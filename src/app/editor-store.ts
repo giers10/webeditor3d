@@ -5,8 +5,10 @@ import type { ToolMode } from "../core/tool-mode";
 import { createEmptySceneDocument, type SceneDocument } from "../document/scene-document";
 import {
   DEFAULT_SCENE_DRAFT_STORAGE_KEY,
+  type LoadSceneDocumentDraftResult,
   loadSceneDocumentDraft,
   type KeyValueStorage,
+  type SaveSceneDocumentDraftResult,
   saveSceneDocumentDraft
 } from "../serialization/local-draft-storage";
 import { parseSceneDocumentJson, serializeSceneDocument } from "../serialization/scene-document-json";
@@ -27,6 +29,9 @@ interface EditorStoreOptions {
 }
 
 type EditorStoreListener = () => void;
+
+export type EditorDraftSaveResult = SaveSceneDocumentDraftResult;
+export type EditorDraftLoadResult = LoadSceneDocumentDraftResult;
 
 export class EditorStore {
   private document: SceneDocument;
@@ -128,28 +133,33 @@ export class EditorStore {
     this.emit();
   }
 
-  saveDraft(): boolean {
+  saveDraft(): EditorDraftSaveResult {
     if (this.storage === null) {
-      return false;
+      return {
+        status: "error",
+        message: "Browser local storage is unavailable."
+      };
     }
 
-    saveSceneDocumentDraft(this.storage, this.document, this.storageKey);
-    return true;
+    return saveSceneDocumentDraft(this.storage, this.document, this.storageKey);
   }
 
-  loadDraft(): boolean {
+  loadDraft(): EditorDraftLoadResult {
     if (this.storage === null) {
-      return false;
+      return {
+        status: "error",
+        message: "Browser local storage is unavailable."
+      };
     }
 
-    const document = loadSceneDocumentDraft(this.storage, this.storageKey);
+    const draftResult = loadSceneDocumentDraft(this.storage, this.storageKey);
 
-    if (document === null) {
-      return false;
+    if (draftResult.status !== "loaded") {
+      return draftResult;
     }
 
-    this.replaceDocument(document);
-    return true;
+    this.replaceDocument(draftResult.document);
+    return draftResult;
   }
 
   exportDocumentJson(): string {

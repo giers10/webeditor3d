@@ -9,6 +9,7 @@ import { useEditorStoreState } from "./use-editor-store";
 
 interface AppProps {
   store: EditorStore;
+  initialStatusMessage?: string;
 }
 
 function describeSelection(selectionKind: EditorSelection["kind"]): string {
@@ -34,10 +35,10 @@ function getErrorMessage(error: unknown): string {
   return "An unexpected error occurred.";
 }
 
-export function App({ store }: AppProps) {
+export function App({ store, initialStatusMessage }: AppProps) {
   const editorState = useEditorStoreState(store);
   const [sceneNameDraft, setSceneNameDraft] = useState(editorState.document.name);
-  const [statusMessage, setStatusMessage] = useState("Viewport shell ready.");
+  const [statusMessage, setStatusMessage] = useState(initialStatusMessage ?? "Viewport shell ready.");
   const importInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -57,17 +58,13 @@ export function App({ store }: AppProps) {
   };
 
   const handleSaveDraft = () => {
-    const didSave = store.saveDraft();
-    setStatusMessage(didSave ? "Local draft saved." : "Local draft storage is unavailable.");
+    const result = store.saveDraft();
+    setStatusMessage(result.message);
   };
 
   const handleLoadDraft = () => {
-    try {
-      const didLoad = store.loadDraft();
-      setStatusMessage(didLoad ? "Local draft loaded." : "No local draft was found.");
-    } catch (error) {
-      setStatusMessage(getErrorMessage(error));
-    }
+    const result = store.loadDraft();
+    setStatusMessage(result.message);
   };
 
   const handleExportJson = () => {
