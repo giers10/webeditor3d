@@ -37,6 +37,7 @@ export class EditorStore {
   private readonly storage: KeyValueStorage | null;
   private readonly storageKey: string;
   private lastCommandLabel: string | null = null;
+  private snapshot: EditorStoreState;
 
   private readonly commandContext: CommandContext = {
     getDocument: () => this.document,
@@ -57,6 +58,7 @@ export class EditorStore {
     this.document = options.initialDocument ?? createEmptySceneDocument();
     this.storage = options.storage ?? null;
     this.storageKey = options.storageKey ?? DEFAULT_SCENE_DRAFT_STORAGE_KEY;
+    this.snapshot = this.createSnapshot();
   }
 
   subscribe = (listener: EditorStoreListener) => {
@@ -67,14 +69,7 @@ export class EditorStore {
     };
   };
 
-  getState = (): EditorStoreState => ({
-    document: this.document,
-    selection: this.selection,
-    toolMode: this.toolMode,
-    canUndo: this.history.canUndo(),
-    canRedo: this.history.canRedo(),
-    lastCommandLabel: this.lastCommandLabel
-  });
+  getState = (): EditorStoreState => this.snapshot;
 
   setToolMode(toolMode: ToolMode) {
     if (this.toolMode === toolMode) {
@@ -168,9 +163,22 @@ export class EditorStore {
   }
 
   private emit() {
+    this.snapshot = this.createSnapshot();
+
     for (const listener of this.listeners) {
       listener();
     }
+  }
+
+  private createSnapshot(): EditorStoreState {
+    return {
+      document: this.document,
+      selection: this.selection,
+      toolMode: this.toolMode,
+      canUndo: this.history.canUndo(),
+      canRedo: this.history.canRedo(),
+      lastCommandLabel: this.lastCommandLabel
+    };
   }
 }
 
