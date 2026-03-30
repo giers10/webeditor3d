@@ -215,6 +215,25 @@ This is the first proof that the product is real.
 
 ---
 
+### Slice 1.5 — World lighting and environment basics
+
+#### Deliverables
+
+- canonical world settings for environment/background
+- authored global ambient light settings
+- authored global directional light / sun settings
+- optional fog settings if they are easy and coherent
+- editor and runner support for those world settings
+- inspector or scene-settings UI for editing them
+
+#### Acceptance criteria
+
+- the first-room workflow no longer depends on hidden hardcoded lighting assumptions
+- world environment settings persist through save/load
+- editor and runner both reflect the authored world settings coherently
+
+---
+
 ## Milestone 2 — Entity-driven interactions
 
 ### Vision
@@ -322,7 +341,25 @@ The tool becomes more than brush-only by supporting imported GLB/GLTF assets and
 
 ---
 
-### Slice 3.2 — Animation playback
+### Slice 3.2 — Local lights and skyboxes
+
+#### Deliverables
+
+- typed local light entities such as point light and spot light
+- viewport helpers and inspector editing for those lights
+- runtime support for local authored lights
+- skybox / environment-background asset support using persistent project storage
+- scene/world settings integration for choosing the active environment background
+
+#### Acceptance criteria
+
+- author can place local lights in a scene and see them in editor and runner
+- environment background / skybox survives reload
+- lighting/environment settings are explicit, not hidden hardcoded runtime state
+
+---
+
+### Slice 3.3 — Animation playback
 
 #### Deliverables
 
@@ -338,7 +375,7 @@ The tool becomes more than brush-only by supporting imported GLB/GLTF assets and
 
 ---
 
-### Slice 3.3 — Spatial audio
+### Slice 3.4 — Spatial audio
 
 #### Deliverables
 
@@ -560,7 +597,7 @@ A slice is complete only when:
 - tests run
 
 ### M1 quality gate
-- user can make a textured room, save/reload it, and walk it
+- user can make a textured room, save/reload it, walk it, and light it coherently
 
 ### M2 quality gate
 - user can place interactive entities without code

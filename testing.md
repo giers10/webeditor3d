@@ -277,6 +277,12 @@ Playwright covers:
 - runtime loads
 - first-person or orbit mode active
 
+#### E2E-04b World environment
+- author non-default world lighting/background settings
+- save or persist through the current path
+- reload
+- editor and runner still reflect those settings
+
 #### E2E-05 Import asset
 - import test GLB
 - place a model instance
@@ -460,6 +466,7 @@ Use small, explicit fixtures.
 - minimal empty doc
 - one-box-room
 - textured-room
+- lit-room
 - trigger-scene
 - imported-asset-scene
 - migration-old-version scene
@@ -468,6 +475,7 @@ Use small, explicit fixtures.
 
 - tiny GLB static mesh
 - tiny GLB animated mesh
+- tiny environment image or skybox fixture
 - simple audio file
 - placeholder textures
 
