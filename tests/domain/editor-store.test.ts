@@ -22,6 +22,21 @@ class MemoryStorage implements KeyValueStorage {
 }
 
 describe("EditorStore", () => {
+  it("returns a stable snapshot between store updates", () => {
+    const store = createEditorStore();
+
+    const initialSnapshot = store.getState();
+    const repeatedSnapshot = store.getState();
+
+    expect(repeatedSnapshot).toBe(initialSnapshot);
+
+    store.executeCommand(createSetSceneNameCommand("Snapshot Scene"));
+
+    const updatedSnapshot = store.getState();
+    expect(updatedSnapshot).not.toBe(initialSnapshot);
+    expect(updatedSnapshot.document.name).toBe("Snapshot Scene");
+  });
+
   it("applies command history with undo and redo", () => {
     const store = createEditorStore();
 
