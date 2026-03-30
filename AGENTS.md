@@ -177,9 +177,9 @@ When working in this repo:
 
 1. Read:
    - `AGENTS.md`
-   - `architecture.md`
-   - `roadmap.md`
-   - `testing.md`
+   - `CHAT_CONTEXT.md`
+   - then inspect the relevant sections of `architecture.md`, `roadmap.md`, and `testing.md` for the active slice
+   - if a slice touches persistence, runtime, or testing boundaries in a non-obvious way, read the relevant full doc sections before changing code
 
 2. Respect the current vertical slice.
    - Do not “prepare for future flexibility” by adding unnecessary systems.
