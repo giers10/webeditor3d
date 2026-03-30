@@ -328,6 +328,59 @@ Please implement only what materially improves the first-room workflow and repor
 
 ---
 
+## Prompt 4A — World lighting and environment basics
+
+```text
+You are implementing Slice 1.5 — World lighting and environment basics.
+
+Read and follow:
+- AGENTS.md
+- CHAT_CONTEXT.md
+- architecture.md
+- roadmap.md
+- testing.md
+
+Before coding:
+- Inspect the current repo and extend the existing implementation.
+- Do not redesign earlier slices.
+- Keep global environment settings in `world`, not as hidden renderer state.
+- If you change persisted schema, update versioning, migrations, and at least one compatibility test.
+
+Current goal:
+Make the first-room workflow use explicit authored world environment settings instead of hidden hardcoded lighting assumptions.
+
+Requirements:
+- Add canonical world settings for:
+  - background mode
+  - background color or simple gradient
+  - ambient light color/intensity
+  - one global directional light / sun color, intensity, and direction
+- Add fog settings only if they are easy and coherent in this slice.
+- Add editor and runner support for those world settings.
+- Add a minimal scene/world settings UI to edit them.
+- Ensure the settings persist through save/load.
+- Ensure there is still a safe fallback if an older document lacks these settings.
+
+Important:
+- This slice is about global world environment settings.
+- Do not add local point/spot light entities yet.
+- Do not add image-based skyboxes yet.
+- Do not add a full environment-lighting/HDR pipeline.
+
+Testing expectations:
+- Round-trip save/load test for world environment settings
+- Validation or migration test if schema changes
+- Browser/e2e or manual verification that editor and runner both reflect authored settings
+
+Please implement fully and report:
+- how world environment settings are represented
+- what UI was added
+- how editor and runner apply the settings
+- what remains intentionally deferred
+```
+
+---
+
 ## Prompt 5 — Entity system foundation
 
 ```text
@@ -555,10 +608,68 @@ Please implement fully and report:
 
 ---
 
+## Prompt 8A — Local lights and skyboxes
+
+```text
+You are implementing Slice 3.2 — Local lights and skyboxes.
+
+Read and follow:
+- AGENTS.md
+- CHAT_CONTEXT.md
+- architecture.md
+- roadmap.md
+- testing.md
+
+Before coding:
+- Inspect the current repo and extend the existing implementation.
+- Reuse the existing entity system for local lights.
+- Reuse the existing persistent asset storage introduced for imported assets where possible.
+- Keep global world lighting separate from local light entities.
+- If you change persisted schema, update versioning, migrations, and at least one compatibility test.
+
+Current goal:
+Add explicit authored local lights and a real skybox/environment-background path.
+
+Requirements:
+- Add typed local light entities for at least:
+  - PointLight
+  - SpotLight
+- Add viewport helpers/gizmos and inspector editing for those light entities.
+- Add runtime support for those local lights.
+- Persist those entities through save/load.
+- Add skybox/environment-background asset support using persistent project storage.
+- Keep the skybox/background path small and explicit.
+- For v1, support only one authored background asset format:
+  - preferably a single equirectangular image asset
+- Add world settings or equivalent explicit document state for choosing the active background asset.
+- Render that background in editor and runner.
+
+Important:
+- Do not fold local lights into `world` settings.
+- Do not treat skyboxes as hidden runtime-only renderer state.
+- Do not build a general HDR/environment-lighting pipeline unless it is trivial and clearly justified.
+- It is acceptable if the skybox is visual background only in v1 rather than a full image-based-lighting system.
+
+Testing expectations:
+- Domain tests for local light entity creation/editing
+- Round-trip tests for light entities and active skybox/background state
+- Browser/e2e or manual verification that lights and skybox/background appear in editor and runner
+- At least one tiny background image fixture if needed
+
+Please implement fully and report:
+- light entity schemas added
+- how local lights are represented in viewport and runner
+- how skybox/background assets are stored and referenced
+- what v1 limitations remain
+- how to verify manually
+```
+
+---
+
 ## Prompt 9 — Animation playback
 
 ```text
-You are implementing Slice 3.2 — Animation playback.
+You are implementing Slice 3.3 — Animation playback.
 
 Read and follow:
 - AGENTS.md
@@ -601,7 +712,7 @@ Please implement fully and report:
 ## Prompt 10 — Spatial audio
 
 ```text
-You are implementing Slice 3.3 — Spatial audio.
+You are implementing Slice 3.4 — Spatial audio.
 
 Read and follow:
 - AGENTS.md
