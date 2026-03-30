@@ -22,7 +22,6 @@ export function ViewportCanvas({ world }: ViewportCanvasProps) {
     const viewportHost = new ViewportHost();
     hostRef.current = viewportHost;
     viewportHost.mount(container);
-    viewportHost.updateWorld(world);
 
     return () => {
       viewportHost.dispose();
