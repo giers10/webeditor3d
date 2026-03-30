@@ -50,7 +50,9 @@ export function createDefaultWorldSettings(): WorldSettings {
     sunLight: {
       colorHex: "#fff1d5",
       intensity: 1.75,
-      direction: DEFAULT_SUN_DIRECTION
+      direction: {
+        ...DEFAULT_SUN_DIRECTION
+      }
     }
   };
 }

@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
 
 import { createSetSceneNameCommand } from "../commands/set-scene-name-command";
+import type { EditorSelection } from "../core/selection";
 import { Panel } from "../shared-ui/Panel";
 import { ViewportCanvas } from "../viewport-three/ViewportCanvas";
 import type { EditorStore } from "./editor-store";
@@ -10,7 +11,7 @@ interface AppProps {
   store: EditorStore;
 }
 
-function describeSelection(selectionKind: string): string {
+function describeSelection(selectionKind: EditorSelection["kind"]): string {
   switch (selectionKind) {
     case "none":
       return "No authored selection yet";
@@ -87,7 +88,7 @@ export function App({ store }: AppProps) {
     importInputRef.current?.click();
   };
 
-  const handleImportChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImportChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.currentTarget.files?.[0];
 
     if (file === undefined) {

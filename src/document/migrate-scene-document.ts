@@ -30,6 +30,14 @@ function expectHexColor(value: unknown, label: string): string {
   return normalizedValue;
 }
 
+function expectLiteralString<T extends string>(value: unknown, expectedValue: T, label: string): T {
+  if (value !== expectedValue) {
+    throw new Error(`${label} must be ${expectedValue}.`);
+  }
+
+  return expectedValue;
+}
+
 function expectEmptyCollection(value: unknown, label: string): Record<string, never> {
   if (!isRecord(value)) {
     throw new Error(`${label} must be a record.`);
@@ -71,7 +79,7 @@ function readWorldSettings(value: unknown): WorldSettings {
 
   return {
     background: {
-      mode: "solid",
+      mode: expectLiteralString(background.mode, "solid", "world.background.mode"),
       colorHex: expectHexColor(background.colorHex, "world.background.colorHex")
     },
     ambientLight: {

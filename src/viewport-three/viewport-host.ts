@@ -36,10 +36,9 @@ export class ViewportHost {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   }
 
-  mount(container: HTMLElement, world: WorldSettings) {
+  mount(container: HTMLElement) {
     this.container = container;
     container.appendChild(this.renderer.domElement);
-    this.updateWorld(world);
     this.resize();
 
     this.resizeObserver = new ResizeObserver(() => {

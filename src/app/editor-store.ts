@@ -123,6 +123,7 @@ export class EditorStore {
   replaceDocument(document: SceneDocument, resetHistory = true) {
     this.document = document;
     this.selection = { kind: "none" };
+    this.toolMode = "select";
 
     if (resetHistory) {
       this.history.clear();
