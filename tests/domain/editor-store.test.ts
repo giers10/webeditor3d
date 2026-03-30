@@ -21,6 +21,18 @@ class MemoryStorage implements KeyValueStorage {
   }
 }
 
+class ThrowingStorage implements KeyValueStorage {
+  getItem(_key: string): string | null {
+    throw new Error("blocked read");
+  }
+
+  setItem(_key: string, _value: string): void {
+    throw new Error("blocked write");
+  }
+
+  removeItem(_key: string): void {}
+}
+
 describe("EditorStore", () => {
   it("returns a stable snapshot between store updates", () => {
     const store = createEditorStore();
@@ -58,14 +70,34 @@ describe("EditorStore", () => {
     const writerStore = createEditorStore({ storage });
 
     writerStore.executeCommand(createSetSceneNameCommand("Draft Scene"));
-    expect(writerStore.saveDraft()).toBe(true);
+    expect(writerStore.saveDraft()).toEqual({
+      status: "saved",
+      message: "Local draft saved."
+    });
 
     const readerStore = createEditorStore({
       initialDocument: createEmptySceneDocument({ name: "Fresh Scene" }),
       storage
     });
 
-    expect(readerStore.loadDraft()).toBe(true);
+    expect(readerStore.loadDraft()).toMatchObject({
+      status: "loaded",
+      message: "Local draft loaded."
+    });
     expect(readerStore.getState().document.name).toBe("Draft Scene");
+  });
+
+  it("fails gracefully when storage access throws", () => {
+    const store = createEditorStore({ storage: new ThrowingStorage() });
+
+    expect(store.saveDraft()).toMatchObject({
+      status: "error",
+      message: expect.stringContaining("blocked write")
+    });
+
+    expect(store.loadDraft()).toMatchObject({
+      status: "error",
+      message: expect.stringContaining("blocked read")
+    });
   });
 });

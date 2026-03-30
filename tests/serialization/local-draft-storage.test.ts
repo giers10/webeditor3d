@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { SCENE_DOCUMENT_VERSION, createEmptySceneDocument } from "../../src/document/scene-document";
 import {
@@ -35,7 +35,7 @@ class ThrowingStorage implements KeyValueStorage {
     } = {}
   ) {}
 
-  getItem(): string | null {
+  getItem(_key: string): string | null {
     if (this.options.onGetItem !== undefined) {
       throw this.options.onGetItem;
     }
@@ -43,13 +43,13 @@ class ThrowingStorage implements KeyValueStorage {
     return null;
   }
 
-  setItem(): void {
+  setItem(_key: string, _value: string): void {
     if (this.options.onSetItem !== undefined) {
       throw this.options.onSetItem;
     }
   }
 
-  removeItem(): void {
+  removeItem(_key: string): void {
     if (this.options.onRemoveItem !== undefined) {
       throw this.options.onRemoveItem;
     }
@@ -88,6 +88,8 @@ describe("local draft storage", () => {
     } finally {
       if (originalDescriptor !== undefined) {
         Object.defineProperty(window, "localStorage", originalDescriptor);
+      } else {
+        Reflect.deleteProperty(window, "localStorage");
       }
     }
   });
