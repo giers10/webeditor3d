@@ -863,6 +863,7 @@ Read and follow:
 Before coding:
 - Inspect the current repo and extend the existing implementation.
 - Avoid rewriting the whole viewport architecture unnecessarily.
+- If you change persisted schema, update versioning, migrations, and at least one compatibility test.
 
 Current goal:
 Improve level-authoring ergonomics with classic editor-style view support.
