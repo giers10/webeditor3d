@@ -1,0 +1,1113 @@
+These prompts assume the repo docs are already updated.
+Use one fresh Codex chat per prompt.
+Each prompt is written to be copy-paste ready.
+
+---
+
+## Prompt 0 — Repo foundation / bootstrap
+
+```text
+You are working in a new repo for a browser-based brush editor + built-in runner for lightweight interactive 3D scenes.
+
+Read and follow these files first:
+- AGENTS.md
+- architecture.md
+- roadmap.md
+- testing.md
+
+Before coding:
+- Inspect the current repo and extend what is there.
+- Do not re-architect unless the current code clearly violates the docs.
+- Keep the repo as a single Vite app with domain folders under src/.
+- Do not use the React tree as the canonical state container.
+
+Your task is to implement the foundation slice only.
+
+Goals:
+- Bootstrap the project with React + Vite + TypeScript.
+- Set up a minimal app shell with a visible three.js viewport region and placeholder side panels.
+- Add strict TypeScript config, lint/format scaffolding if missing, and a small folder structure under src/ that matches the architecture docs.
+- Add a minimal versioned canonical SceneDocument model.
+- Add a migration entry point, even if it only handles the current version.
+- Add a minimal Command interface and CommandHistory with undo/redo support.
+- Add a thin external editor store/service that owns the document, selection, tool mode, and command history.
+- Add local draft save/load scaffolding for the empty document.
+- Add explicit JSON import/export scaffolding for the document.
+- Add test setup for Vitest and Playwright.
+- Add one smoke test that proves the app boots and the viewport shell is visible.
+- Do not implement real geometry tools yet.
+- Do not overbuild infrastructure.
+- Do not add React Three Fiber.
+- Do not split into a monorepo.
+
+Expected output:
+- A working app that starts locally.
+- A visible layout with a center viewport and side panels.
+- A minimal empty document factory.
+- A command stack that can handle at least a dummy command.
+- Basic scripts in package.json for dev, build, test, test:e2e, and typecheck.
+- Initial test files.
+- Small, coherent file structure.
+
+Constraints:
+- Keep the canonical document independent from three.js objects.
+- Keep the viewport imperative and plain three.js.
+- Keep the implementation as small as possible while preserving architecture seams.
+- Avoid speculative plugin systems or ECS.
+- If you introduce persisted schema, version it from day one.
+
+Please:
+1. Inspect the repo.
+2. Implement the slice fully.
+3. Update any missing config/scripts.
+4. Run the relevant build/tests locally if possible.
+5. At the end, report:
+   - what changed
+   - why it changed
+   - which files were added/updated
+   - how to run it
+   - what was verified
+   - known limitations
+```
+
+---
+
+## Prompt 1 — Box brush authoring
+
+```text
+You are implementing the first real vertical slice of a browser-based brush editor.
+
+Read and follow:
+- AGENTS.md
+- architecture.md
+- roadmap.md
+- testing.md
+
+Before coding:
+- Inspect the current repo and extend the existing implementation.
+- Do not re-architect unless the current code clearly violates the docs.
+- If you change the persisted SceneDocument schema, update versioning, migrations, and at least one migration/compatibility test.
+
+Current goal:
+Implement Slice 1.1 — Box brush authoring.
+
+Requirements:
+- Add canonical BoxBrush support to the SceneDocument.
+- Keep early box brushes axis-aligned only.
+- Do not implement arbitrary brush rotation in this slice.
+- Unless the repo already has a compatible equivalent, represent a box brush canonically as:
+  - `kind: "box"`
+  - `center`
+  - positive `size`
+  - stable face records keyed by `posX | negX | posY | negY | posZ | negZ`
+- Implement create/select/move/resize for box brushes.
+- Add grid snapping.
+- Render box brushes in the three.js editor viewport.
+- Add outliner presence for brushes.
+- Ensure save/load JSON works for box brushes.
+- Add undo/redo support through commands for all authoring actions in this slice.
+- Keep the box brush stored canonically as structured brush data, not raw triangle soup.
+- Keep editor mesh generation derived from canonical brush data.
+- Keep the UI simple and real. Button-driven creation is acceptable if it is usable.
+- Do not implement face UV editing yet.
+- Do not implement fancy primitives yet.
+
+Testing expectations:
+- Unit/domain tests for create box brush command and undo/redo
+- Serialization round-trip test for a document with at least one box brush
+- Browser/e2e smoke proving a user can create a box brush and it persists after reload through the current persistence path
+- Geometry sanity tests if you introduce a mesh builder
+
+Important architecture rules:
+- Document is source of truth
+- Commands own mutations
+- three.js scene is derived
+- No raw three.js objects in the document
+- No R3F
+
+Deliverables:
+- End-to-end usable box brush slice
+- Any small UI needed to exercise it
+- Tests
+- Brief manual QA notes in your response
+
+Please implement this slice completely, run the relevant checks if possible, and then report:
+- changed files
+- commands added
+- how box brush canonical data is represented
+- how to test/use it
+- what remains intentionally out of scope
+```
+
+---
+
+## Prompt 2 — Face materials and UV basics
+
+```text
+You are implementing Slice 1.2 — Face materials and UV basics.
+
+Read and follow:
+- AGENTS.md
+- architecture.md
+- roadmap.md
+- testing.md
+
+Before coding:
+- Inspect the current repo and extend the existing implementation.
+- Do not re-architect unless the current code clearly violates the docs.
+- If you change persisted schema, update versioning, migrations, and at least one compatibility test.
+
+Current goal:
+Make it possible to assign materials to individual box brush faces and edit basic UV parameters.
+
+Requirements:
+- Introduce a canonical material registry in the document.
+- Add a tiny starter material library stored locally in the repo.
+- Add face selection for box brushes using the stable box face IDs.
+- Allow applying a material to a single face.
+- Persist explicit UV state canonically per face using concrete values.
+- Unless the repo already has a compatible equivalent, store these per-face UV fields:
+  - `offset`
+  - `scale`
+  - `rotationQuarterTurns`
+  - `flipU`
+  - `flipV`
+- Support these operations:
+  - offset
+  - scale
+  - rotate 90
+  - flip U
+  - flip V
+  - fit to face
+- Treat “fit to face” as a command that rewrites explicit UV values.
+- Do not persist a separate procedural fit flag yet.
+- Persist all face material and UV data through save/load.
+- Reflect material and UV changes in viewport rendering.
+- Add a minimal material browser panel and/or inspector controls.
+- Keep UV state canonical in the document, not only in generated mesh UV buffers.
+- Do not overcomplicate the material system yet.
+- Do not build a huge texture pipeline yet.
+
+Important:
+- A major goal is to preserve Hammer/TrenchBroom-style speed.
+- The UX can be simple at first, but it must be real and usable.
+- Commands must cover material application and UV edits so undo/redo works.
+
+Testing expectations:
+- Round-trip save/load test with per-face material + UV state
+- Domain tests for apply-material and UV edit commands
+- Geometry/render tests if useful for derived UV output
+- Browser/e2e test for assigning a face material through the UI if feasible
+
+Implementation guidance:
+- Keep the starter material library small and local to the project
+- Prefer simple thumbnails / labels over overdesigned UI
+- Keep face identification stable in the canonical box brush representation
+
+Please implement the slice fully and report:
+- how face IDs are represented
+- how UV state is stored
+- what UI affordances were added
+- what tests were added
+- how to verify manually
+```
+
+---
+
+## Prompt 3 — Runner v1
+
+```text
+You are implementing Slice 1.3 — Runner v1.
+
+Read and follow:
+- AGENTS.md
+- architecture.md
+- roadmap.md
+- testing.md
+
+Before coding:
+- Inspect the current repo and extend the existing implementation.
+- Do not re-architect unless the current code clearly violates the docs.
+- If you change persisted schema, update versioning, migrations, and at least one compatibility test.
+
+Current goal:
+Make the authored scene playable inside the browser.
+
+Requirements:
+- Add a runtime build step from SceneDocument to a runtime scene representation.
+- Add a built-in runner/play mode reachable from the editor.
+- Support:
+  - first-person navigation
+  - orbit visitor mode
+- First-person can be simple, but should feel real:
+  - `WASD` movement
+  - mouse-look when active
+  - graceful pointer-lock failure handling
+- Orbit visitor should provide a clear fallback for non-FPS navigation.
+- Add minimal typed PlayerStart support in a way that is compatible with the later full entity system.
+- Add basic collision against axis-aligned box-brush-generated geometry, enough for a small room test.
+- Allow entering and leaving run mode safely.
+- Preserve editor state when leaving run mode.
+- Keep the runner as a sibling system, not a hack inside editor-only viewport code.
+- Do not add triggers or audio yet.
+- Do not add future nav modes yet.
+
+Implementation guidance:
+- Reuse three.js where appropriate, but keep runtime-specific logic separate from editor helpers.
+- Keep collision deterministic and explicit about limitations.
+- PlayerStart should become part of the canonical document, not an editor-only setting.
+
+Testing expectations:
+- Domain/build tests for runtime scene construction from a simple document
+- E2E/smoke test that enters run mode successfully
+- If possible, a minimal interaction test that the player spawns at PlayerStart
+
+Please implement the slice fully and report:
+- what runtime modules/classes were added
+- how edit mode and run mode are separated
+- how PlayerStart is represented
+- known limitations of collision/movement
+- how to run and verify manually
+```
+
+---
+
+## Prompt 4 — End-to-end first-room polish
+
+```text
+You are implementing Slice 1.4 — polish for the first complete room workflow.
+
+Read and follow:
+- AGENTS.md
+- architecture.md
+- roadmap.md
+- testing.md
+
+Before coding:
+- Inspect the current repo and extend the existing implementation.
+- Do not redesign the product or rewrite earlier slices.
+- If you change persisted schema, update versioning, migrations, and at least one compatibility test.
+
+Current goal:
+Strengthen the first real user loop:
+create box brush -> texture faces -> save/load -> run scene.
+
+Requirements:
+- Add basic document validation and visible validation/build errors.
+- Improve snapping feedback and active-tool feedback.
+- Add a minimal toolbar or command surface for key authoring actions.
+- Improve save/load UX enough that the first-room workflow feels coherent.
+- Add or refine scene/world settings only if needed for the first-room slice.
+- Tighten rough edges in the editor/runner transition.
+- Add smoke/regression coverage for the first-room loop.
+
+Minimum validation scope:
+- duplicate IDs
+- invalid box sizes
+- missing material refs
+- invalid entity refs introduced so far
+- missing PlayerStart when entering first-person mode, if that matters in the current implementation
+
+Important:
+- This is not a redesign pass.
+- This is not a “make it pretty” pass.
+- It is a coherence and trust pass.
+- Prioritize usability, error visibility, and slice completeness.
+
+Testing expectations:
+- E2E flow for create -> texture -> save/load -> run
+- Validation tests for obvious bad states
+- Missing regression tests for the first-room loop
+
+Please implement only what materially improves the first-room workflow and report:
+- UX improvements made
+- validation/build diagnostics added
+- tests added
+- manual QA flow you used
+```
+
+---
+
+## Prompt 5 — Entity system foundation
+
+```text
+You are implementing Slice 2.1 — Entity system foundation.
+
+Read and follow:
+- AGENTS.md
+- architecture.md
+- roadmap.md
+- testing.md
+
+Before coding:
+- Inspect the current repo and extend the existing implementation.
+- Reuse and extend the existing PlayerStart path rather than rebuilding it in parallel.
+- Do not merge model instances into entities.
+- If you change persisted schema, update versioning, migrations, and at least one compatibility test.
+
+Current goal:
+Add a typed entity system to the editor and runtime foundation.
+
+Initial entity types to support:
+- PlayerStart
+- SoundEmitter
+- TriggerVolume
+- TeleportTarget
+- Interactable
+
+Requirements:
+- Add explicit typed entity schemas to the canonical document model.
+- Add an entity registry/defaults layer.
+- Add an entity placement workflow.
+- Add viewport helpers/icons/gizmos for entities.
+- Add entity selection and inspector editing.
+- Persist entities through save/load.
+- Make runtime build consume entities, even if only some are active yet.
+- Keep entities typed; do not implement a generic script blob system.
+- Keep editor visuals for entities separate from runtime behavior.
+- Keep model instances, if any exist already, in their own collection.
+
+Implementation guidance:
+- Keep the first version small and explicit.
+- Use clear defaults and property validation.
+- Ensure entity IDs and references are stable.
+
+Testing expectations:
+- Domain tests for entity creation/editing
+- Serialization round-trip tests
+- Browser/e2e test for placing and selecting an entity if feasible
+
+Please implement fully and report:
+- entity types added
+- how the registry/defaults work
+- how placement works
+- how entities appear in viewport/outliner/inspector
+- what runtime integration exists so far
+```
+
+---
+
+## Prompt 6 — Trigger -> Action -> Target foundation
+
+```text
+You are implementing Slice 2.2 — Trigger -> Action -> Target foundation.
+
+Read and follow:
+- AGENTS.md
+- architecture.md
+- roadmap.md
+- testing.md
+
+Before coding:
+- Inspect the current repo and extend the existing implementation.
+- Do not build a generic scripting system or node graph.
+- If you change persisted schema, update versioning, migrations, and at least one compatibility test.
+
+Current goal:
+Enable the first simple data-driven interactions without scripting.
+
+Requirements:
+- Add canonical schemas for trigger/action/target links.
+- Unless the repo already has a compatible equivalent, represent links as explicit records with:
+  - stable link ID
+  - source entity ID
+  - trigger kind
+  - typed action payload
+- Support authoring and persistence of these links.
+- Add runtime evaluation of trigger -> action -> target.
+- Add minimal UI for configuring links in the inspector.
+- Keep the system typed and explicit.
+
+Initial supported trigger sources:
+- TriggerVolume enter
+- TriggerVolume exit
+
+Initial supported actions:
+- teleport player
+- toggle visibility
+
+Important:
+- Keep it data-driven, not script-driven.
+- Do not activate sound or animation actions yet.
+- Do not build a generic node graph.
+- Do not overdesign event buses.
+- Focus on the smallest real interaction system that works end-to-end.
+
+Testing expectations:
+- Domain tests for link validation
+- Runtime tests for dispatch behavior with fixtures or mocks
+- E2E/manual verification for at least one actual trigger flow
+
+Please implement the slice fully and report:
+- how links are stored canonically
+- which trigger types and actions are active now
+- how runtime dispatch works
+- how to test an example interaction
+- known limitations
+```
+
+---
+
+## Prompt 7 — Click interactions and runner prompts
+
+```text
+You are implementing Slice 2.3 — Click interactions and runner prompts.
+
+Read and follow:
+- AGENTS.md
+- architecture.md
+- roadmap.md
+- testing.md
+
+Before coding:
+- Inspect the current repo and extend the existing implementation.
+- Preserve compatibility with the current Trigger -> Action -> Target system.
+- If you change persisted schema, update versioning, migrations, and at least one compatibility test.
+
+Current goal:
+Allow the user to click interactive entities in run mode and receive clear prompts/feedback.
+
+Requirements:
+- Add click-target support in the runner.
+- Add a minimal prompt / interaction UI.
+- Support action-on-click behavior for Interactable entities.
+- Add interaction distance and basic targeting rules.
+- Keep behavior deterministic and understandable.
+- Preserve compatibility with the existing Trigger -> Action -> Target system.
+- Separate runtime input handling from editor picking.
+
+Implementation guidance:
+- Keep the UI minimal and legible.
+- Prefer explicit interaction affordances over hidden magic.
+- Interaction range should be a clear authored/configured value or a simple documented default.
+
+Testing expectations:
+- Runtime/browser tests for click targeting
+- E2E or manual verification for click-to-trigger flow
+- Regression coverage for prompt visibility logic if practical
+
+Please implement fully and report:
+- how click targeting works
+- what prompt UX was added
+- how interaction range is defined
+- how to verify manually
+```
+
+---
+
+## Prompt 8 — GLB/GLTF import
+
+```text
+You are implementing Slice 3.1 — GLB/GLTF import.
+
+Read and follow:
+- AGENTS.md
+- architecture.md
+- roadmap.md
+- testing.md
+
+Before coding:
+- Inspect the current repo and extend the existing implementation.
+- Keep placed imported models separate from entities.
+- If you change persisted schema, update versioning, migrations, and at least one compatibility test.
+
+Current goal:
+Import GLB/GLTF assets, register them, and place them in the scene.
+
+Requirements:
+- Add an asset registry to the canonical document or asset domain.
+- Implement a GLB/GLTF import workflow.
+- Add the smallest reliable project-storage addition needed so imported assets survive reload.
+- Prefer IndexedDB-backed project asset storage for binary payloads if browser storage is needed.
+- Keep stable asset records in the canonical document.
+- Never rely on ephemeral Blob URLs as the only persisted reference.
+- Extract and store useful metadata:
+  - asset id
+  - name
+  - stable persistence reference
+  - contained materials/textures if useful
+  - animations list if present
+  - bounding box / dimensions if feasible
+- Add preview/thumbnail support if practical, but do not let thumbnail generation block import.
+- Allow placing an imported model instance in the scene.
+- Allow selecting and transforming a model instance.
+- Persist asset references and placed model instances through save/load.
+- Render imported assets in editor and runner.
+
+Important:
+- Imported assets should be first-class but must not replace brushes.
+- Distinguish clearly between asset records and scene model instances.
+- Keep the implementation small and reliable.
+- Do not build a giant asset-management subsystem yet.
+
+Testing expectations:
+- Round-trip tests for asset refs / placed model instances
+- At least one fixture GLB/GLTF test asset
+- E2E or browser verification for import and placement if possible
+
+Please implement fully and report:
+- asset registry design
+- model instance representation
+- what metadata is extracted
+- what limitations exist on import
+- how to test with the included fixture(s)
+```
+
+---
+
+## Prompt 9 — Animation playback
+
+```text
+You are implementing Slice 3.2 — Animation playback.
+
+Read and follow:
+- AGENTS.md
+- architecture.md
+- roadmap.md
+- testing.md
+
+Before coding:
+- Inspect the current repo and extend the existing implementation.
+- Reuse the existing Trigger -> Action -> Target system rather than inventing a second dispatch path.
+- If you change persisted schema, update versioning, migrations, and at least one compatibility test.
+
+Current goal:
+Enable playback of animations from imported GLB/GLTF assets.
+
+Requirements:
+- Detect and surface imported animations in asset metadata and/or model instance config.
+- Add a way to configure an animation target or animated model instance.
+- Integrate animation playback into the runner.
+- Add `play animation` and `stop animation` action wiring through the existing interaction system.
+- Add minimal inspector UI needed to choose or inspect animation clips.
+- Persist animation-related settings through save/load.
+- Keep it small and explicit.
+- Do not build a full timeline editor.
+
+Testing expectations:
+- Tests for imported animation metadata availability
+- Runtime tests for play/stop dispatch if feasible
+- Manual or e2e verification using a small animated fixture
+
+Please implement fully and report:
+- how animations are exposed to the author
+- how runtime playback is managed
+- what actions are supported
+- how to test it
+```
+
+---
+
+## Prompt 10 — Spatial audio
+
+```text
+You are implementing Slice 3.3 — Spatial audio.
+
+Read and follow:
+- AGENTS.md
+- architecture.md
+- roadmap.md
+- testing.md
+
+Before coding:
+- Inspect the current repo and extend the existing implementation.
+- Reuse the existing Trigger -> Action -> Target system rather than inventing a second dispatch path.
+- If you change persisted schema, update versioning, migrations, and at least one compatibility test.
+
+Current goal:
+Make positional/spatial audio a first-class runner feature.
+
+Requirements:
+- Support audio asset references for SoundEmitter entities.
+- Add the smallest reliable project-storage addition needed so imported audio survives reload if that does not already exist.
+- Prefer reusing any existing project asset storage introduced for GLB/GLTF import.
+- Implement positional audio in the runner.
+- Support at least:
+  - loop
+  - one-shot or triggered playback
+  - volume
+  - ref distance
+  - max distance if applicable
+- Handle browser audio unlock / user gesture requirements gracefully.
+- Integrate with existing trigger/action flows.
+- Add `play sound` and `stop sound` actions to the existing interaction system.
+- Add minimal inspector controls for sound settings.
+- Persist all relevant settings through save/load.
+
+Important:
+- Spatial audio is a core product feature.
+- Keep the authoring flow understandable.
+- Don’t attempt advanced occlusion or buses yet.
+
+Testing expectations:
+- Domain tests for sound entity config
+- Runtime tests for action dispatch into the audio system where practical
+- Manual QA notes for real spatial verification
+- Browser behavior notes for audio unlock
+
+Please implement fully and report:
+- audio system structure
+- entity fields added/used
+- how browser unlock is handled
+- what was tested automatically vs manually
+```
+
+---
+
+## Prompt 11 — Wedge/ramp and cylinder prism
+
+```text
+You are implementing the first additional brush-primitive slice.
+
+Read and follow:
+- AGENTS.md
+- architecture.md
+- roadmap.md
+- testing.md
+
+Before coding:
+- Inspect the current repo and extend the existing implementation.
+- Keep generated mesh derived from canonical primitive data.
+- If you change persisted schema, update versioning, migrations, and at least one compatibility test.
+
+Current goal:
+Add two more canonical brush primitives:
+- wedge / ramp
+- cylinder prism
+
+Requirements:
+- Add canonical representation for each primitive.
+- Add creation workflows.
+- Add viewport rendering.
+- Ensure save/load support.
+- Ensure runner/runtime build support.
+- Reuse existing material/face systems where possible.
+- Keep primitive authoring simple and explicit.
+- Do not introduce arbitrary mesh editing.
+
+Important:
+- Geometry robustness matters more than flashy UI.
+- It is acceptable to ship these two primitives now and leave stairs/arch for later prompts.
+
+Testing expectations:
+- Strong geometry tests for each primitive
+- Serialization round-trip tests
+- Manual verification in viewport and runner
+
+Please implement fully and report:
+- canonical schema for each primitive
+- creation UX
+- any limitations in face/material support
+- what tests protect geometry correctness
+```
+
+---
+
+## Prompt 12 — Stairs primitive
+
+```text
+You are implementing the stairs brush primitive as its own vertical slice.
+
+Read and follow:
+- AGENTS.md
+- architecture.md
+- roadmap.md
+- testing.md
+
+Before coding:
+- Inspect the current repo and extend the existing implementation.
+- Keep generated mesh derived from canonical primitive data.
+- If you change persisted schema, update versioning, migrations, and at least one compatibility test.
+
+Current goal:
+Add a canonical stairs primitive.
+
+Requirements:
+- Add canonical representation for stairs.
+- Add creation workflow.
+- Add viewport rendering.
+- Ensure save/load support.
+- Ensure runner/runtime build support.
+- Reuse existing material/face systems where possible.
+- Keep authoring explicit and understandable.
+- Define step-count and size constraints clearly.
+
+Important:
+- Geometry robustness matters more than flashy UI.
+- Do not introduce arbitrary mesh editing.
+
+Testing expectations:
+- Dense geometry tests for stairs
+- Serialization round-trip tests
+- Manual verification in viewport and runner
+
+Please implement fully and report:
+- canonical schema
+- creation UX
+- any limitations in face/material support
+- what tests protect geometry correctness
+```
+
+---
+
+## Prompt 13 — Arch primitive
+
+```text
+You are implementing the arch brush primitive as its own vertical slice.
+
+Read and follow:
+- AGENTS.md
+- architecture.md
+- roadmap.md
+- testing.md
+
+Before coding:
+- Inspect the current repo and extend the existing implementation.
+- Keep generated mesh derived from canonical primitive data.
+- If you change persisted schema, update versioning, migrations, and at least one compatibility test.
+
+Current goal:
+Add a canonical arch primitive.
+
+Requirements:
+- Add canonical representation for an arch primitive.
+- Add creation workflow.
+- Add viewport rendering.
+- Ensure save/load support.
+- Ensure runner/runtime build support.
+- Reuse existing material/face systems where possible.
+- Keep authoring explicit and deterministic.
+- Define any segment-count or thickness constraints clearly.
+
+Important:
+- Geometry robustness matters more than flashy UI.
+- Do not introduce arbitrary mesh editing.
+
+Testing expectations:
+- Dense geometry tests for the arch
+- Serialization round-trip tests
+- Manual verification in viewport and runner
+
+Please implement fully and report:
+- canonical schema
+- creation UX
+- any limitations in face/material support
+- what tests protect geometry correctness
+```
+
+---
+
+## Prompt 14 — Constrained brush clipping
+
+```text
+You are implementing a constrained v1 brush clipping slice.
+
+Read and follow:
+- AGENTS.md
+- architecture.md
+- roadmap.md
+- testing.md
+
+Before coding:
+- Inspect the current repo and extend the existing implementation.
+- Do not introduce a full convex-brush system in this slice.
+- If you change persisted schema, update versioning, migrations, and at least one compatibility test.
+
+Current goal:
+Add a clip tool with predictable, undoable results under explicit constraints.
+
+Requirements:
+- Add a clip tool workflow.
+- Support at least:
+  - preview of the clip plane/line
+  - split brush or keep one side
+- Store results as valid canonical brushes using currently supported brush kinds only.
+- Preserve material/face information as sensibly as possible for v1.
+- Ensure undo/redo is robust.
+- Ensure clipped brushes save/load and run correctly.
+
+Scope constraint:
+- Prefer a first version that clips only axis-aligned box brushes with principal-axis clip planes if that keeps the implementation reliable.
+- Unsupported cases must fail clearly in the UI.
+
+Important:
+- This is a high-risk geometry feature.
+- Prefer a smaller but reliable implementation over an ambitious one.
+- Be explicit about unsupported cases.
+
+Testing expectations:
+- Geometry tests for clip results
+- Command tests for undo/redo
+- Manual QA for common clip flows
+
+Please implement fully and report:
+- how clipping works internally
+- what user workflow exists
+- what constraints/unsupported cases remain
+- what tests were added
+```
+
+---
+
+## Prompt 15 — Better viewport layouts
+
+```text
+You are implementing the viewport-layout ergonomics slice.
+
+Read and follow:
+- AGENTS.md
+- architecture.md
+- roadmap.md
+- testing.md
+
+Before coding:
+- Inspect the current repo and extend the existing implementation.
+- Avoid rewriting the whole viewport architecture unnecessarily.
+
+Current goal:
+Improve level-authoring ergonomics with classic editor-style view support.
+
+Requirements:
+- Add orthographic top/front/side views.
+- If feasible, add a split multi-view layout.
+- Improve camera/control ergonomics.
+- Improve snapping feedback if needed to support these views.
+- Preserve existing selection and tool behavior across views as much as possible.
+
+Important:
+- This slice is about workflow speed.
+- Keep the implementation understandable.
+- Avoid rewriting the whole viewport architecture unnecessarily.
+
+Testing expectations:
+- Browser/manual verification for view switching and basic authoring
+- Any integration tests that are stable and worth adding
+
+Please implement fully and report:
+- which view modes/layouts were added
+- how camera handling is structured
+- what manual QA scenarios were used
+- any remaining rough edges
+```
+
+---
+
+## Prompt 16 — Better material library
+
+```text
+You are implementing Slice 5.1 — Better material library.
+
+Read and follow:
+- AGENTS.md
+- architecture.md
+- roadmap.md
+- testing.md
+
+Before coding:
+- Inspect the current repo and extend the existing implementation.
+- Preserve compatibility with the existing face-assignment workflow.
+- If you change persisted schema, update versioning, migrations, and at least one compatibility test.
+
+Current goal:
+Make the material workflow fast and pleasant enough for repeated real use.
+
+Requirements:
+- Expand the material browser with:
+  - categories
+  - tags
+  - search
+  - favorites
+  - recent materials
+- Preserve compatibility with existing face assignment workflow.
+- Keep the implementation performant for a modestly larger material set.
+- Add small UI refinements necessary to make assignment fast.
+
+Important:
+- This is a workflow slice, not a rendering-tech slice.
+- Prefer fast browsing and assignment over over-designed visuals.
+- Do not introduce a complicated backend or remote library system yet.
+
+Testing expectations:
+- Domain tests for favorites/recent logic if introduced
+- Browser tests for search/filter behavior if practical
+- Manual QA for speed of assignment flow
+
+Please implement fully and report:
+- material browser improvements
+- data model changes
+- performance considerations
+- how to verify the workflow manually
+```
+
+---
+
+## Prompt 17 — Prefab foundation
+
+```text
+You are implementing a constrained prefab foundation slice.
+
+Read and follow:
+- AGENTS.md
+- architecture.md
+- roadmap.md
+- testing.md
+
+Before coding:
+- Inspect the current repo and extend the existing implementation.
+- Do not build a dependency-graph editor.
+- If you change persisted schema, update versioning, migrations, and at least one compatibility test.
+
+Current goal:
+Make repeated reusable scene elements possible with explicit, simple semantics.
+
+Requirements:
+- Add a prefab definition concept.
+- Allow creating or registering reusable placeable prefab content.
+- Allow placing prefab instances in the scene.
+- Persist prefab definitions and instances through save/load.
+- Add a prefab browser or equivalent UI affordance.
+
+Use these v1 semantics unless the repo already has a clearly compatible equivalent:
+- prefab instances reference a prefab definition by ID
+- instance transform is allowed
+- no per-instance internal structural overrides yet
+- definition changes do not silently live-update all instances; provide an explicit refresh/apply path if updates are supported
+
+Important:
+- Keep prefab semantics simple and explicit.
+- Do not build a full dependency graph editor.
+- Be clear about what is supported vs deferred.
+
+Testing expectations:
+- Serialization tests
+- Domain tests for prefab instance behavior
+- Manual/e2e verification for placing multiple instances
+
+Please implement fully and report:
+- prefab data model
+- instance/update behavior
+- UI workflow
+- limitations and deferred features
+```
+
+---
+
+## Prompt 18 — GLB export improvements
+
+```text
+You are implementing the first dedicated export slice.
+
+Read and follow:
+- AGENTS.md
+- architecture.md
+- roadmap.md
+- testing.md
+
+Before coding:
+- Inspect the current repo and extend the existing implementation.
+- Keep canonical JSON as the authoring format.
+- If you change persisted schema, update versioning, migrations, and at least one compatibility test.
+
+Current goal:
+Improve GLB/GLTF export from the authored scene without distorting the editor data model.
+
+Requirements:
+- Improve or add GLB/GLTF export from the authored scene.
+- Build export data downstream from the canonical document and/or runtime build.
+- Preserve material, asset, animation, and scene structure as sensibly as possible.
+- Add minimal export-oriented validation or diagnostics if needed.
+- Do not conflate export with the canonical save format.
+- Do not build a standalone packaged runner in this slice.
+
+Important:
+- Export is downstream from the authoring document/runtime build.
+- Do not distort the editor data model to match export constraints.
+
+Testing expectations:
+- Export tests with small fixtures
+- Manual verification that exported output loads in the runner or a standard viewer if applicable
+
+Please implement fully and report:
+- export flow
+- what is included vs omitted in export
+- what limitations remain
+- how to verify the exported result
+```
+
+---
+
+## Prompt 19 — Scene packaging and embeddable runner
+
+```text
+You are implementing the packaging/deployment slice.
+
+Read and follow:
+- AGENTS.md
+- architecture.md
+- roadmap.md
+- testing.md
+
+Before coding:
+- Inspect the current repo and extend the existing implementation.
+- Keep this separate from canonical save/load and separate from plain GLB export.
+
+Current goal:
+Make scenes more shareable and deployable through packaged runner output.
+
+Requirements:
+- Clarify and implement a scene packaging path.
+- Add or improve a standalone/embeddable runner route if appropriate for the current architecture.
+- Package the runtime scene and required assets/materials so the result can be opened without the editor.
+- Keep the implementation small and explicit.
+- Add any minimal production-oriented optimization hooks that are easy and justified.
+- Do not redesign the editor just to support packaging.
+
+Important:
+- Canonical JSON remains the authoring format.
+- Packaging is downstream from authoring and runtime build.
+- This slice is about deployment/shareability, not about changing authoring semantics.
+
+Testing expectations:
+- Packaging tests with small fixtures if practical
+- Manual verification that a packaged scene loads in the standalone/embedded runner
+
+Please implement fully and report:
+- packaging flow
+- output options
+- what is included vs omitted
+- how to verify the packaged result
+```
+
+---
+
+## Meta prompt — Audit the slice before merging
+
+```text
+Please audit the current branch/work for architecture compliance and slice completeness.
+
+Read and use:
+- AGENTS.md
+- architecture.md
+- roadmap.md
+- testing.md
+
+Then inspect the implementation and answer these questions by making concrete improvements where needed:
+
+1. Does the slice work end-to-end?
+2. Is the canonical document still clearly separated from three.js runtime/editor objects?
+3. Are editor mutations routed through commands?
+4. Are save/load and undo/redo covered where they should be?
+5. If persisted schema changed, were versioning, migrations, and compatibility tests updated?
+6. Are there obvious missing tests for the slice?
+7. Are there speculative abstractions or dead scaffolds that should be removed?
+8. Are failure modes surfaced clearly enough?
+9. Does the implementation still match the intended vertical slice, without scope creep?
+
+Please:
+- inspect the current repo first
+- make targeted improvements
+- remove unnecessary scaffolding if present
+- add missing tests if obvious
+- run the narrowest relevant checks if possible
+- report remaining risks honestly
+```
