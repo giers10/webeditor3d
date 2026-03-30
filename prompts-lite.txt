@@ -1,0 +1,588 @@
+Use this file for lower-context Codex chats.
+
+For each new chat:
+
+1. Copy the **Common Preamble**
+2. Append exactly one **Slice Body**
+
+This keeps startup context smaller than `prompts.txt` while still pointing Codex at the hard rules.
+
+---
+
+## Common Preamble
+
+```text
+You are working in a browser-based brush editor + built-in runner repo.
+
+Read first:
+- AGENTS.md
+- CHAT_CONTEXT.md
+
+Then inspect only the relevant sections of:
+- architecture.md
+- roadmap.md
+- testing.md
+
+Before coding:
+- Inspect the current repo and extend the existing implementation.
+- Do not re-architect unless the current code clearly violates the docs.
+- Keep the implementation as small and real as possible for the active slice.
+- If you change persisted SceneDocument schema, update versioning, migrations, and at least one compatibility test.
+- Run the narrowest relevant checks you can.
+
+At the end, report:
+- what changed
+- why it changed
+- which files were added/updated
+- how to run/test it
+- what was verified
+- known limitations
+```
+
+---
+
+## Slice Body 0 — Repo foundation / bootstrap
+
+```text
+Relevant docs to inspect after the common preamble:
+- architecture.md: overview, early binding decisions, state management
+- roadmap.md: Milestone 0
+- testing.md: test stack, e2e-01, minimum test commands
+
+Implement the foundation slice only.
+
+Goals:
+- React + Vite + TypeScript bootstrap
+- visible app shell with three.js viewport region and side panels
+- strict TypeScript config and small domain folder structure under src/
+- versioned SceneDocument model plus migration entry point
+- Command interface and CommandHistory with undo/redo
+- thin external editor store/service
+- local draft save/load scaffold plus JSON import/export scaffold
+- Vitest + Playwright setup
+- one smoke test proving the app boots and the viewport shell is visible
+
+Do not:
+- implement real geometry tools
+- use React Three Fiber
+- split into a monorepo
+```
+
+---
+
+## Slice Body 1 — Box brush authoring
+
+```text
+Relevant docs to inspect after the common preamble:
+- architecture.md: early brush representation, geometry, selection/picking
+- roadmap.md: Slice 1.1
+- testing.md: domain, geometry, serialization, e2e-02
+
+Implement Slice 1.1.
+
+Requirements:
+- add canonical axis-aligned BoxBrush support
+- use stable face IDs `posX | negX | posY | negY | posZ | negZ`
+- create/select/move/resize box brushes
+- grid snapping
+- viewport rendering and outliner presence
+- save/load support
+- undo/redo through commands
+
+Do not:
+- add arbitrary brush rotation
+- store raw triangle soup canonically
+```
+
+---
+
+## Slice Body 2 — Face materials and UV basics
+
+```text
+Relevant docs to inspect after the common preamble:
+- architecture.md: materials, early UV representation
+- roadmap.md: Slice 1.2
+- testing.md: serialization, geometry, e2e-03
+
+Implement Slice 1.2.
+
+Requirements:
+- canonical material registry
+- tiny local starter material library
+- face selection for box brushes
+- apply material to a single face
+- canonical per-face UV fields:
+  - offset
+  - scale
+  - rotationQuarterTurns
+  - flipU
+  - flipV
+- support offset, scale, rotate 90, flip U/V, fit to face
+- viewport reflects material/UV changes
+- minimal material browser and/or inspector controls
+- undo/redo for material and UV edits
+
+Treat “fit to face” as rewriting explicit UV values.
+```
+
+---
+
+## Slice Body 3 — Runner v1
+
+```text
+Relevant docs to inspect after the common preamble:
+- architecture.md: runtime-three, build pipeline, validation
+- roadmap.md: Slice 1.3
+- testing.md: runtime invariants, e2e-04
+
+Implement Slice 1.3.
+
+Requirements:
+- runtime build from SceneDocument
+- built-in play mode
+- first-person navigation
+- orbit visitor mode
+- minimal typed PlayerStart support compatible with later entity work
+- basic collision against axis-aligned box brush geometry
+- safe enter/exit run mode with editor state preserved
+
+Handle pointer-lock failure clearly.
+Do not add triggers or audio yet.
+```
+
+---
+
+## Slice Body 4 — End-to-end first-room polish
+
+```text
+Relevant docs to inspect after the common preamble:
+- roadmap.md: Slice 1.4
+- testing.md: done criteria, regression policy
+
+Implement Slice 1.4.
+
+Focus only on improvements that materially strengthen:
+create box brush -> texture faces -> save/load -> run scene
+
+Requirements:
+- visible validation/build errors
+- better snapping feedback and active-tool feedback
+- minimal toolbar or command surface
+- coherent save/load UX
+- regression coverage for the first-room workflow
+
+Do not turn this into a redesign pass.
+```
+
+---
+
+## Slice Body 4A — World lighting and environment basics
+
+```text
+Relevant docs to inspect after the common preamble:
+- architecture.md: world settings, document, runtime/editor separation
+- roadmap.md: Slice 1.5
+- testing.md: serialization and world-environment coverage
+
+Implement Slice 1.5.
+
+Requirements:
+- canonical world settings for:
+  - background mode
+  - background color or simple gradient
+  - ambient light color/intensity
+  - one global directional light / sun color, intensity, direction
+- optional fog only if it stays coherent and small
+- editor and runner support
+- minimal scene/world settings UI
+- save/load persistence
+
+Do not:
+- add local light entities yet
+- add image-based skyboxes yet
+```
+
+---
+
+## Slice Body 5 — Entity system foundation
+
+```text
+Relevant docs to inspect after the common preamble:
+- architecture.md: entities, selection/picking
+- roadmap.md: Slice 2.1
+- testing.md: domain, serialization, browser
+
+Implement Slice 2.1.
+
+Initial entity types:
+- PlayerStart
+- SoundEmitter
+- TriggerVolume
+- TeleportTarget
+- Interactable
+
+Requirements:
+- typed entity schemas
+- entity registry/defaults
+- placement workflow
+- viewport helpers/icons/gizmos
+- selection and inspector editing
+- save/load support
+- runtime build consumes them
+
+Keep model instances separate from entities.
+```
+
+---
+
+## Slice Body 6 — Trigger -> Action -> Target foundation
+
+```text
+Relevant docs to inspect after the common preamble:
+- architecture.md: runner interaction architecture
+- roadmap.md: Slice 2.2
+- testing.md: domain/runtime/e2e guidance
+
+Implement Slice 2.2.
+
+Requirements:
+- canonical typed trigger/action/target links
+- minimal inspector UI for linking
+- runtime evaluation
+
+Initial triggers:
+- TriggerVolume enter
+- TriggerVolume exit
+
+Initial actions:
+- teleport player
+- toggle visibility
+
+Do not add sound or animation actions yet.
+Do not build scripting or a node graph.
+```
+
+---
+
+## Slice Body 7 — Click interactions and runner prompts
+
+```text
+Relevant docs to inspect after the common preamble:
+- architecture.md: runner interaction architecture
+- roadmap.md: Slice 2.3
+- testing.md: browser/e2e/input notes
+
+Implement Slice 2.3.
+
+Requirements:
+- click targeting in run mode
+- minimal prompt / interaction UI
+- action-on-click behavior for Interactable
+- interaction distance and basic targeting rules
+- compatibility with the existing Trigger -> Action -> Target system
+
+Separate runtime input from editor picking.
+```
+
+---
+
+## Slice Body 8 — GLB/GLTF import
+
+```text
+Relevant docs to inspect after the common preamble:
+- architecture.md: assets, model instances, persistence
+- roadmap.md: Slice 3.1
+- testing.md: asset fixtures, serialization, e2e-05
+
+Implement Slice 3.1.
+
+Requirements:
+- asset registry
+- GLB/GLTF import workflow
+- persistent project storage so imported assets survive reload
+- metadata extraction
+- place/select/transform model instances
+- save/load support for asset refs and model instances
+- editor and runner rendering
+
+Never rely on Blob URLs as the only persisted asset reference.
+```
+
+---
+
+## Slice Body 8A — Local lights and skyboxes
+
+```text
+Relevant docs to inspect after the common preamble:
+- architecture.md: entities, assets, world settings
+- roadmap.md: Slice 3.2
+- testing.md: serialization, fixtures, browser/e2e guidance
+
+Implement Slice 3.2.
+
+Requirements:
+- typed local light entities:
+  - PointLight
+  - SpotLight
+- viewport helpers and inspector editing
+- runtime support for those local lights
+- persistent save/load support
+- skybox/environment-background asset support using project storage
+- explicit document state for choosing the active background asset
+- editor and runner rendering
+
+For v1, support only one authored background-asset format, preferably a single equirectangular image.
+
+Do not:
+- fold local lights into world settings
+- build a full HDR/image-based-lighting pipeline unless trivial
+```
+
+---
+
+## Slice Body 9 — Animation playback
+
+```text
+Relevant docs to inspect after the common preamble:
+- architecture.md: assets, runtime-three, interaction links
+- roadmap.md: Slice 3.3
+- testing.md: runtime and fixture guidance
+
+Implement Slice 3.3.
+
+Requirements:
+- surface imported animation metadata
+- configure animation on model instances or equivalent explicit targets
+- runtime playback integration
+- add play/stop animation actions through the existing interaction system
+- minimal inspector UI
+- save/load support
+```
+
+---
+
+## Slice Body 10 — Spatial audio
+
+```text
+Relevant docs to inspect after the common preamble:
+- architecture.md: audio architecture, assets
+- roadmap.md: Slice 3.4
+- testing.md: audio testing notes
+
+Implement Slice 3.4.
+
+Requirements:
+- audio asset references for SoundEmitter
+- persistent audio asset storage if needed
+- positional audio in the runner
+- loop / one-shot / volume / ref distance / max distance
+- audio unlock handling
+- play/stop sound actions through the existing interaction system
+- inspector controls
+- save/load support
+```
+
+---
+
+## Slice Body 11 — Wedge/ramp and cylinder prism
+
+```text
+Relevant docs to inspect after the common preamble:
+- architecture.md: geometry
+- roadmap.md: part of Slice 4.1
+- testing.md: geometry and serialization guidance
+
+Add two new canonical brush primitives:
+- wedge / ramp
+- cylinder prism
+
+Requirements:
+- canonical representation
+- creation workflow
+- viewport + runner support
+- save/load support
+- strong geometry tests
+
+Do not introduce arbitrary mesh editing.
+```
+
+---
+
+## Slice Body 12 — Stairs primitive
+
+```text
+Relevant docs to inspect after the common preamble:
+- architecture.md: geometry
+- roadmap.md: part of Slice 4.1
+- testing.md: geometry and serialization guidance
+
+Add a canonical stairs primitive with:
+- clear size and step-count constraints
+- creation workflow
+- viewport + runner support
+- save/load support
+- strong geometry tests
+```
+
+---
+
+## Slice Body 13 — Arch primitive
+
+```text
+Relevant docs to inspect after the common preamble:
+- architecture.md: geometry
+- roadmap.md: part of Slice 4.1
+- testing.md: geometry and serialization guidance
+
+Add a canonical arch primitive with:
+- clear thickness/segment constraints
+- creation workflow
+- viewport + runner support
+- save/load support
+- strong geometry tests
+```
+
+---
+
+## Slice Body 14 — Constrained brush clipping
+
+```text
+Relevant docs to inspect after the common preamble:
+- architecture.md: clipping scope, geometry
+- roadmap.md: Slice 4.2
+- testing.md: geometry, command, manual QA guidance
+
+Implement constrained v1 clipping.
+
+Requirements:
+- clip workflow
+- preview
+- split or keep-one-side
+- robust undo/redo
+- save/load + runner correctness
+
+Prefer a first version limited to axis-aligned box brushes with principal-axis clip planes if that keeps it reliable.
+Unsupported cases must fail clearly.
+```
+
+---
+
+## Slice Body 15 — Better viewport layouts
+
+```text
+Relevant docs to inspect after the common preamble:
+- architecture.md: viewport-three, cameras
+- roadmap.md: Slice 4.3
+- testing.md: browser/manual guidance
+
+Implement the viewport ergonomics slice:
+- top/front/side orthographic views
+- split layout if feasible
+- improved camera/control ergonomics
+- preserve selection and tools across views
+```
+
+---
+
+## Slice Body 16 — Better material library
+
+```text
+Relevant docs to inspect after the common preamble:
+- architecture.md: materials
+- roadmap.md: Slice 5.1
+- testing.md: browser/domain guidance
+
+Implement Slice 5.1.
+
+Requirements:
+- categories
+- tags
+- search
+- favorites
+- recent materials
+- small UI improvements for faster assignment
+```
+
+---
+
+## Slice Body 17 — Prefab foundation
+
+```text
+Relevant docs to inspect after the common preamble:
+- architecture.md: prefab/model instance separation
+- roadmap.md: Slice 5.2
+- testing.md: serialization/domain guidance
+
+Implement a constrained prefab foundation.
+
+Requirements:
+- prefab definitions
+- prefab placement
+- prefab instances persisted through save/load
+- prefab browser
+- explicit v1 update semantics
+
+Prefer simple semantics over live-linked complexity.
+```
+
+---
+
+## Slice Body 18 — GLB export improvements
+
+```text
+Relevant docs to inspect after the common preamble:
+- architecture.md: export build vs canonical save format
+- roadmap.md: part of Slice 5.3
+- testing.md: export fixtures guidance
+
+Improve GLB/GLTF export from authored scenes.
+
+Requirements:
+- build export data downstream from the document/runtime build
+- preserve scene/material/asset/animation structure sensibly
+- add minimal export diagnostics if needed
+
+Do not conflate export with canonical save/load.
+Do not build packaged runner output in this slice.
+```
+
+---
+
+## Slice Body 19 — Scene packaging and embeddable runner
+
+```text
+Relevant docs to inspect after the common preamble:
+- architecture.md: runner-web, packaging boundaries
+- roadmap.md: part of Slice 5.3
+- testing.md: packaging/export verification guidance
+
+Implement the packaging/deployment slice.
+
+Requirements:
+- packaged runner output path
+- standalone or embeddable runner route if appropriate
+- package required runtime data/assets
+- keep canonical JSON separate from packaged output
+```
+
+---
+
+## Audit Body — Audit the slice before merging
+
+```text
+Relevant docs to inspect after the common preamble:
+- whichever architecture/roadmap/testing sections match the active slice
+
+Audit the current branch/work for architecture compliance and slice completeness.
+
+Questions to answer by making targeted improvements where needed:
+1. Does the slice work end-to-end?
+2. Is the canonical document still separate from three.js runtime/editor objects?
+3. Are editor mutations routed through commands?
+4. Are save/load and undo/redo covered where they should be?
+5. If schema changed, were versioning, migrations, and compatibility tests updated?
+6. Are there obvious missing tests?
+7. Are there speculative abstractions or dead scaffolds to remove?
+8. Are failure modes surfaced clearly enough?
+9. Does the implementation still match the intended slice without scope creep?
+```
