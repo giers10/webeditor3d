@@ -65,7 +65,7 @@ First real room: brush layout + materials + play mode
 Entities and runtime interaction
 
 ### Milestone 3
-Imported models, animation, and audio
+Imported models, lighting, animation, and audio
 
 ### Milestone 4
 Better brush editing and authoring ergonomics
@@ -315,11 +315,11 @@ Sound and animation actions are intentionally deferred until their runtime syste
 
 ---
 
-## Milestone 3 — Assets, animation, audio
+## Milestone 3 — Assets, lighting, animation, and audio
 
 ### Vision
 
-The tool becomes more than brush-only by supporting imported GLB/GLTF assets and native spatial audio.
+The tool becomes more than brush-only by supporting imported assets, authored lighting, richer scene atmosphere, animation, and native spatial audio.
 
 ### Slice 3.1 — GLB/GLTF import
 
@@ -603,7 +603,7 @@ A slice is complete only when:
 - user can place interactive entities without code
 
 ### M3 quality gate
-- user can import a GLB and combine it with brush scenes, animation, and audio
+- user can import a GLB and combine it with brush scenes, local lights, environment background, animation, and audio
 
 ### M4 quality gate
 - editor starts feeling genuinely ergonomic
