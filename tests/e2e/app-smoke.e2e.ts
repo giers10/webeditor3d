@@ -1,0 +1,24 @@
+import { expect, test } from "@playwright/test";
+
+test("app boots and shows the viewport shell", async ({ page }) => {
+  const pageErrors: string[] = [];
+  const consoleErrors: string[] = [];
+
+  page.on("pageerror", (error) => {
+    pageErrors.push(error.message);
+  });
+
+  page.on("console", (message) => {
+    if (message.type() === "error") {
+      consoleErrors.push(message.text());
+    }
+  });
+
+  await page.goto("/");
+
+  await expect(page.getByText("WebEditor3D")).toBeVisible();
+  await expect(page.getByTestId("viewport-shell")).toBeVisible();
+
+  expect(pageErrors).toEqual([]);
+  expect(consoleErrors).toEqual([]);
+});
