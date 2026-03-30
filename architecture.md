@@ -341,6 +341,15 @@ interface SceneDocument {
 }
 ```
 
+`WorldSettings` is the correct home for:
+
+- background mode and background color/gradient
+- global ambient light settings
+- one authored global directional light / sun for early slices
+- fog settings where supported
+
+Do not model global world lighting as ad hoc hidden viewport state.
+
 ---
 
 ## `commands`
@@ -558,6 +567,8 @@ Early entity types:
 
 Later entity types may include:
 
+- `PointLight`
+- `SpotLight`
 - `Door`
 - `Waypoint`
 - `AmbientZone`
@@ -656,6 +667,7 @@ Imported assets should become one or more of:
 - placed model instances
 - reusable prefab inputs
 - material/texture records where useful
+- environment/sky assets where useful
 
 Do not treat imported assets as opaque blobs forever.
 Extract useful metadata and register them meaningfully.
