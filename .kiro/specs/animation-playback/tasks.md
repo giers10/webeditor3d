@@ -120,7 +120,7 @@ Implement animation playback for imported GLB/GLTF assets in vertical slice orde
     - Pass a v12 document with a `playAnimation` action where `clipName` is `""` to `migrateSceneDocument`; assert it throws
     - _Requirements: 8.5_
 
-- [~] 8. Inspector UI — animation section for model instances
+- [-] 8. Inspector UI — animation section for model instances
   - In `src/app/App.tsx`, in the model instance inspector section, add a conditional animation sub-section rendered when `selectedModelAssetRecord.metadata.animationNames.length > 0`
   - Render a `<select>` for clip name (options from `animationNames`, plus a "— none —" option) bound to `selectedModelInstance.animationClipName`
   - Render a checkbox for `animationAutoplay` bound to `selectedModelInstance.animationAutoplay`
