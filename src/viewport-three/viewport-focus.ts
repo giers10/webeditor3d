@@ -1,4 +1,9 @@
-import { getSingleSelectedBrushId, getSingleSelectedEntityId, type EditorSelection } from "../core/selection";
+import {
+  getSingleSelectedBrushId,
+  getSingleSelectedEntityId,
+  getSingleSelectedModelInstanceId,
+  type EditorSelection
+} from "../core/selection";
 import type { Vec3 } from "../core/vector";
 import type { BoxBrush } from "../document/brushes";
 import type { SceneDocument } from "../document/scene-document";
@@ -169,16 +174,28 @@ function createTeleportTargetFocusTarget(position: Vec3): ViewportFocusTarget {
 
 function getModelInstanceBoundingBox(modelInstance: ModelInstance, asset: ProjectAssetRecord | undefined): { center: Vec3; size: Vec3 } {
   if (asset?.kind === "model" && asset.metadata.boundingBox !== null) {
+    const boundingBox = asset.metadata.boundingBox;
+    const scaledMin = {
+      x: boundingBox.min.x * modelInstance.scale.x,
+      y: boundingBox.min.y * modelInstance.scale.y,
+      z: boundingBox.min.z * modelInstance.scale.z
+    };
+    const scaledMax = {
+      x: boundingBox.max.x * modelInstance.scale.x,
+      y: boundingBox.max.y * modelInstance.scale.y,
+      z: boundingBox.max.z * modelInstance.scale.z
+    };
+
     return {
       center: {
-        x: modelInstance.position.x + asset.metadata.boundingBox.size.x * 0.5 * modelInstance.scale.x,
-        y: modelInstance.position.y + asset.metadata.boundingBox.size.y * 0.5 * modelInstance.scale.y,
-        z: modelInstance.position.z + asset.metadata.boundingBox.size.z * 0.5 * modelInstance.scale.z
+        x: modelInstance.position.x + (scaledMin.x + scaledMax.x) * 0.5,
+        y: modelInstance.position.y + (scaledMin.y + scaledMax.y) * 0.5,
+        z: modelInstance.position.z + (scaledMin.z + scaledMax.z) * 0.5
       },
       size: {
-        x: asset.metadata.boundingBox.size.x * modelInstance.scale.x,
-        y: asset.metadata.boundingBox.size.y * modelInstance.scale.y,
-        z: asset.metadata.boundingBox.size.z * modelInstance.scale.z
+        x: Math.abs(scaledMax.x - scaledMin.x),
+        y: Math.abs(scaledMax.y - scaledMin.y),
+        z: Math.abs(scaledMax.z - scaledMin.z)
       }
     };
   }
@@ -220,11 +237,15 @@ function includeModelInstance(bounds: FocusBoundsAccumulator, modelInstance: Mod
 
 function createModelInstanceFocusTarget(modelInstance: ModelInstance, asset: ProjectAssetRecord | undefined): ViewportFocusTarget {
   const modelBounds = getModelInstanceBoundingBox(modelInstance, asset);
-  return createBoundsFocusTarget(modelBounds.center, {
-    x: modelBounds.size.x * 0.5,
-    y: modelBounds.size.y * 0.5,
-    z: modelBounds.size.z * 0.5
-  }, 0.5);
+  return createBoundsFocusTarget(
+    modelBounds.center,
+    {
+      x: modelBounds.size.x * 0.5,
+      y: modelBounds.size.y * 0.5,
+      z: modelBounds.size.z * 0.5
+    },
+    0.5
+  );
 }
 
 function includeSphereEntity(bounds: FocusBoundsAccumulator, position: Vec3, radius: number) {
@@ -336,6 +357,10 @@ function getSceneFocusTarget(document: SceneDocument): ViewportFocusTarget | nul
     includeBrush(bounds, brush);
   }
 
+  for (const modelInstance of Object.values(document.modelInstances)) {
+    includeModelInstance(bounds, modelInstance, document.assets[modelInstance.assetId]);
+  }
+
   for (const entity of Object.values(document.entities)) {
     includeEntity(bounds, entity);
   }
@@ -361,6 +386,16 @@ export function resolveViewportFocusTarget(document: SceneDocument, selection: E
 
     if (entity !== undefined) {
       return createEntityFocusTarget(entity);
+    }
+  }
+
+  const selectedModelInstanceId = getSingleSelectedModelInstanceId(selection);
+
+  if (selectedModelInstanceId !== null) {
+    const modelInstance = document.modelInstances[selectedModelInstanceId];
+
+    if (modelInstance !== undefined) {
+      return createModelInstanceFocusTarget(modelInstance, document.assets[modelInstance.assetId]);
     }
   }
 
