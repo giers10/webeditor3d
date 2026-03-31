@@ -733,6 +733,19 @@ export function App({ store, initialStatusMessage }: AppProps) {
   }, [selectedEntity]);
 
   useEffect(() => {
+    if (selectedModelInstance === null) {
+      setModelPositionDraft(createVec3Draft(DEFAULT_MODEL_INSTANCE_POSITION));
+      setModelRotationDraft(createVec3Draft(DEFAULT_MODEL_INSTANCE_ROTATION_DEGREES));
+      setModelScaleDraft(createVec3Draft(DEFAULT_MODEL_INSTANCE_SCALE));
+      return;
+    }
+
+    setModelPositionDraft(createVec3Draft(selectedModelInstance.position));
+    setModelRotationDraft(createVec3Draft(selectedModelInstance.rotationDegrees));
+    setModelScaleDraft(createVec3Draft(selectedModelInstance.scale));
+  }, [selectedModelInstance]);
+
+  useEffect(() => {
     setAmbientLightIntensityDraft(String(editorState.document.world.ambientLight.intensity));
   }, [editorState.document.world.ambientLight.intensity]);
 
