@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 
 import type { FirstPersonTelemetry } from "../runtime-three/navigation-controller";
 import { RuntimeHost } from "../runtime-three/runtime-host";
+import type { RuntimeInteractionPrompt } from "../runtime-three/runtime-interaction-system";
 import type { RuntimeNavigationMode, RuntimeSceneDefinition } from "../runtime-three/runtime-scene-build";
 import { createWorldBackgroundStyle } from "../shared-ui/world-background-style";
 
@@ -10,17 +11,20 @@ interface RunnerCanvasProps {
   navigationMode: RuntimeNavigationMode;
   onRuntimeMessageChange(message: string | null): void;
   onFirstPersonTelemetryChange(telemetry: FirstPersonTelemetry | null): void;
+  onInteractionPromptChange(prompt: RuntimeInteractionPrompt | null): void;
 }
 
 export function RunnerCanvas({
   runtimeScene,
   navigationMode,
   onRuntimeMessageChange,
-  onFirstPersonTelemetryChange
+  onFirstPersonTelemetryChange,
+  onInteractionPromptChange
 }: RunnerCanvasProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const hostRef = useRef<RuntimeHost | null>(null);
   const [runnerMessage, setRunnerMessage] = useState<string | null>(null);
+  const [interactionPrompt, setInteractionPrompt] = useState<RuntimeInteractionPrompt | null>(null);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -43,20 +47,26 @@ export function RunnerCanvas({
       runtimeHost.mount(container);
       runtimeHost.setRuntimeMessageHandler(onRuntimeMessageChange);
       runtimeHost.setFirstPersonTelemetryHandler(onFirstPersonTelemetryChange);
+      runtimeHost.setInteractionPromptHandler((prompt) => {
+        setInteractionPrompt(prompt);
+        onInteractionPromptChange(prompt);
+      });
       setRunnerMessage(
         hasWebGl ? null : "WebGL is unavailable in this browser environment. The runner shell is visible, but runtime rendering is disabled."
       );
 
       return () => {
+        onInteractionPromptChange(null);
         runtimeHost.dispose();
         hostRef.current = null;
       };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Runner initialization failed.";
       setRunnerMessage(`Runner initialization failed: ${message}`);
+      onInteractionPromptChange(null);
       return;
     }
-  }, [onFirstPersonTelemetryChange, onRuntimeMessageChange]);
+  }, [onFirstPersonTelemetryChange, onInteractionPromptChange, onRuntimeMessageChange]);
 
   useEffect(() => {
     hostRef.current?.loadScene(runtimeScene);
@@ -74,6 +84,18 @@ export function RunnerCanvas({
       aria-label="Built-in scene runner"
       style={createWorldBackgroundStyle(runtimeScene.world.background)}
     >
+      {navigationMode === "firstPerson" ? <div className="runner-canvas__crosshair" aria-hidden="true" /> : null}
+      {navigationMode === "firstPerson" && interactionPrompt !== null ? (
+        <div className="runner-canvas__prompt" data-testid="runner-interaction-prompt" role="status" aria-live="polite">
+          <div className="runner-canvas__prompt-badge">Click</div>
+          <div className="runner-canvas__prompt-text" data-testid="runner-interaction-prompt-text">
+            {interactionPrompt.prompt}
+          </div>
+          <div className="runner-canvas__prompt-meta" data-testid="runner-interaction-prompt-meta">
+            {interactionPrompt.distance.toFixed(1)}m away · {interactionPrompt.range.toFixed(1)}m range
+          </div>
+        </div>
+      ) : null}
       {runnerMessage === null ? null : (
         <div className="runner-canvas__fallback" role="status">
           <div className="runner-canvas__fallback-title">Runner Unavailable</div>
