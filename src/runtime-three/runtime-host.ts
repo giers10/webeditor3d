@@ -483,6 +483,10 @@ export class RuntimeHost {
 
     this.activeController?.update(dt);
 
+    for (const mixer of this.animationMixers.values()) {
+      mixer.update(dt);
+    }
+
     if (this.runtimeScene !== null && this.activeController === this.firstPersonController && this.currentFirstPersonTelemetry !== null) {
       this.interactionSystem.updatePlayerPosition(this.currentFirstPersonTelemetry.feetPosition, this.runtimeScene, this.createInteractionDispatcher());
       this.camera.getWorldDirection(this.cameraForward);
