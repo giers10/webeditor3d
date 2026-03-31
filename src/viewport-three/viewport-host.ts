@@ -14,6 +14,7 @@ import {
   LineSegments,
   Mesh,
   MeshStandardMaterial,
+  Plane,
   PerspectiveCamera,
   Raycaster,
   Scene,
@@ -23,10 +24,13 @@ import {
 } from "three";
 
 import { isBrushFaceSelected, isBrushSelected, type EditorSelection } from "../core/selection";
+import type { ToolMode } from "../core/tool-mode";
+import type { Vec3 } from "../core/vector";
 import type { SceneDocument, WorldSettings } from "../document/scene-document";
 import { getPlayerStartEntities } from "../entities/entity-instances";
-import { BOX_FACE_IDS, type BoxBrush, type BoxFaceId } from "../document/brushes";
+import { BOX_FACE_IDS, DEFAULT_BOX_BRUSH_SIZE, type BoxBrush, type BoxFaceId } from "../document/brushes";
 import { applyBoxBrushFaceUvsToGeometry } from "../geometry/box-face-uvs";
+import { DEFAULT_GRID_SIZE, snapValueToGrid } from "../geometry/grid-snapping";
 import { createStarterMaterialSignature, createStarterMaterialTexture } from "../materials/starter-material-textures";
 import type { MaterialDef } from "../materials/starter-material-library";
 
@@ -42,6 +46,8 @@ const SELECTED_FACE_FALLBACK_COLOR = 0xcf7b42;
 const SELECTED_FACE_EMISSIVE = 0x4a2814;
 const PLAYER_START_COLOR = 0x7cb7ff;
 const PLAYER_START_SELECTED_COLOR = 0xf3be8f;
+const BOX_CREATE_PREVIEW_FILL = 0x89b6ff;
+const BOX_CREATE_PREVIEW_EDGE = 0xf3be8f;
 
 interface CachedMaterialTexture {
   signature: string;
@@ -63,13 +69,37 @@ export class ViewportHost {
   private readonly entityGroup = new Group();
   private readonly raycaster = new Raycaster();
   private readonly pointer = new Vector2();
+  private readonly boxCreateIntersection = new Vector3();
+  private readonly boxCreatePlane = new Plane(new Vector3(0, 1, 0), 0);
   private readonly brushRenderObjects = new Map<string, BrushRenderObjects>();
   private readonly playerStartRenderObjects = new Map<string, PlayerStartRenderObjects>();
   private readonly materialTextureCache = new Map<string, CachedMaterialTexture>();
+  private readonly boxCreatePreviewMesh = new Mesh(
+    new BoxGeometry(DEFAULT_BOX_BRUSH_SIZE.x, DEFAULT_BOX_BRUSH_SIZE.y, DEFAULT_BOX_BRUSH_SIZE.z),
+    new MeshStandardMaterial({
+      color: BOX_CREATE_PREVIEW_FILL,
+      emissive: BOX_CREATE_PREVIEW_FILL,
+      emissiveIntensity: 0.12,
+      roughness: 0.68,
+      metalness: 0.02,
+      transparent: true,
+      opacity: 0.22
+    })
+  );
+  private readonly boxCreatePreviewEdges = new LineSegments(
+    new EdgesGeometry(this.boxCreatePreviewMesh.geometry),
+    new LineBasicMaterial({
+      color: BOX_CREATE_PREVIEW_EDGE
+    })
+  );
   private resizeObserver: ResizeObserver | null = null;
   private animationFrame = 0;
   private container: HTMLElement | null = null;
   private brushSelectionChangeHandler: ((selection: EditorSelection) => void) | null = null;
+  private createBoxBrushHandler: ((center: Vec3) => void) | null = null;
+  private boxCreatePreviewHandler: ((center: Vec3 | null) => void) | null = null;
+  private toolMode: ToolMode = "select";
+  private lastBoxCreatePreviewCenter: Vec3 | null = null;
 
   constructor() {
     this.camera.position.set(10, 9, 10);
@@ -84,6 +114,10 @@ export class ViewportHost {
     this.scene.add(this.sunLight);
     this.scene.add(this.brushGroup);
     this.scene.add(this.entityGroup);
+    this.boxCreatePreviewMesh.visible = false;
+    this.boxCreatePreviewEdges.visible = false;
+    this.scene.add(this.boxCreatePreviewMesh);
+    this.scene.add(this.boxCreatePreviewEdges);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   }
 
@@ -91,6 +125,8 @@ export class ViewportHost {
     this.container = container;
     container.appendChild(this.renderer.domElement);
     this.renderer.domElement.addEventListener("pointerdown", this.handlePointerDown);
+    this.renderer.domElement.addEventListener("pointermove", this.handlePointerMove);
+    this.renderer.domElement.addEventListener("pointerleave", this.handlePointerLeave);
     this.resize();
 
     this.resizeObserver = new ResizeObserver(() => {
@@ -119,6 +155,23 @@ export class ViewportHost {
     this.brushSelectionChangeHandler = handler;
   }
 
+  setCreateBoxBrushHandler(handler: ((center: Vec3) => void) | null) {
+    this.createBoxBrushHandler = handler;
+  }
+
+  setBoxCreatePreviewHandler(handler: ((center: Vec3 | null) => void) | null) {
+    this.boxCreatePreviewHandler = handler;
+    handler?.(this.lastBoxCreatePreviewCenter);
+  }
+
+  setToolMode(toolMode: ToolMode) {
+    this.toolMode = toolMode;
+
+    if (toolMode !== "box-create") {
+      this.setBoxCreatePreview(null);
+    }
+  }
+
   dispose() {
     if (this.animationFrame !== 0) {
       cancelAnimationFrame(this.animationFrame);
@@ -128,14 +181,21 @@ export class ViewportHost {
     this.resizeObserver?.disconnect();
     this.resizeObserver = null;
     this.renderer.domElement.removeEventListener("pointerdown", this.handlePointerDown);
+    this.renderer.domElement.removeEventListener("pointermove", this.handlePointerMove);
+    this.renderer.domElement.removeEventListener("pointerleave", this.handlePointerLeave);
     this.clearBrushMeshes();
     this.clearPlayerStartMarkers();
+    this.setBoxCreatePreview(null);
 
     for (const cachedTexture of this.materialTextureCache.values()) {
       cachedTexture.texture.dispose();
     }
 
     this.materialTextureCache.clear();
+    this.boxCreatePreviewMesh.geometry.dispose();
+    this.boxCreatePreviewMesh.material.dispose();
+    this.boxCreatePreviewEdges.geometry.dispose();
+    this.boxCreatePreviewEdges.material.dispose();
     this.renderer.dispose();
 
     if (this.container !== null && this.container.contains(this.renderer.domElement)) {

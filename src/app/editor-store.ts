@@ -20,6 +20,7 @@ export interface EditorStoreState {
   canUndo: boolean;
   canRedo: boolean;
   lastCommandLabel: string | null;
+  storageAvailable: boolean;
 }
 
 interface EditorStoreOptions {
@@ -212,7 +213,8 @@ export class EditorStore {
       toolMode: this.toolMode,
       canUndo: this.history.canUndo(),
       canRedo: this.history.canRedo(),
-      lastCommandLabel: this.lastCommandLabel
+      lastCommandLabel: this.lastCommandLabel,
+      storageAvailable: this.storage !== null
     };
   }
 }
