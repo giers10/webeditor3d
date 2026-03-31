@@ -48,6 +48,14 @@ export function getSelectedBrushFaceId(selection: EditorSelection): BoxFaceId | 
   return selection.faceId;
 }
 
+export function getSingleSelectedEntityId(selection: EditorSelection): string | null {
+  if (selection.kind !== "entities" || selection.ids.length !== 1) {
+    return null;
+  }
+
+  return selection.ids[0];
+}
+
 export function isBrushSelected(selection: EditorSelection, brushId: string): boolean {
   return (
     (selection.kind === "brushes" && selection.ids.includes(brushId)) ||

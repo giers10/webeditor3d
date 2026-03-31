@@ -1,4 +1,5 @@
 import { createStarterMaterialRegistry, type MaterialDef, type MaterialPattern } from "../materials/starter-material-library";
+import { createPlayerStartEntity, type EntityInstance } from "../entities/entity-instances";
 import {
   createBoxBrush,
   createDefaultFaceUvState,
@@ -10,6 +11,7 @@ import {
 } from "./brushes";
 import {
   BOX_BRUSH_SCENE_DOCUMENT_VERSION,
+  FACE_MATERIALS_SCENE_DOCUMENT_VERSION,
   FOUNDATION_SCENE_DOCUMENT_VERSION,
   SCENE_DOCUMENT_VERSION,
   type SceneDocument,
@@ -321,6 +323,53 @@ function readWorldSettings(value: unknown): WorldSettings {
   };
 }
 
+function readPlayerStartEntity(value: unknown, label: string): EntityInstance {
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  const kind = expectLiteralString(value.kind, "playerStart", `${label}.kind`);
+  const entity = createPlayerStartEntity({
+    id: expectString(value.id, `${label}.id`),
+    position: readVec3(value.position, `${label}.position`),
+    yawDegrees: expectFiniteNumber(value.yawDegrees, `${label}.yawDegrees`)
+  });
+
+  if (entity.kind !== kind) {
+    throw new Error(`${label}.kind must be playerStart.`);
+  }
+
+  return entity;
+}
+
+function readEntities(value: unknown): SceneDocument["entities"] {
+  if (!isRecord(value)) {
+    throw new Error("entities must be a record.");
+  }
+
+  const entities: SceneDocument["entities"] = {};
+
+  for (const [entityId, entityValue] of Object.entries(value)) {
+    if (!isRecord(entityValue)) {
+      throw new Error(`entities.${entityId} must be an object.`);
+    }
+
+    if (entityValue.kind !== "playerStart") {
+      throw new Error(`entities.${entityId}.kind must be a supported entity type.`);
+    }
+
+    const entity = readPlayerStartEntity(entityValue, `entities.${entityId}`);
+
+    if (entity.id !== entityId) {
+      throw new Error(`entities.${entityId}.id must match the registry key.`);
+    }
+
+    entities[entityId] = entity;
+  }
+
+  return entities;
+}
+
 export function migrateSceneDocument(source: unknown): SceneDocument {
   if (!isRecord(source)) {
     throw new Error("Scene document must be a JSON object.");
@@ -362,6 +411,23 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     };
   }
 
+  if (source.version === FACE_MATERIALS_SCENE_DOCUMENT_VERSION) {
+    const materials = readMaterialRegistry(source.materials, "materials");
+
+    return {
+      version: SCENE_DOCUMENT_VERSION,
+      name: expectString(source.name, "name"),
+      world: readWorldSettings(source.world),
+      materials,
+      textures: expectEmptyCollection(source.textures, "textures"),
+      assets: expectEmptyCollection(source.assets, "assets"),
+      brushes: readBrushes(source.brushes, materials, false),
+      modelInstances: expectEmptyCollection(source.modelInstances, "modelInstances"),
+      entities: expectEmptyCollection(source.entities, "entities"),
+      interactionLinks: expectEmptyCollection(source.interactionLinks, "interactionLinks")
+    };
+  }
+
   if (source.version !== SCENE_DOCUMENT_VERSION) {
     throw new Error(`Unsupported scene document version: ${String(source.version)}.`);
   }
@@ -377,7 +443,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     assets: expectEmptyCollection(source.assets, "assets"),
     brushes: readBrushes(source.brushes, materials, false),
     modelInstances: expectEmptyCollection(source.modelInstances, "modelInstances"),
-    entities: expectEmptyCollection(source.entities, "entities"),
+    entities: readEntities(source.entities),
     interactionLinks: expectEmptyCollection(source.interactionLinks, "interactionLinks")
   };
 }
