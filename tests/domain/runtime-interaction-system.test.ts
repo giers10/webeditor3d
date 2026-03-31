@@ -292,7 +292,9 @@ describe("RuntimeInteractionSystem", () => {
       },
       toggleBrushVisibility: () => {
         throw new Error("Visibility should not dispatch for this click fixture.");
-      }
+      },
+      playAnimation: () => {},
+      stopAnimation: () => {}
     });
 
     expect(dispatches).toEqual(["link-click-teleport:entity-teleport-main:8"]);

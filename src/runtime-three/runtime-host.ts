@@ -502,6 +502,12 @@ export class RuntimeHost {
       },
       toggleBrushVisibility: (brushId, visible) => {
         this.applyToggleBrushVisibilityAction(brushId, visible);
+      },
+      playAnimation: (instanceId, clipName) => {
+        this.applyPlayAnimationAction(instanceId, clipName);
+      },
+      stopAnimation: (instanceId) => {
+        this.applyStopAnimationAction(instanceId);
       }
     };
   }
