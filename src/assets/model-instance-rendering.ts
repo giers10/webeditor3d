@@ -1,4 +1,4 @@
-import { BoxGeometry, Group, Mesh, MeshBasicMaterial } from "three";
+import { BoxGeometry, Group, Mesh, MeshBasicMaterial, type Material, type Texture } from "three";
 
 import type { Vec3 } from "../core/vector";
 
@@ -59,6 +59,59 @@ function createWireframeBox(size: Vec3, color: number, opacity: number): Mesh {
   );
 }
 
+function disposeTexture(texture: Texture, seenTextures: Set<Texture>) {
+  if (seenTextures.has(texture)) {
+    return;
+  }
+
+  seenTextures.add(texture);
+  texture.dispose();
+}
+
+function disposeMaterialResources(material: Material, disposeTextures: boolean, seenTextures: Set<Texture>) {
+  if (disposeTextures) {
+    for (const value of Object.values(material as unknown as Record<string, unknown>)) {
+      if (value === null || value === undefined) {
+        continue;
+      }
+
+      if (Array.isArray(value)) {
+        for (const entry of value) {
+          if (entry !== null && typeof entry === "object" && "isTexture" in entry) {
+            disposeTexture(entry as Texture, seenTextures);
+          }
+        }
+
+        continue;
+      }
+
+      if (typeof value === "object" && "isTexture" in value) {
+        disposeTexture(value as Texture, seenTextures);
+      }
+    }
+  }
+
+  material.dispose();
+}
+
+function disposeMeshResources(object: Group | Mesh, disposeTextures: boolean, seenTextures: Set<Texture>) {
+  const maybeMesh = object as Mesh & { isMesh?: boolean };
+
+  if (maybeMesh.isMesh !== true) {
+    return;
+  }
+
+  maybeMesh.geometry.dispose();
+
+  if (Array.isArray(maybeMesh.material)) {
+    for (const material of maybeMesh.material) {
+      disposeMaterialResources(material, disposeTextures, seenTextures);
+    }
+  } else {
+    disposeMaterialResources(maybeMesh.material, disposeTextures, seenTextures);
+  }
+}
+
 export function createModelInstanceRenderGroup(
   modelInstance: ModelInstance,
   asset: ProjectAssetRecord | undefined,
@@ -93,4 +146,12 @@ export function createModelInstanceRenderGroup(
   }
 
   return group;
+}
+
+export function disposeModelInstance(instance: Group) {
+  const seenTextures = new Set<Texture>();
+
+  instance.traverse((object) => {
+    disposeMeshResources(object as Group | Mesh, false, seenTextures);
+  });
 }
