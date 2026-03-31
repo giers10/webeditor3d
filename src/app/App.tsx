@@ -634,6 +634,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const selectedTeleportTarget = selectedEntity?.kind === "teleportTarget" ? selectedEntity : null;
   const selectedInteractable = selectedEntity?.kind === "interactable" ? selectedEntity : null;
   const projectAssetList = Object.values(editorState.document.assets);
+  const modelAssetList = projectAssetList.filter(isModelAsset);
   const imageAssetList = projectAssetList.filter(isImageAsset);
   const selectedPointLight = selectedEntity?.kind === "pointLight" ? selectedEntity : null;
   const selectedSpotLight = selectedEntity?.kind === "spotLight" ? selectedEntity : null;
@@ -658,6 +659,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [uvOffsetDraft, setUvOffsetDraft] = useState(createVec2Draft(createDefaultFaceUvState().offset));
   const [uvScaleDraft, setUvScaleDraft] = useState(createVec2Draft(createDefaultFaceUvState().scale));
   const [entityPositionDraft, setEntityPositionDraft] = useState(createVec3Draft(DEFAULT_ENTITY_POSITION));
+  const [pointLightColorDraft, setPointLightColorDraft] = useState(DEFAULT_POINT_LIGHT_COLOR_HEX);
+  const [pointLightIntensityDraft, setPointLightIntensityDraft] = useState(String(DEFAULT_POINT_LIGHT_INTENSITY));
+  const [pointLightDistanceDraft, setPointLightDistanceDraft] = useState(String(DEFAULT_POINT_LIGHT_DISTANCE));
+  const [spotLightColorDraft, setSpotLightColorDraft] = useState(DEFAULT_SPOT_LIGHT_COLOR_HEX);
+  const [spotLightIntensityDraft, setSpotLightIntensityDraft] = useState(String(DEFAULT_SPOT_LIGHT_INTENSITY));
+  const [spotLightDistanceDraft, setSpotLightDistanceDraft] = useState(String(DEFAULT_SPOT_LIGHT_DISTANCE));
+  const [spotLightAngleDraft, setSpotLightAngleDraft] = useState(String(DEFAULT_SPOT_LIGHT_ANGLE_DEGREES));
+  const [spotLightDirectionDraft, setSpotLightDirectionDraft] = useState(createVec3Draft(DEFAULT_SPOT_LIGHT_DIRECTION));
   const [playerStartYawDraft, setPlayerStartYawDraft] = useState("0");
   const [soundEmitterRadiusDraft, setSoundEmitterRadiusDraft] = useState(String(DEFAULT_SOUND_EMITTER_RADIUS));
   const [soundEmitterGainDraft, setSoundEmitterGainDraft] = useState(String(DEFAULT_SOUND_EMITTER_GAIN));
@@ -752,6 +761,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
   useEffect(() => {
     if (selectedEntity === null) {
       setEntityPositionDraft(createVec3Draft(DEFAULT_ENTITY_POSITION));
+      setPointLightColorDraft(DEFAULT_POINT_LIGHT_COLOR_HEX);
+      setPointLightIntensityDraft(String(DEFAULT_POINT_LIGHT_INTENSITY));
+      setPointLightDistanceDraft(String(DEFAULT_POINT_LIGHT_DISTANCE));
+      setSpotLightColorDraft(DEFAULT_SPOT_LIGHT_COLOR_HEX);
+      setSpotLightIntensityDraft(String(DEFAULT_SPOT_LIGHT_INTENSITY));
+      setSpotLightDistanceDraft(String(DEFAULT_SPOT_LIGHT_DISTANCE));
+      setSpotLightAngleDraft(String(DEFAULT_SPOT_LIGHT_ANGLE_DEGREES));
+      setSpotLightDirectionDraft(createVec3Draft(DEFAULT_SPOT_LIGHT_DIRECTION));
       setPlayerStartYawDraft("0");
       setSoundEmitterRadiusDraft(String(DEFAULT_SOUND_EMITTER_RADIUS));
       setSoundEmitterGainDraft(String(DEFAULT_SOUND_EMITTER_GAIN));
@@ -770,6 +787,18 @@ export function App({ store, initialStatusMessage }: AppProps) {
     setEntityPositionDraft(createVec3Draft(selectedEntity.position));
 
     switch (selectedEntity.kind) {
+      case "pointLight":
+        setPointLightColorDraft(selectedEntity.colorHex);
+        setPointLightIntensityDraft(String(selectedEntity.intensity));
+        setPointLightDistanceDraft(String(selectedEntity.distance));
+        break;
+      case "spotLight":
+        setSpotLightColorDraft(selectedEntity.colorHex);
+        setSpotLightIntensityDraft(String(selectedEntity.intensity));
+        setSpotLightDistanceDraft(String(selectedEntity.distance));
+        setSpotLightAngleDraft(String(selectedEntity.angleDegrees));
+        setSpotLightDirectionDraft(createVec3Draft(selectedEntity.direction));
+        break;
       case "playerStart":
         setPlayerStartYawDraft(String(selectedEntity.yawDegrees));
         break;
@@ -821,6 +850,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
   }, [editorState.document.world.sunLight.direction]);
 
   useEffect(() => {
+    loadedImageAssetsRef.current = loadedImageAssets;
+  }, [loadedImageAssets]);
+
+  useEffect(() => {
     loadedModelAssetsRef.current = loadedModelAssets;
   }, [loadedModelAssets]);
 
@@ -858,71 +891,113 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
 
     let cancelled = false;
-    const previousLoadedAssets = loadedModelAssetsRef.current;
     const currentAssets = editorState.document.assets;
-    const previousLoadedAssetIds = new Set(Object.keys(previousLoadedAssets));
-    const nextLoadedAssets: Record<string, LoadedModelAsset> = {};
+    const previousLoadedModelAssets = loadedModelAssetsRef.current;
+    const previousLoadedImageAssets = loadedImageAssetsRef.current;
+    const previousLoadedModelAssetIds = new Set(Object.keys(previousLoadedModelAssets));
+    const previousLoadedImageAssetIds = new Set(Object.keys(previousLoadedImageAssets));
+    const nextLoadedModelAssets: Record<string, LoadedModelAsset> = {};
+    const nextLoadedImageAssets: Record<string, LoadedImageAsset> = {};
     const syncErrorMessages: string[] = [];
 
-    const syncModelAssets = async () => {
+    const syncAssets = async () => {
       if (projectAssetStorage === null) {
-        for (const loadedAsset of Object.values(previousLoadedAssets)) {
+        for (const loadedAsset of Object.values(previousLoadedModelAssets)) {
           disposeModelTemplate(loadedAsset.template);
+        }
+
+        for (const loadedAsset of Object.values(previousLoadedImageAssets)) {
+          disposeLoadedImageAsset(loadedAsset);
         }
 
         if (!cancelled) {
           loadedModelAssetsRef.current = {};
+          loadedImageAssetsRef.current = {};
           setLoadedModelAssets({});
+          setLoadedImageAssets({});
         }
 
         return;
       }
 
       for (const asset of Object.values(currentAssets)) {
-        if (!isModelAsset(asset)) {
+        if (isModelAsset(asset)) {
+          previousLoadedModelAssetIds.delete(asset.id);
+
+          const cachedLoadedAsset = previousLoadedModelAssets[asset.id];
+
+          if (cachedLoadedAsset !== undefined && cachedLoadedAsset.storageKey === asset.storageKey) {
+            nextLoadedModelAssets[asset.id] = cachedLoadedAsset;
+            continue;
+          }
+
+          try {
+            nextLoadedModelAssets[asset.id] = await loadModelAssetFromStorage(projectAssetStorage, asset);
+          } catch (error) {
+            syncErrorMessages.push(`Model asset ${asset.sourceName} could not be restored: ${getErrorMessage(error)}`);
+          }
+
           continue;
         }
 
-        previousLoadedAssetIds.delete(asset.id);
+        if (isImageAsset(asset)) {
+          previousLoadedImageAssetIds.delete(asset.id);
 
-        const cachedLoadedAsset = previousLoadedAssets[asset.id];
+          const cachedLoadedAsset = previousLoadedImageAssets[asset.id];
 
-        if (cachedLoadedAsset !== undefined && cachedLoadedAsset.storageKey === asset.storageKey) {
-          nextLoadedAssets[asset.id] = cachedLoadedAsset;
-          continue;
-        }
+          if (cachedLoadedAsset !== undefined && cachedLoadedAsset.storageKey === asset.storageKey) {
+            nextLoadedImageAssets[asset.id] = cachedLoadedAsset;
+            continue;
+          }
 
-        try {
-          nextLoadedAssets[asset.id] = await loadModelAssetFromStorage(projectAssetStorage, asset);
-        } catch (error) {
-          syncErrorMessages.push(`Model asset ${asset.sourceName} could not be restored: ${getErrorMessage(error)}`);
+          try {
+            nextLoadedImageAssets[asset.id] = await loadImageAssetFromStorage(projectAssetStorage, asset);
+          } catch (error) {
+            syncErrorMessages.push(`Image asset ${asset.sourceName} could not be restored: ${getErrorMessage(error)}`);
+          }
         }
       }
 
       if (cancelled) {
-        for (const loadedAsset of Object.values(nextLoadedAssets)) {
-          if (previousLoadedAssets[loadedAsset.assetId] !== loadedAsset) {
+        for (const loadedAsset of Object.values(nextLoadedModelAssets)) {
+          if (previousLoadedModelAssets[loadedAsset.assetId] !== loadedAsset) {
             disposeModelTemplate(loadedAsset.template);
+          }
+        }
+
+        for (const loadedAsset of Object.values(nextLoadedImageAssets)) {
+          if (previousLoadedImageAssets[loadedAsset.assetId] !== loadedAsset) {
+            disposeLoadedImageAsset(loadedAsset);
           }
         }
 
         return;
       }
 
-      for (const assetId of previousLoadedAssetIds) {
-        const removedAsset = previousLoadedAssets[assetId];
+      for (const assetId of previousLoadedModelAssetIds) {
+        const removedAsset = previousLoadedModelAssets[assetId];
 
         if (removedAsset !== undefined) {
           disposeModelTemplate(removedAsset.template);
         }
       }
 
-      loadedModelAssetsRef.current = nextLoadedAssets;
-      setLoadedModelAssets(nextLoadedAssets);
+      for (const assetId of previousLoadedImageAssetIds) {
+        const removedAsset = previousLoadedImageAssets[assetId];
+
+        if (removedAsset !== undefined) {
+          disposeLoadedImageAsset(removedAsset);
+        }
+      }
+
+      loadedModelAssetsRef.current = nextLoadedModelAssets;
+      loadedImageAssetsRef.current = nextLoadedImageAssets;
+      setLoadedModelAssets(nextLoadedModelAssets);
+      setLoadedImageAssets(nextLoadedImageAssets);
       setAssetStatusMessage(syncErrorMessages.length === 0 ? null : syncErrorMessages.join(" | "));
     };
 
-    void syncModelAssets();
+    void syncAssets();
 
     return () => {
       cancelled = true;
