@@ -343,7 +343,7 @@ export function areEntityInstancesEqual(left: EntityInstance, right: EntityInsta
     case "soundEmitter": {
       const typedRight = right as SoundEmitterEntity;
       return (
-        left.radius === right.radius &&
+        left.radius === typedRight.radius &&
         left.gain === typedRight.gain &&
         left.autoplay === typedRight.autoplay &&
         left.loop === typedRight.loop
