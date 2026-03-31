@@ -6,6 +6,7 @@ import type { Vec3 } from "../core/vector";
 import { DEFAULT_BOX_BRUSH_CENTER, DEFAULT_BOX_BRUSH_SIZE } from "../document/brushes";
 import type { SceneDocument, WorldSettings } from "../document/scene-document";
 import { DEFAULT_GRID_SIZE } from "../geometry/grid-snapping";
+import { createWorldBackgroundStyle } from "../shared-ui/world-background-style";
 
 import { ViewportHost } from "./viewport-host";
 
@@ -120,6 +121,7 @@ export function ViewportCanvas({
       className={`viewport-canvas viewport-canvas--${toolMode}`}
       data-testid="viewport-shell"
       aria-label="Editor viewport"
+      style={createWorldBackgroundStyle(world.background)}
     >
       <div className="viewport-canvas__overlay" data-testid="viewport-overlay">
         <div className="viewport-canvas__overlay-badge">{toolMode === "box-create" ? "Box Create" : "Select"}</div>

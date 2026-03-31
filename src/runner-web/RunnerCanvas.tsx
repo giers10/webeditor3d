@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import type { FirstPersonTelemetry } from "../runtime-three/navigation-controller";
 import { RuntimeHost } from "../runtime-three/runtime-host";
 import type { RuntimeNavigationMode, RuntimeSceneDefinition } from "../runtime-three/runtime-scene-build";
+import { createWorldBackgroundStyle } from "../shared-ui/world-background-style";
 
 interface RunnerCanvasProps {
   runtimeScene: RuntimeSceneDefinition;
@@ -67,7 +68,13 @@ export function RunnerCanvas({
   }, [navigationMode]);
 
   return (
-    <div ref={containerRef} className="runner-canvas" data-testid="runner-shell" aria-label="Built-in scene runner">
+    <div
+      ref={containerRef}
+      className="runner-canvas"
+      data-testid="runner-shell"
+      aria-label="Built-in scene runner"
+      style={createWorldBackgroundStyle(runtimeScene.world.background)}
+    >
       {runnerMessage === null ? null : (
         <div className="runner-canvas__fallback" role="status">
           <div className="runner-canvas__fallback-title">Runner Unavailable</div>
