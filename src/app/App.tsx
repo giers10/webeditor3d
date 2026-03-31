@@ -1344,6 +1344,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         }}
                         onBlur={applyPlayerStartChange}
                         onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPlayerStartChange)}
+                        onKeyUp={(event) => handleNumberInputKeyUp(event, applyPlayerStartChange)}
+                        onPointerUp={(event) => handleNumberInputPointerUp(event, applyPlayerStartChange)}
                       />
                     </label>
                     <label className="form-field">
@@ -1360,6 +1362,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         }}
                         onBlur={applyPlayerStartChange}
                         onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPlayerStartChange)}
+                        onKeyUp={(event) => handleNumberInputKeyUp(event, applyPlayerStartChange)}
+                        onPointerUp={(event) => handleNumberInputPointerUp(event, applyPlayerStartChange)}
                       />
                     </label>
                     <label className="form-field">
@@ -1376,6 +1380,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         }}
                         onBlur={applyPlayerStartChange}
                         onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPlayerStartChange)}
+                        onKeyUp={(event) => handleNumberInputKeyUp(event, applyPlayerStartChange)}
+                        onPointerUp={(event) => handleNumberInputPointerUp(event, applyPlayerStartChange)}
                       />
                     </label>
                   </div>
@@ -1394,6 +1400,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       onChange={(event) => setPlayerStartYawDraft(event.currentTarget.value)}
                       onBlur={applyPlayerStartChange}
                       onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPlayerStartChange)}
+                      onKeyUp={(event) => handleNumberInputKeyUp(event, applyPlayerStartChange)}
+                      onPointerUp={(event) => handleNumberInputPointerUp(event, applyPlayerStartChange)}
                     />
                   </label>
                 </div>
@@ -1424,6 +1432,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         }}
                         onBlur={applyPositionChange}
                         onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPositionChange)}
+                        onKeyUp={(event) => handleNumberInputKeyUp(event, applyPositionChange)}
+                        onPointerUp={(event) => handleNumberInputPointerUp(event, applyPositionChange)}
                       />
                     </label>
                     <label className="form-field">
@@ -1440,6 +1450,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         }}
                         onBlur={applyPositionChange}
                         onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPositionChange)}
+                        onKeyUp={(event) => handleNumberInputKeyUp(event, applyPositionChange)}
+                        onPointerUp={(event) => handleNumberInputPointerUp(event, applyPositionChange)}
                       />
                     </label>
                     <label className="form-field">
@@ -1456,6 +1468,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         }}
                         onBlur={applyPositionChange}
                         onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPositionChange)}
+                        onKeyUp={(event) => handleNumberInputKeyUp(event, applyPositionChange)}
+                        onPointerUp={(event) => handleNumberInputPointerUp(event, applyPositionChange)}
                       />
                     </label>
                   </div>
@@ -1479,6 +1493,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         }}
                         onBlur={applySizeChange}
                         onKeyDown={(event) => handleDraftVectorKeyDown(event, applySizeChange)}
+                        onKeyUp={(event) => handleNumberInputKeyUp(event, applySizeChange)}
+                        onPointerUp={(event) => handleNumberInputPointerUp(event, applySizeChange)}
                       />
                     </label>
                     <label className="form-field">
@@ -1496,6 +1512,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         }}
                         onBlur={applySizeChange}
                         onKeyDown={(event) => handleDraftVectorKeyDown(event, applySizeChange)}
+                        onKeyUp={(event) => handleNumberInputKeyUp(event, applySizeChange)}
+                        onPointerUp={(event) => handleNumberInputPointerUp(event, applySizeChange)}
                       />
                     </label>
                     <label className="form-field">
@@ -1513,6 +1531,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         }}
                         onBlur={applySizeChange}
                         onKeyDown={(event) => handleDraftVectorKeyDown(event, applySizeChange)}
+                        onKeyUp={(event) => handleNumberInputKeyUp(event, applySizeChange)}
+                        onPointerUp={(event) => handleNumberInputPointerUp(event, applySizeChange)}
                       />
                     </label>
                   </div>
