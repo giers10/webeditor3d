@@ -3,6 +3,8 @@ import type { Vec3 } from "../core/vector";
 import type { BoxBrush } from "../document/brushes";
 import type { SceneDocument } from "../document/scene-document";
 import type { EntityInstance } from "../entities/entity-instances";
+import type { ModelInstance } from "../assets/model-instances";
+import type { ProjectAssetRecord } from "../assets/project-assets";
 
 const PLAYER_START_FOCUS_HALF_EXTENTS: Vec3 = {
   x: 0.35,
@@ -163,6 +165,66 @@ function createTeleportTargetFocusTarget(position: Vec3): ViewportFocusTarget {
     TELEPORT_TARGET_FOCUS_HALF_EXTENTS,
     0.45
   );
+}
+
+function getModelInstanceBoundingBox(modelInstance: ModelInstance, asset: ProjectAssetRecord | undefined): { center: Vec3; size: Vec3 } {
+  if (asset?.kind === "model" && asset.metadata.boundingBox !== null) {
+    return {
+      center: {
+        x: modelInstance.position.x + asset.metadata.boundingBox.size.x * 0.5 * modelInstance.scale.x,
+        y: modelInstance.position.y + asset.metadata.boundingBox.size.y * 0.5 * modelInstance.scale.y,
+        z: modelInstance.position.z + asset.metadata.boundingBox.size.z * 0.5 * modelInstance.scale.z
+      },
+      size: {
+        x: asset.metadata.boundingBox.size.x * modelInstance.scale.x,
+        y: asset.metadata.boundingBox.size.y * modelInstance.scale.y,
+        z: asset.metadata.boundingBox.size.z * modelInstance.scale.z
+      }
+    };
+  }
+
+  return {
+    center: {
+      ...modelInstance.position
+    },
+    size: {
+      x: modelInstance.scale.x,
+      y: modelInstance.scale.y,
+      z: modelInstance.scale.z
+    }
+  };
+}
+
+function includeModelInstance(bounds: FocusBoundsAccumulator, modelInstance: ModelInstance, asset: ProjectAssetRecord | undefined) {
+  const modelBounds = getModelInstanceBoundingBox(modelInstance, asset);
+  const halfSize = {
+    x: modelBounds.size.x * 0.5,
+    y: modelBounds.size.y * 0.5,
+    z: modelBounds.size.z * 0.5
+  };
+
+  includeBounds(
+    bounds,
+    {
+      x: modelBounds.center.x - halfSize.x,
+      y: modelBounds.center.y - halfSize.y,
+      z: modelBounds.center.z - halfSize.z
+    },
+    {
+      x: modelBounds.center.x + halfSize.x,
+      y: modelBounds.center.y + halfSize.y,
+      z: modelBounds.center.z + halfSize.z
+    }
+  );
+}
+
+function createModelInstanceFocusTarget(modelInstance: ModelInstance, asset: ProjectAssetRecord | undefined): ViewportFocusTarget {
+  const modelBounds = getModelInstanceBoundingBox(modelInstance, asset);
+  return createBoundsFocusTarget(modelBounds.center, {
+    x: modelBounds.size.x * 0.5,
+    y: modelBounds.size.y * 0.5,
+    z: modelBounds.size.z * 0.5
+  }, 0.5);
 }
 
 function includeSphereEntity(bounds: FocusBoundsAccumulator, position: Vec3, radius: number) {
