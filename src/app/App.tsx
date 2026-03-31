@@ -433,7 +433,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
         return;
       }
 
-      if (event.code !== "NumpadComma" && !(event.key === "," && event.location === event.DOM_KEY_LOCATION_NUMPAD)) {
+      if (
+        event.code !== "NumpadComma" &&
+        !(event.key === "," && event.location === globalThis.KeyboardEvent.DOM_KEY_LOCATION_NUMPAD)
+      ) {
         return;
       }
 
@@ -973,17 +976,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 </div>
               </div>
 
-              {runtimeMessage === null ? null : (
-                <ul className="placeholder-list">
-                  <li>{runtimeMessage}</li>
-                </ul>
-              )}
-
-              <ul className="placeholder-list">
-                <li>First-person uses `WASD` plus mouse-look after pointer lock is captured.</li>
-                <li>Orbit Visitor is the browser-safe fallback when pointer lock is unavailable or undesirable.</li>
-                <li>Collision is axis-aligned box collision only in this slice.</li>
-              </ul>
+              {runtimeMessage === null ? null : <div className="info-banner">{runtimeMessage}</div>}
             </Panel>
           </aside>
         </div>
