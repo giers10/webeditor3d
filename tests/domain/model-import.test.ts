@@ -10,11 +10,19 @@ const tinyGlbFixturePath = path.resolve(process.cwd(), "fixtures/assets/tiny-tri
 const externalTriangleGltfPath = path.resolve(process.cwd(), "fixtures/assets/external-triangle/scene.gltf");
 const externalTriangleBinPath = path.resolve(process.cwd(), "fixtures/assets/external-triangle/triangle.bin");
 
+function createTestFile(bytes: Uint8Array | Buffer, name: string, type: string): File {
+  return Object.assign(new Blob([bytes], { type }), {
+    name,
+    lastModified: Date.now(),
+    webkitRelativePath: ""
+  }) as File;
+}
+
 describe("model import", () => {
   it("imports and reloads a tiny GLB fixture", async () => {
     const storage = createInMemoryProjectAssetStorage();
     const fileBytes = await readFile(tinyGlbFixturePath);
-    const file = new File([fileBytes], "tiny-triangle.glb", { type: "model/gltf-binary" });
+    const file = createTestFile(fileBytes, "tiny-triangle.glb", "model/gltf-binary");
 
     const importedModel = await importModelAssetFromFile(file, storage);
 
@@ -40,8 +48,8 @@ describe("model import", () => {
 
     const importedModel = await importModelAssetFromFiles(
       [
-        new File([binBytes], "triangle.bin", { type: "application/octet-stream" }),
-        new File([gltfBytes], "scene.gltf", { type: "model/gltf+json" })
+        createTestFile(binBytes, "triangle.bin", "application/octet-stream"),
+        createTestFile(gltfBytes, "scene.gltf", "model/gltf+json")
       ],
       storage
     );
