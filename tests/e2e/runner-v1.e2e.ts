@@ -22,10 +22,11 @@ test("user can place PlayerStart, enter run mode, and spawn from it", async ({ p
 
   await page.getByTestId("place-player-start").click();
   await page.getByTestId("player-start-position-x").fill("4");
-  await page.getByTestId("player-start-position-y").fill("0");
+  await page.getByTestId("player-start-position-x").press("Tab");
   await page.getByTestId("player-start-position-z").fill("-2");
+  await page.getByTestId("player-start-position-z").press("Tab");
   await page.getByTestId("player-start-yaw").fill("90");
-  await page.getByTestId("apply-player-start").click();
+  await page.getByTestId("player-start-yaw").press("Tab");
 
   await page.getByTestId("enter-run-mode").click();
 
