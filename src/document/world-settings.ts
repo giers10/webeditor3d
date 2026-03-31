@@ -124,7 +124,7 @@ export function areWorldBackgroundSettingsEqual(left: WorldBackgroundSettings, r
     return left.topColorHex === right.topColorHex && left.bottomColorHex === right.bottomColorHex;
   }
 
-  return left.mode === "image" && right.mode === "image" && left.assetId === right.assetId;
+  return left.mode === "image" && right.mode === "image" && left.assetId === right.assetId && left.environmentIntensity === right.environmentIntensity;
 }
 
 export function areWorldSettingsEqual(left: WorldSettings, right: WorldSettings): boolean {
