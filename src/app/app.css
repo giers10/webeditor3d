@@ -239,6 +239,10 @@ button:disabled {
   gap: 12px;
 }
 
+.vector-inputs--two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .placeholder-list {
   display: flex;
   flex-direction: column;
@@ -293,7 +297,99 @@ button:disabled {
 .outliner-item__meta {
   color: var(--color-muted);
   font-size: 0.8rem;
- }
+}
+
+.material-browser {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.material-item {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+  padding: 10px;
+  color: var(--color-text);
+  text-align: left;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+}
+
+.material-item--active {
+  background: var(--color-accent-soft);
+  border-color: rgba(207, 123, 66, 0.55);
+}
+
+.material-item__preview {
+  display: block;
+  width: 100%;
+  height: 50px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.material-item__text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.material-item__title {
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.material-item__meta {
+  color: var(--color-muted);
+  font-size: 0.76rem;
+}
+
+.face-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.face-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 10px 12px;
+  color: var(--color-text);
+  text-align: left;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+}
+
+.face-chip--active {
+  background: var(--color-accent-soft);
+  border-color: rgba(207, 123, 66, 0.55);
+}
+
+.face-chip__title {
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.face-chip__meta {
+  color: var(--color-muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.material-summary {
+  margin-top: 8px;
+  color: var(--color-muted);
+  font-size: 0.82rem;
+}
 
 .viewport-region {
   display: grid;
