@@ -294,26 +294,39 @@ function validateInteractionLink(link: InteractionLink, path: string, document: 
     return;
   }
 
-  if (sourceEntity.kind !== "triggerVolume") {
+  if (sourceEntity.kind !== "triggerVolume" && sourceEntity.kind !== "interactable") {
     diagnostics.push(
       createDiagnostic(
         "error",
         "invalid-interaction-source-kind",
-        "Interaction links may only source from Trigger Volume entities in the current slice.",
+        "Interaction links may only source from Trigger Volume or Interactable entities in the current slice.",
         `${path}.sourceEntityId`
       )
     );
   }
 
-  if (link.trigger !== "enter" && link.trigger !== "exit") {
-    diagnostics.push(
-      createDiagnostic(
-        "error",
-        "unsupported-interaction-trigger",
-        `Unsupported interaction trigger ${String(link.trigger)}.`,
-        `${path}.trigger`
-      )
-    );
+  if (sourceEntity.kind === "triggerVolume") {
+    if (link.trigger !== "enter" && link.trigger !== "exit") {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "unsupported-interaction-trigger",
+          "Trigger Volume links may only use enter or exit triggers.",
+          `${path}.trigger`
+        )
+      );
+    }
+  } else if (sourceEntity.kind === "interactable") {
+    if (link.trigger !== "click") {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "unsupported-interaction-trigger",
+          "Interactable links may only use the click trigger.",
+          `${path}.trigger`
+        )
+      );
+    }
   }
 
   switch (link.action.type) {
