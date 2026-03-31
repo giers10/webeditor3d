@@ -470,6 +470,17 @@ export function App({ store, initialStatusMessage }: AppProps) {
     setStatusMessage(`Scene renamed to ${normalizedName}.`);
   };
 
+  const requestViewportFocus = (selection: EditorSelection, status?: string) => {
+    setFocusRequest((current) => ({
+      id: current.id + 1,
+      selection
+    }));
+
+    if (status !== undefined) {
+      setStatusMessage(status);
+    }
+  };
+
   const handleCreateBoxBrush = (center?: Vec3) => {
     try {
       store.executeCommand(createCreateBoxBrushCommand(center === undefined ? {} : { center }));
@@ -483,25 +494,37 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
-  const applySelection = (selection: EditorSelection, source: "outliner" | "viewport" | "inspector" | "runner") => {
+  const applySelection = (
+    selection: EditorSelection,
+    source: "outliner" | "viewport" | "inspector" | "runner",
+    options: { focusViewport?: boolean } = {}
+  ) => {
     store.setSelection(selection);
+
+    const suffix = source === "outliner" && options.focusViewport ? " and framed it in the viewport" : "";
 
     switch (selection.kind) {
       case "none":
-        setStatusMessage(`${source === "viewport" ? "Viewport" : "Editor"} selection cleared.`);
+        setStatusMessage(`${source === "viewport" ? "Viewport" : "Editor"} selection cleared${suffix}.`);
         break;
       case "brushes":
-        setStatusMessage(`Selected ${getBrushLabelById(selection.ids[0], brushList)} from the ${source}.`);
+        setStatusMessage(`Selected ${getBrushLabelById(selection.ids[0], brushList)} from the ${source}${suffix}.`);
         break;
       case "brushFace":
-        setStatusMessage(`Selected ${FACE_LABELS[selection.faceId]} on ${getBrushLabelById(selection.brushId, brushList)} from the ${source}.`);
+        setStatusMessage(
+          `Selected ${FACE_LABELS[selection.faceId]} on ${getBrushLabelById(selection.brushId, brushList)} from the ${source}${suffix}.`
+        );
         break;
       case "entities":
-        setStatusMessage(`Selected ${getPlayerStartLabelById(selection.ids[0], playerStartList)} from the ${source}.`);
+        setStatusMessage(`Selected ${getPlayerStartLabelById(selection.ids[0], playerStartList)} from the ${source}${suffix}.`);
         break;
       default:
-        setStatusMessage(`Selection updated from the ${source}.`);
+        setStatusMessage(`Selection updated from the ${source}${suffix}.`);
         break;
+    }
+
+    if (options.focusViewport) {
+      requestViewportFocus(selection);
     }
   };
 
