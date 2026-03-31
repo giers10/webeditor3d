@@ -317,6 +317,12 @@ function createTriggerVolumeFocusTarget(position: Vec3, size: Vec3): ViewportFoc
 
 function includeEntity(bounds: FocusBoundsAccumulator, entity: EntityInstance) {
   switch (entity.kind) {
+    case "pointLight":
+      includeSphereEntity(bounds, entity.position, Math.max(0.5, entity.distance));
+      break;
+    case "spotLight":
+      includeSphereEntity(bounds, entity.position, Math.max(0.75, entity.distance));
+      break;
     case "playerStart":
       includePlayerStart(bounds, entity.position);
       break;
@@ -337,6 +343,10 @@ function includeEntity(bounds: FocusBoundsAccumulator, entity: EntityInstance) {
 
 function createEntityFocusTarget(entity: EntityInstance): ViewportFocusTarget {
   switch (entity.kind) {
+    case "pointLight":
+      return createSphereEntityFocusTarget(entity.position, Math.max(0.6, entity.distance), 0.75);
+    case "spotLight":
+      return createSphereEntityFocusTarget(entity.position, Math.max(0.8, entity.distance), 0.9);
     case "playerStart":
       return createPlayerStartFocusTarget(entity.position);
     case "soundEmitter":
