@@ -772,6 +772,170 @@ describe("scene document JSON", () => {
     });
   });
 
+  it("migrates v11 documents to v12 with animation fields defaulted to undefined on model instances", () => {
+    const asset = {
+      id: "asset-model-anim",
+      kind: "model",
+      sourceName: "animated.glb",
+      mimeType: "model/gltf-binary",
+      storageKey: createProjectAssetStorageKey("asset-model-anim"),
+      byteLength: 1024,
+      metadata: {
+        kind: "model" as const,
+        format: "glb" as const,
+        sceneName: null,
+        nodeCount: 1,
+        meshCount: 1,
+        materialNames: [],
+        textureNames: [],
+        animationNames: ["Walk"],
+        boundingBox: null,
+        warnings: []
+      }
+    };
+
+    const migratedDocument = migrateSceneDocument({
+      version: 11,
+      name: "V11 Scene",
+      world: createEmptySceneDocument().world,
+      materials: createEmptySceneDocument().materials,
+      textures: {},
+      assets: { [asset.id]: asset },
+      brushes: {},
+      modelInstances: {
+        "mi-1": {
+          id: "mi-1",
+          kind: "modelInstance",
+          assetId: asset.id,
+          position: { x: 0, y: 0, z: 0 },
+          rotationDegrees: { x: 0, y: 0, z: 0 },
+          scale: { x: 1, y: 1, z: 1 }
+        }
+      },
+      entities: {},
+      interactionLinks: {}
+    });
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.modelInstances["mi-1"].animationClipName).toBeUndefined();
+    expect(migratedDocument.modelInstances["mi-1"].animationAutoplay).toBeUndefined();
+  });
+
+  it("round-trips a v12 document containing playAnimation and stopAnimation interaction links", () => {
+    const asset = {
+      id: "asset-model-anim",
+      kind: "model",
+      sourceName: "animated.glb",
+      mimeType: "model/gltf-binary",
+      storageKey: createProjectAssetStorageKey("asset-model-anim"),
+      byteLength: 1024,
+      metadata: {
+        kind: "model" as const,
+        format: "glb" as const,
+        sceneName: null,
+        nodeCount: 1,
+        meshCount: 1,
+        materialNames: [],
+        textureNames: [],
+        animationNames: ["Walk", "Run"],
+        boundingBox: null,
+        warnings: []
+      }
+    };
+    const modelInstance = createModelInstance({
+      id: "mi-animated",
+      assetId: asset.id,
+      animationClipName: "Walk",
+      animationAutoplay: true
+    });
+    const triggerVolume = createTriggerVolumeEntity({
+      id: "entity-trigger-main"
+    });
+    const playLink = createPlayAnimationInteractionLink({
+      id: "link-play",
+      sourceEntityId: triggerVolume.id,
+      trigger: "enter",
+      targetModelInstanceId: modelInstance.id,
+      clipName: "Walk"
+    });
+    const stopLink = createStopAnimationInteractionLink({
+      id: "link-stop",
+      sourceEntityId: triggerVolume.id,
+      trigger: "exit",
+      targetModelInstanceId: modelInstance.id
+    });
+    const document = {
+      ...createEmptySceneDocument({ name: "Animation Scene" }),
+      assets: { [asset.id]: asset },
+      modelInstances: { [modelInstance.id]: modelInstance },
+      entities: { [triggerVolume.id]: triggerVolume },
+      interactionLinks: {
+        [playLink.id]: playLink,
+        [stopLink.id]: stopLink
+      }
+    };
+
+    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(document);
+  });
+
+  it("rejects a v12 document where a playAnimation action has an empty clipName", () => {
+    const asset = {
+      id: "asset-model-anim",
+      kind: "model",
+      sourceName: "animated.glb",
+      mimeType: "model/gltf-binary",
+      storageKey: createProjectAssetStorageKey("asset-model-anim"),
+      byteLength: 1024,
+      metadata: {
+        kind: "model" as const,
+        format: "glb" as const,
+        sceneName: null,
+        nodeCount: 1,
+        meshCount: 1,
+        materialNames: [],
+        textureNames: [],
+        animationNames: [],
+        boundingBox: null,
+        warnings: []
+      }
+    };
+
+    expect(() =>
+      migrateSceneDocument({
+        version: SCENE_DOCUMENT_VERSION,
+        name: "Bad Animation Scene",
+        world: createEmptySceneDocument().world,
+        materials: createEmptySceneDocument().materials,
+        textures: {},
+        assets: { [asset.id]: asset },
+        brushes: {},
+        modelInstances: {},
+        entities: {
+          "entity-trigger-main": {
+            id: "entity-trigger-main",
+            kind: "triggerVolume",
+            position: { x: 0, y: 0, z: 0 },
+            size: { x: 2, y: 2, z: 2 },
+            triggerOnEnter: true,
+            triggerOnExit: false
+          }
+        },
+        interactionLinks: {
+          "link-bad-play": {
+            id: "link-bad-play",
+            sourceEntityId: "entity-trigger-main",
+            trigger: "enter",
+            action: {
+              type: "playAnimation",
+              targetModelInstanceId: "mi-animated",
+              clipName: ""
+            }
+          }
+        }
+      })
+    ).toThrow();
+  });
+
   it("rejects unsupported versions", () => {
     expect(() =>
       migrateSceneDocument({
