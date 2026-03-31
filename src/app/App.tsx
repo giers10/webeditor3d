@@ -625,7 +625,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
         );
         break;
       case "entities":
-        setStatusMessage(`Selected ${getPlayerStartLabelById(selection.ids[0], playerStartList)} from the ${source}${suffix}.`);
+        setStatusMessage(`Selected ${getEntityDisplayLabelById(selection.ids[0], editorState.document.entities)} from the ${source}${suffix}.`);
         break;
       default:
         setStatusMessage(`Selection updated from the ${source}${suffix}.`);
