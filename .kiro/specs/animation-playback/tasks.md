@@ -95,7 +95,7 @@ Implement animation playback for imported GLB/GLTF assets in vertical slice orde
     - Load scene A, then load scene B; assert no mixers from scene A remain
     - **Validates: Requirements 5.3**
 
-- [-] 6. Checkpoint — ensure all tests pass
+- [x] 6. Checkpoint — ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 - [~] 7. Schema migration: bump version to 12
