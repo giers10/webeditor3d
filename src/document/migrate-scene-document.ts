@@ -25,12 +25,13 @@ import {
 } from "./brushes";
 import {
   BOX_BRUSH_SCENE_DOCUMENT_VERSION,
+  ENTITY_SYSTEM_FOUNDATION_SCENE_DOCUMENT_VERSION,
   FACE_MATERIALS_SCENE_DOCUMENT_VERSION,
   FIRST_ROOM_POLISH_SCENE_DOCUMENT_VERSION,
   FOUNDATION_SCENE_DOCUMENT_VERSION,
-  ENTITY_SYSTEM_FOUNDATION_SCENE_DOCUMENT_VERSION,
   RUNNER_V1_SCENE_DOCUMENT_VERSION,
   SCENE_DOCUMENT_VERSION,
+  TRIGGER_ACTION_TARGET_FOUNDATION_SCENE_DOCUMENT_VERSION,
   WORLD_ENVIRONMENT_SCENE_DOCUMENT_VERSION,
   type SceneDocument
 } from "./scene-document";
@@ -735,6 +736,23 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       modelInstances: expectEmptyCollection(source.modelInstances, "modelInstances"),
       entities: readEntities(source.entities),
       interactionLinks: expectEmptyCollection(source.interactionLinks, "interactionLinks")
+    };
+  }
+
+  if (source.version === TRIGGER_ACTION_TARGET_FOUNDATION_SCENE_DOCUMENT_VERSION) {
+    const materials = readMaterialRegistry(source.materials, "materials");
+
+    return {
+      version: SCENE_DOCUMENT_VERSION,
+      name: expectString(source.name, "name"),
+      world: readWorldSettings(source.world),
+      materials,
+      textures: expectEmptyCollection(source.textures, "textures"),
+      assets: expectEmptyCollection(source.assets, "assets"),
+      brushes: readBrushes(source.brushes, materials, false),
+      modelInstances: expectEmptyCollection(source.modelInstances, "modelInstances"),
+      entities: readEntities(source.entities),
+      interactionLinks: readInteractionLinks(source.interactionLinks)
     };
   }
 
