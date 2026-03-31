@@ -19,7 +19,7 @@ export interface SceneDocumentValidationResult {
   warnings: SceneDiagnostic[];
 }
 
-function createDiagnostic(
+export function createDiagnostic(
   severity: SceneDiagnosticSeverity,
   code: string,
   message: string,
