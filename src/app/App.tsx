@@ -840,21 +840,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
   };
 
-  const handleSelectOrPlacePlayerStart = () => {
-    if (primaryPlayerStart === null) {
-      applyPlayerStartChange();
-      return;
-    }
-
-    applySelection(
-      {
-        kind: "entities",
-        ids: [primaryPlayerStart.id]
-      },
-      "runner"
-    );
-  };
-
   const handleEnterPlayMode = () => {
     if (blockingDiagnostics.length > 0) {
       setStatusMessage(`Run mode blocked: ${formatSceneDiagnosticSummary(blockingDiagnostics)}`);
