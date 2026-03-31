@@ -9,6 +9,7 @@ import {
   createTeleportTargetEntity,
   createTriggerVolumeEntity
 } from "../../src/entities/entity-instances";
+import { createTeleportPlayerInteractionLink, createToggleVisibilityInteractionLink } from "../../src/interactions/interaction-links";
 import { buildRuntimeSceneFromDocument } from "../../src/runtime-three/runtime-scene-build";
 
 describe("buildRuntimeSceneFromDocument", () => {
@@ -96,6 +97,21 @@ describe("buildRuntimeSceneFromDocument", () => {
         [triggerVolume.id]: triggerVolume,
         [teleportTarget.id]: teleportTarget,
         [interactable.id]: interactable
+      },
+      interactionLinks: {
+        "link-teleport": createTeleportPlayerInteractionLink({
+          id: "link-teleport",
+          sourceEntityId: triggerVolume.id,
+          trigger: "enter",
+          targetEntityId: teleportTarget.id
+        }),
+        "link-hide-brush": createToggleVisibilityInteractionLink({
+          id: "link-hide-brush",
+          sourceEntityId: triggerVolume.id,
+          trigger: "exit",
+          targetBrushId: brush.id,
+          visible: false
+        })
       }
     };
     document.world.background = {
@@ -223,6 +239,27 @@ describe("buildRuntimeSceneFromDocument", () => {
         }
       ]
     });
+    expect(runtimeScene.interactionLinks).toEqual([
+      {
+        id: "link-teleport",
+        sourceEntityId: "entity-trigger-door",
+        trigger: "enter",
+        action: {
+          type: "teleportPlayer",
+          targetEntityId: "entity-teleport-target-main"
+        }
+      },
+      {
+        id: "link-hide-brush",
+        sourceEntityId: "entity-trigger-door",
+        trigger: "exit",
+        action: {
+          type: "toggleVisibility",
+          targetBrushId: "brush-room-floor",
+          visible: false
+        }
+      }
+    ]);
     expect(runtimeScene.playerStart).toEqual({
       entityId: "entity-player-start-main",
       position: {
@@ -274,6 +311,7 @@ describe("buildRuntimeSceneFromDocument", () => {
       teleportTargets: [],
       interactables: []
     });
+    expect(runtimeScene.interactionLinks).toEqual([]);
     expect(runtimeScene.spawn).toEqual({
       source: "fallback",
       entityId: null,
