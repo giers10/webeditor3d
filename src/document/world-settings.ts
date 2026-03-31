@@ -125,13 +125,13 @@ export function changeWorldBackgroundMode(background: WorldBackgroundSettings, m
   if (mode === "solid") {
     return {
       mode: "solid",
-      colorHex: background.topColorHex
+      colorHex: background.mode === "verticalGradient" ? background.topColorHex : background.colorHex
     };
   }
 
   return {
     mode: "verticalGradient",
-    topColorHex: background.colorHex,
+    topColorHex: background.mode === "solid" ? background.colorHex : background.topColorHex,
     bottomColorHex: DEFAULT_GRADIENT_BOTTOM_COLOR
   };
 }
