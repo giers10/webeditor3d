@@ -1,4 +1,11 @@
-import type { EntityInstance } from "../entities/entity-instances";
+import {
+  type EntityInstance,
+  type InteractableEntity,
+  type PlayerStartEntity,
+  type SoundEmitterEntity,
+  type TeleportTargetEntity,
+  type TriggerVolumeEntity
+} from "../entities/entity-instances";
 import { BOX_FACE_IDS, hasPositiveBoxSize } from "./brushes";
 import type { SceneDocument } from "./scene-document";
 import { isHexColorString, type WorldSettings } from "./world-settings";
@@ -44,8 +51,20 @@ function isFiniteVec3(vector: { x: unknown; y: unknown; z: unknown }): boolean {
   return isFiniteNumber(vector.x) && isFiniteNumber(vector.y) && isFiniteNumber(vector.z);
 }
 
+function hasPositiveFiniteVec3(vector: { x: unknown; y: unknown; z: unknown }): boolean {
+  return isFiniteVec3(vector) && vector.x > 0 && vector.y > 0 && vector.z > 0;
+}
+
 function isNonNegativeFiniteNumber(value: unknown): value is number {
   return isFiniteNumber(value) && value >= 0;
+}
+
+function isPositiveFiniteNumber(value: unknown): value is number {
+  return isFiniteNumber(value) && value > 0;
+}
+
+function isBoolean(value: unknown): value is boolean {
+  return typeof value === "boolean";
 }
 
 function hasNonZeroVectorLength(vector: { x: number; y: number; z: number }): boolean {
@@ -139,7 +158,7 @@ function validateWorldSettings(world: WorldSettings, diagnostics: SceneDiagnosti
   }
 }
 
-function validatePlayerStartEntity(entity: EntityInstance, path: string, diagnostics: SceneDiagnostic[]) {
+function validatePlayerStartEntity(entity: PlayerStartEntity, path: string, diagnostics: SceneDiagnostic[]) {
   if (!isFiniteVec3(entity.position)) {
     diagnostics.push(
       createDiagnostic("error", "invalid-player-start-position", "Player Start position must remain finite on every axis.", `${path}.position`)
@@ -148,6 +167,115 @@ function validatePlayerStartEntity(entity: EntityInstance, path: string, diagnos
 
   if (!isFiniteNumber(entity.yawDegrees)) {
     diagnostics.push(createDiagnostic("error", "invalid-player-start-yaw", "Player Start yaw must remain a finite number.", `${path}.yawDegrees`));
+  }
+}
+
+function validateSoundEmitterEntity(entity: SoundEmitterEntity, path: string, diagnostics: SceneDiagnostic[]) {
+  if (!isFiniteVec3(entity.position)) {
+    diagnostics.push(
+      createDiagnostic("error", "invalid-sound-emitter-position", "Sound Emitter position must remain finite on every axis.", `${path}.position`)
+    );
+  }
+
+  if (!isPositiveFiniteNumber(entity.radius)) {
+    diagnostics.push(
+      createDiagnostic("error", "invalid-sound-emitter-radius", "Sound Emitter radius must remain finite and greater than zero.", `${path}.radius`)
+    );
+  }
+
+  if (!isNonNegativeFiniteNumber(entity.gain)) {
+    diagnostics.push(
+      createDiagnostic("error", "invalid-sound-emitter-gain", "Sound Emitter gain must remain finite and zero or greater.", `${path}.gain`)
+    );
+  }
+
+  if (!isBoolean(entity.autoplay)) {
+    diagnostics.push(
+      createDiagnostic("error", "invalid-sound-emitter-autoplay", "Sound Emitter autoplay must remain a boolean.", `${path}.autoplay`)
+    );
+  }
+
+  if (!isBoolean(entity.loop)) {
+    diagnostics.push(createDiagnostic("error", "invalid-sound-emitter-loop", "Sound Emitter loop must remain a boolean.", `${path}.loop`));
+  }
+}
+
+function validateTriggerVolumeEntity(entity: TriggerVolumeEntity, path: string, diagnostics: SceneDiagnostic[]) {
+  if (!isFiniteVec3(entity.position)) {
+    diagnostics.push(
+      createDiagnostic("error", "invalid-trigger-volume-position", "Trigger Volume position must remain finite on every axis.", `${path}.position`)
+    );
+  }
+
+  if (!hasPositiveFiniteVec3(entity.size)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-trigger-volume-size",
+        "Trigger Volume size must remain finite and positive on every axis.",
+        `${path}.size`
+      )
+    );
+  }
+
+  if (!isBoolean(entity.triggerOnEnter)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-trigger-volume-enter-flag",
+        "Trigger Volume triggerOnEnter must remain a boolean.",
+        `${path}.triggerOnEnter`
+      )
+    );
+  }
+
+  if (!isBoolean(entity.triggerOnExit)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-trigger-volume-exit-flag",
+        "Trigger Volume triggerOnExit must remain a boolean.",
+        `${path}.triggerOnExit`
+      )
+    );
+  }
+}
+
+function validateTeleportTargetEntity(entity: TeleportTargetEntity, path: string, diagnostics: SceneDiagnostic[]) {
+  if (!isFiniteVec3(entity.position)) {
+    diagnostics.push(
+      createDiagnostic("error", "invalid-teleport-target-position", "Teleport Target position must remain finite on every axis.", `${path}.position`)
+    );
+  }
+
+  if (!isFiniteNumber(entity.yawDegrees)) {
+    diagnostics.push(
+      createDiagnostic("error", "invalid-teleport-target-yaw", "Teleport Target yaw must remain a finite number.", `${path}.yawDegrees`)
+    );
+  }
+}
+
+function validateInteractableEntity(entity: InteractableEntity, path: string, diagnostics: SceneDiagnostic[]) {
+  if (!isFiniteVec3(entity.position)) {
+    diagnostics.push(
+      createDiagnostic("error", "invalid-interactable-position", "Interactable position must remain finite on every axis.", `${path}.position`)
+    );
+  }
+
+  if (!isPositiveFiniteNumber(entity.radius)) {
+    diagnostics.push(
+      createDiagnostic("error", "invalid-interactable-radius", "Interactable radius must remain finite and greater than zero.", `${path}.radius`)
+    );
+  }
+
+  if (typeof entity.prompt !== "string" || entity.prompt.trim().length === 0) {
+    diagnostics.push(
+      createDiagnostic("error", "invalid-interactable-prompt", "Interactable prompt must remain a non-empty string.", `${path}.prompt`)
+    );
+  }
+
+  if (!isBoolean(entity.enabled)) {
+    diagnostics.push(createDiagnostic("error", "invalid-interactable-enabled", "Interactable enabled must remain a boolean.", `${path}.enabled`));
   }
 }
 
@@ -242,19 +370,33 @@ export function validateSceneDocument(document: SceneDocument): SceneDocumentVal
 
     registerAuthoredId(entity.id, path, seenIds, diagnostics);
 
-    if (entity.kind === "playerStart") {
-      validatePlayerStartEntity(entity, path, diagnostics);
-      continue;
+    switch (entity.kind) {
+      case "playerStart":
+        validatePlayerStartEntity(entity, path, diagnostics);
+        break;
+      case "soundEmitter":
+        validateSoundEmitterEntity(entity, path, diagnostics);
+        break;
+      case "triggerVolume":
+        validateTriggerVolumeEntity(entity, path, diagnostics);
+        break;
+      case "teleportTarget":
+        validateTeleportTargetEntity(entity, path, diagnostics);
+        break;
+      case "interactable":
+        validateInteractableEntity(entity, path, diagnostics);
+        break;
+      default:
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "unsupported-entity-kind",
+            `Unsupported entity kind ${(entity as { kind: string }).kind}.`,
+            `${path}.kind`
+          )
+        );
+        break;
     }
-
-    diagnostics.push(
-      createDiagnostic(
-        "error",
-        "unsupported-entity-kind",
-        `Unsupported entity kind ${(entity as { kind: string }).kind}.`,
-        `${path}.kind`
-      )
-    );
   }
 
   return {
