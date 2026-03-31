@@ -7,6 +7,7 @@ import {
   MeshStandardMaterial,
   PerspectiveCamera,
   Scene,
+  Vector3,
   WebGLRenderer
 } from "three";
 
@@ -15,7 +16,7 @@ import { createStarterMaterialSignature, createStarterMaterialTexture } from "..
 
 import { FirstPersonNavigationController } from "./first-person-navigation-controller";
 import type { FirstPersonTelemetry, NavigationController, RuntimeControllerContext } from "./navigation-controller";
-import { RuntimeInteractionSystem } from "./runtime-interaction-system";
+import { RuntimeInteractionSystem, type RuntimeInteractionDispatcher, type RuntimeInteractionPrompt } from "./runtime-interaction-system";
 import { OrbitVisitorNavigationController } from "./orbit-visitor-navigation-controller";
 import type { RuntimeBoxBrushInstance, RuntimeNavigationMode, RuntimeSceneDefinition, RuntimeTeleportTarget } from "./runtime-scene-build";
 
@@ -29,6 +30,7 @@ const FALLBACK_FACE_COLOR = 0x747d89;
 export class RuntimeHost {
   private readonly scene = new Scene();
   private readonly camera = new PerspectiveCamera(70, 1, 0.05, 1000);
+  private readonly cameraForward = new Vector3();
   private readonly domElement: HTMLCanvasElement;
   private readonly ambientLight = new AmbientLight();
   private readonly sunLight = new DirectionalLight();
@@ -48,8 +50,10 @@ export class RuntimeHost {
   private runtimeScene: RuntimeSceneDefinition | null = null;
   private runtimeMessageHandler: ((message: string | null) => void) | null = null;
   private firstPersonTelemetryHandler: ((telemetry: FirstPersonTelemetry | null) => void) | null = null;
+  private interactionPromptHandler: ((prompt: RuntimeInteractionPrompt | null) => void) | null = null;
   private currentRuntimeMessage: string | null = null;
   private currentFirstPersonTelemetry: FirstPersonTelemetry | null = null;
+  private currentInteractionPrompt: RuntimeInteractionPrompt | null = null;
 
   constructor(options: { enableRendering?: boolean } = {}) {
     const enableRendering = options.enableRendering ?? true;
@@ -95,6 +99,7 @@ export class RuntimeHost {
   mount(container: HTMLElement) {
     this.container = container;
     container.appendChild(this.domElement);
+    this.domElement.addEventListener("click", this.handleRuntimeClick);
     this.resize();
 
     this.resizeObserver = new ResizeObserver(() => {
@@ -109,6 +114,7 @@ export class RuntimeHost {
   loadScene(runtimeScene: RuntimeSceneDefinition) {
     this.runtimeScene = runtimeScene;
     this.interactionSystem.reset();
+    this.setInteractionPrompt(null);
     this.applyWorld(runtimeScene);
     this.rebuildBrushMeshes(runtimeScene.brushes);
   }
@@ -130,6 +136,7 @@ export class RuntimeHost {
 
     this.activeController?.deactivate(this.controllerContext);
     this.interactionSystem.reset();
+    this.setInteractionPrompt(null);
     this.activeController = nextController;
     this.activeController.activate(this.controllerContext);
   }
@@ -142,6 +149,10 @@ export class RuntimeHost {
     this.firstPersonTelemetryHandler = handler;
   }
 
+  setInteractionPromptHandler(handler: ((prompt: RuntimeInteractionPrompt | null) => void) | null) {
+    this.interactionPromptHandler = handler;
+  }
+
   dispose() {
     if (this.animationFrame !== 0) {
       cancelAnimationFrame(this.animationFrame);
@@ -150,6 +161,7 @@ export class RuntimeHost {
 
     this.activeController?.deactivate(this.controllerContext);
     this.activeController = null;
+    this.setInteractionPrompt(null);
     this.resizeObserver?.disconnect();
     this.resizeObserver = null;
     this.clearBrushMeshes();
@@ -160,6 +172,7 @@ export class RuntimeHost {
 
     this.materialTextureCache.clear();
     this.renderer?.dispose();
+    this.domElement.removeEventListener("click", this.handleRuntimeClick);
 
     if (this.container !== null && this.container.contains(this.domElement)) {
       this.container.removeChild(this.domElement);
@@ -285,14 +298,21 @@ export class RuntimeHost {
     this.activeController?.update(dt);
 
     if (this.runtimeScene !== null && this.activeController === this.firstPersonController && this.currentFirstPersonTelemetry !== null) {
-      this.interactionSystem.updatePlayerPosition(this.currentFirstPersonTelemetry.feetPosition, this.runtimeScene, {
-        teleportPlayer: (target) => {
-          this.applyTeleportPlayerAction(target);
-        },
-        toggleBrushVisibility: (brushId, visible) => {
-          this.applyToggleBrushVisibilityAction(brushId, visible);
-        }
-      });
+      this.interactionSystem.updatePlayerPosition(this.currentFirstPersonTelemetry.feetPosition, this.runtimeScene, this.createInteractionDispatcher());
+      this.camera.getWorldDirection(this.cameraForward);
+      this.setInteractionPrompt(
+        this.interactionSystem.resolveClickInteractionPrompt(
+          this.currentFirstPersonTelemetry.eyePosition,
+          {
+            x: this.cameraForward.x,
+            y: this.cameraForward.y,
+            z: this.cameraForward.z
+          },
+          this.runtimeScene
+        )
+      );
+    } else {
+      this.setInteractionPrompt(null);
     }
 
     this.renderer?.render(this.scene, this.camera);
@@ -311,4 +331,37 @@ export class RuntimeHost {
 
     mesh.visible = visible ?? !mesh.visible;
   }
+
+  private createInteractionDispatcher(): RuntimeInteractionDispatcher {
+    return {
+      teleportPlayer: (target) => {
+        this.applyTeleportPlayerAction(target);
+      },
+      toggleBrushVisibility: (brushId, visible) => {
+        this.applyToggleBrushVisibilityAction(brushId, visible);
+      }
+    };
+  }
+
+  private setInteractionPrompt(prompt: RuntimeInteractionPrompt | null) {
+    if (
+      this.currentInteractionPrompt?.sourceEntityId === prompt?.sourceEntityId &&
+      this.currentInteractionPrompt?.prompt === prompt?.prompt &&
+      this.currentInteractionPrompt?.distance === prompt?.distance &&
+      this.currentInteractionPrompt?.range === prompt?.range
+    ) {
+      return;
+    }
+
+    this.currentInteractionPrompt = prompt;
+    this.interactionPromptHandler?.(prompt);
+  }
+
+  private handleRuntimeClick = () => {
+    if (this.runtimeScene === null || this.activeController !== this.firstPersonController || this.currentInteractionPrompt === null) {
+      return;
+    }
+
+    this.interactionSystem.dispatchClickInteraction(this.currentInteractionPrompt.sourceEntityId, this.runtimeScene, this.createInteractionDispatcher());
+  };
 }
