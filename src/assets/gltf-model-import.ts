@@ -330,7 +330,7 @@ async function loadGltfFromArrayBuffer(arrayBuffer: ArrayBuffer): Promise<GLTF> 
   return loader.parseAsync(arrayBuffer, "");
 }
 
-function createObjectUrlForStoredFile(file: ProjectAssetStorageFileRecord): string {
+function createDataUrlForStoredFile(file: ProjectAssetStorageFileRecord): string {
   const byteArray = new Uint8Array(file.bytes);
   let binary = "";
   const chunkSize = 0x8000;
@@ -362,13 +362,13 @@ function rewriteGltfResourceUris(
       return null;
     }
 
-    const cachedObjectUrl = dataUrlsByPath.get(normalizedUri);
+    const cachedDataUrl = dataUrlsByPath.get(normalizedUri);
 
-    if (cachedObjectUrl !== undefined) {
-      return cachedObjectUrl;
+    if (cachedDataUrl !== undefined) {
+      return cachedDataUrl;
     }
 
-    const dataUrl = createObjectUrlForStoredFile(storedFile);
+    const dataUrl = createDataUrlForStoredFile(storedFile);
     dataUrlsByPath.set(normalizedUri, dataUrl);
     return dataUrl;
   };
