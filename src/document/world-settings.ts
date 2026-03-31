@@ -156,7 +156,8 @@ export function changeWorldBackgroundMode(
 
     return {
       mode: "image",
-      assetId: imageAssetId
+      assetId: imageAssetId,
+      environmentIntensity: background.mode === "image" ? background.environmentIntensity : 0.5
     };
   }
 
