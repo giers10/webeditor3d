@@ -9,6 +9,7 @@ import {
 } from "react";
 
 import { createCreateBoxBrushCommand } from "../commands/create-box-brush-command";
+import { createImportModelAssetCommand } from "../commands/import-model-asset-command";
 import { createMoveBoxBrushCommand } from "../commands/move-box-brush-command";
 import { createResizeBoxBrushCommand } from "../commands/resize-box-brush-command";
 import { createSetBoxBrushFaceMaterialCommand } from "../commands/set-box-brush-face-material-command";
@@ -18,16 +19,36 @@ import { createDeleteInteractionLinkCommand } from "../commands/delete-interacti
 import { createSetSceneNameCommand } from "../commands/set-scene-name-command";
 import { createSetWorldSettingsCommand } from "../commands/set-world-settings-command";
 import { createUpsertEntityCommand } from "../commands/upsert-entity-command";
+import { createUpsertModelInstanceCommand } from "../commands/upsert-model-instance-command";
 import { createUpsertInteractionLinkCommand } from "../commands/upsert-interaction-link-command";
 import {
   getSelectedBrushFaceId,
   getSingleSelectedBrushId,
   getSingleSelectedEntityId,
+  getSingleSelectedModelInstanceId,
   isBrushFaceSelected,
   isBrushSelected,
   type EditorSelection
 } from "../core/selection";
 import type { Vec2, Vec3 } from "../core/vector";
+import {
+  areModelInstancesEqual,
+  createModelInstance,
+  DEFAULT_MODEL_INSTANCE_POSITION,
+  DEFAULT_MODEL_INSTANCE_ROTATION_DEGREES,
+  DEFAULT_MODEL_INSTANCE_SCALE,
+  type ModelInstance
+} from "../assets/model-instances";
+import {
+  getModelInstanceDisplayLabelById,
+  getSortedModelInstanceDisplayLabels
+} from "../assets/model-instance-labels";
+import {
+  importModelAssetFromFile,
+  loadModelAssetFromStorage,
+  type LoadedModelAsset
+} from "../assets/gltf-model-import";
+import type { ModelAssetRecord, ProjectAssetRecord } from "../assets/project-assets";
 import {
   BOX_FACE_IDS,
   DEFAULT_BOX_BRUSH_CENTER,
@@ -41,6 +62,7 @@ import {
 } from "../document/brushes";
 import { areWorldSettingsEqual, changeWorldBackgroundMode, type WorldBackgroundMode, type WorldSettings } from "../document/scene-document";
 import { formatSceneDiagnosticSummary, validateSceneDocument } from "../document/scene-document-validation";
+import { getBrowserProjectAssetStorageAccess, type ProjectAssetStorage } from "../assets/project-asset-storage";
 import { DEFAULT_GRID_SIZE, snapPositiveSizeToGrid, snapVec3ToGrid } from "../geometry/grid-snapping";
 import { createFitToFaceBoxBrushFaceUvState } from "../geometry/box-face-uvs";
 import {
