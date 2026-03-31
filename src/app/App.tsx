@@ -986,7 +986,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
       createUpsertInteractionLinkCommand({
         link: createTeleportPlayerInteractionLink({
           sourceEntityId: selectedTriggerVolume.id,
-          trigger: selectedTriggerVolume.triggerOnEnter ? "enter" : "exit",
+          trigger: getDefaultTriggerVolumeLinkTrigger(selectedTriggerVolume.triggerOnEnter, selectedTriggerVolume.triggerOnExit),
           targetEntityId: defaultTarget.id
         }),
         label: "Add teleport interaction link"
@@ -1012,7 +1012,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
       createUpsertInteractionLinkCommand({
         link: createToggleVisibilityInteractionLink({
           sourceEntityId: selectedTriggerVolume.id,
-          trigger: selectedTriggerVolume.triggerOnEnter ? "enter" : "exit",
+          trigger: getDefaultTriggerVolumeLinkTrigger(selectedTriggerVolume.triggerOnEnter, selectedTriggerVolume.triggerOnExit),
           targetBrushId: defaultTarget.id
         }),
         label: "Add visibility interaction link"
