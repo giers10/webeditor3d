@@ -1657,9 +1657,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
             </div>
 
             {primaryPlayerStart === null ? (
-              <ul className="placeholder-list">
-                <li>No Player Start is authored yet. Orbit Visitor can still run, but first-person run is blocked until you place one.</li>
-              </ul>
+              <div className="outliner-empty">First-person run needs an authored Player Start.</div>
             ) : (
               <div className="stat-card">
                 <div className="label">Authored Spawn</div>
@@ -1670,11 +1668,13 @@ export function App({ store, initialStatusMessage }: AppProps) {
               </div>
             )}
 
-            <div className="inline-actions">
-              <button className="toolbar__button" type="button" data-testid="place-player-start" onClick={handleSelectOrPlacePlayerStart}>
-                {primaryPlayerStart === null ? "Place Player Start" : "Select Player Start"}
-              </button>
-            </div>
+            {primaryPlayerStart !== null ? null : (
+              <div className="inline-actions">
+                <button className="toolbar__button" type="button" data-testid="place-player-start" onClick={applyPlayerStartChange}>
+                  Place Player Start
+                </button>
+              </div>
+            )}
 
             <div className="inline-actions">
               <button
@@ -1702,12 +1702,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 Enter Run Mode
               </button>
             </div>
-
-            <ul className="placeholder-list">
-              <li>First-person supports `WASD` movement plus mouse-look after pointer lock is active.</li>
-              <li>Orbit Visitor provides the non-FPS fallback for browsers or users that do not want pointer lock.</li>
-              <li>Collision is deterministic AABB collision against box-brush runtime colliders in this slice.</li>
-            </ul>
           </Panel>
         </aside>
       </div>
