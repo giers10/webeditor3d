@@ -24,7 +24,7 @@ test("imports a model asset, places an instance, and survives reload", async ({ 
 
   await page.locator('input[type="file"][accept*="gltf"]').setInputFiles(fixturePath);
 
-  await expect(page.getByText("tiny-triangle.gltf")).toBeVisible();
+  await expect(page.getByTestId("asset-list").getByText("tiny-triangle.gltf", { exact: true })).toBeVisible();
   await expect(page.getByTestId("outliner-model-instance-list").getByRole("button")).toHaveCount(1);
 
   await page.getByRole("button", { name: "Place Instance" }).click();
@@ -35,7 +35,7 @@ test("imports a model asset, places an instance, and survives reload", async ({ 
 
   await page.reload();
 
-  await expect(page.getByText("tiny-triangle.gltf")).toBeVisible();
+  await expect(page.getByTestId("asset-list").getByText("tiny-triangle.gltf", { exact: true })).toBeVisible();
   await expect(page.getByTestId("outliner-model-instance-list").getByRole("button")).toHaveCount(2);
   await expect(page.getByTestId("asset-status-message")).toHaveCount(0);
 
