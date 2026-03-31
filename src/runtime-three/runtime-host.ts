@@ -367,6 +367,19 @@ export class RuntimeHost {
 
       this.modelGroup.add(renderGroup);
       this.modelRenderObjects.set(modelInstance.instanceId, renderGroup);
+
+      if (loadedAsset?.animations && loadedAsset.animations.length > 0) {
+        const mixer = new AnimationMixer(renderGroup);
+        this.animationMixers.set(modelInstance.instanceId, mixer);
+        this.instanceAnimationClips.set(modelInstance.instanceId, loadedAsset.animations);
+
+        if (modelInstance.animationAutoplay === true && modelInstance.animationClipName) {
+          const clip = AnimationClip.findByName(loadedAsset.animations, modelInstance.animationClipName);
+          if (clip) {
+            mixer.clipAction(clip).play();
+          }
+        }
+      }
     }
   }
 
