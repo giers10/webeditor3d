@@ -144,6 +144,13 @@ button:disabled {
   min-height: 0;
 }
 
+.runner-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 320px);
+  gap: 12px;
+  min-height: 0;
+}
+
 .side-column {
   display: flex;
   flex-direction: column;
@@ -264,6 +271,12 @@ button:disabled {
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+.outliner-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .outliner-item {
@@ -402,6 +415,16 @@ button:disabled {
   box-shadow: var(--shadow-panel);
 }
 
+.runner-region {
+  display: flex;
+  min-height: 0;
+  background: rgba(20, 24, 31, 0.92);
+  border: 1px solid var(--color-border);
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: var(--shadow-panel);
+}
+
 .viewport-region__header {
   display: flex;
   align-items: center;
@@ -423,22 +446,33 @@ button:disabled {
   font-size: 0.82rem;
 }
 
-.viewport-canvas {
+.viewport-canvas,
+.runner-canvas {
   position: relative;
   min-height: 420px;
-  cursor: crosshair;
   background:
     radial-gradient(circle at top, rgba(130, 154, 188, 0.28) 0%, rgba(130, 154, 188, 0) 38%),
     linear-gradient(180deg, #55657c 0%, #2c3440 34%, #151920 100%);
 }
 
-.viewport-canvas canvas {
+.viewport-canvas {
+  cursor: crosshair;
+}
+
+.runner-canvas {
+  flex: 1 1 auto;
+  cursor: grab;
+}
+
+.viewport-canvas canvas,
+.runner-canvas canvas {
   display: block;
   width: 100%;
   height: 100%;
 }
 
-.viewport-canvas__fallback {
+.viewport-canvas__fallback,
+.runner-canvas__fallback {
   position: absolute;
   inset: 18px;
   display: flex;
@@ -452,7 +486,8 @@ button:disabled {
   border-radius: 18px;
 }
 
-.viewport-canvas__fallback-title {
+.viewport-canvas__fallback-title,
+.runner-canvas__fallback-title {
   font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.14em;
@@ -493,6 +528,10 @@ button:disabled {
     grid-template-columns: minmax(240px, 280px) minmax(0, 1fr);
   }
 
+  .runner-workspace {
+    grid-template-columns: 1fr;
+  }
+
   .workspace > .side-column:last-child {
     grid-column: 1 / -1;
     display: grid;
@@ -515,11 +554,16 @@ button:disabled {
     grid-template-columns: 1fr;
   }
 
+  .runner-workspace {
+    grid-template-columns: 1fr;
+  }
+
   .workspace > .side-column:last-child {
     display: flex;
   }
 
-  .viewport-canvas {
+  .viewport-canvas,
+  .runner-canvas {
     min-height: 320px;
   }
 

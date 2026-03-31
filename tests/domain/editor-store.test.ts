@@ -100,4 +100,17 @@ describe("EditorStore", () => {
       message: expect.stringContaining("blocked read")
     });
   });
+
+  it("restores the previous editor tool when leaving play mode", () => {
+    const store = createEditorStore();
+
+    store.setToolMode("box-create");
+    store.enterPlayMode();
+
+    expect(store.getState().toolMode).toBe("play");
+
+    store.exitPlayMode();
+
+    expect(store.getState().toolMode).toBe("box-create");
+  });
 });

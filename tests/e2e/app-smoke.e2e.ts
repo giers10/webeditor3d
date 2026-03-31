@@ -18,6 +18,7 @@ test("app boots and shows the viewport shell", async ({ page }) => {
 
   await expect(page.getByText("WebEditor3D")).toBeVisible();
   await expect(page.getByTestId("viewport-shell")).toBeVisible();
+  await expect(page.getByTestId("enter-run-mode")).toBeVisible();
 
   expect(pageErrors).toEqual([]);
   expect(consoleErrors).toEqual([]);

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { createBoxBrush } from "../../src/document/brushes";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
 import { migrateSceneDocument } from "../../src/document/migrate-scene-document";
+import { createPlayerStartEntity } from "../../src/entities/entity-instances";
 import { STARTER_MATERIAL_LIBRARY } from "../../src/materials/starter-material-library";
 import { parseSceneDocumentJson, serializeSceneDocument } from "../../src/serialization/scene-document-json";
 
@@ -78,6 +79,26 @@ describe("scene document JSON", () => {
     expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(document);
   });
 
+  it("round-trips a document containing an authored PlayerStart entity", () => {
+    const playerStart = createPlayerStartEntity({
+      id: "entity-player-start-main",
+      position: {
+        x: 4,
+        y: 0,
+        z: -2
+      },
+      yawDegrees: 135
+    });
+    const document = {
+      ...createEmptySceneDocument({ name: "Player Start Scene" }),
+      entities: {
+        [playerStart.id]: playerStart
+      }
+    };
+
+    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(document);
+  });
+
   it("migrates the foundation schema to the current schema version", () => {
     const migratedDocument = migrateSceneDocument({
       version: 1,
@@ -92,7 +113,7 @@ describe("scene document JSON", () => {
       interactionLinks: {}
     });
 
-    expect(migratedDocument.version).toBe(3);
+    expect(migratedDocument.version).toBe(4);
     expect(migratedDocument.brushes).toEqual({});
     expect(migratedDocument.name).toBe("Foundation Scene");
     expect(Object.keys(migratedDocument.materials)).toEqual(STARTER_MATERIAL_LIBRARY.map((material) => material.id));
@@ -135,7 +156,7 @@ describe("scene document JSON", () => {
       interactionLinks: {}
     });
 
-    expect(migratedDocument.version).toBe(3);
+    expect(migratedDocument.version).toBe(4);
     expect(migratedDocument.brushes["brush-legacy"].faces.posZ.materialId).toBe("starter-amber-grid");
     expect(migratedDocument.brushes["brush-legacy"].faces.posZ.uv).toEqual({
       offset: {
@@ -150,6 +171,24 @@ describe("scene document JSON", () => {
       flipU: false,
       flipV: false
     });
+  });
+
+  it("migrates slice 1.2 face materials to the PlayerStart-capable schema", () => {
+    const migratedDocument = migrateSceneDocument({
+      version: 3,
+      name: "Legacy Face Scene",
+      world: createEmptySceneDocument().world,
+      materials: createEmptySceneDocument().materials,
+      textures: {},
+      assets: {},
+      brushes: {},
+      modelInstances: {},
+      entities: {},
+      interactionLinks: {}
+    });
+
+    expect(migratedDocument.version).toBe(4);
+    expect(migratedDocument.entities).toEqual({});
   });
 
   it("rejects unsupported versions", () => {
