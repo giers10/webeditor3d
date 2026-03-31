@@ -49,6 +49,7 @@ These are locked for the early milestones:
 - early box brushes are axis-aligned only with fixed face IDs
 - placed imported models are `modelInstances`, not `entities`
 - local draft persistence plus explicit JSON import/export is acceptable early
+- once scenes depend on external binary assets, portable save/load must move to a project package containing canonical scene JSON plus bundled assets
 - broad roadmap items may be split into smaller implementation chats as long as each chat still lands a coherent vertical slice
 
 ---
@@ -71,7 +72,7 @@ Imported models, lighting, animation, and audio
 Better brush editing and authoring ergonomics
 
 ### Milestone 5
-Scene packaging, sharing, and quality improvements
+Project portability, deployment, and quality improvements
 
 ### Milestone 6
 Power-user systems and ecosystem growth
@@ -499,19 +500,38 @@ These items are also likely candidates for sub-slices if needed.
 
 ---
 
-### Slice 5.3 — Export and packaging improvements
+### Slice 5.3 — Portable project package import/export
 
 #### Deliverables
 
-- GLB export improvements
-- scene packaging options
-- embeddable runner route or bundle
+- explicit project package export path
+- explicit project package import path
+- canonical `scene.json` plus bundled assets
+- support for scenes with or without external assets
+- clear diagnostics for missing or incompatible packaged assets
+
+#### Acceptance criteria
+
+- user can move a project between machines and continue editing it
+- imported assets survive project package export/import
+- project package structure is explicit and understandable
+
+---
+
+### Slice 5.4 — Runner package and embeddable runner
+
+#### Deliverables
+
+- runner package output path
+- embeddable or standalone runner route/bundle
+- packaged runtime scene plus required assets
 - production asset optimization hooks where easy and justified
 
 #### Acceptance criteria
 
-- user can reasonably share or deploy scenes
+- user can export a playable runner package from authored scenes
 - runner package loads reliably in target browsers
+- runner package is clearly separate from editable project save/load
 
 ---
 
@@ -576,7 +596,7 @@ A slice is complete only when:
 - imported asset/material compatibility
 - browser audio unlock behavior
 - input edge cases across browsers
-- export correctness
+- project package / deployment correctness
 
 ### Process risks
 
@@ -609,7 +629,7 @@ A slice is complete only when:
 - editor starts feeling genuinely ergonomic
 
 ### M5 quality gate
-- project becomes reusable for real experiments / small productions
+- project can be moved between machines and exported as a playable runner package
 
 ---
 
@@ -622,6 +642,7 @@ These are explicitly deferred unless reprioritized:
 - procedural generation systems
 - full scripting VM
 - lightmapping pipeline
+- GLB/GLTF scene export as a priority feature
 - node-based materials
 - native desktop packaging as a priority
 - R3F integration as a core dependency
