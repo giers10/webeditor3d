@@ -101,7 +101,10 @@ Do not introduce `/apps` + `/packages` or monorepo packaging until the current c
 
 - version the canonical document from day one
 - M0-M2 may use local draft persistence plus explicit JSON import/export for the document
-- once binary assets are introduced, saved projects must keep them via embedded data or project-packaged storage
+- once binary assets are introduced, user-facing save/load must move to a portable project package built around canonical scene JSON plus referenced assets
+- canonical scene JSON remains the source document format, but JSON alone is no longer a portable project once external assets exist
+- deployable runner output is a separate downstream package, not the editable project format
+- saved projects must keep binary assets via embedded data or project-packaged storage
 - never persist only ephemeral Blob URLs or runtime-only browser object references
 
 ### Early brush representation
@@ -772,7 +775,7 @@ Main responsibilities:
 - instantiate the editor viewport
 - connect store/document/commands
 - switch into play mode or launch runner context
-- manage local persistence/import/export actions
+- manage local draft persistence plus project package import/export actions
 
 Suggested major areas:
 
@@ -845,7 +848,8 @@ Keep ephemeral rendering and interaction state out of the serialized document.
 
 ## Build pipeline
 
-The project has multiple “builds” conceptually:
+The project has multiple derived outputs conceptually.
+These should not be conflated.
 
 ### 1. Frontend app build
 
@@ -855,11 +859,18 @@ Standard web app bundling.
 
 Transforms the document into runtime-usable data.
 
-### 3. Export build
+### 3. Project package build/import
 
-Transforms document/runtime scene data into external deliverables such as GLB or a packaged runner.
+Produces or reads the portable editable project format.
+This is the user-facing save/load path once external assets exist.
 
-These should not be conflated.
+### 4. Runner package build
+
+Produces the deployable/playable output for sharing or embedding.
+
+### 5. Optional later interchange export
+
+Produces formats such as GLB/GLTF when that becomes worth implementing.
 
 ### Runtime scene build stages
 
@@ -875,14 +886,52 @@ SceneDocument
 -> assemble runtime scene package
 ```
 
-### Export build stages
+### Project package build stages
+
+```txt
+SceneDocument
+-> validate
+-> resolve referenced project assets
+-> emit scene.json
+-> copy/embed referenced assets
+-> produce portable project package
+```
+
+Recommended package shape:
+
+```txt
+project/
+  scene.json
+  assets/
+    ...
+```
+
+The concrete output may be:
+
+- a structured folder
+- a zip/archive of that folder
+
+But the logical model should remain “canonical scene JSON plus referenced assets”.
+
+### Runner package build stages
+
+```txt
+SceneDocument
+-> validate
+-> build runtime scene data
+-> resolve required assets
+-> emit standalone runner package
+-> optional post-process
+```
+
+### Optional later interchange export stages
 
 ```txt
 SceneDocument
 -> validate
 -> build export scene graph
 -> attach materials/textures/assets
--> emit GLTF/GLB or packaged output
+-> emit GLTF/GLB
 -> optional post-process
 ```
 
