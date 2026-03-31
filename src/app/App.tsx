@@ -68,7 +68,6 @@ import {
 import { getEntityDisplayLabelById, getSortedEntityDisplayLabels } from "../entities/entity-labels";
 import {
   areInteractionLinksEqual,
-  cloneInteractionLink,
   createTeleportPlayerInteractionLink,
   createToggleVisibilityInteractionLink,
   getInteractionLinksForSource,
