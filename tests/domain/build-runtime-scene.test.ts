@@ -3,9 +3,11 @@ import { describe, expect, it } from "vitest";
 import { createBoxBrush } from "../../src/document/brushes";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
 import {
+  createPointLightEntity,
   createInteractableEntity,
   createPlayerStartEntity,
   createSoundEmitterEntity,
+  createSpotLightEntity,
   createTeleportTargetEntity,
   createTriggerVolumeEntity
 } from "../../src/entities/entity-instances";
@@ -87,6 +89,42 @@ describe("buildRuntimeSceneFromDocument", () => {
       prompt: "Use Console",
       enabled: true
     });
+    const pointLight = createPointLightEntity({
+      id: "entity-point-light-main",
+      position: {
+        x: 2,
+        y: 3,
+        z: 1
+      }
+    });
+    const spotLight = createSpotLightEntity({
+      id: "entity-spot-light-main",
+      position: {
+        x: -2,
+        y: 4,
+        z: 0
+      },
+      direction: {
+        x: 0.2,
+        y: -1,
+        z: 0.1
+      }
+    });
+    const imageAsset = {
+      id: "asset-background-panorama",
+      kind: "image" as const,
+      sourceName: "skybox-panorama.svg",
+      mimeType: "image/svg+xml",
+      storageKey: createProjectAssetStorageKey("asset-background-panorama"),
+      byteLength: 2048,
+      metadata: {
+        kind: "image" as const,
+        width: 512,
+        height: 256,
+        hasAlpha: false,
+        warnings: []
+      }
+    };
     const modelAsset = {
       id: "asset-model-triangle",
       kind: "model" as const,
@@ -149,7 +187,8 @@ describe("buildRuntimeSceneFromDocument", () => {
         [brush.id]: brush
       },
       assets: {
-        [modelAsset.id]: modelAsset
+        [modelAsset.id]: modelAsset,
+        [imageAsset.id]: imageAsset
       },
       modelInstances: {
         [modelInstance.id]: modelInstance
@@ -159,7 +198,9 @@ describe("buildRuntimeSceneFromDocument", () => {
         [soundEmitter.id]: soundEmitter,
         [triggerVolume.id]: triggerVolume,
         [teleportTarget.id]: teleportTarget,
-        [interactable.id]: interactable
+        [interactable.id]: interactable,
+        [pointLight.id]: pointLight,
+        [spotLight.id]: spotLight
       },
       interactionLinks: {
         "link-teleport": createTeleportPlayerInteractionLink({
@@ -184,9 +225,8 @@ describe("buildRuntimeSceneFromDocument", () => {
       }
     };
     document.world.background = {
-      mode: "verticalGradient",
-      topColorHex: "#5f7693",
-      bottomColorHex: "#11161d"
+      mode: "image",
+      assetId: imageAsset.id
     };
     document.world.ambientLight.intensity = 0.55;
     document.world.sunLight.direction = {
@@ -327,6 +367,40 @@ describe("buildRuntimeSceneFromDocument", () => {
           radius: 1.5,
           prompt: "Use Console",
           enabled: true
+        }
+      ]
+    });
+    expect(runtimeScene.localLights).toEqual({
+      pointLights: [
+        {
+          entityId: "entity-point-light-main",
+          position: {
+            x: 2,
+            y: 3,
+            z: 1
+          },
+          colorHex: "#ffffff",
+          intensity: 1.25,
+          distance: 8
+        }
+      ],
+      spotLights: [
+        {
+          entityId: "entity-spot-light-main",
+          position: {
+            x: -2,
+            y: 4,
+            z: 0
+          },
+          direction: {
+            x: 0.2,
+            y: -1,
+            z: 0.1
+          },
+          colorHex: "#ffffff",
+          intensity: 1.5,
+          distance: 12,
+          angleDegrees: 35
         }
       ]
     });
