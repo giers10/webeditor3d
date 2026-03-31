@@ -66,6 +66,20 @@ function cloneVec3(vector: Vec3): Vec3 {
   };
 }
 
+function resolveRuntimeMaterial(document: SceneDocument, materialId: string | null): MaterialDef | null {
+  if (materialId === null) {
+    return null;
+  }
+
+  const material = document.materials[materialId];
+
+  if (material === undefined) {
+    throw new Error(`Runtime build could not resolve material ${materialId}.`);
+  }
+
+  return cloneMaterialDef(material);
+}
+
 function buildRuntimeBrush(brush: BoxBrush, document: SceneDocument): RuntimeBoxBrushInstance {
   return {
     id: brush.id,
@@ -75,32 +89,32 @@ function buildRuntimeBrush(brush: BoxBrush, document: SceneDocument): RuntimeBox
     faces: {
       posX: {
         materialId: brush.faces.posX.materialId,
-        material: brush.faces.posX.materialId === null ? null : cloneMaterialDef(document.materials[brush.faces.posX.materialId]),
+        material: resolveRuntimeMaterial(document, brush.faces.posX.materialId),
         uv: cloneFaceUvState(brush.faces.posX.uv)
       },
       negX: {
         materialId: brush.faces.negX.materialId,
-        material: brush.faces.negX.materialId === null ? null : cloneMaterialDef(document.materials[brush.faces.negX.materialId]),
+        material: resolveRuntimeMaterial(document, brush.faces.negX.materialId),
         uv: cloneFaceUvState(brush.faces.negX.uv)
       },
       posY: {
         materialId: brush.faces.posY.materialId,
-        material: brush.faces.posY.materialId === null ? null : cloneMaterialDef(document.materials[brush.faces.posY.materialId]),
+        material: resolveRuntimeMaterial(document, brush.faces.posY.materialId),
         uv: cloneFaceUvState(brush.faces.posY.uv)
       },
       negY: {
         materialId: brush.faces.negY.materialId,
-        material: brush.faces.negY.materialId === null ? null : cloneMaterialDef(document.materials[brush.faces.negY.materialId]),
+        material: resolveRuntimeMaterial(document, brush.faces.negY.materialId),
         uv: cloneFaceUvState(brush.faces.negY.uv)
       },
       posZ: {
         materialId: brush.faces.posZ.materialId,
-        material: brush.faces.posZ.materialId === null ? null : cloneMaterialDef(document.materials[brush.faces.posZ.materialId]),
+        material: resolveRuntimeMaterial(document, brush.faces.posZ.materialId),
         uv: cloneFaceUvState(brush.faces.posZ.uv)
       },
       negZ: {
         materialId: brush.faces.negZ.materialId,
-        material: brush.faces.negZ.materialId === null ? null : cloneMaterialDef(document.materials[brush.faces.negZ.materialId]),
+        material: resolveRuntimeMaterial(document, brush.faces.negZ.materialId),
         uv: cloneFaceUvState(brush.faces.negZ.uv)
       }
     }

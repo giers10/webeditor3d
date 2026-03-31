@@ -219,9 +219,12 @@ export class FirstPersonNavigationController implements NavigationController {
       return;
     }
 
-    const pointerLockResult = this.context.domElement.requestPointerLock();
+    const pointerLockCapableElement = this.context.domElement as HTMLCanvasElement & {
+      requestPointerLock(): void | Promise<void>;
+    };
+    const pointerLockResult = pointerLockCapableElement.requestPointerLock();
 
-    if (pointerLockResult !== undefined && "catch" in pointerLockResult) {
+    if (pointerLockResult instanceof Promise) {
       pointerLockResult.catch(() => {
         this.context?.setRuntimeMessage(
           "Pointer lock request was denied. Click again or use Orbit Visitor for non-locked navigation."
