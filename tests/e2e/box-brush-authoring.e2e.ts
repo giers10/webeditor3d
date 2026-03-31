@@ -51,3 +51,26 @@ test("user can create a box brush and keep it through a draft reload", async ({ 
   expect(pageErrors).toEqual([]);
   expect(consoleErrors).toEqual([]);
 });
+
+test("switching selection while a transform input is active does not overwrite the newly selected brush", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate((storageKey) => {
+    window.localStorage.removeItem(storageKey);
+  }, "webeditor3d.scene-document-draft");
+  await page.reload();
+
+  await page.getByRole("button", { name: "Box Create" }).click();
+  await page.getByTestId("viewport-fallback-create-box").click();
+  await page.getByRole("button", { name: "Box Create" }).click();
+  await page.getByTestId("viewport-fallback-create-box").click();
+
+  await page.getByTestId("outliner-brush-brush-1").click();
+  await page.getByTestId("brush-size-z").fill("4");
+  await page.getByTestId("outliner-brush-brush-2").click();
+
+  await expect(page.getByText("1 brush selected (Box Brush 2)")).toBeVisible();
+  await expect(page.getByTestId("brush-size-z")).toHaveValue("2");
+
+  await page.getByTestId("outliner-brush-brush-1").click();
+  await expect(page.getByTestId("brush-size-z")).toHaveValue("4");
+});
