@@ -1,6 +1,7 @@
 import type { Vec3 } from "../core/vector";
 import type { BoxBrush, BoxFaceId, FaceUvState } from "../document/brushes";
 import type { SceneDocument, WorldSettings } from "../document/scene-document";
+import { cloneWorldSettings } from "../document/world-settings";
 import { getPrimaryPlayerStartEntity } from "../entities/entity-instances";
 import { getBoxBrushBounds } from "../geometry/box-brush";
 import { cloneMaterialDef, type MaterialDef } from "../materials/starter-material-library";
@@ -213,18 +214,7 @@ export function buildRuntimeSceneFromDocument(document: SceneDocument, options: 
         };
 
   return {
-    world: {
-      background: {
-        ...document.world.background
-      },
-      ambientLight: {
-        ...document.world.ambientLight
-      },
-      sunLight: {
-        ...document.world.sunLight,
-        direction: cloneVec3(document.world.sunLight.direction)
-      }
-    },
+    world: cloneWorldSettings(document.world),
     brushes,
     colliders,
     sceneBounds,

@@ -3,7 +3,6 @@ import {
   AxesHelper,
   BoxGeometry,
   CanvasTexture,
-  Color,
   ConeGeometry,
   CylinderGeometry,
   DirectionalLight,
@@ -71,7 +70,7 @@ interface PlayerStartRenderObjects {
 export class ViewportHost {
   private readonly scene = new Scene();
   private readonly camera = new PerspectiveCamera(60, 1, 0.1, 1000);
-  private readonly renderer = new WebGLRenderer({ antialias: true });
+  private readonly renderer = new WebGLRenderer({ antialias: true, alpha: true });
   private readonly cameraTarget = new Vector3(0, 0, 0);
   private readonly cameraOffset = new Vector3();
   private readonly cameraForward = new Vector3();
@@ -137,6 +136,7 @@ export class ViewportHost {
     this.scene.add(this.boxCreatePreviewMesh);
     this.scene.add(this.boxCreatePreviewEdges);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.setClearAlpha(0);
   }
 
   mount(container: HTMLElement) {
@@ -161,7 +161,7 @@ export class ViewportHost {
   }
 
   updateWorld(world: WorldSettings) {
-    this.scene.background = new Color(world.background.colorHex);
+    this.scene.background = null;
     this.ambientLight.color.set(world.ambientLight.colorHex);
     this.ambientLight.intensity = world.ambientLight.intensity;
     this.sunLight.color.set(world.sunLight.colorHex);
