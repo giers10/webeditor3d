@@ -1,5 +1,15 @@
-import { createBoxBrush, isBoxFaceId, type BoxBrushFaces, type BrushFace } from "./brushes";
+import { createStarterMaterialRegistry, type MaterialDef, type MaterialPattern } from "../materials/starter-material-library";
 import {
+  createBoxBrush,
+  createDefaultFaceUvState,
+  isBoxFaceId,
+  isFaceUvRotationQuarterTurns,
+  type BoxBrushFaces,
+  type BrushFace,
+  type FaceUvState
+} from "./brushes";
+import {
+  BOX_BRUSH_SCENE_DOCUMENT_VERSION,
   FOUNDATION_SCENE_DOCUMENT_VERSION,
   SCENE_DOCUMENT_VERSION,
   type SceneDocument,
@@ -26,6 +36,22 @@ function expectString(value: unknown, label: string): string {
   return value;
 }
 
+function expectBoolean(value: unknown, label: string): boolean {
+  if (typeof value !== "boolean") {
+    throw new Error(`${label} must be a boolean.`);
+  }
+
+  return value;
+}
+
+function expectStringArray(value: unknown, label: string): string[] {
+  if (!Array.isArray(value) || value.some((entry) => typeof entry !== "string")) {
+    throw new Error(`${label} must be a string array.`);
+  }
+
+  return [...value];
+}
+
 function expectHexColor(value: unknown, label: string): string {
   const normalizedValue = expectString(value, label);
 
@@ -44,18 +70,6 @@ function expectLiteralString<T extends string>(value: unknown, expectedValue: T,
   return expectedValue;
 }
 
-function expectEmptyCollection(value: unknown, label: string): Record<string, never> {
-  if (!isRecord(value)) {
-    throw new Error(`${label} must be a record.`);
-  }
-
-  if (Object.keys(value).length > 0) {
-    throw new Error(`${label} must be empty in the foundation schema.`);
-  }
-
-  return {};
-}
-
 function expectOptionalString(value: unknown, label: string): string | undefined {
   if (value === undefined) {
     return undefined;
@@ -64,19 +78,26 @@ function expectOptionalString(value: unknown, label: string): string | undefined
   return expectString(value, label);
 }
 
-function expectBrushFace(value: unknown, label: string): BrushFace {
+function expectEmptyCollection(value: unknown, label: string): Record<string, never> {
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be a record.`);
+  }
+
+  if (Object.keys(value).length > 0) {
+    throw new Error(`${label} must be empty in the current schema.`);
+  }
+
+  return {};
+}
+
+function readVec2(value: unknown, label: string) {
   if (!isRecord(value)) {
     throw new Error(`${label} must be an object.`);
   }
 
-  const materialId = value.materialId;
-
-  if (materialId !== null && materialId !== undefined && typeof materialId !== "string") {
-    throw new Error(`${label}.materialId must be a string or null.`);
-  }
-
   return {
-    materialId: materialId ?? null
+    x: expectFiniteNumber(value.x, `${label}.x`),
+    y: expectFiniteNumber(value.y, `${label}.y`)
   };
 }
 
@@ -92,7 +113,106 @@ function readVec3(value: unknown, label: string) {
   };
 }
 
-function readBoxBrushFaces(value: unknown, label: string): BoxBrushFaces {
+function expectMaterialPattern(value: unknown, label: string): MaterialPattern {
+  if (value !== "grid" && value !== "checker" && value !== "stripes" && value !== "diamond") {
+    throw new Error(`${label} must be a supported starter material pattern.`);
+  }
+
+  return value;
+}
+
+function readMaterialRegistry(value: unknown, label: string): SceneDocument["materials"] {
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be a record.`);
+  }
+
+  const materials: SceneDocument["materials"] = {};
+
+  for (const [materialId, materialValue] of Object.entries(value)) {
+    if (!isRecord(materialValue)) {
+      throw new Error(`${label}.${materialId} must be an object.`);
+    }
+
+    const material: MaterialDef = {
+      id: expectString(materialValue.id, `${label}.${materialId}.id`),
+      name: expectString(materialValue.name, `${label}.${materialId}.name`),
+      baseColorHex: expectHexColor(materialValue.baseColorHex, `${label}.${materialId}.baseColorHex`),
+      accentColorHex: expectHexColor(materialValue.accentColorHex, `${label}.${materialId}.accentColorHex`),
+      pattern: expectMaterialPattern(materialValue.pattern, `${label}.${materialId}.pattern`),
+      tags: expectStringArray(materialValue.tags, `${label}.${materialId}.tags`)
+    };
+
+    if (material.id !== materialId) {
+      throw new Error(`${label}.${materialId}.id must match the registry key.`);
+    }
+
+    materials[materialId] = material;
+  }
+
+  return materials;
+}
+
+function readFaceUvState(value: unknown, label: string): FaceUvState {
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  const rotationQuarterTurns = expectFiniteNumber(value.rotationQuarterTurns, `${label}.rotationQuarterTurns`);
+
+  if (!isFaceUvRotationQuarterTurns(rotationQuarterTurns)) {
+    throw new Error(`${label}.rotationQuarterTurns must be 0, 1, 2, or 3.`);
+  }
+
+  const scale = readVec2(value.scale, `${label}.scale`);
+
+  if (scale.x <= 0 || scale.y <= 0) {
+    throw new Error(`${label}.scale values must remain positive.`);
+  }
+
+  return {
+    offset: readVec2(value.offset, `${label}.offset`),
+    scale,
+    rotationQuarterTurns,
+    flipU: expectBoolean(value.flipU, `${label}.flipU`),
+    flipV: expectBoolean(value.flipV, `${label}.flipV`)
+  };
+}
+
+function readBrushFace(
+  value: unknown,
+  label: string,
+  materials: SceneDocument["materials"],
+  allowMissingUvState: boolean
+): BrushFace {
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  const materialId = value.materialId;
+
+  if (materialId !== null && materialId !== undefined && typeof materialId !== "string") {
+    throw new Error(`${label}.materialId must be a string or null.`);
+  }
+
+  if (materialId !== null && materialId !== undefined && materials[materialId] === undefined) {
+    throw new Error(`${label}.materialId references missing material ${materialId}.`);
+  }
+
+  return {
+    materialId: materialId ?? null,
+    uv:
+      value.uv === undefined && allowMissingUvState
+        ? createDefaultFaceUvState()
+        : readFaceUvState(value.uv, `${label}.uv`)
+  };
+}
+
+function readBoxBrushFaces(
+  value: unknown,
+  label: string,
+  materials: SceneDocument["materials"],
+  allowMissingUvState: boolean
+): BoxBrushFaces {
   if (!isRecord(value)) {
     throw new Error(`${label} must be an object.`);
   }
@@ -104,16 +224,20 @@ function readBoxBrushFaces(value: unknown, label: string): BoxBrushFaces {
   }
 
   return {
-    posX: expectBrushFace(value.posX, `${label}.posX`),
-    negX: expectBrushFace(value.negX, `${label}.negX`),
-    posY: expectBrushFace(value.posY, `${label}.posY`),
-    negY: expectBrushFace(value.negY, `${label}.negY`),
-    posZ: expectBrushFace(value.posZ, `${label}.posZ`),
-    negZ: expectBrushFace(value.negZ, `${label}.negZ`)
+    posX: readBrushFace(value.posX, `${label}.posX`, materials, allowMissingUvState),
+    negX: readBrushFace(value.negX, `${label}.negX`, materials, allowMissingUvState),
+    posY: readBrushFace(value.posY, `${label}.posY`, materials, allowMissingUvState),
+    negY: readBrushFace(value.negY, `${label}.negY`, materials, allowMissingUvState),
+    posZ: readBrushFace(value.posZ, `${label}.posZ`, materials, allowMissingUvState),
+    negZ: readBrushFace(value.negZ, `${label}.negZ`, materials, allowMissingUvState)
   };
 }
 
-function readBrushes(value: unknown): SceneDocument["brushes"] {
+function readBrushes(
+  value: unknown,
+  materials: SceneDocument["materials"],
+  allowMissingUvState: boolean
+): SceneDocument["brushes"] {
   if (!isRecord(value)) {
     throw new Error("brushes must be a record.");
   }
@@ -140,7 +264,7 @@ function readBrushes(value: unknown): SceneDocument["brushes"] {
       id: expectString(brushValue.id, `brushes.${brushId}.id`),
       center,
       size,
-      faces: readBoxBrushFaces(brushValue.faces, `brushes.${brushId}.faces`),
+      faces: readBoxBrushFaces(brushValue.faces, `brushes.${brushId}.faces`, materials, allowMissingUvState),
       layerId: expectOptionalString(brushValue.layerId, `brushes.${brushId}.layerId`),
       groupId: expectOptionalString(brushValue.groupId, `brushes.${brushId}.groupId`)
     });
@@ -207,10 +331,27 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
       world: readWorldSettings(source.world),
-      materials: expectEmptyCollection(source.materials, "materials"),
+      materials: createStarterMaterialRegistry(),
       textures: expectEmptyCollection(source.textures, "textures"),
       assets: expectEmptyCollection(source.assets, "assets"),
       brushes: {},
+      modelInstances: expectEmptyCollection(source.modelInstances, "modelInstances"),
+      entities: expectEmptyCollection(source.entities, "entities"),
+      interactionLinks: expectEmptyCollection(source.interactionLinks, "interactionLinks")
+    };
+  }
+
+  if (source.version === BOX_BRUSH_SCENE_DOCUMENT_VERSION) {
+    const materials = createStarterMaterialRegistry();
+
+    return {
+      version: SCENE_DOCUMENT_VERSION,
+      name: expectString(source.name, "name"),
+      world: readWorldSettings(source.world),
+      materials,
+      textures: expectEmptyCollection(source.textures, "textures"),
+      assets: expectEmptyCollection(source.assets, "assets"),
+      brushes: readBrushes(source.brushes, materials, true),
       modelInstances: expectEmptyCollection(source.modelInstances, "modelInstances"),
       entities: expectEmptyCollection(source.entities, "entities"),
       interactionLinks: expectEmptyCollection(source.interactionLinks, "interactionLinks")
@@ -221,14 +362,16 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     throw new Error(`Unsupported scene document version: ${String(source.version)}.`);
   }
 
+  const materials = readMaterialRegistry(source.materials, "materials");
+
   return {
     version: SCENE_DOCUMENT_VERSION,
     name: expectString(source.name, "name"),
     world: readWorldSettings(source.world),
-    materials: expectEmptyCollection(source.materials, "materials"),
+    materials,
     textures: expectEmptyCollection(source.textures, "textures"),
     assets: expectEmptyCollection(source.assets, "assets"),
-    brushes: readBrushes(source.brushes),
+    brushes: readBrushes(source.brushes, materials, false),
     modelInstances: expectEmptyCollection(source.modelInstances, "modelInstances"),
     entities: expectEmptyCollection(source.entities, "entities"),
     interactionLinks: expectEmptyCollection(source.interactionLinks, "interactionLinks")
