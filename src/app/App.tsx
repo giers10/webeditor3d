@@ -5,10 +5,12 @@ import { createMoveBoxBrushCommand } from "../commands/move-box-brush-command";
 import { createResizeBoxBrushCommand } from "../commands/resize-box-brush-command";
 import { createSetBoxBrushFaceMaterialCommand } from "../commands/set-box-brush-face-material-command";
 import { createSetBoxBrushFaceUvStateCommand } from "../commands/set-box-brush-face-uv-state-command";
+import { createSetPlayerStartCommand } from "../commands/set-player-start-command";
 import { createSetSceneNameCommand } from "../commands/set-scene-name-command";
 import {
   getSelectedBrushFaceId,
   getSingleSelectedBrushId,
+  getSingleSelectedEntityId,
   isBrushFaceSelected,
   isBrushSelected,
   type EditorSelection
@@ -21,12 +23,22 @@ import {
   createDefaultFaceUvState,
   type BoxBrush,
   type BoxFaceId,
-  type FaceUvState,
-  type FaceUvRotationQuarterTurns
+  type FaceUvRotationQuarterTurns,
+  type FaceUvState
 } from "../document/brushes";
 import { DEFAULT_GRID_SIZE, snapPositiveSizeToGrid, snapVec3ToGrid } from "../geometry/grid-snapping";
 import { createFitToFaceBoxBrushFaceUvState } from "../geometry/box-face-uvs";
+import {
+  DEFAULT_PLAYER_START_POSITION,
+  getPlayerStartEntities,
+  getPrimaryPlayerStartEntity,
+  normalizeYawDegrees,
+  type PlayerStartEntity
+} from "../entities/entity-instances";
 import { STARTER_MATERIAL_LIBRARY, type MaterialDef } from "../materials/starter-material-library";
+import { RunnerCanvas } from "../runner-web/RunnerCanvas";
+import type { FirstPersonTelemetry } from "../runtime-three/navigation-controller";
+import { buildRuntimeSceneFromDocument, type RuntimeNavigationMode, type RuntimeSceneDefinition } from "../runtime-three/runtime-scene-build";
 import { Panel } from "../shared-ui/Panel";
 import { ViewportCanvas } from "../viewport-three/ViewportCanvas";
 import type { EditorStore } from "./editor-store";
@@ -111,6 +123,16 @@ function readVec3Draft(draft: Vec3Draft, label: string): Vec3 {
   return vector;
 }
 
+function readYawDegreesDraft(source: string): number {
+  const yawDegrees = Number(source);
+
+  if (!Number.isFinite(yawDegrees)) {
+    throw new Error("Player start yaw must be a finite number.");
+  }
+
+  return normalizeYawDegrees(yawDegrees);
+}
+
 function areVec2Equal(left: Vec2, right: Vec2): boolean {
   return left.x === right.x && left.y === right.y;
 }
@@ -129,6 +151,10 @@ function areFaceUvStatesEqual(left: FaceUvState, right: FaceUvState): boolean {
   );
 }
 
+function arePlayerStartsEqual(left: PlayerStartEntity, rightPosition: Vec3, rightYawDegrees: number): boolean {
+  return areVec3Equal(left.position, rightPosition) && left.yawDegrees === normalizeYawDegrees(rightYawDegrees);
+}
+
 function getSelectedBoxBrush(selection: EditorSelection, brushes: BoxBrush[]): BoxBrush | null {
   const selectedBrushId = getSingleSelectedBrushId(selection);
 
@@ -139,6 +165,16 @@ function getSelectedBoxBrush(selection: EditorSelection, brushes: BoxBrush[]): B
   return brushes.find((brush) => brush.id === selectedBrushId) ?? null;
 }
 
+function getSelectedPlayerStart(selection: EditorSelection, playerStarts: PlayerStartEntity[]): PlayerStartEntity | null {
+  const selectedEntityId = getSingleSelectedEntityId(selection);
+
+  if (selectedEntityId === null) {
+    return null;
+  }
+
+  return playerStarts.find((entity) => entity.id === selectedEntityId) ?? null;
+}
+
 function getBrushLabel(index: number): string {
   return `Box Brush ${index + 1}`;
 }
@@ -146,6 +182,15 @@ function getBrushLabel(index: number): string {
 function getBrushLabelById(brushId: string, brushes: BoxBrush[]): string {
   const brushIndex = brushes.findIndex((brush) => brush.id === brushId);
   return brushIndex === -1 ? "Box Brush" : getBrushLabel(brushIndex);
+}
+
+function getPlayerStartLabel(index: number): string {
+  return index === 0 ? "Player Start" : `Player Start ${index + 1}`;
+}
+
+function getPlayerStartLabelById(entityId: string, playerStarts: PlayerStartEntity[]): string {
+  const playerStartIndex = playerStarts.findIndex((playerStart) => playerStart.id === entityId);
+  return playerStartIndex === -1 ? "Player Start" : getPlayerStartLabel(playerStartIndex);
 }
 
 function getSelectedBrushLabel(selection: EditorSelection, brushes: BoxBrush[]): string {
@@ -158,7 +203,7 @@ function getSelectedBrushLabel(selection: EditorSelection, brushes: BoxBrush[]):
   return getBrushLabelById(selectedBrushId, brushes);
 }
 
-function describeSelection(selection: EditorSelection, brushes: BoxBrush[]): string {
+function describeSelection(selection: EditorSelection, brushes: BoxBrush[], playerStarts: PlayerStartEntity[]): string {
   switch (selection.kind) {
     case "none":
       return "No authored selection";
@@ -167,7 +212,7 @@ function describeSelection(selection: EditorSelection, brushes: BoxBrush[]): str
     case "brushFace":
       return `1 face selected (${FACE_LABELS[selection.faceId]} on ${getBrushLabelById(selection.brushId, brushes)})`;
     case "entities":
-      return `${selection.ids.length} entities selected`;
+      return `${selection.ids.length} entity selected (${getPlayerStartLabelById(selection.ids[0], playerStarts)})`;
     case "modelInstances":
       return `${selection.ids.length} model instances selected`;
     default:
@@ -229,22 +274,45 @@ function rotateQuarterTurns(rotationQuarterTurns: FaceUvRotationQuarterTurns): F
   return ((rotationQuarterTurns + 1) % 4) as FaceUvRotationQuarterTurns;
 }
 
+function formatRunnerFeetPosition(position: Vec3 | null): string {
+  if (position === null) {
+    return "n/a";
+  }
+
+  return `${position.x.toFixed(2)}, ${position.y.toFixed(2)}, ${position.z.toFixed(2)}`;
+}
+
 export function App({ store, initialStatusMessage }: AppProps) {
   const editorState = useEditorStoreState(store);
   const brushList = Object.values(editorState.document.brushes);
+  const playerStartList = getPlayerStartEntities(editorState.document.entities);
+  const primaryPlayerStart = getPrimaryPlayerStartEntity(editorState.document.entities);
   const materialList = sortDocumentMaterials(editorState.document.materials);
   const selectedBrush = getSelectedBoxBrush(editorState.selection, brushList);
+  const selectedPlayerStart = getSelectedPlayerStart(editorState.selection, playerStartList);
   const selectedFaceId = getSelectedBrushFaceId(editorState.selection);
   const selectedFace = selectedBrush !== null && selectedFaceId !== null ? selectedBrush.faces[selectedFaceId] : null;
   const selectedFaceMaterial =
     selectedFace !== null && selectedFace.materialId !== null ? editorState.document.materials[selectedFace.materialId] ?? null : null;
+  const editablePlayerStart = selectedPlayerStart ?? primaryPlayerStart;
 
   const [sceneNameDraft, setSceneNameDraft] = useState(editorState.document.name);
   const [positionDraft, setPositionDraft] = useState(createVec3Draft(DEFAULT_BOX_BRUSH_CENTER));
   const [sizeDraft, setSizeDraft] = useState(createVec3Draft(DEFAULT_BOX_BRUSH_SIZE));
   const [uvOffsetDraft, setUvOffsetDraft] = useState(createVec2Draft(createDefaultFaceUvState().offset));
   const [uvScaleDraft, setUvScaleDraft] = useState(createVec2Draft(createDefaultFaceUvState().scale));
-  const [statusMessage, setStatusMessage] = useState(initialStatusMessage ?? "Face material authoring ready.");
+  const [playerStartPositionDraft, setPlayerStartPositionDraft] = useState(createVec3Draft(DEFAULT_PLAYER_START_POSITION));
+  const [playerStartYawDraft, setPlayerStartYawDraft] = useState("0");
+  const [statusMessage, setStatusMessage] = useState(initialStatusMessage ?? "Runner v1 authoring ready.");
+  const [preferredNavigationMode, setPreferredNavigationMode] = useState<RuntimeNavigationMode>(
+    primaryPlayerStart === null ? "orbitVisitor" : "firstPerson"
+  );
+  const [activeNavigationMode, setActiveNavigationMode] = useState<RuntimeNavigationMode>(
+    primaryPlayerStart === null ? "orbitVisitor" : "firstPerson"
+  );
+  const [runtimeScene, setRuntimeScene] = useState<RuntimeSceneDefinition | null>(null);
+  const [runtimeMessage, setRuntimeMessage] = useState<string | null>(null);
+  const [firstPersonTelemetry, setFirstPersonTelemetry] = useState<FirstPersonTelemetry | null>(null);
   const importInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -274,6 +342,26 @@ export function App({ store, initialStatusMessage }: AppProps) {
     setUvScaleDraft(createVec2Draft(selectedFace.uv.scale));
   }, [selectedFace]);
 
+  useEffect(() => {
+    if (editablePlayerStart === null) {
+      setPlayerStartPositionDraft(createVec3Draft(DEFAULT_PLAYER_START_POSITION));
+      setPlayerStartYawDraft("0");
+      return;
+    }
+
+    setPlayerStartPositionDraft(createVec3Draft(editablePlayerStart.position));
+    setPlayerStartYawDraft(String(editablePlayerStart.yawDegrees));
+  }, [editablePlayerStart]);
+
+  useEffect(() => {
+    if (primaryPlayerStart !== null || preferredNavigationMode !== "firstPerson") {
+      return;
+    }
+
+    setPreferredNavigationMode("orbitVisitor");
+    setActiveNavigationMode("orbitVisitor");
+  }, [preferredNavigationMode, primaryPlayerStart]);
+
   const applySceneName = () => {
     const normalizedName = sceneNameDraft.trim() || "Untitled Scene";
 
@@ -295,7 +383,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
-  const applySelection = (selection: EditorSelection, source: "outliner" | "viewport" | "inspector") => {
+  const applySelection = (selection: EditorSelection, source: "outliner" | "viewport" | "inspector" | "runner") => {
     store.setSelection(selection);
 
     switch (selection.kind) {
@@ -307,6 +395,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
         break;
       case "brushFace":
         setStatusMessage(`Selected ${FACE_LABELS[selection.faceId]} on ${getBrushLabelById(selection.brushId, brushList)} from the ${source}.`);
+        break;
+      case "entities":
+        setStatusMessage(`Selected ${getPlayerStartLabelById(selection.ids[0], playerStartList)} from the ${source}.`);
         break;
       default:
         setStatusMessage(`Selection updated from the ${source}.`);
@@ -361,6 +452,29 @@ export function App({ store, initialStatusMessage }: AppProps) {
         })
       );
       setStatusMessage("Resized selected box brush.");
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const applyPlayerStartChange = () => {
+    try {
+      const snappedPosition = snapVec3ToGrid(readVec3Draft(playerStartPositionDraft, "Player start position"), DEFAULT_GRID_SIZE);
+      const yawDegrees = readYawDegreesDraft(playerStartYawDraft);
+
+      if (editablePlayerStart !== null && arePlayerStartsEqual(editablePlayerStart, snappedPosition, yawDegrees)) {
+        setStatusMessage("Player start already uses that authored position and yaw.");
+        return;
+      }
+
+      store.executeCommand(
+        createSetPlayerStartCommand({
+          entityId: editablePlayerStart?.id,
+          position: snappedPosition,
+          yawDegrees
+        })
+      );
+      setStatusMessage(editablePlayerStart === null ? "Placed Player Start." : "Updated Player Start.");
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
     }
@@ -557,12 +671,177 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
   };
 
+  const handleSelectOrPlacePlayerStart = () => {
+    if (primaryPlayerStart === null) {
+      applyPlayerStartChange();
+      return;
+    }
+
+    applySelection(
+      {
+        kind: "entities",
+        ids: [primaryPlayerStart.id]
+      },
+      "runner"
+    );
+  };
+
+  const handleEnterPlayMode = () => {
+    try {
+      const nextRuntimeScene = buildRuntimeSceneFromDocument(editorState.document);
+      const nextNavigationMode = primaryPlayerStart === null && preferredNavigationMode === "firstPerson" ? "orbitVisitor" : preferredNavigationMode;
+
+      setRuntimeScene(nextRuntimeScene);
+      setRuntimeMessage(
+        nextRuntimeScene.spawn.source === "playerStart"
+          ? "Running from the authored Player Start."
+          : "No Player Start is authored yet. Orbit Visitor opened first, with a fallback FPS spawn still available."
+      );
+      setFirstPersonTelemetry(null);
+      setActiveNavigationMode(nextNavigationMode);
+      store.enterPlayMode();
+      setStatusMessage(
+        nextNavigationMode === "firstPerson"
+          ? "Entered run mode with first-person navigation."
+          : "Entered run mode with Orbit Visitor."
+      );
+    } catch (error) {
+      setStatusMessage(`Run mode could not start: ${getErrorMessage(error)}`);
+    }
+  };
+
+  const handleExitPlayMode = () => {
+    setRuntimeScene(null);
+    setRuntimeMessage(null);
+    setFirstPersonTelemetry(null);
+    store.exitPlayMode();
+    setStatusMessage("Returned to editor mode.");
+  };
+
+  const handleSetPreferredNavigationMode = (navigationMode: RuntimeNavigationMode) => {
+    setPreferredNavigationMode(navigationMode);
+
+    if (editorState.toolMode === "play") {
+      setActiveNavigationMode(navigationMode);
+      setStatusMessage(navigationMode === "firstPerson" ? "Runner switched to first-person navigation." : "Runner switched to Orbit Visitor.");
+    }
+  };
+
+  if (editorState.toolMode === "play" && runtimeScene !== null) {
+    return (
+      <div className="app-shell app-shell--play">
+        <header className="toolbar">
+          <div className="toolbar__brand">
+            <div className="toolbar__title">WebEditor3D</div>
+            <div className="toolbar__subtitle">Slice 1.3 runner v1</div>
+          </div>
+
+          <div className="toolbar__actions">
+            <div className="toolbar__group">
+              <button
+                className={`toolbar__button ${activeNavigationMode === "firstPerson" ? "toolbar__button--active" : ""}`}
+                type="button"
+                data-testid="runner-mode-first-person"
+                onClick={() => handleSetPreferredNavigationMode("firstPerson")}
+              >
+                First Person
+              </button>
+              <button
+                className={`toolbar__button ${activeNavigationMode === "orbitVisitor" ? "toolbar__button--active" : ""}`}
+                type="button"
+                data-testid="runner-mode-orbit-visitor"
+                onClick={() => handleSetPreferredNavigationMode("orbitVisitor")}
+              >
+                Orbit Visitor
+              </button>
+            </div>
+
+            <div className="toolbar__group">
+              <button className="toolbar__button toolbar__button--accent" type="button" data-testid="exit-run-mode" onClick={handleExitPlayMode}>
+                Return To Editor
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <div className="runner-workspace">
+          <main className="runner-region">
+            <RunnerCanvas
+              runtimeScene={runtimeScene}
+              navigationMode={activeNavigationMode}
+              onRuntimeMessageChange={setRuntimeMessage}
+              onFirstPersonTelemetryChange={setFirstPersonTelemetry}
+            />
+          </main>
+
+          <aside className="side-column">
+            <Panel title="Runner">
+              <div className="stat-grid">
+                <div className="stat-card">
+                  <div className="label">Navigation</div>
+                  <div className="value">{activeNavigationMode === "firstPerson" ? "First Person" : "Orbit Visitor"}</div>
+                </div>
+                <div className="stat-card">
+                  <div className="label">Spawn Source</div>
+                  <div className="value">{runtimeScene.spawn.source === "playerStart" ? "Player Start" : "Fallback"}</div>
+                </div>
+                <div className="stat-card">
+                  <div className="label">Pointer Lock</div>
+                  <div className="value">
+                    {activeNavigationMode === "firstPerson" ? (firstPersonTelemetry?.pointerLocked ? "active" : "idle") : "not used"}
+                  </div>
+                </div>
+                <div className="stat-card">
+                  <div className="label">Grounded</div>
+                  <div className="value">{firstPersonTelemetry?.grounded ? "yes" : activeNavigationMode === "firstPerson" ? "no" : "n/a"}</div>
+                </div>
+              </div>
+
+              <div className="stat-card">
+                <div className="label">FPS Feet Position</div>
+                <div className="value" data-testid="runner-player-position">
+                  {formatRunnerFeetPosition(firstPersonTelemetry?.feetPosition ?? runtimeScene.spawn.position)}
+                </div>
+                <div className="material-summary" data-testid="runner-spawn-state">
+                  Spawn: {runtimeScene.spawn.source === "playerStart" ? "Player Start" : "Fallback"} at{" "}
+                  {formatRunnerFeetPosition(runtimeScene.spawn.position)}
+                </div>
+              </div>
+
+              {runtimeMessage === null ? null : (
+                <ul className="placeholder-list">
+                  <li>{runtimeMessage}</li>
+                </ul>
+              )}
+
+              <ul className="placeholder-list">
+                <li>First-person uses `WASD` plus mouse-look after pointer lock is captured.</li>
+                <li>Orbit Visitor is the browser-safe fallback when pointer lock is unavailable or undesirable.</li>
+                <li>Collision is axis-aligned box collision only in this slice.</li>
+              </ul>
+            </Panel>
+          </aside>
+        </div>
+
+        <footer className="status-bar">
+          <div>
+            <span className="status-bar__strong">Status:</span> {statusMessage}
+          </div>
+          <div>
+            <span className="status-bar__strong">Spawn:</span>{" "}
+            {runtimeScene.spawn.source === "playerStart" ? "Authored Player Start" : "Fallback runtime spawn"}
+          </div>
+        </footer>
+      </div>
+    );
+  }
+
   return (
     <div className="app-shell">
       <header className="toolbar">
         <div className="toolbar__brand">
           <div className="toolbar__title">WebEditor3D</div>
-          <div className="toolbar__subtitle">Slice 1.2 face materials and UV basics</div>
+          <div className="toolbar__subtitle">Slice 1.3 runner v1</div>
         </div>
 
         <div className="toolbar__actions">
@@ -581,15 +860,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
             >
               Box
             </button>
-            <button
-              className={`toolbar__button ${editorState.toolMode === "play" ? "toolbar__button--active" : ""}`}
-              type="button"
-              onClick={() => store.setToolMode("play")}
-            >
-              Play
-            </button>
             <button className="toolbar__button toolbar__button--accent" type="button" data-testid="create-box-brush" onClick={handleCreateBoxBrush}>
               Create Box Brush
+            </button>
+            <button className="toolbar__button toolbar__button--accent" type="button" data-testid="enter-run-mode" onClick={handleEnterPlayMode}>
+              Run Scene
             </button>
           </div>
 
@@ -664,7 +939,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
             <ul className="placeholder-list">
               <li>Materials live in the canonical document registry and ship with a tiny starter library.</li>
-              <li>Each box face persists its own material id and explicit UV transform values.</li>
+              <li>Player Start now persists as a typed scene entity and feeds the built-in runner directly.</li>
             </ul>
           </Panel>
 
@@ -700,38 +975,79 @@ export function App({ store, initialStatusMessage }: AppProps) {
           </Panel>
 
           <Panel title="Outliner">
-            {brushList.length === 0 ? (
-              <ul className="placeholder-list">
-                <li>No authored brushes yet. Use Create Box Brush to place the first brush.</li>
-              </ul>
-            ) : (
-              <div className="outliner-list" data-testid="outliner-brush-list">
-                {brushList.map((brush, brushIndex) => (
-                  <button
-                    key={brush.id}
-                    className={`outliner-item ${isBrushSelected(editorState.selection, brush.id) ? "outliner-item--selected" : ""}`}
-                    type="button"
-                    onClick={() =>
-                      applySelection(
-                        {
-                          kind: "brushes",
-                          ids: [brush.id]
-                        },
-                        "outliner"
-                      )
-                    }
-                  >
-                    <span className="outliner-item__title">{getBrushLabel(brushIndex)}</span>
-                    <span className="outliner-item__meta">
-                      center {brush.center.x}, {brush.center.y}, {brush.center.z}
-                    </span>
-                    <span className="outliner-item__meta">
-                      size {brush.size.x}, {brush.size.y}, {brush.size.z}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
+            <div className="outliner-section">
+              <div className="label">Brushes</div>
+              {brushList.length === 0 ? (
+                <ul className="placeholder-list">
+                  <li>No authored brushes yet. Use Create Box Brush to place the first brush.</li>
+                </ul>
+              ) : (
+                <div className="outliner-list" data-testid="outliner-brush-list">
+                  {brushList.map((brush, brushIndex) => (
+                    <button
+                      key={brush.id}
+                      className={`outliner-item ${isBrushSelected(editorState.selection, brush.id) ? "outliner-item--selected" : ""}`}
+                      type="button"
+                      onClick={() =>
+                        applySelection(
+                          {
+                            kind: "brushes",
+                            ids: [brush.id]
+                          },
+                          "outliner"
+                        )
+                      }
+                    >
+                      <span className="outliner-item__title">{getBrushLabel(brushIndex)}</span>
+                      <span className="outliner-item__meta">
+                        center {brush.center.x}, {brush.center.y}, {brush.center.z}
+                      </span>
+                      <span className="outliner-item__meta">
+                        size {brush.size.x}, {brush.size.y}, {brush.size.z}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="outliner-section">
+              <div className="label">Entities</div>
+              {playerStartList.length === 0 ? (
+                <ul className="placeholder-list">
+                  <li>No Player Start authored yet. Place one before relying on first-person spawn.</li>
+                </ul>
+              ) : (
+                <div className="outliner-list">
+                  {playerStartList.map((playerStart, index) => (
+                    <button
+                      key={playerStart.id}
+                      className={`outliner-item ${
+                        editorState.selection.kind === "entities" && editorState.selection.ids.includes(playerStart.id)
+                          ? "outliner-item--selected"
+                          : ""
+                      }`}
+                      type="button"
+                      onClick={() =>
+                        applySelection(
+                          {
+                            kind: "entities",
+                            ids: [playerStart.id]
+                          },
+                          "outliner"
+                        )
+                      }
+                    >
+                      <span className="outliner-item__title">{getPlayerStartLabel(index)}</span>
+                      <span className="outliner-item__meta">
+                        position {playerStart.position.x}, {playerStart.position.y}, {playerStart.position.z}
+                      </span>
+                      <span className="outliner-item__meta">yaw {playerStart.yawDegrees}°</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </Panel>
         </aside>
 
@@ -754,13 +1070,91 @@ export function App({ store, initialStatusMessage }: AppProps) {
           <Panel title="Inspector">
             <div className="stat-card">
               <div className="label">Selection</div>
-              <div className="value">{describeSelection(editorState.selection, brushList)}</div>
+              <div className="value">{describeSelection(editorState.selection, brushList, playerStartList)}</div>
             </div>
 
-            {selectedBrush === null ? (
+            {selectedPlayerStart !== null ? (
+              <>
+                <div className="stat-card">
+                  <div className="label">Entity Kind</div>
+                  <div className="value">Player Start</div>
+                  <div className="material-summary">Used by first-person run mode as the authored spawn transform.</div>
+                </div>
+
+                <div className="form-section">
+                  <div className="label">Position</div>
+                  <div className="vector-inputs">
+                    <label className="form-field">
+                      <span className="label">X</span>
+                      <input
+                        data-testid="player-start-position-x"
+                        className="text-input"
+                        type="number"
+                        step={DEFAULT_GRID_SIZE}
+                        value={playerStartPositionDraft.x}
+                        onChange={(event) => {
+                          const nextValue = event.currentTarget.value;
+                          setPlayerStartPositionDraft((draft) => ({ ...draft, x: nextValue }));
+                        }}
+                        onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPlayerStartChange)}
+                      />
+                    </label>
+                    <label className="form-field">
+                      <span className="label">Y</span>
+                      <input
+                        data-testid="player-start-position-y"
+                        className="text-input"
+                        type="number"
+                        step={DEFAULT_GRID_SIZE}
+                        value={playerStartPositionDraft.y}
+                        onChange={(event) => {
+                          const nextValue = event.currentTarget.value;
+                          setPlayerStartPositionDraft((draft) => ({ ...draft, y: nextValue }));
+                        }}
+                        onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPlayerStartChange)}
+                      />
+                    </label>
+                    <label className="form-field">
+                      <span className="label">Z</span>
+                      <input
+                        data-testid="player-start-position-z"
+                        className="text-input"
+                        type="number"
+                        step={DEFAULT_GRID_SIZE}
+                        value={playerStartPositionDraft.z}
+                        onChange={(event) => {
+                          const nextValue = event.currentTarget.value;
+                          setPlayerStartPositionDraft((draft) => ({ ...draft, z: nextValue }));
+                        }}
+                        onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPlayerStartChange)}
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                <div className="form-section">
+                  <div className="label">Yaw</div>
+                  <label className="form-field">
+                    <span className="label">Degrees</span>
+                    <input
+                      data-testid="player-start-yaw"
+                      className="text-input"
+                      type="number"
+                      step="1"
+                      value={playerStartYawDraft}
+                      onChange={(event) => setPlayerStartYawDraft(event.currentTarget.value)}
+                      onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPlayerStartChange)}
+                    />
+                  </label>
+                  <button className="toolbar__button" type="button" data-testid="apply-player-start" onClick={applyPlayerStartChange}>
+                    Apply Player Start Command
+                  </button>
+                </div>
+              </>
+            ) : selectedBrush === null ? (
               <ul className="placeholder-list">
                 <li>Select a box brush to edit transforms and choose individual faces.</li>
-                <li>All authored transforms remain axis-aligned and snapped to the grid in this slice.</li>
+                <li>Select Player Start to author the first-person spawn transform.</li>
               </ul>
             ) : (
               <>
@@ -1027,9 +1421,64 @@ export function App({ store, initialStatusMessage }: AppProps) {
           </Panel>
 
           <Panel title="Runner">
+            <div className="stat-grid">
+              <div className="stat-card">
+                <div className="label">Player Start</div>
+                <div className="value">{primaryPlayerStart === null ? "Missing" : "Authored"}</div>
+              </div>
+              <div className="stat-card">
+                <div className="label">Default Run Mode</div>
+                <div className="value">{preferredNavigationMode === "firstPerson" ? "First Person" : "Orbit Visitor"}</div>
+              </div>
+            </div>
+
+            {primaryPlayerStart === null ? (
+              <ul className="placeholder-list">
+                <li>No Player Start is authored yet. First-person can still fall back, but Orbit Visitor is the safer default.</li>
+              </ul>
+            ) : (
+              <div className="stat-card">
+                <div className="label">Authored Spawn</div>
+                <div className="value">
+                  {primaryPlayerStart.position.x}, {primaryPlayerStart.position.y}, {primaryPlayerStart.position.z}
+                </div>
+                <div className="material-summary">yaw {primaryPlayerStart.yawDegrees}°</div>
+              </div>
+            )}
+
+            <div className="inline-actions">
+              <button className="toolbar__button" type="button" data-testid="place-player-start" onClick={handleSelectOrPlacePlayerStart}>
+                {primaryPlayerStart === null ? "Place Player Start" : "Select Player Start"}
+              </button>
+            </div>
+
+            <div className="inline-actions">
+              <button
+                className={`toolbar__button ${preferredNavigationMode === "firstPerson" ? "toolbar__button--active" : ""}`}
+                type="button"
+                onClick={() => handleSetPreferredNavigationMode("firstPerson")}
+              >
+                First Person
+              </button>
+              <button
+                className={`toolbar__button ${preferredNavigationMode === "orbitVisitor" ? "toolbar__button--active" : ""}`}
+                type="button"
+                onClick={() => handleSetPreferredNavigationMode("orbitVisitor")}
+              >
+                Orbit Visitor
+              </button>
+            </div>
+
+            <div className="inline-actions">
+              <button className="toolbar__button toolbar__button--accent" type="button" onClick={handleEnterPlayMode}>
+                Enter Run Mode
+              </button>
+            </div>
+
             <ul className="placeholder-list">
-              <li>Built-in runner authoring is still pending.</li>
-              <li>This slice keeps face materials and UV state canonical so the runner can consume them later.</li>
+              <li>First-person supports `WASD` movement plus mouse-look after pointer lock is active.</li>
+              <li>Orbit Visitor provides the non-FPS fallback for browsers or users that do not want pointer lock.</li>
+              <li>Collision is deterministic AABB collision against box-brush runtime colliders in this slice.</li>
             </ul>
           </Panel>
         </aside>
