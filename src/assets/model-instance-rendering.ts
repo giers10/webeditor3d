@@ -14,14 +14,6 @@ interface ModelInstanceBounds {
   size: Vec3;
 }
 
-function cloneVec3(vector: Vec3): Vec3 {
-  return {
-    x: vector.x,
-    y: vector.y,
-    z: vector.z
-  };
-}
-
 function getLocalModelBounds(asset: ProjectAssetRecord | undefined): ModelInstanceBounds {
   if (asset?.kind === "model" && asset.metadata.boundingBox !== null) {
     const boundingBox = asset.metadata.boundingBox;
