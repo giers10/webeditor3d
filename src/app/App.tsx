@@ -484,7 +484,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [ambientLightIntensityDraft, setAmbientLightIntensityDraft] = useState(String(editorState.document.world.ambientLight.intensity));
   const [sunLightIntensityDraft, setSunLightIntensityDraft] = useState(String(editorState.document.world.sunLight.intensity));
   const [sunDirectionDraft, setSunDirectionDraft] = useState(createVec3Draft(editorState.document.world.sunLight.direction));
-  const [statusMessage, setStatusMessage] = useState(initialStatusMessage ?? "Slice 2.1 entity system foundation ready.");
+  const [statusMessage, setStatusMessage] = useState(initialStatusMessage ?? "Slice 2.2 trigger-action-target foundation ready.");
   const [preferredNavigationMode, setPreferredNavigationMode] = useState<RuntimeNavigationMode>(
     primaryPlayerStart === null ? "orbitVisitor" : "firstPerson"
   );
@@ -1604,7 +1604,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
         <header className="toolbar">
           <div className="toolbar__brand">
             <div className="toolbar__title">WebEditor3D</div>
-            <div className="toolbar__subtitle">Slice 2.1 entity system foundation</div>
+            <div className="toolbar__subtitle">Slice 2.2 trigger-action-target foundation</div>
           </div>
 
           <div className="toolbar__actions">
