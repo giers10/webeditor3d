@@ -604,7 +604,6 @@ Requirements:
   - contained materials/textures if useful
   - animations list if present
   - bounding box / dimensions if feasible
-- Extract and store useful metadata:
 - Add preview/thumbnail support if practical, but do not let thumbnail generation block import.
 - Allow placing an imported model instance in the scene.
 - Allow selecting and transforming a model instance.
