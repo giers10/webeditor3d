@@ -328,7 +328,16 @@ function readModelInstance(value: unknown, label: string, assets: SceneDocument[
     name: normalizeModelInstanceName(expectOptionalString(value.name, `${label}.name`)),
     position: readVec3(value.position, `${label}.position`),
     rotationDegrees: readVec3(value.rotationDegrees, `${label}.rotationDegrees`),
-    scale: readVec3(value.scale, `${label}.scale`)
+    scale: readVec3(value.scale, `${label}.scale`),
+    animationClipName: (() => {
+      const raw = expectOptionalString(value.animationClipName, `${label}.animationClipName`);
+      if (raw === undefined) return undefined;
+      const trimmed = raw.trim();
+      return trimmed.length === 0 ? undefined : trimmed;
+    })(),
+    animationAutoplay: value.animationAutoplay === undefined
+      ? undefined
+      : expectBoolean(value.animationAutoplay, `${label}.animationAutoplay`)
   });
 }
 
