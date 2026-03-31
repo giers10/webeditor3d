@@ -82,12 +82,28 @@ export interface EntityRegistryEntry<T extends EntityInstance = EntityInstance> 
   createDefaultEntity(overrides?: Partial<T>): T;
 }
 
-export const ENTITY_KIND_ORDER = ["playerStart", "soundEmitter", "triggerVolume", "teleportTarget", "interactable"] as const;
-export const DEFAULT_POINT_LIGHT_POSITION = DEFAULT_ENTITY_POSITION;
+export const ENTITY_KIND_ORDER = [
+  "pointLight",
+  "spotLight",
+  "playerStart",
+  "soundEmitter",
+  "triggerVolume",
+  "teleportTarget",
+  "interactable"
+] as const;
+export const DEFAULT_POINT_LIGHT_POSITION: Vec3 = {
+  x: 0,
+  y: 0,
+  z: 0
+};
 export const DEFAULT_POINT_LIGHT_COLOR_HEX = "#ffffff";
 export const DEFAULT_POINT_LIGHT_INTENSITY = 1.25;
 export const DEFAULT_POINT_LIGHT_DISTANCE = 8;
-export const DEFAULT_SPOT_LIGHT_POSITION = DEFAULT_ENTITY_POSITION;
+export const DEFAULT_SPOT_LIGHT_POSITION: Vec3 = {
+  x: 0,
+  y: 0,
+  z: 0
+};
 export const DEFAULT_SPOT_LIGHT_DIRECTION: Vec3 = {
   x: 0,
   y: -1,
