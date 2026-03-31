@@ -2866,10 +2866,212 @@ export function App({ store, initialStatusMessage }: AppProps) {
           <Panel title="Inspector">
             <div className="stat-card">
               <div className="label">Selection</div>
-              <div className="value">{describeSelection(editorState.selection, brushList, editorState.document.entities)}</div>
+              <div className="value">
+                {describeSelection(editorState.selection, brushList, editorState.document.modelInstances, editorState.document.assets, editorState.document.entities)}
+              </div>
             </div>
 
-            {selectedEntity !== null ? (
+            {selectedModelInstance !== null ? (
+              <>
+                <div className="stat-card">
+                  <div className="label">Model Asset</div>
+                  <div className="value">{selectedModelAsset?.sourceName ?? "Missing Asset"}</div>
+                  <div className="material-summary">
+                    {selectedModelAsset === null ? "This model instance references an asset that is missing from the registry." : formatModelAssetSummary(selectedModelAsset)}
+                  </div>
+                  {selectedModelAsset === null ? null : <div className="material-summary">{formatModelBoundingBoxLabel(selectedModelAsset)}</div>}
+                </div>
+
+                <div className="form-section">
+                  <div className="label">Position</div>
+                  <div className="vector-inputs">
+                    <label className="form-field">
+                      <span className="label">X</span>
+                      <input
+                        data-testid="model-instance-position-x"
+                        className="text-input"
+                        type="number"
+                        step={DEFAULT_GRID_SIZE}
+                        value={modelPositionDraft.x}
+                        onChange={(event) => {
+                          const nextValue = event.currentTarget.value;
+                          setModelPositionDraft((draft) => ({ ...draft, x: nextValue }));
+                        }}
+                        onBlur={applyModelInstanceChange}
+                        onKeyDown={(event) => handleDraftVectorKeyDown(event, applyModelInstanceChange)}
+                        onKeyUp={(event) => handleNumberInputKeyUp(event, applyModelInstanceChange)}
+                        onPointerUp={(event) => handleNumberInputPointerUp(event, applyModelInstanceChange)}
+                      />
+                    </label>
+                    <label className="form-field">
+                      <span className="label">Y</span>
+                      <input
+                        data-testid="model-instance-position-y"
+                        className="text-input"
+                        type="number"
+                        step={DEFAULT_GRID_SIZE}
+                        value={modelPositionDraft.y}
+                        onChange={(event) => {
+                          const nextValue = event.currentTarget.value;
+                          setModelPositionDraft((draft) => ({ ...draft, y: nextValue }));
+                        }}
+                        onBlur={applyModelInstanceChange}
+                        onKeyDown={(event) => handleDraftVectorKeyDown(event, applyModelInstanceChange)}
+                        onKeyUp={(event) => handleNumberInputKeyUp(event, applyModelInstanceChange)}
+                        onPointerUp={(event) => handleNumberInputPointerUp(event, applyModelInstanceChange)}
+                      />
+                    </label>
+                    <label className="form-field">
+                      <span className="label">Z</span>
+                      <input
+                        data-testid="model-instance-position-z"
+                        className="text-input"
+                        type="number"
+                        step={DEFAULT_GRID_SIZE}
+                        value={modelPositionDraft.z}
+                        onChange={(event) => {
+                          const nextValue = event.currentTarget.value;
+                          setModelPositionDraft((draft) => ({ ...draft, z: nextValue }));
+                        }}
+                        onBlur={applyModelInstanceChange}
+                        onKeyDown={(event) => handleDraftVectorKeyDown(event, applyModelInstanceChange)}
+                        onKeyUp={(event) => handleNumberInputKeyUp(event, applyModelInstanceChange)}
+                        onPointerUp={(event) => handleNumberInputPointerUp(event, applyModelInstanceChange)}
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                <div className="form-section">
+                  <div className="label">Rotation</div>
+                  <div className="vector-inputs">
+                    <label className="form-field">
+                      <span className="label">X</span>
+                      <input
+                        data-testid="model-instance-rotation-x"
+                        className="text-input"
+                        type="number"
+                        step="1"
+                        value={modelRotationDraft.x}
+                        onChange={(event) => {
+                          const nextValue = event.currentTarget.value;
+                          setModelRotationDraft((draft) => ({ ...draft, x: nextValue }));
+                        }}
+                        onBlur={applyModelInstanceChange}
+                        onKeyDown={(event) => handleDraftVectorKeyDown(event, applyModelInstanceChange)}
+                        onKeyUp={(event) => handleNumberInputKeyUp(event, applyModelInstanceChange)}
+                        onPointerUp={(event) => handleNumberInputPointerUp(event, applyModelInstanceChange)}
+                      />
+                    </label>
+                    <label className="form-field">
+                      <span className="label">Y</span>
+                      <input
+                        data-testid="model-instance-rotation-y"
+                        className="text-input"
+                        type="number"
+                        step="1"
+                        value={modelRotationDraft.y}
+                        onChange={(event) => {
+                          const nextValue = event.currentTarget.value;
+                          setModelRotationDraft((draft) => ({ ...draft, y: nextValue }));
+                        }}
+                        onBlur={applyModelInstanceChange}
+                        onKeyDown={(event) => handleDraftVectorKeyDown(event, applyModelInstanceChange)}
+                        onKeyUp={(event) => handleNumberInputKeyUp(event, applyModelInstanceChange)}
+                        onPointerUp={(event) => handleNumberInputPointerUp(event, applyModelInstanceChange)}
+                      />
+                    </label>
+                    <label className="form-field">
+                      <span className="label">Z</span>
+                      <input
+                        data-testid="model-instance-rotation-z"
+                        className="text-input"
+                        type="number"
+                        step="1"
+                        value={modelRotationDraft.z}
+                        onChange={(event) => {
+                          const nextValue = event.currentTarget.value;
+                          setModelRotationDraft((draft) => ({ ...draft, z: nextValue }));
+                        }}
+                        onBlur={applyModelInstanceChange}
+                        onKeyDown={(event) => handleDraftVectorKeyDown(event, applyModelInstanceChange)}
+                        onKeyUp={(event) => handleNumberInputKeyUp(event, applyModelInstanceChange)}
+                        onPointerUp={(event) => handleNumberInputPointerUp(event, applyModelInstanceChange)}
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                <div className="form-section">
+                  <div className="label">Scale</div>
+                  <div className="vector-inputs">
+                    <label className="form-field">
+                      <span className="label">X</span>
+                      <input
+                        data-testid="model-instance-scale-x"
+                        className="text-input"
+                        type="number"
+                        min="0.001"
+                        step="0.1"
+                        value={modelScaleDraft.x}
+                        onChange={(event) => {
+                          const nextValue = event.currentTarget.value;
+                          setModelScaleDraft((draft) => ({ ...draft, x: nextValue }));
+                        }}
+                        onBlur={applyModelInstanceChange}
+                        onKeyDown={(event) => handleDraftVectorKeyDown(event, applyModelInstanceChange)}
+                        onKeyUp={(event) => handleNumberInputKeyUp(event, applyModelInstanceChange)}
+                        onPointerUp={(event) => handleNumberInputPointerUp(event, applyModelInstanceChange)}
+                      />
+                    </label>
+                    <label className="form-field">
+                      <span className="label">Y</span>
+                      <input
+                        data-testid="model-instance-scale-y"
+                        className="text-input"
+                        type="number"
+                        min="0.001"
+                        step="0.1"
+                        value={modelScaleDraft.y}
+                        onChange={(event) => {
+                          const nextValue = event.currentTarget.value;
+                          setModelScaleDraft((draft) => ({ ...draft, y: nextValue }));
+                        }}
+                        onBlur={applyModelInstanceChange}
+                        onKeyDown={(event) => handleDraftVectorKeyDown(event, applyModelInstanceChange)}
+                        onKeyUp={(event) => handleNumberInputKeyUp(event, applyModelInstanceChange)}
+                        onPointerUp={(event) => handleNumberInputPointerUp(event, applyModelInstanceChange)}
+                      />
+                    </label>
+                    <label className="form-field">
+                      <span className="label">Z</span>
+                      <input
+                        data-testid="model-instance-scale-z"
+                        className="text-input"
+                        type="number"
+                        min="0.001"
+                        step="0.1"
+                        value={modelScaleDraft.z}
+                        onChange={(event) => {
+                          const nextValue = event.currentTarget.value;
+                          setModelScaleDraft((draft) => ({ ...draft, z: nextValue }));
+                        }}
+                        onBlur={applyModelInstanceChange}
+                        onKeyDown={(event) => handleDraftVectorKeyDown(event, applyModelInstanceChange)}
+                        onKeyUp={(event) => handleNumberInputKeyUp(event, applyModelInstanceChange)}
+                        onPointerUp={(event) => handleNumberInputPointerUp(event, applyModelInstanceChange)}
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                <div className="inline-actions">
+                  <button className="toolbar__button" type="button" data-testid="apply-model-instance" onClick={applyModelInstanceChange}>
+                    Apply Transform
+                  </button>
+                </div>
+              </>
+            ) : selectedEntity !== null ? (
               <>
                 <div className="stat-card">
                   <div className="label">Entity Kind</div>
