@@ -27,8 +27,8 @@ describe("project asset storage", () => {
 
     expect(loadedAsset).not.toBeNull();
     expect(Object.keys(loadedAsset?.files ?? {})).toEqual(["tiny-triangle.gltf", "triangle.bin"]);
-    expect(Array.from(new Uint8Array(loadedAsset?.files["tiny-triangle.gltf"].bytes ?? new ArrayBuffer(0)))).toEqual([0, 1, 2, 3, 4]);
-    expect(Array.from(new Uint8Array(loadedAsset?.files["triangle.bin"].bytes ?? new ArrayBuffer(0)))).toEqual([9, 8, 7]);
+    expect(Array.from(new Uint8Array(loadedAsset?.files["tiny-triangle.gltf"]?.bytes ?? new ArrayBuffer(0)))).toEqual([0, 1, 2, 3, 4]);
+    expect(Array.from(new Uint8Array(loadedAsset?.files["triangle.bin"]?.bytes ?? new ArrayBuffer(0)))).toEqual([9, 8, 7]);
 
     await storage.deleteAsset(storageKey);
 
