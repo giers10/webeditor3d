@@ -1441,6 +1441,209 @@ export function App({ store, initialStatusMessage }: AppProps) {
         </main>
 
         <aside className="side-column">
+          <Panel title="World">
+            <div className="stat-card">
+              <div className="label">Background</div>
+              <div className="value" data-testid="world-background-mode-value">
+                {formatWorldBackgroundLabel(editorState.document.world)}
+              </div>
+              <div
+                className="world-background-preview"
+                data-testid="world-background-preview"
+                style={createWorldBackgroundStyle(editorState.document.world.background)}
+              />
+              <div className="material-summary">
+                {editorState.document.world.background.mode === "solid"
+                  ? editorState.document.world.background.colorHex
+                  : `${editorState.document.world.background.topColorHex} -> ${editorState.document.world.background.bottomColorHex}`}
+              </div>
+            </div>
+
+            <div className="form-section">
+              <div className="label">Background Mode</div>
+              <div className="inline-actions">
+                <button
+                  className={`toolbar__button ${editorState.document.world.background.mode === "solid" ? "toolbar__button--active" : ""}`}
+                  type="button"
+                  data-testid="world-background-mode-solid"
+                  onClick={() => applyWorldBackgroundMode("solid")}
+                >
+                  Solid
+                </button>
+                <button
+                  className={`toolbar__button ${
+                    editorState.document.world.background.mode === "verticalGradient" ? "toolbar__button--active" : ""
+                  }`}
+                  type="button"
+                  data-testid="world-background-mode-gradient"
+                  onClick={() => applyWorldBackgroundMode("verticalGradient")}
+                >
+                  Gradient
+                </button>
+              </div>
+            </div>
+
+            <div className="form-section">
+              <div className="label">Background Colors</div>
+              {editorState.document.world.background.mode === "solid" ? (
+                <label className="form-field">
+                  <span className="label">Color</span>
+                  <input
+                    data-testid="world-background-solid-color"
+                    className="color-input"
+                    type="color"
+                    value={editorState.document.world.background.colorHex}
+                    onChange={(event) => applyWorldBackgroundColor(event.currentTarget.value)}
+                  />
+                </label>
+              ) : (
+                <div className="vector-inputs vector-inputs--two">
+                  <label className="form-field">
+                    <span className="label">Top</span>
+                    <input
+                      data-testid="world-background-top-color"
+                      className="color-input"
+                      type="color"
+                      value={editorState.document.world.background.topColorHex}
+                      onChange={(event) => applyWorldGradientColor("top", event.currentTarget.value)}
+                    />
+                  </label>
+                  <label className="form-field">
+                    <span className="label">Bottom</span>
+                    <input
+                      data-testid="world-background-bottom-color"
+                      className="color-input"
+                      type="color"
+                      value={editorState.document.world.background.bottomColorHex}
+                      onChange={(event) => applyWorldGradientColor("bottom", event.currentTarget.value)}
+                    />
+                  </label>
+                </div>
+              )}
+            </div>
+
+            <div className="form-section">
+              <div className="label">Ambient Light</div>
+              <div className="vector-inputs vector-inputs--two">
+                <label className="form-field">
+                  <span className="label">Color</span>
+                  <input
+                    data-testid="world-ambient-color"
+                    className="color-input"
+                    type="color"
+                    value={editorState.document.world.ambientLight.colorHex}
+                    onChange={(event) => applyAmbientLightColor(event.currentTarget.value)}
+                  />
+                </label>
+                <label className="form-field">
+                  <span className="label">Intensity</span>
+                  <input
+                    data-testid="world-ambient-intensity"
+                    className="text-input"
+                    type="number"
+                    min="0"
+                    step="0.1"
+                    value={ambientLightIntensityDraft}
+                    onChange={(event) => setAmbientLightIntensityDraft(event.currentTarget.value)}
+                    onBlur={applyAmbientLightIntensity}
+                    onKeyDown={(event) => handleDraftVectorKeyDown(event, applyAmbientLightIntensity)}
+                    onKeyUp={(event) => handleNumberInputKeyUp(event, applyAmbientLightIntensity)}
+                    onPointerUp={(event) => handleNumberInputPointerUp(event, applyAmbientLightIntensity)}
+                  />
+                </label>
+              </div>
+            </div>
+
+            <div className="form-section">
+              <div className="label">Sun Light</div>
+              <div className="vector-inputs vector-inputs--two">
+                <label className="form-field">
+                  <span className="label">Color</span>
+                  <input
+                    data-testid="world-sun-color"
+                    className="color-input"
+                    type="color"
+                    value={editorState.document.world.sunLight.colorHex}
+                    onChange={(event) => applySunLightColor(event.currentTarget.value)}
+                  />
+                </label>
+                <label className="form-field">
+                  <span className="label">Intensity</span>
+                  <input
+                    data-testid="world-sun-intensity"
+                    className="text-input"
+                    type="number"
+                    min="0"
+                    step="0.1"
+                    value={sunLightIntensityDraft}
+                    onChange={(event) => setSunLightIntensityDraft(event.currentTarget.value)}
+                    onBlur={applySunLightIntensity}
+                    onKeyDown={(event) => handleDraftVectorKeyDown(event, applySunLightIntensity)}
+                    onKeyUp={(event) => handleNumberInputKeyUp(event, applySunLightIntensity)}
+                    onPointerUp={(event) => handleNumberInputPointerUp(event, applySunLightIntensity)}
+                  />
+                </label>
+              </div>
+
+              <div className="vector-inputs">
+                <label className="form-field">
+                  <span className="label">Dir X</span>
+                  <input
+                    data-testid="world-sun-direction-x"
+                    className="text-input"
+                    type="number"
+                    step="0.1"
+                    value={sunDirectionDraft.x}
+                    onChange={(event) => {
+                      const nextValue = event.currentTarget.value;
+                      setSunDirectionDraft((draft) => ({ ...draft, x: nextValue }));
+                    }}
+                    onBlur={applySunLightDirection}
+                    onKeyDown={(event) => handleDraftVectorKeyDown(event, applySunLightDirection)}
+                    onKeyUp={(event) => handleNumberInputKeyUp(event, applySunLightDirection)}
+                    onPointerUp={(event) => handleNumberInputPointerUp(event, applySunLightDirection)}
+                  />
+                </label>
+                <label className="form-field">
+                  <span className="label">Dir Y</span>
+                  <input
+                    data-testid="world-sun-direction-y"
+                    className="text-input"
+                    type="number"
+                    step="0.1"
+                    value={sunDirectionDraft.y}
+                    onChange={(event) => {
+                      const nextValue = event.currentTarget.value;
+                      setSunDirectionDraft((draft) => ({ ...draft, y: nextValue }));
+                    }}
+                    onBlur={applySunLightDirection}
+                    onKeyDown={(event) => handleDraftVectorKeyDown(event, applySunLightDirection)}
+                    onKeyUp={(event) => handleNumberInputKeyUp(event, applySunLightDirection)}
+                    onPointerUp={(event) => handleNumberInputPointerUp(event, applySunLightDirection)}
+                  />
+                </label>
+                <label className="form-field">
+                  <span className="label">Dir Z</span>
+                  <input
+                    data-testid="world-sun-direction-z"
+                    className="text-input"
+                    type="number"
+                    step="0.1"
+                    value={sunDirectionDraft.z}
+                    onChange={(event) => {
+                      const nextValue = event.currentTarget.value;
+                      setSunDirectionDraft((draft) => ({ ...draft, z: nextValue }));
+                    }}
+                    onBlur={applySunLightDirection}
+                    onKeyDown={(event) => handleDraftVectorKeyDown(event, applySunLightDirection)}
+                    onKeyUp={(event) => handleNumberInputKeyUp(event, applySunLightDirection)}
+                    onPointerUp={(event) => handleNumberInputPointerUp(event, applySunLightDirection)}
+                  />
+                </label>
+              </div>
+            </div>
+          </Panel>
+
           <Panel title="Inspector">
             <div className="stat-card">
               <div className="label">Selection</div>
