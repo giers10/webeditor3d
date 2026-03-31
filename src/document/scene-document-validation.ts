@@ -1,6 +1,7 @@
 import type { EntityInstance } from "../entities/entity-instances";
 import { BOX_FACE_IDS, hasPositiveBoxSize } from "./brushes";
 import type { SceneDocument } from "./scene-document";
+import { isHexColorString, type WorldSettings } from "./world-settings";
 
 export type SceneDiagnosticSeverity = "error" | "warning";
 export type SceneDiagnosticScope = "document" | "build";
@@ -41,6 +42,101 @@ function isFiniteNumber(value: unknown): value is number {
 
 function isFiniteVec3(vector: { x: unknown; y: unknown; z: unknown }): boolean {
   return isFiniteNumber(vector.x) && isFiniteNumber(vector.y) && isFiniteNumber(vector.z);
+}
+
+function isNonNegativeFiniteNumber(value: unknown): value is number {
+  return isFiniteNumber(value) && value >= 0;
+}
+
+function hasNonZeroVectorLength(vector: { x: number; y: number; z: number }): boolean {
+  return vector.x !== 0 || vector.y !== 0 || vector.z !== 0;
+}
+
+function validateWorldSettings(world: WorldSettings, diagnostics: SceneDiagnostic[]) {
+  if (world.background.mode === "solid") {
+    if (!isHexColorString(world.background.colorHex)) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-world-background-color",
+          "Solid world backgrounds must use #RRGGBB colors.",
+          "world.background.colorHex"
+        )
+      );
+    }
+  } else {
+    if (!isHexColorString(world.background.topColorHex)) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-world-background-top-color",
+          "Gradient world backgrounds must use #RRGGBB colors for the top color.",
+          "world.background.topColorHex"
+        )
+      );
+    }
+
+    if (!isHexColorString(world.background.bottomColorHex)) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-world-background-bottom-color",
+          "Gradient world backgrounds must use #RRGGBB colors for the bottom color.",
+          "world.background.bottomColorHex"
+        )
+      );
+    }
+  }
+
+  if (!isHexColorString(world.ambientLight.colorHex)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-world-ambient-color",
+        "World ambient light must use a #RRGGBB color.",
+        "world.ambientLight.colorHex"
+      )
+    );
+  }
+
+  if (!isNonNegativeFiniteNumber(world.ambientLight.intensity)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-world-ambient-intensity",
+        "World ambient light intensity must remain finite and zero or greater.",
+        "world.ambientLight.intensity"
+      )
+    );
+  }
+
+  if (!isHexColorString(world.sunLight.colorHex)) {
+    diagnostics.push(
+      createDiagnostic("error", "invalid-world-sun-color", "World sun color must use a #RRGGBB color.", "world.sunLight.colorHex")
+    );
+  }
+
+  if (!isNonNegativeFiniteNumber(world.sunLight.intensity)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-world-sun-intensity",
+        "World sun intensity must remain finite and zero or greater.",
+        "world.sunLight.intensity"
+      )
+    );
+  }
+
+  if (!isFiniteVec3(world.sunLight.direction) || !hasNonZeroVectorLength(world.sunLight.direction)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-world-sun-direction",
+        "World sun direction must remain finite and must not be the zero vector.",
+        "world.sunLight.direction"
+      )
+    );
+  }
 }
 
 function validatePlayerStartEntity(entity: EntityInstance, path: string, diagnostics: SceneDiagnostic[]) {
@@ -87,6 +183,8 @@ export function formatSceneDiagnosticSummary(diagnostics: SceneDiagnostic[], lim
 export function validateSceneDocument(document: SceneDocument): SceneDocumentValidationResult {
   const diagnostics: SceneDiagnostic[] = [];
   const seenIds = new Map<string, string>();
+
+  validateWorldSettings(document.world, diagnostics);
 
   for (const [materialKey, material] of Object.entries(document.materials)) {
     const path = `materials.${materialKey}`;
