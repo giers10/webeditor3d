@@ -668,6 +668,42 @@ function validateInteractionLink(link: InteractionLink, path: string, document: 
         );
       }
       break;
+    case "playAnimation":
+      // Validate that the target model instance exists in the document
+      if (document.modelInstances[link.action.targetModelInstanceId] === undefined) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "missing-play-animation-target-instance",
+            `Play animation target model instance ${link.action.targetModelInstanceId} does not exist.`,
+            `${path}.action.targetModelInstanceId`
+          )
+        );
+      }
+      if (link.action.clipName.trim().length === 0) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-play-animation-clip-name",
+            "Play animation clip name must be non-empty.",
+            `${path}.action.clipName`
+          )
+        );
+      }
+      break;
+    case "stopAnimation":
+      // Validate that the target model instance exists in the document
+      if (document.modelInstances[link.action.targetModelInstanceId] === undefined) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "missing-stop-animation-target-instance",
+            `Stop animation target model instance ${link.action.targetModelInstanceId} does not exist.`,
+            `${path}.action.targetModelInstanceId`
+          )
+        );
+      }
+      break;
     default:
       diagnostics.push(
         createDiagnostic(
