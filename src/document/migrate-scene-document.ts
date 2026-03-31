@@ -584,7 +584,11 @@ function readWorldSettings(value: unknown): WorldSettings {
   } else {
     resolvedBackground = {
       mode: "image",
-      assetId: expectString(background.assetId, "world.background.assetId")
+      assetId: expectString(background.assetId, "world.background.assetId"),
+      // Default to 0.5 for documents saved before environmentIntensity was added
+      environmentIntensity: typeof background.environmentIntensity === "number" && isFinite(background.environmentIntensity) && background.environmentIntensity >= 0
+        ? background.environmentIntensity
+        : 0.5
     };
   }
 
