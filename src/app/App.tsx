@@ -697,23 +697,167 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
-  const applyPlayerStartChange = () => {
-    try {
-      const snappedPosition = snapVec3ToGrid(readVec3Draft(playerStartPositionDraft, "Player start position"), DEFAULT_GRID_SIZE);
-      const yawDegrees = readYawDegreesDraft(playerStartYawDraft);
+  const commitEntityChange = (currentEntity: EntityInstance, nextEntity: EntityInstance, successMessage: string) => {
+    if (areEntityInstancesEqual(currentEntity, nextEntity)) {
+      return;
+    }
 
-      if (editablePlayerStart !== null && arePlayerStartsEqual(editablePlayerStart, snappedPosition, yawDegrees)) {
-        return;
+    store.executeCommand(
+      createUpsertEntityCommand({
+        entity: nextEntity,
+        label: `Update ${getEntityKindLabel(nextEntity.kind).toLowerCase()}`
+      })
+    );
+    setStatusMessage(successMessage);
+  };
+
+  const resolveNewEntityPosition = (kind: EntityKind): Vec3 => {
+    if (selectedBrush !== null) {
+      if (kind === "triggerVolume") {
+        return snapVec3ToGrid(selectedBrush.center, DEFAULT_GRID_SIZE);
       }
 
+      return snapVec3ToGrid(
+        {
+          x: selectedBrush.center.x,
+          y: selectedBrush.center.y + selectedBrush.size.y * 0.5,
+          z: selectedBrush.center.z
+        },
+        DEFAULT_GRID_SIZE
+      );
+    }
+
+    if (selectedEntity !== null) {
+      return snapVec3ToGrid(selectedEntity.position, DEFAULT_GRID_SIZE);
+    }
+
+    return snapVec3ToGrid(DEFAULT_ENTITY_POSITION, DEFAULT_GRID_SIZE);
+  };
+
+  const handlePlaceEntity = (kind: EntityKind) => {
+    try {
+      const basePosition = resolveNewEntityPosition(kind);
+      const nextEntity =
+        kind === "triggerVolume" && selectedBrush !== null
+          ? createTriggerVolumeEntity({
+              position: basePosition,
+              size: selectedBrush.size
+            })
+          : createDefaultEntityInstance(kind, {
+              position: basePosition
+            });
+
       store.executeCommand(
-        createSetPlayerStartCommand({
-          entityId: editablePlayerStart?.id,
-          position: snappedPosition,
-          yawDegrees
+        createUpsertEntityCommand({
+          entity: nextEntity,
+          label: `Place ${getEntityKindLabel(kind).toLowerCase()}`
         })
       );
-      setStatusMessage(editablePlayerStart === null ? "Placed Player Start." : "Updated Player Start.");
+      setStatusMessage(`Placed ${getEntityKindLabel(kind)}.`);
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const applyPlayerStartChange = () => {
+    if (selectedPlayerStart === null) {
+      setStatusMessage("Select a Player Start before editing it.");
+      return;
+    }
+
+    try {
+      const snappedPosition = snapVec3ToGrid(readVec3Draft(entityPositionDraft, "Player Start position"), DEFAULT_GRID_SIZE);
+      const yawDegrees = readYawDegreesDraft(playerStartYawDraft);
+      const nextEntity = createPlayerStartEntity({
+        id: selectedPlayerStart.id,
+        position: snappedPosition,
+        yawDegrees
+      });
+
+      commitEntityChange(selectedPlayerStart, nextEntity, "Updated Player Start.");
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const applySoundEmitterChange = () => {
+    if (selectedSoundEmitter === null) {
+      setStatusMessage("Select a Sound Emitter before editing it.");
+      return;
+    }
+
+    try {
+      const nextEntity = createSoundEmitterEntity({
+        id: selectedSoundEmitter.id,
+        position: snapVec3ToGrid(readVec3Draft(entityPositionDraft, "Sound Emitter position"), DEFAULT_GRID_SIZE),
+        radius: readPositiveNumberDraft(soundEmitterRadiusDraft, "Sound Emitter radius"),
+        gain: readNonNegativeNumberDraft(soundEmitterGainDraft, "Sound Emitter gain"),
+        autoplay: soundEmitterAutoplayDraft,
+        loop: soundEmitterLoopDraft
+      });
+
+      commitEntityChange(selectedSoundEmitter, nextEntity, "Updated Sound Emitter.");
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const applyTriggerVolumeChange = () => {
+    if (selectedTriggerVolume === null) {
+      setStatusMessage("Select a Trigger Volume before editing it.");
+      return;
+    }
+
+    try {
+      const nextEntity = createTriggerVolumeEntity({
+        id: selectedTriggerVolume.id,
+        position: snapVec3ToGrid(readVec3Draft(entityPositionDraft, "Trigger Volume position"), DEFAULT_GRID_SIZE),
+        size: snapPositiveSizeToGrid(readVec3Draft(triggerVolumeSizeDraft, "Trigger Volume size"), DEFAULT_GRID_SIZE),
+        triggerOnEnter: triggerOnEnterDraft,
+        triggerOnExit: triggerOnExitDraft
+      });
+
+      commitEntityChange(selectedTriggerVolume, nextEntity, "Updated Trigger Volume.");
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const applyTeleportTargetChange = () => {
+    if (selectedTeleportTarget === null) {
+      setStatusMessage("Select a Teleport Target before editing it.");
+      return;
+    }
+
+    try {
+      const nextEntity = createTeleportTargetEntity({
+        id: selectedTeleportTarget.id,
+        position: snapVec3ToGrid(readVec3Draft(entityPositionDraft, "Teleport Target position"), DEFAULT_GRID_SIZE),
+        yawDegrees: readYawDegreesDraft(teleportTargetYawDraft)
+      });
+
+      commitEntityChange(selectedTeleportTarget, nextEntity, "Updated Teleport Target.");
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const applyInteractableChange = () => {
+    if (selectedInteractable === null) {
+      setStatusMessage("Select an Interactable before editing it.");
+      return;
+    }
+
+    try {
+      const nextEntity = createInteractableEntity({
+        id: selectedInteractable.id,
+        position: snapVec3ToGrid(readVec3Draft(entityPositionDraft, "Interactable position"), DEFAULT_GRID_SIZE),
+        radius: readPositiveNumberDraft(interactableRadiusDraft, "Interactable radius"),
+        prompt: readInteractablePromptDraft(interactablePromptDraft),
+        enabled: interactableEnabledDraft
+      });
+
+      commitEntityChange(selectedInteractable, nextEntity, "Updated Interactable.");
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
     }
