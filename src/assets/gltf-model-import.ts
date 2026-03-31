@@ -41,6 +41,14 @@ export interface ImportedModelAssetResult {
   loadedAsset: LoadedModelAsset;
 }
 
+function getErrorDetail(error: unknown): string {
+  if (error instanceof Error && error.message.trim().length > 0) {
+    return error.message.trim();
+  }
+
+  return "Unknown error.";
+}
+
 function getFileExtension(sourceName: string): string {
   const match = /\.([^.]+)$/u.exec(sourceName.trim());
   return match === null ? "" : match[1].toLowerCase();
@@ -607,11 +615,25 @@ export async function importModelAssetFromFiles(
   files: File[],
   storage: ProjectAssetStorage
 ): Promise<ImportedModelAssetResult> {
-  const fileSet = await loadModelFileSet(files);
+  let fileSet: ImportedModelFileSet;
+
+  try {
+    fileSet = await loadModelFileSet(files);
+  } catch (error) {
+    throw new Error(`Model import failed: ${getErrorDetail(error)}`);
+  }
+
   const sourceName = fileSet.rootFile.path;
   const format = inferModelAssetFormat(sourceName, fileSet.rootFile.mimeType);
   const mimeType = inferModelMimeType(format);
-  const gltf = await loadGltfFromImportedModelFileSet(fileSet);
+  let gltf: GLTF;
+
+  try {
+    gltf = await loadGltfFromImportedModelFileSet(fileSet);
+  } catch (error) {
+    throw new Error(`Model import failed for ${sourceName}: ${getErrorDetail(error)}`);
+  }
+
   const metadata = extractModelAssetMetadata(gltf, format);
   const asset = createModelAssetRecordFromFileSet(sourceName, mimeType, fileSet.totalByteLength, metadata);
 
@@ -664,7 +686,13 @@ export async function loadModelAssetFromStorage(
   storage: ProjectAssetStorage,
   asset: ModelAssetRecord
 ): Promise<LoadedModelAsset> {
-  const storedAsset = await storage.getAsset(asset.storageKey);
+  let storedAsset: ProjectAssetStoragePackageRecord | null;
+
+  try {
+    storedAsset = await storage.getAsset(asset.storageKey);
+  } catch (error) {
+    throw new Error(`Model asset reload failed for ${asset.sourceName}: ${getErrorDetail(error)}`);
+  }
 
   if (storedAsset === null) {
     throw new Error(`Missing stored binary data for imported model asset ${asset.sourceName}.`);
@@ -677,8 +705,12 @@ export async function loadModelAssetFromStorage(
   }
 
   if (asset.metadata.format === "glb") {
-    const gltf = await loadGltfFromArrayBuffer(storedModelFile.bytes);
-    return createLoadedModelAsset(asset, cloneTemplateScene(gltf.scene));
+    try {
+      const gltf = await loadGltfFromArrayBuffer(storedModelFile.bytes);
+      return createLoadedModelAsset(asset, cloneTemplateScene(gltf.scene));
+    } catch (error) {
+      throw new Error(`Model asset reload failed for ${asset.sourceName}: ${getErrorDetail(error)}`);
+    }
   }
 
   const fileEntries = storedAsset.files;
