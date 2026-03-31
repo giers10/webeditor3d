@@ -139,6 +139,11 @@ export function ViewportCanvas({
         <div className="viewport-canvas__fallback" role="status">
           <div className="viewport-canvas__fallback-title">Viewport Unavailable</div>
           <div>{viewportMessage}</div>
+          {toolMode !== "box-create" ? null : (
+            <button className="toolbar__button toolbar__button--accent" type="button" data-testid="viewport-fallback-create-box" onClick={() => onCreateBoxBrush(DEFAULT_BOX_BRUSH_CENTER)}>
+              Create Default Box
+            </button>
+          )}
         </div>
       )}
     </div>
