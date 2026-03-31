@@ -108,6 +108,26 @@ export function cloneInteractionLink(link: InteractionLink): InteractionLink {
   };
 }
 
+export function areInteractionLinksEqual(left: InteractionLink, right: InteractionLink): boolean {
+  if (left.id !== right.id || left.sourceEntityId !== right.sourceEntityId || left.trigger !== right.trigger) {
+    return false;
+  }
+
+  if (left.action.type !== right.action.type) {
+    return false;
+  }
+
+  switch (left.action.type) {
+    case "teleportPlayer":
+      return left.action.targetEntityId === (right.action as TeleportPlayerAction).targetEntityId;
+    case "toggleVisibility":
+      return (
+        left.action.targetBrushId === (right.action as ToggleVisibilityAction).targetBrushId &&
+        left.action.visible === (right.action as ToggleVisibilityAction).visible
+      );
+  }
+}
+
 export function cloneInteractionLinkRegistry(links: Record<string, InteractionLink>): Record<string, InteractionLink> {
   return Object.fromEntries(Object.entries(links).map(([linkId, link]) => [linkId, cloneInteractionLink(link)]));
 }
