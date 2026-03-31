@@ -2734,6 +2734,15 @@ export function App({ store, initialStatusMessage }: AppProps) {
               >
                 Import GLB/GLTF
               </button>
+              <button
+                className="toolbar__button toolbar__button--accent"
+                type="button"
+                data-testid="import-background-image-asset"
+                onClick={handleImportBackgroundImageButtonClick}
+                disabled={!projectAssetStorageReady || projectAssetStorage === null}
+              >
+                Import Background Image
+              </button>
             </div>
 
             {assetStatusMessage === null ? null : (
@@ -2746,28 +2755,24 @@ export function App({ store, initialStatusMessage }: AppProps) {
               <div className="outliner-empty">Project asset storage is unavailable. Imported assets cannot be persisted.</div>
             ) : null}
 
-            {projectAssetList.length === 0 ? (
-              <div className="outliner-empty">
-                No imported model assets yet. Import a GLB or GLTF to register the first project asset.
-              </div>
-            ) : (
-              <div className="outliner-list" data-testid="asset-list">
-                {projectAssetList.map((asset) => (
-                  <div key={asset.id} className="outliner-item asset-item">
-                    <div className="outliner-item__select">
-                      <span className="outliner-item__title">{asset.sourceName}</span>
-                      <span className="outliner-item__meta">{getProjectAssetKindLabel(asset.kind)}</span>
-                    </div>
+            <div data-testid="asset-list">
+              <div className="outliner-section">
+                <div className="label">Model Assets</div>
+                {modelAssetList.length === 0 ? (
+                  <div className="outliner-empty">No imported model assets yet. Import a GLB or GLTF to register the first model asset.</div>
+                ) : (
+                  <div className="outliner-list">
+                    {modelAssetList.map((asset) => (
+                      <div key={asset.id} className="outliner-item asset-item">
+                        <div className="outliner-item__select">
+                          <span className="outliner-item__title">{asset.sourceName}</span>
+                          <span className="outliner-item__meta">{getProjectAssetKindLabel(asset.kind)}</span>
+                        </div>
 
-                    <div className="asset-item__summary">
-                      {formatByteLength(asset.byteLength)} | {asset.mimeType}
-                    </div>
-                    <div className="asset-item__summary">Storage key: {asset.storageKey}</div>
-
-                    {asset.kind !== "model" ? (
-                      <div className="asset-item__summary">This asset kind is registered for future slices but is not placeable yet.</div>
-                    ) : (
-                      <>
+                        <div className="asset-item__summary">
+                          {formatByteLength(asset.byteLength)} | {asset.mimeType}
+                        </div>
+                        <div className="asset-item__summary">Storage key: {asset.storageKey}</div>
                         <div className="asset-item__summary">{formatModelAssetSummary(asset)}</div>
                         <div className="asset-item__summary">{formatModelBoundingBoxLabel(asset)}</div>
                         {asset.metadata.materialNames.length === 0 ? null : (
@@ -2793,12 +2798,61 @@ export function App({ store, initialStatusMessage }: AppProps) {
                             Place Instance
                           </button>
                         </div>
-                      </>
-                    )}
+                      </div>
+                    ))}
                   </div>
-                ))}
+                )}
               </div>
-            )}
+
+              <div className="outliner-section">
+                <div className="label">Image Assets</div>
+                {imageAssetList.length === 0 ? (
+                  <div className="outliner-empty">No imported background images yet. Import a 2:1 panorama to register the first background asset.</div>
+                ) : (
+                  <div className="outliner-list">
+                    {imageAssetList.map((asset) => (
+                      <div
+                        key={asset.id}
+                        className={`outliner-item asset-item ${
+                          editorState.document.world.background.mode === "image" && editorState.document.world.background.assetId === asset.id
+                            ? "outliner-item--selected"
+                            : ""
+                        }`}
+                      >
+                        <div className="outliner-item__select">
+                          <span className="outliner-item__title">{asset.sourceName}</span>
+                          <span className="outliner-item__meta">{getProjectAssetKindLabel(asset.kind)}</span>
+                        </div>
+
+                        <div className="asset-item__summary">
+                          {formatByteLength(asset.byteLength)} | {asset.mimeType}
+                        </div>
+                        <div className="asset-item__summary">Storage key: {asset.storageKey}</div>
+                        <div className="asset-item__summary">{formatImageAssetSummary(asset)}</div>
+                        {asset.metadata.warnings.length === 0 ? null : (
+                          <div className="asset-item__warnings">{asset.metadata.warnings.join(" | ")}</div>
+                        )}
+
+                        <div className="inline-actions">
+                          <button
+                            className={`toolbar__button ${
+                              editorState.document.world.background.mode === "image" && editorState.document.world.background.assetId === asset.id
+                                ? "toolbar__button--active"
+                                : ""
+                            }`}
+                            type="button"
+                            data-testid={`use-background-asset-${asset.id}`}
+                            onClick={() => applyWorldBackgroundMode("image", asset.id)}
+                          >
+                            Use as Background
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           </Panel>
 
           <Panel title="Outliner">
