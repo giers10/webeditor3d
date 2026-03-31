@@ -83,11 +83,6 @@ const FACE_LABELS: Record<BoxFaceId, string> = {
 
 const STARTER_MATERIAL_ORDER = new Map(STARTER_MATERIAL_LIBRARY.map((material, index) => [material.id, index]));
 
-const DIAGNOSTIC_BADGE_LABELS = {
-  document: "Document",
-  build: "Run"
-} as const;
-
 function formatVec3(vector: Vec3): string {
   return `${vector.x}, ${vector.y}, ${vector.z}`;
 }
@@ -390,6 +385,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const diagnostics = [...documentValidation.errors, ...documentValidation.warnings, ...runValidation.errors, ...runValidation.warnings];
   const blockingDiagnostics = diagnostics.filter((diagnostic) => diagnostic.severity === "error");
   const warningDiagnostics = diagnostics.filter((diagnostic) => diagnostic.severity === "warning");
+  const documentStatusLabel =
+    documentValidation.errors.length === 0 ? "Valid" : formatDiagnosticCount(documentValidation.errors.length, "error");
+  const lastCommandLabel = editorState.lastCommandLabel ?? "No commands yet";
   const runReadyLabel =
     blockingDiagnostics.length > 0
       ? "Blocked"
@@ -1086,51 +1084,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
       <div className="workspace">
         <aside className="side-column">
-          <Panel title="Status">
-            <div className="stat-grid">
-              <div className="stat-card" data-testid="document-validation-state">
-                <div className="label">Document</div>
-                <div className="value">
-                  {documentValidation.errors.length === 0 ? "Valid" : formatDiagnosticCount(documentValidation.errors.length, "error")}
-                </div>
-              </div>
-              <div className="stat-card" data-testid="run-validation-state">
-                <div className="label">Run Preflight</div>
-                <div className="value">{runReadyLabel}</div>
-              </div>
-              <div className="stat-card">
-                <div className="label">Warnings</div>
-                <div className="value">{warningDiagnostics.length}</div>
-              </div>
-              <div className="stat-card">
-                <div className="label">Last Command</div>
-                <div className="value">{editorState.lastCommandLabel ?? "No commands yet"}</div>
-              </div>
-            </div>
-
-            {diagnostics.length === 0 ? (
-              <ul className="placeholder-list" data-testid="diagnostics-list">
-                <li>No validation or run-preflight issues are blocking the first-room workflow.</li>
-              </ul>
-            ) : (
-              <div className="diagnostic-list" data-testid="diagnostics-list">
-                {diagnostics.map((diagnostic, index) => (
-                  <div
-                    key={`${diagnostic.scope}-${diagnostic.code}-${diagnostic.path ?? index}`}
-                    className={`diagnostic-item diagnostic-item--${diagnostic.severity}`}
-                  >
-                    <div className="diagnostic-item__header">
-                      <span className={`diagnostic-badge diagnostic-badge--${diagnostic.severity}`}>{diagnostic.severity}</span>
-                      <span className="diagnostic-item__scope">{DIAGNOSTIC_BADGE_LABELS[diagnostic.scope]}</span>
-                    </div>
-                    <div className="diagnostic-item__message">{diagnostic.message}</div>
-                    {diagnostic.path === undefined ? null : <div className="diagnostic-item__path">{diagnostic.path}</div>}
-                  </div>
-                ))}
-              </div>
-            )}
-          </Panel>
-
           <Panel title="Materials">
             <div className="material-browser">
               {materialList.map((material) => (
@@ -1704,14 +1657,20 @@ export function App({ store, initialStatusMessage }: AppProps) {
       </div>
 
       <footer className="status-bar">
-        <div>
+        <div className="status-bar__item" data-testid="status-message">
           <span className="status-bar__strong">Status:</span> {statusMessage}
         </div>
-        <div>
-          <span className="status-bar__strong">Diagnostics:</span>{" "}
-          {diagnostics.length === 0
-            ? "Ready"
-            : `${formatDiagnosticCount(blockingDiagnostics.length, "error")}, ${formatDiagnosticCount(warningDiagnostics.length, "warning")}`}
+        <div className="status-bar__item" data-testid="status-document">
+          <span className="status-bar__strong">Document:</span> {documentStatusLabel}
+        </div>
+        <div className="status-bar__item" data-testid="status-run-preflight">
+          <span className="status-bar__strong">Run:</span> {runReadyLabel}
+        </div>
+        <div className="status-bar__item" data-testid="status-warnings">
+          <span className="status-bar__strong">Warnings:</span> {warningDiagnostics.length}
+        </div>
+        <div className="status-bar__item" data-testid="status-last-command">
+          <span className="status-bar__strong">Last:</span> {lastCommandLabel}
         </div>
       </footer>
 
