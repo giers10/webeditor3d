@@ -1913,7 +1913,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
   };
 
   const handleImportJsonChange = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.currentTarget.files?.[0];
+    const input = event.currentTarget;
+    const file = input.files?.[0];
 
     if (file === undefined) {
       return;
@@ -1926,7 +1927,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
     } finally {
-      event.currentTarget.value = "";
+      input.value = "";
     }
   };
 
@@ -1935,7 +1936,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
   };
 
   const handleImportModelChange = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.currentTarget.files?.[0];
+    const input = event.currentTarget;
+    const file = input.files?.[0];
 
     if (file === undefined) {
       return;
@@ -1973,7 +1975,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
       setStatusMessage(message);
       setAssetStatusMessage(message);
     } finally {
-      event.currentTarget.value = "";
+      input.value = "";
     }
   };
 
