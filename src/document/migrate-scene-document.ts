@@ -23,6 +23,8 @@ import {
   type EntityInstance
 } from "../entities/entity-instances";
 import {
+  createPlayAnimationInteractionLink,
+  createStopAnimationInteractionLink,
   createTeleportPlayerInteractionLink,
   createToggleVisibilityInteractionLink,
   isInteractionTriggerKind,
