@@ -16,7 +16,7 @@ test("app boots and shows the viewport shell", async ({ page }) => {
 
   await page.goto("/");
 
-  await expect(page.getByText("WebEditor3D")).toBeVisible();
+  await expect(page.getByTestId("toolbar-scene-name")).toHaveValue("Untitled Scene");
   await expect(page.getByTestId("viewport-shell")).toBeVisible();
   await expect(page.getByTestId("enter-run-mode")).toBeVisible();
 
