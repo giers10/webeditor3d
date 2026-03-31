@@ -327,7 +327,7 @@ function formatModelBoundingBoxLabel(asset: ModelAssetRecord): string {
 
   const { size } = asset.metadata.boundingBox;
 
-  return `Bounds ${size.x.toFixed(2)} × ${size.y.toFixed(2)} × ${size.z.toFixed(2)} m`;
+  return `Bounds ${size.x.toFixed(2)} x ${size.y.toFixed(2)} x ${size.z.toFixed(2)} m`;
 }
 
 function formatModelAssetSummary(asset: ModelAssetRecord): string {
@@ -342,7 +342,7 @@ function formatModelAssetSummary(asset: ModelAssetRecord): string {
     details.push(`${asset.metadata.animationNames.length} animation${asset.metadata.animationNames.length === 1 ? "" : "s"}`);
   }
 
-  return details.join(" • ");
+  return details.join(" | ");
 }
 
 function createModelInstancePlacementPosition(asset: ModelAssetRecord, anchor: Vec3 | null): Vec3 {
@@ -2393,7 +2393,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   <span className="material-item__preview" style={getMaterialPreviewStyle(material)} aria-hidden="true" />
                   <span className="material-item__text">
                     <span className="material-item__title">{material.name}</span>
-                    <span className="material-item__meta">{material.tags.join(" • ")}</span>
+                    <span className="material-item__meta">{material.tags.join(" | ")}</span>
                   </span>
                 </button>
               ))}
@@ -2445,7 +2445,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     <div className="asset-item__summary">{formatModelAssetSummary(asset)}</div>
                     <div className="asset-item__summary">{formatModelBoundingBoxLabel(asset)}</div>
                     {asset.metadata.warnings.length === 0 ? null : (
-                      <div className="asset-item__warnings">{asset.metadata.warnings.join(" • ")}</div>
+                      <div className="asset-item__warnings">{asset.metadata.warnings.join(" | ")}</div>
                     )}
 
                     <div className="inline-actions">
