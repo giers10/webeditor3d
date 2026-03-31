@@ -1190,6 +1190,159 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
   };
 
+  const renderInteractionLinksSection = (
+    sourceEntity: InteractionSourceEntity,
+    links: InteractionLink[],
+    addTeleportTestId: string,
+    addVisibilityTestId: string
+  ) => (
+    <div className="form-section">
+      <div className="label">Links</div>
+      {links.length === 0 ? (
+        <div className="outliner-empty">
+          {sourceEntity.kind === "triggerVolume" ? "No trigger links authored yet." : "No click links authored yet."}
+        </div>
+      ) : (
+        <div className="outliner-list">
+          {links.map((link, index) => (
+            <div key={link.id} className="outliner-item">
+              <div className="outliner-item__select">
+                <span className="outliner-item__title">{`Link ${index + 1}`}</span>
+                <span className="outliner-item__meta">{getInteractionActionLabel(link)}</span>
+              </div>
+
+              <div className="form-section">
+                <div className="vector-inputs vector-inputs--two">
+                  <label className="form-field">
+                    <span className="label">Trigger</span>
+                    {sourceEntity.kind === "triggerVolume" ? (
+                      <select
+                        data-testid={`interaction-link-trigger-${link.id}`}
+                        className="text-input"
+                        value={link.trigger}
+                        onChange={(event) => updateInteractionLinkTrigger(link, event.currentTarget.value as InteractionTriggerKind)}
+                      >
+                        <option value="enter">On Enter</option>
+                        <option value="exit">On Exit</option>
+                      </select>
+                    ) : (
+                      <input
+                        data-testid={`interaction-link-trigger-${link.id}`}
+                        className="text-input"
+                        type="text"
+                        value={getInteractionTriggerLabel(link.trigger)}
+                        readOnly
+                      />
+                    )}
+                  </label>
+                  <label className="form-field">
+                    <span className="label">Action</span>
+                    <select
+                      data-testid={`interaction-link-action-${link.id}`}
+                      className="text-input"
+                      value={link.action.type}
+                      onChange={(event) => updateInteractionLinkActionType(link, event.currentTarget.value as InteractionLink["action"]["type"])}
+                    >
+                      <option value="teleportPlayer">Teleport Player</option>
+                      <option value="toggleVisibility">Toggle Visibility</option>
+                    </select>
+                  </label>
+                </div>
+              </div>
+
+              {link.action.type === "teleportPlayer" ? (
+                <div className="form-section">
+                  <label className="form-field">
+                    <span className="label">Target</span>
+                    <select
+                      data-testid={`interaction-link-teleport-target-${link.id}`}
+                      className="text-input"
+                      value={link.action.targetEntityId}
+                      onChange={(event) => updateTeleportInteractionLinkTarget(link, event.currentTarget.value)}
+                    >
+                      {teleportTargetOptions.map(({ entity, label }) => (
+                        <option key={entity.id} value={entity.id}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+              ) : (
+                <div className="form-section">
+                  <div className="vector-inputs vector-inputs--two">
+                    <label className="form-field">
+                      <span className="label">Brush</span>
+                      <select
+                        data-testid={`interaction-link-visibility-target-${link.id}`}
+                        className="text-input"
+                        value={link.action.targetBrushId}
+                        onChange={(event) => updateVisibilityInteractionLinkTarget(link, event.currentTarget.value)}
+                      >
+                        {visibilityBrushOptions.map(({ brush, label }) => (
+                          <option key={brush.id} value={brush.id}>
+                            {label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="form-field">
+                      <span className="label">Mode</span>
+                      <select
+                        data-testid={`interaction-link-visibility-mode-${link.id}`}
+                        className="text-input"
+                        value={getVisibilityModeSelectValue(link.action.visible)}
+                        onChange={(event) =>
+                          updateVisibilityInteractionMode(link, event.currentTarget.value as ReturnType<typeof getVisibilityModeSelectValue>)
+                        }
+                      >
+                        <option value="toggle">Toggle</option>
+                        <option value="show">Show</option>
+                        <option value="hide">Hide</option>
+                      </select>
+                    </label>
+                  </div>
+                </div>
+              )}
+
+              <div className="inline-actions">
+                <button
+                  className="toolbar__button"
+                  type="button"
+                  data-testid={`delete-interaction-link-${link.id}`}
+                  onClick={() => handleDeleteInteractionLink(link.id)}
+                >
+                  Delete Link
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="inline-actions">
+        <button
+          className="toolbar__button"
+          type="button"
+          data-testid={addTeleportTestId}
+          disabled={teleportTargetOptions.length === 0}
+          onClick={handleAddTeleportInteractionLink}
+        >
+          Add Teleport Link
+        </button>
+        <button
+          className="toolbar__button"
+          type="button"
+          data-testid={addVisibilityTestId}
+          disabled={visibilityBrushOptions.length === 0}
+          onClick={handleAddVisibilityInteractionLink}
+        >
+          Add Visibility Link
+        </button>
+      </div>
+    </div>
+  );
+
   const applyWorldSettings = (nextWorld: WorldSettings, label: string, successMessage: string) => {
     if (areWorldSettingsEqual(editorState.document.world, nextWorld)) {
       return;
