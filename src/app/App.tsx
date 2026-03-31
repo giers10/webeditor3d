@@ -397,15 +397,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
     setPlayerStartYawDraft(String(editablePlayerStart.yawDegrees));
   }, [editablePlayerStart]);
 
-  useEffect(() => {
-    if (primaryPlayerStart !== null || preferredNavigationMode !== "firstPerson") {
-      return;
-    }
-
-    setPreferredNavigationMode("orbitVisitor");
-    setActiveNavigationMode("orbitVisitor");
-  }, [preferredNavigationMode, primaryPlayerStart]);
-
   const applySceneName = () => {
     const normalizedName = sceneNameDraft.trim() || "Untitled Scene";
 
