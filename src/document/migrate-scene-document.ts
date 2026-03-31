@@ -1042,6 +1042,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
 
   if (source.version === LOCAL_LIGHTS_AND_SKYBOX_SCENE_DOCUMENT_VERSION) {
     const materials = readMaterialRegistry(source.materials, "materials");
+    const assets = readAssets(source.assets);
 
     return {
       version: SCENE_DOCUMENT_VERSION,
@@ -1049,9 +1050,9 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       world: readWorldSettings(source.world),
       materials,
       textures: expectEmptyCollection(source.textures, "textures"),
-      assets: readAssets(source.assets),
+      assets,
       brushes: readBrushes(source.brushes, materials, false),
-      modelInstances: readModelInstances(source.modelInstances, readAssets(source.assets)),
+      modelInstances: readModelInstances(source.modelInstances, assets),
       entities: readEntities(source.entities),
       interactionLinks: readInteractionLinks(source.interactionLinks)
     };
