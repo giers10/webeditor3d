@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { createBoxBrush } from "../../src/document/brushes";
-import { SCENE_DOCUMENT_VERSION, createEmptySceneDocument } from "../../src/document/scene-document";
+import { FIRST_ROOM_POLISH_SCENE_DOCUMENT_VERSION, SCENE_DOCUMENT_VERSION, createEmptySceneDocument } from "../../src/document/scene-document";
 import { migrateSceneDocument } from "../../src/document/migrate-scene-document";
 import { createPlayerStartEntity } from "../../src/entities/entity-instances";
 import { STARTER_MATERIAL_LIBRARY } from "../../src/materials/starter-material-library";
@@ -74,6 +74,30 @@ describe("scene document JSON", () => {
       ...createEmptySceneDocument({ name: "Face UV Scene" }),
       brushes: {
         [brush.id]: brush
+      }
+    };
+
+    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(document);
+  });
+
+  it("round-trips authored world environment settings", () => {
+    const document = createEmptySceneDocument({ name: "World Environment Scene" });
+    document.world.background = {
+      mode: "verticalGradient",
+      topColorHex: "#6a87ab",
+      bottomColorHex: "#151b23"
+    };
+    document.world.ambientLight = {
+      colorHex: "#d4e2ff",
+      intensity: 0.45
+    };
+    document.world.sunLight = {
+      colorHex: "#ffd8a6",
+      intensity: 2.25,
+      direction: {
+        x: -1,
+        y: 0.8,
+        z: 0.2
       }
     };
 
@@ -245,6 +269,27 @@ describe("scene document JSON", () => {
     expect(migratedDocument.entities["entity-player-start-main"]).toMatchObject({
       kind: "playerStart",
       yawDegrees: 45
+    });
+  });
+
+  it("migrates slice 1.4 documents to the world-environment schema without changing authored solid backgrounds", () => {
+    const migratedDocument = migrateSceneDocument({
+      version: FIRST_ROOM_POLISH_SCENE_DOCUMENT_VERSION,
+      name: "First Room Scene",
+      world: createEmptySceneDocument().world,
+      materials: createEmptySceneDocument().materials,
+      textures: {},
+      assets: {},
+      brushes: {},
+      modelInstances: {},
+      entities: {},
+      interactionLinks: {}
+    });
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.world.background).toEqual({
+      mode: "solid",
+      colorHex: "#2f3947"
     });
   });
 
