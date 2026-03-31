@@ -61,7 +61,7 @@ Implement animation playback for imported GLB/GLTF assets in vertical slice orde
     - Create a document with a model instance that has `animationClipName` and `animationAutoplay` set; assert the built `RuntimeModelInstance` has the same values
     - _Requirements: 5.6_
 
-- [-] 5. Implement `AnimationMixer` lifecycle in `RuntimeHost`
+- [x] 5. Implement `AnimationMixer` lifecycle in `RuntimeHost`
   - Add `animationMixers: Map<string, AnimationMixer>` and `instanceAnimationClips: Map<string, AnimationClip[]>` private fields to `RuntimeHost` in `src/runtime-three/runtime-host.ts`
   - In `rebuildModelInstances`: after creating each render group, check `loadedModelAssets[assetId].animations`; if non-empty, create a mixer, store it, and start autoplay if configured
   - In `clearModelInstances`: call `mixer.stopAllAction()` and clear both maps before removing render objects
