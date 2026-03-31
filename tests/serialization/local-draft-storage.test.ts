@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { createBoxBrush } from "../../src/document/brushes";
 import { SCENE_DOCUMENT_VERSION, createEmptySceneDocument } from "../../src/document/scene-document";
 import {
   DEFAULT_SCENE_DRAFT_STORAGE_KEY,
@@ -115,5 +116,22 @@ describe("local draft storage", () => {
 
     expect(result.status).toBe("error");
     expect(result.message).toContain("quota exceeded");
+  });
+
+  it("refuses to save an invalid scene document draft", () => {
+    const invalidBrush = createBoxBrush({
+      id: "brush-invalid"
+    });
+    invalidBrush.faces.posX.materialId = "missing-material";
+
+    const result = saveSceneDocumentDraft(new MemoryStorage(), {
+      ...createEmptySceneDocument(),
+      brushes: {
+        [invalidBrush.id]: invalidBrush
+      }
+    });
+
+    expect(result.status).toBe("error");
+    expect(result.message).toContain("validation error");
   });
 });

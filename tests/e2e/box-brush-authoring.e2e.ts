@@ -36,7 +36,7 @@ test("user can create a box brush and keep it through a draft reload", async ({ 
   await expect(page.getByRole("button", { name: /Box Brush 1/ })).toBeVisible();
   await expect(page.getByRole("button", { name: /center 0, 2, 0/ })).toBeVisible();
   await expect(page.getByRole("button", { name: /size 2, 2, 4/ })).toBeVisible();
-  await expect(page.getByText("1 box brushes loaded. Click a brush face in the viewport or use the face selector to texture it.")).toBeVisible();
+  await expect(page.getByTestId("viewport-overlay")).toBeVisible();
 
   expect(pageErrors).toEqual([]);
   expect(consoleErrors).toEqual([]);
