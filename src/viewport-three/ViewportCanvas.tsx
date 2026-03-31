@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import type { EditorSelection } from "../core/selection";
 import type { ToolMode } from "../core/tool-mode";
 import type { Vec3 } from "../core/vector";
-import { DEFAULT_BOX_BRUSH_SIZE } from "../document/brushes";
+import { DEFAULT_BOX_BRUSH_CENTER, DEFAULT_BOX_BRUSH_SIZE } from "../document/brushes";
 import type { SceneDocument, WorldSettings } from "../document/scene-document";
 import { DEFAULT_GRID_SIZE } from "../geometry/grid-snapping";
 
