@@ -5,6 +5,7 @@ import {
   Color,
   DirectionalLight,
   EdgesGeometry,
+  GridHelper,
   Group,
   LineBasicMaterial,
   LineSegments,

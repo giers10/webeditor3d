@@ -7,12 +7,12 @@ import { ViewportHost } from "./viewport-host";
 
 interface ViewportCanvasProps {
   world: WorldSettings;
-  document: SceneDocument;
+  sceneDocument: SceneDocument;
   selection: EditorSelection;
   onBrushSelectionChange(brushId: string | null): void;
 }
 
-export function ViewportCanvas({ world, document, selection, onBrushSelectionChange }: ViewportCanvasProps) {
+export function ViewportCanvas({ world, sceneDocument, selection, onBrushSelectionChange }: ViewportCanvasProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const hostRef = useRef<ViewportHost | null>(null);
   const [viewportMessage, setViewportMessage] = useState<string | null>(null);
@@ -57,8 +57,8 @@ export function ViewportCanvas({ world, document, selection, onBrushSelectionCha
   }, [world]);
 
   useEffect(() => {
-    hostRef.current?.updateDocument(document, selection);
-  }, [document, selection]);
+    hostRef.current?.updateDocument(sceneDocument, selection);
+  }, [sceneDocument, selection]);
 
   useEffect(() => {
     hostRef.current?.setBrushSelectionChangeHandler(onBrushSelectionChange);

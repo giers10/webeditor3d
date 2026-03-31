@@ -431,7 +431,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
           </div>
           <ViewportCanvas
             world={editorState.document.world}
-            document={editorState.document}
+            sceneDocument={editorState.document}
             selection={editorState.selection}
             onBrushSelectionChange={(brushId) => handleBrushSelection(brushId, "viewport")}
           />

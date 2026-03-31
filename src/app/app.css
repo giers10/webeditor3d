@@ -227,6 +227,18 @@ button:disabled {
   flex-wrap: wrap;
 }
 
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.vector-inputs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
 .placeholder-list {
   display: flex;
   flex-direction: column;
@@ -243,6 +255,45 @@ button:disabled {
   border: 1px dashed rgba(255, 255, 255, 0.11);
   border-radius: 12px;
 }
+
+.outliner-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.outliner-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  width: 100%;
+  padding: 12px 14px;
+  color: var(--color-text);
+  text-align: left;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+}
+
+.outliner-item:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.outliner-item--selected {
+  background: var(--color-accent-soft);
+  border-color: rgba(207, 123, 66, 0.55);
+}
+
+.outliner-item__title {
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.outliner-item__meta {
+  color: var(--color-muted);
+  font-size: 0.8rem;
+ }
 
 .viewport-region {
   display: grid;
@@ -279,6 +330,7 @@ button:disabled {
 .viewport-canvas {
   position: relative;
   min-height: 420px;
+  cursor: crosshair;
   background:
     radial-gradient(circle at top, rgba(130, 154, 188, 0.28) 0%, rgba(130, 154, 188, 0) 38%),
     linear-gradient(180deg, #55657c 0%, #2c3440 34%, #151920 100%);
@@ -373,6 +425,10 @@ button:disabled {
 
   .viewport-canvas {
     min-height: 320px;
+  }
+
+  .vector-inputs {
+    grid-template-columns: 1fr;
   }
 
   .status-bar {
