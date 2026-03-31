@@ -508,7 +508,7 @@ export class RuntimeHost {
       return;
     }
 
-    const clip = THREE.AnimationClip.findByName(clips, clipName);
+    const clip = AnimationClip.findByName(clips, clipName);
 
     if (!clip) {
       console.warn(`playAnimation: clip "${clipName}" not found on instance ${instanceId}`);
