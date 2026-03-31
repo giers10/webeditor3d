@@ -3,10 +3,11 @@ import type { Brush } from "./brushes";
 import type { EntityInstance } from "../entities/entity-instances";
 import { cloneMaterialRegistry, createStarterMaterialRegistry, type MaterialDef } from "../materials/starter-material-library";
 
-export const SCENE_DOCUMENT_VERSION = 4 as const;
+export const SCENE_DOCUMENT_VERSION = 5 as const;
 export const FOUNDATION_SCENE_DOCUMENT_VERSION = 1 as const;
 export const BOX_BRUSH_SCENE_DOCUMENT_VERSION = 2 as const;
 export const FACE_MATERIALS_SCENE_DOCUMENT_VERSION = 3 as const;
+export const RUNNER_V1_SCENE_DOCUMENT_VERSION = 4 as const;
 
 export interface WorldBackgroundSettings {
   mode: "solid";

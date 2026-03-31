@@ -109,6 +109,10 @@ export function validateSceneDocument(document: SceneDocument): SceneDocumentVal
 
     registerAuthoredId(brush.id, path, seenIds, diagnostics);
 
+    if (brush.name !== undefined && brush.name.trim().length === 0) {
+      diagnostics.push(createDiagnostic("error", "invalid-box-name", "Box brush names must be non-empty when authored.", `${path}.name`));
+    }
+
     if (!isFiniteVec3(brush.size) || !hasPositiveBoxSize(brush.size)) {
       diagnostics.push(
         createDiagnostic("error", "invalid-box-size", "Box brush sizes must remain finite and positive on every axis.", `${path}.size`)

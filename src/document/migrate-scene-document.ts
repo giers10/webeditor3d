@@ -5,6 +5,7 @@ import {
   createDefaultFaceUvState,
   isBoxFaceId,
   isFaceUvRotationQuarterTurns,
+  normalizeBrushName,
   type BoxBrushFaces,
   type BrushFace,
   type FaceUvState
@@ -13,6 +14,7 @@ import {
   BOX_BRUSH_SCENE_DOCUMENT_VERSION,
   FACE_MATERIALS_SCENE_DOCUMENT_VERSION,
   FOUNDATION_SCENE_DOCUMENT_VERSION,
+  RUNNER_V1_SCENE_DOCUMENT_VERSION,
   SCENE_DOCUMENT_VERSION,
   type SceneDocument,
   type WorldSettings
@@ -78,6 +80,10 @@ function expectOptionalString(value: unknown, label: string): string | undefined
   }
 
   return expectString(value, label);
+}
+
+function readOptionalBrushName(value: unknown, label: string): string | undefined {
+  return normalizeBrushName(expectOptionalString(value, label));
 }
 
 function expectEmptyCollection(value: unknown, label: string): Record<string, never> {
@@ -264,6 +270,7 @@ function readBrushes(
 
     brushes[brushId] = createBoxBrush({
       id: expectString(brushValue.id, `brushes.${brushId}.id`),
+      name: readOptionalBrushName(brushValue.name, `brushes.${brushId}.name`),
       center,
       size,
       faces: readBoxBrushFaces(brushValue.faces, `brushes.${brushId}.faces`, materials, allowMissingUvState),
@@ -424,6 +431,23 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       brushes: readBrushes(source.brushes, materials, false),
       modelInstances: expectEmptyCollection(source.modelInstances, "modelInstances"),
       entities: expectEmptyCollection(source.entities, "entities"),
+      interactionLinks: expectEmptyCollection(source.interactionLinks, "interactionLinks")
+    };
+  }
+
+  if (source.version === RUNNER_V1_SCENE_DOCUMENT_VERSION) {
+    const materials = readMaterialRegistry(source.materials, "materials");
+
+    return {
+      version: SCENE_DOCUMENT_VERSION,
+      name: expectString(source.name, "name"),
+      world: readWorldSettings(source.world),
+      materials,
+      textures: expectEmptyCollection(source.textures, "textures"),
+      assets: expectEmptyCollection(source.assets, "assets"),
+      brushes: readBrushes(source.brushes, materials, false),
+      modelInstances: expectEmptyCollection(source.modelInstances, "modelInstances"),
+      entities: readEntities(source.entities),
       interactionLinks: expectEmptyCollection(source.interactionLinks, "interactionLinks")
     };
   }
