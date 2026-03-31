@@ -287,6 +287,16 @@ function isCommitIncrementKey(key: string): boolean {
   return key === "ArrowUp" || key === "ArrowDown" || key === "PageUp" || key === "PageDown";
 }
 
+function blurActiveTextEntry() {
+  const activeElement = document.activeElement;
+
+  if (!isTextEntryTarget(activeElement)) {
+    return;
+  }
+
+  activeElement.blur();
+}
+
 function sortDocumentMaterials(materials: Record<string, MaterialDef>): MaterialDef[] {
   return Object.values(materials).sort((left, right) => {
     const leftStarterIndex = STARTER_MATERIAL_ORDER.get(left.id) ?? Number.MAX_SAFE_INTEGER;
