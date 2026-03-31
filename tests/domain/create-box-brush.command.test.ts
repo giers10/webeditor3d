@@ -4,6 +4,7 @@ import { createEditorStore } from "../../src/app/editor-store";
 import { createCreateBoxBrushCommand } from "../../src/commands/create-box-brush-command";
 import { createMoveBoxBrushCommand } from "../../src/commands/move-box-brush-command";
 import { createResizeBoxBrushCommand } from "../../src/commands/resize-box-brush-command";
+import { createSetBoxBrushNameCommand } from "../../src/commands/set-box-brush-name-command";
 
 describe("box brush commands", () => {
   it("creates a canonical box brush and supports undo/redo", () => {
@@ -132,5 +133,28 @@ describe("box brush commands", () => {
       y: 1,
       z: 1
     });
+  });
+
+  it("renames a box brush through an undoable command", () => {
+    const store = createEditorStore();
+
+    store.executeCommand(createCreateBoxBrushCommand());
+
+    const createdBrush = Object.values(store.getState().document.brushes)[0];
+
+    store.executeCommand(
+      createSetBoxBrushNameCommand({
+        brushId: createdBrush.id,
+        name: "Entry Room"
+      })
+    );
+
+    expect(store.getState().document.brushes[createdBrush.id].name).toBe("Entry Room");
+
+    expect(store.undo()).toBe(true);
+    expect(store.getState().document.brushes[createdBrush.id].name).toBeUndefined();
+
+    expect(store.redo()).toBe(true);
+    expect(store.getState().document.brushes[createdBrush.id].name).toBe("Entry Room");
   });
 });
