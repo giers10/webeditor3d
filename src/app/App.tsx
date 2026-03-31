@@ -2137,6 +2137,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
     importModelInputRef.current?.click();
   };
 
+  const handleImportBackgroundImageButtonClick = () => {
+    importBackgroundImageInputRef.current?.click();
+  };
+
   const handleImportModelChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const input = event.currentTarget;
     const files = Array.from(input.files ?? []);
@@ -2181,6 +2185,61 @@ export function App({ store, initialStatusMessage }: AppProps) {
       if (importedModelForCleanup !== null) {
         await projectAssetStorage.deleteAsset(importedModelForCleanup.asset.storageKey).catch(() => undefined);
         disposeModelTemplate(importedModelForCleanup.loadedAsset.template);
+      }
+
+      const message = getErrorMessage(error);
+      setStatusMessage(message);
+      setAssetStatusMessage(message);
+    } finally {
+      input.value = "";
+    }
+  };
+
+  const handleImportBackgroundImageChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const input = event.currentTarget;
+    const file = input.files?.[0];
+
+    if (file === undefined) {
+      return;
+    }
+
+    if (projectAssetStorage === null) {
+      setAssetStatusMessage("Imported background images require project asset storage. IndexedDB is unavailable in this browser.");
+      input.value = "";
+      return;
+    }
+
+    let importedImageForCleanup: ImportedImageAssetResult | null = null;
+
+    try {
+      const importedImage = await importBackgroundImageAssetFromFile(file, projectAssetStorage);
+      importedImageForCleanup = importedImage;
+
+      store.executeCommand(
+        createImportBackgroundImageAssetCommand({
+          asset: importedImage.asset,
+          world: {
+            ...editorState.document.world,
+            background: changeWorldBackgroundMode(editorState.document.world.background, "image", importedImage.asset.id)
+          },
+          label: `Import ${importedImage.asset.sourceName} as background`
+        })
+      );
+
+      loadedImageAssetsRef.current = {
+        ...loadedImageAssetsRef.current,
+        [importedImage.asset.id]: importedImage.loadedAsset
+      };
+      setLoadedImageAssets((currentLoadedAssets) => ({
+        ...currentLoadedAssets,
+        [importedImage.asset.id]: importedImage.loadedAsset
+      }));
+      setAssetStatusMessage(null);
+      setStatusMessage(`Imported ${importedImage.asset.sourceName} and set it as the world background.`);
+    } catch (error) {
+      if (importedImageForCleanup !== null) {
+        await projectAssetStorage.deleteAsset(importedImageForCleanup.asset.storageKey).catch(() => undefined);
+        disposeLoadedImageAsset(importedImageForCleanup.loadedAsset);
       }
 
       const message = getErrorMessage(error);
