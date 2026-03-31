@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { createBoxBrush } from "../../src/document/brushes";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
-import { createPlayerStartEntity } from "../../src/entities/entity-instances";
+import { createPlayerStartEntity, createTriggerVolumeEntity } from "../../src/entities/entity-instances";
 import { resolveViewportFocusTarget } from "../../src/viewport-three/viewport-focus";
 
 describe("resolveViewportFocusTarget", () => {
@@ -91,6 +91,42 @@ describe("resolveViewportFocusTarget", () => {
       z: -2
     });
     expect(focusTarget?.radius).toBeGreaterThan(0.6);
+  });
+
+  it("frames a selected Trigger Volume around its authored bounds", () => {
+    const triggerVolume = createTriggerVolumeEntity({
+      id: "entity-trigger-main",
+      position: {
+        x: 3,
+        y: 2,
+        z: -1
+      },
+      size: {
+        x: 4,
+        y: 6,
+        z: 2
+      }
+    });
+    const document = {
+      ...createEmptySceneDocument(),
+      entities: {
+        [triggerVolume.id]: triggerVolume
+      }
+    };
+
+    const focusTarget = resolveViewportFocusTarget(document, {
+      kind: "entities",
+      ids: [triggerVolume.id]
+    });
+
+    expect(focusTarget).toEqual({
+      center: {
+        x: 3,
+        y: 2,
+        z: -1
+      },
+      radius: Math.hypot(2, 3, 1)
+    });
   });
 
   it("frames the authored scene when nothing is selected and returns null when the scene is empty", () => {
