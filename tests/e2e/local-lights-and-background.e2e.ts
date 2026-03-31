@@ -52,6 +52,7 @@ test("local lights and background images persist through editor and runner flows
 
   await expect(page.getByTestId("asset-list")).toContainText("skybox-panorama.svg");
   await expect(page.locator('[data-testid^="outliner-entity-"]')).toHaveCount(2);
+  await expect(page.getByTestId("viewport-shell")).toHaveCSS("background-image", /url/);
 
   await page.getByTestId("enter-run-mode").click();
 
