@@ -725,6 +725,30 @@ Reasons:
 - easier to migrate than overloading glTF with editor-only metadata
 - decouples authoring from runtime/export packaging
 
+Canonical document format is not the same thing as the portable project format.
+
+Once scenes reference external binary assets, JSON alone is no longer enough to move a project between machines.
+At that point, the user-facing save/load format should be a **project package** built around:
+
+- `scene.json`
+- referenced asset payloads
+
+Recommended logical shape:
+
+```txt
+project/
+  scene.json
+  assets/
+    ...
+```
+
+The project package may be represented as:
+
+- a folder
+- a zip/archive of that folder
+
+Runner/deployment output is separate from this and should not become the editable source package by default.
+
 ### Migration rule
 
 Every persisted schema change must be accompanied by:
