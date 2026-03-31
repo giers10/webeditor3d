@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { createBoxBrush } from "../../src/document/brushes";
 import {
+  ENTITY_SYSTEM_FOUNDATION_SCENE_DOCUMENT_VERSION,
   FIRST_ROOM_POLISH_SCENE_DOCUMENT_VERSION,
   SCENE_DOCUMENT_VERSION,
   WORLD_ENVIRONMENT_SCENE_DOCUMENT_VERSION,
@@ -15,6 +16,7 @@ import {
   createTeleportTargetEntity,
   createTriggerVolumeEntity
 } from "../../src/entities/entity-instances";
+import { createTeleportPlayerInteractionLink, createToggleVisibilityInteractionLink } from "../../src/interactions/interaction-links";
 import { STARTER_MATERIAL_LIBRARY } from "../../src/materials/starter-material-library";
 import { parseSceneDocumentJson, serializeSceneDocument } from "../../src/serialization/scene-document-json";
 
