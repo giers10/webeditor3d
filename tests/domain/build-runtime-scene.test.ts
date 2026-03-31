@@ -2,7 +2,13 @@ import { describe, expect, it } from "vitest";
 
 import { createBoxBrush } from "../../src/document/brushes";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
-import { createPlayerStartEntity } from "../../src/entities/entity-instances";
+import {
+  createInteractableEntity,
+  createPlayerStartEntity,
+  createSoundEmitterEntity,
+  createTeleportTargetEntity,
+  createTriggerVolumeEntity
+} from "../../src/entities/entity-instances";
 import { buildRuntimeSceneFromDocument } from "../../src/runtime-three/runtime-scene-build";
 
 describe("buildRuntimeSceneFromDocument", () => {
@@ -31,6 +37,53 @@ describe("buildRuntimeSceneFromDocument", () => {
       },
       yawDegrees: 90
     });
+    const soundEmitter = createSoundEmitterEntity({
+      id: "entity-sound-lobby",
+      position: {
+        x: -1,
+        y: 1,
+        z: 0
+      },
+      radius: 8,
+      gain: 0.75,
+      autoplay: true,
+      loop: false
+    });
+    const triggerVolume = createTriggerVolumeEntity({
+      id: "entity-trigger-door",
+      position: {
+        x: 0,
+        y: 1,
+        z: 2
+      },
+      size: {
+        x: 2,
+        y: 2,
+        z: 1
+      },
+      triggerOnEnter: true,
+      triggerOnExit: false
+    });
+    const teleportTarget = createTeleportTargetEntity({
+      id: "entity-teleport-target-main",
+      position: {
+        x: 6,
+        y: 0,
+        z: -3
+      },
+      yawDegrees: 270
+    });
+    const interactable = createInteractableEntity({
+      id: "entity-interactable-console",
+      position: {
+        x: 1,
+        y: 1,
+        z: 1
+      },
+      radius: 1.5,
+      prompt: "Use Console",
+      enabled: true
+    });
 
     const document = {
       ...createEmptySceneDocument({ name: "Runtime Slice" }),
@@ -38,7 +91,11 @@ describe("buildRuntimeSceneFromDocument", () => {
         [brush.id]: brush
       },
       entities: {
-        [playerStart.id]: playerStart
+        [playerStart.id]: playerStart,
+        [soundEmitter.id]: soundEmitter,
+        [triggerVolume.id]: triggerVolume,
+        [teleportTarget.id]: teleportTarget,
+        [interactable.id]: interactable
       }
     };
     document.world.background = {
@@ -98,6 +155,74 @@ describe("buildRuntimeSceneFromDocument", () => {
         z: 8
       }
     });
+    expect(runtimeScene.entities).toEqual({
+      playerStarts: [
+        {
+          entityId: "entity-player-start-main",
+          position: {
+            x: 2,
+            y: 0,
+            z: -1
+          },
+          yawDegrees: 90
+        }
+      ],
+      soundEmitters: [
+        {
+          entityId: "entity-sound-lobby",
+          position: {
+            x: -1,
+            y: 1,
+            z: 0
+          },
+          radius: 8,
+          gain: 0.75,
+          autoplay: true,
+          loop: false
+        }
+      ],
+      triggerVolumes: [
+        {
+          entityId: "entity-trigger-door",
+          position: {
+            x: 0,
+            y: 1,
+            z: 2
+          },
+          size: {
+            x: 2,
+            y: 2,
+            z: 1
+          },
+          triggerOnEnter: true,
+          triggerOnExit: false
+        }
+      ],
+      teleportTargets: [
+        {
+          entityId: "entity-teleport-target-main",
+          position: {
+            x: 6,
+            y: 0,
+            z: -3
+          },
+          yawDegrees: 270
+        }
+      ],
+      interactables: [
+        {
+          entityId: "entity-interactable-console",
+          position: {
+            x: 1,
+            y: 1,
+            z: 1
+          },
+          radius: 1.5,
+          prompt: "Use Console",
+          enabled: true
+        }
+      ]
+    });
     expect(runtimeScene.playerStart).toEqual({
       entityId: "entity-player-start-main",
       position: {
@@ -142,6 +267,13 @@ describe("buildRuntimeSceneFromDocument", () => {
     });
 
     expect(runtimeScene.playerStart).toBeNull();
+    expect(runtimeScene.entities).toEqual({
+      playerStarts: [],
+      soundEmitters: [],
+      triggerVolumes: [],
+      teleportTargets: [],
+      interactables: []
+    });
     expect(runtimeScene.spawn).toEqual({
       source: "fallback",
       entityId: null,
