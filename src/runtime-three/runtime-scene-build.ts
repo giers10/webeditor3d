@@ -107,6 +107,8 @@ export interface RuntimeModelInstance {
   position: Vec3;
   rotationDegrees: Vec3;
   scale: Vec3;
+  animationClipName?: string;
+  animationAutoplay?: boolean;
 }
 
 export interface RuntimeEntityCollection {
