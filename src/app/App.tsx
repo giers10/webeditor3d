@@ -845,6 +845,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
   }, [editorState.document.world.ambientLight.intensity]);
 
   useEffect(() => {
+    if (editorState.document.world.background.mode === "image") {
+      setBackgroundEnvironmentIntensityDraft(String(editorState.document.world.background.environmentIntensity));
+    }
+  }, [editorState.document.world.background]);
+
+  useEffect(() => {
     setSunLightIntensityDraft(String(editorState.document.world.sunLight.intensity));
   }, [editorState.document.world.sunLight.intensity]);
 
