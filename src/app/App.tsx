@@ -373,7 +373,13 @@ function getSelectedBrushLabel(selection: EditorSelection, brushes: BoxBrush[]):
   return getBrushLabelById(selectedBrushId, brushes);
 }
 
-function describeSelection(selection: EditorSelection, brushes: BoxBrush[], entities: Record<string, EntityInstance>): string {
+function describeSelection(
+  selection: EditorSelection,
+  brushes: BoxBrush[],
+  modelInstances: Record<string, ModelInstance>,
+  assets: Record<string, ProjectAssetRecord>,
+  entities: Record<string, EntityInstance>
+): string {
   switch (selection.kind) {
     case "none":
       return "No authored selection";
@@ -384,9 +390,9 @@ function describeSelection(selection: EditorSelection, brushes: BoxBrush[], enti
     case "entities":
       return `${selection.ids.length} entity selected (${getEntityDisplayLabelById(selection.ids[0], entities)})`;
     case "modelInstances":
-      return `${selection.ids.length} model instances selected`;
-    default:
-      return "Unknown selection";
+      return `${selection.ids.length} model instance selected (${getModelInstanceDisplayLabelById(selection.ids[0], modelInstances, assets)})`;
+    case "modelInstances":
+      return `${selection.ids.length} model instance selected (${getModelInstanceDisplayLabelById(selection.ids[0], modelInstances, assets)})`;
   }
 }
 
