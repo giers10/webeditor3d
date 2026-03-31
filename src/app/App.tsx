@@ -1593,23 +1593,60 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
             <div className="outliner-section">
               <div className="label">Entities</div>
-              {playerStartList.length === 0 ? (
-                <>
-                  <div className="outliner-empty">No Player Start authored yet.</div>
-                  <div className="inline-actions">
-                    <button className="toolbar__button" type="button" data-testid="place-player-start" onClick={applyPlayerStartChange}>
-                      Place Player Start
-                    </button>
-                  </div>
-                </>
-              ) : (
+              {entityDisplayList.length === 0 ? <div className="outliner-empty">No entities authored yet.</div> : null}
+
+              <div className="inline-actions">
+                <button className="toolbar__button" type="button" data-testid="place-player-start" onClick={() => handlePlaceEntity("playerStart")}>
+                  Add Player Start
+                </button>
+                <button
+                  className="toolbar__button"
+                  type="button"
+                  data-testid="add-entity-soundEmitter"
+                  onClick={() => handlePlaceEntity("soundEmitter")}
+                >
+                  Add Sound Emitter
+                </button>
+              </div>
+
+              <div className="inline-actions">
+                <button
+                  className="toolbar__button"
+                  type="button"
+                  data-testid="add-entity-triggerVolume"
+                  onClick={() => handlePlaceEntity("triggerVolume")}
+                >
+                  Add Trigger Volume
+                </button>
+                <button
+                  className="toolbar__button"
+                  type="button"
+                  data-testid="add-entity-teleportTarget"
+                  onClick={() => handlePlaceEntity("teleportTarget")}
+                >
+                  Add Teleport Target
+                </button>
+              </div>
+
+              <div className="inline-actions">
+                <button
+                  className="toolbar__button"
+                  type="button"
+                  data-testid="add-entity-interactable"
+                  onClick={() => handlePlaceEntity("interactable")}
+                >
+                  Add Interactable
+                </button>
+              </div>
+
+              {entityDisplayList.length === 0 ? null : (
                 <div className="outliner-list">
-                  {playerStartList.map((playerStart, index) => (
+                  {entityDisplayList.map(({ entity, label }) => (
                     <button
-                      key={playerStart.id}
-                      data-testid={`outliner-entity-${playerStart.id}`}
+                      key={entity.id}
+                      data-testid={`outliner-entity-${entity.id}`}
                       className={`outliner-item ${
-                        editorState.selection.kind === "entities" && editorState.selection.ids.includes(playerStart.id)
+                        editorState.selection.kind === "entities" && editorState.selection.ids.includes(entity.id)
                           ? "outliner-item--selected"
                           : ""
                       }`}
@@ -1618,7 +1655,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         applySelection(
                           {
                             kind: "entities",
-                            ids: [playerStart.id]
+                            ids: [entity.id]
                           },
                           "outliner",
                           {
@@ -1627,8 +1664,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         )
                       }
                     >
-                      <span className="outliner-item__title">{getPlayerStartLabel(index)}</span>
-                      <span className="outliner-item__meta">Entity</span>
+                      <span className="outliner-item__title">{label}</span>
+                      <span className="outliner-item__meta">{getEntityKindLabel(entity.kind)}</span>
                     </button>
                   ))}
                 </div>
