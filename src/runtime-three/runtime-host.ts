@@ -6,13 +6,17 @@ import {
   Mesh,
   MeshStandardMaterial,
   PerspectiveCamera,
+  PointLight,
+  Quaternion,
   Scene,
   Vector3,
+  SpotLight,
   WebGLRenderer
 } from "three";
 
 import { createModelInstanceRenderGroup, disposeModelInstance } from "../assets/model-instance-rendering";
 import type { LoadedModelAsset } from "../assets/gltf-model-import";
+import type { LoadedImageAsset } from "../assets/image-assets";
 import type { ProjectAssetRecord } from "../assets/project-assets";
 import { applyBoxBrushFaceUvsToGeometry } from "../geometry/box-face-uvs";
 import { createStarterMaterialSignature, createStarterMaterialTexture } from "../materials/starter-material-textures";
@@ -21,7 +25,13 @@ import { FirstPersonNavigationController } from "./first-person-navigation-contr
 import type { FirstPersonTelemetry, NavigationController, RuntimeControllerContext } from "./navigation-controller";
 import { RuntimeInteractionSystem, type RuntimeInteractionDispatcher, type RuntimeInteractionPrompt } from "./runtime-interaction-system";
 import { OrbitVisitorNavigationController } from "./orbit-visitor-navigation-controller";
-import type { RuntimeBoxBrushInstance, RuntimeNavigationMode, RuntimeSceneDefinition, RuntimeTeleportTarget } from "./runtime-scene-build";
+import type {
+  RuntimeBoxBrushInstance,
+  RuntimeLocalLightCollection,
+  RuntimeNavigationMode,
+  RuntimeSceneDefinition,
+  RuntimeTeleportTarget
+} from "./runtime-scene-build";
 
 interface CachedMaterialTexture {
   signature: string;
@@ -37,19 +47,23 @@ export class RuntimeHost {
   private readonly domElement: HTMLCanvasElement;
   private readonly ambientLight = new AmbientLight();
   private readonly sunLight = new DirectionalLight();
+  private readonly localLightGroup = new Group();
   private readonly brushGroup = new Group();
   private readonly modelGroup = new Group();
   private readonly firstPersonController = new FirstPersonNavigationController();
   private readonly orbitVisitorController = new OrbitVisitorNavigationController();
   private readonly interactionSystem = new RuntimeInteractionSystem();
   private readonly brushMeshes = new Map<string, Mesh<BoxGeometry, MeshStandardMaterial[]>>();
+  private readonly localLightObjects = new Map<string, Group>();
   private readonly modelRenderObjects = new Map<string, Group>();
   private readonly materialTextureCache = new Map<string, CachedMaterialTexture>();
   private readonly controllerContext: RuntimeControllerContext;
   private readonly renderer: WebGLRenderer | null;
   private runtimeScene: RuntimeSceneDefinition | null = null;
+  private currentWorld: RuntimeSceneDefinition["world"] | null = null;
   private projectAssets: Record<string, ProjectAssetRecord> = {};
   private loadedModelAssets: Record<string, LoadedModelAsset> = {};
+  private loadedImageAssets: Record<string, LoadedImageAsset> = {};
   private resizeObserver: ResizeObserver | null = null;
   private animationFrame = 0;
   private previousFrameTime = 0;
@@ -67,6 +81,7 @@ export class RuntimeHost {
 
     this.scene.add(this.ambientLight);
     this.scene.add(this.sunLight);
+    this.scene.add(this.localLightGroup);
     this.scene.add(this.brushGroup);
     this.scene.add(this.modelGroup);
     this.renderer = enableRendering ? new WebGLRenderer({ antialias: true, alpha: true }) : null;
