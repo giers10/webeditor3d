@@ -8,8 +8,10 @@ import {
 import type { ModelInstance } from "../assets/model-instances";
 import {
   type InteractableEntity,
+  type PointLightEntity,
   type PlayerStartEntity,
   type SoundEmitterEntity,
+  type SpotLightEntity,
   type TeleportTargetEntity,
   type TriggerVolumeEntity
 } from "../entities/entity-instances";
@@ -79,7 +81,7 @@ function hasNonZeroVectorLength(vector: { x: number; y: number; z: number }): bo
   return vector.x !== 0 || vector.y !== 0 || vector.z !== 0;
 }
 
-function validateWorldSettings(world: WorldSettings, diagnostics: SceneDiagnostic[]) {
+function validateWorldSettings(world: WorldSettings, document: SceneDocument, diagnostics: SceneDiagnostic[]) {
   if (world.background.mode === "solid") {
     if (!isHexColorString(world.background.colorHex)) {
       diagnostics.push(
@@ -112,6 +114,39 @@ function validateWorldSettings(world: WorldSettings, diagnostics: SceneDiagnosti
           "world.background.bottomColorHex"
         )
       );
+    }
+  } else if (world.background.mode === "image") {
+    if (typeof world.background.assetId !== "string" || world.background.assetId.trim().length === 0) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-world-background-asset-id",
+          "World background images must reference a non-empty asset id.",
+          "world.background.assetId"
+        )
+      );
+    } else {
+      const backgroundAsset = document.assets[world.background.assetId];
+
+      if (backgroundAsset === undefined) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "missing-world-background-asset",
+            `World background image asset ${world.background.assetId} does not exist.`,
+            "world.background.assetId"
+          )
+        );
+      } else if (backgroundAsset.kind !== "image") {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-world-background-asset-kind",
+            "World background images must reference image assets.",
+            "world.background.assetId"
+          )
+        );
+      }
     }
   }
 
@@ -163,6 +198,50 @@ function validateWorldSettings(world: WorldSettings, diagnostics: SceneDiagnosti
         "world.sunLight.direction"
       )
     );
+  }
+}
+
+function validatePointLightEntity(entity: PointLightEntity, path: string, diagnostics: SceneDiagnostic[]) {
+  if (!isFiniteVec3(entity.position)) {
+    diagnostics.push(createDiagnostic("error", "invalid-point-light-position", "Point Light position must remain finite on every axis.", `${path}.position`));
+  }
+
+  if (!isHexColorString(entity.colorHex)) {
+    diagnostics.push(createDiagnostic("error", "invalid-point-light-color", "Point Light color must use a #RRGGBB color.", `${path}.colorHex`));
+  }
+
+  if (!isNonNegativeFiniteNumber(entity.intensity)) {
+    diagnostics.push(createDiagnostic("error", "invalid-point-light-intensity", "Point Light intensity must remain finite and zero or greater.", `${path}.intensity`));
+  }
+
+  if (!isPositiveFiniteNumber(entity.distance)) {
+    diagnostics.push(createDiagnostic("error", "invalid-point-light-distance", "Point Light distance must remain finite and greater than zero.", `${path}.distance`));
+  }
+}
+
+function validateSpotLightEntity(entity: SpotLightEntity, path: string, diagnostics: SceneDiagnostic[]) {
+  if (!isFiniteVec3(entity.position)) {
+    diagnostics.push(createDiagnostic("error", "invalid-spot-light-position", "Spot Light position must remain finite on every axis.", `${path}.position`));
+  }
+
+  if (!isFiniteVec3(entity.direction) || !hasNonZeroVectorLength(entity.direction)) {
+    diagnostics.push(createDiagnostic("error", "invalid-spot-light-direction", "Spot Light direction must remain finite and must not be the zero vector.", `${path}.direction`));
+  }
+
+  if (!isHexColorString(entity.colorHex)) {
+    diagnostics.push(createDiagnostic("error", "invalid-spot-light-color", "Spot Light color must use a #RRGGBB color.", `${path}.colorHex`));
+  }
+
+  if (!isNonNegativeFiniteNumber(entity.intensity)) {
+    diagnostics.push(createDiagnostic("error", "invalid-spot-light-intensity", "Spot Light intensity must remain finite and zero or greater.", `${path}.intensity`));
+  }
+
+  if (!isPositiveFiniteNumber(entity.distance)) {
+    diagnostics.push(createDiagnostic("error", "invalid-spot-light-distance", "Spot Light distance must remain finite and greater than zero.", `${path}.distance`));
+  }
+
+  if (!isFiniteNumber(entity.angleDegrees) || entity.angleDegrees <= 0 || entity.angleDegrees >= 180) {
+    diagnostics.push(createDiagnostic("error", "invalid-spot-light-angle", "Spot Light angle must remain a finite degree value between 0 and 180.", `${path}.angleDegrees`));
   }
 }
 
