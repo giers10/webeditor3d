@@ -55,7 +55,6 @@ export class RuntimeHost {
   private previousFrameTime = 0;
   private container: HTMLElement | null = null;
   private activeController: NavigationController | null = null;
-  private runtimeScene: RuntimeSceneDefinition | null = null;
   private runtimeMessageHandler: ((message: string | null) => void) | null = null;
   private firstPersonTelemetryHandler: ((telemetry: FirstPersonTelemetry | null) => void) | null = null;
   private interactionPromptHandler: ((prompt: RuntimeInteractionPrompt | null) => void) | null = null;
