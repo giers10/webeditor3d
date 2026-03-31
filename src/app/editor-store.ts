@@ -37,6 +37,7 @@ export class EditorStore {
   private document: SceneDocument;
   private selection: EditorSelection = { kind: "none" };
   private toolMode: ToolMode = "select";
+  private previousEditingToolMode: Exclude<ToolMode, "play"> = "select";
   private readonly history = new CommandHistory();
   private readonly listeners = new Set<EditorStoreListener>();
   private readonly storage: KeyValueStorage | null;
@@ -81,7 +82,33 @@ export class EditorStore {
       return;
     }
 
+    if (toolMode !== "play") {
+      this.previousEditingToolMode = toolMode;
+    }
+
     this.toolMode = toolMode;
+    this.emit();
+  }
+
+  enterPlayMode() {
+    if (this.toolMode === "play") {
+      return;
+    }
+
+    if (this.toolMode !== "play") {
+      this.previousEditingToolMode = this.toolMode;
+    }
+
+    this.toolMode = "play";
+    this.emit();
+  }
+
+  exitPlayMode() {
+    if (this.toolMode !== "play") {
+      return;
+    }
+
+    this.toolMode = this.previousEditingToolMode;
     this.emit();
   }
 
@@ -124,6 +151,7 @@ export class EditorStore {
     this.document = document;
     this.selection = { kind: "none" };
     this.toolMode = "select";
+    this.previousEditingToolMode = "select";
 
     if (resetHistory) {
       this.history.clear();

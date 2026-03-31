@@ -80,7 +80,7 @@ export class OrbitVisitorNavigationController implements NavigationController {
     this.context = null;
   }
 
-  update(): void {
+  update(_dt: number): void {
     this.updateCameraTransform();
   }
 

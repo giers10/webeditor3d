@@ -4,6 +4,8 @@ import {
   BoxGeometry,
   CanvasTexture,
   Color,
+  ConeGeometry,
+  CylinderGeometry,
   DirectionalLight,
   EdgesGeometry,
   GridHelper,
@@ -24,8 +26,10 @@ import {
 
 import { isBrushFaceSelected, isBrushSelected, type EditorSelection } from "../core/selection";
 import type { SceneDocument, WorldSettings } from "../document/scene-document";
+import { getPlayerStartEntities } from "../entities/entity-instances";
 import { BOX_FACE_IDS, type BoxBrush, type BoxFaceId } from "../document/brushes";
 import { applyBoxBrushFaceUvsToGeometry } from "../geometry/box-face-uvs";
+import { createStarterMaterialSignature, createStarterMaterialTexture } from "../materials/starter-material-textures";
 import type { MaterialDef } from "../materials/starter-material-library";
 
 interface BrushRenderObjects {
@@ -33,79 +37,22 @@ interface BrushRenderObjects {
   edges: LineSegments<EdgesGeometry, LineBasicMaterial>;
 }
 
-interface CachedMaterialTexture {
-  signature: string;
-  texture: CanvasTexture;
-}
-
 const BRUSH_SELECTED_EDGE_COLOR = 0xf7d2aa;
 const BRUSH_EDGE_COLOR = 0x0d1017;
 const FALLBACK_FACE_COLOR = 0x747d89;
 const SELECTED_FACE_FALLBACK_COLOR = 0xcf7b42;
 const SELECTED_FACE_EMISSIVE = 0x4a2814;
+const PLAYER_START_COLOR = 0x7cb7ff;
+const PLAYER_START_SELECTED_COLOR = 0xf3be8f;
 
-function createMaterialSignature(material: MaterialDef): string {
-  return `${material.baseColorHex}|${material.accentColorHex}|${material.pattern}`;
+interface CachedMaterialTexture {
+  signature: string;
+  texture: CanvasTexture;
 }
 
-function fillMaterialPattern(context: CanvasRenderingContext2D, material: MaterialDef, size: number) {
-  context.fillStyle = material.baseColorHex;
-  context.fillRect(0, 0, size, size);
-  context.strokeStyle = material.accentColorHex;
-  context.fillStyle = material.accentColorHex;
-
-  switch (material.pattern) {
-    case "grid":
-      context.lineWidth = Math.max(2, size / 32);
-
-      for (let offset = 0; offset <= size; offset += size / 4) {
-        context.beginPath();
-        context.moveTo(offset, 0);
-        context.lineTo(offset, size);
-        context.stroke();
-
-        context.beginPath();
-        context.moveTo(0, offset);
-        context.lineTo(size, offset);
-        context.stroke();
-      }
-      break;
-    case "checker": {
-      const checkerSize = size / 4;
-
-      for (let row = 0; row < 4; row += 1) {
-        for (let column = 0; column < 4; column += 1) {
-          if ((row + column) % 2 === 0) {
-            context.fillRect(column * checkerSize, row * checkerSize, checkerSize, checkerSize);
-          }
-        }
-      }
-      break;
-    }
-    case "stripes":
-      context.lineWidth = size / 6;
-
-      for (let offset = -size; offset <= size * 2; offset += size / 3) {
-        context.beginPath();
-        context.moveTo(offset, size);
-        context.lineTo(offset + size, 0);
-        context.stroke();
-      }
-      break;
-    case "diamond":
-      context.lineWidth = Math.max(2, size / 28);
-
-      for (let offset = -size; offset <= size; offset += size / 3) {
-        context.beginPath();
-        context.moveTo(size * 0.5, offset);
-        context.lineTo(size - offset, size * 0.5);
-        context.lineTo(size * 0.5, size - offset);
-        context.lineTo(-offset, size * 0.5);
-        context.closePath();
-        context.stroke();
-      }
-      break;
-  }
+interface PlayerStartRenderObjects {
+  group: Group;
+  meshes: Mesh[];
 }
 
 export class ViewportHost {
@@ -115,9 +62,11 @@ export class ViewportHost {
   private readonly ambientLight = new AmbientLight();
   private readonly sunLight = new DirectionalLight();
   private readonly brushGroup = new Group();
+  private readonly entityGroup = new Group();
   private readonly raycaster = new Raycaster();
   private readonly pointer = new Vector2();
   private readonly brushRenderObjects = new Map<string, BrushRenderObjects>();
+  private readonly playerStartRenderObjects = new Map<string, PlayerStartRenderObjects>();
   private readonly materialTextureCache = new Map<string, CachedMaterialTexture>();
   private resizeObserver: ResizeObserver | null = null;
   private animationFrame = 0;
@@ -136,6 +85,7 @@ export class ViewportHost {
     this.scene.add(this.ambientLight);
     this.scene.add(this.sunLight);
     this.scene.add(this.brushGroup);
+    this.scene.add(this.entityGroup);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   }
 
@@ -164,6 +114,7 @@ export class ViewportHost {
 
   updateDocument(document: SceneDocument, selection: EditorSelection) {
     this.rebuildBrushMeshes(document, selection);
+    this.rebuildPlayerStartMarkers(document, selection);
   }
 
   setBrushSelectionChangeHandler(handler: ((selection: EditorSelection) => void) | null) {
@@ -180,6 +131,7 @@ export class ViewportHost {
     this.resizeObserver = null;
     this.renderer.domElement.removeEventListener("pointerdown", this.handlePointerDown);
     this.clearBrushMeshes();
+    this.clearPlayerStartMarkers();
 
     for (const cachedTexture of this.materialTextureCache.values()) {
       cachedTexture.texture.dispose();
@@ -235,6 +187,67 @@ export class ViewportHost {
     }
   }
 
+  private rebuildPlayerStartMarkers(document: SceneDocument, selection: EditorSelection) {
+    this.clearPlayerStartMarkers();
+
+    for (const playerStart of getPlayerStartEntities(document.entities)) {
+      const selected = selection.kind === "entities" && selection.ids.includes(playerStart.id);
+      const markerColor = selected ? PLAYER_START_SELECTED_COLOR : PLAYER_START_COLOR;
+      const group = new Group();
+      group.position.set(playerStart.position.x, playerStart.position.y, playerStart.position.z);
+      group.rotation.y = (playerStart.yawDegrees * Math.PI) / 180;
+
+      const base = new Mesh(
+        new CylinderGeometry(0.22, 0.22, 0.05, 18),
+        new MeshStandardMaterial({
+          color: markerColor,
+          emissive: markerColor,
+          emissiveIntensity: selected ? 0.18 : 0.08,
+          roughness: 0.35,
+          metalness: 0.08
+        })
+      );
+      base.position.y = 0.025;
+
+      const body = new Mesh(
+        new BoxGeometry(0.12, 0.12, 0.46),
+        new MeshStandardMaterial({
+          color: markerColor,
+          emissive: markerColor,
+          emissiveIntensity: selected ? 0.14 : 0.06,
+          roughness: 0.42,
+          metalness: 0.02
+        })
+      );
+      body.position.set(0, 0.16, 0.1);
+
+      const arrowHead = new Mesh(
+        new ConeGeometry(0.12, 0.28, 14),
+        new MeshStandardMaterial({
+          color: markerColor,
+          emissive: markerColor,
+          emissiveIntensity: selected ? 0.2 : 0.08,
+          roughness: 0.38,
+          metalness: 0.03
+        })
+      );
+      arrowHead.rotation.x = Math.PI * 0.5;
+      arrowHead.position.set(0, 0.16, 0.42);
+
+      for (const mesh of [base, body, arrowHead]) {
+        mesh.userData.entityId = playerStart.id;
+        mesh.userData.entityKind = "playerStart";
+        group.add(mesh);
+      }
+
+      this.entityGroup.add(group);
+      this.playerStartRenderObjects.set(playerStart.id, {
+        group,
+        meshes: [base, body, arrowHead]
+      });
+    }
+  }
+
   private createFaceMaterial(brush: BoxBrush, faceId: BoxFaceId, material: MaterialDef | undefined, selectedFace: boolean): MeshStandardMaterial {
     const face = brush.faces[faceId];
 
@@ -259,7 +272,7 @@ export class ViewportHost {
   }
 
   private getOrCreateTexture(material: MaterialDef): CanvasTexture {
-    const signature = createMaterialSignature(material);
+    const signature = createStarterMaterialSignature(material);
     const cachedTexture = this.materialTextureCache.get(material.id);
 
     if (cachedTexture !== undefined && cachedTexture.signature === signature) {
@@ -268,23 +281,7 @@ export class ViewportHost {
 
     cachedTexture?.texture.dispose();
 
-    const canvas = document.createElement("canvas");
-    canvas.width = 128;
-    canvas.height = 128;
-
-    const context = canvas.getContext("2d");
-
-    if (context === null) {
-      throw new Error("2D canvas context is unavailable for starter material texture generation.");
-    }
-
-    fillMaterialPattern(context, material, canvas.width);
-
-    const texture = new CanvasTexture(canvas);
-    texture.wrapS = RepeatWrapping;
-    texture.wrapT = RepeatWrapping;
-    texture.colorSpace = SRGBColorSpace;
-    texture.needsUpdate = true;
+    const texture = createStarterMaterialTexture(material);
 
     this.materialTextureCache.set(material.id, {
       signature,
@@ -309,6 +306,19 @@ export class ViewportHost {
     }
 
     this.brushRenderObjects.clear();
+  }
+
+  private clearPlayerStartMarkers() {
+    for (const renderObjects of this.playerStartRenderObjects.values()) {
+      this.entityGroup.remove(renderObjects.group);
+
+      for (const mesh of renderObjects.meshes) {
+        mesh.geometry.dispose();
+        mesh.material.dispose();
+      }
+    }
+
+    this.playerStartRenderObjects.clear();
   }
 
   private resize() {
@@ -341,8 +351,11 @@ export class ViewportHost {
     this.raycaster.setFromCamera(this.pointer, this.camera);
 
     const hits = this.raycaster.intersectObjects(
-      Array.from(this.brushRenderObjects.values(), (renderObjects) => renderObjects.mesh),
-      false
+      [
+        ...Array.from(this.playerStartRenderObjects.values(), (renderObjects) => renderObjects.group),
+        ...Array.from(this.brushRenderObjects.values(), (renderObjects) => renderObjects.mesh)
+      ],
+      true
     );
 
     if (hits.length === 0) {
@@ -353,6 +366,16 @@ export class ViewportHost {
     }
 
     const hit = hits[0];
+    const entityId = hit.object.userData.entityId;
+
+    if (typeof entityId === "string") {
+      this.brushSelectionChangeHandler?.({
+        kind: "entities",
+        ids: [entityId]
+      });
+      return;
+    }
+
     const brushId = hit.object.userData.brushId;
     const faceMaterialIndex = hit.face?.materialIndex;
     const faceId = typeof faceMaterialIndex === "number" ? BOX_FACE_IDS[faceMaterialIndex] ?? null : null;
