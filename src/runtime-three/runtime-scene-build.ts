@@ -5,6 +5,7 @@ import { getPrimaryPlayerStartEntity } from "../entities/entity-instances";
 import { getBoxBrushBounds } from "../geometry/box-brush";
 import { cloneMaterialDef, type MaterialDef } from "../materials/starter-material-library";
 import { cloneFaceUvState } from "../document/brushes";
+import { assertRuntimeSceneBuildable } from "./runtime-scene-validation";
 
 export type RuntimeNavigationMode = "firstPerson" | "orbitVisitor";
 
@@ -56,6 +57,10 @@ export interface RuntimeSceneDefinition {
   sceneBounds: RuntimeSceneBounds | null;
   playerStart: RuntimePlayerStart | null;
   spawn: RuntimeSpawnPoint;
+}
+
+interface BuildRuntimeSceneOptions {
+  navigationMode?: RuntimeNavigationMode;
 }
 
 function cloneVec3(vector: Vec3): Vec3 {
@@ -191,7 +196,9 @@ function buildFallbackSpawn(sceneBounds: RuntimeSceneBounds | null): RuntimeSpaw
   };
 }
 
-export function buildRuntimeSceneFromDocument(document: SceneDocument): RuntimeSceneDefinition {
+export function buildRuntimeSceneFromDocument(document: SceneDocument, options: BuildRuntimeSceneOptions = {}): RuntimeSceneDefinition {
+  assertRuntimeSceneBuildable(document, options.navigationMode ?? "orbitVisitor");
+
   const brushes = Object.values(document.brushes).map((brush) => buildRuntimeBrush(brush, document));
   const colliders = Object.values(document.brushes).map((brush) => buildRuntimeCollider(brush));
   const sceneBounds = combineColliderBounds(colliders);
