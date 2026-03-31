@@ -596,9 +596,7 @@ async function loadGltfFromImportedModelFileSet(fileSet: ImportedModelFileSet): 
 
   const loader = new GLTFLoader();
 
-  try {
-    return await loader.parseAsync(JSON.stringify(gltfJson), "");
-  }
+  return loader.parseAsync(JSON.stringify(gltfJson), "");
 }
 
 function createModelAssetRecordFromFileSet(
@@ -723,8 +721,6 @@ export async function loadModelAssetFromStorage(
 
   const loader = new GLTFLoader();
 
-  try {
-    const gltf = await loader.parseAsync(JSON.stringify(gltfJson), "");
-    return createLoadedModelAsset(asset, cloneTemplateScene(gltf.scene));
-  }
+  const gltf = await loader.parseAsync(JSON.stringify(gltfJson), "");
+  return createLoadedModelAsset(asset, cloneTemplateScene(gltf.scene));
 }
