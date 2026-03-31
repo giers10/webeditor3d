@@ -1358,6 +1358,50 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
+  const applyPointLightChange = () => {
+    if (selectedPointLight === null) {
+      setStatusMessage("Select a Point Light before editing it.");
+      return;
+    }
+
+    try {
+      const nextEntity = createPointLightEntity({
+        id: selectedPointLight.id,
+        position: snapVec3ToGrid(readVec3Draft(entityPositionDraft, "Point Light position"), DEFAULT_GRID_SIZE),
+        colorHex: pointLightColorDraft,
+        intensity: readNonNegativeNumberDraft(pointLightIntensityDraft, "Point Light intensity"),
+        distance: readPositiveNumberDraft(pointLightDistanceDraft, "Point Light distance")
+      });
+
+      commitEntityChange(selectedPointLight, nextEntity, "Updated Point Light.");
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const applySpotLightChange = () => {
+    if (selectedSpotLight === null) {
+      setStatusMessage("Select a Spot Light before editing it.");
+      return;
+    }
+
+    try {
+      const nextEntity = createSpotLightEntity({
+        id: selectedSpotLight.id,
+        position: snapVec3ToGrid(readVec3Draft(entityPositionDraft, "Spot Light position"), DEFAULT_GRID_SIZE),
+        direction: readVec3Draft(spotLightDirectionDraft, "Spot Light direction"),
+        colorHex: spotLightColorDraft,
+        intensity: readNonNegativeNumberDraft(spotLightIntensityDraft, "Spot Light intensity"),
+        distance: readPositiveNumberDraft(spotLightDistanceDraft, "Spot Light distance"),
+        angleDegrees: readPositiveNumberDraft(spotLightAngleDraft, "Spot Light angle")
+      });
+
+      commitEntityChange(selectedSpotLight, nextEntity, "Updated Spot Light.");
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
   const applySoundEmitterChange = () => {
     if (selectedSoundEmitter === null) {
       setStatusMessage("Select a Sound Emitter before editing it.");
