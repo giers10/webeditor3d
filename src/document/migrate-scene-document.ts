@@ -13,12 +13,13 @@ import {
 import {
   BOX_BRUSH_SCENE_DOCUMENT_VERSION,
   FACE_MATERIALS_SCENE_DOCUMENT_VERSION,
+  FIRST_ROOM_POLISH_SCENE_DOCUMENT_VERSION,
   FOUNDATION_SCENE_DOCUMENT_VERSION,
   RUNNER_V1_SCENE_DOCUMENT_VERSION,
   SCENE_DOCUMENT_VERSION,
-  type SceneDocument,
-  type WorldSettings
+  type SceneDocument
 } from "./scene-document";
+import { isWorldBackgroundMode, type WorldBackgroundSettings, type WorldSettings } from "./world-settings";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -30,6 +31,16 @@ function expectFiniteNumber(value: unknown, label: string): number {
   }
 
   return value;
+}
+
+function expectNonNegativeFiniteNumber(value: unknown, label: string): number {
+  const numberValue = expectFiniteNumber(value, label);
+
+  if (numberValue < 0) {
+    throw new Error(`${label} must be zero or greater.`);
+  }
+
+  return numberValue;
 }
 
 function expectString(value: unknown, label: string): string {
@@ -119,6 +130,12 @@ function readVec3(value: unknown, label: string) {
     y: expectFiniteNumber(value.y, `${label}.y`),
     z: expectFiniteNumber(value.z, `${label}.z`)
   };
+}
+
+function assertNonZeroVec3(vector: { x: number; y: number; z: number }, label: string) {
+  if (vector.x === 0 && vector.y === 0 && vector.z === 0) {
+    throw new Error(`${label} must not be the zero vector.`);
+  }
 }
 
 function expectMaterialPattern(value: unknown, label: string): MaterialPattern {
@@ -303,29 +320,39 @@ function readWorldSettings(value: unknown): WorldSettings {
     throw new Error("world.sunLight must be an object.");
   }
 
-  const direction = sunLight.direction;
+  const direction = readVec3(sunLight.direction, "world.sunLight.direction");
+  assertNonZeroVec3(direction, "world.sunLight.direction");
 
-  if (!isRecord(direction)) {
-    throw new Error("world.sunLight.direction must be an object.");
+  const backgroundMode = expectString(background.mode, "world.background.mode");
+  let resolvedBackground: WorldBackgroundSettings;
+
+  if (!isWorldBackgroundMode(backgroundMode)) {
+    throw new Error("world.background.mode must be a supported background mode.");
+  }
+
+  if (backgroundMode === "solid") {
+    resolvedBackground = {
+      mode: "solid",
+      colorHex: expectHexColor(background.colorHex, "world.background.colorHex")
+    };
+  } else {
+    resolvedBackground = {
+      mode: "verticalGradient",
+      topColorHex: expectHexColor(background.topColorHex, "world.background.topColorHex"),
+      bottomColorHex: expectHexColor(background.bottomColorHex, "world.background.bottomColorHex")
+    };
   }
 
   return {
-    background: {
-      mode: expectLiteralString(background.mode, "solid", "world.background.mode"),
-      colorHex: expectHexColor(background.colorHex, "world.background.colorHex")
-    },
+    background: resolvedBackground,
     ambientLight: {
       colorHex: expectHexColor(ambientLight.colorHex, "world.ambientLight.colorHex"),
-      intensity: expectFiniteNumber(ambientLight.intensity, "world.ambientLight.intensity")
+      intensity: expectNonNegativeFiniteNumber(ambientLight.intensity, "world.ambientLight.intensity")
     },
     sunLight: {
       colorHex: expectHexColor(sunLight.colorHex, "world.sunLight.colorHex"),
-      intensity: expectFiniteNumber(sunLight.intensity, "world.sunLight.intensity"),
-      direction: {
-        x: expectFiniteNumber(direction.x, "world.sunLight.direction.x"),
-        y: expectFiniteNumber(direction.y, "world.sunLight.direction.y"),
-        z: expectFiniteNumber(direction.z, "world.sunLight.direction.z")
-      }
+      intensity: expectNonNegativeFiniteNumber(sunLight.intensity, "world.sunLight.intensity"),
+      direction
     }
   };
 }
@@ -436,6 +463,23 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
   }
 
   if (source.version === RUNNER_V1_SCENE_DOCUMENT_VERSION) {
+    const materials = readMaterialRegistry(source.materials, "materials");
+
+    return {
+      version: SCENE_DOCUMENT_VERSION,
+      name: expectString(source.name, "name"),
+      world: readWorldSettings(source.world),
+      materials,
+      textures: expectEmptyCollection(source.textures, "textures"),
+      assets: expectEmptyCollection(source.assets, "assets"),
+      brushes: readBrushes(source.brushes, materials, false),
+      modelInstances: expectEmptyCollection(source.modelInstances, "modelInstances"),
+      entities: readEntities(source.entities),
+      interactionLinks: expectEmptyCollection(source.interactionLinks, "interactionLinks")
+    };
+  }
+
+  if (source.version === FIRST_ROOM_POLISH_SCENE_DOCUMENT_VERSION) {
     const materials = readMaterialRegistry(source.materials, "materials");
 
     return {
