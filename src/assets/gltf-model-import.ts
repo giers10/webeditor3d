@@ -335,21 +335,27 @@ export async function importModelAssetFromFile(
 
   const metadata = extractModelAssetMetadata(gltf, format);
   const asset = createModelAssetRecord(sourceName, mimeType, bytes, metadata);
-  await storage.putAsset(asset.storageKey, {
-    bytes,
-    mimeType
-  } satisfies ProjectAssetStorageRecord);
 
-  const modelInstance = createModelInstance({
-    assetId: asset.id,
-    name: undefined
-  });
+  try {
+    await storage.putAsset(asset.storageKey, {
+      bytes,
+      mimeType
+    } satisfies ProjectAssetStorageRecord);
 
-  return {
-    asset,
-    modelInstance,
-    loadedAsset: createLoadedModelAsset(asset, cloneTemplateScene(gltf.scene))
-  };
+    const modelInstance = createModelInstance({
+      assetId: asset.id,
+      name: undefined
+    });
+
+    return {
+      asset,
+      modelInstance,
+      loadedAsset: createLoadedModelAsset(asset, cloneTemplateScene(gltf.scene))
+    };
+  } catch (error) {
+    await storage.deleteAsset(asset.storageKey).catch(() => undefined);
+    throw error;
+  }
 }
 
 export async function loadModelAssetFromStorage(
