@@ -185,6 +185,7 @@ export class ViewportHost {
     this.renderer.domElement.removeEventListener("pointerleave", this.handlePointerLeave);
     this.clearBrushMeshes();
     this.clearPlayerStartMarkers();
+    this.boxCreatePreviewHandler = null;
     this.setBoxCreatePreview(null);
 
     for (const cachedTexture of this.materialTextureCache.values()) {
