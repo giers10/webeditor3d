@@ -77,6 +77,7 @@ import {
 import { STARTER_MATERIAL_LIBRARY, type MaterialDef } from "../materials/starter-material-library";
 import { RunnerCanvas } from "../runner-web/RunnerCanvas";
 import type { FirstPersonTelemetry } from "../runtime-three/navigation-controller";
+import type { RuntimeInteractionPrompt } from "../runtime-three/runtime-interaction-system";
 import { buildRuntimeSceneFromDocument, type RuntimeNavigationMode, type RuntimeSceneDefinition } from "../runtime-three/runtime-scene-build";
 import { validateRuntimeSceneBuild } from "../runtime-three/runtime-scene-validation";
 import { Panel } from "../shared-ui/Panel";
@@ -100,6 +101,8 @@ interface Vec3Draft {
   y: string;
   z: string;
 }
+
+type InteractionSourceEntity = Extract<EntityInstance, { kind: "triggerVolume" | "interactable" }>;
 
 const FACE_LABELS: Record<BoxFaceId, string> = {
   posX: "+X Right",
@@ -293,7 +296,14 @@ function describeSelection(selection: EditorSelection, brushes: BoxBrush[], enti
 }
 
 function getInteractionTriggerLabel(trigger: InteractionTriggerKind): string {
-  return trigger === "enter" ? "On Enter" : "On Exit";
+  switch (trigger) {
+    case "enter":
+      return "On Enter";
+    case "exit":
+      return "On Exit";
+    case "click":
+      return "On Click";
+  }
 }
 
 function getInteractionActionLabel(link: InteractionLink): string {
@@ -338,6 +348,16 @@ function getDefaultTriggerVolumeLinkTrigger(triggerOnEnter: boolean, triggerOnEx
   }
 
   return "enter";
+}
+
+function isInteractionSourceEntity(entity: EntityInstance | null): entity is InteractionSourceEntity {
+  return entity !== null && (entity.kind === "triggerVolume" || entity.kind === "interactable");
+}
+
+function getDefaultInteractionLinkTrigger(sourceEntity: InteractionSourceEntity): InteractionTriggerKind {
+  return sourceEntity.kind === "triggerVolume"
+    ? getDefaultTriggerVolumeLinkTrigger(sourceEntity.triggerOnEnter, sourceEntity.triggerOnExit)
+    : "click";
 }
 
 function getErrorMessage(error: unknown): string {
