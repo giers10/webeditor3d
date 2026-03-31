@@ -2552,7 +2552,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       }
                     >
                       <span className="outliner-item__title">{label}</span>
-                      <span className="outliner-item__meta">{modelInstance.assetId}</span>
+                      <span className="outliner-item__meta">{editorState.document.assets[modelInstance.assetId]?.sourceName ?? modelInstance.assetId}</span>
                     </button>
                   ))}
                 </div>
