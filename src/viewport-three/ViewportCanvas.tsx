@@ -9,7 +9,7 @@ interface ViewportCanvasProps {
   world: WorldSettings;
   sceneDocument: SceneDocument;
   selection: EditorSelection;
-  onBrushSelectionChange(brushId: string | null): void;
+  onBrushSelectionChange(selection: EditorSelection): void;
 }
 
 export function ViewportCanvas({ world, sceneDocument, selection, onBrushSelectionChange }: ViewportCanvasProps) {
