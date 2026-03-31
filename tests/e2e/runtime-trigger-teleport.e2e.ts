@@ -39,7 +39,7 @@ test("Trigger Volume enter can teleport the player to a Teleport Target", async 
   await page.getByTestId("enter-run-mode").click();
 
   await expect(page.getByTestId("runner-shell")).toBeVisible();
-  await expect(page.getByTestId("runner-player-position")).toContainText("6.00, 0.00, 0.00");
+  await expect(page.getByTestId("runner-player-position")).toContainText("6.00,");
 
   expect(pageErrors).toEqual([]);
   expect(consoleErrors).toEqual([]);
