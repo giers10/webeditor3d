@@ -203,12 +203,8 @@ export class ViewportHost {
   }
 
   updateWorld(world: WorldSettings) {
-    this.scene.background = null;
-    this.ambientLight.color.set(world.ambientLight.colorHex);
-    this.ambientLight.intensity = world.ambientLight.intensity;
-    this.sunLight.color.set(world.sunLight.colorHex);
-    this.sunLight.intensity = world.sunLight.intensity;
-    this.sunLight.position.set(world.sunLight.direction.x, world.sunLight.direction.y, world.sunLight.direction.z).normalize().multiplyScalar(18);
+    this.currentWorld = world;
+    this.applyWorld();
   }
 
   updateDocument(document: SceneDocument, selection: EditorSelection) {
@@ -222,6 +218,10 @@ export class ViewportHost {
   updateAssets(projectAssets: Record<string, ProjectAssetRecord>, loadedModelAssets: Record<string, LoadedModelAsset>) {
     this.projectAssets = projectAssets;
     this.loadedModelAssets = loadedModelAssets;
+
+    if (this.currentWorld !== null) {
+      this.applyWorld();
+    }
 
     if (this.currentDocument !== null) {
       this.rebuildModelInstances(this.currentDocument, this.currentSelection);
@@ -285,6 +285,7 @@ export class ViewportHost {
     this.renderer.domElement.removeEventListener("pointerleave", this.handlePointerLeave);
     this.renderer.domElement.removeEventListener("wheel", this.handleWheel);
     this.renderer.domElement.removeEventListener("auxclick", this.handleAuxClick);
+    this.clearLocalLights();
     this.clearBrushMeshes();
     this.clearEntityMarkers();
     this.boxCreatePreviewHandler = null;
