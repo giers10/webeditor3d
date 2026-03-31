@@ -327,6 +327,9 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
   }
 
   if (source.version === FOUNDATION_SCENE_DOCUMENT_VERSION) {
+    expectEmptyCollection(source.materials, "materials");
+    expectEmptyCollection(source.brushes, "brushes");
+
     return {
       version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
@@ -342,6 +345,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
   }
 
   if (source.version === BOX_BRUSH_SCENE_DOCUMENT_VERSION) {
+    expectEmptyCollection(source.materials, "materials");
     const materials = createStarterMaterialRegistry();
 
     return {
