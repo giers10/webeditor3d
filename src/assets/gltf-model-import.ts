@@ -762,7 +762,7 @@ export async function loadModelAssetFromStorage(
 
   try {
     const gltf = await loader.parseAsync(JSON.stringify(gltfJson), "");
-    return createLoadedModelAsset(asset, cloneTemplateScene(gltf.scene));
+    return createLoadedModelAsset(asset, cloneTemplateScene(gltf.scene), gltf.animations);
   } finally {
     for (const revokeUrl of revokeUrls) {
       revokeUrl();
