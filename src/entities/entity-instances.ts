@@ -1,5 +1,26 @@
 import { createOpaqueId } from "../core/ids";
 import type { Vec3 } from "../core/vector";
+import { isHexColorString } from "../document/world-settings";
+
+export interface PointLightEntity {
+  id: string;
+  kind: "pointLight";
+  position: Vec3;
+  colorHex: string;
+  intensity: number;
+  distance: number;
+}
+
+export interface SpotLightEntity {
+  id: string;
+  kind: "spotLight";
+  position: Vec3;
+  direction: Vec3;
+  colorHex: string;
+  intensity: number;
+  distance: number;
+  angleDegrees: number;
+}
 
 export interface PlayerStartEntity {
   id: string;
@@ -44,6 +65,8 @@ export interface InteractableEntity {
 }
 
 export type EntityInstance =
+  | PointLightEntity
+  | SpotLightEntity
   | PlayerStartEntity
   | SoundEmitterEntity
   | TriggerVolumeEntity
@@ -60,6 +83,20 @@ export interface EntityRegistryEntry<T extends EntityInstance = EntityInstance> 
 }
 
 export const ENTITY_KIND_ORDER = ["playerStart", "soundEmitter", "triggerVolume", "teleportTarget", "interactable"] as const;
+export const DEFAULT_POINT_LIGHT_POSITION = DEFAULT_ENTITY_POSITION;
+export const DEFAULT_POINT_LIGHT_COLOR_HEX = "#ffffff";
+export const DEFAULT_POINT_LIGHT_INTENSITY = 1.25;
+export const DEFAULT_POINT_LIGHT_DISTANCE = 8;
+export const DEFAULT_SPOT_LIGHT_POSITION = DEFAULT_ENTITY_POSITION;
+export const DEFAULT_SPOT_LIGHT_DIRECTION: Vec3 = {
+  x: 0,
+  y: -1,
+  z: 0
+};
+export const DEFAULT_SPOT_LIGHT_COLOR_HEX = "#ffffff";
+export const DEFAULT_SPOT_LIGHT_INTENSITY = 1.5;
+export const DEFAULT_SPOT_LIGHT_DISTANCE = 12;
+export const DEFAULT_SPOT_LIGHT_ANGLE_DEGREES = 35;
 
 export const DEFAULT_ENTITY_POSITION: Vec3 = {
   x: 0,
@@ -118,6 +155,18 @@ function assertNonNegativeFiniteNumber(value: number, label: string) {
   }
 }
 
+function assertHexColorString(value: string, label: string) {
+  if (!isHexColorString(value)) {
+    throw new Error(`${label} must use #RRGGBB format.`);
+  }
+}
+
+function assertNonZeroVec3(vector: Vec3, label: string) {
+  if (vector.x === 0 && vector.y === 0 && vector.z === 0) {
+    throw new Error(`${label} must not be the zero vector.`);
+  }
+}
+
 function assertBoolean(value: boolean, label: string) {
   if (typeof value !== "boolean") {
     throw new Error(`${label} must be a boolean.`);
@@ -137,6 +186,62 @@ export function normalizeInteractablePrompt(prompt: string): string {
   }
 
   return normalizedPrompt;
+}
+
+export function createPointLightEntity(
+  overrides: Partial<Pick<PointLightEntity, "id" | "position" | "colorHex" | "intensity" | "distance">> = {}
+): PointLightEntity {
+  const position = cloneVec3(overrides.position ?? DEFAULT_POINT_LIGHT_POSITION);
+  const colorHex = overrides.colorHex ?? DEFAULT_POINT_LIGHT_COLOR_HEX;
+  const intensity = overrides.intensity ?? DEFAULT_POINT_LIGHT_INTENSITY;
+  const distance = overrides.distance ?? DEFAULT_POINT_LIGHT_DISTANCE;
+
+  assertFiniteVec3(position, "Point Light position");
+  assertHexColorString(colorHex, "Point Light color");
+  assertNonNegativeFiniteNumber(intensity, "Point Light intensity");
+  assertPositiveFiniteNumber(distance, "Point Light distance");
+
+  return {
+    id: overrides.id ?? createOpaqueId("entity-point-light"),
+    kind: "pointLight",
+    position,
+    colorHex,
+    intensity,
+    distance
+  };
+}
+
+export function createSpotLightEntity(
+  overrides: Partial<Pick<SpotLightEntity, "id" | "position" | "direction" | "colorHex" | "intensity" | "distance" | "angleDegrees">> = {}
+): SpotLightEntity {
+  const position = cloneVec3(overrides.position ?? DEFAULT_SPOT_LIGHT_POSITION);
+  const direction = cloneVec3(overrides.direction ?? DEFAULT_SPOT_LIGHT_DIRECTION);
+  const colorHex = overrides.colorHex ?? DEFAULT_SPOT_LIGHT_COLOR_HEX;
+  const intensity = overrides.intensity ?? DEFAULT_SPOT_LIGHT_INTENSITY;
+  const distance = overrides.distance ?? DEFAULT_SPOT_LIGHT_DISTANCE;
+  const angleDegrees = overrides.angleDegrees ?? DEFAULT_SPOT_LIGHT_ANGLE_DEGREES;
+
+  assertFiniteVec3(position, "Spot Light position");
+  assertFiniteVec3(direction, "Spot Light direction");
+  assertNonZeroVec3(direction, "Spot Light direction");
+  assertHexColorString(colorHex, "Spot Light color");
+  assertNonNegativeFiniteNumber(intensity, "Spot Light intensity");
+  assertPositiveFiniteNumber(distance, "Spot Light distance");
+
+  if (!Number.isFinite(angleDegrees) || angleDegrees <= 0 || angleDegrees >= 180) {
+    throw new Error("Spot Light angle must be a finite degree value between 0 and 180.");
+  }
+
+  return {
+    id: overrides.id ?? createOpaqueId("entity-spot-light"),
+    kind: "spotLight",
+    position,
+    direction,
+    colorHex,
+    intensity,
+    distance,
+    angleDegrees
+  };
 }
 
 export function createPlayerStartEntity(
@@ -251,6 +356,18 @@ export function createInteractableEntity(
 }
 
 export const ENTITY_REGISTRY: { [K in EntityKind]: EntityRegistryEntry<Extract<EntityInstance, { kind: K }>> } = {
+  pointLight: {
+    kind: "pointLight",
+    label: "Point Light",
+    description: "Authored local point light that illuminates nearby geometry in a spherical radius.",
+    createDefaultEntity: createPointLightEntity
+  },
+  spotLight: {
+    kind: "spotLight",
+    label: "Spot Light",
+    description: "Authored local spotlight with an explicit direction and cone angle.",
+    createDefaultEntity: createSpotLightEntity
+  },
   playerStart: {
     kind: "playerStart",
     label: "Player Start",
@@ -292,12 +409,18 @@ export function getEntityRegistryEntry<K extends EntityKind>(kind: K): EntityReg
 }
 
 export function createDefaultEntityInstance(kind: "playerStart", overrides?: Partial<PlayerStartEntity>): PlayerStartEntity;
+export function createDefaultEntityInstance(kind: "pointLight", overrides?: Partial<PointLightEntity>): PointLightEntity;
+export function createDefaultEntityInstance(kind: "spotLight", overrides?: Partial<SpotLightEntity>): SpotLightEntity;
 export function createDefaultEntityInstance(kind: "soundEmitter", overrides?: Partial<SoundEmitterEntity>): SoundEmitterEntity;
 export function createDefaultEntityInstance(kind: "triggerVolume", overrides?: Partial<TriggerVolumeEntity>): TriggerVolumeEntity;
 export function createDefaultEntityInstance(kind: "teleportTarget", overrides?: Partial<TeleportTargetEntity>): TeleportTargetEntity;
 export function createDefaultEntityInstance(kind: "interactable", overrides?: Partial<InteractableEntity>): InteractableEntity;
 export function createDefaultEntityInstance(kind: EntityKind, overrides: Partial<EntityInstance> = {}): EntityInstance {
   switch (kind) {
+    case "pointLight":
+      return createPointLightEntity(overrides);
+    case "spotLight":
+      return createSpotLightEntity(overrides);
     case "playerStart":
       return createPlayerStartEntity(overrides);
     case "soundEmitter":
@@ -313,6 +436,10 @@ export function createDefaultEntityInstance(kind: EntityKind, overrides: Partial
 
 export function cloneEntityInstance(entity: EntityInstance): EntityInstance {
   switch (entity.kind) {
+    case "pointLight":
+      return createPointLightEntity(entity);
+    case "spotLight":
+      return createSpotLightEntity(entity);
     case "playerStart":
       return createPlayerStartEntity(entity);
     case "soundEmitter":
@@ -336,6 +463,24 @@ export function areEntityInstancesEqual(left: EntityInstance, right: EntityInsta
   }
 
   switch (left.kind) {
+    case "pointLight": {
+      const typedRight = right as PointLightEntity;
+      return (
+        left.colorHex === typedRight.colorHex &&
+        left.intensity === typedRight.intensity &&
+        left.distance === typedRight.distance
+      );
+    }
+    case "spotLight": {
+      const typedRight = right as SpotLightEntity;
+      return (
+        areVec3Equal(left.direction, typedRight.direction) &&
+        left.colorHex === typedRight.colorHex &&
+        left.intensity === typedRight.intensity &&
+        left.distance === typedRight.distance &&
+        left.angleDegrees === typedRight.angleDegrees
+      );
+    }
     case "playerStart": {
       const typedRight = right as PlayerStartEntity;
       return left.yawDegrees === typedRight.yawDegrees;
