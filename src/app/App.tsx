@@ -440,6 +440,15 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const selectedTriggerVolume = selectedEntity?.kind === "triggerVolume" ? selectedEntity : null;
   const selectedTeleportTarget = selectedEntity?.kind === "teleportTarget" ? selectedEntity : null;
   const selectedInteractable = selectedEntity?.kind === "interactable" ? selectedEntity : null;
+  const selectedTriggerVolumeLinks =
+    selectedTriggerVolume === null
+      ? []
+      : getInteractionLinksForSource(editorState.document.interactionLinks, selectedTriggerVolume.id);
+  const teleportTargetOptions = entityDisplayList.filter(({ entity }) => entity.kind === "teleportTarget");
+  const visibilityBrushOptions = brushList.map((brush, brushIndex) => ({
+    brush,
+    label: getBrushLabel(brush, brushIndex)
+  }));
 
   const [sceneNameDraft, setSceneNameDraft] = useState(editorState.document.name);
   const [brushNameDraft, setBrushNameDraft] = useState("");
