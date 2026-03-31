@@ -27,8 +27,6 @@ import {
 } from "../core/selection";
 import type { Vec2, Vec3 } from "../core/vector";
 import {
-  areWorldSettingsEqual,
-  changeWorldBackgroundMode,
   BOX_FACE_IDS,
   DEFAULT_BOX_BRUSH_CENTER,
   DEFAULT_BOX_BRUSH_SIZE,
@@ -37,10 +35,9 @@ import {
   type BoxBrush,
   type BoxFaceId,
   type FaceUvRotationQuarterTurns,
-  type FaceUvState,
-  type WorldBackgroundMode,
-  type WorldSettings
+  type FaceUvState
 } from "../document/brushes";
+import { areWorldSettingsEqual, changeWorldBackgroundMode, type WorldBackgroundMode, type WorldSettings } from "../document/scene-document";
 import { formatSceneDiagnosticSummary, validateSceneDocument } from "../document/scene-document-validation";
 import { DEFAULT_GRID_SIZE, snapPositiveSizeToGrid, snapVec3ToGrid } from "../geometry/grid-snapping";
 import { createFitToFaceBoxBrushFaceUvState } from "../geometry/box-face-uvs";
