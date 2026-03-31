@@ -21,7 +21,7 @@ import {
   createTeleportTargetEntity,
   createTriggerVolumeEntity
 } from "../../src/entities/entity-instances";
-import { createTeleportPlayerInteractionLink, createToggleVisibilityInteractionLink } from "../../src/interactions/interaction-links";
+import { createTeleportPlayerInteractionLink, createToggleVisibilityInteractionLink, createPlayAnimationInteractionLink, createStopAnimationInteractionLink } from "../../src/interactions/interaction-links";
 import { STARTER_MATERIAL_LIBRARY } from "../../src/materials/starter-material-library";
 import { createModelInstance } from "../../src/assets/model-instances";
 import { createProjectAssetStorageKey, type ImageAssetRecord, type ModelAssetRecord } from "../../src/assets/project-assets";
