@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { createBoxBrush } from "../../src/document/brushes";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
 import {
+  createModelInstance,
   createInteractableEntity,
   createPlayerStartEntity,
   createSoundEmitterEntity,
@@ -10,6 +11,7 @@ import {
   createTriggerVolumeEntity
 } from "../../src/entities/entity-instances";
 import { createTeleportPlayerInteractionLink, createToggleVisibilityInteractionLink } from "../../src/interactions/interaction-links";
+import { createProjectAssetStorageKey } from "../../src/assets/project-assets";
 import { buildRuntimeSceneFromDocument } from "../../src/runtime-three/runtime-scene-build";
 
 describe("buildRuntimeSceneFromDocument", () => {
@@ -85,11 +87,72 @@ describe("buildRuntimeSceneFromDocument", () => {
       prompt: "Use Console",
       enabled: true
     });
+    const modelAsset = {
+      id: "asset-model-triangle",
+      kind: "model" as const,
+      sourceName: "tiny-triangle.gltf",
+      mimeType: "model/gltf+json",
+      storageKey: createProjectAssetStorageKey("asset-model-triangle"),
+      byteLength: 36,
+      metadata: {
+        kind: "model" as const,
+        format: "gltf" as const,
+        sceneName: "Fixture Triangle Scene",
+        nodeCount: 2,
+        meshCount: 1,
+        materialNames: ["Fixture Material"],
+        textureNames: [],
+        animationNames: [],
+        boundingBox: {
+          min: {
+            x: 0,
+            y: 0,
+            z: 0
+          },
+          max: {
+            x: 1,
+            y: 1,
+            z: 0
+          },
+          size: {
+            x: 1,
+            y: 1,
+            z: 0
+          }
+        },
+        warnings: []
+      }
+    };
+    const modelInstance = createModelInstance({
+      id: "model-instance-triangle",
+      assetId: modelAsset.id,
+      position: {
+        x: -2,
+        y: 0,
+        z: 4
+      },
+      rotationDegrees: {
+        x: 0,
+        y: 90,
+        z: 0
+      },
+      scale: {
+        x: 2,
+        y: 2,
+        z: 2
+      }
+    });
 
     const document = {
       ...createEmptySceneDocument({ name: "Runtime Slice" }),
       brushes: {
         [brush.id]: brush
+      },
+      assets: {
+        [modelAsset.id]: modelAsset
+      },
+      modelInstances: {
+        [modelInstance.id]: modelInstance
       },
       entities: {
         [playerStart.id]: playerStart,
@@ -138,6 +201,28 @@ describe("buildRuntimeSceneFromDocument", () => {
     expect(runtimeScene.world).not.toBe(document.world);
     expect(runtimeScene.world.sunLight.direction).not.toBe(document.world.sunLight.direction);
     expect(runtimeScene.brushes).toHaveLength(1);
+    expect(runtimeScene.modelInstances).toEqual([
+      {
+        instanceId: "model-instance-triangle",
+        assetId: "asset-model-triangle",
+        name: undefined,
+        position: {
+          x: -2,
+          y: 0,
+          z: 4
+        },
+        rotationDegrees: {
+          x: 0,
+          y: 90,
+          z: 0
+        },
+        scale: {
+          x: 2,
+          y: 2,
+          z: 2
+        }
+      }
+    ]);
     expect(runtimeScene.brushes[0].faces.posY.material?.id).toBe("starter-concrete-checker");
     expect(runtimeScene.colliders).toEqual([
       {
