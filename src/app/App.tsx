@@ -1900,10 +1900,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
   const applyWorldBackgroundMode = (mode: WorldBackgroundMode, imageAssetId?: string) => {
     if (mode === "image") {
+      const currentBackgroundAssetId =
+        editorState.document.world.background.mode === "image" ? editorState.document.world.background.assetId : null;
       const nextImageAssetId =
         imageAssetId ??
-        (editorState.document.world.background.mode === "image"
-          ? editorState.document.world.background.assetId
+        (currentBackgroundAssetId !== null && editorState.document.assets[currentBackgroundAssetId]?.kind === "image"
+          ? currentBackgroundAssetId
           : imageAssetList[0]?.id);
 
       if (nextImageAssetId === undefined) {
