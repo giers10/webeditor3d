@@ -2317,8 +2317,16 @@ export function App({ store, initialStatusMessage }: AppProps) {
             <button className="toolbar__button" type="button" onClick={handleExportJson}>
               Export JSON
             </button>
-            <button className="toolbar__button" type="button" onClick={handleImportButtonClick}>
+            <button className="toolbar__button" type="button" onClick={handleImportJsonButtonClick}>
               Import JSON
+            </button>
+            <button
+              className="toolbar__button"
+              type="button"
+              onClick={handleImportModelButtonClick}
+              disabled={!projectAssetStorageReady || projectAssetStorage === null}
+            >
+              Import Model
             </button>
           </div>
 
