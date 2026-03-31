@@ -1116,6 +1116,48 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
+  const commitModelInstanceChange = (currentModelInstance: ModelInstance, nextModelInstance: ModelInstance, successMessage: string) => {
+    if (areModelInstancesEqual(currentModelInstance, nextModelInstance)) {
+      return;
+    }
+
+    store.executeCommand(
+      createUpsertModelInstanceCommand({
+        modelInstance: nextModelInstance,
+        label: `Update ${getModelInstanceDisplayLabelById(currentModelInstance.id, editorState.document.modelInstances, editorState.document.assets).toLowerCase()}`
+      })
+    );
+    setStatusMessage(successMessage);
+  };
+
+  const handlePlaceModelInstance = (assetId: string) => {
+    const asset = editorState.document.assets[assetId];
+
+    if (asset === undefined || asset.kind !== "model") {
+      setStatusMessage("Select a model asset before placing a model instance.");
+      return;
+    }
+
+    try {
+      const nextModelInstance = createModelInstance({
+        assetId: asset.id,
+        position: createModelInstancePlacementPosition(asset, selectedBrush?.center ?? null),
+        rotationDegrees: DEFAULT_MODEL_INSTANCE_ROTATION_DEGREES,
+        scale: DEFAULT_MODEL_INSTANCE_SCALE
+      });
+
+      store.executeCommand(
+        createUpsertModelInstanceCommand({
+          modelInstance: nextModelInstance,
+          label: `Place ${asset.sourceName}`
+        })
+      );
+      setStatusMessage(`Placed ${asset.sourceName}.`);
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
   const applyPlayerStartChange = () => {
     if (selectedPlayerStart === null) {
       setStatusMessage("Select a Player Start before editing it.");
