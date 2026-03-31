@@ -23,7 +23,7 @@ Implement animation playback for imported GLB/GLTF assets in vertical slice orde
     - Generate pairs of instances differing only in `animationClipName` or `animationAutoplay`; assert `areModelInstancesEqual` returns false
     - **Validates: Requirements 2.9**
 
-- [~] 2. Extend `LoadedModelAsset` with animation clips
+- [-] 2. Extend `LoadedModelAsset` with animation clips
   - Add `animations: AnimationClip[]` to the `LoadedModelAsset` interface in `src/assets/gltf-model-import.ts`
   - Update `createLoadedModelAsset` to accept and store `gltf.animations`
   - Update all call sites (`importModelAssetFromFiles`, `loadModelAssetFromStorage`) to pass the clips
