@@ -370,7 +370,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [uvScaleDraft, setUvScaleDraft] = useState(createVec2Draft(createDefaultFaceUvState().scale));
   const [playerStartPositionDraft, setPlayerStartPositionDraft] = useState(createVec3Draft(DEFAULT_PLAYER_START_POSITION));
   const [playerStartYawDraft, setPlayerStartYawDraft] = useState("0");
-  const [statusMessage, setStatusMessage] = useState(initialStatusMessage ?? "Slice 1.4 room-authoring workflow ready.");
+  const [ambientLightIntensityDraft, setAmbientLightIntensityDraft] = useState(String(editorState.document.world.ambientLight.intensity));
+  const [sunLightIntensityDraft, setSunLightIntensityDraft] = useState(String(editorState.document.world.sunLight.intensity));
+  const [sunDirectionDraft, setSunDirectionDraft] = useState(createVec3Draft(editorState.document.world.sunLight.direction));
+  const [statusMessage, setStatusMessage] = useState(initialStatusMessage ?? "Slice 1.5 world environment settings ready.");
   const [preferredNavigationMode, setPreferredNavigationMode] = useState<RuntimeNavigationMode>(
     primaryPlayerStart === null ? "orbitVisitor" : "firstPerson"
   );
@@ -443,6 +446,18 @@ export function App({ store, initialStatusMessage }: AppProps) {
     setPlayerStartPositionDraft(createVec3Draft(editablePlayerStart.position));
     setPlayerStartYawDraft(String(editablePlayerStart.yawDegrees));
   }, [editablePlayerStart]);
+
+  useEffect(() => {
+    setAmbientLightIntensityDraft(String(editorState.document.world.ambientLight.intensity));
+  }, [editorState.document.world.ambientLight.intensity]);
+
+  useEffect(() => {
+    setSunLightIntensityDraft(String(editorState.document.world.sunLight.intensity));
+  }, [editorState.document.world.sunLight.intensity]);
+
+  useEffect(() => {
+    setSunDirectionDraft(createVec3Draft(editorState.document.world.sunLight.direction));
+  }, [editorState.document.world.sunLight.direction]);
 
   useEffect(() => {
     if (editorState.toolMode === "play") {
