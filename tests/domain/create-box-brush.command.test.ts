@@ -39,6 +39,22 @@ describe("box brush commands", () => {
       z: 4
     });
     expect(Object.keys(brush.faces)).toEqual(["posX", "negX", "posY", "negY", "posZ", "negZ"]);
+    expect(brush.faces.posX).toEqual({
+      materialId: null,
+      uv: {
+        offset: {
+          x: 0,
+          y: 0
+        },
+        scale: {
+          x: 1,
+          y: 1
+        },
+        rotationQuarterTurns: 0,
+        flipU: false,
+        flipV: false
+      }
+    });
     expect(store.getState().selection).toEqual({
       kind: "brushes",
       ids: [brush.id]

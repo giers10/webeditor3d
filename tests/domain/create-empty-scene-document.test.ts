@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { SCENE_DOCUMENT_VERSION, createEmptySceneDocument } from "../../src/document/scene-document";
+import { STARTER_MATERIAL_LIBRARY } from "../../src/materials/starter-material-library";
 
 describe("createEmptySceneDocument", () => {
   it("creates a versioned empty scene document", () => {
@@ -11,5 +12,6 @@ describe("createEmptySceneDocument", () => {
     expect(document.brushes).toEqual({});
     expect(document.entities).toEqual({});
     expect(document.modelInstances).toEqual({});
+    expect(Object.keys(document.materials)).toEqual(STARTER_MATERIAL_LIBRARY.map((material) => material.id));
   });
 });
