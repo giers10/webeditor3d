@@ -397,6 +397,14 @@ export class RuntimeHost {
     return texture;
   }
 
+  private clearLocalLights() {
+    for (const renderGroup of this.localLightObjects.values()) {
+      this.localLightGroup.remove(renderGroup);
+    }
+
+    this.localLightObjects.clear();
+  }
+
   private clearBrushMeshes() {
     for (const mesh of this.brushMeshes.values()) {
       this.brushGroup.remove(mesh);
