@@ -25,6 +25,7 @@ export type BoxBrushFaces = Record<BoxFaceId, BrushFace>;
 export interface BoxBrush {
   id: string;
   kind: "box";
+  name?: string;
   center: Vec3;
   size: Vec3;
   faces: BoxBrushFaces;
@@ -45,6 +46,15 @@ export const DEFAULT_BOX_BRUSH_SIZE: Vec3 = {
   y: 2,
   z: 2
 };
+
+export function normalizeBrushName(name: string | null | undefined): string | undefined {
+  if (name === undefined || name === null) {
+    return undefined;
+  }
+
+  const trimmedName = name.trim();
+  return trimmedName.length === 0 ? undefined : trimmedName;
+}
 
 function cloneVec3(vector: Vec3): Vec3 {
   return {
@@ -144,7 +154,7 @@ export function createDefaultBoxBrushFaces(): BoxBrushFaces {
 }
 
 export function createBoxBrush(
-  overrides: Partial<Pick<BoxBrush, "id" | "center" | "size" | "faces" | "layerId" | "groupId">> = {}
+  overrides: Partial<Pick<BoxBrush, "id" | "name" | "center" | "size" | "faces" | "layerId" | "groupId">> = {}
 ): BoxBrush {
   const center = cloneVec3(overrides.center ?? DEFAULT_BOX_BRUSH_CENTER);
   const size = cloneVec3(overrides.size ?? DEFAULT_BOX_BRUSH_SIZE);
@@ -156,6 +166,7 @@ export function createBoxBrush(
   return {
     id: overrides.id ?? createOpaqueId("brush"),
     kind: "box",
+    name: normalizeBrushName(overrides.name),
     center,
     size,
     faces: overrides.faces === undefined ? createDefaultBoxBrushFaces() : cloneBoxBrushFaces(overrides.faces),
