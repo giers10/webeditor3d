@@ -8,6 +8,12 @@ import {
   type EntityInstance
 } from "../entities/entity-instances";
 import {
+  createTeleportPlayerInteractionLink,
+  createToggleVisibilityInteractionLink,
+  isInteractionTriggerKind,
+  type InteractionLink
+} from "../interactions/interaction-links";
+import {
   createBoxBrush,
   createDefaultFaceUvState,
   isBoxFaceId,
@@ -22,6 +28,7 @@ import {
   FACE_MATERIALS_SCENE_DOCUMENT_VERSION,
   FIRST_ROOM_POLISH_SCENE_DOCUMENT_VERSION,
   FOUNDATION_SCENE_DOCUMENT_VERSION,
+  ENTITY_SYSTEM_FOUNDATION_SCENE_DOCUMENT_VERSION,
   RUNNER_V1_SCENE_DOCUMENT_VERSION,
   SCENE_DOCUMENT_VERSION,
   WORLD_ENVIRONMENT_SCENE_DOCUMENT_VERSION,
