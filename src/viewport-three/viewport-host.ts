@@ -333,6 +333,256 @@ export class ViewportHost {
     }
   }
 
+  private createEntityRenderObjects(entity: EntityInstance, selected: boolean): EntityRenderObjects {
+    switch (entity.kind) {
+      case "playerStart":
+        return this.createPlayerStartRenderObjects(entity.id, entity.position, entity.yawDegrees, selected);
+      case "soundEmitter":
+        return this.createSoundEmitterRenderObjects(entity.id, entity.position, entity.radius, selected);
+      case "triggerVolume":
+        return this.createTriggerVolumeRenderObjects(entity.id, entity.position, entity.size, selected);
+      case "teleportTarget":
+        return this.createTeleportTargetRenderObjects(entity.id, entity.position, entity.yawDegrees, selected);
+      case "interactable":
+        return this.createInteractableRenderObjects(entity.id, entity.position, entity.radius, selected);
+    }
+  }
+
+  private tagEntityMesh(mesh: Mesh, entityId: string, entityKind: EntityInstance["kind"], group: Group) {
+    mesh.userData.entityId = entityId;
+    mesh.userData.entityKind = entityKind;
+    group.add(mesh);
+  }
+
+  private createPlayerStartRenderObjects(entityId: string, position: Vec3, yawDegrees: number, selected: boolean): EntityRenderObjects {
+    const markerColor = selected ? PLAYER_START_SELECTED_COLOR : PLAYER_START_COLOR;
+    const group = new Group();
+    group.position.set(position.x, position.y, position.z);
+    group.rotation.y = (yawDegrees * Math.PI) / 180;
+
+    const base = new Mesh(
+      new CylinderGeometry(0.22, 0.22, 0.05, 18),
+      new MeshStandardMaterial({
+        color: markerColor,
+        emissive: markerColor,
+        emissiveIntensity: selected ? 0.18 : 0.08,
+        roughness: 0.35,
+        metalness: 0.08
+      })
+    );
+    base.position.y = 0.025;
+
+    const body = new Mesh(
+      new BoxGeometry(0.12, 0.12, 0.46),
+      new MeshStandardMaterial({
+        color: markerColor,
+        emissive: markerColor,
+        emissiveIntensity: selected ? 0.14 : 0.06,
+        roughness: 0.42,
+        metalness: 0.02
+      })
+    );
+    body.position.set(0, 0.16, 0.1);
+
+    const arrowHead = new Mesh(
+      new ConeGeometry(0.12, 0.28, 14),
+      new MeshStandardMaterial({
+        color: markerColor,
+        emissive: markerColor,
+        emissiveIntensity: selected ? 0.2 : 0.08,
+        roughness: 0.38,
+        metalness: 0.03
+      })
+    );
+    arrowHead.rotation.x = Math.PI * 0.5;
+    arrowHead.position.set(0, 0.16, 0.42);
+
+    for (const mesh of [base, body, arrowHead]) {
+      this.tagEntityMesh(mesh, entityId, "playerStart", group);
+    }
+
+    return {
+      group,
+      meshes: [base, body, arrowHead]
+    };
+  }
+
+  private createSoundEmitterRenderObjects(entityId: string, position: Vec3, radius: number, selected: boolean): EntityRenderObjects {
+    const markerColor = selected ? SOUND_EMITTER_SELECTED_COLOR : SOUND_EMITTER_COLOR;
+    const displayRadius = Math.max(0.5, radius);
+    const group = new Group();
+    group.position.set(position.x, position.y, position.z);
+
+    const core = new Mesh(
+      new SphereGeometry(0.18, 16, 12),
+      new MeshStandardMaterial({
+        color: markerColor,
+        emissive: markerColor,
+        emissiveIntensity: selected ? 0.18 : 0.08,
+        roughness: 0.32,
+        metalness: 0.06
+      })
+    );
+
+    const radiusShell = new Mesh(
+      new SphereGeometry(displayRadius, 16, 12),
+      new MeshStandardMaterial({
+        color: markerColor,
+        emissive: markerColor,
+        emissiveIntensity: selected ? 0.08 : 0.02,
+        roughness: 0.8,
+        metalness: 0,
+        transparent: true,
+        opacity: selected ? 0.16 : 0.08,
+        wireframe: true
+      })
+    );
+
+    for (const mesh of [core, radiusShell]) {
+      this.tagEntityMesh(mesh, entityId, "soundEmitter", group);
+    }
+
+    return {
+      group,
+      meshes: [core, radiusShell]
+    };
+  }
+
+  private createTriggerVolumeRenderObjects(entityId: string, position: Vec3, size: Vec3, selected: boolean): EntityRenderObjects {
+    const markerColor = selected ? TRIGGER_VOLUME_SELECTED_COLOR : TRIGGER_VOLUME_COLOR;
+    const group = new Group();
+    group.position.set(position.x, position.y, position.z);
+
+    const fill = new Mesh(
+      new BoxGeometry(size.x, size.y, size.z),
+      new MeshStandardMaterial({
+        color: markerColor,
+        emissive: markerColor,
+        emissiveIntensity: selected ? 0.1 : 0.03,
+        roughness: 0.7,
+        metalness: 0,
+        transparent: true,
+        opacity: selected ? 0.2 : 0.1
+      })
+    );
+
+    const outline = new Mesh(
+      new BoxGeometry(size.x, size.y, size.z),
+      new MeshStandardMaterial({
+        color: markerColor,
+        emissive: markerColor,
+        emissiveIntensity: selected ? 0.12 : 0.04,
+        roughness: 0.9,
+        metalness: 0,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.95
+      })
+    );
+
+    for (const mesh of [fill, outline]) {
+      this.tagEntityMesh(mesh, entityId, "triggerVolume", group);
+    }
+
+    return {
+      group,
+      meshes: [fill, outline]
+    };
+  }
+
+  private createTeleportTargetRenderObjects(entityId: string, position: Vec3, yawDegrees: number, selected: boolean): EntityRenderObjects {
+    const markerColor = selected ? TELEPORT_TARGET_SELECTED_COLOR : TELEPORT_TARGET_COLOR;
+    const group = new Group();
+    group.position.set(position.x, position.y, position.z);
+    group.rotation.y = (yawDegrees * Math.PI) / 180;
+
+    const ring = new Mesh(
+      new TorusGeometry(0.28, 0.045, 8, 24),
+      new MeshStandardMaterial({
+        color: markerColor,
+        emissive: markerColor,
+        emissiveIntensity: selected ? 0.18 : 0.08,
+        roughness: 0.42,
+        metalness: 0.04
+      })
+    );
+    ring.rotation.x = Math.PI * 0.5;
+    ring.position.y = 0.035;
+
+    const stem = new Mesh(
+      new CylinderGeometry(0.04, 0.04, 0.3, 12),
+      new MeshStandardMaterial({
+        color: markerColor,
+        emissive: markerColor,
+        emissiveIntensity: selected ? 0.12 : 0.04,
+        roughness: 0.45,
+        metalness: 0.02
+      })
+    );
+    stem.position.y = 0.15;
+
+    const arrowHead = new Mesh(
+      new ConeGeometry(0.12, 0.24, 14),
+      new MeshStandardMaterial({
+        color: markerColor,
+        emissive: markerColor,
+        emissiveIntensity: selected ? 0.18 : 0.06,
+        roughness: 0.36,
+        metalness: 0.03
+      })
+    );
+    arrowHead.rotation.x = Math.PI * 0.5;
+    arrowHead.position.set(0, 0.15, 0.34);
+
+    for (const mesh of [ring, stem, arrowHead]) {
+      this.tagEntityMesh(mesh, entityId, "teleportTarget", group);
+    }
+
+    return {
+      group,
+      meshes: [ring, stem, arrowHead]
+    };
+  }
+
+  private createInteractableRenderObjects(entityId: string, position: Vec3, radius: number, selected: boolean): EntityRenderObjects {
+    const markerColor = selected ? INTERACTABLE_SELECTED_COLOR : INTERACTABLE_COLOR;
+    const displayRadius = Math.max(0.45, radius);
+    const group = new Group();
+    group.position.set(position.x, position.y, position.z);
+
+    const core = new Mesh(
+      new SphereGeometry(0.16, 12, 10),
+      new MeshStandardMaterial({
+        color: markerColor,
+        emissive: markerColor,
+        emissiveIntensity: selected ? 0.18 : 0.08,
+        roughness: 0.34,
+        metalness: 0.04
+      })
+    );
+
+    const radiusRing = new Mesh(
+      new TorusGeometry(displayRadius, 0.03, 8, 32),
+      new MeshStandardMaterial({
+        color: markerColor,
+        emissive: markerColor,
+        emissiveIntensity: selected ? 0.1 : 0.04,
+        roughness: 0.55,
+        metalness: 0.02
+      })
+    );
+    radiusRing.rotation.x = Math.PI * 0.5;
+
+    for (const mesh of [core, radiusRing]) {
+      this.tagEntityMesh(mesh, entityId, "interactable", group);
+    }
+
+    return {
+      group,
+      meshes: [core, radiusRing]
+    };
+  }
+
   private createFaceMaterial(brush: BoxBrush, faceId: BoxFaceId, material: MaterialDef | undefined, selectedFace: boolean): MeshStandardMaterial {
     const face = brush.faces[faceId];
 
