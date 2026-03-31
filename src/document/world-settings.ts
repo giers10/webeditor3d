@@ -196,17 +196,3 @@ export function changeWorldBackgroundMode(
     bottomColorHex: DEFAULT_GRADIENT_BOTTOM_COLOR
   };
 }
-    }
-
-    return {
-      mode: "image",
-      assetId: imageAssetId
-    };
-  }
-
-  return {
-    mode: "verticalGradient",
-    topColorHex: background.mode === "solid" ? background.colorHex : background.topColorHex,
-    bottomColorHex: DEFAULT_GRADIENT_BOTTOM_COLOR
-  };
-}
