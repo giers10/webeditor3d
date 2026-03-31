@@ -1950,10 +1950,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
       return;
     }
 
-    let importedModel: ImportedModelAssetResult | null = null;
+    let importedModelForCleanup: ImportedModelAssetResult | null = null;
 
     try {
-      importedModel = await importModelAssetFromFile(file, projectAssetStorage);
+      const importedModel = await importModelAssetFromFile(file, projectAssetStorage);
+      importedModelForCleanup = importedModel;
 
       store.executeCommand(
         createImportModelAssetCommand({
@@ -1974,9 +1975,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
       setAssetStatusMessage(null);
       setStatusMessage(`Imported ${importedModel.asset.sourceName} and placed a model instance.`);
     } catch (error) {
-      if (importedModel !== null) {
-        await projectAssetStorage.deleteAsset(importedModel.asset.storageKey).catch(() => undefined);
-        disposeModelTemplate(importedModel.loadedAsset.template);
+      if (importedModelForCleanup !== null) {
+        await projectAssetStorage.deleteAsset(importedModelForCleanup.asset.storageKey).catch(() => undefined);
+        disposeModelTemplate(importedModelForCleanup.loadedAsset.template);
       }
 
       const message = getErrorMessage(error);
