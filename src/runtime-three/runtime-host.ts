@@ -38,6 +38,10 @@ interface CachedMaterialTexture {
   texture: ReturnType<typeof createStarterMaterialTexture>;
 }
 
+interface LocalLightRenderObjects {
+  group: Group;
+}
+
 const FALLBACK_FACE_COLOR = 0x747d89;
 
 export class RuntimeHost {
@@ -136,16 +140,27 @@ export class RuntimeHost {
 
   loadScene(runtimeScene: RuntimeSceneDefinition) {
     this.runtimeScene = runtimeScene;
+    this.currentWorld = runtimeScene.world;
     this.interactionSystem.reset();
     this.setInteractionPrompt(null);
-    this.applyWorld(runtimeScene);
+    this.applyWorld();
+    this.rebuildLocalLights(runtimeScene.localLights);
     this.rebuildBrushMeshes(runtimeScene.brushes);
     this.rebuildModelInstances(runtimeScene.modelInstances);
   }
 
-  updateAssets(projectAssets: Record<string, ProjectAssetRecord>, loadedModelAssets: Record<string, LoadedModelAsset>) {
+  updateAssets(
+    projectAssets: Record<string, ProjectAssetRecord>,
+    loadedModelAssets: Record<string, LoadedModelAsset>,
+    loadedImageAssets: Record<string, LoadedImageAsset>
+  ) {
     this.projectAssets = projectAssets;
     this.loadedModelAssets = loadedModelAssets;
+    this.loadedImageAssets = loadedImageAssets;
+
+    if (this.currentWorld !== null) {
+      this.applyWorld();
+    }
 
     if (this.runtimeScene !== null) {
       this.rebuildModelInstances(this.runtimeScene.modelInstances);
@@ -197,6 +212,7 @@ export class RuntimeHost {
     this.setInteractionPrompt(null);
     this.resizeObserver?.disconnect();
     this.resizeObserver = null;
+    this.clearLocalLights();
     this.clearBrushMeshes();
     this.clearModelInstances();
 
@@ -215,20 +231,47 @@ export class RuntimeHost {
     this.container = null;
   }
 
-  private applyWorld(runtimeScene: RuntimeSceneDefinition) {
-    this.scene.background = null;
-    this.ambientLight.color.set(runtimeScene.world.ambientLight.colorHex);
-    this.ambientLight.intensity = runtimeScene.world.ambientLight.intensity;
-    this.sunLight.color.set(runtimeScene.world.sunLight.colorHex);
-    this.sunLight.intensity = runtimeScene.world.sunLight.intensity;
+  private applyWorld() {
+    if (this.currentWorld === null) {
+      return;
+    }
+
+    const world = this.currentWorld;
+    this.ambientLight.color.set(world.ambientLight.colorHex);
+    this.ambientLight.intensity = world.ambientLight.intensity;
+    this.sunLight.color.set(world.sunLight.colorHex);
+    this.sunLight.intensity = world.sunLight.intensity;
     this.sunLight.position
       .set(
-        runtimeScene.world.sunLight.direction.x,
-        runtimeScene.world.sunLight.direction.y,
-        runtimeScene.world.sunLight.direction.z
+        world.sunLight.direction.x,
+        world.sunLight.direction.y,
+        world.sunLight.direction.z
       )
       .normalize()
       .multiplyScalar(18);
+
+    if (world.background.mode === "image") {
+      this.scene.background = this.loadedImageAssets[world.background.assetId]?.texture ?? null;
+      return;
+    }
+
+    this.scene.background = null;
+  }
+
+  private rebuildLocalLights(localLights: RuntimeLocalLightCollection) {
+    this.clearLocalLights();
+
+    for (const pointLight of localLights.pointLights) {
+      const renderObjects = this.createPointLightRuntimeObjects(pointLight);
+      this.localLightGroup.add(renderObjects.group);
+      this.localLightObjects.set(pointLight.entityId, renderObjects.group);
+    }
+
+    for (const spotLight of localLights.spotLights) {
+      const renderObjects = this.createSpotLightRuntimeObjects(spotLight);
+      this.localLightGroup.add(renderObjects.group);
+      this.localLightObjects.set(spotLight.entityId, renderObjects.group);
+    }
   }
 
   private rebuildBrushMeshes(brushes: RuntimeBoxBrushInstance[]) {
