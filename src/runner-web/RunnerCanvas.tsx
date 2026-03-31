@@ -35,18 +35,17 @@ export function RunnerCanvas({
       testCanvas.getContext("webgl") !== null ||
       testCanvas.getContext("experimental-webgl") !== null;
 
-    if (!hasWebGl) {
-      setRunnerMessage("WebGL is unavailable in this browser environment. The runner shell is visible, but runtime rendering is disabled.");
-      return;
-    }
-
     try {
-      const runtimeHost = new RuntimeHost();
+      const runtimeHost = new RuntimeHost({
+        enableRendering: hasWebGl
+      });
       hostRef.current = runtimeHost;
       runtimeHost.mount(container);
       runtimeHost.setRuntimeMessageHandler(onRuntimeMessageChange);
       runtimeHost.setFirstPersonTelemetryHandler(onFirstPersonTelemetryChange);
-      setRunnerMessage(null);
+      setRunnerMessage(
+        hasWebGl ? null : "WebGL is unavailable in this browser environment. The runner shell is visible, but runtime rendering is disabled."
+      );
 
       return () => {
         runtimeHost.dispose();
