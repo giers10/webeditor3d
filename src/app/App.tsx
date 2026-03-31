@@ -1149,9 +1149,17 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
 
     try {
+      const anchorPosition =
+        selectedBrush !== null
+          ? {
+              x: selectedBrush.center.x,
+              y: selectedBrush.center.y + selectedBrush.size.y * 0.5,
+              z: selectedBrush.center.z
+            }
+          : selectedModelInstance?.position ?? null;
       const nextModelInstance = createModelInstance({
         assetId: asset.id,
-        position: createModelInstancePlacementPosition(asset, selectedBrush?.center ?? null),
+        position: createModelInstancePlacementPosition(asset, anchorPosition),
         rotationDegrees: DEFAULT_MODEL_INSTANCE_ROTATION_DEGREES,
         scale: DEFAULT_MODEL_INSTANCE_SCALE
       });
