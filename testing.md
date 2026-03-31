@@ -22,6 +22,9 @@ We use a layered strategy:
 The goal is not maximal test count.
 The goal is confidence in the edit -> save/load -> run loop.
 
+Early in the roadmap, “save/load” may mean local draft persistence plus JSON import/export.
+Once scenes depend on external binary assets, “save/load” must expand to cover the portable project package path as well.
+
 ---
 
 ## Testing priorities
@@ -34,9 +37,10 @@ Highest-priority confidence areas:
 4. per-face material/UV persistence
 5. runtime build correctness
 6. asset import survival
-7. runner navigation/input reliability
-8. spatial audio and interaction basics
-9. critical regressions caught in CI
+7. project package portability once binary assets exist
+8. runner navigation/input reliability
+9. spatial audio and interaction basics
+10. critical regressions caught in CI
 
 ---
 
@@ -70,6 +74,7 @@ For every author-authored feature that persists:
 
 - add a round-trip save/load test
 - cover the current persistence path used by the product at that milestone
+- once asset-bearing scenes exist, cover the project package path where relevant
 - avoid assuming that runtime-only state is persisted
 
 ### Small fixtures
@@ -196,6 +201,7 @@ Examples:
 - scene round-trips without losing face materials
 - UV state survives save/load
 - imported asset refs survive save/load
+- project package export/import preserves asset-backed scenes
 - unsupported version throws an understandable error
 - migration from v1 to v2 preserves semantics
 
@@ -295,6 +301,11 @@ Playwright covers:
 - activate trigger
 - target effect occurs
 
+#### E2E-07 Project package portability
+- export a project package
+- import or reopen it in the editor
+- asset-backed scene remains usable
+
 These flows should expand with milestones.
 
 ---
@@ -344,6 +355,7 @@ tests/
 fixtures/
   documents/
   assets/
+  packages/
   exports/
 ```
 
@@ -406,6 +418,7 @@ The following invariants are important enough to deserve repeated coverage:
 - unsupported versions do not silently corrupt
 - migrations are explicit and tested
 - binary asset persistence survives the current project-storage strategy
+- project package export/import preserves semantics when that path exists
 
 ### Runtime invariants
 
@@ -469,6 +482,7 @@ Use small, explicit fixtures.
 - lit-room
 - trigger-scene
 - imported-asset-scene
+- packaged-project scene
 - migration-old-version scene
 
 ### Asset fixtures
