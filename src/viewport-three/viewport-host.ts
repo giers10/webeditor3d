@@ -18,6 +18,7 @@ import {
   PerspectiveCamera,
   Raycaster,
   Scene,
+  Spherical,
   Vector2,
   Vector3,
   WebGLRenderer
@@ -33,6 +34,7 @@ import { applyBoxBrushFaceUvsToGeometry } from "../geometry/box-face-uvs";
 import { DEFAULT_GRID_SIZE, snapValueToGrid } from "../geometry/grid-snapping";
 import { createStarterMaterialSignature, createStarterMaterialTexture } from "../materials/starter-material-textures";
 import type { MaterialDef } from "../materials/starter-material-library";
+import { resolveViewportFocusTarget } from "./viewport-focus";
 
 interface BrushRenderObjects {
   mesh: Mesh<BoxGeometry, MeshStandardMaterial[]>;
@@ -48,6 +50,13 @@ const PLAYER_START_COLOR = 0x7cb7ff;
 const PLAYER_START_SELECTED_COLOR = 0xf3be8f;
 const BOX_CREATE_PREVIEW_FILL = 0x89b6ff;
 const BOX_CREATE_PREVIEW_EDGE = 0xf3be8f;
+const MIN_CAMERA_DISTANCE = 1.5;
+const MAX_CAMERA_DISTANCE = 400;
+const ORBIT_ROTATION_SPEED = 0.0085;
+const ZOOM_SPEED = 0.0014;
+const MIN_POLAR_ANGLE = 0.12;
+const MAX_POLAR_ANGLE = Math.PI - 0.12;
+const FOCUS_MARGIN = 1.35;
 
 interface CachedMaterialTexture {
   signature: string;
