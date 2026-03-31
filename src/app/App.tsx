@@ -1,4 +1,12 @@
-import { useEffect, useRef, useState, type CSSProperties, type ChangeEvent, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ChangeEvent,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type PointerEvent as ReactPointerEvent
+} from "react";
 
 import { createCreateBoxBrushCommand } from "../commands/create-box-brush-command";
 import { createMoveBoxBrushCommand } from "../commands/move-box-brush-command";
@@ -273,6 +281,10 @@ function isTextEntryTarget(target: EventTarget | null): boolean {
     target instanceof HTMLSelectElement ||
     target.isContentEditable
   );
+}
+
+function isCommitIncrementKey(key: string): boolean {
+  return key === "ArrowUp" || key === "ArrowDown" || key === "PageUp" || key === "PageDown";
 }
 
 function sortDocumentMaterials(materials: Record<string, MaterialDef>): MaterialDef[] {
