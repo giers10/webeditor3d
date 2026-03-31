@@ -114,6 +114,8 @@ import {
 import { getEntityDisplayLabelById, getSortedEntityDisplayLabels } from "../entities/entity-labels";
 import {
   areInteractionLinksEqual,
+  createPlayAnimationInteractionLink,
+  createStopAnimationInteractionLink,
   createTeleportPlayerInteractionLink,
   createToggleVisibilityInteractionLink,
   getInteractionLinksForSource,
