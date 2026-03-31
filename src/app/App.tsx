@@ -281,6 +281,79 @@ function getSelectedEntity(selection: EditorSelection, entities: EntityInstance[
   return entities.find((entity) => entity.id === selectedEntityId) ?? null;
 }
 
+function getSelectedModelInstance(selection: EditorSelection, modelInstances: ModelInstance[]): ModelInstance | null {
+  const selectedModelInstanceId = getSingleSelectedModelInstanceId(selection);
+
+  if (selectedModelInstanceId === null) {
+    return null;
+  }
+
+  return modelInstances.find((modelInstance) => modelInstance.id === selectedModelInstanceId) ?? null;
+}
+
+function isModelAsset(asset: ProjectAssetRecord): asset is ModelAssetRecord {
+  return asset.kind === "model";
+}
+
+function formatByteLength(byteLength: number): string {
+  if (byteLength < 1024) {
+    return `${byteLength} B`;
+  }
+
+  const kilobytes = byteLength / 1024;
+
+  if (kilobytes < 1024) {
+    return `${kilobytes.toFixed(kilobytes >= 10 ? 0 : 1)} KB`;
+  }
+
+  return `${(kilobytes / 1024).toFixed(1)} MB`;
+}
+
+function formatModelBoundingBoxLabel(asset: ModelAssetRecord): string {
+  if (asset.metadata.boundingBox === null) {
+    return "Bounds unavailable";
+  }
+
+  const { size } = asset.metadata.boundingBox;
+
+  return `Bounds ${size.x.toFixed(2)} × ${size.y.toFixed(2)} × ${size.z.toFixed(2)} m`;
+}
+
+function formatModelAssetSummary(asset: ModelAssetRecord): string {
+  const details = [
+    asset.metadata.format.toUpperCase(),
+    formatByteLength(asset.byteLength),
+    `${asset.metadata.meshCount} mesh${asset.metadata.meshCount === 1 ? "" : "es"}`,
+    `${asset.metadata.materialNames.length} material${asset.metadata.materialNames.length === 1 ? "" : "s"}`
+  ];
+
+  if (asset.metadata.animationNames.length > 0) {
+    details.push(`${asset.metadata.animationNames.length} animation${asset.metadata.animationNames.length === 1 ? "" : "s"}`);
+  }
+
+  return details.join(" • ");
+}
+
+function createModelInstancePlacementPosition(asset: ModelAssetRecord, anchor: Vec3 | null): Vec3 {
+  const boundingBox = asset.metadata.boundingBox;
+
+  if (anchor !== null) {
+    const floorOffset = boundingBox === null ? 0 : -boundingBox.min.y;
+
+    return {
+      x: anchor.x,
+      y: anchor.y + floorOffset,
+      z: anchor.z
+    };
+  }
+
+  return {
+    x: DEFAULT_MODEL_INSTANCE_POSITION.x,
+    y: boundingBox === null ? DEFAULT_MODEL_INSTANCE_POSITION.y : Math.max(DEFAULT_MODEL_INSTANCE_POSITION.y, -boundingBox.min.y),
+    z: DEFAULT_MODEL_INSTANCE_POSITION.z
+  };
+}
+
 function getBrushLabel(brush: BoxBrush, index: number): string {
   return brush.name ?? `Box Brush ${index + 1}`;
 }
