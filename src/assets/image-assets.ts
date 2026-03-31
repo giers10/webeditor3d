@@ -1,8 +1,7 @@
 import {
   EquirectangularReflectionMapping,
   SRGBColorSpace,
-  Texture,
-  type TextureDataType
+  Texture
 } from "three";
 
 import { createOpaqueId } from "../core/ids";
