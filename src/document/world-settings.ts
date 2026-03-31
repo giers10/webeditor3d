@@ -78,11 +78,13 @@ export function cloneWorldBackgroundSettings(background: WorldBackgroundSettings
     };
   }
 
-  return {
-    mode: "verticalGradient",
-    topColorHex: background.topColorHex,
-    bottomColorHex: background.bottomColorHex
-  };
+  if (background.mode === "verticalGradient") {
+    return {
+      mode: "verticalGradient",
+      topColorHex: background.topColorHex,
+      bottomColorHex: background.bottomColorHex
+    };
+  }
 
   return {
     mode: "image",
