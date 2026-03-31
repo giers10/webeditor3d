@@ -623,7 +623,7 @@ export class ViewportHost {
 
   private orbitCamera(deltaX: number, deltaY: number) {
     this.cameraSpherical.theta -= deltaX * ORBIT_ROTATION_SPEED;
-    this.cameraSpherical.phi += deltaY * ORBIT_ROTATION_SPEED;
+    this.cameraSpherical.phi -= deltaY * ORBIT_ROTATION_SPEED;
     this.applyCameraOrbitPose();
   }
 
