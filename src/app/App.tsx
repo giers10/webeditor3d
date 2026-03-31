@@ -1105,7 +1105,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
         <header className="toolbar">
           <div className="toolbar__brand">
             <div className="toolbar__title">WebEditor3D</div>
-            <div className="toolbar__subtitle">Slice 1.4 first-room polish</div>
+            <div className="toolbar__subtitle">Slice 1.5 world lighting basics</div>
           </div>
 
           <div className="toolbar__actions">
