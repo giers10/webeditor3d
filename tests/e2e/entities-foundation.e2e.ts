@@ -36,7 +36,7 @@ test("user can place and select typed entities from the entity foundation workfl
     .click();
 
   await expect(page.getByTestId("sound-emitter-radius")).toHaveValue("9");
-  await expect(page.getByText("Sound Emitter", { exact: true })).toBeVisible();
+  await expect(page.getByTestId("interactable-prompt")).toHaveCount(0);
 
   expect(pageErrors).toEqual([]);
   expect(consoleErrors).toEqual([]);
