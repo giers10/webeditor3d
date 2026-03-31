@@ -67,7 +67,7 @@ function assertPositiveFiniteVec3(vector: Vec3, label: string) {
 }
 
 export function createModelInstance(
-  overrides: Partial<Pick<ModelInstance, "id" | "name" | "position" | "rotationDegrees" | "scale">> & Pick<ModelInstance, "assetId">
+  overrides: Partial<Pick<ModelInstance, "id" | "name" | "position" | "rotationDegrees" | "scale" | "animationClipName" | "animationAutoplay">> & Pick<ModelInstance, "assetId">
 ): ModelInstance {
   const position = cloneVec3(overrides.position ?? DEFAULT_MODEL_INSTANCE_POSITION);
   const rotationDegrees = cloneVec3(overrides.rotationDegrees ?? DEFAULT_MODEL_INSTANCE_ROTATION_DEGREES);
