@@ -1210,6 +1210,16 @@ export function App({ store, initialStatusMessage }: AppProps) {
       let nextEntity: EntityInstance;
 
       switch (kind) {
+        case "pointLight":
+          nextEntity = createPointLightEntity({
+            position: basePosition
+          });
+          break;
+        case "spotLight":
+          nextEntity = createSpotLightEntity({
+            position: basePosition
+          });
+          break;
         case "playerStart":
           nextEntity = createPlayerStartEntity({
             position: basePosition
