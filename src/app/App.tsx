@@ -464,6 +464,10 @@ function getInteractionActionLabel(link: InteractionLink): string {
       return "Teleport Player";
     case "toggleVisibility":
       return "Toggle Visibility";
+    case "playAnimation":
+      return "Play Animation";
+    case "stopAnimation":
+      return "Stop Animation";
   }
 }
 
