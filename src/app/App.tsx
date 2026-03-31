@@ -2456,6 +2456,15 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
                     <div className="asset-item__summary">{formatModelAssetSummary(asset)}</div>
                     <div className="asset-item__summary">{formatModelBoundingBoxLabel(asset)}</div>
+                    {asset.metadata.materialNames.length === 0 ? null : (
+                      <div className="asset-item__summary">Materials: {asset.metadata.materialNames.join(", ")}</div>
+                    )}
+                    {asset.metadata.textureNames.length === 0 ? null : (
+                      <div className="asset-item__summary">Textures: {asset.metadata.textureNames.join(", ")}</div>
+                    )}
+                    {asset.metadata.animationNames.length === 0 ? null : (
+                      <div className="asset-item__summary">Animations: {asset.metadata.animationNames.join(", ")}</div>
+                    )}
                     {asset.metadata.warnings.length === 0 ? null : (
                       <div className="asset-item__warnings">{asset.metadata.warnings.join(" | ")}</div>
                     )}
