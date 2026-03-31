@@ -4369,7 +4369,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
         ref={importBackgroundImageInputRef}
         className="visually-hidden"
         type="file"
-        accept=".avif,.gif,.jpg,.jpeg,.png,.svg,.webp,image/*"
+        accept=".avif,.exr,.gif,.hdr,.jpg,.jpeg,.png,.svg,.webp,image/*"
         onChange={handleImportBackgroundImageChange}
       />
     </div>
