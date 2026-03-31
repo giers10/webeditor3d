@@ -77,6 +77,29 @@ export interface RuntimeInteractable {
   enabled: boolean;
 }
 
+export interface RuntimePointLight {
+  entityId: string;
+  position: Vec3;
+  colorHex: string;
+  intensity: number;
+  distance: number;
+}
+
+export interface RuntimeSpotLight {
+  entityId: string;
+  position: Vec3;
+  direction: Vec3;
+  colorHex: string;
+  intensity: number;
+  distance: number;
+  angleDegrees: number;
+}
+
+export interface RuntimeLocalLightCollection {
+  pointLights: RuntimePointLight[];
+  spotLights: RuntimeSpotLight[];
+}
+
 export interface RuntimeModelInstance {
   instanceId: string;
   assetId: string;
@@ -103,6 +126,7 @@ export interface RuntimeSpawnPoint {
 
 export interface RuntimeSceneDefinition {
   world: WorldSettings;
+  localLights: RuntimeLocalLightCollection;
   brushes: RuntimeBoxBrushInstance[];
   colliders: RuntimeBoxCollider[];
   sceneBounds: RuntimeSceneBounds | null;
@@ -261,7 +285,12 @@ function buildFallbackSpawn(sceneBounds: RuntimeSceneBounds | null): RuntimeSpaw
   };
 }
 
-function buildRuntimeEntityCollection(document: SceneDocument): RuntimeEntityCollection {
+interface RuntimeSceneCollections {
+  entities: RuntimeEntityCollection;
+  localLights: RuntimeLocalLightCollection;
+}
+
+function buildRuntimeSceneCollections(document: SceneDocument): RuntimeSceneCollections {
   const runtimeEntities: RuntimeEntityCollection = {
     playerStarts: [],
     soundEmitters: [],
@@ -269,9 +298,33 @@ function buildRuntimeEntityCollection(document: SceneDocument): RuntimeEntityCol
     teleportTargets: [],
     interactables: []
   };
+  const localLights: RuntimeLocalLightCollection = {
+    pointLights: [],
+    spotLights: []
+  };
 
   for (const entity of getEntityInstances(document.entities)) {
     switch (entity.kind) {
+      case "pointLight":
+        localLights.pointLights.push({
+          entityId: entity.id,
+          position: cloneVec3(entity.position),
+          colorHex: entity.colorHex,
+          intensity: entity.intensity,
+          distance: entity.distance
+        });
+        break;
+      case "spotLight":
+        localLights.spotLights.push({
+          entityId: entity.id,
+          position: cloneVec3(entity.position),
+          direction: cloneVec3(entity.direction),
+          colorHex: entity.colorHex,
+          intensity: entity.intensity,
+          distance: entity.distance,
+          angleDegrees: entity.angleDegrees
+        });
+        break;
       case "playerStart":
         runtimeEntities.playerStarts.push({
           entityId: entity.id,
@@ -319,7 +372,10 @@ function buildRuntimeEntityCollection(document: SceneDocument): RuntimeEntityCol
     }
   }
 
-  return runtimeEntities;
+  return {
+    entities: runtimeEntities,
+    localLights
+  };
 }
 
 function assertNever(value: never): never {
@@ -333,7 +389,7 @@ export function buildRuntimeSceneFromDocument(document: SceneDocument, options: 
   const colliders = Object.values(document.brushes).map((brush) => buildRuntimeCollider(brush));
   const sceneBounds = combineColliderBounds(colliders);
   const modelInstances = getModelInstances(document.modelInstances).map(buildRuntimeModelInstance);
-  const entities = buildRuntimeEntityCollection(document);
+  const collections = buildRuntimeSceneCollections(document);
   const interactionLinks = getInteractionLinks(document.interactionLinks).map((link) => cloneInteractionLink(link));
   const playerStartEntity = getPrimaryPlayerStartEntity(document.entities);
   const playerStart =
@@ -347,11 +403,12 @@ export function buildRuntimeSceneFromDocument(document: SceneDocument, options: 
 
   return {
     world: cloneWorldSettings(document.world),
+    localLights: collections.localLights,
     brushes,
     colliders,
     sceneBounds,
     modelInstances,
-    entities,
+    entities: collections.entities,
     interactionLinks,
     playerStart,
     spawn:
