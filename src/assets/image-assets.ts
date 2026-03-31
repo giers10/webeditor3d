@@ -302,6 +302,16 @@ async function loadImageAssetFromFileRecord(
 ): Promise<LoadedImageAsset> {
   const transientResourceUrl = createTransientResourceUrl(fileRecord);
 
+  if (isHdrFormat(asset.sourceName)) {
+    try {
+      const texture = await loadHdrTexture(transientResourceUrl.url, asset.sourceName);
+      return createLoadedHdrImageAsset(asset, texture, transientResourceUrl.url, transientResourceUrl.revoke);
+    } catch (error) {
+      transientResourceUrl.revoke();
+      throw new Error(`Image asset reload failed for ${asset.sourceName}: ${getErrorDetail(error)}`);
+    }
+  }
+
   try {
     const image = await loadImageElement(transientResourceUrl.url);
     return createLoadedImageAsset(asset, image, transientResourceUrl.url, transientResourceUrl.revoke);
