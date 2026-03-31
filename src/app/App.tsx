@@ -1839,6 +1839,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
               navigationMode={activeNavigationMode}
               onRuntimeMessageChange={setRuntimeMessage}
               onFirstPersonTelemetryChange={setFirstPersonTelemetry}
+              onInteractionPromptChange={setRuntimeInteractionPrompt}
             />
           </main>
 
@@ -1876,7 +1877,26 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 </div>
               </div>
 
+              <div className="stat-card">
+                <div className="label">Interaction</div>
+                <div className="value" data-testid="runner-interaction-state">
+                  {activeNavigationMode === "firstPerson" ? (runtimeInteractionPrompt === null ? "No target" : "Ready") : "Not available"}
+                </div>
+                <div className="material-summary" data-testid="runner-interaction-summary">
+                  {activeNavigationMode === "firstPerson"
+                    ? runtimeInteractionPrompt === null
+                      ? "Aim at an authored Interactable and click when a prompt appears."
+                      : `Click "${runtimeInteractionPrompt.prompt}" within ${runtimeInteractionPrompt.range.toFixed(1)}m.`
+                    : "Switch to First Person to use click interactions."}
+                </div>
+              </div>
+
               {runtimeMessage === null ? null : <div className="info-banner">{runtimeMessage}</div>}
+              {activeNavigationMode === "firstPerson" ? (
+                <div className="info-banner" data-testid="runner-interaction-help">
+                  Mouse click activates the current prompt target. Keyboard/controller fallback is not active yet.
+                </div>
+              ) : null}
             </Panel>
           </aside>
         </div>
