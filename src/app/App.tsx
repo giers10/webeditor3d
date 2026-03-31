@@ -3481,6 +3481,203 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   </div>
                 </div>
 
+                {selectedPointLight !== null ? (
+                  <>
+                    <div className="form-section">
+                      <div className="label">Light</div>
+                      <div className="vector-inputs vector-inputs--two">
+                        <label className="form-field">
+                          <span className="label">Color</span>
+                          <input
+                            data-testid="point-light-color"
+                            className="color-input"
+                            type="color"
+                            value={pointLightColorDraft}
+                            onChange={(event) => {
+                              setPointLightColorDraft(event.currentTarget.value);
+                              scheduleDraftCommit(applyPointLightChange);
+                            }}
+                          />
+                        </label>
+                        <label className="form-field">
+                          <span className="label">Intensity</span>
+                          <input
+                            data-testid="point-light-intensity"
+                            className="text-input"
+                            type="number"
+                            min="0"
+                            step="0.1"
+                            value={pointLightIntensityDraft}
+                            onChange={(event) => setPointLightIntensityDraft(event.currentTarget.value)}
+                            onBlur={applyPointLightChange}
+                            onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPointLightChange)}
+                            onKeyUp={(event) => handleNumberInputKeyUp(event, applyPointLightChange)}
+                            onPointerUp={(event) => handleNumberInputPointerUp(event, applyPointLightChange)}
+                          />
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="form-section">
+                      <div className="label">Range</div>
+                      <label className="form-field">
+                        <span className="label">Distance</span>
+                        <input
+                          data-testid="point-light-distance"
+                          className="text-input"
+                          type="number"
+                          min="0.1"
+                          step="0.1"
+                          value={pointLightDistanceDraft}
+                          onChange={(event) => setPointLightDistanceDraft(event.currentTarget.value)}
+                          onBlur={applyPointLightChange}
+                          onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPointLightChange)}
+                          onKeyUp={(event) => handleNumberInputKeyUp(event, applyPointLightChange)}
+                          onPointerUp={(event) => handleNumberInputPointerUp(event, applyPointLightChange)}
+                        />
+                      </label>
+                    </div>
+                  </>
+                ) : null}
+
+                {selectedSpotLight !== null ? (
+                  <>
+                    <div className="form-section">
+                      <div className="label">Light</div>
+                      <div className="vector-inputs vector-inputs--two">
+                        <label className="form-field">
+                          <span className="label">Color</span>
+                          <input
+                            data-testid="spot-light-color"
+                            className="color-input"
+                            type="color"
+                            value={spotLightColorDraft}
+                            onChange={(event) => {
+                              setSpotLightColorDraft(event.currentTarget.value);
+                              scheduleDraftCommit(applySpotLightChange);
+                            }}
+                          />
+                        </label>
+                        <label className="form-field">
+                          <span className="label">Intensity</span>
+                          <input
+                            data-testid="spot-light-intensity"
+                            className="text-input"
+                            type="number"
+                            min="0"
+                            step="0.1"
+                            value={spotLightIntensityDraft}
+                            onChange={(event) => setSpotLightIntensityDraft(event.currentTarget.value)}
+                            onBlur={applySpotLightChange}
+                            onKeyDown={(event) => handleDraftVectorKeyDown(event, applySpotLightChange)}
+                            onKeyUp={(event) => handleNumberInputKeyUp(event, applySpotLightChange)}
+                            onPointerUp={(event) => handleNumberInputPointerUp(event, applySpotLightChange)}
+                          />
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="form-section">
+                      <div className="label">Range</div>
+                      <div className="vector-inputs vector-inputs--two">
+                        <label className="form-field">
+                          <span className="label">Distance</span>
+                          <input
+                            data-testid="spot-light-distance"
+                            className="text-input"
+                            type="number"
+                            min="0.1"
+                            step="0.1"
+                            value={spotLightDistanceDraft}
+                            onChange={(event) => setSpotLightDistanceDraft(event.currentTarget.value)}
+                            onBlur={applySpotLightChange}
+                            onKeyDown={(event) => handleDraftVectorKeyDown(event, applySpotLightChange)}
+                            onKeyUp={(event) => handleNumberInputKeyUp(event, applySpotLightChange)}
+                            onPointerUp={(event) => handleNumberInputPointerUp(event, applySpotLightChange)}
+                          />
+                        </label>
+                        <label className="form-field">
+                          <span className="label">Angle</span>
+                          <input
+                            data-testid="spot-light-angle"
+                            className="text-input"
+                            type="number"
+                            min="1"
+                            max="179"
+                            step="1"
+                            value={spotLightAngleDraft}
+                            onChange={(event) => setSpotLightAngleDraft(event.currentTarget.value)}
+                            onBlur={applySpotLightChange}
+                            onKeyDown={(event) => handleDraftVectorKeyDown(event, applySpotLightChange)}
+                            onKeyUp={(event) => handleNumberInputKeyUp(event, applySpotLightChange)}
+                            onPointerUp={(event) => handleNumberInputPointerUp(event, applySpotLightChange)}
+                          />
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="form-section">
+                      <div className="label">Direction</div>
+                      <div className="vector-inputs">
+                        <label className="form-field">
+                          <span className="label">X</span>
+                          <input
+                            data-testid="spot-light-direction-x"
+                            className="text-input"
+                            type="number"
+                            step="0.1"
+                            value={spotLightDirectionDraft.x}
+                            onChange={(event) => {
+                              const nextValue = event.currentTarget.value;
+                              setSpotLightDirectionDraft((draft) => ({ ...draft, x: nextValue }));
+                            }}
+                            onBlur={applySpotLightChange}
+                            onKeyDown={(event) => handleDraftVectorKeyDown(event, applySpotLightChange)}
+                            onKeyUp={(event) => handleNumberInputKeyUp(event, applySpotLightChange)}
+                            onPointerUp={(event) => handleNumberInputPointerUp(event, applySpotLightChange)}
+                          />
+                        </label>
+                        <label className="form-field">
+                          <span className="label">Y</span>
+                          <input
+                            data-testid="spot-light-direction-y"
+                            className="text-input"
+                            type="number"
+                            step="0.1"
+                            value={spotLightDirectionDraft.y}
+                            onChange={(event) => {
+                              const nextValue = event.currentTarget.value;
+                              setSpotLightDirectionDraft((draft) => ({ ...draft, y: nextValue }));
+                            }}
+                            onBlur={applySpotLightChange}
+                            onKeyDown={(event) => handleDraftVectorKeyDown(event, applySpotLightChange)}
+                            onKeyUp={(event) => handleNumberInputKeyUp(event, applySpotLightChange)}
+                            onPointerUp={(event) => handleNumberInputPointerUp(event, applySpotLightChange)}
+                          />
+                        </label>
+                        <label className="form-field">
+                          <span className="label">Z</span>
+                          <input
+                            data-testid="spot-light-direction-z"
+                            className="text-input"
+                            type="number"
+                            step="0.1"
+                            value={spotLightDirectionDraft.z}
+                            onChange={(event) => {
+                              const nextValue = event.currentTarget.value;
+                              setSpotLightDirectionDraft((draft) => ({ ...draft, z: nextValue }));
+                            }}
+                            onBlur={applySpotLightChange}
+                            onKeyDown={(event) => handleDraftVectorKeyDown(event, applySpotLightChange)}
+                            onKeyUp={(event) => handleNumberInputKeyUp(event, applySpotLightChange)}
+                            onPointerUp={(event) => handleNumberInputPointerUp(event, applySpotLightChange)}
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  </>
+                ) : null}
+
                 {selectedPlayerStart !== null ? (
                   <div className="form-section">
                     <div className="label">Yaw</div>
