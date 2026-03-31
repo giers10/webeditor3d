@@ -1029,17 +1029,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
           <div className="toolbar__group">
             <button
-              className="toolbar__button toolbar__button--accent"
-              type="button"
-              data-testid="create-box-brush"
-              onClick={() => handleCreateBoxBrush()}
-            >
-              Create Box
-            </button>
-            <button className="toolbar__button" type="button" data-testid="place-player-start-toolbar" onClick={handleSelectOrPlacePlayerStart}>
-              {primaryPlayerStart === null ? "Place Player Start" : "Select Player Start"}
-            </button>
-            <button
               className={`toolbar__button toolbar__button--accent ${blockingDiagnostics.length > 0 ? "toolbar__button--warn" : ""}`}
               type="button"
               data-testid="enter-run-mode"
