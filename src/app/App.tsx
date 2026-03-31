@@ -600,7 +600,15 @@ function formatRunnerFeetPosition(position: Vec3 | null): string {
 }
 
 function formatWorldBackgroundLabel(world: WorldSettings): string {
-  return world.background.mode === "solid" ? "Solid" : "Vertical Gradient";
+  if (world.background.mode === "solid") {
+    return "Solid";
+  }
+
+  if (world.background.mode === "verticalGradient") {
+    return "Vertical Gradient";
+  }
+
+  return "Image";
 }
 
 export function App({ store, initialStatusMessage }: AppProps) {
