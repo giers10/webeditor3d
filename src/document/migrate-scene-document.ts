@@ -1,5 +1,18 @@
 import { createStarterMaterialRegistry, type MaterialDef, type MaterialPattern } from "../materials/starter-material-library";
 import {
+  createModelInstance,
+  normalizeModelInstanceName,
+  type ModelInstance
+} from "../assets/model-instances";
+import {
+  isProjectAssetKind,
+  type AudioAssetMetadata,
+  type ImageAssetMetadata,
+  type ModelAssetMetadata,
+  type ProjectAssetBoundingBox,
+  type ProjectAssetRecord
+} from "../assets/project-assets";
+import {
   createInteractableEntity,
   createPlayerStartEntity,
   createSoundEmitterEntity,
@@ -29,6 +42,7 @@ import {
   FACE_MATERIALS_SCENE_DOCUMENT_VERSION,
   FIRST_ROOM_POLISH_SCENE_DOCUMENT_VERSION,
   FOUNDATION_SCENE_DOCUMENT_VERSION,
+  MODEL_ASSET_PIPELINE_SCENE_DOCUMENT_VERSION,
   RUNNER_V1_SCENE_DOCUMENT_VERSION,
   SCENE_DOCUMENT_VERSION,
   TRIGGER_ACTION_TARGET_FOUNDATION_SCENE_DOCUMENT_VERSION,
@@ -133,6 +147,203 @@ function expectEmptyCollection(value: unknown, label: string): Record<string, ne
   }
 
   return {};
+}
+
+function readProjectAssetBoundingBox(value: unknown, label: string): ProjectAssetBoundingBox {
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  const min = readVec3(value.min, `${label}.min`);
+  const max = readVec3(value.max, `${label}.max`);
+  const size = readVec3(value.size, `${label}.size`);
+
+  if (size.x < 0 || size.y < 0 || size.z < 0) {
+    throw new Error(`${label}.size values must remain zero or greater.`);
+  }
+
+  return {
+    min,
+    max,
+    size
+  };
+}
+
+function readModelAssetMetadata(value: unknown, label: string): ModelAssetMetadata {
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  const format = expectString(value.format, `${label}.format`);
+
+  if (format !== "glb" && format !== "gltf") {
+    throw new Error(`${label}.format must be glb or gltf.`);
+  }
+
+  const sceneName = value.sceneName === null ? null : expectOptionalString(value.sceneName, `${label}.sceneName`) ?? null;
+
+  return {
+    kind: "model",
+    format,
+    sceneName,
+    nodeCount: expectNonNegativeFiniteNumber(value.nodeCount, `${label}.nodeCount`),
+    meshCount: expectNonNegativeFiniteNumber(value.meshCount, `${label}.meshCount`),
+    materialNames: expectStringArray(value.materialNames, `${label}.materialNames`),
+    textureNames: expectStringArray(value.textureNames, `${label}.textureNames`),
+    animationNames: expectStringArray(value.animationNames, `${label}.animationNames`),
+    boundingBox: value.boundingBox === null ? null : readProjectAssetBoundingBox(value.boundingBox, `${label}.boundingBox`),
+    warnings: expectStringArray(value.warnings, `${label}.warnings`)
+  };
+}
+
+function readImageAssetMetadata(value: unknown, label: string): ImageAssetMetadata {
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  return {
+    kind: "image",
+    width: expectPositiveFiniteNumber(value.width, `${label}.width`),
+    height: expectPositiveFiniteNumber(value.height, `${label}.height`),
+    hasAlpha: expectBoolean(value.hasAlpha, `${label}.hasAlpha`),
+    warnings: expectStringArray(value.warnings, `${label}.warnings`)
+  };
+}
+
+function readAudioAssetMetadata(value: unknown, label: string): AudioAssetMetadata {
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  return {
+    kind: "audio",
+    durationSeconds:
+      value.durationSeconds === null
+        ? null
+        : expectNonNegativeFiniteNumber(value.durationSeconds, `${label}.durationSeconds`),
+    channelCount:
+      value.channelCount === null ? null : expectPositiveFiniteNumber(value.channelCount, `${label}.channelCount`),
+    sampleRateHz:
+      value.sampleRateHz === null ? null : expectPositiveFiniteNumber(value.sampleRateHz, `${label}.sampleRateHz`),
+    warnings: expectStringArray(value.warnings, `${label}.warnings`)
+  };
+}
+
+function readProjectAsset(value: unknown, label: string): ProjectAssetRecord {
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  const kind = value.kind;
+
+  if (!isProjectAssetKind(kind)) {
+    throw new Error(`${label}.kind must be model, image, or audio.`);
+  }
+
+  const id = expectString(value.id, `${label}.id`);
+  const sourceName = expectString(value.sourceName, `${label}.sourceName`);
+  const mimeType = expectString(value.mimeType, `${label}.mimeType`);
+  const storageKey = expectString(value.storageKey, `${label}.storageKey`);
+  const byteLength = expectPositiveFiniteNumber(value.byteLength, `${label}.byteLength`);
+
+  switch (kind) {
+    case "model":
+      return {
+        id,
+        kind,
+        sourceName,
+        mimeType,
+        storageKey,
+        byteLength,
+        metadata: readModelAssetMetadata(value.metadata, `${label}.metadata`)
+      };
+    case "image":
+      return {
+        id,
+        kind,
+        sourceName,
+        mimeType,
+        storageKey,
+        byteLength,
+        metadata: readImageAssetMetadata(value.metadata, `${label}.metadata`)
+      };
+    case "audio":
+      return {
+        id,
+        kind,
+        sourceName,
+        mimeType,
+        storageKey,
+        byteLength,
+        metadata: readAudioAssetMetadata(value.metadata, `${label}.metadata`)
+      };
+  }
+}
+
+function readAssets(value: unknown): SceneDocument["assets"] {
+  if (!isRecord(value)) {
+    throw new Error("assets must be a record.");
+  }
+
+  const assets: SceneDocument["assets"] = {};
+
+  for (const [assetId, assetValue] of Object.entries(value)) {
+    const asset = readProjectAsset(assetValue, `assets.${assetId}`);
+
+    if (asset.id !== assetId) {
+      throw new Error(`assets.${assetId}.id must match the registry key.`);
+    }
+
+    assets[assetId] = asset;
+  }
+
+  return assets;
+}
+
+function readModelInstance(value: unknown, label: string, assets: SceneDocument["assets"]): ModelInstance {
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  const assetId = expectString(value.assetId, `${label}.assetId`);
+  const asset = assets[assetId];
+
+  if (asset === undefined) {
+    throw new Error(`${label}.assetId references missing asset ${assetId}.`);
+  }
+
+  if (asset.kind !== "model") {
+    throw new Error(`${label}.assetId must reference a model asset.`);
+  }
+
+  return createModelInstance({
+    id: expectString(value.id, `${label}.id`),
+    assetId,
+    name: normalizeModelInstanceName(expectOptionalString(value.name, `${label}.name`)),
+    position: readVec3(value.position, `${label}.position`),
+    rotationDegrees: readVec3(value.rotationDegrees, `${label}.rotationDegrees`),
+    scale: readVec3(value.scale, `${label}.scale`)
+  });
+}
+
+function readModelInstances(value: unknown, assets: SceneDocument["assets"]): SceneDocument["modelInstances"] {
+  if (!isRecord(value)) {
+    throw new Error("modelInstances must be a record.");
+  }
+
+  const modelInstances: SceneDocument["modelInstances"] = {};
+
+  for (const [modelInstanceId, modelInstanceValue] of Object.entries(value)) {
+    const modelInstance = readModelInstance(modelInstanceValue, `modelInstances.${modelInstanceId}`, assets);
+
+    if (modelInstance.id !== modelInstanceId) {
+      throw new Error(`modelInstances.${modelInstanceId}.id must match the registry key.`);
+    }
+
+    modelInstances[modelInstanceId] = modelInstance;
+  }
+
+  return modelInstances;
 }
 
 function readVec2(value: unknown, label: string) {
@@ -756,11 +967,29 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     };
   }
 
+  if (source.version === MODEL_ASSET_PIPELINE_SCENE_DOCUMENT_VERSION) {
+    const materials = readMaterialRegistry(source.materials, "materials");
+
+    return {
+      version: SCENE_DOCUMENT_VERSION,
+      name: expectString(source.name, "name"),
+      world: readWorldSettings(source.world),
+      materials,
+      textures: expectEmptyCollection(source.textures, "textures"),
+      assets: expectEmptyCollection(source.assets, "assets"),
+      brushes: readBrushes(source.brushes, materials, false),
+      modelInstances: expectEmptyCollection(source.modelInstances, "modelInstances"),
+      entities: readEntities(source.entities),
+      interactionLinks: readInteractionLinks(source.interactionLinks)
+    };
+  }
+
   if (source.version !== SCENE_DOCUMENT_VERSION) {
     throw new Error(`Unsupported scene document version: ${String(source.version)}.`);
   }
 
   const materials = readMaterialRegistry(source.materials, "materials");
+  const assets = readAssets(source.assets);
 
   return {
     version: SCENE_DOCUMENT_VERSION,
@@ -768,9 +997,9 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     world: readWorldSettings(source.world),
     materials,
     textures: expectEmptyCollection(source.textures, "textures"),
-    assets: expectEmptyCollection(source.assets, "assets"),
+    assets,
     brushes: readBrushes(source.brushes, materials, false),
-    modelInstances: expectEmptyCollection(source.modelInstances, "modelInstances"),
+    modelInstances: readModelInstances(source.modelInstances, assets),
     entities: readEntities(source.entities),
     interactionLinks: readInteractionLinks(source.interactionLinks)
   };

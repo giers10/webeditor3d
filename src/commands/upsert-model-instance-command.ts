@@ -2,7 +2,7 @@ import { createOpaqueId } from "../core/ids";
 import { cloneEditorSelection, type EditorSelection } from "../core/selection";
 import type { ToolMode } from "../core/tool-mode";
 import { cloneModelInstance, getModelInstanceKindLabel, type ModelInstance } from "../assets/model-instances";
-import { cloneProjectAssetRecord, getProjectAssetKindLabel } from "../assets/project-assets";
+import { getProjectAssetKindLabel } from "../assets/project-assets";
 
 import type { EditorCommand } from "./command";
 
@@ -95,4 +95,3 @@ export function createUpsertModelInstanceCommand(options: UpsertModelInstanceCom
     }
   };
 }
-

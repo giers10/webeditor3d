@@ -1,4 +1,14 @@
 import {
+  type AudioAssetMetadata,
+  type ImageAssetMetadata,
+  type ModelAssetMetadata,
+  type ModelAssetRecord,
+  type ProjectAssetBoundingBox,
+  type ProjectAssetRecord,
+  type ModelInstance,
+  getProjectAssetKindLabel
+} from "../assets/project-assets";
+import {
   type InteractableEntity,
   type PlayerStartEntity,
   type SoundEmitterEntity,
@@ -153,6 +163,196 @@ function validateWorldSettings(world: WorldSettings, diagnostics: SceneDiagnosti
         "invalid-world-sun-direction",
         "World sun direction must remain finite and must not be the zero vector.",
         "world.sunLight.direction"
+      )
+    );
+  }
+}
+
+function validateProjectAssetBoundingBox(
+  boundingBox: ProjectAssetBoundingBox | null,
+  path: string,
+  diagnostics: SceneDiagnostic[]
+) {
+  if (boundingBox === null) {
+    return;
+  }
+
+  if (!isFiniteVec3(boundingBox.min)) {
+    diagnostics.push(createDiagnostic("error", "invalid-asset-bounding-box-min", "Model asset bounding boxes must have finite minimum coordinates.", `${path}.min`));
+  }
+
+  if (!isFiniteVec3(boundingBox.max)) {
+    diagnostics.push(createDiagnostic("error", "invalid-asset-bounding-box-max", "Model asset bounding boxes must have finite maximum coordinates.", `${path}.max`));
+  }
+
+  if (!isFiniteVec3(boundingBox.size) || boundingBox.size.x < 0 || boundingBox.size.y < 0 || boundingBox.size.z < 0) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-asset-bounding-box-size",
+        "Model asset bounding boxes must have finite, zero-or-greater size values.",
+        `${path}.size`
+      )
+    );
+  }
+}
+
+function validateModelAssetMetadata(metadata: ModelAssetMetadata, path: string, diagnostics: SceneDiagnostic[]) {
+  if (metadata.format !== "glb" && metadata.format !== "gltf") {
+    diagnostics.push(createDiagnostic("error", "invalid-model-asset-format", "Model asset format must be glb or gltf.", `${path}.format`));
+  }
+
+  if (metadata.sceneName !== null && metadata.sceneName.trim().length === 0) {
+    diagnostics.push(createDiagnostic("error", "invalid-model-asset-scene-name", "Model asset scene names must be non-empty when authored.", `${path}.sceneName`));
+  }
+
+  if (!isNonNegativeFiniteNumber(metadata.nodeCount)) {
+    diagnostics.push(createDiagnostic("error", "invalid-model-asset-node-count", "Model asset node counts must be finite and zero or greater.", `${path}.nodeCount`));
+  }
+
+  if (!isNonNegativeFiniteNumber(metadata.meshCount)) {
+    diagnostics.push(createDiagnostic("error", "invalid-model-asset-mesh-count", "Model asset mesh counts must be finite and zero or greater.", `${path}.meshCount`));
+  }
+
+  if (!Array.isArray(metadata.materialNames) || metadata.materialNames.some((name) => typeof name !== "string")) {
+    diagnostics.push(createDiagnostic("error", "invalid-model-asset-material-names", "Model asset material names must be string arrays.", `${path}.materialNames`));
+  }
+
+  if (!Array.isArray(metadata.textureNames) || metadata.textureNames.some((name) => typeof name !== "string")) {
+    diagnostics.push(createDiagnostic("error", "invalid-model-asset-texture-names", "Model asset texture names must be string arrays.", `${path}.textureNames`));
+  }
+
+  if (!Array.isArray(metadata.animationNames) || metadata.animationNames.some((name) => typeof name !== "string")) {
+    diagnostics.push(createDiagnostic("error", "invalid-model-asset-animation-names", "Model asset animation names must be string arrays.", `${path}.animationNames`));
+  }
+
+  validateProjectAssetBoundingBox(metadata.boundingBox, `${path}.boundingBox`, diagnostics);
+
+  if (!Array.isArray(metadata.warnings) || metadata.warnings.some((warning) => typeof warning !== "string")) {
+    diagnostics.push(createDiagnostic("error", "invalid-model-asset-warnings", "Model asset warnings must be string arrays.", `${path}.warnings`));
+  }
+}
+
+function validateImageAssetMetadata(metadata: ImageAssetMetadata, path: string, diagnostics: SceneDiagnostic[]) {
+  if (!isPositiveFiniteNumber(metadata.width)) {
+    diagnostics.push(createDiagnostic("error", "invalid-image-asset-width", "Image asset width must be finite and greater than zero.", `${path}.width`));
+  }
+
+  if (!isPositiveFiniteNumber(metadata.height)) {
+    diagnostics.push(createDiagnostic("error", "invalid-image-asset-height", "Image asset height must be finite and greater than zero.", `${path}.height`));
+  }
+
+  if (!isBoolean(metadata.hasAlpha)) {
+    diagnostics.push(createDiagnostic("error", "invalid-image-asset-alpha", "Image asset alpha flags must be booleans.", `${path}.hasAlpha`));
+  }
+
+  if (!Array.isArray(metadata.warnings) || metadata.warnings.some((warning) => typeof warning !== "string")) {
+    diagnostics.push(createDiagnostic("error", "invalid-image-asset-warnings", "Image asset warnings must be string arrays.", `${path}.warnings`));
+  }
+}
+
+function validateAudioAssetMetadata(metadata: AudioAssetMetadata, path: string, diagnostics: SceneDiagnostic[]) {
+  if (metadata.durationSeconds !== null && !isNonNegativeFiniteNumber(metadata.durationSeconds)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-audio-asset-duration",
+        "Audio asset durations must be finite and zero or greater when authored.",
+        `${path}.durationSeconds`
+      )
+    );
+  }
+
+  if (metadata.channelCount !== null && !isPositiveFiniteNumber(metadata.channelCount)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-audio-asset-channel-count",
+        "Audio asset channel counts must be finite and greater than zero when authored.",
+        `${path}.channelCount`
+      )
+    );
+  }
+
+  if (metadata.sampleRateHz !== null && !isPositiveFiniteNumber(metadata.sampleRateHz)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-audio-asset-sample-rate",
+        "Audio asset sample rates must be finite and greater than zero when authored.",
+        `${path}.sampleRateHz`
+      )
+    );
+  }
+
+  if (!Array.isArray(metadata.warnings) || metadata.warnings.some((warning) => typeof warning !== "string")) {
+    diagnostics.push(createDiagnostic("error", "invalid-audio-asset-warnings", "Audio asset warnings must be string arrays.", `${path}.warnings`));
+  }
+}
+
+function validateProjectAsset(asset: ProjectAssetRecord, path: string, diagnostics: SceneDiagnostic[]) {
+  if (asset.sourceName.trim().length === 0) {
+    diagnostics.push(createDiagnostic("error", "invalid-asset-source-name", "Asset source names must be non-empty strings.", `${path}.sourceName`));
+  }
+
+  if (asset.mimeType.trim().length === 0) {
+    diagnostics.push(createDiagnostic("error", "invalid-asset-mime-type", "Asset mime types must be non-empty strings.", `${path}.mimeType`));
+  }
+
+  if (asset.storageKey.trim().length === 0) {
+    diagnostics.push(createDiagnostic("error", "invalid-asset-storage-key", "Asset storage keys must be non-empty strings.", `${path}.storageKey`));
+  }
+
+  if (!isPositiveFiniteNumber(asset.byteLength)) {
+    diagnostics.push(createDiagnostic("error", "invalid-asset-byte-length", "Asset byte lengths must be finite and greater than zero.", `${path}.byteLength`));
+  }
+
+  switch (asset.kind) {
+    case "model":
+      validateModelAssetMetadata(asset.metadata, `${path}.metadata`, diagnostics);
+      break;
+    case "image":
+      validateImageAssetMetadata(asset.metadata, `${path}.metadata`, diagnostics);
+      break;
+    case "audio":
+      validateAudioAssetMetadata(asset.metadata, `${path}.metadata`, diagnostics);
+      break;
+  }
+}
+
+function validateModelInstance(modelInstance: ModelInstance, path: string, document: SceneDocument, diagnostics: SceneDiagnostic[]) {
+  if (modelInstance.name !== undefined && modelInstance.name.trim().length === 0) {
+    diagnostics.push(createDiagnostic("error", "invalid-model-instance-name", "Model instance names must be non-empty when authored.", `${path}.name`));
+  }
+
+  if (!isFiniteVec3(modelInstance.position)) {
+    diagnostics.push(createDiagnostic("error", "invalid-model-instance-position", "Model instance positions must remain finite on every axis.", `${path}.position`));
+  }
+
+  if (!isFiniteVec3(modelInstance.rotationDegrees)) {
+    diagnostics.push(createDiagnostic("error", "invalid-model-instance-rotation", "Model instance rotations must remain finite on every axis.", `${path}.rotationDegrees`));
+  }
+
+  if (!hasPositiveFiniteVec3(modelInstance.scale)) {
+    diagnostics.push(createDiagnostic("error", "invalid-model-instance-scale", "Model instance scales must remain finite and positive on every axis.", `${path}.scale`));
+  }
+
+  const asset = document.assets[modelInstance.assetId];
+
+  if (asset === undefined) {
+    diagnostics.push(
+      createDiagnostic("error", "missing-model-instance-asset", `Model instance asset ${modelInstance.assetId} does not exist.`, `${path}.assetId`)
+    );
+    return;
+  }
+
+  if (asset.kind !== "model") {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-model-instance-asset-kind",
+        "Model instances may only reference model assets.",
+        `${path}.assetId`
       )
     );
   }
@@ -440,6 +640,17 @@ export function validateSceneDocument(document: SceneDocument): SceneDocumentVal
     registerAuthoredId(material.id, path, seenIds, diagnostics);
   }
 
+  for (const [assetKey, asset] of Object.entries(document.assets)) {
+    const path = `assets.${assetKey}`;
+
+    if (asset.id !== assetKey) {
+      diagnostics.push(createDiagnostic("error", "asset-id-mismatch", "Asset ids must match their registry key.", `${path}.id`));
+    }
+
+    registerAuthoredId(asset.id, path, seenIds, diagnostics);
+    validateProjectAsset(asset, path, diagnostics);
+  }
+
   for (const [brushKey, brush] of Object.entries(document.brushes)) {
     const path = `brushes.${brushKey}`;
 
@@ -473,6 +684,19 @@ export function validateSceneDocument(document: SceneDocument): SceneDocumentVal
         );
       }
     }
+  }
+
+  for (const [modelInstanceKey, modelInstance] of Object.entries(document.modelInstances)) {
+    const path = `modelInstances.${modelInstanceKey}`;
+
+    if (modelInstance.id !== modelInstanceKey) {
+      diagnostics.push(
+        createDiagnostic("error", "model-instance-id-mismatch", "Model instance ids must match their registry key.", `${path}.id`)
+      );
+    }
+
+    registerAuthoredId(modelInstance.id, path, seenIds, diagnostics);
+    validateModelInstance(modelInstance, path, document, diagnostics);
   }
 
   for (const [entityKey, entity] of Object.entries(document.entities)) {
