@@ -34,6 +34,7 @@ test("Trigger Volume enter can teleport the player to a Teleport Target", async 
     .click();
 
   await page.getByTestId("add-trigger-teleport-link").click();
+  await page.getByRole("button", { name: "First Person" }).first().click();
 
   await page.getByTestId("enter-run-mode").click();
 
