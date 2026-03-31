@@ -1,8 +1,12 @@
 import {
+  DataTexture,
   EquirectangularReflectionMapping,
+  LinearSRGBColorSpace,
   SRGBColorSpace,
   Texture
 } from "three";
+import { EXRLoader } from "three/examples/jsm/loaders/EXRLoader.js";
+import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader.js";
 
 import { createOpaqueId } from "../core/ids";
 import { createProjectAssetStorageKey, type ImageAssetMetadata, type ImageAssetRecord } from "./project-assets";
