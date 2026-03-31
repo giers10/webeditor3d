@@ -50,6 +50,7 @@ import {
   type LoadedModelAsset
 } from "../assets/gltf-model-import";
 import type { ModelAssetRecord, ProjectAssetRecord } from "../assets/project-assets";
+import { getProjectAssetKindLabel } from "../assets/project-assets";
 import {
   BOX_FACE_IDS,
   DEFAULT_BOX_BRUSH_CENTER,
