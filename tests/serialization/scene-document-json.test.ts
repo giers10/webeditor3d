@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { createBoxBrush } from "../../src/document/brushes";
-import { createEmptySceneDocument } from "../../src/document/scene-document";
+import { SCENE_DOCUMENT_VERSION, createEmptySceneDocument } from "../../src/document/scene-document";
 import { migrateSceneDocument } from "../../src/document/migrate-scene-document";
 import { createPlayerStartEntity } from "../../src/entities/entity-instances";
 import { STARTER_MATERIAL_LIBRARY } from "../../src/materials/starter-material-library";
@@ -113,7 +113,7 @@ describe("scene document JSON", () => {
       interactionLinks: {}
     });
 
-    expect(migratedDocument.version).toBe(4);
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
     expect(migratedDocument.brushes).toEqual({});
     expect(migratedDocument.name).toBe("Foundation Scene");
     expect(Object.keys(migratedDocument.materials)).toEqual(STARTER_MATERIAL_LIBRARY.map((material) => material.id));
@@ -156,7 +156,7 @@ describe("scene document JSON", () => {
       interactionLinks: {}
     });
 
-    expect(migratedDocument.version).toBe(4);
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
     expect(migratedDocument.brushes["brush-legacy"].faces.posZ.materialId).toBe("starter-amber-grid");
     expect(migratedDocument.brushes["brush-legacy"].faces.posZ.uv).toEqual({
       offset: {
@@ -187,8 +187,64 @@ describe("scene document JSON", () => {
       interactionLinks: {}
     });
 
-    expect(migratedDocument.version).toBe(4);
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
     expect(migratedDocument.entities).toEqual({});
+  });
+
+  it("migrates runner-v1 documents to authored brush names without changing existing content", () => {
+    const migratedDocument = migrateSceneDocument({
+      version: 4,
+      name: "Runner V1 Scene",
+      world: createEmptySceneDocument().world,
+      materials: createEmptySceneDocument().materials,
+      textures: {},
+      assets: {},
+      brushes: {
+        "brush-room-shell": {
+          id: "brush-room-shell",
+          kind: "box",
+          center: {
+            x: 0,
+            y: 1,
+            z: 0
+          },
+          size: {
+            x: 4,
+            y: 2,
+            z: 6
+          },
+          faces: {
+            posX: { materialId: null, uv: createBoxBrush().faces.posX.uv },
+            negX: { materialId: null, uv: createBoxBrush().faces.negX.uv },
+            posY: { materialId: null, uv: createBoxBrush().faces.posY.uv },
+            negY: { materialId: null, uv: createBoxBrush().faces.negY.uv },
+            posZ: { materialId: null, uv: createBoxBrush().faces.posZ.uv },
+            negZ: { materialId: null, uv: createBoxBrush().faces.negZ.uv }
+          }
+        }
+      },
+      modelInstances: {},
+      entities: {
+        "entity-player-start-main": {
+          id: "entity-player-start-main",
+          kind: "playerStart",
+          position: {
+            x: 2,
+            y: 0,
+            z: -2
+          },
+          yawDegrees: 45
+        }
+      },
+      interactionLinks: {}
+    });
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.brushes["brush-room-shell"].name).toBeUndefined();
+    expect(migratedDocument.entities["entity-player-start-main"]).toMatchObject({
+      kind: "playerStart",
+      yawDegrees: 45
+    });
   });
 
   it("rejects unsupported versions", () => {
@@ -211,7 +267,7 @@ describe("scene document JSON", () => {
     expect(() =>
       parseSceneDocumentJson(
         JSON.stringify({
-          version: 4,
+          version: SCENE_DOCUMENT_VERSION,
           name: "Duplicate Id Scene",
           world: createEmptySceneDocument().world,
           materials: createEmptySceneDocument().materials,
