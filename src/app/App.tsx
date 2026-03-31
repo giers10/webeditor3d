@@ -1898,14 +1898,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
           <Panel title="Inspector">
             <div className="stat-card">
               <div className="label">Selection</div>
-              <div className="value">{describeSelection(editorState.selection, brushList, playerStartList)}</div>
+              <div className="value">{describeSelection(editorState.selection, brushList, editorState.document.entities)}</div>
             </div>
 
-            {selectedPlayerStart !== null ? (
+            {selectedEntity !== null ? (
               <>
                 <div className="stat-card">
                   <div className="label">Entity Kind</div>
-                  <div className="value">Player Start</div>
+                  <div className="value">{getEntityKindLabel(selectedEntity.kind)}</div>
                 </div>
 
                 <div className="form-section">
@@ -1914,51 +1914,306 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     <label className="form-field">
                       <span className="label">X</span>
                       <input
-                        data-testid="player-start-position-x"
+                        data-testid={selectedEntity.kind === "playerStart" ? "player-start-position-x" : `${selectedEntity.kind}-position-x`}
                         className="text-input"
                         type="number"
                         step={DEFAULT_GRID_SIZE}
-                        value={playerStartPositionDraft.x}
+                        value={entityPositionDraft.x}
                         onChange={(event) => {
                           const nextValue = event.currentTarget.value;
-                          setPlayerStartPositionDraft((draft) => ({ ...draft, x: nextValue }));
+                          setEntityPositionDraft((draft) => ({ ...draft, x: nextValue }));
                         }}
-                        onBlur={applyPlayerStartChange}
-                        onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPlayerStartChange)}
-                        onKeyUp={(event) => handleNumberInputKeyUp(event, applyPlayerStartChange)}
-                        onPointerUp={(event) => handleNumberInputPointerUp(event, applyPlayerStartChange)}
+                        onBlur={() => {
+                          switch (selectedEntity.kind) {
+                            case "playerStart":
+                              applyPlayerStartChange();
+                              break;
+                            case "soundEmitter":
+                              applySoundEmitterChange();
+                              break;
+                            case "triggerVolume":
+                              applyTriggerVolumeChange();
+                              break;
+                            case "teleportTarget":
+                              applyTeleportTargetChange();
+                              break;
+                            case "interactable":
+                              applyInteractableChange();
+                              break;
+                          }
+                        }}
+                        onKeyDown={(event) =>
+                          handleDraftVectorKeyDown(event, () => {
+                            switch (selectedEntity.kind) {
+                              case "playerStart":
+                                applyPlayerStartChange();
+                                break;
+                              case "soundEmitter":
+                                applySoundEmitterChange();
+                                break;
+                              case "triggerVolume":
+                                applyTriggerVolumeChange();
+                                break;
+                              case "teleportTarget":
+                                applyTeleportTargetChange();
+                                break;
+                              case "interactable":
+                                applyInteractableChange();
+                                break;
+                            }
+                          })
+                        }
+                        onKeyUp={(event) =>
+                          handleNumberInputKeyUp(event, () => {
+                            switch (selectedEntity.kind) {
+                              case "playerStart":
+                                applyPlayerStartChange();
+                                break;
+                              case "soundEmitter":
+                                applySoundEmitterChange();
+                                break;
+                              case "triggerVolume":
+                                applyTriggerVolumeChange();
+                                break;
+                              case "teleportTarget":
+                                applyTeleportTargetChange();
+                                break;
+                              case "interactable":
+                                applyInteractableChange();
+                                break;
+                            }
+                          })
+                        }
+                        onPointerUp={(event) =>
+                          handleNumberInputPointerUp(event, () => {
+                            switch (selectedEntity.kind) {
+                              case "playerStart":
+                                applyPlayerStartChange();
+                                break;
+                              case "soundEmitter":
+                                applySoundEmitterChange();
+                                break;
+                              case "triggerVolume":
+                                applyTriggerVolumeChange();
+                                break;
+                              case "teleportTarget":
+                                applyTeleportTargetChange();
+                                break;
+                              case "interactable":
+                                applyInteractableChange();
+                                break;
+                            }
+                          })
+                        }
                       />
                     </label>
                     <label className="form-field">
                       <span className="label">Y</span>
                       <input
-                        data-testid="player-start-position-y"
+                        data-testid={selectedEntity.kind === "playerStart" ? "player-start-position-y" : `${selectedEntity.kind}-position-y`}
                         className="text-input"
                         type="number"
                         step={DEFAULT_GRID_SIZE}
-                        value={playerStartPositionDraft.y}
+                        value={entityPositionDraft.y}
                         onChange={(event) => {
                           const nextValue = event.currentTarget.value;
-                          setPlayerStartPositionDraft((draft) => ({ ...draft, y: nextValue }));
+                          setEntityPositionDraft((draft) => ({ ...draft, y: nextValue }));
                         }}
-                        onBlur={applyPlayerStartChange}
-                        onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPlayerStartChange)}
-                        onKeyUp={(event) => handleNumberInputKeyUp(event, applyPlayerStartChange)}
-                        onPointerUp={(event) => handleNumberInputPointerUp(event, applyPlayerStartChange)}
+                        onBlur={() => {
+                          switch (selectedEntity.kind) {
+                            case "playerStart":
+                              applyPlayerStartChange();
+                              break;
+                            case "soundEmitter":
+                              applySoundEmitterChange();
+                              break;
+                            case "triggerVolume":
+                              applyTriggerVolumeChange();
+                              break;
+                            case "teleportTarget":
+                              applyTeleportTargetChange();
+                              break;
+                            case "interactable":
+                              applyInteractableChange();
+                              break;
+                          }
+                        }}
+                        onKeyDown={(event) =>
+                          handleDraftVectorKeyDown(event, () => {
+                            switch (selectedEntity.kind) {
+                              case "playerStart":
+                                applyPlayerStartChange();
+                                break;
+                              case "soundEmitter":
+                                applySoundEmitterChange();
+                                break;
+                              case "triggerVolume":
+                                applyTriggerVolumeChange();
+                                break;
+                              case "teleportTarget":
+                                applyTeleportTargetChange();
+                                break;
+                              case "interactable":
+                                applyInteractableChange();
+                                break;
+                            }
+                          })
+                        }
+                        onKeyUp={(event) =>
+                          handleNumberInputKeyUp(event, () => {
+                            switch (selectedEntity.kind) {
+                              case "playerStart":
+                                applyPlayerStartChange();
+                                break;
+                              case "soundEmitter":
+                                applySoundEmitterChange();
+                                break;
+                              case "triggerVolume":
+                                applyTriggerVolumeChange();
+                                break;
+                              case "teleportTarget":
+                                applyTeleportTargetChange();
+                                break;
+                              case "interactable":
+                                applyInteractableChange();
+                                break;
+                            }
+                          })
+                        }
+                        onPointerUp={(event) =>
+                          handleNumberInputPointerUp(event, () => {
+                            switch (selectedEntity.kind) {
+                              case "playerStart":
+                                applyPlayerStartChange();
+                                break;
+                              case "soundEmitter":
+                                applySoundEmitterChange();
+                                break;
+                              case "triggerVolume":
+                                applyTriggerVolumeChange();
+                                break;
+                              case "teleportTarget":
+                                applyTeleportTargetChange();
+                                break;
+                              case "interactable":
+                                applyInteractableChange();
+                                break;
+                            }
+                          })
+                        }
                       />
                     </label>
                     <label className="form-field">
                       <span className="label">Z</span>
                       <input
-                        data-testid="player-start-position-z"
+                        data-testid={selectedEntity.kind === "playerStart" ? "player-start-position-z" : `${selectedEntity.kind}-position-z`}
                         className="text-input"
                         type="number"
                         step={DEFAULT_GRID_SIZE}
-                        value={playerStartPositionDraft.z}
+                        value={entityPositionDraft.z}
                         onChange={(event) => {
                           const nextValue = event.currentTarget.value;
-                          setPlayerStartPositionDraft((draft) => ({ ...draft, z: nextValue }));
+                          setEntityPositionDraft((draft) => ({ ...draft, z: nextValue }));
                         }}
+                        onBlur={() => {
+                          switch (selectedEntity.kind) {
+                            case "playerStart":
+                              applyPlayerStartChange();
+                              break;
+                            case "soundEmitter":
+                              applySoundEmitterChange();
+                              break;
+                            case "triggerVolume":
+                              applyTriggerVolumeChange();
+                              break;
+                            case "teleportTarget":
+                              applyTeleportTargetChange();
+                              break;
+                            case "interactable":
+                              applyInteractableChange();
+                              break;
+                          }
+                        }}
+                        onKeyDown={(event) =>
+                          handleDraftVectorKeyDown(event, () => {
+                            switch (selectedEntity.kind) {
+                              case "playerStart":
+                                applyPlayerStartChange();
+                                break;
+                              case "soundEmitter":
+                                applySoundEmitterChange();
+                                break;
+                              case "triggerVolume":
+                                applyTriggerVolumeChange();
+                                break;
+                              case "teleportTarget":
+                                applyTeleportTargetChange();
+                                break;
+                              case "interactable":
+                                applyInteractableChange();
+                                break;
+                            }
+                          })
+                        }
+                        onKeyUp={(event) =>
+                          handleNumberInputKeyUp(event, () => {
+                            switch (selectedEntity.kind) {
+                              case "playerStart":
+                                applyPlayerStartChange();
+                                break;
+                              case "soundEmitter":
+                                applySoundEmitterChange();
+                                break;
+                              case "triggerVolume":
+                                applyTriggerVolumeChange();
+                                break;
+                              case "teleportTarget":
+                                applyTeleportTargetChange();
+                                break;
+                              case "interactable":
+                                applyInteractableChange();
+                                break;
+                            }
+                          })
+                        }
+                        onPointerUp={(event) =>
+                          handleNumberInputPointerUp(event, () => {
+                            switch (selectedEntity.kind) {
+                              case "playerStart":
+                                applyPlayerStartChange();
+                                break;
+                              case "soundEmitter":
+                                applySoundEmitterChange();
+                                break;
+                              case "triggerVolume":
+                                applyTriggerVolumeChange();
+                                break;
+                              case "teleportTarget":
+                                applyTeleportTargetChange();
+                                break;
+                              case "interactable":
+                                applyInteractableChange();
+                                break;
+                            }
+                          })
+                        }
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                {selectedPlayerStart !== null ? (
+                  <div className="form-section">
+                    <div className="label">Yaw</div>
+                    <label className="form-field">
+                      <span className="label">Degrees</span>
+                      <input
+                        data-testid="player-start-yaw"
+                        className="text-input"
+                        type="number"
+                        step="1"
+                        value={playerStartYawDraft}
+                        onChange={(event) => setPlayerStartYawDraft(event.currentTarget.value)}
                         onBlur={applyPlayerStartChange}
                         onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPlayerStartChange)}
                         onKeyUp={(event) => handleNumberInputKeyUp(event, applyPlayerStartChange)}
@@ -1966,29 +2221,258 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       />
                     </label>
                   </div>
-                </div>
+                ) : null}
 
-                <div className="form-section">
-                  <div className="label">Yaw</div>
-                  <label className="form-field">
-                    <span className="label">Degrees</span>
-                    <input
-                      data-testid="player-start-yaw"
-                      className="text-input"
-                      type="number"
-                      step="1"
-                      value={playerStartYawDraft}
-                      onChange={(event) => setPlayerStartYawDraft(event.currentTarget.value)}
-                      onBlur={applyPlayerStartChange}
-                      onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPlayerStartChange)}
-                      onKeyUp={(event) => handleNumberInputKeyUp(event, applyPlayerStartChange)}
-                      onPointerUp={(event) => handleNumberInputPointerUp(event, applyPlayerStartChange)}
-                    />
-                  </label>
-                </div>
+                {selectedSoundEmitter !== null ? (
+                  <>
+                    <div className="form-section">
+                      <div className="label">Audio Shape</div>
+                      <div className="vector-inputs vector-inputs--two">
+                        <label className="form-field">
+                          <span className="label">Radius</span>
+                          <input
+                            data-testid="sound-emitter-radius"
+                            className="text-input"
+                            type="number"
+                            min="0.1"
+                            step="0.1"
+                            value={soundEmitterRadiusDraft}
+                            onChange={(event) => setSoundEmitterRadiusDraft(event.currentTarget.value)}
+                            onBlur={applySoundEmitterChange}
+                            onKeyDown={(event) => handleDraftVectorKeyDown(event, applySoundEmitterChange)}
+                            onKeyUp={(event) => handleNumberInputKeyUp(event, applySoundEmitterChange)}
+                            onPointerUp={(event) => handleNumberInputPointerUp(event, applySoundEmitterChange)}
+                          />
+                        </label>
+                        <label className="form-field">
+                          <span className="label">Gain</span>
+                          <input
+                            data-testid="sound-emitter-gain"
+                            className="text-input"
+                            type="number"
+                            min="0"
+                            step="0.1"
+                            value={soundEmitterGainDraft}
+                            onChange={(event) => setSoundEmitterGainDraft(event.currentTarget.value)}
+                            onBlur={applySoundEmitterChange}
+                            onKeyDown={(event) => handleDraftVectorKeyDown(event, applySoundEmitterChange)}
+                            onKeyUp={(event) => handleNumberInputKeyUp(event, applySoundEmitterChange)}
+                            onPointerUp={(event) => handleNumberInputPointerUp(event, applySoundEmitterChange)}
+                          />
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="form-section">
+                      <div className="label">Playback</div>
+                      <div className="vector-inputs vector-inputs--two">
+                        <label className="form-field">
+                          <span className="label">Autoplay</span>
+                          <input
+                            data-testid="sound-emitter-autoplay"
+                            type="checkbox"
+                            checked={soundEmitterAutoplayDraft}
+                            onChange={(event) => {
+                              setSoundEmitterAutoplayDraft(event.currentTarget.checked);
+                              scheduleDraftCommit(applySoundEmitterChange);
+                            }}
+                          />
+                        </label>
+                        <label className="form-field">
+                          <span className="label">Loop</span>
+                          <input
+                            data-testid="sound-emitter-loop"
+                            type="checkbox"
+                            checked={soundEmitterLoopDraft}
+                            onChange={(event) => {
+                              setSoundEmitterLoopDraft(event.currentTarget.checked);
+                              scheduleDraftCommit(applySoundEmitterChange);
+                            }}
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  </>
+                ) : null}
+
+                {selectedTriggerVolume !== null ? (
+                  <>
+                    <div className="form-section">
+                      <div className="label">Size</div>
+                      <div className="vector-inputs">
+                        <label className="form-field">
+                          <span className="label">X</span>
+                          <input
+                            data-testid="trigger-volume-size-x"
+                            className="text-input"
+                            type="number"
+                            min={DEFAULT_GRID_SIZE}
+                            step={DEFAULT_GRID_SIZE}
+                            value={triggerVolumeSizeDraft.x}
+                            onChange={(event) => {
+                              const nextValue = event.currentTarget.value;
+                              setTriggerVolumeSizeDraft((draft) => ({ ...draft, x: nextValue }));
+                            }}
+                            onBlur={applyTriggerVolumeChange}
+                            onKeyDown={(event) => handleDraftVectorKeyDown(event, applyTriggerVolumeChange)}
+                            onKeyUp={(event) => handleNumberInputKeyUp(event, applyTriggerVolumeChange)}
+                            onPointerUp={(event) => handleNumberInputPointerUp(event, applyTriggerVolumeChange)}
+                          />
+                        </label>
+                        <label className="form-field">
+                          <span className="label">Y</span>
+                          <input
+                            data-testid="trigger-volume-size-y"
+                            className="text-input"
+                            type="number"
+                            min={DEFAULT_GRID_SIZE}
+                            step={DEFAULT_GRID_SIZE}
+                            value={triggerVolumeSizeDraft.y}
+                            onChange={(event) => {
+                              const nextValue = event.currentTarget.value;
+                              setTriggerVolumeSizeDraft((draft) => ({ ...draft, y: nextValue }));
+                            }}
+                            onBlur={applyTriggerVolumeChange}
+                            onKeyDown={(event) => handleDraftVectorKeyDown(event, applyTriggerVolumeChange)}
+                            onKeyUp={(event) => handleNumberInputKeyUp(event, applyTriggerVolumeChange)}
+                            onPointerUp={(event) => handleNumberInputPointerUp(event, applyTriggerVolumeChange)}
+                          />
+                        </label>
+                        <label className="form-field">
+                          <span className="label">Z</span>
+                          <input
+                            data-testid="trigger-volume-size-z"
+                            className="text-input"
+                            type="number"
+                            min={DEFAULT_GRID_SIZE}
+                            step={DEFAULT_GRID_SIZE}
+                            value={triggerVolumeSizeDraft.z}
+                            onChange={(event) => {
+                              const nextValue = event.currentTarget.value;
+                              setTriggerVolumeSizeDraft((draft) => ({ ...draft, z: nextValue }));
+                            }}
+                            onBlur={applyTriggerVolumeChange}
+                            onKeyDown={(event) => handleDraftVectorKeyDown(event, applyTriggerVolumeChange)}
+                            onKeyUp={(event) => handleNumberInputKeyUp(event, applyTriggerVolumeChange)}
+                            onPointerUp={(event) => handleNumberInputPointerUp(event, applyTriggerVolumeChange)}
+                          />
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="form-section">
+                      <div className="label">Trigger Sources</div>
+                      <div className="vector-inputs vector-inputs--two">
+                        <label className="form-field">
+                          <span className="label">On Enter</span>
+                          <input
+                            data-testid="trigger-volume-enter"
+                            type="checkbox"
+                            checked={triggerOnEnterDraft}
+                            onChange={(event) => {
+                              setTriggerOnEnterDraft(event.currentTarget.checked);
+                              scheduleDraftCommit(applyTriggerVolumeChange);
+                            }}
+                          />
+                        </label>
+                        <label className="form-field">
+                          <span className="label">On Exit</span>
+                          <input
+                            data-testid="trigger-volume-exit"
+                            type="checkbox"
+                            checked={triggerOnExitDraft}
+                            onChange={(event) => {
+                              setTriggerOnExitDraft(event.currentTarget.checked);
+                              scheduleDraftCommit(applyTriggerVolumeChange);
+                            }}
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  </>
+                ) : null}
+
+                {selectedTeleportTarget !== null ? (
+                  <div className="form-section">
+                    <div className="label">Yaw</div>
+                    <label className="form-field">
+                      <span className="label">Degrees</span>
+                      <input
+                        data-testid="teleport-target-yaw"
+                        className="text-input"
+                        type="number"
+                        step="1"
+                        value={teleportTargetYawDraft}
+                        onChange={(event) => setTeleportTargetYawDraft(event.currentTarget.value)}
+                        onBlur={applyTeleportTargetChange}
+                        onKeyDown={(event) => handleDraftVectorKeyDown(event, applyTeleportTargetChange)}
+                        onKeyUp={(event) => handleNumberInputKeyUp(event, applyTeleportTargetChange)}
+                        onPointerUp={(event) => handleNumberInputPointerUp(event, applyTeleportTargetChange)}
+                      />
+                    </label>
+                  </div>
+                ) : null}
+
+                {selectedInteractable !== null ? (
+                  <>
+                    <div className="form-section">
+                      <div className="label">Interaction</div>
+                      <div className="vector-inputs vector-inputs--two">
+                        <label className="form-field">
+                          <span className="label">Radius</span>
+                          <input
+                            data-testid="interactable-radius"
+                            className="text-input"
+                            type="number"
+                            min="0.1"
+                            step="0.1"
+                            value={interactableRadiusDraft}
+                            onChange={(event) => setInteractableRadiusDraft(event.currentTarget.value)}
+                            onBlur={applyInteractableChange}
+                            onKeyDown={(event) => handleDraftVectorKeyDown(event, applyInteractableChange)}
+                            onKeyUp={(event) => handleNumberInputKeyUp(event, applyInteractableChange)}
+                            onPointerUp={(event) => handleNumberInputPointerUp(event, applyInteractableChange)}
+                          />
+                        </label>
+                        <label className="form-field">
+                          <span className="label">Enabled</span>
+                          <input
+                            data-testid="interactable-enabled"
+                            type="checkbox"
+                            checked={interactableEnabledDraft}
+                            onChange={(event) => {
+                              setInteractableEnabledDraft(event.currentTarget.checked);
+                              scheduleDraftCommit(applyInteractableChange);
+                            }}
+                          />
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="form-section">
+                      <div className="label">Prompt</div>
+                      <label className="form-field">
+                        <span className="label">Text</span>
+                        <input
+                          data-testid="interactable-prompt"
+                          className="text-input"
+                          type="text"
+                          value={interactablePromptDraft}
+                          onChange={(event) => setInteractablePromptDraft(event.currentTarget.value)}
+                          onBlur={applyInteractableChange}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter") {
+                              applyInteractableChange();
+                            }
+                          }}
+                        />
+                      </label>
+                    </div>
+                  </>
+                ) : null}
               </>
             ) : selectedBrush === null ? (
-              <div className="outliner-empty">Select a brush or Player Start to edit authored properties.</div>
+              <div className="outliner-empty">Select a brush or entity to edit authored properties.</div>
             ) : (
               <>
                 <div className="stat-card">
