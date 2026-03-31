@@ -28,3 +28,4 @@ tmp*
 .last-run.json
 playwright-report
 test-results
+.DS_Store
