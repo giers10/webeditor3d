@@ -1814,7 +1814,30 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
-  const applyWorldBackgroundMode = (mode: WorldBackgroundMode) => {
+  const applyWorldBackgroundMode = (mode: WorldBackgroundMode, imageAssetId?: string) => {
+    if (mode === "image") {
+      const nextImageAssetId =
+        imageAssetId ??
+        (editorState.document.world.background.mode === "image"
+          ? editorState.document.world.background.assetId
+          : imageAssetList[0]?.id);
+
+      if (nextImageAssetId === undefined) {
+        setStatusMessage("Import an image asset before using an image background.");
+        return;
+      }
+
+      applyWorldSettings(
+        {
+          ...editorState.document.world,
+          background: changeWorldBackgroundMode(editorState.document.world.background, "image", nextImageAssetId)
+        },
+        "Set world background image",
+        `World background set to ${editorState.document.assets[nextImageAssetId]?.sourceName ?? nextImageAssetId}.`
+      );
+      return;
+    }
+
     applyWorldSettings(
       {
         ...editorState.document.world,
