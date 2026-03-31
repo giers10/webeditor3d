@@ -28,6 +28,7 @@ function createRuntimeSceneFixture(): RuntimeSceneDefinition {
     brushes: [],
     colliders: [],
     sceneBounds: null,
+    modelInstances: [],
     entities: {
       playerStarts: [],
       soundEmitters: [],
