@@ -14,7 +14,18 @@ export interface ToggleVisibilityAction {
   visible?: boolean;
 }
 
-export type InteractionAction = TeleportPlayerAction | ToggleVisibilityAction;
+export interface PlayAnimationAction {
+  type: "playAnimation";
+  targetModelInstanceId: string;
+  clipName: string;
+}
+
+export interface StopAnimationAction {
+  type: "stopAnimation";
+  targetModelInstanceId: string;
+}
+
+export type InteractionAction = TeleportPlayerAction | ToggleVisibilityAction | PlayAnimationAction | StopAnimationAction;
 
 export interface InteractionLink {
   id: string;
