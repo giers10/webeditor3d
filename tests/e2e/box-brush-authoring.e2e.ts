@@ -23,11 +23,19 @@ test("user can create a box brush and keep it through a draft reload", async ({ 
   await page.getByTestId("create-box-brush").click();
   await expect(page.getByRole("button", { name: /Box Brush 1/ })).toBeVisible();
   await expect(page.getByText("1 brush selected (Box Brush 1)")).toBeVisible();
+  await page.getByTestId("brush-center-y").fill("2");
+  await page.getByTestId("apply-brush-position").click();
+  await page.getByTestId("brush-size-z").fill("4");
+  await page.getByTestId("apply-brush-size").click();
+  await expect(page.getByRole("button", { name: /center 0, 2, 0/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /size 2, 2, 4/ })).toBeVisible();
 
   await page.getByRole("button", { name: "Save Draft" }).click();
   await page.reload();
 
   await expect(page.getByRole("button", { name: /Box Brush 1/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /center 0, 2, 0/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /size 2, 2, 4/ })).toBeVisible();
   await expect(page.getByText("1 box brushes loaded. Click a brush in the viewport or outliner to select it.")).toBeVisible();
 
   expect(pageErrors).toEqual([]);
