@@ -186,6 +186,10 @@ function readYawDegreesDraft(source: string): number {
   return normalizeYawDegrees(yawDegrees);
 }
 
+function readInteractablePromptDraft(source: string): string {
+  return normalizeInteractablePrompt(source);
+}
+
 function readNonNegativeNumberDraft(source: string, label: string): number {
   const value = Number(source);
 
@@ -214,10 +218,6 @@ function areFaceUvStatesEqual(left: FaceUvState, right: FaceUvState): boolean {
   );
 }
 
-function arePlayerStartsEqual(left: PlayerStartEntity, rightPosition: Vec3, rightYawDegrees: number): boolean {
-  return areVec3Equal(left.position, rightPosition) && left.yawDegrees === normalizeYawDegrees(rightYawDegrees);
-}
-
 function getSelectedBoxBrush(selection: EditorSelection, brushes: BoxBrush[]): BoxBrush | null {
   const selectedBrushId = getSingleSelectedBrushId(selection);
 
@@ -228,14 +228,14 @@ function getSelectedBoxBrush(selection: EditorSelection, brushes: BoxBrush[]): B
   return brushes.find((brush) => brush.id === selectedBrushId) ?? null;
 }
 
-function getSelectedPlayerStart(selection: EditorSelection, playerStarts: PlayerStartEntity[]): PlayerStartEntity | null {
+function getSelectedEntity(selection: EditorSelection, entities: EntityInstance[]): EntityInstance | null {
   const selectedEntityId = getSingleSelectedEntityId(selection);
 
   if (selectedEntityId === null) {
     return null;
   }
 
-  return playerStarts.find((entity) => entity.id === selectedEntityId) ?? null;
+  return entities.find((entity) => entity.id === selectedEntityId) ?? null;
 }
 
 function getBrushLabel(brush: BoxBrush, index: number): string {
@@ -245,15 +245,6 @@ function getBrushLabel(brush: BoxBrush, index: number): string {
 function getBrushLabelById(brushId: string, brushes: BoxBrush[]): string {
   const brushIndex = brushes.findIndex((brush) => brush.id === brushId);
   return brushIndex === -1 ? "Box Brush" : getBrushLabel(brushes[brushIndex], brushIndex);
-}
-
-function getPlayerStartLabel(index: number): string {
-  return index === 0 ? "Player Start" : `Player Start ${index + 1}`;
-}
-
-function getPlayerStartLabelById(entityId: string, playerStarts: PlayerStartEntity[]): string {
-  const playerStartIndex = playerStarts.findIndex((playerStart) => playerStart.id === entityId);
-  return playerStartIndex === -1 ? "Player Start" : getPlayerStartLabel(playerStartIndex);
 }
 
 function getSelectedBrushLabel(selection: EditorSelection, brushes: BoxBrush[]): string {
@@ -266,7 +257,7 @@ function getSelectedBrushLabel(selection: EditorSelection, brushes: BoxBrush[]):
   return getBrushLabelById(selectedBrushId, brushes);
 }
 
-function describeSelection(selection: EditorSelection, brushes: BoxBrush[], playerStarts: PlayerStartEntity[]): string {
+function describeSelection(selection: EditorSelection, brushes: BoxBrush[], entities: Record<string, EntityInstance>): string {
   switch (selection.kind) {
     case "none":
       return "No authored selection";
@@ -275,7 +266,7 @@ function describeSelection(selection: EditorSelection, brushes: BoxBrush[], play
     case "brushFace":
       return `1 face selected (${FACE_LABELS[selection.faceId]} on ${getBrushLabelById(selection.brushId, brushes)})`;
     case "entities":
-      return `${selection.ids.length} entity selected (${getPlayerStartLabelById(selection.ids[0], playerStarts)})`;
+      return `${selection.ids.length} entity selected (${getEntityDisplayLabelById(selection.ids[0], entities)})`;
     case "modelInstances":
       return `${selection.ids.length} model instances selected`;
     default:
