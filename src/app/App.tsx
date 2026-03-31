@@ -1288,6 +1288,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
             sceneDocument={editorState.document}
             selection={editorState.selection}
             toolMode={editorState.toolMode}
+            focusRequestId={focusRequest.id}
+            focusSelection={focusRequest.selection}
             onSelectionChange={(selection) => applySelection(selection, "viewport")}
             onCreateBoxBrush={handleCreateBoxBrush}
           />
