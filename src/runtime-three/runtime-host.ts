@@ -441,6 +441,12 @@ export class RuntimeHost {
   }
 
   private clearModelInstances() {
+    for (const mixer of this.animationMixers.values()) {
+      mixer.stopAllAction();
+    }
+    this.animationMixers.clear();
+    this.instanceAnimationClips.clear();
+
     for (const renderGroup of this.modelRenderObjects.values()) {
       this.modelGroup.remove(renderGroup);
       disposeModelInstance(renderGroup);
