@@ -527,6 +527,10 @@ button:disabled {
     grid-template-columns: 1fr;
   }
 
+  .face-grid {
+    grid-template-columns: 1fr;
+  }
+
   .status-bar {
     flex-direction: column;
     align-items: flex-start;
