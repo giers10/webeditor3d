@@ -203,6 +203,45 @@ describe("scene document JSON", () => {
     expect(roundTripDocument.modelInstances).toEqual({});
   });
 
+  it("round-trips canonical interaction links", () => {
+    const triggerVolume = createTriggerVolumeEntity({
+      id: "entity-trigger-main"
+    });
+    const teleportTarget = createTeleportTargetEntity({
+      id: "entity-teleport-main"
+    });
+    const brush = createBoxBrush({
+      id: "brush-door"
+    });
+    const document = {
+      ...createEmptySceneDocument({ name: "Interaction Scene" }),
+      brushes: {
+        [brush.id]: brush
+      },
+      entities: {
+        [triggerVolume.id]: triggerVolume,
+        [teleportTarget.id]: teleportTarget
+      },
+      interactionLinks: {
+        "link-teleport": createTeleportPlayerInteractionLink({
+          id: "link-teleport",
+          sourceEntityId: triggerVolume.id,
+          trigger: "enter",
+          targetEntityId: teleportTarget.id
+        }),
+        "link-hide-door": createToggleVisibilityInteractionLink({
+          id: "link-hide-door",
+          sourceEntityId: triggerVolume.id,
+          trigger: "exit",
+          targetBrushId: brush.id,
+          visible: false
+        })
+      }
+    };
+
+    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(document);
+  });
+
   it("migrates the foundation schema to the current schema version", () => {
     const migratedDocument = migrateSceneDocument({
       version: 1,
@@ -401,6 +440,44 @@ describe("scene document JSON", () => {
     expect(migratedDocument.entities["entity-player-start-main"]).toMatchObject({
       kind: "playerStart",
       yawDegrees: 90
+    });
+  });
+
+  it("migrates slice 2.1 documents to the interaction-link schema with empty interaction links", () => {
+    const migratedDocument = migrateSceneDocument({
+      version: ENTITY_SYSTEM_FOUNDATION_SCENE_DOCUMENT_VERSION,
+      name: "Entity Foundation Scene",
+      world: createEmptySceneDocument().world,
+      materials: createEmptySceneDocument().materials,
+      textures: {},
+      assets: {},
+      brushes: {},
+      modelInstances: {},
+      entities: {
+        "entity-trigger-main": {
+          id: "entity-trigger-main",
+          kind: "triggerVolume",
+          position: {
+            x: 0,
+            y: 0,
+            z: 0
+          },
+          size: {
+            x: 2,
+            y: 2,
+            z: 2
+          },
+          triggerOnEnter: true,
+          triggerOnExit: false
+        }
+      },
+      interactionLinks: {}
+    });
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.interactionLinks).toEqual({});
+    expect(migratedDocument.entities["entity-trigger-main"]).toMatchObject({
+      kind: "triggerVolume"
     });
   });
 
