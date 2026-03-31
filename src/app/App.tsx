@@ -744,6 +744,114 @@ export function App({ store, initialStatusMessage }: AppProps) {
   }, [editorState.document.world.sunLight.direction]);
 
   useEffect(() => {
+    loadedModelAssetsRef.current = loadedModelAssets;
+  }, [loadedModelAssets]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void (async () => {
+      const access = await getBrowserProjectAssetStorageAccess();
+
+      if (cancelled) {
+        return;
+      }
+
+      setProjectAssetStorage(access.storage);
+      setAssetStatusMessage(access.diagnostic);
+      setProjectAssetStorageReady(true);
+    })().catch((error) => {
+      if (cancelled) {
+        return;
+      }
+
+      setProjectAssetStorage(null);
+      setProjectAssetStorageReady(true);
+      setAssetStatusMessage(getErrorMessage(error));
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!projectAssetStorageReady) {
+      return;
+    }
+
+    let cancelled = false;
+    const previousLoadedAssets = loadedModelAssetsRef.current;
+    const currentAssets = editorState.document.assets;
+    const previousLoadedAssetIds = new Set(Object.keys(previousLoadedAssets));
+    const nextLoadedAssets: Record<string, LoadedModelAsset> = {};
+
+    const syncModelAssets = async () => {
+      if (projectAssetStorage === null) {
+        for (const loadedAsset of Object.values(previousLoadedAssets)) {
+          disposeModelTemplate(loadedAsset.template);
+        }
+
+        if (!cancelled) {
+          setLoadedModelAssets({});
+        }
+
+        return;
+      }
+
+      for (const asset of Object.values(currentAssets)) {
+        if (!isModelAsset(asset)) {
+          continue;
+        }
+
+        previousLoadedAssetIds.delete(asset.id);
+
+        const cachedLoadedAsset = previousLoadedAssets[asset.id];
+
+        if (cachedLoadedAsset !== undefined && cachedLoadedAsset.storageKey === asset.storageKey) {
+          nextLoadedAssets[asset.id] = cachedLoadedAsset;
+          continue;
+        }
+
+        try {
+          nextLoadedAssets[asset.id] = await loadModelAssetFromStorage(projectAssetStorage, asset);
+        } catch (error) {
+          if (!cancelled) {
+            setAssetStatusMessage(`Model asset ${asset.sourceName} could not be restored: ${getErrorMessage(error)}`);
+          }
+        }
+      }
+
+      if (cancelled) {
+        for (const loadedAsset of Object.values(nextLoadedAssets)) {
+          if (previousLoadedAssets[loadedAsset.asset.id] !== loadedAsset) {
+            disposeModelTemplate(loadedAsset.template);
+          }
+        }
+
+        return;
+      }
+
+      for (const assetId of previousLoadedAssetIds) {
+        const removedAsset = previousLoadedAssets[assetId];
+
+        if (removedAsset !== undefined) {
+          disposeModelTemplate(removedAsset.template);
+        }
+      }
+
+      loadedModelAssetsRef.current = nextLoadedAssets;
+      setLoadedModelAssets(nextLoadedAssets);
+    };
+
+    void syncModelAssets();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [editorState.document.assets, projectAssetStorage, projectAssetStorageReady]);
+
+  useEffect(() => {
     if (editorState.toolMode === "play") {
       return;
     }
