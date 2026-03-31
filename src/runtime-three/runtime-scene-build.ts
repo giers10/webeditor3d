@@ -1,4 +1,5 @@
 import type { Vec3 } from "../core/vector";
+import { getModelInstances } from "../assets/model-instances";
 import type { BoxBrush, BoxFaceId, FaceUvState } from "../document/brushes";
 import type { SceneDocument, WorldSettings } from "../document/scene-document";
 import { cloneWorldSettings } from "../document/world-settings";
@@ -76,6 +77,15 @@ export interface RuntimeInteractable {
   enabled: boolean;
 }
 
+export interface RuntimeModelInstance {
+  instanceId: string;
+  assetId: string;
+  name?: string;
+  position: Vec3;
+  rotationDegrees: Vec3;
+  scale: Vec3;
+}
+
 export interface RuntimeEntityCollection {
   playerStarts: RuntimePlayerStart[];
   soundEmitters: RuntimeSoundEmitter[];
@@ -96,6 +106,7 @@ export interface RuntimeSceneDefinition {
   brushes: RuntimeBoxBrushInstance[];
   colliders: RuntimeBoxCollider[];
   sceneBounds: RuntimeSceneBounds | null;
+  modelInstances: RuntimeModelInstance[];
   entities: RuntimeEntityCollection;
   interactionLinks: InteractionLink[];
   playerStart: RuntimePlayerStart | null;
@@ -177,6 +188,17 @@ function buildRuntimeCollider(brush: BoxBrush): RuntimeBoxCollider {
     brushId: brush.id,
     min: cloneVec3(bounds.min),
     max: cloneVec3(bounds.max)
+  };
+}
+
+function buildRuntimeModelInstance(modelInstance: SceneDocument["modelInstances"][string]): RuntimeModelInstance {
+  return {
+    instanceId: modelInstance.id,
+    assetId: modelInstance.assetId,
+    name: modelInstance.name,
+    position: cloneVec3(modelInstance.position),
+    rotationDegrees: cloneVec3(modelInstance.rotationDegrees),
+    scale: cloneVec3(modelInstance.scale)
   };
 }
 
@@ -310,6 +332,7 @@ export function buildRuntimeSceneFromDocument(document: SceneDocument, options: 
   const brushes = Object.values(document.brushes).map((brush) => buildRuntimeBrush(brush, document));
   const colliders = Object.values(document.brushes).map((brush) => buildRuntimeCollider(brush));
   const sceneBounds = combineColliderBounds(colliders);
+  const modelInstances = getModelInstances(document.modelInstances).map(buildRuntimeModelInstance);
   const entities = buildRuntimeEntityCollection(document);
   const interactionLinks = getInteractionLinks(document.interactionLinks).map((link) => cloneInteractionLink(link));
   const playerStartEntity = getPrimaryPlayerStartEntity(document.entities);
@@ -327,6 +350,7 @@ export function buildRuntimeSceneFromDocument(document: SceneDocument, options: 
     brushes,
     colliders,
     sceneBounds,
+    modelInstances,
     entities,
     interactionLinks,
     playerStart,

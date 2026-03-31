@@ -2,12 +2,10 @@ import {
   type AudioAssetMetadata,
   type ImageAssetMetadata,
   type ModelAssetMetadata,
-  type ModelAssetRecord,
   type ProjectAssetBoundingBox,
-  type ProjectAssetRecord,
-  type ModelInstance,
-  getProjectAssetKindLabel
+  type ProjectAssetRecord
 } from "../assets/project-assets";
+import type { ModelInstance } from "../assets/model-instances";
 import {
   type InteractableEntity,
   type PlayerStartEntity,
