@@ -14,6 +14,8 @@ interface ViewportCanvasProps {
   sceneDocument: SceneDocument;
   selection: EditorSelection;
   toolMode: ToolMode;
+  focusRequestId: number;
+  focusSelection: EditorSelection;
   onSelectionChange(selection: EditorSelection): void;
   onCreateBoxBrush(center: Vec3): void;
 }
@@ -26,7 +28,16 @@ function formatVec3(vector: Vec3 | null): string {
   return `${vector.x}, ${vector.y}, ${vector.z}`;
 }
 
-export function ViewportCanvas({ world, sceneDocument, selection, toolMode, onSelectionChange, onCreateBoxBrush }: ViewportCanvasProps) {
+export function ViewportCanvas({
+  world,
+  sceneDocument,
+  selection,
+  toolMode,
+  focusRequestId,
+  focusSelection,
+  onSelectionChange,
+  onCreateBoxBrush
+}: ViewportCanvasProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const hostRef = useRef<ViewportHost | null>(null);
   const [viewportMessage, setViewportMessage] = useState<string | null>(null);
@@ -95,6 +106,14 @@ export function ViewportCanvas({ world, sceneDocument, selection, toolMode, onSe
     }
   }, [toolMode]);
 
+  useEffect(() => {
+    if (focusRequestId === 0) {
+      return;
+    }
+
+    hostRef.current?.focusSelection(sceneDocument, focusSelection);
+  }, [focusRequestId, focusSelection, sceneDocument]);
+
   return (
     <div
       ref={containerRef}
@@ -107,7 +126,7 @@ export function ViewportCanvas({ world, sceneDocument, selection, toolMode, onSe
         <div className="viewport-canvas__overlay-text">
           {toolMode === "box-create"
             ? `Click to place a ${DEFAULT_BOX_BRUSH_SIZE.x} x ${DEFAULT_BOX_BRUSH_SIZE.y} x ${DEFAULT_BOX_BRUSH_SIZE.z} box on the ${DEFAULT_GRID_SIZE}m grid.`
-            : "Click a brush, face, or Player Start marker to update the authored selection."}
+            : "Click to select. Middle-drag orbits, Shift + middle-drag pans, wheel zooms, and Numpad Comma frames the selection."}
         </div>
         {toolMode !== "box-create" ? null : (
           <div className="viewport-canvas__overlay-preview" data-testid="viewport-snap-preview">
