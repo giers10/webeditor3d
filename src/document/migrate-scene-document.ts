@@ -394,6 +394,116 @@ function readPlayerStartEntity(value: unknown, label: string): EntityInstance {
   return entity;
 }
 
+function readSoundEmitterEntity(value: unknown, label: string): EntityInstance {
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  const kind = expectLiteralString(value.kind, "soundEmitter", `${label}.kind`);
+  const entity = createSoundEmitterEntity({
+    id: expectString(value.id, `${label}.id`),
+    position: readVec3(value.position, `${label}.position`),
+    radius: expectPositiveFiniteNumber(value.radius, `${label}.radius`),
+    gain: expectNonNegativeFiniteNumber(value.gain, `${label}.gain`),
+    autoplay: expectBoolean(value.autoplay, `${label}.autoplay`),
+    loop: expectBoolean(value.loop, `${label}.loop`)
+  });
+
+  if (entity.kind !== kind) {
+    throw new Error(`${label}.kind must be soundEmitter.`);
+  }
+
+  return entity;
+}
+
+function readTriggerVolumeEntity(value: unknown, label: string): EntityInstance {
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  const kind = expectLiteralString(value.kind, "triggerVolume", `${label}.kind`);
+  const size = readVec3(value.size, `${label}.size`);
+
+  if (size.x <= 0 || size.y <= 0 || size.z <= 0) {
+    throw new Error(`${label}.size values must be positive.`);
+  }
+
+  const entity = createTriggerVolumeEntity({
+    id: expectString(value.id, `${label}.id`),
+    position: readVec3(value.position, `${label}.position`),
+    size,
+    triggerOnEnter: expectBoolean(value.triggerOnEnter, `${label}.triggerOnEnter`),
+    triggerOnExit: expectBoolean(value.triggerOnExit, `${label}.triggerOnExit`)
+  });
+
+  if (entity.kind !== kind) {
+    throw new Error(`${label}.kind must be triggerVolume.`);
+  }
+
+  return entity;
+}
+
+function readTeleportTargetEntity(value: unknown, label: string): EntityInstance {
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  const kind = expectLiteralString(value.kind, "teleportTarget", `${label}.kind`);
+  const entity = createTeleportTargetEntity({
+    id: expectString(value.id, `${label}.id`),
+    position: readVec3(value.position, `${label}.position`),
+    yawDegrees: expectFiniteNumber(value.yawDegrees, `${label}.yawDegrees`)
+  });
+
+  if (entity.kind !== kind) {
+    throw new Error(`${label}.kind must be teleportTarget.`);
+  }
+
+  return entity;
+}
+
+function readInteractableEntity(value: unknown, label: string): EntityInstance {
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  const kind = expectLiteralString(value.kind, "interactable", `${label}.kind`);
+  const entity = createInteractableEntity({
+    id: expectString(value.id, `${label}.id`),
+    position: readVec3(value.position, `${label}.position`),
+    radius: expectPositiveFiniteNumber(value.radius, `${label}.radius`),
+    prompt: expectString(value.prompt, `${label}.prompt`),
+    enabled: expectBoolean(value.enabled, `${label}.enabled`)
+  });
+
+  if (entity.kind !== kind) {
+    throw new Error(`${label}.kind must be interactable.`);
+  }
+
+  return entity;
+}
+
+function readEntityInstance(value: unknown, label: string): EntityInstance {
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  switch (value.kind) {
+    case "playerStart":
+      return readPlayerStartEntity(value, label);
+    case "soundEmitter":
+      return readSoundEmitterEntity(value, label);
+    case "triggerVolume":
+      return readTriggerVolumeEntity(value, label);
+    case "teleportTarget":
+      return readTeleportTargetEntity(value, label);
+    case "interactable":
+      return readInteractableEntity(value, label);
+    default:
+      throw new Error(`${label}.kind must be a supported entity type.`);
+  }
+}
+
 function readEntities(value: unknown): SceneDocument["entities"] {
   if (!isRecord(value)) {
     throw new Error("entities must be a record.");
@@ -406,11 +516,7 @@ function readEntities(value: unknown): SceneDocument["entities"] {
       throw new Error(`entities.${entityId} must be an object.`);
     }
 
-    if (entityValue.kind !== "playerStart") {
-      throw new Error(`entities.${entityId}.kind must be a supported entity type.`);
-    }
-
-    const entity = readPlayerStartEntity(entityValue, `entities.${entityId}`);
+    const entity = readEntityInstance(entityValue, `entities.${entityId}`);
 
     if (entity.id !== entityId) {
       throw new Error(`entities.${entityId}.id must match the registry key.`);
