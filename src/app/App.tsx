@@ -1307,7 +1307,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 <div className="stat-card">
                   <div className="label">Entity Kind</div>
                   <div className="value">Player Start</div>
-                  <div className="material-summary">Used by first-person run mode as the authored spawn transform.</div>
                 </div>
 
                 <div className="form-section">
@@ -1325,6 +1324,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           const nextValue = event.currentTarget.value;
                           setPlayerStartPositionDraft((draft) => ({ ...draft, x: nextValue }));
                         }}
+                        onBlur={applyPlayerStartChange}
                         onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPlayerStartChange)}
                       />
                     </label>
@@ -1340,6 +1340,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           const nextValue = event.currentTarget.value;
                           setPlayerStartPositionDraft((draft) => ({ ...draft, y: nextValue }));
                         }}
+                        onBlur={applyPlayerStartChange}
                         onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPlayerStartChange)}
                       />
                     </label>
@@ -1355,6 +1356,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           const nextValue = event.currentTarget.value;
                           setPlayerStartPositionDraft((draft) => ({ ...draft, z: nextValue }));
                         }}
+                        onBlur={applyPlayerStartChange}
                         onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPlayerStartChange)}
                       />
                     </label>
@@ -1372,19 +1374,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       step="1"
                       value={playerStartYawDraft}
                       onChange={(event) => setPlayerStartYawDraft(event.currentTarget.value)}
+                      onBlur={applyPlayerStartChange}
                       onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPlayerStartChange)}
                     />
                   </label>
-                  <button className="toolbar__button" type="button" data-testid="apply-player-start" onClick={applyPlayerStartChange}>
-                    Apply Player Start Command
-                  </button>
                 </div>
               </>
             ) : selectedBrush === null ? (
-              <ul className="placeholder-list">
-                <li>Select a box brush to edit transforms and choose individual faces.</li>
-                <li>Select Player Start to author the first-person spawn transform.</li>
-              </ul>
+              <div className="outliner-empty">Select a brush or Player Start to edit authored properties.</div>
             ) : (
               <>
                 <div className="stat-card">
@@ -1407,6 +1404,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           const nextValue = event.currentTarget.value;
                           setPositionDraft((draft) => ({ ...draft, x: nextValue }));
                         }}
+                        onBlur={applyPositionChange}
                         onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPositionChange)}
                       />
                     </label>
@@ -1422,6 +1420,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           const nextValue = event.currentTarget.value;
                           setPositionDraft((draft) => ({ ...draft, y: nextValue }));
                         }}
+                        onBlur={applyPositionChange}
                         onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPositionChange)}
                       />
                     </label>
@@ -1437,13 +1436,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           const nextValue = event.currentTarget.value;
                           setPositionDraft((draft) => ({ ...draft, z: nextValue }));
                         }}
+                        onBlur={applyPositionChange}
                         onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPositionChange)}
                       />
                     </label>
                   </div>
-                  <button className="toolbar__button" type="button" data-testid="apply-brush-position" onClick={applyPositionChange}>
-                    Apply Move Command
-                  </button>
                 </div>
 
                 <div className="form-section">
@@ -1462,6 +1459,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           const nextValue = event.currentTarget.value;
                           setSizeDraft((draft) => ({ ...draft, x: nextValue }));
                         }}
+                        onBlur={applySizeChange}
                         onKeyDown={(event) => handleDraftVectorKeyDown(event, applySizeChange)}
                       />
                     </label>
@@ -1478,6 +1476,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           const nextValue = event.currentTarget.value;
                           setSizeDraft((draft) => ({ ...draft, y: nextValue }));
                         }}
+                        onBlur={applySizeChange}
                         onKeyDown={(event) => handleDraftVectorKeyDown(event, applySizeChange)}
                       />
                     </label>
@@ -1494,13 +1493,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           const nextValue = event.currentTarget.value;
                           setSizeDraft((draft) => ({ ...draft, z: nextValue }));
                         }}
+                        onBlur={applySizeChange}
                         onKeyDown={(event) => handleDraftVectorKeyDown(event, applySizeChange)}
                       />
                     </label>
                   </div>
-                  <button className="toolbar__button" type="button" data-testid="apply-brush-size" onClick={applySizeChange}>
-                    Apply Resize Command
-                  </button>
                 </div>
 
                 <div className="form-section">
@@ -1531,10 +1528,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 </div>
 
                 {selectedFace === null || selectedFaceId === null ? (
-                  <ul className="placeholder-list">
-                    <li>Stable face ids are: posX, negX, posY, negY, posZ, negZ.</li>
-                    <li>Select one face to apply a material and edit its UV transform.</li>
-                  </ul>
+                  <div className="outliner-empty">Select a face to edit its material and UV transform.</div>
                 ) : (
                   <>
                     <div className="stat-card">
@@ -1637,12 +1631,13 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       </button>
                     </div>
 
-                    <ul className="placeholder-list">
-                      <li>Rotation: {selectedFace.uv.rotationQuarterTurns * 90}°</li>
-                      <li>
-                        Flip flags: U {selectedFace.uv.flipU ? "on" : "off"}, V {selectedFace.uv.flipV ? "on" : "off"}
-                      </li>
-                    </ul>
+                    <div className="stat-card">
+                      <div className="label">UV Flags</div>
+                      <div className="value">Rotation {selectedFace.uv.rotationQuarterTurns * 90}°</div>
+                      <div className="material-summary">
+                        U {selectedFace.uv.flipU ? "flipped" : "normal"} · V {selectedFace.uv.flipV ? "flipped" : "normal"}
+                      </div>
+                    </div>
                   </>
                 )}
               </>
