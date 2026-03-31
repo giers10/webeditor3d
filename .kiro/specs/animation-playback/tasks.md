@@ -33,7 +33,7 @@ Implement animation playback for imported GLB/GLTF assets in vertical slice orde
     - Test that after loading a GLTF fixture with animations, `loadedAsset.animations` contains the expected clip names
     - _Requirements: 1.1, 5.1_
 
-- [-] 3. Add `PlayAnimationAction` and `StopAnimationAction` to the interaction layer
+- [x] 3. Add `PlayAnimationAction` and `StopAnimationAction` to the interaction layer
   - Add the two new action interfaces and extend the `InteractionAction` union in `src/interactions/interaction-links.ts`
   - Add `createPlayAnimationInteractionLink` factory with validation (non-empty `sourceEntityId`, `targetModelInstanceId`, `clipName`)
   - Add `createStopAnimationInteractionLink` factory with validation (non-empty `sourceEntityId`, `targetModelInstanceId`)
