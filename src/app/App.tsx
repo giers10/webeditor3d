@@ -634,6 +634,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const selectedTeleportTarget = selectedEntity?.kind === "teleportTarget" ? selectedEntity : null;
   const selectedInteractable = selectedEntity?.kind === "interactable" ? selectedEntity : null;
   const projectAssetList = Object.values(editorState.document.assets);
+  const imageAssetList = projectAssetList.filter(isImageAsset);
+  const selectedPointLight = selectedEntity?.kind === "pointLight" ? selectedEntity : null;
+  const selectedSpotLight = selectedEntity?.kind === "spotLight" ? selectedEntity : null;
   const modelInstanceDisplayList = getSortedModelInstanceDisplayLabels(editorState.document.modelInstances, editorState.document.assets);
   const selectedInteractionSource = isInteractionSourceEntity(selectedEntity) ? selectedEntity : null;
   const selectedTriggerVolumeLinks =
