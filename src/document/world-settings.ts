@@ -40,13 +40,15 @@ export interface WorldSettings {
   sunLight: WorldSunLightSettings;
 }
 
+const DEFAULT_SOLID_BACKGROUND_COLOR = "#2f3947";
+const DEFAULT_GRADIENT_TOP_COLOR = DEFAULT_SOLID_BACKGROUND_COLOR;
 const DEFAULT_GRADIENT_BOTTOM_COLOR = "#141a22";
 
 export function createDefaultWorldSettings(): WorldSettings {
   return {
     background: {
       mode: "solid",
-      colorHex: "#2f3947"
+      colorHex: DEFAULT_SOLID_BACKGROUND_COLOR
     },
     ambientLight: {
       colorHex: "#f7f1e8",
@@ -141,6 +143,21 @@ export function changeWorldBackgroundMode(
   mode: WorldBackgroundMode,
   imageAssetId?: string
 ): WorldBackgroundSettings {
+  if (mode === "image") {
+    if (imageAssetId === undefined || imageAssetId.trim().length === 0) {
+      if (background.mode === "image") {
+        return cloneWorldBackgroundSettings(background);
+      }
+
+      throw new Error("An image asset must be selected to use an image background.");
+    }
+
+    return {
+      mode: "image",
+      assetId: imageAssetId
+    };
+  }
+
   if (background.mode === mode) {
     return cloneWorldBackgroundSettings(background);
   }
@@ -148,17 +165,37 @@ export function changeWorldBackgroundMode(
   if (mode === "solid") {
     return {
       mode: "solid",
-      colorHex: background.mode === "verticalGradient" ? background.topColorHex : background.colorHex
+      colorHex:
+        background.mode === "solid"
+          ? background.colorHex
+          : background.mode === "verticalGradient"
+            ? background.topColorHex
+            : DEFAULT_SOLID_BACKGROUND_COLOR
     };
   }
 
-  if (mode === "image") {
-    if (background.mode === "image") {
-      return cloneWorldBackgroundSettings(background);
-    }
+  if (background.mode === "solid") {
+    return {
+      mode: "verticalGradient",
+      topColorHex: background.colorHex,
+      bottomColorHex: DEFAULT_GRADIENT_BOTTOM_COLOR
+    };
+  }
 
-    if (imageAssetId === undefined || imageAssetId.trim().length === 0) {
-      throw new Error("An image asset must be selected to use an image background.");
+  if (background.mode === "verticalGradient") {
+    return {
+      mode: "verticalGradient",
+      topColorHex: background.topColorHex,
+      bottomColorHex: background.bottomColorHex
+    };
+  }
+
+  return {
+    mode: "verticalGradient",
+    topColorHex: DEFAULT_GRADIENT_TOP_COLOR,
+    bottomColorHex: DEFAULT_GRADIENT_BOTTOM_COLOR
+  };
+}
     }
 
     return {
