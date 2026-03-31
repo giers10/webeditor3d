@@ -2443,44 +2443,55 @@ export function App({ store, initialStatusMessage }: AppProps) {
               <div className="outliner-empty">Project asset storage is unavailable. Imported assets cannot be persisted.</div>
             ) : null}
 
-            {modelAssetList.length === 0 ? (
+            {projectAssetList.length === 0 ? (
               <div className="outliner-empty">
                 No imported model assets yet. Import a GLB or GLTF to register the first project asset.
               </div>
             ) : (
               <div className="outliner-list" data-testid="asset-list">
-                {modelAssetList.map((asset) => (
+                {projectAssetList.map((asset) => (
                   <div key={asset.id} className="outliner-item asset-item">
                     <div className="outliner-item__select">
                       <span className="outliner-item__title">{asset.sourceName}</span>
-                      <span className="outliner-item__meta">Model Asset</span>
+                      <span className="outliner-item__meta">{getProjectAssetKindLabel(asset.kind)}</span>
                     </div>
 
-                    <div className="asset-item__summary">{formatModelAssetSummary(asset)}</div>
-                    <div className="asset-item__summary">{formatModelBoundingBoxLabel(asset)}</div>
-                    {asset.metadata.materialNames.length === 0 ? null : (
-                      <div className="asset-item__summary">Materials: {asset.metadata.materialNames.join(", ")}</div>
-                    )}
-                    {asset.metadata.textureNames.length === 0 ? null : (
-                      <div className="asset-item__summary">Textures: {asset.metadata.textureNames.join(", ")}</div>
-                    )}
-                    {asset.metadata.animationNames.length === 0 ? null : (
-                      <div className="asset-item__summary">Animations: {asset.metadata.animationNames.join(", ")}</div>
-                    )}
-                    {asset.metadata.warnings.length === 0 ? null : (
-                      <div className="asset-item__warnings">{asset.metadata.warnings.join(" | ")}</div>
-                    )}
-
-                    <div className="inline-actions">
-                      <button
-                        className="toolbar__button"
-                        type="button"
-                        data-testid={`place-model-instance-${asset.id}`}
-                        onClick={() => handlePlaceModelInstance(asset.id)}
-                      >
-                        Place Instance
-                      </button>
+                    <div className="asset-item__summary">
+                      {formatByteLength(asset.byteLength)} | {asset.mimeType}
                     </div>
+                    <div className="asset-item__summary">Storage key: {asset.storageKey}</div>
+
+                    {asset.kind !== "model" ? (
+                      <div className="asset-item__summary">This asset kind is registered for future slices but is not placeable yet.</div>
+                    ) : (
+                      <>
+                        <div className="asset-item__summary">{formatModelAssetSummary(asset)}</div>
+                        <div className="asset-item__summary">{formatModelBoundingBoxLabel(asset)}</div>
+                        {asset.metadata.materialNames.length === 0 ? null : (
+                          <div className="asset-item__summary">Materials: {asset.metadata.materialNames.join(", ")}</div>
+                        )}
+                        {asset.metadata.textureNames.length === 0 ? null : (
+                          <div className="asset-item__summary">Textures: {asset.metadata.textureNames.join(", ")}</div>
+                        )}
+                        {asset.metadata.animationNames.length === 0 ? null : (
+                          <div className="asset-item__summary">Animations: {asset.metadata.animationNames.join(", ")}</div>
+                        )}
+                        {asset.metadata.warnings.length === 0 ? null : (
+                          <div className="asset-item__warnings">{asset.metadata.warnings.join(" | ")}</div>
+                        )}
+
+                        <div className="inline-actions">
+                          <button
+                            className="toolbar__button"
+                            type="button"
+                            data-testid={`place-model-instance-${asset.id}`}
+                            onClick={() => handlePlaceModelInstance(asset.id)}
+                          >
+                            Place Instance
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </div>
                 ))}
               </div>
