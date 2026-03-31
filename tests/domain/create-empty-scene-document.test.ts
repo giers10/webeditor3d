@@ -31,6 +31,7 @@ describe("createEmptySceneDocument", () => {
     expect(document.brushes).toEqual({});
     expect(document.entities).toEqual({});
     expect(document.modelInstances).toEqual({});
+    expect(document.interactionLinks).toEqual({});
     expect(Object.keys(document.materials)).toEqual(STARTER_MATERIAL_LIBRARY.map((material) => material.id));
   });
 });
