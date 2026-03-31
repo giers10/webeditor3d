@@ -472,15 +472,50 @@ export function App({ store, initialStatusMessage }: AppProps) {
   }, [selectedFace]);
 
   useEffect(() => {
-    if (editablePlayerStart === null) {
-      setPlayerStartPositionDraft(createVec3Draft(DEFAULT_PLAYER_START_POSITION));
+    if (selectedEntity === null) {
+      setEntityPositionDraft(createVec3Draft(DEFAULT_ENTITY_POSITION));
       setPlayerStartYawDraft("0");
+      setSoundEmitterRadiusDraft(String(DEFAULT_SOUND_EMITTER_RADIUS));
+      setSoundEmitterGainDraft(String(DEFAULT_SOUND_EMITTER_GAIN));
+      setSoundEmitterAutoplayDraft(false);
+      setSoundEmitterLoopDraft(false);
+      setTriggerVolumeSizeDraft(createVec3Draft(DEFAULT_TRIGGER_VOLUME_SIZE));
+      setTriggerOnEnterDraft(true);
+      setTriggerOnExitDraft(false);
+      setTeleportTargetYawDraft(String(DEFAULT_TELEPORT_TARGET_YAW_DEGREES));
+      setInteractableRadiusDraft(String(DEFAULT_INTERACTABLE_RADIUS));
+      setInteractablePromptDraft(DEFAULT_INTERACTABLE_PROMPT);
+      setInteractableEnabledDraft(true);
       return;
     }
 
-    setPlayerStartPositionDraft(createVec3Draft(editablePlayerStart.position));
-    setPlayerStartYawDraft(String(editablePlayerStart.yawDegrees));
-  }, [editablePlayerStart]);
+    setEntityPositionDraft(createVec3Draft(selectedEntity.position));
+
+    switch (selectedEntity.kind) {
+      case "playerStart":
+        setPlayerStartYawDraft(String(selectedEntity.yawDegrees));
+        break;
+      case "soundEmitter":
+        setSoundEmitterRadiusDraft(String(selectedEntity.radius));
+        setSoundEmitterGainDraft(String(selectedEntity.gain));
+        setSoundEmitterAutoplayDraft(selectedEntity.autoplay);
+        setSoundEmitterLoopDraft(selectedEntity.loop);
+        break;
+      case "triggerVolume":
+        setTriggerVolumeSizeDraft(createVec3Draft(selectedEntity.size));
+        setTriggerOnEnterDraft(selectedEntity.triggerOnEnter);
+        setTriggerOnExitDraft(selectedEntity.triggerOnExit);
+        break;
+      case "teleportTarget":
+        setTeleportTargetYawDraft(String(selectedEntity.yawDegrees));
+        break;
+      case "interactable":
+        setInteractableRadiusDraft(String(selectedEntity.radius));
+        setInteractablePromptDraft(selectedEntity.prompt);
+        setInteractableEnabledDraft(selectedEntity.enabled);
+        break;
+    }
+  }, [selectedEntity]);
 
   useEffect(() => {
     setAmbientLightIntensityDraft(String(editorState.document.world.ambientLight.intensity));
@@ -513,7 +548,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
       event.preventDefault();
 
-      if (editorState.selection.kind === "none" && brushList.length === 0 && playerStartList.length === 0) {
+      if (editorState.selection.kind === "none" && brushList.length === 0 && entityList.length === 0) {
         setStatusMessage("Nothing authored yet to frame in the viewport.");
         return;
       }
@@ -530,7 +565,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     return () => {
       window.removeEventListener("keydown", handleWindowKeyDown);
     };
-  }, [editorState.selection, editorState.toolMode, brushList.length, playerStartList.length]);
+  }, [editorState.selection, editorState.toolMode, brushList.length, entityList.length]);
 
   const applySceneName = () => {
     const normalizedName = sceneNameDraft.trim() || "Untitled Scene";
