@@ -173,6 +173,7 @@ button:disabled {
 
 .panel {
   display: flex;
+  flex: 0 0 auto;
   flex-direction: column;
   min-height: 0;
   background: var(--color-surface);
