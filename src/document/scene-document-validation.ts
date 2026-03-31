@@ -703,7 +703,7 @@ export function validateSceneDocument(document: SceneDocument): SceneDocumentVal
   const diagnostics: SceneDiagnostic[] = [];
   const seenIds = new Map<string, string>();
 
-  validateWorldSettings(document.world, diagnostics);
+  validateWorldSettings(document.world, document, diagnostics);
 
   for (const [materialKey, material] of Object.entries(document.materials)) {
     const path = `materials.${materialKey}`;
@@ -786,6 +786,12 @@ export function validateSceneDocument(document: SceneDocument): SceneDocumentVal
     registerAuthoredId(entity.id, path, seenIds, diagnostics);
 
     switch (entity.kind) {
+      case "pointLight":
+        validatePointLightEntity(entity, path, diagnostics);
+        break;
+      case "spotLight":
+        validateSpotLightEntity(entity, path, diagnostics);
+        break;
       case "playerStart":
         validatePlayerStartEntity(entity, path, diagnostics);
         break;
