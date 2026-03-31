@@ -196,6 +196,16 @@ function readPositiveVec2Draft(draft: Vec2Draft, label: string): Vec2 {
   return vector;
 }
 
+function readPositiveVec3Draft(draft: Vec3Draft, label: string): Vec3 {
+  const vector = readVec3Draft(draft, label);
+
+  if (vector.x <= 0 || vector.y <= 0 || vector.z <= 0) {
+    throw new Error(`${label} values must remain positive.`);
+  }
+
+  return vector;
+}
+
 function readVec3Draft(draft: Vec3Draft, label: string): Vec3 {
   const vector = {
     x: Number(draft.x),
