@@ -1,0 +1,82 @@
+import type { ToolMode } from "../core/tool-mode";
+import { DEFAULT_GRID_SIZE, snapPositiveSizeToGrid } from "../geometry/grid-snapping";
+
+import { createOpaqueId } from "../core/ids";
+import type { EditorSelection } from "../core/selection";
+import type { Vec3 } from "../core/vector";
+
+import { cloneSelectionForCommand, getBoxBrushOrThrow, replaceBrush, setSingleBrushSelection } from "./brush-command-helpers";
+import type { EditorCommand } from "./command";
+
+interface ResizeBoxBrushCommandOptions {
+  brushId: string;
+  size: Vec3;
+  gridSize?: number;
+}
+
+export function createResizeBoxBrushCommand(options: ResizeBoxBrushCommandOptions): EditorCommand {
+  const snappedSize = snapPositiveSizeToGrid(options.size, options.gridSize ?? DEFAULT_GRID_SIZE);
+
+  let previousSize: Vec3 | null = null;
+  let previousSelection: EditorSelection | null = null;
+  let previousToolMode: ToolMode | null = null;
+
+  return {
+    id: createOpaqueId("command"),
+    label: "Resize box brush",
+    execute(context) {
+      const currentDocument = context.getDocument();
+      const brush = getBoxBrushOrThrow(currentDocument, options.brushId);
+
+      if (previousSize === null) {
+        previousSize = {
+          ...brush.size
+        };
+      }
+
+      if (previousSelection === null) {
+        previousSelection = cloneSelectionForCommand(context.getSelection());
+      }
+
+      if (previousToolMode === null) {
+        previousToolMode = context.getToolMode();
+      }
+
+      context.setDocument(
+        replaceBrush(currentDocument, {
+          ...brush,
+          size: {
+            ...snappedSize
+          }
+        })
+      );
+      context.setSelection(setSingleBrushSelection(options.brushId));
+      context.setToolMode("select");
+    },
+    undo(context) {
+      if (previousSize === null) {
+        return;
+      }
+
+      const currentDocument = context.getDocument();
+      const brush = getBoxBrushOrThrow(currentDocument, options.brushId);
+
+      context.setDocument(
+        replaceBrush(currentDocument, {
+          ...brush,
+          size: {
+            ...previousSize
+          }
+        })
+      );
+
+      if (previousSelection !== null) {
+        context.setSelection(previousSelection);
+      }
+
+      if (previousToolMode !== null) {
+        context.setToolMode(previousToolMode);
+      }
+    }
+  };
+}
