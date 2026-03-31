@@ -992,9 +992,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
     setStatusMessage(successMessage);
   };
 
+  const getInteractionSourceEntityForLink = (link: InteractionLink): InteractionSourceEntity | null => {
+    const sourceEntity = editorState.document.entities[link.sourceEntityId];
+    return sourceEntity?.kind === "triggerVolume" || sourceEntity?.kind === "interactable" ? sourceEntity : null;
+  };
+
   const handleAddTeleportInteractionLink = () => {
-    if (selectedTriggerVolume === null) {
-      setStatusMessage("Select a Trigger Volume before adding links.");
+    if (selectedInteractionSource === null) {
+      setStatusMessage("Select a Trigger Volume or Interactable before adding links.");
       return;
     }
 
@@ -1008,19 +1013,19 @@ export function App({ store, initialStatusMessage }: AppProps) {
     store.executeCommand(
       createUpsertInteractionLinkCommand({
         link: createTeleportPlayerInteractionLink({
-          sourceEntityId: selectedTriggerVolume.id,
-          trigger: getDefaultTriggerVolumeLinkTrigger(selectedTriggerVolume.triggerOnEnter, selectedTriggerVolume.triggerOnExit),
+          sourceEntityId: selectedInteractionSource.id,
+          trigger: getDefaultInteractionLinkTrigger(selectedInteractionSource),
           targetEntityId: defaultTarget.id
         }),
         label: "Add teleport interaction link"
       })
     );
-    setStatusMessage("Added a teleport link to the selected Trigger Volume.");
+    setStatusMessage(`Added a teleport link to the selected ${selectedInteractionSource.kind === "triggerVolume" ? "Trigger Volume" : "Interactable"}.`);
   };
 
   const handleAddVisibilityInteractionLink = () => {
-    if (selectedTriggerVolume === null) {
-      setStatusMessage("Select a Trigger Volume before adding links.");
+    if (selectedInteractionSource === null) {
+      setStatusMessage("Select a Trigger Volume or Interactable before adding links.");
       return;
     }
 
@@ -1034,14 +1039,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
     store.executeCommand(
       createUpsertInteractionLinkCommand({
         link: createToggleVisibilityInteractionLink({
-          sourceEntityId: selectedTriggerVolume.id,
-          trigger: getDefaultTriggerVolumeLinkTrigger(selectedTriggerVolume.triggerOnEnter, selectedTriggerVolume.triggerOnExit),
+          sourceEntityId: selectedInteractionSource.id,
+          trigger: getDefaultInteractionLinkTrigger(selectedInteractionSource),
           targetBrushId: defaultTarget.id
         }),
         label: "Add visibility interaction link"
       })
     );
-    setStatusMessage("Added a visibility link to the selected Trigger Volume.");
+    setStatusMessage(`Added a visibility link to the selected ${selectedInteractionSource.kind === "triggerVolume" ? "Trigger Volume" : "Interactable"}.`);
   };
 
   const handleDeleteInteractionLink = (linkId: string) => {
@@ -1054,6 +1059,18 @@ export function App({ store, initialStatusMessage }: AppProps) {
   };
 
   const updateInteractionLinkTrigger = (link: InteractionLink, trigger: InteractionTriggerKind) => {
+    const sourceEntity = getInteractionSourceEntityForLink(link);
+
+    if (sourceEntity?.kind === "interactable" && trigger !== "click") {
+      setStatusMessage("Interactable links always use the click trigger.");
+      return;
+    }
+
+    if (sourceEntity?.kind === "triggerVolume" && trigger === "click") {
+      setStatusMessage("Trigger Volume links may only use enter or exit triggers.");
+      return;
+    }
+
     const nextLink =
       link.action.type === "teleportPlayer"
         ? createTeleportPlayerInteractionLink({
@@ -1074,7 +1091,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
   };
 
   const updateInteractionLinkActionType = (link: InteractionLink, actionType: InteractionLink["action"]["type"]) => {
-    if (selectedTriggerVolume === null || link.action.type === actionType) {
+    const sourceEntity = getInteractionSourceEntityForLink(link);
+
+    if (sourceEntity === null || link.action.type === actionType) {
       return;
     }
 
@@ -1090,7 +1109,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
         link,
         createTeleportPlayerInteractionLink({
           id: link.id,
-          sourceEntityId: selectedTriggerVolume.id,
+          sourceEntityId: sourceEntity.id,
           trigger: link.trigger,
           targetEntityId: defaultTarget.id
         }),
@@ -1110,7 +1129,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
       link,
       createToggleVisibilityInteractionLink({
         id: link.id,
-        sourceEntityId: selectedTriggerVolume.id,
+        sourceEntityId: sourceEntity.id,
         trigger: link.trigger,
         targetBrushId: defaultBrush.id
       }),
