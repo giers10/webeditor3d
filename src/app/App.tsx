@@ -4361,6 +4361,13 @@ export function App({ store, initialStatusMessage }: AppProps) {
         accept=".glb,.gltf,model/gltf-binary,model/gltf+json,application/octet-stream"
         onChange={handleImportModelChange}
       />
+      <input
+        ref={importBackgroundImageInputRef}
+        className="visually-hidden"
+        type="file"
+        accept=".avif,.gif,.jpg,.jpeg,.png,.svg,.webp,image/*"
+        onChange={handleImportBackgroundImageChange}
+      />
     </div>
   );
 }
