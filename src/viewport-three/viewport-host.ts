@@ -470,6 +470,21 @@ export class ViewportHost {
   }
 
   private handlePointerDown = (event: PointerEvent) => {
+    if (event.button === 1) {
+      event.preventDefault();
+      this.activeCameraDragPointerId = event.pointerId;
+      this.lastCameraDragClientPosition = {
+        x: event.clientX,
+        y: event.clientY
+      };
+      this.renderer.domElement.setPointerCapture(event.pointerId);
+      return;
+    }
+
+    if (event.button !== 0) {
+      return;
+    }
+
     if (this.toolMode === "box-create") {
       const previewCenter = this.getBoxCreatePreviewCenter(event);
 
@@ -541,6 +556,24 @@ export class ViewportHost {
   };
 
   private handlePointerMove = (event: PointerEvent) => {
+    if (this.activeCameraDragPointerId === event.pointerId && this.lastCameraDragClientPosition !== null) {
+      const deltaX = event.clientX - this.lastCameraDragClientPosition.x;
+      const deltaY = event.clientY - this.lastCameraDragClientPosition.y;
+
+      this.lastCameraDragClientPosition = {
+        x: event.clientX,
+        y: event.clientY
+      };
+
+      if (event.shiftKey) {
+        this.panCamera(deltaX, deltaY);
+      } else {
+        this.orbitCamera(deltaX, deltaY);
+      }
+
+      return;
+    }
+
     if (this.toolMode !== "box-create") {
       return;
     }
@@ -548,13 +581,72 @@ export class ViewportHost {
     this.setBoxCreatePreview(this.getBoxCreatePreviewCenter(event));
   };
 
+  private handlePointerUp = (event: PointerEvent) => {
+    if (this.activeCameraDragPointerId !== event.pointerId) {
+      return;
+    }
+
+    if (this.renderer.domElement.hasPointerCapture(event.pointerId)) {
+      this.renderer.domElement.releasePointerCapture(event.pointerId);
+    }
+
+    this.activeCameraDragPointerId = null;
+    this.lastCameraDragClientPosition = null;
+  };
+
   private handlePointerLeave = () => {
+    if (this.activeCameraDragPointerId !== null) {
+      return;
+    }
+
     if (this.toolMode !== "box-create") {
       return;
     }
 
     this.setBoxCreatePreview(null);
   };
+
+  private handleWheel = (event: WheelEvent) => {
+    event.preventDefault();
+    this.cameraSpherical.radius = Math.min(
+      MAX_CAMERA_DISTANCE,
+      Math.max(MIN_CAMERA_DISTANCE, this.cameraSpherical.radius * Math.exp(event.deltaY * ZOOM_SPEED))
+    );
+    this.applyCameraOrbitPose();
+  };
+
+  private handleAuxClick = (event: MouseEvent) => {
+    if (event.button === 1) {
+      event.preventDefault();
+    }
+  };
+
+  private orbitCamera(deltaX: number, deltaY: number) {
+    this.cameraSpherical.theta -= deltaX * ORBIT_ROTATION_SPEED;
+    this.cameraSpherical.phi += deltaY * ORBIT_ROTATION_SPEED;
+    this.applyCameraOrbitPose();
+  }
+
+  private panCamera(deltaX: number, deltaY: number) {
+    if (this.container === null) {
+      return;
+    }
+
+    const width = Math.max(1, this.container.clientWidth);
+    const height = Math.max(1, this.container.clientHeight);
+    const visibleHeight = 2 * Math.tan((this.camera.fov * Math.PI) / 360) * this.cameraSpherical.radius;
+    const visibleWidth = visibleHeight * Math.max(this.camera.aspect, 0.0001);
+
+    this.camera.getWorldDirection(this.cameraForward);
+    this.cameraRight.crossVectors(this.cameraForward, this.camera.up).normalize();
+    this.cameraUp.crossVectors(this.cameraRight, this.cameraForward).normalize();
+
+    this.cameraTarget
+      .addScaledVector(this.cameraRight, (-deltaX / width) * visibleWidth)
+      .addScaledVector(this.cameraUp, (deltaY / height) * visibleHeight);
+
+    this.applyCameraOrbitPose();
+  }
 
   private getBoxCreatePreviewCenter(event: PointerEvent): Vec3 | null {
     const bounds = this.renderer.domElement.getBoundingClientRect();
