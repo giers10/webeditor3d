@@ -645,6 +645,24 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
+  const scheduleDraftCommit = (applyChange: () => void) => {
+    window.setTimeout(() => {
+      applyChange();
+    }, 0);
+  };
+
+  const handleNumberInputPointerUp = (_event: ReactPointerEvent<HTMLInputElement>, applyChange: () => void) => {
+    scheduleDraftCommit(applyChange);
+  };
+
+  const handleNumberInputKeyUp = (event: ReactKeyboardEvent<HTMLInputElement>, applyChange: () => void) => {
+    if (!isCommitIncrementKey(event.key)) {
+      return;
+    }
+
+    scheduleDraftCommit(applyChange);
+  };
+
   const handleSaveDraft = () => {
     const result = store.saveDraft();
     setPersistenceMessage(
