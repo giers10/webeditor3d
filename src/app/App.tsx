@@ -963,6 +963,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
       case "entities":
         setStatusMessage(`Selected ${getEntityDisplayLabelById(selection.ids[0], editorState.document.entities)} from the ${source}${suffix}.`);
         break;
+      case "modelInstances":
+        setStatusMessage(
+          `Selected ${getModelInstanceDisplayLabelById(selection.ids[0], editorState.document.modelInstances, editorState.document.assets)} from the ${source}${suffix}.`
+        );
+        break;
       default:
         setStatusMessage(`Selection updated from the ${source}${suffix}.`);
         break;
