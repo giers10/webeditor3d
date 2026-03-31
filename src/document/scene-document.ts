@@ -3,12 +3,13 @@ import type { EntityInstance } from "../entities/entity-instances";
 import { cloneMaterialRegistry, createStarterMaterialRegistry, type MaterialDef } from "../materials/starter-material-library";
 import { createDefaultWorldSettings, type WorldSettings } from "./world-settings";
 
-export const SCENE_DOCUMENT_VERSION = 6 as const;
+export const SCENE_DOCUMENT_VERSION = 7 as const;
 export const FOUNDATION_SCENE_DOCUMENT_VERSION = 1 as const;
 export const BOX_BRUSH_SCENE_DOCUMENT_VERSION = 2 as const;
 export const FACE_MATERIALS_SCENE_DOCUMENT_VERSION = 3 as const;
 export const RUNNER_V1_SCENE_DOCUMENT_VERSION = 4 as const;
 export const FIRST_ROOM_POLISH_SCENE_DOCUMENT_VERSION = 5 as const;
+export const WORLD_ENVIRONMENT_SCENE_DOCUMENT_VERSION = 6 as const;
 
 export interface SceneDocument {
   version: typeof SCENE_DOCUMENT_VERSION;

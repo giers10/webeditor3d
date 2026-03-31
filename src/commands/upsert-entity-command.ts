@@ -34,7 +34,6 @@ export function createUpsertEntityCommand(options: UpsertEntityCommandOptions): 
     execute(context) {
       const currentDocument = context.getDocument();
       const currentEntity = currentDocument.entities[nextEntity.id];
-      const isNewEntity = currentEntity === undefined;
 
       if (currentEntity !== undefined && currentEntity.kind !== nextEntity.kind) {
         throw new Error(`Entity ${nextEntity.id} is a ${currentEntity.kind}, not a ${nextEntity.kind}.`);
@@ -61,10 +60,6 @@ export function createUpsertEntityCommand(options: UpsertEntityCommandOptions): 
       });
       context.setSelection(setSingleEntitySelection(nextEntity.id));
       context.setToolMode("select");
-
-      if (options.label === undefined) {
-        this.label = createDefaultEntityCommandLabel(nextEntity, isNewEntity);
-      }
     },
     undo(context) {
       const currentDocument = context.getDocument();
