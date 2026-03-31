@@ -38,7 +38,10 @@ export function replaceBrush(document: SceneDocument, brush: BoxBrush): SceneDoc
 }
 
 export function removeBrush(document: SceneDocument, brushId: string): SceneDocument {
-  const { [brushId]: _removedBrush, ...remainingBrushes } = document.brushes;
+  const remainingBrushes = {
+    ...document.brushes
+  };
+  delete remainingBrushes[brushId];
 
   return {
     ...document,

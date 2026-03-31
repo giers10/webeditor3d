@@ -35,7 +35,7 @@ class ThrowingStorage implements KeyValueStorage {
     } = {}
   ) {}
 
-  getItem(_key: string): string | null {
+  getItem(): string | null {
     if (this.options.onGetItem !== undefined) {
       throw this.options.onGetItem;
     }
@@ -43,13 +43,13 @@ class ThrowingStorage implements KeyValueStorage {
     return null;
   }
 
-  setItem(_key: string, _value: string): void {
+  setItem(): void {
     if (this.options.onSetItem !== undefined) {
       throw this.options.onSetItem;
     }
   }
 
-  removeItem(_key: string): void {
+  removeItem(): void {
     if (this.options.onRemoveItem !== undefined) {
       throw this.options.onRemoveItem;
     }

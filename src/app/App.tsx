@@ -128,15 +128,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
     setPositionDraft(createVec3Draft(selectedBrush.center));
     setSizeDraft(createVec3Draft(selectedBrush.size));
-  }, [
-    selectedBrush?.id,
-    selectedBrush?.center.x,
-    selectedBrush?.center.y,
-    selectedBrush?.center.z,
-    selectedBrush?.size.x,
-    selectedBrush?.size.y,
-    selectedBrush?.size.z
-  ]);
+  }, [selectedBrush]);
 
   const applySceneName = () => {
     const normalizedName = sceneNameDraft.trim() || "Untitled Scene";

@@ -22,15 +22,15 @@ class MemoryStorage implements KeyValueStorage {
 }
 
 class ThrowingStorage implements KeyValueStorage {
-  getItem(_key: string): string | null {
+  getItem(): string | null {
     throw new Error("blocked read");
   }
 
-  setItem(_key: string, _value: string): void {
+  setItem(): void {
     throw new Error("blocked write");
   }
 
-  removeItem(_key: string): void {}
+  removeItem(): void {}
 }
 
 describe("EditorStore", () => {
