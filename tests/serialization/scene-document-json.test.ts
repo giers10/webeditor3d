@@ -1,9 +1,20 @@
 import { describe, expect, it } from "vitest";
 
 import { createBoxBrush } from "../../src/document/brushes";
-import { FIRST_ROOM_POLISH_SCENE_DOCUMENT_VERSION, SCENE_DOCUMENT_VERSION, createEmptySceneDocument } from "../../src/document/scene-document";
+import {
+  FIRST_ROOM_POLISH_SCENE_DOCUMENT_VERSION,
+  SCENE_DOCUMENT_VERSION,
+  WORLD_ENVIRONMENT_SCENE_DOCUMENT_VERSION,
+  createEmptySceneDocument
+} from "../../src/document/scene-document";
 import { migrateSceneDocument } from "../../src/document/migrate-scene-document";
-import { createPlayerStartEntity } from "../../src/entities/entity-instances";
+import {
+  createInteractableEntity,
+  createPlayerStartEntity,
+  createSoundEmitterEntity,
+  createTeleportTargetEntity,
+  createTriggerVolumeEntity
+} from "../../src/entities/entity-instances";
 import { STARTER_MATERIAL_LIBRARY } from "../../src/materials/starter-material-library";
 import { parseSceneDocumentJson, serializeSceneDocument } from "../../src/serialization/scene-document-json";
 
