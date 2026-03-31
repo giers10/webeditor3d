@@ -14,11 +14,14 @@ function createTestFile(bytes: Uint8Array | Buffer, name: string, type: string):
   const arrayBuffer = new ArrayBuffer(bytes.byteLength);
   new Uint8Array(arrayBuffer).set(bytes);
 
-  return Object.assign(new Blob([arrayBuffer], { type }), {
+  return {
     name,
+    type,
     lastModified: Date.now(),
-    webkitRelativePath: ""
-  }) as File;
+    size: arrayBuffer.byteLength,
+    webkitRelativePath: "",
+    arrayBuffer: async () => arrayBuffer.slice(0)
+  } as File;
 }
 
 describe("model import", () => {
