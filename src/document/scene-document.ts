@@ -1,8 +1,10 @@
 import { DEFAULT_SUN_DIRECTION, type Vec3 } from "../core/vector";
 import type { Brush } from "./brushes";
+import { cloneMaterialRegistry, createStarterMaterialRegistry, type MaterialDef } from "../materials/starter-material-library";
 
-export const SCENE_DOCUMENT_VERSION = 2 as const;
+export const SCENE_DOCUMENT_VERSION = 3 as const;
 export const FOUNDATION_SCENE_DOCUMENT_VERSION = 1 as const;
+export const BOX_BRUSH_SCENE_DOCUMENT_VERSION = 2 as const;
 
 export interface WorldBackgroundSettings {
   mode: "solid";
@@ -30,7 +32,7 @@ export interface SceneDocument {
   version: typeof SCENE_DOCUMENT_VERSION;
   name: string;
   world: WorldSettings;
-  materials: Record<string, never>;
+  materials: Record<string, MaterialDef>;
   textures: Record<string, never>;
   assets: Record<string, never>;
   brushes: Record<string, Brush>;
@@ -59,12 +61,12 @@ export function createDefaultWorldSettings(): WorldSettings {
   };
 }
 
-export function createEmptySceneDocument(overrides: Partial<Pick<SceneDocument, "name" | "world">> = {}): SceneDocument {
+export function createEmptySceneDocument(overrides: Partial<Pick<SceneDocument, "name" | "world" | "materials">> = {}): SceneDocument {
   return {
     version: SCENE_DOCUMENT_VERSION,
     name: overrides.name ?? "Untitled Scene",
     world: overrides.world ?? createDefaultWorldSettings(),
-    materials: {},
+    materials: cloneMaterialRegistry(overrides.materials ?? createStarterMaterialRegistry()),
     textures: {},
     assets: {},
     brushes: {},

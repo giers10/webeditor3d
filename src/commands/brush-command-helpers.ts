@@ -1,5 +1,5 @@
 import { cloneEditorSelection, type EditorSelection } from "../core/selection";
-import type { BoxBrush } from "../document/brushes";
+import { cloneFaceUvState, type BoxBrush, type BoxFaceId, type BrushFace } from "../document/brushes";
 import type { SceneDocument } from "../document/scene-document";
 
 export function getBoxBrushOrThrow(document: SceneDocument, brushId: string): BoxBrush {
@@ -20,6 +20,14 @@ export function setSingleBrushSelection(brushId: string): EditorSelection {
   return {
     kind: "brushes",
     ids: [brushId]
+  };
+}
+
+export function setSingleBrushFaceSelection(brushId: string, faceId: BoxFaceId): EditorSelection {
+  return {
+    kind: "brushFace",
+    brushId,
+    faceId
   };
 }
 
@@ -47,4 +55,30 @@ export function removeBrush(document: SceneDocument, brushId: string): SceneDocu
     ...document,
     brushes: remainingBrushes
   };
+}
+
+export function getBoxBrushFaceOrThrow(document: SceneDocument, brushId: string, faceId: BoxFaceId): BrushFace {
+  const brush = getBoxBrushOrThrow(document, brushId);
+  const face = brush.faces[faceId];
+
+  if (face === undefined) {
+    throw new Error(`Box brush ${brushId} does not contain face ${faceId}.`);
+  }
+
+  return face;
+}
+
+export function replaceBoxBrushFace(document: SceneDocument, brushId: string, faceId: BoxFaceId, face: BrushFace): SceneDocument {
+  const brush = getBoxBrushOrThrow(document, brushId);
+
+  return replaceBrush(document, {
+    ...brush,
+    faces: {
+      ...brush.faces,
+      [faceId]: {
+        materialId: face.materialId,
+        uv: cloneFaceUvState(face.uv)
+      }
+    }
+  });
 }

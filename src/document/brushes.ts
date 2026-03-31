@@ -1,12 +1,23 @@
 import { createOpaqueId } from "../core/ids";
-import type { Vec3 } from "../core/vector";
+import type { Vec2, Vec3 } from "../core/vector";
 
 export const BOX_FACE_IDS = ["posX", "negX", "posY", "negY", "posZ", "negZ"] as const;
+export const FACE_UV_ROTATION_QUARTER_TURNS = [0, 1, 2, 3] as const;
 
 export type BoxFaceId = (typeof BOX_FACE_IDS)[number];
+export type FaceUvRotationQuarterTurns = (typeof FACE_UV_ROTATION_QUARTER_TURNS)[number];
+
+export interface FaceUvState {
+  offset: Vec2;
+  scale: Vec2;
+  rotationQuarterTurns: FaceUvRotationQuarterTurns;
+  flipU: boolean;
+  flipV: boolean;
+}
 
 export interface BrushFace {
   materialId: string | null;
+  uv: FaceUvState;
 }
 
 export type BoxBrushFaces = Record<BoxFaceId, BrushFace>;
@@ -45,7 +56,8 @@ function cloneVec3(vector: Vec3): Vec3 {
 
 function cloneBrushFace(face: BrushFace): BrushFace {
   return {
-    materialId: face.materialId
+    materialId: face.materialId,
+    uv: cloneFaceUvState(face.uv)
   };
 }
 
@@ -53,8 +65,42 @@ export function isBoxFaceId(value: unknown): value is BoxFaceId {
   return typeof value === "string" && BOX_FACE_IDS.some((faceId) => faceId === value);
 }
 
+export function isFaceUvRotationQuarterTurns(value: unknown): value is FaceUvRotationQuarterTurns {
+  return typeof value === "number" && FACE_UV_ROTATION_QUARTER_TURNS.includes(value as FaceUvRotationQuarterTurns);
+}
+
 export function hasPositiveBoxSize(size: Vec3): boolean {
   return size.x > 0 && size.y > 0 && size.z > 0;
+}
+
+export function createDefaultFaceUvState(): FaceUvState {
+  return {
+    offset: {
+      x: 0,
+      y: 0
+    },
+    scale: {
+      x: 1,
+      y: 1
+    },
+    rotationQuarterTurns: 0,
+    flipU: false,
+    flipV: false
+  };
+}
+
+export function cloneFaceUvState(uv: FaceUvState): FaceUvState {
+  return {
+    offset: {
+      ...uv.offset
+    },
+    scale: {
+      ...uv.scale
+    },
+    rotationQuarterTurns: uv.rotationQuarterTurns,
+    flipU: uv.flipU,
+    flipV: uv.flipV
+  };
 }
 
 export function cloneBoxBrushFaces(faces: BoxBrushFaces): BoxBrushFaces {
@@ -71,22 +117,28 @@ export function cloneBoxBrushFaces(faces: BoxBrushFaces): BoxBrushFaces {
 export function createDefaultBoxBrushFaces(): BoxBrushFaces {
   return {
     posX: {
-      materialId: null
+      materialId: null,
+      uv: createDefaultFaceUvState()
     },
     negX: {
-      materialId: null
+      materialId: null,
+      uv: createDefaultFaceUvState()
     },
     posY: {
-      materialId: null
+      materialId: null,
+      uv: createDefaultFaceUvState()
     },
     negY: {
-      materialId: null
+      materialId: null,
+      uv: createDefaultFaceUvState()
     },
     posZ: {
-      materialId: null
+      materialId: null,
+      uv: createDefaultFaceUvState()
     },
     negZ: {
-      materialId: null
+      materialId: null,
+      uv: createDefaultFaceUvState()
     }
   };
 }
