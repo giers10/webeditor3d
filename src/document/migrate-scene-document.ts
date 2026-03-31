@@ -839,6 +839,31 @@ function readInteractionAction(value: unknown, label: string): InteractionLink["
             ? undefined
             : expectBoolean(value.visible, `${label}.visible`)
       }).action;
+    case "playAnimation": {
+      const targetModelInstanceId = expectString(value.targetModelInstanceId, `${label}.targetModelInstanceId`);
+      if (targetModelInstanceId.trim().length === 0) {
+        throw new Error(`${label}.targetModelInstanceId must be non-empty.`);
+      }
+      const clipName = expectString(value.clipName, `${label}.clipName`);
+      if (clipName.trim().length === 0) {
+        throw new Error(`${label}.clipName must be non-empty.`);
+      }
+      return createPlayAnimationInteractionLink({
+        sourceEntityId: "interaction-source-placeholder",
+        targetModelInstanceId,
+        clipName
+      }).action;
+    }
+    case "stopAnimation": {
+      const targetModelInstanceId = expectString(value.targetModelInstanceId, `${label}.targetModelInstanceId`);
+      if (targetModelInstanceId.trim().length === 0) {
+        throw new Error(`${label}.targetModelInstanceId must be non-empty.`);
+      }
+      return createStopAnimationInteractionLink({
+        sourceEntityId: "interaction-source-placeholder",
+        targetModelInstanceId
+      }).action;
+    }
     default:
       throw new Error(`${label}.type must be a supported interaction action.`);
   }
