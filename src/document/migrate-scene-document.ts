@@ -898,6 +898,21 @@ function readInteractionLink(value: unknown, label: string): InteractionLink {
         targetBrushId: action.targetBrushId,
         visible: action.visible
       });
+    case "playAnimation":
+      return createPlayAnimationInteractionLink({
+        id: expectString(value.id, `${label}.id`),
+        sourceEntityId: expectString(value.sourceEntityId, `${label}.sourceEntityId`),
+        trigger,
+        targetModelInstanceId: action.targetModelInstanceId,
+        clipName: action.clipName
+      });
+    case "stopAnimation":
+      return createStopAnimationInteractionLink({
+        id: expectString(value.id, `${label}.id`),
+        sourceEntityId: expectString(value.sourceEntityId, `${label}.sourceEntityId`),
+        trigger,
+        targetModelInstanceId: action.targetModelInstanceId
+      });
   }
 }
 
