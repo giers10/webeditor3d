@@ -119,6 +119,7 @@ export class RuntimeHost {
     }
 
     this.activeController?.deactivate(this.controllerContext);
+    this.interactionSystem.reset();
     this.activeController = nextController;
     this.activeController.activate(this.controllerContext);
   }

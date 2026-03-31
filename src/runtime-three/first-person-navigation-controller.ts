@@ -138,6 +138,18 @@ export class FirstPersonNavigationController implements NavigationController {
     this.publishTelemetry();
   }
 
+  teleportTo(feetPosition: Vec3, yawDegrees: number) {
+    this.feetPosition = {
+      ...feetPosition
+    };
+    this.yawRadians = (yawDegrees * Math.PI) / 180;
+    this.pitchRadians = 0;
+    this.verticalVelocity = 0;
+    this.grounded = false;
+    this.updateCameraTransform();
+    this.publishTelemetry();
+  }
+
   private updateCameraTransform() {
     if (this.context === null) {
       return;
