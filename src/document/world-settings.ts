@@ -16,6 +16,7 @@ export interface WorldVerticalGradientBackgroundSettings {
 export interface WorldImageBackgroundSettings {
   mode: "image";
   assetId: string;
+  environmentIntensity: number;
 }
 
 export type WorldBackgroundSettings =
