@@ -335,7 +335,8 @@ function formatModelAssetSummary(asset: ModelAssetRecord): string {
     asset.metadata.format.toUpperCase(),
     formatByteLength(asset.byteLength),
     `${asset.metadata.meshCount} mesh${asset.metadata.meshCount === 1 ? "" : "es"}`,
-    `${asset.metadata.materialNames.length} material${asset.metadata.materialNames.length === 1 ? "" : "s"}`
+    `${asset.metadata.materialNames.length} material${asset.metadata.materialNames.length === 1 ? "" : "s"}`,
+    `${asset.metadata.textureNames.length} texture${asset.metadata.textureNames.length === 1 ? "" : "s"}`
   ];
 
   if (asset.metadata.animationNames.length > 0) {
