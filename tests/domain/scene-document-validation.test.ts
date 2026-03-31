@@ -116,4 +116,38 @@ describe("validateSceneDocument", () => {
       ])
     );
   });
+
+  it("detects invalid world lighting and background settings", () => {
+    const document = createEmptySceneDocument();
+    document.world.background = {
+      mode: "verticalGradient",
+      topColorHex: "sky-blue",
+      bottomColorHex: "#18212b"
+    };
+    document.world.ambientLight.intensity = -0.25;
+    document.world.sunLight.direction = {
+      x: 0,
+      y: 0,
+      z: 0
+    };
+
+    const validation = validateSceneDocument(document);
+
+    expect(validation.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "invalid-world-background-top-color",
+          path: "world.background.topColorHex"
+        }),
+        expect.objectContaining({
+          code: "invalid-world-ambient-intensity",
+          path: "world.ambientLight.intensity"
+        }),
+        expect.objectContaining({
+          code: "invalid-world-sun-direction",
+          path: "world.sunLight.direction"
+        })
+      ])
+    );
+  });
 });

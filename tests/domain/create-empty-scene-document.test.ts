@@ -9,6 +9,25 @@ describe("createEmptySceneDocument", () => {
 
     expect(document.version).toBe(SCENE_DOCUMENT_VERSION);
     expect(document.name).toBe("Untitled Scene");
+    expect(document.world).toEqual({
+      background: {
+        mode: "solid",
+        colorHex: "#2f3947"
+      },
+      ambientLight: {
+        colorHex: "#f7f1e8",
+        intensity: 1
+      },
+      sunLight: {
+        colorHex: "#fff1d5",
+        intensity: 1.75,
+        direction: {
+          x: -0.6,
+          y: 1,
+          z: 0.35
+        }
+      }
+    });
     expect(document.brushes).toEqual({});
     expect(document.entities).toEqual({});
     expect(document.modelInstances).toEqual({});
