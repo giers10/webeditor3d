@@ -70,8 +70,8 @@ function openIndexedDb(): Promise<IDBDatabase> {
 class IndexedDbProjectAssetStorage implements ProjectAssetStorage {
   private readonly databasePromise: Promise<IDBDatabase>;
 
-  constructor() {
-    this.databasePromise = openIndexedDb();
+  constructor(databasePromise: Promise<IDBDatabase>) {
+    this.databasePromise = databasePromise;
   }
 
   private async withStore<T>(mode: IDBTransactionMode, callback: (store: IDBObjectStore) => IDBRequest<T>): Promise<T> {
@@ -172,8 +172,10 @@ export async function getBrowserProjectAssetStorageAccess(): Promise<ProjectAsse
   }
 
   try {
+    const databasePromise = openIndexedDb();
+    await databasePromise;
     return {
-      storage: new IndexedDbProjectAssetStorage(),
+      storage: new IndexedDbProjectAssetStorage(databasePromise),
       diagnostic: null
     };
   } catch (error) {
@@ -183,4 +185,3 @@ export async function getBrowserProjectAssetStorageAccess(): Promise<ProjectAsse
     };
   }
 }
-

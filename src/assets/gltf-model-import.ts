@@ -1,8 +1,5 @@
-import { Box3, BoxGeometry, Group, Mesh, MeshStandardMaterial, Object3D, type BufferGeometry, type Material } from "three";
+import { Box3, Group, Mesh, Object3D } from "three";
 import { GLTFLoader, type GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
-
-import { createOpaqueId } from "../core/ids";
-import type { Vec3 } from "../core/vector";
 
 import { createModelInstance, type ModelInstance } from "./model-instances";
 import {
@@ -11,6 +8,7 @@ import {
   type ModelAssetRecord,
   type ProjectAssetStorage
 } from "./project-assets";
+import { createOpaqueId } from "../core/ids";
 import type { ProjectAssetStorageRecord } from "./project-asset-storage";
 
 export interface LoadedModelAsset {
@@ -24,14 +22,6 @@ export interface ImportedModelAssetResult {
   asset: ModelAssetRecord;
   modelInstance: ModelInstance;
   loadedAsset: LoadedModelAsset;
-}
-
-function cloneVec3(vector: Vec3): Vec3 {
-  return {
-    x: vector.x,
-    y: vector.y,
-    z: vector.z
-  };
 }
 
 function getErrorDetail(error: unknown): string {
@@ -98,7 +88,7 @@ function collectMaterialNames(scene: Group): string[] {
   const names = new Set<string>();
 
   scene.traverse((object) => {
-    const maybeMesh = object as Mesh | null;
+    const maybeMesh = object as Mesh & { isMesh?: boolean };
 
     if (maybeMesh.isMesh !== true) {
       return;
@@ -131,7 +121,7 @@ function collectTextureNames(parserJson: { textures?: Array<{ name?: string }> }
 
 function collectAnimationNames(gltf: GLTF): string[] {
   return gltf.animations
-    .map((animation, index) => animation.name.trim().length > 0 ? animation.name : `Animation ${index + 1}`)
+    .map((animation, index) => (animation.name.trim().length > 0 ? animation.name : `Animation ${index + 1}`))
     .sort((left, right) => left.localeCompare(right));
 }
 
@@ -148,7 +138,6 @@ function countNodes(scene: Group): number {
 export function extractModelAssetMetadata(gltf: GLTF, format: "glb" | "gltf"): ModelAssetMetadata {
   gltf.scene.updateMatrixWorld(true);
   const boundingBox = createBoundingBoxFromObject(gltf.scene);
-  const meshCount = gltf.scene.children.length === 0 ? 0 : gltf.scene.getObjectByProperty("isMesh", true) !== undefined ? 1 : 0;
 
   let actualMeshCount = 0;
 
@@ -185,7 +174,7 @@ export function extractModelAssetMetadata(gltf: GLTF, format: "glb" | "gltf"): M
     format,
     sceneName: gltf.scene.name.trim().length > 0 ? gltf.scene.name : null,
     nodeCount: countNodes(gltf.scene),
-    meshCount: actualMeshCount ?? meshCount,
+    meshCount: actualMeshCount,
     materialNames: [...new Set(materialNames)].sort((left, right) => left.localeCompare(right)),
     textureNames,
     animationNames,
@@ -286,4 +275,3 @@ export async function loadModelAssetFromStorage(
 
   return createLoadedModelAsset(asset, cloneTemplateScene(gltf.scene));
 }
-
