@@ -344,6 +344,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const editablePlayerStart = selectedPlayerStart ?? primaryPlayerStart;
 
   const [sceneNameDraft, setSceneNameDraft] = useState(editorState.document.name);
+  const [brushNameDraft, setBrushNameDraft] = useState("");
   const [positionDraft, setPositionDraft] = useState(createVec3Draft(DEFAULT_BOX_BRUSH_CENTER));
   const [sizeDraft, setSizeDraft] = useState(createVec3Draft(DEFAULT_BOX_BRUSH_SIZE));
   const [uvOffsetDraft, setUvOffsetDraft] = useState(createVec2Draft(createDefaultFaceUvState().offset));
@@ -361,6 +362,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [runtimeScene, setRuntimeScene] = useState<RuntimeSceneDefinition | null>(null);
   const [runtimeMessage, setRuntimeMessage] = useState<string | null>(null);
   const [firstPersonTelemetry, setFirstPersonTelemetry] = useState<FirstPersonTelemetry | null>(null);
+  const [focusRequest, setFocusRequest] = useState<{ id: number; selection: EditorSelection }>({
+    id: 0,
+    selection: {
+      kind: "none"
+    }
+  });
   const importInputRef = useRef<HTMLInputElement | null>(null);
   const documentValidation = validateSceneDocument(editorState.document);
   const runValidation = validateRuntimeSceneBuild(editorState.document, preferredNavigationMode);
@@ -377,6 +384,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
   useEffect(() => {
     setSceneNameDraft(editorState.document.name);
   }, [editorState.document.name]);
+
+  useEffect(() => {
+    setBrushNameDraft(selectedBrush?.name ?? "");
+  }, [selectedBrush]);
 
   useEffect(() => {
     if (selectedBrush === null) {
@@ -411,6 +422,41 @@ export function App({ store, initialStatusMessage }: AppProps) {
     setPlayerStartPositionDraft(createVec3Draft(editablePlayerStart.position));
     setPlayerStartYawDraft(String(editablePlayerStart.yawDegrees));
   }, [editablePlayerStart]);
+
+  useEffect(() => {
+    if (editorState.toolMode === "play") {
+      return;
+    }
+
+    const handleWindowKeyDown = (event: KeyboardEvent) => {
+      if (isTextEntryTarget(event.target)) {
+        return;
+      }
+
+      if (event.code !== "NumpadComma" && !(event.key === "," && event.location === event.DOM_KEY_LOCATION_NUMPAD)) {
+        return;
+      }
+
+      event.preventDefault();
+
+      if (editorState.selection.kind === "none" && brushList.length === 0 && playerStartList.length === 0) {
+        setStatusMessage("Nothing authored yet to frame in the viewport.");
+        return;
+      }
+
+      setFocusRequest((current) => ({
+        id: current.id + 1,
+        selection: editorState.selection
+      }));
+      setStatusMessage(editorState.selection.kind === "none" ? "Framed the authored scene in the viewport." : "Framed the current selection.");
+    };
+
+    window.addEventListener("keydown", handleWindowKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleWindowKeyDown);
+    };
+  }, [editorState.selection, editorState.toolMode, brushList.length, playerStartList.length]);
 
   const applySceneName = () => {
     const normalizedName = sceneNameDraft.trim() || "Untitled Scene";
