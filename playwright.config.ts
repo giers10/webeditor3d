@@ -15,7 +15,10 @@ export default defineConfig({
     {
       name: "chromium",
       use: {
-        ...devices["Desktop Chrome"]
+        ...devices["Desktop Chrome"],
+        launchOptions: {
+          args: ["--enable-webgl", "--use-gl=angle", "--use-angle=swiftshader-webgl"]
+        }
       }
     }
   ],
