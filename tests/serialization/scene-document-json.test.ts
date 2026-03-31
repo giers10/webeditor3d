@@ -83,6 +83,7 @@ describe("scene document JSON", () => {
       version: 1,
       name: "Foundation Scene",
       world: createEmptySceneDocument().world,
+      materials: {},
       textures: {},
       assets: {},
       brushes: {},
