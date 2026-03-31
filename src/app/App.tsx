@@ -4,6 +4,7 @@ import { createCreateBoxBrushCommand } from "../commands/create-box-brush-comman
 import { createMoveBoxBrushCommand } from "../commands/move-box-brush-command";
 import { createResizeBoxBrushCommand } from "../commands/resize-box-brush-command";
 import { createSetBoxBrushFaceMaterialCommand } from "../commands/set-box-brush-face-material-command";
+import { createSetBoxBrushNameCommand } from "../commands/set-box-brush-name-command";
 import { createSetBoxBrushFaceUvStateCommand } from "../commands/set-box-brush-face-uv-state-command";
 import { createSetPlayerStartCommand } from "../commands/set-player-start-command";
 import { createSetSceneNameCommand } from "../commands/set-scene-name-command";
@@ -21,6 +22,7 @@ import {
   DEFAULT_BOX_BRUSH_CENTER,
   DEFAULT_BOX_BRUSH_SIZE,
   createDefaultFaceUvState,
+  normalizeBrushName,
   type BoxBrush,
   type BoxFaceId,
   type FaceUvRotationQuarterTurns,
@@ -97,10 +99,10 @@ function getViewportCaption(toolMode: "select" | "box-create" | "play", brushCou
   }
 
   if (toolMode === "box-create") {
-    return `Box Create is active. Move over the grid to preview snapped placement, then click to place a ${DEFAULT_BOX_BRUSH_SIZE.x} x ${DEFAULT_BOX_BRUSH_SIZE.y} x ${DEFAULT_BOX_BRUSH_SIZE.z} box.`;
+    return `Box Create is active. Click the grid to place a ${DEFAULT_BOX_BRUSH_SIZE.x} x ${DEFAULT_BOX_BRUSH_SIZE.y} x ${DEFAULT_BOX_BRUSH_SIZE.z} box.`;
   }
 
-  return `${brushCount} box brush${brushCount === 1 ? "" : "es"} loaded. Click a brush face in the viewport or use the face selector to texture it.`;
+  return `${brushCount} box brush${brushCount === 1 ? "" : "es"} loaded. Middle-drag orbits, Shift + middle-drag pans, wheel zooms, and Numpad Comma frames the selection.`;
 }
 
 function createVec2Draft(vector: Vec2): Vec2Draft {
@@ -207,13 +209,13 @@ function getSelectedPlayerStart(selection: EditorSelection, playerStarts: Player
   return playerStarts.find((entity) => entity.id === selectedEntityId) ?? null;
 }
 
-function getBrushLabel(index: number): string {
-  return `Box Brush ${index + 1}`;
+function getBrushLabel(brush: BoxBrush, index: number): string {
+  return brush.name ?? `Box Brush ${index + 1}`;
 }
 
 function getBrushLabelById(brushId: string, brushes: BoxBrush[]): string {
   const brushIndex = brushes.findIndex((brush) => brush.id === brushId);
-  return brushIndex === -1 ? "Box Brush" : getBrushLabel(brushIndex);
+  return brushIndex === -1 ? "Box Brush" : getBrushLabel(brushes[brushIndex], brushIndex);
 }
 
 function getPlayerStartLabel(index: number): string {
@@ -258,6 +260,19 @@ function getErrorMessage(error: unknown): string {
   }
 
   return "An unexpected error occurred.";
+}
+
+function isTextEntryTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) {
+    return false;
+  }
+
+  return (
+    target instanceof HTMLInputElement ||
+    target instanceof HTMLTextAreaElement ||
+    target instanceof HTMLSelectElement ||
+    target.isContentEditable
+  );
 }
 
 function sortDocumentMaterials(materials: Record<string, MaterialDef>): MaterialDef[] {
