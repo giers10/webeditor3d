@@ -583,6 +583,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     selectedFace !== null && selectedFace.materialId !== null ? editorState.document.materials[selectedFace.materialId] ?? null : null;
   const selectedModelAsset =
     selectedModelInstance !== null ? (editorState.document.assets[selectedModelInstance.assetId] ?? null) : null;
+  const selectedModelAssetRecord = selectedModelAsset !== null && selectedModelAsset.kind === "model" ? selectedModelAsset : null;
   const selectedPlayerStart = selectedEntity?.kind === "playerStart" ? selectedEntity : null;
   const selectedSoundEmitter = selectedEntity?.kind === "soundEmitter" ? selectedEntity : null;
   const selectedTriggerVolume = selectedEntity?.kind === "triggerVolume" ? selectedEntity : null;
