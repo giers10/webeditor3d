@@ -1,5 +1,4 @@
 import {
-  type EntityInstance,
   type InteractableEntity,
   type PlayerStartEntity,
   type SoundEmitterEntity,
@@ -47,11 +46,11 @@ function isFiniteNumber(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value);
 }
 
-function isFiniteVec3(vector: { x: unknown; y: unknown; z: unknown }): boolean {
+function isFiniteVec3(vector: { x: unknown; y: unknown; z: unknown }): vector is { x: number; y: number; z: number } {
   return isFiniteNumber(vector.x) && isFiniteNumber(vector.y) && isFiniteNumber(vector.z);
 }
 
-function hasPositiveFiniteVec3(vector: { x: unknown; y: unknown; z: unknown }): boolean {
+function hasPositiveFiniteVec3(vector: { x: unknown; y: unknown; z: unknown }): vector is { x: number; y: number; z: number } {
   return isFiniteVec3(vector) && vector.x > 0 && vector.y > 0 && vector.z > 0;
 }
 
