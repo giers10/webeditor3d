@@ -88,6 +88,10 @@ function cloneVec3(vector: Vec3): Vec3 {
   };
 }
 
+function areVec3Equal(left: Vec3, right: Vec3): boolean {
+  return left.x === right.x && left.y === right.y && left.z === right.z;
+}
+
 function assertFiniteVec3(vector: Vec3, label: string) {
   if (!Number.isFinite(vector.x) || !Number.isFinite(vector.y) || !Number.isFinite(vector.z)) {
     throw new Error(`${label} must be finite on every axis.`);
@@ -324,6 +328,34 @@ export function cloneEntityInstance(entity: EntityInstance): EntityInstance {
 
 export function cloneEntityRegistry(entities: Record<string, EntityInstance>): Record<string, EntityInstance> {
   return Object.fromEntries(Object.entries(entities).map(([entityId, entity]) => [entityId, cloneEntityInstance(entity)]));
+}
+
+export function areEntityInstancesEqual(left: EntityInstance, right: EntityInstance): boolean {
+  if (left.kind !== right.kind || left.id !== right.id || !areVec3Equal(left.position, right.position)) {
+    return false;
+  }
+
+  switch (left.kind) {
+    case "playerStart":
+      return left.yawDegrees === right.yawDegrees;
+    case "soundEmitter":
+      return (
+        left.radius === right.radius &&
+        left.gain === right.gain &&
+        left.autoplay === right.autoplay &&
+        left.loop === right.loop
+      );
+    case "triggerVolume":
+      return (
+        areVec3Equal(left.size, right.size) &&
+        left.triggerOnEnter === right.triggerOnEnter &&
+        left.triggerOnExit === right.triggerOnExit
+      );
+    case "teleportTarget":
+      return left.yawDegrees === right.yawDegrees;
+    case "interactable":
+      return left.radius === right.radius && left.prompt === right.prompt && left.enabled === right.enabled;
+  }
 }
 
 export function compareEntityInstances(left: EntityInstance, right: EntityInstance): number {
