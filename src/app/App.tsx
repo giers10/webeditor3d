@@ -2516,6 +2516,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
               runtimeScene={runtimeScene}
               projectAssets={editorState.document.assets}
               loadedModelAssets={loadedModelAssets}
+              loadedImageAssets={loadedImageAssets}
               navigationMode={activeNavigationMode}
               onRuntimeMessageChange={setRuntimeMessage}
               onFirstPersonTelemetryChange={setFirstPersonTelemetry}
@@ -3052,6 +3053,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
             sceneDocument={editorState.document}
             projectAssets={editorState.document.assets}
             loadedModelAssets={loadedModelAssets}
+            loadedImageAssets={loadedImageAssets}
             selection={editorState.selection}
             toolMode={editorState.toolMode}
             focusRequestId={focusRequest.id}
