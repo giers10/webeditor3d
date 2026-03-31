@@ -29,7 +29,7 @@ const FALLBACK_FACE_COLOR = 0x747d89;
 export class RuntimeHost {
   private readonly scene = new Scene();
   private readonly camera = new PerspectiveCamera(70, 1, 0.05, 1000);
-  private readonly renderer = new WebGLRenderer({ antialias: true, alpha: true });
+  private readonly domElement: HTMLCanvasElement;
   private readonly ambientLight = new AmbientLight();
   private readonly sunLight = new DirectionalLight();
   private readonly brushGroup = new Group();
@@ -39,6 +39,7 @@ export class RuntimeHost {
   private readonly brushMeshes = new Map<string, Mesh<BoxGeometry, MeshStandardMaterial[]>>();
   private readonly materialTextureCache = new Map<string, CachedMaterialTexture>();
   private readonly controllerContext: RuntimeControllerContext;
+  private readonly renderer: WebGLRenderer | null;
   private resizeObserver: ResizeObserver | null = null;
   private animationFrame = 0;
   private previousFrameTime = 0;
@@ -50,16 +51,25 @@ export class RuntimeHost {
   private currentRuntimeMessage: string | null = null;
   private currentFirstPersonTelemetry: FirstPersonTelemetry | null = null;
 
-  constructor() {
+  constructor(options: { enableRendering?: boolean } = {}) {
+    const enableRendering = options.enableRendering ?? true;
+
     this.scene.add(this.ambientLight);
     this.scene.add(this.sunLight);
     this.scene.add(this.brushGroup);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    this.renderer.setClearAlpha(0);
+    this.renderer = enableRendering ? new WebGLRenderer({ antialias: true, alpha: true }) : null;
+    this.domElement = this.renderer?.domElement ?? document.createElement("canvas");
+
+    if (this.renderer !== null) {
+      this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      this.renderer.setClearAlpha(0);
+    } else {
+      this.domElement.className = "runner-canvas__surface";
+    }
 
     this.controllerContext = {
       camera: this.camera,
-      domElement: this.renderer.domElement,
+      domElement: this.domElement,
       getRuntimeScene: () => {
         if (this.runtimeScene === null) {
           throw new Error("Runtime scene has not been loaded.");
@@ -84,7 +94,7 @@ export class RuntimeHost {
 
   mount(container: HTMLElement) {
     this.container = container;
-    container.appendChild(this.renderer.domElement);
+    container.appendChild(this.domElement);
     this.resize();
 
     this.resizeObserver = new ResizeObserver(() => {
@@ -149,10 +159,10 @@ export class RuntimeHost {
     }
 
     this.materialTextureCache.clear();
-    this.renderer.dispose();
+    this.renderer?.dispose();
 
-    if (this.container !== null && this.container.contains(this.renderer.domElement)) {
-      this.container.removeChild(this.renderer.domElement);
+    if (this.container !== null && this.container.contains(this.domElement)) {
+      this.container.removeChild(this.domElement);
     }
 
     this.container = null;
@@ -260,7 +270,9 @@ export class RuntimeHost {
 
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
-    this.renderer.setSize(width, height, false);
+    this.domElement.width = width;
+    this.domElement.height = height;
+    this.renderer?.setSize(width, height, false);
   }
 
   private render = () => {
@@ -283,7 +295,7 @@ export class RuntimeHost {
       });
     }
 
-    this.renderer.render(this.scene, this.camera);
+    this.renderer?.render(this.scene, this.camera);
   };
 
   private applyTeleportPlayerAction(target: RuntimeTeleportTarget) {
