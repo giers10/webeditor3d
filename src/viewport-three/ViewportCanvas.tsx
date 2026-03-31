@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import type { LoadedModelAsset } from "../assets/gltf-model-import";
+import type { LoadedImageAsset } from "../assets/image-assets";
 import type { ProjectAssetRecord } from "../assets/project-assets";
 import type { EditorSelection } from "../core/selection";
 import type { ToolMode } from "../core/tool-mode";
@@ -17,6 +18,7 @@ interface ViewportCanvasProps {
   sceneDocument: SceneDocument;
   projectAssets: Record<string, ProjectAssetRecord>;
   loadedModelAssets: Record<string, LoadedModelAsset>;
+  loadedImageAssets: Record<string, LoadedImageAsset>;
   selection: EditorSelection;
   toolMode: ToolMode;
   focusRequestId: number;
@@ -38,6 +40,7 @@ export function ViewportCanvas({
   sceneDocument,
   projectAssets,
   loadedModelAssets,
+  loadedImageAssets,
   selection,
   toolMode,
   focusRequestId,
@@ -90,8 +93,8 @@ export function ViewportCanvas({
   }, [world]);
 
   useEffect(() => {
-    hostRef.current?.updateAssets(projectAssets, loadedModelAssets);
-  }, [projectAssets, loadedModelAssets]);
+    hostRef.current?.updateAssets(projectAssets, loadedModelAssets, loadedImageAssets);
+  }, [projectAssets, loadedModelAssets, loadedImageAssets]);
 
   useEffect(() => {
     hostRef.current?.updateDocument(sceneDocument, selection);
@@ -131,7 +134,7 @@ export function ViewportCanvas({
       className={`viewport-canvas viewport-canvas--${toolMode}`}
       data-testid="viewport-shell"
       aria-label="Editor viewport"
-      style={createWorldBackgroundStyle(world.background)}
+      style={createWorldBackgroundStyle(world.background, world.background.mode === "image" ? loadedImageAssets[world.background.assetId]?.sourceUrl ?? null : null)}
     >
       <div className="viewport-canvas__overlay" data-testid="viewport-overlay">
         <div className="viewport-canvas__overlay-badge">{toolMode === "box-create" ? "Box Create" : "Select"}</div>
