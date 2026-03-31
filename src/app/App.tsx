@@ -290,7 +290,7 @@ function isCommitIncrementKey(key: string): boolean {
 function blurActiveTextEntry() {
   const activeElement = document.activeElement;
 
-  if (!isTextEntryTarget(activeElement)) {
+  if (!(activeElement instanceof HTMLElement) || !isTextEntryTarget(activeElement)) {
     return;
   }
 
