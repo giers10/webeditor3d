@@ -1072,6 +1072,23 @@ export function App({ store, initialStatusMessage }: AppProps) {
           </div>
 
           <div className="toolbar__group">
+            <button
+              className={`toolbar__button ${preferredNavigationMode === "firstPerson" ? "toolbar__button--active" : ""}`}
+              type="button"
+              onClick={() => handleSetPreferredNavigationMode("firstPerson")}
+            >
+              First Person
+            </button>
+            <button
+              className={`toolbar__button ${preferredNavigationMode === "orbitVisitor" ? "toolbar__button--active" : ""}`}
+              type="button"
+              onClick={() => handleSetPreferredNavigationMode("orbitVisitor")}
+            >
+              Orbit Visitor
+            </button>
+          </div>
+
+          <div className="toolbar__group">
             <button className="toolbar__button" type="button" disabled={!editorState.canUndo} onClick={() => store.undo()}>
               Undo
             </button>
@@ -1172,7 +1189,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
             <div className="outliner-section">
               <div className="label">Entities</div>
               {playerStartList.length === 0 ? (
-                <div className="outliner-empty">No Player Start authored yet.</div>
+                <>
+                  <div className="outliner-empty">No Player Start authored yet.</div>
+                  <div className="inline-actions">
+                    <button className="toolbar__button" type="button" data-testid="place-player-start" onClick={applyPlayerStartChange}>
+                      Place Player Start
+                    </button>
+                  </div>
+                </>
               ) : (
                 <div className="outliner-list">
                   {playerStartList.map((playerStart, index) => (
@@ -1592,66 +1616,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 )}
               </>
             )}
-          </Panel>
-
-          <Panel title="Runner">
-            <div className="stat-grid">
-              <div className="stat-card">
-                <div className="label">Player Start</div>
-                <div className="value">{primaryPlayerStart === null ? "Missing" : "Authored"}</div>
-              </div>
-              <div className="stat-card">
-                <div className="label">Default Run Mode</div>
-                <div className="value">{preferredNavigationMode === "firstPerson" ? "First Person" : "Orbit Visitor"}</div>
-              </div>
-            </div>
-
-            {primaryPlayerStart === null ? (
-              <div className="outliner-empty">First-person run needs an authored Player Start.</div>
-            ) : (
-              <div className="stat-card">
-                <div className="label">Authored Spawn</div>
-                <div className="value">
-                  {primaryPlayerStart.position.x}, {primaryPlayerStart.position.y}, {primaryPlayerStart.position.z}
-                </div>
-                <div className="material-summary">yaw {primaryPlayerStart.yawDegrees}°</div>
-              </div>
-            )}
-
-            {primaryPlayerStart !== null ? null : (
-              <div className="inline-actions">
-                <button className="toolbar__button" type="button" data-testid="place-player-start" onClick={applyPlayerStartChange}>
-                  Place Player Start
-                </button>
-              </div>
-            )}
-
-            <div className="inline-actions">
-              <button
-                className={`toolbar__button ${preferredNavigationMode === "firstPerson" ? "toolbar__button--active" : ""}`}
-                type="button"
-                onClick={() => handleSetPreferredNavigationMode("firstPerson")}
-              >
-                First Person
-              </button>
-              <button
-                className={`toolbar__button ${preferredNavigationMode === "orbitVisitor" ? "toolbar__button--active" : ""}`}
-                type="button"
-                onClick={() => handleSetPreferredNavigationMode("orbitVisitor")}
-              >
-                Orbit Visitor
-              </button>
-            </div>
-
-            <div className="inline-actions">
-              <button
-                className={`toolbar__button toolbar__button--accent ${blockingDiagnostics.length > 0 ? "toolbar__button--warn" : ""}`}
-                type="button"
-                onClick={handleEnterPlayMode}
-              >
-                Enter Run Mode
-              </button>
-            </div>
           </Panel>
         </aside>
       </div>
