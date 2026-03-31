@@ -33,6 +33,7 @@ export interface LoadedModelAsset {
   storageKey: string;
   metadata: ModelAssetMetadata;
   template: Group;
+  animations: AnimationClip[];
 }
 
 export interface ImportedModelAssetResult {
