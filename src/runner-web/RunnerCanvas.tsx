@@ -57,7 +57,6 @@ export function RunnerCanvas({
         setInteractionPrompt(prompt);
         onInteractionPromptChange(prompt);
       });
-      runtimeHost.updateAssets(projectAssets, loadedModelAssets);
       setRunnerMessage(
         hasWebGl ? null : "WebGL is unavailable in this browser environment. The runner shell is visible, but runtime rendering is disabled."
       );
@@ -73,7 +72,7 @@ export function RunnerCanvas({
       onInteractionPromptChange(null);
       return;
     }
-  }, [onFirstPersonTelemetryChange, onInteractionPromptChange, onRuntimeMessageChange, projectAssets, loadedModelAssets]);
+  }, [onFirstPersonTelemetryChange, onInteractionPromptChange, onRuntimeMessageChange]);
 
   useEffect(() => {
     hostRef.current?.loadScene(runtimeScene);
