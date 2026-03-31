@@ -685,6 +685,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [ambientLightIntensityDraft, setAmbientLightIntensityDraft] = useState(String(editorState.document.world.ambientLight.intensity));
   const [sunLightIntensityDraft, setSunLightIntensityDraft] = useState(String(editorState.document.world.sunLight.intensity));
   const [sunDirectionDraft, setSunDirectionDraft] = useState(createVec3Draft(editorState.document.world.sunLight.direction));
+  const [backgroundEnvironmentIntensityDraft, setBackgroundEnvironmentIntensityDraft] = useState(
+    editorState.document.world.background.mode === "image" ? String(editorState.document.world.background.environmentIntensity) : "0.5"
+  );
   const [statusMessage, setStatusMessage] = useState(initialStatusMessage ?? "Slice 3.2 local lights and skyboxes ready.");
   const [assetStatusMessage, setAssetStatusMessage] = useState<string | null>(null);
   const [preferredNavigationMode, setPreferredNavigationMode] = useState<RuntimeNavigationMode>(
