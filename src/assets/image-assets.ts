@@ -51,8 +51,12 @@ function inferImageMimeType(sourceName: string, fallbackMimeType: string): strin
   switch (getFileExtension(sourceName)) {
     case "avif":
       return "image/avif";
+    case "exr":
+      return "image/x-exr";
     case "gif":
       return "image/gif";
+    case "hdr":
+      return "image/vnd.radiance";
     case "jpg":
     case "jpeg":
       return "image/jpeg";
@@ -63,8 +67,13 @@ function inferImageMimeType(sourceName: string, fallbackMimeType: string): strin
     case "webp":
       return "image/webp";
     default:
-      throw new Error(`Unsupported image asset format for ${sourceName}. Use a browser-supported image file.`);
+      throw new Error(`Unsupported image asset format for ${sourceName}. Use a browser-supported image file or .exr/.hdr.`);
   }
+}
+
+function isHdrFormat(sourceName: string): boolean {
+  const ext = getFileExtension(sourceName);
+  return ext === "exr" || ext === "hdr";
 }
 
 function getImportedFilePath(file: File): string {
