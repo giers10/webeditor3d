@@ -5,9 +5,8 @@ import {
 } from "three";
 
 import { createOpaqueId } from "../core/ids";
-import type { ImageAssetMetadata, ImageAssetRecord } from "./project-assets";
+import { createProjectAssetStorageKey, type ImageAssetMetadata, type ImageAssetRecord } from "./project-assets";
 import {
-  createProjectAssetStorageKey,
   type ProjectAssetStorage,
   type ProjectAssetStorageFileRecord,
   type ProjectAssetStoragePackageRecord
