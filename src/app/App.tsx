@@ -1078,6 +1078,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 type="text"
                 value={sceneNameDraft}
                 onChange={(event) => setSceneNameDraft(event.currentTarget.value)}
+                onBlur={applySceneName}
                 onKeyDown={(event) => {
                   if (event.key === "Enter") {
                     applySceneName();
@@ -1085,12 +1086,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 }}
               />
             </label>
-
-            <div className="inline-actions">
-              <button className="toolbar__button toolbar__button--accent" type="button" onClick={applySceneName}>
-                Apply Scene Name Command
-              </button>
-            </div>
 
             <div className="form-section">
               <div className="label">Save / Load</div>
@@ -1112,11 +1107,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 {persistenceMessage}
               </div>
             </div>
-
-            <ul className="placeholder-list">
-              <li>Local Draft is the browser persistence path for this slice and auto-loads on refresh when available.</li>
-              <li>JSON import replaces the current document only after migration and validation succeed.</li>
-            </ul>
           </Panel>
 
           <Panel title="Status">
