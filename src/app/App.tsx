@@ -370,16 +370,21 @@ function formatWorldBackgroundLabel(world: WorldSettings): string {
 export function App({ store, initialStatusMessage }: AppProps) {
   const editorState = useEditorStoreState(store);
   const brushList = Object.values(editorState.document.brushes);
-  const playerStartList = getPlayerStartEntities(editorState.document.entities);
+  const entityList = getEntityInstances(editorState.document.entities);
+  const entityDisplayList = getSortedEntityDisplayLabels(editorState.document.entities);
   const primaryPlayerStart = getPrimaryPlayerStartEntity(editorState.document.entities);
   const materialList = sortDocumentMaterials(editorState.document.materials);
   const selectedBrush = getSelectedBoxBrush(editorState.selection, brushList);
-  const selectedPlayerStart = getSelectedPlayerStart(editorState.selection, playerStartList);
+  const selectedEntity = getSelectedEntity(editorState.selection, entityList);
   const selectedFaceId = getSelectedBrushFaceId(editorState.selection);
   const selectedFace = selectedBrush !== null && selectedFaceId !== null ? selectedBrush.faces[selectedFaceId] : null;
   const selectedFaceMaterial =
     selectedFace !== null && selectedFace.materialId !== null ? editorState.document.materials[selectedFace.materialId] ?? null : null;
-  const editablePlayerStart = selectedPlayerStart ?? primaryPlayerStart;
+  const selectedPlayerStart = selectedEntity?.kind === "playerStart" ? selectedEntity : null;
+  const selectedSoundEmitter = selectedEntity?.kind === "soundEmitter" ? selectedEntity : null;
+  const selectedTriggerVolume = selectedEntity?.kind === "triggerVolume" ? selectedEntity : null;
+  const selectedTeleportTarget = selectedEntity?.kind === "teleportTarget" ? selectedEntity : null;
+  const selectedInteractable = selectedEntity?.kind === "interactable" ? selectedEntity : null;
 
   const [sceneNameDraft, setSceneNameDraft] = useState(editorState.document.name);
   const [brushNameDraft, setBrushNameDraft] = useState("");
@@ -387,12 +392,23 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [sizeDraft, setSizeDraft] = useState(createVec3Draft(DEFAULT_BOX_BRUSH_SIZE));
   const [uvOffsetDraft, setUvOffsetDraft] = useState(createVec2Draft(createDefaultFaceUvState().offset));
   const [uvScaleDraft, setUvScaleDraft] = useState(createVec2Draft(createDefaultFaceUvState().scale));
-  const [playerStartPositionDraft, setPlayerStartPositionDraft] = useState(createVec3Draft(DEFAULT_PLAYER_START_POSITION));
+  const [entityPositionDraft, setEntityPositionDraft] = useState(createVec3Draft(DEFAULT_ENTITY_POSITION));
   const [playerStartYawDraft, setPlayerStartYawDraft] = useState("0");
+  const [soundEmitterRadiusDraft, setSoundEmitterRadiusDraft] = useState(String(DEFAULT_SOUND_EMITTER_RADIUS));
+  const [soundEmitterGainDraft, setSoundEmitterGainDraft] = useState(String(DEFAULT_SOUND_EMITTER_GAIN));
+  const [soundEmitterAutoplayDraft, setSoundEmitterAutoplayDraft] = useState(false);
+  const [soundEmitterLoopDraft, setSoundEmitterLoopDraft] = useState(false);
+  const [triggerVolumeSizeDraft, setTriggerVolumeSizeDraft] = useState(createVec3Draft(DEFAULT_TRIGGER_VOLUME_SIZE));
+  const [triggerOnEnterDraft, setTriggerOnEnterDraft] = useState(true);
+  const [triggerOnExitDraft, setTriggerOnExitDraft] = useState(false);
+  const [teleportTargetYawDraft, setTeleportTargetYawDraft] = useState(String(DEFAULT_TELEPORT_TARGET_YAW_DEGREES));
+  const [interactableRadiusDraft, setInteractableRadiusDraft] = useState(String(DEFAULT_INTERACTABLE_RADIUS));
+  const [interactablePromptDraft, setInteractablePromptDraft] = useState(DEFAULT_INTERACTABLE_PROMPT);
+  const [interactableEnabledDraft, setInteractableEnabledDraft] = useState(true);
   const [ambientLightIntensityDraft, setAmbientLightIntensityDraft] = useState(String(editorState.document.world.ambientLight.intensity));
   const [sunLightIntensityDraft, setSunLightIntensityDraft] = useState(String(editorState.document.world.sunLight.intensity));
   const [sunDirectionDraft, setSunDirectionDraft] = useState(createVec3Draft(editorState.document.world.sunLight.direction));
-  const [statusMessage, setStatusMessage] = useState(initialStatusMessage ?? "Slice 1.5 world environment settings ready.");
+  const [statusMessage, setStatusMessage] = useState(initialStatusMessage ?? "Slice 2.1 entity system foundation ready.");
   const [preferredNavigationMode, setPreferredNavigationMode] = useState<RuntimeNavigationMode>(
     primaryPlayerStart === null ? "orbitVisitor" : "firstPerson"
   );
