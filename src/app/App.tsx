@@ -649,6 +649,165 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
+  const applyWorldSettings = (nextWorld: WorldSettings, label: string, successMessage: string) => {
+    if (areWorldSettingsEqual(editorState.document.world, nextWorld)) {
+      return;
+    }
+
+    try {
+      store.executeCommand(
+        createSetWorldSettingsCommand({
+          label,
+          world: nextWorld
+        })
+      );
+      setStatusMessage(successMessage);
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const applyWorldBackgroundMode = (mode: WorldBackgroundMode) => {
+    applyWorldSettings(
+      {
+        ...editorState.document.world,
+        background: changeWorldBackgroundMode(editorState.document.world.background, mode)
+      },
+      "Set world background mode",
+      mode === "solid" ? "World background set to a solid color." : "World background set to a vertical gradient."
+    );
+  };
+
+  const applyWorldBackgroundColor = (colorHex: string) => {
+    if (editorState.document.world.background.mode !== "solid") {
+      return;
+    }
+
+    applyWorldSettings(
+      {
+        ...editorState.document.world,
+        background: {
+          mode: "solid",
+          colorHex
+        }
+      },
+      "Set world background color",
+      "Updated the world background color."
+    );
+  };
+
+  const applyWorldGradientColor = (edge: "top" | "bottom", colorHex: string) => {
+    if (editorState.document.world.background.mode !== "verticalGradient") {
+      return;
+    }
+
+    applyWorldSettings(
+      {
+        ...editorState.document.world,
+        background:
+          edge === "top"
+            ? {
+                ...editorState.document.world.background,
+                topColorHex: colorHex
+              }
+            : {
+                ...editorState.document.world.background,
+                bottomColorHex: colorHex
+              }
+      },
+      edge === "top" ? "Set world gradient top color" : "Set world gradient bottom color",
+      edge === "top" ? "Updated the world gradient top color." : "Updated the world gradient bottom color."
+    );
+  };
+
+  const applyAmbientLightColor = (colorHex: string) => {
+    applyWorldSettings(
+      {
+        ...editorState.document.world,
+        ambientLight: {
+          ...editorState.document.world.ambientLight,
+          colorHex
+        }
+      },
+      "Set world ambient light color",
+      "Updated the world ambient light color."
+    );
+  };
+
+  const applyAmbientLightIntensity = () => {
+    try {
+      applyWorldSettings(
+        {
+          ...editorState.document.world,
+          ambientLight: {
+            ...editorState.document.world.ambientLight,
+            intensity: readNonNegativeNumberDraft(ambientLightIntensityDraft, "Ambient light intensity")
+          }
+        },
+        "Set world ambient light intensity",
+        "Updated the world ambient light intensity."
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const applySunLightColor = (colorHex: string) => {
+    applyWorldSettings(
+      {
+        ...editorState.document.world,
+        sunLight: {
+          ...editorState.document.world.sunLight,
+          colorHex
+        }
+      },
+      "Set world sun color",
+      "Updated the world sun color."
+    );
+  };
+
+  const applySunLightIntensity = () => {
+    try {
+      applyWorldSettings(
+        {
+          ...editorState.document.world,
+          sunLight: {
+            ...editorState.document.world.sunLight,
+            intensity: readNonNegativeNumberDraft(sunLightIntensityDraft, "Sun intensity")
+          }
+        },
+        "Set world sun intensity",
+        "Updated the world sun intensity."
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const applySunLightDirection = () => {
+    try {
+      const direction = readVec3Draft(sunDirectionDraft, "Sun direction");
+
+      if (direction.x === 0 && direction.y === 0 && direction.z === 0) {
+        throw new Error("Sun direction must not be the zero vector.");
+      }
+
+      applyWorldSettings(
+        {
+          ...editorState.document.world,
+          sunLight: {
+            ...editorState.document.world.sunLight,
+            direction
+          }
+        },
+        "Set world sun direction",
+        "Updated the world sun direction."
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
   const applyBrushNameChange = () => {
     if (selectedBrush === null) {
       setStatusMessage("Select a box brush before renaming it.");
