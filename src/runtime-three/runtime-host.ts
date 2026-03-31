@@ -1,7 +1,6 @@
 import {
   AmbientLight,
   BoxGeometry,
-  Color,
   DirectionalLight,
   Group,
   Mesh,
@@ -29,7 +28,7 @@ const FALLBACK_FACE_COLOR = 0x747d89;
 export class RuntimeHost {
   private readonly scene = new Scene();
   private readonly camera = new PerspectiveCamera(70, 1, 0.05, 1000);
-  private readonly renderer = new WebGLRenderer({ antialias: true });
+  private readonly renderer = new WebGLRenderer({ antialias: true, alpha: true });
   private readonly ambientLight = new AmbientLight();
   private readonly sunLight = new DirectionalLight();
   private readonly brushGroup = new Group();
@@ -54,6 +53,7 @@ export class RuntimeHost {
     this.scene.add(this.sunLight);
     this.scene.add(this.brushGroup);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.setClearAlpha(0);
 
     this.controllerContext = {
       camera: this.camera,
@@ -155,7 +155,7 @@ export class RuntimeHost {
   }
 
   private applyWorld(runtimeScene: RuntimeSceneDefinition) {
-    this.scene.background = new Color(runtimeScene.world.background.colorHex);
+    this.scene.background = null;
     this.ambientLight.color.set(runtimeScene.world.ambientLight.colorHex);
     this.ambientLight.intensity = runtimeScene.world.ambientLight.intensity;
     this.sunLight.color.set(runtimeScene.world.sunLight.colorHex);
