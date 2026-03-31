@@ -93,7 +93,7 @@ function validateWorldSettings(world: WorldSettings, document: SceneDocument, di
         )
       );
     }
-  } else {
+  } else if (world.background.mode === "verticalGradient") {
     if (!isHexColorString(world.background.topColorHex)) {
       diagnostics.push(
         createDiagnostic(
@@ -115,7 +115,7 @@ function validateWorldSettings(world: WorldSettings, document: SceneDocument, di
         )
       );
     }
-  } else if (world.background.mode === "image") {
+  } else {
     if (typeof world.background.assetId !== "string" || world.background.assetId.trim().length === 0) {
       diagnostics.push(
         createDiagnostic(
