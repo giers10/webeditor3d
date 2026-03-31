@@ -76,7 +76,7 @@ export function createModelInstanceRenderGroup(
   const bounds = getLocalModelBounds(asset);
   const group = new Group();
 
-  group.position.copy(cloneVec3(modelInstance.position));
+  group.position.set(modelInstance.position.x, modelInstance.position.y, modelInstance.position.z);
   group.rotation.set(
     (modelInstance.rotationDegrees.x * Math.PI) / 180,
     (modelInstance.rotationDegrees.y * Math.PI) / 180,
