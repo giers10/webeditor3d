@@ -535,6 +535,83 @@ function readEntities(value: unknown): SceneDocument["entities"] {
   return entities;
 }
 
+function readInteractionAction(value: unknown, label: string): InteractionLink["action"] {
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  switch (value.type) {
+    case "teleportPlayer":
+      return createTeleportPlayerInteractionLink({
+        sourceEntityId: "interaction-source-placeholder",
+        targetEntityId: expectString(value.targetEntityId, `${label}.targetEntityId`)
+      }).action;
+    case "toggleVisibility":
+      return createToggleVisibilityInteractionLink({
+        sourceEntityId: "interaction-source-placeholder",
+        targetBrushId: expectString(value.targetBrushId, `${label}.targetBrushId`),
+        visible:
+          value.visible === undefined
+            ? undefined
+            : expectBoolean(value.visible, `${label}.visible`)
+      }).action;
+    default:
+      throw new Error(`${label}.type must be a supported interaction action.`);
+  }
+}
+
+function readInteractionLink(value: unknown, label: string): InteractionLink {
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  const trigger = expectString(value.trigger, `${label}.trigger`);
+
+  if (!isInteractionTriggerKind(trigger)) {
+    throw new Error(`${label}.trigger must be a supported interaction trigger.`);
+  }
+
+  const action = readInteractionAction(value.action, `${label}.action`);
+
+  switch (action.type) {
+    case "teleportPlayer":
+      return createTeleportPlayerInteractionLink({
+        id: expectString(value.id, `${label}.id`),
+        sourceEntityId: expectString(value.sourceEntityId, `${label}.sourceEntityId`),
+        trigger,
+        targetEntityId: action.targetEntityId
+      });
+    case "toggleVisibility":
+      return createToggleVisibilityInteractionLink({
+        id: expectString(value.id, `${label}.id`),
+        sourceEntityId: expectString(value.sourceEntityId, `${label}.sourceEntityId`),
+        trigger,
+        targetBrushId: action.targetBrushId,
+        visible: action.visible
+      });
+  }
+}
+
+function readInteractionLinks(value: unknown): SceneDocument["interactionLinks"] {
+  if (!isRecord(value)) {
+    throw new Error("interactionLinks must be a record.");
+  }
+
+  const interactionLinks: SceneDocument["interactionLinks"] = {};
+
+  for (const [linkId, linkValue] of Object.entries(value)) {
+    const interactionLink = readInteractionLink(linkValue, `interactionLinks.${linkId}`);
+
+    if (interactionLink.id !== linkId) {
+      throw new Error(`interactionLinks.${linkId}.id must match the registry key.`);
+    }
+
+    interactionLinks[linkId] = interactionLink;
+  }
+
+  return interactionLinks;
+}
+
 export function migrateSceneDocument(source: unknown): SceneDocument {
   if (!isRecord(source)) {
     throw new Error("Scene document must be a JSON object.");
@@ -644,6 +721,23 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     };
   }
 
+  if (source.version === ENTITY_SYSTEM_FOUNDATION_SCENE_DOCUMENT_VERSION) {
+    const materials = readMaterialRegistry(source.materials, "materials");
+
+    return {
+      version: SCENE_DOCUMENT_VERSION,
+      name: expectString(source.name, "name"),
+      world: readWorldSettings(source.world),
+      materials,
+      textures: expectEmptyCollection(source.textures, "textures"),
+      assets: expectEmptyCollection(source.assets, "assets"),
+      brushes: readBrushes(source.brushes, materials, false),
+      modelInstances: expectEmptyCollection(source.modelInstances, "modelInstances"),
+      entities: readEntities(source.entities),
+      interactionLinks: expectEmptyCollection(source.interactionLinks, "interactionLinks")
+    };
+  }
+
   if (source.version !== SCENE_DOCUMENT_VERSION) {
     throw new Error(`Unsupported scene document version: ${String(source.version)}.`);
   }
@@ -660,6 +754,6 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     brushes: readBrushes(source.brushes, materials, false),
     modelInstances: expectEmptyCollection(source.modelInstances, "modelInstances"),
     entities: readEntities(source.entities),
-    interactionLinks: expectEmptyCollection(source.interactionLinks, "interactionLinks")
+    interactionLinks: readInteractionLinks(source.interactionLinks)
   };
 }
