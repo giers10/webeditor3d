@@ -224,7 +224,9 @@ function buildRuntimeModelInstance(modelInstance: SceneDocument["modelInstances"
     name: modelInstance.name,
     position: cloneVec3(modelInstance.position),
     rotationDegrees: cloneVec3(modelInstance.rotationDegrees),
-    scale: cloneVec3(modelInstance.scale)
+    scale: cloneVec3(modelInstance.scale),
+    animationClipName: modelInstance.animationClipName,
+    animationAutoplay: modelInstance.animationAutoplay
   };
 }
 

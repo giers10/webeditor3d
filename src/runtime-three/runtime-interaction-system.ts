@@ -214,6 +214,12 @@ export class RuntimeInteractionSystem {
         case "toggleVisibility":
           dispatcher.toggleBrushVisibility(link.action.targetBrushId, link.action.visible, link);
           break;
+        case "playAnimation":
+          dispatcher.playAnimation(link.action.targetModelInstanceId, link.action.clipName, link);
+          break;
+        case "stopAnimation":
+          dispatcher.stopAnimation(link.action.targetModelInstanceId, link);
+          break;
       }
     }
   }
