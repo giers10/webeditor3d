@@ -50,7 +50,7 @@ Implement animation playback for imported GLB/GLTF assets in vertical slice orde
     - Generate calls with empty string in each required field; assert each throws
     - **Validates: Requirements 4.5**
 
-- [-] 4. Extend the runtime build layer
+- [x] 4. Extend the runtime build layer
   - Add `animationClipName?: string` and `animationAutoplay?: boolean` to `RuntimeModelInstance` in `src/runtime-three/runtime-scene-build.ts`
   - Update `buildRuntimeModelInstance` to propagate the new fields from the document model instance
   - Extend `RuntimeInteractionDispatcher` in `src/runtime-three/runtime-interaction-system.ts` with `playAnimation` and `stopAnimation` methods
