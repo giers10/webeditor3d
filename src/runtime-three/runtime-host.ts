@@ -1,5 +1,7 @@
 import {
   AmbientLight,
+  AnimationClip,
+  AnimationMixer,
   BoxGeometry,
   DirectionalLight,
   Group,
