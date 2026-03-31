@@ -329,6 +329,18 @@ function readVisibilityModeSelectValue(value: "toggle" | "show" | "hide"): boole
   }
 }
 
+function getDefaultTriggerVolumeLinkTrigger(triggerOnEnter: boolean, triggerOnExit: boolean): InteractionTriggerKind {
+  if (triggerOnEnter) {
+    return "enter";
+  }
+
+  if (triggerOnExit) {
+    return "exit";
+  }
+
+  return "enter";
+}
+
 function getErrorMessage(error: unknown): string {
   if (error instanceof Error) {
     return error.message;
