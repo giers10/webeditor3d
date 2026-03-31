@@ -30,6 +30,38 @@ describe("world settings helpers", () => {
     });
   });
 
+  it("switches and clones image backgrounds by asset id", () => {
+    const imageBackground = changeWorldBackgroundMode(
+      {
+        mode: "solid",
+        colorHex: "#334455"
+      },
+      "image",
+      "asset-background-panorama"
+    );
+
+    expect(imageBackground).toEqual({
+      mode: "image",
+      assetId: "asset-background-panorama"
+    });
+
+    const nextImageBackground = changeWorldBackgroundMode(imageBackground, "image", "asset-background-panorama-2");
+
+    expect(nextImageBackground).toEqual({
+      mode: "image",
+      assetId: "asset-background-panorama-2"
+    });
+
+    const world = createDefaultWorldSettings();
+    world.background = nextImageBackground;
+
+    const clonedWorld = cloneWorldSettings(world);
+
+    expect(clonedWorld.background).toEqual(nextImageBackground);
+    expect(clonedWorld.background).not.toBe(world.background);
+    expect(areWorldSettingsEqual(world, clonedWorld)).toBe(true);
+  });
+
   it("compares authored world settings by value", () => {
     const left = createDefaultWorldSettings();
     const right = cloneWorldSettings(left);
