@@ -16,6 +16,7 @@ import { createSetBoxBrushNameCommand } from "../commands/set-box-brush-name-com
 import { createSetBoxBrushFaceUvStateCommand } from "../commands/set-box-brush-face-uv-state-command";
 import { createSetPlayerStartCommand } from "../commands/set-player-start-command";
 import { createSetSceneNameCommand } from "../commands/set-scene-name-command";
+import { createSetWorldSettingsCommand } from "../commands/set-world-settings-command";
 import {
   getSelectedBrushFaceId,
   getSingleSelectedBrushId,
@@ -26,6 +27,8 @@ import {
 } from "../core/selection";
 import type { Vec2, Vec3 } from "../core/vector";
 import {
+  areWorldSettingsEqual,
+  changeWorldBackgroundMode,
   BOX_FACE_IDS,
   DEFAULT_BOX_BRUSH_CENTER,
   DEFAULT_BOX_BRUSH_SIZE,
@@ -34,7 +37,9 @@ import {
   type BoxBrush,
   type BoxFaceId,
   type FaceUvRotationQuarterTurns,
-  type FaceUvState
+  type FaceUvState,
+  type WorldBackgroundMode,
+  type WorldSettings
 } from "../document/brushes";
 import { formatSceneDiagnosticSummary, validateSceneDocument } from "../document/scene-document-validation";
 import { DEFAULT_GRID_SIZE, snapPositiveSizeToGrid, snapVec3ToGrid } from "../geometry/grid-snapping";
@@ -52,6 +57,7 @@ import type { FirstPersonTelemetry } from "../runtime-three/navigation-controlle
 import { buildRuntimeSceneFromDocument, type RuntimeNavigationMode, type RuntimeSceneDefinition } from "../runtime-three/runtime-scene-build";
 import { validateRuntimeSceneBuild } from "../runtime-three/runtime-scene-validation";
 import { Panel } from "../shared-ui/Panel";
+import { createWorldBackgroundStyle } from "../shared-ui/world-background-style";
 import { ViewportCanvas } from "../viewport-three/ViewportCanvas";
 import type { EditorStore } from "./editor-store";
 import { useEditorStoreState } from "./use-editor-store";
@@ -339,6 +345,10 @@ function formatRunnerFeetPosition(position: Vec3 | null): string {
   }
 
   return `${position.x.toFixed(2)}, ${position.y.toFixed(2)}, ${position.z.toFixed(2)}`;
+}
+
+function formatWorldBackgroundLabel(world: WorldSettings): string {
+  return world.background.mode === "solid" ? "Solid" : "Vertical Gradient";
 }
 
 export function App({ store, initialStatusMessage }: AppProps) {
