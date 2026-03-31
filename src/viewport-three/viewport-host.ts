@@ -16,9 +16,7 @@ import {
   MeshStandardMaterial,
   PerspectiveCamera,
   Raycaster,
-  RepeatWrapping,
   Scene,
-  SRGBColorSpace,
   Vector2,
   Vector3,
   WebGLRenderer
@@ -314,7 +312,14 @@ export class ViewportHost {
 
       for (const mesh of renderObjects.meshes) {
         mesh.geometry.dispose();
-        mesh.material.dispose();
+
+        if (Array.isArray(mesh.material)) {
+          for (const material of mesh.material) {
+            material.dispose();
+          }
+        } else {
+          mesh.material.dispose();
+        }
       }
     }
 

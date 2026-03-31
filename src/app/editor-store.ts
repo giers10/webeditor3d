@@ -95,10 +95,7 @@ export class EditorStore {
       return;
     }
 
-    if (this.toolMode !== "play") {
-      this.previousEditingToolMode = this.toolMode;
-    }
-
+    this.previousEditingToolMode = this.toolMode;
     this.toolMode = "play";
     this.emit();
   }
