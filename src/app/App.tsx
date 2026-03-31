@@ -943,6 +943,199 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
+  const commitInteractionLinkChange = (currentLink: InteractionLink, nextLink: InteractionLink, successMessage: string, label = "Update interaction link") => {
+    if (areInteractionLinksEqual(currentLink, nextLink)) {
+      return;
+    }
+
+    store.executeCommand(
+      createUpsertInteractionLinkCommand({
+        link: nextLink,
+        label
+      })
+    );
+    setStatusMessage(successMessage);
+  };
+
+  const handleAddTeleportInteractionLink = () => {
+    if (selectedTriggerVolume === null) {
+      setStatusMessage("Select a Trigger Volume before adding links.");
+      return;
+    }
+
+    const defaultTarget = teleportTargetOptions[0]?.entity;
+
+    if (defaultTarget === undefined || defaultTarget.kind !== "teleportTarget") {
+      setStatusMessage("Author a Teleport Target before adding a teleport link.");
+      return;
+    }
+
+    store.executeCommand(
+      createUpsertInteractionLinkCommand({
+        link: createTeleportPlayerInteractionLink({
+          sourceEntityId: selectedTriggerVolume.id,
+          trigger: selectedTriggerVolume.triggerOnEnter ? "enter" : "exit",
+          targetEntityId: defaultTarget.id
+        }),
+        label: "Add teleport interaction link"
+      })
+    );
+    setStatusMessage("Added a teleport link to the selected Trigger Volume.");
+  };
+
+  const handleAddVisibilityInteractionLink = () => {
+    if (selectedTriggerVolume === null) {
+      setStatusMessage("Select a Trigger Volume before adding links.");
+      return;
+    }
+
+    const defaultTarget = visibilityBrushOptions[0]?.brush;
+
+    if (defaultTarget === undefined) {
+      setStatusMessage("Author at least one brush before adding a visibility link.");
+      return;
+    }
+
+    store.executeCommand(
+      createUpsertInteractionLinkCommand({
+        link: createToggleVisibilityInteractionLink({
+          sourceEntityId: selectedTriggerVolume.id,
+          trigger: selectedTriggerVolume.triggerOnEnter ? "enter" : "exit",
+          targetBrushId: defaultTarget.id
+        }),
+        label: "Add visibility interaction link"
+      })
+    );
+    setStatusMessage("Added a visibility link to the selected Trigger Volume.");
+  };
+
+  const handleDeleteInteractionLink = (linkId: string) => {
+    try {
+      store.executeCommand(createDeleteInteractionLinkCommand(linkId));
+      setStatusMessage("Deleted interaction link.");
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const updateInteractionLinkTrigger = (link: InteractionLink, trigger: InteractionTriggerKind) => {
+    const nextLink =
+      link.action.type === "teleportPlayer"
+        ? createTeleportPlayerInteractionLink({
+            id: link.id,
+            sourceEntityId: link.sourceEntityId,
+            trigger,
+            targetEntityId: link.action.targetEntityId
+          })
+        : createToggleVisibilityInteractionLink({
+            id: link.id,
+            sourceEntityId: link.sourceEntityId,
+            trigger,
+            targetBrushId: link.action.targetBrushId,
+            visible: link.action.visible
+          });
+
+    commitInteractionLinkChange(link, nextLink, `Updated ${getInteractionTriggerLabel(trigger).toLowerCase()} trigger link.`);
+  };
+
+  const updateInteractionLinkActionType = (link: InteractionLink, actionType: InteractionLink["action"]["type"]) => {
+    if (selectedTriggerVolume === null || link.action.type === actionType) {
+      return;
+    }
+
+    if (actionType === "teleportPlayer") {
+      const defaultTarget = teleportTargetOptions[0]?.entity;
+
+      if (defaultTarget === undefined || defaultTarget.kind !== "teleportTarget") {
+        setStatusMessage("Author a Teleport Target before switching this link to teleport.");
+        return;
+      }
+
+      commitInteractionLinkChange(
+        link,
+        createTeleportPlayerInteractionLink({
+          id: link.id,
+          sourceEntityId: selectedTriggerVolume.id,
+          trigger: link.trigger,
+          targetEntityId: defaultTarget.id
+        }),
+        "Switched link action to teleport player."
+      );
+      return;
+    }
+
+    const defaultBrush = visibilityBrushOptions[0]?.brush;
+
+    if (defaultBrush === undefined) {
+      setStatusMessage("Author at least one brush before switching this link to visibility.");
+      return;
+    }
+
+    commitInteractionLinkChange(
+      link,
+      createToggleVisibilityInteractionLink({
+        id: link.id,
+        sourceEntityId: selectedTriggerVolume.id,
+        trigger: link.trigger,
+        targetBrushId: defaultBrush.id
+      }),
+      "Switched link action to toggle visibility."
+    );
+  };
+
+  const updateTeleportInteractionLinkTarget = (link: InteractionLink, targetEntityId: string) => {
+    if (link.action.type !== "teleportPlayer") {
+      return;
+    }
+
+    commitInteractionLinkChange(
+      link,
+      createTeleportPlayerInteractionLink({
+        id: link.id,
+        sourceEntityId: link.sourceEntityId,
+        trigger: link.trigger,
+        targetEntityId
+      }),
+      "Updated teleport link target."
+    );
+  };
+
+  const updateVisibilityInteractionLinkTarget = (link: InteractionLink, targetBrushId: string) => {
+    if (link.action.type !== "toggleVisibility") {
+      return;
+    }
+
+    commitInteractionLinkChange(
+      link,
+      createToggleVisibilityInteractionLink({
+        id: link.id,
+        sourceEntityId: link.sourceEntityId,
+        trigger: link.trigger,
+        targetBrushId,
+        visible: link.action.visible
+      }),
+      "Updated visibility link target."
+    );
+  };
+
+  const updateVisibilityInteractionMode = (link: InteractionLink, mode: "toggle" | "show" | "hide") => {
+    if (link.action.type !== "toggleVisibility") {
+      return;
+    }
+
+    commitInteractionLinkChange(
+      link,
+      createToggleVisibilityInteractionLink({
+        id: link.id,
+        sourceEntityId: link.sourceEntityId,
+        trigger: link.trigger,
+        targetBrushId: link.action.targetBrushId,
+        visible: readVisibilityModeSelectValue(mode)
+      }),
+      "Updated visibility link mode."
+    );
+  };
+
   const applyWorldSettings = (nextWorld: WorldSettings, label: string, successMessage: string) => {
     if (areWorldSettingsEqual(editorState.document.world, nextWorld)) {
       return;
