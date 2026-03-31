@@ -97,11 +97,16 @@ export function areWorldBackgroundSettingsEqual(left: WorldBackgroundSettings, r
     return false;
   }
 
-  if (left.mode === "solid") {
+  if (left.mode === "solid" && right.mode === "solid") {
     return left.colorHex === right.colorHex;
   }
 
-  return left.topColorHex === right.topColorHex && left.bottomColorHex === right.bottomColorHex;
+  return (
+    left.mode === "verticalGradient" &&
+    right.mode === "verticalGradient" &&
+    left.topColorHex === right.topColorHex &&
+    left.bottomColorHex === right.bottomColorHex
+  );
 }
 
 export function areWorldSettingsEqual(left: WorldSettings, right: WorldSettings): boolean {
