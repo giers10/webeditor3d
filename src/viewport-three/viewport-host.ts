@@ -327,6 +327,49 @@ export class ViewportHost {
     this.camera.lookAt(this.cameraTarget);
   }
 
+  private applyWorld() {
+    if (this.currentWorld === null) {
+      return;
+    }
+
+    const world = this.currentWorld;
+    this.ambientLight.color.set(world.ambientLight.colorHex);
+    this.ambientLight.intensity = world.ambientLight.intensity;
+    this.sunLight.color.set(world.sunLight.colorHex);
+    this.sunLight.intensity = world.sunLight.intensity;
+    this.sunLight.position.set(world.sunLight.direction.x, world.sunLight.direction.y, world.sunLight.direction.z).normalize().multiplyScalar(18);
+
+    if (world.background.mode === "image") {
+      this.scene.background = this.loadedImageAssets[world.background.assetId]?.texture ?? null;
+      return;
+    }
+
+    this.scene.background = null;
+  }
+
+  private rebuildLocalLights(document: SceneDocument) {
+    this.clearLocalLights();
+
+    for (const entity of getEntityInstances(document.entities)) {
+      const selected = this.currentSelection.kind === "entities" && this.currentSelection.ids.includes(entity.id);
+
+      switch (entity.kind) {
+        case "pointLight": {
+          const renderObjects = this.createPointLightRenderObjects(entity, selected);
+          this.localLightGroup.add(renderObjects.group);
+          this.localLightRenderObjects.set(entity.id, renderObjects);
+          break;
+        }
+        case "spotLight": {
+          const renderObjects = this.createSpotLightRenderObjects(entity, selected);
+          this.localLightGroup.add(renderObjects.group);
+          this.localLightRenderObjects.set(entity.id, renderObjects);
+          break;
+        }
+      }
+    }
+  }
+
   private rebuildBrushMeshes(document: SceneDocument, selection: EditorSelection) {
     this.clearBrushMeshes();
 
@@ -395,6 +438,18 @@ export class ViewportHost {
 
   private createEntityRenderObjects(entity: EntityInstance, selected: boolean): EntityRenderObjects {
     switch (entity.kind) {
+      case "pointLight":
+        return this.createPointLightGizmoRenderObjects(entity.id, entity.position, entity.distance, entity.colorHex, selected);
+      case "spotLight":
+        return this.createSpotLightGizmoRenderObjects(
+          entity.id,
+          entity.position,
+          entity.direction,
+          entity.distance,
+          entity.angleDegrees,
+          entity.colorHex,
+          selected
+        );
       case "playerStart":
         return this.createPlayerStartRenderObjects(entity.id, entity.position, entity.yawDegrees, selected);
       case "soundEmitter":
@@ -412,6 +467,147 @@ export class ViewportHost {
     mesh.userData.entityId = entityId;
     mesh.userData.entityKind = entityKind;
     group.add(mesh);
+  }
+
+  private createPointLightRenderObjects(
+    entityId: string,
+    position: Vec3,
+    distance: number,
+    colorHex: string,
+    selected: boolean
+  ): EntityRenderObjects {
+    const markerColor = colorHex;
+    const displayRadius = Math.max(0.5, distance);
+    const group = new Group();
+    group.position.set(position.x, position.y, position.z);
+
+    const core = new Mesh(
+      new SphereGeometry(0.16, 16, 12),
+      new MeshStandardMaterial({
+        color: markerColor,
+        emissive: markerColor,
+        emissiveIntensity: selected ? 0.22 : 0.1,
+        roughness: 0.28,
+        metalness: 0.05
+      })
+    );
+
+    const range = new Mesh(
+      new SphereGeometry(displayRadius, 16, 12),
+      new MeshStandardMaterial({
+        color: markerColor,
+        emissive: markerColor,
+        emissiveIntensity: selected ? 0.08 : 0.03,
+        roughness: 0.85,
+        metalness: 0,
+        transparent: true,
+        opacity: selected ? 0.16 : 0.08,
+        wireframe: true
+      })
+    );
+
+    for (const mesh of [core, range]) {
+      this.tagEntityMesh(mesh, entityId, "pointLight", group);
+    }
+
+    return {
+      group,
+      meshes: [core, range]
+    };
+  }
+
+  private createSpotLightRenderObjects(
+    entityId: string,
+    position: Vec3,
+    direction: Vec3,
+    distance: number,
+    angleDegrees: number,
+    colorHex: string,
+    selected: boolean
+  ): EntityRenderObjects {
+    const markerColor = colorHex;
+    const group = new Group();
+    group.position.set(position.x, position.y, position.z);
+
+    const forward = new Vector3(direction.x, direction.y, direction.z).normalize();
+    const coneLength = Math.max(0.85, distance);
+    const coneRadius = Math.max(0.16, Math.tan((angleDegrees * Math.PI) / 360) * coneLength);
+    const orientation = new Quaternion().setFromUnitVectors(new Vector3(0, 1, 0), forward);
+    group.quaternion.copy(orientation);
+
+    const core = new Mesh(
+      new SphereGeometry(0.16, 14, 10),
+      new MeshStandardMaterial({
+        color: markerColor,
+        emissive: markerColor,
+        emissiveIntensity: selected ? 0.24 : 0.1,
+        roughness: 0.28,
+        metalness: 0.05
+      })
+    );
+
+    const cone = new Mesh(
+      new CylinderGeometry(coneRadius, 0, coneLength, 20, 1, true),
+      new MeshStandardMaterial({
+        color: markerColor,
+        emissive: markerColor,
+        emissiveIntensity: selected ? 0.08 : 0.03,
+        roughness: 0.85,
+        metalness: 0,
+        transparent: true,
+        opacity: selected ? 0.16 : 0.08,
+        wireframe: true
+      })
+    );
+    cone.position.y = coneLength * 0.5;
+
+    for (const mesh of [core, cone]) {
+      this.tagEntityMesh(mesh, entityId, "spotLight", group);
+    }
+
+    return {
+      group,
+      meshes: [core, cone]
+    };
+  }
+
+  private createSpotLightObjects(entity: SpotLightEntity): Group {
+    const group = new Group();
+    const light = new SpotLight(entity.colorHex, entity.intensity, entity.distance, (entity.angleDegrees * Math.PI) / 180, 0.18, 1);
+    const direction = new Vector3(entity.direction.x, entity.direction.y, entity.direction.z).normalize();
+    const orientation = new Quaternion().setFromUnitVectors(new Vector3(0, 1, 0), direction);
+
+    group.position.set(entity.position.x, entity.position.y, entity.position.z);
+    group.quaternion.copy(orientation);
+    light.position.set(0, 0, 0);
+    light.target.position.set(0, 1, 0);
+    group.add(light);
+    group.add(light.target);
+
+    return group;
+  }
+
+  private createPointLightObjects(entity: PointLightEntity): Group {
+    const group = new Group();
+    const light = new PointLight(entity.colorHex, entity.intensity, entity.distance);
+
+    group.position.set(entity.position.x, entity.position.y, entity.position.z);
+    light.position.set(0, 0, 0);
+    group.add(light);
+
+    return group;
+  }
+
+  private createPointLightRenderObjectsWrapper(entity: PointLightEntity): LocalLightRenderObjects {
+    return {
+      group: this.createPointLightObjects(entity)
+    };
+  }
+
+  private createSpotLightRenderObjectsWrapper(entity: SpotLightEntity): LocalLightRenderObjects {
+    return {
+      group: this.createSpotLightObjects(entity)
+    };
   }
 
   private createPlayerStartRenderObjects(entityId: string, position: Vec3, yawDegrees: number, selected: boolean): EntityRenderObjects {
