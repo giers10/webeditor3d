@@ -14,8 +14,10 @@ import {
 } from "../assets/project-assets";
 import {
   createInteractableEntity,
+  createPointLightEntity,
   createPlayerStartEntity,
   createSoundEmitterEntity,
+  createSpotLightEntity,
   createTeleportTargetEntity,
   createTriggerVolumeEntity,
   type EntityInstance
@@ -42,6 +44,7 @@ import {
   FACE_MATERIALS_SCENE_DOCUMENT_VERSION,
   FIRST_ROOM_POLISH_SCENE_DOCUMENT_VERSION,
   FOUNDATION_SCENE_DOCUMENT_VERSION,
+  LOCAL_LIGHTS_AND_SKYBOX_SCENE_DOCUMENT_VERSION,
   MODEL_ASSET_PIPELINE_SCENE_DOCUMENT_VERSION,
   RUNNER_V1_SCENE_DOCUMENT_VERSION,
   SCENE_DOCUMENT_VERSION,
@@ -572,11 +575,16 @@ function readWorldSettings(value: unknown): WorldSettings {
       mode: "solid",
       colorHex: expectHexColor(background.colorHex, "world.background.colorHex")
     };
-  } else {
+  } else if (backgroundMode === "verticalGradient") {
     resolvedBackground = {
       mode: "verticalGradient",
       topColorHex: expectHexColor(background.topColorHex, "world.background.topColorHex"),
       bottomColorHex: expectHexColor(background.bottomColorHex, "world.background.bottomColorHex")
+    };
+  } else {
+    resolvedBackground = {
+      mode: "image",
+      assetId: expectString(background.assetId, "world.background.assetId")
     };
   }
 
@@ -592,6 +600,50 @@ function readWorldSettings(value: unknown): WorldSettings {
       direction
     }
   };
+}
+
+function readPointLightEntity(value: unknown, label: string): EntityInstance {
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  const kind = expectLiteralString(value.kind, "pointLight", `${label}.kind`);
+  const entity = createPointLightEntity({
+    id: expectString(value.id, `${label}.id`),
+    position: readVec3(value.position, `${label}.position`),
+    colorHex: expectHexColor(value.colorHex, `${label}.colorHex`),
+    intensity: expectNonNegativeFiniteNumber(value.intensity, `${label}.intensity`),
+    distance: expectPositiveFiniteNumber(value.distance, `${label}.distance`)
+  });
+
+  if (entity.kind !== kind) {
+    throw new Error(`${label}.kind must be pointLight.`);
+  }
+
+  return entity;
+}
+
+function readSpotLightEntity(value: unknown, label: string): EntityInstance {
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  const kind = expectLiteralString(value.kind, "spotLight", `${label}.kind`);
+  const entity = createSpotLightEntity({
+    id: expectString(value.id, `${label}.id`),
+    position: readVec3(value.position, `${label}.position`),
+    direction: readVec3(value.direction, `${label}.direction`),
+    colorHex: expectHexColor(value.colorHex, `${label}.colorHex`),
+    intensity: expectNonNegativeFiniteNumber(value.intensity, `${label}.intensity`),
+    distance: expectPositiveFiniteNumber(value.distance, `${label}.distance`),
+    angleDegrees: expectFiniteNumber(value.angleDegrees, `${label}.angleDegrees`)
+  });
+
+  if (entity.kind !== kind) {
+    throw new Error(`${label}.kind must be spotLight.`);
+  }
+
+  return entity;
 }
 
 function readPlayerStartEntity(value: unknown, label: string): EntityInstance {
@@ -708,6 +760,10 @@ function readEntityInstance(value: unknown, label: string): EntityInstance {
   }
 
   switch (value.kind) {
+    case "pointLight":
+      return readPointLightEntity(value, label);
+    case "spotLight":
+      return readSpotLightEntity(value, label);
     case "playerStart":
       return readPlayerStartEntity(value, label);
     case "soundEmitter":
@@ -979,6 +1035,23 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       assets: expectEmptyCollection(source.assets, "assets"),
       brushes: readBrushes(source.brushes, materials, false),
       modelInstances: expectEmptyCollection(source.modelInstances, "modelInstances"),
+      entities: readEntities(source.entities),
+      interactionLinks: readInteractionLinks(source.interactionLinks)
+    };
+  }
+
+  if (source.version === LOCAL_LIGHTS_AND_SKYBOX_SCENE_DOCUMENT_VERSION) {
+    const materials = readMaterialRegistry(source.materials, "materials");
+
+    return {
+      version: SCENE_DOCUMENT_VERSION,
+      name: expectString(source.name, "name"),
+      world: readWorldSettings(source.world),
+      materials,
+      textures: expectEmptyCollection(source.textures, "textures"),
+      assets: readAssets(source.assets),
+      brushes: readBrushes(source.brushes, materials, false),
+      modelInstances: readModelInstances(source.modelInstances, readAssets(source.assets)),
       entities: readEntities(source.entities),
       interactionLinks: readInteractionLinks(source.interactionLinks)
     };
