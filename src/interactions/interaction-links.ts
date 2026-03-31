@@ -68,6 +68,17 @@ function cloneAction(action: InteractionAction): InteractionAction {
         targetBrushId: action.targetBrushId,
         visible: action.visible
       };
+    case "playAnimation":
+      return {
+        type: "playAnimation",
+        targetModelInstanceId: action.targetModelInstanceId,
+        clipName: action.clipName
+      };
+    case "stopAnimation":
+      return {
+        type: "stopAnimation",
+        targetModelInstanceId: action.targetModelInstanceId
+      };
   }
 }
 
