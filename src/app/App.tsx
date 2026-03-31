@@ -402,7 +402,7 @@ function describeSelection(
     case "entities":
       return `${selection.ids.length} entity selected (${getEntityDisplayLabelById(selection.ids[0], entities)})`;
     case "modelInstances":
-      return `${selection.ids.length} model instance selected (${getModelInstanceDisplayLabelById(selection.ids[0], modelInstances, assets)})`;
+      return `${selection.ids.length} model instance${selection.ids.length === 1 ? "" : "s"} selected (${getModelInstanceDisplayLabelById(selection.ids[0], modelInstances, assets)})`;
     default:
       return "Unknown selection";
   }
