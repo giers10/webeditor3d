@@ -364,7 +364,7 @@ export class ViewportHost {
 
     for (const modelInstance of getModelInstances(document.modelInstances)) {
       const selected = isModelInstanceSelected(selection, modelInstance.id);
-      const asset = document.assets[modelInstance.assetId];
+      const asset = this.projectAssets[modelInstance.assetId];
       const loadedAsset = this.loadedModelAssets[modelInstance.assetId];
       const renderGroup = createModelInstanceRenderGroup(modelInstance, asset, loadedAsset, selected);
 
