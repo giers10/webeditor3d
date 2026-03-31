@@ -299,12 +299,13 @@ Implement Slice 3.1.
 Requirements:
 - asset registry
 - GLB/GLTF import workflow
-- persistent project storage so imported assets survive reload
+- generic project asset storage so imported binary assets survive reload
 - metadata extraction
 - place/select/transform model instances
 - save/load support for asset refs and model instances
 - editor and runner rendering
 
+Do not create a GLB-only storage path that later image/audio assets would need to replace.
 Never rely on Blob URLs as the only persisted asset reference.
 ```
 
@@ -373,13 +374,15 @@ Implement Slice 3.4.
 
 Requirements:
 - audio asset references for SoundEmitter
-- persistent audio asset storage if needed
+- reuse the existing generic asset registry/storage path
 - positional audio in the runner
 - loop / one-shot / volume / ref distance / max distance
 - audio unlock handling
 - play/stop sound actions through the existing interaction system
 - inspector controls
 - save/load support
+
+Do not invent an audio-only binary storage path if the generic asset system can support audio assets.
 ```
 
 ---
@@ -527,33 +530,35 @@ Prefer simple semantics over live-linked complexity.
 
 ---
 
-## Slice Body 18 — GLB export improvements
+## Slice Body 18 — Project package import/export
 
 ```text
 Relevant docs to inspect after the common preamble:
-- architecture.md: export build vs canonical save format
+- architecture.md: serialization, project package vs runner package
 - roadmap.md: part of Slice 5.3
-- testing.md: export fixtures guidance
+- testing.md: package portability guidance
 
-Improve GLB/GLTF export from authored scenes.
+Implement portable project package import/export.
 
 Requirements:
-- build export data downstream from the document/runtime build
-- preserve scene/material/asset/animation structure sensibly
-- add minimal export diagnostics if needed
+- export canonical `scene.json` plus bundled assets
+- import that project package back into the editor
+- reuse the existing asset registry/storage path
+- keep the package shape explicit and simple
+- add diagnostics for missing/incompatible packaged assets if needed
 
-Do not conflate export with canonical save/load.
-Do not build packaged runner output in this slice.
+This is the real save/load portability path once assets exist.
+Do not build runner deployment output in this slice.
 ```
 
 ---
 
-## Slice Body 19 — Scene packaging and embeddable runner
+## Slice Body 19 — Runner package and embeddable runner
 
 ```text
 Relevant docs to inspect after the common preamble:
 - architecture.md: runner-web, packaging boundaries
-- roadmap.md: part of Slice 5.3
+- roadmap.md: part of Slice 5.4
 - testing.md: packaging/export verification guidance
 
 Implement the packaging/deployment slice.
@@ -562,7 +567,8 @@ Requirements:
 - packaged runner output path
 - standalone or embeddable runner route if appropriate
 - package required runtime data/assets
-- keep canonical JSON separate from packaged output
+- reuse the existing asset registry/storage path
+- keep canonical JSON / project package separate from packaged output
 ```
 
 ---
