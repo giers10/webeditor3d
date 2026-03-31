@@ -3550,6 +3550,48 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   </div>
                 </div>
 
+                {selectedModelAssetRecord !== null && selectedModelAssetRecord.metadata.animationNames.length > 0 && (
+                  <div className="form-section">
+                    <div className="label">Animation</div>
+                    <label className="form-field">
+                      <span className="label">Clip</span>
+                      <select
+                        className="select-input"
+                        value={selectedModelInstance.animationClipName ?? ""}
+                        onChange={(e) => {
+                          const clipName = e.target.value || undefined;
+                          store.dispatch(
+                            createUpsertModelInstanceCommand({
+                              modelInstance: { ...selectedModelInstance, animationClipName: clipName },
+                              label: "Set animation clip"
+                            })
+                          );
+                        }}
+                      >
+                        <option value="">— none —</option>
+                        {selectedModelAssetRecord.metadata.animationNames.map((name) => (
+                          <option key={name} value={name}>{name}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="form-field">
+                      <input
+                        type="checkbox"
+                        checked={selectedModelInstance.animationAutoplay ?? false}
+                        onChange={(e) => {
+                          store.dispatch(
+                            createUpsertModelInstanceCommand({
+                              modelInstance: { ...selectedModelInstance, animationAutoplay: e.target.checked },
+                              label: "Set animation autoplay"
+                            })
+                          );
+                        }}
+                      />
+                      <span className="label">Autoplay on scene load</span>
+                    </label>
+                  </div>
+                )}
+
                 <div className="inline-actions">
                   <button className="toolbar__button" type="button" data-testid="apply-model-instance" onClick={applyModelInstanceChange}>
                     Apply Transform
