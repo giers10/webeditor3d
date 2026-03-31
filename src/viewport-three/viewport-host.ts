@@ -355,13 +355,13 @@ export class ViewportHost {
 
       switch (entity.kind) {
         case "pointLight": {
-          const renderObjects = this.createPointLightRenderObjects(entity, selected);
+          const renderObjects = this.createPointLightRuntimeObjects(entity);
           this.localLightGroup.add(renderObjects.group);
           this.localLightRenderObjects.set(entity.id, renderObjects);
           break;
         }
         case "spotLight": {
-          const renderObjects = this.createSpotLightRenderObjects(entity, selected);
+          const renderObjects = this.createSpotLightRuntimeObjects(entity);
           this.localLightGroup.add(renderObjects.group);
           this.localLightRenderObjects.set(entity.id, renderObjects);
           break;
@@ -469,7 +469,7 @@ export class ViewportHost {
     group.add(mesh);
   }
 
-  private createPointLightRenderObjects(
+  private createPointLightGizmoRenderObjects(
     entityId: string,
     position: Vec3,
     distance: number,
@@ -516,7 +516,7 @@ export class ViewportHost {
     };
   }
 
-  private createSpotLightRenderObjects(
+  private createSpotLightGizmoRenderObjects(
     entityId: string,
     position: Vec3,
     direction: Vec3,
@@ -571,7 +571,7 @@ export class ViewportHost {
     };
   }
 
-  private createSpotLightObjects(entity: SpotLightEntity): Group {
+  private createSpotLightRuntimeObjects(entity: SpotLightEntity): LocalLightRenderObjects {
     const group = new Group();
     const light = new SpotLight(entity.colorHex, entity.intensity, entity.distance, (entity.angleDegrees * Math.PI) / 180, 0.18, 1);
     const direction = new Vector3(entity.direction.x, entity.direction.y, entity.direction.z).normalize();
@@ -584,10 +584,12 @@ export class ViewportHost {
     group.add(light);
     group.add(light.target);
 
-    return group;
+    return {
+      group
+    };
   }
 
-  private createPointLightObjects(entity: PointLightEntity): Group {
+  private createPointLightRuntimeObjects(entity: PointLightEntity): LocalLightRenderObjects {
     const group = new Group();
     const light = new PointLight(entity.colorHex, entity.intensity, entity.distance);
 
@@ -595,18 +597,8 @@ export class ViewportHost {
     light.position.set(0, 0, 0);
     group.add(light);
 
-    return group;
-  }
-
-  private createPointLightRenderObjectsWrapper(entity: PointLightEntity): LocalLightRenderObjects {
     return {
       group: this.createPointLightObjects(entity)
-    };
-  }
-
-  private createSpotLightRenderObjectsWrapper(entity: SpotLightEntity): LocalLightRenderObjects {
-    return {
-      group: this.createSpotLightObjects(entity)
     };
   }
 
