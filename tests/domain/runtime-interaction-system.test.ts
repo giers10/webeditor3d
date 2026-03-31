@@ -186,7 +186,9 @@ describe("RuntimeInteractionSystem", () => {
             brushId,
             visible
           });
-        }
+        },
+        playAnimation: () => {},
+        stopAnimation: () => {}
       }
     );
     interactionSystem.updatePlayerPosition(
@@ -205,7 +207,9 @@ describe("RuntimeInteractionSystem", () => {
             brushId,
             visible
           });
-        }
+        },
+        playAnimation: () => {},
+        stopAnimation: () => {}
       }
     );
 
