@@ -4,12 +4,15 @@ import { createBoxBrush } from "../../src/document/brushes";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
 import { validateSceneDocument } from "../../src/document/scene-document-validation";
 import {
+  createPointLightEntity,
   createInteractableEntity,
   createPlayerStartEntity,
   createSoundEmitterEntity,
+  createSpotLightEntity,
   createTeleportTargetEntity,
   createTriggerVolumeEntity
 } from "../../src/entities/entity-instances";
+import { createProjectAssetStorageKey } from "../../src/assets/project-assets";
 
 describe("validateSceneDocument", () => {
   it("accepts a valid first-room document", () => {
@@ -180,6 +183,123 @@ describe("validateSceneDocument", () => {
         }),
         expect.objectContaining({
           code: "invalid-interactable-enabled"
+        })
+      ])
+    );
+  });
+
+  it("accepts authored point and spot lights with an active image background asset", () => {
+    const imageAsset = {
+      id: "asset-background-panorama",
+      kind: "image" as const,
+      sourceName: "skybox-panorama.svg",
+      mimeType: "image/svg+xml",
+      storageKey: createProjectAssetStorageKey("asset-background-panorama"),
+      byteLength: 2048,
+      metadata: {
+        kind: "image" as const,
+        width: 512,
+        height: 256,
+        hasAlpha: false,
+        warnings: ["Background images work best as a 2:1 equirectangular panorama."]
+      }
+    };
+    const pointLight = createPointLightEntity({
+      id: "entity-point-light-main",
+      position: {
+        x: 1,
+        y: 3,
+        z: -2
+      }
+    });
+    const spotLight = createSpotLightEntity({
+      id: "entity-spot-light-main",
+      position: {
+        x: -1,
+        y: 4,
+        z: 2
+      },
+      direction: {
+        x: 0.25,
+        y: -1,
+        z: 0.15
+      }
+    });
+    const document = {
+      ...createEmptySceneDocument(),
+      assets: {
+        [imageAsset.id]: imageAsset
+      },
+      entities: {
+        [pointLight.id]: pointLight,
+        [spotLight.id]: spotLight
+      }
+    };
+    document.world.background = {
+      mode: "image",
+      assetId: imageAsset.id
+    };
+
+    const validation = validateSceneDocument(document);
+
+    expect(validation.errors).toEqual([]);
+  });
+
+  it("detects invalid local light values and missing image background assets", () => {
+    const pointLight = createPointLightEntity({
+      id: "entity-point-light-invalid"
+    });
+    pointLight.colorHex = "not-a-color";
+    pointLight.intensity = -1;
+    pointLight.distance = 0;
+
+    const spotLight = createSpotLightEntity({
+      id: "entity-spot-light-invalid"
+    });
+    spotLight.direction = {
+      x: 0,
+      y: 0,
+      z: 0
+    };
+    spotLight.distance = -2;
+    spotLight.angleDegrees = 180;
+
+    const document = {
+      ...createEmptySceneDocument(),
+      entities: {
+        [pointLight.id]: pointLight,
+        [spotLight.id]: spotLight
+      }
+    };
+    document.world.background = {
+      mode: "image",
+      assetId: "asset-missing-background"
+    };
+
+    const validation = validateSceneDocument(document);
+
+    expect(validation.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "invalid-point-light-color"
+        }),
+        expect.objectContaining({
+          code: "invalid-point-light-intensity"
+        }),
+        expect.objectContaining({
+          code: "invalid-point-light-distance"
+        }),
+        expect.objectContaining({
+          code: "invalid-spot-light-direction"
+        }),
+        expect.objectContaining({
+          code: "invalid-spot-light-distance"
+        }),
+        expect.objectContaining({
+          code: "invalid-spot-light-angle"
+        }),
+        expect.objectContaining({
+          code: "missing-world-background-asset"
         })
       ])
     );
