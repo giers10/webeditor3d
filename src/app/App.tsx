@@ -1864,11 +1864,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
-  const handleImportButtonClick = () => {
+  const handleImportJsonButtonClick = () => {
     importInputRef.current?.click();
   };
 
-  const handleImportChange = async (event: ChangeEvent<HTMLInputElement>) => {
+  const handleImportJsonChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.currentTarget.files?.[0];
 
     if (file === undefined) {
@@ -1881,6 +1881,53 @@ export function App({ store, initialStatusMessage }: AppProps) {
       setStatusMessage(`Imported ${file.name}.`);
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
+    } finally {
+      event.currentTarget.value = "";
+    }
+  };
+
+  const handleImportModelButtonClick = () => {
+    importModelInputRef.current?.click();
+  };
+
+  const handleImportModelChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.currentTarget.files?.[0];
+
+    if (file === undefined) {
+      return;
+    }
+
+    if (projectAssetStorage === null) {
+      setAssetStatusMessage("Imported model assets require project asset storage. IndexedDB is unavailable in this browser.");
+      event.currentTarget.value = "";
+      return;
+    }
+
+    try {
+      const importedModel = await importModelAssetFromFile(file, projectAssetStorage);
+
+      store.executeCommand(
+        createImportModelAssetCommand({
+          asset: importedModel.asset,
+          modelInstance: importedModel.modelInstance,
+          label: `Import ${importedModel.asset.sourceName}`
+        })
+      );
+
+      loadedModelAssetsRef.current = {
+        ...loadedModelAssetsRef.current,
+        [importedModel.asset.id]: importedModel.loadedAsset
+      };
+      setLoadedModelAssets((currentLoadedAssets) => ({
+        ...currentLoadedAssets,
+        [importedModel.asset.id]: importedModel.loadedAsset
+      }));
+      setAssetStatusMessage(null);
+      setStatusMessage(`Imported ${importedModel.asset.sourceName} and placed a model instance.`);
+    } catch (error) {
+      const message = getErrorMessage(error);
+      setStatusMessage(message);
+      setAssetStatusMessage(message);
     } finally {
       event.currentTarget.value = "";
     }
