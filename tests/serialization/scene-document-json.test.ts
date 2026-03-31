@@ -18,6 +18,7 @@ describe("scene document JSON", () => {
   it("round-trips a document containing a canonical box brush", () => {
     const brush = createBoxBrush({
       id: "brush-box-room",
+      name: "Entry Room",
       center: {
         x: 0,
         y: 1,
