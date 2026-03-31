@@ -563,15 +563,20 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const materialList = sortDocumentMaterials(editorState.document.materials);
   const selectedBrush = getSelectedBoxBrush(editorState.selection, brushList);
   const selectedEntity = getSelectedEntity(editorState.selection, entityList);
+  const selectedModelInstance = getSelectedModelInstance(editorState.selection, Object.values(editorState.document.modelInstances));
   const selectedFaceId = getSelectedBrushFaceId(editorState.selection);
   const selectedFace = selectedBrush !== null && selectedFaceId !== null ? selectedBrush.faces[selectedFaceId] : null;
   const selectedFaceMaterial =
     selectedFace !== null && selectedFace.materialId !== null ? editorState.document.materials[selectedFace.materialId] ?? null : null;
+  const selectedModelAsset =
+    selectedModelInstance !== null ? (editorState.document.assets[selectedModelInstance.assetId] ?? null) : null;
   const selectedPlayerStart = selectedEntity?.kind === "playerStart" ? selectedEntity : null;
   const selectedSoundEmitter = selectedEntity?.kind === "soundEmitter" ? selectedEntity : null;
   const selectedTriggerVolume = selectedEntity?.kind === "triggerVolume" ? selectedEntity : null;
   const selectedTeleportTarget = selectedEntity?.kind === "teleportTarget" ? selectedEntity : null;
   const selectedInteractable = selectedEntity?.kind === "interactable" ? selectedEntity : null;
+  const modelAssetList = Object.values(editorState.document.assets).filter(isModelAsset);
+  const modelInstanceDisplayList = getSortedModelInstanceDisplayLabels(editorState.document.modelInstances, editorState.document.assets);
   const selectedInteractionSource = isInteractionSourceEntity(selectedEntity) ? selectedEntity : null;
   const selectedTriggerVolumeLinks =
     selectedTriggerVolume === null
@@ -604,20 +609,26 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [interactableRadiusDraft, setInteractableRadiusDraft] = useState(String(DEFAULT_INTERACTABLE_RADIUS));
   const [interactablePromptDraft, setInteractablePromptDraft] = useState(DEFAULT_INTERACTABLE_PROMPT);
   const [interactableEnabledDraft, setInteractableEnabledDraft] = useState(true);
+  const [modelPositionDraft, setModelPositionDraft] = useState(createVec3Draft(DEFAULT_MODEL_INSTANCE_POSITION));
+  const [modelRotationDraft, setModelRotationDraft] = useState(createVec3Draft(DEFAULT_MODEL_INSTANCE_ROTATION_DEGREES));
+  const [modelScaleDraft, setModelScaleDraft] = useState(createVec3Draft(DEFAULT_MODEL_INSTANCE_SCALE));
   const [ambientLightIntensityDraft, setAmbientLightIntensityDraft] = useState(String(editorState.document.world.ambientLight.intensity));
   const [sunLightIntensityDraft, setSunLightIntensityDraft] = useState(String(editorState.document.world.sunLight.intensity));
   const [sunDirectionDraft, setSunDirectionDraft] = useState(createVec3Draft(editorState.document.world.sunLight.direction));
   const [statusMessage, setStatusMessage] = useState(initialStatusMessage ?? "Slice 2.3 click interactions and runner prompts ready.");
+  const [assetStatusMessage, setAssetStatusMessage] = useState<string | null>(null);
   const [preferredNavigationMode, setPreferredNavigationMode] = useState<RuntimeNavigationMode>(
     primaryPlayerStart === null ? "orbitVisitor" : "firstPerson"
   );
   const [activeNavigationMode, setActiveNavigationMode] = useState<RuntimeNavigationMode>(
     primaryPlayerStart === null ? "orbitVisitor" : "firstPerson"
   );
+  const [projectAssetStorage, setProjectAssetStorage] = useState<ProjectAssetStorage | null>(null);
   const [runtimeScene, setRuntimeScene] = useState<RuntimeSceneDefinition | null>(null);
   const [runtimeMessage, setRuntimeMessage] = useState<string | null>(null);
   const [firstPersonTelemetry, setFirstPersonTelemetry] = useState<FirstPersonTelemetry | null>(null);
   const [runtimeInteractionPrompt, setRuntimeInteractionPrompt] = useState<RuntimeInteractionPrompt | null>(null);
+  const [loadedModelAssets, setLoadedModelAssets] = useState<Record<string, LoadedModelAsset>>({});
   const [focusRequest, setFocusRequest] = useState<{ id: number; selection: EditorSelection }>({
     id: 0,
     selection: {
@@ -625,6 +636,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   });
   const importInputRef = useRef<HTMLInputElement | null>(null);
+  const importModelInputRef = useRef<HTMLInputElement | null>(null);
+  const loadedModelAssetsRef = useRef<Record<string, LoadedModelAsset>>({});
   const documentValidation = validateSceneDocument(editorState.document);
   const runValidation = validateRuntimeSceneBuild(editorState.document, preferredNavigationMode);
   const diagnostics = [...documentValidation.errors, ...documentValidation.warnings, ...runValidation.errors, ...runValidation.warnings];
