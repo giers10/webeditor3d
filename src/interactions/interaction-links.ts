@@ -121,6 +121,53 @@ export function createToggleVisibilityInteractionLink(options: CreateToggleVisib
   };
 }
 
+export interface CreatePlayAnimationInteractionLinkOptions {
+  id?: string;
+  sourceEntityId: string;
+  trigger?: InteractionTriggerKind;
+  targetModelInstanceId: string;
+  clipName: string;
+}
+
+export interface CreateStopAnimationInteractionLinkOptions {
+  id?: string;
+  sourceEntityId: string;
+  trigger?: InteractionTriggerKind;
+  targetModelInstanceId: string;
+}
+
+export function createPlayAnimationInteractionLink(options: CreatePlayAnimationInteractionLinkOptions): InteractionLink {
+  assertNonEmptyString(options.sourceEntityId, "Interaction source entity id");
+  assertNonEmptyString(options.targetModelInstanceId, "Play animation target model instance id");
+  assertNonEmptyString(options.clipName, "Play animation clip name");
+
+  return {
+    id: options.id ?? createOpaqueId("interaction-link"),
+    sourceEntityId: options.sourceEntityId,
+    trigger: options.trigger ?? "enter",
+    action: {
+      type: "playAnimation",
+      targetModelInstanceId: options.targetModelInstanceId,
+      clipName: options.clipName
+    }
+  };
+}
+
+export function createStopAnimationInteractionLink(options: CreateStopAnimationInteractionLinkOptions): InteractionLink {
+  assertNonEmptyString(options.sourceEntityId, "Interaction source entity id");
+  assertNonEmptyString(options.targetModelInstanceId, "Stop animation target model instance id");
+
+  return {
+    id: options.id ?? createOpaqueId("interaction-link"),
+    sourceEntityId: options.sourceEntityId,
+    trigger: options.trigger ?? "enter",
+    action: {
+      type: "stopAnimation",
+      targetModelInstanceId: options.targetModelInstanceId
+    }
+  };
+}
+
 export function cloneInteractionLink(link: InteractionLink): InteractionLink {
   return {
     id: link.id,
@@ -147,6 +194,19 @@ export function areInteractionLinksEqual(left: InteractionLink, right: Interacti
         left.action.targetBrushId === (right.action as ToggleVisibilityAction).targetBrushId &&
         left.action.visible === (right.action as ToggleVisibilityAction).visible
       );
+    case "playAnimation":
+      return (
+        left.action.targetModelInstanceId === (right.action as PlayAnimationAction).targetModelInstanceId &&
+        left.action.clipName === (right.action as PlayAnimationAction).clipName
+      );
+    case "stopAnimation":
+      return left.action.targetModelInstanceId === (right.action as StopAnimationAction).targetModelInstanceId;
+    default: {
+      // Exhaustive check — TypeScript should never reach here
+      const _exhaustive: never = left.action;
+      void _exhaustive;
+      return false;
+    }
   }
 }
 
