@@ -165,7 +165,8 @@ function getRelativePath(fromDirectory: string, targetPath: string): string {
 }
 
 function getImportedFilePath(file: File): string {
-  return normalizeRelativePath(file.webkitRelativePath.trim() || file.name.trim());
+  const relativePath = typeof file.webkitRelativePath === "string" ? file.webkitRelativePath.trim() : "";
+  return normalizeRelativePath(relativePath.length > 0 ? relativePath : file.name.trim());
 }
 
 function createBoundingBoxFromObject(object: Object3D): ModelAssetMetadata["boundingBox"] {
