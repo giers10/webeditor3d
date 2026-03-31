@@ -1151,13 +1151,14 @@ Please implement fully and report:
 
 ---
 
-## Prompt 18 — GLB export improvements
+## Prompt 18 — Project package import/export
 
 ```text
-You are implementing the first dedicated export slice.
+You are implementing the first dedicated portable-project slice.
 
 Read and follow:
 - AGENTS.md
+- CHAT_CONTEXT.md
 - architecture.md
 - roadmap.md
 - testing.md
@@ -1165,75 +1166,120 @@ Read and follow:
 Before coding:
 - Inspect the current repo and extend the existing implementation.
 - Keep canonical JSON as the authoring format.
+- Treat project package import/export as the user-facing save/load path for asset-bearing scenes.
+- Build it around the canonical document plus the generic asset registry and project asset storage layer.
 - If you change persisted schema, update versioning, migrations, and at least one compatibility test.
 
 Current goal:
-Improve GLB/GLTF export from the authored scene without distorting the editor data model.
+Make projects portable between machines by supporting explicit project package export/import.
 
 Requirements:
-- Improve or add GLB/GLTF export from the authored scene.
-- Build export data downstream from the canonical document and/or runtime build.
-- Preserve material, asset, animation, and scene structure as sensibly as possible.
-- Add minimal export-oriented validation or diagnostics if needed.
-- Do not conflate export with the canonical save format.
-- Do not build a standalone packaged runner in this slice.
+- Clarify and implement one explicit portable project package path.
+- Export the canonical scene JSON plus referenced assets.
+- Import that project package back into the editor.
+- Resolve referenced binaries through the existing generic asset registry and project asset storage layer.
+- Do not depend on transient Blob URLs, live editor-only objects, or in-memory caches as the source of package data.
+- Support scenes with or without external assets cleanly.
+- Keep the logical package model explicit and simple:
+  - top-level `scene.json`
+  - bundled `assets/` payloads when needed
+- The concrete exported form may be:
+  - a structured folder
+  - a zip/archive of that folder
+- Preserve canonical authoring semantics through package export/import.
+- Add minimal validation or diagnostics for missing, incompatible, or unsupported packaged assets if needed.
+- Do not build a standalone runner package in this slice.
 
 Important:
-- Export is downstream from the authoring document/runtime build.
-- Do not distort the editor data model to match export constraints.
+- Canonical JSON remains the authoring format.
+- Portable project packages are the user-facing save/load format once assets exist.
+- This slice is about editable project portability, not deployment.
 
 Testing expectations:
-- Export tests with small fixtures
-- Manual verification that exported output loads in the runner or a standard viewer if applicable
+- Project package export/import tests with small fixtures
+- Tests that exercise export/import with imported assets resolved from the existing asset registry/storage path
+- Manual verification that a packaged project can be moved and reopened successfully
+- Clear coverage for missing-asset or incompatible-package diagnostics if they are introduced
 
 Please implement fully and report:
-- export flow
-- what is included vs omitted in export
+- project package flow
+- output format/options
+- how the existing asset registry/storage path is consumed
+- what is included vs omitted
+- what diagnostics were added
 - what limitations remain
-- how to verify the exported result
+- how to verify project portability manually
 ```
 
 ---
 
-## Prompt 19 — Scene packaging and embeddable runner
+## Prompt 19 — Runner package and embeddable runner
 
 ```text
 You are implementing the packaging/deployment slice.
 
 Read and follow:
 - AGENTS.md
+- CHAT_CONTEXT.md
 - architecture.md
 - roadmap.md
 - testing.md
 
 Before coding:
 - Inspect the current repo and extend the existing implementation.
-- Keep this separate from canonical save/load and separate from plain GLB export.
+- Keep this separate from canonical save/load and separate from project package import/export.
+- Treat packaging as downstream from:
+  - the canonical `SceneDocument`
+  - the runtime scene build
+  - the generic asset registry
+  - the project asset storage layer
+- Do not redesign the editor just to support packaging.
 
 Current goal:
 Make scenes more shareable and deployable through packaged runner output.
 
 Requirements:
-- Clarify and implement a scene packaging path.
+- Clarify and implement one explicit runner packaging path.
 - Add or improve a standalone/embeddable runner route if appropriate for the current architecture.
 - Package the runtime scene and required assets/materials so the result can be opened without the editor.
+- Resolve imported binaries through the existing generic asset registry and project asset storage layer.
+- Do not require access to the editor’s local project storage after packaging is produced.
 - Keep the implementation small and explicit.
 - Add any minimal production-oriented optimization hooks that are easy and justified.
-- Do not redesign the editor just to support packaging.
+
+Packaging constraints:
+- Canonical JSON remains the authoring format.
+- Packaging is a derived output, not the source of truth.
+- Do not create a second authoring save format for packaged scenes.
+- Do not invent a separate asset system for packaged output; package assets from the existing registry/storage path.
+- The output should make clear what is bundled:
+  - runtime scene data
+  - required binary assets
+  - any minimal manifest/metadata needed by the standalone or embedded runner
+- If you choose a concrete output shape, keep it explicit and simple:
+  - for example, a folder bundle or archive-friendly package layout
+- Unsupported authored features must be surfaced clearly rather than silently dropped.
 
 Important:
-- Canonical JSON remains the authoring format.
-- Packaging is downstream from authoring and runtime build.
 - This slice is about deployment/shareability, not about changing authoring semantics.
+- Packaging should remain distinct from:
+  - canonical document save/load
+  - project package import/export
+- The packaged output must not depend on ephemeral Blob URLs or editor-only memory state.
 
 Testing expectations:
 - Packaging tests with small fixtures if practical
+- Tests that prove packaged output includes the assets needed by the scene
 - Manual verification that a packaged scene loads in the standalone/embedded runner
+- Validation/diagnostic coverage for missing assets or unsupported packaged features if introduced
 
 Please implement fully and report:
 - packaging flow
-- output options
+- output format/options
+- how the existing asset registry/storage path is consumed
 - what is included vs omitted
+- how packaged assets are resolved at runtime
+- what diagnostics were added
 - how to verify the packaged result
 ```
 
