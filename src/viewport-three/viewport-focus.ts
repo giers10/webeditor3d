@@ -2,11 +2,18 @@ import { getSingleSelectedBrushId, getSingleSelectedEntityId, type EditorSelecti
 import type { Vec3 } from "../core/vector";
 import type { BoxBrush } from "../document/brushes";
 import type { SceneDocument } from "../document/scene-document";
+import type { EntityInstance } from "../entities/entity-instances";
 
 const PLAYER_START_FOCUS_HALF_EXTENTS: Vec3 = {
   x: 0.35,
   y: 0.3,
   z: 0.55
+};
+
+const TELEPORT_TARGET_FOCUS_HALF_EXTENTS: Vec3 = {
+  x: 0.42,
+  y: 0.28,
+  z: 0.42
 };
 
 interface FocusBoundsAccumulator {
@@ -73,24 +80,6 @@ function createBrushFocusTarget(brush: BoxBrush): ViewportFocusTarget {
   };
 }
 
-function createPlayerStartFocusTarget(position: Vec3): ViewportFocusTarget {
-  return {
-    center: {
-      x: position.x,
-      y: position.y + PLAYER_START_FOCUS_HALF_EXTENTS.y,
-      z: position.z
-    },
-    radius: Math.max(
-      0.45,
-      Math.hypot(
-        PLAYER_START_FOCUS_HALF_EXTENTS.x,
-        PLAYER_START_FOCUS_HALF_EXTENTS.y,
-        PLAYER_START_FOCUS_HALF_EXTENTS.z
-      )
-    )
-  };
-}
-
 function includeBrush(bounds: FocusBoundsAccumulator, brush: BoxBrush) {
   const halfSize = {
     x: brush.size.x * 0.5,
@@ -129,6 +118,155 @@ function includePlayerStart(bounds: FocusBoundsAccumulator, position: Vec3) {
   );
 }
 
+function createBoundsFocusTarget(center: Vec3, halfExtents: Vec3, minimumRadius: number): ViewportFocusTarget {
+  return {
+    center,
+    radius: Math.max(minimumRadius, Math.hypot(halfExtents.x, halfExtents.y, halfExtents.z))
+  };
+}
+
+function createPlayerStartFocusTarget(position: Vec3): ViewportFocusTarget {
+  return createBoundsFocusTarget(
+    {
+      x: position.x,
+      y: position.y + PLAYER_START_FOCUS_HALF_EXTENTS.y,
+      z: position.z
+    },
+    PLAYER_START_FOCUS_HALF_EXTENTS,
+    0.45
+  );
+}
+
+function includeTeleportTarget(bounds: FocusBoundsAccumulator, position: Vec3) {
+  includeBounds(
+    bounds,
+    {
+      x: position.x - TELEPORT_TARGET_FOCUS_HALF_EXTENTS.x,
+      y: position.y,
+      z: position.z - TELEPORT_TARGET_FOCUS_HALF_EXTENTS.z
+    },
+    {
+      x: position.x + TELEPORT_TARGET_FOCUS_HALF_EXTENTS.x,
+      y: position.y + TELEPORT_TARGET_FOCUS_HALF_EXTENTS.y * 2,
+      z: position.z + TELEPORT_TARGET_FOCUS_HALF_EXTENTS.z
+    }
+  );
+}
+
+function createTeleportTargetFocusTarget(position: Vec3): ViewportFocusTarget {
+  return createBoundsFocusTarget(
+    {
+      x: position.x,
+      y: position.y + TELEPORT_TARGET_FOCUS_HALF_EXTENTS.y,
+      z: position.z
+    },
+    TELEPORT_TARGET_FOCUS_HALF_EXTENTS,
+    0.45
+  );
+}
+
+function includeSphereEntity(bounds: FocusBoundsAccumulator, position: Vec3, radius: number) {
+  includeBounds(
+    bounds,
+    {
+      x: position.x - radius,
+      y: position.y - radius,
+      z: position.z - radius
+    },
+    {
+      x: position.x + radius,
+      y: position.y + radius,
+      z: position.z + radius
+    }
+  );
+}
+
+function createSphereEntityFocusTarget(position: Vec3, radius: number, minimumRadius: number): ViewportFocusTarget {
+  return {
+    center: {
+      x: position.x,
+      y: position.y,
+      z: position.z
+    },
+    radius: Math.max(minimumRadius, radius)
+  };
+}
+
+function includeTriggerVolume(bounds: FocusBoundsAccumulator, position: Vec3, size: Vec3) {
+  const halfSize = {
+    x: size.x * 0.5,
+    y: size.y * 0.5,
+    z: size.z * 0.5
+  };
+
+  includeBounds(
+    bounds,
+    {
+      x: position.x - halfSize.x,
+      y: position.y - halfSize.y,
+      z: position.z - halfSize.z
+    },
+    {
+      x: position.x + halfSize.x,
+      y: position.y + halfSize.y,
+      z: position.z + halfSize.z
+    }
+  );
+}
+
+function createTriggerVolumeFocusTarget(position: Vec3, size: Vec3): ViewportFocusTarget {
+  const halfSize = {
+    x: size.x * 0.5,
+    y: size.y * 0.5,
+    z: size.z * 0.5
+  };
+
+  return createBoundsFocusTarget(
+    {
+      x: position.x,
+      y: position.y,
+      z: position.z
+    },
+    halfSize,
+    0.75
+  );
+}
+
+function includeEntity(bounds: FocusBoundsAccumulator, entity: EntityInstance) {
+  switch (entity.kind) {
+    case "playerStart":
+      includePlayerStart(bounds, entity.position);
+      break;
+    case "soundEmitter":
+      includeSphereEntity(bounds, entity.position, Math.max(0.4, entity.radius));
+      break;
+    case "triggerVolume":
+      includeTriggerVolume(bounds, entity.position, entity.size);
+      break;
+    case "teleportTarget":
+      includeTeleportTarget(bounds, entity.position);
+      break;
+    case "interactable":
+      includeSphereEntity(bounds, entity.position, Math.max(0.4, entity.radius));
+      break;
+  }
+}
+
+function createEntityFocusTarget(entity: EntityInstance): ViewportFocusTarget {
+  switch (entity.kind) {
+    case "playerStart":
+      return createPlayerStartFocusTarget(entity.position);
+    case "soundEmitter":
+      return createSphereEntityFocusTarget(entity.position, entity.radius, 0.75);
+    case "triggerVolume":
+      return createTriggerVolumeFocusTarget(entity.position, entity.size);
+    case "teleportTarget":
+      return createTeleportTargetFocusTarget(entity.position);
+    case "interactable":
+      return createSphereEntityFocusTarget(entity.position, entity.radius, 0.65);
+  }
+}
+
 function getSceneFocusTarget(document: SceneDocument): ViewportFocusTarget | null {
   const bounds = createEmptyBoundsAccumulator();
 
@@ -137,9 +275,7 @@ function getSceneFocusTarget(document: SceneDocument): ViewportFocusTarget | nul
   }
 
   for (const entity of Object.values(document.entities)) {
-    if (entity.kind === "playerStart") {
-      includePlayerStart(bounds, entity.position);
-    }
+    includeEntity(bounds, entity);
   }
 
   return finishBounds(bounds);
@@ -161,8 +297,8 @@ export function resolveViewportFocusTarget(document: SceneDocument, selection: E
   if (selectedEntityId !== null) {
     const entity = document.entities[selectedEntityId];
 
-    if (entity?.kind === "playerStart") {
-      return createPlayerStartFocusTarget(entity.position);
+    if (entity !== undefined) {
+      return createEntityFocusTarget(entity);
     }
   }
 

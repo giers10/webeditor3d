@@ -2,7 +2,7 @@ import type { Vec3 } from "../core/vector";
 import type { BoxBrush, BoxFaceId, FaceUvState } from "../document/brushes";
 import type { SceneDocument, WorldSettings } from "../document/scene-document";
 import { cloneWorldSettings } from "../document/world-settings";
-import { getPrimaryPlayerStartEntity } from "../entities/entity-instances";
+import { getEntityInstances, getPrimaryPlayerStartEntity, type EntityInstance } from "../entities/entity-instances";
 import { getBoxBrushBounds } from "../geometry/box-brush";
 import { cloneMaterialDef, type MaterialDef } from "../materials/starter-material-library";
 import { cloneFaceUvState } from "../document/brushes";
@@ -44,6 +44,45 @@ export interface RuntimePlayerStart {
   yawDegrees: number;
 }
 
+export interface RuntimeSoundEmitter {
+  entityId: string;
+  position: Vec3;
+  radius: number;
+  gain: number;
+  autoplay: boolean;
+  loop: boolean;
+}
+
+export interface RuntimeTriggerVolume {
+  entityId: string;
+  position: Vec3;
+  size: Vec3;
+  triggerOnEnter: boolean;
+  triggerOnExit: boolean;
+}
+
+export interface RuntimeTeleportTarget {
+  entityId: string;
+  position: Vec3;
+  yawDegrees: number;
+}
+
+export interface RuntimeInteractable {
+  entityId: string;
+  position: Vec3;
+  radius: number;
+  prompt: string;
+  enabled: boolean;
+}
+
+export interface RuntimeEntityCollection {
+  playerStarts: RuntimePlayerStart[];
+  soundEmitters: RuntimeSoundEmitter[];
+  triggerVolumes: RuntimeTriggerVolume[];
+  teleportTargets: RuntimeTeleportTarget[];
+  interactables: RuntimeInteractable[];
+}
+
 export interface RuntimeSpawnPoint {
   source: "playerStart" | "fallback";
   entityId: string | null;
@@ -56,6 +95,7 @@ export interface RuntimeSceneDefinition {
   brushes: RuntimeBoxBrushInstance[];
   colliders: RuntimeBoxCollider[];
   sceneBounds: RuntimeSceneBounds | null;
+  entities: RuntimeEntityCollection;
   playerStart: RuntimePlayerStart | null;
   spawn: RuntimeSpawnPoint;
 }
@@ -197,12 +237,78 @@ function buildFallbackSpawn(sceneBounds: RuntimeSceneBounds | null): RuntimeSpaw
   };
 }
 
+function buildRuntimeEntityCollection(document: SceneDocument): RuntimeEntityCollection {
+  const runtimeEntities: RuntimeEntityCollection = {
+    playerStarts: [],
+    soundEmitters: [],
+    triggerVolumes: [],
+    teleportTargets: [],
+    interactables: []
+  };
+
+  for (const entity of getEntityInstances(document.entities)) {
+    switch (entity.kind) {
+      case "playerStart":
+        runtimeEntities.playerStarts.push({
+          entityId: entity.id,
+          position: cloneVec3(entity.position),
+          yawDegrees: entity.yawDegrees
+        });
+        break;
+      case "soundEmitter":
+        runtimeEntities.soundEmitters.push({
+          entityId: entity.id,
+          position: cloneVec3(entity.position),
+          radius: entity.radius,
+          gain: entity.gain,
+          autoplay: entity.autoplay,
+          loop: entity.loop
+        });
+        break;
+      case "triggerVolume":
+        runtimeEntities.triggerVolumes.push({
+          entityId: entity.id,
+          position: cloneVec3(entity.position),
+          size: cloneVec3(entity.size),
+          triggerOnEnter: entity.triggerOnEnter,
+          triggerOnExit: entity.triggerOnExit
+        });
+        break;
+      case "teleportTarget":
+        runtimeEntities.teleportTargets.push({
+          entityId: entity.id,
+          position: cloneVec3(entity.position),
+          yawDegrees: entity.yawDegrees
+        });
+        break;
+      case "interactable":
+        runtimeEntities.interactables.push({
+          entityId: entity.id,
+          position: cloneVec3(entity.position),
+          radius: entity.radius,
+          prompt: entity.prompt,
+          enabled: entity.enabled
+        });
+        break;
+      default:
+        assertNever(entity);
+    }
+  }
+
+  return runtimeEntities;
+}
+
+function assertNever(value: never): never {
+  throw new Error(`Unsupported runtime entity: ${String((value as EntityInstance).kind)}`);
+}
+
 export function buildRuntimeSceneFromDocument(document: SceneDocument, options: BuildRuntimeSceneOptions = {}): RuntimeSceneDefinition {
   assertRuntimeSceneBuildable(document, options.navigationMode ?? "orbitVisitor");
 
   const brushes = Object.values(document.brushes).map((brush) => buildRuntimeBrush(brush, document));
   const colliders = Object.values(document.brushes).map((brush) => buildRuntimeCollider(brush));
   const sceneBounds = combineColliderBounds(colliders);
+  const entities = buildRuntimeEntityCollection(document);
   const playerStartEntity = getPrimaryPlayerStartEntity(document.entities);
   const playerStart =
     playerStartEntity === null
@@ -218,6 +324,7 @@ export function buildRuntimeSceneFromDocument(document: SceneDocument, options: 
     brushes,
     colliders,
     sceneBounds,
+    entities,
     playerStart,
     spawn:
       playerStart === null
