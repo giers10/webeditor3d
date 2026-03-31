@@ -471,10 +471,13 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const selectedTriggerVolume = selectedEntity?.kind === "triggerVolume" ? selectedEntity : null;
   const selectedTeleportTarget = selectedEntity?.kind === "teleportTarget" ? selectedEntity : null;
   const selectedInteractable = selectedEntity?.kind === "interactable" ? selectedEntity : null;
+  const selectedInteractionSource = isInteractionSourceEntity(selectedEntity) ? selectedEntity : null;
   const selectedTriggerVolumeLinks =
     selectedTriggerVolume === null
       ? []
       : getInteractionLinksForSource(editorState.document.interactionLinks, selectedTriggerVolume.id);
+  const selectedInteractableLinks =
+    selectedInteractable === null ? [] : getInteractionLinksForSource(editorState.document.interactionLinks, selectedInteractable.id);
   const teleportTargetOptions = entityDisplayList.filter(({ entity }) => entity.kind === "teleportTarget");
   const visibilityBrushOptions = brushList.map((brush, brushIndex) => ({
     brush,
@@ -503,7 +506,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [ambientLightIntensityDraft, setAmbientLightIntensityDraft] = useState(String(editorState.document.world.ambientLight.intensity));
   const [sunLightIntensityDraft, setSunLightIntensityDraft] = useState(String(editorState.document.world.sunLight.intensity));
   const [sunDirectionDraft, setSunDirectionDraft] = useState(createVec3Draft(editorState.document.world.sunLight.direction));
-  const [statusMessage, setStatusMessage] = useState(initialStatusMessage ?? "Slice 2.2 trigger-action-target foundation ready.");
+  const [statusMessage, setStatusMessage] = useState(initialStatusMessage ?? "Slice 2.3 click interactions and runner prompts ready.");
   const [preferredNavigationMode, setPreferredNavigationMode] = useState<RuntimeNavigationMode>(
     primaryPlayerStart === null ? "orbitVisitor" : "firstPerson"
   );
@@ -513,6 +516,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [runtimeScene, setRuntimeScene] = useState<RuntimeSceneDefinition | null>(null);
   const [runtimeMessage, setRuntimeMessage] = useState<string | null>(null);
   const [firstPersonTelemetry, setFirstPersonTelemetry] = useState<FirstPersonTelemetry | null>(null);
+  const [runtimeInteractionPrompt, setRuntimeInteractionPrompt] = useState<RuntimeInteractionPrompt | null>(null);
   const [focusRequest, setFocusRequest] = useState<{ id: number; selection: EditorSelection }>({
     id: 0,
     selection: {
