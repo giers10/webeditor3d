@@ -20,22 +20,27 @@ test("user can create a box brush and keep it through a draft reload", async ({ 
   }, "webeditor3d.scene-document-draft");
   await page.reload();
 
-  await page.getByTestId("create-box-brush").click();
+  await page.getByRole("button", { name: "Box Create" }).click();
+  await page.getByTestId("viewport-shell").click();
   await expect(page.getByRole("button", { name: /Box Brush 1/ })).toBeVisible();
   await expect(page.getByText("1 brush selected (Box Brush 1)")).toBeVisible();
+  await expect(page.getByTestId("apply-brush-position")).toHaveCount(0);
+  await expect(page.getByTestId("apply-brush-size")).toHaveCount(0);
   await page.getByTestId("brush-center-y").fill("2");
-  await page.getByTestId("apply-brush-position").click();
+  await page.getByTestId("brush-center-y").press("Tab");
   await page.getByTestId("brush-size-z").fill("4");
-  await page.getByTestId("apply-brush-size").click();
-  await expect(page.getByRole("button", { name: /center 0, 2, 0/ })).toBeVisible();
-  await expect(page.getByRole("button", { name: /size 2, 2, 4/ })).toBeVisible();
+  await page.getByTestId("brush-size-z").press("Tab");
+  await page.getByTestId("selected-brush-name").fill("Entry Room");
+  await page.getByTestId("selected-brush-name").press("Tab");
+  await expect(page.getByRole("button", { name: /Entry Room/ })).toBeVisible();
 
   await page.getByRole("button", { name: "Save Draft" }).click();
   await page.reload();
 
-  await expect(page.getByRole("button", { name: /Box Brush 1/ })).toBeVisible();
-  await expect(page.getByRole("button", { name: /center 0, 2, 0/ })).toBeVisible();
-  await expect(page.getByRole("button", { name: /size 2, 2, 4/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Entry Room/ })).toBeVisible();
+  await page.getByRole("button", { name: /Entry Room/ }).click();
+  await expect(page.getByTestId("brush-center-y")).toHaveValue("2");
+  await expect(page.getByTestId("brush-size-z")).toHaveValue("4");
   await expect(page.getByTestId("viewport-overlay")).toBeVisible();
 
   expect(pageErrors).toEqual([]);
