@@ -293,6 +293,42 @@ function describeSelection(selection: EditorSelection, brushes: BoxBrush[], enti
   }
 }
 
+function getInteractionTriggerLabel(trigger: InteractionTriggerKind): string {
+  return trigger === "enter" ? "On Enter" : "On Exit";
+}
+
+function getInteractionActionLabel(link: InteractionLink): string {
+  switch (link.action.type) {
+    case "teleportPlayer":
+      return "Teleport Player";
+    case "toggleVisibility":
+      return "Toggle Visibility";
+  }
+}
+
+function getVisibilityModeSelectValue(visible: boolean | undefined): "toggle" | "show" | "hide" {
+  if (visible === true) {
+    return "show";
+  }
+
+  if (visible === false) {
+    return "hide";
+  }
+
+  return "toggle";
+}
+
+function readVisibilityModeSelectValue(value: "toggle" | "show" | "hide"): boolean | undefined {
+  switch (value) {
+    case "toggle":
+      return undefined;
+    case "show":
+      return true;
+    case "hide":
+      return false;
+  }
+}
+
 function getErrorMessage(error: unknown): string {
   if (error instanceof Error) {
     return error.message;
