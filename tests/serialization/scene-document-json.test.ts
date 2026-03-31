@@ -4,6 +4,7 @@ import { createBoxBrush } from "../../src/document/brushes";
 import {
   ENTITY_SYSTEM_FOUNDATION_SCENE_DOCUMENT_VERSION,
   FIRST_ROOM_POLISH_SCENE_DOCUMENT_VERSION,
+  MODEL_ASSET_PIPELINE_SCENE_DOCUMENT_VERSION,
   SCENE_DOCUMENT_VERSION,
   TRIGGER_ACTION_TARGET_FOUNDATION_SCENE_DOCUMENT_VERSION,
   WORLD_ENVIRONMENT_SCENE_DOCUMENT_VERSION,
@@ -11,6 +12,7 @@ import {
 } from "../../src/document/scene-document";
 import { migrateSceneDocument } from "../../src/document/migrate-scene-document";
 import {
+  createModelInstance,
   createInteractableEntity,
   createPlayerStartEntity,
   createSoundEmitterEntity,
@@ -19,6 +21,7 @@ import {
 } from "../../src/entities/entity-instances";
 import { createTeleportPlayerInteractionLink, createToggleVisibilityInteractionLink } from "../../src/interactions/interaction-links";
 import { STARTER_MATERIAL_LIBRARY } from "../../src/materials/starter-material-library";
+import { createProjectAssetStorageKey, type ModelAssetRecord } from "../../src/assets/project-assets";
 import { parseSceneDocumentJson, serializeSceneDocument } from "../../src/serialization/scene-document-json";
 
 describe("scene document JSON", () => {
@@ -204,6 +207,76 @@ describe("scene document JSON", () => {
     expect(roundTripDocument.modelInstances).toEqual({});
   });
 
+  it("round-trips imported model assets and placed model instances", () => {
+    const asset = {
+      id: "asset-model-triangle",
+      kind: "model",
+      sourceName: "tiny-triangle.gltf",
+      mimeType: "model/gltf+json",
+      storageKey: createProjectAssetStorageKey("asset-model-triangle"),
+      byteLength: 36,
+      metadata: {
+        kind: "model",
+        format: "gltf",
+        sceneName: "Fixture Triangle Scene",
+        nodeCount: 2,
+        meshCount: 1,
+        materialNames: ["Fixture Material"],
+        textureNames: [],
+        animationNames: [],
+        boundingBox: {
+          min: {
+            x: 0,
+            y: 0,
+            z: 0
+          },
+          max: {
+            x: 1,
+            y: 1,
+            z: 0
+          },
+          size: {
+            x: 1,
+            y: 1,
+            z: 0
+          }
+        },
+        warnings: []
+      }
+    } satisfies ModelAssetRecord;
+    const modelInstance = createModelInstance({
+      id: "model-instance-triangle",
+      assetId: asset.id,
+      name: "Fixture Triangle",
+      position: {
+        x: 4,
+        y: 2,
+        z: -3
+      },
+      rotationDegrees: {
+        x: 0,
+        y: 45,
+        z: 0
+      },
+      scale: {
+        x: 1.5,
+        y: 2,
+        z: 1.5
+      }
+    });
+    const document = {
+      ...createEmptySceneDocument({ name: "Imported Asset Scene" }),
+      assets: {
+        [asset.id]: asset
+      },
+      modelInstances: {
+        [modelInstance.id]: modelInstance
+      }
+    };
+
+    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(document);
+  });
+
   it("round-trips canonical interaction links", () => {
     const triggerVolume = createTriggerVolumeEntity({
       id: "entity-trigger-main"
@@ -272,6 +345,25 @@ describe("scene document JSON", () => {
     expect(migratedDocument.brushes).toEqual({});
     expect(migratedDocument.name).toBe("Foundation Scene");
     expect(Object.keys(migratedDocument.materials)).toEqual(STARTER_MATERIAL_LIBRARY.map((material) => material.id));
+  });
+
+  it("migrates slice 3.0 documents to the current schema version without changing empty asset collections", () => {
+    const migratedDocument = migrateSceneDocument({
+      version: MODEL_ASSET_PIPELINE_SCENE_DOCUMENT_VERSION,
+      name: "Imported Asset Scene",
+      world: createEmptySceneDocument().world,
+      materials: createEmptySceneDocument().materials,
+      textures: {},
+      assets: {},
+      brushes: {},
+      modelInstances: {},
+      entities: {},
+      interactionLinks: {}
+    });
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.assets).toEqual({});
+    expect(migratedDocument.modelInstances).toEqual({});
   });
 
   it("migrates slice 1.1 box brushes to explicit per-face UV state", () => {
