@@ -184,12 +184,46 @@ function extractImageAssetMetadata(image: HTMLImageElement): ImageAssetMetadata 
   };
 }
 
+function extractHdrTextureMetadata(texture: DataTexture): ImageAssetMetadata {
+  const width = texture.image.width as number;
+  const height = texture.image.height as number;
+  const warnings: string[] = [];
+
+  if (Math.abs(width / height - 2) > 0.15) {
+    warnings.push("Background images work best as a 2:1 equirectangular panorama.");
+  }
+
+  return { kind: "image", width, height, hasAlpha: false, warnings };
+}
+
 function createImageTexture(image: HTMLImageElement): Texture {
   const texture = new Texture(image);
   texture.colorSpace = SRGBColorSpace;
   texture.mapping = EquirectangularReflectionMapping;
   texture.needsUpdate = true;
   return texture;
+}
+
+function configureHdrTexture(texture: DataTexture): DataTexture {
+  // HDR/EXR data is linear — do not apply sRGB color space
+  texture.colorSpace = LinearSRGBColorSpace;
+  texture.mapping = EquirectangularReflectionMapping;
+  texture.needsUpdate = true;
+  return texture;
+}
+
+function loadHdrTexture(url: string, sourceName: string): Promise<DataTexture> {
+  return new Promise<DataTexture>((resolve, reject) => {
+    if (getFileExtension(sourceName) === "exr") {
+      new EXRLoader().load(url, resolve, undefined, () => {
+        reject(new Error(`EXR file could not be loaded: ${sourceName}.`));
+      });
+    } else {
+      new RGBELoader().load(url, resolve, undefined, () => {
+        reject(new Error(`HDR file could not be loaded: ${sourceName}.`));
+      });
+    }
+  });
 }
 
 function createLoadedImageAsset(
@@ -203,6 +237,22 @@ function createLoadedImageAsset(
     storageKey: asset.storageKey,
     metadata: asset.metadata,
     texture: createImageTexture(image),
+    sourceUrl,
+    revokeSourceUrl
+  };
+}
+
+function createLoadedHdrImageAsset(
+  asset: ImageAssetRecord,
+  texture: DataTexture,
+  sourceUrl: string,
+  revokeSourceUrl: () => void
+): LoadedImageAsset {
+  return {
+    assetId: asset.id,
+    storageKey: asset.storageKey,
+    metadata: asset.metadata,
+    texture: configureHdrTexture(texture),
     sourceUrl,
     revokeSourceUrl
   };
