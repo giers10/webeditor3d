@@ -41,14 +41,6 @@ export interface ImportedModelAssetResult {
   loadedAsset: LoadedModelAsset;
 }
 
-function getErrorDetail(error: unknown): string {
-  if (error instanceof Error && error.message.trim().length > 0) {
-    return error.message.trim();
-  }
-
-  return "Unknown error.";
-}
-
 function getFileExtension(sourceName: string): string {
   const match = /\.([^.]+)$/u.exec(sourceName.trim());
   return match === null ? "" : match[1].toLowerCase();
@@ -521,7 +513,6 @@ async function loadModelFileSet(files: File[]): Promise<ImportedModelFileSet> {
   }
 
   const rootFile = modelFiles[0];
-  const rootFormat = inferModelAssetFormat(rootFile.name, rootFile.type);
   const rootSourcePath = getImportedFilePath(rootFile);
   const rootDirectory = getPathDirectory(rootSourcePath);
   const importedFiles = await Promise.all(
@@ -537,7 +528,7 @@ async function loadModelFileSet(files: File[]): Promise<ImportedModelFileSet> {
     const sourcePath = file === rootFile ? normalizeRelativePath(rootFile.name.trim()) : getRelativePath(rootDirectory, getImportedFilePath(file));
     const mimeType = inferFileMimeType(file.name, file.type);
 
-    if (packageFiles[sourcePath] !== undefined && packageFiles[sourcePath].bytes !== bytes) {
+    if (packageFiles[sourcePath] !== undefined) {
       throw new Error(`Duplicate imported file path ${sourcePath}.`);
     }
 
