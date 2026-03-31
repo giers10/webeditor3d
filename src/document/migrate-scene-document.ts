@@ -1,4 +1,4 @@
-import { BOX_FACE_IDS, createBoxBrush, isBoxFaceId, type BoxBrushFaces, type BrushFace } from "./brushes";
+import { createBoxBrush, isBoxFaceId, type BoxBrushFaces, type BrushFace } from "./brushes";
 import {
   FOUNDATION_SCENE_DOCUMENT_VERSION,
   SCENE_DOCUMENT_VERSION,
