@@ -351,8 +351,6 @@ export class ViewportHost {
     this.clearLocalLights();
 
     for (const entity of getEntityInstances(document.entities)) {
-      const selected = this.currentSelection.kind === "entities" && this.currentSelection.ids.includes(entity.id);
-
       switch (entity.kind) {
         case "pointLight": {
           const renderObjects = this.createPointLightRuntimeObjects(entity);
@@ -598,7 +596,7 @@ export class ViewportHost {
     group.add(light);
 
     return {
-      group: this.createPointLightObjects(entity)
+      group
     };
   }
 
