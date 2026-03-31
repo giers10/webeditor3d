@@ -2406,6 +2406,64 @@ export function App({ store, initialStatusMessage }: AppProps) {
             </div>
           </Panel>
 
+          <Panel title="Assets">
+            <div className="inline-actions">
+              <button
+                className="toolbar__button toolbar__button--accent"
+                type="button"
+                data-testid="import-model-asset"
+                onClick={handleImportModelButtonClick}
+                disabled={!projectAssetStorageReady || projectAssetStorage === null}
+              >
+                Import GLB/GLTF
+              </button>
+            </div>
+
+            {assetStatusMessage === null ? null : (
+              <div className="info-banner" data-testid="asset-status-message">
+                {assetStatusMessage}
+              </div>
+            )}
+
+            {projectAssetStorageReady && projectAssetStorage === null ? (
+              <div className="outliner-empty">Project asset storage is unavailable. Imported assets cannot be persisted.</div>
+            ) : null}
+
+            {modelAssetList.length === 0 ? (
+              <div className="outliner-empty">
+                No imported model assets yet. Import a GLB or GLTF to register the first project asset.
+              </div>
+            ) : (
+              <div className="outliner-list" data-testid="asset-list">
+                {modelAssetList.map((asset) => (
+                  <div key={asset.id} className="outliner-item asset-item">
+                    <div className="outliner-item__select">
+                      <span className="outliner-item__title">{asset.sourceName}</span>
+                      <span className="outliner-item__meta">Model Asset</span>
+                    </div>
+
+                    <div className="asset-item__summary">{formatModelAssetSummary(asset)}</div>
+                    <div className="asset-item__summary">{formatModelBoundingBoxLabel(asset)}</div>
+                    {asset.metadata.warnings.length === 0 ? null : (
+                      <div className="asset-item__warnings">{asset.metadata.warnings.join(" • ")}</div>
+                    )}
+
+                    <div className="inline-actions">
+                      <button
+                        className="toolbar__button"
+                        type="button"
+                        data-testid={`place-model-instance-${asset.id}`}
+                        onClick={() => handlePlaceModelInstance(asset.id)}
+                      >
+                        Place Instance
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Panel>
+
           <Panel title="Outliner">
             <div className="outliner-section">
               <div className="label">Brushes</div>
@@ -2459,6 +2517,43 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         </label>
                       )}
                     </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="outliner-section">
+              <div className="label">Model Instances</div>
+              {modelInstanceDisplayList.length === 0 ? (
+                <div className="outliner-empty">No model instances placed yet.</div>
+              ) : (
+                <div className="outliner-list" data-testid="outliner-model-instance-list">
+                  {modelInstanceDisplayList.map(({ modelInstance, label }) => (
+                    <button
+                      key={modelInstance.id}
+                      data-testid={`outliner-model-instance-${modelInstance.id}`}
+                      className={`outliner-item ${
+                        editorState.selection.kind === "modelInstances" && editorState.selection.ids.includes(modelInstance.id)
+                          ? "outliner-item--selected"
+                          : ""
+                      }`}
+                      type="button"
+                      onClick={() =>
+                        applySelection(
+                          {
+                            kind: "modelInstances",
+                            ids: [modelInstance.id]
+                          },
+                          "outliner",
+                          {
+                            focusViewport: true
+                          }
+                        )
+                      }
+                    >
+                      <span className="outliner-item__title">{label}</span>
+                      <span className="outliner-item__meta">{modelInstance.assetId}</span>
+                    </button>
                   ))}
                 </div>
               )}
