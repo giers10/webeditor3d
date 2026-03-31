@@ -3071,13 +3071,28 @@ export function App({ store, initialStatusMessage }: AppProps) {
               <div
                 className="world-background-preview"
                 data-testid="world-background-preview"
-                style={createWorldBackgroundStyle(editorState.document.world.background)}
+                style={createWorldBackgroundStyle(
+                  editorState.document.world.background,
+                  editorState.document.world.background.mode === "image"
+                    ? loadedImageAssets[editorState.document.world.background.assetId]?.sourceUrl ?? null
+                    : null
+                )}
               />
               <div className="material-summary">
                 {editorState.document.world.background.mode === "solid"
                   ? editorState.document.world.background.colorHex
-                  : `${editorState.document.world.background.topColorHex} -> ${editorState.document.world.background.bottomColorHex}`}
+                  : editorState.document.world.background.mode === "verticalGradient"
+                    ? `${editorState.document.world.background.topColorHex} -> ${editorState.document.world.background.bottomColorHex}`
+                    : editorState.document.assets[editorState.document.world.background.assetId]?.sourceName ??
+                      editorState.document.world.background.assetId}
               </div>
+              {editorState.document.world.background.mode !== "image" ? null : (
+                <div className="material-summary" data-testid="world-background-asset-value">
+                  Background Asset:{" "}
+                  {editorState.document.assets[editorState.document.world.background.assetId]?.sourceName ??
+                    editorState.document.world.background.assetId}
+                </div>
+              )}
             </div>
 
             <div className="form-section">
@@ -3100,6 +3115,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   onClick={() => applyWorldBackgroundMode("verticalGradient")}
                 >
                   Gradient
+                </button>
+                <button
+                  className={`toolbar__button ${editorState.document.world.background.mode === "image" ? "toolbar__button--active" : ""}`}
+                  type="button"
+                  data-testid="world-background-mode-image"
+                  onClick={() => applyWorldBackgroundMode("image")}
+                >
+                  Image
                 </button>
               </div>
             </div>
