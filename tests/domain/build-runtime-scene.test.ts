@@ -111,6 +111,12 @@ describe("buildRuntimeSceneFromDocument", () => {
           trigger: "exit",
           targetBrushId: brush.id,
           visible: false
+        }),
+        "link-click-teleport": createTeleportPlayerInteractionLink({
+          id: "link-click-teleport",
+          sourceEntityId: interactable.id,
+          trigger: "click",
+          targetEntityId: teleportTarget.id
         })
       }
     };
@@ -240,6 +246,15 @@ describe("buildRuntimeSceneFromDocument", () => {
       ]
     });
     expect(runtimeScene.interactionLinks).toEqual([
+      {
+        id: "link-click-teleport",
+        sourceEntityId: "entity-interactable-console",
+        trigger: "click",
+        action: {
+          type: "teleportPlayer",
+          targetEntityId: "entity-teleport-target-main"
+        }
+      },
       {
         id: "link-teleport",
         sourceEntityId: "entity-trigger-door",
