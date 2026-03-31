@@ -8,7 +8,7 @@ The product goal is:
 
 - Hammer / TrenchBroom style spatial authoring
 - modern browser delivery
-- glTF asset import/export
+- glTF asset import, with optional later interchange export
 - fast edit -> run iteration
 - lightweight interactive runtime with spatial audio, navigation modes, and simple entity-driven logic
 
@@ -60,7 +60,7 @@ The project uses:
 - a canonical editor document model independent of three.js
 - command pattern for undo/redo
 - runtime entity systems for navigation, triggers, audio, and interaction
-- glTF / GLB as the main interchange asset format
+- glTF / GLB as the main imported 3D asset format
 - JSON as the canonical authoring format
 
 Do not collapse editor state into raw three.js objects.
@@ -95,6 +95,9 @@ These defaults are intentionally fixed for the early slices unless a later slice
 
 - the canonical scene document is versioned from day one
 - M0-M2 may use local draft persistence plus explicit JSON import/export
+- once binary assets matter, user-facing save/load must become a portable project package containing canonical scene JSON plus referenced assets
+- canonical scene JSON remains the source document format, but by itself is no longer a portable project once external assets exist
+- runner/deployment output is a separate downstream package, not the editable project format
 - when binary assets arrive, they must survive reloads via embedded data or project-scoped packaged storage
 - never rely on ephemeral Blob URLs as the only persisted asset reference
 
@@ -160,12 +163,14 @@ Use these terms consistently:
 - **Model Instance**: placed scene instance of an imported asset
 - **Prefab**: reusable asset/entity package placeable in scenes
 - **Entity**: typed scene object with runtime/editor semantics
+- **Project Package**: portable editable bundle containing canonical scene JSON plus referenced assets
+- **Runner Package**: deployable playable output for the built-in runner
 - **Runner**: browser runtime that loads and plays scenes
 - **Viewport**: editor rendering surface
 - **Command**: undoable state transition
 - **Tool**: editor interaction mode such as select, move, box-create, face-edit
 - **Build**: deterministic transformation from document -> runtime scene data
-- **Export**: transformation to external deliverables such as GLB
+- **Export**: downstream transformation to deployable or interchange deliverables such as runner packages or optional later GLB
 
 Avoid vague terms like “object”, “thing”, “item”, or “component” when a more precise domain term exists.
 

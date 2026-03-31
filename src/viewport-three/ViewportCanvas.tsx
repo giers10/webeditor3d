@@ -90,12 +90,12 @@ export function ViewportCanvas({
   }, [world]);
 
   useEffect(() => {
-    hostRef.current?.updateDocument(sceneDocument, selection);
-  }, [sceneDocument, selection]);
-
-  useEffect(() => {
     hostRef.current?.updateAssets(projectAssets, loadedModelAssets);
   }, [projectAssets, loadedModelAssets]);
+
+  useEffect(() => {
+    hostRef.current?.updateDocument(sceneDocument, selection);
+  }, [sceneDocument, selection]);
 
   useEffect(() => {
     hostRef.current?.setBrushSelectionChangeHandler(onSelectionChange);
