@@ -9,6 +9,8 @@ export interface ModelInstance {
   position: Vec3;
   rotationDegrees: Vec3;
   scale: Vec3;
+  animationClipName?: string;
+  animationAutoplay?: boolean;
 }
 
 export const DEFAULT_MODEL_INSTANCE_POSITION: Vec3 = {
