@@ -145,7 +145,10 @@ export class FirstPersonNavigationController implements NavigationController {
 
     const eyePosition = toEyePosition(this.feetPosition);
     this.cameraRotation.x = this.pitchRadians;
-    this.cameraRotation.y = this.yawRadians;
+    // Authoring yaw treats 0 degrees as facing +Z, while a three.js camera
+    // looks down -Z by default. Offset by 180 degrees so runtime view matches
+    // the authored PlayerStart marker and movement basis.
+    this.cameraRotation.y = this.yawRadians + Math.PI;
     this.cameraRotation.z = 0;
 
     this.context.camera.position.set(eyePosition.x, eyePosition.y, eyePosition.z);
