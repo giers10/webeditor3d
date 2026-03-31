@@ -1,6 +1,6 @@
 import { DEFAULT_SUN_DIRECTION, type Vec3 } from "../core/vector";
 
-export type WorldBackgroundMode = "solid" | "verticalGradient";
+export type WorldBackgroundMode = "solid" | "verticalGradient" | "image";
 
 export interface WorldSolidBackgroundSettings {
   mode: "solid";
@@ -13,7 +13,15 @@ export interface WorldVerticalGradientBackgroundSettings {
   bottomColorHex: string;
 }
 
-export type WorldBackgroundSettings = WorldSolidBackgroundSettings | WorldVerticalGradientBackgroundSettings;
+export interface WorldImageBackgroundSettings {
+  mode: "image";
+  assetId: string;
+}
+
+export type WorldBackgroundSettings =
+  | WorldSolidBackgroundSettings
+  | WorldVerticalGradientBackgroundSettings
+  | WorldImageBackgroundSettings;
 
 export interface WorldAmbientLightSettings {
   colorHex: string;
@@ -59,7 +67,7 @@ export function isHexColorString(value: string): boolean {
 }
 
 export function isWorldBackgroundMode(value: unknown): value is WorldBackgroundMode {
-  return value === "solid" || value === "verticalGradient";
+  return value === "solid" || value === "verticalGradient" || value === "image";
 }
 
 export function cloneWorldBackgroundSettings(background: WorldBackgroundSettings): WorldBackgroundSettings {
@@ -74,6 +82,11 @@ export function cloneWorldBackgroundSettings(background: WorldBackgroundSettings
     mode: "verticalGradient",
     topColorHex: background.topColorHex,
     bottomColorHex: background.bottomColorHex
+  };
+
+  return {
+    mode: "image",
+    assetId: background.assetId
   };
 }
 
@@ -101,12 +114,11 @@ export function areWorldBackgroundSettingsEqual(left: WorldBackgroundSettings, r
     return left.colorHex === right.colorHex;
   }
 
-  return (
-    left.mode === "verticalGradient" &&
-    right.mode === "verticalGradient" &&
-    left.topColorHex === right.topColorHex &&
-    left.bottomColorHex === right.bottomColorHex
-  );
+  if (left.mode === "verticalGradient" && right.mode === "verticalGradient") {
+    return left.topColorHex === right.topColorHex && left.bottomColorHex === right.bottomColorHex;
+  }
+
+  return left.mode === "image" && right.mode === "image" && left.assetId === right.assetId;
 }
 
 export function areWorldSettingsEqual(left: WorldSettings, right: WorldSettings): boolean {
@@ -122,7 +134,11 @@ export function areWorldSettingsEqual(left: WorldSettings, right: WorldSettings)
   );
 }
 
-export function changeWorldBackgroundMode(background: WorldBackgroundSettings, mode: WorldBackgroundMode): WorldBackgroundSettings {
+export function changeWorldBackgroundMode(
+  background: WorldBackgroundSettings,
+  mode: WorldBackgroundMode,
+  imageAssetId?: string
+): WorldBackgroundSettings {
   if (background.mode === mode) {
     return cloneWorldBackgroundSettings(background);
   }
@@ -131,6 +147,21 @@ export function changeWorldBackgroundMode(background: WorldBackgroundSettings, m
     return {
       mode: "solid",
       colorHex: background.mode === "verticalGradient" ? background.topColorHex : background.colorHex
+    };
+  }
+
+  if (mode === "image") {
+    if (background.mode === "image") {
+      return cloneWorldBackgroundSettings(background);
+    }
+
+    if (imageAssetId === undefined || imageAssetId.trim().length === 0) {
+      throw new Error("An image asset must be selected to use an image background.");
+    }
+
+    return {
+      mode: "image",
+      assetId: imageAssetId
     };
   }
 
