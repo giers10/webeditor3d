@@ -11,7 +11,9 @@ const externalTriangleGltfPath = path.resolve(process.cwd(), "fixtures/assets/ex
 const externalTriangleBinPath = path.resolve(process.cwd(), "fixtures/assets/external-triangle/triangle.bin");
 
 function createTestFile(bytes: Uint8Array | Buffer, name: string, type: string): File {
-  return Object.assign(new Blob([bytes], { type }), {
+  const arrayBuffer = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+
+  return Object.assign(new Blob([arrayBuffer], { type }), {
     name,
     lastModified: Date.now(),
     webkitRelativePath: ""
