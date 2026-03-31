@@ -1,6 +1,6 @@
 import { createOpaqueId } from "../core/ids";
 
-export const INTERACTION_TRIGGER_KINDS = ["enter", "exit"] as const;
+export const INTERACTION_TRIGGER_KINDS = ["enter", "exit", "click"] as const;
 export type InteractionTriggerKind = (typeof INTERACTION_TRIGGER_KINDS)[number];
 
 export interface TeleportPlayerAction {
@@ -61,7 +61,7 @@ function cloneAction(action: InteractionAction): InteractionAction {
 }
 
 export function isInteractionTriggerKind(value: unknown): value is InteractionTriggerKind {
-  return value === "enter" || value === "exit";
+  return value === "enter" || value === "exit" || value === "click";
 }
 
 export function createTeleportPlayerInteractionLink(options: CreateTeleportPlayerInteractionLinkOptions): InteractionLink {
