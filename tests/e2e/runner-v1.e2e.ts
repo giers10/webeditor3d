@@ -34,7 +34,7 @@ test("user can place PlayerStart, enter run mode, and spawn from it", async ({ p
   await expect(page.getByTestId("runner-player-position")).toContainText("4.00, 0.00, -2.00");
 
   await page.getByTestId("runner-mode-orbit-visitor").click();
-  await expect(page.getByText("Orbit Visitor")).toBeVisible();
+  await expect(page.getByTestId("runner-mode-orbit-visitor")).toHaveClass(/toolbar__button--active/);
 
   await page.getByTestId("exit-run-mode").click();
   await expect(page.getByTestId("viewport-shell")).toBeVisible();
