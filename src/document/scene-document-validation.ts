@@ -5,6 +5,7 @@ import {
   type TeleportTargetEntity,
   type TriggerVolumeEntity
 } from "../entities/entity-instances";
+import { type InteractionLink } from "../interactions/interaction-links";
 import { BOX_FACE_IDS, hasPositiveBoxSize } from "./brushes";
 import type { SceneDocument } from "./scene-document";
 import { isHexColorString, type WorldSettings } from "./world-settings";
@@ -278,6 +279,107 @@ function validateInteractableEntity(entity: InteractableEntity, path: string, di
   }
 }
 
+function validateInteractionLink(link: InteractionLink, path: string, document: SceneDocument, diagnostics: SceneDiagnostic[]) {
+  const sourceEntity = document.entities[link.sourceEntityId];
+
+  if (sourceEntity === undefined) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "missing-interaction-source-entity",
+        `Interaction source entity ${link.sourceEntityId} does not exist.`,
+        `${path}.sourceEntityId`
+      )
+    );
+    return;
+  }
+
+  if (sourceEntity.kind !== "triggerVolume") {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-interaction-source-kind",
+        "Interaction links may only source from Trigger Volume entities in the current slice.",
+        `${path}.sourceEntityId`
+      )
+    );
+  }
+
+  if (link.trigger !== "enter" && link.trigger !== "exit") {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "unsupported-interaction-trigger",
+        `Unsupported interaction trigger ${String(link.trigger)}.`,
+        `${path}.trigger`
+      )
+    );
+  }
+
+  switch (link.action.type) {
+    case "teleportPlayer": {
+      const targetEntity = document.entities[link.action.targetEntityId];
+
+      if (targetEntity === undefined) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "missing-teleport-target-entity",
+            `Teleport target entity ${link.action.targetEntityId} does not exist.`,
+            `${path}.action.targetEntityId`
+          )
+        );
+        return;
+      }
+
+      if (targetEntity.kind !== "teleportTarget") {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-teleport-target-kind",
+            "Teleport player actions must target a Teleport Target entity.",
+            `${path}.action.targetEntityId`
+          )
+        );
+      }
+      break;
+    }
+    case "toggleVisibility":
+      if (document.brushes[link.action.targetBrushId] === undefined) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "missing-visibility-target-brush",
+            `Visibility target brush ${link.action.targetBrushId} does not exist.`,
+            `${path}.action.targetBrushId`
+          )
+        );
+      }
+
+      if (link.action.visible !== undefined && typeof link.action.visible !== "boolean") {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-visibility-action-visible",
+            "Visibility actions must use a boolean visible value when authored.",
+            `${path}.action.visible`
+          )
+        );
+      }
+      break;
+    default:
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "unsupported-interaction-action",
+          `Unsupported interaction action ${(link.action as { type: string }).type}.`,
+          `${path}.action.type`
+        )
+      );
+      break;
+  }
+}
+
 function registerAuthoredId(id: string, path: string, seenIds: Map<string, string>, diagnostics: SceneDiagnostic[]) {
   const previousPath = seenIds.get(id);
 
@@ -396,6 +498,17 @@ export function validateSceneDocument(document: SceneDocument): SceneDocumentVal
         );
         break;
     }
+  }
+
+  for (const [linkKey, link] of Object.entries(document.interactionLinks)) {
+    const path = `interactionLinks.${linkKey}`;
+
+    if (link.id !== linkKey) {
+      diagnostics.push(createDiagnostic("error", "interaction-link-id-mismatch", "Interaction link ids must match their registry key.", `${path}.id`));
+    }
+
+    registerAuthoredId(link.id, path, seenIds, diagnostics);
+    validateInteractionLink(link, path, document, diagnostics);
   }
 
   return {
