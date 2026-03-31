@@ -343,11 +343,32 @@ function createDataUrlForStoredFile(file: ProjectAssetStorageFileRecord): string
   return `data:${file.mimeType};base64,${base64}`;
 }
 
+function createTransientResourceUrl(file: ProjectAssetStorageFileRecord): { revoke: () => void; url: string } {
+  if (typeof URL.createObjectURL === "function" && typeof Blob !== "undefined") {
+    const objectUrl = URL.createObjectURL(new Blob([file.bytes], { type: file.mimeType }));
+
+    return {
+      url: objectUrl,
+      revoke: () => {
+        if (typeof URL.revokeObjectURL === "function") {
+          URL.revokeObjectURL(objectUrl);
+        }
+      }
+    };
+  }
+
+  return {
+    url: createDataUrlForStoredFile(file),
+    revoke: () => undefined
+  };
+}
+
 function rewriteGltfResourceUris(
   gltfJson: Record<string, unknown>,
   files: Record<string, ProjectAssetStorageFileRecord>
-): { missingUris: string[] } {
+): { missingUris: string[]; revokeUrls: Array<() => void> } {
   const dataUrlsByPath = new Map<string, string>();
+  const revokeUrls: Array<() => void> = [];
   const missingUris = new Set<string>();
 
   const resolveUri = (uri: string): string | null => {
@@ -368,9 +389,10 @@ function rewriteGltfResourceUris(
       return cachedDataUrl;
     }
 
-    const dataUrl = createDataUrlForStoredFile(storedFile);
-    dataUrlsByPath.set(normalizedUri, dataUrl);
-    return dataUrl;
+    const transientResourceUrl = createTransientResourceUrl(storedFile);
+    dataUrlsByPath.set(normalizedUri, transientResourceUrl.url);
+    revokeUrls.push(transientResourceUrl.revoke);
+    return transientResourceUrl.url;
   };
 
   const rewriteUri = (value: unknown): unknown => {
@@ -403,7 +425,8 @@ function rewriteGltfResourceUris(
   }
 
   return {
-    missingUris: [...missingUris]
+    missingUris: [...missingUris],
+    revokeUrls
   };
 }
 
@@ -588,15 +611,25 @@ async function loadGltfFromImportedModelFileSet(fileSet: ImportedModelFileSet): 
 
   const text = new TextDecoder().decode(fileSet.rootFile.bytes);
   const gltfJson = JSON.parse(text) as Record<string, unknown>;
-  const { missingUris } = rewriteGltfResourceUris(gltfJson, fileSet.packageRecord.files);
+  const { missingUris, revokeUrls } = rewriteGltfResourceUris(gltfJson, fileSet.packageRecord.files);
 
   if (missingUris.length > 0) {
+    for (const revokeUrl of revokeUrls) {
+      revokeUrl();
+    }
+
     throw new Error(`Missing external model resource(s): ${missingUris.join(", ")}.`);
   }
 
   const loader = new GLTFLoader();
 
-  return loader.parseAsync(JSON.stringify(gltfJson), "");
+  try {
+    return await loader.parseAsync(JSON.stringify(gltfJson), "");
+  } finally {
+    for (const revokeUrl of revokeUrls) {
+      revokeUrl();
+    }
+  }
 }
 
 function createModelAssetRecordFromFileSet(
@@ -713,14 +746,24 @@ export async function loadModelAssetFromStorage(
   const fileEntries = storedAsset.files;
   const rootFileBytes = storedModelFile.bytes;
   const gltfJson = JSON.parse(new TextDecoder().decode(rootFileBytes)) as Record<string, unknown>;
-  const { missingUris } = rewriteGltfResourceUris(gltfJson, fileEntries);
+  const { missingUris, revokeUrls } = rewriteGltfResourceUris(gltfJson, fileEntries);
 
   if (missingUris.length > 0) {
+    for (const revokeUrl of revokeUrls) {
+      revokeUrl();
+    }
+
     throw new Error(`Missing stored external model resource(s): ${missingUris.join(", ")}.`);
   }
 
   const loader = new GLTFLoader();
 
-  const gltf = await loader.parseAsync(JSON.stringify(gltfJson), "");
-  return createLoadedModelAsset(asset, cloneTemplateScene(gltf.scene));
+  try {
+    const gltf = await loader.parseAsync(JSON.stringify(gltfJson), "");
+    return createLoadedModelAsset(asset, cloneTemplateScene(gltf.scene));
+  } finally {
+    for (const revokeUrl of revokeUrls) {
+      revokeUrl();
+    }
+  }
 }
