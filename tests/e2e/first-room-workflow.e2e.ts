@@ -21,7 +21,9 @@ test("first-room workflow covers create, texture, save/load, and run", async ({ 
   await page.reload();
 
   await page.getByRole("button", { name: "Box Create" }).click();
-  await page.getByTestId("viewport-shell").click();
+  const viewportCanvas = page.locator('[data-testid="viewport-shell"] canvas');
+  await expect(viewportCanvas).toBeVisible();
+  await viewportCanvas.click();
   await page.getByTestId("face-button-posZ").click();
   await page.getByTestId("material-button-starter-amber-grid").click();
 
@@ -40,7 +42,7 @@ test("first-room workflow covers create, texture, save/load, and run", async ({ 
 
   await page.getByRole("button", { name: "Save Draft" }).click();
   await page.getByRole("button", { name: "Box Create" }).click();
-  await page.getByTestId("viewport-shell").click();
+  await viewportCanvas.click();
   await expect(page.getByRole("button", { name: /Box Brush 2/ })).toBeVisible();
 
   await page.getByRole("button", { name: "Load Draft" }).click();
