@@ -128,7 +128,9 @@ describe("RuntimeInteractionSystem", () => {
         },
         toggleBrushVisibility: () => {
           dispatches.push("toggle");
-        }
+        },
+        playAnimation: () => {},
+        stopAnimation: () => {}
       }
     );
     interactionSystem.updatePlayerPosition(
@@ -144,7 +146,9 @@ describe("RuntimeInteractionSystem", () => {
         },
         toggleBrushVisibility: () => {
           dispatches.push("toggle");
-        }
+        },
+        playAnimation: () => {},
+        stopAnimation: () => {}
       }
     );
 
