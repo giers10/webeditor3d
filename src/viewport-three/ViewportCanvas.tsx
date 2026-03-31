@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
+import type { LoadedModelAsset } from "../assets/gltf-model-import";
+import type { ProjectAssetRecord } from "../assets/project-assets";
 import type { EditorSelection } from "../core/selection";
 import type { ToolMode } from "../core/tool-mode";
 import type { Vec3 } from "../core/vector";
@@ -13,6 +15,8 @@ import { ViewportHost } from "./viewport-host";
 interface ViewportCanvasProps {
   world: WorldSettings;
   sceneDocument: SceneDocument;
+  projectAssets: Record<string, ProjectAssetRecord>;
+  loadedModelAssets: Record<string, LoadedModelAsset>;
   selection: EditorSelection;
   toolMode: ToolMode;
   focusRequestId: number;
@@ -32,6 +36,8 @@ function formatVec3(vector: Vec3 | null): string {
 export function ViewportCanvas({
   world,
   sceneDocument,
+  projectAssets,
+  loadedModelAssets,
   selection,
   toolMode,
   focusRequestId,
@@ -86,6 +92,10 @@ export function ViewportCanvas({
   useEffect(() => {
     hostRef.current?.updateDocument(sceneDocument, selection);
   }, [sceneDocument, selection]);
+
+  useEffect(() => {
+    hostRef.current?.updateAssets(projectAssets, loadedModelAssets);
+  }, [projectAssets, loadedModelAssets]);
 
   useEffect(() => {
     hostRef.current?.setBrushSelectionChangeHandler(onSelectionChange);
