@@ -3159,6 +3159,28 @@ export function App({ store, initialStatusMessage }: AppProps) {
               </div>
             </div>
 
+            {editorState.document.world.background.mode === "image" && (
+              <div className="form-section">
+                <div className="label">Environment Intensity</div>
+                <label className="form-field">
+                  <span className="label">Intensity</span>
+                  <input
+                    data-testid="world-background-environment-intensity"
+                    className="text-input"
+                    type="number"
+                    min="0"
+                    step="0.1"
+                    value={backgroundEnvironmentIntensityDraft}
+                    onChange={(event) => setBackgroundEnvironmentIntensityDraft(event.currentTarget.value)}
+                    onBlur={applyBackgroundEnvironmentIntensity}
+                    onKeyDown={(event) => handleDraftVectorKeyDown(event, applyBackgroundEnvironmentIntensity)}
+                    onKeyUp={(event) => handleNumberInputKeyUp(event, applyBackgroundEnvironmentIntensity)}
+                    onPointerUp={(event) => handleNumberInputPointerUp(event, applyBackgroundEnvironmentIntensity)}
+                  />
+                </label>
+              </div>
+            )}
+
             {editorState.document.world.background.mode !== "image" && (
               <div className="form-section">
                 <div className="label">Background Colors</div>
