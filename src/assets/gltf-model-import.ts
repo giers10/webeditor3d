@@ -7,10 +7,10 @@ import {
   createProjectAssetStorageKey,
   type ModelAssetMetadata,
   type ModelAssetRecord,
-  type ProjectAssetStorage
 } from "./project-assets";
 import { createOpaqueId } from "../core/ids";
 import type { ProjectAssetStorageRecord } from "./project-asset-storage";
+import type { ProjectAssetStorage } from "./project-asset-storage";
 
 export interface LoadedModelAsset {
   assetId: string;
@@ -250,7 +250,7 @@ function disposeTexture(texture: Texture, seenTextures: Set<Texture>) {
 
 function disposeMaterialResources(material: Material, disposeTextures: boolean, seenTextures: Set<Texture>) {
   if (disposeTextures) {
-    for (const value of Object.values(material as Record<string, unknown>)) {
+    for (const value of Object.values(material as unknown as Record<string, unknown>)) {
       if (value === null || value === undefined) {
         continue;
       }
