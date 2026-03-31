@@ -72,6 +72,12 @@ export class ViewportHost {
   private readonly scene = new Scene();
   private readonly camera = new PerspectiveCamera(60, 1, 0.1, 1000);
   private readonly renderer = new WebGLRenderer({ antialias: true });
+  private readonly cameraTarget = new Vector3(0, 0, 0);
+  private readonly cameraOffset = new Vector3();
+  private readonly cameraForward = new Vector3();
+  private readonly cameraRight = new Vector3();
+  private readonly cameraUp = new Vector3();
+  private readonly cameraSpherical = new Spherical();
   private readonly ambientLight = new AmbientLight();
   private readonly sunLight = new DirectionalLight();
   private readonly brushGroup = new Group();
@@ -109,10 +115,13 @@ export class ViewportHost {
   private boxCreatePreviewHandler: ((center: Vec3 | null) => void) | null = null;
   private toolMode: ToolMode = "select";
   private lastBoxCreatePreviewCenter: Vec3 | null = null;
+  private activeCameraDragPointerId: number | null = null;
+  private lastCameraDragClientPosition: { x: number; y: number } | null = null;
 
   constructor() {
     this.camera.position.set(10, 9, 10);
-    this.camera.lookAt(new Vector3(0, 0, 0));
+    this.camera.lookAt(this.cameraTarget);
+    this.updateCameraSphericalFromPose();
 
     const gridHelper = new GridHelper(40, 40, 0xcf8354, 0x4e596b);
     const axesHelper = new AxesHelper(2);
