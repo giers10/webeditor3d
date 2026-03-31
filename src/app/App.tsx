@@ -3560,7 +3560,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         value={selectedModelInstance.animationClipName ?? ""}
                         onChange={(e) => {
                           const clipName = e.target.value || undefined;
-                          store.dispatch(
+                          store.executeCommand(
                             createUpsertModelInstanceCommand({
                               modelInstance: { ...selectedModelInstance, animationClipName: clipName },
                               label: "Set animation clip"
