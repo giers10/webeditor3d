@@ -620,6 +620,23 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     };
   }
 
+  if (source.version === WORLD_ENVIRONMENT_SCENE_DOCUMENT_VERSION) {
+    const materials = readMaterialRegistry(source.materials, "materials");
+
+    return {
+      version: SCENE_DOCUMENT_VERSION,
+      name: expectString(source.name, "name"),
+      world: readWorldSettings(source.world),
+      materials,
+      textures: expectEmptyCollection(source.textures, "textures"),
+      assets: expectEmptyCollection(source.assets, "assets"),
+      brushes: readBrushes(source.brushes, materials, false),
+      modelInstances: expectEmptyCollection(source.modelInstances, "modelInstances"),
+      entities: readEntities(source.entities),
+      interactionLinks: expectEmptyCollection(source.interactionLinks, "interactionLinks")
+    };
+  }
+
   if (source.version !== SCENE_DOCUMENT_VERSION) {
     throw new Error(`Unsupported scene document version: ${String(source.version)}.`);
   }
