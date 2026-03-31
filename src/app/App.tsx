@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties, type ChangeEvent, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ChangeEvent, type KeyboardEvent as ReactKeyboardEvent } from "react";
 
 import { createCreateBoxBrushCommand } from "../commands/create-box-brush-command";
 import { createMoveBoxBrushCommand } from "../commands/move-box-brush-command";
@@ -428,7 +428,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
       return;
     }
 
-    const handleWindowKeyDown = (event: KeyboardEvent) => {
+    const handleWindowKeyDown = (event: globalThis.KeyboardEvent) => {
       if (isTextEntryTarget(event.target)) {
         return;
       }
@@ -627,7 +627,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
-  const handleDraftVectorKeyDown = (event: KeyboardEvent<HTMLInputElement>, applyChange: () => void) => {
+  const handleDraftVectorKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>, applyChange: () => void) => {
     if (event.key === "Enter") {
       applyChange();
     }
