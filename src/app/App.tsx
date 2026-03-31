@@ -810,6 +810,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     const currentAssets = editorState.document.assets;
     const previousLoadedAssetIds = new Set(Object.keys(previousLoadedAssets));
     const nextLoadedAssets: Record<string, LoadedModelAsset> = {};
+    const syncErrorMessages: string[] = [];
 
     const syncModelAssets = async () => {
       if (projectAssetStorage === null) {
@@ -842,9 +843,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
         try {
           nextLoadedAssets[asset.id] = await loadModelAssetFromStorage(projectAssetStorage, asset);
         } catch (error) {
-          if (!cancelled) {
-            setAssetStatusMessage(`Model asset ${asset.sourceName} could not be restored: ${getErrorMessage(error)}`);
-          }
+          syncErrorMessages.push(`Model asset ${asset.sourceName} could not be restored: ${getErrorMessage(error)}`);
         }
       }
 
@@ -868,6 +867,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
       loadedModelAssetsRef.current = nextLoadedAssets;
       setLoadedModelAssets(nextLoadedAssets);
+      setAssetStatusMessage(syncErrorMessages.length === 0 ? null : syncErrorMessages.join(" | "));
     };
 
     void syncModelAssets();
