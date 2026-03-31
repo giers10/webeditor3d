@@ -1,4 +1,5 @@
 import { cloneEditorSelection, type EditorSelection } from "../core/selection";
+import type { ToolMode } from "../core/tool-mode";
 import type { Vec3 } from "../core/vector";
 import { createOpaqueId } from "../core/ids";
 import { cloneEntityInstance, createPlayerStartEntity } from "../entities/entity-instances";
@@ -27,6 +28,7 @@ export function createSetPlayerStartCommand(options: SetPlayerStartCommandOption
 
   let previousEntity = null as typeof nextEntity | null;
   let previousSelection: EditorSelection | null = null;
+  let previousToolMode: ToolMode | null = null;
 
   return {
     id: createOpaqueId("command"),
@@ -41,6 +43,10 @@ export function createSetPlayerStartCommand(options: SetPlayerStartCommandOption
 
       if (previousSelection === null) {
         previousSelection = cloneEditorSelection(context.getSelection());
+      }
+
+      if (previousToolMode === null) {
+        previousToolMode = context.getToolMode();
       }
 
       if (previousEntity === null && currentEntity !== undefined) {
@@ -76,6 +82,10 @@ export function createSetPlayerStartCommand(options: SetPlayerStartCommandOption
 
       if (previousSelection !== null) {
         context.setSelection(previousSelection);
+      }
+
+      if (previousToolMode !== null) {
+        context.setToolMode(previousToolMode);
       }
     }
   };
