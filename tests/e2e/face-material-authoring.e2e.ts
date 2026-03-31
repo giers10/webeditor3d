@@ -20,7 +20,8 @@ test("user can assign a face material through the UI and keep it through a draft
   }, "webeditor3d.scene-document-draft");
   await page.reload();
 
-  await page.getByTestId("create-box-brush").click();
+  await page.getByRole("button", { name: "Box Create" }).click();
+  await page.getByTestId("viewport-shell").click();
   await page.getByTestId("face-button-posZ").click();
   await page.getByTestId("material-button-starter-amber-grid").click();
 
