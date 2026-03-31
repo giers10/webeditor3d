@@ -555,6 +555,7 @@ You are implementing Slice 3.1 — GLB/GLTF import.
 
 Read and follow:
 - AGENTS.md
+- CHAT_CONTEXT.md
 - architecture.md
 - roadmap.md
 - testing.md
@@ -563,46 +564,78 @@ Before coding:
 - Inspect the current repo and extend the existing implementation.
 - Keep placed imported models separate from entities.
 - If you change persisted schema, update versioning, migrations, and at least one compatibility test.
+- Do not invent a GLB-only storage path that later image/audio imports would need to replace.
 
 Current goal:
-Import GLB/GLTF assets, register them, and place them in the scene.
+Import GLB/GLTF assets, register them, persist them reliably, and place them in the scene.
+
+This slice starts the project’s binary asset pipeline, so the storage/pathing decisions must stay coherent for later model, image, and audio assets.
 
 Requirements:
 - Add an asset registry to the canonical document or asset domain.
 - Implement a GLB/GLTF import workflow.
-- Add the smallest reliable project-storage addition needed so imported assets survive reload.
-- Prefer IndexedDB-backed project asset storage for binary payloads if browser storage is needed.
+- Add the smallest reliable project asset storage layer needed so imported binary assets survive reload.
+- Prefer IndexedDB-backed project asset storage if browser storage is needed.
 - Keep stable asset records in the canonical document.
 - Never rely on ephemeral Blob URLs as the only persisted reference.
-- Extract and store useful metadata:
+- Do not create one storage system for models now and a different one later for images/audio.
+- The asset registry should be generic enough to support later:
+  - model assets
+  - image assets
+  - audio assets
+- For this slice, only model import/placement must be fully implemented.
+- If the repo does not already have a suitable equivalent, each asset record should capture at least:
+  - `id`
+  - `kind`
+  - `sourceName`
+  - `mimeType`
+  - `storageKey` or equivalent stable persistence reference
+  - `byteLength`
+  - extracted metadata relevant to the asset kind
+- Keep extracted metadata typed and explicit.
+- Do not put binary payloads directly into the canonical `SceneDocument` unless that is already the established project-storage strategy.
+- Do not use `textures` as a second unrelated binary storage path in this slice.
+- `textures` may remain reserved for later authoring texture definitions/material wiring.
+- Later skyboxes/background images and audio assets should be able to reuse this same asset storage path.
+- Extract and store useful metadata for imported GLB/GLTF assets:
   - asset id
   - name
   - stable persistence reference
   - contained materials/textures if useful
   - animations list if present
   - bounding box / dimensions if feasible
+- Extract and store useful metadata:
 - Add preview/thumbnail support if practical, but do not let thumbnail generation block import.
 - Allow placing an imported model instance in the scene.
 - Allow selecting and transforming a model instance.
+- Model instances must reference asset ids, not duplicate imported asset payloads.
 - Persist asset references and placed model instances through save/load.
 - Render imported assets in editor and runner.
 
 Important:
 - Imported assets should be first-class but must not replace brushes.
-- Distinguish clearly between asset records and scene model instances.
+- Distinguish clearly between:
+  - asset record
+  - model instance
+  - entity
 - Keep the implementation small and reliable.
 - Do not build a giant asset-management subsystem yet.
+- Do not solve full project package export/import in this slice.
+- Do not distort the editor data model to match glTF runtime structures.
 
 Testing expectations:
 - Round-trip tests for asset refs / placed model instances
+- Tests for the project asset storage path, including survival across reload through the current persistence strategy
 - At least one fixture GLB/GLTF test asset
 - E2E or browser verification for import and placement if possible
 
 Please implement fully and report:
 - asset registry design
+- project asset storage design
 - model instance representation
 - what metadata is extracted
-- what limitations exist on import
+- what limitations exist on import/storage
+- how later image/audio assets are expected to reuse this same path
 - how to test with the included fixture(s)
 ```
 
@@ -716,6 +749,7 @@ You are implementing Slice 3.4 — Spatial audio.
 
 Read and follow:
 - AGENTS.md
+- CHAT_CONTEXT.md
 - architecture.md
 - roadmap.md
 - testing.md
@@ -723,15 +757,20 @@ Read and follow:
 Before coding:
 - Inspect the current repo and extend the existing implementation.
 - Reuse the existing Trigger -> Action -> Target system rather than inventing a second dispatch path.
+- Reuse the existing generic asset registry and persistent project asset storage introduced for imported assets.
 - If you change persisted schema, update versioning, migrations, and at least one compatibility test.
+- Do not invent an audio-specific binary storage path if the existing generic asset storage can support audio assets.
 
 Current goal:
 Make positional/spatial audio a first-class runner feature.
 
 Requirements:
 - Support audio asset references for SoundEmitter entities.
-- Add the smallest reliable project-storage addition needed so imported audio survives reload if that does not already exist.
-- Prefer reusing any existing project asset storage introduced for GLB/GLTF import.
+- Reuse the existing generic asset registry for audio assets.
+- Reuse the same persistent project asset storage path used for imported binary assets.
+- If the asset registry does not yet support audio asset kinds, extend it generically rather than creating a second asset system.
+- SoundEmitter entities should reference audio asset ids, not raw File objects, Blob URLs, or ad hoc file paths.
+- Never rely on ephemeral Blob URLs as the only persisted reference.
 - Implement positional audio in the runner.
 - Support at least:
   - loop
@@ -744,23 +783,31 @@ Requirements:
 - Add `play sound` and `stop sound` actions to the existing interaction system.
 - Add minimal inspector controls for sound settings.
 - Persist all relevant settings through save/load.
+- Keep binary payloads out of the canonical `SceneDocument` if project storage already exists.
+- Store stable asset records in the document and load binary data through the project asset storage layer.
+- Missing or invalid audio asset refs must fail clearly in validation and/or runtime diagnostics.
+- Do not create a separate audio-only registry if the generic asset registry is already present.
 
 Important:
 - Spatial audio is a core product feature.
 - Keep the authoring flow understandable.
 - Don’t attempt advanced occlusion or buses yet.
+- Do not redesign the entity system just to support audio.
 
 Testing expectations:
-- Domain tests for sound entity config
+- Domain tests for sound entity config and asset references
 - Runtime tests for action dispatch into the audio system where practical
+- Tests for missing/invalid audio asset refs surfacing clearly
 - Manual QA notes for real spatial verification
 - Browser behavior notes for audio unlock
 
 Please implement fully and report:
 - audio system structure
-- entity fields added/used
+- how SoundEmitter references audio assets
+- how the generic asset registry/storage path is reused
 - how browser unlock is handled
 - what was tested automatically vs manually
+- remaining limitations
 ```
 
 ---
