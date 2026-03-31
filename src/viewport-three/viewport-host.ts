@@ -216,9 +216,14 @@ export class ViewportHost {
     this.rebuildModelInstances(document, selection);
   }
 
-  updateAssets(projectAssets: Record<string, ProjectAssetRecord>, loadedModelAssets: Record<string, LoadedModelAsset>) {
+  updateAssets(
+    projectAssets: Record<string, ProjectAssetRecord>,
+    loadedModelAssets: Record<string, LoadedModelAsset>,
+    loadedImageAssets: Record<string, LoadedImageAsset>
+  ) {
     this.projectAssets = projectAssets;
     this.loadedModelAssets = loadedModelAssets;
+    this.loadedImageAssets = loadedImageAssets;
 
     if (this.currentWorld !== null) {
       this.applyWorld();
