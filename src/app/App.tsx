@@ -3966,7 +3966,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
         className="visually-hidden"
         type="file"
         accept=".json,application/json"
-        onChange={handleImportChange}
+        onChange={handleImportJsonChange}
+      />
+      <input
+        ref={importModelInputRef}
+        className="visually-hidden"
+        type="file"
+        accept=".glb,.gltf,model/gltf-binary,model/gltf+json,application/octet-stream"
+        onChange={handleImportModelChange}
       />
     </div>
   );
