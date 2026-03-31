@@ -46,6 +46,7 @@ import {
 import {
   importModelAssetFromFile,
   loadModelAssetFromStorage,
+  disposeModelTemplate,
   type LoadedModelAsset
 } from "../assets/gltf-model-import";
 import type { ModelAssetRecord, ProjectAssetRecord } from "../assets/project-assets";
