@@ -680,7 +680,7 @@ export async function importModelAssetFromFiles(
     return {
       asset,
       modelInstance,
-      loadedAsset: createLoadedModelAsset(asset, cloneTemplateScene(gltf.scene))
+      loadedAsset: createLoadedModelAsset(asset, cloneTemplateScene(gltf.scene), gltf.animations)
     };
   } catch (error) {
     await storage.deleteAsset(asset.storageKey).catch(() => undefined);
@@ -739,7 +739,7 @@ export async function loadModelAssetFromStorage(
   if (asset.metadata.format === "glb") {
     try {
       const gltf = await loadGltfFromArrayBuffer(storedModelFile.bytes);
-      return createLoadedModelAsset(asset, cloneTemplateScene(gltf.scene));
+      return createLoadedModelAsset(asset, cloneTemplateScene(gltf.scene), gltf.animations);
     } catch (error) {
       throw new Error(`Model asset reload failed for ${asset.sourceName}: ${getErrorDetail(error)}`);
     }
