@@ -14,9 +14,11 @@ import { createResizeBoxBrushCommand } from "../commands/resize-box-brush-comman
 import { createSetBoxBrushFaceMaterialCommand } from "../commands/set-box-brush-face-material-command";
 import { createSetBoxBrushNameCommand } from "../commands/set-box-brush-name-command";
 import { createSetBoxBrushFaceUvStateCommand } from "../commands/set-box-brush-face-uv-state-command";
+import { createDeleteInteractionLinkCommand } from "../commands/delete-interaction-link-command";
 import { createSetSceneNameCommand } from "../commands/set-scene-name-command";
 import { createSetWorldSettingsCommand } from "../commands/set-world-settings-command";
 import { createUpsertEntityCommand } from "../commands/upsert-entity-command";
+import { createUpsertInteractionLinkCommand } from "../commands/upsert-interaction-link-command";
 import {
   getSelectedBrushFaceId,
   getSingleSelectedBrushId,
@@ -64,6 +66,15 @@ import {
   type EntityKind
 } from "../entities/entity-instances";
 import { getEntityDisplayLabelById, getSortedEntityDisplayLabels } from "../entities/entity-labels";
+import {
+  areInteractionLinksEqual,
+  cloneInteractionLink,
+  createTeleportPlayerInteractionLink,
+  createToggleVisibilityInteractionLink,
+  getInteractionLinksForSource,
+  type InteractionLink,
+  type InteractionTriggerKind
+} from "../interactions/interaction-links";
 import { STARTER_MATERIAL_LIBRARY, type MaterialDef } from "../materials/starter-material-library";
 import { RunnerCanvas } from "../runner-web/RunnerCanvas";
 import type { FirstPersonTelemetry } from "../runtime-three/navigation-controller";
