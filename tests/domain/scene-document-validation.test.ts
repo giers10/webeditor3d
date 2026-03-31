@@ -3,7 +3,13 @@ import { describe, expect, it } from "vitest";
 import { createBoxBrush } from "../../src/document/brushes";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
 import { validateSceneDocument } from "../../src/document/scene-document-validation";
-import { createPlayerStartEntity } from "../../src/entities/entity-instances";
+import {
+  createInteractableEntity,
+  createPlayerStartEntity,
+  createSoundEmitterEntity,
+  createTeleportTargetEntity,
+  createTriggerVolumeEntity
+} from "../../src/entities/entity-instances";
 
 describe("validateSceneDocument", () => {
   it("accepts a valid first-room document", () => {
@@ -112,6 +118,68 @@ describe("validateSceneDocument", () => {
         }),
         expect.objectContaining({
           code: "invalid-player-start-yaw"
+        })
+      ])
+    );
+  });
+
+  it("detects invalid typed entity values across the entity registry", () => {
+    const soundEmitter = createSoundEmitterEntity({
+      id: "entity-sound-main"
+    });
+    const triggerVolume = createTriggerVolumeEntity({
+      id: "entity-trigger-main"
+    });
+    const teleportTarget = createTeleportTargetEntity({
+      id: "entity-teleport-main"
+    });
+    const interactable = createInteractableEntity({
+      id: "entity-interactable-main"
+    });
+
+    const validation = validateSceneDocument({
+      ...createEmptySceneDocument(),
+      entities: {
+        [soundEmitter.id]: {
+          ...soundEmitter,
+          radius: Number.NaN
+        },
+        [triggerVolume.id]: {
+          ...triggerVolume,
+          size: {
+            x: 0,
+            y: 2,
+            z: 2
+          }
+        },
+        [teleportTarget.id]: {
+          ...teleportTarget,
+          yawDegrees: Number.POSITIVE_INFINITY
+        },
+        [interactable.id]: {
+          ...interactable,
+          prompt: "   ",
+          enabled: "yes" as unknown as boolean
+        }
+      }
+    });
+
+    expect(validation.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "invalid-sound-emitter-radius"
+        }),
+        expect.objectContaining({
+          code: "invalid-trigger-volume-size"
+        }),
+        expect.objectContaining({
+          code: "invalid-teleport-target-yaw"
+        }),
+        expect.objectContaining({
+          code: "invalid-interactable-prompt"
+        }),
+        expect.objectContaining({
+          code: "invalid-interactable-enabled"
         })
       ])
     );
