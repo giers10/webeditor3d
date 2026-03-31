@@ -1,5 +1,6 @@
-import { Box3, Group, Mesh, Object3D } from "three";
+import { Box3, Group, Mesh, type Material, type Object3D, type Texture } from "three";
 import { GLTFLoader, type GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { clone as cloneSkeleton } from "three/examples/jsm/utils/SkeletonUtils.js";
 
 import { createModelInstance, type ModelInstance } from "./model-instances";
 import {
@@ -219,6 +220,100 @@ async function loadGltfFromBlob(blob: Blob): Promise<GLTF> {
 
 function cloneTemplateScene(scene: Group): Group {
   return scene.clone(true);
+}
+
+function cloneMaterial(material: Material): Material {
+  return material.clone();
+}
+
+function cloneMeshResources(object: Object3D) {
+  const maybeMesh = object as Mesh & { isMesh?: boolean };
+
+  if (maybeMesh.isMesh !== true) {
+    return;
+  }
+
+  maybeMesh.geometry = maybeMesh.geometry.clone();
+  maybeMesh.material = Array.isArray(maybeMesh.material)
+    ? maybeMesh.material.map((material) => cloneMaterial(material))
+    : cloneMaterial(maybeMesh.material);
+}
+
+function disposeTexture(texture: Texture, seenTextures: Set<Texture>) {
+  if (seenTextures.has(texture)) {
+    return;
+  }
+
+  seenTextures.add(texture);
+  texture.dispose();
+}
+
+function disposeMaterialResources(material: Material, disposeTextures: boolean, seenTextures: Set<Texture>) {
+  if (disposeTextures) {
+    for (const value of Object.values(material as Record<string, unknown>)) {
+      if (value === null || value === undefined) {
+        continue;
+      }
+
+      if (Array.isArray(value)) {
+        for (const entry of value) {
+          if (entry !== null && typeof entry === "object" && "isTexture" in entry) {
+            disposeTexture(entry as Texture, seenTextures);
+          }
+        }
+
+        continue;
+      }
+
+      if (typeof value === "object" && "isTexture" in value) {
+        disposeTexture(value as Texture, seenTextures);
+      }
+    }
+  }
+
+  material.dispose();
+}
+
+function disposeMeshResources(object: Object3D, disposeTextures: boolean, seenTextures: Set<Texture>) {
+  const maybeMesh = object as Mesh & { isMesh?: boolean };
+
+  if (maybeMesh.isMesh !== true) {
+    return;
+  }
+
+  maybeMesh.geometry.dispose();
+
+  if (Array.isArray(maybeMesh.material)) {
+    for (const material of maybeMesh.material) {
+      disposeMaterialResources(material, disposeTextures, seenTextures);
+    }
+  } else {
+    disposeMaterialResources(maybeMesh.material, disposeTextures, seenTextures);
+  }
+}
+
+export function instantiateModelTemplate(template: Group): Group {
+  const clone = cloneSkeleton(template) as Group;
+
+  clone.traverse(cloneMeshResources);
+
+  return clone;
+}
+
+export function disposeModelTemplate(template: Group) {
+  const seenTextures = new Set<Texture>();
+
+  template.traverse((object) => {
+    disposeMeshResources(object, true, seenTextures);
+  });
+}
+
+export function disposeModelInstance(instance: Group) {
+  const seenTextures = new Set<Texture>();
+
+  instance.traverse((object) => {
+    disposeMeshResources(object, false, seenTextures);
+  });
 }
 
 export async function importModelAssetFromFile(
