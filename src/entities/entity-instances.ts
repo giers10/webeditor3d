@@ -284,7 +284,7 @@ export const ENTITY_REGISTRY: { [K in EntityKind]: EntityRegistryEntry<Extract<E
 };
 
 export function isEntityKind(value: unknown): value is EntityKind {
-  return typeof value === "string" && Object.hasOwn(ENTITY_REGISTRY, value);
+  return typeof value === "string" && Object.prototype.hasOwnProperty.call(ENTITY_REGISTRY, value);
 }
 
 export function getEntityRegistryEntry<K extends EntityKind>(kind: K): EntityRegistryEntry<Extract<EntityInstance, { kind: K }>> {
