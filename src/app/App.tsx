@@ -1985,6 +1985,25 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
   };
 
+  const applyBackgroundEnvironmentIntensity = () => {
+    if (editorState.document.world.background.mode !== "image") {
+      return;
+    }
+
+    const intensity = readNonNegativeNumberDraft(backgroundEnvironmentIntensityDraft, "Environment intensity");
+    applyWorldSettings(
+      {
+        ...editorState.document.world,
+        background: {
+          ...editorState.document.world.background,
+          environmentIntensity: intensity
+        }
+      },
+      "Set background environment intensity",
+      "Updated the background environment intensity."
+    );
+  };
+
   const applyAmbientLightColor = (colorHex: string) => {
     applyWorldSettings(
       {
