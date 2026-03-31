@@ -4,6 +4,7 @@ import type { SceneDocument, WorldSettings } from "../document/scene-document";
 import { cloneWorldSettings } from "../document/world-settings";
 import { getEntityInstances, getPrimaryPlayerStartEntity, type EntityInstance } from "../entities/entity-instances";
 import { getBoxBrushBounds } from "../geometry/box-brush";
+import { cloneInteractionLink, getInteractionLinks, type InteractionLink } from "../interactions/interaction-links";
 import { cloneMaterialDef, type MaterialDef } from "../materials/starter-material-library";
 import { cloneFaceUvState } from "../document/brushes";
 import { assertRuntimeSceneBuildable } from "./runtime-scene-validation";
@@ -96,6 +97,7 @@ export interface RuntimeSceneDefinition {
   colliders: RuntimeBoxCollider[];
   sceneBounds: RuntimeSceneBounds | null;
   entities: RuntimeEntityCollection;
+  interactionLinks: InteractionLink[];
   playerStart: RuntimePlayerStart | null;
   spawn: RuntimeSpawnPoint;
 }
@@ -309,6 +311,7 @@ export function buildRuntimeSceneFromDocument(document: SceneDocument, options: 
   const colliders = Object.values(document.brushes).map((brush) => buildRuntimeCollider(brush));
   const sceneBounds = combineColliderBounds(colliders);
   const entities = buildRuntimeEntityCollection(document);
+  const interactionLinks = getInteractionLinks(document.interactionLinks).map((link) => cloneInteractionLink(link));
   const playerStartEntity = getPrimaryPlayerStartEntity(document.entities);
   const playerStart =
     playerStartEntity === null
@@ -325,6 +328,7 @@ export function buildRuntimeSceneFromDocument(document: SceneDocument, options: 
     colliders,
     sceneBounds,
     entities,
+    interactionLinks,
     playerStart,
     spawn:
       playerStart === null
