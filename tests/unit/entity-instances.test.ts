@@ -1,12 +1,22 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  DEFAULT_POINT_LIGHT_COLOR_HEX,
+  DEFAULT_POINT_LIGHT_DISTANCE,
+  DEFAULT_POINT_LIGHT_INTENSITY,
+  DEFAULT_SPOT_LIGHT_ANGLE_DEGREES,
+  DEFAULT_SPOT_LIGHT_COLOR_HEX,
+  DEFAULT_SPOT_LIGHT_DISTANCE,
+  DEFAULT_SPOT_LIGHT_DIRECTION,
+  DEFAULT_SPOT_LIGHT_INTENSITY,
   DEFAULT_INTERACTABLE_PROMPT,
   DEFAULT_SOUND_EMITTER_GAIN,
   DEFAULT_SOUND_EMITTER_RADIUS,
   DEFAULT_TRIGGER_VOLUME_SIZE,
+  createPointLightEntity,
   createDefaultEntityInstance,
   createInteractableEntity,
+  createSpotLightEntity,
   getEntityRegistryEntry
 } from "../../src/entities/entity-instances";
 
@@ -16,6 +26,24 @@ describe("entity registry defaults", () => {
       kind: "playerStart",
       position: { x: 0, y: 0, z: 0 },
       yawDegrees: 0
+    });
+
+    expect(createDefaultEntityInstance("pointLight")).toMatchObject({
+      kind: "pointLight",
+      position: { x: 0, y: 0, z: 0 },
+      colorHex: DEFAULT_POINT_LIGHT_COLOR_HEX,
+      intensity: DEFAULT_POINT_LIGHT_INTENSITY,
+      distance: DEFAULT_POINT_LIGHT_DISTANCE
+    });
+
+    expect(createDefaultEntityInstance("spotLight")).toMatchObject({
+      kind: "spotLight",
+      position: { x: 0, y: 0, z: 0 },
+      direction: DEFAULT_SPOT_LIGHT_DIRECTION,
+      colorHex: DEFAULT_SPOT_LIGHT_COLOR_HEX,
+      intensity: DEFAULT_SPOT_LIGHT_INTENSITY,
+      distance: DEFAULT_SPOT_LIGHT_DISTANCE,
+      angleDegrees: DEFAULT_SPOT_LIGHT_ANGLE_DEGREES
     });
 
     expect(createDefaultEntityInstance("soundEmitter")).toMatchObject({
@@ -67,5 +95,21 @@ describe("entity registry defaults", () => {
         prompt: "   "
       })
     ).toThrow("Interactable prompt must be non-empty.");
+
+    expect(() =>
+      createPointLightEntity({
+        distance: 0
+      })
+    ).toThrow("Point Light distance must be a finite number greater than zero.");
+
+    expect(() =>
+      createSpotLightEntity({
+        direction: {
+          x: 0,
+          y: 0,
+          z: 0
+        }
+      })
+    ).toThrow("Spot Light direction must not be the zero vector.");
   });
 });
