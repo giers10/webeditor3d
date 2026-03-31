@@ -627,7 +627,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [ambientLightIntensityDraft, setAmbientLightIntensityDraft] = useState(String(editorState.document.world.ambientLight.intensity));
   const [sunLightIntensityDraft, setSunLightIntensityDraft] = useState(String(editorState.document.world.sunLight.intensity));
   const [sunDirectionDraft, setSunDirectionDraft] = useState(createVec3Draft(editorState.document.world.sunLight.direction));
-  const [statusMessage, setStatusMessage] = useState(initialStatusMessage ?? "Slice 2.3 click interactions and runner prompts ready.");
+  const [statusMessage, setStatusMessage] = useState(initialStatusMessage ?? "Slice 3.1 GLB/GLTF import ready.");
   const [assetStatusMessage, setAssetStatusMessage] = useState<string | null>(null);
   const [preferredNavigationMode, setPreferredNavigationMode] = useState<RuntimeNavigationMode>(
     primaryPlayerStart === null ? "orbitVisitor" : "firstPerson"
@@ -2173,7 +2173,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
         <header className="toolbar">
             <div className="toolbar__brand">
               <div className="toolbar__title">WebEditor3D</div>
-              <div className="toolbar__subtitle">Slice 2.3 click interactions and runner prompts</div>
+              <div className="toolbar__subtitle">Slice 3.1 GLB/GLTF import and model placement</div>
             </div>
 
           <div className="toolbar__actions">
