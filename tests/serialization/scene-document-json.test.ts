@@ -5,6 +5,7 @@ import {
   ENTITY_SYSTEM_FOUNDATION_SCENE_DOCUMENT_VERSION,
   FIRST_ROOM_POLISH_SCENE_DOCUMENT_VERSION,
   SCENE_DOCUMENT_VERSION,
+  TRIGGER_ACTION_TARGET_FOUNDATION_SCENE_DOCUMENT_VERSION,
   WORLD_ENVIRONMENT_SCENE_DOCUMENT_VERSION,
   createEmptySceneDocument
 } from "../../src/document/scene-document";
@@ -207,6 +208,10 @@ describe("scene document JSON", () => {
     const triggerVolume = createTriggerVolumeEntity({
       id: "entity-trigger-main"
     });
+    const interactable = createInteractableEntity({
+      id: "entity-interactable-main",
+      prompt: "Use Console"
+    });
     const teleportTarget = createTeleportTargetEntity({
       id: "entity-teleport-main"
     });
@@ -220,6 +225,7 @@ describe("scene document JSON", () => {
       },
       entities: {
         [triggerVolume.id]: triggerVolume,
+        [interactable.id]: interactable,
         [teleportTarget.id]: teleportTarget
       },
       interactionLinks: {
@@ -235,6 +241,12 @@ describe("scene document JSON", () => {
           trigger: "exit",
           targetBrushId: brush.id,
           visible: false
+        }),
+        "link-click-teleport": createTeleportPlayerInteractionLink({
+          id: "link-click-teleport",
+          sourceEntityId: interactable.id,
+          trigger: "click",
+          targetEntityId: teleportTarget.id
         })
       }
     };
@@ -478,6 +490,71 @@ describe("scene document JSON", () => {
     expect(migratedDocument.interactionLinks).toEqual({});
     expect(migratedDocument.entities["entity-trigger-main"]).toMatchObject({
       kind: "triggerVolume"
+    });
+  });
+
+  it("migrates slice 2.2 documents to the click-capable interaction schema without changing existing links", () => {
+    const migratedDocument = migrateSceneDocument({
+      version: TRIGGER_ACTION_TARGET_FOUNDATION_SCENE_DOCUMENT_VERSION,
+      name: "Trigger Action Target Scene",
+      world: createEmptySceneDocument().world,
+      materials: createEmptySceneDocument().materials,
+      textures: {},
+      assets: {},
+      brushes: {},
+      modelInstances: {},
+      entities: {
+        "entity-trigger-main": {
+          id: "entity-trigger-main",
+          kind: "triggerVolume",
+          position: {
+            x: 0,
+            y: 0,
+            z: 0
+          },
+          size: {
+            x: 2,
+            y: 2,
+            z: 2
+          },
+          triggerOnEnter: true,
+          triggerOnExit: false
+        },
+        "entity-teleport-main": {
+          id: "entity-teleport-main",
+          kind: "teleportTarget",
+          position: {
+            x: 4,
+            y: 0,
+            z: -2
+          },
+          yawDegrees: 90
+        }
+      },
+      interactionLinks: {
+        "link-teleport": {
+          id: "link-teleport",
+          sourceEntityId: "entity-trigger-main",
+          trigger: "enter",
+          action: {
+            type: "teleportPlayer",
+            targetEntityId: "entity-teleport-main"
+          }
+        }
+      }
+    });
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.interactionLinks).toEqual({
+      "link-teleport": {
+        id: "link-teleport",
+        sourceEntityId: "entity-trigger-main",
+        trigger: "enter",
+        action: {
+          type: "teleportPlayer",
+          targetEntityId: "entity-teleport-main"
+        }
+      }
     });
   });
 
