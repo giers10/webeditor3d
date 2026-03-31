@@ -274,6 +274,44 @@ export class RuntimeHost {
     }
   }
 
+  private createPointLightRuntimeObjects(pointLight: RuntimeLocalLightCollection["pointLights"][number]): LocalLightRenderObjects {
+    const group = new Group();
+    const light = new PointLight(pointLight.colorHex, pointLight.intensity, pointLight.distance);
+
+    group.position.set(pointLight.position.x, pointLight.position.y, pointLight.position.z);
+    light.position.set(0, 0, 0);
+    group.add(light);
+
+    return {
+      group
+    };
+  }
+
+  private createSpotLightRuntimeObjects(spotLight: RuntimeLocalLightCollection["spotLights"][number]): LocalLightRenderObjects {
+    const group = new Group();
+    const light = new SpotLight(
+      spotLight.colorHex,
+      spotLight.intensity,
+      spotLight.distance,
+      (spotLight.angleDegrees * Math.PI) / 180,
+      0.18,
+      1
+    );
+    const direction = new Vector3(spotLight.direction.x, spotLight.direction.y, spotLight.direction.z).normalize();
+    const orientation = new Quaternion().setFromUnitVectors(new Vector3(0, 1, 0), direction);
+
+    group.position.set(spotLight.position.x, spotLight.position.y, spotLight.position.z);
+    group.quaternion.copy(orientation);
+    light.position.set(0, 0, 0);
+    light.target.position.set(0, 1, 0);
+    group.add(light);
+    group.add(light.target);
+
+    return {
+      group
+    };
+  }
+
   private rebuildBrushMeshes(brushes: RuntimeBoxBrushInstance[]) {
     this.clearBrushMeshes();
 
