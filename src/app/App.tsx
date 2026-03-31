@@ -825,7 +825,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
       if (cancelled) {
         for (const loadedAsset of Object.values(nextLoadedAssets)) {
-          if (previousLoadedAssets[loadedAsset.asset.id] !== loadedAsset) {
+          if (previousLoadedAssets[loadedAsset.assetId] !== loadedAsset) {
             disposeModelTemplate(loadedAsset.template);
           }
         }
