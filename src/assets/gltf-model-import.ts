@@ -298,12 +298,13 @@ export function extractModelAssetMetadata(gltf: GLTF, format: "glb" | "gltf"): M
   };
 }
 
-function createLoadedModelAsset(asset: ModelAssetRecord, template: Group): LoadedModelAsset {
+function createLoadedModelAsset(asset: ModelAssetRecord, template: Group, animations: AnimationClip[]): LoadedModelAsset {
   return {
     assetId: asset.id,
     storageKey: asset.storageKey,
     metadata: asset.metadata,
-    template
+    template,
+    animations
   };
 }
 
