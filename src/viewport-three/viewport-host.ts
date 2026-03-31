@@ -32,6 +32,7 @@ import type { Vec3 } from "../core/vector";
 import { createModelInstanceRenderGroup, disposeModelInstance } from "../assets/model-instance-rendering";
 import type { LoadedModelAsset } from "../assets/gltf-model-import";
 import type { ProjectAssetRecord } from "../assets/project-assets";
+import { getModelInstances } from "../assets/model-instances";
 import type { SceneDocument, WorldSettings } from "../document/scene-document";
 import { getEntityInstances, type EntityInstance } from "../entities/entity-instances";
 import { BOX_FACE_IDS, DEFAULT_BOX_BRUSH_SIZE, type BoxBrush, type BoxFaceId } from "../document/brushes";
@@ -361,7 +362,7 @@ export class ViewportHost {
   private rebuildModelInstances(document: SceneDocument, selection: EditorSelection) {
     this.clearModelInstances();
 
-    for (const modelInstance of Object.values(document.modelInstances)) {
+    for (const modelInstance of getModelInstances(document.modelInstances)) {
       const selected = isModelInstanceSelected(selection, modelInstance.id);
       const asset = document.assets[modelInstance.assetId];
       const loadedAsset = this.loadedModelAssets[modelInstance.assetId];
