@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { createEditorStore } from "../../src/app/editor-store";
 import { createUpsertEntityCommand } from "../../src/commands/upsert-entity-command";
-import { createSoundEmitterEntity, createTriggerVolumeEntity } from "../../src/entities/entity-instances";
+import { createPointLightEntity, createSoundEmitterEntity, createSpotLightEntity, createTriggerVolumeEntity } from "../../src/entities/entity-instances";
 
 describe("typed entity upsert command", () => {
   it("places a Sound Emitter and restores the previous tool mode across undo and redo", () => {
@@ -39,6 +39,43 @@ describe("typed entity upsert command", () => {
     expect(store.redo()).toBe(true);
     expect(store.getState().toolMode).toBe("select");
     expect(store.getState().document.entities[soundEmitter.id]).toEqual(soundEmitter);
+  });
+
+  it("places a Point Light and restores the previous tool mode across undo and redo", () => {
+    const store = createEditorStore();
+    const pointLight = createPointLightEntity({
+      position: {
+        x: 2,
+        y: 3,
+        z: 4
+      },
+      colorHex: "#ccddee",
+      intensity: 1.5,
+      distance: 9
+    });
+
+    store.setToolMode("box-create");
+    store.executeCommand(
+      createUpsertEntityCommand({
+        entity: pointLight,
+        label: "Place point light"
+      })
+    );
+
+    expect(store.getState().toolMode).toBe("select");
+    expect(store.getState().selection).toEqual({
+      kind: "entities",
+      ids: [pointLight.id]
+    });
+    expect(store.getState().document.entities[pointLight.id]).toEqual(pointLight);
+
+    expect(store.undo()).toBe(true);
+    expect(store.getState().toolMode).toBe("box-create");
+    expect(store.getState().document.entities).toEqual({});
+
+    expect(store.redo()).toBe(true);
+    expect(store.getState().toolMode).toBe("select");
+    expect(store.getState().document.entities[pointLight.id]).toEqual(pointLight);
   });
 
   it("updates an existing Trigger Volume without changing its entity id", () => {
@@ -90,5 +127,58 @@ describe("typed entity upsert command", () => {
 
     expect(store.redo()).toBe(true);
     expect(store.getState().document.entities[triggerVolume.id]).toEqual(movedTriggerVolume);
+  });
+
+  it("updates an existing Spot Light without changing its entity id", () => {
+    const store = createEditorStore();
+    const spotLight = createSpotLightEntity({
+      id: "entity-spot-main",
+      position: {
+        x: -3,
+        y: 4,
+        z: 2
+      }
+    });
+    const movedSpotLight = createSpotLightEntity({
+      ...spotLight,
+      position: {
+        x: 5,
+        y: 6,
+        z: -4
+      },
+      direction: {
+        x: 0.5,
+        y: -1,
+        z: 0.25
+      },
+      colorHex: "#aaccee",
+      intensity: 2.25,
+      distance: 14,
+      angleDegrees: 50
+    });
+
+    store.executeCommand(
+      createUpsertEntityCommand({
+        entity: spotLight,
+        label: "Place spot light"
+      })
+    );
+    store.setToolMode("box-create");
+    store.executeCommand(
+      createUpsertEntityCommand({
+        entity: movedSpotLight,
+        label: "Update spot light"
+      })
+    );
+
+    expect(store.getState().toolMode).toBe("select");
+    expect(store.getState().document.entities[spotLight.id]).toEqual(movedSpotLight);
+
+    expect(store.undo()).toBe(true);
+    expect(store.getState().toolMode).toBe("box-create");
+    expect(store.getState().document.entities[spotLight.id]).toEqual(spotLight);
+
+    expect(store.redo()).toBe(true);
+    expect(store.getState().document.entities[spotLight.id]).toEqual(movedSpotLight);
   });
 });
