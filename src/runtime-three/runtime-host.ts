@@ -251,11 +251,16 @@ export class RuntimeHost {
       .multiplyScalar(18);
 
     if (world.background.mode === "image") {
-      this.scene.background = this.loadedImageAssets[world.background.assetId]?.texture ?? null;
+      const texture = this.loadedImageAssets[world.background.assetId]?.texture ?? null;
+      this.scene.background = texture;
+      this.scene.environment = texture;
+      this.scene.environmentIntensity = world.background.environmentIntensity;
       return;
     }
 
     this.scene.background = null;
+    this.scene.environment = null;
+    this.scene.environmentIntensity = 1;
   }
 
   private rebuildLocalLights(localLights: RuntimeLocalLightCollection) {
