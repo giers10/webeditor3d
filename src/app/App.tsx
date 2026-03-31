@@ -2913,9 +2913,13 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   <div className="label">Model Asset</div>
                   <div className="value">{selectedModelAsset?.sourceName ?? "Missing Asset"}</div>
                   <div className="material-summary">
-                    {selectedModelAsset === null ? "This model instance references an asset that is missing from the registry." : formatModelAssetSummary(selectedModelAsset)}
+                    {selectedModelAssetRecord === null
+                      ? "This model instance references an asset that is missing from the registry."
+                      : formatModelAssetSummary(selectedModelAssetRecord)}
                   </div>
-                  {selectedModelAsset === null ? null : <div className="material-summary">{formatModelBoundingBoxLabel(selectedModelAsset)}</div>}
+                  {selectedModelAssetRecord === null ? null : (
+                    <div className="material-summary">{formatModelBoundingBoxLabel(selectedModelAssetRecord)}</div>
+                  )}
                 </div>
 
                 <div className="form-section">
