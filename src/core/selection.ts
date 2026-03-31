@@ -56,6 +56,14 @@ export function getSingleSelectedEntityId(selection: EditorSelection): string | 
   return selection.ids[0];
 }
 
+export function getSingleSelectedModelInstanceId(selection: EditorSelection): string | null {
+  if (selection.kind !== "modelInstances" || selection.ids.length !== 1) {
+    return null;
+  }
+
+  return selection.ids[0];
+}
+
 export function isBrushSelected(selection: EditorSelection, brushId: string): boolean {
   return (
     (selection.kind === "brushes" && selection.ids.includes(brushId)) ||
@@ -65,4 +73,8 @@ export function isBrushSelected(selection: EditorSelection, brushId: string): bo
 
 export function isBrushFaceSelected(selection: EditorSelection, brushId: string, faceId: BoxFaceId): boolean {
   return selection.kind === "brushFace" && selection.brushId === brushId && selection.faceId === faceId;
+}
+
+export function isModelInstanceSelected(selection: EditorSelection, modelInstanceId: string): boolean {
+  return selection.kind === "modelInstances" && selection.ids.includes(modelInstanceId);
 }
