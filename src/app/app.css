@@ -615,6 +615,7 @@ button:disabled {
 .runner-canvas__fallback {
   position: absolute;
   inset: 18px;
+  z-index: 2;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
@@ -624,6 +625,7 @@ button:disabled {
   background: linear-gradient(180deg, rgba(8, 10, 14, 0.12) 0%, rgba(8, 10, 14, 0.58) 100%);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 18px;
+  pointer-events: none;
 }
 
 .viewport-canvas__fallback-title,
@@ -632,6 +634,67 @@ button:disabled {
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
+}
+
+.runner-canvas__crosshair {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 3;
+  width: 14px;
+  height: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 999px;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 0 2px rgba(8, 10, 14, 0.35);
+  pointer-events: none;
+}
+
+.runner-canvas__crosshair::after {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  background: rgba(255, 255, 255, 0.88);
+  border-radius: 999px;
+}
+
+.runner-canvas__prompt {
+  position: absolute;
+  left: 50%;
+  bottom: 22px;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 220px;
+  max-width: min(320px, calc(100% - 32px));
+  padding: 12px 14px;
+  color: #f6efe5;
+  background: rgba(8, 10, 14, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 16px;
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.22);
+  transform: translateX(-50%);
+  backdrop-filter: blur(12px);
+  pointer-events: none;
+}
+
+.runner-canvas__prompt-badge {
+  color: var(--color-accent-strong);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.runner-canvas__prompt-text {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.runner-canvas__prompt-meta {
+  color: rgba(246, 239, 229, 0.76);
+  font-size: 0.78rem;
 }
 
 .status-bar {
