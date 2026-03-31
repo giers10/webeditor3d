@@ -737,15 +737,41 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const handlePlaceEntity = (kind: EntityKind) => {
     try {
       const basePosition = resolveNewEntityPosition(kind);
-      const nextEntity =
-        kind === "triggerVolume" && selectedBrush !== null
-          ? createTriggerVolumeEntity({
-              position: basePosition,
-              size: selectedBrush.size
-            })
-          : createDefaultEntityInstance(kind, {
-              position: basePosition
-            });
+      let nextEntity: EntityInstance;
+
+      switch (kind) {
+        case "playerStart":
+          nextEntity = createPlayerStartEntity({
+            position: basePosition
+          });
+          break;
+        case "soundEmitter":
+          nextEntity = createSoundEmitterEntity({
+            position: basePosition
+          });
+          break;
+        case "triggerVolume":
+          nextEntity =
+            selectedBrush === null
+              ? createTriggerVolumeEntity({
+                  position: basePosition
+                })
+              : createTriggerVolumeEntity({
+                  position: basePosition,
+                  size: selectedBrush.size
+                });
+          break;
+        case "teleportTarget":
+          nextEntity = createTeleportTargetEntity({
+            position: basePosition
+          });
+          break;
+        case "interactable":
+          nextEntity = createInteractableEntity({
+            position: basePosition
+          });
+          break;
+      }
 
       store.executeCommand(
         createUpsertEntityCommand({
@@ -1319,7 +1345,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
         <header className="toolbar">
           <div className="toolbar__brand">
             <div className="toolbar__title">WebEditor3D</div>
-            <div className="toolbar__subtitle">Slice 1.5 world lighting basics</div>
+            <div className="toolbar__subtitle">Slice 2.1 entity system foundation</div>
           </div>
 
           <div className="toolbar__actions">
