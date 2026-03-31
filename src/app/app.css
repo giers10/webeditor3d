@@ -63,7 +63,7 @@ button:disabled {
 
 .app-shell {
   display: grid;
-  grid-template-rows: 64px minmax(0, 1fr) 36px;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   height: 100vh;
   gap: 12px;
   padding: 12px;
@@ -461,68 +461,6 @@ button:disabled {
   font-size: 0.82rem;
 }
 
-.diagnostic-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.diagnostic-item {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 12px 14px;
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  background: rgba(255, 255, 255, 0.03);
-}
-
-.diagnostic-item--error {
-  border-color: rgba(207, 123, 66, 0.45);
-  background: rgba(207, 123, 66, 0.09);
-}
-
-.diagnostic-item--warning {
-  border-color: rgba(243, 190, 143, 0.36);
-  background: rgba(243, 190, 143, 0.08);
-}
-
-.diagnostic-item__header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.diagnostic-badge {
-  padding: 0.2rem 0.55rem;
-  border-radius: 999px;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.diagnostic-badge--error {
-  color: #20140c;
-  background: #cf7b42;
-}
-
-.diagnostic-badge--warning {
-  color: #20140c;
-  background: #f3be8f;
-}
-
-.diagnostic-item__scope,
-.diagnostic-item__path {
-  color: var(--color-muted);
-  font-size: 0.76rem;
-}
-
-.diagnostic-item__message {
-  font-size: 0.9rem;
-  line-height: 1.45;
-}
-
 .viewport-region {
   display: grid;
   grid-template-rows: 42px minmax(0, 1fr);
@@ -652,13 +590,22 @@ button:disabled {
 .status-bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
+  flex-wrap: wrap;
   gap: 16px;
-  padding: 0 16px;
+  min-height: 44px;
+  padding: 8px 16px;
   background: rgba(18, 22, 28, 0.88);
   border: 1px solid var(--color-border);
   border-radius: 16px;
   color: var(--color-muted);
+}
+
+.status-bar__item {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
 }
 
 .status-bar__strong {
