@@ -1402,6 +1402,36 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
+  const applySelectedEntityDraftChange = () => {
+    if (selectedEntity === null) {
+      return;
+    }
+
+    switch (selectedEntity.kind) {
+      case "pointLight":
+        applyPointLightChange();
+        break;
+      case "spotLight":
+        applySpotLightChange();
+        break;
+      case "playerStart":
+        applyPlayerStartChange();
+        break;
+      case "soundEmitter":
+        applySoundEmitterChange();
+        break;
+      case "triggerVolume":
+        applyTriggerVolumeChange();
+        break;
+      case "teleportTarget":
+        applyTeleportTargetChange();
+        break;
+      case "interactable":
+        applyInteractableChange();
+        break;
+    }
+  };
+
   const applySoundEmitterChange = () => {
     if (selectedSoundEmitter === null) {
       setStatusMessage("Select a Sound Emitter before editing it.");
