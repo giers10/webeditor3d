@@ -82,11 +82,6 @@ const FACE_LABELS: Record<BoxFaceId, string> = {
 };
 
 const STARTER_MATERIAL_ORDER = new Map(STARTER_MATERIAL_LIBRARY.map((material, index) => [material.id, index]));
-const TOOL_LABELS = {
-  select: "Select",
-  "box-create": "Box Create",
-  play: "Play"
-} as const;
 
 const DIAGNOSTIC_BADGE_LABELS = {
   document: "Document",
@@ -374,7 +369,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [playerStartPositionDraft, setPlayerStartPositionDraft] = useState(createVec3Draft(DEFAULT_PLAYER_START_POSITION));
   const [playerStartYawDraft, setPlayerStartYawDraft] = useState("0");
   const [statusMessage, setStatusMessage] = useState(initialStatusMessage ?? "Slice 1.4 room-authoring workflow ready.");
-  const [persistenceMessage, setPersistenceMessage] = useState("Local Draft is the current browser persistence path. Export JSON creates a portable copy.");
   const [preferredNavigationMode, setPreferredNavigationMode] = useState<RuntimeNavigationMode>(
     primaryPlayerStart === null ? "orbitVisitor" : "firstPerson"
   );
@@ -676,21 +670,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
   const handleSaveDraft = () => {
     const result = store.saveDraft();
-    setPersistenceMessage(
-      result.status === "saved"
-        ? "Local Draft saved. Refresh, reopen, or use Load Draft to restore this exact validated document."
-        : result.message
-    );
     setStatusMessage(result.message);
   };
 
   const handleLoadDraft = () => {
     const result = store.loadDraft();
-    setPersistenceMessage(
-      result.status === "loaded"
-        ? "Local Draft loaded. The current in-memory document was replaced with the stored browser draft."
-        : result.message
-    );
     setStatusMessage(result.message);
   };
 
@@ -706,11 +690,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
       anchor.click();
       URL.revokeObjectURL(objectUrl);
 
-      setPersistenceMessage("Exported a validated Scene Document JSON file for sharing or backup.");
       setStatusMessage("Scene document exported as JSON.");
     } catch (error) {
       const message = getErrorMessage(error);
-      setPersistenceMessage(message);
       setStatusMessage(message);
     }
   };
@@ -729,12 +711,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
     try {
       const source = await file.text();
       store.importDocumentJson(source);
-      setPersistenceMessage("Imported JSON replaced the current document after migration and validation. Save Draft to make it the browser draft.");
       setStatusMessage(`Imported ${file.name}.`);
     } catch (error) {
-      const message = getErrorMessage(error);
-      setPersistenceMessage(message);
-      setStatusMessage(message);
+      setStatusMessage(getErrorMessage(error));
     } finally {
       event.currentTarget.value = "";
     }
@@ -1033,12 +1012,39 @@ export function App({ store, initialStatusMessage }: AppProps) {
   return (
     <div className="app-shell">
       <header className="toolbar">
-        <div className="toolbar__brand">
-          <div className="toolbar__title">WebEditor3D</div>
-          <div className="toolbar__subtitle">Slice 1.4 first-room polish</div>
-        </div>
+        <label className="toolbar__scene-name">
+          <span className="visually-hidden">Scene Name</span>
+          <input
+            data-testid="toolbar-scene-name"
+            className="text-input toolbar__scene-name-input"
+            type="text"
+            value={sceneNameDraft}
+            onChange={(event) => setSceneNameDraft(event.currentTarget.value)}
+            onBlur={applySceneName}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                applySceneName();
+              }
+            }}
+          />
+        </label>
 
         <div className="toolbar__actions">
+          <div className="toolbar__group">
+            <button className="toolbar__button" type="button" disabled={!editorState.storageAvailable} onClick={handleSaveDraft}>
+              Save Draft
+            </button>
+            <button className="toolbar__button" type="button" disabled={!editorState.storageAvailable} onClick={handleLoadDraft}>
+              Load Draft
+            </button>
+            <button className="toolbar__button" type="button" onClick={handleExportJson}>
+              Export JSON
+            </button>
+            <button className="toolbar__button" type="button" onClick={handleImportButtonClick}>
+              Import JSON
+            </button>
+          </div>
+
           <div className="toolbar__group">
             <button
               className={`toolbar__button ${editorState.toolMode === "select" ? "toolbar__button--active" : ""}`}
@@ -1080,64 +1086,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
       <div className="workspace">
         <aside className="side-column">
-          <Panel title="Scene">
-            <div className="stat-grid">
-              <div className="stat-card">
-                <div className="label">Version</div>
-                <div className="value">v{editorState.document.version}</div>
-              </div>
-              <div className="stat-card">
-                <div className="label">Grid</div>
-                <div className="value">{DEFAULT_GRID_SIZE}m snap</div>
-              </div>
-              <div className="stat-card">
-                <div className="label">Tool Mode</div>
-                <div className="value">{TOOL_LABELS[editorState.toolMode]}</div>
-              </div>
-              <div className="stat-card">
-                <div className="label">Brushes</div>
-                <div className="value">{brushList.length}</div>
-              </div>
-            </div>
-
-            <label className="form-field">
-              <span className="label">Scene Name</span>
-              <input
-                className="text-input"
-                type="text"
-                value={sceneNameDraft}
-                onChange={(event) => setSceneNameDraft(event.currentTarget.value)}
-                onBlur={applySceneName}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") {
-                    applySceneName();
-                  }
-                }}
-              />
-            </label>
-
-            <div className="form-section">
-              <div className="label">Save / Load</div>
-              <div className="inline-actions">
-                <button className="toolbar__button" type="button" disabled={!editorState.storageAvailable} onClick={handleSaveDraft}>
-                  Save Draft
-                </button>
-                <button className="toolbar__button" type="button" disabled={!editorState.storageAvailable} onClick={handleLoadDraft}>
-                  Load Draft
-                </button>
-                <button className="toolbar__button" type="button" onClick={handleExportJson}>
-                  Export JSON
-                </button>
-                <button className="toolbar__button" type="button" onClick={handleImportButtonClick}>
-                  Import JSON
-                </button>
-              </div>
-              <div className="info-banner" data-testid="persistence-message">
-                {persistenceMessage}
-              </div>
-            </div>
-          </Panel>
-
           <Panel title="Status">
             <div className="stat-grid">
               <div className="stat-card" data-testid="document-validation-state">
