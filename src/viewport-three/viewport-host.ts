@@ -210,6 +210,7 @@ export class ViewportHost {
   updateDocument(document: SceneDocument, selection: EditorSelection) {
     this.currentDocument = document;
     this.currentSelection = selection;
+    this.rebuildLocalLights(document);
     this.rebuildBrushMeshes(document, selection);
     this.rebuildEntityMarkers(document, selection);
     this.rebuildModelInstances(document, selection);
