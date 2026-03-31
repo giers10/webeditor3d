@@ -17,7 +17,9 @@ import {
   PerspectiveCamera,
   Raycaster,
   Scene,
+  SphereGeometry,
   Spherical,
+  TorusGeometry,
   Vector2,
   Vector3,
   WebGLRenderer
@@ -27,7 +29,7 @@ import { isBrushFaceSelected, isBrushSelected, type EditorSelection } from "../c
 import type { ToolMode } from "../core/tool-mode";
 import type { Vec3 } from "../core/vector";
 import type { SceneDocument, WorldSettings } from "../document/scene-document";
-import { getPlayerStartEntities } from "../entities/entity-instances";
+import { getEntityInstances, type EntityInstance } from "../entities/entity-instances";
 import { BOX_FACE_IDS, DEFAULT_BOX_BRUSH_SIZE, type BoxBrush, type BoxFaceId } from "../document/brushes";
 import { applyBoxBrushFaceUvsToGeometry } from "../geometry/box-face-uvs";
 import { DEFAULT_GRID_SIZE, snapValueToGrid } from "../geometry/grid-snapping";
@@ -47,6 +49,14 @@ const SELECTED_FACE_FALLBACK_COLOR = 0xcf7b42;
 const SELECTED_FACE_EMISSIVE = 0x4a2814;
 const PLAYER_START_COLOR = 0x7cb7ff;
 const PLAYER_START_SELECTED_COLOR = 0xf3be8f;
+const SOUND_EMITTER_COLOR = 0x72d7c9;
+const SOUND_EMITTER_SELECTED_COLOR = 0xf4d37d;
+const TRIGGER_VOLUME_COLOR = 0x9f8cff;
+const TRIGGER_VOLUME_SELECTED_COLOR = 0xf0b07f;
+const TELEPORT_TARGET_COLOR = 0x7ee0ff;
+const TELEPORT_TARGET_SELECTED_COLOR = 0xf6c48a;
+const INTERACTABLE_COLOR = 0x92de7e;
+const INTERACTABLE_SELECTED_COLOR = 0xf1cf7e;
 const BOX_CREATE_PREVIEW_FILL = 0x89b6ff;
 const BOX_CREATE_PREVIEW_EDGE = 0xf3be8f;
 const MIN_CAMERA_DISTANCE = 1.5;
@@ -62,7 +72,7 @@ interface CachedMaterialTexture {
   texture: CanvasTexture;
 }
 
-interface PlayerStartRenderObjects {
+interface EntityRenderObjects {
   group: Group;
   meshes: Mesh[];
 }
@@ -86,7 +96,7 @@ export class ViewportHost {
   private readonly boxCreateIntersection = new Vector3();
   private readonly boxCreatePlane = new Plane(new Vector3(0, 1, 0), 0);
   private readonly brushRenderObjects = new Map<string, BrushRenderObjects>();
-  private readonly playerStartRenderObjects = new Map<string, PlayerStartRenderObjects>();
+  private readonly entityRenderObjects = new Map<string, EntityRenderObjects>();
   private readonly materialTextureCache = new Map<string, CachedMaterialTexture>();
   private readonly boxCreatePreviewMesh = new Mesh(
     new BoxGeometry(DEFAULT_BOX_BRUSH_SIZE.x, DEFAULT_BOX_BRUSH_SIZE.y, DEFAULT_BOX_BRUSH_SIZE.z),
