@@ -13,14 +13,17 @@ import {
   LineSegments,
   Mesh,
   MeshStandardMaterial,
+  Object3D,
   Plane,
   PerspectiveCamera,
+  PointLight,
+  Quaternion,
   Raycaster,
   Scene,
-  type Object3D,
   SphereGeometry,
   Spherical,
   TorusGeometry,
+  SpotLight,
   Vector2,
   Vector3,
   WebGLRenderer
@@ -31,10 +34,16 @@ import type { ToolMode } from "../core/tool-mode";
 import type { Vec3 } from "../core/vector";
 import { createModelInstanceRenderGroup, disposeModelInstance } from "../assets/model-instance-rendering";
 import type { LoadedModelAsset } from "../assets/gltf-model-import";
+import type { LoadedImageAsset } from "../assets/image-assets";
 import type { ProjectAssetRecord } from "../assets/project-assets";
 import { getModelInstances } from "../assets/model-instances";
 import type { SceneDocument, WorldSettings } from "../document/scene-document";
-import { getEntityInstances, type EntityInstance } from "../entities/entity-instances";
+import {
+  getEntityInstances,
+  type EntityInstance,
+  type PointLightEntity,
+  type SpotLightEntity
+} from "../entities/entity-instances";
 import { BOX_FACE_IDS, DEFAULT_BOX_BRUSH_SIZE, type BoxBrush, type BoxFaceId } from "../document/brushes";
 import { applyBoxBrushFaceUvsToGeometry } from "../geometry/box-face-uvs";
 import { DEFAULT_GRID_SIZE, snapValueToGrid } from "../geometry/grid-snapping";
@@ -82,6 +91,10 @@ interface EntityRenderObjects {
   meshes: Mesh[];
 }
 
+interface LocalLightRenderObjects {
+  group: Group;
+}
+
 export class ViewportHost {
   private readonly scene = new Scene();
   private readonly camera = new PerspectiveCamera(60, 1, 0.1, 1000);
@@ -94,6 +107,7 @@ export class ViewportHost {
   private readonly cameraSpherical = new Spherical();
   private readonly ambientLight = new AmbientLight();
   private readonly sunLight = new DirectionalLight();
+  private readonly localLightGroup = new Group();
   private readonly brushGroup = new Group();
   private readonly entityGroup = new Group();
   private readonly modelGroup = new Group();
@@ -103,14 +117,17 @@ export class ViewportHost {
   private readonly boxCreatePlane = new Plane(new Vector3(0, 1, 0), 0);
   private readonly brushRenderObjects = new Map<string, BrushRenderObjects>();
   private readonly entityRenderObjects = new Map<string, EntityRenderObjects>();
+  private readonly localLightRenderObjects = new Map<string, LocalLightRenderObjects>();
   private readonly modelRenderObjects = new Map<string, Group>();
   private readonly materialTextureCache = new Map<string, CachedMaterialTexture>();
   private currentDocument: SceneDocument | null = null;
+  private currentWorld: WorldSettings | null = null;
   private currentSelection: EditorSelection = {
     kind: "none"
   };
   private projectAssets: Record<string, ProjectAssetRecord> = {};
   private loadedModelAssets: Record<string, LoadedModelAsset> = {};
+  private loadedImageAssets: Record<string, LoadedImageAsset> = {};
   private readonly boxCreatePreviewMesh = new Mesh(
     new BoxGeometry(DEFAULT_BOX_BRUSH_SIZE.x, DEFAULT_BOX_BRUSH_SIZE.y, DEFAULT_BOX_BRUSH_SIZE.z),
     new MeshStandardMaterial({
@@ -152,6 +169,7 @@ export class ViewportHost {
     this.scene.add(axesHelper);
     this.scene.add(this.ambientLight);
     this.scene.add(this.sunLight);
+    this.scene.add(this.localLightGroup);
     this.scene.add(this.brushGroup);
     this.scene.add(this.entityGroup);
     this.scene.add(this.modelGroup);
