@@ -47,6 +47,7 @@ import {
   importModelAssetFromFile,
   loadModelAssetFromStorage,
   disposeModelTemplate,
+  type ImportedModelAssetResult,
   type LoadedModelAsset
 } from "../assets/gltf-model-import";
 import type { ModelAssetRecord, ProjectAssetRecord } from "../assets/project-assets";
@@ -1949,8 +1950,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
       return;
     }
 
+    let importedModel: ImportedModelAssetResult | null = null;
+
     try {
-      const importedModel = await importModelAssetFromFile(file, projectAssetStorage);
+      importedModel = await importModelAssetFromFile(file, projectAssetStorage);
 
       store.executeCommand(
         createImportModelAssetCommand({
@@ -1971,6 +1974,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
       setAssetStatusMessage(null);
       setStatusMessage(`Imported ${importedModel.asset.sourceName} and placed a model instance.`);
     } catch (error) {
+      if (importedModel !== null) {
+        await projectAssetStorage.deleteAsset(importedModel.asset.storageKey).catch(() => undefined);
+        disposeModelTemplate(importedModel.loadedAsset.template);
+      }
+
       const message = getErrorMessage(error);
       setStatusMessage(message);
       setAssetStatusMessage(message);
