@@ -603,6 +603,32 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
+  const applyBrushNameChange = () => {
+    if (selectedBrush === null) {
+      setStatusMessage("Select a box brush before renaming it.");
+      return;
+    }
+
+    const nextName = normalizeBrushName(brushNameDraft);
+
+    if (selectedBrush.name === nextName) {
+      setStatusMessage(nextName === undefined ? "Brush name already uses the default label." : "Brush name is already current.");
+      return;
+    }
+
+    try {
+      store.executeCommand(
+        createSetBoxBrushNameCommand({
+          brushId: selectedBrush.id,
+          name: brushNameDraft
+        })
+      );
+      setStatusMessage(nextName === undefined ? "Cleared the authored brush name." : `Renamed brush to ${nextName}.`);
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
   const handleDraftVectorKeyDown = (event: KeyboardEvent<HTMLInputElement>, applyChange: () => void) => {
     if (event.key === "Enter") {
       applyChange();
