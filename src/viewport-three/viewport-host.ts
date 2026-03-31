@@ -181,7 +181,7 @@ export class ViewportHost {
 
   updateDocument(document: SceneDocument, selection: EditorSelection) {
     this.rebuildBrushMeshes(document, selection);
-    this.rebuildPlayerStartMarkers(document, selection);
+    this.rebuildEntityMarkers(document, selection);
   }
 
   setBrushSelectionChangeHandler(handler: ((selection: EditorSelection) => void) | null) {
@@ -242,7 +242,7 @@ export class ViewportHost {
     this.renderer.domElement.removeEventListener("wheel", this.handleWheel);
     this.renderer.domElement.removeEventListener("auxclick", this.handleAuxClick);
     this.clearBrushMeshes();
-    this.clearPlayerStartMarkers();
+    this.clearEntityMarkers();
     this.boxCreatePreviewHandler = null;
     this.setBoxCreatePreview(null);
 
@@ -321,64 +321,15 @@ export class ViewportHost {
     }
   }
 
-  private rebuildPlayerStartMarkers(document: SceneDocument, selection: EditorSelection) {
-    this.clearPlayerStartMarkers();
+  private rebuildEntityMarkers(document: SceneDocument, selection: EditorSelection) {
+    this.clearEntityMarkers();
 
-    for (const playerStart of getPlayerStartEntities(document.entities)) {
-      const selected = selection.kind === "entities" && selection.ids.includes(playerStart.id);
-      const markerColor = selected ? PLAYER_START_SELECTED_COLOR : PLAYER_START_COLOR;
-      const group = new Group();
-      group.position.set(playerStart.position.x, playerStart.position.y, playerStart.position.z);
-      group.rotation.y = (playerStart.yawDegrees * Math.PI) / 180;
+    for (const entity of getEntityInstances(document.entities)) {
+      const selected = selection.kind === "entities" && selection.ids.includes(entity.id);
+      const renderObjects = this.createEntityRenderObjects(entity, selected);
 
-      const base = new Mesh(
-        new CylinderGeometry(0.22, 0.22, 0.05, 18),
-        new MeshStandardMaterial({
-          color: markerColor,
-          emissive: markerColor,
-          emissiveIntensity: selected ? 0.18 : 0.08,
-          roughness: 0.35,
-          metalness: 0.08
-        })
-      );
-      base.position.y = 0.025;
-
-      const body = new Mesh(
-        new BoxGeometry(0.12, 0.12, 0.46),
-        new MeshStandardMaterial({
-          color: markerColor,
-          emissive: markerColor,
-          emissiveIntensity: selected ? 0.14 : 0.06,
-          roughness: 0.42,
-          metalness: 0.02
-        })
-      );
-      body.position.set(0, 0.16, 0.1);
-
-      const arrowHead = new Mesh(
-        new ConeGeometry(0.12, 0.28, 14),
-        new MeshStandardMaterial({
-          color: markerColor,
-          emissive: markerColor,
-          emissiveIntensity: selected ? 0.2 : 0.08,
-          roughness: 0.38,
-          metalness: 0.03
-        })
-      );
-      arrowHead.rotation.x = Math.PI * 0.5;
-      arrowHead.position.set(0, 0.16, 0.42);
-
-      for (const mesh of [base, body, arrowHead]) {
-        mesh.userData.entityId = playerStart.id;
-        mesh.userData.entityKind = "playerStart";
-        group.add(mesh);
-      }
-
-      this.entityGroup.add(group);
-      this.playerStartRenderObjects.set(playerStart.id, {
-        group,
-        meshes: [base, body, arrowHead]
-      });
+      this.entityGroup.add(renderObjects.group);
+      this.entityRenderObjects.set(entity.id, renderObjects);
     }
   }
 
@@ -442,8 +393,8 @@ export class ViewportHost {
     this.brushRenderObjects.clear();
   }
 
-  private clearPlayerStartMarkers() {
-    for (const renderObjects of this.playerStartRenderObjects.values()) {
+  private clearEntityMarkers() {
+    for (const renderObjects of this.entityRenderObjects.values()) {
       this.entityGroup.remove(renderObjects.group);
 
       for (const mesh of renderObjects.meshes) {
@@ -459,7 +410,7 @@ export class ViewportHost {
       }
     }
 
-    this.playerStartRenderObjects.clear();
+    this.entityRenderObjects.clear();
   }
 
   private resize() {
@@ -518,7 +469,7 @@ export class ViewportHost {
 
     const hits = this.raycaster.intersectObjects(
       [
-        ...Array.from(this.playerStartRenderObjects.values(), (renderObjects) => renderObjects.group),
+        ...Array.from(this.entityRenderObjects.values(), (renderObjects) => renderObjects.group),
         ...Array.from(this.brushRenderObjects.values(), (renderObjects) => renderObjects.mesh)
       ],
       true
