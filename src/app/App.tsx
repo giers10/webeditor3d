@@ -3436,88 +3436,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           const nextValue = event.currentTarget.value;
                           setEntityPositionDraft((draft) => ({ ...draft, x: nextValue }));
                         }}
-                        onBlur={() => {
-                          switch (selectedEntity.kind) {
-                            case "playerStart":
-                              applyPlayerStartChange();
-                              break;
-                            case "soundEmitter":
-                              applySoundEmitterChange();
-                              break;
-                            case "triggerVolume":
-                              applyTriggerVolumeChange();
-                              break;
-                            case "teleportTarget":
-                              applyTeleportTargetChange();
-                              break;
-                            case "interactable":
-                              applyInteractableChange();
-                              break;
-                          }
-                        }}
-                        onKeyDown={(event) =>
-                          handleDraftVectorKeyDown(event, () => {
-                            switch (selectedEntity.kind) {
-                              case "playerStart":
-                                applyPlayerStartChange();
-                                break;
-                              case "soundEmitter":
-                                applySoundEmitterChange();
-                                break;
-                              case "triggerVolume":
-                                applyTriggerVolumeChange();
-                                break;
-                              case "teleportTarget":
-                                applyTeleportTargetChange();
-                                break;
-                              case "interactable":
-                                applyInteractableChange();
-                                break;
-                            }
-                          })
-                        }
-                        onKeyUp={(event) =>
-                          handleNumberInputKeyUp(event, () => {
-                            switch (selectedEntity.kind) {
-                              case "playerStart":
-                                applyPlayerStartChange();
-                                break;
-                              case "soundEmitter":
-                                applySoundEmitterChange();
-                                break;
-                              case "triggerVolume":
-                                applyTriggerVolumeChange();
-                                break;
-                              case "teleportTarget":
-                                applyTeleportTargetChange();
-                                break;
-                              case "interactable":
-                                applyInteractableChange();
-                                break;
-                            }
-                          })
-                        }
-                        onPointerUp={(event) =>
-                          handleNumberInputPointerUp(event, () => {
-                            switch (selectedEntity.kind) {
-                              case "playerStart":
-                                applyPlayerStartChange();
-                                break;
-                              case "soundEmitter":
-                                applySoundEmitterChange();
-                                break;
-                              case "triggerVolume":
-                                applyTriggerVolumeChange();
-                                break;
-                              case "teleportTarget":
-                                applyTeleportTargetChange();
-                                break;
-                              case "interactable":
-                                applyInteractableChange();
-                                break;
-                            }
-                          })
-                        }
+                        onBlur={applySelectedEntityDraftChange}
+                        onKeyDown={(event) => handleDraftVectorKeyDown(event, applySelectedEntityDraftChange)}
+                        onKeyUp={(event) => handleNumberInputKeyUp(event, applySelectedEntityDraftChange)}
+                        onPointerUp={(event) => handleNumberInputPointerUp(event, applySelectedEntityDraftChange)}
                       />
                     </label>
                     <label className="form-field">
