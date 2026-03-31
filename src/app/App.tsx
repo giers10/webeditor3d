@@ -818,6 +818,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
         }
 
         if (!cancelled) {
+          loadedModelAssetsRef.current = {};
           setLoadedModelAssets({});
         }
 

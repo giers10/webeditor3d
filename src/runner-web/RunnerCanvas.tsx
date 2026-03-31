@@ -75,12 +75,12 @@ export function RunnerCanvas({
   }, [onFirstPersonTelemetryChange, onInteractionPromptChange, onRuntimeMessageChange]);
 
   useEffect(() => {
-    hostRef.current?.loadScene(runtimeScene);
-  }, [runtimeScene]);
-
-  useEffect(() => {
     hostRef.current?.updateAssets(projectAssets, loadedModelAssets);
   }, [projectAssets, loadedModelAssets]);
+
+  useEffect(() => {
+    hostRef.current?.loadScene(runtimeScene);
+  }, [runtimeScene]);
 
   useEffect(() => {
     hostRef.current?.setNavigationMode(navigationMode);

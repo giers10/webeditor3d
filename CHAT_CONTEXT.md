@@ -43,8 +43,9 @@ It is not:
 - Editor-authored mutations should flow through commands.
 - The editor viewport is derived from the document.
 - The runner is a sibling system, not an editor hack.
-- Canonical save format is project JSON, not glTF/GLB.
-- Export/package output is downstream from the document/runtime build.
+- Canonical document format is project JSON, not glTF/GLB.
+- Portable save/load for asset-bearing scenes should use a project package built around that JSON.
+- Runner/deployment output is downstream from the document/runtime build and is separate from editable project save/load.
 - Model instances are separate from typed entities.
 
 ---
@@ -76,6 +77,9 @@ These are fixed for the early milestones unless a later slice explicitly changes
 - version the document from day one
 - keep migrations explicit
 - early project persistence can be local draft storage plus JSON import/export
+- once binary assets exist, portable save/load should use a project package such as `scene.json` plus bundled assets
+- canonical JSON stays the source document format underneath that project package
+- runner package output is a separate deployable artifact
 - binary assets must survive reload via embedded or project-scoped persistent storage
 - never rely on Blob URLs as the only persisted asset reference
 
