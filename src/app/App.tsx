@@ -2208,6 +2208,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
           <main className="runner-region">
             <RunnerCanvas
               runtimeScene={runtimeScene}
+              projectAssets={editorState.document.assets}
+              loadedModelAssets={loadedModelAssets}
               navigationMode={activeNavigationMode}
               onRuntimeMessageChange={setRuntimeMessage}
               onFirstPersonTelemetryChange={setFirstPersonTelemetry}
@@ -2659,6 +2661,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
           <ViewportCanvas
             world={editorState.document.world}
             sceneDocument={editorState.document}
+            projectAssets={editorState.document.assets}
+            loadedModelAssets={loadedModelAssets}
             selection={editorState.selection}
             toolMode={editorState.toolMode}
             focusRequestId={focusRequest.id}
