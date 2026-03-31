@@ -495,6 +495,37 @@ export class RuntimeHost {
     mesh.visible = visible ?? !mesh.visible;
   }
 
+  private applyPlayAnimationAction(instanceId: string, clipName: string) {
+    const mixer = this.animationMixers.get(instanceId);
+    const clips = this.instanceAnimationClips.get(instanceId);
+
+    if (!mixer || !clips) {
+      console.warn(`playAnimation: no mixer for instance ${instanceId}`);
+      return;
+    }
+
+    const clip = THREE.AnimationClip.findByName(clips, clipName);
+
+    if (!clip) {
+      console.warn(`playAnimation: clip "${clipName}" not found on instance ${instanceId}`);
+      return;
+    }
+
+    mixer.stopAllAction();
+    mixer.clipAction(clip).play();
+  }
+
+  private applyStopAnimationAction(instanceId: string) {
+    const mixer = this.animationMixers.get(instanceId);
+
+    if (!mixer) {
+      console.warn(`stopAnimation: no mixer for instance ${instanceId}`);
+      return;
+    }
+
+    mixer.stopAllAction();
+  }
+
   private createInteractionDispatcher(): RuntimeInteractionDispatcher {
     return {
       teleportPlayer: (target) => {
