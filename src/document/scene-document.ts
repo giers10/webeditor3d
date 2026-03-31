@@ -43,6 +43,7 @@ export type {
   WorldBackgroundMode,
   WorldBackgroundSettings,
   WorldSolidBackgroundSettings,
+  WorldSettings,
   WorldSunLightSettings,
   WorldVerticalGradientBackgroundSettings
 } from "./world-settings";
