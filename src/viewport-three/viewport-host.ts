@@ -141,10 +141,15 @@ export class ViewportHost {
 
   mount(container: HTMLElement) {
     this.container = container;
+    this.renderer.domElement.tabIndex = -1;
     container.appendChild(this.renderer.domElement);
     this.renderer.domElement.addEventListener("pointerdown", this.handlePointerDown);
     this.renderer.domElement.addEventListener("pointermove", this.handlePointerMove);
+    this.renderer.domElement.addEventListener("pointerup", this.handlePointerUp);
+    this.renderer.domElement.addEventListener("pointercancel", this.handlePointerUp);
     this.renderer.domElement.addEventListener("pointerleave", this.handlePointerLeave);
+    this.renderer.domElement.addEventListener("wheel", this.handleWheel, { passive: false });
+    this.renderer.domElement.addEventListener("auxclick", this.handleAuxClick);
     this.resize();
 
     this.resizeObserver = new ResizeObserver(() => {
@@ -190,6 +195,27 @@ export class ViewportHost {
     }
   }
 
+  focusSelection(document: SceneDocument, selection: EditorSelection) {
+    const focusTarget = resolveViewportFocusTarget(document, selection);
+
+    if (focusTarget === null) {
+      return;
+    }
+
+    const verticalHalfFov = (this.camera.fov * Math.PI) / 360;
+    const horizontalHalfFov = Math.atan(Math.tan(verticalHalfFov) * Math.max(this.camera.aspect, 0.0001));
+    const fitAngle = Math.max(0.1, Math.min(verticalHalfFov, horizontalHalfFov));
+    const fitDistance = Math.min(
+      MAX_CAMERA_DISTANCE,
+      Math.max(MIN_CAMERA_DISTANCE, (focusTarget.radius / Math.sin(fitAngle)) * FOCUS_MARGIN)
+    );
+
+    this.cameraTarget.set(focusTarget.center.x, focusTarget.center.y, focusTarget.center.z);
+    this.cameraSpherical.radius = fitDistance;
+    this.cameraSpherical.makeSafe();
+    this.applyCameraOrbitPose();
+  }
+
   dispose() {
     if (this.animationFrame !== 0) {
       cancelAnimationFrame(this.animationFrame);
@@ -200,7 +226,11 @@ export class ViewportHost {
     this.resizeObserver = null;
     this.renderer.domElement.removeEventListener("pointerdown", this.handlePointerDown);
     this.renderer.domElement.removeEventListener("pointermove", this.handlePointerMove);
+    this.renderer.domElement.removeEventListener("pointerup", this.handlePointerUp);
+    this.renderer.domElement.removeEventListener("pointercancel", this.handlePointerUp);
     this.renderer.domElement.removeEventListener("pointerleave", this.handlePointerLeave);
+    this.renderer.domElement.removeEventListener("wheel", this.handleWheel);
+    this.renderer.domElement.removeEventListener("auxclick", this.handleAuxClick);
     this.clearBrushMeshes();
     this.clearPlayerStartMarkers();
     this.boxCreatePreviewHandler = null;
@@ -222,6 +252,23 @@ export class ViewportHost {
     }
 
     this.container = null;
+  }
+
+  private updateCameraSphericalFromPose() {
+    this.cameraOffset.copy(this.camera.position).sub(this.cameraTarget);
+    this.cameraSpherical.setFromVector3(this.cameraOffset);
+    this.cameraSpherical.radius = Math.min(MAX_CAMERA_DISTANCE, Math.max(MIN_CAMERA_DISTANCE, this.cameraSpherical.radius));
+    this.cameraSpherical.phi = Math.min(MAX_POLAR_ANGLE, Math.max(MIN_POLAR_ANGLE, this.cameraSpherical.phi));
+    this.cameraSpherical.makeSafe();
+  }
+
+  private applyCameraOrbitPose() {
+    this.cameraSpherical.radius = Math.min(MAX_CAMERA_DISTANCE, Math.max(MIN_CAMERA_DISTANCE, this.cameraSpherical.radius));
+    this.cameraSpherical.phi = Math.min(MAX_POLAR_ANGLE, Math.max(MIN_POLAR_ANGLE, this.cameraSpherical.phi));
+    this.cameraSpherical.makeSafe();
+    this.cameraOffset.setFromSpherical(this.cameraSpherical);
+    this.camera.position.copy(this.cameraTarget).add(this.cameraOffset);
+    this.camera.lookAt(this.cameraTarget);
   }
 
   private rebuildBrushMeshes(document: SceneDocument, selection: EditorSelection) {
