@@ -11,6 +11,9 @@ import {
   WebGLRenderer
 } from "three";
 
+import { createModelInstanceRenderGroup, disposeModelInstance } from "../assets/model-instance-rendering";
+import type { LoadedModelAsset } from "../assets/gltf-model-import";
+import type { ProjectAssetRecord } from "../assets/project-assets";
 import { applyBoxBrushFaceUvsToGeometry } from "../geometry/box-face-uvs";
 import { createStarterMaterialSignature, createStarterMaterialTexture } from "../materials/starter-material-textures";
 
@@ -35,13 +38,18 @@ export class RuntimeHost {
   private readonly ambientLight = new AmbientLight();
   private readonly sunLight = new DirectionalLight();
   private readonly brushGroup = new Group();
+  private readonly modelGroup = new Group();
   private readonly firstPersonController = new FirstPersonNavigationController();
   private readonly orbitVisitorController = new OrbitVisitorNavigationController();
   private readonly interactionSystem = new RuntimeInteractionSystem();
   private readonly brushMeshes = new Map<string, Mesh<BoxGeometry, MeshStandardMaterial[]>>();
+  private readonly modelRenderObjects = new Map<string, Group>();
   private readonly materialTextureCache = new Map<string, CachedMaterialTexture>();
   private readonly controllerContext: RuntimeControllerContext;
   private readonly renderer: WebGLRenderer | null;
+  private runtimeScene: RuntimeSceneDefinition | null = null;
+  private projectAssets: Record<string, ProjectAssetRecord> = {};
+  private loadedModelAssets: Record<string, LoadedModelAsset> = {};
   private resizeObserver: ResizeObserver | null = null;
   private animationFrame = 0;
   private previousFrameTime = 0;
@@ -61,6 +69,7 @@ export class RuntimeHost {
     this.scene.add(this.ambientLight);
     this.scene.add(this.sunLight);
     this.scene.add(this.brushGroup);
+    this.scene.add(this.modelGroup);
     this.renderer = enableRendering ? new WebGLRenderer({ antialias: true, alpha: true }) : null;
     this.domElement = this.renderer?.domElement ?? document.createElement("canvas");
 
@@ -117,6 +126,16 @@ export class RuntimeHost {
     this.setInteractionPrompt(null);
     this.applyWorld(runtimeScene);
     this.rebuildBrushMeshes(runtimeScene.brushes);
+    this.rebuildModelInstances(runtimeScene.modelInstances);
+  }
+
+  updateAssets(projectAssets: Record<string, ProjectAssetRecord>, loadedModelAssets: Record<string, LoadedModelAsset>) {
+    this.projectAssets = projectAssets;
+    this.loadedModelAssets = loadedModelAssets;
+
+    if (this.runtimeScene !== null) {
+      this.rebuildModelInstances(this.runtimeScene.modelInstances);
+    }
   }
 
   setNavigationMode(mode: RuntimeNavigationMode) {
@@ -165,6 +184,7 @@ export class RuntimeHost {
     this.resizeObserver?.disconnect();
     this.resizeObserver = null;
     this.clearBrushMeshes();
+    this.clearModelInstances();
 
     for (const cachedTexture of this.materialTextureCache.values()) {
       cachedTexture.texture.dispose();
@@ -220,6 +240,32 @@ export class RuntimeHost {
     }
   }
 
+  private rebuildModelInstances(modelInstances: RuntimeSceneDefinition["modelInstances"]) {
+    this.clearModelInstances();
+
+    for (const modelInstance of modelInstances) {
+      const asset = this.projectAssets[modelInstance.assetId];
+      const loadedAsset = this.loadedModelAssets[modelInstance.assetId];
+      const renderGroup = createModelInstanceRenderGroup(
+        {
+          id: modelInstance.instanceId,
+          kind: "modelInstance",
+          assetId: modelInstance.assetId,
+          name: modelInstance.name,
+          position: modelInstance.position,
+          rotationDegrees: modelInstance.rotationDegrees,
+          scale: modelInstance.scale
+        },
+        asset,
+        loadedAsset,
+        false
+      );
+
+      this.modelGroup.add(renderGroup);
+      this.modelRenderObjects.set(modelInstance.instanceId, renderGroup);
+    }
+  }
+
   private createFaceMaterial(material: RuntimeBoxBrushInstance["faces"]["posX"]["material"]): MeshStandardMaterial {
     if (material === null) {
       return new MeshStandardMaterial({
@@ -267,6 +313,15 @@ export class RuntimeHost {
     }
 
     this.brushMeshes.clear();
+  }
+
+  private clearModelInstances() {
+    for (const renderGroup of this.modelRenderObjects.values()) {
+      this.modelGroup.remove(renderGroup);
+      disposeModelInstance(renderGroup);
+    }
+
+    this.modelRenderObjects.clear();
   }
 
   private resize() {
