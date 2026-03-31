@@ -15,8 +15,9 @@ import { createStarterMaterialSignature, createStarterMaterialTexture } from "..
 
 import { FirstPersonNavigationController } from "./first-person-navigation-controller";
 import type { FirstPersonTelemetry, NavigationController, RuntimeControllerContext } from "./navigation-controller";
+import { RuntimeInteractionSystem } from "./runtime-interaction-system";
 import { OrbitVisitorNavigationController } from "./orbit-visitor-navigation-controller";
-import type { RuntimeBoxBrushInstance, RuntimeNavigationMode, RuntimeSceneDefinition } from "./runtime-scene-build";
+import type { RuntimeBoxBrushInstance, RuntimeNavigationMode, RuntimeSceneDefinition, RuntimeTeleportTarget } from "./runtime-scene-build";
 
 interface CachedMaterialTexture {
   signature: string;
@@ -34,6 +35,7 @@ export class RuntimeHost {
   private readonly brushGroup = new Group();
   private readonly firstPersonController = new FirstPersonNavigationController();
   private readonly orbitVisitorController = new OrbitVisitorNavigationController();
+  private readonly interactionSystem = new RuntimeInteractionSystem();
   private readonly brushMeshes = new Map<string, Mesh<BoxGeometry, MeshStandardMaterial[]>>();
   private readonly materialTextureCache = new Map<string, CachedMaterialTexture>();
   private readonly controllerContext: RuntimeControllerContext;
@@ -96,6 +98,7 @@ export class RuntimeHost {
 
   loadScene(runtimeScene: RuntimeSceneDefinition) {
     this.runtimeScene = runtimeScene;
+    this.interactionSystem.reset();
     this.applyWorld(runtimeScene);
     this.rebuildBrushMeshes(runtimeScene.brushes);
   }
@@ -267,6 +270,32 @@ export class RuntimeHost {
     this.previousFrameTime = now;
 
     this.activeController?.update(dt);
+
+    if (this.runtimeScene !== null && this.activeController === this.firstPersonController && this.currentFirstPersonTelemetry !== null) {
+      this.interactionSystem.updatePlayerPosition(this.currentFirstPersonTelemetry.feetPosition, this.runtimeScene, {
+        teleportPlayer: (target) => {
+          this.applyTeleportPlayerAction(target);
+        },
+        toggleBrushVisibility: (brushId, visible) => {
+          this.applyToggleBrushVisibilityAction(brushId, visible);
+        }
+      });
+    }
+
     this.renderer.render(this.scene, this.camera);
   };
+
+  private applyTeleportPlayerAction(target: RuntimeTeleportTarget) {
+    this.firstPersonController.teleportTo(target.position, target.yawDegrees);
+  }
+
+  private applyToggleBrushVisibilityAction(brushId: string, visible: boolean | undefined) {
+    const mesh = this.brushMeshes.get(brushId);
+
+    if (mesh === undefined) {
+      return;
+    }
+
+    mesh.visible = visible ?? !mesh.visible;
+  }
 }
