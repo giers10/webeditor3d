@@ -3579,7 +3579,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         type="checkbox"
                         checked={selectedModelInstance.animationAutoplay ?? false}
                         onChange={(e) => {
-                          store.dispatch(
+                          store.executeCommand(
                             createUpsertModelInstanceCommand({
                               modelInstance: { ...selectedModelInstance, animationAutoplay: e.target.checked },
                               label: "Set animation autoplay"
