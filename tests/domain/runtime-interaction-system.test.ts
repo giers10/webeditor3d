@@ -59,7 +59,30 @@ function createRuntimeSceneFixture(): RuntimeSceneDefinition {
           yawDegrees: 180
         }
       ],
-      interactables: []
+      interactables: [
+        {
+          entityId: "entity-interactable-console",
+          position: {
+            x: 0,
+            y: 1,
+            z: 1
+          },
+          radius: 2,
+          prompt: "Use Console",
+          enabled: true
+        },
+        {
+          entityId: "entity-interactable-disabled",
+          position: {
+            x: 0.25,
+            y: 1,
+            z: 1
+          },
+          radius: 2,
+          prompt: "Disabled Prompt",
+          enabled: false
+        }
+      ]
     },
     interactionLinks: [],
     playerStart: null,
@@ -187,5 +210,82 @@ describe("RuntimeInteractionSystem", () => {
         visible: false
       }
     ]);
+  });
+
+  it("shows a click prompt only for enabled interactables with authored click links inside range", () => {
+    const runtimeScene = createRuntimeSceneFixture();
+    runtimeScene.interactionLinks = [
+      createTeleportPlayerInteractionLink({
+        id: "link-click-teleport",
+        sourceEntityId: "entity-interactable-console",
+        trigger: "click",
+        targetEntityId: "entity-teleport-main"
+      })
+    ];
+
+    const interactionSystem = new RuntimeInteractionSystem();
+
+    expect(
+      interactionSystem.resolveClickInteractionPrompt(
+        {
+          x: 0,
+          y: 1.6,
+          z: 0
+        },
+        {
+          x: 0,
+          y: 0,
+          z: 1
+        },
+        runtimeScene
+      )
+    ).toEqual({
+      sourceEntityId: "entity-interactable-console",
+      prompt: "Use Console",
+      distance: expect.any(Number),
+      range: 2
+    });
+
+    expect(
+      interactionSystem.resolveClickInteractionPrompt(
+        {
+          x: 0,
+          y: 1.6,
+          z: 0
+        },
+        {
+          x: 1,
+          y: 0,
+          z: 0
+        },
+        runtimeScene
+      )
+    ).toBeNull();
+  });
+
+  it("dispatches click actions for the targeted Interactable", () => {
+    const runtimeScene = createRuntimeSceneFixture();
+    runtimeScene.interactionLinks = [
+      createTeleportPlayerInteractionLink({
+        id: "link-click-teleport",
+        sourceEntityId: "entity-interactable-console",
+        trigger: "click",
+        targetEntityId: "entity-teleport-main"
+      })
+    ];
+
+    const interactionSystem = new RuntimeInteractionSystem();
+    const dispatches: string[] = [];
+
+    interactionSystem.dispatchClickInteraction("entity-interactable-console", runtimeScene, {
+      teleportPlayer: (target, link) => {
+        dispatches.push(`${link.id}:${target.entityId}:${target.position.x}`);
+      },
+      toggleBrushVisibility: () => {
+        throw new Error("Visibility should not dispatch for this click fixture.");
+      }
+    });
+
+    expect(dispatches).toEqual(["link-click-teleport:entity-teleport-main:8"]);
   });
 });
