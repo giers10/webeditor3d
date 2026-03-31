@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="256" viewBox="0 0 512 256" role="img" aria-label="Skybox panorama fixture">
+  <defs>
+    <linearGradient id="sky" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#6cb8ff" />
+      <stop offset="58%" stop-color="#c8ebff" />
+      <stop offset="100%" stop-color="#f7d9a6" />
+    </linearGradient>
+    <linearGradient id="ground" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#5e7a4d" />
+      <stop offset="100%" stop-color="#24311d" />
+    </linearGradient>
+    <radialGradient id="sun" cx="0.5" cy="0.35" r="0.14">
+      <stop offset="0%" stop-color="#fff6c8" stop-opacity="1" />
+      <stop offset="60%" stop-color="#fff6c8" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#fff6c8" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+  <rect width="512" height="256" fill="url(#sky)" />
+  <circle cx="256" cy="90" r="78" fill="url(#sun)" />
+  <path d="M0 168 C72 150, 128 162, 192 170 C254 178, 320 146, 384 158 C438 168, 470 165, 512 152 L512 256 L0 256 Z" fill="url(#ground)" />
+  <rect y="152" width="512" height="12" fill="#7f6742" opacity="0.58" />
+  <path d="M0 138 C44 130, 84 134, 124 140 C170 146, 220 120, 268 126 C322 132, 370 116, 418 128 C456 137, 488 138, 512 132 L512 152 L0 152 Z" fill="#d8a85a" opacity="0.55" />
+  <path d="M24 158 L72 114 L118 156 Z" fill="#8f7aa9" opacity="0.52" />
+  <path d="M394 156 L434 120 L484 158 Z" fill="#6b7fbd" opacity="0.48" />
+</svg>
