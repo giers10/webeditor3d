@@ -673,7 +673,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [ambientLightIntensityDraft, setAmbientLightIntensityDraft] = useState(String(editorState.document.world.ambientLight.intensity));
   const [sunLightIntensityDraft, setSunLightIntensityDraft] = useState(String(editorState.document.world.sunLight.intensity));
   const [sunDirectionDraft, setSunDirectionDraft] = useState(createVec3Draft(editorState.document.world.sunLight.direction));
-  const [statusMessage, setStatusMessage] = useState(initialStatusMessage ?? "Slice 3.1 GLB/GLTF import ready.");
+  const [statusMessage, setStatusMessage] = useState(initialStatusMessage ?? "Slice 3.2 local lights and skyboxes ready.");
   const [assetStatusMessage, setAssetStatusMessage] = useState<string | null>(null);
   const [preferredNavigationMode, setPreferredNavigationMode] = useState<RuntimeNavigationMode>(
     primaryPlayerStart === null ? "orbitVisitor" : "firstPerson"
@@ -688,6 +688,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [firstPersonTelemetry, setFirstPersonTelemetry] = useState<FirstPersonTelemetry | null>(null);
   const [runtimeInteractionPrompt, setRuntimeInteractionPrompt] = useState<RuntimeInteractionPrompt | null>(null);
   const [loadedModelAssets, setLoadedModelAssets] = useState<Record<string, LoadedModelAsset>>({});
+  const [loadedImageAssets, setLoadedImageAssets] = useState<Record<string, LoadedImageAsset>>({});
   const [focusRequest, setFocusRequest] = useState<{ id: number; selection: EditorSelection }>({
     id: 0,
     selection: {
@@ -696,7 +697,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
   });
   const importInputRef = useRef<HTMLInputElement | null>(null);
   const importModelInputRef = useRef<HTMLInputElement | null>(null);
+  const importBackgroundImageInputRef = useRef<HTMLInputElement | null>(null);
   const loadedModelAssetsRef = useRef<Record<string, LoadedModelAsset>>({});
+  const loadedImageAssetsRef = useRef<Record<string, LoadedImageAsset>>({});
   const documentValidation = validateSceneDocument(editorState.document);
   const runValidation = validateRuntimeSceneBuild(editorState.document, preferredNavigationMode);
   const diagnostics = [...documentValidation.errors, ...documentValidation.warnings, ...runValidation.errors, ...runValidation.warnings];
