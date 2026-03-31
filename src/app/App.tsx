@@ -624,6 +624,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     primaryPlayerStart === null ? "orbitVisitor" : "firstPerson"
   );
   const [projectAssetStorage, setProjectAssetStorage] = useState<ProjectAssetStorage | null>(null);
+  const [projectAssetStorageReady, setProjectAssetStorageReady] = useState(false);
   const [runtimeScene, setRuntimeScene] = useState<RuntimeSceneDefinition | null>(null);
   const [runtimeMessage, setRuntimeMessage] = useState<string | null>(null);
   const [firstPersonTelemetry, setFirstPersonTelemetry] = useState<FirstPersonTelemetry | null>(null);
