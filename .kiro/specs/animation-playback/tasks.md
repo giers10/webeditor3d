@@ -6,7 +6,7 @@ Implement animation playback for imported GLB/GLTF assets in vertical slice orde
 
 ## Tasks
 
-- [-] 1. Extend `ModelInstance` with animation fields
+- [x] 1. Extend `ModelInstance` with animation fields
   - Add `animationClipName?: string` and `animationAutoplay?: boolean` to the `ModelInstance` interface in `src/assets/model-instances.ts`
   - Update `createModelInstance` to accept and store the new optional fields
   - Update `cloneModelInstance` to copy the new fields
