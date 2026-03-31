@@ -206,4 +206,57 @@ describe("scene document JSON", () => {
       })
     ).toThrow("Unsupported scene document version");
   });
+
+  it("rejects duplicate authored ids after migration and validation", () => {
+    expect(() =>
+      parseSceneDocumentJson(
+        JSON.stringify({
+          version: 4,
+          name: "Duplicate Id Scene",
+          world: createEmptySceneDocument().world,
+          materials: createEmptySceneDocument().materials,
+          textures: {},
+          assets: {},
+          brushes: {
+            "brush-room-shell": {
+              id: "shared-id",
+              kind: "box",
+              center: {
+                x: 0,
+                y: 1,
+                z: 0
+              },
+              size: {
+                x: 2,
+                y: 2,
+                z: 2
+              },
+              faces: {
+                posX: { materialId: null, uv: createBoxBrush().faces.posX.uv },
+                negX: { materialId: null, uv: createBoxBrush().faces.negX.uv },
+                posY: { materialId: null, uv: createBoxBrush().faces.posY.uv },
+                negY: { materialId: null, uv: createBoxBrush().faces.negY.uv },
+                posZ: { materialId: null, uv: createBoxBrush().faces.posZ.uv },
+                negZ: { materialId: null, uv: createBoxBrush().faces.negZ.uv }
+              }
+            }
+          },
+          modelInstances: {},
+          entities: {
+            "entity-player-start-main": {
+              id: "shared-id",
+              kind: "playerStart",
+              position: {
+                x: 0,
+                y: 0,
+                z: 0
+              },
+              yawDegrees: 0
+            }
+          },
+          interactionLinks: {}
+        })
+      )
+    ).toThrow("Duplicate authored id shared-id");
+  });
 });

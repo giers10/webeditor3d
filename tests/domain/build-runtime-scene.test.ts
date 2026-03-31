@@ -139,4 +139,12 @@ describe("buildRuntimeSceneFromDocument", () => {
       yawDegrees: 180
     });
   });
+
+  it("blocks first-person runtime builds when PlayerStart is missing", () => {
+    expect(() =>
+      buildRuntimeSceneFromDocument(createEmptySceneDocument({ name: "Missing Player Start" }), {
+        navigationMode: "firstPerson"
+      })
+    ).toThrow("First-person run requires an authored Player Start");
+  });
 });

@@ -942,7 +942,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
           </div>
 
           <div className="toolbar__group">
-            <button className="toolbar__button toolbar__button--accent" type="button" data-testid="create-box-brush" onClick={handleCreateBoxBrush}>
+            <button
+              className="toolbar__button toolbar__button--accent"
+              type="button"
+              data-testid="create-box-brush"
+              onClick={() => handleCreateBoxBrush()}
+            >
               Create Box
             </button>
             <button className="toolbar__button" type="button" data-testid="place-player-start-toolbar" onClick={handleSelectOrPlacePlayerStart}>
@@ -955,21 +960,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
               onClick={handleEnterPlayMode}
             >
               Run Scene
-            </button>
-          </div>
-
-          <div className="toolbar__group">
-            <button className="toolbar__button" type="button" disabled={!editorState.storageAvailable} onClick={handleSaveDraft}>
-              Save Draft
-            </button>
-            <button className="toolbar__button" type="button" disabled={!editorState.storageAvailable} onClick={handleLoadDraft}>
-              Load Draft
-            </button>
-            <button className="toolbar__button" type="button" onClick={handleExportJson}>
-              Export JSON
-            </button>
-            <button className="toolbar__button" type="button" onClick={handleImportButtonClick}>
-              Import JSON
             </button>
           </div>
 
