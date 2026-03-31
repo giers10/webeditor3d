@@ -465,7 +465,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
     const normalizedName = sceneNameDraft.trim() || "Untitled Scene";
 
     if (normalizedName === editorState.document.name) {
-      setStatusMessage("Scene name is already current.");
       return;
     }
 
@@ -541,7 +540,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
       const snappedCenter = snapVec3ToGrid(readVec3Draft(positionDraft, "Box brush position"), DEFAULT_GRID_SIZE);
 
       if (areVec3Equal(snappedCenter, selectedBrush.center)) {
-        setStatusMessage("Box brush position is already snapped to that grid location.");
         return;
       }
 
@@ -567,7 +565,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
       const snappedSize = snapPositiveSizeToGrid(readVec3Draft(sizeDraft, "Box brush size"), DEFAULT_GRID_SIZE);
 
       if (areVec3Equal(snappedSize, selectedBrush.size)) {
-        setStatusMessage("Box brush size is already snapped to those dimensions.");
         return;
       }
 
@@ -589,7 +586,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
       const yawDegrees = readYawDegreesDraft(playerStartYawDraft);
 
       if (editablePlayerStart !== null && arePlayerStartsEqual(editablePlayerStart, snappedPosition, yawDegrees)) {
-        setStatusMessage("Player start already uses that authored position and yaw.");
         return;
       }
 
@@ -615,7 +611,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
     const nextName = normalizeBrushName(brushNameDraft);
 
     if (selectedBrush.name === nextName) {
-      setStatusMessage(nextName === undefined ? "Brush name already uses the default label." : "Brush name is already current.");
       return;
     }
 
