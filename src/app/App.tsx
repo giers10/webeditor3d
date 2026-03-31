@@ -14,9 +14,9 @@ import { createResizeBoxBrushCommand } from "../commands/resize-box-brush-comman
 import { createSetBoxBrushFaceMaterialCommand } from "../commands/set-box-brush-face-material-command";
 import { createSetBoxBrushNameCommand } from "../commands/set-box-brush-name-command";
 import { createSetBoxBrushFaceUvStateCommand } from "../commands/set-box-brush-face-uv-state-command";
-import { createSetPlayerStartCommand } from "../commands/set-player-start-command";
 import { createSetSceneNameCommand } from "../commands/set-scene-name-command";
 import { createSetWorldSettingsCommand } from "../commands/set-world-settings-command";
+import { createUpsertEntityCommand } from "../commands/upsert-entity-command";
 import {
   getSelectedBrushFaceId,
   getSingleSelectedBrushId,
@@ -42,12 +42,30 @@ import { formatSceneDiagnosticSummary, validateSceneDocument } from "../document
 import { DEFAULT_GRID_SIZE, snapPositiveSizeToGrid, snapVec3ToGrid } from "../geometry/grid-snapping";
 import { createFitToFaceBoxBrushFaceUvState } from "../geometry/box-face-uvs";
 import {
+  DEFAULT_ENTITY_POSITION,
+  DEFAULT_INTERACTABLE_PROMPT,
+  DEFAULT_INTERACTABLE_RADIUS,
   DEFAULT_PLAYER_START_POSITION,
-  getPlayerStartEntities,
+  DEFAULT_SOUND_EMITTER_GAIN,
+  DEFAULT_SOUND_EMITTER_RADIUS,
+  DEFAULT_TELEPORT_TARGET_YAW_DEGREES,
+  DEFAULT_TRIGGER_VOLUME_SIZE,
+  areEntityInstancesEqual,
+  createDefaultEntityInstance,
+  createInteractableEntity,
+  createPlayerStartEntity,
+  createSoundEmitterEntity,
+  createTeleportTargetEntity,
+  createTriggerVolumeEntity,
+  getEntityInstances,
+  getEntityKindLabel,
   getPrimaryPlayerStartEntity,
   normalizeYawDegrees,
-  type PlayerStartEntity
+  normalizeInteractablePrompt,
+  type EntityInstance,
+  type EntityKind
 } from "../entities/entity-instances";
+import { getEntityDisplayLabelById, getSortedEntityDisplayLabels } from "../entities/entity-labels";
 import { STARTER_MATERIAL_LIBRARY, type MaterialDef } from "../materials/starter-material-library";
 import { RunnerCanvas } from "../runner-web/RunnerCanvas";
 import type { FirstPersonTelemetry } from "../runtime-three/navigation-controller";
