@@ -91,7 +91,8 @@ export function cloneWorldBackgroundSettings(background: WorldBackgroundSettings
 
   return {
     mode: "image",
-    assetId: background.assetId
+    assetId: background.assetId,
+    environmentIntensity: background.environmentIntensity
   };
 }
 
