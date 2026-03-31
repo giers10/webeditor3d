@@ -458,7 +458,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         type="number"
                         step={DEFAULT_GRID_SIZE}
                         value={positionDraft.x}
-                        onChange={(event) => setPositionDraft((draft) => ({ ...draft, x: event.currentTarget.value }))}
+                        onChange={(event) => {
+                          const nextValue = event.currentTarget.value;
+                          setPositionDraft((draft) => ({ ...draft, x: nextValue }));
+                        }}
                         onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPositionChange)}
                       />
                     </label>
@@ -469,7 +472,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         type="number"
                         step={DEFAULT_GRID_SIZE}
                         value={positionDraft.y}
-                        onChange={(event) => setPositionDraft((draft) => ({ ...draft, y: event.currentTarget.value }))}
+                        onChange={(event) => {
+                          const nextValue = event.currentTarget.value;
+                          setPositionDraft((draft) => ({ ...draft, y: nextValue }));
+                        }}
                         onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPositionChange)}
                       />
                     </label>
@@ -480,7 +486,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         type="number"
                         step={DEFAULT_GRID_SIZE}
                         value={positionDraft.z}
-                        onChange={(event) => setPositionDraft((draft) => ({ ...draft, z: event.currentTarget.value }))}
+                        onChange={(event) => {
+                          const nextValue = event.currentTarget.value;
+                          setPositionDraft((draft) => ({ ...draft, z: nextValue }));
+                        }}
                         onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPositionChange)}
                       />
                     </label>
@@ -501,7 +510,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         min={DEFAULT_GRID_SIZE}
                         step={DEFAULT_GRID_SIZE}
                         value={sizeDraft.x}
-                        onChange={(event) => setSizeDraft((draft) => ({ ...draft, x: event.currentTarget.value }))}
+                        onChange={(event) => {
+                          const nextValue = event.currentTarget.value;
+                          setSizeDraft((draft) => ({ ...draft, x: nextValue }));
+                        }}
                         onKeyDown={(event) => handleDraftVectorKeyDown(event, applySizeChange)}
                       />
                     </label>
@@ -513,7 +525,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         min={DEFAULT_GRID_SIZE}
                         step={DEFAULT_GRID_SIZE}
                         value={sizeDraft.y}
-                        onChange={(event) => setSizeDraft((draft) => ({ ...draft, y: event.currentTarget.value }))}
+                        onChange={(event) => {
+                          const nextValue = event.currentTarget.value;
+                          setSizeDraft((draft) => ({ ...draft, y: nextValue }));
+                        }}
                         onKeyDown={(event) => handleDraftVectorKeyDown(event, applySizeChange)}
                       />
                     </label>
@@ -525,7 +540,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         min={DEFAULT_GRID_SIZE}
                         step={DEFAULT_GRID_SIZE}
                         value={sizeDraft.z}
-                        onChange={(event) => setSizeDraft((draft) => ({ ...draft, z: event.currentTarget.value }))}
+                        onChange={(event) => {
+                          const nextValue = event.currentTarget.value;
+                          setSizeDraft((draft) => ({ ...draft, z: nextValue }));
+                        }}
                         onKeyDown={(event) => handleDraftVectorKeyDown(event, applySizeChange)}
                       />
                     </label>
