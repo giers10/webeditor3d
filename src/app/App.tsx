@@ -2975,6 +2975,15 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   ))}
                 </div>
               )}
+
+              <div className="inline-actions">
+                <button className="toolbar__button" type="button" data-testid="add-entity-pointLight" onClick={() => handlePlaceEntity("pointLight")}>
+                  Add Point Light
+                </button>
+                <button className="toolbar__button" type="button" data-testid="add-entity-spotLight" onClick={() => handlePlaceEntity("spotLight")}>
+                  Add Spot Light
+                </button>
+              </div>
             </div>
           </Panel>
         </aside>
