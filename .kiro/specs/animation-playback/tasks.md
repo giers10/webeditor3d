@@ -116,7 +116,7 @@ Implement animation playback for imported GLB/GLTF assets in vertical slice orde
     - Generate random v12 documents with animation fields (including `playAnimation` and `stopAnimation` links); assert `parseSceneDocumentJson(serializeSceneDocument(doc))` produces a deeply equal document
     - **Validates: Requirements 8.3, 8.4, 8.6**
 
-  - [ ]* 7.3 Write unit test: migration rejects empty clipName
+  - [x]* 7.3 Write unit test: migration rejects empty clipName
     - Pass a v12 document with a `playAnimation` action where `clipName` is `""` to `migrateSceneDocument`; assert it throws
     - _Requirements: 8.5_
 
