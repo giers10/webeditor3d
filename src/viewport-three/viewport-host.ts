@@ -38,7 +38,6 @@ interface CachedMaterialTexture {
   texture: CanvasTexture;
 }
 
-const BRUSH_BASE_COLOR = 0x8c98a7;
 const BRUSH_SELECTED_EDGE_COLOR = 0xf7d2aa;
 const BRUSH_EDGE_COLOR = 0x0d1017;
 const FALLBACK_FACE_COLOR = 0x747d89;
