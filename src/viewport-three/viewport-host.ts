@@ -404,6 +404,16 @@ export class ViewportHost {
   }
 
   private handlePointerDown = (event: PointerEvent) => {
+    if (this.toolMode === "box-create") {
+      const previewCenter = this.getBoxCreatePreviewCenter(event);
+
+      if (previewCenter !== null) {
+        this.createBoxBrushHandler?.(previewCenter);
+      }
+
+      return;
+    }
+
     const bounds = this.renderer.domElement.getBoundingClientRect();
 
     if (bounds.width === 0 || bounds.height === 0) {
@@ -463,6 +473,68 @@ export class ViewportHost {
       ids: [brushId]
     });
   };
+
+  private handlePointerMove = (event: PointerEvent) => {
+    if (this.toolMode !== "box-create") {
+      return;
+    }
+
+    this.setBoxCreatePreview(this.getBoxCreatePreviewCenter(event));
+  };
+
+  private handlePointerLeave = () => {
+    if (this.toolMode !== "box-create") {
+      return;
+    }
+
+    this.setBoxCreatePreview(null);
+  };
+
+  private getBoxCreatePreviewCenter(event: PointerEvent): Vec3 | null {
+    const bounds = this.renderer.domElement.getBoundingClientRect();
+
+    if (bounds.width === 0 || bounds.height === 0) {
+      return null;
+    }
+
+    this.pointer.x = ((event.clientX - bounds.left) / bounds.width) * 2 - 1;
+    this.pointer.y = -(((event.clientY - bounds.top) / bounds.height) * 2 - 1);
+    this.raycaster.setFromCamera(this.pointer, this.camera);
+
+    if (this.raycaster.ray.intersectPlane(this.boxCreatePlane, this.boxCreateIntersection) === null) {
+      return null;
+    }
+
+    return {
+      x: snapValueToGrid(this.boxCreateIntersection.x, DEFAULT_GRID_SIZE),
+      y: DEFAULT_BOX_BRUSH_SIZE.y * 0.5,
+      z: snapValueToGrid(this.boxCreateIntersection.z, DEFAULT_GRID_SIZE)
+    };
+  }
+
+  private setBoxCreatePreview(center: Vec3 | null) {
+    if (
+      (center === null && this.lastBoxCreatePreviewCenter === null) ||
+      (center !== null &&
+        this.lastBoxCreatePreviewCenter !== null &&
+        center.x === this.lastBoxCreatePreviewCenter.x &&
+        center.y === this.lastBoxCreatePreviewCenter.y &&
+        center.z === this.lastBoxCreatePreviewCenter.z)
+    ) {
+      return;
+    }
+
+    this.lastBoxCreatePreviewCenter = center === null ? null : { ...center };
+    this.boxCreatePreviewMesh.visible = center !== null;
+    this.boxCreatePreviewEdges.visible = center !== null;
+
+    if (center !== null) {
+      this.boxCreatePreviewMesh.position.set(center.x, center.y, center.z);
+      this.boxCreatePreviewEdges.position.set(center.x, center.y, center.z);
+    }
+
+    this.boxCreatePreviewHandler?.(this.lastBoxCreatePreviewCenter);
+  }
 
   private render = () => {
     this.animationFrame = window.requestAnimationFrame(this.render);

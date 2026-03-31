@@ -1,7 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 
 import type { EditorSelection } from "../core/selection";
+import type { ToolMode } from "../core/tool-mode";
+import type { Vec3 } from "../core/vector";
+import { DEFAULT_BOX_BRUSH_SIZE } from "../document/brushes";
 import type { SceneDocument, WorldSettings } from "../document/scene-document";
+import { DEFAULT_GRID_SIZE } from "../geometry/grid-snapping";
 
 import { ViewportHost } from "./viewport-host";
 
@@ -9,13 +13,24 @@ interface ViewportCanvasProps {
   world: WorldSettings;
   sceneDocument: SceneDocument;
   selection: EditorSelection;
-  onBrushSelectionChange(selection: EditorSelection): void;
+  toolMode: ToolMode;
+  onSelectionChange(selection: EditorSelection): void;
+  onCreateBoxBrush(center: Vec3): void;
 }
 
-export function ViewportCanvas({ world, sceneDocument, selection, onBrushSelectionChange }: ViewportCanvasProps) {
+function formatVec3(vector: Vec3 | null): string {
+  if (vector === null) {
+    return "Move over the grid to preview a snapped placement.";
+  }
+
+  return `${vector.x}, ${vector.y}, ${vector.z}`;
+}
+
+export function ViewportCanvas({ world, sceneDocument, selection, toolMode, onSelectionChange, onCreateBoxBrush }: ViewportCanvasProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const hostRef = useRef<ViewportHost | null>(null);
   const [viewportMessage, setViewportMessage] = useState<string | null>(null);
+  const [boxCreatePreview, setBoxCreatePreview] = useState<Vec3 | null>(null);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -61,11 +76,46 @@ export function ViewportCanvas({ world, sceneDocument, selection, onBrushSelecti
   }, [sceneDocument, selection]);
 
   useEffect(() => {
-    hostRef.current?.setBrushSelectionChangeHandler(onBrushSelectionChange);
-  }, [onBrushSelectionChange]);
+    hostRef.current?.setBrushSelectionChangeHandler(onSelectionChange);
+  }, [onSelectionChange]);
+
+  useEffect(() => {
+    hostRef.current?.setCreateBoxBrushHandler(onCreateBoxBrush);
+  }, [onCreateBoxBrush]);
+
+  useEffect(() => {
+    hostRef.current?.setBoxCreatePreviewHandler(setBoxCreatePreview);
+  }, []);
+
+  useEffect(() => {
+    hostRef.current?.setToolMode(toolMode);
+
+    if (toolMode !== "box-create") {
+      setBoxCreatePreview(null);
+    }
+  }, [toolMode]);
 
   return (
-    <div ref={containerRef} className="viewport-canvas" data-testid="viewport-shell" aria-label="Editor viewport">
+    <div
+      ref={containerRef}
+      className={`viewport-canvas viewport-canvas--${toolMode}`}
+      data-testid="viewport-shell"
+      aria-label="Editor viewport"
+    >
+      <div className="viewport-canvas__overlay" data-testid="viewport-overlay">
+        <div className="viewport-canvas__overlay-badge">{toolMode === "box-create" ? "Box Create" : "Select"}</div>
+        <div className="viewport-canvas__overlay-text">
+          {toolMode === "box-create"
+            ? `Click to place a ${DEFAULT_BOX_BRUSH_SIZE.x} x ${DEFAULT_BOX_BRUSH_SIZE.y} x ${DEFAULT_BOX_BRUSH_SIZE.z} box on the ${DEFAULT_GRID_SIZE}m grid.`
+            : "Click a brush, face, or Player Start marker to update the authored selection."}
+        </div>
+        {toolMode !== "box-create" ? null : (
+          <div className="viewport-canvas__overlay-preview" data-testid="viewport-snap-preview">
+            Next box center: {formatVec3(boxCreatePreview)}
+          </div>
+        )}
+      </div>
+
       {viewportMessage === null ? null : (
         <div className="viewport-canvas__fallback" role="status">
           <div className="viewport-canvas__fallback-title">Viewport Unavailable</div>

@@ -26,6 +26,7 @@ import {
   type FaceUvRotationQuarterTurns,
   type FaceUvState
 } from "../document/brushes";
+import { formatSceneDiagnosticSummary, validateSceneDocument, type SceneDiagnostic } from "../document/scene-document-validation";
 import { DEFAULT_GRID_SIZE, snapPositiveSizeToGrid, snapVec3ToGrid } from "../geometry/grid-snapping";
 import { createFitToFaceBoxBrushFaceUvState } from "../geometry/box-face-uvs";
 import {
@@ -39,6 +40,7 @@ import { STARTER_MATERIAL_LIBRARY, type MaterialDef } from "../materials/starter
 import { RunnerCanvas } from "../runner-web/RunnerCanvas";
 import type { FirstPersonTelemetry } from "../runtime-three/navigation-controller";
 import { buildRuntimeSceneFromDocument, type RuntimeNavigationMode, type RuntimeSceneDefinition } from "../runtime-three/runtime-scene-build";
+import { validateRuntimeSceneBuild } from "../runtime-three/runtime-scene-validation";
 import { Panel } from "../shared-ui/Panel";
 import { ViewportCanvas } from "../viewport-three/ViewportCanvas";
 import type { EditorStore } from "./editor-store";
@@ -70,6 +72,32 @@ const FACE_LABELS: Record<BoxFaceId, string> = {
 };
 
 const STARTER_MATERIAL_ORDER = new Map(STARTER_MATERIAL_LIBRARY.map((material, index) => [material.id, index]));
+const TOOL_LABELS = {
+  select: "Select",
+  "box-create": "Box Create",
+  play: "Play"
+} as const;
+
+const DIAGNOSTIC_BADGE_LABELS = {
+  document: "Document",
+  build: "Run"
+} as const;
+
+function formatVec3(vector: Vec3): string {
+  return `${vector.x}, ${vector.y}, ${vector.z}`;
+}
+
+function formatDiagnosticCount(count: number, label: string): string {
+  return `${count} ${label}${count === 1 ? "" : "s"}`;
+}
+
+function getViewportCaption(toolMode: "select" | "box-create", brushCount: number): string {
+  if (toolMode === "box-create") {
+    return `Box Create is active. Move over the grid to preview snapped placement, then click to place a ${DEFAULT_BOX_BRUSH_SIZE.x} x ${DEFAULT_BOX_BRUSH_SIZE.y} x ${DEFAULT_BOX_BRUSH_SIZE.z} box.`;
+  }
+
+  return `${brushCount} box brush${brushCount === 1 ? "" : "es"} loaded. Click a brush face in the viewport or use the face selector to texture it.`;
+}
 
 function createVec2Draft(vector: Vec2): Vec2Draft {
   return {
@@ -303,7 +331,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [uvScaleDraft, setUvScaleDraft] = useState(createVec2Draft(createDefaultFaceUvState().scale));
   const [playerStartPositionDraft, setPlayerStartPositionDraft] = useState(createVec3Draft(DEFAULT_PLAYER_START_POSITION));
   const [playerStartYawDraft, setPlayerStartYawDraft] = useState("0");
-  const [statusMessage, setStatusMessage] = useState(initialStatusMessage ?? "Runner v1 authoring ready.");
+  const [statusMessage, setStatusMessage] = useState(initialStatusMessage ?? "Slice 1.4 room-authoring workflow ready.");
+  const [persistenceMessage, setPersistenceMessage] = useState("Local Draft is the current browser persistence path. Export JSON creates a portable copy.");
   const [preferredNavigationMode, setPreferredNavigationMode] = useState<RuntimeNavigationMode>(
     primaryPlayerStart === null ? "orbitVisitor" : "firstPerson"
   );
@@ -314,6 +343,17 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [runtimeMessage, setRuntimeMessage] = useState<string | null>(null);
   const [firstPersonTelemetry, setFirstPersonTelemetry] = useState<FirstPersonTelemetry | null>(null);
   const importInputRef = useRef<HTMLInputElement | null>(null);
+  const documentValidation = validateSceneDocument(editorState.document);
+  const runValidation = validateRuntimeSceneBuild(editorState.document, preferredNavigationMode);
+  const diagnostics = [...documentValidation.errors, ...documentValidation.warnings, ...runValidation.errors, ...runValidation.warnings];
+  const blockingDiagnostics = diagnostics.filter((diagnostic) => diagnostic.severity === "error");
+  const warningDiagnostics = diagnostics.filter((diagnostic) => diagnostic.severity === "warning");
+  const runReadyLabel =
+    blockingDiagnostics.length > 0
+      ? "Blocked"
+      : preferredNavigationMode === "firstPerson"
+        ? "Ready for First Person"
+        : "Ready for Orbit Visitor";
 
   useEffect(() => {
     setSceneNameDraft(editorState.document.name);
@@ -374,10 +414,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
     setStatusMessage(`Scene renamed to ${normalizedName}.`);
   };
 
-  const handleCreateBoxBrush = () => {
+  const handleCreateBoxBrush = (center?: Vec3) => {
     try {
-      store.executeCommand(createCreateBoxBrushCommand());
-      setStatusMessage(`Created a box brush snapped to the ${DEFAULT_GRID_SIZE}m grid.`);
+      store.executeCommand(createCreateBoxBrushCommand(center === undefined ? {} : { center }));
+      setStatusMessage(
+        center === undefined
+          ? `Created a box brush snapped to the ${DEFAULT_GRID_SIZE}m grid.`
+          : `Created a box brush at snapped center ${formatVec3(center)}.`
+      );
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
     }
@@ -488,26 +532,43 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
   const handleSaveDraft = () => {
     const result = store.saveDraft();
+    setPersistenceMessage(
+      result.status === "saved"
+        ? "Local Draft saved. Refresh, reopen, or use Load Draft to restore this exact validated document."
+        : result.message
+    );
     setStatusMessage(result.message);
   };
 
   const handleLoadDraft = () => {
     const result = store.loadDraft();
+    setPersistenceMessage(
+      result.status === "loaded"
+        ? "Local Draft loaded. The current in-memory document was replaced with the stored browser draft."
+        : result.message
+    );
     setStatusMessage(result.message);
   };
 
   const handleExportJson = () => {
-    const exportedJson = store.exportDocumentJson();
-    const blob = new Blob([exportedJson], { type: "application/json" });
-    const objectUrl = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
+    try {
+      const exportedJson = store.exportDocumentJson();
+      const blob = new Blob([exportedJson], { type: "application/json" });
+      const objectUrl = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
 
-    anchor.href = objectUrl;
-    anchor.download = `${editorState.document.name.replace(/\s+/g, "-").toLowerCase() || "scene"}.json`;
-    anchor.click();
-    URL.revokeObjectURL(objectUrl);
+      anchor.href = objectUrl;
+      anchor.download = `${editorState.document.name.replace(/\s+/g, "-").toLowerCase() || "scene"}.json`;
+      anchor.click();
+      URL.revokeObjectURL(objectUrl);
 
-    setStatusMessage("Scene document exported as JSON.");
+      setPersistenceMessage("Exported a validated Scene Document JSON file for sharing or backup.");
+      setStatusMessage("Scene document exported as JSON.");
+    } catch (error) {
+      const message = getErrorMessage(error);
+      setPersistenceMessage(message);
+      setStatusMessage(message);
+    }
   };
 
   const handleImportButtonClick = () => {
@@ -524,9 +585,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
     try {
       const source = await file.text();
       store.importDocumentJson(source);
+      setPersistenceMessage("Imported JSON replaced the current document after migration and validation. Save Draft to make it the browser draft.");
       setStatusMessage(`Imported ${file.name}.`);
     } catch (error) {
-      setStatusMessage(getErrorMessage(error));
+      const message = getErrorMessage(error);
+      setPersistenceMessage(message);
+      setStatusMessage(message);
     } finally {
       event.currentTarget.value = "";
     }
@@ -687,9 +751,16 @@ export function App({ store, initialStatusMessage }: AppProps) {
   };
 
   const handleEnterPlayMode = () => {
+    if (blockingDiagnostics.length > 0) {
+      setStatusMessage(`Run mode blocked: ${formatSceneDiagnosticSummary(blockingDiagnostics)}`);
+      return;
+    }
+
     try {
-      const nextRuntimeScene = buildRuntimeSceneFromDocument(editorState.document);
-      const nextNavigationMode = primaryPlayerStart === null && preferredNavigationMode === "firstPerson" ? "orbitVisitor" : preferredNavigationMode;
+      const nextRuntimeScene = buildRuntimeSceneFromDocument(editorState.document, {
+        navigationMode: preferredNavigationMode
+      });
+      const nextNavigationMode = preferredNavigationMode;
 
       setRuntimeScene(nextRuntimeScene);
       setRuntimeMessage(
@@ -721,6 +792,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const handleSetPreferredNavigationMode = (navigationMode: RuntimeNavigationMode) => {
     setPreferredNavigationMode(navigationMode);
 
+    if (navigationMode === "firstPerson" && primaryPlayerStart === null) {
+      setStatusMessage("First Person selected. Author a Player Start before running, or switch back to Orbit Visitor.");
+    }
+
     if (editorState.toolMode === "play") {
       setActiveNavigationMode(navigationMode);
       setStatusMessage(navigationMode === "firstPerson" ? "Runner switched to first-person navigation." : "Runner switched to Orbit Visitor.");
@@ -733,7 +808,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
         <header className="toolbar">
           <div className="toolbar__brand">
             <div className="toolbar__title">WebEditor3D</div>
-            <div className="toolbar__subtitle">Slice 1.3 runner v1</div>
+            <div className="toolbar__subtitle">Slice 1.4 first-room polish</div>
           </div>
 
           <div className="toolbar__actions">
@@ -841,7 +916,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
       <header className="toolbar">
         <div className="toolbar__brand">
           <div className="toolbar__title">WebEditor3D</div>
-          <div className="toolbar__subtitle">Slice 1.3 runner v1</div>
+          <div className="toolbar__subtitle">Slice 1.4 first-room polish</div>
         </div>
 
         <div className="toolbar__actions">
@@ -858,21 +933,32 @@ export function App({ store, initialStatusMessage }: AppProps) {
               type="button"
               onClick={() => store.setToolMode("box-create")}
             >
-              Box
+              Box Create
             </button>
+          </div>
+
+          <div className="toolbar__group">
             <button className="toolbar__button toolbar__button--accent" type="button" data-testid="create-box-brush" onClick={handleCreateBoxBrush}>
-              Create Box Brush
+              Create Box
             </button>
-            <button className="toolbar__button toolbar__button--accent" type="button" data-testid="enter-run-mode" onClick={handleEnterPlayMode}>
+            <button className="toolbar__button" type="button" data-testid="place-player-start-toolbar" onClick={handleSelectOrPlacePlayerStart}>
+              {primaryPlayerStart === null ? "Place Player Start" : "Select Player Start"}
+            </button>
+            <button
+              className={`toolbar__button toolbar__button--accent ${blockingDiagnostics.length > 0 ? "toolbar__button--warn" : ""}`}
+              type="button"
+              data-testid="enter-run-mode"
+              onClick={handleEnterPlayMode}
+            >
               Run Scene
             </button>
           </div>
 
           <div className="toolbar__group">
-            <button className="toolbar__button" type="button" onClick={handleSaveDraft}>
+            <button className="toolbar__button" type="button" disabled={!editorState.storageAvailable} onClick={handleSaveDraft}>
               Save Draft
             </button>
-            <button className="toolbar__button" type="button" onClick={handleLoadDraft}>
+            <button className="toolbar__button" type="button" disabled={!editorState.storageAvailable} onClick={handleLoadDraft}>
               Load Draft
             </button>
             <button className="toolbar__button" type="button" onClick={handleExportJson}>
@@ -896,7 +982,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
       <div className="workspace">
         <aside className="side-column">
-          <Panel title="Document">
+          <Panel title="Scene">
             <div className="stat-grid">
               <div className="stat-card">
                 <div className="label">Version</div>
@@ -908,7 +994,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
               </div>
               <div className="stat-card">
                 <div className="label">Tool Mode</div>
-                <div className="value">{editorState.toolMode}</div>
+                <div className="value">{TOOL_LABELS[editorState.toolMode]}</div>
               </div>
               <div className="stat-card">
                 <div className="label">Brushes</div>
@@ -937,10 +1023,76 @@ export function App({ store, initialStatusMessage }: AppProps) {
               </button>
             </div>
 
+            <div className="form-section">
+              <div className="label">Save / Load</div>
+              <div className="inline-actions">
+                <button className="toolbar__button" type="button" disabled={!editorState.storageAvailable} onClick={handleSaveDraft}>
+                  Save Draft
+                </button>
+                <button className="toolbar__button" type="button" disabled={!editorState.storageAvailable} onClick={handleLoadDraft}>
+                  Load Draft
+                </button>
+                <button className="toolbar__button" type="button" onClick={handleExportJson}>
+                  Export JSON
+                </button>
+                <button className="toolbar__button" type="button" onClick={handleImportButtonClick}>
+                  Import JSON
+                </button>
+              </div>
+              <div className="info-banner" data-testid="persistence-message">
+                {persistenceMessage}
+              </div>
+            </div>
+
             <ul className="placeholder-list">
-              <li>Materials live in the canonical document registry and ship with a tiny starter library.</li>
-              <li>Player Start now persists as a typed scene entity and feeds the built-in runner directly.</li>
+              <li>Local Draft is the browser persistence path for this slice and auto-loads on refresh when available.</li>
+              <li>JSON import replaces the current document only after migration and validation succeed.</li>
             </ul>
+          </Panel>
+
+          <Panel title="Status">
+            <div className="stat-grid">
+              <div className="stat-card" data-testid="document-validation-state">
+                <div className="label">Document</div>
+                <div className="value">
+                  {documentValidation.errors.length === 0 ? "Valid" : formatDiagnosticCount(documentValidation.errors.length, "error")}
+                </div>
+              </div>
+              <div className="stat-card" data-testid="run-validation-state">
+                <div className="label">Run Preflight</div>
+                <div className="value">{runReadyLabel}</div>
+              </div>
+              <div className="stat-card">
+                <div className="label">Warnings</div>
+                <div className="value">{warningDiagnostics.length}</div>
+              </div>
+              <div className="stat-card">
+                <div className="label">Last Command</div>
+                <div className="value">{editorState.lastCommandLabel ?? "No commands yet"}</div>
+              </div>
+            </div>
+
+            {diagnostics.length === 0 ? (
+              <ul className="placeholder-list" data-testid="diagnostics-list">
+                <li>No validation or run-preflight issues are blocking the first-room workflow.</li>
+              </ul>
+            ) : (
+              <div className="diagnostic-list" data-testid="diagnostics-list">
+                {diagnostics.map((diagnostic, index) => (
+                  <div
+                    key={`${diagnostic.scope}-${diagnostic.code}-${diagnostic.path ?? index}`}
+                    className={`diagnostic-item diagnostic-item--${diagnostic.severity}`}
+                  >
+                    <div className="diagnostic-item__header">
+                      <span className={`diagnostic-badge diagnostic-badge--${diagnostic.severity}`}>{diagnostic.severity}</span>
+                      <span className="diagnostic-item__scope">{DIAGNOSTIC_BADGE_LABELS[diagnostic.scope]}</span>
+                    </div>
+                    <div className="diagnostic-item__message">{diagnostic.message}</div>
+                    {diagnostic.path === undefined ? null : <div className="diagnostic-item__path">{diagnostic.path}</div>}
+                  </div>
+                ))}
+              </div>
+            )}
           </Panel>
 
           <Panel title="Materials">
@@ -1054,15 +1206,15 @@ export function App({ store, initialStatusMessage }: AppProps) {
         <main className="viewport-region">
           <div className="viewport-region__header">
             <div className="viewport-region__title">Viewport</div>
-            <div className="viewport-region__caption">
-              {brushList.length} box brushes loaded. Click a brush face in the viewport or use the face selector to texture it.
-            </div>
+            <div className="viewport-region__caption">{getViewportCaption(editorState.toolMode, brushList.length)}</div>
           </div>
           <ViewportCanvas
             world={editorState.document.world}
             sceneDocument={editorState.document}
             selection={editorState.selection}
-            onBrushSelectionChange={(selection) => applySelection(selection, "viewport")}
+            toolMode={editorState.toolMode}
+            onSelectionChange={(selection) => applySelection(selection, "viewport")}
+            onCreateBoxBrush={handleCreateBoxBrush}
           />
         </main>
 
