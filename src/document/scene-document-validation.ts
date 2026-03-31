@@ -148,6 +148,17 @@ function validateWorldSettings(world: WorldSettings, document: SceneDocument, di
         );
       }
     }
+
+    if (!isNonNegativeFiniteNumber(world.background.environmentIntensity)) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-world-background-environment-intensity",
+          "World background environment intensity must be a non-negative finite number.",
+          "world.background.environmentIntensity"
+        )
+      );
+    }
   }
 
   if (!isHexColorString(world.ambientLight.colorHex)) {
