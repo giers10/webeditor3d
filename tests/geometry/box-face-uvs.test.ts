@@ -70,9 +70,7 @@ describe("box face UV projection", () => {
       }
     );
 
-    expect(transformedUv).toEqual({
-      x: expect.closeTo(1.5),
-      y: expect.closeTo(1.75)
-    });
+    expect(transformedUv.x).toBeCloseTo(1.5);
+    expect(transformedUv.y).toBeCloseTo(1.75);
   });
 });
