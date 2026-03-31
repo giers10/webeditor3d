@@ -1945,7 +1945,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
     if (projectAssetStorage === null) {
       setAssetStatusMessage("Imported model assets require project asset storage. IndexedDB is unavailable in this browser.");
-      event.currentTarget.value = "";
+      input.value = "";
       return;
     }
 
