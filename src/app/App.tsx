@@ -26,7 +26,7 @@ import {
   type FaceUvRotationQuarterTurns,
   type FaceUvState
 } from "../document/brushes";
-import { formatSceneDiagnosticSummary, validateSceneDocument, type SceneDiagnostic } from "../document/scene-document-validation";
+import { formatSceneDiagnosticSummary, validateSceneDocument } from "../document/scene-document-validation";
 import { DEFAULT_GRID_SIZE, snapPositiveSizeToGrid, snapVec3ToGrid } from "../geometry/grid-snapping";
 import { createFitToFaceBoxBrushFaceUvState } from "../geometry/box-face-uvs";
 import {
