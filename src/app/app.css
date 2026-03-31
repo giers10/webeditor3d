@@ -245,6 +245,16 @@ button:disabled {
   border-radius: 10px;
 }
 
+.color-input {
+  width: 100%;
+  min-height: 46px;
+  padding: 0;
+  background: rgba(7, 9, 13, 0.4);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  cursor: pointer;
+}
+
 .inline-actions {
   display: flex;
   gap: 8px;
@@ -459,6 +469,13 @@ button:disabled {
   margin-top: 8px;
   color: var(--color-muted);
   font-size: 0.82rem;
+}
+
+.world-background-preview {
+  height: 76px;
+  margin-top: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
 }
 
 .viewport-region {
