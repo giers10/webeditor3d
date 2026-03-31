@@ -8,6 +8,8 @@ const DEFAULT_INTERACTABLE_TARGET_RADIUS = 0.75;
 export interface RuntimeInteractionDispatcher {
   teleportPlayer(target: RuntimeTeleportTarget, link: InteractionLink): void;
   toggleBrushVisibility(brushId: string, visible: boolean | undefined, link: InteractionLink): void;
+  playAnimation(instanceId: string, clipName: string, link: InteractionLink): void;
+  stopAnimation(instanceId: string, link: InteractionLink): void;
 }
 
 export interface RuntimeInteractionPrompt {
