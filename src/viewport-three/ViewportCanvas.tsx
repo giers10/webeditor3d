@@ -1,14 +1,18 @@
 import { useEffect, useRef, useState } from "react";
 
-import type { WorldSettings } from "../document/scene-document";
+import type { EditorSelection } from "../core/selection";
+import type { SceneDocument, WorldSettings } from "../document/scene-document";
 
 import { ViewportHost } from "./viewport-host";
 
 interface ViewportCanvasProps {
   world: WorldSettings;
+  document: SceneDocument;
+  selection: EditorSelection;
+  onBrushSelectionChange(brushId: string | null): void;
 }
 
-export function ViewportCanvas({ world }: ViewportCanvasProps) {
+export function ViewportCanvas({ world, document, selection, onBrushSelectionChange }: ViewportCanvasProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const hostRef = useRef<ViewportHost | null>(null);
   const [viewportMessage, setViewportMessage] = useState<string | null>(null);
@@ -51,6 +55,14 @@ export function ViewportCanvas({ world }: ViewportCanvasProps) {
   useEffect(() => {
     hostRef.current?.updateWorld(world);
   }, [world]);
+
+  useEffect(() => {
+    hostRef.current?.updateDocument(document, selection);
+  }, [document, selection]);
+
+  useEffect(() => {
+    hostRef.current?.setBrushSelectionChangeHandler(onBrushSelectionChange);
+  }, [onBrushSelectionChange]);
 
   return (
     <div ref={containerRef} className="viewport-canvas" data-testid="viewport-shell" aria-label="Editor viewport">
