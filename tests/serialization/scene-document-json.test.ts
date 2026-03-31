@@ -135,6 +135,72 @@ describe("scene document JSON", () => {
     expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(document);
   });
 
+  it("round-trips the initial typed entity registry without mixing entities into model instances", () => {
+    const playerStart = createPlayerStartEntity({
+      id: "entity-player-start-main"
+    });
+    const soundEmitter = createSoundEmitterEntity({
+      id: "entity-sound-main",
+      position: {
+        x: 1,
+        y: 2,
+        z: 3
+      },
+      radius: 7,
+      gain: 0.6,
+      autoplay: true,
+      loop: true
+    });
+    const triggerVolume = createTriggerVolumeEntity({
+      id: "entity-trigger-main",
+      position: {
+        x: 0,
+        y: 1,
+        z: 0
+      },
+      size: {
+        x: 2,
+        y: 3,
+        z: 4
+      }
+    });
+    const teleportTarget = createTeleportTargetEntity({
+      id: "entity-teleport-main",
+      position: {
+        x: -3,
+        y: 0,
+        z: 5
+      },
+      yawDegrees: 180
+    });
+    const interactable = createInteractableEntity({
+      id: "entity-interactable-main",
+      position: {
+        x: 2,
+        y: 1,
+        z: -2
+      },
+      radius: 1.25,
+      prompt: "Open Door",
+      enabled: true
+    });
+    const document = {
+      ...createEmptySceneDocument({ name: "Typed Entity Scene" }),
+      entities: {
+        [playerStart.id]: playerStart,
+        [soundEmitter.id]: soundEmitter,
+        [triggerVolume.id]: triggerVolume,
+        [teleportTarget.id]: teleportTarget,
+        [interactable.id]: interactable
+      }
+    };
+
+    const roundTripDocument = parseSceneDocumentJson(serializeSceneDocument(document));
+
+    expect(roundTripDocument).toEqual(document);
+    expect(roundTripDocument.modelInstances).toEqual({});
+  });
+
   it("migrates the foundation schema to the current schema version", () => {
     const migratedDocument = migrateSceneDocument({
       version: 1,
@@ -301,6 +367,38 @@ describe("scene document JSON", () => {
     expect(migratedDocument.world.background).toEqual({
       mode: "solid",
       colorHex: "#2f3947"
+    });
+  });
+
+  it("migrates slice 1.5 documents to the typed-entity schema without changing supported authored entities", () => {
+    const migratedDocument = migrateSceneDocument({
+      version: WORLD_ENVIRONMENT_SCENE_DOCUMENT_VERSION,
+      name: "World Environment Scene",
+      world: createEmptySceneDocument().world,
+      materials: createEmptySceneDocument().materials,
+      textures: {},
+      assets: {},
+      brushes: {},
+      modelInstances: {},
+      entities: {
+        "entity-player-start-main": {
+          id: "entity-player-start-main",
+          kind: "playerStart",
+          position: {
+            x: 2,
+            y: 0,
+            z: -1
+          },
+          yawDegrees: 90
+        }
+      },
+      interactionLinks: {}
+    });
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.entities["entity-player-start-main"]).toMatchObject({
+      kind: "playerStart",
+      yawDegrees: 90
     });
   });
 
