@@ -1760,6 +1760,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
           : "No Player Start is authored yet. Orbit Visitor opened first, with a fallback FPS spawn still available."
       );
       setFirstPersonTelemetry(null);
+      setRuntimeInteractionPrompt(null);
       setActiveNavigationMode(nextNavigationMode);
       store.enterPlayMode();
       setStatusMessage(
@@ -1776,6 +1777,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     setRuntimeScene(null);
     setRuntimeMessage(null);
     setFirstPersonTelemetry(null);
+    setRuntimeInteractionPrompt(null);
     store.exitPlayMode();
     setStatusMessage("Returned to editor mode.");
   };
@@ -1797,10 +1799,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
     return (
       <div className="app-shell app-shell--play">
         <header className="toolbar">
-          <div className="toolbar__brand">
-            <div className="toolbar__title">WebEditor3D</div>
-            <div className="toolbar__subtitle">Slice 2.2 trigger-action-target foundation</div>
-          </div>
+            <div className="toolbar__brand">
+              <div className="toolbar__title">WebEditor3D</div>
+              <div className="toolbar__subtitle">Slice 2.3 click interactions and runner prompts</div>
+            </div>
 
           <div className="toolbar__actions">
             <div className="toolbar__group">
