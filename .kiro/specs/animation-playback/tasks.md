@@ -136,7 +136,7 @@ Implement animation playback for imported GLB/GLTF assets in vertical slice orde
   - Display existing `playAnimation`/`stopAnimation` links with resolved model instance name and clip name
   - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5_
 
-- [~] 10. Final checkpoint — ensure all tests pass
+- [ ] 10. Final checkpoint — ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes
