@@ -523,6 +523,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     source: "outliner" | "viewport" | "inspector" | "runner",
     options: { focusViewport?: boolean } = {}
   ) => {
+    blurActiveTextEntry();
     store.setSelection(selection);
 
     const suffix = source === "outliner" && options.focusViewport ? " and framed it in the viewport" : "";
