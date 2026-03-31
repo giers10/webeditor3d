@@ -336,25 +336,35 @@ export function areEntityInstancesEqual(left: EntityInstance, right: EntityInsta
   }
 
   switch (left.kind) {
-    case "playerStart":
-      return left.yawDegrees === right.yawDegrees;
-    case "soundEmitter":
+    case "playerStart": {
+      const typedRight = right as PlayerStartEntity;
+      return left.yawDegrees === typedRight.yawDegrees;
+    }
+    case "soundEmitter": {
+      const typedRight = right as SoundEmitterEntity;
       return (
         left.radius === right.radius &&
-        left.gain === right.gain &&
-        left.autoplay === right.autoplay &&
-        left.loop === right.loop
+        left.gain === typedRight.gain &&
+        left.autoplay === typedRight.autoplay &&
+        left.loop === typedRight.loop
       );
-    case "triggerVolume":
+    }
+    case "triggerVolume": {
+      const typedRight = right as TriggerVolumeEntity;
       return (
-        areVec3Equal(left.size, right.size) &&
-        left.triggerOnEnter === right.triggerOnEnter &&
-        left.triggerOnExit === right.triggerOnExit
+        areVec3Equal(left.size, typedRight.size) &&
+        left.triggerOnEnter === typedRight.triggerOnEnter &&
+        left.triggerOnExit === typedRight.triggerOnExit
       );
-    case "teleportTarget":
-      return left.yawDegrees === right.yawDegrees;
-    case "interactable":
-      return left.radius === right.radius && left.prompt === right.prompt && left.enabled === right.enabled;
+    }
+    case "teleportTarget": {
+      const typedRight = right as TeleportTargetEntity;
+      return left.yawDegrees === typedRight.yawDegrees;
+    }
+    case "interactable": {
+      const typedRight = right as InteractableEntity;
+      return left.radius === typedRight.radius && left.prompt === typedRight.prompt && left.enabled === typedRight.enabled;
+    }
   }
 }
 
