@@ -872,6 +872,14 @@ export class ViewportHost {
     return texture;
   }
 
+  private clearLocalLights() {
+    for (const renderObjects of this.localLightRenderObjects.values()) {
+      this.localLightGroup.remove(renderObjects.group);
+    }
+
+    this.localLightRenderObjects.clear();
+  }
+
   private clearBrushMeshes() {
     for (const renderObjects of this.brushRenderObjects.values()) {
       this.brushGroup.remove(renderObjects.mesh);
