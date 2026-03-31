@@ -1,7 +1,7 @@
-import type { EditorSelection } from "../core/selection";
+import { cloneEditorSelection, type EditorSelection } from "../core/selection";
 import type { Vec3 } from "../core/vector";
 import { createOpaqueId } from "../core/ids";
-import { createPlayerStartEntity } from "../entities/entity-instances";
+import { cloneEntityInstance, createPlayerStartEntity } from "../entities/entity-instances";
 
 import type { EditorCommand } from "./command";
 
@@ -40,11 +40,11 @@ export function createSetPlayerStartCommand(options: SetPlayerStartCommandOption
       }
 
       if (previousSelection === null) {
-        previousSelection = context.getSelection().kind === "none" ? { kind: "none" } : structuredClone(context.getSelection());
+        previousSelection = cloneEditorSelection(context.getSelection());
       }
 
       if (previousEntity === null && currentEntity !== undefined) {
-        previousEntity = currentEntity;
+        previousEntity = cloneEntityInstance(currentEntity);
       }
 
       context.setDocument({
