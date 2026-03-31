@@ -1,5 +1,12 @@
 import { createStarterMaterialRegistry, type MaterialDef, type MaterialPattern } from "../materials/starter-material-library";
-import { createPlayerStartEntity, type EntityInstance } from "../entities/entity-instances";
+import {
+  createInteractableEntity,
+  createPlayerStartEntity,
+  createSoundEmitterEntity,
+  createTeleportTargetEntity,
+  createTriggerVolumeEntity,
+  type EntityInstance
+} from "../entities/entity-instances";
 import {
   createBoxBrush,
   createDefaultFaceUvState,
@@ -17,6 +24,7 @@ import {
   FOUNDATION_SCENE_DOCUMENT_VERSION,
   RUNNER_V1_SCENE_DOCUMENT_VERSION,
   SCENE_DOCUMENT_VERSION,
+  WORLD_ENVIRONMENT_SCENE_DOCUMENT_VERSION,
   type SceneDocument
 } from "./scene-document";
 import { isWorldBackgroundMode, type WorldBackgroundSettings, type WorldSettings } from "./world-settings";
@@ -38,6 +46,16 @@ function expectNonNegativeFiniteNumber(value: unknown, label: string): number {
 
   if (numberValue < 0) {
     throw new Error(`${label} must be zero or greater.`);
+  }
+
+  return numberValue;
+}
+
+function expectPositiveFiniteNumber(value: unknown, label: string): number {
+  const numberValue = expectFiniteNumber(value, label);
+
+  if (numberValue <= 0) {
+    throw new Error(`${label} must be greater than zero.`);
   }
 
   return numberValue;
