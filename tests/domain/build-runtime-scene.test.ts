@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 import { createBoxBrush } from "../../src/document/brushes";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
 import {
-  createModelInstance,
   createInteractableEntity,
   createPlayerStartEntity,
   createSoundEmitterEntity,
@@ -11,6 +10,7 @@ import {
   createTriggerVolumeEntity
 } from "../../src/entities/entity-instances";
 import { createTeleportPlayerInteractionLink, createToggleVisibilityInteractionLink } from "../../src/interactions/interaction-links";
+import { createModelInstance } from "../../src/assets/model-instances";
 import { createProjectAssetStorageKey } from "../../src/assets/project-assets";
 import { buildRuntimeSceneFromDocument } from "../../src/runtime-three/runtime-scene-build";
 
