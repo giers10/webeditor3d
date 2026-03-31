@@ -18,7 +18,7 @@ function setSingleModelInstanceSelection(modelInstanceId: string): EditorSelecti
   };
 }
 
-function createDefaultModelInstanceCommandLabel(modelInstance: ModelInstance, isNewModelInstance: boolean): string {
+function createDefaultModelInstanceCommandLabel(isNewModelInstance: boolean): string {
   const action = isNewModelInstance ? "Place" : "Update";
   return `${action} ${getModelInstanceKindLabel().toLowerCase()}`;
 }
@@ -31,7 +31,7 @@ export function createUpsertModelInstanceCommand(options: UpsertModelInstanceCom
 
   return {
     id: createOpaqueId("command"),
-    label: options.label ?? createDefaultModelInstanceCommandLabel(nextModelInstance, true),
+    label: options.label ?? createDefaultModelInstanceCommandLabel(true),
     execute(context) {
       const currentDocument = context.getDocument();
       const currentAsset = currentDocument.assets[nextModelInstance.assetId];
