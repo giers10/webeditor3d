@@ -1168,6 +1168,28 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
+  const applyModelInstanceChange = () => {
+    if (selectedModelInstance === null) {
+      setStatusMessage("Select a model instance before editing it.");
+      return;
+    }
+
+    try {
+      const nextModelInstance = createModelInstance({
+        id: selectedModelInstance.id,
+        assetId: selectedModelInstance.assetId,
+        name: selectedModelInstance.name,
+        position: readVec3Draft(modelPositionDraft, "Model instance position"),
+        rotationDegrees: readVec3Draft(modelRotationDraft, "Model instance rotation"),
+        scale: readPositiveVec3Draft(modelScaleDraft, "Model instance scale")
+      });
+
+      commitModelInstanceChange(selectedModelInstance, nextModelInstance, "Updated model instance.");
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
   const applyPlayerStartChange = () => {
     if (selectedPlayerStart === null) {
       setStatusMessage("Select a Player Start before editing it.");
