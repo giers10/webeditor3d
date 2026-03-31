@@ -31,7 +31,8 @@ test("first-room workflow covers create, texture, save/load, and run", async ({ 
   await page.getByTestId("material-button-starter-amber-grid").click();
 
   await page.getByRole("button", { name: "First Person" }).click();
-  await expect(page.getByTestId("diagnostics-list")).toContainText("First-person run requires an authored Player Start");
+  await expect(page.getByTestId("status-message")).toContainText("Author a Player Start before running");
+  await expect(page.getByTestId("status-run-preflight")).toContainText("Blocked");
 
   await page.getByTestId("place-player-start").click();
   await page.getByTestId("player-start-position-x").fill("2");
@@ -41,7 +42,7 @@ test("first-room workflow covers create, texture, save/load, and run", async ({ 
   await page.getByTestId("player-start-yaw").fill("90");
   await page.getByTestId("player-start-yaw").press("Tab");
 
-  await expect(page.getByTestId("run-validation-state")).toContainText("Ready for First Person");
+  await expect(page.getByTestId("status-run-preflight")).toContainText("Ready for First Person");
 
   await page.getByRole("button", { name: "Save Draft" }).click();
   await page.getByRole("button", { name: "Box Create" }).click();
