@@ -17,6 +17,7 @@ import {
   PerspectiveCamera,
   Raycaster,
   Scene,
+  type Object3D,
   SphereGeometry,
   Spherical,
   TorusGeometry,
@@ -25,9 +26,12 @@ import {
   WebGLRenderer
 } from "three";
 
-import { isBrushFaceSelected, isBrushSelected, type EditorSelection } from "../core/selection";
+import { isBrushFaceSelected, isBrushSelected, isModelInstanceSelected, type EditorSelection } from "../core/selection";
 import type { ToolMode } from "../core/tool-mode";
 import type { Vec3 } from "../core/vector";
+import { createModelInstanceRenderGroup, disposeModelInstance } from "../assets/model-instance-rendering";
+import type { LoadedModelAsset } from "../assets/gltf-model-import";
+import type { ProjectAssetRecord } from "../assets/project-assets";
 import type { SceneDocument, WorldSettings } from "../document/scene-document";
 import { getEntityInstances, type EntityInstance } from "../entities/entity-instances";
 import { BOX_FACE_IDS, DEFAULT_BOX_BRUSH_SIZE, type BoxBrush, type BoxFaceId } from "../document/brushes";
@@ -91,13 +95,21 @@ export class ViewportHost {
   private readonly sunLight = new DirectionalLight();
   private readonly brushGroup = new Group();
   private readonly entityGroup = new Group();
+  private readonly modelGroup = new Group();
   private readonly raycaster = new Raycaster();
   private readonly pointer = new Vector2();
   private readonly boxCreateIntersection = new Vector3();
   private readonly boxCreatePlane = new Plane(new Vector3(0, 1, 0), 0);
   private readonly brushRenderObjects = new Map<string, BrushRenderObjects>();
   private readonly entityRenderObjects = new Map<string, EntityRenderObjects>();
+  private readonly modelRenderObjects = new Map<string, Group>();
   private readonly materialTextureCache = new Map<string, CachedMaterialTexture>();
+  private currentDocument: SceneDocument | null = null;
+  private currentSelection: EditorSelection = {
+    kind: "none"
+  };
+  private projectAssets: Record<string, ProjectAssetRecord> = {};
+  private loadedModelAssets: Record<string, LoadedModelAsset> = {};
   private readonly boxCreatePreviewMesh = new Mesh(
     new BoxGeometry(DEFAULT_BOX_BRUSH_SIZE.x, DEFAULT_BOX_BRUSH_SIZE.y, DEFAULT_BOX_BRUSH_SIZE.z),
     new MeshStandardMaterial({
@@ -141,6 +153,7 @@ export class ViewportHost {
     this.scene.add(this.sunLight);
     this.scene.add(this.brushGroup);
     this.scene.add(this.entityGroup);
+    this.scene.add(this.modelGroup);
     this.boxCreatePreviewMesh.visible = false;
     this.boxCreatePreviewEdges.visible = false;
     this.scene.add(this.boxCreatePreviewMesh);
@@ -180,8 +193,20 @@ export class ViewportHost {
   }
 
   updateDocument(document: SceneDocument, selection: EditorSelection) {
+    this.currentDocument = document;
+    this.currentSelection = selection;
     this.rebuildBrushMeshes(document, selection);
     this.rebuildEntityMarkers(document, selection);
+    this.rebuildModelInstances(document, selection);
+  }
+
+  updateAssets(projectAssets: Record<string, ProjectAssetRecord>, loadedModelAssets: Record<string, LoadedModelAsset>) {
+    this.projectAssets = projectAssets;
+    this.loadedModelAssets = loadedModelAssets;
+
+    if (this.currentDocument !== null) {
+      this.rebuildModelInstances(this.currentDocument, this.currentSelection);
+    }
   }
 
   setBrushSelectionChangeHandler(handler: ((selection: EditorSelection) => void) | null) {
@@ -330,6 +355,20 @@ export class ViewportHost {
 
       this.entityGroup.add(renderObjects.group);
       this.entityRenderObjects.set(entity.id, renderObjects);
+    }
+  }
+
+  private rebuildModelInstances(document: SceneDocument, selection: EditorSelection) {
+    this.clearModelInstances();
+
+    for (const modelInstance of Object.values(document.modelInstances)) {
+      const selected = isModelInstanceSelected(selection, modelInstance.id);
+      const asset = document.assets[modelInstance.assetId];
+      const loadedAsset = this.loadedModelAssets[modelInstance.assetId];
+      const renderGroup = createModelInstanceRenderGroup(modelInstance, asset, loadedAsset, selected);
+
+      this.modelGroup.add(renderGroup);
+      this.modelRenderObjects.set(modelInstance.id, renderGroup);
     }
   }
 
@@ -663,6 +702,15 @@ export class ViewportHost {
     this.entityRenderObjects.clear();
   }
 
+  private clearModelInstances() {
+    for (const renderGroup of this.modelRenderObjects.values()) {
+      this.modelGroup.remove(renderGroup);
+      disposeModelInstance(renderGroup);
+    }
+
+    this.modelRenderObjects.clear();
+  }
+
   private resize() {
     if (this.container === null) {
       return;
@@ -720,6 +768,7 @@ export class ViewportHost {
     const hits = this.raycaster.intersectObjects(
       [
         ...Array.from(this.entityRenderObjects.values(), (renderObjects) => renderObjects.group),
+        ...Array.from(this.modelRenderObjects.values()),
         ...Array.from(this.brushRenderObjects.values(), (renderObjects) => renderObjects.mesh)
       ],
       true
@@ -739,6 +788,16 @@ export class ViewportHost {
       this.brushSelectionChangeHandler?.({
         kind: "entities",
         ids: [entityId]
+      });
+      return;
+    }
+
+    const modelInstanceId = this.findModelInstanceId(hit.object);
+
+    if (modelInstanceId !== null) {
+      this.brushSelectionChangeHandler?.({
+        kind: "modelInstances",
+        ids: [modelInstanceId]
       });
       return;
     }
@@ -831,6 +890,22 @@ export class ViewportHost {
       event.preventDefault();
     }
   };
+
+  private findModelInstanceId(object: Object3D): string | null {
+    let current: Object3D | null = object;
+
+    while (current !== null) {
+      const modelInstanceId = current.userData.modelInstanceId;
+
+      if (typeof modelInstanceId === "string") {
+        return modelInstanceId;
+      }
+
+      current = current.parent;
+    }
+
+    return null;
+  }
 
   private orbitCamera(deltaX: number, deltaY: number) {
     this.cameraSpherical.theta -= deltaX * ORBIT_ROTATION_SPEED;
