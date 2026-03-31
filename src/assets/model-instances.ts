@@ -88,7 +88,9 @@ export function createModelInstance(
     name: normalizeModelInstanceName(overrides.name),
     position,
     rotationDegrees,
-    scale
+    scale,
+    animationClipName: overrides.animationClipName,
+    animationAutoplay: overrides.animationAutoplay
   };
 }
 
