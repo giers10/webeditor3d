@@ -45,6 +45,7 @@ import {
 } from "../assets/model-instance-labels";
 import {
   importModelAssetFromFile,
+  importModelAssetFromFiles,
   loadModelAssetFromStorage,
   disposeModelTemplate,
   type ImportedModelAssetResult,
@@ -1938,9 +1939,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
   const handleImportModelChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const input = event.currentTarget;
-    const file = input.files?.[0];
+    const files = Array.from(input.files ?? []);
 
-    if (file === undefined) {
+    if (files.length === 0) {
       return;
     }
 
@@ -1953,7 +1954,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
     let importedModelForCleanup: ImportedModelAssetResult | null = null;
 
     try {
-      const importedModel = await importModelAssetFromFile(file, projectAssetStorage);
+      const importedModel = files.length === 1
+        ? await importModelAssetFromFile(files[0], projectAssetStorage)
+        : await importModelAssetFromFiles(files, projectAssetStorage);
       importedModelForCleanup = importedModel;
 
       store.executeCommand(
@@ -4014,6 +4017,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
         ref={importModelInputRef}
         className="visually-hidden"
         type="file"
+        multiple
         accept=".glb,.gltf,model/gltf-binary,model/gltf+json,application/octet-stream"
         onChange={handleImportModelChange}
       />
