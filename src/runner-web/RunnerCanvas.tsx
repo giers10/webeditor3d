@@ -1,0 +1,79 @@
+import { useEffect, useRef, useState } from "react";
+
+import type { FirstPersonTelemetry } from "../runtime-three/navigation-controller";
+import { RuntimeHost } from "../runtime-three/runtime-host";
+import type { RuntimeNavigationMode, RuntimeSceneDefinition } from "../runtime-three/runtime-scene-build";
+
+interface RunnerCanvasProps {
+  runtimeScene: RuntimeSceneDefinition;
+  navigationMode: RuntimeNavigationMode;
+  onRuntimeMessageChange(message: string | null): void;
+  onFirstPersonTelemetryChange(telemetry: FirstPersonTelemetry | null): void;
+}
+
+export function RunnerCanvas({
+  runtimeScene,
+  navigationMode,
+  onRuntimeMessageChange,
+  onFirstPersonTelemetryChange
+}: RunnerCanvasProps) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const hostRef = useRef<RuntimeHost | null>(null);
+  const [runnerMessage, setRunnerMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    const container = containerRef.current;
+
+    if (container === null) {
+      return;
+    }
+
+    const testCanvas = document.createElement("canvas");
+    const hasWebGl =
+      testCanvas.getContext("webgl2") !== null ||
+      testCanvas.getContext("webgl") !== null ||
+      testCanvas.getContext("experimental-webgl") !== null;
+
+    if (!hasWebGl) {
+      setRunnerMessage("WebGL is unavailable in this browser environment. The runner shell is visible, but runtime rendering is disabled.");
+      return;
+    }
+
+    try {
+      const runtimeHost = new RuntimeHost();
+      hostRef.current = runtimeHost;
+      runtimeHost.mount(container);
+      runtimeHost.setRuntimeMessageHandler(onRuntimeMessageChange);
+      runtimeHost.setFirstPersonTelemetryHandler(onFirstPersonTelemetryChange);
+      setRunnerMessage(null);
+
+      return () => {
+        runtimeHost.dispose();
+        hostRef.current = null;
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Runner initialization failed.";
+      setRunnerMessage(`Runner initialization failed: ${message}`);
+      return;
+    }
+  }, [onFirstPersonTelemetryChange, onRuntimeMessageChange]);
+
+  useEffect(() => {
+    hostRef.current?.loadScene(runtimeScene);
+  }, [runtimeScene]);
+
+  useEffect(() => {
+    hostRef.current?.setNavigationMode(navigationMode);
+  }, [navigationMode]);
+
+  return (
+    <div ref={containerRef} className="runner-canvas" data-testid="runner-shell" aria-label="Built-in scene runner">
+      {runnerMessage === null ? null : (
+        <div className="runner-canvas__fallback" role="status">
+          <div className="runner-canvas__fallback-title">Runner Unavailable</div>
+          <div>{runnerMessage}</div>
+        </div>
+      )}
+    </div>
+  );
+}
