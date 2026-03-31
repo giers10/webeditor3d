@@ -106,7 +106,9 @@ export function areModelInstancesEqual(left: ModelInstance, right: ModelInstance
     left.name === right.name &&
     areVec3Equal(left.position, right.position) &&
     areVec3Equal(left.rotationDegrees, right.rotationDegrees) &&
-    areVec3Equal(left.scale, right.scale)
+    areVec3Equal(left.scale, right.scale) &&
+    left.animationClipName === right.animationClipName &&
+    left.animationAutoplay === right.animationAutoplay
   );
 }
 
