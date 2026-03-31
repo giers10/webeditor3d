@@ -63,8 +63,8 @@ export class RuntimeHost {
   private readonly localLightObjects = new Map<string, Group>();
   private readonly modelRenderObjects = new Map<string, Group>();
   private readonly materialTextureCache = new Map<string, CachedMaterialTexture>();
-  private readonly animationMixers = new Map<string, THREE.AnimationMixer>();
-  private readonly instanceAnimationClips = new Map<string, THREE.AnimationClip[]>();
+  private readonly animationMixers = new Map<string, AnimationMixer>();
+  private readonly instanceAnimationClips = new Map<string, AnimationClip[]>();
   private readonly controllerContext: RuntimeControllerContext;
   private readonly renderer: WebGLRenderer | null;
   private runtimeScene: RuntimeSceneDefinition | null = null;
