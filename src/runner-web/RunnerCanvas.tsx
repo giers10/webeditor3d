@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
+import type { LoadedModelAsset } from "../assets/gltf-model-import";
+import type { ProjectAssetRecord } from "../assets/project-assets";
 import type { FirstPersonTelemetry } from "../runtime-three/navigation-controller";
 import { RuntimeHost } from "../runtime-three/runtime-host";
 import type { RuntimeInteractionPrompt } from "../runtime-three/runtime-interaction-system";
@@ -8,6 +10,8 @@ import { createWorldBackgroundStyle } from "../shared-ui/world-background-style"
 
 interface RunnerCanvasProps {
   runtimeScene: RuntimeSceneDefinition;
+  projectAssets: Record<string, ProjectAssetRecord>;
+  loadedModelAssets: Record<string, LoadedModelAsset>;
   navigationMode: RuntimeNavigationMode;
   onRuntimeMessageChange(message: string | null): void;
   onFirstPersonTelemetryChange(telemetry: FirstPersonTelemetry | null): void;
@@ -16,6 +20,8 @@ interface RunnerCanvasProps {
 
 export function RunnerCanvas({
   runtimeScene,
+  projectAssets,
+  loadedModelAssets,
   navigationMode,
   onRuntimeMessageChange,
   onFirstPersonTelemetryChange,
@@ -51,6 +57,7 @@ export function RunnerCanvas({
         setInteractionPrompt(prompt);
         onInteractionPromptChange(prompt);
       });
+      runtimeHost.updateAssets(projectAssets, loadedModelAssets);
       setRunnerMessage(
         hasWebGl ? null : "WebGL is unavailable in this browser environment. The runner shell is visible, but runtime rendering is disabled."
       );
@@ -66,11 +73,15 @@ export function RunnerCanvas({
       onInteractionPromptChange(null);
       return;
     }
-  }, [onFirstPersonTelemetryChange, onInteractionPromptChange, onRuntimeMessageChange]);
+  }, [onFirstPersonTelemetryChange, onInteractionPromptChange, onRuntimeMessageChange, projectAssets, loadedModelAssets]);
 
   useEffect(() => {
     hostRef.current?.loadScene(runtimeScene);
   }, [runtimeScene]);
+
+  useEffect(() => {
+    hostRef.current?.updateAssets(projectAssets, loadedModelAssets);
+  }, [projectAssets, loadedModelAssets]);
 
   useEffect(() => {
     hostRef.current?.setNavigationMode(navigationMode);
