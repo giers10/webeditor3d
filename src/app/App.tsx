@@ -52,7 +52,14 @@ import {
   type ImportedModelAssetResult,
   type LoadedModelAsset
 } from "../assets/gltf-model-import";
-import type { ModelAssetRecord, ProjectAssetRecord } from "../assets/project-assets";
+import {
+  importBackgroundImageAssetFromFile,
+  loadImageAssetFromStorage,
+  disposeLoadedImageAsset,
+  type ImportedImageAssetResult,
+  type LoadedImageAsset
+} from "../assets/image-assets";
+import type { ImageAssetRecord, ModelAssetRecord, ProjectAssetRecord } from "../assets/project-assets";
 import { getProjectAssetKindLabel } from "../assets/project-assets";
 import {
   BOX_FACE_IDS,
