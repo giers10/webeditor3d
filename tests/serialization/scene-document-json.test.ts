@@ -243,7 +243,7 @@ describe("scene document JSON", () => {
           },
           modelInstances: {},
           entities: {
-            "entity-player-start-main": {
+            "shared-id": {
               id: "shared-id",
               kind: "playerStart",
               position: {
