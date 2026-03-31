@@ -328,35 +328,48 @@ export async function importBackgroundImageAssetFromFile(
   const sourceName = getImportedFilePath(file);
   const mimeType = inferImageMimeType(sourceName, file.type);
   const bytes = await file.arrayBuffer();
-  const fileRecord: ProjectAssetStorageFileRecord = {
-    bytes,
-    mimeType
-  };
-  const transientResourceUrl = createTransientResourceUrl(fileRecord);
-  let image: HTMLImageElement;
+  const fileRecord: ProjectAssetStorageFileRecord = { bytes, mimeType };
 
-  try {
-    image = await loadImageElement(transientResourceUrl.url);
-  } catch (error) {
-    transientResourceUrl.revoke();
-    throw new Error(`Image import failed for ${sourceName}: ${getErrorDetail(error)}`);
+  let asset: ImageAssetRecord;
+  let loadedAsset: LoadedImageAsset;
+
+  if (isHdrFormat(sourceName)) {
+    const transientResourceUrl = createTransientResourceUrl(fileRecord);
+    let texture: DataTexture;
+
+    try {
+      texture = await loadHdrTexture(transientResourceUrl.url, sourceName);
+    } catch (error) {
+      transientResourceUrl.revoke();
+      throw new Error(`Image import failed for ${sourceName}: ${getErrorDetail(error)}`);
+    }
+
+    const metadata = extractHdrTextureMetadata(texture);
+    asset = createImageAssetRecord(sourceName, mimeType, bytes.byteLength, metadata);
+    loadedAsset = createLoadedHdrImageAsset(asset, texture, transientResourceUrl.url, transientResourceUrl.revoke);
+  } else {
+    const transientResourceUrl = createTransientResourceUrl(fileRecord);
+    let image: HTMLImageElement;
+
+    try {
+      image = await loadImageElement(transientResourceUrl.url);
+    } catch (error) {
+      transientResourceUrl.revoke();
+      throw new Error(`Image import failed for ${sourceName}: ${getErrorDetail(error)}`);
+    }
+
+    const metadata = extractImageAssetMetadata(image);
+    asset = createImageAssetRecord(sourceName, mimeType, bytes.byteLength, metadata);
+    loadedAsset = createLoadedImageAsset(asset, image, transientResourceUrl.url, transientResourceUrl.revoke);
   }
 
-  const metadata = extractImageAssetMetadata(image);
-  const asset = createImageAssetRecord(sourceName, mimeType, bytes.byteLength, metadata);
-  const loadedAsset = createLoadedImageAsset(asset, image, transientResourceUrl.url, transientResourceUrl.revoke);
   const packageRecord: ProjectAssetStoragePackageRecord = {
-    files: {
-      [sourceName]: fileRecord
-    }
+    files: { [sourceName]: fileRecord }
   };
 
   try {
     await storage.putAsset(asset.storageKey, packageRecord);
-    return {
-      asset,
-      loadedAsset
-    };
+    return { asset, loadedAsset };
   } catch (error) {
     disposeLoadedImageAsset(loadedAsset);
     await storage.deleteAsset(asset.storageKey).catch(() => undefined);
