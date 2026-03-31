@@ -91,7 +91,11 @@ function formatDiagnosticCount(count: number, label: string): string {
   return `${count} ${label}${count === 1 ? "" : "s"}`;
 }
 
-function getViewportCaption(toolMode: "select" | "box-create", brushCount: number): string {
+function getViewportCaption(toolMode: "select" | "box-create" | "play", brushCount: number): string {
+  if (toolMode === "play") {
+    return "Runner is active.";
+  }
+
   if (toolMode === "box-create") {
     return `Box Create is active. Move over the grid to preview snapped placement, then click to place a ${DEFAULT_BOX_BRUSH_SIZE.x} x ${DEFAULT_BOX_BRUSH_SIZE.y} x ${DEFAULT_BOX_BRUSH_SIZE.z} box.`;
   }
@@ -1586,7 +1590,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
             {primaryPlayerStart === null ? (
               <ul className="placeholder-list">
-                <li>No Player Start is authored yet. First-person can still fall back, but Orbit Visitor is the safer default.</li>
+                <li>No Player Start is authored yet. Orbit Visitor can still run, but first-person run is blocked until you place one.</li>
               </ul>
             ) : (
               <div className="stat-card">
@@ -1622,7 +1626,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
             </div>
 
             <div className="inline-actions">
-              <button className="toolbar__button toolbar__button--accent" type="button" onClick={handleEnterPlayMode}>
+              <button
+                className={`toolbar__button toolbar__button--accent ${blockingDiagnostics.length > 0 ? "toolbar__button--warn" : ""}`}
+                type="button"
+                onClick={handleEnterPlayMode}
+              >
                 Enter Run Mode
               </button>
             </div>
@@ -1641,7 +1649,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
           <span className="status-bar__strong">Status:</span> {statusMessage}
         </div>
         <div>
-          <span className="status-bar__strong">History:</span> {editorState.lastCommandLabel ?? "No commands yet"}
+          <span className="status-bar__strong">Diagnostics:</span>{" "}
+          {diagnostics.length === 0
+            ? "Ready"
+            : `${formatDiagnosticCount(blockingDiagnostics.length, "error")}, ${formatDiagnosticCount(warningDiagnostics.length, "warning")}`}
         </div>
       </footer>
 
