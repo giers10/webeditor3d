@@ -1,6 +1,8 @@
 import { DEFAULT_SUN_DIRECTION, type Vec3 } from "../core/vector";
+import type { Brush } from "./brushes";
 
-export const SCENE_DOCUMENT_VERSION = 1 as const;
+export const SCENE_DOCUMENT_VERSION = 2 as const;
+export const FOUNDATION_SCENE_DOCUMENT_VERSION = 1 as const;
 
 export interface WorldBackgroundSettings {
   mode: "solid";
@@ -31,7 +33,7 @@ export interface SceneDocument {
   materials: Record<string, never>;
   textures: Record<string, never>;
   assets: Record<string, never>;
-  brushes: Record<string, never>;
+  brushes: Record<string, Brush>;
   modelInstances: Record<string, never>;
   entities: Record<string, never>;
   interactionLinks: Record<string, never>;
