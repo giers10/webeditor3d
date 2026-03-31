@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { createBoxBrush } from "../../src/document/brushes";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
-import { createPlayerStartEntity, createTriggerVolumeEntity } from "../../src/entities/entity-instances";
+import { createPointLightEntity, createPlayerStartEntity, createSpotLightEntity, createTriggerVolumeEntity } from "../../src/entities/entity-instances";
 import { resolveViewportFocusTarget } from "../../src/viewport-three/viewport-focus";
 
 describe("resolveViewportFocusTarget", () => {
@@ -91,6 +91,70 @@ describe("resolveViewportFocusTarget", () => {
       z: -2
     });
     expect(focusTarget?.radius).toBeGreaterThan(0.6);
+  });
+
+  it("frames the selected Point Light helper", () => {
+    const pointLight = createPointLightEntity({
+      id: "entity-point-light-main",
+      position: {
+        x: 2,
+        y: 3,
+        z: -1
+      },
+      distance: 8
+    });
+    const document = {
+      ...createEmptySceneDocument(),
+      entities: {
+        [pointLight.id]: pointLight
+      }
+    };
+
+    const focusTarget = resolveViewportFocusTarget(document, {
+      kind: "entities",
+      ids: [pointLight.id]
+    });
+
+    expect(focusTarget).toEqual({
+      center: {
+        x: 2,
+        y: 3,
+        z: -1
+      },
+      radius: 8
+    });
+  });
+
+  it("frames the selected Spot Light helper", () => {
+    const spotLight = createSpotLightEntity({
+      id: "entity-spot-light-main",
+      position: {
+        x: -2,
+        y: 4,
+        z: 1
+      },
+      distance: 12
+    });
+    const document = {
+      ...createEmptySceneDocument(),
+      entities: {
+        [spotLight.id]: spotLight
+      }
+    };
+
+    const focusTarget = resolveViewportFocusTarget(document, {
+      kind: "entities",
+      ids: [spotLight.id]
+    });
+
+    expect(focusTarget).toEqual({
+      center: {
+        x: -2,
+        y: 4,
+        z: 1
+      },
+      radius: 12
+    });
   });
 
   it("frames a selected Trigger Volume around its authored bounds", () => {
