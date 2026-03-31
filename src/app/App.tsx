@@ -329,6 +329,10 @@ function isModelAsset(asset: ProjectAssetRecord): asset is ModelAssetRecord {
   return asset.kind === "model";
 }
 
+function isImageAsset(asset: ProjectAssetRecord): asset is ImageAssetRecord {
+  return asset.kind === "image";
+}
+
 function formatByteLength(byteLength: number): string {
   if (byteLength < 1024) {
     return `${byteLength} B`;
@@ -365,6 +369,16 @@ function formatModelAssetSummary(asset: ModelAssetRecord): string {
   if (asset.metadata.animationNames.length > 0) {
     details.push(`${asset.metadata.animationNames.length} animation${asset.metadata.animationNames.length === 1 ? "" : "s"}`);
   }
+
+  return details.join(" | ");
+}
+
+function formatImageAssetSummary(asset: ImageAssetRecord): string {
+  const details = [
+    `${asset.metadata.width} x ${asset.metadata.height}`,
+    asset.metadata.hasAlpha ? "alpha" : "opaque",
+    formatByteLength(asset.byteLength)
+  ];
 
   return details.join(" | ");
 }
