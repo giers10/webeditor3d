@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import type { LoadedModelAsset } from "../assets/gltf-model-import";
+import type { LoadedImageAsset } from "../assets/image-assets";
 import type { ProjectAssetRecord } from "../assets/project-assets";
 import type { FirstPersonTelemetry } from "../runtime-three/navigation-controller";
 import { RuntimeHost } from "../runtime-three/runtime-host";
@@ -12,6 +13,7 @@ interface RunnerCanvasProps {
   runtimeScene: RuntimeSceneDefinition;
   projectAssets: Record<string, ProjectAssetRecord>;
   loadedModelAssets: Record<string, LoadedModelAsset>;
+  loadedImageAssets: Record<string, LoadedImageAsset>;
   navigationMode: RuntimeNavigationMode;
   onRuntimeMessageChange(message: string | null): void;
   onFirstPersonTelemetryChange(telemetry: FirstPersonTelemetry | null): void;
@@ -22,6 +24,7 @@ export function RunnerCanvas({
   runtimeScene,
   projectAssets,
   loadedModelAssets,
+  loadedImageAssets,
   navigationMode,
   onRuntimeMessageChange,
   onFirstPersonTelemetryChange,
@@ -75,8 +78,8 @@ export function RunnerCanvas({
   }, [onFirstPersonTelemetryChange, onInteractionPromptChange, onRuntimeMessageChange]);
 
   useEffect(() => {
-    hostRef.current?.updateAssets(projectAssets, loadedModelAssets);
-  }, [projectAssets, loadedModelAssets]);
+    hostRef.current?.updateAssets(projectAssets, loadedModelAssets, loadedImageAssets);
+  }, [projectAssets, loadedModelAssets, loadedImageAssets]);
 
   useEffect(() => {
     hostRef.current?.loadScene(runtimeScene);
@@ -92,7 +95,10 @@ export function RunnerCanvas({
       className="runner-canvas"
       data-testid="runner-shell"
       aria-label="Built-in scene runner"
-      style={createWorldBackgroundStyle(runtimeScene.world.background)}
+      style={createWorldBackgroundStyle(
+        runtimeScene.world.background,
+        runtimeScene.world.background.mode === "image" ? loadedImageAssets[runtimeScene.world.background.assetId]?.sourceUrl ?? null : null
+      )}
     >
       {navigationMode === "firstPerson" ? <div className="runner-canvas__crosshair" aria-hidden="true" /> : null}
       {navigationMode === "firstPerson" && interactionPrompt !== null ? (
