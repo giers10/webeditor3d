@@ -20,7 +20,8 @@ test("first-room workflow covers create, texture, save/load, and run", async ({ 
   }, "webeditor3d.scene-document-draft");
   await page.reload();
 
-  await page.getByTestId("create-box-brush").click();
+  await page.getByRole("button", { name: "Box Create" }).click();
+  await page.getByTestId("viewport-shell").click();
   await page.getByTestId("face-button-posZ").click();
   await page.getByTestId("material-button-starter-amber-grid").click();
 
@@ -29,15 +30,17 @@ test("first-room workflow covers create, texture, save/load, and run", async ({ 
 
   await page.getByTestId("place-player-start").click();
   await page.getByTestId("player-start-position-x").fill("2");
-  await page.getByTestId("player-start-position-y").fill("0");
+  await page.getByTestId("player-start-position-x").press("Tab");
   await page.getByTestId("player-start-position-z").fill("-2");
+  await page.getByTestId("player-start-position-z").press("Tab");
   await page.getByTestId("player-start-yaw").fill("90");
-  await page.getByTestId("apply-player-start").click();
+  await page.getByTestId("player-start-yaw").press("Tab");
 
   await expect(page.getByTestId("run-validation-state")).toContainText("Ready for First Person");
 
   await page.getByRole("button", { name: "Save Draft" }).click();
-  await page.getByTestId("create-box-brush").click();
+  await page.getByRole("button", { name: "Box Create" }).click();
+  await page.getByTestId("viewport-shell").click();
   await expect(page.getByRole("button", { name: /Box Brush 2/ })).toBeVisible();
 
   await page.getByRole("button", { name: "Load Draft" }).click();
