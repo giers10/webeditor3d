@@ -12,7 +12,6 @@ import {
 } from "../../src/document/scene-document";
 import { migrateSceneDocument } from "../../src/document/migrate-scene-document";
 import {
-  createModelInstance,
   createInteractableEntity,
   createPlayerStartEntity,
   createSoundEmitterEntity,
@@ -21,6 +20,7 @@ import {
 } from "../../src/entities/entity-instances";
 import { createTeleportPlayerInteractionLink, createToggleVisibilityInteractionLink } from "../../src/interactions/interaction-links";
 import { STARTER_MATERIAL_LIBRARY } from "../../src/materials/starter-material-library";
+import { createModelInstance } from "../../src/assets/model-instances";
 import { createProjectAssetStorageKey, type ModelAssetRecord } from "../../src/assets/project-assets";
 import { parseSceneDocumentJson, serializeSceneDocument } from "../../src/serialization/scene-document-json";
 
