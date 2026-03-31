@@ -1114,6 +1114,27 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     };
   }
 
+  // v11 → v12: animation fields added to model instances and interaction links
+  // readModelInstance now reads animationClipName/animationAutoplay as optional (defaulting to undefined)
+  // so no special handling is needed beyond routing through the same readers
+  if (source.version === 11) {
+    const materials = readMaterialRegistry(source.materials, "materials");
+    const assets = readAssets(source.assets);
+
+    return {
+      version: SCENE_DOCUMENT_VERSION,
+      name: expectString(source.name, "name"),
+      world: readWorldSettings(source.world),
+      materials,
+      textures: expectEmptyCollection(source.textures, "textures"),
+      assets,
+      brushes: readBrushes(source.brushes, materials, false),
+      modelInstances: readModelInstances(source.modelInstances, assets),
+      entities: readEntities(source.entities),
+      interactionLinks: readInteractionLinks(source.interactionLinks)
+    };
+  }
+
   if (source.version !== SCENE_DOCUMENT_VERSION) {
     throw new Error(`Unsupported scene document version: ${String(source.version)}.`);
   }
