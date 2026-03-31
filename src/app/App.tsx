@@ -2928,7 +2928,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       <div className="label">Interaction</div>
                       <div className="vector-inputs vector-inputs--two">
                         <label className="form-field">
-                          <span className="label">Radius</span>
+                          <span className="label">Range</span>
                           <input
                             data-testid="interactable-radius"
                             className="text-input"
@@ -2956,6 +2956,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           />
                         </label>
                       </div>
+                      <div className="material-summary">Range defines how close the player must be before the click prompt can activate.</div>
                     </div>
 
                     <div className="form-section">
@@ -2977,6 +2978,13 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         />
                       </label>
                     </div>
+
+                    {renderInteractionLinksSection(
+                      selectedInteractable,
+                      selectedInteractableLinks,
+                      "add-interactable-teleport-link",
+                      "add-interactable-visibility-link"
+                    )}
                   </>
                 ) : null}
               </>
