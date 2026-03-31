@@ -41,9 +41,23 @@ describe("buildRuntimeSceneFromDocument", () => {
         [playerStart.id]: playerStart
       }
     };
+    document.world.background = {
+      mode: "verticalGradient",
+      topColorHex: "#5f7693",
+      bottomColorHex: "#11161d"
+    };
+    document.world.ambientLight.intensity = 0.55;
+    document.world.sunLight.direction = {
+      x: -0.8,
+      y: 1.2,
+      z: 0.1
+    };
 
     const runtimeScene = buildRuntimeSceneFromDocument(document);
 
+    expect(runtimeScene.world).toEqual(document.world);
+    expect(runtimeScene.world).not.toBe(document.world);
+    expect(runtimeScene.world.sunLight.direction).not.toBe(document.world.sunLight.direction);
     expect(runtimeScene.brushes).toHaveLength(1);
     expect(runtimeScene.brushes[0].faces.posY.material?.id).toBe("starter-concrete-checker");
     expect(runtimeScene.colliders).toEqual([
