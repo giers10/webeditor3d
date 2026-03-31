@@ -4,6 +4,7 @@ import { createBoxBrush } from "../../src/document/brushes";
 import {
   ENTITY_SYSTEM_FOUNDATION_SCENE_DOCUMENT_VERSION,
   FIRST_ROOM_POLISH_SCENE_DOCUMENT_VERSION,
+  LOCAL_LIGHTS_AND_SKYBOX_SCENE_DOCUMENT_VERSION,
   MODEL_ASSET_PIPELINE_SCENE_DOCUMENT_VERSION,
   SCENE_DOCUMENT_VERSION,
   TRIGGER_ACTION_TARGET_FOUNDATION_SCENE_DOCUMENT_VERSION,
@@ -12,16 +13,18 @@ import {
 } from "../../src/document/scene-document";
 import { migrateSceneDocument } from "../../src/document/migrate-scene-document";
 import {
+  createPointLightEntity,
   createInteractableEntity,
   createPlayerStartEntity,
   createSoundEmitterEntity,
+  createSpotLightEntity,
   createTeleportTargetEntity,
   createTriggerVolumeEntity
 } from "../../src/entities/entity-instances";
 import { createTeleportPlayerInteractionLink, createToggleVisibilityInteractionLink } from "../../src/interactions/interaction-links";
 import { STARTER_MATERIAL_LIBRARY } from "../../src/materials/starter-material-library";
 import { createModelInstance } from "../../src/assets/model-instances";
-import { createProjectAssetStorageKey, type ModelAssetRecord } from "../../src/assets/project-assets";
+import { createProjectAssetStorageKey, type ImageAssetRecord, type ModelAssetRecord } from "../../src/assets/project-assets";
 import { parseSceneDocumentJson, serializeSceneDocument } from "../../src/serialization/scene-document-json";
 
 describe("scene document JSON", () => {
@@ -116,6 +119,68 @@ describe("scene document JSON", () => {
         y: 0.8,
         z: 0.2
       }
+    };
+
+    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(document);
+  });
+
+  it("round-trips authored local lights and an image background asset", () => {
+    const imageAsset = {
+      id: "asset-background-panorama",
+      kind: "image",
+      sourceName: "skybox-panorama.svg",
+      mimeType: "image/svg+xml",
+      storageKey: createProjectAssetStorageKey("asset-background-panorama"),
+      byteLength: 2048,
+      metadata: {
+        kind: "image" as const,
+        width: 512,
+        height: 256,
+        hasAlpha: false,
+        warnings: []
+      }
+    } satisfies ImageAssetRecord;
+    const pointLight = createPointLightEntity({
+      id: "entity-point-light-main",
+      position: {
+        x: 2,
+        y: 3,
+        z: 1
+      },
+      colorHex: "#ffddaa",
+      intensity: 1.5,
+      distance: 10
+    });
+    const spotLight = createSpotLightEntity({
+      id: "entity-spot-light-main",
+      position: {
+        x: -2,
+        y: 4,
+        z: 0
+      },
+      direction: {
+        x: 0.25,
+        y: -1,
+        z: 0.15
+      },
+      colorHex: "#d6e6ff",
+      intensity: 2,
+      distance: 14,
+      angleDegrees: 42
+    });
+    const document = {
+      ...createEmptySceneDocument({ name: "Local Light and Background Scene" }),
+      assets: {
+        [imageAsset.id]: imageAsset
+      },
+      entities: {
+        [pointLight.id]: pointLight,
+        [spotLight.id]: spotLight
+      }
+    };
+    document.world.background = {
+      mode: "image",
+      assetId: imageAsset.id
     };
 
     expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(document);
@@ -513,6 +578,63 @@ describe("scene document JSON", () => {
       mode: "solid",
       colorHex: "#2f3947"
     });
+  });
+
+  it("migrates slice 3.2 documents with local lights and skyboxes to the current schema version", () => {
+    const imageAsset = {
+      id: "asset-background-panorama",
+      kind: "image",
+      sourceName: "skybox-panorama.svg",
+      mimeType: "image/svg+xml",
+      storageKey: createProjectAssetStorageKey("asset-background-panorama"),
+      byteLength: 2048,
+      metadata: {
+        kind: "image" as const,
+        width: 512,
+        height: 256,
+        hasAlpha: false,
+        warnings: []
+      }
+    } satisfies ImageAssetRecord;
+    const pointLight = createPointLightEntity({
+      id: "entity-point-light-main"
+    });
+    const spotLight = createSpotLightEntity({
+      id: "entity-spot-light-main"
+    });
+
+    const migratedDocument = migrateSceneDocument({
+      version: LOCAL_LIGHTS_AND_SKYBOX_SCENE_DOCUMENT_VERSION,
+      name: "Local Light Scene",
+      world: {
+        ...createEmptySceneDocument().world,
+        background: {
+          mode: "image",
+          assetId: imageAsset.id
+        }
+      },
+      materials: createEmptySceneDocument().materials,
+      textures: {},
+      assets: {
+        [imageAsset.id]: imageAsset
+      },
+      brushes: {},
+      modelInstances: {},
+      entities: {
+        [pointLight.id]: pointLight,
+        [spotLight.id]: spotLight
+      },
+      interactionLinks: {}
+    });
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.world.background).toEqual({
+      mode: "image",
+      assetId: imageAsset.id
+    });
+    expect(migratedDocument.entities[pointLight.id]).toEqual(pointLight);
+    expect(migratedDocument.entities[spotLight.id]).toEqual(spotLight);
+    expect(migratedDocument.assets[imageAsset.id]).toEqual(imageAsset);
   });
 
   it("migrates slice 1.5 documents to the typed-entity schema without changing supported authored entities", () => {
