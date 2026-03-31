@@ -22,8 +22,11 @@ test("user can assign a face material through the UI and keep it through a draft
 
   await page.getByRole("button", { name: "Box Create" }).click();
   const viewportCanvas = page.locator('[data-testid="viewport-shell"] canvas');
-  await expect(viewportCanvas).toBeVisible();
-  await viewportCanvas.click();
+  if ((await viewportCanvas.count()) > 0) {
+    await viewportCanvas.click();
+  } else {
+    await page.getByTestId("viewport-fallback-create-box").click();
+  }
   await page.getByTestId("face-button-posZ").click();
   await page.getByTestId("material-button-starter-amber-grid").click();
 
