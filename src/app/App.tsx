@@ -454,6 +454,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     <label className="form-field">
                       <span className="label">X</span>
                       <input
+                        data-testid="brush-center-x"
                         className="text-input"
                         type="number"
                         step={DEFAULT_GRID_SIZE}
@@ -468,6 +469,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     <label className="form-field">
                       <span className="label">Y</span>
                       <input
+                        data-testid="brush-center-y"
                         className="text-input"
                         type="number"
                         step={DEFAULT_GRID_SIZE}
@@ -482,6 +484,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     <label className="form-field">
                       <span className="label">Z</span>
                       <input
+                        data-testid="brush-center-z"
                         className="text-input"
                         type="number"
                         step={DEFAULT_GRID_SIZE}
@@ -505,6 +508,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     <label className="form-field">
                       <span className="label">X</span>
                       <input
+                        data-testid="brush-size-x"
                         className="text-input"
                         type="number"
                         min={DEFAULT_GRID_SIZE}
@@ -520,6 +524,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     <label className="form-field">
                       <span className="label">Y</span>
                       <input
+                        data-testid="brush-size-y"
                         className="text-input"
                         type="number"
                         min={DEFAULT_GRID_SIZE}
@@ -535,6 +540,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     <label className="form-field">
                       <span className="label">Z</span>
                       <input
+                        data-testid="brush-size-z"
                         className="text-input"
                         type="number"
                         min={DEFAULT_GRID_SIZE}
