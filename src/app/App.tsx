@@ -1179,44 +1179,61 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 Clear Face Material
               </button>
             </div>
-
-            <ul className="placeholder-list">
-              <li>Select a face in the viewport or inspector, then click a starter material to apply it.</li>
-            </ul>
           </Panel>
 
           <Panel title="Outliner">
             <div className="outliner-section">
               <div className="label">Brushes</div>
               {brushList.length === 0 ? (
-                <ul className="placeholder-list">
-                  <li>No authored brushes yet. Use Create Box Brush to place the first brush.</li>
-                </ul>
+                <div className="outliner-empty">Switch to Box Create and click in the viewport to place the first brush.</div>
               ) : (
                 <div className="outliner-list" data-testid="outliner-brush-list">
                   {brushList.map((brush, brushIndex) => (
-                    <button
+                    <div
                       key={brush.id}
                       className={`outliner-item ${isBrushSelected(editorState.selection, brush.id) ? "outliner-item--selected" : ""}`}
-                      type="button"
-                      onClick={() =>
-                        applySelection(
-                          {
-                            kind: "brushes",
-                            ids: [brush.id]
-                          },
-                          "outliner"
-                        )
-                      }
                     >
-                      <span className="outliner-item__title">{getBrushLabel(brushIndex)}</span>
-                      <span className="outliner-item__meta">
-                        center {brush.center.x}, {brush.center.y}, {brush.center.z}
-                      </span>
-                      <span className="outliner-item__meta">
-                        size {brush.size.x}, {brush.size.y}, {brush.size.z}
-                      </span>
-                    </button>
+                      <button
+                        className="outliner-item__select"
+                        type="button"
+                        data-testid={`outliner-brush-${brush.id}`}
+                        onClick={() =>
+                          applySelection(
+                            {
+                              kind: "brushes",
+                              ids: [brush.id]
+                            },
+                            "outliner",
+                            {
+                              focusViewport: true
+                            }
+                          )
+                        }
+                      >
+                        <span className="outliner-item__title">{getBrushLabel(brush, brushIndex)}</span>
+                        <span className="outliner-item__meta">Brush</span>
+                      </button>
+
+                      {selectedBrush?.id !== brush.id ? null : (
+                        <label className="form-field outliner-item__editor">
+                          <span className="label">Name</span>
+                          <input
+                            className="text-input text-input--dense"
+                            data-testid="selected-brush-name"
+                            type="text"
+                            value={brushNameDraft}
+                            placeholder={`Box Brush ${brushIndex + 1}`}
+                            onChange={(event) => setBrushNameDraft(event.currentTarget.value)}
+                            onBlur={applyBrushNameChange}
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter") {
+                                applyBrushNameChange();
+                              }
+                            }}
+                          />
+                        </label>
+                      )}
+                    </div>
                   ))}
                 </div>
               )}
@@ -1225,14 +1242,13 @@ export function App({ store, initialStatusMessage }: AppProps) {
             <div className="outliner-section">
               <div className="label">Entities</div>
               {playerStartList.length === 0 ? (
-                <ul className="placeholder-list">
-                  <li>No Player Start authored yet. Place one before relying on first-person spawn.</li>
-                </ul>
+                <div className="outliner-empty">No Player Start authored yet.</div>
               ) : (
                 <div className="outliner-list">
                   {playerStartList.map((playerStart, index) => (
                     <button
                       key={playerStart.id}
+                      data-testid={`outliner-entity-${playerStart.id}`}
                       className={`outliner-item ${
                         editorState.selection.kind === "entities" && editorState.selection.ids.includes(playerStart.id)
                           ? "outliner-item--selected"
@@ -1245,15 +1261,15 @@ export function App({ store, initialStatusMessage }: AppProps) {
                             kind: "entities",
                             ids: [playerStart.id]
                           },
-                          "outliner"
+                          "outliner",
+                          {
+                            focusViewport: true
+                          }
                         )
                       }
                     >
                       <span className="outliner-item__title">{getPlayerStartLabel(index)}</span>
-                      <span className="outliner-item__meta">
-                        position {playerStart.position.x}, {playerStart.position.y}, {playerStart.position.z}
-                      </span>
-                      <span className="outliner-item__meta">yaw {playerStart.yawDegrees}°</span>
+                      <span className="outliner-item__meta">Entity</span>
                     </button>
                   ))}
                 </div>
