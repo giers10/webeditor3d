@@ -3131,44 +3131,46 @@ export function App({ store, initialStatusMessage }: AppProps) {
               </div>
             </div>
 
-            <div className="form-section">
-              <div className="label">Background Colors</div>
-              {editorState.document.world.background.mode === "solid" ? (
-                <label className="form-field">
-                  <span className="label">Color</span>
-                  <input
-                    data-testid="world-background-solid-color"
-                    className="color-input"
-                    type="color"
-                    value={editorState.document.world.background.colorHex}
-                    onChange={(event) => applyWorldBackgroundColor(event.currentTarget.value)}
-                  />
-                </label>
-              ) : (
-                <div className="vector-inputs vector-inputs--two">
+            {editorState.document.world.background.mode !== "image" && (
+              <div className="form-section">
+                <div className="label">Background Colors</div>
+                {editorState.document.world.background.mode === "solid" ? (
                   <label className="form-field">
-                    <span className="label">Top</span>
+                    <span className="label">Color</span>
                     <input
-                      data-testid="world-background-top-color"
+                      data-testid="world-background-solid-color"
                       className="color-input"
                       type="color"
-                      value={editorState.document.world.background.topColorHex}
-                      onChange={(event) => applyWorldGradientColor("top", event.currentTarget.value)}
+                      value={editorState.document.world.background.colorHex}
+                      onChange={(event) => applyWorldBackgroundColor(event.currentTarget.value)}
                     />
                   </label>
-                  <label className="form-field">
-                    <span className="label">Bottom</span>
-                    <input
-                      data-testid="world-background-bottom-color"
-                      className="color-input"
-                      type="color"
-                      value={editorState.document.world.background.bottomColorHex}
-                      onChange={(event) => applyWorldGradientColor("bottom", event.currentTarget.value)}
-                    />
-                  </label>
-                </div>
-              )}
-            </div>
+                ) : (
+                  <div className="vector-inputs vector-inputs--two">
+                    <label className="form-field">
+                      <span className="label">Top</span>
+                      <input
+                        data-testid="world-background-top-color"
+                        className="color-input"
+                        type="color"
+                        value={editorState.document.world.background.topColorHex}
+                        onChange={(event) => applyWorldGradientColor("top", event.currentTarget.value)}
+                      />
+                    </label>
+                    <label className="form-field">
+                      <span className="label">Bottom</span>
+                      <input
+                        data-testid="world-background-bottom-color"
+                        className="color-input"
+                        type="color"
+                        value={editorState.document.world.background.bottomColorHex}
+                        onChange={(event) => applyWorldGradientColor("bottom", event.currentTarget.value)}
+                      />
+                    </label>
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="form-section">
               <div className="label">Ambient Light</div>
