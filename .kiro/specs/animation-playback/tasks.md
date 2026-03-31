@@ -98,7 +98,7 @@ Implement animation playback for imported GLB/GLTF assets in vertical slice orde
 - [x] 6. Checkpoint — ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [-] 7. Schema migration: bump version to 12
+- [x] 7. Schema migration: bump version to 12
   - Increment `SCENE_DOCUMENT_VERSION` to `12` and add `ANIMATION_PLAYBACK_SCENE_DOCUMENT_VERSION = 12` in `src/document/scene-document.ts`
   - In `src/document/migrate-scene-document.ts`:
     - Update `readModelInstance` to read `animationClipName` (optional string, trimmed, empty → undefined) and `animationAutoplay` (optional boolean)
