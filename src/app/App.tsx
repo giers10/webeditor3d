@@ -16,6 +16,8 @@ import {
 import type { Vec2, Vec3 } from "../core/vector";
 import {
   BOX_FACE_IDS,
+  DEFAULT_BOX_BRUSH_CENTER,
+  DEFAULT_BOX_BRUSH_SIZE,
   createDefaultFaceUvState,
   type BoxBrush,
   type BoxFaceId,
@@ -27,8 +29,6 @@ import { createFitToFaceBoxBrushFaceUvState } from "../geometry/box-face-uvs";
 import { STARTER_MATERIAL_LIBRARY, type MaterialDef } from "../materials/starter-material-library";
 import { Panel } from "../shared-ui/Panel";
 import { ViewportCanvas } from "../viewport-three/ViewportCanvas";
-
-import { DEFAULT_BOX_BRUSH_CENTER, DEFAULT_BOX_BRUSH_SIZE } from "../document/brushes";
 import type { EditorStore } from "./editor-store";
 import { useEditorStoreState } from "./use-editor-store";
 
