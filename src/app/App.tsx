@@ -4547,6 +4547,32 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     </div>
 
                     <div className="form-section">
+                      <div className="label">Material</div>
+                      <div className="material-browser">
+                        {materialList.map((material) => (
+                          <button
+                            key={material.id}
+                            type="button"
+                            data-testid={`material-button-${material.id}`}
+                            className={`material-item ${selectedFace.materialId === material.id ? "material-item--active" : ""}`}
+                            onClick={() => applyFaceMaterial(material.id)}
+                          >
+                            <span className="material-item__preview" style={getMaterialPreviewStyle(material)} aria-hidden="true" />
+                            <span className="material-item__text">
+                              <span className="material-item__title">{material.name}</span>
+                              <span className="material-item__meta">{material.tags.join(" | ")}</span>
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                      <div className="inline-actions">
+                        <button className="toolbar__button" type="button" onClick={clearFaceMaterial}>
+                          Clear Material
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="form-section">
                       <div className="label">UV Offset</div>
                       <div className="vector-inputs vector-inputs--two">
                         <label className="form-field">
