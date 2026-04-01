@@ -1639,8 +1639,17 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
   const handleDeleteInteractionLink = (linkId: string) => {
     try {
+      const link = editorState.document.interactionLinks[linkId];
       store.executeCommand(createDeleteInteractionLinkCommand(linkId));
       setStatusMessage("Deleted interaction link.");
+      // Re-sync trigger volume flags after deletion
+      if (link !== undefined) {
+        const remainingLinks = getInteractionLinksForSource(
+          editorState.document.interactionLinks,
+          link.sourceEntityId
+        ).filter((l) => l.id !== linkId);
+        syncTriggerVolumeFlags(link.sourceEntityId, remainingLinks);
+      }
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
     }
