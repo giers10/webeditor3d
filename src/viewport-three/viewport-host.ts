@@ -838,6 +838,7 @@ export class ViewportHost {
       })
     );
     radiusRing.rotation.x = Math.PI * 0.5;
+    radiusRing.userData.nonPickable = true;
 
     for (const mesh of [core, radiusRing]) {
       this.tagEntityMesh(mesh, entityId, "interactable", group);
