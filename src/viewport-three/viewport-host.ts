@@ -576,6 +576,7 @@ export class ViewportHost {
       })
     );
     cone.position.y = coneLength * 0.5;
+    cone.userData.nonPickable = true;
 
     for (const mesh of [core, cone]) {
       this.tagEntityMesh(mesh, entityId, "spotLight", group);
