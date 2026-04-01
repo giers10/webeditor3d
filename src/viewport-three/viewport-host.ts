@@ -253,6 +253,8 @@ export class ViewportHost {
 
   setToolMode(toolMode: ToolMode) {
     this.toolMode = toolMode;
+    this.lastClickPointer = null;
+    this.lastClickSelectionKey = null;
 
     if (toolMode !== "box-create") {
       this.setBoxCreatePreview(null);
