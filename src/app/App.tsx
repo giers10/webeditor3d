@@ -679,8 +679,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [soundEmitterAutoplayDraft, setSoundEmitterAutoplayDraft] = useState(false);
   const [soundEmitterLoopDraft, setSoundEmitterLoopDraft] = useState(false);
   const [triggerVolumeSizeDraft, setTriggerVolumeSizeDraft] = useState(createVec3Draft(DEFAULT_TRIGGER_VOLUME_SIZE));
-  const [triggerOnEnterDraft, setTriggerOnEnterDraft] = useState(true);
-  const [triggerOnExitDraft, setTriggerOnExitDraft] = useState(false);
   const [teleportTargetYawDraft, setTeleportTargetYawDraft] = useState(String(DEFAULT_TELEPORT_TARGET_YAW_DEGREES));
   const [interactableRadiusDraft, setInteractableRadiusDraft] = useState(String(DEFAULT_INTERACTABLE_RADIUS));
   const [interactablePromptDraft, setInteractablePromptDraft] = useState(DEFAULT_INTERACTABLE_PROMPT);
