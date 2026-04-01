@@ -1004,35 +1004,88 @@ export class ViewportHost {
     );
 
     if (hits.length === 0) {
+      this.lastClickPointer = null;
+      this.lastClickSelectionKey = null;
       this.brushSelectionChangeHandler?.({
         kind: "none"
       });
       return;
     }
 
-    const hit = hits[0];
-    const entityId = hit.object.userData.entityId;
+    // Build a deduplicated list of selectable candidates from the hit list.
+    // Multiple mesh parts of the same entity/model/brush collapse to one entry.
+    const candidates: Array<{ key: string; object: (typeof hits)[0]["object"]; face: (typeof hits)[0]["face"] }> = [];
+    const seenKeys = new Set<string>();
 
+    for (const hit of hits) {
+      const entityId = hit.object.userData.entityId;
+      const modelInstanceId = this.findModelInstanceId(hit.object);
+      const brushId = hit.object.userData.brushId;
+
+      let key: string;
+      if (typeof entityId === "string") {
+        key = `entity:${entityId}`;
+      } else if (modelInstanceId !== null) {
+        key = `model:${modelInstanceId}`;
+      } else if (typeof brushId === "string") {
+        const faceMaterialIndex = hit.face?.materialIndex;
+        const faceId = typeof faceMaterialIndex === "number" ? BOX_FACE_IDS[faceMaterialIndex] ?? null : null;
+        // In face-edit mode each face is a distinct candidate; in brush mode collapse to brush.
+        key = faceId !== null ? `brushFace:${brushId}:${faceId}` : `brush:${brushId}`;
+      } else {
+        continue;
+      }
+
+      if (!seenKeys.has(key)) {
+        seenKeys.add(key);
+        candidates.push({ key, object: hit.object, face: hit.face });
+      }
+    }
+
+    if (candidates.length === 0) {
+      this.lastClickPointer = null;
+      this.lastClickSelectionKey = null;
+      this.brushSelectionChangeHandler?.({ kind: "none" });
+      return;
+    }
+
+    // Determine whether this click is at the same spot as the last one.
+    const POINTER_TOLERANCE = 0.01;
+    const isSameSpot =
+      this.lastClickPointer !== null &&
+      Math.abs(this.pointer.x - this.lastClickPointer.x) < POINTER_TOLERANCE &&
+      Math.abs(this.pointer.y - this.lastClickPointer.y) < POINTER_TOLERANCE;
+
+    let candidateIndex = 0;
+
+    if (isSameSpot && this.lastClickSelectionKey !== null) {
+      // Find where the previously selected item sits in the new hit list and advance by one.
+      const lastIndex = candidates.findIndex((c) => c.key === this.lastClickSelectionKey);
+      if (lastIndex !== -1) {
+        candidateIndex = (lastIndex + 1) % candidates.length;
+      }
+    }
+
+    this.lastClickPointer = { x: this.pointer.x, y: this.pointer.y };
+
+    const chosen = candidates[candidateIndex];
+    this.lastClickSelectionKey = chosen.key;
+
+    // Dispatch the selection for the chosen candidate.
+    const entityId = chosen.object.userData.entityId;
     if (typeof entityId === "string") {
-      this.brushSelectionChangeHandler?.({
-        kind: "entities",
-        ids: [entityId]
-      });
+      this.brushSelectionChangeHandler?.({ kind: "entities", ids: [entityId] });
       return;
     }
 
-    const modelInstanceId = this.findModelInstanceId(hit.object);
-
+    const modelInstanceId = this.findModelInstanceId(chosen.object);
     if (modelInstanceId !== null) {
-      this.brushSelectionChangeHandler?.({
-        kind: "modelInstances",
-        ids: [modelInstanceId]
-      });
+      this.brushSelectionChangeHandler?.({ kind: "modelInstances", ids: [modelInstanceId] });
       return;
     }
 
-    const brushId = hit.object.userData.brushId;
-    const faceMaterialIndex = hit.face?.materialIndex;
+    const brushId = chosen.object.userData.brushId;
+    const faceMaterialIndex = chosen.face?.materialIndex;
     const faceId = typeof faceMaterialIndex === "number" ? BOX_FACE_IDS[faceMaterialIndex] ?? null : null;
 
     if (typeof brushId !== "string") {
@@ -1040,18 +1093,11 @@ export class ViewportHost {
     }
 
     if (faceId !== null) {
-      this.brushSelectionChangeHandler?.({
-        kind: "brushFace",
-        brushId,
-        faceId
-      });
+      this.brushSelectionChangeHandler?.({ kind: "brushFace", brushId, faceId });
       return;
     }
 
-    this.brushSelectionChangeHandler?.({
-      kind: "brushes",
-      ids: [brushId]
-    });
+    this.brushSelectionChangeHandler?.({ kind: "brushes", ids: [brushId] });
   };
 
   private handlePointerMove = (event: PointerEvent) => {
