@@ -527,8 +527,7 @@ export class ViewportHost {
     return {
       group,
       meshes: [core, range]
-    };
-  }
+    };  }
 
   private createSpotLightGizmoRenderObjects(
     entityId: string,
