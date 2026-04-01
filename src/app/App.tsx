@@ -782,8 +782,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
       setSoundEmitterAutoplayDraft(false);
       setSoundEmitterLoopDraft(false);
       setTriggerVolumeSizeDraft(createVec3Draft(DEFAULT_TRIGGER_VOLUME_SIZE));
-      setTriggerOnEnterDraft(true);
-      setTriggerOnExitDraft(false);
       setTeleportTargetYawDraft(String(DEFAULT_TELEPORT_TARGET_YAW_DEGREES));
       setInteractableRadiusDraft(String(DEFAULT_INTERACTABLE_RADIUS));
       setInteractablePromptDraft(DEFAULT_INTERACTABLE_PROMPT);
