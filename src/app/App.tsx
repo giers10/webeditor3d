@@ -1948,6 +1948,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     >
                       <option value="teleportPlayer">Teleport Player</option>
                       <option value="toggleVisibility">Toggle Visibility</option>
+                      <option value="playAnimation">Play Animation</option>
+                      <option value="stopAnimation">Stop Animation</option>
                     </select>
                   </label>
                 </div>
