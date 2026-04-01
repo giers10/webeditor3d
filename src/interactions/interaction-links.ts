@@ -151,7 +151,8 @@ export function createPlayAnimationInteractionLink(options: CreatePlayAnimationI
     action: {
       type: "playAnimation",
       targetModelInstanceId: options.targetModelInstanceId,
-      clipName: options.clipName
+      clipName: options.clipName,
+      loop: options.loop
     }
   };
 }
