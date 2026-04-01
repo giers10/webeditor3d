@@ -5,6 +5,8 @@ import {
   BoxGeometry,
   DirectionalLight,
   Group,
+  LoopOnce,
+  LoopRepeat,
   Mesh,
   MeshStandardMaterial,
   PerspectiveCamera,
