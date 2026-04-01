@@ -1806,7 +1806,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
           sourceEntityId: link.sourceEntityId,
           trigger: link.trigger,
           targetModelInstanceId,
-          clipName: link.action.clipName
+          clipName: link.action.clipName,
+          loop: link.action.loop
         }),
         "Updated play animation link target."
       );
@@ -1836,9 +1837,29 @@ export function App({ store, initialStatusMessage }: AppProps) {
         sourceEntityId: link.sourceEntityId,
         trigger: link.trigger,
         targetModelInstanceId: link.action.targetModelInstanceId,
-        clipName
+        clipName,
+        loop: link.action.loop
       }),
       "Updated play animation clip."
+    );
+  };
+
+  const updatePlayAnimationLinkLoop = (link: InteractionLink, loop: boolean) => {
+    if (link.action.type !== "playAnimation") {
+      return;
+    }
+
+    commitInteractionLinkChange(
+      link,
+      createPlayAnimationInteractionLink({
+        id: link.id,
+        sourceEntityId: link.sourceEntityId,
+        trigger: link.trigger,
+        targetModelInstanceId: link.action.targetModelInstanceId,
+        clipName: link.action.clipName,
+        loop
+      }),
+      "Updated play animation loop setting."
     );
   };
 

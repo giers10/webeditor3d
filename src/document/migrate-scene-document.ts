@@ -904,7 +904,8 @@ function readInteractionLink(value: unknown, label: string): InteractionLink {
         sourceEntityId: expectString(value.sourceEntityId, `${label}.sourceEntityId`),
         trigger,
         targetModelInstanceId: action.targetModelInstanceId,
-        clipName: action.clipName
+        clipName: action.clipName,
+        loop: action.loop
       });
     case "stopAnimation":
       return createStopAnimationInteractionLink({
