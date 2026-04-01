@@ -18,6 +18,7 @@ export interface PlayAnimationAction {
   type: "playAnimation";
   targetModelInstanceId: string;
   clipName: string;
+  loop?: boolean;
 }
 
 export interface StopAnimationAction {
