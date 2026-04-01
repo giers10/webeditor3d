@@ -2985,33 +2985,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
       <div className="workspace">
         <aside className="side-column">
-          <Panel title="Materials">
-            <div className="material-browser">
-              {materialList.map((material) => (
-                <button
-                  key={material.id}
-                  type="button"
-                  data-testid={`material-button-${material.id}`}
-                  className={`material-item ${selectedFace?.materialId === material.id ? "material-item--active" : ""}`}
-                  disabled={selectedFace === null}
-                  onClick={() => applyFaceMaterial(material.id)}
-                >
-                  <span className="material-item__preview" style={getMaterialPreviewStyle(material)} aria-hidden="true" />
-                  <span className="material-item__text">
-                    <span className="material-item__title">{material.name}</span>
-                    <span className="material-item__meta">{material.tags.join(" | ")}</span>
-                  </span>
-                </button>
-              ))}
-            </div>
-
-            <div className="inline-actions">
-              <button className="toolbar__button" type="button" disabled={selectedFace === null} onClick={clearFaceMaterial}>
-                Clear Face Material
-              </button>
-            </div>
-          </Panel>
-
           <Panel title="Assets">
             <div className="inline-actions">
               <button
