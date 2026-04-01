@@ -4650,6 +4650,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
               </>
             )}
           </Panel>
+          )}
         </aside>
       </div>
 
