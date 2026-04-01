@@ -156,6 +156,10 @@ export class ViewportHost {
   private lastBoxCreatePreviewCenter: Vec3 | null = null;
   private activeCameraDragPointerId: number | null = null;
   private lastCameraDragClientPosition: { x: number; y: number } | null = null;
+  // Click-through cycling: track the last click position and the last picked object
+  // so repeated clicks at the same spot cycle through overlapping objects.
+  private lastClickPointer: { x: number; y: number } | null = null;
+  private lastClickSelectionKey: string | null = null;
 
   constructor() {
     this.camera.position.set(10, 9, 10);
