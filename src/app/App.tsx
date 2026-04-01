@@ -1973,7 +1973,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     </select>
                   </label>
                 </div>
-              ) : (
+              ) : link.action.type === "toggleVisibility" ? (
                 <div className="form-section">
                   <div className="vector-inputs vector-inputs--two">
                     <label className="form-field">
@@ -2007,6 +2007,59 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       </select>
                     </label>
                   </div>
+                </div>
+              ) : link.action.type === "playAnimation" ? (
+                <div className="form-section">
+                  <div className="vector-inputs vector-inputs--two">
+                    <label className="form-field">
+                      <span className="label">Instance</span>
+                      <select
+                        data-testid={`interaction-link-play-anim-instance-${link.id}`}
+                        className="text-input"
+                        value={link.action.targetModelInstanceId}
+                        onChange={(event) => updateAnimationInteractionLinkTarget(link, event.currentTarget.value)}
+                      >
+                        {modelInstanceDisplayList.map(({ modelInstance, label }) => (
+                          <option key={modelInstance.id} value={modelInstance.id}>
+                            {label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="form-field">
+                      <span className="label">Clip</span>
+                      <select
+                        data-testid={`interaction-link-play-anim-clip-${link.id}`}
+                        className="text-input"
+                        value={link.action.clipName}
+                        onChange={(event) => updatePlayAnimationLinkClip(link, event.currentTarget.value)}
+                      >
+                        {(editorState.document.assets[
+                          editorState.document.modelInstances[link.action.targetModelInstanceId]?.assetId ?? ""
+                        ] as { kind: "model"; metadata: { animationNames: string[] } } | undefined)?.metadata.animationNames.map((name) => (
+                          <option key={name} value={name}>{name}</option>
+                        )) ?? <option value={link.action.clipName}>{link.action.clipName}</option>}
+                      </select>
+                    </label>
+                  </div>
+                </div>
+              ) : (
+                <div className="form-section">
+                  <label className="form-field">
+                    <span className="label">Instance</span>
+                    <select
+                      data-testid={`interaction-link-stop-anim-instance-${link.id}`}
+                      className="text-input"
+                      value={link.action.targetModelInstanceId}
+                      onChange={(event) => updateAnimationInteractionLinkTarget(link, event.currentTarget.value)}
+                    >
+                      {modelInstanceDisplayList.map(({ modelInstance, label }) => (
+                        <option key={modelInstance.id} value={modelInstance.id}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
                 </div>
               )}
 
