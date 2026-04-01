@@ -565,8 +565,8 @@ export class RuntimeHost {
       toggleBrushVisibility: (brushId, visible) => {
         this.applyToggleBrushVisibilityAction(brushId, visible);
       },
-      playAnimation: (instanceId, clipName) => {
-        this.applyPlayAnimationAction(instanceId, clipName);
+      playAnimation: (instanceId, clipName, loop) => {
+        this.applyPlayAnimationAction(instanceId, clipName, loop);
       },
       stopAnimation: (instanceId) => {
         this.applyStopAnimationAction(instanceId);
