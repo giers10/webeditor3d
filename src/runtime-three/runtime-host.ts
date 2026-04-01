@@ -542,7 +542,7 @@ export class RuntimeHost {
 
     // LoopRepeat is the three.js default; LoopOnce plays the clip a single time then stops.
     const action = mixer.clipAction(clip);
-    action.loop = loop === false ? 2200 /* THREE.LoopOnce */ : 2201 /* THREE.LoopRepeat */;
+    action.loop = loop === false ? LoopOnce : LoopRepeat;
     action.clampWhenFinished = loop === false;
     mixer.stopAllAction();
     action.reset().play();
