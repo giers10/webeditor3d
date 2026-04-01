@@ -215,7 +215,7 @@ export class RuntimeInteractionSystem {
           dispatcher.toggleBrushVisibility(link.action.targetBrushId, link.action.visible, link);
           break;
         case "playAnimation":
-          dispatcher.playAnimation(link.action.targetModelInstanceId, link.action.clipName, link);
+          dispatcher.playAnimation(link.action.targetModelInstanceId, link.action.clipName, link.action.loop, link);
           break;
         case "stopAnimation":
           dispatcher.stopAnimation(link.action.targetModelInstanceId, link);
