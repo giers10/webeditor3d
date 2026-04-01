@@ -73,7 +73,8 @@ function cloneAction(action: InteractionAction): InteractionAction {
       return {
         type: "playAnimation",
         targetModelInstanceId: action.targetModelInstanceId,
-        clipName: action.clipName
+        clipName: action.clipName,
+        loop: action.loop
       };
     case "stopAnimation":
       return {
