@@ -3602,7 +3602,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
               </div>
             </div>
           </Panel>
-
+          ) : (
           <Panel title="Inspector">
             <div className="stat-card">
               <div className="label">Selection</div>
