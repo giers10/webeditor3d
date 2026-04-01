@@ -129,6 +129,7 @@ export interface CreatePlayAnimationInteractionLinkOptions {
   trigger?: InteractionTriggerKind;
   targetModelInstanceId: string;
   clipName: string;
+  loop?: boolean;
 }
 
 export interface CreateStopAnimationInteractionLinkOptions {
