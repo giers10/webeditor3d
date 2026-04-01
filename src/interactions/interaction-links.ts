@@ -201,7 +201,8 @@ export function areInteractionLinksEqual(left: InteractionLink, right: Interacti
     case "playAnimation":
       return (
         left.action.targetModelInstanceId === (right.action as PlayAnimationAction).targetModelInstanceId &&
-        left.action.clipName === (right.action as PlayAnimationAction).clipName
+        left.action.clipName === (right.action as PlayAnimationAction).clipName &&
+        left.action.loop === (right.action as PlayAnimationAction).loop
       );
     case "stopAnimation":
       return left.action.targetModelInstanceId === (right.action as StopAnimationAction).targetModelInstanceId;
