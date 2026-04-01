@@ -522,7 +522,7 @@ export class RuntimeHost {
     mesh.visible = visible ?? !mesh.visible;
   }
 
-  private applyPlayAnimationAction(instanceId: string, clipName: string) {
+  private applyPlayAnimationAction(instanceId: string, clipName: string, loop: boolean | undefined) {
     const mixer = this.animationMixers.get(instanceId);
     const clips = this.instanceAnimationClips.get(instanceId);
 
@@ -538,8 +538,12 @@ export class RuntimeHost {
       return;
     }
 
+    // LoopRepeat is the three.js default; LoopOnce plays the clip a single time then stops.
+    const action = mixer.clipAction(clip);
+    action.loop = loop === false ? 2200 /* THREE.LoopOnce */ : 2201 /* THREE.LoopRepeat */;
+    action.clampWhenFinished = loop === false;
     mixer.stopAllAction();
-    mixer.clipAction(clip).play();
+    action.reset().play();
   }
 
   private applyStopAnimationAction(instanceId: string) {
