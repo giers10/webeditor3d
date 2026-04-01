@@ -817,8 +817,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
         break;
       case "triggerVolume":
         setTriggerVolumeSizeDraft(createVec3Draft(selectedEntity.size));
-        setTriggerOnEnterDraft(selectedEntity.triggerOnEnter);
-        setTriggerOnExitDraft(selectedEntity.triggerOnExit);
         break;
       case "teleportTarget":
         setTeleportTargetYawDraft(String(selectedEntity.yawDegrees));
