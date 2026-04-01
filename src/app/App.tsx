@@ -1742,6 +1742,106 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
   };
 
+  const updateAnimationInteractionLinkTarget = (link: InteractionLink, targetModelInstanceId: string) => {
+    if (link.action.type !== "playAnimation" && link.action.type !== "stopAnimation") {
+      return;
+    }
+
+    if (link.action.type === "playAnimation") {
+      commitInteractionLinkChange(
+        link,
+        createPlayAnimationInteractionLink({
+          id: link.id,
+          sourceEntityId: link.sourceEntityId,
+          trigger: link.trigger,
+          targetModelInstanceId,
+          clipName: link.action.clipName
+        }),
+        "Updated play animation link target."
+      );
+    } else {
+      commitInteractionLinkChange(
+        link,
+        createStopAnimationInteractionLink({
+          id: link.id,
+          sourceEntityId: link.sourceEntityId,
+          trigger: link.trigger,
+          targetModelInstanceId
+        }),
+        "Updated stop animation link target."
+      );
+    }
+  };
+
+  const updatePlayAnimationLinkClip = (link: InteractionLink, clipName: string) => {
+    if (link.action.type !== "playAnimation") {
+      return;
+    }
+
+    commitInteractionLinkChange(
+      link,
+      createPlayAnimationInteractionLink({
+        id: link.id,
+        sourceEntityId: link.sourceEntityId,
+        trigger: link.trigger,
+        targetModelInstanceId: link.action.targetModelInstanceId,
+        clipName
+      }),
+      "Updated play animation clip."
+    );
+  };
+
+  const handleAddPlayAnimationLink = (sourceEntity: InteractionSourceEntity) => {
+    const firstInstance = modelInstanceDisplayList[0];
+
+    if (firstInstance === undefined) {
+      setStatusMessage("Place a model instance before adding an animation link.");
+      return;
+    }
+
+    const asset = editorState.document.assets[firstInstance.modelInstance.assetId];
+    const firstClip = asset?.kind === "model" ? (asset.metadata.animationNames[0] ?? "") : "";
+
+    if (firstClip === "") {
+      setStatusMessage("The model instance has no animation clips.");
+      return;
+    }
+
+    store.executeCommand(
+      createUpsertInteractionLinkCommand({
+        link: createPlayAnimationInteractionLink({
+          sourceEntityId: sourceEntity.id,
+          trigger: getDefaultInteractionLinkTrigger(sourceEntity),
+          targetModelInstanceId: firstInstance.modelInstance.id,
+          clipName: firstClip
+        }),
+        label: "Add play animation link"
+      })
+    );
+    setStatusMessage("Added a play animation link.");
+  };
+
+  const handleAddStopAnimationLink = (sourceEntity: InteractionSourceEntity) => {
+    const firstInstance = modelInstanceDisplayList[0];
+
+    if (firstInstance === undefined) {
+      setStatusMessage("Place a model instance before adding an animation link.");
+      return;
+    }
+
+    store.executeCommand(
+      createUpsertInteractionLinkCommand({
+        link: createStopAnimationInteractionLink({
+          sourceEntityId: sourceEntity.id,
+          trigger: getDefaultInteractionLinkTrigger(sourceEntity),
+          targetModelInstanceId: firstInstance.modelInstance.id
+        }),
+        label: "Add stop animation link"
+      })
+    );
+    setStatusMessage("Added a stop animation link.");
+  };
+
   const renderInteractionLinksSection = (
     sourceEntity: InteractionSourceEntity,
     links: InteractionLink[],
