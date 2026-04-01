@@ -127,7 +127,7 @@ Implement animation playback for imported GLB/GLTF assets in vertical slice orde
   - On change, dispatch `createUpsertModelInstanceCommand` with the updated model instance
   - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6_
 
-- [ ] 9. Interaction link UI — play/stop animation action authoring
+- [-] 9. Interaction link UI — play/stop animation action authoring
   - In `src/app/App.tsx`, extend the interaction link action type `<select>` to include `"playAnimation"` and `"stopAnimation"` options
   - When `"playAnimation"` is selected, show a model instance picker and a clip name `<select>` (populated from the chosen instance's asset's `animationNames`)
   - When `"stopAnimation"` is selected, show only the model instance picker
