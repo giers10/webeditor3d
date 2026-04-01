@@ -850,7 +850,8 @@ function readInteractionAction(value: unknown, label: string): InteractionLink["
       return createPlayAnimationInteractionLink({
         sourceEntityId: "interaction-source-placeholder",
         targetModelInstanceId,
-        clipName
+        clipName,
+        loop: value.loop === undefined ? undefined : expectBoolean(value.loop, `${label}.loop`)
       }).action;
     }
     case "stopAnimation": {
