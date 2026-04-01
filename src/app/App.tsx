@@ -1476,12 +1476,18 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
 
     try {
+      // Derive triggerOnEnter/triggerOnExit from the actual links so the flags
+      // stay in sync automatically — no manual checkbox needed.
+      const links = getInteractionLinksForSource(editorState.document.interactionLinks, selectedTriggerVolume.id);
+      const triggerOnEnter = links.some((l) => l.trigger === "enter");
+      const triggerOnExit = links.some((l) => l.trigger === "exit");
+
       const nextEntity = createTriggerVolumeEntity({
         id: selectedTriggerVolume.id,
         position: snapVec3ToGrid(readVec3Draft(entityPositionDraft, "Trigger Volume position"), DEFAULT_GRID_SIZE),
         size: snapPositiveSizeToGrid(readVec3Draft(triggerVolumeSizeDraft, "Trigger Volume size"), DEFAULT_GRID_SIZE),
-        triggerOnEnter: triggerOnEnterDraft,
-        triggerOnExit: triggerOnExitDraft
+        triggerOnEnter,
+        triggerOnExit
       });
 
       commitEntityChange(selectedTriggerVolume, nextEntity, "Updated Trigger Volume.");
