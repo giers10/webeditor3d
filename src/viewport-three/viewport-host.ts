@@ -702,6 +702,7 @@ export class ViewportHost {
         wireframe: true
       })
     );
+    radiusShell.userData.nonPickable = true;
 
     for (const mesh of [core, radiusShell]) {
       this.tagEntityMesh(mesh, entityId, "soundEmitter", group);
