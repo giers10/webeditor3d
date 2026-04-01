@@ -520,6 +520,8 @@ export class ViewportHost {
       })
     );
 
+    range.userData.nonPickable = true;
+
     for (const mesh of [core, range]) {
       this.tagEntityMesh(mesh, entityId, "pointLight", group);
     }
@@ -527,7 +529,8 @@ export class ViewportHost {
     return {
       group,
       meshes: [core, range]
-    };  }
+    };
+  }
 
   private createSpotLightGizmoRenderObjects(
     entityId: string,
