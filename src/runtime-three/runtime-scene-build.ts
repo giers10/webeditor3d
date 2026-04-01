@@ -351,8 +351,13 @@ function buildRuntimeSceneCollections(document: SceneDocument): RuntimeSceneColl
           entityId: entity.id,
           position: cloneVec3(entity.position),
           size: cloneVec3(entity.size),
-          triggerOnEnter: entity.triggerOnEnter,
-          triggerOnExit: entity.triggerOnExit
+          // Derive from links so the flags are always correct regardless of stored entity state
+          triggerOnEnter: document.interactionLinks
+            ? Object.values(document.interactionLinks).some((l) => l.sourceEntityId === entity.id && l.trigger === "enter")
+            : entity.triggerOnEnter,
+          triggerOnExit: document.interactionLinks
+            ? Object.values(document.interactionLinks).some((l) => l.sourceEntityId === entity.id && l.trigger === "exit")
+            : entity.triggerOnExit
         });
         break;
       case "teleportTarget":
