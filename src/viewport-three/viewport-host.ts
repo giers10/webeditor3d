@@ -1025,6 +1025,11 @@ export class ViewportHost {
     const seenKeys = new Set<string>();
 
     for (const hit of hits) {
+      // Skip indicator meshes that are intentionally non-pickable (wireframe shells, range spheres, etc.)
+      if (hit.object.userData.nonPickable === true) {
+        continue;
+      }
+
       const entityId = hit.object.userData.entityId;
       const modelInstanceId = this.findModelInstanceId(hit.object);
       const brushId = hit.object.userData.brushId;
