@@ -2097,6 +2097,22 @@ export function App({ store, initialStatusMessage }: AppProps) {
         >
           Add Visibility Link
         </button>
+        <button
+          className="toolbar__button"
+          type="button"
+          disabled={modelInstanceDisplayList.length === 0}
+          onClick={() => handleAddPlayAnimationLink(sourceEntity)}
+        >
+          Add Play Anim Link
+        </button>
+        <button
+          className="toolbar__button"
+          type="button"
+          disabled={modelInstanceDisplayList.length === 0}
+          onClick={() => handleAddStopAnimationLink(sourceEntity)}
+        >
+          Add Stop Anim Link
+        </button>
       </div>
     </div>
   );
