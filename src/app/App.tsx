@@ -3352,6 +3352,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
         </main>
 
         <aside className="side-column">
+          {editorState.selection.kind === "none" ? (
           <Panel title="World">
             <div className="stat-card">
               <div className="label">Background</div>
