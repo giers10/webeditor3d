@@ -1550,36 +1550,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
     setStatusMessage(successMessage);
   };
 
-  // After any link mutation on a trigger volume, re-derive and persist the
-  // triggerOnEnter/triggerOnExit flags so the document stays consistent.
-  const syncTriggerVolumeFlags = (sourceEntityId: string, linksAfterMutation: InteractionLink[]) => {
-    const entity = editorState.document.entities[sourceEntityId];
-    if (entity?.kind !== "triggerVolume") return;
-
-    const triggerOnEnter = linksAfterMutation.some((l) => l.trigger === "enter");
-    const triggerOnExit = linksAfterMutation.some((l) => l.trigger === "exit");
-
-    if (entity.triggerOnEnter === triggerOnEnter && entity.triggerOnExit === triggerOnExit) return;
-
-    try {
-      const nextEntity = createTriggerVolumeEntity({
-        id: entity.id,
-        position: entity.position,
-        size: entity.size,
-        triggerOnEnter,
-        triggerOnExit
-      });
-      store.executeCommand(
-        createUpsertEntityCommand({
-          entity: nextEntity,
-          label: "Sync trigger volume flags"
-        })
-      );
-    } catch {
-      // Non-critical — runtime already derives flags from links directly
-    }
-  };
-
   const getInteractionSourceEntityForLink = (link: InteractionLink): InteractionSourceEntity | null => {
     const sourceEntity = editorState.document.entities[link.sourceEntityId];
     return sourceEntity?.kind === "triggerVolume" || sourceEntity?.kind === "interactable" ? sourceEntity : null;
