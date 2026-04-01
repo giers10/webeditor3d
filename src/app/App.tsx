@@ -1670,6 +1670,57 @@ export function App({ store, initialStatusMessage }: AppProps) {
       return;
     }
 
+    if (actionType === "playAnimation") {
+      const firstInstance = modelInstanceDisplayList[0];
+
+      if (firstInstance === undefined) {
+        setStatusMessage("Place a model instance before switching this link to play animation.");
+        return;
+      }
+
+      const asset = editorState.document.assets[firstInstance.modelInstance.assetId];
+      const firstClip = asset?.kind === "model" ? (asset.metadata.animationNames[0] ?? "") : "";
+
+      if (firstClip === "") {
+        setStatusMessage("The model instance has no animation clips.");
+        return;
+      }
+
+      commitInteractionLinkChange(
+        link,
+        createPlayAnimationInteractionLink({
+          id: link.id,
+          sourceEntityId: sourceEntity.id,
+          trigger: link.trigger,
+          targetModelInstanceId: firstInstance.modelInstance.id,
+          clipName: firstClip
+        }),
+        "Switched link action to play animation."
+      );
+      return;
+    }
+
+    if (actionType === "stopAnimation") {
+      const firstInstance = modelInstanceDisplayList[0];
+
+      if (firstInstance === undefined) {
+        setStatusMessage("Place a model instance before switching this link to stop animation.");
+        return;
+      }
+
+      commitInteractionLinkChange(
+        link,
+        createStopAnimationInteractionLink({
+          id: link.id,
+          sourceEntityId: sourceEntity.id,
+          trigger: link.trigger,
+          targetModelInstanceId: firstInstance.modelInstance.id
+        }),
+        "Switched link action to stop animation."
+      );
+      return;
+    }
+
     const defaultBrush = visibilityBrushOptions[0]?.brush;
 
     if (defaultBrush === undefined) {
