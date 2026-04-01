@@ -119,9 +119,9 @@ export class RuntimeInteractionSystem {
       const containsPlayer = isPointInsideTriggerVolume(feetPosition, triggerVolume);
       const wasOccupied = this.occupiedTriggerVolumes.has(triggerVolume.entityId);
 
-      if (!wasOccupied && containsPlayer && triggerVolume.triggerOnEnter) {
+      if (!wasOccupied && containsPlayer && hasTriggerLinks(runtimeScene, triggerVolume.entityId, "enter")) {
         this.dispatchLinks(triggerVolume.entityId, "enter", runtimeScene, dispatcher);
-      } else if (wasOccupied && !containsPlayer && triggerVolume.triggerOnExit) {
+      } else if (wasOccupied && !containsPlayer && hasTriggerLinks(runtimeScene, triggerVolume.entityId, "exit")) {
         this.dispatchLinks(triggerVolume.entityId, "exit", runtimeScene, dispatcher);
       }
 
