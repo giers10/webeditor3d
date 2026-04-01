@@ -2063,6 +2063,15 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       </select>
                     </label>
                   </div>
+                  <label className="form-field">
+                    <input
+                      type="checkbox"
+                      data-testid={`interaction-link-play-anim-loop-${link.id}`}
+                      checked={link.action.loop !== false}
+                      onChange={(event) => updatePlayAnimationLinkLoop(link, event.currentTarget.checked)}
+                    />
+                    <span className="label">Loop</span>
+                  </label>
                 </div>
               ) : (
                 <div className="form-section">
