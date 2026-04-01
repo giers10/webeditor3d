@@ -4280,36 +4280,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       </div>
                     </div>
 
-                    <div className="form-section">
-                      <div className="label">Trigger Sources</div>
-                      <div className="vector-inputs vector-inputs--two">
-                        <label className="form-field">
-                          <span className="label">On Enter</span>
-                          <input
-                            data-testid="trigger-volume-enter"
-                            type="checkbox"
-                            checked={triggerOnEnterDraft}
-                            onChange={(event) => {
-                              setTriggerOnEnterDraft(event.currentTarget.checked);
-                              scheduleDraftCommit(applyTriggerVolumeChange);
-                            }}
-                          />
-                        </label>
-                        <label className="form-field">
-                          <span className="label">On Exit</span>
-                          <input
-                            data-testid="trigger-volume-exit"
-                            type="checkbox"
-                            checked={triggerOnExitDraft}
-                            onChange={(event) => {
-                              setTriggerOnExitDraft(event.currentTarget.checked);
-                              scheduleDraftCommit(applyTriggerVolumeChange);
-                            }}
-                          />
-                        </label>
-                      </div>
-                    </div>
-
                     {renderInteractionLinksSection(
                       selectedTriggerVolume,
                       selectedTriggerVolumeLinks,
