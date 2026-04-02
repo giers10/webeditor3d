@@ -64,6 +64,12 @@ import {
 } from "../rendering/advanced-rendering";
 import { resolveViewportFocusTarget } from "./viewport-focus";
 import { createSoundEmitterMarkerMeshes } from "./viewport-entity-markers";
+import {
+  getViewportViewModeDefinition,
+  isOrthographicViewportViewMode,
+  type ViewportGridPlane,
+  type ViewportViewMode
+} from "./viewport-view-modes";
 
 interface BrushRenderObjects {
   mesh: Mesh<BoxGeometry, MeshStandardMaterial[]>;
