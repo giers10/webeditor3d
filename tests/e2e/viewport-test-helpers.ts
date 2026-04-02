@@ -28,6 +28,10 @@ interface EditorStoreSnapshot {
     modelInstances: Record<string, { position: { x: number; y: number; z: number } }>;
     entities: Record<string, { position: { x: number; y: number; z: number } }>;
   };
+  viewportQuadSplit: {
+    x: number;
+    y: number;
+  };
   viewportTransientState: {
     toolPreview: ViewportToolPreview;
   };

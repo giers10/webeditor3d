@@ -29,18 +29,19 @@ test("orthographic panel controls keep brush authoring and selection behavior in
   await expect(page.getByText("1 brush selected (Box Brush 1)")).toBeVisible();
   await expect(page.getByTestId("viewport-active-panel")).toHaveCount(0);
   await expect(page.getByTestId("viewport-panel-topLeft-view-perspective")).toHaveAttribute("aria-pressed", "true");
+  await expect(getViewportOverlay(page, "topLeft")).toHaveCount(0);
 
   await page.getByTestId("viewport-panel-topLeft-view-top").dispatchEvent("click");
   await expect(page.getByTestId("viewport-panel-topLeft-view-top")).toHaveAttribute("aria-pressed", "true");
-  await expect(getViewportOverlay(page, "topLeft")).toContainText("XZ grid");
+  await expect(getViewportOverlay(page, "topLeft")).toHaveCount(0);
 
   await page.getByTestId("viewport-panel-topLeft-view-front").dispatchEvent("click");
   await expect(page.getByTestId("viewport-panel-topLeft-view-front")).toHaveAttribute("aria-pressed", "true");
-  await expect(getViewportOverlay(page, "topLeft")).toContainText("XY grid");
+  await expect(getViewportOverlay(page, "topLeft")).toHaveCount(0);
 
   await page.getByTestId("viewport-panel-topLeft-view-side").dispatchEvent("click");
   await expect(page.getByTestId("viewport-panel-topLeft-view-side")).toHaveAttribute("aria-pressed", "true");
-  await expect(getViewportOverlay(page, "topLeft")).toContainText("YZ grid");
+  await expect(getViewportOverlay(page, "topLeft")).toHaveCount(0);
 
   await page.getByTestId("viewport-panel-topLeft-display-authoring").dispatchEvent("click");
   await expect(page.getByTestId("viewport-panel-topLeft-display-authoring")).toHaveAttribute("aria-pressed", "true");

@@ -78,7 +78,7 @@ test("user can create a box brush and keep it through a draft reload", async ({ 
   await page.getByRole("button", { name: /Entry Room/ }).click();
   await expect(page.getByTestId("brush-center-y")).toHaveValue("2");
   await expect(page.getByTestId("brush-size-z")).toHaveValue("4");
-  await expect(page.getByTestId("viewport-overlay-topLeft")).toBeVisible();
+  await expect(page.getByTestId("viewport-overlay-topLeft")).toHaveCount(0);
 
   expect(pageErrors).toEqual([]);
   expect(consoleErrors).toEqual([]);
