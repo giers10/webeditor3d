@@ -171,7 +171,8 @@ import {
   getViewportLayoutModeLabel,
   type ViewportDisplayMode,
   type ViewportLayoutMode,
-  type ViewportPanelId
+  type ViewportPanelId,
+  type ViewportQuadSplit
 } from "../viewport-three/viewport-layout";
 import type { EditorStore } from "./editor-store";
 import { useEditorStoreState } from "./use-editor-store";
@@ -204,6 +205,10 @@ const FACE_LABELS: Record<BoxFaceId, string> = {
 };
 
 const STARTER_MATERIAL_ORDER = new Map(STARTER_MATERIAL_LIBRARY.map((material, index) => [material.id, index]));
+const MIN_VIEWPORT_QUAD_SPLIT = 0.2;
+const MAX_VIEWPORT_QUAD_SPLIT = 0.8;
+
+type ViewportQuadResizeMode = "vertical" | "horizontal" | "center";
 
 function formatVec3(vector: Vec3): string {
   return `${vector.x}, ${vector.y}, ${vector.z}`;
@@ -211,6 +216,28 @@ function formatVec3(vector: Vec3): string {
 
 function formatDiagnosticCount(count: number, label: string): string {
   return `${count} ${label}${count === 1 ? "" : "s"}`;
+}
+
+function clampViewportQuadSplitValue(value: number): number {
+  return Math.min(MAX_VIEWPORT_QUAD_SPLIT, Math.max(MIN_VIEWPORT_QUAD_SPLIT, value));
+}
+
+function createViewportQuadPanelsStyle(viewportQuadSplit: ViewportQuadSplit): CSSProperties {
+  return {
+    "--viewport-quad-split-x": String(viewportQuadSplit.x),
+    "--viewport-quad-split-y": String(viewportQuadSplit.y)
+  } as CSSProperties;
+}
+
+function getViewportQuadResizeCursor(resizeMode: ViewportQuadResizeMode): string {
+  switch (resizeMode) {
+    case "vertical":
+      return "col-resize";
+    case "horizontal":
+      return "row-resize";
+    case "center":
+      return "move";
+  }
 }
 
 function createVec2Draft(vector: Vec2): Vec2Draft {
@@ -884,13 +911,16 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const importModelInputRef = useRef<HTMLInputElement | null>(null);
   const importBackgroundImageInputRef = useRef<HTMLInputElement | null>(null);
   const importAudioInputRef = useRef<HTMLInputElement | null>(null);
+  const viewportPanelsRef = useRef<HTMLDivElement | null>(null);
   const loadedModelAssetsRef = useRef<Record<string, LoadedModelAsset>>({});
   const loadedImageAssetsRef = useRef<Record<string, LoadedImageAsset>>({});
   const loadedAudioAssetsRef = useRef<Record<string, LoadedAudioAsset>>({});
+  const viewportQuadSplitRef = useRef(editorState.viewportQuadSplit);
   const lastPointerPositionRef = useRef<HierarchicalMenuPosition>({
     x: Math.round(window.innerWidth * 0.5),
     y: Math.round(window.innerHeight * 0.5)
   });
+  const [viewportQuadResizeMode, setViewportQuadResizeMode] = useState<ViewportQuadResizeMode | null>(null);
   const documentValidation = validateSceneDocument(editorState.document);
   const runValidation = validateRuntimeSceneBuild(editorState.document, preferredNavigationMode);
   const diagnostics = [...documentValidation.errors, ...documentValidation.warnings, ...runValidation.errors, ...runValidation.warnings];
@@ -1071,6 +1101,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
   useEffect(() => {
     loadedAudioAssetsRef.current = loadedAudioAssets;
   }, [loadedAudioAssets]);
+
+  useEffect(() => {
+    viewportQuadSplitRef.current = editorState.viewportQuadSplit;
+  }, [editorState.viewportQuadSplit]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1382,6 +1416,69 @@ export function App({ store, initialStatusMessage }: AppProps) {
   }, [activePanelId, addMenuPosition, brushList.length, editorState.selection, editorState.toolMode, entityList.length]);
 
   useEffect(() => {
+    if (layoutMode === "quad" || viewportQuadResizeMode === null) {
+      return;
+    }
+
+    setViewportQuadResizeMode(null);
+  }, [layoutMode, viewportQuadResizeMode]);
+
+  useEffect(() => {
+    if (layoutMode !== "quad" || viewportQuadResizeMode === null) {
+      return;
+    }
+
+    const previousCursor = document.body.style.cursor;
+    const previousUserSelect = document.body.style.userSelect;
+    document.body.style.cursor = getViewportQuadResizeCursor(viewportQuadResizeMode);
+    document.body.style.userSelect = "none";
+
+    const handlePointerMove = (event: globalThis.PointerEvent) => {
+      const viewportPanels = viewportPanelsRef.current;
+
+      if (viewportPanels === null) {
+        return;
+      }
+
+      const rect = viewportPanels.getBoundingClientRect();
+
+      if (rect.width <= 0 || rect.height <= 0) {
+        return;
+      }
+
+      const nextViewportQuadSplit = {
+        ...viewportQuadSplitRef.current
+      };
+
+      if (viewportQuadResizeMode !== "horizontal") {
+        nextViewportQuadSplit.x = clampViewportQuadSplitValue((event.clientX - rect.left) / rect.width);
+      }
+
+      if (viewportQuadResizeMode !== "vertical") {
+        nextViewportQuadSplit.y = clampViewportQuadSplitValue((event.clientY - rect.top) / rect.height);
+      }
+
+      store.setViewportQuadSplit(nextViewportQuadSplit);
+    };
+
+    const stopViewportResize = () => {
+      setViewportQuadResizeMode(null);
+    };
+
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", stopViewportResize);
+    window.addEventListener("pointercancel", stopViewportResize);
+
+    return () => {
+      document.body.style.cursor = previousCursor;
+      document.body.style.userSelect = previousUserSelect;
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", stopViewportResize);
+      window.removeEventListener("pointercancel", stopViewportResize);
+    };
+  }, [layoutMode, store, viewportQuadResizeMode]);
+
+  useEffect(() => {
     if (editorState.toolMode !== "play") {
       return;
     }
@@ -1494,6 +1591,43 @@ export function App({ store, initialStatusMessage }: AppProps) {
     store.setViewportPanelDisplayMode(panelId, nextDisplayMode);
     setStatusMessage(`Set the viewport panel to ${getViewportDisplayModeLabel(nextDisplayMode)} display.`);
   };
+
+  const handleViewportQuadResizeStart =
+    (resizeMode: ViewportQuadResizeMode) => (event: ReactPointerEvent<HTMLDivElement>) => {
+      if (layoutMode !== "quad") {
+        return;
+      }
+
+      const viewportPanels = viewportPanelsRef.current;
+
+      if (viewportPanels === null) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+      blurActiveTextEntry();
+
+      const rect = viewportPanels.getBoundingClientRect();
+
+      if (rect.width > 0 && rect.height > 0) {
+        const nextViewportQuadSplit = {
+          ...viewportQuadSplitRef.current
+        };
+
+        if (resizeMode !== "horizontal") {
+          nextViewportQuadSplit.x = clampViewportQuadSplitValue((event.clientX - rect.left) / rect.width);
+        }
+
+        if (resizeMode !== "vertical") {
+          nextViewportQuadSplit.y = clampViewportQuadSplitValue((event.clientY - rect.top) / rect.height);
+        }
+
+        store.setViewportQuadSplit(nextViewportQuadSplit);
+      }
+
+      setViewportQuadResizeMode(resizeMode);
+    };
 
   const beginCreation = (toolPreview: CreationViewportToolPreview, status: string) => {
     blurActiveTextEntry();
@@ -4034,6 +4168,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
       ]
     }
   ];
+
+  const viewportPanelsStyle = layoutMode === "quad" ? createViewportQuadPanelsStyle(editorState.viewportQuadSplit) : undefined;
 
   if (editorState.toolMode === "play" && runtimeScene !== null) {
     return (
