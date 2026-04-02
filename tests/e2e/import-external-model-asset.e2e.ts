@@ -29,9 +29,9 @@ test("imports a gltf asset with external resources and survives reload", async (
   await expect(page.getByTestId("asset-list")).not.toContainText("Storage key:");
   await expect(page.getByTestId("outliner-model-instance-list").getByRole("button")).toHaveCount(1);
 
-  await page.getByRole("button", { name: /scene\.gltf/i }).hover();
+  await page.getByRole("button", { name: "Place instance for scene.gltf" }).hover();
   await expect(page.getByTestId("status-asset-hover")).toContainText("Storage key:");
-  await page.getByRole("button", { name: /scene\.gltf/i }).click();
+  await page.getByRole("button", { name: "Place instance for scene.gltf" }).click();
   await expect(page.getByTestId("outliner-model-instance-list").getByRole("button")).toHaveCount(2);
 
   await page.getByRole("button", { name: "Save Draft" }).click();
