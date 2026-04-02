@@ -693,7 +693,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const selectedInteractableLinks =
     selectedInteractable === null ? [] : getInteractionLinksForSource(editorState.document.interactionLinks, selectedInteractable.id);
   const teleportTargetOptions = entityDisplayList.filter(({ entity }) => entity.kind === "teleportTarget");
-  const soundEmitterOptions = entityDisplayList.filter(({ entity }) => entity.kind === "soundEmitter");
+  const soundEmitterOptions = entityDisplayList.filter(({ entity }) => entity.kind === "soundEmitter") as Array<{
+    entity: Extract<EntityInstance, { kind: "soundEmitter" }>;
+    label: string;
+  }>;
   const playableSoundEmitterOptions = soundEmitterOptions.filter(({ entity }) => {
     if (entity.audioAssetId === null) {
       return false;
