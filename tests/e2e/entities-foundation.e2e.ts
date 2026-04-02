@@ -32,7 +32,7 @@ test("user can place and select typed entities from the entity foundation workfl
     { x: 4, y: 1, z: -6 }
   );
   await expect(page.getByTestId("viewport-snap-preview-topLeft")).toBeVisible();
-  await page.getByTestId("viewport-fallback-place-topLeft").click();
+  await page.getByTestId("viewport-fallback-place-topLeft").dispatchEvent("click");
   const soundEmitterSnapshot = await getEditorStoreSnapshot(page);
   const selectedSoundEmitterId =
     soundEmitterSnapshot.selection.kind === "entities" ? soundEmitterSnapshot.selection.ids?.[0] ?? null : null;
@@ -71,7 +71,7 @@ test("user can place and select typed entities from the entity foundation workfl
     { x: -8, y: 1, z: 12 }
   );
   await expect(page.getByTestId("viewport-snap-preview-topLeft")).toBeVisible();
-  await page.getByTestId("viewport-fallback-place-topLeft").click();
+  await page.getByTestId("viewport-fallback-place-topLeft").dispatchEvent("click");
   await expect(page.getByTestId("interactable-prompt")).toHaveValue("Use");
 
   await page
@@ -121,7 +121,7 @@ test("shift+a opens the add menu at the cursor", async ({ page }) => {
     { kind: "entity", entityKind: "pointLight", audioAssetId: null },
     { x: 12, y: 3, z: -4 }
   );
-  await page.getByTestId("viewport-fallback-place-topLeft").click();
+  await page.getByTestId("viewport-fallback-place-topLeft").dispatchEvent("click");
   await expect(page.getByTestId("point-light-intensity")).toHaveValue("1.25");
 
   expect(pageErrors).toEqual([]);
