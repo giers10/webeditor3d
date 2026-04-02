@@ -4018,8 +4018,24 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
         <main className="viewport-region">
           <div className="viewport-region__header">
-            <div className="viewport-region__title">Viewport</div>
-            <div className="viewport-region__caption">{getViewportCaption(editorState.toolMode, brushList.length)}</div>
+            <div className="viewport-region__meta">
+              <div className="viewport-region__title">Viewport</div>
+              <div className="viewport-region__caption">{getViewportCaption(editorState.toolMode, viewMode, brushList.length)}</div>
+            </div>
+            <div className="viewport-region__view-toggle" role="group" aria-label="Viewport view mode">
+              {VIEWPORT_VIEW_MODES.map((mode) => (
+                <button
+                  key={mode}
+                  className={`viewport-region__view-button ${viewMode === mode ? "viewport-region__view-button--active" : ""}`}
+                  type="button"
+                  data-testid={`viewport-mode-${mode}`}
+                  aria-pressed={viewMode === mode}
+                  onClick={() => handleSetViewportViewMode(mode)}
+                >
+                  {getViewportViewModeLabel(mode)}
+                </button>
+              ))}
+            </div>
           </div>
           <ViewportCanvas
             world={editorState.document.world}
@@ -4029,6 +4045,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
             loadedImageAssets={loadedImageAssets}
             selection={editorState.selection}
             toolMode={editorState.toolMode}
+            viewMode={viewMode}
             focusRequestId={focusRequest.id}
             focusSelection={focusRequest.selection}
             onSelectionChange={(selection) => applySelection(selection, "viewport")}
