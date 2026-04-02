@@ -225,7 +225,7 @@ export class ViewportHost {
     this.scene.add(this.boxCreatePreviewEdges);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.setClearAlpha(0);
-    this.applyViewMode(this.viewMode);
+    this.applyViewModePose();
   }
 
   mount(container: HTMLElement) {
@@ -488,6 +488,8 @@ export class ViewportHost {
         return this.boxCreatePlane.set(new Vector3(0, 0, 1), 0);
       case "side":
         return this.boxCreatePlane.set(new Vector3(1, 0, 0), 0);
+      default:
+        return this.boxCreatePlane.set(new Vector3(0, 1, 0), 0);
     }
   }
 
