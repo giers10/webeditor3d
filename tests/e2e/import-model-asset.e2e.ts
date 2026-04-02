@@ -39,6 +39,20 @@ test("imports a model asset, places an instance, and survives reload", async ({ 
   await expect(page.getByTestId("status-asset-hover")).toContainText("Storage key:");
   await page.getByRole("button", { name: "Place instance for tiny-triangle.gltf" }).click();
   const importedSnapshot = await getEditorStoreSnapshot(page);
+  expect(importedSnapshot).toMatchObject({
+    toolMode: "create",
+    viewportTransientState: {
+      toolPreview: {
+        kind: "create",
+        sourcePanelId: "topLeft",
+        target: {
+          kind: "model-instance",
+          assetId: expect.any(String)
+        },
+        center: null
+      }
+    }
+  });
   const importedModelAsset = Object.values(importedSnapshot.document.assets).find(
     (asset) => asset.kind === "model" && asset.sourceName === "tiny-triangle.gltf"
   );
@@ -47,6 +61,17 @@ test("imports a model asset, places an instance, and survives reload", async ({ 
     throw new Error("Imported model asset was not found in the document snapshot.");
   }
 
+  await page.keyboard.press("Escape");
+  await expect(await getEditorStoreSnapshot(page)).toMatchObject({
+    toolMode: "select",
+    viewportTransientState: {
+      toolPreview: {
+        kind: "none"
+      }
+    }
+  });
+
+  await page.getByRole("button", { name: "Place instance for tiny-triangle.gltf" }).click();
   await setViewportCreationPreview(page, "topLeft", { kind: "model-instance", assetId: importedModelAsset.id }, { x: 92, y: 0, z: -76 });
   await expect(page.getByTestId("viewport-snap-preview-topLeft")).toBeVisible();
   await clickViewport(page, "topLeft");
