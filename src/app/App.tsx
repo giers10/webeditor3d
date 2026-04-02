@@ -1326,15 +1326,15 @@ export function App({ store, initialStatusMessage }: AppProps) {
       return;
     }
 
-    blurActiveTextEntry();
-    store.setViewportPanelViewMode(panelId, nextViewMode);
-
     if (
       editorState.viewportTransientState.toolPreview.kind === "box-create" &&
       editorState.viewportTransientState.toolPreview.sourcePanelId === panelId
     ) {
       store.clearViewportToolPreview(panelId);
     }
+
+    blurActiveTextEntry();
+    store.setViewportPanelViewMode(panelId, nextViewMode);
 
     setStatusMessage(`Set the ${getViewportPanelLabel(panelId)} panel to ${getViewportViewModeLabel(nextViewMode)} view.`);
   };
