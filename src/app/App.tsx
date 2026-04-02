@@ -1250,10 +1250,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
         return;
       }
 
-      if (event.key === "Escape" && editorState.toolMode === "place") {
+      if (event.key === "Escape" && editorState.toolMode === "create") {
         event.preventDefault();
         store.setToolMode("select");
-        setStatusMessage("Cancelled the current placement preview.");
+        setStatusMessage("Cancelled the current creation preview.");
         return;
       }
 
@@ -1342,14 +1342,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
       return;
     }
 
-    if (
-      nextLayoutMode === "single" &&
-      editorState.viewportTransientState.toolPreview.kind === "box-create" &&
-      editorState.viewportTransientState.toolPreview.sourcePanelId !== activePanelId
-    ) {
-      store.clearViewportToolPreview(editorState.viewportTransientState.toolPreview.sourcePanelId);
-    }
-
     blurActiveTextEntry();
     store.setViewportLayoutMode(nextLayoutMode);
     setStatusMessage(`Switched the viewport to ${getViewportLayoutModeLabel(nextLayoutMode)}.`);
@@ -1370,13 +1362,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
       return;
     }
 
-    if (
-      editorState.viewportTransientState.toolPreview.kind === "box-create" &&
-      editorState.viewportTransientState.toolPreview.sourcePanelId === panelId
-    ) {
-      store.clearViewportToolPreview(panelId);
-    }
-
     blurActiveTextEntry();
     store.setViewportPanelViewMode(panelId, nextViewMode);
 
@@ -1393,17 +1378,26 @@ export function App({ store, initialStatusMessage }: AppProps) {
     setStatusMessage(`Set the viewport panel to ${getViewportDisplayModeLabel(nextDisplayMode)} display.`);
   };
 
-  const handleCreateBoxBrush = (center?: Vec3) => {
-    try {
-      store.executeCommand(createCreateBoxBrushCommand(center === undefined ? {} : { center }));
-      setStatusMessage(
-        center === undefined
-          ? `Created a box brush snapped to the ${DEFAULT_GRID_SIZE}m grid.`
-          : `Created a box brush at snapped center ${formatVec3(center)}.`
-      );
-    } catch (error) {
-      setStatusMessage(getErrorMessage(error));
-    }
+  const beginCreation = (toolPreview: CreationViewportToolPreview, status: string) => {
+    blurActiveTextEntry();
+    closeAddMenu();
+    store.setViewportToolPreview(toolPreview);
+    store.setToolMode("create");
+    setStatusMessage(status);
+  };
+
+  const beginBoxCreation = () => {
+    beginCreation(
+      {
+        kind: "create",
+        sourcePanelId: activePanelId,
+        target: {
+          kind: "box-brush"
+        },
+        center: null
+      },
+      "Previewing a box brush. Click in the viewport to create it."
+    );
   };
 
   const applySelection = (
@@ -1510,18 +1504,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
     setStatusMessage(successMessage);
   };
 
-  const beginPlacement = (toolPreview: PlacementViewportToolPreview, status: string) => {
-    blurActiveTextEntry();
-    closeAddMenu();
-    store.setViewportToolPreview(toolPreview);
-    store.setToolMode("place");
-    setStatusMessage(status);
-  };
-
-  const beginEntityPlacement = (kind: EntityKind, options: { audioAssetId?: string | null } = {}) => {
-    beginPlacement(
+  const beginEntityCreation = (kind: EntityKind, options: { audioAssetId?: string | null } = {}) => {
+    beginCreation(
       {
-        kind: "placement",
+        kind: "create",
         sourcePanelId: activePanelId,
         target: {
           kind: "entity",
@@ -1534,7 +1520,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
   };
 
-  const beginModelInstancePlacement = (assetId: string) => {
+  const beginModelInstanceCreation = (assetId: string) => {
     const asset = editorState.document.assets[assetId];
 
     if (asset === undefined || asset.kind !== "model") {
@@ -1542,9 +1528,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
       return;
     }
 
-    beginPlacement(
+    beginCreation(
       {
-        kind: "placement",
+        kind: "create",
         sourcePanelId: activePanelId,
         target: {
           kind: "model-instance",
@@ -1556,10 +1542,24 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
   };
 
-  const handleCommitPlacement = (placementPreview: PlacementViewportToolPreview) => {
+  const handleCommitCreation = (creationPreview: CreationViewportToolPreview) => {
     try {
-      if (placementPreview.target.kind === "model-instance") {
-        const asset = editorState.document.assets[placementPreview.target.assetId];
+      if (creationPreview.target.kind === "box-brush") {
+        const center = creationPreview.center === null ? undefined : creationPreview.center;
+
+        store.executeCommand(
+          createCreateBoxBrushCommand(center === undefined ? {} : { center })
+        );
+        setStatusMessage(
+          center === undefined
+            ? `Created a box brush snapped to the ${DEFAULT_GRID_SIZE}m grid.`
+            : `Created a box brush at snapped center ${formatVec3(center)}.`
+        );
+        return;
+      }
+
+      if (creationPreview.target.kind === "model-instance") {
+        const asset = editorState.document.assets[creationPreview.target.assetId];
 
         if (asset === undefined || asset.kind !== "model") {
           setStatusMessage("Select a model asset before placing a model instance.");
@@ -1569,7 +1569,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
         const nextModelInstance = createModelInstance({
           assetId: asset.id,
           position:
-            placementPreview.center === null ? createModelInstancePlacementPosition(asset, null) : placementPreview.center,
+            creationPreview.center === null ? createModelInstancePlacementPosition(asset, null) : creationPreview.center,
           rotationDegrees: DEFAULT_MODEL_INSTANCE_ROTATION_DEGREES,
           scale: DEFAULT_MODEL_INSTANCE_SCALE
         });
@@ -1584,9 +1584,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
         return;
       }
 
-      const position = placementPreview.center ?? DEFAULT_ENTITY_POSITION;
+      const position = creationPreview.center ?? DEFAULT_ENTITY_POSITION;
 
-      switch (placementPreview.target.entityKind) {
+      switch (creationPreview.target.entityKind) {
         case "pointLight":
           store.executeCommand(
             createUpsertEntityCommand({
@@ -1621,7 +1621,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
           setStatusMessage("Placed Player Start.");
           return;
         case "soundEmitter": {
-          const placedAudioAssetId = placementPreview.target.audioAssetId ?? audioAssetList[0]?.id ?? null;
+          const placedAudioAssetId = creationPreview.target.audioAssetId ?? audioAssetList[0]?.id ?? null;
 
           store.executeCommand(
             createUpsertEntityCommand({
