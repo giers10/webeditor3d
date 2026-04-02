@@ -38,6 +38,7 @@ test("imports a model asset, places an instance, and survives reload", async ({ 
   await page.getByRole("button", { name: "Place instance for tiny-triangle.gltf" }).hover();
   await expect(page.getByTestId("status-asset-hover")).toContainText("Storage key:");
   await page.getByRole("button", { name: "Place instance for tiny-triangle.gltf" }).click();
+  await page.getByTestId("viewport-panel-topLeft").click({ position: { x: 16, y: 16 }, force: true });
   const viewportCanvas = getViewportCanvas(page);
   await viewportCanvas.hover({ position: { x: 92, y: 76 }, force: true });
   await expect(page.getByTestId("viewport-snap-preview-topLeft")).toBeVisible();
