@@ -641,6 +641,14 @@ button:disabled {
   overflow: hidden;
 }
 
+.viewport-panel--single {
+  flex: 1 1 auto;
+}
+
+.viewport-panel--quad {
+  min-height: 0;
+}
+
 .viewport-panel--active {
   border-color: rgba(207, 123, 66, 0.58);
   box-shadow: 0 0 0 1px rgba(207, 123, 66, 0.18), var(--shadow-panel);
