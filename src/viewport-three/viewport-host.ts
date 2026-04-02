@@ -209,7 +209,7 @@ export class ViewportHost {
   private container: HTMLElement | null = null;
   private brushSelectionChangeHandler: ((selection: EditorSelection) => void) | null = null;
   private creationPreviewChangeHandler: ((toolPreview: ViewportToolPreview) => void) | null = null;
-  private creationCommitHandler: ((toolPreview: CreationViewportToolPreview) => void) | null = null;
+  private creationCommitHandler: ((toolPreview: CreationViewportToolPreview) => boolean) | null = null;
   private toolMode: ToolMode = "select";
   private viewMode: ViewportViewMode = "perspective";
   private displayMode: ViewportDisplayMode = "normal";
@@ -317,7 +317,7 @@ export class ViewportHost {
     this.creationPreviewChangeHandler = handler;
   }
 
-  setCreationCommitHandler(handler: ((toolPreview: CreationViewportToolPreview) => void) | null) {
+  setCreationCommitHandler(handler: ((toolPreview: CreationViewportToolPreview) => boolean) | null) {
     this.creationCommitHandler = handler;
   }
 
@@ -1314,7 +1314,12 @@ export class ViewportHost {
       this.creationPreviewChangeHandler?.(nextCreationPreview);
 
       if (previewCenter !== null) {
-        this.creationCommitHandler?.(nextCreationPreview);
+        const committed = this.creationCommitHandler?.(nextCreationPreview) === true;
+
+        if (committed) {
+          this.syncCreationPreview(null);
+          this.creationPreviewChangeHandler?.({ kind: "none" });
+        }
       }
 
       return;
