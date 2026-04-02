@@ -31,7 +31,9 @@ test("first-room workflow covers create, texture, save/load, and run", async ({ 
   await expect(page.getByTestId("status-message")).toContainText("Author a Player Start before running");
   await expect(page.getByTestId("status-run-preflight")).toContainText("Blocked");
 
-  await page.getByTestId("place-player-start").click();
+  await page.getByTestId("outliner-add-button").click();
+  await page.getByTestId("add-menu-entities").click();
+  await page.getByTestId("add-menu-player-start").click();
   await page.getByTestId("player-start-position-x").fill("2");
   await page.getByTestId("player-start-position-x").press("Tab");
   await page.getByTestId("player-start-position-z").fill("-2");

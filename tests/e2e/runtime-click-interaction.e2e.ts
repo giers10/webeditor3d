@@ -20,8 +20,12 @@ test("Interactable click prompt can teleport the player in run mode", async ({ p
   }, "webeditor3d.scene-document-draft");
   await page.reload();
 
-  await page.getByTestId("place-player-start").click();
-  await page.getByTestId("add-entity-interactable").click();
+  await page.getByTestId("outliner-add-button").click();
+  await page.getByTestId("add-menu-entities").click();
+  await page.getByTestId("add-menu-player-start").click();
+  await page.getByTestId("outliner-add-button").click();
+  await page.getByTestId("add-menu-entities").click();
+  await page.getByTestId("add-menu-interactable").click();
   await page.getByTestId("interactable-position-y").fill("1");
   await page.getByTestId("interactable-position-y").press("Tab");
   await page.getByTestId("interactable-position-z").fill("1");
@@ -31,7 +35,9 @@ test("Interactable click prompt can teleport the player in run mode", async ({ p
   await page.getByTestId("interactable-prompt").fill("Use Console");
   await page.getByTestId("interactable-prompt").press("Tab");
 
-  await page.getByTestId("add-entity-teleportTarget").click();
+  await page.getByTestId("outliner-add-button").click();
+  await page.getByTestId("add-menu-entities").click();
+  await page.getByTestId("add-menu-teleport-target").click();
   await page.getByTestId("teleportTarget-position-x").fill("6");
   await page.getByTestId("teleportTarget-position-x").press("Tab");
 

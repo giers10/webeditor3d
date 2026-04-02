@@ -31,12 +31,16 @@ test("local lights and background images persist through editor and runner flows
   await expect(page.getByTestId("world-background-asset-value")).toContainText("skybox-panorama.svg");
   await expect(page.getByTestId("viewport-canvas-topLeft")).toHaveCSS("background-image", /url/);
 
-  await page.getByTestId("add-entity-pointLight").click();
+  await page.getByTestId("outliner-add-button").click();
+  await page.getByTestId("add-menu-lights").click();
+  await page.getByTestId("add-menu-point-light").click();
   await expect(page.getByTestId("point-light-distance")).toHaveValue("8");
   await page.getByTestId("point-light-distance").fill("12");
   await page.getByTestId("point-light-distance").press("Tab");
 
-  await page.getByTestId("add-entity-spotLight").click();
+  await page.getByTestId("outliner-add-button").click();
+  await page.getByTestId("add-menu-lights").click();
+  await page.getByTestId("add-menu-spot-light").click();
   await expect(page.getByTestId("spot-light-angle")).toHaveValue("35");
   await page.getByTestId("spot-light-angle").fill("48");
   await page.getByTestId("spot-light-angle").press("Tab");

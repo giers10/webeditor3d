@@ -20,9 +20,15 @@ test("Trigger Volume enter can teleport the player to a Teleport Target", async 
   }, "webeditor3d.scene-document-draft");
   await page.reload();
 
-  await page.getByTestId("place-player-start").click();
-  await page.getByTestId("add-entity-triggerVolume").click();
-  await page.getByTestId("add-entity-teleportTarget").click();
+  await page.getByTestId("outliner-add-button").click();
+  await page.getByTestId("add-menu-entities").click();
+  await page.getByTestId("add-menu-player-start").click();
+  await page.getByTestId("outliner-add-button").click();
+  await page.getByTestId("add-menu-entities").click();
+  await page.getByTestId("add-menu-trigger-volume").click();
+  await page.getByTestId("outliner-add-button").click();
+  await page.getByTestId("add-menu-entities").click();
+  await page.getByTestId("add-menu-teleport-target").click();
 
   await page.getByTestId("teleportTarget-position-x").fill("6");
   await page.getByTestId("teleportTarget-position-x").press("Tab");

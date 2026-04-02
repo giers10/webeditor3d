@@ -27,7 +27,7 @@ test("imports a draco-compressed glb asset, places an instance, and survives rel
   await expect(page.getByTestId("asset-list").getByText("tiny-triangle-draco.glb", { exact: true })).toBeVisible();
   await expect(page.getByTestId("outliner-model-instance-list").getByRole("button")).toHaveCount(1);
 
-  await page.getByRole("button", { name: "Place Instance" }).click();
+  await page.getByRole("button", { name: /tiny-triangle-draco\.glb/i }).click();
   await expect(page.getByTestId("outliner-model-instance-list").getByRole("button")).toHaveCount(2);
 
   await page.getByRole("button", { name: "Save Draft" }).click();

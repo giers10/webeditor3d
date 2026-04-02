@@ -20,7 +20,9 @@ test("user can place PlayerStart, enter run mode, and spawn from it", async ({ p
   }, "webeditor3d.scene-document-draft");
   await page.reload();
 
-  await page.getByTestId("place-player-start").click();
+  await page.getByTestId("outliner-add-button").click();
+  await page.getByTestId("add-menu-entities").click();
+  await page.getByTestId("add-menu-player-start").click();
   await page.getByTestId("player-start-position-x").fill("4");
   await page.getByTestId("player-start-position-x").press("Tab");
   await page.getByTestId("player-start-position-z").fill("-2");
