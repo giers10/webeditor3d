@@ -38,7 +38,7 @@ test("imports a draco-compressed glb asset, places an instance, and survives rel
   await viewportCanvas.click({ position: { x: 84, y: 88 } });
   await expect(page.getByTestId("outliner-model-instance-list").getByRole("button")).toHaveCount(2);
   const snapshot = await getEditorStoreSnapshot(page);
-  const selectedModelInstanceId = snapshot.selection.kind === "modelInstances" ? snapshot.selection.ids[0] ?? null : null;
+  const selectedModelInstanceId = snapshot.selection.kind === "modelInstances" ? snapshot.selection.ids?.[0] ?? null : null;
 
   expect(selectedModelInstanceId).not.toBeNull();
 
