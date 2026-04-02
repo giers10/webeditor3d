@@ -1,5 +1,7 @@
 import type { Page } from "@playwright/test";
 
+import type { ViewportPlacementPreviewTarget } from "../../src/viewport-three/viewport-transient-state";
+
 export const DEFAULT_VIEWPORT_PANEL_ID = "topLeft";
 
 export function getViewportPanel(page: Page, panelId: string = DEFAULT_VIEWPORT_PANEL_ID) {
@@ -20,6 +22,7 @@ interface EditorStoreSnapshot {
     ids?: string[];
   };
   document: {
+    assets: Record<string, { id: string; kind: string; sourceName: string }>;
     modelInstances: Record<string, { position: { x: number; y: number; z: number } }>;
     entities: Record<string, { position: { x: number; y: number; z: number } }>;
   };
@@ -47,6 +50,43 @@ export async function getEditorStoreSnapshot(page: Page): Promise<EditorStoreSna
 export async function getViewportToolPreview(page: Page): Promise<EditorStoreSnapshot["viewportTransientState"]["toolPreview"]> {
   const snapshot = await getEditorStoreSnapshot(page);
   return snapshot.viewportTransientState.toolPreview;
+}
+
+export async function setViewportPlacementPreview(
+  page: Page,
+  panelId: string,
+  target: ViewportPlacementPreviewTarget,
+  center: { x: number; y: number; z: number } | null
+) {
+  await page.evaluate(
+    ({ sourcePanelId, nextTarget, nextCenter }) => {
+      const store = (window as Window & {
+        __webeditor3dEditorStore?: {
+          setViewportToolPreview(preview: { kind: "none" } | { kind: "placement"; sourcePanelId: string; target: ViewportPlacementPreviewTarget; center: { x: number; y: number; z: number } | null }): void;
+        };
+      }).__webeditor3dEditorStore;
+
+      if (store === undefined) {
+        throw new Error("Editor store debug hook is unavailable.");
+      }
+
+      store.setViewportToolPreview(
+        nextCenter === null
+          ? { kind: "none" }
+          : {
+              kind: "placement",
+              sourcePanelId,
+              target: nextTarget,
+              center: nextCenter
+            }
+      );
+    },
+    {
+      sourcePanelId: panelId,
+      nextTarget: target,
+      nextCenter: center
+    }
+  );
 }
 
 export async function clickViewport(page: Page, panelId: string = DEFAULT_VIEWPORT_PANEL_ID) {

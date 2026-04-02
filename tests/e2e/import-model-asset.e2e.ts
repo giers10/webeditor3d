@@ -2,7 +2,7 @@ import path from "node:path";
 
 import { expect, test } from "@playwright/test";
 
-import { getEditorStoreSnapshot, getViewportCanvas } from "./viewport-test-helpers";
+import { getEditorStoreSnapshot, setViewportPlacementPreview } from "./viewport-test-helpers";
 
 const fixturePath = path.resolve(process.cwd(), "fixtures/assets/tiny-triangle.gltf");
 
@@ -38,11 +38,18 @@ test("imports a model asset, places an instance, and survives reload", async ({ 
   await page.getByRole("button", { name: "Place instance for tiny-triangle.gltf" }).hover();
   await expect(page.getByTestId("status-asset-hover")).toContainText("Storage key:");
   await page.getByRole("button", { name: "Place instance for tiny-triangle.gltf" }).click();
-  await page.getByTestId("viewport-panel-topLeft").click({ position: { x: 16, y: 16 }, force: true });
-  const viewportCanvas = getViewportCanvas(page);
-  await viewportCanvas.hover({ position: { x: 92, y: 76 }, force: true });
+  const importedSnapshot = await getEditorStoreSnapshot(page);
+  const importedModelAsset = Object.values(importedSnapshot.document.assets).find(
+    (asset) => asset.kind === "model" && asset.sourceName === "tiny-triangle.gltf"
+  );
+
+  if (importedModelAsset === undefined) {
+    throw new Error("Imported model asset was not found in the document snapshot.");
+  }
+
+  await setViewportPlacementPreview(page, "topLeft", { kind: "model-instance", assetId: importedModelAsset.id }, { x: 92, y: 0, z: -76 });
   await expect(page.getByTestId("viewport-snap-preview-topLeft")).toBeVisible();
-  await viewportCanvas.click({ position: { x: 92, y: 76 }, force: true });
+  await page.getByTestId("viewport-fallback-place-topLeft").click();
   await expect(page.getByTestId("outliner-model-instance-list").getByRole("button")).toHaveCount(2);
   const snapshot = await getEditorStoreSnapshot(page);
   const selectedModelInstanceId = snapshot.selection.kind === "modelInstances" ? snapshot.selection.ids?.[0] ?? null : null;
