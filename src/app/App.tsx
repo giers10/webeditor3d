@@ -4310,7 +4310,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                             step="0.1"
                             value={pointLightIntensityDraft}
                             onChange={(event) => setPointLightIntensityDraft(event.currentTarget.value)}
-                            onBlur={applyPointLightChange}
+                            onBlur={() => applyPointLightChange()}
                             onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPointLightChange)}
                             onKeyUp={(event) => handleNumberInputKeyUp(event, applyPointLightChange)}
                             onPointerUp={(event) => handleNumberInputPointerUp(event, applyPointLightChange)}
@@ -4331,7 +4331,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           step="0.1"
                           value={pointLightDistanceDraft}
                           onChange={(event) => setPointLightDistanceDraft(event.currentTarget.value)}
-                          onBlur={applyPointLightChange}
+                          onBlur={() => applyPointLightChange()}
                           onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPointLightChange)}
                           onKeyUp={(event) => handleNumberInputKeyUp(event, applyPointLightChange)}
                           onPointerUp={(event) => handleNumberInputPointerUp(event, applyPointLightChange)}
@@ -4370,7 +4370,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                             step="0.1"
                             value={spotLightIntensityDraft}
                             onChange={(event) => setSpotLightIntensityDraft(event.currentTarget.value)}
-                            onBlur={applySpotLightChange}
+                            onBlur={() => applySpotLightChange()}
                             onKeyDown={(event) => handleDraftVectorKeyDown(event, applySpotLightChange)}
                             onKeyUp={(event) => handleNumberInputKeyUp(event, applySpotLightChange)}
                             onPointerUp={(event) => handleNumberInputPointerUp(event, applySpotLightChange)}
@@ -4392,7 +4392,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                             step="0.1"
                             value={spotLightDistanceDraft}
                             onChange={(event) => setSpotLightDistanceDraft(event.currentTarget.value)}
-                            onBlur={applySpotLightChange}
+                            onBlur={() => applySpotLightChange()}
                             onKeyDown={(event) => handleDraftVectorKeyDown(event, applySpotLightChange)}
                             onKeyUp={(event) => handleNumberInputKeyUp(event, applySpotLightChange)}
                             onPointerUp={(event) => handleNumberInputPointerUp(event, applySpotLightChange)}
@@ -4409,7 +4409,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                             step="1"
                             value={spotLightAngleDraft}
                             onChange={(event) => setSpotLightAngleDraft(event.currentTarget.value)}
-                            onBlur={applySpotLightChange}
+                            onBlur={() => applySpotLightChange()}
                             onKeyDown={(event) => handleDraftVectorKeyDown(event, applySpotLightChange)}
                             onKeyUp={(event) => handleNumberInputKeyUp(event, applySpotLightChange)}
                             onPointerUp={(event) => handleNumberInputPointerUp(event, applySpotLightChange)}
@@ -4433,7 +4433,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               const nextValue = event.currentTarget.value;
                               setSpotLightDirectionDraft((draft) => ({ ...draft, x: nextValue }));
                             }}
-                            onBlur={applySpotLightChange}
+                            onBlur={() => applySpotLightChange()}
                             onKeyDown={(event) => handleDraftVectorKeyDown(event, applySpotLightChange)}
                             onKeyUp={(event) => handleNumberInputKeyUp(event, applySpotLightChange)}
                             onPointerUp={(event) => handleNumberInputPointerUp(event, applySpotLightChange)}
@@ -4451,7 +4451,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               const nextValue = event.currentTarget.value;
                               setSpotLightDirectionDraft((draft) => ({ ...draft, y: nextValue }));
                             }}
-                            onBlur={applySpotLightChange}
+                            onBlur={() => applySpotLightChange()}
                             onKeyDown={(event) => handleDraftVectorKeyDown(event, applySpotLightChange)}
                             onKeyUp={(event) => handleNumberInputKeyUp(event, applySpotLightChange)}
                             onPointerUp={(event) => handleNumberInputPointerUp(event, applySpotLightChange)}
@@ -4469,7 +4469,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               const nextValue = event.currentTarget.value;
                               setSpotLightDirectionDraft((draft) => ({ ...draft, z: nextValue }));
                             }}
-                            onBlur={applySpotLightChange}
+                            onBlur={() => applySpotLightChange()}
                             onKeyDown={(event) => handleDraftVectorKeyDown(event, applySpotLightChange)}
                             onKeyUp={(event) => handleNumberInputKeyUp(event, applySpotLightChange)}
                             onPointerUp={(event) => handleNumberInputPointerUp(event, applySpotLightChange)}
@@ -4553,7 +4553,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           step="0.1"
                           value={soundEmitterVolumeDraft}
                           onChange={(event) => setSoundEmitterVolumeDraft(event.currentTarget.value)}
-                          onBlur={applySoundEmitterChange}
+                          onBlur={() => applySoundEmitterChange()}
                           onKeyDown={(event) => handleDraftVectorKeyDown(event, applySoundEmitterChange)}
                           onKeyUp={(event) => handleNumberInputKeyUp(event, applySoundEmitterChange)}
                           onPointerUp={(event) => handleNumberInputPointerUp(event, applySoundEmitterChange)}
@@ -4574,7 +4574,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                             step="0.1"
                             value={soundEmitterRefDistanceDraft}
                             onChange={(event) => setSoundEmitterRefDistanceDraft(event.currentTarget.value)}
-                            onBlur={applySoundEmitterChange}
+                            onBlur={() => applySoundEmitterChange()}
                             onKeyDown={(event) => handleDraftVectorKeyDown(event, applySoundEmitterChange)}
                             onKeyUp={(event) => handleNumberInputKeyUp(event, applySoundEmitterChange)}
                             onPointerUp={(event) => handleNumberInputPointerUp(event, applySoundEmitterChange)}
@@ -4590,7 +4590,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                             step="0.1"
                             value={soundEmitterMaxDistanceDraft}
                             onChange={(event) => setSoundEmitterMaxDistanceDraft(event.currentTarget.value)}
-                            onBlur={applySoundEmitterChange}
+                            onBlur={() => applySoundEmitterChange()}
                             onKeyDown={(event) => handleDraftVectorKeyDown(event, applySoundEmitterChange)}
                             onKeyUp={(event) => handleNumberInputKeyUp(event, applySoundEmitterChange)}
                             onPointerUp={(event) => handleNumberInputPointerUp(event, applySoundEmitterChange)}
@@ -4745,7 +4745,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                             step="0.1"
                             value={interactableRadiusDraft}
                             onChange={(event) => setInteractableRadiusDraft(event.currentTarget.value)}
-                            onBlur={applyInteractableChange}
+                            onBlur={() => applyInteractableChange()}
                             onKeyDown={(event) => handleDraftVectorKeyDown(event, applyInteractableChange)}
                             onKeyUp={(event) => handleNumberInputKeyUp(event, applyInteractableChange)}
                             onPointerUp={(event) => handleNumberInputPointerUp(event, applyInteractableChange)}
@@ -4778,7 +4778,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           type="text"
                           value={interactablePromptDraft}
                           onChange={(event) => setInteractablePromptDraft(event.currentTarget.value)}
-                          onBlur={applyInteractableChange}
+                          onBlur={() => applyInteractableChange()}
                           onKeyDown={(event) => {
                             if (event.key === "Enter") {
                               applyInteractableChange();
