@@ -1288,6 +1288,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const requestViewportFocus = (selection: EditorSelection, status?: string) => {
     setFocusRequest((current) => ({
       id: current.id + 1,
+      panelId: activePanelId,
       selection
     }));
 
@@ -1296,14 +1297,44 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
-  const handleSetViewportViewMode = (nextViewMode: ViewportViewMode) => {
-    if (editorState.viewportViewMode === nextViewMode) {
+  const handleSetViewportLayoutMode = (nextLayoutMode: ViewportLayoutMode) => {
+    if (editorState.viewportLayoutMode === nextLayoutMode) {
       return;
     }
 
     blurActiveTextEntry();
-    store.setViewportViewMode(nextViewMode);
-    setStatusMessage(`Switched the viewport to ${getViewportViewModeLabel(nextViewMode)} view.`);
+    store.setViewportLayoutMode(nextLayoutMode);
+    setStatusMessage(`Switched the viewport to ${getViewportLayoutModeLabel(nextLayoutMode)}.`);
+  };
+
+  const handleActivateViewportPanel = (panelId: ViewportPanelId) => {
+    if (editorState.activeViewportPanelId === panelId) {
+      return;
+    }
+
+    blurActiveTextEntry();
+    store.setActiveViewportPanel(panelId);
+    setStatusMessage(`Activated the ${getViewportPanelLabel(panelId)} viewport panel.`);
+  };
+
+  const handleSetViewportPanelViewMode = (panelId: ViewportPanelId, nextViewMode: ViewportViewMode) => {
+    if (editorState.viewportPanels[panelId].viewMode === nextViewMode) {
+      return;
+    }
+
+    blurActiveTextEntry();
+    store.setViewportPanelViewMode(panelId, nextViewMode);
+    setStatusMessage(`Set the ${getViewportPanelLabel(panelId)} panel to ${getViewportViewModeLabel(nextViewMode)} view.`);
+  };
+
+  const handleSetViewportPanelDisplayMode = (panelId: ViewportPanelId, nextDisplayMode: ViewportDisplayMode) => {
+    if (editorState.viewportPanels[panelId].displayMode === nextDisplayMode) {
+      return;
+    }
+
+    blurActiveTextEntry();
+    store.setViewportPanelDisplayMode(panelId, nextDisplayMode);
+    setStatusMessage(`Set the ${getViewportPanelLabel(panelId)} panel to ${getViewportDisplayModeLabel(nextDisplayMode)} display.`);
   };
 
   const handleCreateBoxBrush = (center?: Vec3) => {
