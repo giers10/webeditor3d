@@ -192,7 +192,7 @@ function readOptionalAllowedValue<T extends string>(value: unknown, label: strin
     throw new Error(`${label} must be a supported value.`);
   }
 
-  return stringValue;
+  return stringValue as T;
 }
 
 function readAdvancedRenderingSettings(value: unknown): AdvancedRenderingSettings {
