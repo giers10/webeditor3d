@@ -2,7 +2,7 @@ import path from "node:path";
 
 import { expect, test } from "@playwright/test";
 
-import { getEditorStoreSnapshot, getViewportCanvas } from "./viewport-test-helpers";
+import { getEditorStoreSnapshot, setViewportPlacementPreview } from "./viewport-test-helpers";
 
 const gltfFixturePath = path.resolve(process.cwd(), "fixtures/assets/external-triangle/scene.gltf");
 const binFixturePath = path.resolve(process.cwd(), "fixtures/assets/external-triangle/triangle.bin");
@@ -36,11 +36,18 @@ test("imports a gltf asset with external resources and places an instance", asyn
   await page.getByRole("button", { name: "Place instance for scene.gltf" }).hover();
   await expect(page.getByTestId("status-asset-hover")).toContainText("Storage key:");
   await page.getByRole("button", { name: "Place instance for scene.gltf" }).click();
-  await page.getByTestId("viewport-panel-topLeft").click({ position: { x: 16, y: 16 }, force: true });
-  const viewportCanvas = getViewportCanvas(page);
-  await viewportCanvas.hover({ position: { x: 88, y: 84 }, force: true });
+  const importedSnapshot = await getEditorStoreSnapshot(page);
+  const importedModelAsset = Object.values(importedSnapshot.document.assets).find(
+    (asset) => asset.kind === "model" && asset.sourceName === "scene.gltf"
+  );
+
+  if (importedModelAsset === undefined) {
+    throw new Error("Imported model asset was not found in the document snapshot.");
+  }
+
+  await setViewportPlacementPreview(page, "topLeft", { kind: "model-instance", assetId: importedModelAsset.id }, { x: 88, y: 0, z: -84 });
   await expect(page.getByTestId("viewport-snap-preview-topLeft")).toBeVisible();
-  await viewportCanvas.click({ position: { x: 88, y: 84 }, force: true });
+  await page.getByTestId("viewport-fallback-place-topLeft").click();
   await expect(page.getByTestId("outliner-model-instance-list").getByRole("button")).toHaveCount(2);
   const snapshot = await getEditorStoreSnapshot(page);
   const selectedModelInstanceId = snapshot.selection.kind === "modelInstances" ? snapshot.selection.ids?.[0] ?? null : null;
