@@ -4181,29 +4181,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
         </aside>
 
         <main className={`viewport-region viewport-region--${layoutMode}`} data-testid="viewport-shell">
-          <div className="viewport-region__header">
-            <div className="viewport-region__meta">
-              <div className="viewport-region__title">Viewport</div>
-              <div className="viewport-region__caption">{getViewportCaption(editorState.toolMode, layoutMode)}</div>
-              <div className="viewport-region__active-panel" data-testid="viewport-active-panel">
-                Active panel: {activePanelLabel} ({activePanelDisplaySummary})
-              </div>
-            </div>
-            <div className="viewport-region__layout-toggle" role="group" aria-label="Viewport layout mode">
-              {VIEWPORT_LAYOUT_MODES.map((mode) => (
-                <button
-                  key={mode}
-                  className={`toolbar__button viewport-region__layout-button ${layoutMode === mode ? "viewport-region__layout-button--active" : ""}`}
-                  type="button"
-                  data-testid={`viewport-layout-${mode}`}
-                  aria-pressed={layoutMode === mode}
-                  onClick={() => handleSetViewportLayoutMode(mode)}
-                >
-                  {getViewportLayoutModeLabel(mode)}
-                </button>
-              ))}
-            </div>
-          </div>
           <div className={`viewport-region__panels viewport-region__panels--${layoutMode}`}>
             {VIEWPORT_PANEL_IDS.map((panelId) => (
               <ViewportPanel
