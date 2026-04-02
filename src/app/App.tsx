@@ -717,6 +717,7 @@ function formatAdvancedRenderingToneMappingLabel(mode: AdvancedRenderingToneMapp
 export function App({ store, initialStatusMessage }: AppProps) {
   const editorState = useEditorStoreState(store);
   const brushList = Object.values(editorState.document.brushes);
+  const viewMode = editorState.viewportViewMode;
   const entityList = getEntityInstances(editorState.document.entities);
   const entityDisplayList = getSortedEntityDisplayLabels(editorState.document.entities, editorState.document.assets);
   const primaryPlayerStart = getPrimaryPlayerStartEntity(editorState.document.entities);
@@ -1275,6 +1276,16 @@ export function App({ store, initialStatusMessage }: AppProps) {
     if (status !== undefined) {
       setStatusMessage(status);
     }
+  };
+
+  const handleSetViewportViewMode = (nextViewMode: ViewportViewMode) => {
+    if (editorState.viewportViewMode === nextViewMode) {
+      return;
+    }
+
+    blurActiveTextEntry();
+    store.setViewportViewMode(nextViewMode);
+    setStatusMessage(`Switched the viewport to ${getViewportViewModeLabel(nextViewMode)} view.`);
   };
 
   const handleCreateBoxBrush = (center?: Vec3) => {
