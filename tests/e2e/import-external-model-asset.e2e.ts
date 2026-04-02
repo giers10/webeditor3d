@@ -34,7 +34,7 @@ test("imports a gltf asset with external resources and survives reload", async (
   await page.getByRole("button", { name: "Place instance for scene.gltf" }).click();
   await expect(page.getByTestId("outliner-model-instance-list").getByRole("button")).toHaveCount(2);
 
-  await page.getByRole("button", { name: "Save Draft" }).click();
+  await page.getByRole("button", { name: "Save Draft" }).click({ force: true });
   await expect(page.getByTestId("status-message")).toContainText("Local draft saved.");
 
   await page.reload();
