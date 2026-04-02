@@ -3600,6 +3600,31 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const addMenuItems: HierarchicalMenuItem[] = [
     {
       kind: "group",
+      label: "Import",
+      testId: "add-menu-import",
+      children: [
+        {
+          kind: "action",
+          label: "3D Model (GLB/GLTF)",
+          testId: "import-menu-model",
+          onSelect: handleImportModelButtonClick
+        },
+        {
+          kind: "action",
+          label: "Environment",
+          testId: "import-menu-environment",
+          onSelect: handleImportBackgroundImageButtonClick
+        },
+        {
+          kind: "action",
+          label: "Audio",
+          testId: "import-menu-audio",
+          onSelect: handleImportAudioButtonClick
+        }
+      ]
+    },
+    {
+      kind: "group",
       label: "Entities",
       testId: "add-menu-entities",
       children: [
@@ -3607,31 +3632,31 @@ export function App({ store, initialStatusMessage }: AppProps) {
           kind: "action",
           label: "Player Start",
           testId: "add-menu-player-start",
-          onSelect: () => handlePlaceEntity("playerStart")
+          onSelect: () => beginEntityPlacement("playerStart")
         },
         {
           kind: "action",
           label: "Sound Emitter",
           testId: "add-menu-sound-emitter",
-          onSelect: () => handlePlaceEntity("soundEmitter")
+          onSelect: () => beginEntityPlacement("soundEmitter", { audioAssetId: audioAssetList[0]?.id ?? null })
         },
         {
           kind: "action",
           label: "Trigger Volume",
           testId: "add-menu-trigger-volume",
-          onSelect: () => handlePlaceEntity("triggerVolume")
+          onSelect: () => beginEntityPlacement("triggerVolume")
         },
         {
           kind: "action",
           label: "Teleport Target",
           testId: "add-menu-teleport-target",
-          onSelect: () => handlePlaceEntity("teleportTarget")
+          onSelect: () => beginEntityPlacement("teleportTarget")
         },
         {
           kind: "action",
           label: "Interactable",
           testId: "add-menu-interactable",
-          onSelect: () => handlePlaceEntity("interactable")
+          onSelect: () => beginEntityPlacement("interactable")
         }
       ]
     },
@@ -3644,13 +3669,13 @@ export function App({ store, initialStatusMessage }: AppProps) {
           kind: "action",
           label: "Point Light",
           testId: "add-menu-point-light",
-          onSelect: () => handlePlaceEntity("pointLight")
+          onSelect: () => beginEntityPlacement("pointLight")
         },
         {
           kind: "action",
           label: "Spot Light",
           testId: "add-menu-spot-light",
-          onSelect: () => handlePlaceEntity("spotLight")
+          onSelect: () => beginEntityPlacement("spotLight")
         }
       ]
     }
