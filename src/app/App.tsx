@@ -3610,18 +3610,21 @@ export function App({ store, initialStatusMessage }: AppProps) {
           kind: "action",
           label: "3D Model (GLB/GLTF)",
           testId: "import-menu-model",
+          disabled: !projectAssetStorageReady || projectAssetStorage === null,
           onSelect: handleImportModelButtonClick
         },
         {
           kind: "action",
           label: "Environment",
           testId: "import-menu-environment",
+          disabled: !projectAssetStorageReady || projectAssetStorage === null,
           onSelect: handleImportBackgroundImageButtonClick
         },
         {
           kind: "action",
           label: "Audio",
           testId: "import-menu-audio",
+          disabled: !projectAssetStorageReady || projectAssetStorage === null,
           onSelect: handleImportAudioButtonClick
         }
       ]
