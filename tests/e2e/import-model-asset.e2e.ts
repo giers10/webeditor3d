@@ -44,7 +44,7 @@ test("imports a model asset, places an instance, and survives reload", async ({ 
   await viewportCanvas.click({ position: { x: 92, y: 76 } });
   await expect(page.getByTestId("outliner-model-instance-list").getByRole("button")).toHaveCount(2);
   const snapshot = await getEditorStoreSnapshot(page);
-  const selectedModelInstanceId = snapshot.selection.kind === "modelInstances" ? snapshot.selection.ids[0] ?? null : null;
+  const selectedModelInstanceId = snapshot.selection.kind === "modelInstances" ? snapshot.selection.ids?.[0] ?? null : null;
 
   expect(selectedModelInstanceId).not.toBeNull();
 
