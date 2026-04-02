@@ -730,7 +730,11 @@ function formatAdvancedRenderingToneMappingLabel(mode: AdvancedRenderingToneMapp
 export function App({ store, initialStatusMessage }: AppProps) {
   const editorState = useEditorStoreState(store);
   const brushList = Object.values(editorState.document.brushes);
-  const viewMode = editorState.viewportViewMode;
+  const layoutMode = editorState.viewportLayoutMode;
+  const activePanelId = editorState.activeViewportPanelId;
+  const activePanelState = editorState.viewportPanels[activePanelId];
+  const activePanelLabel = getViewportPanelLabel(activePanelId);
+  const activePanelDisplaySummary = `${getViewportViewModeLabel(activePanelState.viewMode)} / ${getViewportDisplayModeLabel(activePanelState.displayMode)}`;
   const entityList = getEntityInstances(editorState.document.entities);
   const entityDisplayList = getSortedEntityDisplayLabels(editorState.document.entities, editorState.document.assets);
   const primaryPlayerStart = getPrimaryPlayerStartEntity(editorState.document.entities);
@@ -875,8 +879,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [loadedModelAssets, setLoadedModelAssets] = useState<Record<string, LoadedModelAsset>>({});
   const [loadedImageAssets, setLoadedImageAssets] = useState<Record<string, LoadedImageAsset>>({});
   const [loadedAudioAssets, setLoadedAudioAssets] = useState<Record<string, LoadedAudioAsset>>({});
-  const [focusRequest, setFocusRequest] = useState<{ id: number; selection: EditorSelection }>({
+  const [focusRequest, setFocusRequest] = useState<{ id: number; selection: EditorSelection; panelId: ViewportPanelId }>({
     id: 0,
+    panelId: "topLeft",
     selection: {
       kind: "none"
     }
