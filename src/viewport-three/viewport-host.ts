@@ -1157,8 +1157,10 @@ export class ViewportHost {
       return;
     }
 
-    this.camera.aspect = width / height;
-    this.camera.updateProjectionMatrix();
+    this.perspectiveCamera.aspect = width / height;
+    this.perspectiveCamera.updateProjectionMatrix();
+    this.updateOrthographicCameraFrustum();
+    this.orthographicCamera.updateProjectionMatrix();
     this.renderer.setSize(width, height, false);
     this.advancedRenderingComposer?.setSize(width, height);
   }
@@ -1198,7 +1200,7 @@ export class ViewportHost {
     this.pointer.x = ((event.clientX - bounds.left) / bounds.width) * 2 - 1;
     this.pointer.y = -(((event.clientY - bounds.top) / bounds.height) * 2 - 1);
 
-    this.raycaster.setFromCamera(this.pointer, this.camera);
+    this.raycaster.setFromCamera(this.pointer, this.getActiveCamera());
 
     const hits = this.raycaster.intersectObjects(
       [
@@ -1321,10 +1323,10 @@ export class ViewportHost {
         y: event.clientY
       };
 
-      if (event.shiftKey) {
-        this.panCamera(deltaX, deltaY);
-      } else {
+      if (this.viewMode === "perspective" && !event.shiftKey) {
         this.orbitCamera(deltaX, deltaY);
+      } else {
+        this.panCamera(deltaX, deltaY);
       }
 
       return;
@@ -1364,11 +1366,21 @@ export class ViewportHost {
 
   private handleWheel = (event: WheelEvent) => {
     event.preventDefault();
-    this.cameraSpherical.radius = Math.min(
-      MAX_CAMERA_DISTANCE,
-      Math.max(MIN_CAMERA_DISTANCE, this.cameraSpherical.radius * Math.exp(event.deltaY * ZOOM_SPEED))
+
+    if (this.viewMode === "perspective") {
+      this.cameraSpherical.radius = Math.min(
+        MAX_CAMERA_DISTANCE,
+        Math.max(MIN_CAMERA_DISTANCE, this.cameraSpherical.radius * Math.exp(event.deltaY * ZOOM_SPEED))
+      );
+      this.applyPerspectiveCameraPose();
+      return;
+    }
+
+    this.orthographicCamera.zoom = Math.min(
+      MAX_ORTHOGRAPHIC_ZOOM,
+      Math.max(MIN_ORTHOGRAPHIC_ZOOM, this.orthographicCamera.zoom * Math.exp(-event.deltaY * ZOOM_SPEED))
     );
-    this.applyCameraOrbitPose();
+    this.orthographicCamera.updateProjectionMatrix();
   };
 
   private handleAuxClick = (event: MouseEvent) => {
@@ -1406,18 +1418,35 @@ export class ViewportHost {
 
     const width = Math.max(1, this.container.clientWidth);
     const height = Math.max(1, this.container.clientHeight);
-    const visibleHeight = 2 * Math.tan((this.camera.fov * Math.PI) / 360) * this.cameraSpherical.radius;
-    const visibleWidth = visibleHeight * Math.max(this.camera.aspect, 0.0001);
 
-    this.camera.getWorldDirection(this.cameraForward);
-    this.cameraRight.crossVectors(this.cameraForward, this.camera.up).normalize();
+    if (this.viewMode === "perspective") {
+      const visibleHeight = 2 * Math.tan((this.perspectiveCamera.fov * Math.PI) / 360) * this.cameraSpherical.radius;
+      const visibleWidth = visibleHeight * Math.max(this.perspectiveCamera.aspect, 0.0001);
+
+      this.perspectiveCamera.getWorldDirection(this.cameraForward);
+      this.cameraRight.crossVectors(this.cameraForward, this.perspectiveCamera.up).normalize();
+      this.cameraUp.crossVectors(this.cameraRight, this.cameraForward).normalize();
+
+      this.cameraTarget
+        .addScaledVector(this.cameraRight, (-deltaX / width) * visibleWidth)
+        .addScaledVector(this.cameraUp, (deltaY / height) * visibleHeight);
+
+      this.applyPerspectiveCameraPose();
+      return;
+    }
+
+    const visibleHeight = ORTHOGRAPHIC_FRUSTUM_HEIGHT / this.orthographicCamera.zoom;
+    const visibleWidth = (this.orthographicCamera.right - this.orthographicCamera.left) / this.orthographicCamera.zoom;
+
+    this.orthographicCamera.getWorldDirection(this.cameraForward);
+    this.cameraRight.crossVectors(this.cameraForward, this.orthographicCamera.up).normalize();
     this.cameraUp.crossVectors(this.cameraRight, this.cameraForward).normalize();
 
     this.cameraTarget
       .addScaledVector(this.cameraRight, (-deltaX / width) * visibleWidth)
       .addScaledVector(this.cameraUp, (deltaY / height) * visibleHeight);
 
-    this.applyCameraOrbitPose();
+    this.applyOrthographicCameraPose();
   }
 
   private getBoxCreatePreviewCenter(event: PointerEvent): Vec3 | null {
@@ -1429,17 +1458,34 @@ export class ViewportHost {
 
     this.pointer.x = ((event.clientX - bounds.left) / bounds.width) * 2 - 1;
     this.pointer.y = -(((event.clientY - bounds.top) / bounds.height) * 2 - 1);
-    this.raycaster.setFromCamera(this.pointer, this.camera);
 
-    if (this.raycaster.ray.intersectPlane(this.boxCreatePlane, this.boxCreateIntersection) === null) {
+    this.raycaster.setFromCamera(this.pointer, this.getActiveCamera());
+
+    if (this.raycaster.ray.intersectPlane(this.getBoxCreatePlane(), this.boxCreateIntersection) === null) {
       return null;
     }
 
-    return {
-      x: snapValueToGrid(this.boxCreateIntersection.x, DEFAULT_GRID_SIZE),
-      y: DEFAULT_BOX_BRUSH_SIZE.y * 0.5,
-      z: snapValueToGrid(this.boxCreateIntersection.z, DEFAULT_GRID_SIZE)
-    };
+    switch (this.viewMode) {
+      case "perspective":
+      case "top":
+        return {
+          x: snapValueToGrid(this.boxCreateIntersection.x, DEFAULT_GRID_SIZE),
+          y: DEFAULT_BOX_BRUSH_SIZE.y * 0.5,
+          z: snapValueToGrid(this.boxCreateIntersection.z, DEFAULT_GRID_SIZE)
+        };
+      case "front":
+        return {
+          x: snapValueToGrid(this.boxCreateIntersection.x, DEFAULT_GRID_SIZE),
+          y: snapValueToGrid(this.boxCreateIntersection.y, DEFAULT_GRID_SIZE),
+          z: DEFAULT_BOX_BRUSH_SIZE.z * 0.5
+        };
+      case "side":
+        return {
+          x: DEFAULT_BOX_BRUSH_SIZE.x * 0.5,
+          y: snapValueToGrid(this.boxCreateIntersection.y, DEFAULT_GRID_SIZE),
+          z: snapValueToGrid(this.boxCreateIntersection.z, DEFAULT_GRID_SIZE)
+        };
+    }
   }
 
   private setBoxCreatePreview(center: Vec3 | null) {
@@ -1474,6 +1520,6 @@ export class ViewportHost {
       return;
     }
 
-    this.renderer.render(this.scene, this.camera);
+    this.renderer.render(this.scene, this.getActiveCamera());
   };
 }
