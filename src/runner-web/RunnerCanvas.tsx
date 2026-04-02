@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
+import type { LoadedAudioAsset } from "../assets/audio-assets";
 import type { LoadedModelAsset } from "../assets/gltf-model-import";
 import type { LoadedImageAsset } from "../assets/image-assets";
 import type { ProjectAssetRecord } from "../assets/project-assets";
@@ -14,6 +15,7 @@ interface RunnerCanvasProps {
   projectAssets: Record<string, ProjectAssetRecord>;
   loadedModelAssets: Record<string, LoadedModelAsset>;
   loadedImageAssets: Record<string, LoadedImageAsset>;
+  loadedAudioAssets: Record<string, LoadedAudioAsset>;
   navigationMode: RuntimeNavigationMode;
   onRuntimeMessageChange(message: string | null): void;
   onFirstPersonTelemetryChange(telemetry: FirstPersonTelemetry | null): void;
@@ -25,6 +27,7 @@ export function RunnerCanvas({
   projectAssets,
   loadedModelAssets,
   loadedImageAssets,
+  loadedAudioAssets,
   navigationMode,
   onRuntimeMessageChange,
   onFirstPersonTelemetryChange,
@@ -78,8 +81,8 @@ export function RunnerCanvas({
   }, [onFirstPersonTelemetryChange, onInteractionPromptChange, onRuntimeMessageChange]);
 
   useEffect(() => {
-    hostRef.current?.updateAssets(projectAssets, loadedModelAssets, loadedImageAssets);
-  }, [projectAssets, loadedModelAssets, loadedImageAssets]);
+    hostRef.current?.updateAssets(projectAssets, loadedModelAssets, loadedImageAssets, loadedAudioAssets);
+  }, [projectAssets, loadedModelAssets, loadedImageAssets, loadedAudioAssets]);
 
   useEffect(() => {
     hostRef.current?.loadScene(runtimeScene);

@@ -9,6 +9,7 @@ import {
 } from "react";
 
 import { createCreateBoxBrushCommand } from "../commands/create-box-brush-command";
+import { createImportAudioAssetCommand } from "../commands/import-audio-asset-command";
 import { createImportBackgroundImageAssetCommand } from "../commands/import-background-image-asset-command";
 import { createImportModelAssetCommand } from "../commands/import-model-asset-command";
 import { createMoveBoxBrushCommand } from "../commands/move-box-brush-command";
@@ -45,6 +46,11 @@ import {
   getSortedModelInstanceDisplayLabels
 } from "../assets/model-instance-labels";
 import {
+  importAudioAssetFromFile,
+  loadAudioAssetFromStorage,
+  type LoadedAudioAsset
+} from "../assets/audio-assets";
+import {
   importModelAssetFromFile,
   importModelAssetFromFiles,
   loadModelAssetFromStorage,
@@ -59,7 +65,7 @@ import {
   type ImportedImageAssetResult,
   type LoadedImageAsset
 } from "../assets/image-assets";
-import type { ImageAssetRecord, ModelAssetRecord, ProjectAssetRecord } from "../assets/project-assets";
+import type { AudioAssetRecord, ImageAssetRecord, ModelAssetRecord, ProjectAssetRecord } from "../assets/project-assets";
 import { getProjectAssetKindLabel } from "../assets/project-assets";
 import {
   BOX_FACE_IDS,
@@ -85,7 +91,11 @@ import {
   DEFAULT_POINT_LIGHT_DISTANCE,
   DEFAULT_POINT_LIGHT_INTENSITY,
   DEFAULT_SOUND_EMITTER_GAIN,
+  DEFAULT_SOUND_EMITTER_AUDIO_ASSET_ID,
   DEFAULT_SOUND_EMITTER_RADIUS,
+  DEFAULT_SOUND_EMITTER_VOLUME,
+  DEFAULT_SOUND_EMITTER_REF_DISTANCE,
+  DEFAULT_SOUND_EMITTER_MAX_DISTANCE,
   DEFAULT_TELEPORT_TARGET_YAW_DEGREES,
   DEFAULT_SPOT_LIGHT_ANGLE_DEGREES,
   DEFAULT_SPOT_LIGHT_COLOR_HEX,
@@ -333,6 +343,10 @@ function isImageAsset(asset: ProjectAssetRecord): asset is ImageAssetRecord {
   return asset.kind === "image";
 }
 
+function isAudioAsset(asset: ProjectAssetRecord): asset is AudioAssetRecord {
+  return asset.kind === "audio";
+}
+
 function formatByteLength(byteLength: number): string {
   if (byteLength < 1024) {
     return `${byteLength} B`;
@@ -377,6 +391,17 @@ function formatImageAssetSummary(asset: ImageAssetRecord): string {
   const details = [
     `${asset.metadata.width} x ${asset.metadata.height}`,
     asset.metadata.hasAlpha ? "alpha" : "opaque",
+    formatByteLength(asset.byteLength)
+  ];
+
+  return details.join(" | ");
+}
+
+function formatAudioAssetSummary(asset: AudioAssetRecord): string {
+  const details = [
+    asset.metadata.durationSeconds === null ? "duration unavailable" : `${asset.metadata.durationSeconds.toFixed(2)}s`,
+    asset.metadata.channelCount === null ? "channels unavailable" : `${asset.metadata.channelCount} channel${asset.metadata.channelCount === 1 ? "" : "s"}`,
+    asset.metadata.sampleRateHz === null ? "sample rate unavailable" : `${asset.metadata.sampleRateHz} Hz`,
     formatByteLength(asset.byteLength)
   ];
 
@@ -466,6 +491,10 @@ function getInteractionActionLabel(link: InteractionLink): string {
       return "Play Animation";
     case "stopAnimation":
       return "Stop Animation";
+    case "playSound":
+      return "Play Sound";
+    case "stopSound":
+      return "Stop Sound";
   }
 }
 
