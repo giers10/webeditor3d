@@ -39,7 +39,13 @@ import { createModelInstanceRenderGroup, disposeModelInstance } from "../assets/
 import type { LoadedModelAsset } from "../assets/gltf-model-import";
 import type { LoadedImageAsset } from "../assets/image-assets";
 import type { ProjectAssetRecord } from "../assets/project-assets";
-import { getModelInstances } from "../assets/model-instances";
+import {
+  createModelInstance,
+  createModelInstancePlacementPosition,
+  DEFAULT_MODEL_INSTANCE_ROTATION_DEGREES,
+  DEFAULT_MODEL_INSTANCE_SCALE,
+  getModelInstances
+} from "../assets/model-instances";
 import type { SceneDocument } from "../document/scene-document";
 import {
   areAdvancedRenderingSettingsEqual,
@@ -48,6 +54,16 @@ import {
 } from "../document/world-settings";
 import type { WorldSettings } from "../document/world-settings";
 import {
+  DEFAULT_INTERACTABLE_RADIUS,
+  DEFAULT_PLAYER_START_YAW_DEGREES,
+  DEFAULT_POINT_LIGHT_DISTANCE,
+  DEFAULT_SOUND_EMITTER_MAX_DISTANCE,
+  DEFAULT_SOUND_EMITTER_REF_DISTANCE,
+  DEFAULT_SPOT_LIGHT_ANGLE_DEGREES,
+  DEFAULT_SPOT_LIGHT_DIRECTION,
+  DEFAULT_SPOT_LIGHT_DISTANCE,
+  DEFAULT_TELEPORT_TARGET_YAW_DEGREES,
+  DEFAULT_TRIGGER_VOLUME_SIZE,
   getEntityInstances,
   type EntityInstance,
   type PointLightEntity,
@@ -951,9 +967,9 @@ export class ViewportHost {
     position: Vec3,
     refDistance: number,
     maxDistance: number,
-    selected: boolean
+    selected: boolean,
+    markerColor = selected ? SOUND_EMITTER_SELECTED_COLOR : SOUND_EMITTER_COLOR
   ): EntityRenderObjects {
-    const markerColor = selected ? SOUND_EMITTER_SELECTED_COLOR : SOUND_EMITTER_COLOR;
     const displayRefDistance = Math.max(0.4, refDistance);
     const displayMaxDistance = Math.max(displayRefDistance, maxDistance);
     const group = new Group();
@@ -1001,8 +1017,13 @@ export class ViewportHost {
     };
   }
 
-  private createTriggerVolumeRenderObjects(entityId: string, position: Vec3, size: Vec3, selected: boolean): EntityRenderObjects {
-    const markerColor = selected ? TRIGGER_VOLUME_SELECTED_COLOR : TRIGGER_VOLUME_COLOR;
+  private createTriggerVolumeRenderObjects(
+    entityId: string,
+    position: Vec3,
+    size: Vec3,
+    selected: boolean,
+    markerColor = selected ? TRIGGER_VOLUME_SELECTED_COLOR : TRIGGER_VOLUME_COLOR
+  ): EntityRenderObjects {
     const group = new Group();
     group.position.set(position.x, position.y, position.z);
 
@@ -1043,8 +1064,13 @@ export class ViewportHost {
     };
   }
 
-  private createTeleportTargetRenderObjects(entityId: string, position: Vec3, yawDegrees: number, selected: boolean): EntityRenderObjects {
-    const markerColor = selected ? TELEPORT_TARGET_SELECTED_COLOR : TELEPORT_TARGET_COLOR;
+  private createTeleportTargetRenderObjects(
+    entityId: string,
+    position: Vec3,
+    yawDegrees: number,
+    selected: boolean,
+    markerColor = selected ? TELEPORT_TARGET_SELECTED_COLOR : TELEPORT_TARGET_COLOR
+  ): EntityRenderObjects {
     const group = new Group();
     group.position.set(position.x, position.y, position.z);
     group.rotation.y = (yawDegrees * Math.PI) / 180;
@@ -1097,8 +1123,13 @@ export class ViewportHost {
     };
   }
 
-  private createInteractableRenderObjects(entityId: string, position: Vec3, radius: number, selected: boolean): EntityRenderObjects {
-    const markerColor = selected ? INTERACTABLE_SELECTED_COLOR : INTERACTABLE_COLOR;
+  private createInteractableRenderObjects(
+    entityId: string,
+    position: Vec3,
+    radius: number,
+    selected: boolean,
+    markerColor = selected ? INTERACTABLE_SELECTED_COLOR : INTERACTABLE_COLOR
+  ): EntityRenderObjects {
     const displayRadius = Math.max(0.45, radius);
     const group = new Group();
     group.position.set(position.x, position.y, position.z);
