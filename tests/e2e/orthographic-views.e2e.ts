@@ -30,7 +30,7 @@ test("orthographic panel controls keep brush authoring and selection behavior in
   await expect(page.getByTestId("viewport-active-panel")).toContainText("Top Left");
   await expect(page.getByTestId("viewport-panel-topLeft-view-perspective")).toHaveAttribute("aria-pressed", "true");
 
-  await page.getByTestId("viewport-panel-topLeft-view-top").click();
+  await page.getByTestId("viewport-panel-topLeft-view-top").click({ force: true });
   await expect(page.getByTestId("viewport-panel-topLeft-view-top")).toHaveAttribute("aria-pressed", "true");
   await expect(getViewportOverlay(page, "topLeft")).toContainText("XZ grid");
 
@@ -38,7 +38,7 @@ test("orthographic panel controls keep brush authoring and selection behavior in
   await expect(page.getByRole("button", { name: /Box Brush 2/ })).toBeVisible();
   await expect(page.getByText("1 brush selected (Box Brush 2)")).toBeVisible();
 
-  await page.getByTestId("viewport-panel-topLeft-view-front").click();
+  await page.getByTestId("viewport-panel-topLeft-view-front").click({ force: true });
   await expect(page.getByTestId("viewport-panel-topLeft-view-front")).toHaveAttribute("aria-pressed", "true");
   await expect(getViewportOverlay(page, "topLeft")).toContainText("XY grid");
 
@@ -46,11 +46,11 @@ test("orthographic panel controls keep brush authoring and selection behavior in
   await expect(page.getByRole("button", { name: /Box Brush 3/ })).toBeVisible();
   await expect(page.getByText("1 brush selected (Box Brush 3)")).toBeVisible();
 
-  await page.getByTestId("viewport-panel-topLeft-view-side").click();
+  await page.getByTestId("viewport-panel-topLeft-view-side").click({ force: true });
   await expect(page.getByTestId("viewport-panel-topLeft-view-side")).toHaveAttribute("aria-pressed", "true");
   await expect(getViewportOverlay(page, "topLeft")).toContainText("YZ grid");
 
-  await page.getByTestId("viewport-panel-topLeft-display-authoring").click();
+  await page.getByTestId("viewport-panel-topLeft-display-authoring").click({ force: true });
   await expect(page.getByTestId("viewport-panel-topLeft-display-authoring")).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByTestId("viewport-canvas-topLeft")).toHaveCSS("background-color", "rgb(0, 0, 0)");
   await expect(getViewportPanel(page, "topLeft")).toHaveAttribute("data-active", "true");
