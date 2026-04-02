@@ -1523,19 +1523,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
   };
 
   const resolveNewEntityPosition = (kind: EntityKind): Vec3 => {
-    if (selectedBrush !== null) {
-      if (kind === "triggerVolume") {
-        return snapVec3ToGrid(selectedBrush.center, DEFAULT_GRID_SIZE);
-      }
-
-      return snapVec3ToGrid(
-        {
-          x: selectedBrush.center.x,
-          y: selectedBrush.center.y + selectedBrush.size.y * 0.5,
-          z: selectedBrush.center.z
-        },
-        DEFAULT_GRID_SIZE
-      );
+    if (kind === "triggerVolume" && selectedBrush !== null) {
+      return snapVec3ToGrid(selectedBrush.center, DEFAULT_GRID_SIZE);
     }
 
     if (selectedEntity !== null) {
