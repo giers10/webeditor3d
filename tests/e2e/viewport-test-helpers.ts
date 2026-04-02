@@ -15,6 +15,9 @@ export function getViewportOverlay(page: Page, panelId: string = DEFAULT_VIEWPOR
 }
 
 export async function clickViewport(page: Page, panelId: string = DEFAULT_VIEWPORT_PANEL_ID) {
+  const viewportPanel = getViewportPanel(page, panelId);
+  await viewportPanel.click({ position: { x: 16, y: 16 } });
+
   const viewportCanvas = getViewportCanvas(page, panelId);
 
   if ((await viewportCanvas.count()) > 0) {
@@ -22,6 +25,5 @@ export async function clickViewport(page: Page, panelId: string = DEFAULT_VIEWPO
     return;
   }
 
-  await getViewportPanel(page, panelId).getByTestId(`viewport-fallback-create-box-${panelId}`).click();
+  await viewportPanel.getByTestId(`viewport-fallback-create-box-${panelId}`).click();
 }
-
