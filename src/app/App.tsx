@@ -3628,63 +3628,63 @@ export function App({ store, initialStatusMessage }: AppProps) {
         }
       ]
     },
-    {
-      kind: "group",
-      label: "Entities",
-      testId: "add-menu-entities",
-      children: [
-        {
-          kind: "action",
-          label: "Player Start",
-          testId: "add-menu-player-start",
-          onSelect: () => beginEntityPlacement("playerStart")
-        },
-        {
-          kind: "action",
-          label: "Sound Emitter",
-          testId: "add-menu-sound-emitter",
-          onSelect: () => beginEntityPlacement("soundEmitter", { audioAssetId: audioAssetList[0]?.id ?? null })
-        },
-        {
-          kind: "action",
-          label: "Trigger Volume",
-          testId: "add-menu-trigger-volume",
-          onSelect: () => beginEntityPlacement("triggerVolume")
-        },
-        {
-          kind: "action",
-          label: "Teleport Target",
-          testId: "add-menu-teleport-target",
-          onSelect: () => beginEntityPlacement("teleportTarget")
-        },
-        {
-          kind: "action",
-          label: "Interactable",
-          testId: "add-menu-interactable",
-          onSelect: () => beginEntityPlacement("interactable")
-        }
-      ]
-    },
-    {
-      kind: "group",
-      label: "Lights",
-      testId: "add-menu-lights",
-      children: [
-        {
-          kind: "action",
-          label: "Point Light",
-          testId: "add-menu-point-light",
-          onSelect: () => beginEntityPlacement("pointLight")
-        },
-        {
-          kind: "action",
-          label: "Spot Light",
-          testId: "add-menu-spot-light",
-          onSelect: () => beginEntityPlacement("spotLight")
-        }
-      ]
-    }
-  ];
+      {
+        kind: "group",
+        label: "Entities",
+        testId: "add-menu-entities",
+        children: [
+          {
+            kind: "action",
+            label: "Player Start",
+            testId: "add-menu-player-start",
+            onSelect: () => beginEntityCreation("playerStart")
+          },
+          {
+            kind: "action",
+            label: "Sound Emitter",
+            testId: "add-menu-sound-emitter",
+            onSelect: () => beginEntityCreation("soundEmitter", { audioAssetId: audioAssetList[0]?.id ?? null })
+          },
+          {
+            kind: "action",
+            label: "Trigger Volume",
+            testId: "add-menu-trigger-volume",
+            onSelect: () => beginEntityCreation("triggerVolume")
+          },
+          {
+            kind: "action",
+            label: "Teleport Target",
+            testId: "add-menu-teleport-target",
+            onSelect: () => beginEntityCreation("teleportTarget")
+          },
+          {
+            kind: "action",
+            label: "Interactable",
+            testId: "add-menu-interactable",
+            onSelect: () => beginEntityCreation("interactable")
+          }
+        ]
+      },
+      {
+        kind: "group",
+        label: "Lights",
+        testId: "add-menu-lights",
+        children: [
+          {
+            kind: "action",
+            label: "Point Light",
+            testId: "add-menu-point-light",
+            onSelect: () => beginEntityCreation("pointLight")
+          },
+          {
+            kind: "action",
+            label: "Spot Light",
+            testId: "add-menu-spot-light",
+            onSelect: () => beginEntityCreation("spotLight")
+          }
+        ]
+      }
+    ];
 
   if (editorState.toolMode === "play" && runtimeScene !== null) {
     return (
@@ -3854,9 +3854,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
               Select
             </button>
             <button
-              className={`toolbar__button ${editorState.toolMode === "box-create" ? "toolbar__button--active" : ""}`}
+              className={`toolbar__button ${editorState.toolMode === "create" ? "toolbar__button--active" : ""}`}
               type="button"
-              onClick={() => store.setToolMode("box-create")}
+              onClick={beginBoxCreation}
               >
               Box Create
             </button>
@@ -3943,7 +3943,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         type="button"
                         data-testid={`place-model-instance-${asset.id}`}
                         aria-label={`Place instance for ${asset.sourceName}`}
-                        onClick={() => beginModelInstancePlacement(asset.id)}
+                        onClick={() => beginModelInstanceCreation(asset.id)}
                         onPointerEnter={() => setHoveredAssetId(asset.id)}
                         onPointerLeave={() => setHoveredAssetId((current) => (current === asset.id ? null : current))}
                         onFocus={() => setHoveredAssetId(asset.id)}
@@ -4011,7 +4011,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         type="button"
                         data-testid={`place-sound-emitter-${asset.id}`}
                         aria-label={`Place sound emitter for ${asset.sourceName}`}
-                        onClick={() => beginEntityPlacement("soundEmitter", { audioAssetId: asset.id })}
+                        onClick={() => beginEntityCreation("soundEmitter", { audioAssetId: asset.id })}
                         onPointerEnter={() => setHoveredAssetId(asset.id)}
                         onPointerLeave={() => setHoveredAssetId((current) => (current === asset.id ? null : current))}
                         onFocus={() => setHoveredAssetId(asset.id)}
@@ -4182,9 +4182,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
         <main className={`viewport-region viewport-region--${layoutMode}`} data-testid="viewport-shell">
           <div className={`viewport-region__panels viewport-region__panels--${layoutMode}`}>
             {VIEWPORT_PANEL_IDS.map((panelId) => (
-              <ViewportPanel
-                key={panelId}
-                panelId={panelId}
+                <ViewportPanel
+                  key={panelId}
+                  panelId={panelId}
                 panelState={editorState.viewportPanels[panelId]}
                 layoutMode={layoutMode}
                 isActive={activePanelId === panelId}
@@ -4201,12 +4201,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 onActivatePanel={handleActivateViewportPanel}
                 onSetPanelViewMode={handleSetViewportPanelViewMode}
                 onSetPanelDisplayMode={handleSetViewportPanelDisplayMode}
-                onCommitPlacement={handleCommitPlacement}
+                onCommitCreation={handleCommitCreation}
                 onToolPreviewChange={(toolPreview) => {
                   store.setViewportToolPreview(toolPreview);
                 }}
                 onSelectionChange={(selection) => applySelection(selection, "viewport")}
-                onCreateBoxBrush={handleCreateBoxBrush}
               />
             ))}
           </div>
