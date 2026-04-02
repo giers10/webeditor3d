@@ -146,12 +146,8 @@ export function ViewportCanvas({
   }, [onSelectionChange]);
 
   useEffect(() => {
-    hostRef.current?.setCreateBoxBrushHandler(onCreateBoxBrush);
-  }, [onCreateBoxBrush]);
-
-  useEffect(() => {
     hostRef.current?.setCreationPreviewChangeHandler(onToolPreviewChange);
-  }, [onToolPreviewChange, panelId]);
+  }, [onToolPreviewChange]);
 
   useEffect(() => {
     hostRef.current?.setToolMode(toolMode);
@@ -190,9 +186,7 @@ export function ViewportCanvas({
     >
       <div className="viewport-canvas__overlay" data-testid={`viewport-overlay-${panelId}`}>
         <div className="viewport-canvas__overlay-badges">
-          <div className="viewport-canvas__overlay-badge">
-            {toolMode === "create" ? "Create" : "Select"}
-          </div>
+          <div className="viewport-canvas__overlay-badge">{toolMode === "create" ? "Create" : "Select"}</div>
           <div className="viewport-canvas__overlay-badge viewport-canvas__overlay-badge--view">{getViewportViewModeLabel(viewMode)}</div>
           <div className="viewport-canvas__overlay-badge viewport-canvas__overlay-badge--display">
             {displayMode === "authoring" ? "Authoring" : "Lit"}

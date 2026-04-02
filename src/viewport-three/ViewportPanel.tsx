@@ -8,13 +8,12 @@ import {
   type ViewportPanelState
 } from "./viewport-layout";
 import { VIEWPORT_VIEW_MODES, getViewportViewModeLabel, type ViewportViewMode } from "./viewport-view-modes";
-import type { PlacementViewportToolPreview, ViewportToolPreview } from "./viewport-transient-state";
+import type { CreationViewportToolPreview, ViewportToolPreview } from "./viewport-transient-state";
 import type { LoadedModelAsset } from "../assets/gltf-model-import";
 import type { LoadedImageAsset } from "../assets/image-assets";
 import type { ProjectAssetRecord } from "../assets/project-assets";
 import type { EditorSelection } from "../core/selection";
 import type { ToolMode } from "../core/tool-mode";
-import type { Vec3 } from "../core/vector";
 import type { SceneDocument } from "../document/scene-document";
 import type { WorldSettings } from "../document/world-settings";
 
@@ -36,10 +35,9 @@ interface ViewportPanelProps {
   onActivatePanel(panelId: ViewportPanelId): void;
   onSetPanelViewMode(panelId: ViewportPanelId, viewMode: ViewportViewMode): void;
   onSetPanelDisplayMode(panelId: ViewportPanelId, displayMode: ViewportDisplayMode): void;
-  onCommitPlacement(toolPreview: PlacementViewportToolPreview): void;
+  onCommitCreation(toolPreview: CreationViewportToolPreview): void;
   onToolPreviewChange(toolPreview: ViewportToolPreview): void;
   onSelectionChange(selection: EditorSelection): void;
-  onCreateBoxBrush(center: Vec3): void;
 }
 
 export function ViewportPanel({
@@ -60,10 +58,9 @@ export function ViewportPanel({
   onActivatePanel,
   onSetPanelViewMode,
   onSetPanelDisplayMode,
-  onCommitPlacement,
+  onCommitCreation,
   onToolPreviewChange,
-  onSelectionChange,
-  onCreateBoxBrush
+  onSelectionChange
 }: ViewportPanelProps) {
   const shouldShow = layoutMode === "quad" || isActive;
 
@@ -129,8 +126,7 @@ export function ViewportPanel({
         focusRequestId={focusRequestId}
         focusSelection={focusSelection}
         onSelectionChange={onSelectionChange}
-        onCreateBoxBrush={onCreateBoxBrush}
-        onCommitPlacement={onCommitPlacement}
+        onCommitCreation={onCommitCreation}
         onToolPreviewChange={onToolPreviewChange}
       />
     </section>
