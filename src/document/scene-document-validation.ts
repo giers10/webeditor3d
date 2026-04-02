@@ -18,7 +18,13 @@ import {
 import { type InteractionLink } from "../interactions/interaction-links";
 import { BOX_FACE_IDS, hasPositiveBoxSize } from "./brushes";
 import type { SceneDocument } from "./scene-document";
-import { isHexColorString, type WorldSettings } from "./world-settings";
+import {
+  isAdvancedRenderingShadowMapSize,
+  isAdvancedRenderingShadowType,
+  isAdvancedRenderingToneMappingMode,
+  isHexColorString,
+  type WorldSettings
+} from "./world-settings";
 
 export type SceneDiagnosticSeverity = "error" | "warning";
 export type SceneDiagnosticScope = "document" | "build";
