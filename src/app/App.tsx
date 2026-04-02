@@ -4077,41 +4077,57 @@ export function App({ store, initialStatusMessage }: AppProps) {
           </Panel>
         </aside>
 
-        <main className="viewport-region">
+        <main className={`viewport-region viewport-region--${layoutMode}`}>
           <div className="viewport-region__header">
             <div className="viewport-region__meta">
               <div className="viewport-region__title">Viewport</div>
-              <div className="viewport-region__caption">{getViewportCaption(editorState.toolMode, viewMode, brushList.length)}</div>
+              <div className="viewport-region__caption">
+                {getViewportCaption(editorState.toolMode, layoutMode, activePanelId, activePanelState, brushList.length)}
+              </div>
+              <div className="viewport-region__active-panel" data-testid="viewport-active-panel">
+                Active panel: {activePanelLabel} ({activePanelDisplaySummary})
+              </div>
             </div>
-            <div className="viewport-region__view-toggle" role="group" aria-label="Viewport view mode">
-              {VIEWPORT_VIEW_MODES.map((mode) => (
+            <div className="viewport-region__layout-toggle" role="group" aria-label="Viewport layout mode">
+              {VIEWPORT_LAYOUT_MODES.map((mode) => (
                 <button
                   key={mode}
-                  className={`toolbar__button viewport-region__view-button ${viewMode === mode ? "viewport-region__view-button--active" : ""}`}
+                  className={`toolbar__button viewport-region__layout-button ${layoutMode === mode ? "viewport-region__layout-button--active" : ""}`}
                   type="button"
-                  data-testid={`viewport-mode-${mode}`}
-                  aria-pressed={viewMode === mode}
-                  onClick={() => handleSetViewportViewMode(mode)}
+                  data-testid={`viewport-layout-${mode}`}
+                  aria-pressed={layoutMode === mode}
+                  onClick={() => handleSetViewportLayoutMode(mode)}
                 >
-                  {getViewportViewModeLabel(mode)}
+                  {getViewportLayoutModeLabel(mode)}
                 </button>
               ))}
             </div>
           </div>
-          <ViewportCanvas
-            world={editorState.document.world}
-            sceneDocument={editorState.document}
-            projectAssets={editorState.document.assets}
-            loadedModelAssets={loadedModelAssets}
-            loadedImageAssets={loadedImageAssets}
-            selection={editorState.selection}
-            toolMode={editorState.toolMode}
-            viewMode={viewMode}
-            focusRequestId={focusRequest.id}
-            focusSelection={focusRequest.selection}
-            onSelectionChange={(selection) => applySelection(selection, "viewport")}
-            onCreateBoxBrush={handleCreateBoxBrush}
-          />
+          <div className={`viewport-region__panels viewport-region__panels--${layoutMode}`}>
+            {VIEWPORT_PANEL_IDS.map((panelId) => (
+              <ViewportPanel
+                key={panelId}
+                panelId={panelId}
+                panelState={editorState.viewportPanels[panelId]}
+                layoutMode={layoutMode}
+                isActive={activePanelId === panelId}
+                world={editorState.document.world}
+                sceneDocument={editorState.document}
+                projectAssets={editorState.document.assets}
+                loadedModelAssets={loadedModelAssets}
+                loadedImageAssets={loadedImageAssets}
+                selection={editorState.selection}
+                toolMode={editorState.toolMode}
+                focusRequestId={focusRequest.panelId === panelId ? focusRequest.id : 0}
+                focusSelection={focusRequest.selection}
+                onActivatePanel={handleActivateViewportPanel}
+                onSetPanelViewMode={handleSetViewportPanelViewMode}
+                onSetPanelDisplayMode={handleSetViewportPanelDisplayMode}
+                onSelectionChange={(selection) => applySelection(selection, "viewport")}
+                onCreateBoxBrush={handleCreateBoxBrush}
+              />
+            ))}
+          </div>
         </main>
 
         <aside className="side-column">
