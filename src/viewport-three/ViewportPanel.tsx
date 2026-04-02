@@ -4,6 +4,7 @@ import { ViewportCanvas } from "./ViewportCanvas";
 import {
   getViewportDisplayModeLabel,
   getViewportPanelLabel,
+  type ViewportPanelCameraState,
   type ViewportDisplayMode,
   type ViewportLayoutMode,
   type ViewportPanelId,
@@ -34,12 +35,14 @@ interface ViewportPanelProps {
   selection: EditorSelection;
   toolMode: ToolMode;
   toolPreview: ViewportToolPreview;
+  cameraState: ViewportPanelCameraState;
   focusRequestId: number;
   focusSelection: EditorSelection;
   onActivatePanel(panelId: ViewportPanelId): void;
   onSetPanelViewMode(panelId: ViewportPanelId, viewMode: ViewportViewMode): void;
   onSetPanelDisplayMode(panelId: ViewportPanelId, displayMode: ViewportDisplayMode): void;
   onCommitCreation(toolPreview: CreationViewportToolPreview): boolean;
+  onCameraStateChange(cameraState: ViewportPanelCameraState): void;
   onToolPreviewChange(toolPreview: ViewportToolPreview): void;
   onSelectionChange(selection: EditorSelection): void;
 }
@@ -59,12 +62,14 @@ export function ViewportPanel({
   selection,
   toolMode,
   toolPreview,
+  cameraState,
   focusRequestId,
   focusSelection,
   onActivatePanel,
   onSetPanelViewMode,
   onSetPanelDisplayMode,
   onCommitCreation,
+  onCameraStateChange,
   onToolPreviewChange,
   onSelectionChange
 }: ViewportPanelProps) {
@@ -126,6 +131,7 @@ export function ViewportPanel({
         selection={selection}
         toolMode={toolMode}
         toolPreview={toolPreview}
+        cameraState={cameraState}
         viewMode={panelState.viewMode}
         displayMode={panelState.displayMode}
         layoutMode={layoutMode}
@@ -134,6 +140,7 @@ export function ViewportPanel({
         focusSelection={focusSelection}
         onSelectionChange={onSelectionChange}
         onCommitCreation={onCommitCreation}
+        onCameraStateChange={onCameraStateChange}
         onToolPreviewChange={onToolPreviewChange}
       />
     </section>
