@@ -11,6 +11,12 @@ import type { SceneDocument } from "../document/scene-document";
 import type { WorldSettings } from "../document/world-settings";
 import { DEFAULT_GRID_SIZE } from "../geometry/grid-snapping";
 import { createWorldBackgroundStyle } from "../shared-ui/world-background-style";
+import {
+  getViewportViewModeControlHint,
+  getViewportViewModeGridPlaneLabel,
+  getViewportViewModeLabel,
+  type ViewportViewMode
+} from "./viewport-view-modes";
 
 import { ViewportHost } from "./viewport-host";
 
@@ -22,6 +28,7 @@ interface ViewportCanvasProps {
   loadedImageAssets: Record<string, LoadedImageAsset>;
   selection: EditorSelection;
   toolMode: ToolMode;
+  viewMode: ViewportViewMode;
   focusRequestId: number;
   focusSelection: EditorSelection;
   onSelectionChange(selection: EditorSelection): void;
@@ -36,6 +43,14 @@ function formatVec3(vector: Vec3 | null): string {
   return `${vector.x}, ${vector.y}, ${vector.z}`;
 }
 
+function getViewportOverlayText(toolMode: ToolMode, viewMode: ViewportViewMode): string {
+  if (toolMode === "box-create") {
+    return `Box Create is active. Click the ${getViewportViewModeGridPlaneLabel(viewMode)} grid to place a ${DEFAULT_BOX_BRUSH_SIZE.x} x ${DEFAULT_BOX_BRUSH_SIZE.y} x ${DEFAULT_BOX_BRUSH_SIZE.z} box. ${getViewportViewModeControlHint(viewMode)}`;
+  }
+
+  return `${getViewportViewModeLabel(viewMode)} view active. ${getViewportViewModeControlHint(viewMode)}`;
+}
+
 export function ViewportCanvas({
   world,
   sceneDocument,
@@ -44,6 +59,7 @@ export function ViewportCanvas({
   loadedImageAssets,
   selection,
   toolMode,
+  viewMode,
   focusRequestId,
   focusSelection,
   onSelectionChange,
@@ -102,6 +118,10 @@ export function ViewportCanvas({
   }, [sceneDocument, selection]);
 
   useEffect(() => {
+    hostRef.current?.setViewMode(viewMode);
+  }, [viewMode]);
+
+  useEffect(() => {
     hostRef.current?.setBrushSelectionChangeHandler(onSelectionChange);
   }, [onSelectionChange]);
 
@@ -132,18 +152,17 @@ export function ViewportCanvas({
   return (
     <div
       ref={containerRef}
-      className={`viewport-canvas viewport-canvas--${toolMode}`}
+      className={`viewport-canvas viewport-canvas--${toolMode} viewport-canvas--${viewMode}`}
       data-testid="viewport-shell"
       aria-label="Editor viewport"
       style={createWorldBackgroundStyle(world.background, world.background.mode === "image" ? loadedImageAssets[world.background.assetId]?.sourceUrl ?? null : null)}
     >
       <div className="viewport-canvas__overlay" data-testid="viewport-overlay">
-        <div className="viewport-canvas__overlay-badge">{toolMode === "box-create" ? "Box Create" : "Select"}</div>
-        <div className="viewport-canvas__overlay-text">
-          {toolMode === "box-create"
-            ? `Click to place a ${DEFAULT_BOX_BRUSH_SIZE.x} x ${DEFAULT_BOX_BRUSH_SIZE.y} x ${DEFAULT_BOX_BRUSH_SIZE.z} box on the ${DEFAULT_GRID_SIZE}m grid.`
-            : "Click to select. Middle-drag orbits, Shift + middle-drag pans, wheel zooms, and Numpad Comma frames the selection."}
+        <div className="viewport-canvas__overlay-badges">
+          <div className="viewport-canvas__overlay-badge">{toolMode === "box-create" ? "Box Create" : "Select"}</div>
+          <div className="viewport-canvas__overlay-badge viewport-canvas__overlay-badge--view">{getViewportViewModeLabel(viewMode)}</div>
         </div>
+        <div className="viewport-canvas__overlay-text">{getViewportOverlayText(toolMode, viewMode)}</div>
         {toolMode !== "box-create" ? null : (
           <div className="viewport-canvas__overlay-preview" data-testid="viewport-snap-preview">
             Next box center: {formatVec3(boxCreatePreview)}
