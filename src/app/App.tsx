@@ -1263,6 +1263,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
       const hasPrimaryModifier = (event.metaKey || event.ctrlKey) && !event.altKey;
 
+      if (hasPrimaryModifier && event.code === "KeyR" && !event.shiftKey) {
+        event.preventDefault();
+        handleEnterPlayMode();
+        return;
+      }
+
       if (hasPrimaryModifier && event.code === "KeyS" && !event.shiftKey) {
         event.preventDefault();
         handleSaveDraft();
@@ -1374,6 +1380,37 @@ export function App({ store, initialStatusMessage }: AppProps) {
       window.removeEventListener("keydown", handleWindowKeyDown);
     };
   }, [activePanelId, addMenuPosition, brushList.length, editorState.selection, editorState.toolMode, entityList.length]);
+
+  useEffect(() => {
+    if (editorState.toolMode !== "play") {
+      return;
+    }
+
+    const handleWindowKeyDown = (event: globalThis.KeyboardEvent) => {
+      if (isTextEntryTarget(event.target)) {
+        return;
+      }
+
+      if (event.key !== "Escape") {
+        return;
+      }
+
+      const pointerCaptured = activeNavigationMode === "firstPerson" && firstPersonTelemetry?.pointerLocked === true;
+
+      if (pointerCaptured) {
+        return;
+      }
+
+      event.preventDefault();
+      handleExitPlayMode();
+    };
+
+    window.addEventListener("keydown", handleWindowKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleWindowKeyDown);
+    };
+  }, [activeNavigationMode, editorState.toolMode, firstPersonTelemetry]);
 
   const applySceneName = () => {
     const normalizedName = sceneNameDraft.trim() || "Untitled Scene";
