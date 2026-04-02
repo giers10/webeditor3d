@@ -1563,7 +1563,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     return snapVec3ToGrid(DEFAULT_ENTITY_POSITION, DEFAULT_GRID_SIZE);
   };
 
-  const handlePlaceEntity = (kind: EntityKind) => {
+  const handlePlaceEntity = (kind: EntityKind, options: { audioAssetId?: string | null } = {}) => {
     try {
       const basePosition = resolveNewEntityPosition(kind);
       let nextEntity: EntityInstance;
@@ -1587,7 +1587,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
         case "soundEmitter":
           nextEntity = createSoundEmitterEntity({
             position: basePosition,
-            audioAssetId: audioAssetList[0]?.id ?? undefined
+            audioAssetId: options.audioAssetId ?? audioAssetList[0]?.id ?? undefined
           });
           break;
         case "triggerVolume":
@@ -1619,6 +1619,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
           label: `Place ${getEntityKindLabel(kind).toLowerCase()}`
         })
       );
+      if (kind === "soundEmitter" && (options.audioAssetId ?? audioAssetList[0]?.id ?? null) !== null) {
+        const placedAudioAssetId = options.audioAssetId ?? audioAssetList[0]?.id ?? null;
+        setStatusMessage(
+          `Placed ${getEntityKindLabel(kind)} using ${editorState.document.assets[placedAudioAssetId ?? ""]?.sourceName ?? "the authored audio asset"}.`
+        );
+        return;
+      }
+
       setStatusMessage(`Placed ${getEntityKindLabel(kind)}.`);
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
