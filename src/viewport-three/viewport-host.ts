@@ -317,6 +317,10 @@ export class ViewportHost {
     this.clearEntityMarkers();
     this.boxCreatePreviewHandler = null;
     this.setBoxCreatePreview(null);
+    this.advancedRenderingComposer?.dispose();
+    this.advancedRenderingComposer = null;
+    this.currentAdvancedRenderingSettings = null;
+    this.renderer.autoClear = true;
 
     for (const cachedTexture of this.materialTextureCache.values()) {
       cachedTexture.texture.dispose();
@@ -1052,6 +1056,7 @@ export class ViewportHost {
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(width, height, false);
+    this.advancedRenderingComposer?.setSize(width, height);
   }
 
   private handlePointerDown = (event: PointerEvent) => {
@@ -1359,6 +1364,12 @@ export class ViewportHost {
 
   private render = () => {
     this.animationFrame = window.requestAnimationFrame(this.render);
+
+    if (this.advancedRenderingComposer !== null) {
+      this.advancedRenderingComposer.render();
+      return;
+    }
+
     this.renderer.render(this.scene, this.camera);
   };
 }
