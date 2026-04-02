@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { clickViewport } from "./viewport-test-helpers";
+import { clickViewport, getViewportPanel } from "./viewport-test-helpers";
 
 test("quad viewport layout shows four linked panels with shared selection and active panel state", async ({ page }) => {
   const pageErrors: string[] = [];
@@ -44,11 +44,13 @@ test("quad viewport layout shows four linked panels with shared selection and ac
   await expect(page.getByTestId("viewport-panel-bottomRight-view-side")).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByTestId("viewport-panel-bottomRight-display-authoring")).toHaveAttribute("aria-pressed", "true");
 
+  await getViewportPanel(page, "topRight").click({ position: { x: 16, y: 16 }, force: true });
   await page.getByTestId("viewport-panel-topRight-view-side").click({ force: true });
   await expect(page.getByTestId("viewport-active-panel")).toContainText("Top Right");
   await expect(page.getByTestId("viewport-panel-topRight-view-side")).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByRole("button", { name: /Box Brush 1/ })).toBeVisible();
 
+  await getViewportPanel(page, "topLeft").click({ position: { x: 16, y: 16 }, force: true });
   await page.getByTestId("viewport-panel-topLeft-display-authoring").click({ force: true });
   await expect(page.getByTestId("viewport-active-panel")).toContainText("Top Left");
   await expect(page.getByTestId("viewport-panel-topLeft-display-authoring")).toHaveAttribute("aria-pressed", "true");
