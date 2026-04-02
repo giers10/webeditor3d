@@ -10,6 +10,8 @@ export interface RuntimeInteractionDispatcher {
   toggleBrushVisibility(brushId: string, visible: boolean | undefined, link: InteractionLink): void;
   playAnimation(instanceId: string, clipName: string, loop: boolean | undefined, link: InteractionLink): void;
   stopAnimation(instanceId: string, link: InteractionLink): void;
+  playSound(soundEmitterId: string, link: InteractionLink): void;
+  stopSound(soundEmitterId: string, link: InteractionLink): void;
 }
 
 export interface RuntimeInteractionPrompt {
@@ -219,6 +221,12 @@ export class RuntimeInteractionSystem {
           break;
         case "stopAnimation":
           dispatcher.stopAnimation(link.action.targetModelInstanceId, link);
+          break;
+        case "playSound":
+          dispatcher.playSound(link.action.targetSoundEmitterId, link);
+          break;
+        case "stopSound":
+          dispatcher.stopSound(link.action.targetSoundEmitterId, link);
           break;
       }
     }

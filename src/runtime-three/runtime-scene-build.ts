@@ -49,8 +49,10 @@ export interface RuntimePlayerStart {
 export interface RuntimeSoundEmitter {
   entityId: string;
   position: Vec3;
-  radius: number;
-  gain: number;
+  audioAssetId: string | null;
+  volume: number;
+  refDistance: number;
+  maxDistance: number;
   autoplay: boolean;
   loop: boolean;
 }
@@ -340,8 +342,10 @@ function buildRuntimeSceneCollections(document: SceneDocument): RuntimeSceneColl
         runtimeEntities.soundEmitters.push({
           entityId: entity.id,
           position: cloneVec3(entity.position),
-          radius: entity.radius,
-          gain: entity.gain,
+          audioAssetId: entity.audioAssetId,
+          volume: entity.volume,
+          refDistance: entity.refDistance,
+          maxDistance: entity.maxDistance,
           autoplay: entity.autoplay,
           loop: entity.loop
         });

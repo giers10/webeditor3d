@@ -807,6 +807,47 @@ function validateInteractionLink(link: InteractionLink, path: string, document: 
         );
       }
       break;
+    case "playSound":
+    case "stopSound": {
+      const targetEntity = document.entities[link.action.targetSoundEmitterId];
+
+      if (targetEntity === undefined) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "missing-sound-emitter-entity",
+            `Sound emitter entity ${link.action.targetSoundEmitterId} does not exist.`,
+            `${path}.action.targetSoundEmitterId`
+          )
+        );
+        break;
+      }
+
+      if (targetEntity.kind !== "soundEmitter") {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-sound-emitter-kind",
+            "Sound playback actions must target a Sound Emitter entity.",
+            `${path}.action.targetSoundEmitterId`
+          )
+        );
+        break;
+      }
+
+      if (targetEntity.audioAssetId === null) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "missing-sound-emitter-audio-asset",
+            "Sound playback actions require a Sound Emitter that references an audio asset.",
+            `${path}.action.targetSoundEmitterId`
+          )
+        );
+      }
+
+      break;
+    }
     default:
       diagnostics.push(
         createDiagnostic(
@@ -946,7 +987,7 @@ export function validateSceneDocument(document: SceneDocument): SceneDocumentVal
         validatePlayerStartEntity(entity, path, diagnostics);
         break;
       case "soundEmitter":
-        validateSoundEmitterEntity(entity, path, diagnostics);
+        validateSoundEmitterEntity(entity, path, document, diagnostics);
         break;
       case "triggerVolume":
         validateTriggerVolumeEntity(entity, path, diagnostics);
