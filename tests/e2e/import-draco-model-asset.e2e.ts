@@ -33,9 +33,9 @@ test("imports a draco-compressed glb asset, places an instance, and survives rel
 
   await page.getByRole("button", { name: "Place instance for tiny-triangle-draco.glb" }).click();
   const viewportCanvas = getViewportCanvas(page);
-  await viewportCanvas.hover({ position: { x: 84, y: 88 } });
+  await viewportCanvas.hover({ position: { x: 84, y: 88 }, force: true });
   await expect(page.getByTestId("viewport-snap-preview-topLeft")).toBeVisible();
-  await viewportCanvas.click({ position: { x: 84, y: 88 } });
+  await viewportCanvas.click({ position: { x: 84, y: 88 }, force: true });
   await expect(page.getByTestId("outliner-model-instance-list").getByRole("button")).toHaveCount(2);
   const snapshot = await getEditorStoreSnapshot(page);
   const selectedModelInstanceId = snapshot.selection.kind === "modelInstances" ? snapshot.selection.ids?.[0] ?? null : null;

@@ -26,9 +26,9 @@ test("user can place and select typed entities from the entity foundation workfl
   await page.getByTestId("add-menu-entities").click();
   await page.getByTestId("add-menu-sound-emitter").click();
   const viewportCanvas = getViewportCanvas(page);
-  await viewportCanvas.hover({ position: { x: 124, y: 108 } });
+  await viewportCanvas.hover({ position: { x: 124, y: 108 }, force: true });
   await expect(page.getByTestId("viewport-snap-preview-topLeft")).toBeVisible();
-  await viewportCanvas.click({ position: { x: 124, y: 108 } });
+  await viewportCanvas.click({ position: { x: 124, y: 108 }, force: true });
   const soundEmitterSnapshot = await getEditorStoreSnapshot(page);
   const selectedSoundEmitterId =
     soundEmitterSnapshot.selection.kind === "entities" ? soundEmitterSnapshot.selection.ids?.[0] ?? null : null;
@@ -56,9 +56,9 @@ test("user can place and select typed entities from the entity foundation workfl
   await page.getByTestId("outliner-add-button").click();
   await page.getByTestId("add-menu-entities").click();
   await page.getByTestId("add-menu-interactable").click();
-  await viewportCanvas.hover({ position: { x: 240, y: 156 } });
+  await viewportCanvas.hover({ position: { x: 240, y: 156 }, force: true });
   await expect(page.getByTestId("viewport-snap-preview-topLeft")).toBeVisible();
-  await viewportCanvas.click({ position: { x: 240, y: 156 } });
+  await viewportCanvas.click({ position: { x: 240, y: 156 }, force: true });
   await expect(page.getByTestId("interactable-prompt")).toHaveValue("Use");
 
   await page
@@ -102,6 +102,9 @@ test("shift+a opens the add menu at the cursor", async ({ page }) => {
   await expect(page.getByRole("menu", { name: "Add" })).toBeVisible();
   await page.getByTestId("add-menu-lights").click();
   await page.getByTestId("add-menu-point-light").click();
+  const pointLightViewportCanvas = getViewportCanvas(page);
+  await pointLightViewportCanvas.hover({ position: { x: 168, y: 128 }, force: true });
+  await pointLightViewportCanvas.click({ position: { x: 168, y: 128 }, force: true });
   await expect(page.getByTestId("point-light-intensity")).toHaveValue("1.25");
 
   expect(pageErrors).toEqual([]);
