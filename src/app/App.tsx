@@ -4296,7 +4296,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                             onChange={(event) => {
                               const nextColorHex = event.currentTarget.value;
                               setPointLightColorDraft(nextColorHex);
-                              applyPointLightChange({ colorHex: nextColorHex });
+                              scheduleDraftCommit(() => applyPointLightChange({ colorHex: nextColorHex }));
                             }}
                           />
                         </label>
@@ -4356,7 +4356,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                             onChange={(event) => {
                               const nextColorHex = event.currentTarget.value;
                               setSpotLightColorDraft(nextColorHex);
-                              applySpotLightChange({ colorHex: nextColorHex });
+                              scheduleDraftCommit(() => applySpotLightChange({ colorHex: nextColorHex }));
                             }}
                           />
                         </label>
@@ -4528,7 +4528,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           onChange={(event) => {
                             const nextAudioAssetId = event.currentTarget.value.trim();
                             setSoundEmitterAudioAssetIdDraft(nextAudioAssetId);
-                            applySoundEmitterChange({ audioAssetId: nextAudioAssetId.length === 0 ? null : nextAudioAssetId });
+                            scheduleDraftCommit(() =>
+                              applySoundEmitterChange({
+                                audioAssetId: nextAudioAssetId.length === 0 ? null : nextAudioAssetId
+                              })
+                            );
                           }}
                         >
                           <option value="">— none —</option>
@@ -4611,7 +4615,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                             onChange={(event) => {
                               const nextAutoplay = event.currentTarget.checked;
                               setSoundEmitterAutoplayDraft(nextAutoplay);
-                              applySoundEmitterChange({ autoplay: nextAutoplay });
+                              scheduleDraftCommit(() => applySoundEmitterChange({ autoplay: nextAutoplay }));
                             }}
                           />
                         </label>
@@ -4624,7 +4628,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                             onChange={(event) => {
                               const nextLoop = event.currentTarget.checked;
                               setSoundEmitterLoopDraft(nextLoop);
-                              applySoundEmitterChange({ loop: nextLoop });
+                              scheduleDraftCommit(() => applySoundEmitterChange({ loop: nextLoop }));
                             }}
                           />
                         </label>
@@ -4760,7 +4764,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                             onChange={(event) => {
                               const nextEnabled = event.currentTarget.checked;
                               setInteractableEnabledDraft(nextEnabled);
-                              applyInteractableChange({ enabled: nextEnabled });
+                              scheduleDraftCommit(() => applyInteractableChange({ enabled: nextEnabled }));
                             }}
                           />
                         </label>
