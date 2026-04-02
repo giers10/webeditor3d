@@ -15,10 +15,16 @@ export interface ViewportPanelState {
   displayMode: ViewportDisplayMode;
 }
 
+export interface ViewportQuadSplit {
+  x: number;
+  y: number;
+}
+
 export interface ViewportLayoutState {
   layoutMode: ViewportLayoutMode;
   activePanelId: ViewportPanelId;
   panels: Record<ViewportPanelId, ViewportPanelState>;
+  viewportQuadSplit: ViewportQuadSplit;
 }
 
 export const DEFAULT_VIEWPORT_LAYOUT_STATE: ViewportLayoutState = {
@@ -41,6 +47,10 @@ export const DEFAULT_VIEWPORT_LAYOUT_STATE: ViewportLayoutState = {
       viewMode: "side",
       displayMode: "authoring"
     }
+  },
+  viewportQuadSplit: {
+    x: 0.5,
+    y: 0.5
   }
 };
 
@@ -61,6 +71,9 @@ export function createDefaultViewportLayoutState(): ViewportLayoutState {
       bottomRight: {
         ...DEFAULT_VIEWPORT_LAYOUT_STATE.panels.bottomRight
       }
+    },
+    viewportQuadSplit: {
+      ...DEFAULT_VIEWPORT_LAYOUT_STATE.viewportQuadSplit
     }
   };
 }
