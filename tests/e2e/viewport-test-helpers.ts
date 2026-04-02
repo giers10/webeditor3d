@@ -14,6 +14,41 @@ export function getViewportOverlay(page: Page, panelId: string = DEFAULT_VIEWPOR
   return page.getByTestId(`viewport-overlay-${panelId}`);
 }
 
+interface EditorStoreSnapshot {
+  selection: {
+    kind: string;
+    ids?: string[];
+  };
+  document: {
+    modelInstances: Record<string, { position: { x: number; y: number; z: number } }>;
+    entities: Record<string, { position: { x: number; y: number; z: number } }>;
+  };
+  viewportTransientState: {
+    toolPreview: unknown;
+  };
+}
+
+export async function getEditorStoreSnapshot(page: Page): Promise<EditorStoreSnapshot> {
+  return page.evaluate(() => {
+    const store = (window as Window & {
+      __webeditor3dEditorStore?: {
+        getState(): EditorStoreSnapshot;
+      };
+    }).__webeditor3dEditorStore;
+
+    if (store === undefined) {
+      throw new Error("Editor store debug hook is unavailable.");
+    }
+
+    return store.getState();
+  });
+}
+
+export async function getViewportToolPreview(page: Page): Promise<EditorStoreSnapshot["viewportTransientState"]["toolPreview"]> {
+  const snapshot = await getEditorStoreSnapshot(page);
+  return snapshot.viewportTransientState.toolPreview;
+}
+
 export async function clickViewport(page: Page, panelId: string = DEFAULT_VIEWPORT_PANEL_ID) {
   const viewportPanel = getViewportPanel(page, panelId);
   await viewportPanel.click({ position: { x: 16, y: 16 }, force: true });
