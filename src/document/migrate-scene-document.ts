@@ -824,6 +824,7 @@ function readPointLightEntity(value: unknown, label: string): EntityInstance {
   const kind = expectLiteralString(value.kind, "pointLight", `${label}.kind`);
   const entity = createPointLightEntity({
     id: expectString(value.id, `${label}.id`),
+    name: readOptionalEntityName(value.name, `${label}.name`),
     position: readVec3(value.position, `${label}.position`),
     colorHex: expectHexColor(value.colorHex, `${label}.colorHex`),
     intensity: expectNonNegativeFiniteNumber(value.intensity, `${label}.intensity`),
@@ -845,6 +846,7 @@ function readSpotLightEntity(value: unknown, label: string): EntityInstance {
   const kind = expectLiteralString(value.kind, "spotLight", `${label}.kind`);
   const entity = createSpotLightEntity({
     id: expectString(value.id, `${label}.id`),
+    name: readOptionalEntityName(value.name, `${label}.name`),
     position: readVec3(value.position, `${label}.position`),
     direction: readVec3(value.direction, `${label}.direction`),
     colorHex: expectHexColor(value.colorHex, `${label}.colorHex`),
@@ -868,6 +870,7 @@ function readPlayerStartEntity(value: unknown, label: string): EntityInstance {
   const kind = expectLiteralString(value.kind, "playerStart", `${label}.kind`);
   const entity = createPlayerStartEntity({
     id: expectString(value.id, `${label}.id`),
+    name: readOptionalEntityName(value.name, `${label}.name`),
     position: readVec3(value.position, `${label}.position`),
     yawDegrees: expectFiniteNumber(value.yawDegrees, `${label}.yawDegrees`)
   });
@@ -887,6 +890,7 @@ function readSoundEmitterEntity(value: unknown, label: string): EntityInstance {
   const kind = expectLiteralString(value.kind, "soundEmitter", `${label}.kind`);
   const entity = createSoundEmitterEntity({
     id: expectString(value.id, `${label}.id`),
+    name: readOptionalEntityName(value.name, `${label}.name`),
     position: readVec3(value.position, `${label}.position`),
     audioAssetId:
       value.audioAssetId === undefined || value.audioAssetId === null
@@ -915,6 +919,7 @@ function readLegacySoundEmitterEntity(value: unknown, label: string): EntityInst
   const radius = expectPositiveFiniteNumber(value.radius, `${label}.radius`);
   const entity = createSoundEmitterEntity({
     id: expectString(value.id, `${label}.id`),
+    name: readOptionalEntityName(value.name, `${label}.name`),
     position: readVec3(value.position, `${label}.position`),
     refDistance: radius,
     maxDistance: radius,
@@ -944,6 +949,7 @@ function readTriggerVolumeEntity(value: unknown, label: string): EntityInstance 
 
   const entity = createTriggerVolumeEntity({
     id: expectString(value.id, `${label}.id`),
+    name: readOptionalEntityName(value.name, `${label}.name`),
     position: readVec3(value.position, `${label}.position`),
     size,
     triggerOnEnter: expectBoolean(value.triggerOnEnter, `${label}.triggerOnEnter`),
@@ -965,6 +971,7 @@ function readTeleportTargetEntity(value: unknown, label: string): EntityInstance
   const kind = expectLiteralString(value.kind, "teleportTarget", `${label}.kind`);
   const entity = createTeleportTargetEntity({
     id: expectString(value.id, `${label}.id`),
+    name: readOptionalEntityName(value.name, `${label}.name`),
     position: readVec3(value.position, `${label}.position`),
     yawDegrees: expectFiniteNumber(value.yawDegrees, `${label}.yawDegrees`)
   });
@@ -984,6 +991,7 @@ function readInteractableEntity(value: unknown, label: string): EntityInstance {
   const kind = expectLiteralString(value.kind, "interactable", `${label}.kind`);
   const entity = createInteractableEntity({
     id: expectString(value.id, `${label}.id`),
+    name: readOptionalEntityName(value.name, `${label}.name`),
     position: readVec3(value.position, `${label}.position`),
     radius: expectPositiveFiniteNumber(value.radius, `${label}.radius`),
     prompt: expectString(value.prompt, `${label}.prompt`),
