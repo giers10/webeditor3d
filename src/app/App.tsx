@@ -955,10 +955,13 @@ export function App({ store, initialStatusMessage }: AppProps) {
     const currentAssets = editorState.document.assets;
     const previousLoadedModelAssets = loadedModelAssetsRef.current;
     const previousLoadedImageAssets = loadedImageAssetsRef.current;
+    const previousLoadedAudioAssets = loadedAudioAssetsRef.current;
     const previousLoadedModelAssetIds = new Set(Object.keys(previousLoadedModelAssets));
     const previousLoadedImageAssetIds = new Set(Object.keys(previousLoadedImageAssets));
+    const previousLoadedAudioAssetIds = new Set(Object.keys(previousLoadedAudioAssets));
     const nextLoadedModelAssets: Record<string, LoadedModelAsset> = {};
     const nextLoadedImageAssets: Record<string, LoadedImageAsset> = {};
+    const nextLoadedAudioAssets: Record<string, LoadedAudioAsset> = {};
     const syncErrorMessages: string[] = [];
 
     const syncAssets = async () => {
@@ -974,8 +977,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
         if (!cancelled) {
           loadedModelAssetsRef.current = {};
           loadedImageAssetsRef.current = {};
+          loadedAudioAssetsRef.current = {};
           setLoadedModelAssets({});
           setLoadedImageAssets({});
+          setLoadedAudioAssets({});
         }
 
         return;
@@ -1016,6 +1021,24 @@ export function App({ store, initialStatusMessage }: AppProps) {
           } catch (error) {
             syncErrorMessages.push(`Image asset ${asset.sourceName} could not be restored: ${getErrorMessage(error)}`);
           }
+          continue;
+        }
+
+        if (isAudioAsset(asset)) {
+          previousLoadedAudioAssetIds.delete(asset.id);
+
+          const cachedLoadedAsset = previousLoadedAudioAssets[asset.id];
+
+          if (cachedLoadedAsset !== undefined && cachedLoadedAsset.storageKey === asset.storageKey) {
+            nextLoadedAudioAssets[asset.id] = cachedLoadedAsset;
+            continue;
+          }
+
+          try {
+            nextLoadedAudioAssets[asset.id] = await loadAudioAssetFromStorage(projectAssetStorage, asset);
+          } catch (error) {
+            syncErrorMessages.push(`Audio asset ${asset.sourceName} could not be restored: ${getErrorMessage(error)}`);
+          }
         }
       }
 
@@ -1053,8 +1076,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
       loadedModelAssetsRef.current = nextLoadedModelAssets;
       loadedImageAssetsRef.current = nextLoadedImageAssets;
+      loadedAudioAssetsRef.current = nextLoadedAudioAssets;
       setLoadedModelAssets(nextLoadedModelAssets);
       setLoadedImageAssets(nextLoadedImageAssets);
+      setLoadedAudioAssets(nextLoadedAudioAssets);
       setAssetStatusMessage(syncErrorMessages.length === 0 ? null : syncErrorMessages.join(" | "));
     };
 
