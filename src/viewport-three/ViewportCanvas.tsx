@@ -44,10 +44,10 @@ function formatVec3(vector: Vec3 | null): string {
 
 function getViewportOverlayText(toolMode: ToolMode, viewMode: ViewportViewMode): string {
   if (toolMode === "box-create") {
-    return `Box Create is active. Click the ${getViewportViewModeGridPlaneLabel(viewMode)} grid to place a ${DEFAULT_BOX_BRUSH_SIZE.x} x ${DEFAULT_BOX_BRUSH_SIZE.y} x ${DEFAULT_BOX_BRUSH_SIZE.z} box. ${getViewportViewModeControlHint(viewMode)}`;
+    return `Box Create is active on the ${getViewportViewModeGridPlaneLabel(viewMode)} grid. Click the ${getViewportViewModeGridPlaneLabel(viewMode)} grid to place a ${DEFAULT_BOX_BRUSH_SIZE.x} x ${DEFAULT_BOX_BRUSH_SIZE.y} x ${DEFAULT_BOX_BRUSH_SIZE.z} box. ${getViewportViewModeControlHint(viewMode)}`;
   }
 
-  return `${getViewportViewModeLabel(viewMode)} view active. ${getViewportViewModeControlHint(viewMode)}`;
+  return `${getViewportViewModeLabel(viewMode)} view active on the ${getViewportViewModeGridPlaneLabel(viewMode)} grid. ${getViewportViewModeControlHint(viewMode)}`;
 }
 
 export function ViewportCanvas({
