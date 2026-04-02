@@ -4,12 +4,20 @@ import { createBoxBrush } from "../../src/document/brushes";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
 import { validateSceneDocument } from "../../src/document/scene-document-validation";
 import { createModelInstance } from "../../src/assets/model-instances";
-import { createProjectAssetStorageKey, type ModelAssetRecord } from "../../src/assets/project-assets";
-import { createInteractableEntity, createPlayerStartEntity, createTeleportTargetEntity, createTriggerVolumeEntity } from "../../src/entities/entity-instances";
+import { createProjectAssetStorageKey, type AudioAssetRecord, type ModelAssetRecord } from "../../src/assets/project-assets";
+import {
+  createInteractableEntity,
+  createPlayerStartEntity,
+  createSoundEmitterEntity,
+  createTeleportTargetEntity,
+  createTriggerVolumeEntity
+} from "../../src/entities/entity-instances";
 import {
   createPlayAnimationInteractionLink,
+  createPlaySoundInteractionLink,
   createTeleportPlayerInteractionLink,
-  createToggleVisibilityInteractionLink
+  createToggleVisibilityInteractionLink,
+  createStopSoundInteractionLink
 } from "../../src/interactions/interaction-links";
 
 describe("interaction link validation", () => {
@@ -24,6 +32,25 @@ describe("interaction link validation", () => {
     const teleportTarget = createTeleportTargetEntity({
       id: "entity-teleport-main"
     });
+    const audioAsset = {
+      id: "asset-audio-main",
+      kind: "audio" as const,
+      sourceName: "lobby-loop.ogg",
+      mimeType: "audio/ogg",
+      storageKey: createProjectAssetStorageKey("asset-audio-main"),
+      byteLength: 4096,
+      metadata: {
+        kind: "audio" as const,
+        durationSeconds: 4,
+        channelCount: 2,
+        sampleRateHz: 48000,
+        warnings: []
+      }
+    } satisfies AudioAssetRecord;
+    const soundEmitter = createSoundEmitterEntity({
+      id: "entity-sound-main",
+      audioAssetId: audioAsset.id
+    });
     const brush = createBoxBrush({
       id: "brush-door"
     });
@@ -35,7 +62,11 @@ describe("interaction link validation", () => {
       entities: {
         [triggerVolume.id]: triggerVolume,
         [interactable.id]: interactable,
-        [teleportTarget.id]: teleportTarget
+        [teleportTarget.id]: teleportTarget,
+        [soundEmitter.id]: soundEmitter
+      },
+      assets: {
+        [audioAsset.id]: audioAsset
       },
       interactionLinks: {
         "link-teleport": createTeleportPlayerInteractionLink({
@@ -56,6 +87,18 @@ describe("interaction link validation", () => {
           sourceEntityId: interactable.id,
           trigger: "click",
           targetEntityId: teleportTarget.id
+        }),
+        "link-play-sound": createPlaySoundInteractionLink({
+          id: "link-play-sound",
+          sourceEntityId: interactable.id,
+          trigger: "click",
+          targetSoundEmitterId: soundEmitter.id
+        }),
+        "link-stop-sound": createStopSoundInteractionLink({
+          id: "link-stop-sound",
+          sourceEntityId: triggerVolume.id,
+          trigger: "exit",
+          targetSoundEmitterId: soundEmitter.id
         })
       }
     };
@@ -63,6 +106,40 @@ describe("interaction link validation", () => {
     const validation = validateSceneDocument(document);
 
     expect(validation.errors).toEqual([]);
+  });
+
+  it("detects sound playback links that target a sound emitter without an audio asset", () => {
+    const triggerVolume = createTriggerVolumeEntity({
+      id: "entity-trigger-main"
+    });
+    const soundEmitter = createSoundEmitterEntity({
+      id: "entity-sound-main"
+    });
+
+    const validation = validateSceneDocument({
+      ...createEmptySceneDocument(),
+      entities: {
+        [triggerVolume.id]: triggerVolume,
+        [soundEmitter.id]: soundEmitter
+      },
+      interactionLinks: {
+        "link-play-sound": createPlaySoundInteractionLink({
+          id: "link-play-sound",
+          sourceEntityId: triggerVolume.id,
+          trigger: "enter",
+          targetSoundEmitterId: soundEmitter.id
+        })
+      }
+    });
+
+    expect(validation.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "missing-sound-emitter-audio-asset",
+          path: "interactionLinks.link-play-sound.action.targetSoundEmitterId"
+        })
+      ])
+    );
   });
 
   it("detects invalid interaction link source and target references", () => {
