@@ -136,12 +136,14 @@ export function createModelInstanceRenderGroup(
   } else {
     const placeholder = createWireframeBox(bounds.size, MODEL_PLACEHOLDER_COLOR, 0.28);
     placeholder.position.set(bounds.center.x, bounds.center.y, bounds.center.z);
+    placeholder.userData.shadowIgnored = true;
     group.add(placeholder);
   }
 
   if (selected) {
     const selectionShell = createWireframeBox(bounds.size, MODEL_SELECTION_COLOR, 0.8);
     selectionShell.position.set(bounds.center.x, bounds.center.y, bounds.center.z);
+    selectionShell.userData.shadowIgnored = true;
     group.add(selectionShell);
   }
 
