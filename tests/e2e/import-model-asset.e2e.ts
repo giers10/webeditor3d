@@ -62,7 +62,8 @@ test("imports a model asset, places an instance, and survives reload", async ({ 
   }
 
   await page.keyboard.press("Escape");
-  await expect(await getEditorStoreSnapshot(page)).toMatchObject({
+  const cancelledSnapshot = await getEditorStoreSnapshot(page);
+  expect(cancelledSnapshot).toMatchObject({
     toolMode: "select",
     viewportTransientState: {
       toolPreview: {
