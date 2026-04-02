@@ -6,7 +6,6 @@ import type { ProjectAssetRecord } from "../assets/project-assets";
 import type { EditorSelection } from "../core/selection";
 import type { ToolMode } from "../core/tool-mode";
 import type { Vec3 } from "../core/vector";
-import { DEFAULT_BOX_BRUSH_CENTER, DEFAULT_BOX_BRUSH_SIZE } from "../document/brushes";
 import type { SceneDocument } from "../document/scene-document";
 import type { WorldSettings } from "../document/world-settings";
 import { createWorldBackgroundStyle } from "../shared-ui/world-background-style";
@@ -17,7 +16,7 @@ import {
   getViewportViewModeLabel,
   type ViewportViewMode
 } from "./viewport-view-modes";
-import type { PlacementViewportToolPreview, ViewportToolPreview } from "./viewport-transient-state";
+import type { CreationViewportToolPreview, ViewportToolPreview } from "./viewport-transient-state";
 
 import { ViewportHost } from "./viewport-host";
 
@@ -38,8 +37,7 @@ interface ViewportCanvasProps {
   focusRequestId: number;
   focusSelection: EditorSelection;
   onSelectionChange(selection: EditorSelection): void;
-  onCreateBoxBrush(center: Vec3): void;
-  onCommitPlacement(toolPreview: PlacementViewportToolPreview): void;
+  onCommitCreation(toolPreview: CreationViewportToolPreview): void;
   onToolPreviewChange(toolPreview: ViewportToolPreview): void;
 }
 
@@ -57,12 +55,8 @@ function getViewportOverlayText(
     return null;
   }
 
-  if (toolMode === "box-create") {
-    return `Hover the ${getViewportViewModeGridPlaneLabel(viewMode)} grid to place a ${DEFAULT_BOX_BRUSH_SIZE.x} x ${DEFAULT_BOX_BRUSH_SIZE.y} x ${DEFAULT_BOX_BRUSH_SIZE.z} box. ${getViewportViewModeControlHint(viewMode)}`;
-  }
-
-  if (toolMode === "place") {
-    return `Hover the ${getViewportViewModeGridPlaneLabel(viewMode)} grid to position the preview. Click to place it. ${getViewportViewModeControlHint(viewMode)}`;
+  if (toolMode === "create") {
+    return `Hover the ${getViewportViewModeGridPlaneLabel(viewMode)} grid to position the creation preview. Click to commit it. ${getViewportViewModeControlHint(viewMode)}`;
   }
 
   return `${displayMode === "authoring" ? "Authoring view" : `${getViewportViewModeLabel(viewMode)} view`} on the ${getViewportViewModeGridPlaneLabel(viewMode)} grid. ${getViewportViewModeControlHint(viewMode)}`;
@@ -85,8 +79,7 @@ export function ViewportCanvas({
   focusRequestId,
   focusSelection,
   onSelectionChange,
-  onCreateBoxBrush,
-  onCommitPlacement,
+  onCommitCreation,
   onToolPreviewChange
 }: ViewportCanvasProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -157,39 +150,15 @@ export function ViewportCanvas({
   }, [onCreateBoxBrush]);
 
   useEffect(() => {
-    hostRef.current?.setBoxCreatePreviewChangeHandler((center) => {
-      onToolPreviewChange(
-        center === null
-          ? {
-              kind: "none"
-            }
-          : {
-              kind: "box-create",
-              sourcePanelId: panelId,
-              center
-            }
-      );
-    });
+    hostRef.current?.setCreationPreviewChangeHandler(onToolPreviewChange);
   }, [onToolPreviewChange, panelId]);
-
-  useEffect(() => {
-    hostRef.current?.setPlacementPreviewChangeHandler(onToolPreviewChange);
-  }, [onToolPreviewChange]);
-
-  useEffect(() => {
-    hostRef.current?.setPlacementCommitHandler(onCommitPlacement);
-  }, [onCommitPlacement]);
 
   useEffect(() => {
     hostRef.current?.setToolMode(toolMode);
   }, [toolMode]);
 
   useEffect(() => {
-    hostRef.current?.setBoxCreatePreview(toolMode === "box-create" && toolPreview.kind === "box-create" ? toolPreview.center : null);
-  }, [toolMode, toolPreview]);
-
-  useEffect(() => {
-    hostRef.current?.setPlacementPreview(toolMode === "place" && toolPreview.kind === "placement" ? toolPreview : null);
+    hostRef.current?.setCreationPreview(toolMode === "create" && toolPreview.kind === "create" ? toolPreview : null);
   }, [toolMode, toolPreview]);
 
   useEffect(() => {
@@ -201,9 +170,7 @@ export function ViewportCanvas({
   }, [focusRequestId, focusSelection, sceneDocument]);
 
   const overlayText = getViewportOverlayText(toolMode, viewMode, displayMode, layoutMode);
-  const previewVisible =
-    (toolMode === "box-create" && toolPreview.kind === "box-create" && toolPreview.center !== null) ||
-    (toolMode === "place" && toolPreview.kind === "placement" && toolPreview.center !== null);
+  const previewVisible = toolMode === "create" && toolPreview.kind === "create" && toolPreview.center !== null;
 
   return (
     <div
@@ -224,7 +191,7 @@ export function ViewportCanvas({
       <div className="viewport-canvas__overlay" data-testid={`viewport-overlay-${panelId}`}>
         <div className="viewport-canvas__overlay-badges">
           <div className="viewport-canvas__overlay-badge">
-            {toolMode === "box-create" ? "Box Create" : toolMode === "place" ? "Place" : "Select"}
+            {toolMode === "create" ? "Create" : "Select"}
           </div>
           <div className="viewport-canvas__overlay-badge viewport-canvas__overlay-badge--view">{getViewportViewModeLabel(viewMode)}</div>
           <div className="viewport-canvas__overlay-badge viewport-canvas__overlay-badge--display">
@@ -243,23 +210,16 @@ export function ViewportCanvas({
         <div className="viewport-canvas__fallback" role="status">
           <div className="viewport-canvas__fallback-title">Viewport Unavailable</div>
           <div>{viewportMessage}</div>
-          {toolMode !== "box-create" && toolMode !== "place" ? null : (
+          {toolMode !== "create" || toolPreview.kind !== "create" ? null : (
             <button
               className="toolbar__button toolbar__button--accent"
               type="button"
-              data-testid={
-                toolMode === "place" ? `viewport-fallback-place-${panelId}` : `viewport-fallback-create-box-${panelId}`
-              }
+              data-testid={`viewport-fallback-create-${panelId}`}
               onClick={() => {
-                if (toolMode === "place" && toolPreview.kind === "placement") {
-                  onCommitPlacement(toolPreview);
-                  return;
-                }
-
-                onCreateBoxBrush(DEFAULT_BOX_BRUSH_CENTER);
+                onCommitCreation(toolPreview);
               }}
             >
-              {toolMode === "place" ? "Place Preview at Default Position" : "Create Default Box"}
+              Commit Creation Preview
             </button>
           )}
         </div>

@@ -43,29 +43,6 @@ export function cloneViewportToolPreview(toolPreview: ViewportToolPreview): View
     return toolPreview;
   }
 
-  if (toolPreview.kind === "create") {
-    return {
-      kind: "create",
-      sourcePanelId: toolPreview.sourcePanelId,
-      target:
-        toolPreview.target.kind === "entity"
-          ? {
-              kind: "entity",
-              entityKind: toolPreview.target.entityKind,
-              audioAssetId: toolPreview.target.audioAssetId
-            }
-          : toolPreview.target.kind === "model-instance"
-            ? {
-                kind: "model-instance",
-                assetId: toolPreview.target.assetId
-              }
-            : {
-                kind: "box-brush"
-              },
-      center: toolPreview.center === null ? null : { ...toolPreview.center }
-    };
-  }
-
   return {
     kind: "create",
     sourcePanelId: toolPreview.sourcePanelId,
