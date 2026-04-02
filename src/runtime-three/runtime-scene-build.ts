@@ -1,8 +1,8 @@
 import type { Vec3 } from "../core/vector";
 import { getModelInstances } from "../assets/model-instances";
 import type { BoxBrush, BoxFaceId, FaceUvState } from "../document/brushes";
-import type { SceneDocument, WorldSettings } from "../document/scene-document";
-import { cloneWorldSettings } from "../document/world-settings";
+import type { SceneDocument } from "../document/scene-document";
+import { cloneWorldSettings, type WorldSettings } from "../document/world-settings";
 import { getEntityInstances, getPrimaryPlayerStartEntity, type EntityInstance } from "../entities/entity-instances";
 import { getBoxBrushBounds } from "../geometry/box-brush";
 import { cloneInteractionLink, getInteractionLinks, type InteractionLink } from "../interactions/interaction-links";
