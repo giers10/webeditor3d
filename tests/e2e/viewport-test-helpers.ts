@@ -25,5 +25,7 @@ export async function clickViewport(page: Page, panelId: string = DEFAULT_VIEWPO
     return;
   }
 
-  await viewportPanel.getByTestId(`viewport-fallback-create-box-${panelId}`).click();
+  const fallbackButton = viewportPanel.getByTestId(`viewport-fallback-create-box-${panelId}`);
+  await fallbackButton.waitFor({ state: "visible" });
+  await fallbackButton.click();
 }
