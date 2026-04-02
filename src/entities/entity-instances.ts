@@ -2,19 +2,21 @@ import { createOpaqueId } from "../core/ids";
 import type { Vec3 } from "../core/vector";
 import { isHexColorString } from "../document/world-settings";
 
-export interface PointLightEntity {
+interface PositionedEntity {
   id: string;
-  kind: "pointLight";
+  name?: string;
   position: Vec3;
+}
+
+export interface PointLightEntity extends PositionedEntity {
+  kind: "pointLight";
   colorHex: string;
   intensity: number;
   distance: number;
 }
 
-export interface SpotLightEntity {
-  id: string;
+export interface SpotLightEntity extends PositionedEntity {
   kind: "spotLight";
-  position: Vec3;
   direction: Vec3;
   colorHex: string;
   intensity: number;
@@ -22,17 +24,13 @@ export interface SpotLightEntity {
   angleDegrees: number;
 }
 
-export interface PlayerStartEntity {
-  id: string;
+export interface PlayerStartEntity extends PositionedEntity {
   kind: "playerStart";
-  position: Vec3;
   yawDegrees: number;
 }
 
-export interface SoundEmitterEntity {
-  id: string;
+export interface SoundEmitterEntity extends PositionedEntity {
   kind: "soundEmitter";
-  position: Vec3;
   audioAssetId: string | null;
   volume: number;
   refDistance: number;
@@ -41,26 +39,20 @@ export interface SoundEmitterEntity {
   loop: boolean;
 }
 
-export interface TriggerVolumeEntity {
-  id: string;
+export interface TriggerVolumeEntity extends PositionedEntity {
   kind: "triggerVolume";
-  position: Vec3;
   size: Vec3;
   triggerOnEnter: boolean;
   triggerOnExit: boolean;
 }
 
-export interface TeleportTargetEntity {
-  id: string;
+export interface TeleportTargetEntity extends PositionedEntity {
   kind: "teleportTarget";
-  position: Vec3;
   yawDegrees: number;
 }
 
-export interface InteractableEntity {
-  id: string;
+export interface InteractableEntity extends PositionedEntity {
   kind: "interactable";
-  position: Vec3;
   radius: number;
   prompt: string;
   enabled: boolean;
