@@ -135,6 +135,8 @@ export class ViewportHost {
   private readonly materialTextureCache = new Map<string, CachedMaterialTexture>();
   private currentDocument: SceneDocument | null = null;
   private currentWorld: WorldSettings | null = null;
+  private currentAdvancedRenderingSettings: AdvancedRenderingSettings | null = null;
+  private advancedRenderingComposer: EffectComposer | null = null;
   private currentSelection: EditorSelection = {
     kind: "none"
   };
