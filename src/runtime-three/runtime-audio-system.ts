@@ -119,6 +119,11 @@ export class RuntimeAudioSystem {
       return;
     }
 
+    if (this.listener === null) {
+      this.setRuntimeMessage("Audio is unavailable in this browser environment.");
+      return;
+    }
+
     if (soundEmitter.buffer === null) {
       const assetLabel =
         soundEmitter.entity.audioAssetId === null ? "no assigned audio asset" : `audio asset ${soundEmitter.entity.audioAssetId}`;
@@ -127,7 +132,7 @@ export class RuntimeAudioSystem {
       return;
     }
 
-    if (this.listener === null || this.listener.context.state !== "running") {
+    if (this.listener.context.state !== "running") {
       this.pendingPlayEmitterIds.add(soundEmitterId);
       this.setRuntimeMessage("Audio is locked. Click the runner to enable sound.");
       return;
