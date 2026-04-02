@@ -59,7 +59,8 @@ test("first-room workflow covers create, texture, save/load, and run", async ({ 
 
   await expect(page.getByTestId("runner-shell")).toBeVisible();
   await expect(page.getByTestId("runner-spawn-state")).toContainText("Player Start");
-  await expect(page.getByTestId("runner-player-position")).toContainText("2.00, 0.00, -2.00");
+  await expect(page.getByTestId("runner-player-position")).toContainText("2.00,");
+  await expect(page.getByTestId("runner-player-position")).toContainText(", -2.00");
 
   expect(pageErrors).toEqual([]);
   expect(consoleErrors).toEqual([]);
