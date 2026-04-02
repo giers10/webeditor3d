@@ -114,13 +114,23 @@ describe("EditorStore", () => {
     expect(store.getState().toolMode).toBe("box-create");
   });
 
-  it("tracks the active viewport view mode independently from the document", () => {
+  it("tracks viewport layout and per-panel state independently from the document", () => {
     const store = createEditorStore();
 
-    expect(store.getState().viewportViewMode).toBe("perspective");
+    expect(store.getState().viewportLayoutMode).toBe("single");
+    expect(store.getState().activeViewportPanelId).toBe("topLeft");
+    expect(store.getState().viewportPanels.topLeft.viewMode).toBe("perspective");
+    expect(store.getState().viewportPanels.topRight.viewMode).toBe("top");
+    expect(store.getState().viewportPanels.topRight.displayMode).toBe("authoring");
 
-    store.setViewportViewMode("top");
+    store.setViewportLayoutMode("quad");
+    store.setActiveViewportPanel("bottomRight");
+    store.setViewportPanelViewMode("bottomRight", "front");
+    store.setViewportPanelDisplayMode("bottomRight", "normal");
 
-    expect(store.getState().viewportViewMode).toBe("top");
+    expect(store.getState().viewportLayoutMode).toBe("quad");
+    expect(store.getState().activeViewportPanelId).toBe("bottomRight");
+    expect(store.getState().viewportPanels.bottomRight.viewMode).toBe("front");
+    expect(store.getState().viewportPanels.bottomRight.displayMode).toBe("normal");
   });
 });
