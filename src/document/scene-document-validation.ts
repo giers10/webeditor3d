@@ -220,6 +220,217 @@ function validateWorldSettings(world: WorldSettings, document: SceneDocument, di
       )
     );
   }
+
+  const advancedRendering = world.advancedRendering;
+
+  if (!isBoolean(advancedRendering.enabled)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-enabled",
+        "Advanced rendering enabled must be a boolean.",
+        "world.advancedRendering.enabled"
+      )
+    );
+  }
+
+  if (!isBoolean(advancedRendering.shadows.enabled)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-shadows-enabled",
+        "Advanced rendering shadow enabled must be a boolean.",
+        "world.advancedRendering.shadows.enabled"
+      )
+    );
+  }
+
+  if (!isAdvancedRenderingShadowMapSize(advancedRendering.shadows.mapSize)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-shadow-map-size",
+        "Advanced rendering shadow map size must be one of 512, 1024, 2048, or 4096.",
+        "world.advancedRendering.shadows.mapSize"
+      )
+    );
+  }
+
+  if (!isAdvancedRenderingShadowType(advancedRendering.shadows.type)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-shadow-type",
+        "Advanced rendering shadow type must be basic, pcf, or pcfSoft.",
+        "world.advancedRendering.shadows.type"
+      )
+    );
+  }
+
+  if (!isFiniteNumber(advancedRendering.shadows.bias)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-shadow-bias",
+        "Advanced rendering shadow bias must be a finite number.",
+        "world.advancedRendering.shadows.bias"
+      )
+    );
+  }
+
+  if (!isBoolean(advancedRendering.ambientOcclusion.enabled)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-ao-enabled",
+        "Advanced rendering ambient occlusion enabled must be a boolean.",
+        "world.advancedRendering.ambientOcclusion.enabled"
+      )
+    );
+  }
+
+  if (!isNonNegativeFiniteNumber(advancedRendering.ambientOcclusion.intensity)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-ao-intensity",
+        "Advanced rendering ambient occlusion intensity must be a non-negative finite number.",
+        "world.advancedRendering.ambientOcclusion.intensity"
+      )
+    );
+  }
+
+  if (!isNonNegativeFiniteNumber(advancedRendering.ambientOcclusion.radius)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-ao-radius",
+        "Advanced rendering ambient occlusion radius must be a non-negative finite number.",
+        "world.advancedRendering.ambientOcclusion.radius"
+      )
+    );
+  }
+
+  if (!isPositiveInteger(advancedRendering.ambientOcclusion.samples)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-ao-samples",
+        "Advanced rendering ambient occlusion samples must be a positive integer.",
+        "world.advancedRendering.ambientOcclusion.samples"
+      )
+    );
+  }
+
+  if (!isBoolean(advancedRendering.bloom.enabled)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-bloom-enabled",
+        "Advanced rendering bloom enabled must be a boolean.",
+        "world.advancedRendering.bloom.enabled"
+      )
+    );
+  }
+
+  if (!isNonNegativeFiniteNumber(advancedRendering.bloom.intensity)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-bloom-intensity",
+        "Advanced rendering bloom intensity must be a non-negative finite number.",
+        "world.advancedRendering.bloom.intensity"
+      )
+    );
+  }
+
+  if (!isNonNegativeFiniteNumber(advancedRendering.bloom.threshold)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-bloom-threshold",
+        "Advanced rendering bloom threshold must be a non-negative finite number.",
+        "world.advancedRendering.bloom.threshold"
+      )
+    );
+  }
+
+  if (!isNonNegativeFiniteNumber(advancedRendering.bloom.radius)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-bloom-radius",
+        "Advanced rendering bloom radius must be a non-negative finite number.",
+        "world.advancedRendering.bloom.radius"
+      )
+    );
+  }
+
+  if (!isAdvancedRenderingToneMappingMode(advancedRendering.toneMapping.mode)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-tone-mapping-mode",
+        "Advanced rendering tone mapping mode must be none, linear, reinhard, cineon, or acesFilmic.",
+        "world.advancedRendering.toneMapping.mode"
+      )
+    );
+  }
+
+  if (!isPositiveFiniteNumber(advancedRendering.toneMapping.exposure)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-tone-mapping-exposure",
+        "Advanced rendering tone mapping exposure must be a positive finite number.",
+        "world.advancedRendering.toneMapping.exposure"
+      )
+    );
+  }
+
+  if (!isBoolean(advancedRendering.depthOfField.enabled)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-dof-enabled",
+        "Advanced rendering depth of field enabled must be a boolean.",
+        "world.advancedRendering.depthOfField.enabled"
+      )
+    );
+  }
+
+  if (!isNonNegativeFiniteNumber(advancedRendering.depthOfField.focusDistance)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-dof-focus-distance",
+        "Advanced rendering depth of field focus distance must be a non-negative finite number.",
+        "world.advancedRendering.depthOfField.focusDistance"
+      )
+    );
+  }
+
+  if (!isPositiveFiniteNumber(advancedRendering.depthOfField.focalLength)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-dof-focal-length",
+        "Advanced rendering depth of field focal length must be a positive finite number.",
+        "world.advancedRendering.depthOfField.focalLength"
+      )
+    );
+  }
+
+  if (!isPositiveFiniteNumber(advancedRendering.depthOfField.bokehScale)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-dof-bokeh-scale",
+        "Advanced rendering depth of field bokeh scale must be a positive finite number.",
+        "world.advancedRendering.depthOfField.bokehScale"
+      )
+    );
+  }
 }
 
 function validatePointLightEntity(entity: PointLightEntity, path: string, diagnostics: SceneDiagnostic[]) {
