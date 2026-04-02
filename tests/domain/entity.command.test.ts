@@ -13,8 +13,10 @@ describe("typed entity upsert command", () => {
         y: 2,
         z: 3
       },
-      radius: 5,
-      gain: 0.5
+      audioAssetId: null,
+      volume: 0.5,
+      refDistance: 5,
+      maxDistance: 12
     });
 
     store.setToolMode("box-create");
