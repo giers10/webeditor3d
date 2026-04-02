@@ -10,7 +10,7 @@ import { DEFAULT_BOX_BRUSH_CENTER, DEFAULT_BOX_BRUSH_SIZE } from "../document/br
 import type { SceneDocument } from "../document/scene-document";
 import type { WorldSettings } from "../document/world-settings";
 import { createWorldBackgroundStyle } from "../shared-ui/world-background-style";
-import { getViewportPanelLabel, type ViewportDisplayMode, type ViewportPanelId } from "./viewport-layout";
+import { getViewportPanelLabel, type ViewportDisplayMode, type ViewportLayoutMode, type ViewportPanelId } from "./viewport-layout";
 import {
   getViewportViewModeControlHint,
   getViewportViewModeGridPlaneLabel,
@@ -186,6 +186,8 @@ export function ViewportCanvas({
     hostRef.current?.focusSelection(sceneDocument, focusSelection);
   }, [focusRequestId, focusSelection, sceneDocument]);
 
+  const overlayText = getViewportOverlayText(toolMode, viewMode, displayMode, layoutMode);
+
   return (
     <div
       ref={containerRef}
@@ -209,9 +211,7 @@ export function ViewportCanvas({
             {displayMode === "authoring" ? "Authoring" : "Lit"}
           </div>
         </div>
-        {getViewportOverlayText(toolMode, viewMode, displayMode, layoutMode) === null ? null : (
-          <div className="viewport-canvas__overlay-text">{getViewportOverlayText(toolMode, viewMode, displayMode, layoutMode)}</div>
-        )}
+        {overlayText === null ? null : <div className="viewport-canvas__overlay-text">{overlayText}</div>}
         {toolMode !== "box-create" || toolPreview.kind !== "box-create" || toolPreview.center === null ? null : (
           <div className="viewport-canvas__overlay-preview" data-testid={`viewport-snap-preview-${panelId}`}>
             Preview: {formatVec3(toolPreview.center)}
