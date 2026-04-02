@@ -287,6 +287,26 @@ function readNonNegativeNumberDraft(source: string, label: string): number {
   return value;
 }
 
+function readFiniteNumberDraft(source: string, label: string): number {
+  const value = Number(source);
+
+  if (!Number.isFinite(value)) {
+    throw new Error(`${label} must be a finite number.`);
+  }
+
+  return value;
+}
+
+function readPositiveIntegerDraft(source: string, label: string): number {
+  const value = Number(source);
+
+  if (!Number.isFinite(value) || value <= 0 || !Number.isInteger(value)) {
+    throw new Error(`${label} must be a positive integer.`);
+  }
+
+  return value;
+}
+
 function readPositiveNumberDraft(source: string, label: string): number {
   const value = Number(source);
 
