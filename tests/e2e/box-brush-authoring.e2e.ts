@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { clickViewport } from "./viewport-test-helpers";
+import { clickViewport, getEditorStoreSnapshot } from "./viewport-test-helpers";
 
 test("user can create a box brush and keep it through a draft reload", async ({ page }) => {
   const pageErrors: string[] = [];
@@ -21,6 +21,30 @@ test("user can create a box brush and keep it through a draft reload", async ({ 
     window.localStorage.removeItem(storageKey);
   }, "webeditor3d.scene-document-draft");
   await page.reload();
+
+  await page.getByRole("button", { name: "Box Create" }).click();
+  await expect(await getEditorStoreSnapshot(page)).toMatchObject({
+    toolMode: "create",
+    viewportTransientState: {
+      toolPreview: {
+        kind: "create",
+        sourcePanelId: "topLeft",
+        target: {
+          kind: "box-brush"
+        },
+        center: null
+      }
+    }
+  });
+  await page.keyboard.press("Escape");
+  await expect(await getEditorStoreSnapshot(page)).toMatchObject({
+    toolMode: "select",
+    viewportTransientState: {
+      toolPreview: {
+        kind: "none"
+      }
+    }
+  });
 
   await page.getByRole("button", { name: "Box Create" }).click();
   await clickViewport(page);
