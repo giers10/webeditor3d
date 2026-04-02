@@ -47,37 +47,3 @@ export function createEmptySceneDocument(overrides: Partial<Pick<SceneDocument, 
     interactionLinks: {}
   };
 }
-
-export type {
-  AdvancedRenderingAmbientOcclusionSettings,
-  AdvancedRenderingBloomSettings,
-  AdvancedRenderingDepthOfFieldSettings,
-  AdvancedRenderingSettings,
-  AdvancedRenderingShadowMapSize,
-  AdvancedRenderingShadowType,
-  AdvancedRenderingShadowsSettings,
-  AdvancedRenderingToneMappingMode,
-  WorldAmbientLightSettings,
-  WorldBackgroundMode,
-  WorldBackgroundSettings,
-  WorldImageBackgroundSettings,
-  WorldSolidBackgroundSettings,
-  WorldSettings,
-  WorldSunLightSettings,
-  WorldVerticalGradientBackgroundSettings
-} from "./world-settings";
-
-export {
-  areAdvancedRenderingSettingsEqual,
-  areWorldSettingsEqual,
-  changeWorldBackgroundMode,
-  cloneWorldBackgroundSettings,
-  cloneAdvancedRenderingSettings,
-  cloneWorldSettings,
-  createDefaultWorldSettings,
-  createDefaultAdvancedRenderingSettings,
-  isAdvancedRenderingShadowMapSize,
-  isAdvancedRenderingShadowType,
-  isAdvancedRenderingToneMappingMode,
-  isHexColorString
-} from "./world-settings";
