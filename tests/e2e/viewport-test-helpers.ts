@@ -21,6 +21,7 @@ interface EditorStoreSnapshot {
     kind: string;
     ids?: string[];
   };
+  toolMode: string;
   document: {
     assets: Record<string, { id: string; kind: string; sourceName: string }>;
     modelInstances: Record<string, { position: { x: number; y: number; z: number } }>;
