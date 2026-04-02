@@ -7,7 +7,7 @@ describe("player start command", () => {
   it("restores the previous tool mode across undo and redo when placing PlayerStart", () => {
     const store = createEditorStore();
 
-    store.setToolMode("box-create");
+    store.setToolMode("create");
     store.executeCommand(
       createSetPlayerStartCommand({
         position: {
@@ -25,7 +25,7 @@ describe("player start command", () => {
     expect(store.getState().toolMode).toBe("select");
 
     expect(store.undo()).toBe(true);
-    expect(store.getState().toolMode).toBe("box-create");
+    expect(store.getState().toolMode).toBe("create");
     expect(store.getState().document.entities).toEqual({});
 
     expect(store.redo()).toBe(true);
@@ -49,7 +49,7 @@ describe("player start command", () => {
 
     const existingPlayerStart = Object.values(store.getState().document.entities)[0];
 
-    store.setToolMode("box-create");
+    store.setToolMode("create");
     store.executeCommand(
       createSetPlayerStartCommand({
         entityId: existingPlayerStart.id,
@@ -73,7 +73,7 @@ describe("player start command", () => {
     });
 
     expect(store.undo()).toBe(true);
-    expect(store.getState().toolMode).toBe("box-create");
+    expect(store.getState().toolMode).toBe("create");
     expect(store.getState().document.entities[existingPlayerStart.id]).toEqual(existingPlayerStart);
 
     expect(store.redo()).toBe(true);

@@ -19,7 +19,7 @@ describe("typed entity upsert command", () => {
       maxDistance: 12
     });
 
-    store.setToolMode("box-create");
+    store.setToolMode("create");
     store.executeCommand(
       createUpsertEntityCommand({
         entity: soundEmitter,
@@ -35,7 +35,7 @@ describe("typed entity upsert command", () => {
     expect(store.getState().document.entities[soundEmitter.id]).toEqual(soundEmitter);
 
     expect(store.undo()).toBe(true);
-    expect(store.getState().toolMode).toBe("box-create");
+    expect(store.getState().toolMode).toBe("create");
     expect(store.getState().document.entities).toEqual({});
 
     expect(store.redo()).toBe(true);
@@ -56,7 +56,7 @@ describe("typed entity upsert command", () => {
       distance: 9
     });
 
-    store.setToolMode("box-create");
+    store.setToolMode("create");
     store.executeCommand(
       createUpsertEntityCommand({
         entity: pointLight,
@@ -72,7 +72,7 @@ describe("typed entity upsert command", () => {
     expect(store.getState().document.entities[pointLight.id]).toEqual(pointLight);
 
     expect(store.undo()).toBe(true);
-    expect(store.getState().toolMode).toBe("box-create");
+    expect(store.getState().toolMode).toBe("create");
     expect(store.getState().document.entities).toEqual({});
 
     expect(store.redo()).toBe(true);
@@ -112,7 +112,7 @@ describe("typed entity upsert command", () => {
         label: "Place trigger volume"
       })
     );
-    store.setToolMode("box-create");
+    store.setToolMode("create");
     store.executeCommand(
       createUpsertEntityCommand({
         entity: movedTriggerVolume,
@@ -124,7 +124,7 @@ describe("typed entity upsert command", () => {
     expect(store.getState().document.entities[triggerVolume.id]).toEqual(movedTriggerVolume);
 
     expect(store.undo()).toBe(true);
-    expect(store.getState().toolMode).toBe("box-create");
+    expect(store.getState().toolMode).toBe("create");
     expect(store.getState().document.entities[triggerVolume.id]).toEqual(triggerVolume);
 
     expect(store.redo()).toBe(true);
@@ -165,7 +165,7 @@ describe("typed entity upsert command", () => {
         label: "Place spot light"
       })
     );
-    store.setToolMode("box-create");
+    store.setToolMode("create");
     store.executeCommand(
       createUpsertEntityCommand({
         entity: movedSpotLight,
@@ -177,7 +177,7 @@ describe("typed entity upsert command", () => {
     expect(store.getState().document.entities[spotLight.id]).toEqual(movedSpotLight);
 
     expect(store.undo()).toBe(true);
-    expect(store.getState().toolMode).toBe("box-create");
+    expect(store.getState().toolMode).toBe("create");
     expect(store.getState().document.entities[spotLight.id]).toEqual(spotLight);
 
     expect(store.redo()).toBe(true);
