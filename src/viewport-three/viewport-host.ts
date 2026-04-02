@@ -28,6 +28,7 @@ import {
   Vector3,
   WebGLRenderer
 } from "three";
+import { EffectComposer } from "postprocessing";
 
 import { isBrushFaceSelected, isBrushSelected, isModelInstanceSelected, type EditorSelection } from "../core/selection";
 import type { ToolMode } from "../core/tool-mode";
@@ -39,6 +40,11 @@ import type { ProjectAssetRecord } from "../assets/project-assets";
 import { getModelInstances } from "../assets/model-instances";
 import type { SceneDocument, WorldSettings } from "../document/scene-document";
 import {
+  areAdvancedRenderingSettingsEqual,
+  cloneAdvancedRenderingSettings,
+  type AdvancedRenderingSettings
+} from "../document/scene-document";
+import {
   getEntityInstances,
   type EntityInstance,
   type PointLightEntity,
@@ -49,6 +55,12 @@ import { applyBoxBrushFaceUvsToGeometry } from "../geometry/box-face-uvs";
 import { DEFAULT_GRID_SIZE, snapValueToGrid } from "../geometry/grid-snapping";
 import { createStarterMaterialSignature, createStarterMaterialTexture } from "../materials/starter-material-textures";
 import type { MaterialDef } from "../materials/starter-material-library";
+import {
+  applyAdvancedRenderingLightShadowFlags,
+  applyAdvancedRenderingRenderableShadowFlags,
+  configureAdvancedRenderingRenderer,
+  createAdvancedRenderingComposer
+} from "../rendering/advanced-rendering";
 import { resolveViewportFocusTarget } from "./viewport-focus";
 import { createSoundEmitterMarkerMeshes } from "./viewport-entity-markers";
 
