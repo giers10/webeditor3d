@@ -1261,6 +1261,44 @@ export function App({ store, initialStatusMessage }: AppProps) {
         return;
       }
 
+      const hasPrimaryModifier = (event.metaKey || event.ctrlKey) && !event.altKey;
+
+      if (hasPrimaryModifier && event.code === "KeyS" && !event.shiftKey) {
+        event.preventDefault();
+        handleSaveDraft();
+        return;
+      }
+
+      if (hasPrimaryModifier && event.code === "KeyZ") {
+        event.preventDefault();
+
+        if (event.shiftKey) {
+          if (store.redo()) {
+            setStatusMessage("Redid the last action.");
+          } else {
+            setStatusMessage("Nothing to redo.");
+          }
+        } else if (store.undo()) {
+          setStatusMessage("Undid the last action.");
+        } else {
+          setStatusMessage("Nothing to undo.");
+        }
+
+        return;
+      }
+
+      if (hasPrimaryModifier && event.code === "KeyY") {
+        event.preventDefault();
+
+        if (store.redo()) {
+          setStatusMessage("Redid the last action.");
+        } else {
+          setStatusMessage("Nothing to redo.");
+        }
+
+        return;
+      }
+
       if (event.key === "Escape" && addMenuPosition !== null) {
         event.preventDefault();
         setAddMenuPosition(null);
