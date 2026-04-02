@@ -178,14 +178,20 @@ export class ViewportHost {
   private lastClickSelectionKey: string | null = null;
 
   constructor() {
-    this.camera.position.set(10, 9, 10);
-    this.camera.lookAt(this.cameraTarget);
-    this.updateCameraSphericalFromPose();
+    this.perspectiveCamera.position.set(10, 9, 10);
+    this.perspectiveCamera.lookAt(this.cameraTarget);
+    this.updatePerspectiveCameraSphericalFromPose();
+    this.updateOrthographicCameraFrustum();
 
-    const gridHelper = new GridHelper(40, 40, 0xcf8354, 0x4e596b);
     const axesHelper = new AxesHelper(2);
 
-    this.scene.add(gridHelper);
+    this.gridHelpers.xz.visible = true;
+    this.gridHelpers.xy.visible = false;
+    this.gridHelpers.yz.visible = false;
+
+    this.scene.add(this.gridHelpers.xz);
+    this.scene.add(this.gridHelpers.xy);
+    this.scene.add(this.gridHelpers.yz);
     this.scene.add(axesHelper);
     this.scene.add(this.ambientLight);
     this.scene.add(this.sunLight);
@@ -199,6 +205,7 @@ export class ViewportHost {
     this.scene.add(this.boxCreatePreviewEdges);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.setClearAlpha(0);
+    this.applyViewMode(this.viewMode);
   }
 
   mount(container: HTMLElement) {
