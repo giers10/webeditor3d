@@ -1202,6 +1202,7 @@ export function validateSceneDocument(document: SceneDocument): SceneDocumentVal
     }
 
     registerAuthoredId(entity.id, path, seenIds, diagnostics);
+    validateEntityName(entity.name, path, diagnostics);
 
     switch (entity.kind) {
       case "pointLight":
