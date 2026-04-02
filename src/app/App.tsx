@@ -1386,6 +1386,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
     setStatusMessage(status);
   };
 
+  const completeCreation = (status: string) => {
+    store.setToolMode("select");
+    setStatusMessage(status);
+  };
+
   const beginBoxCreation = () => {
     beginCreation(
       {
@@ -1550,7 +1555,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
         store.executeCommand(
           createCreateBoxBrushCommand(center === undefined ? {} : { center })
         );
-        setStatusMessage(
+        completeCreation(
           center === undefined
             ? `Created a box brush snapped to the ${DEFAULT_GRID_SIZE}m grid.`
             : `Created a box brush at snapped center ${formatVec3(center)}.`
@@ -1580,7 +1585,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
             label: `Place ${asset.sourceName}`
           })
         );
-        setStatusMessage(`Placed ${asset.sourceName}.`);
+        completeCreation(`Placed ${asset.sourceName}.`);
         return;
       }
 
@@ -1596,7 +1601,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
               label: "Place point light"
             })
           );
-          setStatusMessage("Placed Point Light.");
+          completeCreation("Placed Point Light.");
           return;
         case "spotLight":
           store.executeCommand(
@@ -1607,7 +1612,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
               label: "Place spot light"
             })
           );
-          setStatusMessage("Placed Spot Light.");
+          completeCreation("Placed Spot Light.");
           return;
         case "playerStart":
           store.executeCommand(
@@ -1618,7 +1623,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
               label: "Place player start"
             })
           );
-          setStatusMessage("Placed Player Start.");
+          completeCreation("Placed Player Start.");
           return;
         case "soundEmitter": {
           const placedAudioAssetId = creationPreview.target.audioAssetId ?? audioAssetList[0]?.id ?? null;
@@ -1632,7 +1637,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
               label: "Place sound emitter"
             })
           );
-          setStatusMessage(
+          completeCreation(
             placedAudioAssetId === null
               ? "Placed Sound Emitter."
               : `Placed Sound Emitter using ${editorState.document.assets[placedAudioAssetId]?.sourceName ?? "the authored audio asset"}.`
@@ -1648,7 +1653,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
               label: "Place trigger volume"
             })
           );
-          setStatusMessage("Placed Trigger Volume.");
+          completeCreation("Placed Trigger Volume.");
           return;
         case "teleportTarget":
           store.executeCommand(
@@ -1659,7 +1664,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
               label: "Place teleport target"
             })
           );
-          setStatusMessage("Placed Teleport Target.");
+          completeCreation("Placed Teleport Target.");
           return;
         case "interactable":
           store.executeCommand(
@@ -1670,7 +1675,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
               label: "Place interactable"
             })
           );
-          setStatusMessage("Placed Interactable.");
+          completeCreation("Placed Interactable.");
           return;
       }
     } catch (error) {
