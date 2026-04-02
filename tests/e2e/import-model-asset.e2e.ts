@@ -31,13 +31,15 @@ test("imports a model asset, places an instance, and survives reload", async ({ 
 
   await page.locator('input[type="file"][accept*="gltf"]').setInputFiles(fixturePath);
 
-  await expect(page.getByTestId("asset-list").getByText("tiny-triangle.gltf", { exact: true })).toBeVisible();
-  await expect(page.getByTestId("asset-list")).not.toContainText("Storage key:");
   await expect(page.getByTestId("outliner-model-instance-list").getByRole("button")).toHaveCount(1);
 
-  await page.getByRole("button", { name: "Place instance for tiny-triangle.gltf" }).hover();
+  await page.getByTestId("outliner-add-button").click();
+  await page.getByTestId("add-menu-assets").click();
+  await page.getByTestId("add-menu-assets-models").click();
+  await expect(page.getByRole("button", { name: "tiny-triangle.gltf" })).toBeVisible();
+  await page.getByRole("button", { name: "tiny-triangle.gltf" }).hover();
   await expect(page.getByTestId("status-asset-hover")).toContainText("Storage key:");
-  await page.getByRole("button", { name: "Place instance for tiny-triangle.gltf" }).click();
+  await page.getByRole("button", { name: "tiny-triangle.gltf" }).click();
   const importedSnapshot = await getEditorStoreSnapshot(page);
   expect(importedSnapshot).toMatchObject({
     toolMode: "create",
@@ -72,7 +74,10 @@ test("imports a model asset, places an instance, and survives reload", async ({ 
     }
   });
 
-  await page.getByRole("button", { name: "Place instance for tiny-triangle.gltf" }).click();
+  await page.getByTestId("outliner-add-button").click();
+  await page.getByTestId("add-menu-assets").click();
+  await page.getByTestId("add-menu-assets-models").click();
+  await page.getByRole("button", { name: "tiny-triangle.gltf" }).click();
   await setViewportCreationPreview(page, "topLeft", { kind: "model-instance", assetId: importedModelAsset.id }, { x: 92, y: 0, z: -76 });
   await expect(page.getByTestId("viewport-snap-preview-topLeft")).toBeVisible();
   await clickViewport(page, "topLeft");
@@ -107,8 +112,10 @@ test("imports a model asset, places an instance, and survives reload", async ({ 
 
   await page.reload();
 
-  await expect(page.getByTestId("asset-list").getByText("tiny-triangle.gltf", { exact: true })).toBeVisible();
-  await expect(page.getByTestId("asset-list")).not.toContainText("Storage key:");
+  await page.getByTestId("outliner-add-button").click();
+  await page.getByTestId("add-menu-assets").click();
+  await page.getByTestId("add-menu-assets-models").click();
+  await expect(page.getByRole("button", { name: "tiny-triangle.gltf" })).toBeVisible();
   await expect(page.getByTestId("outliner-model-instance-list").getByRole("button")).toHaveCount(2);
   await expect(page.getByTestId("asset-status-message")).toHaveCount(0);
 
