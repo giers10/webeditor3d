@@ -35,7 +35,12 @@ describe("audio asset import and storage", () => {
 
     const storage = createInMemoryProjectAssetStorage();
     const fileBytes = new Uint8Array([1, 2, 3, 4]).buffer;
-    const file = new File([fileBytes], "lobby-loop.ogg", { type: "audio/ogg" });
+    const file = {
+      name: "lobby-loop.ogg",
+      type: "audio/ogg",
+      webkitRelativePath: "",
+      arrayBuffer: async () => fileBytes
+    } as File;
 
     const importedAudio = await importAudioAssetFromFile(file, storage);
     const storedAsset = await storage.getAsset(importedAudio.asset.storageKey);
