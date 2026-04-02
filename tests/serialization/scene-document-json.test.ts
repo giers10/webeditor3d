@@ -988,6 +988,27 @@ describe("scene document JSON", () => {
     });
   });
 
+  it("migrates v13 documents without the advanced rendering block to the current schema version", () => {
+    const emptyScene = createEmptySceneDocument();
+    const { advancedRendering: _advancedRendering, ...legacyWorld } = emptyScene.world;
+
+    const migratedDocument = migrateSceneDocument({
+      version: SPATIAL_AUDIO_SCENE_DOCUMENT_VERSION,
+      name: "Legacy Spatial Audio Scene",
+      world: legacyWorld,
+      materials: emptyScene.materials,
+      textures: {},
+      assets: {},
+      brushes: {},
+      modelInstances: {},
+      entities: {},
+      interactionLinks: {}
+    });
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.world.advancedRendering).toEqual(emptyScene.world.advancedRendering);
+  });
+
   it("round-trips authored playAnimation and stopAnimation interaction links", () => {
     const asset = {
       id: "asset-model-anim",
