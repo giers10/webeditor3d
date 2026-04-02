@@ -133,4 +133,63 @@ describe("EditorStore", () => {
     expect(store.getState().viewportPanels.bottomRight.viewMode).toBe("front");
     expect(store.getState().viewportPanels.bottomRight.displayMode).toBe("normal");
   });
+
+  it("shares transient box-create preview state across viewport panels", () => {
+    const store = createEditorStore();
+
+    expect(store.getState().viewportTransientState.toolPreview).toEqual({
+      kind: "none"
+    });
+
+    store.setViewportToolPreview({
+      kind: "box-create",
+      sourcePanelId: "topLeft",
+      center: {
+        x: 4,
+        y: 0,
+        z: 8
+      }
+    });
+
+    expect(store.getState().viewportTransientState.toolPreview).toEqual({
+      kind: "box-create",
+      sourcePanelId: "topLeft",
+      center: {
+        x: 4,
+        y: 0,
+        z: 8
+      }
+    });
+
+    store.clearViewportToolPreview("topRight");
+    expect(store.getState().viewportTransientState.toolPreview).toEqual({
+      kind: "box-create",
+      sourcePanelId: "topLeft",
+      center: {
+        x: 4,
+        y: 0,
+        z: 8
+      }
+    });
+
+    store.clearViewportToolPreview("topLeft");
+    expect(store.getState().viewportTransientState.toolPreview).toEqual({
+      kind: "none"
+    });
+  });
+
+  it("clears transient viewport preview when leaving box-create mode", () => {
+    const store = createEditorStore();
+
+    store.setViewportToolPreview({
+      kind: "box-create",
+      sourcePanelId: "bottomRight",
+      center: null
+    });
+    store.setToolMode("select");
+
+    expect(store.getState().viewportTransientState.toolPreview).toEqual({
+      kind: "none"
+    });
+  });
 });
