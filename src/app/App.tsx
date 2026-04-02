@@ -37,6 +37,7 @@ import type { Vec2, Vec3 } from "../core/vector";
 import {
   areModelInstancesEqual,
   createModelInstance,
+  createModelInstancePlacementPosition,
   DEFAULT_MODEL_INSTANCE_POSITION,
   DEFAULT_MODEL_INSTANCE_ROTATION_DEGREES,
   DEFAULT_MODEL_INSTANCE_SCALE,
@@ -154,6 +155,7 @@ import { Panel } from "../shared-ui/Panel";
 import { HierarchicalMenu, type HierarchicalMenuItem, type HierarchicalMenuPosition } from "../shared-ui/HierarchicalMenu";
 import { createWorldBackgroundStyle } from "../shared-ui/world-background-style";
 import { ViewportPanel } from "../viewport-three/ViewportPanel";
+import type { PlacementViewportToolPreview } from "../viewport-three/viewport-transient-state";
 import { getViewportViewModeLabel, type ViewportViewMode } from "../viewport-three/viewport-view-modes";
 import {
   VIEWPORT_LAYOUT_MODES,
@@ -463,26 +465,6 @@ function formatAssetHoverStatus(asset: ProjectAssetRecord): string {
   }
 
   return `${asset.sourceName} | ${details.join(" | ")}`;
-}
-
-function createModelInstancePlacementPosition(asset: ModelAssetRecord, anchor: Vec3 | null): Vec3 {
-  const boundingBox = asset.metadata.boundingBox;
-
-  if (anchor !== null) {
-    const floorOffset = boundingBox === null ? 0 : -boundingBox.min.y;
-
-    return {
-      x: anchor.x,
-      y: anchor.y + floorOffset,
-      z: anchor.z
-    };
-  }
-
-  return {
-    x: DEFAULT_MODEL_INSTANCE_POSITION.x,
-    y: boundingBox === null ? DEFAULT_MODEL_INSTANCE_POSITION.y : Math.max(DEFAULT_MODEL_INSTANCE_POSITION.y, -boundingBox.min.y),
-    z: DEFAULT_MODEL_INSTANCE_POSITION.z
-  };
 }
 
 function getBrushLabel(brush: BoxBrush, index: number): string {
@@ -1705,39 +1687,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
   };
 
   const handlePlaceModelInstance = (assetId: string) => {
-    const asset = editorState.document.assets[assetId];
-
-    if (asset === undefined || asset.kind !== "model") {
-      setStatusMessage("Select a model asset before placing a model instance.");
-      return;
-    }
-
-    try {
-      const anchorPosition =
-        selectedBrush !== null
-          ? {
-              x: selectedBrush.center.x,
-              y: selectedBrush.center.y + selectedBrush.size.y * 0.5,
-              z: selectedBrush.center.z
-            }
-          : selectedModelInstance?.position ?? null;
-      const nextModelInstance = createModelInstance({
-        assetId: asset.id,
-        position: createModelInstancePlacementPosition(asset, anchorPosition),
-        rotationDegrees: DEFAULT_MODEL_INSTANCE_ROTATION_DEGREES,
-        scale: DEFAULT_MODEL_INSTANCE_SCALE
-      });
-
-      store.executeCommand(
-        createUpsertModelInstanceCommand({
-          modelInstance: nextModelInstance,
-          label: `Place ${asset.sourceName}`
-        })
-      );
-      setStatusMessage(`Placed ${asset.sourceName}.`);
-    } catch (error) {
-      setStatusMessage(getErrorMessage(error));
-    }
+    beginModelInstancePlacement(assetId);
   };
 
   const applyModelInstanceChange = () => {
