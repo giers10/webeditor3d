@@ -459,6 +459,18 @@ export class ViewportHost {
     this.applyOrthographicCameraPose();
   }
 
+  private getBoxCreatePlane() {
+    switch (this.viewMode) {
+      case "perspective":
+      case "top":
+        return this.boxCreatePlane.set(new Vector3(0, 1, 0), 0);
+      case "front":
+        return this.boxCreatePlane.set(new Vector3(0, 0, 1), 0);
+      case "side":
+        return this.boxCreatePlane.set(new Vector3(1, 0, 0), 0);
+    }
+  }
+
   private applyWorld() {
     if (this.currentWorld === null) {
       return;
