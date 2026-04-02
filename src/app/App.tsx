@@ -2334,7 +2334,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 </button>
               </div>
 
-              {link.action.type === "playAnimation" || link.action.type === "stopAnimation" ? null : null}
             </div>
           ))}
         </div>
