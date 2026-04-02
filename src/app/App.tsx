@@ -155,7 +155,7 @@ import { Panel } from "../shared-ui/Panel";
 import { HierarchicalMenu, type HierarchicalMenuItem, type HierarchicalMenuPosition } from "../shared-ui/HierarchicalMenu";
 import { createWorldBackgroundStyle } from "../shared-ui/world-background-style";
 import { ViewportPanel } from "../viewport-three/ViewportPanel";
-import type { PlacementViewportToolPreview } from "../viewport-three/viewport-transient-state";
+import type { CreationViewportToolPreview } from "../viewport-three/viewport-transient-state";
 import { getViewportViewModeLabel, type ViewportViewMode } from "../viewport-three/viewport-view-modes";
 import {
   VIEWPORT_LAYOUT_MODES,
