@@ -2126,7 +2126,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
     sourceEntity: InteractionSourceEntity,
     links: InteractionLink[],
     addTeleportTestId: string,
-    addVisibilityTestId: string
+    addVisibilityTestId: string,
+    addPlaySoundTestId: string,
+    addStopSoundTestId: string
   ) => (
     <div className="form-section">
       <div className="label">Links</div>
@@ -2179,6 +2181,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       <option value="toggleVisibility">Toggle Visibility</option>
                       <option value="playAnimation">Play Animation</option>
                       <option value="stopAnimation">Stop Animation</option>
+                      <option value="playSound">Play Sound</option>
+                      <option value="stopSound">Stop Sound</option>
                     </select>
                   </label>
                 </div>
