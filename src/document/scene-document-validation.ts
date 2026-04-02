@@ -458,22 +458,99 @@ function validatePlayerStartEntity(entity: PlayerStartEntity, path: string, diag
   }
 }
 
-function validateSoundEmitterEntity(entity: SoundEmitterEntity, path: string, diagnostics: SceneDiagnostic[]) {
+function validateSoundEmitterAudioAsset(
+  entity: SoundEmitterEntity,
+  path: string,
+  document: SceneDocument,
+  diagnostics: SceneDiagnostic[],
+  missingSeverity: SceneDiagnosticSeverity
+): ProjectAssetRecord | null {
+  if (entity.audioAssetId === null) {
+    diagnostics.push(
+      createDiagnostic(
+        missingSeverity,
+        "missing-sound-emitter-audio-asset",
+        entity.autoplay
+          ? "Sound Emitter autoplay requires an assigned audio asset."
+          : "Sound Emitter has no audio asset assigned yet.",
+        `${path}.audioAssetId`
+      )
+    );
+    return null;
+  }
+
+  const asset = document.assets[entity.audioAssetId];
+
+  if (asset === undefined) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "missing-sound-emitter-audio-asset",
+        `Sound Emitter audio asset ${entity.audioAssetId} does not exist.`,
+        `${path}.audioAssetId`
+      )
+    );
+    return null;
+  }
+
+  if (asset.kind !== "audio") {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-sound-emitter-audio-asset-kind",
+        "Sound Emitter audioAssetId must reference an audio asset.",
+        `${path}.audioAssetId`
+      )
+    );
+    return null;
+  }
+
+  return asset;
+}
+
+function validateSoundEmitterEntity(entity: SoundEmitterEntity, path: string, document: SceneDocument, diagnostics: SceneDiagnostic[]) {
   if (!isFiniteVec3(entity.position)) {
     diagnostics.push(
       createDiagnostic("error", "invalid-sound-emitter-position", "Sound Emitter position must remain finite on every axis.", `${path}.position`)
     );
   }
 
-  if (!isPositiveFiniteNumber(entity.radius)) {
+  if (!isNonNegativeFiniteNumber(entity.volume)) {
     diagnostics.push(
-      createDiagnostic("error", "invalid-sound-emitter-radius", "Sound Emitter radius must remain finite and greater than zero.", `${path}.radius`)
+      createDiagnostic("error", "invalid-sound-emitter-volume", "Sound Emitter volume must remain finite and zero or greater.", `${path}.volume`)
     );
   }
 
-  if (!isNonNegativeFiniteNumber(entity.gain)) {
+  if (!isPositiveFiniteNumber(entity.refDistance)) {
     diagnostics.push(
-      createDiagnostic("error", "invalid-sound-emitter-gain", "Sound Emitter gain must remain finite and zero or greater.", `${path}.gain`)
+      createDiagnostic(
+        "error",
+        "invalid-sound-emitter-ref-distance",
+        "Sound Emitter ref distance must remain finite and greater than zero.",
+        `${path}.refDistance`
+      )
+    );
+  }
+
+  if (!isPositiveFiniteNumber(entity.maxDistance)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-sound-emitter-max-distance",
+        "Sound Emitter max distance must remain finite and greater than zero.",
+        `${path}.maxDistance`
+      )
+    );
+  }
+
+  if (isPositiveFiniteNumber(entity.refDistance) && isPositiveFiniteNumber(entity.maxDistance) && entity.maxDistance < entity.refDistance) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-sound-emitter-distance-order",
+        "Sound Emitter max distance must be greater than or equal to ref distance.",
+        `${path}.maxDistance`
+      )
     );
   }
 
@@ -486,6 +563,8 @@ function validateSoundEmitterEntity(entity: SoundEmitterEntity, path: string, di
   if (!isBoolean(entity.loop)) {
     diagnostics.push(createDiagnostic("error", "invalid-sound-emitter-loop", "Sound Emitter loop must remain a boolean.", `${path}.loop`));
   }
+
+  validateSoundEmitterAudioAsset(entity, path, document, diagnostics, entity.autoplay ? "error" : "warning");
 }
 
 function validateTriggerVolumeEntity(entity: TriggerVolumeEntity, path: string, diagnostics: SceneDiagnostic[]) {
