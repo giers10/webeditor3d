@@ -5118,6 +5118,13 @@ export function App({ store, initialStatusMessage }: AppProps) {
         accept=".avif,.exr,.gif,.hdr,.jpg,.jpeg,.png,.svg,.webp,image/*"
         onChange={handleImportBackgroundImageChange}
       />
+      <input
+        ref={importAudioInputRef}
+        className="visually-hidden"
+        type="file"
+        accept=".aac,.flac,.m4a,.mp3,.oga,.ogg,.wav,.webm,audio/*"
+        onChange={handleImportAudioChange}
+      />
     </div>
   );
 }
