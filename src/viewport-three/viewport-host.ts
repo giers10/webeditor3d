@@ -14,6 +14,7 @@ import {
   Mesh,
   MeshStandardMaterial,
   Object3D,
+  OrthographicCamera,
   Plane,
   PerspectiveCamera,
   PointLight,
@@ -1442,7 +1443,7 @@ export class ViewportHost {
   private orbitCamera(deltaX: number, deltaY: number) {
     this.cameraSpherical.theta -= deltaX * ORBIT_ROTATION_SPEED;
     this.cameraSpherical.phi -= deltaY * ORBIT_ROTATION_SPEED;
-    this.applyCameraOrbitPose();
+    this.applyPerspectiveCameraPose();
   }
 
   private panCamera(deltaX: number, deltaY: number) {
