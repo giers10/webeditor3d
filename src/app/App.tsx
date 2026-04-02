@@ -3692,7 +3692,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
         <header className="toolbar">
             <div className="toolbar__brand">
               <div className="toolbar__title">WebEditor3D</div>
-              <div className="toolbar__subtitle">Slice 3.1 GLB/GLTF import and model placement</div>
+              <div className="toolbar__subtitle">Slice 3.1 GLB/GLTF import and unified creation</div>
             </div>
 
           <div className="toolbar__actions">
@@ -4036,7 +4036,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
             <div className="outliner-section">
               <div className="label">Brushes</div>
               {brushList.length === 0 ? (
-                <div className="outliner-empty">Switch to Box Create and click in the viewport to place the first brush.</div>
+                <div className="outliner-empty">Switch to Box Create and click in the viewport to create the first brush.</div>
               ) : (
                 <div className="outliner-list" data-testid="outliner-brush-list">
                   {brushList.map((brush, brushIndex) => (
