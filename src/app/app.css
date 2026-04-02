@@ -607,6 +607,7 @@ button:disabled {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  position: relative;
   background: rgba(11, 15, 20, 0.92);
   border: 1px solid var(--color-border);
   border-radius: 18px;
@@ -626,53 +627,25 @@ button:disabled {
   box-shadow: 0 0 0 1px rgba(207, 123, 66, 0.18), var(--shadow-panel);
 }
 
-.viewport-panel--compact .viewport-panel__header {
-  padding: 6px 8px;
-  gap: 8px;
-}
-
-.viewport-panel--compact .viewport-panel__meta {
-  gap: 2px;
-}
-
-.viewport-panel--compact .viewport-panel__title {
-  font-size: 0.62rem;
-  letter-spacing: 0.12em;
-}
-
-.viewport-panel--compact .viewport-panel__active-badge {
-  padding: 0.12rem 0.34rem;
-  font-size: 0.54rem;
-}
-
-.viewport-panel--compact .viewport-panel__controls {
-  gap: 6px;
-}
-
-.viewport-panel--compact .viewport-panel__control-group {
-  gap: 3px;
-  padding: 3px;
-  border-radius: 10px;
-}
-
-.viewport-panel--compact .viewport-panel__button {
-  padding: 0.24rem 0.4rem;
-  font-size: 0.62rem;
-}
-
 .viewport-panel__header {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 10px 12px;
-  background: rgba(255, 255, 255, 0.025);
-  border-bottom: 1px solid var(--color-border);
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 0;
+  background: transparent;
+  border-bottom: 0;
+  pointer-events: none;
 }
 
 .viewport-panel__meta {
   display: flex;
   flex-direction: column;
+  align-items: flex-end;
   gap: 4px;
   min-width: 0;
 }
@@ -701,16 +674,12 @@ button:disabled {
   text-transform: uppercase;
 }
 
-.viewport-panel__subtitle {
-  color: var(--color-muted);
-  font-size: 0.74rem;
-}
-
 .viewport-panel__controls {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 8px;
+  pointer-events: auto;
 }
 
 .viewport-panel__control-group {
