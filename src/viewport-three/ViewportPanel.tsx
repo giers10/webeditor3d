@@ -78,7 +78,7 @@ export function ViewportPanel({
             {isActive ? <div className="viewport-panel__active-badge">Active</div> : null}
           </div>
           <div className="viewport-panel__subtitle">
-            {getViewportViewModeLabel(panelState.viewMode)} {getViewportDisplayModeLabel(panelState.displayMode)}
+            {getViewportViewModeLabel(panelState.viewMode)} / {getViewportDisplayModeLabel(panelState.displayMode)}
           </div>
         </div>
 
