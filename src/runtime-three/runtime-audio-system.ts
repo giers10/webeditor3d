@@ -46,9 +46,10 @@ export function computeSoundEmitterDistanceGain(distance: number, refDistance: n
 
   const normalizedDistance = (distance - refDistance) / (maxDistance - refDistance);
   const clampedDistance = Math.min(1, Math.max(0, normalizedDistance));
-  const smoothStep = clampedDistance * clampedDistance * (3 - 2 * clampedDistance);
+  const proximity = 1 - clampedDistance;
+  const easedProximity = proximity * proximity * proximity * proximity;
 
-  return 1 - smoothStep;
+  return easedProximity;
 }
 
 export class RuntimeAudioSystem {
