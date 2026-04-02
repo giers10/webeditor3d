@@ -65,9 +65,6 @@ import {
   isAdvancedRenderingToneMappingMode,
   isWorldBackgroundMode,
   type AdvancedRenderingSettings,
-  type AdvancedRenderingShadowMapSize,
-  type AdvancedRenderingShadowType,
-  type AdvancedRenderingToneMappingMode,
   type WorldBackgroundSettings,
   type WorldSettings
 } from "./world-settings";
