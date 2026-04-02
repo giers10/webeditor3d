@@ -73,7 +73,9 @@ test("local lights and background images persist through editor and runner flows
   await page.getByTestId("outliner-add-button").click();
   await page.getByTestId("add-menu-assets").click();
   await page.getByTestId("add-menu-assets-environments").click();
-  await expect(page.getByRole("menu", { name: "Add" }).getByRole("menuitem", { name: "skybox-panorama.svg" })).toBeVisible();
+  const reloadedAddMenu = page.getByRole("menu", { name: "Add" });
+  await expect(reloadedAddMenu.getByRole("menuitem", { name: "skybox-panorama.svg" })).toBeVisible();
+  await reloadedAddMenu.getByRole("menuitem", { name: "skybox-panorama.svg" }).click();
   await expect(page.locator('[data-testid^="outliner-entity-"]')).toHaveCount(2);
   await expect(page.getByTestId("viewport-canvas-topLeft")).toHaveCSS("background-image", /url/);
 
