@@ -36,10 +36,11 @@ test("imports a model asset, places an instance, and survives reload", async ({ 
   await page.getByTestId("outliner-add-button").click();
   await page.getByTestId("add-menu-assets").click();
   await page.getByTestId("add-menu-assets-models").click();
-  await expect(page.getByRole("button", { name: "tiny-triangle.gltf" })).toBeVisible();
-  await page.getByRole("button", { name: "tiny-triangle.gltf" }).hover();
+  const addMenu = page.getByRole("menu", { name: "Add" });
+  await expect(addMenu.getByRole("menuitem", { name: "tiny-triangle.gltf" })).toBeVisible();
+  await addMenu.getByRole("menuitem", { name: "tiny-triangle.gltf" }).hover();
   await expect(page.getByTestId("status-asset-hover")).toContainText("Storage key:");
-  await page.getByRole("button", { name: "tiny-triangle.gltf" }).click();
+  await addMenu.getByRole("menuitem", { name: "tiny-triangle.gltf" }).click();
   const importedSnapshot = await getEditorStoreSnapshot(page);
   expect(importedSnapshot).toMatchObject({
     toolMode: "create",
@@ -77,7 +78,7 @@ test("imports a model asset, places an instance, and survives reload", async ({ 
   await page.getByTestId("outliner-add-button").click();
   await page.getByTestId("add-menu-assets").click();
   await page.getByTestId("add-menu-assets-models").click();
-  await page.getByRole("button", { name: "tiny-triangle.gltf" }).click();
+  await page.getByRole("menu", { name: "Add" }).getByRole("menuitem", { name: "tiny-triangle.gltf" }).click();
   await setViewportCreationPreview(page, "topLeft", { kind: "model-instance", assetId: importedModelAsset.id }, { x: 92, y: 0, z: -76 });
   await expect(page.getByTestId("viewport-snap-preview-topLeft")).toBeVisible();
   await clickViewport(page, "topLeft");
@@ -115,7 +116,7 @@ test("imports a model asset, places an instance, and survives reload", async ({ 
   await page.getByTestId("outliner-add-button").click();
   await page.getByTestId("add-menu-assets").click();
   await page.getByTestId("add-menu-assets-models").click();
-  await expect(page.getByRole("button", { name: "tiny-triangle.gltf" })).toBeVisible();
+  await expect(page.getByRole("menu", { name: "Add" }).getByRole("menuitem", { name: "tiny-triangle.gltf" })).toBeVisible();
   await expect(page.getByTestId("outliner-model-instance-list").getByRole("button")).toHaveCount(2);
   await expect(page.getByTestId("asset-status-message")).toHaveCount(0);
 
