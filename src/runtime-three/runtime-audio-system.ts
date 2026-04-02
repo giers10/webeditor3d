@@ -125,8 +125,7 @@ export class RuntimeAudioSystem {
     }
 
     if (soundEmitter.buffer === null) {
-      const assetLabel =
-        soundEmitter.entity.audioAssetId === null ? "no assigned audio asset" : `audio asset ${soundEmitter.entity.audioAssetId}`;
+      const assetLabel = this.describeAudioAssetAvailability(soundEmitter.entity.audioAssetId);
       this.setRuntimeMessage(`Sound emitter ${formatSoundEmitterLabel(soundEmitterId, link)} cannot play because ${assetLabel} is unavailable.`);
       console.warn(`playSound: ${soundEmitterId} has no playable audio buffer.`);
       return;
@@ -257,6 +256,24 @@ export class RuntimeAudioSystem {
     }
 
     return null;
+  }
+
+  private describeAudioAssetAvailability(audioAssetId: string | null): string {
+    if (audioAssetId === null) {
+      return "no assigned audio asset";
+    }
+
+    const asset = this.projectAssets[audioAssetId];
+
+    if (asset === undefined) {
+      return `missing audio asset ${audioAssetId}`;
+    }
+
+    if (asset.kind !== "audio") {
+      return `asset ${audioAssetId} is not an audio asset`;
+    }
+
+    return `audio asset ${audioAssetId}`;
   }
 
   private queueAutoplayEmitters() {
