@@ -245,6 +245,12 @@ export class RuntimeHost {
     this.clearBrushMeshes();
     this.clearModelInstances();
     this.audioSystem.dispose();
+    this.advancedRenderingComposer?.dispose();
+    this.advancedRenderingComposer = null;
+    this.currentAdvancedRenderingSettings = null;
+    if (this.renderer !== null) {
+      this.renderer.autoClear = true;
+    }
 
     for (const cachedTexture of this.materialTextureCache.values()) {
       cachedTexture.texture.dispose();
@@ -568,6 +574,7 @@ export class RuntimeHost {
     this.domElement.width = width;
     this.domElement.height = height;
     this.renderer?.setSize(width, height, false);
+    this.advancedRenderingComposer?.setSize(width, height);
   }
 
   private render = () => {
@@ -600,6 +607,11 @@ export class RuntimeHost {
       );
     } else {
       this.setInteractionPrompt(null);
+    }
+
+    if (this.advancedRenderingComposer !== null) {
+      this.advancedRenderingComposer.render(dt);
+      return;
     }
 
     this.renderer?.render(this.scene, this.camera);
