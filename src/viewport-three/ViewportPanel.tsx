@@ -77,18 +77,18 @@ export function ViewportPanel({
       onFocusCapture={() => onActivatePanel(panelId)}
     >
       <div className="viewport-panel__header">
-        <div className="viewport-panel__meta">
-          <div className="viewport-panel__title-row">
-            <div className="viewport-panel__title">{getViewportPanelLabel(panelId)}</div>
-            {isActive ? <div className="viewport-panel__active-badge">Active</div> : null}
-          </div>
-          {layoutMode === "quad" ? null : (
-            <div className="viewport-panel__subtitle">
-              {getViewportViewModeLabel(panelState.viewMode)} / {getViewportDisplayModeLabel(panelState.displayMode)}
+        {layoutMode === "quad" ? (
+          <div className="viewport-panel__meta">
+            <div className="viewport-panel__title-row">
+              <div className="viewport-panel__title">{getViewportPanelLabel(panelId)}</div>
+              {isActive ? (
+                <div className="viewport-panel__active-badge" data-testid="viewport-active-panel">
+                  {getViewportPanelLabel(panelId)} Active
+                </div>
+              ) : null}
             </div>
-          )}
-        </div>
-
+          </div>
+        ) : null}
         <div className="viewport-panel__controls">
           <div className="viewport-panel__control-group" role="group" aria-label={`${getViewportPanelLabel(panelId)} view mode`}>
             {VIEWPORT_VIEW_MODES.map((viewMode) => (
