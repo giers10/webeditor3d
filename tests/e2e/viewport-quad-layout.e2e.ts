@@ -34,6 +34,41 @@ test("quad viewport layout shows four linked panels with shared selection and ac
   await expect(page.getByTestId("viewport-panel-bottomLeft")).toBeVisible();
   await expect(page.getByTestId("viewport-panel-bottomRight")).toBeVisible();
 
+  const initialLayoutSnapshot = await getEditorStoreSnapshot(page);
+  expect(initialLayoutSnapshot.viewportQuadSplit).toEqual({
+    x: 0.5,
+    y: 0.5
+  });
+
+  const dragSplitter = async (testId: string, deltaX: number, deltaY: number) => {
+    const splitter = page.getByTestId(testId);
+    const box = await splitter.boundingBox();
+
+    if (box === null) {
+      throw new Error(`Missing splitter handle: ${testId}`);
+    }
+
+    await page.mouse.move(box.x + box.width * 0.5, box.y + box.height * 0.5);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width * 0.5 + deltaX, box.y + box.height * 0.5 + deltaY);
+    await page.mouse.up();
+  };
+
+  await dragSplitter("viewport-quad-splitter-center", 80, 48);
+  const afterCenterResizeSnapshot = await getEditorStoreSnapshot(page);
+  expect(afterCenterResizeSnapshot.viewportQuadSplit.x).toBeGreaterThan(0.5);
+  expect(afterCenterResizeSnapshot.viewportQuadSplit.y).toBeGreaterThan(0.5);
+
+  await dragSplitter("viewport-quad-splitter-vertical", -60, 0);
+  const afterVerticalResizeSnapshot = await getEditorStoreSnapshot(page);
+  expect(afterVerticalResizeSnapshot.viewportQuadSplit.x).toBeLessThan(afterCenterResizeSnapshot.viewportQuadSplit.x);
+  expect(Math.abs(afterVerticalResizeSnapshot.viewportQuadSplit.y - afterCenterResizeSnapshot.viewportQuadSplit.y)).toBeLessThan(0.02);
+
+  await dragSplitter("viewport-quad-splitter-horizontal", 0, -40);
+  const afterHorizontalResizeSnapshot = await getEditorStoreSnapshot(page);
+  expect(Math.abs(afterHorizontalResizeSnapshot.viewportQuadSplit.x - afterVerticalResizeSnapshot.viewportQuadSplit.x)).toBeLessThan(0.02);
+  expect(afterHorizontalResizeSnapshot.viewportQuadSplit.y).toBeLessThan(afterVerticalResizeSnapshot.viewportQuadSplit.y);
+
   await expect(page.getByTestId("viewport-panel-topLeft-view-perspective")).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByTestId("viewport-panel-topLeft-display-normal")).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByTestId("viewport-panel-topRight-view-top")).toHaveAttribute("aria-pressed", "true");
