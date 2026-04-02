@@ -431,6 +431,36 @@ button:disabled {
   gap: 6px;
 }
 
+.asset-item--action {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.asset-item__content {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.asset-item--action .outliner-item__title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.asset-item__plus {
+  flex: 0 0 auto;
+  color: var(--color-accent-strong);
+  font-size: 1.1rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
 .material-browser {
   display: flex;
   flex-direction: column;
