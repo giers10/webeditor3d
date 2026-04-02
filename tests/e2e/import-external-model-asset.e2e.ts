@@ -34,10 +34,11 @@ test("imports a gltf asset with external resources and places an instance", asyn
   await page.getByTestId("outliner-add-button").click();
   await page.getByTestId("add-menu-assets").click();
   await page.getByTestId("add-menu-assets-models").click();
-  await expect(page.getByRole("button", { name: "scene.gltf" })).toBeVisible();
-  await page.getByRole("button", { name: "scene.gltf" }).hover();
+  const addMenu = page.getByRole("menu", { name: "Add" });
+  await expect(addMenu.getByRole("menuitem", { name: "scene.gltf" })).toBeVisible();
+  await addMenu.getByRole("menuitem", { name: "scene.gltf" }).hover();
   await expect(page.getByTestId("status-asset-hover")).toContainText("Storage key:");
-  await page.getByRole("button", { name: "scene.gltf" }).click();
+  await addMenu.getByRole("menuitem", { name: "scene.gltf" }).click();
   const importedSnapshot = await getEditorStoreSnapshot(page);
   const importedModelAsset = Object.values(importedSnapshot.document.assets).find(
     (asset) => asset.kind === "model" && asset.sourceName === "scene.gltf"
