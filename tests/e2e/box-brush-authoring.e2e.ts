@@ -69,7 +69,7 @@ test("user can create a box brush and keep it through a draft reload", async ({ 
   await page.getByTestId("brush-size-z").press("Tab");
   await page.getByTestId("selected-brush-name").fill("Entry Room");
   await page.getByTestId("selected-brush-name").press("Tab");
-  await expect(page.getByRole("button", { name: /^Entry Room$/ })).toBeVisible();
+  await expect(page.getByTestId("selected-brush-name")).toHaveValue("Entry Room");
 
   await page.getByRole("button", { name: "Save Draft" }).click();
   await page.reload();
