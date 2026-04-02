@@ -3828,9 +3828,24 @@ export function App({ store, initialStatusMessage }: AppProps) {
               className={`toolbar__button ${editorState.toolMode === "box-create" ? "toolbar__button--active" : ""}`}
               type="button"
               onClick={() => store.setToolMode("box-create")}
-            >
+              >
               Box Create
             </button>
+          </div>
+
+          <div className="toolbar__group" role="group" aria-label="Viewport layout mode">
+            {VIEWPORT_LAYOUT_MODES.map((mode) => (
+              <button
+                key={mode}
+                className={`toolbar__button toolbar__button--compact ${editorState.viewportLayoutMode === mode ? "toolbar__button--active" : ""}`}
+                type="button"
+                data-testid={`viewport-layout-${mode}`}
+                aria-pressed={editorState.viewportLayoutMode === mode}
+                onClick={() => handleSetViewportLayoutMode(mode)}
+              >
+                {getViewportLayoutModeLabel(mode)}
+              </button>
+            ))}
           </div>
 
           <div className="toolbar__group">
@@ -4115,51 +4130,20 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
             <div className="outliner-section">
               <div className="label">Entities</div>
+              <div className="inline-actions">
+                <button
+                  className="toolbar__button toolbar__button--accent"
+                  type="button"
+                  data-testid="outliner-add-button"
+                  aria-haspopup="menu"
+                  aria-expanded={addMenuPosition !== null}
+                  onClick={handleOpenAddMenuFromButton}
+                >
+                  Add
+                </button>
+              </div>
+
               {entityDisplayList.length === 0 ? <div className="outliner-empty">No entities authored yet.</div> : null}
-
-              <div className="inline-actions">
-                <button className="toolbar__button" type="button" data-testid="place-player-start" onClick={() => handlePlaceEntity("playerStart")}>
-                  Add Player Start
-                </button>
-                <button
-                  className="toolbar__button"
-                  type="button"
-                  data-testid="add-entity-soundEmitter"
-                  onClick={() => handlePlaceEntity("soundEmitter")}
-                >
-                  Add Sound Emitter
-                </button>
-              </div>
-
-              <div className="inline-actions">
-                <button
-                  className="toolbar__button"
-                  type="button"
-                  data-testid="add-entity-triggerVolume"
-                  onClick={() => handlePlaceEntity("triggerVolume")}
-                >
-                  Add Trigger Volume
-                </button>
-                <button
-                  className="toolbar__button"
-                  type="button"
-                  data-testid="add-entity-teleportTarget"
-                  onClick={() => handlePlaceEntity("teleportTarget")}
-                >
-                  Add Teleport Target
-                </button>
-              </div>
-
-              <div className="inline-actions">
-                <button
-                  className="toolbar__button"
-                  type="button"
-                  data-testid="add-entity-interactable"
-                  onClick={() => handlePlaceEntity("interactable")}
-                >
-                  Add Interactable
-                </button>
-              </div>
 
               {entityDisplayList.length === 0 ? null : (
                 <div className="outliner-list">
@@ -4192,15 +4176,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   ))}
                 </div>
               )}
-
-              <div className="inline-actions">
-                <button className="toolbar__button" type="button" data-testid="add-entity-pointLight" onClick={() => handlePlaceEntity("pointLight")}>
-                  Add Point Light
-                </button>
-                <button className="toolbar__button" type="button" data-testid="add-entity-spotLight" onClick={() => handlePlaceEntity("spotLight")}>
-                  Add Spot Light
-                </button>
-              </div>
             </div>
           </Panel>
         </aside>
