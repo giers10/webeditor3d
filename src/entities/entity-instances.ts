@@ -201,6 +201,15 @@ function normalizeSoundEmitterAudioAssetId(audioAssetId: string | null | undefin
   return trimmedAudioAssetId;
 }
 
+export function normalizeEntityName(name: string | null | undefined): string | undefined {
+  if (name === undefined || name === null) {
+    return undefined;
+  }
+
+  const trimmedName = name.trim();
+  return trimmedName.length === 0 ? undefined : trimmedName;
+}
+
 export function normalizeYawDegrees(yawDegrees: number): number {
   const normalizedYaw = yawDegrees % 360;
   return normalizedYaw < 0 ? normalizedYaw + 360 : normalizedYaw;
