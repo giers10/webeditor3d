@@ -33,8 +33,9 @@ test("imports a draco-compressed glb asset, places an instance, and survives rel
   await page.getByTestId("outliner-add-button").click();
   await page.getByTestId("add-menu-assets").click();
   await page.getByTestId("add-menu-assets-models").click();
-  await expect(page.getByRole("button", { name: "tiny-triangle-draco.glb" })).toBeVisible();
-  await page.getByRole("button", { name: "tiny-triangle-draco.glb" }).click();
+  const addMenu = page.getByRole("menu", { name: "Add" });
+  await expect(addMenu.getByRole("menuitem", { name: "tiny-triangle-draco.glb" })).toBeVisible();
+  await addMenu.getByRole("menuitem", { name: "tiny-triangle-draco.glb" }).click();
   const importedSnapshot = await getEditorStoreSnapshot(page);
   const importedModelAsset = Object.values(importedSnapshot.document.assets).find(
     (asset) => asset.kind === "model" && asset.sourceName === "tiny-triangle-draco.glb"
@@ -77,7 +78,7 @@ test("imports a draco-compressed glb asset, places an instance, and survives rel
   await page.getByTestId("outliner-add-button").click();
   await page.getByTestId("add-menu-assets").click();
   await page.getByTestId("add-menu-assets-models").click();
-  await expect(page.getByRole("button", { name: "tiny-triangle-draco.glb" })).toBeVisible();
+  await expect(page.getByRole("menu", { name: "Add" }).getByRole("menuitem", { name: "tiny-triangle-draco.glb" })).toBeVisible();
   await expect(page.getByTestId("outliner-model-instance-list").getByRole("button")).toHaveCount(2);
   await expect(page.getByTestId("asset-status-message")).toHaveCount(0);
 
