@@ -8,6 +8,7 @@ import type { ProjectAssetRecord } from "./project-assets";
 
 const MODEL_PLACEHOLDER_COLOR = 0x89b6ff;
 const MODEL_SELECTION_COLOR = 0xf7d2aa;
+const MODEL_PREVIEW_SHELL_OPACITY = 0.5;
 
 interface ModelInstanceBounds {
   center: Vec3;
@@ -116,7 +117,8 @@ export function createModelInstanceRenderGroup(
   modelInstance: ModelInstance,
   asset: ProjectAssetRecord | undefined,
   loadedAsset: LoadedModelAsset | undefined,
-  selected = false
+  selected = false,
+  previewShellColor?: number
 ): Group {
   const bounds = getLocalModelBounds(asset);
   const group = new Group();
@@ -134,10 +136,17 @@ export function createModelInstanceRenderGroup(
   if (loadedAsset !== undefined) {
     group.add(instantiateModelTemplate(loadedAsset.template));
   } else {
-    const placeholder = createWireframeBox(bounds.size, MODEL_PLACEHOLDER_COLOR, 0.28);
+    const placeholder = createWireframeBox(bounds.size, previewShellColor ?? MODEL_PLACEHOLDER_COLOR, previewShellColor === undefined ? 0.28 : MODEL_PREVIEW_SHELL_OPACITY);
     placeholder.position.set(bounds.center.x, bounds.center.y, bounds.center.z);
     placeholder.userData.shadowIgnored = true;
     group.add(placeholder);
+  }
+
+  if (loadedAsset !== undefined && previewShellColor !== undefined) {
+    const previewShell = createWireframeBox(bounds.size, previewShellColor, MODEL_PREVIEW_SHELL_OPACITY);
+    previewShell.position.set(bounds.center.x, bounds.center.y, bounds.center.z);
+    previewShell.userData.shadowIgnored = true;
+    group.add(previewShell);
   }
 
   if (selected) {
