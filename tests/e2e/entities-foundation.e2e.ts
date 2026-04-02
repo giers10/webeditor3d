@@ -21,10 +21,11 @@ test("user can place and select typed entities from the entity foundation workfl
   await page.reload();
 
   await page.getByTestId("add-entity-soundEmitter").click();
-  await expect(page.getByTestId("sound-emitter-radius")).toHaveValue("6");
+  await expect(page.getByTestId("sound-emitter-ref-distance")).toHaveValue("6");
+  await expect(page.getByTestId("sound-emitter-max-distance")).toHaveValue("24");
 
-  await page.getByTestId("sound-emitter-radius").fill("9");
-  await page.getByTestId("sound-emitter-radius").press("Tab");
+  await page.getByTestId("sound-emitter-ref-distance").fill("9");
+  await page.getByTestId("sound-emitter-ref-distance").press("Tab");
 
   await page.getByTestId("add-entity-interactable").click();
   await expect(page.getByTestId("interactable-prompt")).toHaveValue("Use");
@@ -35,7 +36,7 @@ test("user can place and select typed entities from the entity foundation workfl
     .first()
     .click();
 
-  await expect(page.getByTestId("sound-emitter-radius")).toHaveValue("9");
+  await expect(page.getByTestId("sound-emitter-ref-distance")).toHaveValue("9");
   await expect(page.getByTestId("interactable-prompt")).toHaveCount(0);
 
   expect(pageErrors).toEqual([]);

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { createBoxBrush } from "../../src/document/brushes";
 import {
+  ANIMATION_PLAYBACK_SCENE_DOCUMENT_VERSION,
   ENTITY_SYSTEM_FOUNDATION_SCENE_DOCUMENT_VERSION,
   FIRST_ROOM_POLISH_SCENE_DOCUMENT_VERSION,
   LOCAL_LIGHTS_AND_SKYBOX_SCENE_DOCUMENT_VERSION,
@@ -21,10 +22,17 @@ import {
   createTeleportTargetEntity,
   createTriggerVolumeEntity
 } from "../../src/entities/entity-instances";
-import { createTeleportPlayerInteractionLink, createToggleVisibilityInteractionLink, createPlayAnimationInteractionLink, createStopAnimationInteractionLink } from "../../src/interactions/interaction-links";
+import {
+  createPlayAnimationInteractionLink,
+  createPlaySoundInteractionLink,
+  createStopAnimationInteractionLink,
+  createStopSoundInteractionLink,
+  createTeleportPlayerInteractionLink,
+  createToggleVisibilityInteractionLink
+} from "../../src/interactions/interaction-links";
 import { STARTER_MATERIAL_LIBRARY } from "../../src/materials/starter-material-library";
 import { createModelInstance } from "../../src/assets/model-instances";
-import { createProjectAssetStorageKey, type ImageAssetRecord, type ModelAssetRecord } from "../../src/assets/project-assets";
+import { createProjectAssetStorageKey, type AudioAssetRecord, type ImageAssetRecord, type ModelAssetRecord } from "../../src/assets/project-assets";
 import { parseSceneDocumentJson, serializeSceneDocument } from "../../src/serialization/scene-document-json";
 
 describe("scene document JSON", () => {
@@ -211,6 +219,21 @@ describe("scene document JSON", () => {
     const playerStart = createPlayerStartEntity({
       id: "entity-player-start-main"
     });
+    const audioAsset = {
+      id: "asset-audio-main",
+      kind: "audio" as const,
+      sourceName: "lobby-loop.ogg",
+      mimeType: "audio/ogg",
+      storageKey: createProjectAssetStorageKey("asset-audio-main"),
+      byteLength: 4096,
+      metadata: {
+        kind: "audio" as const,
+        durationSeconds: 4.5,
+        channelCount: 2,
+        sampleRateHz: 48000,
+        warnings: []
+      }
+    } satisfies AudioAssetRecord;
     const soundEmitter = createSoundEmitterEntity({
       id: "entity-sound-main",
       position: {
@@ -218,8 +241,10 @@ describe("scene document JSON", () => {
         y: 2,
         z: 3
       },
-      radius: 7,
-      gain: 0.6,
+      audioAssetId: audioAsset.id,
+      volume: 0.6,
+      refDistance: 7,
+      maxDistance: 18,
       autoplay: true,
       loop: true
     });
@@ -258,6 +283,9 @@ describe("scene document JSON", () => {
     });
     const document = {
       ...createEmptySceneDocument({ name: "Typed Entity Scene" }),
+      assets: {
+        [audioAsset.id]: audioAsset
+      },
       entities: {
         [playerStart.id]: playerStart,
         [soundEmitter.id]: soundEmitter,
@@ -271,6 +299,59 @@ describe("scene document JSON", () => {
 
     expect(roundTripDocument).toEqual(document);
     expect(roundTripDocument.modelInstances).toEqual({});
+  });
+
+  it("round-trips authored playSound and stopSound interaction links", () => {
+    const audioAsset = {
+      id: "asset-audio-main",
+      kind: "audio" as const,
+      sourceName: "lobby-loop.ogg",
+      mimeType: "audio/ogg",
+      storageKey: createProjectAssetStorageKey("asset-audio-main"),
+      byteLength: 4096,
+      metadata: {
+        kind: "audio" as const,
+        durationSeconds: 4.5,
+        channelCount: 2,
+        sampleRateHz: 48000,
+        warnings: []
+      }
+    } satisfies AudioAssetRecord;
+    const triggerVolume = createTriggerVolumeEntity({
+      id: "entity-trigger-main"
+    });
+    const soundEmitter = createSoundEmitterEntity({
+      id: "entity-sound-main",
+      audioAssetId: audioAsset.id
+    });
+    const playLink = createPlaySoundInteractionLink({
+      id: "link-play-sound",
+      sourceEntityId: triggerVolume.id,
+      trigger: "enter",
+      targetSoundEmitterId: soundEmitter.id
+    });
+    const stopLink = createStopSoundInteractionLink({
+      id: "link-stop-sound",
+      sourceEntityId: triggerVolume.id,
+      trigger: "exit",
+      targetSoundEmitterId: soundEmitter.id
+    });
+    const document = {
+      ...createEmptySceneDocument({ name: "Sound Link Scene" }),
+      assets: {
+        [audioAsset.id]: audioAsset
+      },
+      entities: {
+        [triggerVolume.id]: triggerVolume,
+        [soundEmitter.id]: soundEmitter
+      },
+      interactionLinks: {
+        [playLink.id]: playLink,
+        [stopLink.id]: stopLink
+      }
+    };
+
+    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(document);
   });
 
   it("round-trips imported model assets and placed model instances", () => {
