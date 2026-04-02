@@ -210,10 +210,7 @@ export class RuntimeAudioSystem {
 
       if (this.listener !== null) {
         audio = new PositionalAudio(this.listener);
-        audio.setLoop(entity.loop);
-        audio.setVolume(entity.volume);
-        audio.setRefDistance(entity.refDistance);
-        audio.setMaxDistance(entity.maxDistance);
+        this.configurePositionalAudio(audio, entity);
         audio.position.set(0, 0, 0);
         group.add(audio);
       }
@@ -316,11 +313,17 @@ export class RuntimeAudioSystem {
       // three.js audio.stop() can throw when the underlying source is not active yet.
     }
 
-    soundEmitter.audio.setLoop(soundEmitter.entity.loop);
-    soundEmitter.audio.setVolume(soundEmitter.entity.volume);
-    soundEmitter.audio.setRefDistance(soundEmitter.entity.refDistance);
-    soundEmitter.audio.setMaxDistance(soundEmitter.entity.maxDistance);
+    this.configurePositionalAudio(soundEmitter.audio, soundEmitter.entity);
     soundEmitter.audio.setBuffer(soundEmitter.buffer);
     soundEmitter.audio.play();
+  }
+
+  private configurePositionalAudio(audio: PositionalAudio, entity: RuntimeSoundEmitter) {
+    audio.setLoop(entity.loop);
+    audio.setVolume(entity.volume);
+    audio.setRefDistance(entity.refDistance);
+    audio.setMaxDistance(entity.maxDistance);
+    audio.setDistanceModel("linear");
+    audio.setRolloffFactor(1);
   }
 }
