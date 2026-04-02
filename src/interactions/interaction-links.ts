@@ -66,6 +66,20 @@ export interface CreateToggleVisibilityInteractionLinkOptions {
   visible?: boolean;
 }
 
+export interface CreatePlaySoundInteractionLinkOptions {
+  id?: string;
+  sourceEntityId: string;
+  trigger?: InteractionTriggerKind;
+  targetSoundEmitterId: string;
+}
+
+export interface CreateStopSoundInteractionLinkOptions {
+  id?: string;
+  sourceEntityId: string;
+  trigger?: InteractionTriggerKind;
+  targetSoundEmitterId: string;
+}
+
 function assertNonEmptyString(value: string, label: string) {
   if (value.trim().length === 0) {
     throw new Error(`${label} must be non-empty.`);
