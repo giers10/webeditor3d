@@ -1547,7 +1547,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
   };
 
-  const handleCommitCreation = (creationPreview: CreationViewportToolPreview) => {
+  const handleCommitCreation = (creationPreview: CreationViewportToolPreview): boolean => {
     try {
       if (creationPreview.target.kind === "box-brush") {
         const center = creationPreview.center === null ? undefined : creationPreview.center;
@@ -1560,7 +1560,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
             ? `Created a box brush snapped to the ${DEFAULT_GRID_SIZE}m grid.`
             : `Created a box brush at snapped center ${formatVec3(center)}.`
         );
-        return;
+        return true;
       }
 
       if (creationPreview.target.kind === "model-instance") {
@@ -1568,7 +1568,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
         if (asset === undefined || asset.kind !== "model") {
           setStatusMessage("Select a model asset before placing a model instance.");
-          return;
+          return false;
         }
 
         const nextModelInstance = createModelInstance({
@@ -1586,7 +1586,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
           })
         );
         completeCreation(`Placed ${asset.sourceName}.`);
-        return;
+        return true;
       }
 
       const position = creationPreview.center ?? DEFAULT_ENTITY_POSITION;
@@ -1602,7 +1602,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
             })
           );
           completeCreation("Placed Point Light.");
-          return;
+          return true;
         case "spotLight":
           store.executeCommand(
             createUpsertEntityCommand({
@@ -1613,7 +1613,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
             })
           );
           completeCreation("Placed Spot Light.");
-          return;
+          return true;
         case "playerStart":
           store.executeCommand(
             createUpsertEntityCommand({
@@ -1624,7 +1624,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
             })
           );
           completeCreation("Placed Player Start.");
-          return;
+          return true;
         case "soundEmitter": {
           const placedAudioAssetId = creationPreview.target.audioAssetId ?? audioAssetList[0]?.id ?? null;
 
@@ -1642,7 +1642,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
               ? "Placed Sound Emitter."
               : `Placed Sound Emitter using ${editorState.document.assets[placedAudioAssetId]?.sourceName ?? "the authored audio asset"}.`
           );
-          return;
+          return true;
         }
         case "triggerVolume":
           store.executeCommand(
@@ -1654,7 +1654,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
             })
           );
           completeCreation("Placed Trigger Volume.");
-          return;
+          return true;
         case "teleportTarget":
           store.executeCommand(
             createUpsertEntityCommand({
@@ -1665,7 +1665,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
             })
           );
           completeCreation("Placed Teleport Target.");
-          return;
+          return true;
         case "interactable":
           store.executeCommand(
             createUpsertEntityCommand({
@@ -1676,11 +1676,13 @@ export function App({ store, initialStatusMessage }: AppProps) {
             })
           );
           completeCreation("Placed Interactable.");
-          return;
+          return true;
       }
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
     }
+
+    return false;
   };
 
   const commitModelInstanceChange = (currentModelInstance: ModelInstance, nextModelInstance: ModelInstance, successMessage: string) => {
