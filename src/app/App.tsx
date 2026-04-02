@@ -5900,6 +5900,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
         </aside>
       </div>
 
+      {addMenuPosition === null ? null : (
+        <HierarchicalMenu title="Add" position={addMenuPosition} items={addMenuItems} onClose={closeAddMenu} />
+      )}
+
       <footer className="status-bar">
         <div className="status-bar__item" data-testid="status-message">
           <span className="status-bar__strong">Status:</span> {statusMessage}
