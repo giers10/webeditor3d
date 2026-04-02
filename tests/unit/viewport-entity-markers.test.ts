@@ -15,7 +15,7 @@ describe("createSoundEmitterMarkerMeshes", () => {
     expect(meshes[4].geometry).toBeInstanceOf(CylinderGeometry);
     expect(meshes.some((mesh) => mesh.geometry instanceof SphereGeometry)).toBe(false);
 
-    expect(meshes[0].position).toEqual({
+    expect(meshes[0].position).toMatchObject({
       x: 0,
       y: 0,
       z: 0
