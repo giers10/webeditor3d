@@ -175,8 +175,8 @@ export function ViewportCanvas({
   }, [toolMode]);
 
   useEffect(() => {
-    hostRef.current?.setBoxCreatePreview(toolPreview.kind === "box-create" ? toolPreview.center : null);
-  }, [toolPreview]);
+    hostRef.current?.setBoxCreatePreview(toolMode === "box-create" && toolPreview.kind === "box-create" ? toolPreview.center : null);
+  }, [toolMode, toolPreview]);
 
   useEffect(() => {
     if (focusRequestId === 0) {
