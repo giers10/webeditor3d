@@ -205,21 +205,6 @@ function formatDiagnosticCount(count: number, label: string): string {
   return `${count} ${label}${count === 1 ? "" : "s"}`;
 }
 
-function getViewportCaption(
-  toolMode: "select" | "box-create" | "play",
-  layoutMode: ViewportLayoutMode
-): string {
-  if (toolMode === "play") {
-    return "Runner is active.";
-  }
-
-  if (toolMode === "box-create") {
-    return `${getViewportLayoutModeLabel(layoutMode)} active. Hover any viewport to update the shared preview; click to place.`;
-  }
-
-  return `${getViewportLayoutModeLabel(layoutMode)} active.`;
-}
-
 function createVec2Draft(vector: Vec2): Vec2Draft {
   return {
     x: String(vector.x),
@@ -751,9 +736,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const brushList = Object.values(editorState.document.brushes);
   const layoutMode = editorState.viewportLayoutMode;
   const activePanelId = editorState.activeViewportPanelId;
-  const activePanelState = editorState.viewportPanels[activePanelId];
-  const activePanelLabel = getViewportPanelLabel(activePanelId);
-  const activePanelDisplaySummary = `${getViewportViewModeLabel(activePanelState.viewMode)} / ${getViewportDisplayModeLabel(activePanelState.displayMode)}`;
   const viewportToolPreview = editorState.viewportTransientState.toolPreview;
   const entityList = getEntityInstances(editorState.document.entities);
   const entityDisplayList = getSortedEntityDisplayLabels(editorState.document.entities, editorState.document.assets);
