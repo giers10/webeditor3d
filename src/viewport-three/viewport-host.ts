@@ -155,7 +155,6 @@ export class ViewportHost {
   private currentWorld: WorldSettings | null = null;
   private currentAdvancedRenderingSettings: AdvancedRenderingSettings | null = null;
   private advancedRenderingComposer: EffectComposer | null = null;
-  private currentComposerCameraMode: ViewportViewMode = "perspective";
   private currentSelection: EditorSelection = {
     kind: "none"
   };
@@ -535,7 +534,6 @@ export class ViewportHost {
       }
 
       this.currentAdvancedRenderingSettings = settings.enabled ? cloneAdvancedRenderingSettings(settings) : null;
-      this.currentComposerCameraMode = this.viewMode;
       this.renderer.autoClear = true;
       return;
     }
@@ -550,7 +548,6 @@ export class ViewportHost {
 
     this.advancedRenderingComposer = createAdvancedRenderingComposer(this.renderer, this.scene, this.perspectiveCamera, settings);
     this.currentAdvancedRenderingSettings = cloneAdvancedRenderingSettings(settings);
-    this.currentComposerCameraMode = "perspective";
     this.renderer.autoClear = false;
   }
 
