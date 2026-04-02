@@ -162,7 +162,6 @@ import {
   VIEWPORT_PANEL_IDS,
   getViewportDisplayModeLabel,
   getViewportLayoutModeLabel,
-  getViewportPanelLabel,
   type ViewportDisplayMode,
   type ViewportLayoutMode,
   type ViewportPanelId
@@ -1363,7 +1362,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
     blurActiveTextEntry();
     store.setActiveViewportPanel(panelId);
-    setStatusMessage(`Activated the ${getViewportPanelLabel(panelId)} viewport panel.`);
+    setStatusMessage("Activated the viewport panel.");
   };
 
   const handleSetViewportPanelViewMode = (panelId: ViewportPanelId, nextViewMode: ViewportViewMode) => {
@@ -1381,7 +1380,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     blurActiveTextEntry();
     store.setViewportPanelViewMode(panelId, nextViewMode);
 
-    setStatusMessage(`Set the ${getViewportPanelLabel(panelId)} panel to ${getViewportViewModeLabel(nextViewMode)} view.`);
+    setStatusMessage(`Set the viewport panel to ${getViewportViewModeLabel(nextViewMode)} view.`);
   };
 
   const handleSetViewportPanelDisplayMode = (panelId: ViewportPanelId, nextDisplayMode: ViewportDisplayMode) => {
@@ -1391,7 +1390,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
     blurActiveTextEntry();
     store.setViewportPanelDisplayMode(panelId, nextDisplayMode);
-    setStatusMessage(`Set the ${getViewportPanelLabel(panelId)} panel to ${getViewportDisplayModeLabel(nextDisplayMode)} display.`);
+    setStatusMessage(`Set the viewport panel to ${getViewportDisplayModeLabel(nextDisplayMode)} display.`);
   };
 
   const handleCreateBoxBrush = (center?: Vec3) => {
