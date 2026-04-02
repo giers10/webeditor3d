@@ -11,8 +11,6 @@ import type { WorldSettings } from "../document/world-settings";
 import { createWorldBackgroundStyle } from "../shared-ui/world-background-style";
 import { getViewportPanelLabel, type ViewportDisplayMode, type ViewportLayoutMode, type ViewportPanelId } from "./viewport-layout";
 import {
-  getViewportViewModeControlHint,
-  getViewportViewModeGridPlaneLabel,
   getViewportViewModeLabel,
   type ViewportViewMode
 } from "./viewport-view-modes";
@@ -39,27 +37,6 @@ interface ViewportCanvasProps {
   onSelectionChange(selection: EditorSelection): void;
   onCommitCreation(toolPreview: CreationViewportToolPreview): boolean;
   onToolPreviewChange(toolPreview: ViewportToolPreview): void;
-}
-
-function formatVec3(vector: Vec3): string {
-  return `${vector.x}, ${vector.y}, ${vector.z}`;
-}
-
-function getViewportOverlayText(
-  toolMode: ToolMode,
-  viewMode: ViewportViewMode,
-  displayMode: ViewportDisplayMode,
-  layoutMode: ViewportLayoutMode
-): string | null {
-  if (layoutMode === "quad") {
-    return null;
-  }
-
-  if (toolMode === "create") {
-    return `Hover the ${getViewportViewModeGridPlaneLabel(viewMode)} grid to position the creation preview. Click to commit it. ${getViewportViewModeControlHint(viewMode)}`;
-  }
-
-  return `${displayMode === "authoring" ? "Authoring view" : `${getViewportViewModeLabel(viewMode)} view`} on the ${getViewportViewModeGridPlaneLabel(viewMode)} grid. ${getViewportViewModeControlHint(viewMode)}`;
 }
 
 export function ViewportCanvas({
@@ -178,8 +155,9 @@ export function ViewportCanvas({
     hostRef.current?.focusSelection(sceneDocument, focusSelection);
   }, [focusRequestId, focusSelection, sceneDocument]);
 
-  const overlayText = getViewportOverlayText(toolMode, viewMode, displayMode, layoutMode);
   const previewVisible = toolMode === "create" && toolPreview.kind === "create" && toolPreview.center !== null;
+  const showViewModeOverlay = layoutMode === "quad";
+  const showOverlay = showViewModeOverlay || previewVisible;
 
   return (
     <div
@@ -197,21 +175,20 @@ export function ViewportCanvas({
           : createWorldBackgroundStyle(world.background, world.background.mode === "image" ? loadedImageAssets[world.background.assetId]?.sourceUrl ?? null : null)
       }
     >
-      <div className="viewport-canvas__overlay" data-testid={`viewport-overlay-${panelId}`}>
-        <div className="viewport-canvas__overlay-badges">
-          <div className="viewport-canvas__overlay-badge">{toolMode === "create" ? "Create" : "Select"}</div>
-          <div className="viewport-canvas__overlay-badge viewport-canvas__overlay-badge--view">{getViewportViewModeLabel(viewMode)}</div>
-          <div className="viewport-canvas__overlay-badge viewport-canvas__overlay-badge--display">
-            {displayMode === "authoring" ? "Authoring" : "Lit"}
-          </div>
+      {!showOverlay ? null : (
+        <div className="viewport-canvas__overlay" data-testid={`viewport-overlay-${panelId}`}>
+          {!showViewModeOverlay ? null : (
+            <div className="viewport-canvas__overlay-badges">
+              <div className="viewport-canvas__overlay-badge viewport-canvas__overlay-badge--view">{getViewportViewModeLabel(viewMode)}</div>
+            </div>
+          )}
+          {!previewVisible ? null : (
+            <div className="viewport-canvas__overlay-preview" data-testid={`viewport-snap-preview-${panelId}`}>
+              Preview: {(toolPreview.center as Vec3).x}, {(toolPreview.center as Vec3).y}, {(toolPreview.center as Vec3).z}
+            </div>
+          )}
         </div>
-        {overlayText === null ? null : <div className="viewport-canvas__overlay-text">{overlayText}</div>}
-        {!previewVisible ? null : (
-          <div className="viewport-canvas__overlay-preview" data-testid={`viewport-snap-preview-${panelId}`}>
-            Preview: {toolPreview.center === null ? "..." : formatVec3(toolPreview.center)}
-          </div>
-        )}
-      </div>
+      )}
 
       {viewportMessage === null ? null : (
         <div className="viewport-canvas__fallback" role="status">
