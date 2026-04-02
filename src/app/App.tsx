@@ -4190,18 +4190,75 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 {selectedSoundEmitter !== null ? (
                   <>
                     <div className="form-section">
-                      <div className="label">Audio Shape</div>
+                      <div className="label">Audio Asset</div>
+                      <div className="stat-card">
+                        <div className="value">
+                          {selectedSoundEmitter.audioAssetId === null
+                            ? "Unassigned"
+                            : selectedSoundEmitterAudioAssetRecord?.sourceName ?? "Missing Audio Asset"}
+                        </div>
+                        <div className="material-summary">
+                          {selectedSoundEmitter.audioAssetId === null
+                            ? "Choose an audio asset to make this emitter playable."
+                            : selectedSoundEmitterAudioAssetRecord === null
+                              ? `This sound emitter references ${selectedSoundEmitter.audioAssetId}, but the asset is missing or not audio.`
+                              : formatAudioAssetSummary(selectedSoundEmitterAudioAssetRecord)}
+                        </div>
+                      </div>
+                      <label className="form-field">
+                        <span className="label">Audio</span>
+                        <select
+                          data-testid="sound-emitter-audio-asset"
+                          className="text-input"
+                          value={soundEmitterAudioAssetIdDraft}
+                          onChange={(event) => {
+                            setSoundEmitterAudioAssetIdDraft(event.currentTarget.value);
+                            scheduleDraftCommit(applySoundEmitterChange);
+                          }}
+                        >
+                          <option value="">— none —</option>
+                          {audioAssetList.map((asset) => (
+                            <option key={asset.id} value={asset.id}>
+                              {asset.sourceName}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
+
+                    <div className="form-section">
+                      <div className="label">Volume</div>
+                      <label className="form-field">
+                        <span className="label">Amount</span>
+                        <input
+                          data-testid="sound-emitter-volume"
+                          className="text-input"
+                          type="number"
+                          min="0"
+                          step="0.1"
+                          value={soundEmitterVolumeDraft}
+                          onChange={(event) => setSoundEmitterVolumeDraft(event.currentTarget.value)}
+                          onBlur={applySoundEmitterChange}
+                          onKeyDown={(event) => handleDraftVectorKeyDown(event, applySoundEmitterChange)}
+                          onKeyUp={(event) => handleNumberInputKeyUp(event, applySoundEmitterChange)}
+                          onPointerUp={(event) => handleNumberInputPointerUp(event, applySoundEmitterChange)}
+                        />
+                      </label>
+                    </div>
+
+                    <div className="form-section">
+                      <div className="label">Distance</div>
                       <div className="vector-inputs vector-inputs--two">
                         <label className="form-field">
-                          <span className="label">Radius</span>
+                          <span className="label">Ref Distance</span>
                           <input
-                            data-testid="sound-emitter-radius"
+                            data-testid="sound-emitter-ref-distance"
                             className="text-input"
                             type="number"
                             min="0.1"
                             step="0.1"
-                            value={soundEmitterRadiusDraft}
-                            onChange={(event) => setSoundEmitterRadiusDraft(event.currentTarget.value)}
+                            value={soundEmitterRefDistanceDraft}
+                            onChange={(event) => setSoundEmitterRefDistanceDraft(event.currentTarget.value)}
                             onBlur={applySoundEmitterChange}
                             onKeyDown={(event) => handleDraftVectorKeyDown(event, applySoundEmitterChange)}
                             onKeyUp={(event) => handleNumberInputKeyUp(event, applySoundEmitterChange)}
@@ -4209,15 +4266,15 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           />
                         </label>
                         <label className="form-field">
-                          <span className="label">Gain</span>
+                          <span className="label">Max Distance</span>
                           <input
-                            data-testid="sound-emitter-gain"
+                            data-testid="sound-emitter-max-distance"
                             className="text-input"
                             type="number"
-                            min="0"
+                            min="0.1"
                             step="0.1"
-                            value={soundEmitterGainDraft}
-                            onChange={(event) => setSoundEmitterGainDraft(event.currentTarget.value)}
+                            value={soundEmitterMaxDistanceDraft}
+                            onChange={(event) => setSoundEmitterMaxDistanceDraft(event.currentTarget.value)}
                             onBlur={applySoundEmitterChange}
                             onKeyDown={(event) => handleDraftVectorKeyDown(event, applySoundEmitterChange)}
                             onKeyUp={(event) => handleNumberInputKeyUp(event, applySoundEmitterChange)}
