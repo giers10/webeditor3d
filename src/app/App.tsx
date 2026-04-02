@@ -3923,42 +3923,26 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 ) : (
                   <div className="outliner-list">
                     {modelAssetList.map((asset) => (
-                      <div key={asset.id} className="outliner-item asset-item">
-                        <div className="outliner-item__select">
+                      <button
+                        key={asset.id}
+                        className="outliner-item asset-item asset-item--action"
+                        type="button"
+                        data-testid={`place-model-instance-${asset.id}`}
+                        aria-label={`Place instance for ${asset.sourceName}`}
+                        onClick={() => handlePlaceModelInstance(asset.id)}
+                        onPointerEnter={() => setHoveredAssetId(asset.id)}
+                        onPointerLeave={() => setHoveredAssetId((current) => (current === asset.id ? null : current))}
+                        onFocus={() => setHoveredAssetId(asset.id)}
+                        onBlur={() => setHoveredAssetId((current) => (current === asset.id ? null : current))}
+                      >
+                        <span className="asset-item__content">
                           <span className="outliner-item__title">{asset.sourceName}</span>
                           <span className="outliner-item__meta">{getProjectAssetKindLabel(asset.kind)}</span>
-                        </div>
-
-                        <div className="asset-item__summary">
-                          {formatByteLength(asset.byteLength)} | {asset.mimeType}
-                        </div>
-                        <div className="asset-item__summary">Storage key: {asset.storageKey}</div>
-                        <div className="asset-item__summary">{formatModelAssetSummary(asset)}</div>
-                        <div className="asset-item__summary">{formatModelBoundingBoxLabel(asset)}</div>
-                        {asset.metadata.materialNames.length === 0 ? null : (
-                          <div className="asset-item__summary">Materials: {asset.metadata.materialNames.join(", ")}</div>
-                        )}
-                        {asset.metadata.textureNames.length === 0 ? null : (
-                          <div className="asset-item__summary">Textures: {asset.metadata.textureNames.join(", ")}</div>
-                        )}
-                        {asset.metadata.animationNames.length === 0 ? null : (
-                          <div className="asset-item__summary">Animations: {asset.metadata.animationNames.join(", ")}</div>
-                        )}
-                        {asset.metadata.warnings.length === 0 ? null : (
-                          <div className="asset-item__warnings">{asset.metadata.warnings.join(" | ")}</div>
-                        )}
-
-                        <div className="inline-actions">
-                          <button
-                            className="toolbar__button"
-                            type="button"
-                            data-testid={`place-model-instance-${asset.id}`}
-                            onClick={() => handlePlaceModelInstance(asset.id)}
-                          >
-                            Place Instance
-                          </button>
-                        </div>
-                      </div>
+                        </span>
+                        <span className="asset-item__plus" aria-hidden="true">
+                          +
+                        </span>
+                      </button>
                     ))}
                   </div>
                 )}
@@ -3971,43 +3955,30 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 ) : (
                   <div className="outliner-list">
                     {imageAssetList.map((asset) => (
-                      <div
+                      <button
                         key={asset.id}
-                        className={`outliner-item asset-item ${
+                        className={`outliner-item asset-item asset-item--action ${
                           editorState.document.world.background.mode === "image" && editorState.document.world.background.assetId === asset.id
                             ? "outliner-item--selected"
                             : ""
                         }`}
+                        type="button"
+                        data-testid={`use-background-asset-${asset.id}`}
+                        aria-label={`Use ${asset.sourceName} as background`}
+                        onClick={() => applyWorldBackgroundMode("image", asset.id)}
+                        onPointerEnter={() => setHoveredAssetId(asset.id)}
+                        onPointerLeave={() => setHoveredAssetId((current) => (current === asset.id ? null : current))}
+                        onFocus={() => setHoveredAssetId(asset.id)}
+                        onBlur={() => setHoveredAssetId((current) => (current === asset.id ? null : current))}
                       >
-                        <div className="outliner-item__select">
+                        <span className="asset-item__content">
                           <span className="outliner-item__title">{asset.sourceName}</span>
                           <span className="outliner-item__meta">{getProjectAssetKindLabel(asset.kind)}</span>
-                        </div>
-
-                        <div className="asset-item__summary">
-                          {formatByteLength(asset.byteLength)} | {asset.mimeType}
-                        </div>
-                        <div className="asset-item__summary">Storage key: {asset.storageKey}</div>
-                        <div className="asset-item__summary">{formatImageAssetSummary(asset)}</div>
-                        {asset.metadata.warnings.length === 0 ? null : (
-                          <div className="asset-item__warnings">{asset.metadata.warnings.join(" | ")}</div>
-                        )}
-
-                        <div className="inline-actions">
-                          <button
-                            className={`toolbar__button ${
-                              editorState.document.world.background.mode === "image" && editorState.document.world.background.assetId === asset.id
-                                ? "toolbar__button--active"
-                                : ""
-                            }`}
-                            type="button"
-                            data-testid={`use-background-asset-${asset.id}`}
-                            onClick={() => applyWorldBackgroundMode("image", asset.id)}
-                          >
-                            Use as Background
-                          </button>
-                        </div>
-                      </div>
+                        </span>
+                        <span className="asset-item__plus" aria-hidden="true">
+                          +
+                        </span>
+                      </button>
                     ))}
                   </div>
                 )}
@@ -4020,21 +3991,26 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 ) : (
                   <div className="outliner-list">
                     {audioAssetList.map((asset) => (
-                      <div key={asset.id} className="outliner-item asset-item">
-                        <div className="outliner-item__select">
+                      <button
+                        key={asset.id}
+                        className="outliner-item asset-item asset-item--action"
+                        type="button"
+                        data-testid={`place-sound-emitter-${asset.id}`}
+                        aria-label={`Place sound emitter for ${asset.sourceName}`}
+                        onClick={() => handlePlaceEntity("soundEmitter", { audioAssetId: asset.id })}
+                        onPointerEnter={() => setHoveredAssetId(asset.id)}
+                        onPointerLeave={() => setHoveredAssetId((current) => (current === asset.id ? null : current))}
+                        onFocus={() => setHoveredAssetId(asset.id)}
+                        onBlur={() => setHoveredAssetId((current) => (current === asset.id ? null : current))}
+                      >
+                        <span className="asset-item__content">
                           <span className="outliner-item__title">{asset.sourceName}</span>
                           <span className="outliner-item__meta">{getProjectAssetKindLabel(asset.kind)}</span>
-                        </div>
-
-                        <div className="asset-item__summary">
-                          {formatByteLength(asset.byteLength)} | {asset.mimeType}
-                        </div>
-                        <div className="asset-item__summary">Storage key: {asset.storageKey}</div>
-                        <div className="asset-item__summary">{formatAudioAssetSummary(asset)}</div>
-                        {asset.metadata.warnings.length === 0 ? null : (
-                          <div className="asset-item__warnings">{asset.metadata.warnings.join(" | ")}</div>
-                        )}
-                      </div>
+                        </span>
+                        <span className="asset-item__plus" aria-hidden="true">
+                          +
+                        </span>
+                      </button>
                     ))}
                   </div>
                 )}
