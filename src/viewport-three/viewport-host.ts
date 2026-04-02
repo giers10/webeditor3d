@@ -1861,7 +1861,7 @@ export class ViewportHost {
           scale: DEFAULT_MODEL_INSTANCE_SCALE
         });
 
-        return createModelInstanceRenderGroup(dummyModelInstance, asset, this.loadedModelAssets[toolPreview.target.assetId], false);
+        return createModelInstanceRenderGroup(dummyModelInstance, asset, undefined, false);
       }
     }
   }
