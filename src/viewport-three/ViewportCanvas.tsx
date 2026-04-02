@@ -146,8 +146,17 @@ export function ViewportCanvas({
   }, [onSelectionChange]);
 
   useEffect(() => {
-    hostRef.current?.setCreationPreviewChangeHandler(onToolPreviewChange);
-  }, [onToolPreviewChange]);
+    hostRef.current?.setCreationPreviewChangeHandler((nextToolPreview) => {
+      onToolPreviewChange(
+        nextToolPreview.kind === "create"
+          ? {
+              ...nextToolPreview,
+              sourcePanelId: panelId
+            }
+          : nextToolPreview
+      );
+    });
+  }, [onToolPreviewChange, panelId]);
 
   useEffect(() => {
     hostRef.current?.setToolMode(toolMode);
