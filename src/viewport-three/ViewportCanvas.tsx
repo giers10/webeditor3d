@@ -61,6 +61,10 @@ function getViewportOverlayText(
     return `Hover the ${getViewportViewModeGridPlaneLabel(viewMode)} grid to place a ${DEFAULT_BOX_BRUSH_SIZE.x} x ${DEFAULT_BOX_BRUSH_SIZE.y} x ${DEFAULT_BOX_BRUSH_SIZE.z} box. ${getViewportViewModeControlHint(viewMode)}`;
   }
 
+  if (toolMode === "place") {
+    return `Hover the ${getViewportViewModeGridPlaneLabel(viewMode)} grid to position the preview. Click to place it. ${getViewportViewModeControlHint(viewMode)}`;
+  }
+
   return `${displayMode === "authoring" ? "Authoring view" : `${getViewportViewModeLabel(viewMode)} view`} on the ${getViewportViewModeGridPlaneLabel(viewMode)} grid. ${getViewportViewModeControlHint(viewMode)}`;
 }
 
