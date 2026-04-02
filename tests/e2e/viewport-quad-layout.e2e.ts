@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { clickViewport, getViewportPanel } from "./viewport-test-helpers";
+import { clickViewport, getViewportPanel, setSharedBoxCreatePreview } from "./viewport-test-helpers";
 
 test("quad viewport layout shows four linked panels with shared selection and active panel state", async ({ page }) => {
   const pageErrors: string[] = [];
@@ -43,6 +43,16 @@ test("quad viewport layout shows four linked panels with shared selection and ac
   await expect(page.getByTestId("viewport-panel-bottomLeft-display-authoring")).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByTestId("viewport-panel-bottomRight-view-side")).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByTestId("viewport-panel-bottomRight-display-authoring")).toHaveAttribute("aria-pressed", "true");
+
+  for (const panelId of ["topLeft", "topRight", "bottomLeft", "bottomRight"] as const) {
+    await expect(getViewportPanel(page, panelId).locator(".viewport-canvas__overlay-text")).toHaveCount(0);
+  }
+
+  await setSharedBoxCreatePreview(page, "topLeft", { x: 4, y: 0, z: 8 });
+
+  for (const panelId of ["topLeft", "topRight", "bottomLeft", "bottomRight"] as const) {
+    await expect(page.getByTestId(`viewport-snap-preview-${panelId}`)).toContainText("Preview: 4, 0, 8");
+  }
 
   await getViewportPanel(page, "topRight").click({ position: { x: 16, y: 16 }, force: true });
   await page.getByTestId("viewport-panel-topRight-view-side").dispatchEvent("click");
