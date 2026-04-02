@@ -1073,7 +1073,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       assets: expectEmptyCollection(source.assets, "assets"),
       brushes: readBrushes(source.brushes, materials, false),
       modelInstances: expectEmptyCollection(source.modelInstances, "modelInstances"),
-      entities: readEntities(source.entities, false),
+      entities: readEntities(source.entities, { legacySoundEmitter: false }),
       interactionLinks: expectEmptyCollection(source.interactionLinks, "interactionLinks")
     };
   }
@@ -1090,7 +1090,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       assets: expectEmptyCollection(source.assets, "assets"),
       brushes: readBrushes(source.brushes, materials, false),
       modelInstances: expectEmptyCollection(source.modelInstances, "modelInstances"),
-      entities: readEntities(source.entities, false),
+      entities: readEntities(source.entities, { legacySoundEmitter: false }),
       interactionLinks: expectEmptyCollection(source.interactionLinks, "interactionLinks")
     };
   }
@@ -1107,7 +1107,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       assets: expectEmptyCollection(source.assets, "assets"),
       brushes: readBrushes(source.brushes, materials, false),
       modelInstances: expectEmptyCollection(source.modelInstances, "modelInstances"),
-      entities: readEntities(source.entities, false),
+      entities: readEntities(source.entities, { legacySoundEmitter: false }),
       interactionLinks: expectEmptyCollection(source.interactionLinks, "interactionLinks")
     };
   }
@@ -1124,7 +1124,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       assets: expectEmptyCollection(source.assets, "assets"),
       brushes: readBrushes(source.brushes, materials, false),
       modelInstances: expectEmptyCollection(source.modelInstances, "modelInstances"),
-      entities: readEntities(source.entities, false),
+      entities: readEntities(source.entities, { legacySoundEmitter: false }),
       interactionLinks: expectEmptyCollection(source.interactionLinks, "interactionLinks")
     };
   }
@@ -1141,7 +1141,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       assets: expectEmptyCollection(source.assets, "assets"),
       brushes: readBrushes(source.brushes, materials, false),
       modelInstances: expectEmptyCollection(source.modelInstances, "modelInstances"),
-      entities: readEntities(source.entities, false),
+      entities: readEntities(source.entities, { legacySoundEmitter: false }),
       interactionLinks: readInteractionLinks(source.interactionLinks)
     };
   }
@@ -1158,7 +1158,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       assets: expectEmptyCollection(source.assets, "assets"),
       brushes: readBrushes(source.brushes, materials, false),
       modelInstances: expectEmptyCollection(source.modelInstances, "modelInstances"),
-      entities: readEntities(source.entities, false),
+      entities: readEntities(source.entities, { legacySoundEmitter: false }),
       interactionLinks: readInteractionLinks(source.interactionLinks)
     };
   }
@@ -1176,7 +1176,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       assets,
       brushes: readBrushes(source.brushes, materials, false),
       modelInstances: readModelInstances(source.modelInstances, assets),
-      entities: readEntities(source.entities, false),
+      entities: readEntities(source.entities, { legacySoundEmitter: false }),
       interactionLinks: readInteractionLinks(source.interactionLinks)
     };
   }
@@ -1194,7 +1194,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       assets,
       brushes: readBrushes(source.brushes, materials, false),
       modelInstances: readModelInstances(source.modelInstances, assets),
-      entities: readEntities(source.entities, true),
+      entities: readEntities(source.entities, { legacySoundEmitter: true }),
       interactionLinks: readInteractionLinks(source.interactionLinks)
     };
   }
@@ -1215,7 +1215,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       assets,
       brushes: readBrushes(source.brushes, materials, false),
       modelInstances: readModelInstances(source.modelInstances, assets),
-      entities: readEntities(source.entities, false),
+      entities: readEntities(source.entities, { legacySoundEmitter: false }),
       interactionLinks: readInteractionLinks(source.interactionLinks)
     };
   }
@@ -1236,7 +1236,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     assets,
     brushes: readBrushes(source.brushes, materials, false),
     modelInstances: readModelInstances(source.modelInstances, assets),
-    entities: readEntities(source.entities, false),
+    entities: readEntities(source.entities, { legacySoundEmitter: false }),
     interactionLinks: readInteractionLinks(source.interactionLinks)
   };
 }
