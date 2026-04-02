@@ -532,7 +532,7 @@ button:disabled {
 
 .viewport-region {
   display: grid;
-  grid-template-rows: 42px minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
   min-height: 0;
   background: rgba(20, 24, 31, 0.92);
   border: 1px solid var(--color-border);
@@ -555,9 +555,18 @@ button:disabled {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
   padding: 0 18px;
   background: linear-gradient(90deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0) 100%);
   border-bottom: 1px solid var(--color-border);
+  flex-wrap: wrap;
+}
+
+.viewport-region__meta {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  min-width: 0;
 }
 
 .viewport-region__title {
@@ -570,6 +579,28 @@ button:disabled {
 .viewport-region__caption {
   color: var(--color-muted);
   font-size: 0.82rem;
+}
+
+.viewport-region__view-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  flex-wrap: wrap;
+}
+
+.viewport-region__view-button {
+  padding: 0.45rem 0.7rem;
+  font-size: 0.78rem;
+}
+
+.viewport-region__view-button--active {
+  background: var(--color-accent-soft);
+  border-color: rgba(207, 123, 66, 0.55);
+  color: var(--color-accent-strong);
 }
 
 .viewport-canvas,
@@ -619,12 +650,22 @@ button:disabled {
   pointer-events: none;
 }
 
+.viewport-canvas__overlay-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .viewport-canvas__overlay-badge {
   color: var(--color-accent-strong);
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
+}
+
+.viewport-canvas__overlay-badge--view {
+  color: #dbe5f4;
 }
 
 .viewport-canvas__overlay-text,
