@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { clickViewport, getEditorStoreSnapshot, getViewportPanel, setSharedBoxCreationPreview } from "./viewport-test-helpers";
+import { beginBoxCreation, clickViewport, getEditorStoreSnapshot, getViewportPanel, setSharedBoxCreationPreview } from "./viewport-test-helpers";
 
 test("quad viewport layout shows four linked panels with shared selection and active panel state", async ({ page }) => {
   const pageErrors: string[] = [];
@@ -22,7 +22,7 @@ test("quad viewport layout shows four linked panels with shared selection and ac
   }, "webeditor3d.scene-document-draft");
   await page.reload();
 
-  await page.getByRole("button", { name: "Box Create" }).click();
+  await beginBoxCreation(page);
   await clickViewport(page, "topLeft");
   await expect(page.getByRole("button", { name: /Box Brush 1/ })).toBeVisible();
   await expect(page.getByText("1 brush selected (Box Brush 1)")).toBeVisible();
