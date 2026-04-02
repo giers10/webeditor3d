@@ -5913,6 +5913,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
         <div className="status-bar__item" data-testid="status-warnings">
           <span className="status-bar__strong">Warnings:</span> {warningDiagnostics.length}
         </div>
+        {hoveredAssetStatusMessage === null ? null : (
+          <div className="status-bar__item status-bar__item--asset" data-testid="status-asset-hover">
+            <span className="status-bar__strong">Asset:</span> {hoveredAssetStatusMessage}
+          </div>
+        )}
         <div className="status-bar__item" data-testid="status-last-command">
           <span className="status-bar__strong">Last:</span> {lastCommandLabel}
         </div>
