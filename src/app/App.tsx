@@ -123,7 +123,9 @@ import { getEntityDisplayLabelById, getSortedEntityDisplayLabels } from "../enti
 import {
   areInteractionLinksEqual,
   createPlayAnimationInteractionLink,
+  createPlaySoundInteractionLink,
   createStopAnimationInteractionLink,
+  createStopSoundInteractionLink,
   createTeleportPlayerInteractionLink,
   createToggleVisibilityInteractionLink,
   getInteractionLinksForSource,
