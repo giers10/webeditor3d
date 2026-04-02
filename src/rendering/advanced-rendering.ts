@@ -30,7 +30,6 @@ import {
 
 import type {
   AdvancedRenderingSettings,
-  AdvancedRenderingShadowMapSize,
   AdvancedRenderingShadowType,
   AdvancedRenderingToneMappingMode
 } from "../document/world-settings";
@@ -81,7 +80,7 @@ export function createAdvancedRenderingComposer(
 
   composer.addPass(new RenderPass(scene, camera));
 
-  const effects = [];
+  const effects: Array<SSAOEffect | BloomEffect | DepthOfFieldEffect | ToneMappingEffect | SMAAEffect> = [];
 
   if (settings.ambientOcclusion.enabled) {
     effects.push(
@@ -132,8 +131,9 @@ export function createAdvancedRenderingComposer(
 export function applyAdvancedRenderingRenderableShadowFlags(root: Object3D, enabled: boolean) {
   root.traverse((object) => {
     if ((object as Mesh).isMesh === true && object.userData.shadowIgnored !== true) {
-      object.castShadow = enabled;
-      object.receiveShadow = enabled;
+      const mesh = object as Mesh;
+      mesh.castShadow = enabled;
+      mesh.receiveShadow = enabled;
     }
   });
 }
