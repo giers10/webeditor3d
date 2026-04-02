@@ -39,9 +39,9 @@ test("imports a model asset, places an instance, and survives reload", async ({ 
   await expect(page.getByTestId("status-asset-hover")).toContainText("Storage key:");
   await page.getByRole("button", { name: "Place instance for tiny-triangle.gltf" }).click();
   const viewportCanvas = getViewportCanvas(page);
-  await viewportCanvas.hover({ position: { x: 92, y: 76 } });
+  await viewportCanvas.hover({ position: { x: 92, y: 76 }, force: true });
   await expect(page.getByTestId("viewport-snap-preview-topLeft")).toBeVisible();
-  await viewportCanvas.click({ position: { x: 92, y: 76 } });
+  await viewportCanvas.click({ position: { x: 92, y: 76 }, force: true });
   await expect(page.getByTestId("outliner-model-instance-list").getByRole("button")).toHaveCount(2);
   const snapshot = await getEditorStoreSnapshot(page);
   const selectedModelInstanceId = snapshot.selection.kind === "modelInstances" ? snapshot.selection.ids?.[0] ?? null : null;
