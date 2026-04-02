@@ -669,28 +669,52 @@ function validateInteractionLink(link: InteractionLink, path: string, document: 
       }
       break;
     case "playAnimation":
-      // Validate that the target model instance exists in the document
-      if (document.modelInstances[link.action.targetModelInstanceId] === undefined) {
-        diagnostics.push(
-          createDiagnostic(
-            "error",
-            "missing-play-animation-target-instance",
-            `Play animation target model instance ${link.action.targetModelInstanceId} does not exist.`,
-            `${path}.action.targetModelInstanceId`
-          )
-        );
+      {
+        const targetModelInstance = document.modelInstances[link.action.targetModelInstanceId];
+
+        if (targetModelInstance === undefined) {
+          diagnostics.push(
+            createDiagnostic(
+              "error",
+              "missing-play-animation-target-instance",
+              `Play animation target model instance ${link.action.targetModelInstanceId} does not exist.`,
+              `${path}.action.targetModelInstanceId`
+            )
+          );
+          return;
+        }
+
+        if (link.action.clipName.trim().length === 0) {
+          diagnostics.push(
+            createDiagnostic(
+              "error",
+              "invalid-play-animation-clip-name",
+              "Play animation clip name must be non-empty.",
+              `${path}.action.clipName`
+            )
+          );
+          return;
+        }
+
+        const targetAsset = document.assets[targetModelInstance.assetId];
+
+        if (targetAsset === undefined || targetAsset.kind !== "model") {
+          return;
+        }
+
+        if (!targetAsset.metadata.animationNames.includes(link.action.clipName)) {
+          diagnostics.push(
+            createDiagnostic(
+              "error",
+              "missing-play-animation-clip",
+              `Play animation clip ${link.action.clipName} does not exist on model asset ${targetAsset.id}.`,
+              `${path}.action.clipName`
+            )
+          );
+        }
+
+        break;
       }
-      if (link.action.clipName.trim().length === 0) {
-        diagnostics.push(
-          createDiagnostic(
-            "error",
-            "invalid-play-animation-clip-name",
-            "Play animation clip name must be non-empty.",
-            `${path}.action.clipName`
-          )
-        );
-      }
-      break;
     case "stopAnimation":
       // Validate that the target model instance exists in the document
       if (document.modelInstances[link.action.targetModelInstanceId] === undefined) {
