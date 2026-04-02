@@ -1490,18 +1490,18 @@ export class ViewportHost {
       case "top":
         return {
           x: snapValueToGrid(this.boxCreateIntersection.x, DEFAULT_GRID_SIZE),
-          y: DEFAULT_BOX_BRUSH_SIZE.y * 0.5,
+          y: snapValueToGrid(DEFAULT_BOX_BRUSH_SIZE.y * 0.5, DEFAULT_GRID_SIZE),
           z: snapValueToGrid(this.boxCreateIntersection.z, DEFAULT_GRID_SIZE)
         };
       case "front":
         return {
           x: snapValueToGrid(this.boxCreateIntersection.x, DEFAULT_GRID_SIZE),
           y: snapValueToGrid(this.boxCreateIntersection.y, DEFAULT_GRID_SIZE),
-          z: DEFAULT_BOX_BRUSH_SIZE.z * 0.5
+          z: snapValueToGrid(DEFAULT_BOX_BRUSH_SIZE.z * 0.5, DEFAULT_GRID_SIZE)
         };
       case "side":
         return {
-          x: DEFAULT_BOX_BRUSH_SIZE.x * 0.5,
+          x: snapValueToGrid(DEFAULT_BOX_BRUSH_SIZE.x * 0.5, DEFAULT_GRID_SIZE),
           y: snapValueToGrid(this.boxCreateIntersection.y, DEFAULT_GRID_SIZE),
           z: snapValueToGrid(this.boxCreateIntersection.z, DEFAULT_GRID_SIZE)
         };
