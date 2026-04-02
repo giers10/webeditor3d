@@ -34,7 +34,9 @@ test("local lights and background images persist through editor and runner flows
   await page.getByTestId("outliner-add-button").click();
   await page.getByTestId("add-menu-assets").click();
   await page.getByTestId("add-menu-assets-environments").click();
-  await expect(page.getByRole("button", { name: "skybox-panorama.svg" })).toBeVisible();
+  const addMenu = page.getByRole("menu", { name: "Add" });
+  await expect(addMenu.getByRole("menuitem", { name: "skybox-panorama.svg" })).toBeVisible();
+  await addMenu.getByRole("menuitem", { name: "skybox-panorama.svg" }).click();
   await expect(page.getByTestId("world-background-mode-value")).toContainText("Image");
   await expect(page.getByTestId("world-background-asset-value")).toContainText("skybox-panorama.svg");
   await expect(page.getByTestId("viewport-canvas-topLeft")).toHaveCSS("background-image", /url/);
@@ -71,7 +73,7 @@ test("local lights and background images persist through editor and runner flows
   await page.getByTestId("outliner-add-button").click();
   await page.getByTestId("add-menu-assets").click();
   await page.getByTestId("add-menu-assets-environments").click();
-  await expect(page.getByRole("button", { name: "skybox-panorama.svg" })).toBeVisible();
+  await expect(page.getByRole("menu", { name: "Add" }).getByRole("menuitem", { name: "skybox-panorama.svg" })).toBeVisible();
   await expect(page.locator('[data-testid^="outliner-entity-"]')).toHaveCount(2);
   await expect(page.getByTestId("viewport-canvas-topLeft")).toHaveCSS("background-image", /url/);
 
