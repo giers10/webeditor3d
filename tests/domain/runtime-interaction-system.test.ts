@@ -8,12 +8,14 @@ import {
   createStopAnimationInteractionLink,
   createStopSoundInteractionLink
 } from "../../src/interactions/interaction-links";
+import { createDefaultWorldSettings } from "../../src/document/scene-document";
 import { RuntimeInteractionSystem } from "../../src/runtime-three/runtime-interaction-system";
 import type { RuntimeSceneDefinition } from "../../src/runtime-three/runtime-scene-build";
 
 function createRuntimeSceneFixture(): RuntimeSceneDefinition {
   return {
     world: {
+      ...createDefaultWorldSettings(),
       background: {
         mode: "solid",
         colorHex: "#000000"
