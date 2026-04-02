@@ -1381,8 +1381,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const beginCreation = (toolPreview: CreationViewportToolPreview, status: string) => {
     blurActiveTextEntry();
     closeAddMenu();
-    store.setViewportToolPreview(toolPreview);
     store.setToolMode("create");
+    store.setViewportToolPreview(toolPreview);
     setStatusMessage(status);
   };
 
