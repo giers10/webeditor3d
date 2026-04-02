@@ -39,6 +39,7 @@ interface ViewportCanvasProps {
   focusSelection: EditorSelection;
   onSelectionChange(selection: EditorSelection): void;
   onCreateBoxBrush(center: Vec3): void;
+  onCommitPlacement(toolPreview: PlacementViewportToolPreview): void;
   onToolPreviewChange(toolPreview: ViewportToolPreview): void;
 }
 
