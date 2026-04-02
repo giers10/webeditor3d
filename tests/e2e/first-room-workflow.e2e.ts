@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+import { clickViewport } from "./viewport-test-helpers";
+
 test("first-room workflow covers create, texture, save/load, and run", async ({ page }) => {
   const pageErrors: string[] = [];
   const consoleErrors: string[] = [];
@@ -21,12 +23,7 @@ test("first-room workflow covers create, texture, save/load, and run", async ({ 
   await page.reload();
 
   await page.getByRole("button", { name: "Box Create" }).click();
-  const viewportCanvas = page.locator('[data-testid="viewport-shell"] canvas');
-  if ((await viewportCanvas.count()) > 0) {
-    await viewportCanvas.click();
-  } else {
-    await page.getByTestId("viewport-fallback-create-box").click();
-  }
+  await clickViewport(page);
   await page.getByTestId("face-button-posZ").click();
   await page.getByTestId("material-button-starter-amber-grid").click();
 
@@ -46,11 +43,7 @@ test("first-room workflow covers create, texture, save/load, and run", async ({ 
 
   await page.getByRole("button", { name: "Save Draft" }).click();
   await page.getByRole("button", { name: "Box Create" }).click();
-  if ((await viewportCanvas.count()) > 0) {
-    await viewportCanvas.click();
-  } else {
-    await page.getByTestId("viewport-fallback-create-box").click();
-  }
+  await clickViewport(page);
   await expect(page.getByRole("button", { name: /Box Brush 2/ })).toBeVisible();
 
   await page.getByRole("button", { name: "Load Draft" }).click();
