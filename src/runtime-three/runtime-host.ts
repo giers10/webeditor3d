@@ -21,6 +21,7 @@ import {
 import { createModelInstanceRenderGroup, disposeModelInstance } from "../assets/model-instance-rendering";
 import type { LoadedModelAsset } from "../assets/gltf-model-import";
 import type { LoadedImageAsset } from "../assets/image-assets";
+import type { LoadedAudioAsset } from "../assets/audio-assets";
 import type { ProjectAssetRecord } from "../assets/project-assets";
 import { applyBoxBrushFaceUvsToGeometry } from "../geometry/box-face-uvs";
 import { createStarterMaterialSignature, createStarterMaterialTexture } from "../materials/starter-material-textures";
@@ -28,6 +29,7 @@ import { createStarterMaterialSignature, createStarterMaterialTexture } from "..
 import { FirstPersonNavigationController } from "./first-person-navigation-controller";
 import type { FirstPersonTelemetry, NavigationController, RuntimeControllerContext } from "./navigation-controller";
 import { RuntimeInteractionSystem, type RuntimeInteractionDispatcher, type RuntimeInteractionPrompt } from "./runtime-interaction-system";
+import { RuntimeAudioSystem } from "./runtime-audio-system";
 import { OrbitVisitorNavigationController } from "./orbit-visitor-navigation-controller";
 import type {
   RuntimeBoxBrushInstance,
@@ -61,6 +63,7 @@ export class RuntimeHost {
   private readonly firstPersonController = new FirstPersonNavigationController();
   private readonly orbitVisitorController = new OrbitVisitorNavigationController();
   private readonly interactionSystem = new RuntimeInteractionSystem();
+  private readonly audioSystem = new RuntimeAudioSystem(this.scene, this.camera, null);
   private readonly brushMeshes = new Map<string, Mesh<BoxGeometry, MeshStandardMaterial[]>>();
   private readonly localLightObjects = new Map<string, Group>();
   private readonly modelRenderObjects = new Map<string, Group>();
@@ -74,6 +77,7 @@ export class RuntimeHost {
   private projectAssets: Record<string, ProjectAssetRecord> = {};
   private loadedModelAssets: Record<string, LoadedModelAsset> = {};
   private loadedImageAssets: Record<string, LoadedImageAsset> = {};
+  private loadedAudioAssets: Record<string, LoadedAudioAsset> = {};
   private resizeObserver: ResizeObserver | null = null;
   private animationFrame = 0;
   private previousFrameTime = 0;
@@ -133,6 +137,7 @@ export class RuntimeHost {
     this.container = container;
     container.appendChild(this.domElement);
     this.domElement.addEventListener("click", this.handleRuntimeClick);
+    this.domElement.addEventListener("pointerdown", this.handleRuntimePointerDown);
     this.resize();
 
     this.resizeObserver = new ResizeObserver(() => {
@@ -153,16 +158,19 @@ export class RuntimeHost {
     this.rebuildLocalLights(runtimeScene.localLights);
     this.rebuildBrushMeshes(runtimeScene.brushes);
     this.rebuildModelInstances(runtimeScene.modelInstances);
+    this.audioSystem.loadScene(runtimeScene);
   }
 
   updateAssets(
     projectAssets: Record<string, ProjectAssetRecord>,
     loadedModelAssets: Record<string, LoadedModelAsset>,
-    loadedImageAssets: Record<string, LoadedImageAsset>
+    loadedImageAssets: Record<string, LoadedImageAsset>,
+    loadedAudioAssets: Record<string, LoadedAudioAsset>
   ) {
     this.projectAssets = projectAssets;
     this.loadedModelAssets = loadedModelAssets;
     this.loadedImageAssets = loadedImageAssets;
+    this.loadedAudioAssets = loadedAudioAssets;
 
     if (this.currentWorld !== null) {
       this.applyWorld();
@@ -171,6 +179,8 @@ export class RuntimeHost {
     if (this.runtimeScene !== null) {
       this.rebuildModelInstances(this.runtimeScene.modelInstances);
     }
+
+    this.audioSystem.updateAssets(projectAssets, loadedAudioAssets);
   }
 
   setNavigationMode(mode: RuntimeNavigationMode) {
@@ -197,6 +207,7 @@ export class RuntimeHost {
 
   setRuntimeMessageHandler(handler: ((message: string | null) => void) | null) {
     this.runtimeMessageHandler = handler;
+    this.audioSystem.setRuntimeMessageHandler(handler);
   }
 
   setFirstPersonTelemetryHandler(handler: ((telemetry: FirstPersonTelemetry | null) => void) | null) {
@@ -221,6 +232,7 @@ export class RuntimeHost {
     this.clearLocalLights();
     this.clearBrushMeshes();
     this.clearModelInstances();
+    this.audioSystem.dispose();
 
     for (const cachedTexture of this.materialTextureCache.values()) {
       cachedTexture.texture.dispose();
@@ -229,6 +241,7 @@ export class RuntimeHost {
     this.materialTextureCache.clear();
     this.renderer?.dispose();
     this.domElement.removeEventListener("click", this.handleRuntimeClick);
+    this.domElement.removeEventListener("pointerdown", this.handleRuntimePointerDown);
 
     if (this.container !== null && this.container.contains(this.domElement)) {
       this.container.removeChild(this.domElement);
@@ -484,6 +497,7 @@ export class RuntimeHost {
     this.previousFrameTime = now;
 
     this.activeController?.update(dt);
+    this.audioSystem.updateListenerTransform();
 
     for (const mixer of this.animationMixers.values()) {
       mixer.update(dt);
@@ -572,6 +586,12 @@ export class RuntimeHost {
       },
       stopAnimation: (instanceId) => {
         this.applyStopAnimationAction(instanceId);
+      },
+      playSound: (soundEmitterId, link) => {
+        this.audioSystem.playSound(soundEmitterId, link);
+      },
+      stopSound: (soundEmitterId) => {
+        this.audioSystem.stopSound(soundEmitterId);
       }
     };
   }
@@ -591,10 +611,16 @@ export class RuntimeHost {
   }
 
   private handleRuntimeClick = () => {
+    this.audioSystem.handleUserGesture();
+
     if (this.runtimeScene === null || this.activeController !== this.firstPersonController || this.currentInteractionPrompt === null) {
       return;
     }
 
     this.interactionSystem.dispatchClickInteraction(this.currentInteractionPrompt.sourceEntityId, this.runtimeScene, this.createInteractionDispatcher());
+  };
+
+  private handleRuntimePointerDown = () => {
+    this.audioSystem.handleUserGesture();
   };
 }

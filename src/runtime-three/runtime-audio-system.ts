@@ -161,7 +161,9 @@ export class RuntimeAudioSystem {
 
     for (const soundEmitter of this.soundEmitters.values()) {
       this.soundGroup.remove(soundEmitter.group);
-      soundEmitter.group.remove(soundEmitter.audio as PositionalAudio);
+      if (soundEmitter.audio !== null) {
+        soundEmitter.group.remove(soundEmitter.audio);
+      }
     }
 
     this.soundEmitters.clear();
@@ -189,7 +191,9 @@ export class RuntimeAudioSystem {
     for (const soundEmitter of this.soundEmitters.values()) {
       this.stopSound(soundEmitter.entity.entityId);
       this.soundGroup.remove(soundEmitter.group);
-      soundEmitter.group.remove(soundEmitter.audio as PositionalAudio);
+      if (soundEmitter.audio !== null) {
+        soundEmitter.group.remove(soundEmitter.audio);
+      }
     }
 
     this.soundEmitters.clear();
