@@ -801,7 +801,7 @@ function readInteractableEntity(value: unknown, label: string): EntityInstance {
   return entity;
 }
 
-function readEntityInstance(value: unknown, label: string): EntityInstance {
+function readEntityInstance(value: unknown, label: string, options: { legacySoundEmitter: boolean }): EntityInstance {
   if (!isRecord(value)) {
     throw new Error(`${label} must be an object.`);
   }
@@ -814,7 +814,7 @@ function readEntityInstance(value: unknown, label: string): EntityInstance {
     case "playerStart":
       return readPlayerStartEntity(value, label);
     case "soundEmitter":
-      return readSoundEmitterEntity(value, label);
+      return options.legacySoundEmitter ? readLegacySoundEmitterEntity(value, label) : readSoundEmitterEntity(value, label);
     case "triggerVolume":
       return readTriggerVolumeEntity(value, label);
     case "teleportTarget":
@@ -826,7 +826,7 @@ function readEntityInstance(value: unknown, label: string): EntityInstance {
   }
 }
 
-function readEntities(value: unknown): SceneDocument["entities"] {
+function readEntities(value: unknown, options: { legacySoundEmitter: boolean }): SceneDocument["entities"] {
   if (!isRecord(value)) {
     throw new Error("entities must be a record.");
   }
@@ -838,7 +838,7 @@ function readEntities(value: unknown): SceneDocument["entities"] {
       throw new Error(`entities.${entityId} must be an object.`);
     }
 
-    const entity = readEntityInstance(entityValue, `entities.${entityId}`);
+    const entity = readEntityInstance(entityValue, `entities.${entityId}`, options);
 
     if (entity.id !== entityId) {
       throw new Error(`entities.${entityId}.id must match the registry key.`);
@@ -896,6 +896,26 @@ function readInteractionAction(value: unknown, label: string): InteractionLink["
         targetModelInstanceId
       }).action;
     }
+    case "playSound": {
+      const targetSoundEmitterId = expectString(value.targetSoundEmitterId, `${label}.targetSoundEmitterId`);
+      if (targetSoundEmitterId.trim().length === 0) {
+        throw new Error(`${label}.targetSoundEmitterId must be non-empty.`);
+      }
+      return createPlaySoundInteractionLink({
+        sourceEntityId: "interaction-source-placeholder",
+        targetSoundEmitterId
+      }).action;
+    }
+    case "stopSound": {
+      const targetSoundEmitterId = expectString(value.targetSoundEmitterId, `${label}.targetSoundEmitterId`);
+      if (targetSoundEmitterId.trim().length === 0) {
+        throw new Error(`${label}.targetSoundEmitterId must be non-empty.`);
+      }
+      return createStopSoundInteractionLink({
+        sourceEntityId: "interaction-source-placeholder",
+        targetSoundEmitterId
+      }).action;
+    }
     default:
       throw new Error(`${label}.type must be a supported interaction action.`);
   }
@@ -945,6 +965,20 @@ function readInteractionLink(value: unknown, label: string): InteractionLink {
         sourceEntityId: expectString(value.sourceEntityId, `${label}.sourceEntityId`),
         trigger,
         targetModelInstanceId: action.targetModelInstanceId
+      });
+    case "playSound":
+      return createPlaySoundInteractionLink({
+        id: expectString(value.id, `${label}.id`),
+        sourceEntityId: expectString(value.sourceEntityId, `${label}.sourceEntityId`),
+        trigger,
+        targetSoundEmitterId: action.targetSoundEmitterId
+      });
+    case "stopSound":
+      return createStopSoundInteractionLink({
+        id: expectString(value.id, `${label}.id`),
+        sourceEntityId: expectString(value.sourceEntityId, `${label}.sourceEntityId`),
+        trigger,
+        targetSoundEmitterId: action.targetSoundEmitterId
       });
   }
 }
