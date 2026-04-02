@@ -104,14 +104,14 @@ describe("EditorStore", () => {
   it("restores the previous editor tool when leaving play mode", () => {
     const store = createEditorStore();
 
-    store.setToolMode("box-create");
+    store.setToolMode("create");
     store.enterPlayMode();
 
     expect(store.getState().toolMode).toBe("play");
 
     store.exitPlayMode();
 
-    expect(store.getState().toolMode).toBe("box-create");
+    expect(store.getState().toolMode).toBe("create");
   });
 
   it("tracks viewport layout and per-panel state independently from the document", () => {
@@ -134,7 +134,7 @@ describe("EditorStore", () => {
     expect(store.getState().viewportPanels.bottomRight.displayMode).toBe("normal");
   });
 
-  it("shares transient box-create preview state across viewport panels", () => {
+  it("shares transient creation preview state across viewport panels", () => {
     const store = createEditorStore();
 
     expect(store.getState().viewportTransientState.toolPreview).toEqual({
@@ -142,8 +142,11 @@ describe("EditorStore", () => {
     });
 
     store.setViewportToolPreview({
-      kind: "box-create",
+      kind: "create",
       sourcePanelId: "topLeft",
+      target: {
+        kind: "box-brush"
+      },
       center: {
         x: 4,
         y: 0,
@@ -152,39 +155,81 @@ describe("EditorStore", () => {
     });
 
     expect(store.getState().viewportTransientState.toolPreview).toEqual({
-      kind: "box-create",
+      kind: "create",
       sourcePanelId: "topLeft",
+      target: {
+        kind: "box-brush"
+      },
       center: {
         x: 4,
         y: 0,
         z: 8
+      }
+    });
+
+    store.setViewportToolPreview({
+      kind: "create",
+      sourcePanelId: "bottomRight",
+      target: {
+        kind: "entity",
+        entityKind: "pointLight",
+        audioAssetId: null
+      },
+      center: {
+        x: 2,
+        y: 1,
+        z: -3
+      }
+    });
+
+    expect(store.getState().viewportTransientState.toolPreview).toEqual({
+      kind: "create",
+      sourcePanelId: "bottomRight",
+      target: {
+        kind: "entity",
+        entityKind: "pointLight",
+        audioAssetId: null
+      },
+      center: {
+        x: 2,
+        y: 1,
+        z: -3
       }
     });
 
     store.clearViewportToolPreview("topRight");
     expect(store.getState().viewportTransientState.toolPreview).toEqual({
-      kind: "box-create",
-      sourcePanelId: "topLeft",
+      kind: "create",
+      sourcePanelId: "bottomRight",
+      target: {
+        kind: "entity",
+        entityKind: "pointLight",
+        audioAssetId: null
+      },
       center: {
-        x: 4,
-        y: 0,
-        z: 8
+        x: 2,
+        y: 1,
+        z: -3
       }
     });
 
-    store.clearViewportToolPreview("topLeft");
+    store.clearViewportToolPreview("bottomRight");
     expect(store.getState().viewportTransientState.toolPreview).toEqual({
       kind: "none"
     });
   });
 
-  it("clears transient viewport preview when leaving box-create mode", () => {
+  it("clears transient viewport preview when leaving create mode", () => {
     const store = createEditorStore();
 
-    store.setToolMode("box-create");
+    store.setToolMode("create");
     store.setViewportToolPreview({
-      kind: "box-create",
+      kind: "create",
       sourcePanelId: "bottomRight",
+      target: {
+        kind: "model-instance",
+        assetId: "asset-1"
+      },
       center: null
     });
     store.setToolMode("select");
