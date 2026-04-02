@@ -70,6 +70,23 @@ describe("EditorStore", () => {
     const writerStore = createEditorStore({ storage });
 
     writerStore.executeCommand(createSetSceneNameCommand("Draft Scene"));
+    writerStore.setViewportLayoutMode("quad");
+    writerStore.setActiveViewportPanel("bottomRight");
+    writerStore.setViewportPanelViewMode("topLeft", "top");
+    writerStore.setViewportPanelDisplayMode("topLeft", "authoring");
+    writerStore.setViewportPanelCameraState("topLeft", {
+      target: {
+        x: 6,
+        y: 2,
+        z: -4
+      },
+      perspectiveOrbit: {
+        radius: 18,
+        theta: 0.9,
+        phi: 1.1
+      },
+      orthographicZoom: 2.25
+    });
     expect(writerStore.saveDraft()).toEqual({
       status: "saved",
       message: "Local draft saved."
@@ -85,6 +102,25 @@ describe("EditorStore", () => {
       message: "Local draft loaded."
     });
     expect(readerStore.getState().document.name).toBe("Draft Scene");
+    expect(readerStore.getState().viewportLayoutMode).toBe("quad");
+    expect(readerStore.getState().activeViewportPanelId).toBe("bottomRight");
+    expect(readerStore.getState().viewportPanels.topLeft).toMatchObject({
+      viewMode: "top",
+      displayMode: "authoring",
+      cameraState: {
+        target: {
+          x: 6,
+          y: 2,
+          z: -4
+        },
+        perspectiveOrbit: {
+          radius: 18,
+          theta: 0.9,
+          phi: 1.1
+        },
+        orthographicZoom: 2.25
+      }
+    });
   });
 
   it("fails gracefully when storage access throws", () => {
