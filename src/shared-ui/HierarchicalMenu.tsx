@@ -12,6 +12,7 @@ export type HierarchicalMenuItem =
       onSelect: () => void;
       testId?: string;
       disabled?: boolean;
+      onHoverChange?: (hovered: boolean) => void;
     }
   | {
       kind: "group";
@@ -76,6 +77,10 @@ function renderHierarchicalMenuItems(items: HierarchicalMenuItem[], onClose: () 
           item.onSelect();
           onClose();
         }}
+        onPointerEnter={() => item.onHoverChange?.(true)}
+        onPointerLeave={() => item.onHoverChange?.(false)}
+        onFocus={() => item.onHoverChange?.(true)}
+        onBlur={() => item.onHoverChange?.(false)}
       >
         <span className="hierarchical-menu__action-label">{item.label}</span>
         <span className="hierarchical-menu__action-plus" aria-hidden="true">
