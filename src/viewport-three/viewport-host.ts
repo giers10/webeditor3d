@@ -91,7 +91,8 @@ import {
 import type { ViewportDisplayMode } from "./viewport-layout";
 import {
   areViewportToolPreviewsEqual,
-  type PlacementViewportToolPreview,
+  type CreationTarget,
+  type CreationViewportToolPreview,
   type ViewportToolPreview
 } from "./viewport-transient-state";
 
@@ -207,17 +208,14 @@ export class ViewportHost {
   private animationFrame = 0;
   private container: HTMLElement | null = null;
   private brushSelectionChangeHandler: ((selection: EditorSelection) => void) | null = null;
-  private createBoxBrushHandler: ((center: Vec3) => void) | null = null;
-  private boxCreatePreviewChangeHandler: ((center: Vec3 | null) => void) | null = null;
-  private placementPreviewChangeHandler: ((toolPreview: ViewportToolPreview) => void) | null = null;
-  private placementCommitHandler: ((toolPreview: PlacementViewportToolPreview) => void) | null = null;
+  private creationPreviewChangeHandler: ((toolPreview: ViewportToolPreview) => void) | null = null;
+  private creationCommitHandler: ((toolPreview: CreationViewportToolPreview) => void) | null = null;
   private toolMode: ToolMode = "select";
   private viewMode: ViewportViewMode = "perspective";
   private displayMode: ViewportDisplayMode = "normal";
-  private lastBoxCreatePreviewCenter: Vec3 | null = null;
-  private placementPreview: PlacementViewportToolPreview | null = null;
-  private placementPreviewTargetKey: string | null = null;
-  private placementPreviewObject: Group | null = null;
+  private creationPreview: CreationViewportToolPreview | null = null;
+  private creationPreviewTargetKey: string | null = null;
+  private creationPreviewObject: Group | null = null;
   private activeCameraDragPointerId: number | null = null;
   private lastCameraDragClientPosition: { x: number; y: number } | null = null;
   // Click-through cycling: track the last click position and the last picked object
@@ -315,28 +313,16 @@ export class ViewportHost {
     this.brushSelectionChangeHandler = handler;
   }
 
-  setCreateBoxBrushHandler(handler: ((center: Vec3) => void) | null) {
-    this.createBoxBrushHandler = handler;
+  setCreationPreviewChangeHandler(handler: ((toolPreview: ViewportToolPreview) => void) | null) {
+    this.creationPreviewChangeHandler = handler;
   }
 
-  setBoxCreatePreviewChangeHandler(handler: ((center: Vec3 | null) => void) | null) {
-    this.boxCreatePreviewChangeHandler = handler;
+  setCreationCommitHandler(handler: ((toolPreview: CreationViewportToolPreview) => void) | null) {
+    this.creationCommitHandler = handler;
   }
 
-  setBoxCreatePreview(center: Vec3 | null) {
-    this.syncBoxCreatePreview(center);
-  }
-
-  setPlacementPreviewChangeHandler(handler: ((toolPreview: ViewportToolPreview) => void) | null) {
-    this.placementPreviewChangeHandler = handler;
-  }
-
-  setPlacementCommitHandler(handler: ((toolPreview: PlacementViewportToolPreview) => void) | null) {
-    this.placementCommitHandler = handler;
-  }
-
-  setPlacementPreview(toolPreview: PlacementViewportToolPreview | null) {
-    this.syncPlacementPreview(toolPreview);
+  setCreationPreview(toolPreview: CreationViewportToolPreview | null) {
+    this.syncCreationPreview(toolPreview);
   }
 
   setToolMode(toolMode: ToolMode) {
@@ -344,12 +330,8 @@ export class ViewportHost {
     this.lastClickPointer = null;
     this.lastClickSelectionKey = null;
 
-    if (toolMode !== "box-create") {
-      this.syncBoxCreatePreview(null);
-    }
-
-    if (toolMode !== "place") {
-      this.syncPlacementPreview(null);
+    if (toolMode !== "create") {
+      this.syncCreationPreview(null);
     }
   }
 
@@ -435,11 +417,9 @@ export class ViewportHost {
     this.clearLocalLights();
     this.clearBrushMeshes();
     this.clearEntityMarkers();
-    this.boxCreatePreviewChangeHandler = null;
-    this.syncBoxCreatePreview(null);
-    this.placementPreviewChangeHandler = null;
-    this.placementCommitHandler = null;
-    this.syncPlacementPreview(null);
+    this.creationPreviewChangeHandler = null;
+    this.creationCommitHandler = null;
+    this.syncCreationPreview(null);
     this.advancedRenderingComposer?.dispose();
     this.advancedRenderingComposer = null;
     this.currentAdvancedRenderingSettings = null;
