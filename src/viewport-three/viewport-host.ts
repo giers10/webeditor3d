@@ -1823,7 +1823,7 @@ export class ViewportHost {
               DEFAULT_SOUND_EMITTER_REF_DISTANCE,
               DEFAULT_SOUND_EMITTER_MAX_DISTANCE,
               false,
-              PLACEMENT_PREVIEW_COLOR_HEX
+              BOX_CREATE_PREVIEW_FILL
             ).group;
           case "triggerVolume":
             return this.createTriggerVolumeRenderObjects(
@@ -1831,7 +1831,7 @@ export class ViewportHost {
               previewPosition,
               DEFAULT_TRIGGER_VOLUME_SIZE,
               false,
-              PLACEMENT_PREVIEW_COLOR_HEX
+              BOX_CREATE_PREVIEW_FILL
             ).group;
           case "teleportTarget":
             return this.createTeleportTargetRenderObjects(
@@ -1839,7 +1839,7 @@ export class ViewportHost {
               previewPosition,
               DEFAULT_TELEPORT_TARGET_YAW_DEGREES,
               false,
-              PLACEMENT_PREVIEW_COLOR_HEX
+              BOX_CREATE_PREVIEW_FILL
             ).group;
           case "interactable":
             return this.createInteractableRenderObjects(
@@ -1847,7 +1847,7 @@ export class ViewportHost {
               previewPosition,
               DEFAULT_INTERACTABLE_RADIUS,
               false,
-              PLACEMENT_PREVIEW_COLOR_HEX
+              BOX_CREATE_PREVIEW_FILL
             ).group;
         }
       case "model-instance": {
