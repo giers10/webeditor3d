@@ -775,7 +775,40 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [backgroundEnvironmentIntensityDraft, setBackgroundEnvironmentIntensityDraft] = useState(
     editorState.document.world.background.mode === "image" ? String(editorState.document.world.background.environmentIntensity) : "0.5"
   );
-  const [statusMessage, setStatusMessage] = useState(initialStatusMessage ?? "Slice 3.4 spatial audio ready.");
+  const [advancedRenderingShadowBiasDraft, setAdvancedRenderingShadowBiasDraft] = useState(
+    String(editorState.document.world.advancedRendering.shadows.bias)
+  );
+  const [advancedRenderingAmbientOcclusionIntensityDraft, setAdvancedRenderingAmbientOcclusionIntensityDraft] = useState(
+    String(editorState.document.world.advancedRendering.ambientOcclusion.intensity)
+  );
+  const [advancedRenderingAmbientOcclusionRadiusDraft, setAdvancedRenderingAmbientOcclusionRadiusDraft] = useState(
+    String(editorState.document.world.advancedRendering.ambientOcclusion.radius)
+  );
+  const [advancedRenderingAmbientOcclusionSamplesDraft, setAdvancedRenderingAmbientOcclusionSamplesDraft] = useState(
+    String(editorState.document.world.advancedRendering.ambientOcclusion.samples)
+  );
+  const [advancedRenderingBloomIntensityDraft, setAdvancedRenderingBloomIntensityDraft] = useState(
+    String(editorState.document.world.advancedRendering.bloom.intensity)
+  );
+  const [advancedRenderingBloomThresholdDraft, setAdvancedRenderingBloomThresholdDraft] = useState(
+    String(editorState.document.world.advancedRendering.bloom.threshold)
+  );
+  const [advancedRenderingBloomRadiusDraft, setAdvancedRenderingBloomRadiusDraft] = useState(
+    String(editorState.document.world.advancedRendering.bloom.radius)
+  );
+  const [advancedRenderingToneMappingExposureDraft, setAdvancedRenderingToneMappingExposureDraft] = useState(
+    String(editorState.document.world.advancedRendering.toneMapping.exposure)
+  );
+  const [advancedRenderingDepthOfFieldFocusDistanceDraft, setAdvancedRenderingDepthOfFieldFocusDistanceDraft] = useState(
+    String(editorState.document.world.advancedRendering.depthOfField.focusDistance)
+  );
+  const [advancedRenderingDepthOfFieldFocalLengthDraft, setAdvancedRenderingDepthOfFieldFocalLengthDraft] = useState(
+    String(editorState.document.world.advancedRendering.depthOfField.focalLength)
+  );
+  const [advancedRenderingDepthOfFieldBokehScaleDraft, setAdvancedRenderingDepthOfFieldBokehScaleDraft] = useState(
+    String(editorState.document.world.advancedRendering.depthOfField.bokehScale)
+  );
+  const [statusMessage, setStatusMessage] = useState(initialStatusMessage ?? "Slice 3.5 advanced rendering ready.");
   const [assetStatusMessage, setAssetStatusMessage] = useState<string | null>(null);
   const [preferredNavigationMode, setPreferredNavigationMode] = useState<RuntimeNavigationMode>(
     primaryPlayerStart === null ? "orbitVisitor" : "firstPerson"
@@ -819,6 +852,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
       : preferredNavigationMode === "firstPerson"
         ? "Ready for First Person"
         : "Ready for Orbit Visitor";
+  const advancedRendering = editorState.document.world.advancedRendering;
 
   useEffect(() => {
     setSceneNameDraft(editorState.document.name);
@@ -947,6 +981,21 @@ export function App({ store, initialStatusMessage }: AppProps) {
   useEffect(() => {
     setSunDirectionDraft(createVec3Draft(editorState.document.world.sunLight.direction));
   }, [editorState.document.world.sunLight.direction]);
+
+  useEffect(() => {
+    const advancedRendering = editorState.document.world.advancedRendering;
+    setAdvancedRenderingShadowBiasDraft(String(advancedRendering.shadows.bias));
+    setAdvancedRenderingAmbientOcclusionIntensityDraft(String(advancedRendering.ambientOcclusion.intensity));
+    setAdvancedRenderingAmbientOcclusionRadiusDraft(String(advancedRendering.ambientOcclusion.radius));
+    setAdvancedRenderingAmbientOcclusionSamplesDraft(String(advancedRendering.ambientOcclusion.samples));
+    setAdvancedRenderingBloomIntensityDraft(String(advancedRendering.bloom.intensity));
+    setAdvancedRenderingBloomThresholdDraft(String(advancedRendering.bloom.threshold));
+    setAdvancedRenderingBloomRadiusDraft(String(advancedRendering.bloom.radius));
+    setAdvancedRenderingToneMappingExposureDraft(String(advancedRendering.toneMapping.exposure));
+    setAdvancedRenderingDepthOfFieldFocusDistanceDraft(String(advancedRendering.depthOfField.focusDistance));
+    setAdvancedRenderingDepthOfFieldFocalLengthDraft(String(advancedRendering.depthOfField.focalLength));
+    setAdvancedRenderingDepthOfFieldBokehScaleDraft(String(advancedRendering.depthOfField.bokehScale));
+  }, [editorState.document.world.advancedRendering]);
 
   useEffect(() => {
     loadedImageAssetsRef.current = loadedImageAssets;
