@@ -202,16 +202,26 @@ function formatDiagnosticCount(count: number, label: string): string {
   return `${count} ${label}${count === 1 ? "" : "s"}`;
 }
 
-function getViewportCaption(toolMode: "select" | "box-create" | "play", viewMode: ViewportViewMode, brushCount: number): string {
+function getViewportCaption(
+  toolMode: "select" | "box-create" | "play",
+  layoutMode: ViewportLayoutMode,
+  activePanelId: ViewportPanelId,
+  activePanelState: { viewMode: ViewportViewMode; displayMode: ViewportDisplayMode },
+  brushCount: number
+): string {
   if (toolMode === "play") {
     return "Runner is active.";
   }
 
+  const layoutLabel = getViewportLayoutModeLabel(layoutMode);
+  const panelLabel = getViewportPanelLabel(activePanelId);
+  const panelSummary = `${getViewportViewModeLabel(activePanelState.viewMode)} / ${getViewportDisplayModeLabel(activePanelState.displayMode)}`;
+
   if (toolMode === "box-create") {
-    return `${brushCount} box brush${brushCount === 1 ? "" : "es"} loaded. Box Create is active on the ${getViewportViewModeGridPlaneLabel(viewMode)} grid. Click the ${getViewportViewModeGridPlaneLabel(viewMode)} grid to place a ${DEFAULT_BOX_BRUSH_SIZE.x} x ${DEFAULT_BOX_BRUSH_SIZE.y} x ${DEFAULT_BOX_BRUSH_SIZE.z} box. ${getViewportViewModeControlHint(viewMode)}`;
+    return `${brushCount} box brush${brushCount === 1 ? "" : "es"} loaded. ${layoutLabel} active. Box Create uses the active panel. Active panel: ${panelLabel} (${panelSummary}).`;
   }
 
-  return `${brushCount} box brush${brushCount === 1 ? "" : "es"} loaded. ${getViewportViewModeLabel(viewMode)} view active on the ${getViewportViewModeGridPlaneLabel(viewMode)} grid. ${getViewportViewModeControlHint(viewMode)}`;
+  return `${brushCount} box brush${brushCount === 1 ? "" : "es"} loaded. ${layoutLabel} active. Active panel: ${panelLabel} (${panelSummary}).`;
 }
 
 function createVec2Draft(vector: Vec2): Vec2Draft {
