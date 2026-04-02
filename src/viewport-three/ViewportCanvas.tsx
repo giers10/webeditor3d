@@ -9,7 +9,6 @@ import type { Vec3 } from "../core/vector";
 import { DEFAULT_BOX_BRUSH_CENTER, DEFAULT_BOX_BRUSH_SIZE } from "../document/brushes";
 import type { SceneDocument } from "../document/scene-document";
 import type { WorldSettings } from "../document/world-settings";
-import { DEFAULT_GRID_SIZE } from "../geometry/grid-snapping";
 import { createWorldBackgroundStyle } from "../shared-ui/world-background-style";
 import {
   getViewportViewModeControlHint,
