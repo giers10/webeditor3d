@@ -181,18 +181,16 @@ function readOptionalPositiveInteger(value: unknown, label: string, fallback: nu
   return integerValue;
 }
 
-function readOptionalAllowedValue<T extends string>(value: unknown, label: string, fallback: T, guard: (candidate: unknown) => candidate is T): T {
+function readOptionalAllowedValue<T>(value: unknown, label: string, fallback: T, guard: (candidate: unknown) => candidate is T): T {
   if (value === undefined) {
     return fallback;
   }
 
-  const stringValue = expectString(value, label);
-
-  if (!guard(stringValue)) {
+  if (!guard(value)) {
     throw new Error(`${label} must be a supported value.`);
   }
 
-  return stringValue as T;
+  return value;
 }
 
 function readAdvancedRenderingSettings(value: unknown): AdvancedRenderingSettings {
