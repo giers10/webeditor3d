@@ -1388,6 +1388,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
   const completeCreation = (status: string) => {
     store.setToolMode("select");
+    store.clearViewportToolPreview();
     setStatusMessage(status);
   };
 
