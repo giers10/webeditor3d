@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { createBoxBrush } from "../../src/document/brushes";
 import { SCENE_DOCUMENT_VERSION, createEmptySceneDocument } from "../../src/document/scene-document";
+import { serializeSceneDocument } from "../../src/serialization/scene-document-json";
 import {
   DEFAULT_SCENE_DRAFT_STORAGE_KEY,
   getBrowserStorageAccess,
@@ -10,6 +11,7 @@ import {
   saveSceneDocumentDraft,
   type KeyValueStorage
 } from "../../src/serialization/local-draft-storage";
+import { createDefaultViewportLayoutState } from "../../src/viewport-three/viewport-layout";
 
 class MemoryStorage implements KeyValueStorage {
   private readonly values = new Map<string, string>();
@@ -116,6 +118,69 @@ describe("local draft storage", () => {
 
     expect(result.status).toBe("error");
     expect(result.message).toContain("quota exceeded");
+  });
+
+  it("stores and restores editor viewport layout state alongside the document draft", () => {
+    const storage = new MemoryStorage();
+    const viewportLayoutState = createDefaultViewportLayoutState();
+
+    viewportLayoutState.layoutMode = "quad";
+    viewportLayoutState.activePanelId = "bottomRight";
+    viewportLayoutState.panels.topLeft.cameraState.target = {
+      x: 8,
+      y: 3,
+      z: -5
+    };
+    viewportLayoutState.panels.topLeft.cameraState.perspectiveOrbit.theta = 1.25;
+    viewportLayoutState.panels.topLeft.cameraState.orthographicZoom = 2.5;
+
+    expect(saveSceneDocumentDraft(storage, createEmptySceneDocument({ name: "Viewport Draft" }), viewportLayoutState)).toEqual({
+      status: "saved",
+      message: "Local draft saved."
+    });
+
+    const result = loadSceneDocumentDraft(storage);
+
+    expect(result).toMatchObject({
+      status: "loaded",
+      document: {
+        name: "Viewport Draft"
+      },
+      viewportLayoutState: {
+        layoutMode: "quad",
+        activePanelId: "bottomRight",
+        panels: {
+          topLeft: {
+            cameraState: {
+              target: {
+                x: 8,
+                y: 3,
+                z: -5
+              },
+              perspectiveOrbit: {
+                theta: 1.25
+              },
+              orthographicZoom: 2.5
+            }
+          }
+        }
+      }
+    });
+  });
+
+  it("loads older raw scene-document drafts without requiring viewport layout state", () => {
+    const storage = new MemoryStorage();
+    storage.setItem(DEFAULT_SCENE_DRAFT_STORAGE_KEY, serializeSceneDocument(createEmptySceneDocument({ name: "Legacy Draft" })));
+
+    const result = loadSceneDocumentDraft(storage);
+
+    expect(result).toMatchObject({
+      status: "loaded",
+      document: {
+        name: "Legacy Draft"
+      },
+      viewportLayoutState: null
+    });
   });
 
   it("refuses to save an invalid scene document draft", () => {
