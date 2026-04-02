@@ -42,11 +42,7 @@ interface ViewportCanvasProps {
   onToolPreviewChange(toolPreview: ViewportToolPreview): void;
 }
 
-function formatVec3(vector: Vec3 | null): string {
-  if (vector === null) {
-    return "Move over the grid to preview a snapped placement.";
-  }
-
+function formatVec3(vector: Vec3): string {
   return `${vector.x}, ${vector.y}, ${vector.z}`;
 }
 
