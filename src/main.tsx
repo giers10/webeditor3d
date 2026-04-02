@@ -16,6 +16,7 @@ const storageAccess = getBrowserStorageAccess();
 const bootstrapResult = loadOrCreateSceneDocument(storageAccess.storage);
 const editorStore = createEditorStore({
   initialDocument: bootstrapResult.document,
+  initialViewportLayoutState: bootstrapResult.viewportLayoutState ?? undefined,
   storage: storageAccess.storage
 });
 const initialStatusMessage = [storageAccess.diagnostic, bootstrapResult.diagnostic].filter(Boolean).join(" ") || undefined;
