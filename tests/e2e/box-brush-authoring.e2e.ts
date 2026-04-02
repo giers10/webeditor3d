@@ -23,7 +23,8 @@ test("user can create a box brush and keep it through a draft reload", async ({ 
   await page.reload();
 
   await page.getByRole("button", { name: "Box Create" }).click();
-  await expect(await getEditorStoreSnapshot(page)).toMatchObject({
+  const creationSnapshot = await getEditorStoreSnapshot(page);
+  expect(creationSnapshot).toMatchObject({
     toolMode: "create",
     viewportTransientState: {
       toolPreview: {
@@ -37,7 +38,8 @@ test("user can create a box brush and keep it through a draft reload", async ({ 
     }
   });
   await page.keyboard.press("Escape");
-  await expect(await getEditorStoreSnapshot(page)).toMatchObject({
+  const cancelledSnapshot = await getEditorStoreSnapshot(page);
+  expect(cancelledSnapshot).toMatchObject({
     toolMode: "select",
     viewportTransientState: {
       toolPreview: {
