@@ -173,11 +173,23 @@ export function ViewportCanvas({
   }, [onToolPreviewChange, panelId]);
 
   useEffect(() => {
+    hostRef.current?.setPlacementPreviewChangeHandler(onToolPreviewChange);
+  }, [onToolPreviewChange]);
+
+  useEffect(() => {
+    hostRef.current?.setPlacementCommitHandler(onCommitPlacement);
+  }, [onCommitPlacement]);
+
+  useEffect(() => {
     hostRef.current?.setToolMode(toolMode);
   }, [toolMode]);
 
   useEffect(() => {
     hostRef.current?.setBoxCreatePreview(toolMode === "box-create" && toolPreview.kind === "box-create" ? toolPreview.center : null);
+  }, [toolMode, toolPreview]);
+
+  useEffect(() => {
+    hostRef.current?.setPlacementPreview(toolMode === "place" && toolPreview.kind === "placement" ? toolPreview : null);
   }, [toolMode, toolPreview]);
 
   useEffect(() => {
