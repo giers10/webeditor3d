@@ -50,6 +50,7 @@ import { DEFAULT_GRID_SIZE, snapValueToGrid } from "../geometry/grid-snapping";
 import { createStarterMaterialSignature, createStarterMaterialTexture } from "../materials/starter-material-textures";
 import type { MaterialDef } from "../materials/starter-material-library";
 import { resolveViewportFocusTarget } from "./viewport-focus";
+import { createSoundEmitterMarkerMeshes } from "./viewport-entity-markers";
 
 interface BrushRenderObjects {
   mesh: Mesh<BoxGeometry, MeshStandardMaterial[]>;
@@ -685,16 +686,7 @@ export class ViewportHost {
     const group = new Group();
     group.position.set(position.x, position.y, position.z);
 
-    const core = new Mesh(
-      new SphereGeometry(0.18, 16, 12),
-      new MeshStandardMaterial({
-        color: markerColor,
-        emissive: markerColor,
-        emissiveIntensity: selected ? 0.18 : 0.08,
-        roughness: 0.32,
-        metalness: 0.06
-      })
-    );
+    const speakerMeshes = createSoundEmitterMarkerMeshes(markerColor, selected);
 
     const refDistanceShell = new Mesh(
       new SphereGeometry(displayRefDistance, 16, 12),
@@ -726,13 +718,13 @@ export class ViewportHost {
     );
     maxDistanceShell.userData.nonPickable = true;
 
-    for (const mesh of [core, refDistanceShell, maxDistanceShell]) {
+    for (const mesh of [...speakerMeshes, refDistanceShell, maxDistanceShell]) {
       this.tagEntityMesh(mesh, entityId, "soundEmitter", group);
     }
 
     return {
       group,
-      meshes: [core, refDistanceShell, maxDistanceShell]
+      meshes: [...speakerMeshes, refDistanceShell, maxDistanceShell]
     };
   }
 
