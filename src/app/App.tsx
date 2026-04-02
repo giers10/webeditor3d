@@ -1522,83 +1522,169 @@ export function App({ store, initialStatusMessage }: AppProps) {
     setStatusMessage(successMessage);
   };
 
-  const resolveNewEntityPosition = (kind: EntityKind): Vec3 => {
-    if (kind === "triggerVolume" && selectedBrush !== null) {
-      return snapVec3ToGrid(selectedBrush.center, DEFAULT_GRID_SIZE);
-    }
-
-    if (selectedEntity !== null) {
-      return snapVec3ToGrid(selectedEntity.position, DEFAULT_GRID_SIZE);
-    }
-
-    return snapVec3ToGrid(DEFAULT_ENTITY_POSITION, DEFAULT_GRID_SIZE);
+  const beginPlacement = (toolPreview: PlacementViewportToolPreview, status: string) => {
+    blurActiveTextEntry();
+    closeAddMenu();
+    store.setViewportToolPreview(toolPreview);
+    store.setToolMode("place");
+    setStatusMessage(status);
   };
 
-  const handlePlaceEntity = (kind: EntityKind, options: { audioAssetId?: string | null } = {}) => {
+  const beginEntityPlacement = (kind: EntityKind, options: { audioAssetId?: string | null } = {}) => {
+    beginPlacement(
+      {
+        kind: "placement",
+        sourcePanelId: activePanelId,
+        target: {
+          kind: "entity",
+          entityKind: kind,
+          audioAssetId: options.audioAssetId ?? null
+        },
+        center: null
+      },
+      `Previewing ${getEntityKindLabel(kind)}. Click in the viewport to place it.`
+    );
+  };
+
+  const beginModelInstancePlacement = (assetId: string) => {
+    const asset = editorState.document.assets[assetId];
+
+    if (asset === undefined || asset.kind !== "model") {
+      setStatusMessage("Select a model asset before placing a model instance.");
+      return;
+    }
+
+    beginPlacement(
+      {
+        kind: "placement",
+        sourcePanelId: activePanelId,
+        target: {
+          kind: "model-instance",
+          assetId: asset.id
+        },
+        center: null
+      },
+      `Previewing ${asset.sourceName}. Click in the viewport to place it.`
+    );
+  };
+
+  const handleCommitPlacement = (placementPreview: PlacementViewportToolPreview) => {
     try {
-      const basePosition = resolveNewEntityPosition(kind);
-      let nextEntity: EntityInstance;
+      if (placementPreview.target.kind === "model-instance") {
+        const asset = editorState.document.assets[placementPreview.target.assetId];
 
-      switch (kind) {
-        case "pointLight":
-          nextEntity = createPointLightEntity({
-            position: basePosition
-          });
-          break;
-        case "spotLight":
-          nextEntity = createSpotLightEntity({
-            position: basePosition
-          });
-          break;
-        case "playerStart":
-          nextEntity = createPlayerStartEntity({
-            position: basePosition
-          });
-          break;
-        case "soundEmitter":
-          nextEntity = createSoundEmitterEntity({
-            position: basePosition,
-            audioAssetId: options.audioAssetId ?? audioAssetList[0]?.id ?? undefined
-          });
-          break;
-        case "triggerVolume":
-          nextEntity =
-            selectedBrush === null
-              ? createTriggerVolumeEntity({
-                  position: basePosition
-                })
-              : createTriggerVolumeEntity({
-                  position: basePosition,
-                  size: selectedBrush.size
-                });
-          break;
-        case "teleportTarget":
-          nextEntity = createTeleportTargetEntity({
-            position: basePosition
-          });
-          break;
-        case "interactable":
-          nextEntity = createInteractableEntity({
-            position: basePosition
-          });
-          break;
-      }
+        if (asset === undefined || asset.kind !== "model") {
+          setStatusMessage("Select a model asset before placing a model instance.");
+          return;
+        }
 
-      store.executeCommand(
-        createUpsertEntityCommand({
-          entity: nextEntity,
-          label: `Place ${getEntityKindLabel(kind).toLowerCase()}`
-        })
-      );
-      if (kind === "soundEmitter" && (options.audioAssetId ?? audioAssetList[0]?.id ?? null) !== null) {
-        const placedAudioAssetId = options.audioAssetId ?? audioAssetList[0]?.id ?? null;
-        setStatusMessage(
-          `Placed ${getEntityKindLabel(kind)} using ${editorState.document.assets[placedAudioAssetId ?? ""]?.sourceName ?? "the authored audio asset"}.`
+        const nextModelInstance = createModelInstance({
+          assetId: asset.id,
+          position:
+            placementPreview.center === null ? createModelInstancePlacementPosition(asset, null) : placementPreview.center,
+          rotationDegrees: DEFAULT_MODEL_INSTANCE_ROTATION_DEGREES,
+          scale: DEFAULT_MODEL_INSTANCE_SCALE
+        });
+
+        store.executeCommand(
+          createUpsertModelInstanceCommand({
+            modelInstance: nextModelInstance,
+            label: `Place ${asset.sourceName}`
+          })
         );
+        setStatusMessage(`Placed ${asset.sourceName}.`);
         return;
       }
 
-      setStatusMessage(`Placed ${getEntityKindLabel(kind)}.`);
+      const position = placementPreview.center ?? DEFAULT_ENTITY_POSITION;
+
+      switch (placementPreview.target.entityKind) {
+        case "pointLight":
+          store.executeCommand(
+            createUpsertEntityCommand({
+              entity: createPointLightEntity({
+                position
+              }),
+              label: "Place point light"
+            })
+          );
+          setStatusMessage("Placed Point Light.");
+          return;
+        case "spotLight":
+          store.executeCommand(
+            createUpsertEntityCommand({
+              entity: createSpotLightEntity({
+                position
+              }),
+              label: "Place spot light"
+            })
+          );
+          setStatusMessage("Placed Spot Light.");
+          return;
+        case "playerStart":
+          store.executeCommand(
+            createUpsertEntityCommand({
+              entity: createPlayerStartEntity({
+                position
+              }),
+              label: "Place player start"
+            })
+          );
+          setStatusMessage("Placed Player Start.");
+          return;
+        case "soundEmitter": {
+          const placedAudioAssetId = placementPreview.target.audioAssetId ?? audioAssetList[0]?.id ?? null;
+
+          store.executeCommand(
+            createUpsertEntityCommand({
+              entity: createSoundEmitterEntity({
+                position,
+                audioAssetId: placedAudioAssetId
+              }),
+              label: "Place sound emitter"
+            })
+          );
+          setStatusMessage(
+            placedAudioAssetId === null
+              ? "Placed Sound Emitter."
+              : `Placed Sound Emitter using ${editorState.document.assets[placedAudioAssetId]?.sourceName ?? "the authored audio asset"}.`
+          );
+          return;
+        }
+        case "triggerVolume":
+          store.executeCommand(
+            createUpsertEntityCommand({
+              entity: createTriggerVolumeEntity({
+                position
+              }),
+              label: "Place trigger volume"
+            })
+          );
+          setStatusMessage("Placed Trigger Volume.");
+          return;
+        case "teleportTarget":
+          store.executeCommand(
+            createUpsertEntityCommand({
+              entity: createTeleportTargetEntity({
+                position
+              }),
+              label: "Place teleport target"
+            })
+          );
+          setStatusMessage("Placed Teleport Target.");
+          return;
+        case "interactable":
+          store.executeCommand(
+            createUpsertEntityCommand({
+              entity: createInteractableEntity({
+                position
+              }),
+              label: "Place interactable"
+            })
+          );
+          setStatusMessage("Placed Interactable.");
+          return;
+      }
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
     }
