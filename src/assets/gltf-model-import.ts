@@ -1,4 +1,5 @@
 import { Box3, Group, Mesh, type AnimationClip, type Material, type Object3D, type Texture } from "three";
+import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 import { GLTFLoader, type GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { clone as cloneSkeleton } from "three/examples/jsm/utils/SkeletonUtils.js";
 
@@ -27,6 +28,10 @@ interface ImportedModelFileSet {
   rootFile: ImportedModelFileEntry;
   totalByteLength: number;
 }
+
+const DRACO_DECODER_PATH = "/draco/gltf/";
+
+let sharedDracoLoader: DRACOLoader | null = null;
 
 export interface LoadedModelAsset {
   assetId: string;
@@ -328,8 +333,23 @@ function createModelAssetRecord(
 }
 
 async function loadGltfFromArrayBuffer(arrayBuffer: ArrayBuffer): Promise<GLTF> {
-  const loader = new GLTFLoader();
+  const loader = createConfiguredGltfLoader();
   return loader.parseAsync(arrayBuffer, "");
+}
+
+function createConfiguredGltfLoader(): GLTFLoader {
+  const loader = new GLTFLoader();
+  loader.setDRACOLoader(getSharedDracoLoader());
+  return loader;
+}
+
+function getSharedDracoLoader(): DRACOLoader {
+  if (sharedDracoLoader === null) {
+    sharedDracoLoader = new DRACOLoader();
+    sharedDracoLoader.setDecoderPath(DRACO_DECODER_PATH);
+  }
+
+  return sharedDracoLoader;
 }
 
 function createDataUrlForStoredFile(file: ProjectAssetStorageFileRecord): string {
@@ -623,7 +643,7 @@ async function loadGltfFromImportedModelFileSet(fileSet: ImportedModelFileSet): 
     throw new Error(`Missing external model resource(s): ${missingUris.join(", ")}.`);
   }
 
-  const loader = new GLTFLoader();
+  const loader = createConfiguredGltfLoader();
 
   try {
     return await loader.parseAsync(JSON.stringify(gltfJson), "");
@@ -758,7 +778,7 @@ export async function loadModelAssetFromStorage(
     throw new Error(`Missing stored external model resource(s): ${missingUris.join(", ")}.`);
   }
 
-  const loader = new GLTFLoader();
+  const loader = createConfiguredGltfLoader();
 
   try {
     const gltf = await loader.parseAsync(JSON.stringify(gltfJson), "");
