@@ -35,7 +35,7 @@ interface ViewportPanelProps {
   onActivatePanel(panelId: ViewportPanelId): void;
   onSetPanelViewMode(panelId: ViewportPanelId, viewMode: ViewportViewMode): void;
   onSetPanelDisplayMode(panelId: ViewportPanelId, displayMode: ViewportDisplayMode): void;
-  onCommitCreation(toolPreview: CreationViewportToolPreview): void;
+  onCommitCreation(toolPreview: CreationViewportToolPreview): boolean;
   onToolPreviewChange(toolPreview: ViewportToolPreview): void;
   onSelectionChange(selection: EditorSelection): void;
 }
