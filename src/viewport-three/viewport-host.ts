@@ -73,6 +73,7 @@ import {
   type ViewportViewMode
 } from "./viewport-view-modes";
 import type { ViewportDisplayMode } from "./viewport-layout";
+import type { PlacementViewportToolPreview, ViewportToolPreview } from "./viewport-transient-state";
 
 interface BrushRenderObjects {
   mesh: Mesh<BoxGeometry, Array<MeshStandardMaterial | MeshBasicMaterial>>;
@@ -187,10 +188,14 @@ export class ViewportHost {
   private brushSelectionChangeHandler: ((selection: EditorSelection) => void) | null = null;
   private createBoxBrushHandler: ((center: Vec3) => void) | null = null;
   private boxCreatePreviewChangeHandler: ((center: Vec3 | null) => void) | null = null;
+  private placementPreviewChangeHandler: ((toolPreview: ViewportToolPreview) => void) | null = null;
+  private placementCommitHandler: ((toolPreview: PlacementViewportToolPreview) => void) | null = null;
   private toolMode: ToolMode = "select";
   private viewMode: ViewportViewMode = "perspective";
   private displayMode: ViewportDisplayMode = "normal";
   private lastBoxCreatePreviewCenter: Vec3 | null = null;
+  private placementPreview: PlacementViewportToolPreview | null = null;
+  private placementPreviewObject: Group | null = null;
   private activeCameraDragPointerId: number | null = null;
   private lastCameraDragClientPosition: { x: number; y: number } | null = null;
   // Click-through cycling: track the last click position and the last picked object
@@ -300,6 +305,18 @@ export class ViewportHost {
     this.syncBoxCreatePreview(center);
   }
 
+  setPlacementPreviewChangeHandler(handler: ((toolPreview: ViewportToolPreview) => void) | null) {
+    this.placementPreviewChangeHandler = handler;
+  }
+
+  setPlacementCommitHandler(handler: ((toolPreview: PlacementViewportToolPreview) => void) | null) {
+    this.placementCommitHandler = handler;
+  }
+
+  setPlacementPreview(toolPreview: PlacementViewportToolPreview | null) {
+    this.syncPlacementPreview(toolPreview);
+  }
+
   setToolMode(toolMode: ToolMode) {
     this.toolMode = toolMode;
     this.lastClickPointer = null;
@@ -307,6 +324,10 @@ export class ViewportHost {
 
     if (toolMode !== "box-create") {
       this.syncBoxCreatePreview(null);
+    }
+
+    if (toolMode !== "place") {
+      this.syncPlacementPreview(null);
     }
   }
 
@@ -394,6 +415,9 @@ export class ViewportHost {
     this.clearEntityMarkers();
     this.boxCreatePreviewChangeHandler = null;
     this.syncBoxCreatePreview(null);
+    this.placementPreviewChangeHandler = null;
+    this.placementCommitHandler = null;
+    this.syncPlacementPreview(null);
     this.advancedRenderingComposer?.dispose();
     this.advancedRenderingComposer = null;
     this.currentAdvancedRenderingSettings = null;
@@ -1272,6 +1296,23 @@ export class ViewportHost {
       return;
     }
 
+    if (this.toolMode === "place" && this.placementPreview !== null) {
+      const previewCenter = this.getPlacementPreviewCenter(event);
+
+      if (previewCenter !== null) {
+        const nextPlacementPreview = {
+          ...this.placementPreview,
+          center: previewCenter
+        } as PlacementViewportToolPreview;
+
+        this.syncPlacementPreview(nextPlacementPreview);
+        this.placementPreviewChangeHandler?.(nextPlacementPreview);
+        this.placementCommitHandler?.(nextPlacementPreview);
+      }
+
+      return;
+    }
+
     const bounds = this.renderer.domElement.getBoundingClientRect();
 
     if (bounds.width === 0 || bounds.height === 0) {
@@ -1414,6 +1455,15 @@ export class ViewportHost {
     }
 
     if (this.toolMode !== "box-create") {
+      if (this.toolMode !== "place" || this.placementPreview === null) {
+        return;
+      }
+
+      const previewCenter = this.getPlacementPreviewCenter(event);
+      const nextPlacementPreview = previewCenter === null ? { kind: "none" } : { ...this.placementPreview, center: previewCenter };
+
+      this.syncPlacementPreview(previewCenter === null ? null : (nextPlacementPreview as PlacementViewportToolPreview));
+      this.placementPreviewChangeHandler?.(nextPlacementPreview as ViewportToolPreview);
       return;
     }
 
@@ -1440,12 +1490,18 @@ export class ViewportHost {
       return;
     }
 
-    if (this.toolMode !== "box-create") {
+    if (this.toolMode !== "box-create" && this.toolMode !== "place") {
       return;
     }
 
-    this.syncBoxCreatePreview(null);
-    this.boxCreatePreviewChangeHandler?.(null);
+    if (this.toolMode === "box-create") {
+      this.syncBoxCreatePreview(null);
+      this.boxCreatePreviewChangeHandler?.(null);
+      return;
+    }
+
+    this.syncPlacementPreview(null);
+    this.placementPreviewChangeHandler?.({ kind: "none" });
   };
 
   private handleWheel = (event: WheelEvent) => {

@@ -1,5 +1,6 @@
 import { createOpaqueId } from "../core/ids";
 import type { Vec3 } from "../core/vector";
+import type { ModelAssetRecord } from "./project-assets";
 
 export interface ModelInstance {
   id: string;
@@ -94,6 +95,26 @@ export function createModelInstance(
   };
 }
 
+export function createModelInstancePlacementPosition(asset: ModelAssetRecord | undefined, anchor: Vec3 | null): Vec3 {
+  const boundingBox = asset?.metadata.boundingBox;
+
+  if (anchor !== null) {
+    const floorOffset = boundingBox === null || boundingBox === undefined ? 0 : -boundingBox.min.y;
+
+    return {
+      x: anchor.x,
+      y: anchor.y + floorOffset,
+      z: anchor.z
+    };
+  }
+
+  return {
+    x: DEFAULT_MODEL_INSTANCE_POSITION.x,
+    y: boundingBox === null || boundingBox === undefined ? DEFAULT_MODEL_INSTANCE_POSITION.y : Math.max(DEFAULT_MODEL_INSTANCE_POSITION.y, -boundingBox.min.y),
+    z: DEFAULT_MODEL_INSTANCE_POSITION.z
+  };
+}
+
 export function cloneModelInstance(instance: ModelInstance): ModelInstance {
   return createModelInstance(instance);
 }
@@ -134,4 +155,3 @@ export function getModelInstances(modelInstances: Record<string, ModelInstance>)
 export function getModelInstanceKindLabel(): string {
   return "Model Instance";
 }
-

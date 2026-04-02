@@ -17,6 +17,7 @@ import {
   areViewportToolPreviewsEqual,
   cloneViewportToolPreview,
   createDefaultViewportTransientState,
+  isViewportToolPreviewCompatible,
   type ViewportToolPreview,
   type ViewportTransientState
 } from "../viewport-three/viewport-transient-state";
@@ -112,7 +113,7 @@ export class EditorStore {
 
     this.toolMode = toolMode;
 
-    if (toolMode !== "box-create" && this.viewportTransientState.toolPreview.kind !== "none") {
+    if (!isViewportToolPreviewCompatible(toolMode, this.viewportTransientState.toolPreview)) {
       this.viewportTransientState = createDefaultViewportTransientState();
     }
 
