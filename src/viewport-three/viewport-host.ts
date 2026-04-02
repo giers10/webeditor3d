@@ -467,7 +467,7 @@ export class ViewportHost {
       case "playerStart":
         return this.createPlayerStartRenderObjects(entity.id, entity.position, entity.yawDegrees, selected);
       case "soundEmitter":
-        return this.createSoundEmitterRenderObjects(entity.id, entity.position, entity.radius, selected);
+        return this.createSoundEmitterRenderObjects(entity.id, entity.position, entity.refDistance, entity.maxDistance, selected);
       case "triggerVolume":
         return this.createTriggerVolumeRenderObjects(entity.id, entity.position, entity.size, selected);
       case "teleportTarget":
@@ -672,9 +672,16 @@ export class ViewportHost {
     };
   }
 
-  private createSoundEmitterRenderObjects(entityId: string, position: Vec3, radius: number, selected: boolean): EntityRenderObjects {
+  private createSoundEmitterRenderObjects(
+    entityId: string,
+    position: Vec3,
+    refDistance: number,
+    maxDistance: number,
+    selected: boolean
+  ): EntityRenderObjects {
     const markerColor = selected ? SOUND_EMITTER_SELECTED_COLOR : SOUND_EMITTER_COLOR;
-    const displayRadius = Math.max(0.5, radius);
+    const displayRefDistance = Math.max(0.4, refDistance);
+    const displayMaxDistance = Math.max(displayRefDistance, maxDistance);
     const group = new Group();
     group.position.set(position.x, position.y, position.z);
 
@@ -689,28 +696,43 @@ export class ViewportHost {
       })
     );
 
-    const radiusShell = new Mesh(
-      new SphereGeometry(displayRadius, 16, 12),
+    const refDistanceShell = new Mesh(
+      new SphereGeometry(displayRefDistance, 16, 12),
       new MeshStandardMaterial({
         color: markerColor,
         emissive: markerColor,
-        emissiveIntensity: selected ? 0.08 : 0.02,
+        emissiveIntensity: selected ? 0.1 : 0.03,
         roughness: 0.8,
         metalness: 0,
         transparent: true,
-        opacity: selected ? 0.16 : 0.08,
+        opacity: selected ? 0.18 : 0.09,
         wireframe: true
       })
     );
-    radiusShell.userData.nonPickable = true;
+    refDistanceShell.userData.nonPickable = true;
 
-    for (const mesh of [core, radiusShell]) {
+    const maxDistanceShell = new Mesh(
+      new SphereGeometry(displayMaxDistance, 16, 12),
+      new MeshStandardMaterial({
+        color: markerColor,
+        emissive: markerColor,
+        emissiveIntensity: selected ? 0.06 : 0.015,
+        roughness: 0.82,
+        metalness: 0,
+        transparent: true,
+        opacity: selected ? 0.12 : 0.06,
+        wireframe: true
+      })
+    );
+    maxDistanceShell.userData.nonPickable = true;
+
+    for (const mesh of [core, refDistanceShell, maxDistanceShell]) {
       this.tagEntityMesh(mesh, entityId, "soundEmitter", group);
     }
 
     return {
       group,
-      meshes: [core, radiusShell]
+      meshes: [core, refDistanceShell, maxDistanceShell]
     };
   }
 

@@ -77,7 +77,6 @@ export class RuntimeHost {
   private projectAssets: Record<string, ProjectAssetRecord> = {};
   private loadedModelAssets: Record<string, LoadedModelAsset> = {};
   private loadedImageAssets: Record<string, LoadedImageAsset> = {};
-  private loadedAudioAssets: Record<string, LoadedAudioAsset> = {};
   private resizeObserver: ResizeObserver | null = null;
   private animationFrame = 0;
   private previousFrameTime = 0;
@@ -170,7 +169,6 @@ export class RuntimeHost {
     this.projectAssets = projectAssets;
     this.loadedModelAssets = loadedModelAssets;
     this.loadedImageAssets = loadedImageAssets;
-    this.loadedAudioAssets = loadedAudioAssets;
 
     if (this.currentWorld !== null) {
       this.applyWorld();
