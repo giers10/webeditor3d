@@ -65,6 +65,7 @@ export function ViewportPanel({
       className={`viewport-panel ${layoutMode === "single" ? "viewport-panel--single" : "viewport-panel--quad"} ${isActive ? "viewport-panel--active" : ""}`}
       data-testid={`viewport-panel-${panelId}`}
       data-active={isActive ? "true" : "false"}
+      aria-hidden={shouldShow ? undefined : true}
       aria-label={`${getViewportPanelLabel(panelId)} viewport panel`}
       style={shouldShow ? undefined : { display: "none" }}
       onPointerDownCapture={() => onActivatePanel(panelId)}
