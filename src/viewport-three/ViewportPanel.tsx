@@ -8,7 +8,7 @@ import {
   type ViewportPanelState
 } from "./viewport-layout";
 import { VIEWPORT_VIEW_MODES, getViewportViewModeLabel, type ViewportViewMode } from "./viewport-view-modes";
-import type { ViewportToolPreview } from "./viewport-transient-state";
+import type { PlacementViewportToolPreview, ViewportToolPreview } from "./viewport-transient-state";
 import type { LoadedModelAsset } from "../assets/gltf-model-import";
 import type { LoadedImageAsset } from "../assets/image-assets";
 import type { ProjectAssetRecord } from "../assets/project-assets";
@@ -36,7 +36,7 @@ interface ViewportPanelProps {
   onActivatePanel(panelId: ViewportPanelId): void;
   onSetPanelViewMode(panelId: ViewportPanelId, viewMode: ViewportViewMode): void;
   onSetPanelDisplayMode(panelId: ViewportPanelId, displayMode: ViewportDisplayMode): void;
-  onCommitPlacement(toolPreview: import("./viewport-transient-state").PlacementViewportToolPreview): void;
+  onCommitPlacement(toolPreview: PlacementViewportToolPreview): void;
   onToolPreviewChange(toolPreview: ViewportToolPreview): void;
   onSelectionChange(selection: EditorSelection): void;
   onCreateBoxBrush(center: Vec3): void;

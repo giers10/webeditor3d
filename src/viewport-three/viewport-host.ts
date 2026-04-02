@@ -216,6 +216,7 @@ export class ViewportHost {
   private displayMode: ViewportDisplayMode = "normal";
   private lastBoxCreatePreviewCenter: Vec3 | null = null;
   private placementPreview: PlacementViewportToolPreview | null = null;
+  private placementPreviewTargetKey: string | null = null;
   private placementPreviewObject: Group | null = null;
   private activeCameraDragPointerId: number | null = null;
   private lastCameraDragClientPosition: { x: number; y: number } | null = null;
@@ -1775,12 +1776,14 @@ export class ViewportHost {
 
   private clearPlacementPreviewObject() {
     if (this.placementPreviewObject === null) {
+      this.placementPreviewTargetKey = null;
       return;
     }
 
     this.scene.remove(this.placementPreviewObject);
     disposeModelInstance(this.placementPreviewObject);
     this.placementPreviewObject = null;
+    this.placementPreviewTargetKey = null;
   }
 
   private createPlacementPreviewObject(toolPreview: PlacementViewportToolPreview): Group {
