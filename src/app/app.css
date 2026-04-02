@@ -553,7 +553,7 @@ button:disabled {
 
 .viewport-region__header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
   padding: 0 18px;
@@ -564,10 +564,12 @@ button:disabled {
 
 .viewport-region__meta {
   display: flex;
-  align-items: baseline;
-  gap: 12px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
   min-width: 0;
   flex: 1 1 420px;
+  padding: 12px 0;
 }
 
 .viewport-region__title {
@@ -583,7 +585,13 @@ button:disabled {
   min-width: 0;
 }
 
-.viewport-region__view-toggle {
+.viewport-region__active-panel {
+  color: #dbe5f4;
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+.viewport-region__layout-toggle {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -592,14 +600,124 @@ button:disabled {
   border: 1px solid var(--color-border);
   border-radius: 14px;
   flex-wrap: wrap;
+  margin-block: 10px;
 }
 
-.viewport-region__view-button {
+.viewport-region__layout-button {
   padding: 0.45rem 0.7rem;
   font-size: 0.78rem;
 }
 
-.viewport-region__view-button--active {
+.viewport-region__layout-button--active {
+  background: var(--color-accent-soft);
+  border-color: rgba(207, 123, 66, 0.55);
+  color: var(--color-accent-strong);
+}
+
+.viewport-region__panels {
+  min-height: 0;
+}
+
+.viewport-region__panels--single {
+  display: flex;
+  padding: 12px;
+}
+
+.viewport-region__panels--quad {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  padding: 12px;
+}
+
+.viewport-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: rgba(11, 15, 20, 0.92);
+  border: 1px solid var(--color-border);
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.viewport-panel--active {
+  border-color: rgba(207, 123, 66, 0.58);
+  box-shadow: 0 0 0 1px rgba(207, 123, 66, 0.18), var(--shadow-panel);
+}
+
+.viewport-panel__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.025);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.viewport-panel__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.viewport-panel__title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.viewport-panel__title {
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.viewport-panel__active-badge {
+  padding: 0.18rem 0.42rem;
+  color: #20140c;
+  background: var(--color-accent-strong);
+  border-radius: 999px;
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.viewport-panel__subtitle {
+  color: var(--color-muted);
+  font-size: 0.74rem;
+}
+
+.viewport-panel__controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.viewport-panel__control-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+}
+
+.viewport-panel__button {
+  padding: 0.34rem 0.54rem;
+  color: var(--color-text);
+  background: var(--color-surface-strong);
+  font-size: 0.7rem;
+  line-height: 1.15;
+}
+
+.viewport-panel__button--active {
   background: var(--color-accent-soft);
   border-color: rgba(207, 123, 66, 0.55);
   color: var(--color-accent-strong);
@@ -608,18 +726,28 @@ button:disabled {
 .viewport-canvas,
 .runner-canvas {
   position: relative;
-  min-height: 420px;
+  flex: 1 1 auto;
+  min-height: 0;
   background:
     radial-gradient(circle at top, rgba(130, 154, 188, 0.28) 0%, rgba(130, 154, 188, 0) 38%),
     linear-gradient(180deg, #55657c 0%, #2c3440 34%, #151920 100%);
 }
 
 .viewport-canvas {
+  display: flex;
   cursor: default;
 }
 
 .viewport-canvas--box-create {
   cursor: copy;
+}
+
+.viewport-canvas--authoring {
+  background: #000000;
+}
+
+.viewport-canvas--active {
+  box-shadow: inset 0 0 0 1px rgba(207, 123, 66, 0.24);
 }
 
 .runner-canvas {
@@ -668,6 +796,10 @@ button:disabled {
 
 .viewport-canvas__overlay-badge--view {
   color: #dbe5f4;
+}
+
+.viewport-canvas__overlay-badge--display {
+  color: #9dc1ff;
 }
 
 .viewport-canvas__overlay-text,
