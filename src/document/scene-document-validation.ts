@@ -79,6 +79,10 @@ function isPositiveFiniteNumber(value: unknown): value is number {
   return isFiniteNumber(value) && value > 0;
 }
 
+function isPositiveInteger(value: unknown): value is number {
+  return isFiniteNumber(value) && Number.isInteger(value) && value > 0;
+}
+
 function isBoolean(value: unknown): value is boolean {
   return typeof value === "boolean";
 }
