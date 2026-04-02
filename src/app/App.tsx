@@ -462,7 +462,7 @@ function describeSelection(
     case "brushFace":
       return `1 face selected (${FACE_LABELS[selection.faceId]} on ${getBrushLabelById(selection.brushId, brushes)})`;
     case "entities":
-      return `${selection.ids.length} entity selected (${getEntityDisplayLabelById(selection.ids[0], entities)})`;
+      return `${selection.ids.length} entity selected (${getEntityDisplayLabelById(selection.ids[0], entities, assets)})`;
     case "modelInstances":
       return `${selection.ids.length} model instance${selection.ids.length === 1 ? "" : "s"} selected (${getModelInstanceDisplayLabelById(selection.ids[0], modelInstances, assets)})`;
     default:
@@ -648,7 +648,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const editorState = useEditorStoreState(store);
   const brushList = Object.values(editorState.document.brushes);
   const entityList = getEntityInstances(editorState.document.entities);
-  const entityDisplayList = getSortedEntityDisplayLabels(editorState.document.entities);
+  const entityDisplayList = getSortedEntityDisplayLabels(editorState.document.entities, editorState.document.assets);
   const primaryPlayerStart = getPrimaryPlayerStartEntity(editorState.document.entities);
   const materialList = sortDocumentMaterials(editorState.document.materials);
   const selectedBrush = getSelectedBoxBrush(editorState.selection, brushList);
@@ -701,8 +701,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [spotLightAngleDraft, setSpotLightAngleDraft] = useState(String(DEFAULT_SPOT_LIGHT_ANGLE_DEGREES));
   const [spotLightDirectionDraft, setSpotLightDirectionDraft] = useState(createVec3Draft(DEFAULT_SPOT_LIGHT_DIRECTION));
   const [playerStartYawDraft, setPlayerStartYawDraft] = useState("0");
-  const [soundEmitterRadiusDraft, setSoundEmitterRadiusDraft] = useState(String(DEFAULT_SOUND_EMITTER_RADIUS));
-  const [soundEmitterGainDraft, setSoundEmitterGainDraft] = useState(String(DEFAULT_SOUND_EMITTER_GAIN));
+  const [soundEmitterAudioAssetIdDraft, setSoundEmitterAudioAssetIdDraft] = useState(DEFAULT_SOUND_EMITTER_AUDIO_ASSET_ID ?? "");
+  const [soundEmitterVolumeDraft, setSoundEmitterVolumeDraft] = useState(String(DEFAULT_SOUND_EMITTER_VOLUME));
+  const [soundEmitterRefDistanceDraft, setSoundEmitterRefDistanceDraft] = useState(String(DEFAULT_SOUND_EMITTER_REF_DISTANCE));
+  const [soundEmitterMaxDistanceDraft, setSoundEmitterMaxDistanceDraft] = useState(String(DEFAULT_SOUND_EMITTER_MAX_DISTANCE));
   const [soundEmitterAutoplayDraft, setSoundEmitterAutoplayDraft] = useState(false);
   const [soundEmitterLoopDraft, setSoundEmitterLoopDraft] = useState(false);
   const [triggerVolumeSizeDraft, setTriggerVolumeSizeDraft] = useState(createVec3Draft(DEFAULT_TRIGGER_VOLUME_SIZE));
@@ -1136,7 +1138,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
         );
         break;
       case "entities":
-        setStatusMessage(`Selected ${getEntityDisplayLabelById(selection.ids[0], editorState.document.entities)} from the ${source}${suffix}.`);
+        setStatusMessage(`Selected ${getEntityDisplayLabelById(selection.ids[0], editorState.document.entities, editorState.document.assets)} from the ${source}${suffix}.`);
         break;
       case "modelInstances":
         setStatusMessage(
