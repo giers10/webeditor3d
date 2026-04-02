@@ -37,9 +37,9 @@ test("imports a gltf asset with external resources and places an instance", asyn
   await expect(page.getByTestId("status-asset-hover")).toContainText("Storage key:");
   await page.getByRole("button", { name: "Place instance for scene.gltf" }).click();
   const viewportCanvas = getViewportCanvas(page);
-  await viewportCanvas.hover({ position: { x: 88, y: 84 } });
+  await viewportCanvas.hover({ position: { x: 88, y: 84 }, force: true });
   await expect(page.getByTestId("viewport-snap-preview-topLeft")).toBeVisible();
-  await viewportCanvas.click({ position: { x: 88, y: 84 } });
+  await viewportCanvas.click({ position: { x: 88, y: 84 }, force: true });
   await expect(page.getByTestId("outliner-model-instance-list").getByRole("button")).toHaveCount(2);
   const snapshot = await getEditorStoreSnapshot(page);
   const selectedModelInstanceId = snapshot.selection.kind === "modelInstances" ? snapshot.selection.ids?.[0] ?? null : null;
