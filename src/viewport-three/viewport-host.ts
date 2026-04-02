@@ -88,7 +88,7 @@ import {
   type ViewportGridPlane,
   type ViewportViewMode
 } from "./viewport-view-modes";
-import type { ViewportDisplayMode } from "./viewport-layout";
+import { areViewportPanelCameraStatesEqual, type ViewportDisplayMode, type ViewportPanelCameraState } from "./viewport-layout";
 import {
   areViewportToolPreviewsEqual,
   type CreationTarget,
@@ -210,6 +210,7 @@ export class ViewportHost {
   private brushSelectionChangeHandler: ((selection: EditorSelection) => void) | null = null;
   private creationPreviewChangeHandler: ((toolPreview: ViewportToolPreview) => void) | null = null;
   private creationCommitHandler: ((toolPreview: CreationViewportToolPreview) => boolean) | null = null;
+  private cameraStateChangeHandler: ((cameraState: ViewportPanelCameraState) => void) | null = null;
   private toolMode: ToolMode = "select";
   private viewMode: ViewportViewMode = "perspective";
   private displayMode: ViewportDisplayMode = "normal";
@@ -328,6 +329,23 @@ export class ViewportHost {
     this.creationCommitHandler = handler;
   }
 
+  setCameraStateChangeHandler(handler: ((cameraState: ViewportPanelCameraState) => void) | null) {
+    this.cameraStateChangeHandler = handler;
+  }
+
+  setCameraState(cameraState: ViewportPanelCameraState) {
+    if (areViewportPanelCameraStatesEqual(this.createCameraStateSnapshot(), cameraState)) {
+      return;
+    }
+
+    this.cameraTarget.set(cameraState.target.x, cameraState.target.y, cameraState.target.z);
+    this.cameraSpherical.radius = cameraState.perspectiveOrbit.radius;
+    this.cameraSpherical.theta = cameraState.perspectiveOrbit.theta;
+    this.cameraSpherical.phi = cameraState.perspectiveOrbit.phi;
+    this.orthographicCamera.zoom = cameraState.orthographicZoom;
+    this.applyViewModePose();
+  }
+
   setCreationPreview(toolPreview: CreationViewportToolPreview | null) {
     this.syncCreationPreview(toolPreview);
   }
@@ -392,6 +410,7 @@ export class ViewportHost {
       this.cameraSpherical.radius = fitDistance;
       this.cameraSpherical.makeSafe();
       this.applyPerspectiveCameraPose();
+      this.emitCameraStateChange();
       return;
     }
 
@@ -404,6 +423,7 @@ export class ViewportHost {
 
     this.orthographicCamera.zoom = Math.min(MAX_ORTHOGRAPHIC_ZOOM, Math.max(MIN_ORTHOGRAPHIC_ZOOM, fitZoom));
     this.applyOrthographicCameraPose();
+    this.emitCameraStateChange();
   }
 
   dispose() {
@@ -426,6 +446,7 @@ export class ViewportHost {
     this.clearEntityMarkers();
     this.creationPreviewChangeHandler = null;
     this.creationCommitHandler = null;
+    this.cameraStateChangeHandler = null;
     this.syncCreationPreview(null);
     this.advancedRenderingComposer?.dispose();
     this.advancedRenderingComposer = null;
@@ -452,6 +473,26 @@ export class ViewportHost {
 
   private getActiveCamera() {
     return this.viewMode === "perspective" ? this.perspectiveCamera : this.orthographicCamera;
+  }
+
+  private createCameraStateSnapshot(): ViewportPanelCameraState {
+    return {
+      target: {
+        x: this.cameraTarget.x,
+        y: this.cameraTarget.y,
+        z: this.cameraTarget.z
+      },
+      perspectiveOrbit: {
+        radius: this.cameraSpherical.radius,
+        theta: this.cameraSpherical.theta,
+        phi: this.cameraSpherical.phi
+      },
+      orthographicZoom: this.orthographicCamera.zoom
+    };
+  }
+
+  private emitCameraStateChange() {
+    this.cameraStateChangeHandler?.(this.createCameraStateSnapshot());
   }
 
   private updatePerspectiveCameraSphericalFromPose() {
@@ -1498,6 +1539,7 @@ export class ViewportHost {
 
     this.activeCameraDragPointerId = null;
     this.lastCameraDragClientPosition = null;
+    this.emitCameraStateChange();
   };
 
   private handlePointerLeave = () => {
@@ -1518,6 +1560,7 @@ export class ViewportHost {
         Math.max(MIN_CAMERA_DISTANCE, this.cameraSpherical.radius * Math.exp(event.deltaY * ZOOM_SPEED))
       );
       this.applyPerspectiveCameraPose();
+      this.emitCameraStateChange();
       return;
     }
 
@@ -1526,6 +1569,7 @@ export class ViewportHost {
       Math.max(MIN_ORTHOGRAPHIC_ZOOM, this.orthographicCamera.zoom * Math.exp(-event.deltaY * ZOOM_SPEED))
     );
     this.orthographicCamera.updateProjectionMatrix();
+    this.emitCameraStateChange();
   };
 
   private handleAuxClick = (event: MouseEvent) => {
