@@ -234,7 +234,7 @@ export function ViewportCanvas({
         {overlayText === null ? null : <div className="viewport-canvas__overlay-text">{overlayText}</div>}
         {!previewVisible ? null : (
           <div className="viewport-canvas__overlay-preview" data-testid={`viewport-snap-preview-${panelId}`}>
-            Preview: {formatVec3(toolPreview.center)}
+            Preview: {toolPreview.center === null ? "..." : formatVec3(toolPreview.center)}
           </div>
         )}
       </div>
@@ -242,7 +242,7 @@ export function ViewportCanvas({
       {viewportMessage === null ? null : (
         <div className="viewport-canvas__fallback" role="status">
           <div className="viewport-canvas__fallback-title">Viewport Unavailable</div>
-        <div>{viewportMessage}</div>
+          <div>{viewportMessage}</div>
           {toolMode !== "box-create" && toolMode !== "place" ? null : (
             <button
               className="toolbar__button toolbar__button--accent"
