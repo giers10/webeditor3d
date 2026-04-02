@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { clickViewport } from "./viewport-test-helpers";
+import { beginBoxCreation, clickViewport } from "./viewport-test-helpers";
 
 test("user can assign a face material through the UI and keep it through a draft reload", async ({ page }) => {
   const pageErrors: string[] = [];
@@ -22,7 +22,7 @@ test("user can assign a face material through the UI and keep it through a draft
   }, "webeditor3d.scene-document-draft");
   await page.reload();
 
-  await page.getByRole("button", { name: "Box Create" }).click();
+  await beginBoxCreation(page);
   await clickViewport(page);
   await page.getByTestId("face-button-posZ").click();
   await page.getByTestId("material-button-starter-amber-grid").click();

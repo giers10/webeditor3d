@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { clickViewport, getViewportOverlay, getViewportPanel } from "./viewport-test-helpers";
+import { beginBoxCreation, clickViewport, getViewportOverlay, getViewportPanel } from "./viewport-test-helpers";
 
 test("orthographic panel controls keep brush authoring and selection behavior intact", async ({ page }) => {
   const pageErrors: string[] = [];
@@ -22,7 +22,7 @@ test("orthographic panel controls keep brush authoring and selection behavior in
   }, "webeditor3d.scene-document-draft");
   await page.reload();
 
-  await page.getByRole("button", { name: "Box Create" }).click();
+  await beginBoxCreation(page);
   await clickViewport(page, "topLeft");
 
   await expect(page.getByRole("button", { name: /Box Brush 1/ })).toBeVisible();

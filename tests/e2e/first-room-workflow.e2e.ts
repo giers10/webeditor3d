@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { clickViewport } from "./viewport-test-helpers";
+import { beginBoxCreation, clickViewport } from "./viewport-test-helpers";
 
 test("first-room workflow covers create, texture, save/load, and run", async ({ page }) => {
   const pageErrors: string[] = [];
@@ -22,7 +22,7 @@ test("first-room workflow covers create, texture, save/load, and run", async ({ 
   }, "webeditor3d.scene-document-draft");
   await page.reload();
 
-  await page.getByRole("button", { name: "Box Create" }).click();
+  await beginBoxCreation(page);
   await clickViewport(page);
   await page.getByTestId("face-button-posZ").click();
   await page.getByTestId("material-button-starter-amber-grid").click();
@@ -44,7 +44,7 @@ test("first-room workflow covers create, texture, save/load, and run", async ({ 
   await expect(page.getByTestId("status-run-preflight")).toContainText("Ready for First Person");
 
   await page.getByRole("button", { name: "Save Draft" }).click();
-  await page.getByRole("button", { name: "Box Create" }).click();
+  await beginBoxCreation(page);
   await clickViewport(page);
   await expect(page.getByRole("button", { name: /Box Brush 2/ })).toBeVisible();
 
