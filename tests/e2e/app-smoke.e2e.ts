@@ -21,14 +21,9 @@ test("app boots and shows the viewport shell", async ({ page }) => {
   await expect(page.getByTestId("viewport-panel-topLeft")).toBeVisible();
   await expect(page.getByTestId("viewport-layout-single")).toBeVisible();
   await expect(page.getByTestId("viewport-layout-quad")).toBeVisible();
+  await expect(page.getByRole("button", { name: "World" })).toBeVisible();
+  await expect(page.getByTestId("world-background-mode-value")).toBeVisible();
   await expect(page.getByTestId("enter-run-mode")).toBeVisible();
-  await expect(page.getByTestId("material-button-starter-amber-grid")).toBeVisible();
-
-  await page.getByRole("button", { name: "Materials" }).click();
-  await expect(page.getByTestId("material-button-starter-amber-grid")).toHaveCount(0);
-
-  await page.getByRole("button", { name: "Materials" }).click();
-  await expect(page.getByTestId("material-button-starter-amber-grid")).toBeVisible();
 
   expect(pageErrors).toEqual([]);
   expect(consoleErrors).toEqual([]);
