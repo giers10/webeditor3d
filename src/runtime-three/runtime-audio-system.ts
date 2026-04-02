@@ -1,4 +1,4 @@
-import { AudioListener, Group, PositionalAudio, Scene, type PerspectiveCamera } from "three";
+import { AudioListener, Group, PositionalAudio, Scene, Vector3, type PerspectiveCamera } from "three";
 
 import type { LoadedAudioAsset } from "../assets/audio-assets";
 import type { ProjectAssetRecord } from "../assets/project-assets";
@@ -12,6 +12,9 @@ interface RuntimeSoundEmitterState {
   buffer: AudioBuffer | null;
 }
 
+const _listenerPosition = /*@__PURE__*/ new Vector3();
+const _emitterPosition = /*@__PURE__*/ new Vector3();
+
 function getErrorDetail(error: unknown): string {
   if (error instanceof Error && error.message.trim().length > 0) {
     return error.message.trim();
@@ -22,6 +25,30 @@ function getErrorDetail(error: unknown): string {
 
 function formatSoundEmitterLabel(entityId: string, link: InteractionLink | null): string {
   return link === null ? entityId : `${entityId} (${link.id})`;
+}
+
+export function computeSoundEmitterDistanceGain(distance: number, refDistance: number, maxDistance: number): number {
+  if (!Number.isFinite(distance) || !Number.isFinite(refDistance) || !Number.isFinite(maxDistance)) {
+    return 0;
+  }
+
+  if (distance <= refDistance) {
+    return 1;
+  }
+
+  if (maxDistance <= refDistance) {
+    return 0;
+  }
+
+  if (distance >= maxDistance) {
+    return 0;
+  }
+
+  const normalizedDistance = (distance - refDistance) / (maxDistance - refDistance);
+  const clampedDistance = Math.min(1, Math.max(0, normalizedDistance));
+  const smoothStep = clampedDistance * clampedDistance * (3 - 2 * clampedDistance);
+
+  return 1 - smoothStep;
 }
 
 export class RuntimeAudioSystem {
@@ -79,6 +106,7 @@ export class RuntimeAudioSystem {
 
   updateListenerTransform() {
     this.listener?.updateMatrixWorld(true);
+    this.updateSoundEmitterVolumes();
   }
 
   handleUserGesture() {
@@ -314,16 +342,39 @@ export class RuntimeAudioSystem {
     }
 
     this.configurePositionalAudio(soundEmitter.audio, soundEmitter.entity);
+    this.updateSoundEmitterVolume(soundEmitter);
     soundEmitter.audio.setBuffer(soundEmitter.buffer);
     soundEmitter.audio.play();
   }
 
   private configurePositionalAudio(audio: PositionalAudio, entity: RuntimeSoundEmitter) {
     audio.setLoop(entity.loop);
-    audio.setVolume(entity.volume);
     audio.setRefDistance(entity.refDistance);
     audio.setMaxDistance(entity.maxDistance);
-    audio.setDistanceModel("linear");
-    audio.setRolloffFactor(1);
+    audio.setDistanceModel("inverse");
+    audio.setRolloffFactor(0);
+  }
+
+  private updateSoundEmitterVolumes() {
+    if (this.listener === null) {
+      return;
+    }
+
+    for (const soundEmitter of this.soundEmitters.values()) {
+      this.updateSoundEmitterVolume(soundEmitter);
+    }
+  }
+
+  private updateSoundEmitterVolume(soundEmitter: RuntimeSoundEmitterState) {
+    if (soundEmitter.audio === null) {
+      return;
+    }
+
+    this.camera.getWorldPosition(_listenerPosition);
+    soundEmitter.group.getWorldPosition(_emitterPosition);
+    const distance = _listenerPosition.distanceTo(_emitterPosition);
+    const attenuation = computeSoundEmitterDistanceGain(distance, soundEmitter.entity.refDistance, soundEmitter.entity.maxDistance);
+
+    soundEmitter.audio.setVolume(soundEmitter.entity.volume * attenuation);
   }
 }
