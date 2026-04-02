@@ -24,6 +24,9 @@ test("local lights and background images persist through editor and runner flows
   }, "webeditor3d.scene-document-draft");
   await page.reload();
 
+  await page.getByTestId("outliner-add-button").click();
+  await page.getByTestId("add-menu-import").click();
+  await page.getByTestId("import-menu-environment").click();
   await page.locator('input[type="file"][accept*="image"]').setInputFiles(panoramaFixturePath);
 
   await expect(page.getByTestId("asset-list")).toContainText("skybox-panorama.svg");

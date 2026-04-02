@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+import { getEditorStoreSnapshot, getViewportCanvas } from "./viewport-test-helpers";
+
 test("user can place and select typed entities from the entity foundation workflow", async ({ page }) => {
   const pageErrors: string[] = [];
   const consoleErrors: string[] = [];
@@ -23,6 +25,20 @@ test("user can place and select typed entities from the entity foundation workfl
   await page.getByTestId("outliner-add-button").click();
   await page.getByTestId("add-menu-entities").click();
   await page.getByTestId("add-menu-sound-emitter").click();
+  const viewportCanvas = getViewportCanvas(page);
+  await viewportCanvas.hover({ position: { x: 124, y: 108 } });
+  await expect(page.getByTestId("viewport-snap-preview-topLeft")).toBeVisible();
+  await viewportCanvas.click({ position: { x: 124, y: 108 } });
+  const soundEmitterSnapshot = await getEditorStoreSnapshot(page);
+  const selectedSoundEmitterId =
+    soundEmitterSnapshot.selection.kind === "entities" ? soundEmitterSnapshot.selection.ids[0] ?? null : null;
+
+  expect(selectedSoundEmitterId).not.toBeNull();
+
+  const selectedSoundEmitter = soundEmitterSnapshot.document.entities[selectedSoundEmitterId as string];
+
+  expect(selectedSoundEmitter).toBeDefined();
+  expect(Math.abs(selectedSoundEmitter.position.x) > 0 || Math.abs(selectedSoundEmitter.position.z) > 0).toBe(true);
   await expect(page.getByTestId("sound-emitter-ref-distance")).toHaveValue("6");
   await expect(page.getByTestId("sound-emitter-max-distance")).toHaveValue("24");
 
@@ -37,6 +53,9 @@ test("user can place and select typed entities from the entity foundation workfl
   await page.getByTestId("outliner-add-button").click();
   await page.getByTestId("add-menu-entities").click();
   await page.getByTestId("add-menu-interactable").click();
+  await viewportCanvas.hover({ position: { x: 240, y: 156 } });
+  await expect(page.getByTestId("viewport-snap-preview-topLeft")).toBeVisible();
+  await viewportCanvas.click({ position: { x: 240, y: 156 } });
   await expect(page.getByTestId("interactable-prompt")).toHaveValue("Use");
 
   await page
