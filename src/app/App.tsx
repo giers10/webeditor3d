@@ -154,6 +154,7 @@ import { createWorldBackgroundStyle } from "../shared-ui/world-background-style"
 import { ViewportPanel } from "../viewport-three/ViewportPanel";
 import { getViewportViewModeLabel, type ViewportViewMode } from "../viewport-three/viewport-view-modes";
 import {
+  VIEWPORT_LAYOUT_MODES,
   VIEWPORT_PANEL_IDS,
   getViewportDisplayModeLabel,
   getViewportLayoutModeLabel,
