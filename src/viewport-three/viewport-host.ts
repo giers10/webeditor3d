@@ -1417,8 +1417,9 @@ export class ViewportHost {
       return;
     }
 
-    this.syncBoxCreatePreview(this.getBoxCreatePreviewCenter(event));
-    this.boxCreatePreviewChangeHandler?.(this.lastBoxCreatePreviewCenter);
+    const previewCenter = this.getBoxCreatePreviewCenter(event);
+    this.syncBoxCreatePreview(previewCenter);
+    this.boxCreatePreviewChangeHandler?.(previewCenter);
   };
 
   private handlePointerUp = (event: PointerEvent) => {
@@ -1591,8 +1592,6 @@ export class ViewportHost {
       this.boxCreatePreviewMesh.position.set(center.x, center.y, center.z);
       this.boxCreatePreviewEdges.position.set(center.x, center.y, center.z);
     }
-
-    this.boxCreatePreviewChangeHandler?.(this.lastBoxCreatePreviewCenter);
   }
 
   private render = () => {
