@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { getEditorStoreSnapshot, getViewportCanvas } from "./viewport-test-helpers";
+import { getEditorStoreSnapshot, setViewportPlacementPreview } from "./viewport-test-helpers";
 
 test("user can place and select typed entities from the entity foundation workflow", async ({ page }) => {
   const pageErrors: string[] = [];
@@ -25,11 +25,14 @@ test("user can place and select typed entities from the entity foundation workfl
   await page.getByTestId("outliner-add-button").click();
   await page.getByTestId("add-menu-entities").click();
   await page.getByTestId("add-menu-sound-emitter").click();
-  await page.getByTestId("viewport-panel-topLeft").click({ position: { x: 16, y: 16 }, force: true });
-  const viewportCanvas = getViewportCanvas(page);
-  await viewportCanvas.hover({ position: { x: 124, y: 108 }, force: true });
+  await setViewportPlacementPreview(
+    page,
+    "topLeft",
+    { kind: "entity", entityKind: "soundEmitter", audioAssetId: null },
+    { x: 4, y: 1, z: -6 }
+  );
   await expect(page.getByTestId("viewport-snap-preview-topLeft")).toBeVisible();
-  await viewportCanvas.click({ position: { x: 124, y: 108 }, force: true });
+  await page.getByTestId("viewport-fallback-place-topLeft").click();
   const soundEmitterSnapshot = await getEditorStoreSnapshot(page);
   const selectedSoundEmitterId =
     soundEmitterSnapshot.selection.kind === "entities" ? soundEmitterSnapshot.selection.ids?.[0] ?? null : null;
@@ -42,7 +45,11 @@ test("user can place and select typed entities from the entity foundation workfl
     throw new Error("Placed sound emitter is missing from the document snapshot.");
   }
 
-  expect(Math.abs(selectedSoundEmitter.position.x) > 0 || Math.abs(selectedSoundEmitter.position.z) > 0).toBe(true);
+  expect(selectedSoundEmitter.position).toMatchObject({
+    x: 4,
+    y: 1,
+    z: -6
+  });
   await expect(page.getByTestId("sound-emitter-ref-distance")).toHaveValue("6");
   await expect(page.getByTestId("sound-emitter-max-distance")).toHaveValue("24");
 
@@ -57,10 +64,14 @@ test("user can place and select typed entities from the entity foundation workfl
   await page.getByTestId("outliner-add-button").click();
   await page.getByTestId("add-menu-entities").click();
   await page.getByTestId("add-menu-interactable").click();
-  await page.getByTestId("viewport-panel-topLeft").click({ position: { x: 16, y: 16 }, force: true });
-  await viewportCanvas.hover({ position: { x: 240, y: 156 }, force: true });
+  await setViewportPlacementPreview(
+    page,
+    "topLeft",
+    { kind: "entity", entityKind: "interactable", audioAssetId: null },
+    { x: -8, y: 1, z: 12 }
+  );
   await expect(page.getByTestId("viewport-snap-preview-topLeft")).toBeVisible();
-  await viewportCanvas.click({ position: { x: 240, y: 156 }, force: true });
+  await page.getByTestId("viewport-fallback-place-topLeft").click();
   await expect(page.getByTestId("interactable-prompt")).toHaveValue("Use");
 
   await page
@@ -104,10 +115,13 @@ test("shift+a opens the add menu at the cursor", async ({ page }) => {
   await expect(page.getByRole("menu", { name: "Add" })).toBeVisible();
   await page.getByTestId("add-menu-lights").click();
   await page.getByTestId("add-menu-point-light").click();
-  await page.getByTestId("viewport-panel-topLeft").click({ position: { x: 16, y: 16 }, force: true });
-  const pointLightViewportCanvas = getViewportCanvas(page);
-  await pointLightViewportCanvas.hover({ position: { x: 168, y: 128 }, force: true });
-  await pointLightViewportCanvas.click({ position: { x: 168, y: 128 }, force: true });
+  await setViewportPlacementPreview(
+    page,
+    "topLeft",
+    { kind: "entity", entityKind: "pointLight", audioAssetId: null },
+    { x: 12, y: 3, z: -4 }
+  );
+  await page.getByTestId("viewport-fallback-place-topLeft").click();
   await expect(page.getByTestId("point-light-intensity")).toHaveValue("1.25");
 
   expect(pageErrors).toEqual([]);
