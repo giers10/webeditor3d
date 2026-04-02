@@ -4026,7 +4026,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
               {VIEWPORT_VIEW_MODES.map((mode) => (
                 <button
                   key={mode}
-                  className={`viewport-region__view-button ${viewMode === mode ? "viewport-region__view-button--active" : ""}`}
+                  className={`toolbar__button viewport-region__view-button ${viewMode === mode ? "viewport-region__view-button--active" : ""}`}
                   type="button"
                   data-testid={`viewport-mode-${mode}`}
                   aria-pressed={viewMode === mode}
