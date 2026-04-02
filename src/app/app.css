@@ -690,7 +690,7 @@ button:disabled {
   background: linear-gradient(180deg, rgba(8, 10, 14, 0.12) 0%, rgba(8, 10, 14, 0.58) 100%);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 18px;
-  pointer-events: none;
+  pointer-events: auto;
 }
 
 .viewport-canvas__fallback-title,
