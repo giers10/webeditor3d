@@ -12,6 +12,7 @@ import {
   LineBasicMaterial,
   LineSegments,
   Mesh,
+  MeshBasicMaterial,
   MeshStandardMaterial,
   Object3D,
   OrthographicCamera,
@@ -68,12 +69,13 @@ import { createSoundEmitterMarkerMeshes } from "./viewport-entity-markers";
 import {
   getViewportViewModeDefinition,
   isOrthographicViewportViewMode,
+  type ViewportDisplayMode,
   type ViewportGridPlane,
   type ViewportViewMode
 } from "./viewport-view-modes";
 
 interface BrushRenderObjects {
-  mesh: Mesh<BoxGeometry, MeshStandardMaterial[]>;
+  mesh: Mesh<BoxGeometry, Array<MeshStandardMaterial | MeshBasicMaterial>>;
   edges: LineSegments<EdgesGeometry, LineBasicMaterial>;
 }
 
@@ -187,6 +189,7 @@ export class ViewportHost {
   private boxCreatePreviewHandler: ((center: Vec3 | null) => void) | null = null;
   private toolMode: ToolMode = "select";
   private viewMode: ViewportViewMode = "perspective";
+  private displayMode: ViewportDisplayMode = "normal";
   private lastBoxCreatePreviewCenter: Vec3 | null = null;
   private activeCameraDragPointerId: number | null = null;
   private lastCameraDragClientPosition: { x: number; y: number } | null = null;
@@ -321,6 +324,19 @@ export class ViewportHost {
 
     if (this.currentAdvancedRenderingSettings !== null) {
       this.syncAdvancedRenderingComposer(this.currentAdvancedRenderingSettings);
+    }
+  }
+
+  setDisplayMode(displayMode: ViewportDisplayMode) {
+    if (this.displayMode === displayMode) {
+      return;
+    }
+
+    this.displayMode = displayMode;
+    this.applyWorld();
+
+    if (this.currentDocument !== null) {
+      this.updateDocument(this.currentDocument, this.currentSelection);
     }
   }
 
@@ -505,7 +521,11 @@ export class ViewportHost {
     this.sunLight.intensity = world.sunLight.intensity;
     this.sunLight.position.set(world.sunLight.direction.x, world.sunLight.direction.y, world.sunLight.direction.z).normalize().multiplyScalar(18);
 
-    if (world.background.mode === "image") {
+    if (this.displayMode === "authoring") {
+      this.scene.background = null;
+      this.scene.environment = null;
+      this.scene.environmentIntensity = 1;
+    } else if (world.background.mode === "image") {
       const texture = this.loadedImageAssets[world.background.assetId]?.texture ?? null;
       this.scene.background = texture;
       this.scene.environment = texture;
@@ -522,7 +542,7 @@ export class ViewportHost {
   }
 
   private syncAdvancedRenderingComposer(settings: AdvancedRenderingSettings) {
-    const shouldUseComposer = settings.enabled && this.viewMode === "perspective";
+    const shouldUseComposer = settings.enabled && this.displayMode === "normal" && this.viewMode === "perspective";
     const settingsChanged =
       this.currentAdvancedRenderingSettings === null ||
       !areAdvancedRenderingSettingsEqual(this.currentAdvancedRenderingSettings, settings);
@@ -1080,8 +1100,24 @@ export class ViewportHost {
     };
   }
 
-  private createFaceMaterial(brush: BoxBrush, faceId: BoxFaceId, material: MaterialDef | undefined, selectedFace: boolean): MeshStandardMaterial {
+  private createFaceMaterial(
+    brush: BoxBrush,
+    faceId: BoxFaceId,
+    material: MaterialDef | undefined,
+    selectedFace: boolean
+  ): MeshStandardMaterial | MeshBasicMaterial {
     const face = brush.faces[faceId];
+
+    if (this.displayMode === "authoring") {
+      const colorHex = material === undefined || face.materialId === null ? (selectedFace ? SELECTED_FACE_FALLBACK_COLOR : FALLBACK_FACE_COLOR) : selectedFace ? material.accentColorHex : material.baseColorHex;
+
+      return new MeshBasicMaterial({
+        color: colorHex,
+        transparent: true,
+        opacity: selectedFace ? 0.36 : 0.18,
+        wireframe: false
+      });
+    }
 
     if (material === undefined || face.materialId === null) {
       return new MeshStandardMaterial({
