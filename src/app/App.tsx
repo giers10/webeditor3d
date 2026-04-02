@@ -1274,7 +1274,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     return () => {
       window.removeEventListener("keydown", handleWindowKeyDown);
     };
-  }, [editorState.selection, editorState.toolMode, brushList.length, entityList.length]);
+  }, [activePanelId, editorState.selection, editorState.toolMode, brushList.length, entityList.length]);
 
   const applySceneName = () => {
     const normalizedName = sceneNameDraft.trim() || "Untitled Scene";
