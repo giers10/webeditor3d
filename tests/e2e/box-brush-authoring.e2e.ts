@@ -50,6 +50,15 @@ test("user can create a box brush and keep it through a draft reload", async ({ 
 
   await page.getByRole("button", { name: "Box Create" }).click();
   await clickViewport(page);
+  const committedSnapshot = await getEditorStoreSnapshot(page);
+  expect(committedSnapshot).toMatchObject({
+    toolMode: "select",
+    viewportTransientState: {
+      toolPreview: {
+        kind: "none"
+      }
+    }
+  });
   await expect(page.getByRole("button", { name: /Box Brush 1/ })).toBeVisible();
   await expect(page.getByText("1 brush selected (Box Brush 1)")).toBeVisible();
   await expect(page.getByTestId("apply-brush-position")).toHaveCount(0);
