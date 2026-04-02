@@ -36,6 +36,7 @@ interface ViewportPanelProps {
   onActivatePanel(panelId: ViewportPanelId): void;
   onSetPanelViewMode(panelId: ViewportPanelId, viewMode: ViewportViewMode): void;
   onSetPanelDisplayMode(panelId: ViewportPanelId, displayMode: ViewportDisplayMode): void;
+  onCommitPlacement(toolPreview: import("./viewport-transient-state").PlacementViewportToolPreview): void;
   onToolPreviewChange(toolPreview: ViewportToolPreview): void;
   onSelectionChange(selection: EditorSelection): void;
   onCreateBoxBrush(center: Vec3): void;
@@ -59,6 +60,7 @@ export function ViewportPanel({
   onActivatePanel,
   onSetPanelViewMode,
   onSetPanelDisplayMode,
+  onCommitPlacement,
   onToolPreviewChange,
   onSelectionChange,
   onCreateBoxBrush
@@ -128,6 +130,7 @@ export function ViewportPanel({
         focusSelection={focusSelection}
         onSelectionChange={onSelectionChange}
         onCreateBoxBrush={onCreateBoxBrush}
+        onCommitPlacement={onCommitPlacement}
         onToolPreviewChange={onToolPreviewChange}
       />
     </section>
