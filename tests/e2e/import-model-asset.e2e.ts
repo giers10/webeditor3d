@@ -76,8 +76,17 @@ test("imports a model asset, places an instance, and survives reload", async ({ 
   await setViewportCreationPreview(page, "topLeft", { kind: "model-instance", assetId: importedModelAsset.id }, { x: 92, y: 0, z: -76 });
   await expect(page.getByTestId("viewport-snap-preview-topLeft")).toBeVisible();
   await clickViewport(page, "topLeft");
+  const committedSnapshot = await getEditorStoreSnapshot(page);
+  expect(committedSnapshot).toMatchObject({
+    toolMode: "select",
+    viewportTransientState: {
+      toolPreview: {
+        kind: "none"
+      }
+    }
+  });
   await expect(page.getByTestId("outliner-model-instance-list").getByRole("button")).toHaveCount(2);
-  const snapshot = await getEditorStoreSnapshot(page);
+  const snapshot = committedSnapshot;
   const selectedModelInstanceId = snapshot.selection.kind === "modelInstances" ? snapshot.selection.ids?.[0] ?? null : null;
 
   expect(selectedModelInstanceId).not.toBeNull();

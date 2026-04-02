@@ -34,6 +34,14 @@ test("user can place and select typed entities from the entity foundation workfl
   await expect(page.getByTestId("viewport-snap-preview-topLeft")).toBeVisible();
   await clickViewport(page, "topLeft");
   const soundEmitterSnapshot = await getEditorStoreSnapshot(page);
+  expect(soundEmitterSnapshot).toMatchObject({
+    toolMode: "select",
+    viewportTransientState: {
+      toolPreview: {
+        kind: "none"
+      }
+    }
+  });
   const selectedSoundEmitterId =
     soundEmitterSnapshot.selection.kind === "entities" ? soundEmitterSnapshot.selection.ids?.[0] ?? null : null;
 
@@ -72,6 +80,15 @@ test("user can place and select typed entities from the entity foundation workfl
   );
   await expect(page.getByTestId("viewport-snap-preview-topLeft")).toBeVisible();
   await clickViewport(page, "topLeft");
+  const interactableSnapshot = await getEditorStoreSnapshot(page);
+  expect(interactableSnapshot).toMatchObject({
+    toolMode: "select",
+    viewportTransientState: {
+      toolPreview: {
+        kind: "none"
+      }
+    }
+  });
   await expect(page.getByTestId("interactable-prompt")).toHaveValue("Use");
 
   await page
