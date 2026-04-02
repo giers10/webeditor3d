@@ -1236,7 +1236,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     assets,
     brushes: readBrushes(source.brushes, materials, false),
     modelInstances: readModelInstances(source.modelInstances, assets),
-    entities: readEntities(source.entities),
+    entities: readEntities(source.entities, false),
     interactionLinks: readInteractionLinks(source.interactionLinks)
   };
 }
