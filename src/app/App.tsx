@@ -2285,6 +2285,24 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     <span className="label">Loop</span>
                   </label>
                 </div>
+              ) : link.action.type === "playSound" || link.action.type === "stopSound" ? (
+                <div className="form-section">
+                  <label className="form-field">
+                    <span className="label">Emitter</span>
+                    <select
+                      data-testid={`interaction-link-sound-target-${link.id}`}
+                      className="text-input"
+                      value={link.action.targetSoundEmitterId}
+                      onChange={(event) => updateSoundInteractionLinkTarget(link, event.currentTarget.value)}
+                    >
+                      {soundEmitterOptions.map(({ entity, label }) => (
+                        <option key={entity.id} value={entity.id}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
               ) : (
                 <div className="form-section">
                   <label className="form-field">
@@ -2315,6 +2333,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   Delete Link
                 </button>
               </div>
+
+              {link.action.type === "playAnimation" || link.action.type === "stopAnimation" ? null : null}
             </div>
           ))}
         </div>
