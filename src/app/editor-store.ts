@@ -12,11 +12,13 @@ import {
   saveSceneDocumentDraft
 } from "../serialization/local-draft-storage";
 import { parseSceneDocumentJson, serializeSceneDocument } from "../serialization/scene-document-json";
+import type { ViewportViewMode } from "../viewport-three/viewport-view-modes";
 
 export interface EditorStoreState {
   document: SceneDocument;
   selection: EditorSelection;
   toolMode: ToolMode;
+  viewportViewMode: ViewportViewMode;
   canUndo: boolean;
   canRedo: boolean;
   lastCommandLabel: string | null;
@@ -38,6 +40,7 @@ export class EditorStore {
   private document: SceneDocument;
   private selection: EditorSelection = { kind: "none" };
   private toolMode: ToolMode = "select";
+  private viewportViewMode: ViewportViewMode = "perspective";
   private previousEditingToolMode: Exclude<ToolMode, "play"> = "select";
   private readonly history = new CommandHistory();
   private readonly listeners = new Set<EditorStoreListener>();
@@ -88,6 +91,15 @@ export class EditorStore {
     }
 
     this.toolMode = toolMode;
+    this.emit();
+  }
+
+  setViewportViewMode(viewportViewMode: ViewportViewMode) {
+    if (this.viewportViewMode === viewportViewMode) {
+      return;
+    }
+
+    this.viewportViewMode = viewportViewMode;
     this.emit();
   }
 
@@ -211,6 +223,7 @@ export class EditorStore {
       document: this.document,
       selection: this.selection,
       toolMode: this.toolMode,
+      viewportViewMode: this.viewportViewMode,
       canUndo: this.history.canUndo(),
       canRedo: this.history.canRedo(),
       lastCommandLabel: this.lastCommandLabel,
