@@ -22,11 +22,16 @@ import {
   type ViewportTransientState
 } from "../viewport-three/viewport-transient-state";
 import {
+  areViewportPanelCameraStatesEqual,
+  cloneViewportLayoutState,
+  cloneViewportPanelCameraState,
   createDefaultViewportLayoutState,
   type ViewportDisplayMode,
+  type ViewportLayoutState,
   type ViewportLayoutMode,
   type ViewportPanelId,
   type ViewportPanelState,
+  type ViewportPanelCameraState,
   type ViewportQuadSplit
 } from "../viewport-three/viewport-layout";
 
@@ -47,6 +52,7 @@ export interface EditorStoreState {
 
 interface EditorStoreOptions {
   initialDocument?: SceneDocument;
+  initialViewportLayoutState?: ViewportLayoutState;
   storage?: KeyValueStorage | null;
   storageKey?: string;
 }
@@ -60,10 +66,10 @@ export class EditorStore {
   private document: SceneDocument;
   private selection: EditorSelection = { kind: "none" };
   private toolMode: ToolMode = "select";
-  private viewportLayoutMode: ViewportLayoutMode = "single";
-  private activeViewportPanelId: ViewportPanelId = "topLeft";
-  private viewportPanels = createDefaultViewportLayoutState().panels;
-  private viewportQuadSplit = createDefaultViewportLayoutState().viewportQuadSplit;
+  private viewportLayoutMode: ViewportLayoutMode;
+  private activeViewportPanelId: ViewportPanelId;
+  private viewportPanels: Record<ViewportPanelId, ViewportPanelState>;
+  private viewportQuadSplit: ViewportQuadSplit;
   private viewportTransientState = createDefaultViewportTransientState();
   private previousEditingToolMode: Exclude<ToolMode, "play"> = "select";
   private readonly history = new CommandHistory();
@@ -89,7 +95,13 @@ export class EditorStore {
   };
 
   constructor(options: EditorStoreOptions = {}) {
+    const initialViewportLayoutState = cloneViewportLayoutState(options.initialViewportLayoutState ?? createDefaultViewportLayoutState());
+
     this.document = options.initialDocument ?? createEmptySceneDocument();
+    this.viewportLayoutMode = initialViewportLayoutState.layoutMode;
+    this.activeViewportPanelId = initialViewportLayoutState.activePanelId;
+    this.viewportPanels = initialViewportLayoutState.panels;
+    this.viewportQuadSplit = initialViewportLayoutState.viewportQuadSplit;
     this.storage = options.storage ?? null;
     this.storageKey = options.storageKey ?? DEFAULT_SCENE_DRAFT_STORAGE_KEY;
     this.snapshot = this.createSnapshot();
@@ -166,6 +178,21 @@ export class EditorStore {
       [panelId]: {
         ...this.viewportPanels[panelId],
         displayMode
+      }
+    };
+    this.emit();
+  }
+
+  setViewportPanelCameraState(panelId: ViewportPanelId, cameraState: ViewportPanelCameraState) {
+    if (areViewportPanelCameraStatesEqual(this.viewportPanels[panelId].cameraState, cameraState)) {
+      return;
+    }
+
+    this.viewportPanels = {
+      ...this.viewportPanels,
+      [panelId]: {
+        ...this.viewportPanels[panelId],
+        cameraState: cloneViewportPanelCameraState(cameraState)
       }
     };
     this.emit();
@@ -298,7 +325,7 @@ export class EditorStore {
       };
     }
 
-    return saveSceneDocumentDraft(this.storage, this.document, this.storageKey);
+    return saveSceneDocumentDraft(this.storage, this.document, this.createViewportLayoutState(), this.storageKey);
   }
 
   loadDraft(): EditorDraftLoadResult {
@@ -316,6 +343,11 @@ export class EditorStore {
     }
 
     this.replaceDocument(draftResult.document);
+
+    if (draftResult.viewportLayoutState !== null) {
+      this.applyViewportLayoutState(draftResult.viewportLayoutState);
+    }
+
     return draftResult;
   }
 
@@ -335,6 +367,24 @@ export class EditorStore {
     for (const listener of this.listeners) {
       listener();
     }
+  }
+
+  private createViewportLayoutState(): ViewportLayoutState {
+    return cloneViewportLayoutState({
+      layoutMode: this.viewportLayoutMode,
+      activePanelId: this.activeViewportPanelId,
+      panels: this.viewportPanels,
+      viewportQuadSplit: this.viewportQuadSplit
+    });
+  }
+
+  private applyViewportLayoutState(viewportLayoutState: ViewportLayoutState) {
+    const nextViewportLayoutState = cloneViewportLayoutState(viewportLayoutState);
+
+    this.viewportLayoutMode = nextViewportLayoutState.layoutMode;
+    this.activeViewportPanelId = nextViewportLayoutState.activePanelId;
+    this.viewportPanels = nextViewportLayoutState.panels;
+    this.viewportQuadSplit = nextViewportLayoutState.viewportQuadSplit;
   }
 
   private createSnapshot(): EditorStoreState {
