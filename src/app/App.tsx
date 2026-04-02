@@ -678,6 +678,32 @@ function formatWorldBackgroundLabel(world: WorldSettings): string {
   return "Image";
 }
 
+function formatAdvancedRenderingShadowTypeLabel(type: AdvancedRenderingShadowType): string {
+  switch (type) {
+    case "basic":
+      return "Basic";
+    case "pcf":
+      return "PCF";
+    case "pcfSoft":
+      return "PCF Soft";
+  }
+}
+
+function formatAdvancedRenderingToneMappingLabel(mode: AdvancedRenderingToneMappingMode): string {
+  switch (mode) {
+    case "none":
+      return "None";
+    case "linear":
+      return "Linear";
+    case "reinhard":
+      return "Reinhard";
+    case "cineon":
+      return "Cineon";
+    case "acesFilmic":
+      return "ACES Filmic";
+  }
+}
+
 export function App({ store, initialStatusMessage }: AppProps) {
   const editorState = useEditorStoreState(store);
   const brushList = Object.values(editorState.document.brushes);
