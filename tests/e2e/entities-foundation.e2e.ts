@@ -127,3 +127,58 @@ test("shift+a opens the add menu at the cursor", async ({ page }) => {
   expect(pageErrors).toEqual([]);
   expect(consoleErrors).toEqual([]);
 });
+
+test("escape cancels a typed entity creation preview", async ({ page }) => {
+  const pageErrors: string[] = [];
+  const consoleErrors: string[] = [];
+
+  page.on("pageerror", (error) => {
+    pageErrors.push(error.message);
+  });
+
+  page.on("console", (message) => {
+    if (message.type() === "error") {
+      consoleErrors.push(message.text());
+    }
+  });
+
+  await page.goto("/");
+  await page.evaluate((storageKey) => {
+    window.localStorage.removeItem(storageKey);
+  }, "webeditor3d.scene-document-draft");
+  await page.reload();
+
+  await page.getByTestId("outliner-add-button").click();
+  await page.getByTestId("add-menu-entities").click();
+  await page.getByTestId("add-menu-player-start").click();
+
+  await expect(await getEditorStoreSnapshot(page)).toMatchObject({
+    toolMode: "create",
+    viewportTransientState: {
+      toolPreview: {
+        kind: "create",
+        sourcePanelId: "topLeft",
+        target: {
+          kind: "entity",
+          entityKind: "playerStart",
+          audioAssetId: null
+        },
+        center: null
+      }
+    }
+  });
+
+  await page.keyboard.press("Escape");
+
+  await expect(await getEditorStoreSnapshot(page)).toMatchObject({
+    toolMode: "select",
+    viewportTransientState: {
+      toolPreview: {
+        kind: "none"
+      }
+    }
+  });
+
+  expect(pageErrors).toEqual([]);
+  expect(consoleErrors).toEqual([]);
+});
