@@ -1,3 +1,5 @@
+import type { Vec3 } from "../core/vector";
+
 import type { ViewportViewMode } from "./viewport-view-modes";
 
 export type ViewportLayoutMode = "single" | "quad";
@@ -10,9 +12,22 @@ export const VIEWPORT_LAYOUT_MODES = ["single", "quad"] as const;
 
 export const VIEWPORT_PANEL_IDS = ["topLeft", "topRight", "bottomLeft", "bottomRight"] as const;
 
+export interface ViewportPerspectiveOrbitState {
+  radius: number;
+  theta: number;
+  phi: number;
+}
+
+export interface ViewportPanelCameraState {
+  target: Vec3;
+  perspectiveOrbit: ViewportPerspectiveOrbitState;
+  orthographicZoom: number;
+}
+
 export interface ViewportPanelState {
   viewMode: ViewportViewMode;
   displayMode: ViewportDisplayMode;
+  cameraState: ViewportPanelCameraState;
 }
 
 export interface ViewportQuadSplit {
@@ -33,19 +48,23 @@ export const DEFAULT_VIEWPORT_LAYOUT_STATE: ViewportLayoutState = {
   panels: {
     topLeft: {
       viewMode: "perspective",
-      displayMode: "normal"
+      displayMode: "normal",
+      cameraState: createDefaultViewportPanelCameraState()
     },
     topRight: {
       viewMode: "top",
-      displayMode: "authoring"
+      displayMode: "authoring",
+      cameraState: createDefaultViewportPanelCameraState()
     },
     bottomLeft: {
       viewMode: "front",
-      displayMode: "authoring"
+      displayMode: "authoring",
+      cameraState: createDefaultViewportPanelCameraState()
     },
     bottomRight: {
       viewMode: "side",
-      displayMode: "authoring"
+      displayMode: "authoring",
+      cameraState: createDefaultViewportPanelCameraState()
     }
   },
   viewportQuadSplit: {
@@ -54,28 +73,85 @@ export const DEFAULT_VIEWPORT_LAYOUT_STATE: ViewportLayoutState = {
   }
 };
 
-export function createDefaultViewportLayoutState(): ViewportLayoutState {
+const DEFAULT_PERSPECTIVE_CAMERA_POSITION = {
+  x: 10,
+  y: 9,
+  z: 10
+} as const;
+
+function createDefaultPerspectiveOrbitState(): ViewportPerspectiveOrbitState {
+  const { x, y, z } = DEFAULT_PERSPECTIVE_CAMERA_POSITION;
+  const radius = Math.sqrt(x * x + y * y + z * z);
+
   return {
-    layoutMode: DEFAULT_VIEWPORT_LAYOUT_STATE.layoutMode,
-    activePanelId: DEFAULT_VIEWPORT_LAYOUT_STATE.activePanelId,
+    radius,
+    theta: Math.atan2(x, z),
+    phi: Math.acos(y / radius)
+  };
+}
+
+export function createDefaultViewportPanelCameraState(): ViewportPanelCameraState {
+  return {
+    target: {
+      x: 0,
+      y: 0,
+      z: 0
+    },
+    perspectiveOrbit: createDefaultPerspectiveOrbitState(),
+    orthographicZoom: 1
+  };
+}
+
+export function cloneViewportPanelCameraState(cameraState: ViewportPanelCameraState): ViewportPanelCameraState {
+  return {
+    target: {
+      ...cameraState.target
+    },
+    perspectiveOrbit: {
+      ...cameraState.perspectiveOrbit
+    },
+    orthographicZoom: cameraState.orthographicZoom
+  };
+}
+
+export function areViewportPanelCameraStatesEqual(a: ViewportPanelCameraState, b: ViewportPanelCameraState): boolean {
+  return (
+    a.target.x === b.target.x &&
+    a.target.y === b.target.y &&
+    a.target.z === b.target.z &&
+    a.perspectiveOrbit.radius === b.perspectiveOrbit.radius &&
+    a.perspectiveOrbit.theta === b.perspectiveOrbit.theta &&
+    a.perspectiveOrbit.phi === b.perspectiveOrbit.phi &&
+    a.orthographicZoom === b.orthographicZoom
+  );
+}
+
+export function cloneViewportPanelState(panelState: ViewportPanelState): ViewportPanelState {
+  return {
+    viewMode: panelState.viewMode,
+    displayMode: panelState.displayMode,
+    cameraState: cloneViewportPanelCameraState(panelState.cameraState)
+  };
+}
+
+export function cloneViewportLayoutState(layoutState: ViewportLayoutState): ViewportLayoutState {
+  return {
+    layoutMode: layoutState.layoutMode,
+    activePanelId: layoutState.activePanelId,
     panels: {
-      topLeft: {
-        ...DEFAULT_VIEWPORT_LAYOUT_STATE.panels.topLeft
-      },
-      topRight: {
-        ...DEFAULT_VIEWPORT_LAYOUT_STATE.panels.topRight
-      },
-      bottomLeft: {
-        ...DEFAULT_VIEWPORT_LAYOUT_STATE.panels.bottomLeft
-      },
-      bottomRight: {
-        ...DEFAULT_VIEWPORT_LAYOUT_STATE.panels.bottomRight
-      }
+      topLeft: cloneViewportPanelState(layoutState.panels.topLeft),
+      topRight: cloneViewportPanelState(layoutState.panels.topRight),
+      bottomLeft: cloneViewportPanelState(layoutState.panels.bottomLeft),
+      bottomRight: cloneViewportPanelState(layoutState.panels.bottomRight)
     },
     viewportQuadSplit: {
-      ...DEFAULT_VIEWPORT_LAYOUT_STATE.viewportQuadSplit
+      ...layoutState.viewportQuadSplit
     }
   };
+}
+
+export function createDefaultViewportLayoutState(): ViewportLayoutState {
+  return cloneViewportLayoutState(DEFAULT_VIEWPORT_LAYOUT_STATE);
 }
 
 const VIEWPORT_PANEL_LABELS: Record<ViewportPanelId, string> = {
