@@ -2683,6 +2683,209 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
+  const applyAdvancedRenderingEnabled = (enabled: boolean) => {
+    applyAdvancedRenderingSettings(
+      "Set advanced rendering",
+      enabled ? "Advanced rendering enabled." : "Advanced rendering disabled.",
+      (advancedRendering) => {
+        advancedRendering.enabled = enabled;
+      }
+    );
+  };
+
+  const applyAdvancedRenderingShadowsEnabled = (enabled: boolean) => {
+    applyAdvancedRenderingSettings(
+      "Set advanced rendering shadows",
+      enabled ? "Advanced rendering shadows enabled." : "Advanced rendering shadows disabled.",
+      (advancedRendering) => {
+        advancedRendering.shadows.enabled = enabled;
+      }
+    );
+  };
+
+  const applyAdvancedRenderingShadowMapSize = (shadowMapSize: AdvancedRenderingShadowMapSize) => {
+    applyAdvancedRenderingSettings("Set advanced rendering shadow map size", "Updated the shadow map size.", (advancedRendering) => {
+      advancedRendering.shadows.mapSize = shadowMapSize;
+    });
+  };
+
+  const applyAdvancedRenderingShadowType = (shadowType: AdvancedRenderingShadowType) => {
+    applyAdvancedRenderingSettings("Set advanced rendering shadow type", "Updated the shadow map type.", (advancedRendering) => {
+      advancedRendering.shadows.type = shadowType;
+    });
+  };
+
+  const applyAdvancedRenderingShadowBias = () => {
+    try {
+      applyAdvancedRenderingSettings("Set advanced rendering shadow bias", "Updated the shadow bias.", (advancedRendering) => {
+        advancedRendering.shadows.bias = readFiniteNumberDraft(advancedRenderingShadowBiasDraft, "Shadow bias");
+      });
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const applyAdvancedRenderingAmbientOcclusionEnabled = (enabled: boolean) => {
+    applyAdvancedRenderingSettings(
+      "Set ambient occlusion",
+      enabled ? "Ambient occlusion enabled." : "Ambient occlusion disabled.",
+      (advancedRendering) => {
+        advancedRendering.ambientOcclusion.enabled = enabled;
+      }
+    );
+  };
+
+  const applyAdvancedRenderingAmbientOcclusionIntensity = () => {
+    try {
+      applyAdvancedRenderingSettings(
+        "Set ambient occlusion intensity",
+        "Updated the ambient occlusion intensity.",
+        (advancedRendering) => {
+          advancedRendering.ambientOcclusion.intensity = readNonNegativeNumberDraft(
+            advancedRenderingAmbientOcclusionIntensityDraft,
+            "Ambient occlusion intensity"
+          );
+        }
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const applyAdvancedRenderingAmbientOcclusionRadius = () => {
+    try {
+      applyAdvancedRenderingSettings("Set ambient occlusion radius", "Updated the ambient occlusion radius.", (advancedRendering) => {
+        advancedRendering.ambientOcclusion.radius = readNonNegativeNumberDraft(
+          advancedRenderingAmbientOcclusionRadiusDraft,
+          "Ambient occlusion radius"
+        );
+      });
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const applyAdvancedRenderingAmbientOcclusionSamples = () => {
+    try {
+      applyAdvancedRenderingSettings("Set ambient occlusion samples", "Updated the ambient occlusion samples.", (advancedRendering) => {
+        advancedRendering.ambientOcclusion.samples = readPositiveIntegerDraft(
+          advancedRenderingAmbientOcclusionSamplesDraft,
+          "Ambient occlusion samples"
+        );
+      });
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const applyAdvancedRenderingBloomEnabled = (enabled: boolean) => {
+    applyAdvancedRenderingSettings(
+      "Set bloom",
+      enabled ? "Bloom enabled." : "Bloom disabled.",
+      (advancedRendering) => {
+        advancedRendering.bloom.enabled = enabled;
+      }
+    );
+  };
+
+  const applyAdvancedRenderingBloomIntensity = () => {
+    try {
+      applyAdvancedRenderingSettings("Set bloom intensity", "Updated the bloom intensity.", (advancedRendering) => {
+        advancedRendering.bloom.intensity = readNonNegativeNumberDraft(advancedRenderingBloomIntensityDraft, "Bloom intensity");
+      });
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const applyAdvancedRenderingBloomThreshold = () => {
+    try {
+      applyAdvancedRenderingSettings("Set bloom threshold", "Updated the bloom threshold.", (advancedRendering) => {
+        advancedRendering.bloom.threshold = readNonNegativeNumberDraft(advancedRenderingBloomThresholdDraft, "Bloom threshold");
+      });
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const applyAdvancedRenderingBloomRadius = () => {
+    try {
+      applyAdvancedRenderingSettings("Set bloom radius", "Updated the bloom radius.", (advancedRendering) => {
+        advancedRendering.bloom.radius = readNonNegativeNumberDraft(advancedRenderingBloomRadiusDraft, "Bloom radius");
+      });
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const applyAdvancedRenderingToneMappingMode = (mode: AdvancedRenderingToneMappingMode) => {
+    applyAdvancedRenderingSettings("Set tone mapping mode", "Updated the tone mapping mode.", (advancedRendering) => {
+      advancedRendering.toneMapping.mode = mode;
+    });
+  };
+
+  const applyAdvancedRenderingToneMappingExposure = () => {
+    try {
+      applyAdvancedRenderingSettings("Set tone mapping exposure", "Updated the tone mapping exposure.", (advancedRendering) => {
+        advancedRendering.toneMapping.exposure = readPositiveNumberDraft(
+          advancedRenderingToneMappingExposureDraft,
+          "Tone mapping exposure"
+        );
+      });
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const applyAdvancedRenderingDepthOfFieldEnabled = (enabled: boolean) => {
+    applyAdvancedRenderingSettings(
+      "Set depth of field",
+      enabled ? "Depth of field enabled." : "Depth of field disabled.",
+      (advancedRendering) => {
+        advancedRendering.depthOfField.enabled = enabled;
+      }
+    );
+  };
+
+  const applyAdvancedRenderingDepthOfFieldFocusDistance = () => {
+    try {
+      applyAdvancedRenderingSettings("Set focus distance", "Updated the focus distance.", (advancedRendering) => {
+        advancedRendering.depthOfField.focusDistance = readNonNegativeNumberDraft(
+          advancedRenderingDepthOfFieldFocusDistanceDraft,
+          "Focus distance"
+        );
+      });
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const applyAdvancedRenderingDepthOfFieldFocalLength = () => {
+    try {
+      applyAdvancedRenderingSettings("Set focal length", "Updated the focal length.", (advancedRendering) => {
+        advancedRendering.depthOfField.focalLength = readPositiveNumberDraft(
+          advancedRenderingDepthOfFieldFocalLengthDraft,
+          "Focal length"
+        );
+      });
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const applyAdvancedRenderingDepthOfFieldBokehScale = () => {
+    try {
+      applyAdvancedRenderingSettings("Set bokeh scale", "Updated the bokeh scale.", (advancedRendering) => {
+        advancedRendering.depthOfField.bokehScale = readPositiveNumberDraft(
+          advancedRenderingDepthOfFieldBokehScaleDraft,
+          "Bokeh scale"
+        );
+      });
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
   const applyBrushNameChange = () => {
     if (selectedBrush === null) {
       setStatusMessage("Select a box brush before renaming it.");
