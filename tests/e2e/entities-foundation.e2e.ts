@@ -20,7 +20,9 @@ test("user can place and select typed entities from the entity foundation workfl
   }, "webeditor3d.scene-document-draft");
   await page.reload();
 
-  await page.getByTestId("add-entity-soundEmitter").click();
+  await page.getByTestId("outliner-add-button").click();
+  await page.getByTestId("add-menu-entities").click();
+  await page.getByTestId("add-menu-sound-emitter").click();
   await expect(page.getByTestId("sound-emitter-ref-distance")).toHaveValue("6");
   await expect(page.getByTestId("sound-emitter-max-distance")).toHaveValue("24");
 
@@ -32,7 +34,9 @@ test("user can place and select typed entities from the entity foundation workfl
   await expect(page.getByTestId("sound-emitter-autoplay")).toBeChecked();
   await expect(page.getByTestId("sound-emitter-loop")).toBeChecked();
 
-  await page.getByTestId("add-entity-interactable").click();
+  await page.getByTestId("outliner-add-button").click();
+  await page.getByTestId("add-menu-entities").click();
+  await page.getByTestId("add-menu-interactable").click();
   await expect(page.getByTestId("interactable-prompt")).toHaveValue("Use");
 
   await page
@@ -45,6 +49,38 @@ test("user can place and select typed entities from the entity foundation workfl
   await expect(page.getByTestId("sound-emitter-autoplay")).toBeChecked();
   await expect(page.getByTestId("sound-emitter-loop")).toBeChecked();
   await expect(page.getByTestId("interactable-prompt")).toHaveCount(0);
+
+  expect(pageErrors).toEqual([]);
+  expect(consoleErrors).toEqual([]);
+});
+
+test("shift+a opens the add menu at the cursor", async ({ page }) => {
+  const pageErrors: string[] = [];
+  const consoleErrors: string[] = [];
+
+  page.on("pageerror", (error) => {
+    pageErrors.push(error.message);
+  });
+
+  page.on("console", (message) => {
+    if (message.type() === "error") {
+      consoleErrors.push(message.text());
+    }
+  });
+
+  await page.goto("/");
+  await page.evaluate((storageKey) => {
+    window.localStorage.removeItem(storageKey);
+  }, "webeditor3d.scene-document-draft");
+  await page.reload();
+
+  await page.mouse.move(420, 260);
+  await page.keyboard.press("Shift+A");
+
+  await expect(page.getByRole("menu", { name: "Add" })).toBeVisible();
+  await page.getByTestId("add-menu-lights").click();
+  await page.getByTestId("add-menu-point-light").click();
+  await expect(page.getByTestId("point-light-intensity")).toHaveValue("1.25");
 
   expect(pageErrors).toEqual([]);
   expect(consoleErrors).toEqual([]);
