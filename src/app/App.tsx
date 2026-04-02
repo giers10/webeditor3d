@@ -685,6 +685,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const selectedInteractableLinks =
     selectedInteractable === null ? [] : getInteractionLinksForSource(editorState.document.interactionLinks, selectedInteractable.id);
   const teleportTargetOptions = entityDisplayList.filter(({ entity }) => entity.kind === "teleportTarget");
+  const soundEmitterOptions = entityDisplayList.filter(({ entity }) => entity.kind === "soundEmitter");
   const visibilityBrushOptions = brushList.map((brush, brushIndex) => ({
     brush,
     label: getBrushLabel(brush, brushIndex)
