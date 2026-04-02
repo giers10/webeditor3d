@@ -1251,6 +1251,13 @@ export function App({ store, initialStatusMessage }: AppProps) {
         return;
       }
 
+      if (event.key === "Escape" && editorState.toolMode === "place") {
+        event.preventDefault();
+        store.setToolMode("select");
+        setStatusMessage("Cancelled the current placement preview.");
+        return;
+      }
+
       if (event.shiftKey && event.code === "KeyA") {
         event.preventDefault();
         setAddMenuPosition({
@@ -1684,10 +1691,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
       })
     );
     setStatusMessage(successMessage);
-  };
-
-  const handlePlaceModelInstance = (assetId: string) => {
-    beginModelInstancePlacement(assetId);
   };
 
   const applyModelInstanceChange = () => {
