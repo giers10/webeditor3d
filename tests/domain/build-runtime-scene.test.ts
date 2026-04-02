@@ -226,7 +226,8 @@ describe("buildRuntimeSceneFromDocument", () => {
     };
     document.world.background = {
       mode: "image",
-      assetId: imageAsset.id
+      assetId: imageAsset.id,
+      environmentIntensity: 0.75
     };
     document.world.ambientLight.intensity = 0.55;
     document.world.sunLight.direction = {

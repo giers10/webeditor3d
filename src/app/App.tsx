@@ -84,7 +84,6 @@ import {
   DEFAULT_POINT_LIGHT_COLOR_HEX,
   DEFAULT_POINT_LIGHT_DISTANCE,
   DEFAULT_POINT_LIGHT_INTENSITY,
-  DEFAULT_POINT_LIGHT_POSITION,
   DEFAULT_SOUND_EMITTER_GAIN,
   DEFAULT_SOUND_EMITTER_RADIUS,
   DEFAULT_TELEPORT_TARGET_YAW_DEGREES,
@@ -93,7 +92,6 @@ import {
   DEFAULT_SPOT_LIGHT_DISTANCE,
   DEFAULT_SPOT_LIGHT_DIRECTION,
   DEFAULT_SPOT_LIGHT_INTENSITY,
-  DEFAULT_SPOT_LIGHT_POSITION,
   DEFAULT_TRIGGER_VOLUME_SIZE,
   areEntityInstancesEqual,
   createInteractableEntity,
@@ -1623,21 +1621,45 @@ export function App({ store, initialStatusMessage }: AppProps) {
       return;
     }
 
-    const nextLink =
-      link.action.type === "teleportPlayer"
-        ? createTeleportPlayerInteractionLink({
-            id: link.id,
-            sourceEntityId: link.sourceEntityId,
-            trigger,
-            targetEntityId: link.action.targetEntityId
-          })
-        : createToggleVisibilityInteractionLink({
-            id: link.id,
-            sourceEntityId: link.sourceEntityId,
-            trigger,
-            targetBrushId: link.action.targetBrushId,
-            visible: link.action.visible
-          });
+    let nextLink: InteractionLink;
+
+    switch (link.action.type) {
+      case "teleportPlayer":
+        nextLink = createTeleportPlayerInteractionLink({
+          id: link.id,
+          sourceEntityId: link.sourceEntityId,
+          trigger,
+          targetEntityId: link.action.targetEntityId
+        });
+        break;
+      case "toggleVisibility":
+        nextLink = createToggleVisibilityInteractionLink({
+          id: link.id,
+          sourceEntityId: link.sourceEntityId,
+          trigger,
+          targetBrushId: link.action.targetBrushId,
+          visible: link.action.visible
+        });
+        break;
+      case "playAnimation":
+        nextLink = createPlayAnimationInteractionLink({
+          id: link.id,
+          sourceEntityId: link.sourceEntityId,
+          trigger,
+          targetModelInstanceId: link.action.targetModelInstanceId,
+          clipName: link.action.clipName,
+          loop: link.action.loop
+        });
+        break;
+      case "stopAnimation":
+        nextLink = createStopAnimationInteractionLink({
+          id: link.id,
+          sourceEntityId: link.sourceEntityId,
+          trigger,
+          targetModelInstanceId: link.action.targetModelInstanceId
+        });
+        break;
+    }
 
     commitInteractionLinkChange(link, nextLink, `Updated ${getInteractionTriggerLabel(trigger).toLowerCase()} trigger link.`);
   };
@@ -1671,14 +1693,17 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
 
     if (actionType === "playAnimation") {
-      const firstInstance = modelInstanceDisplayList[0];
+      const targetModelInstance =
+        (link.action.type === "playAnimation" || link.action.type === "stopAnimation"
+          ? editorState.document.modelInstances[link.action.targetModelInstanceId]
+          : undefined) ?? modelInstanceDisplayList[0]?.modelInstance;
 
-      if (firstInstance === undefined) {
+      if (targetModelInstance === undefined) {
         setStatusMessage("Place a model instance before switching this link to play animation.");
         return;
       }
 
-      const asset = editorState.document.assets[firstInstance.modelInstance.assetId];
+      const asset = editorState.document.assets[targetModelInstance.assetId];
       const firstClip = asset?.kind === "model" ? (asset.metadata.animationNames[0] ?? "") : "";
 
       if (firstClip === "") {
@@ -1692,7 +1717,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
           id: link.id,
           sourceEntityId: sourceEntity.id,
           trigger: link.trigger,
-          targetModelInstanceId: firstInstance.modelInstance.id,
+          targetModelInstanceId: targetModelInstance.id,
           clipName: firstClip
         }),
         "Switched link action to play animation."
@@ -1701,9 +1726,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
 
     if (actionType === "stopAnimation") {
-      const firstInstance = modelInstanceDisplayList[0];
+      const targetModelInstance =
+        (link.action.type === "playAnimation" || link.action.type === "stopAnimation"
+          ? editorState.document.modelInstances[link.action.targetModelInstanceId]
+          : undefined) ?? modelInstanceDisplayList[0]?.modelInstance;
 
-      if (firstInstance === undefined) {
+      if (targetModelInstance === undefined) {
         setStatusMessage("Place a model instance before switching this link to stop animation.");
         return;
       }
@@ -1714,7 +1742,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
           id: link.id,
           sourceEntityId: sourceEntity.id,
           trigger: link.trigger,
-          targetModelInstanceId: firstInstance.modelInstance.id
+          targetModelInstanceId: targetModelInstance.id
         }),
         "Switched link action to stop animation."
       );

@@ -42,14 +42,16 @@ describe("world settings helpers", () => {
 
     expect(imageBackground).toEqual({
       mode: "image",
-      assetId: "asset-background-panorama"
+      assetId: "asset-background-panorama",
+      environmentIntensity: 0.5
     });
 
     const nextImageBackground = changeWorldBackgroundMode(imageBackground, "image", "asset-background-panorama-2");
 
     expect(nextImageBackground).toEqual({
       mode: "image",
-      assetId: "asset-background-panorama-2"
+      assetId: "asset-background-panorama-2",
+      environmentIntensity: 0.5
     });
 
     const world = createDefaultWorldSettings();

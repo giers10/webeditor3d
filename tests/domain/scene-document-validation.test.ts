@@ -237,7 +237,8 @@ describe("validateSceneDocument", () => {
     };
     document.world.background = {
       mode: "image",
-      assetId: imageAsset.id
+      assetId: imageAsset.id,
+      environmentIntensity: 0.5
     };
 
     const validation = validateSceneDocument(document);
@@ -273,7 +274,8 @@ describe("validateSceneDocument", () => {
     };
     document.world.background = {
       mode: "image",
-      assetId: "asset-missing-background"
+      assetId: "asset-missing-background",
+      environmentIntensity: 0.5
     };
 
     const validation = validateSceneDocument(document);
