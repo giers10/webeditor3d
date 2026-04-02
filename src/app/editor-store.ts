@@ -14,6 +14,13 @@ import {
 import { parseSceneDocumentJson, serializeSceneDocument } from "../serialization/scene-document-json";
 import type { ViewportViewMode } from "../viewport-three/viewport-view-modes";
 import {
+  areViewportToolPreviewsEqual,
+  cloneViewportToolPreview,
+  createDefaultViewportTransientState,
+  type ViewportToolPreview,
+  type ViewportTransientState
+} from "../viewport-three/viewport-transient-state";
+import {
   createDefaultViewportLayoutState,
   type ViewportDisplayMode,
   type ViewportLayoutMode,
@@ -28,6 +35,7 @@ export interface EditorStoreState {
   viewportLayoutMode: ViewportLayoutMode;
   activeViewportPanelId: ViewportPanelId;
   viewportPanels: Record<ViewportPanelId, ViewportPanelState>;
+  viewportTransientState: ViewportTransientState;
   canUndo: boolean;
   canRedo: boolean;
   lastCommandLabel: string | null;
@@ -52,6 +60,7 @@ export class EditorStore {
   private viewportLayoutMode: ViewportLayoutMode = "single";
   private activeViewportPanelId: ViewportPanelId = "topLeft";
   private viewportPanels = createDefaultViewportLayoutState().panels;
+  private viewportTransientState = createDefaultViewportTransientState();
   private previousEditingToolMode: Exclude<ToolMode, "play"> = "select";
   private readonly history = new CommandHistory();
   private readonly listeners = new Set<EditorStoreListener>();
@@ -102,6 +111,11 @@ export class EditorStore {
     }
 
     this.toolMode = toolMode;
+
+    if (toolMode !== "box-create" && this.viewportTransientState.toolPreview.kind !== "none") {
+      this.viewportTransientState = createDefaultViewportTransientState();
+    }
+
     this.emit();
   }
 
@@ -153,6 +167,35 @@ export class EditorStore {
     this.emit();
   }
 
+  setViewportToolPreview(toolPreview: ViewportToolPreview) {
+    const nextToolPreview = cloneViewportToolPreview(toolPreview);
+
+    if (areViewportToolPreviewsEqual(this.viewportTransientState.toolPreview, nextToolPreview)) {
+      return;
+    }
+
+    this.viewportTransientState = {
+      ...this.viewportTransientState,
+      toolPreview: nextToolPreview
+    };
+    this.emit();
+  }
+
+  clearViewportToolPreview(sourcePanelId?: ViewportPanelId) {
+    const currentToolPreview = this.viewportTransientState.toolPreview;
+
+    if (currentToolPreview.kind === "none") {
+      return;
+    }
+
+    if (sourcePanelId !== undefined && currentToolPreview.sourcePanelId !== sourcePanelId) {
+      return;
+    }
+
+    this.viewportTransientState = createDefaultViewportTransientState();
+    this.emit();
+  }
+
   setViewportViewMode(viewportViewMode: ViewportViewMode) {
     this.setViewportPanelViewMode(this.activeViewportPanelId, viewportViewMode);
   }
@@ -164,6 +207,11 @@ export class EditorStore {
 
     this.previousEditingToolMode = this.toolMode;
     this.toolMode = "play";
+
+    if (this.viewportTransientState.toolPreview.kind !== "none") {
+      this.viewportTransientState = createDefaultViewportTransientState();
+    }
+
     this.emit();
   }
 
@@ -216,6 +264,7 @@ export class EditorStore {
     this.selection = { kind: "none" };
     this.toolMode = "select";
     this.previousEditingToolMode = "select";
+    this.viewportTransientState = createDefaultViewportTransientState();
 
     if (resetHistory) {
       this.history.clear();
@@ -280,6 +329,7 @@ export class EditorStore {
       viewportLayoutMode: this.viewportLayoutMode,
       activeViewportPanelId: this.activeViewportPanelId,
       viewportPanels: this.viewportPanels,
+      viewportTransientState: this.viewportTransientState,
       canUndo: this.history.canUndo(),
       canRedo: this.history.canRedo(),
       lastCommandLabel: this.lastCommandLabel,
