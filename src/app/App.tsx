@@ -1775,6 +1775,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
       const yawDegrees = readYawDegreesDraft(playerStartYawDraft);
       const nextEntity = createPlayerStartEntity({
         id: selectedPlayerStart.id,
+        name: selectedPlayerStart.name,
         position: snappedPosition,
         yawDegrees
       });
@@ -1794,6 +1795,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     try {
       const nextEntity = createPointLightEntity({
         id: selectedPointLight.id,
+        name: selectedPointLight.name,
         position: snapVec3ToGrid(readVec3Draft(entityPositionDraft, "Point Light position"), DEFAULT_GRID_SIZE),
         colorHex: overrides.colorHex ?? pointLightColorDraft,
         intensity: readNonNegativeNumberDraft(pointLightIntensityDraft, "Point Light intensity"),
@@ -1815,6 +1817,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     try {
       const nextEntity = createSpotLightEntity({
         id: selectedSpotLight.id,
+        name: selectedSpotLight.name,
         position: snapVec3ToGrid(readVec3Draft(entityPositionDraft, "Spot Light position"), DEFAULT_GRID_SIZE),
         direction: readVec3Draft(spotLightDirectionDraft, "Spot Light direction"),
         colorHex: overrides.colorHex ?? spotLightColorDraft,
@@ -1877,6 +1880,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
             : trimmedAudioAssetId;
       const nextEntity = createSoundEmitterEntity({
         id: selectedSoundEmitter.id,
+        name: selectedSoundEmitter.name,
         position: snapVec3ToGrid(readVec3Draft(entityPositionDraft, "Sound Emitter position"), DEFAULT_GRID_SIZE),
         audioAssetId: nextAudioAssetId,
         volume: readNonNegativeNumberDraft(soundEmitterVolumeDraft, "Sound Emitter volume"),
@@ -1907,6 +1911,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
       const nextEntity = createTriggerVolumeEntity({
         id: selectedTriggerVolume.id,
+        name: selectedTriggerVolume.name,
         position: snapVec3ToGrid(readVec3Draft(entityPositionDraft, "Trigger Volume position"), DEFAULT_GRID_SIZE),
         size: snapPositiveSizeToGrid(readVec3Draft(triggerVolumeSizeDraft, "Trigger Volume size"), DEFAULT_GRID_SIZE),
         triggerOnEnter,
@@ -1928,6 +1933,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     try {
       const nextEntity = createTeleportTargetEntity({
         id: selectedTeleportTarget.id,
+        name: selectedTeleportTarget.name,
         position: snapVec3ToGrid(readVec3Draft(entityPositionDraft, "Teleport Target position"), DEFAULT_GRID_SIZE),
         yawDegrees: readYawDegreesDraft(teleportTargetYawDraft)
       });
@@ -1947,6 +1953,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     try {
       const nextEntity = createInteractableEntity({
         id: selectedInteractable.id,
+        name: selectedInteractable.name,
         position: snapVec3ToGrid(readVec3Draft(entityPositionDraft, "Interactable position"), DEFAULT_GRID_SIZE),
         radius: readPositiveNumberDraft(interactableRadiusDraft, "Interactable radius"),
         prompt: readInteractablePromptDraft(interactablePromptDraft),
@@ -3286,6 +3293,73 @@ export function App({ store, initialStatusMessage }: AppProps) {
       setStatusMessage(nextName === undefined ? "Cleared the authored brush name." : `Renamed brush to ${nextName}.`);
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const applyEntityNameChange = () => {
+    if (selectedEntity === null) {
+      setStatusMessage("Select an entity before renaming it.");
+      return;
+    }
+
+    const nextName = normalizeEntityName(entityNameDraft);
+
+    if (selectedEntity.name === nextName) {
+      return;
+    }
+
+    try {
+      store.executeCommand(
+        createSetEntityNameCommand({
+          entityId: selectedEntity.id,
+          name: entityNameDraft
+        })
+      );
+      setStatusMessage(nextName === undefined ? "Cleared the authored entity name." : `Renamed entity to ${nextName}.`);
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const applyModelInstanceNameChange = () => {
+    if (selectedModelInstance === null) {
+      setStatusMessage("Select a model instance before renaming it.");
+      return;
+    }
+
+    const nextName = normalizeModelInstanceName(modelInstanceNameDraft);
+
+    if (selectedModelInstance.name === nextName) {
+      return;
+    }
+
+    try {
+      store.executeCommand(
+        createSetModelInstanceNameCommand({
+          modelInstanceId: selectedModelInstance.id,
+          name: modelInstanceNameDraft
+        })
+      );
+      setStatusMessage(nextName === undefined ? "Cleared the authored model instance name." : `Renamed model instance to ${nextName}.`);
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const handleInlineNameInputKeyDown = (
+    event: ReactKeyboardEvent<HTMLInputElement>,
+    resetDraft: () => void
+  ) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      event.currentTarget.blur();
+      return;
+    }
+
+    if (event.key === "Escape") {
+      event.preventDefault();
+      resetDraft();
+      event.currentTarget.blur();
     }
   };
 
