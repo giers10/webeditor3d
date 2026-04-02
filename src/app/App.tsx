@@ -1262,6 +1262,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
       setFocusRequest((current) => ({
         id: current.id + 1,
+        panelId: activePanelId,
         selection: editorState.selection
       }));
       setStatusMessage(editorState.selection.kind === "none" ? "Framed the authored scene in the viewport." : "Framed the current selection.");
