@@ -1622,6 +1622,46 @@ export class ViewportHost {
   }
 
   private getBoxCreatePreviewCenter(event: PointerEvent): Vec3 | null {
+    return this.getBoxPlacementPreviewCenter(event, DEFAULT_BOX_BRUSH_SIZE);
+  }
+
+  private getPlacementPreviewCenter(event: PointerEvent): Vec3 | null {
+    if (this.placementPreview === null) {
+      return null;
+    }
+
+    const target = this.placementPreview.target;
+
+    if (target.kind === "model-instance") {
+      const anchor = this.getPlanarPlacementAnchor(event);
+
+      if (anchor === null) {
+        return null;
+      }
+
+      const asset = this.projectAssets[target.assetId];
+
+      if (asset === undefined || asset.kind !== "model") {
+        return null;
+      }
+
+      return createModelInstancePlacementPosition(asset, anchor);
+    }
+
+    switch (target.entityKind) {
+      case "triggerVolume":
+        return this.getBoxPlacementPreviewCenter(event, DEFAULT_TRIGGER_VOLUME_SIZE);
+      case "pointLight":
+      case "playerStart":
+      case "soundEmitter":
+      case "teleportTarget":
+      case "interactable":
+      case "spotLight":
+        return this.getPlanarPlacementAnchor(event);
+    }
+  }
+
+  private getPlanarPlacementAnchor(event: PointerEvent): Vec3 | null {
     const bounds = this.renderer.domElement.getBoundingClientRect();
 
     if (bounds.width === 0 || bounds.height === 0) {
@@ -1642,18 +1682,57 @@ export class ViewportHost {
       case "top":
         return {
           x: snapValueToGrid(this.boxCreateIntersection.x, DEFAULT_GRID_SIZE),
-          y: snapValueToGrid(DEFAULT_BOX_BRUSH_SIZE.y * 0.5, DEFAULT_GRID_SIZE),
+          y: snapValueToGrid(0, DEFAULT_GRID_SIZE),
           z: snapValueToGrid(this.boxCreateIntersection.z, DEFAULT_GRID_SIZE)
         };
       case "front":
         return {
           x: snapValueToGrid(this.boxCreateIntersection.x, DEFAULT_GRID_SIZE),
           y: snapValueToGrid(this.boxCreateIntersection.y, DEFAULT_GRID_SIZE),
-          z: snapValueToGrid(DEFAULT_BOX_BRUSH_SIZE.z * 0.5, DEFAULT_GRID_SIZE)
+          z: snapValueToGrid(0, DEFAULT_GRID_SIZE)
         };
       case "side":
         return {
-          x: snapValueToGrid(DEFAULT_BOX_BRUSH_SIZE.x * 0.5, DEFAULT_GRID_SIZE),
+          x: snapValueToGrid(0, DEFAULT_GRID_SIZE),
+          y: snapValueToGrid(this.boxCreateIntersection.y, DEFAULT_GRID_SIZE),
+          z: snapValueToGrid(this.boxCreateIntersection.z, DEFAULT_GRID_SIZE)
+        };
+    }
+  }
+
+  private getBoxPlacementPreviewCenter(event: PointerEvent, size: Vec3): Vec3 | null {
+    const bounds = this.renderer.domElement.getBoundingClientRect();
+
+    if (bounds.width === 0 || bounds.height === 0) {
+      return null;
+    }
+
+    this.pointer.x = ((event.clientX - bounds.left) / bounds.width) * 2 - 1;
+    this.pointer.y = -(((event.clientY - bounds.top) / bounds.height) * 2 - 1);
+
+    this.raycaster.setFromCamera(this.pointer, this.getActiveCamera());
+
+    if (this.raycaster.ray.intersectPlane(this.getBoxCreatePlane(), this.boxCreateIntersection) === null) {
+      return null;
+    }
+
+    switch (this.viewMode) {
+      case "perspective":
+      case "top":
+        return {
+          x: snapValueToGrid(this.boxCreateIntersection.x, DEFAULT_GRID_SIZE),
+          y: snapValueToGrid(size.y * 0.5, DEFAULT_GRID_SIZE),
+          z: snapValueToGrid(this.boxCreateIntersection.z, DEFAULT_GRID_SIZE)
+        };
+      case "front":
+        return {
+          x: snapValueToGrid(this.boxCreateIntersection.x, DEFAULT_GRID_SIZE),
+          y: snapValueToGrid(this.boxCreateIntersection.y, DEFAULT_GRID_SIZE),
+          z: snapValueToGrid(size.z * 0.5, DEFAULT_GRID_SIZE)
+        };
+      case "side":
+        return {
+          x: snapValueToGrid(size.x * 0.5, DEFAULT_GRID_SIZE),
           y: snapValueToGrid(this.boxCreateIntersection.y, DEFAULT_GRID_SIZE),
           z: snapValueToGrid(this.boxCreateIntersection.z, DEFAULT_GRID_SIZE)
         };
@@ -1680,6 +1759,149 @@ export class ViewportHost {
       this.boxCreatePreviewMesh.position.set(center.x, center.y, center.z);
       this.boxCreatePreviewEdges.position.set(center.x, center.y, center.z);
     }
+  }
+
+  private getPlacementPreviewTargetKey(toolPreview: PlacementViewportToolPreview): string {
+    if (toolPreview.target.kind === "entity") {
+      return `entity:${toolPreview.target.entityKind}:${toolPreview.target.audioAssetId}`;
+    }
+
+    return `model-instance:${toolPreview.target.assetId}`;
+  }
+
+  private clearPlacementPreviewObject() {
+    if (this.placementPreviewObject === null) {
+      this.placementPreviewTargetKey = null;
+      return;
+    }
+
+    this.scene.remove(this.placementPreviewObject);
+    disposeModelInstance(this.placementPreviewObject);
+    this.placementPreviewObject = null;
+    this.placementPreviewTargetKey = null;
+  }
+
+  private createPlacementPreviewObject(toolPreview: PlacementViewportToolPreview): Group {
+    const previewPosition = toolPreview.center ?? {
+      x: 0,
+      y: 0,
+      z: 0
+    };
+
+    switch (toolPreview.target.kind) {
+      case "entity":
+        switch (toolPreview.target.entityKind) {
+          case "pointLight":
+            return this.createPointLightGizmoRenderObjects(
+              "placement-preview",
+              previewPosition,
+              DEFAULT_POINT_LIGHT_DISTANCE,
+              BOX_CREATE_PREVIEW_FILL,
+              false
+            ).group;
+          case "spotLight":
+            return this.createSpotLightGizmoRenderObjects(
+              "placement-preview",
+              previewPosition,
+              DEFAULT_SPOT_LIGHT_DIRECTION,
+              DEFAULT_SPOT_LIGHT_DISTANCE,
+              DEFAULT_SPOT_LIGHT_ANGLE_DEGREES,
+              BOX_CREATE_PREVIEW_FILL,
+              false
+            ).group;
+          case "playerStart":
+            return this.createPlayerStartRenderObjects("placement-preview", previewPosition, DEFAULT_PLAYER_START_YAW_DEGREES, false).group;
+          case "soundEmitter":
+            return this.createSoundEmitterRenderObjects(
+              "placement-preview",
+              previewPosition,
+              DEFAULT_SOUND_EMITTER_REF_DISTANCE,
+              DEFAULT_SOUND_EMITTER_MAX_DISTANCE,
+              false,
+              BOX_CREATE_PREVIEW_FILL
+            ).group;
+          case "triggerVolume":
+            return this.createTriggerVolumeRenderObjects(
+              "placement-preview",
+              previewPosition,
+              DEFAULT_TRIGGER_VOLUME_SIZE,
+              false,
+              BOX_CREATE_PREVIEW_FILL
+            ).group;
+          case "teleportTarget":
+            return this.createTeleportTargetRenderObjects(
+              "placement-preview",
+              previewPosition,
+              DEFAULT_TELEPORT_TARGET_YAW_DEGREES,
+              false,
+              BOX_CREATE_PREVIEW_FILL
+            ).group;
+          case "interactable":
+            return this.createInteractableRenderObjects(
+              "placement-preview",
+              previewPosition,
+              DEFAULT_INTERACTABLE_RADIUS,
+              false,
+              BOX_CREATE_PREVIEW_FILL
+            ).group;
+        }
+      case "model-instance": {
+        const asset = this.projectAssets[toolPreview.target.assetId];
+
+        if (asset === undefined || asset.kind !== "model") {
+          const fallbackGroup = new Group();
+          fallbackGroup.visible = false;
+          return fallbackGroup;
+        }
+
+        const dummyModelInstance = createModelInstance({
+          assetId: toolPreview.target.assetId,
+          position: previewPosition,
+          rotationDegrees: DEFAULT_MODEL_INSTANCE_ROTATION_DEGREES,
+          scale: DEFAULT_MODEL_INSTANCE_SCALE
+        });
+
+        return createModelInstanceRenderGroup(dummyModelInstance, asset, this.loadedModelAssets[toolPreview.target.assetId], false);
+      }
+    }
+  }
+
+  private syncPlacementPreview(toolPreview: PlacementViewportToolPreview | null) {
+    const currentToolPreview = this.placementPreview === null ? { kind: "none" as const } : this.placementPreview;
+    const nextToolPreview = toolPreview === null ? { kind: "none" as const } : toolPreview;
+
+    if (areViewportToolPreviewsEqual(currentToolPreview, nextToolPreview)) {
+      return;
+    }
+
+    this.placementPreview = toolPreview === null ? null : {
+      kind: "placement",
+      sourcePanelId: toolPreview.sourcePanelId,
+      target:
+        toolPreview.target.kind === "entity"
+          ? {
+              kind: "entity",
+              entityKind: toolPreview.target.entityKind,
+              audioAssetId: toolPreview.target.audioAssetId
+            }
+          : {
+              kind: "model-instance",
+              assetId: toolPreview.target.assetId
+            },
+      center: toolPreview.center === null ? null : { ...toolPreview.center }
+    };
+
+    this.clearPlacementPreviewObject();
+
+    if (toolPreview === null) {
+      return;
+    }
+
+    const placementPreviewObject = this.createPlacementPreviewObject(toolPreview);
+    placementPreviewObject.visible = toolPreview.center !== null;
+    this.scene.add(placementPreviewObject);
+    this.placementPreviewObject = placementPreviewObject;
+    this.placementPreviewTargetKey = this.getPlacementPreviewTargetKey(toolPreview);
   }
 
   private render = () => {
