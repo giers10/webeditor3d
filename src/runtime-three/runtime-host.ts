@@ -36,7 +36,7 @@ import {
   areAdvancedRenderingSettingsEqual,
   cloneAdvancedRenderingSettings,
   type AdvancedRenderingSettings
-} from "../document/scene-document";
+} from "../document/world-settings";
 
 import { FirstPersonNavigationController } from "./first-person-navigation-controller";
 import type { FirstPersonTelemetry, NavigationController, RuntimeControllerContext } from "./navigation-controller";

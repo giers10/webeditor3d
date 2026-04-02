@@ -8,7 +8,7 @@ import {
   createStopAnimationInteractionLink,
   createStopSoundInteractionLink
 } from "../../src/interactions/interaction-links";
-import { createDefaultWorldSettings } from "../../src/document/scene-document";
+import { createDefaultWorldSettings } from "../../src/document/world-settings";
 import { RuntimeInteractionSystem } from "../../src/runtime-three/runtime-interaction-system";
 import type { RuntimeSceneDefinition } from "../../src/runtime-three/runtime-scene-build";
 

@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { createDefaultWorldSettings } from "../../src/document/scene-document";
-import { areWorldSettingsEqual, changeWorldBackgroundMode, cloneWorldSettings } from "../../src/document/world-settings";
+import {
+  areWorldSettingsEqual,
+  changeWorldBackgroundMode,
+  cloneWorldSettings,
+  createDefaultWorldSettings
+} from "../../src/document/world-settings";
 
 describe("world settings helpers", () => {
   it("clones world settings without retaining nested references", () => {
