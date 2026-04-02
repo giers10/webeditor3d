@@ -585,11 +585,18 @@ export class ViewportHost {
 
     const advancedRendering = this.currentWorld.advancedRendering;
     const shadowsEnabled = advancedRendering.enabled && advancedRendering.shadows.enabled && this.displayMode === "normal";
+    const shadowSettings =
+      this.displayMode === "normal"
+        ? advancedRendering
+        : {
+            ...advancedRendering,
+            enabled: false
+          };
 
-    applyAdvancedRenderingLightShadowFlags(this.sunLight, advancedRendering);
+    applyAdvancedRenderingLightShadowFlags(this.sunLight, shadowSettings);
 
     for (const renderObjects of this.localLightRenderObjects.values()) {
-      applyAdvancedRenderingLightShadowFlags(renderObjects.group, advancedRendering);
+      applyAdvancedRenderingLightShadowFlags(renderObjects.group, shadowSettings);
     }
 
     for (const renderObjects of this.brushRenderObjects.values()) {
