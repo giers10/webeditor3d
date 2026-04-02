@@ -69,13 +69,13 @@ test("user can create a box brush and keep it through a draft reload", async ({ 
   await page.getByTestId("brush-size-z").press("Tab");
   await page.getByTestId("selected-brush-name").fill("Entry Room");
   await page.getByTestId("selected-brush-name").press("Tab");
-  await expect(page.getByRole("button", { name: /Entry Room/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /^Entry Room$/ })).toBeVisible();
 
   await page.getByRole("button", { name: "Save Draft" }).click();
   await page.reload();
 
-  await expect(page.getByRole("button", { name: /Entry Room/ })).toBeVisible();
-  await page.getByRole("button", { name: /Entry Room/ }).click();
+  await expect(page.getByRole("button", { name: /^Entry Room$/ })).toBeVisible();
+  await page.getByRole("button", { name: /^Entry Room$/ }).click();
   await expect(page.getByTestId("brush-center-y")).toHaveValue("2");
   await expect(page.getByTestId("brush-size-z")).toHaveValue("4");
   await expect(page.getByTestId("viewport-overlay-topLeft")).toHaveCount(0);
