@@ -10,9 +10,12 @@ import {
 } from "react";
 
 import { createCreateBoxBrushCommand } from "../commands/create-box-brush-command";
+import { createDeleteBoxBrushCommand } from "../commands/delete-box-brush-command";
+import { createDeleteEntityCommand } from "../commands/delete-entity-command";
 import { createImportAudioAssetCommand } from "../commands/import-audio-asset-command";
 import { createImportBackgroundImageAssetCommand } from "../commands/import-background-image-asset-command";
 import { createImportModelAssetCommand } from "../commands/import-model-asset-command";
+import { createDeleteModelInstanceCommand } from "../commands/delete-model-instance-command";
 import { createMoveBoxBrushCommand } from "../commands/move-box-brush-command";
 import { createResizeBoxBrushCommand } from "../commands/resize-box-brush-command";
 import { createSetBoxBrushFaceMaterialCommand } from "../commands/set-box-brush-face-material-command";
@@ -1266,6 +1269,25 @@ export function App({ store, initialStatusMessage }: AppProps) {
         return;
       }
 
+      const isDeletionKey = event.key === "Delete" || event.key === "Backspace";
+      const isDeleteShortcut = !event.altKey && !event.ctrlKey && !event.metaKey && (event.code === "KeyX" || isDeletionKey);
+
+      if (addMenuPosition !== null) {
+        if (isDeletionKey) {
+          event.preventDefault();
+        }
+        return;
+      }
+
+      if (isDeleteShortcut && editorState.toolMode !== "create") {
+        const deleted = handleDeleteSelectedSceneItem();
+
+        if (deleted || isDeletionKey) {
+          event.preventDefault();
+        }
+        return;
+      }
+
       if (
         event.code !== "NumpadComma" &&
         !(event.key === "," && event.location === globalThis.KeyboardEvent.DOM_KEY_LOCATION_NUMPAD)
@@ -1295,7 +1317,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
       window.removeEventListener("pointermove", handleWindowPointerMove);
       window.removeEventListener("keydown", handleWindowKeyDown);
     };
-  }, [activePanelId, addMenuPosition, editorState.selection, editorState.toolMode, brushList.length, entityList.length]);
+  }, [activePanelId, addMenuPosition, brushList.length, editorState.selection, editorState.toolMode, entityList.length, handleDeleteSelectedSceneItem]);
 
   const applySceneName = () => {
     const normalizedName = sceneNameDraft.trim() || "Untitled Scene";
@@ -2034,6 +2056,86 @@ export function App({ store, initialStatusMessage }: AppProps) {
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
     }
+  };
+
+  const confirmDeleteSceneItem = (label: string) =>
+    globalThis.window.confirm(`Delete ${label}?\n\nThis can be undone with Undo.`);
+
+  const handleDeleteBrush = (brushId: string) => {
+    const label = getBrushLabelById(brushId, brushList);
+
+    if (!confirmDeleteSceneItem(label)) {
+      return false;
+    }
+
+    try {
+      store.executeCommand(createDeleteBoxBrushCommand(brushId));
+      setStatusMessage(`Deleted ${label}.`);
+      return true;
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+      return false;
+    }
+  };
+
+  const handleDeleteEntity = (entityId: string) => {
+    const label = getEntityDisplayLabelById(entityId, editorState.document.entities, editorState.document.assets);
+
+    if (!confirmDeleteSceneItem(label)) {
+      return false;
+    }
+
+    try {
+      store.executeCommand(createDeleteEntityCommand(entityId));
+      setStatusMessage(`Deleted ${label}.`);
+      return true;
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+      return false;
+    }
+  };
+
+  const handleDeleteModelInstance = (modelInstanceId: string) => {
+    const label = getModelInstanceDisplayLabelById(
+      modelInstanceId,
+      editorState.document.modelInstances,
+      editorState.document.assets
+    );
+
+    if (!confirmDeleteSceneItem(label)) {
+      return false;
+    }
+
+    try {
+      store.executeCommand(createDeleteModelInstanceCommand(modelInstanceId));
+      setStatusMessage(`Deleted ${label}.`);
+      return true;
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+      return false;
+    }
+  };
+
+  const handleDeleteSelectedSceneItem = () => {
+    const selectedBrushId = getSingleSelectedBrushId(editorState.selection);
+
+    if (selectedBrushId !== null) {
+      return handleDeleteBrush(selectedBrushId);
+    }
+
+    const selectedEntityId = getSingleSelectedEntityId(editorState.selection);
+
+    if (selectedEntityId !== null) {
+      return handleDeleteEntity(selectedEntityId);
+    }
+
+    const selectedModelInstanceId = getSingleSelectedModelInstanceId(editorState.selection);
+
+    if (selectedModelInstanceId !== null) {
+      return handleDeleteModelInstance(selectedModelInstanceId);
+    }
+
+    return false;
   };
 
   const updateInteractionLinkTrigger = (link: InteractionLink, trigger: InteractionTriggerKind) => {
@@ -3911,6 +4013,16 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
         <div className="toolbar__actions">
           <div className="toolbar__group">
+            <button
+              className="toolbar__button toolbar__button--accent"
+              type="button"
+              data-testid="outliner-add-button"
+              aria-haspopup="menu"
+              aria-expanded={addMenuPosition !== null}
+              onClick={handleOpenAddMenuFromButton}
+            >
+              Add
+            </button>
             <button className="toolbar__button" type="button" disabled={!editorState.storageAvailable} onClick={handleSaveDraft}>
               Save Draft
             </button>
@@ -3997,53 +4109,67 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 <div className="outliner-empty">Use Add &gt; Box and click in the viewport to create the first brush.</div>
               ) : (
                 <div className="outliner-list" data-testid="outliner-brush-list">
-                  {brushList.map((brush, brushIndex) => (
-                    <div
-                      key={brush.id}
-                      className={`outliner-item ${isBrushSelected(editorState.selection, brush.id) ? "outliner-item--selected" : ""}`}
-                    >
-                      <button
-                        className="outliner-item__select"
-                        type="button"
-                        data-testid={`outliner-brush-${brush.id}`}
-                        onClick={() =>
-                          applySelection(
-                            {
-                              kind: "brushes",
-                              ids: [brush.id]
-                            },
-                            "outliner",
-                            {
-                              focusViewport: true
-                            }
-                          )
-                        }
-                      >
-                        <span className="outliner-item__title">{getBrushLabel(brush, brushIndex)}</span>
-                        <span className="outliner-item__meta">Brush</span>
-                      </button>
+                  {brushList.map((brush, brushIndex) => {
+                    const label = getBrushLabel(brush, brushIndex);
 
-                      {selectedBrush?.id !== brush.id ? null : (
-                        <label className="form-field outliner-item__editor">
-                          <span className="label">Name</span>
-                          <input
-                            className="text-input text-input--dense"
-                            data-testid="selected-brush-name"
-                            type="text"
-                            value={brushNameDraft}
-                            placeholder={`Box Brush ${brushIndex + 1}`}
-                            onChange={(event) => setBrushNameDraft(event.currentTarget.value)}
-                            onBlur={applyBrushNameChange}
-                            onKeyDown={(event) => {
-                              if (event.key === "Enter") {
-                                applyBrushNameChange();
-                              }
-                            }}
-                          />
-                        </label>
-                      )}
-                    </div>
-                  ))}
+                    return (
+                      <div
+                        key={brush.id}
+                        className={`outliner-item outliner-item--compact ${isBrushSelected(editorState.selection, brush.id) ? "outliner-item--selected" : ""}`}
+                      >
+                        <div className="outliner-item__row">
+                          <button
+                            className="outliner-item__select"
+                            type="button"
+                            data-testid={`outliner-brush-${brush.id}`}
+                            onClick={() =>
+                              applySelection(
+                                {
+                                  kind: "brushes",
+                                  ids: [brush.id]
+                                },
+                                "outliner",
+                                {
+                                  focusViewport: true
+                                }
+                              )
+                            }
+                          >
+                            <span className="outliner-item__title">{label}</span>
+                          </button>
+                          <button
+                            className="outliner-item__delete"
+                            type="button"
+                            data-testid={`outliner-delete-brush-${brush.id}`}
+                            aria-label={`Delete ${label}`}
+                            onClick={() => handleDeleteBrush(brush.id)}
+                          >
+                            x
+                          </button>
+                        </div>
+
+                        {selectedBrush?.id !== brush.id ? null : (
+                          <label className="form-field outliner-item__editor">
+                            <span className="label">Name</span>
+                            <input
+                              className="text-input text-input--dense"
+                              data-testid="selected-brush-name"
+                              type="text"
+                              value={brushNameDraft}
+                              placeholder={`Box Brush ${brushIndex + 1}`}
+                              onChange={(event) => setBrushNameDraft(event.currentTarget.value)}
+                              onBlur={applyBrushNameChange}
+                              onKeyDown={(event) => {
+                                if (event.key === "Enter") {
+                                  applyBrushNameChange();
+                                }
+                              }}
+                            />
+                          </label>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -4055,31 +4181,45 @@ export function App({ store, initialStatusMessage }: AppProps) {
               ) : (
                 <div className="outliner-list" data-testid="outliner-model-instance-list">
                   {modelInstanceDisplayList.map(({ modelInstance, label }) => (
-                    <button
+                    <div
                       key={modelInstance.id}
-                      data-testid={`outliner-model-instance-${modelInstance.id}`}
                       className={`outliner-item ${
                         editorState.selection.kind === "modelInstances" && editorState.selection.ids.includes(modelInstance.id)
                           ? "outliner-item--selected"
                           : ""
-                      }`}
-                      type="button"
-                      onClick={() =>
-                        applySelection(
-                          {
-                            kind: "modelInstances",
-                            ids: [modelInstance.id]
-                          },
-                          "outliner",
-                          {
-                            focusViewport: true
-                          }
-                        )
-                      }
+                      } outliner-item--compact`}
                     >
-                      <span className="outliner-item__title">{label}</span>
-                      <span className="outliner-item__meta">{editorState.document.assets[modelInstance.assetId]?.sourceName ?? modelInstance.assetId}</span>
-                    </button>
+                      <div className="outliner-item__row">
+                        <button
+                          data-testid={`outliner-model-instance-${modelInstance.id}`}
+                          className="outliner-item__select"
+                          type="button"
+                          onClick={() =>
+                            applySelection(
+                              {
+                                kind: "modelInstances",
+                                ids: [modelInstance.id]
+                              },
+                              "outliner",
+                              {
+                                focusViewport: true
+                              }
+                            )
+                          }
+                        >
+                          <span className="outliner-item__title">{label}</span>
+                        </button>
+                        <button
+                          className="outliner-item__delete"
+                          type="button"
+                          data-testid={`outliner-delete-model-instance-${modelInstance.id}`}
+                          aria-label={`Delete ${label}`}
+                          onClick={() => handleDeleteModelInstance(modelInstance.id)}
+                        >
+                          x
+                        </button>
+                      </div>
+                    </div>
                   ))}
                 </div>
               )}
@@ -4087,49 +4227,51 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
             <div className="outliner-section">
               <div className="label">Entities</div>
-              <div className="inline-actions">
-                <button
-                  className="toolbar__button toolbar__button--accent"
-                  type="button"
-                  data-testid="outliner-add-button"
-                  aria-haspopup="menu"
-                  aria-expanded={addMenuPosition !== null}
-                  onClick={handleOpenAddMenuFromButton}
-                >
-                  Add
-                </button>
-              </div>
 
               {entityDisplayList.length === 0 ? <div className="outliner-empty">No entities authored yet.</div> : null}
 
               {entityDisplayList.length === 0 ? null : (
                 <div className="outliner-list">
                   {entityDisplayList.map(({ entity, label }) => (
-                    <button
+                    <div
                       key={entity.id}
-                      data-testid={`outliner-entity-${entity.id}`}
                       className={`outliner-item ${
                         editorState.selection.kind === "entities" && editorState.selection.ids.includes(entity.id)
                           ? "outliner-item--selected"
                           : ""
-                      }`}
-                      type="button"
-                      onClick={() =>
-                        applySelection(
-                          {
-                            kind: "entities",
-                            ids: [entity.id]
-                          },
-                          "outliner",
-                          {
-                            focusViewport: true
-                          }
-                        )
-                      }
+                      } outliner-item--compact`}
                     >
-                      <span className="outliner-item__title">{label}</span>
-                      <span className="outliner-item__meta">{getEntityKindLabel(entity.kind)}</span>
-                    </button>
+                      <div className="outliner-item__row">
+                        <button
+                          data-testid={`outliner-entity-${entity.id}`}
+                          className="outliner-item__select"
+                          type="button"
+                          onClick={() =>
+                            applySelection(
+                              {
+                                kind: "entities",
+                                ids: [entity.id]
+                              },
+                              "outliner",
+                              {
+                                focusViewport: true
+                              }
+                            )
+                          }
+                        >
+                          <span className="outliner-item__title">{label}</span>
+                        </button>
+                        <button
+                          className="outliner-item__delete"
+                          type="button"
+                          data-testid={`outliner-delete-entity-${entity.id}`}
+                          aria-label={`Delete ${label}`}
+                          onClick={() => handleDeleteEntity(entity.id)}
+                        >
+                          x
+                        </button>
+                      </div>
+                    </div>
                   ))}
                 </div>
               )}
