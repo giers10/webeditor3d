@@ -159,6 +159,10 @@ export function ViewportCanvas({
   }, [onToolPreviewChange, panelId]);
 
   useEffect(() => {
+    hostRef.current?.setCreationCommitHandler(onCommitCreation);
+  }, [onCommitCreation]);
+
+  useEffect(() => {
     hostRef.current?.setToolMode(toolMode);
   }, [toolMode]);
 
