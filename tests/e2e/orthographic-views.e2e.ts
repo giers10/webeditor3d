@@ -27,7 +27,7 @@ test("orthographic panel controls keep brush authoring and selection behavior in
 
   await expect(page.getByRole("button", { name: /Box Brush 1/ })).toBeVisible();
   await expect(page.getByText("1 brush selected (Box Brush 1)")).toBeVisible();
-  await expect(page.getByTestId("viewport-active-panel")).toContainText("Top Left");
+  await expect(page.getByTestId("viewport-active-panel")).toHaveCount(0);
   await expect(page.getByTestId("viewport-panel-topLeft-view-perspective")).toHaveAttribute("aria-pressed", "true");
 
   await page.getByTestId("viewport-panel-topLeft-view-top").dispatchEvent("click");
