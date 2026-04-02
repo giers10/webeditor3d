@@ -199,16 +199,16 @@ function formatDiagnosticCount(count: number, label: string): string {
   return `${count} ${label}${count === 1 ? "" : "s"}`;
 }
 
-function getViewportCaption(toolMode: "select" | "box-create" | "play", brushCount: number): string {
+function getViewportCaption(toolMode: "select" | "box-create" | "play", viewMode: ViewportViewMode, brushCount: number): string {
   if (toolMode === "play") {
     return "Runner is active.";
   }
 
   if (toolMode === "box-create") {
-    return `Box Create is active. Click the grid to place a ${DEFAULT_BOX_BRUSH_SIZE.x} x ${DEFAULT_BOX_BRUSH_SIZE.y} x ${DEFAULT_BOX_BRUSH_SIZE.z} box.`;
+    return `${brushCount} box brush${brushCount === 1 ? "" : "es"} loaded. Box Create is active. Click the ${getViewportViewModeGridPlaneLabel(viewMode)} grid to place a ${DEFAULT_BOX_BRUSH_SIZE.x} x ${DEFAULT_BOX_BRUSH_SIZE.y} x ${DEFAULT_BOX_BRUSH_SIZE.z} box. ${getViewportViewModeControlHint(viewMode)}`;
   }
 
-  return `${brushCount} box brush${brushCount === 1 ? "" : "es"} loaded. Middle-drag orbits, Shift + middle-drag pans, wheel zooms, and Numpad Comma frames the selection.`;
+  return `${brushCount} box brush${brushCount === 1 ? "" : "es"} loaded. ${getViewportViewModeLabel(viewMode)} view active. ${getViewportViewModeControlHint(viewMode)}`;
 }
 
 function createVec2Draft(vector: Vec2): Vec2Draft {
