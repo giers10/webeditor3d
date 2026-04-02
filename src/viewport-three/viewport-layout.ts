@@ -42,6 +42,12 @@ export interface ViewportLayoutState {
   viewportQuadSplit: ViewportQuadSplit;
 }
 
+const DEFAULT_PERSPECTIVE_CAMERA_POSITION = {
+  x: 10,
+  y: 9,
+  z: 10
+} as const;
+
 export const DEFAULT_VIEWPORT_LAYOUT_STATE: ViewportLayoutState = {
   layoutMode: "single",
   activePanelId: "topLeft",
@@ -72,12 +78,6 @@ export const DEFAULT_VIEWPORT_LAYOUT_STATE: ViewportLayoutState = {
     y: 0.5
   }
 };
-
-const DEFAULT_PERSPECTIVE_CAMERA_POSITION = {
-  x: 10,
-  y: 9,
-  z: 10
-} as const;
 
 function createDefaultPerspectiveOrbitState(): ViewportPerspectiveOrbitState {
   const { x, y, z } = DEFAULT_PERSPECTIVE_CAMERA_POSITION;
