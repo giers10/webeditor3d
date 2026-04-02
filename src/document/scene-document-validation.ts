@@ -667,6 +667,12 @@ function validateModelInstance(modelInstance: ModelInstance, path: string, docum
   }
 }
 
+function validateEntityName(name: string | undefined, path: string, diagnostics: SceneDiagnostic[]) {
+  if (name !== undefined && name.trim().length === 0) {
+    diagnostics.push(createDiagnostic("error", "invalid-entity-name", "Entity names must be non-empty when authored.", `${path}.name`));
+  }
+}
+
 function validatePlayerStartEntity(entity: PlayerStartEntity, path: string, diagnostics: SceneDiagnostic[]) {
   if (!isFiniteVec3(entity.position)) {
     diagnostics.push(
