@@ -100,6 +100,10 @@ const ZOOM_SPEED = 0.0014;
 const MIN_POLAR_ANGLE = 0.12;
 const MAX_POLAR_ANGLE = Math.PI - 0.12;
 const FOCUS_MARGIN = 1.35;
+const ORTHOGRAPHIC_CAMERA_DISTANCE = 100;
+const ORTHOGRAPHIC_FRUSTUM_HEIGHT = 20;
+const MIN_ORTHOGRAPHIC_ZOOM = 0.25;
+const MAX_ORTHOGRAPHIC_ZOOM = 20;
 
 interface CachedMaterialTexture {
   signature: string;
@@ -117,7 +121,8 @@ interface LocalLightRenderObjects {
 
 export class ViewportHost {
   private readonly scene = new Scene();
-  private readonly camera = new PerspectiveCamera(60, 1, 0.1, 1000);
+  private readonly perspectiveCamera = new PerspectiveCamera(60, 1, 0.1, 1000);
+  private readonly orthographicCamera = new OrthographicCamera(-10, 10, 10, -10, 0.1, 1000);
   private readonly renderer = new WebGLRenderer({ antialias: true, alpha: true });
   private readonly cameraTarget = new Vector3(0, 0, 0);
   private readonly cameraOffset = new Vector3();
@@ -125,6 +130,11 @@ export class ViewportHost {
   private readonly cameraRight = new Vector3();
   private readonly cameraUp = new Vector3();
   private readonly cameraSpherical = new Spherical();
+  private readonly gridHelpers: Record<ViewportGridPlane, GridHelper> = {
+    xz: new GridHelper(40, 40, 0xcf8354, 0x4e596b),
+    xy: new GridHelper(40, 40, 0xcf8354, 0x4e596b),
+    yz: new GridHelper(40, 40, 0xcf8354, 0x4e596b)
+  };
   private readonly ambientLight = new AmbientLight();
   private readonly sunLight = new DirectionalLight();
   private readonly localLightGroup = new Group();
@@ -144,6 +154,7 @@ export class ViewportHost {
   private currentWorld: WorldSettings | null = null;
   private currentAdvancedRenderingSettings: AdvancedRenderingSettings | null = null;
   private advancedRenderingComposer: EffectComposer | null = null;
+  private currentComposerCameraMode: ViewportViewMode = "perspective";
   private currentSelection: EditorSelection = {
     kind: "none"
   };
@@ -175,6 +186,7 @@ export class ViewportHost {
   private createBoxBrushHandler: ((center: Vec3) => void) | null = null;
   private boxCreatePreviewHandler: ((center: Vec3 | null) => void) | null = null;
   private toolMode: ToolMode = "select";
+  private viewMode: ViewportViewMode = "perspective";
   private lastBoxCreatePreviewCenter: Vec3 | null = null;
   private activeCameraDragPointerId: number | null = null;
   private lastCameraDragClientPosition: { x: number; y: number } | null = null;
