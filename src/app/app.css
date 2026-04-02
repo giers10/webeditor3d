@@ -1054,6 +1054,9 @@ button:disabled {
 
 .status-bar__item--asset {
   flex: 1 1 420px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .status-bar__strong {
