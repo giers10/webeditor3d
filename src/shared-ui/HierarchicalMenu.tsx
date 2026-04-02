@@ -1,4 +1,4 @@
-import type { CSSProperties, PropsWithChildren } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 export type HierarchicalMenuPosition = {
   x: number;
@@ -23,7 +23,7 @@ export type HierarchicalMenuItem =
       kind: "separator";
     };
 
-interface HierarchicalMenuProps extends PropsWithChildren {
+interface HierarchicalMenuProps {
   title: string;
   position: HierarchicalMenuPosition;
   items: HierarchicalMenuItem[];
@@ -42,7 +42,7 @@ function clampMenuPosition(position: HierarchicalMenuPosition): HierarchicalMenu
   };
 }
 
-function renderHierarchicalMenuItems(items: HierarchicalMenuItem[], onClose: () => void): React.ReactNode {
+function renderHierarchicalMenuItems(items: HierarchicalMenuItem[], onClose: () => void): ReactNode {
   return items.map((item, index) => {
     if (item.kind === "separator") {
       return <div key={`separator-${index}`} className="hierarchical-menu__separator" role="separator" />;
