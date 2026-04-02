@@ -36,6 +36,7 @@ test("imports a gltf asset with external resources and places an instance", asyn
   await page.getByRole("button", { name: "Place instance for scene.gltf" }).hover();
   await expect(page.getByTestId("status-asset-hover")).toContainText("Storage key:");
   await page.getByRole("button", { name: "Place instance for scene.gltf" }).click();
+  await page.getByTestId("viewport-panel-topLeft").click({ position: { x: 16, y: 16 }, force: true });
   const viewportCanvas = getViewportCanvas(page);
   await viewportCanvas.hover({ position: { x: 88, y: 84 }, force: true });
   await expect(page.getByTestId("viewport-snap-preview-topLeft")).toBeVisible();
