@@ -2,7 +2,7 @@ import path from "node:path";
 
 import { expect, test } from "@playwright/test";
 
-import { getEditorStoreSnapshot, setViewportPlacementPreview } from "./viewport-test-helpers";
+import { clickViewport, getEditorStoreSnapshot, setViewportCreationPreview } from "./viewport-test-helpers";
 
 const gltfFixturePath = path.resolve(process.cwd(), "fixtures/assets/external-triangle/scene.gltf");
 const binFixturePath = path.resolve(process.cwd(), "fixtures/assets/external-triangle/triangle.bin");
@@ -45,9 +45,9 @@ test("imports a gltf asset with external resources and places an instance", asyn
     throw new Error("Imported model asset was not found in the document snapshot.");
   }
 
-  await setViewportPlacementPreview(page, "topLeft", { kind: "model-instance", assetId: importedModelAsset.id }, { x: 88, y: 0, z: -84 });
+  await setViewportCreationPreview(page, "topLeft", { kind: "model-instance", assetId: importedModelAsset.id }, { x: 88, y: 0, z: -84 });
   await expect(page.getByTestId("viewport-snap-preview-topLeft")).toBeVisible();
-  await page.getByTestId("viewport-fallback-place-topLeft").dispatchEvent("click");
+  await clickViewport(page, "topLeft");
   await expect(page.getByTestId("outliner-model-instance-list").getByRole("button")).toHaveCount(2);
   const snapshot = await getEditorStoreSnapshot(page);
   const selectedModelInstanceId = snapshot.selection.kind === "modelInstances" ? snapshot.selection.ids?.[0] ?? null : null;

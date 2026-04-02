@@ -2,7 +2,7 @@ import path from "node:path";
 
 import { expect, test } from "@playwright/test";
 
-import { getEditorStoreSnapshot, setViewportPlacementPreview } from "./viewport-test-helpers";
+import { clickViewport, getEditorStoreSnapshot, setViewportCreationPreview } from "./viewport-test-helpers";
 
 const fixturePath = path.resolve(process.cwd(), "fixtures/assets/tiny-triangle.gltf");
 
@@ -47,9 +47,9 @@ test("imports a model asset, places an instance, and survives reload", async ({ 
     throw new Error("Imported model asset was not found in the document snapshot.");
   }
 
-  await setViewportPlacementPreview(page, "topLeft", { kind: "model-instance", assetId: importedModelAsset.id }, { x: 92, y: 0, z: -76 });
+  await setViewportCreationPreview(page, "topLeft", { kind: "model-instance", assetId: importedModelAsset.id }, { x: 92, y: 0, z: -76 });
   await expect(page.getByTestId("viewport-snap-preview-topLeft")).toBeVisible();
-  await page.getByTestId("viewport-fallback-place-topLeft").dispatchEvent("click");
+  await clickViewport(page, "topLeft");
   await expect(page.getByTestId("outliner-model-instance-list").getByRole("button")).toHaveCount(2);
   const snapshot = await getEditorStoreSnapshot(page);
   const selectedModelInstanceId = snapshot.selection.kind === "modelInstances" ? snapshot.selection.ids?.[0] ?? null : null;
