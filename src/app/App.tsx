@@ -3838,14 +3838,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
             <button className="toolbar__button" type="button" onClick={handleImportJsonButtonClick}>
               Import JSON
             </button>
-            <button
-              className="toolbar__button"
-              type="button"
-              onClick={handleImportModelButtonClick}
-              disabled={!projectAssetStorageReady || projectAssetStorage === null}
-            >
-              Import Model
-            </button>
           </div>
 
           <div className="toolbar__group">
@@ -3922,36 +3914,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
       <div className="workspace">
         <aside className="side-column">
           <Panel title="Assets">
-            <div className="inline-actions">
-              <button
-                className="toolbar__button toolbar__button--accent"
-                type="button"
-                data-testid="import-model-asset"
-                onClick={handleImportModelButtonClick}
-                disabled={!projectAssetStorageReady || projectAssetStorage === null}
-              >
-                Import GLB/GLTF
-              </button>
-              <button
-                className="toolbar__button toolbar__button--accent"
-                type="button"
-                data-testid="import-background-image-asset"
-                onClick={handleImportBackgroundImageButtonClick}
-                disabled={!projectAssetStorageReady || projectAssetStorage === null}
-              >
-                Import Background Image
-              </button>
-              <button
-                className="toolbar__button toolbar__button--accent"
-                type="button"
-                data-testid="import-audio-asset"
-                onClick={handleImportAudioButtonClick}
-                disabled={!projectAssetStorageReady || projectAssetStorage === null}
-              >
-                Import Audio
-              </button>
-            </div>
-
             {assetStatusMessage === null ? null : (
               <div className="info-banner" data-testid="asset-status-message">
                 {assetStatusMessage}
@@ -3976,7 +3938,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         type="button"
                         data-testid={`place-model-instance-${asset.id}`}
                         aria-label={`Place instance for ${asset.sourceName}`}
-                        onClick={() => handlePlaceModelInstance(asset.id)}
+                        onClick={() => beginModelInstancePlacement(asset.id)}
                         onPointerEnter={() => setHoveredAssetId(asset.id)}
                         onPointerLeave={() => setHoveredAssetId((current) => (current === asset.id ? null : current))}
                         onFocus={() => setHoveredAssetId(asset.id)}
@@ -4044,7 +4006,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         type="button"
                         data-testid={`place-sound-emitter-${asset.id}`}
                         aria-label={`Place sound emitter for ${asset.sourceName}`}
-                        onClick={() => handlePlaceEntity("soundEmitter", { audioAssetId: asset.id })}
+                        onClick={() => beginEntityPlacement("soundEmitter", { audioAssetId: asset.id })}
                         onPointerEnter={() => setHoveredAssetId(asset.id)}
                         onPointerLeave={() => setHoveredAssetId((current) => (current === asset.id ? null : current))}
                         onFocus={() => setHoveredAssetId(asset.id)}
