@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createEmptySceneDocument } from "../../src/document/scene-document";
 import { ViewportCanvas } from "../../src/viewport-three/ViewportCanvas";
+import { createDefaultViewportPanelCameraState, type ViewportPanelCameraState } from "../../src/viewport-three/viewport-layout";
 import type { CreationViewportToolPreview, ViewportToolPreview } from "../../src/viewport-three/viewport-transient-state";
 
 const { MockViewportHost, viewportHostInstances } = vi.hoisted(() => {
@@ -14,7 +15,9 @@ const { MockViewportHost, viewportHostInstances } = vi.hoisted(() => {
     updateDocument: ReturnType<typeof vi.fn>;
     setViewMode: ReturnType<typeof vi.fn>;
     setDisplayMode: ReturnType<typeof vi.fn>;
+    setCameraState: ReturnType<typeof vi.fn>;
     setBrushSelectionChangeHandler: ReturnType<typeof vi.fn>;
+    setCameraStateChangeHandler: ReturnType<typeof vi.fn>;
     setCreationPreviewChangeHandler: ReturnType<typeof vi.fn>;
     setCreationCommitHandler: ReturnType<typeof vi.fn>;
     setToolMode: ReturnType<typeof vi.fn>;
@@ -30,7 +33,9 @@ const { MockViewportHost, viewportHostInstances } = vi.hoisted(() => {
     updateDocument = vi.fn();
     setViewMode = vi.fn();
     setDisplayMode = vi.fn();
+    setCameraState = vi.fn();
     setBrushSelectionChangeHandler = vi.fn();
+    setCameraStateChangeHandler = vi.fn();
     setCreationPreviewChangeHandler = vi.fn();
     setCreationCommitHandler = vi.fn();
     setToolMode = vi.fn();
@@ -64,6 +69,7 @@ describe("ViewportCanvas", () => {
 
   it("wires the creation commit handler into the viewport host", async () => {
     const sceneDocument = createEmptySceneDocument();
+    const cameraState = createDefaultViewportPanelCameraState();
     const toolPreview: CreationViewportToolPreview = {
       kind: "create",
       sourcePanelId: "topLeft",
@@ -73,6 +79,7 @@ describe("ViewportCanvas", () => {
       center: null
     };
     const onCommitCreation = vi.fn(() => true);
+    const onCameraStateChange = vi.fn((_cameraState: ViewportPanelCameraState) => undefined);
     const onToolPreviewChange = vi.fn((_toolPreview: ViewportToolPreview) => undefined);
     const onSelectionChange = vi.fn();
 
@@ -87,6 +94,7 @@ describe("ViewportCanvas", () => {
         selection={{ kind: "none" }}
         toolMode="create"
         toolPreview={toolPreview}
+        cameraState={cameraState}
         viewMode="perspective"
         displayMode="authoring"
         layoutMode="single"
@@ -95,6 +103,7 @@ describe("ViewportCanvas", () => {
         focusSelection={{ kind: "none" }}
         onSelectionChange={onSelectionChange}
         onCommitCreation={onCommitCreation}
+        onCameraStateChange={onCameraStateChange}
         onToolPreviewChange={onToolPreviewChange}
       />
     );
@@ -110,5 +119,42 @@ describe("ViewportCanvas", () => {
 
     expect(registeredHandler(toolPreview)).toBe(true);
     expect(onCommitCreation).toHaveBeenCalledWith(toolPreview);
+  });
+
+  it("applies and subscribes to persisted camera state through the viewport host", async () => {
+    const sceneDocument = createEmptySceneDocument();
+    const cameraState = createDefaultViewportPanelCameraState();
+    const onCameraStateChange = vi.fn((_cameraState: ViewportPanelCameraState) => undefined);
+
+    render(
+      <ViewportCanvas
+        panelId="topLeft"
+        world={sceneDocument.world}
+        sceneDocument={sceneDocument}
+        projectAssets={sceneDocument.assets}
+        loadedModelAssets={{}}
+        loadedImageAssets={{}}
+        selection={{ kind: "none" }}
+        toolMode="select"
+        toolPreview={{ kind: "none" }}
+        cameraState={cameraState}
+        viewMode="perspective"
+        displayMode="normal"
+        layoutMode="single"
+        isActivePanel
+        focusRequestId={0}
+        focusSelection={{ kind: "none" }}
+        onSelectionChange={vi.fn()}
+        onCommitCreation={vi.fn(() => true)}
+        onCameraStateChange={onCameraStateChange}
+        onToolPreviewChange={vi.fn()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(viewportHostInstances).toHaveLength(1);
+      expect(viewportHostInstances[0].setCameraState).toHaveBeenCalledWith(cameraState);
+      expect(viewportHostInstances[0].setCameraStateChangeHandler).toHaveBeenCalledTimes(1);
+    });
   });
 });
