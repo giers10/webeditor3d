@@ -1321,10 +1321,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
   };
 
   const openAddMenuAt = (position: HierarchicalMenuPosition) => {
+    setHoveredAssetId(null);
     setAddMenuPosition(position);
   };
 
   const closeAddMenu = () => {
+    setHoveredAssetId(null);
     setAddMenuPosition(null);
   };
 
