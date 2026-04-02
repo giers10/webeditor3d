@@ -20,8 +20,10 @@ import { createMoveBoxBrushCommand } from "../commands/move-box-brush-command";
 import { createResizeBoxBrushCommand } from "../commands/resize-box-brush-command";
 import { createSetBoxBrushFaceMaterialCommand } from "../commands/set-box-brush-face-material-command";
 import { createSetBoxBrushNameCommand } from "../commands/set-box-brush-name-command";
+import { createSetEntityNameCommand } from "../commands/set-entity-name-command";
 import { createSetBoxBrushFaceUvStateCommand } from "../commands/set-box-brush-face-uv-state-command";
 import { createDeleteInteractionLinkCommand } from "../commands/delete-interaction-link-command";
+import { createSetModelInstanceNameCommand } from "../commands/set-model-instance-name-command";
 import { createSetSceneNameCommand } from "../commands/set-scene-name-command";
 import { createSetWorldSettingsCommand } from "../commands/set-world-settings-command";
 import { createUpsertEntityCommand } from "../commands/upsert-entity-command";
@@ -44,6 +46,7 @@ import {
   DEFAULT_MODEL_INSTANCE_POSITION,
   DEFAULT_MODEL_INSTANCE_ROTATION_DEGREES,
   DEFAULT_MODEL_INSTANCE_SCALE,
+  normalizeModelInstanceName,
   type ModelInstance
 } from "../assets/model-instances";
 import {
@@ -130,6 +133,7 @@ import {
   getEntityInstances,
   getEntityKindLabel,
   getPrimaryPlayerStartEntity,
+  normalizeEntityName,
   normalizeYawDegrees,
   normalizeInteractablePrompt,
   type EntityInstance,
