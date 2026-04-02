@@ -17,6 +17,7 @@ import {
   getViewportViewModeLabel,
   type ViewportViewMode
 } from "./viewport-view-modes";
+import type { ViewportToolPreview } from "./viewport-transient-state";
 
 import { ViewportHost } from "./viewport-host";
 
@@ -29,13 +30,16 @@ interface ViewportCanvasProps {
   loadedImageAssets: Record<string, LoadedImageAsset>;
   selection: EditorSelection;
   toolMode: ToolMode;
+  toolPreview: ViewportToolPreview;
   viewMode: ViewportViewMode;
   displayMode: ViewportDisplayMode;
+  layoutMode: ViewportLayoutMode;
   isActivePanel: boolean;
   focusRequestId: number;
   focusSelection: EditorSelection;
   onSelectionChange(selection: EditorSelection): void;
   onCreateBoxBrush(center: Vec3): void;
+  onToolPreviewChange(toolPreview: ViewportToolPreview): void;
 }
 
 function formatVec3(vector: Vec3 | null): string {
@@ -46,12 +50,21 @@ function formatVec3(vector: Vec3 | null): string {
   return `${vector.x}, ${vector.y}, ${vector.z}`;
 }
 
-function getViewportOverlayText(toolMode: ToolMode, viewMode: ViewportViewMode, displayMode: ViewportDisplayMode): string {
-  if (toolMode === "box-create") {
-    return `Box Create is active on the ${getViewportViewModeGridPlaneLabel(viewMode)} grid. Click the ${getViewportViewModeGridPlaneLabel(viewMode)} grid to place a ${DEFAULT_BOX_BRUSH_SIZE.x} x ${DEFAULT_BOX_BRUSH_SIZE.y} x ${DEFAULT_BOX_BRUSH_SIZE.z} box. ${getViewportViewModeControlHint(viewMode)}`;
+function getViewportOverlayText(
+  toolMode: ToolMode,
+  viewMode: ViewportViewMode,
+  displayMode: ViewportDisplayMode,
+  layoutMode: ViewportLayoutMode
+): string | null {
+  if (layoutMode === "quad") {
+    return null;
   }
 
-  return `${displayMode === "authoring" ? "Authoring view" : `${getViewportViewModeLabel(viewMode)} view`} active on the ${getViewportViewModeGridPlaneLabel(viewMode)} grid. ${getViewportViewModeControlHint(viewMode)}`;
+  if (toolMode === "box-create") {
+    return `Hover the ${getViewportViewModeGridPlaneLabel(viewMode)} grid to place a ${DEFAULT_BOX_BRUSH_SIZE.x} x ${DEFAULT_BOX_BRUSH_SIZE.y} x ${DEFAULT_BOX_BRUSH_SIZE.z} box. ${getViewportViewModeControlHint(viewMode)}`;
+  }
+
+  return `${displayMode === "authoring" ? "Authoring view" : `${getViewportViewModeLabel(viewMode)} view`} on the ${getViewportViewModeGridPlaneLabel(viewMode)} grid. ${getViewportViewModeControlHint(viewMode)}`;
 }
 
 export function ViewportCanvas({
@@ -63,18 +76,20 @@ export function ViewportCanvas({
   loadedImageAssets,
   selection,
   toolMode,
+  toolPreview,
   viewMode,
   displayMode,
+  layoutMode,
   isActivePanel,
   focusRequestId,
   focusSelection,
   onSelectionChange,
-  onCreateBoxBrush
+  onCreateBoxBrush,
+  onToolPreviewChange
 }: ViewportCanvasProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const hostRef = useRef<ViewportHost | null>(null);
   const [viewportMessage, setViewportMessage] = useState<string | null>(null);
-  const [boxCreatePreview, setBoxCreatePreview] = useState<Vec3 | null>(null);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -140,16 +155,28 @@ export function ViewportCanvas({
   }, [onCreateBoxBrush]);
 
   useEffect(() => {
-    hostRef.current?.setBoxCreatePreviewHandler(setBoxCreatePreview);
-  }, []);
+    hostRef.current?.setBoxCreatePreviewHandler((center) => {
+      onToolPreviewChange(
+        center === null
+          ? {
+              kind: "none"
+            }
+          : {
+              kind: "box-create",
+              sourcePanelId: panelId,
+              center
+            }
+      );
+    });
+  }, [onToolPreviewChange, panelId]);
 
   useEffect(() => {
     hostRef.current?.setToolMode(toolMode);
-
-    if (toolMode !== "box-create") {
-      setBoxCreatePreview(null);
-    }
   }, [toolMode]);
+
+  useEffect(() => {
+    hostRef.current?.setBoxCreatePreview(toolPreview.kind === "box-create" ? toolPreview.center : null);
+  }, [toolPreview]);
 
   useEffect(() => {
     if (focusRequestId === 0) {
@@ -162,7 +189,7 @@ export function ViewportCanvas({
   return (
     <div
       ref={containerRef}
-      className={`viewport-canvas viewport-canvas--${toolMode} viewport-canvas--${viewMode} viewport-canvas--${displayMode} ${isActivePanel ? "viewport-canvas--active" : ""}`}
+      className={`viewport-canvas viewport-canvas--${toolMode} viewport-canvas--${viewMode} viewport-canvas--${displayMode} viewport-canvas--${layoutMode} ${isActivePanel ? "viewport-canvas--active" : ""}`}
       data-testid={`viewport-canvas-${panelId}`}
       aria-label={`${getViewportPanelLabel(panelId)} editor viewport`}
       style={
@@ -182,10 +209,12 @@ export function ViewportCanvas({
             {displayMode === "authoring" ? "Authoring" : "Lit"}
           </div>
         </div>
-        <div className="viewport-canvas__overlay-text">{getViewportOverlayText(toolMode, viewMode, displayMode)}</div>
-        {toolMode !== "box-create" ? null : (
+        {getViewportOverlayText(toolMode, viewMode, displayMode, layoutMode) === null ? null : (
+          <div className="viewport-canvas__overlay-text">{getViewportOverlayText(toolMode, viewMode, displayMode, layoutMode)}</div>
+        )}
+        {toolMode !== "box-create" || toolPreview.kind !== "box-create" || toolPreview.center === null ? null : (
           <div className="viewport-canvas__overlay-preview" data-testid={`viewport-snap-preview-${panelId}`}>
-            Next box center: {formatVec3(boxCreatePreview)}
+            Preview: {formatVec3(toolPreview.center)}
           </div>
         )}
       </div>
