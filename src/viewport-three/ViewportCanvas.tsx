@@ -86,6 +86,7 @@ export function ViewportCanvas({
   focusSelection,
   onSelectionChange,
   onCreateBoxBrush,
+  onCommitPlacement,
   onToolPreviewChange
 }: ViewportCanvasProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
