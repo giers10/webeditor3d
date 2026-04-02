@@ -86,6 +86,8 @@ export class RuntimeHost {
   private readonly renderer: WebGLRenderer | null;
   private runtimeScene: RuntimeSceneDefinition | null = null;
   private currentWorld: RuntimeSceneDefinition["world"] | null = null;
+  private currentAdvancedRenderingSettings: AdvancedRenderingSettings | null = null;
+  private advancedRenderingComposer: EffectComposer | null = null;
   private projectAssets: Record<string, ProjectAssetRecord> = {};
   private loadedModelAssets: Record<string, LoadedModelAsset> = {};
   private loadedImageAssets: Record<string, LoadedImageAsset> = {};
