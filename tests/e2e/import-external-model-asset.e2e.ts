@@ -26,9 +26,12 @@ test("imports a gltf asset with external resources and survives reload", async (
   await page.locator('input[type="file"][accept*="gltf"]').setInputFiles([gltfFixturePath, binFixturePath]);
 
   await expect(page.getByTestId("asset-list").getByText("scene.gltf", { exact: true })).toBeVisible();
+  await expect(page.getByTestId("asset-list")).not.toContainText("Storage key:");
   await expect(page.getByTestId("outliner-model-instance-list").getByRole("button")).toHaveCount(1);
 
-  await page.getByRole("button", { name: "Place Instance" }).click();
+  await page.getByRole("button", { name: /scene\.gltf/i }).hover();
+  await expect(page.getByTestId("status-asset-hover")).toContainText("Storage key:");
+  await page.getByRole("button", { name: /scene\.gltf/i }).click();
   await expect(page.getByTestId("outliner-model-instance-list").getByRole("button")).toHaveCount(2);
 
   await page.getByRole("button", { name: "Save Draft" }).click();
@@ -37,6 +40,7 @@ test("imports a gltf asset with external resources and survives reload", async (
   await page.reload();
 
   await expect(page.getByTestId("asset-list").getByText("scene.gltf", { exact: true })).toBeVisible();
+  await expect(page.getByTestId("asset-list")).not.toContainText("Storage key:");
   await expect(page.getByTestId("outliner-model-instance-list").getByRole("button")).toHaveCount(2);
   await expect(page.getByTestId("asset-status-message")).toHaveCount(0);
 
