@@ -25,6 +25,7 @@ test("user can place and select typed entities from the entity foundation workfl
   await page.getByTestId("outliner-add-button").click();
   await page.getByTestId("add-menu-entities").click();
   await page.getByTestId("add-menu-sound-emitter").click();
+  await page.getByTestId("viewport-panel-topLeft").click({ position: { x: 16, y: 16 }, force: true });
   const viewportCanvas = getViewportCanvas(page);
   await viewportCanvas.hover({ position: { x: 124, y: 108 }, force: true });
   await expect(page.getByTestId("viewport-snap-preview-topLeft")).toBeVisible();
@@ -56,6 +57,7 @@ test("user can place and select typed entities from the entity foundation workfl
   await page.getByTestId("outliner-add-button").click();
   await page.getByTestId("add-menu-entities").click();
   await page.getByTestId("add-menu-interactable").click();
+  await page.getByTestId("viewport-panel-topLeft").click({ position: { x: 16, y: 16 }, force: true });
   await viewportCanvas.hover({ position: { x: 240, y: 156 }, force: true });
   await expect(page.getByTestId("viewport-snap-preview-topLeft")).toBeVisible();
   await viewportCanvas.click({ position: { x: 240, y: 156 }, force: true });
@@ -102,6 +104,7 @@ test("shift+a opens the add menu at the cursor", async ({ page }) => {
   await expect(page.getByRole("menu", { name: "Add" })).toBeVisible();
   await page.getByTestId("add-menu-lights").click();
   await page.getByTestId("add-menu-point-light").click();
+  await page.getByTestId("viewport-panel-topLeft").click({ position: { x: 16, y: 16 }, force: true });
   const pointLightViewportCanvas = getViewportCanvas(page);
   await pointLightViewportCanvas.hover({ position: { x: 168, y: 128 }, force: true });
   await pointLightViewportCanvas.click({ position: { x: 168, y: 128 }, force: true });
