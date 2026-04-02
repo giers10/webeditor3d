@@ -1457,7 +1457,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
-  const applyPointLightChange = () => {
+  const applyPointLightChange = (overrides: { colorHex?: string } = {}) => {
     if (selectedPointLight === null) {
       setStatusMessage("Select a Point Light before editing it.");
       return;
@@ -1467,7 +1467,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
       const nextEntity = createPointLightEntity({
         id: selectedPointLight.id,
         position: snapVec3ToGrid(readVec3Draft(entityPositionDraft, "Point Light position"), DEFAULT_GRID_SIZE),
-        colorHex: pointLightColorDraft,
+        colorHex: overrides.colorHex ?? pointLightColorDraft,
         intensity: readNonNegativeNumberDraft(pointLightIntensityDraft, "Point Light intensity"),
         distance: readPositiveNumberDraft(pointLightDistanceDraft, "Point Light distance")
       });
@@ -1478,7 +1478,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
-  const applySpotLightChange = () => {
+  const applySpotLightChange = (overrides: { colorHex?: string } = {}) => {
     if (selectedSpotLight === null) {
       setStatusMessage("Select a Spot Light before editing it.");
       return;
@@ -1489,7 +1489,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
         id: selectedSpotLight.id,
         position: snapVec3ToGrid(readVec3Draft(entityPositionDraft, "Spot Light position"), DEFAULT_GRID_SIZE),
         direction: readVec3Draft(spotLightDirectionDraft, "Spot Light direction"),
-        colorHex: spotLightColorDraft,
+        colorHex: overrides.colorHex ?? spotLightColorDraft,
         intensity: readNonNegativeNumberDraft(spotLightIntensityDraft, "Spot Light intensity"),
         distance: readPositiveNumberDraft(spotLightDistanceDraft, "Spot Light distance"),
         angleDegrees: readPositiveNumberDraft(spotLightAngleDraft, "Spot Light angle")
@@ -1531,7 +1531,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
-  const applySoundEmitterChange = () => {
+  const applySoundEmitterChange = (
+    overrides: { audioAssetId?: string | null; autoplay?: boolean; loop?: boolean } = {}
+  ) => {
     if (selectedSoundEmitter === null) {
       setStatusMessage("Select a Sound Emitter before editing it.");
       return;
@@ -1539,15 +1541,21 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
     try {
       const trimmedAudioAssetId = soundEmitterAudioAssetIdDraft.trim();
+      const nextAudioAssetId =
+        overrides.audioAssetId !== undefined
+          ? overrides.audioAssetId
+          : trimmedAudioAssetId.length === 0
+            ? null
+            : trimmedAudioAssetId;
       const nextEntity = createSoundEmitterEntity({
         id: selectedSoundEmitter.id,
         position: snapVec3ToGrid(readVec3Draft(entityPositionDraft, "Sound Emitter position"), DEFAULT_GRID_SIZE),
-        audioAssetId: trimmedAudioAssetId.length === 0 ? undefined : trimmedAudioAssetId,
+        audioAssetId: nextAudioAssetId,
         volume: readNonNegativeNumberDraft(soundEmitterVolumeDraft, "Sound Emitter volume"),
         refDistance: readPositiveNumberDraft(soundEmitterRefDistanceDraft, "Sound Emitter ref distance"),
         maxDistance: readPositiveNumberDraft(soundEmitterMaxDistanceDraft, "Sound Emitter max distance"),
-        autoplay: soundEmitterAutoplayDraft,
-        loop: soundEmitterLoopDraft
+        autoplay: overrides.autoplay ?? soundEmitterAutoplayDraft,
+        loop: overrides.loop ?? soundEmitterLoopDraft
       });
 
       commitEntityChange(selectedSoundEmitter, nextEntity, "Updated Sound Emitter.");
@@ -1602,7 +1610,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
-  const applyInteractableChange = () => {
+  const applyInteractableChange = (overrides: { enabled?: boolean } = {}) => {
     if (selectedInteractable === null) {
       setStatusMessage("Select an Interactable before editing it.");
       return;
@@ -1614,7 +1622,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
         position: snapVec3ToGrid(readVec3Draft(entityPositionDraft, "Interactable position"), DEFAULT_GRID_SIZE),
         radius: readPositiveNumberDraft(interactableRadiusDraft, "Interactable radius"),
         prompt: readInteractablePromptDraft(interactablePromptDraft),
-        enabled: interactableEnabledDraft
+        enabled: overrides.enabled ?? interactableEnabledDraft
       });
 
       commitEntityChange(selectedInteractable, nextEntity, "Updated Interactable.");
@@ -4286,8 +4294,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                             type="color"
                             value={pointLightColorDraft}
                             onChange={(event) => {
-                              setPointLightColorDraft(event.currentTarget.value);
-                              scheduleDraftCommit(applyPointLightChange);
+                              const nextColorHex = event.currentTarget.value;
+                              setPointLightColorDraft(nextColorHex);
+                              applyPointLightChange({ colorHex: nextColorHex });
                             }}
                           />
                         </label>
@@ -4345,8 +4354,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                             type="color"
                             value={spotLightColorDraft}
                             onChange={(event) => {
-                              setSpotLightColorDraft(event.currentTarget.value);
-                              scheduleDraftCommit(applySpotLightChange);
+                              const nextColorHex = event.currentTarget.value;
+                              setSpotLightColorDraft(nextColorHex);
+                              applySpotLightChange({ colorHex: nextColorHex });
                             }}
                           />
                         </label>
@@ -4516,8 +4526,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           className="text-input"
                           value={soundEmitterAudioAssetIdDraft}
                           onChange={(event) => {
-                            setSoundEmitterAudioAssetIdDraft(event.currentTarget.value);
-                            scheduleDraftCommit(applySoundEmitterChange);
+                            const nextAudioAssetId = event.currentTarget.value.trim();
+                            setSoundEmitterAudioAssetIdDraft(nextAudioAssetId);
+                            applySoundEmitterChange({ audioAssetId: nextAudioAssetId.length === 0 ? null : nextAudioAssetId });
                           }}
                         >
                           <option value="">— none —</option>
@@ -4598,8 +4609,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                             type="checkbox"
                             checked={soundEmitterAutoplayDraft}
                             onChange={(event) => {
-                              setSoundEmitterAutoplayDraft(event.currentTarget.checked);
-                              scheduleDraftCommit(applySoundEmitterChange);
+                              const nextAutoplay = event.currentTarget.checked;
+                              setSoundEmitterAutoplayDraft(nextAutoplay);
+                              applySoundEmitterChange({ autoplay: nextAutoplay });
                             }}
                           />
                         </label>
@@ -4610,8 +4622,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                             type="checkbox"
                             checked={soundEmitterLoopDraft}
                             onChange={(event) => {
-                              setSoundEmitterLoopDraft(event.currentTarget.checked);
-                              scheduleDraftCommit(applySoundEmitterChange);
+                              const nextLoop = event.currentTarget.checked;
+                              setSoundEmitterLoopDraft(nextLoop);
+                              applySoundEmitterChange({ loop: nextLoop });
                             }}
                           />
                         </label>
@@ -4745,8 +4758,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                             type="checkbox"
                             checked={interactableEnabledDraft}
                             onChange={(event) => {
-                              setInteractableEnabledDraft(event.currentTarget.checked);
-                              scheduleDraftCommit(applyInteractableChange);
+                              const nextEnabled = event.currentTarget.checked;
+                              setInteractableEnabledDraft(nextEnabled);
+                              applyInteractableChange({ enabled: nextEnabled });
                             }}
                           />
                         </label>
