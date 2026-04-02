@@ -1279,10 +1279,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
         return;
       }
 
-      if (isDeleteShortcut && editorState.toolMode !== "create") {
-        const deleted = handleDeleteSelectedSceneItem();
+      if (isDeleteShortcut) {
+        if (editorState.toolMode !== "create") {
+          const deleted = handleDeleteSelectedSceneItem();
 
-        if (deleted || isDeletionKey) {
+          if (deleted || isDeletionKey) {
+            event.preventDefault();
+          }
+        } else if (isDeletionKey) {
           event.preventDefault();
         }
         return;
@@ -1317,7 +1321,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
       window.removeEventListener("pointermove", handleWindowPointerMove);
       window.removeEventListener("keydown", handleWindowKeyDown);
     };
-  }, [activePanelId, addMenuPosition, brushList.length, editorState.selection, editorState.toolMode, entityList.length, handleDeleteSelectedSceneItem]);
+  }, [activePanelId, addMenuPosition, brushList.length, editorState.selection, editorState.toolMode, entityList.length]);
 
   const applySceneName = () => {
     const normalizedName = sceneNameDraft.trim() || "Untitled Scene";

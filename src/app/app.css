@@ -362,13 +362,13 @@ button:disabled {
 .outliner-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .outliner-section {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .outliner-empty {
@@ -404,6 +404,19 @@ button:disabled {
   border-color: rgba(207, 123, 66, 0.55);
 }
 
+.outliner-item--compact {
+  gap: 6px;
+  padding: 8px 10px;
+}
+
+.outliner-item__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
 .outliner-item__title {
   font-size: 0.88rem;
   font-weight: 700;
@@ -428,6 +441,41 @@ button:disabled {
 }
 
 .outliner-item__select:hover:not(:disabled) {
+  transform: none;
+}
+
+.outliner-item--compact .outliner-item__select {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.outliner-item--compact .outliner-item__title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.outliner-item__delete {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  color: var(--color-muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+}
+
+.outliner-item__delete:hover:not(:disabled) {
+  color: var(--color-text);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
   transform: none;
 }
 
