@@ -113,4 +113,14 @@ describe("EditorStore", () => {
 
     expect(store.getState().toolMode).toBe("box-create");
   });
+
+  it("tracks the active viewport view mode independently from the document", () => {
+    const store = createEditorStore();
+
+    expect(store.getState().viewportViewMode).toBe("perspective");
+
+    store.setViewportViewMode("top");
+
+    expect(store.getState().viewportViewMode).toBe("top");
+  });
 });
