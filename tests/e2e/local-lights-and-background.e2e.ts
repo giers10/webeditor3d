@@ -2,7 +2,7 @@ import path from "node:path";
 
 import { expect, test } from "@playwright/test";
 
-import { getViewportCanvas } from "./viewport-test-helpers";
+import { setViewportPlacementPreview } from "./viewport-test-helpers";
 
 const panoramaFixturePath = path.resolve(process.cwd(), "fixtures/assets/skybox-panorama.svg");
 
@@ -39,10 +39,9 @@ test("local lights and background images persist through editor and runner flows
   await page.getByTestId("outliner-add-button").click();
   await page.getByTestId("add-menu-lights").click();
   await page.getByTestId("add-menu-point-light").click();
-  await page.getByTestId("viewport-panel-topLeft").click({ position: { x: 16, y: 16 }, force: true });
-  const viewportCanvas = getViewportCanvas(page);
-  await viewportCanvas.hover({ position: { x: 172, y: 116 }, force: true });
-  await viewportCanvas.click({ position: { x: 172, y: 116 }, force: true });
+  await setViewportPlacementPreview(page, "topLeft", { kind: "entity", entityKind: "pointLight", audioAssetId: null }, { x: 12, y: 3, z: -4 });
+  await expect(page.getByTestId("viewport-snap-preview-topLeft")).toBeVisible();
+  await page.getByTestId("viewport-fallback-place-topLeft").click();
   await expect(page.getByTestId("point-light-distance")).toHaveValue("8");
   await page.getByTestId("point-light-distance").fill("12");
   await page.getByTestId("point-light-distance").press("Tab");
@@ -50,9 +49,9 @@ test("local lights and background images persist through editor and runner flows
   await page.getByTestId("outliner-add-button").click();
   await page.getByTestId("add-menu-lights").click();
   await page.getByTestId("add-menu-spot-light").click();
-  await page.getByTestId("viewport-panel-topLeft").click({ position: { x: 16, y: 16 }, force: true });
-  await viewportCanvas.hover({ position: { x: 240, y: 132 }, force: true });
-  await viewportCanvas.click({ position: { x: 240, y: 132 }, force: true });
+  await setViewportPlacementPreview(page, "topLeft", { kind: "entity", entityKind: "spotLight", audioAssetId: null }, { x: -10, y: 4, z: 6 });
+  await expect(page.getByTestId("viewport-snap-preview-topLeft")).toBeVisible();
+  await page.getByTestId("viewport-fallback-place-topLeft").click();
   await expect(page.getByTestId("spot-light-angle")).toHaveValue("35");
   await page.getByTestId("spot-light-angle").fill("48");
   await page.getByTestId("spot-light-angle").press("Tab");

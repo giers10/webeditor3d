@@ -60,7 +60,10 @@ test("imports a gltf asset with external resources and places an instance", asyn
     throw new Error("Placed model instance is missing from the document snapshot.");
   }
 
-  expect(Math.abs(selectedModelInstance.position.x) > 0 || Math.abs(selectedModelInstance.position.z) > 0).toBe(true);
+  expect(selectedModelInstance.position).toMatchObject({
+    x: 88,
+    z: -84
+  });
 
   expect(pageErrors).toEqual([]);
   expect(consoleErrors).toEqual([]);

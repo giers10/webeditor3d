@@ -62,7 +62,10 @@ test("imports a model asset, places an instance, and survives reload", async ({ 
     throw new Error("Placed model instance is missing from the document snapshot.");
   }
 
-  expect(Math.abs(selectedModelInstance.position.x) > 0 || Math.abs(selectedModelInstance.position.z) > 0).toBe(true);
+  expect(selectedModelInstance.position).toMatchObject({
+    x: 92,
+    z: -76
+  });
 
   await page.getByRole("button", { name: "Save Draft" }).click();
   await expect(page.getByTestId("status-message")).toContainText("Local draft saved.");
