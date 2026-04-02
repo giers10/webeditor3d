@@ -24,7 +24,9 @@ import {
 } from "../entities/entity-instances";
 import {
   createPlayAnimationInteractionLink,
+  createPlaySoundInteractionLink,
   createStopAnimationInteractionLink,
+  createStopSoundInteractionLink,
   createTeleportPlayerInteractionLink,
   createToggleVisibilityInteractionLink,
   isInteractionTriggerKind,
@@ -42,6 +44,7 @@ import {
 } from "./brushes";
 import {
   BOX_BRUSH_SCENE_DOCUMENT_VERSION,
+  ANIMATION_PLAYBACK_SCENE_DOCUMENT_VERSION,
   ENTITY_SYSTEM_FOUNDATION_SCENE_DOCUMENT_VERSION,
   FACE_MATERIALS_SCENE_DOCUMENT_VERSION,
   FIRST_ROOM_POLISH_SCENE_DOCUMENT_VERSION,
