@@ -48,7 +48,10 @@ test("imports a gltf asset with external resources and places an instance", asyn
 
   const selectedModelInstance = snapshot.document.modelInstances[selectedModelInstanceId as string];
 
-  expect(selectedModelInstance).toBeDefined();
+  if (selectedModelInstance === undefined) {
+    throw new Error("Placed model instance is missing from the document snapshot.");
+  }
+
   expect(Math.abs(selectedModelInstance.position.x) > 0 || Math.abs(selectedModelInstance.position.z) > 0).toBe(true);
 
   expect(pageErrors).toEqual([]);

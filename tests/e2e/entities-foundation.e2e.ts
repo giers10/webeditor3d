@@ -37,7 +37,10 @@ test("user can place and select typed entities from the entity foundation workfl
 
   const selectedSoundEmitter = soundEmitterSnapshot.document.entities[selectedSoundEmitterId as string];
 
-  expect(selectedSoundEmitter).toBeDefined();
+  if (selectedSoundEmitter === undefined) {
+    throw new Error("Placed sound emitter is missing from the document snapshot.");
+  }
+
   expect(Math.abs(selectedSoundEmitter.position.x) > 0 || Math.abs(selectedSoundEmitter.position.z) > 0).toBe(true);
   await expect(page.getByTestId("sound-emitter-ref-distance")).toHaveValue("6");
   await expect(page.getByTestId("sound-emitter-max-distance")).toHaveValue("24");
