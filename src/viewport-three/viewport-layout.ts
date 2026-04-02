@@ -44,6 +44,27 @@ export const DEFAULT_VIEWPORT_LAYOUT_STATE: ViewportLayoutState = {
   }
 };
 
+export function createDefaultViewportLayoutState(): ViewportLayoutState {
+  return {
+    layoutMode: DEFAULT_VIEWPORT_LAYOUT_STATE.layoutMode,
+    activePanelId: DEFAULT_VIEWPORT_LAYOUT_STATE.activePanelId,
+    panels: {
+      topLeft: {
+        ...DEFAULT_VIEWPORT_LAYOUT_STATE.panels.topLeft
+      },
+      topRight: {
+        ...DEFAULT_VIEWPORT_LAYOUT_STATE.panels.topRight
+      },
+      bottomLeft: {
+        ...DEFAULT_VIEWPORT_LAYOUT_STATE.panels.bottomLeft
+      },
+      bottomRight: {
+        ...DEFAULT_VIEWPORT_LAYOUT_STATE.panels.bottomRight
+      }
+    }
+  };
+}
+
 const VIEWPORT_PANEL_LABELS: Record<ViewportPanelId, string> = {
   topLeft: "Top Left",
   topRight: "Top Right",
@@ -72,4 +93,3 @@ export function getViewportLayoutModeLabel(layoutMode: ViewportLayoutMode): stri
 export function getViewportDisplayModeLabel(displayMode: ViewportDisplayMode): string {
   return VIEWPORT_DISPLAY_MODE_LABELS[displayMode];
 }
-
