@@ -7,7 +7,7 @@ const SOUND_EMITTER_CABINET_SIZE = {
 };
 
 const SOUND_EMITTER_FRONT_OFFSET = 0.1;
-const SOUND_EMITTER_TWEEETER_RADIUS = 0.045;
+const SOUND_EMITTER_TWEETER_RADIUS = 0.045;
 const SOUND_EMITTER_TWEETER_Y = 0.15;
 const SOUND_EMITTER_WOOFER_RADIUS = 0.11;
 const SOUND_EMITTER_WOOFER_Y = -0.08;
@@ -29,14 +29,14 @@ export function createSoundEmitterMarkerMeshes(markerColor: number, selected: bo
   );
 
   const tweeterRing = new Mesh(
-    new TorusGeometry(SOUND_EMITTER_TWEEETER_RADIUS, 0.012, 8, 18),
+    new TorusGeometry(SOUND_EMITTER_TWEETER_RADIUS, 0.012, 8, 18),
     createSpeakerMaterial(markerColor, selected, 0.22, 0.4, 0.04)
   );
   tweeterRing.rotation.x = Math.PI * 0.5;
   tweeterRing.position.set(0, SOUND_EMITTER_TWEETER_Y, SOUND_EMITTER_FRONT_OFFSET);
 
   const tweeterCone = new Mesh(
-    new CylinderGeometry(SOUND_EMITTER_TWEEETER_RADIUS * 0.58, SOUND_EMITTER_TWEEETER_RADIUS * 0.58, 0.028, 18),
+    new CylinderGeometry(SOUND_EMITTER_TWEETER_RADIUS * 0.58, SOUND_EMITTER_TWEETER_RADIUS * 0.58, 0.028, 18),
     createSpeakerMaterial(0x14171c, selected, 0.08, 0.68, 0.01)
   );
   tweeterCone.rotation.x = Math.PI * 0.5;
