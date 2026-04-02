@@ -884,6 +884,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
   );
   const [statusMessage, setStatusMessage] = useState(initialStatusMessage ?? "Slice 3.5 advanced rendering ready.");
   const [assetStatusMessage, setAssetStatusMessage] = useState<string | null>(null);
+  const [hoveredAssetId, setHoveredAssetId] = useState<string | null>(null);
+  const [addMenuPosition, setAddMenuPosition] = useState<HierarchicalMenuPosition | null>(null);
   const [preferredNavigationMode, setPreferredNavigationMode] = useState<RuntimeNavigationMode>(
     primaryPlayerStart === null ? "orbitVisitor" : "firstPerson"
   );
@@ -913,6 +915,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const loadedModelAssetsRef = useRef<Record<string, LoadedModelAsset>>({});
   const loadedImageAssetsRef = useRef<Record<string, LoadedImageAsset>>({});
   const loadedAudioAssetsRef = useRef<Record<string, LoadedAudioAsset>>({});
+  const lastPointerPositionRef = useRef<HierarchicalMenuPosition>({
+    x: Math.round(window.innerWidth * 0.5),
+    y: Math.round(window.innerHeight * 0.5)
+  });
   const documentValidation = validateSceneDocument(editorState.document);
   const runValidation = validateRuntimeSceneBuild(editorState.document, preferredNavigationMode);
   const diagnostics = [...documentValidation.errors, ...documentValidation.warnings, ...runValidation.errors, ...runValidation.warnings];
@@ -928,6 +934,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
         ? "Ready for First Person"
         : "Ready for Orbit Visitor";
   const advancedRendering = editorState.document.world.advancedRendering;
+  const hoveredAsset = hoveredAssetId === null ? null : editorState.document.assets[hoveredAssetId] ?? null;
+  const hoveredAssetStatusMessage = hoveredAsset === null ? null : formatAssetHoverStatus(hoveredAsset);
 
   useEffect(() => {
     setSceneNameDraft(editorState.document.name);
@@ -1261,8 +1269,30 @@ export function App({ store, initialStatusMessage }: AppProps) {
       return;
     }
 
+    const handleWindowPointerMove = (event: globalThis.PointerEvent) => {
+      lastPointerPositionRef.current = {
+        x: event.clientX,
+        y: event.clientY
+      };
+    };
+
     const handleWindowKeyDown = (event: globalThis.KeyboardEvent) => {
       if (isTextEntryTarget(event.target)) {
+        return;
+      }
+
+      if (event.key === "Escape" && addMenuPosition !== null) {
+        event.preventDefault();
+        setAddMenuPosition(null);
+        return;
+      }
+
+      if (event.shiftKey && event.code === "KeyA") {
+        event.preventDefault();
+        setAddMenuPosition({
+          x: lastPointerPositionRef.current.x,
+          y: lastPointerPositionRef.current.y
+        });
         return;
       }
 
@@ -1288,12 +1318,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
       setStatusMessage(editorState.selection.kind === "none" ? "Framed the authored scene in the viewport." : "Framed the current selection.");
     };
 
+    window.addEventListener("pointermove", handleWindowPointerMove);
     window.addEventListener("keydown", handleWindowKeyDown);
 
     return () => {
+      window.removeEventListener("pointermove", handleWindowPointerMove);
       window.removeEventListener("keydown", handleWindowKeyDown);
     };
-  }, [activePanelId, editorState.selection, editorState.toolMode, brushList.length, entityList.length]);
+  }, [activePanelId, addMenuPosition, editorState.selection, editorState.toolMode, brushList.length, entityList.length]);
 
   const applySceneName = () => {
     const normalizedName = sceneNameDraft.trim() || "Untitled Scene";
@@ -1316,6 +1348,23 @@ export function App({ store, initialStatusMessage }: AppProps) {
     if (status !== undefined) {
       setStatusMessage(status);
     }
+  };
+
+  const openAddMenuAt = (position: HierarchicalMenuPosition) => {
+    setAddMenuPosition(position);
+  };
+
+  const closeAddMenu = () => {
+    setAddMenuPosition(null);
+  };
+
+  const handleOpenAddMenuFromButton = (event: ReactMouseEvent<HTMLButtonElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+
+    openAddMenuAt({
+      x: rect.left,
+      y: rect.bottom + 8
+    });
   };
 
   const handleSetViewportLayoutMode = (nextLayoutMode: ViewportLayoutMode) => {
