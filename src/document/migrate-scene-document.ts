@@ -1073,7 +1073,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       assets: expectEmptyCollection(source.assets, "assets"),
       brushes: readBrushes(source.brushes, materials, false),
       modelInstances: expectEmptyCollection(source.modelInstances, "modelInstances"),
-      entities: readEntities(source.entities),
+      entities: readEntities(source.entities, false),
       interactionLinks: expectEmptyCollection(source.interactionLinks, "interactionLinks")
     };
   }
@@ -1090,7 +1090,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       assets: expectEmptyCollection(source.assets, "assets"),
       brushes: readBrushes(source.brushes, materials, false),
       modelInstances: expectEmptyCollection(source.modelInstances, "modelInstances"),
-      entities: readEntities(source.entities),
+      entities: readEntities(source.entities, false),
       interactionLinks: expectEmptyCollection(source.interactionLinks, "interactionLinks")
     };
   }
@@ -1107,7 +1107,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       assets: expectEmptyCollection(source.assets, "assets"),
       brushes: readBrushes(source.brushes, materials, false),
       modelInstances: expectEmptyCollection(source.modelInstances, "modelInstances"),
-      entities: readEntities(source.entities),
+      entities: readEntities(source.entities, false),
       interactionLinks: expectEmptyCollection(source.interactionLinks, "interactionLinks")
     };
   }
@@ -1124,7 +1124,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       assets: expectEmptyCollection(source.assets, "assets"),
       brushes: readBrushes(source.brushes, materials, false),
       modelInstances: expectEmptyCollection(source.modelInstances, "modelInstances"),
-      entities: readEntities(source.entities),
+      entities: readEntities(source.entities, false),
       interactionLinks: expectEmptyCollection(source.interactionLinks, "interactionLinks")
     };
   }
@@ -1141,7 +1141,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       assets: expectEmptyCollection(source.assets, "assets"),
       brushes: readBrushes(source.brushes, materials, false),
       modelInstances: expectEmptyCollection(source.modelInstances, "modelInstances"),
-      entities: readEntities(source.entities),
+      entities: readEntities(source.entities, false),
       interactionLinks: readInteractionLinks(source.interactionLinks)
     };
   }
@@ -1158,7 +1158,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       assets: expectEmptyCollection(source.assets, "assets"),
       brushes: readBrushes(source.brushes, materials, false),
       modelInstances: expectEmptyCollection(source.modelInstances, "modelInstances"),
-      entities: readEntities(source.entities),
+      entities: readEntities(source.entities, false),
       interactionLinks: readInteractionLinks(source.interactionLinks)
     };
   }
@@ -1176,7 +1176,25 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       assets,
       brushes: readBrushes(source.brushes, materials, false),
       modelInstances: readModelInstances(source.modelInstances, assets),
-      entities: readEntities(source.entities),
+      entities: readEntities(source.entities, false),
+      interactionLinks: readInteractionLinks(source.interactionLinks)
+    };
+  }
+
+  if (source.version === ANIMATION_PLAYBACK_SCENE_DOCUMENT_VERSION) {
+    const materials = readMaterialRegistry(source.materials, "materials");
+    const assets = readAssets(source.assets);
+
+    return {
+      version: SCENE_DOCUMENT_VERSION,
+      name: expectString(source.name, "name"),
+      world: readWorldSettings(source.world),
+      materials,
+      textures: expectEmptyCollection(source.textures, "textures"),
+      assets,
+      brushes: readBrushes(source.brushes, materials, false),
+      modelInstances: readModelInstances(source.modelInstances, assets),
+      entities: readEntities(source.entities, true),
       interactionLinks: readInteractionLinks(source.interactionLinks)
     };
   }
@@ -1197,7 +1215,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       assets,
       brushes: readBrushes(source.brushes, materials, false),
       modelInstances: readModelInstances(source.modelInstances, assets),
-      entities: readEntities(source.entities),
+      entities: readEntities(source.entities, false),
       interactionLinks: readInteractionLinks(source.interactionLinks)
     };
   }
