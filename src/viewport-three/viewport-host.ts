@@ -1303,28 +1303,18 @@ export class ViewportHost {
       return;
     }
 
-    if (this.toolMode === "box-create") {
-      const previewCenter = this.getBoxCreatePreviewCenter(event);
+    if (this.toolMode === "create" && this.creationPreview !== null) {
+      const previewCenter = this.getCreationPreviewCenter(event, this.creationPreview.target);
+      const nextCreationPreview = {
+        ...this.creationPreview,
+        center: previewCenter
+      };
+
+      this.syncCreationPreview(nextCreationPreview);
+      this.creationPreviewChangeHandler?.(nextCreationPreview);
 
       if (previewCenter !== null) {
-        this.createBoxBrushHandler?.(previewCenter);
-      }
-
-      return;
-    }
-
-    if (this.toolMode === "place" && this.placementPreview !== null) {
-      const previewCenter = this.getPlacementPreviewCenter(event);
-
-      if (previewCenter !== null) {
-        const nextPlacementPreview = {
-          ...this.placementPreview,
-          center: previewCenter
-        } as PlacementViewportToolPreview;
-
-        this.syncPlacementPreview(nextPlacementPreview);
-        this.placementPreviewChangeHandler?.(nextPlacementPreview);
-        this.placementCommitHandler?.(nextPlacementPreview);
+        this.creationCommitHandler?.(nextCreationPreview);
       }
 
       return;
@@ -1471,22 +1461,18 @@ export class ViewportHost {
       return;
     }
 
-    if (this.toolMode !== "box-create") {
-      if (this.toolMode !== "place" || this.placementPreview === null) {
-        return;
-      }
-
-      const previewCenter = this.getPlacementPreviewCenter(event);
-      const nextPlacementPreview = previewCenter === null ? { kind: "none" } : { ...this.placementPreview, center: previewCenter };
-
-      this.syncPlacementPreview(previewCenter === null ? null : (nextPlacementPreview as PlacementViewportToolPreview));
-      this.placementPreviewChangeHandler?.(nextPlacementPreview as ViewportToolPreview);
+    if (this.toolMode !== "create" || this.creationPreview === null) {
       return;
     }
 
-    const previewCenter = this.getBoxCreatePreviewCenter(event);
-    this.syncBoxCreatePreview(previewCenter);
-    this.boxCreatePreviewChangeHandler?.(previewCenter);
+    const previewCenter = this.getCreationPreviewCenter(event, this.creationPreview.target);
+    const nextCreationPreview = {
+      ...this.creationPreview,
+      center: previewCenter
+    };
+
+    this.syncCreationPreview(nextCreationPreview);
+    this.creationPreviewChangeHandler?.(nextCreationPreview);
   };
 
   private handlePointerUp = (event: PointerEvent) => {
@@ -1506,19 +1492,6 @@ export class ViewportHost {
     if (this.activeCameraDragPointerId !== null) {
       return;
     }
-
-    if (this.toolMode !== "box-create" && this.toolMode !== "place") {
-      return;
-    }
-
-    if (this.toolMode === "box-create") {
-      this.syncBoxCreatePreview(null);
-      this.boxCreatePreviewChangeHandler?.(null);
-      return;
-    }
-
-    this.syncPlacementPreview(null);
-    this.placementPreviewChangeHandler?.({ kind: "none" });
   };
 
   private handleWheel = (event: WheelEvent) => {
@@ -1606,47 +1579,41 @@ export class ViewportHost {
     this.applyOrthographicCameraPose();
   }
 
-  private getBoxCreatePreviewCenter(event: PointerEvent): Vec3 | null {
-    return this.getBoxPlacementPreviewCenter(event, DEFAULT_BOX_BRUSH_SIZE);
-  }
+  private getCreationPreviewCenter(event: PointerEvent, target: CreationTarget): Vec3 | null {
+    switch (target.kind) {
+      case "box-brush":
+        return this.getBoxCreationPreviewCenter(event, DEFAULT_BOX_BRUSH_SIZE);
+      case "entity":
+        switch (target.entityKind) {
+          case "triggerVolume":
+            return this.getBoxCreationPreviewCenter(event, DEFAULT_TRIGGER_VOLUME_SIZE);
+          case "pointLight":
+          case "playerStart":
+          case "soundEmitter":
+          case "teleportTarget":
+          case "interactable":
+          case "spotLight":
+            return this.getPlanarCreationAnchor(event);
+        }
+      case "model-instance": {
+        const anchor = this.getPlanarCreationAnchor(event);
 
-  private getPlacementPreviewCenter(event: PointerEvent): Vec3 | null {
-    if (this.placementPreview === null) {
-      return null;
-    }
+        if (anchor === null) {
+          return null;
+        }
 
-    const target = this.placementPreview.target;
+        const asset = this.projectAssets[target.assetId];
 
-    if (target.kind === "model-instance") {
-      const anchor = this.getPlanarPlacementAnchor(event);
+        if (asset === undefined || asset.kind !== "model") {
+          return null;
+        }
 
-      if (anchor === null) {
-        return null;
+        return createModelInstancePlacementPosition(asset, anchor);
       }
-
-      const asset = this.projectAssets[target.assetId];
-
-      if (asset === undefined || asset.kind !== "model") {
-        return null;
-      }
-
-      return createModelInstancePlacementPosition(asset, anchor);
-    }
-
-    switch (target.entityKind) {
-      case "triggerVolume":
-        return this.getBoxPlacementPreviewCenter(event, DEFAULT_TRIGGER_VOLUME_SIZE);
-      case "pointLight":
-      case "playerStart":
-      case "soundEmitter":
-      case "teleportTarget":
-      case "interactable":
-      case "spotLight":
-        return this.getPlanarPlacementAnchor(event);
     }
   }
 
-  private getPlanarPlacementAnchor(event: PointerEvent): Vec3 | null {
+  private getPlanarCreationAnchor(event: PointerEvent): Vec3 | null {
     const bounds = this.renderer.domElement.getBoundingClientRect();
 
     if (bounds.width === 0 || bounds.height === 0) {
@@ -1685,7 +1652,7 @@ export class ViewportHost {
     }
   }
 
-  private getBoxPlacementPreviewCenter(event: PointerEvent, size: Vec3): Vec3 | null {
+  private getBoxCreationPreviewCenter(event: PointerEvent, size: Vec3): Vec3 | null {
     const bounds = this.renderer.domElement.getBoundingClientRect();
 
     if (bounds.width === 0 || bounds.height === 0) {
@@ -1724,49 +1691,30 @@ export class ViewportHost {
     }
   }
 
-  private syncBoxCreatePreview(center: Vec3 | null) {
-    if (
-      (center === null && this.lastBoxCreatePreviewCenter === null) ||
-      (center !== null &&
-        this.lastBoxCreatePreviewCenter !== null &&
-        center.x === this.lastBoxCreatePreviewCenter.x &&
-        center.y === this.lastBoxCreatePreviewCenter.y &&
-        center.z === this.lastBoxCreatePreviewCenter.z)
-    ) {
+  private getCreationPreviewTargetKey(target: CreationTarget): string {
+    switch (target.kind) {
+      case "box-brush":
+        return "box-brush";
+      case "entity":
+        return `entity:${target.entityKind}:${target.audioAssetId}`;
+      case "model-instance":
+        return `model-instance:${target.assetId}`;
+    }
+  }
+
+  private clearCreationPreviewObject() {
+    if (this.creationPreviewObject === null) {
+      this.creationPreviewTargetKey = null;
       return;
     }
 
-    this.lastBoxCreatePreviewCenter = center === null ? null : { ...center };
-    this.boxCreatePreviewMesh.visible = center !== null;
-    this.boxCreatePreviewEdges.visible = center !== null;
-
-    if (center !== null) {
-      this.boxCreatePreviewMesh.position.set(center.x, center.y, center.z);
-      this.boxCreatePreviewEdges.position.set(center.x, center.y, center.z);
-    }
+    this.scene.remove(this.creationPreviewObject);
+    disposeModelInstance(this.creationPreviewObject);
+    this.creationPreviewObject = null;
+    this.creationPreviewTargetKey = null;
   }
 
-  private getPlacementPreviewTargetKey(toolPreview: PlacementViewportToolPreview): string {
-    if (toolPreview.target.kind === "entity") {
-      return `entity:${toolPreview.target.entityKind}:${toolPreview.target.audioAssetId}`;
-    }
-
-    return `model-instance:${toolPreview.target.assetId}`;
-  }
-
-  private clearPlacementPreviewObject() {
-    if (this.placementPreviewObject === null) {
-      this.placementPreviewTargetKey = null;
-      return;
-    }
-
-    this.scene.remove(this.placementPreviewObject);
-    disposeModelInstance(this.placementPreviewObject);
-    this.placementPreviewObject = null;
-    this.placementPreviewTargetKey = null;
-  }
-
-  private createPlacementPreviewObject(toolPreview: PlacementViewportToolPreview): Group {
+  private createCreationPreviewObject(toolPreview: CreationViewportToolPreview): Group {
     const previewPosition = toolPreview.center ?? {
       x: 0,
       y: 0,
@@ -1774,11 +1722,16 @@ export class ViewportHost {
     };
 
     switch (toolPreview.target.kind) {
+      case "box-brush": {
+        const fallbackGroup = new Group();
+        fallbackGroup.visible = false;
+        return fallbackGroup;
+      }
       case "entity":
         switch (toolPreview.target.entityKind) {
           case "pointLight":
             return this.createPointLightGizmoRenderObjects(
-              "placement-preview",
+              "creation-preview",
               previewPosition,
               DEFAULT_POINT_LIGHT_DISTANCE,
               PLACEMENT_PREVIEW_COLOR_HEX,
@@ -1786,7 +1739,7 @@ export class ViewportHost {
             ).group;
           case "spotLight":
             return this.createSpotLightGizmoRenderObjects(
-              "placement-preview",
+              "creation-preview",
               previewPosition,
               DEFAULT_SPOT_LIGHT_DIRECTION,
               DEFAULT_SPOT_LIGHT_DISTANCE,
@@ -1795,10 +1748,10 @@ export class ViewportHost {
               false
             ).group;
           case "playerStart":
-            return this.createPlayerStartRenderObjects("placement-preview", previewPosition, DEFAULT_PLAYER_START_YAW_DEGREES, false).group;
+            return this.createPlayerStartRenderObjects("creation-preview", previewPosition, DEFAULT_PLAYER_START_YAW_DEGREES, false).group;
           case "soundEmitter":
             return this.createSoundEmitterRenderObjects(
-              "placement-preview",
+              "creation-preview",
               previewPosition,
               DEFAULT_SOUND_EMITTER_REF_DISTANCE,
               DEFAULT_SOUND_EMITTER_MAX_DISTANCE,
@@ -1807,7 +1760,7 @@ export class ViewportHost {
             ).group;
           case "triggerVolume":
             return this.createTriggerVolumeRenderObjects(
-              "placement-preview",
+              "creation-preview",
               previewPosition,
               DEFAULT_TRIGGER_VOLUME_SIZE,
               false,
@@ -1815,7 +1768,7 @@ export class ViewportHost {
             ).group;
           case "teleportTarget":
             return this.createTeleportTargetRenderObjects(
-              "placement-preview",
+              "creation-preview",
               previewPosition,
               DEFAULT_TELEPORT_TARGET_YAW_DEGREES,
               false,
@@ -1823,7 +1776,7 @@ export class ViewportHost {
             ).group;
           case "interactable":
             return this.createInteractableRenderObjects(
-              "placement-preview",
+              "creation-preview",
               previewPosition,
               DEFAULT_INTERACTABLE_RADIUS,
               false,
@@ -1850,19 +1803,19 @@ export class ViewportHost {
       }
     }
 
-    throw new Error("Unsupported placement preview target.");
+    throw new Error("Unsupported creation preview target.");
   }
 
-  private syncPlacementPreview(toolPreview: PlacementViewportToolPreview | null) {
-    const currentToolPreview = this.placementPreview === null ? { kind: "none" as const } : this.placementPreview;
+  private syncCreationPreview(toolPreview: CreationViewportToolPreview | null) {
+    const currentToolPreview = this.creationPreview === null ? { kind: "none" as const } : this.creationPreview;
     const nextToolPreview = toolPreview === null ? { kind: "none" as const } : toolPreview;
 
     if (areViewportToolPreviewsEqual(currentToolPreview, nextToolPreview)) {
       return;
     }
 
-    this.placementPreview = toolPreview === null ? null : {
-      kind: "placement",
+    this.creationPreview = toolPreview === null ? null : {
+      kind: "create",
       sourcePanelId: toolPreview.sourcePanelId,
       target:
         toolPreview.target.kind === "entity"
@@ -1874,34 +1827,56 @@ export class ViewportHost {
           : {
               kind: "model-instance",
               assetId: toolPreview.target.assetId
+            }
+          : {
+              kind: "box-brush"
             },
       center: toolPreview.center === null ? null : { ...toolPreview.center }
     };
 
     if (toolPreview === null) {
-      this.clearPlacementPreviewObject();
+      this.boxCreatePreviewMesh.visible = false;
+      this.boxCreatePreviewEdges.visible = false;
+      this.clearCreationPreviewObject();
       return;
     }
 
-    const nextTargetKey = this.getPlacementPreviewTargetKey(toolPreview);
-
-    if (this.placementPreviewObject !== null && this.placementPreviewTargetKey === nextTargetKey) {
-      this.placementPreviewObject.visible = toolPreview.center !== null;
+    if (toolPreview.target.kind === "box-brush") {
+      this.boxCreatePreviewMesh.visible = toolPreview.center !== null;
+      this.boxCreatePreviewEdges.visible = toolPreview.center !== null;
 
       if (toolPreview.center !== null) {
-        this.placementPreviewObject.position.set(toolPreview.center.x, toolPreview.center.y, toolPreview.center.z);
+        this.boxCreatePreviewMesh.position.set(toolPreview.center.x, toolPreview.center.y, toolPreview.center.z);
+        this.boxCreatePreviewEdges.position.set(toolPreview.center.x, toolPreview.center.y, toolPreview.center.z);
       }
 
-      this.placementPreviewTargetKey = nextTargetKey;
+      this.clearCreationPreviewObject();
+      this.creationPreviewTargetKey = null;
       return;
     }
 
-    this.clearPlacementPreviewObject();
+    const nextTargetKey = this.getCreationPreviewTargetKey(toolPreview.target);
 
-    const placementPreviewObject = this.createPlacementPreviewObject(toolPreview);
-    placementPreviewObject.visible = toolPreview.center !== null;
-    this.scene.add(placementPreviewObject);
-    this.placementPreviewObject = placementPreviewObject;
+    this.boxCreatePreviewMesh.visible = false;
+    this.boxCreatePreviewEdges.visible = false;
+
+    if (this.creationPreviewObject !== null && this.creationPreviewTargetKey === nextTargetKey) {
+      this.creationPreviewObject.visible = toolPreview.center !== null;
+
+      if (toolPreview.center !== null) {
+        this.creationPreviewObject.position.set(toolPreview.center.x, toolPreview.center.y, toolPreview.center.z);
+      }
+
+      this.creationPreviewTargetKey = nextTargetKey;
+      return;
+    }
+
+    this.clearCreationPreviewObject();
+
+    const creationPreviewObject = this.createCreationPreviewObject(toolPreview);
+    creationPreviewObject.visible = toolPreview.center !== null;
+    this.scene.add(creationPreviewObject);
+    this.creationPreviewObject = creationPreviewObject;
     this.placementPreviewTargetKey = nextTargetKey;
   }
 
