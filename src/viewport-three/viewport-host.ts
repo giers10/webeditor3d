@@ -523,11 +523,10 @@ export class ViewportHost {
   }
 
   private syncAdvancedRenderingComposer(settings: AdvancedRenderingSettings) {
-    const shouldUseComposer = settings.enabled;
+    const shouldUseComposer = settings.enabled && this.viewMode === "perspective";
     const settingsChanged =
       this.currentAdvancedRenderingSettings === null ||
       !areAdvancedRenderingSettingsEqual(this.currentAdvancedRenderingSettings, settings);
-    const cameraModeChanged = this.currentComposerCameraMode !== this.viewMode;
 
     if (!shouldUseComposer) {
       if (this.advancedRenderingComposer !== null) {
@@ -535,12 +534,13 @@ export class ViewportHost {
         this.advancedRenderingComposer = null;
       }
 
-      this.currentAdvancedRenderingSettings = null;
+      this.currentAdvancedRenderingSettings = settings.enabled ? cloneAdvancedRenderingSettings(settings) : null;
+      this.currentComposerCameraMode = this.viewMode;
       this.renderer.autoClear = true;
       return;
     }
 
-    if (this.advancedRenderingComposer !== null && !settingsChanged && !cameraModeChanged) {
+    if (this.advancedRenderingComposer !== null && !settingsChanged) {
       return;
     }
 
@@ -548,9 +548,9 @@ export class ViewportHost {
       this.advancedRenderingComposer.dispose();
     }
 
-    this.advancedRenderingComposer = createAdvancedRenderingComposer(this.renderer, this.scene, this.getActiveCamera(), settings);
+    this.advancedRenderingComposer = createAdvancedRenderingComposer(this.renderer, this.scene, this.perspectiveCamera, settings);
     this.currentAdvancedRenderingSettings = cloneAdvancedRenderingSettings(settings);
-    this.currentComposerCameraMode = this.viewMode;
+    this.currentComposerCameraMode = "perspective";
     this.renderer.autoClear = false;
   }
 
