@@ -226,7 +226,7 @@ export function normalizeInteractablePrompt(prompt: string): string {
 }
 
 export function createPointLightEntity(
-  overrides: Partial<Pick<PointLightEntity, "id" | "position" | "colorHex" | "intensity" | "distance">> = {}
+  overrides: Partial<Pick<PointLightEntity, "id" | "name" | "position" | "colorHex" | "intensity" | "distance">> = {}
 ): PointLightEntity {
   const position = cloneVec3(overrides.position ?? DEFAULT_POINT_LIGHT_POSITION);
   const colorHex = overrides.colorHex ?? DEFAULT_POINT_LIGHT_COLOR_HEX;
@@ -241,6 +241,7 @@ export function createPointLightEntity(
   return {
     id: overrides.id ?? createOpaqueId("entity-point-light"),
     kind: "pointLight",
+    name: normalizeEntityName(overrides.name),
     position,
     colorHex,
     intensity,
@@ -249,7 +250,7 @@ export function createPointLightEntity(
 }
 
 export function createSpotLightEntity(
-  overrides: Partial<Pick<SpotLightEntity, "id" | "position" | "direction" | "colorHex" | "intensity" | "distance" | "angleDegrees">> = {}
+  overrides: Partial<Pick<SpotLightEntity, "id" | "name" | "position" | "direction" | "colorHex" | "intensity" | "distance" | "angleDegrees">> = {}
 ): SpotLightEntity {
   const position = cloneVec3(overrides.position ?? DEFAULT_SPOT_LIGHT_POSITION);
   const direction = cloneVec3(overrides.direction ?? DEFAULT_SPOT_LIGHT_DIRECTION);
@@ -272,6 +273,7 @@ export function createSpotLightEntity(
   return {
     id: overrides.id ?? createOpaqueId("entity-spot-light"),
     kind: "spotLight",
+    name: normalizeEntityName(overrides.name),
     position,
     direction,
     colorHex,
@@ -282,7 +284,7 @@ export function createSpotLightEntity(
 }
 
 export function createPlayerStartEntity(
-  overrides: Partial<Pick<PlayerStartEntity, "id" | "position" | "yawDegrees">> = {}
+  overrides: Partial<Pick<PlayerStartEntity, "id" | "name" | "position" | "yawDegrees">> = {}
 ): PlayerStartEntity {
   const position = cloneVec3(overrides.position ?? DEFAULT_PLAYER_START_POSITION);
   const yawDegrees = overrides.yawDegrees ?? DEFAULT_PLAYER_START_YAW_DEGREES;
@@ -296,6 +298,7 @@ export function createPlayerStartEntity(
   return {
     id: overrides.id ?? createOpaqueId("entity-player-start"),
     kind: "playerStart",
+    name: normalizeEntityName(overrides.name),
     position,
     yawDegrees: normalizeYawDegrees(yawDegrees)
   };
@@ -305,7 +308,7 @@ export function createSoundEmitterEntity(
   overrides: Partial<
     Pick<
       SoundEmitterEntity,
-      "id" | "position" | "audioAssetId" | "volume" | "refDistance" | "maxDistance" | "autoplay" | "loop"
+      "id" | "name" | "position" | "audioAssetId" | "volume" | "refDistance" | "maxDistance" | "autoplay" | "loop"
     >
   > = {}
 ): SoundEmitterEntity {
@@ -332,6 +335,7 @@ export function createSoundEmitterEntity(
   return {
     id: overrides.id ?? createOpaqueId("entity-sound-emitter"),
     kind: "soundEmitter",
+    name: normalizeEntityName(overrides.name),
     position,
     audioAssetId,
     volume,
@@ -343,7 +347,7 @@ export function createSoundEmitterEntity(
 }
 
 export function createTriggerVolumeEntity(
-  overrides: Partial<Pick<TriggerVolumeEntity, "id" | "position" | "size" | "triggerOnEnter" | "triggerOnExit">> = {}
+  overrides: Partial<Pick<TriggerVolumeEntity, "id" | "name" | "position" | "size" | "triggerOnEnter" | "triggerOnExit">> = {}
 ): TriggerVolumeEntity {
   const position = cloneVec3(overrides.position ?? DEFAULT_ENTITY_POSITION);
   const size = cloneVec3(overrides.size ?? DEFAULT_TRIGGER_VOLUME_SIZE);
@@ -358,6 +362,7 @@ export function createTriggerVolumeEntity(
   return {
     id: overrides.id ?? createOpaqueId("entity-trigger-volume"),
     kind: "triggerVolume",
+    name: normalizeEntityName(overrides.name),
     position,
     size,
     triggerOnEnter,
@@ -366,7 +371,7 @@ export function createTriggerVolumeEntity(
 }
 
 export function createTeleportTargetEntity(
-  overrides: Partial<Pick<TeleportTargetEntity, "id" | "position" | "yawDegrees">> = {}
+  overrides: Partial<Pick<TeleportTargetEntity, "id" | "name" | "position" | "yawDegrees">> = {}
 ): TeleportTargetEntity {
   const position = cloneVec3(overrides.position ?? DEFAULT_ENTITY_POSITION);
   const yawDegrees = overrides.yawDegrees ?? DEFAULT_TELEPORT_TARGET_YAW_DEGREES;
@@ -380,13 +385,14 @@ export function createTeleportTargetEntity(
   return {
     id: overrides.id ?? createOpaqueId("entity-teleport-target"),
     kind: "teleportTarget",
+    name: normalizeEntityName(overrides.name),
     position,
     yawDegrees: normalizeYawDegrees(yawDegrees)
   };
 }
 
 export function createInteractableEntity(
-  overrides: Partial<Pick<InteractableEntity, "id" | "position" | "radius" | "prompt" | "enabled">> = {}
+  overrides: Partial<Pick<InteractableEntity, "id" | "name" | "position" | "radius" | "prompt" | "enabled">> = {}
 ): InteractableEntity {
   const position = cloneVec3(overrides.position ?? DEFAULT_ENTITY_POSITION);
   const radius = overrides.radius ?? DEFAULT_INTERACTABLE_RADIUS;
@@ -400,6 +406,7 @@ export function createInteractableEntity(
   return {
     id: overrides.id ?? createOpaqueId("entity-interactable"),
     kind: "interactable",
+    name: normalizeEntityName(overrides.name),
     position,
     radius,
     prompt,
