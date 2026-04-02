@@ -4642,12 +4642,16 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 selection={editorState.selection}
                 toolMode={editorState.toolMode}
                 toolPreview={viewportToolPreview}
+                cameraState={editorState.viewportPanels[panelId].cameraState}
                 focusRequestId={focusRequest.panelId === panelId ? focusRequest.id : 0}
                 focusSelection={focusRequest.selection}
                 onActivatePanel={handleActivateViewportPanel}
                 onSetPanelViewMode={handleSetViewportPanelViewMode}
                 onSetPanelDisplayMode={handleSetViewportPanelDisplayMode}
                 onCommitCreation={handleCommitCreation}
+                onCameraStateChange={(cameraState) => {
+                  store.setViewportPanelCameraState(panelId, cameraState);
+                }}
                 onToolPreviewChange={(toolPreview) => {
                   store.setViewportToolPreview(toolPreview);
                 }}
