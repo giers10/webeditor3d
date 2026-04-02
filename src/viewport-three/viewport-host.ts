@@ -89,7 +89,11 @@ import {
   type ViewportViewMode
 } from "./viewport-view-modes";
 import type { ViewportDisplayMode } from "./viewport-layout";
-import type { PlacementViewportToolPreview, ViewportToolPreview } from "./viewport-transient-state";
+import {
+  areViewportToolPreviewsEqual,
+  type PlacementViewportToolPreview,
+  type ViewportToolPreview
+} from "./viewport-transient-state";
 
 interface BrushRenderObjects {
   mesh: Mesh<BoxGeometry, Array<MeshStandardMaterial | MeshBasicMaterial>>;
@@ -113,6 +117,7 @@ const INTERACTABLE_COLOR = 0x92de7e;
 const INTERACTABLE_SELECTED_COLOR = 0xf1cf7e;
 const BOX_CREATE_PREVIEW_FILL = 0x89b6ff;
 const BOX_CREATE_PREVIEW_EDGE = 0xf3be8f;
+const PLACEMENT_PREVIEW_COLOR_HEX = "#89b6ff";
 const MIN_CAMERA_DISTANCE = 1.5;
 const MAX_CAMERA_DISTANCE = 400;
 const ORBIT_ROTATION_SPEED = 0.0085;
@@ -211,7 +216,6 @@ export class ViewportHost {
   private displayMode: ViewportDisplayMode = "normal";
   private lastBoxCreatePreviewCenter: Vec3 | null = null;
   private placementPreview: PlacementViewportToolPreview | null = null;
-  private placementPreviewTargetKey: string | null = null;
   private placementPreviewObject: Group | null = null;
   private activeCameraDragPointerId: number | null = null;
   private lastCameraDragClientPosition: { x: number; y: number } | null = null;
@@ -1771,14 +1775,12 @@ export class ViewportHost {
 
   private clearPlacementPreviewObject() {
     if (this.placementPreviewObject === null) {
-      this.placementPreviewTargetKey = null;
       return;
     }
 
     this.scene.remove(this.placementPreviewObject);
     disposeModelInstance(this.placementPreviewObject);
     this.placementPreviewObject = null;
-    this.placementPreviewTargetKey = null;
   }
 
   private createPlacementPreviewObject(toolPreview: PlacementViewportToolPreview): Group {
@@ -1796,7 +1798,7 @@ export class ViewportHost {
               "placement-preview",
               previewPosition,
               DEFAULT_POINT_LIGHT_DISTANCE,
-              BOX_CREATE_PREVIEW_FILL,
+              PLACEMENT_PREVIEW_COLOR_HEX,
               false
             ).group;
           case "spotLight":
@@ -1806,7 +1808,7 @@ export class ViewportHost {
               DEFAULT_SPOT_LIGHT_DIRECTION,
               DEFAULT_SPOT_LIGHT_DISTANCE,
               DEFAULT_SPOT_LIGHT_ANGLE_DEGREES,
-              BOX_CREATE_PREVIEW_FILL,
+              PLACEMENT_PREVIEW_COLOR_HEX,
               false
             ).group;
           case "playerStart":
@@ -1818,7 +1820,7 @@ export class ViewportHost {
               DEFAULT_SOUND_EMITTER_REF_DISTANCE,
               DEFAULT_SOUND_EMITTER_MAX_DISTANCE,
               false,
-              BOX_CREATE_PREVIEW_FILL
+              PLACEMENT_PREVIEW_COLOR_HEX
             ).group;
           case "triggerVolume":
             return this.createTriggerVolumeRenderObjects(
@@ -1826,7 +1828,7 @@ export class ViewportHost {
               previewPosition,
               DEFAULT_TRIGGER_VOLUME_SIZE,
               false,
-              BOX_CREATE_PREVIEW_FILL
+              PLACEMENT_PREVIEW_COLOR_HEX
             ).group;
           case "teleportTarget":
             return this.createTeleportTargetRenderObjects(
@@ -1834,7 +1836,7 @@ export class ViewportHost {
               previewPosition,
               DEFAULT_TELEPORT_TARGET_YAW_DEGREES,
               false,
-              BOX_CREATE_PREVIEW_FILL
+              PLACEMENT_PREVIEW_COLOR_HEX
             ).group;
           case "interactable":
             return this.createInteractableRenderObjects(
@@ -1842,7 +1844,7 @@ export class ViewportHost {
               previewPosition,
               DEFAULT_INTERACTABLE_RADIUS,
               false,
-              BOX_CREATE_PREVIEW_FILL
+              PLACEMENT_PREVIEW_COLOR_HEX
             ).group;
         }
       case "model-instance": {
@@ -1864,6 +1866,8 @@ export class ViewportHost {
         return createModelInstanceRenderGroup(dummyModelInstance, asset, undefined, false);
       }
     }
+
+    throw new Error("Unsupported placement preview target.");
   }
 
   private syncPlacementPreview(toolPreview: PlacementViewportToolPreview | null) {
@@ -1891,17 +1895,31 @@ export class ViewportHost {
       center: toolPreview.center === null ? null : { ...toolPreview.center }
     };
 
-    this.clearPlacementPreviewObject();
-
     if (toolPreview === null) {
+      this.clearPlacementPreviewObject();
       return;
     }
+
+    const nextTargetKey = this.getPlacementPreviewTargetKey(toolPreview);
+
+    if (this.placementPreviewObject !== null && this.placementPreviewTargetKey === nextTargetKey) {
+      this.placementPreviewObject.visible = toolPreview.center !== null;
+
+      if (toolPreview.center !== null) {
+        this.placementPreviewObject.position.set(toolPreview.center.x, toolPreview.center.y, toolPreview.center.z);
+      }
+
+      this.placementPreviewTargetKey = nextTargetKey;
+      return;
+    }
+
+    this.clearPlacementPreviewObject();
 
     const placementPreviewObject = this.createPlacementPreviewObject(toolPreview);
     placementPreviewObject.visible = toolPreview.center !== null;
     this.scene.add(placementPreviewObject);
     this.placementPreviewObject = placementPreviewObject;
-    this.placementPreviewTargetKey = this.getPlacementPreviewTargetKey(toolPreview);
+    this.placementPreviewTargetKey = nextTargetKey;
   }
 
   private render = () => {
