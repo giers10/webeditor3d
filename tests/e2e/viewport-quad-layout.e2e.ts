@@ -38,6 +38,7 @@ test("quad viewport layout shows four linked panels with shared selection and ac
   await expect(page.getByTestId("viewport-panel-topLeft-display-normal")).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByTestId("viewport-panel-topRight-view-top")).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByTestId("viewport-panel-topRight-display-authoring")).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByTestId("viewport-canvas-topRight")).toHaveCSS("background-color", "rgb(0, 0, 0)");
   await expect(page.getByTestId("viewport-panel-bottomLeft-view-front")).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByTestId("viewport-panel-bottomLeft-display-authoring")).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByTestId("viewport-panel-bottomRight-view-side")).toHaveAttribute("aria-pressed", "true");
