@@ -785,6 +785,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
   const [sceneNameDraft, setSceneNameDraft] = useState(editorState.document.name);
   const [brushNameDraft, setBrushNameDraft] = useState("");
+  const [entityNameDraft, setEntityNameDraft] = useState("");
+  const [modelInstanceNameDraft, setModelInstanceNameDraft] = useState("");
   const [positionDraft, setPositionDraft] = useState(createVec3Draft(DEFAULT_BOX_BRUSH_CENTER));
   const [sizeDraft, setSizeDraft] = useState(createVec3Draft(DEFAULT_BOX_BRUSH_SIZE));
   const [uvOffsetDraft, setUvOffsetDraft] = useState(createVec2Draft(createDefaultFaceUvState().offset));
@@ -914,6 +916,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
   useEffect(() => {
     setBrushNameDraft(selectedBrush?.name ?? "");
   }, [selectedBrush]);
+
+  useEffect(() => {
+    setEntityNameDraft(selectedEntity?.name ?? "");
+  }, [selectedEntity]);
+
+  useEffect(() => {
+    setModelInstanceNameDraft(selectedModelInstance?.name ?? "");
+  }, [selectedModelInstance]);
 
   useEffect(() => {
     if (selectedBrush === null) {
