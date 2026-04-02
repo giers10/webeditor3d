@@ -1417,7 +1417,8 @@ export class ViewportHost {
       return;
     }
 
-    this.setBoxCreatePreview(this.getBoxCreatePreviewCenter(event));
+    this.syncBoxCreatePreview(this.getBoxCreatePreviewCenter(event));
+    this.boxCreatePreviewChangeHandler?.(this.lastBoxCreatePreviewCenter);
   };
 
   private handlePointerUp = (event: PointerEvent) => {
@@ -1442,7 +1443,8 @@ export class ViewportHost {
       return;
     }
 
-    this.setBoxCreatePreview(null);
+    this.syncBoxCreatePreview(null);
+    this.boxCreatePreviewChangeHandler?.(null);
   };
 
   private handleWheel = (event: WheelEvent) => {
@@ -1567,10 +1569,6 @@ export class ViewportHost {
           z: snapValueToGrid(this.boxCreateIntersection.z, DEFAULT_GRID_SIZE)
         };
     }
-  }
-
-  private setBoxCreatePreview(center: Vec3 | null) {
-    this.syncBoxCreatePreview(center);
   }
 
   private syncBoxCreatePreview(center: Vec3 | null) {
