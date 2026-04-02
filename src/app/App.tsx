@@ -4619,11 +4619,18 @@ export function App({ store, initialStatusMessage }: AppProps) {
         </aside>
 
         <main className={`viewport-region viewport-region--${layoutMode}`} data-testid="viewport-shell">
-          <div className={`viewport-region__panels viewport-region__panels--${layoutMode}`}>
+          <div
+            ref={viewportPanelsRef}
+            className={`viewport-region__panels viewport-region__panels--${layoutMode} ${
+              viewportQuadResizeMode === null ? "" : "viewport-region__panels--resizing"
+            }`.trim()}
+            style={viewportPanelsStyle}
+          >
             {VIEWPORT_PANEL_IDS.map((panelId) => (
-                <ViewportPanel
-                  key={panelId}
-                  panelId={panelId}
+              <ViewportPanel
+                key={panelId}
+                panelId={panelId}
+                className={`viewport-panel--${panelId}`}
                 panelState={editorState.viewportPanels[panelId]}
                 layoutMode={layoutMode}
                 isActive={activePanelId === panelId}
@@ -4647,6 +4654,25 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 onSelectionChange={(selection) => applySelection(selection, "viewport")}
               />
             ))}
+            {layoutMode !== "quad" ? null : (
+              <>
+                <div
+                  className="viewport-region__splitter viewport-region__splitter--vertical"
+                  data-testid="viewport-quad-splitter-vertical"
+                  onPointerDown={handleViewportQuadResizeStart("vertical")}
+                />
+                <div
+                  className="viewport-region__splitter viewport-region__splitter--horizontal"
+                  data-testid="viewport-quad-splitter-horizontal"
+                  onPointerDown={handleViewportQuadResizeStart("horizontal")}
+                />
+                <div
+                  className="viewport-region__splitter viewport-region__splitter--center"
+                  data-testid="viewport-quad-splitter-center"
+                  onPointerDown={handleViewportQuadResizeStart("center")}
+                />
+              </>
+            )}
           </div>
         </main>
 
