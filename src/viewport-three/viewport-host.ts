@@ -577,7 +577,7 @@ export class ViewportHost {
     }
 
     const advancedRendering = this.currentWorld.advancedRendering;
-    const shadowsEnabled = advancedRendering.enabled && advancedRendering.shadows.enabled;
+    const shadowsEnabled = advancedRendering.enabled && advancedRendering.shadows.enabled && this.displayMode === "normal";
 
     applyAdvancedRenderingLightShadowFlags(this.sunLight, advancedRendering);
 
