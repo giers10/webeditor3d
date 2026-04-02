@@ -3333,6 +3333,15 @@ export function App({ store, initialStatusMessage }: AppProps) {
               >
                 Import Background Image
               </button>
+              <button
+                className="toolbar__button toolbar__button--accent"
+                type="button"
+                data-testid="import-audio-asset"
+                onClick={handleImportAudioButtonClick}
+                disabled={!projectAssetStorageReady || projectAssetStorage === null}
+              >
+                Import Audio
+              </button>
             </div>
 
             {assetStatusMessage === null ? null : (
@@ -3437,6 +3446,33 @@ export function App({ store, initialStatusMessage }: AppProps) {
                             Use as Background
                           </button>
                         </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="outliner-section">
+                <div className="label">Audio Assets</div>
+                {audioAssetList.length === 0 ? (
+                  <div className="outliner-empty">No imported audio assets yet. Import a playable audio file to register the first audio asset.</div>
+                ) : (
+                  <div className="outliner-list">
+                    {audioAssetList.map((asset) => (
+                      <div key={asset.id} className="outliner-item asset-item">
+                        <div className="outliner-item__select">
+                          <span className="outliner-item__title">{asset.sourceName}</span>
+                          <span className="outliner-item__meta">{getProjectAssetKindLabel(asset.kind)}</span>
+                        </div>
+
+                        <div className="asset-item__summary">
+                          {formatByteLength(asset.byteLength)} | {asset.mimeType}
+                        </div>
+                        <div className="asset-item__summary">Storage key: {asset.storageKey}</div>
+                        <div className="asset-item__summary">{formatAudioAssetSummary(asset)}</div>
+                        {asset.metadata.warnings.length === 0 ? null : (
+                          <div className="asset-item__warnings">{asset.metadata.warnings.join(" | ")}</div>
+                        )}
                       </div>
                     ))}
                   </div>
