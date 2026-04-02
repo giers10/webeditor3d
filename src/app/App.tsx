@@ -915,6 +915,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
   }, [loadedModelAssets]);
 
   useEffect(() => {
+    loadedAudioAssetsRef.current = loadedAudioAssets;
+  }, [loadedAudioAssets]);
+
+  useEffect(() => {
     let cancelled = false;
 
     void (async () => {
