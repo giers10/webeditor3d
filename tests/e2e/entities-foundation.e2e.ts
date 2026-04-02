@@ -31,7 +31,7 @@ test("user can place and select typed entities from the entity foundation workfl
   await viewportCanvas.click({ position: { x: 124, y: 108 } });
   const soundEmitterSnapshot = await getEditorStoreSnapshot(page);
   const selectedSoundEmitterId =
-    soundEmitterSnapshot.selection.kind === "entities" ? soundEmitterSnapshot.selection.ids[0] ?? null : null;
+    soundEmitterSnapshot.selection.kind === "entities" ? soundEmitterSnapshot.selection.ids?.[0] ?? null : null;
 
   expect(selectedSoundEmitterId).not.toBeNull();
 
