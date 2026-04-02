@@ -286,12 +286,75 @@ export class RuntimeHost {
       this.scene.background = texture;
       this.scene.environment = texture;
       this.scene.environmentIntensity = world.background.environmentIntensity;
+    } else {
+      this.scene.background = null;
+      this.scene.environment = null;
+      this.scene.environmentIntensity = 1;
+    }
+
+    if (this.renderer !== null) {
+      configureAdvancedRenderingRenderer(this.renderer, world.advancedRendering);
+      this.syncAdvancedRenderingComposer(world.advancedRendering);
+    }
+
+    this.applyShadowState();
+  }
+
+  private syncAdvancedRenderingComposer(settings: AdvancedRenderingSettings) {
+    if (this.renderer === null) {
       return;
     }
 
-    this.scene.background = null;
-    this.scene.environment = null;
-    this.scene.environmentIntensity = 1;
+    const shouldUseComposer = settings.enabled;
+    const settingsChanged =
+      this.currentAdvancedRenderingSettings === null ||
+      !areAdvancedRenderingSettingsEqual(this.currentAdvancedRenderingSettings, settings);
+
+    if (!shouldUseComposer) {
+      if (this.advancedRenderingComposer !== null) {
+        this.advancedRenderingComposer.dispose();
+        this.advancedRenderingComposer = null;
+      }
+
+      this.currentAdvancedRenderingSettings = null;
+      this.renderer.autoClear = true;
+      return;
+    }
+
+    if (this.advancedRenderingComposer !== null && !settingsChanged) {
+      return;
+    }
+
+    if (this.advancedRenderingComposer !== null) {
+      this.advancedRenderingComposer.dispose();
+    }
+
+    this.advancedRenderingComposer = createAdvancedRenderingComposer(this.renderer, this.scene, this.camera, settings);
+    this.currentAdvancedRenderingSettings = cloneAdvancedRenderingSettings(settings);
+    this.renderer.autoClear = false;
+  }
+
+  private applyShadowState() {
+    if (this.currentWorld === null) {
+      return;
+    }
+
+    const advancedRendering = this.currentWorld.advancedRendering;
+    const shadowsEnabled = advancedRendering.enabled && advancedRendering.shadows.enabled;
+
+    applyAdvancedRenderingLightShadowFlags(this.sunLight, advancedRendering);
+
+    for (const renderGroup of this.localLightObjects.values()) {
+      applyAdvancedRenderingLightShadowFlags(renderGroup, advancedRendering);
+    }
+
+    for (const mesh of this.brushMeshes.values()) {
+      applyAdvancedRenderingRenderableShadowFlags(mesh, shadowsEnabled);
+    }
+
+    for (const renderGroup of this.modelRenderObjects.values()) {
+      applyAdvancedRenderingRenderableShadowFlags(renderGroup, shadowsEnabled);
+    }
   }
 
   private rebuildLocalLights(localLights: RuntimeLocalLightCollection) {
@@ -308,6 +371,8 @@ export class RuntimeHost {
       this.localLightGroup.add(renderObjects.group);
       this.localLightObjects.set(spotLight.entityId, renderObjects.group);
     }
+
+    this.applyShadowState();
   }
 
   private createPointLightRuntimeObjects(pointLight: RuntimeLocalLightCollection["pointLights"][number]): LocalLightRenderObjects {
@@ -369,6 +434,8 @@ export class RuntimeHost {
       this.brushGroup.add(mesh);
       this.brushMeshes.set(brush.id, mesh);
     }
+
+    this.applyShadowState();
   }
 
   private rebuildModelInstances(modelInstances: RuntimeSceneDefinition["modelInstances"]) {
@@ -408,6 +475,8 @@ export class RuntimeHost {
         }
       }
     }
+
+    this.applyShadowState();
   }
 
   private createFaceMaterial(material: RuntimeBoxBrushInstance["faces"]["posX"]["material"]): MeshStandardMaterial {
