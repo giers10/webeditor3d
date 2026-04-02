@@ -669,6 +669,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const projectAssetList = Object.values(editorState.document.assets);
   const modelAssetList = projectAssetList.filter(isModelAsset);
   const imageAssetList = projectAssetList.filter(isImageAsset);
+  const audioAssetList = projectAssetList.filter(isAudioAsset);
   const selectedPointLight = selectedEntity?.kind === "pointLight" ? selectedEntity : null;
   const selectedSpotLight = selectedEntity?.kind === "spotLight" ? selectedEntity : null;
   const modelInstanceDisplayList = getSortedModelInstanceDisplayLabels(editorState.document.modelInstances, editorState.document.assets);
@@ -806,8 +807,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
       setSpotLightAngleDraft(String(DEFAULT_SPOT_LIGHT_ANGLE_DEGREES));
       setSpotLightDirectionDraft(createVec3Draft(DEFAULT_SPOT_LIGHT_DIRECTION));
       setPlayerStartYawDraft("0");
-      setSoundEmitterRadiusDraft(String(DEFAULT_SOUND_EMITTER_RADIUS));
-      setSoundEmitterGainDraft(String(DEFAULT_SOUND_EMITTER_GAIN));
+      setSoundEmitterAudioAssetIdDraft(DEFAULT_SOUND_EMITTER_AUDIO_ASSET_ID ?? "");
+      setSoundEmitterVolumeDraft(String(DEFAULT_SOUND_EMITTER_VOLUME));
+      setSoundEmitterRefDistanceDraft(String(DEFAULT_SOUND_EMITTER_REF_DISTANCE));
+      setSoundEmitterMaxDistanceDraft(String(DEFAULT_SOUND_EMITTER_MAX_DISTANCE));
       setSoundEmitterAutoplayDraft(false);
       setSoundEmitterLoopDraft(false);
       setTriggerVolumeSizeDraft(createVec3Draft(DEFAULT_TRIGGER_VOLUME_SIZE));
@@ -837,8 +840,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
         setPlayerStartYawDraft(String(selectedEntity.yawDegrees));
         break;
       case "soundEmitter":
-        setSoundEmitterRadiusDraft(String(selectedEntity.radius));
-        setSoundEmitterGainDraft(String(selectedEntity.gain));
+        setSoundEmitterAudioAssetIdDraft(selectedEntity.audioAssetId ?? "");
+        setSoundEmitterVolumeDraft(String(selectedEntity.volume));
+        setSoundEmitterRefDistanceDraft(String(selectedEntity.refDistance));
+        setSoundEmitterMaxDistanceDraft(String(selectedEntity.maxDistance));
         setSoundEmitterAutoplayDraft(selectedEntity.autoplay);
         setSoundEmitterLoopDraft(selectedEntity.loop);
         break;
@@ -1265,7 +1270,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
           break;
         case "soundEmitter":
           nextEntity = createSoundEmitterEntity({
-            position: basePosition
+            position: basePosition,
+            audioAssetId: audioAssetList[0]?.id ?? undefined
           });
           break;
         case "triggerVolume":
