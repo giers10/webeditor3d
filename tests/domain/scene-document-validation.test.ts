@@ -12,7 +12,7 @@ import {
   createTeleportTargetEntity,
   createTriggerVolumeEntity
 } from "../../src/entities/entity-instances";
-import { createProjectAssetStorageKey } from "../../src/assets/project-assets";
+import { createProjectAssetStorageKey, type AudioAssetRecord, type ModelAssetRecord } from "../../src/assets/project-assets";
 
 describe("validateSceneDocument", () => {
   it("accepts a valid first-room document", () => {
@@ -145,7 +145,7 @@ describe("validateSceneDocument", () => {
       entities: {
         [soundEmitter.id]: {
           ...soundEmitter,
-          radius: Number.NaN
+          refDistance: Number.NaN
         },
         [triggerVolume.id]: {
           ...triggerVolume,
@@ -170,7 +170,7 @@ describe("validateSceneDocument", () => {
     expect(validation.errors).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          code: "invalid-sound-emitter-radius"
+          code: "invalid-sound-emitter-ref-distance"
         }),
         expect.objectContaining({
           code: "invalid-trigger-volume-size"
@@ -183,6 +183,82 @@ describe("validateSceneDocument", () => {
         }),
         expect.objectContaining({
           code: "invalid-interactable-enabled"
+        })
+      ])
+    );
+  });
+
+  it("detects missing and invalid audio asset references on Sound Emitters", () => {
+    const audioAsset = {
+      id: "asset-audio-main",
+      kind: "audio" as const,
+      sourceName: "lobby-loop.ogg",
+      mimeType: "audio/ogg",
+      storageKey: createProjectAssetStorageKey("asset-audio-main"),
+      byteLength: 4096,
+      metadata: {
+        kind: "audio" as const,
+        durationSeconds: 4.25,
+        channelCount: 2,
+        sampleRateHz: 48000,
+        warnings: []
+      }
+    } satisfies AudioAssetRecord;
+    const modelAsset = {
+      id: "asset-model-main",
+      kind: "model" as const,
+      sourceName: "fixture.glb",
+      mimeType: "model/gltf-binary",
+      storageKey: createProjectAssetStorageKey("asset-model-main"),
+      byteLength: 128,
+      metadata: {
+        kind: "model" as const,
+        format: "glb" as const,
+        sceneName: null,
+        nodeCount: 1,
+        meshCount: 1,
+        materialNames: [],
+        textureNames: [],
+        animationNames: [],
+        boundingBox: null,
+        warnings: []
+      }
+    } satisfies ModelAssetRecord;
+    const missingAudioEmitter = createSoundEmitterEntity({
+      id: "entity-sound-missing",
+      audioAssetId: "asset-missing-audio"
+    });
+    const wrongKindAudioEmitter = createSoundEmitterEntity({
+      id: "entity-sound-wrong-kind",
+      audioAssetId: modelAsset.id
+    });
+    const validAudioEmitter = createSoundEmitterEntity({
+      id: "entity-sound-valid",
+      audioAssetId: audioAsset.id
+    });
+
+    const validation = validateSceneDocument({
+      ...createEmptySceneDocument(),
+      assets: {
+        [audioAsset.id]: audioAsset,
+        [modelAsset.id]: modelAsset
+      },
+      entities: {
+        [missingAudioEmitter.id]: missingAudioEmitter,
+        [wrongKindAudioEmitter.id]: wrongKindAudioEmitter,
+        [validAudioEmitter.id]: validAudioEmitter
+      }
+    });
+
+    expect(validation.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "missing-sound-emitter-audio-asset",
+          path: "entities.entity-sound-missing.audioAssetId"
+        }),
+        expect.objectContaining({
+          code: "invalid-sound-emitter-audio-asset-kind",
+          path: "entities.entity-sound-wrong-kind.audioAssetId"
         })
       ])
     );
