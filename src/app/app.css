@@ -654,6 +654,40 @@ button:disabled {
   box-shadow: 0 0 0 1px rgba(207, 123, 66, 0.18), var(--shadow-panel);
 }
 
+.viewport-panel--compact .viewport-panel__header {
+  padding: 6px 8px;
+  gap: 8px;
+}
+
+.viewport-panel--compact .viewport-panel__meta {
+  gap: 2px;
+}
+
+.viewport-panel--compact .viewport-panel__title {
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+}
+
+.viewport-panel--compact .viewport-panel__active-badge {
+  padding: 0.12rem 0.34rem;
+  font-size: 0.54rem;
+}
+
+.viewport-panel--compact .viewport-panel__controls {
+  gap: 6px;
+}
+
+.viewport-panel--compact .viewport-panel__control-group {
+  gap: 3px;
+  padding: 3px;
+  border-radius: 10px;
+}
+
+.viewport-panel--compact .viewport-panel__button {
+  padding: 0.24rem 0.4rem;
+  font-size: 0.62rem;
+}
+
 .viewport-panel__header {
   display: flex;
   align-items: flex-start;
@@ -744,6 +778,29 @@ button:disabled {
 .viewport-canvas {
   display: flex;
   cursor: default;
+}
+
+.viewport-canvas--quad .viewport-canvas__overlay {
+  top: 10px;
+  left: 10px;
+  max-width: calc(100% - 20px);
+  padding: 8px 10px;
+  gap: 4px;
+  border-radius: 12px;
+}
+
+.viewport-canvas--quad .viewport-canvas__overlay-badges {
+  gap: 4px;
+}
+
+.viewport-canvas--quad .viewport-canvas__overlay-badge {
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+}
+
+.viewport-canvas--quad .viewport-canvas__overlay-preview {
+  font-size: 0.74rem;
+  line-height: 1.35;
 }
 
 .viewport-canvas--box-create {
