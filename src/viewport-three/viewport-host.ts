@@ -211,6 +211,7 @@ export class ViewportHost {
   private displayMode: ViewportDisplayMode = "normal";
   private lastBoxCreatePreviewCenter: Vec3 | null = null;
   private placementPreview: PlacementViewportToolPreview | null = null;
+  private placementPreviewTargetKey: string | null = null;
   private placementPreviewObject: Group | null = null;
   private activeCameraDragPointerId: number | null = null;
   private lastCameraDragClientPosition: { x: number; y: number } | null = null;
