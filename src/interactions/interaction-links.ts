@@ -111,6 +111,16 @@ function cloneAction(action: InteractionAction): InteractionAction {
         type: "stopAnimation",
         targetModelInstanceId: action.targetModelInstanceId
       };
+    case "playSound":
+      return {
+        type: "playSound",
+        targetSoundEmitterId: action.targetSoundEmitterId
+      };
+    case "stopSound":
+      return {
+        type: "stopSound",
+        targetSoundEmitterId: action.targetSoundEmitterId
+      };
   }
 }
 
@@ -216,6 +226,36 @@ export function createStopAnimationInteractionLink(options: CreateStopAnimationI
   };
 }
 
+export function createPlaySoundInteractionLink(options: CreatePlaySoundInteractionLinkOptions): InteractionLink {
+  assertNonEmptyString(options.sourceEntityId, "Interaction source entity id");
+  assertNonEmptyString(options.targetSoundEmitterId, "Play sound target sound emitter id");
+
+  return {
+    id: options.id ?? createOpaqueId("interaction-link"),
+    sourceEntityId: options.sourceEntityId,
+    trigger: options.trigger ?? "enter",
+    action: {
+      type: "playSound",
+      targetSoundEmitterId: options.targetSoundEmitterId
+    }
+  };
+}
+
+export function createStopSoundInteractionLink(options: CreateStopSoundInteractionLinkOptions): InteractionLink {
+  assertNonEmptyString(options.sourceEntityId, "Interaction source entity id");
+  assertNonEmptyString(options.targetSoundEmitterId, "Stop sound target sound emitter id");
+
+  return {
+    id: options.id ?? createOpaqueId("interaction-link"),
+    sourceEntityId: options.sourceEntityId,
+    trigger: options.trigger ?? "enter",
+    action: {
+      type: "stopSound",
+      targetSoundEmitterId: options.targetSoundEmitterId
+    }
+  };
+}
+
 export function cloneInteractionLink(link: InteractionLink): InteractionLink {
   return {
     id: link.id,
@@ -250,6 +290,10 @@ export function areInteractionLinksEqual(left: InteractionLink, right: Interacti
       );
     case "stopAnimation":
       return left.action.targetModelInstanceId === (right.action as StopAnimationAction).targetModelInstanceId;
+    case "playSound":
+      return left.action.targetSoundEmitterId === (right.action as PlaySoundAction).targetSoundEmitterId;
+    case "stopSound":
+      return left.action.targetSoundEmitterId === (right.action as StopSoundAction).targetSoundEmitterId;
     default: {
       // Exhaustive check — TypeScript should never reach here
       const _exhaustive: never = left.action;
