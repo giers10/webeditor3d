@@ -1858,14 +1858,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
       const targetSoundEmitter =
         (link.action.type === "playSound" || link.action.type === "stopSound"
           ? editorState.document.entities[link.action.targetSoundEmitterId]
-          : undefined) ?? soundEmitterOptions.find(({ entity }) => {
-          if (entity.audioAssetId === null) {
-            return false;
-          }
-
-          const asset = editorState.document.assets[entity.audioAssetId];
-          return asset?.kind === "audio";
-        })?.entity;
+          : undefined) ?? playableSoundEmitterOptions[0]?.entity;
 
       if (targetSoundEmitter === undefined || targetSoundEmitter.kind !== "soundEmitter") {
         setStatusMessage("Author a Sound Emitter with an audio asset before switching this link to sound playback.");
@@ -2373,6 +2366,24 @@ export function App({ store, initialStatusMessage }: AppProps) {
           onClick={() => handleAddStopAnimationLink(sourceEntity)}
         >
           Add Stop Anim Link
+        </button>
+        <button
+          className="toolbar__button"
+          type="button"
+          data-testid={addPlaySoundTestId}
+          disabled={playableSoundEmitterOptions.length === 0}
+          onClick={() => handleAddSoundInteractionLink("playSound")}
+        >
+          Add Play Sound Link
+        </button>
+        <button
+          className="toolbar__button"
+          type="button"
+          data-testid={addStopSoundTestId}
+          disabled={playableSoundEmitterOptions.length === 0}
+          onClick={() => handleAddSoundInteractionLink("stopSound")}
+        >
+          Add Stop Sound Link
         </button>
       </div>
     </div>
