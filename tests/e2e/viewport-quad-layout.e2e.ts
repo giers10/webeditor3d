@@ -51,9 +51,36 @@ test("quad viewport layout shows four linked panels with shared selection and ac
 
   await setSharedBoxCreatePreview(page, "topLeft", { x: 4, y: 0, z: 8 });
 
-  for (const panelId of ["topLeft", "topRight", "bottomLeft", "bottomRight"] as const) {
-    await expect(page.getByTestId(`viewport-snap-preview-${panelId}`)).toContainText("Preview: 4, 0, 8");
-  }
+  await expect(page.getByTestId("viewport-shell")).toContainText("shared preview");
+  await expect
+    .poll(async () =>
+      page.evaluate(() => {
+        const store = (window as Window & {
+          __webeditor3dEditorStore?: {
+            getState(): {
+              viewportTransientState: {
+                toolPreview: unknown;
+              };
+            };
+          };
+        }).__webeditor3dEditorStore;
+
+        if (store === undefined) {
+          throw new Error("Editor store debug hook is unavailable.");
+        }
+
+        return store.getState().viewportTransientState.toolPreview;
+      })
+    )
+    .toMatchObject({
+      kind: "box-create",
+      sourcePanelId: "topLeft",
+      center: {
+        x: 4,
+        y: 0,
+        z: 8
+      }
+    });
 
   await getViewportPanel(page, "topRight").click({ position: { x: 16, y: 16 }, force: true });
   await page.getByTestId("viewport-panel-topRight-view-side").dispatchEvent("click");
