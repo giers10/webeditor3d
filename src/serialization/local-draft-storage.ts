@@ -262,6 +262,7 @@ export function loadOrCreateSceneDocument(
   if (storage === null) {
     return {
       document: createEmptySceneDocument(),
+      viewportLayoutState: null,
       diagnostic: null
     };
   }
