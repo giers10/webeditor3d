@@ -692,8 +692,37 @@ function readSoundEmitterEntity(value: unknown, label: string): EntityInstance {
   const entity = createSoundEmitterEntity({
     id: expectString(value.id, `${label}.id`),
     position: readVec3(value.position, `${label}.position`),
-    radius: expectPositiveFiniteNumber(value.radius, `${label}.radius`),
-    gain: expectNonNegativeFiniteNumber(value.gain, `${label}.gain`),
+    audioAssetId:
+      value.audioAssetId === undefined || value.audioAssetId === null
+        ? undefined
+        : expectString(value.audioAssetId, `${label}.audioAssetId`),
+    volume: expectNonNegativeFiniteNumber(value.volume, `${label}.volume`),
+    refDistance: expectPositiveFiniteNumber(value.refDistance, `${label}.refDistance`),
+    maxDistance: expectPositiveFiniteNumber(value.maxDistance, `${label}.maxDistance`),
+    autoplay: expectBoolean(value.autoplay, `${label}.autoplay`),
+    loop: expectBoolean(value.loop, `${label}.loop`)
+  });
+
+  if (entity.kind !== kind) {
+    throw new Error(`${label}.kind must be soundEmitter.`);
+  }
+
+  return entity;
+}
+
+function readLegacySoundEmitterEntity(value: unknown, label: string): EntityInstance {
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  const kind = expectLiteralString(value.kind, "soundEmitter", `${label}.kind`);
+  const radius = expectPositiveFiniteNumber(value.radius, `${label}.radius`);
+  const entity = createSoundEmitterEntity({
+    id: expectString(value.id, `${label}.id`),
+    position: readVec3(value.position, `${label}.position`),
+    refDistance: radius,
+    maxDistance: radius,
+    volume: expectNonNegativeFiniteNumber(value.gain, `${label}.gain`),
     autoplay: expectBoolean(value.autoplay, `${label}.autoplay`),
     loop: expectBoolean(value.loop, `${label}.loop`)
   });
