@@ -904,6 +904,52 @@ describe("scene document JSON", () => {
     expect(migratedDocument.modelInstances["mi-1"].animationAutoplay).toBeUndefined();
   });
 
+  it("migrates v12 sound emitters to the current schema version", () => {
+    const migratedDocument = migrateSceneDocument({
+      version: ANIMATION_PLAYBACK_SCENE_DOCUMENT_VERSION,
+      name: "Legacy Sound Scene",
+      world: createEmptySceneDocument().world,
+      materials: createEmptySceneDocument().materials,
+      textures: {},
+      assets: {},
+      brushes: {},
+      modelInstances: {},
+      entities: {
+        "entity-sound-main": {
+          id: "entity-sound-main",
+          kind: "soundEmitter",
+          position: {
+            x: 1,
+            y: 2,
+            z: 3
+          },
+          radius: 9,
+          gain: 0.4,
+          autoplay: true,
+          loop: false
+        }
+      },
+      interactionLinks: {}
+    });
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.entities["entity-sound-main"]).toEqual({
+      id: "entity-sound-main",
+      kind: "soundEmitter",
+      position: {
+        x: 1,
+        y: 2,
+        z: 3
+      },
+      audioAssetId: null,
+      volume: 0.4,
+      refDistance: 9,
+      maxDistance: 9,
+      autoplay: true,
+      loop: false
+    });
+  });
+
   it("round-trips a v12 document containing playAnimation and stopAnimation interaction links", () => {
     const asset = {
       id: "asset-model-anim",
