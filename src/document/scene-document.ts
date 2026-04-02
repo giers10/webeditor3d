@@ -4,24 +4,7 @@ import type { ProjectAssetRecord } from "../assets/project-assets";
 import type { EntityInstance } from "../entities/entity-instances";
 import type { InteractionLink } from "../interactions/interaction-links";
 import { cloneMaterialRegistry, createStarterMaterialRegistry, type MaterialDef } from "../materials/starter-material-library";
-import {
-  areAdvancedRenderingSettingsEqual,
-  cloneAdvancedRenderingSettings,
-  createDefaultAdvancedRenderingSettings,
-  createDefaultWorldSettings,
-  isAdvancedRenderingShadowMapSize,
-  isAdvancedRenderingShadowType,
-  isAdvancedRenderingToneMappingMode,
-  type AdvancedRenderingAmbientOcclusionSettings,
-  type AdvancedRenderingBloomSettings,
-  type AdvancedRenderingDepthOfFieldSettings,
-  type AdvancedRenderingSettings,
-  type AdvancedRenderingShadowMapSize,
-  type AdvancedRenderingShadowType,
-  type AdvancedRenderingShadowsSettings,
-  type AdvancedRenderingToneMappingMode,
-  type WorldSettings
-} from "./world-settings";
+import { createDefaultWorldSettings, type WorldSettings } from "./world-settings";
 
 export const SCENE_DOCUMENT_VERSION = 14 as const;
 export const SPATIAL_AUDIO_SCENE_DOCUMENT_VERSION = 13 as const;
