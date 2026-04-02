@@ -79,6 +79,16 @@ import {
   type FaceUvState
 } from "../document/brushes";
 import { areWorldSettingsEqual, changeWorldBackgroundMode, type WorldBackgroundMode, type WorldSettings } from "../document/scene-document";
+import {
+  ADVANCED_RENDERING_SHADOW_MAP_SIZES,
+  ADVANCED_RENDERING_SHADOW_TYPES,
+  ADVANCED_RENDERING_TONE_MAPPING_MODES,
+  cloneWorldSettings,
+  type AdvancedRenderingSettings,
+  type AdvancedRenderingShadowMapSize,
+  type AdvancedRenderingShadowType,
+  type AdvancedRenderingToneMappingMode
+} from "../document/world-settings";
 import { formatSceneDiagnosticSummary, validateSceneDocument } from "../document/scene-document-validation";
 import { getBrowserProjectAssetStorageAccess, type ProjectAssetStorage } from "../assets/project-asset-storage";
 import { DEFAULT_GRID_SIZE, snapPositiveSizeToGrid, snapVec3ToGrid } from "../geometry/grid-snapping";

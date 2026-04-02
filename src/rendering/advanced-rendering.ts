@@ -147,11 +147,6 @@ export function applyAdvancedRenderingLightShadowFlags(
   root.traverse((object) => {
     if (object instanceof DirectionalLight || object instanceof PointLight || object instanceof SpotLight) {
       object.castShadow = shadowEnabled;
-
-      if (!shadowEnabled) {
-        return;
-      }
-
       object.shadow.bias = settings.shadows.bias;
       object.shadow.mapSize.set(settings.shadows.mapSize, settings.shadows.mapSize);
     }
