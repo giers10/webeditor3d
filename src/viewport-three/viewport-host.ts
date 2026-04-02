@@ -492,6 +492,7 @@ export class ViewportHost {
     const settingsChanged =
       this.currentAdvancedRenderingSettings === null ||
       !areAdvancedRenderingSettingsEqual(this.currentAdvancedRenderingSettings, settings);
+    const cameraModeChanged = this.currentComposerCameraMode !== this.viewMode;
 
     if (!shouldUseComposer) {
       if (this.advancedRenderingComposer !== null) {
@@ -504,7 +505,7 @@ export class ViewportHost {
       return;
     }
 
-    if (this.advancedRenderingComposer !== null && !settingsChanged) {
+    if (this.advancedRenderingComposer !== null && !settingsChanged && !cameraModeChanged) {
       return;
     }
 
@@ -512,8 +513,9 @@ export class ViewportHost {
       this.advancedRenderingComposer.dispose();
     }
 
-    this.advancedRenderingComposer = createAdvancedRenderingComposer(this.renderer, this.scene, this.camera, settings);
+    this.advancedRenderingComposer = createAdvancedRenderingComposer(this.renderer, this.scene, this.getActiveCamera(), settings);
     this.currentAdvancedRenderingSettings = cloneAdvancedRenderingSettings(settings);
+    this.currentComposerCameraMode = this.viewMode;
     this.renderer.autoClear = false;
   }
 
