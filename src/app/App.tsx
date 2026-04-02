@@ -1657,14 +1657,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
       return;
     }
 
-    const defaultTarget = soundEmitterOptions.find(({ entity }) => {
-      if (entity.audioAssetId === null) {
-        return false;
-      }
-
-      const asset = editorState.document.assets[entity.audioAssetId];
-      return asset?.kind === "audio";
-    })?.entity;
+    const defaultTarget = playableSoundEmitterOptions[0]?.entity;
 
     if (defaultTarget === undefined) {
       setStatusMessage("Author a Sound Emitter with an audio asset before adding sound links.");
