@@ -10,6 +10,7 @@ import { DEFAULT_BOX_BRUSH_CENTER, DEFAULT_BOX_BRUSH_SIZE } from "../document/br
 import type { SceneDocument } from "../document/scene-document";
 import type { WorldSettings } from "../document/world-settings";
 import { createWorldBackgroundStyle } from "../shared-ui/world-background-style";
+import type { ViewportDisplayMode, ViewportPanelId } from "./viewport-layout";
 import {
   getViewportViewModeControlHint,
   getViewportViewModeGridPlaneLabel,
@@ -20,6 +21,7 @@ import {
 import { ViewportHost } from "./viewport-host";
 
 interface ViewportCanvasProps {
+  panelId: ViewportPanelId;
   world: WorldSettings;
   sceneDocument: SceneDocument;
   projectAssets: Record<string, ProjectAssetRecord>;
@@ -28,6 +30,8 @@ interface ViewportCanvasProps {
   selection: EditorSelection;
   toolMode: ToolMode;
   viewMode: ViewportViewMode;
+  displayMode: ViewportDisplayMode;
+  isActivePanel: boolean;
   focusRequestId: number;
   focusSelection: EditorSelection;
   onSelectionChange(selection: EditorSelection): void;
@@ -42,15 +46,16 @@ function formatVec3(vector: Vec3 | null): string {
   return `${vector.x}, ${vector.y}, ${vector.z}`;
 }
 
-function getViewportOverlayText(toolMode: ToolMode, viewMode: ViewportViewMode): string {
+function getViewportOverlayText(toolMode: ToolMode, viewMode: ViewportViewMode, displayMode: ViewportDisplayMode): string {
   if (toolMode === "box-create") {
-    return `Box Create is active on the ${getViewportViewModeGridPlaneLabel(viewMode)} grid. Click the ${getViewportViewModeGridPlaneLabel(viewMode)} grid to place a ${DEFAULT_BOX_BRUSH_SIZE.x} x ${DEFAULT_BOX_BRUSH_SIZE.y} x ${DEFAULT_BOX_BRUSH_SIZE.z} box. ${getViewportViewModeControlHint(viewMode)}`;
+    return `${displayMode === "authoring" ? "Authoring view" : "Box Create"} is active on the ${getViewportViewModeGridPlaneLabel(viewMode)} grid. Click the ${getViewportViewModeGridPlaneLabel(viewMode)} grid to place a ${DEFAULT_BOX_BRUSH_SIZE.x} x ${DEFAULT_BOX_BRUSH_SIZE.y} x ${DEFAULT_BOX_BRUSH_SIZE.z} box. ${getViewportViewModeControlHint(viewMode)}`;
   }
 
-  return `${getViewportViewModeLabel(viewMode)} view active on the ${getViewportViewModeGridPlaneLabel(viewMode)} grid. ${getViewportViewModeControlHint(viewMode)}`;
+  return `${displayMode === "authoring" ? "Authoring view" : `${getViewportViewModeLabel(viewMode)} view`} active on the ${getViewportViewModeGridPlaneLabel(viewMode)} grid. ${getViewportViewModeControlHint(viewMode)}`;
 }
 
 export function ViewportCanvas({
+  panelId,
   world,
   sceneDocument,
   projectAssets,
@@ -59,6 +64,8 @@ export function ViewportCanvas({
   selection,
   toolMode,
   viewMode,
+  displayMode,
+  isActivePanel,
   focusRequestId,
   focusSelection,
   onSelectionChange,
@@ -121,6 +128,10 @@ export function ViewportCanvas({
   }, [viewMode]);
 
   useEffect(() => {
+    hostRef.current?.setDisplayMode(displayMode);
+  }, [displayMode]);
+
+  useEffect(() => {
     hostRef.current?.setBrushSelectionChangeHandler(onSelectionChange);
   }, [onSelectionChange]);
 
@@ -151,19 +162,29 @@ export function ViewportCanvas({
   return (
     <div
       ref={containerRef}
-      className={`viewport-canvas viewport-canvas--${toolMode} viewport-canvas--${viewMode}`}
-      data-testid="viewport-shell"
+      className={`viewport-canvas viewport-canvas--${toolMode} viewport-canvas--${viewMode} viewport-canvas--${displayMode} ${isActivePanel ? "viewport-canvas--active" : ""}`}
+      data-testid={`viewport-canvas-${panelId}`}
       aria-label="Editor viewport"
-      style={createWorldBackgroundStyle(world.background, world.background.mode === "image" ? loadedImageAssets[world.background.assetId]?.sourceUrl ?? null : null)}
+      style={
+        displayMode === "authoring"
+          ? {
+              backgroundColor: "#000000",
+              backgroundImage: "none"
+            }
+          : createWorldBackgroundStyle(world.background, world.background.mode === "image" ? loadedImageAssets[world.background.assetId]?.sourceUrl ?? null : null)
+      }
     >
-      <div className="viewport-canvas__overlay" data-testid="viewport-overlay">
+      <div className="viewport-canvas__overlay" data-testid={`viewport-overlay-${panelId}`}>
         <div className="viewport-canvas__overlay-badges">
           <div className="viewport-canvas__overlay-badge">{toolMode === "box-create" ? "Box Create" : "Select"}</div>
           <div className="viewport-canvas__overlay-badge viewport-canvas__overlay-badge--view">{getViewportViewModeLabel(viewMode)}</div>
+          <div className="viewport-canvas__overlay-badge viewport-canvas__overlay-badge--display">
+            {displayMode === "authoring" ? "Authoring" : "Lit"}
+          </div>
         </div>
-        <div className="viewport-canvas__overlay-text">{getViewportOverlayText(toolMode, viewMode)}</div>
+        <div className="viewport-canvas__overlay-text">{getViewportOverlayText(toolMode, viewMode, displayMode)}</div>
         {toolMode !== "box-create" ? null : (
-          <div className="viewport-canvas__overlay-preview" data-testid="viewport-snap-preview">
+          <div className="viewport-canvas__overlay-preview" data-testid={`viewport-snap-preview-${panelId}`}>
             Next box center: {formatVec3(boxCreatePreview)}
           </div>
         )}
@@ -173,8 +194,13 @@ export function ViewportCanvas({
         <div className="viewport-canvas__fallback" role="status">
           <div className="viewport-canvas__fallback-title">Viewport Unavailable</div>
           <div>{viewportMessage}</div>
-          {toolMode !== "box-create" ? null : (
-            <button className="toolbar__button toolbar__button--accent" type="button" data-testid="viewport-fallback-create-box" onClick={() => onCreateBoxBrush(DEFAULT_BOX_BRUSH_CENTER)}>
+          {toolMode !== "box-create" || !isActivePanel ? null : (
+            <button
+              className="toolbar__button toolbar__button--accent"
+              type="button"
+              data-testid={`viewport-fallback-create-box-${panelId}`}
+              onClick={() => onCreateBoxBrush(DEFAULT_BOX_BRUSH_CENTER)}
+            >
               Create Default Box
             </button>
           )}
