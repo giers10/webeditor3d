@@ -950,7 +950,7 @@ describe("scene document JSON", () => {
     });
   });
 
-  it("round-trips a v12 document containing playAnimation and stopAnimation interaction links", () => {
+  it("round-trips authored playAnimation and stopAnimation interaction links", () => {
     const asset = {
       id: "asset-model-anim",
       kind: "model",
