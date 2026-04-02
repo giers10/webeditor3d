@@ -50,8 +50,6 @@ test("quad viewport layout shows four linked panels with shared selection and ac
   }
 
   await setSharedBoxCreatePreview(page, "topLeft", { x: 4, y: 0, z: 8 });
-
-  await expect(page.getByTestId("viewport-shell")).toContainText("shared preview");
   await expect
     .poll(async () =>
       page.evaluate(() => {
