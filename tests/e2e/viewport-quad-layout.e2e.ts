@@ -50,7 +50,8 @@ test("quad viewport layout shows four linked panels with shared selection and ac
   }
 
   await setSharedBoxCreationPreview(page, "topLeft", { x: 4, y: 0, z: 8 });
-  await expect(await getEditorStoreSnapshot(page)).toMatchObject({
+  const initialSnapshot = await getEditorStoreSnapshot(page);
+  expect(initialSnapshot).toMatchObject({
     viewportTransientState: {
       toolPreview: {
         kind: "create",
@@ -72,7 +73,8 @@ test("quad viewport layout shows four linked panels with shared selection and ac
   await expect(getViewportPanel(page, "topRight")).toHaveAttribute("data-active", "true");
   await expect(page.getByTestId("viewport-panel-topRight-view-side")).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByRole("button", { name: /Box Brush 1/ })).toBeVisible();
-  await expect(await getEditorStoreSnapshot(page)).toMatchObject({
+  const transferredSnapshot = await getEditorStoreSnapshot(page);
+  expect(transferredSnapshot).toMatchObject({
     viewportTransientState: {
       toolPreview: {
         kind: "create",
@@ -95,7 +97,8 @@ test("quad viewport layout shows four linked panels with shared selection and ac
   await expect(page.getByTestId("viewport-panel-topLeft-display-authoring")).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByTestId("viewport-canvas-topLeft")).toHaveCSS("background-color", "rgb(0, 0, 0)");
   await expect(page.getByText("1 brush selected (Box Brush 1)")).toBeVisible();
-  await expect(await getEditorStoreSnapshot(page)).toMatchObject({
+  const finalSnapshot = await getEditorStoreSnapshot(page);
+  expect(finalSnapshot).toMatchObject({
     viewportTransientState: {
       toolPreview: {
         kind: "create",
