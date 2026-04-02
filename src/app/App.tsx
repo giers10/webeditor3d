@@ -4202,6 +4202,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 onActivatePanel={handleActivateViewportPanel}
                 onSetPanelViewMode={handleSetViewportPanelViewMode}
                 onSetPanelDisplayMode={handleSetViewportPanelDisplayMode}
+                onCommitPlacement={handleCommitPlacement}
                 onToolPreviewChange={(toolPreview) => {
                   store.setViewportToolPreview(toolPreview);
                 }}
