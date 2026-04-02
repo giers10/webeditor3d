@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+import { clickViewport, setViewportCreationPreview } from "./viewport-test-helpers";
+
 test("Trigger Volume enter can teleport the player to a Teleport Target", async ({ page }) => {
   const pageErrors: string[] = [];
   const consoleErrors: string[] = [];
@@ -23,12 +25,18 @@ test("Trigger Volume enter can teleport the player to a Teleport Target", async 
   await page.getByTestId("outliner-add-button").click();
   await page.getByTestId("add-menu-entities").click();
   await page.getByTestId("add-menu-player-start").click();
+  await setViewportCreationPreview(page, "topLeft", { kind: "entity", entityKind: "playerStart", audioAssetId: null }, { x: 0, y: 0, z: 0 });
+  await clickViewport(page, "topLeft");
   await page.getByTestId("outliner-add-button").click();
   await page.getByTestId("add-menu-entities").click();
   await page.getByTestId("add-menu-trigger-volume").click();
+  await setViewportCreationPreview(page, "topLeft", { kind: "entity", entityKind: "triggerVolume", audioAssetId: null }, { x: 0, y: 0, z: 0 });
+  await clickViewport(page, "topLeft");
   await page.getByTestId("outliner-add-button").click();
   await page.getByTestId("add-menu-entities").click();
   await page.getByTestId("add-menu-teleport-target").click();
+  await setViewportCreationPreview(page, "topLeft", { kind: "entity", entityKind: "teleportTarget", audioAssetId: null }, { x: 0, y: 0, z: 0 });
+  await clickViewport(page, "topLeft");
 
   await page.getByTestId("teleportTarget-position-x").fill("6");
   await page.getByTestId("teleportTarget-position-x").press("Tab");
