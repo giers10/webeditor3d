@@ -133,6 +133,43 @@ describe("scene document JSON", () => {
     expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(document);
   });
 
+  it("round-trips authored advanced rendering settings", () => {
+    const document = createEmptySceneDocument({ name: "Advanced Rendering Scene" });
+    document.world.advancedRendering = {
+      enabled: true,
+      shadows: {
+        enabled: true,
+        mapSize: 4096,
+        type: "pcf",
+        bias: -0.001
+      },
+      ambientOcclusion: {
+        enabled: true,
+        intensity: 1.4,
+        radius: 0.75,
+        samples: 16
+      },
+      bloom: {
+        enabled: true,
+        intensity: 1.2,
+        threshold: 0.9,
+        radius: 0.4
+      },
+      toneMapping: {
+        mode: "acesFilmic",
+        exposure: 1.25
+      },
+      depthOfField: {
+        enabled: true,
+        focusDistance: 12,
+        focalLength: 0.045,
+        bokehScale: 1.8
+      }
+    };
+
+    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(document);
+  });
+
   it("round-trips authored local lights and an image background asset", () => {
     const imageAsset = {
       id: "asset-background-panorama",
