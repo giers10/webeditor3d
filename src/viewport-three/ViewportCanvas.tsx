@@ -10,7 +10,7 @@ import { DEFAULT_BOX_BRUSH_CENTER, DEFAULT_BOX_BRUSH_SIZE } from "../document/br
 import type { SceneDocument } from "../document/scene-document";
 import type { WorldSettings } from "../document/world-settings";
 import { createWorldBackgroundStyle } from "../shared-ui/world-background-style";
-import type { ViewportDisplayMode, ViewportPanelId } from "./viewport-layout";
+import { getViewportPanelLabel, type ViewportDisplayMode, type ViewportPanelId } from "./viewport-layout";
 import {
   getViewportViewModeControlHint,
   getViewportViewModeGridPlaneLabel,
@@ -164,7 +164,7 @@ export function ViewportCanvas({
       ref={containerRef}
       className={`viewport-canvas viewport-canvas--${toolMode} viewport-canvas--${viewMode} viewport-canvas--${displayMode} ${isActivePanel ? "viewport-canvas--active" : ""}`}
       data-testid={`viewport-canvas-${panelId}`}
-      aria-label="Editor viewport"
+      aria-label={`${getViewportPanelLabel(panelId)} editor viewport`}
       style={
         displayMode === "authoring"
           ? {
