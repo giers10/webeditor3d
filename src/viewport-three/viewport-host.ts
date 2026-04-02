@@ -38,12 +38,13 @@ import type { LoadedModelAsset } from "../assets/gltf-model-import";
 import type { LoadedImageAsset } from "../assets/image-assets";
 import type { ProjectAssetRecord } from "../assets/project-assets";
 import { getModelInstances } from "../assets/model-instances";
-import type { SceneDocument, WorldSettings } from "../document/scene-document";
+import type { SceneDocument } from "../document/scene-document";
 import {
   areAdvancedRenderingSettingsEqual,
   cloneAdvancedRenderingSettings,
   type AdvancedRenderingSettings
-} from "../document/scene-document";
+} from "../document/world-settings";
+import type { WorldSettings } from "../document/world-settings";
 import {
   getEntityInstances,
   type EntityInstance,
