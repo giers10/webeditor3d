@@ -185,6 +185,8 @@ export class ViewportHost {
 
     const axesHelper = new AxesHelper(2);
 
+    this.gridHelpers.xy.rotation.x = Math.PI * 0.5;
+    this.gridHelpers.yz.rotation.z = Math.PI * 0.5;
     this.gridHelpers.xz.visible = true;
     this.gridHelpers.xy.visible = false;
     this.gridHelpers.yz.visible = false;
