@@ -843,7 +843,7 @@ describe("scene document JSON", () => {
         boundingBox: null,
         warnings: []
       }
-    };
+    } satisfies ModelAssetRecord;
     const modelInstance = createModelInstance({
       id: "mi-animated",
       assetId: asset.id,
