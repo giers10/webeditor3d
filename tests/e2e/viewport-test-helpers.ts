@@ -16,7 +16,7 @@ export function getViewportOverlay(page: Page, panelId: string = DEFAULT_VIEWPOR
 
 export async function clickViewport(page: Page, panelId: string = DEFAULT_VIEWPORT_PANEL_ID) {
   const viewportPanel = getViewportPanel(page, panelId);
-  await viewportPanel.click({ position: { x: 16, y: 16 } });
+  await viewportPanel.click({ position: { x: 16, y: 16 }, force: true });
 
   const viewportCanvas = getViewportCanvas(page, panelId);
 
