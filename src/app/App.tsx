@@ -760,6 +760,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const importInputRef = useRef<HTMLInputElement | null>(null);
   const importModelInputRef = useRef<HTMLInputElement | null>(null);
   const importBackgroundImageInputRef = useRef<HTMLInputElement | null>(null);
+  const importAudioInputRef = useRef<HTMLInputElement | null>(null);
   const loadedModelAssetsRef = useRef<Record<string, LoadedModelAsset>>({});
   const loadedImageAssetsRef = useRef<Record<string, LoadedImageAsset>>({});
   const loadedAudioAssetsRef = useRef<Record<string, LoadedAudioAsset>>({});
@@ -2732,6 +2733,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
     importBackgroundImageInputRef.current?.click();
   };
 
+  const handleImportAudioButtonClick = () => {
+    importAudioInputRef.current?.click();
+  };
+
   const handleImportModelChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const input = event.currentTarget;
     const files = Array.from(input.files ?? []);
@@ -2831,6 +2836,56 @@ export function App({ store, initialStatusMessage }: AppProps) {
       if (importedImageForCleanup !== null) {
         await projectAssetStorage.deleteAsset(importedImageForCleanup.asset.storageKey).catch(() => undefined);
         disposeLoadedImageAsset(importedImageForCleanup.loadedAsset);
+      }
+
+      const message = getErrorMessage(error);
+      setStatusMessage(message);
+      setAssetStatusMessage(message);
+    } finally {
+      input.value = "";
+    }
+  };
+
+  const handleImportAudioChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const input = event.currentTarget;
+    const file = input.files?.[0];
+
+    if (file === undefined) {
+      return;
+    }
+
+    if (projectAssetStorage === null) {
+      setAssetStatusMessage("Imported audio assets require project asset storage. IndexedDB is unavailable in this browser.");
+      input.value = "";
+      return;
+    }
+
+    let importedAudioForCleanup: { asset: AudioAssetRecord; loadedAsset: LoadedAudioAsset } | null = null;
+
+    try {
+      const importedAudio = await importAudioAssetFromFile(file, projectAssetStorage);
+      importedAudioForCleanup = importedAudio;
+
+      store.executeCommand(
+        createImportAudioAssetCommand({
+          asset: importedAudio.asset,
+          label: `Import ${importedAudio.asset.sourceName}`
+        })
+      );
+
+      loadedAudioAssetsRef.current = {
+        ...loadedAudioAssetsRef.current,
+        [importedAudio.asset.id]: importedAudio.loadedAsset
+      };
+      setLoadedAudioAssets((currentLoadedAssets) => ({
+        ...currentLoadedAssets,
+        [importedAudio.asset.id]: importedAudio.loadedAsset
+      }));
+      setAssetStatusMessage(null);
+      setStatusMessage(`Imported ${importedAudio.asset.sourceName} and registered it as an audio asset.`);
+    } catch (error) {
+      if (importedAudioForCleanup !== null) {
+        await projectAssetStorage.deleteAsset(importedAudioForCleanup.asset.storageKey).catch(() => undefined);
       }
 
       const message = getErrorMessage(error);
