@@ -686,6 +686,13 @@ export function App({ store, initialStatusMessage }: AppProps) {
     selectedInteractable === null ? [] : getInteractionLinksForSource(editorState.document.interactionLinks, selectedInteractable.id);
   const teleportTargetOptions = entityDisplayList.filter(({ entity }) => entity.kind === "teleportTarget");
   const soundEmitterOptions = entityDisplayList.filter(({ entity }) => entity.kind === "soundEmitter");
+  const playableSoundEmitterOptions = soundEmitterOptions.filter(({ entity }) => {
+    if (entity.audioAssetId === null) {
+      return false;
+    }
+
+    return editorState.document.assets[entity.audioAssetId]?.kind === "audio";
+  });
   const visibilityBrushOptions = brushList.map((brush, brushIndex) => ({
     brush,
     label: getBrushLabel(brush, brushIndex)
