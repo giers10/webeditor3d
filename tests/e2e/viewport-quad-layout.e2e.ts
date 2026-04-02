@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { clickViewport, getViewportPanel, setSharedBoxCreatePreview } from "./viewport-test-helpers";
+import { clickViewport, getEditorStoreSnapshot, getViewportPanel, setSharedBoxCreationPreview } from "./viewport-test-helpers";
 
 test("quad viewport layout shows four linked panels with shared selection and active panel state", async ({ page }) => {
   const pageErrors: string[] = [];
@@ -49,42 +49,45 @@ test("quad viewport layout shows four linked panels with shared selection and ac
     await expect(getViewportPanel(page, panelId).locator(".viewport-canvas__overlay-text")).toHaveCount(0);
   }
 
-  await setSharedBoxCreatePreview(page, "topLeft", { x: 4, y: 0, z: 8 });
-  await expect
-    .poll(async () =>
-      page.evaluate(() => {
-        const store = (window as Window & {
-          __webeditor3dEditorStore?: {
-            getState(): {
-              viewportTransientState: {
-                toolPreview: unknown;
-              };
-            };
-          };
-        }).__webeditor3dEditorStore;
-
-        if (store === undefined) {
-          throw new Error("Editor store debug hook is unavailable.");
+  await setSharedBoxCreationPreview(page, "topLeft", { x: 4, y: 0, z: 8 });
+  await expect(await getEditorStoreSnapshot(page)).toMatchObject({
+    viewportTransientState: {
+      toolPreview: {
+        kind: "create",
+        sourcePanelId: "topLeft",
+        target: {
+          kind: "box-brush"
+        },
+        center: {
+          x: 4,
+          y: 0,
+          z: 8
         }
-
-        return store.getState().viewportTransientState.toolPreview;
-      })
-    )
-    .toMatchObject({
-      kind: "box-create",
-      sourcePanelId: "topLeft",
-      center: {
-        x: 4,
-        y: 0,
-        z: 8
       }
-    });
+    }
+  });
 
   await getViewportPanel(page, "topRight").click({ position: { x: 16, y: 16 }, force: true });
   await page.getByTestId("viewport-panel-topRight-view-side").dispatchEvent("click");
   await expect(getViewportPanel(page, "topRight")).toHaveAttribute("data-active", "true");
   await expect(page.getByTestId("viewport-panel-topRight-view-side")).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByRole("button", { name: /Box Brush 1/ })).toBeVisible();
+  await expect(await getEditorStoreSnapshot(page)).toMatchObject({
+    viewportTransientState: {
+      toolPreview: {
+        kind: "create",
+        sourcePanelId: "topLeft",
+        target: {
+          kind: "box-brush"
+        },
+        center: {
+          x: 4,
+          y: 0,
+          z: 8
+        }
+      }
+    }
+  });
 
   await getViewportPanel(page, "topLeft").click({ position: { x: 16, y: 16 }, force: true });
   await page.getByTestId("viewport-panel-topLeft-display-authoring").dispatchEvent("click");
@@ -92,6 +95,22 @@ test("quad viewport layout shows four linked panels with shared selection and ac
   await expect(page.getByTestId("viewport-panel-topLeft-display-authoring")).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByTestId("viewport-canvas-topLeft")).toHaveCSS("background-color", "rgb(0, 0, 0)");
   await expect(page.getByText("1 brush selected (Box Brush 1)")).toBeVisible();
+  await expect(await getEditorStoreSnapshot(page)).toMatchObject({
+    viewportTransientState: {
+      toolPreview: {
+        kind: "create",
+        sourcePanelId: "topLeft",
+        target: {
+          kind: "box-brush"
+        },
+        center: {
+          x: 4,
+          y: 0,
+          z: 8
+        }
+      }
+    }
+  });
 
   expect(pageErrors).toEqual([]);
   expect(consoleErrors).toEqual([]);
