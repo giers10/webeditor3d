@@ -1492,6 +1492,9 @@ export class ViewportHost {
     if (this.activeCameraDragPointerId !== null) {
       return;
     }
+
+    // Keep the shared creation preview alive across panel boundaries; the next
+    // viewport panel will update it as the pointer continues moving.
   };
 
   private handleWheel = (event: WheelEvent) => {
