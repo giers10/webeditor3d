@@ -1793,6 +1793,7 @@ export class ViewportHost {
         }
       case "model-instance": {
         const asset = this.projectAssets[toolPreview.target.assetId];
+        const loadedAsset = this.loadedModelAssets[toolPreview.target.assetId];
 
         if (asset === undefined || asset.kind !== "model") {
           const fallbackGroup = new Group();
@@ -1807,7 +1808,7 @@ export class ViewportHost {
           scale: DEFAULT_MODEL_INSTANCE_SCALE
         });
 
-        return createModelInstanceRenderGroup(dummyModelInstance, asset, undefined, false);
+        return createModelInstanceRenderGroup(dummyModelInstance, asset, loadedAsset, false, BOX_CREATE_PREVIEW_FILL);
       }
     }
 
