@@ -69,10 +69,10 @@ import { createSoundEmitterMarkerMeshes } from "./viewport-entity-markers";
 import {
   getViewportViewModeDefinition,
   isOrthographicViewportViewMode,
-  type ViewportDisplayMode,
   type ViewportGridPlane,
   type ViewportViewMode
 } from "./viewport-view-modes";
+import type { ViewportDisplayMode } from "./viewport-layout";
 
 interface BrushRenderObjects {
   mesh: Mesh<BoxGeometry, Array<MeshStandardMaterial | MeshBasicMaterial>>;
