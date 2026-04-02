@@ -1824,13 +1824,14 @@ export class ViewportHost {
               entityKind: toolPreview.target.entityKind,
               audioAssetId: toolPreview.target.audioAssetId
             }
-          : {
-              kind: "model-instance",
-              assetId: toolPreview.target.assetId
-            }
-          : {
-              kind: "box-brush"
-            },
+          : toolPreview.target.kind === "model-instance"
+            ? {
+                kind: "model-instance",
+                assetId: toolPreview.target.assetId
+              }
+            : {
+                kind: "box-brush"
+              },
       center: toolPreview.center === null ? null : { ...toolPreview.center }
     };
 
@@ -1877,7 +1878,7 @@ export class ViewportHost {
     creationPreviewObject.visible = toolPreview.center !== null;
     this.scene.add(creationPreviewObject);
     this.creationPreviewObject = creationPreviewObject;
-    this.placementPreviewTargetKey = nextTargetKey;
+    this.creationPreviewTargetKey = nextTargetKey;
   }
 
   private render = () => {
