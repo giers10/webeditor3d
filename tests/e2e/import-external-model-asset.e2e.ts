@@ -29,13 +29,15 @@ test("imports a gltf asset with external resources and places an instance", asyn
 
   await page.locator('input[type="file"][accept*="gltf"]').setInputFiles([gltfFixturePath, binFixturePath]);
 
-  await expect(page.getByTestId("asset-list").getByText("scene.gltf", { exact: true })).toBeVisible();
-  await expect(page.getByTestId("asset-list")).not.toContainText("Storage key:");
   await expect(page.getByTestId("outliner-model-instance-list").getByRole("button")).toHaveCount(1);
 
-  await page.getByRole("button", { name: "Place instance for scene.gltf" }).hover();
+  await page.getByTestId("outliner-add-button").click();
+  await page.getByTestId("add-menu-assets").click();
+  await page.getByTestId("add-menu-assets-models").click();
+  await expect(page.getByRole("button", { name: "scene.gltf" })).toBeVisible();
+  await page.getByRole("button", { name: "scene.gltf" }).hover();
   await expect(page.getByTestId("status-asset-hover")).toContainText("Storage key:");
-  await page.getByRole("button", { name: "Place instance for scene.gltf" }).click();
+  await page.getByRole("button", { name: "scene.gltf" }).click();
   const importedSnapshot = await getEditorStoreSnapshot(page);
   const importedModelAsset = Object.values(importedSnapshot.document.assets).find(
     (asset) => asset.kind === "model" && asset.sourceName === "scene.gltf"
