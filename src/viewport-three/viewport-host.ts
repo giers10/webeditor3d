@@ -370,12 +370,68 @@ export class ViewportHost {
       this.scene.background = texture;
       this.scene.environment = texture;
       this.scene.environmentIntensity = world.background.environmentIntensity;
+    } else {
+      this.scene.background = null;
+      this.scene.environment = null;
+      this.scene.environmentIntensity = 1;
+    }
+
+    configureAdvancedRenderingRenderer(this.renderer, world.advancedRendering);
+    this.syncAdvancedRenderingComposer(world.advancedRendering);
+    this.applyShadowState();
+  }
+
+  private syncAdvancedRenderingComposer(settings: AdvancedRenderingSettings) {
+    const shouldUseComposer = settings.enabled;
+    const settingsChanged =
+      this.currentAdvancedRenderingSettings === null ||
+      !areAdvancedRenderingSettingsEqual(this.currentAdvancedRenderingSettings, settings);
+
+    if (!shouldUseComposer) {
+      if (this.advancedRenderingComposer !== null) {
+        this.advancedRenderingComposer.dispose();
+        this.advancedRenderingComposer = null;
+      }
+
+      this.currentAdvancedRenderingSettings = null;
+      this.renderer.autoClear = true;
       return;
     }
 
-    this.scene.background = null;
-    this.scene.environment = null;
-    this.scene.environmentIntensity = 1;
+    if (this.advancedRenderingComposer !== null && !settingsChanged) {
+      return;
+    }
+
+    if (this.advancedRenderingComposer !== null) {
+      this.advancedRenderingComposer.dispose();
+    }
+
+    this.advancedRenderingComposer = createAdvancedRenderingComposer(this.renderer, this.scene, this.camera, settings);
+    this.currentAdvancedRenderingSettings = cloneAdvancedRenderingSettings(settings);
+    this.renderer.autoClear = false;
+  }
+
+  private applyShadowState() {
+    if (this.currentWorld === null) {
+      return;
+    }
+
+    const advancedRendering = this.currentWorld.advancedRendering;
+    const shadowsEnabled = advancedRendering.enabled && advancedRendering.shadows.enabled;
+
+    applyAdvancedRenderingLightShadowFlags(this.sunLight, advancedRendering);
+
+    for (const renderObjects of this.localLightRenderObjects.values()) {
+      applyAdvancedRenderingLightShadowFlags(renderObjects.group, advancedRendering);
+    }
+
+    for (const renderObjects of this.brushRenderObjects.values()) {
+      applyAdvancedRenderingRenderableShadowFlags(renderObjects.mesh, shadowsEnabled);
+    }
+
+    for (const renderGroup of this.modelRenderObjects.values()) {
+      applyAdvancedRenderingRenderableShadowFlags(renderGroup, shadowsEnabled);
+    }
   }
 
   private rebuildLocalLights(document: SceneDocument) {
@@ -397,6 +453,8 @@ export class ViewportHost {
         }
       }
     }
+
+    this.applyShadowState();
   }
 
   private rebuildBrushMeshes(document: SceneDocument, selection: EditorSelection) {
@@ -437,6 +495,8 @@ export class ViewportHost {
         edges
       });
     }
+
+    this.applyShadowState();
   }
 
   private rebuildEntityMarkers(document: SceneDocument, selection: EditorSelection) {
@@ -463,6 +523,8 @@ export class ViewportHost {
       this.modelGroup.add(renderGroup);
       this.modelRenderObjects.set(modelInstance.id, renderGroup);
     }
+
+    this.applyShadowState();
   }
 
   private createEntityRenderObjects(entity: EntityInstance, selected: boolean): EntityRenderObjects {
