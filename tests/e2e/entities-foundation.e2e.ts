@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { getEditorStoreSnapshot, setViewportPlacementPreview } from "./viewport-test-helpers";
+import { clickViewport, getEditorStoreSnapshot, setViewportCreationPreview } from "./viewport-test-helpers";
 
 test("user can place and select typed entities from the entity foundation workflow", async ({ page }) => {
   const pageErrors: string[] = [];
@@ -25,14 +25,14 @@ test("user can place and select typed entities from the entity foundation workfl
   await page.getByTestId("outliner-add-button").click();
   await page.getByTestId("add-menu-entities").click();
   await page.getByTestId("add-menu-sound-emitter").click();
-  await setViewportPlacementPreview(
+  await setViewportCreationPreview(
     page,
     "topLeft",
     { kind: "entity", entityKind: "soundEmitter", audioAssetId: null },
     { x: 4, y: 1, z: -6 }
   );
   await expect(page.getByTestId("viewport-snap-preview-topLeft")).toBeVisible();
-  await page.getByTestId("viewport-fallback-place-topLeft").dispatchEvent("click");
+  await clickViewport(page, "topLeft");
   const soundEmitterSnapshot = await getEditorStoreSnapshot(page);
   const selectedSoundEmitterId =
     soundEmitterSnapshot.selection.kind === "entities" ? soundEmitterSnapshot.selection.ids?.[0] ?? null : null;
@@ -64,14 +64,14 @@ test("user can place and select typed entities from the entity foundation workfl
   await page.getByTestId("outliner-add-button").click();
   await page.getByTestId("add-menu-entities").click();
   await page.getByTestId("add-menu-interactable").click();
-  await setViewportPlacementPreview(
+  await setViewportCreationPreview(
     page,
     "topLeft",
     { kind: "entity", entityKind: "interactable", audioAssetId: null },
     { x: -8, y: 1, z: 12 }
   );
   await expect(page.getByTestId("viewport-snap-preview-topLeft")).toBeVisible();
-  await page.getByTestId("viewport-fallback-place-topLeft").dispatchEvent("click");
+  await clickViewport(page, "topLeft");
   await expect(page.getByTestId("interactable-prompt")).toHaveValue("Use");
 
   await page
@@ -115,13 +115,13 @@ test("shift+a opens the add menu at the cursor", async ({ page }) => {
   await expect(page.getByRole("menu", { name: "Add" })).toBeVisible();
   await page.getByTestId("add-menu-lights").click();
   await page.getByTestId("add-menu-point-light").click();
-  await setViewportPlacementPreview(
+  await setViewportCreationPreview(
     page,
     "topLeft",
     { kind: "entity", entityKind: "pointLight", audioAssetId: null },
     { x: 12, y: 3, z: -4 }
   );
-  await page.getByTestId("viewport-fallback-place-topLeft").dispatchEvent("click");
+  await clickViewport(page, "topLeft");
   await expect(page.getByTestId("point-light-intensity")).toHaveValue("1.25");
 
   expect(pageErrors).toEqual([]);
