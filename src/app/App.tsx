@@ -1748,6 +1748,22 @@ export function App({ store, initialStatusMessage }: AppProps) {
           targetModelInstanceId: link.action.targetModelInstanceId
         });
         break;
+      case "playSound":
+        nextLink = createPlaySoundInteractionLink({
+          id: link.id,
+          sourceEntityId: link.sourceEntityId,
+          trigger,
+          targetSoundEmitterId: link.action.targetSoundEmitterId
+        });
+        break;
+      case "stopSound":
+        nextLink = createStopSoundInteractionLink({
+          id: link.id,
+          sourceEntityId: link.sourceEntityId,
+          trigger,
+          targetSoundEmitterId: link.action.targetSoundEmitterId
+        });
+        break;
     }
 
     commitInteractionLinkChange(link, nextLink, `Updated ${getInteractionTriggerLabel(trigger).toLowerCase()} trigger link.`);
@@ -1835,6 +1851,51 @@ export function App({ store, initialStatusMessage }: AppProps) {
         }),
         "Switched link action to stop animation."
       );
+      return;
+    }
+
+    if (actionType === "playSound" || actionType === "stopSound") {
+      const targetSoundEmitter =
+        (link.action.type === "playSound" || link.action.type === "stopSound"
+          ? editorState.document.entities[link.action.targetSoundEmitterId]
+          : undefined) ?? soundEmitterOptions.find(({ entity }) => {
+          if (entity.audioAssetId === null) {
+            return false;
+          }
+
+          const asset = editorState.document.assets[entity.audioAssetId];
+          return asset?.kind === "audio";
+        })?.entity;
+
+      if (targetSoundEmitter === undefined || targetSoundEmitter.kind !== "soundEmitter") {
+        setStatusMessage("Author a Sound Emitter with an audio asset before switching this link to sound playback.");
+        return;
+      }
+
+      if (actionType === "playSound") {
+        commitInteractionLinkChange(
+          link,
+          createPlaySoundInteractionLink({
+            id: link.id,
+            sourceEntityId: sourceEntity.id,
+            trigger: link.trigger,
+            targetSoundEmitterId: targetSoundEmitter.id
+          }),
+          "Switched link action to play sound."
+        );
+      } else {
+        commitInteractionLinkChange(
+          link,
+          createStopSoundInteractionLink({
+            id: link.id,
+            sourceEntityId: sourceEntity.id,
+            trigger: link.trigger,
+            targetSoundEmitterId: targetSoundEmitter.id
+          }),
+          "Switched link action to stop sound."
+        );
+      }
+
       return;
     }
 
