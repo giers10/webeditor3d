@@ -52,12 +52,25 @@ import {
   LOCAL_LIGHTS_AND_SKYBOX_SCENE_DOCUMENT_VERSION,
   MODEL_ASSET_PIPELINE_SCENE_DOCUMENT_VERSION,
   RUNNER_V1_SCENE_DOCUMENT_VERSION,
+  SPATIAL_AUDIO_SCENE_DOCUMENT_VERSION,
   SCENE_DOCUMENT_VERSION,
   TRIGGER_ACTION_TARGET_FOUNDATION_SCENE_DOCUMENT_VERSION,
   WORLD_ENVIRONMENT_SCENE_DOCUMENT_VERSION,
   type SceneDocument
 } from "./scene-document";
-import { isWorldBackgroundMode, type WorldBackgroundSettings, type WorldSettings } from "./world-settings";
+import {
+  createDefaultAdvancedRenderingSettings,
+  isAdvancedRenderingShadowMapSize,
+  isAdvancedRenderingShadowType,
+  isAdvancedRenderingToneMappingMode,
+  isWorldBackgroundMode,
+  type AdvancedRenderingSettings,
+  type AdvancedRenderingShadowMapSize,
+  type AdvancedRenderingShadowType,
+  type AdvancedRenderingToneMappingMode,
+  type WorldBackgroundSettings,
+  type WorldSettings
+} from "./world-settings";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -131,6 +144,187 @@ function expectLiteralString<T extends string>(value: unknown, expectedValue: T,
   }
 
   return expectedValue;
+}
+
+function readOptionalBoolean(value: unknown, label: string, fallback: boolean): boolean {
+  if (value === undefined) {
+    return fallback;
+  }
+
+  return expectBoolean(value, label);
+}
+
+function readOptionalFiniteNumber(value: unknown, label: string, fallback: number): number {
+  if (value === undefined) {
+    return fallback;
+  }
+
+  return expectFiniteNumber(value, label);
+}
+
+function readOptionalNonNegativeFiniteNumber(value: unknown, label: string, fallback: number): number {
+  if (value === undefined) {
+    return fallback;
+  }
+
+  return expectNonNegativeFiniteNumber(value, label);
+}
+
+function readOptionalPositiveInteger(value: unknown, label: string, fallback: number): number {
+  if (value === undefined) {
+    return fallback;
+  }
+
+  const integerValue = expectFiniteNumber(value, label);
+
+  if (!Number.isInteger(integerValue) || integerValue <= 0) {
+    throw new Error(`${label} must be a positive integer.`);
+  }
+
+  return integerValue;
+}
+
+function readOptionalAllowedValue<T extends string>(value: unknown, label: string, fallback: T, guard: (candidate: unknown) => candidate is T): T {
+  if (value === undefined) {
+    return fallback;
+  }
+
+  const stringValue = expectString(value, label);
+
+  if (!guard(stringValue)) {
+    throw new Error(`${label} must be a supported value.`);
+  }
+
+  return stringValue;
+}
+
+function readAdvancedRenderingSettings(value: unknown): AdvancedRenderingSettings {
+  const defaults = createDefaultAdvancedRenderingSettings();
+
+  if (value === undefined) {
+    return defaults;
+  }
+
+  if (!isRecord(value)) {
+    throw new Error("world.advancedRendering must be an object.");
+  }
+
+  if (value.shadows !== undefined && !isRecord(value.shadows)) {
+    throw new Error("world.advancedRendering.shadows must be an object.");
+  }
+
+  if (value.ambientOcclusion !== undefined && !isRecord(value.ambientOcclusion)) {
+    throw new Error("world.advancedRendering.ambientOcclusion must be an object.");
+  }
+
+  if (value.bloom !== undefined && !isRecord(value.bloom)) {
+    throw new Error("world.advancedRendering.bloom must be an object.");
+  }
+
+  if (value.toneMapping !== undefined && !isRecord(value.toneMapping)) {
+    throw new Error("world.advancedRendering.toneMapping must be an object.");
+  }
+
+  if (value.depthOfField !== undefined && !isRecord(value.depthOfField)) {
+    throw new Error("world.advancedRendering.depthOfField must be an object.");
+  }
+
+  const shadows = value.shadows as Record<string, unknown> | undefined;
+  const ambientOcclusion = value.ambientOcclusion as Record<string, unknown> | undefined;
+  const bloom = value.bloom as Record<string, unknown> | undefined;
+  const toneMapping = value.toneMapping as Record<string, unknown> | undefined;
+  const depthOfField = value.depthOfField as Record<string, unknown> | undefined;
+
+  const shadowsMapSize = readOptionalAllowedValue(
+    shadows?.mapSize,
+    "world.advancedRendering.shadows.mapSize",
+    defaults.shadows.mapSize,
+    isAdvancedRenderingShadowMapSize
+  );
+  const shadowsType = readOptionalAllowedValue(
+    shadows?.type,
+    "world.advancedRendering.shadows.type",
+    defaults.shadows.type,
+    isAdvancedRenderingShadowType
+  );
+  const toneMappingMode = readOptionalAllowedValue(
+    toneMapping?.mode,
+    "world.advancedRendering.toneMapping.mode",
+    defaults.toneMapping.mode,
+    isAdvancedRenderingToneMappingMode
+  );
+
+  return {
+    enabled: readOptionalBoolean(value.enabled, "world.advancedRendering.enabled", defaults.enabled),
+    shadows: {
+      enabled: readOptionalBoolean(shadows?.enabled, "world.advancedRendering.shadows.enabled", defaults.shadows.enabled),
+      mapSize: shadowsMapSize,
+      type: shadowsType,
+      bias: readOptionalFiniteNumber(shadows?.bias, "world.advancedRendering.shadows.bias", defaults.shadows.bias)
+    },
+    ambientOcclusion: {
+      enabled: readOptionalBoolean(
+        ambientOcclusion?.enabled,
+        "world.advancedRendering.ambientOcclusion.enabled",
+        defaults.ambientOcclusion.enabled
+      ),
+      intensity: readOptionalNonNegativeFiniteNumber(
+        ambientOcclusion?.intensity,
+        "world.advancedRendering.ambientOcclusion.intensity",
+        defaults.ambientOcclusion.intensity
+      ),
+      radius: readOptionalNonNegativeFiniteNumber(
+        ambientOcclusion?.radius,
+        "world.advancedRendering.ambientOcclusion.radius",
+        defaults.ambientOcclusion.radius
+      ),
+      samples: readOptionalPositiveInteger(
+        ambientOcclusion?.samples,
+        "world.advancedRendering.ambientOcclusion.samples",
+        defaults.ambientOcclusion.samples
+      )
+    },
+    bloom: {
+      enabled: readOptionalBoolean(bloom?.enabled, "world.advancedRendering.bloom.enabled", defaults.bloom.enabled),
+      intensity: readOptionalNonNegativeFiniteNumber(
+        bloom?.intensity,
+        "world.advancedRendering.bloom.intensity",
+        defaults.bloom.intensity
+      ),
+      threshold: readOptionalNonNegativeFiniteNumber(
+        bloom?.threshold,
+        "world.advancedRendering.bloom.threshold",
+        defaults.bloom.threshold
+      ),
+      radius: readOptionalNonNegativeFiniteNumber(bloom?.radius, "world.advancedRendering.bloom.radius", defaults.bloom.radius)
+    },
+    toneMapping: {
+      mode: toneMappingMode,
+      exposure: readOptionalFiniteNumber(toneMapping?.exposure, "world.advancedRendering.toneMapping.exposure", defaults.toneMapping.exposure)
+    },
+    depthOfField: {
+      enabled: readOptionalBoolean(
+        depthOfField?.enabled,
+        "world.advancedRendering.depthOfField.enabled",
+        defaults.depthOfField.enabled
+      ),
+      focusDistance: readOptionalNonNegativeFiniteNumber(
+        depthOfField?.focusDistance,
+        "world.advancedRendering.depthOfField.focusDistance",
+        defaults.depthOfField.focusDistance
+      ),
+      focalLength: readOptionalNonNegativeFiniteNumber(
+        depthOfField?.focalLength,
+        "world.advancedRendering.depthOfField.focalLength",
+        defaults.depthOfField.focalLength
+      ),
+      bokehScale: readOptionalNonNegativeFiniteNumber(
+        depthOfField?.bokehScale,
+        "world.advancedRendering.depthOfField.bokehScale",
+        defaults.depthOfField.bokehScale
+      )
+    }
+  };
 }
 
 function expectOptionalString(value: unknown, label: string): string | undefined {
@@ -616,7 +810,8 @@ function readWorldSettings(value: unknown): WorldSettings {
       colorHex: expectHexColor(sunLight.colorHex, "world.sunLight.colorHex"),
       intensity: expectNonNegativeFiniteNumber(sunLight.intensity, "world.sunLight.intensity"),
       direction
-    }
+    },
+    advancedRendering: readAdvancedRenderingSettings(value.advancedRendering)
   };
 }
 
