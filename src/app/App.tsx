@@ -78,16 +78,19 @@ import {
   type FaceUvRotationQuarterTurns,
   type FaceUvState
 } from "../document/brushes";
-import { areWorldSettingsEqual, changeWorldBackgroundMode, type WorldBackgroundMode, type WorldSettings } from "../document/scene-document";
 import {
   ADVANCED_RENDERING_SHADOW_MAP_SIZES,
   ADVANCED_RENDERING_SHADOW_TYPES,
   ADVANCED_RENDERING_TONE_MAPPING_MODES,
+  areWorldSettingsEqual,
+  changeWorldBackgroundMode,
   cloneWorldSettings,
+  type WorldBackgroundMode,
   type AdvancedRenderingSettings,
   type AdvancedRenderingShadowMapSize,
   type AdvancedRenderingShadowType,
-  type AdvancedRenderingToneMappingMode
+  type AdvancedRenderingToneMappingMode,
+  type WorldSettings
 } from "../document/world-settings";
 import { formatSceneDiagnosticSummary, validateSceneDocument } from "../document/scene-document-validation";
 import { getBrowserProjectAssetStorageAccess, type ProjectAssetStorage } from "../assets/project-asset-storage";
