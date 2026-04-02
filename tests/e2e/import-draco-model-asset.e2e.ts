@@ -2,7 +2,7 @@ import path from "node:path";
 
 import { expect, test } from "@playwright/test";
 
-import { getEditorStoreSnapshot, setViewportPlacementPreview } from "./viewport-test-helpers";
+import { clickViewport, getEditorStoreSnapshot, setViewportCreationPreview } from "./viewport-test-helpers";
 
 const fixturePath = path.resolve(process.cwd(), "fixtures/assets/tiny-triangle-draco.glb");
 
@@ -41,14 +41,14 @@ test("imports a draco-compressed glb asset, places an instance, and survives rel
     throw new Error("Imported model asset was not found in the document snapshot.");
   }
 
-  await setViewportPlacementPreview(
+  await setViewportCreationPreview(
     page,
     "topLeft",
     { kind: "model-instance", assetId: importedModelAsset.id },
     { x: 84, y: 0, z: -88 }
   );
   await expect(page.getByTestId("viewport-snap-preview-topLeft")).toBeVisible();
-  await page.getByTestId("viewport-fallback-place-topLeft").dispatchEvent("click");
+  await clickViewport(page, "topLeft");
   await expect(page.getByTestId("outliner-model-instance-list").getByRole("button")).toHaveCount(2);
   const snapshot = await getEditorStoreSnapshot(page);
   const selectedModelInstanceId = snapshot.selection.kind === "modelInstances" ? snapshot.selection.ids?.[0] ?? null : null;
