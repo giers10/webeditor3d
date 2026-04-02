@@ -3582,6 +3582,65 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
+  const addMenuItems: HierarchicalMenuItem[] = [
+    {
+      kind: "group",
+      label: "Entities",
+      testId: "add-menu-entities",
+      children: [
+        {
+          kind: "action",
+          label: "Player Start",
+          testId: "add-menu-player-start",
+          onSelect: () => handlePlaceEntity("playerStart")
+        },
+        {
+          kind: "action",
+          label: "Sound Emitter",
+          testId: "add-menu-sound-emitter",
+          onSelect: () => handlePlaceEntity("soundEmitter")
+        },
+        {
+          kind: "action",
+          label: "Trigger Volume",
+          testId: "add-menu-trigger-volume",
+          onSelect: () => handlePlaceEntity("triggerVolume")
+        },
+        {
+          kind: "action",
+          label: "Teleport Target",
+          testId: "add-menu-teleport-target",
+          onSelect: () => handlePlaceEntity("teleportTarget")
+        },
+        {
+          kind: "action",
+          label: "Interactable",
+          testId: "add-menu-interactable",
+          onSelect: () => handlePlaceEntity("interactable")
+        }
+      ]
+    },
+    {
+      kind: "group",
+      label: "Lights",
+      testId: "add-menu-lights",
+      children: [
+        {
+          kind: "action",
+          label: "Point Light",
+          testId: "add-menu-point-light",
+          onSelect: () => handlePlaceEntity("pointLight")
+        },
+        {
+          kind: "action",
+          label: "Spot Light",
+          testId: "add-menu-spot-light",
+          onSelect: () => handlePlaceEntity("spotLight")
+        }
+      ]
+    }
+  ];
+
   if (editorState.toolMode === "play" && runtimeScene !== null) {
     return (
       <div className="app-shell app-shell--play">
