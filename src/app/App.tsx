@@ -664,7 +664,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const selectedPlayerStart = selectedEntity?.kind === "playerStart" ? selectedEntity : null;
   const selectedSoundEmitter = selectedEntity?.kind === "soundEmitter" ? selectedEntity : null;
   const selectedSoundEmitterAsset =
-    selectedSoundEmitter?.audioAssetId !== null ? editorState.document.assets[selectedSoundEmitter.audioAssetId] ?? null : null;
+    selectedSoundEmitter === null
+      ? null
+      : selectedSoundEmitter.audioAssetId === null
+        ? null
+        : editorState.document.assets[selectedSoundEmitter.audioAssetId] ?? null;
   const selectedSoundEmitterAudioAssetRecord =
     selectedSoundEmitterAsset !== null && selectedSoundEmitterAsset.kind === "audio" ? selectedSoundEmitterAsset : null;
   const selectedTriggerVolume = selectedEntity?.kind === "triggerVolume" ? selectedEntity : null;
