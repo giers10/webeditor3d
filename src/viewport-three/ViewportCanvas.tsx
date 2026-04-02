@@ -9,7 +9,13 @@ import type { Vec3 } from "../core/vector";
 import type { SceneDocument } from "../document/scene-document";
 import type { WorldSettings } from "../document/world-settings";
 import { createWorldBackgroundStyle } from "../shared-ui/world-background-style";
-import { getViewportPanelLabel, type ViewportDisplayMode, type ViewportLayoutMode, type ViewportPanelId } from "./viewport-layout";
+import {
+  getViewportPanelLabel,
+  type ViewportDisplayMode,
+  type ViewportLayoutMode,
+  type ViewportPanelCameraState,
+  type ViewportPanelId
+} from "./viewport-layout";
 import {
   getViewportViewModeLabel,
   type ViewportViewMode
@@ -28,6 +34,7 @@ interface ViewportCanvasProps {
   selection: EditorSelection;
   toolMode: ToolMode;
   toolPreview: ViewportToolPreview;
+  cameraState: ViewportPanelCameraState;
   viewMode: ViewportViewMode;
   displayMode: ViewportDisplayMode;
   layoutMode: ViewportLayoutMode;
@@ -36,6 +43,7 @@ interface ViewportCanvasProps {
   focusSelection: EditorSelection;
   onSelectionChange(selection: EditorSelection): void;
   onCommitCreation(toolPreview: CreationViewportToolPreview): boolean;
+  onCameraStateChange(cameraState: ViewportPanelCameraState): void;
   onToolPreviewChange(toolPreview: ViewportToolPreview): void;
 }
 
@@ -49,6 +57,7 @@ export function ViewportCanvas({
   selection,
   toolMode,
   toolPreview,
+  cameraState,
   viewMode,
   displayMode,
   layoutMode,
@@ -57,6 +66,7 @@ export function ViewportCanvas({
   focusSelection,
   onSelectionChange,
   onCommitCreation,
+  onCameraStateChange,
   onToolPreviewChange
 }: ViewportCanvasProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -119,8 +129,16 @@ export function ViewportCanvas({
   }, [displayMode]);
 
   useEffect(() => {
+    hostRef.current?.setCameraState(cameraState);
+  }, [cameraState]);
+
+  useEffect(() => {
     hostRef.current?.setBrushSelectionChangeHandler(onSelectionChange);
   }, [onSelectionChange]);
+
+  useEffect(() => {
+    hostRef.current?.setCameraStateChangeHandler(onCameraStateChange);
+  }, [onCameraStateChange]);
 
   useEffect(() => {
     hostRef.current?.setCreationPreviewChangeHandler((nextToolPreview) => {
