@@ -122,16 +122,28 @@ describe("EditorStore", () => {
     expect(store.getState().viewportPanels.topLeft.viewMode).toBe("perspective");
     expect(store.getState().viewportPanels.topRight.viewMode).toBe("top");
     expect(store.getState().viewportPanels.topRight.displayMode).toBe("authoring");
+    expect(store.getState().viewportQuadSplit).toEqual({
+      x: 0.5,
+      y: 0.5
+    });
 
     store.setViewportLayoutMode("quad");
     store.setActiveViewportPanel("bottomRight");
     store.setViewportPanelViewMode("bottomRight", "front");
     store.setViewportPanelDisplayMode("bottomRight", "normal");
+    store.setViewportQuadSplit({
+      x: 0.38,
+      y: 0.62
+    });
 
     expect(store.getState().viewportLayoutMode).toBe("quad");
     expect(store.getState().activeViewportPanelId).toBe("bottomRight");
     expect(store.getState().viewportPanels.bottomRight.viewMode).toBe("front");
     expect(store.getState().viewportPanels.bottomRight.displayMode).toBe("normal");
+    expect(store.getState().viewportQuadSplit).toEqual({
+      x: 0.38,
+      y: 0.62
+    });
   });
 
   it("shares transient creation preview state across viewport panels", () => {

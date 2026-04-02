@@ -29,6 +29,10 @@ describe("viewport layout", () => {
       viewMode: "side",
       displayMode: "authoring"
     });
+    expect(layout.viewportQuadSplit).toEqual({
+      x: 0.5,
+      y: 0.5
+    });
   });
 
   it("exposes readable labels for the layout and panel chrome", () => {
