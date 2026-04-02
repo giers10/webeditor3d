@@ -1,3 +1,5 @@
+import type { CSSProperties } from "react";
+
 import { ViewportCanvas } from "./ViewportCanvas";
 import {
   getViewportDisplayModeLabel,
@@ -22,6 +24,8 @@ interface ViewportPanelProps {
   panelState: ViewportPanelState;
   layoutMode: ViewportLayoutMode;
   isActive: boolean;
+  className?: string;
+  style?: CSSProperties;
   world: WorldSettings;
   sceneDocument: SceneDocument;
   projectAssets: Record<string, ProjectAssetRecord>;
@@ -45,6 +49,8 @@ export function ViewportPanel({
   panelState,
   layoutMode,
   isActive,
+  className,
+  style,
   world,
   sceneDocument,
   projectAssets,
@@ -63,15 +69,16 @@ export function ViewportPanel({
   onSelectionChange
 }: ViewportPanelProps) {
   const shouldShow = layoutMode === "quad" || isActive;
+  const panelStyle = shouldShow ? style : { ...(style ?? {}), display: "none" };
 
   return (
     <section
-      className={`viewport-panel ${layoutMode === "single" ? "viewport-panel--single" : "viewport-panel--quad"}`}
+      className={`viewport-panel ${layoutMode === "single" ? "viewport-panel--single" : "viewport-panel--quad"} ${className ?? ""}`.trim()}
       data-testid={`viewport-panel-${panelId}`}
       data-active={isActive ? "true" : "false"}
       aria-hidden={shouldShow ? undefined : true}
       aria-label={`${getViewportPanelLabel(panelId)} viewport panel`}
-      style={shouldShow ? undefined : { display: "none" }}
+      style={panelStyle}
       onPointerDownCapture={() => onActivatePanel(panelId)}
       onFocusCapture={() => onActivatePanel(panelId)}
     >

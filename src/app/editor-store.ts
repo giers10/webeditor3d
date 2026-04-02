@@ -26,7 +26,8 @@ import {
   type ViewportDisplayMode,
   type ViewportLayoutMode,
   type ViewportPanelId,
-  type ViewportPanelState
+  type ViewportPanelState,
+  type ViewportQuadSplit
 } from "../viewport-three/viewport-layout";
 
 export interface EditorStoreState {
@@ -36,6 +37,7 @@ export interface EditorStoreState {
   viewportLayoutMode: ViewportLayoutMode;
   activeViewportPanelId: ViewportPanelId;
   viewportPanels: Record<ViewportPanelId, ViewportPanelState>;
+  viewportQuadSplit: ViewportQuadSplit;
   viewportTransientState: ViewportTransientState;
   canUndo: boolean;
   canRedo: boolean;
@@ -61,6 +63,7 @@ export class EditorStore {
   private viewportLayoutMode: ViewportLayoutMode = "single";
   private activeViewportPanelId: ViewportPanelId = "topLeft";
   private viewportPanels = createDefaultViewportLayoutState().panels;
+  private viewportQuadSplit = createDefaultViewportLayoutState().viewportQuadSplit;
   private viewportTransientState = createDefaultViewportTransientState();
   private previousEditingToolMode: Exclude<ToolMode, "play"> = "select";
   private readonly history = new CommandHistory();
@@ -164,6 +167,18 @@ export class EditorStore {
         ...this.viewportPanels[panelId],
         displayMode
       }
+    };
+    this.emit();
+  }
+
+  setViewportQuadSplit(viewportQuadSplit: ViewportQuadSplit) {
+    if (this.viewportQuadSplit.x === viewportQuadSplit.x && this.viewportQuadSplit.y === viewportQuadSplit.y) {
+      return;
+    }
+
+    this.viewportQuadSplit = {
+      x: viewportQuadSplit.x,
+      y: viewportQuadSplit.y
     };
     this.emit();
   }
@@ -330,6 +345,7 @@ export class EditorStore {
       viewportLayoutMode: this.viewportLayoutMode,
       activeViewportPanelId: this.activeViewportPanelId,
       viewportPanels: this.viewportPanels,
+      viewportQuadSplit: this.viewportQuadSplit,
       viewportTransientState: this.viewportTransientState,
       canUndo: this.history.canUndo(),
       canRedo: this.history.canRedo(),
