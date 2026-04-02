@@ -734,7 +734,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [backgroundEnvironmentIntensityDraft, setBackgroundEnvironmentIntensityDraft] = useState(
     editorState.document.world.background.mode === "image" ? String(editorState.document.world.background.environmentIntensity) : "0.5"
   );
-  const [statusMessage, setStatusMessage] = useState(initialStatusMessage ?? "Slice 3.2 local lights and skyboxes ready.");
+  const [statusMessage, setStatusMessage] = useState(initialStatusMessage ?? "Slice 3.4 spatial audio ready.");
   const [assetStatusMessage, setAssetStatusMessage] = useState<string | null>(null);
   const [preferredNavigationMode, setPreferredNavigationMode] = useState<RuntimeNavigationMode>(
     primaryPlayerStart === null ? "orbitVisitor" : "firstPerson"
