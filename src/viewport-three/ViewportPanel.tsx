@@ -67,7 +67,7 @@ export function ViewportPanel({
 
   return (
     <section
-      className={`viewport-panel ${layoutMode === "single" ? "viewport-panel--single" : "viewport-panel--quad viewport-panel--compact"} ${isActive ? "viewport-panel--active" : ""}`}
+      className={`viewport-panel ${layoutMode === "single" ? "viewport-panel--single" : "viewport-panel--quad"} ${isActive ? "viewport-panel--active" : ""}`}
       data-testid={`viewport-panel-${panelId}`}
       data-active={isActive ? "true" : "false"}
       aria-hidden={shouldShow ? undefined : true}
