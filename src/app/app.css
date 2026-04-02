@@ -753,11 +753,6 @@ button:disabled {
   min-height: 0;
 }
 
-.viewport-panel--active {
-  border-color: rgba(207, 123, 66, 0.58);
-  box-shadow: 0 0 0 1px rgba(207, 123, 66, 0.18), var(--shadow-panel);
-}
-
 .viewport-panel__header {
   position: absolute;
   top: 12px;
@@ -881,10 +876,6 @@ button:disabled {
 
 .viewport-canvas--authoring {
   background: #000000;
-}
-
-.viewport-canvas--active {
-  box-shadow: inset 0 0 0 1px rgba(207, 123, 66, 0.24);
 }
 
 .runner-canvas {
