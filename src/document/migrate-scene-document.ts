@@ -1412,6 +1412,24 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     };
   }
 
+  if (source.version === SPATIAL_AUDIO_SCENE_DOCUMENT_VERSION) {
+    const materials = readMaterialRegistry(source.materials, "materials");
+    const assets = readAssets(source.assets);
+
+    return {
+      version: SCENE_DOCUMENT_VERSION,
+      name: expectString(source.name, "name"),
+      world: readWorldSettings(source.world),
+      materials,
+      textures: expectEmptyCollection(source.textures, "textures"),
+      assets,
+      brushes: readBrushes(source.brushes, materials, false),
+      modelInstances: readModelInstances(source.modelInstances, assets),
+      entities: readEntities(source.entities, { legacySoundEmitter: false }),
+      interactionLinks: readInteractionLinks(source.interactionLinks)
+    };
+  }
+
   if (source.version !== SCENE_DOCUMENT_VERSION) {
     throw new Error(`Unsupported scene document version: ${String(source.version)}.`);
   }
