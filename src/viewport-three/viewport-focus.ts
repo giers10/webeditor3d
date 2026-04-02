@@ -327,7 +327,7 @@ function includeEntity(bounds: FocusBoundsAccumulator, entity: EntityInstance) {
       includePlayerStart(bounds, entity.position);
       break;
     case "soundEmitter":
-      includeSphereEntity(bounds, entity.position, Math.max(0.4, entity.radius));
+      includeSphereEntity(bounds, entity.position, Math.max(0.4, entity.maxDistance));
       break;
     case "triggerVolume":
       includeTriggerVolume(bounds, entity.position, entity.size);
@@ -350,7 +350,7 @@ function createEntityFocusTarget(entity: EntityInstance): ViewportFocusTarget {
     case "playerStart":
       return createPlayerStartFocusTarget(entity.position);
     case "soundEmitter":
-      return createSphereEntityFocusTarget(entity.position, entity.radius, 0.75);
+      return createSphereEntityFocusTarget(entity.position, entity.maxDistance, 0.75);
     case "triggerVolume":
       return createTriggerVolumeFocusTarget(entity.position, entity.size);
     case "teleportTarget":
