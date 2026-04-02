@@ -10,8 +10,10 @@ import {
   DEFAULT_SPOT_LIGHT_DIRECTION,
   DEFAULT_SPOT_LIGHT_INTENSITY,
   DEFAULT_INTERACTABLE_PROMPT,
-  DEFAULT_SOUND_EMITTER_GAIN,
-  DEFAULT_SOUND_EMITTER_RADIUS,
+  DEFAULT_SOUND_EMITTER_AUDIO_ASSET_ID,
+  DEFAULT_SOUND_EMITTER_MAX_DISTANCE,
+  DEFAULT_SOUND_EMITTER_REF_DISTANCE,
+  DEFAULT_SOUND_EMITTER_VOLUME,
   DEFAULT_TRIGGER_VOLUME_SIZE,
   createPointLightEntity,
   createDefaultEntityInstance,
@@ -49,8 +51,10 @@ describe("entity registry defaults", () => {
     expect(createDefaultEntityInstance("soundEmitter")).toMatchObject({
       kind: "soundEmitter",
       position: { x: 0, y: 0, z: 0 },
-      radius: DEFAULT_SOUND_EMITTER_RADIUS,
-      gain: DEFAULT_SOUND_EMITTER_GAIN,
+      audioAssetId: DEFAULT_SOUND_EMITTER_AUDIO_ASSET_ID,
+      volume: DEFAULT_SOUND_EMITTER_VOLUME,
+      refDistance: DEFAULT_SOUND_EMITTER_REF_DISTANCE,
+      maxDistance: DEFAULT_SOUND_EMITTER_MAX_DISTANCE,
       autoplay: false,
       loop: false
     });
