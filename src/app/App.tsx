@@ -4078,7 +4078,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
           </Panel>
         </aside>
 
-        <main className={`viewport-region viewport-region--${layoutMode}`}>
+        <main className={`viewport-region viewport-region--${layoutMode}`} data-testid="viewport-shell">
           <div className="viewport-region__header">
             <div className="viewport-region__meta">
               <div className="viewport-region__title">Viewport</div>
