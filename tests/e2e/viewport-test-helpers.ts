@@ -1,8 +1,9 @@
 import type { Page } from "@playwright/test";
 
 import type { CreationTarget, ViewportToolPreview } from "../../src/viewport-three/viewport-transient-state";
+import type { ViewportPanelId } from "../../src/viewport-three/viewport-layout";
 
-export const DEFAULT_VIEWPORT_PANEL_ID = "topLeft";
+export const DEFAULT_VIEWPORT_PANEL_ID: ViewportPanelId = "topLeft";
 
 export function getViewportPanel(page: Page, panelId: string = DEFAULT_VIEWPORT_PANEL_ID) {
   return page.getByTestId(`viewport-panel-${panelId}`);
@@ -55,7 +56,7 @@ export async function getViewportToolPreview(page: Page): Promise<EditorStoreSna
 
 export async function setViewportCreationPreview(
   page: Page,
-  panelId: string,
+  panelId: ViewportPanelId,
   target: CreationTarget,
   center: { x: number; y: number; z: number } | null
 ) {
@@ -122,7 +123,7 @@ export async function clickViewport(page: Page, panelId: string = DEFAULT_VIEWPO
 
 export async function setSharedBoxCreationPreview(
   page: Page,
-  panelId: string,
+  panelId: ViewportPanelId,
   center: { x: number; y: number; z: number } | null
 ) {
   return setViewportCreationPreview(
