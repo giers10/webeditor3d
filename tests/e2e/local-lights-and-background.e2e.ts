@@ -39,6 +39,7 @@ test("local lights and background images persist through editor and runner flows
   await page.getByTestId("outliner-add-button").click();
   await page.getByTestId("add-menu-lights").click();
   await page.getByTestId("add-menu-point-light").click();
+  await page.getByTestId("viewport-panel-topLeft").click({ position: { x: 16, y: 16 }, force: true });
   const viewportCanvas = getViewportCanvas(page);
   await viewportCanvas.hover({ position: { x: 172, y: 116 }, force: true });
   await viewportCanvas.click({ position: { x: 172, y: 116 }, force: true });
@@ -49,6 +50,7 @@ test("local lights and background images persist through editor and runner flows
   await page.getByTestId("outliner-add-button").click();
   await page.getByTestId("add-menu-lights").click();
   await page.getByTestId("add-menu-spot-light").click();
+  await page.getByTestId("viewport-panel-topLeft").click({ position: { x: 16, y: 16 }, force: true });
   await viewportCanvas.hover({ position: { x: 240, y: 132 }, force: true });
   await viewportCanvas.click({ position: { x: 240, y: 132 }, force: true });
   await expect(page.getByTestId("spot-light-angle")).toHaveValue("35");
