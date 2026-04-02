@@ -201,6 +201,9 @@ export function ViewportCanvas({
   }, [focusRequestId, focusSelection, sceneDocument]);
 
   const overlayText = getViewportOverlayText(toolMode, viewMode, displayMode, layoutMode);
+  const previewVisible =
+    (toolMode === "box-create" && toolPreview.kind === "box-create" && toolPreview.center !== null) ||
+    (toolMode === "place" && toolPreview.kind === "placement" && toolPreview.center !== null);
 
   return (
     <div
@@ -219,14 +222,16 @@ export function ViewportCanvas({
     >
       <div className="viewport-canvas__overlay" data-testid={`viewport-overlay-${panelId}`}>
         <div className="viewport-canvas__overlay-badges">
-          <div className="viewport-canvas__overlay-badge">{toolMode === "box-create" ? "Box Create" : "Select"}</div>
+          <div className="viewport-canvas__overlay-badge">
+            {toolMode === "box-create" ? "Box Create" : toolMode === "place" ? "Place" : "Select"}
+          </div>
           <div className="viewport-canvas__overlay-badge viewport-canvas__overlay-badge--view">{getViewportViewModeLabel(viewMode)}</div>
           <div className="viewport-canvas__overlay-badge viewport-canvas__overlay-badge--display">
             {displayMode === "authoring" ? "Authoring" : "Lit"}
           </div>
         </div>
         {overlayText === null ? null : <div className="viewport-canvas__overlay-text">{overlayText}</div>}
-        {toolMode !== "box-create" || toolPreview.kind !== "box-create" || toolPreview.center === null ? null : (
+        {!previewVisible ? null : (
           <div className="viewport-canvas__overlay-preview" data-testid={`viewport-snap-preview-${panelId}`}>
             Preview: {formatVec3(toolPreview.center)}
           </div>
@@ -236,15 +241,24 @@ export function ViewportCanvas({
       {viewportMessage === null ? null : (
         <div className="viewport-canvas__fallback" role="status">
           <div className="viewport-canvas__fallback-title">Viewport Unavailable</div>
-          <div>{viewportMessage}</div>
-          {toolMode !== "box-create" ? null : (
+        <div>{viewportMessage}</div>
+          {toolMode !== "box-create" && toolMode !== "place" ? null : (
             <button
               className="toolbar__button toolbar__button--accent"
               type="button"
-              data-testid={`viewport-fallback-create-box-${panelId}`}
-              onClick={() => onCreateBoxBrush(DEFAULT_BOX_BRUSH_CENTER)}
+              data-testid={
+                toolMode === "place" ? `viewport-fallback-place-${panelId}` : `viewport-fallback-create-box-${panelId}`
+              }
+              onClick={() => {
+                if (toolMode === "place" && toolPreview.kind === "placement") {
+                  onCommitPlacement(toolPreview);
+                  return;
+                }
+
+                onCreateBoxBrush(DEFAULT_BOX_BRUSH_CENTER);
+              }}
             >
-              Create Default Box
+              {toolMode === "place" ? "Place Preview at Default Position" : "Create Default Box"}
             </button>
           )}
         </div>
