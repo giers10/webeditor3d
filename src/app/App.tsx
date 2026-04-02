@@ -152,14 +152,12 @@ import { validateRuntimeSceneBuild } from "../runtime-three/runtime-scene-valida
 import { Panel } from "../shared-ui/Panel";
 import { createWorldBackgroundStyle } from "../shared-ui/world-background-style";
 import { ViewportPanel } from "../viewport-three/ViewportPanel";
-import {
-  getViewportDisplayModeLabel,
-  getViewportLayoutModeLabel,
-  getViewportViewModeLabel,
-  type ViewportViewMode
-} from "../viewport-three/viewport-view-modes";
+import { getViewportViewModeLabel, type ViewportViewMode } from "../viewport-three/viewport-view-modes";
 import {
   VIEWPORT_PANEL_IDS,
+  getViewportDisplayModeLabel,
+  getViewportLayoutModeLabel,
+  getViewportPanelLabel,
   type ViewportDisplayMode,
   type ViewportLayoutMode,
   type ViewportPanelId
