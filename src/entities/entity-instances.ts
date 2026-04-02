@@ -33,8 +33,10 @@ export interface SoundEmitterEntity {
   id: string;
   kind: "soundEmitter";
   position: Vec3;
-  radius: number;
-  gain: number;
+  audioAssetId: string | null;
+  volume: number;
+  refDistance: number;
+  maxDistance: number;
   autoplay: boolean;
   loop: boolean;
 }
@@ -122,8 +124,12 @@ export const DEFAULT_ENTITY_POSITION: Vec3 = {
 
 export const DEFAULT_PLAYER_START_POSITION = DEFAULT_ENTITY_POSITION;
 export const DEFAULT_PLAYER_START_YAW_DEGREES = 0;
-export const DEFAULT_SOUND_EMITTER_RADIUS = 6;
-export const DEFAULT_SOUND_EMITTER_GAIN = 1;
+export const DEFAULT_SOUND_EMITTER_AUDIO_ASSET_ID: string | null = null;
+export const DEFAULT_SOUND_EMITTER_VOLUME = 1;
+export const DEFAULT_SOUND_EMITTER_GAIN = DEFAULT_SOUND_EMITTER_VOLUME;
+export const DEFAULT_SOUND_EMITTER_REF_DISTANCE = 6;
+export const DEFAULT_SOUND_EMITTER_RADIUS = DEFAULT_SOUND_EMITTER_REF_DISTANCE;
+export const DEFAULT_SOUND_EMITTER_MAX_DISTANCE = 24;
 export const DEFAULT_TRIGGER_VOLUME_SIZE: Vec3 = {
   x: 2,
   y: 2,
@@ -187,6 +193,20 @@ function assertBoolean(value: boolean, label: string) {
   if (typeof value !== "boolean") {
     throw new Error(`${label} must be a boolean.`);
   }
+}
+
+function normalizeSoundEmitterAudioAssetId(audioAssetId: string | null | undefined): string | null {
+  if (audioAssetId === undefined || audioAssetId === null) {
+    return null;
+  }
+
+  const trimmedAudioAssetId = audioAssetId.trim();
+
+  if (trimmedAudioAssetId.length === 0) {
+    throw new Error("Sound Emitter audio asset id must be non-empty when authored.");
+  }
+
+  return trimmedAudioAssetId;
 }
 
 export function normalizeYawDegrees(yawDegrees: number): number {
@@ -281,17 +301,30 @@ export function createPlayerStartEntity(
 }
 
 export function createSoundEmitterEntity(
-  overrides: Partial<Pick<SoundEmitterEntity, "id" | "position" | "radius" | "gain" | "autoplay" | "loop">> = {}
+  overrides: Partial<
+    Pick<
+      SoundEmitterEntity,
+      "id" | "position" | "audioAssetId" | "volume" | "refDistance" | "maxDistance" | "autoplay" | "loop"
+    >
+  > = {}
 ): SoundEmitterEntity {
   const position = cloneVec3(overrides.position ?? DEFAULT_ENTITY_POSITION);
-  const radius = overrides.radius ?? DEFAULT_SOUND_EMITTER_RADIUS;
-  const gain = overrides.gain ?? DEFAULT_SOUND_EMITTER_GAIN;
+  const audioAssetId = normalizeSoundEmitterAudioAssetId(overrides.audioAssetId ?? DEFAULT_SOUND_EMITTER_AUDIO_ASSET_ID);
+  const volume = overrides.volume ?? DEFAULT_SOUND_EMITTER_VOLUME;
+  const refDistance = overrides.refDistance ?? DEFAULT_SOUND_EMITTER_REF_DISTANCE;
+  const maxDistance = overrides.maxDistance ?? DEFAULT_SOUND_EMITTER_MAX_DISTANCE;
   const autoplay = overrides.autoplay ?? false;
   const loop = overrides.loop ?? false;
 
   assertFiniteVec3(position, "Sound Emitter position");
-  assertPositiveFiniteNumber(radius, "Sound Emitter radius");
-  assertNonNegativeFiniteNumber(gain, "Sound Emitter gain");
+  assertNonNegativeFiniteNumber(volume, "Sound Emitter volume");
+  assertPositiveFiniteNumber(refDistance, "Sound Emitter ref distance");
+  assertPositiveFiniteNumber(maxDistance, "Sound Emitter max distance");
+
+  if (maxDistance < refDistance) {
+    throw new Error("Sound Emitter max distance must be greater than or equal to ref distance.");
+  }
+
   assertBoolean(autoplay, "Sound Emitter autoplay");
   assertBoolean(loop, "Sound Emitter loop");
 
@@ -299,8 +332,10 @@ export function createSoundEmitterEntity(
     id: overrides.id ?? createOpaqueId("entity-sound-emitter"),
     kind: "soundEmitter",
     position,
-    radius,
-    gain,
+    audioAssetId,
+    volume,
+    refDistance,
+    maxDistance,
     autoplay,
     loop
   };
@@ -393,7 +428,7 @@ export const ENTITY_REGISTRY: { [K in EntityKind]: EntityRegistryEntry<Extract<E
   soundEmitter: {
     kind: "soundEmitter",
     label: "Sound Emitter",
-    description: "Authored positional audio source placeholder for the later spatial-audio slice.",
+    description: "Authored positional audio source wired to an audio asset and configurable for looping, volume, and distance falloff.",
     createDefaultEntity: createSoundEmitterEntity
   },
   triggerVolume: {
@@ -504,8 +539,10 @@ export function areEntityInstancesEqual(left: EntityInstance, right: EntityInsta
     case "soundEmitter": {
       const typedRight = right as SoundEmitterEntity;
       return (
-        left.radius === typedRight.radius &&
-        left.gain === typedRight.gain &&
+        left.audioAssetId === typedRight.audioAssetId &&
+        left.volume === typedRight.volume &&
+        left.refDistance === typedRight.refDistance &&
+        left.maxDistance === typedRight.maxDistance &&
         left.autoplay === typedRight.autoplay &&
         left.loop === typedRight.loop
       );
