@@ -17,6 +17,11 @@ describe("createSetWorldSettingsCommand", () => {
       bottomColorHex: "#18212b"
     };
     nextWorld.ambientLight.intensity = 0.45;
+    nextWorld.advancedRendering.enabled = true;
+    nextWorld.advancedRendering.shadows.enabled = true;
+    nextWorld.advancedRendering.shadows.mapSize = 4096;
+    nextWorld.advancedRendering.toneMapping.mode = "reinhard";
+    nextWorld.advancedRendering.toneMapping.exposure = 1.35;
 
     store.executeCommand(
       createSetWorldSettingsCommand({

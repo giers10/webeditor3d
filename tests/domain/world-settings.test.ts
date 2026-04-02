@@ -12,6 +12,8 @@ describe("world settings helpers", () => {
     expect(clone).not.toBe(source);
     expect(clone.background).not.toBe(source.background);
     expect(clone.sunLight.direction).not.toBe(source.sunLight.direction);
+    expect(clone.advancedRendering).not.toBe(source.advancedRendering);
+    expect(clone.advancedRendering.shadows).not.toBe(source.advancedRendering.shadows);
   });
 
   it("switches a solid background into a gradient while preserving the authored color as the top edge", () => {
@@ -71,6 +73,11 @@ describe("world settings helpers", () => {
     expect(areWorldSettingsEqual(left, right)).toBe(true);
 
     right.sunLight.direction.x = right.sunLight.direction.x + 0.25;
+
+    expect(areWorldSettingsEqual(left, right)).toBe(false);
+
+    right.sunLight.direction.x = left.sunLight.direction.x;
+    right.advancedRendering.bloom.intensity = right.advancedRendering.bloom.intensity + 0.1;
 
     expect(areWorldSettingsEqual(left, right)).toBe(false);
   });
