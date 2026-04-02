@@ -1971,6 +1971,36 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
   };
 
+  const updateSoundInteractionLinkTarget = (link: InteractionLink, targetSoundEmitterId: string) => {
+    if (link.action.type !== "playSound" && link.action.type !== "stopSound") {
+      return;
+    }
+
+    if (link.action.type === "playSound") {
+      commitInteractionLinkChange(
+        link,
+        createPlaySoundInteractionLink({
+          id: link.id,
+          sourceEntityId: link.sourceEntityId,
+          trigger: link.trigger,
+          targetSoundEmitterId
+        }),
+        "Updated play sound link target."
+      );
+    } else {
+      commitInteractionLinkChange(
+        link,
+        createStopSoundInteractionLink({
+          id: link.id,
+          sourceEntityId: link.sourceEntityId,
+          trigger: link.trigger,
+          targetSoundEmitterId
+        }),
+        "Updated stop sound link target."
+      );
+    }
+  };
+
   const updateAnimationInteractionLinkTarget = (link: InteractionLink, targetModelInstanceId: string) => {
     if (link.action.type !== "playAnimation" && link.action.type !== "stopAnimation") {
       return;
