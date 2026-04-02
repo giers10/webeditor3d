@@ -2,9 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import {
   createPlayAnimationInteractionLink,
+  createPlaySoundInteractionLink,
   createTeleportPlayerInteractionLink,
   createToggleVisibilityInteractionLink,
-  createStopAnimationInteractionLink
+  createStopAnimationInteractionLink,
+  createStopSoundInteractionLink
 } from "../../src/interactions/interaction-links";
 import { RuntimeInteractionSystem } from "../../src/runtime-three/runtime-interaction-system";
 import type { RuntimeSceneDefinition } from "../../src/runtime-three/runtime-scene-build";
@@ -40,7 +42,22 @@ function createRuntimeSceneFixture(): RuntimeSceneDefinition {
     modelInstances: [],
     entities: {
       playerStarts: [],
-      soundEmitters: [],
+      soundEmitters: [
+        {
+          entityId: "entity-sound-lobby",
+          position: {
+            x: 0,
+            y: 1,
+            z: 0
+          },
+          audioAssetId: "asset-audio-lobby",
+          volume: 0.75,
+          refDistance: 6,
+          maxDistance: 24,
+          autoplay: false,
+          loop: true
+        }
+      ],
       triggerVolumes: [
         {
           entityId: "entity-trigger-main",
@@ -139,7 +156,9 @@ describe("RuntimeInteractionSystem", () => {
           dispatches.push("toggle");
         },
         playAnimation: () => {},
-        stopAnimation: () => {}
+        stopAnimation: () => {},
+        playSound: () => {},
+        stopSound: () => {}
       }
     );
     interactionSystem.updatePlayerPosition(
@@ -157,7 +176,9 @@ describe("RuntimeInteractionSystem", () => {
           dispatches.push("toggle");
         },
         playAnimation: () => {},
-        stopAnimation: () => {}
+        stopAnimation: () => {},
+        playSound: () => {},
+        stopSound: () => {}
       }
     );
 
@@ -187,19 +208,21 @@ describe("RuntimeInteractionSystem", () => {
     const dispatches: string[] = [];
 
     interactionSystem.dispatchClickInteraction("entity-interactable-console", runtimeScene, {
-      teleportPlayer: () => {
-        throw new Error("Teleport should not dispatch in this fixture.");
-      },
-      toggleBrushVisibility: () => {
-        throw new Error("Visibility should not dispatch in this fixture.");
-      },
-      playAnimation: (instanceId, clipName, loop, link) => {
-        dispatches.push(`${link.id}:${instanceId}:${clipName}:${loop === false ? "once" : "loop"}`);
-      },
-      stopAnimation: (instanceId, link) => {
-        dispatches.push(`${link.id}:${instanceId}`);
-      }
-    });
+        teleportPlayer: () => {
+          throw new Error("Teleport should not dispatch in this fixture.");
+        },
+        toggleBrushVisibility: () => {
+          throw new Error("Visibility should not dispatch in this fixture.");
+        },
+        playAnimation: (instanceId, clipName, loop, link) => {
+          dispatches.push(`${link.id}:${instanceId}:${clipName}:${loop === false ? "once" : "loop"}`);
+        },
+        stopAnimation: (instanceId, link) => {
+          dispatches.push(`${link.id}:${instanceId}`);
+        },
+        playSound: () => {},
+        stopSound: () => {}
+      });
 
     expect(dispatches).toEqual([
       "link-play-animation:model-instance-animated:Walk:once",
@@ -240,7 +263,9 @@ describe("RuntimeInteractionSystem", () => {
           });
         },
         playAnimation: () => {},
-        stopAnimation: () => {}
+        stopAnimation: () => {},
+        playSound: () => {},
+        stopSound: () => {}
       }
     );
     interactionSystem.updatePlayerPosition(
@@ -261,7 +286,9 @@ describe("RuntimeInteractionSystem", () => {
           });
         },
         playAnimation: () => {},
-        stopAnimation: () => {}
+        stopAnimation: () => {},
+        playSound: () => {},
+        stopSound: () => {}
       }
     );
 
@@ -346,9 +373,55 @@ describe("RuntimeInteractionSystem", () => {
         throw new Error("Visibility should not dispatch for this click fixture.");
       },
       playAnimation: () => {},
-      stopAnimation: () => {}
+      stopAnimation: () => {},
+      playSound: () => {},
+      stopSound: () => {}
     });
 
     expect(dispatches).toEqual(["link-click-teleport:entity-teleport-main:8"]);
+  });
+
+  it("dispatches play and stop sound actions for the targeted Sound Emitter", () => {
+    const runtimeScene = createRuntimeSceneFixture();
+    runtimeScene.interactionLinks = [
+      createPlaySoundInteractionLink({
+        id: "link-play-sound",
+        sourceEntityId: "entity-interactable-console",
+        trigger: "click",
+        targetSoundEmitterId: "entity-sound-lobby"
+      }),
+      createStopSoundInteractionLink({
+        id: "link-stop-sound",
+        sourceEntityId: "entity-interactable-console",
+        trigger: "click",
+        targetSoundEmitterId: "entity-sound-lobby"
+      })
+    ];
+
+    const interactionSystem = new RuntimeInteractionSystem();
+    const dispatches: string[] = [];
+
+    interactionSystem.dispatchClickInteraction("entity-interactable-console", runtimeScene, {
+      teleportPlayer: () => {
+        throw new Error("Teleport should not dispatch in this fixture.");
+      },
+      toggleBrushVisibility: () => {
+        throw new Error("Visibility should not dispatch in this fixture.");
+      },
+      playAnimation: () => {
+        throw new Error("Animation should not dispatch in this fixture.");
+      },
+      stopAnimation: () => {
+        throw new Error("Animation should not dispatch in this fixture.");
+      },
+      playSound: (soundEmitterId, link) => {
+        dispatches.push(`${link.id}:${soundEmitterId}`);
+      },
+      stopSound: (soundEmitterId, link) => {
+        dispatches.push(`${link.id}:${soundEmitterId}`);
+      }
+    });
+
+    expect(dispatches).toEqual(["link-play-sound:entity-sound-lobby", "link-stop-sound:entity-sound-lobby"]);
   });
 });
