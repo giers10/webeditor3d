@@ -26,7 +26,23 @@ export interface StopAnimationAction {
   targetModelInstanceId: string;
 }
 
-export type InteractionAction = TeleportPlayerAction | ToggleVisibilityAction | PlayAnimationAction | StopAnimationAction;
+export interface PlaySoundAction {
+  type: "playSound";
+  targetSoundEmitterId: string;
+}
+
+export interface StopSoundAction {
+  type: "stopSound";
+  targetSoundEmitterId: string;
+}
+
+export type InteractionAction =
+  | TeleportPlayerAction
+  | ToggleVisibilityAction
+  | PlayAnimationAction
+  | StopAnimationAction
+  | PlaySoundAction
+  | StopSoundAction;
 
 export interface InteractionLink {
   id: string;
@@ -137,6 +153,20 @@ export interface CreateStopAnimationInteractionLinkOptions {
   sourceEntityId: string;
   trigger?: InteractionTriggerKind;
   targetModelInstanceId: string;
+}
+
+export interface CreatePlaySoundInteractionLinkOptions {
+  id?: string;
+  sourceEntityId: string;
+  trigger?: InteractionTriggerKind;
+  targetSoundEmitterId: string;
+}
+
+export interface CreateStopSoundInteractionLinkOptions {
+  id?: string;
+  sourceEntityId: string;
+  trigger?: InteractionTriggerKind;
+  targetSoundEmitterId: string;
 }
 
 export function createPlayAnimationInteractionLink(options: CreatePlayAnimationInteractionLinkOptions): InteractionLink {
