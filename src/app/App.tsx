@@ -4133,6 +4133,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 onActivatePanel={handleActivateViewportPanel}
                 onSetPanelViewMode={handleSetViewportPanelViewMode}
                 onSetPanelDisplayMode={handleSetViewportPanelDisplayMode}
+                onToolPreviewChange={store.setViewportToolPreview}
                 onSelectionChange={(selection) => applySelection(selection, "viewport")}
                 onCreateBoxBrush={handleCreateBoxBrush}
               />
