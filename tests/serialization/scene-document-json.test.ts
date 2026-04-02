@@ -170,6 +170,27 @@ describe("scene document JSON", () => {
     expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(document);
   });
 
+  it("migrates legacy documents without advanced rendering settings to defaults", () => {
+    const emptyScene = createEmptySceneDocument({ name: "Legacy Advanced Rendering Scene" });
+    const { advancedRendering: _advancedRendering, ...legacyWorld } = emptyScene.world;
+
+    const migratedDocument = migrateSceneDocument({
+      version: SPATIAL_AUDIO_SCENE_DOCUMENT_VERSION,
+      name: emptyScene.name,
+      world: legacyWorld,
+      materials: emptyScene.materials,
+      textures: emptyScene.textures,
+      assets: emptyScene.assets,
+      brushes: emptyScene.brushes,
+      modelInstances: emptyScene.modelInstances,
+      entities: emptyScene.entities,
+      interactionLinks: emptyScene.interactionLinks
+    });
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.world.advancedRendering).toEqual(emptyScene.world.advancedRendering);
+  });
+
   it("round-trips authored local lights and an image background asset", () => {
     const imageAsset = {
       id: "asset-background-panorama",
