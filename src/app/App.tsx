@@ -3925,23 +3925,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
             </button>
           </div>
 
-          <div className="toolbar__group">
-            <button
-              className={`toolbar__button ${editorState.toolMode === "select" ? "toolbar__button--active" : ""}`}
-              type="button"
-              onClick={() => store.setToolMode("select")}
-            >
-              Select
-            </button>
-            <button
-              className={`toolbar__button ${editorState.toolMode === "create" ? "toolbar__button--active" : ""}`}
-              type="button"
-              onClick={beginBoxCreation}
-            >
-              Box Create
-            </button>
-          </div>
-
           <div className="toolbar__group" role="group" aria-label="Viewport layout mode">
             {VIEWPORT_LAYOUT_MODES.map((mode) => (
               <button
@@ -3998,7 +3981,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
       <div className="workspace">
         <aside className="side-column">
-          <Panel title="Assets">
+          <Panel title="Outliner">
             {assetStatusMessage === null ? null : (
               <div className="info-banner" data-testid="asset-status-message">
                 {assetStatusMessage}
@@ -4008,115 +3991,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
             {projectAssetStorageReady && projectAssetStorage === null ? (
               <div className="outliner-empty">Project asset storage is unavailable. Imported assets cannot be persisted.</div>
             ) : null}
-
-            <div data-testid="asset-list">
-              <div className="outliner-section">
-                <div className="label">Model Assets</div>
-                {modelAssetList.length === 0 ? (
-                  <div className="outliner-empty">No imported model assets yet. Import a GLB or GLTF to register the first model asset.</div>
-                ) : (
-                  <div className="outliner-list">
-                    {modelAssetList.map((asset) => (
-                      <button
-                        key={asset.id}
-                        className="outliner-item asset-item asset-item--action"
-                        type="button"
-                        data-testid={`place-model-instance-${asset.id}`}
-                        aria-label={`Place instance for ${asset.sourceName}`}
-                        onClick={() => beginModelInstanceCreation(asset.id)}
-                        onPointerEnter={() => setHoveredAssetId(asset.id)}
-                        onPointerLeave={() => setHoveredAssetId((current) => (current === asset.id ? null : current))}
-                        onFocus={() => setHoveredAssetId(asset.id)}
-                        onBlur={() => setHoveredAssetId((current) => (current === asset.id ? null : current))}
-                      >
-                        <span className="asset-item__content">
-                          <span className="outliner-item__title">{asset.sourceName}</span>
-                          <span className="outliner-item__meta">{getProjectAssetKindLabel(asset.kind)}</span>
-                        </span>
-                        <span className="asset-item__plus" aria-hidden="true">
-                          +
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div className="outliner-section">
-                <div className="label">Image Assets</div>
-                {imageAssetList.length === 0 ? (
-                  <div className="outliner-empty">No imported background images yet. Import a 2:1 panorama to register the first background asset.</div>
-                ) : (
-                  <div className="outliner-list">
-                    {imageAssetList.map((asset) => (
-                      <button
-                        key={asset.id}
-                        className={`outliner-item asset-item asset-item--action ${
-                          editorState.document.world.background.mode === "image" && editorState.document.world.background.assetId === asset.id
-                            ? "outliner-item--selected"
-                            : ""
-                        }`}
-                        type="button"
-                        data-testid={`use-background-asset-${asset.id}`}
-                        aria-label={`Use ${asset.sourceName} as background`}
-                        onClick={() => applyWorldBackgroundMode("image", asset.id)}
-                        onPointerEnter={() => setHoveredAssetId(asset.id)}
-                        onPointerLeave={() => setHoveredAssetId((current) => (current === asset.id ? null : current))}
-                        onFocus={() => setHoveredAssetId(asset.id)}
-                        onBlur={() => setHoveredAssetId((current) => (current === asset.id ? null : current))}
-                      >
-                        <span className="asset-item__content">
-                          <span className="outliner-item__title">{asset.sourceName}</span>
-                          <span className="outliner-item__meta">{getProjectAssetKindLabel(asset.kind)}</span>
-                        </span>
-                        <span className="asset-item__plus" aria-hidden="true">
-                          +
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div className="outliner-section">
-                <div className="label">Audio Assets</div>
-                {audioAssetList.length === 0 ? (
-                  <div className="outliner-empty">No imported audio assets yet. Import a playable audio file to register the first audio asset.</div>
-                ) : (
-                  <div className="outliner-list">
-                    {audioAssetList.map((asset) => (
-                      <button
-                        key={asset.id}
-                        className="outliner-item asset-item asset-item--action"
-                        type="button"
-                        data-testid={`place-sound-emitter-${asset.id}`}
-                        aria-label={`Place sound emitter for ${asset.sourceName}`}
-                        onClick={() => beginEntityCreation("soundEmitter", { audioAssetId: asset.id })}
-                        onPointerEnter={() => setHoveredAssetId(asset.id)}
-                        onPointerLeave={() => setHoveredAssetId((current) => (current === asset.id ? null : current))}
-                        onFocus={() => setHoveredAssetId(asset.id)}
-                        onBlur={() => setHoveredAssetId((current) => (current === asset.id ? null : current))}
-                      >
-                        <span className="asset-item__content">
-                          <span className="outliner-item__title">{asset.sourceName}</span>
-                          <span className="outliner-item__meta">{getProjectAssetKindLabel(asset.kind)}</span>
-                        </span>
-                        <span className="asset-item__plus" aria-hidden="true">
-                          +
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </Panel>
-
-          <Panel title="Outliner">
             <div className="outliner-section">
               <div className="label">Brushes</div>
               {brushList.length === 0 ? (
-                <div className="outliner-empty">Switch to Box Create and click in the viewport to create the first brush.</div>
+                <div className="outliner-empty">Use Add &gt; Box and click in the viewport to create the first brush.</div>
               ) : (
                 <div className="outliner-list" data-testid="outliner-brush-list">
                   {brushList.map((brush, brushIndex) => (
