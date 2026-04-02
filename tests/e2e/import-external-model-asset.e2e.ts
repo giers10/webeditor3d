@@ -2,6 +2,8 @@ import path from "node:path";
 
 import { expect, test } from "@playwright/test";
 
+import { getEditorStoreSnapshot, getViewportCanvas } from "./viewport-test-helpers";
+
 const gltfFixturePath = path.resolve(process.cwd(), "fixtures/assets/external-triangle/scene.gltf");
 const binFixturePath = path.resolve(process.cwd(), "fixtures/assets/external-triangle/triangle.bin");
 
@@ -21,7 +23,9 @@ test("imports a gltf asset with external resources and places an instance", asyn
 
   await page.goto("/");
 
-  await expect(page.getByRole("button", { name: "Import Model" })).toBeEnabled();
+  await page.getByTestId("outliner-add-button").click();
+  await page.getByTestId("add-menu-import").click();
+  await page.getByTestId("import-menu-model").click();
 
   await page.locator('input[type="file"][accept*="gltf"]').setInputFiles([gltfFixturePath, binFixturePath]);
 
@@ -32,7 +36,20 @@ test("imports a gltf asset with external resources and places an instance", asyn
   await page.getByRole("button", { name: "Place instance for scene.gltf" }).hover();
   await expect(page.getByTestId("status-asset-hover")).toContainText("Storage key:");
   await page.getByRole("button", { name: "Place instance for scene.gltf" }).click();
+  const viewportCanvas = getViewportCanvas(page);
+  await viewportCanvas.hover({ position: { x: 88, y: 84 } });
+  await expect(page.getByTestId("viewport-snap-preview-topLeft")).toBeVisible();
+  await viewportCanvas.click({ position: { x: 88, y: 84 } });
   await expect(page.getByTestId("outliner-model-instance-list").getByRole("button")).toHaveCount(2);
+  const snapshot = await getEditorStoreSnapshot(page);
+  const selectedModelInstanceId = snapshot.selection.kind === "modelInstances" ? snapshot.selection.ids[0] ?? null : null;
+
+  expect(selectedModelInstanceId).not.toBeNull();
+
+  const selectedModelInstance = snapshot.document.modelInstances[selectedModelInstanceId as string];
+
+  expect(selectedModelInstance).toBeDefined();
+  expect(Math.abs(selectedModelInstance.position.x) > 0 || Math.abs(selectedModelInstance.position.z) > 0).toBe(true);
 
   expect(pageErrors).toEqual([]);
   expect(consoleErrors).toEqual([]);
