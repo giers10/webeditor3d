@@ -20,6 +20,10 @@ const editorStore = createEditorStore({
 });
 const initialStatusMessage = [storageAccess.diagnostic, bootstrapResult.diagnostic].filter(Boolean).join(" ") || undefined;
 
+if (import.meta.env.DEV) {
+  (window as Window & { __webeditor3dEditorStore?: typeof editorStore }).__webeditor3dEditorStore = editorStore;
+}
+
 ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>
     <App store={editorStore} initialStatusMessage={initialStatusMessage} />
