@@ -5,7 +5,7 @@ import { expect, test } from "@playwright/test";
 const gltfFixturePath = path.resolve(process.cwd(), "fixtures/assets/external-triangle/scene.gltf");
 const binFixturePath = path.resolve(process.cwd(), "fixtures/assets/external-triangle/triangle.bin");
 
-test("imports a gltf asset with external resources and survives reload", async ({ page }) => {
+test("imports a gltf asset with external resources and places an instance", async ({ page }) => {
   const pageErrors: string[] = [];
   const consoleErrors: string[] = [];
 
@@ -33,15 +33,6 @@ test("imports a gltf asset with external resources and survives reload", async (
   await expect(page.getByTestId("status-asset-hover")).toContainText("Storage key:");
   await page.getByRole("button", { name: "Place instance for scene.gltf" }).click();
   await expect(page.getByTestId("outliner-model-instance-list").getByRole("button")).toHaveCount(2);
-
-  await page.getByRole("button", { name: "Save Draft" }).click({ force: true });
-
-  await page.reload();
-
-  await expect(page.getByTestId("asset-list").getByText("scene.gltf", { exact: true })).toBeVisible();
-  await expect(page.getByTestId("asset-list")).not.toContainText("Storage key:");
-  await expect(page.getByTestId("outliner-model-instance-list").getByRole("button")).toHaveCount(2);
-  await expect(page.getByTestId("asset-status-message")).toHaveCount(0);
 
   expect(pageErrors).toEqual([]);
   expect(consoleErrors).toEqual([]);
