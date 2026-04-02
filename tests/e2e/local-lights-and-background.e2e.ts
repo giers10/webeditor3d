@@ -29,7 +29,7 @@ test("local lights and background images persist through editor and runner flows
   await expect(page.getByTestId("asset-list")).toContainText("skybox-panorama.svg");
   await expect(page.getByTestId("world-background-mode-value")).toContainText("Image");
   await expect(page.getByTestId("world-background-asset-value")).toContainText("skybox-panorama.svg");
-  await expect(page.getByTestId("viewport-shell")).toHaveCSS("background-image", /url/);
+  await expect(page.getByTestId("viewport-canvas-topLeft")).toHaveCSS("background-image", /url/);
 
   await page.getByTestId("add-entity-pointLight").click();
   await expect(page.getByTestId("point-light-distance")).toHaveValue("8");
@@ -52,7 +52,7 @@ test("local lights and background images persist through editor and runner flows
 
   await expect(page.getByTestId("asset-list")).toContainText("skybox-panorama.svg");
   await expect(page.locator('[data-testid^="outliner-entity-"]')).toHaveCount(2);
-  await expect(page.getByTestId("viewport-shell")).toHaveCSS("background-image", /url/);
+  await expect(page.getByTestId("viewport-canvas-topLeft")).toHaveCSS("background-image", /url/);
 
   await page.getByTestId("enter-run-mode").click();
 

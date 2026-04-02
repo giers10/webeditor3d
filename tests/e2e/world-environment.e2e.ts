@@ -42,7 +42,7 @@ test("world environment settings persist and carry into the runner", async ({ pa
   await page.getByTestId("world-sun-direction-x").press("Tab");
 
   await expect(page.getByTestId("world-background-mode-value")).toContainText("Vertical Gradient");
-  await expect(page.getByTestId("viewport-shell")).toHaveCSS("background-image", /linear-gradient/);
+  await expect(page.getByTestId("viewport-canvas-topLeft")).toHaveCSS("background-image", /linear-gradient/);
 
   await page.getByRole("button", { name: "Save Draft" }).click();
 
@@ -55,7 +55,7 @@ test("world environment settings persist and carry into the runner", async ({ pa
 
   await expect(page.getByTestId("world-background-mode-value")).toContainText("Vertical Gradient");
   await expect(page.getByTestId("world-ambient-intensity")).toHaveValue("0.45");
-  await expect(page.getByTestId("viewport-shell")).toHaveCSS("background-image", /linear-gradient/);
+  await expect(page.getByTestId("viewport-canvas-topLeft")).toHaveCSS("background-image", /linear-gradient/);
 
   await page.getByTestId("enter-run-mode").click();
 
