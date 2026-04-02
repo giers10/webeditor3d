@@ -1,1 +1,1 @@
-export type ToolMode = "select" | "box-create" | "place" | "play";
+export type ToolMode = "select" | "create" | "play";
