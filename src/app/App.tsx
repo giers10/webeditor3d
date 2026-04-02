@@ -663,6 +663,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const selectedModelAssetRecord = selectedModelAsset !== null && selectedModelAsset.kind === "model" ? selectedModelAsset : null;
   const selectedPlayerStart = selectedEntity?.kind === "playerStart" ? selectedEntity : null;
   const selectedSoundEmitter = selectedEntity?.kind === "soundEmitter" ? selectedEntity : null;
+  const selectedSoundEmitterAsset =
+    selectedSoundEmitter?.audioAssetId !== null ? editorState.document.assets[selectedSoundEmitter.audioAssetId] ?? null : null;
+  const selectedSoundEmitterAudioAssetRecord =
+    selectedSoundEmitterAsset !== null && selectedSoundEmitterAsset.kind === "audio" ? selectedSoundEmitterAsset : null;
   const selectedTriggerVolume = selectedEntity?.kind === "triggerVolume" ? selectedEntity : null;
   const selectedTeleportTarget = selectedEntity?.kind === "teleportTarget" ? selectedEntity : null;
   const selectedInteractable = selectedEntity?.kind === "interactable" ? selectedEntity : null;
