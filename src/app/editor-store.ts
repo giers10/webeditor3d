@@ -346,6 +346,7 @@ export class EditorStore {
 
     if (draftResult.viewportLayoutState !== null) {
       this.applyViewportLayoutState(draftResult.viewportLayoutState);
+      this.emit();
     }
 
     return draftResult;
