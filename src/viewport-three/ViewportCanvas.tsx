@@ -208,8 +208,9 @@ export function ViewportCanvas({
   return (
     <div
       ref={containerRef}
-      className={`viewport-canvas viewport-canvas--${toolMode} viewport-canvas--${viewMode} viewport-canvas--${displayMode} viewport-canvas--${layoutMode} ${isActivePanel ? "viewport-canvas--active" : ""}`}
+      className={`viewport-canvas viewport-canvas--${toolMode} viewport-canvas--${viewMode} viewport-canvas--${displayMode} viewport-canvas--${layoutMode}`}
       data-testid={`viewport-canvas-${panelId}`}
+      data-active={isActivePanel ? "true" : "false"}
       aria-label={`${getViewportPanelLabel(panelId)} editor viewport`}
       style={
         displayMode === "authoring"
