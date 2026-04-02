@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+import { clickViewport, setViewportCreationPreview } from "./viewport-test-helpers";
+
 test("user can place PlayerStart, enter run mode, and spawn from it", async ({ page }) => {
   const pageErrors: string[] = [];
   const consoleErrors: string[] = [];
@@ -23,6 +25,8 @@ test("user can place PlayerStart, enter run mode, and spawn from it", async ({ p
   await page.getByTestId("outliner-add-button").click();
   await page.getByTestId("add-menu-entities").click();
   await page.getByTestId("add-menu-player-start").click();
+  await setViewportCreationPreview(page, "topLeft", { kind: "entity", entityKind: "playerStart", audioAssetId: null }, { x: 0, y: 0, z: 0 });
+  await clickViewport(page, "topLeft");
   await page.getByTestId("player-start-position-x").fill("4");
   await page.getByTestId("player-start-position-x").press("Tab");
   await page.getByTestId("player-start-position-z").fill("-2");
