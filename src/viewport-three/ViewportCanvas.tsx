@@ -37,7 +37,7 @@ interface ViewportCanvasProps {
   focusRequestId: number;
   focusSelection: EditorSelection;
   onSelectionChange(selection: EditorSelection): void;
-  onCommitCreation(toolPreview: CreationViewportToolPreview): void;
+  onCommitCreation(toolPreview: CreationViewportToolPreview): boolean;
   onToolPreviewChange(toolPreview: ViewportToolPreview): void;
 }
 
