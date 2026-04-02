@@ -186,7 +186,7 @@ export class ViewportHost {
   private container: HTMLElement | null = null;
   private brushSelectionChangeHandler: ((selection: EditorSelection) => void) | null = null;
   private createBoxBrushHandler: ((center: Vec3) => void) | null = null;
-  private boxCreatePreviewHandler: ((center: Vec3 | null) => void) | null = null;
+  private boxCreatePreviewChangeHandler: ((center: Vec3 | null) => void) | null = null;
   private toolMode: ToolMode = "select";
   private viewMode: ViewportViewMode = "perspective";
   private displayMode: ViewportDisplayMode = "normal";
@@ -292,9 +292,12 @@ export class ViewportHost {
     this.createBoxBrushHandler = handler;
   }
 
-  setBoxCreatePreviewHandler(handler: ((center: Vec3 | null) => void) | null) {
-    this.boxCreatePreviewHandler = handler;
-    handler?.(this.lastBoxCreatePreviewCenter);
+  setBoxCreatePreviewChangeHandler(handler: ((center: Vec3 | null) => void) | null) {
+    this.boxCreatePreviewChangeHandler = handler;
+  }
+
+  setBoxCreatePreview(center: Vec3 | null) {
+    this.syncBoxCreatePreview(center);
   }
 
   setToolMode(toolMode: ToolMode) {
@@ -303,7 +306,7 @@ export class ViewportHost {
     this.lastClickSelectionKey = null;
 
     if (toolMode !== "box-create") {
-      this.setBoxCreatePreview(null);
+      this.syncBoxCreatePreview(null);
     }
   }
 
@@ -315,10 +318,6 @@ export class ViewportHost {
     this.viewMode = viewMode;
     this.lastClickPointer = null;
     this.lastClickSelectionKey = null;
-
-    if (this.toolMode === "box-create") {
-      this.setBoxCreatePreview(null);
-    }
 
     this.applyViewModePose();
 
@@ -393,8 +392,8 @@ export class ViewportHost {
     this.clearLocalLights();
     this.clearBrushMeshes();
     this.clearEntityMarkers();
-    this.boxCreatePreviewHandler = null;
-    this.setBoxCreatePreview(null);
+    this.boxCreatePreviewChangeHandler = null;
+    this.syncBoxCreatePreview(null);
     this.advancedRenderingComposer?.dispose();
     this.advancedRenderingComposer = null;
     this.currentAdvancedRenderingSettings = null;
@@ -1571,6 +1570,10 @@ export class ViewportHost {
   }
 
   private setBoxCreatePreview(center: Vec3 | null) {
+    this.syncBoxCreatePreview(center);
+  }
+
+  private syncBoxCreatePreview(center: Vec3 | null) {
     if (
       (center === null && this.lastBoxCreatePreviewCenter === null) ||
       (center !== null &&
@@ -1591,7 +1594,7 @@ export class ViewportHost {
       this.boxCreatePreviewEdges.position.set(center.x, center.y, center.z);
     }
 
-    this.boxCreatePreviewHandler?.(this.lastBoxCreatePreviewCenter);
+    this.boxCreatePreviewChangeHandler?.(this.lastBoxCreatePreviewCenter);
   }
 
   private render = () => {
