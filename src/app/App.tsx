@@ -151,14 +151,19 @@ import { buildRuntimeSceneFromDocument, type RuntimeNavigationMode, type Runtime
 import { validateRuntimeSceneBuild } from "../runtime-three/runtime-scene-validation";
 import { Panel } from "../shared-ui/Panel";
 import { createWorldBackgroundStyle } from "../shared-ui/world-background-style";
-import { ViewportCanvas } from "../viewport-three/ViewportCanvas";
+import { ViewportPanel } from "../viewport-three/ViewportPanel";
 import {
-  VIEWPORT_VIEW_MODES,
-  getViewportViewModeControlHint,
-  getViewportViewModeGridPlaneLabel,
+  getViewportDisplayModeLabel,
+  getViewportLayoutModeLabel,
   getViewportViewModeLabel,
   type ViewportViewMode
 } from "../viewport-three/viewport-view-modes";
+import {
+  VIEWPORT_PANEL_IDS,
+  type ViewportDisplayMode,
+  type ViewportLayoutMode,
+  type ViewportPanelId
+} from "../viewport-three/viewport-layout";
 import type { EditorStore } from "./editor-store";
 import { useEditorStoreState } from "./use-editor-store";
 
