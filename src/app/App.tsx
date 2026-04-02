@@ -3133,6 +3133,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
               projectAssets={editorState.document.assets}
               loadedModelAssets={loadedModelAssets}
               loadedImageAssets={loadedImageAssets}
+              loadedAudioAssets={loadedAudioAssets}
               navigationMode={activeNavigationMode}
               onRuntimeMessageChange={setRuntimeMessage}
               onFirstPersonTelemetryChange={setFirstPersonTelemetry}
