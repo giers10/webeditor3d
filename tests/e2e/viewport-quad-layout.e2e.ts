@@ -45,6 +45,7 @@ test("quad viewport layout shows four linked panels with shared selection and ac
   await expect(page.getByTestId("viewport-panel-bottomRight-display-authoring")).toHaveAttribute("aria-pressed", "true");
 
   for (const panelId of ["topLeft", "topRight", "bottomLeft", "bottomRight"] as const) {
+    await expect(getViewportPanel(page, panelId).locator(".viewport-panel__subtitle")).toHaveCount(0);
     await expect(getViewportPanel(page, panelId).locator(".viewport-canvas__overlay-text")).toHaveCount(0);
   }
 
