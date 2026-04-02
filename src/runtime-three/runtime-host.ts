@@ -17,6 +17,7 @@ import {
   SpotLight,
   WebGLRenderer
 } from "three";
+import { EffectComposer } from "postprocessing";
 
 import { createModelInstanceRenderGroup, disposeModelInstance } from "../assets/model-instance-rendering";
 import type { LoadedModelAsset } from "../assets/gltf-model-import";
@@ -25,6 +26,17 @@ import type { LoadedAudioAsset } from "../assets/audio-assets";
 import type { ProjectAssetRecord } from "../assets/project-assets";
 import { applyBoxBrushFaceUvsToGeometry } from "../geometry/box-face-uvs";
 import { createStarterMaterialSignature, createStarterMaterialTexture } from "../materials/starter-material-textures";
+import {
+  applyAdvancedRenderingLightShadowFlags,
+  applyAdvancedRenderingRenderableShadowFlags,
+  configureAdvancedRenderingRenderer,
+  createAdvancedRenderingComposer
+} from "../rendering/advanced-rendering";
+import {
+  areAdvancedRenderingSettingsEqual,
+  cloneAdvancedRenderingSettings,
+  type AdvancedRenderingSettings
+} from "../document/scene-document";
 
 import { FirstPersonNavigationController } from "./first-person-navigation-controller";
 import type { FirstPersonTelemetry, NavigationController, RuntimeControllerContext } from "./navigation-controller";
