@@ -1,7 +1,6 @@
 import { ViewportCanvas } from "./ViewportCanvas";
 import {
   getViewportDisplayModeLabel,
-  getViewportLayoutModeLabel,
   getViewportPanelLabel,
   type ViewportDisplayMode,
   type ViewportLayoutMode,
@@ -135,4 +134,3 @@ export function ViewportPanel({
     </section>
   );
 }
-
