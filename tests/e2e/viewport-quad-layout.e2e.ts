@@ -82,13 +82,13 @@ test("quad viewport layout shows four linked panels with shared selection and ac
 
   await getViewportPanel(page, "topRight").click({ position: { x: 16, y: 16 }, force: true });
   await page.getByTestId("viewport-panel-topRight-view-side").dispatchEvent("click");
-  await expect(page.getByTestId("viewport-active-panel")).toContainText("Top Right");
+  await expect(getViewportPanel(page, "topRight")).toHaveAttribute("data-active", "true");
   await expect(page.getByTestId("viewport-panel-topRight-view-side")).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByRole("button", { name: /Box Brush 1/ })).toBeVisible();
 
   await getViewportPanel(page, "topLeft").click({ position: { x: 16, y: 16 }, force: true });
   await page.getByTestId("viewport-panel-topLeft-display-authoring").dispatchEvent("click");
-  await expect(page.getByTestId("viewport-active-panel")).toContainText("Top Left");
+  await expect(getViewportPanel(page, "topLeft")).toHaveAttribute("data-active", "true");
   await expect(page.getByTestId("viewport-panel-topLeft-display-authoring")).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByTestId("viewport-canvas-topLeft")).toHaveCSS("background-color", "rgb(0, 0, 0)");
   await expect(page.getByText("1 brush selected (Box Brush 1)")).toBeVisible();
