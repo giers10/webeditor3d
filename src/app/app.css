@@ -567,6 +567,7 @@ button:disabled {
   align-items: baseline;
   gap: 12px;
   min-width: 0;
+  flex: 1 1 420px;
 }
 
 .viewport-region__title {
@@ -579,6 +580,7 @@ button:disabled {
 .viewport-region__caption {
   color: var(--color-muted);
   font-size: 0.82rem;
+  min-width: 0;
 }
 
 .viewport-region__view-toggle {
