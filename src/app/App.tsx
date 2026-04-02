@@ -457,6 +457,29 @@ function formatAudioAssetSummary(asset: AudioAssetRecord): string {
   return details.join(" | ");
 }
 
+function formatAssetHoverStatus(asset: ProjectAssetRecord): string {
+  const details = [
+    `${getProjectAssetKindLabel(asset.kind)} asset`,
+    asset.mimeType,
+    asset.kind === "model"
+      ? formatModelAssetSummary(asset)
+      : asset.kind === "image"
+        ? formatImageAssetSummary(asset)
+        : formatAudioAssetSummary(asset),
+    `Storage key: ${asset.storageKey}`
+  ];
+
+  if (asset.kind === "model") {
+    details.push(formatModelBoundingBoxLabel(asset));
+  }
+
+  if (asset.metadata.warnings.length > 0) {
+    details.push(`Warnings: ${asset.metadata.warnings.join(" | ")}`);
+  }
+
+  return `${asset.sourceName} | ${details.join(" | ")}`;
+}
+
 function createModelInstancePlacementPosition(asset: ModelAssetRecord, anchor: Vec3 | null): Vec3 {
   const boundingBox = asset.metadata.boundingBox;
 
