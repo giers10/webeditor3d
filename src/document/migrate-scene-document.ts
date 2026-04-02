@@ -336,6 +336,10 @@ function readOptionalBrushName(value: unknown, label: string): string | undefine
   return normalizeBrushName(expectOptionalString(value, label));
 }
 
+function readOptionalEntityName(value: unknown, label: string): string | undefined {
+  return normalizeEntityName(expectOptionalString(value, label));
+}
+
 function expectEmptyCollection(value: unknown, label: string): Record<string, never> {
   if (!isRecord(value)) {
     throw new Error(`${label} must be a record.`);
