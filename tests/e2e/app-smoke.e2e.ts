@@ -18,6 +18,9 @@ test("app boots and shows the viewport shell", async ({ page }) => {
 
   await expect(page.getByTestId("toolbar-scene-name")).toHaveValue("Untitled Scene");
   await expect(page.getByTestId("viewport-shell")).toBeVisible();
+  await expect(page.getByTestId("viewport-panel-topLeft")).toBeVisible();
+  await expect(page.getByTestId("viewport-layout-single")).toBeVisible();
+  await expect(page.getByTestId("viewport-layout-quad")).toBeVisible();
   await expect(page.getByTestId("enter-run-mode")).toBeVisible();
   await expect(page.getByTestId("material-button-starter-amber-grid")).toBeVisible();
 
