@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { clickViewport, getEditorStoreSnapshot } from "./viewport-test-helpers";
+import { beginBoxCreation, clickViewport, getEditorStoreSnapshot } from "./viewport-test-helpers";
 
 test("user can create a box brush and keep it through a draft reload", async ({ page }) => {
   const pageErrors: string[] = [];
@@ -22,7 +22,7 @@ test("user can create a box brush and keep it through a draft reload", async ({ 
   }, "webeditor3d.scene-document-draft");
   await page.reload();
 
-  await page.getByRole("button", { name: "Box Create" }).click();
+  await beginBoxCreation(page);
   const creationSnapshot = await getEditorStoreSnapshot(page);
   expect(creationSnapshot).toMatchObject({
     toolMode: "create",
@@ -48,7 +48,7 @@ test("user can create a box brush and keep it through a draft reload", async ({ 
     }
   });
 
-  await page.getByRole("button", { name: "Box Create" }).click();
+  await beginBoxCreation(page);
   await clickViewport(page);
   const committedSnapshot = await getEditorStoreSnapshot(page);
   expect(committedSnapshot).toMatchObject({
@@ -91,9 +91,9 @@ test("switching selection while a transform input is active does not overwrite t
   }, "webeditor3d.scene-document-draft");
   await page.reload();
 
-  await page.getByRole("button", { name: "Box Create" }).click();
+  await beginBoxCreation(page);
   await clickViewport(page);
-  await page.getByRole("button", { name: "Box Create" }).click();
+  await beginBoxCreation(page);
   await clickViewport(page);
 
   const outlinerButtons = page.getByTestId("outliner-brush-list").getByRole("button");

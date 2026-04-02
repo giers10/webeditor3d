@@ -105,6 +105,11 @@ export async function clearViewportCreationPreview(page: Page) {
   });
 }
 
+export async function beginBoxCreation(page: Page) {
+  await page.getByTestId("outliner-add-button").click();
+  await page.getByTestId("add-menu-box").click();
+}
+
 export async function clickViewport(page: Page, panelId: string = DEFAULT_VIEWPORT_PANEL_ID) {
   const viewportPanel = getViewportPanel(page, panelId);
   await viewportPanel.click({ position: { x: 16, y: 16 }, force: true });
