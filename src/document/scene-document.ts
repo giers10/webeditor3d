@@ -4,9 +4,26 @@ import type { ProjectAssetRecord } from "../assets/project-assets";
 import type { EntityInstance } from "../entities/entity-instances";
 import type { InteractionLink } from "../interactions/interaction-links";
 import { cloneMaterialRegistry, createStarterMaterialRegistry, type MaterialDef } from "../materials/starter-material-library";
-import { createDefaultWorldSettings, type WorldSettings } from "./world-settings";
+import {
+  areAdvancedRenderingSettingsEqual,
+  cloneAdvancedRenderingSettings,
+  createDefaultAdvancedRenderingSettings,
+  createDefaultWorldSettings,
+  isAdvancedRenderingShadowMapSize,
+  isAdvancedRenderingShadowType,
+  isAdvancedRenderingToneMappingMode,
+  type AdvancedRenderingAmbientOcclusionSettings,
+  type AdvancedRenderingBloomSettings,
+  type AdvancedRenderingDepthOfFieldSettings,
+  type AdvancedRenderingSettings,
+  type AdvancedRenderingShadowMapSize,
+  type AdvancedRenderingShadowType,
+  type AdvancedRenderingShadowsSettings,
+  type AdvancedRenderingToneMappingMode,
+  type WorldSettings
+} from "./world-settings";
 
-export const SCENE_DOCUMENT_VERSION = 13 as const;
+export const SCENE_DOCUMENT_VERSION = 14 as const;
 export const SPATIAL_AUDIO_SCENE_DOCUMENT_VERSION = 13 as const;
 export const ANIMATION_PLAYBACK_SCENE_DOCUMENT_VERSION = 12 as const;
 export const LOCAL_LIGHTS_AND_SKYBOX_SCENE_DOCUMENT_VERSION = 10 as const;
@@ -49,6 +66,14 @@ export function createEmptySceneDocument(overrides: Partial<Pick<SceneDocument, 
 }
 
 export type {
+  AdvancedRenderingAmbientOcclusionSettings,
+  AdvancedRenderingBloomSettings,
+  AdvancedRenderingDepthOfFieldSettings,
+  AdvancedRenderingSettings,
+  AdvancedRenderingShadowMapSize,
+  AdvancedRenderingShadowType,
+  AdvancedRenderingShadowsSettings,
+  AdvancedRenderingToneMappingMode,
   WorldAmbientLightSettings,
   WorldBackgroundMode,
   WorldBackgroundSettings,
@@ -60,10 +85,16 @@ export type {
 } from "./world-settings";
 
 export {
+  areAdvancedRenderingSettingsEqual,
   areWorldSettingsEqual,
   changeWorldBackgroundMode,
   cloneWorldBackgroundSettings,
+  cloneAdvancedRenderingSettings,
   cloneWorldSettings,
   createDefaultWorldSettings,
+  createDefaultAdvancedRenderingSettings,
+  isAdvancedRenderingShadowMapSize,
+  isAdvancedRenderingShadowType,
+  isAdvancedRenderingToneMappingMode,
   isHexColorString
 } from "./world-settings";
