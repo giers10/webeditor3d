@@ -1,6 +1,6 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
-async function clickViewport(page: Parameters<typeof test>[1] extends (arg: infer T, ...args: never[]) => unknown ? T extends { page: infer P } ? P : never : never) {
+async function clickViewport(page: Page) {
   const viewportCanvas = page.locator('[data-testid="viewport-shell"] canvas');
 
   if ((await viewportCanvas.count()) > 0) {
