@@ -537,6 +537,10 @@ function isInteractionSourceEntity(entity: EntityInstance | null): entity is Int
   return entity !== null && (entity.kind === "triggerVolume" || entity.kind === "interactable");
 }
 
+function isSoundEmitterEntity(entity: EntityInstance | null): entity is Extract<EntityInstance, { kind: "soundEmitter" }> {
+  return entity !== null && entity.kind === "soundEmitter";
+}
+
 function getDefaultInteractionLinkTrigger(sourceEntity: InteractionSourceEntity): InteractionTriggerKind {
   return sourceEntity.kind === "triggerVolume"
     ? getDefaultTriggerVolumeLinkTrigger(sourceEntity.triggerOnEnter, sourceEntity.triggerOnExit)
@@ -662,7 +666,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     selectedModelInstance !== null ? (editorState.document.assets[selectedModelInstance.assetId] ?? null) : null;
   const selectedModelAssetRecord = selectedModelAsset !== null && selectedModelAsset.kind === "model" ? selectedModelAsset : null;
   const selectedPlayerStart = selectedEntity?.kind === "playerStart" ? selectedEntity : null;
-  const selectedSoundEmitter = selectedEntity?.kind === "soundEmitter" ? selectedEntity : null;
+  const selectedSoundEmitter = isSoundEmitterEntity(selectedEntity) ? selectedEntity : null;
   const selectedSoundEmitterAsset =
     selectedSoundEmitter === null
       ? null
