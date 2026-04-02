@@ -13,12 +13,21 @@ import {
 } from "../serialization/local-draft-storage";
 import { parseSceneDocumentJson, serializeSceneDocument } from "../serialization/scene-document-json";
 import type { ViewportViewMode } from "../viewport-three/viewport-view-modes";
+import {
+  createDefaultViewportLayoutState,
+  type ViewportDisplayMode,
+  type ViewportLayoutMode,
+  type ViewportPanelId,
+  type ViewportPanelState
+} from "../viewport-three/viewport-layout";
 
 export interface EditorStoreState {
   document: SceneDocument;
   selection: EditorSelection;
   toolMode: ToolMode;
-  viewportViewMode: ViewportViewMode;
+  viewportLayoutMode: ViewportLayoutMode;
+  activeViewportPanelId: ViewportPanelId;
+  viewportPanels: Record<ViewportPanelId, ViewportPanelState>;
   canUndo: boolean;
   canRedo: boolean;
   lastCommandLabel: string | null;
@@ -40,7 +49,9 @@ export class EditorStore {
   private document: SceneDocument;
   private selection: EditorSelection = { kind: "none" };
   private toolMode: ToolMode = "select";
-  private viewportViewMode: ViewportViewMode = "perspective";
+  private viewportLayoutMode: ViewportLayoutMode = "single";
+  private activeViewportPanelId: ViewportPanelId = "topLeft";
+  private viewportPanels = createDefaultViewportLayoutState().panels;
   private previousEditingToolMode: Exclude<ToolMode, "play"> = "select";
   private readonly history = new CommandHistory();
   private readonly listeners = new Set<EditorStoreListener>();
@@ -94,13 +105,56 @@ export class EditorStore {
     this.emit();
   }
 
-  setViewportViewMode(viewportViewMode: ViewportViewMode) {
-    if (this.viewportViewMode === viewportViewMode) {
+  setViewportLayoutMode(viewportLayoutMode: ViewportLayoutMode) {
+    if (this.viewportLayoutMode === viewportLayoutMode) {
       return;
     }
 
-    this.viewportViewMode = viewportViewMode;
+    this.viewportLayoutMode = viewportLayoutMode;
     this.emit();
+  }
+
+  setActiveViewportPanel(panelId: ViewportPanelId) {
+    if (this.activeViewportPanelId === panelId) {
+      return;
+    }
+
+    this.activeViewportPanelId = panelId;
+    this.emit();
+  }
+
+  setViewportPanelViewMode(panelId: ViewportPanelId, viewMode: ViewportViewMode) {
+    if (this.viewportPanels[panelId].viewMode === viewMode) {
+      return;
+    }
+
+    this.viewportPanels = {
+      ...this.viewportPanels,
+      [panelId]: {
+        ...this.viewportPanels[panelId],
+        viewMode
+      }
+    };
+    this.emit();
+  }
+
+  setViewportPanelDisplayMode(panelId: ViewportPanelId, displayMode: ViewportDisplayMode) {
+    if (this.viewportPanels[panelId].displayMode === displayMode) {
+      return;
+    }
+
+    this.viewportPanels = {
+      ...this.viewportPanels,
+      [panelId]: {
+        ...this.viewportPanels[panelId],
+        displayMode
+      }
+    };
+    this.emit();
+  }
+
+  setViewportViewMode(viewportViewMode: ViewportViewMode) {
+    this.setViewportPanelViewMode(this.activeViewportPanelId, viewportViewMode);
   }
 
   enterPlayMode() {
@@ -223,7 +277,9 @@ export class EditorStore {
       document: this.document,
       selection: this.selection,
       toolMode: this.toolMode,
-      viewportViewMode: this.viewportViewMode,
+      viewportLayoutMode: this.viewportLayoutMode,
+      activeViewportPanelId: this.activeViewportPanelId,
+      viewportPanels: this.viewportPanels,
       canUndo: this.history.canUndo(),
       canRedo: this.history.canRedo(),
       lastCommandLabel: this.lastCommandLabel,
