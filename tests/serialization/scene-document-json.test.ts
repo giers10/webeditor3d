@@ -180,7 +180,8 @@ describe("scene document JSON", () => {
     };
     document.world.background = {
       mode: "image",
-      assetId: imageAsset.id
+      assetId: imageAsset.id,
+      environmentIntensity: 0.75
     };
 
     expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(document);
@@ -630,7 +631,8 @@ describe("scene document JSON", () => {
     expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
     expect(migratedDocument.world.background).toEqual({
       mode: "image",
-      assetId: imageAsset.id
+      assetId: imageAsset.id,
+      environmentIntensity: 0.5
     });
     expect(migratedDocument.entities[pointLight.id]).toEqual(pointLight);
     expect(migratedDocument.entities[spotLight.id]).toEqual(spotLight);
@@ -792,7 +794,7 @@ describe("scene document JSON", () => {
         boundingBox: null,
         warnings: []
       }
-    };
+    } satisfies ModelAssetRecord;
 
     const migratedDocument = migrateSceneDocument({
       version: 11,

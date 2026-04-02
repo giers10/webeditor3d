@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { createTeleportPlayerInteractionLink, createToggleVisibilityInteractionLink } from "../../src/interactions/interaction-links";
+import {
+  createPlayAnimationInteractionLink,
+  createTeleportPlayerInteractionLink,
+  createToggleVisibilityInteractionLink,
+  createStopAnimationInteractionLink
+} from "../../src/interactions/interaction-links";
 import { RuntimeInteractionSystem } from "../../src/runtime-three/runtime-interaction-system";
 import type { RuntimeSceneDefinition } from "../../src/runtime-three/runtime-scene-build";
 
@@ -28,6 +33,10 @@ function createRuntimeSceneFixture(): RuntimeSceneDefinition {
     brushes: [],
     colliders: [],
     sceneBounds: null,
+    localLights: {
+      pointLights: [],
+      spotLights: []
+    },
     modelInstances: [],
     entities: {
       playerStarts: [],
@@ -153,6 +162,49 @@ describe("RuntimeInteractionSystem", () => {
     );
 
     expect(dispatches).toEqual(["link-teleport:entity-teleport-main:8"]);
+  });
+
+  it("dispatches animation actions with the authored target model instance and clip", () => {
+    const runtimeScene = createRuntimeSceneFixture();
+    runtimeScene.interactionLinks = [
+      createPlayAnimationInteractionLink({
+        id: "link-play-animation",
+        sourceEntityId: "entity-interactable-console",
+        trigger: "click",
+        targetModelInstanceId: "model-instance-animated",
+        clipName: "Walk",
+        loop: false
+      }),
+      createStopAnimationInteractionLink({
+        id: "link-stop-animation",
+        sourceEntityId: "entity-interactable-console",
+        trigger: "click",
+        targetModelInstanceId: "model-instance-animated"
+      })
+    ];
+
+    const interactionSystem = new RuntimeInteractionSystem();
+    const dispatches: string[] = [];
+
+    interactionSystem.dispatchClickInteraction("entity-interactable-console", runtimeScene, {
+      teleportPlayer: () => {
+        throw new Error("Teleport should not dispatch in this fixture.");
+      },
+      toggleBrushVisibility: () => {
+        throw new Error("Visibility should not dispatch in this fixture.");
+      },
+      playAnimation: (instanceId, clipName, loop, link) => {
+        dispatches.push(`${link.id}:${instanceId}:${clipName}:${loop === false ? "once" : "loop"}`);
+      },
+      stopAnimation: (instanceId, link) => {
+        dispatches.push(`${link.id}:${instanceId}`);
+      }
+    });
+
+    expect(dispatches).toEqual([
+      "link-play-animation:model-instance-animated:Walk:once",
+      "link-stop-animation:model-instance-animated"
+    ]);
   });
 
   it("dispatches visibility actions only when exiting an occupied Trigger Volume", () => {
