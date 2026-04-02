@@ -1644,6 +1644,50 @@ export function App({ store, initialStatusMessage }: AppProps) {
     setStatusMessage(`Added a visibility link to the selected ${selectedInteractionSource.kind === "triggerVolume" ? "Trigger Volume" : "Interactable"}.`);
   };
 
+  const handleAddSoundInteractionLink = (actionType: "playSound" | "stopSound") => {
+    if (selectedInteractionSource === null) {
+      setStatusMessage("Select a Trigger Volume or Interactable before adding links.");
+      return;
+    }
+
+    const defaultTarget = soundEmitterOptions.find(({ entity }) => {
+      if (entity.audioAssetId === null) {
+        return false;
+      }
+
+      const asset = editorState.document.assets[entity.audioAssetId];
+      return asset?.kind === "audio";
+    })?.entity;
+
+    if (defaultTarget === undefined) {
+      setStatusMessage("Author a Sound Emitter with an audio asset before adding sound links.");
+      return;
+    }
+
+    const link =
+      actionType === "playSound"
+        ? createPlaySoundInteractionLink({
+            sourceEntityId: selectedInteractionSource.id,
+            trigger: getDefaultInteractionLinkTrigger(selectedInteractionSource),
+            targetSoundEmitterId: defaultTarget.id
+          })
+        : createStopSoundInteractionLink({
+            sourceEntityId: selectedInteractionSource.id,
+            trigger: getDefaultInteractionLinkTrigger(selectedInteractionSource),
+            targetSoundEmitterId: defaultTarget.id
+          });
+
+    store.executeCommand(
+      createUpsertInteractionLinkCommand({
+        link,
+        label: actionType === "playSound" ? "Add play sound link" : "Add stop sound link"
+      })
+    );
+    setStatusMessage(
+      `Added a ${actionType === "playSound" ? "play sound" : "stop sound"} link to the selected ${selectedInteractionSource.kind === "triggerVolume" ? "Trigger Volume" : "Interactable"}.`
+    );
+  };
+
   const handleDeleteInteractionLink = (linkId: string) => {
     try {
       store.executeCommand(createDeleteInteractionLinkCommand(linkId));
