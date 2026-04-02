@@ -515,6 +515,13 @@ export class ViewportHost {
     }
 
     const world = this.currentWorld;
+    const rendererSettings =
+      this.displayMode === "authoring"
+        ? {
+            ...cloneAdvancedRenderingSettings(world.advancedRendering),
+            enabled: false
+          }
+        : world.advancedRendering;
     this.ambientLight.color.set(world.ambientLight.colorHex);
     this.ambientLight.intensity = world.ambientLight.intensity;
     this.sunLight.color.set(world.sunLight.colorHex);
@@ -536,8 +543,8 @@ export class ViewportHost {
       this.scene.environmentIntensity = 1;
     }
 
-    configureAdvancedRenderingRenderer(this.renderer, world.advancedRendering);
-    this.syncAdvancedRenderingComposer(world.advancedRendering);
+    configureAdvancedRenderingRenderer(this.renderer, rendererSettings);
+    this.syncAdvancedRenderingComposer(rendererSettings);
     this.applyShadowState();
   }
 
