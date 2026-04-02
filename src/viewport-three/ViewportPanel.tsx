@@ -8,6 +8,7 @@ import {
   type ViewportPanelState
 } from "./viewport-layout";
 import { VIEWPORT_VIEW_MODES, getViewportViewModeLabel, type ViewportViewMode } from "./viewport-view-modes";
+import type { ViewportToolPreview } from "./viewport-transient-state";
 import type { LoadedModelAsset } from "../assets/gltf-model-import";
 import type { LoadedImageAsset } from "../assets/image-assets";
 import type { ProjectAssetRecord } from "../assets/project-assets";
@@ -29,11 +30,13 @@ interface ViewportPanelProps {
   loadedImageAssets: Record<string, LoadedImageAsset>;
   selection: EditorSelection;
   toolMode: ToolMode;
+  toolPreview: ViewportToolPreview;
   focusRequestId: number;
   focusSelection: EditorSelection;
   onActivatePanel(panelId: ViewportPanelId): void;
   onSetPanelViewMode(panelId: ViewportPanelId, viewMode: ViewportViewMode): void;
   onSetPanelDisplayMode(panelId: ViewportPanelId, displayMode: ViewportDisplayMode): void;
+  onToolPreviewChange(toolPreview: ViewportToolPreview): void;
   onSelectionChange(selection: EditorSelection): void;
   onCreateBoxBrush(center: Vec3): void;
 }
@@ -50,11 +53,13 @@ export function ViewportPanel({
   loadedImageAssets,
   selection,
   toolMode,
+  toolPreview,
   focusRequestId,
   focusSelection,
   onActivatePanel,
   onSetPanelViewMode,
   onSetPanelDisplayMode,
+  onToolPreviewChange,
   onSelectionChange,
   onCreateBoxBrush
 }: ViewportPanelProps) {
@@ -62,7 +67,7 @@ export function ViewportPanel({
 
   return (
     <section
-      className={`viewport-panel ${layoutMode === "single" ? "viewport-panel--single" : "viewport-panel--quad"} ${isActive ? "viewport-panel--active" : ""}`}
+      className={`viewport-panel ${layoutMode === "single" ? "viewport-panel--single" : "viewport-panel--quad viewport-panel--compact"} ${isActive ? "viewport-panel--active" : ""}`}
       data-testid={`viewport-panel-${panelId}`}
       data-active={isActive ? "true" : "false"}
       aria-hidden={shouldShow ? undefined : true}
@@ -77,9 +82,11 @@ export function ViewportPanel({
             <div className="viewport-panel__title">{getViewportPanelLabel(panelId)}</div>
             {isActive ? <div className="viewport-panel__active-badge">Active</div> : null}
           </div>
-          <div className="viewport-panel__subtitle">
-            {getViewportViewModeLabel(panelState.viewMode)} / {getViewportDisplayModeLabel(panelState.displayMode)}
-          </div>
+          {layoutMode === "quad" ? null : (
+            <div className="viewport-panel__subtitle">
+              {getViewportViewModeLabel(panelState.viewMode)} / {getViewportDisplayModeLabel(panelState.displayMode)}
+            </div>
+          )}
         </div>
 
         <div className="viewport-panel__controls">
@@ -124,13 +131,16 @@ export function ViewportPanel({
         loadedImageAssets={loadedImageAssets}
         selection={selection}
         toolMode={toolMode}
+        toolPreview={toolPreview}
         viewMode={panelState.viewMode}
         displayMode={panelState.displayMode}
+        layoutMode={layoutMode}
         isActivePanel={isActive}
         focusRequestId={focusRequestId}
         focusSelection={focusSelection}
         onSelectionChange={onSelectionChange}
         onCreateBoxBrush={onCreateBoxBrush}
+        onToolPreviewChange={onToolPreviewChange}
       />
     </section>
   );

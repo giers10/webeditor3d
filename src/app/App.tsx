@@ -205,24 +205,17 @@ function formatDiagnosticCount(count: number, label: string): string {
 
 function getViewportCaption(
   toolMode: "select" | "box-create" | "play",
-  layoutMode: ViewportLayoutMode,
-  activePanelId: ViewportPanelId,
-  activePanelState: { viewMode: ViewportViewMode; displayMode: ViewportDisplayMode },
-  brushCount: number
+  layoutMode: ViewportLayoutMode
 ): string {
   if (toolMode === "play") {
     return "Runner is active.";
   }
 
-  const layoutLabel = getViewportLayoutModeLabel(layoutMode);
-  const panelLabel = getViewportPanelLabel(activePanelId);
-  const panelSummary = `${getViewportViewModeLabel(activePanelState.viewMode)} / ${getViewportDisplayModeLabel(activePanelState.displayMode)}`;
-
   if (toolMode === "box-create") {
-    return `${brushCount} box brush${brushCount === 1 ? "" : "es"} loaded. ${layoutLabel} active. Box Create uses the active panel. Active panel: ${panelLabel} (${panelSummary}).`;
+    return `${getViewportLayoutModeLabel(layoutMode)} active. Hover any viewport to update the shared preview; click to place.`;
   }
 
-  return `${brushCount} box brush${brushCount === 1 ? "" : "es"} loaded. ${layoutLabel} active. Active panel: ${panelLabel} (${panelSummary}).`;
+  return `${getViewportLayoutModeLabel(layoutMode)} active.`;
 }
 
 function createVec2Draft(vector: Vec2): Vec2Draft {
@@ -736,6 +729,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const activePanelState = editorState.viewportPanels[activePanelId];
   const activePanelLabel = getViewportPanelLabel(activePanelId);
   const activePanelDisplaySummary = `${getViewportViewModeLabel(activePanelState.viewMode)} / ${getViewportDisplayModeLabel(activePanelState.displayMode)}`;
+  const viewportToolPreview = editorState.viewportTransientState.toolPreview;
   const entityList = getEntityInstances(editorState.document.entities);
   const entityDisplayList = getSortedEntityDisplayLabels(editorState.document.entities, editorState.document.assets);
   const primaryPlayerStart = getPrimaryPlayerStartEntity(editorState.document.entities);
@@ -1304,6 +1298,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
       return;
     }
 
+    if (
+      nextLayoutMode === "single" &&
+      editorState.viewportTransientState.toolPreview.kind === "box-create" &&
+      editorState.viewportTransientState.toolPreview.sourcePanelId !== activePanelId
+    ) {
+      store.clearViewportToolPreview(editorState.viewportTransientState.toolPreview.sourcePanelId);
+    }
+
     blurActiveTextEntry();
     store.setViewportLayoutMode(nextLayoutMode);
     setStatusMessage(`Switched the viewport to ${getViewportLayoutModeLabel(nextLayoutMode)}.`);
@@ -1326,6 +1328,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
     blurActiveTextEntry();
     store.setViewportPanelViewMode(panelId, nextViewMode);
+
+    if (
+      editorState.viewportTransientState.toolPreview.kind === "box-create" &&
+      editorState.viewportTransientState.toolPreview.sourcePanelId === panelId
+    ) {
+      store.clearViewportToolPreview(panelId);
+    }
+
     setStatusMessage(`Set the ${getViewportPanelLabel(panelId)} panel to ${getViewportViewModeLabel(nextViewMode)} view.`);
   };
 
@@ -4082,9 +4092,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
           <div className="viewport-region__header">
             <div className="viewport-region__meta">
               <div className="viewport-region__title">Viewport</div>
-              <div className="viewport-region__caption">
-                {getViewportCaption(editorState.toolMode, layoutMode, activePanelId, activePanelState, brushList.length)}
-              </div>
+              <div className="viewport-region__caption">{getViewportCaption(editorState.toolMode, layoutMode)}</div>
               <div className="viewport-region__active-panel" data-testid="viewport-active-panel">
                 Active panel: {activePanelLabel} ({activePanelDisplaySummary})
               </div>
@@ -4119,6 +4127,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 loadedImageAssets={loadedImageAssets}
                 selection={editorState.selection}
                 toolMode={editorState.toolMode}
+                toolPreview={viewportToolPreview}
                 focusRequestId={focusRequest.panelId === panelId ? focusRequest.id : 0}
                 focusSelection={focusRequest.selection}
                 onActivatePanel={handleActivateViewportPanel}
