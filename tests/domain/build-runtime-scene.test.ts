@@ -343,7 +343,7 @@ describe("buildRuntimeSceneFromDocument", () => {
             z: 1
           },
           triggerOnEnter: true,
-          triggerOnExit: false
+          triggerOnExit: true
         }
       ],
       teleportTargets: [
