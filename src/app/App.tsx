@@ -152,6 +152,13 @@ import { validateRuntimeSceneBuild } from "../runtime-three/runtime-scene-valida
 import { Panel } from "../shared-ui/Panel";
 import { createWorldBackgroundStyle } from "../shared-ui/world-background-style";
 import { ViewportCanvas } from "../viewport-three/ViewportCanvas";
+import {
+  VIEWPORT_VIEW_MODES,
+  getViewportViewModeControlHint,
+  getViewportViewModeGridPlaneLabel,
+  getViewportViewModeLabel,
+  type ViewportViewMode
+} from "../viewport-three/viewport-view-modes";
 import type { EditorStore } from "./editor-store";
 import { useEditorStoreState } from "./use-editor-store";
 
