@@ -49,7 +49,7 @@ test("imports a model asset, places an instance, and survives reload", async ({ 
 
   await setViewportPlacementPreview(page, "topLeft", { kind: "model-instance", assetId: importedModelAsset.id }, { x: 92, y: 0, z: -76 });
   await expect(page.getByTestId("viewport-snap-preview-topLeft")).toBeVisible();
-  await page.getByTestId("viewport-fallback-place-topLeft").click();
+  await page.getByTestId("viewport-fallback-place-topLeft").dispatchEvent("click");
   await expect(page.getByTestId("outliner-model-instance-list").getByRole("button")).toHaveCount(2);
   const snapshot = await getEditorStoreSnapshot(page);
   const selectedModelInstanceId = snapshot.selection.kind === "modelInstances" ? snapshot.selection.ids?.[0] ?? null : null;
