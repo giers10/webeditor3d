@@ -13,7 +13,7 @@ import {
 } from "../../src/entities/entity-instances";
 import { createTeleportPlayerInteractionLink, createToggleVisibilityInteractionLink } from "../../src/interactions/interaction-links";
 import { createModelInstance } from "../../src/assets/model-instances";
-import { createProjectAssetStorageKey } from "../../src/assets/project-assets";
+import { createProjectAssetStorageKey, type AudioAssetRecord } from "../../src/assets/project-assets";
 import { buildRuntimeSceneFromDocument } from "../../src/runtime-three/runtime-scene-build";
 
 describe("buildRuntimeSceneFromDocument", () => {
@@ -49,8 +49,10 @@ describe("buildRuntimeSceneFromDocument", () => {
         y: 1,
         z: 0
       },
-      radius: 8,
-      gain: 0.75,
+      audioAssetId: "asset-audio-lobby",
+      volume: 0.75,
+      refDistance: 8,
+      maxDistance: 24,
       autoplay: true,
       loop: false
     });
@@ -125,6 +127,21 @@ describe("buildRuntimeSceneFromDocument", () => {
         warnings: []
       }
     };
+    const audioAsset = {
+      id: "asset-audio-lobby",
+      kind: "audio" as const,
+      sourceName: "lobby-loop.ogg",
+      mimeType: "audio/ogg",
+      storageKey: createProjectAssetStorageKey("asset-audio-lobby"),
+      byteLength: 4096,
+      metadata: {
+        kind: "audio" as const,
+        durationSeconds: 3.25,
+        channelCount: 2,
+        sampleRateHz: 48000,
+        warnings: []
+      }
+    } satisfies AudioAssetRecord;
     const modelAsset = {
       id: "asset-model-triangle",
       kind: "model" as const,
@@ -187,6 +204,7 @@ describe("buildRuntimeSceneFromDocument", () => {
         [brush.id]: brush
       },
       assets: {
+        [audioAsset.id]: audioAsset,
         [modelAsset.id]: modelAsset,
         [imageAsset.id]: imageAsset
       },
@@ -323,8 +341,10 @@ describe("buildRuntimeSceneFromDocument", () => {
             y: 1,
             z: 0
           },
-          radius: 8,
-          gain: 0.75,
+          audioAssetId: audioAsset.id,
+          volume: 0.75,
+          refDistance: 8,
+          maxDistance: 24,
           autoplay: true,
           loop: false
         }
