@@ -416,4 +416,88 @@ describe("validateSceneDocument", () => {
       ])
     );
   });
+
+  it("detects invalid advanced rendering settings", () => {
+    const document = createEmptySceneDocument();
+    document.world.advancedRendering = {
+      ...document.world.advancedRendering,
+      enabled: true,
+      shadows: {
+        ...document.world.advancedRendering.shadows,
+        mapSize: 3000,
+        type: "ultra" as unknown as "basic",
+        bias: Number.NaN
+      },
+      ambientOcclusion: {
+        ...document.world.advancedRendering.ambientOcclusion,
+        samples: 0
+      },
+      bloom: {
+        ...document.world.advancedRendering.bloom,
+        intensity: -0.25,
+        threshold: -1,
+        radius: -0.5
+      },
+      toneMapping: {
+        mode: "filmic" as unknown as "none",
+        exposure: 0
+      },
+      depthOfField: {
+        ...document.world.advancedRendering.depthOfField,
+        focalLength: 0,
+        bokehScale: -2
+      }
+    };
+
+    const validation = validateSceneDocument(document);
+
+    expect(validation.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "invalid-advanced-rendering-shadow-map-size",
+          path: "world.advancedRendering.shadows.mapSize"
+        }),
+        expect.objectContaining({
+          code: "invalid-advanced-rendering-shadow-type",
+          path: "world.advancedRendering.shadows.type"
+        }),
+        expect.objectContaining({
+          code: "invalid-advanced-rendering-shadow-bias",
+          path: "world.advancedRendering.shadows.bias"
+        }),
+        expect.objectContaining({
+          code: "invalid-advanced-rendering-ao-samples",
+          path: "world.advancedRendering.ambientOcclusion.samples"
+        }),
+        expect.objectContaining({
+          code: "invalid-advanced-rendering-bloom-intensity",
+          path: "world.advancedRendering.bloom.intensity"
+        }),
+        expect.objectContaining({
+          code: "invalid-advanced-rendering-bloom-threshold",
+          path: "world.advancedRendering.bloom.threshold"
+        }),
+        expect.objectContaining({
+          code: "invalid-advanced-rendering-bloom-radius",
+          path: "world.advancedRendering.bloom.radius"
+        }),
+        expect.objectContaining({
+          code: "invalid-advanced-rendering-tone-mapping-mode",
+          path: "world.advancedRendering.toneMapping.mode"
+        }),
+        expect.objectContaining({
+          code: "invalid-advanced-rendering-tone-mapping-exposure",
+          path: "world.advancedRendering.toneMapping.exposure"
+        }),
+        expect.objectContaining({
+          code: "invalid-advanced-rendering-dof-focal-length",
+          path: "world.advancedRendering.depthOfField.focalLength"
+        }),
+        expect.objectContaining({
+          code: "invalid-advanced-rendering-dof-bokeh-scale",
+          path: "world.advancedRendering.depthOfField.bokehScale"
+        })
+      ])
+    );
+  });
 });
