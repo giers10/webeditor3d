@@ -257,6 +257,7 @@ describe("scene document JSON", () => {
   it("round-trips a document containing an authored PlayerStart entity", () => {
     const playerStart = createPlayerStartEntity({
       id: "entity-player-start-main",
+      name: "Main Spawn",
       position: {
         x: 4,
         y: 0,
@@ -272,6 +273,32 @@ describe("scene document JSON", () => {
     };
 
     expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(document);
+  });
+
+  it("migrates version 14 documents without entity names", () => {
+    const pointLight = createPointLightEntity({
+      id: "entity-point-light-legacy",
+      position: {
+        x: 2,
+        y: 3,
+        z: 1
+      },
+      colorHex: "#ffeeaa",
+      intensity: 1.75,
+      distance: 9
+    });
+    const legacyDocument = {
+      ...createEmptySceneDocument({ name: "Legacy Entity Name Scene" }),
+      version: 14 as const,
+      entities: {
+        [pointLight.id]: pointLight
+      }
+    };
+
+    const migratedDocument = migrateSceneDocument(legacyDocument);
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.entities[pointLight.id]).toEqual(pointLight);
   });
 
   it("round-trips the initial typed entity registry without mixing entities into model instances", () => {

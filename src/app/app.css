@@ -458,6 +458,27 @@ button:disabled {
   font-weight: 600;
 }
 
+.outliner-item__rename {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  padding: 2px 6px;
+  margin: -2px -6px;
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  background: rgba(7, 9, 13, 0.22);
+  border: 1px solid transparent;
+  border-radius: 8px;
+}
+
+.outliner-item__rename:focus {
+  outline: none;
+  background: rgba(7, 9, 13, 0.38);
+  border-color: rgba(207, 123, 66, 0.45);
+}
+
 .outliner-item__delete {
   flex: 0 0 auto;
   width: 22px;
@@ -477,11 +498,6 @@ button:disabled {
   background: rgba(255, 255, 255, 0.06);
   border-color: rgba(255, 255, 255, 0.12);
   transform: none;
-}
-
-.outliner-item__editor {
-  width: 100%;
-  gap: 6px;
 }
 
 .asset-item--action {
