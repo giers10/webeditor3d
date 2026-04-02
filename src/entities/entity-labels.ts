@@ -30,6 +30,10 @@ export function getEntityDisplayLabel(
   entities: Record<string, EntityInstance>,
   assets?: Record<string, ProjectAssetRecord>
 ): string {
+  if (entity.name !== undefined) {
+    return entity.name;
+  }
+
   const typedEntities = getSortedEntitiesByKind(entities, entity.kind);
   const entityIndex = typedEntities.findIndex((candidate) => candidate.id === entity.id);
   const baseLabel = getEntityKindLabel(entity.kind);

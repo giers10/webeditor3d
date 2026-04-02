@@ -6,7 +6,8 @@ import type { InteractionLink } from "../interactions/interaction-links";
 import { cloneMaterialRegistry, createStarterMaterialRegistry, type MaterialDef } from "../materials/starter-material-library";
 import { createDefaultWorldSettings, type WorldSettings } from "./world-settings";
 
-export const SCENE_DOCUMENT_VERSION = 14 as const;
+export const SCENE_DOCUMENT_VERSION = 15 as const;
+export const ENTITY_NAMES_SCENE_DOCUMENT_VERSION = 15 as const;
 export const SPATIAL_AUDIO_SCENE_DOCUMENT_VERSION = 13 as const;
 export const ANIMATION_PLAYBACK_SCENE_DOCUMENT_VERSION = 12 as const;
 export const LOCAL_LIGHTS_AND_SKYBOX_SCENE_DOCUMENT_VERSION = 10 as const;

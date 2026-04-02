@@ -517,7 +517,7 @@ export function cloneEntityRegistry(entities: Record<string, EntityInstance>): R
 }
 
 export function areEntityInstancesEqual(left: EntityInstance, right: EntityInstance): boolean {
-  if (left.kind !== right.kind || left.id !== right.id || !areVec3Equal(left.position, right.position)) {
+  if (left.kind !== right.kind || left.id !== right.id || left.name !== right.name || !areVec3Equal(left.position, right.position)) {
     return false;
   }
 
