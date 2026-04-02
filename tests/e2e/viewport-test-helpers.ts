@@ -109,16 +109,19 @@ export async function clickViewport(page: Page, panelId: string = DEFAULT_VIEWPO
   const viewportPanel = getViewportPanel(page, panelId);
   await viewportPanel.click({ position: { x: 16, y: 16 }, force: true });
 
+  const fallbackButton = viewportPanel.getByTestId(`viewport-fallback-create-${panelId}`);
+
+  if ((await fallbackButton.count()) > 0) {
+    await fallbackButton.click();
+    return;
+  }
+
   const viewportCanvas = getViewportCanvas(page, panelId);
 
   if ((await viewportCanvas.count()) > 0) {
     await viewportCanvas.click();
     return;
   }
-
-  const fallbackButton = viewportPanel.getByTestId(`viewport-fallback-create-${panelId}`);
-  await fallbackButton.waitFor({ state: "visible" });
-  await fallbackButton.click();
 }
 
 export async function setSharedBoxCreationPreview(
