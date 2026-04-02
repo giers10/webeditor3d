@@ -284,6 +284,26 @@ export class ViewportHost {
     }
   }
 
+  setViewMode(viewMode: ViewportViewMode) {
+    if (this.viewMode === viewMode) {
+      return;
+    }
+
+    this.viewMode = viewMode;
+    this.lastClickPointer = null;
+    this.lastClickSelectionKey = null;
+
+    if (this.toolMode === "box-create") {
+      this.setBoxCreatePreview(null);
+    }
+
+    this.applyViewModePose();
+
+    if (this.currentAdvancedRenderingSettings !== null) {
+      this.syncAdvancedRenderingComposer(this.currentAdvancedRenderingSettings);
+    }
+  }
+
   focusSelection(document: SceneDocument, selection: EditorSelection) {
     const focusTarget = resolveViewportFocusTarget(document, selection);
 
@@ -291,18 +311,32 @@ export class ViewportHost {
       return;
     }
 
-    const verticalHalfFov = (this.camera.fov * Math.PI) / 360;
-    const horizontalHalfFov = Math.atan(Math.tan(verticalHalfFov) * Math.max(this.camera.aspect, 0.0001));
-    const fitAngle = Math.max(0.1, Math.min(verticalHalfFov, horizontalHalfFov));
-    const fitDistance = Math.min(
-      MAX_CAMERA_DISTANCE,
-      Math.max(MIN_CAMERA_DISTANCE, (focusTarget.radius / Math.sin(fitAngle)) * FOCUS_MARGIN)
-    );
-
     this.cameraTarget.set(focusTarget.center.x, focusTarget.center.y, focusTarget.center.z);
-    this.cameraSpherical.radius = fitDistance;
-    this.cameraSpherical.makeSafe();
-    this.applyCameraOrbitPose();
+
+    if (this.viewMode === "perspective") {
+      const verticalHalfFov = (this.perspectiveCamera.fov * Math.PI) / 360;
+      const horizontalHalfFov = Math.atan(Math.tan(verticalHalfFov) * Math.max(this.perspectiveCamera.aspect, 0.0001));
+      const fitAngle = Math.max(0.1, Math.min(verticalHalfFov, horizontalHalfFov));
+      const fitDistance = Math.min(
+        MAX_CAMERA_DISTANCE,
+        Math.max(MIN_CAMERA_DISTANCE, (focusTarget.radius / Math.sin(fitAngle)) * FOCUS_MARGIN)
+      );
+
+      this.cameraSpherical.radius = fitDistance;
+      this.cameraSpherical.makeSafe();
+      this.applyPerspectiveCameraPose();
+      return;
+    }
+
+    const containerWidth = Math.max(1, this.container?.clientWidth ?? 1);
+    const containerHeight = Math.max(1, this.container?.clientHeight ?? 1);
+    const aspect = containerWidth / containerHeight;
+    const visibleWidth = ORTHOGRAPHIC_FRUSTUM_HEIGHT * aspect;
+    const fitSize = Math.max(0.5, focusTarget.radius * 2 * FOCUS_MARGIN);
+    const fitZoom = Math.min(visibleWidth, ORTHOGRAPHIC_FRUSTUM_HEIGHT) / fitSize;
+
+    this.orthographicCamera.zoom = Math.min(MAX_ORTHOGRAPHIC_ZOOM, Math.max(MIN_ORTHOGRAPHIC_ZOOM, fitZoom));
+    this.applyOrthographicCameraPose();
   }
 
   dispose() {
@@ -348,21 +382,81 @@ export class ViewportHost {
     this.container = null;
   }
 
-  private updateCameraSphericalFromPose() {
-    this.cameraOffset.copy(this.camera.position).sub(this.cameraTarget);
+  private getActiveCamera() {
+    return this.viewMode === "perspective" ? this.perspectiveCamera : this.orthographicCamera;
+  }
+
+  private updatePerspectiveCameraSphericalFromPose() {
+    this.cameraOffset.copy(this.perspectiveCamera.position).sub(this.cameraTarget);
     this.cameraSpherical.setFromVector3(this.cameraOffset);
     this.cameraSpherical.radius = Math.min(MAX_CAMERA_DISTANCE, Math.max(MIN_CAMERA_DISTANCE, this.cameraSpherical.radius));
     this.cameraSpherical.phi = Math.min(MAX_POLAR_ANGLE, Math.max(MIN_POLAR_ANGLE, this.cameraSpherical.phi));
     this.cameraSpherical.makeSafe();
   }
 
-  private applyCameraOrbitPose() {
+  private updateOrthographicCameraFrustum() {
+    if (this.container === null) {
+      return;
+    }
+
+    const width = this.container.clientWidth;
+    const height = this.container.clientHeight;
+
+    if (width === 0 || height === 0) {
+      return;
+    }
+
+    const aspect = width / height;
+    const halfHeight = ORTHOGRAPHIC_FRUSTUM_HEIGHT * 0.5;
+    const halfWidth = halfHeight * aspect;
+
+    this.orthographicCamera.left = -halfWidth;
+    this.orthographicCamera.right = halfWidth;
+    this.orthographicCamera.top = halfHeight;
+    this.orthographicCamera.bottom = -halfHeight;
+  }
+
+  private applyPerspectiveCameraPose() {
     this.cameraSpherical.radius = Math.min(MAX_CAMERA_DISTANCE, Math.max(MIN_CAMERA_DISTANCE, this.cameraSpherical.radius));
     this.cameraSpherical.phi = Math.min(MAX_POLAR_ANGLE, Math.max(MIN_POLAR_ANGLE, this.cameraSpherical.phi));
     this.cameraSpherical.makeSafe();
     this.cameraOffset.setFromSpherical(this.cameraSpherical);
-    this.camera.position.copy(this.cameraTarget).add(this.cameraOffset);
-    this.camera.lookAt(this.cameraTarget);
+    this.perspectiveCamera.position.copy(this.cameraTarget).add(this.cameraOffset);
+    this.perspectiveCamera.lookAt(this.cameraTarget);
+  }
+
+  private applyOrthographicCameraPose() {
+    const definition = getViewportViewModeDefinition(this.viewMode);
+
+    if (!isOrthographicViewportViewMode(this.viewMode) || definition.cameraDirection === null) {
+      return;
+    }
+
+    this.orthographicCamera.up.set(definition.cameraUp.x, definition.cameraUp.y, definition.cameraUp.z);
+    this.orthographicCamera.position.set(
+      this.cameraTarget.x + definition.cameraDirection.x * ORTHOGRAPHIC_CAMERA_DISTANCE,
+      this.cameraTarget.y + definition.cameraDirection.y * ORTHOGRAPHIC_CAMERA_DISTANCE,
+      this.cameraTarget.z + definition.cameraDirection.z * ORTHOGRAPHIC_CAMERA_DISTANCE
+    );
+    this.orthographicCamera.lookAt(this.cameraTarget);
+    this.orthographicCamera.zoom = Math.min(MAX_ORTHOGRAPHIC_ZOOM, Math.max(MIN_ORTHOGRAPHIC_ZOOM, this.orthographicCamera.zoom));
+    this.orthographicCamera.updateProjectionMatrix();
+  }
+
+  private applyViewModePose() {
+    const definition = getViewportViewModeDefinition(this.viewMode);
+
+    this.gridHelpers.xz.visible = definition.gridPlane === "xz";
+    this.gridHelpers.xy.visible = definition.gridPlane === "xy";
+    this.gridHelpers.yz.visible = definition.gridPlane === "yz";
+
+    if (definition.cameraType === "perspective") {
+      this.applyPerspectiveCameraPose();
+      return;
+    }
+
+    this.updateOrthographicCameraFrustum();
+    this.applyOrthographicCameraPose();
   }
 
   private applyWorld() {
