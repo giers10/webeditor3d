@@ -2488,6 +2488,16 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
+  const applyAdvancedRenderingSettings = (
+    label: string,
+    successMessage: string,
+    mutate: (advancedRendering: AdvancedRenderingSettings) => void
+  ) => {
+    const nextWorld = cloneWorldSettings(editorState.document.world);
+    mutate(nextWorld.advancedRendering);
+    applyWorldSettings(nextWorld, label, successMessage);
+  };
+
   const applyWorldBackgroundMode = (mode: WorldBackgroundMode, imageAssetId?: string) => {
     if (mode === "image") {
       const currentBackgroundAssetId =
