@@ -152,7 +152,8 @@ test("escape cancels a typed entity creation preview", async ({ page }) => {
   await page.getByTestId("add-menu-entities").click();
   await page.getByTestId("add-menu-player-start").click();
 
-  await expect(await getEditorStoreSnapshot(page)).toMatchObject({
+  const creationSnapshot = await getEditorStoreSnapshot(page);
+  expect(creationSnapshot).toMatchObject({
     toolMode: "create",
     viewportTransientState: {
       toolPreview: {
@@ -170,7 +171,8 @@ test("escape cancels a typed entity creation preview", async ({ page }) => {
 
   await page.keyboard.press("Escape");
 
-  await expect(await getEditorStoreSnapshot(page)).toMatchObject({
+  const cancelledSnapshot = await getEditorStoreSnapshot(page);
+  expect(cancelledSnapshot).toMatchObject({
     toolMode: "select",
     viewportTransientState: {
       toolPreview: {
