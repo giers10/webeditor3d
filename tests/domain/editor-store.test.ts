@@ -181,6 +181,7 @@ describe("EditorStore", () => {
   it("clears transient viewport preview when leaving box-create mode", () => {
     const store = createEditorStore();
 
+    store.setToolMode("box-create");
     store.setViewportToolPreview({
       kind: "box-create",
       sourcePanelId: "bottomRight",
