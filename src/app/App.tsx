@@ -3857,7 +3857,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
               className={`toolbar__button ${editorState.toolMode === "create" ? "toolbar__button--active" : ""}`}
               type="button"
               onClick={beginBoxCreation}
-              >
+            >
               Box Create
             </button>
           </div>
