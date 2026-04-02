@@ -85,15 +85,6 @@ export async function setViewportCreationPreview(
   );
 }
 
-export async function setViewportPlacementPreview(
-  page: Page,
-  panelId: string,
-  target: CreationTarget,
-  center: { x: number; y: number; z: number } | null
-) {
-  return setViewportCreationPreview(page, panelId, target, center);
-}
-
 export async function clearViewportCreationPreview(page: Page) {
   await page.evaluate(() => {
     const store = (window as Window & {
@@ -141,12 +132,4 @@ export async function setSharedBoxCreationPreview(
     },
     center
   );
-}
-
-export async function setSharedBoxCreatePreview(
-  page: Page,
-  panelId: string,
-  center: { x: number; y: number; z: number } | null
-) {
-  return setSharedBoxCreationPreview(page, panelId, center);
 }
