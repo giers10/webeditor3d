@@ -307,6 +307,13 @@ export class ViewportHost {
     if (this.currentDocument !== null) {
       this.rebuildModelInstances(this.currentDocument, this.currentSelection);
     }
+
+    if (this.creationPreview?.target.kind === "model-instance") {
+      const currentPreview = this.creationPreview;
+      this.creationPreview = null;
+      this.clearCreationPreviewObject();
+      this.syncCreationPreview(currentPreview);
+    }
   }
 
   setBrushSelectionChangeHandler(handler: ((selection: EditorSelection) => void) | null) {
