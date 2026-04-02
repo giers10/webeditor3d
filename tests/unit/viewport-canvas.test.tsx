@@ -5,27 +5,48 @@ import { createEmptySceneDocument } from "../../src/document/scene-document";
 import { ViewportCanvas } from "../../src/viewport-three/ViewportCanvas";
 import type { CreationViewportToolPreview, ViewportToolPreview } from "../../src/viewport-three/viewport-transient-state";
 
-const viewportHostInstances: MockViewportHost[] = [];
+const { MockViewportHost, viewportHostInstances } = vi.hoisted(() => {
+  const viewportHostInstances: Array<{
+    mount: ReturnType<typeof vi.fn>;
+    dispose: ReturnType<typeof vi.fn>;
+    updateWorld: ReturnType<typeof vi.fn>;
+    updateAssets: ReturnType<typeof vi.fn>;
+    updateDocument: ReturnType<typeof vi.fn>;
+    setViewMode: ReturnType<typeof vi.fn>;
+    setDisplayMode: ReturnType<typeof vi.fn>;
+    setBrushSelectionChangeHandler: ReturnType<typeof vi.fn>;
+    setCreationPreviewChangeHandler: ReturnType<typeof vi.fn>;
+    setCreationCommitHandler: ReturnType<typeof vi.fn>;
+    setToolMode: ReturnType<typeof vi.fn>;
+    setCreationPreview: ReturnType<typeof vi.fn>;
+    focusSelection: ReturnType<typeof vi.fn>;
+  }> = [];
 
-class MockViewportHost {
-  mount = vi.fn();
-  dispose = vi.fn();
-  updateWorld = vi.fn();
-  updateAssets = vi.fn();
-  updateDocument = vi.fn();
-  setViewMode = vi.fn();
-  setDisplayMode = vi.fn();
-  setBrushSelectionChangeHandler = vi.fn();
-  setCreationPreviewChangeHandler = vi.fn();
-  setCreationCommitHandler = vi.fn();
-  setToolMode = vi.fn();
-  setCreationPreview = vi.fn();
-  focusSelection = vi.fn();
+  class MockViewportHost {
+    mount = vi.fn();
+    dispose = vi.fn();
+    updateWorld = vi.fn();
+    updateAssets = vi.fn();
+    updateDocument = vi.fn();
+    setViewMode = vi.fn();
+    setDisplayMode = vi.fn();
+    setBrushSelectionChangeHandler = vi.fn();
+    setCreationPreviewChangeHandler = vi.fn();
+    setCreationCommitHandler = vi.fn();
+    setToolMode = vi.fn();
+    setCreationPreview = vi.fn();
+    focusSelection = vi.fn();
 
-  constructor() {
-    viewportHostInstances.push(this);
+    constructor() {
+      viewportHostInstances.push(this);
+    }
   }
-}
+
+  return {
+    MockViewportHost,
+    viewportHostInstances
+  };
+});
 
 vi.mock("../../src/viewport-three/viewport-host", () => ({
   ViewportHost: MockViewportHost
