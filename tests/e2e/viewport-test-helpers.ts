@@ -29,3 +29,37 @@ export async function clickViewport(page: Page, panelId: string = DEFAULT_VIEWPO
   await fallbackButton.waitFor({ state: "visible" });
   await fallbackButton.click();
 }
+
+export async function setSharedBoxCreatePreview(
+  page: Page,
+  panelId: string,
+  center: { x: number; y: number; z: number } | null
+) {
+  await page.evaluate(
+    ({ panelId: sourcePanelId, center: nextCenter }) => {
+      const store = (window as Window & {
+        __webeditor3dEditorStore?: {
+          setViewportToolPreview(preview: { kind: "none" } | { kind: "box-create"; sourcePanelId: string; center: { x: number; y: number; z: number } | null }): void;
+        };
+      }).__webeditor3dEditorStore;
+
+      if (store === undefined) {
+        throw new Error("Editor store debug hook is unavailable.");
+      }
+
+      store.setViewportToolPreview(
+        nextCenter === null
+          ? { kind: "none" }
+          : {
+              kind: "box-create",
+              sourcePanelId,
+              center: nextCenter
+            }
+      );
+    },
+    {
+      panelId,
+      center
+    }
+  );
+}
