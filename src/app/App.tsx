@@ -1483,11 +1483,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
 
     try {
+      const trimmedAudioAssetId = soundEmitterAudioAssetIdDraft.trim();
       const nextEntity = createSoundEmitterEntity({
         id: selectedSoundEmitter.id,
         position: snapVec3ToGrid(readVec3Draft(entityPositionDraft, "Sound Emitter position"), DEFAULT_GRID_SIZE),
-        radius: readPositiveNumberDraft(soundEmitterRadiusDraft, "Sound Emitter radius"),
-        gain: readNonNegativeNumberDraft(soundEmitterGainDraft, "Sound Emitter gain"),
+        audioAssetId: trimmedAudioAssetId.length === 0 ? undefined : trimmedAudioAssetId,
+        volume: readNonNegativeNumberDraft(soundEmitterVolumeDraft, "Sound Emitter volume"),
+        refDistance: readPositiveNumberDraft(soundEmitterRefDistanceDraft, "Sound Emitter ref distance"),
+        maxDistance: readPositiveNumberDraft(soundEmitterMaxDistanceDraft, "Sound Emitter max distance"),
         autoplay: soundEmitterAutoplayDraft,
         loop: soundEmitterLoopDraft
       });
