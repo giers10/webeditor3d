@@ -750,6 +750,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [runtimeInteractionPrompt, setRuntimeInteractionPrompt] = useState<RuntimeInteractionPrompt | null>(null);
   const [loadedModelAssets, setLoadedModelAssets] = useState<Record<string, LoadedModelAsset>>({});
   const [loadedImageAssets, setLoadedImageAssets] = useState<Record<string, LoadedImageAsset>>({});
+  const [loadedAudioAssets, setLoadedAudioAssets] = useState<Record<string, LoadedAudioAsset>>({});
   const [focusRequest, setFocusRequest] = useState<{ id: number; selection: EditorSelection }>({
     id: 0,
     selection: {
@@ -761,6 +762,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const importBackgroundImageInputRef = useRef<HTMLInputElement | null>(null);
   const loadedModelAssetsRef = useRef<Record<string, LoadedModelAsset>>({});
   const loadedImageAssetsRef = useRef<Record<string, LoadedImageAsset>>({});
+  const loadedAudioAssetsRef = useRef<Record<string, LoadedAudioAsset>>({});
   const documentValidation = validateSceneDocument(editorState.document);
   const runValidation = validateRuntimeSceneBuild(editorState.document, preferredNavigationMode);
   const diagnostics = [...documentValidation.errors, ...documentValidation.warnings, ...runValidation.errors, ...runValidation.warnings];
