@@ -4,6 +4,7 @@ import {
   useState,
   type CSSProperties,
   type ChangeEvent,
+  type MouseEvent as ReactMouseEvent,
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent
 } from "react";
@@ -150,6 +151,7 @@ import type { RuntimeInteractionPrompt } from "../runtime-three/runtime-interact
 import { buildRuntimeSceneFromDocument, type RuntimeNavigationMode, type RuntimeSceneDefinition } from "../runtime-three/runtime-scene-build";
 import { validateRuntimeSceneBuild } from "../runtime-three/runtime-scene-validation";
 import { Panel } from "../shared-ui/Panel";
+import { HierarchicalMenu, type HierarchicalMenuItem, type HierarchicalMenuPosition } from "../shared-ui/HierarchicalMenu";
 import { createWorldBackgroundStyle } from "../shared-ui/world-background-style";
 import { ViewportPanel } from "../viewport-three/ViewportPanel";
 import { getViewportViewModeLabel, type ViewportViewMode } from "../viewport-three/viewport-view-modes";
