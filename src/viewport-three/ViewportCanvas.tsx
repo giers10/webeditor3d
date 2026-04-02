@@ -155,7 +155,7 @@ export function ViewportCanvas({
   }, [onCreateBoxBrush]);
 
   useEffect(() => {
-    hostRef.current?.setBoxCreatePreviewHandler((center) => {
+    hostRef.current?.setBoxCreatePreviewChangeHandler((center) => {
       onToolPreviewChange(
         center === null
           ? {
