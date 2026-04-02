@@ -27,6 +27,11 @@ test("user can place and select typed entities from the entity foundation workfl
   await page.getByTestId("sound-emitter-ref-distance").fill("9");
   await page.getByTestId("sound-emitter-ref-distance").press("Tab");
 
+  await page.getByTestId("sound-emitter-autoplay").click();
+  await page.getByTestId("sound-emitter-loop").click();
+  await expect(page.getByTestId("sound-emitter-autoplay")).toBeChecked();
+  await expect(page.getByTestId("sound-emitter-loop")).toBeChecked();
+
   await page.getByTestId("add-entity-interactable").click();
   await expect(page.getByTestId("interactable-prompt")).toHaveValue("Use");
 
@@ -37,6 +42,8 @@ test("user can place and select typed entities from the entity foundation workfl
     .click();
 
   await expect(page.getByTestId("sound-emitter-ref-distance")).toHaveValue("9");
+  await expect(page.getByTestId("sound-emitter-autoplay")).toBeChecked();
+  await expect(page.getByTestId("sound-emitter-loop")).toBeChecked();
   await expect(page.getByTestId("interactable-prompt")).toHaveCount(0);
 
   expect(pageErrors).toEqual([]);
