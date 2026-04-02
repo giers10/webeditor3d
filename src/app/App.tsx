@@ -3609,7 +3609,133 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
+  const createAssetMenuHoverHandler = (assetId: string) => (hovered: boolean) => {
+    setHoveredAssetId((current) => (hovered ? assetId : current === assetId ? null : current));
+  };
+
+  const createDisabledMenuAction = (label: string, testId: string): HierarchicalMenuItem => ({
+    kind: "action",
+    label,
+    testId,
+    disabled: true,
+    onSelect: () => undefined
+  });
+
   const addMenuItems: HierarchicalMenuItem[] = [
+    {
+      kind: "action",
+      label: "Box",
+      testId: "add-menu-box",
+      onSelect: beginBoxCreation
+    },
+    {
+      kind: "group",
+      label: "Entities",
+      testId: "add-menu-entities",
+      children: [
+        {
+          kind: "action",
+          label: "Player Start",
+          testId: "add-menu-player-start",
+          onSelect: () => beginEntityCreation("playerStart")
+        },
+        {
+          kind: "action",
+          label: "Sound Emitter",
+          testId: "add-menu-sound-emitter",
+          onSelect: () => beginEntityCreation("soundEmitter", { audioAssetId: audioAssetList[0]?.id ?? null })
+        },
+        {
+          kind: "action",
+          label: "Trigger Volume",
+          testId: "add-menu-trigger-volume",
+          onSelect: () => beginEntityCreation("triggerVolume")
+        },
+        {
+          kind: "action",
+          label: "Teleport Target",
+          testId: "add-menu-teleport-target",
+          onSelect: () => beginEntityCreation("teleportTarget")
+        },
+        {
+          kind: "action",
+          label: "Interactable",
+          testId: "add-menu-interactable",
+          onSelect: () => beginEntityCreation("interactable")
+        }
+      ]
+    },
+    {
+      kind: "group",
+      label: "Lights",
+      testId: "add-menu-lights",
+      children: [
+        {
+          kind: "action",
+          label: "Point Light",
+          testId: "add-menu-point-light",
+          onSelect: () => beginEntityCreation("pointLight")
+        },
+        {
+          kind: "action",
+          label: "Spot Light",
+          testId: "add-menu-spot-light",
+          onSelect: () => beginEntityCreation("spotLight")
+        }
+      ]
+    },
+    {
+      kind: "group",
+      label: "Assets",
+      testId: "add-menu-assets",
+      children: [
+        {
+          kind: "group",
+          label: "3D Models",
+          testId: "add-menu-assets-models",
+          children:
+            modelAssetList.length === 0
+              ? [createDisabledMenuAction("No imported 3D models", "add-menu-assets-models-empty")]
+              : modelAssetList.map((asset) => ({
+                  kind: "action" as const,
+                  label: asset.sourceName,
+                  testId: `add-menu-model-asset-${asset.id}`,
+                  onSelect: () => beginModelInstanceCreation(asset.id),
+                  onHoverChange: createAssetMenuHoverHandler(asset.id)
+                }))
+        },
+        {
+          kind: "group",
+          label: "Environments",
+          testId: "add-menu-assets-environments",
+          children:
+            imageAssetList.length === 0
+              ? [createDisabledMenuAction("No imported environments", "add-menu-assets-environments-empty")]
+              : imageAssetList.map((asset) => ({
+                  kind: "action" as const,
+                  label: asset.sourceName,
+                  testId: `add-menu-image-asset-${asset.id}`,
+                  onSelect: () => applyWorldBackgroundMode("image", asset.id),
+                  onHoverChange: createAssetMenuHoverHandler(asset.id)
+                }))
+        },
+        {
+          kind: "group",
+          label: "Audio",
+          testId: "add-menu-assets-audio",
+          children:
+            audioAssetList.length === 0
+              ? [createDisabledMenuAction("No imported audio", "add-menu-assets-audio-empty")]
+              : audioAssetList.map((asset) => ({
+                  kind: "action" as const,
+                  label: asset.sourceName,
+                  testId: `add-menu-audio-asset-${asset.id}`,
+                  onSelect: () => beginEntityCreation("soundEmitter", { audioAssetId: asset.id }),
+                  onHoverChange: createAssetMenuHoverHandler(asset.id)
+                }))
+        }
+      ]
+    },
     {
       kind: "group",
       label: "Import",
@@ -3637,64 +3763,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
           onSelect: handleImportAudioButtonClick
         }
       ]
-    },
-      {
-        kind: "group",
-        label: "Entities",
-        testId: "add-menu-entities",
-        children: [
-          {
-            kind: "action",
-            label: "Player Start",
-            testId: "add-menu-player-start",
-            onSelect: () => beginEntityCreation("playerStart")
-          },
-          {
-            kind: "action",
-            label: "Sound Emitter",
-            testId: "add-menu-sound-emitter",
-            onSelect: () => beginEntityCreation("soundEmitter", { audioAssetId: audioAssetList[0]?.id ?? null })
-          },
-          {
-            kind: "action",
-            label: "Trigger Volume",
-            testId: "add-menu-trigger-volume",
-            onSelect: () => beginEntityCreation("triggerVolume")
-          },
-          {
-            kind: "action",
-            label: "Teleport Target",
-            testId: "add-menu-teleport-target",
-            onSelect: () => beginEntityCreation("teleportTarget")
-          },
-          {
-            kind: "action",
-            label: "Interactable",
-            testId: "add-menu-interactable",
-            onSelect: () => beginEntityCreation("interactable")
-          }
-        ]
-      },
-      {
-        kind: "group",
-        label: "Lights",
-        testId: "add-menu-lights",
-        children: [
-          {
-            kind: "action",
-            label: "Point Light",
-            testId: "add-menu-point-light",
-            onSelect: () => beginEntityCreation("pointLight")
-          },
-          {
-            kind: "action",
-            label: "Spot Light",
-            testId: "add-menu-spot-light",
-            onSelect: () => beginEntityCreation("spotLight")
-          }
-        ]
-      }
-    ];
+    }
+  ];
 
   if (editorState.toolMode === "play" && runtimeScene !== null) {
     return (
