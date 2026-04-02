@@ -124,6 +124,11 @@ button:disabled {
   color: var(--color-accent-strong);
 }
 
+.toolbar__button--compact {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.84rem;
+}
+
 .toolbar__button--accent {
   background: var(--color-accent);
   color: #20140c;
