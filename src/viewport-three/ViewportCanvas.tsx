@@ -17,7 +17,7 @@ import {
   getViewportViewModeLabel,
   type ViewportViewMode
 } from "./viewport-view-modes";
-import type { ViewportToolPreview } from "./viewport-transient-state";
+import type { PlacementViewportToolPreview, ViewportToolPreview } from "./viewport-transient-state";
 
 import { ViewportHost } from "./viewport-host";
 
