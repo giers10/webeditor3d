@@ -425,7 +425,7 @@ describe("validateSceneDocument", () => {
       shadows: {
         ...document.world.advancedRendering.shadows,
         mapSize: 3000,
-        type: "ultra" as unknown as "basic",
+        type: "ultra",
         bias: Number.NaN
       },
       ambientOcclusion: {
@@ -439,7 +439,7 @@ describe("validateSceneDocument", () => {
         radius: -0.5
       },
       toneMapping: {
-        mode: "filmic" as unknown as "none",
+        mode: "filmic",
         exposure: 0
       },
       depthOfField: {
@@ -447,7 +447,7 @@ describe("validateSceneDocument", () => {
         focalLength: 0,
         bokehScale: -2
       }
-    };
+    } as any;
 
     const validation = validateSceneDocument(document);
 
