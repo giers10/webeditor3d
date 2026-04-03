@@ -194,6 +194,16 @@ async function renderTransformFixtureApp() {
   };
 }
 
+async function renderQuadTransformFixtureApp() {
+  const fixture = await renderTransformFixtureApp();
+
+  act(() => {
+    fixture.store.setViewportLayoutMode("quad");
+  });
+
+  return fixture;
+}
+
 function getLatestTransformSession(store: ReturnType<typeof createEditorStore>): ActiveTransformSession {
   const transformSession = store.getState().viewportTransientState.transformSession;
 
@@ -415,6 +425,31 @@ describe("transform foundation integration", () => {
         x: -1,
         y: 0,
         z: 7
+      }
+    });
+  });
+
+  it("uses the hovered quad viewport as the active transform panel for keyboard entry", async () => {
+    const { store, brush } = await renderQuadTransformFixtureApp();
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /^Brush Transform Fixture$/ }));
+    });
+
+    fireEvent.pointerEnter(screen.getByTestId("viewport-panel-bottomRight"));
+    fireEvent.keyDown(window, {
+      key: "g",
+      code: "KeyG"
+    });
+
+    expect(store.getState().activeViewportPanelId).toBe("bottomRight");
+    expect(store.getState().viewportTransientState.transformSession).toMatchObject({
+      kind: "active",
+      operation: "translate",
+      sourcePanelId: "bottomRight",
+      target: {
+        kind: "brush",
+        brushId: brush.id
       }
     });
   });

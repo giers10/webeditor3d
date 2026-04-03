@@ -922,6 +922,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [statusMessage, setStatusMessage] = useState(initialStatusMessage ?? "Slice 3.5 advanced rendering ready.");
   const [assetStatusMessage, setAssetStatusMessage] = useState<string | null>(null);
   const [hoveredAssetId, setHoveredAssetId] = useState<string | null>(null);
+  const [hoveredViewportPanelId, setHoveredViewportPanelId] = useState<ViewportPanelId | null>(null);
   const [addMenuPosition, setAddMenuPosition] = useState<HierarchicalMenuPosition | null>(null);
   const [preferredNavigationMode, setPreferredNavigationMode] = useState<RuntimeNavigationMode>(
     primaryPlayerStart === null ? "orbitVisitor" : "firstPerson"
@@ -1691,6 +1692,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
       return;
     }
 
+    const transformSourcePanelId = hoveredViewportPanelId ?? activePanelId;
+
     const transformTargetResult = resolveTransformTarget(editorState.document, editorState.selection);
     const transformTarget = transformTargetResult.target;
 
@@ -1707,17 +1710,21 @@ export function App({ store, initialStatusMessage }: AppProps) {
     blurActiveTextEntry();
     closeAddMenu();
 
+    if (editorState.activeViewportPanelId !== transformSourcePanelId) {
+      store.setActiveViewportPanel(transformSourcePanelId);
+    }
+
     store.setTransformSession(
       createTransformSession({
         source,
-        sourcePanelId: activePanelId,
+        sourcePanelId: transformSourcePanelId,
         operation,
         target: transformTarget
       })
     );
     setStatusMessage(
       `${getTransformOperationLabel(operation)} ${getTransformTargetLabel(transformTarget).toLowerCase()} in ${getViewportPanelLabel(
-        activePanelId
+        transformSourcePanelId
       )}. Move the pointer, press X/Y/Z to constrain, click or press Enter to commit, Escape cancels.`
     );
   };
@@ -4860,6 +4867,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 focusRequestId={focusRequest.panelId === panelId ? focusRequest.id : 0}
                 focusSelection={focusRequest.selection}
                 onActivatePanel={handleActivateViewportPanel}
+                onHoverPanel={setHoveredViewportPanelId}
                 onSetPanelViewMode={handleSetViewportPanelViewMode}
                 onSetPanelDisplayMode={handleSetViewportPanelDisplayMode}
                 onCommitCreation={handleCommitCreation}
