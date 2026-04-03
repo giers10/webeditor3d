@@ -1,6 +1,7 @@
 import { render, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { createInactiveTransformSession, type ActiveTransformSession, type TransformSessionState } from "../../src/core/transform-session";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
 import { ViewportCanvas } from "../../src/viewport-three/ViewportCanvas";
 import { createDefaultViewportPanelCameraState, type ViewportPanelCameraState } from "../../src/viewport-three/viewport-layout";
@@ -20,8 +21,13 @@ const { MockViewportHost, viewportHostInstances } = vi.hoisted(() => {
     setCameraStateChangeHandler: ReturnType<typeof vi.fn>;
     setCreationPreviewChangeHandler: ReturnType<typeof vi.fn>;
     setCreationCommitHandler: ReturnType<typeof vi.fn>;
+    setTransformSessionChangeHandler: ReturnType<typeof vi.fn>;
+    setTransformCommitHandler: ReturnType<typeof vi.fn>;
+    setTransformCancelHandler: ReturnType<typeof vi.fn>;
     setToolMode: ReturnType<typeof vi.fn>;
     setCreationPreview: ReturnType<typeof vi.fn>;
+    setTransformSession: ReturnType<typeof vi.fn>;
+    setPanelId: ReturnType<typeof vi.fn>;
     focusSelection: ReturnType<typeof vi.fn>;
   }> = [];
 
@@ -38,8 +44,13 @@ const { MockViewportHost, viewportHostInstances } = vi.hoisted(() => {
     setCameraStateChangeHandler = vi.fn();
     setCreationPreviewChangeHandler = vi.fn();
     setCreationCommitHandler = vi.fn();
+    setTransformSessionChangeHandler = vi.fn();
+    setTransformCommitHandler = vi.fn();
+    setTransformCancelHandler = vi.fn();
     setToolMode = vi.fn();
     setCreationPreview = vi.fn();
+    setTransformSession = vi.fn();
+    setPanelId = vi.fn();
     focusSelection = vi.fn();
 
     constructor() {
@@ -81,6 +92,9 @@ describe("ViewportCanvas", () => {
     const onCommitCreation = vi.fn(() => true);
     const onCameraStateChange = vi.fn((_cameraState: ViewportPanelCameraState) => undefined);
     const onToolPreviewChange = vi.fn((_toolPreview: ViewportToolPreview) => undefined);
+    const onTransformSessionChange = vi.fn((_transformSession: TransformSessionState) => undefined);
+    const onTransformCommit = vi.fn((_transformSession: ActiveTransformSession) => undefined);
+    const onTransformCancel = vi.fn(() => undefined);
     const onSelectionChange = vi.fn();
 
     render(
@@ -94,6 +108,7 @@ describe("ViewportCanvas", () => {
         selection={{ kind: "none" }}
         toolMode="create"
         toolPreview={toolPreview}
+        transformSession={createInactiveTransformSession()}
         cameraState={cameraState}
         viewMode="perspective"
         displayMode="authoring"
@@ -105,6 +120,9 @@ describe("ViewportCanvas", () => {
         onCommitCreation={onCommitCreation}
         onCameraStateChange={onCameraStateChange}
         onToolPreviewChange={onToolPreviewChange}
+        onTransformSessionChange={onTransformSessionChange}
+        onTransformCommit={onTransformCommit}
+        onTransformCancel={onTransformCancel}
       />
     );
 
@@ -137,6 +155,7 @@ describe("ViewportCanvas", () => {
         selection={{ kind: "none" }}
         toolMode="select"
         toolPreview={{ kind: "none" }}
+        transformSession={createInactiveTransformSession()}
         cameraState={cameraState}
         viewMode="perspective"
         displayMode="normal"
@@ -148,6 +167,9 @@ describe("ViewportCanvas", () => {
         onCommitCreation={vi.fn(() => true)}
         onCameraStateChange={onCameraStateChange}
         onToolPreviewChange={vi.fn()}
+        onTransformSessionChange={vi.fn()}
+        onTransformCommit={vi.fn()}
+        onTransformCancel={vi.fn()}
       />
     );
 

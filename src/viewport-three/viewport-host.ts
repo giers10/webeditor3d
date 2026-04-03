@@ -37,11 +37,9 @@ import {
   cloneTransformSession,
   createInactiveTransformSession,
   createTransformSession,
-  getTransformOperationLabel,
   supportsTransformAxisConstraint,
   type ActiveTransformSession,
   type TransformAxis,
-  type TransformOperation,
   type TransformSessionState
 } from "../core/transform-session";
 import type { ToolMode } from "../core/tool-mode";
@@ -55,7 +53,8 @@ import {
   createModelInstancePlacementPosition,
   DEFAULT_MODEL_INSTANCE_ROTATION_DEGREES,
   DEFAULT_MODEL_INSTANCE_SCALE,
-  getModelInstances
+  getModelInstances,
+  type ModelInstance
 } from "../assets/model-instances";
 import type { SceneDocument } from "../document/scene-document";
 import {
@@ -100,7 +99,12 @@ import {
   type ViewportGridPlane,
   type ViewportViewMode
 } from "./viewport-view-modes";
-import { areViewportPanelCameraStatesEqual, type ViewportDisplayMode, type ViewportPanelCameraState } from "./viewport-layout";
+import {
+  areViewportPanelCameraStatesEqual,
+  type ViewportDisplayMode,
+  type ViewportPanelCameraState,
+  type ViewportPanelId
+} from "./viewport-layout";
 import {
   areViewportToolPreviewsEqual,
   type CreationTarget,
