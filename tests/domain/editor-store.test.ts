@@ -269,28 +269,7 @@ describe("EditorStore", () => {
   });
 
   it("tracks a shared transient transform session and clears it when selection changes", () => {
-    const store = createEditorStore({
-      initialDocument: {
-        ...createEmptySceneDocument({ name: "Transform Session Fixture" }),
-        brushes: {
-          "brush-main": {
-            id: "brush-main",
-            kind: "box",
-            center: {
-              x: 0,
-              y: 1,
-              z: 0
-            },
-            size: {
-              x: 2,
-              y: 2,
-              z: 2
-            },
-            faces: createEmptySceneDocument().brushes
-          } as never
-        }
-      }
-    });
+    const store = createEditorStore();
 
     store.setTransformSession(
       createTransformSession({
