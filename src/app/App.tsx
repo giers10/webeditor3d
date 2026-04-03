@@ -979,6 +979,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const hoveredAssetStatusMessage = hoveredAsset === null ? null : formatAssetHoverStatus(hoveredAsset);
   const selectedTransformTargetResult = resolveTransformTarget(editorState.document, editorState.selection);
   const selectedTransformTarget = selectedTransformTargetResult.target;
+  const canTranslateSelectedTarget = selectedTransformTarget !== null && supportsTransformOperation(selectedTransformTarget, "translate");
+  const canRotateSelectedTarget = selectedTransformTarget !== null && supportsTransformOperation(selectedTransformTarget, "rotate");
+  const canScaleSelectedTarget = selectedTransformTarget !== null && supportsTransformOperation(selectedTransformTarget, "scale");
 
   useEffect(() => {
     setSceneNameDraft(editorState.document.name);
@@ -4534,6 +4537,39 @@ export function App({ store, initialStatusMessage }: AppProps) {
             ))}
           </div>
 
+          <div className="toolbar__group" role="group" aria-label="Transform operations">
+            <button
+              className={`toolbar__button ${transformSession.kind === "active" && transformSession.operation === "translate" ? "toolbar__button--active" : ""}`}
+              type="button"
+              data-testid="transform-translate-button"
+              aria-pressed={transformSession.kind === "active" && transformSession.operation === "translate"}
+              disabled={editorState.toolMode !== "select" || !canTranslateSelectedTarget}
+              onClick={() => beginTransformOperation("translate", "toolbar")}
+            >
+              Move ({getTransformOperationShortcut("translate")})
+            </button>
+            <button
+              className={`toolbar__button ${transformSession.kind === "active" && transformSession.operation === "rotate" ? "toolbar__button--active" : ""}`}
+              type="button"
+              data-testid="transform-rotate-button"
+              aria-pressed={transformSession.kind === "active" && transformSession.operation === "rotate"}
+              disabled={editorState.toolMode !== "select" || !canRotateSelectedTarget}
+              onClick={() => beginTransformOperation("rotate", "toolbar")}
+            >
+              Rotate ({getTransformOperationShortcut("rotate")})
+            </button>
+            <button
+              className={`toolbar__button ${transformSession.kind === "active" && transformSession.operation === "scale" ? "toolbar__button--active" : ""}`}
+              type="button"
+              data-testid="transform-scale-button"
+              aria-pressed={transformSession.kind === "active" && transformSession.operation === "scale"}
+              disabled={editorState.toolMode !== "select" || !canScaleSelectedTarget}
+              onClick={() => beginTransformOperation("scale", "toolbar")}
+            >
+              Scale ({getTransformOperationShortcut("scale")})
+            </button>
+          </div>
+
           <div className="toolbar__group">
             <button
               className={`toolbar__button toolbar__button--accent ${blockingDiagnostics.length > 0 ? "toolbar__button--warn" : ""}`}
@@ -4821,6 +4857,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 selection={editorState.selection}
                 toolMode={editorState.toolMode}
                 toolPreview={viewportToolPreview}
+                transformSession={transformSession}
                 cameraState={editorState.viewportPanels[panelId].cameraState}
                 focusRequestId={focusRequest.panelId === panelId ? focusRequest.id : 0}
                 focusSelection={focusRequest.selection}
@@ -4834,6 +4871,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 onToolPreviewChange={(toolPreview) => {
                   store.setViewportToolPreview(toolPreview);
                 }}
+                onTransformSessionChange={(nextTransformSession) => {
+                  store.setTransformSession(nextTransformSession);
+                }}
+                onTransformCommit={commitTransformSession}
+                onTransformCancel={() => cancelTransformSession()}
                 onSelectionChange={(selection) => applySelection(selection, "viewport")}
               />
             ))}
