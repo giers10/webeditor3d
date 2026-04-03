@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 import { createModelInstance } from "../../src/assets/model-instances";
 import { createProjectAssetStorageKey, type ModelAssetRecord } from "../../src/assets/project-assets";
@@ -49,7 +49,7 @@ const modelAsset = {
   }
 } satisfies ModelAssetRecord;
 
-async function seedTransformScene(page: Parameters<typeof test>[0]["page"]) {
+async function seedTransformScene(page: Page) {
   const brush = createBoxBrush({
     id: "brush-transform-main",
     name: "Brush Transform Fixture",
@@ -103,7 +103,7 @@ async function seedTransformScene(page: Parameters<typeof test>[0]["page"]) {
   };
 }
 
-async function getViewportCenter(page: Parameters<typeof test>[0]["page"], panelId: "topLeft" | "topRight" | "bottomLeft" | "bottomRight") {
+async function getViewportCenter(page: Page, panelId: "topLeft" | "topRight" | "bottomLeft" | "bottomRight") {
   const viewportCanvas = getViewportCanvas(page, panelId);
   const bounds = await viewportCanvas.boundingBox();
 
@@ -118,7 +118,7 @@ async function getViewportCenter(page: Parameters<typeof test>[0]["page"], panel
 }
 
 async function commitKeyboardMove(
-  page: Parameters<typeof test>[0]["page"],
+  page: Page,
   panelId: "topLeft" | "topRight" | "bottomLeft" | "bottomRight",
   delta: { x: number; y: number },
   axisConstraint?: "x" | "y" | "z"
