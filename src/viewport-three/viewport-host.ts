@@ -36,7 +36,10 @@ import { isBrushFaceSelected, isBrushSelected, isModelInstanceSelected, type Edi
 import {
   cloneTransformSession,
   createInactiveTransformSession,
+  createTransformPreviewFromTarget,
   createTransformSession,
+  resolveTransformTarget,
+  supportsTransformOperation,
   supportsTransformAxisConstraint,
   type ActiveTransformSession,
   type TransformAxis,
@@ -163,6 +166,7 @@ const GIZMO_PICK_RING_TUBE = 0.14;
 const GIZMO_CENTER_HANDLE_SIZE = 0.16;
 const GIZMO_SCREEN_SIZE_PERSPECTIVE = 0.11;
 const GIZMO_SCREEN_SIZE_ORTHOGRAPHIC = 1.4;
+const GIZMO_RENDER_ORDER = 4_000;
 const ROTATION_SNAP_DEGREES = 15;
 const SCALE_SNAP_STEP = 0.1;
 const MIN_SCALE_COMPONENT = 0.1;
@@ -337,6 +341,7 @@ export class ViewportHost {
     this.renderer.domElement.addEventListener("pointerleave", this.handlePointerLeave);
     this.renderer.domElement.addEventListener("wheel", this.handleWheel, { passive: false });
     this.renderer.domElement.addEventListener("auxclick", this.handleAuxClick);
+    window.addEventListener("pointermove", this.handleWindowPointerMove);
     this.resize();
 
     this.resizeObserver = new ResizeObserver(() => {
@@ -549,6 +554,7 @@ export class ViewportHost {
     this.renderer.domElement.removeEventListener("pointerleave", this.handlePointerLeave);
     this.renderer.domElement.removeEventListener("wheel", this.handleWheel);
     this.renderer.domElement.removeEventListener("auxclick", this.handleAuxClick);
+    window.removeEventListener("pointermove", this.handleWindowPointerMove);
     this.clearLocalLights();
     this.clearBrushMeshes();
     this.clearEntityMarkers();
@@ -903,12 +909,23 @@ export class ViewportHost {
     this.transformGizmoGroup.visible = false;
   }
 
+  private markTransformHandleObject<TObject extends Object3D>(object: TObject): TObject {
+    object.renderOrder = GIZMO_RENDER_ORDER;
+
+    object.traverse((child) => {
+      child.renderOrder = GIZMO_RENDER_ORDER;
+    });
+
+    return object;
+  }
+
   private createTransformHandleMaterial(color: number, isActive: boolean, transparent = false) {
     return new MeshBasicMaterial({
       color,
       transparent: transparent || isActive,
       opacity: transparent ? 0.001 : isActive ? GIZMO_ACTIVE_OPACITY : GIZMO_INACTIVE_OPACITY,
-      depthWrite: false
+      depthWrite: false,
+      depthTest: false
     });
   }
 
@@ -948,7 +965,7 @@ export class ViewportHost {
     group.add(line);
     group.add(arrow);
     group.add(pick);
-    return group;
+    return this.markTransformHandleObject(group);
   }
 
   private createRotateHandle(axis: TransformAxis, isActive: boolean): Group {
@@ -974,7 +991,7 @@ export class ViewportHost {
     pick.userData.transformAxisConstraint = axis;
     group.add(ring);
     group.add(pick);
-    return group;
+    return this.markTransformHandleObject(group);
   }
 
   private createScaleHandle(axis: TransformAxis, isActive: boolean): Group {
@@ -1011,7 +1028,7 @@ export class ViewportHost {
     group.add(line);
     group.add(cube);
     group.add(pick);
-    return group;
+    return this.markTransformHandleObject(group);
   }
 
   private createUniformScaleHandle(isActive: boolean): Mesh {
@@ -1020,17 +1037,45 @@ export class ViewportHost {
       this.createTransformHandleMaterial(isActive ? GIZMO_ACTIVE_COLOR : 0xe6edf8, isActive)
     );
     mesh.userData.transformAxisConstraint = null;
-    return mesh;
+    return this.markTransformHandleObject(mesh);
+  }
+
+  private getDisplayedTransformSession(): ActiveTransformSession | null {
+    if (this.currentTransformSession.kind === "active") {
+      return this.currentTransformSession;
+    }
+
+    if (this.toolMode !== "select" || this.currentDocument === null) {
+      return null;
+    }
+
+    const transformTarget = resolveTransformTarget(this.currentDocument, this.currentSelection).target;
+
+    if (transformTarget === null || !supportsTransformOperation(transformTarget, "translate")) {
+      return null;
+    }
+
+    return {
+      kind: "active",
+      id: "__selection-translate-gizmo__",
+      source: "gizmo",
+      sourcePanelId: this.panelId,
+      operation: "translate",
+      axisConstraint: null,
+      target: transformTarget,
+      preview: createTransformPreviewFromTarget(transformTarget)
+    };
   }
 
   private syncTransformGizmo() {
     this.clearTransformGizmo();
 
-    if (this.currentTransformSession.kind !== "active") {
+    const session = this.getDisplayedTransformSession();
+
+    if (session === null) {
       return;
     }
 
-    const session = this.currentTransformSession;
     const effectiveRotationAxis = session.operation === "rotate" ? this.getEffectiveRotationAxis(session) : null;
 
     if (session.operation === "translate") {
@@ -1057,11 +1102,13 @@ export class ViewportHost {
   }
 
   private updateTransformGizmoPose() {
-    if (this.currentTransformSession.kind !== "active" || !this.transformGizmoGroup.visible) {
+    const session = this.getDisplayedTransformSession();
+
+    if (session === null || !this.transformGizmoGroup.visible) {
       return;
     }
 
-    const pivot = this.getTransformPivotPosition(this.currentTransformSession);
+    const pivot = this.getTransformPivotPosition(session);
     const pivotVector = new Vector3(pivot.x, pivot.y, pivot.z);
 
     this.transformGizmoGroup.position.copy(pivotVector);
@@ -2200,7 +2247,7 @@ export class ViewportHost {
   }
 
   private pickTransformHandle(event: PointerEvent): { axisConstraint: TransformAxis | null } | null {
-    if (this.currentTransformSession.kind !== "active" || !this.transformGizmoGroup.visible) {
+    if (!this.transformGizmoGroup.visible) {
       return null;
     }
 
@@ -2246,56 +2293,62 @@ export class ViewportHost {
       return;
     }
 
-    if (this.currentTransformSession.kind === "active") {
-      if (this.currentTransformSession.sourcePanelId !== this.panelId) {
+    const transformHandle = this.pickTransformHandle(event);
+    const interactionSession =
+      this.currentTransformSession.kind === "active"
+        ? this.currentTransformSession.sourcePanelId === this.panelId
+          ? this.currentTransformSession
+          : null
+        : this.getDisplayedTransformSession();
+
+    if (transformHandle !== null && interactionSession !== null) {
+      event.preventDefault();
+
+      if (
+        transformHandle.axisConstraint !== null &&
+        !supportsTransformAxisConstraint(interactionSession, transformHandle.axisConstraint)
+      ) {
         return;
       }
 
-      const transformHandle = this.pickTransformHandle(event);
-
-      if (transformHandle !== null) {
-        event.preventDefault();
-
-        if (
-          transformHandle.axisConstraint !== null &&
-          !supportsTransformAxisConstraint(this.currentTransformSession, transformHandle.axisConstraint)
-        ) {
-          return;
-        }
-
-        const nextSession = this.buildTransformPreviewFromPointer(
-          createTransformSession({
-            source: "gizmo",
-            sourcePanelId: this.panelId,
-            operation: this.currentTransformSession.operation,
-            axisConstraint: transformHandle.axisConstraint,
-            target: this.currentTransformSession.target
-          }),
-          {
-            x: event.clientX,
-            y: event.clientY
-          },
-          {
-            x: event.clientX,
-            y: event.clientY
-          },
-          transformHandle.axisConstraint
-        );
-
-        this.currentTransformSession = nextSession;
-        this.applyTransformPreview();
-        this.syncTransformGizmo();
-        this.transformSessionChangeHandler?.(nextSession);
-        this.activeTransformDrag = {
-          pointerId: event.pointerId,
-          sessionId: nextSession.id,
+      const nextSession = this.buildTransformPreviewFromPointer(
+        createTransformSession({
+          source: "gizmo",
+          sourcePanelId: this.panelId,
+          operation: interactionSession.operation,
           axisConstraint: transformHandle.axisConstraint,
-          initialClientPosition: {
-            x: event.clientX,
-            y: event.clientY
-          }
-        };
-        this.renderer.domElement.setPointerCapture(event.pointerId);
+          target: interactionSession.target
+        }),
+        {
+          x: event.clientX,
+          y: event.clientY
+        },
+        {
+          x: event.clientX,
+          y: event.clientY
+        },
+        transformHandle.axisConstraint
+      );
+
+      this.currentTransformSession = nextSession;
+      this.applyTransformPreview();
+      this.syncTransformGizmo();
+      this.transformSessionChangeHandler?.(nextSession);
+      this.activeTransformDrag = {
+        pointerId: event.pointerId,
+        sessionId: nextSession.id,
+        axisConstraint: transformHandle.axisConstraint,
+        initialClientPosition: {
+          x: event.clientX,
+          y: event.clientY
+        }
+      };
+      this.renderer.domElement.setPointerCapture(event.pointerId);
+      return;
+    }
+
+    if (this.currentTransformSession.kind === "active") {
+      if (this.currentTransformSession.sourcePanelId !== this.panelId) {
         return;
       }
 
@@ -2496,33 +2549,6 @@ export class ViewportHost {
       return;
     }
 
-    if (
-      this.currentTransformSession.kind === "active" &&
-      this.currentTransformSession.sourcePanelId === this.panelId &&
-      this.currentTransformSession.source !== "gizmo" &&
-      this.keyboardTransformPointerOrigin !== null &&
-      this.keyboardTransformPointerOrigin.sessionId === this.currentTransformSession.id
-    ) {
-      const nextSession = this.buildTransformPreviewFromPointer(
-        this.currentTransformSession,
-        {
-          x: this.keyboardTransformPointerOrigin.clientX,
-          y: this.keyboardTransformPointerOrigin.clientY
-        },
-        {
-          x: event.clientX,
-          y: event.clientY
-        },
-        this.currentTransformSession.axisConstraint
-      );
-
-      this.currentTransformSession = nextSession;
-      this.applyTransformPreview();
-      this.syncTransformGizmo();
-      this.transformSessionChangeHandler?.(nextSession);
-      return;
-    }
-
     if (this.toolMode !== "create" || this.creationPreview === null) {
       return;
     }
@@ -2577,6 +2603,36 @@ export class ViewportHost {
 
     // Keep the shared creation preview alive across panel boundaries; the next
     // viewport panel will update it as the pointer continues moving.
+  };
+
+  private handleWindowPointerMove = (event: PointerEvent) => {
+    if (
+      this.currentTransformSession.kind !== "active" ||
+      this.currentTransformSession.sourcePanelId !== this.panelId ||
+      this.currentTransformSession.source === "gizmo" ||
+      this.keyboardTransformPointerOrigin === null ||
+      this.keyboardTransformPointerOrigin.sessionId !== this.currentTransformSession.id
+    ) {
+      return;
+    }
+
+    const nextSession = this.buildTransformPreviewFromPointer(
+      this.currentTransformSession,
+      {
+        x: this.keyboardTransformPointerOrigin.clientX,
+        y: this.keyboardTransformPointerOrigin.clientY
+      },
+      {
+        x: event.clientX,
+        y: event.clientY
+      },
+      this.currentTransformSession.axisConstraint
+    );
+
+    this.currentTransformSession = nextSession;
+    this.applyTransformPreview();
+    this.syncTransformGizmo();
+    this.transformSessionChangeHandler?.(nextSession);
   };
 
   private handleWheel = (event: WheelEvent) => {

@@ -41,6 +41,7 @@ interface ViewportPanelProps {
   focusRequestId: number;
   focusSelection: EditorSelection;
   onActivatePanel(panelId: ViewportPanelId): void;
+  onHoverPanel(panelId: ViewportPanelId | null): void;
   onSetPanelViewMode(panelId: ViewportPanelId, viewMode: ViewportViewMode): void;
   onSetPanelDisplayMode(panelId: ViewportPanelId, displayMode: ViewportDisplayMode): void;
   onCommitCreation(toolPreview: CreationViewportToolPreview): boolean;
@@ -72,6 +73,7 @@ export function ViewportPanel({
   focusRequestId,
   focusSelection,
   onActivatePanel,
+  onHoverPanel,
   onSetPanelViewMode,
   onSetPanelDisplayMode,
   onCommitCreation,
@@ -94,6 +96,8 @@ export function ViewportPanel({
       aria-label={`${getViewportPanelLabel(panelId)} viewport panel`}
       style={panelStyle}
       onPointerDownCapture={() => onActivatePanel(panelId)}
+      onPointerEnterCapture={() => onHoverPanel(panelId)}
+      onPointerLeaveCapture={() => onHoverPanel(null)}
       onFocusCapture={() => onActivatePanel(panelId)}
     >
       <div className="viewport-panel__header">
