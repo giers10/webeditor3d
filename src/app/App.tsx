@@ -1331,6 +1331,16 @@ export function App({ store, initialStatusMessage }: AppProps) {
         x: event.clientX,
         y: event.clientY
       };
+
+      const hoveredViewportPanelElement =
+        event.target instanceof Element ? event.target.closest<HTMLElement>("[data-viewport-panel-id]") : null;
+      const hoveredPanelId = hoveredViewportPanelElement?.dataset.viewportPanelId;
+
+      setHoveredViewportPanelId(
+        hoveredPanelId === "topLeft" || hoveredPanelId === "topRight" || hoveredPanelId === "bottomLeft" || hoveredPanelId === "bottomRight"
+          ? hoveredPanelId
+          : null
+      );
     };
 
     const handleWindowKeyDown = (event: globalThis.KeyboardEvent) => {
@@ -4867,7 +4877,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 focusRequestId={focusRequest.panelId === panelId ? focusRequest.id : 0}
                 focusSelection={focusRequest.selection}
                 onActivatePanel={handleActivateViewportPanel}
-                onHoverPanel={setHoveredViewportPanelId}
                 onSetPanelViewMode={handleSetViewportPanelViewMode}
                 onSetPanelDisplayMode={handleSetViewportPanelDisplayMode}
                 onCommitCreation={handleCommitCreation}
