@@ -358,16 +358,23 @@ export class EditorStore {
   }
 
   undo(): boolean {
+    let clearedTransformSession = false;
+
     if (this.viewportTransientState.transformSession.kind !== "none") {
       this.viewportTransientState = {
         ...this.viewportTransientState,
         transformSession: createInactiveTransformSession()
       };
+      clearedTransformSession = true;
     }
 
     const command = this.history.undo(this.commandContext);
 
     if (command === null) {
+      if (clearedTransformSession) {
+        this.emit();
+      }
+
       return false;
     }
 
@@ -377,16 +384,23 @@ export class EditorStore {
   }
 
   redo(): boolean {
+    let clearedTransformSession = false;
+
     if (this.viewportTransientState.transformSession.kind !== "none") {
       this.viewportTransientState = {
         ...this.viewportTransientState,
         transformSession: createInactiveTransformSession()
       };
+      clearedTransformSession = true;
     }
 
     const command = this.history.redo(this.commandContext);
 
     if (command === null) {
+      if (clearedTransformSession) {
+        this.emit();
+      }
+
       return false;
     }
 
