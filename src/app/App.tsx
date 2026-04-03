@@ -16,6 +16,7 @@ import { createImportAudioAssetCommand } from "../commands/import-audio-asset-co
 import { createImportBackgroundImageAssetCommand } from "../commands/import-background-image-asset-command";
 import { createImportModelAssetCommand } from "../commands/import-model-asset-command";
 import { createDeleteModelInstanceCommand } from "../commands/delete-model-instance-command";
+import { createCommitTransformSessionCommand } from "../commands/commit-transform-session-command";
 import { createMoveBoxBrushCommand } from "../commands/move-box-brush-command";
 import { createResizeBoxBrushCommand } from "../commands/resize-box-brush-command";
 import { createSetBoxBrushFaceMaterialCommand } from "../commands/set-box-brush-face-material-command";
@@ -38,6 +39,20 @@ import {
   isBrushSelected,
   type EditorSelection
 } from "../core/selection";
+import {
+  createTransformSession,
+  doesTransformSessionChangeTarget,
+  getTransformOperationLabel,
+  getTransformTargetLabel,
+  resolveTransformTarget,
+  supportsTransformAxisConstraint,
+  supportsTransformOperation,
+  type ActiveTransformSession,
+  type TransformAxis,
+  type TransformOperation,
+  type TransformSessionSource,
+  type TransformTarget
+} from "../core/transform-session";
 import type { Vec2, Vec3 } from "../core/vector";
 import {
   areModelInstancesEqual,
@@ -169,6 +184,7 @@ import {
   VIEWPORT_PANEL_IDS,
   getViewportDisplayModeLabel,
   getViewportLayoutModeLabel,
+  getViewportPanelLabel,
   type ViewportDisplayMode,
   type ViewportLayoutMode,
   type ViewportPanelId,
@@ -700,6 +716,28 @@ function rotateQuarterTurns(rotationQuarterTurns: FaceUvRotationQuarterTurns): F
   return ((rotationQuarterTurns + 1) % 4) as FaceUvRotationQuarterTurns;
 }
 
+function getTransformOperationPastTense(operation: TransformOperation): string {
+  switch (operation) {
+    case "translate":
+      return "Moved";
+    case "rotate":
+      return "Rotated";
+    case "scale":
+      return "Scaled";
+  }
+}
+
+function getTransformOperationShortcut(operation: TransformOperation): string {
+  switch (operation) {
+    case "translate":
+      return "G";
+    case "rotate":
+      return "R";
+    case "scale":
+      return "S";
+  }
+}
+
 function formatRunnerFeetPosition(position: Vec3 | null): string {
   if (position === null) {
     return "n/a";
@@ -752,6 +790,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const layoutMode = editorState.viewportLayoutMode;
   const activePanelId = editorState.activeViewportPanelId;
   const viewportToolPreview = editorState.viewportTransientState.toolPreview;
+  const transformSession = editorState.viewportTransientState.transformSession;
   const entityList = getEntityInstances(editorState.document.entities);
   const entityDisplayList = getSortedEntityDisplayLabels(editorState.document.entities, editorState.document.assets);
   const primaryPlayerStart = getPrimaryPlayerStartEntity(editorState.document.entities);
@@ -938,6 +977,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const advancedRendering = editorState.document.world.advancedRendering;
   const hoveredAsset = hoveredAssetId === null ? null : editorState.document.assets[hoveredAssetId] ?? null;
   const hoveredAssetStatusMessage = hoveredAsset === null ? null : formatAssetHoverStatus(hoveredAsset);
+  const selectedTransformTargetResult = resolveTransformTarget(editorState.document, editorState.selection);
+  const selectedTransformTarget = selectedTransformTargetResult.target;
 
   useEffect(() => {
     setSceneNameDraft(editorState.document.name);
@@ -1345,6 +1386,40 @@ export function App({ store, initialStatusMessage }: AppProps) {
         return;
       }
 
+      if (transformSession.kind === "active") {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          cancelTransformSession();
+          return;
+        }
+
+        if (event.key === "Enter") {
+          event.preventDefault();
+          commitTransformSession(transformSession);
+          return;
+        }
+
+        if (!event.altKey && !event.ctrlKey && !event.metaKey) {
+          if (event.code === "KeyX") {
+            event.preventDefault();
+            applyTransformAxisConstraint("x");
+            return;
+          }
+
+          if (event.code === "KeyY") {
+            event.preventDefault();
+            applyTransformAxisConstraint("y");
+            return;
+          }
+
+          if (event.code === "KeyZ") {
+            event.preventDefault();
+            applyTransformAxisConstraint("z");
+            return;
+          }
+        }
+      }
+
       if (event.key === "Escape" && editorState.toolMode === "create") {
         event.preventDefault();
         store.setToolMode("select");
@@ -1359,6 +1434,24 @@ export function App({ store, initialStatusMessage }: AppProps) {
           y: lastPointerPositionRef.current.y
         });
         return;
+      }
+
+      if (!event.altKey && !event.ctrlKey && !event.metaKey) {
+        let transformOperation: TransformOperation | null = null;
+
+        if (event.code === "KeyG") {
+          transformOperation = "translate";
+        } else if (event.code === "KeyR") {
+          transformOperation = "rotate";
+        } else if (event.code === "KeyS") {
+          transformOperation = "scale";
+        }
+
+        if (transformOperation !== null) {
+          event.preventDefault();
+          beginTransformOperation(transformOperation, "keyboard");
+          return;
+        }
       }
 
       const isDeletionKey = event.key === "Delete" || event.key === "Backspace";
@@ -1413,7 +1506,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
       window.removeEventListener("pointermove", handleWindowPointerMove);
       window.removeEventListener("keydown", handleWindowKeyDown);
     };
-  }, [activePanelId, addMenuPosition, brushList.length, editorState.selection, editorState.toolMode, entityList.length]);
+  }, [activePanelId, addMenuPosition, brushList.length, editorState.selection, editorState.toolMode, entityList.length, transformSession]);
 
   useEffect(() => {
     if (layoutMode === "quad" || viewportQuadResizeMode === null) {
@@ -1590,6 +1683,92 @@ export function App({ store, initialStatusMessage }: AppProps) {
     blurActiveTextEntry();
     store.setViewportPanelDisplayMode(panelId, nextDisplayMode);
     setStatusMessage(`Set the viewport panel to ${getViewportDisplayModeLabel(nextDisplayMode)} display.`);
+  };
+
+  const beginTransformOperation = (operation: TransformOperation, source: TransformSessionSource) => {
+    if (editorState.toolMode !== "select") {
+      return;
+    }
+
+    const transformTargetResult = resolveTransformTarget(editorState.document, editorState.selection);
+    const transformTarget = transformTargetResult.target;
+
+    if (transformTarget === null) {
+      setStatusMessage(transformTargetResult.message ?? "Select a single brush, entity, or model instance before transforming it.");
+      return;
+    }
+
+    if (!supportsTransformOperation(transformTarget, operation)) {
+      setStatusMessage(`${getTransformOperationLabel(operation)} is not supported for ${getTransformTargetLabel(transformTarget)}.`);
+      return;
+    }
+
+    blurActiveTextEntry();
+    closeAddMenu();
+
+    store.setTransformSession(
+      createTransformSession({
+        source,
+        sourcePanelId: activePanelId,
+        operation,
+        target: transformTarget
+      })
+    );
+    setStatusMessage(
+      `${getTransformOperationLabel(operation)} ${getTransformTargetLabel(transformTarget).toLowerCase()} in ${getViewportPanelLabel(
+        activePanelId
+      )}. Move the pointer, press X/Y/Z to constrain, click or press Enter to commit, Escape cancels.`
+    );
+  };
+
+  const cancelTransformSession = (status = "Cancelled the current transform.") => {
+    if (transformSession.kind === "none") {
+      return;
+    }
+
+    store.clearTransformSession();
+    setStatusMessage(status);
+  };
+
+  const commitTransformSession = (activeTransformSession: ActiveTransformSession) => {
+    if (!doesTransformSessionChangeTarget(activeTransformSession)) {
+      store.clearTransformSession();
+      setStatusMessage("No transform change was committed.");
+      return;
+    }
+
+    try {
+      store.clearTransformSession();
+      store.executeCommand(createCommitTransformSessionCommand(editorState.document, activeTransformSession));
+      setStatusMessage(
+        `${getTransformOperationPastTense(activeTransformSession.operation)} ${getTransformTargetLabel(activeTransformSession.target).toLowerCase()}.`
+      );
+    } catch (error) {
+      store.clearTransformSession();
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const applyTransformAxisConstraint = (axis: TransformAxis) => {
+    if (transformSession.kind !== "active") {
+      return;
+    }
+
+    if (!supportsTransformAxisConstraint(transformSession, axis)) {
+      const supportedAxes = (["x", "y", "z"] as const)
+        .filter((candidateAxis) => supportsTransformAxisConstraint(transformSession, candidateAxis))
+        .map((candidateAxis) => candidateAxis.toUpperCase())
+        .join("/");
+      setStatusMessage(
+        supportedAxes.length === 0
+          ? `${getTransformOperationLabel(transformSession.operation)} does not support axis constraints for ${getTransformTargetLabel(transformSession.target)}.`
+          : `${getTransformOperationLabel(transformSession.operation)} on ${getTransformTargetLabel(transformSession.target)} only supports ${supportedAxes}.`
+      );
+      return;
+    }
+
+    store.setTransformAxisConstraint(axis);
+    setStatusMessage(`Constrained ${getTransformOperationLabel(transformSession.operation).toLowerCase()} to ${axis.toUpperCase()}.`);
   };
 
   const handleViewportQuadResizeStart =
