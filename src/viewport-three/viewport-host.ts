@@ -792,6 +792,751 @@ export class ViewportHost {
     }
   }
 
+  private getPointerOriginForTransformSession() {
+    if (this.lastCanvasPointerPosition !== null) {
+      return this.lastCanvasPointerPosition;
+    }
+
+    const bounds = this.renderer.domElement.getBoundingClientRect();
+
+    return {
+      x: bounds.left + bounds.width * 0.5,
+      y: bounds.top + bounds.height * 0.5
+    };
+  }
+
+  private axisVector(axis: TransformAxis): Vector3 {
+    switch (axis) {
+      case "x":
+        return new Vector3(1, 0, 0);
+      case "y":
+        return new Vector3(0, 1, 0);
+      case "z":
+        return new Vector3(0, 0, 1);
+    }
+  }
+
+  private normalizeDegrees(value: number): number {
+    const normalized = value % 360;
+    return normalized < 0 ? normalized + 360 : normalized;
+  }
+
+  private snapScaleValue(value: number): number {
+    return Math.max(MIN_SCALE_COMPONENT, Math.round(value / SCALE_SNAP_STEP) * SCALE_SNAP_STEP);
+  }
+
+  private getAxisComponent(vector: Vec3, axis: TransformAxis): number {
+    switch (axis) {
+      case "x":
+        return vector.x;
+      case "y":
+        return vector.y;
+      case "z":
+        return vector.z;
+    }
+  }
+
+  private setAxisComponent(vector: Vec3, axis: TransformAxis, value: number): Vec3 {
+    switch (axis) {
+      case "x":
+        return {
+          ...vector,
+          x: value
+        };
+      case "y":
+        return {
+          ...vector,
+          y: value
+        };
+      case "z":
+        return {
+          ...vector,
+          z: value
+        };
+    }
+  }
+
+  private getEffectiveRotationAxis(session: ActiveTransformSession): TransformAxis {
+    if (session.target.kind === "entity" && session.target.initialRotation.kind === "yaw") {
+      return "y";
+    }
+
+    return session.axisConstraint ?? "y";
+  }
+
+  private getTransformPivotPosition(session: ActiveTransformSession): Vec3 {
+    switch (session.preview.kind) {
+      case "brush":
+        return session.preview.center;
+      case "modelInstance":
+        return session.preview.position;
+      case "entity":
+        return session.preview.position;
+    }
+  }
+
+  private clearTransformGizmo() {
+    for (const child of [...this.transformGizmoGroup.children]) {
+      this.transformGizmoGroup.remove(child);
+
+      child.traverse((object) => {
+        const maybeMesh = object as Mesh & { isMesh?: boolean };
+
+        if (maybeMesh.isMesh === true) {
+          maybeMesh.geometry.dispose();
+
+          if (Array.isArray(maybeMesh.material)) {
+            for (const material of maybeMesh.material) {
+              material.dispose();
+            }
+          } else {
+            maybeMesh.material.dispose();
+          }
+        }
+      });
+    }
+
+    this.transformGizmoGroup.visible = false;
+  }
+
+  private createTransformHandleMaterial(color: number, isActive: boolean, transparent = false) {
+    return new MeshBasicMaterial({
+      color,
+      transparent: transparent || isActive,
+      opacity: transparent ? 0.001 : isActive ? GIZMO_ACTIVE_OPACITY : GIZMO_INACTIVE_OPACITY,
+      depthWrite: false
+    });
+  }
+
+  private createTranslateHandle(axis: TransformAxis, isActive: boolean): Group {
+    const axisVector = this.axisVector(axis);
+    const color = isActive ? GIZMO_ACTIVE_COLOR : GIZMO_AXIS_COLORS[axis];
+    const group = new Group();
+    const line = new Mesh(
+      new CylinderGeometry(0.025, 0.025, GIZMO_TRANSLATE_LENGTH, 10),
+      this.createTransformHandleMaterial(color, isActive)
+    );
+    const arrow = new Mesh(
+      new ConeGeometry(0.09, 0.28, 12),
+      this.createTransformHandleMaterial(color, isActive)
+    );
+    const pick = new Mesh(
+      new CylinderGeometry(GIZMO_PICK_THICKNESS, GIZMO_PICK_THICKNESS, GIZMO_TRANSLATE_LENGTH + 0.36, 10),
+      this.createTransformHandleMaterial(color, isActive, true)
+    );
+
+    line.position.copy(axisVector).multiplyScalar(GIZMO_TRANSLATE_LENGTH * 0.5);
+    arrow.position.copy(axisVector).multiplyScalar(GIZMO_TRANSLATE_LENGTH + 0.18);
+    pick.position.copy(axisVector).multiplyScalar((GIZMO_TRANSLATE_LENGTH + 0.36) * 0.5);
+
+    if (axis === "x") {
+      line.rotation.z = -Math.PI * 0.5;
+      arrow.rotation.z = -Math.PI * 0.5;
+      pick.rotation.z = -Math.PI * 0.5;
+    } else if (axis === "z") {
+      line.rotation.x = Math.PI * 0.5;
+      arrow.rotation.x = Math.PI * 0.5;
+      pick.rotation.x = Math.PI * 0.5;
+    }
+
+    pick.userData.transformAxisConstraint = axis;
+
+    group.add(line);
+    group.add(arrow);
+    group.add(pick);
+    return group;
+  }
+
+  private createRotateHandle(axis: TransformAxis, isActive: boolean): Group {
+    const color = isActive ? GIZMO_ACTIVE_COLOR : GIZMO_AXIS_COLORS[axis];
+    const group = new Group();
+    const ring = new Mesh(
+      new TorusGeometry(GIZMO_ROTATE_RADIUS, GIZMO_ROTATE_TUBE, 8, 48),
+      this.createTransformHandleMaterial(color, isActive)
+    );
+    const pick = new Mesh(
+      new TorusGeometry(GIZMO_ROTATE_RADIUS, GIZMO_PICK_RING_TUBE, 8, 36),
+      this.createTransformHandleMaterial(color, isActive, true)
+    );
+
+    if (axis === "x") {
+      ring.rotation.y = Math.PI * 0.5;
+      pick.rotation.y = Math.PI * 0.5;
+    } else if (axis === "y") {
+      ring.rotation.x = Math.PI * 0.5;
+      pick.rotation.x = Math.PI * 0.5;
+    }
+
+    pick.userData.transformAxisConstraint = axis;
+    group.add(ring);
+    group.add(pick);
+    return group;
+  }
+
+  private createScaleHandle(axis: TransformAxis, isActive: boolean): Group {
+    const axisVector = this.axisVector(axis);
+    const color = isActive ? GIZMO_ACTIVE_COLOR : GIZMO_AXIS_COLORS[axis];
+    const group = new Group();
+    const line = new Mesh(
+      new CylinderGeometry(0.022, 0.022, GIZMO_SCALE_LENGTH, 10),
+      this.createTransformHandleMaterial(color, isActive)
+    );
+    const cube = new Mesh(
+      new BoxGeometry(0.16, 0.16, 0.16),
+      this.createTransformHandleMaterial(color, isActive)
+    );
+    const pick = new Mesh(
+      new CylinderGeometry(GIZMO_PICK_THICKNESS, GIZMO_PICK_THICKNESS, GIZMO_SCALE_LENGTH + 0.3, 10),
+      this.createTransformHandleMaterial(color, isActive, true)
+    );
+
+    line.position.copy(axisVector).multiplyScalar(GIZMO_SCALE_LENGTH * 0.5);
+    cube.position.copy(axisVector).multiplyScalar(GIZMO_SCALE_LENGTH + 0.12);
+    pick.position.copy(axisVector).multiplyScalar((GIZMO_SCALE_LENGTH + 0.3) * 0.5);
+
+    if (axis === "x") {
+      line.rotation.z = -Math.PI * 0.5;
+      pick.rotation.z = -Math.PI * 0.5;
+    } else if (axis === "z") {
+      line.rotation.x = Math.PI * 0.5;
+      pick.rotation.x = Math.PI * 0.5;
+    }
+
+    pick.userData.transformAxisConstraint = axis;
+
+    group.add(line);
+    group.add(cube);
+    group.add(pick);
+    return group;
+  }
+
+  private createUniformScaleHandle(isActive: boolean): Mesh {
+    const mesh = new Mesh(
+      new BoxGeometry(GIZMO_CENTER_HANDLE_SIZE, GIZMO_CENTER_HANDLE_SIZE, GIZMO_CENTER_HANDLE_SIZE),
+      this.createTransformHandleMaterial(isActive ? GIZMO_ACTIVE_COLOR : 0xe6edf8, isActive)
+    );
+    mesh.userData.transformAxisConstraint = null;
+    return mesh;
+  }
+
+  private syncTransformGizmo() {
+    this.clearTransformGizmo();
+
+    if (this.currentTransformSession.kind !== "active") {
+      return;
+    }
+
+    const session = this.currentTransformSession;
+    const effectiveRotationAxis = session.operation === "rotate" ? this.getEffectiveRotationAxis(session) : null;
+
+    if (session.operation === "translate") {
+      this.transformGizmoGroup.add(this.createTranslateHandle("x", session.axisConstraint === "x"));
+      this.transformGizmoGroup.add(this.createTranslateHandle("y", session.axisConstraint === "y"));
+      this.transformGizmoGroup.add(this.createTranslateHandle("z", session.axisConstraint === "z"));
+    } else if (session.operation === "rotate") {
+      this.transformGizmoGroup.add(this.createRotateHandle("x", effectiveRotationAxis === "x"));
+      this.transformGizmoGroup.add(this.createRotateHandle("y", effectiveRotationAxis === "y"));
+      this.transformGizmoGroup.add(this.createRotateHandle("z", effectiveRotationAxis === "z"));
+    } else if (session.operation === "scale" && session.target.kind === "modelInstance") {
+      this.transformGizmoGroup.add(this.createScaleHandle("x", session.axisConstraint === "x"));
+      this.transformGizmoGroup.add(this.createScaleHandle("y", session.axisConstraint === "y"));
+      this.transformGizmoGroup.add(this.createScaleHandle("z", session.axisConstraint === "z"));
+      this.transformGizmoGroup.add(this.createUniformScaleHandle(session.axisConstraint === null));
+    }
+
+    this.transformGizmoGroup.visible = this.transformGizmoGroup.children.length > 0;
+    this.updateTransformGizmoPose();
+  }
+
+  private updateTransformGizmoPose() {
+    if (this.currentTransformSession.kind !== "active" || !this.transformGizmoGroup.visible) {
+      return;
+    }
+
+    const pivot = this.getTransformPivotPosition(this.currentTransformSession);
+    const pivotVector = new Vector3(pivot.x, pivot.y, pivot.z);
+
+    this.transformGizmoGroup.position.copy(pivotVector);
+
+    let scale = GIZMO_SCREEN_SIZE_ORTHOGRAPHIC / Math.max(this.orthographicCamera.zoom, 0.0001);
+
+    if (this.viewMode === "perspective") {
+      scale = Math.max(0.5, pivotVector.distanceTo(this.perspectiveCamera.position) * GIZMO_SCREEN_SIZE_PERSPECTIVE);
+    }
+
+    this.transformGizmoGroup.scale.setScalar(scale);
+  }
+
+  private getTransformPlaneForPivot(pivot: Vec3): Plane {
+    switch (this.viewMode) {
+      case "perspective":
+      case "top":
+        return this.transformPlane.set(new Vector3(0, 1, 0), -pivot.y);
+      case "front":
+        return this.transformPlane.set(new Vector3(0, 0, 1), -pivot.z);
+      case "side":
+        return this.transformPlane.set(new Vector3(1, 0, 0), -pivot.x);
+    }
+  }
+
+  private setPointerFromClientPosition(clientX: number, clientY: number): boolean {
+    const bounds = this.renderer.domElement.getBoundingClientRect();
+
+    if (bounds.width === 0 || bounds.height === 0) {
+      return false;
+    }
+
+    this.pointer.x = ((clientX - bounds.left) / bounds.width) * 2 - 1;
+    this.pointer.y = -(((clientY - bounds.top) / bounds.height) * 2 - 1);
+    return true;
+  }
+
+  private getPointerPlaneIntersection(clientX: number, clientY: number, plane: Plane): Vector3 | null {
+    if (!this.setPointerFromClientPosition(clientX, clientY)) {
+      return null;
+    }
+
+    this.raycaster.setFromCamera(this.pointer, this.getActiveCamera());
+
+    if (this.raycaster.ray.intersectPlane(plane, this.transformIntersection) === null) {
+      return null;
+    }
+
+    return this.transformIntersection.clone();
+  }
+
+  private getFallbackWorldUnitsPerPixel(pivot: Vec3): number {
+    if (this.container === null) {
+      return 0;
+    }
+
+    const height = Math.max(1, this.container.clientHeight);
+
+    if (this.viewMode === "perspective") {
+      const pivotVector = new Vector3(pivot.x, pivot.y, pivot.z);
+      const distance = pivotVector.distanceTo(this.perspectiveCamera.position);
+      const visibleHeight = 2 * Math.tan((this.perspectiveCamera.fov * Math.PI) / 360) * distance;
+      return visibleHeight / height;
+    }
+
+    return ORTHOGRAPHIC_FRUSTUM_HEIGHT / this.orthographicCamera.zoom / height;
+  }
+
+  private getAxisMovementDistance(
+    axis: TransformAxis,
+    pivot: Vec3,
+    origin: { x: number; y: number },
+    current: { x: number; y: number }
+  ): number {
+    const pivotVector = new Vector3(pivot.x, pivot.y, pivot.z);
+    const projectedStart = pivotVector.clone().project(this.getActiveCamera());
+    const projectedEnd = pivotVector.clone().add(this.axisVector(axis)).project(this.getActiveCamera());
+    const screenDelta = new Vector2(projectedEnd.x - projectedStart.x, projectedEnd.y - projectedStart.y);
+    const pointerDelta = new Vector2(current.x - origin.x, current.y - origin.y);
+
+    if (this.container !== null) {
+      screenDelta.set((screenDelta.x * this.container.clientWidth) * 0.5, (-screenDelta.y * this.container.clientHeight) * 0.5);
+    }
+
+    const axisLength = screenDelta.length();
+
+    if (axisLength >= 0.0001) {
+      screenDelta.normalize();
+      return pointerDelta.dot(screenDelta) / axisLength;
+    }
+
+    return -(current.y - origin.y) * this.getFallbackWorldUnitsPerPixel(pivot);
+  }
+
+  private buildTransformPreviewFromPointer(
+    session: ActiveTransformSession,
+    origin: { x: number; y: number },
+    current: { x: number; y: number },
+    axisConstraint: TransformAxis | null
+  ): ActiveTransformSession {
+    const nextSession = cloneTransformSession(session) as ActiveTransformSession;
+    nextSession.axisConstraint = axisConstraint;
+
+    switch (session.operation) {
+      case "translate":
+        nextSession.preview = this.buildTranslatedPreview(session, origin, current, axisConstraint);
+        return nextSession;
+      case "rotate":
+        nextSession.preview = this.buildRotatedPreview(session, origin, current, axisConstraint);
+        return nextSession;
+      case "scale":
+        nextSession.preview = this.buildScaledPreview(session, origin, current, axisConstraint);
+        return nextSession;
+    }
+  }
+
+  private buildTranslatedPreview(
+    session: ActiveTransformSession,
+    origin: { x: number; y: number },
+    current: { x: number; y: number },
+    axisConstraint: TransformAxis | null
+  ) {
+    const initialPosition =
+      session.target.kind === "brush" ? session.target.initialCenter : session.target.kind === "modelInstance" ? session.target.initialPosition : session.target.initialPosition;
+    let nextPosition = {
+      ...initialPosition
+    };
+
+    if (axisConstraint === null) {
+      const plane = this.getTransformPlaneForPivot(initialPosition);
+      const startIntersection = this.getPointerPlaneIntersection(origin.x, origin.y, plane);
+      const currentIntersection = this.getPointerPlaneIntersection(current.x, current.y, plane);
+
+      if (startIntersection !== null && currentIntersection !== null) {
+        const delta = currentIntersection.sub(startIntersection);
+
+        switch (this.viewMode) {
+          case "perspective":
+          case "top":
+            nextPosition = {
+              ...initialPosition,
+              x: snapValueToGrid(initialPosition.x + delta.x, DEFAULT_GRID_SIZE),
+              z: snapValueToGrid(initialPosition.z + delta.z, DEFAULT_GRID_SIZE)
+            };
+            break;
+          case "front":
+            nextPosition = {
+              ...initialPosition,
+              x: snapValueToGrid(initialPosition.x + delta.x, DEFAULT_GRID_SIZE),
+              y: snapValueToGrid(initialPosition.y + delta.y, DEFAULT_GRID_SIZE)
+            };
+            break;
+          case "side":
+            nextPosition = {
+              ...initialPosition,
+              y: snapValueToGrid(initialPosition.y + delta.y, DEFAULT_GRID_SIZE),
+              z: snapValueToGrid(initialPosition.z + delta.z, DEFAULT_GRID_SIZE)
+            };
+            break;
+        }
+      }
+    } else {
+      const axisDelta = this.getAxisMovementDistance(axisConstraint, initialPosition, origin, current);
+      nextPosition = this.setAxisComponent(
+        nextPosition,
+        axisConstraint,
+        snapValueToGrid(this.getAxisComponent(initialPosition, axisConstraint) + axisDelta, DEFAULT_GRID_SIZE)
+      );
+    }
+
+    if (session.target.kind === "brush") {
+      return {
+        kind: "brush" as const,
+        center: nextPosition
+      };
+    }
+
+    if (session.target.kind === "modelInstance") {
+      return {
+        kind: "modelInstance" as const,
+        position: nextPosition,
+        rotationDegrees: {
+          ...session.target.initialRotationDegrees
+        },
+        scale: {
+          ...session.target.initialScale
+        }
+      };
+    }
+
+    return {
+      kind: "entity" as const,
+      position: nextPosition,
+      rotation:
+        session.target.initialRotation.kind === "yaw"
+          ? {
+              kind: "yaw" as const,
+              yawDegrees: session.target.initialRotation.yawDegrees
+            }
+          : session.target.initialRotation.kind === "direction"
+            ? {
+                kind: "direction" as const,
+                direction: {
+                  ...session.target.initialRotation.direction
+                }
+              }
+            : {
+                kind: "none" as const
+              }
+    };
+  }
+
+  private buildRotatedPreview(
+    session: ActiveTransformSession,
+    origin: { x: number; y: number },
+    current: { x: number; y: number },
+    axisConstraint: TransformAxis | null
+  ) {
+    const effectiveAxis = axisConstraint ?? this.getEffectiveRotationAxis(session);
+    const pointerDeltaDegrees = snapValueToGrid((current.x - origin.x - (current.y - origin.y)) * 0.5, ROTATION_SNAP_DEGREES);
+
+    if (session.target.kind === "modelInstance") {
+      const nextRotationDegrees = {
+        ...session.target.initialRotationDegrees
+      };
+
+      nextRotationDegrees[effectiveAxis] = this.normalizeDegrees(nextRotationDegrees[effectiveAxis] + pointerDeltaDegrees);
+
+      return {
+        kind: "modelInstance" as const,
+        position: {
+          ...session.target.initialPosition
+        },
+        rotationDegrees: nextRotationDegrees,
+        scale: {
+          ...session.target.initialScale
+        }
+      };
+    }
+
+    if (session.target.kind !== "entity") {
+      throw new Error("Rotation previews are only supported for model instances and rotatable entities.");
+    }
+
+    if (session.target.initialRotation.kind === "yaw") {
+      return {
+        kind: "entity" as const,
+        position: {
+          ...session.target.initialPosition
+        },
+        rotation: {
+          kind: "yaw" as const,
+          yawDegrees: normalizeYawDegrees(session.target.initialRotation.yawDegrees + pointerDeltaDegrees)
+        }
+      };
+    }
+
+    if (session.target.initialRotation.kind === "direction") {
+      const direction = new Vector3(
+        session.target.initialRotation.direction.x,
+        session.target.initialRotation.direction.y,
+        session.target.initialRotation.direction.z
+      )
+        .normalize()
+        .applyAxisAngle(this.axisVector(effectiveAxis).normalize(), (pointerDeltaDegrees * Math.PI) / 180)
+        .normalize();
+
+      return {
+        kind: "entity" as const,
+        position: {
+          ...session.target.initialPosition
+        },
+        rotation: {
+          kind: "direction" as const,
+          direction: {
+            x: direction.x,
+            y: direction.y,
+            z: direction.z
+          }
+        }
+      };
+    }
+
+    return {
+      kind: "entity" as const,
+      position: {
+        ...session.target.initialPosition
+      },
+      rotation: {
+        kind: "none" as const
+      }
+    };
+  }
+
+  private buildScaledPreview(
+    session: ActiveTransformSession,
+    origin: { x: number; y: number },
+    current: { x: number; y: number },
+    axisConstraint: TransformAxis | null
+  ) {
+    if (session.target.kind !== "modelInstance") {
+      throw new Error("Scale previews are only supported for model instances.");
+    }
+
+    const nextScale = {
+      ...session.target.initialScale
+    };
+
+    if (axisConstraint === null) {
+      const uniformFactor = 1 + (current.x - origin.x - (current.y - origin.y)) * 0.01;
+      nextScale.x = this.snapScaleValue(session.target.initialScale.x * uniformFactor);
+      nextScale.y = this.snapScaleValue(session.target.initialScale.y * uniformFactor);
+      nextScale.z = this.snapScaleValue(session.target.initialScale.z * uniformFactor);
+    } else {
+      const scaleFactor = 1 + this.getAxisMovementDistance(axisConstraint, session.target.initialPosition, origin, current) * 0.45;
+      nextScale[axisConstraint] = this.snapScaleValue(session.target.initialScale[axisConstraint] * scaleFactor);
+    }
+
+    return {
+      kind: "modelInstance" as const,
+      position: {
+        ...session.target.initialPosition
+      },
+      rotationDegrees: {
+        ...session.target.initialRotationDegrees
+      },
+      scale: nextScale
+    };
+  }
+
+  private applyBrushRenderObjectTransform(brushId: string, center: Vec3) {
+    const renderObjects = this.brushRenderObjects.get(brushId);
+
+    if (renderObjects === undefined) {
+      return;
+    }
+
+    renderObjects.mesh.position.set(center.x, center.y, center.z);
+    renderObjects.edges.position.set(center.x, center.y, center.z);
+  }
+
+  private applySpotLightGroupTransform(group: Group, position: Vec3, direction: Vec3) {
+    const forward = new Vector3(direction.x, direction.y, direction.z).normalize();
+    const orientation = new Quaternion().setFromUnitVectors(new Vector3(0, 1, 0), forward);
+    group.position.set(position.x, position.y, position.z);
+    group.quaternion.copy(orientation);
+  }
+
+  private applyEntityRenderObjectTransform(entity: EntityInstance) {
+    const renderObjects = this.entityRenderObjects.get(entity.id);
+
+    if (renderObjects === undefined) {
+      return;
+    }
+
+    switch (entity.kind) {
+      case "pointLight":
+      case "soundEmitter":
+      case "triggerVolume":
+      case "interactable":
+        renderObjects.group.position.set(entity.position.x, entity.position.y, entity.position.z);
+        renderObjects.group.rotation.set(0, 0, 0);
+        renderObjects.group.quaternion.identity();
+        break;
+      case "spotLight":
+        this.applySpotLightGroupTransform(renderObjects.group, entity.position, entity.direction);
+        break;
+      case "playerStart":
+      case "teleportTarget":
+        renderObjects.group.position.set(entity.position.x, entity.position.y, entity.position.z);
+        renderObjects.group.rotation.set(0, (entity.yawDegrees * Math.PI) / 180, 0);
+        break;
+    }
+  }
+
+  private applyModelInstanceRenderObjectTransform(modelInstance: ModelInstance) {
+    const renderGroup = this.modelRenderObjects.get(modelInstance.id);
+
+    if (renderGroup === undefined) {
+      return;
+    }
+
+    renderGroup.position.set(modelInstance.position.x, modelInstance.position.y, modelInstance.position.z);
+    renderGroup.rotation.set(
+      (modelInstance.rotationDegrees.x * Math.PI) / 180,
+      (modelInstance.rotationDegrees.y * Math.PI) / 180,
+      (modelInstance.rotationDegrees.z * Math.PI) / 180
+    );
+    renderGroup.scale.set(modelInstance.scale.x, modelInstance.scale.y, modelInstance.scale.z);
+  }
+
+  private resetRenderObjectTransformsFromDocument() {
+    if (this.currentDocument === null) {
+      return;
+    }
+
+    for (const brush of Object.values(this.currentDocument.brushes)) {
+      this.applyBrushRenderObjectTransform(brush.id, brush.center);
+    }
+
+    for (const entity of getEntityInstances(this.currentDocument.entities)) {
+      this.applyEntityRenderObjectTransform(entity);
+    }
+
+    for (const modelInstance of getModelInstances(this.currentDocument.modelInstances)) {
+      this.applyModelInstanceRenderObjectTransform(modelInstance);
+    }
+  }
+
+  private applyTransformPreview() {
+    this.resetRenderObjectTransformsFromDocument();
+
+    if (this.currentTransformSession.kind !== "active") {
+      return;
+    }
+
+    switch (this.currentTransformSession.target.kind) {
+      case "brush":
+        if (this.currentTransformSession.preview.kind === "brush") {
+          this.applyBrushRenderObjectTransform(this.currentTransformSession.target.brushId, snapVec3ToGrid(this.currentTransformSession.preview.center));
+        }
+        break;
+      case "modelInstance":
+        if (this.currentTransformSession.preview.kind === "modelInstance") {
+          this.applyModelInstanceRenderObjectTransform({
+            ...createModelInstance({
+              id: this.currentTransformSession.target.modelInstanceId,
+              assetId: this.currentTransformSession.target.assetId,
+              position: this.currentTransformSession.preview.position,
+              rotationDegrees: this.currentTransformSession.preview.rotationDegrees,
+              scale: this.currentTransformSession.preview.scale
+            })
+          });
+        }
+        break;
+      case "entity": {
+        if (this.currentTransformSession.preview.kind !== "entity" || this.currentDocument === null) {
+          break;
+        }
+
+        const currentEntity = this.currentDocument.entities[this.currentTransformSession.target.entityId];
+
+        if (currentEntity === undefined) {
+          break;
+        }
+
+        switch (currentEntity.kind) {
+          case "pointLight":
+          case "soundEmitter":
+          case "triggerVolume":
+          case "interactable":
+            this.applyEntityRenderObjectTransform({
+              ...currentEntity,
+              position: this.currentTransformSession.preview.position
+            });
+            break;
+          case "spotLight":
+            this.applyEntityRenderObjectTransform({
+              ...currentEntity,
+              position: this.currentTransformSession.preview.position,
+              direction:
+                this.currentTransformSession.preview.rotation.kind === "direction"
+                  ? this.currentTransformSession.preview.rotation.direction
+                  : currentEntity.direction
+            });
+            break;
+          case "playerStart":
+          case "teleportTarget":
+            this.applyEntityRenderObjectTransform({
+              ...currentEntity,
+              position: this.currentTransformSession.preview.position,
+              yawDegrees:
+                this.currentTransformSession.preview.rotation.kind === "yaw"
+                  ? this.currentTransformSession.preview.rotation.yawDegrees
+                  : currentEntity.yawDegrees
+            });
+            break;
+        }
+        break;
+      }
+    }
+  }
+
   private rebuildLocalLights(document: SceneDocument) {
     this.clearLocalLights();
 
