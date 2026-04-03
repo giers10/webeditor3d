@@ -1,5 +1,7 @@
 import type { Page } from "@playwright/test";
 
+import type { TransformSessionState } from "../../src/core/transform-session";
+import type { SceneDocument } from "../../src/document/scene-document";
 import type { CreationTarget, ViewportToolPreview } from "../../src/viewport-three/viewport-transient-state";
 import type { ViewportPanelId } from "../../src/viewport-three/viewport-layout";
 
@@ -25,6 +27,7 @@ interface EditorStoreSnapshot {
   toolMode: string;
   document: {
     assets: Record<string, { id: string; kind: string; sourceName: string }>;
+    brushes: Record<string, { center: { x: number; y: number; z: number } }>;
     modelInstances: Record<string, { position: { x: number; y: number; z: number } }>;
     entities: Record<string, { position: { x: number; y: number; z: number } }>;
   };
@@ -34,6 +37,7 @@ interface EditorStoreSnapshot {
   };
   viewportTransientState: {
     toolPreview: ViewportToolPreview;
+    transformSession: TransformSessionState;
   };
 }
 
@@ -56,6 +60,22 @@ export async function getEditorStoreSnapshot(page: Page): Promise<EditorStoreSna
 export async function getViewportToolPreview(page: Page): Promise<EditorStoreSnapshot["viewportTransientState"]["toolPreview"]> {
   const snapshot = await getEditorStoreSnapshot(page);
   return snapshot.viewportTransientState.toolPreview;
+}
+
+export async function replaceSceneDocument(page: Page, document: SceneDocument) {
+  await page.evaluate((nextDocument) => {
+    const store = (window as Window & {
+      __webeditor3dEditorStore?: {
+        replaceDocument(document: SceneDocument, resetHistory?: boolean): void;
+      };
+    }).__webeditor3dEditorStore;
+
+    if (store === undefined) {
+      throw new Error("Editor store debug hook is unavailable.");
+    }
+
+    store.replaceDocument(nextDocument);
+  }, document);
 }
 
 export async function setViewportCreationPreview(
