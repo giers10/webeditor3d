@@ -8,7 +8,7 @@ import {
   type EntityInstance,
   type EntityKind
 } from "../entities/entity-instances";
-import { cloneModelInstance, getModelInstanceKindLabel, type ModelInstance } from "../assets/model-instances";
+import { cloneModelInstance, getModelInstanceKindLabel } from "../assets/model-instances";
 import type { ViewportPanelId } from "../viewport-three/viewport-layout";
 
 export type TransformOperation = "translate" | "rotate" | "scale";
