@@ -96,8 +96,12 @@ export function ViewportPanel({
       aria-label={`${getViewportPanelLabel(panelId)} viewport panel`}
       style={panelStyle}
       onPointerDownCapture={() => onActivatePanel(panelId)}
-      onPointerEnterCapture={() => onHoverPanel(panelId)}
-      onPointerLeaveCapture={() => onHoverPanel(null)}
+      onPointerMoveCapture={() => onHoverPanel(panelId)}
+      onPointerOutCapture={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+          onHoverPanel(null);
+        }
+      }}
       onFocusCapture={() => onActivatePanel(panelId)}
     >
       <div className="viewport-panel__header">
