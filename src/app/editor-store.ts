@@ -345,12 +345,26 @@ export class EditorStore {
   }
 
   executeCommand(command: EditorCommand) {
+    if (this.viewportTransientState.transformSession.kind !== "none") {
+      this.viewportTransientState = {
+        ...this.viewportTransientState,
+        transformSession: createInactiveTransformSession()
+      };
+    }
+
     this.history.execute(command, this.commandContext);
     this.lastCommandLabel = command.label;
     this.emit();
   }
 
   undo(): boolean {
+    if (this.viewportTransientState.transformSession.kind !== "none") {
+      this.viewportTransientState = {
+        ...this.viewportTransientState,
+        transformSession: createInactiveTransformSession()
+      };
+    }
+
     const command = this.history.undo(this.commandContext);
 
     if (command === null) {
@@ -363,6 +377,13 @@ export class EditorStore {
   }
 
   redo(): boolean {
+    if (this.viewportTransientState.transformSession.kind !== "none") {
+      this.viewportTransientState = {
+        ...this.viewportTransientState,
+        transformSession: createInactiveTransformSession()
+      };
+    }
+
     const command = this.history.redo(this.commandContext);
 
     if (command === null) {
