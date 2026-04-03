@@ -145,14 +145,15 @@ test("viewport picking defaults to whole-brush selection and axis-constrained br
 
   const fixtures = await seedTransformScene(page);
 
-  await page.getByTestId("viewport-layout-quad").click();
-  await clickViewport(page, "topRight");
+  await clickViewport(page, "topLeft");
 
-  const selectedSnapshot = await getEditorStoreSnapshot(page);
-  expect(selectedSnapshot.selection).toEqual({
+  const pickedSnapshot = await getEditorStoreSnapshot(page);
+  expect(pickedSnapshot.selection).toEqual({
     kind: "brushes",
     ids: [fixtures.brush.id]
   });
+
+  await page.getByTestId("viewport-layout-quad").click();
 
   await commitKeyboardMove(page, "topRight", { x: 160, y: 0 }, "x");
 
@@ -174,7 +175,7 @@ test("keyboard move commits an entity translation through the shared transform c
 
   const fixtures = await seedTransformScene(page);
 
-  await page.getByRole("button", { name: fixtures.playerStart.name as string }).click();
+  await page.getByTestId(`outliner-entity-${fixtures.playerStart.id}`).click();
   await commitKeyboardMove(page, "topLeft", { x: 100, y: -60 });
 
   const snapshot = await getEditorStoreSnapshot(page);
@@ -193,7 +194,7 @@ test("escape cancels an active entity transform session without committing previ
 
   const fixtures = await seedTransformScene(page);
 
-  await page.getByRole("button", { name: fixtures.playerStart.name as string }).click();
+  await page.getByTestId(`outliner-entity-${fixtures.playerStart.id}`).click();
 
   const center = await getViewportCenter(page, "topLeft");
   await page.mouse.move(center.x, center.y);
@@ -217,7 +218,7 @@ test("keyboard move commits a model instance translation through the shared tran
 
   const fixtures = await seedTransformScene(page);
 
-  await page.getByRole("button", { name: fixtures.modelInstance.name as string }).click();
+  await page.getByTestId(`outliner-model-instance-${fixtures.modelInstance.id}`).click();
   await commitKeyboardMove(page, "topLeft", { x: -120, y: 80 });
 
   const snapshot = await getEditorStoreSnapshot(page);
