@@ -1511,10 +1511,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
       setStatusMessage(editorState.selection.kind === "none" ? "Framed the authored scene in the viewport." : "Framed the current selection.");
     };
 
+    document.addEventListener("pointermove", handleWindowPointerMove);
     window.addEventListener("pointermove", handleWindowPointerMove);
     window.addEventListener("keydown", handleWindowKeyDown);
 
     return () => {
+      document.removeEventListener("pointermove", handleWindowPointerMove);
       window.removeEventListener("pointermove", handleWindowPointerMove);
       window.removeEventListener("keydown", handleWindowKeyDown);
     };
