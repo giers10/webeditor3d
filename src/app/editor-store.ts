@@ -1,7 +1,14 @@
 import { CommandHistory } from "../commands/command-history";
 import type { CommandContext, EditorCommand } from "../commands/command";
-import type { EditorSelection } from "../core/selection";
+import { areEditorSelectionsEqual, type EditorSelection } from "../core/selection";
 import type { ToolMode } from "../core/tool-mode";
+import {
+  areTransformSessionsEqual,
+  cloneTransformSession,
+  createInactiveTransformSession,
+  type TransformAxis,
+  type TransformSessionState
+} from "../core/transform-session";
 import { createEmptySceneDocument, type SceneDocument } from "../document/scene-document";
 import {
   DEFAULT_SCENE_DRAFT_STORAGE_KEY,
@@ -129,7 +136,17 @@ export class EditorStore {
     this.toolMode = toolMode;
 
     if (!isViewportToolPreviewCompatible(toolMode, this.viewportTransientState.toolPreview)) {
-      this.viewportTransientState = createDefaultViewportTransientState();
+      this.viewportTransientState = {
+        ...this.viewportTransientState,
+        toolPreview: createDefaultViewportTransientState().toolPreview
+      };
+    }
+
+    if (toolMode !== "select" && this.viewportTransientState.transformSession.kind !== "none") {
+      this.viewportTransientState = {
+        ...this.viewportTransientState,
+        transformSession: createInactiveTransformSession()
+      };
     }
 
     this.emit();
@@ -235,7 +252,55 @@ export class EditorStore {
       return;
     }
 
-    this.viewportTransientState = createDefaultViewportTransientState();
+    this.viewportTransientState = {
+      ...this.viewportTransientState,
+      toolPreview: createDefaultViewportTransientState().toolPreview
+    };
+    this.emit();
+  }
+
+  setTransformSession(transformSession: TransformSessionState) {
+    const nextTransformSession = cloneTransformSession(transformSession);
+
+    if (areTransformSessionsEqual(this.viewportTransientState.transformSession, nextTransformSession)) {
+      return;
+    }
+
+    this.viewportTransientState = {
+      ...this.viewportTransientState,
+      transformSession: nextTransformSession
+    };
+    this.emit();
+  }
+
+  clearTransformSession() {
+    if (this.viewportTransientState.transformSession.kind === "none") {
+      return;
+    }
+
+    this.viewportTransientState = {
+      ...this.viewportTransientState,
+      transformSession: createInactiveTransformSession()
+    };
+    this.emit();
+  }
+
+  setTransformAxisConstraint(axisConstraint: TransformAxis | null) {
+    if (this.viewportTransientState.transformSession.kind !== "active") {
+      return;
+    }
+
+    if (this.viewportTransientState.transformSession.axisConstraint === axisConstraint) {
+      return;
+    }
+
+    this.viewportTransientState = {
+      ...this.viewportTransientState,
+      transformSession: {
+        ...cloneTransformSession(this.viewportTransientState.transformSession),
+        axisConstraint
+      }
+    };
     this.emit();
   }
 
@@ -268,6 +333,13 @@ export class EditorStore {
   }
 
   setSelection(selection: EditorSelection) {
+    if (this.viewportTransientState.transformSession.kind === "active" && !areEditorSelectionsEqual(this.selection, selection)) {
+      this.viewportTransientState = {
+        ...this.viewportTransientState,
+        transformSession: createInactiveTransformSession()
+      };
+    }
+
     this.selection = selection;
     this.emit();
   }

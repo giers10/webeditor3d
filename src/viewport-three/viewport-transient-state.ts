@@ -1,5 +1,11 @@
 import type { Vec3 } from "../core/vector";
 import type { ToolMode } from "../core/tool-mode";
+import {
+  areTransformSessionsEqual,
+  cloneTransformSession,
+  createInactiveTransformSession,
+  type TransformSessionState
+} from "../core/transform-session";
 import type { EntityKind } from "../entities/entity-instances";
 import type { ViewportPanelId } from "./viewport-layout";
 
@@ -28,13 +34,15 @@ export type ViewportToolPreview = CreationViewportToolPreview | { kind: "none" }
 
 export interface ViewportTransientState {
   toolPreview: ViewportToolPreview;
+  transformSession: TransformSessionState;
 }
 
 export function createDefaultViewportTransientState(): ViewportTransientState {
   return {
     toolPreview: {
       kind: "none"
-    }
+    },
+    transformSession: createInactiveTransformSession()
   };
 }
 
@@ -109,4 +117,15 @@ export function isViewportToolPreviewCompatible(toolMode: ToolMode, toolPreview:
   }
 
   return toolMode === "create" && toolPreview.kind === "create";
+}
+
+export function cloneViewportTransientState(transientState: ViewportTransientState): ViewportTransientState {
+  return {
+    toolPreview: cloneViewportToolPreview(transientState.toolPreview),
+    transformSession: cloneTransformSession(transientState.transformSession)
+  };
+}
+
+export function areViewportTransientStatesEqual(left: ViewportTransientState, right: ViewportTransientState): boolean {
+  return areViewportToolPreviewsEqual(left.toolPreview, right.toolPreview) && areTransformSessionsEqual(left.transformSession, right.transformSession);
 }
