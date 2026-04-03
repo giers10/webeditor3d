@@ -28,6 +28,23 @@ export function cloneEditorSelection(selection: EditorSelection): EditorSelectio
   };
 }
 
+export function areEditorSelectionsEqual(left: EditorSelection, right: EditorSelection): boolean {
+  if (left.kind !== right.kind) {
+    return false;
+  }
+
+  switch (left.kind) {
+    case "none":
+      return true;
+    case "brushFace":
+      return right.kind === "brushFace" && left.brushId === right.brushId && left.faceId === right.faceId;
+    case "brushes":
+    case "entities":
+    case "modelInstances":
+      return right.kind === left.kind && left.ids.length === right.ids.length && left.ids.every((id, index) => id === right.ids[index]);
+  }
+}
+
 export function getSingleSelectedBrushId(selection: EditorSelection): string | null {
   if (selection.kind === "brushFace") {
     return selection.brushId;
