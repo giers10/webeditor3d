@@ -1692,7 +1692,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
       return;
     }
 
-    const transformSourcePanelId = hoveredViewportPanelId ?? activePanelId;
+    const transformSourcePanelId = layoutMode === "quad" ? hoveredViewportPanelId ?? activePanelId : activePanelId;
 
     const transformTargetResult = resolveTransformTarget(editorState.document, editorState.selection);
     const transformTarget = transformTargetResult.target;
