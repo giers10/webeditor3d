@@ -33,6 +33,17 @@ import {
 import { EffectComposer } from "postprocessing";
 
 import { isBrushFaceSelected, isBrushSelected, isModelInstanceSelected, type EditorSelection } from "../core/selection";
+import {
+  cloneTransformSession,
+  createInactiveTransformSession,
+  createTransformSession,
+  getTransformOperationLabel,
+  supportsTransformAxisConstraint,
+  type ActiveTransformSession,
+  type TransformAxis,
+  type TransformOperation,
+  type TransformSessionState
+} from "../core/transform-session";
 import type { ToolMode } from "../core/tool-mode";
 import type { Vec3 } from "../core/vector";
 import { createModelInstanceRenderGroup, disposeModelInstance } from "../assets/model-instance-rendering";
@@ -65,13 +76,14 @@ import {
   DEFAULT_TELEPORT_TARGET_YAW_DEGREES,
   DEFAULT_TRIGGER_VOLUME_SIZE,
   getEntityInstances,
+  normalizeYawDegrees,
   type EntityInstance,
   type PointLightEntity,
   type SpotLightEntity
 } from "../entities/entity-instances";
 import { BOX_FACE_IDS, DEFAULT_BOX_BRUSH_SIZE, type BoxBrush, type BoxFaceId } from "../document/brushes";
 import { applyBoxBrushFaceUvsToGeometry } from "../geometry/box-face-uvs";
-import { DEFAULT_GRID_SIZE, snapValueToGrid } from "../geometry/grid-snapping";
+import { DEFAULT_GRID_SIZE, snapValueToGrid, snapVec3ToGrid } from "../geometry/grid-snapping";
 import { createStarterMaterialSignature, createStarterMaterialTexture } from "../materials/starter-material-textures";
 import type { MaterialDef } from "../materials/starter-material-library";
 import {
@@ -130,6 +142,26 @@ const ORTHOGRAPHIC_CAMERA_DISTANCE = 100;
 const ORTHOGRAPHIC_FRUSTUM_HEIGHT = 20;
 const MIN_ORTHOGRAPHIC_ZOOM = 0.25;
 const MAX_ORTHOGRAPHIC_ZOOM = 20;
+const GIZMO_AXIS_COLORS: Record<TransformAxis, number> = {
+  x: 0xea655b,
+  y: 0x6ed06f,
+  z: 0x55a2ff
+};
+const GIZMO_ACTIVE_COLOR = 0xf7d2aa;
+const GIZMO_INACTIVE_OPACITY = 0.82;
+const GIZMO_ACTIVE_OPACITY = 1;
+const GIZMO_TRANSLATE_LENGTH = 1.2;
+const GIZMO_SCALE_LENGTH = 1;
+const GIZMO_ROTATE_RADIUS = 1.05;
+const GIZMO_ROTATE_TUBE = 0.035;
+const GIZMO_PICK_THICKNESS = 0.18;
+const GIZMO_PICK_RING_TUBE = 0.14;
+const GIZMO_CENTER_HANDLE_SIZE = 0.16;
+const GIZMO_SCREEN_SIZE_PERSPECTIVE = 0.11;
+const GIZMO_SCREEN_SIZE_ORTHOGRAPHIC = 1.4;
+const ROTATION_SNAP_DEGREES = 15;
+const SCALE_SNAP_STEP = 0.1;
+const MIN_SCALE_COMPONENT = 0.1;
 
 interface CachedMaterialTexture {
   signature: string;
@@ -171,6 +203,9 @@ export class ViewportHost {
   private readonly pointer = new Vector2();
   private readonly boxCreateIntersection = new Vector3();
   private readonly boxCreatePlane = new Plane(new Vector3(0, 1, 0), 0);
+  private readonly transformPlane = new Plane(new Vector3(0, 1, 0), 0);
+  private readonly transformIntersection = new Vector3();
+  private readonly transformGizmoGroup = new Group();
   private readonly brushRenderObjects = new Map<string, BrushRenderObjects>();
   private readonly entityRenderObjects = new Map<string, EntityRenderObjects>();
   private readonly localLightRenderObjects = new Map<string, LocalLightRenderObjects>();
@@ -211,14 +246,38 @@ export class ViewportHost {
   private creationPreviewChangeHandler: ((toolPreview: ViewportToolPreview) => void) | null = null;
   private creationCommitHandler: ((toolPreview: CreationViewportToolPreview) => boolean) | null = null;
   private cameraStateChangeHandler: ((cameraState: ViewportPanelCameraState) => void) | null = null;
+  private transformSessionChangeHandler: ((transformSession: TransformSessionState) => void) | null = null;
+  private transformCommitHandler: ((transformSession: ActiveTransformSession) => void) | null = null;
+  private transformCancelHandler: (() => void) | null = null;
   private toolMode: ToolMode = "select";
   private viewMode: ViewportViewMode = "perspective";
   private displayMode: ViewportDisplayMode = "normal";
+  private panelId: ViewportPanelId = "topLeft";
   private creationPreview: CreationViewportToolPreview | null = null;
   private creationPreviewTargetKey: string | null = null;
   private creationPreviewObject: Group | null = null;
+  private currentTransformSession: TransformSessionState = createInactiveTransformSession();
   private activeCameraDragPointerId: number | null = null;
   private lastCameraDragClientPosition: { x: number; y: number } | null = null;
+  private activeTransformDrag:
+    | {
+        pointerId: number;
+        sessionId: string;
+        axisConstraint: TransformAxis | null;
+        initialClientPosition: {
+          x: number;
+          y: number;
+        };
+      }
+    | null = null;
+  private lastCanvasPointerPosition: { x: number; y: number } | null = null;
+  private keyboardTransformPointerOrigin:
+    | {
+        sessionId: string;
+        clientX: number;
+        clientY: number;
+      }
+    | null = null;
   // Click-through cycling: track the last click position and the last picked object
   // so repeated clicks at the same spot cycle through overlapping objects.
   private lastClickPointer: { x: number; y: number } | null = null;
@@ -248,6 +307,8 @@ export class ViewportHost {
     this.scene.add(this.brushGroup);
     this.scene.add(this.entityGroup);
     this.scene.add(this.modelGroup);
+    this.transformGizmoGroup.visible = false;
+    this.scene.add(this.transformGizmoGroup);
     this.boxCreatePreviewMesh.visible = false;
     this.boxCreatePreviewEdges.visible = false;
     this.scene.add(this.boxCreatePreviewMesh);
@@ -255,6 +316,10 @@ export class ViewportHost {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.setClearAlpha(0);
     this.applyViewModePose();
+  }
+
+  setPanelId(panelId: ViewportPanelId) {
+    this.panelId = panelId;
   }
 
   mount(container: HTMLElement) {
@@ -290,6 +355,8 @@ export class ViewportHost {
     this.rebuildBrushMeshes(document, selection);
     this.rebuildEntityMarkers(document, selection);
     this.rebuildModelInstances(document, selection);
+    this.applyTransformPreview();
+    this.syncTransformGizmo();
   }
 
   updateAssets(
@@ -333,6 +400,18 @@ export class ViewportHost {
     this.cameraStateChangeHandler = handler;
   }
 
+  setTransformSessionChangeHandler(handler: ((transformSession: TransformSessionState) => void) | null) {
+    this.transformSessionChangeHandler = handler;
+  }
+
+  setTransformCommitHandler(handler: ((transformSession: ActiveTransformSession) => void) | null) {
+    this.transformCommitHandler = handler;
+  }
+
+  setTransformCancelHandler(handler: (() => void) | null) {
+    this.transformCancelHandler = handler;
+  }
+
   setCameraState(cameraState: ViewportPanelCameraState) {
     if (areViewportPanelCameraStatesEqual(this.createCameraStateSnapshot(), cameraState)) {
       return;
@@ -348,6 +427,29 @@ export class ViewportHost {
 
   setCreationPreview(toolPreview: CreationViewportToolPreview | null) {
     this.syncCreationPreview(toolPreview);
+  }
+
+  setTransformSession(transformSession: TransformSessionState) {
+    this.currentTransformSession = cloneTransformSession(transformSession);
+
+    if (this.currentTransformSession.kind === "none") {
+      this.activeTransformDrag = null;
+      this.keyboardTransformPointerOrigin = null;
+    } else if (
+      this.currentTransformSession.sourcePanelId === this.panelId &&
+      this.currentTransformSession.source !== "gizmo" &&
+      (this.keyboardTransformPointerOrigin === null || this.keyboardTransformPointerOrigin.sessionId !== this.currentTransformSession.id)
+    ) {
+      const pointerOrigin = this.getPointerOriginForTransformSession();
+      this.keyboardTransformPointerOrigin = {
+        sessionId: this.currentTransformSession.id,
+        clientX: pointerOrigin.x,
+        clientY: pointerOrigin.y
+      };
+    }
+
+    this.applyTransformPreview();
+    this.syncTransformGizmo();
   }
 
   setToolMode(toolMode: ToolMode) {
