@@ -41,7 +41,6 @@ interface ViewportPanelProps {
   focusRequestId: number;
   focusSelection: EditorSelection;
   onActivatePanel(panelId: ViewportPanelId): void;
-  onHoverPanel(panelId: ViewportPanelId | null): void;
   onSetPanelViewMode(panelId: ViewportPanelId, viewMode: ViewportViewMode): void;
   onSetPanelDisplayMode(panelId: ViewportPanelId, displayMode: ViewportDisplayMode): void;
   onCommitCreation(toolPreview: CreationViewportToolPreview): boolean;
@@ -73,7 +72,6 @@ export function ViewportPanel({
   focusRequestId,
   focusSelection,
   onActivatePanel,
-  onHoverPanel,
   onSetPanelViewMode,
   onSetPanelDisplayMode,
   onCommitCreation,
@@ -92,16 +90,11 @@ export function ViewportPanel({
       className={`viewport-panel ${layoutMode === "single" ? "viewport-panel--single" : "viewport-panel--quad"} ${className ?? ""}`.trim()}
       data-testid={`viewport-panel-${panelId}`}
       data-active={isActive ? "true" : "false"}
+      data-viewport-panel-id={panelId}
       aria-hidden={shouldShow ? undefined : true}
       aria-label={`${getViewportPanelLabel(panelId)} viewport panel`}
       style={panelStyle}
       onPointerDownCapture={() => onActivatePanel(panelId)}
-      onPointerOverCapture={() => onHoverPanel(panelId)}
-      onPointerOutCapture={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
-          onHoverPanel(null);
-        }
-      }}
       onFocusCapture={() => onActivatePanel(panelId)}
     >
       <div className="viewport-panel__header">
