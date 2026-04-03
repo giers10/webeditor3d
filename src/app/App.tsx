@@ -976,8 +976,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const advancedRendering = editorState.document.world.advancedRendering;
   const hoveredAsset = hoveredAssetId === null ? null : editorState.document.assets[hoveredAssetId] ?? null;
   const hoveredAssetStatusMessage = hoveredAsset === null ? null : formatAssetHoverStatus(hoveredAsset);
-  const selectedTransformTargetResult = resolveTransformTarget(editorState.document, editorState.selection);
-  const selectedTransformTarget = selectedTransformTargetResult.target;
+  const selectedTransformTarget = resolveTransformTarget(editorState.document, editorState.selection).target;
   const canTranslateSelectedTarget = selectedTransformTarget !== null && supportsTransformOperation(selectedTransformTarget, "translate");
   const canRotateSelectedTarget = selectedTransformTarget !== null && supportsTransformOperation(selectedTransformTarget, "rotate");
   const canScaleSelectedTarget = selectedTransformTarget !== null && supportsTransformOperation(selectedTransformTarget, "scale");
