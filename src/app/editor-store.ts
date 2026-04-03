@@ -297,7 +297,7 @@ export class EditorStore {
     this.viewportTransientState = {
       ...this.viewportTransientState,
       transformSession: {
-        ...cloneTransformSession(this.viewportTransientState.transformSession),
+        ...(cloneTransformSession(this.viewportTransientState.transformSession) as Extract<TransformSessionState, { kind: "active" }>),
         axisConstraint
       }
     };
