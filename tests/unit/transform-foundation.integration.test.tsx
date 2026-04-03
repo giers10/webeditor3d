@@ -436,7 +436,7 @@ describe("transform foundation integration", () => {
       fireEvent.click(screen.getByRole("button", { name: /^Brush Transform Fixture$/ }));
     });
 
-    fireEvent.pointerMove(screen.getByTestId("viewport-panel-bottomRight"));
+    fireEvent.pointerOver(screen.getByTestId("viewport-panel-bottomRight"));
     fireEvent.keyDown(window, {
       key: "g",
       code: "KeyG"
