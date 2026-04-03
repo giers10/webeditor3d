@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { createEditorStore } from "../../src/app/editor-store";
 import { createSetSceneNameCommand } from "../../src/commands/set-scene-name-command";
+import { createTransformSession } from "../../src/core/transform-session";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
 import type { KeyValueStorage } from "../../src/serialization/local-draft-storage";
 
@@ -263,6 +264,76 @@ describe("EditorStore", () => {
 
     store.clearViewportToolPreview("bottomRight");
     expect(store.getState().viewportTransientState.toolPreview).toEqual({
+      kind: "none"
+    });
+  });
+
+  it("tracks a shared transient transform session and clears it when selection changes", () => {
+    const store = createEditorStore({
+      initialDocument: {
+        ...createEmptySceneDocument({ name: "Transform Session Fixture" }),
+        brushes: {
+          "brush-main": {
+            id: "brush-main",
+            kind: "box",
+            center: {
+              x: 0,
+              y: 1,
+              z: 0
+            },
+            size: {
+              x: 2,
+              y: 2,
+              z: 2
+            },
+            faces: createEmptySceneDocument().brushes
+          } as never
+        }
+      }
+    });
+
+    store.setTransformSession(
+      createTransformSession({
+        source: "keyboard",
+        sourcePanelId: "bottomRight",
+        operation: "translate",
+        target: {
+          kind: "brush",
+          brushId: "brush-main",
+          initialCenter: {
+            x: 0,
+            y: 1,
+            z: 0
+          }
+        }
+      })
+    );
+
+    expect(store.getState().viewportTransientState.transformSession).toMatchObject({
+      kind: "active",
+      source: "keyboard",
+      sourcePanelId: "bottomRight",
+      operation: "translate",
+      target: {
+        kind: "brush",
+        brushId: "brush-main"
+      },
+      preview: {
+        kind: "brush",
+        center: {
+          x: 0,
+          y: 1,
+          z: 0
+        }
+      }
+    });
+
+    store.setSelection({
+      kind: "brushes",
+      ids: ["brush-main"]
+    });
+
+    expect(store.getState().viewportTransientState.transformSession).toEqual({
       kind: "none"
     });
   });
