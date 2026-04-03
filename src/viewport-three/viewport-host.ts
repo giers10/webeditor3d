@@ -374,6 +374,8 @@ export class ViewportHost {
 
     if (this.currentDocument !== null) {
       this.rebuildModelInstances(this.currentDocument, this.currentSelection);
+      this.applyTransformPreview();
+      this.syncTransformGizmo();
     }
 
     if (this.creationPreview?.target.kind === "model-instance") {
@@ -549,6 +551,13 @@ export class ViewportHost {
     this.creationPreviewChangeHandler = null;
     this.creationCommitHandler = null;
     this.cameraStateChangeHandler = null;
+    this.transformSessionChangeHandler = null;
+    this.transformCommitHandler = null;
+    this.transformCancelHandler = null;
+    this.currentTransformSession = createInactiveTransformSession();
+    this.clearTransformGizmo();
+    this.activeTransformDrag = null;
+    this.keyboardTransformPointerOrigin = null;
     this.syncCreationPreview(null);
     this.advancedRenderingComposer?.dispose();
     this.advancedRenderingComposer = null;
