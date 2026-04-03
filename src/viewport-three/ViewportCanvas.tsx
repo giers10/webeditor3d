@@ -6,6 +6,7 @@ import type { ProjectAssetRecord } from "../assets/project-assets";
 import type { EditorSelection } from "../core/selection";
 import type { ToolMode } from "../core/tool-mode";
 import type { Vec3 } from "../core/vector";
+import type { ActiveTransformSession, TransformSessionState } from "../core/transform-session";
 import type { SceneDocument } from "../document/scene-document";
 import type { WorldSettings } from "../document/world-settings";
 import { createWorldBackgroundStyle } from "../shared-ui/world-background-style";
@@ -34,6 +35,7 @@ interface ViewportCanvasProps {
   selection: EditorSelection;
   toolMode: ToolMode;
   toolPreview: ViewportToolPreview;
+  transformSession: TransformSessionState;
   cameraState: ViewportPanelCameraState;
   viewMode: ViewportViewMode;
   displayMode: ViewportDisplayMode;
@@ -45,6 +47,9 @@ interface ViewportCanvasProps {
   onCommitCreation(toolPreview: CreationViewportToolPreview): boolean;
   onCameraStateChange(cameraState: ViewportPanelCameraState): void;
   onToolPreviewChange(toolPreview: ViewportToolPreview): void;
+  onTransformSessionChange(transformSession: TransformSessionState): void;
+  onTransformCommit(transformSession: ActiveTransformSession): void;
+  onTransformCancel(): void;
 }
 
 export function ViewportCanvas({
@@ -57,6 +62,7 @@ export function ViewportCanvas({
   selection,
   toolMode,
   toolPreview,
+  transformSession,
   cameraState,
   viewMode,
   displayMode,
@@ -67,7 +73,10 @@ export function ViewportCanvas({
   onSelectionChange,
   onCommitCreation,
   onCameraStateChange,
-  onToolPreviewChange
+  onToolPreviewChange,
+  onTransformSessionChange,
+  onTransformCommit,
+  onTransformCancel
 }: ViewportCanvasProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const hostRef = useRef<ViewportHost | null>(null);
@@ -94,6 +103,7 @@ export function ViewportCanvas({
     try {
       const viewportHost = new ViewportHost();
       hostRef.current = viewportHost;
+      viewportHost.setPanelId(panelId);
       viewportHost.mount(container);
       setViewportMessage(null);
 
@@ -107,6 +117,10 @@ export function ViewportCanvas({
       return;
     }
   }, []);
+
+  useEffect(() => {
+    hostRef.current?.setPanelId(panelId);
+  }, [panelId]);
 
   useEffect(() => {
     hostRef.current?.updateWorld(world);
@@ -158,12 +172,28 @@ export function ViewportCanvas({
   }, [onCommitCreation]);
 
   useEffect(() => {
+    hostRef.current?.setTransformSessionChangeHandler(onTransformSessionChange);
+  }, [onTransformSessionChange]);
+
+  useEffect(() => {
+    hostRef.current?.setTransformCommitHandler(onTransformCommit);
+  }, [onTransformCommit]);
+
+  useEffect(() => {
+    hostRef.current?.setTransformCancelHandler(onTransformCancel);
+  }, [onTransformCancel]);
+
+  useEffect(() => {
     hostRef.current?.setToolMode(toolMode);
   }, [toolMode]);
 
   useEffect(() => {
     hostRef.current?.setCreationPreview(toolMode === "create" && toolPreview.kind === "create" ? toolPreview : null);
   }, [toolMode, toolPreview]);
+
+  useEffect(() => {
+    hostRef.current?.setTransformSession(transformSession);
+  }, [transformSession]);
 
   useEffect(() => {
     if (focusRequestId === 0) {
@@ -174,8 +204,9 @@ export function ViewportCanvas({
   }, [focusRequestId, focusSelection, sceneDocument]);
 
   const previewVisible = toolMode === "create" && toolPreview.kind === "create" && toolPreview.center !== null;
+  const transformPreviewVisible = transformSession.kind === "active";
   const showViewModeOverlay = layoutMode === "quad";
-  const showOverlay = showViewModeOverlay || previewVisible;
+  const showOverlay = showViewModeOverlay || previewVisible || transformPreviewVisible;
 
   return (
     <div
@@ -203,6 +234,13 @@ export function ViewportCanvas({
           {!previewVisible ? null : (
             <div className="viewport-canvas__overlay-preview" data-testid={`viewport-snap-preview-${panelId}`}>
               Preview: {(toolPreview.center as Vec3).x}, {(toolPreview.center as Vec3).y}, {(toolPreview.center as Vec3).z}
+            </div>
+          )}
+          {!transformPreviewVisible ? null : (
+            <div className="viewport-canvas__overlay-preview" data-testid={`viewport-transform-preview-${panelId}`}>
+              {transformSession.kind !== "active"
+                ? null
+                : `${transformSession.operation}${transformSession.axisConstraint === null ? "" : ` · ${transformSession.axisConstraint.toUpperCase()}`}`}
             </div>
           )}
         </div>

@@ -16,6 +16,7 @@ import type { LoadedModelAsset } from "../assets/gltf-model-import";
 import type { LoadedImageAsset } from "../assets/image-assets";
 import type { ProjectAssetRecord } from "../assets/project-assets";
 import type { EditorSelection } from "../core/selection";
+import type { ActiveTransformSession, TransformSessionState } from "../core/transform-session";
 import type { ToolMode } from "../core/tool-mode";
 import type { SceneDocument } from "../document/scene-document";
 import type { WorldSettings } from "../document/world-settings";
@@ -35,6 +36,7 @@ interface ViewportPanelProps {
   selection: EditorSelection;
   toolMode: ToolMode;
   toolPreview: ViewportToolPreview;
+  transformSession: TransformSessionState;
   cameraState: ViewportPanelCameraState;
   focusRequestId: number;
   focusSelection: EditorSelection;
@@ -44,6 +46,9 @@ interface ViewportPanelProps {
   onCommitCreation(toolPreview: CreationViewportToolPreview): boolean;
   onCameraStateChange(cameraState: ViewportPanelCameraState): void;
   onToolPreviewChange(toolPreview: ViewportToolPreview): void;
+  onTransformSessionChange(transformSession: TransformSessionState): void;
+  onTransformCommit(transformSession: ActiveTransformSession): void;
+  onTransformCancel(): void;
   onSelectionChange(selection: EditorSelection): void;
 }
 
@@ -62,6 +67,7 @@ export function ViewportPanel({
   selection,
   toolMode,
   toolPreview,
+  transformSession,
   cameraState,
   focusRequestId,
   focusSelection,
@@ -71,6 +77,9 @@ export function ViewportPanel({
   onCommitCreation,
   onCameraStateChange,
   onToolPreviewChange,
+  onTransformSessionChange,
+  onTransformCommit,
+  onTransformCancel,
   onSelectionChange
 }: ViewportPanelProps) {
   const shouldShow = layoutMode === "quad" || isActive;
@@ -131,6 +140,7 @@ export function ViewportPanel({
         selection={selection}
         toolMode={toolMode}
         toolPreview={toolPreview}
+        transformSession={transformSession}
         cameraState={cameraState}
         viewMode={panelState.viewMode}
         displayMode={panelState.displayMode}
@@ -142,6 +152,9 @@ export function ViewportPanel({
         onCommitCreation={onCommitCreation}
         onCameraStateChange={onCameraStateChange}
         onToolPreviewChange={onToolPreviewChange}
+        onTransformSessionChange={onTransformSessionChange}
+        onTransformCommit={onTransformCommit}
+        onTransformCancel={onTransformCancel}
       />
     </section>
   );

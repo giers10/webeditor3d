@@ -1034,13 +1034,17 @@ export class ViewportHost {
       this.transformGizmoGroup.add(this.createTranslateHandle("y", session.axisConstraint === "y"));
       this.transformGizmoGroup.add(this.createTranslateHandle("z", session.axisConstraint === "z"));
     } else if (session.operation === "rotate") {
-      this.transformGizmoGroup.add(this.createRotateHandle("x", effectiveRotationAxis === "x"));
-      this.transformGizmoGroup.add(this.createRotateHandle("y", effectiveRotationAxis === "y"));
-      this.transformGizmoGroup.add(this.createRotateHandle("z", effectiveRotationAxis === "z"));
+      for (const axis of ["x", "y", "z"] as const) {
+        if (!supportsTransformAxisConstraint(session, axis)) {
+          continue;
+        }
+
+        this.transformGizmoGroup.add(this.createRotateHandle(axis, effectiveRotationAxis === axis));
+      }
     } else if (session.operation === "scale" && session.target.kind === "modelInstance") {
-      this.transformGizmoGroup.add(this.createScaleHandle("x", session.axisConstraint === "x"));
-      this.transformGizmoGroup.add(this.createScaleHandle("y", session.axisConstraint === "y"));
-      this.transformGizmoGroup.add(this.createScaleHandle("z", session.axisConstraint === "z"));
+      for (const axis of ["x", "y", "z"] as const) {
+        this.transformGizmoGroup.add(this.createScaleHandle(axis, session.axisConstraint === axis));
+      }
       this.transformGizmoGroup.add(this.createUniformScaleHandle(session.axisConstraint === null));
     }
 
@@ -2191,7 +2195,38 @@ export class ViewportHost {
     this.advancedRenderingComposer?.setSize(width, height);
   }
 
+  private pickTransformHandle(event: PointerEvent): { axisConstraint: TransformAxis | null } | null {
+    if (this.currentTransformSession.kind !== "active" || !this.transformGizmoGroup.visible) {
+      return null;
+    }
+
+    if (!this.setPointerFromClientPosition(event.clientX, event.clientY)) {
+      return null;
+    }
+
+    this.raycaster.setFromCamera(this.pointer, this.getActiveCamera());
+
+    const hits = this.raycaster.intersectObjects(this.transformGizmoGroup.children, true);
+
+    for (const hit of hits) {
+      const axisConstraint = hit.object.userData.transformAxisConstraint;
+
+      if (axisConstraint === null || axisConstraint === "x" || axisConstraint === "y" || axisConstraint === "z") {
+        return {
+          axisConstraint
+        };
+      }
+    }
+
+    return null;
+  }
+
   private handlePointerDown = (event: PointerEvent) => {
+    this.lastCanvasPointerPosition = {
+      x: event.clientX,
+      y: event.clientY
+    };
+
     if (event.button === 1) {
       event.preventDefault();
       this.activeCameraDragPointerId = event.pointerId;
@@ -2205,6 +2240,66 @@ export class ViewportHost {
 
     if (event.button !== 0) {
       return;
+    }
+
+    if (this.currentTransformSession.kind === "active") {
+      if (this.currentTransformSession.sourcePanelId !== this.panelId) {
+        return;
+      }
+
+      const transformHandle = this.pickTransformHandle(event);
+
+      if (transformHandle !== null) {
+        event.preventDefault();
+
+        if (
+          transformHandle.axisConstraint !== null &&
+          !supportsTransformAxisConstraint(this.currentTransformSession, transformHandle.axisConstraint)
+        ) {
+          return;
+        }
+
+        const nextSession = this.buildTransformPreviewFromPointer(
+          createTransformSession({
+            source: "gizmo",
+            sourcePanelId: this.panelId,
+            operation: this.currentTransformSession.operation,
+            axisConstraint: transformHandle.axisConstraint,
+            target: this.currentTransformSession.target
+          }),
+          {
+            x: event.clientX,
+            y: event.clientY
+          },
+          {
+            x: event.clientX,
+            y: event.clientY
+          },
+          transformHandle.axisConstraint
+        );
+
+        this.currentTransformSession = nextSession;
+        this.applyTransformPreview();
+        this.syncTransformGizmo();
+        this.transformSessionChangeHandler?.(nextSession);
+        this.activeTransformDrag = {
+          pointerId: event.pointerId,
+          sessionId: nextSession.id,
+          axisConstraint: transformHandle.axisConstraint,
+          initialClientPosition: {
+            x: event.clientX,
+            y: event.clientY
+          }
+        };
+        this.renderer.domElement.setPointerCapture(event.pointerId);
+        return;
+      }
+
+      if (this.currentTransformSession.source !== "gizmo" || this.currentTransformSession.sourcePanelId === this.panelId) {
+        event.preventDefault();
+        this.transformCommitHandler?.(this.currentTransformSession);
+        return;
+      }
     }
 
     if (this.toolMode === "create" && this.creationPreview !== null) {
@@ -2281,8 +2376,7 @@ export class ViewportHost {
       } else if (typeof brushId === "string") {
         const faceMaterialIndex = hit.face?.materialIndex;
         const faceId = typeof faceMaterialIndex === "number" ? BOX_FACE_IDS[faceMaterialIndex] ?? null : null;
-        // In face-edit mode each face is a distinct candidate; in brush mode collapse to brush.
-        key = faceId !== null ? `brushFace:${brushId}:${faceId}` : `brush:${brushId}`;
+        key = event.altKey && faceId !== null ? `brushFace:${brushId}:${faceId}` : `brush:${brushId}`;
       } else {
         continue;
       }
@@ -2343,7 +2437,7 @@ export class ViewportHost {
       return;
     }
 
-    if (faceId !== null) {
+    if (event.altKey && faceId !== null) {
       this.brushSelectionChangeHandler?.({ kind: "brushFace", brushId, faceId });
       return;
     }
@@ -2352,6 +2446,11 @@ export class ViewportHost {
   };
 
   private handlePointerMove = (event: PointerEvent) => {
+    this.lastCanvasPointerPosition = {
+      x: event.clientX,
+      y: event.clientY
+    };
+
     if (this.activeCameraDragPointerId === event.pointerId && this.lastCameraDragClientPosition !== null) {
       const deltaX = event.clientX - this.lastCameraDragClientPosition.x;
       const deltaY = event.clientY - this.lastCameraDragClientPosition.y;
@@ -2370,6 +2469,56 @@ export class ViewportHost {
       return;
     }
 
+    if (
+      this.activeTransformDrag !== null &&
+      this.activeTransformDrag.pointerId === event.pointerId &&
+      this.currentTransformSession.kind === "active" &&
+      this.currentTransformSession.id === this.activeTransformDrag.sessionId
+    ) {
+      const nextSession = this.buildTransformPreviewFromPointer(
+        this.currentTransformSession,
+        this.activeTransformDrag.initialClientPosition,
+        {
+          x: event.clientX,
+          y: event.clientY
+        },
+        this.activeTransformDrag.axisConstraint
+      );
+
+      this.currentTransformSession = nextSession;
+      this.applyTransformPreview();
+      this.syncTransformGizmo();
+      this.transformSessionChangeHandler?.(nextSession);
+      return;
+    }
+
+    if (
+      this.currentTransformSession.kind === "active" &&
+      this.currentTransformSession.sourcePanelId === this.panelId &&
+      this.currentTransformSession.source !== "gizmo" &&
+      this.keyboardTransformPointerOrigin !== null &&
+      this.keyboardTransformPointerOrigin.sessionId === this.currentTransformSession.id
+    ) {
+      const nextSession = this.buildTransformPreviewFromPointer(
+        this.currentTransformSession,
+        {
+          x: this.keyboardTransformPointerOrigin.clientX,
+          y: this.keyboardTransformPointerOrigin.clientY
+        },
+        {
+          x: event.clientX,
+          y: event.clientY
+        },
+        this.currentTransformSession.axisConstraint
+      );
+
+      this.currentTransformSession = nextSession;
+      this.applyTransformPreview();
+      this.syncTransformGizmo();
+      this.transformSessionChangeHandler?.(nextSession);
+      return;
+    }
+
     if (this.toolMode !== "create" || this.creationPreview === null) {
       return;
     }
@@ -2385,6 +2534,25 @@ export class ViewportHost {
   };
 
   private handlePointerUp = (event: PointerEvent) => {
+    if (this.activeTransformDrag !== null && this.activeTransformDrag.pointerId === event.pointerId) {
+      if (this.renderer.domElement.hasPointerCapture(event.pointerId)) {
+        this.renderer.domElement.releasePointerCapture(event.pointerId);
+      }
+
+      const completedSession = this.currentTransformSession.kind === "active" ? this.currentTransformSession : null;
+      this.activeTransformDrag = null;
+
+      if (completedSession !== null) {
+        if (event.type === "pointercancel") {
+          this.transformCancelHandler?.();
+        } else {
+          this.transformCommitHandler?.(completedSession);
+        }
+      }
+
+      return;
+    }
+
     if (this.activeCameraDragPointerId !== event.pointerId) {
       return;
     }
@@ -2799,6 +2967,7 @@ export class ViewportHost {
 
   private render = () => {
     this.animationFrame = window.requestAnimationFrame(this.render);
+    this.updateTransformGizmoPose();
 
     if (this.advancedRenderingComposer !== null) {
       this.advancedRenderingComposer.render();
