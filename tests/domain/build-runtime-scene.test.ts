@@ -42,7 +42,18 @@ describe("buildRuntimeSceneFromDocument", () => {
         y: 0,
         z: -1
       },
-      yawDegrees: 90
+      yawDegrees: 90,
+      collider: {
+        mode: "box",
+        eyeHeight: 1.4,
+        capsuleRadius: 0.3,
+        capsuleHeight: 1.8,
+        boxSize: {
+          x: 0.8,
+          y: 1.6,
+          z: 0.7
+        }
+      }
     });
     const soundEmitter = createSoundEmitterEntity({
       id: "entity-sound-lobby",
@@ -465,7 +476,25 @@ describe("buildRuntimeSceneFromDocument", () => {
         y: 0,
         z: -1
       },
-      yawDegrees: 90
+      yawDegrees: 90,
+      collider: {
+        mode: "box",
+        eyeHeight: 1.4,
+        size: {
+          x: 0.8,
+          y: 1.6,
+          z: 0.7
+        }
+      }
+    });
+    expect(runtimeScene.playerCollider).toEqual({
+      mode: "box",
+      eyeHeight: 1.4,
+      size: {
+        x: 0.8,
+        y: 1.6,
+        z: 0.7
+      }
     });
     expect(runtimeScene.spawn).toEqual({
       source: "playerStart",
@@ -502,6 +531,12 @@ describe("buildRuntimeSceneFromDocument", () => {
     });
 
     expect(runtimeScene.playerStart).toBeNull();
+    expect(runtimeScene.playerCollider).toEqual({
+      mode: "capsule",
+      radius: 0.3,
+      height: 1.8,
+      eyeHeight: 1.6
+    });
     expect(runtimeScene.entities).toEqual({
       playerStarts: [],
       soundEmitters: [],
