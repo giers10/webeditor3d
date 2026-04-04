@@ -2,40 +2,45 @@
 
 ## Project identity
 
-This repository contains a browser-based brush/solid editor for creating lightweight interactive 3D scenes, plus a built-in browser runner for playing those scenes.
+This repository contains a browser-based engine/editor for creating interactive 3D environments, with a built-in browser runner for immediate playtesting.
 
 The product goal is:
 
-- Hammer / TrenchBroom style spatial authoring
+- intuitive whiteboxing and scene assembly for interactive 3D spaces
 - modern browser delivery
 - glTF asset import, with optional later interchange export
 - fast edit -> run iteration
 - lightweight interactive runtime with spatial audio, navigation modes, and simple entity-driven logic
 
 This is not a general-purpose DCC.
-This is not a full game engine.
-This is a focused authoring + runtime tool for browser-delivered 3D spaces.
+This is not an unlimited AAA engine platform.
+This is a focused engine/editor for browser-delivered interactive 3D environments.
 
 ---
 
 ## Product pillars
 
-1. **Brushes are sacred**
-   - Layout authoring must remain faster than Blender.
-   - Brush editing is a first-class workflow, not a legacy compatibility mode.
-   - The editor must feel immediate, precise, and grid-friendly.
+1. **Interactive environments come first**
+   - The tool exists to build playable interactive 3D spaces for the web.
+   - The editor and runner are one product, not separate concerns.
+   - One-click edit -> run must remain central.
 
-2. **Imported assets are first-class**
+2. **Whiteboxing is sacred**
+   - Layout authoring must remain faster and more direct than using a general DCC for the same task.
+   - Whiteboxing is a first-class workflow, not a temporary preproduction mode.
+   - The editor must feel immediate and precise, with snapping available as a helper rather than a hard restriction.
+
+3. **Imported assets are first-class**
    - glTF / GLB import must feel native.
-   - Imported meshes, materials, textures, and animations must coexist cleanly with brush-authored worlds.
-   - Imported assets complement brushes; they do not replace them.
+   - Imported meshes, materials, textures, and animations must coexist cleanly with whitebox-authored worlds.
+   - Imported assets complement whiteboxing; they do not replace it.
 
-3. **The runner is built in**
+4. **The runner is built in**
    - Every meaningful authoring step should be testable in-browser.
    - Switching from edit mode to play mode should be nearly instant.
    - The runner is part of the product, not a demo app.
 
-4. **Web-native sharing matters**
+5. **Web-native sharing matters**
    - Scenes should be easy to load, embed, preview, and eventually share by URL.
    - The browser is a target platform, not a secondary export target.
 
@@ -101,10 +106,9 @@ These defaults are intentionally fixed for the early slices unless a later slice
 - when binary assets arrive, they must survive reloads via embedded data or project-scoped packaged storage
 - never rely on ephemeral Blob URLs as the only persisted asset reference
 
-### Early brush defaults
+### Current box-solid defaults
 
-- Slice 1.1 box brushes are axis-aligned only
-- arbitrary brush rotation is explicitly deferred
+- early slices began with axis-aligned box brushes
 - canonical box face IDs are fixed and stable:
   - `posX`
   - `negX`
@@ -113,6 +117,17 @@ These defaults are intentionally fixed for the early slices unless a later slice
   - `posZ`
   - `negZ`
 - `posY` is the top face and `negY` is the bottom face
+- future geometry slices may evolve these box-authored solids into freely transformable whitebox solids while preserving stable face identity where practical
+
+### Whitebox geometry direction
+
+- the product is moving from grid-bound brush thinking toward intuitive whitebox solids for level blocking
+- floating point position, rotation, and scale are allowed
+- the grid is a snap/reference aid, not a hard authoring law
+- whitebox boxes should support object, face, edge, and vertex interaction modes
+- non-planar quads are acceptable; rendering/build should triangulate them deterministically
+- whitebox solids do not need to stay convex
+- derived collision for whitebox solids should come from the solid-collider path, not from an assumption that all geometry is convex or axis-aligned
 
 ### Model placement
 
@@ -138,10 +153,12 @@ These defaults are intentionally fixed for the early slices unless a later slice
 - do not activate actions for systems that do not exist yet
 - add sound and animation actions only when those runtime systems are implemented
 
-### Early clipping scope
+### Whitebox editing scope
 
-- until a dedicated convex-brush slice exists, clipping must be constrained to results representable by currently supported brush kinds
-- unsupported clip cases must fail clearly instead of inventing new hidden geometry rules
+- object, face, edge, and vertex editing should converge on one coherent transform-driven interaction model
+- `G / R / S` style modal transforms with axis constraints are a good fit for whiteboxing
+- clipping/extrusion/other topology tools should come after the whitebox-solid interaction model is coherent
+- unsupported geometry edits must fail clearly instead of inventing hidden topology rules
 
 ---
 
@@ -168,8 +185,11 @@ They are not v1 priorities.
 Use these terms consistently:
 
 - **Document**: canonical editor state
-- **Brush**: author-authored solid/primitive in canonical brush form
-- **Face**: one editable surface of a brush
+- **Whitebox Solid**: author-authored blockout/level-shaping solid used for layout and gameplay space
+- **Box Solid**: the first whitebox solid shape; current code may still refer to this historically as a box brush
+- **Face**: one editable surface of a whitebox solid
+- **Edge**: one editable edge of a whitebox solid
+- **Vertex**: one editable point of a whitebox solid
 - **Material**: logical authoring material definition
 - **Texture**: image resource backing material channels
 - **Asset**: imported external resource, usually GLB/GLTF or audio and related media
@@ -207,7 +227,7 @@ When working in this repo:
 3. Preserve layering.
    - `document` owns canonical state.
    - `commands` apply valid state changes.
-   - `geometry` owns derived brush and collider generation.
+   - `geometry` owns derived solid and collider generation.
    - `viewport-three` renders editor state.
    - `runtime-three` plays runtime state.
    - `entities` owns typed non-brush scene objects.
@@ -312,14 +332,16 @@ Maintain these layers:
 Do not let editor-only helpers leak into the canonical document.
 Do not store raw three.js objects inside canonical document state.
 
-### Brush rules
+### Whitebox geometry rules
 
-- brushes are not stored as triangle soup
+- whitebox solids are canonical authoring objects, not raw renderer state
 - face material assignments are per-face
 - UV transforms are canonical editor data
-- runtime mesh generation is derived data
+- render triangulation is derived data
 - collision generation is derived data
-- early boxes are axis-aligned and use fixed face IDs
+- non-planar quad faces are acceptable if the derived mesh triangulates them deterministically
+- whitebox solids do not need to remain convex
+- current box solids still use stable face IDs, even if later slices relax earlier axis-aligned constraints
 
 ### Entity rules
 
@@ -368,7 +390,7 @@ When optimizing:
 Expected hotspots:
 
 - picking/raycasting
-- brush rebuilds / CSG
+- whitebox mesh rebuilds / solid triangulation
 - face highlighting
 - large texture browser lists
 - imported asset previews
@@ -383,7 +405,7 @@ The editor should feel like a real authoring tool, not a tech demo.
 Prioritize:
 
 - fast selection
-- robust snapping
+- trustworthy snapping when enabled
 - visible grid and transform feedback
 - obvious active tool state
 - low-friction material application
@@ -452,7 +474,7 @@ Especially in early versions.
 
 ### Prefer constrained capabilities that feel good over flexible capabilities that feel vague
 Example:
-- better to have one excellent box-brush tool than five half-working primitive tools
+- better to have one excellent whitebox-solid editing flow than five half-working primitive tools
 
 ### Prefer immediate usability over speculative extensibility
 But preserve clean seams for future extensions.
@@ -468,7 +490,7 @@ Do not:
 - add R3F because “we might want it later”
 - introduce ECS because “games use ECS”
 - over-generalize the entity system
-- replace canonical brush data with raw mesh editing
+- replace canonical whitebox data with hidden renderer-only mesh mutations
 - implement hidden magic behaviors without schema support
 - remove tests to get green CI
 - make visual changes without noting them in the slice summary
@@ -532,9 +554,9 @@ The product should always trend toward:
 - authoring clarity
 - browser-native practicality
 - fast iteration
-- strong foundations for brushes, assets, entities, and runner behavior
+- strong foundations for whiteboxing, assets, entities, and runner behavior
 
 If forced to choose, preserve the integrity of:
 1. the canonical document model
-2. the brush workflow
+2. the whiteboxing workflow
 3. the edit -> run loop
