@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { createEditorStore } from "../../src/app/editor-store";
 import { createCreateBoxBrushCommand } from "../../src/commands/create-box-brush-command";
 import { createMoveBoxBrushCommand } from "../../src/commands/move-box-brush-command";
+import { createRotateBoxBrushCommand } from "../../src/commands/rotate-box-brush-command";
 import { createResizeBoxBrushCommand } from "../../src/commands/resize-box-brush-command";
 import { createSetBoxBrushNameCommand } from "../../src/commands/set-box-brush-name-command";
 
@@ -33,6 +34,11 @@ describe("box brush commands", () => {
       x: 1,
       y: 1,
       z: -1
+    });
+    expect(brush.rotationDegrees).toEqual({
+      x: 0,
+      y: 0,
+      z: 0
     });
     expect(brush.size).toEqual({
       x: 2,
@@ -132,6 +138,121 @@ describe("box brush commands", () => {
       x: 4,
       y: 1,
       z: 1
+    });
+  });
+
+  it("preserves floating-point move, rotate, and scale authoring when snapping is disabled", () => {
+    const store = createEditorStore();
+
+    store.executeCommand(
+      createCreateBoxBrushCommand({
+        center: {
+          x: 1.25,
+          y: 1.5,
+          z: -0.75
+        },
+        size: {
+          x: 2.5,
+          y: 3.25,
+          z: 4.75
+        },
+        snapToGrid: false
+      })
+    );
+
+    const createdBrush = Object.values(store.getState().document.brushes)[0];
+
+    store.executeCommand(
+      createMoveBoxBrushCommand({
+        brushId: createdBrush.id,
+        center: {
+          x: 2.125,
+          y: 3.375,
+          z: -1.625
+        },
+        snapToGrid: false
+      })
+    );
+    store.executeCommand(
+      createRotateBoxBrushCommand({
+        brushId: createdBrush.id,
+        rotationDegrees: {
+          x: 12.5,
+          y: 37.5,
+          z: -8.25
+        }
+      })
+    );
+    store.executeCommand(
+      createResizeBoxBrushCommand({
+        brushId: createdBrush.id,
+        size: {
+          x: 3.5,
+          y: 1.75,
+          z: 5.125
+        },
+        snapToGrid: false
+      })
+    );
+
+    expect(store.getState().document.brushes[createdBrush.id]).toMatchObject({
+      center: {
+        x: 2.125,
+        y: 3.375,
+        z: -1.625
+      },
+      rotationDegrees: {
+        x: 12.5,
+        y: 37.5,
+        z: -8.25
+      },
+      size: {
+        x: 3.5,
+        y: 1.75,
+        z: 5.125
+      }
+    });
+
+    expect(store.undo()).toBe(true);
+    expect(store.getState().document.brushes[createdBrush.id].size).toEqual({
+      x: 2.5,
+      y: 3.25,
+      z: 4.75
+    });
+
+    expect(store.undo()).toBe(true);
+    expect(store.getState().document.brushes[createdBrush.id].rotationDegrees).toEqual({
+      x: 0,
+      y: 0,
+      z: 0
+    });
+
+    expect(store.undo()).toBe(true);
+    expect(store.getState().document.brushes[createdBrush.id].center).toEqual({
+      x: 1.25,
+      y: 1.5,
+      z: -0.75
+    });
+
+    expect(store.redo()).toBe(true);
+    expect(store.redo()).toBe(true);
+    expect(store.redo()).toBe(true);
+    expect(store.getState().document.brushes[createdBrush.id]).toMatchObject({
+      center: {
+        x: 2.125,
+        y: 3.375,
+        z: -1.625
+      },
+      rotationDegrees: {
+        x: 12.5,
+        y: 37.5,
+        z: -8.25
+      },
+      size: {
+        x: 3.5,
+        y: 1.75,
+        z: 5.125
+      }
     });
   });
 
