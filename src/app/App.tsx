@@ -592,12 +592,12 @@ function formatAssetHoverStatus(asset: ProjectAssetRecord): string {
 }
 
 function getBrushLabel(brush: BoxBrush, index: number): string {
-  return brush.name ?? `Box Brush ${index + 1}`;
+  return brush.name ?? `Whitebox Box ${index + 1}`;
 }
 
 function getBrushLabelById(brushId: string, brushes: BoxBrush[]): string {
   const brushIndex = brushes.findIndex((brush) => brush.id === brushId);
-  return brushIndex === -1 ? "Box Brush" : getBrushLabel(brushes[brushIndex], brushIndex);
+  return brushIndex === -1 ? "Whitebox Box" : getBrushLabel(brushes[brushIndex], brushIndex);
 }
 
 function getSelectedBrushLabel(selection: EditorSelection, brushes: BoxBrush[]): string {
@@ -621,7 +621,7 @@ function describeSelection(
     case "none":
       return "No authored selection";
     case "brushes":
-      return `${selection.ids.length} brush selected (${getSelectedBrushLabel(selection, brushes)})`;
+      return `${selection.ids.length} solid${selection.ids.length === 1 ? "" : "s"} selected (${getSelectedBrushLabel(selection, brushes)})`;
     case "brushFace":
       return `1 face selected (${FACE_LABELS[selection.faceId]} on ${getBrushLabelById(selection.brushId, brushes)})`;
     case "entities":
