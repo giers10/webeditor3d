@@ -73,6 +73,7 @@ describe("validateSceneDocument", () => {
     const brush = createBoxBrush({
       id: "brush-invalid"
     });
+    brush.rotationDegrees.y = Number.NaN;
     brush.size.x = 0;
     brush.faces.posZ.materialId = "material-that-does-not-exist";
 
@@ -85,6 +86,10 @@ describe("validateSceneDocument", () => {
 
     expect(validation.errors).toEqual(
       expect.arrayContaining([
+        expect.objectContaining({
+          code: "invalid-box-rotation",
+          path: "brushes.brush-invalid.rotationDegrees"
+        }),
         expect.objectContaining({
           code: "invalid-box-size",
           path: "brushes.brush-invalid.size"
