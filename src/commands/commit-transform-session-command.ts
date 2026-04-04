@@ -1,4 +1,6 @@
 import { createMoveBoxBrushCommand } from "./move-box-brush-command";
+import { createResizeBoxBrushCommand } from "./resize-box-brush-command";
+import { createRotateBoxBrushCommand } from "./rotate-box-brush-command";
 import { createUpsertEntityCommand } from "./upsert-entity-command";
 import { createUpsertModelInstanceCommand } from "./upsert-model-instance-command";
 import type { EditorCommand } from "./command";
@@ -21,7 +23,7 @@ import {
 function createTransformCommandLabel(session: ActiveTransformSession): string {
   return `${getTransformOperationLabel(session.operation)} ${
     session.target.kind === "brush"
-      ? "box brush"
+      ? "whitebox box"
       : session.target.kind === "entity"
         ? session.target.entityKind === "playerStart"
           ? "player start"
@@ -43,14 +45,32 @@ function createTransformCommandLabel(session: ActiveTransformSession): string {
 export function createCommitTransformSessionCommand(document: SceneDocument, session: ActiveTransformSession): EditorCommand {
   switch (session.target.kind) {
     case "brush":
-      if (session.preview.kind !== "brush" || session.operation !== "translate") {
-        throw new Error("Brush transforms currently support translation only.");
+      if (session.preview.kind !== "brush") {
+        throw new Error("Brush transform preview is invalid.");
       }
 
-      return createMoveBoxBrushCommand({
-        brushId: session.target.brushId,
-        center: session.preview.center
-      });
+      switch (session.operation) {
+        case "translate":
+          return createMoveBoxBrushCommand({
+            brushId: session.target.brushId,
+            center: session.preview.center,
+            snapToGrid: false,
+            label: createTransformCommandLabel(session)
+          });
+        case "rotate":
+          return createRotateBoxBrushCommand({
+            brushId: session.target.brushId,
+            rotationDegrees: session.preview.rotationDegrees,
+            label: createTransformCommandLabel(session)
+          });
+        case "scale":
+          return createResizeBoxBrushCommand({
+            brushId: session.target.brushId,
+            size: session.preview.size,
+            snapToGrid: false,
+            label: createTransformCommandLabel(session)
+          });
+      }
     case "modelInstance": {
       if (session.preview.kind !== "modelInstance") {
         throw new Error("Model instance transform preview is invalid.");
