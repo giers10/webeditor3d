@@ -1574,15 +1574,28 @@ export class ViewportHost {
     };
   }
 
-  private applyBrushRenderObjectTransform(brushId: string, center: Vec3) {
+  private applyBrushRenderObjectTransform(brushId: string, center: Vec3, rotationDegrees: Vec3, size: Vec3) {
     const renderObjects = this.brushRenderObjects.get(brushId);
+    const brush = this.currentDocument?.brushes[brushId];
 
-    if (renderObjects === undefined) {
+    if (renderObjects === undefined || brush === undefined) {
       return;
     }
 
     renderObjects.mesh.position.set(center.x, center.y, center.z);
+    renderObjects.mesh.rotation.set(
+      (rotationDegrees.x * Math.PI) / 180,
+      (rotationDegrees.y * Math.PI) / 180,
+      (rotationDegrees.z * Math.PI) / 180
+    );
+    renderObjects.mesh.scale.set(size.x / brush.size.x, size.y / brush.size.y, size.z / brush.size.z);
     renderObjects.edges.position.set(center.x, center.y, center.z);
+    renderObjects.edges.rotation.set(
+      (rotationDegrees.x * Math.PI) / 180,
+      (rotationDegrees.y * Math.PI) / 180,
+      (rotationDegrees.z * Math.PI) / 180
+    );
+    renderObjects.edges.scale.set(size.x / brush.size.x, size.y / brush.size.y, size.z / brush.size.z);
   }
 
   private applySpotLightGroupTransform(group: Group, position: Vec3, direction: Vec3) {
@@ -1641,7 +1654,7 @@ export class ViewportHost {
     }
 
     for (const brush of Object.values(this.currentDocument.brushes)) {
-      this.applyBrushRenderObjectTransform(brush.id, brush.center);
+      this.applyBrushRenderObjectTransform(brush.id, brush.center, brush.rotationDegrees, brush.size);
     }
 
     for (const entity of getEntityInstances(this.currentDocument.entities)) {
@@ -1663,7 +1676,12 @@ export class ViewportHost {
     switch (this.currentTransformSession.target.kind) {
       case "brush":
         if (this.currentTransformSession.preview.kind === "brush") {
-          this.applyBrushRenderObjectTransform(this.currentTransformSession.target.brushId, snapVec3ToGrid(this.currentTransformSession.preview.center));
+          this.applyBrushRenderObjectTransform(
+            this.currentTransformSession.target.brushId,
+            this.currentTransformSession.preview.center,
+            this.currentTransformSession.preview.rotationDegrees,
+            this.currentTransformSession.preview.size
+          );
         }
         break;
       case "modelInstance":
