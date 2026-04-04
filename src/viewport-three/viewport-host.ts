@@ -1722,7 +1722,7 @@ export class ViewportHost {
           selected
         );
       case "playerStart":
-        return this.createPlayerStartRenderObjects(entity.id, entity.position, entity.yawDegrees, selected);
+        return this.createPlayerStartRenderObjects(entity.id, entity.position, entity.yawDegrees, entity.collider, selected);
       case "soundEmitter":
         return this.createSoundEmitterRenderObjects(entity.id, entity.position, entity.refDistance, entity.maxDistance, selected);
       case "triggerVolume":
@@ -1876,56 +1876,76 @@ export class ViewportHost {
     };
   }
 
-  private createPlayerStartRenderObjects(entityId: string, position: Vec3, yawDegrees: number, selected: boolean): EntityRenderObjects {
+  private createPlayerStartRenderObjects(
+    entityId: string,
+    position: Vec3,
+    yawDegrees: number,
+    collider: PlayerStartEntity["collider"],
+    selected: boolean
+  ): EntityRenderObjects {
     const markerColor = selected ? PLAYER_START_SELECTED_COLOR : PLAYER_START_COLOR;
     const group = new Group();
     group.position.set(position.x, position.y, position.z);
-    group.rotation.y = (yawDegrees * Math.PI) / 180;
+    const colliderMaterial = new MeshStandardMaterial({
+      color: markerColor,
+      emissive: markerColor,
+      emissiveIntensity: selected ? 0.14 : 0.05,
+      roughness: 0.5,
+      metalness: 0.02,
+      transparent: true,
+      opacity: selected ? 0.4 : 0.24
+    });
+    const arrowMaterial = new MeshStandardMaterial({
+      color: markerColor,
+      emissive: markerColor,
+      emissiveIntensity: selected ? 0.2 : 0.08,
+      roughness: 0.38,
+      metalness: 0.03
+    });
+    const meshes: Mesh[] = [];
 
-    const base = new Mesh(
-      new CylinderGeometry(0.22, 0.22, 0.05, 18),
-      new MeshStandardMaterial({
-        color: markerColor,
-        emissive: markerColor,
-        emissiveIntensity: selected ? 0.18 : 0.08,
-        roughness: 0.35,
-        metalness: 0.08
-      })
-    );
-    base.position.y = 0.025;
+    switch (collider.mode) {
+      case "capsule": {
+        const collisionMesh = new Mesh(
+          new CapsuleGeometry(collider.capsuleRadius, Math.max(0, collider.capsuleHeight - collider.capsuleRadius * 2), 6, 12),
+          colliderMaterial
+        );
+        collisionMesh.position.y = collider.capsuleHeight * 0.5;
+        this.tagEntityMesh(collisionMesh, entityId, "playerStart", group);
+        meshes.push(collisionMesh);
+        break;
+      }
+      case "box": {
+        const collisionMesh = new Mesh(new BoxGeometry(collider.boxSize.x, collider.boxSize.y, collider.boxSize.z), colliderMaterial);
+        collisionMesh.position.y = collider.boxSize.y * 0.5;
+        this.tagEntityMesh(collisionMesh, entityId, "playerStart", group);
+        meshes.push(collisionMesh);
+        break;
+      }
+      case "none":
+        break;
+    }
 
-    const body = new Mesh(
-      new BoxGeometry(0.12, 0.12, 0.46),
-      new MeshStandardMaterial({
-        color: markerColor,
-        emissive: markerColor,
-        emissiveIntensity: selected ? 0.14 : 0.06,
-        roughness: 0.42,
-        metalness: 0.02
-      })
-    );
-    body.position.set(0, 0.16, 0.1);
+    const directionGroup = new Group();
+    directionGroup.rotation.y = (yawDegrees * Math.PI) / 180;
+    group.add(directionGroup);
+    const colliderTop = getPlayerStartColliderHeight(collider) ?? 0.18;
 
-    const arrowHead = new Mesh(
-      new ConeGeometry(0.12, 0.28, 14),
-      new MeshStandardMaterial({
-        color: markerColor,
-        emissive: markerColor,
-        emissiveIntensity: selected ? 0.2 : 0.08,
-        roughness: 0.38,
-        metalness: 0.03
-      })
-    );
+    const body = new Mesh(new BoxGeometry(0.08, 0.08, 0.34), arrowMaterial);
+    body.position.set(0, colliderTop + 0.12, 0.06);
+
+    const arrowHead = new Mesh(new ConeGeometry(0.1, 0.22, 14), arrowMaterial);
     arrowHead.rotation.x = Math.PI * 0.5;
-    arrowHead.position.set(0, 0.16, 0.42);
+    arrowHead.position.set(0, colliderTop + 0.12, 0.28);
 
-    for (const mesh of [base, body, arrowHead]) {
-      this.tagEntityMesh(mesh, entityId, "playerStart", group);
+    for (const mesh of [body, arrowHead]) {
+      this.tagEntityMesh(mesh, entityId, "playerStart", directionGroup);
+      meshes.push(mesh);
     }
 
     return {
       group,
-      meshes: [base, body, arrowHead]
+      meshes
     };
   }
 
