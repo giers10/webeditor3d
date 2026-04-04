@@ -277,6 +277,10 @@ export class ViewportHost {
   private currentSelection: EditorSelection = {
     kind: "none"
   };
+  private hoveredSelection: EditorSelection = {
+    kind: "none"
+  };
+  private whiteboxSelectionMode: WhiteboxSelectionMode = "object";
   private whiteboxSnapEnabled = true;
   private whiteboxSnapStep = DEFAULT_GRID_SIZE;
   private projectAssets: Record<string, ProjectAssetRecord> = {};
@@ -304,6 +308,7 @@ export class ViewportHost {
   private animationFrame = 0;
   private container: HTMLElement | null = null;
   private brushSelectionChangeHandler: ((selection: EditorSelection) => void) | null = null;
+  private whiteboxHoverLabelChangeHandler: ((label: string | null) => void) | null = null;
   private creationPreviewChangeHandler: ((toolPreview: ViewportToolPreview) => void) | null = null;
   private creationCommitHandler: ((toolPreview: CreationViewportToolPreview) => boolean) | null = null;
   private cameraStateChangeHandler: ((cameraState: ViewportPanelCameraState) => void) | null = null;
