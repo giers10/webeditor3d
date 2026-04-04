@@ -32,6 +32,8 @@ interface ViewportCanvasProps {
   projectAssets: Record<string, ProjectAssetRecord>;
   loadedModelAssets: Record<string, LoadedModelAsset>;
   loadedImageAssets: Record<string, LoadedImageAsset>;
+  whiteboxSnapEnabled: boolean;
+  whiteboxSnapStep: number;
   selection: EditorSelection;
   toolMode: ToolMode;
   toolPreview: ViewportToolPreview;
@@ -59,6 +61,8 @@ export function ViewportCanvas({
   projectAssets,
   loadedModelAssets,
   loadedImageAssets,
+  whiteboxSnapEnabled,
+  whiteboxSnapStep,
   selection,
   toolMode,
   toolPreview,
@@ -129,6 +133,10 @@ export function ViewportCanvas({
   useEffect(() => {
     hostRef.current?.updateAssets(projectAssets, loadedModelAssets, loadedImageAssets);
   }, [projectAssets, loadedModelAssets, loadedImageAssets]);
+
+  useEffect(() => {
+    hostRef.current?.setWhiteboxSnapSettings(whiteboxSnapEnabled, whiteboxSnapStep);
+  }, [whiteboxSnapEnabled, whiteboxSnapStep]);
 
   useEffect(() => {
     hostRef.current?.updateDocument(sceneDocument, selection);
