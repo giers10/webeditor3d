@@ -7009,11 +7009,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       <div className="material-summary">Vertex selection is visible in the viewport. Persistent vertex transforms are still deferred.</div>
                     </div>
                   )
+                ) : whiteboxSelectionMode !== "face" ? (
+                  <div className="outliner-empty">Switch to Face mode or choose a face chip to edit materials and UVs.</div>
                 ) : selectedFace === null || selectedFaceId === null ? (
                   <div className="outliner-empty">
-                    {whiteboxSelectionMode === "object"
-                      ? "Switch to Face mode or choose a face chip to edit materials and UVs."
-                      : "Select a face to edit its material and UV transform."}
+                    Select a face to edit its material and UV transform.
                   </div>
                 ) : (
                   <>
