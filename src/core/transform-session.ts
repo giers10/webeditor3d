@@ -562,7 +562,7 @@ export function resolveTransformTarget(
         };
       }
 
-      return createBrushTransformTarget(document, selection.brushId);
+      return createBrushTransformTarget(document, selection.ids[0]);
     case "entities":
       if (selection.ids.length !== 1) {
         return {
