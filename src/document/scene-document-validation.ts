@@ -1268,6 +1268,23 @@ export function validateSceneDocument(document: SceneDocument): SceneDocumentVal
       diagnostics.push(createDiagnostic("error", "invalid-box-name", "Box brush names must be non-empty when authored.", `${path}.name`));
     }
 
+    if (!isFiniteVec3(brush.center)) {
+      diagnostics.push(
+        createDiagnostic("error", "invalid-box-center", "Box brush centers must remain finite on every axis.", `${path}.center`)
+      );
+    }
+
+    if (!isFiniteVec3(brush.rotationDegrees)) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-box-rotation",
+          "Box brush rotations must remain finite on every axis.",
+          `${path}.rotationDegrees`
+        )
+      );
+    }
+
     if (!isFiniteVec3(brush.size) || !hasPositiveBoxSize(brush.size)) {
       diagnostics.push(
         createDiagnostic("error", "invalid-box-size", "Box brush sizes must remain finite and positive on every axis.", `${path}.size`)

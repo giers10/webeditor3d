@@ -41,6 +41,7 @@ import {
 import {
   createBoxBrush,
   createDefaultFaceUvState,
+  DEFAULT_BOX_BRUSH_ROTATION_DEGREES,
   isBoxFaceId,
   isFaceUvRotationQuarterTurns,
   normalizeBrushName,
@@ -64,6 +65,7 @@ import {
   SPATIAL_AUDIO_SCENE_DOCUMENT_VERSION,
   SCENE_DOCUMENT_VERSION,
   TRIGGER_ACTION_TARGET_FOUNDATION_SCENE_DOCUMENT_VERSION,
+  WHITEBOX_FLOAT_TRANSFORM_SCENE_DOCUMENT_VERSION,
   WORLD_ENVIRONMENT_SCENE_DOCUMENT_VERSION,
   type SceneDocument
 } from "./scene-document";
@@ -633,6 +635,18 @@ function readVec3(value: unknown, label: string) {
   };
 }
 
+function readOptionalVec3(value: unknown, label: string, fallback: { x: number; y: number; z: number }) {
+  if (value === undefined) {
+    return {
+      x: fallback.x,
+      y: fallback.y,
+      z: fallback.z
+    };
+  }
+
+  return readVec3(value, label);
+}
+
 function assertNonZeroVec3(vector: { x: number; y: number; z: number }, label: string) {
   if (vector.x === 0 && vector.y === 0 && vector.z === 0) {
     throw new Error(`${label} must not be the zero vector.`);
@@ -790,6 +804,11 @@ function readBrushes(
       id: expectString(brushValue.id, `brushes.${brushId}.id`),
       name: readOptionalBrushName(brushValue.name, `brushes.${brushId}.name`),
       center,
+      rotationDegrees: readOptionalVec3(
+        brushValue.rotationDegrees,
+        `brushes.${brushId}.rotationDegrees`,
+        DEFAULT_BOX_BRUSH_ROTATION_DEGREES
+      ),
       size,
       faces: readBoxBrushFaces(brushValue.faces, `brushes.${brushId}.faces`, materials, allowMissingUvState),
       layerId: expectOptionalString(brushValue.layerId, `brushes.${brushId}.layerId`),
@@ -1552,7 +1571,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     };
   }
 
-  if (source.version !== SCENE_DOCUMENT_VERSION) {
+  if (source.version !== WHITEBOX_FLOAT_TRANSFORM_SCENE_DOCUMENT_VERSION) {
     throw new Error(`Unsupported scene document version: ${String(source.version)}.`);
   }
 
