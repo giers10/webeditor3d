@@ -302,6 +302,80 @@ describe("scene document JSON", () => {
     expect(migratedDocument.entities[pointLight.id]).toEqual(pointLight);
   });
 
+  it("migrates version 15 model instances to include default collider settings", () => {
+    const asset = {
+      id: "asset-model-legacy-collider",
+      kind: "model",
+      sourceName: "legacy-collider.glb",
+      mimeType: "model/gltf-binary",
+      storageKey: createProjectAssetStorageKey("asset-model-legacy-collider"),
+      byteLength: 64,
+      metadata: {
+        kind: "model",
+        format: "glb",
+        sceneName: "Legacy Collider Scene",
+        nodeCount: 1,
+        meshCount: 1,
+        materialNames: [],
+        textureNames: [],
+        animationNames: [],
+        boundingBox: {
+          min: {
+            x: -0.5,
+            y: 0,
+            z: -0.5
+          },
+          max: {
+            x: 0.5,
+            y: 1,
+            z: 0.5
+          },
+          size: {
+            x: 1,
+            y: 1,
+            z: 1
+          }
+        },
+        warnings: []
+      }
+    } satisfies ModelAssetRecord;
+    const migratedDocument = migrateSceneDocument({
+      ...createEmptySceneDocument({ name: "Legacy Model Collider Scene" }),
+      version: ENTITY_NAMES_SCENE_DOCUMENT_VERSION,
+      assets: {
+        [asset.id]: asset
+      },
+      modelInstances: {
+        "model-instance-legacy-collider": {
+          id: "model-instance-legacy-collider",
+          kind: "modelInstance",
+          assetId: asset.id,
+          position: {
+            x: 1,
+            y: 0,
+            z: -2
+          },
+          rotationDegrees: {
+            x: 0,
+            y: 45,
+            z: 0
+          },
+          scale: {
+            x: 1,
+            y: 1,
+            z: 1
+          }
+        }
+      }
+    });
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.modelInstances["model-instance-legacy-collider"].collision).toEqual({
+      mode: "none",
+      visible: false
+    });
+  });
+
   it("round-trips the initial typed entity registry without mixing entities into model instances", () => {
     const playerStart = createPlayerStartEntity({
       id: "entity-player-start-main"
