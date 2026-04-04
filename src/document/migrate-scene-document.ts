@@ -536,7 +536,12 @@ function readPlayerStartColliderSettings(value: unknown, label: string) {
     throw new Error(`${label} must be an object.`);
   }
 
-  const mode = readOptionalAllowedValue(value.mode, `${label}.mode`, "capsule", isPlayerStartColliderMode);
+  const mode = readOptionalAllowedValue(
+    value.mode,
+    `${label}.mode`,
+    "capsule",
+    (candidate): candidate is "capsule" | "box" | "none" => typeof candidate === "string" && isPlayerStartColliderMode(candidate)
+  );
 
   return createPlayerStartColliderSettings({
     mode,
@@ -1515,7 +1520,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     const assets = readAssets(source.assets);
 
     return {
-      version: IMPORTED_MODEL_COLLIDERS_SCENE_DOCUMENT_VERSION,
+      version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
       world: readWorldSettings(source.world),
       materials,
