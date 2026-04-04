@@ -22,14 +22,14 @@ Core loop:
 
 The product prioritizes:
 
-- brush-first spatial authoring
+- intuitive whiteboxing / level blocking for interactive 3D environments
 - imported assets as first-class additions
 - typed entities and simple interactions
 - browser-native delivery
 
 It is not:
 
-- a full game engine
+- an unlimited general-purpose engine platform
 - a Blender replacement
 - a general CAD tool
 - an R3F showcase
@@ -83,10 +83,9 @@ These are fixed for the early milestones unless a later slice explicitly changes
 - binary assets must survive reload via embedded or project-scoped persistent storage
 - never rely on Blob URLs as the only persisted asset reference
 
-### Early box brushes
+### Current box-solid foundation
 
-- first brush kind is an axis-aligned box
-- arbitrary brush rotation is deferred
+- early slices began with an axis-aligned box shape and stable face IDs
 - stable box face IDs are:
   - `posX`
   - `negX`
@@ -95,6 +94,16 @@ These are fixed for the early milestones unless a later slice explicitly changes
   - `posZ`
   - `negZ`
 - `posY` is top and `negY` is bottom
+
+### Whitebox direction
+
+- move away from grid-bound brush thinking toward whitebox solids
+- allow floating point transforms
+- allow free object rotation
+- use the grid as optional snap/reference help, not as a hard restriction
+- unify object / face / edge / vertex editing around one transform-driven interaction model
+- non-planar quads are acceptable if triangulated deterministically in derived geometry
+- non-convex whitebox solids are acceptable if the solid mesh/collider pipeline can support them
 
 ### Early UV data
 
@@ -165,6 +174,7 @@ If a roadmap item is too large, split it into smaller vertical slices.
 - M1: axis-aligned box brushes, face materials/UVs, runner, first-room polish, world lighting basics
 - M2: typed entities, simple trigger/action/target interactions, click interactions
 - M3: GLB/GLTF import, local lights + skyboxes, animation, spatial audio
+- M4+: whitebox-solid interaction model, component editing, derived solid triangulation/collision
 
 That ordering matters because:
 
