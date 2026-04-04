@@ -24,6 +24,7 @@ const { MockViewportHost, viewportHostInstances } = vi.hoisted(() => {
     setTransformSessionChangeHandler: ReturnType<typeof vi.fn>;
     setTransformCommitHandler: ReturnType<typeof vi.fn>;
     setTransformCancelHandler: ReturnType<typeof vi.fn>;
+    setWhiteboxSnapSettings: ReturnType<typeof vi.fn>;
     setToolMode: ReturnType<typeof vi.fn>;
     setCreationPreview: ReturnType<typeof vi.fn>;
     setTransformSession: ReturnType<typeof vi.fn>;
@@ -47,6 +48,7 @@ const { MockViewportHost, viewportHostInstances } = vi.hoisted(() => {
     setTransformSessionChangeHandler = vi.fn();
     setTransformCommitHandler = vi.fn();
     setTransformCancelHandler = vi.fn();
+    setWhiteboxSnapSettings = vi.fn();
     setToolMode = vi.fn();
     setCreationPreview = vi.fn();
     setTransformSession = vi.fn();
@@ -105,6 +107,8 @@ describe("ViewportCanvas", () => {
         projectAssets={sceneDocument.assets}
         loadedModelAssets={{}}
         loadedImageAssets={{}}
+        whiteboxSnapEnabled
+        whiteboxSnapStep={1}
         selection={{ kind: "none" }}
         toolMode="create"
         toolPreview={toolPreview}
@@ -152,6 +156,8 @@ describe("ViewportCanvas", () => {
         projectAssets={sceneDocument.assets}
         loadedModelAssets={{}}
         loadedImageAssets={{}}
+        whiteboxSnapEnabled
+        whiteboxSnapStep={1}
         selection={{ kind: "none" }}
         toolMode="select"
         toolPreview={{ kind: "none" }}
