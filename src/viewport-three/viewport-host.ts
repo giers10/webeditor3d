@@ -1855,7 +1855,7 @@ export class ViewportHost {
           brush,
           faceId,
           document.materials[brush.faces[faceId].materialId ?? ""],
-          isBrushFaceSelected(selection, brush.id, faceId)
+          this.getFaceHighlightState(brush.id, faceId)
         )
       );
       const mesh = new Mesh(geometry, materials);
@@ -1873,15 +1873,27 @@ export class ViewportHost {
       );
       edges.visible = this.displayMode !== "wireframe";
 
+      const edgeHelpers = BOX_EDGE_IDS.map((edgeId) => this.createEdgeHelper(brush, edgeId));
+      const vertexHelpers = BOX_VERTEX_IDS.map((vertexId) => this.createVertexHelper(brush, vertexId));
+
       this.brushGroup.add(mesh);
       this.brushGroup.add(edges);
+      for (const edgeHelper of edgeHelpers) {
+        this.brushGroup.add(edgeHelper.line);
+      }
+      for (const vertexHelper of vertexHelpers) {
+        this.brushGroup.add(vertexHelper.mesh);
+      }
       this.brushRenderObjects.set(brush.id, {
         mesh,
-        edges
+        edges,
+        edgeHelpers,
+        vertexHelpers
       });
       this.applyBrushRenderObjectTransform(brush.id, brush.center, brush.rotationDegrees, brush.size);
     }
 
+    this.refreshBrushPresentation();
     this.applyShadowState();
   }
 
@@ -2630,6 +2642,16 @@ export class ViewportHost {
     for (const renderObjects of this.brushRenderObjects.values()) {
       this.brushGroup.remove(renderObjects.mesh);
       this.brushGroup.remove(renderObjects.edges);
+      for (const edgeHelper of renderObjects.edgeHelpers) {
+        this.brushGroup.remove(edgeHelper.line);
+        edgeHelper.line.geometry.dispose();
+        edgeHelper.line.material.dispose();
+      }
+      for (const vertexHelper of renderObjects.vertexHelpers) {
+        this.brushGroup.remove(vertexHelper.mesh);
+        vertexHelper.mesh.geometry.dispose();
+        vertexHelper.mesh.material.dispose();
+      }
       renderObjects.mesh.geometry.dispose();
 
       for (const material of renderObjects.mesh.material) {
