@@ -177,9 +177,9 @@ const GIZMO_CENTER_HANDLE_SIZE = 0.16;
 const GIZMO_SCREEN_SIZE_PERSPECTIVE = 0.11;
 const GIZMO_SCREEN_SIZE_ORTHOGRAPHIC = 1.4;
 const GIZMO_RENDER_ORDER = 4_000;
-const ROTATION_SNAP_DEGREES = 15;
 const SCALE_SNAP_STEP = 0.1;
 const MIN_SCALE_COMPONENT = 0.1;
+const MIN_BOX_SIZE_COMPONENT = 0.01;
 
 interface CachedMaterialTexture {
   signature: string;
@@ -236,6 +236,8 @@ export class ViewportHost {
   private currentSelection: EditorSelection = {
     kind: "none"
   };
+  private whiteboxSnapEnabled = true;
+  private whiteboxSnapStep = DEFAULT_GRID_SIZE;
   private projectAssets: Record<string, ProjectAssetRecord> = {};
   private loadedModelAssets: Record<string, LoadedModelAsset> = {};
   private loadedImageAssets: Record<string, LoadedImageAsset> = {};
