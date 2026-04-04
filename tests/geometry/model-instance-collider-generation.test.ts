@@ -56,9 +56,14 @@ describe("buildGeneratedModelCollider", () => {
 
     expect(collider).not.toBeNull();
     expect(collider?.kind).toBe("trimesh");
-    expect(collider?.mode).toBe("static");
-    expect(Array.from(collider?.vertices ?? [])).toSatisfy((values: number[]) => values.every(Number.isFinite));
-    expect(Array.from(collider?.indices ?? [])).toSatisfy((values: number[]) => values.every(Number.isInteger));
+
+    if (collider === null || collider.kind !== "trimesh") {
+      throw new Error("Expected a trimesh collider.");
+    }
+
+    expect(collider.mode).toBe("static");
+    expect(Array.from(collider.vertices)).toSatisfy((values: number[]) => values.every(Number.isFinite));
+    expect(Array.from(collider.indices)).toSatisfy((values: number[]) => values.every(Number.isInteger));
   });
 
   it("builds a terrain heightfield from a regular-grid mesh", () => {
@@ -77,13 +82,18 @@ describe("buildGeneratedModelCollider", () => {
     const collider = buildGeneratedModelCollider(modelInstance, asset, loadedAsset);
 
     expect(collider).not.toBeNull();
+    expect(collider?.kind).toBe("heightfield");
+
+    if (collider === null || collider.kind !== "heightfield") {
+      throw new Error("Expected a heightfield collider.");
+    }
+
     expect(collider).toMatchObject({
-      kind: "heightfield",
       mode: "terrain",
       rows: 3,
       cols: 3
     });
-    expect(Array.from(collider?.heights ?? [])).toSatisfy((values: number[]) => values.every(Number.isFinite));
+    expect(Array.from(collider.heights)).toSatisfy((values: number[]) => values.every(Number.isFinite));
   });
 
   it("fails terrain mode for meshes that are not a clean regular-grid terrain surface", () => {
