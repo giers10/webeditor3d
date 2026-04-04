@@ -3002,73 +3002,14 @@ export class ViewportHost {
       return;
     }
 
-    const bounds = this.renderer.domElement.getBoundingClientRect();
+    const candidates = this.getSelectionCandidates(event);
 
-    if (bounds.width === 0 || bounds.height === 0) {
-      return;
-    }
-
-    this.pointer.x = ((event.clientX - bounds.left) / bounds.width) * 2 - 1;
-    this.pointer.y = -(((event.clientY - bounds.top) / bounds.height) * 2 - 1);
-
-    this.raycaster.setFromCamera(this.pointer, this.getActiveCamera());
-
-    const hits = this.raycaster.intersectObjects(
-      [
-        ...Array.from(this.entityRenderObjects.values(), (renderObjects) => renderObjects.group),
-        ...Array.from(this.modelRenderObjects.values()),
-        ...Array.from(this.brushRenderObjects.values(), (renderObjects) => renderObjects.mesh)
-      ],
-      true
-    );
-
-    if (hits.length === 0) {
+    if (candidates.length === 0) {
       this.lastClickPointer = null;
       this.lastClickSelectionKey = null;
       this.brushSelectionChangeHandler?.({
         kind: "none"
       });
-      return;
-    }
-
-    // Build a deduplicated list of selectable candidates from the hit list.
-    // Multiple mesh parts of the same entity/model/brush collapse to one entry.
-    const candidates: Array<{ key: string; object: (typeof hits)[0]["object"]; face: (typeof hits)[0]["face"] }> = [];
-    const seenKeys = new Set<string>();
-
-    for (const hit of hits) {
-      // Skip indicator meshes that are intentionally non-pickable (wireframe shells, range spheres, etc.)
-      if (hit.object.userData.nonPickable === true) {
-        continue;
-      }
-
-      const entityId = hit.object.userData.entityId;
-      const modelInstanceId = this.findModelInstanceId(hit.object);
-      const brushId = hit.object.userData.brushId;
-
-      let key: string;
-      if (typeof entityId === "string") {
-        key = `entity:${entityId}`;
-      } else if (modelInstanceId !== null) {
-        key = `model:${modelInstanceId}`;
-      } else if (typeof brushId === "string") {
-        const faceMaterialIndex = hit.face?.materialIndex;
-        const faceId = typeof faceMaterialIndex === "number" ? BOX_FACE_IDS[faceMaterialIndex] ?? null : null;
-        key = event.altKey && faceId !== null ? `brushFace:${brushId}:${faceId}` : `brush:${brushId}`;
-      } else {
-        continue;
-      }
-
-      if (!seenKeys.has(key)) {
-        seenKeys.add(key);
-        candidates.push({ key, object: hit.object, face: hit.face });
-      }
-    }
-
-    if (candidates.length === 0) {
-      this.lastClickPointer = null;
-      this.lastClickSelectionKey = null;
-      this.brushSelectionChangeHandler?.({ kind: "none" });
       return;
     }
 
@@ -3093,34 +3034,7 @@ export class ViewportHost {
 
     const chosen = candidates[candidateIndex];
     this.lastClickSelectionKey = chosen.key;
-
-    // Dispatch the selection for the chosen candidate.
-    const entityId = chosen.object.userData.entityId;
-    if (typeof entityId === "string") {
-      this.brushSelectionChangeHandler?.({ kind: "entities", ids: [entityId] });
-      return;
-    }
-
-    const modelInstanceId = this.findModelInstanceId(chosen.object);
-    if (modelInstanceId !== null) {
-      this.brushSelectionChangeHandler?.({ kind: "modelInstances", ids: [modelInstanceId] });
-      return;
-    }
-
-    const brushId = chosen.object.userData.brushId;
-    const faceMaterialIndex = chosen.face?.materialIndex;
-    const faceId = typeof faceMaterialIndex === "number" ? BOX_FACE_IDS[faceMaterialIndex] ?? null : null;
-
-    if (typeof brushId !== "string") {
-      return;
-    }
-
-    if (event.altKey && faceId !== null) {
-      this.brushSelectionChangeHandler?.({ kind: "brushFace", brushId, faceId });
-      return;
-    }
-
-    this.brushSelectionChangeHandler?.({ kind: "brushes", ids: [brushId] });
+    this.brushSelectionChangeHandler?.(chosen.selection);
   };
 
   private handlePointerMove = (event: PointerEvent) => {
