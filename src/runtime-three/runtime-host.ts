@@ -175,7 +175,7 @@ export class RuntimeHost {
     this.applyWorld();
     this.rebuildLocalLights(runtimeScene.localLights);
     this.rebuildBrushMeshes(runtimeScene.brushes);
-    this.rebuildModelInstances(runtimeScene.modelInstances, runtimeScene.colliders);
+    this.rebuildModelInstances(runtimeScene.modelInstances);
     void this.rebuildCollisionWorld(runtimeScene.colliders);
     this.audioSystem.loadScene(runtimeScene);
   }
@@ -195,7 +195,7 @@ export class RuntimeHost {
     }
 
     if (this.runtimeScene !== null) {
-      this.rebuildModelInstances(this.runtimeScene.modelInstances, this.runtimeScene.colliders);
+      this.rebuildModelInstances(this.runtimeScene.modelInstances);
     }
 
     this.audioSystem.updateAssets(projectAssets, loadedAudioAssets);
