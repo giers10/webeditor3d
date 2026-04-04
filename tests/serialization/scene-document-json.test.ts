@@ -72,6 +72,35 @@ describe("scene document JSON", () => {
     expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(document);
   });
 
+  it("round-trips floating-point whitebox box transforms without accidental snapping", () => {
+    const brush = createBoxBrush({
+      id: "brush-float-transform",
+      center: {
+        x: 1.25,
+        y: 1.5,
+        z: -0.875
+      },
+      rotationDegrees: {
+        x: 12.5,
+        y: 37.5,
+        z: -8.25
+      },
+      size: {
+        x: 2.5,
+        y: 3.25,
+        z: 4.75
+      }
+    });
+    const document = {
+      ...createEmptySceneDocument({ name: "Float Transform Scene" }),
+      brushes: {
+        [brush.id]: brush
+      }
+    };
+
+    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(document);
+  });
+
   it("round-trips per-face material and UV state", () => {
     const brush = createBoxBrush({
       id: "brush-face-room",
@@ -386,6 +415,56 @@ describe("scene document JSON", () => {
     expect(migratedDocument.modelInstances["model-instance-legacy-collider"].collision).toEqual({
       mode: "none",
       visible: false
+    });
+  });
+
+  it("migrates version 17 box brushes to include default whitebox rotation", () => {
+    const migratedDocument = migrateSceneDocument({
+      ...createEmptySceneDocument({ name: "Legacy Whitebox Transform Scene" }),
+      version: PLAYER_START_COLLIDER_SETTINGS_SCENE_DOCUMENT_VERSION,
+      brushes: {
+        "brush-legacy-room": {
+          id: "brush-legacy-room",
+          kind: "box",
+          center: {
+            x: 1.25,
+            y: 1.5,
+            z: -0.75
+          },
+          size: {
+            x: 2.5,
+            y: 3.25,
+            z: 4.75
+          },
+          faces: {
+            posX: { materialId: null, uv: createBoxBrush().faces.posX.uv },
+            negX: { materialId: null, uv: createBoxBrush().faces.negX.uv },
+            posY: { materialId: null, uv: createBoxBrush().faces.posY.uv },
+            negY: { materialId: null, uv: createBoxBrush().faces.negY.uv },
+            posZ: { materialId: null, uv: createBoxBrush().faces.posZ.uv },
+            negZ: { materialId: null, uv: createBoxBrush().faces.negZ.uv }
+          }
+        }
+      }
+    });
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.brushes["brush-legacy-room"]).toMatchObject({
+      center: {
+        x: 1.25,
+        y: 1.5,
+        z: -0.75
+      },
+      size: {
+        x: 2.5,
+        y: 3.25,
+        z: 4.75
+      },
+      rotationDegrees: {
+        x: 0,
+        y: 0,
+        z: 0
+      }
     });
   });
 
