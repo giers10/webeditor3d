@@ -88,18 +88,18 @@ function createFixedBodyForModelCollider(world: RAPIER.World, collider: Generate
 }
 
 function attachBrushCollider(world: RAPIER.World, collider: RuntimeBoxCollider) {
-  const center = {
-    x: (collider.min.x + collider.max.x) * 0.5,
-    y: (collider.min.y + collider.max.y) * 0.5,
-    z: (collider.min.z + collider.max.z) * 0.5
-  };
+  const body = world.createRigidBody(
+    RAPIER.RigidBodyDesc.fixed()
+      .setTranslation(collider.center.x, collider.center.y, collider.center.z)
+      .setRotation(createRapierQuaternion(collider.rotationDegrees))
+  );
   const halfExtents = {
-    x: (collider.max.x - collider.min.x) * 0.5,
-    y: (collider.max.y - collider.min.y) * 0.5,
-    z: (collider.max.z - collider.min.z) * 0.5
+    x: collider.size.x * 0.5,
+    y: collider.size.y * 0.5,
+    z: collider.size.z * 0.5
   };
 
-  world.createCollider(RAPIER.ColliderDesc.cuboid(halfExtents.x, halfExtents.y, halfExtents.z).setTranslation(center.x, center.y, center.z));
+  world.createCollider(RAPIER.ColliderDesc.cuboid(halfExtents.x, halfExtents.y, halfExtents.z), body);
 }
 
 function attachSimpleModelCollider(world: RAPIER.World, collider: GeneratedModelBoxCollider) {
