@@ -1490,6 +1490,25 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     };
   }
 
+  // v16 -> v17: Player Start entities gained authored collider settings.
+  if (source.version === IMPORTED_MODEL_COLLIDERS_SCENE_DOCUMENT_VERSION) {
+    const materials = readMaterialRegistry(source.materials, "materials");
+    const assets = readAssets(source.assets);
+
+    return {
+      version: PLAYER_START_COLLIDER_SETTINGS_SCENE_DOCUMENT_VERSION,
+      name: expectString(source.name, "name"),
+      world: readWorldSettings(source.world),
+      materials,
+      textures: expectEmptyCollection(source.textures, "textures"),
+      assets,
+      brushes: readBrushes(source.brushes, materials, false),
+      modelInstances: readModelInstances(source.modelInstances, assets),
+      entities: readEntities(source.entities, { legacySoundEmitter: false }),
+      interactionLinks: readInteractionLinks(source.interactionLinks)
+    };
+  }
+
   // v15 -> v16: model instances gained authored collider settings.
   if (source.version === ENTITY_NAMES_SCENE_DOCUMENT_VERSION) {
     const materials = readMaterialRegistry(source.materials, "materials");
