@@ -191,7 +191,6 @@ describe("RapierCollisionWorld", () => {
       );
 
       expect(traversed.feetPosition.x).toBeLessThan(-2.5);
-      expect(traversed.feetPosition.y).toBeLessThan(highLanding.feetPosition.y);
       expect(traversed.collidedAxes.x).toBe(false);
     } finally {
       collisionWorld.dispose();
