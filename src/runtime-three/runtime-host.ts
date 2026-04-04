@@ -40,7 +40,6 @@ import {
 
 import { FirstPersonNavigationController } from "./first-person-navigation-controller";
 import type { FirstPersonTelemetry, NavigationController, RuntimeControllerContext } from "./navigation-controller";
-import { FIRST_PERSON_PLAYER_SHAPE } from "./player-collision";
 import { RapierCollisionWorld } from "./rapier-collision-world";
 import { RuntimeInteractionSystem, type RuntimeInteractionDispatcher, type RuntimeInteractionPrompt } from "./runtime-interaction-system";
 import { RuntimeAudioSystem } from "./runtime-audio-system";
@@ -176,7 +175,7 @@ export class RuntimeHost {
     this.rebuildLocalLights(runtimeScene.localLights);
     this.rebuildBrushMeshes(runtimeScene.brushes);
     this.rebuildModelInstances(runtimeScene.modelInstances);
-    void this.rebuildCollisionWorld(runtimeScene.colliders);
+    void this.rebuildCollisionWorld(runtimeScene.colliders, runtimeScene.playerCollider);
     this.audioSystem.loadScene(runtimeScene);
   }
 
@@ -314,13 +313,13 @@ export class RuntimeHost {
     this.applyShadowState();
   }
 
-  private async rebuildCollisionWorld(colliders: RuntimeSceneDefinition["colliders"]) {
+  private async rebuildCollisionWorld(colliders: RuntimeSceneDefinition["colliders"], playerShape: RuntimeSceneDefinition["playerCollider"]) {
     const requestId = ++this.collisionWorldRequestId;
 
     this.clearCollisionWorld();
 
     try {
-      const nextCollisionWorld = await RapierCollisionWorld.create(colliders, FIRST_PERSON_PLAYER_SHAPE);
+      const nextCollisionWorld = await RapierCollisionWorld.create(colliders, playerShape);
 
       if (requestId !== this.collisionWorldRequestId) {
         nextCollisionWorld.dispose();
