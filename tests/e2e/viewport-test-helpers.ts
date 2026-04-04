@@ -159,19 +159,14 @@ export async function clickViewport(page: Page, panelId: string = DEFAULT_VIEWPO
 }
 
 export async function clickViewportAtRatio(page: Page, panelId: string, xRatio: number, yRatio: number) {
-  const viewportCanvas = getViewportCanvas(page, panelId);
-  const box = await viewportCanvas.boundingBox();
+  const viewportPanel = getViewportPanel(page, panelId);
+  const box = await viewportPanel.boundingBox();
 
   if (box === null) {
-    throw new Error(`Missing viewport canvas for ${panelId}.`);
+    throw new Error(`Missing viewport panel for ${panelId}.`);
   }
 
-  await viewportCanvas.click({
-    position: {
-      x: box.width * xRatio,
-      y: box.height * yRatio
-    }
-  });
+  await page.mouse.click(box.x + box.width * xRatio, box.y + box.height * yRatio);
 }
 
 export async function setSharedBoxCreationPreview(
