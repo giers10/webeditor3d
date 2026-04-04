@@ -455,7 +455,7 @@ function createBrushTransformTarget(document: SceneDocument, brushId: string): T
   if (brush === undefined || brush.kind !== "box") {
     return {
       target: null,
-      message: "Select a supported box brush before transforming it."
+      message: "Select a supported whitebox box before transforming it."
     };
   }
 
