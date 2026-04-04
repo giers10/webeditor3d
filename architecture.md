@@ -167,6 +167,21 @@ Placed imported models are not typed entities.
 - placed scene instances of those assets live in `modelInstances`
 - typed runtime/editor objects such as `PlayerStart` or `TriggerVolume` live in `entities`
 
+### Imported model collision scope
+
+Imported model collision should extend the current architecture, not replace it.
+
+- authored collision settings belong on `modelInstances`
+- generated collider data is derived from:
+  - imported model asset geometry
+  - model instance transform
+  - authored collision settings
+- do not make cooked/generated collider bytes the canonical source document by default
+- for non-box imported-model collider support and broad-phase/narrow-phase pruning, prefer integrating Rapier as a collision/query subsystem over inventing custom collision code in-house
+- broad-phase and narrow-phase pair pruning should be delegated to that collision/query layer rather than re-implemented manually in app code
+- do not turn this into a full general-purpose physics sandbox unless the product actually needs one
+- near-term slices may adapt or replace the current handcrafted runner collision path so brushes and imported models can participate in one coherent collision/query system
+
 ### Trigger/action/target scope
 
 Keep interaction links explicit and typed.
@@ -343,6 +358,8 @@ interface SceneDocument {
   interactionLinks: Record<string, InteractionLink>;
 }
 ```
+
+Imported model collision settings should be represented canonically on the relevant `ModelInstance` records or a tightly related typed sub-structure, not as hidden renderer/runtime state.
 
 `WorldSettings` is the correct home for:
 
@@ -525,6 +542,14 @@ Responsibilities:
 - `AnimationSystem`
 - `RuntimeUIBridge`
 
+### Collision strategy progression
+
+Near-term runtime collision is intentionally narrower than a full game-engine physics stack.
+
+- early runner slices use deterministic explicit collision data for navigation and authored interactions
+- imported model collision should first plug into that same runtime build/query path
+- only introduce a broader physics world when dynamic rigid bodies, richer contact response, or other product requirements make it necessary
+
 ### Navigation modes
 
 Initial modes:
@@ -696,6 +721,59 @@ There should be a clear distinction between:
 - asset record
 - model instance
 - prefab definition
+
+### Imported model collision authoring
+
+Imported models need an explicit authored collision path that coexists with brush collision.
+
+Recommended authored settings shape:
+
+```ts
+type ModelInstanceCollisionMode =
+  | "none"
+  | "terrain"
+  | "static"
+  | "dynamic"
+  | "simple";
+
+interface ModelInstanceCollisionSettings {
+  mode: ModelInstanceCollisionMode;
+  visible: boolean;
+  simpleShape?: "box" | "sphere" | "capsule" | "convexHull";
+  terrainResolution?: number;
+  dynamicQuality?: "low" | "medium" | "high";
+}
+```
+
+Rules:
+
+- these settings are canonical authoring data
+- generated collider geometry is derived/cacheable data
+- collision generation is triggered by authored settings, not hidden import-time guesses
+- `modelInstances` remain separate from `entities`
+- collision debug rendering should be visually inspectable in editor and runner when enabled
+- preferred implementation path is:
+  - Rapier 3D WASM provides the collision/query layer
+  - Rapier owns broad-phase and narrow-phase pruning
+  - the editor document owns authored collider settings
+  - generated collider geometry/handles are derived runtime/cache data
+- collision modes should mean exactly:
+  - `none` = no collider
+  - `terrain` = heightfield collider, static only
+  - `static` = triangle mesh collider, fixed only
+  - `dynamic` = convex decomposition into compound collider, dynamic/kinematic capable
+  - `simple` = one cheap primitive or one convex hull
+- initial support may be staged, but unsupported modes must fail clearly instead of silently degrading to random approximations
+
+### Collision strategy progression
+
+- early slices used handcrafted box-based player collision because only brush boxes existed
+- once imported-model colliders require terrain, trimesh, convex hull, or compound collision, the preferred next step is a Rapier-backed collision/query layer
+- this does not require a full gameplay physics sandbox in the same slice
+- a valid intermediate state is:
+  - fixed/queryable colliders for brushes and imported models
+  - existing first-person movement adapted to query against Rapier-backed colliders
+  - dynamic collider generation represented canonically even if full rigidbody simulation lands later
 
 ---
 
@@ -905,10 +983,18 @@ SceneDocument
 -> validate
 -> resolve assets/materials/entities/model instances
 -> build brush meshes
+-> build model-instance collider data
 -> build colliders
 -> build runtime entity graph
 -> assemble runtime scene package
 ```
+
+In the near-term architecture, `build colliders` may include a mix of:
+
+- brush-derived colliders
+- imported-model-instance-derived colliders
+
+without requiring a full general-purpose physics world.
 
 ### Project package build stages
 

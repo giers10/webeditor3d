@@ -2,7 +2,7 @@ import { Euler, Vector3 } from "three";
 
 import type { Vec3 } from "../core/vector";
 
-import { FIRST_PERSON_PLAYER_SHAPE, resolveFirstPersonMotion } from "./player-collision";
+import { FIRST_PERSON_PLAYER_SHAPE } from "./player-collision";
 import type { NavigationController, RuntimeControllerContext } from "./navigation-controller";
 
 const LOOK_SENSITIVITY = 0.0022;
@@ -116,16 +116,21 @@ export class FirstPersonNavigationController implements NavigationController {
 
     this.verticalVelocity -= GRAVITY * dt;
 
-    const resolvedMotion = resolveFirstPersonMotion(
+    const resolvedMotion = this.context.resolveFirstPersonMotion(
       this.feetPosition,
       {
         x: horizontalX,
         y: this.verticalVelocity * dt,
         z: horizontalZ
       },
-      FIRST_PERSON_PLAYER_SHAPE,
-      this.context.getRuntimeScene().colliders
+      FIRST_PERSON_PLAYER_SHAPE
     );
+
+    if (resolvedMotion === null) {
+      this.updateCameraTransform();
+      this.publishTelemetry();
+      return;
+    }
 
     this.feetPosition = resolvedMotion.feetPosition;
     this.grounded = resolvedMotion.grounded;

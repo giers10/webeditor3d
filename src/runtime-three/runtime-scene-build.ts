@@ -1,3 +1,4 @@
+import type { LoadedModelAsset } from "../assets/gltf-model-import";
 import type { Vec3 } from "../core/vector";
 import { getModelInstances } from "../assets/model-instances";
 import type { BoxBrush, BoxFaceId, FaceUvState } from "../document/brushes";
@@ -5,6 +6,7 @@ import type { SceneDocument } from "../document/scene-document";
 import { cloneWorldSettings, type WorldSettings } from "../document/world-settings";
 import { getEntityInstances, getPrimaryPlayerStartEntity, type EntityInstance } from "../entities/entity-instances";
 import { getBoxBrushBounds } from "../geometry/box-brush";
+import { buildGeneratedModelCollider, type GeneratedColliderBounds, type GeneratedModelCollider } from "../geometry/model-instance-collider-generation";
 import { cloneInteractionLink, getInteractionLinks, type InteractionLink } from "../interactions/interaction-links";
 import { cloneMaterialDef, type MaterialDef } from "../materials/starter-material-library";
 import { cloneFaceUvState } from "../document/brushes";
@@ -28,10 +30,13 @@ export interface RuntimeBoxBrushInstance {
 
 export interface RuntimeBoxCollider {
   kind: "box";
+  source: "brush";
   brushId: string;
   min: Vec3;
   max: Vec3;
 }
+
+export type RuntimeSceneCollider = RuntimeBoxCollider | GeneratedModelCollider;
 
 export interface RuntimeSceneBounds {
   min: Vec3;
@@ -132,7 +137,7 @@ export interface RuntimeSceneDefinition {
   world: WorldSettings;
   localLights: RuntimeLocalLightCollection;
   brushes: RuntimeBoxBrushInstance[];
-  colliders: RuntimeBoxCollider[];
+  colliders: RuntimeSceneCollider[];
   sceneBounds: RuntimeSceneBounds | null;
   modelInstances: RuntimeModelInstance[];
   entities: RuntimeEntityCollection;
@@ -143,6 +148,7 @@ export interface RuntimeSceneDefinition {
 
 interface BuildRuntimeSceneOptions {
   navigationMode?: RuntimeNavigationMode;
+  loadedModelAssets?: Record<string, LoadedModelAsset>;
 }
 
 function cloneVec3(vector: Vec3): Vec3 {
@@ -213,6 +219,7 @@ function buildRuntimeCollider(brush: BoxBrush): RuntimeBoxCollider {
 
   return {
     kind: "box",
+    source: "brush",
     brushId: brush.id,
     min: cloneVec3(bounds.min),
     max: cloneVec3(bounds.max)
@@ -232,21 +239,37 @@ function buildRuntimeModelInstance(modelInstance: SceneDocument["modelInstances"
   };
 }
 
-function combineColliderBounds(colliders: RuntimeBoxCollider[]): RuntimeSceneBounds | null {
+function getColliderBounds(collider: RuntimeSceneCollider): GeneratedColliderBounds {
+  if (collider.source === "brush") {
+    return {
+      min: cloneVec3(collider.min),
+      max: cloneVec3(collider.max)
+    };
+  }
+
+  return {
+    min: cloneVec3(collider.worldBounds.min),
+    max: cloneVec3(collider.worldBounds.max)
+  };
+}
+
+function combineColliderBounds(colliders: RuntimeSceneCollider[]): RuntimeSceneBounds | null {
   if (colliders.length === 0) {
     return null;
   }
 
-  const min = cloneVec3(colliders[0].min);
-  const max = cloneVec3(colliders[0].max);
+  const firstBounds = getColliderBounds(colliders[0]);
+  const min = cloneVec3(firstBounds.min);
+  const max = cloneVec3(firstBounds.max);
 
   for (const collider of colliders.slice(1)) {
-    min.x = Math.min(min.x, collider.min.x);
-    min.y = Math.min(min.y, collider.min.y);
-    min.z = Math.min(min.z, collider.min.z);
-    max.x = Math.max(max.x, collider.max.x);
-    max.y = Math.max(max.y, collider.max.y);
-    max.z = Math.max(max.z, collider.max.z);
+    const bounds = getColliderBounds(collider);
+    min.x = Math.min(min.x, bounds.min.x);
+    min.y = Math.min(min.y, bounds.min.y);
+    min.z = Math.min(min.z, bounds.min.z);
+    max.x = Math.max(max.x, bounds.max.x);
+    max.y = Math.max(max.y, bounds.max.y);
+    max.z = Math.max(max.z, bounds.max.z);
   }
 
   return {
@@ -396,15 +419,33 @@ function assertNever(value: never): never {
 }
 
 export function buildRuntimeSceneFromDocument(document: SceneDocument, options: BuildRuntimeSceneOptions = {}): RuntimeSceneDefinition {
-  assertRuntimeSceneBuildable(document, options.navigationMode ?? "orbitVisitor");
+  assertRuntimeSceneBuildable(document, {
+    navigationMode: options.navigationMode ?? "orbitVisitor",
+    loadedModelAssets: options.loadedModelAssets
+  });
 
   const brushes = Object.values(document.brushes).map((brush) => buildRuntimeBrush(brush, document));
-  const colliders = Object.values(document.brushes).map((brush) => buildRuntimeCollider(brush));
-  const sceneBounds = combineColliderBounds(colliders);
+  const colliders: RuntimeSceneCollider[] = Object.values(document.brushes).map((brush) => buildRuntimeCollider(brush));
   const modelInstances = getModelInstances(document.modelInstances).map(buildRuntimeModelInstance);
   const collections = buildRuntimeSceneCollections(document);
   const interactionLinks = getInteractionLinks(document.interactionLinks).map((link) => cloneInteractionLink(link));
   const playerStartEntity = getPrimaryPlayerStartEntity(document.entities);
+
+  for (const modelInstance of getModelInstances(document.modelInstances)) {
+    const asset = document.assets[modelInstance.assetId];
+
+    if (asset === undefined || asset.kind !== "model") {
+      continue;
+    }
+
+    const generatedCollider = buildGeneratedModelCollider(modelInstance, asset, options.loadedModelAssets?.[modelInstance.assetId]);
+
+    if (generatedCollider !== null) {
+      colliders.push(generatedCollider);
+    }
+  }
+
+  const combinedSceneBounds = combineColliderBounds(colliders);
   const playerStart =
     playerStartEntity === null
       ? null
@@ -419,14 +460,14 @@ export function buildRuntimeSceneFromDocument(document: SceneDocument, options: 
     localLights: collections.localLights,
     brushes,
     colliders,
-    sceneBounds,
+    sceneBounds: combinedSceneBounds,
     modelInstances,
     entities: collections.entities,
     interactionLinks,
     playerStart,
     spawn:
       playerStart === null
-        ? buildFallbackSpawn(sceneBounds)
+        ? buildFallbackSpawn(combinedSceneBounds)
         : {
             source: "playerStart",
             entityId: playerStart.entityId,

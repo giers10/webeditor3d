@@ -342,6 +342,40 @@ The tool becomes more than brush-only by supporting imported assets, authored li
 
 ---
 
+### Slice 3.1B — Imported model collider authoring
+
+#### Deliverables
+
+- canonical collision settings on model instances
+- explicit collision mode selector for:
+  - none
+  - terrain
+  - static
+  - dynamic
+  - simple
+- collision visibility/debug toggle
+- generated collider data derived from imported model geometry plus authored settings
+- Rapier-backed collision/query integration for imported-model colliders and broad-phase/narrow-phase handling
+- runtime build support for imported-model colliders in the runner collision path
+- editor/runner debug visualization of generated collision where enabled
+
+#### Acceptance criteria
+
+- author can choose a collision mode per model instance in the inspector
+- imported models can participate in runner collision without hand-authored invisible geometry
+- collider modes mean exactly:
+  - none = no collider
+  - terrain = heightfield collider, static only
+  - static = triangle mesh collider, fixed only
+  - dynamic = convex decomposition into compound collider, dynamic/kinematic capable
+  - simple = one cheap primitive or one convex hull
+- generated collision survives save/load through canonical settings and deterministic rebuild behavior
+- broad-phase and narrow-phase pruning are handled by Rapier instead of app-specific custom collision code
+- the slice does not require a full gameplay-physics sandbox
+- unsupported or partial modes fail clearly instead of silently pretending to work
+
+---
+
 ### Slice 3.2 — Local lights and skyboxes
 
 #### Deliverables
@@ -593,6 +627,7 @@ A slice is complete only when:
 - per-face UV persistence
 - picking accuracy
 - collision generation from brush data
+- collision generation from imported model data
 - imported asset/material compatibility
 - browser audio unlock behavior
 - input edge cases across browsers

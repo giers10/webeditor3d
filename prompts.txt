@@ -698,6 +698,100 @@ Please implement fully and report:
 
 ---
 
+## Prompt 8B — Imported model collider authoring
+
+```text
+You are implementing Slice 3.1B — Imported model collider authoring.
+
+Read and follow:
+- AGENTS.md
+- CHAT_CONTEXT.md
+- architecture.md
+- roadmap.md
+- testing.md
+
+Before coding:
+- Inspect the current repo and extend the existing implementation.
+- Build on the existing model asset / model instance path. Do not merge model instances into entities.
+- Integrate with the existing runtime scene build, but use Rapier 3D WASM as the collision/query layer for this slice instead of inventing custom broad-phase/narrow-phase logic.
+- Do not turn this slice into a full gameplay-physics sandbox or broad entity rigidbody rewrite.
+- If you change persisted schema, update versioning, migrations, and at least one compatibility test.
+
+Current goal:
+Make imported model instances participate in collision by adding explicit authored collider settings, generated collider data, Rapier-backed collision/query integration, and runtime/debug support that fits the current codebase.
+
+Requirements:
+- Add canonical collision settings to model instances.
+- Add an inspector UI for imported model instances with an explicit collision mode selector:
+  - none
+  - terrain
+  - static
+  - dynamic
+  - simple
+- Add a collision visibility/debug toggle for model instances.
+- Generated collider data must be derived from:
+  - imported model asset geometry
+  - model instance transform
+  - authored collision settings
+- Keep the authored settings canonical. Do not make cooked/generated collider bytes the source of truth in the document.
+- If you add caching, keep it explicit and derived.
+- Use Rapier 3D WASM for broad-phase/narrow-phase pruning and collision/query evaluation in this slice.
+
+Collision-mode expectations:
+- `none`:
+  - no collider
+- `terrain`:
+  - heightfield collider
+  - static only
+  - if the source mesh cannot support the chosen terrain path cleanly, fail clearly with diagnostics instead of silently pretending it worked
+- `static`:
+  - triangle mesh collider
+  - fixed only
+- `dynamic`:
+  - convex decomposition into a compound collider
+  - dynamic/kinematic capable representation
+  - this slice does not require a full general rigidbody gameplay system, but the generated representation must be explicit and correct
+  - if actual runtime behavior is limited in this slice, document exactly what works now
+- `simple`:
+  - one cheap primitive or one convex hull
+  - keep the initial option set small and explicit if needed
+
+Runtime/build requirements:
+- Extend runtime scene build so imported model colliders participate in one coherent Rapier-backed collision/query path together with brush-authored world collision.
+- Broad-phase and narrow-phase handling should come from Rapier, not app-specific custom collision pruning code.
+- Keep first-person traversal/collision working. It is acceptable to adapt the current player collision path to query against Rapier-backed colliders instead of the handwritten box-only collision path.
+- Add debug visualization for generated imported-model collision in editor and/or runner when the visibility toggle is enabled.
+- Keep the implementation understandable and explicit.
+
+Important:
+- Do not build a giant general-purpose physics framework around Rapier in this slice.
+- Do not add arbitrary rigidbody components to every scene object just because Rapier is present.
+- Do not hide collider generation behind import-time magic; it should be driven by authored collision settings.
+- Do not treat the render mesh as automatically equal to the collision mesh in all modes.
+- Keep model-instance collision separate from brush collision and separate from typed entity schemas.
+
+Testing expectations:
+- Round-trip tests for model-instance collision settings
+- Migration/compatibility test if schema changes
+- Validation/build tests for invalid or unsupported collision-mode assumptions
+- Geometry/runtime tests for generated collider outputs where practical
+- Runtime/domain tests proving the generated colliders participate in the actual Rapier-backed collision/query path
+- Runner/domain tests proving imported-model collision works together with existing brush/world collision
+- Browser/e2e or manual verification for collision debug visibility if practical
+
+Please implement fully and report:
+- model-instance collision schema/settings
+- supported behavior for each collision mode
+- how generated collider data is represented and rebuilt/cached
+- how Rapier is integrated into the current runner collision/query architecture
+- how broad-phase/narrow-phase responsibilities are handled
+- how debug visibility works
+- tests added or updated
+- what limitations remain, especially for `terrain` and `dynamic`
+```
+
+---
+
 ## Prompt 9 — Animation playback
 
 ```text

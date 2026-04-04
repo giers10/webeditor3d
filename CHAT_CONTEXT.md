@@ -113,6 +113,10 @@ Per face, keep explicit UV transform values such as:
 - imported assets live in the asset registry
 - placed imported models live in `modelInstances`
 - typed scene objects like `PlayerStart`, `TriggerVolume`, or lights live in `entities`
+- collision authoring for imported models belongs on `modelInstances`, not asset records
+- generated imported-model collider data should be derived from asset geometry + instance transform + authored settings
+- for imported-model collider types beyond simple boxes, prefer a Rapier-backed collision/query layer over extending the handcrafted collision code indefinitely
+- broad-phase and narrow-phase pruning should come from that collision/query layer, not custom app code
 
 ### Interaction scope
 

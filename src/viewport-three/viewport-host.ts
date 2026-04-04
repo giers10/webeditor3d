@@ -341,6 +341,7 @@ export class ViewportHost {
     this.renderer.domElement.addEventListener("pointerleave", this.handlePointerLeave);
     this.renderer.domElement.addEventListener("wheel", this.handleWheel, { passive: false });
     this.renderer.domElement.addEventListener("auxclick", this.handleAuxClick);
+    this.renderer.domElement.addEventListener("contextmenu", this.handleContextMenu);
     window.addEventListener("pointermove", this.handleWindowPointerMove);
     this.resize();
 
@@ -554,6 +555,7 @@ export class ViewportHost {
     this.renderer.domElement.removeEventListener("pointerleave", this.handlePointerLeave);
     this.renderer.domElement.removeEventListener("wheel", this.handleWheel);
     this.renderer.domElement.removeEventListener("auxclick", this.handleAuxClick);
+    this.renderer.domElement.removeEventListener("contextmenu", this.handleContextMenu);
     window.removeEventListener("pointermove", this.handleWindowPointerMove);
     this.clearLocalLights();
     this.clearBrushMeshes();
@@ -2289,6 +2291,16 @@ export class ViewportHost {
       return;
     }
 
+    if (event.button === 2) {
+      event.preventDefault();
+
+      if (this.currentTransformSession.kind === "active") {
+        this.transformCancelHandler?.();
+      }
+
+      return;
+    }
+
     if (event.button !== 0) {
       return;
     }
@@ -2657,9 +2669,13 @@ export class ViewportHost {
   };
 
   private handleAuxClick = (event: MouseEvent) => {
-    if (event.button === 1) {
+    if (event.button === 1 || event.button === 2) {
       event.preventDefault();
     }
+  };
+
+  private handleContextMenu = (event: MouseEvent) => {
+    event.preventDefault();
   };
 
   private findModelInstanceId(object: Object3D): string | null {

@@ -40,6 +40,8 @@ import {
 
 import { FirstPersonNavigationController } from "./first-person-navigation-controller";
 import type { FirstPersonTelemetry, NavigationController, RuntimeControllerContext } from "./navigation-controller";
+import { FIRST_PERSON_PLAYER_SHAPE } from "./player-collision";
+import { RapierCollisionWorld } from "./rapier-collision-world";
 import { RuntimeInteractionSystem, type RuntimeInteractionDispatcher, type RuntimeInteractionPrompt } from "./runtime-interaction-system";
 import { RuntimeAudioSystem } from "./runtime-audio-system";
 import { OrbitVisitorNavigationController } from "./orbit-visitor-navigation-controller";
@@ -85,6 +87,8 @@ export class RuntimeHost {
   private readonly controllerContext: RuntimeControllerContext;
   private readonly renderer: WebGLRenderer | null;
   private runtimeScene: RuntimeSceneDefinition | null = null;
+  private collisionWorld: RapierCollisionWorld | null = null;
+  private collisionWorldRequestId = 0;
   private currentWorld: RuntimeSceneDefinition["world"] | null = null;
   private currentAdvancedRenderingSettings: AdvancedRenderingSettings | null = null;
   private advancedRenderingComposer: EffectComposer | null = null;
@@ -131,6 +135,7 @@ export class RuntimeHost {
 
         return this.runtimeScene;
       },
+      resolveFirstPersonMotion: (feetPosition, motion, shape) => this.collisionWorld?.resolveFirstPersonMotion(feetPosition, motion, shape) ?? null,
       setRuntimeMessage: (message) => {
         if (message === this.currentRuntimeMessage) {
           return;
@@ -171,6 +176,7 @@ export class RuntimeHost {
     this.rebuildLocalLights(runtimeScene.localLights);
     this.rebuildBrushMeshes(runtimeScene.brushes);
     this.rebuildModelInstances(runtimeScene.modelInstances);
+    void this.rebuildCollisionWorld(runtimeScene.colliders);
     this.audioSystem.loadScene(runtimeScene);
   }
 
@@ -244,6 +250,8 @@ export class RuntimeHost {
     this.clearLocalLights();
     this.clearBrushMeshes();
     this.clearModelInstances();
+    this.collisionWorldRequestId += 1;
+    this.clearCollisionWorld();
     this.audioSystem.dispose();
     this.advancedRenderingComposer?.dispose();
     this.advancedRenderingComposer = null;
@@ -304,6 +312,36 @@ export class RuntimeHost {
     }
 
     this.applyShadowState();
+  }
+
+  private async rebuildCollisionWorld(colliders: RuntimeSceneDefinition["colliders"]) {
+    const requestId = ++this.collisionWorldRequestId;
+
+    this.clearCollisionWorld();
+
+    try {
+      const nextCollisionWorld = await RapierCollisionWorld.create(colliders, FIRST_PERSON_PLAYER_SHAPE);
+
+      if (requestId !== this.collisionWorldRequestId) {
+        nextCollisionWorld.dispose();
+        return;
+      }
+
+      this.collisionWorld = nextCollisionWorld;
+    } catch (error) {
+      if (requestId !== this.collisionWorldRequestId) {
+        return;
+      }
+
+      const message = error instanceof Error ? error.message : "Runner collision initialization failed.";
+      this.currentRuntimeMessage = `Runner collision initialization failed: ${message}`;
+      this.runtimeMessageHandler?.(this.currentRuntimeMessage);
+    }
+  }
+
+  private clearCollisionWorld() {
+    this.collisionWorld?.dispose();
+    this.collisionWorld = null;
   }
 
   private syncAdvancedRenderingComposer(settings: AdvancedRenderingSettings) {

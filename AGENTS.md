@@ -119,6 +119,19 @@ These defaults are intentionally fixed for the early slices unless a later slice
 - placed imported models are **model instances**, not typed entities
 - keep model instances in a document collection separate from `entities`
 
+### Imported model collision scope
+
+- collision authoring for imported models belongs on `modelInstances`, not on asset records
+- the canonical source of truth is authored collision settings, not cooked collider bytes
+- generated collider data may be cached or rebuilt, but it is derived from:
+  - imported model asset geometry
+  - model instance transform
+  - authored collision settings
+- for imported-model collider support beyond simple boxes, prefer integrating a real collision/query library such as Rapier over inventing custom broad-phase/narrow-phase code in-house
+- let the collision/query layer own broad-phase and narrow-phase pruning instead of re-implementing that manually in app code
+- do not turn this slice into a full physics sandbox or general rigidbody architecture rewrite unless the roadmap explicitly asks for that
+- near-term slices may adapt or replace the current handcrafted runner collision path where necessary so brush and imported-model colliders can participate in one coherent collision/query system
+
 ### Runtime interaction scope
 
 - keep trigger/action/target links explicit and typed
@@ -161,6 +174,7 @@ Use these terms consistently:
 - **Texture**: image resource backing material channels
 - **Asset**: imported external resource, usually GLB/GLTF or audio and related media
 - **Model Instance**: placed scene instance of an imported asset
+- **Collider**: runtime collision representation derived from brushes or imported models
 - **Prefab**: reusable asset/entity package placeable in scenes
 - **Entity**: typed scene object with runtime/editor semantics
 - **Project Package**: portable editable bundle containing canonical scene JSON plus referenced assets
@@ -168,7 +182,7 @@ Use these terms consistently:
 - **Runner**: browser runtime that loads and plays scenes
 - **Viewport**: editor rendering surface
 - **Command**: undoable state transition
-- **Tool**: editor interaction mode such as select, move, box-create, face-edit
+- **Tool**: editor interaction mode such as select, create, transform, or face-edit
 - **Build**: deterministic transformation from document -> runtime scene data
 - **Export**: downstream transformation to deployable or interchange deliverables such as runner packages or optional later GLB
 
@@ -314,6 +328,21 @@ Do not store raw three.js objects inside canonical document state.
 - entity defaults must be centralized
 - entity validation must happen at document/build boundaries
 - model instances remain separate from entities
+
+### Imported model collision rules
+
+- collision settings for imported models live on `modelInstances`
+- supported collision modes must be explicit and typed
+- generated collision geometry is derived data, not the canonical source document
+- collision debug visibility is editor/runtime UI state driven by authored settings, not a hidden renderer-only toggle
+- avoid implicit “always collide with render mesh” behavior
+- if broad-phase/narrow-phase pruning or non-box collider support is needed, prefer Rapier over ad hoc custom collision math
+- collision modes mean:
+  - `none` = no collider
+  - `terrain` = heightfield collider, static only
+  - `static` = triangle mesh collider, fixed only
+  - `dynamic` = convex decomposition into compound collider, dynamic/kinematic capable
+  - `simple` = one cheap primitive or one convex hull
 
 ---
 

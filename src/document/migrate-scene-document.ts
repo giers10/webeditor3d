@@ -1,7 +1,10 @@
 import { createStarterMaterialRegistry, type MaterialDef, type MaterialPattern } from "../materials/starter-material-library";
 import {
+  createModelInstanceCollisionSettings,
   createModelInstance,
+  isModelInstanceCollisionMode,
   normalizeModelInstanceName,
+  type ModelInstanceCollisionSettings,
   type ModelInstance
 } from "../assets/model-instances";
 import {
@@ -51,6 +54,7 @@ import {
   FACE_MATERIALS_SCENE_DOCUMENT_VERSION,
   FIRST_ROOM_POLISH_SCENE_DOCUMENT_VERSION,
   FOUNDATION_SCENE_DOCUMENT_VERSION,
+  IMPORTED_MODEL_COLLIDERS_SCENE_DOCUMENT_VERSION,
   LOCAL_LIGHTS_AND_SKYBOX_SCENE_DOCUMENT_VERSION,
   MODEL_ASSET_PIPELINE_SCENE_DOCUMENT_VERSION,
   RUNNER_V1_SCENE_DOCUMENT_VERSION,
@@ -503,6 +507,23 @@ function readAssets(value: unknown): SceneDocument["assets"] {
   return assets;
 }
 
+function readModelInstanceCollisionSettings(value: unknown, label: string): ModelInstanceCollisionSettings {
+  if (value === undefined) {
+    return createModelInstanceCollisionSettings();
+  }
+
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  const mode = readOptionalAllowedValue(value.mode, `${label}.mode`, "none", isModelInstanceCollisionMode);
+
+  return createModelInstanceCollisionSettings({
+    mode,
+    visible: readOptionalBoolean(value.visible, `${label}.visible`, false)
+  });
+}
+
 function readModelInstance(value: unknown, label: string, assets: SceneDocument["assets"]): ModelInstance {
   if (!isRecord(value)) {
     throw new Error(`${label} must be an object.`);
@@ -526,6 +547,7 @@ function readModelInstance(value: unknown, label: string, assets: SceneDocument[
     position: readVec3(value.position, `${label}.position`),
     rotationDegrees: readVec3(value.rotationDegrees, `${label}.rotationDegrees`),
     scale: readVec3(value.scale, `${label}.scale`),
+    collision: readModelInstanceCollisionSettings(value.collision, `${label}.collision`),
     animationClipName: (() => {
       const raw = expectOptionalString(value.animationClipName, `${label}.animationClipName`);
       if (raw === undefined) return undefined;
@@ -1430,6 +1452,25 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
 
     return {
       version: SCENE_DOCUMENT_VERSION,
+      name: expectString(source.name, "name"),
+      world: readWorldSettings(source.world),
+      materials,
+      textures: expectEmptyCollection(source.textures, "textures"),
+      assets,
+      brushes: readBrushes(source.brushes, materials, false),
+      modelInstances: readModelInstances(source.modelInstances, assets),
+      entities: readEntities(source.entities, { legacySoundEmitter: false }),
+      interactionLinks: readInteractionLinks(source.interactionLinks)
+    };
+  }
+
+  // v15 -> v16: model instances gained authored collider settings.
+  if (source.version === ENTITY_NAMES_SCENE_DOCUMENT_VERSION) {
+    const materials = readMaterialRegistry(source.materials, "materials");
+    const assets = readAssets(source.assets);
+
+    return {
+      version: IMPORTED_MODEL_COLLIDERS_SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
       world: readWorldSettings(source.world),
       materials,

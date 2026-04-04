@@ -341,6 +341,46 @@ Do not:
 
 ---
 
+## Slice Body 8B — Imported model collider authoring
+
+```text
+Relevant docs to inspect after the common preamble:
+- architecture.md: model instances, assets, runtime build, collision scope
+- roadmap.md: Slice 3.1B
+- testing.md: serialization, geometry/runtime, collision coverage
+
+Implement Slice 3.1B.
+
+Requirements:
+- canonical collision settings on model instances
+- inspector selector for:
+  - none
+  - terrain
+  - static
+  - dynamic
+  - simple
+- collision visibility/debug toggle
+- generated collider data derived from model asset geometry + model instance transform + authored settings
+- Rapier-backed collision/query integration for broad-phase/narrow-phase handling
+- runtime integration with the existing runner collision path
+- debug visualization for generated collision where enabled
+- explicit collider semantics:
+  - none = no collider
+  - terrain = heightfield collider, static only
+  - static = triangle mesh collider, fixed only
+  - dynamic = convex decomposition into compound collider, dynamic/kinematic capable
+  - simple = one cheap primitive or one convex hull
+
+Constraints:
+- do not merge model instances into entities
+- use Rapier instead of inventing custom broad-phase/narrow-phase code
+- do not rewrite the runner into a full gameplay-physics sandbox in this slice
+- keep authored settings canonical and generated collider data derived/cacheable
+- if terrain/dynamic support is partial, fail clearly and document it
+```
+
+---
+
 ## Slice Body 9 — Animation playback
 
 ```text

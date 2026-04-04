@@ -6,6 +6,7 @@ import {
   type ProjectAssetRecord
 } from "../assets/project-assets";
 import type { ModelInstance } from "../assets/model-instances";
+import { isModelInstanceCollisionMode } from "../assets/model-instances";
 import {
   type InteractableEntity,
   type PointLightEntity,
@@ -644,6 +645,28 @@ function validateModelInstance(modelInstance: ModelInstance, path: string, docum
 
   if (!hasPositiveFiniteVec3(modelInstance.scale)) {
     diagnostics.push(createDiagnostic("error", "invalid-model-instance-scale", "Model instance scales must remain finite and positive on every axis.", `${path}.scale`));
+  }
+
+  if (!isModelInstanceCollisionMode(modelInstance.collision.mode)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-model-instance-collision-mode",
+        "Model instance collision mode must be one of none, terrain, static, dynamic, or simple.",
+        `${path}.collision.mode`
+      )
+    );
+  }
+
+  if (!isBoolean(modelInstance.collision.visible)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-model-instance-collision-visibility",
+        "Model instance collision visibility must be a boolean.",
+        `${path}.collision.visible`
+      )
+    );
   }
 
   const asset = document.assets[modelInstance.assetId];

@@ -37,10 +37,11 @@ Highest-priority confidence areas:
 4. per-face material/UV persistence
 5. runtime build correctness
 6. asset import survival
-7. project package portability once binary assets exist
-8. runner navigation/input reliability
-9. spatial audio and interaction basics
-10. critical regressions caught in CI
+7. imported-model collider generation and runtime collision correctness
+8. project package portability once binary assets exist
+9. runner navigation/input reliability
+10. spatial audio and interaction basics
+11. critical regressions caught in CI
 
 ---
 
@@ -158,6 +159,8 @@ Scope:
 - face generation
 - topology expectations
 - collision mesh generation
+- imported-model collider generation
+- Rapier-backed collider/query integration where relevant
 - UV projection generation
 - clipping results
 - derived mesh determinism
@@ -170,6 +173,13 @@ Examples:
 - clipping yields valid child brushes
 - generated geometry contains no NaNs
 - rebuild is deterministic for the same input
+- imported model collider generation produces finite valid data for the selected mode
+- imported-model collider generation honors the authored mode semantics:
+  - terrain -> heightfield
+  - static -> triangle mesh
+  - dynamic -> compound convex pieces
+  - simple -> primitive or convex hull
+- unsupported imported-model collision modes fail clearly instead of producing silent garbage
 
 ### Geometry test principles
 
@@ -211,6 +221,12 @@ For every substantial document feature, add at least:
 
 - one round-trip save/load test
 - one migration or backward-compatibility consideration if schema changed
+
+For authored imported-model collision settings, also add at least:
+
+- one round-trip test for the selected collision mode/settings
+- one validation/build-path test for missing asset or incompatible collision-mode assumptions where relevant
+- one runtime/query-path test proving the generated collider participates in the actual collision/query layer rather than only existing as dead metadata
 
 ---
 
