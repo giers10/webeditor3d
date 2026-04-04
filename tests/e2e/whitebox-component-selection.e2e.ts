@@ -57,6 +57,13 @@ test("whitebox component selection modes keep object picking intentional across 
       __webeditor3dEditorStore?: {
         getState(): {
           viewportPanels: {
+            topLeft: {
+              cameraState: {
+                target: { x: number; y: number; z: number };
+                perspectiveOrbit: { radius: number; theta: number; phi: number };
+                orthographicZoom: number;
+              };
+            };
             topRight: {
               cameraState: {
                 target: { x: number; y: number; z: number };
@@ -66,15 +73,15 @@ test("whitebox component selection modes keep object picking intentional across 
             };
           };
         };
-        setViewportPanelViewMode(panelId: "topRight", viewMode: "top"): void;
         setViewportPanelCameraState(
-          panelId: "topRight",
+          panelId: "topLeft" | "topRight",
           cameraState: {
             target: { x: number; y: number; z: number };
             perspectiveOrbit: { radius: number; theta: number; phi: number };
             orthographicZoom: number;
           }
         ): void;
+        setViewportPanelViewMode(panelId: "topRight", viewMode: "top"): void;
       };
     }).__webeditor3dEditorStore;
 
@@ -82,7 +89,18 @@ test("whitebox component selection modes keep object picking intentional across 
       throw new Error("Editor store debug hook is unavailable.");
     }
 
+    const topLeftCameraState = store.getState().viewportPanels.topLeft.cameraState;
     const topRightCameraState = store.getState().viewportPanels.topRight.cameraState;
+
+    store.setViewportPanelCameraState("topLeft", {
+      ...topLeftCameraState,
+      target,
+      perspectiveOrbit: {
+        radius: 4.5,
+        theta: 0.72,
+        phi: 1.08
+      }
+    });
     store.setViewportPanelViewMode("topRight", "top");
     store.setViewportPanelCameraState("topRight", {
       ...topRightCameraState,
