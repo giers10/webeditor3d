@@ -700,6 +700,33 @@ export class ViewportHost {
     this.applyOrthographicCameraPose();
   }
 
+  private createWireframeDisplayMaterial(material: MeshStandardMaterial | MeshBasicMaterial): MeshBasicMaterial {
+    return new MeshBasicMaterial({
+      color: material.color.getHex(),
+      wireframe: true,
+      transparent: material.transparent === true || material.opacity < 1,
+      opacity: material.opacity,
+      depthWrite: false
+    });
+  }
+
+  private applyWireframePresentation(object: Object3D) {
+    object.traverse((child) => {
+      const maybeMesh = child as Mesh & { isMesh?: boolean };
+
+      if (maybeMesh.isMesh !== true) {
+        return;
+      }
+
+      if (Array.isArray(maybeMesh.material)) {
+        maybeMesh.material = maybeMesh.material.map((material) => this.createWireframeDisplayMaterial(material));
+        return;
+      }
+
+      maybeMesh.material = this.createWireframeDisplayMaterial(maybeMesh.material);
+    });
+  }
+
   private getBoxCreatePlane() {
     switch (this.viewMode) {
       case "perspective":
@@ -721,7 +748,7 @@ export class ViewportHost {
 
     const world = this.currentWorld;
     const rendererSettings =
-      this.displayMode === "authoring"
+      this.displayMode !== "normal"
         ? {
             ...cloneAdvancedRenderingSettings(world.advancedRendering),
             enabled: false
@@ -732,8 +759,11 @@ export class ViewportHost {
     this.sunLight.color.set(world.sunLight.colorHex);
     this.sunLight.intensity = world.sunLight.intensity;
     this.sunLight.position.set(world.sunLight.direction.x, world.sunLight.direction.y, world.sunLight.direction.z).normalize().multiplyScalar(18);
+    this.ambientLight.visible = this.displayMode !== "wireframe";
+    this.sunLight.visible = this.displayMode !== "wireframe";
+    this.localLightGroup.visible = this.displayMode !== "wireframe";
 
-    if (this.displayMode === "authoring") {
+    if (this.displayMode !== "normal") {
       this.scene.background = null;
       this.scene.environment = null;
       this.scene.environmentIntensity = 1;
@@ -1675,6 +1705,10 @@ export class ViewportHost {
       const selected = selection.kind === "entities" && selection.ids.includes(entity.id);
       const renderObjects = this.createEntityRenderObjects(entity, selected);
 
+      if (this.displayMode === "wireframe") {
+        this.applyWireframePresentation(renderObjects.group);
+      }
+
       this.entityGroup.add(renderObjects.group);
       this.entityRenderObjects.set(entity.id, renderObjects);
     }
@@ -1687,7 +1721,14 @@ export class ViewportHost {
       const selected = isModelInstanceSelected(selection, modelInstance.id);
       const asset = this.projectAssets[modelInstance.assetId];
       const loadedAsset = this.loadedModelAssets[modelInstance.assetId];
-      const renderGroup = createModelInstanceRenderGroup(modelInstance, asset, loadedAsset, selected);
+      const renderGroup = createModelInstanceRenderGroup(
+        modelInstance,
+        asset,
+        loadedAsset,
+        selected,
+        undefined,
+        this.displayMode === "wireframe" ? "wireframe" : "normal"
+      );
 
       if (asset?.kind === "model" && modelInstance.collision.visible) {
         try {
@@ -2172,6 +2213,25 @@ export class ViewportHost {
         transparent: true,
         opacity: selectedFace ? 0.36 : 0.18,
         wireframe: false
+      });
+    }
+
+    if (this.displayMode === "wireframe") {
+      const colorHex =
+        material === undefined || face.materialId === null
+          ? selectedFace
+            ? SELECTED_FACE_FALLBACK_COLOR
+            : FALLBACK_FACE_COLOR
+          : selectedFace
+            ? material.accentColorHex
+            : material.baseColorHex;
+
+      return new MeshBasicMaterial({
+        color: colorHex,
+        wireframe: true,
+        transparent: true,
+        opacity: selectedFace ? 0.95 : 0.76,
+        depthWrite: false
       });
     }
 

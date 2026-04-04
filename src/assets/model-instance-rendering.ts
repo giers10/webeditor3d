@@ -10,6 +10,8 @@ const MODEL_PLACEHOLDER_COLOR = 0x89b6ff;
 const MODEL_SELECTION_COLOR = 0xf7d2aa;
 const MODEL_PREVIEW_SHELL_OPACITY = 0.5;
 
+export type ModelInstanceRenderMode = "normal" | "wireframe";
+
 interface ModelInstanceBounds {
   center: Vec3;
   size: Vec3;
@@ -58,6 +60,40 @@ function createWireframeBox(size: Vec3, color: number, opacity: number): Mesh {
       depthWrite: false
     })
   );
+}
+
+function createWireframeMaterial(material: Material): MeshBasicMaterial {
+  const source = material as Material & {
+    color?: { getHex(): number };
+    opacity?: number;
+    transparent?: boolean;
+  };
+  const opacity = typeof source.opacity === "number" ? source.opacity : 1;
+
+  return new MeshBasicMaterial({
+    color: source.color?.getHex() ?? MODEL_PLACEHOLDER_COLOR,
+    wireframe: true,
+    transparent: source.transparent === true || opacity < 1,
+    opacity,
+    depthWrite: false
+  });
+}
+
+function applyWireframeMaterialPresentation(group: Group) {
+  group.traverse((object) => {
+    const maybeMesh = object as Mesh & { isMesh?: boolean };
+
+    if (maybeMesh.isMesh !== true) {
+      return;
+    }
+
+    if (Array.isArray(maybeMesh.material)) {
+      maybeMesh.material = maybeMesh.material.map((material) => createWireframeMaterial(material));
+      return;
+    }
+
+    maybeMesh.material = createWireframeMaterial(maybeMesh.material);
+  });
 }
 
 function disposeTexture(texture: Texture, seenTextures: Set<Texture>) {
@@ -118,7 +154,8 @@ export function createModelInstanceRenderGroup(
   asset: ProjectAssetRecord | undefined,
   loadedAsset: LoadedModelAsset | undefined,
   selected = false,
-  previewShellColor?: number
+  previewShellColor?: number,
+  renderMode: ModelInstanceRenderMode = "normal"
 ): Group {
   const bounds = getLocalModelBounds(asset);
   const group = new Group();
@@ -134,7 +171,13 @@ export function createModelInstanceRenderGroup(
   group.userData.assetId = modelInstance.assetId;
 
   if (loadedAsset !== undefined) {
-    group.add(instantiateModelTemplate(loadedAsset.template));
+    const instantiatedModel = instantiateModelTemplate(loadedAsset.template);
+
+    if (renderMode === "wireframe") {
+      applyWireframeMaterialPresentation(instantiatedModel);
+    }
+
+    group.add(instantiatedModel);
   } else {
     const placeholder = createWireframeBox(bounds.size, previewShellColor ?? MODEL_PLACEHOLDER_COLOR, previewShellColor === undefined ? 0.28 : MODEL_PREVIEW_SHELL_OPACITY);
     placeholder.position.set(bounds.center.x, bounds.center.y, bounds.center.z);
