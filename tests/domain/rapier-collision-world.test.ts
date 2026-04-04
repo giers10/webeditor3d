@@ -100,11 +100,16 @@ describe("RapierCollisionWorld", () => {
   });
 
   it("initializes and resolves first-person motion against terrain heightfield colliders", async () => {
-    const terrainGeometry = new PlaneGeometry(6, 6, 2, 2);
+    const terrainGeometry = new PlaneGeometry(8, 8, 4, 4);
     terrainGeometry.rotateX(-Math.PI / 2);
     const positionAttribute = terrainGeometry.getAttribute("position");
 
-    positionAttribute.setY(4, 0.5);
+    for (let index = 0; index < positionAttribute.count; index += 1) {
+      const x = positionAttribute.getX(index);
+      const z = positionAttribute.getZ(index);
+      positionAttribute.setY(index, 2 + x * 0.25 + z * 0.75);
+    }
+
     positionAttribute.needsUpdate = true;
     terrainGeometry.computeVertexNormals();
 
@@ -141,26 +146,42 @@ describe("RapierCollisionWorld", () => {
     const collisionWorld = await RapierCollisionWorld.create(runtimeScene.colliders, FIRST_PERSON_PLAYER_SHAPE);
 
     try {
-      const landing = collisionWorld.resolveFirstPersonMotion(
+      const highLanding = collisionWorld.resolveFirstPersonMotion(
         {
-          x: 0,
-          y: 2,
-          z: 0
+          x: -2,
+          y: 6,
+          z: 2
         },
         {
           x: 0,
-          y: -3,
+          y: -8,
+          z: 0
+        },
+        FIRST_PERSON_PLAYER_SHAPE
+      );
+      const lowLanding = collisionWorld.resolveFirstPersonMotion(
+        {
+          x: 2,
+          y: 6,
+          z: -2
+        },
+        {
+          x: 0,
+          y: -8,
           z: 0
         },
         FIRST_PERSON_PLAYER_SHAPE
       );
 
-      expect(landing.grounded).toBe(true);
-      expect(landing.feetPosition.y).toBeGreaterThan(0.45);
-      expect(landing.feetPosition.y).toBeLessThan(0.55);
+      expect(highLanding.grounded).toBe(true);
+      expect(highLanding.feetPosition.y).toBeGreaterThan(2.9);
+      expect(highLanding.feetPosition.y).toBeLessThan(3.1);
+      expect(lowLanding.grounded).toBe(true);
+      expect(lowLanding.feetPosition.y).toBeGreaterThan(0.9);
+      expect(lowLanding.feetPosition.y).toBeLessThan(1.1);
 
       const traversed = collisionWorld.resolveFirstPersonMotion(
-        landing.feetPosition,
+        highLanding.feetPosition,
         {
           x: 1,
           y: 0,
@@ -169,7 +190,8 @@ describe("RapierCollisionWorld", () => {
         FIRST_PERSON_PLAYER_SHAPE
       );
 
-      expect(traversed.feetPosition.x).toBeGreaterThan(0.5);
+      expect(traversed.feetPosition.x).toBeGreaterThan(-1.5);
+      expect(traversed.feetPosition.y).toBeLessThan(highLanding.feetPosition.y);
       expect(traversed.collidedAxes.x).toBe(false);
     } finally {
       collisionWorld.dispose();
