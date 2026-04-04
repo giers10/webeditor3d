@@ -6712,7 +6712,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         data-testid="brush-center-x"
                         className="text-input"
                         type="number"
-                        step={DEFAULT_GRID_SIZE}
+                        step={whiteboxVectorInputStep}
                         value={positionDraft.x}
                         onChange={(event) => {
                           const nextValue = event.currentTarget.value;
@@ -6730,7 +6730,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         data-testid="brush-center-y"
                         className="text-input"
                         type="number"
-                        step={DEFAULT_GRID_SIZE}
+                        step={whiteboxVectorInputStep}
                         value={positionDraft.y}
                         onChange={(event) => {
                           const nextValue = event.currentTarget.value;
@@ -6748,7 +6748,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         data-testid="brush-center-z"
                         className="text-input"
                         type="number"
-                        step={DEFAULT_GRID_SIZE}
+                        step={whiteboxVectorInputStep}
                         value={positionDraft.z}
                         onChange={(event) => {
                           const nextValue = event.currentTarget.value;
@@ -6764,6 +6764,66 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 </div>
 
                 <div className="form-section">
+                  <div className="label">Rotation</div>
+                  <div className="vector-inputs">
+                    <label className="form-field">
+                      <span className="label">X</span>
+                      <input
+                        data-testid="brush-rotation-x"
+                        className="text-input"
+                        type="number"
+                        step="0.1"
+                        value={rotationDraft.x}
+                        onChange={(event) => {
+                          const nextValue = event.currentTarget.value;
+                          setRotationDraft((draft) => ({ ...draft, x: nextValue }));
+                        }}
+                        onBlur={applyRotationChange}
+                        onKeyDown={(event) => handleDraftVectorKeyDown(event, applyRotationChange)}
+                        onKeyUp={(event) => handleNumberInputKeyUp(event, applyRotationChange)}
+                        onPointerUp={(event) => handleNumberInputPointerUp(event, applyRotationChange)}
+                      />
+                    </label>
+                    <label className="form-field">
+                      <span className="label">Y</span>
+                      <input
+                        data-testid="brush-rotation-y"
+                        className="text-input"
+                        type="number"
+                        step="0.1"
+                        value={rotationDraft.y}
+                        onChange={(event) => {
+                          const nextValue = event.currentTarget.value;
+                          setRotationDraft((draft) => ({ ...draft, y: nextValue }));
+                        }}
+                        onBlur={applyRotationChange}
+                        onKeyDown={(event) => handleDraftVectorKeyDown(event, applyRotationChange)}
+                        onKeyUp={(event) => handleNumberInputKeyUp(event, applyRotationChange)}
+                        onPointerUp={(event) => handleNumberInputPointerUp(event, applyRotationChange)}
+                      />
+                    </label>
+                    <label className="form-field">
+                      <span className="label">Z</span>
+                      <input
+                        data-testid="brush-rotation-z"
+                        className="text-input"
+                        type="number"
+                        step="0.1"
+                        value={rotationDraft.z}
+                        onChange={(event) => {
+                          const nextValue = event.currentTarget.value;
+                          setRotationDraft((draft) => ({ ...draft, z: nextValue }));
+                        }}
+                        onBlur={applyRotationChange}
+                        onKeyDown={(event) => handleDraftVectorKeyDown(event, applyRotationChange)}
+                        onKeyUp={(event) => handleNumberInputKeyUp(event, applyRotationChange)}
+                        onPointerUp={(event) => handleNumberInputPointerUp(event, applyRotationChange)}
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                <div className="form-section">
                   <div className="label">Size</div>
                   <div className="vector-inputs">
                     <label className="form-field">
@@ -6772,8 +6832,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         data-testid="brush-size-x"
                         className="text-input"
                         type="number"
-                        min={DEFAULT_GRID_SIZE}
-                        step={DEFAULT_GRID_SIZE}
+                        min="0.01"
+                        step={whiteboxVectorInputStep}
                         value={sizeDraft.x}
                         onChange={(event) => {
                           const nextValue = event.currentTarget.value;
@@ -6791,8 +6851,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         data-testid="brush-size-y"
                         className="text-input"
                         type="number"
-                        min={DEFAULT_GRID_SIZE}
-                        step={DEFAULT_GRID_SIZE}
+                        min="0.01"
+                        step={whiteboxVectorInputStep}
                         value={sizeDraft.y}
                         onChange={(event) => {
                           const nextValue = event.currentTarget.value;
@@ -6810,8 +6870,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         data-testid="brush-size-z"
                         className="text-input"
                         type="number"
-                        min={DEFAULT_GRID_SIZE}
-                        step={DEFAULT_GRID_SIZE}
+                        min="0.01"
+                        step={whiteboxVectorInputStep}
                         value={sizeDraft.z}
                         onChange={(event) => {
                           const nextValue = event.currentTarget.value;
