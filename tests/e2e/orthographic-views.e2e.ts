@@ -49,6 +49,11 @@ test("orthographic panel controls keep brush authoring and selection behavior in
   await expect(getViewportPanel(page, "topLeft")).toHaveAttribute("data-active", "true");
   await expect(page.getByText("1 brush selected (Box Brush 1)")).toBeVisible();
 
+  await page.getByTestId("viewport-panel-topLeft-display-wireframe").dispatchEvent("click");
+  await expect(page.getByTestId("viewport-panel-topLeft-display-wireframe")).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByTestId("viewport-canvas-topLeft")).toHaveCSS("background-color", "rgb(0, 0, 0)");
+  await expect(page.getByText("1 brush selected (Box Brush 1)")).toBeVisible();
+
   expect(pageErrors).toEqual([]);
   expect(consoleErrors).toEqual([]);
 });
