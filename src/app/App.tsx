@@ -120,7 +120,7 @@ import {
 } from "../document/world-settings";
 import { formatSceneDiagnosticSummary, validateSceneDocument } from "../document/scene-document-validation";
 import { getBrowserProjectAssetStorageAccess, type ProjectAssetStorage } from "../assets/project-asset-storage";
-import { DEFAULT_GRID_SIZE } from "../geometry/grid-snapping";
+import { DEFAULT_GRID_SIZE, snapPositiveSizeToGrid, snapVec3ToGrid } from "../geometry/grid-snapping";
 import { createFitToFaceBoxBrushFaceUvState } from "../geometry/box-face-uvs";
 import {
   DEFAULT_ENTITY_POSITION,
