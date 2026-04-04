@@ -430,64 +430,102 @@ The tool becomes more than brush-only by supporting imported assets, authored li
 
 ---
 
-## Milestone 4 — Better brush ergonomics
+## Milestone 4 — Whiteboxing and direct geometry editing
 
 ### Vision
 
-The editor starts feeling closer to the old-school map-editor joy.
+The editor stops feeling like a grid-bound brush tool and starts feeling like an intuitive web-native whiteboxing environment for interactive spaces.
 
 These roadmap items may be delivered as multiple smaller implementation chats if that produces cleaner vertical slices.
 
-### Slice 4.1 — More brush primitives
+### Slice 4.1 — Whitebox terminology and float-transform foundation
 
 #### Deliverables
 
-- wedge/ramp
-- cylinder prism
-- stairs
-- arch
+- shift the product/editor language from brush-first toward whitebox-solid authoring
+- allow floating point position/rotation/scale for box-based whitebox solids
+- free object rotation for whitebox boxes
+- grid snapping becomes optional/configurable rather than mandatory
+- save/load/runtime support for the new transform freedom
 
 #### Acceptance criteria
 
-- each new primitive is:
-  - creatable
-  - editable
-  - save/load safe
-  - renderable in runner
-  - covered by geometry tests
+- user can place and rotate whitebox boxes freely without being forced back onto a coarse grid
+- transformed whitebox solids persist through save/load
+- editor and runner both reflect the same transform state
 
 ---
 
-### Slice 4.2 — Brush clipping
+### Slice 4.2 — Whitebox component selection modes
 
 #### Deliverables
 
-- clip tool
-- split/keep side options
+- explicit object / face / edge / vertex selection modes
+- clear viewport feedback for the current component mode
+- default object-first selection behavior for transform workflows
+- coherent behavior in perspective and orthographic panes
+
+#### Acceptance criteria
+
+- the user can intentionally choose what level of a whitebox solid they are editing
+- component selection feels reliable and visible in single-view and quad-view layouts
+
+---
+
+### Slice 4.3 — Unified whitebox transforms
+
+#### Deliverables
+
+- unified transform workflow for object and component editing
+- `G / R / S` style modal transforms with `X / Y / Z` constraints
+- gizmo + keyboard parity where practical
+- move/rotate/scale support for whitebox objects
+- move/rotate/scale support for faces and edges where valid
+- move support for vertices in the first pass
+
+#### Acceptance criteria
+
+- whitebox editing feels direct rather than inspector-driven
+- transform previews, cancel, commit, and undo/redo are coherent
+- object and component transforms share one understandable interaction model
+
+---
+
+### Slice 4.4 — Whitebox mesh and collider derivation
+
+#### Deliverables
+
+- derived triangulation for edited whitebox solids
+- support for non-planar quad faces via deterministic internal triangulation
+- support for non-convex whitebox solids where the editing model permits them
+- collision generation through the solid collider path rather than axis-aligned-box assumptions
+- validation/diagnostics for invalid or unsupported edited solids
+
+#### Acceptance criteria
+
+- edited whitebox solids render and collide correctly in editor and runner
+- non-planar faces do not break the build path
+- unsupported geometry states fail clearly instead of silently corrupting the scene
+
+---
+
+### Slice 4.5 — Topology tools after transform foundations
+
+#### Deliverables
+
+- evaluate and add the first topology-changing tool only after the whitebox interaction model is coherent
+- possible candidates:
+  - clip
+  - extrude
+  - bevel/chamfer-like edge operations
 - preview visualization
 - undo/redo support
 
 #### Acceptance criteria
 
-- clip operations are predictable and reversible
-- resulting brushes remain valid
-- unsupported clip cases fail clearly instead of silently producing ad hoc geometry
-
----
-
-### Slice 4.3 — Better viewport layouts
-
-#### Deliverables
-
-- top/front/side orthographic views
-- optional split layout
-- improved transform workflows
-- configurable snapping
-
-#### Acceptance criteria
-
-- level-authoring speed materially improves
-- camera controls are documented and stable
+- the chosen topology tool feels consistent with the existing whitebox interaction model
+- resulting solids remain save/load safe and runner-safe
+- unsupported cases fail clearly instead of silently producing ad hoc geometry
 
 ---
 
