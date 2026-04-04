@@ -50,8 +50,6 @@ test("whitebox component selection modes keep object picking intentional across 
     }
   });
 
-  await page.getByTestId("viewport-layout-quad").click();
-
   await page.evaluate(({ target }) => {
     const store = (window as Window & {
       __webeditor3dEditorStore?: {
@@ -64,24 +62,13 @@ test("whitebox component selection modes keep object picking intentional across 
                 orthographicZoom: number;
               };
             };
-            topRight: {
-              cameraState: {
-                target: { x: number; y: number; z: number };
-                perspectiveOrbit: { radius: number; theta: number; phi: number };
-                orthographicZoom: number;
-              };
-            };
           };
         };
-        setViewportPanelCameraState(
-          panelId: "topLeft" | "topRight",
-          cameraState: {
-            target: { x: number; y: number; z: number };
-            perspectiveOrbit: { radius: number; theta: number; phi: number };
-            orthographicZoom: number;
-          }
-        ): void;
-        setViewportPanelViewMode(panelId: "topRight", viewMode: "top"): void;
+        setViewportPanelCameraState(panelId: "topLeft", cameraState: {
+          target: { x: number; y: number; z: number };
+          perspectiveOrbit: { radius: number; theta: number; phi: number };
+          orthographicZoom: number;
+        }): void;
       };
     }).__webeditor3dEditorStore;
 
@@ -90,7 +77,6 @@ test("whitebox component selection modes keep object picking intentional across 
     }
 
     const topLeftCameraState = store.getState().viewportPanels.topLeft.cameraState;
-    const topRightCameraState = store.getState().viewportPanels.topRight.cameraState;
 
     store.setViewportPanelCameraState("topLeft", {
       ...topLeftCameraState,
@@ -100,12 +86,6 @@ test("whitebox component selection modes keep object picking intentional across 
         theta: 0.72,
         phi: 1.08
       }
-    });
-    store.setViewportPanelViewMode("topRight", "top");
-    store.setViewportPanelCameraState("topRight", {
-      ...topRightCameraState,
-      target,
-      orthographicZoom: 8
     });
   }, { target: brush.center });
 
@@ -117,6 +97,44 @@ test("whitebox component selection modes keep object picking intentional across 
     kind: "brushes",
     ids: [brush.id]
   });
+
+  await page.getByTestId("viewport-layout-quad").click();
+
+  await page.evaluate(({ target }) => {
+    const store = (window as Window & {
+      __webeditor3dEditorStore?: {
+        getState(): {
+          viewportPanels: {
+            topRight: {
+              cameraState: {
+                target: { x: number; y: number; z: number };
+                perspectiveOrbit: { radius: number; theta: number; phi: number };
+                orthographicZoom: number;
+              };
+            };
+          };
+        };
+        setViewportPanelViewMode(panelId: "topRight", viewMode: "top"): void;
+        setViewportPanelCameraState(panelId: "topRight", cameraState: {
+          target: { x: number; y: number; z: number };
+          perspectiveOrbit: { radius: number; theta: number; phi: number };
+          orthographicZoom: number;
+        }): void;
+      };
+    }).__webeditor3dEditorStore;
+
+    if (store === undefined) {
+      throw new Error("Editor store debug hook is unavailable.");
+    }
+
+    const topRightCameraState = store.getState().viewportPanels.topRight.cameraState;
+    store.setViewportPanelViewMode("topRight", "top");
+    store.setViewportPanelCameraState("topRight", {
+      ...topRightCameraState,
+      target,
+      orthographicZoom: 8
+    });
+  }, { target: brush.center });
 
   await page.getByTestId("whitebox-selection-mode-face").click();
   await expect(page.getByTestId("viewport-selection-mode-topRight")).toHaveText("Face");
