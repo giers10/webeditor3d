@@ -6,8 +6,10 @@ import {
   ENTITY_NAMES_SCENE_DOCUMENT_VERSION,
   ENTITY_SYSTEM_FOUNDATION_SCENE_DOCUMENT_VERSION,
   FIRST_ROOM_POLISH_SCENE_DOCUMENT_VERSION,
+  IMPORTED_MODEL_COLLIDERS_SCENE_DOCUMENT_VERSION,
   LOCAL_LIGHTS_AND_SKYBOX_SCENE_DOCUMENT_VERSION,
   MODEL_ASSET_PIPELINE_SCENE_DOCUMENT_VERSION,
+  PLAYER_START_COLLIDER_SETTINGS_SCENE_DOCUMENT_VERSION,
   SCENE_DOCUMENT_VERSION,
   SPATIAL_AUDIO_SCENE_DOCUMENT_VERSION,
   TRIGGER_ACTION_TARGET_FOUNDATION_SCENE_DOCUMENT_VERSION,
@@ -264,7 +266,18 @@ describe("scene document JSON", () => {
         y: 0,
         z: -2
       },
-      yawDegrees: 135
+      yawDegrees: 135,
+      collider: {
+        mode: "box",
+        eyeHeight: 1.4,
+        capsuleRadius: 0.3,
+        capsuleHeight: 1.8,
+        boxSize: {
+          x: 0.8,
+          y: 1.6,
+          z: 0.7
+        }
+      }
     });
     const document = {
       ...createEmptySceneDocument({ name: "Player Start Scene" }),
@@ -374,6 +387,35 @@ describe("scene document JSON", () => {
       mode: "none",
       visible: false
     });
+  });
+
+  it("migrates version 16 Player Start entities to include default collider settings", () => {
+    const playerStart = {
+      id: "entity-player-start-legacy-collider",
+      kind: "playerStart" as const,
+      position: {
+        x: 1,
+        y: 0,
+        z: -3
+      },
+      yawDegrees: 45
+    };
+    const legacyDocument = {
+      ...createEmptySceneDocument({ name: "Legacy Player Collider Scene" }),
+      version: IMPORTED_MODEL_COLLIDERS_SCENE_DOCUMENT_VERSION,
+      entities: {
+        [playerStart.id]: playerStart
+      }
+    };
+
+    const migratedDocument = migrateSceneDocument(legacyDocument);
+
+    expect(migratedDocument.version).toBe(PLAYER_START_COLLIDER_SETTINGS_SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.entities[playerStart.id]).toEqual(
+      createPlayerStartEntity({
+        ...playerStart
+      })
+    );
   });
 
   it("round-trips the initial typed entity registry without mixing entities into model instances", () => {
