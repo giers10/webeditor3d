@@ -198,23 +198,66 @@ function attachModelCollider(world: RAPIER.World, collider: GeneratedModelCollid
 }
 
 function feetPositionToColliderCenter(feetPosition: Vec3, shape: FirstPersonPlayerShape): Vec3 {
-  const cylindricalHalfHeight = Math.max(0, (shape.height - shape.radius * 2) * 0.5);
+  switch (shape.mode) {
+    case "capsule": {
+      const cylindricalHalfHeight = Math.max(0, (shape.height - shape.radius * 2) * 0.5);
 
-  return {
-    x: feetPosition.x,
-    y: feetPosition.y + shape.radius + cylindricalHalfHeight,
-    z: feetPosition.z
-  };
+      return {
+        x: feetPosition.x,
+        y: feetPosition.y + shape.radius + cylindricalHalfHeight,
+        z: feetPosition.z
+      };
+    }
+    case "box":
+      return {
+        x: feetPosition.x,
+        y: feetPosition.y + shape.size.y * 0.5,
+        z: feetPosition.z
+      };
+    case "none":
+      return {
+        ...feetPosition
+      };
+  }
 }
 
 function colliderCenterToFeetPosition(center: Vec3, shape: FirstPersonPlayerShape): Vec3 {
-  const cylindricalHalfHeight = Math.max(0, (shape.height - shape.radius * 2) * 0.5);
+  switch (shape.mode) {
+    case "capsule": {
+      const cylindricalHalfHeight = Math.max(0, (shape.height - shape.radius * 2) * 0.5);
 
-  return {
-    x: center.x,
-    y: center.y - (shape.radius + cylindricalHalfHeight),
-    z: center.z
-  };
+      return {
+        x: center.x,
+        y: center.y - (shape.radius + cylindricalHalfHeight),
+        z: center.z
+      };
+    }
+    case "box":
+      return {
+        x: center.x,
+        y: center.y - shape.size.y * 0.5,
+        z: center.z
+      };
+    case "none":
+      return {
+        ...center
+      };
+  }
+}
+
+function createPlayerCollider(world: RAPIER.World, rapier: typeof RAPIER, playerShape: FirstPersonPlayerShape): RAPIER.Collider | null {
+  switch (playerShape.mode) {
+    case "capsule":
+      return world.createCollider(
+        rapier.ColliderDesc.capsule(Math.max(0, (playerShape.height - playerShape.radius * 2) * 0.5), playerShape.radius)
+      );
+    case "box":
+      return world.createCollider(
+        rapier.ColliderDesc.cuboid(playerShape.size.x * 0.5, playerShape.size.y * 0.5, playerShape.size.z * 0.5)
+      );
+    case "none":
+      return null;
+  }
 }
 
 export async function initializeRapierCollisionWorld(): Promise<typeof RAPIER> {
@@ -240,17 +283,18 @@ export class RapierCollisionWorld {
       attachModelCollider(world, collider);
     }
 
-    const playerCollider = world.createCollider(
-      rapier.ColliderDesc.capsule(Math.max(0, (playerShape.height - playerShape.radius * 2) * 0.5), playerShape.radius)
-    );
-    const characterController = world.createCharacterController(CHARACTER_CONTROLLER_OFFSET);
+    const playerCollider = createPlayerCollider(world, rapier, playerShape);
+    const characterController = playerCollider === null ? null : world.createCharacterController(CHARACTER_CONTROLLER_OFFSET);
 
-    characterController.setUp({ x: 0, y: 1, z: 0 });
-    characterController.setSlideEnabled(true);
-    characterController.enableSnapToGround(0.2);
-    characterController.enableAutostep(0.35, 0.15, false);
-    characterController.setMaxSlopeClimbAngle(Math.PI * 0.45);
-    characterController.setMinSlopeSlideAngle(Math.PI * 0.5);
+    if (characterController !== null) {
+      characterController.setUp({ x: 0, y: 1, z: 0 });
+      characterController.setSlideEnabled(true);
+      characterController.enableSnapToGround(0.2);
+      characterController.enableAutostep(0.35, 0.15, false);
+      characterController.setMaxSlopeClimbAngle(Math.PI * 0.45);
+      characterController.setMinSlopeSlideAngle(Math.PI * 0.5);
+    }
+
     world.step();
 
     return new RapierCollisionWorld(world, characterController, playerCollider);
@@ -258,11 +302,27 @@ export class RapierCollisionWorld {
 
   private constructor(
     private readonly world: RAPIER.World,
-    private readonly characterController: RAPIER.KinematicCharacterController,
-    private readonly playerCollider: RAPIER.Collider
+    private readonly characterController: RAPIER.KinematicCharacterController | null,
+    private readonly playerCollider: RAPIER.Collider | null
   ) {}
 
   resolveFirstPersonMotion(feetPosition: Vec3, motion: Vec3, shape: FirstPersonPlayerShape): ResolvedPlayerMotion {
+    if (this.playerCollider === null || this.characterController === null || shape.mode === "none") {
+      return {
+        feetPosition: {
+          x: feetPosition.x + motion.x,
+          y: feetPosition.y + motion.y,
+          z: feetPosition.z + motion.z
+        },
+        grounded: false,
+        collidedAxes: {
+          x: false,
+          y: false,
+          z: false
+        }
+      };
+    }
+
     const currentCenter = feetPositionToColliderCenter(feetPosition, shape);
     this.playerCollider.setTranslation(currentCenter);
     this.characterController.computeColliderMovement(this.playerCollider, motion);
@@ -289,7 +349,9 @@ export class RapierCollisionWorld {
   }
 
   dispose() {
-    this.world.removeCharacterController(this.characterController);
+    if (this.characterController !== null) {
+      this.world.removeCharacterController(this.characterController);
+    }
     this.world.free();
   }
 }
