@@ -903,7 +903,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const selectedBrush = getSelectedBoxBrush(editorState.selection, brushList);
   const selectedEntity = getSelectedEntity(editorState.selection, entityList);
   const selectedModelInstance = getSelectedModelInstance(editorState.selection, Object.values(editorState.document.modelInstances));
+  const whiteboxSelectionMode = editorState.whiteboxSelectionMode;
   const selectedFaceId = getSelectedBrushFaceId(editorState.selection);
+  const selectedEdgeId = getSelectedBrushEdgeId(editorState.selection);
+  const selectedVertexId = getSelectedBrushVertexId(editorState.selection);
   const selectedFace = selectedBrush !== null && selectedFaceId !== null ? selectedBrush.faces[selectedFaceId] : null;
   const selectedFaceMaterial =
     selectedFace !== null && selectedFace.materialId !== null ? editorState.document.materials[selectedFace.materialId] ?? null : null;
@@ -1094,7 +1097,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const advancedRendering = editorState.document.world.advancedRendering;
   const hoveredAsset = hoveredAssetId === null ? null : editorState.document.assets[hoveredAssetId] ?? null;
   const hoveredAssetStatusMessage = hoveredAsset === null ? null : formatAssetHoverStatus(hoveredAsset);
-  const selectedTransformTarget = resolveTransformTarget(editorState.document, editorState.selection).target;
+  const selectedTransformTarget = resolveTransformTarget(editorState.document, editorState.selection, whiteboxSelectionMode).target;
   const canTranslateSelectedTarget = selectedTransformTarget !== null && supportsTransformOperation(selectedTransformTarget, "translate");
   const canRotateSelectedTarget = selectedTransformTarget !== null && supportsTransformOperation(selectedTransformTarget, "rotate");
   const canScaleSelectedTarget = selectedTransformTarget !== null && supportsTransformOperation(selectedTransformTarget, "scale");
