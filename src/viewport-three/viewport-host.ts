@@ -1692,6 +1692,7 @@ export class ViewportHost {
         })
       );
       edges.position.copy(mesh.position);
+      edges.visible = this.displayMode !== "wireframe";
 
       this.brushGroup.add(mesh);
       this.brushGroup.add(edges);
