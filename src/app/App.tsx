@@ -613,6 +613,16 @@ function getSelectedBrushLabel(selection: EditorSelection, brushes: BoxBrush[]):
   return getBrushLabelById(selectedBrushId, brushes);
 }
 
+function getSelectedBrushEdgeLabel(selection: EditorSelection): string | null {
+  const selectedEdgeId = getSelectedBrushEdgeId(selection);
+  return selectedEdgeId === null ? null : BOX_EDGE_LABELS[selectedEdgeId];
+}
+
+function getSelectedBrushVertexLabel(selection: EditorSelection): string | null {
+  const selectedVertexId = getSelectedBrushVertexId(selection);
+  return selectedVertexId === null ? null : BOX_VERTEX_LABELS[selectedVertexId];
+}
+
 function describeSelection(
   selection: EditorSelection,
   brushes: BoxBrush[],
@@ -627,12 +637,29 @@ function describeSelection(
       return `${selection.ids.length} solid${selection.ids.length === 1 ? "" : "s"} selected (${getSelectedBrushLabel(selection, brushes)})`;
     case "brushFace":
       return `1 face selected (${BOX_FACE_LABELS[selection.faceId]} on ${getBrushLabelById(selection.brushId, brushes)})`;
+    case "brushEdge":
+      return `1 edge selected (${BOX_EDGE_LABELS[selection.edgeId]} on ${getBrushLabelById(selection.brushId, brushes)})`;
+    case "brushVertex":
+      return `1 vertex selected (${BOX_VERTEX_LABELS[selection.vertexId]} on ${getBrushLabelById(selection.brushId, brushes)})`;
     case "entities":
       return `${selection.ids.length} entity selected (${getEntityDisplayLabelById(selection.ids[0], entities, assets)})`;
     case "modelInstances":
       return `${selection.ids.length} model instance${selection.ids.length === 1 ? "" : "s"} selected (${getModelInstanceDisplayLabelById(selection.ids[0], modelInstances, assets)})`;
     default:
       return "Unknown selection";
+  }
+}
+
+function getWhiteboxSelectionModeStatus(mode: WhiteboxSelectionMode): string {
+  switch (mode) {
+    case "object":
+      return "Whitebox selection mode set to Object. Whole-solid transforms are available.";
+    case "face":
+      return "Whitebox selection mode set to Face. Click a face to edit materials and UVs.";
+    case "edge":
+      return "Whitebox selection mode set to Edge. Edge transforms land in the next slice.";
+    case "vertex":
+      return "Whitebox selection mode set to Vertex. Vertex transforms land in the next slice.";
   }
 }
 
