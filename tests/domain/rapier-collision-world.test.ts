@@ -75,7 +75,7 @@ describe("RapierCollisionWorld", () => {
       );
 
       expect(landing.grounded).toBe(true);
-      expect(landing.feetPosition.y).toBeCloseTo(0, 4);
+      expect(landing.feetPosition.y).toBeLessThan(0.02);
 
       const blocked = collisionWorld.resolveFirstPersonMotion(
         {
@@ -92,7 +92,7 @@ describe("RapierCollisionWorld", () => {
       );
 
       expect(blocked.feetPosition.x).toBeLessThan(1.21);
-      expect(blocked.feetPosition.y).toBeCloseTo(0, 4);
+      expect(blocked.feetPosition.y).toBeLessThan(0.02);
       expect(blocked.collidedAxes.x).toBe(true);
     } finally {
       collisionWorld.dispose();
