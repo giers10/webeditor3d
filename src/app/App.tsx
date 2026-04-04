@@ -2593,7 +2593,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     const defaultTarget = visibilityBrushOptions[0]?.brush;
 
     if (defaultTarget === undefined) {
-      setStatusMessage("Author at least one brush before adding a visibility link.");
+      setStatusMessage("Author at least one whitebox solid before adding a visibility link.");
       return;
     }
 
@@ -2934,7 +2934,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     const defaultBrush = visibilityBrushOptions[0]?.brush;
 
     if (defaultBrush === undefined) {
-      setStatusMessage("Author at least one brush before switching this link to visibility.");
+      setStatusMessage("Author at least one whitebox solid before switching this link to visibility.");
       return;
     }
 
