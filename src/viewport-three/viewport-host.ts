@@ -1173,7 +1173,7 @@ export class ViewportHost {
 
         this.transformGizmoGroup.add(this.createRotateHandle(axis, effectiveRotationAxis === axis));
       }
-    } else if (session.operation === "scale" && session.target.kind === "modelInstance") {
+    } else if (session.operation === "scale" && (session.target.kind === "modelInstance" || session.target.kind === "brush")) {
       for (const axis of ["x", "y", "z"] as const) {
         this.transformGizmoGroup.add(this.createScaleHandle(axis, session.axisConstraint === axis));
       }
