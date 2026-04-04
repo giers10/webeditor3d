@@ -71,12 +71,156 @@ describe("transform session commit commands", () => {
     expect(resolved.target).toMatchObject({
       kind: "brush",
       brushId: brush.id,
-      initialCenter: brush.center
+      initialCenter: brush.center,
+      initialRotationDegrees: brush.rotationDegrees,
+      initialSize: brush.size
     });
     expect(resolved.target).not.toBeNull();
     expect(supportsTransformOperation(resolved.target as NonNullable<typeof resolved.target>, "translate")).toBe(true);
-    expect(supportsTransformOperation(resolved.target as NonNullable<typeof resolved.target>, "rotate")).toBe(false);
-    expect(supportsTransformOperation(resolved.target as NonNullable<typeof resolved.target>, "scale")).toBe(false);
+    expect(supportsTransformOperation(resolved.target as NonNullable<typeof resolved.target>, "rotate")).toBe(true);
+    expect(supportsTransformOperation(resolved.target as NonNullable<typeof resolved.target>, "scale")).toBe(true);
+  });
+
+  it("commits whitebox box rotate and scale transforms with undo and redo", () => {
+    const brush = createBoxBrush({
+      id: "brush-transform-main",
+      center: {
+        x: 1.25,
+        y: 1.5,
+        z: -0.75
+      },
+      size: {
+        x: 2.5,
+        y: 2,
+        z: 4
+      }
+    });
+    const store = createEditorStore({
+      initialDocument: {
+        ...createEmptySceneDocument({ name: "Brush Transform Fixture" }),
+        brushes: {
+          [brush.id]: brush
+        }
+      }
+    });
+    const target = resolveTransformTarget(store.getState().document, {
+      kind: "brushes",
+      ids: [brush.id]
+    }).target;
+
+    if (target === null || target.kind !== "brush") {
+      throw new Error("Expected a whitebox box transform target.");
+    }
+
+    const rotateSession = createTransformSession({
+      source: "keyboard",
+      sourcePanelId: "topLeft",
+      operation: "rotate",
+      target
+    });
+
+    rotateSession.preview = {
+      kind: "brush",
+      center: {
+        ...brush.center
+      },
+      rotationDegrees: {
+        x: 0,
+        y: 37.5,
+        z: 12.5
+      },
+      size: {
+        ...brush.size
+      }
+    };
+
+    store.executeCommand(createCommitTransformSessionCommand(store.getState().document, rotateSession));
+
+    expect(store.getState().document.brushes[brush.id].rotationDegrees).toEqual({
+      x: 0,
+      y: 37.5,
+      z: 12.5
+    });
+
+    const scaleTarget = resolveTransformTarget(store.getState().document, {
+      kind: "brushes",
+      ids: [brush.id]
+    }).target;
+
+    if (scaleTarget === null || scaleTarget.kind !== "brush") {
+      throw new Error("Expected a whitebox box transform target after rotation.");
+    }
+
+    const scaleSession = createTransformSession({
+      source: "keyboard",
+      sourcePanelId: "topLeft",
+      operation: "scale",
+      target: scaleTarget
+    });
+
+    scaleSession.preview = {
+      kind: "brush",
+      center: {
+        ...brush.center
+      },
+      rotationDegrees: {
+        x: 0,
+        y: 37.5,
+        z: 12.5
+      },
+      size: {
+        x: 3.25,
+        y: 1.75,
+        z: 5.5
+      }
+    };
+
+    store.executeCommand(createCommitTransformSessionCommand(store.getState().document, scaleSession));
+
+    expect(store.getState().document.brushes[brush.id]).toMatchObject({
+      rotationDegrees: {
+        x: 0,
+        y: 37.5,
+        z: 12.5
+      },
+      size: {
+        x: 3.25,
+        y: 1.75,
+        z: 5.5
+      }
+    });
+
+    expect(store.undo()).toBe(true);
+    expect(store.getState().document.brushes[brush.id]).toMatchObject({
+      rotationDegrees: {
+        x: 0,
+        y: 37.5,
+        z: 12.5
+      },
+      size: {
+        x: 2.5,
+        y: 2,
+        z: 4
+      }
+    });
+
+    expect(store.undo()).toBe(true);
+    expect(store.getState().document.brushes[brush.id]).toEqual(brush);
+
+    expect(store.redo()).toBe(true);
+    expect(store.redo()).toBe(true);
+    expect(store.getState().document.brushes[brush.id]).toMatchObject({
+      rotationDegrees: {
+        x: 0,
+        y: 37.5,
+        z: 12.5
+      },
+      size: {
+        x: 3.25,
+        y: 1.75,
+        z: 5.5
+      }
+    });
   });
 
   it("commits a model instance translate/rotate/scale transform with undo and redo", () => {
