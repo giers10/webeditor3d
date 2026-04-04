@@ -228,6 +228,7 @@ export class RapierCollisionWorld {
     characterController.enableAutostep(0.35, 0.15, false);
     characterController.setMaxSlopeClimbAngle(Math.PI * 0.45);
     characterController.setMinSlopeSlideAngle(Math.PI * 0.5);
+    world.step();
 
     return new RapierCollisionWorld(world, characterController, playerCollider);
   }
