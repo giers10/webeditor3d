@@ -2001,6 +2001,16 @@ export function App({ store, initialStatusMessage }: AppProps) {
     setWhiteboxSnapStepDraft(String(normalizedStep));
   };
 
+  const handleWhiteboxSelectionModeChange = (mode: WhiteboxSelectionMode) => {
+    if (whiteboxSelectionMode === mode) {
+      return;
+    }
+
+    blurActiveTextEntry();
+    store.setWhiteboxSelectionMode(mode);
+    setStatusMessage(getWhiteboxSelectionModeStatus(mode));
+  };
+
   const applySelection = (
     selection: EditorSelection,
     source: "outliner" | "viewport" | "inspector" | "runner",
@@ -2023,6 +2033,16 @@ export function App({ store, initialStatusMessage }: AppProps) {
           `Selected ${BOX_FACE_LABELS[selection.faceId]} on ${getBrushLabelById(selection.brushId, brushList)} from the ${source}${suffix}.`
         );
         break;
+      case "brushEdge":
+        setStatusMessage(
+          `Selected ${BOX_EDGE_LABELS[selection.edgeId]} on ${getBrushLabelById(selection.brushId, brushList)} from the ${source}${suffix}.`
+        );
+        break;
+      case "brushVertex":
+        setStatusMessage(
+          `Selected ${BOX_VERTEX_LABELS[selection.vertexId]} on ${getBrushLabelById(selection.brushId, brushList)} from the ${source}${suffix}.`
+        );
+        break;
       case "entities":
         setStatusMessage(`Selected ${getEntityDisplayLabelById(selection.ids[0], editorState.document.entities, editorState.document.assets)} from the ${source}${suffix}.`);
         break;
@@ -2042,8 +2062,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
   };
 
   const applyPositionChange = () => {
-    if (selectedBrush === null) {
-      setStatusMessage("Select a whitebox box before moving it.");
+    if (selectedBrush === null || editorState.selection.kind !== "brushes" || whiteboxSelectionMode !== "object") {
+      setStatusMessage("Switch to Object mode and select a whitebox box before moving it.");
       return;
     }
 
@@ -2068,8 +2088,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
   };
 
   const applyRotationChange = () => {
-    if (selectedBrush === null) {
-      setStatusMessage("Select a whitebox box before rotating it.");
+    if (selectedBrush === null || editorState.selection.kind !== "brushes" || whiteboxSelectionMode !== "object") {
+      setStatusMessage("Switch to Object mode and select a whitebox box before rotating it.");
       return;
     }
 
@@ -2093,8 +2113,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
   };
 
   const applySizeChange = () => {
-    if (selectedBrush === null) {
-      setStatusMessage("Select a whitebox box before scaling it.");
+    if (selectedBrush === null || editorState.selection.kind !== "brushes" || whiteboxSelectionMode !== "object") {
+      setStatusMessage("Switch to Object mode and select a whitebox box before scaling it.");
       return;
     }
 
