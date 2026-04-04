@@ -64,6 +64,21 @@ function scaleBoundsCenter(bounds: { min: Vec3; max: Vec3 }, scale: Vec3): Vec3 
   };
 }
 
+function createRapierHeightfieldHeights(collider: GeneratedModelHeightfieldCollider): Float32Array {
+  const heights = new Float32Array(collider.heights.length);
+
+  // Rapier's heightfield samples are column-major, with the Z axis varying
+  // fastest inside each X column. Our generated collider stores X-major rows
+  // for easier editor/debug mesh reconstruction, so transpose here.
+  for (let zIndex = 0; zIndex < collider.cols; zIndex += 1) {
+    for (let xIndex = 0; xIndex < collider.rows; xIndex += 1) {
+      heights[zIndex + xIndex * collider.cols] = collider.heights[xIndex + zIndex * collider.rows];
+    }
+  }
+
+  return heights;
+}
+
 function createFixedBodyForModelCollider(world: RAPIER.World, collider: GeneratedModelCollider): RAPIER.RigidBody {
   return world.createRigidBody(
     RAPIER.RigidBodyDesc.fixed()
@@ -141,7 +156,7 @@ function attachTerrainModelCollider(world: RAPIER.World, collider: GeneratedMode
   world.createCollider(
     // Rapier expects the number of grid subdivisions here, while our generated
     // collider stores the sampled height grid dimensions.
-    RAPIER.ColliderDesc.heightfield(rowSubdivisions, colSubdivisions, collider.heights, {
+    RAPIER.ColliderDesc.heightfield(rowSubdivisions, colSubdivisions, createRapierHeightfieldHeights(collider), {
       x: (collider.maxX - collider.minX) * collider.transform.scale.x,
       y: collider.transform.scale.y,
       z: (collider.maxZ - collider.minZ) * collider.transform.scale.z
