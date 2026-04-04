@@ -33,6 +33,8 @@ interface ViewportPanelProps {
   projectAssets: Record<string, ProjectAssetRecord>;
   loadedModelAssets: Record<string, LoadedModelAsset>;
   loadedImageAssets: Record<string, LoadedImageAsset>;
+  whiteboxSnapEnabled: boolean;
+  whiteboxSnapStep: number;
   selection: EditorSelection;
   toolMode: ToolMode;
   toolPreview: ViewportToolPreview;
@@ -64,6 +66,8 @@ export function ViewportPanel({
   projectAssets,
   loadedModelAssets,
   loadedImageAssets,
+  whiteboxSnapEnabled,
+  whiteboxSnapStep,
   selection,
   toolMode,
   toolPreview,
@@ -138,6 +142,8 @@ export function ViewportPanel({
         projectAssets={projectAssets}
         loadedModelAssets={loadedModelAssets}
         loadedImageAssets={loadedImageAssets}
+        whiteboxSnapEnabled={whiteboxSnapEnabled}
+        whiteboxSnapStep={whiteboxSnapStep}
         selection={selection}
         toolMode={toolMode}
         toolPreview={toolPreview}
