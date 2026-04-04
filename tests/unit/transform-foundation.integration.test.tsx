@@ -316,6 +316,81 @@ describe("transform foundation integration", () => {
     });
   });
 
+  it("rotates and scales a whole whitebox box through the shared transform controller", async () => {
+    const { store, brush, viewportHost } = await renderTransformFixtureApp();
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /^Brush Transform Fixture$/ }));
+    });
+
+    fireEvent.click(screen.getByTestId("transform-rotate-button"));
+
+    const rotatePreviewSession = {
+      ...getLatestTransformSession(store),
+      preview: {
+        kind: "brush" as const,
+        center: {
+          ...brush.center
+        },
+        rotationDegrees: {
+          x: 0,
+          y: 37.5,
+          z: 12.5
+        },
+        size: {
+          ...brush.size
+        }
+      }
+    };
+
+    emitTransformPreview(viewportHost, rotatePreviewSession);
+    commitTransform(viewportHost, rotatePreviewSession);
+
+    expect(store.getState().document.brushes[brush.id].rotationDegrees).toEqual({
+      x: 0,
+      y: 37.5,
+      z: 12.5
+    });
+
+    fireEvent.click(screen.getByTestId("transform-scale-button"));
+
+    const scalePreviewSession = {
+      ...getLatestTransformSession(store),
+      preview: {
+        kind: "brush" as const,
+        center: {
+          ...brush.center
+        },
+        rotationDegrees: {
+          x: 0,
+          y: 37.5,
+          z: 12.5
+        },
+        size: {
+          x: 3.5,
+          y: 2.5,
+          z: 4.5
+        }
+      }
+    };
+
+    emitTransformPreview(viewportHost, scalePreviewSession);
+    commitTransform(viewportHost, scalePreviewSession);
+
+    expect(store.getState().document.brushes[brush.id]).toMatchObject({
+      rotationDegrees: {
+        x: 0,
+        y: 37.5,
+        z: 12.5
+      },
+      size: {
+        x: 3.5,
+        y: 2.5,
+        z: 4.5
+      }
+    });
+  });
+
   it("moves an entity through the shared transform controller", async () => {
     const { store, playerStart, viewportHost } = await renderTransformFixtureApp();
 
