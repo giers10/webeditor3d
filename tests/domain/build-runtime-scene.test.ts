@@ -656,4 +656,48 @@ describe("buildRuntimeSceneFromDocument", () => {
     });
     expect(runtimeScene.sceneBounds?.max.y).toBeGreaterThanOrEqual(2);
   });
+
+  it("preserves rotated whitebox box transforms for runner rendering and collision bounds", () => {
+    const brush = createBoxBrush({
+      id: "brush-rotated-room",
+      center: {
+        x: 1.25,
+        y: 1.5,
+        z: -0.75
+      },
+      rotationDegrees: {
+        x: 0,
+        y: 45,
+        z: 0
+      },
+      size: {
+        x: 2,
+        y: 2,
+        z: 4
+      }
+    });
+    const runtimeScene = buildRuntimeSceneFromDocument({
+      ...createEmptySceneDocument({ name: "Rotated Whitebox Scene" }),
+      brushes: {
+        [brush.id]: brush
+      }
+    });
+
+    expect(runtimeScene.brushes[0]).toMatchObject({
+      center: brush.center,
+      rotationDegrees: brush.rotationDegrees,
+      size: brush.size
+    });
+    expect(runtimeScene.colliders[0]).toMatchObject({
+      source: "brush",
+      brushId: brush.id,
+      center: brush.center,
+      rotationDegrees: brush.rotationDegrees,
+      size: brush.size
+    });
+    expect(runtimeScene.sceneBounds?.min.x).toBeCloseTo(-0.8713203436);
+    expect(runtimeScene.sceneBounds?.max.x).toBeCloseTo(3.3713203436);
+    expect(runtimeScene.sceneBounds?.min.z).toBeCloseTo(-2.8713203436);
+    expect(runtimeScene.sceneBounds?.max.z).toBeCloseTo(1.3713203436);
+  });
 });
