@@ -4,6 +4,10 @@ import {
   DEFAULT_POINT_LIGHT_COLOR_HEX,
   DEFAULT_POINT_LIGHT_DISTANCE,
   DEFAULT_POINT_LIGHT_INTENSITY,
+  DEFAULT_PLAYER_START_BOX_SIZE,
+  DEFAULT_PLAYER_START_CAPSULE_HEIGHT,
+  DEFAULT_PLAYER_START_CAPSULE_RADIUS,
+  DEFAULT_PLAYER_START_EYE_HEIGHT,
   DEFAULT_SPOT_LIGHT_ANGLE_DEGREES,
   DEFAULT_SPOT_LIGHT_COLOR_HEX,
   DEFAULT_SPOT_LIGHT_DISTANCE,
@@ -27,7 +31,14 @@ describe("entity registry defaults", () => {
     expect(createDefaultEntityInstance("playerStart")).toMatchObject({
       kind: "playerStart",
       position: { x: 0, y: 0, z: 0 },
-      yawDegrees: 0
+      yawDegrees: 0,
+      collider: {
+        mode: "capsule",
+        eyeHeight: DEFAULT_PLAYER_START_EYE_HEIGHT,
+        capsuleRadius: DEFAULT_PLAYER_START_CAPSULE_RADIUS,
+        capsuleHeight: DEFAULT_PLAYER_START_CAPSULE_HEIGHT,
+        boxSize: DEFAULT_PLAYER_START_BOX_SIZE
+      }
     });
 
     expect(createDefaultEntityInstance("pointLight")).toMatchObject({
