@@ -4,7 +4,7 @@ import type { ViewportViewMode } from "./viewport-view-modes";
 
 export type ViewportLayoutMode = "single" | "quad";
 
-export type ViewportDisplayMode = "normal" | "authoring";
+export type ViewportDisplayMode = "normal" | "authoring" | "wireframe";
 
 export type ViewportPanelId = "topLeft" | "topRight" | "bottomLeft" | "bottomRight";
 
@@ -168,7 +168,8 @@ const VIEWPORT_LAYOUT_MODE_LABELS: Record<ViewportLayoutMode, string> = {
 
 const VIEWPORT_DISPLAY_MODE_LABELS: Record<ViewportDisplayMode, string> = {
   normal: "Normal",
-  authoring: "Authoring"
+  authoring: "Authoring",
+  wireframe: "Wireframe"
 };
 
 export function getViewportPanelLabel(panelId: ViewportPanelId): string {
