@@ -929,7 +929,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [entityNameDraft, setEntityNameDraft] = useState("");
   const [modelInstanceNameDraft, setModelInstanceNameDraft] = useState("");
   const [positionDraft, setPositionDraft] = useState(createVec3Draft(DEFAULT_BOX_BRUSH_CENTER));
+  const [rotationDraft, setRotationDraft] = useState(createVec3Draft(DEFAULT_BOX_BRUSH_ROTATION_DEGREES));
   const [sizeDraft, setSizeDraft] = useState(createVec3Draft(DEFAULT_BOX_BRUSH_SIZE));
+  const [whiteboxSnapEnabled, setWhiteboxSnapEnabled] = useState(true);
+  const [whiteboxSnapStepDraft, setWhiteboxSnapStepDraft] = useState(String(DEFAULT_GRID_SIZE));
   const [uvOffsetDraft, setUvOffsetDraft] = useState(createVec2Draft(createDefaultFaceUvState().offset));
   const [uvScaleDraft, setUvScaleDraft] = useState(createVec2Draft(createDefaultFaceUvState().scale));
   const [entityPositionDraft, setEntityPositionDraft] = useState(createVec3Draft(DEFAULT_ENTITY_POSITION));
