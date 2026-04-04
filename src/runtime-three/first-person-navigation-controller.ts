@@ -103,17 +103,17 @@ export class FirstPersonNavigationController implements NavigationController {
     let horizontalX = 0;
     let horizontalZ = 0;
 
-      if (inputLength > 0) {
-        const normalizedInputX = inputX / inputLength;
-        const normalizedInputZ = inputZ / inputLength;
-        const moveDistance = MOVE_SPEED * dt;
+    if (inputLength > 0) {
+      const normalizedInputX = inputX / inputLength;
+      const normalizedInputZ = inputZ / inputLength;
+      const moveDistance = MOVE_SPEED * dt;
 
-        this.forwardVector.set(Math.sin(this.yawRadians), 0, Math.cos(this.yawRadians));
-        this.rightVector.set(-Math.cos(this.yawRadians), 0, Math.sin(this.yawRadians));
+      this.forwardVector.set(Math.sin(this.yawRadians), 0, Math.cos(this.yawRadians));
+      this.rightVector.set(-Math.cos(this.yawRadians), 0, Math.sin(this.yawRadians));
 
-        horizontalX = (this.forwardVector.x * normalizedInputZ + this.rightVector.x * normalizedInputX) * moveDistance;
-        horizontalZ = (this.forwardVector.z * normalizedInputZ + this.rightVector.z * normalizedInputX) * moveDistance;
-      }
+      horizontalX = (this.forwardVector.x * normalizedInputZ + this.rightVector.x * normalizedInputX) * moveDistance;
+      horizontalZ = (this.forwardVector.z * normalizedInputZ + this.rightVector.z * normalizedInputX) * moveDistance;
+    }
 
     if (playerShape.mode === "none") {
       this.verticalVelocity = 0;
@@ -186,7 +186,6 @@ export class FirstPersonNavigationController implements NavigationController {
       feetPosition: {
         ...this.feetPosition
       },
-      eyePosition: toEyePosition(this.feetPosition),
       eyePosition: toEyePosition(this.feetPosition, getFirstPersonPlayerEyeHeight(this.context.getRuntimeScene().playerCollider)),
       grounded: this.grounded,
       pointerLocked: this.pointerLocked,
