@@ -42,6 +42,47 @@ describe("resolveViewportFocusTarget", () => {
     });
   });
 
+  it("frames rotated whitebox boxes around their authored center with a stable object radius", () => {
+    const brush = createBoxBrush({
+      id: "brush-rotated-room",
+      center: {
+        x: 1.25,
+        y: 1.5,
+        z: -0.75
+      },
+      rotationDegrees: {
+        x: 0,
+        y: 45,
+        z: 0
+      },
+      size: {
+        x: 2,
+        y: 2,
+        z: 4
+      }
+    });
+    const document = {
+      ...createEmptySceneDocument(),
+      brushes: {
+        [brush.id]: brush
+      }
+    };
+
+    expect(
+      resolveViewportFocusTarget(document, {
+        kind: "brushes",
+        ids: [brush.id]
+      })
+    ).toEqual({
+      center: {
+        x: 1.25,
+        y: 1.5,
+        z: -0.75
+      },
+      radius: Math.hypot(2, 2, 4) * 0.5
+    });
+  });
+
   it("frames the owning brush when a face is selected", () => {
     const brush = createBoxBrush({
       id: "brush-face-room"
