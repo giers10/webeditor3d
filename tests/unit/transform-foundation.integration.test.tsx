@@ -30,6 +30,7 @@ const { MockViewportHost, viewportHostInstances } = vi.hoisted(() => {
     setTransformSessionChangeHandler: ReturnType<typeof vi.fn>;
     setTransformCommitHandler: ReturnType<typeof vi.fn>;
     setTransformCancelHandler: ReturnType<typeof vi.fn>;
+    setWhiteboxSnapSettings: ReturnType<typeof vi.fn>;
     setToolMode: ReturnType<typeof vi.fn>;
     setCreationPreview: ReturnType<typeof vi.fn>;
     setTransformSession: ReturnType<typeof vi.fn>;
@@ -56,6 +57,7 @@ const { MockViewportHost, viewportHostInstances } = vi.hoisted(() => {
     setTransformSessionChangeHandler = vi.fn();
     setTransformCommitHandler = vi.fn();
     setTransformCancelHandler = vi.fn();
+    setWhiteboxSnapSettings = vi.fn();
     setToolMode = vi.fn();
     setCreationPreview = vi.fn();
     setTransformSession = vi.fn();
@@ -291,6 +293,12 @@ describe("transform foundation integration", () => {
           x: 6,
           y: brush.center.y,
           z: brush.center.z
+        },
+        rotationDegrees: {
+          ...brush.rotationDegrees
+        },
+        size: {
+          ...brush.size
         }
       }
     };
