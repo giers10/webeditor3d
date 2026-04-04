@@ -4753,6 +4753,36 @@ export function App({ store, initialStatusMessage }: AppProps) {
             </button>
           </div>
 
+          <div className="toolbar__group" role="group" aria-label="Whitebox snap settings">
+            <button
+              className={`toolbar__button ${whiteboxSnapEnabled ? "toolbar__button--active" : ""}`}
+              type="button"
+              data-testid="whitebox-snap-toggle"
+              aria-pressed={whiteboxSnapEnabled}
+              onClick={handleWhiteboxSnapToggle}
+            >
+              {whiteboxSnapEnabled ? "Grid Snap On" : "Grid Snap Off"}
+            </button>
+            <label className="toolbar__inline-field">
+              <span className="label">Step</span>
+              <input
+                data-testid="whitebox-snap-step"
+                className="text-input toolbar__inline-input"
+                type="number"
+                min="0.01"
+                step="0.1"
+                value={whiteboxSnapStepDraft}
+                onChange={(event) => setWhiteboxSnapStepDraft(event.currentTarget.value)}
+                onBlur={handleWhiteboxSnapStepBlur}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    handleWhiteboxSnapStepBlur();
+                  }
+                }}
+              />
+            </label>
+          </div>
+
           <div className="toolbar__group">
             <button
               className={`toolbar__button toolbar__button--accent ${blockingDiagnostics.length > 0 ? "toolbar__button--warn" : ""}`}
