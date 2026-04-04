@@ -88,11 +88,17 @@ function applyWireframeMaterialPresentation(group: Group) {
     }
 
     if (Array.isArray(maybeMesh.material)) {
-      maybeMesh.material = maybeMesh.material.map((material) => createWireframeMaterial(material));
+      const originalMaterials = maybeMesh.material;
+      maybeMesh.material = originalMaterials.map((material) => createWireframeMaterial(material));
+      for (const material of originalMaterials) {
+        material.dispose();
+      }
       return;
     }
 
-    maybeMesh.material = createWireframeMaterial(maybeMesh.material);
+    const originalMaterial = maybeMesh.material;
+    maybeMesh.material = createWireframeMaterial(originalMaterial);
+    originalMaterial.dispose();
   });
 }
 

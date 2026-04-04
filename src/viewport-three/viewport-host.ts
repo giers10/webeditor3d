@@ -719,11 +719,17 @@ export class ViewportHost {
       }
 
       if (Array.isArray(maybeMesh.material)) {
-        maybeMesh.material = maybeMesh.material.map((material) => this.createWireframeDisplayMaterial(material));
+        const originalMaterials = maybeMesh.material;
+        maybeMesh.material = originalMaterials.map((material) => this.createWireframeDisplayMaterial(material));
+        for (const material of originalMaterials) {
+          material.dispose();
+        }
         return;
       }
 
-      maybeMesh.material = this.createWireframeDisplayMaterial(maybeMesh.material);
+      const originalMaterial = maybeMesh.material;
+      maybeMesh.material = this.createWireframeDisplayMaterial(originalMaterial);
+      originalMaterial.dispose();
     });
   }
 
