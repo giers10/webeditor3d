@@ -1786,7 +1786,6 @@ export class ViewportHost {
       const mesh = new Mesh(geometry, materials);
       const brushSelected = isBrushSelected(selection, brush.id);
 
-      mesh.position.set(brush.center.x, brush.center.y, brush.center.z);
       mesh.userData.brushId = brush.id;
       mesh.castShadow = false;
       mesh.receiveShadow = false;
@@ -1797,7 +1796,6 @@ export class ViewportHost {
           color: brushSelected ? BRUSH_SELECTED_EDGE_COLOR : BRUSH_EDGE_COLOR
         })
       );
-      edges.position.copy(mesh.position);
       edges.visible = this.displayMode !== "wireframe";
 
       this.brushGroup.add(mesh);
@@ -1806,6 +1804,7 @@ export class ViewportHost {
         mesh,
         edges
       });
+      this.applyBrushRenderObjectTransform(brush.id, brush.center, brush.rotationDegrees, brush.size);
     }
 
     this.applyShadowState();
