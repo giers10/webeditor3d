@@ -159,6 +159,22 @@ export async function clickViewport(page: Page, panelId: string = DEFAULT_VIEWPO
 }
 
 export async function clickViewportAtRatio(page: Page, panelId: string, xRatio: number, yRatio: number) {
+  const viewportCanvas = getViewportCanvas(page, panelId);
+
+  if ((await viewportCanvas.count()) > 0) {
+    const canvasBox = await viewportCanvas.boundingBox();
+
+    if (canvasBox !== null) {
+      await viewportCanvas.click({
+        position: {
+          x: canvasBox.width * xRatio,
+          y: canvasBox.height * yRatio
+        }
+      });
+      return;
+    }
+  }
+
   const viewportPanel = getViewportPanel(page, panelId);
   const box = await viewportPanel.boundingBox();
 
