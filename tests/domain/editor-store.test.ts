@@ -74,7 +74,7 @@ describe("EditorStore", () => {
     writerStore.setViewportLayoutMode("quad");
     writerStore.setActiveViewportPanel("bottomRight");
     writerStore.setViewportPanelViewMode("topLeft", "top");
-    writerStore.setViewportPanelDisplayMode("topLeft", "authoring");
+    writerStore.setViewportPanelDisplayMode("topLeft", "wireframe");
     writerStore.setViewportPanelCameraState("topLeft", {
       target: {
         x: 6,
@@ -107,7 +107,7 @@ describe("EditorStore", () => {
     expect(readerStore.getState().activeViewportPanelId).toBe("bottomRight");
     expect(readerStore.getState().viewportPanels.topLeft).toMatchObject({
       viewMode: "top",
-      displayMode: "authoring",
+      displayMode: "wireframe",
       cameraState: {
         target: {
           x: 6,

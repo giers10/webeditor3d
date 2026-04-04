@@ -2987,18 +2987,21 @@ export class ViewportHost {
         fallbackGroup.visible = false;
         return fallbackGroup;
       }
-      case "entity":
+      case "entity": {
+        let previewGroup: Group;
+
         switch (toolPreview.target.entityKind) {
           case "pointLight":
-            return this.createPointLightGizmoRenderObjects(
+            previewGroup = this.createPointLightGizmoRenderObjects(
               "creation-preview",
               previewPosition,
               DEFAULT_POINT_LIGHT_DISTANCE,
               PLACEMENT_PREVIEW_COLOR_HEX,
               false
             ).group;
+            break;
           case "spotLight":
-            return this.createSpotLightGizmoRenderObjects(
+            previewGroup = this.createSpotLightGizmoRenderObjects(
               "creation-preview",
               previewPosition,
               DEFAULT_SPOT_LIGHT_DIRECTION,
@@ -3007,8 +3010,9 @@ export class ViewportHost {
               PLACEMENT_PREVIEW_COLOR_HEX,
               false
             ).group;
+            break;
           case "playerStart":
-            return this.createPlayerStartRenderObjects(
+            previewGroup = this.createPlayerStartRenderObjects(
               "creation-preview",
               previewPosition,
               DEFAULT_PLAYER_START_YAW_DEGREES,
@@ -3021,8 +3025,9 @@ export class ViewportHost {
               },
               false
             ).group;
+            break;
           case "soundEmitter":
-            return this.createSoundEmitterRenderObjects(
+            previewGroup = this.createSoundEmitterRenderObjects(
               "creation-preview",
               previewPosition,
               DEFAULT_SOUND_EMITTER_REF_DISTANCE,
@@ -3030,31 +3035,41 @@ export class ViewportHost {
               false,
               BOX_CREATE_PREVIEW_FILL
             ).group;
+            break;
           case "triggerVolume":
-            return this.createTriggerVolumeRenderObjects(
+            previewGroup = this.createTriggerVolumeRenderObjects(
               "creation-preview",
               previewPosition,
               DEFAULT_TRIGGER_VOLUME_SIZE,
               false,
               BOX_CREATE_PREVIEW_FILL
             ).group;
+            break;
           case "teleportTarget":
-            return this.createTeleportTargetRenderObjects(
+            previewGroup = this.createTeleportTargetRenderObjects(
               "creation-preview",
               previewPosition,
               DEFAULT_TELEPORT_TARGET_YAW_DEGREES,
               false,
               BOX_CREATE_PREVIEW_FILL
             ).group;
+            break;
           case "interactable":
-            return this.createInteractableRenderObjects(
+            previewGroup = this.createInteractableRenderObjects(
               "creation-preview",
               previewPosition,
               DEFAULT_INTERACTABLE_RADIUS,
               false,
               BOX_CREATE_PREVIEW_FILL
             ).group;
+            break;
         }
+        if (this.displayMode === "wireframe") {
+          this.applyWireframePresentation(previewGroup);
+        }
+
+        return previewGroup;
+      }
       case "model-instance": {
         const asset = this.projectAssets[toolPreview.target.assetId];
         const loadedAsset = this.loadedModelAssets[toolPreview.target.assetId];
@@ -3072,7 +3087,14 @@ export class ViewportHost {
           scale: DEFAULT_MODEL_INSTANCE_SCALE
         });
 
-        return createModelInstanceRenderGroup(dummyModelInstance, asset, loadedAsset, false, BOX_CREATE_PREVIEW_FILL);
+        return createModelInstanceRenderGroup(
+          dummyModelInstance,
+          asset,
+          loadedAsset,
+          false,
+          BOX_CREATE_PREVIEW_FILL,
+          this.displayMode === "wireframe" ? "wireframe" : "normal"
+        );
       }
     }
 

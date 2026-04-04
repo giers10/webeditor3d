@@ -126,6 +126,7 @@ describe("local draft storage", () => {
 
     viewportLayoutState.layoutMode = "quad";
     viewportLayoutState.activePanelId = "bottomRight";
+    viewportLayoutState.panels.topLeft.displayMode = "wireframe";
     viewportLayoutState.panels.topLeft.cameraState.target = {
       x: 8,
       y: 3,
@@ -151,6 +152,7 @@ describe("local draft storage", () => {
         activePanelId: "bottomRight",
         panels: {
           topLeft: {
+            displayMode: "wireframe",
             cameraState: {
               target: {
                 x: 8,

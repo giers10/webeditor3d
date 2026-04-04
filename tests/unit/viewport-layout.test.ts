@@ -39,6 +39,7 @@ describe("viewport layout", () => {
     expect(getViewportLayoutModeLabel("single")).toBe("Single View");
     expect(getViewportLayoutModeLabel("quad")).toBe("4-Panel");
     expect(getViewportDisplayModeLabel("authoring")).toBe("Authoring");
+    expect(getViewportDisplayModeLabel("wireframe")).toBe("Wireframe");
     expect(getViewportPanelLabel("topRight")).toBe("Top Right");
   });
 });
