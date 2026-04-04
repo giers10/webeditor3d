@@ -1417,7 +1417,26 @@ export class ViewportHost {
     axisConstraint: TransformAxis | null
   ) {
     const effectiveAxis = axisConstraint ?? this.getEffectiveRotationAxis(session);
-    const pointerDeltaDegrees = snapValueToGrid((current.x - origin.x - (current.y - origin.y)) * 0.5, ROTATION_SNAP_DEGREES);
+    const pointerDeltaDegrees = (current.x - origin.x - (current.y - origin.y)) * 0.5;
+
+    if (session.target.kind === "brush") {
+      const nextRotationDegrees = {
+        ...session.target.initialRotationDegrees
+      };
+
+      nextRotationDegrees[effectiveAxis] = this.normalizeDegrees(nextRotationDegrees[effectiveAxis] + pointerDeltaDegrees);
+
+      return {
+        kind: "brush" as const,
+        center: {
+          ...session.target.initialCenter
+        },
+        rotationDegrees: nextRotationDegrees,
+        size: {
+          ...session.target.initialSize
+        }
+      };
+    }
 
     if (session.target.kind === "modelInstance") {
       const nextRotationDegrees = {
