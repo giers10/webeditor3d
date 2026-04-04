@@ -1,5 +1,6 @@
 import { createOpaqueId } from "./ids";
 import type { EditorSelection } from "./selection";
+import type { WhiteboxSelectionMode } from "./whitebox-selection-mode";
 import type { Vec3 } from "./vector";
 import type { SceneDocument } from "../document/scene-document";
 import {
@@ -520,7 +521,11 @@ function createModelInstanceTransformTarget(document: SceneDocument, modelInstan
   };
 }
 
-export function resolveTransformTarget(document: SceneDocument, selection: EditorSelection): TransformTargetResolution {
+export function resolveTransformTarget(
+  document: SceneDocument,
+  selection: EditorSelection,
+  whiteboxSelectionMode: WhiteboxSelectionMode = "object"
+): TransformTargetResolution {
   switch (selection.kind) {
     case "none":
       return {
@@ -528,8 +533,28 @@ export function resolveTransformTarget(document: SceneDocument, selection: Edito
         message: "Select a single brush, entity, or model instance before transforming it."
       };
     case "brushFace":
-      return createBrushTransformTarget(document, selection.brushId);
+      return {
+        target: null,
+        message: "Face selection is component-only in this slice. Switch to Object mode to transform the whole whitebox box."
+      };
+    case "brushEdge":
+      return {
+        target: null,
+        message: "Edge transforms land in the next whitebox slice. Switch to Object mode to transform the whole whitebox box."
+      };
+    case "brushVertex":
+      return {
+        target: null,
+        message: "Vertex transforms land in the next whitebox slice. Switch to Object mode to transform the whole whitebox box."
+      };
     case "brushes":
+      if (whiteboxSelectionMode !== "object") {
+        return {
+          target: null,
+          message: "Switch to Object mode to transform the whole whitebox box."
+        };
+      }
+
       if (selection.ids.length !== 1) {
         return {
           target: null,
@@ -537,7 +562,7 @@ export function resolveTransformTarget(document: SceneDocument, selection: Edito
         };
       }
 
-      return createBrushTransformTarget(document, selection.ids[0]);
+      return createBrushTransformTarget(document, selection.brushId);
     case "entities":
       if (selection.ids.length !== 1) {
         return {
