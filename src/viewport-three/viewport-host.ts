@@ -113,7 +113,18 @@ import {
   type BoxFaceId,
   type BoxVertexId
 } from "../document/brushes";
-import { getBoxBrushEdgeWorldSegment, getBoxBrushVertexWorldPosition } from "../geometry/box-brush-components";
+import {
+  getBoxBrushEdgeAxis,
+  getBoxBrushEdgeTransformMeta,
+  getBoxBrushEdgeWorldSegment,
+  getBoxBrushFaceAxis,
+  getBoxBrushFaceTransformMeta,
+  getBoxBrushFaceWorldCenter,
+  getBoxBrushVertexSigns,
+  getBoxBrushVertexWorldPosition,
+  transformBoxBrushLocalPointToWorld,
+  transformBoxBrushWorldVectorToLocal
+} from "../geometry/box-brush-components";
 import { applyBoxBrushFaceUvsToGeometry } from "../geometry/box-face-uvs";
 import { createModelColliderDebugGroup } from "../geometry/model-instance-collider-debug-mesh";
 import { buildGeneratedModelCollider } from "../geometry/model-instance-collider-generation";
