@@ -197,6 +197,70 @@ describe("RapierCollisionWorld", () => {
     }
   });
 
+  it("resolves motion against freely rotated whitebox box colliders", async () => {
+    const floorBrush = createBoxBrush({
+      id: "brush-floor-rotated-wall",
+      center: {
+        x: 0,
+        y: -0.5,
+        z: 0
+      },
+      size: {
+        x: 10,
+        y: 1,
+        z: 10
+      }
+    });
+    const wallBrush = createBoxBrush({
+      id: "brush-wall-rotated",
+      center: {
+        x: 1,
+        y: 1,
+        z: 1
+      },
+      rotationDegrees: {
+        x: 0,
+        y: 45,
+        z: 0
+      },
+      size: {
+        x: 0.5,
+        y: 2,
+        z: 4
+      }
+    });
+    const runtimeScene = buildRuntimeSceneFromDocument({
+      ...createEmptySceneDocument({ name: "Rotated Brush Collision Scene" }),
+      brushes: {
+        [floorBrush.id]: floorBrush,
+        [wallBrush.id]: wallBrush
+      }
+    });
+    const collisionWorld = await RapierCollisionWorld.create(runtimeScene.colliders, runtimeScene.playerCollider);
+
+    try {
+      const blocked = collisionWorld.resolveFirstPersonMotion(
+        {
+          x: 0,
+          y: 0,
+          z: 0
+        },
+        {
+          x: 2,
+          y: 0,
+          z: 2
+        },
+        runtimeScene.playerCollider
+      );
+
+      expect(blocked.feetPosition.x).toBeLessThan(0.85);
+      expect(blocked.feetPosition.z).toBeLessThan(0.85);
+      expect(blocked.collidedAxes.x || blocked.collidedAxes.z).toBe(true);
+    } finally {
+      collisionWorld.dispose();
+    }
+  });
+
   it("uses the authored Player Start box collider in the Rapier motion path", async () => {
     const floorBrush = createBoxBrush({
       id: "brush-floor-box-player",
