@@ -395,6 +395,44 @@ describe("transform foundation integration", () => {
     });
   });
 
+  it("keeps whole-box transforms in Object mode and disables them in component modes", async () => {
+    const { store, brush } = await renderTransformFixtureApp();
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /^Brush Transform Fixture$/ }));
+    });
+
+    expect(screen.getByTestId("transform-translate-button")).not.toBeDisabled();
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("whitebox-selection-mode-face"));
+    });
+
+    expect(store.getState().whiteboxSelectionMode).toBe("face");
+    expect(screen.getByTestId("transform-translate-button")).toBeDisabled();
+
+    act(() => {
+      store.setSelection({
+        kind: "brushFace",
+        brushId: brush.id,
+        faceId: "posY"
+      });
+    });
+
+    expect(screen.getByTestId("transform-translate-button")).toBeDisabled();
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("whitebox-selection-mode-object"));
+    });
+
+    expect(store.getState().whiteboxSelectionMode).toBe("object");
+    expect(store.getState().selection).toEqual({
+      kind: "brushes",
+      ids: [brush.id]
+    });
+    expect(screen.getByTestId("transform-translate-button")).not.toBeDisabled();
+  });
+
   it("moves an entity through the shared transform controller", async () => {
     const { store, playerStart, viewportHost } = await renderTransformFixtureApp();
 
