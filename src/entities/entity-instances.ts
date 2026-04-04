@@ -629,7 +629,14 @@ export function areEntityInstancesEqual(left: EntityInstance, right: EntityInsta
     }
     case "playerStart": {
       const typedRight = right as PlayerStartEntity;
-      return left.yawDegrees === typedRight.yawDegrees;
+      return (
+        left.yawDegrees === typedRight.yawDegrees &&
+        left.collider.mode === typedRight.collider.mode &&
+        left.collider.eyeHeight === typedRight.collider.eyeHeight &&
+        left.collider.capsuleRadius === typedRight.collider.capsuleRadius &&
+        left.collider.capsuleHeight === typedRight.collider.capsuleHeight &&
+        areVec3Equal(left.collider.boxSize, typedRight.collider.boxSize)
+      );
     }
     case "soundEmitter": {
       const typedRight = right as SoundEmitterEntity;

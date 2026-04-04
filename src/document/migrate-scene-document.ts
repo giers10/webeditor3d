@@ -16,6 +16,7 @@ import {
   type ProjectAssetRecord
 } from "../assets/project-assets";
 import {
+  createPlayerStartColliderSettings,
   createInteractableEntity,
   normalizeEntityName,
   createPointLightEntity,
@@ -24,6 +25,7 @@ import {
   createSpotLightEntity,
   createTeleportTargetEntity,
   createTriggerVolumeEntity,
+  isPlayerStartColliderMode,
   type EntityInstance
 } from "../entities/entity-instances";
 import {
@@ -57,6 +59,7 @@ import {
   IMPORTED_MODEL_COLLIDERS_SCENE_DOCUMENT_VERSION,
   LOCAL_LIGHTS_AND_SKYBOX_SCENE_DOCUMENT_VERSION,
   MODEL_ASSET_PIPELINE_SCENE_DOCUMENT_VERSION,
+  PLAYER_START_COLLIDER_SETTINGS_SCENE_DOCUMENT_VERSION,
   RUNNER_V1_SCENE_DOCUMENT_VERSION,
   SPATIAL_AUDIO_SCENE_DOCUMENT_VERSION,
   SCENE_DOCUMENT_VERSION,
