@@ -6110,7 +6110,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           step="1"
                           value={playerStartYawDraft}
                           onChange={(event) => setPlayerStartYawDraft(event.currentTarget.value)}
-                          onBlur={applyPlayerStartChange}
+                          onBlur={() => applyPlayerStartChange()}
                           onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPlayerStartChange)}
                           onKeyUp={(event) => handleNumberInputKeyUp(event, applyPlayerStartChange)}
                           onPointerUp={(event) => handleNumberInputPointerUp(event, applyPlayerStartChange)}
@@ -6149,7 +6149,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           step="0.1"
                           value={playerStartEyeHeightDraft}
                           onChange={(event) => setPlayerStartEyeHeightDraft(event.currentTarget.value)}
-                          onBlur={applyPlayerStartChange}
+                          onBlur={() => applyPlayerStartChange()}
                           onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPlayerStartChange)}
                           onKeyUp={(event) => handleNumberInputKeyUp(event, applyPlayerStartChange)}
                           onPointerUp={(event) => handleNumberInputPointerUp(event, applyPlayerStartChange)}
@@ -6168,7 +6168,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               step="0.1"
                               value={playerStartCapsuleRadiusDraft}
                               onChange={(event) => setPlayerStartCapsuleRadiusDraft(event.currentTarget.value)}
-                              onBlur={applyPlayerStartChange}
+                              onBlur={() => applyPlayerStartChange()}
                               onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPlayerStartChange)}
                               onKeyUp={(event) => handleNumberInputKeyUp(event, applyPlayerStartChange)}
                               onPointerUp={(event) => handleNumberInputPointerUp(event, applyPlayerStartChange)}
@@ -6184,7 +6184,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               step="0.1"
                               value={playerStartCapsuleHeightDraft}
                               onChange={(event) => setPlayerStartCapsuleHeightDraft(event.currentTarget.value)}
-                              onBlur={applyPlayerStartChange}
+                              onBlur={() => applyPlayerStartChange()}
                               onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPlayerStartChange)}
                               onKeyUp={(event) => handleNumberInputKeyUp(event, applyPlayerStartChange)}
                               onPointerUp={(event) => handleNumberInputPointerUp(event, applyPlayerStartChange)}
@@ -6208,7 +6208,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                                 const nextValue = event.currentTarget.value;
                                 setPlayerStartBoxSizeDraft((draft) => ({ ...draft, x: nextValue }));
                               }}
-                              onBlur={applyPlayerStartChange}
+                              onBlur={() => applyPlayerStartChange()}
                               onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPlayerStartChange)}
                               onKeyUp={(event) => handleNumberInputKeyUp(event, applyPlayerStartChange)}
                               onPointerUp={(event) => handleNumberInputPointerUp(event, applyPlayerStartChange)}
@@ -6227,7 +6227,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                                 const nextValue = event.currentTarget.value;
                                 setPlayerStartBoxSizeDraft((draft) => ({ ...draft, y: nextValue }));
                               }}
-                              onBlur={applyPlayerStartChange}
+                              onBlur={() => applyPlayerStartChange()}
                               onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPlayerStartChange)}
                               onKeyUp={(event) => handleNumberInputKeyUp(event, applyPlayerStartChange)}
                               onPointerUp={(event) => handleNumberInputPointerUp(event, applyPlayerStartChange)}
@@ -6246,7 +6246,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                                 const nextValue = event.currentTarget.value;
                                 setPlayerStartBoxSizeDraft((draft) => ({ ...draft, z: nextValue }));
                               }}
-                              onBlur={applyPlayerStartChange}
+                              onBlur={() => applyPlayerStartChange()}
                               onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPlayerStartChange)}
                               onKeyUp={(event) => handleNumberInputKeyUp(event, applyPlayerStartChange)}
                               onPointerUp={(event) => handleNumberInputPointerUp(event, applyPlayerStartChange)}
