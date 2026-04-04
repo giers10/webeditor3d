@@ -115,7 +115,7 @@ export function ViewportPanel({
           </div>
 
           <div className="viewport-panel__control-group" role="group" aria-label={`${getViewportPanelLabel(panelId)} display mode`}>
-            {(["normal", "authoring"] as const).map((displayMode) => (
+            {(["normal", "authoring", "wireframe"] as const).map((displayMode) => (
               <button
                 key={displayMode}
                 className={`viewport-panel__button ${panelState.displayMode === displayMode ? "viewport-panel__button--active" : ""}`}
