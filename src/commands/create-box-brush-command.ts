@@ -12,13 +12,21 @@ import type { EditorCommand } from "./command";
 interface CreateBoxBrushCommandOptions {
   center?: Vec3;
   size?: Vec3;
+  snapToGrid?: boolean;
   gridSize?: number;
 }
 
 export function createCreateBoxBrushCommand(options: CreateBoxBrushCommandOptions = {}): EditorCommand {
+  const snapToGrid = options.snapToGrid ?? true;
   const brush = createBoxBrush({
-    center: snapVec3ToGrid(options.center ?? DEFAULT_BOX_BRUSH_CENTER, options.gridSize ?? DEFAULT_GRID_SIZE),
-    size: snapPositiveSizeToGrid(options.size ?? DEFAULT_BOX_BRUSH_SIZE, options.gridSize ?? DEFAULT_GRID_SIZE)
+    center:
+      snapToGrid === false
+        ? options.center ?? DEFAULT_BOX_BRUSH_CENTER
+        : snapVec3ToGrid(options.center ?? DEFAULT_BOX_BRUSH_CENTER, options.gridSize ?? DEFAULT_GRID_SIZE),
+    size:
+      snapToGrid === false
+        ? options.size ?? DEFAULT_BOX_BRUSH_SIZE
+        : snapPositiveSizeToGrid(options.size ?? DEFAULT_BOX_BRUSH_SIZE, options.gridSize ?? DEFAULT_GRID_SIZE)
   });
 
   let previousSelection: EditorSelection | null = null;

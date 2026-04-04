@@ -11,11 +11,14 @@ import type { EditorCommand } from "./command";
 interface MoveBoxBrushCommandOptions {
   brushId: string;
   center: Vec3;
+  snapToGrid?: boolean;
   gridSize?: number;
+  label?: string;
 }
 
 export function createMoveBoxBrushCommand(options: MoveBoxBrushCommandOptions): EditorCommand {
-  const snappedCenter = snapVec3ToGrid(options.center, options.gridSize ?? DEFAULT_GRID_SIZE);
+  const resolvedCenter =
+    options.snapToGrid === false ? options.center : snapVec3ToGrid(options.center, options.gridSize ?? DEFAULT_GRID_SIZE);
 
   let previousCenter: Vec3 | null = null;
   let previousSelection: EditorSelection | null = null;
@@ -23,7 +26,7 @@ export function createMoveBoxBrushCommand(options: MoveBoxBrushCommandOptions): 
 
   return {
     id: createOpaqueId("command"),
-    label: "Move box brush",
+    label: options.label ?? "Move box brush",
     execute(context) {
       const currentDocument = context.getDocument();
       const brush = getBoxBrushOrThrow(currentDocument, options.brushId);
@@ -46,7 +49,7 @@ export function createMoveBoxBrushCommand(options: MoveBoxBrushCommandOptions): 
         replaceBrush(currentDocument, {
           ...brush,
           center: {
-            ...snappedCenter
+            ...resolvedCenter
           }
         })
       );
