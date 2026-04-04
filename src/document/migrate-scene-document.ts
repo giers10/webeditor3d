@@ -527,6 +527,28 @@ function readModelInstanceCollisionSettings(value: unknown, label: string): Mode
   });
 }
 
+function readPlayerStartColliderSettings(value: unknown, label: string) {
+  if (value === undefined) {
+    return createPlayerStartColliderSettings();
+  }
+
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  const mode = readOptionalAllowedValue(value.mode, `${label}.mode`, "capsule", isPlayerStartColliderMode);
+
+  return createPlayerStartColliderSettings({
+    mode,
+    eyeHeight: value.eyeHeight === undefined ? undefined : expectPositiveFiniteNumber(value.eyeHeight, `${label}.eyeHeight`),
+    capsuleRadius:
+      value.capsuleRadius === undefined ? undefined : expectPositiveFiniteNumber(value.capsuleRadius, `${label}.capsuleRadius`),
+    capsuleHeight:
+      value.capsuleHeight === undefined ? undefined : expectPositiveFiniteNumber(value.capsuleHeight, `${label}.capsuleHeight`),
+    boxSize: value.boxSize === undefined ? undefined : readVec3(value.boxSize, `${label}.boxSize`)
+  });
+}
+
 function readModelInstance(value: unknown, label: string, assets: SceneDocument["assets"]): ModelInstance {
   if (!isRecord(value)) {
     throw new Error(`${label} must be an object.`);
@@ -897,7 +919,8 @@ function readPlayerStartEntity(value: unknown, label: string): EntityInstance {
     id: expectString(value.id, `${label}.id`),
     name: readOptionalEntityName(value.name, `${label}.name`),
     position: readVec3(value.position, `${label}.position`),
-    yawDegrees: expectFiniteNumber(value.yawDegrees, `${label}.yawDegrees`)
+    yawDegrees: expectFiniteNumber(value.yawDegrees, `${label}.yawDegrees`),
+    collider: readPlayerStartColliderSettings(value.collider, `${label}.collider`)
   });
 
   if (entity.kind !== kind) {
