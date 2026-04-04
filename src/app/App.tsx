@@ -604,7 +604,7 @@ function getSelectedBrushLabel(selection: EditorSelection, brushes: BoxBrush[]):
   const selectedBrushId = getSingleSelectedBrushId(selection);
 
   if (selectedBrushId === null) {
-    return "No brush selected";
+    return "No solid selected";
   }
 
   return getBrushLabelById(selectedBrushId, brushes);
@@ -2143,12 +2143,27 @@ export function App({ store, initialStatusMessage }: AppProps) {
         const center = creationPreview.center === null ? undefined : creationPreview.center;
 
         store.executeCommand(
-          createCreateBoxBrushCommand(center === undefined ? {} : { center })
+          createCreateBoxBrushCommand(
+            center === undefined
+              ? {
+                  snapToGrid: whiteboxSnapEnabled,
+                  gridSize: whiteboxSnapStep
+                }
+              : {
+                  center,
+                  snapToGrid: whiteboxSnapEnabled,
+                  gridSize: whiteboxSnapStep
+                }
+          )
         );
         completeCreation(
           center === undefined
-            ? `Created a box brush snapped to the ${DEFAULT_GRID_SIZE}m grid.`
-            : `Created a box brush at snapped center ${formatVec3(center)}.`
+            ? whiteboxSnapEnabled
+              ? `Created a whitebox box on the ${whiteboxSnapStep}m grid.`
+              : "Created a whitebox box."
+            : whiteboxSnapEnabled
+              ? `Created a whitebox box at snapped center ${formatVec3(center)}.`
+              : `Created a whitebox box at ${formatVec3(center)}.`
         );
         return true;
       }
@@ -3831,7 +3846,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
   const applyBrushNameChange = () => {
     if (selectedBrush === null) {
-      setStatusMessage("Select a box brush before renaming it.");
+      setStatusMessage("Select a whitebox box before renaming it.");
       return;
     }
 
@@ -4790,9 +4805,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
               <div className="outliner-empty">Project asset storage is unavailable. Imported assets cannot be persisted.</div>
             ) : null}
             <div className="outliner-section">
-              <div className="label">Brushes</div>
+              <div className="label">Whitebox Solids</div>
               {brushList.length === 0 ? (
-                <div className="outliner-empty">Use Add &gt; Box and click in the viewport to create the first brush.</div>
+                <div className="outliner-empty">Use Add &gt; Whitebox Box and click in the viewport to create the first solid.</div>
               ) : (
                 <div className="outliner-list" data-testid="outliner-brush-list">
                   {brushList.map((brush, brushIndex) => {
@@ -4811,7 +4826,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               data-testid="selected-brush-name"
                               type="text"
                               value={brushNameDraft}
-                              placeholder={`Box Brush ${brushIndex + 1}`}
+                              placeholder={`Whitebox Box ${brushIndex + 1}`}
                               onChange={(event) => setBrushNameDraft(event.currentTarget.value)}
                               onBlur={applyBrushNameChange}
                               onFocus={(event) => event.currentTarget.select()}
@@ -6650,11 +6665,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 ) : null}
               </>
             ) : selectedBrush === null ? (
-              <div className="outliner-empty">Select a brush or entity to edit authored properties.</div>
+              <div className="outliner-empty">Select a whitebox solid or entity to edit authored properties.</div>
             ) : (
               <>
                 <div className="stat-card">
-                  <div className="label">Brush Kind</div>
+                  <div className="label">Whitebox Solid Type</div>
                   <div className="value">box</div>
                 </div>
 
