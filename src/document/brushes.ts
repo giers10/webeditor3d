@@ -2,10 +2,71 @@ import { createOpaqueId } from "../core/ids";
 import type { Vec2, Vec3 } from "../core/vector";
 
 export const BOX_FACE_IDS = ["posX", "negX", "posY", "negY", "posZ", "negZ"] as const;
+export const BOX_EDGE_IDS = [
+  "edgeX_negY_negZ",
+  "edgeX_posY_negZ",
+  "edgeX_negY_posZ",
+  "edgeX_posY_posZ",
+  "edgeY_negX_negZ",
+  "edgeY_posX_negZ",
+  "edgeY_negX_posZ",
+  "edgeY_posX_posZ",
+  "edgeZ_negX_negY",
+  "edgeZ_posX_negY",
+  "edgeZ_negX_posY",
+  "edgeZ_posX_posY"
+] as const;
+export const BOX_VERTEX_IDS = [
+  "negX_negY_negZ",
+  "posX_negY_negZ",
+  "negX_posY_negZ",
+  "posX_posY_negZ",
+  "negX_negY_posZ",
+  "posX_negY_posZ",
+  "negX_posY_posZ",
+  "posX_posY_posZ"
+] as const;
 export const FACE_UV_ROTATION_QUARTER_TURNS = [0, 1, 2, 3] as const;
 
 export type BoxFaceId = (typeof BOX_FACE_IDS)[number];
+export type BoxEdgeId = (typeof BOX_EDGE_IDS)[number];
+export type BoxVertexId = (typeof BOX_VERTEX_IDS)[number];
 export type FaceUvRotationQuarterTurns = (typeof FACE_UV_ROTATION_QUARTER_TURNS)[number];
+
+export const BOX_FACE_LABELS: Record<BoxFaceId, string> = {
+  posX: "Right",
+  negX: "Left",
+  posY: "Top",
+  negY: "Bottom",
+  posZ: "Front",
+  negZ: "Back"
+};
+
+export const BOX_EDGE_LABELS: Record<BoxEdgeId, string> = {
+  edgeX_negY_negZ: "X Edge (-Y, -Z)",
+  edgeX_posY_negZ: "X Edge (+Y, -Z)",
+  edgeX_negY_posZ: "X Edge (-Y, +Z)",
+  edgeX_posY_posZ: "X Edge (+Y, +Z)",
+  edgeY_negX_negZ: "Y Edge (-X, -Z)",
+  edgeY_posX_negZ: "Y Edge (+X, -Z)",
+  edgeY_negX_posZ: "Y Edge (-X, +Z)",
+  edgeY_posX_posZ: "Y Edge (+X, +Z)",
+  edgeZ_negX_negY: "Z Edge (-X, -Y)",
+  edgeZ_posX_negY: "Z Edge (+X, -Y)",
+  edgeZ_negX_posY: "Z Edge (-X, +Y)",
+  edgeZ_posX_posY: "Z Edge (+X, +Y)"
+};
+
+export const BOX_VERTEX_LABELS: Record<BoxVertexId, string> = {
+  negX_negY_negZ: "Vertex (-X, -Y, -Z)",
+  posX_negY_negZ: "Vertex (+X, -Y, -Z)",
+  negX_posY_negZ: "Vertex (-X, +Y, -Z)",
+  posX_posY_negZ: "Vertex (+X, +Y, -Z)",
+  negX_negY_posZ: "Vertex (-X, -Y, +Z)",
+  posX_negY_posZ: "Vertex (+X, -Y, +Z)",
+  negX_posY_posZ: "Vertex (-X, +Y, +Z)",
+  posX_posY_posZ: "Vertex (+X, +Y, +Z)"
+};
 
 export interface FaceUvState {
   offset: Vec2;
@@ -80,6 +141,14 @@ function cloneBrushFace(face: BrushFace): BrushFace {
 
 export function isBoxFaceId(value: unknown): value is BoxFaceId {
   return typeof value === "string" && BOX_FACE_IDS.some((faceId) => faceId === value);
+}
+
+export function isBoxEdgeId(value: unknown): value is BoxEdgeId {
+  return typeof value === "string" && BOX_EDGE_IDS.some((edgeId) => edgeId === value);
+}
+
+export function isBoxVertexId(value: unknown): value is BoxVertexId {
+  return typeof value === "string" && BOX_VERTEX_IDS.some((vertexId) => vertexId === value);
 }
 
 export function isFaceUvRotationQuarterTurns(value: unknown): value is FaceUvRotationQuarterTurns {
