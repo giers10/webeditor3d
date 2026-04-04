@@ -2,7 +2,7 @@ import { Euler, Vector3 } from "three";
 
 import type { Vec3 } from "../core/vector";
 
-import { FIRST_PERSON_PLAYER_SHAPE } from "./player-collision";
+import { getFirstPersonPlayerEyeHeight } from "./player-collision";
 import type { NavigationController, RuntimeControllerContext } from "./navigation-controller";
 
 const LOOK_SENSITIVITY = 0.0022;
@@ -14,10 +14,10 @@ function clampPitch(pitchRadians: number): number {
   return Math.max(-MAX_PITCH_RADIANS, Math.min(MAX_PITCH_RADIANS, pitchRadians));
 }
 
-function toEyePosition(feetPosition: Vec3): Vec3 {
+function toEyePosition(feetPosition: Vec3, eyeHeight: number): Vec3 {
   return {
     x: feetPosition.x,
-    y: feetPosition.y + FIRST_PERSON_PLAYER_SHAPE.eyeHeight,
+    y: feetPosition.y + eyeHeight,
     z: feetPosition.z
   };
 }
@@ -95,6 +95,7 @@ export class FirstPersonNavigationController implements NavigationController {
       return;
     }
 
+    const playerShape = this.context.getRuntimeScene().playerCollider;
     const inputX = (this.pressedKeys.has("KeyD") ? 1 : 0) - (this.pressedKeys.has("KeyA") ? 1 : 0);
     const inputZ = (this.pressedKeys.has("KeyW") ? 1 : 0) - (this.pressedKeys.has("KeyS") ? 1 : 0);
     const inputLength = Math.hypot(inputX, inputZ);
@@ -114,16 +115,20 @@ export class FirstPersonNavigationController implements NavigationController {
         horizontalZ = (this.forwardVector.z * normalizedInputZ + this.rightVector.z * normalizedInputX) * moveDistance;
       }
 
-    this.verticalVelocity -= GRAVITY * dt;
+    if (playerShape.mode === "none") {
+      this.verticalVelocity = 0;
+    } else {
+      this.verticalVelocity -= GRAVITY * dt;
+    }
 
     const resolvedMotion = this.context.resolveFirstPersonMotion(
       this.feetPosition,
       {
         x: horizontalX,
-        y: this.verticalVelocity * dt,
+        y: playerShape.mode === "none" ? 0 : this.verticalVelocity * dt,
         z: horizontalZ
       },
-      FIRST_PERSON_PLAYER_SHAPE
+      playerShape
     );
 
     if (resolvedMotion === null) {
@@ -160,7 +165,7 @@ export class FirstPersonNavigationController implements NavigationController {
       return;
     }
 
-    const eyePosition = toEyePosition(this.feetPosition);
+    const eyePosition = toEyePosition(this.feetPosition, getFirstPersonPlayerEyeHeight(this.context.getRuntimeScene().playerCollider));
     this.cameraRotation.x = this.pitchRadians;
     // Authoring yaw treats 0 degrees as facing +Z, while a three.js camera
     // looks down -Z by default. Offset by 180 degrees so runtime view matches
@@ -182,6 +187,7 @@ export class FirstPersonNavigationController implements NavigationController {
         ...this.feetPosition
       },
       eyePosition: toEyePosition(this.feetPosition),
+      eyePosition: toEyePosition(this.feetPosition, getFirstPersonPlayerEyeHeight(this.context.getRuntimeScene().playerCollider)),
       grounded: this.grounded,
       pointerLocked: this.pointerLocked,
       spawn: this.context.getRuntimeScene().spawn
