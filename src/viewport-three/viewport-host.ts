@@ -150,13 +150,32 @@ import {
 interface BrushRenderObjects {
   mesh: Mesh<BoxGeometry, Array<MeshStandardMaterial | MeshBasicMaterial>>;
   edges: LineSegments<EdgesGeometry, LineBasicMaterial>;
+  edgeHelpers: Array<{
+    id: BoxEdgeId;
+    line: Line<BufferGeometry, LineBasicMaterial>;
+  }>;
+  vertexHelpers: Array<{
+    id: BoxVertexId;
+    mesh: Mesh<SphereGeometry, MeshBasicMaterial>;
+  }>;
 }
 
 const BRUSH_SELECTED_EDGE_COLOR = 0xf7d2aa;
+const BRUSH_HOVERED_EDGE_COLOR = 0xb7cbec;
 const BRUSH_EDGE_COLOR = 0x0d1017;
 const FALLBACK_FACE_COLOR = 0x747d89;
+const HOVERED_FACE_FALLBACK_COLOR = 0xd9a56f;
 const SELECTED_FACE_FALLBACK_COLOR = 0xcf7b42;
+const HOVERED_FACE_EMISSIVE = 0x2f1d11;
 const SELECTED_FACE_EMISSIVE = 0x4a2814;
+const WHITEBOX_COMPONENT_COLOR = 0xb7cbec;
+const WHITEBOX_COMPONENT_HOVERED_COLOR = 0xf3be8f;
+const WHITEBOX_COMPONENT_SELECTED_COLOR = 0xcf7b42;
+const WHITEBOX_COMPONENT_DEFAULT_OPACITY = 0.42;
+const WHITEBOX_COMPONENT_HOVERED_OPACITY = 0.94;
+const WHITEBOX_COMPONENT_SELECTED_OPACITY = 1;
+const WHITEBOX_VERTEX_RADIUS = 0.08;
+const WHITEBOX_EDGE_PICK_THRESHOLD = 0.16;
 const PLAYER_START_COLOR = 0x7cb7ff;
 const PLAYER_START_SELECTED_COLOR = 0xf3be8f;
 const SOUND_EMITTER_COLOR = 0x72d7c9;
