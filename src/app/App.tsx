@@ -425,6 +425,36 @@ function areVec3Equal(left: Vec3, right: Vec3): boolean {
   return left.x === right.x && left.y === right.y && left.z === right.z;
 }
 
+function maybeSnapVec3(vector: Vec3, enabled: boolean, step: number): Vec3 {
+  if (!enabled) {
+    return vector;
+  }
+
+  return {
+    x: Math.round(vector.x / step) * step,
+    y: Math.round(vector.y / step) * step,
+    z: Math.round(vector.z / step) * step
+  };
+}
+
+function maybeSnapPositiveSize(size: Vec3, enabled: boolean, step: number): Vec3 {
+  const clampComponent = (value: number) => Math.max(0.01, Math.abs(value));
+
+  if (!enabled) {
+    return {
+      x: clampComponent(size.x),
+      y: clampComponent(size.y),
+      z: clampComponent(size.z)
+    };
+  }
+
+  return {
+    x: Math.max(0.01, Math.round(Math.abs(size.x) / step) * step),
+    y: Math.max(0.01, Math.round(Math.abs(size.y) / step) * step),
+    z: Math.max(0.01, Math.round(Math.abs(size.z) / step) * step)
+  };
+}
+
 function areFaceUvStatesEqual(left: FaceUvState, right: FaceUvState): boolean {
   return (
     areVec2Equal(left.offset, right.offset) &&
