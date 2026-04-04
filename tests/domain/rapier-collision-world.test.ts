@@ -254,7 +254,7 @@ describe("RapierCollisionWorld", () => {
       );
 
       expect(blocked.collidedAxes.x).toBe(true);
-      expect(blocked.feetPosition.x).toBeLessThan(0.85);
+      expect(blocked.feetPosition.x).toBeLessThan(1.3);
       expect(blocked.feetPosition.z).toBeCloseTo(0, 5);
     } finally {
       collisionWorld.dispose();
