@@ -2384,21 +2384,61 @@ export class ViewportHost {
     };
   }
 
+  private emitWhiteboxHoverLabelChange() {
+    const label =
+      this.currentDocument === null ? null : getWhiteboxSelectionFeedbackLabel(this.currentDocument, this.hoveredSelection);
+    this.whiteboxHoverLabelChangeHandler?.(label);
+  }
+
+  private setHoveredSelection(selection: EditorSelection) {
+    if (areEditorSelectionsEqual(this.hoveredSelection, selection)) {
+      return;
+    }
+
+    this.hoveredSelection = selection;
+    this.refreshBrushPresentation();
+    this.emitWhiteboxHoverLabelChange();
+  }
+
+  private getFaceHighlightState(brushId: string, faceId: BoxFaceId): "none" | "hovered" | "selected" {
+    if (isBrushFaceSelected(this.currentSelection, brushId, faceId)) {
+      return "selected";
+    }
+
+    if (this.hoveredSelection.kind === "brushFace" && this.hoveredSelection.brushId === brushId && this.hoveredSelection.faceId === faceId) {
+      return "hovered";
+    }
+
+    return "none";
+  }
+
   private createFaceMaterial(
     brush: BoxBrush,
     faceId: BoxFaceId,
     material: MaterialDef | undefined,
-    selectedFace: boolean
+    highlightState: "none" | "hovered" | "selected"
   ): MeshStandardMaterial | MeshBasicMaterial {
     const face = brush.faces[faceId];
+    const selectedFace = highlightState === "selected";
+    const hoveredFace = highlightState === "hovered";
+    const emphasizedFace = selectedFace || hoveredFace;
 
     if (this.displayMode === "authoring") {
-      const colorHex = material === undefined || face.materialId === null ? (selectedFace ? SELECTED_FACE_FALLBACK_COLOR : FALLBACK_FACE_COLOR) : selectedFace ? material.accentColorHex : material.baseColorHex;
+      const colorHex =
+        material === undefined || face.materialId === null
+          ? selectedFace
+            ? SELECTED_FACE_FALLBACK_COLOR
+            : hoveredFace
+              ? HOVERED_FACE_FALLBACK_COLOR
+              : FALLBACK_FACE_COLOR
+          : emphasizedFace
+            ? material.accentColorHex
+            : material.baseColorHex;
 
       return new MeshBasicMaterial({
         color: colorHex,
         transparent: true,
-        opacity: selectedFace ? 0.36 : 0.18,
+        opacity: selectedFace ? 0.36 : hoveredFace ? 0.28 : 0.18,
         wireframe: false
       });
     }
@@ -2408,8 +2448,10 @@ export class ViewportHost {
         material === undefined || face.materialId === null
           ? selectedFace
             ? SELECTED_FACE_FALLBACK_COLOR
-            : FALLBACK_FACE_COLOR
-          : selectedFace
+            : hoveredFace
+              ? HOVERED_FACE_FALLBACK_COLOR
+              : FALLBACK_FACE_COLOR
+          : emphasizedFace
             ? material.accentColorHex
             : material.baseColorHex;
 
@@ -2417,16 +2459,16 @@ export class ViewportHost {
         color: colorHex,
         wireframe: true,
         transparent: true,
-        opacity: selectedFace ? 0.95 : 0.76,
+        opacity: selectedFace ? 0.95 : hoveredFace ? 0.86 : 0.76,
         depthWrite: false
       });
     }
 
     if (material === undefined || face.materialId === null) {
       return new MeshStandardMaterial({
-        color: selectedFace ? SELECTED_FACE_FALLBACK_COLOR : FALLBACK_FACE_COLOR,
-        emissive: selectedFace ? SELECTED_FACE_EMISSIVE : 0x000000,
-        emissiveIntensity: selectedFace ? 0.28 : 0,
+        color: selectedFace ? SELECTED_FACE_FALLBACK_COLOR : hoveredFace ? HOVERED_FACE_FALLBACK_COLOR : FALLBACK_FACE_COLOR,
+        emissive: selectedFace ? SELECTED_FACE_EMISSIVE : hoveredFace ? HOVERED_FACE_EMISSIVE : 0x000000,
+        emissiveIntensity: selectedFace ? 0.28 : hoveredFace ? 0.18 : 0,
         roughness: 0.9,
         metalness: 0.05
       });
@@ -2435,8 +2477,8 @@ export class ViewportHost {
     return new MeshStandardMaterial({
       color: 0xffffff,
       map: this.getOrCreateTexture(material),
-      emissive: selectedFace ? SELECTED_FACE_EMISSIVE : 0x000000,
-      emissiveIntensity: selectedFace ? 0.32 : 0,
+      emissive: selectedFace ? SELECTED_FACE_EMISSIVE : hoveredFace ? HOVERED_FACE_EMISSIVE : 0x000000,
+      emissiveIntensity: selectedFace ? 0.32 : hoveredFace ? 0.18 : 0,
       roughness: 0.92,
       metalness: 0.02
     });
