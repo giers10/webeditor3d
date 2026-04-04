@@ -32,7 +32,7 @@ test("user can assign a face material through the UI and keep it through a draft
   await page.getByRole("button", { name: "Save Draft" }).click();
   await page.reload();
 
-  await page.getByRole("button", { name: /Box Brush 1/ }).click();
+  await page.getByRole("button", { name: /Whitebox Box 1/ }).click();
   await page.getByTestId("face-button-posZ").click();
   await expect(page.getByTestId("selected-face-material-name")).toContainText("Amber Grid");
 

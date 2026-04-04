@@ -48,12 +48,12 @@ test("first-room workflow covers create, texture, save/load, and run", async ({ 
   await page.getByRole("button", { name: "Save Draft" }).click();
   await beginBoxCreation(page);
   await clickViewport(page);
-  await expect(page.getByRole("button", { name: /Box Brush 2/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Whitebox Box 2/ })).toBeVisible();
 
   await page.getByRole("button", { name: "Load Draft" }).click();
-  await expect(page.getByRole("button", { name: /Box Brush 2/ })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /Whitebox Box 2/ })).toHaveCount(0);
 
-  await page.getByRole("button", { name: /Box Brush 1/ }).click();
+  await page.getByRole("button", { name: /Whitebox Box 1/ }).click();
   await page.getByTestId("face-button-posZ").click();
   await expect(page.getByTestId("selected-face-material-name")).toContainText("Amber Grid");
 
