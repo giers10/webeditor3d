@@ -3242,7 +3242,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 <div className="form-section">
                   <div className="vector-inputs vector-inputs--two">
                     <label className="form-field">
-                      <span className="label">Brush</span>
+                      <span className="label">Solid</span>
                       <select
                         data-testid={`interaction-link-visibility-target-${link.id}`}
                         className="text-input"
