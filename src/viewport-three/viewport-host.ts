@@ -419,6 +419,9 @@ export class ViewportHost {
   updateDocument(document: SceneDocument, selection: EditorSelection) {
     this.currentDocument = document;
     this.currentSelection = selection;
+    this.setHoveredSelection({
+      kind: "none"
+    });
     this.rebuildLocalLights(document);
     this.rebuildBrushMeshes(document, selection);
     this.rebuildEntityMarkers(document, selection);
@@ -456,6 +459,11 @@ export class ViewportHost {
 
   setBrushSelectionChangeHandler(handler: ((selection: EditorSelection) => void) | null) {
     this.brushSelectionChangeHandler = handler;
+  }
+
+  setWhiteboxHoverLabelChangeHandler(handler: ((label: string | null) => void) | null) {
+    this.whiteboxHoverLabelChangeHandler = handler;
+    this.emitWhiteboxHoverLabelChange();
   }
 
   setCreationPreviewChangeHandler(handler: ((toolPreview: ViewportToolPreview) => void) | null) {
@@ -510,6 +518,21 @@ export class ViewportHost {
     this.applyTransformPreview();
   }
 
+  setWhiteboxSelectionMode(mode: WhiteboxSelectionMode) {
+    if (this.whiteboxSelectionMode === mode) {
+      return;
+    }
+
+    this.whiteboxSelectionMode = mode;
+    this.lastClickPointer = null;
+    this.lastClickSelectionKey = null;
+    this.setHoveredSelection({
+      kind: "none"
+    });
+    this.refreshBrushPresentation();
+    this.syncTransformGizmo();
+  }
+
   setTransformSession(transformSession: TransformSessionState) {
     this.currentTransformSession = cloneTransformSession(transformSession);
 
@@ -537,6 +560,9 @@ export class ViewportHost {
     this.toolMode = toolMode;
     this.lastClickPointer = null;
     this.lastClickSelectionKey = null;
+    this.setHoveredSelection({
+      kind: "none"
+    });
 
     if (toolMode !== "create") {
       this.syncCreationPreview(null);
@@ -551,6 +577,9 @@ export class ViewportHost {
     this.viewMode = viewMode;
     this.lastClickPointer = null;
     this.lastClickSelectionKey = null;
+    this.setHoveredSelection({
+      kind: "none"
+    });
 
     this.applyViewModePose();
 
