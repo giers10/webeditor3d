@@ -1,5 +1,12 @@
 import { cloneEditorSelection, type EditorSelection } from "../core/selection";
-import { cloneFaceUvState, type BoxBrush, type BoxFaceId, type BrushFace } from "../document/brushes";
+import {
+  cloneFaceUvState,
+  type BoxBrush,
+  type BoxEdgeId,
+  type BoxFaceId,
+  type BoxVertexId,
+  type BrushFace
+} from "../document/brushes";
 import type { SceneDocument } from "../document/scene-document";
 
 export function getBoxBrushOrThrow(document: SceneDocument, brushId: string): BoxBrush {
@@ -28,6 +35,22 @@ export function setSingleBrushFaceSelection(brushId: string, faceId: BoxFaceId):
     kind: "brushFace",
     brushId,
     faceId
+  };
+}
+
+export function setSingleBrushEdgeSelection(brushId: string, edgeId: BoxEdgeId): EditorSelection {
+  return {
+    kind: "brushEdge",
+    brushId,
+    edgeId
+  };
+}
+
+export function setSingleBrushVertexSelection(brushId: string, vertexId: BoxVertexId): EditorSelection {
+  return {
+    kind: "brushVertex",
+    brushId,
+    vertexId
   };
 }
 

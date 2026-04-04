@@ -9,7 +9,8 @@ import type { EditorCommand } from "./command";
 function selectionIncludesBrush(selection: EditorSelection, brushId: string): boolean {
   return (
     (selection.kind === "brushes" && selection.ids.includes(brushId)) ||
-    (selection.kind === "brushFace" && selection.brushId === brushId)
+    ((selection.kind === "brushFace" || selection.kind === "brushEdge" || selection.kind === "brushVertex") &&
+      selection.brushId === brushId)
   );
 }
 
