@@ -1036,6 +1036,14 @@ export class ViewportHost {
   }
 
   private getEffectiveRotationAxis(session: ActiveTransformSession): TransformAxis {
+    if (session.target.kind === "brushFace") {
+      return getBoxBrushFaceAxis(session.target.faceId);
+    }
+
+    if (session.target.kind === "brushEdge") {
+      return getBoxBrushEdgeAxis(session.target.edgeId);
+    }
+
     if (session.target.kind === "entity" && session.target.initialRotation.kind === "yaw") {
       return "y";
     }
@@ -1044,6 +1052,71 @@ export class ViewportHost {
   }
 
   private getTransformPivotPosition(session: ActiveTransformSession): Vec3 {
+    if (session.preview.kind === "brush") {
+      if (session.target.kind === "brushFace") {
+        return getBoxBrushFaceWorldCenter(
+          {
+            id: session.target.brushId,
+            kind: "box",
+            center: session.preview.center,
+            rotationDegrees: session.preview.rotationDegrees,
+            size: session.preview.size,
+            faces: this.currentDocument?.brushes[session.target.brushId]?.faces ?? this.currentDocument?.brushes[session.target.brushId]?.faces ?? {
+              posX: { materialId: null, uv: { offset: { x: 0, y: 0 }, scale: { x: 1, y: 1 }, rotationQuarterTurns: 0, flipU: false, flipV: false } },
+              negX: { materialId: null, uv: { offset: { x: 0, y: 0 }, scale: { x: 1, y: 1 }, rotationQuarterTurns: 0, flipU: false, flipV: false } },
+              posY: { materialId: null, uv: { offset: { x: 0, y: 0 }, scale: { x: 1, y: 1 }, rotationQuarterTurns: 0, flipU: false, flipV: false } },
+              negY: { materialId: null, uv: { offset: { x: 0, y: 0 }, scale: { x: 1, y: 1 }, rotationQuarterTurns: 0, flipU: false, flipV: false } },
+              posZ: { materialId: null, uv: { offset: { x: 0, y: 0 }, scale: { x: 1, y: 1 }, rotationQuarterTurns: 0, flipU: false, flipV: false } },
+              negZ: { materialId: null, uv: { offset: { x: 0, y: 0 }, scale: { x: 1, y: 1 }, rotationQuarterTurns: 0, flipU: false, flipV: false } }
+            }
+          },
+          session.target.faceId
+        );
+      }
+
+      if (session.target.kind === "brushEdge") {
+        return getBoxBrushEdgeWorldSegment(
+          {
+            id: session.target.brushId,
+            kind: "box",
+            center: session.preview.center,
+            rotationDegrees: session.preview.rotationDegrees,
+            size: session.preview.size,
+            faces: this.currentDocument?.brushes[session.target.brushId]?.faces ?? {
+              posX: { materialId: null, uv: { offset: { x: 0, y: 0 }, scale: { x: 1, y: 1 }, rotationQuarterTurns: 0, flipU: false, flipV: false } },
+              negX: { materialId: null, uv: { offset: { x: 0, y: 0 }, scale: { x: 1, y: 1 }, rotationQuarterTurns: 0, flipU: false, flipV: false } },
+              posY: { materialId: null, uv: { offset: { x: 0, y: 0 }, scale: { x: 1, y: 1 }, rotationQuarterTurns: 0, flipU: false, flipV: false } },
+              negY: { materialId: null, uv: { offset: { x: 0, y: 0 }, scale: { x: 1, y: 1 }, rotationQuarterTurns: 0, flipU: false, flipV: false } },
+              posZ: { materialId: null, uv: { offset: { x: 0, y: 0 }, scale: { x: 1, y: 1 }, rotationQuarterTurns: 0, flipU: false, flipV: false } },
+              negZ: { materialId: null, uv: { offset: { x: 0, y: 0 }, scale: { x: 1, y: 1 }, rotationQuarterTurns: 0, flipU: false, flipV: false } }
+            }
+          },
+          session.target.edgeId
+        ).center;
+      }
+
+      if (session.target.kind === "brushVertex") {
+        return getBoxBrushVertexWorldPosition(
+          {
+            id: session.target.brushId,
+            kind: "box",
+            center: session.preview.center,
+            rotationDegrees: session.preview.rotationDegrees,
+            size: session.preview.size,
+            faces: this.currentDocument?.brushes[session.target.brushId]?.faces ?? {
+              posX: { materialId: null, uv: { offset: { x: 0, y: 0 }, scale: { x: 1, y: 1 }, rotationQuarterTurns: 0, flipU: false, flipV: false } },
+              negX: { materialId: null, uv: { offset: { x: 0, y: 0 }, scale: { x: 1, y: 1 }, rotationQuarterTurns: 0, flipU: false, flipV: false } },
+              posY: { materialId: null, uv: { offset: { x: 0, y: 0 }, scale: { x: 1, y: 1 }, rotationQuarterTurns: 0, flipU: false, flipV: false } },
+              negY: { materialId: null, uv: { offset: { x: 0, y: 0 }, scale: { x: 1, y: 1 }, rotationQuarterTurns: 0, flipU: false, flipV: false } },
+              posZ: { materialId: null, uv: { offset: { x: 0, y: 0 }, scale: { x: 1, y: 1 }, rotationQuarterTurns: 0, flipU: false, flipV: false } },
+              negZ: { materialId: null, uv: { offset: { x: 0, y: 0 }, scale: { x: 1, y: 1 }, rotationQuarterTurns: 0, flipU: false, flipV: false } }
+            }
+          },
+          session.target.vertexId
+        );
+      }
+    }
+
     switch (session.preview.kind) {
       case "brush":
         return session.preview.center;
@@ -1400,6 +1473,10 @@ export class ViewportHost {
     current: { x: number; y: number },
     axisConstraint: TransformAxis | null
   ) {
+    if (session.target.kind === "brushFace" || session.target.kind === "brushEdge" || session.target.kind === "brushVertex") {
+      return this.buildComponentTranslatedBrushPreview(session, origin, current, axisConstraint);
+    }
+
     const initialPosition =
       session.target.kind === "brush" ? session.target.initialCenter : session.target.kind === "modelInstance" ? session.target.initialPosition : session.target.initialPosition;
     let nextPosition = {
@@ -1502,6 +1579,10 @@ export class ViewportHost {
     current: { x: number; y: number },
     axisConstraint: TransformAxis | null
   ) {
+    if (session.target.kind === "brushFace" || session.target.kind === "brushEdge") {
+      return this.buildComponentRotatedBrushPreview(session, origin, current, axisConstraint);
+    }
+
     const effectiveAxis = axisConstraint ?? this.getEffectiveRotationAxis(session);
     const pointerDeltaDegrees = (current.x - origin.x - (current.y - origin.y)) * 0.5;
 
@@ -1603,6 +1684,10 @@ export class ViewportHost {
     current: { x: number; y: number },
     axisConstraint: TransformAxis | null
   ) {
+    if (session.target.kind === "brushFace" || session.target.kind === "brushEdge") {
+      return this.buildComponentScaledBrushPreview(session, origin, current, axisConstraint);
+    }
+
     if (session.target.kind === "brush") {
       const nextSize = {
         ...session.target.initialSize
