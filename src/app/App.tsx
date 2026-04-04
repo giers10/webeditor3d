@@ -1068,6 +1068,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const canTranslateSelectedTarget = selectedTransformTarget !== null && supportsTransformOperation(selectedTransformTarget, "translate");
   const canRotateSelectedTarget = selectedTransformTarget !== null && supportsTransformOperation(selectedTransformTarget, "rotate");
   const canScaleSelectedTarget = selectedTransformTarget !== null && supportsTransformOperation(selectedTransformTarget, "scale");
+  const whiteboxSnapStep = resolveOptionalPositiveNumber(whiteboxSnapStepDraft, DEFAULT_GRID_SIZE);
+  const whiteboxVectorInputStep = getWhiteboxInputStep(whiteboxSnapEnabled, whiteboxSnapStep);
 
   useEffect(() => {
     setSceneNameDraft(editorState.document.name);
