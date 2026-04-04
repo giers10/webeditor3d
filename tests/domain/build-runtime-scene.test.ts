@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { BoxGeometry } from "three";
 
 import { createBoxBrush } from "../../src/document/brushes";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
@@ -15,6 +16,7 @@ import { createTeleportPlayerInteractionLink, createToggleVisibilityInteractionL
 import { createModelInstance } from "../../src/assets/model-instances";
 import { createProjectAssetStorageKey, type AudioAssetRecord } from "../../src/assets/project-assets";
 import { buildRuntimeSceneFromDocument } from "../../src/runtime-three/runtime-scene-build";
+import { createFixtureLoadedModelAssetFromGeometry } from "../helpers/model-collider-fixtures";
 
 describe("buildRuntimeSceneFromDocument", () => {
   it("builds runtime brush data, colliders, and an authored player spawn from the document", () => {
@@ -286,6 +288,7 @@ describe("buildRuntimeSceneFromDocument", () => {
     expect(runtimeScene.colliders).toEqual([
       {
         kind: "box",
+        source: "brush",
         brushId: "brush-room-floor",
         min: {
           x: -4,
@@ -525,5 +528,66 @@ describe("buildRuntimeSceneFromDocument", () => {
         navigationMode: "firstPerson"
       })
     ).toThrow("First-person run requires an authored Player Start");
+  });
+
+  it("adds generated imported-model colliders to the runtime scene build", () => {
+    const floorBrush = createBoxBrush({
+      id: "brush-runtime-floor",
+      center: {
+        x: 0,
+        y: -0.5,
+        z: 0
+      },
+      size: {
+        x: 8,
+        y: 1,
+        z: 8
+      }
+    });
+    const { asset, loadedAsset } = createFixtureLoadedModelAssetFromGeometry("asset-runtime-collider", new BoxGeometry(1, 2, 1));
+    const modelInstance = createModelInstance({
+      id: "model-instance-runtime-collider",
+      assetId: asset.id,
+      position: {
+        x: 2,
+        y: 1,
+        z: 0
+      },
+      collision: {
+        mode: "static",
+        visible: true
+      }
+    });
+
+    const runtimeScene = buildRuntimeSceneFromDocument(
+      {
+        ...createEmptySceneDocument({ name: "Imported Collider Scene" }),
+        assets: {
+          [asset.id]: asset
+        },
+        brushes: {
+          [floorBrush.id]: floorBrush
+        },
+        modelInstances: {
+          [modelInstance.id]: modelInstance
+        }
+      },
+      {
+        loadedModelAssets: {
+          [asset.id]: loadedAsset
+        }
+      }
+    );
+
+    expect(runtimeScene.colliders).toHaveLength(2);
+    expect(runtimeScene.colliders[1]).toMatchObject({
+      source: "modelInstance",
+      instanceId: modelInstance.id,
+      assetId: asset.id,
+      kind: "trimesh",
+      mode: "static",
+      visible: true
+    });
+    expect(runtimeScene.sceneBounds?.max.y).toBeGreaterThanOrEqual(2);
   });
 });

@@ -510,7 +510,11 @@ export class RuntimeHost {
           name: modelInstance.name,
           position: modelInstance.position,
           rotationDegrees: modelInstance.rotationDegrees,
-          scale: modelInstance.scale
+          scale: modelInstance.scale,
+          collision: {
+            mode: "none",
+            visible: false
+          }
         },
         asset,
         loadedAsset,

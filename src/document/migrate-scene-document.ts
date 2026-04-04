@@ -1489,7 +1489,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     const assets = readAssets(source.assets);
 
     return {
-      version: ENTITY_NAMES_SCENE_DOCUMENT_VERSION,
+      version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
       world: readWorldSettings(source.world),
       materials,

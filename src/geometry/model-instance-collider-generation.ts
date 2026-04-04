@@ -6,7 +6,6 @@ import {
   Mesh,
   Quaternion,
   Vector3,
-  type BufferAttribute,
   type BufferGeometry
 } from "three";
 
@@ -206,7 +205,13 @@ function computeWorldBoundsFromLocalBox(localBounds: GeneratedColliderBounds, mo
   return computeBoundsFromPoints(corners.map((corner) => corner.applyMatrix4(modelMatrix)));
 }
 
-function readIndexedVertex(position: BufferAttribute, index: number, matrix: Matrix4): Vector3 {
+interface PositionLikeAttribute {
+  getX(index: number): number;
+  getY(index: number): number;
+  getZ(index: number): number;
+}
+
+function readIndexedVertex(position: PositionLikeAttribute, index: number, matrix: Matrix4): Vector3 {
   return new Vector3(position.getX(index), position.getY(index), position.getZ(index)).applyMatrix4(matrix);
 }
 

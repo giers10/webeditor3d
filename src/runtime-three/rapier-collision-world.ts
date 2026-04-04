@@ -1,5 +1,5 @@
 import RAPIER from "@dimforge/rapier3d-compat";
-import { Euler, MathUtils, Quaternion, Vector3 } from "three";
+import { Euler, MathUtils, Quaternion } from "three";
 
 import type { Vec3 } from "../core/vector";
 import type {
@@ -17,14 +17,6 @@ const CHARACTER_CONTROLLER_OFFSET = 0.01;
 const COLLISION_EPSILON = 1e-5;
 
 let rapierInitPromise: Promise<typeof RAPIER> | null = null;
-
-function cloneVec3(vector: Vec3): Vec3 {
-  return {
-    x: vector.x,
-    y: vector.y,
-    z: vector.z
-  };
-}
 
 function componentScale(vector: Vec3, scale: Vec3): Vec3 {
   return {

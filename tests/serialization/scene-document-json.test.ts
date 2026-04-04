@@ -585,6 +585,64 @@ describe("scene document JSON", () => {
     expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(document);
   });
 
+  it("round-trips authored model-instance collision settings", () => {
+    const asset = {
+      id: "asset-model-collider",
+      kind: "model",
+      sourceName: "collision-test.glb",
+      mimeType: "model/gltf-binary",
+      storageKey: createProjectAssetStorageKey("asset-model-collider"),
+      byteLength: 64,
+      metadata: {
+        kind: "model",
+        format: "glb",
+        sceneName: "Collision Test Scene",
+        nodeCount: 1,
+        meshCount: 1,
+        materialNames: [],
+        textureNames: [],
+        animationNames: [],
+        boundingBox: {
+          min: {
+            x: -1,
+            y: 0,
+            z: -1
+          },
+          max: {
+            x: 1,
+            y: 2,
+            z: 1
+          },
+          size: {
+            x: 2,
+            y: 2,
+            z: 2
+          }
+        },
+        warnings: []
+      }
+    } satisfies ModelAssetRecord;
+    const modelInstance = createModelInstance({
+      id: "model-instance-collider",
+      assetId: asset.id,
+      collision: {
+        mode: "dynamic",
+        visible: true
+      }
+    });
+    const document = {
+      ...createEmptySceneDocument({ name: "Model Collision Scene" }),
+      assets: {
+        [asset.id]: asset
+      },
+      modelInstances: {
+        [modelInstance.id]: modelInstance
+      }
+    };
+
+    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(document);
+  });
+
   it("round-trips canonical interaction links", () => {
     const triggerVolume = createTriggerVolumeEntity({
       id: "entity-trigger-main"
