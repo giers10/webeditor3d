@@ -1090,11 +1090,13 @@ export function App({ store, initialStatusMessage }: AppProps) {
   useEffect(() => {
     if (selectedBrush === null) {
       setPositionDraft(createVec3Draft(DEFAULT_BOX_BRUSH_CENTER));
+      setRotationDraft(createVec3Draft(DEFAULT_BOX_BRUSH_ROTATION_DEGREES));
       setSizeDraft(createVec3Draft(DEFAULT_BOX_BRUSH_SIZE));
       return;
     }
 
     setPositionDraft(createVec3Draft(selectedBrush.center));
+    setRotationDraft(createVec3Draft(selectedBrush.rotationDegrees));
     setSizeDraft(createVec3Draft(selectedBrush.size));
   }, [selectedBrush]);
 
