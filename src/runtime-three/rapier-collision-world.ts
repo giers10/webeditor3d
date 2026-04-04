@@ -244,6 +244,11 @@ export class RapierCollisionWorld {
     this.characterController.computeColliderMovement(this.playerCollider, motion);
 
     const correctedMovement = this.characterController.computedMovement();
+    const collidedAxes = {
+      x: Math.abs(correctedMovement.x - motion.x) > COLLISION_EPSILON,
+      y: Math.abs(correctedMovement.y - motion.y) > COLLISION_EPSILON,
+      z: Math.abs(correctedMovement.z - motion.z) > COLLISION_EPSILON
+    };
     const nextCenter = {
       x: currentCenter.x + correctedMovement.x,
       y: currentCenter.y + correctedMovement.y,
@@ -254,12 +259,8 @@ export class RapierCollisionWorld {
 
     return {
       feetPosition: colliderCenterToFeetPosition(nextCenter, shape),
-      grounded: this.characterController.computedGrounded(),
-      collidedAxes: {
-        x: Math.abs(correctedMovement.x - motion.x) > COLLISION_EPSILON,
-        y: Math.abs(correctedMovement.y - motion.y) > COLLISION_EPSILON,
-        z: Math.abs(correctedMovement.z - motion.z) > COLLISION_EPSILON
-      }
+      grounded: this.characterController.computedGrounded() || (motion.y < 0 && collidedAxes.y),
+      collidedAxes
     };
   }
 
