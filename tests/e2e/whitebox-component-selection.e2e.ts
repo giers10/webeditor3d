@@ -28,6 +28,8 @@ test("whitebox component selection modes keep object picking intentional across 
   }, "webeditor3d.scene-document-draft");
   await page.reload();
 
+  test.skip((await page.getByText("Viewport Unavailable").count()) > 0, "WebGL is unavailable in this Playwright environment.");
+
   const brush = createBoxBrush({
     id: "brush-selection-modes-main",
     name: "Selection Fixture",
