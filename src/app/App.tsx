@@ -1075,6 +1075,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
       setSpotLightAngleDraft(String(DEFAULT_SPOT_LIGHT_ANGLE_DEGREES));
       setSpotLightDirectionDraft(createVec3Draft(DEFAULT_SPOT_LIGHT_DIRECTION));
       setPlayerStartYawDraft("0");
+      setPlayerStartColliderModeDraft("capsule");
+      setPlayerStartEyeHeightDraft(String(DEFAULT_PLAYER_START_EYE_HEIGHT));
+      setPlayerStartCapsuleRadiusDraft(String(DEFAULT_PLAYER_START_CAPSULE_RADIUS));
+      setPlayerStartCapsuleHeightDraft(String(DEFAULT_PLAYER_START_CAPSULE_HEIGHT));
+      setPlayerStartBoxSizeDraft(createVec3Draft(DEFAULT_PLAYER_START_BOX_SIZE));
       setSoundEmitterAudioAssetIdDraft(DEFAULT_SOUND_EMITTER_AUDIO_ASSET_ID ?? "");
       setSoundEmitterVolumeDraft(String(DEFAULT_SOUND_EMITTER_VOLUME));
       setSoundEmitterRefDistanceDraft(String(DEFAULT_SOUND_EMITTER_REF_DISTANCE));
@@ -1106,6 +1111,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
         break;
       case "playerStart":
         setPlayerStartYawDraft(String(selectedEntity.yawDegrees));
+        setPlayerStartColliderModeDraft(selectedEntity.collider.mode);
+        setPlayerStartEyeHeightDraft(String(selectedEntity.collider.eyeHeight));
+        setPlayerStartCapsuleRadiusDraft(String(selectedEntity.collider.capsuleRadius));
+        setPlayerStartCapsuleHeightDraft(String(selectedEntity.collider.capsuleHeight));
+        setPlayerStartBoxSizeDraft(createVec3Draft(selectedEntity.collider.boxSize));
         break;
       case "soundEmitter":
         setSoundEmitterAudioAssetIdDraft(selectedEntity.audioAssetId ?? "");
