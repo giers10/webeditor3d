@@ -1953,8 +1953,19 @@ export function App({ store, initialStatusMessage }: AppProps) {
         },
         center: null
       },
-      "Previewing a box brush. Click in the viewport to create it."
+      `Previewing a whitebox box. Click in the viewport to create it${whiteboxSnapEnabled ? ` on the ${whiteboxSnapStep}m grid` : ""}.`
     );
+  };
+
+  const handleWhiteboxSnapToggle = () => {
+    const nextEnabled = !whiteboxSnapEnabled;
+    setWhiteboxSnapEnabled(nextEnabled);
+    setStatusMessage(nextEnabled ? `Grid snap enabled at ${whiteboxSnapStep}m.` : "Grid snap disabled for whitebox transforms.");
+  };
+
+  const handleWhiteboxSnapStepBlur = () => {
+    const normalizedStep = resolveOptionalPositiveNumber(whiteboxSnapStepDraft, DEFAULT_GRID_SIZE);
+    setWhiteboxSnapStepDraft(String(normalizedStep));
   };
 
   const applySelection = (
@@ -1999,24 +2010,50 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
   const applyPositionChange = () => {
     if (selectedBrush === null) {
-      setStatusMessage("Select a box brush before moving it.");
+      setStatusMessage("Select a whitebox box before moving it.");
       return;
     }
 
     try {
-      const snappedCenter = snapVec3ToGrid(readVec3Draft(positionDraft, "Box brush position"), DEFAULT_GRID_SIZE);
+      const nextCenter = maybeSnapVec3(readVec3Draft(positionDraft, "Whitebox box position"), whiteboxSnapEnabled, whiteboxSnapStep);
 
-      if (areVec3Equal(snappedCenter, selectedBrush.center)) {
+      if (areVec3Equal(nextCenter, selectedBrush.center)) {
         return;
       }
 
       store.executeCommand(
         createMoveBoxBrushCommand({
           brushId: selectedBrush.id,
-          center: snappedCenter
+          center: nextCenter,
+          snapToGrid: false
         })
       );
-      setStatusMessage("Moved selected box brush.");
+      setStatusMessage("Moved selected whitebox box.");
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const applyRotationChange = () => {
+    if (selectedBrush === null) {
+      setStatusMessage("Select a whitebox box before rotating it.");
+      return;
+    }
+
+    try {
+      const nextRotationDegrees = readVec3Draft(rotationDraft, "Whitebox box rotation");
+
+      if (areVec3Equal(nextRotationDegrees, selectedBrush.rotationDegrees)) {
+        return;
+      }
+
+      store.executeCommand(
+        createRotateBoxBrushCommand({
+          brushId: selectedBrush.id,
+          rotationDegrees: nextRotationDegrees
+        })
+      );
+      setStatusMessage("Rotated selected whitebox box.");
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
     }
@@ -2024,24 +2061,25 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
   const applySizeChange = () => {
     if (selectedBrush === null) {
-      setStatusMessage("Select a box brush before resizing it.");
+      setStatusMessage("Select a whitebox box before scaling it.");
       return;
     }
 
     try {
-      const snappedSize = snapPositiveSizeToGrid(readVec3Draft(sizeDraft, "Box brush size"), DEFAULT_GRID_SIZE);
+      const nextSize = maybeSnapPositiveSize(readVec3Draft(sizeDraft, "Whitebox box size"), whiteboxSnapEnabled, whiteboxSnapStep);
 
-      if (areVec3Equal(snappedSize, selectedBrush.size)) {
+      if (areVec3Equal(nextSize, selectedBrush.size)) {
         return;
       }
 
       store.executeCommand(
         createResizeBoxBrushCommand({
           brushId: selectedBrush.id,
-          size: snappedSize
+          size: nextSize,
+          snapToGrid: false
         })
       );
-      setStatusMessage("Resized selected box brush.");
+      setStatusMessage("Scaled selected whitebox box.");
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
     }
