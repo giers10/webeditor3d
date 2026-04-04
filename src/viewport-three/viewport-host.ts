@@ -3084,6 +3084,16 @@ export class ViewportHost {
       return;
     }
 
+    if (this.toolMode === "select") {
+      const hoveredCandidate = this.getSelectionCandidates(event)[0]?.selection ?? { kind: "none" };
+      this.setHoveredSelection(hoveredCandidate);
+      return;
+    }
+
+    this.setHoveredSelection({
+      kind: "none"
+    });
+
     if (this.toolMode !== "create" || this.creationPreview === null) {
       return;
     }
@@ -3135,6 +3145,10 @@ export class ViewportHost {
     if (this.activeCameraDragPointerId !== null) {
       return;
     }
+
+    this.setHoveredSelection({
+      kind: "none"
+    });
 
     // Keep the shared creation preview alive across panel boundaries; the next
     // viewport panel will update it as the pointer continues moving.
