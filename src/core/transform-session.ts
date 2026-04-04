@@ -35,6 +35,8 @@ export interface BrushTransformTarget {
   kind: "brush";
   brushId: string;
   initialCenter: Vec3;
+  initialRotationDegrees: Vec3;
+  initialSize: Vec3;
 }
 
 export interface ModelInstanceTransformTarget {
@@ -59,6 +61,8 @@ export type TransformTarget = BrushTransformTarget | ModelInstanceTransformTarge
 export interface BrushTransformPreview {
   kind: "brush";
   center: Vec3;
+  rotationDegrees: Vec3;
+  size: Vec3;
 }
 
 export interface ModelInstanceTransformPreview {
@@ -152,7 +156,9 @@ export function cloneTransformTarget(target: TransformTarget): TransformTarget {
       return {
         kind: "brush",
         brushId: target.brushId,
-        initialCenter: cloneVec3(target.initialCenter)
+        initialCenter: cloneVec3(target.initialCenter),
+        initialRotationDegrees: cloneVec3(target.initialRotationDegrees),
+        initialSize: cloneVec3(target.initialSize)
       };
     case "modelInstance":
       return {
@@ -179,7 +185,9 @@ export function cloneTransformPreview(preview: TransformPreview): TransformPrevi
     case "brush":
       return {
         kind: "brush",
-        center: cloneVec3(preview.center)
+        center: cloneVec3(preview.center),
+        rotationDegrees: cloneVec3(preview.rotationDegrees),
+        size: cloneVec3(preview.size)
       };
     case "modelInstance":
       return {
@@ -241,7 +249,13 @@ function areTransformTargetsEqual(left: TransformTarget, right: TransformTarget)
 
   switch (left.kind) {
     case "brush":
-      return right.kind === "brush" && left.brushId === right.brushId && areVec3Equal(left.initialCenter, right.initialCenter);
+      return (
+        right.kind === "brush" &&
+        left.brushId === right.brushId &&
+        areVec3Equal(left.initialCenter, right.initialCenter) &&
+        areVec3Equal(left.initialRotationDegrees, right.initialRotationDegrees) &&
+        areVec3Equal(left.initialSize, right.initialSize)
+      );
     case "modelInstance":
       return (
         right.kind === "modelInstance" &&
@@ -269,7 +283,12 @@ function areTransformPreviewsEqual(left: TransformPreview, right: TransformPrevi
 
   switch (left.kind) {
     case "brush":
-      return right.kind === "brush" && areVec3Equal(left.center, right.center);
+      return (
+        right.kind === "brush" &&
+        areVec3Equal(left.center, right.center) &&
+        areVec3Equal(left.rotationDegrees, right.rotationDegrees) &&
+        areVec3Equal(left.size, right.size)
+      );
     case "modelInstance":
       return (
         right.kind === "modelInstance" &&
@@ -306,7 +325,9 @@ export function createTransformPreviewFromTarget(target: TransformTarget): Trans
     case "brush":
       return {
         kind: "brush",
-        center: cloneVec3(target.initialCenter)
+        center: cloneVec3(target.initialCenter),
+        rotationDegrees: cloneVec3(target.initialRotationDegrees),
+        size: cloneVec3(target.initialSize)
       };
     case "modelInstance":
       return {
@@ -327,7 +348,12 @@ export function createTransformPreviewFromTarget(target: TransformTarget): Trans
 export function doesTransformSessionChangeTarget(session: ActiveTransformSession): boolean {
   switch (session.target.kind) {
     case "brush":
-      return session.preview.kind === "brush" && !areVec3Equal(session.preview.center, session.target.initialCenter);
+      return (
+        session.preview.kind === "brush" &&
+        (!areVec3Equal(session.preview.center, session.target.initialCenter) ||
+          !areVec3Equal(session.preview.rotationDegrees, session.target.initialRotationDegrees) ||
+          !areVec3Equal(session.preview.size, session.target.initialSize))
+      );
     case "modelInstance":
       return (
         session.preview.kind === "modelInstance" &&
@@ -362,7 +388,7 @@ export function getTransformAxisLabel(axis: TransformAxis): string {
 export function getTransformTargetLabel(target: TransformTarget): string {
   switch (target.kind) {
     case "brush":
-      return "Box Brush";
+      return "Whitebox Box";
     case "modelInstance":
       return getModelInstanceKindLabel();
     case "entity":
@@ -373,7 +399,7 @@ export function getTransformTargetLabel(target: TransformTarget): string {
 export function getSupportedTransformOperations(target: TransformTarget): TransformOperation[] {
   switch (target.kind) {
     case "brush":
-      return ["translate"];
+      return ["translate", "rotate", "scale"];
     case "modelInstance":
       return ["translate", "rotate", "scale"];
     case "entity":
@@ -390,13 +416,13 @@ export function supportsTransformAxisConstraint(session: ActiveTransformSession,
     case "translate":
       return true;
     case "scale":
-      return session.target.kind === "modelInstance";
+      return session.target.kind === "modelInstance" || session.target.kind === "brush";
     case "rotate":
       if (session.target.kind === "entity" && session.target.initialRotation.kind === "yaw") {
         return axis === "y";
       }
 
-      return session.target.kind !== "brush";
+      return true;
   }
 }
 
@@ -437,7 +463,9 @@ function createBrushTransformTarget(document: SceneDocument, brushId: string): T
     target: {
       kind: "brush",
       brushId: brush.id,
-      initialCenter: cloneVec3(brush.center)
+      initialCenter: cloneVec3(brush.center),
+      initialRotationDegrees: cloneVec3(brush.rotationDegrees),
+      initialSize: cloneVec3(brush.size)
     },
     message: null
   };
