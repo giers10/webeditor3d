@@ -1,3 +1,5 @@
+import { Euler, MathUtils, Vector3 } from "three";
+
 import type { Vec3 } from "../core/vector";
 import type { BoxBrush } from "../document/brushes";
 
@@ -15,33 +17,52 @@ export function getBoxBrushHalfSize(brush: BoxBrush): Vec3 {
 }
 
 export function getBoxBrushBounds(brush: BoxBrush): BoxBrushBounds {
-  const halfSize = getBoxBrushHalfSize(brush);
+  const corners = getBoxBrushCornerPositions(brush);
+  const firstCorner = corners[0];
+  const min = { ...firstCorner };
+  const max = { ...firstCorner };
+
+  for (const corner of corners.slice(1)) {
+    min.x = Math.min(min.x, corner.x);
+    min.y = Math.min(min.y, corner.y);
+    min.z = Math.min(min.z, corner.z);
+    max.x = Math.max(max.x, corner.x);
+    max.y = Math.max(max.y, corner.y);
+    max.z = Math.max(max.z, corner.z);
+  }
 
   return {
-    min: {
-      x: brush.center.x - halfSize.x,
-      y: brush.center.y - halfSize.y,
-      z: brush.center.z - halfSize.z
-    },
-    max: {
-      x: brush.center.x + halfSize.x,
-      y: brush.center.y + halfSize.y,
-      z: brush.center.z + halfSize.z
-    }
+    min,
+    max
   };
 }
 
 export function getBoxBrushCornerPositions(brush: BoxBrush): Vec3[] {
-  const bounds = getBoxBrushBounds(brush);
-
-  return [
-    { x: bounds.min.x, y: bounds.min.y, z: bounds.min.z },
-    { x: bounds.max.x, y: bounds.min.y, z: bounds.min.z },
-    { x: bounds.min.x, y: bounds.max.y, z: bounds.min.z },
-    { x: bounds.max.x, y: bounds.max.y, z: bounds.min.z },
-    { x: bounds.min.x, y: bounds.min.y, z: bounds.max.z },
-    { x: bounds.max.x, y: bounds.min.y, z: bounds.max.z },
-    { x: bounds.min.x, y: bounds.max.y, z: bounds.max.z },
-    { x: bounds.max.x, y: bounds.max.y, z: bounds.max.z }
+  const halfSize = getBoxBrushHalfSize(brush);
+  const rotation = new Euler(
+    MathUtils.degToRad(brush.rotationDegrees.x),
+    MathUtils.degToRad(brush.rotationDegrees.y),
+    MathUtils.degToRad(brush.rotationDegrees.z),
+    "XYZ"
+  );
+  const offsets = [
+    new Vector3(-halfSize.x, -halfSize.y, -halfSize.z),
+    new Vector3(halfSize.x, -halfSize.y, -halfSize.z),
+    new Vector3(-halfSize.x, halfSize.y, -halfSize.z),
+    new Vector3(halfSize.x, halfSize.y, -halfSize.z),
+    new Vector3(-halfSize.x, -halfSize.y, halfSize.z),
+    new Vector3(halfSize.x, -halfSize.y, halfSize.z),
+    new Vector3(-halfSize.x, halfSize.y, halfSize.z),
+    new Vector3(halfSize.x, halfSize.y, halfSize.z)
   ];
+
+  return offsets.map((offset) => {
+    const rotatedOffset = offset.clone().applyEuler(rotation);
+
+    return {
+      x: brush.center.x + rotatedOffset.x,
+      y: brush.center.y + rotatedOffset.y,
+      z: brush.center.z + rotatedOffset.z
+    };
+  });
 }
