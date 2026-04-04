@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { createEditorStore } from "../../src/app/editor-store";
+import { createCreateBoxBrushCommand } from "../../src/commands/create-box-brush-command";
 import { createSetSceneNameCommand } from "../../src/commands/set-scene-name-command";
 import { createTransformSession } from "../../src/core/transform-session";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
@@ -154,6 +155,7 @@ describe("EditorStore", () => {
   it("tracks viewport layout and per-panel state independently from the document", () => {
     const store = createEditorStore();
 
+    expect(store.getState().whiteboxSelectionMode).toBe("object");
     expect(store.getState().viewportLayoutMode).toBe("single");
     expect(store.getState().activeViewportPanelId).toBe("topLeft");
     expect(store.getState().viewportPanels.topLeft.viewMode).toBe("perspective");
@@ -180,6 +182,70 @@ describe("EditorStore", () => {
     expect(store.getState().viewportQuadSplit).toEqual({
       x: 0.38,
       y: 0.62
+    });
+  });
+
+  it("tracks whitebox component selection mode independently from document state", () => {
+    const store = createEditorStore();
+
+    store.setWhiteboxSelectionMode("face");
+    expect(store.getState().whiteboxSelectionMode).toBe("face");
+
+    store.setWhiteboxSelectionMode("edge");
+    expect(store.getState().whiteboxSelectionMode).toBe("edge");
+
+    store.setWhiteboxSelectionMode("vertex");
+    expect(store.getState().whiteboxSelectionMode).toBe("vertex");
+
+    store.setWhiteboxSelectionMode("object");
+    expect(store.getState().whiteboxSelectionMode).toBe("object");
+  });
+
+  it("normalizes selected whitebox components back to the owning solid when switching to a different component mode", () => {
+    const store = createEditorStore();
+
+    store.executeCommand(createCreateBoxBrushCommand());
+    const createdBrush = Object.values(store.getState().document.brushes)[0];
+
+    store.setWhiteboxSelectionMode("face");
+    store.setSelection({
+      kind: "brushFace",
+      brushId: createdBrush.id,
+      faceId: "posY"
+    });
+
+    expect(store.getState().selection).toEqual({
+      kind: "brushFace",
+      brushId: createdBrush.id,
+      faceId: "posY"
+    });
+
+    store.setWhiteboxSelectionMode("edge");
+    expect(store.getState().selection).toEqual({
+      kind: "brushes",
+      ids: [createdBrush.id]
+    });
+
+    store.setSelection({
+      kind: "brushEdge",
+      brushId: createdBrush.id,
+      edgeId: "edgeX_posY_negZ"
+    });
+    store.setWhiteboxSelectionMode("vertex");
+    expect(store.getState().selection).toEqual({
+      kind: "brushes",
+      ids: [createdBrush.id]
+    });
+
+    store.setSelection({
+      kind: "brushVertex",
+      brushId: createdBrush.id,
+      vertexId: "posX_posY_negZ"
+    });
+    store.setWhiteboxSelectionMode("object");
+    expect(store.getState().selection).toEqual({
+      kind: "brushes",
+      ids: [createdBrush.id]
     });
   });
 
