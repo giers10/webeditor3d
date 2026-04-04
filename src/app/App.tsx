@@ -2227,7 +2227,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
-  const applyPlayerStartChange = () => {
+  const applyPlayerStartChange = (overrides: { colliderMode?: PlayerStartColliderMode } = {}) => {
     if (selectedPlayerStart === null) {
       setStatusMessage("Select a Player Start before editing it.");
       return;
@@ -2236,11 +2236,19 @@ export function App({ store, initialStatusMessage }: AppProps) {
     try {
       const snappedPosition = snapVec3ToGrid(readVec3Draft(entityPositionDraft, "Player Start position"), DEFAULT_GRID_SIZE);
       const yawDegrees = readYawDegreesDraft(playerStartYawDraft);
+      const colliderMode = overrides.colliderMode ?? playerStartColliderModeDraft;
       const nextEntity = createPlayerStartEntity({
         id: selectedPlayerStart.id,
         name: selectedPlayerStart.name,
         position: snappedPosition,
-        yawDegrees
+        yawDegrees,
+        collider: {
+          mode: colliderMode,
+          eyeHeight: readPositiveNumberDraft(playerStartEyeHeightDraft, "Player Start eye height"),
+          capsuleRadius: readPositiveNumberDraft(playerStartCapsuleRadiusDraft, "Player Start capsule radius"),
+          capsuleHeight: readPositiveNumberDraft(playerStartCapsuleHeightDraft, "Player Start capsule height"),
+          boxSize: readPositiveVec3Draft(playerStartBoxSizeDraft, "Player Start box size")
+        }
       });
 
       commitEntityChange(selectedPlayerStart, nextEntity, "Updated Player Start.");
