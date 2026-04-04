@@ -4,7 +4,9 @@ import type { LoadedModelAsset } from "../assets/gltf-model-import";
 import type { LoadedImageAsset } from "../assets/image-assets";
 import type { ProjectAssetRecord } from "../assets/project-assets";
 import type { EditorSelection } from "../core/selection";
+import { getWhiteboxSelectionFeedbackLabel } from "../core/whitebox-selection-feedback";
 import type { ToolMode } from "../core/tool-mode";
+import { getWhiteboxSelectionModeLabel, type WhiteboxSelectionMode } from "../core/whitebox-selection-mode";
 import type { Vec3 } from "../core/vector";
 import type { ActiveTransformSession, TransformSessionState } from "../core/transform-session";
 import type { SceneDocument } from "../document/scene-document";
@@ -32,6 +34,7 @@ interface ViewportCanvasProps {
   projectAssets: Record<string, ProjectAssetRecord>;
   loadedModelAssets: Record<string, LoadedModelAsset>;
   loadedImageAssets: Record<string, LoadedImageAsset>;
+  whiteboxSelectionMode: WhiteboxSelectionMode;
   whiteboxSnapEnabled: boolean;
   whiteboxSnapStep: number;
   selection: EditorSelection;
@@ -61,6 +64,7 @@ export function ViewportCanvas({
   projectAssets,
   loadedModelAssets,
   loadedImageAssets,
+  whiteboxSelectionMode,
   whiteboxSnapEnabled,
   whiteboxSnapStep,
   selection,
@@ -85,6 +89,7 @@ export function ViewportCanvas({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const hostRef = useRef<ViewportHost | null>(null);
   const [viewportMessage, setViewportMessage] = useState<string | null>(null);
+  const [hoveredWhiteboxLabel, setHoveredWhiteboxLabel] = useState<string | null>(null);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -139,6 +144,10 @@ export function ViewportCanvas({
   }, [whiteboxSnapEnabled, whiteboxSnapStep]);
 
   useEffect(() => {
+    hostRef.current?.setWhiteboxSelectionMode(whiteboxSelectionMode);
+  }, [whiteboxSelectionMode]);
+
+  useEffect(() => {
     hostRef.current?.updateDocument(sceneDocument, selection);
   }, [sceneDocument, selection]);
 
@@ -157,6 +166,10 @@ export function ViewportCanvas({
   useEffect(() => {
     hostRef.current?.setBrushSelectionChangeHandler(onSelectionChange);
   }, [onSelectionChange]);
+
+  useEffect(() => {
+    hostRef.current?.setWhiteboxHoverLabelChangeHandler(setHoveredWhiteboxLabel);
+  }, []);
 
   useEffect(() => {
     hostRef.current?.setCameraStateChangeHandler(onCameraStateChange);
@@ -213,8 +226,10 @@ export function ViewportCanvas({
 
   const previewVisible = toolMode === "create" && toolPreview.kind === "create" && toolPreview.center !== null;
   const transformPreviewVisible = transformSession.kind === "active";
+  const selectionModeVisible = toolMode === "select";
+  const selectedWhiteboxLabel = selectionModeVisible ? getWhiteboxSelectionFeedbackLabel(sceneDocument, selection) : null;
   const showViewModeOverlay = layoutMode === "quad";
-  const showOverlay = showViewModeOverlay || previewVisible || transformPreviewVisible;
+  const showOverlay = showViewModeOverlay || selectionModeVisible || previewVisible || transformPreviewVisible || selectedWhiteboxLabel !== null || hoveredWhiteboxLabel !== null;
 
   return (
     <div
@@ -237,6 +252,24 @@ export function ViewportCanvas({
           {!showViewModeOverlay ? null : (
             <div className="viewport-canvas__overlay-badges">
               <div className="viewport-canvas__overlay-badge viewport-canvas__overlay-badge--view">{getViewportViewModeLabel(viewMode)}</div>
+              {!selectionModeVisible ? null : (
+                <div
+                  className="viewport-canvas__overlay-badge viewport-canvas__overlay-badge--selection"
+                  data-testid={`viewport-selection-mode-${panelId}`}
+                >
+                  {getWhiteboxSelectionModeLabel(whiteboxSelectionMode)}
+                </div>
+              )}
+            </div>
+          )}
+          {showViewModeOverlay || !selectionModeVisible ? null : (
+            <div className="viewport-canvas__overlay-badges">
+              <div
+                className="viewport-canvas__overlay-badge viewport-canvas__overlay-badge--selection"
+                data-testid={`viewport-selection-mode-${panelId}`}
+              >
+                {getWhiteboxSelectionModeLabel(whiteboxSelectionMode)}
+              </div>
             </div>
           )}
           {!previewVisible ? null : (
@@ -249,6 +282,16 @@ export function ViewportCanvas({
               {transformSession.kind !== "active"
                 ? null
                 : `${transformSession.operation}${transformSession.axisConstraint === null ? "" : ` · ${transformSession.axisConstraint.toUpperCase()}`}`}
+            </div>
+          )}
+          {selectedWhiteboxLabel === null ? null : (
+            <div className="viewport-canvas__overlay-preview" data-testid={`viewport-selected-whitebox-${panelId}`}>
+              Selected: {selectedWhiteboxLabel}
+            </div>
+          )}
+          {hoveredWhiteboxLabel === null ? null : (
+            <div className="viewport-canvas__overlay-preview" data-testid={`viewport-hovered-whitebox-${panelId}`}>
+              Hover: {hoveredWhiteboxLabel}
             </div>
           )}
         </div>

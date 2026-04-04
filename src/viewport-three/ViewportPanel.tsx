@@ -16,6 +16,7 @@ import type { LoadedModelAsset } from "../assets/gltf-model-import";
 import type { LoadedImageAsset } from "../assets/image-assets";
 import type { ProjectAssetRecord } from "../assets/project-assets";
 import type { EditorSelection } from "../core/selection";
+import type { WhiteboxSelectionMode } from "../core/whitebox-selection-mode";
 import type { ActiveTransformSession, TransformSessionState } from "../core/transform-session";
 import type { ToolMode } from "../core/tool-mode";
 import type { SceneDocument } from "../document/scene-document";
@@ -33,6 +34,7 @@ interface ViewportPanelProps {
   projectAssets: Record<string, ProjectAssetRecord>;
   loadedModelAssets: Record<string, LoadedModelAsset>;
   loadedImageAssets: Record<string, LoadedImageAsset>;
+  whiteboxSelectionMode: WhiteboxSelectionMode;
   whiteboxSnapEnabled: boolean;
   whiteboxSnapStep: number;
   selection: EditorSelection;
@@ -66,6 +68,7 @@ export function ViewportPanel({
   projectAssets,
   loadedModelAssets,
   loadedImageAssets,
+  whiteboxSelectionMode,
   whiteboxSnapEnabled,
   whiteboxSnapStep,
   selection,
@@ -102,6 +105,18 @@ export function ViewportPanel({
       onFocusCapture={() => onActivatePanel(panelId)}
     >
       <div className="viewport-panel__header">
+        {layoutMode !== "quad" ? null : (
+          <div className="viewport-panel__meta">
+            <div className="viewport-panel__title-row">
+              <div className="viewport-panel__title">{getViewportPanelLabel(panelId)}</div>
+              {!isActive ? null : (
+                <div className="viewport-panel__active-badge" data-testid={`viewport-panel-active-badge-${panelId}`}>
+                  Active
+                </div>
+              )}
+            </div>
+          </div>
+        )}
         <div className="viewport-panel__controls">
           <div className="viewport-panel__control-group" role="group" aria-label={`${getViewportPanelLabel(panelId)} view mode`}>
             {VIEWPORT_VIEW_MODES.map((viewMode) => (
@@ -142,6 +157,7 @@ export function ViewportPanel({
         projectAssets={projectAssets}
         loadedModelAssets={loadedModelAssets}
         loadedImageAssets={loadedImageAssets}
+        whiteboxSelectionMode={whiteboxSelectionMode}
         whiteboxSnapEnabled={whiteboxSnapEnabled}
         whiteboxSnapStep={whiteboxSnapStep}
         selection={selection}
