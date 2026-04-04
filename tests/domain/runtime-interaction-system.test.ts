@@ -115,6 +115,12 @@ function createRuntimeSceneFixture(): RuntimeSceneDefinition {
     },
     interactionLinks: [],
     playerStart: null,
+    playerCollider: {
+      mode: "capsule",
+      radius: 0.3,
+      height: 1.8,
+      eyeHeight: 1.6
+    },
     spawn: {
       source: "fallback",
       entityId: null,
