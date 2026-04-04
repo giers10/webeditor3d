@@ -54,6 +54,7 @@ import {
 } from "../core/transform-session";
 import type { Vec2, Vec3 } from "../core/vector";
 import {
+  MODEL_INSTANCE_COLLISION_MODES,
   areModelInstancesEqual,
   createModelInstance,
   createModelInstancePlacementPosition,
@@ -61,7 +62,8 @@ import {
   DEFAULT_MODEL_INSTANCE_ROTATION_DEGREES,
   DEFAULT_MODEL_INSTANCE_SCALE,
   normalizeModelInstanceName,
-  type ModelInstance
+  type ModelInstance,
+  type ModelInstanceCollisionMode
 } from "../assets/model-instances";
 import {
   getModelInstanceDisplayLabelById,
@@ -169,6 +171,7 @@ import {
 import { STARTER_MATERIAL_LIBRARY, type MaterialDef } from "../materials/starter-material-library";
 import { RunnerCanvas } from "../runner-web/RunnerCanvas";
 import type { FirstPersonTelemetry } from "../runtime-three/navigation-controller";
+import { initializeRapierCollisionWorld } from "../runtime-three/rapier-collision-world";
 import type { RuntimeInteractionPrompt } from "../runtime-three/runtime-interaction-system";
 import { buildRuntimeSceneFromDocument, type RuntimeNavigationMode, type RuntimeSceneDefinition } from "../runtime-three/runtime-scene-build";
 import { validateRuntimeSceneBuild } from "../runtime-three/runtime-scene-validation";
@@ -218,6 +221,21 @@ const FACE_LABELS: Record<BoxFaceId, string> = {
   posZ: "+Z Front",
   negZ: "-Z Back"
 };
+
+function getModelInstanceCollisionModeDescription(mode: ModelInstanceCollisionMode): string {
+  switch (mode) {
+    case "none":
+      return "No generated collider is built for this model instance.";
+    case "terrain":
+      return "Builds a Rapier heightfield from a regular-grid terrain mesh. Unsupported terrain sources fail with build diagnostics.";
+    case "static":
+      return "Builds a fixed Rapier triangle-mesh collider from the imported model geometry.";
+    case "dynamic":
+      return "Builds convex compound pieces for Rapier queries. In this slice they participate as fixed world collision, not fully simulated rigid bodies.";
+    case "simple":
+      return "Builds one cheap oriented box from the imported model bounds.";
+  }
+}
 
 const STARTER_MATERIAL_ORDER = new Map(STARTER_MATERIAL_LIBRARY.map((material, index) => [material.id, index]));
 const MIN_VIEWPORT_QUAD_SPLIT = 0.2;
@@ -961,7 +979,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
   });
   const [viewportQuadResizeMode, setViewportQuadResizeMode] = useState<ViewportQuadResizeMode | null>(null);
   const documentValidation = validateSceneDocument(editorState.document);
-  const runValidation = validateRuntimeSceneBuild(editorState.document, preferredNavigationMode);
+  const runValidation = validateRuntimeSceneBuild(editorState.document, {
+    navigationMode: preferredNavigationMode,
+    loadedModelAssets
+  });
   const diagnostics = [...documentValidation.errors, ...documentValidation.warnings, ...runValidation.errors, ...runValidation.warnings];
   const blockingDiagnostics = diagnostics.filter((diagnostic) => diagnostic.severity === "error");
   const warningDiagnostics = diagnostics.filter((diagnostic) => diagnostic.severity === "warning");
@@ -1140,6 +1161,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
   useEffect(() => {
     loadedModelAssetsRef.current = loadedModelAssets;
   }, [loadedModelAssets]);
+
+  useEffect(() => {
+    void initializeRapierCollisionWorld();
+  }, []);
 
   useEffect(() => {
     loadedAudioAssetsRef.current = loadedAudioAssets;
@@ -2161,9 +2186,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
         id: selectedModelInstance.id,
         assetId: selectedModelInstance.assetId,
         name: selectedModelInstance.name,
+        collision: selectedModelInstance.collision,
         position: readVec3Draft(modelPositionDraft, "Model instance position"),
         rotationDegrees: readVec3Draft(modelRotationDraft, "Model instance rotation"),
-        scale: readPositiveVec3Draft(modelScaleDraft, "Model instance scale")
+        scale: readPositiveVec3Draft(modelScaleDraft, "Model instance scale"),
+        animationClipName: selectedModelInstance.animationClipName,
+        animationAutoplay: selectedModelInstance.animationAutoplay
       });
 
       commitModelInstanceChange(selectedModelInstance, nextModelInstance, "Updated model instance.");
@@ -4165,7 +4193,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
     try {
       const nextRuntimeScene = buildRuntimeSceneFromDocument(editorState.document, {
-        navigationMode: preferredNavigationMode
+        navigationMode: preferredNavigationMode,
+        loadedModelAssets
       });
       const nextNavigationMode = preferredNavigationMode;
 
@@ -5662,6 +5691,61 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       />
                     </label>
                   </div>
+                </div>
+
+                <div className="form-section">
+                  <div className="label">Collision</div>
+                  <label className="form-field">
+                    <span className="label">Mode</span>
+                    <select
+                      data-testid="model-instance-collision-mode"
+                      className="select-input"
+                      value={selectedModelInstance.collision.mode}
+                      onChange={(event) => {
+                        store.executeCommand(
+                          createUpsertModelInstanceCommand({
+                            modelInstance: {
+                              ...selectedModelInstance,
+                              collision: {
+                                ...selectedModelInstance.collision,
+                                mode: event.target.value as ModelInstanceCollisionMode
+                              }
+                            },
+                            label: "Set model collision mode"
+                          })
+                        );
+                      }}
+                    >
+                      {MODEL_INSTANCE_COLLISION_MODES.map((mode) => (
+                        <option key={mode} value={mode}>
+                          {mode}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="form-field">
+                    <input
+                      data-testid="model-instance-collision-visible"
+                      type="checkbox"
+                      checked={selectedModelInstance.collision.visible}
+                      onChange={(event) => {
+                        store.executeCommand(
+                          createUpsertModelInstanceCommand({
+                            modelInstance: {
+                              ...selectedModelInstance,
+                              collision: {
+                                ...selectedModelInstance.collision,
+                                visible: event.target.checked
+                              }
+                            },
+                            label: event.target.checked ? "Show model collision debug" : "Hide model collision debug"
+                          })
+                        );
+                      }}
+                    />
+                    <span className="label">Show generated collision debug</span>
+                  </label>
+                  <div className="material-summary">{getModelInstanceCollisionModeDescription(selectedModelInstance.collision.mode)}</div>
                 </div>
 
                 {selectedModelAssetRecord !== null && selectedModelAssetRecord.metadata.animationNames.length > 0 && (

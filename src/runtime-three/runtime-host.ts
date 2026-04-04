@@ -25,6 +25,7 @@ import type { LoadedImageAsset } from "../assets/image-assets";
 import type { LoadedAudioAsset } from "../assets/audio-assets";
 import type { ProjectAssetRecord } from "../assets/project-assets";
 import { applyBoxBrushFaceUvsToGeometry } from "../geometry/box-face-uvs";
+import { createModelColliderDebugGroup } from "../geometry/model-instance-collider-debug-mesh";
 import { createStarterMaterialSignature, createStarterMaterialTexture } from "../materials/starter-material-textures";
 import {
   applyAdvancedRenderingLightShadowFlags,
@@ -63,6 +64,19 @@ interface LocalLightRenderObjects {
 }
 
 const FALLBACK_FACE_COLOR = 0x747d89;
+
+function findVisibleModelCollider(
+  colliders: RuntimeSceneDefinition["colliders"],
+  instanceId: string
+): Extract<RuntimeSceneDefinition["colliders"][number], { source: "modelInstance" }> | null {
+  for (const collider of colliders) {
+    if (collider.source === "modelInstance" && collider.instanceId === instanceId && collider.visible) {
+      return collider;
+    }
+  }
+
+  return null;
+}
 
 export class RuntimeHost {
   private readonly scene = new Scene();
@@ -175,7 +189,7 @@ export class RuntimeHost {
     this.applyWorld();
     this.rebuildLocalLights(runtimeScene.localLights);
     this.rebuildBrushMeshes(runtimeScene.brushes);
-    this.rebuildModelInstances(runtimeScene.modelInstances);
+    this.rebuildModelInstances(runtimeScene.modelInstances, runtimeScene.colliders);
     void this.rebuildCollisionWorld(runtimeScene.colliders);
     this.audioSystem.loadScene(runtimeScene);
   }
@@ -195,7 +209,7 @@ export class RuntimeHost {
     }
 
     if (this.runtimeScene !== null) {
-      this.rebuildModelInstances(this.runtimeScene.modelInstances);
+      this.rebuildModelInstances(this.runtimeScene.modelInstances, this.runtimeScene.colliders);
     }
 
     this.audioSystem.updateAssets(projectAssets, loadedAudioAssets);
@@ -482,7 +496,7 @@ export class RuntimeHost {
     this.applyShadowState();
   }
 
-  private rebuildModelInstances(modelInstances: RuntimeSceneDefinition["modelInstances"]) {
+  private rebuildModelInstances(modelInstances: RuntimeSceneDefinition["modelInstances"], colliders: RuntimeSceneDefinition["colliders"]) {
     this.clearModelInstances();
 
     for (const modelInstance of modelInstances) {
@@ -502,6 +516,11 @@ export class RuntimeHost {
         loadedAsset,
         false
       );
+      const visibleCollider = findVisibleModelCollider(colliders, modelInstance.instanceId);
+
+      if (visibleCollider !== null) {
+        renderGroup.add(createModelColliderDebugGroup(visibleCollider));
+      }
 
       this.modelGroup.add(renderGroup);
       this.modelRenderObjects.set(modelInstance.instanceId, renderGroup);

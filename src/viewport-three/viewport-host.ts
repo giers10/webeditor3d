@@ -85,6 +85,8 @@ import {
 } from "../entities/entity-instances";
 import { BOX_FACE_IDS, DEFAULT_BOX_BRUSH_SIZE, type BoxBrush, type BoxFaceId } from "../document/brushes";
 import { applyBoxBrushFaceUvsToGeometry } from "../geometry/box-face-uvs";
+import { createModelColliderDebugGroup } from "../geometry/model-instance-collider-debug-mesh";
+import { buildGeneratedModelCollider } from "../geometry/model-instance-collider-generation";
 import { DEFAULT_GRID_SIZE, snapValueToGrid, snapVec3ToGrid } from "../geometry/grid-snapping";
 import { createStarterMaterialSignature, createStarterMaterialTexture } from "../materials/starter-material-textures";
 import type { MaterialDef } from "../materials/starter-material-library";
@@ -1679,6 +1681,18 @@ export class ViewportHost {
       const asset = this.projectAssets[modelInstance.assetId];
       const loadedAsset = this.loadedModelAssets[modelInstance.assetId];
       const renderGroup = createModelInstanceRenderGroup(modelInstance, asset, loadedAsset, selected);
+
+      if (asset?.kind === "model" && modelInstance.collision.visible) {
+        try {
+          const generatedCollider = buildGeneratedModelCollider(modelInstance, asset, loadedAsset);
+
+          if (generatedCollider !== null) {
+            renderGroup.add(createModelColliderDebugGroup(generatedCollider));
+          }
+        } catch {
+          // Validation surfaces unsupported collider modes; the viewport keeps rendering the model.
+        }
+      }
 
       this.modelGroup.add(renderGroup);
       this.modelRenderObjects.set(modelInstance.id, renderGroup);
