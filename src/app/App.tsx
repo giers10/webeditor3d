@@ -6758,188 +6758,205 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   <div className="value">box</div>
                 </div>
 
-                <div className="form-section">
-                  <div className="label">Center</div>
-                  <div className="vector-inputs">
-                    <label className="form-field">
-                      <span className="label">X</span>
-                      <input
-                        data-testid="brush-center-x"
-                        className="text-input"
-                        type="number"
-                        step={whiteboxVectorInputStep}
-                        value={positionDraft.x}
-                        onChange={(event) => {
-                          const nextValue = event.currentTarget.value;
-                          setPositionDraft((draft) => ({ ...draft, x: nextValue }));
-                        }}
-                        onBlur={applyPositionChange}
-                        onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPositionChange)}
-                        onKeyUp={(event) => handleNumberInputKeyUp(event, applyPositionChange)}
-                        onPointerUp={(event) => handleNumberInputPointerUp(event, applyPositionChange)}
-                      />
-                    </label>
-                    <label className="form-field">
-                      <span className="label">Y</span>
-                      <input
-                        data-testid="brush-center-y"
-                        className="text-input"
-                        type="number"
-                        step={whiteboxVectorInputStep}
-                        value={positionDraft.y}
-                        onChange={(event) => {
-                          const nextValue = event.currentTarget.value;
-                          setPositionDraft((draft) => ({ ...draft, y: nextValue }));
-                        }}
-                        onBlur={applyPositionChange}
-                        onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPositionChange)}
-                        onKeyUp={(event) => handleNumberInputKeyUp(event, applyPositionChange)}
-                        onPointerUp={(event) => handleNumberInputPointerUp(event, applyPositionChange)}
-                      />
-                    </label>
-                    <label className="form-field">
-                      <span className="label">Z</span>
-                      <input
-                        data-testid="brush-center-z"
-                        className="text-input"
-                        type="number"
-                        step={whiteboxVectorInputStep}
-                        value={positionDraft.z}
-                        onChange={(event) => {
-                          const nextValue = event.currentTarget.value;
-                          setPositionDraft((draft) => ({ ...draft, z: nextValue }));
-                        }}
-                        onBlur={applyPositionChange}
-                        onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPositionChange)}
-                        onKeyUp={(event) => handleNumberInputKeyUp(event, applyPositionChange)}
-                        onPointerUp={(event) => handleNumberInputPointerUp(event, applyPositionChange)}
-                      />
-                    </label>
-                  </div>
+                <div className="stat-card">
+                  <div className="label">Selection Mode</div>
+                  <div className="value">{getWhiteboxSelectionModeLabel(whiteboxSelectionMode)}</div>
                 </div>
 
-                <div className="form-section">
-                  <div className="label">Rotation</div>
-                  <div className="vector-inputs">
-                    <label className="form-field">
-                      <span className="label">X</span>
-                      <input
-                        data-testid="brush-rotation-x"
-                        className="text-input"
-                        type="number"
-                        step="0.1"
-                        value={rotationDraft.x}
-                        onChange={(event) => {
-                          const nextValue = event.currentTarget.value;
-                          setRotationDraft((draft) => ({ ...draft, x: nextValue }));
-                        }}
-                        onBlur={applyRotationChange}
-                        onKeyDown={(event) => handleDraftVectorKeyDown(event, applyRotationChange)}
-                        onKeyUp={(event) => handleNumberInputKeyUp(event, applyRotationChange)}
-                        onPointerUp={(event) => handleNumberInputPointerUp(event, applyRotationChange)}
-                      />
-                    </label>
-                    <label className="form-field">
-                      <span className="label">Y</span>
-                      <input
-                        data-testid="brush-rotation-y"
-                        className="text-input"
-                        type="number"
-                        step="0.1"
-                        value={rotationDraft.y}
-                        onChange={(event) => {
-                          const nextValue = event.currentTarget.value;
-                          setRotationDraft((draft) => ({ ...draft, y: nextValue }));
-                        }}
-                        onBlur={applyRotationChange}
-                        onKeyDown={(event) => handleDraftVectorKeyDown(event, applyRotationChange)}
-                        onKeyUp={(event) => handleNumberInputKeyUp(event, applyRotationChange)}
-                        onPointerUp={(event) => handleNumberInputPointerUp(event, applyRotationChange)}
-                      />
-                    </label>
-                    <label className="form-field">
-                      <span className="label">Z</span>
-                      <input
-                        data-testid="brush-rotation-z"
-                        className="text-input"
-                        type="number"
-                        step="0.1"
-                        value={rotationDraft.z}
-                        onChange={(event) => {
-                          const nextValue = event.currentTarget.value;
-                          setRotationDraft((draft) => ({ ...draft, z: nextValue }));
-                        }}
-                        onBlur={applyRotationChange}
-                        onKeyDown={(event) => handleDraftVectorKeyDown(event, applyRotationChange)}
-                        onKeyUp={(event) => handleNumberInputKeyUp(event, applyRotationChange)}
-                        onPointerUp={(event) => handleNumberInputPointerUp(event, applyRotationChange)}
-                      />
-                    </label>
+                {whiteboxSelectionMode !== "object" ? (
+                  <div className="outliner-empty">
+                    {whiteboxSelectionMode === "face"
+                      ? "Face mode keeps whole-solid transforms out of the way. Select a face to edit its material or UV transform."
+                      : whiteboxSelectionMode === "edge"
+                        ? "Edge mode is selection-only in this slice. Edge transforms land next."
+                        : "Vertex mode is selection-only in this slice. Vertex transforms land next."}
                   </div>
-                </div>
+                ) : (
+                  <>
+                    <div className="form-section">
+                      <div className="label">Center</div>
+                      <div className="vector-inputs">
+                        <label className="form-field">
+                          <span className="label">X</span>
+                          <input
+                            data-testid="brush-center-x"
+                            className="text-input"
+                            type="number"
+                            step={whiteboxVectorInputStep}
+                            value={positionDraft.x}
+                            onChange={(event) => {
+                              const nextValue = event.currentTarget.value;
+                              setPositionDraft((draft) => ({ ...draft, x: nextValue }));
+                            }}
+                            onBlur={applyPositionChange}
+                            onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPositionChange)}
+                            onKeyUp={(event) => handleNumberInputKeyUp(event, applyPositionChange)}
+                            onPointerUp={(event) => handleNumberInputPointerUp(event, applyPositionChange)}
+                          />
+                        </label>
+                        <label className="form-field">
+                          <span className="label">Y</span>
+                          <input
+                            data-testid="brush-center-y"
+                            className="text-input"
+                            type="number"
+                            step={whiteboxVectorInputStep}
+                            value={positionDraft.y}
+                            onChange={(event) => {
+                              const nextValue = event.currentTarget.value;
+                              setPositionDraft((draft) => ({ ...draft, y: nextValue }));
+                            }}
+                            onBlur={applyPositionChange}
+                            onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPositionChange)}
+                            onKeyUp={(event) => handleNumberInputKeyUp(event, applyPositionChange)}
+                            onPointerUp={(event) => handleNumberInputPointerUp(event, applyPositionChange)}
+                          />
+                        </label>
+                        <label className="form-field">
+                          <span className="label">Z</span>
+                          <input
+                            data-testid="brush-center-z"
+                            className="text-input"
+                            type="number"
+                            step={whiteboxVectorInputStep}
+                            value={positionDraft.z}
+                            onChange={(event) => {
+                              const nextValue = event.currentTarget.value;
+                              setPositionDraft((draft) => ({ ...draft, z: nextValue }));
+                            }}
+                            onBlur={applyPositionChange}
+                            onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPositionChange)}
+                            onKeyUp={(event) => handleNumberInputKeyUp(event, applyPositionChange)}
+                            onPointerUp={(event) => handleNumberInputPointerUp(event, applyPositionChange)}
+                          />
+                        </label>
+                      </div>
+                    </div>
 
-                <div className="form-section">
-                  <div className="label">Size</div>
-                  <div className="vector-inputs">
-                    <label className="form-field">
-                      <span className="label">X</span>
-                      <input
-                        data-testid="brush-size-x"
-                        className="text-input"
-                        type="number"
-                        min="0.01"
-                        step={whiteboxVectorInputStep}
-                        value={sizeDraft.x}
-                        onChange={(event) => {
-                          const nextValue = event.currentTarget.value;
-                          setSizeDraft((draft) => ({ ...draft, x: nextValue }));
-                        }}
-                        onBlur={applySizeChange}
-                        onKeyDown={(event) => handleDraftVectorKeyDown(event, applySizeChange)}
-                        onKeyUp={(event) => handleNumberInputKeyUp(event, applySizeChange)}
-                        onPointerUp={(event) => handleNumberInputPointerUp(event, applySizeChange)}
-                      />
-                    </label>
-                    <label className="form-field">
-                      <span className="label">Y</span>
-                      <input
-                        data-testid="brush-size-y"
-                        className="text-input"
-                        type="number"
-                        min="0.01"
-                        step={whiteboxVectorInputStep}
-                        value={sizeDraft.y}
-                        onChange={(event) => {
-                          const nextValue = event.currentTarget.value;
-                          setSizeDraft((draft) => ({ ...draft, y: nextValue }));
-                        }}
-                        onBlur={applySizeChange}
-                        onKeyDown={(event) => handleDraftVectorKeyDown(event, applySizeChange)}
-                        onKeyUp={(event) => handleNumberInputKeyUp(event, applySizeChange)}
-                        onPointerUp={(event) => handleNumberInputPointerUp(event, applySizeChange)}
-                      />
-                    </label>
-                    <label className="form-field">
-                      <span className="label">Z</span>
-                      <input
-                        data-testid="brush-size-z"
-                        className="text-input"
-                        type="number"
-                        min="0.01"
-                        step={whiteboxVectorInputStep}
-                        value={sizeDraft.z}
-                        onChange={(event) => {
-                          const nextValue = event.currentTarget.value;
-                          setSizeDraft((draft) => ({ ...draft, z: nextValue }));
-                        }}
-                        onBlur={applySizeChange}
-                        onKeyDown={(event) => handleDraftVectorKeyDown(event, applySizeChange)}
-                        onKeyUp={(event) => handleNumberInputKeyUp(event, applySizeChange)}
-                        onPointerUp={(event) => handleNumberInputPointerUp(event, applySizeChange)}
-                      />
-                    </label>
-                  </div>
-                </div>
+                    <div className="form-section">
+                      <div className="label">Rotation</div>
+                      <div className="vector-inputs">
+                        <label className="form-field">
+                          <span className="label">X</span>
+                          <input
+                            data-testid="brush-rotation-x"
+                            className="text-input"
+                            type="number"
+                            step="0.1"
+                            value={rotationDraft.x}
+                            onChange={(event) => {
+                              const nextValue = event.currentTarget.value;
+                              setRotationDraft((draft) => ({ ...draft, x: nextValue }));
+                            }}
+                            onBlur={applyRotationChange}
+                            onKeyDown={(event) => handleDraftVectorKeyDown(event, applyRotationChange)}
+                            onKeyUp={(event) => handleNumberInputKeyUp(event, applyRotationChange)}
+                            onPointerUp={(event) => handleNumberInputPointerUp(event, applyRotationChange)}
+                          />
+                        </label>
+                        <label className="form-field">
+                          <span className="label">Y</span>
+                          <input
+                            data-testid="brush-rotation-y"
+                            className="text-input"
+                            type="number"
+                            step="0.1"
+                            value={rotationDraft.y}
+                            onChange={(event) => {
+                              const nextValue = event.currentTarget.value;
+                              setRotationDraft((draft) => ({ ...draft, y: nextValue }));
+                            }}
+                            onBlur={applyRotationChange}
+                            onKeyDown={(event) => handleDraftVectorKeyDown(event, applyRotationChange)}
+                            onKeyUp={(event) => handleNumberInputKeyUp(event, applyRotationChange)}
+                            onPointerUp={(event) => handleNumberInputPointerUp(event, applyRotationChange)}
+                          />
+                        </label>
+                        <label className="form-field">
+                          <span className="label">Z</span>
+                          <input
+                            data-testid="brush-rotation-z"
+                            className="text-input"
+                            type="number"
+                            step="0.1"
+                            value={rotationDraft.z}
+                            onChange={(event) => {
+                              const nextValue = event.currentTarget.value;
+                              setRotationDraft((draft) => ({ ...draft, z: nextValue }));
+                            }}
+                            onBlur={applyRotationChange}
+                            onKeyDown={(event) => handleDraftVectorKeyDown(event, applyRotationChange)}
+                            onKeyUp={(event) => handleNumberInputKeyUp(event, applyRotationChange)}
+                            onPointerUp={(event) => handleNumberInputPointerUp(event, applyRotationChange)}
+                          />
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="form-section">
+                      <div className="label">Size</div>
+                      <div className="vector-inputs">
+                        <label className="form-field">
+                          <span className="label">X</span>
+                          <input
+                            data-testid="brush-size-x"
+                            className="text-input"
+                            type="number"
+                            min="0.01"
+                            step={whiteboxVectorInputStep}
+                            value={sizeDraft.x}
+                            onChange={(event) => {
+                              const nextValue = event.currentTarget.value;
+                              setSizeDraft((draft) => ({ ...draft, x: nextValue }));
+                            }}
+                            onBlur={applySizeChange}
+                            onKeyDown={(event) => handleDraftVectorKeyDown(event, applySizeChange)}
+                            onKeyUp={(event) => handleNumberInputKeyUp(event, applySizeChange)}
+                            onPointerUp={(event) => handleNumberInputPointerUp(event, applySizeChange)}
+                          />
+                        </label>
+                        <label className="form-field">
+                          <span className="label">Y</span>
+                          <input
+                            data-testid="brush-size-y"
+                            className="text-input"
+                            type="number"
+                            min="0.01"
+                            step={whiteboxVectorInputStep}
+                            value={sizeDraft.y}
+                            onChange={(event) => {
+                              const nextValue = event.currentTarget.value;
+                              setSizeDraft((draft) => ({ ...draft, y: nextValue }));
+                            }}
+                            onBlur={applySizeChange}
+                            onKeyDown={(event) => handleDraftVectorKeyDown(event, applySizeChange)}
+                            onKeyUp={(event) => handleNumberInputKeyUp(event, applySizeChange)}
+                            onPointerUp={(event) => handleNumberInputPointerUp(event, applySizeChange)}
+                          />
+                        </label>
+                        <label className="form-field">
+                          <span className="label">Z</span>
+                          <input
+                            data-testid="brush-size-z"
+                            className="text-input"
+                            type="number"
+                            min="0.01"
+                            step={whiteboxVectorInputStep}
+                            value={sizeDraft.z}
+                            onChange={(event) => {
+                              const nextValue = event.currentTarget.value;
+                              setSizeDraft((draft) => ({ ...draft, z: nextValue }));
+                            }}
+                            onBlur={applySizeChange}
+                            onKeyDown={(event) => handleDraftVectorKeyDown(event, applySizeChange)}
+                            onKeyUp={(event) => handleNumberInputKeyUp(event, applySizeChange)}
+                            onPointerUp={(event) => handleNumberInputPointerUp(event, applySizeChange)}
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  </>
+                )}
 
                 <div className="form-section">
                   <div className="label">Faces</div>
