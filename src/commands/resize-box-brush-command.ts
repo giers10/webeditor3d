@@ -11,11 +11,14 @@ import type { EditorCommand } from "./command";
 interface ResizeBoxBrushCommandOptions {
   brushId: string;
   size: Vec3;
+  snapToGrid?: boolean;
   gridSize?: number;
+  label?: string;
 }
 
 export function createResizeBoxBrushCommand(options: ResizeBoxBrushCommandOptions): EditorCommand {
-  const snappedSize = snapPositiveSizeToGrid(options.size, options.gridSize ?? DEFAULT_GRID_SIZE);
+  const resolvedSize =
+    options.snapToGrid === false ? options.size : snapPositiveSizeToGrid(options.size, options.gridSize ?? DEFAULT_GRID_SIZE);
 
   let previousSize: Vec3 | null = null;
   let previousSelection: EditorSelection | null = null;
@@ -23,7 +26,7 @@ export function createResizeBoxBrushCommand(options: ResizeBoxBrushCommandOption
 
   return {
     id: createOpaqueId("command"),
-    label: "Resize box brush",
+    label: options.label ?? "Resize box brush",
     execute(context) {
       const currentDocument = context.getDocument();
       const brush = getBoxBrushOrThrow(currentDocument, options.brushId);
@@ -46,7 +49,7 @@ export function createResizeBoxBrushCommand(options: ResizeBoxBrushCommandOption
         replaceBrush(currentDocument, {
           ...brush,
           size: {
-            ...snappedSize
+            ...resolvedSize
           }
         })
       );
