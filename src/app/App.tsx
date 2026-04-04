@@ -5067,6 +5067,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 projectAssets={editorState.document.assets}
                 loadedModelAssets={loadedModelAssets}
                 loadedImageAssets={loadedImageAssets}
+                whiteboxSnapEnabled={whiteboxSnapEnabled}
+                whiteboxSnapStep={whiteboxSnapStep}
                 selection={editorState.selection}
                 toolMode={editorState.toolMode}
                 toolPreview={viewportToolPreview}
