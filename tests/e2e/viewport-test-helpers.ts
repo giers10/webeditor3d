@@ -23,7 +23,12 @@ interface EditorStoreSnapshot {
   selection: {
     kind: string;
     ids?: string[];
+    brushId?: string;
+    faceId?: string;
+    edgeId?: string;
+    vertexId?: string;
   };
+  whiteboxSelectionMode: string;
   toolMode: string;
   document: {
     assets: Record<string, { id: string; kind: string; sourceName: string }>;
@@ -151,6 +156,22 @@ export async function clickViewport(page: Page, panelId: string = DEFAULT_VIEWPO
     await viewportCanvas.click();
     return;
   }
+}
+
+export async function clickViewportAtRatio(page: Page, panelId: string, xRatio: number, yRatio: number) {
+  const viewportCanvas = getViewportCanvas(page, panelId);
+  const box = await viewportCanvas.boundingBox();
+
+  if (box === null) {
+    throw new Error(`Missing viewport canvas for ${panelId}.`);
+  }
+
+  await viewportCanvas.click({
+    position: {
+      x: box.width * xRatio,
+      y: box.height * yRatio
+    }
+  });
 }
 
 export async function setSharedBoxCreationPreview(
