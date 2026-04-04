@@ -1514,13 +1514,13 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     };
   }
 
-  // v16 -> v17: Player Start entities gained authored collider settings.
+  // v16 -> v18: Player Start collider settings landed before whitebox box rotation.
   if (source.version === IMPORTED_MODEL_COLLIDERS_SCENE_DOCUMENT_VERSION) {
     const materials = readMaterialRegistry(source.materials, "materials");
     const assets = readAssets(source.assets);
 
     return {
-      version: PLAYER_START_COLLIDER_SETTINGS_SCENE_DOCUMENT_VERSION,
+      version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
       world: readWorldSettings(source.world),
       materials,
