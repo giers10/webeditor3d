@@ -11,6 +11,7 @@ import { cloneInteractionLink, getInteractionLinks, type InteractionLink } from 
 import { cloneMaterialDef, type MaterialDef } from "../materials/starter-material-library";
 import { cloneFaceUvState } from "../document/brushes";
 import { assertRuntimeSceneBuildable } from "./runtime-scene-validation";
+import type { FirstPersonPlayerShape } from "./player-collision";
 
 export type RuntimeNavigationMode = "firstPerson" | "orbitVisitor";
 
@@ -49,6 +50,7 @@ export interface RuntimePlayerStart {
   entityId: string;
   position: Vec3;
   yawDegrees: number;
+  collider: FirstPersonPlayerShape;
 }
 
 export interface RuntimeSoundEmitter {
@@ -143,6 +145,7 @@ export interface RuntimeSceneDefinition {
   entities: RuntimeEntityCollection;
   interactionLinks: InteractionLink[];
   playerStart: RuntimePlayerStart | null;
+  playerCollider: FirstPersonPlayerShape;
   spawn: RuntimeSpawnPoint;
 }
 
@@ -418,6 +421,35 @@ function assertNever(value: never): never {
   throw new Error(`Unsupported runtime entity: ${String((value as EntityInstance).kind)}`);
 }
 
+function buildRuntimePlayerShape(
+  playerStartEntity: ReturnType<typeof getPrimaryPlayerStartEntity>
+): FirstPersonPlayerShape {
+  if (playerStartEntity === null) {
+    return FIRST_PERSON_PLAYER_SHAPE;
+  }
+
+  switch (playerStartEntity.collider.mode) {
+    case "capsule":
+      return {
+        mode: "capsule",
+        radius: playerStartEntity.collider.capsuleRadius,
+        height: playerStartEntity.collider.capsuleHeight,
+        eyeHeight: playerStartEntity.collider.eyeHeight
+      };
+    case "box":
+      return {
+        mode: "box",
+        size: cloneVec3(playerStartEntity.collider.boxSize),
+        eyeHeight: playerStartEntity.collider.eyeHeight
+      };
+    case "none":
+      return {
+        mode: "none",
+        eyeHeight: playerStartEntity.collider.eyeHeight
+      };
+  }
+}
+
 export function buildRuntimeSceneFromDocument(document: SceneDocument, options: BuildRuntimeSceneOptions = {}): RuntimeSceneDefinition {
   assertRuntimeSceneBuildable(document, {
     navigationMode: options.navigationMode ?? "orbitVisitor",
@@ -430,6 +462,7 @@ export function buildRuntimeSceneFromDocument(document: SceneDocument, options: 
   const collections = buildRuntimeSceneCollections(document);
   const interactionLinks = getInteractionLinks(document.interactionLinks).map((link) => cloneInteractionLink(link));
   const playerStartEntity = getPrimaryPlayerStartEntity(document.entities);
+  const playerCollider = buildRuntimePlayerShape(playerStartEntity);
 
   for (const modelInstance of getModelInstances(document.modelInstances)) {
     const asset = document.assets[modelInstance.assetId];
@@ -452,7 +485,8 @@ export function buildRuntimeSceneFromDocument(document: SceneDocument, options: 
       : {
           entityId: playerStartEntity.id,
           position: cloneVec3(playerStartEntity.position),
-          yawDegrees: playerStartEntity.yawDegrees
+          yawDegrees: playerStartEntity.yawDegrees,
+          collider: playerCollider
         };
 
   return {
@@ -465,6 +499,7 @@ export function buildRuntimeSceneFromDocument(document: SceneDocument, options: 
     entities: collections.entities,
     interactionLinks,
     playerStart,
+    playerCollider,
     spawn:
       playerStart === null
         ? buildFallbackSpawn(combinedSceneBounds)
