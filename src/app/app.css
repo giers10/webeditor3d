@@ -120,11 +120,25 @@ button:disabled {
 
 .toolbar__group {
   display: flex;
+  align-items: center;
   gap: 6px;
   padding: 6px;
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid var(--color-border);
   border-radius: 12px;
+}
+
+.toolbar__inline-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 4px 0 2px;
+}
+
+.toolbar__inline-input {
+  width: 76px;
+  min-height: 34px;
 }
 
 .toolbar__button {
