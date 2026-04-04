@@ -12,6 +12,7 @@ import {
   Group,
   LineBasicMaterial,
   LineSegments,
+  Material,
   Mesh,
   MeshBasicMaterial,
   MeshStandardMaterial,
@@ -700,12 +701,18 @@ export class ViewportHost {
     this.applyOrthographicCameraPose();
   }
 
-  private createWireframeDisplayMaterial(material: MeshStandardMaterial | MeshBasicMaterial): MeshBasicMaterial {
+  private createWireframeDisplayMaterial(material: Material): MeshBasicMaterial {
+    const source = material as Material & {
+      color?: { getHex(): number };
+      transparent?: boolean;
+      opacity?: number;
+    };
+
     return new MeshBasicMaterial({
-      color: material.color.getHex(),
+      color: source.color?.getHex() ?? FALLBACK_FACE_COLOR,
       wireframe: true,
-      transparent: material.transparent === true || material.opacity < 1,
-      opacity: material.opacity,
+      transparent: source.transparent === true || (source.opacity ?? 1) < 1,
+      opacity: source.opacity ?? 1,
       depthWrite: false
     });
   }
