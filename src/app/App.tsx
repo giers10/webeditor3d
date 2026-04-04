@@ -242,6 +242,17 @@ function getModelInstanceCollisionModeDescription(mode: ModelInstanceCollisionMo
   }
 }
 
+function getPlayerStartColliderModeDescription(mode: PlayerStartColliderMode): string {
+  switch (mode) {
+    case "capsule":
+      return "Uses a capsule player collider for standard grounded first-person traversal.";
+    case "box":
+      return "Uses an axis-aligned box player collider for sharper footprint bounds.";
+    case "none":
+      return "Disables player collision detection. First-person traversal continues without world clipping.";
+  }
+}
+
 const STARTER_MATERIAL_ORDER = new Map(STARTER_MATERIAL_LIBRARY.map((material, index) => [material.id, index]));
 const MIN_VIEWPORT_QUAD_SPLIT = 0.2;
 const MAX_VIEWPORT_QUAD_SPLIT = 0.8;
