@@ -3005,21 +3005,21 @@ export class ViewportHost {
       case "perspective":
       case "top":
         return {
-          x: snapValueToGrid(this.boxCreateIntersection.x, DEFAULT_GRID_SIZE),
-          y: snapValueToGrid(0, DEFAULT_GRID_SIZE),
-          z: snapValueToGrid(this.boxCreateIntersection.z, DEFAULT_GRID_SIZE)
+          x: this.snapWhiteboxPositionValue(this.boxCreateIntersection.x),
+          y: this.snapWhiteboxPositionValue(0),
+          z: this.snapWhiteboxPositionValue(this.boxCreateIntersection.z)
         };
       case "front":
         return {
-          x: snapValueToGrid(this.boxCreateIntersection.x, DEFAULT_GRID_SIZE),
-          y: snapValueToGrid(this.boxCreateIntersection.y, DEFAULT_GRID_SIZE),
-          z: snapValueToGrid(0, DEFAULT_GRID_SIZE)
+          x: this.snapWhiteboxPositionValue(this.boxCreateIntersection.x),
+          y: this.snapWhiteboxPositionValue(this.boxCreateIntersection.y),
+          z: this.snapWhiteboxPositionValue(0)
         };
       case "side":
         return {
-          x: snapValueToGrid(0, DEFAULT_GRID_SIZE),
-          y: snapValueToGrid(this.boxCreateIntersection.y, DEFAULT_GRID_SIZE),
-          z: snapValueToGrid(this.boxCreateIntersection.z, DEFAULT_GRID_SIZE)
+          x: this.snapWhiteboxPositionValue(0),
+          y: this.snapWhiteboxPositionValue(this.boxCreateIntersection.y),
+          z: this.snapWhiteboxPositionValue(this.boxCreateIntersection.z)
         };
     }
   }
@@ -3044,21 +3044,21 @@ export class ViewportHost {
       case "perspective":
       case "top":
         return {
-          x: snapValueToGrid(this.boxCreateIntersection.x, DEFAULT_GRID_SIZE),
-          y: snapValueToGrid(size.y * 0.5, DEFAULT_GRID_SIZE),
-          z: snapValueToGrid(this.boxCreateIntersection.z, DEFAULT_GRID_SIZE)
+          x: this.snapWhiteboxPositionValue(this.boxCreateIntersection.x),
+          y: this.snapWhiteboxPositionValue(size.y * 0.5),
+          z: this.snapWhiteboxPositionValue(this.boxCreateIntersection.z)
         };
       case "front":
         return {
-          x: snapValueToGrid(this.boxCreateIntersection.x, DEFAULT_GRID_SIZE),
-          y: snapValueToGrid(this.boxCreateIntersection.y, DEFAULT_GRID_SIZE),
-          z: snapValueToGrid(size.z * 0.5, DEFAULT_GRID_SIZE)
+          x: this.snapWhiteboxPositionValue(this.boxCreateIntersection.x),
+          y: this.snapWhiteboxPositionValue(this.boxCreateIntersection.y),
+          z: this.snapWhiteboxPositionValue(size.z * 0.5)
         };
       case "side":
         return {
-          x: snapValueToGrid(size.x * 0.5, DEFAULT_GRID_SIZE),
-          y: snapValueToGrid(this.boxCreateIntersection.y, DEFAULT_GRID_SIZE),
-          z: snapValueToGrid(this.boxCreateIntersection.z, DEFAULT_GRID_SIZE)
+          x: this.snapWhiteboxPositionValue(size.x * 0.5),
+          y: this.snapWhiteboxPositionValue(this.boxCreateIntersection.y),
+          z: this.snapWhiteboxPositionValue(this.boxCreateIntersection.z)
         };
     }
   }
