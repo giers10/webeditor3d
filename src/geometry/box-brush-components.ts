@@ -1,4 +1,4 @@
-import { Euler, MathUtils, Vector3 } from "three";
+import { Euler, MathUtils, Quaternion, Vector3 } from "three";
 
 import type { Vec3 } from "../core/vector";
 import {
@@ -136,18 +136,10 @@ function createBrushRotationEuler(brush: BoxBrush): Euler {
   );
 }
 
-function createInverseBrushRotationEuler(brush: BoxBrush): Euler {
-  return new Euler(
-    MathUtils.degToRad(-brush.rotationDegrees.x),
-    MathUtils.degToRad(-brush.rotationDegrees.y),
-    MathUtils.degToRad(-brush.rotationDegrees.z),
-    "ZYX"
-  );
-}
-
 export function transformBoxBrushWorldVectorToLocal(brush: BoxBrush, worldVector: Vec3): Vec3 {
-  const inverseRotation = createInverseBrushRotationEuler(brush);
-  const localVector = new Vector3(worldVector.x, worldVector.y, worldVector.z).applyEuler(inverseRotation);
+  const rotation = createBrushRotationEuler(brush);
+  const inverseRotation = new Quaternion().setFromEuler(rotation).invert();
+  const localVector = new Vector3(worldVector.x, worldVector.y, worldVector.z).applyQuaternion(inverseRotation);
 
   return {
     x: localVector.x,
