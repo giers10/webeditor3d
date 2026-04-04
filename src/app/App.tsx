@@ -613,16 +613,6 @@ function getSelectedBrushLabel(selection: EditorSelection, brushes: BoxBrush[]):
   return getBrushLabelById(selectedBrushId, brushes);
 }
 
-function getSelectedBrushEdgeLabel(selection: EditorSelection): string | null {
-  const selectedEdgeId = getSelectedBrushEdgeId(selection);
-  return selectedEdgeId === null ? null : BOX_EDGE_LABELS[selectedEdgeId];
-}
-
-function getSelectedBrushVertexLabel(selection: EditorSelection): string | null {
-  const selectedVertexId = getSelectedBrushVertexId(selection);
-  return selectedVertexId === null ? null : BOX_VERTEX_LABELS[selectedVertexId];
-}
-
 function describeSelection(
   selection: EditorSelection,
   brushes: BoxBrush[],
@@ -4806,6 +4796,21 @@ export function App({ store, initialStatusMessage }: AppProps) {
             </button>
           </div>
 
+          <div className="toolbar__group" role="group" aria-label="Whitebox selection mode">
+            {WHITEBOX_SELECTION_MODES.map((mode) => (
+              <button
+                key={mode}
+                className={`toolbar__button toolbar__button--compact ${whiteboxSelectionMode === mode ? "toolbar__button--active" : ""}`}
+                type="button"
+                data-testid={`whitebox-selection-mode-${mode}`}
+                aria-pressed={whiteboxSelectionMode === mode}
+                onClick={() => handleWhiteboxSelectionModeChange(mode)}
+              >
+                {getWhiteboxSelectionModeLabel(mode)}
+              </button>
+            ))}
+          </div>
+
           <div className="toolbar__group" role="group" aria-label="Whitebox snap settings">
             <button
               className={`toolbar__button ${whiteboxSnapEnabled ? "toolbar__button--active" : ""}`}
@@ -5120,6 +5125,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 projectAssets={editorState.document.assets}
                 loadedModelAssets={loadedModelAssets}
                 loadedImageAssets={loadedImageAssets}
+                whiteboxSelectionMode={whiteboxSelectionMode}
                 whiteboxSnapEnabled={whiteboxSnapEnabled}
                 whiteboxSnapStep={whiteboxSnapStep}
                 selection={editorState.selection}
@@ -6986,8 +6992,32 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   </div>
                 </div>
 
-                {selectedFace === null || selectedFaceId === null ? (
-                  <div className="outliner-empty">Select a face to edit its material and UV transform.</div>
+                {whiteboxSelectionMode === "edge" ? (
+                  selectedEdgeId === null ? (
+                    <div className="outliner-empty">Select an edge in the viewport to inspect it. Edge transforms land in the next slice.</div>
+                  ) : (
+                    <div className="stat-card">
+                      <div className="label">Active Edge</div>
+                      <div className="value">{BOX_EDGE_LABELS[selectedEdgeId]}</div>
+                      <div className="material-summary">Edge selection is visible in the viewport. Persistent edge transforms are still deferred.</div>
+                    </div>
+                  )
+                ) : whiteboxSelectionMode === "vertex" ? (
+                  selectedVertexId === null ? (
+                    <div className="outliner-empty">Select a vertex in the viewport to inspect it. Vertex transforms land in the next slice.</div>
+                  ) : (
+                    <div className="stat-card">
+                      <div className="label">Active Vertex</div>
+                      <div className="value">{BOX_VERTEX_LABELS[selectedVertexId]}</div>
+                      <div className="material-summary">Vertex selection is visible in the viewport. Persistent vertex transforms are still deferred.</div>
+                    </div>
+                  )
+                ) : selectedFace === null || selectedFaceId === null ? (
+                  <div className="outliner-empty">
+                    {whiteboxSelectionMode === "object"
+                      ? "Switch to Face mode or choose a face chip to edit materials and UVs."
+                      : "Select a face to edit its material and UV transform."}
+                  </div>
                 ) : (
                   <>
                     <div className="stat-card">
@@ -7139,6 +7169,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
       <footer className="status-bar">
         <div className="status-bar__item" data-testid="status-message">
           <span className="status-bar__strong">Status:</span> {statusMessage}
+        </div>
+        <div className="status-bar__item" data-testid="status-whitebox-selection-mode">
+          <span className="status-bar__strong">Whitebox:</span> {getWhiteboxSelectionModeLabel(whiteboxSelectionMode)}
         </div>
         <div className="status-bar__item" data-testid="status-document">
           <span className="status-bar__strong">Document:</span> {documentStatusLabel}
