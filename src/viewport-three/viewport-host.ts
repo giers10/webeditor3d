@@ -453,6 +453,17 @@ export class ViewportHost {
     this.syncCreationPreview(toolPreview);
   }
 
+  setWhiteboxSnapSettings(enabled: boolean, step: number) {
+    this.whiteboxSnapEnabled = enabled;
+    this.whiteboxSnapStep = step;
+
+    if (this.creationPreview !== null) {
+      this.syncCreationPreview(this.creationPreview);
+    }
+
+    this.applyTransformPreview();
+  }
+
   setTransformSession(transformSession: TransformSessionState) {
     this.currentTransformSession = cloneTransformSession(transformSession);
 
