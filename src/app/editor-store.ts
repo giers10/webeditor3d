@@ -1,7 +1,12 @@
 import { CommandHistory } from "../commands/command-history";
 import type { CommandContext, EditorCommand } from "../commands/command";
-import { areEditorSelectionsEqual, type EditorSelection } from "../core/selection";
+import {
+  areEditorSelectionsEqual,
+  normalizeSelectionForWhiteboxSelectionMode,
+  type EditorSelection
+} from "../core/selection";
 import type { ToolMode } from "../core/tool-mode";
+import { type WhiteboxSelectionMode } from "../core/whitebox-selection-mode";
 import {
   areTransformSessionsEqual,
   cloneTransformSession,
@@ -45,6 +50,7 @@ import {
 export interface EditorStoreState {
   document: SceneDocument;
   selection: EditorSelection;
+  whiteboxSelectionMode: WhiteboxSelectionMode;
   toolMode: ToolMode;
   viewportLayoutMode: ViewportLayoutMode;
   activeViewportPanelId: ViewportPanelId;
@@ -72,6 +78,7 @@ export type EditorDraftLoadResult = LoadSceneDocumentDraftResult;
 export class EditorStore {
   private document: SceneDocument;
   private selection: EditorSelection = { kind: "none" };
+  private whiteboxSelectionMode: WhiteboxSelectionMode = "object";
   private toolMode: ToolMode = "select";
   private viewportLayoutMode: ViewportLayoutMode;
   private activeViewportPanelId: ViewportPanelId;
@@ -344,6 +351,23 @@ export class EditorStore {
     this.emit();
   }
 
+  setWhiteboxSelectionMode(mode: WhiteboxSelectionMode) {
+    if (this.whiteboxSelectionMode === mode) {
+      return;
+    }
+
+    if (this.viewportTransientState.transformSession.kind !== "none") {
+      this.viewportTransientState = {
+        ...this.viewportTransientState,
+        transformSession: createInactiveTransformSession()
+      };
+    }
+
+    this.whiteboxSelectionMode = mode;
+    this.selection = normalizeSelectionForWhiteboxSelectionMode(this.selection, mode);
+    this.emit();
+  }
+
   executeCommand(command: EditorCommand) {
     if (this.viewportTransientState.transformSession.kind !== "none") {
       this.viewportTransientState = {
@@ -412,6 +436,7 @@ export class EditorStore {
   replaceDocument(document: SceneDocument, resetHistory = true) {
     this.document = document;
     this.selection = { kind: "none" };
+    this.whiteboxSelectionMode = "object";
     this.toolMode = "select";
     this.previousEditingToolMode = "select";
     this.viewportTransientState = createDefaultViewportTransientState();
@@ -499,6 +524,7 @@ export class EditorStore {
     return {
       document: this.document,
       selection: this.selection,
+      whiteboxSelectionMode: this.whiteboxSelectionMode,
       toolMode: this.toolMode,
       viewportLayoutMode: this.viewportLayoutMode,
       activeViewportPanelId: this.activeViewportPanelId,
