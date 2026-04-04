@@ -626,7 +626,7 @@ function describeSelection(
     case "brushes":
       return `${selection.ids.length} solid${selection.ids.length === 1 ? "" : "s"} selected (${getSelectedBrushLabel(selection, brushes)})`;
     case "brushFace":
-      return `1 face selected (${FACE_LABELS[selection.faceId]} on ${getBrushLabelById(selection.brushId, brushes)})`;
+      return `1 face selected (${BOX_FACE_LABELS[selection.faceId]} on ${getBrushLabelById(selection.brushId, brushes)})`;
     case "entities":
       return `${selection.ids.length} entity selected (${getEntityDisplayLabelById(selection.ids[0], entities, assets)})`;
     case "modelInstances":
@@ -1990,7 +1990,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
         break;
       case "brushFace":
         setStatusMessage(
-          `Selected ${FACE_LABELS[selection.faceId]} on ${getBrushLabelById(selection.brushId, brushList)} from the ${source}${suffix}.`
+          `Selected ${BOX_FACE_LABELS[selection.faceId]} on ${getBrushLabelById(selection.brushId, brushList)} from the ${source}${suffix}.`
         );
         break;
       case "entities":
@@ -4193,7 +4193,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
 
     if (selectedFace.materialId === materialId) {
-      setStatusMessage(`${FACE_LABELS[selectedFaceId]} already uses that material.`);
+      setStatusMessage(`${BOX_FACE_LABELS[selectedFaceId]} already uses that material.`);
       return;
     }
 
@@ -4205,7 +4205,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
           materialId
         })
       );
-      setStatusMessage(`Applied ${editorState.document.materials[materialId]?.name ?? materialId} to ${FACE_LABELS[selectedFaceId]}.`);
+      setStatusMessage(`Applied ${editorState.document.materials[materialId]?.name ?? materialId} to ${BOX_FACE_LABELS[selectedFaceId]}.`);
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
     }
@@ -4218,7 +4218,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
 
     if (selectedFace.materialId === null) {
-      setStatusMessage(`${FACE_LABELS[selectedFaceId]} already uses the fallback face material.`);
+      setStatusMessage(`${BOX_FACE_LABELS[selectedFaceId]} already uses the fallback face material.`);
       return;
     }
 
@@ -4229,7 +4229,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
         materialId: null
       })
     );
-    setStatusMessage(`Cleared the authored material on ${FACE_LABELS[selectedFaceId]}.`);
+    setStatusMessage(`Cleared the authored material on ${BOX_FACE_LABELS[selectedFaceId]}.`);
   };
 
   const applyFaceUvState = (uvState: FaceUvState, label: string, successMessage: string) => {
@@ -6911,7 +6911,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           )
                         }
                       >
-                        <span className="face-chip__title">{FACE_LABELS[faceId]}</span>
+                        <span className="face-chip__title">{BOX_FACE_LABELS[faceId]}</span>
                         <span className="face-chip__meta">{faceId}</span>
                       </button>
                     ))}
@@ -6924,7 +6924,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   <>
                     <div className="stat-card">
                       <div className="label">Active Face</div>
-                      <div className="value">{FACE_LABELS[selectedFaceId]}</div>
+                      <div className="value">{BOX_FACE_LABELS[selectedFaceId]}</div>
                       <div className="material-summary" data-testid="selected-face-material-name">
                         Material: {selectedFaceMaterial?.name ?? "Fallback face color"}
                       </div>
