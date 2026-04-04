@@ -634,7 +634,7 @@ These are only pursued after the earlier core loop feels solid.
 When schedule pressure forces tradeoffs, prefer work that strengthens:
 
 1. edit -> save/load -> run loop
-2. brush ergonomics
+2. whiteboxing ergonomics
 3. material/texture speed
 4. typed entities and interactions
 5. imported asset support
