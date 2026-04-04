@@ -183,14 +183,14 @@ describe("RapierCollisionWorld", () => {
       const traversed = collisionWorld.resolveFirstPersonMotion(
         highLanding.feetPosition,
         {
-          x: 1,
+          x: -1,
           y: 0,
           z: 0
         },
         FIRST_PERSON_PLAYER_SHAPE
       );
 
-      expect(traversed.feetPosition.x).toBeGreaterThan(-1.5);
+      expect(traversed.feetPosition.x).toBeLessThan(-2.5);
       expect(traversed.feetPosition.y).toBeLessThan(highLanding.feetPosition.y);
       expect(traversed.collidedAxes.x).toBe(false);
     } finally {
