@@ -109,7 +109,18 @@ describe("validateSceneDocument", () => {
             y: Number.NaN,
             z: 0
           },
-          yawDegrees: Number.NaN
+          yawDegrees: Number.NaN,
+          collider: {
+            mode: "capsule",
+            eyeHeight: 3,
+            capsuleRadius: 0.4,
+            capsuleHeight: 0.5,
+            boxSize: {
+              x: 0.6,
+              y: -1,
+              z: 0.6
+            }
+          }
         }
       }
     });
@@ -121,6 +132,15 @@ describe("validateSceneDocument", () => {
         }),
         expect.objectContaining({
           code: "invalid-player-start-yaw"
+        }),
+        expect.objectContaining({
+          code: "invalid-player-start-capsule-proportions"
+        }),
+        expect.objectContaining({
+          code: "invalid-player-start-box-size"
+        }),
+        expect.objectContaining({
+          code: "invalid-player-start-eye-height"
         })
       ])
     );
