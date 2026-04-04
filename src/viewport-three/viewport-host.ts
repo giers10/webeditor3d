@@ -902,6 +902,22 @@ export class ViewportHost {
     return Math.max(MIN_SCALE_COMPONENT, Math.round(value / SCALE_SNAP_STEP) * SCALE_SNAP_STEP);
   }
 
+  private snapWhiteboxPositionValue(value: number): number {
+    return this.whiteboxSnapEnabled ? snapValueToGrid(value, this.whiteboxSnapStep) : value;
+  }
+
+  private snapWhiteboxSizeValue(value: number): number {
+    if (!Number.isFinite(value)) {
+      throw new Error("Whitebox box size values must be finite numbers.");
+    }
+
+    if (!this.whiteboxSnapEnabled) {
+      return Math.max(MIN_BOX_SIZE_COMPONENT, Math.abs(value));
+    }
+
+    return Math.max(MIN_BOX_SIZE_COMPONENT, snapValueToGrid(Math.abs(value), this.whiteboxSnapStep));
+  }
+
   private getAxisComponent(vector: Vec3, axis: TransformAxis): number {
     switch (axis) {
       case "x":
