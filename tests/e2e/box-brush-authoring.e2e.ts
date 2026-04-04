@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 import { beginBoxCreation, clickViewport, getEditorStoreSnapshot } from "./viewport-test-helpers";
 
-test("user can create a box brush and keep it through a draft reload", async ({ page }) => {
+test("user can create a whitebox box with float transforms and keep it through reload and run mode", async ({ page }) => {
   const pageErrors: string[] = [];
   const consoleErrors: string[] = [];
 
@@ -50,6 +50,7 @@ test("user can create a box brush and keep it through a draft reload", async ({ 
 
   await beginBoxCreation(page);
   await clickViewport(page);
+  await page.getByTestId("whitebox-snap-toggle").click();
   const committedSnapshot = await getEditorStoreSnapshot(page);
   expect(committedSnapshot).toMatchObject({
     toolMode: "select",
@@ -59,13 +60,17 @@ test("user can create a box brush and keep it through a draft reload", async ({ 
       }
     }
   });
-  await expect(page.getByRole("button", { name: /Box Brush 1/ })).toBeVisible();
-  await expect(page.getByText("1 brush selected (Box Brush 1)")).toBeVisible();
+  await expect(page.getByRole("button", { name: /Whitebox Box 1/ })).toBeVisible();
+  await expect(page.getByText("1 solid selected (Whitebox Box 1)")).toBeVisible();
   await expect(page.getByTestId("apply-brush-position")).toHaveCount(0);
   await expect(page.getByTestId("apply-brush-size")).toHaveCount(0);
-  await page.getByTestId("brush-center-y").fill("2");
+  await page.getByTestId("brush-center-x").fill("1.25");
+  await page.getByTestId("brush-center-x").press("Tab");
+  await page.getByTestId("brush-center-y").fill("2.125");
   await page.getByTestId("brush-center-y").press("Tab");
-  await page.getByTestId("brush-size-z").fill("4");
+  await page.getByTestId("brush-rotation-y").fill("37.5");
+  await page.getByTestId("brush-rotation-y").press("Tab");
+  await page.getByTestId("brush-size-z").fill("4.5");
   await page.getByTestId("brush-size-z").press("Tab");
   await page.getByTestId("selected-brush-name").fill("Entry Room");
   await page.getByTestId("selected-brush-name").press("Tab");
@@ -76,9 +81,13 @@ test("user can create a box brush and keep it through a draft reload", async ({ 
 
   await expect(page.getByRole("button", { name: /^Entry Room$/ })).toBeVisible();
   await page.getByRole("button", { name: /^Entry Room$/ }).click();
-  await expect(page.getByTestId("brush-center-y")).toHaveValue("2");
-  await expect(page.getByTestId("brush-size-z")).toHaveValue("4");
+  await expect(page.getByTestId("brush-center-x")).toHaveValue("1.25");
+  await expect(page.getByTestId("brush-center-y")).toHaveValue("2.125");
+  await expect(page.getByTestId("brush-rotation-y")).toHaveValue("37.5");
+  await expect(page.getByTestId("brush-size-z")).toHaveValue("4.5");
   await expect(page.getByTestId("viewport-overlay-topLeft")).toHaveCount(0);
+  await page.getByTestId("enter-run-mode").click();
+  await expect(page.getByTestId("runner-shell")).toBeVisible();
 
   expect(pageErrors).toEqual([]);
   expect(consoleErrors).toEqual([]);
@@ -102,7 +111,7 @@ test("switching selection while a transform input is active does not overwrite t
   await page.getByTestId("brush-size-z").fill("4");
   await outlinerButtons.nth(1).click();
 
-  await expect(page.getByText("1 brush selected (Box Brush 2)")).toBeVisible();
+  await expect(page.getByText("1 solid selected (Whitebox Box 2)")).toBeVisible();
   await expect(page.getByTestId("brush-size-z")).toHaveValue("2");
 
   await outlinerButtons.nth(0).click();
