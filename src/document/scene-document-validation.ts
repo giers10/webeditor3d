@@ -8,6 +8,8 @@ import {
 import type { ModelInstance } from "../assets/model-instances";
 import { isModelInstanceCollisionMode } from "../assets/model-instances";
 import {
+  isPlayerStartColliderMode,
+  getPlayerStartColliderHeight,
   type InteractableEntity,
   type PointLightEntity,
   type PlayerStartEntity,
@@ -705,6 +707,90 @@ function validatePlayerStartEntity(entity: PlayerStartEntity, path: string, diag
 
   if (!isFiniteNumber(entity.yawDegrees)) {
     diagnostics.push(createDiagnostic("error", "invalid-player-start-yaw", "Player Start yaw must remain a finite number.", `${path}.yawDegrees`));
+  }
+
+  if (!isPlayerStartColliderMode(entity.collider.mode)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-collider-mode",
+        "Player Start collider mode must be capsule, box, or none.",
+        `${path}.collider.mode`
+      )
+    );
+  }
+
+  if (!isFiniteNumber(entity.collider.eyeHeight) || entity.collider.eyeHeight <= 0) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-eye-height",
+        "Player Start eye height must remain a finite number greater than zero.",
+        `${path}.collider.eyeHeight`
+      )
+    );
+  }
+
+  if (!isFiniteNumber(entity.collider.capsuleRadius) || entity.collider.capsuleRadius <= 0) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-capsule-radius",
+        "Player Start capsule radius must remain a finite number greater than zero.",
+        `${path}.collider.capsuleRadius`
+      )
+    );
+  }
+
+  if (!isFiniteNumber(entity.collider.capsuleHeight) || entity.collider.capsuleHeight <= 0) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-capsule-height",
+        "Player Start capsule height must remain a finite number greater than zero.",
+        `${path}.collider.capsuleHeight`
+      )
+    );
+  }
+
+  if (
+    !isFiniteVec3(entity.collider.boxSize) ||
+    entity.collider.boxSize.x <= 0 ||
+    entity.collider.boxSize.y <= 0 ||
+    entity.collider.boxSize.z <= 0
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-box-size",
+        "Player Start box size must remain finite and positive on every axis.",
+        `${path}.collider.boxSize`
+      )
+    );
+  }
+
+  if (entity.collider.capsuleHeight < entity.collider.capsuleRadius * 2) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-capsule-proportions",
+        "Player Start capsule height must be at least twice the capsule radius.",
+        `${path}.collider.capsuleHeight`
+      )
+    );
+  }
+
+  const colliderHeight = getPlayerStartColliderHeight(entity.collider);
+
+  if (colliderHeight !== null && entity.collider.eyeHeight > colliderHeight) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-eye-height",
+        "Player Start eye height must fit within the authored collider height.",
+        `${path}.collider.eyeHeight`
+      )
+    );
   }
 }
 
