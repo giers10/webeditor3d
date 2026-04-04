@@ -115,6 +115,10 @@ function attachStaticModelCollider(world: RAPIER.World, collider: GeneratedModel
 }
 
 function attachTerrainModelCollider(world: RAPIER.World, collider: GeneratedModelHeightfieldCollider) {
+  if (collider.rows < 2 || collider.cols < 2) {
+    throw new Error(`Terrain collider ${collider.instanceId} must have at least a 2x2 height sample grid.`);
+  }
+
   const body = createFixedBodyForModelCollider(world, collider);
   const center = scaleBoundsCenter(
     {
@@ -131,9 +135,13 @@ function attachTerrainModelCollider(world: RAPIER.World, collider: GeneratedMode
     },
     collider.transform.scale
   );
+  const rowSubdivisions = collider.rows - 1;
+  const colSubdivisions = collider.cols - 1;
 
   world.createCollider(
-    RAPIER.ColliderDesc.heightfield(collider.rows, collider.cols, collider.heights, {
+    // Rapier expects the number of grid subdivisions here, while our generated
+    // collider stores the sampled height grid dimensions.
+    RAPIER.ColliderDesc.heightfield(rowSubdivisions, colSubdivisions, collider.heights, {
       x: (collider.maxX - collider.minX) * collider.transform.scale.x,
       y: collider.transform.scale.y,
       z: (collider.maxZ - collider.minZ) * collider.transform.scale.z
