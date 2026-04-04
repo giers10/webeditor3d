@@ -60,6 +60,7 @@ import {
   IMPORTED_MODEL_COLLIDERS_SCENE_DOCUMENT_VERSION,
   LOCAL_LIGHTS_AND_SKYBOX_SCENE_DOCUMENT_VERSION,
   MODEL_ASSET_PIPELINE_SCENE_DOCUMENT_VERSION,
+  PLAYER_START_COLLIDER_SETTINGS_SCENE_DOCUMENT_VERSION,
   RUNNER_V1_SCENE_DOCUMENT_VERSION,
   SPATIAL_AUDIO_SCENE_DOCUMENT_VERSION,
   SCENE_DOCUMENT_VERSION,
@@ -1515,6 +1516,25 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
 
   // v16 -> v18: Player Start collider settings landed before whitebox box rotation.
   if (source.version === IMPORTED_MODEL_COLLIDERS_SCENE_DOCUMENT_VERSION) {
+    const materials = readMaterialRegistry(source.materials, "materials");
+    const assets = readAssets(source.assets);
+
+    return {
+      version: SCENE_DOCUMENT_VERSION,
+      name: expectString(source.name, "name"),
+      world: readWorldSettings(source.world),
+      materials,
+      textures: expectEmptyCollection(source.textures, "textures"),
+      assets,
+      brushes: readBrushes(source.brushes, materials, false),
+      modelInstances: readModelInstances(source.modelInstances, assets),
+      entities: readEntities(source.entities, { legacySoundEmitter: false }),
+      interactionLinks: readInteractionLinks(source.interactionLinks)
+    };
+  }
+
+  // v17 -> v18: box-based whitebox solids gained authored object rotation.
+  if (source.version === PLAYER_START_COLLIDER_SETTINGS_SCENE_DOCUMENT_VERSION) {
     const materials = readMaterialRegistry(source.materials, "materials");
     const assets = readAssets(source.assets);
 
