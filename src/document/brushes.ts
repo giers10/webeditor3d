@@ -27,6 +27,7 @@ export interface BoxBrush {
   kind: "box";
   name?: string;
   center: Vec3;
+  rotationDegrees: Vec3;
   size: Vec3;
   faces: BoxBrushFaces;
   layerId?: string;
@@ -45,6 +46,12 @@ export const DEFAULT_BOX_BRUSH_SIZE: Vec3 = {
   x: 2,
   y: 2,
   z: 2
+};
+
+export const DEFAULT_BOX_BRUSH_ROTATION_DEGREES: Vec3 = {
+  x: 0,
+  y: 0,
+  z: 0
 };
 
 export function normalizeBrushName(name: string | null | undefined): string | undefined {
@@ -154,9 +161,10 @@ export function createDefaultBoxBrushFaces(): BoxBrushFaces {
 }
 
 export function createBoxBrush(
-  overrides: Partial<Pick<BoxBrush, "id" | "name" | "center" | "size" | "faces" | "layerId" | "groupId">> = {}
+  overrides: Partial<Pick<BoxBrush, "id" | "name" | "center" | "rotationDegrees" | "size" | "faces" | "layerId" | "groupId">> = {}
 ): BoxBrush {
   const center = cloneVec3(overrides.center ?? DEFAULT_BOX_BRUSH_CENTER);
+  const rotationDegrees = cloneVec3(overrides.rotationDegrees ?? DEFAULT_BOX_BRUSH_ROTATION_DEGREES);
   const size = cloneVec3(overrides.size ?? DEFAULT_BOX_BRUSH_SIZE);
 
   if (!hasPositiveBoxSize(size)) {
@@ -168,6 +176,7 @@ export function createBoxBrush(
     kind: "box",
     name: normalizeBrushName(overrides.name),
     center,
+    rotationDegrees,
     size,
     faces: overrides.faces === undefined ? createDefaultBoxBrushFaces() : cloneBoxBrushFaces(overrides.faces),
     layerId: overrides.layerId,
