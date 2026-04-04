@@ -2947,7 +2947,19 @@ export class ViewportHost {
               false
             ).group;
           case "playerStart":
-            return this.createPlayerStartRenderObjects("creation-preview", previewPosition, DEFAULT_PLAYER_START_YAW_DEGREES, false).group;
+            return this.createPlayerStartRenderObjects(
+              "creation-preview",
+              previewPosition,
+              DEFAULT_PLAYER_START_YAW_DEGREES,
+              {
+                mode: "capsule",
+                eyeHeight: 1.6,
+                capsuleRadius: DEFAULT_PLAYER_START_CAPSULE_RADIUS,
+                capsuleHeight: DEFAULT_PLAYER_START_CAPSULE_HEIGHT,
+                boxSize: DEFAULT_PLAYER_START_BOX_SIZE
+              },
+              false
+            ).group;
           case "soundEmitter":
             return this.createSoundEmitterRenderObjects(
               "creation-preview",
