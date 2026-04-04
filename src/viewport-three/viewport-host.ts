@@ -1053,67 +1053,20 @@ export class ViewportHost {
 
   private getTransformPivotPosition(session: ActiveTransformSession): Vec3 {
     if (session.preview.kind === "brush") {
-      if (session.target.kind === "brushFace") {
-        return getBoxBrushFaceWorldCenter(
-          {
-            id: session.target.brushId,
-            kind: "box",
-            center: session.preview.center,
-            rotationDegrees: session.preview.rotationDegrees,
-            size: session.preview.size,
-            faces: this.currentDocument?.brushes[session.target.brushId]?.faces ?? this.currentDocument?.brushes[session.target.brushId]?.faces ?? {
-              posX: { materialId: null, uv: { offset: { x: 0, y: 0 }, scale: { x: 1, y: 1 }, rotationQuarterTurns: 0, flipU: false, flipV: false } },
-              negX: { materialId: null, uv: { offset: { x: 0, y: 0 }, scale: { x: 1, y: 1 }, rotationQuarterTurns: 0, flipU: false, flipV: false } },
-              posY: { materialId: null, uv: { offset: { x: 0, y: 0 }, scale: { x: 1, y: 1 }, rotationQuarterTurns: 0, flipU: false, flipV: false } },
-              negY: { materialId: null, uv: { offset: { x: 0, y: 0 }, scale: { x: 1, y: 1 }, rotationQuarterTurns: 0, flipU: false, flipV: false } },
-              posZ: { materialId: null, uv: { offset: { x: 0, y: 0 }, scale: { x: 1, y: 1 }, rotationQuarterTurns: 0, flipU: false, flipV: false } },
-              negZ: { materialId: null, uv: { offset: { x: 0, y: 0 }, scale: { x: 1, y: 1 }, rotationQuarterTurns: 0, flipU: false, flipV: false } }
-            }
-          },
-          session.target.faceId
-        );
-      }
+      const previewBrush = this.createPreviewBrushForSession(session);
 
-      if (session.target.kind === "brushEdge") {
-        return getBoxBrushEdgeWorldSegment(
-          {
-            id: session.target.brushId,
-            kind: "box",
-            center: session.preview.center,
-            rotationDegrees: session.preview.rotationDegrees,
-            size: session.preview.size,
-            faces: this.currentDocument?.brushes[session.target.brushId]?.faces ?? {
-              posX: { materialId: null, uv: { offset: { x: 0, y: 0 }, scale: { x: 1, y: 1 }, rotationQuarterTurns: 0, flipU: false, flipV: false } },
-              negX: { materialId: null, uv: { offset: { x: 0, y: 0 }, scale: { x: 1, y: 1 }, rotationQuarterTurns: 0, flipU: false, flipV: false } },
-              posY: { materialId: null, uv: { offset: { x: 0, y: 0 }, scale: { x: 1, y: 1 }, rotationQuarterTurns: 0, flipU: false, flipV: false } },
-              negY: { materialId: null, uv: { offset: { x: 0, y: 0 }, scale: { x: 1, y: 1 }, rotationQuarterTurns: 0, flipU: false, flipV: false } },
-              posZ: { materialId: null, uv: { offset: { x: 0, y: 0 }, scale: { x: 1, y: 1 }, rotationQuarterTurns: 0, flipU: false, flipV: false } },
-              negZ: { materialId: null, uv: { offset: { x: 0, y: 0 }, scale: { x: 1, y: 1 }, rotationQuarterTurns: 0, flipU: false, flipV: false } }
-            }
-          },
-          session.target.edgeId
-        ).center;
-      }
+      if (previewBrush !== null) {
+        if (session.target.kind === "brushFace") {
+          return getBoxBrushFaceWorldCenter(previewBrush, session.target.faceId);
+        }
 
-      if (session.target.kind === "brushVertex") {
-        return getBoxBrushVertexWorldPosition(
-          {
-            id: session.target.brushId,
-            kind: "box",
-            center: session.preview.center,
-            rotationDegrees: session.preview.rotationDegrees,
-            size: session.preview.size,
-            faces: this.currentDocument?.brushes[session.target.brushId]?.faces ?? {
-              posX: { materialId: null, uv: { offset: { x: 0, y: 0 }, scale: { x: 1, y: 1 }, rotationQuarterTurns: 0, flipU: false, flipV: false } },
-              negX: { materialId: null, uv: { offset: { x: 0, y: 0 }, scale: { x: 1, y: 1 }, rotationQuarterTurns: 0, flipU: false, flipV: false } },
-              posY: { materialId: null, uv: { offset: { x: 0, y: 0 }, scale: { x: 1, y: 1 }, rotationQuarterTurns: 0, flipU: false, flipV: false } },
-              negY: { materialId: null, uv: { offset: { x: 0, y: 0 }, scale: { x: 1, y: 1 }, rotationQuarterTurns: 0, flipU: false, flipV: false } },
-              posZ: { materialId: null, uv: { offset: { x: 0, y: 0 }, scale: { x: 1, y: 1 }, rotationQuarterTurns: 0, flipU: false, flipV: false } },
-              negZ: { materialId: null, uv: { offset: { x: 0, y: 0 }, scale: { x: 1, y: 1 }, rotationQuarterTurns: 0, flipU: false, flipV: false } }
-            }
-          },
-          session.target.vertexId
-        );
+        if (session.target.kind === "brushEdge") {
+          return getBoxBrushEdgeWorldSegment(previewBrush, session.target.edgeId).center;
+        }
+
+        if (session.target.kind === "brushVertex") {
+          return getBoxBrushVertexWorldPosition(previewBrush, session.target.vertexId);
+        }
       }
     }
 
@@ -1125,6 +1078,40 @@ export class ViewportHost {
       case "entity":
         return session.preview.position;
     }
+  }
+
+  private createPreviewBrushForSession(session: ActiveTransformSession): BoxBrush | null {
+    if (session.preview.kind !== "brush") {
+      return null;
+    }
+
+    if (
+      session.target.kind !== "brush" &&
+      session.target.kind !== "brushFace" &&
+      session.target.kind !== "brushEdge" &&
+      session.target.kind !== "brushVertex"
+    ) {
+      return null;
+    }
+
+    const currentBrush = this.currentDocument?.brushes[session.target.brushId];
+
+    if (currentBrush === undefined || currentBrush.kind !== "box") {
+      return null;
+    }
+
+    return {
+      ...currentBrush,
+      center: {
+        ...session.preview.center
+      },
+      rotationDegrees: {
+        ...session.preview.rotationDegrees
+      },
+      size: {
+        ...session.preview.size
+      }
+    };
   }
 
   private clearTransformGizmo() {
