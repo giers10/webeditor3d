@@ -214,9 +214,9 @@ describe("RapierCollisionWorld", () => {
     const wallBrush = createBoxBrush({
       id: "brush-wall-rotated",
       center: {
-        x: 1,
+        x: 1.2,
         y: 1,
-        z: 1
+        z: 0
       },
       rotationDegrees: {
         x: 0,
@@ -224,7 +224,7 @@ describe("RapierCollisionWorld", () => {
         z: 0
       },
       size: {
-        x: 0.5,
+        x: 0.4,
         y: 2,
         z: 4
       }
@@ -248,14 +248,14 @@ describe("RapierCollisionWorld", () => {
         {
           x: 2,
           y: 0,
-          z: 2
+          z: 0
         },
         runtimeScene.playerCollider
       );
 
+      expect(blocked.collidedAxes.x).toBe(true);
       expect(blocked.feetPosition.x).toBeLessThan(0.85);
-      expect(blocked.feetPosition.z).toBeLessThan(0.85);
-      expect(blocked.collidedAxes.x || blocked.collidedAxes.z).toBe(true);
+      expect(blocked.feetPosition.z).toBeCloseTo(0, 5);
     } finally {
       collisionWorld.dispose();
     }

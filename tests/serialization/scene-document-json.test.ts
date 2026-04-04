@@ -489,7 +489,7 @@ describe("scene document JSON", () => {
 
     const migratedDocument = migrateSceneDocument(legacyDocument);
 
-    expect(migratedDocument.version).toBe(PLAYER_START_COLLIDER_SETTINGS_SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
     expect(migratedDocument.entities[playerStart.id]).toEqual(
       createPlayerStartEntity({
         ...playerStart
