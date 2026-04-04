@@ -10,6 +10,7 @@ import type { SceneDocument } from "../document/scene-document";
 import type { EntityInstance } from "../entities/entity-instances";
 import type { ModelInstance } from "../assets/model-instances";
 import type { ProjectAssetRecord } from "../assets/project-assets";
+import { getBoxBrushBounds } from "../geometry/box-brush";
 
 const PLAYER_START_FOCUS_HALF_EXTENTS: Vec3 = {
   x: 0.35,
@@ -88,25 +89,8 @@ function createBrushFocusTarget(brush: BoxBrush): ViewportFocusTarget {
 }
 
 function includeBrush(bounds: FocusBoundsAccumulator, brush: BoxBrush) {
-  const halfSize = {
-    x: brush.size.x * 0.5,
-    y: brush.size.y * 0.5,
-    z: brush.size.z * 0.5
-  };
-
-  includeBounds(
-    bounds,
-    {
-      x: brush.center.x - halfSize.x,
-      y: brush.center.y - halfSize.y,
-      z: brush.center.z - halfSize.z
-    },
-    {
-      x: brush.center.x + halfSize.x,
-      y: brush.center.y + halfSize.y,
-      z: brush.center.z + halfSize.z
-    }
-  );
+  const brushBounds = getBoxBrushBounds(brush);
+  includeBounds(bounds, brushBounds.min, brushBounds.max);
 }
 
 function includePlayerStart(bounds: FocusBoundsAccumulator, position: Vec3) {
