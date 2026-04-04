@@ -474,6 +474,11 @@ export class RuntimeHost {
 
       const mesh = new Mesh(geometry, materials);
       mesh.position.set(brush.center.x, brush.center.y, brush.center.z);
+      mesh.rotation.set(
+        (brush.rotationDegrees.x * Math.PI) / 180,
+        (brush.rotationDegrees.y * Math.PI) / 180,
+        (brush.rotationDegrees.z * Math.PI) / 180
+      );
       this.brushGroup.add(mesh);
       this.brushMeshes.set(brush.id, mesh);
     }

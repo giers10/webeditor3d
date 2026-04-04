@@ -25,6 +25,7 @@ export interface RuntimeBoxBrushInstance {
   id: string;
   kind: "box";
   center: Vec3;
+  rotationDegrees: Vec3;
   size: Vec3;
   faces: Record<BoxFaceId, RuntimeBrushFace>;
 }
@@ -33,8 +34,13 @@ export interface RuntimeBoxCollider {
   kind: "box";
   source: "brush";
   brushId: string;
-  min: Vec3;
-  max: Vec3;
+  center: Vec3;
+  rotationDegrees: Vec3;
+  size: Vec3;
+  worldBounds: {
+    min: Vec3;
+    max: Vec3;
+  };
 }
 
 export type RuntimeSceneCollider = RuntimeBoxCollider | GeneratedModelCollider;
@@ -181,6 +187,7 @@ function buildRuntimeBrush(brush: BoxBrush, document: SceneDocument): RuntimeBox
     id: brush.id,
     kind: "box",
     center: cloneVec3(brush.center),
+    rotationDegrees: cloneVec3(brush.rotationDegrees),
     size: cloneVec3(brush.size),
     faces: {
       posX: {
@@ -224,8 +231,13 @@ function buildRuntimeCollider(brush: BoxBrush): RuntimeBoxCollider {
     kind: "box",
     source: "brush",
     brushId: brush.id,
-    min: cloneVec3(bounds.min),
-    max: cloneVec3(bounds.max)
+    center: cloneVec3(brush.center),
+    rotationDegrees: cloneVec3(brush.rotationDegrees),
+    size: cloneVec3(brush.size),
+    worldBounds: {
+      min: cloneVec3(bounds.min),
+      max: cloneVec3(bounds.max)
+    }
   };
 }
 
@@ -245,8 +257,8 @@ function buildRuntimeModelInstance(modelInstance: SceneDocument["modelInstances"
 function getColliderBounds(collider: RuntimeSceneCollider): GeneratedColliderBounds {
   if (collider.source === "brush") {
     return {
-      min: cloneVec3(collider.min),
-      max: cloneVec3(collider.max)
+      min: cloneVec3(collider.worldBounds.min),
+      max: cloneVec3(collider.worldBounds.max)
     };
   }
 
