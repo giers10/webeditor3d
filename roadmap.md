@@ -27,9 +27,9 @@ If a roadmap item is too large for one implementation pass, split it into smalle
 
 ## Product north star
 
-A browser-based brush editor with a built-in runner, enabling users to quickly create and share lightweight interactive 3D spaces with:
+A browser-based engine/editor with a built-in runner, enabling users to quickly create and share lightweight interactive 3D spaces with:
 
-- brush-authored layout
+- intuitive whiteboxing / level blocking
 - material/texture workflows
 - imported GLB/GLTF assets
 - spatial audio
@@ -46,7 +46,7 @@ These are locked for the early milestones:
 - early repo shape is a single Vite app with domain folders under `src/`
 - canonical document state lives outside the React tree
 - the document is versioned from day one
-- early box brushes are axis-aligned only with fixed face IDs
+- early slices began with axis-aligned box brushes and fixed face IDs
 - placed imported models are `modelInstances`, not `entities`
 - local draft persistence plus explicit JSON import/export is acceptable early
 - once scenes depend on external binary assets, portable save/load must move to a project package containing canonical scene JSON plus bundled assets
@@ -60,7 +60,7 @@ These are locked for the early milestones:
 Foundation and repo discipline
 
 ### Milestone 1
-First real room: brush layout + materials + play mode
+First real room: box-based layout + materials + play mode
 
 ### Milestone 2
 Entities and runtime interaction
@@ -69,7 +69,7 @@ Entities and runtime interaction
 Imported models, lighting, animation, and audio
 
 ### Milestone 4
-Better brush editing and authoring ergonomics
+Whiteboxing and direct geometry editing
 
 ### Milestone 5
 Project portability, deployment, and quality improvements
@@ -120,7 +120,7 @@ Create the minimum project skeleton that supports fast vertical slicing without 
 
 ### Vision
 
-The user can create a box brush, assign materials to faces, save the scene, reload it, and run around it.
+The user can create a box-based room, assign materials to faces, save the scene, reload it, and run around it.
 
 This is the first proof that the product is real.
 
@@ -239,7 +239,7 @@ This is the first proof that the product is real.
 
 ### Vision
 
-The user can place non-brush entities and author simple interactive scenes without scripting.
+The user can place non-whitebox entities and author simple interactive scenes without scripting.
 
 ### Slice 2.1 — Entity system foundation
 

@@ -7,12 +7,12 @@ This project is a browser-based 3D scene authoring tool with a built-in runtime 
 It has two primary modes:
 
 1. **Editor mode**
-   - author spatial scenes using brush primitives, entities, materials, and imported assets
+   - author interactive 3D environments using whitebox solids, entities, materials, and imported assets
 
 2. **Runner mode**
    - load and play those scenes in-browser using configurable navigation and interaction modes
 
-The architecture is designed to preserve old-school level-editor ergonomics while staying web-native and maintainable.
+The architecture is designed to preserve intuitive level-authoring ergonomics while staying web-native and maintainable.
 
 ---
 
@@ -20,7 +20,7 @@ The architecture is designed to preserve old-school level-editor ergonomics whil
 
 ### Primary goals
 
-- fast and precise brush-based scene authoring
+- fast and precise whitebox-based scene authoring
 - modern browser runtime delivery
 - native support for imported GLB/GLTF assets
 - robust material/texture workflows
@@ -107,10 +107,10 @@ Do not introduce `/apps` + `/packages` or monorepo packaging until the current c
 - saved projects must keep binary assets via embedded data or project-packaged storage
 - never persist only ephemeral Blob URLs or runtime-only browser object references
 
-### Early brush representation
+### Current box-solid foundation
 
-The first supported brush kind is an axis-aligned box.
-Do not support arbitrary brush rotation in Slice 1.1.
+The first implemented shape was an axis-aligned box with stable face IDs.
+That is historical starting context, not the long-term geometry constraint.
 
 Use stable face IDs:
 
@@ -141,6 +141,22 @@ interface BoxBrush {
 ```
 
 `size` values should be positive and non-zero.
+
+### Whitebox geometry direction
+
+The product is moving away from grid-bound brush thinking toward intuitive whitebox solids for level blocking.
+
+Directionally, this means:
+
+- floating point transforms are allowed
+- free object rotation is allowed
+- the grid becomes a snap/reference aid, not a hard restriction
+- object, face, edge, and vertex editing should share one coherent transform-driven interaction model
+- non-planar quad faces are acceptable; derived rendering/build should triangulate them deterministically
+- solids do not need to remain convex
+- collision should come from the solid-collider pipeline rather than assumptions about convexity or axis alignment
+
+Near-term implementation can keep existing `BoxBrush`/box-solid structures where useful, but future geometry slices should treat them as the first whitebox solid type rather than the entire long-term model.
 
 ### Early UV representation
 
@@ -191,10 +207,16 @@ Only activate actions for systems that already exist.
 - sound actions should land with the audio slice
 - animation actions should land with the animation slice
 
-### Clipping scope
+### Whitebox editing scope
 
-Until a dedicated convex-brush slice exists, clipping must stay constrained to results representable by the currently supported brush kinds.
-If the first clip implementation only supports axis-aligned box brushes and principal-axis clip planes, that is acceptable.
+The geometry roadmap should prioritize:
+
+- object transforms
+- component selection modes
+- face/edge/vertex editing
+- robust derived triangulation/collision for edited solids
+
+before adding topology-changing tools such as clipping/extrusion in earnest.
 
 ---
 
@@ -215,7 +237,7 @@ Properties:
 
 Contains:
 - world settings
-- brush definitions
+- whitebox solid definitions
 - face UV/material assignments
 - entity instances
 - model instances
@@ -241,7 +263,7 @@ Contains:
 - selection outlines
 - gizmos
 - helper icons
-- grids
+- grids and snap guides
 - temporary tool feedback
 
 ### 3. Runtime representation
@@ -437,29 +459,27 @@ Contains:
 
 This is one of the most critical modules.
 
-### Canonical brush representation
+### Canonical whitebox representation
 
-Brushes should not be stored as raw triangle meshes.
+Whitebox solids should not be stored as hidden renderer-only mesh state.
 
 Preferred progression:
 
-#### Early v1
+#### Current transition
 
-Explicit parametric primitives with per-face data:
-
-- box
-- wedge/ramp
-- cylinder prism
-- stairs
-- arch
+- box-based whitebox solids with stable face identity
+- object transforms plus component selection/editing
+- derived triangulation for rendering and collision
 
 #### Later
 
-Plane-based convex solids and clipping-based editing.
+- richer whitebox solid topology tools
+- clipping/extrusion/bevel-like operations if they fit the product cleanly
+- broader solid editing without turning the product into arbitrary mesh modeling
 
 ### Derived outputs
 
-From brush data, generate:
+From canonical whitebox data, generate:
 
 - editor mesh
 - pick mesh
