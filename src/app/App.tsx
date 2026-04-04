@@ -4392,7 +4392,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const addMenuItems: HierarchicalMenuItem[] = [
     {
       kind: "action",
-      label: "Box",
+      label: "Whitebox Box",
       testId: "add-menu-box",
       onSelect: beginBoxCreation
     },
