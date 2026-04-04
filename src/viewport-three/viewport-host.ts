@@ -1517,8 +1517,35 @@ export class ViewportHost {
     current: { x: number; y: number },
     axisConstraint: TransformAxis | null
   ) {
+    if (session.target.kind === "brush") {
+      const nextSize = {
+        ...session.target.initialSize
+      };
+
+      if (axisConstraint === null) {
+        const uniformFactor = 1 + (current.x - origin.x - (current.y - origin.y)) * 0.01;
+        nextSize.x = this.snapWhiteboxSizeValue(session.target.initialSize.x * uniformFactor);
+        nextSize.y = this.snapWhiteboxSizeValue(session.target.initialSize.y * uniformFactor);
+        nextSize.z = this.snapWhiteboxSizeValue(session.target.initialSize.z * uniformFactor);
+      } else {
+        const scaleFactor = 1 + this.getAxisMovementDistance(axisConstraint, session.target.initialCenter, origin, current) * 0.45;
+        nextSize[axisConstraint] = this.snapWhiteboxSizeValue(session.target.initialSize[axisConstraint] * scaleFactor);
+      }
+
+      return {
+        kind: "brush" as const,
+        center: {
+          ...session.target.initialCenter
+        },
+        rotationDegrees: {
+          ...session.target.initialRotationDegrees
+        },
+        size: nextSize
+      };
+    }
+
     if (session.target.kind !== "modelInstance") {
-      throw new Error("Scale previews are only supported for model instances.");
+      throw new Error("Scale previews are only supported for model instances and whitebox boxes.");
     }
 
     const nextScale = {
