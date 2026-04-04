@@ -2740,6 +2740,149 @@ export class ViewportHost {
     return null;
   }
 
+  private getBrushPickableObjects(): Object3D[] {
+    switch (this.whiteboxSelectionMode) {
+      case "object":
+      case "face":
+        return Array.from(this.brushRenderObjects.values(), (renderObjects) => renderObjects.mesh);
+      case "edge":
+        return Array.from(this.brushRenderObjects.values(), (renderObjects) => renderObjects.edgeHelpers.map((helper) => helper.line)).flat();
+      case "vertex":
+        return Array.from(this.brushRenderObjects.values(), (renderObjects) => renderObjects.vertexHelpers.map((helper) => helper.mesh)).flat();
+    }
+  }
+
+  private createSelectionKey(selection: EditorSelection): string | null {
+    switch (selection.kind) {
+      case "none":
+        return null;
+      case "brushes":
+        return selection.ids.length === 1 ? `brush:${selection.ids[0]}` : null;
+      case "brushFace":
+        return `brushFace:${selection.brushId}:${selection.faceId}`;
+      case "brushEdge":
+        return `brushEdge:${selection.brushId}:${selection.edgeId}`;
+      case "brushVertex":
+        return `brushVertex:${selection.brushId}:${selection.vertexId}`;
+      case "entities":
+        return selection.ids.length === 1 ? `entity:${selection.ids[0]}` : null;
+      case "modelInstances":
+        return selection.ids.length === 1 ? `model:${selection.ids[0]}` : null;
+    }
+  }
+
+  private createSelectionFromHit(hit: { object: Object3D; face?: { materialIndex?: number } | null }): EditorSelection | null {
+    if (hit.object.userData.nonPickable === true) {
+      return null;
+    }
+
+    const entityId = hit.object.userData.entityId;
+    if (typeof entityId === "string") {
+      return {
+        kind: "entities",
+        ids: [entityId]
+      };
+    }
+
+    const modelInstanceId = this.findModelInstanceId(hit.object);
+    if (modelInstanceId !== null) {
+      return {
+        kind: "modelInstances",
+        ids: [modelInstanceId]
+      };
+    }
+
+    const brushId = hit.object.userData.brushId;
+
+    if (typeof brushId !== "string") {
+      return null;
+    }
+
+    const brushEdgeId = hit.object.userData.brushEdgeId;
+    if (typeof brushEdgeId === "string") {
+      return {
+        kind: "brushEdge",
+        brushId,
+        edgeId: brushEdgeId as BoxEdgeId
+      };
+    }
+
+    const brushVertexId = hit.object.userData.brushVertexId;
+    if (typeof brushVertexId === "string") {
+      return {
+        kind: "brushVertex",
+        brushId,
+        vertexId: brushVertexId as BoxVertexId
+      };
+    }
+
+    if (this.whiteboxSelectionMode === "face") {
+      const faceMaterialIndex = hit.face?.materialIndex;
+      const faceId = typeof faceMaterialIndex === "number" ? BOX_FACE_IDS[faceMaterialIndex] ?? null : null;
+
+      if (faceId === null) {
+        return null;
+      }
+
+      return {
+        kind: "brushFace",
+        brushId,
+        faceId
+      };
+    }
+
+    if (this.whiteboxSelectionMode === "object") {
+      return {
+        kind: "brushes",
+        ids: [brushId]
+      };
+    }
+
+    return null;
+  }
+
+  private getSelectionCandidates(event: PointerEvent): Array<{ key: string; selection: EditorSelection }> {
+    if (!this.setPointerFromClientPosition(event.clientX, event.clientY)) {
+      return [];
+    }
+
+    this.raycaster.setFromCamera(this.pointer, this.getActiveCamera());
+    this.raycaster.params.Line.threshold = this.whiteboxSelectionMode === "edge" ? WHITEBOX_EDGE_PICK_THRESHOLD : 1;
+
+    const hits = this.raycaster.intersectObjects(
+      [
+        ...Array.from(this.entityRenderObjects.values(), (renderObjects) => renderObjects.group),
+        ...Array.from(this.modelRenderObjects.values()),
+        ...this.getBrushPickableObjects()
+      ],
+      true
+    );
+    const candidates: Array<{ key: string; selection: EditorSelection }> = [];
+    const seenKeys = new Set<string>();
+
+    for (const hit of hits) {
+      const selection = this.createSelectionFromHit(hit);
+
+      if (selection === null) {
+        continue;
+      }
+
+      const key = this.createSelectionKey(selection);
+
+      if (key === null || seenKeys.has(key)) {
+        continue;
+      }
+
+      seenKeys.add(key);
+      candidates.push({
+        key,
+        selection
+      });
+    }
+
+    return candidates;
+  }
+
   private handlePointerDown = (event: PointerEvent) => {
     this.lastCanvasPointerPosition = {
       x: event.clientX,
