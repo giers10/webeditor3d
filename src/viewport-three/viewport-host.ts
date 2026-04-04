@@ -1333,22 +1333,22 @@ export class ViewportHost {
           case "top":
             nextPosition = {
               ...initialPosition,
-              x: snapValueToGrid(initialPosition.x + delta.x, DEFAULT_GRID_SIZE),
-              z: snapValueToGrid(initialPosition.z + delta.z, DEFAULT_GRID_SIZE)
+              x: this.snapWhiteboxPositionValue(initialPosition.x + delta.x),
+              z: this.snapWhiteboxPositionValue(initialPosition.z + delta.z)
             };
             break;
           case "front":
             nextPosition = {
               ...initialPosition,
-              x: snapValueToGrid(initialPosition.x + delta.x, DEFAULT_GRID_SIZE),
-              y: snapValueToGrid(initialPosition.y + delta.y, DEFAULT_GRID_SIZE)
+              x: this.snapWhiteboxPositionValue(initialPosition.x + delta.x),
+              y: this.snapWhiteboxPositionValue(initialPosition.y + delta.y)
             };
             break;
           case "side":
             nextPosition = {
               ...initialPosition,
-              y: snapValueToGrid(initialPosition.y + delta.y, DEFAULT_GRID_SIZE),
-              z: snapValueToGrid(initialPosition.z + delta.z, DEFAULT_GRID_SIZE)
+              y: this.snapWhiteboxPositionValue(initialPosition.y + delta.y),
+              z: this.snapWhiteboxPositionValue(initialPosition.z + delta.z)
             };
             break;
         }
@@ -1358,14 +1358,20 @@ export class ViewportHost {
       nextPosition = this.setAxisComponent(
         nextPosition,
         axisConstraint,
-        snapValueToGrid(this.getAxisComponent(initialPosition, axisConstraint) + axisDelta, DEFAULT_GRID_SIZE)
+        this.snapWhiteboxPositionValue(this.getAxisComponent(initialPosition, axisConstraint) + axisDelta)
       );
     }
 
     if (session.target.kind === "brush") {
       return {
         kind: "brush" as const,
-        center: nextPosition
+        center: nextPosition,
+        rotationDegrees: {
+          ...session.target.initialRotationDegrees
+        },
+        size: {
+          ...session.target.initialSize
+        }
       };
     }
 
