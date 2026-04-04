@@ -1840,7 +1840,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
     const transformSourcePanelId = layoutMode === "quad" ? hoveredViewportPanelId ?? activePanelId : activePanelId;
 
-    const transformTargetResult = resolveTransformTarget(editorState.document, editorState.selection);
+    const transformTargetResult = resolveTransformTarget(editorState.document, editorState.selection, whiteboxSelectionMode);
     const transformTarget = transformTargetResult.target;
 
     if (transformTarget === null) {
