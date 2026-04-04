@@ -216,7 +216,7 @@ export function ViewportCanvas({
       data-active={isActivePanel ? "true" : "false"}
       aria-label={`${getViewportPanelLabel(panelId)} editor viewport`}
       style={
-        displayMode === "authoring"
+        displayMode !== "normal"
           ? {
               backgroundColor: "#000000",
               backgroundImage: "none"
