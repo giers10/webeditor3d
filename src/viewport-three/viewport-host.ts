@@ -2504,6 +2504,120 @@ export class ViewportHost {
     return texture;
   }
 
+  private createEdgeHelper(brush: BoxBrush, edgeId: BoxEdgeId): { id: BoxEdgeId; line: Line<BufferGeometry, LineBasicMaterial> } {
+    const segment = getBoxBrushEdgeWorldSegment(brush, edgeId);
+    const geometry = new BufferGeometry().setFromPoints([
+      new Vector3(segment.start.x, segment.start.y, segment.start.z),
+      new Vector3(segment.end.x, segment.end.y, segment.end.z)
+    ]);
+    const line = new Line(
+      geometry,
+      new LineBasicMaterial({
+        color: WHITEBOX_COMPONENT_COLOR,
+        transparent: true,
+        opacity: WHITEBOX_COMPONENT_DEFAULT_OPACITY,
+        depthTest: false
+      })
+    );
+
+    line.userData.brushId = brush.id;
+    line.userData.brushEdgeId = edgeId;
+
+    return {
+      id: edgeId,
+      line
+    };
+  }
+
+  private createVertexHelper(brush: BoxBrush, vertexId: BoxVertexId): { id: BoxVertexId; mesh: Mesh<SphereGeometry, MeshBasicMaterial> } {
+    const position = getBoxBrushVertexWorldPosition(brush, vertexId);
+    const mesh = new Mesh(
+      new SphereGeometry(WHITEBOX_VERTEX_RADIUS, 10, 8),
+      new MeshBasicMaterial({
+        color: WHITEBOX_COMPONENT_COLOR,
+        transparent: true,
+        opacity: WHITEBOX_COMPONENT_DEFAULT_OPACITY,
+        depthTest: false
+      })
+    );
+
+    mesh.position.set(position.x, position.y, position.z);
+    mesh.userData.brushId = brush.id;
+    mesh.userData.brushVertexId = vertexId;
+
+    return {
+      id: vertexId,
+      mesh
+    };
+  }
+
+  private refreshBrushPresentation() {
+    if (this.currentDocument === null) {
+      return;
+    }
+
+    for (const brush of Object.values(this.currentDocument.brushes)) {
+      const renderObjects = this.brushRenderObjects.get(brush.id);
+
+      if (renderObjects === undefined) {
+        continue;
+      }
+
+      const brushSelected = isBrushSelected(this.currentSelection, brush.id);
+      const brushHovered = this.hoveredSelection.kind === "brushes" && this.hoveredSelection.ids.includes(brush.id);
+      renderObjects.edges.material.color.setHex(
+        brushSelected ? BRUSH_SELECTED_EDGE_COLOR : brushHovered && this.whiteboxSelectionMode === "object" ? BRUSH_HOVERED_EDGE_COLOR : BRUSH_EDGE_COLOR
+      );
+
+      const previousMaterials = renderObjects.mesh.material;
+      renderObjects.mesh.material = BOX_FACE_IDS.map((faceId) =>
+        this.createFaceMaterial(
+          brush,
+          faceId,
+          this.currentDocument?.materials[brush.faces[faceId].materialId ?? ""],
+          this.getFaceHighlightState(brush.id, faceId)
+        )
+      );
+
+      for (const material of previousMaterials) {
+        material.dispose();
+      }
+
+      const hoveredEdgeId = this.hoveredSelection.kind === "brushEdge" && this.hoveredSelection.brushId === brush.id ? this.hoveredSelection.edgeId : null;
+      const hoveredVertexId = this.hoveredSelection.kind === "brushVertex" && this.hoveredSelection.brushId === brush.id ? this.hoveredSelection.vertexId : null;
+
+      for (const edgeHelper of renderObjects.edgeHelpers) {
+        const selected = isBrushEdgeSelected(this.currentSelection, brush.id, edgeHelper.id);
+        const hovered = hoveredEdgeId === edgeHelper.id;
+
+        edgeHelper.line.visible = this.whiteboxSelectionMode === "edge";
+        edgeHelper.line.material.color.setHex(
+          selected ? WHITEBOX_COMPONENT_SELECTED_COLOR : hovered ? WHITEBOX_COMPONENT_HOVERED_COLOR : WHITEBOX_COMPONENT_COLOR
+        );
+        edgeHelper.line.material.opacity = selected
+          ? WHITEBOX_COMPONENT_SELECTED_OPACITY
+          : hovered
+            ? WHITEBOX_COMPONENT_HOVERED_OPACITY
+            : WHITEBOX_COMPONENT_DEFAULT_OPACITY;
+      }
+
+      for (const vertexHelper of renderObjects.vertexHelpers) {
+        const selected = isBrushVertexSelected(this.currentSelection, brush.id, vertexHelper.id);
+        const hovered = hoveredVertexId === vertexHelper.id;
+
+        vertexHelper.mesh.visible = this.whiteboxSelectionMode === "vertex";
+        vertexHelper.mesh.material.color.setHex(
+          selected ? WHITEBOX_COMPONENT_SELECTED_COLOR : hovered ? WHITEBOX_COMPONENT_HOVERED_COLOR : WHITEBOX_COMPONENT_COLOR
+        );
+        vertexHelper.mesh.material.opacity = selected
+          ? WHITEBOX_COMPONENT_SELECTED_OPACITY
+          : hovered
+            ? WHITEBOX_COMPONENT_HOVERED_OPACITY
+            : WHITEBOX_COMPONENT_DEFAULT_OPACITY;
+      }
+    }
+  }
+
   private clearLocalLights() {
     for (const renderObjects of this.localLightRenderObjects.values()) {
       this.localLightGroup.remove(renderObjects.group);
