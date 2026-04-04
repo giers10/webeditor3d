@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BoxGeometry } from "three";
+import { BoxGeometry, PlaneGeometry } from "three";
 
 import { createModelInstance } from "../../src/assets/model-instances";
 import { createBoxBrush } from "../../src/document/brushes";
@@ -94,6 +94,83 @@ describe("RapierCollisionWorld", () => {
       expect(blocked.feetPosition.x).toBeLessThan(1.21);
       expect(blocked.feetPosition.y).toBeLessThan(0.02);
       expect(blocked.collidedAxes.x).toBe(true);
+    } finally {
+      collisionWorld.dispose();
+    }
+  });
+
+  it("initializes and resolves first-person motion against terrain heightfield colliders", async () => {
+    const terrainGeometry = new PlaneGeometry(6, 6, 2, 2);
+    terrainGeometry.rotateX(-Math.PI / 2);
+    const positionAttribute = terrainGeometry.getAttribute("position");
+
+    positionAttribute.setY(4, 0.5);
+    positionAttribute.needsUpdate = true;
+    terrainGeometry.computeVertexNormals();
+
+    const { asset, loadedAsset } = createFixtureLoadedModelAssetFromGeometry("asset-model-terrain", terrainGeometry);
+    const terrainInstance = createModelInstance({
+      id: "model-instance-terrain",
+      assetId: asset.id,
+      position: {
+        x: 0,
+        y: 0,
+        z: 0
+      },
+      collision: {
+        mode: "terrain",
+        visible: true
+      }
+    });
+    const runtimeScene = buildRuntimeSceneFromDocument(
+      {
+        ...createEmptySceneDocument({ name: "Terrain Collision Scene" }),
+        assets: {
+          [asset.id]: asset
+        },
+        modelInstances: {
+          [terrainInstance.id]: terrainInstance
+        }
+      },
+      {
+        loadedModelAssets: {
+          [asset.id]: loadedAsset
+        }
+      }
+    );
+    const collisionWorld = await RapierCollisionWorld.create(runtimeScene.colliders, FIRST_PERSON_PLAYER_SHAPE);
+
+    try {
+      const landing = collisionWorld.resolveFirstPersonMotion(
+        {
+          x: 0,
+          y: 2,
+          z: 0
+        },
+        {
+          x: 0,
+          y: -3,
+          z: 0
+        },
+        FIRST_PERSON_PLAYER_SHAPE
+      );
+
+      expect(landing.grounded).toBe(true);
+      expect(landing.feetPosition.y).toBeGreaterThan(0.45);
+      expect(landing.feetPosition.y).toBeLessThan(0.55);
+
+      const traversed = collisionWorld.resolveFirstPersonMotion(
+        landing.feetPosition,
+        {
+          x: 1,
+          y: 0,
+          z: 0
+        },
+        FIRST_PERSON_PLAYER_SHAPE
+      );
+
+      expect(traversed.feetPosition.x).toBeGreaterThan(0.5);
+      expect(traversed.collidedAxes.x).toBe(false);
     } finally {
       collisionWorld.dispose();
     }
