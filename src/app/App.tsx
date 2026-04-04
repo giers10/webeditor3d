@@ -260,9 +260,19 @@ const MIN_VIEWPORT_QUAD_SPLIT = 0.2;
 const MAX_VIEWPORT_QUAD_SPLIT = 0.8;
 
 type ViewportQuadResizeMode = "vertical" | "horizontal" | "center";
+type NumberInputStep = number | "any";
 
 function formatVec3(vector: Vec3): string {
   return `${vector.x}, ${vector.y}, ${vector.z}`;
+}
+
+function resolveOptionalPositiveNumber(value: string, fallback: number): number {
+  const parsedValue = Number(value);
+  return Number.isFinite(parsedValue) && parsedValue > 0 ? parsedValue : fallback;
+}
+
+function getWhiteboxInputStep(enabled: boolean, step: number): NumberInputStep {
+  return enabled ? step : "any";
 }
 
 function formatDiagnosticCount(count: number, label: string): string {
