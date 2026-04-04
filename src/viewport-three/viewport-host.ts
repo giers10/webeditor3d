@@ -1207,7 +1207,7 @@ export class ViewportHost {
       return null;
     }
 
-    const transformTarget = resolveTransformTarget(this.currentDocument, this.currentSelection).target;
+    const transformTarget = resolveTransformTarget(this.currentDocument, this.currentSelection, this.whiteboxSelectionMode).target;
 
     if (transformTarget === null || !supportsTransformOperation(transformTarget, "translate")) {
       return null;
