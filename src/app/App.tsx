@@ -6950,7 +6950,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         type="button"
                         data-testid={`face-button-${faceId}`}
                         className={`face-chip ${isBrushFaceSelected(editorState.selection, selectedBrush.id, faceId) ? "face-chip--active" : ""}`}
-                        onClick={() =>
+                        onClick={() => {
+                          store.setWhiteboxSelectionMode("face");
                           applySelection(
                             {
                               kind: "brushFace",
@@ -6958,8 +6959,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               faceId
                             },
                             "inspector"
-                          )
-                        }
+                          );
+                        }}
                       >
                         <span className="face-chip__title">{BOX_FACE_LABELS[faceId]}</span>
                         <span className="face-chip__meta">{faceId}</span>
