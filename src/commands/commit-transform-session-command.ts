@@ -1,6 +1,7 @@
 import { createMoveBoxBrushCommand } from "./move-box-brush-command";
 import { createResizeBoxBrushCommand } from "./resize-box-brush-command";
 import { createRotateBoxBrushCommand } from "./rotate-box-brush-command";
+import { createSetBoxBrushTransformCommand } from "./set-box-brush-transform-command";
 import { createUpsertEntityCommand } from "./upsert-entity-command";
 import { createUpsertModelInstanceCommand } from "./upsert-model-instance-command";
 import type { EditorCommand } from "./command";
@@ -24,6 +25,12 @@ function createTransformCommandLabel(session: ActiveTransformSession): string {
   return `${getTransformOperationLabel(session.operation)} ${
     session.target.kind === "brush"
       ? "whitebox box"
+      : session.target.kind === "brushFace"
+        ? "whitebox face"
+        : session.target.kind === "brushEdge"
+          ? "whitebox edge"
+          : session.target.kind === "brushVertex"
+            ? "whitebox vertex"
       : session.target.kind === "entity"
         ? session.target.entityKind === "playerStart"
           ? "player start"
@@ -71,6 +78,54 @@ export function createCommitTransformSessionCommand(document: SceneDocument, ses
             label: createTransformCommandLabel(session)
           });
       }
+    case "brushFace":
+      if (session.preview.kind !== "brush") {
+        throw new Error("Whitebox face transform preview is invalid.");
+      }
+
+      return createSetBoxBrushTransformCommand({
+        selection: {
+          kind: "brushFace",
+          brushId: session.target.brushId,
+          faceId: session.target.faceId
+        },
+        center: session.preview.center,
+        rotationDegrees: session.preview.rotationDegrees,
+        size: session.preview.size,
+        label: createTransformCommandLabel(session)
+      });
+    case "brushEdge":
+      if (session.preview.kind !== "brush") {
+        throw new Error("Whitebox edge transform preview is invalid.");
+      }
+
+      return createSetBoxBrushTransformCommand({
+        selection: {
+          kind: "brushEdge",
+          brushId: session.target.brushId,
+          edgeId: session.target.edgeId
+        },
+        center: session.preview.center,
+        rotationDegrees: session.preview.rotationDegrees,
+        size: session.preview.size,
+        label: createTransformCommandLabel(session)
+      });
+    case "brushVertex":
+      if (session.preview.kind !== "brush") {
+        throw new Error("Whitebox vertex transform preview is invalid.");
+      }
+
+      return createSetBoxBrushTransformCommand({
+        selection: {
+          kind: "brushVertex",
+          brushId: session.target.brushId,
+          vertexId: session.target.vertexId
+        },
+        center: session.preview.center,
+        rotationDegrees: session.preview.rotationDegrees,
+        size: session.preview.size,
+        label: createTransformCommandLabel(session)
+      });
     case "modelInstance": {
       if (session.preview.kind !== "modelInstance") {
         throw new Error("Model instance transform preview is invalid.");
