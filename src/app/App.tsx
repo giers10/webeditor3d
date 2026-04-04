@@ -32,7 +32,9 @@ import { createUpsertEntityCommand } from "../commands/upsert-entity-command";
 import { createUpsertModelInstanceCommand } from "../commands/upsert-model-instance-command";
 import { createUpsertInteractionLinkCommand } from "../commands/upsert-interaction-link-command";
 import {
+  getSelectedBrushEdgeId,
   getSelectedBrushFaceId,
+  getSelectedBrushVertexId,
   getSingleSelectedBrushId,
   getSingleSelectedEntityId,
   getSingleSelectedModelInstanceId,
@@ -93,14 +95,24 @@ import {
 import type { AudioAssetRecord, ImageAssetRecord, ModelAssetRecord, ProjectAssetRecord } from "../assets/project-assets";
 import { getProjectAssetKindLabel } from "../assets/project-assets";
 import {
+  getWhiteboxSelectionModeLabel,
+  WHITEBOX_SELECTION_MODES,
+  type WhiteboxSelectionMode
+} from "../core/whitebox-selection-mode";
+import {
+  BOX_EDGE_LABELS,
   BOX_FACE_IDS,
+  BOX_FACE_LABELS,
+  BOX_VERTEX_LABELS,
   DEFAULT_BOX_BRUSH_CENTER,
   DEFAULT_BOX_BRUSH_ROTATION_DEGREES,
   DEFAULT_BOX_BRUSH_SIZE,
   createDefaultFaceUvState,
   normalizeBrushName,
   type BoxBrush,
+  type BoxEdgeId,
   type BoxFaceId,
+  type BoxVertexId,
   type FaceUvRotationQuarterTurns,
   type FaceUvState
 } from "../document/brushes";
@@ -219,15 +231,6 @@ interface Vec3Draft {
 }
 
 type InteractionSourceEntity = Extract<EntityInstance, { kind: "triggerVolume" | "interactable" }>;
-
-const FACE_LABELS: Record<BoxFaceId, string> = {
-  posX: "+X Right",
-  negX: "-X Left",
-  posY: "+Y Top",
-  negY: "-Y Bottom",
-  posZ: "+Z Front",
-  negZ: "-Z Back"
-};
 
 function getModelInstanceCollisionModeDescription(mode: ModelInstanceCollisionMode): string {
   switch (mode) {
