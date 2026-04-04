@@ -27,6 +27,18 @@ export interface SpotLightEntity extends PositionedEntity {
 export interface PlayerStartEntity extends PositionedEntity {
   kind: "playerStart";
   yawDegrees: number;
+  collider: PlayerStartColliderSettings;
+}
+
+export const PLAYER_START_COLLIDER_MODES = ["capsule", "box", "none"] as const;
+export type PlayerStartColliderMode = (typeof PLAYER_START_COLLIDER_MODES)[number];
+
+export interface PlayerStartColliderSettings {
+  mode: PlayerStartColliderMode;
+  eyeHeight: number;
+  capsuleRadius: number;
+  capsuleHeight: number;
+  boxSize: Vec3;
 }
 
 export interface SoundEmitterEntity extends PositionedEntity {
@@ -116,6 +128,15 @@ export const DEFAULT_ENTITY_POSITION: Vec3 = {
 
 export const DEFAULT_PLAYER_START_POSITION = DEFAULT_ENTITY_POSITION;
 export const DEFAULT_PLAYER_START_YAW_DEGREES = 0;
+export const DEFAULT_PLAYER_START_COLLIDER_MODE: PlayerStartColliderMode = "capsule";
+export const DEFAULT_PLAYER_START_EYE_HEIGHT = 1.6;
+export const DEFAULT_PLAYER_START_CAPSULE_RADIUS = 0.3;
+export const DEFAULT_PLAYER_START_CAPSULE_HEIGHT = 1.8;
+export const DEFAULT_PLAYER_START_BOX_SIZE: Vec3 = {
+  x: 0.6,
+  y: 1.8,
+  z: 0.6
+};
 export const DEFAULT_SOUND_EMITTER_AUDIO_ASSET_ID: string | null = null;
 export const DEFAULT_SOUND_EMITTER_VOLUME = 1;
 export const DEFAULT_SOUND_EMITTER_GAIN = DEFAULT_SOUND_EMITTER_VOLUME;
@@ -185,6 +206,70 @@ function assertBoolean(value: boolean, label: string) {
   if (typeof value !== "boolean") {
     throw new Error(`${label} must be a boolean.`);
   }
+}
+
+export function isPlayerStartColliderMode(value: string): value is PlayerStartColliderMode {
+  return PLAYER_START_COLLIDER_MODES.includes(value as PlayerStartColliderMode);
+}
+
+export function clonePlayerStartColliderSettings(settings: PlayerStartColliderSettings): PlayerStartColliderSettings {
+  return {
+    mode: settings.mode,
+    eyeHeight: settings.eyeHeight,
+    capsuleRadius: settings.capsuleRadius,
+    capsuleHeight: settings.capsuleHeight,
+    boxSize: cloneVec3(settings.boxSize)
+  };
+}
+
+export function getPlayerStartColliderHeight(settings: PlayerStartColliderSettings): number | null {
+  switch (settings.mode) {
+    case "capsule":
+      return settings.capsuleHeight;
+    case "box":
+      return settings.boxSize.y;
+    case "none":
+      return null;
+  }
+}
+
+export function createPlayerStartColliderSettings(
+  overrides: Partial<PlayerStartColliderSettings> = {}
+): PlayerStartColliderSettings {
+  const mode = overrides.mode ?? DEFAULT_PLAYER_START_COLLIDER_MODE;
+  const eyeHeight = overrides.eyeHeight ?? DEFAULT_PLAYER_START_EYE_HEIGHT;
+  const capsuleRadius = overrides.capsuleRadius ?? DEFAULT_PLAYER_START_CAPSULE_RADIUS;
+  const capsuleHeight = overrides.capsuleHeight ?? DEFAULT_PLAYER_START_CAPSULE_HEIGHT;
+  const boxSize = cloneVec3(overrides.boxSize ?? DEFAULT_PLAYER_START_BOX_SIZE);
+
+  if (!isPlayerStartColliderMode(mode)) {
+    throw new Error("Player Start collider mode must be capsule, box, or none.");
+  }
+
+  assertPositiveFiniteNumber(eyeHeight, "Player Start eye height");
+  assertPositiveFiniteNumber(capsuleRadius, "Player Start capsule radius");
+  assertPositiveFiniteNumber(capsuleHeight, "Player Start capsule height");
+  assertPositiveFiniteVec3(boxSize, "Player Start box size");
+
+  if (capsuleHeight < capsuleRadius * 2) {
+    throw new Error("Player Start capsule height must be at least twice the capsule radius.");
+  }
+
+  if (mode === "capsule" && eyeHeight > capsuleHeight) {
+    throw new Error("Player Start eye height must be less than or equal to the capsule height.");
+  }
+
+  if (mode === "box" && eyeHeight > boxSize.y) {
+    throw new Error("Player Start eye height must be less than or equal to the box height.");
+  }
+
+  return {
+    mode,
+    eyeHeight,
+    capsuleRadius,
+    capsuleHeight,
+    boxSize
+  };
 }
 
 function normalizeSoundEmitterAudioAssetId(audioAssetId: string | null | undefined): string | null {
@@ -284,10 +369,11 @@ export function createSpotLightEntity(
 }
 
 export function createPlayerStartEntity(
-  overrides: Partial<Pick<PlayerStartEntity, "id" | "name" | "position" | "yawDegrees">> = {}
+  overrides: Partial<Pick<PlayerStartEntity, "id" | "name" | "position" | "yawDegrees" | "collider">> = {}
 ): PlayerStartEntity {
   const position = cloneVec3(overrides.position ?? DEFAULT_PLAYER_START_POSITION);
   const yawDegrees = overrides.yawDegrees ?? DEFAULT_PLAYER_START_YAW_DEGREES;
+  const collider = createPlayerStartColliderSettings(overrides.collider);
 
   assertFiniteVec3(position, "Player Start position");
 
@@ -300,7 +386,8 @@ export function createPlayerStartEntity(
     kind: "playerStart",
     name: normalizeEntityName(overrides.name),
     position,
-    yawDegrees: normalizeYawDegrees(yawDegrees)
+    yawDegrees: normalizeYawDegrees(yawDegrees),
+    collider
   };
 }
 
