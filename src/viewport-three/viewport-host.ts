@@ -3,6 +3,7 @@ import {
   AxesHelper,
   BoxGeometry,
   CanvasTexture,
+  CapsuleGeometry,
   ConeGeometry,
   CylinderGeometry,
   DirectionalLight,
@@ -68,6 +69,9 @@ import {
 import type { WorldSettings } from "../document/world-settings";
 import {
   DEFAULT_INTERACTABLE_RADIUS,
+  DEFAULT_PLAYER_START_BOX_SIZE,
+  DEFAULT_PLAYER_START_CAPSULE_HEIGHT,
+  DEFAULT_PLAYER_START_CAPSULE_RADIUS,
   DEFAULT_PLAYER_START_YAW_DEGREES,
   DEFAULT_POINT_LIGHT_DISTANCE,
   DEFAULT_SOUND_EMITTER_MAX_DISTANCE,
@@ -77,9 +81,11 @@ import {
   DEFAULT_SPOT_LIGHT_DISTANCE,
   DEFAULT_TELEPORT_TARGET_YAW_DEGREES,
   DEFAULT_TRIGGER_VOLUME_SIZE,
+  getPlayerStartColliderHeight,
   getEntityInstances,
   normalizeYawDegrees,
   type EntityInstance,
+  type PlayerStartEntity,
   type PointLightEntity,
   type SpotLightEntity
 } from "../entities/entity-instances";
