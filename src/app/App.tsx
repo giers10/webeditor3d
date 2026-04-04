@@ -171,7 +171,6 @@ import {
 import { STARTER_MATERIAL_LIBRARY, type MaterialDef } from "../materials/starter-material-library";
 import { RunnerCanvas } from "../runner-web/RunnerCanvas";
 import type { FirstPersonTelemetry } from "../runtime-three/navigation-controller";
-import { initializeRapierCollisionWorld } from "../runtime-three/rapier-collision-world";
 import type { RuntimeInteractionPrompt } from "../runtime-three/runtime-interaction-system";
 import { buildRuntimeSceneFromDocument, type RuntimeNavigationMode, type RuntimeSceneDefinition } from "../runtime-three/runtime-scene-build";
 import { validateRuntimeSceneBuild } from "../runtime-three/runtime-scene-validation";
@@ -1161,10 +1160,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
   useEffect(() => {
     loadedModelAssetsRef.current = loadedModelAssets;
   }, [loadedModelAssets]);
-
-  useEffect(() => {
-    void initializeRapierCollisionWorld();
-  }, []);
 
   useEffect(() => {
     loadedAudioAssetsRef.current = loadedAudioAssets;
