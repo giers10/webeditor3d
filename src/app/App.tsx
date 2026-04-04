@@ -110,9 +110,6 @@ import {
   createDefaultFaceUvState,
   normalizeBrushName,
   type BoxBrush,
-  type BoxEdgeId,
-  type BoxFaceId,
-  type BoxVertexId,
   type FaceUvRotationQuarterTurns,
   type FaceUvState
 } from "../document/brushes";
