@@ -116,7 +116,7 @@ function parseViewportLayoutState(value: unknown): ViewportLayoutState | null {
 
     if (
       (storedViewMode !== "perspective" && storedViewMode !== "top" && storedViewMode !== "front" && storedViewMode !== "side") ||
-      (storedDisplayMode !== "normal" && storedDisplayMode !== "authoring") ||
+      (storedDisplayMode !== "normal" && storedDisplayMode !== "authoring" && storedDisplayMode !== "wireframe") ||
       storedCameraState === null ||
       storedPerspectiveOrbit === null ||
       storedTarget === null
