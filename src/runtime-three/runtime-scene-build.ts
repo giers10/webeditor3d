@@ -11,7 +11,7 @@ import { cloneInteractionLink, getInteractionLinks, type InteractionLink } from 
 import { cloneMaterialDef, type MaterialDef } from "../materials/starter-material-library";
 import { cloneFaceUvState } from "../document/brushes";
 import { assertRuntimeSceneBuildable } from "./runtime-scene-validation";
-import type { FirstPersonPlayerShape } from "./player-collision";
+import { FIRST_PERSON_PLAYER_SHAPE, type FirstPersonPlayerShape } from "./player-collision";
 
 export type RuntimeNavigationMode = "firstPerson" | "orbitVisitor";
 
@@ -361,7 +361,8 @@ function buildRuntimeSceneCollections(document: SceneDocument): RuntimeSceneColl
         runtimeEntities.playerStarts.push({
           entityId: entity.id,
           position: cloneVec3(entity.position),
-          yawDegrees: entity.yawDegrees
+          yawDegrees: entity.yawDegrees,
+          collider: buildRuntimePlayerShape(entity)
         });
         break;
       case "soundEmitter":
