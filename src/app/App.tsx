@@ -6098,24 +6098,166 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 ) : null}
 
                 {selectedPlayerStart !== null ? (
-                  <div className="form-section">
-                    <div className="label">Yaw</div>
-                    <label className="form-field">
-                      <span className="label">Degrees</span>
-                      <input
-                        data-testid="player-start-yaw"
-                        className="text-input"
-                        type="number"
-                        step="1"
-                        value={playerStartYawDraft}
-                        onChange={(event) => setPlayerStartYawDraft(event.currentTarget.value)}
-                        onBlur={applyPlayerStartChange}
-                        onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPlayerStartChange)}
-                        onKeyUp={(event) => handleNumberInputKeyUp(event, applyPlayerStartChange)}
-                        onPointerUp={(event) => handleNumberInputPointerUp(event, applyPlayerStartChange)}
-                      />
-                    </label>
-                  </div>
+                  <>
+                    <div className="form-section">
+                      <div className="label">Yaw</div>
+                      <label className="form-field">
+                        <span className="label">Degrees</span>
+                        <input
+                          data-testid="player-start-yaw"
+                          className="text-input"
+                          type="number"
+                          step="1"
+                          value={playerStartYawDraft}
+                          onChange={(event) => setPlayerStartYawDraft(event.currentTarget.value)}
+                          onBlur={applyPlayerStartChange}
+                          onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPlayerStartChange)}
+                          onKeyUp={(event) => handleNumberInputKeyUp(event, applyPlayerStartChange)}
+                          onPointerUp={(event) => handleNumberInputPointerUp(event, applyPlayerStartChange)}
+                        />
+                      </label>
+                    </div>
+
+                    <div className="form-section">
+                      <div className="label">Player Collider</div>
+                      <label className="form-field">
+                        <span className="label">Mode</span>
+                        <select
+                          data-testid="player-start-collider-mode"
+                          className="select-input"
+                          value={playerStartColliderModeDraft}
+                          onChange={(event) => {
+                            const nextMode = event.currentTarget.value as PlayerStartColliderMode;
+                            setPlayerStartColliderModeDraft(nextMode);
+                            scheduleDraftCommit(() => applyPlayerStartChange({ colliderMode: nextMode }));
+                          }}
+                        >
+                          {PLAYER_START_COLLIDER_MODES.map((mode) => (
+                            <option key={mode} value={mode}>
+                              {mode}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label className="form-field">
+                        <span className="label">Eye Height</span>
+                        <input
+                          data-testid="player-start-eye-height"
+                          className="text-input"
+                          type="number"
+                          min="0.01"
+                          step="0.1"
+                          value={playerStartEyeHeightDraft}
+                          onChange={(event) => setPlayerStartEyeHeightDraft(event.currentTarget.value)}
+                          onBlur={applyPlayerStartChange}
+                          onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPlayerStartChange)}
+                          onKeyUp={(event) => handleNumberInputKeyUp(event, applyPlayerStartChange)}
+                          onPointerUp={(event) => handleNumberInputPointerUp(event, applyPlayerStartChange)}
+                        />
+                      </label>
+
+                      {playerStartColliderModeDraft === "capsule" ? (
+                        <div className="vector-inputs">
+                          <label className="form-field">
+                            <span className="label">Radius</span>
+                            <input
+                              data-testid="player-start-capsule-radius"
+                              className="text-input"
+                              type="number"
+                              min="0.01"
+                              step="0.1"
+                              value={playerStartCapsuleRadiusDraft}
+                              onChange={(event) => setPlayerStartCapsuleRadiusDraft(event.currentTarget.value)}
+                              onBlur={applyPlayerStartChange}
+                              onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPlayerStartChange)}
+                              onKeyUp={(event) => handleNumberInputKeyUp(event, applyPlayerStartChange)}
+                              onPointerUp={(event) => handleNumberInputPointerUp(event, applyPlayerStartChange)}
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Height</span>
+                            <input
+                              data-testid="player-start-capsule-height"
+                              className="text-input"
+                              type="number"
+                              min="0.01"
+                              step="0.1"
+                              value={playerStartCapsuleHeightDraft}
+                              onChange={(event) => setPlayerStartCapsuleHeightDraft(event.currentTarget.value)}
+                              onBlur={applyPlayerStartChange}
+                              onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPlayerStartChange)}
+                              onKeyUp={(event) => handleNumberInputKeyUp(event, applyPlayerStartChange)}
+                              onPointerUp={(event) => handleNumberInputPointerUp(event, applyPlayerStartChange)}
+                            />
+                          </label>
+                        </div>
+                      ) : null}
+
+                      {playerStartColliderModeDraft === "box" ? (
+                        <div className="vector-inputs">
+                          <label className="form-field">
+                            <span className="label">Size X</span>
+                            <input
+                              data-testid="player-start-box-size-x"
+                              className="text-input"
+                              type="number"
+                              min="0.01"
+                              step="0.1"
+                              value={playerStartBoxSizeDraft.x}
+                              onChange={(event) => {
+                                const nextValue = event.currentTarget.value;
+                                setPlayerStartBoxSizeDraft((draft) => ({ ...draft, x: nextValue }));
+                              }}
+                              onBlur={applyPlayerStartChange}
+                              onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPlayerStartChange)}
+                              onKeyUp={(event) => handleNumberInputKeyUp(event, applyPlayerStartChange)}
+                              onPointerUp={(event) => handleNumberInputPointerUp(event, applyPlayerStartChange)}
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Size Y</span>
+                            <input
+                              data-testid="player-start-box-size-y"
+                              className="text-input"
+                              type="number"
+                              min="0.01"
+                              step="0.1"
+                              value={playerStartBoxSizeDraft.y}
+                              onChange={(event) => {
+                                const nextValue = event.currentTarget.value;
+                                setPlayerStartBoxSizeDraft((draft) => ({ ...draft, y: nextValue }));
+                              }}
+                              onBlur={applyPlayerStartChange}
+                              onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPlayerStartChange)}
+                              onKeyUp={(event) => handleNumberInputKeyUp(event, applyPlayerStartChange)}
+                              onPointerUp={(event) => handleNumberInputPointerUp(event, applyPlayerStartChange)}
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Size Z</span>
+                            <input
+                              data-testid="player-start-box-size-z"
+                              className="text-input"
+                              type="number"
+                              min="0.01"
+                              step="0.1"
+                              value={playerStartBoxSizeDraft.z}
+                              onChange={(event) => {
+                                const nextValue = event.currentTarget.value;
+                                setPlayerStartBoxSizeDraft((draft) => ({ ...draft, z: nextValue }));
+                              }}
+                              onBlur={applyPlayerStartChange}
+                              onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPlayerStartChange)}
+                              onKeyUp={(event) => handleNumberInputKeyUp(event, applyPlayerStartChange)}
+                              onPointerUp={(event) => handleNumberInputPointerUp(event, applyPlayerStartChange)}
+                            />
+                          </label>
+                        </div>
+                      ) : null}
+
+                      <div className="material-summary">{getPlayerStartColliderModeDescription(playerStartColliderModeDraft)}</div>
+                    </div>
+                  </>
                 ) : null}
 
                 {selectedSoundEmitter !== null ? (
