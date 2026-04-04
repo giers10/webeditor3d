@@ -2,8 +2,10 @@ import { Euler, MathUtils, Vector3 } from "three";
 
 import type { Vec3 } from "../core/vector";
 import {
+  BOX_FACE_IDS,
   type BoxBrush,
   type BoxEdgeId,
+  type BoxFaceId,
   type BoxVertexId
 } from "../document/brushes";
 import { getBoxBrushHalfSize } from "./box-brush";
@@ -16,6 +18,22 @@ interface BoxVertexSigns {
   z: Sign;
 }
 
+type BoxAxis = "x" | "y" | "z";
+
+interface BoxFaceTransformMeta {
+  axis: BoxAxis;
+  sign: Sign;
+}
+
+interface BoxEdgeTransformMeta {
+  axis: BoxAxis;
+  signs: {
+    x: Sign | null;
+    y: Sign | null;
+    z: Sign | null;
+  };
+}
+
 const BOX_VERTEX_SIGNS: Record<BoxVertexId, BoxVertexSigns> = {
   negX_negY_negZ: { x: -1, y: -1, z: -1 },
   posX_negY_negZ: { x: 1, y: -1, z: -1 },
@@ -25,6 +43,66 @@ const BOX_VERTEX_SIGNS: Record<BoxVertexId, BoxVertexSigns> = {
   posX_negY_posZ: { x: 1, y: -1, z: 1 },
   negX_posY_posZ: { x: -1, y: 1, z: 1 },
   posX_posY_posZ: { x: 1, y: 1, z: 1 }
+};
+
+const BOX_FACE_TRANSFORM_META: Record<BoxFaceId, BoxFaceTransformMeta> = {
+  posX: { axis: "x", sign: 1 },
+  negX: { axis: "x", sign: -1 },
+  posY: { axis: "y", sign: 1 },
+  negY: { axis: "y", sign: -1 },
+  posZ: { axis: "z", sign: 1 },
+  negZ: { axis: "z", sign: -1 }
+};
+
+const BOX_EDGE_TRANSFORM_META: Record<BoxEdgeId, BoxEdgeTransformMeta> = {
+  edgeX_negY_negZ: {
+    axis: "x",
+    signs: { x: null, y: -1, z: -1 }
+  },
+  edgeX_posY_negZ: {
+    axis: "x",
+    signs: { x: null, y: 1, z: -1 }
+  },
+  edgeX_negY_posZ: {
+    axis: "x",
+    signs: { x: null, y: -1, z: 1 }
+  },
+  edgeX_posY_posZ: {
+    axis: "x",
+    signs: { x: null, y: 1, z: 1 }
+  },
+  edgeY_negX_negZ: {
+    axis: "y",
+    signs: { x: -1, y: null, z: -1 }
+  },
+  edgeY_posX_negZ: {
+    axis: "y",
+    signs: { x: 1, y: null, z: -1 }
+  },
+  edgeY_negX_posZ: {
+    axis: "y",
+    signs: { x: -1, y: null, z: 1 }
+  },
+  edgeY_posX_posZ: {
+    axis: "y",
+    signs: { x: 1, y: null, z: 1 }
+  },
+  edgeZ_negX_negY: {
+    axis: "z",
+    signs: { x: -1, y: -1, z: null }
+  },
+  edgeZ_posX_negY: {
+    axis: "z",
+    signs: { x: 1, y: -1, z: null }
+  },
+  edgeZ_negX_posY: {
+    axis: "z",
+    signs: { x: -1, y: 1, z: null }
+  },
+  edgeZ_posX_posY: {
+    axis: "z",
+    signs: { x: 1, y: 1, z: null }
+  }
 };
 
 const BOX_EDGE_VERTEX_IDS: Record<BoxEdgeId, { start: BoxVertexId; end: BoxVertexId }> = {
@@ -58,6 +136,26 @@ function createBrushRotationEuler(brush: BoxBrush): Euler {
   );
 }
 
+function createInverseBrushRotationEuler(brush: BoxBrush): Euler {
+  return new Euler(
+    MathUtils.degToRad(-brush.rotationDegrees.x),
+    MathUtils.degToRad(-brush.rotationDegrees.y),
+    MathUtils.degToRad(-brush.rotationDegrees.z),
+    "ZYX"
+  );
+}
+
+export function transformBoxBrushWorldVectorToLocal(brush: BoxBrush, worldVector: Vec3): Vec3 {
+  const inverseRotation = createInverseBrushRotationEuler(brush);
+  const localVector = new Vector3(worldVector.x, worldVector.y, worldVector.z).applyEuler(inverseRotation);
+
+  return {
+    x: localVector.x,
+    y: localVector.y,
+    z: localVector.z
+  };
+}
+
 export function transformBoxBrushLocalPointToWorld(brush: BoxBrush, localPoint: Vec3): Vec3 {
   const rotation = createBrushRotationEuler(brush);
   const rotatedOffset = new Vector3(localPoint.x, localPoint.y, localPoint.z).applyEuler(rotation);
@@ -67,6 +165,45 @@ export function transformBoxBrushLocalPointToWorld(brush: BoxBrush, localPoint: 
     y: brush.center.y + rotatedOffset.y,
     z: brush.center.z + rotatedOffset.z
   };
+}
+
+export function getBoxBrushFaceTransformMeta(faceId: BoxFaceId): BoxFaceTransformMeta {
+  return BOX_FACE_TRANSFORM_META[faceId];
+}
+
+export function getBoxBrushEdgeTransformMeta(edgeId: BoxEdgeId): BoxEdgeTransformMeta {
+  return BOX_EDGE_TRANSFORM_META[edgeId];
+}
+
+export function getBoxBrushVertexSigns(vertexId: BoxVertexId): BoxVertexSigns {
+  return BOX_VERTEX_SIGNS[vertexId];
+}
+
+export function getBoxBrushFaceWorldCenter(brush: BoxBrush, faceId: BoxFaceId): Vec3 {
+  const halfSize = getBoxBrushHalfSize(brush);
+  const meta = getBoxBrushFaceTransformMeta(faceId);
+  const localCenter = {
+    x: 0,
+    y: 0,
+    z: 0
+  };
+
+  const axisOffset = meta.sign * (meta.axis === "x" ? halfSize.x : meta.axis === "y" ? halfSize.y : halfSize.z);
+  localCenter[meta.axis] = axisOffset;
+
+  return transformBoxBrushLocalPointToWorld(brush, localCenter);
+}
+
+export function getBoxBrushFaceAxis(faceId: BoxFaceId): BoxAxis {
+  return BOX_FACE_TRANSFORM_META[faceId].axis;
+}
+
+export function getBoxBrushEdgeAxis(edgeId: BoxEdgeId): BoxAxis {
+  return BOX_EDGE_TRANSFORM_META[edgeId].axis;
+}
+
+export function getBoxBrushFaceIdsForAxis(axis: BoxAxis): BoxFaceId[] {
+  return BOX_FACE_IDS.filter((faceId) => BOX_FACE_TRANSFORM_META[faceId].axis === axis);
 }
 
 export function getBoxBrushVertexLocalPosition(brush: BoxBrush, vertexId: BoxVertexId): Vec3 {
