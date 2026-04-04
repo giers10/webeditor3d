@@ -18,6 +18,7 @@ import { createImportModelAssetCommand } from "../commands/import-model-asset-co
 import { createDeleteModelInstanceCommand } from "../commands/delete-model-instance-command";
 import { createCommitTransformSessionCommand } from "../commands/commit-transform-session-command";
 import { createMoveBoxBrushCommand } from "../commands/move-box-brush-command";
+import { createRotateBoxBrushCommand } from "../commands/rotate-box-brush-command";
 import { createResizeBoxBrushCommand } from "../commands/resize-box-brush-command";
 import { createSetBoxBrushFaceMaterialCommand } from "../commands/set-box-brush-face-material-command";
 import { createSetBoxBrushNameCommand } from "../commands/set-box-brush-name-command";
@@ -94,6 +95,7 @@ import { getProjectAssetKindLabel } from "../assets/project-assets";
 import {
   BOX_FACE_IDS,
   DEFAULT_BOX_BRUSH_CENTER,
+  DEFAULT_BOX_BRUSH_ROTATION_DEGREES,
   DEFAULT_BOX_BRUSH_SIZE,
   createDefaultFaceUvState,
   normalizeBrushName,
@@ -118,7 +120,7 @@ import {
 } from "../document/world-settings";
 import { formatSceneDiagnosticSummary, validateSceneDocument } from "../document/scene-document-validation";
 import { getBrowserProjectAssetStorageAccess, type ProjectAssetStorage } from "../assets/project-asset-storage";
-import { DEFAULT_GRID_SIZE, snapPositiveSizeToGrid, snapVec3ToGrid } from "../geometry/grid-snapping";
+import { DEFAULT_GRID_SIZE } from "../geometry/grid-snapping";
 import { createFitToFaceBoxBrushFaceUvState } from "../geometry/box-face-uvs";
 import {
   DEFAULT_ENTITY_POSITION,
