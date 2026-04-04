@@ -51,7 +51,7 @@ const modelAsset = {
 } satisfies ModelAssetRecord;
 
 describe("transform session commit commands", () => {
-  it("resolves a selected brush face to the whole brush transform target", () => {
+  it("requires Object mode for whitebox box transforms and does not silently promote component selections", () => {
     const brush = createBoxBrush({
       id: "brush-main"
     });
@@ -62,23 +62,61 @@ describe("transform session commit commands", () => {
       }
     };
 
-    const resolved = resolveTransformTarget(document, {
+    const faceResolved = resolveTransformTarget(document, {
       kind: "brushFace",
       brushId: brush.id,
       faceId: "posZ"
     });
+    const edgeResolved = resolveTransformTarget(
+      document,
+      {
+        kind: "brushEdge",
+        brushId: brush.id,
+        edgeId: "edgeX_posY_negZ"
+      },
+      "edge"
+    );
+    const vertexResolved = resolveTransformTarget(
+      document,
+      {
+        kind: "brushVertex",
+        brushId: brush.id,
+        vertexId: "posX_posY_negZ"
+      },
+      "vertex"
+    );
+    const faceModeBrushResolved = resolveTransformTarget(
+      document,
+      {
+        kind: "brushes",
+        ids: [brush.id]
+      },
+      "face"
+    );
+    const objectResolved = resolveTransformTarget(document, {
+      kind: "brushes",
+      ids: [brush.id]
+    });
 
-    expect(resolved.target).toMatchObject({
+    expect(faceResolved.target).toBeNull();
+    expect(faceResolved.message).toContain("Face selection");
+    expect(edgeResolved.target).toBeNull();
+    expect(edgeResolved.message).toContain("Edge transforms");
+    expect(vertexResolved.target).toBeNull();
+    expect(vertexResolved.message).toContain("Vertex transforms");
+    expect(faceModeBrushResolved.target).toBeNull();
+    expect(faceModeBrushResolved.message).toContain("Object mode");
+    expect(objectResolved.target).toMatchObject({
       kind: "brush",
       brushId: brush.id,
       initialCenter: brush.center,
       initialRotationDegrees: brush.rotationDegrees,
       initialSize: brush.size
     });
-    expect(resolved.target).not.toBeNull();
-    expect(supportsTransformOperation(resolved.target as NonNullable<typeof resolved.target>, "translate")).toBe(true);
-    expect(supportsTransformOperation(resolved.target as NonNullable<typeof resolved.target>, "rotate")).toBe(true);
-    expect(supportsTransformOperation(resolved.target as NonNullable<typeof resolved.target>, "scale")).toBe(true);
+    expect(objectResolved.target).not.toBeNull();
+    expect(supportsTransformOperation(objectResolved.target as NonNullable<typeof objectResolved.target>, "translate")).toBe(true);
+    expect(supportsTransformOperation(objectResolved.target as NonNullable<typeof objectResolved.target>, "rotate")).toBe(true);
+    expect(supportsTransformOperation(objectResolved.target as NonNullable<typeof objectResolved.target>, "scale")).toBe(true);
   });
 
   it("commits whitebox box rotate and scale transforms with undo and redo", () => {
