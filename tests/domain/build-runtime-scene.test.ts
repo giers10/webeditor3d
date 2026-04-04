@@ -344,7 +344,16 @@ describe("buildRuntimeSceneFromDocument", () => {
             y: 0,
             z: -1
           },
-          yawDegrees: 90
+          yawDegrees: 90,
+          collider: {
+            mode: "box",
+            eyeHeight: 1.4,
+            size: {
+              x: 0.8,
+              y: 1.6,
+              z: 0.7
+            }
+          }
         }
       ],
       soundEmitters: [
