@@ -95,7 +95,7 @@ import { BOX_FACE_IDS, DEFAULT_BOX_BRUSH_SIZE, type BoxBrush, type BoxFaceId } f
 import { applyBoxBrushFaceUvsToGeometry } from "../geometry/box-face-uvs";
 import { createModelColliderDebugGroup } from "../geometry/model-instance-collider-debug-mesh";
 import { buildGeneratedModelCollider } from "../geometry/model-instance-collider-generation";
-import { DEFAULT_GRID_SIZE, snapValueToGrid, snapVec3ToGrid } from "../geometry/grid-snapping";
+import { DEFAULT_GRID_SIZE, snapValueToGrid } from "../geometry/grid-snapping";
 import { createStarterMaterialSignature, createStarterMaterialTexture } from "../materials/starter-material-textures";
 import type { MaterialDef } from "../materials/starter-material-library";
 import {
