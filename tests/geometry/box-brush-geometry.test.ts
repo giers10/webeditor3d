@@ -37,4 +37,34 @@ describe("box brush geometry", () => {
     expect(new Set(corners.map((corner) => `${corner.x}:${corner.y}:${corner.z}`)).size).toBe(8);
     expect(corners.every((corner) => Number.isFinite(corner.x) && Number.isFinite(corner.y) && Number.isFinite(corner.z))).toBe(true);
   });
+
+  it("derives rotated world bounds from authored box rotation without changing stable corner count", () => {
+    const brush = createBoxBrush({
+      center: {
+        x: 0,
+        y: 1,
+        z: 0
+      },
+      rotationDegrees: {
+        x: 0,
+        y: 45,
+        z: 0
+      },
+      size: {
+        x: 2,
+        y: 2,
+        z: 4
+      }
+    });
+
+    const bounds = getBoxBrushBounds(brush);
+    const corners = getBoxBrushCornerPositions(brush);
+
+    expect(bounds.min.x).toBeCloseTo(-2.1213203436);
+    expect(bounds.max.x).toBeCloseTo(2.1213203436);
+    expect(bounds.min.z).toBeCloseTo(-2.1213203436);
+    expect(bounds.max.z).toBeCloseTo(2.1213203436);
+    expect(corners).toHaveLength(8);
+    expect(new Set(corners.map((corner) => `${corner.x}:${corner.y}:${corner.z}`)).size).toBe(8);
+  });
 });
