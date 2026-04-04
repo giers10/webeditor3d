@@ -900,6 +900,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [spotLightAngleDraft, setSpotLightAngleDraft] = useState(String(DEFAULT_SPOT_LIGHT_ANGLE_DEGREES));
   const [spotLightDirectionDraft, setSpotLightDirectionDraft] = useState(createVec3Draft(DEFAULT_SPOT_LIGHT_DIRECTION));
   const [playerStartYawDraft, setPlayerStartYawDraft] = useState("0");
+  const [playerStartColliderModeDraft, setPlayerStartColliderModeDraft] = useState<PlayerStartColliderMode>("capsule");
+  const [playerStartEyeHeightDraft, setPlayerStartEyeHeightDraft] = useState(String(DEFAULT_PLAYER_START_EYE_HEIGHT));
+  const [playerStartCapsuleRadiusDraft, setPlayerStartCapsuleRadiusDraft] = useState(String(DEFAULT_PLAYER_START_CAPSULE_RADIUS));
+  const [playerStartCapsuleHeightDraft, setPlayerStartCapsuleHeightDraft] = useState(String(DEFAULT_PLAYER_START_CAPSULE_HEIGHT));
+  const [playerStartBoxSizeDraft, setPlayerStartBoxSizeDraft] = useState(createVec3Draft(DEFAULT_PLAYER_START_BOX_SIZE));
   const [soundEmitterAudioAssetIdDraft, setSoundEmitterAudioAssetIdDraft] = useState(DEFAULT_SOUND_EMITTER_AUDIO_ASSET_ID ?? "");
   const [soundEmitterVolumeDraft, setSoundEmitterVolumeDraft] = useState(String(DEFAULT_SOUND_EMITTER_VOLUME));
   const [soundEmitterRefDistanceDraft, setSoundEmitterRefDistanceDraft] = useState(String(DEFAULT_SOUND_EMITTER_REF_DISTANCE));
