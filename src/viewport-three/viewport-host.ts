@@ -1,6 +1,7 @@
 import {
   AmbientLight,
   AxesHelper,
+  BufferGeometry,
   BoxGeometry,
   CanvasTexture,
   CapsuleGeometry,
@@ -10,6 +11,7 @@ import {
   EdgesGeometry,
   GridHelper,
   Group,
+  Line,
   LineBasicMaterial,
   LineSegments,
   Material,
@@ -34,7 +36,17 @@ import {
 } from "three";
 import { EffectComposer } from "postprocessing";
 
-import { isBrushFaceSelected, isBrushSelected, isModelInstanceSelected, type EditorSelection } from "../core/selection";
+import {
+  areEditorSelectionsEqual,
+  isBrushEdgeSelected,
+  isBrushFaceSelected,
+  isBrushSelected,
+  isBrushVertexSelected,
+  isModelInstanceSelected,
+  type EditorSelection
+} from "../core/selection";
+import { getWhiteboxSelectionFeedbackLabel } from "../core/whitebox-selection-feedback";
+import type { WhiteboxSelectionMode } from "../core/whitebox-selection-mode";
 import {
   cloneTransformSession,
   createInactiveTransformSession,
@@ -91,7 +103,17 @@ import {
   type PointLightEntity,
   type SpotLightEntity
 } from "../entities/entity-instances";
-import { BOX_FACE_IDS, DEFAULT_BOX_BRUSH_SIZE, type BoxBrush, type BoxFaceId } from "../document/brushes";
+import {
+  BOX_EDGE_IDS,
+  BOX_FACE_IDS,
+  BOX_VERTEX_IDS,
+  DEFAULT_BOX_BRUSH_SIZE,
+  type BoxBrush,
+  type BoxEdgeId,
+  type BoxFaceId,
+  type BoxVertexId
+} from "../document/brushes";
+import { getBoxBrushEdgeWorldSegment, getBoxBrushVertexWorldPosition } from "../geometry/box-brush-components";
 import { applyBoxBrushFaceUvsToGeometry } from "../geometry/box-face-uvs";
 import { createModelColliderDebugGroup } from "../geometry/model-instance-collider-debug-mesh";
 import { buildGeneratedModelCollider } from "../geometry/model-instance-collider-generation";
