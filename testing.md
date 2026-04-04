@@ -33,7 +33,7 @@ Highest-priority confidence areas:
 
 1. document validity and migrations
 2. undo/redo correctness
-3. brush generation correctness
+3. whitebox geometry generation correctness
 4. per-face material/UV persistence
 5. runtime build correctness
 6. asset import survival
@@ -95,7 +95,7 @@ Purpose:
 Scope:
 
 - math helpers
-- grid snapping
+- snapping helpers
 - ID utilities
 - small schema defaults
 - validation helpers
@@ -115,6 +115,7 @@ Examples:
 
 - `snapValue(1.23, 0.5) -> 1.0`
 - UV rotate/flip calculations
+- axis/local transform constraint calculations
 - entity schema default application
 - command label generation if logic matters
 
@@ -137,7 +138,7 @@ Scope:
 
 Examples:
 
-- create brush command adds valid brush
+- create whitebox-solid command adds valid geometry
 - undo removes it cleanly
 - redo restores the same result
 - invalid entity reference is detected
@@ -151,12 +152,13 @@ These tests should not need a browser renderer.
 
 Purpose:
 
-- verify brush/kernel correctness
+- verify whitebox geometry/kernel correctness
 
 Scope:
 
 - primitive generation
 - face generation
+- edge/vertex derivation where canonical
 - topology expectations
 - collision mesh generation
 - imported-model collider generation
@@ -167,12 +169,14 @@ Scope:
 
 Examples:
 
-- box brush creates expected face count
+- box-based whitebox solid creates expected face count
 - stairs generator creates expected step count
 - fit-to-face UV produces finite values
-- clipping yields valid child brushes
+- edited solids triangulate without NaNs or invalid indices
 - generated geometry contains no NaNs
 - rebuild is deterministic for the same input
+- non-planar quad faces triangulate deterministically
+- non-convex whitebox solids either derive valid output or fail clearly when unsupported
 - imported model collider generation produces finite valid data for the selected mode
 - imported-model collider generation honors the authored mode semantics:
   - terrain -> heightfield
@@ -186,7 +190,7 @@ Examples:
 - assert invariants, not fragile exact arrays unless necessary
 - prefer bounded numeric comparisons
 - verify no degenerate triangles where required
-- test edge cases: tiny sizes, rejected zero-like values, unsupported cases failing clearly
+- test edge cases: tiny sizes, float transforms, component edits, unsupported cases failing clearly
 
 Geometry is a high-risk area and deserves dense testing.
 
@@ -210,6 +214,7 @@ Examples:
 
 - scene round-trips without losing face materials
 - UV state survives save/load
+- floating point transforms survive save/load without accidental snapping
 - imported asset refs survive save/load
 - project package export/import preserves asset-backed scenes
 - unsupported version throws an understandable error
