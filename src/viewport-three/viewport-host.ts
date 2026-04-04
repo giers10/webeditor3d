@@ -1319,7 +1319,13 @@ export class ViewportHost {
 
         this.transformGizmoGroup.add(this.createRotateHandle(axis, effectiveRotationAxis === axis));
       }
-    } else if (session.operation === "scale" && (session.target.kind === "modelInstance" || session.target.kind === "brush")) {
+    } else if (
+      session.operation === "scale" &&
+      (session.target.kind === "modelInstance" ||
+        session.target.kind === "brush" ||
+        session.target.kind === "brushFace" ||
+        session.target.kind === "brushEdge")
+    ) {
       for (const axis of ["x", "y", "z"] as const) {
         this.transformGizmoGroup.add(this.createScaleHandle(axis, session.axisConstraint === axis));
       }
@@ -2123,6 +2129,9 @@ export class ViewportHost {
 
     switch (this.currentTransformSession.target.kind) {
       case "brush":
+      case "brushFace":
+      case "brushEdge":
+      case "brushVertex":
         if (this.currentTransformSession.preview.kind === "brush") {
           this.applyBrushRenderObjectTransform(
             this.currentTransformSession.target.brushId,
