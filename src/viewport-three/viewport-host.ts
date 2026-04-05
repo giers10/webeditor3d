@@ -1777,57 +1777,48 @@ export class ViewportHost {
     };
   }
 
-  private createBrushPreviewFromExtents(
-    brush: BoxBrush,
-    extents: { min: Vec3; max: Vec3 },
-    rotationDegrees?: Vec3
-  ): { kind: "brush"; center: Vec3; rotationDegrees: Vec3; size: Vec3 } {
-    const localCenter = {
-      x: (extents.min.x + extents.max.x) * 0.5,
-      y: (extents.min.y + extents.max.y) * 0.5,
-      z: (extents.min.z + extents.max.z) * 0.5
-    };
-    const centerOffset = transformBoxBrushLocalPointToWorld(
-      {
-        ...brush,
-        center: { x: 0, y: 0, z: 0 },
-        rotationDegrees: rotationDegrees ?? brush.rotationDegrees
-      },
-      localCenter
-    );
-    const nextSize = {
-      x: this.snapWhiteboxSizeValue(extents.max.x - extents.min.x),
-      y: this.snapWhiteboxSizeValue(extents.max.y - extents.min.y),
-      z: this.snapWhiteboxSizeValue(extents.max.z - extents.min.z)
-    };
+  private createBrushPreviewFromGeometry(brush: BoxBrush, geometry: BoxBrushGeometry): { kind: "brush"; center: Vec3; rotationDegrees: Vec3; size: Vec3; geometry: BoxBrushGeometry } {
+    const nextGeometry = cloneBoxBrushGeometry(geometry);
 
     return {
       kind: "brush",
       center: {
-        x: this.snapWhiteboxPositionValue(brush.center.x + centerOffset.x),
-        y: this.snapWhiteboxPositionValue(brush.center.y + centerOffset.y),
-        z: this.snapWhiteboxPositionValue(brush.center.z + centerOffset.z)
+        ...brush.center
       },
       rotationDegrees: {
-        ...(rotationDegrees ?? brush.rotationDegrees)
+        ...brush.rotationDegrees
       },
-      size: nextSize
+      size: deriveBoxBrushSizeFromGeometry(nextGeometry),
+      geometry: nextGeometry
     };
   }
 
-  private getInitialBrushLocalExtents(brush: BoxBrush): { min: Vec3; max: Vec3 } {
-    return {
-      min: {
-        x: -brush.size.x * 0.5,
-        y: -brush.size.y * 0.5,
-        z: -brush.size.z * 0.5
-      },
-      max: {
-        x: brush.size.x * 0.5,
-        y: brush.size.y * 0.5,
-        z: brush.size.z * 0.5
+  private getComponentTargetVertexIds(target: ActiveTransformSession["target"]): BoxVertexId[] {
+    switch (target.kind) {
+      case "brushFace":
+        return [...getBoxBrushFaceVertexIds(target.faceId)];
+      case "brushEdge": {
+        const [start, end] = getBoxBrushEdgeVertexIds(target.edgeId);
+        return [start, end];
       }
-    };
+      case "brushVertex":
+        return [target.vertexId];
+      default:
+        return [];
+    }
+  }
+
+  private applyDeltaToVertices(brush: BoxBrush, vertexIds: BoxVertexId[], delta: Vec3): BoxBrushGeometry {
+    const nextGeometry = cloneBoxBrushGeometry(brush.geometry);
+
+    for (const vertexId of vertexIds) {
+      const vertex = nextGeometry.vertices[vertexId];
+      vertex.x = this.snapWhiteboxPositionValue(vertex.x + delta.x);
+      vertex.y = this.snapWhiteboxPositionValue(vertex.y + delta.y);
+      vertex.z = this.snapWhiteboxPositionValue(vertex.z + delta.z);
+    }
+
+    return nextGeometry;
   }
 
   private buildComponentTranslatedBrushPreview(
@@ -1876,57 +1867,10 @@ export class ViewportHost {
     }
 
     const localDelta = transformBoxBrushWorldVectorToLocal(initialBrush, worldDelta);
-    const extents = this.getInitialBrushLocalExtents(initialBrush);
+    const vertexIds = this.getComponentTargetVertexIds(session.target);
+    const nextGeometry = this.applyDeltaToVertices(initialBrush, vertexIds, localDelta);
 
-    if (session.target.kind === "brushFace") {
-      const meta = getBoxBrushFaceTransformMeta(session.target.faceId);
-
-      for (const axis of ["x", "y", "z"] as const) {
-        const axisDelta = localDelta[axis];
-
-        if (axis === meta.axis) {
-          if (meta.sign > 0) {
-            extents.max[axis] += axisDelta;
-          } else {
-            extents.min[axis] += axisDelta;
-          }
-        } else {
-          extents.min[axis] += axisDelta;
-          extents.max[axis] += axisDelta;
-        }
-      }
-    } else if (session.target.kind === "brushEdge") {
-      const meta = getBoxBrushEdgeTransformMeta(session.target.edgeId);
-
-      for (const axis of ["x", "y", "z"] as const) {
-        const axisDelta = localDelta[axis];
-        const axisSign = meta.signs[axis];
-
-        if (axisSign === null) {
-          extents.min[axis] += axisDelta;
-          extents.max[axis] += axisDelta;
-          continue;
-        }
-
-        if (axisSign > 0) {
-          extents.max[axis] += axisDelta;
-        } else {
-          extents.min[axis] += axisDelta;
-        }
-      }
-    } else if (session.target.kind === "brushVertex") {
-      const signs = getBoxBrushVertexSigns(session.target.vertexId);
-
-      for (const axis of ["x", "y", "z"] as const) {
-        if (signs[axis] > 0) {
-          extents.max[axis] += localDelta[axis];
-        } else {
-          extents.min[axis] += localDelta[axis];
-        }
-      }
-    }
-
-    return this.createBrushPreviewFromExtents(initialBrush, extents);
+    return this.createBrushPreviewFromGeometry(initialBrush, nextGeometry);
   }
 
   private buildComponentRotatedBrushPreview(
@@ -1943,40 +1887,34 @@ export class ViewportHost {
 
     const effectiveAxis = axisConstraint ?? this.getEffectiveRotationAxis(session);
     const pointerDeltaDegrees = (current.x - origin.x - (current.y - origin.y)) * 0.5;
-    const pivot = this.getTransformPivotPosition({
+    const pivotWorld = this.getTransformPivotPosition({
       ...session,
       preview: {
         kind: "brush",
         center: { ...initialBrush.center },
         rotationDegrees: { ...initialBrush.rotationDegrees },
-        size: { ...initialBrush.size }
+        size: { ...initialBrush.size },
+        geometry: cloneBoxBrushGeometry(initialBrush.geometry)
       }
     });
-    const axisVector = this.axisVector(effectiveAxis).normalize();
-    const centerVector = new Vector3(initialBrush.center.x, initialBrush.center.y, initialBrush.center.z);
-    const pivotVector = new Vector3(pivot.x, pivot.y, pivot.z);
-    const nextCenter = centerVector
-      .sub(pivotVector)
-      .applyAxisAngle(axisVector, (pointerDeltaDegrees * Math.PI) / 180)
-      .add(pivotVector);
-    const nextRotationDegrees = {
-      ...initialBrush.rotationDegrees
-    };
+    const pivotLocal = transformBoxBrushWorldPointToLocal(initialBrush, pivotWorld);
+    const rotationAxis = this.axisVector(effectiveAxis).normalize();
+    const vertexIds = this.getComponentTargetVertexIds(session.target);
+    const nextGeometry = cloneBoxBrushGeometry(initialBrush.geometry);
 
-    nextRotationDegrees[effectiveAxis] = this.normalizeDegrees(nextRotationDegrees[effectiveAxis] + pointerDeltaDegrees);
+    for (const vertexId of vertexIds) {
+      const vertex = getBoxBrushLocalVertexPosition(initialBrush, vertexId);
+      const next = new Vector3(vertex.x - pivotLocal.x, vertex.y - pivotLocal.y, vertex.z - pivotLocal.z)
+        .applyAxisAngle(rotationAxis, (pointerDeltaDegrees * Math.PI) / 180)
+        .add(new Vector3(pivotLocal.x, pivotLocal.y, pivotLocal.z));
+      nextGeometry.vertices[vertexId] = {
+        x: this.snapWhiteboxPositionValue(next.x),
+        y: this.snapWhiteboxPositionValue(next.y),
+        z: this.snapWhiteboxPositionValue(next.z)
+      };
+    }
 
-    return {
-      kind: "brush" as const,
-      center: {
-        x: this.snapWhiteboxPositionValue(nextCenter.x),
-        y: this.snapWhiteboxPositionValue(nextCenter.y),
-        z: this.snapWhiteboxPositionValue(nextCenter.z)
-      },
-      rotationDegrees: nextRotationDegrees,
-      size: {
-        ...initialBrush.size
-      }
-    };
+    return this.createBrushPreviewFromGeometry(initialBrush, nextGeometry);
   }
 
   private buildComponentScaledBrushPreview(
@@ -1991,50 +1929,46 @@ export class ViewportHost {
       throw new Error("Cannot build a component scale preview without a box brush target.");
     }
 
-    const extents = this.getInitialBrushLocalExtents(initialBrush);
+    const pivotWorld = this.getTransformPivotPosition({
+      ...session,
+      preview: {
+        kind: "brush",
+        center: { ...initialBrush.center },
+        rotationDegrees: { ...initialBrush.rotationDegrees },
+        size: { ...initialBrush.size },
+        geometry: cloneBoxBrushGeometry(initialBrush.geometry)
+      }
+    });
+    const pivotLocal = transformBoxBrushWorldPointToLocal(initialBrush, pivotWorld);
+    const nextGeometry = cloneBoxBrushGeometry(initialBrush.geometry);
+    const vertexIds = this.getComponentTargetVertexIds(session.target);
 
     if (session.target.kind === "brushFace") {
       const meta = getBoxBrushFaceTransformMeta(session.target.faceId);
-      const scaleFactor =
-        1 +
-        this.getAxisMovementDistance(
-          axisConstraint ?? meta.axis,
-          this.getTransformPivotPosition(session),
-          origin,
-          current
-        ) *
-          0.45;
+      const axis = axisConstraint ?? meta.axis;
+      const scaleFactor = 1 + this.getAxisMovementDistance(axis, pivotWorld, origin, current) * 0.45;
 
-      if (meta.sign > 0) {
-        extents.max[meta.axis] = extents.min[meta.axis] + (extents.max[meta.axis] - extents.min[meta.axis]) * scaleFactor;
-      } else {
-        extents.min[meta.axis] = extents.max[meta.axis] - (extents.max[meta.axis] - extents.min[meta.axis]) * scaleFactor;
+      for (const vertexId of vertexIds) {
+        const vertex = nextGeometry.vertices[vertexId];
+        vertex[axis] = this.snapWhiteboxPositionValue(pivotLocal[axis] + (vertex[axis] - pivotLocal[axis]) * scaleFactor);
       }
     } else if (session.target.kind === "brushEdge") {
       const meta = getBoxBrushEdgeTransformMeta(session.target.edgeId);
       const affectedAxes = (["x", "y", "z"] as const).filter(
         (axis) => meta.signs[axis] !== null && (axisConstraint === null || axisConstraint === axis)
       );
-      const pivot = this.getTransformPivotPosition(session);
 
       for (const axis of affectedAxes) {
-        const sign = meta.signs[axis];
+        const scaleFactor = 1 + this.getAxisMovementDistance(axis, pivotWorld, origin, current) * 0.45;
 
-        if (sign === null) {
-          continue;
-        }
-
-        const scaleFactor = 1 + this.getAxisMovementDistance(axis, pivot, origin, current) * 0.45;
-
-        if (sign > 0) {
-          extents.max[axis] = extents.min[axis] + (extents.max[axis] - extents.min[axis]) * scaleFactor;
-        } else {
-          extents.min[axis] = extents.max[axis] - (extents.max[axis] - extents.min[axis]) * scaleFactor;
+        for (const vertexId of vertexIds) {
+          const vertex = nextGeometry.vertices[vertexId];
+          vertex[axis] = this.snapWhiteboxPositionValue(pivotLocal[axis] + (vertex[axis] - pivotLocal[axis]) * scaleFactor);
         }
       }
     }
 
-    return this.createBrushPreviewFromExtents(initialBrush, extents);
+    return this.createBrushPreviewFromGeometry(initialBrush, nextGeometry);
   }
 
   private applyBrushRenderObjectTransform(brushId: string, center: Vec3, rotationDegrees: Vec3, size: Vec3) {
