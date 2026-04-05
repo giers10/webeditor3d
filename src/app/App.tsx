@@ -12,6 +12,7 @@ import {
 import { createCreateBoxBrushCommand } from "../commands/create-box-brush-command";
 import { createDeleteBoxBrushCommand } from "../commands/delete-box-brush-command";
 import { createDeleteEntityCommand } from "../commands/delete-entity-command";
+import { createDuplicateSelectionCommand } from "../commands/duplicate-selection-command";
 import { createImportAudioAssetCommand } from "../commands/import-audio-asset-command";
 import { createImportBackgroundImageAssetCommand } from "../commands/import-background-image-asset-command";
 import { createImportModelAssetCommand } from "../commands/import-model-asset-command";
@@ -746,6 +747,21 @@ function isTextEntryTarget(target: EventTarget | null): boolean {
     target instanceof HTMLSelectElement ||
     target.isContentEditable
   );
+}
+
+function selectionCanBeDuplicated(selection: EditorSelection): boolean {
+  switch (selection.kind) {
+    case "brushes":
+    case "entities":
+    case "modelInstances":
+      return selection.ids.length > 0;
+    case "brushFace":
+    case "brushEdge":
+    case "brushVertex":
+      return true;
+    case "none":
+      return false;
+  }
 }
 
 function isCommitIncrementKey(key: string): boolean {
@@ -1589,11 +1605,22 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
       const isDeletionKey = event.key === "Delete" || event.key === "Backspace";
       const isDeleteShortcut = !event.altKey && !event.ctrlKey && !event.metaKey && (event.code === "KeyX" || isDeletionKey);
+      const isDuplicateShortcut = event.shiftKey && !event.altKey && !event.ctrlKey && !event.metaKey && event.code === "KeyD";
 
       if (addMenuPosition !== null) {
         if (isDeletionKey) {
           event.preventDefault();
         }
+        return;
+      }
+
+      if (isDuplicateShortcut) {
+        const duplicated = handleDuplicateSelection();
+
+        if (duplicated) {
+          event.preventDefault();
+        }
+
         return;
       }
 
@@ -2774,6 +2801,21 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
 
     return false;
+  };
+
+  const handleDuplicateSelection = () => {
+    if (!selectionCanBeDuplicated(editorState.selection)) {
+      return false;
+    }
+
+    try {
+      store.executeCommand(createDuplicateSelectionCommand());
+      setStatusMessage("Duplicated selection.");
+      return true;
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+      return false;
+    }
   };
 
   const updateInteractionLinkTrigger = (link: InteractionLink, trigger: InteractionTriggerKind) => {
