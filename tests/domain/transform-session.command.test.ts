@@ -51,7 +51,7 @@ const modelAsset = {
 } satisfies ModelAssetRecord;
 
 describe("transform session commit commands", () => {
-  it("requires Object mode for whitebox box transforms and does not silently promote component selections", () => {
+  it("resolves component transform targets in matching mode and enforces operation support", () => {
     const brush = createBoxBrush({
       id: "brush-main"
     });
@@ -62,11 +62,20 @@ describe("transform session commit commands", () => {
       }
     };
 
-    const faceResolved = resolveTransformTarget(document, {
+    const faceWrongModeResolved = resolveTransformTarget(document, {
       kind: "brushFace",
       brushId: brush.id,
       faceId: "posZ"
     });
+    const faceResolved = resolveTransformTarget(
+      document,
+      {
+        kind: "brushFace",
+        brushId: brush.id,
+        faceId: "posZ"
+      },
+      "face"
+    );
     const edgeResolved = resolveTransformTarget(
       document,
       {
@@ -98,12 +107,23 @@ describe("transform session commit commands", () => {
       ids: [brush.id]
     });
 
-    expect(faceResolved.target).toBeNull();
-    expect(faceResolved.message).toContain("Face selection");
-    expect(edgeResolved.target).toBeNull();
-    expect(edgeResolved.message).toContain("Edge transforms");
-    expect(vertexResolved.target).toBeNull();
-    expect(vertexResolved.message).toContain("Vertex transforms");
+    expect(faceWrongModeResolved.target).toBeNull();
+    expect(faceWrongModeResolved.message).toContain("Face mode");
+    expect(faceResolved.target).toMatchObject({
+      kind: "brushFace",
+      brushId: brush.id,
+      faceId: "posZ"
+    });
+    expect(edgeResolved.target).toMatchObject({
+      kind: "brushEdge",
+      brushId: brush.id,
+      edgeId: "edgeX_posY_negZ"
+    });
+    expect(vertexResolved.target).toMatchObject({
+      kind: "brushVertex",
+      brushId: brush.id,
+      vertexId: "posX_posY_negZ"
+    });
     expect(faceModeBrushResolved.target).toBeNull();
     expect(faceModeBrushResolved.message).toContain("Object mode");
     expect(objectResolved.target).toMatchObject({
@@ -117,6 +137,14 @@ describe("transform session commit commands", () => {
     expect(supportsTransformOperation(objectResolved.target as NonNullable<typeof objectResolved.target>, "translate")).toBe(true);
     expect(supportsTransformOperation(objectResolved.target as NonNullable<typeof objectResolved.target>, "rotate")).toBe(true);
     expect(supportsTransformOperation(objectResolved.target as NonNullable<typeof objectResolved.target>, "scale")).toBe(true);
+
+    expect(supportsTransformOperation(faceResolved.target as NonNullable<typeof faceResolved.target>, "translate")).toBe(true);
+    expect(supportsTransformOperation(faceResolved.target as NonNullable<typeof faceResolved.target>, "rotate")).toBe(true);
+    expect(supportsTransformOperation(faceResolved.target as NonNullable<typeof faceResolved.target>, "scale")).toBe(true);
+
+    expect(supportsTransformOperation(vertexResolved.target as NonNullable<typeof vertexResolved.target>, "translate")).toBe(true);
+    expect(supportsTransformOperation(vertexResolved.target as NonNullable<typeof vertexResolved.target>, "rotate")).toBe(false);
+    expect(supportsTransformOperation(vertexResolved.target as NonNullable<typeof vertexResolved.target>, "scale")).toBe(false);
   });
 
   it("commits whitebox box rotate and scale transforms with undo and redo", () => {
