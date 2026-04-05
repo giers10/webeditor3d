@@ -1,7 +1,7 @@
 import { Euler, MathUtils, Vector3 } from "three";
 
 import type { Vec3 } from "../core/vector";
-import { type BoxBrush } from "../document/brushes";
+import { BOX_VERTEX_IDS, type BoxBrush } from "../document/brushes";
 import { getBoxBrushLocalVertexPosition } from "./box-brush-mesh";
 
 export interface BoxBrushBounds {
@@ -45,17 +45,8 @@ export function getBoxBrushCornerPositions(brush: BoxBrush): Vec3[] {
     MathUtils.degToRad(brush.rotationDegrees.z),
     "XYZ"
   );
-  const offsets = [
-    "negX_negY_negZ",
-    "posX_negY_negZ",
-    "negX_posY_negZ",
-    "posX_posY_negZ",
-    "negX_negY_posZ",
-    "posX_negY_posZ",
-    "negX_posY_posZ",
-    "posX_posY_posZ"
-  ].map((vertexId) => {
-    const localVertex = getBoxBrushLocalVertexPosition(brush, vertexId as keyof BoxBrush["geometry"]["vertices"] & never);
+  const offsets = BOX_VERTEX_IDS.map((vertexId) => {
+    const localVertex = getBoxBrushLocalVertexPosition(brush, vertexId);
     return new Vector3(localVertex.x, localVertex.y, localVertex.z);
   });
 

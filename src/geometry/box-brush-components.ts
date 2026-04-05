@@ -8,7 +8,7 @@ import {
   type BoxFaceId,
   type BoxVertexId
 } from "../document/brushes";
-import { getBoxBrushHalfSize } from "./box-brush";
+import { getBoxBrushFaceVertexIds, getBoxBrushLocalVertexPosition } from "./box-brush-mesh";
 
 type Sign = -1 | 1;
 
@@ -172,16 +172,18 @@ export function getBoxBrushVertexSigns(vertexId: BoxVertexId): BoxVertexSigns {
 }
 
 export function getBoxBrushFaceWorldCenter(brush: BoxBrush, faceId: BoxFaceId): Vec3 {
-  const halfSize = getBoxBrushHalfSize(brush);
-  const meta = getBoxBrushFaceTransformMeta(faceId);
-  const localCenter = {
-    x: 0,
-    y: 0,
-    z: 0
-  };
-
-  const axisOffset = meta.sign * (meta.axis === "x" ? halfSize.x : meta.axis === "y" ? halfSize.y : halfSize.z);
-  localCenter[meta.axis] = axisOffset;
+  const faceVertexIds = getBoxBrushFaceVertexIds(faceId);
+  const localCenter = faceVertexIds.reduce(
+    (accumulator, vertexId) => {
+      const vertex = getBoxBrushLocalVertexPosition(brush, vertexId);
+      return {
+        x: accumulator.x + vertex.x * 0.25,
+        y: accumulator.y + vertex.y * 0.25,
+        z: accumulator.z + vertex.z * 0.25
+      };
+    },
+    { x: 0, y: 0, z: 0 }
+  );
 
   return transformBoxBrushLocalPointToWorld(brush, localCenter);
 }
@@ -199,14 +201,7 @@ export function getBoxBrushFaceIdsForAxis(axis: BoxAxis): BoxFaceId[] {
 }
 
 export function getBoxBrushVertexLocalPosition(brush: BoxBrush, vertexId: BoxVertexId): Vec3 {
-  const halfSize = getBoxBrushHalfSize(brush);
-  const signs = BOX_VERTEX_SIGNS[vertexId];
-
-  return {
-    x: signs.x * halfSize.x,
-    y: signs.y * halfSize.y,
-    z: signs.z * halfSize.z
-  };
+  return getBoxBrushLocalVertexPosition(brush, vertexId);
 }
 
 export function getBoxBrushVertexWorldPosition(brush: BoxBrush, vertexId: BoxVertexId): Vec3 {
