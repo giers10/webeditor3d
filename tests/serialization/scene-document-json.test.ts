@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { createBoxBrush } from "../../src/document/brushes";
+import { createBoxBrush, deriveBoxBrushSizeFromGeometry } from "../../src/document/brushes";
 import {
   ANIMATION_PLAYBACK_SCENE_DOCUMENT_VERSION,
   ENTITY_NAMES_SCENE_DOCUMENT_VERSION,
@@ -155,6 +155,7 @@ describe("scene document JSON", () => {
       y: -1.25,
       z: -1.5
     };
+    brush.size = deriveBoxBrushSizeFromGeometry(brush.geometry);
 
     const document = {
       ...createEmptySceneDocument({ name: "Authored Geometry Scene" }),
