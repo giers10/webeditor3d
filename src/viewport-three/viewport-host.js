@@ -1,0 +1,2950 @@
+import { AmbientLight, AxesHelper, BufferGeometry, BoxGeometry, CanvasTexture, CapsuleGeometry, ConeGeometry, CylinderGeometry, DirectionalLight, EdgesGeometry, GridHelper, Group, Line, LineBasicMaterial, LineSegments, Material, Mesh, MeshBasicMaterial, MeshStandardMaterial, Object3D, OrthographicCamera, Plane, PerspectiveCamera, PointLight, Quaternion, Raycaster, Scene, SphereGeometry, Spherical, TorusGeometry, SpotLight, Vector2, Vector3, WebGLRenderer } from "three";
+import { EffectComposer } from "postprocessing";
+import { areEditorSelectionsEqual, isBrushEdgeSelected, isBrushFaceSelected, isBrushSelected, isBrushVertexSelected, isModelInstanceSelected } from "../core/selection";
+import { getWhiteboxSelectionFeedbackLabel } from "../core/whitebox-selection-feedback";
+import { cloneTransformSession, createInactiveTransformSession, createTransformPreviewFromTarget, createTransformSession, resolveTransformTarget, supportsTransformOperation, supportsTransformAxisConstraint } from "../core/transform-session";
+import { createModelInstanceRenderGroup, disposeModelInstance } from "../assets/model-instance-rendering";
+import { createModelInstance, createModelInstancePlacementPosition, DEFAULT_MODEL_INSTANCE_ROTATION_DEGREES, DEFAULT_MODEL_INSTANCE_SCALE, getModelInstances } from "../assets/model-instances";
+import { areAdvancedRenderingSettingsEqual, cloneAdvancedRenderingSettings } from "../document/world-settings";
+import { DEFAULT_INTERACTABLE_RADIUS, DEFAULT_PLAYER_START_BOX_SIZE, DEFAULT_PLAYER_START_CAPSULE_HEIGHT, DEFAULT_PLAYER_START_CAPSULE_RADIUS, DEFAULT_PLAYER_START_EYE_HEIGHT, DEFAULT_PLAYER_START_YAW_DEGREES, DEFAULT_POINT_LIGHT_DISTANCE, DEFAULT_SOUND_EMITTER_MAX_DISTANCE, DEFAULT_SOUND_EMITTER_REF_DISTANCE, DEFAULT_SPOT_LIGHT_ANGLE_DEGREES, DEFAULT_SPOT_LIGHT_DIRECTION, DEFAULT_SPOT_LIGHT_DISTANCE, DEFAULT_TELEPORT_TARGET_YAW_DEGREES, DEFAULT_TRIGGER_VOLUME_SIZE, getPlayerStartColliderHeight, getEntityInstances, normalizeYawDegrees } from "../entities/entity-instances";
+import { BOX_EDGE_IDS, BOX_FACE_IDS, BOX_VERTEX_IDS, DEFAULT_BOX_BRUSH_SIZE } from "../document/brushes";
+import { getBoxBrushEdgeAxis, getBoxBrushEdgeTransformMeta, getBoxBrushEdgeWorldSegment, getBoxBrushFaceAxis, getBoxBrushFaceTransformMeta, getBoxBrushFaceWorldCenter, getBoxBrushVertexSigns, getBoxBrushVertexWorldPosition, transformBoxBrushLocalPointToWorld, transformBoxBrushWorldVectorToLocal } from "../geometry/box-brush-components";
+import { applyBoxBrushFaceUvsToGeometry } from "../geometry/box-face-uvs";
+import { createModelColliderDebugGroup } from "../geometry/model-instance-collider-debug-mesh";
+import { buildGeneratedModelCollider } from "../geometry/model-instance-collider-generation";
+import { DEFAULT_GRID_SIZE, snapValueToGrid } from "../geometry/grid-snapping";
+import { createStarterMaterialSignature, createStarterMaterialTexture } from "../materials/starter-material-textures";
+import { applyAdvancedRenderingLightShadowFlags, applyAdvancedRenderingRenderableShadowFlags, configureAdvancedRenderingRenderer, createAdvancedRenderingComposer } from "../rendering/advanced-rendering";
+import { resolveViewportFocusTarget } from "./viewport-focus";
+import { createSoundEmitterMarkerMeshes } from "./viewport-entity-markers";
+import { getViewportViewModeDefinition, isOrthographicViewportViewMode } from "./viewport-view-modes";
+import { areViewportPanelCameraStatesEqual } from "./viewport-layout";
+import { areViewportToolPreviewsEqual } from "./viewport-transient-state";
+const BRUSH_SELECTED_EDGE_COLOR = 0xf7d2aa;
+const BRUSH_HOVERED_EDGE_COLOR = 0xb7cbec;
+const BRUSH_EDGE_COLOR = 0x0d1017;
+const FALLBACK_FACE_COLOR = 0x747d89;
+const HOVERED_FACE_FALLBACK_COLOR = 0xd9a56f;
+const SELECTED_FACE_FALLBACK_COLOR = 0xcf7b42;
+const HOVERED_FACE_EMISSIVE = 0x2f1d11;
+const SELECTED_FACE_EMISSIVE = 0x4a2814;
+const WHITEBOX_COMPONENT_COLOR = 0xb7cbec;
+const WHITEBOX_COMPONENT_HOVERED_COLOR = 0xf3be8f;
+const WHITEBOX_COMPONENT_SELECTED_COLOR = 0xcf7b42;
+const WHITEBOX_COMPONENT_DEFAULT_OPACITY = 0.42;
+const WHITEBOX_COMPONENT_HOVERED_OPACITY = 0.94;
+const WHITEBOX_COMPONENT_SELECTED_OPACITY = 1;
+const WHITEBOX_VERTEX_RADIUS = 0.08;
+const WHITEBOX_EDGE_PICK_THRESHOLD = 0.16;
+const PLAYER_START_COLOR = 0x7cb7ff;
+const PLAYER_START_SELECTED_COLOR = 0xf3be8f;
+const SOUND_EMITTER_COLOR = 0x72d7c9;
+const SOUND_EMITTER_SELECTED_COLOR = 0xf4d37d;
+const TRIGGER_VOLUME_COLOR = 0x9f8cff;
+const TRIGGER_VOLUME_SELECTED_COLOR = 0xf0b07f;
+const TELEPORT_TARGET_COLOR = 0x7ee0ff;
+const TELEPORT_TARGET_SELECTED_COLOR = 0xf6c48a;
+const INTERACTABLE_COLOR = 0x92de7e;
+const INTERACTABLE_SELECTED_COLOR = 0xf1cf7e;
+const BOX_CREATE_PREVIEW_FILL = 0x89b6ff;
+const BOX_CREATE_PREVIEW_EDGE = 0xf3be8f;
+const PLACEMENT_PREVIEW_COLOR_HEX = "#89b6ff";
+const MIN_CAMERA_DISTANCE = 1.5;
+const MAX_CAMERA_DISTANCE = 400;
+const ORBIT_ROTATION_SPEED = 0.0085;
+const ZOOM_SPEED = 0.0014;
+const MIN_POLAR_ANGLE = 0.12;
+const MAX_POLAR_ANGLE = Math.PI - 0.12;
+const FOCUS_MARGIN = 1.35;
+const ORTHOGRAPHIC_CAMERA_DISTANCE = 100;
+const ORTHOGRAPHIC_FRUSTUM_HEIGHT = 20;
+const MIN_ORTHOGRAPHIC_ZOOM = 0.25;
+const MAX_ORTHOGRAPHIC_ZOOM = 20;
+const GIZMO_AXIS_COLORS = {
+    x: 0xea655b,
+    y: 0x6ed06f,
+    z: 0x55a2ff
+};
+const GIZMO_ACTIVE_COLOR = 0xf7d2aa;
+const GIZMO_INACTIVE_OPACITY = 0.82;
+const GIZMO_ACTIVE_OPACITY = 1;
+const GIZMO_TRANSLATE_LENGTH = 1.2;
+const GIZMO_SCALE_LENGTH = 1;
+const GIZMO_ROTATE_RADIUS = 1.05;
+const GIZMO_ROTATE_TUBE = 0.035;
+const GIZMO_PICK_THICKNESS = 0.18;
+const GIZMO_PICK_RING_TUBE = 0.14;
+const GIZMO_CENTER_HANDLE_SIZE = 0.16;
+const GIZMO_SCREEN_SIZE_PERSPECTIVE = 0.11;
+const GIZMO_SCREEN_SIZE_ORTHOGRAPHIC = 1.4;
+const GIZMO_RENDER_ORDER = 4_000;
+const SCALE_SNAP_STEP = 0.1;
+const MIN_SCALE_COMPONENT = 0.1;
+const MIN_BOX_SIZE_COMPONENT = 0.01;
+export class ViewportHost {
+    scene = new Scene();
+    perspectiveCamera = new PerspectiveCamera(60, 1, 0.1, 1000);
+    orthographicCamera = new OrthographicCamera(-10, 10, 10, -10, 0.1, 1000);
+    renderer = new WebGLRenderer({ antialias: true, alpha: true });
+    cameraTarget = new Vector3(0, 0, 0);
+    cameraOffset = new Vector3();
+    cameraForward = new Vector3();
+    cameraRight = new Vector3();
+    cameraUp = new Vector3();
+    cameraSpherical = new Spherical();
+    gridHelpers = {
+        xz: new GridHelper(40, 40, 0xcf8354, 0x4e596b),
+        xy: new GridHelper(40, 40, 0xcf8354, 0x4e596b),
+        yz: new GridHelper(40, 40, 0xcf8354, 0x4e596b)
+    };
+    ambientLight = new AmbientLight();
+    sunLight = new DirectionalLight();
+    localLightGroup = new Group();
+    brushGroup = new Group();
+    entityGroup = new Group();
+    modelGroup = new Group();
+    raycaster = new Raycaster();
+    pointer = new Vector2();
+    boxCreateIntersection = new Vector3();
+    boxCreatePlane = new Plane(new Vector3(0, 1, 0), 0);
+    transformPlane = new Plane(new Vector3(0, 1, 0), 0);
+    transformIntersection = new Vector3();
+    transformGizmoGroup = new Group();
+    brushRenderObjects = new Map();
+    entityRenderObjects = new Map();
+    localLightRenderObjects = new Map();
+    modelRenderObjects = new Map();
+    materialTextureCache = new Map();
+    currentDocument = null;
+    currentWorld = null;
+    currentAdvancedRenderingSettings = null;
+    advancedRenderingComposer = null;
+    currentSelection = {
+        kind: "none"
+    };
+    hoveredSelection = {
+        kind: "none"
+    };
+    whiteboxSelectionMode = "object";
+    whiteboxSnapEnabled = true;
+    whiteboxSnapStep = DEFAULT_GRID_SIZE;
+    projectAssets = {};
+    loadedModelAssets = {};
+    loadedImageAssets = {};
+    boxCreatePreviewMesh = new Mesh(new BoxGeometry(DEFAULT_BOX_BRUSH_SIZE.x, DEFAULT_BOX_BRUSH_SIZE.y, DEFAULT_BOX_BRUSH_SIZE.z), new MeshStandardMaterial({
+        color: BOX_CREATE_PREVIEW_FILL,
+        emissive: BOX_CREATE_PREVIEW_FILL,
+        emissiveIntensity: 0.12,
+        roughness: 0.68,
+        metalness: 0.02,
+        transparent: true,
+        opacity: 0.22
+    }));
+    boxCreatePreviewEdges = new LineSegments(new EdgesGeometry(this.boxCreatePreviewMesh.geometry), new LineBasicMaterial({
+        color: BOX_CREATE_PREVIEW_EDGE
+    }));
+    resizeObserver = null;
+    animationFrame = 0;
+    container = null;
+    brushSelectionChangeHandler = null;
+    whiteboxHoverLabelChangeHandler = null;
+    creationPreviewChangeHandler = null;
+    creationCommitHandler = null;
+    cameraStateChangeHandler = null;
+    transformSessionChangeHandler = null;
+    transformCommitHandler = null;
+    transformCancelHandler = null;
+    toolMode = "select";
+    viewMode = "perspective";
+    displayMode = "normal";
+    panelId = "topLeft";
+    creationPreview = null;
+    creationPreviewTargetKey = null;
+    creationPreviewObject = null;
+    currentTransformSession = createInactiveTransformSession();
+    activeCameraDragPointerId = null;
+    lastCameraDragClientPosition = null;
+    activeTransformDrag = null;
+    lastCanvasPointerPosition = null;
+    keyboardTransformPointerOrigin = null;
+    // Click-through cycling: track the last click position and the last picked object
+    // so repeated clicks at the same spot cycle through overlapping objects.
+    lastClickPointer = null;
+    lastClickSelectionKey = null;
+    constructor() {
+        this.perspectiveCamera.position.set(10, 9, 10);
+        this.perspectiveCamera.lookAt(this.cameraTarget);
+        this.updatePerspectiveCameraSphericalFromPose();
+        this.updateOrthographicCameraFrustum();
+        const axesHelper = new AxesHelper(2);
+        this.gridHelpers.xy.rotation.x = Math.PI * 0.5;
+        this.gridHelpers.yz.rotation.z = Math.PI * 0.5;
+        this.gridHelpers.xz.visible = true;
+        this.gridHelpers.xy.visible = false;
+        this.gridHelpers.yz.visible = false;
+        this.scene.add(this.gridHelpers.xz);
+        this.scene.add(this.gridHelpers.xy);
+        this.scene.add(this.gridHelpers.yz);
+        this.scene.add(axesHelper);
+        this.scene.add(this.ambientLight);
+        this.scene.add(this.sunLight);
+        this.scene.add(this.localLightGroup);
+        this.scene.add(this.brushGroup);
+        this.scene.add(this.entityGroup);
+        this.scene.add(this.modelGroup);
+        this.transformGizmoGroup.visible = false;
+        this.scene.add(this.transformGizmoGroup);
+        this.boxCreatePreviewMesh.visible = false;
+        this.boxCreatePreviewEdges.visible = false;
+        this.scene.add(this.boxCreatePreviewMesh);
+        this.scene.add(this.boxCreatePreviewEdges);
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        this.renderer.setClearAlpha(0);
+        this.applyViewModePose();
+    }
+    setPanelId(panelId) {
+        this.panelId = panelId;
+    }
+    mount(container) {
+        this.container = container;
+        this.renderer.domElement.tabIndex = -1;
+        container.appendChild(this.renderer.domElement);
+        this.renderer.domElement.addEventListener("pointerdown", this.handlePointerDown);
+        this.renderer.domElement.addEventListener("pointermove", this.handlePointerMove);
+        this.renderer.domElement.addEventListener("pointerup", this.handlePointerUp);
+        this.renderer.domElement.addEventListener("pointercancel", this.handlePointerUp);
+        this.renderer.domElement.addEventListener("pointerleave", this.handlePointerLeave);
+        this.renderer.domElement.addEventListener("wheel", this.handleWheel, { passive: false });
+        this.renderer.domElement.addEventListener("auxclick", this.handleAuxClick);
+        this.renderer.domElement.addEventListener("contextmenu", this.handleContextMenu);
+        window.addEventListener("pointermove", this.handleWindowPointerMove);
+        this.resize();
+        this.resizeObserver = new ResizeObserver(() => {
+            this.resize();
+        });
+        this.resizeObserver.observe(container);
+        this.render();
+    }
+    updateWorld(world) {
+        this.currentWorld = world;
+        this.applyWorld();
+    }
+    updateDocument(document, selection) {
+        this.currentDocument = document;
+        this.currentSelection = selection;
+        this.setHoveredSelection({
+            kind: "none"
+        });
+        this.rebuildLocalLights(document);
+        this.rebuildBrushMeshes(document, selection);
+        this.rebuildEntityMarkers(document, selection);
+        this.rebuildModelInstances(document, selection);
+        this.applyTransformPreview();
+        this.syncTransformGizmo();
+    }
+    updateAssets(projectAssets, loadedModelAssets, loadedImageAssets) {
+        this.projectAssets = projectAssets;
+        this.loadedModelAssets = loadedModelAssets;
+        this.loadedImageAssets = loadedImageAssets;
+        if (this.currentWorld !== null) {
+            this.applyWorld();
+        }
+        if (this.currentDocument !== null) {
+            this.rebuildModelInstances(this.currentDocument, this.currentSelection);
+            this.applyTransformPreview();
+            this.syncTransformGizmo();
+        }
+        if (this.creationPreview?.target.kind === "model-instance") {
+            const currentPreview = this.creationPreview;
+            this.creationPreview = null;
+            this.clearCreationPreviewObject();
+            this.syncCreationPreview(currentPreview);
+        }
+    }
+    setBrushSelectionChangeHandler(handler) {
+        this.brushSelectionChangeHandler = handler;
+    }
+    setWhiteboxHoverLabelChangeHandler(handler) {
+        this.whiteboxHoverLabelChangeHandler = handler;
+        this.emitWhiteboxHoverLabelChange();
+    }
+    setCreationPreviewChangeHandler(handler) {
+        this.creationPreviewChangeHandler = handler;
+    }
+    setCreationCommitHandler(handler) {
+        this.creationCommitHandler = handler;
+    }
+    setCameraStateChangeHandler(handler) {
+        this.cameraStateChangeHandler = handler;
+    }
+    setTransformSessionChangeHandler(handler) {
+        this.transformSessionChangeHandler = handler;
+    }
+    setTransformCommitHandler(handler) {
+        this.transformCommitHandler = handler;
+    }
+    setTransformCancelHandler(handler) {
+        this.transformCancelHandler = handler;
+    }
+    setCameraState(cameraState) {
+        if (areViewportPanelCameraStatesEqual(this.createCameraStateSnapshot(), cameraState)) {
+            return;
+        }
+        this.cameraTarget.set(cameraState.target.x, cameraState.target.y, cameraState.target.z);
+        this.cameraSpherical.radius = cameraState.perspectiveOrbit.radius;
+        this.cameraSpherical.theta = cameraState.perspectiveOrbit.theta;
+        this.cameraSpherical.phi = cameraState.perspectiveOrbit.phi;
+        this.orthographicCamera.zoom = cameraState.orthographicZoom;
+        this.applyViewModePose();
+    }
+    setCreationPreview(toolPreview) {
+        this.syncCreationPreview(toolPreview);
+    }
+    setWhiteboxSnapSettings(enabled, step) {
+        this.whiteboxSnapEnabled = enabled;
+        this.whiteboxSnapStep = step;
+        if (this.creationPreview !== null) {
+            this.syncCreationPreview(this.creationPreview);
+        }
+        this.applyTransformPreview();
+    }
+    setWhiteboxSelectionMode(mode) {
+        if (this.whiteboxSelectionMode === mode) {
+            return;
+        }
+        this.whiteboxSelectionMode = mode;
+        this.lastClickPointer = null;
+        this.lastClickSelectionKey = null;
+        this.setHoveredSelection({
+            kind: "none"
+        });
+        this.refreshBrushPresentation();
+        this.syncTransformGizmo();
+    }
+    setTransformSession(transformSession) {
+        this.currentTransformSession = cloneTransformSession(transformSession);
+        if (this.currentTransformSession.kind === "none") {
+            this.activeTransformDrag = null;
+            this.keyboardTransformPointerOrigin = null;
+        }
+        else if (this.currentTransformSession.sourcePanelId === this.panelId &&
+            this.currentTransformSession.source !== "gizmo" &&
+            (this.keyboardTransformPointerOrigin === null || this.keyboardTransformPointerOrigin.sessionId !== this.currentTransformSession.id)) {
+            const pointerOrigin = this.getPointerOriginForTransformSession();
+            this.keyboardTransformPointerOrigin = {
+                sessionId: this.currentTransformSession.id,
+                clientX: pointerOrigin.x,
+                clientY: pointerOrigin.y
+            };
+        }
+        this.applyTransformPreview();
+        this.syncTransformGizmo();
+    }
+    setToolMode(toolMode) {
+        this.toolMode = toolMode;
+        this.lastClickPointer = null;
+        this.lastClickSelectionKey = null;
+        this.setHoveredSelection({
+            kind: "none"
+        });
+        if (toolMode !== "create") {
+            this.syncCreationPreview(null);
+        }
+    }
+    setViewMode(viewMode) {
+        if (this.viewMode === viewMode) {
+            return;
+        }
+        this.viewMode = viewMode;
+        this.lastClickPointer = null;
+        this.lastClickSelectionKey = null;
+        this.setHoveredSelection({
+            kind: "none"
+        });
+        this.applyViewModePose();
+        if (this.currentAdvancedRenderingSettings !== null) {
+            this.syncAdvancedRenderingComposer(this.currentAdvancedRenderingSettings);
+        }
+    }
+    setDisplayMode(displayMode) {
+        if (this.displayMode === displayMode) {
+            return;
+        }
+        this.displayMode = displayMode;
+        this.applyWorld();
+        if (this.currentDocument !== null) {
+            this.updateDocument(this.currentDocument, this.currentSelection);
+        }
+    }
+    focusSelection(document, selection) {
+        const focusTarget = resolveViewportFocusTarget(document, selection);
+        if (focusTarget === null) {
+            return;
+        }
+        this.cameraTarget.set(focusTarget.center.x, focusTarget.center.y, focusTarget.center.z);
+        if (this.viewMode === "perspective") {
+            const verticalHalfFov = (this.perspectiveCamera.fov * Math.PI) / 360;
+            const horizontalHalfFov = Math.atan(Math.tan(verticalHalfFov) * Math.max(this.perspectiveCamera.aspect, 0.0001));
+            const fitAngle = Math.max(0.1, Math.min(verticalHalfFov, horizontalHalfFov));
+            const fitDistance = Math.min(MAX_CAMERA_DISTANCE, Math.max(MIN_CAMERA_DISTANCE, (focusTarget.radius / Math.sin(fitAngle)) * FOCUS_MARGIN));
+            this.cameraSpherical.radius = fitDistance;
+            this.cameraSpherical.makeSafe();
+            this.applyPerspectiveCameraPose();
+            this.emitCameraStateChange();
+            return;
+        }
+        const containerWidth = Math.max(1, this.container?.clientWidth ?? 1);
+        const containerHeight = Math.max(1, this.container?.clientHeight ?? 1);
+        const aspect = containerWidth / containerHeight;
+        const visibleWidth = ORTHOGRAPHIC_FRUSTUM_HEIGHT * aspect;
+        const fitSize = Math.max(0.5, focusTarget.radius * 2 * FOCUS_MARGIN);
+        const fitZoom = Math.min(visibleWidth, ORTHOGRAPHIC_FRUSTUM_HEIGHT) / fitSize;
+        this.orthographicCamera.zoom = Math.min(MAX_ORTHOGRAPHIC_ZOOM, Math.max(MIN_ORTHOGRAPHIC_ZOOM, fitZoom));
+        this.applyOrthographicCameraPose();
+        this.emitCameraStateChange();
+    }
+    dispose() {
+        if (this.animationFrame !== 0) {
+            cancelAnimationFrame(this.animationFrame);
+            this.animationFrame = 0;
+        }
+        this.resizeObserver?.disconnect();
+        this.resizeObserver = null;
+        this.renderer.domElement.removeEventListener("pointerdown", this.handlePointerDown);
+        this.renderer.domElement.removeEventListener("pointermove", this.handlePointerMove);
+        this.renderer.domElement.removeEventListener("pointerup", this.handlePointerUp);
+        this.renderer.domElement.removeEventListener("pointercancel", this.handlePointerUp);
+        this.renderer.domElement.removeEventListener("pointerleave", this.handlePointerLeave);
+        this.renderer.domElement.removeEventListener("wheel", this.handleWheel);
+        this.renderer.domElement.removeEventListener("auxclick", this.handleAuxClick);
+        this.renderer.domElement.removeEventListener("contextmenu", this.handleContextMenu);
+        window.removeEventListener("pointermove", this.handleWindowPointerMove);
+        this.clearLocalLights();
+        this.clearBrushMeshes();
+        this.clearEntityMarkers();
+        this.creationPreviewChangeHandler = null;
+        this.creationCommitHandler = null;
+        this.cameraStateChangeHandler = null;
+        this.transformSessionChangeHandler = null;
+        this.transformCommitHandler = null;
+        this.transformCancelHandler = null;
+        this.currentTransformSession = createInactiveTransformSession();
+        this.clearTransformGizmo();
+        this.activeTransformDrag = null;
+        this.keyboardTransformPointerOrigin = null;
+        this.syncCreationPreview(null);
+        this.advancedRenderingComposer?.dispose();
+        this.advancedRenderingComposer = null;
+        this.currentAdvancedRenderingSettings = null;
+        this.renderer.autoClear = true;
+        for (const cachedTexture of this.materialTextureCache.values()) {
+            cachedTexture.texture.dispose();
+        }
+        this.materialTextureCache.clear();
+        this.boxCreatePreviewMesh.geometry.dispose();
+        this.boxCreatePreviewMesh.material.dispose();
+        this.boxCreatePreviewEdges.geometry.dispose();
+        this.boxCreatePreviewEdges.material.dispose();
+        this.renderer.dispose();
+        if (this.container !== null && this.container.contains(this.renderer.domElement)) {
+            this.container.removeChild(this.renderer.domElement);
+        }
+        this.container = null;
+    }
+    getActiveCamera() {
+        return this.viewMode === "perspective" ? this.perspectiveCamera : this.orthographicCamera;
+    }
+    createCameraStateSnapshot() {
+        return {
+            target: {
+                x: this.cameraTarget.x,
+                y: this.cameraTarget.y,
+                z: this.cameraTarget.z
+            },
+            perspectiveOrbit: {
+                radius: this.cameraSpherical.radius,
+                theta: this.cameraSpherical.theta,
+                phi: this.cameraSpherical.phi
+            },
+            orthographicZoom: this.orthographicCamera.zoom
+        };
+    }
+    emitCameraStateChange() {
+        this.cameraStateChangeHandler?.(this.createCameraStateSnapshot());
+    }
+    updatePerspectiveCameraSphericalFromPose() {
+        this.cameraOffset.copy(this.perspectiveCamera.position).sub(this.cameraTarget);
+        this.cameraSpherical.setFromVector3(this.cameraOffset);
+        this.cameraSpherical.radius = Math.min(MAX_CAMERA_DISTANCE, Math.max(MIN_CAMERA_DISTANCE, this.cameraSpherical.radius));
+        this.cameraSpherical.phi = Math.min(MAX_POLAR_ANGLE, Math.max(MIN_POLAR_ANGLE, this.cameraSpherical.phi));
+        this.cameraSpherical.makeSafe();
+    }
+    updateOrthographicCameraFrustum() {
+        if (this.container === null) {
+            return;
+        }
+        const width = this.container.clientWidth;
+        const height = this.container.clientHeight;
+        if (width === 0 || height === 0) {
+            return;
+        }
+        const aspect = width / height;
+        const halfHeight = ORTHOGRAPHIC_FRUSTUM_HEIGHT * 0.5;
+        const halfWidth = halfHeight * aspect;
+        this.orthographicCamera.left = -halfWidth;
+        this.orthographicCamera.right = halfWidth;
+        this.orthographicCamera.top = halfHeight;
+        this.orthographicCamera.bottom = -halfHeight;
+    }
+    applyPerspectiveCameraPose() {
+        this.cameraSpherical.radius = Math.min(MAX_CAMERA_DISTANCE, Math.max(MIN_CAMERA_DISTANCE, this.cameraSpherical.radius));
+        this.cameraSpherical.phi = Math.min(MAX_POLAR_ANGLE, Math.max(MIN_POLAR_ANGLE, this.cameraSpherical.phi));
+        this.cameraSpherical.makeSafe();
+        this.cameraOffset.setFromSpherical(this.cameraSpherical);
+        this.perspectiveCamera.position.copy(this.cameraTarget).add(this.cameraOffset);
+        this.perspectiveCamera.lookAt(this.cameraTarget);
+    }
+    applyOrthographicCameraPose() {
+        const definition = getViewportViewModeDefinition(this.viewMode);
+        if (!isOrthographicViewportViewMode(this.viewMode) || definition.cameraDirection === null) {
+            return;
+        }
+        this.orthographicCamera.up.set(definition.cameraUp.x, definition.cameraUp.y, definition.cameraUp.z);
+        this.orthographicCamera.position.set(this.cameraTarget.x + definition.cameraDirection.x * ORTHOGRAPHIC_CAMERA_DISTANCE, this.cameraTarget.y + definition.cameraDirection.y * ORTHOGRAPHIC_CAMERA_DISTANCE, this.cameraTarget.z + definition.cameraDirection.z * ORTHOGRAPHIC_CAMERA_DISTANCE);
+        this.orthographicCamera.lookAt(this.cameraTarget);
+        this.orthographicCamera.zoom = Math.min(MAX_ORTHOGRAPHIC_ZOOM, Math.max(MIN_ORTHOGRAPHIC_ZOOM, this.orthographicCamera.zoom));
+        this.orthographicCamera.updateProjectionMatrix();
+    }
+    applyViewModePose() {
+        const definition = getViewportViewModeDefinition(this.viewMode);
+        this.gridHelpers.xz.visible = definition.gridPlane === "xz";
+        this.gridHelpers.xy.visible = definition.gridPlane === "xy";
+        this.gridHelpers.yz.visible = definition.gridPlane === "yz";
+        if (definition.cameraType === "perspective") {
+            this.applyPerspectiveCameraPose();
+            return;
+        }
+        this.updateOrthographicCameraFrustum();
+        this.applyOrthographicCameraPose();
+    }
+    createWireframeDisplayMaterial(material) {
+        const source = material;
+        return new MeshBasicMaterial({
+            color: source.color?.getHex() ?? FALLBACK_FACE_COLOR,
+            wireframe: true,
+            transparent: source.transparent === true || (source.opacity ?? 1) < 1,
+            opacity: source.opacity ?? 1,
+            depthWrite: false
+        });
+    }
+    applyWireframePresentation(object) {
+        object.traverse((child) => {
+            const maybeMesh = child;
+            if (maybeMesh.isMesh !== true) {
+                return;
+            }
+            if (Array.isArray(maybeMesh.material)) {
+                const originalMaterials = maybeMesh.material;
+                maybeMesh.material = originalMaterials.map((material) => this.createWireframeDisplayMaterial(material));
+                for (const material of originalMaterials) {
+                    material.dispose();
+                }
+                return;
+            }
+            const originalMaterial = maybeMesh.material;
+            maybeMesh.material = this.createWireframeDisplayMaterial(originalMaterial);
+            originalMaterial.dispose();
+        });
+    }
+    getBoxCreatePlane() {
+        switch (this.viewMode) {
+            case "perspective":
+            case "top":
+                return this.boxCreatePlane.set(new Vector3(0, 1, 0), 0);
+            case "front":
+                return this.boxCreatePlane.set(new Vector3(0, 0, 1), 0);
+            case "side":
+                return this.boxCreatePlane.set(new Vector3(1, 0, 0), 0);
+            default:
+                return this.boxCreatePlane.set(new Vector3(0, 1, 0), 0);
+        }
+    }
+    applyWorld() {
+        if (this.currentWorld === null) {
+            return;
+        }
+        const world = this.currentWorld;
+        const rendererSettings = this.displayMode !== "normal"
+            ? {
+                ...cloneAdvancedRenderingSettings(world.advancedRendering),
+                enabled: false
+            }
+            : world.advancedRendering;
+        this.ambientLight.color.set(world.ambientLight.colorHex);
+        this.ambientLight.intensity = world.ambientLight.intensity;
+        this.sunLight.color.set(world.sunLight.colorHex);
+        this.sunLight.intensity = world.sunLight.intensity;
+        this.sunLight.position.set(world.sunLight.direction.x, world.sunLight.direction.y, world.sunLight.direction.z).normalize().multiplyScalar(18);
+        this.ambientLight.visible = this.displayMode !== "wireframe";
+        this.sunLight.visible = this.displayMode !== "wireframe";
+        this.localLightGroup.visible = this.displayMode !== "wireframe";
+        if (this.displayMode !== "normal") {
+            this.scene.background = null;
+            this.scene.environment = null;
+            this.scene.environmentIntensity = 1;
+        }
+        else if (world.background.mode === "image") {
+            const texture = this.loadedImageAssets[world.background.assetId]?.texture ?? null;
+            this.scene.background = texture;
+            this.scene.environment = texture;
+            this.scene.environmentIntensity = world.background.environmentIntensity;
+        }
+        else {
+            this.scene.background = null;
+            this.scene.environment = null;
+            this.scene.environmentIntensity = 1;
+        }
+        configureAdvancedRenderingRenderer(this.renderer, rendererSettings);
+        this.syncAdvancedRenderingComposer(rendererSettings);
+        this.applyShadowState();
+    }
+    syncAdvancedRenderingComposer(settings) {
+        const shouldUseComposer = settings.enabled && this.displayMode === "normal" && this.viewMode === "perspective";
+        const settingsChanged = this.currentAdvancedRenderingSettings === null ||
+            !areAdvancedRenderingSettingsEqual(this.currentAdvancedRenderingSettings, settings);
+        if (!shouldUseComposer) {
+            if (this.advancedRenderingComposer !== null) {
+                this.advancedRenderingComposer.dispose();
+                this.advancedRenderingComposer = null;
+            }
+            this.currentAdvancedRenderingSettings = settings.enabled ? cloneAdvancedRenderingSettings(settings) : null;
+            this.renderer.autoClear = true;
+            return;
+        }
+        if (this.advancedRenderingComposer !== null && !settingsChanged) {
+            return;
+        }
+        if (this.advancedRenderingComposer !== null) {
+            this.advancedRenderingComposer.dispose();
+        }
+        this.advancedRenderingComposer = createAdvancedRenderingComposer(this.renderer, this.scene, this.perspectiveCamera, settings);
+        this.currentAdvancedRenderingSettings = cloneAdvancedRenderingSettings(settings);
+        this.renderer.autoClear = false;
+    }
+    applyShadowState() {
+        if (this.currentWorld === null) {
+            return;
+        }
+        const advancedRendering = this.currentWorld.advancedRendering;
+        const shadowsEnabled = advancedRendering.enabled && advancedRendering.shadows.enabled && this.displayMode === "normal";
+        const shadowSettings = this.displayMode === "normal"
+            ? advancedRendering
+            : {
+                ...advancedRendering,
+                enabled: false
+            };
+        applyAdvancedRenderingLightShadowFlags(this.sunLight, shadowSettings);
+        for (const renderObjects of this.localLightRenderObjects.values()) {
+            applyAdvancedRenderingLightShadowFlags(renderObjects.group, shadowSettings);
+        }
+        for (const renderObjects of this.brushRenderObjects.values()) {
+            applyAdvancedRenderingRenderableShadowFlags(renderObjects.mesh, shadowsEnabled);
+        }
+        for (const renderGroup of this.modelRenderObjects.values()) {
+            applyAdvancedRenderingRenderableShadowFlags(renderGroup, shadowsEnabled);
+        }
+    }
+    getPointerOriginForTransformSession() {
+        if (this.lastCanvasPointerPosition !== null) {
+            return this.lastCanvasPointerPosition;
+        }
+        const bounds = this.renderer.domElement.getBoundingClientRect();
+        return {
+            x: bounds.left + bounds.width * 0.5,
+            y: bounds.top + bounds.height * 0.5
+        };
+    }
+    axisVector(axis) {
+        switch (axis) {
+            case "x":
+                return new Vector3(1, 0, 0);
+            case "y":
+                return new Vector3(0, 1, 0);
+            case "z":
+                return new Vector3(0, 0, 1);
+        }
+    }
+    normalizeDegrees(value) {
+        const normalized = value % 360;
+        return normalized < 0 ? normalized + 360 : normalized;
+    }
+    snapScaleValue(value) {
+        return Math.max(MIN_SCALE_COMPONENT, Math.round(value / SCALE_SNAP_STEP) * SCALE_SNAP_STEP);
+    }
+    snapWhiteboxPositionValue(value) {
+        return this.whiteboxSnapEnabled ? snapValueToGrid(value, this.whiteboxSnapStep) : value;
+    }
+    snapWhiteboxSizeValue(value) {
+        if (!Number.isFinite(value)) {
+            throw new Error("Whitebox box size values must be finite numbers.");
+        }
+        if (!this.whiteboxSnapEnabled) {
+            return Math.max(MIN_BOX_SIZE_COMPONENT, Math.abs(value));
+        }
+        return Math.max(MIN_BOX_SIZE_COMPONENT, snapValueToGrid(Math.abs(value), this.whiteboxSnapStep));
+    }
+    getAxisComponent(vector, axis) {
+        switch (axis) {
+            case "x":
+                return vector.x;
+            case "y":
+                return vector.y;
+            case "z":
+                return vector.z;
+        }
+    }
+    setAxisComponent(vector, axis, value) {
+        switch (axis) {
+            case "x":
+                return {
+                    ...vector,
+                    x: value
+                };
+            case "y":
+                return {
+                    ...vector,
+                    y: value
+                };
+            case "z":
+                return {
+                    ...vector,
+                    z: value
+                };
+        }
+    }
+    getEffectiveRotationAxis(session) {
+        if (session.target.kind === "brushFace") {
+            return getBoxBrushFaceAxis(session.target.faceId);
+        }
+        if (session.target.kind === "brushEdge") {
+            return getBoxBrushEdgeAxis(session.target.edgeId);
+        }
+        if (session.target.kind === "entity" && session.target.initialRotation.kind === "yaw") {
+            return "y";
+        }
+        return session.axisConstraint ?? "y";
+    }
+    getTransformPivotPosition(session) {
+        if (session.preview.kind === "brush") {
+            const previewBrush = this.createPreviewBrushForSession(session);
+            if (previewBrush !== null) {
+                if (session.target.kind === "brushFace") {
+                    return getBoxBrushFaceWorldCenter(previewBrush, session.target.faceId);
+                }
+                if (session.target.kind === "brushEdge") {
+                    return getBoxBrushEdgeWorldSegment(previewBrush, session.target.edgeId).center;
+                }
+                if (session.target.kind === "brushVertex") {
+                    return getBoxBrushVertexWorldPosition(previewBrush, session.target.vertexId);
+                }
+            }
+        }
+        switch (session.preview.kind) {
+            case "brush":
+                return session.preview.center;
+            case "modelInstance":
+                return session.preview.position;
+            case "entity":
+                return session.preview.position;
+        }
+    }
+    createPreviewBrushForSession(session) {
+        if (session.preview.kind !== "brush") {
+            return null;
+        }
+        if (session.target.kind !== "brush" &&
+            session.target.kind !== "brushFace" &&
+            session.target.kind !== "brushEdge" &&
+            session.target.kind !== "brushVertex") {
+            return null;
+        }
+        const currentBrush = this.currentDocument?.brushes[session.target.brushId];
+        if (currentBrush === undefined || currentBrush.kind !== "box") {
+            return null;
+        }
+        return {
+            ...currentBrush,
+            center: {
+                ...session.preview.center
+            },
+            rotationDegrees: {
+                ...session.preview.rotationDegrees
+            },
+            size: {
+                ...session.preview.size
+            }
+        };
+    }
+    clearTransformGizmo() {
+        for (const child of [...this.transformGizmoGroup.children]) {
+            this.transformGizmoGroup.remove(child);
+            child.traverse((object) => {
+                const maybeMesh = object;
+                if (maybeMesh.isMesh === true) {
+                    maybeMesh.geometry.dispose();
+                    if (Array.isArray(maybeMesh.material)) {
+                        for (const material of maybeMesh.material) {
+                            material.dispose();
+                        }
+                    }
+                    else {
+                        maybeMesh.material.dispose();
+                    }
+                }
+            });
+        }
+        this.transformGizmoGroup.visible = false;
+    }
+    markTransformHandleObject(object) {
+        object.renderOrder = GIZMO_RENDER_ORDER;
+        object.traverse((child) => {
+            child.renderOrder = GIZMO_RENDER_ORDER;
+        });
+        return object;
+    }
+    createTransformHandleMaterial(color, isActive, transparent = false) {
+        return new MeshBasicMaterial({
+            color,
+            transparent: transparent || isActive,
+            opacity: transparent ? 0.001 : isActive ? GIZMO_ACTIVE_OPACITY : GIZMO_INACTIVE_OPACITY,
+            depthWrite: false,
+            depthTest: false
+        });
+    }
+    createTranslateHandle(axis, isActive) {
+        const axisVector = this.axisVector(axis);
+        const color = isActive ? GIZMO_ACTIVE_COLOR : GIZMO_AXIS_COLORS[axis];
+        const group = new Group();
+        const line = new Mesh(new CylinderGeometry(0.025, 0.025, GIZMO_TRANSLATE_LENGTH, 10), this.createTransformHandleMaterial(color, isActive));
+        const arrow = new Mesh(new ConeGeometry(0.09, 0.28, 12), this.createTransformHandleMaterial(color, isActive));
+        const pick = new Mesh(new CylinderGeometry(GIZMO_PICK_THICKNESS, GIZMO_PICK_THICKNESS, GIZMO_TRANSLATE_LENGTH + 0.36, 10), this.createTransformHandleMaterial(color, isActive, true));
+        line.position.copy(axisVector).multiplyScalar(GIZMO_TRANSLATE_LENGTH * 0.5);
+        arrow.position.copy(axisVector).multiplyScalar(GIZMO_TRANSLATE_LENGTH + 0.18);
+        pick.position.copy(axisVector).multiplyScalar((GIZMO_TRANSLATE_LENGTH + 0.36) * 0.5);
+        if (axis === "x") {
+            line.rotation.z = -Math.PI * 0.5;
+            arrow.rotation.z = -Math.PI * 0.5;
+            pick.rotation.z = -Math.PI * 0.5;
+        }
+        else if (axis === "z") {
+            line.rotation.x = Math.PI * 0.5;
+            arrow.rotation.x = Math.PI * 0.5;
+            pick.rotation.x = Math.PI * 0.5;
+        }
+        pick.userData.transformAxisConstraint = axis;
+        group.add(line);
+        group.add(arrow);
+        group.add(pick);
+        return this.markTransformHandleObject(group);
+    }
+    createRotateHandle(axis, isActive) {
+        const color = isActive ? GIZMO_ACTIVE_COLOR : GIZMO_AXIS_COLORS[axis];
+        const group = new Group();
+        const ring = new Mesh(new TorusGeometry(GIZMO_ROTATE_RADIUS, GIZMO_ROTATE_TUBE, 8, 48), this.createTransformHandleMaterial(color, isActive));
+        const pick = new Mesh(new TorusGeometry(GIZMO_ROTATE_RADIUS, GIZMO_PICK_RING_TUBE, 8, 36), this.createTransformHandleMaterial(color, isActive, true));
+        if (axis === "x") {
+            ring.rotation.y = Math.PI * 0.5;
+            pick.rotation.y = Math.PI * 0.5;
+        }
+        else if (axis === "y") {
+            ring.rotation.x = Math.PI * 0.5;
+            pick.rotation.x = Math.PI * 0.5;
+        }
+        pick.userData.transformAxisConstraint = axis;
+        group.add(ring);
+        group.add(pick);
+        return this.markTransformHandleObject(group);
+    }
+    createScaleHandle(axis, isActive) {
+        const axisVector = this.axisVector(axis);
+        const color = isActive ? GIZMO_ACTIVE_COLOR : GIZMO_AXIS_COLORS[axis];
+        const group = new Group();
+        const line = new Mesh(new CylinderGeometry(0.022, 0.022, GIZMO_SCALE_LENGTH, 10), this.createTransformHandleMaterial(color, isActive));
+        const cube = new Mesh(new BoxGeometry(0.16, 0.16, 0.16), this.createTransformHandleMaterial(color, isActive));
+        const pick = new Mesh(new CylinderGeometry(GIZMO_PICK_THICKNESS, GIZMO_PICK_THICKNESS, GIZMO_SCALE_LENGTH + 0.3, 10), this.createTransformHandleMaterial(color, isActive, true));
+        line.position.copy(axisVector).multiplyScalar(GIZMO_SCALE_LENGTH * 0.5);
+        cube.position.copy(axisVector).multiplyScalar(GIZMO_SCALE_LENGTH + 0.12);
+        pick.position.copy(axisVector).multiplyScalar((GIZMO_SCALE_LENGTH + 0.3) * 0.5);
+        if (axis === "x") {
+            line.rotation.z = -Math.PI * 0.5;
+            pick.rotation.z = -Math.PI * 0.5;
+        }
+        else if (axis === "z") {
+            line.rotation.x = Math.PI * 0.5;
+            pick.rotation.x = Math.PI * 0.5;
+        }
+        pick.userData.transformAxisConstraint = axis;
+        group.add(line);
+        group.add(cube);
+        group.add(pick);
+        return this.markTransformHandleObject(group);
+    }
+    createUniformScaleHandle(isActive) {
+        const mesh = new Mesh(new BoxGeometry(GIZMO_CENTER_HANDLE_SIZE, GIZMO_CENTER_HANDLE_SIZE, GIZMO_CENTER_HANDLE_SIZE), this.createTransformHandleMaterial(isActive ? GIZMO_ACTIVE_COLOR : 0xe6edf8, isActive));
+        mesh.userData.transformAxisConstraint = null;
+        return this.markTransformHandleObject(mesh);
+    }
+    getDisplayedTransformSession() {
+        if (this.currentTransformSession.kind === "active") {
+            return this.currentTransformSession;
+        }
+        if (this.toolMode !== "select" || this.currentDocument === null) {
+            return null;
+        }
+        const transformTarget = resolveTransformTarget(this.currentDocument, this.currentSelection, this.whiteboxSelectionMode).target;
+        if (transformTarget === null || !supportsTransformOperation(transformTarget, "translate")) {
+            return null;
+        }
+        return {
+            kind: "active",
+            id: "__selection-translate-gizmo__",
+            source: "gizmo",
+            sourcePanelId: this.panelId,
+            operation: "translate",
+            axisConstraint: null,
+            target: transformTarget,
+            preview: createTransformPreviewFromTarget(transformTarget)
+        };
+    }
+    syncTransformGizmo() {
+        this.clearTransformGizmo();
+        const session = this.getDisplayedTransformSession();
+        if (session === null) {
+            return;
+        }
+        const effectiveRotationAxis = session.operation === "rotate" ? this.getEffectiveRotationAxis(session) : null;
+        if (session.operation === "translate") {
+            this.transformGizmoGroup.add(this.createTranslateHandle("x", session.axisConstraint === "x"));
+            this.transformGizmoGroup.add(this.createTranslateHandle("y", session.axisConstraint === "y"));
+            this.transformGizmoGroup.add(this.createTranslateHandle("z", session.axisConstraint === "z"));
+        }
+        else if (session.operation === "rotate") {
+            for (const axis of ["x", "y", "z"]) {
+                if (!supportsTransformAxisConstraint(session, axis)) {
+                    continue;
+                }
+                this.transformGizmoGroup.add(this.createRotateHandle(axis, effectiveRotationAxis === axis));
+            }
+        }
+        else if (session.operation === "scale" &&
+            (session.target.kind === "modelInstance" ||
+                session.target.kind === "brush" ||
+                session.target.kind === "brushFace" ||
+                session.target.kind === "brushEdge")) {
+            for (const axis of ["x", "y", "z"]) {
+                this.transformGizmoGroup.add(this.createScaleHandle(axis, session.axisConstraint === axis));
+            }
+            this.transformGizmoGroup.add(this.createUniformScaleHandle(session.axisConstraint === null));
+        }
+        this.transformGizmoGroup.visible = this.transformGizmoGroup.children.length > 0;
+        this.updateTransformGizmoPose();
+    }
+    updateTransformGizmoPose() {
+        const session = this.getDisplayedTransformSession();
+        if (session === null || !this.transformGizmoGroup.visible) {
+            return;
+        }
+        const pivot = this.getTransformPivotPosition(session);
+        const pivotVector = new Vector3(pivot.x, pivot.y, pivot.z);
+        this.transformGizmoGroup.position.copy(pivotVector);
+        let scale = GIZMO_SCREEN_SIZE_ORTHOGRAPHIC / Math.max(this.orthographicCamera.zoom, 0.0001);
+        if (this.viewMode === "perspective") {
+            scale = Math.max(0.5, pivotVector.distanceTo(this.perspectiveCamera.position) * GIZMO_SCREEN_SIZE_PERSPECTIVE);
+        }
+        this.transformGizmoGroup.scale.setScalar(scale);
+    }
+    getTransformPlaneForPivot(pivot) {
+        switch (this.viewMode) {
+            case "perspective":
+            case "top":
+                return this.transformPlane.set(new Vector3(0, 1, 0), -pivot.y);
+            case "front":
+                return this.transformPlane.set(new Vector3(0, 0, 1), -pivot.z);
+            case "side":
+                return this.transformPlane.set(new Vector3(1, 0, 0), -pivot.x);
+        }
+    }
+    setPointerFromClientPosition(clientX, clientY) {
+        const bounds = this.renderer.domElement.getBoundingClientRect();
+        if (bounds.width === 0 || bounds.height === 0) {
+            return false;
+        }
+        this.pointer.x = ((clientX - bounds.left) / bounds.width) * 2 - 1;
+        this.pointer.y = -(((clientY - bounds.top) / bounds.height) * 2 - 1);
+        return true;
+    }
+    getPointerPlaneIntersection(clientX, clientY, plane) {
+        if (!this.setPointerFromClientPosition(clientX, clientY)) {
+            return null;
+        }
+        this.raycaster.setFromCamera(this.pointer, this.getActiveCamera());
+        if (this.raycaster.ray.intersectPlane(plane, this.transformIntersection) === null) {
+            return null;
+        }
+        return this.transformIntersection.clone();
+    }
+    getFallbackWorldUnitsPerPixel(pivot) {
+        if (this.container === null) {
+            return 0;
+        }
+        const height = Math.max(1, this.container.clientHeight);
+        if (this.viewMode === "perspective") {
+            const pivotVector = new Vector3(pivot.x, pivot.y, pivot.z);
+            const distance = pivotVector.distanceTo(this.perspectiveCamera.position);
+            const visibleHeight = 2 * Math.tan((this.perspectiveCamera.fov * Math.PI) / 360) * distance;
+            return visibleHeight / height;
+        }
+        return ORTHOGRAPHIC_FRUSTUM_HEIGHT / this.orthographicCamera.zoom / height;
+    }
+    getAxisMovementDistance(axis, pivot, origin, current) {
+        const pivotVector = new Vector3(pivot.x, pivot.y, pivot.z);
+        const projectedStart = pivotVector.clone().project(this.getActiveCamera());
+        const projectedEnd = pivotVector.clone().add(this.axisVector(axis)).project(this.getActiveCamera());
+        const screenDelta = new Vector2(projectedEnd.x - projectedStart.x, projectedEnd.y - projectedStart.y);
+        const pointerDelta = new Vector2(current.x - origin.x, current.y - origin.y);
+        if (this.container !== null) {
+            screenDelta.set((screenDelta.x * this.container.clientWidth) * 0.5, (-screenDelta.y * this.container.clientHeight) * 0.5);
+        }
+        const axisLength = screenDelta.length();
+        if (axisLength >= 0.0001) {
+            screenDelta.normalize();
+            return pointerDelta.dot(screenDelta) / axisLength;
+        }
+        return -(current.y - origin.y) * this.getFallbackWorldUnitsPerPixel(pivot);
+    }
+    buildTransformPreviewFromPointer(session, origin, current, axisConstraint) {
+        const nextSession = cloneTransformSession(session);
+        nextSession.axisConstraint = axisConstraint;
+        switch (session.operation) {
+            case "translate":
+                nextSession.preview = this.buildTranslatedPreview(session, origin, current, axisConstraint);
+                return nextSession;
+            case "rotate":
+                nextSession.preview = this.buildRotatedPreview(session, origin, current, axisConstraint);
+                return nextSession;
+            case "scale":
+                nextSession.preview = this.buildScaledPreview(session, origin, current, axisConstraint);
+                return nextSession;
+        }
+    }
+    buildTranslatedPreview(session, origin, current, axisConstraint) {
+        if (session.target.kind === "brushFace" || session.target.kind === "brushEdge" || session.target.kind === "brushVertex") {
+            return this.buildComponentTranslatedBrushPreview(session, origin, current, axisConstraint);
+        }
+        const initialPosition = session.target.kind === "brush" ? session.target.initialCenter : session.target.kind === "modelInstance" ? session.target.initialPosition : session.target.initialPosition;
+        let nextPosition = {
+            ...initialPosition
+        };
+        if (axisConstraint === null) {
+            const plane = this.getTransformPlaneForPivot(initialPosition);
+            const startIntersection = this.getPointerPlaneIntersection(origin.x, origin.y, plane);
+            const currentIntersection = this.getPointerPlaneIntersection(current.x, current.y, plane);
+            if (startIntersection !== null && currentIntersection !== null) {
+                const delta = currentIntersection.sub(startIntersection);
+                switch (this.viewMode) {
+                    case "perspective":
+                    case "top":
+                        nextPosition = {
+                            ...initialPosition,
+                            x: this.snapWhiteboxPositionValue(initialPosition.x + delta.x),
+                            z: this.snapWhiteboxPositionValue(initialPosition.z + delta.z)
+                        };
+                        break;
+                    case "front":
+                        nextPosition = {
+                            ...initialPosition,
+                            x: this.snapWhiteboxPositionValue(initialPosition.x + delta.x),
+                            y: this.snapWhiteboxPositionValue(initialPosition.y + delta.y)
+                        };
+                        break;
+                    case "side":
+                        nextPosition = {
+                            ...initialPosition,
+                            y: this.snapWhiteboxPositionValue(initialPosition.y + delta.y),
+                            z: this.snapWhiteboxPositionValue(initialPosition.z + delta.z)
+                        };
+                        break;
+                }
+            }
+        }
+        else {
+            const axisDelta = this.getAxisMovementDistance(axisConstraint, initialPosition, origin, current);
+            nextPosition = this.setAxisComponent(nextPosition, axisConstraint, this.snapWhiteboxPositionValue(this.getAxisComponent(initialPosition, axisConstraint) + axisDelta));
+        }
+        if (session.target.kind === "brush") {
+            return {
+                kind: "brush",
+                center: nextPosition,
+                rotationDegrees: {
+                    ...session.target.initialRotationDegrees
+                },
+                size: {
+                    ...session.target.initialSize
+                }
+            };
+        }
+        if (session.target.kind === "modelInstance") {
+            return {
+                kind: "modelInstance",
+                position: nextPosition,
+                rotationDegrees: {
+                    ...session.target.initialRotationDegrees
+                },
+                scale: {
+                    ...session.target.initialScale
+                }
+            };
+        }
+        return {
+            kind: "entity",
+            position: nextPosition,
+            rotation: session.target.initialRotation.kind === "yaw"
+                ? {
+                    kind: "yaw",
+                    yawDegrees: session.target.initialRotation.yawDegrees
+                }
+                : session.target.initialRotation.kind === "direction"
+                    ? {
+                        kind: "direction",
+                        direction: {
+                            ...session.target.initialRotation.direction
+                        }
+                    }
+                    : {
+                        kind: "none"
+                    }
+        };
+    }
+    buildRotatedPreview(session, origin, current, axisConstraint) {
+        if (session.target.kind === "brushFace" || session.target.kind === "brushEdge") {
+            return this.buildComponentRotatedBrushPreview(session, origin, current, axisConstraint);
+        }
+        const effectiveAxis = axisConstraint ?? this.getEffectiveRotationAxis(session);
+        const pointerDeltaDegrees = (current.x - origin.x - (current.y - origin.y)) * 0.5;
+        if (session.target.kind === "brush") {
+            const nextRotationDegrees = {
+                ...session.target.initialRotationDegrees
+            };
+            nextRotationDegrees[effectiveAxis] = this.normalizeDegrees(nextRotationDegrees[effectiveAxis] + pointerDeltaDegrees);
+            return {
+                kind: "brush",
+                center: {
+                    ...session.target.initialCenter
+                },
+                rotationDegrees: nextRotationDegrees,
+                size: {
+                    ...session.target.initialSize
+                }
+            };
+        }
+        if (session.target.kind === "modelInstance") {
+            const nextRotationDegrees = {
+                ...session.target.initialRotationDegrees
+            };
+            nextRotationDegrees[effectiveAxis] = this.normalizeDegrees(nextRotationDegrees[effectiveAxis] + pointerDeltaDegrees);
+            return {
+                kind: "modelInstance",
+                position: {
+                    ...session.target.initialPosition
+                },
+                rotationDegrees: nextRotationDegrees,
+                scale: {
+                    ...session.target.initialScale
+                }
+            };
+        }
+        if (session.target.kind !== "entity") {
+            throw new Error("Rotation previews are only supported for model instances and rotatable entities.");
+        }
+        if (session.target.initialRotation.kind === "yaw") {
+            return {
+                kind: "entity",
+                position: {
+                    ...session.target.initialPosition
+                },
+                rotation: {
+                    kind: "yaw",
+                    yawDegrees: normalizeYawDegrees(session.target.initialRotation.yawDegrees + pointerDeltaDegrees)
+                }
+            };
+        }
+        if (session.target.initialRotation.kind === "direction") {
+            const direction = new Vector3(session.target.initialRotation.direction.x, session.target.initialRotation.direction.y, session.target.initialRotation.direction.z)
+                .normalize()
+                .applyAxisAngle(this.axisVector(effectiveAxis).normalize(), (pointerDeltaDegrees * Math.PI) / 180)
+                .normalize();
+            return {
+                kind: "entity",
+                position: {
+                    ...session.target.initialPosition
+                },
+                rotation: {
+                    kind: "direction",
+                    direction: {
+                        x: direction.x,
+                        y: direction.y,
+                        z: direction.z
+                    }
+                }
+            };
+        }
+        return {
+            kind: "entity",
+            position: {
+                ...session.target.initialPosition
+            },
+            rotation: {
+                kind: "none"
+            }
+        };
+    }
+    buildScaledPreview(session, origin, current, axisConstraint) {
+        if (session.target.kind === "brushFace" || session.target.kind === "brushEdge") {
+            return this.buildComponentScaledBrushPreview(session, origin, current, axisConstraint);
+        }
+        if (session.target.kind === "brush") {
+            const nextSize = {
+                ...session.target.initialSize
+            };
+            if (axisConstraint === null) {
+                const uniformFactor = 1 + (current.x - origin.x - (current.y - origin.y)) * 0.01;
+                nextSize.x = this.snapWhiteboxSizeValue(session.target.initialSize.x * uniformFactor);
+                nextSize.y = this.snapWhiteboxSizeValue(session.target.initialSize.y * uniformFactor);
+                nextSize.z = this.snapWhiteboxSizeValue(session.target.initialSize.z * uniformFactor);
+            }
+            else {
+                const scaleFactor = 1 + this.getAxisMovementDistance(axisConstraint, session.target.initialCenter, origin, current) * 0.45;
+                nextSize[axisConstraint] = this.snapWhiteboxSizeValue(session.target.initialSize[axisConstraint] * scaleFactor);
+            }
+            return {
+                kind: "brush",
+                center: {
+                    ...session.target.initialCenter
+                },
+                rotationDegrees: {
+                    ...session.target.initialRotationDegrees
+                },
+                size: nextSize
+            };
+        }
+        if (session.target.kind !== "modelInstance") {
+            throw new Error("Scale previews are only supported for model instances and whitebox boxes.");
+        }
+        const nextScale = {
+            ...session.target.initialScale
+        };
+        if (axisConstraint === null) {
+            const uniformFactor = 1 + (current.x - origin.x - (current.y - origin.y)) * 0.01;
+            nextScale.x = this.snapScaleValue(session.target.initialScale.x * uniformFactor);
+            nextScale.y = this.snapScaleValue(session.target.initialScale.y * uniformFactor);
+            nextScale.z = this.snapScaleValue(session.target.initialScale.z * uniformFactor);
+        }
+        else {
+            const scaleFactor = 1 + this.getAxisMovementDistance(axisConstraint, session.target.initialPosition, origin, current) * 0.45;
+            nextScale[axisConstraint] = this.snapScaleValue(session.target.initialScale[axisConstraint] * scaleFactor);
+        }
+        return {
+            kind: "modelInstance",
+            position: {
+                ...session.target.initialPosition
+            },
+            rotationDegrees: {
+                ...session.target.initialRotationDegrees
+            },
+            scale: nextScale
+        };
+    }
+    createTargetPreviewBrush(session) {
+        if (session.target.kind !== "brush" &&
+            session.target.kind !== "brushFace" &&
+            session.target.kind !== "brushEdge" &&
+            session.target.kind !== "brushVertex") {
+            return null;
+        }
+        const currentBrush = this.currentDocument?.brushes[session.target.brushId];
+        if (currentBrush === undefined || currentBrush.kind !== "box") {
+            return null;
+        }
+        return {
+            ...currentBrush,
+            center: {
+                ...session.target.initialCenter
+            },
+            rotationDegrees: {
+                ...session.target.initialRotationDegrees
+            },
+            size: {
+                ...session.target.initialSize
+            }
+        };
+    }
+    createBrushPreviewFromExtents(brush, extents, rotationDegrees) {
+        const localCenter = {
+            x: (extents.min.x + extents.max.x) * 0.5,
+            y: (extents.min.y + extents.max.y) * 0.5,
+            z: (extents.min.z + extents.max.z) * 0.5
+        };
+        const centerOffset = transformBoxBrushLocalPointToWorld({
+            ...brush,
+            center: { x: 0, y: 0, z: 0 },
+            rotationDegrees: rotationDegrees ?? brush.rotationDegrees
+        }, localCenter);
+        const nextSize = {
+            x: this.snapWhiteboxSizeValue(extents.max.x - extents.min.x),
+            y: this.snapWhiteboxSizeValue(extents.max.y - extents.min.y),
+            z: this.snapWhiteboxSizeValue(extents.max.z - extents.min.z)
+        };
+        return {
+            kind: "brush",
+            center: {
+                x: this.snapWhiteboxPositionValue(brush.center.x + centerOffset.x),
+                y: this.snapWhiteboxPositionValue(brush.center.y + centerOffset.y),
+                z: this.snapWhiteboxPositionValue(brush.center.z + centerOffset.z)
+            },
+            rotationDegrees: {
+                ...(rotationDegrees ?? brush.rotationDegrees)
+            },
+            size: nextSize
+        };
+    }
+    getInitialBrushLocalExtents(brush) {
+        return {
+            min: {
+                x: -brush.size.x * 0.5,
+                y: -brush.size.y * 0.5,
+                z: -brush.size.z * 0.5
+            },
+            max: {
+                x: brush.size.x * 0.5,
+                y: brush.size.y * 0.5,
+                z: brush.size.z * 0.5
+            }
+        };
+    }
+    buildComponentTranslatedBrushPreview(session, origin, current, axisConstraint) {
+        const initialBrush = this.createTargetPreviewBrush(session);
+        if (initialBrush === null) {
+            throw new Error("Cannot build a component translation preview without a box brush target.");
+        }
+        const initialPivot = this.getTransformPivotPosition({
+            ...session,
+            preview: {
+                kind: "brush",
+                center: { ...initialBrush.center },
+                rotationDegrees: { ...initialBrush.rotationDegrees },
+                size: { ...initialBrush.size }
+            }
+        });
+        let worldDelta = {
+            x: 0,
+            y: 0,
+            z: 0
+        };
+        if (axisConstraint === null) {
+            const plane = this.getTransformPlaneForPivot(initialPivot);
+            const startIntersection = this.getPointerPlaneIntersection(origin.x, origin.y, plane);
+            const currentIntersection = this.getPointerPlaneIntersection(current.x, current.y, plane);
+            if (startIntersection !== null && currentIntersection !== null) {
+                const delta = currentIntersection.sub(startIntersection);
+                worldDelta = {
+                    x: delta.x,
+                    y: delta.y,
+                    z: delta.z
+                };
+            }
+        }
+        else {
+            const axisDelta = this.getAxisMovementDistance(axisConstraint, initialPivot, origin, current);
+            worldDelta = this.setAxisComponent(worldDelta, axisConstraint, axisDelta);
+        }
+        const localDelta = transformBoxBrushWorldVectorToLocal(initialBrush, worldDelta);
+        const extents = this.getInitialBrushLocalExtents(initialBrush);
+        if (session.target.kind === "brushFace") {
+            const meta = getBoxBrushFaceTransformMeta(session.target.faceId);
+            for (const axis of ["x", "y", "z"]) {
+                const axisDelta = localDelta[axis];
+                if (axis === meta.axis) {
+                    if (meta.sign > 0) {
+                        extents.max[axis] += axisDelta;
+                    }
+                    else {
+                        extents.min[axis] += axisDelta;
+                    }
+                }
+                else {
+                    extents.min[axis] += axisDelta;
+                    extents.max[axis] += axisDelta;
+                }
+            }
+        }
+        else if (session.target.kind === "brushEdge") {
+            const meta = getBoxBrushEdgeTransformMeta(session.target.edgeId);
+            for (const axis of ["x", "y", "z"]) {
+                const axisDelta = localDelta[axis];
+                const axisSign = meta.signs[axis];
+                if (axisSign === null) {
+                    extents.min[axis] += axisDelta;
+                    extents.max[axis] += axisDelta;
+                    continue;
+                }
+                if (axisSign > 0) {
+                    extents.max[axis] += axisDelta;
+                }
+                else {
+                    extents.min[axis] += axisDelta;
+                }
+            }
+        }
+        else if (session.target.kind === "brushVertex") {
+            const signs = getBoxBrushVertexSigns(session.target.vertexId);
+            for (const axis of ["x", "y", "z"]) {
+                if (signs[axis] > 0) {
+                    extents.max[axis] += localDelta[axis];
+                }
+                else {
+                    extents.min[axis] += localDelta[axis];
+                }
+            }
+        }
+        return this.createBrushPreviewFromExtents(initialBrush, extents);
+    }
+    buildComponentRotatedBrushPreview(session, origin, current, axisConstraint) {
+        const initialBrush = this.createTargetPreviewBrush(session);
+        if (initialBrush === null) {
+            throw new Error("Cannot build a component rotation preview without a box brush target.");
+        }
+        const effectiveAxis = axisConstraint ?? this.getEffectiveRotationAxis(session);
+        const pointerDeltaDegrees = (current.x - origin.x - (current.y - origin.y)) * 0.5;
+        const pivot = this.getTransformPivotPosition({
+            ...session,
+            preview: {
+                kind: "brush",
+                center: { ...initialBrush.center },
+                rotationDegrees: { ...initialBrush.rotationDegrees },
+                size: { ...initialBrush.size }
+            }
+        });
+        const axisVector = this.axisVector(effectiveAxis).normalize();
+        const centerVector = new Vector3(initialBrush.center.x, initialBrush.center.y, initialBrush.center.z);
+        const pivotVector = new Vector3(pivot.x, pivot.y, pivot.z);
+        const nextCenter = centerVector
+            .sub(pivotVector)
+            .applyAxisAngle(axisVector, (pointerDeltaDegrees * Math.PI) / 180)
+            .add(pivotVector);
+        const nextRotationDegrees = {
+            ...initialBrush.rotationDegrees
+        };
+        nextRotationDegrees[effectiveAxis] = this.normalizeDegrees(nextRotationDegrees[effectiveAxis] + pointerDeltaDegrees);
+        return {
+            kind: "brush",
+            center: {
+                x: this.snapWhiteboxPositionValue(nextCenter.x),
+                y: this.snapWhiteboxPositionValue(nextCenter.y),
+                z: this.snapWhiteboxPositionValue(nextCenter.z)
+            },
+            rotationDegrees: nextRotationDegrees,
+            size: {
+                ...initialBrush.size
+            }
+        };
+    }
+    buildComponentScaledBrushPreview(session, origin, current, axisConstraint) {
+        const initialBrush = this.createTargetPreviewBrush(session);
+        if (initialBrush === null) {
+            throw new Error("Cannot build a component scale preview without a box brush target.");
+        }
+        const extents = this.getInitialBrushLocalExtents(initialBrush);
+        if (session.target.kind === "brushFace") {
+            const meta = getBoxBrushFaceTransformMeta(session.target.faceId);
+            const scaleFactor = 1 +
+                this.getAxisMovementDistance(axisConstraint ?? meta.axis, this.getTransformPivotPosition(session), origin, current) *
+                    0.45;
+            if (meta.sign > 0) {
+                extents.max[meta.axis] = extents.min[meta.axis] + (extents.max[meta.axis] - extents.min[meta.axis]) * scaleFactor;
+            }
+            else {
+                extents.min[meta.axis] = extents.max[meta.axis] - (extents.max[meta.axis] - extents.min[meta.axis]) * scaleFactor;
+            }
+        }
+        else if (session.target.kind === "brushEdge") {
+            const meta = getBoxBrushEdgeTransformMeta(session.target.edgeId);
+            const affectedAxes = ["x", "y", "z"].filter((axis) => meta.signs[axis] !== null && (axisConstraint === null || axisConstraint === axis));
+            const pivot = this.getTransformPivotPosition(session);
+            for (const axis of affectedAxes) {
+                const sign = meta.signs[axis];
+                if (sign === null) {
+                    continue;
+                }
+                const scaleFactor = 1 + this.getAxisMovementDistance(axis, pivot, origin, current) * 0.45;
+                if (sign > 0) {
+                    extents.max[axis] = extents.min[axis] + (extents.max[axis] - extents.min[axis]) * scaleFactor;
+                }
+                else {
+                    extents.min[axis] = extents.max[axis] - (extents.max[axis] - extents.min[axis]) * scaleFactor;
+                }
+            }
+        }
+        return this.createBrushPreviewFromExtents(initialBrush, extents);
+    }
+    applyBrushRenderObjectTransform(brushId, center, rotationDegrees, size) {
+        const renderObjects = this.brushRenderObjects.get(brushId);
+        const brush = this.currentDocument?.brushes[brushId];
+        if (renderObjects === undefined || brush === undefined) {
+            return;
+        }
+        renderObjects.mesh.position.set(center.x, center.y, center.z);
+        renderObjects.mesh.rotation.set((rotationDegrees.x * Math.PI) / 180, (rotationDegrees.y * Math.PI) / 180, (rotationDegrees.z * Math.PI) / 180);
+        renderObjects.mesh.scale.set(size.x / brush.size.x, size.y / brush.size.y, size.z / brush.size.z);
+        renderObjects.edges.position.set(center.x, center.y, center.z);
+        renderObjects.edges.rotation.set((rotationDegrees.x * Math.PI) / 180, (rotationDegrees.y * Math.PI) / 180, (rotationDegrees.z * Math.PI) / 180);
+        renderObjects.edges.scale.set(size.x / brush.size.x, size.y / brush.size.y, size.z / brush.size.z);
+    }
+    applySpotLightGroupTransform(group, position, direction) {
+        const forward = new Vector3(direction.x, direction.y, direction.z).normalize();
+        const orientation = new Quaternion().setFromUnitVectors(new Vector3(0, 1, 0), forward);
+        group.position.set(position.x, position.y, position.z);
+        group.quaternion.copy(orientation);
+    }
+    applyEntityRenderObjectTransform(entity) {
+        const renderObjects = this.entityRenderObjects.get(entity.id);
+        if (renderObjects === undefined) {
+            return;
+        }
+        switch (entity.kind) {
+            case "pointLight":
+            case "soundEmitter":
+            case "triggerVolume":
+            case "interactable":
+                renderObjects.group.position.set(entity.position.x, entity.position.y, entity.position.z);
+                renderObjects.group.rotation.set(0, 0, 0);
+                renderObjects.group.quaternion.identity();
+                break;
+            case "spotLight":
+                this.applySpotLightGroupTransform(renderObjects.group, entity.position, entity.direction);
+                break;
+            case "playerStart":
+            case "teleportTarget":
+                renderObjects.group.position.set(entity.position.x, entity.position.y, entity.position.z);
+                renderObjects.group.rotation.set(0, (entity.yawDegrees * Math.PI) / 180, 0);
+                break;
+        }
+    }
+    applyModelInstanceRenderObjectTransform(modelInstance) {
+        const renderGroup = this.modelRenderObjects.get(modelInstance.id);
+        if (renderGroup === undefined) {
+            return;
+        }
+        renderGroup.position.set(modelInstance.position.x, modelInstance.position.y, modelInstance.position.z);
+        renderGroup.rotation.set((modelInstance.rotationDegrees.x * Math.PI) / 180, (modelInstance.rotationDegrees.y * Math.PI) / 180, (modelInstance.rotationDegrees.z * Math.PI) / 180);
+        renderGroup.scale.set(modelInstance.scale.x, modelInstance.scale.y, modelInstance.scale.z);
+    }
+    resetRenderObjectTransformsFromDocument() {
+        if (this.currentDocument === null) {
+            return;
+        }
+        for (const brush of Object.values(this.currentDocument.brushes)) {
+            this.applyBrushRenderObjectTransform(brush.id, brush.center, brush.rotationDegrees, brush.size);
+        }
+        for (const entity of getEntityInstances(this.currentDocument.entities)) {
+            this.applyEntityRenderObjectTransform(entity);
+        }
+        for (const modelInstance of getModelInstances(this.currentDocument.modelInstances)) {
+            this.applyModelInstanceRenderObjectTransform(modelInstance);
+        }
+    }
+    applyTransformPreview() {
+        this.resetRenderObjectTransformsFromDocument();
+        if (this.currentTransformSession.kind !== "active") {
+            return;
+        }
+        switch (this.currentTransformSession.target.kind) {
+            case "brush":
+            case "brushFace":
+            case "brushEdge":
+            case "brushVertex":
+                if (this.currentTransformSession.preview.kind === "brush") {
+                    this.applyBrushRenderObjectTransform(this.currentTransformSession.target.brushId, this.currentTransformSession.preview.center, this.currentTransformSession.preview.rotationDegrees, this.currentTransformSession.preview.size);
+                }
+                break;
+            case "modelInstance":
+                if (this.currentTransformSession.preview.kind === "modelInstance") {
+                    this.applyModelInstanceRenderObjectTransform({
+                        ...createModelInstance({
+                            id: this.currentTransformSession.target.modelInstanceId,
+                            assetId: this.currentTransformSession.target.assetId,
+                            position: this.currentTransformSession.preview.position,
+                            rotationDegrees: this.currentTransformSession.preview.rotationDegrees,
+                            scale: this.currentTransformSession.preview.scale
+                        })
+                    });
+                }
+                break;
+            case "entity": {
+                if (this.currentTransformSession.preview.kind !== "entity" || this.currentDocument === null) {
+                    break;
+                }
+                const currentEntity = this.currentDocument.entities[this.currentTransformSession.target.entityId];
+                if (currentEntity === undefined) {
+                    break;
+                }
+                switch (currentEntity.kind) {
+                    case "pointLight":
+                    case "soundEmitter":
+                    case "triggerVolume":
+                    case "interactable":
+                        this.applyEntityRenderObjectTransform({
+                            ...currentEntity,
+                            position: this.currentTransformSession.preview.position
+                        });
+                        break;
+                    case "spotLight":
+                        this.applyEntityRenderObjectTransform({
+                            ...currentEntity,
+                            position: this.currentTransformSession.preview.position,
+                            direction: this.currentTransformSession.preview.rotation.kind === "direction"
+                                ? this.currentTransformSession.preview.rotation.direction
+                                : currentEntity.direction
+                        });
+                        break;
+                    case "playerStart":
+                    case "teleportTarget":
+                        this.applyEntityRenderObjectTransform({
+                            ...currentEntity,
+                            position: this.currentTransformSession.preview.position,
+                            yawDegrees: this.currentTransformSession.preview.rotation.kind === "yaw"
+                                ? this.currentTransformSession.preview.rotation.yawDegrees
+                                : currentEntity.yawDegrees
+                        });
+                        break;
+                }
+                break;
+            }
+        }
+    }
+    rebuildLocalLights(document) {
+        this.clearLocalLights();
+        for (const entity of getEntityInstances(document.entities)) {
+            switch (entity.kind) {
+                case "pointLight": {
+                    const renderObjects = this.createPointLightRuntimeObjects(entity);
+                    this.localLightGroup.add(renderObjects.group);
+                    this.localLightRenderObjects.set(entity.id, renderObjects);
+                    break;
+                }
+                case "spotLight": {
+                    const renderObjects = this.createSpotLightRuntimeObjects(entity);
+                    this.localLightGroup.add(renderObjects.group);
+                    this.localLightRenderObjects.set(entity.id, renderObjects);
+                    break;
+                }
+            }
+        }
+        this.applyShadowState();
+    }
+    rebuildBrushMeshes(document, selection) {
+        this.clearBrushMeshes();
+        for (const brush of Object.values(document.brushes)) {
+            const geometry = new BoxGeometry(brush.size.x, brush.size.y, brush.size.z);
+            applyBoxBrushFaceUvsToGeometry(geometry, brush);
+            const materials = BOX_FACE_IDS.map((faceId) => this.createFaceMaterial(brush, faceId, document.materials[brush.faces[faceId].materialId ?? ""], this.getFaceHighlightState(brush.id, faceId)));
+            const mesh = new Mesh(geometry, materials);
+            const brushSelected = isBrushSelected(selection, brush.id);
+            mesh.userData.brushId = brush.id;
+            mesh.castShadow = false;
+            mesh.receiveShadow = false;
+            const edges = new LineSegments(new EdgesGeometry(geometry), new LineBasicMaterial({
+                color: brushSelected ? BRUSH_SELECTED_EDGE_COLOR : BRUSH_EDGE_COLOR
+            }));
+            edges.visible = this.displayMode !== "wireframe";
+            const edgeHelpers = BOX_EDGE_IDS.map((edgeId) => this.createEdgeHelper(brush, edgeId));
+            const vertexHelpers = BOX_VERTEX_IDS.map((vertexId) => this.createVertexHelper(brush, vertexId));
+            this.brushGroup.add(mesh);
+            this.brushGroup.add(edges);
+            for (const edgeHelper of edgeHelpers) {
+                this.brushGroup.add(edgeHelper.line);
+            }
+            for (const vertexHelper of vertexHelpers) {
+                this.brushGroup.add(vertexHelper.mesh);
+            }
+            this.brushRenderObjects.set(brush.id, {
+                mesh,
+                edges,
+                edgeHelpers,
+                vertexHelpers
+            });
+            this.applyBrushRenderObjectTransform(brush.id, brush.center, brush.rotationDegrees, brush.size);
+        }
+        this.refreshBrushPresentation();
+        this.applyShadowState();
+    }
+    rebuildEntityMarkers(document, selection) {
+        this.clearEntityMarkers();
+        for (const entity of getEntityInstances(document.entities)) {
+            const selected = selection.kind === "entities" && selection.ids.includes(entity.id);
+            const renderObjects = this.createEntityRenderObjects(entity, selected);
+            if (this.displayMode === "wireframe") {
+                this.applyWireframePresentation(renderObjects.group);
+            }
+            this.entityGroup.add(renderObjects.group);
+            this.entityRenderObjects.set(entity.id, renderObjects);
+        }
+    }
+    rebuildModelInstances(document, selection) {
+        this.clearModelInstances();
+        for (const modelInstance of getModelInstances(document.modelInstances)) {
+            const selected = isModelInstanceSelected(selection, modelInstance.id);
+            const asset = this.projectAssets[modelInstance.assetId];
+            const loadedAsset = this.loadedModelAssets[modelInstance.assetId];
+            const renderGroup = createModelInstanceRenderGroup(modelInstance, asset, loadedAsset, selected, undefined, this.displayMode === "wireframe" ? "wireframe" : "normal");
+            if (asset?.kind === "model" && modelInstance.collision.visible) {
+                try {
+                    const generatedCollider = buildGeneratedModelCollider(modelInstance, asset, loadedAsset);
+                    if (generatedCollider !== null) {
+                        renderGroup.add(createModelColliderDebugGroup(generatedCollider));
+                    }
+                }
+                catch {
+                    // Validation surfaces unsupported collider modes; the viewport keeps rendering the model.
+                }
+            }
+            this.modelGroup.add(renderGroup);
+            this.modelRenderObjects.set(modelInstance.id, renderGroup);
+        }
+        this.applyShadowState();
+    }
+    createEntityRenderObjects(entity, selected) {
+        switch (entity.kind) {
+            case "pointLight":
+                return this.createPointLightGizmoRenderObjects(entity.id, entity.position, entity.distance, entity.colorHex, selected);
+            case "spotLight":
+                return this.createSpotLightGizmoRenderObjects(entity.id, entity.position, entity.direction, entity.distance, entity.angleDegrees, entity.colorHex, selected);
+            case "playerStart":
+                return this.createPlayerStartRenderObjects(entity.id, entity.position, entity.yawDegrees, entity.collider, selected);
+            case "soundEmitter":
+                return this.createSoundEmitterRenderObjects(entity.id, entity.position, entity.refDistance, entity.maxDistance, selected);
+            case "triggerVolume":
+                return this.createTriggerVolumeRenderObjects(entity.id, entity.position, entity.size, selected);
+            case "teleportTarget":
+                return this.createTeleportTargetRenderObjects(entity.id, entity.position, entity.yawDegrees, selected);
+            case "interactable":
+                return this.createInteractableRenderObjects(entity.id, entity.position, entity.radius, selected);
+        }
+    }
+    tagEntityMesh(mesh, entityId, entityKind, group) {
+        mesh.userData.entityId = entityId;
+        mesh.userData.entityKind = entityKind;
+        group.add(mesh);
+    }
+    createPointLightGizmoRenderObjects(entityId, position, distance, colorHex, selected) {
+        const markerColor = colorHex;
+        const displayRadius = Math.max(0.5, distance);
+        const group = new Group();
+        group.position.set(position.x, position.y, position.z);
+        const core = new Mesh(new SphereGeometry(0.16, 16, 12), new MeshStandardMaterial({
+            color: markerColor,
+            emissive: markerColor,
+            emissiveIntensity: selected ? 0.22 : 0.1,
+            roughness: 0.28,
+            metalness: 0.05
+        }));
+        const range = new Mesh(new SphereGeometry(displayRadius, 16, 12), new MeshStandardMaterial({
+            color: markerColor,
+            emissive: markerColor,
+            emissiveIntensity: selected ? 0.08 : 0.03,
+            roughness: 0.85,
+            metalness: 0,
+            transparent: true,
+            opacity: selected ? 0.16 : 0.08,
+            wireframe: true
+        }));
+        range.userData.nonPickable = true;
+        for (const mesh of [core, range]) {
+            this.tagEntityMesh(mesh, entityId, "pointLight", group);
+        }
+        return {
+            group,
+            meshes: [core, range]
+        };
+    }
+    createSpotLightGizmoRenderObjects(entityId, position, direction, distance, angleDegrees, colorHex, selected) {
+        const markerColor = colorHex;
+        const group = new Group();
+        group.position.set(position.x, position.y, position.z);
+        const forward = new Vector3(direction.x, direction.y, direction.z).normalize();
+        const coneLength = Math.max(0.85, distance);
+        const coneRadius = Math.max(0.16, Math.tan((angleDegrees * Math.PI) / 360) * coneLength);
+        const orientation = new Quaternion().setFromUnitVectors(new Vector3(0, 1, 0), forward);
+        group.quaternion.copy(orientation);
+        const core = new Mesh(new SphereGeometry(0.16, 14, 10), new MeshStandardMaterial({
+            color: markerColor,
+            emissive: markerColor,
+            emissiveIntensity: selected ? 0.24 : 0.1,
+            roughness: 0.28,
+            metalness: 0.05
+        }));
+        const cone = new Mesh(new CylinderGeometry(coneRadius, 0, coneLength, 20, 1, true), new MeshStandardMaterial({
+            color: markerColor,
+            emissive: markerColor,
+            emissiveIntensity: selected ? 0.08 : 0.03,
+            roughness: 0.85,
+            metalness: 0,
+            transparent: true,
+            opacity: selected ? 0.16 : 0.08,
+            wireframe: true
+        }));
+        cone.position.y = coneLength * 0.5;
+        cone.userData.nonPickable = true;
+        for (const mesh of [core, cone]) {
+            this.tagEntityMesh(mesh, entityId, "spotLight", group);
+        }
+        return {
+            group,
+            meshes: [core, cone]
+        };
+    }
+    createSpotLightRuntimeObjects(entity) {
+        const group = new Group();
+        const light = new SpotLight(entity.colorHex, entity.intensity, entity.distance, (entity.angleDegrees * Math.PI) / 180, 0.18, 1);
+        const direction = new Vector3(entity.direction.x, entity.direction.y, entity.direction.z).normalize();
+        const orientation = new Quaternion().setFromUnitVectors(new Vector3(0, 1, 0), direction);
+        group.position.set(entity.position.x, entity.position.y, entity.position.z);
+        group.quaternion.copy(orientation);
+        light.position.set(0, 0, 0);
+        light.target.position.set(0, 1, 0);
+        group.add(light);
+        group.add(light.target);
+        return {
+            group
+        };
+    }
+    createPointLightRuntimeObjects(entity) {
+        const group = new Group();
+        const light = new PointLight(entity.colorHex, entity.intensity, entity.distance);
+        group.position.set(entity.position.x, entity.position.y, entity.position.z);
+        light.position.set(0, 0, 0);
+        group.add(light);
+        return {
+            group
+        };
+    }
+    createPlayerStartRenderObjects(entityId, position, yawDegrees, collider, selected) {
+        const markerColor = selected ? PLAYER_START_SELECTED_COLOR : PLAYER_START_COLOR;
+        const group = new Group();
+        group.position.set(position.x, position.y, position.z);
+        const colliderMaterial = new MeshStandardMaterial({
+            color: markerColor,
+            emissive: markerColor,
+            emissiveIntensity: selected ? 0.14 : 0.05,
+            roughness: 0.5,
+            metalness: 0.02,
+            transparent: true,
+            opacity: selected ? 0.4 : 0.24
+        });
+        const arrowMaterial = new MeshStandardMaterial({
+            color: markerColor,
+            emissive: markerColor,
+            emissiveIntensity: selected ? 0.2 : 0.08,
+            roughness: 0.38,
+            metalness: 0.03
+        });
+        const meshes = [];
+        switch (collider.mode) {
+            case "capsule": {
+                const collisionMesh = new Mesh(new CapsuleGeometry(collider.capsuleRadius, Math.max(0, collider.capsuleHeight - collider.capsuleRadius * 2), 6, 12), colliderMaterial);
+                collisionMesh.position.y = collider.capsuleHeight * 0.5;
+                this.tagEntityMesh(collisionMesh, entityId, "playerStart", group);
+                meshes.push(collisionMesh);
+                break;
+            }
+            case "box": {
+                const collisionMesh = new Mesh(new BoxGeometry(collider.boxSize.x, collider.boxSize.y, collider.boxSize.z), colliderMaterial);
+                collisionMesh.position.y = collider.boxSize.y * 0.5;
+                this.tagEntityMesh(collisionMesh, entityId, "playerStart", group);
+                meshes.push(collisionMesh);
+                break;
+            }
+            case "none":
+                break;
+        }
+        const directionGroup = new Group();
+        directionGroup.rotation.y = (yawDegrees * Math.PI) / 180;
+        group.add(directionGroup);
+        const colliderTop = getPlayerStartColliderHeight(collider) ?? 0.18;
+        const body = new Mesh(new BoxGeometry(0.08, 0.08, 0.34), arrowMaterial);
+        body.position.set(0, colliderTop + 0.12, 0.06);
+        const arrowHead = new Mesh(new ConeGeometry(0.1, 0.22, 14), arrowMaterial);
+        arrowHead.rotation.x = Math.PI * 0.5;
+        arrowHead.position.set(0, colliderTop + 0.12, 0.28);
+        for (const mesh of [body, arrowHead]) {
+            this.tagEntityMesh(mesh, entityId, "playerStart", directionGroup);
+            meshes.push(mesh);
+        }
+        return {
+            group,
+            meshes
+        };
+    }
+    createSoundEmitterRenderObjects(entityId, position, refDistance, maxDistance, selected, markerColor = selected ? SOUND_EMITTER_SELECTED_COLOR : SOUND_EMITTER_COLOR) {
+        const displayRefDistance = Math.max(0.4, refDistance);
+        const displayMaxDistance = Math.max(displayRefDistance, maxDistance);
+        const group = new Group();
+        group.position.set(position.x, position.y, position.z);
+        const speakerMeshes = createSoundEmitterMarkerMeshes(markerColor, selected);
+        const refDistanceShell = new Mesh(new SphereGeometry(displayRefDistance, 16, 12), new MeshStandardMaterial({
+            color: markerColor,
+            emissive: markerColor,
+            emissiveIntensity: selected ? 0.1 : 0.03,
+            roughness: 0.8,
+            metalness: 0,
+            transparent: true,
+            opacity: selected ? 0.18 : 0.09,
+            wireframe: true
+        }));
+        refDistanceShell.userData.nonPickable = true;
+        const maxDistanceShell = new Mesh(new SphereGeometry(displayMaxDistance, 16, 12), new MeshStandardMaterial({
+            color: markerColor,
+            emissive: markerColor,
+            emissiveIntensity: selected ? 0.06 : 0.015,
+            roughness: 0.82,
+            metalness: 0,
+            transparent: true,
+            opacity: selected ? 0.12 : 0.06,
+            wireframe: true
+        }));
+        maxDistanceShell.userData.nonPickable = true;
+        for (const mesh of [...speakerMeshes, refDistanceShell, maxDistanceShell]) {
+            this.tagEntityMesh(mesh, entityId, "soundEmitter", group);
+        }
+        return {
+            group,
+            meshes: [...speakerMeshes, refDistanceShell, maxDistanceShell]
+        };
+    }
+    createTriggerVolumeRenderObjects(entityId, position, size, selected, markerColor = selected ? TRIGGER_VOLUME_SELECTED_COLOR : TRIGGER_VOLUME_COLOR) {
+        const group = new Group();
+        group.position.set(position.x, position.y, position.z);
+        const fill = new Mesh(new BoxGeometry(size.x, size.y, size.z), new MeshStandardMaterial({
+            color: markerColor,
+            emissive: markerColor,
+            emissiveIntensity: selected ? 0.1 : 0.03,
+            roughness: 0.7,
+            metalness: 0,
+            transparent: true,
+            opacity: selected ? 0.2 : 0.1
+        }));
+        const outline = new Mesh(new BoxGeometry(size.x, size.y, size.z), new MeshStandardMaterial({
+            color: markerColor,
+            emissive: markerColor,
+            emissiveIntensity: selected ? 0.12 : 0.04,
+            roughness: 0.9,
+            metalness: 0,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.95
+        }));
+        for (const mesh of [fill, outline]) {
+            this.tagEntityMesh(mesh, entityId, "triggerVolume", group);
+        }
+        return {
+            group,
+            meshes: [fill, outline]
+        };
+    }
+    createTeleportTargetRenderObjects(entityId, position, yawDegrees, selected, markerColor = selected ? TELEPORT_TARGET_SELECTED_COLOR : TELEPORT_TARGET_COLOR) {
+        const group = new Group();
+        group.position.set(position.x, position.y, position.z);
+        group.rotation.y = (yawDegrees * Math.PI) / 180;
+        const ring = new Mesh(new TorusGeometry(0.28, 0.045, 8, 24), new MeshStandardMaterial({
+            color: markerColor,
+            emissive: markerColor,
+            emissiveIntensity: selected ? 0.18 : 0.08,
+            roughness: 0.42,
+            metalness: 0.04
+        }));
+        ring.rotation.x = Math.PI * 0.5;
+        ring.position.y = 0.035;
+        const stem = new Mesh(new CylinderGeometry(0.04, 0.04, 0.3, 12), new MeshStandardMaterial({
+            color: markerColor,
+            emissive: markerColor,
+            emissiveIntensity: selected ? 0.12 : 0.04,
+            roughness: 0.45,
+            metalness: 0.02
+        }));
+        stem.position.y = 0.15;
+        const arrowHead = new Mesh(new ConeGeometry(0.12, 0.24, 14), new MeshStandardMaterial({
+            color: markerColor,
+            emissive: markerColor,
+            emissiveIntensity: selected ? 0.18 : 0.06,
+            roughness: 0.36,
+            metalness: 0.03
+        }));
+        arrowHead.rotation.x = Math.PI * 0.5;
+        arrowHead.position.set(0, 0.15, 0.34);
+        for (const mesh of [ring, stem, arrowHead]) {
+            this.tagEntityMesh(mesh, entityId, "teleportTarget", group);
+        }
+        return {
+            group,
+            meshes: [ring, stem, arrowHead]
+        };
+    }
+    createInteractableRenderObjects(entityId, position, radius, selected, markerColor = selected ? INTERACTABLE_SELECTED_COLOR : INTERACTABLE_COLOR) {
+        const displayRadius = Math.max(0.45, radius);
+        const group = new Group();
+        group.position.set(position.x, position.y, position.z);
+        const core = new Mesh(new SphereGeometry(0.16, 12, 10), new MeshStandardMaterial({
+            color: markerColor,
+            emissive: markerColor,
+            emissiveIntensity: selected ? 0.18 : 0.08,
+            roughness: 0.34,
+            metalness: 0.04
+        }));
+        const radiusRing = new Mesh(new TorusGeometry(displayRadius, 0.03, 8, 32), new MeshStandardMaterial({
+            color: markerColor,
+            emissive: markerColor,
+            emissiveIntensity: selected ? 0.1 : 0.04,
+            roughness: 0.55,
+            metalness: 0.02
+        }));
+        radiusRing.rotation.x = Math.PI * 0.5;
+        radiusRing.userData.nonPickable = true;
+        for (const mesh of [core, radiusRing]) {
+            this.tagEntityMesh(mesh, entityId, "interactable", group);
+        }
+        return {
+            group,
+            meshes: [core, radiusRing]
+        };
+    }
+    emitWhiteboxHoverLabelChange() {
+        const label = this.currentDocument === null ? null : getWhiteboxSelectionFeedbackLabel(this.currentDocument, this.hoveredSelection);
+        this.whiteboxHoverLabelChangeHandler?.(label);
+    }
+    setHoveredSelection(selection) {
+        if (areEditorSelectionsEqual(this.hoveredSelection, selection)) {
+            return;
+        }
+        this.hoveredSelection = selection;
+        this.refreshBrushPresentation();
+        this.emitWhiteboxHoverLabelChange();
+    }
+    getFaceHighlightState(brushId, faceId) {
+        if (isBrushFaceSelected(this.currentSelection, brushId, faceId)) {
+            return "selected";
+        }
+        if (this.hoveredSelection.kind === "brushFace" && this.hoveredSelection.brushId === brushId && this.hoveredSelection.faceId === faceId) {
+            return "hovered";
+        }
+        return "none";
+    }
+    createFaceMaterial(brush, faceId, material, highlightState) {
+        const face = brush.faces[faceId];
+        const selectedFace = highlightState === "selected";
+        const hoveredFace = highlightState === "hovered";
+        const emphasizedFace = selectedFace || hoveredFace;
+        if (this.displayMode === "authoring") {
+            const colorHex = material === undefined || face.materialId === null
+                ? selectedFace
+                    ? SELECTED_FACE_FALLBACK_COLOR
+                    : hoveredFace
+                        ? HOVERED_FACE_FALLBACK_COLOR
+                        : FALLBACK_FACE_COLOR
+                : emphasizedFace
+                    ? material.accentColorHex
+                    : material.baseColorHex;
+            return new MeshBasicMaterial({
+                color: colorHex,
+                transparent: true,
+                opacity: selectedFace ? 0.36 : hoveredFace ? 0.28 : 0.18,
+                wireframe: false
+            });
+        }
+        if (this.displayMode === "wireframe") {
+            const colorHex = material === undefined || face.materialId === null
+                ? selectedFace
+                    ? SELECTED_FACE_FALLBACK_COLOR
+                    : hoveredFace
+                        ? HOVERED_FACE_FALLBACK_COLOR
+                        : FALLBACK_FACE_COLOR
+                : emphasizedFace
+                    ? material.accentColorHex
+                    : material.baseColorHex;
+            return new MeshBasicMaterial({
+                color: colorHex,
+                wireframe: true,
+                transparent: true,
+                opacity: selectedFace ? 0.95 : hoveredFace ? 0.86 : 0.76,
+                depthWrite: false
+            });
+        }
+        if (material === undefined || face.materialId === null) {
+            return new MeshStandardMaterial({
+                color: selectedFace ? SELECTED_FACE_FALLBACK_COLOR : hoveredFace ? HOVERED_FACE_FALLBACK_COLOR : FALLBACK_FACE_COLOR,
+                emissive: selectedFace ? SELECTED_FACE_EMISSIVE : hoveredFace ? HOVERED_FACE_EMISSIVE : 0x000000,
+                emissiveIntensity: selectedFace ? 0.28 : hoveredFace ? 0.18 : 0,
+                roughness: 0.9,
+                metalness: 0.05
+            });
+        }
+        return new MeshStandardMaterial({
+            color: 0xffffff,
+            map: this.getOrCreateTexture(material),
+            emissive: selectedFace ? SELECTED_FACE_EMISSIVE : hoveredFace ? HOVERED_FACE_EMISSIVE : 0x000000,
+            emissiveIntensity: selectedFace ? 0.32 : hoveredFace ? 0.18 : 0,
+            roughness: 0.92,
+            metalness: 0.02
+        });
+    }
+    getOrCreateTexture(material) {
+        const signature = createStarterMaterialSignature(material);
+        const cachedTexture = this.materialTextureCache.get(material.id);
+        if (cachedTexture !== undefined && cachedTexture.signature === signature) {
+            return cachedTexture.texture;
+        }
+        cachedTexture?.texture.dispose();
+        const texture = createStarterMaterialTexture(material);
+        this.materialTextureCache.set(material.id, {
+            signature,
+            texture
+        });
+        return texture;
+    }
+    createEdgeHelper(brush, edgeId) {
+        const segment = getBoxBrushEdgeWorldSegment(brush, edgeId);
+        const geometry = new BufferGeometry().setFromPoints([
+            new Vector3(segment.start.x, segment.start.y, segment.start.z),
+            new Vector3(segment.end.x, segment.end.y, segment.end.z)
+        ]);
+        const line = new Line(geometry, new LineBasicMaterial({
+            color: WHITEBOX_COMPONENT_COLOR,
+            transparent: true,
+            opacity: WHITEBOX_COMPONENT_DEFAULT_OPACITY,
+            depthTest: false
+        }));
+        line.userData.brushId = brush.id;
+        line.userData.brushEdgeId = edgeId;
+        return {
+            id: edgeId,
+            line
+        };
+    }
+    createVertexHelper(brush, vertexId) {
+        const position = getBoxBrushVertexWorldPosition(brush, vertexId);
+        const mesh = new Mesh(new SphereGeometry(WHITEBOX_VERTEX_RADIUS, 10, 8), new MeshBasicMaterial({
+            color: WHITEBOX_COMPONENT_COLOR,
+            transparent: true,
+            opacity: WHITEBOX_COMPONENT_DEFAULT_OPACITY,
+            depthTest: false
+        }));
+        mesh.position.set(position.x, position.y, position.z);
+        mesh.userData.brushId = brush.id;
+        mesh.userData.brushVertexId = vertexId;
+        return {
+            id: vertexId,
+            mesh
+        };
+    }
+    refreshBrushPresentation() {
+        if (this.currentDocument === null) {
+            return;
+        }
+        for (const brush of Object.values(this.currentDocument.brushes)) {
+            const renderObjects = this.brushRenderObjects.get(brush.id);
+            if (renderObjects === undefined) {
+                continue;
+            }
+            const brushSelected = isBrushSelected(this.currentSelection, brush.id);
+            const brushHovered = this.hoveredSelection.kind === "brushes" && this.hoveredSelection.ids.includes(brush.id);
+            renderObjects.edges.material.color.setHex(brushSelected ? BRUSH_SELECTED_EDGE_COLOR : brushHovered && this.whiteboxSelectionMode === "object" ? BRUSH_HOVERED_EDGE_COLOR : BRUSH_EDGE_COLOR);
+            const previousMaterials = renderObjects.mesh.material;
+            renderObjects.mesh.material = BOX_FACE_IDS.map((faceId) => this.createFaceMaterial(brush, faceId, this.currentDocument?.materials[brush.faces[faceId].materialId ?? ""], this.getFaceHighlightState(brush.id, faceId)));
+            for (const material of previousMaterials) {
+                material.dispose();
+            }
+            const hoveredEdgeId = this.hoveredSelection.kind === "brushEdge" && this.hoveredSelection.brushId === brush.id ? this.hoveredSelection.edgeId : null;
+            const hoveredVertexId = this.hoveredSelection.kind === "brushVertex" && this.hoveredSelection.brushId === brush.id ? this.hoveredSelection.vertexId : null;
+            for (const edgeHelper of renderObjects.edgeHelpers) {
+                const selected = isBrushEdgeSelected(this.currentSelection, brush.id, edgeHelper.id);
+                const hovered = hoveredEdgeId === edgeHelper.id;
+                edgeHelper.line.visible = this.whiteboxSelectionMode === "edge";
+                edgeHelper.line.material.color.setHex(selected ? WHITEBOX_COMPONENT_SELECTED_COLOR : hovered ? WHITEBOX_COMPONENT_HOVERED_COLOR : WHITEBOX_COMPONENT_COLOR);
+                edgeHelper.line.material.opacity = selected
+                    ? WHITEBOX_COMPONENT_SELECTED_OPACITY
+                    : hovered
+                        ? WHITEBOX_COMPONENT_HOVERED_OPACITY
+                        : WHITEBOX_COMPONENT_DEFAULT_OPACITY;
+            }
+            for (const vertexHelper of renderObjects.vertexHelpers) {
+                const selected = isBrushVertexSelected(this.currentSelection, brush.id, vertexHelper.id);
+                const hovered = hoveredVertexId === vertexHelper.id;
+                vertexHelper.mesh.visible = this.whiteboxSelectionMode === "vertex";
+                vertexHelper.mesh.material.color.setHex(selected ? WHITEBOX_COMPONENT_SELECTED_COLOR : hovered ? WHITEBOX_COMPONENT_HOVERED_COLOR : WHITEBOX_COMPONENT_COLOR);
+                vertexHelper.mesh.material.opacity = selected
+                    ? WHITEBOX_COMPONENT_SELECTED_OPACITY
+                    : hovered
+                        ? WHITEBOX_COMPONENT_HOVERED_OPACITY
+                        : WHITEBOX_COMPONENT_DEFAULT_OPACITY;
+            }
+        }
+    }
+    clearLocalLights() {
+        for (const renderObjects of this.localLightRenderObjects.values()) {
+            this.localLightGroup.remove(renderObjects.group);
+        }
+        this.localLightRenderObjects.clear();
+    }
+    clearBrushMeshes() {
+        for (const renderObjects of this.brushRenderObjects.values()) {
+            this.brushGroup.remove(renderObjects.mesh);
+            this.brushGroup.remove(renderObjects.edges);
+            for (const edgeHelper of renderObjects.edgeHelpers) {
+                this.brushGroup.remove(edgeHelper.line);
+                edgeHelper.line.geometry.dispose();
+                edgeHelper.line.material.dispose();
+            }
+            for (const vertexHelper of renderObjects.vertexHelpers) {
+                this.brushGroup.remove(vertexHelper.mesh);
+                vertexHelper.mesh.geometry.dispose();
+                vertexHelper.mesh.material.dispose();
+            }
+            renderObjects.mesh.geometry.dispose();
+            for (const material of renderObjects.mesh.material) {
+                material.dispose();
+            }
+            renderObjects.edges.geometry.dispose();
+            renderObjects.edges.material.dispose();
+        }
+        this.brushRenderObjects.clear();
+    }
+    clearEntityMarkers() {
+        for (const renderObjects of this.entityRenderObjects.values()) {
+            this.entityGroup.remove(renderObjects.group);
+            for (const mesh of renderObjects.meshes) {
+                mesh.geometry.dispose();
+                if (Array.isArray(mesh.material)) {
+                    for (const material of mesh.material) {
+                        material.dispose();
+                    }
+                }
+                else {
+                    mesh.material.dispose();
+                }
+            }
+        }
+        this.entityRenderObjects.clear();
+    }
+    clearModelInstances() {
+        for (const renderGroup of this.modelRenderObjects.values()) {
+            this.modelGroup.remove(renderGroup);
+            disposeModelInstance(renderGroup);
+        }
+        this.modelRenderObjects.clear();
+    }
+    resize() {
+        if (this.container === null) {
+            return;
+        }
+        const width = this.container.clientWidth;
+        const height = this.container.clientHeight;
+        if (width === 0 || height === 0) {
+            return;
+        }
+        this.perspectiveCamera.aspect = width / height;
+        this.perspectiveCamera.updateProjectionMatrix();
+        this.updateOrthographicCameraFrustum();
+        this.orthographicCamera.updateProjectionMatrix();
+        this.renderer.setSize(width, height, false);
+        this.advancedRenderingComposer?.setSize(width, height);
+    }
+    pickTransformHandle(event) {
+        if (!this.transformGizmoGroup.visible) {
+            return null;
+        }
+        if (!this.setPointerFromClientPosition(event.clientX, event.clientY)) {
+            return null;
+        }
+        this.raycaster.setFromCamera(this.pointer, this.getActiveCamera());
+        const hits = this.raycaster.intersectObjects(this.transformGizmoGroup.children, true);
+        for (const hit of hits) {
+            const axisConstraint = hit.object.userData.transformAxisConstraint;
+            if (axisConstraint === null || axisConstraint === "x" || axisConstraint === "y" || axisConstraint === "z") {
+                return {
+                    axisConstraint
+                };
+            }
+        }
+        return null;
+    }
+    getBrushPickableObjects() {
+        switch (this.whiteboxSelectionMode) {
+            case "object":
+            case "face":
+                return Array.from(this.brushRenderObjects.values(), (renderObjects) => renderObjects.mesh);
+            case "edge":
+                return Array.from(this.brushRenderObjects.values(), (renderObjects) => renderObjects.edgeHelpers.map((helper) => helper.line)).flat();
+            case "vertex":
+                return Array.from(this.brushRenderObjects.values(), (renderObjects) => renderObjects.vertexHelpers.map((helper) => helper.mesh)).flat();
+        }
+    }
+    createSelectionKey(selection) {
+        switch (selection.kind) {
+            case "none":
+                return null;
+            case "brushes":
+                return selection.ids.length === 1 ? `brush:${selection.ids[0]}` : null;
+            case "brushFace":
+                return `brushFace:${selection.brushId}:${selection.faceId}`;
+            case "brushEdge":
+                return `brushEdge:${selection.brushId}:${selection.edgeId}`;
+            case "brushVertex":
+                return `brushVertex:${selection.brushId}:${selection.vertexId}`;
+            case "entities":
+                return selection.ids.length === 1 ? `entity:${selection.ids[0]}` : null;
+            case "modelInstances":
+                return selection.ids.length === 1 ? `model:${selection.ids[0]}` : null;
+        }
+    }
+    createSelectionFromHit(hit) {
+        if (hit.object.userData.nonPickable === true) {
+            return null;
+        }
+        const entityId = hit.object.userData.entityId;
+        if (typeof entityId === "string") {
+            return {
+                kind: "entities",
+                ids: [entityId]
+            };
+        }
+        const modelInstanceId = this.findModelInstanceId(hit.object);
+        if (modelInstanceId !== null) {
+            return {
+                kind: "modelInstances",
+                ids: [modelInstanceId]
+            };
+        }
+        const brushId = hit.object.userData.brushId;
+        if (typeof brushId !== "string") {
+            return null;
+        }
+        const brushEdgeId = hit.object.userData.brushEdgeId;
+        if (typeof brushEdgeId === "string") {
+            return {
+                kind: "brushEdge",
+                brushId,
+                edgeId: brushEdgeId
+            };
+        }
+        const brushVertexId = hit.object.userData.brushVertexId;
+        if (typeof brushVertexId === "string") {
+            return {
+                kind: "brushVertex",
+                brushId,
+                vertexId: brushVertexId
+            };
+        }
+        if (this.whiteboxSelectionMode === "face") {
+            const faceMaterialIndex = hit.face?.materialIndex;
+            const faceId = typeof faceMaterialIndex === "number" ? BOX_FACE_IDS[faceMaterialIndex] ?? null : null;
+            if (faceId === null) {
+                return null;
+            }
+            return {
+                kind: "brushFace",
+                brushId,
+                faceId
+            };
+        }
+        if (this.whiteboxSelectionMode === "object") {
+            return {
+                kind: "brushes",
+                ids: [brushId]
+            };
+        }
+        return null;
+    }
+    getSelectionCandidates(event) {
+        if (!this.setPointerFromClientPosition(event.clientX, event.clientY)) {
+            return [];
+        }
+        this.raycaster.setFromCamera(this.pointer, this.getActiveCamera());
+        this.raycaster.params.Line.threshold = this.whiteboxSelectionMode === "edge" ? WHITEBOX_EDGE_PICK_THRESHOLD : 1;
+        const hits = this.raycaster.intersectObjects([
+            ...Array.from(this.entityRenderObjects.values(), (renderObjects) => renderObjects.group),
+            ...Array.from(this.modelRenderObjects.values()),
+            ...this.getBrushPickableObjects()
+        ], true);
+        const candidates = [];
+        const seenKeys = new Set();
+        for (const hit of hits) {
+            const selection = this.createSelectionFromHit(hit);
+            if (selection === null) {
+                continue;
+            }
+            const key = this.createSelectionKey(selection);
+            if (key === null || seenKeys.has(key)) {
+                continue;
+            }
+            seenKeys.add(key);
+            candidates.push({
+                key,
+                selection
+            });
+        }
+        return candidates;
+    }
+    handlePointerDown = (event) => {
+        this.lastCanvasPointerPosition = {
+            x: event.clientX,
+            y: event.clientY
+        };
+        if (event.button === 1) {
+            event.preventDefault();
+            this.activeCameraDragPointerId = event.pointerId;
+            this.lastCameraDragClientPosition = {
+                x: event.clientX,
+                y: event.clientY
+            };
+            this.renderer.domElement.setPointerCapture(event.pointerId);
+            return;
+        }
+        if (event.button === 2) {
+            event.preventDefault();
+            if (this.currentTransformSession.kind === "active") {
+                this.transformCancelHandler?.();
+            }
+            return;
+        }
+        if (event.button !== 0) {
+            return;
+        }
+        const transformHandle = this.pickTransformHandle(event);
+        const interactionSession = this.currentTransformSession.kind === "active"
+            ? this.currentTransformSession.sourcePanelId === this.panelId
+                ? this.currentTransformSession
+                : null
+            : this.getDisplayedTransformSession();
+        if (transformHandle !== null && interactionSession !== null) {
+            event.preventDefault();
+            if (transformHandle.axisConstraint !== null &&
+                !supportsTransformAxisConstraint(interactionSession, transformHandle.axisConstraint)) {
+                return;
+            }
+            const nextSession = this.buildTransformPreviewFromPointer(createTransformSession({
+                source: "gizmo",
+                sourcePanelId: this.panelId,
+                operation: interactionSession.operation,
+                axisConstraint: transformHandle.axisConstraint,
+                target: interactionSession.target
+            }), {
+                x: event.clientX,
+                y: event.clientY
+            }, {
+                x: event.clientX,
+                y: event.clientY
+            }, transformHandle.axisConstraint);
+            this.currentTransformSession = nextSession;
+            this.applyTransformPreview();
+            this.syncTransformGizmo();
+            this.transformSessionChangeHandler?.(nextSession);
+            this.activeTransformDrag = {
+                pointerId: event.pointerId,
+                sessionId: nextSession.id,
+                axisConstraint: transformHandle.axisConstraint,
+                initialClientPosition: {
+                    x: event.clientX,
+                    y: event.clientY
+                }
+            };
+            this.renderer.domElement.setPointerCapture(event.pointerId);
+            return;
+        }
+        if (this.currentTransformSession.kind === "active") {
+            if (this.currentTransformSession.sourcePanelId !== this.panelId) {
+                return;
+            }
+            if (this.currentTransformSession.source !== "gizmo" || this.currentTransformSession.sourcePanelId === this.panelId) {
+                event.preventDefault();
+                this.transformCommitHandler?.(this.currentTransformSession);
+                return;
+            }
+        }
+        if (this.toolMode === "create" && this.creationPreview !== null) {
+            const previewCenter = this.getCreationPreviewCenter(event, this.creationPreview.target);
+            const nextCreationPreview = {
+                ...this.creationPreview,
+                center: previewCenter
+            };
+            this.syncCreationPreview(nextCreationPreview);
+            this.creationPreviewChangeHandler?.(nextCreationPreview);
+            if (previewCenter !== null) {
+                const committed = this.creationCommitHandler?.(nextCreationPreview) === true;
+                if (committed) {
+                    this.syncCreationPreview(null);
+                    this.creationPreviewChangeHandler?.({ kind: "none" });
+                }
+            }
+            return;
+        }
+        const candidates = this.getSelectionCandidates(event);
+        if (candidates.length === 0) {
+            this.lastClickPointer = null;
+            this.lastClickSelectionKey = null;
+            this.brushSelectionChangeHandler?.({
+                kind: "none"
+            });
+            return;
+        }
+        // Determine whether this click is at the same spot as the last one.
+        const POINTER_TOLERANCE = 0.01;
+        const isSameSpot = this.lastClickPointer !== null &&
+            Math.abs(this.pointer.x - this.lastClickPointer.x) < POINTER_TOLERANCE &&
+            Math.abs(this.pointer.y - this.lastClickPointer.y) < POINTER_TOLERANCE;
+        let candidateIndex = 0;
+        if (isSameSpot && this.lastClickSelectionKey !== null) {
+            // Find where the previously selected item sits in the new hit list and advance by one.
+            const lastIndex = candidates.findIndex((c) => c.key === this.lastClickSelectionKey);
+            if (lastIndex !== -1) {
+                candidateIndex = (lastIndex + 1) % candidates.length;
+            }
+        }
+        this.lastClickPointer = { x: this.pointer.x, y: this.pointer.y };
+        const chosen = candidates[candidateIndex];
+        this.lastClickSelectionKey = chosen.key;
+        this.brushSelectionChangeHandler?.(chosen.selection);
+    };
+    handlePointerMove = (event) => {
+        this.lastCanvasPointerPosition = {
+            x: event.clientX,
+            y: event.clientY
+        };
+        if (this.activeCameraDragPointerId === event.pointerId && this.lastCameraDragClientPosition !== null) {
+            const deltaX = event.clientX - this.lastCameraDragClientPosition.x;
+            const deltaY = event.clientY - this.lastCameraDragClientPosition.y;
+            this.lastCameraDragClientPosition = {
+                x: event.clientX,
+                y: event.clientY
+            };
+            if (this.viewMode === "perspective" && !event.shiftKey) {
+                this.orbitCamera(deltaX, deltaY);
+            }
+            else {
+                this.panCamera(deltaX, deltaY);
+            }
+            return;
+        }
+        if (this.activeTransformDrag !== null &&
+            this.activeTransformDrag.pointerId === event.pointerId &&
+            this.currentTransformSession.kind === "active" &&
+            this.currentTransformSession.id === this.activeTransformDrag.sessionId) {
+            const nextSession = this.buildTransformPreviewFromPointer(this.currentTransformSession, this.activeTransformDrag.initialClientPosition, {
+                x: event.clientX,
+                y: event.clientY
+            }, this.activeTransformDrag.axisConstraint);
+            this.currentTransformSession = nextSession;
+            this.applyTransformPreview();
+            this.syncTransformGizmo();
+            this.transformSessionChangeHandler?.(nextSession);
+            return;
+        }
+        if (this.toolMode === "select") {
+            const hoveredCandidate = this.getSelectionCandidates(event)[0]?.selection ?? { kind: "none" };
+            this.setHoveredSelection(hoveredCandidate);
+            return;
+        }
+        this.setHoveredSelection({
+            kind: "none"
+        });
+        if (this.toolMode !== "create" || this.creationPreview === null) {
+            return;
+        }
+        const previewCenter = this.getCreationPreviewCenter(event, this.creationPreview.target);
+        const nextCreationPreview = {
+            ...this.creationPreview,
+            center: previewCenter
+        };
+        this.syncCreationPreview(nextCreationPreview);
+        this.creationPreviewChangeHandler?.(nextCreationPreview);
+    };
+    handlePointerUp = (event) => {
+        if (this.activeTransformDrag !== null && this.activeTransformDrag.pointerId === event.pointerId) {
+            if (this.renderer.domElement.hasPointerCapture(event.pointerId)) {
+                this.renderer.domElement.releasePointerCapture(event.pointerId);
+            }
+            const completedSession = this.currentTransformSession.kind === "active" ? this.currentTransformSession : null;
+            this.activeTransformDrag = null;
+            if (completedSession !== null) {
+                if (event.type === "pointercancel") {
+                    this.transformCancelHandler?.();
+                }
+                else {
+                    this.transformCommitHandler?.(completedSession);
+                }
+            }
+            return;
+        }
+        if (this.activeCameraDragPointerId !== event.pointerId) {
+            return;
+        }
+        if (this.renderer.domElement.hasPointerCapture(event.pointerId)) {
+            this.renderer.domElement.releasePointerCapture(event.pointerId);
+        }
+        this.activeCameraDragPointerId = null;
+        this.lastCameraDragClientPosition = null;
+        this.emitCameraStateChange();
+    };
+    handlePointerLeave = () => {
+        if (this.activeCameraDragPointerId !== null) {
+            return;
+        }
+        this.setHoveredSelection({
+            kind: "none"
+        });
+        // Keep the shared creation preview alive across panel boundaries; the next
+        // viewport panel will update it as the pointer continues moving.
+    };
+    handleWindowPointerMove = (event) => {
+        if (this.currentTransformSession.kind !== "active" ||
+            this.currentTransformSession.sourcePanelId !== this.panelId ||
+            this.currentTransformSession.source === "gizmo" ||
+            this.keyboardTransformPointerOrigin === null ||
+            this.keyboardTransformPointerOrigin.sessionId !== this.currentTransformSession.id) {
+            return;
+        }
+        const nextSession = this.buildTransformPreviewFromPointer(this.currentTransformSession, {
+            x: this.keyboardTransformPointerOrigin.clientX,
+            y: this.keyboardTransformPointerOrigin.clientY
+        }, {
+            x: event.clientX,
+            y: event.clientY
+        }, this.currentTransformSession.axisConstraint);
+        this.currentTransformSession = nextSession;
+        this.applyTransformPreview();
+        this.syncTransformGizmo();
+        this.transformSessionChangeHandler?.(nextSession);
+    };
+    handleWheel = (event) => {
+        event.preventDefault();
+        if (this.viewMode === "perspective") {
+            this.cameraSpherical.radius = Math.min(MAX_CAMERA_DISTANCE, Math.max(MIN_CAMERA_DISTANCE, this.cameraSpherical.radius * Math.exp(event.deltaY * ZOOM_SPEED)));
+            this.applyPerspectiveCameraPose();
+            this.emitCameraStateChange();
+            return;
+        }
+        this.orthographicCamera.zoom = Math.min(MAX_ORTHOGRAPHIC_ZOOM, Math.max(MIN_ORTHOGRAPHIC_ZOOM, this.orthographicCamera.zoom * Math.exp(-event.deltaY * ZOOM_SPEED)));
+        this.orthographicCamera.updateProjectionMatrix();
+        this.emitCameraStateChange();
+    };
+    handleAuxClick = (event) => {
+        if (event.button === 1 || event.button === 2) {
+            event.preventDefault();
+        }
+    };
+    handleContextMenu = (event) => {
+        event.preventDefault();
+    };
+    findModelInstanceId(object) {
+        let current = object;
+        while (current !== null) {
+            const modelInstanceId = current.userData.modelInstanceId;
+            if (typeof modelInstanceId === "string") {
+                return modelInstanceId;
+            }
+            current = current.parent;
+        }
+        return null;
+    }
+    orbitCamera(deltaX, deltaY) {
+        this.cameraSpherical.theta -= deltaX * ORBIT_ROTATION_SPEED;
+        this.cameraSpherical.phi -= deltaY * ORBIT_ROTATION_SPEED;
+        this.applyPerspectiveCameraPose();
+    }
+    panCamera(deltaX, deltaY) {
+        if (this.container === null) {
+            return;
+        }
+        const width = Math.max(1, this.container.clientWidth);
+        const height = Math.max(1, this.container.clientHeight);
+        if (this.viewMode === "perspective") {
+            const visibleHeight = 2 * Math.tan((this.perspectiveCamera.fov * Math.PI) / 360) * this.cameraSpherical.radius;
+            const visibleWidth = visibleHeight * Math.max(this.perspectiveCamera.aspect, 0.0001);
+            this.perspectiveCamera.getWorldDirection(this.cameraForward);
+            this.cameraRight.crossVectors(this.cameraForward, this.perspectiveCamera.up).normalize();
+            this.cameraUp.crossVectors(this.cameraRight, this.cameraForward).normalize();
+            this.cameraTarget
+                .addScaledVector(this.cameraRight, (-deltaX / width) * visibleWidth)
+                .addScaledVector(this.cameraUp, (deltaY / height) * visibleHeight);
+            this.applyPerspectiveCameraPose();
+            return;
+        }
+        const visibleHeight = ORTHOGRAPHIC_FRUSTUM_HEIGHT / this.orthographicCamera.zoom;
+        const visibleWidth = (this.orthographicCamera.right - this.orthographicCamera.left) / this.orthographicCamera.zoom;
+        this.orthographicCamera.getWorldDirection(this.cameraForward);
+        this.cameraRight.crossVectors(this.cameraForward, this.orthographicCamera.up).normalize();
+        this.cameraUp.crossVectors(this.cameraRight, this.cameraForward).normalize();
+        this.cameraTarget
+            .addScaledVector(this.cameraRight, (-deltaX / width) * visibleWidth)
+            .addScaledVector(this.cameraUp, (deltaY / height) * visibleHeight);
+        this.applyOrthographicCameraPose();
+    }
+    getCreationPreviewCenter(event, target) {
+        switch (target.kind) {
+            case "box-brush":
+                return this.getBoxCreationPreviewCenter(event, DEFAULT_BOX_BRUSH_SIZE);
+            case "entity":
+                switch (target.entityKind) {
+                    case "triggerVolume":
+                        return this.getBoxCreationPreviewCenter(event, DEFAULT_TRIGGER_VOLUME_SIZE);
+                    case "pointLight":
+                    case "playerStart":
+                    case "soundEmitter":
+                    case "teleportTarget":
+                    case "interactable":
+                    case "spotLight":
+                        return this.getPlanarCreationAnchor(event);
+                }
+            case "model-instance": {
+                const anchor = this.getPlanarCreationAnchor(event);
+                if (anchor === null) {
+                    return null;
+                }
+                const asset = this.projectAssets[target.assetId];
+                if (asset === undefined || asset.kind !== "model") {
+                    return null;
+                }
+                return createModelInstancePlacementPosition(asset, anchor);
+            }
+        }
+    }
+    getPlanarCreationAnchor(event) {
+        const bounds = this.renderer.domElement.getBoundingClientRect();
+        if (bounds.width === 0 || bounds.height === 0) {
+            return null;
+        }
+        this.pointer.x = ((event.clientX - bounds.left) / bounds.width) * 2 - 1;
+        this.pointer.y = -(((event.clientY - bounds.top) / bounds.height) * 2 - 1);
+        this.raycaster.setFromCamera(this.pointer, this.getActiveCamera());
+        if (this.raycaster.ray.intersectPlane(this.getBoxCreatePlane(), this.boxCreateIntersection) === null) {
+            return null;
+        }
+        switch (this.viewMode) {
+            case "perspective":
+            case "top":
+                return {
+                    x: this.snapWhiteboxPositionValue(this.boxCreateIntersection.x),
+                    y: this.snapWhiteboxPositionValue(0),
+                    z: this.snapWhiteboxPositionValue(this.boxCreateIntersection.z)
+                };
+            case "front":
+                return {
+                    x: this.snapWhiteboxPositionValue(this.boxCreateIntersection.x),
+                    y: this.snapWhiteboxPositionValue(this.boxCreateIntersection.y),
+                    z: this.snapWhiteboxPositionValue(0)
+                };
+            case "side":
+                return {
+                    x: this.snapWhiteboxPositionValue(0),
+                    y: this.snapWhiteboxPositionValue(this.boxCreateIntersection.y),
+                    z: this.snapWhiteboxPositionValue(this.boxCreateIntersection.z)
+                };
+        }
+    }
+    getBoxCreationPreviewCenter(event, size) {
+        const bounds = this.renderer.domElement.getBoundingClientRect();
+        if (bounds.width === 0 || bounds.height === 0) {
+            return null;
+        }
+        this.pointer.x = ((event.clientX - bounds.left) / bounds.width) * 2 - 1;
+        this.pointer.y = -(((event.clientY - bounds.top) / bounds.height) * 2 - 1);
+        this.raycaster.setFromCamera(this.pointer, this.getActiveCamera());
+        if (this.raycaster.ray.intersectPlane(this.getBoxCreatePlane(), this.boxCreateIntersection) === null) {
+            return null;
+        }
+        switch (this.viewMode) {
+            case "perspective":
+            case "top":
+                return {
+                    x: this.snapWhiteboxPositionValue(this.boxCreateIntersection.x),
+                    y: this.snapWhiteboxPositionValue(size.y * 0.5),
+                    z: this.snapWhiteboxPositionValue(this.boxCreateIntersection.z)
+                };
+            case "front":
+                return {
+                    x: this.snapWhiteboxPositionValue(this.boxCreateIntersection.x),
+                    y: this.snapWhiteboxPositionValue(this.boxCreateIntersection.y),
+                    z: this.snapWhiteboxPositionValue(size.z * 0.5)
+                };
+            case "side":
+                return {
+                    x: this.snapWhiteboxPositionValue(size.x * 0.5),
+                    y: this.snapWhiteboxPositionValue(this.boxCreateIntersection.y),
+                    z: this.snapWhiteboxPositionValue(this.boxCreateIntersection.z)
+                };
+        }
+    }
+    getCreationPreviewTargetKey(target) {
+        switch (target.kind) {
+            case "box-brush":
+                return "box-brush";
+            case "entity":
+                return `entity:${target.entityKind}:${target.audioAssetId}`;
+            case "model-instance":
+                return `model-instance:${target.assetId}`;
+        }
+    }
+    clearCreationPreviewObject() {
+        if (this.creationPreviewObject === null) {
+            this.creationPreviewTargetKey = null;
+            return;
+        }
+        this.scene.remove(this.creationPreviewObject);
+        disposeModelInstance(this.creationPreviewObject);
+        this.creationPreviewObject = null;
+        this.creationPreviewTargetKey = null;
+    }
+    createCreationPreviewObject(toolPreview) {
+        const previewPosition = toolPreview.center ?? {
+            x: 0,
+            y: 0,
+            z: 0
+        };
+        switch (toolPreview.target.kind) {
+            case "box-brush": {
+                const fallbackGroup = new Group();
+                fallbackGroup.visible = false;
+                return fallbackGroup;
+            }
+            case "entity": {
+                let previewGroup;
+                switch (toolPreview.target.entityKind) {
+                    case "pointLight":
+                        previewGroup = this.createPointLightGizmoRenderObjects("creation-preview", previewPosition, DEFAULT_POINT_LIGHT_DISTANCE, PLACEMENT_PREVIEW_COLOR_HEX, false).group;
+                        break;
+                    case "spotLight":
+                        previewGroup = this.createSpotLightGizmoRenderObjects("creation-preview", previewPosition, DEFAULT_SPOT_LIGHT_DIRECTION, DEFAULT_SPOT_LIGHT_DISTANCE, DEFAULT_SPOT_LIGHT_ANGLE_DEGREES, PLACEMENT_PREVIEW_COLOR_HEX, false).group;
+                        break;
+                    case "playerStart":
+                        previewGroup = this.createPlayerStartRenderObjects("creation-preview", previewPosition, DEFAULT_PLAYER_START_YAW_DEGREES, {
+                            mode: "capsule",
+                            eyeHeight: DEFAULT_PLAYER_START_EYE_HEIGHT,
+                            capsuleRadius: DEFAULT_PLAYER_START_CAPSULE_RADIUS,
+                            capsuleHeight: DEFAULT_PLAYER_START_CAPSULE_HEIGHT,
+                            boxSize: DEFAULT_PLAYER_START_BOX_SIZE
+                        }, false).group;
+                        break;
+                    case "soundEmitter":
+                        previewGroup = this.createSoundEmitterRenderObjects("creation-preview", previewPosition, DEFAULT_SOUND_EMITTER_REF_DISTANCE, DEFAULT_SOUND_EMITTER_MAX_DISTANCE, false, BOX_CREATE_PREVIEW_FILL).group;
+                        break;
+                    case "triggerVolume":
+                        previewGroup = this.createTriggerVolumeRenderObjects("creation-preview", previewPosition, DEFAULT_TRIGGER_VOLUME_SIZE, false, BOX_CREATE_PREVIEW_FILL).group;
+                        break;
+                    case "teleportTarget":
+                        previewGroup = this.createTeleportTargetRenderObjects("creation-preview", previewPosition, DEFAULT_TELEPORT_TARGET_YAW_DEGREES, false, BOX_CREATE_PREVIEW_FILL).group;
+                        break;
+                    case "interactable":
+                        previewGroup = this.createInteractableRenderObjects("creation-preview", previewPosition, DEFAULT_INTERACTABLE_RADIUS, false, BOX_CREATE_PREVIEW_FILL).group;
+                        break;
+                }
+                if (this.displayMode === "wireframe") {
+                    this.applyWireframePresentation(previewGroup);
+                }
+                return previewGroup;
+            }
+            case "model-instance": {
+                const asset = this.projectAssets[toolPreview.target.assetId];
+                const loadedAsset = this.loadedModelAssets[toolPreview.target.assetId];
+                if (asset === undefined || asset.kind !== "model") {
+                    const fallbackGroup = new Group();
+                    fallbackGroup.visible = false;
+                    return fallbackGroup;
+                }
+                const dummyModelInstance = createModelInstance({
+                    assetId: toolPreview.target.assetId,
+                    position: previewPosition,
+                    rotationDegrees: DEFAULT_MODEL_INSTANCE_ROTATION_DEGREES,
+                    scale: DEFAULT_MODEL_INSTANCE_SCALE
+                });
+                return createModelInstanceRenderGroup(dummyModelInstance, asset, loadedAsset, false, BOX_CREATE_PREVIEW_FILL, this.displayMode === "wireframe" ? "wireframe" : "normal");
+            }
+        }
+        throw new Error("Unsupported creation preview target.");
+    }
+    syncCreationPreview(toolPreview) {
+        const currentToolPreview = this.creationPreview === null ? { kind: "none" } : this.creationPreview;
+        const nextToolPreview = toolPreview === null ? { kind: "none" } : toolPreview;
+        if (areViewportToolPreviewsEqual(currentToolPreview, nextToolPreview)) {
+            return;
+        }
+        this.creationPreview = toolPreview === null ? null : {
+            kind: "create",
+            sourcePanelId: toolPreview.sourcePanelId,
+            target: toolPreview.target.kind === "entity"
+                ? {
+                    kind: "entity",
+                    entityKind: toolPreview.target.entityKind,
+                    audioAssetId: toolPreview.target.audioAssetId
+                }
+                : toolPreview.target.kind === "model-instance"
+                    ? {
+                        kind: "model-instance",
+                        assetId: toolPreview.target.assetId
+                    }
+                    : {
+                        kind: "box-brush"
+                    },
+            center: toolPreview.center === null ? null : { ...toolPreview.center }
+        };
+        if (toolPreview === null) {
+            this.boxCreatePreviewMesh.visible = false;
+            this.boxCreatePreviewEdges.visible = false;
+            this.clearCreationPreviewObject();
+            return;
+        }
+        if (toolPreview.target.kind === "box-brush") {
+            this.boxCreatePreviewMesh.visible = toolPreview.center !== null;
+            this.boxCreatePreviewEdges.visible = toolPreview.center !== null;
+            if (toolPreview.center !== null) {
+                this.boxCreatePreviewMesh.position.set(toolPreview.center.x, toolPreview.center.y, toolPreview.center.z);
+                this.boxCreatePreviewEdges.position.set(toolPreview.center.x, toolPreview.center.y, toolPreview.center.z);
+            }
+            this.clearCreationPreviewObject();
+            this.creationPreviewTargetKey = null;
+            return;
+        }
+        const nextTargetKey = this.getCreationPreviewTargetKey(toolPreview.target);
+        this.boxCreatePreviewMesh.visible = false;
+        this.boxCreatePreviewEdges.visible = false;
+        if (this.creationPreviewObject !== null && this.creationPreviewTargetKey === nextTargetKey) {
+            this.creationPreviewObject.visible = toolPreview.center !== null;
+            if (toolPreview.center !== null) {
+                this.creationPreviewObject.position.set(toolPreview.center.x, toolPreview.center.y, toolPreview.center.z);
+            }
+            this.creationPreviewTargetKey = nextTargetKey;
+            return;
+        }
+        this.clearCreationPreviewObject();
+        const creationPreviewObject = this.createCreationPreviewObject(toolPreview);
+        creationPreviewObject.visible = toolPreview.center !== null;
+        this.scene.add(creationPreviewObject);
+        this.creationPreviewObject = creationPreviewObject;
+        this.creationPreviewTargetKey = nextTargetKey;
+    }
+    render = () => {
+        this.animationFrame = window.requestAnimationFrame(this.render);
+        this.updateTransformGizmoPose();
+        if (this.advancedRenderingComposer !== null) {
+            this.advancedRenderingComposer.render();
+            return;
+        }
+        this.renderer.render(this.scene, this.getActiveCamera());
+    };
+}

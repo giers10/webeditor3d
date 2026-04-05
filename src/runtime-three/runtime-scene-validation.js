@@ -1,0 +1,42 @@
+import { getModelInstances } from "../assets/model-instances";
+import { assertSceneDocumentIsValid, createDiagnostic, formatSceneDiagnosticSummary } from "../document/scene-document-validation";
+import { getPrimaryPlayerStartEntity } from "../entities/entity-instances";
+import { buildGeneratedModelCollider, ModelColliderGenerationError } from "../geometry/model-instance-collider-generation";
+export function validateRuntimeSceneBuild(document, options) {
+    const diagnostics = [];
+    if (options.navigationMode === "firstPerson" && getPrimaryPlayerStartEntity(document.entities) === null) {
+        diagnostics.push(createDiagnostic("error", "missing-player-start", "First-person run requires an authored Player Start. Place one or switch to Orbit Visitor.", "entities", "build"));
+    }
+    for (const modelInstance of getModelInstances(document.modelInstances)) {
+        const path = `modelInstances.${modelInstance.id}.collision.mode`;
+        const asset = document.assets[modelInstance.assetId];
+        if (modelInstance.collision.mode === "none" || asset === undefined || asset.kind !== "model") {
+            continue;
+        }
+        try {
+            const generatedCollider = buildGeneratedModelCollider(modelInstance, asset, options.loadedModelAssets?.[modelInstance.assetId]);
+            if (generatedCollider?.mode === "dynamic") {
+                diagnostics.push(createDiagnostic("warning", "dynamic-model-collider-fixed-query-only", "Dynamic model collision currently generates convex compound pieces for Rapier queries, but the runner still uses them as fixed world collision rather than fully simulated rigid bodies.", path, "build"));
+            }
+        }
+        catch (error) {
+            const message = error instanceof Error ? error.message : "Imported model collision generation failed.";
+            const code = error instanceof ModelColliderGenerationError
+                ? error.code
+                : "invalid-model-instance-collision-mode";
+            diagnostics.push(createDiagnostic("error", code, message, path, "build"));
+        }
+    }
+    return {
+        diagnostics,
+        errors: diagnostics.filter((diagnostic) => diagnostic.severity === "error"),
+        warnings: diagnostics.filter((diagnostic) => diagnostic.severity === "warning")
+    };
+}
+export function assertRuntimeSceneBuildable(document, options) {
+    assertSceneDocumentIsValid(document);
+    const validation = validateRuntimeSceneBuild(document, options);
+    if (validation.errors.length > 0) {
+        throw new Error(`Runtime build is blocked: ${formatSceneDiagnosticSummary(validation.errors)}`);
+    }
+}
