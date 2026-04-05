@@ -96,6 +96,16 @@ export function transformBoxBrushWorldVectorToLocal(brush, worldVector) {
         z: localVector.z
     };
 }
+export function transformBoxBrushWorldPointToLocal(brush, worldPoint) {
+    const rotation = createBrushRotationEuler(brush);
+    const inverseRotation = new Quaternion().setFromEuler(rotation).invert();
+    const localPoint = new Vector3(worldPoint.x - brush.center.x, worldPoint.y - brush.center.y, worldPoint.z - brush.center.z).applyQuaternion(inverseRotation);
+    return {
+        x: localPoint.x,
+        y: localPoint.y,
+        z: localPoint.z
+    };
+}
 export function transformBoxBrushLocalPointToWorld(brush, localPoint) {
     const rotation = createBrushRotationEuler(brush);
     const rotatedOffset = new Vector3(localPoint.x, localPoint.y, localPoint.z).applyEuler(rotation);

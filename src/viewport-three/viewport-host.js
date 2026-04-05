@@ -1,5 +1,4 @@
-import { AmbientLight, AxesHelper, BufferGeometry, BoxGeometry, CanvasTexture, CapsuleGeometry, ConeGeometry, CylinderGeometry, DirectionalLight, EdgesGeometry, GridHelper, Group, Line, LineBasicMaterial, LineSegments, Material, Mesh, MeshBasicMaterial, MeshStandardMaterial, Object3D, OrthographicCamera, Plane, PerspectiveCamera, PointLight, Quaternion, Raycaster, Scene, SphereGeometry, Spherical, TorusGeometry, SpotLight, Vector2, Vector3, WebGLRenderer } from "three";
-import { EffectComposer } from "postprocessing";
+import { AmbientLight, AxesHelper, BufferGeometry, BoxGeometry, CapsuleGeometry, ConeGeometry, CylinderGeometry, DirectionalLight, EdgesGeometry, GridHelper, Group, Line, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, MeshStandardMaterial, OrthographicCamera, Plane, PerspectiveCamera, PointLight, Quaternion, Raycaster, Scene, SphereGeometry, Spherical, TorusGeometry, SpotLight, Vector2, Vector3, WebGLRenderer } from "three";
 import { areEditorSelectionsEqual, isBrushEdgeSelected, isBrushFaceSelected, isBrushSelected, isBrushVertexSelected, isModelInstanceSelected } from "../core/selection";
 import { getWhiteboxSelectionFeedbackLabel } from "../core/whitebox-selection-feedback";
 import { cloneTransformSession, createInactiveTransformSession, createTransformPreviewFromTarget, createTransformSession, resolveTransformTarget, supportsTransformOperation, supportsTransformAxisConstraint } from "../core/transform-session";
@@ -7,9 +6,9 @@ import { createModelInstanceRenderGroup, disposeModelInstance } from "../assets/
 import { createModelInstance, createModelInstancePlacementPosition, DEFAULT_MODEL_INSTANCE_ROTATION_DEGREES, DEFAULT_MODEL_INSTANCE_SCALE, getModelInstances } from "../assets/model-instances";
 import { areAdvancedRenderingSettingsEqual, cloneAdvancedRenderingSettings } from "../document/world-settings";
 import { DEFAULT_INTERACTABLE_RADIUS, DEFAULT_PLAYER_START_BOX_SIZE, DEFAULT_PLAYER_START_CAPSULE_HEIGHT, DEFAULT_PLAYER_START_CAPSULE_RADIUS, DEFAULT_PLAYER_START_EYE_HEIGHT, DEFAULT_PLAYER_START_YAW_DEGREES, DEFAULT_POINT_LIGHT_DISTANCE, DEFAULT_SOUND_EMITTER_MAX_DISTANCE, DEFAULT_SOUND_EMITTER_REF_DISTANCE, DEFAULT_SPOT_LIGHT_ANGLE_DEGREES, DEFAULT_SPOT_LIGHT_DIRECTION, DEFAULT_SPOT_LIGHT_DISTANCE, DEFAULT_TELEPORT_TARGET_YAW_DEGREES, DEFAULT_TRIGGER_VOLUME_SIZE, getPlayerStartColliderHeight, getEntityInstances, normalizeYawDegrees } from "../entities/entity-instances";
-import { BOX_EDGE_IDS, BOX_FACE_IDS, BOX_VERTEX_IDS, DEFAULT_BOX_BRUSH_SIZE } from "../document/brushes";
-import { getBoxBrushEdgeAxis, getBoxBrushEdgeTransformMeta, getBoxBrushEdgeWorldSegment, getBoxBrushFaceAxis, getBoxBrushFaceTransformMeta, getBoxBrushFaceWorldCenter, getBoxBrushVertexSigns, getBoxBrushVertexWorldPosition, transformBoxBrushLocalPointToWorld, transformBoxBrushWorldVectorToLocal } from "../geometry/box-brush-components";
-import { applyBoxBrushFaceUvsToGeometry } from "../geometry/box-face-uvs";
+import { BOX_EDGE_IDS, BOX_FACE_IDS, BOX_VERTEX_IDS, cloneBoxBrushGeometry, deriveBoxBrushSizeFromGeometry, scaleBoxBrushGeometryToSize, DEFAULT_BOX_BRUSH_SIZE } from "../document/brushes";
+import { getBoxBrushEdgeAxis, getBoxBrushEdgeTransformMeta, getBoxBrushEdgeWorldSegment, getBoxBrushFaceAxis, getBoxBrushFaceTransformMeta, getBoxBrushFaceWorldCenter, getBoxBrushVertexWorldPosition, transformBoxBrushWorldPointToLocal, transformBoxBrushWorldVectorToLocal } from "../geometry/box-brush-components";
+import { buildBoxBrushDerivedMeshData, getBoxBrushEdgeVertexIds, getBoxBrushFaceVertexIds, getBoxBrushLocalVertexPosition } from "../geometry/box-brush-mesh";
 import { createModelColliderDebugGroup } from "../geometry/model-instance-collider-debug-mesh";
 import { buildGeneratedModelCollider } from "../geometry/model-instance-collider-generation";
 import { DEFAULT_GRID_SIZE, snapValueToGrid } from "../geometry/grid-snapping";
@@ -782,7 +781,8 @@ export class ViewportHost {
             },
             size: {
                 ...session.preview.size
-            }
+            },
+            geometry: cloneBoxBrushGeometry(session.preview.geometry)
         };
     }
     clearTransformGizmo() {
@@ -1090,7 +1090,8 @@ export class ViewportHost {
                 },
                 size: {
                     ...session.target.initialSize
-                }
+                },
+                geometry: cloneBoxBrushGeometry(session.target.initialGeometry)
             };
         }
         if (session.target.kind === "modelInstance") {
@@ -1144,7 +1145,8 @@ export class ViewportHost {
                 rotationDegrees: nextRotationDegrees,
                 size: {
                     ...session.target.initialSize
-                }
+                },
+                geometry: cloneBoxBrushGeometry(session.target.initialGeometry)
             };
         }
         if (session.target.kind === "modelInstance") {
@@ -1234,7 +1236,8 @@ export class ViewportHost {
                 rotationDegrees: {
                     ...session.target.initialRotationDegrees
                 },
-                size: nextSize
+                size: nextSize,
+                geometry: scaleBoxBrushGeometryToSize(session.target.initialGeometry, nextSize)
             };
         }
         if (session.target.kind !== "modelInstance") {
@@ -1285,51 +1288,47 @@ export class ViewportHost {
             },
             size: {
                 ...session.target.initialSize
-            }
+            },
+            geometry: cloneBoxBrushGeometry(session.target.initialGeometry)
         };
     }
-    createBrushPreviewFromExtents(brush, extents, rotationDegrees) {
-        const localCenter = {
-            x: (extents.min.x + extents.max.x) * 0.5,
-            y: (extents.min.y + extents.max.y) * 0.5,
-            z: (extents.min.z + extents.max.z) * 0.5
-        };
-        const centerOffset = transformBoxBrushLocalPointToWorld({
-            ...brush,
-            center: { x: 0, y: 0, z: 0 },
-            rotationDegrees: rotationDegrees ?? brush.rotationDegrees
-        }, localCenter);
-        const nextSize = {
-            x: this.snapWhiteboxSizeValue(extents.max.x - extents.min.x),
-            y: this.snapWhiteboxSizeValue(extents.max.y - extents.min.y),
-            z: this.snapWhiteboxSizeValue(extents.max.z - extents.min.z)
-        };
+    createBrushPreviewFromGeometry(brush, geometry) {
+        const nextGeometry = cloneBoxBrushGeometry(geometry);
         return {
             kind: "brush",
             center: {
-                x: this.snapWhiteboxPositionValue(brush.center.x + centerOffset.x),
-                y: this.snapWhiteboxPositionValue(brush.center.y + centerOffset.y),
-                z: this.snapWhiteboxPositionValue(brush.center.z + centerOffset.z)
+                ...brush.center
             },
             rotationDegrees: {
-                ...(rotationDegrees ?? brush.rotationDegrees)
+                ...brush.rotationDegrees
             },
-            size: nextSize
+            size: deriveBoxBrushSizeFromGeometry(nextGeometry),
+            geometry: nextGeometry
         };
     }
-    getInitialBrushLocalExtents(brush) {
-        return {
-            min: {
-                x: -brush.size.x * 0.5,
-                y: -brush.size.y * 0.5,
-                z: -brush.size.z * 0.5
-            },
-            max: {
-                x: brush.size.x * 0.5,
-                y: brush.size.y * 0.5,
-                z: brush.size.z * 0.5
+    getComponentTargetVertexIds(target) {
+        switch (target.kind) {
+            case "brushFace":
+                return [...getBoxBrushFaceVertexIds(target.faceId)];
+            case "brushEdge": {
+                const [start, end] = getBoxBrushEdgeVertexIds(target.edgeId);
+                return [start, end];
             }
-        };
+            case "brushVertex":
+                return [target.vertexId];
+            default:
+                return [];
+        }
+    }
+    applyDeltaToVertices(brush, vertexIds, delta) {
+        const nextGeometry = cloneBoxBrushGeometry(brush.geometry);
+        for (const vertexId of vertexIds) {
+            const vertex = nextGeometry.vertices[vertexId];
+            vertex.x = this.snapWhiteboxPositionValue(vertex.x + delta.x);
+            vertex.y = this.snapWhiteboxPositionValue(vertex.y + delta.y);
+            vertex.z = this.snapWhiteboxPositionValue(vertex.z + delta.z);
+        }
+        return nextGeometry;
     }
     buildComponentTranslatedBrushPreview(session, origin, current, axisConstraint) {
         const initialBrush = this.createTargetPreviewBrush(session);
@@ -1342,7 +1341,8 @@ export class ViewportHost {
                 kind: "brush",
                 center: { ...initialBrush.center },
                 rotationDegrees: { ...initialBrush.rotationDegrees },
-                size: { ...initialBrush.size }
+                size: { ...initialBrush.size },
+                geometry: cloneBoxBrushGeometry(initialBrush.geometry)
             }
         });
         let worldDelta = {
@@ -1368,55 +1368,9 @@ export class ViewportHost {
             worldDelta = this.setAxisComponent(worldDelta, axisConstraint, axisDelta);
         }
         const localDelta = transformBoxBrushWorldVectorToLocal(initialBrush, worldDelta);
-        const extents = this.getInitialBrushLocalExtents(initialBrush);
-        if (session.target.kind === "brushFace") {
-            const meta = getBoxBrushFaceTransformMeta(session.target.faceId);
-            for (const axis of ["x", "y", "z"]) {
-                const axisDelta = localDelta[axis];
-                if (axis === meta.axis) {
-                    if (meta.sign > 0) {
-                        extents.max[axis] += axisDelta;
-                    }
-                    else {
-                        extents.min[axis] += axisDelta;
-                    }
-                }
-                else {
-                    extents.min[axis] += axisDelta;
-                    extents.max[axis] += axisDelta;
-                }
-            }
-        }
-        else if (session.target.kind === "brushEdge") {
-            const meta = getBoxBrushEdgeTransformMeta(session.target.edgeId);
-            for (const axis of ["x", "y", "z"]) {
-                const axisDelta = localDelta[axis];
-                const axisSign = meta.signs[axis];
-                if (axisSign === null) {
-                    extents.min[axis] += axisDelta;
-                    extents.max[axis] += axisDelta;
-                    continue;
-                }
-                if (axisSign > 0) {
-                    extents.max[axis] += axisDelta;
-                }
-                else {
-                    extents.min[axis] += axisDelta;
-                }
-            }
-        }
-        else if (session.target.kind === "brushVertex") {
-            const signs = getBoxBrushVertexSigns(session.target.vertexId);
-            for (const axis of ["x", "y", "z"]) {
-                if (signs[axis] > 0) {
-                    extents.max[axis] += localDelta[axis];
-                }
-                else {
-                    extents.min[axis] += localDelta[axis];
-                }
-            }
-        }
-        return this.createBrushPreviewFromExtents(initialBrush, extents);
+        const vertexIds = this.getComponentTargetVertexIds(session.target);
+        const nextGeometry = this.applyDeltaToVertices(initialBrush, vertexIds, localDelta);
+        return this.createBrushPreviewFromGeometry(initialBrush, nextGeometry);
     }
     buildComponentRotatedBrushPreview(session, origin, current, axisConstraint) {
         const initialBrush = this.createTargetPreviewBrush(session);
@@ -1425,89 +1379,108 @@ export class ViewportHost {
         }
         const effectiveAxis = axisConstraint ?? this.getEffectiveRotationAxis(session);
         const pointerDeltaDegrees = (current.x - origin.x - (current.y - origin.y)) * 0.5;
-        const pivot = this.getTransformPivotPosition({
+        const pivotWorld = this.getTransformPivotPosition({
             ...session,
             preview: {
                 kind: "brush",
                 center: { ...initialBrush.center },
                 rotationDegrees: { ...initialBrush.rotationDegrees },
-                size: { ...initialBrush.size }
+                size: { ...initialBrush.size },
+                geometry: cloneBoxBrushGeometry(initialBrush.geometry)
             }
         });
-        const axisVector = this.axisVector(effectiveAxis).normalize();
-        const centerVector = new Vector3(initialBrush.center.x, initialBrush.center.y, initialBrush.center.z);
-        const pivotVector = new Vector3(pivot.x, pivot.y, pivot.z);
-        const nextCenter = centerVector
-            .sub(pivotVector)
-            .applyAxisAngle(axisVector, (pointerDeltaDegrees * Math.PI) / 180)
-            .add(pivotVector);
-        const nextRotationDegrees = {
-            ...initialBrush.rotationDegrees
-        };
-        nextRotationDegrees[effectiveAxis] = this.normalizeDegrees(nextRotationDegrees[effectiveAxis] + pointerDeltaDegrees);
-        return {
-            kind: "brush",
-            center: {
-                x: this.snapWhiteboxPositionValue(nextCenter.x),
-                y: this.snapWhiteboxPositionValue(nextCenter.y),
-                z: this.snapWhiteboxPositionValue(nextCenter.z)
-            },
-            rotationDegrees: nextRotationDegrees,
-            size: {
-                ...initialBrush.size
-            }
-        };
+        const pivotLocal = transformBoxBrushWorldPointToLocal(initialBrush, pivotWorld);
+        const rotationAxis = this.axisVector(effectiveAxis).normalize();
+        const vertexIds = this.getComponentTargetVertexIds(session.target);
+        const nextGeometry = cloneBoxBrushGeometry(initialBrush.geometry);
+        for (const vertexId of vertexIds) {
+            const vertex = getBoxBrushLocalVertexPosition(initialBrush, vertexId);
+            const next = new Vector3(vertex.x - pivotLocal.x, vertex.y - pivotLocal.y, vertex.z - pivotLocal.z)
+                .applyAxisAngle(rotationAxis, (pointerDeltaDegrees * Math.PI) / 180)
+                .add(new Vector3(pivotLocal.x, pivotLocal.y, pivotLocal.z));
+            nextGeometry.vertices[vertexId] = {
+                x: this.snapWhiteboxPositionValue(next.x),
+                y: this.snapWhiteboxPositionValue(next.y),
+                z: this.snapWhiteboxPositionValue(next.z)
+            };
+        }
+        return this.createBrushPreviewFromGeometry(initialBrush, nextGeometry);
     }
     buildComponentScaledBrushPreview(session, origin, current, axisConstraint) {
         const initialBrush = this.createTargetPreviewBrush(session);
         if (initialBrush === null) {
             throw new Error("Cannot build a component scale preview without a box brush target.");
         }
-        const extents = this.getInitialBrushLocalExtents(initialBrush);
+        const pivotWorld = this.getTransformPivotPosition({
+            ...session,
+            preview: {
+                kind: "brush",
+                center: { ...initialBrush.center },
+                rotationDegrees: { ...initialBrush.rotationDegrees },
+                size: { ...initialBrush.size },
+                geometry: cloneBoxBrushGeometry(initialBrush.geometry)
+            }
+        });
+        const pivotLocal = transformBoxBrushWorldPointToLocal(initialBrush, pivotWorld);
+        const nextGeometry = cloneBoxBrushGeometry(initialBrush.geometry);
+        const vertexIds = this.getComponentTargetVertexIds(session.target);
         if (session.target.kind === "brushFace") {
             const meta = getBoxBrushFaceTransformMeta(session.target.faceId);
-            const scaleFactor = 1 +
-                this.getAxisMovementDistance(axisConstraint ?? meta.axis, this.getTransformPivotPosition(session), origin, current) *
-                    0.45;
-            if (meta.sign > 0) {
-                extents.max[meta.axis] = extents.min[meta.axis] + (extents.max[meta.axis] - extents.min[meta.axis]) * scaleFactor;
-            }
-            else {
-                extents.min[meta.axis] = extents.max[meta.axis] - (extents.max[meta.axis] - extents.min[meta.axis]) * scaleFactor;
+            const axis = axisConstraint ?? meta.axis;
+            const scaleFactor = 1 + this.getAxisMovementDistance(axis, pivotWorld, origin, current) * 0.45;
+            for (const vertexId of vertexIds) {
+                const vertex = nextGeometry.vertices[vertexId];
+                vertex[axis] = this.snapWhiteboxPositionValue(pivotLocal[axis] + (vertex[axis] - pivotLocal[axis]) * scaleFactor);
             }
         }
         else if (session.target.kind === "brushEdge") {
             const meta = getBoxBrushEdgeTransformMeta(session.target.edgeId);
             const affectedAxes = ["x", "y", "z"].filter((axis) => meta.signs[axis] !== null && (axisConstraint === null || axisConstraint === axis));
-            const pivot = this.getTransformPivotPosition(session);
             for (const axis of affectedAxes) {
-                const sign = meta.signs[axis];
-                if (sign === null) {
-                    continue;
-                }
-                const scaleFactor = 1 + this.getAxisMovementDistance(axis, pivot, origin, current) * 0.45;
-                if (sign > 0) {
-                    extents.max[axis] = extents.min[axis] + (extents.max[axis] - extents.min[axis]) * scaleFactor;
-                }
-                else {
-                    extents.min[axis] = extents.max[axis] - (extents.max[axis] - extents.min[axis]) * scaleFactor;
+                const scaleFactor = 1 + this.getAxisMovementDistance(axis, pivotWorld, origin, current) * 0.45;
+                for (const vertexId of vertexIds) {
+                    const vertex = nextGeometry.vertices[vertexId];
+                    vertex[axis] = this.snapWhiteboxPositionValue(pivotLocal[axis] + (vertex[axis] - pivotLocal[axis]) * scaleFactor);
                 }
             }
         }
-        return this.createBrushPreviewFromExtents(initialBrush, extents);
+        return this.createBrushPreviewFromGeometry(initialBrush, nextGeometry);
     }
-    applyBrushRenderObjectTransform(brushId, center, rotationDegrees, size) {
+    updateBrushRenderObjectGeometry(brush) {
+        const renderObjects = this.brushRenderObjects.get(brush.id);
+        if (renderObjects === undefined) {
+            return;
+        }
+        const nextGeometry = buildBoxBrushDerivedMeshData(brush).geometry;
+        renderObjects.mesh.geometry.dispose();
+        renderObjects.mesh.geometry = nextGeometry;
+        renderObjects.edges.geometry.dispose();
+        renderObjects.edges.geometry = new EdgesGeometry(nextGeometry);
+        for (const edgeHelper of renderObjects.edgeHelpers) {
+            const segment = getBoxBrushEdgeWorldSegment(brush, edgeHelper.id);
+            const nextEdgeGeometry = new BufferGeometry().setFromPoints([
+                new Vector3(segment.start.x, segment.start.y, segment.start.z),
+                new Vector3(segment.end.x, segment.end.y, segment.end.z)
+            ]);
+            edgeHelper.line.geometry.dispose();
+            edgeHelper.line.geometry = nextEdgeGeometry;
+        }
+        for (const vertexHelper of renderObjects.vertexHelpers) {
+            const vertex = getBoxBrushVertexWorldPosition(brush, vertexHelper.id);
+            vertexHelper.mesh.position.set(vertex.x, vertex.y, vertex.z);
+        }
+    }
+    applyBrushRenderObjectTransform(brushId, center, rotationDegrees) {
         const renderObjects = this.brushRenderObjects.get(brushId);
-        const brush = this.currentDocument?.brushes[brushId];
-        if (renderObjects === undefined || brush === undefined) {
+        if (renderObjects === undefined) {
             return;
         }
         renderObjects.mesh.position.set(center.x, center.y, center.z);
         renderObjects.mesh.rotation.set((rotationDegrees.x * Math.PI) / 180, (rotationDegrees.y * Math.PI) / 180, (rotationDegrees.z * Math.PI) / 180);
-        renderObjects.mesh.scale.set(size.x / brush.size.x, size.y / brush.size.y, size.z / brush.size.z);
+        renderObjects.mesh.scale.set(1, 1, 1);
         renderObjects.edges.position.set(center.x, center.y, center.z);
         renderObjects.edges.rotation.set((rotationDegrees.x * Math.PI) / 180, (rotationDegrees.y * Math.PI) / 180, (rotationDegrees.z * Math.PI) / 180);
-        renderObjects.edges.scale.set(size.x / brush.size.x, size.y / brush.size.y, size.z / brush.size.z);
+        renderObjects.edges.scale.set(1, 1, 1);
     }
     applySpotLightGroupTransform(group, position, direction) {
         const forward = new Vector3(direction.x, direction.y, direction.z).normalize();
@@ -1553,7 +1526,8 @@ export class ViewportHost {
             return;
         }
         for (const brush of Object.values(this.currentDocument.brushes)) {
-            this.applyBrushRenderObjectTransform(brush.id, brush.center, brush.rotationDegrees, brush.size);
+            this.updateBrushRenderObjectGeometry(brush);
+            this.applyBrushRenderObjectTransform(brush.id, brush.center, brush.rotationDegrees);
         }
         for (const entity of getEntityInstances(this.currentDocument.entities)) {
             this.applyEntityRenderObjectTransform(entity);
@@ -1573,7 +1547,11 @@ export class ViewportHost {
             case "brushEdge":
             case "brushVertex":
                 if (this.currentTransformSession.preview.kind === "brush") {
-                    this.applyBrushRenderObjectTransform(this.currentTransformSession.target.brushId, this.currentTransformSession.preview.center, this.currentTransformSession.preview.rotationDegrees, this.currentTransformSession.preview.size);
+                    const previewBrush = this.createPreviewBrushForSession(this.currentTransformSession);
+                    if (previewBrush !== null) {
+                        this.updateBrushRenderObjectGeometry(previewBrush);
+                    }
+                    this.applyBrushRenderObjectTransform(this.currentTransformSession.target.brushId, this.currentTransformSession.preview.center, this.currentTransformSession.preview.rotationDegrees);
                 }
                 break;
             case "modelInstance":
@@ -1654,8 +1632,7 @@ export class ViewportHost {
     rebuildBrushMeshes(document, selection) {
         this.clearBrushMeshes();
         for (const brush of Object.values(document.brushes)) {
-            const geometry = new BoxGeometry(brush.size.x, brush.size.y, brush.size.z);
-            applyBoxBrushFaceUvsToGeometry(geometry, brush);
+            const geometry = buildBoxBrushDerivedMeshData(brush).geometry;
             const materials = BOX_FACE_IDS.map((faceId) => this.createFaceMaterial(brush, faceId, document.materials[brush.faces[faceId].materialId ?? ""], this.getFaceHighlightState(brush.id, faceId)));
             const mesh = new Mesh(geometry, materials);
             const brushSelected = isBrushSelected(selection, brush.id);
@@ -1682,7 +1659,7 @@ export class ViewportHost {
                 edgeHelpers,
                 vertexHelpers
             });
-            this.applyBrushRenderObjectTransform(brush.id, brush.center, brush.rotationDegrees, brush.size);
+            this.applyBrushRenderObjectTransform(brush.id, brush.center, brush.rotationDegrees);
         }
         this.refreshBrushPresentation();
         this.applyShadowState();
