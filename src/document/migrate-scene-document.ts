@@ -776,6 +776,41 @@ function readBoxBrushFaces(
   };
 }
 
+function readBoxBrushGeometry(value: unknown, label: string, size: { x: number; y: number; z: number }) {
+  if (value === undefined) {
+    return createDefaultBoxBrushGeometry(size);
+  }
+
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  if (!isRecord(value.vertices)) {
+    throw new Error(`${label}.vertices must be an object.`);
+  }
+
+  const extraVertexKeys = Object.keys(value.vertices).filter(
+    (vertexId) => !BOX_VERTEX_IDS.includes(vertexId as (typeof BOX_VERTEX_IDS)[number])
+  );
+
+  if (extraVertexKeys.length > 0) {
+    throw new Error(`${label}.vertices contains unsupported vertex ids: ${extraVertexKeys.join(", ")}.`);
+  }
+
+  return {
+    vertices: {
+      negX_negY_negZ: readVec3(value.vertices.negX_negY_negZ, `${label}.vertices.negX_negY_negZ`),
+      posX_negY_negZ: readVec3(value.vertices.posX_negY_negZ, `${label}.vertices.posX_negY_negZ`),
+      negX_posY_negZ: readVec3(value.vertices.negX_posY_negZ, `${label}.vertices.negX_posY_negZ`),
+      posX_posY_negZ: readVec3(value.vertices.posX_posY_negZ, `${label}.vertices.posX_posY_negZ`),
+      negX_negY_posZ: readVec3(value.vertices.negX_negY_posZ, `${label}.vertices.negX_negY_posZ`),
+      posX_negY_posZ: readVec3(value.vertices.posX_negY_posZ, `${label}.vertices.posX_negY_posZ`),
+      negX_posY_posZ: readVec3(value.vertices.negX_posY_posZ, `${label}.vertices.negX_posY_posZ`),
+      posX_posY_posZ: readVec3(value.vertices.posX_posY_posZ, `${label}.vertices.posX_posY_posZ`)
+    }
+  };
+}
+
 function readBrushes(
   value: unknown,
   materials: SceneDocument["materials"],
