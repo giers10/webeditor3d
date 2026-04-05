@@ -11,7 +11,7 @@ import type {
 } from "../geometry/model-instance-collider-generation";
 
 import type { FirstPersonPlayerShape, ResolvedPlayerMotion } from "./player-collision";
-import type { RuntimeBoxCollider, RuntimeSceneCollider } from "./runtime-scene-build";
+import type { RuntimeBrushTriMeshCollider, RuntimeSceneCollider } from "./runtime-scene-build";
 
 const CHARACTER_CONTROLLER_OFFSET = 0.01;
 const COLLISION_EPSILON = 1e-5;
@@ -87,19 +87,14 @@ function createFixedBodyForModelCollider(world: RAPIER.World, collider: Generate
   );
 }
 
-function attachBrushCollider(world: RAPIER.World, collider: RuntimeBoxCollider) {
+function attachBrushCollider(world: RAPIER.World, collider: RuntimeBrushTriMeshCollider) {
   const body = world.createRigidBody(
     RAPIER.RigidBodyDesc.fixed()
       .setTranslation(collider.center.x, collider.center.y, collider.center.z)
       .setRotation(createRapierQuaternion(collider.rotationDegrees))
   );
-  const halfExtents = {
-    x: collider.size.x * 0.5,
-    y: collider.size.y * 0.5,
-    z: collider.size.z * 0.5
-  };
 
-  world.createCollider(RAPIER.ColliderDesc.cuboid(halfExtents.x, halfExtents.y, halfExtents.z), body);
+  world.createCollider(RAPIER.ColliderDesc.trimesh(collider.vertices, collider.indices), body);
 }
 
 function attachSimpleModelCollider(world: RAPIER.World, collider: GeneratedModelBoxCollider) {
