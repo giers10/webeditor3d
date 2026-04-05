@@ -10,9 +10,10 @@ import {
   supportsTransformAxisConstraint,
   supportsTransformOperation
 } from "../../src/core/transform-session";
-import { createBoxBrush } from "../../src/document/brushes";
+import { cloneBoxBrushGeometry, createBoxBrush } from "../../src/document/brushes";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
 import { createPlayerStartEntity } from "../../src/entities/entity-instances";
+import { getBoxBrushLocalVertexPosition } from "../../src/geometry/box-brush-mesh";
 
 const modelAsset = {
   id: "asset-model-transform-fixture",
@@ -503,6 +504,62 @@ describe("transform session commit commands", () => {
       brushId: brush.id,
       vertexId: "posX_posY_posZ"
     });
+  });
+
+  it("commits deformed vertex geometry without forcing all vertices onto box extents", () => {
+    const brush = createBoxBrush({
+      id: "brush-vertex-deform",
+      center: { x: 0, y: 0, z: 0 },
+      size: { x: 2, y: 2, z: 2 }
+    });
+    const store = createEditorStore({
+      initialDocument: {
+        ...createEmptySceneDocument({ name: "Vertex Deform Fixture" }),
+        brushes: {
+          [brush.id]: brush
+        }
+      }
+    });
+    const target = resolveTransformTarget(
+      store.getState().document,
+      {
+        kind: "brushVertex",
+        brushId: brush.id,
+        vertexId: "posX_posY_posZ"
+      },
+      "vertex"
+    ).target;
+
+    if (target === null || target.kind !== "brushVertex") {
+      throw new Error("Expected a whitebox vertex transform target.");
+    }
+
+    const deformedGeometry = cloneBoxBrushGeometry(target.initialGeometry);
+    deformedGeometry.vertices.posX_posY_posZ = {
+      ...deformedGeometry.vertices.posX_posY_posZ,
+      x: deformedGeometry.vertices.posX_posY_posZ.x + 1
+    };
+
+    const session = createTransformSession({
+      source: "keyboard",
+      sourcePanelId: "topLeft",
+      operation: "translate",
+      target
+    });
+
+    session.preview = {
+      kind: "brush",
+      center: { ...target.initialCenter },
+      rotationDegrees: { ...target.initialRotationDegrees },
+      size: { ...target.initialSize },
+      geometry: deformedGeometry
+    };
+
+    store.executeCommand(createCommitTransformSessionCommand(store.getState().document, session));
+
+    const committedBrush = store.getState().document.brushes[brush.id];
+    expect(getBoxBrushLocalVertexPosition(committedBrush, "posX_posY_posZ").x).toBe(2);
+    expect(getBoxBrushLocalVertexPosition(committedBrush, "posX_posY_negZ").x).toBe(1);
   });
 
   it("commits a model instance translate/rotate/scale transform with undo and redo", () => {
