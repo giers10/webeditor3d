@@ -109,6 +109,7 @@ import {
   BOX_VERTEX_IDS,
   cloneBoxBrushGeometry,
   deriveBoxBrushSizeFromGeometry,
+  scaleBoxBrushGeometryToSize,
   DEFAULT_BOX_BRUSH_SIZE,
   type BoxBrush,
   type BoxBrushGeometry,
@@ -1536,7 +1537,8 @@ export class ViewportHost {
         },
         size: {
           ...session.target.initialSize
-        }
+        },
+        geometry: cloneBoxBrushGeometry(session.target.initialGeometry)
       };
     }
 
@@ -1603,7 +1605,8 @@ export class ViewportHost {
         rotationDegrees: nextRotationDegrees,
         size: {
           ...session.target.initialSize
-        }
+        },
+        geometry: cloneBoxBrushGeometry(session.target.initialGeometry)
       };
     }
 
@@ -1714,6 +1717,8 @@ export class ViewportHost {
           ...session.target.initialRotationDegrees
         },
         size: nextSize
+        ,
+        geometry: scaleBoxBrushGeometryToSize(session.target.initialGeometry, nextSize)
       };
     }
 
@@ -1773,7 +1778,8 @@ export class ViewportHost {
       },
       size: {
         ...session.target.initialSize
-      }
+      },
+      geometry: cloneBoxBrushGeometry(session.target.initialGeometry)
     };
   }
 
@@ -1792,7 +1798,8 @@ export class ViewportHost {
       geometry: nextGeometry
     };
   }
-
+        },
+        geometry: cloneBoxBrushGeometry(session.preview.geometry)
   private getComponentTargetVertexIds(target: ActiveTransformSession["target"]): BoxVertexId[] {
     switch (target.kind) {
       case "brushFace":
@@ -1971,6 +1978,35 @@ export class ViewportHost {
     return this.createBrushPreviewFromGeometry(initialBrush, nextGeometry);
   }
 
+  private updateBrushRenderObjectGeometry(brush: BoxBrush) {
+    const renderObjects = this.brushRenderObjects.get(brush.id);
+
+    if (renderObjects === undefined) {
+      return;
+    }
+
+    const nextGeometry = buildBoxBrushDerivedMeshData(brush).geometry;
+    renderObjects.mesh.geometry.dispose();
+    renderObjects.mesh.geometry = nextGeometry;
+    renderObjects.edges.geometry.dispose();
+    renderObjects.edges.geometry = new EdgesGeometry(nextGeometry);
+
+    for (const edgeHelper of renderObjects.edgeHelpers) {
+      const segment = getBoxBrushEdgeWorldSegment(brush, edgeHelper.id);
+      const nextEdgeGeometry = new BufferGeometry().setFromPoints([
+        new Vector3(segment.start.x, segment.start.y, segment.start.z),
+        new Vector3(segment.end.x, segment.end.y, segment.end.z)
+      ]);
+      edgeHelper.line.geometry.dispose();
+      edgeHelper.line.geometry = nextEdgeGeometry;
+    }
+
+    for (const vertexHelper of renderObjects.vertexHelpers) {
+      const vertex = getBoxBrushVertexWorldPosition(brush, vertexHelper.id);
+      vertexHelper.mesh.position.set(vertex.x, vertex.y, vertex.z);
+    }
+  }
+
   private applyBrushRenderObjectTransform(brushId: string, center: Vec3, rotationDegrees: Vec3, size: Vec3) {
     const renderObjects = this.brushRenderObjects.get(brushId);
     const brush = this.currentDocument?.brushes[brushId];
@@ -1985,14 +2021,14 @@ export class ViewportHost {
       (rotationDegrees.y * Math.PI) / 180,
       (rotationDegrees.z * Math.PI) / 180
     );
-    renderObjects.mesh.scale.set(size.x / brush.size.x, size.y / brush.size.y, size.z / brush.size.z);
+    renderObjects.mesh.scale.set(1, 1, 1);
     renderObjects.edges.position.set(center.x, center.y, center.z);
     renderObjects.edges.rotation.set(
       (rotationDegrees.x * Math.PI) / 180,
       (rotationDegrees.y * Math.PI) / 180,
       (rotationDegrees.z * Math.PI) / 180
     );
-    renderObjects.edges.scale.set(size.x / brush.size.x, size.y / brush.size.y, size.z / brush.size.z);
+    renderObjects.edges.scale.set(1, 1, 1);
   }
 
   private applySpotLightGroupTransform(group: Group, position: Vec3, direction: Vec3) {
@@ -2051,6 +2087,7 @@ export class ViewportHost {
     }
 
     for (const brush of Object.values(this.currentDocument.brushes)) {
+      this.updateBrushRenderObjectGeometry(brush);
       this.applyBrushRenderObjectTransform(brush.id, brush.center, brush.rotationDegrees, brush.size);
     }
 
@@ -2076,6 +2113,12 @@ export class ViewportHost {
       case "brushEdge":
       case "brushVertex":
         if (this.currentTransformSession.preview.kind === "brush") {
+          const previewBrush = this.createPreviewBrushForSession(this.currentTransformSession);
+
+          if (previewBrush !== null) {
+            this.updateBrushRenderObjectGeometry(previewBrush);
+          }
+
           this.applyBrushRenderObjectTransform(
             this.currentTransformSession.target.brushId,
             this.currentTransformSession.preview.center,
