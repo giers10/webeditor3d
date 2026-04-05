@@ -1,5 +1,5 @@
 import { createOpaqueId } from "../core/ids";
-import { cloneBoxBrushGeometry, scaleBoxBrushGeometryToSize } from "../document/brushes";
+import { cloneBoxBrushGeometry, deriveBoxBrushSizeFromGeometry, scaleBoxBrushGeometryToSize } from "../document/brushes";
 import { cloneSelectionForCommand, getBoxBrushOrThrow, replaceBrush, setSingleBrushEdgeSelection, setSingleBrushFaceSelection, setSingleBrushSelection, setSingleBrushVertexSelection } from "./brush-command-helpers";
 function cloneVec3(vector) {
     return {
@@ -57,12 +57,14 @@ export function createSetBoxBrushTransformCommand(options) {
             if (previousToolMode === null) {
                 previousToolMode = context.getToolMode();
             }
-            const nextGeometry = scaleBoxBrushGeometryToSize(brush.geometry, options.size);
+            const nextGeometry = options.geometry === undefined ? scaleBoxBrushGeometryToSize(brush.geometry, options.size) : cloneBoxBrushGeometry(options.geometry);
+            const nextSize = deriveBoxBrushSizeFromGeometry(nextGeometry);
+            assertPositiveSize(nextSize);
             context.setDocument(replaceBrush(currentDocument, {
                 ...brush,
                 center: cloneVec3(options.center),
                 rotationDegrees: cloneVec3(options.rotationDegrees),
-                size: cloneVec3(options.size),
+                size: nextSize,
                 geometry: nextGeometry
             }));
             context.setSelection(selectionToEditorSelection(options.selection));
