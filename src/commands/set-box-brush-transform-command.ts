@@ -3,7 +3,7 @@ import type { ToolMode } from "../core/tool-mode";
 import { createOpaqueId } from "../core/ids";
 import type { EditorSelection } from "../core/selection";
 import type { Vec3 } from "../core/vector";
-import { cloneBoxBrushGeometry, scaleBoxBrushGeometryToSize } from "../document/brushes";
+import { cloneBoxBrushGeometry, deriveBoxBrushSizeFromGeometry, scaleBoxBrushGeometryToSize, type BoxBrushGeometry } from "../document/brushes";
 
 import {
   cloneSelectionForCommand,
@@ -28,6 +28,7 @@ interface SetBoxBrushTransformCommandOptions {
   center: Vec3;
   rotationDegrees: Vec3;
   size: Vec3;
+  geometry?: BoxBrushGeometry;
   label?: string;
 }
 
@@ -105,14 +106,17 @@ export function createSetBoxBrushTransformCommand(options: SetBoxBrushTransformC
         previousToolMode = context.getToolMode();
       }
 
-      const nextGeometry = scaleBoxBrushGeometryToSize(brush.geometry, options.size);
+      const nextGeometry = options.geometry === undefined ? scaleBoxBrushGeometryToSize(brush.geometry, options.size) : cloneBoxBrushGeometry(options.geometry);
+      const nextSize = deriveBoxBrushSizeFromGeometry(nextGeometry);
+
+      assertPositiveSize(nextSize);
 
       context.setDocument(
         replaceBrush(currentDocument, {
           ...brush,
           center: cloneVec3(options.center),
           rotationDegrees: cloneVec3(options.rotationDegrees),
-          size: cloneVec3(options.size),
+          size: nextSize,
           geometry: nextGeometry
         })
       );
