@@ -125,7 +125,7 @@ import {
   transformBoxBrushLocalPointToWorld,
   transformBoxBrushWorldVectorToLocal
 } from "../geometry/box-brush-components";
-import { applyBoxBrushFaceUvsToGeometry } from "../geometry/box-face-uvs";
+import { buildBoxBrushDerivedMeshData } from "../geometry/box-brush-mesh";
 import { createModelColliderDebugGroup } from "../geometry/model-instance-collider-debug-mesh";
 import { buildGeneratedModelCollider } from "../geometry/model-instance-collider-generation";
 import { DEFAULT_GRID_SIZE, snapValueToGrid } from "../geometry/grid-snapping";
@@ -159,7 +159,7 @@ import {
 } from "./viewport-transient-state";
 
 interface BrushRenderObjects {
-  mesh: Mesh<BoxGeometry, Array<MeshStandardMaterial | MeshBasicMaterial>>;
+  mesh: Mesh<BufferGeometry, Array<MeshStandardMaterial | MeshBasicMaterial>>;
   edges: LineSegments<EdgesGeometry, LineBasicMaterial>;
   edgeHelpers: Array<{
     id: BoxEdgeId;
@@ -2229,8 +2229,7 @@ export class ViewportHost {
     this.clearBrushMeshes();
 
     for (const brush of Object.values(document.brushes)) {
-      const geometry = new BoxGeometry(brush.size.x, brush.size.y, brush.size.z);
-      applyBoxBrushFaceUvsToGeometry(geometry, brush);
+      const geometry = buildBoxBrushDerivedMeshData(brush).geometry;
 
       const materials = BOX_FACE_IDS.map((faceId) =>
         this.createFaceMaterial(
