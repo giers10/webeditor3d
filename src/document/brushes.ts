@@ -83,6 +83,12 @@ export interface BrushFace {
 
 export type BoxBrushFaces = Record<BoxFaceId, BrushFace>;
 
+export type BoxBrushGeometryVertices = Record<BoxVertexId, Vec3>;
+
+export interface BoxBrushGeometry {
+  vertices: BoxBrushGeometryVertices;
+}
+
 export interface BoxBrush {
   id: string;
   kind: "box";
@@ -90,6 +96,7 @@ export interface BoxBrush {
   center: Vec3;
   rotationDegrees: Vec3;
   size: Vec3;
+  geometry: BoxBrushGeometry;
   faces: BoxBrushFaces;
   layerId?: string;
   groupId?: string;
@@ -136,6 +143,81 @@ function cloneBrushFace(face: BrushFace): BrushFace {
   return {
     materialId: face.materialId,
     uv: cloneFaceUvState(face.uv)
+  };
+}
+
+function cloneBoxBrushGeometryVertex(vertex: Vec3): Vec3 {
+  return {
+    x: vertex.x,
+    y: vertex.y,
+    z: vertex.z
+  };
+}
+
+export function cloneBoxBrushGeometry(geometry: BoxBrushGeometry): BoxBrushGeometry {
+  return {
+    vertices: {
+      negX_negY_negZ: cloneBoxBrushGeometryVertex(geometry.vertices.negX_negY_negZ),
+      posX_negY_negZ: cloneBoxBrushGeometryVertex(geometry.vertices.posX_negY_negZ),
+      negX_posY_negZ: cloneBoxBrushGeometryVertex(geometry.vertices.negX_posY_negZ),
+      posX_posY_negZ: cloneBoxBrushGeometryVertex(geometry.vertices.posX_posY_negZ),
+      negX_negY_posZ: cloneBoxBrushGeometryVertex(geometry.vertices.negX_negY_posZ),
+      posX_negY_posZ: cloneBoxBrushGeometryVertex(geometry.vertices.posX_negY_posZ),
+      negX_posY_posZ: cloneBoxBrushGeometryVertex(geometry.vertices.negX_posY_posZ),
+      posX_posY_posZ: cloneBoxBrushGeometryVertex(geometry.vertices.posX_posY_posZ)
+    }
+  };
+}
+
+export function getBoxBrushGeometryLocalBounds(geometry: BoxBrushGeometry): { min: Vec3; max: Vec3 } {
+  const vertices = Object.values(geometry.vertices);
+  const firstVertex = vertices[0];
+  const min = { ...firstVertex };
+  const max = { ...firstVertex };
+
+  for (const vertex of vertices.slice(1)) {
+    min.x = Math.min(min.x, vertex.x);
+    min.y = Math.min(min.y, vertex.y);
+    min.z = Math.min(min.z, vertex.z);
+    max.x = Math.max(max.x, vertex.x);
+    max.y = Math.max(max.y, vertex.y);
+    max.z = Math.max(max.z, vertex.z);
+  }
+
+  return {
+    min,
+    max
+  };
+}
+
+export function deriveBoxBrushSizeFromGeometry(geometry: BoxBrushGeometry): Vec3 {
+  const bounds = getBoxBrushGeometryLocalBounds(geometry);
+
+  return {
+    x: bounds.max.x - bounds.min.x,
+    y: bounds.max.y - bounds.min.y,
+    z: bounds.max.z - bounds.min.z
+  };
+}
+
+export function createDefaultBoxBrushGeometry(size: Vec3 = DEFAULT_BOX_BRUSH_SIZE): BoxBrushGeometry {
+  const halfSize = {
+    x: size.x * 0.5,
+    y: size.y * 0.5,
+    z: size.z * 0.5
+  };
+
+  return {
+    vertices: {
+      negX_negY_negZ: { x: -halfSize.x, y: -halfSize.y, z: -halfSize.z },
+      posX_negY_negZ: { x: halfSize.x, y: -halfSize.y, z: -halfSize.z },
+      negX_posY_negZ: { x: -halfSize.x, y: halfSize.y, z: -halfSize.z },
+      posX_posY_negZ: { x: halfSize.x, y: halfSize.y, z: -halfSize.z },
+      negX_negY_posZ: { x: -halfSize.x, y: -halfSize.y, z: halfSize.z },
+      posX_negY_posZ: { x: halfSize.x, y: -halfSize.y, z: halfSize.z },
+      negX_posY_posZ: { x: -halfSize.x, y: halfSize.y, z: halfSize.z },
+      posX_posY_posZ: { x: halfSize.x, y: halfSize.y, z: halfSize.z }
+    }
   };
 }
 
@@ -230,11 +312,13 @@ export function createDefaultBoxBrushFaces(): BoxBrushFaces {
 }
 
 export function createBoxBrush(
-  overrides: Partial<Pick<BoxBrush, "id" | "name" | "center" | "rotationDegrees" | "size" | "faces" | "layerId" | "groupId">> = {}
+  overrides: Partial<Pick<BoxBrush, "id" | "name" | "center" | "rotationDegrees" | "size" | "geometry" | "faces" | "layerId" | "groupId">> = {}
 ): BoxBrush {
   const center = cloneVec3(overrides.center ?? DEFAULT_BOX_BRUSH_CENTER);
   const rotationDegrees = cloneVec3(overrides.rotationDegrees ?? DEFAULT_BOX_BRUSH_ROTATION_DEGREES);
-  const size = cloneVec3(overrides.size ?? DEFAULT_BOX_BRUSH_SIZE);
+  const fallbackSize = cloneVec3(overrides.size ?? DEFAULT_BOX_BRUSH_SIZE);
+  const geometry = overrides.geometry === undefined ? createDefaultBoxBrushGeometry(fallbackSize) : cloneBoxBrushGeometry(overrides.geometry);
+  const size = deriveBoxBrushSizeFromGeometry(geometry);
 
   if (!hasPositiveBoxSize(size)) {
     throw new Error("Box brush size must remain positive on every axis.");
@@ -247,6 +331,7 @@ export function createBoxBrush(
     center,
     rotationDegrees,
     size,
+    geometry,
     faces: overrides.faces === undefined ? createDefaultBoxBrushFaces() : cloneBoxBrushFaces(overrides.faces),
     layerId: overrides.layerId,
     groupId: overrides.groupId
