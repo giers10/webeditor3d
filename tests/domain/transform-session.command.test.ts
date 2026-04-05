@@ -289,6 +289,134 @@ describe("transform session commit commands", () => {
     });
   });
 
+  it("commits a face transform preview and restores it through undo/redo", () => {
+    const brush = createBoxBrush({
+      id: "brush-face-transform",
+      center: { x: 0, y: 1, z: 0 },
+      size: { x: 2, y: 2, z: 2 }
+    });
+    const store = createEditorStore({
+      initialDocument: {
+        ...createEmptySceneDocument({ name: "Face Transform Fixture" }),
+        brushes: {
+          [brush.id]: brush
+        }
+      }
+    });
+    const target = resolveTransformTarget(
+      store.getState().document,
+      {
+        kind: "brushFace",
+        brushId: brush.id,
+        faceId: "posX"
+      },
+      "face"
+    ).target;
+
+    if (target === null || target.kind !== "brushFace") {
+      throw new Error("Expected a whitebox face transform target.");
+    }
+
+    const session = createTransformSession({
+      source: "keyboard",
+      sourcePanelId: "topLeft",
+      operation: "translate",
+      target
+    });
+
+    session.preview = {
+      kind: "brush",
+      center: { x: 0.5, y: 1, z: 0 },
+      rotationDegrees: { x: 0, y: 0, z: 0 },
+      size: { x: 3, y: 2, z: 2 }
+    };
+
+    store.executeCommand(createCommitTransformSessionCommand(store.getState().document, session));
+
+    expect(store.getState().document.brushes[brush.id]).toMatchObject({
+      center: { x: 0.5, y: 1, z: 0 },
+      size: { x: 3, y: 2, z: 2 }
+    });
+    expect(store.getState().selection).toEqual({
+      kind: "brushFace",
+      brushId: brush.id,
+      faceId: "posX"
+    });
+
+    expect(store.undo()).toBe(true);
+    expect(store.getState().document.brushes[brush.id]).toEqual(brush);
+
+    expect(store.redo()).toBe(true);
+    expect(store.getState().document.brushes[brush.id]).toMatchObject({
+      center: { x: 0.5, y: 1, z: 0 },
+      size: { x: 3, y: 2, z: 2 }
+    });
+  });
+
+  it("commits a vertex transform preview and preserves vertex selection through undo/redo", () => {
+    const brush = createBoxBrush({
+      id: "brush-vertex-transform",
+      center: { x: 0, y: 1, z: 0 },
+      size: { x: 2, y: 2, z: 2 }
+    });
+    const store = createEditorStore({
+      initialDocument: {
+        ...createEmptySceneDocument({ name: "Vertex Transform Fixture" }),
+        brushes: {
+          [brush.id]: brush
+        }
+      }
+    });
+    const target = resolveTransformTarget(
+      store.getState().document,
+      {
+        kind: "brushVertex",
+        brushId: brush.id,
+        vertexId: "posX_posY_posZ"
+      },
+      "vertex"
+    ).target;
+
+    if (target === null || target.kind !== "brushVertex") {
+      throw new Error("Expected a whitebox vertex transform target.");
+    }
+
+    const session = createTransformSession({
+      source: "keyboard",
+      sourcePanelId: "topLeft",
+      operation: "translate",
+      target
+    });
+
+    session.preview = {
+      kind: "brush",
+      center: { x: 0.5, y: 1.5, z: 0.5 },
+      rotationDegrees: { x: 0, y: 0, z: 0 },
+      size: { x: 3, y: 3, z: 3 }
+    };
+
+    store.executeCommand(createCommitTransformSessionCommand(store.getState().document, session));
+
+    expect(store.getState().document.brushes[brush.id]).toMatchObject({
+      center: { x: 0.5, y: 1.5, z: 0.5 },
+      size: { x: 3, y: 3, z: 3 }
+    });
+    expect(store.getState().selection).toEqual({
+      kind: "brushVertex",
+      brushId: brush.id,
+      vertexId: "posX_posY_posZ"
+    });
+
+    expect(store.undo()).toBe(true);
+    expect(store.getState().document.brushes[brush.id]).toEqual(brush);
+    expect(store.redo()).toBe(true);
+    expect(store.getState().selection).toEqual({
+      kind: "brushVertex",
+      brushId: brush.id,
+      vertexId: "posX_posY_posZ"
+    });
+  });
+
   it("commits a model instance translate/rotate/scale transform with undo and redo", () => {
     const modelInstance = createModelInstance({
       id: "model-instance-main",
