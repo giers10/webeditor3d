@@ -73,6 +73,7 @@ export function createCommitTransformSessionCommand(document, session) {
                 center: session.preview.center,
                 rotationDegrees: session.preview.rotationDegrees,
                 size: session.preview.size,
+                geometry: session.preview.geometry,
                 label: createTransformCommandLabel(session)
             });
         case "brushEdge":
@@ -88,6 +89,7 @@ export function createCommitTransformSessionCommand(document, session) {
                 center: session.preview.center,
                 rotationDegrees: session.preview.rotationDegrees,
                 size: session.preview.size,
+                geometry: session.preview.geometry,
                 label: createTransformCommandLabel(session)
             });
         case "brushVertex":
@@ -103,6 +105,7 @@ export function createCommitTransformSessionCommand(document, session) {
                 center: session.preview.center,
                 rotationDegrees: session.preview.rotationDegrees,
                 size: session.preview.size,
+                geometry: session.preview.geometry,
                 label: createTransformCommandLabel(session)
             });
         case "modelInstance": {
