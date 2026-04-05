@@ -200,6 +200,71 @@ export function deriveBoxBrushSizeFromGeometry(geometry: BoxBrushGeometry): Vec3
   };
 }
 
+export function scaleBoxBrushGeometryToSize(geometry: BoxBrushGeometry, size: Vec3): BoxBrushGeometry {
+  const bounds = getBoxBrushGeometryLocalBounds(geometry);
+  const currentSize = deriveBoxBrushSizeFromGeometry(geometry);
+
+  if (!hasPositiveBoxSize(currentSize) || !hasPositiveBoxSize(size)) {
+    throw new Error("Box brush geometry size must remain positive on every axis.");
+  }
+
+  const center = {
+    x: (bounds.min.x + bounds.max.x) * 0.5,
+    y: (bounds.min.y + bounds.max.y) * 0.5,
+    z: (bounds.min.z + bounds.max.z) * 0.5
+  };
+  const scale = {
+    x: size.x / currentSize.x,
+    y: size.y / currentSize.y,
+    z: size.z / currentSize.z
+  };
+
+  return {
+    vertices: {
+      negX_negY_negZ: {
+        x: center.x + (geometry.vertices.negX_negY_negZ.x - center.x) * scale.x,
+        y: center.y + (geometry.vertices.negX_negY_negZ.y - center.y) * scale.y,
+        z: center.z + (geometry.vertices.negX_negY_negZ.z - center.z) * scale.z
+      },
+      posX_negY_negZ: {
+        x: center.x + (geometry.vertices.posX_negY_negZ.x - center.x) * scale.x,
+        y: center.y + (geometry.vertices.posX_negY_negZ.y - center.y) * scale.y,
+        z: center.z + (geometry.vertices.posX_negY_negZ.z - center.z) * scale.z
+      },
+      negX_posY_negZ: {
+        x: center.x + (geometry.vertices.negX_posY_negZ.x - center.x) * scale.x,
+        y: center.y + (geometry.vertices.negX_posY_negZ.y - center.y) * scale.y,
+        z: center.z + (geometry.vertices.negX_posY_negZ.z - center.z) * scale.z
+      },
+      posX_posY_negZ: {
+        x: center.x + (geometry.vertices.posX_posY_negZ.x - center.x) * scale.x,
+        y: center.y + (geometry.vertices.posX_posY_negZ.y - center.y) * scale.y,
+        z: center.z + (geometry.vertices.posX_posY_negZ.z - center.z) * scale.z
+      },
+      negX_negY_posZ: {
+        x: center.x + (geometry.vertices.negX_negY_posZ.x - center.x) * scale.x,
+        y: center.y + (geometry.vertices.negX_negY_posZ.y - center.y) * scale.y,
+        z: center.z + (geometry.vertices.negX_negY_posZ.z - center.z) * scale.z
+      },
+      posX_negY_posZ: {
+        x: center.x + (geometry.vertices.posX_negY_posZ.x - center.x) * scale.x,
+        y: center.y + (geometry.vertices.posX_negY_posZ.y - center.y) * scale.y,
+        z: center.z + (geometry.vertices.posX_negY_posZ.z - center.z) * scale.z
+      },
+      negX_posY_posZ: {
+        x: center.x + (geometry.vertices.negX_posY_posZ.x - center.x) * scale.x,
+        y: center.y + (geometry.vertices.negX_posY_posZ.y - center.y) * scale.y,
+        z: center.z + (geometry.vertices.negX_posY_posZ.z - center.z) * scale.z
+      },
+      posX_posY_posZ: {
+        x: center.x + (geometry.vertices.posX_posY_posZ.x - center.x) * scale.x,
+        y: center.y + (geometry.vertices.posX_posY_posZ.y - center.y) * scale.y,
+        z: center.z + (geometry.vertices.posX_posY_posZ.z - center.z) * scale.z
+      }
+    }
+  };
+}
+
 export function createDefaultBoxBrushGeometry(size: Vec3 = DEFAULT_BOX_BRUSH_SIZE): BoxBrushGeometry {
   const halfSize = {
     x: size.x * 0.5,
