@@ -141,6 +141,36 @@ describe("scene document JSON", () => {
     expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(document);
   });
 
+  it("round-trips authored whitebox geometry vertices", () => {
+    const brush = createBoxBrush({
+      id: "brush-authored-geometry"
+    });
+    brush.geometry.vertices.posX_posY_posZ = {
+      x: 1.5,
+      y: 1,
+      z: 1.25
+    };
+    brush.geometry.vertices.negX_negY_negZ = {
+      x: -1,
+      y: -1.25,
+      z: -1.5
+    };
+    brush.size = {
+      x: 2.5,
+      y: 2.25,
+      z: 2.75
+    };
+
+    const document = {
+      ...createEmptySceneDocument({ name: "Authored Geometry Scene" }),
+      brushes: {
+        [brush.id]: brush
+      }
+    };
+
+    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(document);
+  });
+
   it("round-trips authored world environment settings", () => {
     const document = createEmptySceneDocument({ name: "World Environment Scene" });
     document.world.background = {

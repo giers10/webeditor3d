@@ -301,40 +301,36 @@ describe("buildRuntimeSceneFromDocument", () => {
       z: 0
     });
     expect(runtimeScene.brushes[0].faces.posY.material?.id).toBe("starter-concrete-checker");
-    expect(runtimeScene.colliders).toEqual([
-      {
-        kind: "box",
-        source: "brush",
-        brushId: "brush-room-floor",
-        center: {
-          x: 0,
-          y: -0.5,
-          z: 0
+    expect(runtimeScene.colliders).toHaveLength(1);
+    expect(runtimeScene.colliders[0]).toMatchObject({
+      kind: "trimesh",
+      source: "brush",
+      brushId: "brush-room-floor",
+      center: {
+        x: 0,
+        y: -0.5,
+        z: 0
+      },
+      rotationDegrees: {
+        x: 0,
+        y: 0,
+        z: 0
+      },
+      worldBounds: {
+        min: {
+          x: -4,
+          y: -1,
+          z: -4
         },
-        rotationDegrees: {
-          x: 0,
+        max: {
+          x: 4,
           y: 0,
-          z: 0
-        },
-        size: {
-          x: 8,
-          y: 1,
-          z: 8
-        },
-        worldBounds: {
-          min: {
-            x: -4,
-            y: -1,
-            z: -4
-          },
-          max: {
-            x: 4,
-            y: 0,
-            z: 4
-          }
+          z: 4
         }
       }
-    ]);
+    });
+    expect(Array.from(runtimeScene.colliders[0].vertices)).toHaveLength(24);
+    expect(Array.from(runtimeScene.colliders[0].indices)).toHaveLength(36);
     expect(runtimeScene.sceneBounds).toEqual({
       min: {
         x: -4,
@@ -689,11 +685,11 @@ describe("buildRuntimeSceneFromDocument", () => {
       size: brush.size
     });
     expect(runtimeScene.colliders[0]).toMatchObject({
+      kind: "trimesh",
       source: "brush",
       brushId: brush.id,
       center: brush.center,
-      rotationDegrees: brush.rotationDegrees,
-      size: brush.size
+      rotationDegrees: brush.rotationDegrees
     });
     expect(runtimeScene.sceneBounds?.min.x).toBeCloseTo(-0.8713203436);
     expect(runtimeScene.sceneBounds?.max.x).toBeCloseTo(3.3713203436);
