@@ -2255,7 +2255,7 @@ export class ViewportHost {
         edgeHelpers,
         vertexHelpers
       });
-      this.applyBrushRenderObjectTransform(brush.id, brush.center, brush.rotationDegrees, brush.size);
+      this.applyBrushRenderObjectTransform(brush.id, brush.center, brush.rotationDegrees);
     }
 
     this.refreshBrushPresentation();
