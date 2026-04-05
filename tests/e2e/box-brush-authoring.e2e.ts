@@ -142,6 +142,10 @@ test("shift+d duplicates the current selection and does not trigger while typing
     kind: "brushes"
   });
   expect(Object.keys(afterDuplicateSnapshot.document.brushes)).toHaveLength(2);
+  expect(afterDuplicateSnapshot.viewportTransientState.transformSession).toMatchObject({
+    kind: "active",
+    operation: "translate"
+  });
 
   const duplicatedBrushId = afterDuplicateSnapshot.selection.ids?.[0];
   expect(duplicatedBrushId).toBeDefined();

@@ -2129,7 +2129,15 @@ export function App({ store, initialStatusMessage }) {
         }
         try {
             store.executeCommand(createDuplicateSelectionCommand());
-            setStatusMessage("Duplicated selection.");
+            const duplicatedSelection = store.getState().selection;
+            const canGrabDuplicatedSelection = (duplicatedSelection.kind === "brushes" || duplicatedSelection.kind === "entities" || duplicatedSelection.kind === "modelInstances") &&
+                duplicatedSelection.ids.length === 1;
+            if (canGrabDuplicatedSelection) {
+                beginTransformOperation("translate", "keyboard");
+            }
+            else {
+                setStatusMessage("Duplicated selection.");
+            }
             return true;
         }
         catch (error) {
