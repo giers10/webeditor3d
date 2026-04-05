@@ -2063,6 +2063,27 @@ export class ViewportHost {
     }
   }
 
+  private applyLocalLightRenderObjectTransform(entity: EntityInstance) {
+    const renderObjects = this.localLightRenderObjects.get(entity.id);
+
+    if (renderObjects === undefined) {
+      return;
+    }
+
+    switch (entity.kind) {
+      case "pointLight":
+        renderObjects.group.position.set(entity.position.x, entity.position.y, entity.position.z);
+        renderObjects.group.rotation.set(0, 0, 0);
+        renderObjects.group.quaternion.identity();
+        break;
+      case "spotLight":
+        this.applySpotLightGroupTransform(renderObjects.group, entity.position, entity.direction);
+        break;
+      default:
+        break;
+    }
+  }
+
   private applyModelInstanceRenderObjectTransform(modelInstance: ModelInstance) {
     const renderGroup = this.modelRenderObjects.get(modelInstance.id);
 
@@ -2091,6 +2112,7 @@ export class ViewportHost {
 
     for (const entity of getEntityInstances(this.currentDocument.entities)) {
       this.applyEntityRenderObjectTransform(entity);
+      this.applyLocalLightRenderObjectTransform(entity);
     }
 
     for (const modelInstance of getModelInstances(this.currentDocument.modelInstances)) {
@@ -2157,6 +2179,10 @@ export class ViewportHost {
               ...currentEntity,
               position: this.currentTransformSession.preview.position
             });
+                this.applyLocalLightRenderObjectTransform({
+                  ...currentEntity,
+                  position: this.currentTransformSession.preview.position
+                });
             break;
           case "spotLight":
             this.applyEntityRenderObjectTransform({
@@ -2167,10 +2193,26 @@ export class ViewportHost {
                   ? this.currentTransformSession.preview.rotation.direction
                   : currentEntity.direction
             });
+                this.applyLocalLightRenderObjectTransform({
+                  ...currentEntity,
+                  position: this.currentTransformSession.preview.position,
+                  direction:
+                    this.currentTransformSession.preview.rotation.kind === "direction"
+                      ? this.currentTransformSession.preview.rotation.direction
+                      : currentEntity.direction
+                });
             break;
           case "playerStart":
           case "teleportTarget":
             this.applyEntityRenderObjectTransform({
+              ...currentEntity,
+              position: this.currentTransformSession.preview.position,
+              yawDegrees:
+                this.currentTransformSession.preview.rotation.kind === "yaw"
+                  ? this.currentTransformSession.preview.rotation.yawDegrees
+                  : currentEntity.yawDegrees
+            });
+            this.applyLocalLightRenderObjectTransform({
               ...currentEntity,
               position: this.currentTransformSession.preview.position,
               yawDegrees:
