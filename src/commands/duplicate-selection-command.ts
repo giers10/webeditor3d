@@ -1,4 +1,4 @@
-import { cloneModelInstance, type ModelInstance } from "../assets/model-instances";
+import { cloneModelInstance, createModelInstancePlacementPosition, type ModelInstance } from "../assets/model-instances";
 import { createOpaqueId } from "../core/ids";
 import { cloneEditorSelection, type EditorSelection } from "../core/selection";
 import type { ToolMode } from "../core/tool-mode";
@@ -44,10 +44,18 @@ function duplicateEntity(entity: EntityInstance): EntityInstance {
   return duplicatedEntity;
 }
 
-function duplicateModelInstance(modelInstance: ModelInstance): ModelInstance {
+function duplicateModelInstance(modelInstance: ModelInstance, currentDocument: SceneDocument): ModelInstance {
   const duplicatedModelInstance = cloneModelInstance(modelInstance);
   duplicatedModelInstance.id = createOpaqueId("model-instance");
-  duplicatedModelInstance.position = applyDuplicateSelectionOffset(duplicatedModelInstance.position);
+
+  const anchoredDuplicatePosition = applyDuplicateSelectionOffset(duplicatedModelInstance.position);
+  const referencedAsset = currentDocument.assets[duplicatedModelInstance.assetId];
+
+  duplicatedModelInstance.position =
+    referencedAsset !== undefined && referencedAsset.kind === "model"
+      ? createModelInstancePlacementPosition(referencedAsset, anchoredDuplicatePosition)
+      : anchoredDuplicatePosition;
+
   return duplicatedModelInstance;
 }
 
@@ -135,7 +143,7 @@ function createDuplicateSelectionResult(currentDocument: SceneDocument, selectio
         throw new Error(`Model instance ${modelInstanceId} does not exist.`);
       }
 
-      return duplicateModelInstance(sourceModelInstance);
+      return duplicateModelInstance(sourceModelInstance, currentDocument);
     });
 
     return {
