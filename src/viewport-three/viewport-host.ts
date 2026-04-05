@@ -107,8 +107,11 @@ import {
   BOX_EDGE_IDS,
   BOX_FACE_IDS,
   BOX_VERTEX_IDS,
+  cloneBoxBrushGeometry,
+  deriveBoxBrushSizeFromGeometry,
   DEFAULT_BOX_BRUSH_SIZE,
   type BoxBrush,
+  type BoxBrushGeometry,
   type BoxEdgeId,
   type BoxFaceId,
   type BoxVertexId
@@ -123,9 +126,15 @@ import {
   getBoxBrushVertexSigns,
   getBoxBrushVertexWorldPosition,
   transformBoxBrushLocalPointToWorld,
+  transformBoxBrushWorldPointToLocal,
   transformBoxBrushWorldVectorToLocal
 } from "../geometry/box-brush-components";
-import { buildBoxBrushDerivedMeshData } from "../geometry/box-brush-mesh";
+import {
+  buildBoxBrushDerivedMeshData,
+  getBoxBrushEdgeVertexIds,
+  getBoxBrushFaceVertexIds,
+  getBoxBrushLocalVertexPosition
+} from "../geometry/box-brush-mesh";
 import { createModelColliderDebugGroup } from "../geometry/model-instance-collider-debug-mesh";
 import { buildGeneratedModelCollider } from "../geometry/model-instance-collider-generation";
 import { DEFAULT_GRID_SIZE, snapValueToGrid } from "../geometry/grid-snapping";
