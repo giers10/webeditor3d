@@ -35,11 +35,14 @@ function duplicateEntity(entity) {
 function duplicateModelInstance(modelInstance, currentDocument) {
   const duplicatedModelInstance = cloneModelInstance(modelInstance);
   duplicatedModelInstance.id = createOpaqueId("model-instance");
-    const anchoredDuplicatePosition = applyDuplicateSelectionOffset(duplicatedModelInstance.position);
-    const referencedAsset = currentDocument.assets[duplicatedModelInstance.assetId];
-    duplicatedModelInstance.position = referencedAsset !== undefined && referencedAsset.kind === "model"
-        ? createModelInstancePlacementPosition(referencedAsset, anchoredDuplicatePosition)
-        : anchoredDuplicatePosition;
+
+  const anchoredDuplicatePosition = applyDuplicateSelectionOffset(duplicatedModelInstance.position);
+  const referencedAsset = currentDocument.assets[duplicatedModelInstance.assetId];
+
+  duplicatedModelInstance.position = referencedAsset !== undefined && referencedAsset.kind === "model"
+    ? createModelInstancePlacementPosition(referencedAsset, anchoredDuplicatePosition)
+    : anchoredDuplicatePosition;
+
   return duplicatedModelInstance;
 }
 
