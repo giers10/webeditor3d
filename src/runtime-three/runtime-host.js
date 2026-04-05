@@ -1,7 +1,6 @@
-import { AmbientLight, AnimationClip, AnimationMixer, BoxGeometry, DirectionalLight, Group, LoopOnce, LoopRepeat, Mesh, MeshStandardMaterial, PerspectiveCamera, PointLight, Quaternion, Scene, Vector3, SpotLight, WebGLRenderer } from "three";
-import { EffectComposer } from "postprocessing";
+import { AmbientLight, AnimationClip, AnimationMixer, DirectionalLight, Group, LoopOnce, LoopRepeat, Mesh, MeshStandardMaterial, PerspectiveCamera, PointLight, Quaternion, Scene, Vector3, SpotLight, WebGLRenderer } from "three";
 import { createModelInstanceRenderGroup, disposeModelInstance } from "../assets/model-instance-rendering";
-import { applyBoxBrushFaceUvsToGeometry } from "../geometry/box-face-uvs";
+import { buildBoxBrushDerivedMeshData } from "../geometry/box-brush-mesh";
 import { createStarterMaterialSignature, createStarterMaterialTexture } from "../materials/starter-material-textures";
 import { applyAdvancedRenderingLightShadowFlags, applyAdvancedRenderingRenderableShadowFlags, configureAdvancedRenderingRenderer, createAdvancedRenderingComposer } from "../rendering/advanced-rendering";
 import { areAdvancedRenderingSettingsEqual, cloneAdvancedRenderingSettings } from "../document/world-settings";
@@ -329,8 +328,7 @@ export class RuntimeHost {
     rebuildBrushMeshes(brushes) {
         this.clearBrushMeshes();
         for (const brush of brushes) {
-            const geometry = new BoxGeometry(brush.size.x, brush.size.y, brush.size.z);
-            applyBoxBrushFaceUvsToGeometry(geometry, brush);
+            const geometry = buildBoxBrushDerivedMeshData(brush).geometry;
             const materials = [
                 this.createFaceMaterial(brush.faces.posX.material),
                 this.createFaceMaterial(brush.faces.negX.material),
