@@ -39,7 +39,9 @@ import {
   type InteractionLink
 } from "../interactions/interaction-links";
 import {
+  BOX_VERTEX_IDS,
   createBoxBrush,
+  createDefaultBoxBrushGeometry,
   createDefaultFaceUvState,
   DEFAULT_BOX_BRUSH_ROTATION_DEGREES,
   isBoxFaceId,
@@ -66,6 +68,7 @@ import {
   SCENE_DOCUMENT_VERSION,
   TRIGGER_ACTION_TARGET_FOUNDATION_SCENE_DOCUMENT_VERSION,
   WHITEBOX_FLOAT_TRANSFORM_SCENE_DOCUMENT_VERSION,
+  WHITEBOX_GEOMETRY_SCENE_DOCUMENT_VERSION,
   WORLD_ENVIRONMENT_SCENE_DOCUMENT_VERSION,
   type SceneDocument
 } from "./scene-document";
