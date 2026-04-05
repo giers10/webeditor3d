@@ -4,6 +4,7 @@ import { cloneEditorSelection, type EditorSelection } from "../core/selection";
 import type { ToolMode } from "../core/tool-mode";
 import type { Vec3 } from "../core/vector";
 import { cloneBoxBrush, type BoxBrush } from "../document/brushes";
+import type { SceneDocument } from "../document/scene-document";
 import { cloneEntityInstance, type EntityInstance } from "../entities/entity-instances";
 
 import type { EditorCommand } from "./command";
@@ -63,7 +64,7 @@ function resolveDuplicatableBrushIds(selection: EditorSelection): string[] | nul
   }
 }
 
-function createDuplicateSelectionResult(currentDocument: ReturnType<Parameters<EditorCommand["execute"]>[0]["getDocument"]>, selection: EditorSelection): DuplicateSelectionResult {
+function createDuplicateSelectionResult(currentDocument: SceneDocument, selection: EditorSelection): DuplicateSelectionResult {
   const duplicatableBrushIds = resolveDuplicatableBrushIds(selection);
 
   if (duplicatableBrushIds !== null) {
