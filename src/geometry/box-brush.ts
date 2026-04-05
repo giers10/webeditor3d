@@ -1,7 +1,8 @@
 import { Euler, MathUtils, Vector3 } from "three";
 
 import type { Vec3 } from "../core/vector";
-import type { BoxBrush } from "../document/brushes";
+import { type BoxBrush } from "../document/brushes";
+import { getBoxBrushLocalVertexPosition } from "./box-brush-mesh";
 
 export interface BoxBrushBounds {
   min: Vec3;
@@ -38,7 +39,6 @@ export function getBoxBrushBounds(brush: BoxBrush): BoxBrushBounds {
 }
 
 export function getBoxBrushCornerPositions(brush: BoxBrush): Vec3[] {
-  const halfSize = getBoxBrushHalfSize(brush);
   const rotation = new Euler(
     MathUtils.degToRad(brush.rotationDegrees.x),
     MathUtils.degToRad(brush.rotationDegrees.y),
@@ -46,15 +46,18 @@ export function getBoxBrushCornerPositions(brush: BoxBrush): Vec3[] {
     "XYZ"
   );
   const offsets = [
-    new Vector3(-halfSize.x, -halfSize.y, -halfSize.z),
-    new Vector3(halfSize.x, -halfSize.y, -halfSize.z),
-    new Vector3(-halfSize.x, halfSize.y, -halfSize.z),
-    new Vector3(halfSize.x, halfSize.y, -halfSize.z),
-    new Vector3(-halfSize.x, -halfSize.y, halfSize.z),
-    new Vector3(halfSize.x, -halfSize.y, halfSize.z),
-    new Vector3(-halfSize.x, halfSize.y, halfSize.z),
-    new Vector3(halfSize.x, halfSize.y, halfSize.z)
-  ];
+    "negX_negY_negZ",
+    "posX_negY_negZ",
+    "negX_posY_negZ",
+    "posX_posY_negZ",
+    "negX_negY_posZ",
+    "posX_negY_posZ",
+    "negX_posY_posZ",
+    "posX_posY_posZ"
+  ].map((vertexId) => {
+    const localVertex = getBoxBrushLocalVertexPosition(brush, vertexId as keyof BoxBrush["geometry"]["vertices"] & never);
+    return new Vector3(localVertex.x, localVertex.y, localVertex.z);
+  });
 
   return offsets.map((offset) => {
     const rotatedOffset = offset.clone().applyEuler(rotation);
