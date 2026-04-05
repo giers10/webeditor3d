@@ -1,5 +1,6 @@
 import type { ToolMode } from "../core/tool-mode";
 import { DEFAULT_GRID_SIZE, snapPositiveSizeToGrid } from "../geometry/grid-snapping";
+import { cloneBoxBrushGeometry, scaleBoxBrushGeometryToSize } from "../document/brushes";
 
 import { createOpaqueId } from "../core/ids";
 import type { EditorSelection } from "../core/selection";

@@ -3,6 +3,7 @@ import type { ToolMode } from "../core/tool-mode";
 import { createOpaqueId } from "../core/ids";
 import type { EditorSelection } from "../core/selection";
 import type { Vec3 } from "../core/vector";
+import { cloneBoxBrushGeometry, scaleBoxBrushGeometryToSize } from "../document/brushes";
 
 import {
   cloneSelectionForCommand,

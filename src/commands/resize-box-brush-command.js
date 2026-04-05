@@ -1,5 +1,6 @@
 import { DEFAULT_GRID_SIZE, snapPositiveSizeToGrid } from "../geometry/grid-snapping";
 import { createOpaqueId } from "../core/ids";
+import { cloneBoxBrushGeometry, scaleBoxBrushGeometryToSize } from "../document/brushes";
 import { cloneSelectionForCommand, getBoxBrushOrThrow, replaceBrush, setSingleBrushSelection } from "./brush-command-helpers";
 export function createResizeBoxBrushCommand(options) {
     const resolvedSize = options.snapToGrid === false ? options.size : snapPositiveSizeToGrid(options.size, options.gridSize ?? DEFAULT_GRID_SIZE);

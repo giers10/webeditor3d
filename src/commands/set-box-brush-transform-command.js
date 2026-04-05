@@ -1,4 +1,5 @@
 import { createOpaqueId } from "../core/ids";
+import { cloneBoxBrushGeometry, scaleBoxBrushGeometryToSize } from "../document/brushes";
 import { cloneSelectionForCommand, getBoxBrushOrThrow, replaceBrush, setSingleBrushEdgeSelection, setSingleBrushFaceSelection, setSingleBrushSelection, setSingleBrushVertexSelection } from "./brush-command-helpers";
 function cloneVec3(vector) {
     return {
