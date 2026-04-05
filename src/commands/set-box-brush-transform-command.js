@@ -46,7 +46,8 @@ export function createSetBoxBrushTransformCommand(options) {
                 previousSnapshot = {
                     center: cloneVec3(brush.center),
                     rotationDegrees: cloneVec3(brush.rotationDegrees),
-                    size: cloneVec3(brush.size)
+                    size: cloneVec3(brush.size),
+                    geometry: cloneBoxBrushGeometry(brush.geometry)
                 };
             }
             if (previousSelection === null) {
@@ -55,11 +56,13 @@ export function createSetBoxBrushTransformCommand(options) {
             if (previousToolMode === null) {
                 previousToolMode = context.getToolMode();
             }
+            const nextGeometry = scaleBoxBrushGeometryToSize(brush.geometry, options.size);
             context.setDocument(replaceBrush(currentDocument, {
                 ...brush,
                 center: cloneVec3(options.center),
                 rotationDegrees: cloneVec3(options.rotationDegrees),
-                size: cloneVec3(options.size)
+                size: cloneVec3(options.size),
+                geometry: nextGeometry
             }));
             context.setSelection(selectionToEditorSelection(options.selection));
             context.setToolMode("select");
@@ -75,7 +78,8 @@ export function createSetBoxBrushTransformCommand(options) {
                 ...brush,
                 center: cloneVec3(previousSnapshot.center),
                 rotationDegrees: cloneVec3(previousSnapshot.rotationDegrees),
-                size: cloneVec3(previousSnapshot.size)
+                size: cloneVec3(previousSnapshot.size),
+                geometry: cloneBoxBrushGeometry(previousSnapshot.geometry)
             }));
             if (previousSelection !== null) {
                 context.setSelection(previousSelection);

@@ -34,6 +34,7 @@ interface BrushTransformSnapshot {
   center: Vec3;
   rotationDegrees: Vec3;
   size: Vec3;
+  geometry: ReturnType<typeof cloneBoxBrushGeometry>;
 }
 
 function cloneVec3(vector: Vec3): Vec3 {
@@ -90,7 +91,8 @@ export function createSetBoxBrushTransformCommand(options: SetBoxBrushTransformC
         previousSnapshot = {
           center: cloneVec3(brush.center),
           rotationDegrees: cloneVec3(brush.rotationDegrees),
-          size: cloneVec3(brush.size)
+          size: cloneVec3(brush.size),
+          geometry: cloneBoxBrushGeometry(brush.geometry)
         };
       }
 
@@ -102,12 +104,15 @@ export function createSetBoxBrushTransformCommand(options: SetBoxBrushTransformC
         previousToolMode = context.getToolMode();
       }
 
+      const nextGeometry = scaleBoxBrushGeometryToSize(brush.geometry, options.size);
+
       context.setDocument(
         replaceBrush(currentDocument, {
           ...brush,
           center: cloneVec3(options.center),
           rotationDegrees: cloneVec3(options.rotationDegrees),
-          size: cloneVec3(options.size)
+          size: cloneVec3(options.size),
+          geometry: nextGeometry
         })
       );
       context.setSelection(selectionToEditorSelection(options.selection));
@@ -127,7 +132,8 @@ export function createSetBoxBrushTransformCommand(options: SetBoxBrushTransformC
           ...brush,
           center: cloneVec3(previousSnapshot.center),
           rotationDegrees: cloneVec3(previousSnapshot.rotationDegrees),
-          size: cloneVec3(previousSnapshot.size)
+          size: cloneVec3(previousSnapshot.size),
+          geometry: cloneBoxBrushGeometry(previousSnapshot.geometry)
         })
       );
 

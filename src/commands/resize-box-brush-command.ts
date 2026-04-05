@@ -21,6 +21,7 @@ export function createResizeBoxBrushCommand(options: ResizeBoxBrushCommandOption
     options.snapToGrid === false ? options.size : snapPositiveSizeToGrid(options.size, options.gridSize ?? DEFAULT_GRID_SIZE);
 
   let previousSize: Vec3 | null = null;
+  let previousGeometry: ReturnType<typeof cloneBoxBrushGeometry> | null = null;
   let previousSelection: EditorSelection | null = null;
   let previousToolMode: ToolMode | null = null;
 
@@ -35,6 +36,7 @@ export function createResizeBoxBrushCommand(options: ResizeBoxBrushCommandOption
         previousSize = {
           ...brush.size
         };
+        previousGeometry = cloneBoxBrushGeometry(brush.geometry);
       }
 
       if (previousSelection === null) {
@@ -45,19 +47,22 @@ export function createResizeBoxBrushCommand(options: ResizeBoxBrushCommandOption
         previousToolMode = context.getToolMode();
       }
 
+      const nextGeometry = scaleBoxBrushGeometryToSize(brush.geometry, resolvedSize);
+
       context.setDocument(
         replaceBrush(currentDocument, {
           ...brush,
           size: {
             ...resolvedSize
-          }
+          },
+          geometry: nextGeometry
         })
       );
       context.setSelection(setSingleBrushSelection(options.brushId));
       context.setToolMode("select");
     },
     undo(context) {
-      if (previousSize === null) {
+      if (previousSize === null || previousGeometry === null) {
         return;
       }
 
@@ -69,7 +74,8 @@ export function createResizeBoxBrushCommand(options: ResizeBoxBrushCommandOption
           ...brush,
           size: {
             ...previousSize
-          }
+          },
+          geometry: cloneBoxBrushGeometry(previousGeometry)
         })
       );
 

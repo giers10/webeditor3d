@@ -4,6 +4,7 @@ import { cloneSelectionForCommand, getBoxBrushOrThrow, replaceBrush, setSingleBr
 export function createResizeBoxBrushCommand(options) {
     const resolvedSize = options.snapToGrid === false ? options.size : snapPositiveSizeToGrid(options.size, options.gridSize ?? DEFAULT_GRID_SIZE);
     let previousSize = null;
+    let previousGeometry = null;
     let previousSelection = null;
     let previousToolMode = null;
     return {
@@ -16,6 +17,7 @@ export function createResizeBoxBrushCommand(options) {
                 previousSize = {
                     ...brush.size
                 };
+                previousGeometry = cloneBoxBrushGeometry(brush.geometry);
             }
             if (previousSelection === null) {
                 previousSelection = cloneSelectionForCommand(context.getSelection());
@@ -23,17 +25,19 @@ export function createResizeBoxBrushCommand(options) {
             if (previousToolMode === null) {
                 previousToolMode = context.getToolMode();
             }
+            const nextGeometry = scaleBoxBrushGeometryToSize(brush.geometry, resolvedSize);
             context.setDocument(replaceBrush(currentDocument, {
                 ...brush,
                 size: {
                     ...resolvedSize
-                }
+                },
+                geometry: nextGeometry
             }));
             context.setSelection(setSingleBrushSelection(options.brushId));
             context.setToolMode("select");
         },
         undo(context) {
-            if (previousSize === null) {
+            if (previousSize === null || previousGeometry === null) {
                 return;
             }
             const currentDocument = context.getDocument();
@@ -42,7 +46,8 @@ export function createResizeBoxBrushCommand(options) {
                 ...brush,
                 size: {
                     ...previousSize
-                }
+                },
+                geometry: cloneBoxBrushGeometry(previousGeometry)
             }));
             if (previousSelection !== null) {
                 context.setSelection(previousSelection);
