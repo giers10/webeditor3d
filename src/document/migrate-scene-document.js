@@ -3,8 +3,8 @@ import { createModelInstanceCollisionSettings, createModelInstance, isModelInsta
 import { isProjectAssetKind } from "../assets/project-assets";
 import { createPlayerStartColliderSettings, createInteractableEntity, normalizeEntityName, createPointLightEntity, createPlayerStartEntity, createSoundEmitterEntity, createSpotLightEntity, createTeleportTargetEntity, createTriggerVolumeEntity, isPlayerStartColliderMode } from "../entities/entity-instances";
 import { createPlayAnimationInteractionLink, createPlaySoundInteractionLink, createStopAnimationInteractionLink, createStopSoundInteractionLink, createTeleportPlayerInteractionLink, createToggleVisibilityInteractionLink, isInteractionTriggerKind } from "../interactions/interaction-links";
-import { createBoxBrush, createDefaultFaceUvState, DEFAULT_BOX_BRUSH_ROTATION_DEGREES, isBoxFaceId, isFaceUvRotationQuarterTurns, normalizeBrushName } from "./brushes";
-import { BOX_BRUSH_SCENE_DOCUMENT_VERSION, ANIMATION_PLAYBACK_SCENE_DOCUMENT_VERSION, ENTITY_NAMES_SCENE_DOCUMENT_VERSION, ENTITY_SYSTEM_FOUNDATION_SCENE_DOCUMENT_VERSION, FACE_MATERIALS_SCENE_DOCUMENT_VERSION, FIRST_ROOM_POLISH_SCENE_DOCUMENT_VERSION, FOUNDATION_SCENE_DOCUMENT_VERSION, IMPORTED_MODEL_COLLIDERS_SCENE_DOCUMENT_VERSION, LOCAL_LIGHTS_AND_SKYBOX_SCENE_DOCUMENT_VERSION, MODEL_ASSET_PIPELINE_SCENE_DOCUMENT_VERSION, PLAYER_START_COLLIDER_SETTINGS_SCENE_DOCUMENT_VERSION, RUNNER_V1_SCENE_DOCUMENT_VERSION, SPATIAL_AUDIO_SCENE_DOCUMENT_VERSION, SCENE_DOCUMENT_VERSION, TRIGGER_ACTION_TARGET_FOUNDATION_SCENE_DOCUMENT_VERSION, WHITEBOX_FLOAT_TRANSFORM_SCENE_DOCUMENT_VERSION, WORLD_ENVIRONMENT_SCENE_DOCUMENT_VERSION } from "./scene-document";
+import { BOX_VERTEX_IDS, createBoxBrush, createDefaultBoxBrushGeometry, createDefaultFaceUvState, DEFAULT_BOX_BRUSH_ROTATION_DEGREES, isBoxFaceId, isFaceUvRotationQuarterTurns, normalizeBrushName } from "./brushes";
+import { BOX_BRUSH_SCENE_DOCUMENT_VERSION, ANIMATION_PLAYBACK_SCENE_DOCUMENT_VERSION, ENTITY_NAMES_SCENE_DOCUMENT_VERSION, ENTITY_SYSTEM_FOUNDATION_SCENE_DOCUMENT_VERSION, FACE_MATERIALS_SCENE_DOCUMENT_VERSION, FIRST_ROOM_POLISH_SCENE_DOCUMENT_VERSION, FOUNDATION_SCENE_DOCUMENT_VERSION, IMPORTED_MODEL_COLLIDERS_SCENE_DOCUMENT_VERSION, LOCAL_LIGHTS_AND_SKYBOX_SCENE_DOCUMENT_VERSION, MODEL_ASSET_PIPELINE_SCENE_DOCUMENT_VERSION, PLAYER_START_COLLIDER_SETTINGS_SCENE_DOCUMENT_VERSION, RUNNER_V1_SCENE_DOCUMENT_VERSION, SPATIAL_AUDIO_SCENE_DOCUMENT_VERSION, SCENE_DOCUMENT_VERSION, TRIGGER_ACTION_TARGET_FOUNDATION_SCENE_DOCUMENT_VERSION, WHITEBOX_FLOAT_TRANSFORM_SCENE_DOCUMENT_VERSION, WHITEBOX_GEOMETRY_SCENE_DOCUMENT_VERSION, WORLD_ENVIRONMENT_SCENE_DOCUMENT_VERSION } from "./scene-document";
 import { createDefaultAdvancedRenderingSettings, isAdvancedRenderingShadowMapSize, isAdvancedRenderingShadowType, isAdvancedRenderingToneMappingMode, isWorldBackgroundMode } from "./world-settings";
 function isRecord(value) {
     return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -499,6 +499,33 @@ function readBoxBrushFaces(value, label, materials, allowMissingUvState) {
         negZ: readBrushFace(value.negZ, `${label}.negZ`, materials, allowMissingUvState)
     };
 }
+function readBoxBrushGeometry(value, label, size) {
+    if (value === undefined) {
+        return createDefaultBoxBrushGeometry(size);
+    }
+    if (!isRecord(value)) {
+        throw new Error(`${label} must be an object.`);
+    }
+    if (!isRecord(value.vertices)) {
+        throw new Error(`${label}.vertices must be an object.`);
+    }
+    const extraVertexKeys = Object.keys(value.vertices).filter((vertexId) => !BOX_VERTEX_IDS.includes(vertexId));
+    if (extraVertexKeys.length > 0) {
+        throw new Error(`${label}.vertices contains unsupported vertex ids: ${extraVertexKeys.join(", ")}.`);
+    }
+    return {
+        vertices: {
+            negX_negY_negZ: readVec3(value.vertices.negX_negY_negZ, `${label}.vertices.negX_negY_negZ`),
+            posX_negY_negZ: readVec3(value.vertices.posX_negY_negZ, `${label}.vertices.posX_negY_negZ`),
+            negX_posY_negZ: readVec3(value.vertices.negX_posY_negZ, `${label}.vertices.negX_posY_negZ`),
+            posX_posY_negZ: readVec3(value.vertices.posX_posY_negZ, `${label}.vertices.posX_posY_negZ`),
+            negX_negY_posZ: readVec3(value.vertices.negX_negY_posZ, `${label}.vertices.negX_negY_posZ`),
+            posX_negY_posZ: readVec3(value.vertices.posX_negY_posZ, `${label}.vertices.posX_negY_posZ`),
+            negX_posY_posZ: readVec3(value.vertices.negX_posY_posZ, `${label}.vertices.negX_posY_posZ`),
+            posX_posY_posZ: readVec3(value.vertices.posX_posY_posZ, `${label}.vertices.posX_posY_posZ`)
+        }
+    };
+}
 function readBrushes(value, materials, allowMissingUvState) {
     if (!isRecord(value)) {
         throw new Error("brushes must be a record.");
@@ -522,6 +549,7 @@ function readBrushes(value, materials, allowMissingUvState) {
             center,
             rotationDegrees: readOptionalVec3(brushValue.rotationDegrees, `brushes.${brushId}.rotationDegrees`, DEFAULT_BOX_BRUSH_ROTATION_DEGREES),
             size,
+            geometry: readBoxBrushGeometry(brushValue.geometry, `brushes.${brushId}.geometry`, size),
             faces: readBoxBrushFaces(brushValue.faces, `brushes.${brushId}.faces`, materials, allowMissingUvState),
             layerId: expectOptionalString(brushValue.layerId, `brushes.${brushId}.layerId`),
             groupId: expectOptionalString(brushValue.groupId, `brushes.${brushId}.groupId`)
@@ -1199,7 +1227,7 @@ export function migrateSceneDocument(source) {
             interactionLinks: readInteractionLinks(source.interactionLinks)
         };
     }
-    if (source.version !== WHITEBOX_FLOAT_TRANSFORM_SCENE_DOCUMENT_VERSION) {
+    if (source.version !== WHITEBOX_FLOAT_TRANSFORM_SCENE_DOCUMENT_VERSION && source.version !== WHITEBOX_GEOMETRY_SCENE_DOCUMENT_VERSION) {
         throw new Error(`Unsupported scene document version: ${String(source.version)}.`);
     }
     const materials = readMaterialRegistry(source.materials, "materials");

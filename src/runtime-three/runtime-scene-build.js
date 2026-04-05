@@ -2,10 +2,11 @@ import { getModelInstances } from "../assets/model-instances";
 import { cloneWorldSettings } from "../document/world-settings";
 import { getEntityInstances, getPrimaryPlayerStartEntity } from "../entities/entity-instances";
 import { getBoxBrushBounds } from "../geometry/box-brush";
+import { buildBoxBrushDerivedMeshData } from "../geometry/box-brush-mesh";
 import { buildGeneratedModelCollider } from "../geometry/model-instance-collider-generation";
 import { cloneInteractionLink, getInteractionLinks } from "../interactions/interaction-links";
 import { cloneMaterialDef } from "../materials/starter-material-library";
-import { cloneFaceUvState } from "../document/brushes";
+import { cloneBoxBrushGeometry, cloneFaceUvState } from "../document/brushes";
 import { assertRuntimeSceneBuildable } from "./runtime-scene-validation";
 import { FIRST_PERSON_PLAYER_SHAPE } from "./player-collision";
 function cloneVec3(vector) {
@@ -32,6 +33,7 @@ function buildRuntimeBrush(brush, document) {
         center: cloneVec3(brush.center),
         rotationDegrees: cloneVec3(brush.rotationDegrees),
         size: cloneVec3(brush.size),
+        geometry: cloneBoxBrushGeometry(brush.geometry),
         faces: {
             posX: {
                 materialId: brush.faces.posX.materialId,
@@ -68,13 +70,15 @@ function buildRuntimeBrush(brush, document) {
 }
 function buildRuntimeCollider(brush) {
     const bounds = getBoxBrushBounds(brush);
+    const derivedMesh = buildBoxBrushDerivedMeshData(brush);
     return {
-        kind: "box",
+        kind: "trimesh",
         source: "brush",
         brushId: brush.id,
         center: cloneVec3(brush.center),
         rotationDegrees: cloneVec3(brush.rotationDegrees),
-        size: cloneVec3(brush.size),
+        vertices: derivedMesh.colliderVertices,
+        indices: derivedMesh.colliderIndices,
         worldBounds: {
             min: cloneVec3(bounds.min),
             max: cloneVec3(bounds.max)

@@ -1,11 +1,20 @@
 import { getModelInstances } from "../assets/model-instances";
 import { assertSceneDocumentIsValid, createDiagnostic, formatSceneDiagnosticSummary } from "../document/scene-document-validation";
 import { getPrimaryPlayerStartEntity } from "../entities/entity-instances";
+import { validateBoxBrushGeometry } from "../geometry/box-brush-mesh";
 import { buildGeneratedModelCollider, ModelColliderGenerationError } from "../geometry/model-instance-collider-generation";
+function validateBrushGeometry(brush, path, diagnostics) {
+    for (const diagnostic of validateBoxBrushGeometry(brush)) {
+        diagnostics.push(createDiagnostic("error", diagnostic.code, diagnostic.message, `${path}.geometry`, "build"));
+    }
+}
 export function validateRuntimeSceneBuild(document, options) {
     const diagnostics = [];
     if (options.navigationMode === "firstPerson" && getPrimaryPlayerStartEntity(document.entities) === null) {
         diagnostics.push(createDiagnostic("error", "missing-player-start", "First-person run requires an authored Player Start. Place one or switch to Orbit Visitor.", "entities", "build"));
+    }
+    for (const brush of Object.values(document.brushes)) {
+        validateBrushGeometry(brush, `brushes.${brush.id}`, diagnostics);
     }
     for (const modelInstance of getModelInstances(document.modelInstances)) {
         const path = `modelInstances.${modelInstance.id}.collision.mode`;

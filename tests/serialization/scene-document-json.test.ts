@@ -155,11 +155,6 @@ describe("scene document JSON", () => {
       y: -1.25,
       z: -1.5
     };
-    brush.size = {
-      x: 2.5,
-      y: 2.25,
-      z: 2.75
-    };
 
     const document = {
       ...createEmptySceneDocument({ name: "Authored Geometry Scene" }),

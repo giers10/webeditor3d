@@ -1,6 +1,7 @@
 import { cloneMaterialRegistry, createStarterMaterialRegistry } from "../materials/starter-material-library";
 import { createDefaultWorldSettings } from "./world-settings";
-export const SCENE_DOCUMENT_VERSION = 18;
+export const SCENE_DOCUMENT_VERSION = 19;
+export const WHITEBOX_GEOMETRY_SCENE_DOCUMENT_VERSION = 19;
 export const WHITEBOX_FLOAT_TRANSFORM_SCENE_DOCUMENT_VERSION = 18;
 export const PLAYER_START_COLLIDER_SETTINGS_SCENE_DOCUMENT_VERSION = 17;
 export const IMPORTED_MODEL_COLLIDERS_SCENE_DOCUMENT_VERSION = 16;
