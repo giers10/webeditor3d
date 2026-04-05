@@ -19,7 +19,7 @@ import {
   type TriggerVolumeEntity
 } from "../entities/entity-instances";
 import { type InteractionLink } from "../interactions/interaction-links";
-import { BOX_FACE_IDS, hasPositiveBoxSize } from "./brushes";
+import { BOX_FACE_IDS, BOX_VERTEX_IDS, hasPositiveBoxSize } from "./brushes";
 import type { SceneDocument } from "./scene-document";
 import {
   isAdvancedRenderingShadowMapSize,
@@ -1289,6 +1289,19 @@ export function validateSceneDocument(document: SceneDocument): SceneDocumentVal
       diagnostics.push(
         createDiagnostic("error", "invalid-box-size", "Box brush sizes must remain finite and positive on every axis.", `${path}.size`)
       );
+    }
+
+    for (const vertexId of BOX_VERTEX_IDS) {
+      if (!isFiniteVec3(brush.geometry.vertices[vertexId])) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-box-geometry-vertex",
+            "Box brush geometry vertices must remain finite on every axis.",
+            `${path}.geometry.vertices.${vertexId}`
+          )
+        );
+      }
     }
 
     for (const faceId of BOX_FACE_IDS) {
