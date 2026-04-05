@@ -328,7 +328,11 @@ function rewriteGltfResourceUris(gltfJson, files) {
     };
 }
 function cloneTemplateScene(scene) {
-    return scene.clone(true);
+    // Use SkeletonUtils.clone so that SkinnedMesh.skeleton.bones are remapped
+    // to the cloned hierarchy. A plain scene.clone(true) leaves the bones array
+    // pointing at the original loader's nodes, which are gone after parsing,
+    // making every skinned mesh invisible at runtime.
+    return cloneSkeleton(scene);
 }
 function cloneMaterial(material) {
     return material.clone();
