@@ -4,7 +4,12 @@ import type { Vec2, Vec3 } from "../core/vector";
 import { BOX_FACE_IDS, createDefaultFaceUvState, type BoxBrush, type BoxFaceId, type FaceUvState } from "../document/brushes";
 import { getBoxBrushHalfSize } from "./box-brush";
 
-export function getBoxBrushFaceSize(brush: BoxBrush, faceId: BoxFaceId): Vec2 {
+interface BoxBrushUvProjectionSource {
+  size: Vec3;
+  faces: Record<BoxFaceId, { uv: FaceUvState }>;
+}
+
+export function getBoxBrushFaceSize(brush: BoxBrushUvProjectionSource, faceId: BoxFaceId): Vec2 {
   switch (faceId) {
     case "posX":
     case "negX":
@@ -39,7 +44,7 @@ export function createFitToFaceBoxBrushFaceUvState(brush: BoxBrush, faceId: BoxF
   };
 }
 
-export function projectBoxFaceVertexToUv(vertexPosition: Vec3, brush: BoxBrush, faceId: BoxFaceId): Vec2 {
+export function projectBoxFaceVertexToUv(vertexPosition: Vec3, brush: BoxBrushUvProjectionSource, faceId: BoxFaceId): Vec2 {
   const halfSize = getBoxBrushHalfSize(brush);
 
   switch (faceId) {
@@ -113,7 +118,7 @@ export function transformProjectedFaceUv(baseUv: Vec2, faceSize: Vec2, uvState: 
   };
 }
 
-export function applyBoxBrushFaceUvsToGeometry(geometry: BoxGeometry, brush: BoxBrush): void {
+export function applyBoxBrushFaceUvsToGeometry(geometry: BoxGeometry, brush: BoxBrushUvProjectionSource): void {
   const positionAttribute = geometry.getAttribute("position");
   const uvAttribute = geometry.getAttribute("uv");
   const indexAttribute = geometry.getIndex();

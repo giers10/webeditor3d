@@ -62,22 +62,6 @@ function cloneVec3(vector: Vec3): Vec3 {
   return { x: vector.x, y: vector.y, z: vector.z };
 }
 
-function subtractVec3(left: Vec3, right: Vec3): Vec3 {
-  return {
-    x: left.x - right.x,
-    y: left.y - right.y,
-    z: left.z - right.z
-  };
-}
-
-function crossVec3(left: Vec3, right: Vec3): Vec3 {
-  return {
-    x: left.y * right.z - left.z * right.y,
-    y: left.z * right.x - left.x * right.z,
-    z: left.x * right.y - left.y * right.x
-  };
-}
-
 function dotVec3(left: Vec3, right: Vec3): number {
   return left.x * right.x + left.y * right.y + left.z * right.z;
 }
