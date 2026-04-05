@@ -2115,6 +2115,20 @@ export function App({ store, initialStatusMessage }) {
         }
         return false;
     };
+    const handleDuplicateSelection = () => {
+        if (!selectionCanBeDuplicated(editorState.selection)) {
+            return false;
+        }
+        try {
+            store.executeCommand(createDuplicateSelectionCommand());
+            setStatusMessage("Duplicated selection.");
+            return true;
+        }
+        catch (error) {
+            setStatusMessage(getErrorMessage(error));
+            return false;
+        }
+    };
     const updateInteractionLinkTrigger = (link, trigger) => {
         const sourceEntity = getInteractionSourceEntityForLink(link);
         if (sourceEntity?.kind === "interactable" && trigger !== "click") {
