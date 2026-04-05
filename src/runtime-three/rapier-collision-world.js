@@ -56,12 +56,7 @@ function attachBrushCollider(world, collider) {
     const body = world.createRigidBody(RAPIER.RigidBodyDesc.fixed()
         .setTranslation(collider.center.x, collider.center.y, collider.center.z)
         .setRotation(createRapierQuaternion(collider.rotationDegrees)));
-    const halfExtents = {
-        x: collider.size.x * 0.5,
-        y: collider.size.y * 0.5,
-        z: collider.size.z * 0.5
-    };
-    world.createCollider(RAPIER.ColliderDesc.cuboid(halfExtents.x, halfExtents.y, halfExtents.z), body);
+    world.createCollider(RAPIER.ColliderDesc.trimesh(collider.vertices, collider.indices), body);
 }
 function attachSimpleModelCollider(world, collider) {
     const body = createFixedBodyForModelCollider(world, collider);

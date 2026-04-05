@@ -2,7 +2,7 @@ import {} from "../assets/project-assets";
 import { isModelInstanceCollisionMode } from "../assets/model-instances";
 import { isPlayerStartColliderMode, getPlayerStartColliderHeight } from "../entities/entity-instances";
 import {} from "../interactions/interaction-links";
-import { BOX_FACE_IDS, hasPositiveBoxSize } from "./brushes";
+import { BOX_FACE_IDS, BOX_VERTEX_IDS, hasPositiveBoxSize } from "./brushes";
 import { isAdvancedRenderingShadowMapSize, isAdvancedRenderingShadowType, isAdvancedRenderingToneMappingMode, isHexColorString } from "./world-settings";
 export function createDiagnostic(severity, code, message, path, scope = "document") {
     return {
@@ -556,6 +556,11 @@ export function validateSceneDocument(document) {
         }
         if (!isFiniteVec3(brush.size) || !hasPositiveBoxSize(brush.size)) {
             diagnostics.push(createDiagnostic("error", "invalid-box-size", "Box brush sizes must remain finite and positive on every axis.", `${path}.size`));
+        }
+        for (const vertexId of BOX_VERTEX_IDS) {
+            if (!isFiniteVec3(brush.geometry.vertices[vertexId])) {
+                diagnostics.push(createDiagnostic("error", "invalid-box-geometry-vertex", "Box brush geometry vertices must remain finite on every axis.", `${path}.geometry.vertices.${vertexId}`));
+            }
         }
         for (const faceId of BOX_FACE_IDS) {
             const materialId = brush.faces[faceId].materialId;
