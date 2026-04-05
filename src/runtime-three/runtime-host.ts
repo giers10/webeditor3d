@@ -3,7 +3,6 @@ import {
   AnimationClip,
   AnimationMixer,
   BufferGeometry,
-  BoxGeometry,
   DirectionalLight,
   Group,
   LoopOnce,
