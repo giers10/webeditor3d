@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { createCreateBoxBrushCommand } from "../commands/create-box-brush-command";
 import { createDeleteBoxBrushCommand } from "../commands/delete-box-brush-command";
 import { createDeleteEntityCommand } from "../commands/delete-entity-command";
+import { createDuplicateSelectionCommand } from "../commands/duplicate-selection-command";
 import { createImportAudioAssetCommand } from "../commands/import-audio-asset-command";
 import { createImportBackgroundImageAssetCommand } from "../commands/import-background-image-asset-command";
 import { createImportModelAssetCommand } from "../commands/import-model-asset-command";
