@@ -1,5 +1,6 @@
 import type { LoadedModelAsset } from "../assets/gltf-model-import";
 import { getModelInstances } from "../assets/model-instances";
+import type { BoxBrush } from "../document/brushes";
 import type { SceneDocument } from "../document/scene-document";
 import {
   assertSceneDocumentIsValid,
@@ -8,6 +9,7 @@ import {
   type SceneDiagnostic
 } from "../document/scene-document-validation";
 import { getPrimaryPlayerStartEntity } from "../entities/entity-instances";
+import { validateBoxBrushGeometry } from "../geometry/box-brush-mesh";
 import { buildGeneratedModelCollider, ModelColliderGenerationError } from "../geometry/model-instance-collider-generation";
 
 export interface RuntimeSceneBuildValidationResult {
@@ -19,6 +21,12 @@ export interface RuntimeSceneBuildValidationResult {
 interface ValidateRuntimeSceneBuildOptions {
   navigationMode: "firstPerson" | "orbitVisitor";
   loadedModelAssets?: Record<string, LoadedModelAsset>;
+}
+
+function validateBrushGeometry(brush: BoxBrush, path: string, diagnostics: SceneDiagnostic[]) {
+  for (const diagnostic of validateBoxBrushGeometry(brush)) {
+    diagnostics.push(createDiagnostic("error", diagnostic.code, diagnostic.message, `${path}.geometry`, "build"));
+  }
 }
 
 export function validateRuntimeSceneBuild(
@@ -37,6 +45,10 @@ export function validateRuntimeSceneBuild(
         "build"
       )
     );
+  }
+
+  for (const brush of Object.values(document.brushes)) {
+    validateBrushGeometry(brush, `brushes.${brush.id}`, diagnostics);
   }
 
   for (const modelInstance of getModelInstances(document.modelInstances)) {
