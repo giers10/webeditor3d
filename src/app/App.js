@@ -457,6 +457,20 @@ function isTextEntryTarget(target) {
         target instanceof HTMLSelectElement ||
         target.isContentEditable);
 }
+function selectionCanBeDuplicated(selection) {
+    switch (selection.kind) {
+        case "brushes":
+        case "entities":
+        case "modelInstances":
+            return selection.ids.length > 0;
+        case "brushFace":
+        case "brushEdge":
+        case "brushVertex":
+            return true;
+        case "none":
+            return false;
+    }
+}
 function isCommitIncrementKey(key) {
     return key === "ArrowUp" || key === "ArrowDown" || key === "PageUp" || key === "PageDown";
 }
