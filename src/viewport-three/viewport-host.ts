@@ -2007,11 +2007,10 @@ export class ViewportHost {
     }
   }
 
-  private applyBrushRenderObjectTransform(brushId: string, center: Vec3, rotationDegrees: Vec3, size: Vec3) {
+  private applyBrushRenderObjectTransform(brushId: string, center: Vec3, rotationDegrees: Vec3) {
     const renderObjects = this.brushRenderObjects.get(brushId);
-    const brush = this.currentDocument?.brushes[brushId];
 
-    if (renderObjects === undefined || brush === undefined) {
+    if (renderObjects === undefined) {
       return;
     }
 
@@ -2088,7 +2087,7 @@ export class ViewportHost {
 
     for (const brush of Object.values(this.currentDocument.brushes)) {
       this.updateBrushRenderObjectGeometry(brush);
-      this.applyBrushRenderObjectTransform(brush.id, brush.center, brush.rotationDegrees, brush.size);
+      this.applyBrushRenderObjectTransform(brush.id, brush.center, brush.rotationDegrees);
     }
 
     for (const entity of getEntityInstances(this.currentDocument.entities)) {
@@ -2122,8 +2121,7 @@ export class ViewportHost {
           this.applyBrushRenderObjectTransform(
             this.currentTransformSession.target.brushId,
             this.currentTransformSession.preview.center,
-            this.currentTransformSession.preview.rotationDegrees,
-            this.currentTransformSession.preview.size
+            this.currentTransformSession.preview.rotationDegrees
           );
         }
         break;
