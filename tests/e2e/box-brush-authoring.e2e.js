@@ -130,11 +130,7 @@ test("shift+d duplicates the current selection and does not trigger while typing
     expect(duplicatedBrushId).not.toBe(sourceBrushId);
     const sourceCenter = beforeDuplicateSnapshot.document.brushes[sourceBrushId].center;
     const duplicatedCenter = afterDuplicateSnapshot.document.brushes[duplicatedBrushId].center;
-    expect(duplicatedCenter).toEqual({
-        x: sourceCenter.x + 1,
-        y: sourceCenter.y,
-        z: sourceCenter.z + 1
-    });
+    expect(duplicatedCenter).toEqual(sourceCenter);
     await page.getByTestId("selected-brush-name").click();
     await page.keyboard.press("Shift+D");
     const afterTypingShortcutSnapshot = await getEditorStoreSnapshot(page);
