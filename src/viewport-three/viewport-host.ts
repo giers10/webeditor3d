@@ -124,9 +124,7 @@ import {
   getBoxBrushFaceAxis,
   getBoxBrushFaceTransformMeta,
   getBoxBrushFaceWorldCenter,
-  getBoxBrushVertexSigns,
   getBoxBrushVertexWorldPosition,
-  transformBoxBrushLocalPointToWorld,
   transformBoxBrushWorldPointToLocal,
   transformBoxBrushWorldVectorToLocal
 } from "../geometry/box-brush-components";
@@ -1846,7 +1844,8 @@ export class ViewportHost {
         kind: "brush",
         center: { ...initialBrush.center },
         rotationDegrees: { ...initialBrush.rotationDegrees },
-        size: { ...initialBrush.size }
+        size: { ...initialBrush.size },
+        geometry: cloneBoxBrushGeometry(initialBrush.geometry)
       }
     });
     let worldDelta = {
