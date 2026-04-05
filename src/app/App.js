@@ -1176,8 +1176,16 @@ export function App({ store, initialStatusMessage }) {
             }
             const isDeletionKey = event.key === "Delete" || event.key === "Backspace";
             const isDeleteShortcut = !event.altKey && !event.ctrlKey && !event.metaKey && (event.code === "KeyX" || isDeletionKey);
+            const isDuplicateShortcut = event.shiftKey && !event.altKey && !event.ctrlKey && !event.metaKey && event.code === "KeyD";
             if (addMenuPosition !== null) {
                 if (isDeletionKey) {
+                    event.preventDefault();
+                }
+                return;
+            }
+            if (isDuplicateShortcut) {
+                const duplicated = handleDuplicateSelection();
+                if (duplicated) {
                     event.preventDefault();
                 }
                 return;
