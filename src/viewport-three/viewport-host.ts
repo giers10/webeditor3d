@@ -1120,7 +1120,8 @@ export class ViewportHost {
       },
       size: {
         ...session.preview.size
-      }
+      },
+      geometry: cloneBoxBrushGeometry(session.preview.geometry)
     };
   }
 
@@ -1798,8 +1799,7 @@ export class ViewportHost {
       geometry: nextGeometry
     };
   }
-        },
-        geometry: cloneBoxBrushGeometry(session.preview.geometry)
+
   private getComponentTargetVertexIds(target: ActiveTransformSession["target"]): BoxVertexId[] {
     switch (target.kind) {
       case "brushFace":
