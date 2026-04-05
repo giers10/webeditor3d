@@ -330,7 +330,9 @@ describe("buildRuntimeSceneFromDocument", () => {
       }
     });
     const brushCollider = runtimeScene.colliders[0];
-    expect(brushCollider.kind).toBe("trimesh");
+    if (brushCollider.kind !== "trimesh") {
+      throw new Error(`Expected a trimesh brush collider, received ${brushCollider.kind}.`);
+    }
     expect(Array.from(brushCollider.vertices)).toHaveLength(24);
     expect(Array.from(brushCollider.indices)).toHaveLength(36);
     expect(runtimeScene.sceneBounds).toEqual({
