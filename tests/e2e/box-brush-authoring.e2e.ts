@@ -117,3 +117,47 @@ test("switching selection while a transform input is active does not overwrite t
   await outlinerButtons.nth(0).click();
   await expect(page.getByTestId("brush-size-z")).toHaveValue("4");
 });
+
+test("shift+d duplicates the current selection and does not trigger while typing", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate((storageKey) => {
+    window.localStorage.removeItem(storageKey);
+  }, "webeditor3d.scene-document-draft");
+  await page.reload();
+
+  await beginBoxCreation(page);
+  await clickViewport(page);
+
+  const beforeDuplicateSnapshot = await getEditorStoreSnapshot(page);
+  expect(beforeDuplicateSnapshot.selection).toMatchObject({
+    kind: "brushes"
+  });
+  const sourceBrushId = beforeDuplicateSnapshot.selection.ids?.[0];
+  expect(sourceBrushId).toBeDefined();
+
+  await page.keyboard.press("Shift+D");
+
+  const afterDuplicateSnapshot = await getEditorStoreSnapshot(page);
+  expect(afterDuplicateSnapshot.selection).toMatchObject({
+    kind: "brushes"
+  });
+  expect(Object.keys(afterDuplicateSnapshot.document.brushes)).toHaveLength(2);
+
+  const duplicatedBrushId = afterDuplicateSnapshot.selection.ids?.[0];
+  expect(duplicatedBrushId).toBeDefined();
+  expect(duplicatedBrushId).not.toBe(sourceBrushId);
+
+  const sourceCenter = beforeDuplicateSnapshot.document.brushes[sourceBrushId as string].center;
+  const duplicatedCenter = afterDuplicateSnapshot.document.brushes[duplicatedBrushId as string].center;
+  expect(duplicatedCenter).toEqual({
+    x: sourceCenter.x + 1,
+    y: sourceCenter.y,
+    z: sourceCenter.z + 1
+  });
+
+  await page.getByTestId("selected-brush-name").click();
+  await page.keyboard.press("Shift+D");
+
+  const afterTypingShortcutSnapshot = await getEditorStoreSnapshot(page);
+  expect(Object.keys(afterTypingShortcutSnapshot.document.brushes)).toHaveLength(2);
+});
