@@ -7,6 +7,7 @@ import { createCommitTransformSessionCommand } from "../../src/commands/commit-t
 import {
   createTransformSession,
   resolveTransformTarget,
+  supportsTransformAxisConstraint,
   supportsTransformOperation
 } from "../../src/core/transform-session";
 import { createBoxBrush } from "../../src/document/brushes";
@@ -145,6 +146,89 @@ describe("transform session commit commands", () => {
     expect(supportsTransformOperation(vertexResolved.target as NonNullable<typeof vertexResolved.target>, "translate")).toBe(true);
     expect(supportsTransformOperation(vertexResolved.target as NonNullable<typeof vertexResolved.target>, "rotate")).toBe(false);
     expect(supportsTransformOperation(vertexResolved.target as NonNullable<typeof vertexResolved.target>, "scale")).toBe(false);
+  });
+
+  it("applies axis-constraint rules across object and component transform sessions", () => {
+    const brush = createBoxBrush({
+      id: "brush-axis-rules"
+    });
+    const document = {
+      ...createEmptySceneDocument(),
+      brushes: {
+        [brush.id]: brush
+      }
+    };
+
+    const faceTarget = resolveTransformTarget(
+      document,
+      {
+        kind: "brushFace",
+        brushId: brush.id,
+        faceId: "posX"
+      },
+      "face"
+    ).target;
+    const edgeTarget = resolveTransformTarget(
+      document,
+      {
+        kind: "brushEdge",
+        brushId: brush.id,
+        edgeId: "edgeY_posX_posZ"
+      },
+      "edge"
+    ).target;
+    const vertexTarget = resolveTransformTarget(
+      document,
+      {
+        kind: "brushVertex",
+        brushId: brush.id,
+        vertexId: "posX_posY_posZ"
+      },
+      "vertex"
+    ).target;
+
+    if (faceTarget === null || faceTarget.kind !== "brushFace") {
+      throw new Error("Expected a face transform target.");
+    }
+
+    if (edgeTarget === null || edgeTarget.kind !== "brushEdge") {
+      throw new Error("Expected an edge transform target.");
+    }
+
+    if (vertexTarget === null || vertexTarget.kind !== "brushVertex") {
+      throw new Error("Expected a vertex transform target.");
+    }
+
+    const faceRotateSession = createTransformSession({
+      source: "keyboard",
+      sourcePanelId: "topLeft",
+      operation: "rotate",
+      target: faceTarget
+    });
+    const edgeScaleSession = createTransformSession({
+      source: "keyboard",
+      sourcePanelId: "topLeft",
+      operation: "scale",
+      target: edgeTarget
+    });
+    const vertexTranslateSession = createTransformSession({
+      source: "keyboard",
+      sourcePanelId: "topLeft",
+      operation: "translate",
+      target: vertexTarget
+    });
+
+    expect(supportsTransformAxisConstraint(faceRotateSession, "x")).toBe(true);
+    expect(supportsTransformAxisConstraint(faceRotateSession, "y")).toBe(false);
+    expect(supportsTransformAxisConstraint(faceRotateSession, "z")).toBe(false);
+
+    expect(supportsTransformAxisConstraint(edgeScaleSession, "x")).toBe(true);
+    expect(supportsTransformAxisConstraint(edgeScaleSession, "y")).toBe(false);
+    expect(supportsTransformAxisConstraint(edgeScaleSession, "z")).toBe(true);
+
+    expect(supportsTransformAxisConstraint(vertexTranslateSession, "x")).toBe(true);
+    expect(supportsTransformAxisConstraint(vertexTranslateSession, "y")).toBe(true);
+    expect(supportsTransformAxisConstraint(vertexTranslateSession, "z")).toBe(true);
   });
 
   it("commits whitebox box rotate and scale transforms with undo and redo", () => {
