@@ -1,15 +1,15 @@
 import type { LoadedModelAsset } from "../assets/gltf-model-import";
 import type { Vec3 } from "../core/vector";
 import { getModelInstances } from "../assets/model-instances";
-import type { BoxBrush, BoxFaceId, FaceUvState } from "../document/brushes";
+import { cloneBoxBrushGeometry, cloneFaceUvState, type BoxBrush, type BoxBrushGeometry, type BoxFaceId, type FaceUvState } from "../document/brushes";
 import type { SceneDocument } from "../document/scene-document";
 import { cloneWorldSettings, type WorldSettings } from "../document/world-settings";
 import { getEntityInstances, getPrimaryPlayerStartEntity, type EntityInstance } from "../entities/entity-instances";
 import { getBoxBrushBounds } from "../geometry/box-brush";
+import { buildBoxBrushDerivedMeshData } from "../geometry/box-brush-mesh";
 import { buildGeneratedModelCollider, type GeneratedColliderBounds, type GeneratedModelCollider } from "../geometry/model-instance-collider-generation";
 import { cloneInteractionLink, getInteractionLinks, type InteractionLink } from "../interactions/interaction-links";
 import { cloneMaterialDef, type MaterialDef } from "../materials/starter-material-library";
-import { cloneFaceUvState } from "../document/brushes";
 import { assertRuntimeSceneBuildable } from "./runtime-scene-validation";
 import { FIRST_PERSON_PLAYER_SHAPE, type FirstPersonPlayerShape } from "./player-collision";
 
@@ -27,23 +27,25 @@ export interface RuntimeBoxBrushInstance {
   center: Vec3;
   rotationDegrees: Vec3;
   size: Vec3;
+  geometry: BoxBrushGeometry;
   faces: Record<BoxFaceId, RuntimeBrushFace>;
 }
 
-export interface RuntimeBoxCollider {
-  kind: "box";
+export interface RuntimeBrushTriMeshCollider {
+  kind: "trimesh";
   source: "brush";
   brushId: string;
   center: Vec3;
   rotationDegrees: Vec3;
-  size: Vec3;
+  vertices: Float32Array;
+  indices: Uint32Array;
   worldBounds: {
     min: Vec3;
     max: Vec3;
   };
 }
 
-export type RuntimeSceneCollider = RuntimeBoxCollider | GeneratedModelCollider;
+export type RuntimeSceneCollider = RuntimeBrushTriMeshCollider | GeneratedModelCollider;
 
 export interface RuntimeSceneBounds {
   min: Vec3;
@@ -189,6 +191,7 @@ function buildRuntimeBrush(brush: BoxBrush, document: SceneDocument): RuntimeBox
     center: cloneVec3(brush.center),
     rotationDegrees: cloneVec3(brush.rotationDegrees),
     size: cloneVec3(brush.size),
+    geometry: cloneBoxBrushGeometry(brush.geometry),
     faces: {
       posX: {
         materialId: brush.faces.posX.materialId,
@@ -224,16 +227,18 @@ function buildRuntimeBrush(brush: BoxBrush, document: SceneDocument): RuntimeBox
   };
 }
 
-function buildRuntimeCollider(brush: BoxBrush): RuntimeBoxCollider {
+function buildRuntimeCollider(brush: BoxBrush): RuntimeBrushTriMeshCollider {
   const bounds = getBoxBrushBounds(brush);
+  const derivedMesh = buildBoxBrushDerivedMeshData(brush);
 
   return {
-    kind: "box",
+    kind: "trimesh",
     source: "brush",
     brushId: brush.id,
     center: cloneVec3(brush.center),
     rotationDegrees: cloneVec3(brush.rotationDegrees),
-    size: cloneVec3(brush.size),
+    vertices: derivedMesh.colliderVertices,
+    indices: derivedMesh.colliderIndices,
     worldBounds: {
       min: cloneVec3(bounds.min),
       max: cloneVec3(bounds.max)
