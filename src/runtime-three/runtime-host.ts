@@ -2,6 +2,7 @@ import {
   AmbientLight,
   AnimationClip,
   AnimationMixer,
+  BufferGeometry,
   BoxGeometry,
   DirectionalLight,
   Group,
@@ -24,7 +25,7 @@ import type { LoadedModelAsset } from "../assets/gltf-model-import";
 import type { LoadedImageAsset } from "../assets/image-assets";
 import type { LoadedAudioAsset } from "../assets/audio-assets";
 import type { ProjectAssetRecord } from "../assets/project-assets";
-import { applyBoxBrushFaceUvsToGeometry } from "../geometry/box-face-uvs";
+import { buildBoxBrushDerivedMeshData } from "../geometry/box-brush-mesh";
 import { createStarterMaterialSignature, createStarterMaterialTexture } from "../materials/starter-material-textures";
 import {
   applyAdvancedRenderingLightShadowFlags,
@@ -77,7 +78,7 @@ export class RuntimeHost {
   private readonly orbitVisitorController = new OrbitVisitorNavigationController();
   private readonly interactionSystem = new RuntimeInteractionSystem();
   private readonly audioSystem = new RuntimeAudioSystem(this.scene, this.camera, null);
-  private readonly brushMeshes = new Map<string, Mesh<BoxGeometry, MeshStandardMaterial[]>>();
+  private readonly brushMeshes = new Map<string, Mesh<BufferGeometry, MeshStandardMaterial[]>>();
   private readonly localLightObjects = new Map<string, Group>();
   private readonly modelRenderObjects = new Map<string, Group>();
   private readonly materialTextureCache = new Map<string, CachedMaterialTexture>();
@@ -460,8 +461,7 @@ export class RuntimeHost {
     this.clearBrushMeshes();
 
     for (const brush of brushes) {
-      const geometry = new BoxGeometry(brush.size.x, brush.size.y, brush.size.z);
-      applyBoxBrushFaceUvsToGeometry(geometry, brush);
+      const geometry = buildBoxBrushDerivedMeshData(brush).geometry;
 
       const materials = [
         this.createFaceMaterial(brush.faces.posX.material),
