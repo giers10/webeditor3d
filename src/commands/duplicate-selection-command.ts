@@ -1,19 +1,12 @@
-import { cloneModelInstance, createModelInstancePlacementPosition, type ModelInstance } from "../assets/model-instances";
+import { cloneModelInstance, type ModelInstance } from "../assets/model-instances";
 import { createOpaqueId } from "../core/ids";
 import { cloneEditorSelection, type EditorSelection } from "../core/selection";
 import type { ToolMode } from "../core/tool-mode";
-import type { Vec3 } from "../core/vector";
 import { cloneBoxBrush, type BoxBrush } from "../document/brushes";
 import type { SceneDocument } from "../document/scene-document";
 import { cloneEntityInstance, type EntityInstance } from "../entities/entity-instances";
 
 import type { EditorCommand } from "./command";
-
-export const DUPLICATE_SELECTION_OFFSET: Vec3 = {
-  x: 1,
-  y: 0,
-  z: 1
-};
 
 interface DuplicateSelectionResult {
   selection: EditorSelection;
@@ -22,40 +15,21 @@ interface DuplicateSelectionResult {
   modelInstances: ModelInstance[] | null;
 }
 
-function applyDuplicateSelectionOffset(position: Vec3): Vec3 {
-  return {
-    x: position.x + DUPLICATE_SELECTION_OFFSET.x,
-    y: position.y + DUPLICATE_SELECTION_OFFSET.y,
-    z: position.z + DUPLICATE_SELECTION_OFFSET.z
-  };
-}
-
 function duplicateBrush(brush: BoxBrush): BoxBrush {
   const duplicatedBrush = cloneBoxBrush(brush);
   duplicatedBrush.id = createOpaqueId("brush");
-  duplicatedBrush.center = applyDuplicateSelectionOffset(duplicatedBrush.center);
   return duplicatedBrush;
 }
 
 function duplicateEntity(entity: EntityInstance): EntityInstance {
   const duplicatedEntity = cloneEntityInstance(entity);
   duplicatedEntity.id = createOpaqueId(`entity-${duplicatedEntity.kind}`);
-  duplicatedEntity.position = applyDuplicateSelectionOffset(duplicatedEntity.position);
   return duplicatedEntity;
 }
 
-function duplicateModelInstance(modelInstance: ModelInstance, currentDocument: SceneDocument): ModelInstance {
+function duplicateModelInstance(modelInstance: ModelInstance): ModelInstance {
   const duplicatedModelInstance = cloneModelInstance(modelInstance);
   duplicatedModelInstance.id = createOpaqueId("model-instance");
-
-  const anchoredDuplicatePosition = applyDuplicateSelectionOffset(duplicatedModelInstance.position);
-  const referencedAsset = currentDocument.assets[duplicatedModelInstance.assetId];
-
-  duplicatedModelInstance.position =
-    referencedAsset !== undefined && referencedAsset.kind === "model"
-      ? createModelInstancePlacementPosition(referencedAsset, anchoredDuplicatePosition)
-      : anchoredDuplicatePosition;
-
   return duplicatedModelInstance;
 }
 
@@ -143,7 +117,7 @@ function createDuplicateSelectionResult(currentDocument: SceneDocument, selectio
         throw new Error(`Model instance ${modelInstanceId} does not exist.`);
       }
 
-      return duplicateModelInstance(sourceModelInstance, currentDocument);
+      return duplicateModelInstance(sourceModelInstance);
     });
 
     return {
