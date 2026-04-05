@@ -409,9 +409,9 @@ describe("transform foundation integration", () => {
     });
 
     expect(store.getState().whiteboxSelectionMode).toBe("face");
-    expect(screen.getByTestId("transform-translate-button")).not.toBeDisabled();
-    expect(screen.getByTestId("transform-rotate-button")).not.toBeDisabled();
-    expect(screen.getByTestId("transform-scale-button")).not.toBeDisabled();
+    expect(screen.getByTestId("transform-translate-button")).toBeDisabled();
+    expect(screen.getByTestId("transform-rotate-button")).toBeDisabled();
+    expect(screen.getByTestId("transform-scale-button")).toBeDisabled();
 
     act(() => {
       store.setSelection({
@@ -422,6 +422,8 @@ describe("transform foundation integration", () => {
     });
 
     expect(screen.getByTestId("transform-translate-button")).not.toBeDisabled();
+    expect(screen.getByTestId("transform-rotate-button")).not.toBeDisabled();
+    expect(screen.getByTestId("transform-scale-button")).not.toBeDisabled();
 
     await act(async () => {
       fireEvent.click(screen.getByTestId("whitebox-selection-mode-vertex"));
