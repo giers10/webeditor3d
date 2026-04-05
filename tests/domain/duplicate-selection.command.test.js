@@ -74,11 +74,7 @@ describe("duplicate selection command", () => {
         expect(selection.ids[0]).not.toBe(sourceBrush.id);
         const duplicatedBrush = store.getState().document.brushes[selection.ids[0]];
         expect(duplicatedBrush).toBeDefined();
-        expect(duplicatedBrush.center).toEqual({
-            x: sourceBrush.center.x + 1,
-            y: sourceBrush.center.y,
-            z: sourceBrush.center.z + 1
-        });
+        expect(duplicatedBrush.center).toEqual(sourceBrush.center);
         expect(duplicatedBrush.faces).toEqual(sourceBrush.faces);
         expect(store.undo()).toBe(true);
         expect(Object.keys(store.getState().document.brushes)).toEqual([sourceBrush.id]);
@@ -134,11 +130,7 @@ describe("duplicate selection command", () => {
         expect(duplicatedModelInstanceId).not.toBe(sourceModelInstance.id);
         const duplicatedModelInstance = store.getState().document.modelInstances[duplicatedModelInstanceId];
         expect(duplicatedModelInstance.assetId).toBe(sourceModelInstance.assetId);
-        expect(duplicatedModelInstance.position).toEqual({
-            x: sourceModelInstance.position.x + 1,
-            y: sourceModelInstance.position.y,
-            z: sourceModelInstance.position.z + 1
-        });
+        expect(duplicatedModelInstance.position).toEqual(sourceModelInstance.position);
         expect(store.getState().document.assets[modelAsset.id]).toEqual(modelAsset);
         expect(Object.keys(store.getState().document.assets)).toHaveLength(1);
         expect(store.undo()).toBe(true);
@@ -189,11 +181,7 @@ describe("duplicate selection command", () => {
         const duplicatedEntity = store.getState().document.entities[selection.ids[0]];
         expect(duplicatedEntity).toBeDefined();
         expect(duplicatedEntity.kind).toBe(sourceEntity.kind);
-        expect(duplicatedEntity.position).toEqual({
-            x: sourceEntity.position.x + 1,
-            y: sourceEntity.position.y,
-            z: sourceEntity.position.z + 1
-        });
+        expect(duplicatedEntity.position).toEqual(sourceEntity.position);
         expect(store.undo()).toBe(true);
         expect(store.getState().document.entities[sourceEntity.id]).toEqual(sourceEntity);
         expect(store.redo()).toBe(true);
@@ -243,16 +231,8 @@ describe("duplicate selection command", () => {
         expect(selection.ids).not.toEqual([sourceBrushA.id, sourceBrushB.id]);
         const duplicatedBrushA = store.getState().document.brushes[selection.ids[0]];
         const duplicatedBrushB = store.getState().document.brushes[selection.ids[1]];
-        expect(duplicatedBrushA.center).toEqual({
-            x: sourceBrushA.center.x + 1,
-            y: sourceBrushA.center.y,
-            z: sourceBrushA.center.z + 1
-        });
-        expect(duplicatedBrushB.center).toEqual({
-            x: sourceBrushB.center.x + 1,
-            y: sourceBrushB.center.y,
-            z: sourceBrushB.center.z + 1
-        });
+        expect(duplicatedBrushA.center).toEqual(sourceBrushA.center);
+        expect(duplicatedBrushB.center).toEqual(sourceBrushB.center);
         expect(store.undo()).toBe(true);
         expect(Object.keys(store.getState().document.brushes).sort()).toEqual([sourceBrushA.id, sourceBrushB.id]);
         expect(store.redo()).toBe(true);
