@@ -848,6 +848,7 @@ function readBrushes(
         DEFAULT_BOX_BRUSH_ROTATION_DEGREES
       ),
       size,
+      geometry: readBoxBrushGeometry(brushValue.geometry, `brushes.${brushId}.geometry`, size),
       faces: readBoxBrushFaces(brushValue.faces, `brushes.${brushId}.faces`, materials, allowMissingUvState),
       layerId: expectOptionalString(brushValue.layerId, `brushes.${brushId}.layerId`),
       groupId: expectOptionalString(brushValue.groupId, `brushes.${brushId}.groupId`)
@@ -1628,7 +1629,10 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     };
   }
 
-  if (source.version !== WHITEBOX_FLOAT_TRANSFORM_SCENE_DOCUMENT_VERSION) {
+  if (
+    source.version !== WHITEBOX_FLOAT_TRANSFORM_SCENE_DOCUMENT_VERSION &&
+    source.version !== WHITEBOX_GEOMETRY_SCENE_DOCUMENT_VERSION
+  ) {
     throw new Error(`Unsupported scene document version: ${String(source.version)}.`);
   }
 
