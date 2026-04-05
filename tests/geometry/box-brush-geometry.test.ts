@@ -80,10 +80,11 @@ describe("box brush geometry", () => {
 
     const diagnostics = validateBoxBrushGeometry(brush);
     const derivedMesh = buildBoxBrushDerivedMeshData(brush);
+    const triangles = derivedMesh.faceSurfaces.flatMap((surface) => surface.triangles);
 
     expect(diagnostics).toEqual([]);
     expect(derivedMesh.faceSurfaces).toHaveLength(6);
-    expect(derivedMesh.faceSurfaces.every((surface) => surface.triangles).flat()).toHaveLength(12);
+    expect(triangles).toHaveLength(12);
     expect(Array.from(derivedMesh.colliderIndices)).toHaveLength(36);
   });
 

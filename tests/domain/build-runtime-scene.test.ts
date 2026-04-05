@@ -329,8 +329,10 @@ describe("buildRuntimeSceneFromDocument", () => {
         }
       }
     });
-    expect(Array.from(runtimeScene.colliders[0].vertices)).toHaveLength(24);
-    expect(Array.from(runtimeScene.colliders[0].indices)).toHaveLength(36);
+    const brushCollider = runtimeScene.colliders[0];
+    expect(brushCollider.kind).toBe("trimesh");
+    expect(Array.from(brushCollider.vertices)).toHaveLength(24);
+    expect(Array.from(brushCollider.indices)).toHaveLength(36);
     expect(runtimeScene.sceneBounds).toEqual({
       min: {
         x: -4,
