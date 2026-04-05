@@ -2811,13 +2811,40 @@ export function App({ store, initialStatusMessage }: AppProps) {
     try {
       store.executeCommand(createDuplicateSelectionCommand());
 
-      const duplicatedSelection = store.getState().selection;
+      const duplicatedState = store.getState();
+      const duplicatedSelection = duplicatedState.selection;
       const canGrabDuplicatedSelection =
         (duplicatedSelection.kind === "brushes" || duplicatedSelection.kind === "entities" || duplicatedSelection.kind === "modelInstances") &&
         duplicatedSelection.ids.length === 1;
 
       if (canGrabDuplicatedSelection) {
-        beginTransformOperation("translate", "keyboard");
+        const transformSourcePanelId = layoutMode === "quad" ? hoveredViewportPanelId ?? activePanelId : activePanelId;
+        const transformTargetResult = resolveTransformTarget(duplicatedState.document, duplicatedSelection, whiteboxSelectionMode);
+        const transformTarget = transformTargetResult.target;
+
+        if (transformTarget === null) {
+          setStatusMessage(transformTargetResult.message ?? "Duplicated selection, but could not start move transform.");
+          return true;
+        }
+
+        if (duplicatedState.activeViewportPanelId !== transformSourcePanelId) {
+          store.setActiveViewportPanel(transformSourcePanelId);
+        }
+
+        store.setTransformSession(
+          createTransformSession({
+            source: "keyboard",
+            sourcePanelId: transformSourcePanelId,
+            operation: "translate",
+            target: transformTarget
+          })
+        );
+
+        setStatusMessage(
+          `Move ${getTransformTargetLabel(transformTarget).toLowerCase()} in ${getViewportPanelLabel(
+            transformSourcePanelId
+          )}. Move the pointer, press X/Y/Z to constrain, click or press Enter to commit, Escape cancels.`
+        );
       } else {
         setStatusMessage("Duplicated selection.");
       }
