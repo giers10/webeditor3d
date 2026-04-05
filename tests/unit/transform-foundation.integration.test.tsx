@@ -303,7 +303,8 @@ describe("transform foundation integration", () => {
         },
         size: {
           ...brush.size
-        }
+        },
+        geometry: createBoxBrush({ size: brush.size }).geometry
       }
     };
 
@@ -343,7 +344,8 @@ describe("transform foundation integration", () => {
         },
         size: {
           ...brush.size
-        }
+        },
+        geometry: createBoxBrush({ size: brush.size }).geometry
       }
     };
 
@@ -374,7 +376,14 @@ describe("transform foundation integration", () => {
           x: 3.5,
           y: 2.5,
           z: 4.5
-        }
+        },
+        geometry: createBoxBrush({
+          size: {
+            x: 3.5,
+            y: 2.5,
+            z: 4.5
+          }
+        }).geometry
       }
     };
 

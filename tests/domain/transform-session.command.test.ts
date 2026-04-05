@@ -281,7 +281,8 @@ describe("transform session commit commands", () => {
       },
       size: {
         ...brush.size
-      }
+      },
+      geometry: target.initialGeometry
     };
 
     store.executeCommand(createCommitTransformSessionCommand(store.getState().document, rotateSession));
@@ -322,7 +323,8 @@ describe("transform session commit commands", () => {
         x: 3.25,
         y: 1.75,
         z: 5.5
-      }
+      },
+      geometry: scaleTarget.initialGeometry
     };
 
     store.executeCommand(createCommitTransformSessionCommand(store.getState().document, scaleSession));
@@ -412,7 +414,8 @@ describe("transform session commit commands", () => {
       kind: "brush",
       center: { x: 0.5, y: 1, z: 0 },
       rotationDegrees: { x: 0, y: 0, z: 0 },
-      size: { x: 3, y: 2, z: 2 }
+      size: { x: 3, y: 2, z: 2 },
+      geometry: createBoxBrush({ size: { x: 3, y: 2, z: 2 } }).geometry
     };
 
     store.executeCommand(createCommitTransformSessionCommand(store.getState().document, session));
@@ -476,7 +479,8 @@ describe("transform session commit commands", () => {
       kind: "brush",
       center: { x: 0.5, y: 1.5, z: 0.5 },
       rotationDegrees: { x: 0, y: 0, z: 0 },
-      size: { x: 3, y: 3, z: 3 }
+      size: { x: 3, y: 3, z: 3 },
+      geometry: createBoxBrush({ size: { x: 3, y: 3, z: 3 } }).geometry
     };
 
     store.executeCommand(createCommitTransformSessionCommand(store.getState().document, session));

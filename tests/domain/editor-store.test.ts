@@ -4,6 +4,7 @@ import { createEditorStore } from "../../src/app/editor-store";
 import { createCreateBoxBrushCommand } from "../../src/commands/create-box-brush-command";
 import { createSetSceneNameCommand } from "../../src/commands/set-scene-name-command";
 import { createTransformSession } from "../../src/core/transform-session";
+import { createBoxBrush } from "../../src/document/brushes";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
 import type { KeyValueStorage } from "../../src/serialization/local-draft-storage";
 
@@ -359,7 +360,14 @@ describe("EditorStore", () => {
             x: 2,
             y: 2,
             z: 2
-          }
+          },
+          initialGeometry: createBoxBrush({
+            size: {
+              x: 2,
+              y: 2,
+              z: 2
+            }
+          }).geometry
         }
       })
     );
