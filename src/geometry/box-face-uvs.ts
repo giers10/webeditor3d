@@ -2,7 +2,6 @@ import { BoxGeometry } from "three";
 
 import type { Vec2, Vec3 } from "../core/vector";
 import { BOX_FACE_IDS, createDefaultFaceUvState, type BoxBrush, type BoxFaceId, type FaceUvState } from "../document/brushes";
-import { getBoxBrushHalfSize } from "./box-brush";
 
 interface BoxBrushUvProjectionSource {
   size: Vec3;
@@ -45,7 +44,11 @@ export function createFitToFaceBoxBrushFaceUvState(brush: BoxBrush, faceId: BoxF
 }
 
 export function projectBoxFaceVertexToUv(vertexPosition: Vec3, brush: BoxBrushUvProjectionSource, faceId: BoxFaceId): Vec2 {
-  const halfSize = getBoxBrushHalfSize(brush);
+  const halfSize = {
+    x: brush.size.x * 0.5,
+    y: brush.size.y * 0.5,
+    z: brush.size.z * 0.5
+  };
 
   switch (faceId) {
     case "posX":
