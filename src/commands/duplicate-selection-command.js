@@ -1,48 +1,24 @@
-import { cloneModelInstance, createModelInstancePlacementPosition } from "../assets/model-instances";
+import { cloneModelInstance } from "../assets/model-instances";
 import { createOpaqueId } from "../core/ids";
 import { cloneEditorSelection } from "../core/selection";
 import { cloneBoxBrush } from "../document/brushes";
 import { cloneEntityInstance } from "../entities/entity-instances";
 
-export const DUPLICATE_SELECTION_OFFSET = {
-  x: 1,
-  y: 0,
-  z: 1
-};
-
-function applyDuplicateSelectionOffset(position) {
-  return {
-    x: position.x + DUPLICATE_SELECTION_OFFSET.x,
-    y: position.y + DUPLICATE_SELECTION_OFFSET.y,
-    z: position.z + DUPLICATE_SELECTION_OFFSET.z
-  };
-}
-
 function duplicateBrush(brush) {
   const duplicatedBrush = cloneBoxBrush(brush);
   duplicatedBrush.id = createOpaqueId("brush");
-  duplicatedBrush.center = applyDuplicateSelectionOffset(duplicatedBrush.center);
   return duplicatedBrush;
 }
 
 function duplicateEntity(entity) {
   const duplicatedEntity = cloneEntityInstance(entity);
   duplicatedEntity.id = createOpaqueId(`entity-${duplicatedEntity.kind}`);
-  duplicatedEntity.position = applyDuplicateSelectionOffset(duplicatedEntity.position);
   return duplicatedEntity;
 }
 
-function duplicateModelInstance(modelInstance, currentDocument) {
+function duplicateModelInstance(modelInstance) {
   const duplicatedModelInstance = cloneModelInstance(modelInstance);
   duplicatedModelInstance.id = createOpaqueId("model-instance");
-
-  const anchoredDuplicatePosition = applyDuplicateSelectionOffset(duplicatedModelInstance.position);
-  const referencedAsset = currentDocument.assets[duplicatedModelInstance.assetId];
-
-  duplicatedModelInstance.position = referencedAsset !== undefined && referencedAsset.kind === "model"
-    ? createModelInstancePlacementPosition(referencedAsset, anchoredDuplicatePosition)
-    : anchoredDuplicatePosition;
-
   return duplicatedModelInstance;
 }
 
@@ -130,7 +106,7 @@ function createDuplicateSelectionResult(currentDocument, selection) {
         throw new Error(`Model instance ${modelInstanceId} does not exist.`);
       }
 
-      return duplicateModelInstance(sourceModelInstance, currentDocument);
+      return duplicateModelInstance(sourceModelInstance);
     });
 
     return {
