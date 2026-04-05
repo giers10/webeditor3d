@@ -1,4 +1,4 @@
-import { cloneModelInstance } from "../assets/model-instances";
+import { cloneModelInstance, createModelInstancePlacementPosition } from "../assets/model-instances";
 import { createOpaqueId } from "../core/ids";
 import { cloneEditorSelection } from "../core/selection";
 import { cloneBoxBrush } from "../document/brushes";
@@ -32,10 +32,14 @@ function duplicateEntity(entity) {
   return duplicatedEntity;
 }
 
-function duplicateModelInstance(modelInstance) {
+function duplicateModelInstance(modelInstance, currentDocument) {
   const duplicatedModelInstance = cloneModelInstance(modelInstance);
   duplicatedModelInstance.id = createOpaqueId("model-instance");
-  duplicatedModelInstance.position = applyDuplicateSelectionOffset(duplicatedModelInstance.position);
+    const anchoredDuplicatePosition = applyDuplicateSelectionOffset(duplicatedModelInstance.position);
+    const referencedAsset = currentDocument.assets[duplicatedModelInstance.assetId];
+    duplicatedModelInstance.position = referencedAsset !== undefined && referencedAsset.kind === "model"
+        ? createModelInstancePlacementPosition(referencedAsset, anchoredDuplicatePosition)
+        : anchoredDuplicatePosition;
   return duplicatedModelInstance;
 }
 
@@ -123,7 +127,7 @@ function createDuplicateSelectionResult(currentDocument, selection) {
         throw new Error(`Model instance ${modelInstanceId} does not exist.`);
       }
 
-      return duplicateModelInstance(sourceModelInstance);
+      return duplicateModelInstance(sourceModelInstance, currentDocument);
     });
 
     return {
