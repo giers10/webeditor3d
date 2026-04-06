@@ -39,7 +39,7 @@ import {
 } from "../document/world-settings";
 
 import { FirstPersonNavigationController } from "./first-person-navigation-controller";
-import type { FirstPersonTelemetry, NavigationController, RuntimeControllerContext } from "./navigation-controller";
+import type { FirstPersonTelemetry, NavigationController, RuntimeControllerContext, RuntimePlayerVolumeState } from "./navigation-controller";
 import { RapierCollisionWorld } from "./rapier-collision-world";
 import { RuntimeInteractionSystem, type RuntimeInteractionDispatcher, type RuntimeInteractionPrompt } from "./runtime-interaction-system";
 import { RuntimeAudioSystem } from "./runtime-audio-system";
@@ -67,6 +67,8 @@ export class RuntimeHost {
   private readonly scene = new Scene();
   private readonly camera = new PerspectiveCamera(70, 1, 0.05, 1000);
   private readonly cameraForward = new Vector3();
+  private readonly volumeOffset = new Vector3();
+  private readonly volumeInverseRotation = new Quaternion();
   private readonly domElement: HTMLCanvasElement;
   private readonly ambientLight = new AmbientLight();
   private readonly sunLight = new DirectionalLight();
@@ -135,6 +137,7 @@ export class RuntimeHost {
         return this.runtimeScene;
       },
       resolveFirstPersonMotion: (feetPosition, motion, shape) => this.collisionWorld?.resolveFirstPersonMotion(feetPosition, motion, shape) ?? null,
+      resolvePlayerVolumeState: (feetPosition) => this.resolvePlayerVolumeState(feetPosition),
       setRuntimeMessage: (message) => {
         if (message === this.currentRuntimeMessage) {
           return;
@@ -148,6 +151,53 @@ export class RuntimeHost {
         this.firstPersonTelemetryHandler?.(telemetry);
       }
     };
+  }
+
+  private resolvePlayerVolumeState(feetPosition: { x: number; y: number; z: number }): RuntimePlayerVolumeState {
+    if (this.runtimeScene === null) {
+      return {
+        inWater: false,
+        inFog: false
+      };
+    }
+
+    const inWater = this.runtimeScene.volumes.water.some((volume) => this.isPointInsideOrientedVolume(feetPosition, volume));
+    const inFog = this.runtimeScene.volumes.fog.some((volume) => this.isPointInsideOrientedVolume(feetPosition, volume));
+
+    return {
+      inWater,
+      inFog
+    };
+  }
+
+  private isPointInsideOrientedVolume(
+    point: { x: number; y: number; z: number },
+    volume: { center: { x: number; y: number; z: number }; rotationDegrees: { x: number; y: number; z: number }; size: { x: number; y: number; z: number } }
+  ): boolean {
+    this.volumeOffset.set(point.x - volume.center.x, point.y - volume.center.y, point.z - volume.center.z);
+
+    this.volumeInverseRotation
+      .setFromEuler(
+        new Euler(
+          (volume.rotationDegrees.x * Math.PI) / 180,
+          (volume.rotationDegrees.y * Math.PI) / 180,
+          (volume.rotationDegrees.z * Math.PI) / 180,
+          "XYZ"
+        )
+      )
+      .invert();
+
+    this.volumeOffset.applyQuaternion(this.volumeInverseRotation);
+
+    const halfX = volume.size.x * 0.5;
+    const halfY = volume.size.y * 0.5;
+    const halfZ = volume.size.z * 0.5;
+
+    return (
+      Math.abs(this.volumeOffset.x) <= halfX &&
+      Math.abs(this.volumeOffset.y) <= halfY &&
+      Math.abs(this.volumeOffset.z) <= halfZ
+    );
   }
 
   mount(container: HTMLElement) {
