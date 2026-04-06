@@ -2262,6 +2262,8 @@ export class ViewportHost {
 
     for (const brush of Object.values(document.brushes)) {
       const geometry = buildBoxBrushDerivedMeshData(brush).geometry;
+      const contactPatches =
+        brush.volume.mode === "water" ? this.collectViewportWaterContactPatches(document, brush.id, brush.center, brush.rotationDegrees, brush.size) : [];
 
       const materials = BOX_FACE_IDS.map((faceId) =>
         this.createFaceMaterial(
@@ -2269,7 +2271,8 @@ export class ViewportHost {
           faceId,
           document.materials[brush.faces[faceId].materialId ?? ""],
           this.getFaceHighlightState(brush.id, faceId),
-          volumeRenderPaths
+          volumeRenderPaths,
+          contactPatches
         )
       );
       const mesh = new Mesh(geometry, materials);
@@ -2843,8 +2846,9 @@ export class ViewportHost {
     faceId: BoxFaceId,
     material: MaterialDef | undefined,
     highlightState: "none" | "hovered" | "selected",
-    volumeRenderPaths: { fog: "performance" | "quality"; water: "performance" | "quality" }
-  ): MeshStandardMaterial | MeshBasicMaterial {
+    volumeRenderPaths: { fog: "performance" | "quality"; water: "performance" | "quality" },
+    contactPatches: ReturnType<typeof collectWaterContactPatches>
+  ): Material {
     const face = brush.faces[faceId];
     const selectedFace = highlightState === "selected";
     const hoveredFace = highlightState === "hovered";
@@ -2856,34 +2860,27 @@ export class ViewportHost {
       const opacityBoost = faceId === "posY" ? 0.16 : 0;
       const opacity = Math.min(1, baseOpacity + opacityBoost + (selectedFace ? 0.08 : hoveredFace ? 0.04 : 0));
 
-      if (this.displayMode === "wireframe") {
-        return new MeshBasicMaterial({
-          color: brush.volume.water.colorHex,
-          wireframe: true,
-          transparent: true,
-          opacity: Math.min(1, opacity + 0.2),
-          depthWrite: false
-        });
-      }
-
-      if (this.displayMode === "authoring") {
-        return new MeshBasicMaterial({
-          color: brush.volume.water.colorHex,
-          transparent: true,
-          opacity
-        });
-      }
-
-      return new MeshStandardMaterial({
-        color: brush.volume.water.colorHex,
-        emissive: brush.volume.water.colorHex,
-        emissiveIntensity: quality ? 0.09 + brush.volume.water.waveStrength * 0.1 : 0.03,
-        roughness: quality ? 0.1 : 0.2,
-        metalness: quality ? 0.04 : 0.01,
-        transparent: true,
+      const waterMaterial = createWaterMaterial({
+        colorHex: brush.volume.water.colorHex,
+        surfaceOpacity: brush.volume.water.surfaceOpacity,
+        waveStrength: brush.volume.water.waveStrength,
         opacity,
-        envMapIntensity: quality ? 1.15 : 1
+        quality,
+        wireframe: this.displayMode === "wireframe",
+        isTopFace: faceId === "posY",
+        time: this.volumeTime,
+        halfSize: {
+          x: brush.size.x * 0.5,
+          z: brush.size.z * 0.5
+        },
+        contactPatches
       });
+
+      if (waterMaterial.animationUniform !== null) {
+        this.volumeAnimatedUniforms.push(waterMaterial.animationUniform);
+      }
+
+      return waterMaterial.material;
     }
 
     if (brush.volume.mode === "fog") {
