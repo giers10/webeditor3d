@@ -468,6 +468,7 @@ export class RuntimeHost {
       varying vec3 vWorldPos;
       varying vec3 vViewDir;
       varying vec4 vScreenPos;
+      varying float vDepth;
       vec3 gerstnerWave(vec4 wave, vec3 p) {
         float steepness = wave.z;
         float wavelength = wave.w;
@@ -504,6 +505,7 @@ export class RuntimeHost {
         vWorldPos = worldPos.xyz;
         vViewDir = normalize(cameraPosition - worldPos.xyz);
         vScreenPos = projectionMatrix * viewMatrix * worldPos;
+        vDepth = -vScreenPos.z;
         gl_Position = vScreenPos;
       }
     `;
@@ -518,6 +520,7 @@ export class RuntimeHost {
       varying vec3 vWorldPos;
       varying vec3 vViewDir;
       varying vec4 vScreenPos;
+      varying float vDepth;
       float noise(vec3 p) {
         vec3 pi = floor(p);
         vec3 pf = p - pi;
@@ -546,21 +549,26 @@ export class RuntimeHost {
         vec3 viewDir = normalize(vViewDir);
         float vDotN = max(0.0, dot(viewDir, surfaceNormal));
         float fresnel = pow(1.0 - vDotN, 3.0) * 0.8 + 0.2;
+        vec3 reflection = reflect(-viewDir, surfaceNormal);
+        float specular = pow(max(0.0, dot(reflection, normalize(vec3(0.3, 0.8, 0.5)))), 16.0) * fresnel * 0.6;
+        float depthFade = 1.0 / (1.0 + vDepth * 0.008);
+        vec3 baseWaterColor = waterColor;
+        vec3 environmentTint = vec3(0.85, 0.9, 1.0);
+        baseWaterColor = mix(baseWaterColor, environmentTint, fresnel * 0.12);
+        vec3 waterWithDepth = baseWaterColor * mix(0.3, 1.0, depthFade);
+        float foamPeaks = smoothstep(0.6, 0.85, fresnel) * sin(vWorldPos.x * 2.0 + time) * waveStrength;
+        foamPeaks = clamp(foamPeaks, 0.0, 0.2);
+        float foamDetail = abs(noise(vWorldPos * 3.0 + time * 0.4)) * 0.15;
         vec2 screenUv = vScreenPos.xy / vScreenPos.w * 0.5 + 0.5;
-        vec2 refractionOffset = surfaceNormal.xz * (waveStrength * 0.05) * fresnel;
-        vec2 refractedUv = screenUv + refractionOffset;
-        float edgeFade = smoothstep(0.0, 0.1, refractedUv.x) * smoothstep(1.0, 0.9, refractedUv.x) *
-                        smoothstep(0.0, 0.1, refractedUv.y) * smoothstep(1.0, 0.9, refractedUv.y);
-        vec3 skyColor = mix(waterColor, vec3(0.7, 0.8, 0.9), fresnel * 0.6);
-        float foamAmount = smoothstep(0.5, 0.8, fresnel) * waveStrength;
-        foamAmount *= (0.3 + 0.7 * sin(vWorldPos.x * 2.0 + time) * sin(vWorldPos.z * 1.5 + time * 0.8));
-        foamAmount = clamp(foamAmount, 0.0, 0.3);
-        vec3 waterBase = mix(waterColor * 0.8, waterColor * 1.2, fresnel * 0.4);
-        vec3 finalColor = mix(waterBase, skyColor, fresnel * 0.35);
-        finalColor = mix(finalColor, vec3(1.0), foamAmount * 0.9);
-        float alpha = surfaceOpacity + fresnel * 0.3 + foamAmount * 0.15;
-        alpha = clamp(alpha, 0.05, 1.0);
-        gl_FragColor = vec4(finalColor, alpha);
+        float depthGradient = abs(sin(vWorldPos.x * 0.5) - sin(vWorldPos.x * 0.5 + 0.3)) * waveStrength;
+        float foamInteraction = smoothstep(0.2, 0.7, depthGradient) * 0.25;
+        float totalFoam = min(0.4, foamPeaks + foamDetail + foamInteraction);
+        vec3 foamColor = vec3(1.0);
+        vec3 waterWithFoam = mix(waterWithDepth, foamColor, totalFoam);
+        waterWithFoam += specular * vec3(1.0);
+        float alpha = surfaceOpacity + fresnel * 0.25 + totalFoam * 0.2;
+        alpha = clamp(alpha, 0.08, 1.0);
+        gl_FragColor = vec4(waterWithFoam, alpha);
       }
     `;
         const mat = new ShaderMaterial({
