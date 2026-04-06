@@ -4903,6 +4903,26 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   <div className="label">Grounded</div>
                   <div className="value">{firstPersonTelemetry?.grounded ? "yes" : activeNavigationMode === "firstPerson" ? "no" : "n/a"}</div>
                 </div>
+                <div className="stat-card">
+                  <div className="label">Locomotion</div>
+                  <div className="value">
+                    {activeNavigationMode === "firstPerson"
+                      ? firstPersonTelemetry?.locomotionState === "swimming"
+                        ? "Swimming"
+                        : firstPersonTelemetry?.locomotionState === "flying"
+                          ? "Flying"
+                          : "Grounded"
+                      : "n/a"}
+                  </div>
+                </div>
+                <div className="stat-card">
+                  <div className="label">Water Volume</div>
+                  <div className="value">{activeNavigationMode === "firstPerson" ? (firstPersonTelemetry?.inWaterVolume ? "inside" : "outside") : "n/a"}</div>
+                </div>
+                <div className="stat-card">
+                  <div className="label">Fog Volume</div>
+                  <div className="value">{activeNavigationMode === "firstPerson" ? (firstPersonTelemetry?.inFogVolume ? "inside" : "outside") : "n/a"}</div>
+                </div>
               </div>
 
               <div className="stat-card">
