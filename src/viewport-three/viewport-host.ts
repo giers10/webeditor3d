@@ -3198,6 +3198,7 @@ export class ViewportHost {
     }
 
     this.brushRenderObjects.clear();
+    this.volumeAnimatedUniforms.length = 0;
   }
 
   private clearEntityMarkers() {
@@ -4150,6 +4151,14 @@ export class ViewportHost {
   private render = () => {
     this.animationFrame = window.requestAnimationFrame(this.render);
     this.updateTransformGizmoPose();
+    const now = performance.now();
+    const dt = this.previousFrameTime === 0 ? 0 : Math.min((now - this.previousFrameTime) / 1000, 1 / 20);
+    this.previousFrameTime = now;
+    this.volumeTime += dt;
+
+    for (const uniform of this.volumeAnimatedUniforms) {
+      uniform.value = this.volumeTime;
+    }
 
     if (this.advancedRenderingComposer !== null) {
       this.advancedRenderingComposer.render();
