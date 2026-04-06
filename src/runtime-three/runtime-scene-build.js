@@ -6,7 +6,7 @@ import { buildBoxBrushDerivedMeshData } from "../geometry/box-brush-mesh";
 import { buildGeneratedModelCollider } from "../geometry/model-instance-collider-generation";
 import { cloneInteractionLink, getInteractionLinks } from "../interactions/interaction-links";
 import { cloneMaterialDef } from "../materials/starter-material-library";
-import { cloneBoxBrushGeometry, cloneFaceUvState } from "../document/brushes";
+import { cloneBoxBrushGeometry, cloneBoxBrushVolumeSettings, cloneFaceUvState } from "../document/brushes";
 import { assertRuntimeSceneBuildable } from "./runtime-scene-validation";
 import { FIRST_PERSON_PLAYER_SHAPE } from "./player-collision";
 function cloneVec3(vector) {
@@ -34,6 +34,7 @@ function buildRuntimeBrush(brush, document) {
         rotationDegrees: cloneVec3(brush.rotationDegrees),
         size: cloneVec3(brush.size),
         geometry: cloneBoxBrushGeometry(brush.geometry),
+        volume: cloneBoxBrushVolumeSettings(brush.volume),
         faces: {
             posX: {
                 materialId: brush.faces.posX.materialId,
@@ -66,6 +67,34 @@ function buildRuntimeBrush(brush, document) {
                 uv: cloneFaceUvState(brush.faces.negZ.uv)
             }
         }
+    };
+}
+function buildRuntimeFogVolume(brush) {
+    if (brush.volume.mode !== "fog") {
+        throw new Error(`Cannot build fog volume from non-fog brush ${brush.id}.`);
+    }
+    return {
+        brushId: brush.id,
+        center: cloneVec3(brush.center),
+        rotationDegrees: cloneVec3(brush.rotationDegrees),
+        size: cloneVec3(brush.size),
+        colorHex: brush.volume.fog.colorHex,
+        density: brush.volume.fog.density,
+        padding: brush.volume.fog.padding
+    };
+}
+function buildRuntimeWaterVolume(brush) {
+    if (brush.volume.mode !== "water") {
+        throw new Error(`Cannot build water volume from non-water brush ${brush.id}.`);
+    }
+    return {
+        brushId: brush.id,
+        center: cloneVec3(brush.center),
+        rotationDegrees: cloneVec3(brush.rotationDegrees),
+        size: cloneVec3(brush.size),
+        colorHex: brush.volume.water.colorHex,
+        surfaceOpacity: brush.volume.water.surfaceOpacity,
+        waveStrength: brush.volume.water.waveStrength
     };
 }
 function buildRuntimeCollider(brush) {
@@ -287,7 +316,22 @@ export function buildRuntimeSceneFromDocument(document, options = {}) {
         loadedModelAssets: options.loadedModelAssets
     });
     const brushes = Object.values(document.brushes).map((brush) => buildRuntimeBrush(brush, document));
-    const colliders = Object.values(document.brushes).map((brush) => buildRuntimeCollider(brush));
+    const colliders = [];
+    const volumes = {
+        fog: [],
+        water: []
+    };
+    for (const brush of Object.values(document.brushes)) {
+        if (brush.volume.mode === "none") {
+            colliders.push(buildRuntimeCollider(brush));
+            continue;
+        }
+        if (brush.volume.mode === "fog") {
+            volumes.fog.push(buildRuntimeFogVolume(brush));
+            continue;
+        }
+        volumes.water.push(buildRuntimeWaterVolume(brush));
+    }
     const modelInstances = getModelInstances(document.modelInstances).map(buildRuntimeModelInstance);
     const collections = buildRuntimeSceneCollections(document);
     const interactionLinks = getInteractionLinks(document.interactionLinks).map((link) => cloneInteractionLink(link));
@@ -316,6 +360,7 @@ export function buildRuntimeSceneFromDocument(document, options = {}) {
         world: cloneWorldSettings(document.world),
         localLights: collections.localLights,
         brushes,
+        volumes,
         colliders,
         sceneBounds: combinedSceneBounds,
         modelInstances,
