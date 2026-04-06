@@ -25,6 +25,10 @@ function createRuntimeSceneFixture() {
             }
         },
         brushes: [],
+        volumes: {
+            fog: [],
+            water: []
+        },
         colliders: [],
         sceneBounds: null,
         localLights: {
