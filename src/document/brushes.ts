@@ -27,11 +27,13 @@ export const BOX_VERTEX_IDS = [
   "posX_posY_posZ"
 ] as const;
 export const FACE_UV_ROTATION_QUARTER_TURNS = [0, 1, 2, 3] as const;
+export const BOX_BRUSH_VOLUME_MODES = ["none", "water", "fog"] as const;
 
 export type BoxFaceId = (typeof BOX_FACE_IDS)[number];
 export type BoxEdgeId = (typeof BOX_EDGE_IDS)[number];
 export type BoxVertexId = (typeof BOX_VERTEX_IDS)[number];
 export type FaceUvRotationQuarterTurns = (typeof FACE_UV_ROTATION_QUARTER_TURNS)[number];
+export type BoxBrushVolumeMode = (typeof BOX_BRUSH_VOLUME_MODES)[number];
 
 export const BOX_FACE_LABELS: Record<BoxFaceId, string> = {
   posX: "Right",
@@ -81,6 +83,31 @@ export interface BrushFace {
   uv: FaceUvState;
 }
 
+export interface BoxBrushWaterSettings {
+  colorHex: string;
+  surfaceOpacity: number;
+  waveStrength: number;
+}
+
+export interface BoxBrushFogSettings {
+  colorHex: string;
+  density: number;
+  padding: number;
+}
+
+export type BoxBrushVolumeSettings =
+  | {
+      mode: "none";
+    }
+  | {
+      mode: "water";
+      water: BoxBrushWaterSettings;
+    }
+  | {
+      mode: "fog";
+      fog: BoxBrushFogSettings;
+    };
+
 export type BoxBrushFaces = Record<BoxFaceId, BrushFace>;
 
 export type BoxBrushGeometryVertices = Record<BoxVertexId, Vec3>;
@@ -98,6 +125,7 @@ export interface BoxBrush {
   size: Vec3;
   geometry: BoxBrushGeometry;
   faces: BoxBrushFaces;
+  volume: BoxBrushVolumeSettings;
   layerId?: string;
   groupId?: string;
 }
@@ -120,6 +148,18 @@ export const DEFAULT_BOX_BRUSH_ROTATION_DEGREES: Vec3 = {
   x: 0,
   y: 0,
   z: 0
+};
+
+const DEFAULT_BOX_BRUSH_WATER_SETTINGS: BoxBrushWaterSettings = {
+  colorHex: "#4da6d9",
+  surfaceOpacity: 0.55,
+  waveStrength: 0.35
+};
+
+const DEFAULT_BOX_BRUSH_FOG_SETTINGS: BoxBrushFogSettings = {
+  colorHex: "#9cb7c7",
+  density: 0.08,
+  padding: 0.2
 };
 
 export function normalizeBrushName(name: string | null | undefined): string | undefined {
@@ -302,6 +342,10 @@ export function isFaceUvRotationQuarterTurns(value: unknown): value is FaceUvRot
   return typeof value === "number" && FACE_UV_ROTATION_QUARTER_TURNS.includes(value as FaceUvRotationQuarterTurns);
 }
 
+export function isBoxBrushVolumeMode(value: unknown): value is BoxBrushVolumeMode {
+  return typeof value === "string" && BOX_BRUSH_VOLUME_MODES.includes(value as BoxBrushVolumeMode);
+}
+
 export function hasPositiveBoxSize(size: Vec3): boolean {
   return size.x > 0 && size.y > 0 && size.z > 0;
 }
@@ -376,8 +420,59 @@ export function createDefaultBoxBrushFaces(): BoxBrushFaces {
   };
 }
 
+export function createDefaultBoxBrushWaterSettings(): BoxBrushWaterSettings {
+  return {
+    colorHex: DEFAULT_BOX_BRUSH_WATER_SETTINGS.colorHex,
+    surfaceOpacity: DEFAULT_BOX_BRUSH_WATER_SETTINGS.surfaceOpacity,
+    waveStrength: DEFAULT_BOX_BRUSH_WATER_SETTINGS.waveStrength
+  };
+}
+
+export function createDefaultBoxBrushFogSettings(): BoxBrushFogSettings {
+  return {
+    colorHex: DEFAULT_BOX_BRUSH_FOG_SETTINGS.colorHex,
+    density: DEFAULT_BOX_BRUSH_FOG_SETTINGS.density,
+    padding: DEFAULT_BOX_BRUSH_FOG_SETTINGS.padding
+  };
+}
+
+export function createDefaultBoxBrushVolumeSettings(): BoxBrushVolumeSettings {
+  return {
+    mode: "none"
+  };
+}
+
+export function cloneBoxBrushVolumeSettings(volume: BoxBrushVolumeSettings): BoxBrushVolumeSettings {
+  switch (volume.mode) {
+    case "none":
+      return {
+        mode: "none"
+      };
+    case "water":
+      return {
+        mode: "water",
+        water: {
+          colorHex: volume.water.colorHex,
+          surfaceOpacity: volume.water.surfaceOpacity,
+          waveStrength: volume.water.waveStrength
+        }
+      };
+    case "fog":
+      return {
+        mode: "fog",
+        fog: {
+          colorHex: volume.fog.colorHex,
+          density: volume.fog.density,
+          padding: volume.fog.padding
+        }
+      };
+  }
+}
+
 export function createBoxBrush(
-  overrides: Partial<Pick<BoxBrush, "id" | "name" | "center" | "rotationDegrees" | "size" | "geometry" | "faces" | "layerId" | "groupId">> = {}
+  overrides: Partial<
+    Pick<BoxBrush, "id" | "name" | "center" | "rotationDegrees" | "size" | "geometry" | "faces" | "volume" | "layerId" | "groupId">
+  > = {}
 ): BoxBrush {
   const center = cloneVec3(overrides.center ?? DEFAULT_BOX_BRUSH_CENTER);
   const rotationDegrees = cloneVec3(overrides.rotationDegrees ?? DEFAULT_BOX_BRUSH_ROTATION_DEGREES);
@@ -398,6 +493,7 @@ export function createBoxBrush(
     size,
     geometry,
     faces: overrides.faces === undefined ? createDefaultBoxBrushFaces() : cloneBoxBrushFaces(overrides.faces),
+    volume: overrides.volume === undefined ? createDefaultBoxBrushVolumeSettings() : cloneBoxBrushVolumeSettings(overrides.volume),
     layerId: overrides.layerId,
     groupId: overrides.groupId
   };
