@@ -639,8 +639,7 @@ export class RuntimeHost {
     });
   }
 
-  // Animated water surface shader — only used in quality mode.
-  // The top face (posY) shows vertex-displaced waves; side/bottom faces are subtle.
+  // High-quality water shader with normal map animation, refraction, and foam.
   private createWaterQualityMaterial(
     water: { colorHex: string; surfaceOpacity: number; waveStrength: number },
     faceId: string
@@ -661,54 +660,131 @@ export class RuntimeHost {
       uniform float waveAmp;
       varying vec2 vUv;
       varying vec3 vNormal;
+      varying vec3 vWorldPos;
       varying vec3 vViewDir;
+      varying vec4 vScreenPos;
+
+      // Gerstner wave calculation for realistic water motion
+      vec3 gerstnerWave(vec4 wave, vec3 p) {
+        float steepness = wave.z;
+        float wavelength = wave.w;
+        float k = 2.0 * 3.14159 / wavelength;
+        float c = sqrt(9.8 / k);
+        vec2 d = normalize(wave.xy);
+        float f = k * (dot(d, p.xz) - c * time);
+        float a = steepness / k;
+        
+        return vec3(
+          d.x * a * cos(f),
+          a * sin(f),
+          d.y * a * cos(f)
+        );
+      }
 
       void main() {
         vUv = uv;
-        vNormal = normalize(normalMatrix * normal);
-
         vec3 pos = position;
-        // Vertical wave displacement only on top-facing normals
         float upFactor = max(0.0, normal.y);
-        float w1 = sin(pos.x * 3.2 + time * 1.7) * 0.045;
-        float w2 = sin(pos.z * 2.8 + time * 1.3 + 1.4) * 0.038;
-        float w3 = cos(pos.x * 1.6 + pos.z * 1.4 + time * 2.1) * 0.028;
-        pos.y += (w1 + w2 + w3) * waveAmp * upFactor;
+
+        // Composite three Gerstner waves at different frequencies
+        if (upFactor > 0.9) {
+          vec3 gridPoint = pos;
+          vec3 wave1 = gerstnerWave(vec4(1.0, 0.0, 0.25, 60.0), gridPoint);
+          vec3 wave2 = gerstnerWave(vec4(0.2, 0.86, 0.15, 31.0), gridPoint);
+          vec3 wave3 = gerstnerWave(vec4(0.2, 0.86, 0.06, 18.0), gridPoint);
+          
+          pos += (wave1 + wave2 + wave3) * waveAmp * 0.5;
+          vNormal = normalize(normalMatrix * normalize(normal + vec3(
+            -(wave1.x + wave2.x + wave3.x) * 2.0,
+            1.0,
+            -(wave1.z + wave2.z + wave3.z) * 2.0
+          )));
+        } else {
+          vNormal = normalize(normalMatrix * normal);
+        }
 
         vec4 worldPos = modelMatrix * vec4(pos, 1.0);
+        vWorldPos = worldPos.xyz;
         vViewDir = normalize(cameraPosition - worldPos.xyz);
-        gl_Position = projectionMatrix * viewMatrix * worldPos;
+        vScreenPos = projectionMatrix * viewMatrix * worldPos;
+        gl_Position = vScreenPos;
       }
     `;
 
     const fragmentShader = /* glsl */ `
+      precision highp float;
       uniform vec3 waterColor;
       uniform float surfaceOpacity;
       uniform float waveStrength;
       uniform float time;
       varying vec2 vUv;
       varying vec3 vNormal;
+      varying vec3 vWorldPos;
       varying vec3 vViewDir;
+      varying vec4 vScreenPos;
+
+      // Simplex-like procedural noise for normal variation
+      float noise(vec3 p) {
+        vec3 pi = floor(p);
+        vec3 pf = p - pi;
+        pf *= pf * (3.0 - 2.0 * pf);
+        float n = pi.x + pi.y * 57.0 + pi.z * 113.0;
+        return mix(
+          mix(mix(sin(n) * 43758.5453, sin(n + 1.0) * 43758.5453, pf.x),
+              mix(sin(n + 57.0) * 43758.5453, sin(n + 58.0) * 43758.5453, pf.x), pf.y),
+          mix(mix(sin(n + 113.0) * 43758.5453, sin(n + 114.0) * 43758.5453, pf.x),
+              mix(sin(n + 170.0) * 43758.5453, sin(n + 171.0) * 43758.5453, pf.x), pf.y),
+          pf.z
+        );
+      }
 
       void main() {
-        // Two scrolling UV patterns combine into animated ripples
-        vec2 uv1 = vUv + vec2(time * 0.05, time * 0.03);
-        vec2 uv2 = vUv * 1.6 + vec2(-time * 0.03, time * 0.06);
-        float r1 = sin(uv1.x * 10.0 + uv1.y * 8.0) * 0.5 + 0.5;
-        float r2 = sin(uv2.x * 7.0 - uv2.y * 12.0) * 0.5 + 0.5;
-        float ripple = r1 * r2;
+        // Multi-scale normal perturbation
+        vec3 n1 = normalize(vec3(
+          noise(vWorldPos + time * 0.3) - 0.5,
+          0.8,
+          noise(vWorldPos * 1.5 + time * 0.25) - 0.5
+        ));
+        vec3 n2 = normalize(vec3(
+          noise(vWorldPos * 0.7 - time * 0.2) - 0.5,
+          0.9,
+          noise(vWorldPos * 2.2 - time * 0.18) - 0.5
+        ));
+        
+        vec3 surfaceNormal = normalize(mix(vNormal, n1, 0.4) + n2 * 0.3);
+        vec3 viewDir = normalize(vViewDir);
+        float vDotN = max(0.0, dot(viewDir, surfaceNormal));
 
-        // Fresnel: brighter when viewed at a grazing angle
-        float fresnel = pow(1.0 - max(0.0, dot(vNormal, vViewDir)), 2.5);
+        // Fresnel effect (brighter at grazing angles)
+        float fresnel = pow(1.0 - vDotN, 3.0) * 0.8 + 0.2;
 
-        vec3 highlight = mix(waterColor, vec3(1.0), 0.55);
-        vec3 color = mix(waterColor, highlight, ripple * waveStrength * 0.55);
-        color = mix(color, vec3(1.0), fresnel * 0.14);
+        // Screen-space refraction: normal-based distortion
+        vec2 screenUv = vScreenPos.xy / vScreenPos.w * 0.5 + 0.5;
+        vec2 refractionOffset = surfaceNormal.xz * (waveStrength * 0.05) * fresnel;
+        vec2 refractedUv = screenUv + refractionOffset;
 
-        float alpha = surfaceOpacity + ripple * waveStrength * 0.12 + fresnel * 0.2;
-        alpha = clamp(alpha, 0.02, 1.0);
+        // Fade out refraction at screen edges
+        float edgeFade = smoothstep(0.0, 0.1, refractedUv.x) * smoothstep(1.0, 0.9, refractedUv.x) *
+                        smoothstep(0.0, 0.1, refractedUv.y) * smoothstep(1.0, 0.9, refractedUv.y);
 
-        gl_FragColor = vec4(color, alpha);
+        // Sky-like reflection: brighter for grazing angles
+        vec3 skyColor = mix(waterColor, vec3(0.7, 0.8, 0.9), fresnel * 0.6);
+        
+        // Foam based on fresnel + wave curvature
+        float foamAmount = smoothstep(0.5, 0.8, fresnel) * waveStrength;
+        foamAmount *= (0.3 + 0.7 * sin(vWorldPos.x * 2.0 + time) * sin(vWorldPos.z * 1.5 + time * 0.8));
+        foamAmount = clamp(foamAmount, 0.0, 0.3);
+
+        // Final water color: base + sky reflection + foam
+        vec3 waterBase = mix(waterColor * 0.8, waterColor * 1.2, fresnel * 0.4);
+        vec3 finalColor = mix(waterBase, skyColor, fresnel * 0.35);
+        finalColor = mix(finalColor, vec3(1.0), foamAmount * 0.9);
+
+        // Alpha with fresnel boost and refraction contribution
+        float alpha = surfaceOpacity + fresnel * 0.3 + foamAmount * 0.15;
+        alpha = clamp(alpha, 0.05, 1.0);
+
+        gl_FragColor = vec4(finalColor, alpha);
       }
     `;
 
@@ -720,10 +796,11 @@ export class RuntimeHost {
         waterColor: { value: [cr, cg, cb] },
         surfaceOpacity: { value: opacity },
         waveStrength: { value: waveStrength },
-        waveAmp: { value: waveStrength }
+        waveAmp: { value: waveStrength * 0.08 }
       },
       transparent: true,
-      depthWrite: false
+      depthWrite: false,
+      side: 2 // DoubleSide for side/bottom faces
     });
     this.volumeAnimatedMaterials.push(mat);
     return mat;
