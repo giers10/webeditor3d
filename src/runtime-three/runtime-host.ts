@@ -32,7 +32,8 @@ import {
   applyAdvancedRenderingRenderableShadowFlags,
   configureAdvancedRenderingRenderer,
   createAdvancedRenderingComposer,
-  resolveBoxVolumeRenderPaths
+  resolveBoxVolumeRenderPaths,
+  type ResolvedBoxVolumeRenderPaths
 } from "../rendering/advanced-rendering";
 import {
   areAdvancedRenderingSettingsEqual,
@@ -510,7 +511,8 @@ export class RuntimeHost {
 
   private rebuildBrushMeshes(brushes: RuntimeBoxBrushInstance[]) {
     this.clearBrushMeshes();
-    const volumeRenderPaths = this.currentWorld === null ? { fog: "performance", water: "performance" } : resolveBoxVolumeRenderPaths(this.currentWorld.advancedRendering);
+    const volumeRenderPaths: ResolvedBoxVolumeRenderPaths =
+      this.currentWorld === null ? { fog: "performance", water: "performance" } : resolveBoxVolumeRenderPaths(this.currentWorld.advancedRendering);
 
     for (const brush of brushes) {
       const geometry = buildBoxBrushDerivedMeshData(brush).geometry;
@@ -601,7 +603,6 @@ export class RuntimeHost {
         metalness: quality ? 0.04 : 0.01,
         transparent: true,
         opacity: Math.min(1, baseOpacity + topBoost),
-        transmission: quality ? 0.25 : 0,
         thickness: quality ? 0.6 : 0,
         envMapIntensity: quality ? 1.15 : 1
       });
