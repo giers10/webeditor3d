@@ -682,6 +682,7 @@ export class RuntimeHost {
     }
 
     this.brushMeshes.clear();
+    this.volumeAnimatedMaterials.length = 0;
   }
 
   private clearModelInstances() {
@@ -728,6 +729,11 @@ export class RuntimeHost {
 
     this.activeController?.update(dt);
     this.audioSystem.updateListenerTransform();
+
+    this.volumeTime += dt;
+    for (const mat of this.volumeAnimatedMaterials) {
+      (mat.uniforms["time"] as { value: number }).value = this.volumeTime;
+    }
 
     for (const mixer of this.animationMixers.values()) {
       mixer.update(dt);
