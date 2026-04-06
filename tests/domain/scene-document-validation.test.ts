@@ -537,16 +537,34 @@ describe("validateSceneDocument", () => {
   });
 
   it("detects invalid whitebox box volume settings", () => {
-    const brush = createBoxBrush({
-      id: "brush-invalid-volume"
+    const invalidModeBrush = createBoxBrush({
+      id: "brush-invalid-volume-mode"
     });
-    (brush as any).volume = {
+    const invalidWaterBrush = createBoxBrush({
+      id: "brush-invalid-volume-water"
+    });
+    const invalidFogBrush = createBoxBrush({
+      id: "brush-invalid-volume-fog"
+    });
+
+    (invalidModeBrush as any).volume = {
       mode: "lava",
+      water: {
+        colorHex: "#3a7dc2",
+        surfaceOpacity: 0.6,
+        waveStrength: 0.3
+      }
+    };
+    (invalidWaterBrush as any).volume = {
+      mode: "water",
       water: {
         colorHex: "water",
         surfaceOpacity: 2,
         waveStrength: -1
-      },
+      }
+    };
+    (invalidFogBrush as any).volume = {
+      mode: "fog",
       fog: {
         colorHex: "fog",
         density: Number.NaN,
@@ -557,7 +575,9 @@ describe("validateSceneDocument", () => {
     const validation = validateSceneDocument({
       ...createEmptySceneDocument(),
       brushes: {
-        [brush.id]: brush
+        [invalidModeBrush.id]: invalidModeBrush,
+        [invalidWaterBrush.id]: invalidWaterBrush,
+        [invalidFogBrush.id]: invalidFogBrush
       }
     });
 
@@ -565,31 +585,31 @@ describe("validateSceneDocument", () => {
       expect.arrayContaining([
         expect.objectContaining({
           code: "invalid-box-volume-mode",
-          path: "brushes.brush-invalid-volume.volume.mode"
+          path: "brushes.brush-invalid-volume-mode.volume.mode"
         }),
         expect.objectContaining({
           code: "invalid-box-volume-water-color",
-          path: "brushes.brush-invalid-volume.volume.water.colorHex"
+          path: "brushes.brush-invalid-volume-water.volume.water.colorHex"
         }),
         expect.objectContaining({
           code: "invalid-box-volume-water-opacity",
-          path: "brushes.brush-invalid-volume.volume.water.surfaceOpacity"
+          path: "brushes.brush-invalid-volume-water.volume.water.surfaceOpacity"
         }),
         expect.objectContaining({
           code: "invalid-box-volume-water-wave-strength",
-          path: "brushes.brush-invalid-volume.volume.water.waveStrength"
+          path: "brushes.brush-invalid-volume-water.volume.water.waveStrength"
         }),
         expect.objectContaining({
           code: "invalid-box-volume-fog-color",
-          path: "brushes.brush-invalid-volume.volume.fog.colorHex"
+          path: "brushes.brush-invalid-volume-fog.volume.fog.colorHex"
         }),
         expect.objectContaining({
           code: "invalid-box-volume-fog-density",
-          path: "brushes.brush-invalid-volume.volume.fog.density"
+          path: "brushes.brush-invalid-volume-fog.volume.fog.density"
         }),
         expect.objectContaining({
           code: "invalid-box-volume-fog-padding",
-          path: "brushes.brush-invalid-volume.volume.fog.padding"
+          path: "brushes.brush-invalid-volume-fog.volume.fog.padding"
         })
       ])
     );
