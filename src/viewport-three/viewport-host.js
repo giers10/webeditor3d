@@ -9,11 +9,13 @@ import { DEFAULT_INTERACTABLE_RADIUS, DEFAULT_PLAYER_START_BOX_SIZE, DEFAULT_PLA
 import { BOX_EDGE_IDS, BOX_FACE_IDS, BOX_VERTEX_IDS, cloneBoxBrushGeometry, deriveBoxBrushSizeFromGeometry, scaleBoxBrushGeometryToSize, DEFAULT_BOX_BRUSH_SIZE } from "../document/brushes";
 import { getBoxBrushEdgeAxis, getBoxBrushEdgeTransformMeta, getBoxBrushEdgeWorldSegment, getBoxBrushFaceAxis, getBoxBrushFaceTransformMeta, getBoxBrushFaceWorldCenter, getBoxBrushVertexWorldPosition, transformBoxBrushWorldPointToLocal, transformBoxBrushWorldVectorToLocal } from "../geometry/box-brush-components";
 import { buildBoxBrushDerivedMeshData, getBoxBrushEdgeVertexIds, getBoxBrushFaceVertexIds, getBoxBrushLocalVertexPosition } from "../geometry/box-brush-mesh";
+import { getBoxBrushBounds } from "../geometry/box-brush";
 import { createModelColliderDebugGroup } from "../geometry/model-instance-collider-debug-mesh";
 import { buildGeneratedModelCollider } from "../geometry/model-instance-collider-generation";
 import { DEFAULT_GRID_SIZE, snapValueToGrid } from "../geometry/grid-snapping";
 import { createStarterMaterialSignature, createStarterMaterialTexture } from "../materials/starter-material-textures";
 import { applyAdvancedRenderingLightShadowFlags, applyAdvancedRenderingRenderableShadowFlags, configureAdvancedRenderingRenderer, createAdvancedRenderingComposer, resolveBoxVolumeRenderPaths } from "../rendering/advanced-rendering";
+import { collectWaterContactPatches, createWaterMaterial } from "../rendering/water-material";
 import { resolveViewportFocusTarget } from "./viewport-focus";
 import { createSoundEmitterMarkerMeshes } from "./viewport-entity-markers";
 import { getViewportViewModeDefinition, isOrthographicViewportViewMode } from "./viewport-view-modes";
@@ -130,6 +132,9 @@ export class ViewportHost {
     projectAssets = {};
     loadedModelAssets = {};
     loadedImageAssets = {};
+    volumeTime = 0;
+    previousFrameTime = 0;
+    volumeAnimatedUniforms = [];
     boxCreatePreviewMesh = new Mesh(new BoxGeometry(DEFAULT_BOX_BRUSH_SIZE.x, DEFAULT_BOX_BRUSH_SIZE.y, DEFAULT_BOX_BRUSH_SIZE.z), new MeshStandardMaterial({
         color: BOX_CREATE_PREVIEW_FILL,
         emissive: BOX_CREATE_PREVIEW_FILL,
