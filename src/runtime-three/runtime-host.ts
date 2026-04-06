@@ -1007,6 +1007,9 @@ export class RuntimeHost {
     for (const mat of this.volumeAnimatedMaterials) {
       (mat.uniforms["time"] as { value: number }).value = this.volumeTime;
     }
+    for (const uniform of this.volumeAnimatedUniforms) {
+      uniform.value = this.volumeTime;
+    }
 
     for (const mixer of this.animationMixers.values()) {
       mixer.update(dt);
