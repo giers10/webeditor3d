@@ -1,5 +1,17 @@
 import { BasicShadowMap, DirectionalLight, HalfFloatType, Mesh, NoToneMapping, PCFShadowMap, PCFSoftShadowMap, PointLight, SpotLight, UnsignedByteType } from "three";
 import { BloomEffect, DepthOfFieldEffect, EffectComposer, EffectPass, RenderPass, SMAAEffect, SMAAPreset, SSAOEffect, ToneMappingEffect, ToneMappingMode } from "postprocessing";
+export function resolveBoxVolumeRenderPaths(settings) {
+    if (!settings.enabled) {
+        return {
+            fog: "performance",
+            water: "performance"
+        };
+    }
+    return {
+        fog: settings.fogPath,
+        water: settings.waterPath
+    };
+}
 export function getAdvancedRenderingShadowMapType(shadowType) {
     switch (shadowType) {
         case "basic":

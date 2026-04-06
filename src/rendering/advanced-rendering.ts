@@ -30,9 +30,29 @@ import {
 
 import type {
   AdvancedRenderingSettings,
+  BoxVolumeRenderPath,
   AdvancedRenderingShadowType,
   AdvancedRenderingToneMappingMode
 } from "../document/world-settings";
+
+export interface ResolvedBoxVolumeRenderPaths {
+  fog: BoxVolumeRenderPath;
+  water: BoxVolumeRenderPath;
+}
+
+export function resolveBoxVolumeRenderPaths(settings: AdvancedRenderingSettings): ResolvedBoxVolumeRenderPaths {
+  if (!settings.enabled) {
+    return {
+      fog: "performance",
+      water: "performance"
+    };
+  }
+
+  return {
+    fog: settings.fogPath,
+    water: settings.waterPath
+  };
+}
 
 export function getAdvancedRenderingShadowMapType(shadowType: AdvancedRenderingShadowType) {
   switch (shadowType) {
