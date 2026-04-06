@@ -700,4 +700,100 @@ describe("buildRuntimeSceneFromDocument", () => {
     expect(runtimeScene.sceneBounds?.min.z).toBeCloseTo(-2.8713203436);
     expect(runtimeScene.sceneBounds?.max.z).toBeCloseTo(1.3713203436);
   });
+
+  it("builds non-blocking water and fog volumes from whitebox boxes", () => {
+    const solidBrush = createBoxBrush({
+      id: "brush-solid",
+      center: {
+        x: 0,
+        y: 0,
+        z: 0
+      },
+      size: {
+        x: 6,
+        y: 1,
+        z: 6
+      }
+    });
+    const waterBrush = createBoxBrush({
+      id: "brush-water",
+      center: {
+        x: 2,
+        y: 0.5,
+        z: 1
+      },
+      size: {
+        x: 3,
+        y: 2,
+        z: 3
+      },
+      volume: {
+        mode: "water",
+        water: {
+          colorHex: "#2f79c4",
+          surfaceOpacity: 0.7,
+          waveStrength: 0.35
+        }
+      }
+    });
+    const fogBrush = createBoxBrush({
+      id: "brush-fog",
+      center: {
+        x: -2,
+        y: 1,
+        z: -1
+      },
+      size: {
+        x: 4,
+        y: 3,
+        z: 2
+      },
+      volume: {
+        mode: "fog",
+        fog: {
+          colorHex: "#99aac4",
+          density: 0.55,
+          padding: 0.25
+        }
+      }
+    });
+
+    const runtimeScene = buildRuntimeSceneFromDocument({
+      ...createEmptySceneDocument({ name: "Volume Runtime Scene" }),
+      brushes: {
+        [solidBrush.id]: solidBrush,
+        [waterBrush.id]: waterBrush,
+        [fogBrush.id]: fogBrush
+      }
+    });
+
+    expect(runtimeScene.brushes).toHaveLength(3);
+    expect(runtimeScene.colliders).toHaveLength(1);
+    expect(runtimeScene.colliders[0]).toMatchObject({
+      source: "brush",
+      brushId: solidBrush.id
+    });
+    expect(runtimeScene.volumes.water).toEqual([
+      {
+        brushId: waterBrush.id,
+        center: waterBrush.center,
+        rotationDegrees: waterBrush.rotationDegrees,
+        size: waterBrush.size,
+        colorHex: "#2f79c4",
+        surfaceOpacity: 0.7,
+        waveStrength: 0.35
+      }
+    ]);
+    expect(runtimeScene.volumes.fog).toEqual([
+      {
+        brushId: fogBrush.id,
+        center: fogBrush.center,
+        rotationDegrees: fogBrush.rotationDegrees,
+        size: fogBrush.size,
+        colorHex: "#99aac4",
+        density: 0.55,
+        padding: 0.25
+      }
+    ]);
+  });
 });
