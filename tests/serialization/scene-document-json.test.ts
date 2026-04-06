@@ -252,6 +252,8 @@ describe("scene document JSON", () => {
         mode: "acesFilmic",
         exposure: 1.25
       },
+      fogPath: "quality",
+      waterPath: "performance",
       depthOfField: {
         enabled: true,
         focusDistance: 12,
