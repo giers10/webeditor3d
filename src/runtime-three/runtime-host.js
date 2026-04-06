@@ -3,7 +3,7 @@ import { createModelInstanceRenderGroup, disposeModelInstance } from "../assets/
 import { buildBoxBrushDerivedMeshData } from "../geometry/box-brush-mesh";
 import { createStarterMaterialSignature, createStarterMaterialTexture } from "../materials/starter-material-textures";
 import { applyAdvancedRenderingLightShadowFlags, applyAdvancedRenderingRenderableShadowFlags, configureAdvancedRenderingRenderer, createAdvancedRenderingComposer, resolveBoxVolumeRenderPaths } from "../rendering/advanced-rendering";
-import { collectWaterContactPatches, createWaterMaterial } from "../rendering/water-material";
+import { collectWaterContactPatches, createWaterContactPatchUniformValue, createWaterMaterial } from "../rendering/water-material";
 import { areAdvancedRenderingSettingsEqual, cloneAdvancedRenderingSettings } from "../document/world-settings";
 import { FirstPersonNavigationController } from "./first-person-navigation-controller";
 import { RapierCollisionWorld } from "./rapier-collision-world";
@@ -31,6 +31,7 @@ export class RuntimeHost {
     volumeTime = 0;
     volumeAnimatedMaterials = [];
     volumeAnimatedUniforms = [];
+    runtimeWaterContactUniforms = [];
     localLightObjects = new Map();
     modelRenderObjects = new Map();
     materialTextureCache = new Map();
@@ -215,6 +216,7 @@ export class RuntimeHost {
             cachedTexture.texture.dispose();
         }
         this.materialTextureCache.clear();
+        this.renderer?.forceContextLoss();
         this.renderer?.dispose();
         this.domElement.removeEventListener("click", this.handleRuntimeClick);
         this.domElement.removeEventListener("pointerdown", this.handleRuntimePointerDown);
@@ -362,19 +364,9 @@ export class RuntimeHost {
     rebuildBrushMeshes(brushes) {
         this.clearBrushMeshes();
         const volumeRenderPaths = this.currentWorld === null ? { fog: "performance", water: "performance" } : resolveBoxVolumeRenderPaths(this.currentWorld.advancedRendering);
-        const colliderBounds = this.runtimeScene?.colliders.map((collider) => ({
-            min: collider.worldBounds.min,
-            max: collider.worldBounds.max
-        })) ?? [];
         for (const brush of brushes) {
             const geometry = buildBoxBrushDerivedMeshData(brush).geometry;
-            const contactPatches = brush.volume.mode === "water"
-                ? collectWaterContactPatches({
-                    center: brush.center,
-                    rotationDegrees: brush.rotationDegrees,
-                    size: brush.size
-                }, colliderBounds)
-                : [];
+            const contactPatches = brush.volume.mode === "water" ? this.collectRuntimeWaterContactPatches(brush) : [];
             const materials = [
                 this.createFaceMaterial(brush, "posX", brush.faces.posX.material, volumeRenderPaths, contactPatches),
                 this.createFaceMaterial(brush, "negX", brush.faces.negX.material, volumeRenderPaths, contactPatches),
@@ -445,6 +437,12 @@ export class RuntimeHost {
             });
             if (waterMaterial.animationUniform !== null) {
                 this.volumeAnimatedUniforms.push(waterMaterial.animationUniform);
+            }
+            if (faceId === "posY" && waterMaterial.contactPatchesUniform !== null) {
+                this.runtimeWaterContactUniforms.push({
+                    brush,
+                    uniform: waterMaterial.contactPatchesUniform
+                });
             }
             return waterMaterial.material;
         }
@@ -547,6 +545,65 @@ export class RuntimeHost {
         }
         this.brushMeshes.clear();
         this.volumeAnimatedMaterials.length = 0;
+        this.volumeAnimatedUniforms.length = 0;
+        this.runtimeWaterContactUniforms.length = 0;
+    }
+    createPlayerWaterContactBounds() {
+        if (this.runtimeScene === null || this.currentFirstPersonTelemetry === null) {
+            return null;
+        }
+        const feetPosition = this.currentFirstPersonTelemetry.feetPosition;
+        const playerShape = this.runtimeScene.playerCollider;
+        switch (playerShape.mode) {
+            case "capsule":
+                return {
+                    min: {
+                        x: feetPosition.x - playerShape.radius,
+                        y: feetPosition.y,
+                        z: feetPosition.z - playerShape.radius
+                    },
+                    max: {
+                        x: feetPosition.x + playerShape.radius,
+                        y: feetPosition.y + playerShape.height,
+                        z: feetPosition.z + playerShape.radius
+                    }
+                };
+            case "box":
+                return {
+                    min: {
+                        x: feetPosition.x - playerShape.size.x * 0.5,
+                        y: feetPosition.y,
+                        z: feetPosition.z - playerShape.size.z * 0.5
+                    },
+                    max: {
+                        x: feetPosition.x + playerShape.size.x * 0.5,
+                        y: feetPosition.y + playerShape.size.y,
+                        z: feetPosition.z + playerShape.size.z * 0.5
+                    }
+                };
+            case "none":
+                return null;
+        }
+    }
+    collectRuntimeWaterContactPatches(brush) {
+        const contactBounds = this.runtimeScene?.colliders.map((collider) => ({
+            min: collider.worldBounds.min,
+            max: collider.worldBounds.max
+        })) ?? [];
+        const playerBounds = this.createPlayerWaterContactBounds();
+        if (playerBounds !== null) {
+            contactBounds.push(playerBounds);
+        }
+        return collectWaterContactPatches({
+            center: brush.center,
+            rotationDegrees: brush.rotationDegrees,
+            size: brush.size
+        }, contactBounds);
+    }
+    updateRuntimeWaterContactUniforms() {
+        for (const binding of this.runtimeWaterContactUniforms) {
+            binding.uniform.value = createWaterContactPatchUniformValue(this.collectRuntimeWaterContactPatches(binding.brush));
+        }
     }
     clearModelInstances() {
         for (const mixer of this.animationMixers.values()) {
@@ -604,6 +661,9 @@ export class RuntimeHost {
         }
         else {
             this.setInteractionPrompt(null);
+        }
+        if (this.runtimeWaterContactUniforms.length > 0) {
+            this.updateRuntimeWaterContactUniforms();
         }
         if (this.advancedRenderingComposer !== null) {
             this.advancedRenderingComposer.render(dt);

@@ -95,6 +95,13 @@ export function collectWaterContactPatches(volume, contactBounds) {
         .slice(0, MAX_WATER_CONTACT_PATCHES);
 }
 
+export function createWaterContactPatchUniformValue(contactPatches) {
+    return Array.from({ length: MAX_WATER_CONTACT_PATCHES }, (_, index) => {
+        const patch = contactPatches?.[index];
+        return new Vector4(patch?.x ?? 0, patch?.z ?? 0, patch?.radius ?? 0, patch?.intensity ?? 0);
+    });
+}
+
 export function createWaterMaterial(options) {
     if (options.wireframe) {
         return {
@@ -105,7 +112,8 @@ export function createWaterMaterial(options) {
                 opacity: Math.min(1, options.opacity + 0.2),
                 depthWrite: false
             }),
-            animationUniform: null
+            animationUniform: null,
+            contactPatchesUniform: null
         };
     }
 
@@ -117,16 +125,14 @@ export function createWaterMaterial(options) {
                 opacity: options.opacity,
                 depthWrite: false
             }),
-            animationUniform: null
+            animationUniform: null,
+            contactPatchesUniform: null
         };
     }
 
     const animationUniform = { value: options.time };
     const halfSize = new Vector2(Math.max(options.halfSize.x, WATER_CONTACT_EPSILON), Math.max(options.halfSize.z, WATER_CONTACT_EPSILON));
-    const contactPatches = Array.from({ length: MAX_WATER_CONTACT_PATCHES }, (_, index) => {
-        const patch = options.contactPatches?.[index];
-        return new Vector4(patch?.x ?? 0, patch?.z ?? 0, patch?.radius ?? 0, patch?.intensity ?? 0);
-    });
+    const contactPatchesUniform = { value: createWaterContactPatchUniformValue(options.contactPatches) };
     const waveStrength = Math.max(0, options.waveStrength);
     const waveAmplitude = 0.016 + Math.min(0.12, waveStrength * 0.06);
     const clampedOpacity = Math.max(0.14, Math.min(1, options.opacity));
@@ -211,25 +217,39 @@ export function createWaterMaterial(options) {
             );
         }
 
+        float fbm(vec2 p) {
+            float value = 0.0;
+            float amplitude = 0.5;
+
+            for (int octave = 0; octave < 4; octave += 1) {
+                value += noise(p) * amplitude;
+                p = p * 2.02 + vec2(17.1, 11.7);
+                amplitude *= 0.5;
+            }
+
+            return value;
+        }
+
         void main() {
             vec3 normal = normalize(vWaveNormal);
             vec3 viewDir = normalize(vViewDir);
             float fresnel = pow(1.0 - clamp(dot(viewDir, normal), 0.0, 1.0), 2.8);
 
-            float refractPattern =
-                sin((vLocalSurfaceUv.x + normal.x * 0.6) * 2.2 + time * 0.8) *
-                sin((vLocalSurfaceUv.y + normal.z * 0.4) * 1.9 - time * 0.65);
-            float detail = noise(vLocalSurfaceUv * 1.8 + vec2(time * 0.12, -time * 0.09));
-            float refraction = refractPattern * 0.08 + (detail - 0.5) * 0.12;
+            float largeWave = fbm(vLocalSurfaceUv * 0.42 + vec2(time * 0.06, -time * 0.04));
+            float mediumWave = fbm(vLocalSurfaceUv * 0.95 + normal.xz * 0.55 + vec2(-time * 0.11, time * 0.09));
+            float microWave = noise(vLocalSurfaceUv * 3.6 + normal.xz * 1.6 + vec2(time * 0.24, -time * 0.19));
+            float caustics = fbm(vLocalSurfaceUv * 1.8 + normal.xz * 1.2 + vec2(time * 0.16, -time * 0.14));
+            caustics *= fbm(vLocalSurfaceUv * 2.7 - normal.xz * 1.4 + vec2(-time * 0.21, time * 0.18));
 
             vec3 deepTint = waterColor * vec3(0.52, 0.66, 0.78);
             vec3 shallowTint = mix(waterColor, vec3(0.72, 0.9, 1.0), 0.2 + fresnel * 0.24);
-            vec3 color = mix(deepTint, shallowTint, 0.58 + refraction);
+            float contactFoam = 0.0;
+            float contactRipple = 0.0;
+            float contactSheen = 0.0;
 
             float edgeDistance = min(halfSize.x - abs(vLocalSurfaceUv.x), halfSize.y - abs(vLocalSurfaceUv.y));
             float edgeBand = max(0.22, min(halfSize.x, halfSize.y) * 0.12);
             float edgeFoam = isTopFace > 0.5 ? 1.0 - smoothstep(0.0, edgeBand, edgeDistance) : 0.0;
-            float contactFoam = 0.0;
 
             if (isTopFace > 0.5) {
                 for (int patchIndex = 0; patchIndex < ${MAX_WATER_CONTACT_PATCHES}; patchIndex += 1) {
@@ -239,22 +259,30 @@ export function createWaterMaterial(options) {
                     }
 
                     float normalizedDistance = length(vLocalSurfaceUv - patchData.xy) / patchData.z;
-                    float ring = smoothstep(0.38, 0.72, normalizedDistance) * (1.0 - smoothstep(0.88, 1.2, normalizedDistance));
-                    contactFoam = max(contactFoam, ring * patchData.w);
+                    float contactBody = 1.0 - smoothstep(0.0, 0.82, normalizedDistance);
+                    float ripple = (sin(normalizedDistance * 14.0 - time * (2.4 + patchData.w * 1.6)) * 0.5 + 0.5) * exp(-normalizedDistance * 3.2);
+                    float wakeNoise = noise(vLocalSurfaceUv * 3.4 + vec2(time * 0.34, -time * 0.28));
+                    float foamField = max(contactBody * 0.38, ripple * (0.72 + wakeNoise * 0.28)) * patchData.w;
+                    contactFoam = max(contactFoam, foamField);
+                    contactRipple = max(contactRipple, ripple * patchData.w);
+                    contactSheen = max(contactSheen, contactBody * patchData.w);
                 }
             }
 
-            float sparkle = max(0.0, sin(vLocalSurfaceUv.x * 5.2 + time * 1.35) * sin(vLocalSurfaceUv.y * 4.4 - time * 1.08));
-            float foam = clamp(max(edgeFoam * 0.42, contactFoam) * (0.45 + waveStrength * 0.75) + sparkle * 0.06, 0.0, 0.72);
-            vec3 specular = vec3(pow(max(0.0, dot(reflect(-viewDir, normal), normalize(vec3(0.25, 0.88, 0.35)))), 18.0)) * (0.18 + fresnel * 0.52);
+            float refraction = (largeWave - 0.5) * 0.18 + (mediumWave - 0.5) * 0.14 + (microWave - 0.5) * 0.08 + contactRipple * 0.06;
+            float glints = smoothstep(0.78, 0.97, fbm(vLocalSurfaceUv * 4.8 + normal.xz * 2.2 + vec2(time * 0.38, -time * 0.31))) * (0.14 + fresnel * 0.28);
+            vec3 color = mix(deepTint, shallowTint, clamp(0.46 + refraction + fresnel * 0.24 + caustics * 0.08, 0.05, 0.98));
+            float foam = clamp(max(edgeFoam * 0.48, contactFoam) * (0.52 + waveStrength * 0.8) + caustics * 0.08 + glints * 0.06, 0.0, 0.84);
+            vec3 specular = vec3(pow(max(0.0, dot(reflect(-viewDir, normal), normalize(vec3(0.25, 0.88, 0.35)))), 18.0)) * (0.14 + fresnel * 0.56 + caustics * 0.14 + contactSheen * 0.12);
 
             color = mix(color, vec3(0.97, 0.99, 1.0), foam);
             color += specular;
             color += vec3(0.05, 0.08, 0.12) * fresnel;
+            color += vec3(0.02, 0.05, 0.08) * caustics;
 
             float alpha = isTopFace > 0.5
-                ? clamp(surfaceOpacity + fresnel * 0.16 + foam * 0.12, 0.32, 0.9)
-                : clamp(surfaceOpacity * 0.72 + refraction * 0.05, 0.16, 0.68);
+                ? clamp(surfaceOpacity + fresnel * 0.18 + foam * 0.16 + contactRipple * 0.08, 0.32, 0.92)
+                : clamp(surfaceOpacity * 0.72 + refraction * 0.08 + caustics * 0.04, 0.16, 0.7);
 
             gl_FragColor = vec4(color, alpha);
         }
@@ -271,7 +299,7 @@ export function createWaterMaterial(options) {
             waveAmplitude: { value: waveAmplitude },
             isTopFace: { value: topFaceFlag },
             halfSize: { value: halfSize },
-            contactPatches: { value: contactPatches }
+            contactPatches: contactPatchesUniform
         },
         transparent: true,
         depthWrite: false,
@@ -280,6 +308,7 @@ export function createWaterMaterial(options) {
 
     return {
         material,
-        animationUniform
+        animationUniform,
+        contactPatchesUniform
     };
 }

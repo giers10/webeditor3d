@@ -43,7 +43,10 @@ export function configureAdvancedRenderingRenderer(renderer, settings) {
     renderer.toneMappingExposure = settings.toneMapping.exposure;
 }
 export function createAdvancedRenderingComposer(renderer, scene, camera, settings) {
+    const requiresDepthBuffer = settings.ambientOcclusion.enabled || settings.depthOfField.enabled;
     const composer = new EffectComposer(renderer, {
+        depthBuffer: requiresDepthBuffer,
+        stencilBuffer: false,
         multisampling: 0,
         frameBufferType: renderer.capabilities.isWebGL2 ? HalfFloatType : UnsignedByteType
     });
