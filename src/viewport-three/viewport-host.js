@@ -86,7 +86,7 @@ export class ViewportHost {
     scene = new Scene();
     perspectiveCamera = new PerspectiveCamera(60, 1, 0.1, 1000);
     orthographicCamera = new OrthographicCamera(-10, 10, 10, -10, 0.1, 1000);
-    renderer = new WebGLRenderer({ antialias: true, alpha: true });
+    renderer = new WebGLRenderer({ antialias: false, alpha: true });
     cameraTarget = new Vector3(0, 0, 0);
     cameraOffset = new Vector3();
     cameraForward = new Vector3();
