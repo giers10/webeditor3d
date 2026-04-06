@@ -641,14 +641,17 @@ export class RuntimeHost {
 
   // Animated water surface shader — only used in quality mode.
   // The top face (posY) shows vertex-displaced waves; side/bottom faces are subtle.
-  private createWaterQualityMaterial(brush: RuntimeBoxBrushInstance, faceId: string): ShaderMaterial {
+  private createWaterQualityMaterial(
+    water: { colorHex: string; surfaceOpacity: number; waveStrength: number },
+    faceId: string
+  ): ShaderMaterial {
     const isTopFace = faceId === "posY";
-    const baseOpacity = Math.max(0.05, Math.min(1, brush.volume.water.surfaceOpacity));
+    const baseOpacity = Math.max(0.05, Math.min(1, water.surfaceOpacity));
     const opacity = isTopFace ? Math.min(1, baseOpacity + 0.2) : baseOpacity * 0.45;
-    const waveStrength = brush.volume.water.waveStrength;
+    const waveStrength = water.waveStrength;
 
     // Parse hex color into r/g/b floats for GLSL
-    const hex = brush.volume.water.colorHex.replace("#", "");
+    const hex = water.colorHex.replace("#", "");
     const cr = parseInt(hex.substring(0, 2), 16) / 255;
     const cg = parseInt(hex.substring(2, 4), 16) / 255;
     const cb = parseInt(hex.substring(4, 6), 16) / 255;
@@ -727,8 +730,8 @@ export class RuntimeHost {
   }
 
   // Soft edge-faded fog shader with slow drift animation — quality mode only.
-  private createFogQualityMaterial(brush: RuntimeBoxBrushInstance): ShaderMaterial {
-    const hex = brush.volume.fog.colorHex.replace("#", "");
+  private createFogQualityMaterial(fog: { colorHex: string; density: number }): ShaderMaterial {
+    const hex = fog.colorHex.replace("#", "");
     const cr = parseInt(hex.substring(0, 2), 16) / 255;
     const cg = parseInt(hex.substring(2, 4), 16) / 255;
     const cb = parseInt(hex.substring(4, 6), 16) / 255;
@@ -770,7 +773,7 @@ export class RuntimeHost {
       fragmentShader,
       uniforms: {
         fogColor: { value: [cr, cg, cb] },
-        fogDensity: { value: Math.min(0.9, brush.volume.fog.density + 0.12) },
+        fogDensity: { value: Math.min(0.9, fog.density + 0.12) },
         time: { value: this.volumeTime }
       },
       transparent: true,
