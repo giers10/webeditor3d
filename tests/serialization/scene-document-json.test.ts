@@ -13,6 +13,7 @@ import {
   SCENE_DOCUMENT_VERSION,
   SPATIAL_AUDIO_SCENE_DOCUMENT_VERSION,
   TRIGGER_ACTION_TARGET_FOUNDATION_SCENE_DOCUMENT_VERSION,
+  WHITEBOX_GEOMETRY_SCENE_DOCUMENT_VERSION,
   WORLD_ENVIRONMENT_SCENE_DOCUMENT_VERSION,
   createEmptySceneDocument
 } from "../../src/document/scene-document";
@@ -135,6 +136,40 @@ describe("scene document JSON", () => {
       ...createEmptySceneDocument({ name: "Face UV Scene" }),
       brushes: {
         [brush.id]: brush
+      }
+    };
+
+    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(document);
+  });
+
+  it("round-trips whitebox box volume settings", () => {
+    const waterBrush = createBoxBrush({
+      id: "brush-water-volume",
+      volume: {
+        mode: "water",
+        water: {
+          colorHex: "#2f79c4",
+          surfaceOpacity: 0.65,
+          waveStrength: 0.35
+        }
+      }
+    });
+    const fogBrush = createBoxBrush({
+      id: "brush-fog-volume",
+      volume: {
+        mode: "fog",
+        fog: {
+          colorHex: "#98a6bf",
+          density: 0.45,
+          padding: 0.2
+        }
+      }
+    });
+    const document = {
+      ...createEmptySceneDocument({ name: "Volume Round Trip Scene" }),
+      brushes: {
+        [waterBrush.id]: waterBrush,
+        [fogBrush.id]: fogBrush
       }
     };
 
@@ -1335,6 +1370,55 @@ describe("scene document JSON", () => {
 
     expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
     expect(migratedDocument.world.advancedRendering).toEqual(emptyScene.world.advancedRendering);
+  });
+
+  it("migrates v19 whitebox boxes without volume settings to the current schema version", () => {
+    const migratedDocument = migrateSceneDocument({
+      version: WHITEBOX_GEOMETRY_SCENE_DOCUMENT_VERSION,
+      name: "Legacy Whitebox Volume Scene",
+      world: {
+        ...createEmptySceneDocument().world,
+        advancedRendering: {
+          ...createEmptySceneDocument().world.advancedRendering,
+          fogPath: undefined,
+          waterPath: undefined
+        }
+      },
+      materials: createEmptySceneDocument().materials,
+      textures: {},
+      assets: {},
+      brushes: {
+        "brush-legacy": {
+          id: "brush-legacy",
+          kind: "box",
+          center: {
+            x: 0,
+            y: 1,
+            z: 0
+          },
+          rotationDegrees: {
+            x: 0,
+            y: 0,
+            z: 0
+          },
+          size: {
+            x: 2,
+            y: 2,
+            z: 2
+          },
+          geometry: createBoxBrush({ id: "brush-legacy-geometry" }).geometry,
+          faces: createBoxBrush({ id: "brush-legacy-faces" }).faces
+        }
+      },
+      modelInstances: {},
+      entities: {},
+      interactionLinks: {}
+    } as any);
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.brushes["brush-legacy"].volume).toEqual({ mode: "none" });
+    expect(migratedDocument.world.advancedRendering.fogPath).toBe("performance");
+    expect(migratedDocument.world.advancedRendering.waterPath).toBe("performance");
   });
 
   it("round-trips authored playAnimation and stopAnimation interaction links", () => {
