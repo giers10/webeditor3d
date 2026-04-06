@@ -23,6 +23,7 @@ import { createRotateBoxBrushCommand } from "../commands/rotate-box-brush-comman
 import { createResizeBoxBrushCommand } from "../commands/resize-box-brush-command";
 import { createSetBoxBrushFaceMaterialCommand } from "../commands/set-box-brush-face-material-command";
 import { createSetBoxBrushNameCommand } from "../commands/set-box-brush-name-command";
+import { createSetBoxBrushVolumeSettingsCommand } from "../commands/set-box-brush-volume-settings-command";
 import { createSetEntityNameCommand } from "../commands/set-entity-name-command";
 import { createSetBoxBrushFaceUvStateCommand } from "../commands/set-box-brush-face-uv-state-command";
 import { createDeleteInteractionLinkCommand } from "../commands/delete-interaction-link-command";
@@ -101,6 +102,7 @@ import {
   type WhiteboxSelectionMode
 } from "../core/whitebox-selection-mode";
 import {
+  BOX_BRUSH_VOLUME_MODES,
   BOX_EDGE_LABELS,
   BOX_FACE_IDS,
   BOX_FACE_LABELS,
@@ -111,10 +113,12 @@ import {
   createDefaultFaceUvState,
   normalizeBrushName,
   type BoxBrush,
+  type BoxBrushVolumeMode,
   type FaceUvRotationQuarterTurns,
   type FaceUvState
 } from "../document/brushes";
 import {
+  BOX_VOLUME_RENDER_PATHS,
   ADVANCED_RENDERING_SHADOW_MAP_SIZES,
   ADVANCED_RENDERING_SHADOW_TYPES,
   ADVANCED_RENDERING_TONE_MAPPING_MODES,
@@ -123,6 +127,7 @@ import {
   cloneWorldSettings,
   type WorldBackgroundMode,
   type AdvancedRenderingSettings,
+  type BoxVolumeRenderPath,
   type AdvancedRenderingShadowMapSize,
   type AdvancedRenderingShadowType,
   type AdvancedRenderingToneMappingMode,
