@@ -1160,12 +1160,27 @@ export function App({ store, initialStatusMessage }: AppProps) {
       setPositionDraft(createVec3Draft(DEFAULT_BOX_BRUSH_CENTER));
       setRotationDraft(createVec3Draft(DEFAULT_BOX_BRUSH_ROTATION_DEGREES));
       setSizeDraft(createVec3Draft(DEFAULT_BOX_BRUSH_SIZE));
+      setBoxVolumeModeDraft("none");
       return;
     }
 
     setPositionDraft(createVec3Draft(selectedBrush.center));
     setRotationDraft(createVec3Draft(selectedBrush.rotationDegrees));
     setSizeDraft(createVec3Draft(selectedBrush.size));
+
+    setBoxVolumeModeDraft(selectedBrush.volume.mode);
+
+    if (selectedBrush.volume.mode === "water") {
+      setBoxVolumeWaterColorDraft(selectedBrush.volume.water.colorHex);
+      setBoxVolumeWaterSurfaceOpacityDraft(String(selectedBrush.volume.water.surfaceOpacity));
+      setBoxVolumeWaterWaveStrengthDraft(String(selectedBrush.volume.water.waveStrength));
+    }
+
+    if (selectedBrush.volume.mode === "fog") {
+      setBoxVolumeFogColorDraft(selectedBrush.volume.fog.colorHex);
+      setBoxVolumeFogDensityDraft(String(selectedBrush.volume.fog.density));
+      setBoxVolumeFogPaddingDraft(String(selectedBrush.volume.fog.padding));
+    }
   }, [selectedBrush]);
 
   useEffect(() => {
