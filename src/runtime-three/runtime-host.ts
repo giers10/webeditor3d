@@ -597,7 +597,7 @@ export class RuntimeHost {
   ): Material {
     if (brush.volume.mode === "water") {
       if (volumeRenderPaths.water === "quality") {
-        return this.createWaterQualityMaterial(brush, faceId);
+        return this.createWaterQualityMaterial(brush.volume.water, faceId);
       }
       // Performance fallback: simple transparent material
       const baseOpacity = Math.max(0.05, Math.min(1, brush.volume.water.surfaceOpacity));
@@ -611,7 +611,7 @@ export class RuntimeHost {
 
     if (brush.volume.mode === "fog") {
       if (volumeRenderPaths.fog === "quality") {
-        return this.createFogQualityMaterial(brush);
+        return this.createFogQualityMaterial(brush.volume.fog);
       }
       // Performance fallback: simple transparent material
       const densityOpacity = Math.max(0.06, Math.min(0.72, brush.volume.fog.density * 0.8 + 0.08));
