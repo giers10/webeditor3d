@@ -3,9 +3,9 @@ import { createModelInstanceCollisionSettings, createModelInstance, isModelInsta
 import { isProjectAssetKind } from "../assets/project-assets";
 import { createPlayerStartColliderSettings, createInteractableEntity, normalizeEntityName, createPointLightEntity, createPlayerStartEntity, createSoundEmitterEntity, createSpotLightEntity, createTeleportTargetEntity, createTriggerVolumeEntity, isPlayerStartColliderMode } from "../entities/entity-instances";
 import { createPlayAnimationInteractionLink, createPlaySoundInteractionLink, createStopAnimationInteractionLink, createStopSoundInteractionLink, createTeleportPlayerInteractionLink, createToggleVisibilityInteractionLink, isInteractionTriggerKind } from "../interactions/interaction-links";
-import { BOX_VERTEX_IDS, createBoxBrush, createDefaultBoxBrushGeometry, createDefaultFaceUvState, DEFAULT_BOX_BRUSH_ROTATION_DEGREES, isBoxFaceId, isFaceUvRotationQuarterTurns, normalizeBrushName } from "./brushes";
-import { BOX_BRUSH_SCENE_DOCUMENT_VERSION, ANIMATION_PLAYBACK_SCENE_DOCUMENT_VERSION, ENTITY_NAMES_SCENE_DOCUMENT_VERSION, ENTITY_SYSTEM_FOUNDATION_SCENE_DOCUMENT_VERSION, FACE_MATERIALS_SCENE_DOCUMENT_VERSION, FIRST_ROOM_POLISH_SCENE_DOCUMENT_VERSION, FOUNDATION_SCENE_DOCUMENT_VERSION, IMPORTED_MODEL_COLLIDERS_SCENE_DOCUMENT_VERSION, LOCAL_LIGHTS_AND_SKYBOX_SCENE_DOCUMENT_VERSION, MODEL_ASSET_PIPELINE_SCENE_DOCUMENT_VERSION, PLAYER_START_COLLIDER_SETTINGS_SCENE_DOCUMENT_VERSION, RUNNER_V1_SCENE_DOCUMENT_VERSION, SPATIAL_AUDIO_SCENE_DOCUMENT_VERSION, SCENE_DOCUMENT_VERSION, TRIGGER_ACTION_TARGET_FOUNDATION_SCENE_DOCUMENT_VERSION, WHITEBOX_FLOAT_TRANSFORM_SCENE_DOCUMENT_VERSION, WHITEBOX_GEOMETRY_SCENE_DOCUMENT_VERSION, WORLD_ENVIRONMENT_SCENE_DOCUMENT_VERSION } from "./scene-document";
-import { createDefaultAdvancedRenderingSettings, isAdvancedRenderingShadowMapSize, isAdvancedRenderingShadowType, isAdvancedRenderingToneMappingMode, isWorldBackgroundMode } from "./world-settings";
+import { BOX_VERTEX_IDS, createBoxBrush, createDefaultBoxBrushGeometry, createDefaultBoxBrushFogSettings, createDefaultBoxBrushWaterSettings, createDefaultFaceUvState, DEFAULT_BOX_BRUSH_ROTATION_DEGREES, isBoxBrushVolumeMode, isBoxFaceId, isFaceUvRotationQuarterTurns, normalizeBrushName } from "./brushes";
+import { BOX_BRUSH_SCENE_DOCUMENT_VERSION, ANIMATION_PLAYBACK_SCENE_DOCUMENT_VERSION, ENTITY_NAMES_SCENE_DOCUMENT_VERSION, ENTITY_SYSTEM_FOUNDATION_SCENE_DOCUMENT_VERSION, FACE_MATERIALS_SCENE_DOCUMENT_VERSION, FIRST_ROOM_POLISH_SCENE_DOCUMENT_VERSION, FOUNDATION_SCENE_DOCUMENT_VERSION, IMPORTED_MODEL_COLLIDERS_SCENE_DOCUMENT_VERSION, LOCAL_LIGHTS_AND_SKYBOX_SCENE_DOCUMENT_VERSION, MODEL_ASSET_PIPELINE_SCENE_DOCUMENT_VERSION, PLAYER_START_COLLIDER_SETTINGS_SCENE_DOCUMENT_VERSION, RUNNER_V1_SCENE_DOCUMENT_VERSION, SPATIAL_AUDIO_SCENE_DOCUMENT_VERSION, SCENE_DOCUMENT_VERSION, TRIGGER_ACTION_TARGET_FOUNDATION_SCENE_DOCUMENT_VERSION, WHITEBOX_BOX_VOLUME_SCENE_DOCUMENT_VERSION, WHITEBOX_FLOAT_TRANSFORM_SCENE_DOCUMENT_VERSION, WHITEBOX_GEOMETRY_SCENE_DOCUMENT_VERSION, WORLD_ENVIRONMENT_SCENE_DOCUMENT_VERSION } from "./scene-document";
+import { createDefaultAdvancedRenderingSettings, isBoxVolumeRenderPath, isAdvancedRenderingShadowMapSize, isAdvancedRenderingShadowType, isAdvancedRenderingToneMappingMode, isWorldBackgroundMode } from "./world-settings";
 function isRecord(value) {
     return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -128,6 +128,8 @@ function readAdvancedRenderingSettings(value) {
     const shadowsMapSize = readOptionalAllowedValue(shadows?.mapSize, "world.advancedRendering.shadows.mapSize", defaults.shadows.mapSize, isAdvancedRenderingShadowMapSize);
     const shadowsType = readOptionalAllowedValue(shadows?.type, "world.advancedRendering.shadows.type", defaults.shadows.type, isAdvancedRenderingShadowType);
     const toneMappingMode = readOptionalAllowedValue(toneMapping?.mode, "world.advancedRendering.toneMapping.mode", defaults.toneMapping.mode, isAdvancedRenderingToneMappingMode);
+    const fogPath = readOptionalAllowedValue(value.fogPath, "world.advancedRendering.fogPath", defaults.fogPath, isBoxVolumeRenderPath);
+    const waterPath = readOptionalAllowedValue(value.waterPath, "world.advancedRendering.waterPath", defaults.waterPath, isBoxVolumeRenderPath);
     return {
         enabled: readOptionalBoolean(value.enabled, "world.advancedRendering.enabled", defaults.enabled),
         shadows: {
@@ -157,6 +159,52 @@ function readAdvancedRenderingSettings(value) {
             focusDistance: readOptionalNonNegativeFiniteNumber(depthOfField?.focusDistance, "world.advancedRendering.depthOfField.focusDistance", defaults.depthOfField.focusDistance),
             focalLength: readOptionalNonNegativeFiniteNumber(depthOfField?.focalLength, "world.advancedRendering.depthOfField.focalLength", defaults.depthOfField.focalLength),
             bokehScale: readOptionalNonNegativeFiniteNumber(depthOfField?.bokehScale, "world.advancedRendering.depthOfField.bokehScale", defaults.depthOfField.bokehScale)
+        },
+        fogPath,
+        waterPath
+    };
+}
+function readBoxBrushVolumeSettings(value, label) {
+    if (value === undefined) {
+        return {
+            mode: "none"
+        };
+    }
+    if (!isRecord(value)) {
+        throw new Error(`${label} must be an object.`);
+    }
+    const mode = readOptionalAllowedValue(value.mode, `${label}.mode`, "none", isBoxBrushVolumeMode);
+    if (mode === "none") {
+        return {
+            mode: "none"
+        };
+    }
+    if (mode === "water") {
+        const defaults = createDefaultBoxBrushWaterSettings();
+        if (value.water !== undefined && !isRecord(value.water)) {
+            throw new Error(`${label}.water must be an object.`);
+        }
+        const water = value.water ?? {};
+        return {
+            mode: "water",
+            water: {
+                colorHex: water.colorHex === undefined ? defaults.colorHex : expectHexColor(water.colorHex, `${label}.water.colorHex`),
+                surfaceOpacity: readOptionalNonNegativeFiniteNumber(water.surfaceOpacity, `${label}.water.surfaceOpacity`, defaults.surfaceOpacity),
+                waveStrength: readOptionalNonNegativeFiniteNumber(water.waveStrength, `${label}.water.waveStrength`, defaults.waveStrength)
+            }
+        };
+    }
+    const defaults = createDefaultBoxBrushFogSettings();
+    if (value.fog !== undefined && !isRecord(value.fog)) {
+        throw new Error(`${label}.fog must be an object.`);
+    }
+    const fog = value.fog ?? {};
+    return {
+        mode: "fog",
+        fog: {
+            colorHex: fog.colorHex === undefined ? defaults.colorHex : expectHexColor(fog.colorHex, `${label}.fog.colorHex`),
+            density: readOptionalNonNegativeFiniteNumber(fog.density, `${label}.fog.density`, defaults.density),
+            padding: readOptionalNonNegativeFiniteNumber(fog.padding, `${label}.fog.padding`, defaults.padding)
         }
     };
 }
@@ -551,6 +599,7 @@ function readBrushes(value, materials, allowMissingUvState) {
             size,
             geometry: readBoxBrushGeometry(brushValue.geometry, `brushes.${brushId}.geometry`, size),
             faces: readBoxBrushFaces(brushValue.faces, `brushes.${brushId}.faces`, materials, allowMissingUvState),
+            volume: readBoxBrushVolumeSettings(brushValue.volume, `brushes.${brushId}.volume`),
             layerId: expectOptionalString(brushValue.layerId, `brushes.${brushId}.layerId`),
             groupId: expectOptionalString(brushValue.groupId, `brushes.${brushId}.groupId`)
         });
@@ -1227,7 +1276,7 @@ export function migrateSceneDocument(source) {
             interactionLinks: readInteractionLinks(source.interactionLinks)
         };
     }
-    if (source.version !== WHITEBOX_FLOAT_TRANSFORM_SCENE_DOCUMENT_VERSION && source.version !== WHITEBOX_GEOMETRY_SCENE_DOCUMENT_VERSION) {
+    if (source.version !== WHITEBOX_BOX_VOLUME_SCENE_DOCUMENT_VERSION && source.version !== WHITEBOX_FLOAT_TRANSFORM_SCENE_DOCUMENT_VERSION && source.version !== WHITEBOX_GEOMETRY_SCENE_DOCUMENT_VERSION) {
         throw new Error(`Unsupported scene document version: ${String(source.version)}.`);
     }
     const materials = readMaterialRegistry(source.materials, "materials");
