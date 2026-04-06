@@ -992,6 +992,13 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [positionDraft, setPositionDraft] = useState(createVec3Draft(DEFAULT_BOX_BRUSH_CENTER));
   const [rotationDraft, setRotationDraft] = useState(createVec3Draft(DEFAULT_BOX_BRUSH_ROTATION_DEGREES));
   const [sizeDraft, setSizeDraft] = useState(createVec3Draft(DEFAULT_BOX_BRUSH_SIZE));
+  const [boxVolumeModeDraft, setBoxVolumeModeDraft] = useState<BoxBrushVolumeMode>("none");
+  const [boxVolumeWaterColorDraft, setBoxVolumeWaterColorDraft] = useState("#4da6d9");
+  const [boxVolumeWaterSurfaceOpacityDraft, setBoxVolumeWaterSurfaceOpacityDraft] = useState("0.55");
+  const [boxVolumeWaterWaveStrengthDraft, setBoxVolumeWaterWaveStrengthDraft] = useState("0.35");
+  const [boxVolumeFogColorDraft, setBoxVolumeFogColorDraft] = useState("#9cb7c7");
+  const [boxVolumeFogDensityDraft, setBoxVolumeFogDensityDraft] = useState("0.08");
+  const [boxVolumeFogPaddingDraft, setBoxVolumeFogPaddingDraft] = useState("0.2");
   const [whiteboxSnapEnabled, setWhiteboxSnapEnabled] = useState(true);
   const [whiteboxSnapStepDraft, setWhiteboxSnapStepDraft] = useState(String(DEFAULT_GRID_SIZE));
   const [uvOffsetDraft, setUvOffsetDraft] = useState(createVec2Draft(createDefaultFaceUvState().offset));
