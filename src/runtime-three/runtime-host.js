@@ -3,6 +3,7 @@ import { createModelInstanceRenderGroup, disposeModelInstance } from "../assets/
 import { buildBoxBrushDerivedMeshData } from "../geometry/box-brush-mesh";
 import { createStarterMaterialSignature, createStarterMaterialTexture } from "../materials/starter-material-textures";
 import { applyAdvancedRenderingLightShadowFlags, applyAdvancedRenderingRenderableShadowFlags, configureAdvancedRenderingRenderer, createAdvancedRenderingComposer, resolveBoxVolumeRenderPaths } from "../rendering/advanced-rendering";
+import { collectWaterContactPatches, createWaterMaterial } from "../rendering/water-material";
 import { areAdvancedRenderingSettingsEqual, cloneAdvancedRenderingSettings } from "../document/world-settings";
 import { FirstPersonNavigationController } from "./first-person-navigation-controller";
 import { RapierCollisionWorld } from "./rapier-collision-world";
@@ -29,6 +30,7 @@ export class RuntimeHost {
     brushMeshes = new Map();
     volumeTime = 0;
     volumeAnimatedMaterials = [];
+    volumeAnimatedUniforms = [];
     localLightObjects = new Map();
     modelRenderObjects = new Map();
     materialTextureCache = new Map();
@@ -360,15 +362,26 @@ export class RuntimeHost {
     rebuildBrushMeshes(brushes) {
         this.clearBrushMeshes();
         const volumeRenderPaths = this.currentWorld === null ? { fog: "performance", water: "performance" } : resolveBoxVolumeRenderPaths(this.currentWorld.advancedRendering);
+        const colliderBounds = this.runtimeScene?.colliders.map((collider) => ({
+            min: collider.worldBounds.min,
+            max: collider.worldBounds.max
+        })) ?? [];
         for (const brush of brushes) {
             const geometry = buildBoxBrushDerivedMeshData(brush).geometry;
+            const contactPatches = brush.volume.mode === "water"
+                ? collectWaterContactPatches({
+                    center: brush.center,
+                    rotationDegrees: brush.rotationDegrees,
+                    size: brush.size
+                }, colliderBounds)
+                : [];
             const materials = [
-                this.createFaceMaterial(brush, "posX", brush.faces.posX.material, volumeRenderPaths),
-                this.createFaceMaterial(brush, "negX", brush.faces.negX.material, volumeRenderPaths),
-                this.createFaceMaterial(brush, "posY", brush.faces.posY.material, volumeRenderPaths),
-                this.createFaceMaterial(brush, "negY", brush.faces.negY.material, volumeRenderPaths),
-                this.createFaceMaterial(brush, "posZ", brush.faces.posZ.material, volumeRenderPaths),
-                this.createFaceMaterial(brush, "negZ", brush.faces.negZ.material, volumeRenderPaths)
+                this.createFaceMaterial(brush, "posX", brush.faces.posX.material, volumeRenderPaths, contactPatches),
+                this.createFaceMaterial(brush, "negX", brush.faces.negX.material, volumeRenderPaths, contactPatches),
+                this.createFaceMaterial(brush, "posY", brush.faces.posY.material, volumeRenderPaths, contactPatches),
+                this.createFaceMaterial(brush, "negY", brush.faces.negY.material, volumeRenderPaths, contactPatches),
+                this.createFaceMaterial(brush, "posZ", brush.faces.posZ.material, volumeRenderPaths, contactPatches),
+                this.createFaceMaterial(brush, "negZ", brush.faces.negZ.material, volumeRenderPaths, contactPatches)
             ];
             const mesh = new Mesh(geometry, materials);
             mesh.position.set(brush.center.x, brush.center.y, brush.center.z);
@@ -412,18 +425,28 @@ export class RuntimeHost {
         }
         this.applyShadowState();
     }
-    createFaceMaterial(brush, faceId, material, volumeRenderPaths) {
+    createFaceMaterial(brush, faceId, material, volumeRenderPaths, contactPatches) {
         if (brush.volume.mode === "water") {
-            if (volumeRenderPaths.water === "quality") {
-                return this.createWaterQualityMaterial(brush.volume.water, faceId);
-            }
             const baseOpacity = Math.max(0.05, Math.min(1, brush.volume.water.surfaceOpacity));
-            return new MeshBasicMaterial({
-                color: brush.volume.water.colorHex,
-                transparent: true,
+            const waterMaterial = createWaterMaterial({
+                colorHex: brush.volume.water.colorHex,
+                surfaceOpacity: brush.volume.water.surfaceOpacity,
+                waveStrength: brush.volume.water.waveStrength,
                 opacity: faceId === "posY" ? Math.min(1, baseOpacity + 0.18) : baseOpacity * 0.5,
-                depthWrite: false
+                quality: volumeRenderPaths.water === "quality",
+                wireframe: false,
+                isTopFace: faceId === "posY",
+                time: this.volumeTime,
+                halfSize: {
+                    x: brush.size.x * 0.5,
+                    z: brush.size.z * 0.5
+                },
+                contactPatches
             });
+            if (waterMaterial.animationUniform !== null) {
+                this.volumeAnimatedUniforms.push(waterMaterial.animationUniform);
+            }
+            return waterMaterial.material;
         }
         if (brush.volume.mode === "fog") {
             if (volumeRenderPaths.fog === "quality") {
@@ -702,6 +725,9 @@ export class RuntimeHost {
         for (const mat of this.volumeAnimatedMaterials) {
             mat.uniforms["time"].value = this.volumeTime;
         }
+        for (const uniform of this.volumeAnimatedUniforms) {
+            uniform.value = this.volumeTime;
+        }
         for (const mixer of this.animationMixers.values()) {
             mixer.update(dt);
         }
@@ -725,6 +751,7 @@ export class RuntimeHost {
     };
     applyTeleportPlayerAction(target) {
         this.firstPersonController.teleportTo(target.position, target.yawDegrees);
+        this.volumeAnimatedUniforms.length = 0;
     }
     applyToggleBrushVisibilityAction(brushId, visible) {
         const mesh = this.brushMeshes.get(brushId);
