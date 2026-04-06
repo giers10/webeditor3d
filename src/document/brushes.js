@@ -25,6 +25,7 @@ export const BOX_VERTEX_IDS = [
     "posX_posY_posZ"
 ];
 export const FACE_UV_ROTATION_QUARTER_TURNS = [0, 1, 2, 3];
+export const BOX_BRUSH_VOLUME_MODES = ["none", "water", "fog"];
 export const BOX_FACE_LABELS = {
     posX: "Right",
     negX: "Left",
@@ -71,6 +72,16 @@ export const DEFAULT_BOX_BRUSH_ROTATION_DEGREES = {
     x: 0,
     y: 0,
     z: 0
+};
+const DEFAULT_BOX_BRUSH_WATER_SETTINGS = {
+    colorHex: "#4da6d9",
+    surfaceOpacity: 0.55,
+    waveStrength: 0.35
+};
+const DEFAULT_BOX_BRUSH_FOG_SETTINGS = {
+    colorHex: "#9cb7c7",
+    density: 0.08,
+    padding: 0.2
 };
 export function normalizeBrushName(name) {
     if (name === undefined || name === null) {
@@ -231,6 +242,9 @@ export function isBoxVertexId(value) {
 export function isFaceUvRotationQuarterTurns(value) {
     return typeof value === "number" && FACE_UV_ROTATION_QUARTER_TURNS.includes(value);
 }
+export function isBoxBrushVolumeMode(value) {
+    return typeof value === "string" && BOX_BRUSH_VOLUME_MODES.includes(value);
+}
 export function hasPositiveBoxSize(size) {
     return size.x > 0 && size.y > 0 && size.z > 0;
 }
@@ -300,6 +314,51 @@ export function createDefaultBoxBrushFaces() {
         }
     };
 }
+export function createDefaultBoxBrushWaterSettings() {
+    return {
+        colorHex: DEFAULT_BOX_BRUSH_WATER_SETTINGS.colorHex,
+        surfaceOpacity: DEFAULT_BOX_BRUSH_WATER_SETTINGS.surfaceOpacity,
+        waveStrength: DEFAULT_BOX_BRUSH_WATER_SETTINGS.waveStrength
+    };
+}
+export function createDefaultBoxBrushFogSettings() {
+    return {
+        colorHex: DEFAULT_BOX_BRUSH_FOG_SETTINGS.colorHex,
+        density: DEFAULT_BOX_BRUSH_FOG_SETTINGS.density,
+        padding: DEFAULT_BOX_BRUSH_FOG_SETTINGS.padding
+    };
+}
+export function createDefaultBoxBrushVolumeSettings() {
+    return {
+        mode: "none"
+    };
+}
+export function cloneBoxBrushVolumeSettings(volume) {
+    switch (volume.mode) {
+        case "none":
+            return {
+                mode: "none"
+            };
+        case "water":
+            return {
+                mode: "water",
+                water: {
+                    colorHex: volume.water.colorHex,
+                    surfaceOpacity: volume.water.surfaceOpacity,
+                    waveStrength: volume.water.waveStrength
+                }
+            };
+        case "fog":
+            return {
+                mode: "fog",
+                fog: {
+                    colorHex: volume.fog.colorHex,
+                    density: volume.fog.density,
+                    padding: volume.fog.padding
+                }
+            };
+    }
+}
 export function createBoxBrush(overrides = {}) {
     const center = cloneVec3(overrides.center ?? DEFAULT_BOX_BRUSH_CENTER);
     const rotationDegrees = cloneVec3(overrides.rotationDegrees ?? DEFAULT_BOX_BRUSH_ROTATION_DEGREES);
@@ -318,6 +377,7 @@ export function createBoxBrush(overrides = {}) {
         size,
         geometry,
         faces: overrides.faces === undefined ? createDefaultBoxBrushFaces() : cloneBoxBrushFaces(overrides.faces),
+        volume: overrides.volume === undefined ? createDefaultBoxBrushVolumeSettings() : cloneBoxBrushVolumeSettings(overrides.volume),
         layerId: overrides.layerId,
         groupId: overrides.groupId
     };
