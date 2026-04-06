@@ -4,6 +4,7 @@ import {
   AnimationMixer,
   BufferGeometry,
   DirectionalLight,
+  Euler,
   Group,
   LoopOnce,
   LoopRepeat,
