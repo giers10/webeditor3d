@@ -71,6 +71,7 @@ interface LocalLightRenderObjects {
 interface RuntimeWaterContactUniformBinding {
   brush: RuntimeBoxBrushInstance;
   uniform: { value: import("three").Vector4[] };
+  staticContactPatches: ReturnType<typeof collectWaterContactPatches>;
 }
 
 const FALLBACK_FACE_COLOR = 0x747d89;
@@ -132,7 +133,7 @@ export class RuntimeHost {
     this.scene.add(this.localLightGroup);
     this.scene.add(this.brushGroup);
     this.scene.add(this.modelGroup);
-    this.renderer = enableRendering ? new WebGLRenderer({ antialias: true, alpha: true }) : null;
+    this.renderer = enableRendering ? new WebGLRenderer({ antialias: false, alpha: true }) : null;
     this.domElement = this.renderer?.domElement ?? document.createElement("canvas");
 
     if (this.renderer !== null) {
@@ -530,7 +531,8 @@ export class RuntimeHost {
 
     for (const brush of brushes) {
       const geometry = buildBoxBrushDerivedMeshData(brush).geometry;
-      const contactPatches = brush.volume.mode === "water" ? this.collectRuntimeWaterContactPatches(brush) : [];
+      const staticContactPatches = brush.volume.mode === "water" ? this.collectRuntimeStaticWaterContactPatches(brush) : [];
+      const contactPatches = brush.volume.mode === "water" ? this.mergeRuntimeWaterContactPatches(staticContactPatches, this.collectRuntimePlayerWaterContactPatches(brush)) : [];
 
       const materials = [
         this.createFaceMaterial(brush, "posX", brush.faces.posX.material, volumeRenderPaths, contactPatches),
@@ -631,7 +633,8 @@ export class RuntimeHost {
       if (faceId === "posY" && waterMaterial.contactPatchesUniform !== null) {
         this.runtimeWaterContactUniforms.push({
           brush,
-          uniform: waterMaterial.contactPatchesUniform
+          uniform: waterMaterial.contactPatchesUniform,
+          staticContactPatches
         });
       }
 
@@ -806,16 +809,11 @@ export class RuntimeHost {
     }
   }
 
-  private collectRuntimeWaterContactPatches(brush: RuntimeBoxBrushInstance) {
+  private collectRuntimeStaticWaterContactPatches(brush: RuntimeBoxBrushInstance) {
     const contactBounds = this.runtimeScene?.colliders.map((collider) => ({
       min: collider.worldBounds.min,
       max: collider.worldBounds.max
     })) ?? [];
-    const playerBounds = this.createPlayerWaterContactBounds();
-
-    if (playerBounds !== null) {
-      contactBounds.push(playerBounds);
-    }
 
     return collectWaterContactPatches(
       {
@@ -827,9 +825,35 @@ export class RuntimeHost {
     );
   }
 
+  private collectRuntimePlayerWaterContactPatches(brush: RuntimeBoxBrushInstance) {
+    const playerBounds = this.createPlayerWaterContactBounds();
+
+    if (playerBounds === null) {
+      return [];
+    }
+
+    return collectWaterContactPatches(
+      {
+        center: brush.center,
+        rotationDegrees: brush.rotationDegrees,
+        size: brush.size
+      },
+      [playerBounds]
+    );
+  }
+
+  private mergeRuntimeWaterContactPatches(
+    staticContactPatches: ReturnType<typeof collectWaterContactPatches>,
+    dynamicContactPatches: ReturnType<typeof collectWaterContactPatches>
+  ) {
+    return [...dynamicContactPatches, ...staticContactPatches].slice(0, 6);
+  }
+
   private updateRuntimeWaterContactUniforms() {
     for (const binding of this.runtimeWaterContactUniforms) {
-      binding.uniform.value = createWaterContactPatchUniformValue(this.collectRuntimeWaterContactPatches(binding.brush));
+      binding.uniform.value = createWaterContactPatchUniformValue(
+        this.mergeRuntimeWaterContactPatches(binding.staticContactPatches, this.collectRuntimePlayerWaterContactPatches(binding.brush))
+      );
     }
   }
 

@@ -262,7 +262,7 @@ export class ViewportHost {
   private readonly scene = new Scene();
   private readonly perspectiveCamera = new PerspectiveCamera(60, 1, 0.1, 1000);
   private readonly orthographicCamera = new OrthographicCamera(-10, 10, 10, -10, 0.1, 1000);
-  private readonly renderer = new WebGLRenderer({ antialias: true, alpha: true });
+  private readonly renderer = new WebGLRenderer({ antialias: false, alpha: true });
   private readonly cameraTarget = new Vector3(0, 0, 0);
   private readonly cameraOffset = new Vector3();
   private readonly cameraForward = new Vector3();
