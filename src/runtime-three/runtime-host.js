@@ -371,12 +371,12 @@ export class RuntimeHost {
                 ? this.mergeRuntimeWaterContactPatches(staticContactPatches, this.collectRuntimePlayerWaterContactPatches(brush))
                 : [];
             const materials = [
-                this.createFaceMaterial(brush, "posX", brush.faces.posX.material, volumeRenderPaths, contactPatches),
-                this.createFaceMaterial(brush, "negX", brush.faces.negX.material, volumeRenderPaths, contactPatches),
-                this.createFaceMaterial(brush, "posY", brush.faces.posY.material, volumeRenderPaths, contactPatches),
-                this.createFaceMaterial(brush, "negY", brush.faces.negY.material, volumeRenderPaths, contactPatches),
-                this.createFaceMaterial(brush, "posZ", brush.faces.posZ.material, volumeRenderPaths, contactPatches),
-                this.createFaceMaterial(brush, "negZ", brush.faces.negZ.material, volumeRenderPaths, contactPatches)
+                this.createFaceMaterial(brush, "posX", brush.faces.posX.material, volumeRenderPaths, contactPatches, staticContactPatches),
+                this.createFaceMaterial(brush, "negX", brush.faces.negX.material, volumeRenderPaths, contactPatches, staticContactPatches),
+                this.createFaceMaterial(brush, "posY", brush.faces.posY.material, volumeRenderPaths, contactPatches, staticContactPatches),
+                this.createFaceMaterial(brush, "negY", brush.faces.negY.material, volumeRenderPaths, contactPatches, staticContactPatches),
+                this.createFaceMaterial(brush, "posZ", brush.faces.posZ.material, volumeRenderPaths, contactPatches, staticContactPatches),
+                this.createFaceMaterial(brush, "negZ", brush.faces.negZ.material, volumeRenderPaths, contactPatches, staticContactPatches)
             ];
             const mesh = new Mesh(geometry, materials);
             mesh.position.set(brush.center.x, brush.center.y, brush.center.z);
@@ -420,7 +420,7 @@ export class RuntimeHost {
         }
         this.applyShadowState();
     }
-    createFaceMaterial(brush, faceId, material, volumeRenderPaths, contactPatches) {
+    createFaceMaterial(brush, faceId, material, volumeRenderPaths, contactPatches, staticContactPatches) {
         if (brush.volume.mode === "water") {
             const baseOpacity = Math.max(0.05, Math.min(1, brush.volume.water.surfaceOpacity));
             const waterMaterial = createWaterMaterial({

@@ -42,8 +42,8 @@ describe("water material helpers", () => {
     expect(patches).toHaveLength(1);
     expect(patches[0]?.x).toBeCloseTo(0, 5);
     expect(patches[0]?.z).toBeCloseTo(0, 5);
-    expect(patches[0]?.radius).toBeGreaterThan(0.9);
-    expect(patches[0]?.intensity).toBeGreaterThan(0.5);
+    expect(patches[0]?.halfWidth).toBeGreaterThan(0.9);
+    expect(patches[0]?.halfDepth).toBeGreaterThan(0.7);
   });
 
   it("ignores bounds that do not overlap the water surface band", () => {
