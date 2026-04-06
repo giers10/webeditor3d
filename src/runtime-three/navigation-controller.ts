@@ -9,8 +9,18 @@ export interface FirstPersonTelemetry {
   feetPosition: Vec3;
   eyePosition: Vec3;
   grounded: boolean;
+  locomotionState: RuntimeLocomotionState;
+  inWaterVolume: boolean;
+  inFogVolume: boolean;
   pointerLocked: boolean;
   spawn: RuntimeSpawnPoint;
+}
+
+export type RuntimeLocomotionState = "grounded" | "swimming" | "flying";
+
+export interface RuntimePlayerVolumeState {
+  inWater: boolean;
+  inFog: boolean;
 }
 
 export interface RuntimeControllerContext {
@@ -18,6 +28,7 @@ export interface RuntimeControllerContext {
   domElement: HTMLCanvasElement;
   getRuntimeScene(): RuntimeSceneDefinition;
   resolveFirstPersonMotion(feetPosition: Vec3, motion: Vec3, shape: FirstPersonPlayerShape): ResolvedPlayerMotion | null;
+  resolvePlayerVolumeState(feetPosition: Vec3): RuntimePlayerVolumeState;
   setRuntimeMessage(message: string | null): void;
   setFirstPersonTelemetry(telemetry: FirstPersonTelemetry | null): void;
 }
