@@ -30,6 +30,9 @@ export class FirstPersonNavigationController {
     pitchRadians = 0;
     verticalVelocity = 0;
     grounded = false;
+    locomotionState = "flying";
+    inWaterVolume = false;
+    inFogVolume = false;
     pointerLocked = false;
     initializedFromSpawn = false;
     activate(ctx) {
@@ -43,6 +46,9 @@ export class FirstPersonNavigationController {
             this.pitchRadians = 0;
             this.verticalVelocity = 0;
             this.grounded = false;
+            this.locomotionState = "flying";
+            this.inWaterVolume = false;
+            this.inFogVolume = false;
             this.initializedFromSpawn = true;
         }
         window.addEventListener("keydown", this.handleKeyDown);
@@ -78,6 +84,7 @@ export class FirstPersonNavigationController {
             return;
         }
         const playerShape = this.context.getRuntimeScene().playerCollider;
+        const currentVolumeState = this.context.resolvePlayerVolumeState(this.feetPosition);
         const inputX = (this.pressedKeys.has("KeyD") ? 1 : 0) - (this.pressedKeys.has("KeyA") ? 1 : 0);
         const inputZ = (this.pressedKeys.has("KeyW") ? 1 : 0) - (this.pressedKeys.has("KeyS") ? 1 : 0);
         const inputLength = Math.hypot(inputX, inputZ);
@@ -95,12 +102,15 @@ export class FirstPersonNavigationController {
         if (playerShape.mode === "none") {
             this.verticalVelocity = 0;
         }
+        else if (currentVolumeState.inWater) {
+            this.verticalVelocity = 0;
+        }
         else {
             this.verticalVelocity -= GRAVITY * dt;
         }
         const resolvedMotion = this.context.resolveFirstPersonMotion(this.feetPosition, {
             x: horizontalX,
-            y: playerShape.mode === "none" ? 0 : this.verticalVelocity * dt,
+            y: playerShape.mode === "none" || currentVolumeState.inWater ? 0 : this.verticalVelocity * dt,
             z: horizontalZ
         }, playerShape);
         if (resolvedMotion === null) {
@@ -109,8 +119,26 @@ export class FirstPersonNavigationController {
             return;
         }
         this.feetPosition = resolvedMotion.feetPosition;
-        this.grounded = resolvedMotion.grounded;
+        const nextVolumeState = this.context.resolvePlayerVolumeState(this.feetPosition);
+        this.inWaterVolume = nextVolumeState.inWater;
+        this.inFogVolume = nextVolumeState.inFog;
+        this.grounded = nextVolumeState.inWater ? false : resolvedMotion.grounded;
+        if (playerShape.mode === "none") {
+            this.locomotionState = "flying";
+        }
+        else if (this.inWaterVolume) {
+            this.locomotionState = "swimming";
+        }
+        else if (this.grounded) {
+            this.locomotionState = "grounded";
+        }
+        else {
+            this.locomotionState = "flying";
+        }
         if (this.grounded && this.verticalVelocity < 0) {
+            this.verticalVelocity = 0;
+        }
+        else if (this.inWaterVolume) {
             this.verticalVelocity = 0;
         }
         this.updateCameraTransform();
@@ -124,6 +152,9 @@ export class FirstPersonNavigationController {
         this.pitchRadians = 0;
         this.verticalVelocity = 0;
         this.grounded = false;
+        this.locomotionState = "flying";
+        this.inWaterVolume = false;
+        this.inFogVolume = false;
         this.updateCameraTransform();
         this.publishTelemetry();
     }
@@ -151,6 +182,9 @@ export class FirstPersonNavigationController {
             },
             eyePosition: toEyePosition(this.feetPosition, getFirstPersonPlayerEyeHeight(this.context.getRuntimeScene().playerCollider)),
             grounded: this.grounded,
+            locomotionState: this.locomotionState,
+            inWaterVolume: this.inWaterVolume,
+            inFogVolume: this.inFogVolume,
             pointerLocked: this.pointerLocked,
             spawn: this.context.getRuntimeScene().spawn
         });
