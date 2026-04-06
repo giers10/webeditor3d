@@ -1,4 +1,4 @@
-import { AmbientLight, AnimationClip, AnimationMixer, DirectionalLight, Group, LoopOnce, LoopRepeat, Mesh, MeshStandardMaterial, PerspectiveCamera, PointLight, Quaternion, Scene, Vector3, SpotLight, WebGLRenderer } from "three";
+import { AmbientLight, AnimationClip, AnimationMixer, DirectionalLight, Euler, Group, LoopOnce, LoopRepeat, Mesh, MeshStandardMaterial, PerspectiveCamera, PointLight, Quaternion, Scene, Vector3, SpotLight, WebGLRenderer } from "three";
 import { createModelInstanceRenderGroup, disposeModelInstance } from "../assets/model-instance-rendering";
 import { buildBoxBrushDerivedMeshData } from "../geometry/box-brush-mesh";
 import { createStarterMaterialSignature, createStarterMaterialTexture } from "../materials/starter-material-textures";
@@ -14,6 +14,8 @@ export class RuntimeHost {
     scene = new Scene();
     camera = new PerspectiveCamera(70, 1, 0.05, 1000);
     cameraForward = new Vector3();
+    volumeOffset = new Vector3();
+    volumeInverseRotation = new Quaternion();
     domElement;
     ambientLight = new AmbientLight();
     sunLight = new DirectionalLight();
@@ -78,6 +80,7 @@ export class RuntimeHost {
                 return this.runtimeScene;
             },
             resolveFirstPersonMotion: (feetPosition, motion, shape) => this.collisionWorld?.resolveFirstPersonMotion(feetPosition, motion, shape) ?? null,
+            resolvePlayerVolumeState: (feetPosition) => this.resolvePlayerVolumeState(feetPosition),
             setRuntimeMessage: (message) => {
                 if (message === this.currentRuntimeMessage) {
                     return;
@@ -90,6 +93,33 @@ export class RuntimeHost {
                 this.firstPersonTelemetryHandler?.(telemetry);
             }
         };
+    }
+    resolvePlayerVolumeState(feetPosition) {
+        if (this.runtimeScene === null) {
+            return {
+                inWater: false,
+                inFog: false
+            };
+        }
+        const inWater = this.runtimeScene.volumes.water.some((volume) => this.isPointInsideOrientedVolume(feetPosition, volume));
+        const inFog = this.runtimeScene.volumes.fog.some((volume) => this.isPointInsideOrientedVolume(feetPosition, volume));
+        return {
+            inWater,
+            inFog
+        };
+    }
+    isPointInsideOrientedVolume(point, volume) {
+        this.volumeOffset.set(point.x - volume.center.x, point.y - volume.center.y, point.z - volume.center.z);
+        this.volumeInverseRotation
+            .setFromEuler(new Euler((volume.rotationDegrees.x * Math.PI) / 180, (volume.rotationDegrees.y * Math.PI) / 180, (volume.rotationDegrees.z * Math.PI) / 180, "XYZ"))
+            .invert();
+        this.volumeOffset.applyQuaternion(this.volumeInverseRotation);
+        const halfX = volume.size.x * 0.5;
+        const halfY = volume.size.y * 0.5;
+        const halfZ = volume.size.z * 0.5;
+        return (Math.abs(this.volumeOffset.x) <= halfX &&
+            Math.abs(this.volumeOffset.y) <= halfY &&
+            Math.abs(this.volumeOffset.z) <= halfZ);
     }
     mount(container) {
         this.container = container;
