@@ -84,12 +84,10 @@ vi.mock("../../src/assets/project-asset-storage", () => ({
 describe("water volume integration", () => {
   beforeEach(() => {
     viewportHostInstances.length = 0;
-    vi.useFakeTimers();
     vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockImplementation(() => ({}) as never);
   });
 
   afterEach(() => {
-    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
@@ -138,18 +136,17 @@ describe("water volume integration", () => {
       });
     });
 
-    await act(async () => {
-      await vi.runAllTimersAsync();
+    await waitFor(() => {
+      expect(store.getState().document.brushes[brush.id]?.volume).toEqual({
+        mode: "water",
+        water: {
+          colorHex: "#12a4ff",
+          surfaceOpacity: 0.55,
+          waveStrength: 0.35
+        }
+      });
     });
 
     expect(input.value).toBe("#12a4ff");
-    expect(store.getState().document.brushes[brush.id]?.volume).toEqual({
-      mode: "water",
-      water: {
-        colorHex: "#12a4ff",
-        surfaceOpacity: 0.55,
-        waveStrength: 0.35
-      }
-    });
   });
 });
