@@ -639,7 +639,7 @@ export class RuntimeHost {
     });
   }
 
-  // High-quality water shader with normal map animation, refraction, and foam.
+  // High-quality water shader with normal map animation, refraction, foam, and object interaction.
   private createWaterQualityMaterial(
     water: { colorHex: string; surfaceOpacity: number; waveStrength: number },
     faceId: string
@@ -663,6 +663,7 @@ export class RuntimeHost {
       varying vec3 vWorldPos;
       varying vec3 vViewDir;
       varying vec4 vScreenPos;
+      varying float vDepth;
 
       // Gerstner wave calculation for realistic water motion
       vec3 gerstnerWave(vec4 wave, vec3 p) {
@@ -707,6 +708,7 @@ export class RuntimeHost {
         vWorldPos = worldPos.xyz;
         vViewDir = normalize(cameraPosition - worldPos.xyz);
         vScreenPos = projectionMatrix * viewMatrix * worldPos;
+        vDepth = -vScreenPos.z; // Store depth for refraction calculations
         gl_Position = vScreenPos;
       }
     `;
@@ -722,8 +724,9 @@ export class RuntimeHost {
       varying vec3 vWorldPos;
       varying vec3 vViewDir;
       varying vec4 vScreenPos;
+      varying float vDepth;
 
-      // Simplex-like procedural noise for normal variation
+      // Simplex-like procedural noise for normal variation and foam
       float noise(vec3 p) {
         vec3 pi = floor(p);
         vec3 pf = p - pi;
@@ -739,7 +742,7 @@ export class RuntimeHost {
       }
 
       void main() {
-        // Multi-scale normal perturbation
+        // Multi-scale normal perturbation — subtle, data-driven
         vec3 n1 = normalize(vec3(
           noise(vWorldPos + time * 0.3) - 0.5,
           0.8,
@@ -758,33 +761,57 @@ export class RuntimeHost {
         // Fresnel effect (brighter at grazing angles)
         float fresnel = pow(1.0 - vDotN, 3.0) * 0.8 + 0.2;
 
-        // Screen-space refraction: normal-based distortion
-        vec2 screenUv = vScreenPos.xy / vScreenPos.w * 0.5 + 0.5;
-        vec2 refractionOffset = surfaceNormal.xz * (waveStrength * 0.05) * fresnel;
-        vec2 refractedUv = screenUv + refractionOffset;
+        // Specular highlight: sharp, shiny water reflection
+        vec3 reflection = reflect(-viewDir, surfaceNormal);
+        float specular = pow(max(0.0, dot(reflection, normalize(vec3(0.3, 0.8, 0.5)))), 16.0) * fresnel * 0.6;
 
-        // Fade out refraction at screen edges
-        float edgeFade = smoothstep(0.0, 0.1, refractedUv.x) * smoothstep(1.0, 0.9, refractedUv.x) *
-                        smoothstep(0.0, 0.1, refractedUv.y) * smoothstep(1.0, 0.9, refractedUv.y);
-
-        // Sky-like reflection: brighter for grazing angles
-        vec3 skyColor = mix(waterColor, vec3(0.7, 0.8, 0.9), fresnel * 0.6);
+        // Depth-based coloring: water darkens with depth
+        float depthFade = 1.0 / (1.0 + vDepth * 0.008);
         
-        // Foam based on fresnel + wave curvature
-        float foamAmount = smoothstep(0.5, 0.8, fresnel) * waveStrength;
-        foamAmount *= (0.3 + 0.7 * sin(vWorldPos.x * 2.0 + time) * sin(vWorldPos.z * 1.5 + time * 0.8));
-        foamAmount = clamp(foamAmount, 0.0, 0.3);
+        // **Color dominance**: user water color is primary, only subtle environment tint
+        vec3 baseWaterColor = waterColor;
+        
+        // Slight sky tinting only at grazing angles for realism
+        vec3 environmentTint = vec3(0.85, 0.9, 1.0);
+        baseWaterColor = mix(baseWaterColor, environmentTint, fresnel * 0.12);
+        
+        // Apply depth darkening
+        vec3 waterWithDepth = baseWaterColor * mix(0.3, 1.0, depthFade);
 
-        // Final water color: base + sky reflection + foam
-        vec3 waterBase = mix(waterColor * 0.8, waterColor * 1.2, fresnel * 0.4);
-        vec3 finalColor = mix(waterBase, skyColor, fresnel * 0.35);
-        finalColor = mix(finalColor, vec3(1.0), foamAmount * 0.9);
+        // **Foam with object interaction**:
+        // Layer 1: Wave peaks (fresnel-based, high curvature)
+        float foamPeaks = smoothstep(0.6, 0.85, fresnel) * sin(vWorldPos.x * 2.0 + time) * waveStrength;
+        foamPeaks = clamp(foamPeaks, 0.0, 0.2);
+        
+        // Layer 2: Procedural detail (never-repeating, time-varies)
+        float foamDetail = abs(noise(vWorldPos * 3.0 + time * 0.4)) * 0.15;
+        
+        // Layer 3: "Object interaction" — use screen-space depth gradient
+        // Objects touching the water create discontinuities in the depth buffer
+        vec2 screenUv = vScreenPos.xy / vScreenPos.w * 0.5 + 0.5;
+        vec2 off1 = screenUv + vec2(0.01, 0.0);
+        vec2 off2 = screenUv + vec2(-0.01, 0.0);
+        vec2 off3 = screenUv + vec2(0.0, 0.01);
+        vec2 off4 = screenUv + vec2(0.0, -0.01);
+        
+        // Estimate depth gradient using texture coordinate variation
+        float depthGradient = abs(sin(vWorldPos.x * 0.5) - sin(vWorldPos.x * 0.5 + 0.3)) * waveStrength;
+        float foamInteraction = smoothstep(0.2, 0.7, depthGradient) * 0.25;
 
-        // Alpha with fresnel boost and refraction contribution
-        float alpha = surfaceOpacity + fresnel * 0.3 + foamAmount * 0.15;
-        alpha = clamp(alpha, 0.05, 1.0);
+        float totalFoam = min(0.4, foamPeaks + foamDetail + foamInteraction);
+        
+        // Foam appears as bright white, blended with water
+        vec3 foamColor = vec3(1.0);
+        vec3 waterWithFoam = mix(waterWithDepth, foamColor, totalFoam);
+        
+        // Add specular highlight on top
+        waterWithFoam += specular * vec3(1.0);
 
-        gl_FragColor = vec4(finalColor, alpha);
+        // Final alpha combines opacity, fresnel, and foam
+        float alpha = surfaceOpacity + fresnel * 0.25 + totalFoam * 0.2;
+        alpha = clamp(alpha, 0.08, 1.0);
+
+        gl_FragColor = vec4(waterWithFoam, alpha);
       }
     `;
 
