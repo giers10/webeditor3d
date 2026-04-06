@@ -3,7 +3,7 @@ import { Euler, Vector3 } from "three";
 import type { Vec3 } from "../core/vector";
 
 import { getFirstPersonPlayerEyeHeight } from "./player-collision";
-import type { NavigationController, RuntimeControllerContext } from "./navigation-controller";
+import type { NavigationController, RuntimeControllerContext, RuntimeLocomotionState } from "./navigation-controller";
 
 const LOOK_SENSITIVITY = 0.0022;
 const MOVE_SPEED = 4.5;
@@ -39,6 +39,9 @@ export class FirstPersonNavigationController implements NavigationController {
   private pitchRadians = 0;
   private verticalVelocity = 0;
   private grounded = false;
+  private locomotionState: RuntimeLocomotionState = "flying";
+  private inWaterVolume = false;
+  private inFogVolume = false;
   private pointerLocked = false;
   private initializedFromSpawn = false;
 
@@ -54,6 +57,9 @@ export class FirstPersonNavigationController implements NavigationController {
       this.pitchRadians = 0;
       this.verticalVelocity = 0;
       this.grounded = false;
+      this.locomotionState = "flying";
+      this.inWaterVolume = false;
+      this.inFogVolume = false;
       this.initializedFromSpawn = true;
     }
 
@@ -96,6 +102,7 @@ export class FirstPersonNavigationController implements NavigationController {
     }
 
     const playerShape = this.context.getRuntimeScene().playerCollider;
+  const currentVolumeState = this.context.resolvePlayerVolumeState(this.feetPosition);
     const inputX = (this.pressedKeys.has("KeyD") ? 1 : 0) - (this.pressedKeys.has("KeyA") ? 1 : 0);
     const inputZ = (this.pressedKeys.has("KeyW") ? 1 : 0) - (this.pressedKeys.has("KeyS") ? 1 : 0);
     const inputLength = Math.hypot(inputX, inputZ);
@@ -117,6 +124,8 @@ export class FirstPersonNavigationController implements NavigationController {
 
     if (playerShape.mode === "none") {
       this.verticalVelocity = 0;
+    } else if (currentVolumeState.inWater) {
+      this.verticalVelocity = 0;
     } else {
       this.verticalVelocity -= GRAVITY * dt;
     }
@@ -125,7 +134,7 @@ export class FirstPersonNavigationController implements NavigationController {
       this.feetPosition,
       {
         x: horizontalX,
-        y: playerShape.mode === "none" ? 0 : this.verticalVelocity * dt,
+        y: playerShape.mode === "none" || currentVolumeState.inWater ? 0 : this.verticalVelocity * dt,
         z: horizontalZ
       },
       playerShape
@@ -138,9 +147,24 @@ export class FirstPersonNavigationController implements NavigationController {
     }
 
     this.feetPosition = resolvedMotion.feetPosition;
-    this.grounded = resolvedMotion.grounded;
+    const nextVolumeState = this.context.resolvePlayerVolumeState(this.feetPosition);
+    this.inWaterVolume = nextVolumeState.inWater;
+    this.inFogVolume = nextVolumeState.inFog;
+    this.grounded = nextVolumeState.inWater ? false : resolvedMotion.grounded;
+
+    if (playerShape.mode === "none") {
+      this.locomotionState = "flying";
+    } else if (this.inWaterVolume) {
+      this.locomotionState = "swimming";
+    } else if (this.grounded) {
+      this.locomotionState = "grounded";
+    } else {
+      this.locomotionState = "flying";
+    }
 
     if (this.grounded && this.verticalVelocity < 0) {
+      this.verticalVelocity = 0;
+    } else if (this.inWaterVolume) {
       this.verticalVelocity = 0;
     }
 
@@ -156,6 +180,9 @@ export class FirstPersonNavigationController implements NavigationController {
     this.pitchRadians = 0;
     this.verticalVelocity = 0;
     this.grounded = false;
+    this.locomotionState = "flying";
+    this.inWaterVolume = false;
+    this.inFogVolume = false;
     this.updateCameraTransform();
     this.publishTelemetry();
   }
@@ -188,6 +215,9 @@ export class FirstPersonNavigationController implements NavigationController {
       },
       eyePosition: toEyePosition(this.feetPosition, getFirstPersonPlayerEyeHeight(this.context.getRuntimeScene().playerCollider)),
       grounded: this.grounded,
+      locomotionState: this.locomotionState,
+      inWaterVolume: this.inWaterVolume,
+      inFogVolume: this.inFogVolume,
       pointerLocked: this.pointerLocked,
       spawn: this.context.getRuntimeScene().spawn
     });
