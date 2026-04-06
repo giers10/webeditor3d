@@ -2198,6 +2198,37 @@ export class ViewportHost {
         });
         return texture;
     }
+    collectViewportWaterContactPatches(document, excludedBrushId, center, rotationDegrees, size) {
+        const contactBounds = [];
+        for (const brush of Object.values(document.brushes)) {
+            if (brush.id === excludedBrushId || brush.volume.mode !== "none") {
+                continue;
+            }
+            contactBounds.push(getBoxBrushBounds(brush));
+        }
+        for (const modelInstance of getModelInstances(document.modelInstances)) {
+            if (modelInstance.collision.mode === "none") {
+                continue;
+            }
+            const asset = this.projectAssets[modelInstance.assetId];
+            if (asset?.kind !== "model") {
+                continue;
+            }
+            try {
+                const generatedCollider = buildGeneratedModelCollider(modelInstance, asset, this.loadedModelAssets[modelInstance.assetId]);
+                if (generatedCollider !== null) {
+                    contactBounds.push(generatedCollider.worldBounds);
+                }
+            }
+            catch {
+            }
+        }
+        return collectWaterContactPatches({
+            center,
+            rotationDegrees,
+            size
+        }, contactBounds);
+    }
     createEdgeHelper(brush, edgeId) {
         const segment = getBoxBrushEdgeWorldSegment(brush, edgeId);
         const geometry = new BufferGeometry().setFromPoints([
