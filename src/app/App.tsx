@@ -4122,6 +4122,22 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
+  const applyAdvancedRenderingFogPath = (path: BoxVolumeRenderPath) => {
+    applyAdvancedRenderingSettings("Set fog render path", `Fog render path set to ${formatBoxVolumeRenderPathLabel(path)}.`, (advancedRendering) => {
+      advancedRendering.fogPath = path;
+    });
+  };
+
+  const applyAdvancedRenderingWaterPath = (path: BoxVolumeRenderPath) => {
+    applyAdvancedRenderingSettings(
+      "Set water render path",
+      `Water render path set to ${formatBoxVolumeRenderPathLabel(path)}.`,
+      (advancedRendering) => {
+        advancedRendering.waterPath = path;
+      }
+    );
+  };
+
   const applyBrushNameChange = () => {
     if (selectedBrush === null) {
       setStatusMessage("Select a whitebox box before renaming it.");
