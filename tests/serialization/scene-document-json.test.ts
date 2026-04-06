@@ -1373,6 +1373,9 @@ describe("scene document JSON", () => {
   });
 
   it("migrates v19 whitebox boxes without volume settings to the current schema version", () => {
+    const legacyBrush = createBoxBrush({
+      id: "brush-legacy"
+    });
     const migratedDocument = migrateSceneDocument({
       version: WHITEBOX_GEOMETRY_SCENE_DOCUMENT_VERSION,
       name: "Legacy Whitebox Volume Scene",
@@ -1391,23 +1394,11 @@ describe("scene document JSON", () => {
         "brush-legacy": {
           id: "brush-legacy",
           kind: "box",
-          center: {
-            x: 0,
-            y: 1,
-            z: 0
-          },
-          rotationDegrees: {
-            x: 0,
-            y: 0,
-            z: 0
-          },
-          size: {
-            x: 2,
-            y: 2,
-            z: 2
-          },
-          geometry: createBoxBrush({ id: "brush-legacy-geometry" }).geometry,
-          faces: createBoxBrush({ id: "brush-legacy-faces" }).faces
+          center: legacyBrush.center,
+          rotationDegrees: legacyBrush.rotationDegrees,
+          size: legacyBrush.size,
+          geometry: legacyBrush.geometry,
+          faces: legacyBrush.faces
         }
       },
       modelInstances: {},
