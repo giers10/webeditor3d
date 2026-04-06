@@ -40,7 +40,6 @@ import {
 } from "../interactions/interaction-links";
 import {
   BOX_VERTEX_IDS,
-  BOX_BRUSH_VOLUME_MODES,
   createBoxBrush,
   createDefaultBoxBrushGeometry,
   createDefaultBoxBrushFogSettings,
