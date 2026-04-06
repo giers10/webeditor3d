@@ -7246,6 +7246,133 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         </label>
                       </div>
                     </div>
+
+                    <div className="form-section">
+                      <div className="label">Volume Mode</div>
+                      <label className="form-field">
+                        <span className="label">Mode</span>
+                        <select
+                          data-testid="brush-volume-mode"
+                          className="select-input"
+                          value={boxVolumeModeDraft}
+                          onChange={(event) => {
+                            const nextMode = event.currentTarget.value as BoxBrushVolumeMode;
+                            setBoxVolumeModeDraft(nextMode);
+                            applyBoxVolumeModeChange(nextMode);
+                          }}
+                        >
+                          {BOX_BRUSH_VOLUME_MODES.map((mode) => (
+                            <option key={mode} value={mode}>
+                              {formatBoxVolumeModeLabel(mode)}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+
+                      {boxVolumeModeDraft === "water" ? (
+                        <>
+                          <div className="vector-inputs vector-inputs--two">
+                            <label className="form-field">
+                              <span className="label">Color</span>
+                              <input
+                                data-testid="brush-water-color"
+                                className="color-input"
+                                type="color"
+                                value={boxVolumeWaterColorDraft}
+                                onChange={(event) => {
+                                  setBoxVolumeWaterColorDraft(event.currentTarget.value);
+                                  scheduleDraftCommit(applyBoxWaterSettings);
+                                }}
+                              />
+                            </label>
+                            <label className="form-field">
+                              <span className="label">Surface Opacity</span>
+                              <input
+                                data-testid="brush-water-surface-opacity"
+                                className="text-input"
+                                type="number"
+                                min="0"
+                                step="0.05"
+                                value={boxVolumeWaterSurfaceOpacityDraft}
+                                onChange={(event) => setBoxVolumeWaterSurfaceOpacityDraft(event.currentTarget.value)}
+                                onBlur={applyBoxWaterSettings}
+                                onKeyDown={(event) => handleDraftVectorKeyDown(event, applyBoxWaterSettings)}
+                                onKeyUp={(event) => handleNumberInputKeyUp(event, applyBoxWaterSettings)}
+                                onPointerUp={(event) => handleNumberInputPointerUp(event, applyBoxWaterSettings)}
+                              />
+                            </label>
+                          </div>
+                          <label className="form-field">
+                            <span className="label">Wave Strength</span>
+                            <input
+                              data-testid="brush-water-wave-strength"
+                              className="text-input"
+                              type="number"
+                              min="0"
+                              step="0.05"
+                              value={boxVolumeWaterWaveStrengthDraft}
+                              onChange={(event) => setBoxVolumeWaterWaveStrengthDraft(event.currentTarget.value)}
+                              onBlur={applyBoxWaterSettings}
+                              onKeyDown={(event) => handleDraftVectorKeyDown(event, applyBoxWaterSettings)}
+                              onKeyUp={(event) => handleNumberInputKeyUp(event, applyBoxWaterSettings)}
+                              onPointerUp={(event) => handleNumberInputPointerUp(event, applyBoxWaterSettings)}
+                            />
+                          </label>
+                        </>
+                      ) : null}
+
+                      {boxVolumeModeDraft === "fog" ? (
+                        <>
+                          <div className="vector-inputs vector-inputs--two">
+                            <label className="form-field">
+                              <span className="label">Color</span>
+                              <input
+                                data-testid="brush-fog-color"
+                                className="color-input"
+                                type="color"
+                                value={boxVolumeFogColorDraft}
+                                onChange={(event) => {
+                                  setBoxVolumeFogColorDraft(event.currentTarget.value);
+                                  scheduleDraftCommit(applyBoxFogSettings);
+                                }}
+                              />
+                            </label>
+                            <label className="form-field">
+                              <span className="label">Density</span>
+                              <input
+                                data-testid="brush-fog-density"
+                                className="text-input"
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={boxVolumeFogDensityDraft}
+                                onChange={(event) => setBoxVolumeFogDensityDraft(event.currentTarget.value)}
+                                onBlur={applyBoxFogSettings}
+                                onKeyDown={(event) => handleDraftVectorKeyDown(event, applyBoxFogSettings)}
+                                onKeyUp={(event) => handleNumberInputKeyUp(event, applyBoxFogSettings)}
+                                onPointerUp={(event) => handleNumberInputPointerUp(event, applyBoxFogSettings)}
+                              />
+                            </label>
+                          </div>
+                          <label className="form-field">
+                            <span className="label">Padding</span>
+                            <input
+                              data-testid="brush-fog-padding"
+                              className="text-input"
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={boxVolumeFogPaddingDraft}
+                              onChange={(event) => setBoxVolumeFogPaddingDraft(event.currentTarget.value)}
+                              onBlur={applyBoxFogSettings}
+                              onKeyDown={(event) => handleDraftVectorKeyDown(event, applyBoxFogSettings)}
+                              onKeyUp={(event) => handleNumberInputKeyUp(event, applyBoxFogSettings)}
+                              onPointerUp={(event) => handleNumberInputPointerUp(event, applyBoxFogSettings)}
+                            />
+                          </label>
+                        </>
+                      ) : null}
+                    </div>
                   </>
                 )}
 
