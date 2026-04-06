@@ -8,12 +8,15 @@ import {
   Group,
   LoopOnce,
   LoopRepeat,
+  Material,
   Mesh,
+  MeshBasicMaterial,
   MeshStandardMaterial,
   PerspectiveCamera,
   PointLight,
   Quaternion,
   Scene,
+  ShaderMaterial,
   Vector3,
   SpotLight,
   WebGLRenderer
@@ -82,7 +85,9 @@ export class RuntimeHost {
   private readonly orbitVisitorController = new OrbitVisitorNavigationController();
   private readonly interactionSystem = new RuntimeInteractionSystem();
   private readonly audioSystem = new RuntimeAudioSystem(this.scene, this.camera, null);
-  private readonly brushMeshes = new Map<string, Mesh<BufferGeometry, MeshStandardMaterial[]>>();
+  private readonly brushMeshes = new Map<string, Mesh<BufferGeometry, Material[]>>();
+  private volumeTime = 0;
+  private readonly volumeAnimatedMaterials: ShaderMaterial[] = [];
   private readonly localLightObjects = new Map<string, Group>();
   private readonly modelRenderObjects = new Map<string, Group>();
   private readonly materialTextureCache = new Map<string, CachedMaterialTexture>();
