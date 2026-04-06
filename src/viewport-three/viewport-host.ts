@@ -143,7 +143,8 @@ import {
   applyAdvancedRenderingLightShadowFlags,
   applyAdvancedRenderingRenderableShadowFlags,
   configureAdvancedRenderingRenderer,
-  createAdvancedRenderingComposer
+  createAdvancedRenderingComposer,
+  resolveBoxVolumeRenderPaths
 } from "../rendering/advanced-rendering";
 import { resolveViewportFocusTarget } from "./viewport-focus";
 import { createSoundEmitterMarkerMeshes } from "./viewport-entity-markers";
@@ -2252,6 +2253,7 @@ export class ViewportHost {
 
   private rebuildBrushMeshes(document: SceneDocument, selection: EditorSelection) {
     this.clearBrushMeshes();
+    const volumeRenderPaths = resolveBoxVolumeRenderPaths(document.world.advancedRendering);
 
     for (const brush of Object.values(document.brushes)) {
       const geometry = buildBoxBrushDerivedMeshData(brush).geometry;
@@ -2261,7 +2263,8 @@ export class ViewportHost {
           brush,
           faceId,
           document.materials[brush.faces[faceId].materialId ?? ""],
-          this.getFaceHighlightState(brush.id, faceId)
+          this.getFaceHighlightState(brush.id, faceId),
+          volumeRenderPaths
         )
       );
       const mesh = new Mesh(geometry, materials);
@@ -2834,12 +2837,86 @@ export class ViewportHost {
     brush: BoxBrush,
     faceId: BoxFaceId,
     material: MaterialDef | undefined,
-    highlightState: "none" | "hovered" | "selected"
+    highlightState: "none" | "hovered" | "selected",
+    volumeRenderPaths: { fog: "performance" | "quality"; water: "performance" | "quality" }
   ): MeshStandardMaterial | MeshBasicMaterial {
     const face = brush.faces[faceId];
     const selectedFace = highlightState === "selected";
     const hoveredFace = highlightState === "hovered";
     const emphasizedFace = selectedFace || hoveredFace;
+
+    if (brush.volume.mode === "water") {
+      const quality = volumeRenderPaths.water === "quality";
+      const baseOpacity = Math.max(0.08, Math.min(1, brush.volume.water.surfaceOpacity));
+      const opacityBoost = faceId === "posY" ? 0.16 : 0;
+      const opacity = Math.min(1, baseOpacity + opacityBoost + (selectedFace ? 0.08 : hoveredFace ? 0.04 : 0));
+
+      if (this.displayMode === "wireframe") {
+        return new MeshBasicMaterial({
+          color: brush.volume.water.colorHex,
+          wireframe: true,
+          transparent: true,
+          opacity: Math.min(1, opacity + 0.2),
+          depthWrite: false
+        });
+      }
+
+      if (this.displayMode === "authoring") {
+        return new MeshBasicMaterial({
+          color: brush.volume.water.colorHex,
+          transparent: true,
+          opacity
+        });
+      }
+
+      return new MeshStandardMaterial({
+        color: brush.volume.water.colorHex,
+        emissive: brush.volume.water.colorHex,
+        emissiveIntensity: quality ? 0.09 + brush.volume.water.waveStrength * 0.1 : 0.03,
+        roughness: quality ? 0.1 : 0.2,
+        metalness: quality ? 0.04 : 0.01,
+        transparent: true,
+        opacity,
+        transmission: quality ? 0.25 : 0,
+        thickness: quality ? 0.5 : 0,
+        envMapIntensity: quality ? 1.15 : 1
+      });
+    }
+
+    if (brush.volume.mode === "fog") {
+      const quality = volumeRenderPaths.fog === "quality";
+      const baseOpacity = Math.max(0.08, Math.min(0.82, brush.volume.fog.density * (quality ? 0.65 : 0.9) + 0.1));
+      const opacity = Math.min(0.92, baseOpacity + (selectedFace ? 0.08 : hoveredFace ? 0.04 : 0));
+
+      if (this.displayMode === "wireframe") {
+        return new MeshBasicMaterial({
+          color: brush.volume.fog.colorHex,
+          wireframe: true,
+          transparent: true,
+          opacity: Math.min(1, opacity + 0.16),
+          depthWrite: false
+        });
+      }
+
+      if (this.displayMode === "authoring") {
+        return new MeshBasicMaterial({
+          color: brush.volume.fog.colorHex,
+          transparent: true,
+          opacity
+        });
+      }
+
+      return new MeshStandardMaterial({
+        color: brush.volume.fog.colorHex,
+        emissive: brush.volume.fog.colorHex,
+        emissiveIntensity: quality ? 0.08 : 0.04,
+        roughness: 1,
+        metalness: 0,
+        transparent: true,
+        opacity,
+        depthWrite: false
+      });
+    }
 
     if (this.displayMode === "authoring") {
       const colorHex =
@@ -2974,6 +3051,8 @@ export class ViewportHost {
       return;
     }
 
+    const volumeRenderPaths = resolveBoxVolumeRenderPaths(this.currentDocument.world.advancedRendering);
+
     for (const brush of Object.values(this.currentDocument.brushes)) {
       const renderObjects = this.brushRenderObjects.get(brush.id);
 
@@ -2993,7 +3072,8 @@ export class ViewportHost {
           brush,
           faceId,
           this.currentDocument?.materials[brush.faces[faceId].materialId ?? ""],
-          this.getFaceHighlightState(brush.id, faceId)
+          this.getFaceHighlightState(brush.id, faceId),
+          volumeRenderPaths
         )
       );
 
