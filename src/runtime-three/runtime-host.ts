@@ -956,6 +956,7 @@ export class RuntimeHost {
 
     this.brushMeshes.clear();
     this.volumeAnimatedMaterials.length = 0;
+    this.volumeAnimatedUniforms.length = 0;
   }
 
   private clearModelInstances() {
