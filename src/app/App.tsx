@@ -5808,40 +5808,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   </div>
 
                   <div className="form-section">
-                    <div className="label">Volume Rendering Paths</div>
-                    <div className="vector-inputs vector-inputs--two">
-                      <label className="form-field">
-                        <span className="label">Fog</span>
-                        <select
-                          className="select-input"
-                          value={advancedRendering.fogPath}
-                          onChange={(event) => applyAdvancedRenderingFogPath(event.currentTarget.value as BoxVolumeRenderPath)}
-                        >
-                          {BOX_VOLUME_RENDER_PATHS.map((path) => (
-                            <option key={path} value={path}>
-                              {formatBoxVolumeRenderPathLabel(path)}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      <label className="form-field">
-                        <span className="label">Water</span>
-                        <select
-                          className="select-input"
-                          value={advancedRendering.waterPath}
-                          onChange={(event) => applyAdvancedRenderingWaterPath(event.currentTarget.value as BoxVolumeRenderPath)}
-                        >
-                          {BOX_VOLUME_RENDER_PATHS.map((path) => (
-                            <option key={path} value={path}>
-                              {formatBoxVolumeRenderPathLabel(path)}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                    </div>
-                  </div>
-
-                  <div className="form-section">
                     <div className="label">Ambient Occlusion</div>
                     <label className="form-field form-field--toggle">
                       <span className="label">Enabled</span>
