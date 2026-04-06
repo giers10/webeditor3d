@@ -897,6 +897,26 @@ function formatAdvancedRenderingToneMappingLabel(mode: AdvancedRenderingToneMapp
   }
 }
 
+function formatBoxVolumeModeLabel(mode: BoxBrushVolumeMode): string {
+  switch (mode) {
+    case "none":
+      return "None";
+    case "water":
+      return "Water";
+    case "fog":
+      return "Fog";
+  }
+}
+
+function formatBoxVolumeRenderPathLabel(path: BoxVolumeRenderPath): string {
+  switch (path) {
+    case "performance":
+      return "Performance";
+    case "quality":
+      return "Quality";
+  }
+}
+
 export function App({ store, initialStatusMessage }: AppProps) {
   const editorState = useEditorStoreState(store);
   const brushList = Object.values(editorState.document.brushes);
