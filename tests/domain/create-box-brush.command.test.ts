@@ -6,6 +6,7 @@ import { createMoveBoxBrushCommand } from "../../src/commands/move-box-brush-com
 import { createRotateBoxBrushCommand } from "../../src/commands/rotate-box-brush-command";
 import { createResizeBoxBrushCommand } from "../../src/commands/resize-box-brush-command";
 import { createSetBoxBrushNameCommand } from "../../src/commands/set-box-brush-name-command";
+import { createSetBoxBrushVolumeSettingsCommand } from "../../src/commands/set-box-brush-volume-settings-command";
 
 describe("box brush commands", () => {
   it("creates a canonical box brush and supports undo/redo", () => {
@@ -277,5 +278,51 @@ describe("box brush commands", () => {
 
     expect(store.redo()).toBe(true);
     expect(store.getState().document.brushes[createdBrush.id].name).toBe("Entry Room");
+  });
+
+  it("updates box volume settings through an undoable command", () => {
+    const store = createEditorStore();
+
+    store.executeCommand(createCreateBoxBrushCommand());
+
+    const createdBrush = Object.values(store.getState().document.brushes)[0];
+
+    store.executeCommand(
+      createSetBoxBrushVolumeSettingsCommand({
+        brushId: createdBrush.id,
+        volume: {
+          mode: "water",
+          water: {
+            colorHex: "#3a7dc2",
+            surfaceOpacity: 0.65,
+            waveStrength: 0.4
+          }
+        }
+      })
+    );
+
+    expect(store.getState().document.brushes[createdBrush.id].volume).toEqual({
+      mode: "water",
+      water: {
+        colorHex: "#3a7dc2",
+        surfaceOpacity: 0.65,
+        waveStrength: 0.4
+      }
+    });
+
+    expect(store.undo()).toBe(true);
+    expect(store.getState().document.brushes[createdBrush.id].volume).toEqual({
+      mode: "none"
+    });
+
+    expect(store.redo()).toBe(true);
+    expect(store.getState().document.brushes[createdBrush.id].volume).toEqual({
+      mode: "water",
+      water: {
+        colorHex: "#3a7dc2",
+        surfaceOpacity: 0.65,
+        waveStrength: 0.4
+      }
+    });
   });
 });
