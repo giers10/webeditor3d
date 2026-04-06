@@ -37,6 +37,7 @@ export function RunnerCanvas({
   const hostRef = useRef<RuntimeHost | null>(null);
   const [runnerMessage, setRunnerMessage] = useState<string | null>(null);
   const [interactionPrompt, setInteractionPrompt] = useState<RuntimeInteractionPrompt | null>(null);
+  const [firstPersonTelemetry, setFirstPersonTelemetry] = useState<FirstPersonTelemetry | null>(null);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -45,30 +46,26 @@ export function RunnerCanvas({
       return;
     }
 
-    const testCanvas = document.createElement("canvas");
-    const hasWebGl =
-      testCanvas.getContext("webgl2") !== null ||
-      testCanvas.getContext("webgl") !== null ||
-      testCanvas.getContext("experimental-webgl") !== null;
-
     try {
       const runtimeHost = new RuntimeHost({
-        enableRendering: hasWebGl
+        enableRendering: true
       });
       hostRef.current = runtimeHost;
       runtimeHost.mount(container);
       runtimeHost.setRuntimeMessageHandler(onRuntimeMessageChange);
-      runtimeHost.setFirstPersonTelemetryHandler(onFirstPersonTelemetryChange);
+      runtimeHost.setFirstPersonTelemetryHandler((telemetry) => {
+        setFirstPersonTelemetry(telemetry);
+        onFirstPersonTelemetryChange(telemetry);
+      });
       runtimeHost.setInteractionPromptHandler((prompt) => {
         setInteractionPrompt(prompt);
         onInteractionPromptChange(prompt);
       });
-      setRunnerMessage(
-        hasWebGl ? null : "WebGL is unavailable in this browser environment. The runner shell is visible, but runtime rendering is disabled."
-      );
+      setRunnerMessage(null);
 
       return () => {
         onInteractionPromptChange(null);
+        setFirstPersonTelemetry(null);
         runtimeHost.dispose();
         hostRef.current = null;
       };
@@ -95,7 +92,7 @@ export function RunnerCanvas({
   return (
     <div
       ref={containerRef}
-      className="runner-canvas"
+      className={`runner-canvas ${navigationMode === "firstPerson" && firstPersonTelemetry?.inWaterVolume ? "runner-canvas--underwater" : ""}`}
       data-testid="runner-shell"
       aria-label="Built-in scene runner"
       style={createWorldBackgroundStyle(
@@ -103,6 +100,7 @@ export function RunnerCanvas({
         runtimeScene.world.background.mode === "image" ? loadedImageAssets[runtimeScene.world.background.assetId]?.sourceUrl ?? null : null
       )}
     >
+      {navigationMode === "firstPerson" && firstPersonTelemetry?.inWaterVolume ? <div className="runner-canvas__underwater" aria-hidden="true" /> : null}
       {navigationMode === "firstPerson" ? <div className="runner-canvas__crosshair" aria-hidden="true" /> : null}
       {navigationMode === "firstPerson" && interactionPrompt !== null ? (
         <div className="runner-canvas__prompt" data-testid="runner-interaction-prompt" role="status" aria-live="polite">
