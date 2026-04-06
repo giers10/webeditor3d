@@ -2199,6 +2199,117 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
+  const applyBoxVolumeSettings = (
+    mutate: (next: BoxBrush["volume"]) => BoxBrush["volume"],
+    label: string,
+    successMessage: string
+  ) => {
+    if (selectedBrush === null) {
+      setStatusMessage("Select a whitebox box before editing volume settings.");
+      return;
+    }
+
+    try {
+      const nextVolume = mutate(selectedBrush.volume);
+
+      store.executeCommand(
+        createSetBoxBrushVolumeSettingsCommand({
+          brushId: selectedBrush.id,
+          volume: nextVolume,
+          label
+        })
+      );
+      setStatusMessage(successMessage);
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const applyBoxVolumeModeChange = (mode: BoxBrushVolumeMode) => {
+    if (selectedBrush === null) {
+      setStatusMessage("Select a whitebox box before changing the volume mode.");
+      return;
+    }
+
+    if (selectedBrush.volume.mode === mode) {
+      return;
+    }
+
+    applyBoxVolumeSettings(
+      (currentVolume) => {
+        if (mode === "none") {
+          return {
+            mode: "none"
+          };
+        }
+
+        if (mode === "water") {
+          return currentVolume.mode === "water"
+            ? currentVolume
+            : {
+                mode: "water",
+                water: {
+                  colorHex: boxVolumeWaterColorDraft,
+                  surfaceOpacity: readNonNegativeNumberDraft(boxVolumeWaterSurfaceOpacityDraft, "Water surface opacity"),
+                  waveStrength: readNonNegativeNumberDraft(boxVolumeWaterWaveStrengthDraft, "Water wave strength")
+                }
+              };
+        }
+
+        return currentVolume.mode === "fog"
+          ? currentVolume
+          : {
+              mode: "fog",
+              fog: {
+                colorHex: boxVolumeFogColorDraft,
+                density: readNonNegativeNumberDraft(boxVolumeFogDensityDraft, "Fog density"),
+                padding: readNonNegativeNumberDraft(boxVolumeFogPaddingDraft, "Fog padding")
+              }
+            };
+      },
+      `Set box volume mode to ${mode}`,
+      `Set selected whitebox box volume mode to ${formatBoxVolumeModeLabel(mode)}.`
+    );
+  };
+
+  const applyBoxWaterSettings = () => {
+    if (selectedBrush === null || selectedBrush.volume.mode !== "water") {
+      return;
+    }
+
+    applyBoxVolumeSettings(
+      () => ({
+        mode: "water",
+        water: {
+          colorHex: boxVolumeWaterColorDraft,
+          surfaceOpacity: readNonNegativeNumberDraft(boxVolumeWaterSurfaceOpacityDraft, "Water surface opacity"),
+          waveStrength: readNonNegativeNumberDraft(boxVolumeWaterWaveStrengthDraft, "Water wave strength")
+        }
+      }),
+      "Set box water settings",
+      "Updated selected whitebox water settings."
+    );
+  };
+
+  const applyBoxFogSettings = () => {
+    if (selectedBrush === null || selectedBrush.volume.mode !== "fog") {
+      return;
+    }
+
+    applyBoxVolumeSettings(
+      () => ({
+        mode: "fog",
+        fog: {
+          colorHex: boxVolumeFogColorDraft,
+          density: readNonNegativeNumberDraft(boxVolumeFogDensityDraft, "Fog density"),
+          padding: readNonNegativeNumberDraft(boxVolumeFogPaddingDraft, "Fog padding")
+        }
+      }),
+      "Set box fog settings",
+      "Updated selected whitebox fog settings."
+    );
+  };
+
   const commitEntityChange = (currentEntity: EntityInstance, nextEntity: EntityInstance, successMessage: string) => {
     if (areEntityInstancesEqual(currentEntity, nextEntity)) {
       return;
