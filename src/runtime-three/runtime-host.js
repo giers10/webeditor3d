@@ -423,7 +423,6 @@ export class RuntimeHost {
                 metalness: quality ? 0.04 : 0.01,
                 transparent: true,
                 opacity: Math.min(1, baseOpacity + topBoost),
-                thickness: quality ? 0.6 : 0,
                 envMapIntensity: quality ? 1.15 : 1
             });
         }

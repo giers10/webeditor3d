@@ -2877,7 +2877,6 @@ export class ViewportHost {
         metalness: quality ? 0.04 : 0.01,
         transparent: true,
         opacity,
-        thickness: quality ? 0.5 : 0,
         envMapIntensity: quality ? 1.15 : 1
       });
     }
