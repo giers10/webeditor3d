@@ -2,7 +2,7 @@ import { AmbientLight, AnimationClip, AnimationMixer, DirectionalLight, Euler, G
 import { createModelInstanceRenderGroup, disposeModelInstance } from "../assets/model-instance-rendering";
 import { buildBoxBrushDerivedMeshData } from "../geometry/box-brush-mesh";
 import { createStarterMaterialSignature, createStarterMaterialTexture } from "../materials/starter-material-textures";
-import { applyAdvancedRenderingLightShadowFlags, applyAdvancedRenderingRenderableShadowFlags, configureAdvancedRenderingRenderer, createAdvancedRenderingComposer } from "../rendering/advanced-rendering";
+import { applyAdvancedRenderingLightShadowFlags, applyAdvancedRenderingRenderableShadowFlags, configureAdvancedRenderingRenderer, createAdvancedRenderingComposer, resolveBoxVolumeRenderPaths } from "../rendering/advanced-rendering";
 import { areAdvancedRenderingSettingsEqual, cloneAdvancedRenderingSettings } from "../document/world-settings";
 import { FirstPersonNavigationController } from "./first-person-navigation-controller";
 import { RapierCollisionWorld } from "./rapier-collision-world";
@@ -357,15 +357,16 @@ export class RuntimeHost {
     }
     rebuildBrushMeshes(brushes) {
         this.clearBrushMeshes();
+        const volumeRenderPaths = this.currentWorld === null ? { fog: "performance", water: "performance" } : resolveBoxVolumeRenderPaths(this.currentWorld.advancedRendering);
         for (const brush of brushes) {
             const geometry = buildBoxBrushDerivedMeshData(brush).geometry;
             const materials = [
-                this.createFaceMaterial(brush.faces.posX.material),
-                this.createFaceMaterial(brush.faces.negX.material),
-                this.createFaceMaterial(brush.faces.posY.material),
-                this.createFaceMaterial(brush.faces.negY.material),
-                this.createFaceMaterial(brush.faces.posZ.material),
-                this.createFaceMaterial(brush.faces.negZ.material)
+                this.createFaceMaterial(brush, "posX", brush.faces.posX.material, volumeRenderPaths),
+                this.createFaceMaterial(brush, "negX", brush.faces.negX.material, volumeRenderPaths),
+                this.createFaceMaterial(brush, "posY", brush.faces.posY.material, volumeRenderPaths),
+                this.createFaceMaterial(brush, "negY", brush.faces.negY.material, volumeRenderPaths),
+                this.createFaceMaterial(brush, "posZ", brush.faces.posZ.material, volumeRenderPaths),
+                this.createFaceMaterial(brush, "negZ", brush.faces.negZ.material, volumeRenderPaths)
             ];
             const mesh = new Mesh(geometry, materials);
             mesh.position.set(brush.center.x, brush.center.y, brush.center.z);
@@ -409,7 +410,38 @@ export class RuntimeHost {
         }
         this.applyShadowState();
     }
-    createFaceMaterial(material) {
+    createFaceMaterial(brush, faceId, material, volumeRenderPaths) {
+        if (brush.volume.mode === "water") {
+            const quality = volumeRenderPaths.water === "quality";
+            const baseOpacity = Math.max(0.05, Math.min(1, brush.volume.water.surfaceOpacity));
+            const topBoost = faceId === "posY" ? 0.18 : 0;
+            return new MeshStandardMaterial({
+                color: brush.volume.water.colorHex,
+                emissive: brush.volume.water.colorHex,
+                emissiveIntensity: quality ? 0.08 + brush.volume.water.waveStrength * 0.1 : 0.03,
+                roughness: quality ? 0.08 : 0.2,
+                metalness: quality ? 0.04 : 0.01,
+                transparent: true,
+                opacity: Math.min(1, baseOpacity + topBoost),
+                transmission: quality ? 0.25 : 0,
+                thickness: quality ? 0.6 : 0,
+                envMapIntensity: quality ? 1.15 : 1
+            });
+        }
+        if (brush.volume.mode === "fog") {
+            const quality = volumeRenderPaths.fog === "quality";
+            const densityOpacity = Math.max(0.08, Math.min(0.82, brush.volume.fog.density * (quality ? 0.65 : 0.9) + 0.1));
+            return new MeshStandardMaterial({
+                color: brush.volume.fog.colorHex,
+                emissive: brush.volume.fog.colorHex,
+                emissiveIntensity: quality ? 0.08 : 0.04,
+                roughness: 1,
+                metalness: 0,
+                transparent: true,
+                opacity: densityOpacity,
+                depthWrite: false
+            });
+        }
         if (material === null) {
             return new MeshStandardMaterial({
                 color: FALLBACK_FACE_COLOR,
