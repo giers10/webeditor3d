@@ -13,7 +13,7 @@ import { createModelColliderDebugGroup } from "../geometry/model-instance-collid
 import { buildGeneratedModelCollider } from "../geometry/model-instance-collider-generation";
 import { DEFAULT_GRID_SIZE, snapValueToGrid } from "../geometry/grid-snapping";
 import { createStarterMaterialSignature, createStarterMaterialTexture } from "../materials/starter-material-textures";
-import { applyAdvancedRenderingLightShadowFlags, applyAdvancedRenderingRenderableShadowFlags, configureAdvancedRenderingRenderer, createAdvancedRenderingComposer } from "../rendering/advanced-rendering";
+import { applyAdvancedRenderingLightShadowFlags, applyAdvancedRenderingRenderableShadowFlags, configureAdvancedRenderingRenderer, createAdvancedRenderingComposer, resolveBoxVolumeRenderPaths } from "../rendering/advanced-rendering";
 import { resolveViewportFocusTarget } from "./viewport-focus";
 import { createSoundEmitterMarkerMeshes } from "./viewport-entity-markers";
 import { getViewportViewModeDefinition, isOrthographicViewportViewMode } from "./viewport-view-modes";
@@ -1668,9 +1668,10 @@ export class ViewportHost {
     }
     rebuildBrushMeshes(document, selection) {
         this.clearBrushMeshes();
+        const volumeRenderPaths = resolveBoxVolumeRenderPaths(document.world.advancedRendering);
         for (const brush of Object.values(document.brushes)) {
             const geometry = buildBoxBrushDerivedMeshData(brush).geometry;
-            const materials = BOX_FACE_IDS.map((faceId) => this.createFaceMaterial(brush, faceId, document.materials[brush.faces[faceId].materialId ?? ""], this.getFaceHighlightState(brush.id, faceId)));
+            const materials = BOX_FACE_IDS.map((faceId) => this.createFaceMaterial(brush, faceId, document.materials[brush.faces[faceId].materialId ?? ""], this.getFaceHighlightState(brush.id, faceId), volumeRenderPaths));
             const mesh = new Mesh(geometry, materials);
             const brushSelected = isBrushSelected(selection, brush.id);
             mesh.userData.brushId = brush.id;
@@ -2061,11 +2062,76 @@ export class ViewportHost {
         }
         return "none";
     }
-    createFaceMaterial(brush, faceId, material, highlightState) {
+    createFaceMaterial(brush, faceId, material, highlightState, volumeRenderPaths) {
         const face = brush.faces[faceId];
         const selectedFace = highlightState === "selected";
         const hoveredFace = highlightState === "hovered";
         const emphasizedFace = selectedFace || hoveredFace;
+        if (brush.volume.mode === "water") {
+            const quality = volumeRenderPaths.water === "quality";
+            const baseOpacity = Math.max(0.08, Math.min(1, brush.volume.water.surfaceOpacity));
+            const opacityBoost = faceId === "posY" ? 0.16 : 0;
+            const opacity = Math.min(1, baseOpacity + opacityBoost + (selectedFace ? 0.08 : hoveredFace ? 0.04 : 0));
+            if (this.displayMode === "wireframe") {
+                return new MeshBasicMaterial({
+                    color: brush.volume.water.colorHex,
+                    wireframe: true,
+                    transparent: true,
+                    opacity: Math.min(1, opacity + 0.2),
+                    depthWrite: false
+                });
+            }
+            if (this.displayMode === "authoring") {
+                return new MeshBasicMaterial({
+                    color: brush.volume.water.colorHex,
+                    transparent: true,
+                    opacity
+                });
+            }
+            return new MeshStandardMaterial({
+                color: brush.volume.water.colorHex,
+                emissive: brush.volume.water.colorHex,
+                emissiveIntensity: quality ? 0.09 + brush.volume.water.waveStrength * 0.1 : 0.03,
+                roughness: quality ? 0.1 : 0.2,
+                metalness: quality ? 0.04 : 0.01,
+                transparent: true,
+                opacity,
+                transmission: quality ? 0.25 : 0,
+                thickness: quality ? 0.5 : 0,
+                envMapIntensity: quality ? 1.15 : 1
+            });
+        }
+        if (brush.volume.mode === "fog") {
+            const quality = volumeRenderPaths.fog === "quality";
+            const baseOpacity = Math.max(0.08, Math.min(0.82, brush.volume.fog.density * (quality ? 0.65 : 0.9) + 0.1));
+            const opacity = Math.min(0.92, baseOpacity + (selectedFace ? 0.08 : hoveredFace ? 0.04 : 0));
+            if (this.displayMode === "wireframe") {
+                return new MeshBasicMaterial({
+                    color: brush.volume.fog.colorHex,
+                    wireframe: true,
+                    transparent: true,
+                    opacity: Math.min(1, opacity + 0.16),
+                    depthWrite: false
+                });
+            }
+            if (this.displayMode === "authoring") {
+                return new MeshBasicMaterial({
+                    color: brush.volume.fog.colorHex,
+                    transparent: true,
+                    opacity
+                });
+            }
+            return new MeshStandardMaterial({
+                color: brush.volume.fog.colorHex,
+                emissive: brush.volume.fog.colorHex,
+                emissiveIntensity: quality ? 0.08 : 0.04,
+                roughness: 1,
+                metalness: 0,
+                transparent: true,
+                opacity,
+                depthWrite: false
+            });
+        }
         if (this.displayMode === "authoring") {
             const colorHex = material === undefined || face.materialId === null
                 ? selectedFace
@@ -2172,6 +2238,7 @@ export class ViewportHost {
         if (this.currentDocument === null) {
             return;
         }
+        const volumeRenderPaths = resolveBoxVolumeRenderPaths(this.currentDocument.world.advancedRendering);
         for (const brush of Object.values(this.currentDocument.brushes)) {
             const renderObjects = this.brushRenderObjects.get(brush.id);
             if (renderObjects === undefined) {
@@ -2181,7 +2248,7 @@ export class ViewportHost {
             const brushHovered = this.hoveredSelection.kind === "brushes" && this.hoveredSelection.ids.includes(brush.id);
             renderObjects.edges.material.color.setHex(brushSelected ? BRUSH_SELECTED_EDGE_COLOR : brushHovered && this.whiteboxSelectionMode === "object" ? BRUSH_HOVERED_EDGE_COLOR : BRUSH_EDGE_COLOR);
             const previousMaterials = renderObjects.mesh.material;
-            renderObjects.mesh.material = BOX_FACE_IDS.map((faceId) => this.createFaceMaterial(brush, faceId, this.currentDocument?.materials[brush.faces[faceId].materialId ?? ""], this.getFaceHighlightState(brush.id, faceId)));
+            renderObjects.mesh.material = BOX_FACE_IDS.map((faceId) => this.createFaceMaterial(brush, faceId, this.currentDocument?.materials[brush.faces[faceId].materialId ?? ""], this.getFaceHighlightState(brush.id, faceId), volumeRenderPaths));
             for (const material of previousMaterials) {
                 material.dispose();
             }
