@@ -559,7 +559,7 @@ describe("validateSceneDocument", () => {
       mode: "water",
       water: {
         colorHex: "water",
-        surfaceOpacity: 2,
+        surfaceOpacity: Number.NaN,
         waveStrength: -1
       }
     };
@@ -588,27 +588,27 @@ describe("validateSceneDocument", () => {
           path: "brushes.brush-invalid-volume-mode.volume.mode"
         }),
         expect.objectContaining({
-          code: "invalid-box-volume-water-color",
+          code: "invalid-box-water-color",
           path: "brushes.brush-invalid-volume-water.volume.water.colorHex"
         }),
         expect.objectContaining({
-          code: "invalid-box-volume-water-opacity",
+          code: "invalid-box-water-surface-opacity",
           path: "brushes.brush-invalid-volume-water.volume.water.surfaceOpacity"
         }),
         expect.objectContaining({
-          code: "invalid-box-volume-water-wave-strength",
+          code: "invalid-box-water-wave-strength",
           path: "brushes.brush-invalid-volume-water.volume.water.waveStrength"
         }),
         expect.objectContaining({
-          code: "invalid-box-volume-fog-color",
+          code: "invalid-box-fog-color",
           path: "brushes.brush-invalid-volume-fog.volume.fog.colorHex"
         }),
         expect.objectContaining({
-          code: "invalid-box-volume-fog-density",
+          code: "invalid-box-fog-density",
           path: "brushes.brush-invalid-volume-fog.volume.fog.density"
         }),
         expect.objectContaining({
-          code: "invalid-box-volume-fog-padding",
+          code: "invalid-box-fog-padding",
           path: "brushes.brush-invalid-volume-fog.volume.fog.padding"
         })
       ])
