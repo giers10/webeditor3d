@@ -19,11 +19,12 @@ import {
   type TriggerVolumeEntity
 } from "../entities/entity-instances";
 import { type InteractionLink } from "../interactions/interaction-links";
-import { BOX_FACE_IDS, BOX_VERTEX_IDS, hasPositiveBoxSize } from "./brushes";
+import { BOX_FACE_IDS, BOX_VERTEX_IDS, hasPositiveBoxSize, isBoxBrushVolumeMode } from "./brushes";
 import type { SceneDocument } from "./scene-document";
 import {
   isAdvancedRenderingShadowMapSize,
   isAdvancedRenderingShadowType,
+  isBoxVolumeRenderPath,
   isAdvancedRenderingToneMappingMode,
   isHexColorString,
   type WorldSettings
@@ -431,6 +432,28 @@ function validateWorldSettings(world: WorldSettings, document: SceneDocument, di
         "invalid-advanced-rendering-dof-bokeh-scale",
         "Advanced rendering depth of field bokeh scale must be a positive finite number.",
         "world.advancedRendering.depthOfField.bokehScale"
+      )
+    );
+  }
+
+  if (!isBoxVolumeRenderPath(advancedRendering.fogPath)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-fog-path",
+        "Advanced rendering fog path must be performance or quality.",
+        "world.advancedRendering.fogPath"
+      )
+    );
+  }
+
+  if (!isBoxVolumeRenderPath(advancedRendering.waterPath)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-water-path",
+        "Advanced rendering water path must be performance or quality.",
+        "world.advancedRendering.waterPath"
       )
     );
   }
@@ -1316,6 +1339,116 @@ export function validateSceneDocument(document: SceneDocument): SceneDocumentVal
             `${path}.faces.${faceId}.materialId`
           )
         );
+      }
+    }
+
+    const volume = brush.volume as Record<string, unknown>;
+
+    if (!isBoxBrushVolumeMode(volume.mode)) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-box-volume-mode",
+          "Box volume mode must be none, water, or fog.",
+          `${path}.volume.mode`
+        )
+      );
+      continue;
+    }
+
+    if (volume.mode === "water") {
+      const water = volume.water as Record<string, unknown> | undefined;
+
+      if (water === undefined) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-box-water-settings",
+            "Water volumes must define water settings.",
+            `${path}.volume.water`
+          )
+        );
+      } else {
+        if (typeof water.colorHex !== "string" || !isHexColorString(water.colorHex)) {
+          diagnostics.push(
+            createDiagnostic(
+              "error",
+              "invalid-box-water-color",
+              "Water volume color must use #RRGGBB format.",
+              `${path}.volume.water.colorHex`
+            )
+          );
+        }
+
+        if (!isNonNegativeFiniteNumber(water.surfaceOpacity)) {
+          diagnostics.push(
+            createDiagnostic(
+              "error",
+              "invalid-box-water-surface-opacity",
+              "Water surface opacity must be a non-negative finite number.",
+              `${path}.volume.water.surfaceOpacity`
+            )
+          );
+        }
+
+        if (!isNonNegativeFiniteNumber(water.waveStrength)) {
+          diagnostics.push(
+            createDiagnostic(
+              "error",
+              "invalid-box-water-wave-strength",
+              "Water wave strength must be a non-negative finite number.",
+              `${path}.volume.water.waveStrength`
+            )
+          );
+        }
+      }
+    }
+
+    if (volume.mode === "fog") {
+      const fog = volume.fog as Record<string, unknown> | undefined;
+
+      if (fog === undefined) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-box-fog-settings",
+            "Fog volumes must define fog settings.",
+            `${path}.volume.fog`
+          )
+        );
+      } else {
+        if (typeof fog.colorHex !== "string" || !isHexColorString(fog.colorHex)) {
+          diagnostics.push(
+            createDiagnostic(
+              "error",
+              "invalid-box-fog-color",
+              "Fog volume color must use #RRGGBB format.",
+              `${path}.volume.fog.colorHex`
+            )
+          );
+        }
+
+        if (!isNonNegativeFiniteNumber(fog.density)) {
+          diagnostics.push(
+            createDiagnostic(
+              "error",
+              "invalid-box-fog-density",
+              "Fog volume density must be a non-negative finite number.",
+              `${path}.volume.fog.density`
+            )
+          );
+        }
+
+        if (!isNonNegativeFiniteNumber(fog.padding)) {
+          diagnostics.push(
+            createDiagnostic(
+              "error",
+              "invalid-box-fog-padding",
+              "Fog volume padding must be a non-negative finite number.",
+              `${path}.volume.fog.padding`
+            )
+          );
+        }
       }
     }
   }
