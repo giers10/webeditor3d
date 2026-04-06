@@ -1,4 +1,4 @@
-import { AmbientLight, AnimationClip, AnimationMixer, DirectionalLight, Euler, Group, LoopOnce, LoopRepeat, Mesh, MeshStandardMaterial, PerspectiveCamera, PointLight, Quaternion, Scene, Vector3, SpotLight, WebGLRenderer } from "three";
+import { AmbientLight, AnimationClip, AnimationMixer, DirectionalLight, Euler, Group, LoopOnce, LoopRepeat, Mesh, MeshBasicMaterial, MeshStandardMaterial, PerspectiveCamera, PointLight, Quaternion, Scene, ShaderMaterial, Vector3, SpotLight, WebGLRenderer } from "three";
 import { createModelInstanceRenderGroup, disposeModelInstance } from "../assets/model-instance-rendering";
 import { buildBoxBrushDerivedMeshData } from "../geometry/box-brush-mesh";
 import { createStarterMaterialSignature, createStarterMaterialTexture } from "../materials/starter-material-textures";
@@ -27,6 +27,8 @@ export class RuntimeHost {
     interactionSystem = new RuntimeInteractionSystem();
     audioSystem = new RuntimeAudioSystem(this.scene, this.camera, null);
     brushMeshes = new Map();
+    volumeTime = 0;
+    volumeAnimatedMaterials = [];
     localLightObjects = new Map();
     modelRenderObjects = new Map();
     materialTextureCache = new Map();
@@ -412,29 +414,24 @@ export class RuntimeHost {
     }
     createFaceMaterial(brush, faceId, material, volumeRenderPaths) {
         if (brush.volume.mode === "water") {
-            const quality = volumeRenderPaths.water === "quality";
+            if (volumeRenderPaths.water === "quality") {
+                return this.createWaterQualityMaterial(brush.volume.water, faceId);
+            }
             const baseOpacity = Math.max(0.05, Math.min(1, brush.volume.water.surfaceOpacity));
-            const topBoost = faceId === "posY" ? 0.18 : 0;
-            return new MeshStandardMaterial({
+            return new MeshBasicMaterial({
                 color: brush.volume.water.colorHex,
-                emissive: brush.volume.water.colorHex,
-                emissiveIntensity: quality ? 0.08 + brush.volume.water.waveStrength * 0.1 : 0.03,
-                roughness: quality ? 0.08 : 0.2,
-                metalness: quality ? 0.04 : 0.01,
                 transparent: true,
-                opacity: Math.min(1, baseOpacity + topBoost),
-                envMapIntensity: quality ? 1.15 : 1
+                opacity: faceId === "posY" ? Math.min(1, baseOpacity + 0.18) : baseOpacity * 0.5,
+                depthWrite: false
             });
         }
         if (brush.volume.mode === "fog") {
-            const quality = volumeRenderPaths.fog === "quality";
-            const densityOpacity = Math.max(0.08, Math.min(0.82, brush.volume.fog.density * (quality ? 0.65 : 0.9) + 0.1));
-            return new MeshStandardMaterial({
+            if (volumeRenderPaths.fog === "quality") {
+                return this.createFogQualityMaterial(brush.volume.fog);
+            }
+            const densityOpacity = Math.max(0.06, Math.min(0.72, brush.volume.fog.density * 0.8 + 0.08));
+            return new MeshBasicMaterial({
                 color: brush.volume.fog.colorHex,
-                emissive: brush.volume.fog.colorHex,
-                emissiveIntensity: quality ? 0.08 : 0.04,
-                roughness: 1,
-                metalness: 0,
                 transparent: true,
                 opacity: densityOpacity,
                 depthWrite: false
@@ -453,6 +450,117 @@ export class RuntimeHost {
             roughness: 0.92,
             metalness: 0.02
         });
+    }
+    createWaterQualityMaterial(water, faceId) {
+        const isTopFace = faceId === "posY";
+        const baseOpacity = Math.max(0.05, Math.min(1, water.surfaceOpacity));
+        const opacity = isTopFace ? Math.min(1, baseOpacity + 0.2) : baseOpacity * 0.45;
+        const waveStrength = water.waveStrength;
+        const hex = water.colorHex.replace("#", "");
+        const cr = parseInt(hex.substring(0, 2), 16) / 255;
+        const cg = parseInt(hex.substring(2, 4), 16) / 255;
+        const cb = parseInt(hex.substring(4, 6), 16) / 255;
+        const vertexShader = `
+      uniform float time;
+      uniform float waveAmp;
+      varying vec2 vUv;
+      varying vec3 vNormal;
+      varying vec3 vViewDir;
+      void main() {
+        vUv = uv;
+        vNormal = normalize(normalMatrix * normal);
+        vec3 pos = position;
+        float upFactor = max(0.0, normal.y);
+        float w1 = sin(pos.x * 3.2 + time * 1.7) * 0.045;
+        float w2 = sin(pos.z * 2.8 + time * 1.3 + 1.4) * 0.038;
+        float w3 = cos(pos.x * 1.6 + pos.z * 1.4 + time * 2.1) * 0.028;
+        pos.y += (w1 + w2 + w3) * waveAmp * upFactor;
+        vec4 worldPos = modelMatrix * vec4(pos, 1.0);
+        vViewDir = normalize(cameraPosition - worldPos.xyz);
+        gl_Position = projectionMatrix * viewMatrix * worldPos;
+      }
+    `;
+        const fragmentShader = `
+      uniform vec3 waterColor;
+      uniform float surfaceOpacity;
+      uniform float waveStrength;
+      uniform float time;
+      varying vec2 vUv;
+      varying vec3 vNormal;
+      varying vec3 vViewDir;
+      void main() {
+        vec2 uv1 = vUv + vec2(time * 0.05, time * 0.03);
+        vec2 uv2 = vUv * 1.6 + vec2(-time * 0.03, time * 0.06);
+        float r1 = sin(uv1.x * 10.0 + uv1.y * 8.0) * 0.5 + 0.5;
+        float r2 = sin(uv2.x * 7.0 - uv2.y * 12.0) * 0.5 + 0.5;
+        float ripple = r1 * r2;
+        float fresnel = pow(1.0 - max(0.0, dot(vNormal, vViewDir)), 2.5);
+        vec3 highlight = mix(waterColor, vec3(1.0), 0.55);
+        vec3 color = mix(waterColor, highlight, ripple * waveStrength * 0.55);
+        color = mix(color, vec3(1.0), fresnel * 0.14);
+        float alpha = surfaceOpacity + ripple * waveStrength * 0.12 + fresnel * 0.2;
+        alpha = clamp(alpha, 0.02, 1.0);
+        gl_FragColor = vec4(color, alpha);
+      }
+    `;
+        const mat = new ShaderMaterial({
+            vertexShader,
+            fragmentShader,
+            uniforms: {
+                time: { value: this.volumeTime },
+                waterColor: { value: [cr, cg, cb] },
+                surfaceOpacity: { value: opacity },
+                waveStrength: { value: waveStrength },
+                waveAmp: { value: waveStrength }
+            },
+            transparent: true,
+            depthWrite: false
+        });
+        this.volumeAnimatedMaterials.push(mat);
+        return mat;
+    }
+    createFogQualityMaterial(fog) {
+        const hex = fog.colorHex.replace("#", "");
+        const cr = parseInt(hex.substring(0, 2), 16) / 255;
+        const cg = parseInt(hex.substring(2, 4), 16) / 255;
+        const cb = parseInt(hex.substring(4, 6), 16) / 255;
+        const vertexShader = `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `;
+        const fragmentShader = `
+      uniform vec3 fogColor;
+      uniform float fogDensity;
+      uniform float time;
+      varying vec2 vUv;
+      void main() {
+        vec2 dist = abs(vUv - 0.5) * 2.0;
+        float edgeFade = 1.0 - smoothstep(0.4, 1.0, max(dist.x, dist.y));
+        float drift = sin(vUv.x * 4.5 + time * 0.28) * sin(vUv.y * 3.2 + time * 0.22);
+        float variation = 0.82 + drift * 0.18;
+        float alpha = fogDensity * edgeFade * variation;
+        alpha = clamp(alpha, 0.0, 0.88);
+        vec3 color = mix(fogColor, vec3(1.0), (1.0 - edgeFade) * 0.09);
+        gl_FragColor = vec4(color, alpha);
+      }
+    `;
+        const mat = new ShaderMaterial({
+            vertexShader,
+            fragmentShader,
+            uniforms: {
+                fogColor: { value: [cr, cg, cb] },
+                fogDensity: { value: Math.min(0.9, fog.density + 0.12) },
+                time: { value: this.volumeTime }
+            },
+            transparent: true,
+            depthWrite: false,
+            side: 2
+        });
+        this.volumeAnimatedMaterials.push(mat);
+        return mat;
     }
     getOrCreateTexture(material) {
         const signature = createStarterMaterialSignature(material);
@@ -483,8 +591,8 @@ export class RuntimeHost {
             }
         }
         this.brushMeshes.clear();
-    }
-    clearModelInstances() {
+        this.volumeAnimatedMaterials.length = 0;
+    } {
         for (const mixer of this.animationMixers.values()) {
             mixer.stopAllAction();
         }
@@ -519,6 +627,10 @@ export class RuntimeHost {
         this.previousFrameTime = now;
         this.activeController?.update(dt);
         this.audioSystem.updateListenerTransform();
+        this.volumeTime += dt;
+        for (const mat of this.volumeAnimatedMaterials) {
+            mat.uniforms["time"].value = this.volumeTime;
+        }
         for (const mixer of this.animationMixers.values()) {
             mixer.update(dt);
         }
