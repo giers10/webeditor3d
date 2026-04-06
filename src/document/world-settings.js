@@ -2,6 +2,7 @@ import { DEFAULT_SUN_DIRECTION } from "../core/vector";
 export const ADVANCED_RENDERING_SHADOW_MAP_SIZES = [512, 1024, 2048, 4096];
 export const ADVANCED_RENDERING_SHADOW_TYPES = ["basic", "pcf", "pcfSoft"];
 export const ADVANCED_RENDERING_TONE_MAPPING_MODES = ["none", "linear", "reinhard", "cineon", "acesFilmic"];
+export const BOX_VOLUME_RENDER_PATHS = ["performance", "quality"];
 const DEFAULT_SOLID_BACKGROUND_COLOR = "#2f3947";
 const DEFAULT_GRADIENT_TOP_COLOR = DEFAULT_SOLID_BACKGROUND_COLOR;
 const DEFAULT_GRADIENT_BOTTOM_COLOR = "#141a22";
@@ -19,6 +20,7 @@ const DEFAULT_ADVANCED_RENDERING_TONE_MAPPING_EXPOSURE = 1;
 const DEFAULT_ADVANCED_RENDERING_DEPTH_OF_FIELD_FOCUS_DISTANCE = 10;
 const DEFAULT_ADVANCED_RENDERING_DEPTH_OF_FIELD_FOCAL_LENGTH = 0.03;
 const DEFAULT_ADVANCED_RENDERING_DEPTH_OF_FIELD_BOKEH_SCALE = 1.5;
+const DEFAULT_BOX_VOLUME_RENDER_PATH = "performance";
 export function isAdvancedRenderingShadowMapSize(value) {
     return ADVANCED_RENDERING_SHADOW_MAP_SIZES.includes(value);
 }
@@ -27,6 +29,9 @@ export function isAdvancedRenderingShadowType(value) {
 }
 export function isAdvancedRenderingToneMappingMode(value) {
     return ADVANCED_RENDERING_TONE_MAPPING_MODES.includes(value);
+}
+export function isBoxVolumeRenderPath(value) {
+    return BOX_VOLUME_RENDER_PATHS.includes(value);
 }
 export function createDefaultAdvancedRenderingSettings() {
     return {
@@ -58,7 +63,9 @@ export function createDefaultAdvancedRenderingSettings() {
             focusDistance: DEFAULT_ADVANCED_RENDERING_DEPTH_OF_FIELD_FOCUS_DISTANCE,
             focalLength: DEFAULT_ADVANCED_RENDERING_DEPTH_OF_FIELD_FOCAL_LENGTH,
             bokehScale: DEFAULT_ADVANCED_RENDERING_DEPTH_OF_FIELD_BOKEH_SCALE
-        }
+        },
+        fogPath: DEFAULT_BOX_VOLUME_RENDER_PATH,
+        waterPath: DEFAULT_BOX_VOLUME_RENDER_PATH
     };
 }
 export function createDefaultWorldSettings() {
@@ -139,7 +146,9 @@ export function cloneAdvancedRenderingSettings(settings) {
         },
         depthOfField: {
             ...settings.depthOfField
-        }
+        },
+        fogPath: settings.fogPath,
+        waterPath: settings.waterPath
     };
 }
 export function areWorldBackgroundSettingsEqual(left, right) {
@@ -184,7 +193,9 @@ export function areAdvancedRenderingSettingsEqual(left, right) {
         left.depthOfField.enabled === right.depthOfField.enabled &&
         left.depthOfField.focusDistance === right.depthOfField.focusDistance &&
         left.depthOfField.focalLength === right.depthOfField.focalLength &&
-        left.depthOfField.bokehScale === right.depthOfField.bokehScale);
+        left.depthOfField.bokehScale === right.depthOfField.bokehScale &&
+        left.fogPath === right.fogPath &&
+        left.waterPath === right.waterPath);
 }
 export function changeWorldBackgroundMode(background, mode, imageAssetId) {
     if (mode === "image") {
