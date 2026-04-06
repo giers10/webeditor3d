@@ -1,6 +1,7 @@
+import { MeshPhysicalMaterial } from "three";
 import { describe, expect, it } from "vitest";
 
-import { collectWaterContactPatches } from "../../src/rendering/water-material";
+import { collectWaterContactPatches, createWaterMaterial } from "../../src/rendering/water-material";
 
 describe("water material helpers", () => {
   it("builds contact foam patches for bounds that cross the water surface", () => {
@@ -81,5 +82,31 @@ describe("water material helpers", () => {
     );
 
     expect(patches).toHaveLength(0);
+  });
+
+  it("keeps quality water visibly tinted instead of fading to transparent alpha", () => {
+    const result = createWaterMaterial({
+      colorHex: "#4da6d9",
+      surfaceOpacity: 0.55,
+      waveStrength: 0.35,
+      opacity: 0.71,
+      quality: true,
+      wireframe: false,
+      isTopFace: true,
+      time: 0,
+      halfSize: {
+        x: 4,
+        z: 4
+      },
+      contactPatches: []
+    });
+
+    expect(result.material).toBeInstanceOf(MeshPhysicalMaterial);
+
+    const material = result.material as MeshPhysicalMaterial;
+    expect(material.opacity).toBe(1);
+    expect(material.transmission).toBeGreaterThan(0.16);
+    expect(material.transmission).toBeLessThan(0.72);
+    expect(material.emissiveIntensity).toBeGreaterThan(0.16);
   });
 });

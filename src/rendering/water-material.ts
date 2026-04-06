@@ -173,22 +173,32 @@ export function createWaterMaterial(options: WaterMaterialOptions): WaterMateria
   });
   const waveStrength = Math.max(0, options.waveStrength);
   const waveAmplitude = 0.016 + Math.min(0.12, waveStrength * 0.06);
+  const clampedOpacity = Math.max(0.12, Math.min(1, options.opacity));
+  const transmission = options.isTopFace
+    ? Math.max(0.16, Math.min(0.72, 0.86 - clampedOpacity * 0.55))
+    : Math.max(0.08, Math.min(0.42, 0.46 - clampedOpacity * 0.32));
+  const attenuationDistance = options.isTopFace
+    ? 1.4 + clampedOpacity * 2.2
+    : 0.8 + clampedOpacity * 1.1;
+  const emissiveIntensity = options.isTopFace
+    ? 0.16 + waveStrength * 0.14 + clampedOpacity * 0.08
+    : 0.05 + clampedOpacity * 0.05;
   const material = new MeshPhysicalMaterial({
     color: options.colorHex,
     emissive: options.colorHex,
-    emissiveIntensity: options.isTopFace ? 0.08 + waveStrength * 0.12 : 0.03,
+    emissiveIntensity,
     roughness: options.isTopFace ? 0.08 : 0.22,
     metalness: 0.02,
     transparent: true,
-    opacity: options.opacity,
-    transmission: options.isTopFace ? 0.86 : 0.42,
+    opacity: 1,
+    transmission,
     thickness: options.isTopFace ? 1.8 : 0.85,
     ior: 1.325,
     reflectivity: options.isTopFace ? 0.45 : 0.16,
     clearcoat: options.isTopFace ? 0.85 : 0.18,
     clearcoatRoughness: options.isTopFace ? 0.12 : 0.2,
     attenuationColor: waterColor,
-    attenuationDistance: options.isTopFace ? 3.5 : 1.7,
+    attenuationDistance,
     envMapIntensity: options.isTopFace ? 1.2 : 0.9,
     depthWrite: false,
     side: DoubleSide
@@ -281,8 +291,9 @@ export function createWaterMaterial(options: WaterMaterialOptions): WaterMateria
           float sparkle = sin(vWaterLocalPos.x * 5.5 + waterTime * 1.4) * sin(vWaterLocalPos.y * 4.6 - waterTime * 1.1);
           float foam = clamp(max(edgeFoam * 0.42, contactFoam) * (0.45 + waterWaveStrength * 0.7) + max(0.0, sparkle) * 0.06, 0.0, 0.72);
           diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.97, 0.99, 1.0), foam);
+          diffuseColor.rgb = mix(diffuseColor.rgb, diffuse.rgb * 1.12, 0.32 + (1.0 - transmissionFactor) * 0.22);
           diffuseColor.rgb += vec3(0.08, 0.12, 0.18) * fresnel * 0.18;
-          diffuseColor.a = clamp(diffuseColor.a + foam * 0.16, 0.0, 1.0);
+          diffuseColor.a = 1.0;
         }`
       );
   };
