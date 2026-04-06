@@ -276,14 +276,14 @@ export function createWaterMaterial(options: WaterMaterialOptions): WaterMateria
 
       if (isTopFace > 0.5) {
         for (int patchIndex = 0; patchIndex < ${MAX_WATER_CONTACT_PATCHES}; patchIndex += 1) {
-          vec4 patch = contactPatches[patchIndex];
-          if (patch.z <= 0.0) {
+          vec4 patchData = contactPatches[patchIndex];
+          if (patchData.z <= 0.0) {
             continue;
           }
 
-          float normalizedDistance = length(vLocalSurfaceUv - patch.xy) / patch.z;
+          float normalizedDistance = length(vLocalSurfaceUv - patchData.xy) / patchData.z;
           float ring = smoothstep(0.38, 0.72, normalizedDistance) * (1.0 - smoothstep(0.88, 1.2, normalizedDistance));
-          contactFoam = max(contactFoam, ring * patch.w);
+          contactFoam = max(contactFoam, ring * patchData.w);
         }
       }
 
