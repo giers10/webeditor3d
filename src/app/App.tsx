@@ -2291,6 +2291,25 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
   };
 
+  const applyBoxWaterColorDraft = (colorHex: string) => {
+    if (selectedBrush === null || selectedBrush.volume.mode !== "water") {
+      return;
+    }
+
+    applyBoxVolumeSettings(
+      () => ({
+        mode: "water",
+        water: {
+          colorHex,
+          surfaceOpacity: readNonNegativeNumberDraft(boxVolumeWaterSurfaceOpacityDraft, "Water surface opacity"),
+          waveStrength: readNonNegativeNumberDraft(boxVolumeWaterWaveStrengthDraft, "Water wave strength")
+        }
+      }),
+      "Set box water color",
+      "Updated selected whitebox water color."
+    );
+  };
+
   const applyBoxFogSettings = () => {
     if (selectedBrush === null || selectedBrush.volume.mode !== "fog") {
       return;
@@ -2307,6 +2326,25 @@ export function App({ store, initialStatusMessage }: AppProps) {
       }),
       "Set box fog settings",
       "Updated selected whitebox fog settings."
+    );
+  };
+
+  const applyBoxFogColorDraft = (colorHex: string) => {
+    if (selectedBrush === null || selectedBrush.volume.mode !== "fog") {
+      return;
+    }
+
+    applyBoxVolumeSettings(
+      () => ({
+        mode: "fog",
+        fog: {
+          colorHex,
+          density: readNonNegativeNumberDraft(boxVolumeFogDensityDraft, "Fog density"),
+          padding: readNonNegativeNumberDraft(boxVolumeFogPaddingDraft, "Fog padding")
+        }
+      }),
+      "Set box fog color",
+      "Updated selected whitebox fog color."
     );
   };
 
@@ -7301,8 +7339,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                                 type="color"
                                 value={boxVolumeWaterColorDraft}
                                 onChange={(event) => {
-                                  setBoxVolumeWaterColorDraft(event.currentTarget.value);
-                                  scheduleDraftCommit(applyBoxWaterSettings);
+                                  const nextColorHex = event.currentTarget.value;
+                                  setBoxVolumeWaterColorDraft(nextColorHex);
+                                  scheduleDraftCommit(() => applyBoxWaterColorDraft(nextColorHex));
                                 }}
                               />
                             </label>
@@ -7353,8 +7392,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                                 type="color"
                                 value={boxVolumeFogColorDraft}
                                 onChange={(event) => {
-                                  setBoxVolumeFogColorDraft(event.currentTarget.value);
-                                  scheduleDraftCommit(applyBoxFogSettings);
+                                  const nextColorHex = event.currentTarget.value;
+                                  setBoxVolumeFogColorDraft(nextColorHex);
+                                  scheduleDraftCommit(() => applyBoxFogColorDraft(nextColorHex));
                                 }}
                               />
                             </label>
