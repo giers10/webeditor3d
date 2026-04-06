@@ -38,7 +38,7 @@ import {
   resolveBoxVolumeRenderPaths,
   type ResolvedBoxVolumeRenderPaths
 } from "../rendering/advanced-rendering";
-import { collectWaterContactPatches, createWaterMaterial } from "../rendering/water-material";
+import { collectWaterContactPatches, createWaterContactPatchUniformValue, createWaterMaterial } from "../rendering/water-material";
 import {
   areAdvancedRenderingSettingsEqual,
   cloneAdvancedRenderingSettings,
@@ -68,6 +68,11 @@ interface LocalLightRenderObjects {
   group: Group;
 }
 
+interface RuntimeWaterContactUniformBinding {
+  brush: RuntimeBoxBrushInstance;
+  uniform: { value: import("three").Vector4[] };
+}
+
 const FALLBACK_FACE_COLOR = 0x747d89;
 
 export class RuntimeHost {
@@ -90,6 +95,7 @@ export class RuntimeHost {
   private volumeTime = 0;
   private readonly volumeAnimatedMaterials: ShaderMaterial[] = [];
   private readonly volumeAnimatedUniforms: Array<{ value: number }> = [];
+  private readonly runtimeWaterContactUniforms: RuntimeWaterContactUniformBinding[] = [];
   private readonly localLightObjects = new Map<string, Group>();
   private readonly modelRenderObjects = new Map<string, Group>();
   private readonly materialTextureCache = new Map<string, CachedMaterialTexture>();
@@ -324,6 +330,7 @@ export class RuntimeHost {
     }
 
     this.materialTextureCache.clear();
+    this.renderer?.forceContextLoss();
     this.renderer?.dispose();
     this.domElement.removeEventListener("click", this.handleRuntimeClick);
     this.domElement.removeEventListener("pointerdown", this.handleRuntimePointerDown);
@@ -520,24 +527,10 @@ export class RuntimeHost {
     this.clearBrushMeshes();
     const volumeRenderPaths: ResolvedBoxVolumeRenderPaths =
       this.currentWorld === null ? { fog: "performance", water: "performance" } : resolveBoxVolumeRenderPaths(this.currentWorld.advancedRendering);
-    const colliderBounds = this.runtimeScene?.colliders.map((collider) => ({
-      min: collider.worldBounds.min,
-      max: collider.worldBounds.max
-    })) ?? [];
 
     for (const brush of brushes) {
       const geometry = buildBoxBrushDerivedMeshData(brush).geometry;
-      const contactPatches =
-        brush.volume.mode === "water"
-          ? collectWaterContactPatches(
-              {
-                center: brush.center,
-                rotationDegrees: brush.rotationDegrees,
-                size: brush.size
-              },
-              colliderBounds
-            )
-          : [];
+      const contactPatches = brush.volume.mode === "water" ? this.collectRuntimeWaterContactPatches(brush) : [];
 
       const materials = [
         this.createFaceMaterial(brush, "posX", brush.faces.posX.material, volumeRenderPaths, contactPatches),
@@ -633,6 +626,13 @@ export class RuntimeHost {
 
       if (waterMaterial.animationUniform !== null) {
         this.volumeAnimatedUniforms.push(waterMaterial.animationUniform);
+      }
+
+      if (faceId === "posY" && waterMaterial.contactPatchesUniform !== null) {
+        this.runtimeWaterContactUniforms.push({
+          brush,
+          uniform: waterMaterial.contactPatchesUniform
+        });
       }
 
       return waterMaterial.material;
@@ -763,6 +763,74 @@ export class RuntimeHost {
     this.brushMeshes.clear();
     this.volumeAnimatedMaterials.length = 0;
     this.volumeAnimatedUniforms.length = 0;
+    this.runtimeWaterContactUniforms.length = 0;
+  }
+
+  private createPlayerWaterContactBounds() {
+    if (this.runtimeScene === null || this.currentFirstPersonTelemetry === null) {
+      return null;
+    }
+
+    const feetPosition = this.currentFirstPersonTelemetry.feetPosition;
+    const playerShape = this.runtimeScene.playerCollider;
+
+    switch (playerShape.mode) {
+      case "capsule":
+        return {
+          min: {
+            x: feetPosition.x - playerShape.radius,
+            y: feetPosition.y,
+            z: feetPosition.z - playerShape.radius
+          },
+          max: {
+            x: feetPosition.x + playerShape.radius,
+            y: feetPosition.y + playerShape.height,
+            z: feetPosition.z + playerShape.radius
+          }
+        };
+      case "box":
+        return {
+          min: {
+            x: feetPosition.x - playerShape.size.x * 0.5,
+            y: feetPosition.y,
+            z: feetPosition.z - playerShape.size.z * 0.5
+          },
+          max: {
+            x: feetPosition.x + playerShape.size.x * 0.5,
+            y: feetPosition.y + playerShape.size.y,
+            z: feetPosition.z + playerShape.size.z * 0.5
+          }
+        };
+      case "none":
+        return null;
+    }
+  }
+
+  private collectRuntimeWaterContactPatches(brush: RuntimeBoxBrushInstance) {
+    const contactBounds = this.runtimeScene?.colliders.map((collider) => ({
+      min: collider.worldBounds.min,
+      max: collider.worldBounds.max
+    })) ?? [];
+    const playerBounds = this.createPlayerWaterContactBounds();
+
+    if (playerBounds !== null) {
+      contactBounds.push(playerBounds);
+    }
+
+    return collectWaterContactPatches(
+      {
+        center: brush.center,
+        rotationDegrees: brush.rotationDegrees,
+        size: brush.size
+      },
+      contactBounds
+    );
+  }
+
+  private updateRuntimeWaterContactUniforms() {
+    for (const binding of this.runtimeWaterContactUniforms) {
+      binding.uniform.value = createWaterContactPatchUniformValue(this.collectRuntimeWaterContactPatches(binding.brush));
+    }
   }
 
   private clearModelInstances() {
@@ -838,6 +906,10 @@ export class RuntimeHost {
       );
     } else {
       this.setInteractionPrompt(null);
+    }
+
+    if (this.runtimeWaterContactUniforms.length > 0) {
+      this.updateRuntimeWaterContactUniforms();
     }
 
     if (this.advancedRenderingComposer !== null) {
