@@ -134,8 +134,9 @@ import {
   getBoxBrushFaceVertexIds,
   getBoxBrushLocalVertexPosition
 } from "../geometry/box-brush-mesh";
+import { getBoxBrushBounds } from "../geometry/box-brush";
 import { createModelColliderDebugGroup } from "../geometry/model-instance-collider-debug-mesh";
-import { buildGeneratedModelCollider } from "../geometry/model-instance-collider-generation";
+import { buildGeneratedModelCollider, type GeneratedColliderBounds } from "../geometry/model-instance-collider-generation";
 import { DEFAULT_GRID_SIZE, snapValueToGrid } from "../geometry/grid-snapping";
 import { createStarterMaterialSignature, createStarterMaterialTexture } from "../materials/starter-material-textures";
 import type { MaterialDef } from "../materials/starter-material-library";
@@ -146,6 +147,7 @@ import {
   createAdvancedRenderingComposer,
   resolveBoxVolumeRenderPaths
 } from "../rendering/advanced-rendering";
+import { collectWaterContactPatches, createWaterMaterial } from "../rendering/water-material";
 import { resolveViewportFocusTarget } from "./viewport-focus";
 import { createSoundEmitterMarkerMeshes } from "./viewport-entity-markers";
 import {
@@ -168,7 +170,7 @@ import {
 } from "./viewport-transient-state";
 
 interface BrushRenderObjects {
-  mesh: Mesh<BufferGeometry, Array<MeshStandardMaterial | MeshBasicMaterial>>;
+  mesh: Mesh<BufferGeometry, Material[]>;
   edges: LineSegments<EdgesGeometry, LineBasicMaterial>;
   edgeHelpers: Array<{
     id: BoxEdgeId;
@@ -306,6 +308,9 @@ export class ViewportHost {
   private projectAssets: Record<string, ProjectAssetRecord> = {};
   private loadedModelAssets: Record<string, LoadedModelAsset> = {};
   private loadedImageAssets: Record<string, LoadedImageAsset> = {};
+  private volumeTime = 0;
+  private previousFrameTime = 0;
+  private readonly volumeAnimatedUniforms: Array<{ value: number }> = [];
   private readonly boxCreatePreviewMesh = new Mesh(
     new BoxGeometry(DEFAULT_BOX_BRUSH_SIZE.x, DEFAULT_BOX_BRUSH_SIZE.y, DEFAULT_BOX_BRUSH_SIZE.z),
     new MeshStandardMaterial({
