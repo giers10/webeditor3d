@@ -108,5 +108,6 @@ describe("water material helpers", () => {
     expect(material.uniforms["surfaceOpacity"]?.value).toBeGreaterThan(0.14);
     expect(material.uniforms["waveStrength"]?.value).toBe(0.35);
     expect(material.uniforms["isTopFace"]?.value).toBe(1);
+    expect(result.contactPatchesUniform?.value).toHaveLength(6);
   });
 });
