@@ -53,7 +53,9 @@ describe("createEmptySceneDocument", () => {
                     focusDistance: 10,
                     focalLength: 0.03,
                     bokehScale: 1.5
-                }
+                },
+                fogPath: "performance",
+                waterPath: "performance"
             }
         });
         expect(document.brushes).toEqual({});
