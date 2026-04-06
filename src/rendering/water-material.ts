@@ -10,8 +10,8 @@ export interface WaterContactBounds {
 export interface WaterContactPatch {
   x: number;
   z: number;
-  radius: number;
-  intensity: number;
+  halfWidth: number;
+  halfDepth: number;
 }
 
 export interface WaterMaterialResult {
@@ -118,31 +118,29 @@ export function collectWaterContactPatches(volume: OrientedWaterVolume, contactB
       continue;
     }
 
-    const radius = Math.max(0.2, Math.min(Math.max(overlapWidth, overlapDepth) * 0.55, Math.min(halfX, halfZ) * 0.85));
     const verticalDistance = Math.min(Math.abs(surfaceY - minY), Math.abs(maxY - surfaceY));
-    const intensity = 1 - Math.min(verticalDistance / surfaceBand, 1);
 
-    if (intensity <= WATER_CONTACT_EPSILON) {
+    if (1 - Math.min(verticalDistance / surfaceBand, 1) <= WATER_CONTACT_EPSILON) {
       continue;
     }
 
     patches.push({
       x: (overlapMinX + overlapMaxX) * 0.5,
       z: (overlapMinZ + overlapMaxZ) * 0.5,
-      radius,
-      intensity: 0.45 + intensity * 0.55
+      halfWidth: overlapWidth * 0.5,
+      halfDepth: overlapDepth * 0.5
     });
   }
 
   return patches
-    .sort((left, right) => right.radius * right.intensity - left.radius * left.intensity)
+    .sort((left, right) => right.halfWidth * right.halfDepth - left.halfWidth * left.halfDepth)
     .slice(0, MAX_WATER_CONTACT_PATCHES);
 }
 
 export function createWaterContactPatchUniformValue(contactPatches?: WaterContactPatch[]): Vector4[] {
   return Array.from({ length: MAX_WATER_CONTACT_PATCHES }, (_, index) => {
     const patch = contactPatches?.[index];
-    return new Vector4(patch?.x ?? 0, patch?.z ?? 0, patch?.radius ?? 0, patch?.intensity ?? 0);
+    return new Vector4(patch?.x ?? 0, patch?.z ?? 0, patch?.halfWidth ?? 0, patch?.halfDepth ?? 0);
   });
 }
 
@@ -298,18 +296,24 @@ export function createWaterMaterial(options: WaterMaterialOptions): WaterMateria
       if (isTopFace > 0.5) {
         for (int patchIndex = 0; patchIndex < ${MAX_WATER_CONTACT_PATCHES}; patchIndex += 1) {
           vec4 patchData = contactPatches[patchIndex];
-          if (patchData.z <= 0.0) {
+          if (patchData.z <= 0.0 || patchData.w <= 0.0) {
             continue;
           }
 
-          float normalizedDistance = length(vLocalSurfaceUv - patchData.xy) / patchData.z;
-          float contactBody = 1.0 - smoothstep(0.0, 0.82, normalizedDistance);
-          float ripple = (sin(normalizedDistance * 14.0 - time * (2.4 + patchData.w * 1.6)) * 0.5 + 0.5) * exp(-normalizedDistance * 3.2);
+          vec2 regionDelta = abs(vLocalSurfaceUv - patchData.xy) - patchData.zw;
+          vec2 outsideDelta = max(regionDelta, 0.0);
+          float outsideDistance = length(outsideDelta);
+          float insideDistance = min(max(regionDelta.x, regionDelta.y), 0.0);
+          float signedDistance = outsideDistance + insideDistance;
+          float boundaryScale = max(min(patchData.z, patchData.w), 0.18);
+          float normalizedDistance = abs(signedDistance) / boundaryScale;
+          float contactBody = 1.0 - smoothstep(0.0, 0.65, max(signedDistance, 0.0) / boundaryScale);
+          float ripple = (sin(normalizedDistance * 13.0 - time * 3.2) * 0.5 + 0.5) * exp(-normalizedDistance * 2.6);
           float wakeNoise = noise(vLocalSurfaceUv * 3.4 + vec2(time * 0.34, -time * 0.28));
-          float foamField = max(contactBody * 0.38, ripple * (0.72 + wakeNoise * 0.28)) * patchData.w;
+          float foamField = max(contactBody * 0.42, ripple * (0.72 + wakeNoise * 0.28));
           contactFoam = max(contactFoam, foamField);
-          contactRipple = max(contactRipple, ripple * patchData.w);
-          contactSheen = max(contactSheen, contactBody * patchData.w);
+          contactRipple = max(contactRipple, ripple);
+          contactSheen = max(contactSheen, contactBody);
         }
       }
 
