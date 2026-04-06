@@ -1,4 +1,4 @@
-import { MeshPhysicalMaterial } from "three";
+import { ShaderMaterial } from "three";
 import { describe, expect, it } from "vitest";
 
 import { collectWaterContactPatches, createWaterMaterial } from "../../src/rendering/water-material";
@@ -84,7 +84,7 @@ describe("water material helpers", () => {
     expect(patches).toHaveLength(0);
   });
 
-  it("keeps quality water visibly tinted instead of fading to transparent alpha", () => {
+  it("builds a shared quality shader material for visible tinted water", () => {
     const result = createWaterMaterial({
       colorHex: "#4da6d9",
       surfaceOpacity: 0.55,
@@ -101,12 +101,12 @@ describe("water material helpers", () => {
       contactPatches: []
     });
 
-    expect(result.material).toBeInstanceOf(MeshPhysicalMaterial);
+    expect(result.material).toBeInstanceOf(ShaderMaterial);
 
-    const material = result.material as MeshPhysicalMaterial;
-    expect(material.opacity).toBe(1);
-    expect(material.transmission).toBeGreaterThan(0.16);
-    expect(material.transmission).toBeLessThan(0.72);
-    expect(material.emissiveIntensity).toBeGreaterThan(0.16);
+    const material = result.material as ShaderMaterial;
+    expect(material.transparent).toBe(true);
+    expect(material.uniforms["surfaceOpacity"]?.value).toBeGreaterThan(0.14);
+    expect(material.uniforms["waveStrength"]?.value).toBe(0.35);
+    expect(material.uniforms["isTopFace"]?.value).toBe(1);
   });
 });
