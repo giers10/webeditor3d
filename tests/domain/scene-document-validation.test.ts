@@ -467,6 +467,8 @@ describe("validateSceneDocument", () => {
         mode: "filmic",
         exposure: 0
       },
+      fogPath: "high",
+      waterPath: "ultra",
       depthOfField: {
         ...document.world.advancedRendering.depthOfField,
         focalLength: 0,
@@ -521,6 +523,73 @@ describe("validateSceneDocument", () => {
         expect.objectContaining({
           code: "invalid-advanced-rendering-dof-bokeh-scale",
           path: "world.advancedRendering.depthOfField.bokehScale"
+        }),
+        expect.objectContaining({
+          code: "invalid-advanced-rendering-fog-path",
+          path: "world.advancedRendering.fogPath"
+        }),
+        expect.objectContaining({
+          code: "invalid-advanced-rendering-water-path",
+          path: "world.advancedRendering.waterPath"
+        })
+      ])
+    );
+  });
+
+  it("detects invalid whitebox box volume settings", () => {
+    const brush = createBoxBrush({
+      id: "brush-invalid-volume"
+    });
+    (brush as any).volume = {
+      mode: "lava",
+      water: {
+        colorHex: "water",
+        surfaceOpacity: 2,
+        waveStrength: -1
+      },
+      fog: {
+        colorHex: "fog",
+        density: Number.NaN,
+        padding: -0.5
+      }
+    };
+
+    const validation = validateSceneDocument({
+      ...createEmptySceneDocument(),
+      brushes: {
+        [brush.id]: brush
+      }
+    });
+
+    expect(validation.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "invalid-box-volume-mode",
+          path: "brushes.brush-invalid-volume.volume.mode"
+        }),
+        expect.objectContaining({
+          code: "invalid-box-volume-water-color",
+          path: "brushes.brush-invalid-volume.volume.water.colorHex"
+        }),
+        expect.objectContaining({
+          code: "invalid-box-volume-water-opacity",
+          path: "brushes.brush-invalid-volume.volume.water.surfaceOpacity"
+        }),
+        expect.objectContaining({
+          code: "invalid-box-volume-water-wave-strength",
+          path: "brushes.brush-invalid-volume.volume.water.waveStrength"
+        }),
+        expect.objectContaining({
+          code: "invalid-box-volume-fog-color",
+          path: "brushes.brush-invalid-volume.volume.fog.colorHex"
+        }),
+        expect.objectContaining({
+          code: "invalid-box-volume-fog-density",
+          path: "brushes.brush-invalid-volume.volume.fog.density"
+        }),
+        expect.objectContaining({
+          code: "invalid-box-volume-fog-padding",
+          path: "brushes.brush-invalid-volume.volume.fog.padding"
         })
       ])
     );
