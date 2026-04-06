@@ -98,17 +98,6 @@ export function ViewportCanvas({
       return;
     }
 
-    const testCanvas = document.createElement("canvas");
-    const hasWebGl =
-      testCanvas.getContext("webgl2") !== null ||
-      testCanvas.getContext("webgl") !== null ||
-      testCanvas.getContext("experimental-webgl") !== null;
-
-    if (!hasWebGl) {
-      setViewportMessage("WebGL is unavailable in this browser environment. The viewport shell is visible, but rendering is disabled.");
-      return;
-    }
-
     try {
       const viewportHost = new ViewportHost();
       hostRef.current = viewportHost;

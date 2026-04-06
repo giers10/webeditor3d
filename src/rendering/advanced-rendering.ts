@@ -93,7 +93,10 @@ export function createAdvancedRenderingComposer(
   camera: PerspectiveCamera,
   settings: AdvancedRenderingSettings
 ): EffectComposer {
+  const requiresDepthBuffer = settings.ambientOcclusion.enabled || settings.depthOfField.enabled;
   const composer = new EffectComposer(renderer, {
+    depthBuffer: requiresDepthBuffer,
+    stencilBuffer: false,
     multisampling: 0,
     frameBufferType: renderer.capabilities.isWebGL2 ? HalfFloatType : UnsignedByteType
   });

@@ -708,6 +708,7 @@ export class ViewportHost {
     this.boxCreatePreviewMesh.material.dispose();
     this.boxCreatePreviewEdges.geometry.dispose();
     this.boxCreatePreviewEdges.material.dispose();
+    this.renderer.forceContextLoss();
     this.renderer.dispose();
 
     if (this.container !== null && this.container.contains(this.renderer.domElement)) {
