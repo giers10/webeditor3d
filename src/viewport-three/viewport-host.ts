@@ -3116,13 +3116,16 @@ export class ViewportHost {
       );
 
       const previousMaterials = renderObjects.mesh.material;
+      const contactPatches =
+        brush.volume.mode === "water" ? this.collectViewportWaterContactPatches(this.currentDocument, brush.id, brush.center, brush.rotationDegrees, brush.size) : [];
       renderObjects.mesh.material = BOX_FACE_IDS.map((faceId) =>
         this.createFaceMaterial(
           brush,
           faceId,
           this.currentDocument?.materials[brush.faces[faceId].materialId ?? ""],
           this.getFaceHighlightState(brush.id, faceId),
-          volumeRenderPaths
+          volumeRenderPaths,
+          contactPatches
         )
       );
 
