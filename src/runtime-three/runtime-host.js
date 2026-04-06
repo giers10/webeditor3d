@@ -592,7 +592,8 @@ export class RuntimeHost {
         }
         this.brushMeshes.clear();
         this.volumeAnimatedMaterials.length = 0;
-    } {
+    }
+    clearModelInstances() {
         for (const mixer of this.animationMixers.values()) {
             mixer.stopAllAction();
         }
