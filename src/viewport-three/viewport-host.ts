@@ -270,6 +270,7 @@ interface LocalLightRenderObjects {
 
 export class ViewportHost {
   private readonly scene = new Scene();
+  private readonly axesHelper = new AxesHelper(2);
   private readonly perspectiveCamera = new PerspectiveCamera(60, 1, 0.1, 1000);
   private readonly orthographicCamera = new OrthographicCamera(-10, 10, 10, -10, 0.1, 1000);
   private readonly renderer = new WebGLRenderer({ antialias: false, alpha: true });
@@ -290,6 +291,7 @@ export class ViewportHost {
   private readonly brushGroup = new Group();
   private readonly entityGroup = new Group();
   private readonly modelGroup = new Group();
+  private readonly waterReflectionCamera = new PerspectiveCamera();
   private readonly raycaster = new Raycaster();
   private readonly pointer = new Vector2();
   private readonly boxCreateIntersection = new Vector3();
@@ -321,6 +323,7 @@ export class ViewportHost {
   private volumeTime = 0;
   private previousFrameTime = 0;
   private readonly volumeAnimatedUniforms: Array<{ value: number }> = [];
+  private readonly viewportWaterSurfaceBindings: ViewportWaterSurfaceBinding[] = [];
   private readonly boxCreatePreviewMesh = new Mesh(
     new BoxGeometry(DEFAULT_BOX_BRUSH_SIZE.x, DEFAULT_BOX_BRUSH_SIZE.y, DEFAULT_BOX_BRUSH_SIZE.z),
     new MeshStandardMaterial({
@@ -390,8 +393,6 @@ export class ViewportHost {
     this.updatePerspectiveCameraSphericalFromPose();
     this.updateOrthographicCameraFrustum();
 
-    const axesHelper = new AxesHelper(2);
-
     this.gridHelpers.xy.rotation.x = Math.PI * 0.5;
     this.gridHelpers.yz.rotation.z = Math.PI * 0.5;
     this.gridHelpers.xz.visible = true;
@@ -401,7 +402,7 @@ export class ViewportHost {
     this.scene.add(this.gridHelpers.xz);
     this.scene.add(this.gridHelpers.xy);
     this.scene.add(this.gridHelpers.yz);
-    this.scene.add(axesHelper);
+    this.scene.add(this.axesHelper);
     this.scene.add(this.ambientLight);
     this.scene.add(this.sunLight);
     this.scene.add(this.localLightGroup);
