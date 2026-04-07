@@ -933,24 +933,22 @@ export function createWaterMaterial(options) {
         }
     `;
 
-    const uniforms = UniformsUtils.merge([
-        UniformsLib.fog,
-        {
-            time: animationUniform,
-            waterColor: { value: [cr, cg, cb] },
-            surfaceOpacity: { value: clampedOpacity },
-            waveStrength: { value: waveStrength },
-            isTopFace: { value: topFaceFlag },
-            surfaceDisplacementEnabled: surfaceDisplacementEnabledUniform,
-            halfSize: { value: halfSize },
-            contactPatches: contactPatchesUniform,
-            contactPatchAxes: contactPatchAxesUniform,
-            contactPatchShapes: contactPatchShapesUniform,
-            reflectionTexture: reflectionTextureUniform,
-            reflectionMatrix: reflectionMatrixUniform,
-            reflectionEnabled: reflectionEnabledUniform
-        }
-    ]);
+    const uniforms = UniformsUtils.clone(UniformsLib.fog);
+    Object.assign(uniforms, {
+        time: animationUniform,
+        waterColor: { value: [cr, cg, cb] },
+        surfaceOpacity: { value: clampedOpacity },
+        waveStrength: { value: waveStrength },
+        isTopFace: { value: topFaceFlag },
+        surfaceDisplacementEnabled: surfaceDisplacementEnabledUniform,
+        halfSize: { value: halfSize },
+        contactPatches: contactPatchesUniform,
+        contactPatchAxes: contactPatchAxesUniform,
+        contactPatchShapes: contactPatchShapesUniform,
+        reflectionTexture: reflectionTextureUniform,
+        reflectionMatrix: reflectionMatrixUniform,
+        reflectionEnabled: reflectionEnabledUniform
+    });
 
     const material = new ShaderMaterial({
         vertexShader,

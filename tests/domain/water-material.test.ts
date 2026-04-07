@@ -616,5 +616,14 @@ describe("water material helpers", () => {
     expect(result.reflectionTextureUniform).not.toBeNull();
     expect(result.reflectionMatrixUniform).not.toBeNull();
     expect(result.reflectionEnabledUniform?.value).toBe(0);
+    expect(result.animationUniform).toBe(material.uniforms["time"]);
+    expect(result.reflectionEnabledUniform).toBe(material.uniforms["reflectionEnabled"]);
+
+    if (result.animationUniform !== null && result.reflectionEnabledUniform !== null) {
+      result.animationUniform.value = 2.5;
+      result.reflectionEnabledUniform.value = 0.36;
+      expect(material.uniforms["time"]?.value).toBe(2.5);
+      expect(material.uniforms["reflectionEnabled"]?.value).toBe(0.36);
+    }
   });
 });
