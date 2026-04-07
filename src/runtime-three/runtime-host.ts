@@ -554,7 +554,10 @@ export class RuntimeHost {
     for (const brush of brushes) {
       const geometry = buildBoxBrushDerivedMeshData(brush).geometry;
       const staticContactPatches = brush.volume.mode === "water" ? this.collectRuntimeStaticWaterContactPatches(brush) : [];
-      const contactPatches = brush.volume.mode === "water" ? this.mergeRuntimeWaterContactPatches(staticContactPatches, this.collectRuntimePlayerWaterContactPatches(brush)) : [];
+      const contactPatches =
+        brush.volume.mode === "water"
+          ? this.mergeRuntimeWaterContactPatches(brush, staticContactPatches, this.collectRuntimePlayerWaterContactPatches(brush))
+          : [];
 
       const materials = [
         this.createFaceMaterial(brush, "posX", brush.faces.posX.material, volumeRenderPaths, contactPatches, staticContactPatches),
@@ -1022,7 +1025,8 @@ export class RuntimeHost {
         rotationDegrees: brush.rotationDegrees,
         size: brush.size
       },
-      contactBounds
+      contactBounds,
+      brush.volume.water.foamContactLimit
     );
   }
 
@@ -1039,20 +1043,26 @@ export class RuntimeHost {
         rotationDegrees: brush.rotationDegrees,
         size: brush.size
       },
-      [playerBounds]
+      [playerBounds],
+      brush.volume.water.foamContactLimit
     );
   }
 
   private mergeRuntimeWaterContactPatches(
+    brush: RuntimeBoxBrushInstance,
     staticContactPatches: ReturnType<typeof collectWaterContactPatches>,
     dynamicContactPatches: ReturnType<typeof collectWaterContactPatches>
   ) {
-    return [...dynamicContactPatches, ...staticContactPatches].slice(0, 6);
+    return [...dynamicContactPatches, ...staticContactPatches].slice(0, brush.volume.water.foamContactLimit);
   }
 
   private updateRuntimeWaterContactUniforms() {
     for (const binding of this.runtimeWaterContactUniforms) {
-      const mergedPatches = this.mergeRuntimeWaterContactPatches(binding.staticContactPatches, this.collectRuntimePlayerWaterContactPatches(binding.brush));
+      const mergedPatches = this.mergeRuntimeWaterContactPatches(
+        binding.brush,
+        binding.staticContactPatches,
+        this.collectRuntimePlayerWaterContactPatches(binding.brush)
+      );
       binding.uniform.value = createWaterContactPatchUniformValue(mergedPatches);
       binding.axisUniform.value = createWaterContactPatchAxisUniformValue(mergedPatches);
       binding.shapeUniform.value = createWaterContactPatchShapeUniformValue(mergedPatches);
