@@ -220,6 +220,62 @@ describe("water material helpers", () => {
     expect(Math.abs(clippedPatch?.axisZ ?? 0)).toBeGreaterThan(0.65);
   });
 
+  it("builds contact patches for transformed triangle meshes that cross the water surface", () => {
+    const patches = collectWaterContactPatches(
+      {
+        center: {
+          x: 0,
+          y: 0,
+          z: 0
+        },
+        rotationDegrees: {
+          x: 0,
+          y: 0,
+          z: 0
+        },
+        size: {
+          x: 8,
+          y: 2,
+          z: 8
+        }
+      },
+      [
+        {
+          kind: "triangleMesh",
+          vertices: new Float32Array([
+            -1, 0, -1,
+            1, 0, -1,
+            1, 0, 1,
+            -1, 0, 1
+          ]),
+          indices: new Uint32Array([0, 1, 2, 0, 2, 3]),
+          transform: {
+            position: {
+              x: 0,
+              y: 1,
+              z: 0
+            },
+            rotationDegrees: {
+              x: 35,
+              y: 28,
+              z: 18
+            },
+            scale: {
+              x: 2,
+              y: 1,
+              z: 1.4
+            }
+          }
+        }
+      ]
+    );
+
+    expect(patches.length).toBeGreaterThan(0);
+    expect(patches[0]?.halfWidth ?? 0).toBeGreaterThan(0.2);
+    expect(Math.abs(patches[0]?.axisX ?? 0)).toBeGreaterThan(0.2);
+    expect(Math.abs(patches[0]?.axisZ ?? 0)).toBeGreaterThan(0.2);
+  });
+
   it("builds a shared quality shader material for visible tinted water", () => {
     const result = createWaterMaterial({
       colorHex: "#4da6d9",

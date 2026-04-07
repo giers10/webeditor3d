@@ -3013,11 +3013,21 @@ export class ViewportHost {
         continue;
       }
 
+      const derivedMesh = buildBoxBrushDerivedMeshData(brush);
+
       contactBounds.push({
-        kind: "orientedBox",
-        center: brush.center,
-        rotationDegrees: brush.rotationDegrees,
-        size: brush.size
+        kind: "triangleMesh",
+        vertices: derivedMesh.colliderVertices,
+        indices: derivedMesh.colliderIndices,
+        transform: {
+          position: brush.center,
+          rotationDegrees: brush.rotationDegrees,
+          scale: {
+            x: 1,
+            y: 1,
+            z: 1
+          }
+        }
       });
     }
 
@@ -3036,7 +3046,16 @@ export class ViewportHost {
         const generatedCollider = buildGeneratedModelCollider(modelInstance, asset, this.loadedModelAssets[modelInstance.assetId]);
 
         if (generatedCollider !== null) {
-          contactBounds.push(generatedCollider.worldBounds);
+          if (generatedCollider.kind === "trimesh") {
+            contactBounds.push({
+              kind: "triangleMesh",
+              vertices: generatedCollider.vertices,
+              indices: generatedCollider.indices,
+              transform: generatedCollider.transform
+            });
+          } else {
+            contactBounds.push(generatedCollider.worldBounds);
+          }
         }
       } catch {
         // Validation already surfaces unsupported collider modes; the viewport keeps rendering.

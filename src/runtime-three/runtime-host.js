@@ -592,19 +592,36 @@ export class RuntimeHost {
     }
     collectRuntimeStaticWaterContactPatches(brush) {
         const contactBounds = [];
-        for (const otherBrush of this.runtimeScene?.brushes ?? []) {
-            if (otherBrush.id === brush.id || otherBrush.volume.mode !== "none") {
+        const runtimeBrushesById = new Map((this.runtimeScene?.brushes ?? []).map((runtimeBrush) => [runtimeBrush.id, runtimeBrush]));
+        for (const collider of this.runtimeScene?.colliders ?? []) {
+            if (collider.source === "brush") {
+                const otherBrush = runtimeBrushesById.get(collider.brushId);
+                if (otherBrush === undefined || otherBrush.id === brush.id || otherBrush.volume.mode !== "none") {
+                    continue;
+                }
+                contactBounds.push({
+                    kind: "triangleMesh",
+                    vertices: collider.vertices,
+                    indices: collider.indices,
+                    transform: {
+                        position: collider.center,
+                        rotationDegrees: collider.rotationDegrees,
+                        scale: {
+                            x: 1,
+                            y: 1,
+                            z: 1
+                        }
+                    }
+                });
                 continue;
             }
-            contactBounds.push({
-                kind: "orientedBox",
-                center: otherBrush.center,
-                rotationDegrees: otherBrush.rotationDegrees,
-                size: otherBrush.size
-            });
-        }
-        for (const collider of this.runtimeScene?.colliders ?? []) {
-            if (collider.source !== "modelInstance") {
+            if (collider.kind === "trimesh") {
+                contactBounds.push({
+                    kind: "triangleMesh",
+                    vertices: collider.vertices,
+                    indices: collider.indices,
+                    transform: collider.transform
+                });
                 continue;
             }
             contactBounds.push({
