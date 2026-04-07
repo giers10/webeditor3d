@@ -256,6 +256,7 @@ function createPatchFromProjectedPoints(projectedPoints, preferredAxis, minimumT
     const patchCenterPrimary = (minPrimary + maxPrimary) * 0.5;
     const patchCenterSecondary = (minSecondary + maxSecondary) * 0.5;
     return {
+        shape: "box",
         x: primaryAxis.x * patchCenterPrimary + secondaryAxis.x * patchCenterSecondary,
         z: primaryAxis.y * patchCenterPrimary + secondaryAxis.y * patchCenterSecondary,
         halfWidth,
@@ -273,6 +274,25 @@ function computeTriangleNormal(pointA, pointB, pointC) {
         return null;
     }
     return normal.normalize();
+}
+
+function createSegmentPatchFromEndpoints(startPoint, endPoint, radius) {
+    const axis = endPoint.clone().sub(startPoint);
+    const length = axis.length();
+    if (length <= WATER_CONTACT_EPSILON) {
+        return null;
+    }
+    axis.divideScalar(length);
+    const center = startPoint.clone().add(endPoint).multiplyScalar(0.5);
+    return {
+        shape: "segment",
+        x: center.x,
+        z: center.y,
+        halfWidth: length * 0.5,
+        halfDepth: Math.max(radius, WATER_CONTACT_EPSILON),
+        axisX: axis.x,
+        axisZ: axis.y
+    };
 }
 
 function addUniqueProjectedPoint(points, point) {
@@ -339,7 +359,7 @@ function createWaterlineSegmentFromPolygon(polygon, surfaceY) {
     return [startPoint.clone(), endPoint.clone()];
 }
 
-function createPatchCornerPoints(patch) {
+function createSegmentEndpoints(patch) {
     const axis = new Vector2(patch.axisX, patch.axisZ);
     if (axis.lengthSq() <= WATER_CONTACT_EPSILON) {
         axis.set(1, 0);
@@ -347,17 +367,12 @@ function createPatchCornerPoints(patch) {
     else {
         axis.normalize();
     }
-    const perpendicularAxis = new Vector2(-axis.y, axis.x);
     const center = new Vector2(patch.x, patch.z);
-    return [
-        center.clone().add(axis.clone().multiplyScalar(patch.halfWidth)).add(perpendicularAxis.clone().multiplyScalar(patch.halfDepth)),
-        center.clone().add(axis.clone().multiplyScalar(patch.halfWidth)).add(perpendicularAxis.clone().multiplyScalar(-patch.halfDepth)),
-        center.clone().add(axis.clone().multiplyScalar(-patch.halfWidth)).add(perpendicularAxis.clone().multiplyScalar(patch.halfDepth)),
-        center.clone().add(axis.clone().multiplyScalar(-patch.halfWidth)).add(perpendicularAxis.clone().multiplyScalar(-patch.halfDepth))
-    ];
+    const offset = axis.clone().multiplyScalar(patch.halfWidth);
+    return [center.clone().sub(offset), center.clone().add(offset)];
 }
 
-function measurePatchExtentsInBasis(points, axis) {
+function measureSegmentExtentsInBasis(points, radius, axis) {
     const perpendicularAxis = new Vector2(-axis.y, axis.x);
     let minPrimary = Number.POSITIVE_INFINITY;
     let maxPrimary = Number.NEGATIVE_INFINITY;
@@ -374,8 +389,35 @@ function measurePatchExtentsInBasis(points, axis) {
     return {
         minPrimary,
         maxPrimary,
-        minSecondary,
-        maxSecondary
+        minSecondary: minSecondary - radius,
+        maxSecondary: maxSecondary + radius
+    };
+}
+
+function createSegmentPatchFromCluster(cluster) {
+    const axis = cluster.axis.clone();
+    if (axis.lengthSq() <= WATER_CONTACT_EPSILON) {
+        axis.set(1, 0);
+    }
+    else {
+        axis.normalize();
+    }
+    const perpendicularAxis = new Vector2(-axis.y, axis.x);
+    const halfWidth = (cluster.extents.maxPrimary - cluster.extents.minPrimary) * 0.5;
+    const halfDepth = Math.max(cluster.maxRadius, (cluster.extents.maxSecondary - cluster.extents.minSecondary) * 0.5);
+    if (halfWidth <= WATER_CONTACT_EPSILON || halfDepth <= WATER_CONTACT_EPSILON) {
+        return null;
+    }
+    const centerPrimary = (cluster.extents.minPrimary + cluster.extents.maxPrimary) * 0.5;
+    const centerSecondary = (cluster.extents.minSecondary + cluster.extents.maxSecondary) * 0.5;
+    return {
+        shape: "segment",
+        x: axis.x * centerPrimary + perpendicularAxis.x * centerSecondary,
+        z: axis.y * centerPrimary + perpendicularAxis.y * centerSecondary,
+        halfWidth,
+        halfDepth,
+        axisX: axis.x,
+        axisZ: axis.y
     };
 }
 
@@ -404,7 +446,6 @@ function mergeTriangleMeshContactPatches(rawPatches, minimumThickness, mergeProf
     const mergeSettings = getTriangleMeshMergeSettings(mergeProfile, minimumThickness);
     const clusters = [];
     for (const rawPatch of rawPatches) {
-        const patchPoints = createPatchCornerPoints(rawPatch.patch);
         const patchAxis = new Vector2(rawPatch.patch.axisX, rawPatch.patch.axisZ);
         if (patchAxis.lengthSq() <= WATER_CONTACT_EPSILON) {
             patchAxis.set(1, 0);
@@ -412,6 +453,7 @@ function mergeTriangleMeshContactPatches(rawPatches, minimumThickness, mergeProf
         else {
             patchAxis.normalize();
         }
+        const patchEndpoints = createSegmentEndpoints(rawPatch.patch);
         let merged = false;
         for (const cluster of clusters) {
             const alignment = Math.abs(cluster.axis.dot(patchAxis));
@@ -422,7 +464,7 @@ function mergeTriangleMeshContactPatches(rawPatches, minimumThickness, mergeProf
             if (normalAlignment < mergeSettings.normalAlignment) {
                 continue;
             }
-            const patchExtents = measurePatchExtentsInBasis(patchPoints, cluster.axis);
+            const patchExtents = measureSegmentExtentsInBasis(patchEndpoints, rawPatch.patch.halfDepth, cluster.axis);
             const primaryGap = Math.max(0, Math.max(cluster.extents.minPrimary - patchExtents.maxPrimary, patchExtents.minPrimary - cluster.extents.maxPrimary));
             const secondaryGap = Math.max(0, Math.max(cluster.extents.minSecondary - patchExtents.maxSecondary, patchExtents.minSecondary - cluster.extents.maxSecondary));
             const clusterPrimarySpan = cluster.extents.maxPrimary - cluster.extents.minPrimary;
@@ -432,8 +474,9 @@ function mergeTriangleMeshContactPatches(rawPatches, minimumThickness, mergeProf
             if (primaryGap > allowedPrimaryGap || secondaryGap > allowedSecondaryGap) {
                 continue;
             }
-            cluster.points.push(...patchPoints.map((point) => point.clone()));
-            cluster.extents = measurePatchExtentsInBasis(cluster.points, cluster.axis);
+            cluster.endpoints.push(...patchEndpoints.map((point) => point.clone()));
+            cluster.maxRadius = Math.max(cluster.maxRadius, rawPatch.patch.halfDepth);
+            cluster.extents = measureSegmentExtentsInBasis(cluster.endpoints, cluster.maxRadius, cluster.axis);
             merged = true;
             break;
         }
@@ -441,13 +484,14 @@ function mergeTriangleMeshContactPatches(rawPatches, minimumThickness, mergeProf
             clusters.push({
                 axis: patchAxis,
                 normal: rawPatch.normal.clone(),
-                points: patchPoints.map((point) => point.clone()),
-                extents: measurePatchExtentsInBasis(patchPoints, patchAxis)
+                endpoints: patchEndpoints.map((point) => point.clone()),
+                maxRadius: rawPatch.patch.halfDepth,
+                extents: measureSegmentExtentsInBasis(patchEndpoints, rawPatch.patch.halfDepth, patchAxis)
             });
         }
     }
     return clusters
-        .map((cluster) => createPatchFromProjectedPoints(cluster.points, cluster.axis, minimumThickness))
+        .map((cluster) => createSegmentPatchFromCluster(cluster))
         .filter((patch) => patch !== null);
 }
 
@@ -488,7 +532,7 @@ function appendTriangleMeshContactPatches(patches, source, volume, inverseRotati
         if (preferredAxis.lengthSq() <= WATER_CONTACT_EPSILON) {
             continue;
         }
-        const patch = createPatchFromProjectedPoints([waterlineSegment[0], waterlineSegment[1]], preferredAxis, bandMinimumThickness);
+        const patch = createSegmentPatchFromEndpoints(waterlineSegment[0], waterlineSegment[1], bandMinimumThickness);
         if (patch !== null) {
             rawPatches.push({
                 patch,
