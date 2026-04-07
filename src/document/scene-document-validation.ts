@@ -19,9 +19,16 @@ import {
   type TriggerVolumeEntity
 } from "../entities/entity-instances";
 import { type InteractionLink } from "../interactions/interaction-links";
-import { BOX_FACE_IDS, BOX_VERTEX_IDS, hasPositiveBoxSize, isBoxBrushVolumeMode } from "./brushes";
+import {
+  BOX_FACE_IDS,
+  BOX_VERTEX_IDS,
+  MAX_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT,
+  hasPositiveBoxSize,
+  isBoxBrushVolumeMode
+} from "./brushes";
 import type { SceneDocument } from "./scene-document";
 import {
+  isAdvancedRenderingWaterReflectionMode,
   isAdvancedRenderingShadowMapSize,
   isAdvancedRenderingShadowType,
   isBoxVolumeRenderPath,
@@ -85,6 +92,10 @@ function isPositiveFiniteNumber(value: unknown): value is number {
 
 function isPositiveInteger(value: unknown): value is number {
   return isFiniteNumber(value) && Number.isInteger(value) && value > 0;
+}
+
+function isPositiveIntegerInRange(value: unknown, max: number): value is number {
+  return isPositiveInteger(value) && value <= max;
 }
 
 function isBoolean(value: unknown): value is boolean {
@@ -454,6 +465,17 @@ function validateWorldSettings(world: WorldSettings, document: SceneDocument, di
         "invalid-advanced-rendering-water-path",
         "Advanced rendering water path must be performance or quality.",
         "world.advancedRendering.waterPath"
+      )
+    );
+  }
+
+  if (!isAdvancedRenderingWaterReflectionMode(advancedRendering.waterReflectionMode)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-water-reflection-mode",
+        "Advanced rendering water reflection mode must be none, world, or all.",
+        "world.advancedRendering.waterReflectionMode"
       )
     );
   }
@@ -1398,6 +1420,17 @@ export function validateSceneDocument(document: SceneDocument): SceneDocumentVal
               "invalid-box-water-wave-strength",
               "Water wave strength must be a non-negative finite number.",
               `${path}.volume.water.waveStrength`
+            )
+          );
+        }
+
+        if (!isPositiveIntegerInRange(water.foamContactLimit, MAX_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT)) {
+          diagnostics.push(
+            createDiagnostic(
+              "error",
+              "invalid-box-water-foam-contact-limit",
+              `Water foam contact limit must be a positive integer between 1 and ${MAX_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT}.`,
+              `${path}.volume.water.foamContactLimit`
             )
           );
         }
