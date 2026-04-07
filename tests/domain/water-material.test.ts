@@ -343,14 +343,14 @@ describe("water material helpers", () => {
     const sharedSource = {
       kind: "triangleMesh" as const,
       vertices: new Float32Array([
-        -2, 0, -1,
-        -0.3, 0, -1,
-        -0.3, 0, 1,
-        -2, 0, 1,
-        0.3, 0, -1,
-        2, 0, -1,
-        2, 0, 1,
-        0.3, 0, 1
+        -3, 0, -1,
+        -0.4, 0, -1,
+        -0.4, 0, 1,
+        -3, 0, 1,
+        0.4, 0, -1,
+        3, 0, -1,
+        3, 0, 1,
+        0.4, 0, 1
       ]),
       indices: new Uint32Array([
         0, 1, 2,
@@ -365,9 +365,9 @@ describe("water material helpers", () => {
           z: 0
         },
         rotationDegrees: {
-          x: 26,
-          y: 14,
-          z: 10
+          x: 0,
+          y: 0,
+          z: 0
         },
         scale: {
           x: 1,
