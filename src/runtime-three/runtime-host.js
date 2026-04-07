@@ -1,4 +1,4 @@
-import { AmbientLight, AnimationClip, AnimationMixer, DirectionalLight, Euler, FogExp2, Group, LoopOnce, LoopRepeat, Mesh, MeshBasicMaterial, MeshStandardMaterial, PerspectiveCamera, PointLight, Quaternion, Scene, Vector3, SpotLight, WebGLRenderTarget, WebGLRenderer } from "three";
+import { AmbientLight, AnimationClip, AnimationMixer, DirectionalLight, Euler, FogExp2, Group, LoopOnce, LoopRepeat, Mesh, MeshBasicMaterial, MeshStandardMaterial, PerspectiveCamera, PointLight, Quaternion, Scene, ShaderMaterial, Vector3, SpotLight, WebGLRenderTarget, WebGLRenderer } from "three";
 import { createModelInstanceRenderGroup, disposeModelInstance } from "../assets/model-instance-rendering";
 import { buildBoxBrushDerivedMeshData } from "../geometry/box-brush-mesh";
 import { createStarterMaterialSignature, createStarterMaterialTexture } from "../materials/starter-material-textures";
@@ -21,6 +21,7 @@ export class RuntimeHost {
     cameraForward = new Vector3();
     volumeOffset = new Vector3();
     volumeInverseRotation = new Quaternion();
+    fogLocalCameraPosition = new Vector3();
     domElement;
     ambientLight = new AmbientLight();
     sunLight = new DirectionalLight();
@@ -389,10 +390,24 @@ export class RuntimeHost {
             const mesh = new Mesh(geometry, materials);
             mesh.position.set(brush.center.x, brush.center.y, brush.center.z);
             mesh.rotation.set((brush.rotationDegrees.x * Math.PI) / 180, (brush.rotationDegrees.y * Math.PI) / 180, (brush.rotationDegrees.z * Math.PI) / 180);
+            this.configureFogVolumeMesh(mesh, materials);
             this.brushGroup.add(mesh);
             this.brushMeshes.set(brush.id, mesh);
         }
         this.applyShadowState();
+    }
+    configureFogVolumeMesh(mesh, materials) {
+        const fogMaterials = materials.filter((material) => material instanceof ShaderMaterial && material.uniforms["localCameraPosition"] !== undefined);
+        if (fogMaterials.length === 0) {
+            mesh.onBeforeRender = null;
+            return;
+        }
+        mesh.onBeforeRender = (_renderer, _scene, camera) => {
+            const localCameraPosition = mesh.worldToLocal(this.fogLocalCameraPosition.copy(camera.position));
+            for (const material of fogMaterials) {
+                material.uniforms["localCameraPosition"].value.copy(localCameraPosition);
+            }
+        };
     }
     rebuildModelInstances(modelInstances) {
         this.clearModelInstances();
