@@ -9,6 +9,7 @@ import { ViewportHost } from "./viewport-host";
 export function ViewportCanvas({ panelId, world, sceneDocument, projectAssets, loadedModelAssets, loadedImageAssets, whiteboxSelectionMode, whiteboxSnapEnabled, whiteboxSnapStep, selection, toolMode, toolPreview, transformSession, cameraState, viewMode, displayMode, layoutMode, isActivePanel, focusRequestId, focusSelection, onSelectionChange, onCommitCreation, onCameraStateChange, onToolPreviewChange, onTransformSessionChange, onTransformCommit, onTransformCancel }) {
     const containerRef = useRef(null);
     const hostRef = useRef(null);
+    const shouldRenderPanel = layoutMode === "quad" || isActivePanel;
     const [viewportMessage, setViewportMessage] = useState(null);
     const [hoveredWhiteboxLabel, setHoveredWhiteboxLabel] = useState(null);
     useEffect(() => {
@@ -20,6 +21,7 @@ export function ViewportCanvas({ panelId, world, sceneDocument, projectAssets, l
             const viewportHost = new ViewportHost();
             hostRef.current = viewportHost;
             viewportHost.setPanelId(panelId);
+            viewportHost.setRenderEnabled(shouldRenderPanel);
             viewportHost.mount(container);
             setViewportMessage(null);
             return () => {
@@ -33,6 +35,9 @@ export function ViewportCanvas({ panelId, world, sceneDocument, projectAssets, l
             return;
         }
     }, []);
+    useEffect(() => {
+        hostRef.current?.setRenderEnabled(shouldRenderPanel);
+    }, [shouldRenderPanel]);
     useEffect(() => {
         hostRef.current?.setPanelId(panelId);
     }, [panelId]);
