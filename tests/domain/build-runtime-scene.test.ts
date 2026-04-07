@@ -732,7 +732,8 @@ describe("buildRuntimeSceneFromDocument", () => {
         water: {
           colorHex: "#2f79c4",
           surfaceOpacity: 0.7,
-          waveStrength: 0.35
+          waveStrength: 0.35,
+          foamContactLimit: 6
         }
       }
     });
