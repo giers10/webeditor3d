@@ -448,7 +448,7 @@ export class RuntimeHost {
                 contactPatches,
                 reflection: {
                     texture: null,
-                    enabled: faceId === "posY" && this.getWaterReflectionMode() !== "none"
+                    enabled: faceId === "posY"
                 }
             });
             if (waterMaterial.animationUniform !== null) {
@@ -591,7 +591,6 @@ export class RuntimeHost {
         const now = performance.now();
         for (const binding of this.runtimeWaterContactUniforms) {
             if (reflectionMode === "none" ||
-                binding.reflectionRenderTarget === null ||
                 binding.reflectionTextureUniform === null ||
                 binding.reflectionMatrixUniform === null ||
                 binding.reflectionEnabledUniform === null) {
@@ -600,8 +599,11 @@ export class RuntimeHost {
                 }
                 continue;
             }
+            if (binding.reflectionRenderTarget === null) {
+                binding.reflectionRenderTarget = this.createWaterReflectionRenderTarget();
+            }
             const canRenderReflection = updatePlanarReflectionCamera(binding.brush, this.camera, this.waterReflectionCamera, binding.reflectionMatrixUniform.value);
-            if (!canRenderReflection) {
+            if (!canRenderReflection || binding.reflectionRenderTarget === null) {
                 binding.reflectionEnabledUniform.value = 0;
                 continue;
             }
