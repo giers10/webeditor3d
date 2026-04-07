@@ -548,14 +548,10 @@ describe("water material helpers", () => {
       ]
     );
 
-    expect(patches.length).toBeGreaterThanOrEqual(4);
-
-    const sortedByWidth = [...patches].sort((left, right) => right.halfWidth - left.halfWidth);
-    const longEdgeHalfWidth = sortedByWidth[0]?.halfWidth ?? 0;
-    const shortEdgeHalfWidth = sortedByWidth[sortedByWidth.length - 1]?.halfWidth ?? 0;
-
-    expect(longEdgeHalfWidth).toBeGreaterThan(1.7);
-    expect(shortEdgeHalfWidth).toBeGreaterThan(0.7);
+    expect(patches).toHaveLength(1);
+    expect(patches[0]?.shape).toBe("box");
+    expect(patches[0]?.halfWidth ?? 0).toBeGreaterThan(1.7);
+    expect(patches[0]?.halfDepth ?? 0).toBeGreaterThan(0.7);
   });
 
   it("only uses aggressive merging for explicitly marked triangle meshes", () => {
