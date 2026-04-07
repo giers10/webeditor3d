@@ -1,6 +1,7 @@
 import { ShaderMaterial } from "three";
 import { describe, expect, it } from "vitest";
 
+import { MAX_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT } from "../../src/document/brushes";
 import { collectWaterContactPatches, createWaterMaterial } from "../../src/rendering/water-material";
 
 describe("water material helpers", () => {
@@ -546,6 +547,37 @@ describe("water material helpers", () => {
     expect(patches.length).toBeGreaterThan(1);
   });
 
+  it("caps the authored foam contact patch count per water surface", () => {
+    const patches = collectWaterContactPatches(
+      {
+        center: {
+          x: 0,
+          y: 0,
+          z: 0
+        },
+        rotationDegrees: {
+          x: 0,
+          y: 0,
+          z: 0
+        },
+        size: {
+          x: 12,
+          y: 2,
+          z: 12
+        }
+      },
+      [
+        { min: { x: -5, y: 0.8, z: -1 }, max: { x: -4, y: 1.2, z: 1 } },
+        { min: { x: -3, y: 0.8, z: -1 }, max: { x: -2, y: 1.2, z: 1 } },
+        { min: { x: -1, y: 0.8, z: -1 }, max: { x: 0, y: 1.2, z: 1 } },
+        { min: { x: 1, y: 0.8, z: -1 }, max: { x: 2, y: 1.2, z: 1 } }
+      ],
+      2
+    );
+
+    expect(patches).toHaveLength(2);
+  });
+
   it("builds a shared quality shader material for visible tinted water", () => {
     const result = createWaterMaterial({
       colorHex: "#4da6d9",
@@ -560,7 +592,11 @@ describe("water material helpers", () => {
         x: 4,
         z: 4
       },
-      contactPatches: []
+      contactPatches: [],
+      reflection: {
+        texture: null,
+        enabled: true
+      }
     });
 
     expect(result.material).toBeInstanceOf(ShaderMaterial);
@@ -568,10 +604,16 @@ describe("water material helpers", () => {
     const material = result.material as ShaderMaterial;
     expect(material.transparent).toBe(true);
     expect(material.fog).toBe(true);
+    expect(material.uniforms["fogColor"]).toBeDefined();
+    expect(material.uniforms["fogDensity"]).toBeDefined();
     expect(material.uniforms["surfaceOpacity"]?.value).toBeGreaterThan(0.14);
     expect(material.uniforms["waveStrength"]?.value).toBe(0.35);
     expect(material.uniforms["isTopFace"]?.value).toBe(1);
-    expect(result.contactPatchesUniform?.value).toHaveLength(6);
-    expect(result.contactPatchShapesUniform?.value).toHaveLength(6);
+    expect(material.vertexShader).not.toContain("transformed.y +=");
+    expect(result.contactPatchesUniform?.value).toHaveLength(MAX_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT);
+    expect(result.contactPatchShapesUniform?.value).toHaveLength(MAX_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT);
+    expect(result.reflectionTextureUniform).not.toBeNull();
+    expect(result.reflectionMatrixUniform).not.toBeNull();
+    expect(result.reflectionEnabledUniform?.value).toBeGreaterThan(0);
   });
 });
