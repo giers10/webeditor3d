@@ -6096,6 +6096,25 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         </select>
                       </label>
                     </div>
+                    {advancedRendering.waterPath === "quality" ? (
+                      <label className="form-field">
+                        <span className="label">Water Reflection</span>
+                        <select
+                          data-testid="advanced-rendering-water-reflection-mode"
+                          className="select-input"
+                          value={advancedRendering.waterReflectionMode}
+                          onChange={(event) =>
+                            applyAdvancedRenderingWaterReflectionMode(event.currentTarget.value as AdvancedRenderingWaterReflectionMode)
+                          }
+                        >
+                          {ADVANCED_RENDERING_WATER_REFLECTION_MODES.map((mode) => (
+                            <option key={mode} value={mode}>
+                              {formatAdvancedRenderingWaterReflectionModeLabel(mode)}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    ) : null}
                   </div>
                 </>
               )}
