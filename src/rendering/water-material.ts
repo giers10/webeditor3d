@@ -100,7 +100,7 @@ function createInverseVolumeRotation(rotationDegrees: Vec3) {
     .invert();
 }
 
-export function collectWaterContactPatches(volume: OrientedWaterVolume, contactBounds: WaterContactBounds[]): WaterContactPatch[] {
+export function collectWaterContactPatches(volume: OrientedWaterVolume, contactBounds: WaterContactSource[]): WaterContactPatch[] {
   const inverseRotation = createInverseVolumeRotation(volume.rotationDegrees);
   const halfX = Math.max(volume.size.x * 0.5, WATER_CONTACT_EPSILON);
   const halfY = Math.max(volume.size.y * 0.5, WATER_CONTACT_EPSILON);

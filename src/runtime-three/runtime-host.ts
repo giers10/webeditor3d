@@ -38,7 +38,7 @@ import {
   resolveBoxVolumeRenderPaths,
   type ResolvedBoxVolumeRenderPaths
 } from "../rendering/advanced-rendering";
-import { collectWaterContactPatches, createWaterContactPatchUniformValue, createWaterMaterial } from "../rendering/water-material";
+import { collectWaterContactPatches, createWaterContactPatchAxisUniformValue, createWaterContactPatchUniformValue, createWaterMaterial } from "../rendering/water-material";
 import {
   areAdvancedRenderingSettingsEqual,
   cloneAdvancedRenderingSettings,
@@ -71,6 +71,7 @@ interface LocalLightRenderObjects {
 interface RuntimeWaterContactUniformBinding {
   brush: RuntimeBoxBrushInstance;
   uniform: { value: import("three").Vector4[] };
+  axisUniform: { value: import("three").Vector2[] };
   staticContactPatches: ReturnType<typeof collectWaterContactPatches>;
 }
 
@@ -631,10 +632,11 @@ export class RuntimeHost {
         this.volumeAnimatedUniforms.push(waterMaterial.animationUniform);
       }
 
-      if (faceId === "posY" && waterMaterial.contactPatchesUniform !== null) {
+      if (faceId === "posY" && waterMaterial.contactPatchesUniform !== null && waterMaterial.contactPatchAxesUniform !== null) {
         this.runtimeWaterContactUniforms.push({
           brush,
           uniform: waterMaterial.contactPatchesUniform,
+          axisUniform: waterMaterial.contactPatchAxesUniform,
           staticContactPatches
         });
       }
@@ -811,10 +813,31 @@ export class RuntimeHost {
   }
 
   private collectRuntimeStaticWaterContactPatches(brush: RuntimeBoxBrushInstance) {
-    const contactBounds = this.runtimeScene?.colliders.map((collider) => ({
-      min: collider.worldBounds.min,
-      max: collider.worldBounds.max
-    })) ?? [];
+    const contactBounds: Parameters<typeof collectWaterContactPatches>[1] = [];
+
+    for (const otherBrush of this.runtimeScene?.brushes ?? []) {
+      if (otherBrush.id === brush.id || otherBrush.volume.mode !== "none") {
+        continue;
+      }
+
+      contactBounds.push({
+        kind: "orientedBox",
+        center: otherBrush.center,
+        rotationDegrees: otherBrush.rotationDegrees,
+        size: otherBrush.size
+      });
+    }
+
+    for (const collider of this.runtimeScene?.colliders ?? []) {
+      if (collider.source !== "modelInstance") {
+        continue;
+      }
+
+      contactBounds.push({
+        min: collider.worldBounds.min,
+        max: collider.worldBounds.max
+      });
+    }
 
     return collectWaterContactPatches(
       {
@@ -852,9 +875,9 @@ export class RuntimeHost {
 
   private updateRuntimeWaterContactUniforms() {
     for (const binding of this.runtimeWaterContactUniforms) {
-      binding.uniform.value = createWaterContactPatchUniformValue(
-        this.mergeRuntimeWaterContactPatches(binding.staticContactPatches, this.collectRuntimePlayerWaterContactPatches(binding.brush))
-      );
+      const mergedPatches = this.mergeRuntimeWaterContactPatches(binding.staticContactPatches, this.collectRuntimePlayerWaterContactPatches(binding.brush));
+      binding.uniform.value = createWaterContactPatchUniformValue(mergedPatches);
+      binding.axisUniform.value = createWaterContactPatchAxisUniformValue(mergedPatches);
     }
   }
 

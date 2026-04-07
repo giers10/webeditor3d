@@ -3007,14 +3007,19 @@ export class ViewportHost {
     rotationDegrees: Vec3,
     size: Vec3
   ) {
-    const contactBounds: GeneratedColliderBounds[] = [];
+    const contactBounds: Parameters<typeof collectWaterContactPatches>[1] = [];
 
     for (const brush of Object.values(document.brushes)) {
       if (brush.id === excludedBrushId || brush.volume.mode !== "none") {
         continue;
       }
 
-      contactBounds.push(getBoxBrushBounds(brush));
+      contactBounds.push({
+        kind: "orientedBox",
+        center: brush.center,
+        rotationDegrees: brush.rotationDegrees,
+        size: brush.size
+      });
     }
 
     for (const modelInstance of getModelInstances(document.modelInstances)) {
