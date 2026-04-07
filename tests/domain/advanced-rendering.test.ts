@@ -1,7 +1,90 @@
-import { describe, expect, it } from "vitest";
+import { PerspectiveCamera, Scene, UnsignedByteType } from "three";
+import { describe, expect, it, vi } from "vitest";
+
+const postprocessingState = vi.hoisted(() => ({
+  composerOptions: [] as Array<Record<string, unknown>>,
+  composerPasses: [] as unknown[],
+  normalPassTextures: [] as unknown[],
+  ssaoCalls: [] as Array<{ normalBuffer: unknown; options: Record<string, unknown> }>
+}));
+
+vi.mock("postprocessing", () => {
+  class MockEffectComposer {
+    constructor(_renderer: unknown, options: Record<string, unknown>) {
+      postprocessingState.composerOptions.push(options);
+    }
+
+    addPass(pass: unknown) {
+      postprocessingState.composerPasses.push(pass);
+    }
+  }
+
+  class MockRenderPass {
+    constructor(_scene: unknown, _camera: unknown) {}
+  }
+
+  class MockNormalPass {
+    texture: Record<string, unknown>;
+
+    constructor(_scene: unknown, _camera: unknown) {
+      this.texture = {
+        kind: "normal-pass-texture",
+        index: postprocessingState.normalPassTextures.length
+      };
+      postprocessingState.normalPassTextures.push(this.texture);
+    }
+  }
+
+  class MockEffectPass {
+    constructor(_camera: unknown, ..._effects: unknown[]) {}
+  }
+
+  class MockSSAOEffect {
+    constructor(_camera: unknown, normalBuffer: unknown, options: Record<string, unknown>) {
+      postprocessingState.ssaoCalls.push({ normalBuffer, options });
+    }
+  }
+
+  class MockBloomEffect {
+    constructor(_options: Record<string, unknown>) {}
+  }
+
+  class MockDepthOfFieldEffect {
+    constructor(_camera: unknown, _options: Record<string, unknown>) {}
+  }
+
+  class MockToneMappingEffect {
+    constructor(_options: Record<string, unknown>) {}
+  }
+
+  class MockSMAAEffect {
+    constructor(_options: Record<string, unknown>) {}
+  }
+
+  return {
+    BloomEffect: MockBloomEffect,
+    DepthOfFieldEffect: MockDepthOfFieldEffect,
+    EffectComposer: MockEffectComposer,
+    EffectPass: MockEffectPass,
+    NormalPass: MockNormalPass,
+    RenderPass: MockRenderPass,
+    SMAAEffect: MockSMAAEffect,
+    SMAAPreset: {
+      MEDIUM: "medium"
+    },
+    SSAOEffect: MockSSAOEffect,
+    ToneMappingEffect: MockToneMappingEffect,
+    ToneMappingMode: {
+      ACES_FILMIC: "ACES_FILMIC",
+      CINEON: "CINEON",
+      LINEAR: "LINEAR",
+      REINHARD: "REINHARD"
+    }
+  };
+});
 
 import { createDefaultWorldSettings } from "../../src/document/world-settings";
-import { resolveBoxVolumeRenderPaths } from "../../src/rendering/advanced-rendering";
+import { createAdvancedRenderingComposer, resolveBoxVolumeRenderPaths } from "../../src/rendering/advanced-rendering";
 
 describe("resolveBoxVolumeRenderPaths", () => {
   it("uses authored fog and water paths when advanced rendering is enabled", () => {
@@ -25,6 +108,75 @@ describe("resolveBoxVolumeRenderPaths", () => {
     expect(resolveBoxVolumeRenderPaths(settings)).toEqual({
       fog: "performance",
       water: "performance"
+    });
+  });
+});
+
+describe("createAdvancedRenderingComposer", () => {
+  it("keeps depth buffering enabled when the post stack only uses color effects", () => {
+    postprocessingState.composerOptions.length = 0;
+    postprocessingState.composerPasses.length = 0;
+    postprocessingState.normalPassTextures.length = 0;
+    postprocessingState.ssaoCalls.length = 0;
+
+    const settings = createDefaultWorldSettings().advancedRendering;
+    settings.enabled = true;
+    settings.ambientOcclusion.enabled = false;
+    settings.depthOfField.enabled = false;
+
+    createAdvancedRenderingComposer(
+      {
+        capabilities: {
+          isWebGL2: false
+        }
+      } as unknown as never,
+      new Scene(),
+      new PerspectiveCamera(),
+      settings
+    );
+
+    expect(postprocessingState.composerOptions).toHaveLength(1);
+    expect(postprocessingState.composerOptions[0]).toMatchObject({
+      depthBuffer: true,
+      frameBufferType: UnsignedByteType
+    });
+  });
+
+  it("feeds SSAO a normal pass and clamps broad occlusion into a corner-shading range", () => {
+    postprocessingState.composerOptions.length = 0;
+    postprocessingState.composerPasses.length = 0;
+    postprocessingState.normalPassTextures.length = 0;
+    postprocessingState.ssaoCalls.length = 0;
+
+    const settings = createDefaultWorldSettings().advancedRendering;
+    settings.enabled = true;
+    settings.ambientOcclusion.enabled = true;
+    settings.ambientOcclusion.samples = 12;
+    settings.ambientOcclusion.radius = 0.5;
+    settings.ambientOcclusion.intensity = 0.85;
+
+    createAdvancedRenderingComposer(
+      {
+        capabilities: {
+          isWebGL2: true
+        }
+      } as unknown as never,
+      new Scene(),
+      new PerspectiveCamera(),
+      settings
+    );
+
+    expect(postprocessingState.normalPassTextures).toHaveLength(1);
+    expect(postprocessingState.ssaoCalls).toHaveLength(1);
+    expect(postprocessingState.ssaoCalls[0]).toMatchObject({
+      normalBuffer: postprocessingState.normalPassTextures[0],
+      options: {
+        depthAwareUpsampling: true,
+        luminanceInfluence: 0.15,
+        samples: 12,
+        radius: 0.2,
+        intensity: 0.85
+      }
     });
   });
 });

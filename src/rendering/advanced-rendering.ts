@@ -20,6 +20,7 @@ import {
   DepthOfFieldEffect,
   EffectComposer,
   EffectPass,
+  NormalPass,
   RenderPass,
   SMAAEffect,
   SMAAPreset,
@@ -34,6 +35,9 @@ import type {
   AdvancedRenderingShadowType,
   AdvancedRenderingToneMappingMode
 } from "../document/world-settings";
+
+const AMBIENT_OCCLUSION_LUMINANCE_INFLUENCE = 0.15;
+const MAX_AMBIENT_OCCLUSION_EFFECT_RADIUS = 0.2;
 
 export interface ResolvedBoxVolumeRenderPaths {
   fog: BoxVolumeRenderPath;
@@ -93,9 +97,10 @@ export function createAdvancedRenderingComposer(
   camera: PerspectiveCamera,
   settings: AdvancedRenderingSettings
 ): EffectComposer {
-  const requiresDepthBuffer = settings.ambientOcclusion.enabled || settings.depthOfField.enabled;
+  // The scene is always rendered into the composer's offscreen targets first,
+  // so those targets need depth for correct visibility even when no effect samples it.
   const composer = new EffectComposer(renderer, {
-    depthBuffer: requiresDepthBuffer,
+    depthBuffer: true,
     stencilBuffer: false,
     multisampling: 0,
     frameBufferType: renderer.capabilities.isWebGL2 ? HalfFloatType : UnsignedByteType
@@ -106,10 +111,17 @@ export function createAdvancedRenderingComposer(
   const effects: Array<SSAOEffect | BloomEffect | DepthOfFieldEffect | ToneMappingEffect | SMAAEffect> = [];
 
   if (settings.ambientOcclusion.enabled) {
+    // postprocessing's internal depth-downsampling path writes zero normals unless
+    // a real normal buffer is supplied, which turns SSAO into speckled noise.
+    const normalPass = new NormalPass(scene, camera);
+    composer.addPass(normalPass);
+
     effects.push(
-      new SSAOEffect(camera, undefined, {
+      new SSAOEffect(camera, normalPass.texture, {
+        depthAwareUpsampling: true,
+        luminanceInfluence: AMBIENT_OCCLUSION_LUMINANCE_INFLUENCE,
         samples: settings.ambientOcclusion.samples,
-        radius: settings.ambientOcclusion.radius,
+        radius: Math.min(settings.ambientOcclusion.radius, MAX_AMBIENT_OCCLUSION_EFFECT_RADIUS),
         intensity: settings.ambientOcclusion.intensity
       })
     );
