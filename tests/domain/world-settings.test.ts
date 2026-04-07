@@ -85,4 +85,13 @@ describe("world settings helpers", () => {
 
     expect(areWorldSettingsEqual(left, right)).toBe(false);
   });
+
+  it("treats water reflection mode as part of authored world equality", () => {
+    const left = createDefaultWorldSettings();
+    const right = cloneWorldSettings(left);
+
+    right.advancedRendering.waterReflectionMode = "all";
+
+    expect(areWorldSettingsEqual(left, right)).toBe(false);
+  });
 });
