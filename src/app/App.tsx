@@ -7421,6 +7421,23 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               onPointerUp={(event) => handleNumberInputPointerUp(event, applyBoxWaterSettings)}
                             />
                           </label>
+                          <label className="form-field">
+                            <span className="label">Foam Contact Limit</span>
+                            <input
+                              data-testid="brush-water-foam-contact-limit"
+                              className="text-input"
+                              type="number"
+                              min="1"
+                              max={String(MAX_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT)}
+                              step="1"
+                              value={boxVolumeWaterFoamContactLimitDraft}
+                              onChange={(event) => setBoxVolumeWaterFoamContactLimitDraft(event.currentTarget.value)}
+                              onBlur={applyBoxWaterSettings}
+                              onKeyDown={(event) => handleDraftVectorKeyDown(event, applyBoxWaterSettings)}
+                              onKeyUp={(event) => handleNumberInputKeyUp(event, applyBoxWaterSettings)}
+                              onPointerUp={(event) => handleNumberInputPointerUp(event, applyBoxWaterSettings)}
+                            />
+                          </label>
                         </>
                       ) : null}
 
