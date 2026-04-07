@@ -140,9 +140,10 @@ describe("createAdvancedRenderingComposer", () => {
       depthBuffer: true,
       frameBufferType: UnsignedByteType
     });
+    expect(postprocessingState.ssaoCalls).toHaveLength(0);
   });
 
-  it("feeds SSAO a normal pass and clamps broad occlusion into a corner-shading range", () => {
+  it("builds a dual-layer SSAO stack from one normal pass", () => {
     postprocessingState.composerOptions.length = 0;
     postprocessingState.composerPasses.length = 0;
     postprocessingState.normalPassTextures.length = 0;
@@ -151,7 +152,7 @@ describe("createAdvancedRenderingComposer", () => {
     const settings = createDefaultWorldSettings().advancedRendering;
     settings.enabled = true;
     settings.ambientOcclusion.enabled = true;
-    settings.ambientOcclusion.samples = 12;
+    settings.ambientOcclusion.samples = 8;
     settings.ambientOcclusion.radius = 0.5;
     settings.ambientOcclusion.intensity = 0.85;
 
@@ -167,7 +168,7 @@ describe("createAdvancedRenderingComposer", () => {
     );
 
     expect(postprocessingState.normalPassTextures).toHaveLength(1);
-    expect(postprocessingState.ssaoCalls).toHaveLength(1);
+    expect(postprocessingState.ssaoCalls).toHaveLength(2);
     expect(postprocessingState.ssaoCalls[0]).toMatchObject({
       normalBuffer: postprocessingState.normalPassTextures[0],
       options: {
@@ -175,7 +176,19 @@ describe("createAdvancedRenderingComposer", () => {
         luminanceInfluence: 0.15,
         samples: 12,
         radius: 0.2,
-        intensity: 0.85
+        intensity: 0.3825,
+        resolutionScale: 0.5
+      }
+    });
+    expect(postprocessingState.ssaoCalls[1]).toMatchObject({
+      normalBuffer: postprocessingState.normalPassTextures[0],
+      options: {
+        depthAwareUpsampling: true,
+        luminanceInfluence: 0.15,
+        samples: 12,
+        radius: 0.07,
+        intensity: 0.2975,
+        resolutionScale: 0.75
       }
     });
   });
