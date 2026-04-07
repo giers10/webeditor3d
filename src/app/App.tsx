@@ -417,6 +417,16 @@ function readPositiveIntegerDraft(source: string, label: string): number {
   return value;
 }
 
+function readWaterFoamContactLimitDraft(source: string): number {
+  const value = readPositiveIntegerDraft(source, "Water foam contact limit");
+
+  if (value > MAX_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT) {
+    throw new Error(`Water foam contact limit must be ${MAX_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT} or less.`);
+  }
+
+  return value;
+}
+
 function readPositiveNumberDraft(source: string, label: string): number {
   const value = Number(source);
 
@@ -898,6 +908,17 @@ function formatAdvancedRenderingToneMappingLabel(mode: AdvancedRenderingToneMapp
       return "Cineon";
     case "acesFilmic":
       return "ACES Filmic";
+  }
+}
+
+function formatAdvancedRenderingWaterReflectionModeLabel(mode: AdvancedRenderingWaterReflectionMode): string {
+  switch (mode) {
+    case "none":
+      return "Nothing";
+    case "world":
+      return "World";
+    case "all":
+      return "All";
   }
 }
 
