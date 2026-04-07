@@ -1,4 +1,4 @@
-import { AmbientLight, AxesHelper, BufferGeometry, BoxGeometry, CapsuleGeometry, ConeGeometry, CylinderGeometry, DirectionalLight, EdgesGeometry, GridHelper, Group, Line, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, MeshStandardMaterial, OrthographicCamera, Plane, PerspectiveCamera, PointLight, Quaternion, Raycaster, Scene, SphereGeometry, Spherical, TorusGeometry, SpotLight, Vector2, Vector3, WebGLRenderer } from "three";
+import { AmbientLight, AxesHelper, BufferGeometry, BoxGeometry, CapsuleGeometry, ConeGeometry, CylinderGeometry, DirectionalLight, EdgesGeometry, GridHelper, Group, Line, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, MeshStandardMaterial, OrthographicCamera, Plane, PerspectiveCamera, PointLight, Quaternion, Raycaster, Scene, SphereGeometry, Spherical, TorusGeometry, SpotLight, Vector2, Vector3, WebGLRenderTarget, WebGLRenderer } from "three";
 import { areEditorSelectionsEqual, isBrushEdgeSelected, isBrushFaceSelected, isBrushSelected, isBrushVertexSelected, isModelInstanceSelected } from "../core/selection";
 import { getWhiteboxSelectionFeedbackLabel } from "../core/whitebox-selection-feedback";
 import { cloneTransformSession, createInactiveTransformSession, createTransformPreviewFromTarget, createTransformSession, resolveTransformTarget, supportsTransformOperation, supportsTransformAxisConstraint } from "../core/transform-session";
@@ -14,6 +14,7 @@ import { buildGeneratedModelCollider } from "../geometry/model-instance-collider
 import { DEFAULT_GRID_SIZE, snapValueToGrid } from "../geometry/grid-snapping";
 import { createStarterMaterialSignature, createStarterMaterialTexture } from "../materials/starter-material-textures";
 import { applyAdvancedRenderingLightShadowFlags, applyAdvancedRenderingRenderableShadowFlags, configureAdvancedRenderingRenderer, createAdvancedRenderingComposer, resolveBoxVolumeRenderPaths } from "../rendering/advanced-rendering";
+import { updatePlanarReflectionCamera } from "../rendering/planar-reflection";
 import { collectWaterContactPatches, createWaterMaterial } from "../rendering/water-material";
 import { resolveViewportFocusTarget } from "./viewport-focus";
 import { createSoundEmitterMarkerMeshes } from "./viewport-entity-markers";
@@ -83,6 +84,7 @@ const MIN_SCALE_COMPONENT = 0.1;
 const MIN_BOX_SIZE_COMPONENT = 0.01;
 export class ViewportHost {
     scene = new Scene();
+    axesHelper = new AxesHelper(2);
     perspectiveCamera = new PerspectiveCamera(60, 1, 0.1, 1000);
     orthographicCamera = new OrthographicCamera(-10, 10, 10, -10, 0.1, 1000);
     renderer = new WebGLRenderer({ antialias: false, alpha: true });
@@ -103,6 +105,7 @@ export class ViewportHost {
     brushGroup = new Group();
     entityGroup = new Group();
     modelGroup = new Group();
+    waterReflectionCamera = new PerspectiveCamera();
     raycaster = new Raycaster();
     pointer = new Vector2();
     boxCreateIntersection = new Vector3();
@@ -134,6 +137,7 @@ export class ViewportHost {
     volumeTime = 0;
     previousFrameTime = 0;
     volumeAnimatedUniforms = [];
+    viewportWaterSurfaceBindings = [];
     boxCreatePreviewMesh = new Mesh(new BoxGeometry(DEFAULT_BOX_BRUSH_SIZE.x, DEFAULT_BOX_BRUSH_SIZE.y, DEFAULT_BOX_BRUSH_SIZE.z), new MeshStandardMaterial({
         color: BOX_CREATE_PREVIEW_FILL,
         emissive: BOX_CREATE_PREVIEW_FILL,
@@ -179,7 +183,6 @@ export class ViewportHost {
         this.perspectiveCamera.lookAt(this.cameraTarget);
         this.updatePerspectiveCameraSphericalFromPose();
         this.updateOrthographicCameraFrustum();
-        const axesHelper = new AxesHelper(2);
         this.gridHelpers.xy.rotation.x = Math.PI * 0.5;
         this.gridHelpers.yz.rotation.z = Math.PI * 0.5;
         this.gridHelpers.xz.visible = true;
@@ -188,7 +191,7 @@ export class ViewportHost {
         this.scene.add(this.gridHelpers.xz);
         this.scene.add(this.gridHelpers.xy);
         this.scene.add(this.gridHelpers.yz);
-        this.scene.add(axesHelper);
+        this.scene.add(this.axesHelper);
         this.scene.add(this.ambientLight);
         this.scene.add(this.sunLight);
         this.scene.add(this.localLightGroup);
