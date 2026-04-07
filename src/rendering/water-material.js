@@ -583,7 +583,7 @@ export function collectWaterContactPatches(volume, contactBounds, patchLimit = M
             maxZ = Math.max(maxZ, localPoint.z);
         }
 
-        if (maxX <= -halfX || minX >= halfX || maxZ <= -halfZ || minZ >= halfZ) {
+        if (maxX < -halfX || minX > halfX || maxZ < -halfZ || minZ > halfZ) {
             continue;
         }
 
@@ -593,7 +593,7 @@ export function collectWaterContactPatches(volume, contactBounds, patchLimit = M
 
         const clippedFootprint = clipPolygonToRectangle(buildConvexHull(localCorners.map((corner) => new Vector2(corner.x, corner.z))), -halfX, halfX, -halfZ, halfZ);
 
-        if (calculatePolygonArea(clippedFootprint) <= WATER_CONTACT_EPSILON) {
+        if (clippedFootprint.length < 2) {
             continue;
         }
 
