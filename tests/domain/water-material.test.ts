@@ -270,10 +270,72 @@ describe("water material helpers", () => {
       ]
     );
 
-    expect(patches.length).toBeGreaterThan(0);
+    expect(patches).toHaveLength(1);
     expect(patches[0]?.halfWidth ?? 0).toBeGreaterThan(0.2);
     expect(Math.abs(patches[0]?.axisX ?? 0)).toBeGreaterThan(0.2);
     expect(Math.abs(patches[0]?.axisZ ?? 0)).toBeGreaterThan(0.2);
+  });
+
+  it("merges adjacent triangle mesh strips into one longer foam band", () => {
+    const patches = collectWaterContactPatches(
+      {
+        center: {
+          x: 0,
+          y: 0,
+          z: 0
+        },
+        rotationDegrees: {
+          x: 0,
+          y: 0,
+          z: 0
+        },
+        size: {
+          x: 10,
+          y: 2,
+          z: 10
+        }
+      },
+      [
+        {
+          kind: "triangleMesh",
+          vertices: new Float32Array([
+            -2, 0, -1,
+            0, 0, -1,
+            0, 0, 1,
+            -2, 0, 1,
+            2, 0, -1,
+            2, 0, 1
+          ]),
+          indices: new Uint32Array([
+            0, 1, 2,
+            0, 2, 3,
+            1, 4, 5,
+            1, 5, 2
+          ]),
+          transform: {
+            position: {
+              x: 0,
+              y: 1,
+              z: 0
+            },
+            rotationDegrees: {
+              x: 32,
+              y: 20,
+              z: 12
+            },
+            scale: {
+              x: 1,
+              y: 1,
+              z: 1
+            }
+          }
+        }
+      ]
+    );
+
+    expect(patches).toHaveLength(1);
+    expect(patches[0]?.halfWidth ?? 0).toBeGreaterThan(1.2);
+    expect(patches[0]?.halfDepth ?? 0).toBeGreaterThan(0.05);
   });
 
   it("builds a shared quality shader material for visible tinted water", () => {
