@@ -15,6 +15,7 @@ import {
   LineBasicMaterial,
   LineSegments,
   Material,
+  Matrix4,
   Mesh,
   MeshBasicMaterial,
   MeshStandardMaterial,
@@ -32,6 +33,7 @@ import {
   SpotLight,
   Vector2,
   Vector3,
+  WebGLRenderTarget,
   WebGLRenderer
 } from "three";
 import { EffectComposer } from "postprocessing";
@@ -146,6 +148,7 @@ import {
   createAdvancedRenderingComposer,
   resolveBoxVolumeRenderPaths
 } from "../rendering/advanced-rendering";
+import { updatePlanarReflectionCamera } from "../rendering/planar-reflection";
 import { collectWaterContactPatches, createWaterMaterial } from "../rendering/water-material";
 import { resolveViewportFocusTarget } from "./viewport-focus";
 import { createSoundEmitterMarkerMeshes } from "./viewport-entity-markers";
