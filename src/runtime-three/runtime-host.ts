@@ -803,14 +803,18 @@ export class RuntimeHost {
   }
 
   private createWaterReflectionRenderTarget() {
-    const width = Math.max(128, Math.round((this.container?.clientWidth ?? this.domElement.width || 512) * 0.5));
-    const height = Math.max(128, Math.round((this.container?.clientHeight ?? this.domElement.height || 512) * 0.5));
+    const canvasWidth = this.container?.clientWidth ?? this.domElement.width;
+    const canvasHeight = this.container?.clientHeight ?? this.domElement.height;
+    const width = Math.max(128, Math.round(Math.max(canvasWidth, 512) * 0.5));
+    const height = Math.max(128, Math.round(Math.max(canvasHeight, 512) * 0.5));
     return new WebGLRenderTarget(width, height);
   }
 
   private resizeWaterReflectionTargets() {
-    const width = Math.max(128, Math.round((this.container?.clientWidth ?? this.domElement.width || 512) * 0.5));
-    const height = Math.max(128, Math.round((this.container?.clientHeight ?? this.domElement.height || 512) * 0.5));
+    const canvasWidth = this.container?.clientWidth ?? this.domElement.width;
+    const canvasHeight = this.container?.clientHeight ?? this.domElement.height;
+    const width = Math.max(128, Math.round(Math.max(canvasWidth, 512) * 0.5));
+    const height = Math.max(128, Math.round(Math.max(canvasHeight, 512) * 0.5));
 
     for (const binding of this.runtimeWaterContactUniforms) {
       binding.reflectionRenderTarget?.setSize(width, height);
