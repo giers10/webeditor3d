@@ -222,6 +222,47 @@ describe("water material helpers", () => {
     expect(Math.abs(clippedPatch?.axisZ ?? 0)).toBeGreaterThan(0.65);
   });
 
+  it("creates a foam patch when a bounds source only touches the water footprint edge", () => {
+    const patches = collectWaterContactPatches(
+      {
+        center: {
+          x: 0,
+          y: 0,
+          z: 0
+        },
+        rotationDegrees: {
+          x: 0,
+          y: 0,
+          z: 0
+        },
+        size: {
+          x: 4,
+          y: 2,
+          z: 4
+        }
+      },
+      [
+        {
+          min: {
+            x: 2,
+            y: 0.8,
+            z: -0.7
+          },
+          max: {
+            x: 3,
+            y: 1.2,
+            z: 0.7
+          }
+        }
+      ]
+    );
+
+    expect(patches).toHaveLength(1);
+    expect(patches[0]?.x).toBeCloseTo(2, 5);
+    expect(patches[0]?.halfWidth ?? 0).toBeGreaterThan(0.65);
+    expect(patches[0]?.halfDepth ?? 0).toBeGreaterThan(0);
+  });
+
   it("builds contact patches for transformed triangle meshes that cross the water surface", () => {
     const patches = collectWaterContactPatches(
       {
@@ -278,6 +319,60 @@ describe("water material helpers", () => {
     expect(Math.abs(patches[0]?.axisX ?? 0)).toBeGreaterThan(0.2);
     expect(Math.abs(patches[0]?.axisZ ?? 0)).toBeGreaterThan(0.2);
     expect(patches[0]?.halfDepth ?? 1).toBeLessThan(0.3);
+  });
+
+  it("creates foam for triangle mesh waterlines clipped to the water footprint edge", () => {
+    const patches = collectWaterContactPatches(
+      {
+        center: {
+          x: 0,
+          y: 0,
+          z: 0
+        },
+        rotationDegrees: {
+          x: 0,
+          y: 0,
+          z: 0
+        },
+        size: {
+          x: 4,
+          y: 2,
+          z: 4
+        }
+      },
+      [
+        {
+          kind: "triangleMesh",
+          vertices: new Float32Array([
+            1.6, -0.3, -0.8,
+            2.4, 0.3, -0.8,
+            2.4, 0.3, 0.8,
+            1.6, -0.3, 0.8
+          ]),
+          indices: new Uint32Array([0, 1, 2, 0, 2, 3]),
+          transform: {
+            position: {
+              x: 0,
+              y: 1,
+              z: 0
+            },
+            rotationDegrees: {
+              x: 0,
+              y: 0,
+              z: 0
+            },
+            scale: {
+              x: 1,
+              y: 1,
+              z: 1
+            }
+          }
+        }
+      ]
+    );
+
+    expect(patches.length).toBeGreaterThan(0);
+    expect(patches[0]?.halfDepth ?? 0).toBeGreaterThan(0);
   });
 
   it("uses narrow waterline bands for large sloped triangle surfaces", () => {
