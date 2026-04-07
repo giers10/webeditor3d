@@ -2274,8 +2274,7 @@ export class ViewportHost {
 
     for (const brush of Object.values(document.brushes)) {
       const geometry = buildBoxBrushDerivedMeshData(brush).geometry;
-      const contactPatches =
-        brush.volume.mode === "water" ? this.collectViewportWaterContactPatches(document, brush.id, brush.center, brush.rotationDegrees, brush.size) : [];
+      const contactPatches = brush.volume.mode === "water" ? this.collectViewportWaterContactPatches(document, brush) : [];
 
       const materials = BOX_FACE_IDS.map((faceId) =>
         this.createFaceMaterial(
@@ -3025,17 +3024,11 @@ export class ViewportHost {
     return texture;
   }
 
-  private collectViewportWaterContactPatches(
-    document: SceneDocument,
-    excludedBrushId: string,
-    center: Vec3,
-    rotationDegrees: Vec3,
-    size: Vec3
-  ) {
+  private collectViewportWaterContactPatches(document: SceneDocument, waterBrush: BoxBrush) {
     const contactBounds: Parameters<typeof collectWaterContactPatches>[1] = [];
 
     for (const brush of Object.values(document.brushes)) {
-      if (brush.id === excludedBrushId || brush.volume.mode !== "none") {
+      if (brush.id === waterBrush.id || brush.volume.mode !== "none") {
         continue;
       }
 
@@ -3091,11 +3084,12 @@ export class ViewportHost {
 
     return collectWaterContactPatches(
       {
-        center,
-        rotationDegrees,
-        size
+        center: waterBrush.center,
+        rotationDegrees: waterBrush.rotationDegrees,
+        size: waterBrush.size
       },
-      contactBounds
+      contactBounds,
+      waterBrush.volume.water.foamContactLimit
     );
   }
 
@@ -3167,8 +3161,7 @@ export class ViewportHost {
       );
 
       const previousMaterials = renderObjects.mesh.material;
-      const contactPatches =
-        brush.volume.mode === "water" ? this.collectViewportWaterContactPatches(this.currentDocument, brush.id, brush.center, brush.rotationDegrees, brush.size) : [];
+      const contactPatches = brush.volume.mode === "water" ? this.collectViewportWaterContactPatches(this.currentDocument, brush) : [];
       renderObjects.mesh.material = BOX_FACE_IDS.map((faceId) =>
         this.createFaceMaterial(
           brush,
