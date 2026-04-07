@@ -67,11 +67,7 @@ export function createFogQualityMaterial(options: FogQualityMaterialOptions): Fo
     varying vec3 vLocalPosition;
     #include <fog_pars_fragment>
 
-    #define FOG_STEPS 18
-
-    float saturate(float value) {
-      return clamp(value, 0.0, 1.0);
-    }
+    #define FOG_STEPS 10
 
     float hash13(vec3 point) {
       point = fract(point * 0.1031);
@@ -106,9 +102,9 @@ export function createFogQualityMaterial(options: FogQualityMaterialOptions): Fo
       float value = 0.0;
       float amplitude = 0.5;
 
-      for (int octave = 0; octave < 4; octave += 1) {
+      for (int octave = 0; octave < 3; octave += 1) {
         value += amplitude * noise3(point);
-        point = point * 2.02 + vec3(17.1, 31.7, 9.2);
+        point = point * 2.04 + vec3(17.1, 31.7, 9.2);
         amplitude *= 0.5;
       }
 
@@ -151,22 +147,14 @@ export function createFogQualityMaterial(options: FogQualityMaterialOptions): Fo
         return 0.0;
       }
 
-      vec3 drift = vec3(time * 0.12, time * 0.05, -time * 0.08);
-      vec3 warpSource = samplePosition * 0.65 + drift;
-      vec3 warp = vec3(
-        fbm(warpSource + vec3(13.1, 0.0, 0.0)),
-        fbm(warpSource + vec3(0.0, 7.9, 0.0)),
-        fbm(warpSource + vec3(0.0, 0.0, 19.7))
-      ) - 0.5;
-      vec3 cloudPosition = samplePosition + warp * (0.7 + shape * 0.5);
-
-      float primary = fbm(cloudPosition * 0.78 + drift);
-      float secondary = fbm(cloudPosition * 1.56 - drift * 1.35);
-      float wisps = fbm(cloudPosition * 2.35 + vec3(0.0, time * 0.09, 0.0));
-      float cloud = smoothstep(0.28, 0.94, mix(primary, secondary, 0.45) + wisps * 0.18);
+      vec3 drift = vec3(time * 0.1, time * 0.04, -time * 0.065);
+      float primary = fbm(samplePosition * 0.58 + drift);
+      float secondary = fbm(samplePosition * 1.18 - drift * 1.45 + vec3(4.3, 9.7, 2.1));
+      float wisps = noise3(samplePosition * 2.15 + vec3(0.0, time * 0.08, 0.0));
+      float cloud = smoothstep(0.34, 0.92, primary * 0.68 + secondary * 0.24 + wisps * 0.08);
       float centerBias = 1.0 - smoothstep(0.18, 1.08, length(normalizedPosition * vec3(1.05, 0.92, 1.05)));
       float verticalBias = mix(0.9, 1.08, smoothstep(-0.75, 0.35, normalizedPosition.y));
-      float carvedCloud = mix(0.35, 1.1, cloud) * mix(0.72, 1.0, centerBias);
+      float carvedCloud = mix(0.42, 1.04, cloud) * mix(0.72, 1.0, centerBias);
 
       return volumeFogDensity * shape * carvedCloud * verticalBias;
     }
@@ -197,13 +185,13 @@ export function createFogQualityMaterial(options: FogQualityMaterialOptions): Fo
         }
 
         vec3 normalizedPosition = samplePosition / max(volumeHalfSize, vec3(1e-3));
-        float forwardScatter = pow(1.0 - abs(dot(rayDirection, normalize(samplePosition + vec3(1e-3, 2e-3, -1e-3)))), 2.0);
         float topLight = smoothstep(-0.2, 0.95, normalizedPosition.y);
-        float coolShadow = smoothstep(0.15, 0.9, fbm(samplePosition * 0.92 - vec3(time * 0.11, 0.0, time * 0.06)));
-        vec3 sampleColor = mix(volumeFogColor * 0.74, vec3(1.0), 0.08 + topLight * 0.12 + forwardScatter * 0.18);
+        float forwardScatter = 1.0 - abs(dot(rayDirection, normalize(samplePosition + vec3(1e-3, 2e-3, -1e-3))));
+        float coolShadow = smoothstep(0.18, 0.88, noise3(samplePosition * 0.88 - vec3(time * 0.08, 0.0, time * 0.05)));
+        vec3 sampleColor = mix(volumeFogColor * 0.76, vec3(1.0), 0.06 + topLight * 0.12 + forwardScatter * 0.12);
         sampleColor = mix(sampleColor * 0.92, sampleColor, coolShadow);
 
-        float extinction = sampleDensity * stepLength * 1.65;
+        float extinction = sampleDensity * stepLength * 1.5;
         float sampleAlpha = 1.0 - exp(-extinction);
         accumulatedColor += transmittance * sampleColor * sampleAlpha;
         transmittance *= 1.0 - sampleAlpha;
