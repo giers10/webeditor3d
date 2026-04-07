@@ -3055,6 +3055,7 @@ export class ViewportHost {
     }
 
     const reflectionMode = this.getWaterReflectionMode();
+    const now = performance.now();
 
     for (const binding of this.viewportWaterSurfaceBindings) {
       if (
@@ -3082,6 +3083,11 @@ export class ViewportHost {
 
       if (!canRenderReflection || binding.reflectionRenderTarget === null) {
         binding.reflectionEnabledUniform.value = 0;
+        continue;
+      }
+
+      if (binding.reflectionTextureUniform.value !== null && now - binding.lastReflectionUpdateTime < WATER_REFLECTION_UPDATE_INTERVAL_MS) {
+        binding.reflectionEnabledUniform.value = 0.36;
         continue;
       }
 
@@ -3131,19 +3137,23 @@ export class ViewportHost {
 
       const previousAutoClear = this.renderer.autoClear;
       const previousRenderTarget = this.renderer.getRenderTarget();
-      this.renderer.autoClear = true;
-      this.renderer.setRenderTarget(binding.reflectionRenderTarget);
-      this.renderer.clear();
-      this.renderer.render(this.scene, this.waterReflectionCamera);
-      this.renderer.setRenderTarget(previousRenderTarget);
-      this.renderer.autoClear = previousAutoClear;
+      try {
+        this.renderer.autoClear = true;
+        this.renderer.setRenderTarget(binding.reflectionRenderTarget);
+        this.renderer.clear();
+        this.renderer.render(this.scene, this.waterReflectionCamera);
+      } finally {
+        this.renderer.setRenderTarget(previousRenderTarget);
+        this.renderer.autoClear = previousAutoClear;
 
-      for (const hiddenObject of hiddenObjects) {
-        hiddenObject.object.visible = hiddenObject.visible;
+        for (const hiddenObject of hiddenObjects) {
+          hiddenObject.object.visible = hiddenObject.visible;
+        }
       }
 
       binding.reflectionTextureUniform.value = binding.reflectionRenderTarget.texture;
       binding.reflectionEnabledUniform.value = 0.36;
+      binding.lastReflectionUpdateTime = now;
     }
   }
 
