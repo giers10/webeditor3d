@@ -2961,6 +2961,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     setStatusMessage(
       `Added a ${actionType === "playSound" ? "play sound" : "stop sound"} link to the selected ${selectedInteractionSource.kind === "triggerVolume" ? "Trigger Volume" : "Interactable"}.`
     );
+  };
 
   const handleDeleteInteractionLink = (linkId: string) => {
     try {
