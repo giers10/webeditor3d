@@ -184,6 +184,14 @@ interface BrushRenderObjects {
   }>;
 }
 
+interface ViewportWaterSurfaceBinding {
+  brush: BoxBrush;
+  reflectionTextureUniform: { value: unknown } | null;
+  reflectionMatrixUniform: { value: Matrix4 } | null;
+  reflectionEnabledUniform: { value: number } | null;
+  reflectionRenderTarget: WebGLRenderTarget | null;
+}
+
 const BRUSH_SELECTED_EDGE_COLOR = 0xf7d2aa;
 const BRUSH_HOVERED_EDGE_COLOR = 0xb7cbec;
 const BRUSH_EDGE_COLOR = 0x0d1017;
