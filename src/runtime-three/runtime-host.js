@@ -666,6 +666,9 @@ export class RuntimeHost {
         this.brushMeshes.clear();
         this.volumeAnimatedMaterials.length = 0;
         this.volumeAnimatedUniforms.length = 0;
+        for (const binding of this.runtimeWaterContactUniforms) {
+            binding.reflectionRenderTarget?.dispose();
+        }
         this.runtimeWaterContactUniforms.length = 0;
     }
     createPlayerWaterContactBounds() {
@@ -749,7 +752,7 @@ export class RuntimeHost {
             center: brush.center,
             rotationDegrees: brush.rotationDegrees,
             size: brush.size
-        }, contactBounds);
+        }, contactBounds, brush.volume.water.foamContactLimit);
     }
     collectRuntimePlayerWaterContactPatches(brush) {
         const playerBounds = this.createPlayerWaterContactBounds();
@@ -760,14 +763,14 @@ export class RuntimeHost {
             center: brush.center,
             rotationDegrees: brush.rotationDegrees,
             size: brush.size
-        }, [playerBounds]);
+        }, [playerBounds], brush.volume.water.foamContactLimit);
     }
-    mergeRuntimeWaterContactPatches(staticContactPatches, dynamicContactPatches) {
-        return [...dynamicContactPatches, ...staticContactPatches].slice(0, 6);
+    mergeRuntimeWaterContactPatches(brush, staticContactPatches, dynamicContactPatches) {
+        return [...dynamicContactPatches, ...staticContactPatches].slice(0, brush.volume.water.foamContactLimit);
     }
     updateRuntimeWaterContactUniforms() {
         for (const binding of this.runtimeWaterContactUniforms) {
-            const mergedPatches = this.mergeRuntimeWaterContactPatches(binding.staticContactPatches, this.collectRuntimePlayerWaterContactPatches(binding.brush));
+            const mergedPatches = this.mergeRuntimeWaterContactPatches(binding.brush, binding.staticContactPatches, this.collectRuntimePlayerWaterContactPatches(binding.brush));
             binding.uniform.value = createWaterContactPatchUniformValue(mergedPatches);
             binding.axisUniform.value = createWaterContactPatchAxisUniformValue(mergedPatches);
             binding.shapeUniform.value = createWaterContactPatchShapeUniformValue(mergedPatches);
@@ -800,6 +803,7 @@ export class RuntimeHost {
         this.domElement.height = height;
         this.renderer?.setSize(width, height, false);
         this.advancedRenderingComposer?.setSize(width, height);
+        this.resizeWaterReflectionTargets();
     }
     render = () => {
         this.animationFrame = window.requestAnimationFrame(this.render);
@@ -832,6 +836,7 @@ export class RuntimeHost {
         }
         if (this.runtimeWaterContactUniforms.length > 0) {
             this.updateRuntimeWaterContactUniforms();
+            this.updateRuntimeWaterReflections();
         }
         this.updateUnderwaterSceneFog();
         if (this.advancedRenderingComposer !== null) {
