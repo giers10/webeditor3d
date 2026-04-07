@@ -1,6 +1,7 @@
 import { cloneMaterialRegistry, createStarterMaterialRegistry } from "../materials/starter-material-library";
 import { createDefaultWorldSettings } from "./world-settings";
-export const SCENE_DOCUMENT_VERSION = 20;
+export const SCENE_DOCUMENT_VERSION = 21;
+export const WATER_SURFACE_DISPLACEMENT_SCENE_DOCUMENT_VERSION = 21;
 export const WHITEBOX_BOX_VOLUME_SCENE_DOCUMENT_VERSION = 20;
 export const WHITEBOX_GEOMETRY_SCENE_DOCUMENT_VERSION = 19;
 export const WHITEBOX_FLOAT_TRANSFORM_SCENE_DOCUMENT_VERSION = 18;
