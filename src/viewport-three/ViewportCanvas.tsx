@@ -88,6 +88,7 @@ export function ViewportCanvas({
 }: ViewportCanvasProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const hostRef = useRef<ViewportHost | null>(null);
+  const shouldRenderPanel = layoutMode === "quad" || isActivePanel;
   const [viewportMessage, setViewportMessage] = useState<string | null>(null);
   const [hoveredWhiteboxLabel, setHoveredWhiteboxLabel] = useState<string | null>(null);
 
@@ -102,6 +103,7 @@ export function ViewportCanvas({
       const viewportHost = new ViewportHost();
       hostRef.current = viewportHost;
       viewportHost.setPanelId(panelId);
+      viewportHost.setRenderEnabled(shouldRenderPanel);
       viewportHost.mount(container);
       setViewportMessage(null);
 
@@ -115,6 +117,10 @@ export function ViewportCanvas({
       return;
     }
   }, []);
+
+  useEffect(() => {
+    hostRef.current?.setRenderEnabled(shouldRenderPanel);
+  }, [shouldRenderPanel]);
 
   useEffect(() => {
     hostRef.current?.setPanelId(panelId);
