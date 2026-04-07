@@ -196,7 +196,8 @@ function readBoxBrushVolumeSettings(value, label) {
                 colorHex: water.colorHex === undefined ? defaults.colorHex : expectHexColor(water.colorHex, `${label}.water.colorHex`),
                 surfaceOpacity: readOptionalNonNegativeFiniteNumber(water.surfaceOpacity, `${label}.water.surfaceOpacity`, defaults.surfaceOpacity),
                 waveStrength: readOptionalNonNegativeFiniteNumber(water.waveStrength, `${label}.water.waveStrength`, defaults.waveStrength),
-                foamContactLimit: readOptionalPositiveIntegerWithMax(water.foamContactLimit, `${label}.water.foamContactLimit`, defaults.foamContactLimit, MAX_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT)
+                foamContactLimit: readOptionalPositiveIntegerWithMax(water.foamContactLimit, `${label}.water.foamContactLimit`, defaults.foamContactLimit, MAX_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT),
+                surfaceDisplacementEnabled: readOptionalBoolean(water.surfaceDisplacementEnabled, `${label}.water.surfaceDisplacementEnabled`, defaults.surfaceDisplacementEnabled)
             }
         };
     }
