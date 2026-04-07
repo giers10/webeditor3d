@@ -3038,6 +3038,7 @@ export class ViewportHost {
 
     for (const binding of this.viewportWaterSurfaceBindings) {
       binding.reflectionRenderTarget?.setSize(width, height);
+      binding.lastReflectionUpdateTime = Number.NEGATIVE_INFINITY;
     }
   }
 
