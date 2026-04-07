@@ -1033,7 +1033,7 @@ export class RuntimeHost {
         size: brush.size
       },
       contactBounds,
-      brush.volume.water.foamContactLimit
+      this.getRuntimeWaterFoamContactLimit(brush)
     );
   }
 
@@ -1051,8 +1051,12 @@ export class RuntimeHost {
         size: brush.size
       },
       [playerBounds],
-      brush.volume.water.foamContactLimit
+      this.getRuntimeWaterFoamContactLimit(brush)
     );
+  }
+
+  private getRuntimeWaterFoamContactLimit(brush: RuntimeBoxBrushInstance) {
+    return brush.volume.mode === "water" ? brush.volume.water.foamContactLimit : 0;
   }
 
   private mergeRuntimeWaterContactPatches(
@@ -1060,7 +1064,7 @@ export class RuntimeHost {
     staticContactPatches: ReturnType<typeof collectWaterContactPatches>,
     dynamicContactPatches: ReturnType<typeof collectWaterContactPatches>
   ) {
-    return [...dynamicContactPatches, ...staticContactPatches].slice(0, brush.volume.water.foamContactLimit);
+    return [...dynamicContactPatches, ...staticContactPatches].slice(0, this.getRuntimeWaterFoamContactLimit(brush));
   }
 
   private updateRuntimeWaterContactUniforms() {
