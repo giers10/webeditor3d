@@ -7,17 +7,29 @@ export interface WaterContactBounds {
   max: Vec3;
 }
 
+export interface WaterContactOrientedBox {
+  kind: "orientedBox";
+  center: Vec3;
+  rotationDegrees: Vec3;
+  size: Vec3;
+}
+
+export type WaterContactSource = WaterContactBounds | WaterContactOrientedBox;
+
 export interface WaterContactPatch {
   x: number;
   z: number;
   halfWidth: number;
   halfDepth: number;
+  axisX: number;
+  axisZ: number;
 }
 
 export interface WaterMaterialResult {
   material: MeshBasicMaterial | ShaderMaterial;
   animationUniform: { value: number } | null;
   contactPatchesUniform: { value: Vector4[] } | null;
+  contactPatchAxesUniform: { value: Vector2[] } | null;
 }
 
 interface WaterMaterialOptions {
@@ -58,6 +70,28 @@ function createBoundsCorners(bounds: WaterContactBounds) {
   ];
 }
 
+function createOrientedBoxCorners(box: WaterContactOrientedBox) {
+  const halfSize = {
+    x: box.size.x * 0.5,
+    y: box.size.y * 0.5,
+    z: box.size.z * 0.5
+  };
+  const rotation = new Quaternion().setFromEuler(
+    new Euler((box.rotationDegrees.x * Math.PI) / 180, (box.rotationDegrees.y * Math.PI) / 180, (box.rotationDegrees.z * Math.PI) / 180, "XYZ")
+  );
+
+  return [
+    new Vector3(-halfSize.x, -halfSize.y, -halfSize.z),
+    new Vector3(-halfSize.x, -halfSize.y, halfSize.z),
+    new Vector3(-halfSize.x, halfSize.y, -halfSize.z),
+    new Vector3(-halfSize.x, halfSize.y, halfSize.z),
+    new Vector3(halfSize.x, -halfSize.y, -halfSize.z),
+    new Vector3(halfSize.x, -halfSize.y, halfSize.z),
+    new Vector3(halfSize.x, halfSize.y, -halfSize.z),
+    new Vector3(halfSize.x, halfSize.y, halfSize.z)
+  ].map((corner) => corner.applyQuaternion(rotation).add(new Vector3(box.center.x, box.center.y, box.center.z)));
+}
+
 function createInverseVolumeRotation(rotationDegrees: Vec3) {
   return new Quaternion()
     .setFromEuler(
@@ -76,8 +110,8 @@ export function collectWaterContactPatches(volume: OrientedWaterVolume, contactB
   const localPoint = new Vector3();
   const patches: WaterContactPatch[] = [];
 
-  for (const bounds of contactBounds) {
-    const corners = createBoundsCorners(bounds);
+  for (const source of contactBounds) {
+    const corners = "kind" in source ? createOrientedBoxCorners(source) : createBoundsCorners(source);
     let minX = Number.POSITIVE_INFINITY;
     let minY = Number.POSITIVE_INFINITY;
     let minZ = Number.POSITIVE_INFINITY;
@@ -124,11 +158,79 @@ export function collectWaterContactPatches(volume: OrientedWaterVolume, contactB
       continue;
     }
 
+    let axisX = 1;
+    let axisZ = 0;
+    let halfWidth = overlapWidth * 0.5;
+    let halfDepth = overlapDepth * 0.5;
+    let centerX = (overlapMinX + overlapMaxX) * 0.5;
+    let centerZ = (overlapMinZ + overlapMaxZ) * 0.5;
+
+    if ("kind" in source) {
+      const sourceRotation = new Quaternion().setFromEuler(
+        new Euler(
+          (source.rotationDegrees.x * Math.PI) / 180,
+          (source.rotationDegrees.y * Math.PI) / 180,
+          (source.rotationDegrees.z * Math.PI) / 180,
+          "XYZ"
+        )
+      );
+      const projectedSourceX = new Vector2(1, 0)
+        .set(
+          new Vector3(1, 0, 0).applyQuaternion(sourceRotation).applyQuaternion(inverseRotation).x,
+          new Vector3(1, 0, 0).applyQuaternion(sourceRotation).applyQuaternion(inverseRotation).z
+        );
+      const projectedSourceZ = new Vector2(1, 0)
+        .set(
+          new Vector3(0, 0, 1).applyQuaternion(sourceRotation).applyQuaternion(inverseRotation).x,
+          new Vector3(0, 0, 1).applyQuaternion(sourceRotation).applyQuaternion(inverseRotation).z
+        );
+      const primaryAxis = projectedSourceX.lengthSq() >= projectedSourceZ.lengthSq() ? projectedSourceX : projectedSourceZ;
+
+      if (primaryAxis.lengthSq() > WATER_CONTACT_EPSILON) {
+        primaryAxis.normalize();
+        const secondaryAxis = new Vector2(-primaryAxis.y, primaryAxis.x);
+        if (projectedSourceZ.lengthSq() > WATER_CONTACT_EPSILON && projectedSourceZ.clone().normalize().dot(secondaryAxis) < 0) {
+          secondaryAxis.negate();
+        }
+
+        let minPrimary = Number.POSITIVE_INFINITY;
+        let maxPrimary = Number.NEGATIVE_INFINITY;
+        let minSecondary = Number.POSITIVE_INFINITY;
+        let maxSecondary = Number.NEGATIVE_INFINITY;
+
+        for (const corner of corners) {
+          localPoint.copy(corner);
+          localPoint.x -= volume.center.x;
+          localPoint.y -= volume.center.y;
+          localPoint.z -= volume.center.z;
+          localPoint.applyQuaternion(inverseRotation);
+          const projectedPoint = new Vector2(localPoint.x, localPoint.z);
+          const primaryDistance = projectedPoint.dot(primaryAxis);
+          const secondaryDistance = projectedPoint.dot(secondaryAxis);
+          minPrimary = Math.min(minPrimary, primaryDistance);
+          maxPrimary = Math.max(maxPrimary, primaryDistance);
+          minSecondary = Math.min(minSecondary, secondaryDistance);
+          maxSecondary = Math.max(maxSecondary, secondaryDistance);
+        }
+
+        const patchCenterPrimary = (minPrimary + maxPrimary) * 0.5;
+        const patchCenterSecondary = (minSecondary + maxSecondary) * 0.5;
+        centerX = primaryAxis.x * patchCenterPrimary + secondaryAxis.x * patchCenterSecondary;
+        centerZ = primaryAxis.y * patchCenterPrimary + secondaryAxis.y * patchCenterSecondary;
+        halfWidth = (maxPrimary - minPrimary) * 0.5;
+        halfDepth = (maxSecondary - minSecondary) * 0.5;
+        axisX = primaryAxis.x;
+        axisZ = primaryAxis.y;
+      }
+    }
+
     patches.push({
-      x: (overlapMinX + overlapMaxX) * 0.5,
-      z: (overlapMinZ + overlapMaxZ) * 0.5,
-      halfWidth: overlapWidth * 0.5,
-      halfDepth: overlapDepth * 0.5
+      x: centerX,
+      z: centerZ,
+      halfWidth,
+      halfDepth,
+      axisX,
+      axisZ
     });
   }
 
@@ -144,6 +246,13 @@ export function createWaterContactPatchUniformValue(contactPatches?: WaterContac
   });
 }
 
+export function createWaterContactPatchAxisUniformValue(contactPatches?: WaterContactPatch[]): Vector2[] {
+  return Array.from({ length: MAX_WATER_CONTACT_PATCHES }, (_, index) => {
+    const patch = contactPatches?.[index];
+    return new Vector2(patch?.axisX ?? 1, patch?.axisZ ?? 0);
+  });
+}
+
 export function createWaterMaterial(options: WaterMaterialOptions): WaterMaterialResult {
   if (options.wireframe) {
     return {
@@ -155,7 +264,8 @@ export function createWaterMaterial(options: WaterMaterialOptions): WaterMateria
         depthWrite: false
       }),
       animationUniform: null,
-      contactPatchesUniform: null
+      contactPatchesUniform: null,
+      contactPatchAxesUniform: null
     };
   }
 
@@ -168,13 +278,15 @@ export function createWaterMaterial(options: WaterMaterialOptions): WaterMateria
         depthWrite: false
       }),
       animationUniform: null,
-      contactPatchesUniform: null
+      contactPatchesUniform: null,
+      contactPatchAxesUniform: null
     };
   }
 
   const animationUniform = { value: options.time };
   const halfSize = new Vector2(Math.max(options.halfSize.x, WATER_CONTACT_EPSILON), Math.max(options.halfSize.z, WATER_CONTACT_EPSILON));
   const contactPatchesUniform = { value: createWaterContactPatchUniformValue(options.contactPatches) };
+  const contactPatchAxesUniform = { value: createWaterContactPatchAxisUniformValue(options.contactPatches) };
   const waveStrength = Math.max(0, options.waveStrength);
   const waveAmplitude = 0.016 + Math.min(0.12, waveStrength * 0.06);
   const clampedOpacity = Math.max(0.14, Math.min(1, options.opacity));
@@ -237,6 +349,7 @@ export function createWaterMaterial(options: WaterMaterialOptions): WaterMateria
     uniform float isTopFace;
     uniform vec2 halfSize;
     uniform vec4 contactPatches[${MAX_WATER_CONTACT_PATCHES}];
+    uniform vec2 contactPatchAxes[${MAX_WATER_CONTACT_PATCHES}];
 
     varying vec2 vLocalSurfaceUv;
     varying vec3 vWaveNormal;
@@ -300,7 +413,10 @@ export function createWaterMaterial(options: WaterMaterialOptions): WaterMateria
             continue;
           }
 
-          vec2 regionDelta = abs(vLocalSurfaceUv - patchData.xy) - patchData.zw;
+          vec2 patchAxis = contactPatchAxes[patchIndex];
+          vec2 patchPerpendicular = vec2(-patchAxis.y, patchAxis.x);
+          vec2 patchLocalUv = vec2(dot(vLocalSurfaceUv - patchData.xy, patchAxis), dot(vLocalSurfaceUv - patchData.xy, patchPerpendicular));
+          vec2 regionDelta = abs(patchLocalUv) - patchData.zw;
           vec2 outsideDelta = max(regionDelta, 0.0);
           float outsideDistance = length(outsideDelta);
           float insideDistance = min(max(regionDelta.x, regionDelta.y), 0.0);
@@ -347,7 +463,8 @@ export function createWaterMaterial(options: WaterMaterialOptions): WaterMateria
       waveAmplitude: { value: waveAmplitude },
       isTopFace: { value: topFaceFlag },
       halfSize: { value: halfSize },
-      contactPatches: contactPatchesUniform
+      contactPatches: contactPatchesUniform,
+      contactPatchAxes: contactPatchAxesUniform
     },
     transparent: true,
     depthWrite: false,
@@ -357,6 +474,7 @@ export function createWaterMaterial(options: WaterMaterialOptions): WaterMateria
   return {
     material,
     animationUniform,
-    contactPatchesUniform
+    contactPatchesUniform,
+    contactPatchAxesUniform
   };
 }
