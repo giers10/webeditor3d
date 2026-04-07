@@ -614,6 +614,107 @@ function createSegmentPatchFromCluster(cluster: {
   };
 }
 
+function createSignedDistanceToPatchRegion(point: Vector2, center: Vector2, axis: Vector2, halfExtents: Vector2) {
+  const patchPerpendicular = new Vector2(-axis.y, axis.x);
+  const patchLocalUv = new Vector2(point.clone().sub(center).dot(axis), point.clone().sub(center).dot(patchPerpendicular));
+  const regionDelta = new Vector2(Math.abs(patchLocalUv.x) - halfExtents.x, Math.abs(patchLocalUv.y) - halfExtents.y);
+  const outsideDistance = new Vector2(Math.max(regionDelta.x, 0), Math.max(regionDelta.y, 0)).length();
+  const insideDistance = Math.min(Math.max(regionDelta.x, regionDelta.y), 0);
+  return outsideDistance + insideDistance;
+}
+
+function createBoxPatchFromSegmentLoop(segments: WaterContactPatch[], minimumThickness: number): WaterContactPatch | null {
+  if (segments.length < 3) {
+    return null;
+  }
+
+  const canonicalAxes: Vector2[] = [];
+
+  for (const segment of segments) {
+    if (segment.shape !== "segment") {
+      return null;
+    }
+
+    const axis = new Vector2(segment.axisX, segment.axisZ);
+    if (axis.lengthSq() <= WATER_CONTACT_EPSILON) {
+      continue;
+    }
+
+    axis.normalize();
+
+    if (axis.x < 0 || (Math.abs(axis.x) <= WATER_CONTACT_EPSILON && axis.y < 0)) {
+      axis.multiplyScalar(-1);
+    }
+
+    const existingAxis = canonicalAxes.find((candidate) => Math.abs(candidate.dot(axis)) >= 0.94);
+    if (existingAxis === undefined) {
+      canonicalAxes.push(axis);
+    }
+  }
+
+  if (canonicalAxes.length < 2) {
+    return null;
+  }
+
+  let foundOrthogonalAxes = false;
+
+  for (let leftIndex = 0; leftIndex < canonicalAxes.length; leftIndex += 1) {
+    for (let rightIndex = leftIndex + 1; rightIndex < canonicalAxes.length; rightIndex += 1) {
+      const leftAxis = canonicalAxes[leftIndex];
+      const rightAxis = canonicalAxes[rightIndex];
+
+      if (leftAxis === undefined || rightAxis === undefined) {
+        continue;
+      }
+
+      if (Math.abs(leftAxis.dot(rightAxis)) <= 0.35) {
+        foundOrthogonalAxes = true;
+        break;
+      }
+    }
+
+    if (foundOrthogonalAxes) {
+      break;
+    }
+  }
+
+  if (!foundOrthogonalAxes) {
+    return null;
+  }
+
+  const projectedPoints: Vector2[] = [];
+
+  for (const segment of segments) {
+    const [startPoint, endPoint] = createSegmentEndpoints(segment);
+    projectedPoints.push(startPoint, endPoint);
+  }
+
+  const candidatePatch = createPatchFromProjectedPoints(projectedPoints, null, minimumThickness);
+  if (candidatePatch === null) {
+    return null;
+  }
+
+  const candidateAxis = new Vector2(candidatePatch.axisX, candidatePatch.axisZ);
+  if (candidateAxis.lengthSq() <= WATER_CONTACT_EPSILON) {
+    return null;
+  }
+
+  candidateAxis.normalize();
+  const candidateCenter = new Vector2(candidatePatch.x, candidatePatch.z);
+  const candidateHalfExtents = new Vector2(candidatePatch.halfWidth, candidatePatch.halfDepth);
+  const acceptanceDistance = Math.max(minimumThickness * 2.2, 0.14);
+
+  for (const point of projectedPoints) {
+    const signedDistance = createSignedDistanceToPatchRegion(point, candidateCenter, candidateAxis, candidateHalfExtents);
+
+    if (Math.abs(signedDistance) > acceptanceDistance) {
+      return null;
+    }
+  }
+
+  return candidatePatch;
+}
+
 function getTriangleMeshMergeSettings(mergeProfile: WaterContactTriangleMesh["mergeProfile"], minimumThickness: number) {
   if (mergeProfile === "aggressive") {
     return {
@@ -781,7 +882,15 @@ function appendTriangleMeshContactPatches(
     }
   }
 
-  patches.push(...mergeTriangleMeshContactPatches(rawPatches, bandMinimumThickness, source.mergeProfile));
+  const mergedPatches = mergeTriangleMeshContactPatches(rawPatches, bandMinimumThickness, source.mergeProfile);
+  const loopPatch = createBoxPatchFromSegmentLoop(mergedPatches, bandMinimumThickness);
+
+  if (loopPatch !== null) {
+    patches.push(loopPatch);
+    return;
+  }
+
+  patches.push(...mergedPatches);
 }
 
 export function collectWaterContactPatches(volume: OrientedWaterVolume, contactBounds: WaterContactSource[], patchLimit = MAX_WATER_CONTACT_PATCHES): WaterContactPatch[] {
