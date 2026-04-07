@@ -1,25 +1,32 @@
 import { Euler, Quaternion, Vector3 } from "three";
 
 const MIN_UNDERWATER_FOG_DENSITY = 0.018;
-const MAX_UNDERWATER_FOG_DENSITY = 0.055;
+const MAX_UNDERWATER_FOG_DENSITY = 0.12;
 
 function clampNumber(value, min, max) {
     return Math.max(min, Math.min(max, value));
 }
 
-function isPointInsideWaterVolume(point, volume) {
+function getWaterVolumeLocalPoint(point, volume) {
     const offset = new Vector3(point.x - volume.center.x, point.y - volume.center.y, point.z - volume.center.z);
     const inverseRotation = new Quaternion()
         .setFromEuler(new Euler((volume.rotationDegrees.x * Math.PI) / 180, (volume.rotationDegrees.y * Math.PI) / 180, (volume.rotationDegrees.z * Math.PI) / 180, "XYZ"))
         .invert();
     offset.applyQuaternion(inverseRotation);
+    return offset;
+}
+function isPointInsideWaterVolume(point, volume) {
+    const offset = getWaterVolumeLocalPoint(point, volume);
     return (Math.abs(offset.x) <= volume.size.x * 0.5 &&
         Math.abs(offset.y) <= volume.size.y * 0.5 &&
         Math.abs(offset.z) <= volume.size.z * 0.5);
 }
 
-function resolveUnderwaterFogDensity(volume) {
-    return clampNumber(MIN_UNDERWATER_FOG_DENSITY + volume.surfaceOpacity * 0.016 + Math.max(volume.waveStrength, 0) * 0.01, MIN_UNDERWATER_FOG_DENSITY, MAX_UNDERWATER_FOG_DENSITY);
+function resolveUnderwaterFogDensity(volume, point) {
+    const localPoint = getWaterVolumeLocalPoint(point, volume);
+    const halfHeight = Math.max(volume.size.y * 0.5, 0.0001);
+    const submersionDepth = clampNumber((halfHeight - localPoint.y) / (halfHeight * 2), 0, 1);
+    return clampNumber(0.045 + volume.surfaceOpacity * 0.035 + Math.max(volume.waveStrength, 0) * 0.015 + submersionDepth * 0.03, MIN_UNDERWATER_FOG_DENSITY, MAX_UNDERWATER_FOG_DENSITY);
 }
 
 export function resolveUnderwaterFogState(runtimeScene, telemetry) {
@@ -32,6 +39,6 @@ export function resolveUnderwaterFogState(runtimeScene, telemetry) {
     }
     return {
         colorHex: containingVolume.colorHex,
-        density: resolveUnderwaterFogDensity(containingVolume)
+        density: resolveUnderwaterFogDensity(containingVolume, telemetry.eyePosition)
     };
 }
