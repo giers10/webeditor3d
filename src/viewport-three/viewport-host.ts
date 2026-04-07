@@ -326,6 +326,7 @@ export class ViewportHost {
   private previousFrameTime = 0;
   private readonly volumeAnimatedUniforms: Array<{ value: number }> = [];
   private readonly viewportWaterSurfaceBindings: ViewportWaterSurfaceBinding[] = [];
+  private preservedViewportWaterReflectionTargets: Map<string, WebGLRenderTarget | null> | null = null;
   private readonly boxCreatePreviewMesh = new Mesh(
     new BoxGeometry(DEFAULT_BOX_BRUSH_SIZE.x, DEFAULT_BOX_BRUSH_SIZE.y, DEFAULT_BOX_BRUSH_SIZE.z),
     new MeshStandardMaterial({
@@ -2899,12 +2900,15 @@ export class ViewportHost {
       }
 
       if (faceId === "posY" && waterMaterial.reflectionMatrixUniform !== null && waterMaterial.reflectionEnabledUniform !== null) {
+        const preservedReflectionRenderTarget = this.claimPreservedViewportWaterReflectionTarget(brush.id);
         this.viewportWaterSurfaceBindings.push({
           brush,
           reflectionTextureUniform: waterMaterial.reflectionTextureUniform,
           reflectionMatrixUniform: waterMaterial.reflectionMatrixUniform,
           reflectionEnabledUniform: waterMaterial.reflectionEnabledUniform,
-          reflectionRenderTarget: this.getWaterReflectionMode() !== "none" ? this.createWaterReflectionRenderTarget() : null,
+          reflectionRenderTarget:
+            preservedReflectionRenderTarget ??
+            (this.getWaterReflectionMode() !== "none" ? this.createWaterReflectionRenderTarget() : null),
           lastReflectionUpdateTime: Number.NEGATIVE_INFINITY
         });
       }
@@ -3042,6 +3046,47 @@ export class ViewportHost {
     }
   }
 
+  private resetViewportWaterSurfaceBindings(preserveRenderTargets: boolean) {
+    const preservedReflectionTargets = new Map<string, WebGLRenderTarget | null>();
+
+    this.volumeAnimatedUniforms.length = 0;
+
+    for (const binding of this.viewportWaterSurfaceBindings) {
+      if (preserveRenderTargets && !preservedReflectionTargets.has(binding.brush.id)) {
+        preservedReflectionTargets.set(binding.brush.id, binding.reflectionRenderTarget);
+        continue;
+      }
+
+      binding.reflectionRenderTarget?.dispose();
+    }
+
+    this.viewportWaterSurfaceBindings.length = 0;
+
+    return preservedReflectionTargets;
+  }
+
+  private claimPreservedViewportWaterReflectionTarget(brushId: string) {
+    if (this.preservedViewportWaterReflectionTargets === null) {
+      return null;
+    }
+
+    const reflectionRenderTarget = this.preservedViewportWaterReflectionTargets.get(brushId) ?? null;
+    this.preservedViewportWaterReflectionTargets.delete(brushId);
+    return reflectionRenderTarget;
+  }
+
+  private disposePreservedViewportWaterReflectionTargets() {
+    if (this.preservedViewportWaterReflectionTargets === null) {
+      return;
+    }
+
+    for (const reflectionRenderTarget of this.preservedViewportWaterReflectionTargets.values()) {
+      reflectionRenderTarget?.dispose();
+    }
+
+    this.preservedViewportWaterReflectionTargets = null;
+  }
+
   private updateViewportWaterReflections() {
     const activeCamera = this.getActiveCamera();
 
@@ -3092,11 +3137,13 @@ export class ViewportHost {
       }
 
       const hiddenObjects: Array<{ object: Object3D; visible: boolean }> = [];
+      const hiddenObjectSet = new Set<Object3D>();
       const hideObject = (object: Object3D | null | undefined) => {
-        if (object === null || object === undefined) {
+        if (object === null || object === undefined || hiddenObjectSet.has(object)) {
           return;
         }
 
+        hiddenObjectSet.add(object);
         hiddenObjects.push({ object, visible: object.visible });
         object.visible = false;
       };
@@ -3323,68 +3370,74 @@ export class ViewportHost {
 
     const volumeRenderPaths = resolveBoxVolumeRenderPaths(this.currentDocument.world.advancedRendering);
 
-    for (const brush of Object.values(this.currentDocument.brushes)) {
-      const renderObjects = this.brushRenderObjects.get(brush.id);
+    this.preservedViewportWaterReflectionTargets = this.resetViewportWaterSurfaceBindings(true);
 
-      if (renderObjects === undefined) {
-        continue;
-      }
+    try {
+      for (const brush of Object.values(this.currentDocument.brushes)) {
+        const renderObjects = this.brushRenderObjects.get(brush.id);
 
-      const brushSelected = isBrushSelected(this.currentSelection, brush.id);
-      const brushHovered = this.hoveredSelection.kind === "brushes" && this.hoveredSelection.ids.includes(brush.id);
-      renderObjects.edges.material.color.setHex(
-        brushSelected ? BRUSH_SELECTED_EDGE_COLOR : brushHovered && this.whiteboxSelectionMode === "object" ? BRUSH_HOVERED_EDGE_COLOR : BRUSH_EDGE_COLOR
-      );
+        if (renderObjects === undefined) {
+          continue;
+        }
 
-      const previousMaterials = renderObjects.mesh.material;
-      const contactPatches = brush.volume.mode === "water" ? this.collectViewportWaterContactPatches(this.currentDocument, brush) : [];
-      renderObjects.mesh.material = BOX_FACE_IDS.map((faceId) =>
-        this.createFaceMaterial(
-          brush,
-          faceId,
-          this.currentDocument?.materials[brush.faces[faceId].materialId ?? ""],
-          this.getFaceHighlightState(brush.id, faceId),
-          volumeRenderPaths,
-          contactPatches
-        )
-      );
-
-      for (const material of previousMaterials) {
-        material.dispose();
-      }
-
-      const hoveredEdgeId = this.hoveredSelection.kind === "brushEdge" && this.hoveredSelection.brushId === brush.id ? this.hoveredSelection.edgeId : null;
-      const hoveredVertexId = this.hoveredSelection.kind === "brushVertex" && this.hoveredSelection.brushId === brush.id ? this.hoveredSelection.vertexId : null;
-
-      for (const edgeHelper of renderObjects.edgeHelpers) {
-        const selected = isBrushEdgeSelected(this.currentSelection, brush.id, edgeHelper.id);
-        const hovered = hoveredEdgeId === edgeHelper.id;
-
-        edgeHelper.line.visible = this.whiteboxSelectionMode === "edge";
-        edgeHelper.line.material.color.setHex(
-          selected ? WHITEBOX_COMPONENT_SELECTED_COLOR : hovered ? WHITEBOX_COMPONENT_HOVERED_COLOR : WHITEBOX_COMPONENT_COLOR
+        const brushSelected = isBrushSelected(this.currentSelection, brush.id);
+        const brushHovered = this.hoveredSelection.kind === "brushes" && this.hoveredSelection.ids.includes(brush.id);
+        renderObjects.edges.material.color.setHex(
+          brushSelected ? BRUSH_SELECTED_EDGE_COLOR : brushHovered && this.whiteboxSelectionMode === "object" ? BRUSH_HOVERED_EDGE_COLOR : BRUSH_EDGE_COLOR
         );
-        edgeHelper.line.material.opacity = selected
-          ? WHITEBOX_COMPONENT_SELECTED_OPACITY
-          : hovered
-            ? WHITEBOX_COMPONENT_HOVERED_OPACITY
-            : WHITEBOX_COMPONENT_DEFAULT_OPACITY;
-      }
 
-      for (const vertexHelper of renderObjects.vertexHelpers) {
-        const selected = isBrushVertexSelected(this.currentSelection, brush.id, vertexHelper.id);
-        const hovered = hoveredVertexId === vertexHelper.id;
-
-        vertexHelper.mesh.visible = this.whiteboxSelectionMode === "vertex";
-        vertexHelper.mesh.material.color.setHex(
-          selected ? WHITEBOX_COMPONENT_SELECTED_COLOR : hovered ? WHITEBOX_COMPONENT_HOVERED_COLOR : WHITEBOX_COMPONENT_COLOR
+        const previousMaterials = renderObjects.mesh.material;
+        const contactPatches = brush.volume.mode === "water" ? this.collectViewportWaterContactPatches(this.currentDocument, brush) : [];
+        renderObjects.mesh.material = BOX_FACE_IDS.map((faceId) =>
+          this.createFaceMaterial(
+            brush,
+            faceId,
+            this.currentDocument?.materials[brush.faces[faceId].materialId ?? ""],
+            this.getFaceHighlightState(brush.id, faceId),
+            volumeRenderPaths,
+            contactPatches
+          )
         );
-        vertexHelper.mesh.material.opacity = selected
-          ? WHITEBOX_COMPONENT_SELECTED_OPACITY
-          : hovered
-            ? WHITEBOX_COMPONENT_HOVERED_OPACITY
-            : WHITEBOX_COMPONENT_DEFAULT_OPACITY;
+
+        for (const material of previousMaterials) {
+          material.dispose();
+        }
+
+        const hoveredEdgeId = this.hoveredSelection.kind === "brushEdge" && this.hoveredSelection.brushId === brush.id ? this.hoveredSelection.edgeId : null;
+        const hoveredVertexId = this.hoveredSelection.kind === "brushVertex" && this.hoveredSelection.brushId === brush.id ? this.hoveredSelection.vertexId : null;
+
+        for (const edgeHelper of renderObjects.edgeHelpers) {
+          const selected = isBrushEdgeSelected(this.currentSelection, brush.id, edgeHelper.id);
+          const hovered = hoveredEdgeId === edgeHelper.id;
+
+          edgeHelper.line.visible = this.whiteboxSelectionMode === "edge";
+          edgeHelper.line.material.color.setHex(
+            selected ? WHITEBOX_COMPONENT_SELECTED_COLOR : hovered ? WHITEBOX_COMPONENT_HOVERED_COLOR : WHITEBOX_COMPONENT_COLOR
+          );
+          edgeHelper.line.material.opacity = selected
+            ? WHITEBOX_COMPONENT_SELECTED_OPACITY
+            : hovered
+              ? WHITEBOX_COMPONENT_HOVERED_OPACITY
+              : WHITEBOX_COMPONENT_DEFAULT_OPACITY;
+        }
+
+        for (const vertexHelper of renderObjects.vertexHelpers) {
+          const selected = isBrushVertexSelected(this.currentSelection, brush.id, vertexHelper.id);
+          const hovered = hoveredVertexId === vertexHelper.id;
+
+          vertexHelper.mesh.visible = this.whiteboxSelectionMode === "vertex";
+          vertexHelper.mesh.material.color.setHex(
+            selected ? WHITEBOX_COMPONENT_SELECTED_COLOR : hovered ? WHITEBOX_COMPONENT_HOVERED_COLOR : WHITEBOX_COMPONENT_COLOR
+          );
+          vertexHelper.mesh.material.opacity = selected
+            ? WHITEBOX_COMPONENT_SELECTED_OPACITY
+            : hovered
+              ? WHITEBOX_COMPONENT_HOVERED_OPACITY
+              : WHITEBOX_COMPONENT_DEFAULT_OPACITY;
+        }
       }
+    } finally {
+      this.disposePreservedViewportWaterReflectionTargets();
     }
   }
 
@@ -3421,11 +3474,8 @@ export class ViewportHost {
     }
 
     this.brushRenderObjects.clear();
-    this.volumeAnimatedUniforms.length = 0;
-    for (const binding of this.viewportWaterSurfaceBindings) {
-      binding.reflectionRenderTarget?.dispose();
-    }
-    this.viewportWaterSurfaceBindings.length = 0;
+    this.disposePreservedViewportWaterReflectionTargets();
+    this.resetViewportWaterSurfaceBindings(false);
   }
 
   private clearEntityMarkers() {
