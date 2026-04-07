@@ -3137,7 +3137,18 @@ export class ViewportHost {
 
       const previousAutoClear = this.renderer.autoClear;
       const previousRenderTarget = this.renderer.getRenderTarget();
+      const previousReflectionStates = this.viewportWaterSurfaceBindings.map((waterBinding) => ({
+        binding: waterBinding,
+        enabled: waterBinding.reflectionEnabledUniform?.value ?? 0,
+        texture: waterBinding.reflectionTextureUniform?.value ?? null
+      }));
       try {
+        for (const state of previousReflectionStates) {
+          if (state.binding.reflectionEnabledUniform !== null) {
+            state.binding.reflectionEnabledUniform.value = 0;
+          }
+        }
+        binding.reflectionTextureUniform.value = null;
         this.renderer.autoClear = true;
         this.renderer.setRenderTarget(binding.reflectionRenderTarget);
         this.renderer.clear();
@@ -3145,6 +3156,14 @@ export class ViewportHost {
       } finally {
         this.renderer.setRenderTarget(previousRenderTarget);
         this.renderer.autoClear = previousAutoClear;
+        for (const state of previousReflectionStates) {
+          if (state.binding.reflectionEnabledUniform !== null) {
+            state.binding.reflectionEnabledUniform.value = state.enabled;
+          }
+          if (state.binding.reflectionTextureUniform !== null) {
+            state.binding.reflectionTextureUniform.value = state.texture;
+          }
+        }
 
         for (const hiddenObject of hiddenObjects) {
           hiddenObject.object.visible = hiddenObject.visible;

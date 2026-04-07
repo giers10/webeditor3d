@@ -628,8 +628,19 @@ export class RuntimeHost {
             const previousAutoClear = this.renderer.autoClear;
             const previousRenderTarget = this.renderer.getRenderTarget();
             const previousFogDensity = this.underwaterSceneFog.density;
+            const previousReflectionStates = this.runtimeWaterContactUniforms.map((waterBinding) => ({
+                binding: waterBinding,
+                enabled: waterBinding.reflectionEnabledUniform?.value ?? 0,
+                texture: waterBinding.reflectionTextureUniform?.value ?? null
+            }));
             try {
                 this.underwaterSceneFog.density = 0;
+                for (const state of previousReflectionStates) {
+                    if (state.binding.reflectionEnabledUniform !== null) {
+                        state.binding.reflectionEnabledUniform.value = 0;
+                    }
+                }
+                binding.reflectionTextureUniform.value = null;
                 this.renderer.autoClear = true;
                 this.renderer.setRenderTarget(binding.reflectionRenderTarget);
                 this.renderer.clear();
@@ -640,6 +651,14 @@ export class RuntimeHost {
                 this.renderer.autoClear = previousAutoClear;
                 this.modelGroup.visible = previousModelGroupVisibility;
                 this.underwaterSceneFog.density = previousFogDensity;
+                for (const state of previousReflectionStates) {
+                    if (state.binding.reflectionEnabledUniform !== null) {
+                        state.binding.reflectionEnabledUniform.value = state.enabled;
+                    }
+                    if (state.binding.reflectionTextureUniform !== null) {
+                        state.binding.reflectionTextureUniform.value = state.texture;
+                    }
+                }
                 for (const hiddenWaterMesh of hiddenWaterMeshes) {
                     hiddenWaterMesh.mesh.visible = hiddenWaterMesh.visible;
                 }

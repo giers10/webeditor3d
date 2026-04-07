@@ -718,7 +718,6 @@ export function createWaterMaterial(options) {
 
         varying vec2 vLocalSurfaceUv;
         varying vec3 vWaveNormal;
-        varying vec3 vWorldPos;
         varying vec3 vViewDir;
         varying vec4 vReflectionCoord;
         #include <fog_pars_vertex>
@@ -754,7 +753,6 @@ export function createWaterMaterial(options) {
 
             vec4 worldPos = modelMatrix * vec4(transformedPosition, 1.0);
             vec4 mvPosition = viewMatrix * worldPos;
-            vWorldPos = worldPos.xyz;
             vViewDir = normalize(cameraPosition - worldPos.xyz);
             vReflectionCoord = reflectionMatrix * worldPos;
             gl_Position = projectionMatrix * mvPosition;
@@ -779,7 +777,6 @@ export function createWaterMaterial(options) {
 
         varying vec2 vLocalSurfaceUv;
         varying vec3 vWaveNormal;
-        varying vec3 vWorldPos;
         varying vec3 vViewDir;
         varying vec4 vReflectionCoord;
         #include <fog_pars_fragment>

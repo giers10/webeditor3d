@@ -36,6 +36,8 @@ const EDGE_VERTEX_IDS: Record<BoxEdgeId, readonly [BoxVertexId, BoxVertexId]> = 
   edgeZ_posX_posY: ["posX_posY_negZ", "posX_posY_posZ"]
 };
 
+const WATER_TOP_FACE_RENDER_SEGMENTS = 12;
+
 export interface BoxBrushGeometryDiagnostic {
   code: string;
   message: string;
@@ -280,6 +282,50 @@ function computeFaceBounds(vertices: Vec3[]): { min: Vec3; max: Vec3 } {
   return { min, max };
 }
 
+function lerpNumber(start: number, end: number, amount: number) {
+  return start + (end - start) * amount;
+}
+
+function lerpVec3(start: Vec3, end: Vec3, amount: number): Vec3 {
+  return {
+    x: lerpNumber(start.x, end.x, amount),
+    y: lerpNumber(start.y, end.y, amount),
+    z: lerpNumber(start.z, end.z, amount)
+  };
+}
+
+function interpolateQuadSurfaceVertex(
+  corners: readonly [Vec3, Vec3, Vec3, Vec3],
+  u: number,
+  v: number
+): Vec3 {
+  const topEdge = lerpVec3(corners[0], corners[1], u);
+  const bottomEdge = lerpVec3(corners[3], corners[2], u);
+
+  return lerpVec3(topEdge, bottomEdge, v);
+}
+
+function pushRenderedFaceVertex(
+  positions: number[],
+  normals: number[],
+  uvs: number[],
+  indices: number[],
+  vertex: Vec3,
+  normal: Vec3,
+  faceId: BoxFaceId,
+  faceBounds: { min: Vec3; max: Vec3 },
+  uvSize: Vec2,
+  uvState: FaceUvState
+) {
+  const projectedUv = projectLocalVertexToFaceUv(vertex, faceId, faceBounds);
+  const transformedUv = transformProjectedFaceUv(projectedUv, uvSize, uvState);
+
+  positions.push(vertex.x, vertex.y, vertex.z);
+  normals.push(normal.x, normal.y, normal.z);
+  uvs.push(transformedUv.x, transformedUv.y);
+  indices.push(indices.length);
+}
+
 export function getBoxBrushFaceVertexIds(faceId: BoxFaceId): readonly [BoxVertexId, BoxVertexId, BoxVertexId, BoxVertexId] {
   return FACE_VERTEX_IDS[faceId];
 }
@@ -322,6 +368,7 @@ export function buildBoxBrushDerivedMeshData(brush: BoxBrush): DerivedBoxBrushMe
     const normal = computeNewellNormal(faceVertices);
     const faceBounds = computeFaceBounds(faceVertices);
     const uvSize = getFaceUvSize(faceId, faceBounds);
+    const uvState = brush.faces[faceId].uv as FaceUvState;
     const indexStart = indices.length;
 
     faceSurfaces.push({
@@ -331,15 +378,49 @@ export function buildBoxBrushDerivedMeshData(brush: BoxBrush): DerivedBoxBrushMe
       normal
     });
 
-    for (const triangle of triangles) {
-      for (const vertexOffset of triangle) {
-        const vertex = faceVertices[vertexOffset];
-        const projectedUv = projectLocalVertexToFaceUv(vertex, faceId, faceBounds);
-        const transformedUv = transformProjectedFaceUv(projectedUv, uvSize, brush.faces[faceId].uv as FaceUvState);
-        positions.push(vertex.x, vertex.y, vertex.z);
-        normals.push(normal.x, normal.y, normal.z);
-        uvs.push(transformedUv.x, transformedUv.y);
-        indices.push(indices.length);
+    const useSubdividedWaterTopFace =
+      brush.volume.mode === "water" &&
+      faceId === "posY" &&
+      brush.volume.water.surfaceDisplacementEnabled;
+
+    if (useSubdividedWaterTopFace) {
+      const faceCorners = faceVertices as [Vec3, Vec3, Vec3, Vec3];
+
+      for (let row = 0; row < WATER_TOP_FACE_RENDER_SEGMENTS; row += 1) {
+        const v0 = row / WATER_TOP_FACE_RENDER_SEGMENTS;
+        const v1 = (row + 1) / WATER_TOP_FACE_RENDER_SEGMENTS;
+
+        for (let column = 0; column < WATER_TOP_FACE_RENDER_SEGMENTS; column += 1) {
+          const u0 = column / WATER_TOP_FACE_RENDER_SEGMENTS;
+          const u1 = (column + 1) / WATER_TOP_FACE_RENDER_SEGMENTS;
+          const quadVertices: [Vec3, Vec3, Vec3, Vec3] = [
+            interpolateQuadSurfaceVertex(faceCorners, u0, v0),
+            interpolateQuadSurfaceVertex(faceCorners, u1, v0),
+            interpolateQuadSurfaceVertex(faceCorners, u1, v1),
+            interpolateQuadSurfaceVertex(faceCorners, u0, v1)
+          ];
+
+          for (const vertex of [quadVertices[0], quadVertices[1], quadVertices[2], quadVertices[0], quadVertices[2], quadVertices[3]]) {
+            pushRenderedFaceVertex(positions, normals, uvs, indices, vertex, normal, faceId, faceBounds, uvSize, uvState);
+          }
+        }
+      }
+    } else {
+      for (const triangle of triangles) {
+        for (const vertexOffset of triangle) {
+          pushRenderedFaceVertex(
+            positions,
+            normals,
+            uvs,
+            indices,
+            faceVertices[vertexOffset],
+            normal,
+            faceId,
+            faceBounds,
+            uvSize,
+            uvState
+          );
+        }
       }
     }
 
