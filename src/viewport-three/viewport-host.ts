@@ -3227,8 +3227,12 @@ export class ViewportHost {
         size: waterBrush.size
       },
       contactBounds,
-      waterBrush.volume.water.foamContactLimit
+      this.getViewportWaterFoamContactLimit(waterBrush)
     );
+  }
+
+  private getViewportWaterFoamContactLimit(brush: BoxBrush) {
+    return brush.volume.mode === "water" ? brush.volume.water.foamContactLimit : 0;
   }
 
   private createEdgeHelper(brush: BoxBrush, edgeId: BoxEdgeId): { id: BoxEdgeId; line: Line<BufferGeometry, LineBasicMaterial> } {

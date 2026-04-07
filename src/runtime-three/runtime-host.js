@@ -752,7 +752,7 @@ export class RuntimeHost {
             center: brush.center,
             rotationDegrees: brush.rotationDegrees,
             size: brush.size
-        }, contactBounds, brush.volume.water.foamContactLimit);
+        }, contactBounds, this.getRuntimeWaterFoamContactLimit(brush));
     }
     collectRuntimePlayerWaterContactPatches(brush) {
         const playerBounds = this.createPlayerWaterContactBounds();
@@ -763,10 +763,13 @@ export class RuntimeHost {
             center: brush.center,
             rotationDegrees: brush.rotationDegrees,
             size: brush.size
-        }, [playerBounds], brush.volume.water.foamContactLimit);
+        }, [playerBounds], this.getRuntimeWaterFoamContactLimit(brush));
+    }
+    getRuntimeWaterFoamContactLimit(brush) {
+        return brush.volume.mode === "water" ? brush.volume.water.foamContactLimit : 0;
     }
     mergeRuntimeWaterContactPatches(brush, staticContactPatches, dynamicContactPatches) {
-        return [...dynamicContactPatches, ...staticContactPatches].slice(0, brush.volume.water.foamContactLimit);
+        return [...dynamicContactPatches, ...staticContactPatches].slice(0, this.getRuntimeWaterFoamContactLimit(brush));
     }
     updateRuntimeWaterContactUniforms() {
         for (const binding of this.runtimeWaterContactUniforms) {
