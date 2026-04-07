@@ -3004,6 +3004,140 @@ export class ViewportHost {
     });
   }
 
+  private getWaterReflectionMode() {
+    if (
+      this.currentWorld === null ||
+      !this.currentWorld.advancedRendering.enabled ||
+      this.currentWorld.advancedRendering.waterPath !== "quality" ||
+      this.displayMode !== "normal" ||
+      this.viewMode !== "perspective"
+    ) {
+      return "none" as const;
+    }
+
+    return this.currentWorld.advancedRendering.waterReflectionMode;
+  }
+
+  private createWaterReflectionRenderTarget() {
+    const width = Math.max(128, Math.round((this.container?.clientWidth ?? this.renderer.domElement.width || 512) * 0.5));
+    const height = Math.max(128, Math.round((this.container?.clientHeight ?? this.renderer.domElement.height || 512) * 0.5));
+    return new WebGLRenderTarget(width, height);
+  }
+
+  private resizeWaterReflectionTargets() {
+    const width = Math.max(128, Math.round((this.container?.clientWidth ?? this.renderer.domElement.width || 512) * 0.5));
+    const height = Math.max(128, Math.round((this.container?.clientHeight ?? this.renderer.domElement.height || 512) * 0.5));
+
+    for (const binding of this.viewportWaterSurfaceBindings) {
+      binding.reflectionRenderTarget?.setSize(width, height);
+    }
+  }
+
+  private updateViewportWaterReflections() {
+    const activeCamera = this.getActiveCamera();
+
+    if (!(activeCamera instanceof PerspectiveCamera)) {
+      for (const binding of this.viewportWaterSurfaceBindings) {
+        if (binding.reflectionEnabledUniform !== null) {
+          binding.reflectionEnabledUniform.value = 0;
+        }
+      }
+      return;
+    }
+
+    const reflectionMode = this.getWaterReflectionMode();
+
+    for (const binding of this.viewportWaterSurfaceBindings) {
+      if (
+        reflectionMode === "none" ||
+        binding.reflectionTextureUniform === null ||
+        binding.reflectionMatrixUniform === null ||
+        binding.reflectionEnabledUniform === null
+      ) {
+        if (binding.reflectionEnabledUniform !== null) {
+          binding.reflectionEnabledUniform.value = 0;
+        }
+        continue;
+      }
+
+      if (binding.reflectionRenderTarget === null) {
+        binding.reflectionRenderTarget = this.createWaterReflectionRenderTarget();
+      }
+
+      const canRenderReflection = updatePlanarReflectionCamera(
+        binding.brush,
+        activeCamera,
+        this.waterReflectionCamera,
+        binding.reflectionMatrixUniform.value
+      );
+
+      if (!canRenderReflection || binding.reflectionRenderTarget === null) {
+        binding.reflectionEnabledUniform.value = 0;
+        continue;
+      }
+
+      const hiddenObjects: Array<{ object: Object3D; visible: boolean }> = [];
+      const hideObject = (object: Object3D | null | undefined) => {
+        if (object === null || object === undefined) {
+          return;
+        }
+
+        hiddenObjects.push({ object, visible: object.visible });
+        object.visible = false;
+      };
+
+      for (const waterBinding of this.viewportWaterSurfaceBindings) {
+        const renderObjects = this.brushRenderObjects.get(waterBinding.brush.id);
+
+        if (renderObjects !== undefined) {
+          hideObject(renderObjects.mesh);
+        }
+      }
+
+      for (const renderObjects of this.brushRenderObjects.values()) {
+        hideObject(renderObjects.edges);
+
+        for (const edgeHelper of renderObjects.edgeHelpers) {
+          hideObject(edgeHelper.line);
+        }
+
+        for (const vertexHelper of renderObjects.vertexHelpers) {
+          hideObject(vertexHelper.mesh);
+        }
+      }
+
+      hideObject(this.axesHelper);
+      hideObject(this.gridHelpers.xz);
+      hideObject(this.gridHelpers.xy);
+      hideObject(this.gridHelpers.yz);
+      hideObject(this.entityGroup);
+      hideObject(this.transformGizmoGroup);
+      hideObject(this.boxCreatePreviewMesh);
+      hideObject(this.boxCreatePreviewEdges);
+      hideObject(this.creationPreviewObject);
+
+      if (reflectionMode === "world") {
+        hideObject(this.modelGroup);
+      }
+
+      const previousAutoClear = this.renderer.autoClear;
+      const previousRenderTarget = this.renderer.getRenderTarget();
+      this.renderer.autoClear = true;
+      this.renderer.setRenderTarget(binding.reflectionRenderTarget);
+      this.renderer.clear();
+      this.renderer.render(this.scene, this.waterReflectionCamera);
+      this.renderer.setRenderTarget(previousRenderTarget);
+      this.renderer.autoClear = previousAutoClear;
+
+      for (const hiddenObject of hiddenObjects) {
+        hiddenObject.object.visible = hiddenObject.visible;
+      }
+
+      binding.reflectionTextureUniform.value = binding.reflectionRenderTarget.texture;
+      binding.reflectionEnabledUniform.value = 0.36;
+    }
+  }
+
   private getOrCreateTexture(material: MaterialDef): CanvasTexture {
     const signature = createStarterMaterialSignature(material);
     const cachedTexture = this.materialTextureCache.get(material.id);
