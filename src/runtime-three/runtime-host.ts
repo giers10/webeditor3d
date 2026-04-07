@@ -18,6 +18,7 @@ import {
   PointLight,
   Quaternion,
   Scene,
+  ShaderMaterial,
   Vector3,
   SpotLight,
   WebGLRenderTarget,
@@ -101,6 +102,7 @@ export class RuntimeHost {
   private readonly cameraForward = new Vector3();
   private readonly volumeOffset = new Vector3();
   private readonly volumeInverseRotation = new Quaternion();
+  private readonly fogLocalCameraPosition = new Vector3();
   private readonly domElement: HTMLCanvasElement;
   private readonly ambientLight = new AmbientLight();
   private readonly sunLight = new DirectionalLight();
@@ -576,11 +578,31 @@ export class RuntimeHost {
         (brush.rotationDegrees.y * Math.PI) / 180,
         (brush.rotationDegrees.z * Math.PI) / 180
       );
+      this.configureFogVolumeMesh(mesh, materials);
       this.brushGroup.add(mesh);
       this.brushMeshes.set(brush.id, mesh);
     }
 
     this.applyShadowState();
+  }
+
+  private configureFogVolumeMesh(mesh: Mesh<BufferGeometry, Material[]>, materials: Material[]) {
+    const fogMaterials = materials.filter(
+      (material): material is ShaderMaterial => material instanceof ShaderMaterial && material.uniforms["localCameraPosition"] !== undefined
+    );
+
+    if (fogMaterials.length === 0) {
+      mesh.onBeforeRender = null;
+      return;
+    }
+
+    mesh.onBeforeRender = (_renderer, _scene, camera) => {
+      const localCameraPosition = mesh.worldToLocal(this.fogLocalCameraPosition.copy(camera.position));
+
+      for (const material of fogMaterials) {
+        (material.uniforms["localCameraPosition"] as { value: Vector3 }).value.copy(localCameraPosition);
+      }
+    };
   }
 
   private rebuildModelInstances(modelInstances: RuntimeSceneDefinition["modelInstances"]) {
