@@ -3433,6 +3433,7 @@ export class ViewportHost {
     this.orthographicCamera.updateProjectionMatrix();
     this.renderer.setSize(width, height, false);
     this.advancedRenderingComposer?.setSize(width, height);
+    this.resizeWaterReflectionTargets();
   }
 
   private pickTransformHandle(event: PointerEvent): { axisConstraint: TransformAxis | null } | null {
