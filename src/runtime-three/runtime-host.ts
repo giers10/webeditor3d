@@ -824,6 +824,7 @@ export class RuntimeHost {
 
     for (const binding of this.runtimeWaterContactUniforms) {
       binding.reflectionRenderTarget?.setSize(width, height);
+      binding.lastReflectionUpdateTime = Number.NEGATIVE_INFINITY;
     }
   }
 
