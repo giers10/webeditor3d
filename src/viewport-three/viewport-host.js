@@ -9,7 +9,6 @@ import { DEFAULT_INTERACTABLE_RADIUS, DEFAULT_PLAYER_START_BOX_SIZE, DEFAULT_PLA
 import { BOX_EDGE_IDS, BOX_FACE_IDS, BOX_VERTEX_IDS, cloneBoxBrushGeometry, deriveBoxBrushSizeFromGeometry, scaleBoxBrushGeometryToSize, DEFAULT_BOX_BRUSH_SIZE } from "../document/brushes";
 import { getBoxBrushEdgeAxis, getBoxBrushEdgeTransformMeta, getBoxBrushEdgeWorldSegment, getBoxBrushFaceAxis, getBoxBrushFaceTransformMeta, getBoxBrushFaceWorldCenter, getBoxBrushVertexWorldPosition, transformBoxBrushWorldPointToLocal, transformBoxBrushWorldVectorToLocal } from "../geometry/box-brush-components";
 import { buildBoxBrushDerivedMeshData, getBoxBrushEdgeVertexIds, getBoxBrushFaceVertexIds, getBoxBrushLocalVertexPosition } from "../geometry/box-brush-mesh";
-import { getBoxBrushBounds } from "../geometry/box-brush";
 import { createModelColliderDebugGroup } from "../geometry/model-instance-collider-debug-mesh";
 import { buildGeneratedModelCollider } from "../geometry/model-instance-collider-generation";
 import { DEFAULT_GRID_SIZE, snapValueToGrid } from "../geometry/grid-snapping";
@@ -2205,7 +2204,12 @@ export class ViewportHost {
             if (brush.id === excludedBrushId || brush.volume.mode !== "none") {
                 continue;
             }
-            contactBounds.push(getBoxBrushBounds(brush));
+            contactBounds.push({
+                kind: "orientedBox",
+                center: brush.center,
+                rotationDegrees: brush.rotationDegrees,
+                size: brush.size
+            });
         }
         for (const modelInstance of getModelInstances(document.modelInstances)) {
             if (modelInstance.collision.mode === "none") {
