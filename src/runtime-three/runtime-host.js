@@ -506,9 +506,9 @@ export class RuntimeHost {
                 #include <fog_vertex>
       }
     `;
-        const fragmentShader = `
-      uniform vec3 fogColor;
-      uniform float fogDensity;
+                const fragmentShader = `
+            uniform vec3 volumeFogColor;
+            uniform float volumeFogDensity;
       uniform float time;
       varying vec2 vUv;
             #include <fog_pars_fragment>
@@ -517,21 +517,25 @@ export class RuntimeHost {
         float edgeFade = 1.0 - smoothstep(0.4, 1.0, max(dist.x, dist.y));
         float drift = sin(vUv.x * 4.5 + time * 0.28) * sin(vUv.y * 3.2 + time * 0.22);
         float variation = 0.82 + drift * 0.18;
-        float alpha = fogDensity * edgeFade * variation;
+                float alpha = volumeFogDensity * edgeFade * variation;
         alpha = clamp(alpha, 0.0, 0.88);
-        vec3 color = mix(fogColor, vec3(1.0), (1.0 - edgeFade) * 0.09);
+                vec3 color = mix(volumeFogColor, vec3(1.0), (1.0 - edgeFade) * 0.09);
         gl_FragColor = vec4(color, alpha);
                 #include <fog_fragment>
       }
     `;
+                const uniforms = UniformsUtils.merge([
+                        UniformsLib.fog,
+                        {
+                                volumeFogColor: { value: [cr, cg, cb] },
+                                volumeFogDensity: { value: Math.min(0.9, fog.density + 0.12) },
+                                time: { value: this.volumeTime }
+                        }
+                ]);
         const mat = new ShaderMaterial({
             vertexShader,
             fragmentShader,
-            uniforms: {
-                fogColor: { value: [cr, cg, cb] },
-                fogDensity: { value: Math.min(0.9, fog.density + 0.12) },
-                time: { value: this.volumeTime }
-            },
+                        uniforms,
             transparent: true,
             depthWrite: false,
             fog: true,
@@ -554,6 +558,81 @@ export class RuntimeHost {
         this.underwaterSceneFog.density = fogState.density;
         if (this.scene.fog !== this.underwaterSceneFog) {
             this.scene.fog = this.underwaterSceneFog;
+        }
+    }
+    getWaterReflectionMode() {
+        if (this.currentWorld === null || !this.currentWorld.advancedRendering.enabled || this.currentWorld.advancedRendering.waterPath !== "quality") {
+            return "none";
+        }
+        return this.currentWorld.advancedRendering.waterReflectionMode;
+    }
+    createWaterReflectionRenderTarget() {
+        const canvasWidth = this.container?.clientWidth ?? this.domElement.width;
+        const canvasHeight = this.container?.clientHeight ?? this.domElement.height;
+        const width = Math.max(128, Math.round(Math.max(canvasWidth, 512) * 0.5));
+        const height = Math.max(128, Math.round(Math.max(canvasHeight, 512) * 0.5));
+        return new WebGLRenderTarget(width, height);
+    }
+    resizeWaterReflectionTargets() {
+        const canvasWidth = this.container?.clientWidth ?? this.domElement.width;
+        const canvasHeight = this.container?.clientHeight ?? this.domElement.height;
+        const width = Math.max(128, Math.round(Math.max(canvasWidth, 512) * 0.5));
+        const height = Math.max(128, Math.round(Math.max(canvasHeight, 512) * 0.5));
+        for (const binding of this.runtimeWaterContactUniforms) {
+            binding.reflectionRenderTarget?.setSize(width, height);
+        }
+    }
+    updateRuntimeWaterReflections() {
+        if (this.renderer === null || this.runtimeScene === null) {
+            return;
+        }
+        const reflectionMode = this.getWaterReflectionMode();
+        for (const binding of this.runtimeWaterContactUniforms) {
+            if (reflectionMode === "none" ||
+                binding.reflectionRenderTarget === null ||
+                binding.reflectionTextureUniform === null ||
+                binding.reflectionMatrixUniform === null ||
+                binding.reflectionEnabledUniform === null) {
+                if (binding.reflectionEnabledUniform !== null) {
+                    binding.reflectionEnabledUniform.value = 0;
+                }
+                continue;
+            }
+            const canRenderReflection = updatePlanarReflectionCamera(binding.brush, this.camera, this.waterReflectionCamera, binding.reflectionMatrixUniform.value);
+            if (!canRenderReflection) {
+                binding.reflectionEnabledUniform.value = 0;
+                continue;
+            }
+            const hiddenWaterMeshes = [];
+            for (const runtimeBrush of this.runtimeScene.brushes) {
+                if (runtimeBrush.volume.mode !== "water") {
+                    continue;
+                }
+                const mesh = this.brushMeshes.get(runtimeBrush.id);
+                if (mesh === undefined) {
+                    continue;
+                }
+                hiddenWaterMeshes.push({ mesh, visible: mesh.visible });
+                mesh.visible = false;
+            }
+            const previousModelGroupVisibility = this.modelGroup.visible;
+            if (reflectionMode === "world") {
+                this.modelGroup.visible = false;
+            }
+            const previousAutoClear = this.renderer.autoClear;
+            const previousRenderTarget = this.renderer.getRenderTarget();
+            this.renderer.autoClear = true;
+            this.renderer.setRenderTarget(binding.reflectionRenderTarget);
+            this.renderer.clear();
+            this.renderer.render(this.scene, this.waterReflectionCamera);
+            this.renderer.setRenderTarget(previousRenderTarget);
+            this.renderer.autoClear = previousAutoClear;
+            this.modelGroup.visible = previousModelGroupVisibility;
+            for (const hiddenWaterMesh of hiddenWaterMeshes) {
+                hiddenWaterMesh.mesh.visible = hiddenWaterMesh.visible;
+            }
+            binding.reflectionTextureUniform.value = binding.reflectionRenderTarget.texture;
+            binding.reflectionEnabledUniform.value = 0.36;
         }
     }
     getOrCreateTexture(material) {
