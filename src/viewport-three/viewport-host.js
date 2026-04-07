@@ -153,6 +153,7 @@ export class ViewportHost {
     }));
     resizeObserver = null;
     animationFrame = 0;
+    renderEnabled = false;
     container = null;
     brushSelectionChangeHandler = null;
     whiteboxHoverLabelChangeHandler = null;
@@ -230,7 +231,26 @@ export class ViewportHost {
             this.resize();
         });
         this.resizeObserver.observe(container);
-        this.render();
+        if (this.renderEnabled) {
+            this.render();
+        }
+    }
+    setRenderEnabled(enabled) {
+        if (this.renderEnabled === enabled) {
+            return;
+        }
+        this.renderEnabled = enabled;
+        if (!enabled) {
+            if (this.animationFrame !== 0) {
+                cancelAnimationFrame(this.animationFrame);
+                this.animationFrame = 0;
+            }
+            this.previousFrameTime = 0;
+            return;
+        }
+        if (this.container !== null && this.animationFrame === 0) {
+            this.render();
+        }
     }
     updateWorld(world) {
         this.currentWorld = world;
@@ -3237,6 +3257,10 @@ export class ViewportHost {
         this.creationPreviewTargetKey = nextTargetKey;
     }
     render = () => {
+        if (!this.renderEnabled) {
+            this.animationFrame = 0;
+            return;
+        }
         this.animationFrame = window.requestAnimationFrame(this.render);
         this.updateTransformGizmoPose();
         const now = performance.now();
