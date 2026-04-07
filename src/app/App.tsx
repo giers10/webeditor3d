@@ -2961,7 +2961,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     setStatusMessage(
       `Added a ${actionType === "playSound" ? "play sound" : "stop sound"} link to the selected ${selectedInteractionSource.kind === "triggerVolume" ? "Trigger Volume" : "Interactable"}.`
     );
-  };
+                              onBlur={() => applyBoxWaterSettings()}
 
   const handleDeleteInteractionLink = (linkId: string) => {
     try {
@@ -3200,7 +3200,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
           trigger: link.trigger,
           targetEntityId: defaultTarget.id
         }),
-        "Switched link action to teleport player."
+                              onBlur={() => applyBoxWaterSettings()}
       );
       return;
     }
@@ -3232,7 +3232,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
           trigger: link.trigger,
           targetModelInstanceId: targetModelInstance.id,
           clipName: firstClip
-        }),
+                              onBlur={() => applyBoxWaterSettings()}
         "Switched link action to play animation."
       );
       return;
