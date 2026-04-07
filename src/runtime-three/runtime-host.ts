@@ -6,6 +6,7 @@ import {
   DirectionalLight,
   Euler,
   Group,
+  FogExp2,
   LoopOnce,
   LoopRepeat,
   Material,
@@ -38,7 +39,13 @@ import {
   resolveBoxVolumeRenderPaths,
   type ResolvedBoxVolumeRenderPaths
 } from "../rendering/advanced-rendering";
-import { collectWaterContactPatches, createWaterContactPatchAxisUniformValue, createWaterContactPatchUniformValue, createWaterMaterial } from "../rendering/water-material";
+import {
+  collectWaterContactPatches,
+  createWaterContactPatchAxisUniformValue,
+  createWaterContactPatchShapeUniformValue,
+  createWaterContactPatchUniformValue,
+  createWaterMaterial
+} from "../rendering/water-material";
 import {
   areAdvancedRenderingSettingsEqual,
   cloneAdvancedRenderingSettings,
@@ -51,6 +58,7 @@ import { RapierCollisionWorld } from "./rapier-collision-world";
 import { RuntimeInteractionSystem, type RuntimeInteractionDispatcher, type RuntimeInteractionPrompt } from "./runtime-interaction-system";
 import { RuntimeAudioSystem } from "./runtime-audio-system";
 import { OrbitVisitorNavigationController } from "./orbit-visitor-navigation-controller";
+import { resolveUnderwaterFogState } from "./underwater-fog";
 import type {
   RuntimeBoxBrushInstance,
   RuntimeLocalLightCollection,
@@ -72,6 +80,7 @@ interface RuntimeWaterContactUniformBinding {
   brush: RuntimeBoxBrushInstance;
   uniform: { value: import("three").Vector4[] };
   axisUniform: { value: import("three").Vector2[] };
+  shapeUniform: { value: number[] };
   staticContactPatches: ReturnType<typeof collectWaterContactPatches>;
 }
 
@@ -93,6 +102,7 @@ export class RuntimeHost {
   private readonly orbitVisitorController = new OrbitVisitorNavigationController();
   private readonly interactionSystem = new RuntimeInteractionSystem();
   private readonly audioSystem = new RuntimeAudioSystem(this.scene, this.camera, null);
+  private readonly underwaterSceneFog = new FogExp2("#2c6f8d", 0.03);
   private readonly brushMeshes = new Map<string, Mesh<BufferGeometry, Material[]>>();
   private volumeTime = 0;
   private readonly volumeAnimatedMaterials: ShaderMaterial[] = [];
@@ -323,6 +333,7 @@ export class RuntimeHost {
     this.advancedRenderingComposer?.dispose();
     this.advancedRenderingComposer = null;
     this.currentAdvancedRenderingSettings = null;
+    this.scene.fog = null;
     if (this.renderer !== null) {
       this.renderer.autoClear = true;
     }
@@ -637,6 +648,7 @@ export class RuntimeHost {
           brush,
           uniform: waterMaterial.contactPatchesUniform,
           axisUniform: waterMaterial.contactPatchAxesUniform,
+          shapeUniform: waterMaterial.contactPatchShapesUniform ?? { value: [] },
           staticContactPatches
         });
       }
@@ -683,9 +695,12 @@ export class RuntimeHost {
 
     const vertexShader = /* glsl */ `
       varying vec2 vUv;
+      #include <fog_pars_vertex>
       void main() {
         vUv = uv;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+        gl_Position = projectionMatrix * mvPosition;
+        #include <fog_vertex>
       }
     `;
 
@@ -694,6 +709,7 @@ export class RuntimeHost {
       uniform float fogDensity;
       uniform float time;
       varying vec2 vUv;
+      #include <fog_pars_fragment>
 
       void main() {
         // Soft fade: distance from the center of each face in UV space
@@ -710,6 +726,7 @@ export class RuntimeHost {
         // Edge scatter brightening
         vec3 color = mix(fogColor, vec3(1.0), (1.0 - edgeFade) * 0.09);
         gl_FragColor = vec4(color, alpha);
+        #include <fog_fragment>
       }
     `;
 
@@ -723,10 +740,32 @@ export class RuntimeHost {
       },
       transparent: true,
       depthWrite: false,
+      fog: true,
       side: 2 // THREE.DoubleSide — fog is visible from inside too
     });
     this.volumeAnimatedMaterials.push(mat);
     return mat;
+  }
+
+  private updateUnderwaterSceneFog() {
+    const fogState =
+      this.activeController === this.firstPersonController
+        ? resolveUnderwaterFogState(this.runtimeScene, this.currentFirstPersonTelemetry)
+        : null;
+
+    if (fogState === null) {
+      if (this.scene.fog !== null) {
+        this.scene.fog = null;
+      }
+      return;
+    }
+
+    this.underwaterSceneFog.color.set(fogState.colorHex);
+    this.underwaterSceneFog.density = fogState.density;
+
+    if (this.scene.fog !== this.underwaterSceneFog) {
+      this.scene.fog = this.underwaterSceneFog;
+    }
   }
 
   private getOrCreateTexture(material: NonNullable<RuntimeBoxBrushInstance["faces"]["posX"]["material"]>) {
@@ -898,6 +937,7 @@ export class RuntimeHost {
       const mergedPatches = this.mergeRuntimeWaterContactPatches(binding.staticContactPatches, this.collectRuntimePlayerWaterContactPatches(binding.brush));
       binding.uniform.value = createWaterContactPatchUniformValue(mergedPatches);
       binding.axisUniform.value = createWaterContactPatchAxisUniformValue(mergedPatches);
+      binding.shapeUniform.value = createWaterContactPatchShapeUniformValue(mergedPatches);
     }
   }
 
@@ -979,6 +1019,8 @@ export class RuntimeHost {
     if (this.runtimeWaterContactUniforms.length > 0) {
       this.updateRuntimeWaterContactUniforms();
     }
+
+    this.updateUnderwaterSceneFog();
 
     if (this.advancedRenderingComposer !== null) {
       this.advancedRenderingComposer.render(dt);
