@@ -4209,6 +4209,16 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
   };
 
+  const applyAdvancedRenderingWaterReflectionMode = (mode: AdvancedRenderingWaterReflectionMode) => {
+    applyAdvancedRenderingSettings(
+      "Set water reflection mode",
+      `Water reflection mode set to ${formatAdvancedRenderingWaterReflectionModeLabel(mode)}.`,
+      (advancedRendering) => {
+        advancedRendering.waterReflectionMode = mode;
+      }
+    );
+  };
+
   const applyBrushNameChange = () => {
     if (selectedBrush === null) {
       setStatusMessage("Select a whitebox box before renaming it.");
