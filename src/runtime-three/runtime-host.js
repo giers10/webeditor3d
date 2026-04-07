@@ -13,6 +13,7 @@ import { RuntimeAudioSystem } from "./runtime-audio-system";
 import { OrbitVisitorNavigationController } from "./orbit-visitor-navigation-controller";
 import { resolveUnderwaterFogState } from "./underwater-fog";
 const FALLBACK_FACE_COLOR = 0x747d89;
+const WATER_REFLECTION_UPDATE_INTERVAL_MS = 96;
 export class RuntimeHost {
     scene = new Scene();
     camera = new PerspectiveCamera(70, 1, 0.05, 1000);
@@ -70,6 +71,8 @@ export class RuntimeHost {
         this.scene.add(this.localLightGroup);
         this.scene.add(this.brushGroup);
         this.scene.add(this.modelGroup);
+        this.underwaterSceneFog.density = 0;
+        this.scene.fog = this.underwaterSceneFog;
         this.renderer = enableRendering ? new WebGLRenderer({ antialias: false, alpha: true }) : null;
         this.domElement = this.renderer?.domElement ?? document.createElement("canvas");
         if (this.renderer !== null) {
@@ -432,6 +435,7 @@ export class RuntimeHost {
                 colorHex: brush.volume.water.colorHex,
                 surfaceOpacity: brush.volume.water.surfaceOpacity,
                 waveStrength: brush.volume.water.waveStrength,
+                surfaceDisplacementEnabled: brush.volume.water.surfaceDisplacementEnabled,
                 opacity: faceId === "posY" ? Math.min(1, baseOpacity + 0.18) : baseOpacity * 0.5,
                 quality: volumeRenderPaths.water === "quality",
                 wireframe: false,
@@ -460,7 +464,8 @@ export class RuntimeHost {
                     reflectionTextureUniform: waterMaterial.reflectionTextureUniform,
                     reflectionMatrixUniform: waterMaterial.reflectionMatrixUniform,
                     reflectionEnabledUniform: waterMaterial.reflectionEnabledUniform,
-                    reflectionRenderTarget: this.getWaterReflectionMode() !== "none" ? this.createWaterReflectionRenderTarget() : null
+                    reflectionRenderTarget: this.getWaterReflectionMode() !== "none" ? this.createWaterReflectionRenderTarget() : null,
+                    lastReflectionUpdateTime: Number.NEGATIVE_INFINITY
                 });
             }
             return waterMaterial.material;
@@ -549,16 +554,11 @@ export class RuntimeHost {
             ? resolveUnderwaterFogState(this.runtimeScene, this.currentFirstPersonTelemetry)
             : null;
         if (fogState === null) {
-            if (this.scene.fog !== null) {
-                this.scene.fog = null;
-            }
+            this.underwaterSceneFog.density = 0;
             return;
         }
         this.underwaterSceneFog.color.set(fogState.colorHex);
         this.underwaterSceneFog.density = fogState.density;
-        if (this.scene.fog !== this.underwaterSceneFog) {
-            this.scene.fog = this.underwaterSceneFog;
-        }
     }
     getWaterReflectionMode() {
         if (this.currentWorld === null || !this.currentWorld.advancedRendering.enabled || this.currentWorld.advancedRendering.waterPath !== "quality") {
@@ -580,6 +580,7 @@ export class RuntimeHost {
         const height = Math.max(128, Math.round(Math.max(canvasHeight, 512) * 0.5));
         for (const binding of this.runtimeWaterContactUniforms) {
             binding.reflectionRenderTarget?.setSize(width, height);
+            binding.lastReflectionUpdateTime = Number.NEGATIVE_INFINITY;
         }
     }
     updateRuntimeWaterReflections() {
@@ -587,6 +588,7 @@ export class RuntimeHost {
             return;
         }
         const reflectionMode = this.getWaterReflectionMode();
+        const now = performance.now();
         for (const binding of this.runtimeWaterContactUniforms) {
             if (reflectionMode === "none" ||
                 binding.reflectionRenderTarget === null ||
@@ -601,6 +603,10 @@ export class RuntimeHost {
             const canRenderReflection = updatePlanarReflectionCamera(binding.brush, this.camera, this.waterReflectionCamera, binding.reflectionMatrixUniform.value);
             if (!canRenderReflection) {
                 binding.reflectionEnabledUniform.value = 0;
+                continue;
+            }
+            if (binding.reflectionTextureUniform.value !== null && now - binding.lastReflectionUpdateTime < WATER_REFLECTION_UPDATE_INTERVAL_MS) {
+                binding.reflectionEnabledUniform.value = 0.36;
                 continue;
             }
             const hiddenWaterMeshes = [];
@@ -621,18 +627,26 @@ export class RuntimeHost {
             }
             const previousAutoClear = this.renderer.autoClear;
             const previousRenderTarget = this.renderer.getRenderTarget();
-            this.renderer.autoClear = true;
-            this.renderer.setRenderTarget(binding.reflectionRenderTarget);
-            this.renderer.clear();
-            this.renderer.render(this.scene, this.waterReflectionCamera);
-            this.renderer.setRenderTarget(previousRenderTarget);
-            this.renderer.autoClear = previousAutoClear;
-            this.modelGroup.visible = previousModelGroupVisibility;
-            for (const hiddenWaterMesh of hiddenWaterMeshes) {
-                hiddenWaterMesh.mesh.visible = hiddenWaterMesh.visible;
+            const previousFogDensity = this.underwaterSceneFog.density;
+            try {
+                this.underwaterSceneFog.density = 0;
+                this.renderer.autoClear = true;
+                this.renderer.setRenderTarget(binding.reflectionRenderTarget);
+                this.renderer.clear();
+                this.renderer.render(this.scene, this.waterReflectionCamera);
+            }
+            finally {
+                this.renderer.setRenderTarget(previousRenderTarget);
+                this.renderer.autoClear = previousAutoClear;
+                this.modelGroup.visible = previousModelGroupVisibility;
+                this.underwaterSceneFog.density = previousFogDensity;
+                for (const hiddenWaterMesh of hiddenWaterMeshes) {
+                    hiddenWaterMesh.mesh.visible = hiddenWaterMesh.visible;
+                }
             }
             binding.reflectionTextureUniform.value = binding.reflectionRenderTarget.texture;
             binding.reflectionEnabledUniform.value = 0.36;
+            binding.lastReflectionUpdateTime = now;
         }
     }
     getOrCreateTexture(material) {
