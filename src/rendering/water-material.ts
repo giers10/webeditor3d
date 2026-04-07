@@ -75,6 +75,7 @@ interface WaterMaterialOptions {
   colorHex: string;
   surfaceOpacity: number;
   waveStrength: number;
+  surfaceDisplacementEnabled?: boolean;
   opacity: number;
   quality: boolean;
   wireframe: boolean;
@@ -951,6 +952,9 @@ export function createWaterMaterial(options: WaterMaterialOptions): WaterMateria
   const reflectionEnabledUniform = {
     value: options.reflection?.enabled === true ? Math.max(0, Math.min(1, options.reflection?.strength ?? 0.36)) : 0
   };
+  const surfaceDisplacementEnabledUniform = {
+    value: options.surfaceDisplacementEnabled === true ? 1 : 0
+  };
   const waveStrength = Math.max(0, options.waveStrength);
   const clampedOpacity = Math.max(0.14, Math.min(1, options.opacity));
   const topFaceFlag = options.isTopFace ? 1 : 0;
@@ -963,6 +967,7 @@ export function createWaterMaterial(options: WaterMaterialOptions): WaterMateria
     uniform float time;
     uniform float waveStrength;
     uniform float isTopFace;
+    uniform float surfaceDisplacementEnabled;
     uniform mat4 reflectionMatrix;
 
     varying vec2 vLocalSurfaceUv;
@@ -988,12 +993,17 @@ export function createWaterMaterial(options: WaterMaterialOptions): WaterMateria
         float waveA = sin(phaseA) * 0.55;
         float waveB = sin(phaseB) * 0.30;
         float waveC = sin(phaseC) * 0.15;
+        float combinedWave = waveA + waveB + waveC;
 
         vec2 slope =
           dirA * (cos(phaseA) / 2.3) * 0.55 +
           dirB * (cos(phaseB) / 1.45) * 0.30 +
           dirC * (cos(phaseC) / 0.82) * 0.15;
         vWaveNormal = normalize(vec3(-slope.x * (0.3 + waveStrength * 0.7), 1.0, -slope.y * (0.3 + waveStrength * 0.7)));
+
+        if (surfaceDisplacementEnabled > 0.5) {
+          transformedPosition.y += combinedWave * (0.035 + waveStrength * 0.09);
+        }
       }
 
       vec4 worldPos = modelMatrix * vec4(transformedPosition, 1.0);
@@ -1091,6 +1101,11 @@ export function createWaterMaterial(options: WaterMaterialOptions): WaterMateria
       float contactSheen = 0.0;
       float reflectionMask = 0.0;
       vec3 reflectionColor = vec3(0.0);
+      vec2 foamDrift = vec2(
+        sin(time * 0.52 + vLocalSurfaceUv.y * 1.15),
+        cos(time * 0.46 + vLocalSurfaceUv.x * 1.08)
+      ) * (0.06 + waveStrength * 0.12);
+      vec2 foamUv = vLocalSurfaceUv + foamDrift + normal.xz * (0.08 + waveStrength * 0.14);
 
       float edgeDistance = min(halfSize.x - abs(vLocalSurfaceUv.x), halfSize.y - abs(vLocalSurfaceUv.y));
       float edgeBand = max(0.22, min(halfSize.x, halfSize.y) * 0.12);
@@ -1110,7 +1125,7 @@ export function createWaterMaterial(options: WaterMaterialOptions): WaterMateria
             patchAxis = normalize(patchAxis);
           }
 
-          float alongDistance = dot(vLocalSurfaceUv - patchData.xy, patchAxis);
+          float alongDistance = dot(foamUv - patchData.xy, patchAxis);
           float contactBody = 0.0;
           float ripple = 0.0;
           float normalizedDistance = 1.0;
@@ -1118,20 +1133,21 @@ export function createWaterMaterial(options: WaterMaterialOptions): WaterMateria
 
           if (contactPatchShapes[patchIndex] > 0.5) {
             float segmentRadius = max(patchData.w * mix(0.82, 1.18, tangentNoise), 0.05);
-            float segmentDistance = distanceToSegmentBand(vLocalSurfaceUv, patchData.xy, patchAxis, patchData.z);
+            float segmentDistance = distanceToSegmentBand(foamUv, patchData.xy, patchAxis, patchData.z);
             normalizedDistance = segmentDistance / segmentRadius;
             contactBody = 1.0 - smoothstep(0.0, 1.0, normalizedDistance);
             ripple = (sin(normalizedDistance * 11.0 - time * 3.2 + alongDistance * 0.48) * 0.5 + 0.5) * exp(-normalizedDistance * 1.9);
           } else {
             float boundaryScale = max(min(patchData.z, patchData.w), 0.18) * mix(0.86, 1.14, tangentNoise);
-            float signedDistance = signedDistanceToRegion(vLocalSurfaceUv, patchData.xy, patchAxis, patchData.zw);
+            float signedDistance = signedDistanceToRegion(foamUv, patchData.xy, patchAxis, patchData.zw);
             normalizedDistance = abs(signedDistance) / max(boundaryScale, 0.05);
             contactBody = 1.0 - smoothstep(0.0, 1.0, normalizedDistance);
             ripple = (sin(normalizedDistance * 13.0 - time * 3.2 + alongDistance * 0.35) * 0.5 + 0.5) * exp(-normalizedDistance * 2.6);
           }
 
-          float wakeNoise = noise(vLocalSurfaceUv * 3.4 + vec2(time * 0.34, -time * 0.28));
-          float foamField = max(contactBody * 0.48, ripple * (0.68 + wakeNoise * 0.32));
+          float wakeNoise = noise(foamUv * 3.4 + vec2(time * 0.34, -time * 0.28));
+          float foamFlow = fbm(foamUv * 1.95 + vec2(time * 0.22, -time * 0.18));
+          float foamField = max(contactBody * (0.42 + foamFlow * 0.18), ripple * (0.68 + wakeNoise * 0.32));
           contactFoam = max(contactFoam, foamField);
           contactRipple = max(contactRipple, ripple);
           contactSheen = max(contactSheen, contactBody);
@@ -1146,9 +1162,11 @@ export function createWaterMaterial(options: WaterMaterialOptions): WaterMateria
         vec2 reflectionUv = vReflectionCoord.xy / vReflectionCoord.w;
         reflectionUv += normal.xz * (0.01 + waveStrength * 0.012) + vec2((microWave - 0.5) * 0.018, (mediumWave - 0.5) * 0.015);
         if (reflectionUv.x >= 0.0 && reflectionUv.x <= 1.0 && reflectionUv.y >= 0.0 && reflectionUv.y <= 1.0) {
-          reflectionColor = texture2D(reflectionTexture, clamp(reflectionUv, vec2(0.001), vec2(0.999))).rgb;
-          reflectionColor = mix(reflectionColor, shallowTint, 0.16);
-          reflectionMask = reflectionEnabled * clamp(0.12 + fresnel * 0.92 + glints * 0.28, 0.0, 0.92);
+          vec4 reflectionSample = texture2D(reflectionTexture, clamp(reflectionUv, vec2(0.001), vec2(0.999)));
+          if (reflectionSample.a > 0.001) {
+            reflectionColor = mix(reflectionSample.rgb, shallowTint, 0.16);
+            reflectionMask = reflectionEnabled * reflectionSample.a * clamp(0.12 + fresnel * 0.92 + glints * 0.28, 0.0, 0.92);
+          }
         }
       }
 
@@ -1178,6 +1196,7 @@ export function createWaterMaterial(options: WaterMaterialOptions): WaterMateria
       surfaceOpacity: { value: clampedOpacity },
       waveStrength: { value: waveStrength },
       isTopFace: { value: topFaceFlag },
+      surfaceDisplacementEnabled: surfaceDisplacementEnabledUniform,
       halfSize: { value: halfSize },
       contactPatches: contactPatchesUniform,
       contactPatchAxes: contactPatchAxesUniform,
