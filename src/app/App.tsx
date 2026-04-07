@@ -1021,6 +1021,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [boxVolumeWaterColorDraft, setBoxVolumeWaterColorDraft] = useState("#4da6d9");
   const [boxVolumeWaterSurfaceOpacityDraft, setBoxVolumeWaterSurfaceOpacityDraft] = useState("0.55");
   const [boxVolumeWaterWaveStrengthDraft, setBoxVolumeWaterWaveStrengthDraft] = useState("0.35");
+  const [boxVolumeWaterFoamContactLimitDraft, setBoxVolumeWaterFoamContactLimitDraft] = useState(
+    String(DEFAULT_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT)
+  );
   const [boxVolumeFogColorDraft, setBoxVolumeFogColorDraft] = useState("#9cb7c7");
   const [boxVolumeFogDensityDraft, setBoxVolumeFogDensityDraft] = useState("0.08");
   const [boxVolumeFogPaddingDraft, setBoxVolumeFogPaddingDraft] = useState("0.2");
@@ -1186,6 +1189,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
       setRotationDraft(createVec3Draft(DEFAULT_BOX_BRUSH_ROTATION_DEGREES));
       setSizeDraft(createVec3Draft(DEFAULT_BOX_BRUSH_SIZE));
       setBoxVolumeModeDraft("none");
+      setBoxVolumeWaterFoamContactLimitDraft(String(DEFAULT_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT));
       return;
     }
 
@@ -1199,6 +1203,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
       setBoxVolumeWaterColorDraft(selectedBrush.volume.water.colorHex);
       setBoxVolumeWaterSurfaceOpacityDraft(String(selectedBrush.volume.water.surfaceOpacity));
       setBoxVolumeWaterWaveStrengthDraft(String(selectedBrush.volume.water.waveStrength));
+      setBoxVolumeWaterFoamContactLimitDraft(String(selectedBrush.volume.water.foamContactLimit));
     }
 
     if (selectedBrush.volume.mode === "fog") {
