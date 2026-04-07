@@ -3051,6 +3051,7 @@ export class ViewportHost {
               kind: "triangleMesh",
               vertices: generatedCollider.vertices,
               indices: generatedCollider.indices,
+              mergeProfile: "aggressive",
               transform: generatedCollider.transform
             });
           } else {

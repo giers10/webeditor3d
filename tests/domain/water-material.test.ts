@@ -298,6 +298,7 @@ describe("water material helpers", () => {
       [
         {
           kind: "triangleMesh",
+          mergeProfile: "aggressive",
           vertices: new Float32Array([
             -2, 0, -1,
             0, 0, -1,
@@ -336,6 +337,153 @@ describe("water material helpers", () => {
     expect(patches).toHaveLength(1);
     expect(patches[0]?.halfWidth ?? 0).toBeGreaterThan(1.2);
     expect(patches[0]?.halfDepth ?? 0).toBeGreaterThan(0.05);
+  });
+
+  it("only uses aggressive merging for explicitly marked triangle meshes", () => {
+    const sharedSource = {
+      kind: "triangleMesh" as const,
+      vertices: new Float32Array([
+        -2, 0, -1,
+        -0.3, 0, -1,
+        -0.3, 0, 1,
+        -2, 0, 1,
+        0.3, 0, -1,
+        2, 0, -1,
+        2, 0, 1,
+        0.3, 0, 1
+      ]),
+      indices: new Uint32Array([
+        0, 1, 2,
+        0, 2, 3,
+        4, 5, 6,
+        4, 6, 7
+      ]),
+      transform: {
+        position: {
+          x: 0,
+          y: 1,
+          z: 0
+        },
+        rotationDegrees: {
+          x: 26,
+          y: 14,
+          z: 10
+        },
+        scale: {
+          x: 1,
+          y: 1,
+          z: 1
+        }
+      }
+    };
+
+    const defaultPatches = collectWaterContactPatches(
+      {
+        center: {
+          x: 0,
+          y: 0,
+          z: 0
+        },
+        rotationDegrees: {
+          x: 0,
+          y: 0,
+          z: 0
+        },
+        size: {
+          x: 10,
+          y: 2,
+          z: 10
+        }
+      },
+      [sharedSource]
+    );
+    const aggressivePatches = collectWaterContactPatches(
+      {
+        center: {
+          x: 0,
+          y: 0,
+          z: 0
+        },
+        rotationDegrees: {
+          x: 0,
+          y: 0,
+          z: 0
+        },
+        size: {
+          x: 10,
+          y: 2,
+          z: 10
+        }
+      },
+      [{
+        ...sharedSource,
+        mergeProfile: "aggressive" as const
+      }]
+    );
+
+    expect(defaultPatches.length).toBeGreaterThan(1);
+    expect(aggressivePatches).toHaveLength(1);
+  });
+
+  it("does not merge sharply bent triangle mesh strips even in aggressive mode", () => {
+    const patches = collectWaterContactPatches(
+      {
+        center: {
+          x: 0,
+          y: 0,
+          z: 0
+        },
+        rotationDegrees: {
+          x: 0,
+          y: 0,
+          z: 0
+        },
+        size: {
+          x: 10,
+          y: 2,
+          z: 10
+        }
+      },
+      [
+        {
+          kind: "triangleMesh",
+          mergeProfile: "aggressive",
+          vertices: new Float32Array([
+            -2, 0, -1,
+            0, 0, -1,
+            0, 0, 1,
+            -2, 0, 1,
+            2, 1.6, -1,
+            2, 1.6, 1
+          ]),
+          indices: new Uint32Array([
+            0, 1, 2,
+            0, 2, 3,
+            1, 4, 5,
+            1, 5, 2
+          ]),
+          transform: {
+            position: {
+              x: 0,
+              y: 1,
+              z: 0
+            },
+            rotationDegrees: {
+              x: 0,
+              y: 0,
+              z: 0
+            },
+            scale: {
+              x: 1,
+              y: 1,
+              z: 1
+            }
+          }
+        }
+      ]
+    );
+
+    expect(patches.length).toBeGreaterThan(1);
   });
 
   it("builds a shared quality shader material for visible tinted water", () => {

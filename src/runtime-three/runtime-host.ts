@@ -847,6 +847,7 @@ export class RuntimeHost {
           kind: "triangleMesh",
           vertices: collider.vertices,
           indices: collider.indices,
+          mergeProfile: "aggressive",
           transform: collider.transform
         });
         continue;

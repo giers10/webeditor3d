@@ -265,6 +265,16 @@ function createPatchFromProjectedPoints(projectedPoints, preferredAxis, minimumT
     };
 }
 
+function computeTriangleNormal(pointA, pointB, pointC) {
+    const edgeAB = pointB.clone().sub(pointA);
+    const edgeAC = pointC.clone().sub(pointA);
+    const normal = edgeAB.cross(edgeAC);
+    if (normal.lengthSq() <= WATER_CONTACT_EPSILON) {
+        return null;
+    }
+    return normal.normalize();
+}
+
 function createPatchCornerPoints(patch) {
     const axis = new Vector2(patch.axisX, patch.axisZ);
     if (axis.lengthSq() <= WATER_CONTACT_EPSILON) {
@@ -305,11 +315,33 @@ function measurePatchExtentsInBasis(points, axis) {
     };
 }
 
-function mergeTriangleMeshContactPatches(rawPatches, minimumThickness) {
+function getTriangleMeshMergeSettings(mergeProfile, minimumThickness) {
+    if (mergeProfile === "aggressive") {
+        return {
+            axisAlignment: 0.88,
+            normalAlignment: 0.9,
+            minimumPrimaryGap: Math.max(0.26, minimumThickness * 2.8),
+            minimumSecondaryGap: Math.max(0.18, minimumThickness * 2.2),
+            primaryGapScale: 0.34,
+            secondaryGapScale: 0.55
+        };
+    }
+    return {
+        axisAlignment: 0.95,
+        normalAlignment: 0.97,
+        minimumPrimaryGap: Math.max(0.08, minimumThickness * 1.25),
+        minimumSecondaryGap: Math.max(0.1, minimumThickness * 1.4),
+        primaryGapScale: 0.12,
+        secondaryGapScale: 0.3
+    };
+}
+
+function mergeTriangleMeshContactPatches(rawPatches, minimumThickness, mergeProfile) {
+    const mergeSettings = getTriangleMeshMergeSettings(mergeProfile, minimumThickness);
     const clusters = [];
-    for (const patch of rawPatches) {
-        const patchPoints = createPatchCornerPoints(patch);
-        const patchAxis = new Vector2(patch.axisX, patch.axisZ);
+    for (const rawPatch of rawPatches) {
+        const patchPoints = createPatchCornerPoints(rawPatch.patch);
+        const patchAxis = new Vector2(rawPatch.patch.axisX, rawPatch.patch.axisZ);
         if (patchAxis.lengthSq() <= WATER_CONTACT_EPSILON) {
             patchAxis.set(1, 0);
         }
@@ -319,14 +351,20 @@ function mergeTriangleMeshContactPatches(rawPatches, minimumThickness) {
         let merged = false;
         for (const cluster of clusters) {
             const alignment = Math.abs(cluster.axis.dot(patchAxis));
-            if (alignment < 0.92) {
+            if (alignment < mergeSettings.axisAlignment) {
+                continue;
+            }
+            const normalAlignment = Math.abs(cluster.normal.dot(rawPatch.normal));
+            if (normalAlignment < mergeSettings.normalAlignment) {
                 continue;
             }
             const patchExtents = measurePatchExtentsInBasis(patchPoints, cluster.axis);
             const primaryGap = Math.max(0, Math.max(cluster.extents.minPrimary - patchExtents.maxPrimary, patchExtents.minPrimary - cluster.extents.maxPrimary));
             const secondaryGap = Math.max(0, Math.max(cluster.extents.minSecondary - patchExtents.maxSecondary, patchExtents.minSecondary - cluster.extents.maxSecondary));
-            const allowedPrimaryGap = Math.max(0.18, Math.max(patch.halfWidth, (cluster.extents.maxPrimary - cluster.extents.minPrimary) * 0.12));
-            const allowedSecondaryGap = Math.max(minimumThickness * 1.5, Math.max(patch.halfDepth, (cluster.extents.maxSecondary - cluster.extents.minSecondary) * 0.35));
+            const clusterPrimarySpan = cluster.extents.maxPrimary - cluster.extents.minPrimary;
+            const clusterSecondarySpan = cluster.extents.maxSecondary - cluster.extents.minSecondary;
+            const allowedPrimaryGap = Math.max(mergeSettings.minimumPrimaryGap, Math.max(rawPatch.patch.halfWidth, clusterPrimarySpan) * mergeSettings.primaryGapScale);
+            const allowedSecondaryGap = Math.max(mergeSettings.minimumSecondaryGap, Math.max(rawPatch.patch.halfDepth, clusterSecondarySpan) * mergeSettings.secondaryGapScale);
             if (primaryGap > allowedPrimaryGap || secondaryGap > allowedSecondaryGap) {
                 continue;
             }
@@ -338,6 +376,7 @@ function mergeTriangleMeshContactPatches(rawPatches, minimumThickness) {
         if (!merged) {
             clusters.push({
                 axis: patchAxis,
+                normal: rawPatch.normal.clone(),
                 points: patchPoints.map((point) => point.clone()),
                 extents: measurePatchExtentsInBasis(patchPoints, patchAxis)
             });
@@ -372,16 +411,23 @@ function appendTriangleMeshContactPatches(patches, source, volume, inverseRotati
             vertex.applyQuaternion(inverseRotation);
             polygon.push(vertex.clone());
         }
+        const triangleNormal = computeTriangleNormal(polygon[0] ?? new Vector3(), polygon[1] ?? new Vector3(), polygon[2] ?? new Vector3());
+        if (triangleNormal === null) {
+            continue;
+        }
         const clippedPolygon = clipPolygonToContactVolume(polygon, halfX, surfaceY - surfaceBand, surfaceY + surfaceBand, halfZ);
         if (clippedPolygon.length < 2) {
             continue;
         }
         const patch = createPatchFromProjectedPoints(clippedPolygon.map((point) => new Vector2(point.x, point.z)), null, bandMinimumThickness);
         if (patch !== null) {
-            rawPatches.push(patch);
+            rawPatches.push({
+                patch,
+                normal: triangleNormal
+            });
         }
     }
-    patches.push(...mergeTriangleMeshContactPatches(rawPatches, bandMinimumThickness));
+    patches.push(...mergeTriangleMeshContactPatches(rawPatches, bandMinimumThickness, source.mergeProfile));
 }
 
 export function collectWaterContactPatches(volume, contactBounds) {
