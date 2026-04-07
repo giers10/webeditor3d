@@ -307,7 +307,8 @@ describe("box brush commands", () => {
       water: {
         colorHex: "#3a7dc2",
         surfaceOpacity: 0.65,
-        waveStrength: 0.4
+        waveStrength: 0.4,
+        foamContactLimit: 6
       }
     });
 
@@ -322,7 +323,8 @@ describe("box brush commands", () => {
       water: {
         colorHex: "#3a7dc2",
         surfaceOpacity: 0.65,
-        waveStrength: 0.4
+        waveStrength: 0.4,
+        foamContactLimit: 6
       }
     });
   });
