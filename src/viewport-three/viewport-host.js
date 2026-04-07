@@ -1679,9 +1679,7 @@ export class ViewportHost {
         const volumeRenderPaths = resolveBoxVolumeRenderPaths(document.world.advancedRendering);
         for (const brush of Object.values(document.brushes)) {
             const geometry = buildBoxBrushDerivedMeshData(brush).geometry;
-            const contactPatches = brush.volume.mode === "water"
-                ? this.collectViewportWaterContactPatches(document, brush.id, brush.center, brush.rotationDegrees, brush.size)
-                : [];
+            const contactPatches = brush.volume.mode === "water" ? this.collectViewportWaterContactPatches(document, brush) : [];
             const materials = BOX_FACE_IDS.map((faceId) => this.createFaceMaterial(brush, faceId, document.materials[brush.faces[faceId].materialId ?? ""], this.getFaceHighlightState(brush.id, faceId), volumeRenderPaths, contactPatches));
             const mesh = new Mesh(geometry, materials);
             const brushSelected = isBrushSelected(selection, brush.id);
@@ -2214,10 +2212,10 @@ export class ViewportHost {
         });
         return texture;
     }
-    collectViewportWaterContactPatches(document, excludedBrushId, center, rotationDegrees, size) {
+    collectViewportWaterContactPatches(document, waterBrush) {
         const contactBounds = [];
         for (const brush of Object.values(document.brushes)) {
-            if (brush.id === excludedBrushId || brush.volume.mode !== "none") {
+            if (brush.id === waterBrush.id || brush.volume.mode !== "none") {
                 continue;
             }
             const derivedMesh = buildBoxBrushDerivedMeshData(brush);
@@ -2265,10 +2263,10 @@ export class ViewportHost {
             }
         }
         return collectWaterContactPatches({
-            center,
-            rotationDegrees,
-            size
-        }, contactBounds);
+            center: waterBrush.center,
+            rotationDegrees: waterBrush.rotationDegrees,
+            size: waterBrush.size
+        }, contactBounds, waterBrush.volume.water.foamContactLimit);
     }
     createEdgeHelper(brush, edgeId) {
         const segment = getBoxBrushEdgeWorldSegment(brush, edgeId);
@@ -2319,9 +2317,7 @@ export class ViewportHost {
             const brushHovered = this.hoveredSelection.kind === "brushes" && this.hoveredSelection.ids.includes(brush.id);
             renderObjects.edges.material.color.setHex(brushSelected ? BRUSH_SELECTED_EDGE_COLOR : brushHovered && this.whiteboxSelectionMode === "object" ? BRUSH_HOVERED_EDGE_COLOR : BRUSH_EDGE_COLOR);
             const previousMaterials = renderObjects.mesh.material;
-            const contactPatches = brush.volume.mode === "water"
-                ? this.collectViewportWaterContactPatches(this.currentDocument, brush.id, brush.center, brush.rotationDegrees, brush.size)
-                : [];
+            const contactPatches = brush.volume.mode === "water" ? this.collectViewportWaterContactPatches(this.currentDocument, brush) : [];
             renderObjects.mesh.material = BOX_FACE_IDS.map((faceId) => this.createFaceMaterial(brush, faceId, this.currentDocument?.materials[brush.faces[faceId].materialId ?? ""], this.getFaceHighlightState(brush.id, faceId), volumeRenderPaths, contactPatches));
             for (const material of previousMaterials) {
                 material.dispose();
