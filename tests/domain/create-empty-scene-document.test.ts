@@ -58,7 +58,8 @@ describe("createEmptySceneDocument", () => {
           bokehScale: 1.5
         },
         fogPath: "performance",
-        waterPath: "performance"
+        waterPath: "performance",
+        waterReflectionMode: "none"
       }
     });
     expect(document.brushes).toEqual({});
