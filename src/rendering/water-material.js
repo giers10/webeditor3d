@@ -639,6 +639,13 @@ export function createWaterContactPatchAxisUniformValue(contactPatches) {
     });
 }
 
+export function createWaterContactPatchShapeUniformValue(contactPatches) {
+    return Array.from({ length: MAX_WATER_CONTACT_PATCHES }, (_, index) => {
+        const patch = contactPatches?.[index];
+        return patch?.shape === "segment" ? 1 : 0;
+    });
+}
+
 export function createWaterMaterial(options) {
     if (options.wireframe) {
         return {
@@ -651,7 +658,8 @@ export function createWaterMaterial(options) {
             }),
             animationUniform: null,
             contactPatchesUniform: null,
-            contactPatchAxesUniform: null
+            contactPatchAxesUniform: null,
+            contactPatchShapesUniform: null
         };
     }
 
@@ -665,7 +673,8 @@ export function createWaterMaterial(options) {
             }),
             animationUniform: null,
             contactPatchesUniform: null,
-            contactPatchAxesUniform: null
+            contactPatchAxesUniform: null,
+            contactPatchShapesUniform: null
         };
     }
 
@@ -673,6 +682,7 @@ export function createWaterMaterial(options) {
     const halfSize = new Vector2(Math.max(options.halfSize.x, WATER_CONTACT_EPSILON), Math.max(options.halfSize.z, WATER_CONTACT_EPSILON));
     const contactPatchesUniform = { value: createWaterContactPatchUniformValue(options.contactPatches) };
     const contactPatchAxesUniform = { value: createWaterContactPatchAxisUniformValue(options.contactPatches) };
+    const contactPatchShapesUniform = { value: createWaterContactPatchShapeUniformValue(options.contactPatches) };
     const waveStrength = Math.max(0, options.waveStrength);
     const waveAmplitude = 0.016 + Math.min(0.12, waveStrength * 0.06);
     const clampedOpacity = Math.max(0.14, Math.min(1, options.opacity));
@@ -692,6 +702,7 @@ export function createWaterMaterial(options) {
         varying vec3 vWaveNormal;
         varying vec3 vWorldPos;
         varying vec3 vViewDir;
+        #include <fog_pars_vertex>
 
         void main() {
             vec3 transformedPosition = position;
@@ -719,9 +730,11 @@ export function createWaterMaterial(options) {
             }
 
             vec4 worldPos = modelMatrix * vec4(transformedPosition, 1.0);
+            vec4 mvPosition = viewMatrix * worldPos;
             vWorldPos = worldPos.xyz;
             vViewDir = normalize(cameraPosition - worldPos.xyz);
-            gl_Position = projectionMatrix * viewMatrix * worldPos;
+            gl_Position = projectionMatrix * mvPosition;
+            #include <fog_vertex>
         }
     `;
 
@@ -736,11 +749,13 @@ export function createWaterMaterial(options) {
         uniform vec2 halfSize;
         uniform vec4 contactPatches[${MAX_WATER_CONTACT_PATCHES}];
         uniform vec2 contactPatchAxes[${MAX_WATER_CONTACT_PATCHES}];
+        uniform float contactPatchShapes[${MAX_WATER_CONTACT_PATCHES}];
 
         varying vec2 vLocalSurfaceUv;
         varying vec3 vWaveNormal;
         varying vec3 vWorldPos;
         varying vec3 vViewDir;
+        #include <fog_pars_fragment>
 
         float hash(vec2 p) {
             return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
@@ -771,6 +786,22 @@ export function createWaterMaterial(options) {
             return value;
         }
 
+        float signedDistanceToRegion(vec2 point, vec2 center, vec2 axis, vec2 halfExtents) {
+            vec2 patchPerpendicular = vec2(-axis.y, axis.x);
+            vec2 patchLocalUv = vec2(dot(point - center, axis), dot(point - center, patchPerpendicular));
+            vec2 regionDelta = abs(patchLocalUv) - halfExtents;
+            vec2 outsideDelta = max(regionDelta, 0.0);
+            float outsideDistance = length(outsideDelta);
+            float insideDistance = min(max(regionDelta.x, regionDelta.y), 0.0);
+            return outsideDistance + insideDistance;
+        }
+
+        float distanceToSegmentBand(vec2 point, vec2 center, vec2 axis, float halfLength) {
+            float along = clamp(dot(point - center, axis), -halfLength, halfLength);
+            vec2 closestPoint = center + axis * along;
+            return distance(point, closestPoint);
+        }
+
         void main() {
             vec3 normal = normalize(vWaveNormal);
             vec3 viewDir = normalize(vViewDir);
@@ -799,21 +830,37 @@ export function createWaterMaterial(options) {
                         continue;
                     }
 
-                    vec2 patchAxis = normalize(contactPatchAxes[patchIndex]);
-                    vec2 patchPerpendicular = vec2(-patchAxis.y, patchAxis.x);
-                    vec2 patchDelta = vLocalSurfaceUv - patchData.xy;
-                    vec2 orientedDelta = vec2(dot(patchDelta, patchAxis), dot(patchDelta, patchPerpendicular));
-                    vec2 regionDelta = abs(orientedDelta) - patchData.zw;
-                    vec2 outsideDelta = max(regionDelta, 0.0);
-                    float outsideDistance = length(outsideDelta);
-                    float insideDistance = min(max(regionDelta.x, regionDelta.y), 0.0);
-                    float signedDistance = outsideDistance + insideDistance;
-                    float boundaryScale = max(min(patchData.z, patchData.w), 0.18);
-                    float normalizedDistance = abs(signedDistance) / boundaryScale;
-                    float contactBody = 1.0 - smoothstep(0.0, 0.65, max(signedDistance, 0.0) / boundaryScale);
-                    float ripple = (sin(normalizedDistance * 13.0 - time * 3.2) * 0.5 + 0.5) * exp(-normalizedDistance * 2.6);
+                    vec2 patchAxis = contactPatchAxes[patchIndex];
+                    if (dot(patchAxis, patchAxis) <= 0.0) {
+                        patchAxis = vec2(1.0, 0.0);
+                    }
+                    else {
+                        patchAxis = normalize(patchAxis);
+                    }
+
+                    float alongDistance = dot(vLocalSurfaceUv - patchData.xy, patchAxis);
+                    float contactBody = 0.0;
+                    float ripple = 0.0;
+                    float normalizedDistance = 1.0;
+                    float tangentNoise = noise(vec2(alongDistance * 0.45 + float(patchIndex) * 7.13, time * 0.12));
+
+                    if (contactPatchShapes[patchIndex] > 0.5) {
+                        float segmentRadius = max(patchData.w * mix(0.82, 1.18, tangentNoise), 0.05);
+                        float segmentDistance = distanceToSegmentBand(vLocalSurfaceUv, patchData.xy, patchAxis, patchData.z);
+                        normalizedDistance = segmentDistance / segmentRadius;
+                        contactBody = 1.0 - smoothstep(0.0, 1.0, normalizedDistance);
+                        ripple = (sin(normalizedDistance * 11.0 - time * 3.2 + alongDistance * 0.48) * 0.5 + 0.5) * exp(-normalizedDistance * 1.9);
+                    }
+                    else {
+                        float boundaryScale = max(min(patchData.z, patchData.w), 0.18) * mix(0.86, 1.14, tangentNoise);
+                        float signedDistance = signedDistanceToRegion(vLocalSurfaceUv, patchData.xy, patchAxis, patchData.zw);
+                        normalizedDistance = abs(signedDistance) / max(boundaryScale, 0.05);
+                        contactBody = 1.0 - smoothstep(0.0, 1.0, normalizedDistance);
+                        ripple = (sin(normalizedDistance * 13.0 - time * 3.2 + alongDistance * 0.35) * 0.5 + 0.5) * exp(-normalizedDistance * 2.6);
+                    }
+
                     float wakeNoise = noise(vLocalSurfaceUv * 3.4 + vec2(time * 0.34, -time * 0.28));
-                    float foamField = max(contactBody * 0.42, ripple * (0.72 + wakeNoise * 0.28));
+                    float foamField = max(contactBody * 0.48, ripple * (0.68 + wakeNoise * 0.32));
                     contactFoam = max(contactFoam, foamField);
                     contactRipple = max(contactRipple, ripple);
                     contactSheen = max(contactSheen, contactBody);
@@ -836,6 +883,7 @@ export function createWaterMaterial(options) {
                 : clamp(surfaceOpacity * 0.72 + refraction * 0.08 + caustics * 0.04, 0.16, 0.7);
 
             gl_FragColor = vec4(color, alpha);
+            #include <fog_fragment>
         }
     `;
 
@@ -851,10 +899,12 @@ export function createWaterMaterial(options) {
             isTopFace: { value: topFaceFlag },
             halfSize: { value: halfSize },
             contactPatches: contactPatchesUniform,
-            contactPatchAxes: contactPatchAxesUniform
+            contactPatchAxes: contactPatchAxesUniform,
+            contactPatchShapes: contactPatchShapesUniform
         },
         transparent: true,
         depthWrite: false,
+        fog: true,
         side: DoubleSide
     });
 
@@ -862,6 +912,7 @@ export function createWaterMaterial(options) {
         material,
         animationUniform,
         contactPatchesUniform,
-        contactPatchAxesUniform
+        contactPatchAxesUniform,
+        contactPatchShapesUniform
     };
 }
