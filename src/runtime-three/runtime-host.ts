@@ -9,6 +9,7 @@ import {
   FogExp2,
   LoopOnce,
   LoopRepeat,
+  Matrix4,
   Material,
   Mesh,
   MeshBasicMaterial,
@@ -20,6 +21,9 @@ import {
   ShaderMaterial,
   Vector3,
   SpotLight,
+  UniformsLib,
+  UniformsUtils,
+  WebGLRenderTarget,
   WebGLRenderer
 } from "three";
 import { EffectComposer } from "postprocessing";
@@ -46,6 +50,7 @@ import {
   createWaterContactPatchUniformValue,
   createWaterMaterial
 } from "../rendering/water-material";
+import { updatePlanarReflectionCamera } from "../rendering/planar-reflection";
 import {
   areAdvancedRenderingSettingsEqual,
   cloneAdvancedRenderingSettings,
@@ -82,6 +87,10 @@ interface RuntimeWaterContactUniformBinding {
   axisUniform: { value: import("three").Vector2[] };
   shapeUniform: { value: number[] };
   staticContactPatches: ReturnType<typeof collectWaterContactPatches>;
+  reflectionTextureUniform: { value: import("three").Texture | null } | null;
+  reflectionMatrixUniform: { value: Matrix4 } | null;
+  reflectionEnabledUniform: { value: number } | null;
+  reflectionRenderTarget: WebGLRenderTarget | null;
 }
 
 const FALLBACK_FACE_COLOR = 0x747d89;
@@ -103,6 +112,7 @@ export class RuntimeHost {
   private readonly interactionSystem = new RuntimeInteractionSystem();
   private readonly audioSystem = new RuntimeAudioSystem(this.scene, this.camera, null);
   private readonly underwaterSceneFog = new FogExp2("#2c6f8d", 0.03);
+  private readonly waterReflectionCamera = new PerspectiveCamera();
   private readonly brushMeshes = new Map<string, Mesh<BufferGeometry, Material[]>>();
   private volumeTime = 0;
   private readonly volumeAnimatedMaterials: ShaderMaterial[] = [];
