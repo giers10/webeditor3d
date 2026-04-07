@@ -1024,6 +1024,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [boxVolumeWaterFoamContactLimitDraft, setBoxVolumeWaterFoamContactLimitDraft] = useState(
     String(DEFAULT_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT)
   );
+  const [boxVolumeWaterSurfaceDisplacementEnabledDraft, setBoxVolumeWaterSurfaceDisplacementEnabledDraft] = useState(false);
   const [boxVolumeFogColorDraft, setBoxVolumeFogColorDraft] = useState("#9cb7c7");
   const [boxVolumeFogDensityDraft, setBoxVolumeFogDensityDraft] = useState("0.08");
   const [boxVolumeFogPaddingDraft, setBoxVolumeFogPaddingDraft] = useState("0.2");
@@ -1190,6 +1191,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
       setSizeDraft(createVec3Draft(DEFAULT_BOX_BRUSH_SIZE));
       setBoxVolumeModeDraft("none");
       setBoxVolumeWaterFoamContactLimitDraft(String(DEFAULT_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT));
+      setBoxVolumeWaterSurfaceDisplacementEnabledDraft(false);
       return;
     }
 
@@ -1204,6 +1206,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
       setBoxVolumeWaterSurfaceOpacityDraft(String(selectedBrush.volume.water.surfaceOpacity));
       setBoxVolumeWaterWaveStrengthDraft(String(selectedBrush.volume.water.waveStrength));
       setBoxVolumeWaterFoamContactLimitDraft(String(selectedBrush.volume.water.foamContactLimit));
+      setBoxVolumeWaterSurfaceDisplacementEnabledDraft(selectedBrush.volume.water.surfaceDisplacementEnabled);
     }
 
     if (selectedBrush.volume.mode === "fog") {
@@ -2282,7 +2285,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   colorHex: boxVolumeWaterColorDraft,
                   surfaceOpacity: readNonNegativeNumberDraft(boxVolumeWaterSurfaceOpacityDraft, "Water surface opacity"),
                   waveStrength: readNonNegativeNumberDraft(boxVolumeWaterWaveStrengthDraft, "Water wave strength"),
-                  foamContactLimit: readWaterFoamContactLimitDraft(boxVolumeWaterFoamContactLimitDraft)
+                  foamContactLimit: readWaterFoamContactLimitDraft(boxVolumeWaterFoamContactLimitDraft),
+                  surfaceDisplacementEnabled: boxVolumeWaterSurfaceDisplacementEnabledDraft
                 }
               };
         }
@@ -2315,7 +2319,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
           colorHex: boxVolumeWaterColorDraft,
           surfaceOpacity: readNonNegativeNumberDraft(boxVolumeWaterSurfaceOpacityDraft, "Water surface opacity"),
           waveStrength: readNonNegativeNumberDraft(boxVolumeWaterWaveStrengthDraft, "Water wave strength"),
-          foamContactLimit: readWaterFoamContactLimitDraft(boxVolumeWaterFoamContactLimitDraft)
+          foamContactLimit: readWaterFoamContactLimitDraft(boxVolumeWaterFoamContactLimitDraft),
+          surfaceDisplacementEnabled: boxVolumeWaterSurfaceDisplacementEnabledDraft
         }
       }),
       "Set box water settings",
@@ -2335,7 +2340,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
           colorHex,
           surfaceOpacity: readNonNegativeNumberDraft(boxVolumeWaterSurfaceOpacityDraft, "Water surface opacity"),
           waveStrength: readNonNegativeNumberDraft(boxVolumeWaterWaveStrengthDraft, "Water wave strength"),
-          foamContactLimit: readWaterFoamContactLimitDraft(boxVolumeWaterFoamContactLimitDraft)
+          foamContactLimit: readWaterFoamContactLimitDraft(boxVolumeWaterFoamContactLimitDraft),
+          surfaceDisplacementEnabled: boxVolumeWaterSurfaceDisplacementEnabledDraft
         }
       }),
       "Set box water color",
@@ -7455,6 +7461,18 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               onKeyDown={(event) => handleDraftVectorKeyDown(event, applyBoxWaterSettings)}
                               onKeyUp={(event) => handleNumberInputKeyUp(event, applyBoxWaterSettings)}
                               onPointerUp={(event) => handleNumberInputPointerUp(event, applyBoxWaterSettings)}
+                            />
+                          </label>
+                          <label className="form-field form-field--toggle">
+                            <span className="label">Vertical Surface Motion</span>
+                            <input
+                              data-testid="brush-water-surface-displacement-enabled"
+                              type="checkbox"
+                              checked={boxVolumeWaterSurfaceDisplacementEnabledDraft}
+                              onChange={(event) => {
+                                setBoxVolumeWaterSurfaceDisplacementEnabledDraft(event.currentTarget.checked);
+                                scheduleDraftCommit(() => applyBoxWaterSettings());
+                              }}
                             />
                           </label>
                         </>

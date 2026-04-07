@@ -1434,6 +1434,17 @@ export function validateSceneDocument(document: SceneDocument): SceneDocumentVal
             )
           );
         }
+
+        if (typeof water.surfaceDisplacementEnabled !== "boolean") {
+          diagnostics.push(
+            createDiagnostic(
+              "error",
+              "invalid-box-water-surface-displacement-enabled",
+              "Water surface displacement must be enabled or disabled explicitly.",
+              `${path}.volume.water.surfaceDisplacementEnabled`
+            )
+          );
+        }
       }
     }
 

@@ -72,6 +72,7 @@ import {
   SPATIAL_AUDIO_SCENE_DOCUMENT_VERSION,
   SCENE_DOCUMENT_VERSION,
   TRIGGER_ACTION_TARGET_FOUNDATION_SCENE_DOCUMENT_VERSION,
+  WATER_SURFACE_DISPLACEMENT_SCENE_DOCUMENT_VERSION,
   WHITEBOX_BOX_VOLUME_SCENE_DOCUMENT_VERSION,
   WHITEBOX_FLOAT_TRANSFORM_SCENE_DOCUMENT_VERSION,
   WHITEBOX_GEOMETRY_SCENE_DOCUMENT_VERSION,
@@ -402,6 +403,11 @@ function readBoxBrushVolumeSettings(value: unknown, label: string): BoxBrushVolu
           `${label}.water.foamContactLimit`,
           defaults.foamContactLimit,
           MAX_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT
+        ),
+        surfaceDisplacementEnabled: readOptionalBoolean(
+          water.surfaceDisplacementEnabled,
+          `${label}.water.surfaceDisplacementEnabled`,
+          defaults.surfaceDisplacementEnabled
         )
       }
     };
@@ -1720,6 +1726,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
   }
 
   if (
+    source.version !== WATER_SURFACE_DISPLACEMENT_SCENE_DOCUMENT_VERSION &&
     source.version !== WHITEBOX_BOX_VOLUME_SCENE_DOCUMENT_VERSION &&
     source.version !== WHITEBOX_FLOAT_TRANSFORM_SCENE_DOCUMENT_VERSION &&
     source.version !== WHITEBOX_GEOMETRY_SCENE_DOCUMENT_VERSION
