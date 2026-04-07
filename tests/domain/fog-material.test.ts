@@ -30,7 +30,7 @@ describe("fog quality material", () => {
     expect(material.uniforms["localCameraPosition"]?.value).toMatchObject({ x: 0, y: 0, z: 0 });
     expect(material.fragmentShader).toContain("intersectBox");
     expect(material.fragmentShader).toContain("sampleVolumeDensity");
-    expect(material.fragmentShader).toContain("FOG_STEPS 18");
+    expect(material.fragmentShader).toContain("FOG_STEPS 10");
     expect(material.fragmentShader).toContain("uniform vec3 localCameraPosition");
     expect(result.animationUniform).toBe(material.uniforms["time"]);
 
