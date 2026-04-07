@@ -91,9 +91,11 @@ interface RuntimeWaterContactUniformBinding {
   reflectionMatrixUniform: { value: Matrix4 } | null;
   reflectionEnabledUniform: { value: number } | null;
   reflectionRenderTarget: WebGLRenderTarget | null;
+  lastReflectionUpdateTime: number;
 }
 
 const FALLBACK_FACE_COLOR = 0x747d89;
+const WATER_REFLECTION_UPDATE_INTERVAL_MS = 96;
 
 export class RuntimeHost {
   private readonly scene = new Scene();
