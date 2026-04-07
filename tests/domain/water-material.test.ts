@@ -274,6 +274,63 @@ describe("water material helpers", () => {
     expect(patches[0]?.halfWidth ?? 0).toBeGreaterThan(0.2);
     expect(Math.abs(patches[0]?.axisX ?? 0)).toBeGreaterThan(0.2);
     expect(Math.abs(patches[0]?.axisZ ?? 0)).toBeGreaterThan(0.2);
+    expect(patches[0]?.halfDepth ?? 1).toBeLessThan(0.3);
+  });
+
+  it("uses narrow waterline bands for large sloped triangle surfaces", () => {
+    const patches = collectWaterContactPatches(
+      {
+        center: {
+          x: 0,
+          y: 0,
+          z: 0
+        },
+        rotationDegrees: {
+          x: 0,
+          y: 0,
+          z: 0
+        },
+        size: {
+          x: 12,
+          y: 2,
+          z: 12
+        }
+      },
+      [
+        {
+          kind: "triangleMesh",
+          mergeProfile: "aggressive",
+          vertices: new Float32Array([
+            -4, -1, -3,
+            4, 1.4, -3,
+            4, 1.4, 3,
+            -4, -1, 3
+          ]),
+          indices: new Uint32Array([0, 1, 2, 0, 2, 3]),
+          transform: {
+            position: {
+              x: 0,
+              y: 1,
+              z: 0
+            },
+            rotationDegrees: {
+              x: 0,
+              y: 0,
+              z: 0
+            },
+            scale: {
+              x: 1,
+              y: 1,
+              z: 1
+            }
+          }
+        }
+      ]
+    );
+
+    expect(patches).toHaveLength(1);
+    expect(patches[0]?.halfWidth ?? 0).toBeGreaterThan(1.5);
+    expect(patches[0]?.halfDepth ?? 1).toBeLessThan(0.3);
   });
 
   it("merges adjacent triangle mesh strips into one longer foam band", () => {

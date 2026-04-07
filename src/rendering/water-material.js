@@ -275,6 +275,70 @@ function computeTriangleNormal(pointA, pointB, pointC) {
     return normal.normalize();
 }
 
+function addUniqueProjectedPoint(points, point) {
+    const alreadyExists = points.some((candidate) => Math.abs(candidate.x - point.x) <= WATER_CONTACT_EPSILON && Math.abs(candidate.y - point.y) <= WATER_CONTACT_EPSILON);
+    if (!alreadyExists) {
+        points.push(point);
+    }
+}
+
+function createWaterlineSegmentFromPolygon(polygon, surfaceY) {
+    if (polygon.length < 2) {
+        return null;
+    }
+    const intersectionPoints = [];
+    let previousPoint = polygon[polygon.length - 1] ?? null;
+    if (previousPoint === null) {
+        return null;
+    }
+    for (const point of polygon) {
+        const previousDelta = previousPoint.y - surfaceY;
+        const delta = point.y - surfaceY;
+        const previousOnPlane = Math.abs(previousDelta) <= WATER_CONTACT_EPSILON;
+        const onPlane = Math.abs(delta) <= WATER_CONTACT_EPSILON;
+        if (previousOnPlane && onPlane) {
+            addUniqueProjectedPoint(intersectionPoints, new Vector2(previousPoint.x, previousPoint.z));
+            addUniqueProjectedPoint(intersectionPoints, new Vector2(point.x, point.z));
+        }
+        else if (previousOnPlane) {
+            addUniqueProjectedPoint(intersectionPoints, new Vector2(previousPoint.x, previousPoint.z));
+        }
+        else if (onPlane) {
+            addUniqueProjectedPoint(intersectionPoints, new Vector2(point.x, point.z));
+        }
+        else if ((previousDelta < 0 && delta > 0) || (previousDelta > 0 && delta < 0)) {
+            const interpolation = (surfaceY - previousPoint.y) / (point.y - previousPoint.y);
+            addUniqueProjectedPoint(intersectionPoints, new Vector2(previousPoint.x + (point.x - previousPoint.x) * interpolation, previousPoint.z + (point.z - previousPoint.z) * interpolation));
+        }
+        previousPoint = point;
+    }
+    if (intersectionPoints.length < 2) {
+        return null;
+    }
+    let startPoint = intersectionPoints[0] ?? null;
+    let endPoint = intersectionPoints[1] ?? null;
+    let longestDistanceSquared = -1;
+    for (let startIndex = 0; startIndex < intersectionPoints.length; startIndex += 1) {
+        for (let endIndex = startIndex + 1; endIndex < intersectionPoints.length; endIndex += 1) {
+            const candidateStart = intersectionPoints[startIndex];
+            const candidateEnd = intersectionPoints[endIndex];
+            if (candidateStart === undefined || candidateEnd === undefined) {
+                continue;
+            }
+            const distanceSquared = candidateStart.distanceToSquared(candidateEnd);
+            if (distanceSquared > longestDistanceSquared) {
+                longestDistanceSquared = distanceSquared;
+                startPoint = candidateStart;
+                endPoint = candidateEnd;
+            }
+        }
+    }
+    if (startPoint === null || endPoint === null || longestDistanceSquared <= WATER_CONTACT_EPSILON) {
+        return null;
+    }
+    return [startPoint.clone(), endPoint.clone()];
+}
+
 function createPatchCornerPoints(patch) {
     const axis = new Vector2(patch.axisX, patch.axisZ);
     if (axis.lengthSq() <= WATER_CONTACT_EPSILON) {
@@ -416,10 +480,15 @@ function appendTriangleMeshContactPatches(patches, source, volume, inverseRotati
             continue;
         }
         const clippedPolygon = clipPolygonToContactVolume(polygon, halfX, surfaceY - surfaceBand, surfaceY + surfaceBand, halfZ);
-        if (clippedPolygon.length < 2) {
+        const waterlineSegment = createWaterlineSegmentFromPolygon(clippedPolygon, surfaceY);
+        if (waterlineSegment === null) {
             continue;
         }
-        const patch = createPatchFromProjectedPoints(clippedPolygon.map((point) => new Vector2(point.x, point.z)), null, bandMinimumThickness);
+        const preferredAxis = waterlineSegment[1].clone().sub(waterlineSegment[0]);
+        if (preferredAxis.lengthSq() <= WATER_CONTACT_EPSILON) {
+            continue;
+        }
+        const patch = createPatchFromProjectedPoints([waterlineSegment[0], waterlineSegment[1]], preferredAxis, bandMinimumThickness);
         if (patch !== null) {
             rawPatches.push({
                 patch,
