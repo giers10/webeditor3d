@@ -79,7 +79,8 @@ const DEFAULT_BOX_BRUSH_WATER_SETTINGS = {
     colorHex: "#4da6d9",
     surfaceOpacity: 0.55,
     waveStrength: 0.35,
-    foamContactLimit: DEFAULT_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT
+    foamContactLimit: DEFAULT_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT,
+    surfaceDisplacementEnabled: false
 };
 const DEFAULT_BOX_BRUSH_FOG_SETTINGS = {
     colorHex: "#9cb7c7",
@@ -322,7 +323,8 @@ export function createDefaultBoxBrushWaterSettings() {
         colorHex: DEFAULT_BOX_BRUSH_WATER_SETTINGS.colorHex,
         surfaceOpacity: DEFAULT_BOX_BRUSH_WATER_SETTINGS.surfaceOpacity,
         waveStrength: DEFAULT_BOX_BRUSH_WATER_SETTINGS.waveStrength,
-        foamContactLimit: DEFAULT_BOX_BRUSH_WATER_SETTINGS.foamContactLimit
+        foamContactLimit: DEFAULT_BOX_BRUSH_WATER_SETTINGS.foamContactLimit,
+        surfaceDisplacementEnabled: DEFAULT_BOX_BRUSH_WATER_SETTINGS.surfaceDisplacementEnabled
     };
 }
 export function createDefaultBoxBrushFogSettings() {
@@ -350,7 +352,8 @@ export function cloneBoxBrushVolumeSettings(volume) {
                     colorHex: volume.water.colorHex,
                     surfaceOpacity: volume.water.surfaceOpacity,
                     waveStrength: volume.water.waveStrength,
-                    foamContactLimit: volume.water.foamContactLimit
+                    foamContactLimit: volume.water.foamContactLimit,
+                    surfaceDisplacementEnabled: volume.water.surfaceDisplacementEnabled
                 }
             };
         case "fog":
