@@ -644,6 +644,7 @@ export class RuntimeHost {
         colorHex: brush.volume.water.colorHex,
         surfaceOpacity: brush.volume.water.surfaceOpacity,
         waveStrength: brush.volume.water.waveStrength,
+        surfaceDisplacementEnabled: brush.volume.water.surfaceDisplacementEnabled,
         opacity: faceId === "posY" ? Math.min(1, baseOpacity + 0.18) : baseOpacity * 0.5,
         quality: volumeRenderPaths.water === "quality",
         wireframe: false,
@@ -674,7 +675,8 @@ export class RuntimeHost {
           reflectionTextureUniform: waterMaterial.reflectionTextureUniform,
           reflectionMatrixUniform: waterMaterial.reflectionMatrixUniform,
           reflectionEnabledUniform: waterMaterial.reflectionEnabledUniform,
-          reflectionRenderTarget: this.getWaterReflectionMode() !== "none" ? this.createWaterReflectionRenderTarget() : null
+          reflectionRenderTarget: this.getWaterReflectionMode() !== "none" ? this.createWaterReflectionRenderTarget() : null,
+          lastReflectionUpdateTime: Number.NEGATIVE_INFINITY
         });
       }
 
