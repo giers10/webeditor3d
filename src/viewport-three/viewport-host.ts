@@ -27,6 +27,7 @@ import {
   Quaternion,
   Raycaster,
   Scene,
+  ShaderMaterial,
   SphereGeometry,
   Spherical,
   TorusGeometry,
@@ -282,6 +283,7 @@ export class ViewportHost {
   private readonly cameraForward = new Vector3();
   private readonly cameraRight = new Vector3();
   private readonly cameraUp = new Vector3();
+  private readonly fogLocalCameraPosition = new Vector3();
   private readonly cameraSpherical = new Spherical();
   private readonly gridHelpers: Record<ViewportGridPlane, GridHelper> = {
     xz: new GridHelper(40, 40, 0xcf8354, 0x4e596b),
@@ -2317,6 +2319,8 @@ export class ViewportHost {
       const mesh = new Mesh(geometry, materials);
       const brushSelected = isBrushSelected(selection, brush.id);
 
+      this.configureFogVolumeMesh(mesh, materials);
+
       mesh.userData.brushId = brush.id;
       mesh.castShadow = false;
       mesh.receiveShadow = false;
@@ -2351,6 +2355,25 @@ export class ViewportHost {
 
     this.refreshBrushPresentation();
     this.applyShadowState();
+  }
+
+  private configureFogVolumeMesh(mesh: Mesh<BufferGeometry, Material[]>, materials: Material[]) {
+    const fogMaterials = materials.filter(
+      (material): material is ShaderMaterial => material instanceof ShaderMaterial && material.uniforms["localCameraPosition"] !== undefined
+    );
+
+    if (fogMaterials.length === 0) {
+      mesh.onBeforeRender = null;
+      return;
+    }
+
+    mesh.onBeforeRender = (_renderer, _scene, camera) => {
+      const localCameraPosition = mesh.worldToLocal(this.fogLocalCameraPosition.copy(camera.position));
+
+      for (const material of fogMaterials) {
+        (material.uniforms["localCameraPosition"] as { value: Vector3 }).value.copy(localCameraPosition);
+      }
+    };
   }
 
   private rebuildEntityMarkers(document: SceneDocument, selection: EditorSelection) {
