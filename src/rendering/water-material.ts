@@ -467,10 +467,10 @@ function getTriangleMeshMergeSettings(mergeProfile: WaterContactTriangleMesh["me
   return {
     axisAlignment: 0.95,
     normalAlignment: 0.97,
-    minimumPrimaryGap: Math.max(0.08, minimumThickness * 1.25),
-    minimumSecondaryGap: Math.max(0.1, minimumThickness * 1.4),
-    primaryGapScale: 0.12,
-    secondaryGapScale: 0.3
+    minimumPrimaryGap: Math.max(0.04, minimumThickness),
+    minimumSecondaryGap: Math.max(0.05, minimumThickness * 1.1),
+    primaryGapScale: 0.06,
+    secondaryGapScale: 0.12
   };
 }
 
