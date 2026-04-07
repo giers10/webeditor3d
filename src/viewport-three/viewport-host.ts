@@ -2877,6 +2877,7 @@ export class ViewportHost {
         colorHex: brush.volume.water.colorHex,
         surfaceOpacity: brush.volume.water.surfaceOpacity,
         waveStrength: brush.volume.water.waveStrength,
+        surfaceDisplacementEnabled: brush.volume.water.surfaceDisplacementEnabled,
         opacity,
         quality,
         wireframe: this.displayMode === "wireframe",
@@ -2903,7 +2904,8 @@ export class ViewportHost {
           reflectionTextureUniform: waterMaterial.reflectionTextureUniform,
           reflectionMatrixUniform: waterMaterial.reflectionMatrixUniform,
           reflectionEnabledUniform: waterMaterial.reflectionEnabledUniform,
-          reflectionRenderTarget: this.getWaterReflectionMode() !== "none" ? this.createWaterReflectionRenderTarget() : null
+          reflectionRenderTarget: this.getWaterReflectionMode() !== "none" ? this.createWaterReflectionRenderTarget() : null,
+          lastReflectionUpdateTime: Number.NEGATIVE_INFINITY
         });
       }
 
