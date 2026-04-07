@@ -3380,6 +3380,10 @@ export class ViewportHost {
 
     this.brushRenderObjects.clear();
     this.volumeAnimatedUniforms.length = 0;
+    for (const binding of this.viewportWaterSurfaceBindings) {
+      binding.reflectionRenderTarget?.dispose();
+    }
+    this.viewportWaterSurfaceBindings.length = 0;
   }
 
   private clearEntityMarkers() {
