@@ -834,6 +834,7 @@ export class RuntimeHost {
     }
 
     const reflectionMode = this.getWaterReflectionMode();
+    const now = performance.now();
 
     for (const binding of this.runtimeWaterContactUniforms) {
       if (
@@ -861,6 +862,11 @@ export class RuntimeHost {
         continue;
       }
 
+      if (binding.reflectionTextureUniform.value !== null && now - binding.lastReflectionUpdateTime < WATER_REFLECTION_UPDATE_INTERVAL_MS) {
+        binding.reflectionEnabledUniform.value = 0.36;
+        continue;
+      }
+
       const hiddenWaterMeshes: Array<{ mesh: Mesh<BufferGeometry, Material[]>; visible: boolean }> = [];
       for (const runtimeBrush of this.runtimeScene.brushes) {
         if (runtimeBrush.volume.mode !== "water") {
@@ -883,20 +889,28 @@ export class RuntimeHost {
 
       const previousAutoClear = this.renderer.autoClear;
       const previousRenderTarget = this.renderer.getRenderTarget();
-      this.renderer.autoClear = true;
-      this.renderer.setRenderTarget(binding.reflectionRenderTarget);
-      this.renderer.clear();
-      this.renderer.render(this.scene, this.waterReflectionCamera);
-      this.renderer.setRenderTarget(previousRenderTarget);
-      this.renderer.autoClear = previousAutoClear;
-      this.modelGroup.visible = previousModelGroupVisibility;
+      const previousFogDensity = this.underwaterSceneFog.density;
 
-      for (const hiddenWaterMesh of hiddenWaterMeshes) {
-        hiddenWaterMesh.mesh.visible = hiddenWaterMesh.visible;
+      try {
+        this.underwaterSceneFog.density = 0;
+        this.renderer.autoClear = true;
+        this.renderer.setRenderTarget(binding.reflectionRenderTarget);
+        this.renderer.clear();
+        this.renderer.render(this.scene, this.waterReflectionCamera);
+      } finally {
+        this.renderer.setRenderTarget(previousRenderTarget);
+        this.renderer.autoClear = previousAutoClear;
+        this.modelGroup.visible = previousModelGroupVisibility;
+        this.underwaterSceneFog.density = previousFogDensity;
+
+        for (const hiddenWaterMesh of hiddenWaterMeshes) {
+          hiddenWaterMesh.mesh.visible = hiddenWaterMesh.visible;
+        }
       }
 
       binding.reflectionTextureUniform.value = binding.reflectionRenderTarget.texture;
       binding.reflectionEnabledUniform.value = 0.36;
+      binding.lastReflectionUpdateTime = now;
     }
   }
 
