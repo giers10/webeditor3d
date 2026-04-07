@@ -105,4 +105,40 @@ describe("box brush geometry", () => {
       ])
     );
   });
+
+  it("subdivides the rendered top face for displaced water without changing authored collider geometry", () => {
+    const flatWaterBrush = createBoxBrush({
+      volume: {
+        mode: "water",
+        water: {
+          colorHex: "#4da6d9",
+          surfaceOpacity: 0.55,
+          waveStrength: 0.35,
+          foamContactLimit: 6,
+          surfaceDisplacementEnabled: false
+        }
+      }
+    });
+    const displacedWaterBrush = createBoxBrush({
+      volume: {
+        mode: "water",
+        water: {
+          colorHex: "#4da6d9",
+          surfaceOpacity: 0.55,
+          waveStrength: 0.35,
+          foamContactLimit: 6,
+          surfaceDisplacementEnabled: true
+        }
+      }
+    });
+
+    const flatDerivedMesh = buildBoxBrushDerivedMeshData(flatWaterBrush);
+    const displacedDerivedMesh = buildBoxBrushDerivedMeshData(displacedWaterBrush);
+
+    expect(displacedDerivedMesh.geometry.getAttribute("position").count).toBeGreaterThan(
+      flatDerivedMesh.geometry.getAttribute("position").count
+    );
+    expect(Array.from(displacedDerivedMesh.colliderVertices)).toEqual(Array.from(flatDerivedMesh.colliderVertices));
+    expect(Array.from(displacedDerivedMesh.colliderIndices)).toEqual(Array.from(flatDerivedMesh.colliderIndices));
+  });
 });
