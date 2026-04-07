@@ -1704,7 +1704,7 @@ export class ViewportHost {
         for (const brush of Object.values(document.brushes)) {
             const geometry = buildBoxBrushDerivedMeshData(brush).geometry;
             const contactPatches = brush.volume.mode === "water" ? this.collectViewportWaterContactPatches(document, brush) : [];
-            const materials = BOX_FACE_IDS.map((faceId) => this.createFaceMaterial(brush, faceId, document.materials[brush.faces[faceId].materialId ?? ""], this.getFaceHighlightState(brush.id, faceId), volumeRenderPaths, contactPatches));
+            const materials = this.createFogMaterialSet(brush, volumeRenderPaths) ?? BOX_FACE_IDS.map((faceId) => this.createFaceMaterial(brush, faceId, document.materials[brush.faces[faceId].materialId ?? ""], this.getFaceHighlightState(brush.id, faceId), volumeRenderPaths, contactPatches));
             const mesh = new Mesh(geometry, materials);
             const brushSelected = isBrushSelected(selection, brush.id);
             mesh.userData.brushId = brush.id;
@@ -1736,7 +1736,7 @@ export class ViewportHost {
         this.applyShadowState();
     }
     configureFogVolumeMesh(mesh, materials) {
-        const fogMaterials = materials.filter((material) => material instanceof ShaderMaterial && material.uniforms["localCameraPosition"] !== undefined);
+        const fogMaterials = Array.from(new Set(materials.filter((material) => material instanceof ShaderMaterial && material.uniforms["localCameraPosition"] !== undefined)));
         if (fogMaterials.length === 0) {
             return;
         }
@@ -1746,6 +1746,46 @@ export class ViewportHost {
                 material.uniforms["localCameraPosition"].value.copy(localCameraPosition);
             }
         };
+    }
+    createFogMaterialSet(brush, volumeRenderPaths) {
+        if (brush.volume.mode !== "fog" || this.displayMode === "wireframe" || this.displayMode === "authoring") {
+            return null;
+        }
+        const highlightStates = BOX_FACE_IDS.map((faceId) => this.getFaceHighlightState(brush.id, faceId));
+        const selectedFace = highlightStates.includes("selected");
+        const hoveredFace = !selectedFace && highlightStates.includes("hovered");
+        const quality = volumeRenderPaths.fog === "quality";
+        const densityBoost = selectedFace ? 1.08 : hoveredFace ? 1.04 : 1;
+        const opacityBoost = selectedFace ? 0.08 : hoveredFace ? 0.04 : 0;
+        if (quality) {
+            const fogMaterial = createFogQualityMaterial({
+                colorHex: brush.volume.fog.colorHex,
+                density: brush.volume.fog.density * densityBoost,
+                padding: brush.volume.fog.padding,
+                time: this.volumeTime,
+                halfSize: {
+                    x: brush.size.x * 0.5,
+                    y: brush.size.y * 0.5,
+                    z: brush.size.z * 0.5
+                },
+                opacityMultiplier: densityBoost,
+                colorLift: selectedFace ? 0.08 : hoveredFace ? 0.04 : 0
+            });
+            this.volumeAnimatedUniforms.push(fogMaterial.animationUniform);
+            return BOX_FACE_IDS.map(() => fogMaterial.material);
+        }
+        const baseOpacity = Math.max(0.08, Math.min(0.82, brush.volume.fog.density * 0.9 + 0.1));
+        const fogMaterial = new MeshStandardMaterial({
+            color: brush.volume.fog.colorHex,
+            emissive: brush.volume.fog.colorHex,
+            emissiveIntensity: 0.04,
+            roughness: 1,
+            metalness: 0,
+            transparent: true,
+            opacity: Math.min(0.92, baseOpacity + opacityBoost),
+            depthWrite: false
+        });
+        return BOX_FACE_IDS.map(() => fogMaterial);
     }
     rebuildEntityMarkers(document, selection) {
         this.clearEntityMarkers();
@@ -2511,10 +2551,9 @@ export class ViewportHost {
             renderObjects.edges.material.color.setHex(brushSelected ? BRUSH_SELECTED_EDGE_COLOR : brushHovered && this.whiteboxSelectionMode === "object" ? BRUSH_HOVERED_EDGE_COLOR : BRUSH_EDGE_COLOR);
             const previousMaterials = renderObjects.mesh.material;
             const contactPatches = brush.volume.mode === "water" ? this.collectViewportWaterContactPatches(this.currentDocument, brush) : [];
-            renderObjects.mesh.material = BOX_FACE_IDS.map((faceId) => this.createFaceMaterial(brush, faceId, this.currentDocument?.materials[brush.faces[faceId].materialId ?? ""], this.getFaceHighlightState(brush.id, faceId), volumeRenderPaths, contactPatches));
-            for (const material of previousMaterials) {
-                material.dispose();
-            }
+            renderObjects.mesh.material = this.createFogMaterialSet(brush, volumeRenderPaths) ?? BOX_FACE_IDS.map((faceId) => this.createFaceMaterial(brush, faceId, this.currentDocument?.materials[brush.faces[faceId].materialId ?? ""], this.getFaceHighlightState(brush.id, faceId), volumeRenderPaths, contactPatches));
+            this.configureFogVolumeMesh(renderObjects.mesh, renderObjects.mesh.material);
+            this.disposeUniqueMaterials(previousMaterials);
             const hoveredEdgeId = this.hoveredSelection.kind === "brushEdge" && this.hoveredSelection.brushId === brush.id ? this.hoveredSelection.edgeId : null;
             const hoveredVertexId = this.hoveredSelection.kind === "brushVertex" && this.hoveredSelection.brushId === brush.id ? this.hoveredSelection.vertexId : null;
             for (const edgeHelper of renderObjects.edgeHelpers) {
@@ -2541,6 +2580,11 @@ export class ViewportHost {
             }
         }
     }
+    disposeUniqueMaterials(materials) {
+        for (const material of new Set(materials)) {
+            material.dispose();
+        }
+    }
     clearLocalLights() {
         for (const renderObjects of this.localLightRenderObjects.values()) {
             this.localLightGroup.remove(renderObjects.group);
@@ -2562,9 +2606,7 @@ export class ViewportHost {
                 vertexHelper.mesh.material.dispose();
             }
             renderObjects.mesh.geometry.dispose();
-            for (const material of renderObjects.mesh.material) {
-                material.dispose();
-            }
+            this.disposeUniqueMaterials(renderObjects.mesh.material);
             renderObjects.edges.geometry.dispose();
             renderObjects.edges.material.dispose();
         }
