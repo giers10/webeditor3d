@@ -151,7 +151,8 @@ describe("scene document JSON", () => {
           colorHex: "#2f79c4",
           surfaceOpacity: 0.65,
           waveStrength: 0.35,
-          foamContactLimit: 9
+          foamContactLimit: 9,
+          surfaceDisplacementEnabled: true
         }
       }
     });
@@ -308,7 +309,8 @@ describe("scene document JSON", () => {
     expect(migratedDocument.brushes["brush-water-legacy"]?.volume).toEqual({
       mode: "water",
       water: expect.objectContaining({
-        foamContactLimit: 24
+        foamContactLimit: 24,
+        surfaceDisplacementEnabled: false
       })
     });
   });

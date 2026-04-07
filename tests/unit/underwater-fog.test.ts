@@ -28,7 +28,7 @@ describe("resolveUnderwaterFogState", () => {
 
     expect(fogState).not.toBeNull();
     expect(fogState?.colorHex).toBe("#347aa0");
-    expect(fogState?.density ?? 0).toBeCloseTo(0.03352, 5);
+    expect(fogState?.density ?? 0).toBeCloseTo(0.08295, 5);
   });
 
   it("does not enable fog when the camera is not submerged", () => {

@@ -608,8 +608,9 @@ describe("water material helpers", () => {
     expect(material.uniforms["fogDensity"]).toBeDefined();
     expect(material.uniforms["surfaceOpacity"]?.value).toBeGreaterThan(0.14);
     expect(material.uniforms["waveStrength"]?.value).toBe(0.35);
+    expect(material.uniforms["surfaceDisplacementEnabled"]?.value).toBe(0);
     expect(material.uniforms["isTopFace"]?.value).toBe(1);
-    expect(material.vertexShader).not.toContain("transformed.y +=");
+    expect(material.vertexShader).toContain("surfaceDisplacementEnabled");
     expect(result.contactPatchesUniform?.value).toHaveLength(MAX_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT);
     expect(result.contactPatchShapesUniform?.value).toHaveLength(MAX_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT);
     expect(result.reflectionTextureUniform).not.toBeNull();

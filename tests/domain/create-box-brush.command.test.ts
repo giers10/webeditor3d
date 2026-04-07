@@ -296,7 +296,8 @@ describe("box brush commands", () => {
             colorHex: "#3a7dc2",
             surfaceOpacity: 0.65,
             waveStrength: 0.4,
-            foamContactLimit: 6
+            foamContactLimit: 6,
+            surfaceDisplacementEnabled: false
           }
         }
       })
@@ -308,7 +309,8 @@ describe("box brush commands", () => {
         colorHex: "#3a7dc2",
         surfaceOpacity: 0.65,
         waveStrength: 0.4,
-        foamContactLimit: 6
+        foamContactLimit: 6,
+        surfaceDisplacementEnabled: false
       }
     });
 
@@ -324,7 +326,8 @@ describe("box brush commands", () => {
         colorHex: "#3a7dc2",
         surfaceOpacity: 0.65,
         waveStrength: 0.4,
-        foamContactLimit: 6
+        foamContactLimit: 6,
+        surfaceDisplacementEnabled: false
       }
     });
   });

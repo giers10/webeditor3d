@@ -552,7 +552,8 @@ describe("validateSceneDocument", () => {
       water: {
         colorHex: "#3a7dc2",
         surfaceOpacity: 0.6,
-        waveStrength: 0.3
+        waveStrength: 0.3,
+        surfaceDisplacementEnabled: false
       }
     };
     (invalidWaterBrush as any).volume = {
@@ -598,6 +599,10 @@ describe("validateSceneDocument", () => {
         expect.objectContaining({
           code: "invalid-box-water-wave-strength",
           path: "brushes.brush-invalid-volume-water.volume.water.waveStrength"
+        }),
+        expect.objectContaining({
+          code: "invalid-box-water-surface-displacement-enabled",
+          path: "brushes.brush-invalid-volume-water.volume.water.surfaceDisplacementEnabled"
         }),
         expect.objectContaining({
           code: "invalid-box-fog-color",

@@ -733,7 +733,8 @@ describe("buildRuntimeSceneFromDocument", () => {
           colorHex: "#2f79c4",
           surfaceOpacity: 0.7,
           waveStrength: 0.35,
-          foamContactLimit: 6
+          foamContactLimit: 6,
+          surfaceDisplacementEnabled: false
         }
       }
     });
