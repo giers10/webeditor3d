@@ -441,7 +441,11 @@ export class RuntimeHost {
                     x: brush.size.x * 0.5,
                     z: brush.size.z * 0.5
                 },
-                contactPatches
+                contactPatches,
+                reflection: {
+                    texture: null,
+                    enabled: faceId === "posY" && this.getWaterReflectionMode() !== "none"
+                }
             });
             if (waterMaterial.animationUniform !== null) {
                 this.volumeAnimatedUniforms.push(waterMaterial.animationUniform);
@@ -452,7 +456,11 @@ export class RuntimeHost {
                     uniform: waterMaterial.contactPatchesUniform,
                     axisUniform: waterMaterial.contactPatchAxesUniform,
                     shapeUniform: waterMaterial.contactPatchShapesUniform ?? { value: [] },
-                    staticContactPatches
+                    staticContactPatches,
+                    reflectionTextureUniform: waterMaterial.reflectionTextureUniform,
+                    reflectionMatrixUniform: waterMaterial.reflectionMatrixUniform,
+                    reflectionEnabledUniform: waterMaterial.reflectionEnabledUniform,
+                    reflectionRenderTarget: this.getWaterReflectionMode() !== "none" ? this.createWaterReflectionRenderTarget() : null
                 });
             }
             return waterMaterial.material;
