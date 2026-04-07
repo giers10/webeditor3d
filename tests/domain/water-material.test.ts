@@ -118,7 +118,7 @@ describe("water material helpers", () => {
           },
           size: {
             x: 2,
-            y: 1,
+            y: 0.4,
             z: 1
           }
         }
