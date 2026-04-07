@@ -150,7 +150,8 @@ describe("scene document JSON", () => {
         water: {
           colorHex: "#2f79c4",
           surfaceOpacity: 0.65,
-          waveStrength: 0.35
+          waveStrength: 0.35,
+          foamContactLimit: 9
         }
       }
     });
@@ -254,6 +255,7 @@ describe("scene document JSON", () => {
       },
       fogPath: "quality",
       waterPath: "performance",
+      waterReflectionMode: "world",
       depthOfField: {
         enabled: true,
         focusDistance: 12,
@@ -263,6 +265,52 @@ describe("scene document JSON", () => {
     };
 
     expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(document);
+  });
+
+  it("defaults missing water reflection mode and clamps legacy foam limits during migration", () => {
+    const migratedDocument = migrateSceneDocument({
+      version: SCENE_DOCUMENT_VERSION,
+      name: "Legacy Water Settings",
+      world: {
+        ...createEmptySceneDocument().world,
+        advancedRendering: {
+          ...createEmptySceneDocument().world.advancedRendering,
+          enabled: true,
+          waterPath: "quality"
+        }
+      },
+      materials: STARTER_MATERIAL_LIBRARY.reduce<Record<string, (typeof STARTER_MATERIAL_LIBRARY)[number]>>((registry, material) => {
+        registry[material.id] = material;
+        return registry;
+      }, {}),
+      textures: {},
+      assets: {},
+      brushes: {
+        "brush-water-legacy": {
+          ...createBoxBrush({ id: "brush-water-legacy" }),
+          volume: {
+            mode: "water",
+            water: {
+              colorHex: "#2f79c4",
+              surfaceOpacity: 0.65,
+              waveStrength: 0.35,
+              foamContactLimit: 999
+            }
+          }
+        }
+      },
+      modelInstances: {},
+      entities: {},
+      interactionLinks: {}
+    } as unknown);
+
+    expect(migratedDocument.world.advancedRendering.waterReflectionMode).toBe("none");
+    expect(migratedDocument.brushes["brush-water-legacy"]?.volume).toEqual({
+      mode: "water",
+      water: expect.objectContaining({
+        foamContactLimit: 24
+      })
+    });
   });
 
   it("migrates legacy documents without advanced rendering settings to defaults", () => {
