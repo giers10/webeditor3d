@@ -2885,11 +2885,25 @@ export class ViewportHost {
           x: brush.size.x * 0.5,
           z: brush.size.z * 0.5
         },
-        contactPatches
+        contactPatches,
+        reflection: {
+          texture: null,
+          enabled: faceId === "posY"
+        }
       });
 
       if (waterMaterial.animationUniform !== null) {
         this.volumeAnimatedUniforms.push(waterMaterial.animationUniform);
+      }
+
+      if (faceId === "posY" && waterMaterial.reflectionMatrixUniform !== null && waterMaterial.reflectionEnabledUniform !== null) {
+        this.viewportWaterSurfaceBindings.push({
+          brush,
+          reflectionTextureUniform: waterMaterial.reflectionTextureUniform,
+          reflectionMatrixUniform: waterMaterial.reflectionMatrixUniform,
+          reflectionEnabledUniform: waterMaterial.reflectionEnabledUniform,
+          reflectionRenderTarget: this.getWaterReflectionMode() !== "none" ? this.createWaterReflectionRenderTarget() : null
+        });
       }
 
       return waterMaterial.material;
