@@ -40,6 +40,7 @@ import {
 } from "../interactions/interaction-links";
 import {
   BOX_VERTEX_IDS,
+  MAX_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT,
   createBoxBrush,
   createDefaultBoxBrushGeometry,
   createDefaultBoxBrushFogSettings,
@@ -78,6 +79,7 @@ import {
   type SceneDocument
 } from "./scene-document";
 import {
+  isAdvancedRenderingWaterReflectionMode,
   createDefaultAdvancedRenderingSettings,
   isBoxVolumeRenderPath,
   isAdvancedRenderingShadowMapSize,
@@ -201,6 +203,10 @@ function readOptionalPositiveInteger(value: unknown, label: string, fallback: nu
   return integerValue;
 }
 
+function readOptionalPositiveIntegerWithMax(value: unknown, label: string, fallback: number, max: number): number {
+  return Math.min(readOptionalPositiveInteger(value, label, fallback), max);
+}
+
 function readOptionalAllowedValue<T>(value: unknown, label: string, fallback: T, guard: (candidate: unknown) => candidate is T): T {
   if (value === undefined) {
     return fallback;
@@ -270,6 +276,12 @@ function readAdvancedRenderingSettings(value: unknown): AdvancedRenderingSetting
   );
   const fogPath = readOptionalAllowedValue(value.fogPath, "world.advancedRendering.fogPath", defaults.fogPath, isBoxVolumeRenderPath);
   const waterPath = readOptionalAllowedValue(value.waterPath, "world.advancedRendering.waterPath", defaults.waterPath, isBoxVolumeRenderPath);
+  const waterReflectionMode = readOptionalAllowedValue(
+    value.waterReflectionMode,
+    "world.advancedRendering.waterReflectionMode",
+    defaults.waterReflectionMode,
+    isAdvancedRenderingWaterReflectionMode
+  );
 
   return {
     enabled: readOptionalBoolean(value.enabled, "world.advancedRendering.enabled", defaults.enabled),
@@ -342,7 +354,8 @@ function readAdvancedRenderingSettings(value: unknown): AdvancedRenderingSetting
       )
     },
     fogPath,
-    waterPath
+    waterPath,
+    waterReflectionMode
   };
 }
 
@@ -383,7 +396,13 @@ function readBoxBrushVolumeSettings(value: unknown, label: string): BoxBrushVolu
           `${label}.water.surfaceOpacity`,
           defaults.surfaceOpacity
         ),
-        waveStrength: readOptionalNonNegativeFiniteNumber(water.waveStrength, `${label}.water.waveStrength`, defaults.waveStrength)
+        waveStrength: readOptionalNonNegativeFiniteNumber(water.waveStrength, `${label}.water.waveStrength`, defaults.waveStrength),
+        foamContactLimit: readOptionalPositiveIntegerWithMax(
+          water.foamContactLimit,
+          `${label}.water.foamContactLimit`,
+          defaults.foamContactLimit,
+          MAX_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT
+        )
       }
     };
   }
