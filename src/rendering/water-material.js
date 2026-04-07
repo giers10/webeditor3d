@@ -1,6 +1,7 @@
-import { DoubleSide, Euler, MeshBasicMaterial, Quaternion, ShaderMaterial, Vector2, Vector3, Vector4 } from "three";
+import { DoubleSide, Euler, Matrix4, MeshBasicMaterial, Quaternion, ShaderMaterial, UniformsLib, UniformsUtils, Vector2, Vector3, Vector4 } from "three";
+import { MAX_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT } from "../document/brushes";
 
-const MAX_WATER_CONTACT_PATCHES = 6;
+const MAX_WATER_CONTACT_PATCHES = MAX_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT;
 const WATER_CONTACT_EPSILON = 1e-4;
 
 function createBoundsCorners(bounds) {
@@ -543,7 +544,7 @@ function appendTriangleMeshContactPatches(patches, source, volume, inverseRotati
     patches.push(...mergeTriangleMeshContactPatches(rawPatches, bandMinimumThickness, source.mergeProfile));
 }
 
-export function collectWaterContactPatches(volume, contactBounds) {
+export function collectWaterContactPatches(volume, contactBounds, patchLimit = MAX_WATER_CONTACT_PATCHES) {
     const inverseRotation = createInverseVolumeRotation(volume.rotationDegrees);
     const halfX = Math.max(volume.size.x * 0.5, WATER_CONTACT_EPSILON);
     const halfY = Math.max(volume.size.y * 0.5, WATER_CONTACT_EPSILON);
@@ -620,9 +621,10 @@ export function collectWaterContactPatches(volume, contactBounds) {
         }
     }
 
+    const clampedPatchLimit = Math.max(1, Math.min(patchLimit, MAX_WATER_CONTACT_PATCHES));
     return patches
         .sort((left, right) => right.halfWidth * right.halfDepth - left.halfWidth * left.halfDepth)
-        .slice(0, MAX_WATER_CONTACT_PATCHES);
+        .slice(0, clampedPatchLimit);
 }
 
 export function createWaterContactPatchUniformValue(contactPatches) {
@@ -659,7 +661,10 @@ export function createWaterMaterial(options) {
             animationUniform: null,
             contactPatchesUniform: null,
             contactPatchAxesUniform: null,
-            contactPatchShapesUniform: null
+            contactPatchShapesUniform: null,
+            reflectionTextureUniform: null,
+            reflectionMatrixUniform: null,
+            reflectionEnabledUniform: null
         };
     }
 
@@ -674,7 +679,10 @@ export function createWaterMaterial(options) {
             animationUniform: null,
             contactPatchesUniform: null,
             contactPatchAxesUniform: null,
-            contactPatchShapesUniform: null
+            contactPatchShapesUniform: null,
+            reflectionTextureUniform: null,
+            reflectionMatrixUniform: null,
+            reflectionEnabledUniform: null
         };
     }
 
@@ -683,8 +691,12 @@ export function createWaterMaterial(options) {
     const contactPatchesUniform = { value: createWaterContactPatchUniformValue(options.contactPatches) };
     const contactPatchAxesUniform = { value: createWaterContactPatchAxisUniformValue(options.contactPatches) };
     const contactPatchShapesUniform = { value: createWaterContactPatchShapeUniformValue(options.contactPatches) };
+    const reflectionTextureUniform = { value: options.reflection?.texture ?? null };
+    const reflectionMatrixUniform = { value: new Matrix4() };
+    const reflectionEnabledUniform = {
+        value: options.reflection?.enabled === true ? Math.max(0, Math.min(1, options.reflection?.strength ?? 0.36)) : 0
+    };
     const waveStrength = Math.max(0, options.waveStrength);
-    const waveAmplitude = 0.016 + Math.min(0.12, waveStrength * 0.06);
     const clampedOpacity = Math.max(0.14, Math.min(1, options.opacity));
     const topFaceFlag = options.isTopFace ? 1 : 0;
     const hex = options.colorHex.replace("#", "");
@@ -695,19 +707,21 @@ export function createWaterMaterial(options) {
     const vertexShader = /* glsl */ `
         uniform float time;
         uniform float waveStrength;
-        uniform float waveAmplitude;
         uniform float isTopFace;
+        uniform mat4 reflectionMatrix;
 
         varying vec2 vLocalSurfaceUv;
         varying vec3 vWaveNormal;
         varying vec3 vWorldPos;
         varying vec3 vViewDir;
+        varying vec4 vReflectionCoord;
         #include <fog_pars_vertex>
 
         void main() {
             vec3 transformedPosition = position;
             vLocalSurfaceUv = position.xz;
             vWaveNormal = vec3(0.0, 1.0, 0.0);
+            vReflectionCoord = vec4(0.0);
 
             if (isTopFace > 0.5) {
                 vec2 dirA = normalize(vec2(0.92, 0.38));
@@ -720,8 +734,6 @@ export function createWaterMaterial(options) {
                 float waveB = sin(phaseB) * 0.30;
                 float waveC = sin(phaseC) * 0.15;
 
-                transformedPosition.y += (waveA + waveB + waveC) * waveAmplitude;
-
                 vec2 slope =
                     dirA * (cos(phaseA) / 2.3) * 0.55 +
                     dirB * (cos(phaseB) / 1.45) * 0.30 +
@@ -733,6 +745,7 @@ export function createWaterMaterial(options) {
             vec4 mvPosition = viewMatrix * worldPos;
             vWorldPos = worldPos.xyz;
             vViewDir = normalize(cameraPosition - worldPos.xyz);
+            vReflectionCoord = reflectionMatrix * worldPos;
             gl_Position = projectionMatrix * mvPosition;
             #include <fog_vertex>
         }
@@ -750,11 +763,14 @@ export function createWaterMaterial(options) {
         uniform vec4 contactPatches[${MAX_WATER_CONTACT_PATCHES}];
         uniform vec2 contactPatchAxes[${MAX_WATER_CONTACT_PATCHES}];
         uniform float contactPatchShapes[${MAX_WATER_CONTACT_PATCHES}];
+        uniform sampler2D reflectionTexture;
+        uniform float reflectionEnabled;
 
         varying vec2 vLocalSurfaceUv;
         varying vec3 vWaveNormal;
         varying vec3 vWorldPos;
         varying vec3 vViewDir;
+        varying vec4 vReflectionCoord;
         #include <fog_pars_fragment>
 
         float hash(vec2 p) {
@@ -818,6 +834,8 @@ export function createWaterMaterial(options) {
             float contactFoam = 0.0;
             float contactRipple = 0.0;
             float contactSheen = 0.0;
+            float reflectionMask = 0.0;
+            vec3 reflectionColor = vec3(0.0);
 
             float edgeDistance = min(halfSize.x - abs(vLocalSurfaceUv.x), halfSize.y - abs(vLocalSurfaceUv.y));
             float edgeBand = max(0.22, min(halfSize.x, halfSize.y) * 0.12);
@@ -870,9 +888,21 @@ export function createWaterMaterial(options) {
             float refraction = (largeWave - 0.5) * 0.18 + (mediumWave - 0.5) * 0.14 + (microWave - 0.5) * 0.08 + contactRipple * 0.06;
             float glints = smoothstep(0.78, 0.97, fbm(vLocalSurfaceUv * 4.8 + normal.xz * 2.2 + vec2(time * 0.38, -time * 0.31))) * (0.14 + fresnel * 0.28);
             vec3 color = mix(deepTint, shallowTint, clamp(0.46 + refraction + fresnel * 0.24 + caustics * 0.08, 0.05, 0.98));
+
+            if (isTopFace > 0.5 && reflectionEnabled > 0.0 && vReflectionCoord.w > 0.0) {
+                vec2 reflectionUv = vReflectionCoord.xy / vReflectionCoord.w;
+                reflectionUv += normal.xz * (0.01 + waveStrength * 0.012) + vec2((microWave - 0.5) * 0.018, (mediumWave - 0.5) * 0.015);
+                if (reflectionUv.x >= 0.0 && reflectionUv.x <= 1.0 && reflectionUv.y >= 0.0 && reflectionUv.y <= 1.0) {
+                    reflectionColor = texture2D(reflectionTexture, clamp(reflectionUv, vec2(0.001), vec2(0.999))).rgb;
+                    reflectionColor = mix(reflectionColor, shallowTint, 0.16);
+                    reflectionMask = reflectionEnabled * clamp(0.12 + fresnel * 0.92 + glints * 0.28, 0.0, 0.92);
+                }
+            }
+
             float foam = clamp(max(edgeFoam * 0.48, contactFoam) * (0.52 + waveStrength * 0.8) + caustics * 0.08 + glints * 0.06, 0.0, 0.84);
             vec3 specular = vec3(pow(max(0.0, dot(reflect(-viewDir, normal), normalize(vec3(0.25, 0.88, 0.35)))), 18.0)) * (0.14 + fresnel * 0.56 + caustics * 0.14 + contactSheen * 0.12);
 
+            color = mix(color, reflectionColor, reflectionMask);
             color = mix(color, vec3(0.97, 0.99, 1.0), foam);
             color += specular;
             color += vec3(0.05, 0.08, 0.12) * fresnel;
@@ -887,21 +917,28 @@ export function createWaterMaterial(options) {
         }
     `;
 
-    const material = new ShaderMaterial({
-        vertexShader,
-        fragmentShader,
-        uniforms: {
+    const uniforms = UniformsUtils.merge([
+        UniformsLib.fog,
+        {
             time: animationUniform,
             waterColor: { value: [cr, cg, cb] },
             surfaceOpacity: { value: clampedOpacity },
             waveStrength: { value: waveStrength },
-            waveAmplitude: { value: waveAmplitude },
             isTopFace: { value: topFaceFlag },
             halfSize: { value: halfSize },
             contactPatches: contactPatchesUniform,
             contactPatchAxes: contactPatchAxesUniform,
-            contactPatchShapes: contactPatchShapesUniform
-        },
+            contactPatchShapes: contactPatchShapesUniform,
+            reflectionTexture: reflectionTextureUniform,
+            reflectionMatrix: reflectionMatrixUniform,
+            reflectionEnabled: reflectionEnabledUniform
+        }
+    ]);
+
+    const material = new ShaderMaterial({
+        vertexShader,
+        fragmentShader,
+        uniforms,
         transparent: true,
         depthWrite: false,
         fog: true,
@@ -913,6 +950,9 @@ export function createWaterMaterial(options) {
         animationUniform,
         contactPatchesUniform,
         contactPatchAxesUniform,
-        contactPatchShapesUniform
+        contactPatchShapesUniform,
+        reflectionTextureUniform,
+        reflectionMatrixUniform,
+        reflectionEnabledUniform
     };
 }
