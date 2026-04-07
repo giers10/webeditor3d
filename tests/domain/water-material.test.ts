@@ -40,6 +40,7 @@ describe("water material helpers", () => {
     );
 
     expect(patches).toHaveLength(1);
+    expect(patches[0]?.shape).toBe("box");
     expect(patches[0]?.x).toBeCloseTo(0, 5);
     expect(patches[0]?.z).toBeCloseTo(0, 5);
     expect(patches[0]?.halfWidth).toBeGreaterThan(0.9);
@@ -271,6 +272,7 @@ describe("water material helpers", () => {
     );
 
     expect(patches).toHaveLength(1);
+  expect(patches[0]?.shape).toBe("segment");
     expect(patches[0]?.halfWidth ?? 0).toBeGreaterThan(0.2);
     expect(Math.abs(patches[0]?.axisX ?? 0)).toBeGreaterThan(0.2);
     expect(Math.abs(patches[0]?.axisZ ?? 0)).toBeGreaterThan(0.2);
@@ -329,6 +331,7 @@ describe("water material helpers", () => {
     );
 
     expect(patches).toHaveLength(1);
+  expect(patches[0]?.shape).toBe("segment");
     expect(patches[0]?.halfWidth ?? 0).toBeGreaterThan(1.5);
     expect(patches[0]?.halfDepth ?? 1).toBeLessThan(0.3);
   });
@@ -564,9 +567,11 @@ describe("water material helpers", () => {
 
     const material = result.material as ShaderMaterial;
     expect(material.transparent).toBe(true);
+    expect(material.fog).toBe(true);
     expect(material.uniforms["surfaceOpacity"]?.value).toBeGreaterThan(0.14);
     expect(material.uniforms["waveStrength"]?.value).toBe(0.35);
     expect(material.uniforms["isTopFace"]?.value).toBe(1);
     expect(result.contactPatchesUniform?.value).toHaveLength(6);
+    expect(result.contactPatchShapesUniform?.value).toHaveLength(6);
   });
 });
