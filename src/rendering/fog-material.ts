@@ -39,6 +39,7 @@ export function createFogQualityMaterial(options: FogQualityMaterialOptions): Fo
   uniforms["volumePadding"] = { value: padding };
   uniforms["opacityMultiplier"] = { value: Math.max(0.6, Math.min(1.5, options.opacityMultiplier ?? 1)) };
   uniforms["colorLift"] = { value: Math.max(0, Math.min(0.22, options.colorLift ?? 0)) };
+  uniforms["localCameraPosition"] = { value: new Vector3() };
 
   const vertexShader = /* glsl */ `
     varying vec3 vLocalPosition;
@@ -61,6 +62,7 @@ export function createFogQualityMaterial(options: FogQualityMaterialOptions): Fo
     uniform float opacityMultiplier;
     uniform float colorLift;
     uniform float time;
+    uniform vec3 localCameraPosition;
 
     varying vec3 vLocalPosition;
     #include <fog_pars_fragment>
@@ -170,14 +172,6 @@ export function createFogQualityMaterial(options: FogQualityMaterialOptions): Fo
     }
 
     void main() {
-      vec3 worldOrigin = (modelMatrix * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
-      mat3 localToWorld = mat3(modelMatrix);
-      vec3 worldCameraOffset = cameraPosition - worldOrigin;
-      vec3 localCameraPosition = vec3(
-        dot(worldCameraOffset, localToWorld[0]),
-        dot(worldCameraOffset, localToWorld[1]),
-        dot(worldCameraOffset, localToWorld[2])
-      );
       vec3 rayDirection = normalize(vLocalPosition - localCameraPosition);
       vec2 hitRange = intersectBox(localCameraPosition, rayDirection, volumeHalfSize);
       float startDistance = max(hitRange.x, 0.0);
