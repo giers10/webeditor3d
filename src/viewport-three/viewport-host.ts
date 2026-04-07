@@ -4346,6 +4346,10 @@ export class ViewportHost {
       uniform.value = this.volumeTime;
     }
 
+    if (this.viewportWaterSurfaceBindings.length > 0) {
+      this.updateViewportWaterReflections();
+    }
+
     if (this.advancedRenderingComposer !== null) {
       this.advancedRenderingComposer.render();
       return;
