@@ -824,7 +824,7 @@ export function collectWaterContactPatches(volume: OrientedWaterVolume, contactB
       maxZ = Math.max(maxZ, localPoint.z);
     }
 
-    if (maxX <= -halfX || minX >= halfX || maxZ <= -halfZ || minZ >= halfZ) {
+    if (maxX < -halfX || minX > halfX || maxZ < -halfZ || minZ > halfZ) {
       continue;
     }
 
@@ -840,7 +840,7 @@ export function collectWaterContactPatches(volume: OrientedWaterVolume, contactB
       halfZ
     );
 
-    if (calculatePolygonArea(clippedFootprint) <= WATER_CONTACT_EPSILON) {
+    if (clippedFootprint.length < 2) {
       continue;
     }
 
