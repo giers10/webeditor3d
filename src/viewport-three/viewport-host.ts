@@ -347,6 +347,7 @@ export class ViewportHost {
   );
   private resizeObserver: ResizeObserver | null = null;
   private animationFrame = 0;
+  private renderEnabled = false;
   private container: HTMLElement | null = null;
   private brushSelectionChangeHandler: ((selection: EditorSelection) => void) | null = null;
   private whiteboxHoverLabelChangeHandler: ((label: string | null) => void) | null = null;
@@ -447,7 +448,30 @@ export class ViewportHost {
     });
     this.resizeObserver.observe(container);
 
-    this.render();
+    if (this.renderEnabled) {
+      this.render();
+    }
+  }
+
+  setRenderEnabled(enabled: boolean) {
+    if (this.renderEnabled === enabled) {
+      return;
+    }
+
+    this.renderEnabled = enabled;
+
+    if (!enabled) {
+      if (this.animationFrame !== 0) {
+        cancelAnimationFrame(this.animationFrame);
+        this.animationFrame = 0;
+      }
+      this.previousFrameTime = 0;
+      return;
+    }
+
+    if (this.container !== null && this.animationFrame === 0) {
+      this.render();
+    }
   }
 
   updateWorld(world: WorldSettings) {
@@ -4427,6 +4451,11 @@ export class ViewportHost {
   }
 
   private render = () => {
+    if (!this.renderEnabled) {
+      this.animationFrame = 0;
+      return;
+    }
+
     this.animationFrame = window.requestAnimationFrame(this.render);
     this.updateTransformGizmoPose();
     const now = performance.now();
