@@ -791,6 +791,101 @@ export class RuntimeHost {
     }
   }
 
+  private getWaterReflectionMode() {
+    if (this.currentWorld === null || !this.currentWorld.advancedRendering.enabled || this.currentWorld.advancedRendering.waterPath !== "quality") {
+      return "none" as const;
+    }
+
+    return this.currentWorld.advancedRendering.waterReflectionMode;
+  }
+
+  private createWaterReflectionRenderTarget() {
+    const width = Math.max(128, Math.round((this.container?.clientWidth ?? this.domElement.width || 512) * 0.5));
+    const height = Math.max(128, Math.round((this.container?.clientHeight ?? this.domElement.height || 512) * 0.5));
+    return new WebGLRenderTarget(width, height);
+  }
+
+  private resizeWaterReflectionTargets() {
+    const width = Math.max(128, Math.round((this.container?.clientWidth ?? this.domElement.width || 512) * 0.5));
+    const height = Math.max(128, Math.round((this.container?.clientHeight ?? this.domElement.height || 512) * 0.5));
+
+    for (const binding of this.runtimeWaterContactUniforms) {
+      binding.reflectionRenderTarget?.setSize(width, height);
+    }
+  }
+
+  private updateRuntimeWaterReflections() {
+    if (this.renderer === null || this.runtimeScene === null) {
+      return;
+    }
+
+    const reflectionMode = this.getWaterReflectionMode();
+
+    for (const binding of this.runtimeWaterContactUniforms) {
+      if (
+        reflectionMode === "none" ||
+        binding.reflectionRenderTarget === null ||
+        binding.reflectionTextureUniform === null ||
+        binding.reflectionMatrixUniform === null ||
+        binding.reflectionEnabledUniform === null
+      ) {
+        if (binding.reflectionEnabledUniform !== null) {
+          binding.reflectionEnabledUniform.value = 0;
+        }
+        continue;
+      }
+
+      const canRenderReflection = updatePlanarReflectionCamera(
+        binding.brush,
+        this.camera,
+        this.waterReflectionCamera,
+        binding.reflectionMatrixUniform.value
+      );
+
+      if (!canRenderReflection) {
+        binding.reflectionEnabledUniform.value = 0;
+        continue;
+      }
+
+      const hiddenWaterMeshes: Array<{ mesh: Mesh<BufferGeometry, Material[]>; visible: boolean }> = [];
+      for (const runtimeBrush of this.runtimeScene.brushes) {
+        if (runtimeBrush.volume.mode !== "water") {
+          continue;
+        }
+
+        const mesh = this.brushMeshes.get(runtimeBrush.id);
+        if (mesh === undefined) {
+          continue;
+        }
+
+        hiddenWaterMeshes.push({ mesh, visible: mesh.visible });
+        mesh.visible = false;
+      }
+
+      const previousModelGroupVisibility = this.modelGroup.visible;
+      if (reflectionMode === "world") {
+        this.modelGroup.visible = false;
+      }
+
+      const previousAutoClear = this.renderer.autoClear;
+      const previousRenderTarget = this.renderer.getRenderTarget();
+      this.renderer.autoClear = true;
+      this.renderer.setRenderTarget(binding.reflectionRenderTarget);
+      this.renderer.clear();
+      this.renderer.render(this.scene, this.waterReflectionCamera);
+      this.renderer.setRenderTarget(previousRenderTarget);
+      this.renderer.autoClear = previousAutoClear;
+      this.modelGroup.visible = previousModelGroupVisibility;
+
+      for (const hiddenWaterMesh of hiddenWaterMeshes) {
+        hiddenWaterMesh.mesh.visible = hiddenWaterMesh.visible;
+      }
+
+      binding.reflectionTextureUniform.value = binding.reflectionRenderTarget.texture;
+      binding.reflectionEnabledUniform.value = 0.36;
+    }
+  }
+
   private getOrCreateTexture(material: NonNullable<RuntimeBoxBrushInstance["faces"]["posX"]["material"]>) {
     const signature = createStarterMaterialSignature(material);
     const cachedTexture = this.materialTextureCache.get(material.id);
