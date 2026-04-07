@@ -3,6 +3,7 @@ export const ADVANCED_RENDERING_SHADOW_MAP_SIZES = [512, 1024, 2048, 4096];
 export const ADVANCED_RENDERING_SHADOW_TYPES = ["basic", "pcf", "pcfSoft"];
 export const ADVANCED_RENDERING_TONE_MAPPING_MODES = ["none", "linear", "reinhard", "cineon", "acesFilmic"];
 export const BOX_VOLUME_RENDER_PATHS = ["performance", "quality"];
+export const ADVANCED_RENDERING_WATER_REFLECTION_MODES = ["none", "world", "all"];
 const DEFAULT_SOLID_BACKGROUND_COLOR = "#2f3947";
 const DEFAULT_GRADIENT_TOP_COLOR = DEFAULT_SOLID_BACKGROUND_COLOR;
 const DEFAULT_GRADIENT_BOTTOM_COLOR = "#141a22";
@@ -21,6 +22,7 @@ const DEFAULT_ADVANCED_RENDERING_DEPTH_OF_FIELD_FOCUS_DISTANCE = 10;
 const DEFAULT_ADVANCED_RENDERING_DEPTH_OF_FIELD_FOCAL_LENGTH = 0.03;
 const DEFAULT_ADVANCED_RENDERING_DEPTH_OF_FIELD_BOKEH_SCALE = 1.5;
 const DEFAULT_BOX_VOLUME_RENDER_PATH = "performance";
+const DEFAULT_ADVANCED_RENDERING_WATER_REFLECTION_MODE = "none";
 export function isAdvancedRenderingShadowMapSize(value) {
     return ADVANCED_RENDERING_SHADOW_MAP_SIZES.includes(value);
 }
@@ -32,6 +34,9 @@ export function isAdvancedRenderingToneMappingMode(value) {
 }
 export function isBoxVolumeRenderPath(value) {
     return BOX_VOLUME_RENDER_PATHS.includes(value);
+}
+export function isAdvancedRenderingWaterReflectionMode(value) {
+    return ADVANCED_RENDERING_WATER_REFLECTION_MODES.includes(value);
 }
 export function createDefaultAdvancedRenderingSettings() {
     return {
@@ -65,7 +70,8 @@ export function createDefaultAdvancedRenderingSettings() {
             bokehScale: DEFAULT_ADVANCED_RENDERING_DEPTH_OF_FIELD_BOKEH_SCALE
         },
         fogPath: DEFAULT_BOX_VOLUME_RENDER_PATH,
-        waterPath: DEFAULT_BOX_VOLUME_RENDER_PATH
+        waterPath: DEFAULT_BOX_VOLUME_RENDER_PATH,
+        waterReflectionMode: DEFAULT_ADVANCED_RENDERING_WATER_REFLECTION_MODE
     };
 }
 export function createDefaultWorldSettings() {
@@ -148,7 +154,8 @@ export function cloneAdvancedRenderingSettings(settings) {
             ...settings.depthOfField
         },
         fogPath: settings.fogPath,
-        waterPath: settings.waterPath
+        waterPath: settings.waterPath,
+        waterReflectionMode: settings.waterReflectionMode
     };
 }
 export function areWorldBackgroundSettingsEqual(left, right) {
@@ -195,7 +202,8 @@ export function areAdvancedRenderingSettingsEqual(left, right) {
         left.depthOfField.focalLength === right.depthOfField.focalLength &&
         left.depthOfField.bokehScale === right.depthOfField.bokehScale &&
         left.fogPath === right.fogPath &&
-        left.waterPath === right.waterPath);
+        left.waterPath === right.waterPath &&
+        left.waterReflectionMode === right.waterReflectionMode);
 }
 export function changeWorldBackgroundMode(background, mode, imageAssetId) {
     if (mode === "image") {
