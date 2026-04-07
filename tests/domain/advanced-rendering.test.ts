@@ -186,10 +186,10 @@ describe("createAdvancedRenderingComposer", () => {
         depthAwareUpsampling: true,
         luminanceInfluence: 0.15,
         samples: 12,
-        radius: 0.07,
         intensity: 0.2975,
         resolutionScale: 0.75
       }
     });
+    expect(postprocessingState.ssaoCalls[1].options.radius).toBeCloseTo(0.07, 6);
   });
 });
