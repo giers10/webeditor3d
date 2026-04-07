@@ -153,4 +153,64 @@ describe("water volume integration", () => {
 
     expect(input.value).toBe("#12a4ff");
   });
+
+  it("keeps vertical surface motion enabled after toggling the checkbox", async () => {
+    const brush = createBoxBrush({
+      id: "brush-water-displacement-toggle",
+      volume: {
+        mode: "water",
+        water: {
+          colorHex: "#4da6d9",
+          surfaceOpacity: 0.55,
+          waveStrength: 0.35,
+          foamContactLimit: 6,
+          surfaceDisplacementEnabled: false
+        }
+      }
+    });
+    const store = createEditorStore({
+      initialDocument: {
+        ...createEmptySceneDocument({ name: "Water Displacement Toggle Test" }),
+        brushes: {
+          [brush.id]: brush
+        }
+      }
+    });
+
+    render(<App store={store} />);
+
+    await waitFor(() => {
+      expect(viewportHostInstances.length).toBeGreaterThan(0);
+    });
+
+    act(() => {
+      store.setSelection({
+        kind: "brushes",
+        ids: [brush.id]
+      });
+    });
+
+    const checkbox = (await screen.findByTestId("brush-water-surface-displacement-enabled")) as HTMLInputElement;
+
+    expect(checkbox.checked).toBe(false);
+
+    act(() => {
+      fireEvent.click(checkbox);
+    });
+
+    await waitFor(() => {
+      expect(store.getState().document.brushes[brush.id]?.volume).toEqual({
+        mode: "water",
+        water: {
+          colorHex: "#4da6d9",
+          surfaceOpacity: 0.55,
+          waveStrength: 0.35,
+          foamContactLimit: 6,
+          surfaceDisplacementEnabled: true
+        }
+      });
+    });
+
+    expect(checkbox.checked).toBe(true);
+  });
 });

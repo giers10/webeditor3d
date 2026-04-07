@@ -615,6 +615,6 @@ describe("water material helpers", () => {
     expect(result.contactPatchShapesUniform?.value).toHaveLength(MAX_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT);
     expect(result.reflectionTextureUniform).not.toBeNull();
     expect(result.reflectionMatrixUniform).not.toBeNull();
-    expect(result.reflectionEnabledUniform?.value).toBeGreaterThan(0);
+    expect(result.reflectionEnabledUniform?.value).toBe(0);
   });
 });
