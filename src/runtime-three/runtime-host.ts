@@ -929,6 +929,9 @@ export class RuntimeHost {
     this.brushMeshes.clear();
     this.volumeAnimatedMaterials.length = 0;
     this.volumeAnimatedUniforms.length = 0;
+    for (const binding of this.runtimeWaterContactUniforms) {
+      binding.reflectionRenderTarget?.dispose();
+    }
     this.runtimeWaterContactUniforms.length = 0;
   }
 
@@ -1102,6 +1105,7 @@ export class RuntimeHost {
     this.domElement.height = height;
     this.renderer?.setSize(width, height, false);
     this.advancedRenderingComposer?.setSize(width, height);
+    this.resizeWaterReflectionTargets();
   }
 
   private render = () => {
@@ -1146,6 +1150,7 @@ export class RuntimeHost {
 
     if (this.runtimeWaterContactUniforms.length > 0) {
       this.updateRuntimeWaterContactUniforms();
+      this.updateRuntimeWaterReflections();
     }
 
     this.updateUnderwaterSceneFog();
