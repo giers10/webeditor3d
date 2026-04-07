@@ -2,6 +2,8 @@ import { ShaderMaterial } from "three";
 import { describe, expect, it } from "vitest";
 
 import { MAX_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT } from "../../src/document/brushes";
+import { createBoxBrush } from "../../src/document/brushes";
+import { buildBoxBrushDerivedMeshData } from "../../src/geometry/box-brush-mesh";
 import { collectWaterContactPatches, createWaterMaterial } from "../../src/rendering/water-material";
 
 describe("water material helpers", () => {
@@ -493,6 +495,67 @@ describe("water material helpers", () => {
     expect(patches).toHaveLength(1);
     expect(patches[0]?.halfWidth ?? 0).toBeGreaterThan(1.2);
     expect(patches[0]?.halfDepth ?? 0).toBeGreaterThan(0.05);
+  });
+
+  it("keeps foam patches for both long and short edges of a box intersecting the water surface", () => {
+    const intersectingBox = createBoxBrush({
+      center: {
+        x: 0,
+        y: 1,
+        z: 0
+      },
+      size: {
+        x: 4,
+        y: 4,
+        z: 2
+      }
+    });
+    const derivedMesh = buildBoxBrushDerivedMeshData(intersectingBox);
+
+    const patches = collectWaterContactPatches(
+      {
+        center: {
+          x: 0,
+          y: 0,
+          z: 0
+        },
+        rotationDegrees: {
+          x: 0,
+          y: 0,
+          z: 0
+        },
+        size: {
+          x: 10,
+          y: 2,
+          z: 10
+        }
+      },
+      [
+        {
+          kind: "triangleMesh",
+          vertices: derivedMesh.colliderVertices,
+          indices: derivedMesh.colliderIndices,
+          transform: {
+            position: intersectingBox.center,
+            rotationDegrees: intersectingBox.rotationDegrees,
+            scale: {
+              x: 1,
+              y: 1,
+              z: 1
+            }
+          }
+        }
+      ]
+    );
+
+    expect(patches.length).toBeGreaterThanOrEqual(4);
+
+    const sortedByWidth = [...patches].sort((left, right) => right.halfWidth - left.halfWidth);
+    const longEdgeHalfWidth = sortedByWidth[0]?.halfWidth ?? 0;
+    const shortEdgeHalfWidth = sortedByWidth[sortedByWidth.length - 1]?.halfWidth ?? 0;
+
+    expect(longEdgeHalfWidth).toBeGreaterThan(1.7);
+    expect(shortEdgeHalfWidth).toBeGreaterThan(0.7);
   });
 
   it("only uses aggressive merging for explicitly marked triangle meshes", () => {
