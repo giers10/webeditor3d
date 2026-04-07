@@ -1,9 +1,10 @@
-import { AmbientLight, AnimationClip, AnimationMixer, DirectionalLight, Euler, FogExp2, Group, LoopOnce, LoopRepeat, Mesh, MeshBasicMaterial, MeshStandardMaterial, PerspectiveCamera, PointLight, Quaternion, Scene, ShaderMaterial, Vector3, SpotLight, WebGLRenderer } from "three";
+import { AmbientLight, AnimationClip, AnimationMixer, DirectionalLight, Euler, FogExp2, Group, LoopOnce, LoopRepeat, Mesh, MeshBasicMaterial, MeshStandardMaterial, PerspectiveCamera, PointLight, Quaternion, Scene, ShaderMaterial, Vector3, SpotLight, UniformsLib, UniformsUtils, WebGLRenderTarget, WebGLRenderer } from "three";
 import { createModelInstanceRenderGroup, disposeModelInstance } from "../assets/model-instance-rendering";
 import { buildBoxBrushDerivedMeshData } from "../geometry/box-brush-mesh";
 import { createStarterMaterialSignature, createStarterMaterialTexture } from "../materials/starter-material-textures";
 import { applyAdvancedRenderingLightShadowFlags, applyAdvancedRenderingRenderableShadowFlags, configureAdvancedRenderingRenderer, createAdvancedRenderingComposer, resolveBoxVolumeRenderPaths } from "../rendering/advanced-rendering";
 import { collectWaterContactPatches, createWaterContactPatchAxisUniformValue, createWaterContactPatchShapeUniformValue, createWaterContactPatchUniformValue, createWaterMaterial } from "../rendering/water-material";
+import { updatePlanarReflectionCamera } from "../rendering/planar-reflection";
 import { areAdvancedRenderingSettingsEqual, cloneAdvancedRenderingSettings } from "../document/world-settings";
 import { FirstPersonNavigationController } from "./first-person-navigation-controller";
 import { RapierCollisionWorld } from "./rapier-collision-world";
