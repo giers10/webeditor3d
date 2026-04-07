@@ -25,6 +25,7 @@ export class RuntimeHost {
     localLightGroup = new Group();
     brushGroup = new Group();
     modelGroup = new Group();
+    waterReflectionCamera = new PerspectiveCamera();
     firstPersonController = new FirstPersonNavigationController();
     orbitVisitorController = new OrbitVisitorNavigationController();
     interactionSystem = new RuntimeInteractionSystem();
