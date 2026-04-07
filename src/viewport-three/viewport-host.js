@@ -82,6 +82,7 @@ const GIZMO_RENDER_ORDER = 4_000;
 const SCALE_SNAP_STEP = 0.1;
 const MIN_SCALE_COMPONENT = 0.1;
 const MIN_BOX_SIZE_COMPONENT = 0.01;
+const WATER_REFLECTION_UPDATE_INTERVAL_MS = 96;
 export class ViewportHost {
     scene = new Scene();
     axesHelper = new AxesHelper(2);
@@ -2085,6 +2086,7 @@ export class ViewportHost {
                 colorHex: brush.volume.water.colorHex,
                 surfaceOpacity: brush.volume.water.surfaceOpacity,
                 waveStrength: brush.volume.water.waveStrength,
+                surfaceDisplacementEnabled: brush.volume.water.surfaceDisplacementEnabled,
                 opacity,
                 quality,
                 wireframe: this.displayMode === "wireframe",
@@ -2109,7 +2111,8 @@ export class ViewportHost {
                     reflectionTextureUniform: waterMaterial.reflectionTextureUniform,
                     reflectionMatrixUniform: waterMaterial.reflectionMatrixUniform,
                     reflectionEnabledUniform: waterMaterial.reflectionEnabledUniform,
-                    reflectionRenderTarget: this.getWaterReflectionMode() !== "none" ? this.createWaterReflectionRenderTarget() : null
+                    reflectionRenderTarget: this.getWaterReflectionMode() !== "none" ? this.createWaterReflectionRenderTarget() : null,
+                    lastReflectionUpdateTime: Number.NEGATIVE_INFINITY
                 });
             }
             return waterMaterial.material;
@@ -2222,6 +2225,7 @@ export class ViewportHost {
         const height = Math.max(128, Math.round(Math.max(canvasHeight, 512) * 0.5));
         for (const binding of this.viewportWaterSurfaceBindings) {
             binding.reflectionRenderTarget?.setSize(width, height);
+            binding.lastReflectionUpdateTime = Number.NEGATIVE_INFINITY;
         }
     }
     updateViewportWaterReflections() {
@@ -2235,6 +2239,7 @@ export class ViewportHost {
             return;
         }
         const reflectionMode = this.getWaterReflectionMode();
+        const now = performance.now();
         for (const binding of this.viewportWaterSurfaceBindings) {
             if (reflectionMode === "none" ||
                 binding.reflectionTextureUniform === null ||
@@ -2251,6 +2256,10 @@ export class ViewportHost {
             const canRenderReflection = updatePlanarReflectionCamera(binding.brush, activeCamera, this.waterReflectionCamera, binding.reflectionMatrixUniform.value);
             if (!canRenderReflection || binding.reflectionRenderTarget === null) {
                 binding.reflectionEnabledUniform.value = 0;
+                continue;
+            }
+            if (binding.reflectionTextureUniform.value !== null && now - binding.lastReflectionUpdateTime < WATER_REFLECTION_UPDATE_INTERVAL_MS) {
+                binding.reflectionEnabledUniform.value = 0.36;
                 continue;
             }
             const hiddenObjects = [];
@@ -2290,17 +2299,41 @@ export class ViewportHost {
             }
             const previousAutoClear = this.renderer.autoClear;
             const previousRenderTarget = this.renderer.getRenderTarget();
-            this.renderer.autoClear = true;
-            this.renderer.setRenderTarget(binding.reflectionRenderTarget);
-            this.renderer.clear();
-            this.renderer.render(this.scene, this.waterReflectionCamera);
-            this.renderer.setRenderTarget(previousRenderTarget);
-            this.renderer.autoClear = previousAutoClear;
-            for (const hiddenObject of hiddenObjects) {
-                hiddenObject.object.visible = hiddenObject.visible;
+            const previousReflectionStates = this.viewportWaterSurfaceBindings.map((waterBinding) => ({
+                binding: waterBinding,
+                enabled: waterBinding.reflectionEnabledUniform?.value ?? 0,
+                texture: waterBinding.reflectionTextureUniform?.value ?? null
+            }));
+            try {
+                for (const state of previousReflectionStates) {
+                    if (state.binding.reflectionEnabledUniform !== null) {
+                        state.binding.reflectionEnabledUniform.value = 0;
+                    }
+                }
+                binding.reflectionTextureUniform.value = null;
+                this.renderer.autoClear = true;
+                this.renderer.setRenderTarget(binding.reflectionRenderTarget);
+                this.renderer.clear();
+                this.renderer.render(this.scene, this.waterReflectionCamera);
+            }
+            finally {
+                this.renderer.setRenderTarget(previousRenderTarget);
+                this.renderer.autoClear = previousAutoClear;
+                for (const state of previousReflectionStates) {
+                    if (state.binding.reflectionEnabledUniform !== null) {
+                        state.binding.reflectionEnabledUniform.value = state.enabled;
+                    }
+                    if (state.binding.reflectionTextureUniform !== null) {
+                        state.binding.reflectionTextureUniform.value = state.texture;
+                    }
+                }
+                for (const hiddenObject of hiddenObjects) {
+                    hiddenObject.object.visible = hiddenObject.visible;
+                }
             }
             binding.reflectionTextureUniform.value = binding.reflectionRenderTarget.texture;
             binding.reflectionEnabledUniform.value = 0.36;
+            binding.lastReflectionUpdateTime = now;
         }
     }
     getOrCreateTexture(material) {
@@ -2371,7 +2404,10 @@ export class ViewportHost {
             center: waterBrush.center,
             rotationDegrees: waterBrush.rotationDegrees,
             size: waterBrush.size
-        }, contactBounds, waterBrush.volume.water.foamContactLimit);
+        }, contactBounds, this.getViewportWaterFoamContactLimit(waterBrush));
+    }
+    getViewportWaterFoamContactLimit(brush) {
+        return brush.volume.mode === "water" ? brush.volume.water.foamContactLimit : 0;
     }
     createEdgeHelper(brush, edgeId) {
         const segment = getBoxBrushEdgeWorldSegment(brush, edgeId);
@@ -2526,6 +2562,7 @@ export class ViewportHost {
         this.orthographicCamera.updateProjectionMatrix();
         this.renderer.setSize(width, height, false);
         this.advancedRenderingComposer?.setSize(width, height);
+        this.resizeWaterReflectionTargets();
     }
     pickTransformHandle(event) {
         if (!this.transformGizmoGroup.visible) {
@@ -3208,6 +3245,9 @@ export class ViewportHost {
         this.volumeTime += dt;
         for (const uniform of this.volumeAnimatedUniforms) {
             uniform.value = this.volumeTime;
+        }
+        if (this.viewportWaterSurfaceBindings.length > 0) {
+            this.updateViewportWaterReflections();
         }
         if (this.advancedRenderingComposer !== null) {
             this.advancedRenderingComposer.render();
