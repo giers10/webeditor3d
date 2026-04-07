@@ -529,7 +529,7 @@ function createSegmentEndpoints(patch: WaterContactPatch) {
   return [center.clone().sub(offset), center.clone().add(offset)] as const;
 }
 
-function measureSegmentExtentsInBasis(points: Vector2[], radius: number, axis: Vector2) {
+function measureSegmentExtentsInBasis(points: readonly Vector2[], radius: number, axis: Vector2) {
   const perpendicularAxis = new Vector2(-axis.y, axis.x);
   let minPrimary = Number.POSITIVE_INFINITY;
   let maxPrimary = Number.NEGATIVE_INFINITY;
