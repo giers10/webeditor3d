@@ -156,6 +156,8 @@ export class RuntimeHost {
     this.scene.add(this.localLightGroup);
     this.scene.add(this.brushGroup);
     this.scene.add(this.modelGroup);
+    this.underwaterSceneFog.density = 0;
+    this.scene.fog = this.underwaterSceneFog;
     this.renderer = enableRendering ? new WebGLRenderer({ antialias: false, alpha: true }) : null;
     this.domElement = this.renderer?.domElement ?? document.createElement("canvas");
 
