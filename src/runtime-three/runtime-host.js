@@ -14,6 +14,7 @@ import { RuntimeAudioSystem } from "./runtime-audio-system";
 import { OrbitVisitorNavigationController } from "./orbit-visitor-navigation-controller";
 import { resolveUnderwaterFogState } from "./underwater-fog";
 const FALLBACK_FACE_COLOR = 0x747d89;
+const BOX_FACE_MATERIAL_COUNT = 6;
 const WATER_REFLECTION_UPDATE_INTERVAL_MS = 96;
 export class RuntimeHost {
     scene = new Scene();
@@ -379,14 +380,15 @@ export class RuntimeHost {
             const contactPatches = brush.volume.mode === "water"
                 ? this.mergeRuntimeWaterContactPatches(staticContactPatches, this.collectRuntimePlayerWaterContactPatches(brush))
                 : [];
-            const materials = [
-                this.createFaceMaterial(brush, "posX", brush.faces.posX.material, volumeRenderPaths, contactPatches, staticContactPatches),
-                this.createFaceMaterial(brush, "negX", brush.faces.negX.material, volumeRenderPaths, contactPatches, staticContactPatches),
-                this.createFaceMaterial(brush, "posY", brush.faces.posY.material, volumeRenderPaths, contactPatches, staticContactPatches),
-                this.createFaceMaterial(brush, "negY", brush.faces.negY.material, volumeRenderPaths, contactPatches, staticContactPatches),
-                this.createFaceMaterial(brush, "posZ", brush.faces.posZ.material, volumeRenderPaths, contactPatches, staticContactPatches),
-                this.createFaceMaterial(brush, "negZ", brush.faces.negZ.material, volumeRenderPaths, contactPatches, staticContactPatches)
-            ];
+            const materials = this.createFogMaterialSet(brush, volumeRenderPaths) ??
+                [
+                    this.createFaceMaterial(brush, "posX", brush.faces.posX.material, volumeRenderPaths, contactPatches, staticContactPatches),
+                    this.createFaceMaterial(brush, "negX", brush.faces.negX.material, volumeRenderPaths, contactPatches, staticContactPatches),
+                    this.createFaceMaterial(brush, "posY", brush.faces.posY.material, volumeRenderPaths, contactPatches, staticContactPatches),
+                    this.createFaceMaterial(brush, "negY", brush.faces.negY.material, volumeRenderPaths, contactPatches, staticContactPatches),
+                    this.createFaceMaterial(brush, "posZ", brush.faces.posZ.material, volumeRenderPaths, contactPatches, staticContactPatches),
+                    this.createFaceMaterial(brush, "negZ", brush.faces.negZ.material, volumeRenderPaths, contactPatches, staticContactPatches)
+                ];
             const mesh = new Mesh(geometry, materials);
             mesh.position.set(brush.center.x, brush.center.y, brush.center.z);
             mesh.rotation.set((brush.rotationDegrees.x * Math.PI) / 180, (brush.rotationDegrees.y * Math.PI) / 180, (brush.rotationDegrees.z * Math.PI) / 180);
@@ -395,6 +397,34 @@ export class RuntimeHost {
             this.brushMeshes.set(brush.id, mesh);
         }
         this.applyShadowState();
+    }
+    createFogMaterialSet(brush, volumeRenderPaths) {
+        if (brush.volume.mode !== "fog") {
+            return null;
+        }
+        if (volumeRenderPaths.fog === "quality") {
+            const fogMaterial = createFogQualityMaterial({
+                colorHex: brush.volume.fog.colorHex,
+                density: brush.volume.fog.density,
+                padding: brush.volume.fog.padding,
+                time: this.volumeTime,
+                halfSize: {
+                    x: brush.size.x * 0.5,
+                    y: brush.size.y * 0.5,
+                    z: brush.size.z * 0.5
+                }
+            });
+            this.volumeAnimatedUniforms.push(fogMaterial.animationUniform);
+            return Array.from({ length: BOX_FACE_MATERIAL_COUNT }, () => fogMaterial.material);
+        }
+        const densityOpacity = Math.max(0.06, Math.min(0.72, brush.volume.fog.density * 0.8 + 0.08));
+        const fogMaterial = new MeshBasicMaterial({
+            color: brush.volume.fog.colorHex,
+            transparent: true,
+            opacity: densityOpacity,
+            depthWrite: false
+        });
+        return Array.from({ length: BOX_FACE_MATERIAL_COUNT }, () => fogMaterial);
     }
     configureFogVolumeMesh(mesh, materials) {
         const fogMaterials = materials.filter((material) => material instanceof ShaderMaterial && material.uniforms["localCameraPosition"] !== undefined);
@@ -666,9 +696,7 @@ export class RuntimeHost {
         for (const mesh of this.brushMeshes.values()) {
             this.brushGroup.remove(mesh);
             mesh.geometry.dispose();
-            for (const material of mesh.material) {
-                material.dispose();
-            }
+            this.disposeUniqueMaterials(mesh.material);
         }
         this.brushMeshes.clear();
         this.volumeAnimatedUniforms.length = 0;
@@ -676,6 +704,11 @@ export class RuntimeHost {
             binding.reflectionRenderTarget?.dispose();
         }
         this.runtimeWaterContactUniforms.length = 0;
+    }
+    disposeUniqueMaterials(materials) {
+        for (const material of new Set(materials)) {
+            material.dispose();
+        }
     }
     createPlayerWaterContactBounds() {
         if (this.runtimeScene === null || this.currentFirstPersonTelemetry === null) {
