@@ -6,11 +6,13 @@ export const ADVANCED_RENDERING_SHADOW_MAP_SIZES = [512, 1024, 2048, 4096] as co
 export const ADVANCED_RENDERING_SHADOW_TYPES = ["basic", "pcf", "pcfSoft"] as const;
 export const ADVANCED_RENDERING_TONE_MAPPING_MODES = ["none", "linear", "reinhard", "cineon", "acesFilmic"] as const;
 export const BOX_VOLUME_RENDER_PATHS = ["performance", "quality"] as const;
+export const ADVANCED_RENDERING_WATER_REFLECTION_MODES = ["none", "world", "all"] as const;
 
 export type AdvancedRenderingShadowMapSize = (typeof ADVANCED_RENDERING_SHADOW_MAP_SIZES)[number];
 export type AdvancedRenderingShadowType = (typeof ADVANCED_RENDERING_SHADOW_TYPES)[number];
 export type AdvancedRenderingToneMappingMode = (typeof ADVANCED_RENDERING_TONE_MAPPING_MODES)[number];
 export type BoxVolumeRenderPath = (typeof BOX_VOLUME_RENDER_PATHS)[number];
+export type AdvancedRenderingWaterReflectionMode = (typeof ADVANCED_RENDERING_WATER_REFLECTION_MODES)[number];
 
 export interface WorldSolidBackgroundSettings {
   mode: "solid";
@@ -87,6 +89,7 @@ export interface AdvancedRenderingSettings {
   depthOfField: AdvancedRenderingDepthOfFieldSettings;
   fogPath: BoxVolumeRenderPath;
   waterPath: BoxVolumeRenderPath;
+  waterReflectionMode: AdvancedRenderingWaterReflectionMode;
 }
 
 export interface WorldSettings {
@@ -114,6 +117,7 @@ const DEFAULT_ADVANCED_RENDERING_DEPTH_OF_FIELD_FOCUS_DISTANCE = 10;
 const DEFAULT_ADVANCED_RENDERING_DEPTH_OF_FIELD_FOCAL_LENGTH = 0.03;
 const DEFAULT_ADVANCED_RENDERING_DEPTH_OF_FIELD_BOKEH_SCALE = 1.5;
 const DEFAULT_BOX_VOLUME_RENDER_PATH: BoxVolumeRenderPath = "performance";
+const DEFAULT_ADVANCED_RENDERING_WATER_REFLECTION_MODE: AdvancedRenderingWaterReflectionMode = "none";
 
 export function isAdvancedRenderingShadowMapSize(value: unknown): value is AdvancedRenderingShadowMapSize {
   return ADVANCED_RENDERING_SHADOW_MAP_SIZES.includes(value as AdvancedRenderingShadowMapSize);
@@ -129,6 +133,10 @@ export function isAdvancedRenderingToneMappingMode(value: unknown): value is Adv
 
 export function isBoxVolumeRenderPath(value: unknown): value is BoxVolumeRenderPath {
   return BOX_VOLUME_RENDER_PATHS.includes(value as BoxVolumeRenderPath);
+}
+
+export function isAdvancedRenderingWaterReflectionMode(value: unknown): value is AdvancedRenderingWaterReflectionMode {
+  return ADVANCED_RENDERING_WATER_REFLECTION_MODES.includes(value as AdvancedRenderingWaterReflectionMode);
 }
 
 export function createDefaultAdvancedRenderingSettings(): AdvancedRenderingSettings {
@@ -163,7 +171,8 @@ export function createDefaultAdvancedRenderingSettings(): AdvancedRenderingSetti
       bokehScale: DEFAULT_ADVANCED_RENDERING_DEPTH_OF_FIELD_BOKEH_SCALE
     },
     fogPath: DEFAULT_BOX_VOLUME_RENDER_PATH,
-    waterPath: DEFAULT_BOX_VOLUME_RENDER_PATH
+    waterPath: DEFAULT_BOX_VOLUME_RENDER_PATH,
+    waterReflectionMode: DEFAULT_ADVANCED_RENDERING_WATER_REFLECTION_MODE
   };
 }
 
@@ -254,7 +263,8 @@ export function cloneAdvancedRenderingSettings(settings: AdvancedRenderingSettin
       ...settings.depthOfField
     },
     fogPath: settings.fogPath,
-    waterPath: settings.waterPath
+    waterPath: settings.waterPath,
+    waterReflectionMode: settings.waterReflectionMode
   };
 }
 
@@ -310,7 +320,8 @@ export function areAdvancedRenderingSettingsEqual(left: AdvancedRenderingSetting
     left.depthOfField.focalLength === right.depthOfField.focalLength &&
     left.depthOfField.bokehScale === right.depthOfField.bokehScale &&
     left.fogPath === right.fogPath &&
-    left.waterPath === right.waterPath
+    left.waterPath === right.waterPath &&
+    left.waterReflectionMode === right.waterReflectionMode
   );
 }
 
