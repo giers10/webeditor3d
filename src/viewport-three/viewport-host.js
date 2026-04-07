@@ -1,4 +1,4 @@
-import { AmbientLight, AxesHelper, BufferGeometry, BoxGeometry, CapsuleGeometry, ConeGeometry, CylinderGeometry, DirectionalLight, EdgesGeometry, GridHelper, Group, Line, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, MeshStandardMaterial, OrthographicCamera, Plane, PerspectiveCamera, PointLight, Quaternion, Raycaster, Scene, SphereGeometry, Spherical, TorusGeometry, SpotLight, Vector2, Vector3, WebGLRenderTarget, WebGLRenderer } from "three";
+import { AmbientLight, AxesHelper, BufferGeometry, BoxGeometry, CapsuleGeometry, ConeGeometry, CylinderGeometry, DirectionalLight, EdgesGeometry, GridHelper, Group, Line, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, MeshStandardMaterial, OrthographicCamera, Plane, PerspectiveCamera, PointLight, Quaternion, Raycaster, Scene, ShaderMaterial, SphereGeometry, Spherical, TorusGeometry, SpotLight, Vector2, Vector3, WebGLRenderTarget, WebGLRenderer } from "three";
 import { areEditorSelectionsEqual, isBrushEdgeSelected, isBrushFaceSelected, isBrushSelected, isBrushVertexSelected, isModelInstanceSelected } from "../core/selection";
 import { getWhiteboxSelectionFeedbackLabel } from "../core/whitebox-selection-feedback";
 import { cloneTransformSession, createInactiveTransformSession, createTransformPreviewFromTarget, createTransformSession, resolveTransformTarget, supportsTransformOperation, supportsTransformAxisConstraint } from "../core/transform-session";
@@ -95,6 +95,7 @@ export class ViewportHost {
     cameraForward = new Vector3();
     cameraRight = new Vector3();
     cameraUp = new Vector3();
+    fogLocalCameraPosition = new Vector3();
     cameraSpherical = new Spherical();
     gridHelpers = {
         xz: new GridHelper(40, 40, 0xcf8354, 0x4e596b),
@@ -151,6 +152,7 @@ export class ViewportHost {
     }));
     boxCreatePreviewEdges = new LineSegments(new EdgesGeometry(this.boxCreatePreviewMesh.geometry), new LineBasicMaterial({
         color: BOX_CREATE_PREVIEW_EDGE
+            this.configureFogVolumeMesh(mesh, materials);
     }));
     resizeObserver = null;
     animationFrame = 0;
@@ -1732,6 +1734,19 @@ export class ViewportHost {
         }
         this.refreshBrushPresentation();
         this.applyShadowState();
+    }
+    configureFogVolumeMesh(mesh, materials) {
+        const fogMaterials = materials.filter((material) => material instanceof ShaderMaterial && material.uniforms["localCameraPosition"] !== undefined);
+        if (fogMaterials.length === 0) {
+            mesh.onBeforeRender = null;
+            return;
+        }
+        mesh.onBeforeRender = (_renderer, _scene, camera) => {
+            const localCameraPosition = mesh.worldToLocal(this.fogLocalCameraPosition.copy(camera.position));
+            for (const material of fogMaterials) {
+                material.uniforms["localCameraPosition"].value.copy(localCameraPosition);
+            }
+        };
     }
     rebuildEntityMarkers(document, selection) {
         this.clearEntityMarkers();
