@@ -2,7 +2,7 @@ import {} from "../assets/project-assets";
 import { isModelInstanceCollisionMode } from "../assets/model-instances";
 import { isPlayerStartColliderMode, getPlayerStartColliderHeight } from "../entities/entity-instances";
 import {} from "../interactions/interaction-links";
-import { BOX_FACE_IDS, BOX_VERTEX_IDS, hasPositiveBoxSize, isBoxBrushVolumeMode } from "./brushes";
+import { BOX_FACE_IDS, BOX_VERTEX_IDS, MAX_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT, hasPositiveBoxSize, isBoxBrushVolumeMode } from "./brushes";
 import { isAdvancedRenderingShadowMapSize, isAdvancedRenderingShadowType, isBoxVolumeRenderPath, isAdvancedRenderingToneMappingMode, isHexColorString } from "./world-settings";
 export function createDiagnostic(severity, code, message, path, scope = "document") {
     return {
@@ -30,6 +30,9 @@ function isPositiveFiniteNumber(value) {
 }
 function isPositiveInteger(value) {
     return isFiniteNumber(value) && Number.isInteger(value) && value > 0;
+}
+function isPositiveIntegerInRange(value, max) {
+    return isPositiveInteger(value) && value <= max;
 }
 function isBoolean(value) {
     return typeof value === "boolean";
@@ -146,6 +149,9 @@ function validateWorldSettings(world, document, diagnostics) {
     }
     if (!isBoxVolumeRenderPath(advancedRendering.waterPath)) {
         diagnostics.push(createDiagnostic("error", "invalid-advanced-rendering-water-path", "Advanced rendering water path must be performance or quality.", "world.advancedRendering.waterPath"));
+    }
+    if (!["none", "world", "all"].includes(advancedRendering.waterReflectionMode)) {
+        diagnostics.push(createDiagnostic("error", "invalid-advanced-rendering-water-reflection-mode", "Advanced rendering water reflection mode must be none, world, or all.", "world.advancedRendering.waterReflectionMode"));
     }
 }
 function validatePointLightEntity(entity, path, diagnostics) {
@@ -593,6 +599,9 @@ export function validateSceneDocument(document) {
                 }
                 if (!isNonNegativeFiniteNumber(water.waveStrength)) {
                     diagnostics.push(createDiagnostic("error", "invalid-box-water-wave-strength", "Water wave strength must be a non-negative finite number.", `${path}.volume.water.waveStrength`));
+                }
+                if (!isPositiveIntegerInRange(water.foamContactLimit, MAX_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT)) {
+                    diagnostics.push(createDiagnostic("error", "invalid-box-water-foam-contact-limit", `Water foam contact limit must be a positive integer between 1 and ${MAX_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT}.`, `${path}.volume.water.foamContactLimit`));
                 }
             }
         }
