@@ -107,9 +107,11 @@ import {
   BOX_FACE_IDS,
   BOX_FACE_LABELS,
   BOX_VERTEX_LABELS,
+  DEFAULT_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT,
   DEFAULT_BOX_BRUSH_CENTER,
   DEFAULT_BOX_BRUSH_ROTATION_DEGREES,
   DEFAULT_BOX_BRUSH_SIZE,
+  MAX_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT,
   createDefaultFaceUvState,
   normalizeBrushName,
   type BoxBrush,
@@ -118,6 +120,7 @@ import {
   type FaceUvState
 } from "../document/brushes";
 import {
+  ADVANCED_RENDERING_WATER_REFLECTION_MODES,
   BOX_VOLUME_RENDER_PATHS,
   ADVANCED_RENDERING_SHADOW_MAP_SIZES,
   ADVANCED_RENDERING_SHADOW_TYPES,
@@ -128,6 +131,7 @@ import {
   type WorldBackgroundMode,
   type AdvancedRenderingSettings,
   type BoxVolumeRenderPath,
+  type AdvancedRenderingWaterReflectionMode,
   type AdvancedRenderingShadowMapSize,
   type AdvancedRenderingShadowType,
   type AdvancedRenderingToneMappingMode,
