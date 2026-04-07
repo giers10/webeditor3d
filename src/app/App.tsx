@@ -2281,7 +2281,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 water: {
                   colorHex: boxVolumeWaterColorDraft,
                   surfaceOpacity: readNonNegativeNumberDraft(boxVolumeWaterSurfaceOpacityDraft, "Water surface opacity"),
-                  waveStrength: readNonNegativeNumberDraft(boxVolumeWaterWaveStrengthDraft, "Water wave strength")
+                  waveStrength: readNonNegativeNumberDraft(boxVolumeWaterWaveStrengthDraft, "Water wave strength"),
+                  foamContactLimit: readWaterFoamContactLimitDraft(boxVolumeWaterFoamContactLimitDraft)
                 }
               };
         }
@@ -2313,7 +2314,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
         water: {
           colorHex: boxVolumeWaterColorDraft,
           surfaceOpacity: readNonNegativeNumberDraft(boxVolumeWaterSurfaceOpacityDraft, "Water surface opacity"),
-          waveStrength: readNonNegativeNumberDraft(boxVolumeWaterWaveStrengthDraft, "Water wave strength")
+          waveStrength: readNonNegativeNumberDraft(boxVolumeWaterWaveStrengthDraft, "Water wave strength"),
+          foamContactLimit: readWaterFoamContactLimitDraft(boxVolumeWaterFoamContactLimitDraft)
         }
       }),
       "Set box water settings",
@@ -2332,7 +2334,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
         water: {
           colorHex,
           surfaceOpacity: readNonNegativeNumberDraft(boxVolumeWaterSurfaceOpacityDraft, "Water surface opacity"),
-          waveStrength: readNonNegativeNumberDraft(boxVolumeWaterWaveStrengthDraft, "Water wave strength")
+          waveStrength: readNonNegativeNumberDraft(boxVolumeWaterWaveStrengthDraft, "Water wave strength"),
+          foamContactLimit: readWaterFoamContactLimitDraft(boxVolumeWaterFoamContactLimitDraft)
         }
       }),
       "Set box water color",
