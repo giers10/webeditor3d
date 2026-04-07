@@ -603,6 +603,9 @@ export function validateSceneDocument(document) {
                 if (!isPositiveIntegerInRange(water.foamContactLimit, MAX_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT)) {
                     diagnostics.push(createDiagnostic("error", "invalid-box-water-foam-contact-limit", `Water foam contact limit must be a positive integer between 1 and ${MAX_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT}.`, `${path}.volume.water.foamContactLimit`));
                 }
+                if (typeof water.surfaceDisplacementEnabled !== "boolean") {
+                    diagnostics.push(createDiagnostic("error", "invalid-box-water-surface-displacement-enabled", "Water surface displacement must be enabled or disabled explicitly.", `${path}.volume.water.surfaceDisplacementEnabled`));
+                }
             }
         }
         if (volume.mode === "fog") {
