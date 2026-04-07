@@ -399,7 +399,6 @@ export class RuntimeHost {
     configureFogVolumeMesh(mesh, materials) {
         const fogMaterials = materials.filter((material) => material instanceof ShaderMaterial && material.uniforms["localCameraPosition"] !== undefined);
         if (fogMaterials.length === 0) {
-            mesh.onBeforeRender = null;
             return;
         }
         mesh.onBeforeRender = (_renderer, _scene, camera) => {

@@ -2363,7 +2363,6 @@ export class ViewportHost {
     );
 
     if (fogMaterials.length === 0) {
-      mesh.onBeforeRender = null;
       return;
     }
 

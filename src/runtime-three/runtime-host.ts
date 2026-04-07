@@ -592,7 +592,6 @@ export class RuntimeHost {
     );
 
     if (fogMaterials.length === 0) {
-      mesh.onBeforeRender = null;
       return;
     }
 
