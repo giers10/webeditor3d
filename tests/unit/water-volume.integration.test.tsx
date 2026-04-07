@@ -99,7 +99,8 @@ describe("water volume integration", () => {
         water: {
           colorHex: "#4da6d9",
           surfaceOpacity: 0.55,
-          waveStrength: 0.35
+          waveStrength: 0.35,
+          foamContactLimit: 6
         }
       }
     });
