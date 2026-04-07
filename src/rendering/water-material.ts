@@ -100,6 +100,158 @@ function createInverseVolumeRotation(rotationDegrees: Vec3) {
     .invert();
 }
 
+function cross2d(origin: Vector2, pointA: Vector2, pointB: Vector2) {
+  return (pointA.x - origin.x) * (pointB.y - origin.y) - (pointA.y - origin.y) * (pointB.x - origin.x);
+}
+
+function buildConvexHull(points: Vector2[]) {
+  const sortedPoints = [...points]
+    .map((point) => point.clone())
+    .sort((left, right) => (left.x === right.x ? left.y - right.y : left.x - right.x));
+  const uniquePoints: Vector2[] = [];
+
+  for (const point of sortedPoints) {
+    const lastPoint = uniquePoints.at(-1);
+    if (lastPoint === undefined || Math.abs(point.x - lastPoint.x) > WATER_CONTACT_EPSILON || Math.abs(point.y - lastPoint.y) > WATER_CONTACT_EPSILON) {
+      uniquePoints.push(point);
+    }
+  }
+
+  if (uniquePoints.length <= 2) {
+    return uniquePoints;
+  }
+
+  const lowerHull: Vector2[] = [];
+
+  for (const point of uniquePoints) {
+    while (lowerHull.length >= 2 && cross2d(lowerHull[lowerHull.length - 2], lowerHull[lowerHull.length - 1], point) <= WATER_CONTACT_EPSILON) {
+      lowerHull.pop();
+    }
+
+    lowerHull.push(point);
+  }
+
+  const upperHull: Vector2[] = [];
+
+  for (let index = uniquePoints.length - 1; index >= 0; index -= 1) {
+    const point = uniquePoints[index];
+    if (point === undefined) {
+      continue;
+    }
+
+    while (upperHull.length >= 2 && cross2d(upperHull[upperHull.length - 2], upperHull[upperHull.length - 1], point) <= WATER_CONTACT_EPSILON) {
+      upperHull.pop();
+    }
+
+    upperHull.push(point);
+  }
+
+  lowerHull.pop();
+  upperHull.pop();
+  return [...lowerHull, ...upperHull];
+}
+
+function clipPolygonAgainstVerticalBoundary(polygon: Vector2[], limit: number, keepGreater: boolean) {
+  if (polygon.length === 0) {
+    return [];
+  }
+
+  const clipped: Vector2[] = [];
+  let previousPoint = polygon[polygon.length - 1] ?? null;
+
+  if (previousPoint === null) {
+    return [];
+  }
+
+  let previousInside = keepGreater ? previousPoint.x >= limit - WATER_CONTACT_EPSILON : previousPoint.x <= limit + WATER_CONTACT_EPSILON;
+
+  for (const point of polygon) {
+    const inside = keepGreater ? point.x >= limit - WATER_CONTACT_EPSILON : point.x <= limit + WATER_CONTACT_EPSILON;
+
+    if (inside !== previousInside) {
+      const deltaX = point.x - previousPoint.x;
+      if (Math.abs(deltaX) > WATER_CONTACT_EPSILON) {
+        const interpolation = (limit - previousPoint.x) / deltaX;
+        clipped.push(new Vector2(limit, previousPoint.y + (point.y - previousPoint.y) * interpolation));
+      }
+    }
+
+    if (inside) {
+      clipped.push(point.clone());
+    }
+
+    previousPoint = point;
+    previousInside = inside;
+  }
+
+  return clipped;
+}
+
+function clipPolygonAgainstHorizontalBoundary(polygon: Vector2[], limit: number, keepGreater: boolean) {
+  if (polygon.length === 0) {
+    return [];
+  }
+
+  const clipped: Vector2[] = [];
+  let previousPoint = polygon[polygon.length - 1] ?? null;
+
+  if (previousPoint === null) {
+    return [];
+  }
+
+  let previousInside = keepGreater ? previousPoint.y >= limit - WATER_CONTACT_EPSILON : previousPoint.y <= limit + WATER_CONTACT_EPSILON;
+
+  for (const point of polygon) {
+    const inside = keepGreater ? point.y >= limit - WATER_CONTACT_EPSILON : point.y <= limit + WATER_CONTACT_EPSILON;
+
+    if (inside !== previousInside) {
+      const deltaY = point.y - previousPoint.y;
+      if (Math.abs(deltaY) > WATER_CONTACT_EPSILON) {
+        const interpolation = (limit - previousPoint.y) / deltaY;
+        clipped.push(new Vector2(previousPoint.x + (point.x - previousPoint.x) * interpolation, limit));
+      }
+    }
+
+    if (inside) {
+      clipped.push(point.clone());
+    }
+
+    previousPoint = point;
+    previousInside = inside;
+  }
+
+  return clipped;
+}
+
+function clipPolygonToRectangle(polygon: Vector2[], minX: number, maxX: number, minZ: number, maxZ: number) {
+  let clippedPolygon = polygon;
+  clippedPolygon = clipPolygonAgainstVerticalBoundary(clippedPolygon, minX, true);
+  clippedPolygon = clipPolygonAgainstVerticalBoundary(clippedPolygon, maxX, false);
+  clippedPolygon = clipPolygonAgainstHorizontalBoundary(clippedPolygon, minZ, true);
+  clippedPolygon = clipPolygonAgainstHorizontalBoundary(clippedPolygon, maxZ, false);
+  return clippedPolygon;
+}
+
+function calculatePolygonArea(polygon: Vector2[]) {
+  if (polygon.length < 3) {
+    return 0;
+  }
+
+  let doubledArea = 0;
+
+  for (let index = 0; index < polygon.length; index += 1) {
+    const point = polygon[index];
+    const nextPoint = polygon[(index + 1) % polygon.length];
+    if (point === undefined || nextPoint === undefined) {
+      continue;
+    }
+
+    doubledArea += point.x * nextPoint.y - nextPoint.x * point.y;
+  }
+
+  return Math.abs(doubledArea) * 0.5;
+}
+
 export function collectWaterContactPatches(volume: OrientedWaterVolume, contactBounds: WaterContactSource[]): WaterContactPatch[] {
   const inverseRotation = createInverseVolumeRotation(volume.rotationDegrees);
   const halfX = Math.max(volume.size.x * 0.5, WATER_CONTACT_EPSILON);
@@ -112,6 +264,7 @@ export function collectWaterContactPatches(volume: OrientedWaterVolume, contactB
 
   for (const source of contactBounds) {
     const corners = "kind" in source ? createOrientedBoxCorners(source) : createBoundsCorners(source);
+    const localCorners: Vector3[] = [];
     let minX = Number.POSITIVE_INFINITY;
     let minY = Number.POSITIVE_INFINITY;
     let minZ = Number.POSITIVE_INFINITY;
@@ -125,6 +278,7 @@ export function collectWaterContactPatches(volume: OrientedWaterVolume, contactB
       localPoint.y -= volume.center.y;
       localPoint.z -= volume.center.z;
       localPoint.applyQuaternion(inverseRotation);
+      localCorners.push(localPoint.clone());
       minX = Math.min(minX, localPoint.x);
       minY = Math.min(minY, localPoint.y);
       minZ = Math.min(minZ, localPoint.z);
@@ -141,14 +295,15 @@ export function collectWaterContactPatches(volume: OrientedWaterVolume, contactB
       continue;
     }
 
-    const overlapMinX = Math.max(minX, -halfX);
-    const overlapMaxX = Math.min(maxX, halfX);
-    const overlapMinZ = Math.max(minZ, -halfZ);
-    const overlapMaxZ = Math.min(maxZ, halfZ);
-    const overlapWidth = overlapMaxX - overlapMinX;
-    const overlapDepth = overlapMaxZ - overlapMinZ;
+    const clippedFootprint = clipPolygonToRectangle(
+      buildConvexHull(localCorners.map((corner) => new Vector2(corner.x, corner.z))),
+      -halfX,
+      halfX,
+      -halfZ,
+      halfZ
+    );
 
-    if (overlapWidth <= WATER_CONTACT_EPSILON || overlapDepth <= WATER_CONTACT_EPSILON) {
+    if (calculatePolygonArea(clippedFootprint) <= WATER_CONTACT_EPSILON) {
       continue;
     }
 
@@ -160,10 +315,8 @@ export function collectWaterContactPatches(volume: OrientedWaterVolume, contactB
 
     let axisX = 1;
     let axisZ = 0;
-    let halfWidth = overlapWidth * 0.5;
-    let halfDepth = overlapDepth * 0.5;
-    let centerX = (overlapMinX + overlapMaxX) * 0.5;
-    let centerZ = (overlapMinZ + overlapMaxZ) * 0.5;
+    const primaryAxis = new Vector2(1, 0);
+    const secondaryAxis = new Vector2(0, 1);
 
     if ("kind" in source) {
       const sourceRotation = new Quaternion().setFromEuler(
@@ -174,55 +327,52 @@ export function collectWaterContactPatches(volume: OrientedWaterVolume, contactB
           "XYZ"
         )
       );
-      const projectedSourceX = new Vector2(1, 0)
-        .set(
-          new Vector3(1, 0, 0).applyQuaternion(sourceRotation).applyQuaternion(inverseRotation).x,
-          new Vector3(1, 0, 0).applyQuaternion(sourceRotation).applyQuaternion(inverseRotation).z
-        );
-      const projectedSourceZ = new Vector2(1, 0)
-        .set(
-          new Vector3(0, 0, 1).applyQuaternion(sourceRotation).applyQuaternion(inverseRotation).x,
-          new Vector3(0, 0, 1).applyQuaternion(sourceRotation).applyQuaternion(inverseRotation).z
-        );
-      const primaryAxis = projectedSourceX.lengthSq() >= projectedSourceZ.lengthSq() ? projectedSourceX : projectedSourceZ;
+      const projectedSourceX = new Vector2(
+        new Vector3(1, 0, 0).applyQuaternion(sourceRotation).applyQuaternion(inverseRotation).x,
+        new Vector3(1, 0, 0).applyQuaternion(sourceRotation).applyQuaternion(inverseRotation).z
+      );
+      const projectedSourceZ = new Vector2(
+        new Vector3(0, 0, 1).applyQuaternion(sourceRotation).applyQuaternion(inverseRotation).x,
+        new Vector3(0, 0, 1).applyQuaternion(sourceRotation).applyQuaternion(inverseRotation).z
+      );
+      const nextPrimaryAxis = projectedSourceX.lengthSq() >= projectedSourceZ.lengthSq() ? projectedSourceX : projectedSourceZ;
 
-      if (primaryAxis.lengthSq() > WATER_CONTACT_EPSILON) {
-        primaryAxis.normalize();
-        const secondaryAxis = new Vector2(-primaryAxis.y, primaryAxis.x);
+      if (nextPrimaryAxis.lengthSq() > WATER_CONTACT_EPSILON) {
+        primaryAxis.copy(nextPrimaryAxis).normalize();
+        secondaryAxis.set(-primaryAxis.y, primaryAxis.x);
         if (projectedSourceZ.lengthSq() > WATER_CONTACT_EPSILON && projectedSourceZ.clone().normalize().dot(secondaryAxis) < 0) {
           secondaryAxis.negate();
         }
-
-        let minPrimary = Number.POSITIVE_INFINITY;
-        let maxPrimary = Number.NEGATIVE_INFINITY;
-        let minSecondary = Number.POSITIVE_INFINITY;
-        let maxSecondary = Number.NEGATIVE_INFINITY;
-
-        for (const corner of corners) {
-          localPoint.copy(corner);
-          localPoint.x -= volume.center.x;
-          localPoint.y -= volume.center.y;
-          localPoint.z -= volume.center.z;
-          localPoint.applyQuaternion(inverseRotation);
-          const projectedPoint = new Vector2(localPoint.x, localPoint.z);
-          const primaryDistance = projectedPoint.dot(primaryAxis);
-          const secondaryDistance = projectedPoint.dot(secondaryAxis);
-          minPrimary = Math.min(minPrimary, primaryDistance);
-          maxPrimary = Math.max(maxPrimary, primaryDistance);
-          minSecondary = Math.min(minSecondary, secondaryDistance);
-          maxSecondary = Math.max(maxSecondary, secondaryDistance);
-        }
-
-        const patchCenterPrimary = (minPrimary + maxPrimary) * 0.5;
-        const patchCenterSecondary = (minSecondary + maxSecondary) * 0.5;
-        centerX = primaryAxis.x * patchCenterPrimary + secondaryAxis.x * patchCenterSecondary;
-        centerZ = primaryAxis.y * patchCenterPrimary + secondaryAxis.y * patchCenterSecondary;
-        halfWidth = (maxPrimary - minPrimary) * 0.5;
-        halfDepth = (maxSecondary - minSecondary) * 0.5;
-        axisX = primaryAxis.x;
-        axisZ = primaryAxis.y;
       }
     }
+
+    let minPrimary = Number.POSITIVE_INFINITY;
+    let maxPrimary = Number.NEGATIVE_INFINITY;
+    let minSecondary = Number.POSITIVE_INFINITY;
+    let maxSecondary = Number.NEGATIVE_INFINITY;
+
+    for (const point of clippedFootprint) {
+      const primaryDistance = point.dot(primaryAxis);
+      const secondaryDistance = point.dot(secondaryAxis);
+      minPrimary = Math.min(minPrimary, primaryDistance);
+      maxPrimary = Math.max(maxPrimary, primaryDistance);
+      minSecondary = Math.min(minSecondary, secondaryDistance);
+      maxSecondary = Math.max(maxSecondary, secondaryDistance);
+    }
+
+    const halfWidth = (maxPrimary - minPrimary) * 0.5;
+    const halfDepth = (maxSecondary - minSecondary) * 0.5;
+
+    if (halfWidth <= WATER_CONTACT_EPSILON || halfDepth <= WATER_CONTACT_EPSILON) {
+      continue;
+    }
+
+    const patchCenterPrimary = (minPrimary + maxPrimary) * 0.5;
+    const patchCenterSecondary = (minSecondary + maxSecondary) * 0.5;
+    const centerX = primaryAxis.x * patchCenterPrimary + secondaryAxis.x * patchCenterSecondary;
+    const centerZ = primaryAxis.y * patchCenterPrimary + secondaryAxis.y * patchCenterSecondary;
+    axisX = primaryAxis.x;
+    axisZ = primaryAxis.y;
 
     patches.push({
       x: centerX,
