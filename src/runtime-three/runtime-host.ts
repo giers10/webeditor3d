@@ -786,18 +786,12 @@ export class RuntimeHost {
         : null;
 
     if (fogState === null) {
-      if (this.scene.fog !== null) {
-        this.scene.fog = null;
-      }
+      this.underwaterSceneFog.density = 0;
       return;
     }
 
     this.underwaterSceneFog.color.set(fogState.colorHex);
     this.underwaterSceneFog.density = fogState.density;
-
-    if (this.scene.fog !== this.underwaterSceneFog) {
-      this.scene.fog = this.underwaterSceneFog;
-    }
   }
 
   private getWaterReflectionMode() {

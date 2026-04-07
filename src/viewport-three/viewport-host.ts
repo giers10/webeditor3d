@@ -190,6 +190,7 @@ interface ViewportWaterSurfaceBinding {
   reflectionMatrixUniform: { value: Matrix4 } | null;
   reflectionEnabledUniform: { value: number } | null;
   reflectionRenderTarget: WebGLRenderTarget | null;
+  lastReflectionUpdateTime: number;
 }
 
 const BRUSH_SELECTED_EDGE_COLOR = 0xf7d2aa;
@@ -253,6 +254,7 @@ const GIZMO_RENDER_ORDER = 4_000;
 const SCALE_SNAP_STEP = 0.1;
 const MIN_SCALE_COMPONENT = 0.1;
 const MIN_BOX_SIZE_COMPONENT = 0.01;
+const WATER_REFLECTION_UPDATE_INTERVAL_MS = 96;
 
 interface CachedMaterialTexture {
   signature: string;
