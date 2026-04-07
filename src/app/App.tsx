@@ -2307,7 +2307,33 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
   };
 
-  const applyBoxWaterSettings = () => {
+  const resolveDraftBoxWaterSettings = (
+    overrides: {
+      colorHex?: string;
+      surfaceOpacity?: number;
+      waveStrength?: number;
+      foamContactLimit?: number;
+      surfaceDisplacementEnabled?: boolean;
+    } = {}
+  ) => ({
+    colorHex: overrides.colorHex ?? boxVolumeWaterColorDraft,
+    surfaceOpacity:
+      overrides.surfaceOpacity ?? readNonNegativeNumberDraft(boxVolumeWaterSurfaceOpacityDraft, "Water surface opacity"),
+    waveStrength: overrides.waveStrength ?? readNonNegativeNumberDraft(boxVolumeWaterWaveStrengthDraft, "Water wave strength"),
+    foamContactLimit: overrides.foamContactLimit ?? readWaterFoamContactLimitDraft(boxVolumeWaterFoamContactLimitDraft),
+    surfaceDisplacementEnabled:
+      overrides.surfaceDisplacementEnabled ?? boxVolumeWaterSurfaceDisplacementEnabledDraft
+  });
+
+  const applyBoxWaterSettings = (
+    overrides: {
+      colorHex?: string;
+      surfaceOpacity?: number;
+      waveStrength?: number;
+      foamContactLimit?: number;
+      surfaceDisplacementEnabled?: boolean;
+    } = {}
+  ) => {
     if (selectedBrush === null || selectedBrush.volume.mode !== "water") {
       return;
     }
@@ -2315,13 +2341,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     applyBoxVolumeSettings(
       () => ({
         mode: "water",
-        water: {
-          colorHex: boxVolumeWaterColorDraft,
-          surfaceOpacity: readNonNegativeNumberDraft(boxVolumeWaterSurfaceOpacityDraft, "Water surface opacity"),
-          waveStrength: readNonNegativeNumberDraft(boxVolumeWaterWaveStrengthDraft, "Water wave strength"),
-          foamContactLimit: readWaterFoamContactLimitDraft(boxVolumeWaterFoamContactLimitDraft),
-          surfaceDisplacementEnabled: boxVolumeWaterSurfaceDisplacementEnabledDraft
-        }
+        water: resolveDraftBoxWaterSettings(overrides)
       }),
       "Set box water settings",
       "Updated selected whitebox water settings."
@@ -2336,13 +2356,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     applyBoxVolumeSettings(
       () => ({
         mode: "water",
-        water: {
-          colorHex,
-          surfaceOpacity: readNonNegativeNumberDraft(boxVolumeWaterSurfaceOpacityDraft, "Water surface opacity"),
-          waveStrength: readNonNegativeNumberDraft(boxVolumeWaterWaveStrengthDraft, "Water wave strength"),
-          foamContactLimit: readWaterFoamContactLimitDraft(boxVolumeWaterFoamContactLimitDraft),
-          surfaceDisplacementEnabled: boxVolumeWaterSurfaceDisplacementEnabledDraft
-        }
+        water: resolveDraftBoxWaterSettings({ colorHex })
       }),
       "Set box water color",
       "Updated selected whitebox water color."
@@ -7470,8 +7484,13 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               type="checkbox"
                               checked={boxVolumeWaterSurfaceDisplacementEnabledDraft}
                               onChange={(event) => {
-                                setBoxVolumeWaterSurfaceDisplacementEnabledDraft(event.currentTarget.checked);
-                                scheduleDraftCommit(() => applyBoxWaterSettings());
+                                const nextSurfaceDisplacementEnabled = event.currentTarget.checked;
+                                setBoxVolumeWaterSurfaceDisplacementEnabledDraft(nextSurfaceDisplacementEnabled);
+                                scheduleDraftCommit(() =>
+                                  applyBoxWaterSettings({
+                                    surfaceDisplacementEnabled: nextSurfaceDisplacementEnabled
+                                  })
+                                );
                               }}
                             />
                           </label>

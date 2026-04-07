@@ -694,7 +694,9 @@ export function createWaterMaterial(options) {
     const reflectionTextureUniform = { value: options.reflection?.texture ?? null };
     const reflectionMatrixUniform = { value: new Matrix4() };
     const reflectionEnabledUniform = {
-        value: options.reflection?.enabled === true ? Math.max(0, Math.min(1, options.reflection?.strength ?? 0.36)) : 0
+        value: options.reflection?.enabled === true && options.reflection?.texture !== null
+            ? Math.max(0, Math.min(1, options.reflection?.strength ?? 0.36))
+            : 0
     };
     const surfaceDisplacementEnabledUniform = {
         value: options.surfaceDisplacementEnabled === true ? 1 : 0
@@ -910,8 +912,8 @@ export function createWaterMaterial(options) {
                 if (reflectionUv.x >= 0.0 && reflectionUv.x <= 1.0 && reflectionUv.y >= 0.0 && reflectionUv.y <= 1.0) {
                     vec4 reflectionSample = texture2D(reflectionTexture, clamp(reflectionUv, vec2(0.001), vec2(0.999)));
                     if (reflectionSample.a > 0.001) {
-                        reflectionColor = mix(reflectionSample.rgb, shallowTint, 0.16);
-                        reflectionMask = reflectionEnabled * reflectionSample.a * clamp(0.12 + fresnel * 0.92 + glints * 0.28, 0.0, 0.92);
+                        reflectionColor = mix(reflectionSample.rgb, shallowTint, 0.32);
+                        reflectionMask = reflectionEnabled * reflectionSample.a * clamp(0.08 + fresnel * 0.72 + glints * 0.18, 0.0, 0.62);
                     }
                 }
             }
@@ -919,7 +921,7 @@ export function createWaterMaterial(options) {
             float foam = clamp(max(edgeFoam * 0.48, contactFoam) * (0.52 + waveStrength * 0.8) + caustics * 0.08 + glints * 0.06, 0.0, 0.84);
             vec3 specular = vec3(pow(max(0.0, dot(reflect(-viewDir, normal), normalize(vec3(0.25, 0.88, 0.35)))), 18.0)) * (0.14 + fresnel * 0.56 + caustics * 0.14 + contactSheen * 0.12);
 
-            color = mix(color, reflectionColor, reflectionMask);
+            color = mix(color, mix(reflectionColor, color, 0.42), reflectionMask);
             color = mix(color, vec3(0.97, 0.99, 1.0), foam);
             color += specular;
             color += vec3(0.05, 0.08, 0.12) * fresnel;
