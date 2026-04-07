@@ -2961,7 +2961,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
     setStatusMessage(
       `Added a ${actionType === "playSound" ? "play sound" : "stop sound"} link to the selected ${selectedInteractionSource.kind === "triggerVolume" ? "Trigger Volume" : "Interactable"}.`
     );
-                              onBlur={() => applyBoxWaterSettings()}
 
   const handleDeleteInteractionLink = (linkId: string) => {
     try {
@@ -3200,7 +3199,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
           trigger: link.trigger,
           targetEntityId: defaultTarget.id
         }),
-                              onBlur={() => applyBoxWaterSettings()}
+        "Switched link action to teleport player."
       );
       return;
     }
@@ -3232,7 +3231,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
           trigger: link.trigger,
           targetModelInstanceId: targetModelInstance.id,
           clipName: firstClip
-                              onBlur={() => applyBoxWaterSettings()}
+        }),
         "Switched link action to play animation."
       );
       return;
@@ -7437,7 +7436,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                                 step="0.05"
                                 value={boxVolumeWaterSurfaceOpacityDraft}
                                 onChange={(event) => setBoxVolumeWaterSurfaceOpacityDraft(event.currentTarget.value)}
-                                onBlur={applyBoxWaterSettings}
+                                onBlur={() => applyBoxWaterSettings()}
                                 onKeyDown={(event) => handleDraftVectorKeyDown(event, applyBoxWaterSettings)}
                                 onKeyUp={(event) => handleNumberInputKeyUp(event, applyBoxWaterSettings)}
                                 onPointerUp={(event) => handleNumberInputPointerUp(event, applyBoxWaterSettings)}
@@ -7454,7 +7453,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               step="0.05"
                               value={boxVolumeWaterWaveStrengthDraft}
                               onChange={(event) => setBoxVolumeWaterWaveStrengthDraft(event.currentTarget.value)}
-                              onBlur={applyBoxWaterSettings}
+                              onBlur={() => applyBoxWaterSettings()}
                               onKeyDown={(event) => handleDraftVectorKeyDown(event, applyBoxWaterSettings)}
                               onKeyUp={(event) => handleNumberInputKeyUp(event, applyBoxWaterSettings)}
                               onPointerUp={(event) => handleNumberInputPointerUp(event, applyBoxWaterSettings)}
@@ -7471,7 +7470,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               step="1"
                               value={boxVolumeWaterFoamContactLimitDraft}
                               onChange={(event) => setBoxVolumeWaterFoamContactLimitDraft(event.currentTarget.value)}
-                              onBlur={applyBoxWaterSettings}
+                              onBlur={() => applyBoxWaterSettings()}
                               onKeyDown={(event) => handleDraftVectorKeyDown(event, applyBoxWaterSettings)}
                               onKeyUp={(event) => handleNumberInputKeyUp(event, applyBoxWaterSettings)}
                               onPointerUp={(event) => handleNumberInputPointerUp(event, applyBoxWaterSettings)}
