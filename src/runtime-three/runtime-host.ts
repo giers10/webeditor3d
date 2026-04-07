@@ -646,7 +646,11 @@ export class RuntimeHost {
           x: brush.size.x * 0.5,
           z: brush.size.z * 0.5
         },
-        contactPatches
+        contactPatches,
+        reflection: {
+          texture: null,
+          enabled: faceId === "posY" && this.getWaterReflectionMode() !== "none"
+        }
       });
 
       if (waterMaterial.animationUniform !== null) {
@@ -659,7 +663,11 @@ export class RuntimeHost {
           uniform: waterMaterial.contactPatchesUniform,
           axisUniform: waterMaterial.contactPatchAxesUniform,
           shapeUniform: waterMaterial.contactPatchShapesUniform ?? { value: [] },
-          staticContactPatches
+          staticContactPatches,
+          reflectionTextureUniform: waterMaterial.reflectionTextureUniform,
+          reflectionMatrixUniform: waterMaterial.reflectionMatrixUniform,
+          reflectionEnabledUniform: waterMaterial.reflectionEnabledUniform,
+          reflectionRenderTarget: this.getWaterReflectionMode() !== "none" ? this.createWaterReflectionRenderTarget() : null
         });
       }
 
@@ -715,8 +723,8 @@ export class RuntimeHost {
     `;
 
     const fragmentShader = /* glsl */ `
-      uniform vec3 fogColor;
-      uniform float fogDensity;
+      uniform vec3 volumeFogColor;
+      uniform float volumeFogDensity;
       uniform float time;
       varying vec2 vUv;
       #include <fog_pars_fragment>
@@ -730,24 +738,29 @@ export class RuntimeHost {
         float drift = sin(vUv.x * 4.5 + time * 0.28) * sin(vUv.y * 3.2 + time * 0.22);
         float variation = 0.82 + drift * 0.18;
 
-        float alpha = fogDensity * edgeFade * variation;
+        float alpha = volumeFogDensity * edgeFade * variation;
         alpha = clamp(alpha, 0.0, 0.88);
 
         // Edge scatter brightening
-        vec3 color = mix(fogColor, vec3(1.0), (1.0 - edgeFade) * 0.09);
+        vec3 color = mix(volumeFogColor, vec3(1.0), (1.0 - edgeFade) * 0.09);
         gl_FragColor = vec4(color, alpha);
         #include <fog_fragment>
       }
     `;
 
+    const uniforms = UniformsUtils.merge([
+      UniformsLib.fog,
+      {
+        volumeFogColor: { value: [cr, cg, cb] },
+        volumeFogDensity: { value: Math.min(0.9, fog.density + 0.12) },
+        time: { value: this.volumeTime }
+      }
+    ]);
+
     const mat = new ShaderMaterial({
       vertexShader,
       fragmentShader,
-      uniforms: {
-        fogColor: { value: [cr, cg, cb] },
-        fogDensity: { value: Math.min(0.9, fog.density + 0.12) },
-        time: { value: this.volumeTime }
-      },
+      uniforms,
       transparent: true,
       depthWrite: false,
       fog: true,
