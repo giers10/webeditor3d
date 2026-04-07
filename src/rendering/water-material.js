@@ -35,10 +35,12 @@ function createOrientedBoxCorners(box) {
     ].map((corner) => corner.applyQuaternion(rotation).add(new Vector3(box.center.x, box.center.y, box.center.z)));
 }
 
+function createRotationQuaternion(rotationDegrees) {
+    return new Quaternion().setFromEuler(new Euler((rotationDegrees.x * Math.PI) / 180, (rotationDegrees.y * Math.PI) / 180, (rotationDegrees.z * Math.PI) / 180, "XYZ"));
+}
+
 function createInverseVolumeRotation(rotationDegrees) {
-    return new Quaternion()
-        .setFromEuler(new Euler((rotationDegrees.x * Math.PI) / 180, (rotationDegrees.y * Math.PI) / 180, (rotationDegrees.z * Math.PI) / 180, "XYZ"))
-        .invert();
+    return createRotationQuaternion(rotationDegrees).invert();
 }
 
 function cross2d(origin, pointA, pointB) {
@@ -147,6 +149,45 @@ function clipPolygonToRectangle(polygon, minX, maxX, minZ, maxZ) {
     return clippedPolygon;
 }
 
+function clipPolygonAgainstPlane3d(polygon, signedDistance) {
+    if (polygon.length === 0) {
+        return [];
+    }
+    const clipped = [];
+    let previousPoint = polygon[polygon.length - 1] ?? null;
+    if (previousPoint === null) {
+        return [];
+    }
+    let previousDistance = signedDistance(previousPoint);
+    let previousInside = previousDistance >= -WATER_CONTACT_EPSILON;
+    for (const point of polygon) {
+        const distance = signedDistance(point);
+        const inside = distance >= -WATER_CONTACT_EPSILON;
+        if (inside !== previousInside) {
+            const interpolation = previousDistance / (previousDistance - distance);
+            clipped.push(previousPoint.clone().lerp(point, interpolation));
+        }
+        if (inside) {
+            clipped.push(point.clone());
+        }
+        previousPoint = point;
+        previousDistance = distance;
+        previousInside = inside;
+    }
+    return clipped;
+}
+
+function clipPolygonToContactVolume(polygon, halfX, minY, maxY, halfZ) {
+    let clippedPolygon = polygon;
+    clippedPolygon = clipPolygonAgainstPlane3d(clippedPolygon, (point) => point.x + halfX);
+    clippedPolygon = clipPolygonAgainstPlane3d(clippedPolygon, (point) => halfX - point.x);
+    clippedPolygon = clipPolygonAgainstPlane3d(clippedPolygon, (point) => point.y - minY);
+    clippedPolygon = clipPolygonAgainstPlane3d(clippedPolygon, (point) => maxY - point.y);
+    clippedPolygon = clipPolygonAgainstPlane3d(clippedPolygon, (point) => point.z + halfZ);
+    clippedPolygon = clipPolygonAgainstPlane3d(clippedPolygon, (point) => halfZ - point.z);
+    return clippedPolygon;
+}
+
 function calculatePolygonArea(polygon) {
     if (polygon.length < 3) {
         return 0;
@@ -163,6 +204,101 @@ function calculatePolygonArea(polygon) {
     return Math.abs(doubledArea) * 0.5;
 }
 
+function createPatchFromProjectedPoints(projectedPoints, preferredAxis, minimumThickness) {
+    const hull = buildConvexHull(projectedPoints);
+    if (hull.length === 0) {
+        return null;
+    }
+    const primaryAxis = preferredAxis !== null && preferredAxis.lengthSq() > WATER_CONTACT_EPSILON ? preferredAxis.clone().normalize() : new Vector2(1, 0);
+    if (preferredAxis === null || preferredAxis.lengthSq() <= WATER_CONTACT_EPSILON) {
+        let longestSegmentLength = 0;
+        for (let index = 0; index < hull.length; index += 1) {
+            const startPoint = hull[index];
+            const endPoint = hull[(index + 1) % hull.length];
+            if (startPoint === undefined || endPoint === undefined) {
+                continue;
+            }
+            const segment = endPoint.clone().sub(startPoint);
+            const segmentLength = segment.lengthSq();
+            if (segmentLength > longestSegmentLength) {
+                longestSegmentLength = segmentLength;
+                primaryAxis.copy(segment.normalize());
+            }
+        }
+    }
+    if (primaryAxis.lengthSq() <= WATER_CONTACT_EPSILON) {
+        return null;
+    }
+    const secondaryAxis = new Vector2(-primaryAxis.y, primaryAxis.x);
+    let minPrimary = Number.POSITIVE_INFINITY;
+    let maxPrimary = Number.NEGATIVE_INFINITY;
+    let minSecondary = Number.POSITIVE_INFINITY;
+    let maxSecondary = Number.NEGATIVE_INFINITY;
+    for (const point of hull) {
+        const primaryDistance = point.dot(primaryAxis);
+        const secondaryDistance = point.dot(secondaryAxis);
+        minPrimary = Math.min(minPrimary, primaryDistance);
+        maxPrimary = Math.max(maxPrimary, primaryDistance);
+        minSecondary = Math.min(minSecondary, secondaryDistance);
+        maxSecondary = Math.max(maxSecondary, secondaryDistance);
+    }
+    const halfWidth = (maxPrimary - minPrimary) * 0.5;
+    let halfDepth = (maxSecondary - minSecondary) * 0.5;
+    if (halfWidth <= WATER_CONTACT_EPSILON) {
+        return null;
+    }
+    if (halfDepth <= WATER_CONTACT_EPSILON || calculatePolygonArea(hull) <= WATER_CONTACT_EPSILON) {
+        halfDepth = Math.max(halfDepth, minimumThickness);
+    }
+    if (halfDepth <= WATER_CONTACT_EPSILON) {
+        return null;
+    }
+    const patchCenterPrimary = (minPrimary + maxPrimary) * 0.5;
+    const patchCenterSecondary = (minSecondary + maxSecondary) * 0.5;
+    return {
+        x: primaryAxis.x * patchCenterPrimary + secondaryAxis.x * patchCenterSecondary,
+        z: primaryAxis.y * patchCenterPrimary + secondaryAxis.y * patchCenterSecondary,
+        halfWidth,
+        halfDepth,
+        axisX: primaryAxis.x,
+        axisZ: primaryAxis.y
+    };
+}
+
+function appendTriangleMeshContactPatches(patches, source, volume, inverseRotation, halfX, surfaceY, surfaceBand, halfZ) {
+    const position = new Vector3(source.transform?.position.x ?? 0, source.transform?.position.y ?? 0, source.transform?.position.z ?? 0);
+    const rotation = source.transform !== undefined ? createRotationQuaternion(source.transform.rotationDegrees) : null;
+    const scale = new Vector3(source.transform?.scale.x ?? 1, source.transform?.scale.y ?? 1, source.transform?.scale.z ?? 1);
+    const bandMinimumThickness = Math.max(0.08, Math.min(0.22, surfaceBand * 0.45));
+    const triangleVertices = [new Vector3(), new Vector3(), new Vector3()];
+    for (let indexOffset = 0; indexOffset <= source.indices.length - 3; indexOffset += 3) {
+        const polygon = [];
+        for (let cornerIndex = 0; cornerIndex < 3; cornerIndex += 1) {
+            const vertexIndex = source.indices[indexOffset + cornerIndex] ?? 0;
+            const vertex = triangleVertices[cornerIndex] ?? new Vector3();
+            vertex.set(source.vertices[vertexIndex * 3] ?? 0, source.vertices[vertexIndex * 3 + 1] ?? 0, source.vertices[vertexIndex * 3 + 2] ?? 0);
+            vertex.multiply(scale);
+            if (rotation !== null) {
+                vertex.applyQuaternion(rotation);
+            }
+            vertex.add(position);
+            vertex.x -= volume.center.x;
+            vertex.y -= volume.center.y;
+            vertex.z -= volume.center.z;
+            vertex.applyQuaternion(inverseRotation);
+            polygon.push(vertex.clone());
+        }
+        const clippedPolygon = clipPolygonToContactVolume(polygon, halfX, surfaceY - surfaceBand, surfaceY + surfaceBand, halfZ);
+        if (clippedPolygon.length < 2) {
+            continue;
+        }
+        const patch = createPatchFromProjectedPoints(clippedPolygon.map((point) => new Vector2(point.x, point.z)), null, bandMinimumThickness);
+        if (patch !== null) {
+            patches.push(patch);
+        }
+    }
+}
+
 export function collectWaterContactPatches(volume, contactBounds) {
     const inverseRotation = createInverseVolumeRotation(volume.rotationDegrees);
     const halfX = Math.max(volume.size.x * 0.5, WATER_CONTACT_EPSILON);
@@ -174,6 +310,10 @@ export function collectWaterContactPatches(volume, contactBounds) {
     const patches = [];
 
     for (const source of contactBounds) {
+        if ("kind" in source && source.kind === "triangleMesh") {
+            appendTriangleMeshContactPatches(patches, source, volume, inverseRotation, halfX, surfaceY, surfaceBand, halfZ);
+            continue;
+        }
         const corners = "kind" in source ? createOrientedBoxCorners(source) : createBoundsCorners(source);
         const localCorners = [];
         let minX = Number.POSITIVE_INFINITY;
@@ -218,62 +358,22 @@ export function collectWaterContactPatches(volume, contactBounds) {
             continue;
         }
 
-        let axisX = 1;
-        let axisZ = 0;
-        const primaryAxis = new Vector2(1, 0);
-        const secondaryAxis = new Vector2(0, 1);
+        let preferredAxis = null;
 
         if ("kind" in source) {
-            const sourceRotation = new Quaternion().setFromEuler(new Euler((source.rotationDegrees.x * Math.PI) / 180, (source.rotationDegrees.y * Math.PI) / 180, (source.rotationDegrees.z * Math.PI) / 180, "XYZ"));
+            const sourceRotation = createRotationQuaternion(source.rotationDegrees);
             const projectedSourceX = new Vector2(new Vector3(1, 0, 0).applyQuaternion(sourceRotation).applyQuaternion(inverseRotation).x, new Vector3(1, 0, 0).applyQuaternion(sourceRotation).applyQuaternion(inverseRotation).z);
             const projectedSourceZ = new Vector2(new Vector3(0, 0, 1).applyQuaternion(sourceRotation).applyQuaternion(inverseRotation).x, new Vector3(0, 0, 1).applyQuaternion(sourceRotation).applyQuaternion(inverseRotation).z);
             const nextPrimaryAxis = projectedSourceX.lengthSq() >= projectedSourceZ.lengthSq() ? projectedSourceX : projectedSourceZ;
 
             if (nextPrimaryAxis.lengthSq() > WATER_CONTACT_EPSILON) {
-                primaryAxis.copy(nextPrimaryAxis).normalize();
-                secondaryAxis.set(-primaryAxis.y, primaryAxis.x);
-                if (projectedSourceZ.lengthSq() > WATER_CONTACT_EPSILON && projectedSourceZ.clone().normalize().dot(secondaryAxis) < 0) {
-                    secondaryAxis.negate();
-                }
+                preferredAxis = nextPrimaryAxis.normalize();
             }
         }
-
-        let minPrimary = Number.POSITIVE_INFINITY;
-        let maxPrimary = Number.NEGATIVE_INFINITY;
-        let minSecondary = Number.POSITIVE_INFINITY;
-        let maxSecondary = Number.NEGATIVE_INFINITY;
-
-        for (const point of clippedFootprint) {
-            const primaryDistance = point.dot(primaryAxis);
-            const secondaryDistance = point.dot(secondaryAxis);
-            minPrimary = Math.min(minPrimary, primaryDistance);
-            maxPrimary = Math.max(maxPrimary, primaryDistance);
-            minSecondary = Math.min(minSecondary, secondaryDistance);
-            maxSecondary = Math.max(maxSecondary, secondaryDistance);
+        const patch = createPatchFromProjectedPoints(clippedFootprint, preferredAxis, Math.max(0.08, Math.min(0.18, surfaceBand * 0.4)));
+        if (patch !== null) {
+            patches.push(patch);
         }
-
-        const halfWidth = (maxPrimary - minPrimary) * 0.5;
-        const halfDepth = (maxSecondary - minSecondary) * 0.5;
-
-        if (halfWidth <= WATER_CONTACT_EPSILON || halfDepth <= WATER_CONTACT_EPSILON) {
-            continue;
-        }
-
-        const patchCenterPrimary = (minPrimary + maxPrimary) * 0.5;
-        const patchCenterSecondary = (minSecondary + maxSecondary) * 0.5;
-        const centerX = primaryAxis.x * patchCenterPrimary + secondaryAxis.x * patchCenterSecondary;
-        const centerZ = primaryAxis.y * patchCenterPrimary + secondaryAxis.y * patchCenterSecondary;
-        axisX = primaryAxis.x;
-        axisZ = primaryAxis.y;
-
-        patches.push({
-            x: centerX,
-            z: centerZ,
-            halfWidth,
-            halfDepth,
-            axisX,
-            axisZ
-        });
     }
 
     return patches
