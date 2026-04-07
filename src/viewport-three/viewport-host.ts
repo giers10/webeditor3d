@@ -148,6 +148,7 @@ import {
   createAdvancedRenderingComposer,
   resolveBoxVolumeRenderPaths
 } from "../rendering/advanced-rendering";
+import { createFogQualityMaterial } from "../rendering/fog-material";
 import { updatePlanarReflectionCamera } from "../rendering/planar-reflection";
 import { collectWaterContactPatches, createWaterMaterial } from "../rendering/water-material";
 import { resolveViewportFocusTarget } from "./viewport-focus";
@@ -2961,6 +2962,25 @@ export class ViewportHost {
           transparent: true,
           opacity
         });
+      }
+
+      if (quality) {
+        const fogMaterial = createFogQualityMaterial({
+          colorHex: brush.volume.fog.colorHex,
+          density: brush.volume.fog.density * (selectedFace ? 1.12 : hoveredFace ? 1.06 : 1),
+          padding: brush.volume.fog.padding,
+          time: this.volumeTime,
+          halfSize: {
+            x: brush.size.x * 0.5,
+            y: brush.size.y * 0.5,
+            z: brush.size.z * 0.5
+          },
+          opacityMultiplier: selectedFace ? 1.12 : hoveredFace ? 1.06 : 1,
+          colorLift: selectedFace ? 0.08 : hoveredFace ? 0.04 : 0
+        });
+
+        this.volumeAnimatedUniforms.push(fogMaterial.animationUniform);
+        return fogMaterial.material;
       }
 
       return new MeshStandardMaterial({

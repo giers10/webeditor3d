@@ -1,8 +1,9 @@
-import { AmbientLight, AnimationClip, AnimationMixer, DirectionalLight, Euler, FogExp2, Group, LoopOnce, LoopRepeat, Mesh, MeshBasicMaterial, MeshStandardMaterial, PerspectiveCamera, PointLight, Quaternion, Scene, ShaderMaterial, Vector3, SpotLight, UniformsLib, UniformsUtils, WebGLRenderTarget, WebGLRenderer } from "three";
+import { AmbientLight, AnimationClip, AnimationMixer, DirectionalLight, Euler, FogExp2, Group, LoopOnce, LoopRepeat, Mesh, MeshBasicMaterial, MeshStandardMaterial, PerspectiveCamera, PointLight, Quaternion, Scene, Vector3, SpotLight, WebGLRenderTarget, WebGLRenderer } from "three";
 import { createModelInstanceRenderGroup, disposeModelInstance } from "../assets/model-instance-rendering";
 import { buildBoxBrushDerivedMeshData } from "../geometry/box-brush-mesh";
 import { createStarterMaterialSignature, createStarterMaterialTexture } from "../materials/starter-material-textures";
 import { applyAdvancedRenderingLightShadowFlags, applyAdvancedRenderingRenderableShadowFlags, configureAdvancedRenderingRenderer, createAdvancedRenderingComposer, resolveBoxVolumeRenderPaths } from "../rendering/advanced-rendering";
+import { createFogQualityMaterial } from "../rendering/fog-material";
 import { collectWaterContactPatches, createWaterContactPatchAxisUniformValue, createWaterContactPatchShapeUniformValue, createWaterContactPatchUniformValue, createWaterMaterial } from "../rendering/water-material";
 import { updatePlanarReflectionCamera } from "../rendering/planar-reflection";
 import { areAdvancedRenderingSettingsEqual, cloneAdvancedRenderingSettings } from "../document/world-settings";
@@ -34,7 +35,6 @@ export class RuntimeHost {
     underwaterSceneFog = new FogExp2("#2c6f8d", 0.03);
     brushMeshes = new Map();
     volumeTime = 0;
-    volumeAnimatedMaterials = [];
     volumeAnimatedUniforms = [];
     runtimeWaterContactUniforms = [];
     localLightObjects = new Map();
@@ -472,7 +472,19 @@ export class RuntimeHost {
         }
         if (brush.volume.mode === "fog") {
             if (volumeRenderPaths.fog === "quality") {
-                return this.createFogQualityMaterial(brush.volume.fog);
+                const fogMaterial = createFogQualityMaterial({
+                    colorHex: brush.volume.fog.colorHex,
+                    density: brush.volume.fog.density,
+                    padding: brush.volume.fog.padding,
+                    time: this.volumeTime,
+                    halfSize: {
+                        x: brush.size.x * 0.5,
+                        y: brush.size.y * 0.5,
+                        z: brush.size.z * 0.5
+                    }
+                });
+                this.volumeAnimatedUniforms.push(fogMaterial.animationUniform);
+                return fogMaterial.material;
             }
             const densityOpacity = Math.max(0.06, Math.min(0.72, brush.volume.fog.density * 0.8 + 0.08));
             return new MeshBasicMaterial({
@@ -496,60 +508,6 @@ export class RuntimeHost {
             metalness: 0.02
         });
     }
-    createFogQualityMaterial(fog) {
-        const hex = fog.colorHex.replace("#", "");
-        const cr = parseInt(hex.substring(0, 2), 16) / 255;
-        const cg = parseInt(hex.substring(2, 4), 16) / 255;
-        const cb = parseInt(hex.substring(4, 6), 16) / 255;
-        const vertexShader = `
-      varying vec2 vUv;
-            #include <fog_pars_vertex>
-      void main() {
-        vUv = uv;
-                vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-                gl_Position = projectionMatrix * mvPosition;
-                #include <fog_vertex>
-      }
-    `;
-                const fragmentShader = `
-            uniform vec3 volumeFogColor;
-            uniform float volumeFogDensity;
-      uniform float time;
-      varying vec2 vUv;
-            #include <fog_pars_fragment>
-      void main() {
-        vec2 dist = abs(vUv - 0.5) * 2.0;
-        float edgeFade = 1.0 - smoothstep(0.4, 1.0, max(dist.x, dist.y));
-        float drift = sin(vUv.x * 4.5 + time * 0.28) * sin(vUv.y * 3.2 + time * 0.22);
-        float variation = 0.82 + drift * 0.18;
-                float alpha = volumeFogDensity * edgeFade * variation;
-        alpha = clamp(alpha, 0.0, 0.88);
-                vec3 color = mix(volumeFogColor, vec3(1.0), (1.0 - edgeFade) * 0.09);
-        gl_FragColor = vec4(color, alpha);
-                #include <fog_fragment>
-      }
-    `;
-                const uniforms = UniformsUtils.merge([
-                        UniformsLib.fog,
-                        {
-                                volumeFogColor: { value: [cr, cg, cb] },
-                                volumeFogDensity: { value: Math.min(0.9, fog.density + 0.12) },
-                                time: { value: this.volumeTime }
-                        }
-                ]);
-        const mat = new ShaderMaterial({
-            vertexShader,
-            fragmentShader,
-                        uniforms,
-            transparent: true,
-            depthWrite: false,
-            fog: true,
-            side: 2
-        });
-        this.volumeAnimatedMaterials.push(mat);
-        return mat;
-    }
-    updateUnderwaterSceneFog() {
         const fogState = this.activeController === this.firstPersonController
             ? resolveUnderwaterFogState(this.runtimeScene, this.currentFirstPersonTelemetry)
             : null;
@@ -699,7 +657,6 @@ export class RuntimeHost {
             }
         }
         this.brushMeshes.clear();
-        this.volumeAnimatedMaterials.length = 0;
         this.volumeAnimatedUniforms.length = 0;
         for (const binding of this.runtimeWaterContactUniforms) {
             binding.reflectionRenderTarget?.dispose();
@@ -851,9 +808,6 @@ export class RuntimeHost {
         this.activeController?.update(dt);
         this.audioSystem.updateListenerTransform();
         this.volumeTime += dt;
-        for (const mat of this.volumeAnimatedMaterials) {
-            mat.uniforms["time"].value = this.volumeTime;
-        }
         for (const uniform of this.volumeAnimatedUniforms) {
             uniform.value = this.volumeTime;
         }
