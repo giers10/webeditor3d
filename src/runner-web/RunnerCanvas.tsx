@@ -92,7 +92,7 @@ export function RunnerCanvas({
   return (
     <div
       ref={containerRef}
-      className={`runner-canvas ${navigationMode === "firstPerson" && firstPersonTelemetry?.inWaterVolume ? "runner-canvas--underwater" : ""}`}
+      className={`runner-canvas ${navigationMode === "firstPerson" && firstPersonTelemetry?.cameraSubmerged ? "runner-canvas--underwater" : ""}`}
       data-testid="runner-shell"
       aria-label="Built-in scene runner"
       style={createWorldBackgroundStyle(
@@ -100,7 +100,7 @@ export function RunnerCanvas({
         runtimeScene.world.background.mode === "image" ? loadedImageAssets[runtimeScene.world.background.assetId]?.sourceUrl ?? null : null
       )}
     >
-      {navigationMode === "firstPerson" && firstPersonTelemetry?.inWaterVolume ? <div className="runner-canvas__underwater" aria-hidden="true" /> : null}
+      {navigationMode === "firstPerson" && firstPersonTelemetry?.cameraSubmerged ? <div className="runner-canvas__underwater" aria-hidden="true" /> : null}
       {navigationMode === "firstPerson" ? <div className="runner-canvas__crosshair" aria-hidden="true" /> : null}
       {navigationMode === "firstPerson" && interactionPrompt !== null ? (
         <div className="runner-canvas__prompt" data-testid="runner-interaction-prompt" role="status" aria-live="polite">

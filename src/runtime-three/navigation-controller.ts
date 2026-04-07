@@ -11,6 +11,7 @@ export interface FirstPersonTelemetry {
   grounded: boolean;
   locomotionState: RuntimeLocomotionState;
   inWaterVolume: boolean;
+  cameraSubmerged: boolean;
   inFogVolume: boolean;
   pointerLocked: boolean;
   spawn: RuntimeSpawnPoint;

@@ -209,14 +209,18 @@ export class FirstPersonNavigationController implements NavigationController {
       return;
     }
 
+    const eyePosition = toEyePosition(this.feetPosition, getFirstPersonPlayerEyeHeight(this.context.getRuntimeScene().playerCollider));
+    const cameraVolumeState = this.context.resolvePlayerVolumeState(eyePosition);
+
     this.context.setFirstPersonTelemetry({
       feetPosition: {
         ...this.feetPosition
       },
-      eyePosition: toEyePosition(this.feetPosition, getFirstPersonPlayerEyeHeight(this.context.getRuntimeScene().playerCollider)),
+      eyePosition,
       grounded: this.grounded,
       locomotionState: this.locomotionState,
       inWaterVolume: this.inWaterVolume,
+      cameraSubmerged: cameraVolumeState.inWater,
       inFogVolume: this.inFogVolume,
       pointerLocked: this.pointerLocked,
       spawn: this.context.getRuntimeScene().spawn
