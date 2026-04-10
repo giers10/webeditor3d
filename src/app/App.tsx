@@ -201,7 +201,13 @@ import type { FirstPersonTelemetry } from "../runtime-three/navigation-controlle
 import type { RuntimeInteractionPrompt } from "../runtime-three/runtime-interaction-system";
 import { buildRuntimeSceneFromDocument, type RuntimeNavigationMode, type RuntimeSceneDefinition } from "../runtime-three/runtime-scene-build";
 import { validateRuntimeSceneBuild } from "../runtime-three/runtime-scene-validation";
+import { EditorAutosaveController } from "../serialization/editor-autosave";
 import { Panel } from "../shared-ui/Panel";
+import {
+  loadProjectPackage,
+  PROJECT_PACKAGE_FILE_EXTENSION,
+  saveProjectPackage
+} from "../serialization/project-package";
 import { HierarchicalMenu, type HierarchicalMenuItem, type HierarchicalMenuPosition } from "../shared-ui/HierarchicalMenu";
 import { createWorldBackgroundStyle } from "../shared-ui/world-background-style";
 import { ViewportPanel } from "../viewport-three/ViewportPanel";
@@ -942,6 +948,16 @@ function formatBoxVolumeRenderPathLabel(path: BoxVolumeRenderPath): string {
   }
 }
 
+function createProjectDownloadName(documentName: string): string {
+  const slug = documentName
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/gu, "-")
+    .replace(/^-+|-+$/gu, "");
+
+  return `${slug.length > 0 ? slug : "scene"}${PROJECT_PACKAGE_FILE_EXTENSION}`;
+}
+
 export function App({ store, initialStatusMessage }: AppProps) {
   const editorState = useEditorStoreState(store);
   const brushList = Object.values(editorState.document.brushes);
@@ -1127,7 +1143,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
       kind: "none"
     }
   });
-  const importInputRef = useRef<HTMLInputElement | null>(null);
+  const importProjectInputRef = useRef<HTMLInputElement | null>(null);
   const importModelInputRef = useRef<HTMLInputElement | null>(null);
   const importBackgroundImageInputRef = useRef<HTMLInputElement | null>(null);
   const importAudioInputRef = useRef<HTMLInputElement | null>(null);
@@ -1135,6 +1151,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const loadedModelAssetsRef = useRef<Record<string, LoadedModelAsset>>({});
   const loadedImageAssetsRef = useRef<Record<string, LoadedImageAsset>>({});
   const loadedAudioAssetsRef = useRef<Record<string, LoadedAudioAsset>>({});
+  const autosaveControllerRef = useRef<EditorAutosaveController | null>(null);
+  const lastAutosaveErrorRef = useRef<string | null>(null);
   const viewportQuadSplitRef = useRef(editorState.viewportQuadSplit);
   const lastPointerPositionRef = useRef<HierarchicalMenuPosition>({
     x: Math.round(window.innerWidth * 0.5),
@@ -1393,6 +1411,68 @@ export function App({ store, initialStatusMessage }: AppProps) {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    autosaveControllerRef.current = new EditorAutosaveController({
+      saveDraft: () => store.saveDraft(),
+      onComplete: (result) => {
+        if (result.status === "error") {
+          if (lastAutosaveErrorRef.current !== result.message) {
+            lastAutosaveErrorRef.current = result.message;
+            setStatusMessage(result.message);
+          }
+          return;
+        }
+
+        lastAutosaveErrorRef.current = null;
+      }
+    });
+
+    return () => {
+      autosaveControllerRef.current?.dispose();
+      autosaveControllerRef.current = null;
+    };
+  }, [store]);
+
+  useEffect(() => {
+    if (!editorState.storageAvailable) {
+      return;
+    }
+
+    autosaveControllerRef.current?.schedule();
+  }, [
+    editorState.activeViewportPanelId,
+    editorState.document,
+    editorState.storageAvailable,
+    editorState.viewportLayoutMode,
+    editorState.viewportPanels,
+    editorState.viewportQuadSplit
+  ]);
+
+  useEffect(() => {
+    if (!editorState.storageAvailable) {
+      return;
+    }
+
+    const flushAutosave = () => {
+      autosaveControllerRef.current?.flush();
+    };
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        flushAutosave();
+      }
+    };
+
+    window.addEventListener("beforeunload", flushAutosave);
+    window.addEventListener("pagehide", flushAutosave);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("beforeunload", flushAutosave);
+      window.removeEventListener("pagehide", flushAutosave);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [editorState.storageAvailable]);
 
   useEffect(() => {
     if (!projectAssetStorageReady) {

@@ -206,12 +206,12 @@ export function saveSceneDocumentDraft(
 
     return {
       status: "saved",
-      message: "Local draft saved."
+      message: "Autosave updated."
     };
   } catch (error) {
     return {
       status: "error",
-      message: formatStorageDiagnostic("Local draft could not be saved.", error)
+      message: formatStorageDiagnostic("Autosave could not be saved.", error)
     };
   }
 }
@@ -226,7 +226,7 @@ export function loadSceneDocumentDraft(
     if (rawDocument === null) {
       return {
         status: "missing",
-        message: "No local draft was found."
+        message: "No autosave was found."
       };
     }
 
@@ -237,7 +237,7 @@ export function loadSceneDocumentDraft(
         status: "loaded",
         document: parseSceneDocumentJson(JSON.stringify(parsedDraft.document)),
         viewportLayoutState: parseViewportLayoutState(parsedDraft.viewportLayoutState ?? null),
-        message: "Local draft loaded."
+        message: "Recovered latest autosave."
       };
     }
 
@@ -245,12 +245,12 @@ export function loadSceneDocumentDraft(
       status: "loaded",
       document: parseSceneDocumentJson(rawDocument),
       viewportLayoutState: null,
-      message: "Local draft loaded."
+      message: "Recovered latest autosave."
     };
   } catch (error) {
     return {
       status: "error",
-      message: formatStorageDiagnostic("Stored local draft could not be loaded.", error)
+      message: formatStorageDiagnostic("Stored autosave could not be loaded.", error)
     };
   }
 }
