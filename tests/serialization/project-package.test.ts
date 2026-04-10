@@ -58,6 +58,9 @@ describe("project package serialization", () => {
     const document = createEmptySceneDocument({ name: "Portable Empty Scene" });
 
     const packageBytes = await saveProjectPackage(document, null);
+    // TEMP DEBUG
+    console.log("DEBUG package keys", Object.keys(unzipSync(packageBytes)));
+    console.log("DEBUG scene entry", unzipSync(packageBytes)["scene.json"]);
     const restoredDocument = await loadProjectPackage(packageBytes, null);
 
     expect(restoredDocument).toEqual(document);
