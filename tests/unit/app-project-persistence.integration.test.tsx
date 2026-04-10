@@ -64,8 +64,10 @@ const { MockViewportHost, viewportHostInstances } = vi.hoisted(() => {
   };
 });
 
-const saveProjectPackageMock = vi.fn(async () => new Uint8Array([1, 2, 3]));
-const loadProjectPackageMock = vi.fn();
+const { loadProjectPackageMock, saveProjectPackageMock } = vi.hoisted(() => ({
+  saveProjectPackageMock: vi.fn(async () => new Uint8Array([1, 2, 3])),
+  loadProjectPackageMock: vi.fn()
+}));
 
 vi.mock("../../src/viewport-three/viewport-host", () => ({
   ViewportHost: MockViewportHost
