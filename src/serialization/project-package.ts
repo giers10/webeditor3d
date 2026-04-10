@@ -97,7 +97,9 @@ function normalizePackagePath(path: string): string {
 }
 
 function cloneUint8ArrayIntoArrayBuffer(bytes: Uint8Array): ArrayBuffer {
-  return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+  const clonedBytes = new Uint8Array(bytes.byteLength);
+  clonedBytes.set(bytes);
+  return clonedBytes.buffer;
 }
 
 function createAssetPackagePath(assetId: string, relativePath: string): string {
@@ -193,8 +195,8 @@ export async function saveProjectPackage(
     throw new Error("Project save failed: project asset storage is unavailable for asset-backed scenes.");
   }
 
-  const packageEntries: Record<string, Uint8Array> = {
-    [PROJECT_PACKAGE_SCENE_PATH]: strToU8(sceneJson)
+  const packageEntries: Record<string, [Uint8Array, object]> = {
+    [PROJECT_PACKAGE_SCENE_PATH]: [strToU8(sceneJson), {}]
   };
   const missingAssetDiagnostics: string[] = [];
 
@@ -232,7 +234,7 @@ export async function saveProjectPackage(
         throw new Error(`Project save failed: duplicate packaged asset path ${packagePath}.`);
       }
 
-      packageEntries[packagePath] = new Uint8Array(storedFile.bytes.slice(0));
+      packageEntries[packagePath] = [new Uint8Array(storedFile.bytes.slice(0)), {}];
     }
   }
 
