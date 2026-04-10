@@ -274,7 +274,7 @@ export function loadOrCreateSceneDocument(
       return {
         document: draftResult.document,
         viewportLayoutState: draftResult.viewportLayoutState,
-        diagnostic: null
+        diagnostic: draftResult.message
       };
     case "missing":
       return {
