@@ -36,6 +36,12 @@ function createTestFile(bytes: Uint8Array | Buffer, name: string, type: string):
   } as File;
 }
 
+function cloneArrayBuffer(bytes: Uint8Array): ArrayBuffer {
+  const clonedBytes = new Uint8Array(bytes.byteLength);
+  clonedBytes.set(bytes);
+  return clonedBytes.buffer;
+}
+
 describe("project package serialization", () => {
   afterEach(() => {
     vi.restoreAllMocks();
@@ -93,7 +99,7 @@ describe("project package serialization", () => {
     await storage.putAsset(imageAsset.storageKey, {
       files: {
         [imageAsset.sourceName]: {
-          bytes: strToU8("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1024\" height=\"512\"></svg>").buffer,
+          bytes: cloneArrayBuffer(strToU8("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1024\" height=\"512\"></svg>")),
           mimeType: imageAsset.mimeType
         }
       }
@@ -145,6 +151,10 @@ describe("project package serialization", () => {
     vi.stubGlobal("AudioContext", MockAudioContext);
     vi.stubGlobal("webkitAudioContext", MockAudioContext);
 
+    const portableModelInstance = createModelInstance({
+      ...importedModel.modelInstance,
+      id: "model-instance-portable"
+    });
     const document = {
       ...createEmptySceneDocument({ name: "Portable Asset Scene" }),
       assets: {
@@ -153,10 +163,7 @@ describe("project package serialization", () => {
         [audioAsset.id]: audioAsset
       },
       modelInstances: {
-        [importedModel.modelInstance.id]: createModelInstance({
-          ...importedModel.modelInstance,
-          id: "model-instance-portable"
-        })
+        [portableModelInstance.id]: portableModelInstance
       }
     };
 
@@ -242,7 +249,7 @@ describe("project package serialization", () => {
 
   it("fails project load when scene.json is missing", async () => {
     const packageBytes = zipSync({
-      "assets/readme.txt": strToU8("not a project")
+      "assets/readme.txt": [strToU8("not a project"), {}]
     });
 
     await expect(loadProjectPackage(packageBytes, null)).rejects.toThrow("project package is missing scene.json");
@@ -271,7 +278,7 @@ describe("project package serialization", () => {
       }
     };
     const packageBytes = zipSync({
-      [PROJECT_PACKAGE_SCENE_PATH]: strToU8(serializeSceneDocument(document))
+      [PROJECT_PACKAGE_SCENE_PATH]: [strToU8(serializeSceneDocument(document)), {}]
     });
 
     await expect(loadProjectPackage(packageBytes, createInMemoryProjectAssetStorage())).rejects.toThrow(
