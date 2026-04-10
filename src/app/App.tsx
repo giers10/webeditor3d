@@ -5180,17 +5180,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
             >
               Add
             </button>
-            <button className="toolbar__button" type="button" disabled={!editorState.storageAvailable} onClick={handleSaveDraft}>
-              Save Draft
+            <button className="toolbar__button" type="button" data-testid="save-project-button" onClick={() => void handleSaveProject()}>
+              Save Project
             </button>
-            <button className="toolbar__button" type="button" disabled={!editorState.storageAvailable} onClick={handleLoadDraft}>
-              Load Draft
-            </button>
-            <button className="toolbar__button" type="button" onClick={handleExportJson}>
-              Export JSON
-            </button>
-            <button className="toolbar__button" type="button" onClick={handleImportJsonButtonClick}>
-              Import JSON
+            <button className="toolbar__button" type="button" data-testid="load-project-button" onClick={handleLoadProjectButtonClick}>
+              Load Project
             </button>
           </div>
 
@@ -7856,11 +7850,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
       </footer>
 
       <input
-        ref={importInputRef}
+        ref={importProjectInputRef}
         className="visually-hidden"
         type="file"
-        accept=".json,application/json"
-        onChange={handleImportJsonChange}
+        accept={`${PROJECT_PACKAGE_FILE_EXTENSION},.zip,application/zip`}
+        onChange={handleLoadProjectChange}
       />
       <input
         ref={importModelInputRef}
