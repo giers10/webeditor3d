@@ -92,7 +92,7 @@ describe("EditorStore", () => {
     });
     expect(writerStore.saveDraft()).toEqual({
       status: "saved",
-      message: "Local draft saved."
+      message: "Autosave updated."
     });
 
     const readerStore = createEditorStore({
@@ -102,7 +102,7 @@ describe("EditorStore", () => {
 
     expect(readerStore.loadDraft()).toMatchObject({
       status: "loaded",
-      message: "Local draft loaded."
+      message: "Recovered latest autosave."
     });
     expect(readerStore.getState().document.name).toBe("Draft Scene");
     expect(readerStore.getState().viewportLayoutMode).toBe("quad");
