@@ -230,7 +230,9 @@ export async function saveProjectPackage(
   }
 
   const packageEntries: ProjectPackageTree = {};
-  setPackagedFile(packageEntries, PROJECT_PACKAGE_SCENE_PATH, strToU8(sceneJson));
+  const sceneBytes = strToU8(sceneJson);
+  console.log("DEBUG sceneBytes", sceneBytes instanceof Uint8Array, sceneBytes.constructor.name, Object.prototype.toString.call(sceneBytes));
+  setPackagedFile(packageEntries, PROJECT_PACKAGE_SCENE_PATH, sceneBytes);
   const missingAssetDiagnostics: string[] = [];
 
   for (const asset of assets) {
