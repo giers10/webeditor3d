@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const { MockViewportHost, viewportHostInstances } = vi.hoisted(() => {
   const viewportHostInstances: Array<{
     setTransformCommitHandler: ReturnType<typeof vi.fn>;
+    setRenderEnabled: ReturnType<typeof vi.fn>;
     mount: ReturnType<typeof vi.fn>;
     dispose: ReturnType<typeof vi.fn>;
     updateWorld: ReturnType<typeof vi.fn>;
@@ -30,6 +31,7 @@ const { MockViewportHost, viewportHostInstances } = vi.hoisted(() => {
 
   class MockViewportHost {
     setPanelId = vi.fn();
+    setRenderEnabled = vi.fn();
     mount = vi.fn();
     dispose = vi.fn();
     updateWorld = vi.fn();
