@@ -240,9 +240,9 @@ describe("project package serialization", () => {
 
     const packageBytes = await saveProjectPackage(document, storage);
     expect(listPackagedFiles(packageBytes)).toEqual([
-      PROJECT_PACKAGE_SCENE_PATH,
       `assets/${importedModel.asset.id}/scene.gltf`,
-      `assets/${importedModel.asset.id}/triangle.bin`
+      `assets/${importedModel.asset.id}/triangle.bin`,
+      PROJECT_PACKAGE_SCENE_PATH
     ]);
 
     const restoredStorage = createInMemoryProjectAssetStorage();
