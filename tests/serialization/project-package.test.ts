@@ -1,7 +1,7 @@
 import path from "node:path";
 import { readFile } from "node:fs/promises";
 
-import { strToU8, unzipSync, zipSync } from "fflate";
+import { strToU8, unzipSync, Zip, ZipDeflate } from "fflate";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { loadAudioAssetFromStorage } from "../../src/assets/audio-assets";
@@ -48,6 +48,37 @@ function listPackagedFiles(packageBytes: Uint8Array): string[] {
     .sort();
 }
 
+function buildZipArchive(entries: Record<string, Uint8Array>): Uint8Array {
+  const chunks: Uint8Array[] = [];
+  const zip = new Zip((error, chunk) => {
+    if (error !== null) {
+      throw error;
+    }
+
+    if (chunk !== null) {
+      chunks.push(chunk.slice(0));
+    }
+  });
+
+  for (const [path, bytes] of Object.entries(entries)) {
+    const zippedFile = new ZipDeflate(path, { level: 6 });
+    zip.add(zippedFile);
+    zippedFile.push(bytes, true);
+  }
+
+  zip.end();
+
+  const archiveBytes = new Uint8Array(chunks.reduce((sum, chunk) => sum + chunk.byteLength, 0));
+  let offset = 0;
+
+  for (const chunk of chunks) {
+    archiveBytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+
+  return archiveBytes;
+}
+
 describe("project package serialization", () => {
   afterEach(() => {
     vi.restoreAllMocks();
@@ -58,9 +89,6 @@ describe("project package serialization", () => {
     const document = createEmptySceneDocument({ name: "Portable Empty Scene" });
 
     const packageBytes = await saveProjectPackage(document, null);
-    // TEMP DEBUG
-    console.log("DEBUG package keys", Object.keys(unzipSync(packageBytes)));
-    console.log("DEBUG scene entry", unzipSync(packageBytes)["scene.json"]);
     const restoredDocument = await loadProjectPackage(packageBytes, null);
 
     expect(restoredDocument).toEqual(document);
@@ -255,10 +283,8 @@ describe("project package serialization", () => {
   });
 
   it("fails project load when scene.json is missing", async () => {
-    const packageBytes = zipSync({
-      assets: {
-        "readme.txt": strToU8("not a project")
-      }
+    const packageBytes = buildZipArchive({
+      "assets/readme.txt": strToU8("not a project")
     });
 
     await expect(loadProjectPackage(packageBytes, null)).rejects.toThrow("project package is missing scene.json");
@@ -286,7 +312,7 @@ describe("project package serialization", () => {
         [imageAsset.id]: imageAsset
       }
     };
-    const packageBytes = zipSync({
+    const packageBytes = buildZipArchive({
       [PROJECT_PACKAGE_SCENE_PATH]: strToU8(serializeSceneDocument(document))
     });
 
