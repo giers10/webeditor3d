@@ -1828,7 +1828,20 @@ export function App({ store, initialStatusMessage }: AppProps) {
       window.removeEventListener("pointermove", handleWindowPointerMove);
       window.removeEventListener("keydown", handleWindowKeyDown);
     };
-  }, [activePanelId, addMenuPosition, brushList.length, editorState.selection, editorState.toolMode, entityList.length, hoveredViewportPanelId, layoutMode, transformSession]);
+  }, [
+    activePanelId,
+    addMenuPosition,
+    brushList.length,
+    editorState.document,
+    editorState.selection,
+    editorState.toolMode,
+    entityList.length,
+    hoveredViewportPanelId,
+    layoutMode,
+    projectAssetStorage,
+    projectAssetStorageReady,
+    transformSession
+  ]);
 
   useEffect(() => {
     if (layoutMode === "quad" || viewportQuadResizeMode === null) {
