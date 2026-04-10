@@ -9,6 +9,8 @@ export const PROJECT_PACKAGE_FILE_EXTENSION = ".we3d";
 export const PROJECT_PACKAGE_SCENE_PATH = "scene.json";
 export const PROJECT_PACKAGE_ASSETS_DIRECTORY = "assets";
 
+type ProjectPackageTree = Record<string, Uint8Array | ProjectPackageTree>;
+
 function getErrorDetail(error: unknown): string {
   if (error instanceof Error && error.message.trim().length > 0) {
     return error.message.trim();
@@ -106,6 +108,38 @@ function createAssetPackagePath(assetId: string, relativePath: string): string {
   return `${PROJECT_PACKAGE_ASSETS_DIRECTORY}/${assetId}/${relativePath}`;
 }
 
+function setPackagedFile(tree: ProjectPackageTree, packagePath: string, bytes: Uint8Array) {
+  const segments = normalizePackagePath(packagePath).split("/");
+  let currentTree = tree;
+
+  for (let index = 0; index < segments.length - 1; index += 1) {
+    const segment = segments[index];
+    const currentEntry = currentTree[segment];
+
+    if (currentEntry instanceof Uint8Array) {
+      throw new Error(`Project save failed: packaged file path ${packagePath} conflicts with an existing file.`);
+    }
+
+    if (currentEntry === undefined) {
+      currentTree[segment] = {};
+    }
+
+    currentTree = currentTree[segment] as ProjectPackageTree;
+  }
+
+  const fileName = segments.at(-1);
+
+  if (fileName === undefined || fileName.length === 0) {
+    throw new Error(`Project save failed: packaged file path ${packagePath} is invalid.`);
+  }
+
+  if (currentTree[fileName] !== undefined) {
+    throw new Error(`Project save failed: duplicate packaged asset path ${packagePath}.`);
+  }
+
+  currentTree[fileName] = bytes;
+}
+
 function resolveStoredFileMimeType(asset: ProjectAssetRecord, relativePath: string): string {
   if (normalizePackagePath(relativePath) === normalizePackagePath(asset.sourceName)) {
     return asset.mimeType;
@@ -195,9 +229,8 @@ export async function saveProjectPackage(
     throw new Error("Project save failed: project asset storage is unavailable for asset-backed scenes.");
   }
 
-  const packageEntries: Record<string, [Uint8Array, object]> = {
-    [PROJECT_PACKAGE_SCENE_PATH]: [strToU8(sceneJson), {}]
-  };
+  const packageEntries: ProjectPackageTree = {};
+  setPackagedFile(packageEntries, PROJECT_PACKAGE_SCENE_PATH, strToU8(sceneJson));
   const missingAssetDiagnostics: string[] = [];
 
   for (const asset of assets) {
@@ -230,11 +263,7 @@ export async function saveProjectPackage(
 
       const packagePath = createAssetPackagePath(asset.id, normalizedStoredPath);
 
-      if (packageEntries[packagePath] !== undefined) {
-        throw new Error(`Project save failed: duplicate packaged asset path ${packagePath}.`);
-      }
-
-      packageEntries[packagePath] = [new Uint8Array(storedFile.bytes.slice(0)), {}];
+      setPackagedFile(packageEntries, packagePath, new Uint8Array(storedFile.bytes.slice(0)));
     }
   }
 
