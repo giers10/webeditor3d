@@ -1653,9 +1653,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
         return;
       }
 
-      if (hasPrimaryModifier && event.code === "KeyS" && !event.shiftKey) {
+      if (hasPrimaryModifier && event.code === "KeyS") {
         event.preventDefault();
-        handleSaveDraft();
+        void handleSaveProject();
         return;
       }
 
@@ -4435,40 +4435,33 @@ export function App({ store, initialStatusMessage }: AppProps) {
     scheduleDraftCommit(applyChange);
   };
 
-  const handleSaveDraft = () => {
-    const result = store.saveDraft();
-    setStatusMessage(result.message);
-  };
-
-  const handleLoadDraft = () => {
-    const result = store.loadDraft();
-    setStatusMessage(result.message);
-  };
-
-  const handleExportJson = () => {
+  const handleSaveProject = async () => {
     try {
-      const exportedJson = store.exportDocumentJson();
-      const blob = new Blob([exportedJson], { type: "application/json" });
+      if (!projectAssetStorageReady && projectAssetList.length > 0) {
+        throw new Error("Project save failed: project asset storage is still initializing for this asset-backed scene.");
+      }
+
+      const projectBytes = await saveProjectPackage(editorState.document, projectAssetStorage);
+      const blob = new Blob([projectBytes], { type: "application/zip" });
       const objectUrl = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
 
       anchor.href = objectUrl;
-      anchor.download = `${editorState.document.name.replace(/\s+/g, "-").toLowerCase() || "scene"}.json`;
+      anchor.download = createProjectDownloadName(editorState.document.name);
       anchor.click();
       URL.revokeObjectURL(objectUrl);
 
-      setStatusMessage("Scene document exported as JSON.");
+      setStatusMessage(`Saved project ${anchor.download}.`);
     } catch (error) {
-      const message = getErrorMessage(error);
-      setStatusMessage(message);
+      setStatusMessage(getErrorMessage(error));
     }
   };
 
-  const handleImportJsonButtonClick = () => {
-    importInputRef.current?.click();
+  const handleLoadProjectButtonClick = () => {
+    importProjectInputRef.current?.click();
   };
 
-  const handleImportJsonChange = async (event: ChangeEvent<HTMLInputElement>) => {
+  const handleLoadProjectChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const input = event.currentTarget;
     const file = input.files?.[0];
 
@@ -4477,9 +4470,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
 
     try {
-      const source = await file.text();
-      store.importDocumentJson(source);
-      setStatusMessage(`Imported ${file.name}.`);
+      const projectBytes = new Uint8Array(await file.arrayBuffer());
+      const nextDocument = await loadProjectPackage(projectBytes, projectAssetStorage);
+      store.replaceDocument(nextDocument);
+      setStatusMessage(`Loaded project ${file.name}.`);
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
     } finally {
