@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 import { beginBoxCreation, clickViewport } from "./viewport-test-helpers";
 
-test("user can assign a face material through the UI and keep it through a draft reload", async ({ page }) => {
+test("user can assign a face material through the UI and keep it through an autosave reload", async ({ page }) => {
   const pageErrors: string[] = [];
   const consoleErrors: string[] = [];
 
@@ -29,7 +29,7 @@ test("user can assign a face material through the UI and keep it through a draft
 
   await expect(page.getByTestId("selected-face-material-name")).toContainText("Amber Grid");
 
-  await page.getByRole("button", { name: "Save Draft" }).click();
+  await page.waitForTimeout(400);
   await page.reload();
 
   await page.getByRole("button", { name: /Whitebox Box 1/ }).click();

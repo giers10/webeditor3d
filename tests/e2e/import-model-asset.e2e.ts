@@ -108,8 +108,7 @@ test("imports a model asset, places an instance, and survives reload", async ({ 
     z: -76
   });
 
-  await page.getByRole("button", { name: "Save Draft" }).dispatchEvent("click");
-  await expect(page.getByTestId("status-message")).toContainText("Local draft saved.");
+  await page.waitForTimeout(400);
 
   await page.reload();
 

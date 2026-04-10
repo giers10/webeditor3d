@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 import { beginBoxCreation, clickViewport, setViewportCreationPreview } from "./viewport-test-helpers";
 
-test("first-room workflow covers create, texture, save/load, and run", async ({ page }) => {
+test("first-room workflow covers create, texture, autosave recovery, and run", async ({ page }) => {
   const pageErrors: string[] = [];
   const consoleErrors: string[] = [];
 
@@ -45,13 +45,8 @@ test("first-room workflow covers create, texture, save/load, and run", async ({ 
 
   await expect(page.getByTestId("status-run-preflight")).toContainText("Ready for First Person");
 
-  await page.getByRole("button", { name: "Save Draft" }).click();
-  await beginBoxCreation(page);
-  await clickViewport(page);
-  await expect(page.getByRole("button", { name: /Whitebox Box 2/ })).toBeVisible();
-
-  await page.getByRole("button", { name: "Load Draft" }).click();
-  await expect(page.getByRole("button", { name: /Whitebox Box 2/ })).toHaveCount(0);
+  await page.waitForTimeout(400);
+  await page.reload();
 
   await page.getByRole("button", { name: /Whitebox Box 1/ }).click();
   await page.getByTestId("face-button-posZ").click();

@@ -76,7 +76,7 @@ test("user can create a whitebox box with float transforms and keep it through r
   await page.getByTestId("selected-brush-name").press("Tab");
   await expect(page.getByTestId("selected-brush-name")).toHaveValue("Entry Room");
 
-  await page.getByRole("button", { name: "Save Draft" }).click();
+  await page.waitForTimeout(400);
   await page.reload();
 
   await expect(page.getByRole("button", { name: /^Entry Room$/ })).toBeVisible();

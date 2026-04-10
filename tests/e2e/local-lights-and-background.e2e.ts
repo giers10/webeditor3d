@@ -65,8 +65,7 @@ test("local lights and background images persist through editor and runner flows
 
   await expect(page.locator('[data-testid^="outliner-entity-"]')).toHaveCount(2);
 
-  await page.getByRole("button", { name: "Save Draft" }).click();
-  await expect(page.getByTestId("status-message")).toContainText("Local draft saved.");
+  await page.waitForTimeout(400);
 
   await page.reload();
 
