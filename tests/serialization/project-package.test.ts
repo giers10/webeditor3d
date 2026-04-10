@@ -42,6 +42,12 @@ function cloneArrayBuffer(bytes: Uint8Array): ArrayBuffer {
   return clonedBytes.buffer;
 }
 
+function listPackagedFiles(packageBytes: Uint8Array): string[] {
+  return Object.keys(unzipSync(packageBytes))
+    .filter((path) => !path.endsWith("/"))
+    .sort();
+}
+
 describe("project package serialization", () => {
   afterEach(() => {
     vi.restoreAllMocks();
@@ -202,9 +208,7 @@ describe("project package serialization", () => {
     };
 
     const packageBytes = await saveProjectPackage(document, storage);
-    const packageEntries = unzipSync(packageBytes);
-
-    expect(Object.keys(packageEntries).sort()).toEqual([
+    expect(listPackagedFiles(packageBytes)).toEqual([
       PROJECT_PACKAGE_SCENE_PATH,
       `assets/${importedModel.asset.id}/scene.gltf`,
       `assets/${importedModel.asset.id}/triangle.bin`
@@ -249,7 +253,9 @@ describe("project package serialization", () => {
 
   it("fails project load when scene.json is missing", async () => {
     const packageBytes = zipSync({
-      "assets/readme.txt": [strToU8("not a project"), {}]
+      assets: {
+        "readme.txt": strToU8("not a project")
+      }
     });
 
     await expect(loadProjectPackage(packageBytes, null)).rejects.toThrow("project package is missing scene.json");
@@ -278,7 +284,7 @@ describe("project package serialization", () => {
       }
     };
     const packageBytes = zipSync({
-      [PROJECT_PACKAGE_SCENE_PATH]: [strToU8(serializeSceneDocument(document)), {}]
+      [PROJECT_PACKAGE_SCENE_PATH]: strToU8(serializeSceneDocument(document))
     });
 
     await expect(loadProjectPackage(packageBytes, createInMemoryProjectAssetStorage())).rejects.toThrow(
