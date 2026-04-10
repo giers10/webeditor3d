@@ -4455,7 +4455,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
       }
 
       const projectBytes = await saveProjectPackage(editorState.document, projectAssetStorage);
-      const blob = new Blob([projectBytes], { type: "application/zip" });
+      const blobBytes = new Uint8Array(projectBytes);
+      const blob = new Blob([blobBytes.buffer as ArrayBuffer], { type: "application/zip" });
       const objectUrl = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
 
