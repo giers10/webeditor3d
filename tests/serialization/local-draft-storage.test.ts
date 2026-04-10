@@ -68,7 +68,7 @@ describe("local draft storage", () => {
 
     expect(result.document.version).toBe(SCENE_DOCUMENT_VERSION);
     expect(result.document).toEqual(createEmptySceneDocument());
-    expect(result.diagnostic).toContain("Stored local draft could not be loaded.");
+    expect(result.diagnostic).toContain("Stored autosave could not be loaded.");
     expect(result.diagnostic).toContain("Starting with a fresh empty document.");
   });
 
@@ -137,7 +137,7 @@ describe("local draft storage", () => {
 
     expect(saveSceneDocumentDraft(storage, createEmptySceneDocument({ name: "Viewport Draft" }), viewportLayoutState)).toEqual({
       status: "saved",
-      message: "Local draft saved."
+      message: "Autosave updated."
     });
 
     const result = loadSceneDocumentDraft(storage);
@@ -181,8 +181,19 @@ describe("local draft storage", () => {
       document: {
         name: "Legacy Draft"
       },
-      viewportLayoutState: null
+      viewportLayoutState: null,
+      message: "Recovered latest autosave."
     });
+  });
+
+  it("reports recovered autosaves through bootstrap diagnostics", () => {
+    const storage = new MemoryStorage();
+    saveSceneDocumentDraft(storage, createEmptySceneDocument({ name: "Recovered Scene" }));
+
+    const result = loadOrCreateSceneDocument(storage);
+
+    expect(result.document.name).toBe("Recovered Scene");
+    expect(result.diagnostic).toBe("Recovered latest autosave.");
   });
 
   it("refuses to save an invalid scene document draft", () => {
