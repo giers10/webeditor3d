@@ -232,6 +232,8 @@ export async function saveProjectPackage(
   const packageEntries: ProjectPackageTree = {};
   const sceneBytes = strToU8(sceneJson);
   console.log("DEBUG sceneBytes", sceneBytes instanceof Uint8Array, sceneBytes.constructor.name, Object.prototype.toString.call(sceneBytes));
+  const probeArchive = zipSync({ "__probe.txt": sceneBytes });
+  console.log("DEBUG probe keys", Object.keys(unzipSync(probeArchive)));
   setPackagedFile(packageEntries, PROJECT_PACKAGE_SCENE_PATH, sceneBytes);
   const missingAssetDiagnostics: string[] = [];
 
