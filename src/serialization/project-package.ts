@@ -1,4 +1,4 @@
-import { strFromU8, strToU8, unzipSync, zipSync } from "fflate";
+import { strFromU8, strToU8, unzipSync, Zip, ZipDeflate } from "fflate";
 
 import type { SceneDocument } from "../document/scene-document";
 import { getProjectAssetKindLabel, type ProjectAssetRecord } from "../assets/project-assets";
@@ -8,8 +8,6 @@ import { parseSceneDocumentJson, serializeSceneDocument } from "./scene-document
 export const PROJECT_PACKAGE_FILE_EXTENSION = ".we3d";
 export const PROJECT_PACKAGE_SCENE_PATH = "scene.json";
 export const PROJECT_PACKAGE_ASSETS_DIRECTORY = "assets";
-
-type ProjectPackageTree = Record<string, Uint8Array | ProjectPackageTree>;
 
 function getErrorDetail(error: unknown): string {
   if (error instanceof Error && error.message.trim().length > 0) {
@@ -108,36 +106,68 @@ function createAssetPackagePath(assetId: string, relativePath: string): string {
   return `${PROJECT_PACKAGE_ASSETS_DIRECTORY}/${assetId}/${relativePath}`;
 }
 
-function setPackagedFile(tree: ProjectPackageTree, packagePath: string, bytes: Uint8Array) {
-  const segments = normalizePackagePath(packagePath).split("/");
-  let currentTree = tree;
+function cloneUint8Array(bytes: Uint8Array): Uint8Array {
+  const clonedBytes = new Uint8Array(bytes.byteLength);
+  clonedBytes.set(bytes);
+  return clonedBytes;
+}
 
-  for (let index = 0; index < segments.length - 1; index += 1) {
-    const segment = segments[index];
-    const currentEntry = currentTree[segment];
+function setPackagedFile(entries: Map<string, Uint8Array>, packagePath: string, bytes: Uint8Array) {
+  const normalizedPath = normalizePackagePath(packagePath);
 
-    if (currentEntry instanceof Uint8Array) {
-      throw new Error(`Project save failed: packaged file path ${packagePath} conflicts with an existing file.`);
-    }
-
-    if (currentEntry === undefined) {
-      currentTree[segment] = {};
-    }
-
-    currentTree = currentTree[segment] as ProjectPackageTree;
-  }
-
-  const fileName = segments.at(-1);
-
-  if (fileName === undefined || fileName.length === 0) {
+  if (normalizedPath.length === 0) {
     throw new Error(`Project save failed: packaged file path ${packagePath} is invalid.`);
   }
 
-  if (currentTree[fileName] !== undefined) {
+  if (entries.has(normalizedPath)) {
     throw new Error(`Project save failed: duplicate packaged asset path ${packagePath}.`);
   }
 
-  currentTree[fileName] = bytes;
+  entries.set(normalizedPath, cloneUint8Array(bytes));
+}
+
+function buildProjectPackageArchive(entries: Map<string, Uint8Array>): Uint8Array {
+  const chunks: Uint8Array[] = [];
+  let zipError: unknown = null;
+  const zip = new Zip((error, chunk) => {
+    if (error !== null) {
+      zipError = error;
+      return;
+    }
+
+    if (chunk !== null) {
+      chunks.push(cloneUint8Array(chunk));
+    }
+  });
+
+  for (const [packagePath, bytes] of [...entries.entries()].sort(([leftPath], [rightPath]) => leftPath.localeCompare(rightPath))) {
+    if (zipError !== null) {
+      break;
+    }
+
+    const zippedFile = new ZipDeflate(packagePath, { level: 6 });
+    zip.add(zippedFile);
+    zippedFile.push(bytes, true);
+  }
+
+  if (zipError === null) {
+    zip.end();
+  }
+
+  if (zipError !== null) {
+    throw new Error(getErrorDetail(zipError));
+  }
+
+  const totalLength = chunks.reduce((sum, chunk) => sum + chunk.byteLength, 0);
+  const archiveBytes = new Uint8Array(totalLength);
+  let offset = 0;
+
+  for (const chunk of chunks) {
+    archiveBytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+
+  return archiveBytes;
 }
 
 function resolveStoredFileMimeType(asset: ProjectAssetRecord, relativePath: string): string {
@@ -229,12 +259,8 @@ export async function saveProjectPackage(
     throw new Error("Project save failed: project asset storage is unavailable for asset-backed scenes.");
   }
 
-  const packageEntries: ProjectPackageTree = {};
-  const sceneBytes = strToU8(sceneJson);
-  console.log("DEBUG sceneBytes", sceneBytes instanceof Uint8Array, sceneBytes.constructor.name, Object.prototype.toString.call(sceneBytes));
-  const probeArchive = zipSync({ "__probe.txt": sceneBytes });
-  console.log("DEBUG probe keys", Object.keys(unzipSync(probeArchive)));
-  setPackagedFile(packageEntries, PROJECT_PACKAGE_SCENE_PATH, sceneBytes);
+  const packageEntries = new Map<string, Uint8Array>();
+  setPackagedFile(packageEntries, PROJECT_PACKAGE_SCENE_PATH, strToU8(sceneJson));
   const missingAssetDiagnostics: string[] = [];
 
   for (const asset of assets) {
@@ -275,9 +301,7 @@ export async function saveProjectPackage(
     throw new Error(`Project save failed: ${missingAssetDiagnostics.join(" | ")}`);
   }
 
-  return zipSync(packageEntries, {
-    level: 6
-  });
+  return buildProjectPackageArchive(packageEntries);
 }
 
 export async function loadProjectPackage(
