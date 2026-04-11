@@ -140,6 +140,38 @@ function expectString(value: unknown, label: string): string {
   return value;
 }
 
+function readOptionalSceneLoadingText(value: unknown, label: string): string | null {
+  if (value === undefined || value === null) {
+    return null;
+  }
+
+  const normalizedValue = expectString(value, label).trim();
+  return normalizedValue.length === 0 ? null : normalizedValue;
+}
+
+function readSceneLoadingScreen(
+  value: unknown,
+  label: string,
+  options: { allowMissing: boolean }
+): SceneLoadingScreenSettings {
+  if (value === undefined && options.allowMissing) {
+    return createDefaultSceneLoadingScreenSettings();
+  }
+
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  return {
+    colorHex: expectString(value.colorHex, `${label}.colorHex`),
+    headline: readOptionalSceneLoadingText(value.headline, `${label}.headline`),
+    description: readOptionalSceneLoadingText(
+      value.description,
+      `${label}.description`
+    )
+  };
+}
+
 function expectBoolean(value: unknown, label: string): boolean {
   if (typeof value !== "boolean") {
     throw new Error(`${label} must be a boolean.`);
