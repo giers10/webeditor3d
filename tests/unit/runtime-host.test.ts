@@ -39,7 +39,10 @@ describe("RuntimeHost", () => {
     );
     vi.spyOn(console, "warn").mockImplementation(() => undefined);
     const collisionWorld = {
-      dispose: vi.fn()
+      dispose: vi.fn(),
+      resolveThirdPersonCameraCollision: vi.fn(
+        (_pivot, desiredCameraPosition) => desiredCameraPosition
+      )
     } as unknown as RapierCollisionWorld;
     const deferredCollisionWorld = createDeferred<RapierCollisionWorld>();
     vi.spyOn(RapierCollisionWorld, "create").mockReturnValue(
