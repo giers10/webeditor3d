@@ -1,9 +1,12 @@
 import { strFromU8, strToU8, unzipSync, Zip, ZipDeflate } from "fflate";
 
-import type { SceneDocument } from "../document/scene-document";
+import type { ProjectDocument } from "../document/scene-document";
 import { getProjectAssetKindLabel, type ProjectAssetRecord } from "../assets/project-assets";
 import type { ProjectAssetStorage, ProjectAssetStoragePackageRecord } from "../assets/project-asset-storage";
-import { parseSceneDocumentJson, serializeSceneDocument } from "./scene-document-json";
+import {
+  parseProjectDocumentJson,
+  serializeProjectDocument
+} from "./scene-document-json";
 
 export const PROJECT_PACKAGE_FILE_EXTENSION = ".we3d";
 export const PROJECT_PACKAGE_SCENE_PATH = "scene.json";
@@ -201,7 +204,7 @@ function readPackageEntries(bytes: Uint8Array): Map<string, Uint8Array> {
 
 function buildStoredAssetRecordsFromPackage(
   entries: Map<string, Uint8Array>,
-  document: SceneDocument
+  document: ProjectDocument
 ): Map<string, ProjectAssetStoragePackageRecord> {
   const packageRecords = new Map<string, ProjectAssetStoragePackageRecord>();
 
@@ -249,10 +252,10 @@ function buildStoredAssetRecordsFromPackage(
 }
 
 export async function saveProjectPackage(
-  document: SceneDocument,
+  document: ProjectDocument,
   storage: ProjectAssetStorage | null
 ): Promise<Uint8Array> {
-  const sceneJson = serializeSceneDocument(document);
+  const sceneJson = serializeProjectDocument(document);
   const assets = Object.values(document.assets).sort((left, right) => left.id.localeCompare(right.id));
 
   if (assets.length > 0 && storage === null) {
@@ -307,7 +310,7 @@ export async function saveProjectPackage(
 export async function loadProjectPackage(
   bytes: Uint8Array,
   storage: ProjectAssetStorage | null
-): Promise<SceneDocument> {
+): Promise<ProjectDocument> {
   let entries: Map<string, Uint8Array>;
 
   try {
@@ -322,10 +325,10 @@ export async function loadProjectPackage(
     throw new Error("Project load failed: project package is missing scene.json.");
   }
 
-  let document: SceneDocument;
+  let document: ProjectDocument;
 
   try {
-    document = parseSceneDocumentJson(strFromU8(sceneEntry));
+    document = parseProjectDocumentJson(strFromU8(sceneEntry));
   } catch (error) {
     throw new Error(`Project load failed: ${getErrorDetail(error)}`);
   }
