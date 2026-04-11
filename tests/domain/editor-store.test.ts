@@ -2,10 +2,15 @@ import { describe, expect, it } from "vitest";
 
 import { createEditorStore } from "../../src/app/editor-store";
 import { createCreateBoxBrushCommand } from "../../src/commands/create-box-brush-command";
+import { createCreateSceneCommand } from "../../src/commands/create-scene-command";
+import { createSetActiveSceneCommand } from "../../src/commands/set-active-scene-command";
 import { createSetSceneNameCommand } from "../../src/commands/set-scene-name-command";
 import { createTransformSession } from "../../src/core/transform-session";
 import { createBoxBrush } from "../../src/document/brushes";
-import { createEmptySceneDocument } from "../../src/document/scene-document";
+import {
+  createEmptyProjectScene,
+  createEmptySceneDocument
+} from "../../src/document/scene-document";
 import type { KeyValueStorage } from "../../src/serialization/local-draft-storage";
 
 class MemoryStorage implements KeyValueStorage {
@@ -66,6 +71,76 @@ describe("EditorStore", () => {
 
     expect(store.redo()).toBe(true);
     expect(store.getState().document.name).toBe("Foundation Room");
+  });
+
+  it("creates scenes, switches the active scene, and keeps inactive scene content in the project document", () => {
+    const store = createEditorStore();
+
+    store.executeCommand(createSetSceneNameCommand("Entry"));
+    const firstSceneId = store.getState().activeSceneId;
+
+    store.executeCommand(createCreateSceneCommand());
+    const secondSceneId = store.getState().activeSceneId;
+
+    expect(secondSceneId).not.toBe(firstSceneId);
+    expect(Object.keys(store.getState().projectDocument.scenes)).toHaveLength(2);
+    expect(store.getState().document.name).toBe("Scene 2");
+
+    store.executeCommand(createCreateBoxBrushCommand());
+
+    expect(
+      Object.keys(store.getState().projectDocument.scenes[firstSceneId].brushes)
+    ).toHaveLength(0);
+    expect(
+      Object.keys(
+        store.getState().projectDocument.scenes[secondSceneId].brushes
+      )
+    ).toHaveLength(1);
+
+    store.executeCommand(createSetActiveSceneCommand(firstSceneId));
+
+    expect(store.getState().activeSceneId).toBe(firstSceneId);
+    expect(store.getState().document.name).toBe("Entry");
+    expect(Object.keys(store.getState().document.brushes)).toHaveLength(0);
+    expect(
+      Object.keys(
+        store.getState().projectDocument.scenes[secondSceneId].brushes
+      )
+    ).toHaveLength(1);
+  });
+
+  it("keeps scene-scoped command history targeting the authored scene after the active scene changes", () => {
+    const store = createEditorStore();
+
+    store.executeCommand(createCreateBoxBrushCommand());
+    const authoredSceneId = store.getState().activeSceneId;
+    const otherSceneId = "scene-other";
+
+    store.replaceDocument(
+      {
+        ...store.getState().projectDocument,
+        activeSceneId: otherSceneId,
+        scenes: {
+          ...store.getState().projectDocument.scenes,
+          [otherSceneId]: createEmptyProjectScene({
+            id: otherSceneId,
+            name: "Other"
+          })
+        }
+      },
+      false
+    );
+
+    expect(store.getState().activeSceneId).toBe(otherSceneId);
+    expect(Object.keys(store.getState().document.brushes)).toHaveLength(0);
+
+    expect(store.undo()).toBe(true);
+    expect(store.getState().activeSceneId).toBe(otherSceneId);
+    expect(
+      Object.keys(
+        store.getState().projectDocument.scenes[authoredSceneId].brushes
+      )
+    ).toHaveLength(0);
   });
 
   it("saves and loads a local draft document", () => {
