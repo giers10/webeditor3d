@@ -4024,6 +4024,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const applyPlayerStartChange = (
     overrides: {
       colliderMode?: PlayerStartColliderMode;
+      movementTemplate?: PlayerStartMovementTemplate;
       navigationMode?: PlayerStartNavigationMode;
       inputBindings?: PlayerStartInputBindings;
     } = {}
@@ -4041,6 +4042,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
       const yawDegrees = readYawDegreesDraft(playerStartYawDraft);
       const navigationMode =
         overrides.navigationMode ?? playerStartNavigationModeDraft;
+      const movementTemplate =
+        overrides.movementTemplate ?? playerStartMovementTemplateDraft;
       const colliderMode =
         overrides.colliderMode ?? playerStartColliderModeDraft;
       const inputBindings =
@@ -4051,6 +4054,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
         position: snappedPosition,
         yawDegrees,
         navigationMode,
+        movementTemplate,
         inputBindings,
         collider: {
           mode: colliderMode,
