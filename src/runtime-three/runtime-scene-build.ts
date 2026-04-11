@@ -105,8 +105,15 @@ export interface RuntimePlayerStart {
   position: Vec3;
   yawDegrees: number;
   navigationMode: RuntimeNavigationMode;
+  movement: RuntimePlayerMovement;
   inputBindings: PlayerStartInputBindings;
   collider: FirstPersonPlayerShape;
+}
+
+export interface RuntimePlayerMovement {
+  templateKind: PlayerStartMovementTemplate["kind"];
+  moveSpeed: number;
+  capabilities: PlayerStartMovementCapabilities;
 }
 
 export interface RuntimeSceneEntry {
@@ -221,6 +228,7 @@ export interface RuntimeSceneDefinition {
   interactionLinks: InteractionLink[];
   playerStart: RuntimePlayerStart | null;
   playerCollider: FirstPersonPlayerShape;
+  playerMovement: RuntimePlayerMovement;
   playerInputBindings: PlayerStartInputBindings;
   navigationMode: RuntimeNavigationMode;
   spawn: RuntimeSpawnPoint;
