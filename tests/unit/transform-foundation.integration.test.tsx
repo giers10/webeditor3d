@@ -33,6 +33,7 @@ const { MockViewportHost, viewportHostInstances } = vi.hoisted(() => {
     setWhiteboxHoverLabelChangeHandler: ReturnType<typeof vi.fn>;
     setWhiteboxSelectionMode: ReturnType<typeof vi.fn>;
     setWhiteboxSnapSettings: ReturnType<typeof vi.fn>;
+    setGridVisible: ReturnType<typeof vi.fn>;
     setToolMode: ReturnType<typeof vi.fn>;
     setCreationPreview: ReturnType<typeof vi.fn>;
     setTransformSession: ReturnType<typeof vi.fn>;
@@ -62,6 +63,7 @@ const { MockViewportHost, viewportHostInstances } = vi.hoisted(() => {
     setWhiteboxHoverLabelChangeHandler = vi.fn();
     setWhiteboxSelectionMode = vi.fn();
     setWhiteboxSnapSettings = vi.fn();
+    setGridVisible = vi.fn();
     setToolMode = vi.fn();
     setCreationPreview = vi.fn();
     setTransformSession = vi.fn();
