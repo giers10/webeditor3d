@@ -717,18 +717,6 @@ function readPositiveNumberDraft(source: string, label: string): number {
   return value;
 }
 
-function readNonNegativeNumberDraft(source: string, label: string): number {
-  const value = Number(source);
-
-  if (!Number.isFinite(value) || value < 0) {
-    throw new Error(
-      `${label} must be a finite number greater than or equal to zero.`
-    );
-  }
-
-  return value;
-}
-
 function areVec2Equal(left: Vec2, right: Vec2): boolean {
   return left.x === right.x && left.y === right.y;
 }
