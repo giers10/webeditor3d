@@ -10,12 +10,24 @@ import type {
   GeneratedModelTriMeshCollider
 } from "../geometry/model-instance-collider-generation";
 
-import type { FirstPersonPlayerShape, ResolvedPlayerMotion } from "./player-collision";
+import type {
+  FirstPersonPlayerShape,
+  PlayerGroundProbeResult,
+  ResolvedPlayerMotion
+} from "./player-collision";
+import { getFirstPersonPlayerShapeSignature } from "./player-collision";
 import type { RuntimeBrushTriMeshCollider, RuntimeSceneCollider } from "./runtime-scene-build";
 
 const CHARACTER_CONTROLLER_OFFSET = 0.01;
 const COLLISION_EPSILON = 1e-5;
 const CAMERA_COLLISION_EPSILON = 1e-3;
+const GROUND_NORMAL_Y_THRESHOLD = 0.45;
+const IDENTITY_ROTATION = {
+  x: 0,
+  y: 0,
+  z: 0,
+  w: 1
+};
 
 let rapierInitPromise: Promise<typeof RAPIER> | null = null;
 
@@ -276,6 +288,34 @@ function createPlayerCollider(world: RAPIER.World, rapier: typeof RAPIER, player
     case "none":
       return null;
   }
+}
+
+function createPlayerQueryShape(
+  shape: FirstPersonPlayerShape
+): RAPIER.Shape | null {
+  switch (shape.mode) {
+    case "capsule":
+      return new RAPIER.Capsule(
+        Math.max(0, (shape.height - shape.radius * 2) * 0.5),
+        shape.radius
+      );
+    case "box":
+      return new RAPIER.Cuboid(
+        shape.size.x * 0.5,
+        shape.size.y * 0.5,
+        shape.size.z * 0.5
+      );
+    case "none":
+      return null;
+  }
+}
+
+function toVec3(vector: RAPIER.Vector): Vec3 {
+  return {
+    x: vector.x,
+    y: vector.y,
+    z: vector.z
+  };
 }
 
 export async function initializeRapierCollisionWorld(): Promise<typeof RAPIER> {
