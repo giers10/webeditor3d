@@ -332,6 +332,12 @@ describe("FirstPersonNavigationController", () => {
             normal: { x: 0, y: 1, z: 0 },
             slopeDegrees: 0
           })
+          .mockReturnValueOnce({
+            grounded: true,
+            distance: 0,
+            normal: { x: 0, y: 1, z: 0 },
+            slopeDegrees: 0
+          })
           .mockReturnValue({
             grounded: false,
             distance: null,
