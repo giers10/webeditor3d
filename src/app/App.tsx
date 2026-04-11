@@ -7574,160 +7574,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
           className={`viewport-region viewport-region--${layoutMode}`}
           data-testid="viewport-shell"
         >
-          <div className="viewport-region__toolbar">
-            <div className="viewport-region__toolbar-scroll">
-              <div className="toolbar__group">
-                <button
-                  className="toolbar__button toolbar__button--accent"
-                  type="button"
-                  data-testid="outliner-add-button"
-                  aria-haspopup="menu"
-                  aria-expanded={addMenuPosition !== null}
-                  onClick={handleOpenAddMenuFromButton}
-                >
-                  Add
-                </button>
-              </div>
-
-              <div
-                className="toolbar__group"
-                role="group"
-                aria-label="Viewport layout mode"
-              >
-                {VIEWPORT_LAYOUT_MODES.map((mode) => (
-                  <button
-                    key={mode}
-                    className={`toolbar__button toolbar__button--compact ${editorState.viewportLayoutMode === mode ? "toolbar__button--active" : ""}`}
-                    type="button"
-                    data-testid={`viewport-layout-${mode}`}
-                    aria-pressed={editorState.viewportLayoutMode === mode}
-                    onClick={() => handleSetViewportLayoutMode(mode)}
-                  >
-                    {getViewportLayoutModeLabel(mode)}
-                  </button>
-                ))}
-              </div>
-
-              <div
-                className="toolbar__group"
-                role="group"
-                aria-label="Transform operations"
-              >
-                <button
-                  className={`toolbar__button ${transformSession.kind === "active" && transformSession.operation === "translate" ? "toolbar__button--active" : ""}`}
-                  type="button"
-                  data-testid="transform-translate-button"
-                  aria-pressed={
-                    transformSession.kind === "active" &&
-                    transformSession.operation === "translate"
-                  }
-                  disabled={
-                    editorState.toolMode !== "select" ||
-                    !canTranslateSelectedTarget
-                  }
-                  onClick={() => beginTransformOperation("translate", "toolbar")}
-                >
-                  Move ({getTransformOperationShortcut("translate")})
-                </button>
-                <button
-                  className={`toolbar__button ${transformSession.kind === "active" && transformSession.operation === "rotate" ? "toolbar__button--active" : ""}`}
-                  type="button"
-                  data-testid="transform-rotate-button"
-                  aria-pressed={
-                    transformSession.kind === "active" &&
-                    transformSession.operation === "rotate"
-                  }
-                  disabled={
-                    editorState.toolMode !== "select" ||
-                    !canRotateSelectedTarget
-                  }
-                  onClick={() => beginTransformOperation("rotate", "toolbar")}
-                >
-                  Rotate ({getTransformOperationShortcut("rotate")})
-                </button>
-                <button
-                  className={`toolbar__button ${transformSession.kind === "active" && transformSession.operation === "scale" ? "toolbar__button--active" : ""}`}
-                  type="button"
-                  data-testid="transform-scale-button"
-                  aria-pressed={
-                    transformSession.kind === "active" &&
-                    transformSession.operation === "scale"
-                  }
-                  disabled={
-                    editorState.toolMode !== "select" || !canScaleSelectedTarget
-                  }
-                  onClick={() => beginTransformOperation("scale", "toolbar")}
-                >
-                  Scale ({getTransformOperationShortcut("scale")})
-                </button>
-              </div>
-
-              <div
-                className="toolbar__group"
-                role="group"
-                aria-label="Whitebox selection mode"
-              >
-                {WHITEBOX_SELECTION_MODES.map((mode) => (
-                  <button
-                    key={mode}
-                    className={`toolbar__button toolbar__button--compact ${whiteboxSelectionMode === mode ? "toolbar__button--active" : ""}`}
-                    type="button"
-                    data-testid={`whitebox-selection-mode-${mode}`}
-                    aria-pressed={whiteboxSelectionMode === mode}
-                    onClick={() => handleWhiteboxSelectionModeChange(mode)}
-                  >
-                    {getWhiteboxSelectionModeLabel(mode)}
-                  </button>
-                ))}
-              </div>
-
-              <div
-                className="toolbar__group"
-                role="group"
-                aria-label="Whitebox snap settings"
-              >
-                <button
-                  className={`toolbar__button ${viewportGridVisible ? "toolbar__button--active" : ""}`}
-                  type="button"
-                  data-testid="viewport-grid-toggle"
-                  aria-pressed={viewportGridVisible}
-                  onClick={handleViewportGridToggle}
-                >
-                  {viewportGridVisible ? "Grid On" : "Grid Off"}
-                </button>
-                <button
-                  className={`toolbar__button ${whiteboxSnapEnabled ? "toolbar__button--active" : ""}`}
-                  type="button"
-                  data-testid="whitebox-snap-toggle"
-                  aria-pressed={whiteboxSnapEnabled}
-                  onClick={handleWhiteboxSnapToggle}
-                >
-                  {whiteboxSnapEnabled ? "Grid Snap On" : "Grid Snap Off"}
-                </button>
-                <label className="toolbar__inline-field">
-                  <span className="label">Step</span>
-                  <input
-                    data-testid="whitebox-snap-step"
-                    className="text-input toolbar__inline-input"
-                    type="number"
-                    min="0.01"
-                    step="0.1"
-                    value={whiteboxSnapStepDraft}
-                    onChange={(event) =>
-                      setWhiteboxSnapStepDraft(event.currentTarget.value)
-                    }
-                    onBlur={handleWhiteboxSnapStepBlur}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter") {
-                        handleWhiteboxSnapStepBlur();
-                      }
-                    }}
-                  />
-                </label>
-              </div>
-            </div>
-          </div>
-
           <div
             ref={viewportPanelsRef}
             className={`viewport-region__panels viewport-region__panels--${layoutMode} ${
@@ -7752,18 +7598,24 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 loadedImageAssets={loadedImageAssets}
                 whiteboxSelectionMode={whiteboxSelectionMode}
                 whiteboxSnapEnabled={whiteboxSnapEnabled}
+                whiteboxSnapStepDraft={whiteboxSnapStepDraft}
                 whiteboxSnapStep={whiteboxSnapStep}
                 viewportGridVisible={viewportGridVisible}
                 selection={editorState.selection}
                 toolMode={editorState.toolMode}
                 toolPreview={viewportToolPreview}
                 transformSession={transformSession}
+                canTranslateSelectedTarget={canTranslateSelectedTarget}
+                canRotateSelectedTarget={canRotateSelectedTarget}
+                canScaleSelectedTarget={canScaleSelectedTarget}
                 cameraState={editorState.viewportPanels[panelId].cameraState}
                 focusRequestId={
                   focusRequest.panelId === panelId ? focusRequest.id : 0
                 }
                 focusSelection={focusRequest.selection}
                 onActivatePanel={handleActivateViewportPanel}
+                onOpenAddMenu={handleOpenAddMenuFromButton}
+                onSetViewportLayoutMode={handleSetViewportLayoutMode}
                 onSetPanelViewMode={handleSetViewportPanelViewMode}
                 onSetPanelDisplayMode={handleSetViewportPanelDisplayMode}
                 onCommitCreation={handleCommitCreation}
@@ -7773,6 +7625,16 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 onToolPreviewChange={(toolPreview) => {
                   store.setViewportToolPreview(toolPreview);
                 }}
+                onBeginTransformOperation={(operation) =>
+                  beginTransformOperation(operation, "toolbar")
+                }
+                onWhiteboxSelectionModeChange={
+                  handleWhiteboxSelectionModeChange
+                }
+                onViewportGridToggle={handleViewportGridToggle}
+                onWhiteboxSnapToggle={handleWhiteboxSnapToggle}
+                onWhiteboxSnapStepDraftChange={setWhiteboxSnapStepDraft}
+                onWhiteboxSnapStepBlur={handleWhiteboxSnapStepBlur}
                 onTransformSessionChange={(nextTransformSession) => {
                   store.setTransformSession(nextTransformSession);
                 }}
