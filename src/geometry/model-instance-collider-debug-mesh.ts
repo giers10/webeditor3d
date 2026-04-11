@@ -103,7 +103,7 @@ function createHeightfieldColliderDebugMesh(collider: GeneratedModelHeightfieldC
 
 function createCompoundColliderDebugGroup(collider: GeneratedModelCompoundCollider): Group {
   const group = new Group();
-  const color = DEBUG_COLLIDER_COLORS[collider.mode];
+  const color = collider.mode === "static-simple" ? DEBUG_COLLIDER_COLORS["static-simple"] : DEBUG_COLLIDER_COLORS.dynamic;
 
   for (const piece of collider.pieces) {
     if (piece.kind === "box") {
