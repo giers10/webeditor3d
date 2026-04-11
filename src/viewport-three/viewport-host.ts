@@ -288,12 +288,15 @@ export class ViewportHost {
   private readonly cameraForward = new Vector3();
   private readonly cameraRight = new Vector3();
   private readonly cameraUp = new Vector3();
+  private readonly transformOrientation = new Quaternion();
+  private readonly transformOrientationInverse = new Quaternion();
+  private readonly transformAxisDelta = new Vector3();
   private readonly fogLocalCameraPosition = new Vector3();
   private readonly cameraSpherical = new Spherical();
   private readonly gridHelpers: Record<ViewportGridPlane, GridHelper> = {
-    xz: new GridHelper(40, 40, 0xcf8354, 0x4e596b),
-    xy: new GridHelper(40, 40, 0xcf8354, 0x4e596b),
-    yz: new GridHelper(40, 40, 0xcf8354, 0x4e596b)
+    xz: new GridHelper(VIEWPORT_GRID_VISUAL_SIZE, VIEWPORT_GRID_VISUAL_DIVISIONS, 0xcf8354, 0x4e596b),
+    xy: new GridHelper(VIEWPORT_GRID_VISUAL_SIZE, VIEWPORT_GRID_VISUAL_DIVISIONS, 0xcf8354, 0x4e596b),
+    yz: new GridHelper(VIEWPORT_GRID_VISUAL_SIZE, VIEWPORT_GRID_VISUAL_DIVISIONS, 0xcf8354, 0x4e596b)
   };
   private readonly ambientLight = new AmbientLight();
   private readonly sunLight = new DirectionalLight();
@@ -327,6 +330,7 @@ export class ViewportHost {
   private whiteboxSelectionMode: WhiteboxSelectionMode = "object";
   private whiteboxSnapEnabled = true;
   private whiteboxSnapStep = DEFAULT_GRID_SIZE;
+  private viewportGridVisible = true;
   private projectAssets: Record<string, ProjectAssetRecord> = {};
   private loadedModelAssets: Record<string, LoadedModelAsset> = {};
   private loadedImageAssets: Record<string, LoadedImageAsset> = {};
