@@ -127,6 +127,11 @@ export class FirstPersonNavigationController implements NavigationController {
   private previousTelemetry: PlayerControllerTelemetry | null = null;
   private latestJumpStarted = false;
   private latestHeadBump = false;
+  private previousPlanarDisplacement = {
+    x: 0,
+    y: 0,
+    z: 0
+  };
   private jumpBufferRemainingMs = 0;
   private coyoteTimeRemainingMs = 0;
   private jumpHoldRemainingMs = 0;
@@ -225,6 +230,11 @@ export class FirstPersonNavigationController implements NavigationController {
     this.jumpPressed = false;
     this.latestJumpStarted = false;
     this.latestHeadBump = false;
+    this.previousPlanarDisplacement = {
+      x: 0,
+      y: 0,
+      z: 0
+    };
     this.jumpBufferRemainingMs = 0;
     this.coyoteTimeRemainingMs = 0;
     this.jumpHoldRemainingMs = 0;
@@ -261,6 +271,11 @@ export class FirstPersonNavigationController implements NavigationController {
     this.previousTelemetry = null;
     this.latestJumpStarted = false;
     this.latestHeadBump = false;
+    this.previousPlanarDisplacement = {
+      x: 0,
+      y: 0,
+      z: 0
+    };
     this.jumpBufferRemainingMs = 0;
     this.coyoteTimeRemainingMs = 0;
     this.jumpHoldRemainingMs = 0;
@@ -299,6 +314,7 @@ export class FirstPersonNavigationController implements NavigationController {
         standingShape: this.standingPlayerShape,
         verticalVelocity: this.verticalVelocity,
         previousLocomotionState: this.locomotionState,
+        previousPlanarDisplacement: this.previousPlanarDisplacement,
         jumpBufferRemainingMs: this.jumpBufferRemainingMs,
         coyoteTimeRemainingMs: this.coyoteTimeRemainingMs,
         jumpHoldRemainingMs: this.jumpHoldRemainingMs,
@@ -342,6 +358,7 @@ export class FirstPersonNavigationController implements NavigationController {
     this.latestJumpStarted = locomotionStep.jumpStarted;
     this.latestHeadBump = locomotionStep.headBump;
     this.locomotionState = locomotionStep.locomotionState;
+    this.previousPlanarDisplacement = locomotionStep.planarDisplacement;
     this.grounded = locomotionStep.locomotionState.grounded;
     this.inWaterVolume = locomotionStep.inWaterVolume;
     this.inFogVolume = locomotionStep.inFogVolume;
@@ -371,6 +388,11 @@ export class FirstPersonNavigationController implements NavigationController {
     this.previousTelemetry = null;
     this.latestJumpStarted = false;
     this.latestHeadBump = false;
+    this.previousPlanarDisplacement = {
+      x: 0,
+      y: 0,
+      z: 0
+    };
     this.jumpBufferRemainingMs = 0;
     this.coyoteTimeRemainingMs = 0;
     this.jumpHoldRemainingMs = 0;
