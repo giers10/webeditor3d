@@ -7,7 +7,7 @@ import type { InteractionLink } from "../interactions/interaction-links";
 import { cloneMaterialRegistry, createStarterMaterialRegistry, type MaterialDef } from "../materials/starter-material-library";
 import { createDefaultWorldSettings, type WorldSettings } from "./world-settings";
 
-export const SCENE_DOCUMENT_VERSION = 22 as const;
+export const SCENE_DOCUMENT_VERSION = 23 as const;
 export const MULTI_SCENE_FOUNDATION_SCENE_DOCUMENT_VERSION = 22 as const;
 export const WATER_SURFACE_DISPLACEMENT_SCENE_DOCUMENT_VERSION = 21 as const;
 export const WHITEBOX_BOX_VOLUME_SCENE_DOCUMENT_VERSION = 20 as const;
@@ -87,12 +87,14 @@ export function createEmptySceneDocument(overrides: Partial<Pick<SceneDocument, 
 }
 
 export function createEmptyProjectScene(
-  overrides: Partial<Pick<ProjectScene, "id" | "name" | "world">> = {}
+  overrides: Partial<Pick<ProjectScene, "id" | "name" | "loadingScreen" | "world">> = {}
 ): ProjectScene {
   return {
     id: overrides.id ?? createOpaqueId("scene"),
     name: overrides.name ?? "Untitled Scene",
-    loadingScreen: createDefaultSceneLoadingScreenSettings(),
+    loadingScreen: cloneSceneLoadingScreenSettings(
+      overrides.loadingScreen ?? createDefaultSceneLoadingScreenSettings()
+    ),
     world: overrides.world ?? createDefaultWorldSettings(),
     brushes: {},
     modelInstances: {},
