@@ -10,6 +10,7 @@ import {
   LOCAL_LIGHTS_AND_SKYBOX_SCENE_DOCUMENT_VERSION,
   MODEL_ASSET_PIPELINE_SCENE_DOCUMENT_VERSION,
   PLAYER_START_COLLIDER_SETTINGS_SCENE_DOCUMENT_VERSION,
+  PLAYER_START_INPUT_BINDINGS_SCENE_DOCUMENT_VERSION,
   PLAYER_START_NAVIGATION_MODE_SCENE_DOCUMENT_VERSION,
   SCENE_TRANSITION_ENTITIES_SCENE_DOCUMENT_VERSION,
   SCENE_DOCUMENT_VERSION,
@@ -424,16 +425,17 @@ describe("scene document JSON", () => {
       },
       inputBindings: {
         keyboard: {
-          moveForward: "ArrowUp",
-          moveBackward: "ArrowDown",
-          moveLeft: "ArrowLeft",
-          moveRight: "ArrowRight"
+          moveForward: "KeyQ",
+          moveBackward: "BracketLeft",
+          moveLeft: "Comma",
+          moveRight: "Period"
         },
         gamepad: {
           moveForward: "dpadUp",
           moveBackward: "dpadDown",
           moveLeft: "dpadLeft",
-          moveRight: "dpadRight"
+          moveRight: "dpadRight",
+          cameraLook: "rightStick"
         }
       }
     });
@@ -693,6 +695,61 @@ describe("scene document JSON", () => {
     const legacyDocument = {
       ...createEmptySceneDocument({ name: "Legacy Player Binding Scene" }),
       version: PLAYER_START_NAVIGATION_MODE_SCENE_DOCUMENT_VERSION,
+      entities: {
+        [playerStart.id]: playerStart
+      }
+    };
+
+    const migratedDocument = migrateSceneDocument(legacyDocument);
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.entities[playerStart.id]).toEqual(
+      createPlayerStartEntity({
+        ...playerStart
+      })
+    );
+  });
+
+  it("migrates version 26 Player Start input bindings to include default gamepad camera look", () => {
+    const playerStart = {
+      id: "entity-player-start-legacy-camera-look",
+      kind: "playerStart" as const,
+      position: {
+        x: 2,
+        y: 0,
+        z: 0
+      },
+      yawDegrees: 0,
+      navigationMode: "firstPerson" as const,
+      inputBindings: {
+        keyboard: {
+          moveForward: "KeyW",
+          moveBackward: "KeyS",
+          moveLeft: "KeyA",
+          moveRight: "KeyD"
+        },
+        gamepad: {
+          moveForward: "leftStickUp",
+          moveBackward: "leftStickDown",
+          moveLeft: "leftStickLeft",
+          moveRight: "leftStickRight"
+        }
+      },
+      collider: {
+        mode: "capsule" as const,
+        eyeHeight: 1.6,
+        capsuleRadius: 0.3,
+        capsuleHeight: 1.8,
+        boxSize: {
+          x: 0.6,
+          y: 1.8,
+          z: 0.6
+        }
+      }
+    };
+    const legacyDocument = {
+      ...createEmptySceneDocument({ name: "Legacy Player Camera Look Scene" }),
+      version: PLAYER_START_INPUT_BINDINGS_SCENE_DOCUMENT_VERSION,
       entities: {
         [playerStart.id]: playerStart
       }
