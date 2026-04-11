@@ -2062,7 +2062,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     setStatusMessage(
       `${getTransformOperationLabel(operation)} ${getTransformTargetLabel(transformTarget).toLowerCase()} in ${getViewportPanelLabel(
         transformSourcePanelId
-      )}. Move the pointer, press X/Y/Z to constrain, click or press Enter to commit, Escape cancels.`
+      )}. Move the pointer, press X/Y/Z to constrain, press the same axis again for local when supported, click or press Enter to commit, Escape cancels.`
     );
   };
 
@@ -3211,7 +3211,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
         setStatusMessage(
           `Move ${getTransformTargetLabel(transformTarget).toLowerCase()} in ${getViewportPanelLabel(
             transformSourcePanelId
-          )}. Move the pointer, press X/Y/Z to constrain, click or press Enter to commit, Escape cancels.`
+          )}. Move the pointer, press X/Y/Z to constrain, press the same axis again for local when supported, click or press Enter to commit, Escape cancels.`
         );
       } else {
         setStatusMessage("Duplicated selection.");

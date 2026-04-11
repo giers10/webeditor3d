@@ -1498,6 +1498,7 @@ export class ViewportHost {
       sourcePanelId: this.panelId,
       operation: "translate",
       axisConstraint: null,
+      axisConstraintSpace: "world",
       target: transformTarget,
       preview: createTransformPreviewFromTarget(transformTarget)
     };
@@ -1835,10 +1836,7 @@ export class ViewportHost {
 
       if (axisConstraint !== null) {
         const initialOrientation = this.createRotationQuaternion(session.target.initialRotationDegrees);
-        const deltaRotation = new Quaternion().setFromAxisAngle(
-          this.getConstraintAxisWorldVector(session, effectiveAxis, axisConstraintSpace),
-          pointerDeltaRadians
-        );
+        const deltaRotation = new Quaternion().setFromAxisAngle(this.axisVector(effectiveAxis), pointerDeltaRadians);
 
         nextRotationDegrees = this.getQuaternionEulerDegrees(
           axisConstraintSpace === "local" && supportsLocalTransformAxisConstraint(session, effectiveAxis)
@@ -1869,10 +1867,7 @@ export class ViewportHost {
 
       if (axisConstraint !== null) {
         const initialOrientation = this.createRotationQuaternion(session.target.initialRotationDegrees);
-        const deltaRotation = new Quaternion().setFromAxisAngle(
-          this.getConstraintAxisWorldVector(session, effectiveAxis, axisConstraintSpace),
-          pointerDeltaRadians
-        );
+        const deltaRotation = new Quaternion().setFromAxisAngle(this.axisVector(effectiveAxis), pointerDeltaRadians);
 
         nextRotationDegrees = this.getQuaternionEulerDegrees(
           axisConstraintSpace === "local" && supportsLocalTransformAxisConstraint(session, effectiveAxis)
@@ -1942,10 +1937,7 @@ export class ViewportHost {
           session.target.initialRotation.direction.z
         ).normalize()
       );
-      const deltaRotation = new Quaternion().setFromAxisAngle(
-        this.getConstraintAxisWorldVector(session, effectiveAxis, axisConstraintSpace),
-        pointerDeltaRadians
-      );
+      const deltaRotation = new Quaternion().setFromAxisAngle(this.axisVector(effectiveAxis), pointerDeltaRadians);
       const nextOrientation =
         axisConstraint !== null && axisConstraintSpace === "local" && supportsLocalTransformAxisConstraint(session, effectiveAxis)
           ? initialOrientation.multiply(deltaRotation)
