@@ -79,7 +79,8 @@ export type RuntimeLocomotionMode =
   | "grounded"
   | "airborne"
   | "flying"
-  | "swimming";
+  | "swimming"
+  | "diving";
 export type RuntimeAirborneKind = "jumping" | "falling" | null;
 export type RuntimeLocomotionGait =
   | "idle"
@@ -116,6 +117,7 @@ export interface RuntimeLocomotionState {
 export interface RuntimePlayerVolumeState {
   inWater: boolean;
   inFog: boolean;
+  waterSurfaceHeight: number | null;
 }
 
 export interface RuntimeControllerContext {
