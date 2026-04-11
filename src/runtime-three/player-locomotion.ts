@@ -23,6 +23,7 @@ const SPRINT_SPEED_MULTIPLIER = 1.65;
 const CROUCH_SPEED_MULTIPLIER = 0.45;
 const GROUND_PROBE_DISTANCE = 0.12;
 const GROUND_STICK_DISTANCE = 0.08;
+const VERTICAL_ASCENT_EPSILON = 1e-4;
 const IDLE_SPEED_EPSILON = 0.05;
 
 function clampUnitInterval(value: number): number {
@@ -274,7 +275,13 @@ export function stepPlayerLocomotion(
     currentVolumeState,
     options.probeGround
   );
-  const currentlyGrounded = currentGroundProbe.grounded;
+  // The probe can still see nearby floor on the frame after takeoff. While a
+  // jump is still carrying positive upward velocity, don't let that probe pull
+  // the controller back into grounded/stick-to-ground logic.
+  const ascendingFromPreviousFrame =
+    options.verticalVelocity > VERTICAL_ASCENT_EPSILON;
+  const currentlyGrounded =
+    currentGroundProbe.grounded && !ascendingFromPreviousFrame;
   const sprinting =
     options.movement.capabilities.sprint &&
     sprintPressed &&
@@ -339,17 +346,24 @@ export function stepPlayerLocomotion(
     nextVolumeState,
     options.probeGround
   );
-  const grounded =
-    !jumpTriggered &&
-    activeShape.mode !== "none" &&
-    !nextVolumeState.inWater &&
-    (resolvedMotion.grounded || groundProbe.grounded);
   const headBump =
     verticalDisplacement > 0 &&
     resolvedMotion.collidedAxes.y &&
     resolvedMotion.feetPosition.y <= options.feetPosition.y + 1e-4;
+  const ascending = verticalVelocity > VERTICAL_ASCENT_EPSILON && !headBump;
+  const grounded =
+    !jumpTriggered &&
+    !ascending &&
+    activeShape.mode !== "none" &&
+    !nextVolumeState.inWater &&
+    (resolvedMotion.grounded || groundProbe.grounded);
 
-  if (activeShape.mode === "none" || nextVolumeState.inWater || grounded) {
+  if (
+    activeShape.mode === "none" ||
+    nextVolumeState.inWater ||
+    grounded ||
+    headBump
+  ) {
     verticalVelocity = 0;
   }
 
