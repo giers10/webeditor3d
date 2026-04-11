@@ -6506,19 +6506,16 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
 
     try {
-      const nextRuntimeScene = buildRuntimeSceneFromDocument(
-        editorState.document,
-        {
-          navigationMode: preferredNavigationMode,
-          loadedModelAssets
-        }
+      const nextRuntimeScene = buildRuntimeSceneForProjectScene(
+        editorState.activeSceneId
       );
       const nextNavigationMode = preferredNavigationMode;
 
-      setRuntimeScene(nextRuntimeScene);
+      applyRuntimeSceneSession(editorState.activeSceneId, nextRuntimeScene);
       setRuntimeMessage(null);
       setFirstPersonTelemetry(null);
       setRuntimeInteractionPrompt(null);
+      setRuntimeGlobalState(createDefaultRuntimeGlobalState());
       setActiveNavigationMode(nextNavigationMode);
       store.enterPlayMode();
       setStatusMessage(
@@ -6533,6 +6530,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
   const handleExitPlayMode = () => {
     setRuntimeScene(null);
+    setRuntimeSceneId(null);
+    setRuntimeSceneName(null);
+    setRuntimeSceneLoadingScreen(null);
+    setRuntimeGlobalState(createDefaultRuntimeGlobalState());
     setRuntimeMessage(null);
     setFirstPersonTelemetry(null);
     setRuntimeInteractionPrompt(null);
