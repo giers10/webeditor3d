@@ -166,6 +166,7 @@ import {
 } from "../rendering/water-material";
 import { resolveViewportFocusTarget } from "./viewport-focus";
 import { createSoundEmitterMarkerMeshes } from "./viewport-entity-markers";
+import { resolveDominantLocalAxisForWorldAxis } from "./transform-axis-mapping";
 import {
   getViewportViewModeDefinition,
   isOrthographicViewportViewMode,
@@ -1425,6 +1426,18 @@ export class ViewportHost {
     };
   }
 
+  private resolveObjectScaleConstraintAxis(
+    session: Extract<ActiveTransformSession, { target: { kind: "brush" | "modelInstance" } }>,
+    worldAxis: TransformAxis
+  ): TransformAxis {
+    const rotationDegrees =
+      session.target.kind === "brush"
+        ? session.target.initialRotationDegrees
+        : session.target.initialRotationDegrees;
+
+    return resolveDominantLocalAxisForWorldAxis(rotationDegrees, worldAxis);
+  }
+
   private normalizeDegrees(value: number): number {
     const normalized = value % 360;
     return normalized < 0 ? normalized + 360 : normalized;
@@ -2476,6 +2489,10 @@ export class ViewportHost {
           session.target.initialSize.z * uniformFactor
         );
       } else {
+        const scaleAxis = this.resolveObjectScaleConstraintAxis(
+          session,
+          axisConstraint
+        );
         const scaleFactor =
           1 +
           this.getAxisMovementDistance(
@@ -2485,8 +2502,8 @@ export class ViewportHost {
             current
           ) *
             0.45;
-        nextSize[axisConstraint] = this.snapWhiteboxSizeValue(
-          session.target.initialSize[axisConstraint] * scaleFactor
+        nextSize[scaleAxis] = this.snapWhiteboxSizeValue(
+          session.target.initialSize[scaleAxis] * scaleFactor
         );
       }
 
@@ -2529,6 +2546,10 @@ export class ViewportHost {
         session.target.initialScale.z * uniformFactor
       );
     } else {
+      const scaleAxis = this.resolveObjectScaleConstraintAxis(
+        session,
+        axisConstraint
+      );
       const scaleFactor =
         1 +
         this.getAxisMovementDistance(
@@ -2538,8 +2559,8 @@ export class ViewportHost {
           current
         ) *
           0.45;
-      nextScale[axisConstraint] = this.snapScaleValue(
-        session.target.initialScale[axisConstraint] * scaleFactor
+      nextScale[scaleAxis] = this.snapScaleValue(
+        session.target.initialScale[scaleAxis] * scaleFactor
       );
     }
 

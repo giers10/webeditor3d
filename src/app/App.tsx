@@ -1252,6 +1252,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
     String(DEFAULT_GRID_SIZE)
   );
   const [viewportGridVisible, setViewportGridVisible] = useState(true);
+  const [viewportCameraSyncRequestId, setViewportCameraSyncRequestId] =
+    useState(0);
   const [uvOffsetDraft, setUvOffsetDraft] = useState(
     createVec2Draft(createDefaultFaceUvState().offset)
   );
