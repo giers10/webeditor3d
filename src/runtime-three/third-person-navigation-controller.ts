@@ -2,11 +2,19 @@ import { Vector3 } from "three";
 
 import type { Vec3 } from "../core/vector";
 
-import { getFirstPersonPlayerEyeHeight } from "./player-collision";
 import {
+  FIRST_PERSON_PLAYER_SHAPE,
+  cloneFirstPersonPlayerShape,
+  getFirstPersonPlayerEyeHeight
+} from "./player-collision";
+import {
+  resolvePlayerStartActionInputs,
   resolvePlayerStartLookInput,
-  resolvePlayerStartMovementActions
 } from "./player-input-bindings";
+import {
+  createIdleRuntimeLocomotionState,
+  stepPlayerLocomotion
+} from "./player-locomotion";
 import type {
   NavigationController,
   NavigationControllerDeactivateOptions,
@@ -17,7 +25,6 @@ import type { RuntimePlayerMovement } from "./runtime-scene-build";
 
 const LOOK_SENSITIVITY = 0.008;
 const GAMEPAD_LOOK_SPEED = 2.8;
-const GRAVITY = 22;
 const DEFAULT_CAMERA_DISTANCE = 4.5;
 const MIN_CAMERA_DISTANCE = 1.5;
 const MAX_CAMERA_DISTANCE = 7;
@@ -68,21 +75,27 @@ export class ThirdPersonNavigationController implements NavigationController {
 
   private context: RuntimeControllerContext | null = null;
   private readonly pressedKeys = new Set<string>();
-  private readonly forwardVector = new Vector3();
-  private readonly rightVector = new Vector3();
   private readonly lookAtVector = new Vector3();
   private feetPosition = {
     x: 0,
     y: 0,
     z: 0
   };
+  private standingPlayerShape = cloneFirstPersonPlayerShape(
+    FIRST_PERSON_PLAYER_SHAPE
+  );
+  private activePlayerShape = cloneFirstPersonPlayerShape(
+    FIRST_PERSON_PLAYER_SHAPE
+  );
   private yawRadians = 0;
   private cameraYawRadians = 0;
   private pitchRadians = DEFAULT_PITCH_RADIANS;
   private cameraDistance = DEFAULT_CAMERA_DISTANCE;
   private verticalVelocity = 0;
   private grounded = false;
-  private locomotionState: RuntimeLocomotionState = "flying";
+  private jumpPressed = false;
+  private locomotionState: RuntimeLocomotionState =
+    createIdleRuntimeLocomotionState("flying");
   private inWaterVolume = false;
   private inFogVolume = false;
   private dragging = false;
