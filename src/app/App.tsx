@@ -10293,7 +10293,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           >
                             <label className="form-field">
                               <span className="label">
-                                {getPlayerStartMovementActionLabel(action)} Key
+                                {getPlayerStartInputActionLabel(action)} Key
                               </span>
                               <button
                                 type="button"
@@ -10302,7 +10302,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                                 onClick={() => {
                                   setPlayerStartKeyboardCaptureAction(action);
                                   setStatusMessage(
-                                    `Press any key for ${getPlayerStartMovementActionLabel(action)}. Press Escape to cancel.`
+                                    `Press any key for ${getPlayerStartInputActionLabel(action)}. Press Escape to cancel.`
                                   );
                                 }}
                               >
@@ -10317,14 +10317,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
                             </label>
                             <label className="form-field">
                               <span className="label">
-                                {getPlayerStartMovementActionLabel(action)} Pad
+                                {getPlayerStartInputActionLabel(action)} Pad
                               </span>
                               <select
                                 data-testid={`player-start-gamepad-binding-${action}`}
                                 className="select-input"
                                 value={playerStartInputBindingsDraft.gamepad[action]}
                                 onChange={(event) =>
-                                  handlePlayerStartGamepadBindingChange(
+                                  handlePlayerStartMovementGamepadBindingChange(
                                     action,
                                     event.currentTarget
                                       .value as PlayerStartGamepadBinding
@@ -10336,6 +10336,65 @@ export function App({ store, initialStatusMessage }: AppProps) {
                                     {formatPlayerStartGamepadBindingLabel(binding)}
                                   </option>
                                 ))}
+                              </select>
+                            </label>
+                          </div>
+                        ))}
+
+                        {PLAYER_START_LOCOMOTION_ACTIONS.map((action) => (
+                          <div
+                            key={action}
+                            className="vector-inputs vector-inputs--two"
+                          >
+                            <label className="form-field">
+                              <span className="label">
+                                {getPlayerStartInputActionLabel(action)} Key
+                              </span>
+                              <button
+                                type="button"
+                                data-testid={`player-start-keyboard-binding-${action}`}
+                                className="toolbar__button"
+                                onClick={() => {
+                                  setPlayerStartKeyboardCaptureAction(action);
+                                  setStatusMessage(
+                                    `Press any key for ${getPlayerStartInputActionLabel(action)}. Press Escape to cancel.`
+                                  );
+                                }}
+                              >
+                                {playerStartKeyboardCaptureAction === action
+                                  ? "Press Any Key..."
+                                  : formatPlayerStartKeyboardBindingLabel(
+                                      playerStartInputBindingsDraft.keyboard[
+                                        action
+                                      ]
+                                    )}
+                              </button>
+                            </label>
+                            <label className="form-field">
+                              <span className="label">
+                                {getPlayerStartInputActionLabel(action)} Pad
+                              </span>
+                              <select
+                                data-testid={`player-start-gamepad-binding-${action}`}
+                                className="select-input"
+                                value={playerStartInputBindingsDraft.gamepad[action]}
+                                onChange={(event) =>
+                                  handlePlayerStartGamepadActionBindingChange(
+                                    action,
+                                    event.currentTarget
+                                      .value as PlayerStartGamepadActionBinding
+                                  )
+                                }
+                              >
+                                {PLAYER_START_GAMEPAD_ACTION_BINDINGS.map(
+                                  (binding) => (
+                                    <option key={binding} value={binding}>
+                                      {formatPlayerStartGamepadActionBindingLabel(
+                                        binding
+                                      )}
+                                    </option>
+                                  )
+                                )}
                               </select>
                             </label>
                           </div>
@@ -10367,9 +10426,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         </label>
 
                         <div className="material-summary">
-                          These bindings feed the same typed movement and camera
-                          actions in First Person and Third Person. Mouse look
-                          stays available as before.
+                          These bindings feed the same typed movement,
+                          locomotion, and camera actions in First Person and
+                          Third Person. Mouse look stays available as before.
                         </div>
                       </div>
                     </>
