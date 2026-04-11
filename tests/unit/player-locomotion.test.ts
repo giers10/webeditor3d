@@ -56,6 +56,11 @@ function stepForwardOnSlope(normal: Vec3) {
     standingShape: FIRST_PERSON_PLAYER_SHAPE,
     verticalVelocity: 0,
     previousLocomotionState: undefined,
+    previousPlanarDisplacement: {
+      x: 0,
+      y: 0,
+      z: 0
+    },
     jumpBufferRemainingMs: 0,
     coyoteTimeRemainingMs: 0,
     jumpHoldRemainingMs: 0,
@@ -122,5 +127,68 @@ describe("player-locomotion", () => {
     expect(step?.locomotionState.requestedPlanarSpeed).toBeCloseTo(4.5);
     expect(step?.feetPosition.z).toBeCloseTo(0.45);
     expect(step?.feetPosition.y ?? 0).toBeLessThan(-0.25);
+  });
+
+  it("preserves airborne planar momentum when movement input is released", () => {
+    const step = stepPlayerLocomotion({
+      dt: 0.1,
+      feetPosition: {
+        x: 0,
+        y: 1,
+        z: 0
+      },
+      movementYawRadians: 0,
+      standingShape: FIRST_PERSON_PLAYER_SHAPE,
+      verticalVelocity: 2,
+      previousLocomotionState: createIdleRuntimeLocomotionState("airborne"),
+      previousPlanarDisplacement: {
+        x: 0,
+        y: 0,
+        z: 0.45
+      },
+      jumpBufferRemainingMs: 0,
+      coyoteTimeRemainingMs: 0,
+      jumpHoldRemainingMs: 0,
+      crouched: false,
+      wasJumpPressed: false,
+      input: {
+        ...FORWARD_INPUT,
+        moveForward: 0
+      },
+      movement: DEFAULT_MOVEMENT,
+      resolveMotion: (feetPosition, motion): ResolvedPlayerMotion => ({
+        feetPosition: {
+          x: feetPosition.x + motion.x,
+          y: feetPosition.y + motion.y,
+          z: feetPosition.z + motion.z
+        },
+        grounded: false,
+        collisionCount: 0,
+        groundCollisionNormal: null,
+        collidedAxes: {
+          x: false,
+          y: false,
+          z: false
+        }
+      }),
+      resolveVolumeState: () => ({
+        inWater: false,
+        inFog: false
+      }),
+      probeGround: () => ({
+        grounded: false,
+        distance: null,
+        normal: null,
+        slopeDegrees: null
+      }),
+      canOccupyShape: () => true
+    });
+
+    expect(step).not.toBeNull();
+    expect(step?.locomotionState.locomotionMode).toBe("airborne");
+    expect(step?.locomotionState.inputMagnitude).toBe(0);
+    expect(step?.locomotionState.requestedPlanarSpeed).toBeCloseTo(4.5);
+    expect(step?.locomotionState.planarSpeed).toBeCloseTo(4.5);
+    expect(step?.planarDisplacement.z).toBeCloseTo(0.45);
   });
 });
