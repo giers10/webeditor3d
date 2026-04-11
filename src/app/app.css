@@ -870,7 +870,7 @@ button:disabled {
 
 .viewport-region__panels--single {
   display: flex;
-  padding: 12px;
+  padding: 0;
 }
 
 .viewport-region__panels--quad {
