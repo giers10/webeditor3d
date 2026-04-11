@@ -309,6 +309,7 @@ function pushRenderedFaceVertex(
   positions: number[],
   normals: number[],
   uvs: number[],
+  faceUvs: number[],
   indices: number[],
   vertex: Vec3,
   normal: Vec3,
@@ -323,6 +324,10 @@ function pushRenderedFaceVertex(
   positions.push(vertex.x, vertex.y, vertex.z);
   normals.push(normal.x, normal.y, normal.z);
   uvs.push(transformedUv.x, transformedUv.y);
+  faceUvs.push(
+    uvSize.x <= 1e-8 ? 0.5 : projectedUv.x / uvSize.x,
+    uvSize.y <= 1e-8 ? 0.5 : projectedUv.y / uvSize.y
+  );
   indices.push(indices.length);
 }
 
@@ -348,6 +353,7 @@ export function buildBoxBrushDerivedMeshData(brush: BoxBrush): DerivedBoxBrushMe
   const positions: number[] = [];
   const normals: number[] = [];
   const uvs: number[] = [];
+  const faceUvs: number[] = [];
   const indices: number[] = [];
   const colliderVertices: number[] = [];
   const colliderIndices: number[] = [];
@@ -401,7 +407,19 @@ export function buildBoxBrushDerivedMeshData(brush: BoxBrush): DerivedBoxBrushMe
           ];
 
           for (const vertex of [quadVertices[0], quadVertices[1], quadVertices[2], quadVertices[0], quadVertices[2], quadVertices[3]]) {
-            pushRenderedFaceVertex(positions, normals, uvs, indices, vertex, normal, faceId, faceBounds, uvSize, uvState);
+            pushRenderedFaceVertex(
+              positions,
+              normals,
+              uvs,
+              faceUvs,
+              indices,
+              vertex,
+              normal,
+              faceId,
+              faceBounds,
+              uvSize,
+              uvState
+            );
           }
         }
       }
@@ -412,6 +430,7 @@ export function buildBoxBrushDerivedMeshData(brush: BoxBrush): DerivedBoxBrushMe
             positions,
             normals,
             uvs,
+            faceUvs,
             indices,
             faceVertices[vertexOffset],
             normal,
@@ -443,6 +462,7 @@ export function buildBoxBrushDerivedMeshData(brush: BoxBrush): DerivedBoxBrushMe
   geometry.setAttribute("position", new BufferAttribute(new Float32Array(positions), 3));
   geometry.setAttribute("normal", new BufferAttribute(new Float32Array(normals), 3));
   geometry.setAttribute("uv", new BufferAttribute(new Float32Array(uvs), 2));
+  geometry.setAttribute("faceUv", new BufferAttribute(new Float32Array(faceUvs), 2));
   geometry.setIndex(indices);
 
   for (const group of groups) {
