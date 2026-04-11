@@ -572,13 +572,15 @@ export class RuntimeHost {
   private async finalizeSceneLoad(
     requestId: number,
     colliders: RuntimeSceneDefinition["colliders"],
-    playerShape: RuntimeSceneDefinition["playerCollider"]
+    playerShape: RuntimeSceneDefinition["playerCollider"],
+    playerMovement: RuntimeSceneDefinition["playerMovement"]
   ) {
     try {
       const nextCollisionWorld = await this.buildCollisionWorld(
         requestId,
         colliders,
-        playerShape
+        playerShape,
+        playerMovement
       );
 
       if (requestId !== this.collisionWorldRequestId) {
