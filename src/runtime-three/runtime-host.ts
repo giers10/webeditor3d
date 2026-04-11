@@ -1379,12 +1379,12 @@ export class RuntimeHost {
   private createPlayerWaterContactBounds() {
     if (
       this.runtimeScene === null ||
-      this.currentFirstPersonTelemetry === null
+      this.currentPlayerControllerTelemetry === null
     ) {
       return null;
     }
 
-    const feetPosition = this.currentFirstPersonTelemetry.feetPosition;
+    const feetPosition = this.currentPlayerControllerTelemetry.feetPosition;
     const playerShape = this.runtimeScene.playerCollider;
 
     switch (playerShape.mode) {
