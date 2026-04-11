@@ -10,6 +10,7 @@ import {
   LOCAL_LIGHTS_AND_SKYBOX_SCENE_DOCUMENT_VERSION,
   MODEL_ASSET_PIPELINE_SCENE_DOCUMENT_VERSION,
   PLAYER_START_COLLIDER_SETTINGS_SCENE_DOCUMENT_VERSION,
+  PLAYER_START_NAVIGATION_MODE_SCENE_DOCUMENT_VERSION,
   SCENE_TRANSITION_ENTITIES_SCENE_DOCUMENT_VERSION,
   SCENE_DOCUMENT_VERSION,
   SPATIAL_AUDIO_SCENE_DOCUMENT_VERSION,
@@ -420,6 +421,20 @@ describe("scene document JSON", () => {
           y: 1.6,
           z: 0.7
         }
+      },
+      inputBindings: {
+        keyboard: {
+          moveForward: "ArrowUp",
+          moveBackward: "ArrowDown",
+          moveLeft: "ArrowLeft",
+          moveRight: "ArrowRight"
+        },
+        gamepad: {
+          moveForward: "dpadUp",
+          moveBackward: "dpadDown",
+          moveLeft: "dpadLeft",
+          moveRight: "dpadRight"
+        }
       }
     });
     const document = {
@@ -648,6 +663,47 @@ describe("scene document JSON", () => {
       createPlayerStartEntity({
         ...playerStart,
         navigationMode: "firstPerson"
+      })
+    );
+  });
+
+  it("migrates version 25 Player Start entities to include default input bindings", () => {
+    const playerStart = {
+      id: "entity-player-start-legacy-bindings",
+      kind: "playerStart" as const,
+      position: {
+        x: 1,
+        y: 0,
+        z: -2
+      },
+      yawDegrees: 90,
+      navigationMode: "thirdPerson" as const,
+      collider: {
+        mode: "capsule" as const,
+        eyeHeight: 1.6,
+        capsuleRadius: 0.3,
+        capsuleHeight: 1.8,
+        boxSize: {
+          x: 0.6,
+          y: 1.8,
+          z: 0.6
+        }
+      }
+    };
+    const legacyDocument = {
+      ...createEmptySceneDocument({ name: "Legacy Player Binding Scene" }),
+      version: PLAYER_START_NAVIGATION_MODE_SCENE_DOCUMENT_VERSION,
+      entities: {
+        [playerStart.id]: playerStart
+      }
+    };
+
+    const migratedDocument = migrateSceneDocument(legacyDocument);
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.entities[playerStart.id]).toEqual(
+      createPlayerStartEntity({
+        ...playerStart
       })
     );
   });
