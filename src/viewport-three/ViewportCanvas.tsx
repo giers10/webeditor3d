@@ -37,6 +37,7 @@ interface ViewportCanvasProps {
   whiteboxSelectionMode: WhiteboxSelectionMode;
   whiteboxSnapEnabled: boolean;
   whiteboxSnapStep: number;
+  viewportGridVisible: boolean;
   selection: EditorSelection;
   toolMode: ToolMode;
   toolPreview: ViewportToolPreview;
@@ -67,6 +68,7 @@ export function ViewportCanvas({
   whiteboxSelectionMode,
   whiteboxSnapEnabled,
   whiteboxSnapStep,
+  viewportGridVisible,
   selection,
   toolMode,
   toolPreview,
@@ -139,6 +141,10 @@ export function ViewportCanvas({
   }, [whiteboxSnapEnabled, whiteboxSnapStep]);
 
   useEffect(() => {
+    hostRef.current?.setGridVisible(viewportGridVisible);
+  }, [viewportGridVisible]);
+
+  useEffect(() => {
     hostRef.current?.setWhiteboxSelectionMode(whiteboxSelectionMode);
   }, [whiteboxSelectionMode]);
 
@@ -156,7 +162,7 @@ export function ViewportCanvas({
 
   useEffect(() => {
     hostRef.current?.setCameraState(cameraState);
-  }, [cameraState]);
+  }, [cameraState, sceneDocument, transformSession.kind]);
 
   useEffect(() => {
     hostRef.current?.setBrushSelectionChangeHandler(onSelectionChange);
