@@ -500,6 +500,7 @@ export class RapierCollisionWorld {
       y: currentCenter.y + correctedMovement.y,
       z: currentCenter.z + correctedMovement.z
     };
+    const nextFeetPosition = colliderCenterToFeetPosition(nextCenter, shape);
     const collisionCount = this.characterController.numComputedCollisions();
     let groundCollisionNormal: Vec3 | null = null;
 
@@ -520,12 +521,15 @@ export class RapierCollisionWorld {
 
     this.playerCollider.setTranslation(nextCenter);
 
+    const groundedProbe = this.probePlayerGround(
+      nextFeetPosition,
+      shape,
+      this.snapToGroundDistance
+    );
+
     return {
-      feetPosition: colliderCenterToFeetPosition(nextCenter, shape),
-      grounded:
-        this.characterController.computedGrounded() ||
-        groundCollisionNormal !== null ||
-        (motion.y < 0 && collidedAxes.y),
+      feetPosition: nextFeetPosition,
+      grounded: groundedProbe.grounded,
       collisionCount,
       groundCollisionNormal,
       collidedAxes
