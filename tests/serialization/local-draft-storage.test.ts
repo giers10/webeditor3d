@@ -192,11 +192,11 @@ describe("local draft storage", () => {
       ...createEmptyProjectDocument({ sceneName: "Entry" }),
       activeSceneId: "scene-hall",
       scenes: {
-        scene-main: createEmptyProjectScene({
+        "scene-main": createEmptyProjectScene({
           id: "scene-main",
           name: "Entry"
         }),
-        scene-hall: createEmptyProjectScene({
+        "scene-hall": createEmptyProjectScene({
           id: "scene-hall",
           name: "Hallway"
         })
