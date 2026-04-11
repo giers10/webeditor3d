@@ -1179,6 +1179,103 @@ export class RuntimeHost {
     this.underwaterSceneFog.density = fogState.density;
   }
 
+  private resetPlayerCameraEffects() {
+    this.cameraEffectVerticalOffset = 0;
+    this.cameraEffectVerticalVelocity = 0;
+    this.cameraEffectPitchOffset = 0;
+    this.cameraEffectPitchVelocity = 0;
+    this.cameraEffectRollOffset = 0;
+
+    if (Math.abs(this.camera.fov - this.baseCameraFov) > 1e-4) {
+      this.camera.fov = this.baseCameraFov;
+      this.camera.updateProjectionMatrix();
+    }
+  }
+
+  private applyPlayerCameraEffects(dt: number) {
+    const telemetry = this.currentPlayerControllerTelemetry;
+    const cameraHooks = telemetry?.hooks.camera ?? null;
+    const signals = telemetry?.signals ?? null;
+
+    if (signals?.jumpStarted) {
+      this.cameraEffectVerticalVelocity += 0.42;
+      this.cameraEffectPitchVelocity += 0.045;
+    }
+
+    if (signals?.startedFalling) {
+      this.cameraEffectVerticalVelocity -= 0.1;
+      this.cameraEffectPitchVelocity -= 0.035;
+    }
+
+    if (signals?.landed) {
+      this.cameraEffectVerticalVelocity -= 0.68;
+      this.cameraEffectPitchVelocity -= 0.08;
+    }
+
+    if (signals?.headBump) {
+      this.cameraEffectVerticalVelocity -= 0.28;
+      this.cameraEffectPitchVelocity -= 0.05;
+    }
+
+    this.cameraEffectVerticalOffset += this.cameraEffectVerticalVelocity * dt;
+    this.cameraEffectPitchOffset += this.cameraEffectPitchVelocity * dt;
+    this.cameraEffectVerticalVelocity = dampScalar(
+      this.cameraEffectVerticalVelocity,
+      0,
+      10,
+      dt
+    );
+    this.cameraEffectPitchVelocity = dampScalar(
+      this.cameraEffectPitchVelocity,
+      0,
+      12,
+      dt
+    );
+    this.cameraEffectVerticalOffset = dampScalar(
+      this.cameraEffectVerticalOffset,
+      0,
+      9,
+      dt
+    );
+    this.cameraEffectPitchOffset = dampScalar(
+      this.cameraEffectPitchOffset,
+      0,
+      10,
+      dt
+    );
+
+    const swimmingOffset =
+      cameraHooks?.swimming === true
+        ? Math.sin(this.volumeTime * 2.8) * 0.025
+        : 0;
+    const targetRollOffset =
+      cameraHooks?.swimming === true
+        ? Math.sin(this.volumeTime * 1.8) * 0.012
+        : 0;
+    const targetFov =
+      this.baseCameraFov -
+      (cameraHooks?.underwaterAmount ?? 0) * 1.8 -
+      (cameraHooks?.swimming === true ? 0.6 : 0);
+
+    this.cameraEffectRollOffset = dampScalar(
+      this.cameraEffectRollOffset,
+      targetRollOffset,
+      6,
+      dt
+    );
+
+    this.camera.position.y += this.cameraEffectVerticalOffset + swimmingOffset;
+    this.camera.rotation.x += this.cameraEffectPitchOffset;
+    this.camera.rotation.z += this.cameraEffectRollOffset;
+
+    const nextFov = dampScalar(this.camera.fov, targetFov, 6, dt);
+
+    if (Math.abs(nextFov - this.camera.fov) > 1e-4) {
+      this.camera.fov = nextFov;
+      this.camera.updateProjectionMatrix();
+    }
+  }
+
   private getWaterReflectionMode() {
     if (
       this.currentWorld === null ||
