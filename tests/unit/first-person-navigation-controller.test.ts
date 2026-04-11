@@ -190,6 +190,54 @@ describe("FirstPersonNavigationController", () => {
     });
   });
 
+  it("uses the authored movement template speed for first-person motion telemetry", () => {
+    const playerStart = createPlayerStartEntity({
+      id: "entity-player-start-custom-movement",
+      movementTemplate: {
+        moveSpeed: 2.25
+      }
+    });
+    const { context } = createRuntimeControllerContext(
+      playerStart,
+      (feetPosition, motion) => ({
+        feetPosition: {
+          x: feetPosition.x + motion.x,
+          y: feetPosition.y + motion.y,
+          z: feetPosition.z + motion.z
+        },
+        grounded: true,
+        collidedAxes: {
+          x: false,
+          y: false,
+          z: false
+        }
+      })
+    );
+    const controller = new FirstPersonNavigationController();
+
+    controller.activate(context);
+    window.dispatchEvent(new KeyboardEvent("keydown", { code: "KeyW" }));
+    controller.update(1);
+
+    const telemetry = context.setFirstPersonTelemetry.mock.calls.at(-1)?.[0];
+
+    expect(telemetry?.feetPosition.z).toBeCloseTo(2.25);
+    expect(telemetry?.movement).toMatchObject({
+      templateKind: "default",
+      moveSpeed: 2.25,
+      capabilities: {
+        jump: true,
+        sprint: true,
+        crouch: true
+      }
+    });
+
+    window.dispatchEvent(new KeyboardEvent("keyup", { code: "KeyW" }));
+    controller.deactivate(context, {
+      releasePointerLock: false
+    });
+  });
+
   it("uses the gamepad right stick for camera look without requiring pointer lock", () => {
     const { context } = createRuntimeControllerContext();
     const controller = new FirstPersonNavigationController();
