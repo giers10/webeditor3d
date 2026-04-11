@@ -1739,6 +1739,8 @@ export function validateProjectDocument(
       );
     }
 
+    validateProjectSceneLoadingScreen(scene, scenePath, diagnostics);
+
     const sceneDocument = createSceneDocumentFromProject(
       document,
       sceneKey
