@@ -3,7 +3,10 @@ import { Euler, Vector3 } from "three";
 import type { Vec3 } from "../core/vector";
 
 import { getFirstPersonPlayerEyeHeight } from "./player-collision";
-import { resolvePlayerStartMovementActions } from "./player-input-bindings";
+import {
+  resolvePlayerStartLookInput,
+  resolvePlayerStartMovementActions
+} from "./player-input-bindings";
 import type {
   NavigationControllerDeactivateOptions,
   NavigationController,
@@ -12,6 +15,7 @@ import type {
 } from "./navigation-controller";
 
 const LOOK_SENSITIVITY = 0.0022;
+const GAMEPAD_LOOK_SPEED = 2.4;
 const MOVE_SPEED = 4.5;
 const GRAVITY = 22;
 const MAX_PITCH_RADIANS = Math.PI * 0.48;
@@ -144,10 +148,21 @@ export class FirstPersonNavigationController implements NavigationController {
     }
 
     const playerShape = this.context.getRuntimeScene().playerCollider;
+    const lookInput = resolvePlayerStartLookInput(
+      this.context.getRuntimeScene().playerInputBindings
+    );
     const inputState = resolvePlayerStartMovementActions(
       this.pressedKeys,
       this.context.getRuntimeScene().playerInputBindings
     );
+
+    if (lookInput.horizontal !== 0 || lookInput.vertical !== 0) {
+      this.yawRadians -= lookInput.horizontal * GAMEPAD_LOOK_SPEED * dt;
+      this.pitchRadians = clampPitch(
+        this.pitchRadians + lookInput.vertical * GAMEPAD_LOOK_SPEED * dt
+      );
+    }
+
     const currentVolumeState = this.context.resolvePlayerVolumeState(
       this.feetPosition
     );
@@ -319,8 +334,8 @@ export class FirstPersonNavigationController implements NavigationController {
     this.pointerLocked = pointerLocked;
     this.context.setRuntimeMessage(
       pointerLocked
-        ? "Mouse look active. Press Escape to release the cursor or switch to Third Person."
-        : "Click inside the runner viewport to capture mouse look. If pointer lock fails, switch to Third Person."
+        ? "Mouse look active. Press Escape to release the cursor or switch to Third Person. The gamepad right stick also controls the camera."
+        : "Click inside the runner viewport to capture mouse look. If pointer lock fails, the gamepad right stick still controls the camera and Third Person remains available."
     );
     this.publishTelemetry();
   }
