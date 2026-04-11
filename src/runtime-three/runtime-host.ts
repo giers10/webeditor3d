@@ -396,8 +396,10 @@ export class RuntimeHost {
     this.thirdPersonController.resetSceneState();
     this.interactionSystem.reset();
     this.setInteractionPrompt(null);
-    this.currentFirstPersonTelemetry = null;
-    this.firstPersonTelemetryHandler?.(null);
+    this.currentPlayerControllerTelemetry = null;
+    this.currentPlayerAnimationHooks = null;
+    this.currentPlayerAudioHooks = null;
+    this.playerControllerTelemetryHandler?.(null);
     this.currentRuntimeMessage = null;
     this.runtimeMessageHandler?.(null);
     this.clearCollisionWorld();
