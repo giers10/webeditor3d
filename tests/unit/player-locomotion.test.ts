@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { Vec3 } from "../../src/core/vector";
+import { createPlayerStartMovementTemplate } from "../../src/entities/entity-instances";
 import { FIRST_PERSON_PLAYER_SHAPE } from "../../src/runtime-three/player-collision";
 import type {
   PlayerGroundProbeResult,
@@ -10,14 +11,15 @@ import { stepPlayerLocomotion } from "../../src/runtime-three/player-locomotion"
 import type { PlayerStartActionInputState } from "../../src/runtime-three/player-input-bindings";
 import type { RuntimePlayerMovement } from "../../src/runtime-three/runtime-scene-build";
 
+const movementTemplate = createPlayerStartMovementTemplate();
+
 const DEFAULT_MOVEMENT: RuntimePlayerMovement = {
   templateKind: "default",
-  moveSpeed: 4.5,
-  capabilities: {
-    jump: true,
-    sprint: true,
-    crouch: true
-  }
+  moveSpeed: movementTemplate.moveSpeed,
+  capabilities: movementTemplate.capabilities,
+  jump: movementTemplate.jump,
+  sprint: movementTemplate.sprint,
+  crouch: movementTemplate.crouch
 };
 
 const FORWARD_INPUT: PlayerStartActionInputState = {
@@ -52,6 +54,9 @@ function stepForwardOnSlope(normal: Vec3) {
     standingShape: FIRST_PERSON_PLAYER_SHAPE,
     verticalVelocity: 0,
     previousLocomotionState: undefined,
+    jumpBufferRemainingMs: 0,
+    coyoteTimeRemainingMs: 0,
+    jumpHoldRemainingMs: 0,
     crouched: false,
     wasJumpPressed: false,
     input: FORWARD_INPUT,
