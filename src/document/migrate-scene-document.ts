@@ -74,6 +74,7 @@ import {
 import {
   BOX_BRUSH_SCENE_DOCUMENT_VERSION,
   ANIMATION_PLAYBACK_SCENE_DOCUMENT_VERSION,
+  DEFAULT_PROJECT_NAME,
   DEFAULT_PROJECT_SCENE_ID,
   ENTITY_NAMES_SCENE_DOCUMENT_VERSION,
   ENTITY_SYSTEM_FOUNDATION_SCENE_DOCUMENT_VERSION,
@@ -91,6 +92,7 @@ import {
   RUNNER_V1_SCENE_DOCUMENT_VERSION,
   SCENE_TRANSITION_ENTITIES_SCENE_DOCUMENT_VERSION,
   SPATIAL_AUDIO_SCENE_DOCUMENT_VERSION,
+  PROJECT_NAME_SCENE_DOCUMENT_VERSION,
   SCENE_DOCUMENT_VERSION,
   TRIGGER_ACTION_TARGET_FOUNDATION_SCENE_DOCUMENT_VERSION,
   RUNNER_LOADING_SCREEN_SCENE_DOCUMENT_VERSION,
@@ -2548,23 +2550,44 @@ function readProjectScene(
   };
 }
 
+function isProjectDocumentVersion(value: unknown): value is number {
+  return (
+    typeof value === "number" &&
+    Number.isInteger(value) &&
+    value >= MULTI_SCENE_FOUNDATION_SCENE_DOCUMENT_VERSION &&
+    value <= SCENE_DOCUMENT_VERSION
+  );
+}
+
+function readProjectName(
+  value: unknown,
+  label: string,
+  options: { allowMissing: boolean }
+): string {
+  if (value === undefined && options.allowMissing) {
+    return DEFAULT_PROJECT_NAME;
+  }
+
+  return expectString(value, label);
+}
+
 export function migrateProjectDocument(source: unknown): ProjectDocument {
   if (!isRecord(source)) {
     throw new Error("Project document must be a JSON object.");
   }
 
-  if (
-    (source.version === MULTI_SCENE_FOUNDATION_SCENE_DOCUMENT_VERSION ||
-      source.version === RUNNER_LOADING_SCREEN_SCENE_DOCUMENT_VERSION ||
-      source.version === SCENE_TRANSITION_ENTITIES_SCENE_DOCUMENT_VERSION ||
-      source.version === PLAYER_START_NAVIGATION_MODE_SCENE_DOCUMENT_VERSION) &&
-    isRecord(source.scenes)
-  ) {
+  if (isProjectDocumentVersion(source.version)) {
+    if (!isRecord(source.scenes)) {
+      throw new Error("scenes must be an object.");
+    }
+
     const materials = readMaterialRegistry(source.materials, "materials");
     const assets = readAssets(source.assets);
     const scenes: Record<string, ProjectScene> = {};
     const allowMissingLoadingScreen =
       source.version === MULTI_SCENE_FOUNDATION_SCENE_DOCUMENT_VERSION;
+    const allowMissingProjectName =
+      source.version < PROJECT_NAME_SCENE_DOCUMENT_VERSION;
 
     for (const [sceneKey, sceneValue] of Object.entries(source.scenes)) {
       scenes[sceneKey] = readProjectScene(
@@ -2580,6 +2603,9 @@ export function migrateProjectDocument(source: unknown): ProjectDocument {
 
     return {
       version: SCENE_DOCUMENT_VERSION,
+      name: readProjectName(source.name, "name", {
+        allowMissing: allowMissingProjectName
+      }),
       activeSceneId: expectString(source.activeSceneId, "activeSceneId"),
       scenes,
       materials,

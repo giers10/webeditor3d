@@ -2518,6 +2518,17 @@ export function validateProjectDocument(
 ): SceneDocumentValidationResult {
   const diagnostics: SceneDiagnostic[] = [];
 
+  if (document.name.trim().length === 0) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-project-name",
+        "Project names must be non-empty.",
+        "name"
+      )
+    );
+  }
+
   if (Object.keys(document.scenes).length === 0) {
     diagnostics.push(
       createDiagnostic(
