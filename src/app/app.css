@@ -79,10 +79,10 @@ button:disabled {
   align-items: center;
   justify-content: flex-start;
   flex-wrap: nowrap;
-  gap: 12px;
-  min-height: 48px;
-  height: 48px;
-  padding: 6px 12px;
+  gap: 14px;
+  min-height: 52px;
+  height: 52px;
+  padding: 7px 14px;
   background: rgba(18, 22, 28, 0.88);
   border: 1px solid var(--color-border);
   border-radius: 16px;
@@ -117,26 +117,26 @@ button:disabled {
   display: flex;
   align-items: center;
   flex-wrap: nowrap;
-  gap: 8px;
+  gap: 10px;
   flex: 0 0 auto;
   min-width: max-content;
 }
 
 .toolbar__project-name {
-  flex: 0 0 220px;
-  min-width: 180px;
-  max-width: 220px;
+  flex: 0 0 240px;
+  min-width: 220px;
+  max-width: 240px;
 }
 
 .toolbar__scene-picker {
-  flex: 0 0 180px;
-  min-width: 180px;
+  flex: 0 0 210px;
+  min-width: 210px;
 }
 
 .toolbar__scene-name {
-  flex: 0 0 220px;
-  min-width: 180px;
-  max-width: 220px;
+  flex: 0 0 240px;
+  min-width: 220px;
+  max-width: 240px;
 }
 
 .toolbar__scene-select {
@@ -157,8 +157,8 @@ button:disabled {
   display: flex;
   align-items: center;
   flex-wrap: nowrap;
-  gap: 6px;
-  padding: 6px;
+  gap: 8px;
+  padding: 7px;
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid var(--color-border);
   border-radius: 12px;
@@ -178,12 +178,13 @@ button:disabled {
 }
 
 .toolbar__button {
-  min-height: 34px;
-  padding: 0.48rem 0.72rem;
+  min-height: 36px;
+  padding: 0.52rem 0.92rem;
   background: var(--color-surface-strong);
   color: var(--color-text);
   font-size: 0.84rem;
   line-height: 1.1;
+  white-space: nowrap;
 }
 
 .toolbar__button:hover:not(:disabled) {
@@ -197,8 +198,8 @@ button:disabled {
 }
 
 .toolbar__button--compact {
-  min-height: 32px;
-  padding: 0.4rem 0.62rem;
+  min-height: 34px;
+  padding: 0.42rem 0.78rem;
   font-size: 0.78rem;
 }
 
@@ -214,7 +215,7 @@ button:disabled {
 
 .toolbar__project-name-input,
 .toolbar__scene-name-input {
-  height: 32px;
+  height: 34px;
   padding: 0 12px;
   font-size: 0.92rem;
   font-weight: 700;
@@ -842,8 +843,7 @@ button:disabled {
 }
 
 .viewport-region {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
+  display: flex;
   min-height: 0;
   background: rgba(20, 24, 31, 0.92);
   border: 1px solid var(--color-border);
@@ -865,25 +865,7 @@ button:disabled {
 .viewport-region__panels {
   position: relative;
   min-height: 0;
-}
-
-.viewport-region__toolbar {
-  display: flex;
-  align-items: center;
-  min-height: 44px;
-  padding: 6px 10px;
-  border-bottom: 1px solid var(--color-border);
-  background: rgba(14, 18, 24, 0.72);
-}
-
-.viewport-region__toolbar-scroll {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: max-content;
-  overflow-x: auto;
-  overflow-y: hidden;
-  scrollbar-width: thin;
+  flex: 1 1 auto;
 }
 
 .viewport-region__panels--single {
@@ -943,65 +925,50 @@ button:disabled {
   grid-area: bottomRight;
 }
 
-.viewport-panel__header {
+.viewport-panel__overlay {
   position: absolute;
-  top: 12px;
-  right: 12px;
   z-index: 2;
-  display: flex;
-  flex-direction: row;
-  align-items: flex-end;
-  justify-content: flex-end;
-  gap: 6px;
-  padding: 0;
-  background: transparent;
-  border-bottom: 0;
   pointer-events: none;
 }
 
-.viewport-panel--quad .viewport-panel__header {
+.viewport-panel__overlay--top {
   top: 10px;
+  left: 10px;
   right: 10px;
 }
 
-.viewport-panel__meta {
+.viewport-panel__overlay--left {
+  top: 56px;
+  left: 10px;
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  gap: 4px;
-  min-width: 0;
-}
-
-.viewport-panel__title-row {
-  display: flex;
-  align-items: center;
   gap: 8px;
 }
 
-.viewport-panel__title {
-  font-size: 0.74rem;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+.viewport-panel--quad .viewport-panel__overlay--top {
+  top: 8px;
+  left: 8px;
+  right: 8px;
 }
 
-.viewport-panel__active-badge {
-  padding: 0.18rem 0.42rem;
-  color: #20140c;
-  background: var(--color-accent-strong);
-  border-radius: 999px;
-  font-size: 0.64rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+.viewport-panel--quad .viewport-panel__overlay--left {
+  top: 52px;
+  left: 8px;
 }
 
-.viewport-panel__controls {
+.viewport-panel__overlay-scroll {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
+  align-items: flex-start;
   gap: 6px;
-  pointer-events: auto;
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+}
+
+.viewport-panel__overlay-scroll > * {
+  flex: 0 0 auto;
 }
 
 .viewport-panel__control-group {
@@ -1009,23 +976,63 @@ button:disabled {
   flex-wrap: wrap;
   gap: 4px;
   padding: 4px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid var(--color-border);
+  background: rgba(8, 10, 14, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
+  backdrop-filter: blur(12px);
+  pointer-events: auto;
+}
+
+.viewport-panel__control-group--stack {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: stretch;
 }
 
 .viewport-panel__button {
-  padding: 0.34rem 0.54rem;
+  min-height: 28px;
+  padding: 0.34rem 0.58rem;
   color: var(--color-text);
   background: var(--color-surface-strong);
   font-size: 0.7rem;
   line-height: 1.15;
+  white-space: nowrap;
+  pointer-events: auto;
 }
 
 .viewport-panel__button--active {
   background: var(--color-accent-soft);
   border-color: rgba(207, 123, 66, 0.55);
   color: var(--color-accent-strong);
+}
+
+.viewport-panel__button--accent {
+  color: #20140c;
+  background: var(--color-accent);
+  font-weight: 700;
+}
+
+.viewport-panel__inline-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 0 4px 0 6px;
+  color: var(--color-text);
+  pointer-events: auto;
+}
+
+.viewport-panel__inline-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.viewport-panel__inline-input {
+  width: 66px;
+  min-height: 28px;
+  padding: 0 8px;
 }
 
 .viewport-canvas,
@@ -1069,7 +1076,7 @@ button:disabled {
 
 .viewport-canvas__overlay {
   position: absolute;
-  top: 10px;
+  bottom: 10px;
   left: 10px;
   z-index: 1;
   display: flex;
