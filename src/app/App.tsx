@@ -10288,14 +10288,25 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               const nextKind = event.currentTarget
                                 .value as PlayerStartMovementTemplate["kind"];
                               const nextTemplate =
-                                createPlayerStartMovementTemplate({
-                                  kind: nextKind,
-                                  moveSpeed:
-                                    playerStartMovementTemplateDraft.moveSpeed,
-                                  capabilities:
-                                    playerStartMovementTemplateDraft.capabilities
-                                });
-                              setPlayerStartMovementTemplateDraft(nextTemplate);
+                                nextKind === "custom"
+                                  ? createPlayerStartMovementTemplate({
+                                      kind: "custom",
+                                      moveSpeed:
+                                        playerStartMovementTemplateDraft.moveSpeed,
+                                      capabilities:
+                                        playerStartMovementTemplateDraft.capabilities,
+                                      jump: playerStartMovementTemplateDraft.jump,
+                                      sprint:
+                                        playerStartMovementTemplateDraft.sprint,
+                                      crouch:
+                                        playerStartMovementTemplateDraft.crouch
+                                    })
+                                  : createPlayerStartMovementTemplate({
+                                      kind: nextKind
+                                    });
+                              setPlayerStartMovementTemplateEditorDraft(
+                                nextTemplate
+                              );
                               scheduleDraftCommit(() =>
                                 applyPlayerStartChange({
                                   movementTemplate: nextTemplate
@@ -10321,6 +10332,397 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           {getPlayerStartMovementTemplateDescription(
                             playerStartMovementTemplateDraft.kind
                           )}
+                        </div>
+
+                        <div className="vector-inputs vector-inputs--two">
+                          <label className="form-field">
+                            <span className="label">Base Speed</span>
+                            <input
+                              data-testid="player-start-movement-move-speed"
+                              className="text-input"
+                              type="number"
+                              min="0.01"
+                              step="0.1"
+                              value={playerStartMovementTemplateNumberDraft.moveSpeed}
+                              onChange={(event) =>
+                                setPlayerStartMovementTemplateNumberDraft(
+                                  (draft) => ({
+                                    ...draft,
+                                    moveSpeed: event.currentTarget.value
+                                  })
+                                )
+                              }
+                              onBlur={() =>
+                                commitPlayerStartMovementTemplateDraft()
+                              }
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(
+                                  event,
+                                  commitPlayerStartMovementTemplateDraft
+                                )
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(
+                                  event,
+                                  commitPlayerStartMovementTemplateDraft
+                                )
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(
+                                  event,
+                                  commitPlayerStartMovementTemplateDraft
+                                )
+                              }
+                            />
+                          </label>
+                        </div>
+
+                        <div className="form-section">
+                          <div className="label">Jump</div>
+                          <label className="form-field form-field--toggle">
+                            <span className="label">Enabled</span>
+                            <input
+                              data-testid="player-start-movement-jump-enabled"
+                              type="checkbox"
+                              checked={
+                                playerStartMovementTemplateDraft.capabilities.jump
+                              }
+                              onChange={(event) =>
+                                commitPlayerStartMovementTemplateDraft(
+                                  {
+                                    capabilities: {
+                                      jump: event.currentTarget.checked
+                                    }
+                                  },
+                                  {
+                                    schedule: true
+                                  }
+                                )
+                              }
+                            />
+                          </label>
+                          <div className="vector-inputs vector-inputs--two">
+                            <label className="form-field">
+                              <span className="label">Speed</span>
+                              <input
+                                data-testid="player-start-movement-jump-speed"
+                                className="text-input"
+                                type="number"
+                                min="0.01"
+                                step="0.1"
+                                value={playerStartMovementTemplateNumberDraft.jumpSpeed}
+                                onChange={(event) =>
+                                  setPlayerStartMovementTemplateNumberDraft(
+                                    (draft) => ({
+                                      ...draft,
+                                      jumpSpeed: event.currentTarget.value
+                                    })
+                                  )
+                                }
+                                onBlur={() =>
+                                  commitPlayerStartMovementTemplateDraft()
+                                }
+                                onKeyDown={(event) =>
+                                  handleDraftVectorKeyDown(
+                                    event,
+                                    commitPlayerStartMovementTemplateDraft
+                                  )
+                                }
+                                onKeyUp={(event) =>
+                                  handleNumberInputKeyUp(
+                                    event,
+                                    commitPlayerStartMovementTemplateDraft
+                                  )
+                                }
+                                onPointerUp={(event) =>
+                                  handleNumberInputPointerUp(
+                                    event,
+                                    commitPlayerStartMovementTemplateDraft
+                                  )
+                                }
+                              />
+                            </label>
+                            <label className="form-field">
+                              <span className="label">Buffer ms</span>
+                              <input
+                                data-testid="player-start-movement-jump-buffer"
+                                className="text-input"
+                                type="number"
+                                min="0"
+                                step="1"
+                                value={playerStartMovementTemplateNumberDraft.jumpBufferMs}
+                                onChange={(event) =>
+                                  setPlayerStartMovementTemplateNumberDraft(
+                                    (draft) => ({
+                                      ...draft,
+                                      jumpBufferMs: event.currentTarget.value
+                                    })
+                                  )
+                                }
+                                onBlur={() =>
+                                  commitPlayerStartMovementTemplateDraft()
+                                }
+                                onKeyDown={(event) =>
+                                  handleDraftVectorKeyDown(
+                                    event,
+                                    commitPlayerStartMovementTemplateDraft
+                                  )
+                                }
+                                onKeyUp={(event) =>
+                                  handleNumberInputKeyUp(
+                                    event,
+                                    commitPlayerStartMovementTemplateDraft
+                                  )
+                                }
+                                onPointerUp={(event) =>
+                                  handleNumberInputPointerUp(
+                                    event,
+                                    commitPlayerStartMovementTemplateDraft
+                                  )
+                                }
+                              />
+                            </label>
+                          </div>
+                          <div className="vector-inputs vector-inputs--two">
+                            <label className="form-field">
+                              <span className="label">Coyote ms</span>
+                              <input
+                                data-testid="player-start-movement-coyote-time"
+                                className="text-input"
+                                type="number"
+                                min="0"
+                                step="1"
+                                value={playerStartMovementTemplateNumberDraft.coyoteTimeMs}
+                                onChange={(event) =>
+                                  setPlayerStartMovementTemplateNumberDraft(
+                                    (draft) => ({
+                                      ...draft,
+                                      coyoteTimeMs: event.currentTarget.value
+                                    })
+                                  )
+                                }
+                                onBlur={() =>
+                                  commitPlayerStartMovementTemplateDraft()
+                                }
+                                onKeyDown={(event) =>
+                                  handleDraftVectorKeyDown(
+                                    event,
+                                    commitPlayerStartMovementTemplateDraft
+                                  )
+                                }
+                                onKeyUp={(event) =>
+                                  handleNumberInputKeyUp(
+                                    event,
+                                    commitPlayerStartMovementTemplateDraft
+                                  )
+                                }
+                                onPointerUp={(event) =>
+                                  handleNumberInputPointerUp(
+                                    event,
+                                    commitPlayerStartMovementTemplateDraft
+                                  )
+                                }
+                              />
+                            </label>
+                            <label className="form-field">
+                              <span className="label">Max Hold ms</span>
+                              <input
+                                data-testid="player-start-movement-variable-jump-max-hold"
+                                className="text-input"
+                                type="number"
+                                min="0.01"
+                                step="1"
+                                value={playerStartMovementTemplateNumberDraft.variableJumpMaxHoldMs}
+                                onChange={(event) =>
+                                  setPlayerStartMovementTemplateNumberDraft(
+                                    (draft) => ({
+                                      ...draft,
+                                      variableJumpMaxHoldMs:
+                                        event.currentTarget.value
+                                    })
+                                  )
+                                }
+                                onBlur={() =>
+                                  commitPlayerStartMovementTemplateDraft()
+                                }
+                                onKeyDown={(event) =>
+                                  handleDraftVectorKeyDown(
+                                    event,
+                                    commitPlayerStartMovementTemplateDraft
+                                  )
+                                }
+                                onKeyUp={(event) =>
+                                  handleNumberInputKeyUp(
+                                    event,
+                                    commitPlayerStartMovementTemplateDraft
+                                  )
+                                }
+                                onPointerUp={(event) =>
+                                  handleNumberInputPointerUp(
+                                    event,
+                                    commitPlayerStartMovementTemplateDraft
+                                  )
+                                }
+                              />
+                            </label>
+                          </div>
+                          <label className="form-field form-field--toggle">
+                            <span className="label">Variable Height</span>
+                            <input
+                              data-testid="player-start-movement-variable-jump-enabled"
+                              type="checkbox"
+                              checked={
+                                playerStartMovementTemplateDraft.jump.variableHeight
+                              }
+                              onChange={(event) =>
+                                commitPlayerStartMovementTemplateDraft(
+                                  {
+                                    jump: {
+                                      variableHeight:
+                                        event.currentTarget.checked
+                                    }
+                                  },
+                                  {
+                                    schedule: true
+                                  }
+                                )
+                              }
+                            />
+                          </label>
+                        </div>
+
+                        <div className="form-section">
+                          <div className="label">Sprint</div>
+                          <label className="form-field form-field--toggle">
+                            <span className="label">Enabled</span>
+                            <input
+                              data-testid="player-start-movement-sprint-enabled"
+                              type="checkbox"
+                              checked={
+                                playerStartMovementTemplateDraft.capabilities.sprint
+                              }
+                              onChange={(event) =>
+                                commitPlayerStartMovementTemplateDraft(
+                                  {
+                                    capabilities: {
+                                      sprint: event.currentTarget.checked
+                                    }
+                                  },
+                                  {
+                                    schedule: true
+                                  }
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Speed Multiplier</span>
+                            <input
+                              data-testid="player-start-movement-sprint-multiplier"
+                              className="text-input"
+                              type="number"
+                              min="0.01"
+                              step="0.05"
+                              value={playerStartMovementTemplateNumberDraft.sprintSpeedMultiplier}
+                              onChange={(event) =>
+                                setPlayerStartMovementTemplateNumberDraft(
+                                  (draft) => ({
+                                    ...draft,
+                                    sprintSpeedMultiplier:
+                                      event.currentTarget.value
+                                  })
+                                )
+                              }
+                              onBlur={() =>
+                                commitPlayerStartMovementTemplateDraft()
+                              }
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(
+                                  event,
+                                  commitPlayerStartMovementTemplateDraft
+                                )
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(
+                                  event,
+                                  commitPlayerStartMovementTemplateDraft
+                                )
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(
+                                  event,
+                                  commitPlayerStartMovementTemplateDraft
+                                )
+                              }
+                            />
+                          </label>
+                        </div>
+
+                        <div className="form-section">
+                          <div className="label">Crouch</div>
+                          <label className="form-field form-field--toggle">
+                            <span className="label">Enabled</span>
+                            <input
+                              data-testid="player-start-movement-crouch-enabled"
+                              type="checkbox"
+                              checked={
+                                playerStartMovementTemplateDraft.capabilities.crouch
+                              }
+                              onChange={(event) =>
+                                commitPlayerStartMovementTemplateDraft(
+                                  {
+                                    capabilities: {
+                                      crouch: event.currentTarget.checked
+                                    }
+                                  },
+                                  {
+                                    schedule: true
+                                  }
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Speed Multiplier</span>
+                            <input
+                              data-testid="player-start-movement-crouch-multiplier"
+                              className="text-input"
+                              type="number"
+                              min="0.01"
+                              step="0.05"
+                              value={playerStartMovementTemplateNumberDraft.crouchSpeedMultiplier}
+                              onChange={(event) =>
+                                setPlayerStartMovementTemplateNumberDraft(
+                                  (draft) => ({
+                                    ...draft,
+                                    crouchSpeedMultiplier:
+                                      event.currentTarget.value
+                                  })
+                                )
+                              }
+                              onBlur={() =>
+                                commitPlayerStartMovementTemplateDraft()
+                              }
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(
+                                  event,
+                                  commitPlayerStartMovementTemplateDraft
+                                )
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(
+                                  event,
+                                  commitPlayerStartMovementTemplateDraft
+                                )
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(
+                                  event,
+                                  commitPlayerStartMovementTemplateDraft
+                                )
+                              }
+                            />
+                          </label>
                         </div>
                       </div>
 
