@@ -11,6 +11,26 @@ import type {
 import { buildRuntimeSceneFromDocument } from "../../src/runtime-three/runtime-scene-build";
 import { ThirdPersonNavigationController } from "../../src/runtime-three/third-person-navigation-controller";
 
+function createMockGamepad(options: {
+  axes?: number[];
+} = {}): Gamepad {
+  return {
+    connected: true,
+    axes: options.axes ?? [0, 0, 0, 0],
+    buttons: Array.from({ length: 16 }, () => ({
+      pressed: false,
+      touched: false,
+      value: 0
+    })),
+    id: "mock-standard-gamepad",
+    index: 0,
+    mapping: "standard",
+    timestamp: 0,
+    vibrationActuator: null,
+    hapticActuators: []
+  } as unknown as Gamepad;
+}
+
 function createRuntimeControllerContext() {
   const runtimeScene = buildRuntimeSceneFromDocument(
     {
@@ -98,6 +118,35 @@ describe("ThirdPersonNavigationController", () => {
     expect(context.camera.position.z).toBeGreaterThan(initialCameraZ);
 
     window.dispatchEvent(new KeyboardEvent("keyup", { code: "ArrowUp" }));
+    controller.deactivate(context);
+  });
+
+  it("uses the gamepad right stick for third-person camera orbit", () => {
+    const { context } = createRuntimeControllerContext();
+    const controller = new ThirdPersonNavigationController();
+    const getGamepads = vi.fn<() => Gamepad[]>(() => [
+      createMockGamepad({
+        axes: [0, 0, 1, 0]
+      })
+    ]);
+
+    Object.defineProperty(navigator, "getGamepads", {
+      configurable: true,
+      value: getGamepads
+    });
+
+    controller.activate(context);
+
+    const initialCameraX = context.camera.position.x;
+    const initialCameraZ = context.camera.position.z;
+
+    controller.update(1);
+
+    expect(
+      context.camera.position.x !== initialCameraX ||
+        context.camera.position.z !== initialCameraZ
+    ).toBe(true);
+
     controller.deactivate(context);
   });
 });
