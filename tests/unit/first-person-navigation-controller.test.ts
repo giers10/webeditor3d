@@ -343,6 +343,7 @@ describe("FirstPersonNavigationController", () => {
     const controller = new FirstPersonNavigationController();
 
     controller.activate(context);
+    controller.update(0.1);
     window.dispatchEvent(new KeyboardEvent("keydown", { code: "Space" }));
     controller.update(0.1);
 

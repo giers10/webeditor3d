@@ -66,7 +66,6 @@ import { FirstPersonNavigationController } from "./first-person-navigation-contr
 import type {
   NavigationController,
   PlayerControllerTelemetry,
-  RuntimePlayerAnimationHookState,
   RuntimeControllerContext,
   RuntimePlayerAudioHookState,
   RuntimePlayerVolumeState
@@ -208,8 +207,6 @@ export class RuntimeHost {
     null;
   private currentInteractionPrompt: RuntimeInteractionPrompt | null = null;
   private currentSceneLoadState: RuntimeSceneLoadState | null = null;
-  private currentPlayerAnimationHooks: RuntimePlayerAnimationHookState | null =
-    null;
   private currentPlayerAudioHooks: RuntimePlayerAudioHookState | null = null;
   private cameraEffectVerticalOffset = 0;
   private cameraEffectVerticalVelocity = 0;
@@ -292,7 +289,6 @@ export class RuntimeHost {
       },
       setPlayerControllerTelemetry: (telemetry) => {
         this.currentPlayerControllerTelemetry = telemetry;
-        this.currentPlayerAnimationHooks = telemetry?.hooks.animation ?? null;
         this.currentPlayerAudioHooks = telemetry?.hooks.audio ?? null;
         this.playerControllerTelemetryHandler?.(telemetry);
       }
@@ -400,7 +396,6 @@ export class RuntimeHost {
     this.interactionSystem.reset();
     this.setInteractionPrompt(null);
     this.currentPlayerControllerTelemetry = null;
-    this.currentPlayerAnimationHooks = null;
     this.currentPlayerAudioHooks = null;
     this.playerControllerTelemetryHandler?.(null);
     this.currentRuntimeMessage = null;
