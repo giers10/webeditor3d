@@ -899,6 +899,15 @@ function readPlayerStartColliderSettings(value: unknown, label: string) {
   });
 }
 
+function readPlayerStartNavigationMode(value: unknown, label: string) {
+  return readOptionalAllowedValue(
+    value,
+    label,
+    "firstPerson",
+    isPlayerStartNavigationMode
+  );
+}
+
 function readModelInstance(
   value: unknown,
   label: string,
