@@ -57,6 +57,11 @@ describe("createEmptySceneDocument", () => {
           focalLength: 0.03,
           bokehScale: 1.5
         },
+        whiteboxBevel: {
+          enabled: false,
+          edgeWidth: 0.14,
+          normalStrength: 0.75
+        },
         fogPath: "performance",
         waterPath: "performance",
         waterReflectionMode: "none"
