@@ -37,12 +37,14 @@ import {
   createTeleportTargetEntity,
   createTriggerVolumeEntity,
   isPlayerStartColliderMode,
+  isPlayerStartGamepadActionBinding,
   isPlayerStartGamepadCameraLookBinding,
   isPlayerStartGamepadBinding,
   isPlayerStartKeyboardBindingCode,
   isPlayerStartMovementTemplateKind,
   isPlayerStartNavigationMode,
   type EntityInstance,
+  type PlayerStartGamepadActionBinding,
   type PlayerStartGamepadBinding,
   type PlayerStartGamepadCameraLookBinding,
   type PlayerStartMovementTemplateKind
@@ -90,6 +92,7 @@ import {
   LOCAL_LIGHTS_AND_SKYBOX_SCENE_DOCUMENT_VERSION,
   MULTI_SCENE_FOUNDATION_SCENE_DOCUMENT_VERSION,
   MODEL_ASSET_PIPELINE_SCENE_DOCUMENT_VERSION,
+  PLAYER_START_MOVEMENT_TEMPLATE_SCENE_DOCUMENT_VERSION,
   PLAYER_START_GAMEPAD_CAMERA_LOOK_SCENE_DOCUMENT_VERSION,
   PLAYER_START_INPUT_BINDINGS_SCENE_DOCUMENT_VERSION,
   PLAYER_START_NAVIGATION_MODE_SCENE_DOCUMENT_VERSION,
@@ -1102,6 +1105,21 @@ function readPlayerStartGamepadBinding(
   );
 }
 
+function readPlayerStartGamepadActionBinding(
+  value: unknown,
+  label: string,
+  fallback: PlayerStartGamepadActionBinding
+): PlayerStartGamepadActionBinding {
+  return readOptionalAllowedValue<PlayerStartGamepadActionBinding>(
+    value,
+    label,
+    fallback,
+    (candidate): candidate is typeof fallback =>
+      typeof candidate === "string" &&
+      isPlayerStartGamepadActionBinding(candidate)
+  );
+}
+
 function readPlayerStartGamepadCameraLookBinding(
   value: unknown,
   label: string,
@@ -1158,6 +1176,21 @@ function readPlayerStartInputBindings(value: unknown, label: string) {
         keyboard?.moveRight,
         `${label}.keyboard.moveRight`,
         DEFAULT_PLAYER_START_KEYBOARD_BINDINGS.moveRight
+      ),
+      jump: readPlayerStartKeyboardBindingCode(
+        keyboard?.jump,
+        `${label}.keyboard.jump`,
+        DEFAULT_PLAYER_START_KEYBOARD_BINDINGS.jump
+      ),
+      sprint: readPlayerStartKeyboardBindingCode(
+        keyboard?.sprint,
+        `${label}.keyboard.sprint`,
+        DEFAULT_PLAYER_START_KEYBOARD_BINDINGS.sprint
+      ),
+      crouch: readPlayerStartKeyboardBindingCode(
+        keyboard?.crouch,
+        `${label}.keyboard.crouch`,
+        DEFAULT_PLAYER_START_KEYBOARD_BINDINGS.crouch
       )
     },
     gamepad: {
@@ -1181,12 +1214,28 @@ function readPlayerStartInputBindings(value: unknown, label: string) {
         `${label}.gamepad.moveRight`,
         DEFAULT_PLAYER_START_GAMEPAD_BINDINGS.moveRight
       ),
+      jump: readPlayerStartGamepadActionBinding(
+        gamepad?.jump,
+        `${label}.gamepad.jump`,
+        DEFAULT_PLAYER_START_GAMEPAD_BINDINGS.jump
+      ),
+      sprint: readPlayerStartGamepadActionBinding(
+        gamepad?.sprint,
+        `${label}.gamepad.sprint`,
+        DEFAULT_PLAYER_START_GAMEPAD_BINDINGS.sprint
+      ),
+      crouch: readPlayerStartGamepadActionBinding(
+        gamepad?.crouch,
+        `${label}.gamepad.crouch`,
+        DEFAULT_PLAYER_START_GAMEPAD_BINDINGS.crouch
+      ),
       cameraLook: readPlayerStartGamepadCameraLookBinding(
         gamepad?.cameraLook,
         `${label}.gamepad.cameraLook`,
         DEFAULT_PLAYER_START_GAMEPAD_BINDINGS.cameraLook
       )
     }
+        source.version !== PLAYER_START_MOVEMENT_TEMPLATE_SCENE_DOCUMENT_VERSION &&
   });
 }
 
@@ -1194,10 +1243,12 @@ function readPlayerStartMovementTemplate(value: unknown, label: string) {
   if (value === undefined) {
     return createPlayerStartMovementTemplate();
   }
+        source.version !== PROJECT_NAME_SCENE_DOCUMENT_VERSION &&
 
   if (!isRecord(value)) {
     throw new Error(`${label} must be an object.`);
-  }
+        source.version !== WHITEBOX_GEOMETRY_SCENE_DOCUMENT_VERSION &&
+        source.version !== STATIC_SIMPLE_MODEL_COLLIDERS_SCENE_DOCUMENT_VERSION
 
   const kind = readOptionalAllowedValue(
     value.kind,
