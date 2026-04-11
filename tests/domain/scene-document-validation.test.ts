@@ -115,7 +115,7 @@ describe("validateSceneDocument", () => {
             z: 0
           },
           yawDegrees: Number.NaN,
-          navigationMode: "orbitVisitor" as unknown as "firstPerson",
+          navigationMode: "invalidMode" as unknown as "firstPerson",
           collider: {
             mode: "capsule",
             eyeHeight: 3,
