@@ -20,7 +20,6 @@ import {
   type ProjectAssetRecord
 } from "../assets/project-assets";
 import {
-  DEFAULT_PLAYER_START_MOVEMENT_CAPABILITIES,
   DEFAULT_PLAYER_START_GAMEPAD_BINDINGS,
   DEFAULT_PLAYER_START_KEYBOARD_BINDINGS,
   createPlayerStartColliderSettings,
@@ -1255,10 +1254,26 @@ function readPlayerStartMovementTemplate(value: unknown, label: string) {
       typeof candidate === "string" &&
       isPlayerStartMovementTemplateKind(candidate)
   );
+  const preset = createPlayerStartMovementTemplate({ kind });
   const capabilities = value.capabilities;
+  const jump = value.jump;
+  const sprint = value.sprint;
+  const crouch = value.crouch;
 
   if (capabilities !== undefined && !isRecord(capabilities)) {
     throw new Error(`${label}.capabilities must be an object.`);
+  }
+
+  if (jump !== undefined && !isRecord(jump)) {
+    throw new Error(`${label}.jump must be an object.`);
+  }
+
+  if (sprint !== undefined && !isRecord(sprint)) {
+    throw new Error(`${label}.sprint must be an object.`);
+  }
+
+  if (crouch !== undefined && !isRecord(crouch)) {
+    throw new Error(`${label}.crouch must be an object.`);
   }
 
   return createPlayerStartMovementTemplate({
@@ -1271,18 +1286,68 @@ function readPlayerStartMovementTemplate(value: unknown, label: string) {
       jump: readOptionalBoolean(
         capabilities?.jump,
         `${label}.capabilities.jump`,
-        DEFAULT_PLAYER_START_MOVEMENT_CAPABILITIES.jump
+        preset.capabilities.jump
       ),
       sprint: readOptionalBoolean(
         capabilities?.sprint,
         `${label}.capabilities.sprint`,
-        DEFAULT_PLAYER_START_MOVEMENT_CAPABILITIES.sprint
+        preset.capabilities.sprint
       ),
       crouch: readOptionalBoolean(
         capabilities?.crouch,
         `${label}.capabilities.crouch`,
-        DEFAULT_PLAYER_START_MOVEMENT_CAPABILITIES.crouch
+        preset.capabilities.crouch
       )
+    },
+    jump: {
+      speed:
+        jump?.speed === undefined
+          ? preset.jump.speed
+          : expectPositiveFiniteNumber(jump.speed, `${label}.jump.speed`),
+      bufferMs:
+        jump?.bufferMs === undefined
+          ? preset.jump.bufferMs
+          : expectNonNegativeFiniteNumber(
+              jump.bufferMs,
+              `${label}.jump.bufferMs`
+            ),
+      coyoteTimeMs:
+        jump?.coyoteTimeMs === undefined
+          ? preset.jump.coyoteTimeMs
+          : expectNonNegativeFiniteNumber(
+              jump.coyoteTimeMs,
+              `${label}.jump.coyoteTimeMs`
+            ),
+      variableHeight: readOptionalBoolean(
+        jump?.variableHeight,
+        `${label}.jump.variableHeight`,
+        preset.jump.variableHeight
+      ),
+      maxHoldMs:
+        jump?.maxHoldMs === undefined
+          ? preset.jump.maxHoldMs
+          : expectPositiveFiniteNumber(
+              jump.maxHoldMs,
+              `${label}.jump.maxHoldMs`
+            )
+    },
+    sprint: {
+      speedMultiplier:
+        sprint?.speedMultiplier === undefined
+          ? preset.sprint.speedMultiplier
+          : expectPositiveFiniteNumber(
+              sprint.speedMultiplier,
+              `${label}.sprint.speedMultiplier`
+            )
+    },
+    crouch: {
+      speedMultiplier:
+        crouch?.speedMultiplier === undefined
+          ? preset.crouch.speedMultiplier
+          : expectPositiveFiniteNumber(
+              crouch.speedMultiplier,
+              `${label}.crouch.speedMultiplier`
+            )
     }
   });
 }
