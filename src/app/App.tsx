@@ -10332,14 +10332,15 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               min="0.01"
                               step="0.1"
                               value={playerStartMovementTemplateNumberDraft.moveSpeed}
-                              onChange={(event) =>
+                              onChange={(event) => {
+                                const nextValue = event.currentTarget.value;
                                 setPlayerStartMovementTemplateNumberDraft(
                                   (draft) => ({
                                     ...draft,
-                                    moveSpeed: event.currentTarget.value
+                                    moveSpeed: nextValue
                                   })
-                                )
-                              }
+                                );
+                              }}
                               onBlur={() =>
                                 commitPlayerStartMovementTemplateDraft()
                               }
@@ -10399,14 +10400,15 @@ export function App({ store, initialStatusMessage }: AppProps) {
                                 min="0.01"
                                 step="0.1"
                                 value={playerStartMovementTemplateNumberDraft.jumpSpeed}
-                                onChange={(event) =>
+                                onChange={(event) => {
+                                  const nextValue = event.currentTarget.value;
                                   setPlayerStartMovementTemplateNumberDraft(
                                     (draft) => ({
                                       ...draft,
-                                      jumpSpeed: event.currentTarget.value
+                                      jumpSpeed: nextValue
                                     })
-                                  )
-                                }
+                                  );
+                                }}
                                 onBlur={() =>
                                   commitPlayerStartMovementTemplateDraft()
                                 }
@@ -10439,14 +10441,15 @@ export function App({ store, initialStatusMessage }: AppProps) {
                                 min="0"
                                 step="1"
                                 value={playerStartMovementTemplateNumberDraft.jumpBufferMs}
-                                onChange={(event) =>
+                                onChange={(event) => {
+                                  const nextValue = event.currentTarget.value;
                                   setPlayerStartMovementTemplateNumberDraft(
                                     (draft) => ({
                                       ...draft,
-                                      jumpBufferMs: event.currentTarget.value
+                                      jumpBufferMs: nextValue
                                     })
-                                  )
-                                }
+                                  );
+                                }}
                                 onBlur={() =>
                                   commitPlayerStartMovementTemplateDraft()
                                 }
@@ -10481,14 +10484,15 @@ export function App({ store, initialStatusMessage }: AppProps) {
                                 min="0"
                                 step="1"
                                 value={playerStartMovementTemplateNumberDraft.coyoteTimeMs}
-                                onChange={(event) =>
+                                onChange={(event) => {
+                                  const nextValue = event.currentTarget.value;
                                   setPlayerStartMovementTemplateNumberDraft(
                                     (draft) => ({
                                       ...draft,
-                                      coyoteTimeMs: event.currentTarget.value
+                                      coyoteTimeMs: nextValue
                                     })
-                                  )
-                                }
+                                  );
+                                }}
                                 onBlur={() =>
                                   commitPlayerStartMovementTemplateDraft()
                                 }
@@ -10521,15 +10525,15 @@ export function App({ store, initialStatusMessage }: AppProps) {
                                 min="0.01"
                                 step="1"
                                 value={playerStartMovementTemplateNumberDraft.variableJumpMaxHoldMs}
-                                onChange={(event) =>
+                                onChange={(event) => {
+                                  const nextValue = event.currentTarget.value;
                                   setPlayerStartMovementTemplateNumberDraft(
                                     (draft) => ({
                                       ...draft,
-                                      variableJumpMaxHoldMs:
-                                        event.currentTarget.value
+                                      variableJumpMaxHoldMs: nextValue
                                     })
-                                  )
-                                }
+                                  );
+                                }}
                                 onBlur={() =>
                                   commitPlayerStartMovementTemplateDraft()
                                 }
@@ -10612,15 +10616,15 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               min="0.01"
                               step="0.05"
                               value={playerStartMovementTemplateNumberDraft.sprintSpeedMultiplier}
-                              onChange={(event) =>
+                              onChange={(event) => {
+                                const nextValue = event.currentTarget.value;
                                 setPlayerStartMovementTemplateNumberDraft(
                                   (draft) => ({
                                     ...draft,
-                                    sprintSpeedMultiplier:
-                                      event.currentTarget.value
+                                    sprintSpeedMultiplier: nextValue
                                   })
-                                )
-                              }
+                                );
+                              }}
                               onBlur={() =>
                                 commitPlayerStartMovementTemplateDraft()
                               }
@@ -10679,15 +10683,15 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               min="0.01"
                               step="0.05"
                               value={playerStartMovementTemplateNumberDraft.crouchSpeedMultiplier}
-                              onChange={(event) =>
+                              onChange={(event) => {
+                                const nextValue = event.currentTarget.value;
                                 setPlayerStartMovementTemplateNumberDraft(
                                   (draft) => ({
                                     ...draft,
-                                    crouchSpeedMultiplier:
-                                      event.currentTarget.value
+                                    crouchSpeedMultiplier: nextValue
                                   })
-                                )
-                              }
+                                );
+                              }}
                               onBlur={() =>
                                 commitPlayerStartMovementTemplateDraft()
                               }
