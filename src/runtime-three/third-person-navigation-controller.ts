@@ -65,6 +65,7 @@ function cloneRuntimePlayerMovement(
     templateKind: movement.templateKind,
     moveSpeed: movement.moveSpeed,
     maxSpeed: movement.maxSpeed,
+    maxStepHeight: movement.maxStepHeight,
     capabilities: {
       jump: movement.capabilities.jump,
       sprint: movement.capabilities.sprint,

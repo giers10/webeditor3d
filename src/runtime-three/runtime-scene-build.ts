@@ -116,6 +116,7 @@ export interface RuntimePlayerMovement {
   templateKind: PlayerStartMovementTemplate["kind"];
   moveSpeed: number;
   maxSpeed: number;
+  maxStepHeight: number;
   capabilities: PlayerStartMovementCapabilities;
   jump: PlayerStartJumpSettings;
   sprint: PlayerStartSprintSettings;
@@ -312,6 +313,7 @@ function cloneRuntimePlayerMovement(
     templateKind: movement.templateKind,
     moveSpeed: movement.moveSpeed,
     maxSpeed: movement.maxSpeed,
+    maxStepHeight: movement.maxStepHeight,
     capabilities: clonePlayerStartMovementCapabilities(movement.capabilities),
     jump: clonePlayerStartJumpSettings(movement.jump),
     sprint: clonePlayerStartSprintSettings(movement.sprint),
@@ -328,6 +330,7 @@ function buildRuntimePlayerMovement(
     templateKind: resolvedTemplate.kind,
     moveSpeed: resolvedTemplate.moveSpeed,
     maxSpeed: resolvedTemplate.maxSpeed,
+    maxStepHeight: resolvedTemplate.maxStepHeight,
     capabilities: clonePlayerStartMovementCapabilities(
       resolvedTemplate.capabilities
     ),
