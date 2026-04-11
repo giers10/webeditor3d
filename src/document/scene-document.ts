@@ -14,7 +14,8 @@ import {
   type WorldSettings
 } from "./world-settings";
 
-export const SCENE_DOCUMENT_VERSION = 27 as const;
+export const SCENE_DOCUMENT_VERSION = 28 as const;
+export const PROJECT_NAME_SCENE_DOCUMENT_VERSION = 28 as const;
 export const PLAYER_START_GAMEPAD_CAMERA_LOOK_SCENE_DOCUMENT_VERSION = 27 as const;
 export const PLAYER_START_INPUT_BINDINGS_SCENE_DOCUMENT_VERSION = 26 as const;
 export const PLAYER_START_NAVIGATION_MODE_SCENE_DOCUMENT_VERSION = 25 as const;
@@ -43,6 +44,7 @@ export const TRIGGER_ACTION_TARGET_FOUNDATION_SCENE_DOCUMENT_VERSION =
   8 as const;
 export const RUNNER_LOADING_SCREEN_SCENE_DOCUMENT_VERSION = 23 as const;
 
+export const DEFAULT_PROJECT_NAME = "Untitled Project" as const;
 export const DEFAULT_PROJECT_SCENE_ID = "scene-main" as const;
 
 export interface SceneLoadingScreenSettings {
@@ -64,6 +66,7 @@ export interface ProjectScene {
 
 export interface ProjectDocument {
   version: typeof SCENE_DOCUMENT_VERSION;
+  name: string;
   activeSceneId: string;
   scenes: Record<string, ProjectScene>;
   materials: Record<string, MaterialDef>;
@@ -124,7 +127,10 @@ export function createEmptyProjectScene(
 
 export function createEmptyProjectDocument(
   overrides: Partial<
-    Pick<ProjectDocument, "activeSceneId" | "materials" | "textures" | "assets">
+    Pick<
+      ProjectDocument,
+      "name" | "activeSceneId" | "materials" | "textures" | "assets"
+    >
   > & {
     sceneId?: string;
     sceneName?: string;
@@ -140,6 +146,7 @@ export function createEmptyProjectDocument(
 
   return {
     version: SCENE_DOCUMENT_VERSION,
+    name: overrides.name ?? DEFAULT_PROJECT_NAME,
     activeSceneId: initialScene.id,
     scenes: {
       [initialScene.id]: initialScene
@@ -187,10 +194,12 @@ export function createSceneDocumentFromProject(
 
 export function createProjectDocumentFromSceneDocument(
   sceneDocument: SceneDocument,
-  sceneId = DEFAULT_PROJECT_SCENE_ID
+  sceneId = DEFAULT_PROJECT_SCENE_ID,
+  projectName = DEFAULT_PROJECT_NAME
 ): ProjectDocument {
   return {
     version: SCENE_DOCUMENT_VERSION,
+    name: projectName,
     activeSceneId: sceneId,
     scenes: {
       [sceneId]: {
