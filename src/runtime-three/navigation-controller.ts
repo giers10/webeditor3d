@@ -4,6 +4,7 @@ import type { Vec3 } from "../core/vector";
 
 import type {
   FirstPersonPlayerShape,
+  PlayerGroundProbeResult,
   ResolvedPlayerMotion
 } from "./player-collision";
 import type {
@@ -26,7 +27,43 @@ export interface FirstPersonTelemetry {
   spawn: RuntimeSpawnPoint;
 }
 
-export type RuntimeLocomotionState = "grounded" | "swimming" | "flying";
+export type RuntimeLocomotionMode =
+  | "grounded"
+  | "airborne"
+  | "flying"
+  | "swimming";
+export type RuntimeAirborneKind = "jumping" | "falling" | null;
+export type RuntimeLocomotionGait =
+  | "idle"
+  | "walk"
+  | "sprint"
+  | "crouch";
+
+export interface RuntimeLocomotionContactState {
+  collisionCount: number;
+  collidedAxes: {
+    x: boolean;
+    y: boolean;
+    z: boolean;
+  };
+  groundNormal: Vec3 | null;
+  groundDistance: number | null;
+  slopeDegrees: number | null;
+}
+
+export interface RuntimeLocomotionState {
+  locomotionMode: RuntimeLocomotionMode;
+  airborneKind: RuntimeAirborneKind;
+  gait: RuntimeLocomotionGait;
+  grounded: boolean;
+  crouched: boolean;
+  sprinting: boolean;
+  inputMagnitude: number;
+  requestedPlanarSpeed: number;
+  planarSpeed: number;
+  verticalVelocity: number;
+  contact: RuntimeLocomotionContactState;
+}
 
 export interface RuntimePlayerVolumeState {
   inWater: boolean;
@@ -42,6 +79,15 @@ export interface RuntimeControllerContext {
     motion: Vec3,
     shape: FirstPersonPlayerShape
   ): ResolvedPlayerMotion | null;
+  probePlayerGround(
+    feetPosition: Vec3,
+    shape: FirstPersonPlayerShape,
+    maxDistance: number
+  ): PlayerGroundProbeResult;
+  canOccupyPlayerShape(
+    feetPosition: Vec3,
+    shape: FirstPersonPlayerShape
+  ): boolean;
   resolvePlayerVolumeState(feetPosition: Vec3): RuntimePlayerVolumeState;
   resolveThirdPersonCameraCollision(
     pivot: Vec3,
