@@ -765,6 +765,7 @@ function resolveEntityRotation(
 ): EntityTransformRotationState {
   switch (entity.kind) {
     case "playerStart":
+    case "sceneEntry":
     case "teleportTarget":
       return {
         kind: "yaw",
@@ -779,6 +780,7 @@ function resolveEntityRotation(
     case "soundEmitter":
     case "triggerVolume":
     case "interactable":
+    case "sceneExit":
       return {
         kind: "none"
       };
