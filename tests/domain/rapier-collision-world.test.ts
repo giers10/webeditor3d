@@ -424,6 +424,69 @@ describe("RapierCollisionWorld", () => {
     }
   });
 
+  it("does not autostep onto a ledge while airborne without floor support", async () => {
+    const floorBrush = createBoxBrush({
+      id: "brush-floor-airborne-ledge",
+      center: {
+        x: 0,
+        y: -0.5,
+        z: 0
+      },
+      size: {
+        x: 10,
+        y: 1,
+        z: 10
+      }
+    });
+    const ledgeBrush = createBoxBrush({
+      id: "brush-airborne-ledge",
+      center: {
+        x: 1.2,
+        y: 0.35,
+        z: 0
+      },
+      size: {
+        x: 0.4,
+        y: 0.7,
+        z: 4
+      }
+    });
+    const runtimeScene = buildRuntimeSceneFromDocument({
+      ...createEmptySceneDocument({ name: "Airborne Ledge Collision Scene" }),
+      brushes: {
+        [floorBrush.id]: floorBrush,
+        [ledgeBrush.id]: ledgeBrush
+      }
+    });
+    const collisionWorld = await RapierCollisionWorld.create(
+      runtimeScene.colliders,
+      runtimeScene.playerCollider
+    );
+
+    try {
+      const airborne = collisionWorld.resolveFirstPersonMotion(
+        {
+          x: 0,
+          y: 0.45,
+          z: 0
+        },
+        {
+          x: 2,
+          y: -0.05,
+          z: 0
+        },
+        runtimeScene.playerCollider
+      );
+
+      expect(airborne.grounded).toBe(false);
+      expect(airborne.feetPosition.y).toBeLessThan(0.55);
+      expect(airborne.feetPosition.x).toBeLessThan(0.95);
+      expect(airborne.collidedAxes.x).toBe(true);
+    } finally {
+      collisionWorld.dispose();
+    }
+  });
+
   it("supports authored Player Start collision mode none without world clipping", async () => {
     const wallBrush = createBoxBrush({
       id: "brush-wall-no-collision",
