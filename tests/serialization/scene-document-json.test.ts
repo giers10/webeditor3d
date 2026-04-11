@@ -759,6 +759,64 @@ describe("scene document JSON", () => {
     expect(migratedDocument.entities[playerStart.id]).toEqual(playerStart);
   });
 
+  it("migrates version 30 Player Start entities to include the default movement template", () => {
+    const playerStart = {
+      id: "entity-player-start-legacy-movement-template",
+      kind: "playerStart" as const,
+      position: {
+        x: -1,
+        y: 0,
+        z: 3
+      },
+      yawDegrees: 30,
+      navigationMode: "thirdPerson" as const,
+      inputBindings: {
+        keyboard: {
+          moveForward: "KeyW",
+          moveBackward: "KeyS",
+          moveLeft: "KeyA",
+          moveRight: "KeyD"
+        },
+        gamepad: {
+          moveForward: "leftStickUp" as const,
+          moveBackward: "leftStickDown" as const,
+          moveLeft: "leftStickLeft" as const,
+          moveRight: "leftStickRight" as const,
+          cameraLook: "rightStick" as const
+        }
+      },
+      collider: {
+        mode: "capsule" as const,
+        eyeHeight: 1.6,
+        capsuleRadius: 0.3,
+        capsuleHeight: 1.8,
+        boxSize: {
+          x: 0.6,
+          y: 1.8,
+          z: 0.6
+        }
+      }
+    };
+    const legacyDocument = {
+      ...createEmptySceneDocument({
+        name: "Legacy Player Movement Template Scene"
+      }),
+      version: STATIC_SIMPLE_MODEL_COLLIDERS_SCENE_DOCUMENT_VERSION,
+      entities: {
+        [playerStart.id]: playerStart
+      }
+    };
+
+    const migratedDocument = migrateSceneDocument(legacyDocument);
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.entities[playerStart.id]).toEqual(
+      createPlayerStartEntity({
+        ...playerStart
+      })
+    );
+  });
+
   it("round-trips authored third-person Player Start navigation", () => {
     const playerStart = createPlayerStartEntity({
       id: "entity-player-start-third-person",
