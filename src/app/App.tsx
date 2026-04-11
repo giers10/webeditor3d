@@ -7193,23 +7193,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
           <div className="toolbar__group">
             <button
-              className={`toolbar__button ${preferredNavigationMode === "firstPerson" ? "toolbar__button--active" : ""}`}
-              type="button"
-              onClick={() => handleSetPreferredNavigationMode("firstPerson")}
-            >
-              First Person
-            </button>
-            <button
-              className={`toolbar__button ${preferredNavigationMode === "orbitVisitor" ? "toolbar__button--active" : ""}`}
-              type="button"
-              onClick={() => handleSetPreferredNavigationMode("orbitVisitor")}
-            >
-              Orbit Visitor
-            </button>
-          </div>
-
-          <div className="toolbar__group">
-            <button
               className="toolbar__button"
               type="button"
               disabled={!editorState.canUndo}
