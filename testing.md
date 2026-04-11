@@ -280,11 +280,13 @@ Playwright covers:
 ### Required e2e flows for early milestones
 
 #### E2E-01 Empty app boots
+
 - app loads
 - viewport visible
 - no fatal console errors
 
 #### E2E-02 Create box brush
+
 - create box brush
 - select it
 - persist through the current save path
@@ -292,6 +294,7 @@ Playwright covers:
 - brush still exists
 
 #### E2E-03 Apply material
+
 - create room or brush
 - assign material to a face
 - persist through the current save path
@@ -299,30 +302,35 @@ Playwright covers:
 - material persists
 
 #### E2E-04 Run scene
+
 - place `PlayerStart`
 - enter run mode
 - runtime loads
 - first-person or orbit mode active
 
 #### E2E-04b World environment
+
 - author non-default world lighting/background settings
 - save or persist through the current path
 - reload
 - editor and runner still reflect those settings
 
 #### E2E-05 Import asset
+
 - import test GLB
 - place a model instance
 - reload
 - instance remains visible
 
 #### E2E-06 Trigger action
+
 - create trigger and target
 - run scene
 - activate trigger
 - target effect occurs
 
 #### E2E-07 Project package portability
+
 - export a project package
 - import or reopen it in the editor
 - asset-backed scene remains usable
