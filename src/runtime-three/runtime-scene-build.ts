@@ -15,11 +15,15 @@ import type { SceneDocument } from "../document/scene-document";
 import { cloneWorldSettings, type WorldSettings } from "../document/world-settings";
 import {
   clonePlayerStartInputBindings,
+  clonePlayerStartMovementTemplate,
+  createPlayerStartMovementTemplate,
   createPlayerStartInputBindings,
   getEntityInstances,
   getPrimaryPlayerStartEntity,
   type EntityInstance,
-  type PlayerStartInputBindings
+  type PlayerStartInputBindings,
+  type PlayerStartMovementCapabilities,
+  type PlayerStartMovementTemplate
 } from "../entities/entity-instances";
 import { getBoxBrushBounds } from "../geometry/box-brush";
 import { buildBoxBrushDerivedMeshData } from "../geometry/box-brush-mesh";
