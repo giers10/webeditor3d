@@ -69,6 +69,7 @@ export interface StepPlayerLocomotionOptions {
   movementYawRadians: number;
   standingShape: FirstPersonPlayerShape;
   verticalVelocity: number;
+  previousLocomotionState?: RuntimeLocomotionState;
   crouched: boolean;
   wasJumpPressed: boolean;
   input: PlayerStartActionInputState;
@@ -286,14 +287,25 @@ export function stepPlayerLocomotion(
     options.movement.capabilities.sprint &&
     sprintPressed &&
     !crouched &&
+    currentlyGrounded &&
     !currentVolumeState.inWater;
-  const requestedPlanarSpeed =
+  const groundedRequestedPlanarSpeed =
     options.movement.moveSpeed *
     (crouched
       ? CROUCH_SPEED_MULTIPLIER
       : sprinting
         ? SPRINT_SPEED_MULTIPLIER
         : 1);
+  const airborneRequestedPlanarSpeed = Math.max(
+    options.movement.moveSpeed,
+    options.previousLocomotionState?.requestedPlanarSpeed ?? 0
+  );
+  const requestedPlanarSpeed =
+    activeShape.mode !== "none" &&
+    !currentVolumeState.inWater &&
+    !currentlyGrounded
+      ? airborneRequestedPlanarSpeed
+      : groundedRequestedPlanarSpeed;
   const planarMotion = computePlanarMotion(
     options.movementYawRadians,
     options.input,

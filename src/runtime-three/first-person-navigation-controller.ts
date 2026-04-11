@@ -272,6 +272,7 @@ export class FirstPersonNavigationController implements NavigationController {
         movementYawRadians: this.yawRadians,
         standingShape: this.standingPlayerShape,
         verticalVelocity: this.verticalVelocity,
+        previousLocomotionState: this.locomotionState,
         crouched: this.locomotionState.crouched,
         wasJumpPressed: this.jumpPressed,
         input: inputState,

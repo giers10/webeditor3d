@@ -385,7 +385,7 @@ describe("FirstPersonNavigationController", () => {
     });
   });
 
-  it("preserves sprint planar speed while jumping", () => {
+  it("preserves takeoff sprint speed while airborne", () => {
     const probePlayerGround = vi.fn(
       (
         feetPosition: Vec3,
@@ -473,12 +473,101 @@ describe("FirstPersonNavigationController", () => {
       airborneTelemetry?.locomotionState.requestedPlanarSpeed
     ).toBeGreaterThan(7);
     expect(airborneTelemetry?.locomotionState.planarSpeed).toBeGreaterThan(7);
-    expect(airborneTelemetry?.locomotionState.sprinting).toBe(true);
+    expect(airborneTelemetry?.locomotionState.sprinting).toBe(false);
 
     window.dispatchEvent(new KeyboardEvent("keyup", { code: "Space" }));
     window.dispatchEvent(new KeyboardEvent("keyup", { code: "KeyW" }));
     window.dispatchEvent(
       new KeyboardEvent("keyup", { code: "ShiftLeft" })
+    );
+    controller.deactivate(context, {
+      releasePointerLock: false
+    });
+  });
+
+  it("does not keep crouch speed penalty while airborne", () => {
+    const probePlayerGround = vi.fn(
+      (
+        feetPosition: Vec3,
+        _shape: FirstPersonPlayerShape,
+        _maxDistance: number
+      ): PlayerGroundProbeResult => {
+        if (feetPosition.y <= 0.13) {
+          return {
+            grounded: true,
+            distance: feetPosition.y,
+            normal: { x: 0, y: 1, z: 0 },
+            slopeDegrees: 0
+          };
+        }
+
+        return {
+          grounded: false,
+          distance: null,
+          normal: null,
+          slopeDegrees: null
+        };
+      }
+    );
+
+    const { context } = createRuntimeControllerContext(
+      createPlayerStartEntity({
+        id: "entity-player-start-crouch-jump"
+      }),
+      (feetPosition, motion) => ({
+        feetPosition: {
+          x: feetPosition.x + motion.x,
+          y: feetPosition.y + motion.y,
+          z: feetPosition.z + motion.z
+        },
+        grounded: false,
+        collisionCount: 0,
+        groundCollisionNormal: null,
+        collidedAxes: {
+          x: false,
+          y: false,
+          z: false
+        }
+      }),
+      {
+        probePlayerGround,
+        canOccupyPlayerShape: () => true
+      }
+    );
+    const controller = new FirstPersonNavigationController();
+
+    controller.activate(context);
+    window.dispatchEvent(
+      new KeyboardEvent("keydown", { code: "ControlLeft" })
+    );
+    window.dispatchEvent(new KeyboardEvent("keydown", { code: "KeyW" }));
+    controller.update(1 / 60);
+
+    const crouchedGroundedTelemetry =
+      context.setPlayerControllerTelemetry.mock.calls.at(-1)?.[0];
+
+    window.dispatchEvent(new KeyboardEvent("keydown", { code: "Space" }));
+    controller.update(1 / 60);
+    controller.update(1 / 60);
+
+    const airborneTelemetry =
+      context.setPlayerControllerTelemetry.mock.calls.at(-1)?.[0];
+
+    expect(crouchedGroundedTelemetry?.locomotionState.crouched).toBe(true);
+    expect(crouchedGroundedTelemetry?.locomotionState.requestedPlanarSpeed).toBe(
+      lessThanBaseMoveSpeedMatcher()
+    );
+
+    expect(airborneTelemetry?.locomotionState.locomotionMode).toBe("airborne");
+    expect(airborneTelemetry?.locomotionState.requestedPlanarSpeed).toBeCloseTo(
+      4.5
+    );
+    expect(airborneTelemetry?.locomotionState.planarSpeed).toBeCloseTo(4.5);
+
+    window.dispatchEvent(new KeyboardEvent("keyup", { code: "Space" }));
+    window.dispatchEvent(new KeyboardEvent("keyup", { code: "KeyW" }));
+    window.dispatchEvent(
+      new KeyboardEvent("keyup", { code: "ControlLeft" })
     );
     controller.deactivate(context, {
       releasePointerLock: false

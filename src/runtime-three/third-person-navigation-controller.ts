@@ -244,6 +244,7 @@ export class ThirdPersonNavigationController implements NavigationController {
         movementYawRadians: this.cameraYawRadians,
         standingShape: this.standingPlayerShape,
         verticalVelocity: this.verticalVelocity,
+        previousLocomotionState: this.locomotionState,
         crouched: this.locomotionState.crouched,
         wasJumpPressed: this.jumpPressed,
         input: inputState,
