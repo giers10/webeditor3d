@@ -55,25 +55,49 @@ describe("scene document JSON", () => {
     const brush = createBoxBrush({
       id: "brush-box-room",
       name: "Entry Room",
-      const playerStart = createPlayerStartEntity({
-        id: "entity-player-start-legacy-look"
-      });
+      center: {
+        x: 0,
+        y: 1,
+        z: 0
+      },
+      size: {
+        x: 4,
+        y: 2,
+        z: 6
+      }
+    });
+
+    const document = {
+      ...createEmptySceneDocument({ name: "Brush Scene" }),
+      brushes: {
+        [brush.id]: brush
+      }
+    };
+
+    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(document);
+  });
+
+  it("round-trips floating-point whitebox box transforms without accidental snapping", () => {
+    const brush = createBoxBrush({
+      id: "brush-float-transform",
+      center: {
+        x: 1.25,
+        y: 1.5,
+        z: -0.875
+      },
+      rotationDegrees: {
+        x: 12.5,
+        y: 37.5,
+        z: -8.25
+      },
+      size: {
+        x: 2.5,
         y: 3.25,
         z: 4.75
       }
     });
-          [playerStart.id]: {
-            ...playerStart,
-            inputBindings: {
-              ...playerStart.inputBindings,
-              gamepad: {
-                moveForward: playerStart.inputBindings.gamepad.moveForward,
-                moveBackward: playerStart.inputBindings.gamepad.moveBackward,
-                moveLeft: playerStart.inputBindings.gamepad.moveLeft,
-                moveRight: playerStart.inputBindings.gamepad.moveRight
-              }
-            }
-          }
+
+    const document = {
       ...createEmptySceneDocument({ name: "Float Transform Scene" }),
       brushes: {
         [brush.id]: brush
@@ -685,58 +709,37 @@ describe("scene document JSON", () => {
   });
 
   it("migrates version 26 Player Start input bindings to include default gamepad camera look", () => {
-    const playerStart = {
+    const playerStart = createPlayerStartEntity({
       id: "entity-player-start-legacy-camera-look",
-      kind: "playerStart" as const,
       position: {
         x: 2,
         y: 0,
         z: 0
-      },
-      yawDegrees: 0,
-      navigationMode: "firstPerson" as const,
-      inputBindings: {
-        keyboard: {
-          moveForward: "KeyW",
-          moveBackward: "KeyS",
-          moveLeft: "KeyA",
-          moveRight: "KeyD"
-        },
-        gamepad: {
-          moveForward: "leftStickUp",
-          moveBackward: "leftStickDown",
-          moveLeft: "leftStickLeft",
-          moveRight: "leftStickRight"
-        }
-      },
-      collider: {
-        mode: "capsule" as const,
-        eyeHeight: 1.6,
-        capsuleRadius: 0.3,
-        capsuleHeight: 1.8,
-        boxSize: {
-          x: 0.6,
-          y: 1.8,
-          z: 0.6
-        }
       }
-    };
+    });
     const legacyDocument = {
       ...createEmptySceneDocument({ name: "Legacy Player Camera Look Scene" }),
       version: PLAYER_START_INPUT_BINDINGS_SCENE_DOCUMENT_VERSION,
       entities: {
-        [playerStart.id]: playerStart
+        [playerStart.id]: {
+          ...playerStart,
+          inputBindings: {
+            ...playerStart.inputBindings,
+            gamepad: {
+              moveForward: playerStart.inputBindings.gamepad.moveForward,
+              moveBackward: playerStart.inputBindings.gamepad.moveBackward,
+              moveLeft: playerStart.inputBindings.gamepad.moveLeft,
+              moveRight: playerStart.inputBindings.gamepad.moveRight
+            }
+          }
+        }
       }
     };
 
     const migratedDocument = migrateSceneDocument(legacyDocument);
 
     expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
-    expect(migratedDocument.entities[playerStart.id]).toEqual(
-      createPlayerStartEntity({
-        ...playerStart
-      })
-    );
+    expect(migratedDocument.entities[playerStart.id]).toEqual(playerStart);
   });
 
   it("round-trips authored third-person Player Start navigation", () => {
