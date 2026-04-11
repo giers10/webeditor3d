@@ -348,6 +348,11 @@ describe("RuntimeInteractionSystem", () => {
         },
         {
           x: 0,
+          y: 1.6,
+          z: 0
+        },
+        {
+          x: 0,
           y: 0,
           z: 1
         },
@@ -368,6 +373,11 @@ describe("RuntimeInteractionSystem", () => {
           z: 0
         },
         {
+          x: 0,
+          y: 1.6,
+          z: 0
+        },
+        {
           x: 1,
           y: 0,
           z: 0
@@ -375,6 +385,46 @@ describe("RuntimeInteractionSystem", () => {
         runtimeScene
       )
     ).toBeNull();
+  });
+
+  it("uses the player eye for interaction range while aiming with a third-person camera ray", () => {
+    const runtimeScene = createRuntimeSceneFixture();
+    runtimeScene.interactionLinks = [
+      createTeleportPlayerInteractionLink({
+        id: "link-click-teleport",
+        sourceEntityId: "entity-interactable-console",
+        trigger: "click",
+        targetEntityId: "entity-teleport-main"
+      })
+    ];
+
+    const interactionSystem = new RuntimeInteractionSystem();
+
+    expect(
+      interactionSystem.resolveClickInteractionPrompt(
+        {
+          x: 0,
+          y: 1.6,
+          z: 0
+        },
+        {
+          x: 0,
+          y: 1.6,
+          z: -2
+        },
+        {
+          x: 0,
+          y: 0,
+          z: 1
+        },
+        runtimeScene
+      )
+    ).toEqual({
+      sourceEntityId: "entity-interactable-console",
+      prompt: "Use Console",
+      distance: expect.any(Number),
+      range: 2
+    });
   });
 
   it("dispatches click actions for the targeted Interactable", () => {
@@ -478,6 +528,11 @@ describe("RuntimeInteractionSystem", () => {
 
     expect(
       interactionSystem.resolveClickInteractionPrompt(
+        {
+          x: 0,
+          y: 1.6,
+          z: 0
+        },
         {
           x: 0,
           y: 1.6,

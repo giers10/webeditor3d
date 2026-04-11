@@ -225,9 +225,7 @@ export function RunnerCanvas({
       {runnerReady && navigationMode === "firstPerson" ? (
         <div className="runner-canvas__crosshair" aria-hidden="true" />
       ) : null}
-      {runnerReady &&
-      navigationMode === "firstPerson" &&
-      interactionPrompt !== null ? (
+      {runnerReady && interactionPrompt !== null ? (
         <div
           className="runner-canvas__prompt"
           data-testid="runner-interaction-prompt"

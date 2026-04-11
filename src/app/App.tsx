@@ -6910,21 +6910,15 @@ export function App({ store, initialStatusMessage }: AppProps) {
               <div className="stat-card">
                 <div className="label">Interaction</div>
                 <div className="value" data-testid="runner-interaction-state">
-                  {activeNavigationMode === "firstPerson"
-                    ? runtimeInteractionPrompt === null
-                      ? "No target"
-                      : "Ready"
-                    : "Not available"}
+                  {runtimeInteractionPrompt === null ? "No target" : "Ready"}
                 </div>
                 <div
                   className="material-summary"
                   data-testid="runner-interaction-summary"
                 >
-                  {activeNavigationMode === "firstPerson"
-                    ? runtimeInteractionPrompt === null
-                      ? "Aim at an authored Interactable or Scene Exit and click when a prompt appears."
-                      : `Click "${runtimeInteractionPrompt.prompt}" within ${runtimeInteractionPrompt.range.toFixed(1)}m.`
-                    : "Switch to First Person to use click interactions."}
+                  {runtimeInteractionPrompt === null
+                    ? "Aim at an authored Interactable or Scene Exit and click when a prompt appears."
+                    : `Click "${runtimeInteractionPrompt.prompt}" within ${runtimeInteractionPrompt.range.toFixed(1)}m.`}
                 </div>
               </div>
 
@@ -6937,7 +6931,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   {runtimeGlobalState.lastSceneTransition.toSceneName}
                 </div>
               )}
-              {activeNavigationMode === "firstPerson" ? (
+              {
                 <div
                   className="info-banner"
                   data-testid="runner-interaction-help"
@@ -6945,7 +6939,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   Mouse click activates the current prompt target.
                   Keyboard/controller fallback is not active yet.
                 </div>
-              ) : null}
+              }
             </Panel>
           </aside>
         </div>

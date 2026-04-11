@@ -329,7 +329,7 @@ describe("RunnerCanvas", () => {
     ).toHaveBeenCalledTimes(2);
   });
 
-  it("keeps first-person HUD affordances hidden in third-person mode", async () => {
+  it("keeps the crosshair hidden in third-person mode while still showing interaction prompts", async () => {
     const runtimeScene = buildRuntimeSceneFromDocument(
       createEmptySceneDocument()
     );
@@ -362,17 +362,33 @@ describe("RunnerCanvas", () => {
       ?.setSceneLoadStateHandler.mock.calls[0]?.[0] as
       | ((state: RuntimeSceneLoadState) => void)
       | undefined;
+    const publishInteractionPrompt = runtimeHostInstances[0]
+      ?.setInteractionPromptHandler.mock.calls[0]?.[0] as
+      | ((prompt: {
+          sourceEntityId: string;
+          prompt: string;
+          distance: number;
+          range: number;
+        } | null) => void)
+      | undefined;
 
     act(() => {
       publishSceneLoadState?.({
         status: "ready",
         message: null
       });
+      publishInteractionPrompt?.({
+        sourceEntityId: "entity-interactable-console",
+        prompt: "Use Console",
+        distance: 1.2,
+        range: 2
+      });
     });
 
     expect(document.querySelector(".runner-canvas__crosshair")).toBeNull();
-    expect(
-      screen.queryByTestId("runner-interaction-prompt")
-    ).toBeNull();
+    expect(screen.getByTestId("runner-interaction-prompt")).toBeVisible();
+    expect(screen.getByTestId("runner-interaction-prompt-text")).toHaveTextContent(
+      "Use Console"
+    );
   });
 });

@@ -1571,22 +1571,7 @@ export class RuntimeHost {
         this.createInteractionDispatcher()
       );
 
-      if (this.activeController === this.firstPersonController) {
-        this.camera.getWorldDirection(this.cameraForward);
-        this.setInteractionPrompt(
-          this.interactionSystem.resolveClickInteractionPrompt(
-            this.currentFirstPersonTelemetry.eyePosition,
-            {
-              x: this.cameraForward.x,
-              y: this.cameraForward.y,
-              z: this.cameraForward.z
-            },
-            this.runtimeScene
-          )
-        );
-      } else {
-        this.setInteractionPrompt(null);
-      }
+      this.setInteractionPrompt(this.resolveInteractionPrompt());
     } else {
       this.setInteractionPrompt(null);
     }
@@ -1714,11 +1699,46 @@ export class RuntimeHost {
     this.interactionPromptHandler?.(prompt);
   }
 
+  private resolveInteractionPrompt(): RuntimeInteractionPrompt | null {
+    if (
+      this.runtimeScene === null ||
+      this.currentFirstPersonTelemetry === null ||
+      (this.activeController !== this.firstPersonController &&
+        this.activeController !== this.thirdPersonController)
+    ) {
+      return null;
+    }
+
+    this.camera.getWorldDirection(this.cameraForward);
+
+    const interactionOrigin = this.currentFirstPersonTelemetry.eyePosition;
+    const rayOrigin =
+      this.activeController === this.thirdPersonController
+        ? {
+            x: this.camera.position.x,
+            y: this.camera.position.y,
+            z: this.camera.position.z
+          }
+        : interactionOrigin;
+
+    return this.interactionSystem.resolveClickInteractionPrompt(
+      interactionOrigin,
+      rayOrigin,
+      {
+        x: this.cameraForward.x,
+        y: this.cameraForward.y,
+        z: this.cameraForward.z
+      },
+      this.runtimeScene
+    );
+  }
+
   private handleRuntimeClick = () => {
     if (
       !this.sceneReady ||
       this.runtimeScene === null ||
-      this.activeController !== this.firstPersonController ||
+      (this.activeController !== this.firstPersonController &&
+        this.activeController !== this.thirdPersonController) ||
       this.currentInteractionPrompt === null
     ) {
       return;

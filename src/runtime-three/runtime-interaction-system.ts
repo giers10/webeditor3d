@@ -178,8 +178,13 @@ export class RuntimeInteractionSystem {
     }
   }
 
-  resolveClickInteractionPrompt(viewOrigin: Vec3, viewDirection: Vec3, runtimeScene: RuntimeSceneDefinition): RuntimeInteractionPrompt | null {
-    const normalizedViewDirection = normalizeVec3(viewDirection);
+  resolveClickInteractionPrompt(
+    interactionOrigin: Vec3,
+    rayOrigin: Vec3,
+    rayDirection: Vec3,
+    runtimeScene: RuntimeSceneDefinition
+  ): RuntimeInteractionPrompt | null {
+    const normalizedViewDirection = normalizeVec3(rayDirection);
 
     if (normalizedViewDirection === null) {
       return null;
@@ -193,14 +198,17 @@ export class RuntimeInteractionSystem {
         continue;
       }
 
-      const distance = distanceBetweenVec3(viewOrigin, interactable.position);
+      const distance = distanceBetweenVec3(
+        interactionOrigin,
+        interactable.position
+      );
 
       if (distance > interactable.radius) {
         continue;
       }
 
       const hitDistance = raySphereHitDistance(
-        viewOrigin,
+        rayOrigin,
         normalizedViewDirection,
         interactable.position,
         getInteractableTargetRadius(interactable)
@@ -227,14 +235,14 @@ export class RuntimeInteractionSystem {
         continue;
       }
 
-      const distance = distanceBetweenVec3(viewOrigin, sceneExit.position);
+      const distance = distanceBetweenVec3(interactionOrigin, sceneExit.position);
 
       if (distance > sceneExit.radius) {
         continue;
       }
 
       const hitDistance = raySphereHitDistance(
-        viewOrigin,
+        rayOrigin,
         normalizedViewDirection,
         sceneExit.position,
         Math.min(DEFAULT_INTERACTABLE_TARGET_RADIUS, sceneExit.radius)
