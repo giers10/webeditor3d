@@ -247,14 +247,14 @@ export class ThirdPersonNavigationController implements NavigationController {
             inFog: false
           },
         probeGround: (feetPosition, shape, maxDistance) =>
-          this.context?.probePlayerGround(feetPosition, shape, maxDistance) ?? {
+          this.context?.probePlayerGround?.(feetPosition, shape, maxDistance) ?? {
             grounded: false,
             distance: null,
             normal: null,
             slopeDegrees: null
           },
         canOccupyShape: (feetPosition, shape) =>
-          this.context?.canOccupyPlayerShape(feetPosition, shape) ?? true
+          this.context?.canOccupyPlayerShape?.(feetPosition, shape) ?? true
       }
     );
 
