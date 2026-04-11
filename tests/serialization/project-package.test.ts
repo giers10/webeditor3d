@@ -113,11 +113,11 @@ describe("project package serialization", () => {
       ),
       activeSceneId: "scene-dungeon",
       scenes: {
-        scene-main: createEmptyProjectScene({
+        "scene-main": createEmptyProjectScene({
           id: "scene-main",
           name: "Portable Entry"
         }),
-        scene-dungeon: createEmptyProjectScene({
+        "scene-dungeon": createEmptyProjectScene({
           id: "scene-dungeon",
           name: "Portable Dungeon"
         })
