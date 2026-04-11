@@ -3,7 +3,6 @@ import { Vector3 } from "three";
 import type { Vec3 } from "../core/vector";
 
 import {
-  createPlayerControllerTelemetry,
   FIRST_PERSON_PLAYER_SHAPE,
   cloneFirstPersonPlayerShape,
   getFirstPersonPlayerEyeHeight
@@ -16,7 +15,7 @@ import {
   createIdleRuntimeLocomotionState,
   stepPlayerLocomotion
 } from "./player-locomotion";
-import { createEmptyRuntimeMovementTransitionSignals } from "./player-controller-telemetry";
+import { createPlayerControllerTelemetry } from "./player-controller-telemetry";
 import type { PlayerControllerTelemetry } from "./navigation-controller";
 import type {
   NavigationController,
@@ -173,8 +172,11 @@ export class ThirdPersonNavigationController implements NavigationController {
     this.pressedKeys.clear();
     this.dragging = false;
     this.jumpPressed = false;
+    this.latestJumpStarted = false;
+    this.latestHeadBump = false;
+    this.previousTelemetry = null;
     ctx.setRuntimeMessage(null);
-    ctx.setFirstPersonTelemetry(null);
+    ctx.setPlayerControllerTelemetry(null);
     this.context = null;
   }
 
@@ -205,6 +207,9 @@ export class ThirdPersonNavigationController implements NavigationController {
     this.lastPointerClientX = 0;
     this.lastPointerClientY = 0;
     this.initializedFromSpawn = false;
+    this.previousTelemetry = null;
+    this.latestJumpStarted = false;
+    this.latestHeadBump = false;
   }
 
   update(dt: number): void {
@@ -273,6 +278,8 @@ export class ThirdPersonNavigationController implements NavigationController {
     this.activePlayerShape = locomotionStep.activeShape;
     this.verticalVelocity = locomotionStep.verticalVelocity;
     this.jumpPressed = locomotionStep.jumpPressed;
+    this.latestJumpStarted = locomotionStep.jumpStarted;
+    this.latestHeadBump = locomotionStep.headBump;
     this.locomotionState = locomotionStep.locomotionState;
     this.grounded = locomotionStep.locomotionState.grounded;
     this.inWaterVolume = locomotionStep.inWaterVolume;
@@ -313,6 +320,9 @@ export class ThirdPersonNavigationController implements NavigationController {
     this.locomotionState = createIdleRuntimeLocomotionState(
       this.activePlayerShape.mode === "none" ? "flying" : "airborne"
     );
+    this.previousTelemetry = null;
+    this.latestJumpStarted = false;
+    this.latestHeadBump = false;
     this.inWaterVolume = false;
     this.inFogVolume = false;
     this.updateCameraTransform();
@@ -368,7 +378,7 @@ export class ThirdPersonNavigationController implements NavigationController {
       z: this.context.camera.position.z
     });
 
-    this.context.setFirstPersonTelemetry({
+    const telemetry = createPlayerControllerTelemetry({
       feetPosition: {
         ...this.feetPosition
       },
@@ -382,8 +392,17 @@ export class ThirdPersonNavigationController implements NavigationController {
       cameraSubmerged: cameraVolumeState.inWater,
       inFogVolume: this.inFogVolume,
       pointerLocked: false,
-      spawn: this.context.getRuntimeScene().spawn
+      spawn: this.context.getRuntimeScene().spawn,
+      previousLocomotionState: this.previousTelemetry?.locomotionState ?? null,
+      previousInWaterVolume: this.previousTelemetry?.inWaterVolume ?? false,
+      jumpStarted: this.latestJumpStarted,
+      headBump: this.latestHeadBump
     });
+
+    this.context.setPlayerControllerTelemetry(telemetry);
+    this.previousTelemetry = telemetry;
+    this.latestJumpStarted = false;
+    this.latestHeadBump = false;
   }
 
   private handleKeyDown = (event: KeyboardEvent) => {
