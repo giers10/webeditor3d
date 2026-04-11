@@ -142,8 +142,10 @@ export function RunnerCanvas({
     onInteractionPromptChange(null);
     onFirstPersonTelemetryChange(null);
     onRuntimeMessageChange(null);
+    hostRef.current?.setNavigationMode(navigationMode);
     hostRef.current?.loadScene(runtimeScene);
   }, [
+    navigationMode,
     onFirstPersonTelemetryChange,
     onInteractionPromptChange,
     onRuntimeMessageChange,
