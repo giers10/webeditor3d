@@ -29,7 +29,6 @@ import {
 import {
   createSceneDocumentFromProject,
   type ProjectDocument,
-  type ProjectScene,
   type SceneDocument
 } from "./scene-document";
 import {
@@ -1696,11 +1695,8 @@ export function validateProjectDocument(
     }
 
     const sceneDocument = createSceneDocumentFromProject(
-      {
-        ...document,
-        activeSceneId: scene.id
-      },
-      scene.id
+      document,
+      sceneKey
     );
 
     for (const diagnostic of filterProjectSceneDiagnostics(
