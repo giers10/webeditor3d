@@ -18,12 +18,11 @@ import type { RuntimePlayerMovement } from "./runtime-scene-build";
 
 const ACTION_ACTIVE_THRESHOLD = 0.5;
 const GRAVITY = 22;
-const JUMP_SPEED = 7.2;
-const SPRINT_SPEED_MULTIPLIER = 1.65;
-const CROUCH_SPEED_MULTIPLIER = 0.45;
 const GROUND_PROBE_DISTANCE = 0.12;
 const VERTICAL_ASCENT_EPSILON = 1e-4;
 const IDLE_SPEED_EPSILON = 0.05;
+const VARIABLE_JUMP_HOLD_GRAVITY_FACTOR = 0.45;
+const VARIABLE_JUMP_RELEASE_VELOCITY_FACTOR = 0.45;
 
 function clampUnitInterval(value: number): number {
   return Math.max(0, Math.min(1, value));
@@ -69,6 +68,9 @@ export interface StepPlayerLocomotionOptions {
   standingShape: FirstPersonPlayerShape;
   verticalVelocity: number;
   previousLocomotionState?: RuntimeLocomotionState;
+  jumpBufferRemainingMs: number;
+  coyoteTimeRemainingMs: number;
+  jumpHoldRemainingMs: number;
   crouched: boolean;
   wasJumpPressed: boolean;
   input: PlayerStartActionInputState;
@@ -94,6 +96,9 @@ export interface StepPlayerLocomotionResult {
   feetPosition: Vec3;
   activeShape: FirstPersonPlayerShape;
   verticalVelocity: number;
+  jumpBufferRemainingMs: number;
+  coyoteTimeRemainingMs: number;
+  jumpHoldRemainingMs: number;
   crouched: boolean;
   jumpPressed: boolean;
   jumpStarted: boolean;
@@ -263,12 +268,27 @@ export function stepPlayerLocomotion(
   options: StepPlayerLocomotionOptions
 ): StepPlayerLocomotionResult | null {
   const currentVolumeState = options.resolveVolumeState(options.feetPosition);
+  const dtMs = Math.max(0, options.dt * 1000);
   const jumpPressed = options.input.jump > ACTION_ACTIVE_THRESHOLD;
   const sprintPressed = options.input.sprint > ACTION_ACTIVE_THRESHOLD;
   const crouchPressed = options.input.crouch > ACTION_ACTIVE_THRESHOLD;
+  const jumpJustPressed = jumpPressed && !options.wasJumpPressed;
   const canCrouch =
     options.movement.capabilities.crouch &&
     options.standingShape.mode !== "none";
+  let jumpBufferRemainingMs = Math.max(
+    0,
+    options.jumpBufferRemainingMs - dtMs
+  );
+  let coyoteTimeRemainingMs = Math.max(
+    0,
+    options.coyoteTimeRemainingMs - dtMs
+  );
+  let jumpHoldRemainingMs = Math.max(0, options.jumpHoldRemainingMs - dtMs);
+
+  if (options.movement.capabilities.jump && jumpJustPressed) {
+    jumpBufferRemainingMs = options.movement.jump.bufferMs;
+  }
 
   let crouched = options.crouched && canCrouch;
 
@@ -301,6 +321,11 @@ export function stepPlayerLocomotion(
     options.verticalVelocity > VERTICAL_ASCENT_EPSILON;
   const currentlyGrounded =
     currentGroundProbe.grounded && !ascendingFromPreviousFrame;
+
+  if (currentlyGrounded) {
+    coyoteTimeRemainingMs = options.movement.jump.coyoteTimeMs;
+  }
+
   const sprinting =
     options.movement.capabilities.sprint &&
     sprintPressed &&
@@ -310,9 +335,9 @@ export function stepPlayerLocomotion(
   const groundedRequestedPlanarSpeed =
     options.movement.moveSpeed *
     (crouched
-      ? CROUCH_SPEED_MULTIPLIER
+      ? options.movement.crouch.speedMultiplier
       : sprinting
-        ? SPRINT_SPEED_MULTIPLIER
+        ? options.movement.sprint.speedMultiplier
         : 1);
   const airborneRequestedPlanarSpeed = Math.max(
     options.movement.moveSpeed,
@@ -332,11 +357,16 @@ export function stepPlayerLocomotion(
   );
   const jumpTriggered =
     options.movement.capabilities.jump &&
-    jumpPressed &&
-    !options.wasJumpPressed &&
-    currentlyGrounded &&
+    (jumpJustPressed || jumpBufferRemainingMs > 0) &&
+    (currentlyGrounded || coyoteTimeRemainingMs > 0) &&
     !currentVolumeState.inWater &&
     activeShape.mode !== "none";
+
+  if (jumpTriggered) {
+    jumpBufferRemainingMs = 0;
+    coyoteTimeRemainingMs = 0;
+  }
+
   const groundedPlanarMotion =
     currentlyGrounded && !jumpTriggered
       ? alignPlanarMotionToGround(
@@ -350,14 +380,38 @@ export function stepPlayerLocomotion(
 
   if (activeShape.mode === "none" || currentVolumeState.inWater) {
     verticalVelocity = 0;
+    jumpHoldRemainingMs = 0;
   } else if (jumpTriggered) {
-    verticalVelocity = JUMP_SPEED;
+    verticalVelocity = options.movement.jump.speed;
     verticalDisplacement = verticalVelocity * options.dt;
+    jumpHoldRemainingMs = options.movement.jump.variableHeight
+      ? options.movement.jump.maxHoldMs
+      : 0;
   } else if (currentlyGrounded) {
     verticalVelocity = 0;
     verticalDisplacement = 0;
+    jumpHoldRemainingMs = 0;
   } else {
-    verticalVelocity -= GRAVITY * options.dt;
+    if (
+      options.movement.jump.variableHeight &&
+      !jumpPressed &&
+      jumpHoldRemainingMs > 0 &&
+      verticalVelocity > VERTICAL_ASCENT_EPSILON
+    ) {
+      verticalVelocity *= VARIABLE_JUMP_RELEASE_VELOCITY_FACTOR;
+      jumpHoldRemainingMs = 0;
+    }
+
+    const variableJumpActive =
+      options.movement.jump.variableHeight &&
+      jumpPressed &&
+      jumpHoldRemainingMs > 0 &&
+      verticalVelocity > VERTICAL_ASCENT_EPSILON;
+    const gravityScale = variableJumpActive
+      ? VARIABLE_JUMP_HOLD_GRAVITY_FACTOR
+      : 1;
+
+    verticalVelocity -= GRAVITY * gravityScale * options.dt;
     verticalDisplacement = verticalVelocity * options.dt;
   }
 
@@ -401,6 +455,7 @@ export function stepPlayerLocomotion(
     headBump
   ) {
     verticalVelocity = 0;
+    jumpHoldRemainingMs = 0;
   }
 
   const locomotionMode = resolveLocomotionMode(
@@ -420,6 +475,9 @@ export function stepPlayerLocomotion(
     feetPosition: resolvedMotion.feetPosition,
     activeShape,
     verticalVelocity,
+    jumpBufferRemainingMs,
+    coyoteTimeRemainingMs,
+    jumpHoldRemainingMs,
     crouched,
     jumpPressed,
     jumpStarted: jumpTriggered,
