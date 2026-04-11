@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 import { clickViewport, setViewportCreationPreview } from "./viewport-test-helpers";
 
-test("user can place PlayerStart, enter run mode, and spawn from it", async ({ page }) => {
+test("user can place PlayerStart, author third-person navigation, and spawn from it", async ({ page }) => {
   const pageErrors: string[] = [];
   const consoleErrors: string[] = [];
 
@@ -33,15 +33,14 @@ test("user can place PlayerStart, enter run mode, and spawn from it", async ({ p
   await page.getByTestId("player-start-position-z").press("Tab");
   await page.getByTestId("player-start-yaw").fill("90");
   await page.getByTestId("player-start-yaw").press("Tab");
+  await page.getByTestId("player-start-navigation-mode").selectOption("thirdPerson");
 
   await page.getByTestId("enter-run-mode").click();
 
   await expect(page.getByTestId("runner-shell")).toBeVisible();
   await expect(page.getByTestId("runner-spawn-state")).toContainText("Player Start");
   await expect(page.getByTestId("runner-player-position")).toContainText("4.00, 0.00, -2.00");
-
-  await page.getByTestId("runner-mode-orbit-visitor").click();
-  await expect(page.getByTestId("runner-mode-orbit-visitor")).toHaveClass(/toolbar__button--active/);
+  await expect(page.getByText("Third Person")).toBeVisible();
 
   await page.getByTestId("exit-run-mode").click();
   await expect(page.getByTestId("viewport-shell")).toBeVisible();
