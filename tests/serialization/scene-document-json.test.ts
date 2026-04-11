@@ -10,6 +10,7 @@ import {
   LOCAL_LIGHTS_AND_SKYBOX_SCENE_DOCUMENT_VERSION,
   MODEL_ASSET_PIPELINE_SCENE_DOCUMENT_VERSION,
   PLAYER_START_COLLIDER_SETTINGS_SCENE_DOCUMENT_VERSION,
+  SCENE_TRANSITION_ENTITIES_SCENE_DOCUMENT_VERSION,
   SCENE_DOCUMENT_VERSION,
   SPATIAL_AUDIO_SCENE_DOCUMENT_VERSION,
   TRIGGER_ACTION_TARGET_FOUNDATION_SCENE_DOCUMENT_VERSION,
@@ -606,6 +607,47 @@ describe("scene document JSON", () => {
     expect(migratedDocument.entities[playerStart.id]).toEqual(
       createPlayerStartEntity({
         ...playerStart
+      })
+    );
+  });
+
+  it("migrates version 24 Player Start entities to default to first-person navigation", () => {
+    const playerStart = {
+      id: "entity-player-start-legacy-navigation",
+      kind: "playerStart" as const,
+      position: {
+        x: 0,
+        y: 0,
+        z: 1
+      },
+      yawDegrees: 180,
+      collider: {
+        mode: "capsule" as const,
+        eyeHeight: 1.6,
+        capsuleRadius: 0.3,
+        capsuleHeight: 1.8,
+        boxSize: {
+          x: 0.6,
+          y: 1.8,
+          z: 0.6
+        }
+      }
+    };
+    const legacyDocument = {
+      ...createEmptySceneDocument({ name: "Legacy Player Navigation Scene" }),
+      version: SCENE_TRANSITION_ENTITIES_SCENE_DOCUMENT_VERSION,
+      entities: {
+        [playerStart.id]: playerStart
+      }
+    };
+
+    const migratedDocument = migrateSceneDocument(legacyDocument);
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.entities[playerStart.id]).toEqual(
+      createPlayerStartEntity({
+        ...playerStart,
+        navigationMode: "firstPerson"
       })
     );
   });
