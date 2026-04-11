@@ -1162,7 +1162,7 @@ export class RuntimeHost {
       this.activeController === this.firstPersonController
         ? resolveUnderwaterFogState(
             this.runtimeScene,
-            this.currentFirstPersonTelemetry
+            this.currentPlayerControllerTelemetry
           )
         : null;
 
@@ -1599,10 +1599,10 @@ export class RuntimeHost {
     if (
       this.sceneReady &&
       this.runtimeScene !== null &&
-      this.currentFirstPersonTelemetry !== null
+      this.currentPlayerControllerTelemetry !== null
     ) {
       this.interactionSystem.updatePlayerPosition(
-        this.currentFirstPersonTelemetry.feetPosition,
+        this.currentPlayerControllerTelemetry.feetPosition,
         this.runtimeScene,
         this.createInteractionDispatcher()
       );
@@ -1738,7 +1738,7 @@ export class RuntimeHost {
   private resolveInteractionPrompt(): RuntimeInteractionPrompt | null {
     if (
       this.runtimeScene === null ||
-      this.currentFirstPersonTelemetry === null ||
+      this.currentPlayerControllerTelemetry === null ||
       (this.activeController !== this.firstPersonController &&
         this.activeController !== this.thirdPersonController)
     ) {
@@ -1747,7 +1747,7 @@ export class RuntimeHost {
 
     this.camera.getWorldDirection(this.cameraForward);
 
-    const interactionOrigin = this.currentFirstPersonTelemetry.eyePosition;
+    const interactionOrigin = this.currentPlayerControllerTelemetry.eyePosition;
     const rayOrigin =
       this.activeController === this.thirdPersonController
         ? {
