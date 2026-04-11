@@ -59,6 +59,7 @@ import {
 import {
   BOX_BRUSH_SCENE_DOCUMENT_VERSION,
   ANIMATION_PLAYBACK_SCENE_DOCUMENT_VERSION,
+  DEFAULT_PROJECT_SCENE_ID,
   ENTITY_NAMES_SCENE_DOCUMENT_VERSION,
   ENTITY_SYSTEM_FOUNDATION_SCENE_DOCUMENT_VERSION,
   FACE_MATERIALS_SCENE_DOCUMENT_VERSION,
@@ -66,6 +67,7 @@ import {
   FOUNDATION_SCENE_DOCUMENT_VERSION,
   IMPORTED_MODEL_COLLIDERS_SCENE_DOCUMENT_VERSION,
   LOCAL_LIGHTS_AND_SKYBOX_SCENE_DOCUMENT_VERSION,
+  MULTI_SCENE_FOUNDATION_SCENE_DOCUMENT_VERSION,
   MODEL_ASSET_PIPELINE_SCENE_DOCUMENT_VERSION,
   PLAYER_START_COLLIDER_SETTINGS_SCENE_DOCUMENT_VERSION,
   RUNNER_V1_SCENE_DOCUMENT_VERSION,
@@ -77,6 +79,9 @@ import {
   WHITEBOX_FLOAT_TRANSFORM_SCENE_DOCUMENT_VERSION,
   WHITEBOX_GEOMETRY_SCENE_DOCUMENT_VERSION,
   WORLD_ENVIRONMENT_SCENE_DOCUMENT_VERSION,
+  createProjectDocumentFromSceneDocument,
+  type ProjectDocument,
+  type ProjectScene,
   type SceneDocument
 } from "./scene-document";
 import {
@@ -1726,6 +1731,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
   }
 
   if (
+    source.version !== SCENE_DOCUMENT_VERSION &&
     source.version !== WATER_SURFACE_DISPLACEMENT_SCENE_DOCUMENT_VERSION &&
     source.version !== WHITEBOX_BOX_VOLUME_SCENE_DOCUMENT_VERSION &&
     source.version !== WHITEBOX_FLOAT_TRANSFORM_SCENE_DOCUMENT_VERSION &&
@@ -1749,4 +1755,63 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     entities: readEntities(source.entities, { legacySoundEmitter: false }),
     interactionLinks: readInteractionLinks(source.interactionLinks)
   };
+}
+
+function readProjectScene(
+  value: unknown,
+  label: string,
+  materials: Record<string, MaterialDef>,
+  assets: Record<string, ProjectAssetRecord>
+): ProjectScene {
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  return {
+    id: expectString(value.id, `${label}.id`),
+    name: expectString(value.name, `${label}.name`),
+    world: readWorldSettings(value.world),
+    brushes: readBrushes(value.brushes, materials, false),
+    modelInstances: readModelInstances(value.modelInstances, assets),
+    entities: readEntities(value.entities, { legacySoundEmitter: false }),
+    interactionLinks: readInteractionLinks(value.interactionLinks)
+  };
+}
+
+export function migrateProjectDocument(source: unknown): ProjectDocument {
+  if (!isRecord(source)) {
+    throw new Error("Project document must be a JSON object.");
+  }
+
+  if (
+    source.version === MULTI_SCENE_FOUNDATION_SCENE_DOCUMENT_VERSION &&
+    isRecord(source.scenes)
+  ) {
+    const materials = readMaterialRegistry(source.materials, "materials");
+    const assets = readAssets(source.assets);
+    const scenes: Record<string, ProjectScene> = {};
+
+    for (const [sceneKey, sceneValue] of Object.entries(source.scenes)) {
+      scenes[sceneKey] = readProjectScene(
+        sceneValue,
+        `scenes.${sceneKey}`,
+        materials,
+        assets
+      );
+    }
+
+    return {
+      version: SCENE_DOCUMENT_VERSION,
+      activeSceneId: expectString(source.activeSceneId, "activeSceneId"),
+      scenes,
+      materials,
+      textures: expectEmptyCollection(source.textures, "textures"),
+      assets
+    };
+  }
+
+  return createProjectDocumentFromSceneDocument(
+    migrateSceneDocument(source),
+    DEFAULT_PROJECT_SCENE_ID
+  );
 }
