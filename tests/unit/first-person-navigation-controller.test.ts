@@ -6,6 +6,7 @@ import { createEmptySceneDocument } from "../../src/document/scene-document";
 import { createPlayerStartEntity } from "../../src/entities/entity-instances";
 import type {
   FirstPersonPlayerShape,
+  PlayerGroundProbeResult,
   ResolvedPlayerMotion
 } from "../../src/runtime-three/player-collision";
 import { buildRuntimeSceneFromDocument } from "../../src/runtime-three/runtime-scene-build";
@@ -39,7 +40,18 @@ function createRuntimeControllerContext(
   resolveFirstPersonMotion: (
     feetPosition: Vec3,
     motion: Vec3
-  ) => ResolvedPlayerMotion | null = () => null
+  ) => ResolvedPlayerMotion | null = () => null,
+  options: {
+    probePlayerGround?: (
+      feetPosition: Vec3,
+      shape: FirstPersonPlayerShape,
+      maxDistance: number
+    ) => PlayerGroundProbeResult;
+    canOccupyPlayerShape?: (
+      feetPosition: Vec3,
+      shape: FirstPersonPlayerShape
+    ) => boolean;
+  } = {}
 ) {
   const runtimeScene = buildRuntimeSceneFromDocument(
     {
@@ -65,6 +77,21 @@ function createRuntimeControllerContext(
         motion: Vec3,
         _shape: FirstPersonPlayerShape
       ) => resolveFirstPersonMotion(feetPosition, motion),
+      probePlayerGround: (
+        feetPosition: Vec3,
+        shape: FirstPersonPlayerShape,
+        maxDistance: number
+      ) =>
+        options.probePlayerGround?.(feetPosition, shape, maxDistance) ?? {
+          grounded: false,
+          distance: null,
+          normal: null,
+          slopeDegrees: null
+        },
+      canOccupyPlayerShape: (
+        feetPosition: Vec3,
+        shape: FirstPersonPlayerShape
+      ) => options.canOccupyPlayerShape?.(feetPosition, shape) ?? true,
       resolvePlayerVolumeState: () => ({
         inWater: false,
         inFog: false
@@ -260,6 +287,123 @@ describe("FirstPersonNavigationController", () => {
 
     expect(context.camera.rotation.y).not.toBe(initialCameraYaw);
 
+    controller.deactivate(context, {
+      releasePointerLock: false
+    });
+  });
+
+  it("publishes jumping locomotion state when the jump action starts from grounded contact", () => {
+    const { context } = createRuntimeControllerContext(
+      createPlayerStartEntity({
+        id: "entity-player-start-jump"
+      }),
+      (feetPosition, motion) => ({
+        feetPosition: {
+          x: feetPosition.x + motion.x,
+          y: feetPosition.y + motion.y,
+          z: feetPosition.z + motion.z
+        },
+        grounded: false,
+        collisionCount: 0,
+        groundCollisionNormal: null,
+        collidedAxes: {
+          x: false,
+          y: false,
+          z: false
+        }
+      }),
+      {
+        probePlayerGround: vi
+          .fn<
+            (
+              feetPosition: Vec3,
+              shape: FirstPersonPlayerShape,
+              maxDistance: number
+            ) => PlayerGroundProbeResult
+          >()
+          .mockReturnValueOnce({
+            grounded: true,
+            distance: 0,
+            normal: { x: 0, y: 1, z: 0 },
+            slopeDegrees: 0
+          })
+          .mockReturnValue({
+            grounded: false,
+            distance: null,
+            normal: null,
+            slopeDegrees: null
+          })
+      }
+    );
+    const controller = new FirstPersonNavigationController();
+
+    controller.activate(context);
+    window.dispatchEvent(new KeyboardEvent("keydown", { code: "Space" }));
+    controller.update(0.1);
+
+    const telemetry = context.setFirstPersonTelemetry.mock.calls.at(-1)?.[0];
+
+    expect(telemetry?.grounded).toBe(false);
+    expect(telemetry?.locomotionState.locomotionMode).toBe("airborne");
+    expect(telemetry?.locomotionState.airborneKind).toBe("jumping");
+    expect(telemetry?.locomotionState.verticalVelocity).toBeGreaterThan(0);
+    expect(telemetry?.feetPosition.y ?? 0).toBeGreaterThan(0);
+
+    window.dispatchEvent(new KeyboardEvent("keyup", { code: "Space" }));
+    controller.deactivate(context, {
+      releasePointerLock: false
+    });
+  });
+
+  it("lowers the eye height and locomotion gait when crouch is held", () => {
+    const { context } = createRuntimeControllerContext(
+      createPlayerStartEntity({
+        id: "entity-player-start-crouch"
+      }),
+      (feetPosition, motion) => ({
+        feetPosition: {
+          x: feetPosition.x + motion.x,
+          y: feetPosition.y,
+          z: feetPosition.z + motion.z
+        },
+        grounded: true,
+        collisionCount: 1,
+        groundCollisionNormal: { x: 0, y: 1, z: 0 },
+        collidedAxes: {
+          x: false,
+          y: true,
+          z: false
+        }
+      }),
+      {
+        probePlayerGround: () => ({
+          grounded: true,
+          distance: 0,
+          normal: { x: 0, y: 1, z: 0 },
+          slopeDegrees: 0
+        }),
+        canOccupyPlayerShape: () => true
+      }
+    );
+    const controller = new FirstPersonNavigationController();
+
+    controller.activate(context);
+    window.dispatchEvent(
+      new KeyboardEvent("keydown", { code: "ControlLeft" })
+    );
+    controller.update(0.1);
+
+    const telemetry = context.setFirstPersonTelemetry.mock.calls.at(-1)?.[0];
+
+    expect(telemetry?.locomotionState.gait).toBe("crouch");
+    expect(telemetry?.locomotionState.crouched).toBe(true);
+    expect(telemetry?.eyePosition.y ?? Number.POSITIVE_INFINITY).toBeLessThan(
+      1.6
+    );
+
+    window.dispatchEvent(
+      new KeyboardEvent("keyup", { code: "ControlLeft" })
+    );
     controller.deactivate(context, {
       releasePointerLock: false
     });
