@@ -192,8 +192,10 @@ import {
   DEFAULT_SOUND_EMITTER_MAX_DISTANCE,
   DEFAULT_TELEPORT_TARGET_YAW_DEGREES,
   PLAYER_START_COLLIDER_MODES,
+  PLAYER_START_GAMEPAD_ACTION_BINDINGS,
   PLAYER_START_GAMEPAD_CAMERA_LOOK_BINDINGS,
   PLAYER_START_GAMEPAD_BINDINGS,
+  PLAYER_START_LOCOMOTION_ACTIONS,
   PLAYER_START_MOVEMENT_ACTIONS,
   PLAYER_START_NAVIGATION_MODES,
   DEFAULT_SPOT_LIGHT_ANGLE_DEGREES,
@@ -222,11 +224,14 @@ import {
   normalizeEntityName,
   normalizeYawDegrees,
   normalizeInteractablePrompt,
+  type PlayerStartGamepadActionBinding,
   type PlayerStartGamepadCameraLookBinding,
   type PlayerStartColliderMode,
   type PlayerStartGamepadBinding,
+  type PlayerStartInputAction,
   type PlayerStartInputBindings,
   type PlayerStartKeyboardBindingCode,
+  type PlayerStartLocomotionAction,
   type PlayerStartMovementAction,
   type PlayerStartMovementTemplate,
   type PlayerStartNavigationMode,
@@ -254,7 +259,10 @@ import {
   type MaterialDef
 } from "../materials/starter-material-library";
 import { RunnerCanvas } from "../runner-web/RunnerCanvas";
-import type { FirstPersonTelemetry } from "../runtime-three/navigation-controller";
+import type {
+  FirstPersonTelemetry,
+  RuntimeLocomotionState
+} from "../runtime-three/navigation-controller";
 import type { RuntimeInteractionPrompt } from "../runtime-three/runtime-interaction-system";
 import { createDefaultRuntimeGlobalState, type RuntimeGlobalState } from "../runtime-three/runtime-global-state";
 import type { RuntimeSceneExitTransitionRequest } from "../runtime-three/runtime-host";
