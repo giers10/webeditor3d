@@ -1845,7 +1845,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
         setSceneExitTargetEntryIdDraft(selectedEntity.targetEntryEntityId);
         break;
     }
-  }, [sceneEntryOptionsBySceneId, sceneTargetOptions, selectedEntity]);
+  }, [editorState.projectDocument, selectedEntity]);
 
   useEffect(() => {
     if (selectedModelInstance === null) {
