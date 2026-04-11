@@ -76,7 +76,7 @@ import {
   type RuntimeInteractionPrompt
 } from "./runtime-interaction-system";
 import { RuntimeAudioSystem } from "./runtime-audio-system";
-import { OrbitVisitorNavigationController } from "./orbit-visitor-navigation-controller";
+import { ThirdPersonNavigationController } from "./third-person-navigation-controller";
 import { resolveUnderwaterFogState } from "./underwater-fog";
 import type {
   RuntimeBoxBrushInstance,
@@ -138,8 +138,8 @@ export class RuntimeHost {
   private readonly modelGroup = new Group();
   private readonly firstPersonController =
     new FirstPersonNavigationController();
-  private readonly orbitVisitorController =
-    new OrbitVisitorNavigationController();
+  private readonly thirdPersonController =
+    new ThirdPersonNavigationController();
   private readonly interactionSystem = new RuntimeInteractionSystem();
   private readonly audioSystem = new RuntimeAudioSystem(
     this.scene,
@@ -169,7 +169,7 @@ export class RuntimeHost {
   private runtimeScene: RuntimeSceneDefinition | null = null;
   private collisionWorld: RapierCollisionWorld | null = null;
   private collisionWorldRequestId = 0;
-  private desiredNavigationMode: RuntimeNavigationMode = "firstPerson";
+  private desiredNavigationMode: RuntimeNavigationMode = "thirdPerson";
   private sceneReady = false;
   private currentWorld: RuntimeSceneDefinition["world"] | null = null;
   private currentAdvancedRenderingSettings: AdvancedRenderingSettings | null =
