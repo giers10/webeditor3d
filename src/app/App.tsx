@@ -1354,6 +1354,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
     createVec3Draft(DEFAULT_SPOT_LIGHT_DIRECTION)
   );
   const [playerStartYawDraft, setPlayerStartYawDraft] = useState("0");
+  const [playerStartNavigationModeDraft, setPlayerStartNavigationModeDraft] =
+    useState<PlayerStartNavigationMode>(DEFAULT_PLAYER_START_NAVIGATION_MODE);
   const [playerStartColliderModeDraft, setPlayerStartColliderModeDraft] =
     useState<PlayerStartColliderMode>("capsule");
   const [playerStartEyeHeightDraft, setPlayerStartEyeHeightDraft] = useState(
@@ -1534,14 +1536,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
     useState<ViewportPanelId | null>(null);
   const [addMenuPosition, setAddMenuPosition] =
     useState<HierarchicalMenuPosition | null>(null);
-  const [preferredNavigationMode, setPreferredNavigationMode] =
-    useState<RuntimeNavigationMode>(
-      primaryPlayerStart === null ? "orbitVisitor" : "firstPerson"
-    );
   const [activeNavigationMode, setActiveNavigationMode] =
-    useState<RuntimeNavigationMode>(
-      primaryPlayerStart === null ? "orbitVisitor" : "firstPerson"
-    );
+    useState<RuntimeNavigationMode>("thirdPerson");
   const [projectAssetStorage, setProjectAssetStorage] =
     useState<ProjectAssetStorage | null>(null);
   const [projectAssetStorageReady, setProjectAssetStorageReady] =
@@ -1605,8 +1601,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
         diagnostic.code === "missing-scene-exit-target-entry" ||
         diagnostic.code === "scene-exit-target-entry-kind-mismatch")
   );
+  const authoredNavigationMode: RuntimeNavigationMode =
+    primaryPlayerStart?.navigationMode ?? "thirdPerson";
   const runValidation = validateRuntimeSceneBuild(editorState.document, {
-    navigationMode: preferredNavigationMode,
+    navigationMode: authoredNavigationMode,
     loadedModelAssets
   });
   const diagnostics = [
@@ -1630,9 +1628,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const runReadyLabel =
     blockingDiagnostics.length > 0
       ? "Blocked"
-      : preferredNavigationMode === "firstPerson"
+      : authoredNavigationMode === "firstPerson"
         ? "Ready for First Person"
-        : "Ready for Orbit Visitor";
+        : "Ready for Third Person";
   const advancedRendering = editorState.document.world.advancedRendering;
   const hoveredAsset =
     hoveredAssetId === null
