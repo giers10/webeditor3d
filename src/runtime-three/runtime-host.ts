@@ -115,6 +115,10 @@ const FALLBACK_FACE_COLOR = 0xf2ece2;
 const BOX_FACE_MATERIAL_COUNT = 6;
 const WATER_REFLECTION_UPDATE_INTERVAL_MS = 96;
 
+function dampScalar(current: number, target: number, rate: number, dt: number) {
+  return current + (target - current) * Math.min(1, dt * rate);
+}
+
 export interface RuntimeSceneLoadState {
   status: "loading" | "ready" | "error";
   message: string | null;
