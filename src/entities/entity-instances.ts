@@ -898,6 +898,7 @@ export function arePlayerStartMovementTemplatesEqual(
   return (
     left.kind === right.kind &&
     left.moveSpeed === right.moveSpeed &&
+    left.maxSpeed === right.maxSpeed &&
     left.capabilities.jump === right.capabilities.jump &&
     left.capabilities.sprint === right.capabilities.sprint &&
     left.capabilities.crouch === right.capabilities.crouch &&
@@ -906,6 +907,8 @@ export function arePlayerStartMovementTemplatesEqual(
     left.jump.coyoteTimeMs === right.jump.coyoteTimeMs &&
     left.jump.variableHeight === right.jump.variableHeight &&
     left.jump.maxHoldMs === right.jump.maxHoldMs &&
+    left.jump.bunnyHop === right.jump.bunnyHop &&
+    left.jump.bunnyHopBoost === right.jump.bunnyHopBoost &&
     left.sprint.speedMultiplier === right.sprint.speedMultiplier &&
     left.crouch.speedMultiplier === right.crouch.speedMultiplier
   );
