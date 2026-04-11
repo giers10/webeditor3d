@@ -1,6 +1,7 @@
 import { PerspectiveCamera } from "three";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import type { Vec3 } from "../../src/core/vector";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
 import { createPlayerStartEntity } from "../../src/entities/entity-instances";
 import { buildRuntimeSceneFromDocument } from "../../src/runtime-three/runtime-scene-build";
@@ -33,7 +34,10 @@ function createRuntimeControllerContext() {
         inWater: false,
         inFog: false
       }),
-      resolveThirdPersonCameraCollision: (_pivot, desiredCameraPosition) => ({
+      resolveThirdPersonCameraCollision: (
+        _pivot: Vec3,
+        desiredCameraPosition: Vec3
+      ) => ({
         ...desiredCameraPosition
       }),
       setRuntimeMessage: vi.fn(),
