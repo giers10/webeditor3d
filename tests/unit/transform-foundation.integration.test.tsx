@@ -848,6 +848,69 @@ describe("transform foundation integration", () => {
     ).toBeInTheDocument();
   });
 
+  it("toggles repeated axis keys from world to local while translating a selected vertex", async () => {
+    const { store, brush } = await renderTransformFixtureApp();
+
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole("button", { name: /^Brush Transform Fixture$/ })
+      );
+    });
+
+    await act(async () => {
+      fireEvent.keyDown(window, {
+        key: "3",
+        code: "Digit3"
+      });
+    });
+
+    act(() => {
+      store.setSelection({
+        kind: "brushVertex",
+        brushId: brush.id,
+        vertexId: "posX_posY_posZ"
+      });
+    });
+
+    fireEvent.keyDown(window, {
+      key: "g",
+      code: "KeyG"
+    });
+    fireEvent.keyDown(window, {
+      key: "z",
+      code: "KeyZ"
+    });
+
+    expect(
+      store.getState().viewportTransientState.transformSession
+    ).toMatchObject({
+      kind: "active",
+      target: {
+        kind: "brushVertex",
+        brushId: brush.id,
+        vertexId: "posX_posY_posZ"
+      },
+      axisConstraint: "z",
+      axisConstraintSpace: "world"
+    });
+
+    fireEvent.keyDown(window, {
+      key: "z",
+      code: "KeyZ"
+    });
+
+    expect(
+      store.getState().viewportTransientState.transformSession
+    ).toMatchObject({
+      kind: "active",
+      axisConstraint: "z",
+      axisConstraintSpace: "local"
+    });
+    expect(
+      screen.getByText(/constrained move to local z\./i)
+    ).toBeInTheDocument();
+  });
+
   it("does not reapply the persisted viewport camera state across transform commit, cancel, and delete", async () => {
     const { store, brush, viewportHost } = await renderTransformFixtureApp();
     const persistedCameraState: ViewportPanelCameraState = {
