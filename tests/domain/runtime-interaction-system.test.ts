@@ -48,6 +48,7 @@ function createRuntimeSceneFixture(): RuntimeSceneDefinition {
     modelInstances: [],
     entities: {
       playerStarts: [],
+      sceneEntries: [],
       soundEmitters: [
         {
           entityId: "entity-sound-lobby",
@@ -115,7 +116,8 @@ function createRuntimeSceneFixture(): RuntimeSceneDefinition {
           prompt: "Disabled Prompt",
           enabled: false
         }
-      ]
+      ],
+      sceneExits: []
     },
     interactionLinks: [],
     playerStart: null,
@@ -164,6 +166,7 @@ describe("RuntimeInteractionSystem", () => {
         teleportPlayer: (target, link) => {
           dispatches.push(`${link.id}:${target.entityId}:${target.position.x}`);
         },
+        activateSceneExit: () => {},
         toggleBrushVisibility: () => {
           dispatches.push("toggle");
         },
@@ -184,6 +187,7 @@ describe("RuntimeInteractionSystem", () => {
         teleportPlayer: (target, link) => {
           dispatches.push(`${link.id}:${target.entityId}:${target.position.x}`);
         },
+        activateSceneExit: () => {},
         toggleBrushVisibility: () => {
           dispatches.push("toggle");
         },
@@ -222,6 +226,9 @@ describe("RuntimeInteractionSystem", () => {
     interactionSystem.dispatchClickInteraction("entity-interactable-console", runtimeScene, {
         teleportPlayer: () => {
           throw new Error("Teleport should not dispatch in this fixture.");
+        },
+        activateSceneExit: () => {
+          throw new Error("Scene exit should not dispatch in this fixture.");
         },
         toggleBrushVisibility: () => {
           throw new Error("Visibility should not dispatch in this fixture.");
@@ -268,6 +275,9 @@ describe("RuntimeInteractionSystem", () => {
         teleportPlayer: () => {
           throw new Error("Teleport should not dispatch in this fixture.");
         },
+        activateSceneExit: () => {
+          throw new Error("Scene exit should not dispatch in this fixture.");
+        },
         toggleBrushVisibility: (brushId, visible) => {
           dispatches.push({
             brushId,
@@ -290,6 +300,9 @@ describe("RuntimeInteractionSystem", () => {
       {
         teleportPlayer: () => {
           throw new Error("Teleport should not dispatch in this fixture.");
+        },
+        activateSceneExit: () => {
+          throw new Error("Scene exit should not dispatch in this fixture.");
         },
         toggleBrushVisibility: (brushId, visible) => {
           dispatches.push({
@@ -381,6 +394,9 @@ describe("RuntimeInteractionSystem", () => {
       teleportPlayer: (target, link) => {
         dispatches.push(`${link.id}:${target.entityId}:${target.position.x}`);
       },
+      activateSceneExit: () => {
+        throw new Error("Scene exit should not dispatch for this click fixture.");
+      },
       toggleBrushVisibility: () => {
         throw new Error("Visibility should not dispatch for this click fixture.");
       },
@@ -417,6 +433,9 @@ describe("RuntimeInteractionSystem", () => {
       teleportPlayer: () => {
         throw new Error("Teleport should not dispatch in this fixture.");
       },
+      activateSceneExit: () => {
+        throw new Error("Scene exit should not dispatch in this fixture.");
+      },
       toggleBrushVisibility: () => {
         throw new Error("Visibility should not dispatch in this fixture.");
       },
@@ -435,5 +454,91 @@ describe("RuntimeInteractionSystem", () => {
     });
 
     expect(dispatches).toEqual(["link-play-sound:entity-sound-lobby", "link-stop-sound:entity-sound-lobby"]);
+  });
+
+  it("shows a click prompt for enabled Scene Exits within range", () => {
+    const runtimeScene = createRuntimeSceneFixture();
+    runtimeScene.entities.sceneExits.push({
+      entityId: "entity-scene-exit-house-door",
+      position: {
+        x: 0,
+        y: 1,
+        z: 1
+      },
+      radius: 2,
+      prompt: "Enter House",
+      enabled: true,
+      targetSceneId: "scene-house",
+      targetEntryEntityId: "entity-scene-entry-house-front"
+    });
+    runtimeScene.entities.interactables = [];
+
+    const interactionSystem = new RuntimeInteractionSystem();
+
+    expect(
+      interactionSystem.resolveClickInteractionPrompt(
+        {
+          x: 0,
+          y: 1.6,
+          z: 0
+        },
+        {
+          x: 0,
+          y: 0,
+          z: 1
+        },
+        runtimeScene
+      )
+    ).toEqual({
+      sourceEntityId: "entity-scene-exit-house-door",
+      prompt: "Enter House",
+      distance: expect.any(Number),
+      range: 2
+    });
+  });
+
+  it("dispatches scene transition requests for Scene Exit click targets", () => {
+    const runtimeScene = createRuntimeSceneFixture();
+    runtimeScene.entities.sceneExits.push({
+      entityId: "entity-scene-exit-house-door",
+      position: {
+        x: 0,
+        y: 1,
+        z: 1
+      },
+      radius: 2,
+      prompt: "Enter House",
+      enabled: true,
+      targetSceneId: "scene-house",
+      targetEntryEntityId: "entity-scene-entry-house-front"
+    });
+    const dispatches: string[] = [];
+    const interactionSystem = new RuntimeInteractionSystem();
+
+    interactionSystem.dispatchClickInteraction(
+      "entity-scene-exit-house-door",
+      runtimeScene,
+      {
+        teleportPlayer: () => {
+          throw new Error("Teleport should not dispatch for a scene exit.");
+        },
+        activateSceneExit: (sceneExit) => {
+          dispatches.push(
+            `${sceneExit.entityId}:${sceneExit.targetSceneId}:${sceneExit.targetEntryEntityId}`
+          );
+        },
+        toggleBrushVisibility: () => {
+          throw new Error("Visibility should not dispatch for a scene exit.");
+        },
+        playAnimation: () => {},
+        stopAnimation: () => {},
+        playSound: () => {},
+        stopSound: () => {}
+      }
+    );
+
+    expect(dispatches).toEqual([
+      "entity-scene-exit-house-door:scene-house:entity-scene-entry-house-front"
+    ]);
   });
 });
