@@ -1,5 +1,8 @@
 import { createOpaqueId } from "../core/ids";
-import { createEmptyProjectScene } from "../document/scene-document";
+import {
+  createEmptyProjectScene,
+  type ProjectDocument
+} from "../document/scene-document";
 
 import type { EditorCommand } from "./command";
 
@@ -57,9 +60,7 @@ export function createCreateSceneCommand(): EditorCommand {
       }
 
       context.setProjectDocument(
-        JSON.parse(previousProjectDocumentSerialized) as ReturnType<
-          typeof context.getProjectDocument
-        >
+        JSON.parse(previousProjectDocumentSerialized) as ProjectDocument
       );
       context.setSelection({ kind: "none" });
       context.setToolMode("select");
