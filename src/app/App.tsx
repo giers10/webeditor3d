@@ -1104,6 +1104,13 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const sceneList = Object.values(editorState.projectDocument.scenes);
   const activeProjectScene =
     editorState.projectDocument.scenes[editorState.activeSceneId];
+
+  if (activeProjectScene === undefined) {
+    throw new Error(
+      `Active scene ${editorState.activeSceneId} does not exist in the project document.`
+    );
+  }
+
   const brushList = Object.values(editorState.document.brushes);
   const layoutMode = editorState.viewportLayoutMode;
   const activePanelId = editorState.activeViewportPanelId;
