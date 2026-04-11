@@ -4,6 +4,7 @@ import { createBoxBrush } from "../../src/document/brushes";
 import {
   DEFAULT_PROJECT_NAME,
   SCENE_DOCUMENT_VERSION,
+  createDefaultSceneEditorPreferences,
   createEmptyProjectDocument,
   createEmptyProjectScene,
   createEmptySceneDocument,
@@ -302,6 +303,7 @@ describe("local draft storage", () => {
             headline: null,
             description: null
           },
+          editorPreferences: createDefaultSceneEditorPreferences(),
           world: createEmptySceneDocument().world,
           brushes: {
             [invalidBrush.id]: invalidBrush
