@@ -754,9 +754,10 @@ export function supportsLocalTransformAxisConstraint(
     case "entity":
       return session.target.initialRotation.kind !== "none";
     case "brushFace":
-    case "brushEdge":
     case "brushVertex":
       return false;
+    case "brushEdge":
+      return session.operation === "translate";
   }
 }
 
