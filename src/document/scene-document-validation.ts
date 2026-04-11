@@ -13,6 +13,8 @@ import {
   type InteractableEntity,
   type PointLightEntity,
   type PlayerStartEntity,
+  type SceneEntryEntity,
+  type SceneExitEntity,
   type SoundEmitterEntity,
   type SpotLightEntity,
   type TeleportTargetEntity,
@@ -1518,6 +1520,112 @@ function validateInteractableEntity(
   }
 }
 
+function validateSceneEntryEntity(
+  entity: SceneEntryEntity,
+  path: string,
+  diagnostics: SceneDiagnostic[]
+) {
+  if (!isFiniteVec3(entity.position)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-scene-entry-position",
+        "Scene Entry position must remain finite on every axis.",
+        `${path}.position`
+      )
+    );
+  }
+
+  if (!isFiniteNumber(entity.yawDegrees)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-scene-entry-yaw",
+        "Scene Entry yaw must remain a finite number.",
+        `${path}.yawDegrees`
+      )
+    );
+  }
+}
+
+function validateSceneExitEntity(
+  entity: SceneExitEntity,
+  path: string,
+  diagnostics: SceneDiagnostic[]
+) {
+  if (!isFiniteVec3(entity.position)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-scene-exit-position",
+        "Scene Exit position must remain finite on every axis.",
+        `${path}.position`
+      )
+    );
+  }
+
+  if (!isPositiveFiniteNumber(entity.radius)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-scene-exit-radius",
+        "Scene Exit radius must remain finite and greater than zero.",
+        `${path}.radius`
+      )
+    );
+  }
+
+  if (typeof entity.prompt !== "string" || entity.prompt.trim().length === 0) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-scene-exit-prompt",
+        "Scene Exit prompt must remain a non-empty string.",
+        `${path}.prompt`
+      )
+    );
+  }
+
+  if (!isBoolean(entity.enabled)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-scene-exit-enabled",
+        "Scene Exit enabled must remain a boolean.",
+        `${path}.enabled`
+      )
+    );
+  }
+
+  if (
+    typeof entity.targetSceneId !== "string" ||
+    entity.targetSceneId.trim().length === 0
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-scene-exit-target-scene",
+        "Scene Exit target scene id must remain a non-empty string.",
+        `${path}.targetSceneId`
+      )
+    );
+  }
+
+  if (
+    typeof entity.targetEntryEntityId !== "string" ||
+    entity.targetEntryEntityId.trim().length === 0
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-scene-exit-target-entry",
+        "Scene Exit target entry id must remain a non-empty string.",
+        `${path}.targetEntryEntityId`
+      )
+    );
+  }
+}
+
 function validateInteractionLink(
   link: InteractionLink,
   path: string,
@@ -2219,6 +2327,9 @@ export function validateSceneDocument(
       case "playerStart":
         validatePlayerStartEntity(entity, path, diagnostics);
         break;
+      case "sceneEntry":
+        validateSceneEntryEntity(entity, path, diagnostics);
+        break;
       case "soundEmitter":
         validateSoundEmitterEntity(entity, path, document, diagnostics);
         break;
@@ -2230,6 +2341,9 @@ export function validateSceneDocument(
         break;
       case "interactable":
         validateInteractableEntity(entity, path, diagnostics);
+        break;
+      case "sceneExit":
+        validateSceneExitEntity(entity, path, diagnostics);
         break;
       default:
         diagnostics.push(
@@ -2346,6 +2460,54 @@ export function validateProjectDocument(
         ...diagnostic,
         path: prefixDiagnosticPath(`${scenePath}.`, diagnostic.path)
       });
+    }
+
+    for (const [entityId, entity] of Object.entries(scene.entities)) {
+      if (entity.kind !== "sceneExit") {
+        continue;
+      }
+
+      const targetScenePath = `${scenePath}.entities.${entityId}.targetSceneId`;
+      const targetEntryPath =
+        `${scenePath}.entities.${entityId}.targetEntryEntityId`;
+      const targetScene = document.scenes[entity.targetSceneId];
+
+      if (targetScene === undefined) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "missing-scene-exit-target-scene",
+            `Scene Exit target scene ${entity.targetSceneId} does not exist in this project.`,
+            targetScenePath
+          )
+        );
+        continue;
+      }
+
+      const targetEntry = targetScene.entities[entity.targetEntryEntityId];
+
+      if (targetEntry === undefined) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "missing-scene-exit-target-entry",
+            `Scene Exit target entry ${entity.targetEntryEntityId} does not exist in scene ${targetScene.name}.`,
+            targetEntryPath
+          )
+        );
+        continue;
+      }
+
+      if (targetEntry.kind !== "sceneEntry") {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "scene-exit-target-entry-kind-mismatch",
+            `Scene Exit target ${entity.targetEntryEntityId} in scene ${targetScene.name} is not a Scene Entry.`,
+            targetEntryPath
+          )
+        );
+      }
     }
   }
 
