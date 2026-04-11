@@ -101,6 +101,11 @@ export interface PlayerStartInputBindings {
   gamepad: PlayerStartGamepadBindings;
 }
 
+export interface PlayerStartInputBindingOverrides {
+  keyboard?: Partial<PlayerStartKeyboardBindings>;
+  gamepad?: Partial<PlayerStartGamepadBindings>;
+}
+
 export interface PlayerStartColliderSettings {
   mode: PlayerStartColliderMode;
   eyeHeight: number;
@@ -366,10 +371,7 @@ export function clonePlayerStartInputBindings(
 }
 
 export function createPlayerStartInputBindings(
-  overrides: {
-    keyboard?: Partial<PlayerStartKeyboardBindings>;
-    gamepad?: Partial<PlayerStartGamepadBindings>;
-  } = {}
+  overrides: PlayerStartInputBindingOverrides = {}
 ): PlayerStartInputBindings {
   const keyboard: PlayerStartKeyboardBindings = {
     moveForward:
@@ -621,15 +623,12 @@ export function createPlayerStartEntity(
   overrides: Partial<
     Pick<
       PlayerStartEntity,
-      | "id"
-      | "name"
-      | "position"
-      | "yawDegrees"
-      | "navigationMode"
-      | "inputBindings"
-      | "collider"
+      "id" | "name" | "position" | "yawDegrees" | "navigationMode"
     >
-  > = {}
+  > & {
+    inputBindings?: PlayerStartInputBindingOverrides;
+    collider?: Partial<PlayerStartColliderSettings>;
+  } = {}
 ): PlayerStartEntity {
   const position = cloneVec3(overrides.position ?? DEFAULT_PLAYER_START_POSITION);
   const yawDegrees = overrides.yawDegrees ?? DEFAULT_PLAYER_START_YAW_DEGREES;
