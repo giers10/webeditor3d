@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  createPlayerStartInputBindings,
   createPlayAnimationInteractionLink,
   createPlaySoundInteractionLink,
   createTeleportPlayerInteractionLink,
@@ -41,6 +42,7 @@ function createRuntimeSceneFixture(): RuntimeSceneDefinition {
     },
     colliders: [],
     sceneBounds: null,
+    playerInputBindings: createPlayerStartInputBindings(),
     localLights: {
       pointLights: [],
       spotLights: []
