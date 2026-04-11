@@ -39,7 +39,9 @@ import {
   isPlayerStartGamepadBinding,
   isPlayerStartKeyboardBindingCode,
   isPlayerStartNavigationMode,
-  type EntityInstance
+  type EntityInstance,
+  type PlayerStartGamepadBinding,
+  type PlayerStartGamepadCameraLookBinding
 } from "../entities/entity-instances";
 import {
   createPlayAnimationInteractionLink,
@@ -934,9 +936,9 @@ function readPlayerStartKeyboardBindingCode(
 function readPlayerStartGamepadBinding(
   value: unknown,
   label: string,
-  fallback: (typeof DEFAULT_PLAYER_START_GAMEPAD_BINDINGS)[keyof typeof DEFAULT_PLAYER_START_GAMEPAD_BINDINGS]
-) {
-  return readOptionalAllowedValue(
+  fallback: PlayerStartGamepadBinding
+): PlayerStartGamepadBinding {
+  return readOptionalAllowedValue<PlayerStartGamepadBinding>(
     value,
     label,
     fallback,
@@ -948,9 +950,9 @@ function readPlayerStartGamepadBinding(
 function readPlayerStartGamepadCameraLookBinding(
   value: unknown,
   label: string,
-  fallback: (typeof DEFAULT_PLAYER_START_GAMEPAD_CAMERA_LOOK_BINDINGS)[number]
-) {
-  return readOptionalAllowedValue(
+  fallback: PlayerStartGamepadCameraLookBinding
+): PlayerStartGamepadCameraLookBinding {
+  return readOptionalAllowedValue<PlayerStartGamepadCameraLookBinding>(
     value,
     label,
     fallback,
