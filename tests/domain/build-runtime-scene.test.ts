@@ -6,6 +6,7 @@ import { createEmptySceneDocument } from "../../src/document/scene-document";
 import {
   createPointLightEntity,
   createInteractableEntity,
+  createPlayerStartInputBindings,
   createPlayerStartEntity,
   createSceneEntryEntity,
   createSceneExitEntity,
@@ -562,6 +563,7 @@ describe("buildRuntimeSceneFromDocument", () => {
       },
       yawDegrees: 90,
       navigationMode: "firstPerson",
+      inputBindings: playerStart.inputBindings,
       collider: {
         mode: "box",
         eyeHeight: 1.4,
@@ -581,6 +583,7 @@ describe("buildRuntimeSceneFromDocument", () => {
         z: 0.7
       }
     });
+    expect(runtimeScene.playerInputBindings).toEqual(playerStart.inputBindings);
     expect(runtimeScene.navigationMode).toBe("firstPerson");
     expect(runtimeScene.spawn).toEqual({
       source: "playerStart",
@@ -623,6 +626,9 @@ describe("buildRuntimeSceneFromDocument", () => {
       height: 1.8,
       eyeHeight: 1.6
     });
+    expect(runtimeScene.playerInputBindings).toEqual(
+      createPlayerStartInputBindings()
+    );
     expect(runtimeScene.navigationMode).toBe("thirdPerson");
     expect(runtimeScene.entities).toEqual({
       playerStarts: [],
