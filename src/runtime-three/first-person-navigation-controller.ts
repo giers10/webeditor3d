@@ -360,9 +360,7 @@ export class FirstPersonNavigationController implements NavigationController {
 
     const eyePosition = toEyePosition(
       this.feetPosition,
-      getFirstPersonPlayerEyeHeight(
-        this.context.getRuntimeScene().playerCollider
-      )
+      getFirstPersonPlayerEyeHeight(this.activePlayerShape)
     );
     const cameraVolumeState =
       this.context.resolvePlayerVolumeState(eyePosition);
