@@ -19,6 +19,7 @@ import {
   SPATIAL_AUDIO_SCENE_DOCUMENT_VERSION,
   STATIC_SIMPLE_MODEL_COLLIDERS_SCENE_DOCUMENT_VERSION,
   TRIGGER_ACTION_TARGET_FOUNDATION_SCENE_DOCUMENT_VERSION,
+  WHITEBOX_BEVEL_SCENE_DOCUMENT_VERSION,
   WHITEBOX_GEOMETRY_SCENE_DOCUMENT_VERSION,
   WORLD_ENVIRONMENT_SCENE_DOCUMENT_VERSION,
   createEmptySceneDocument
@@ -262,6 +263,11 @@ describe("scene document JSON", () => {
         mode: "acesFilmic",
         exposure: 1.25
       },
+      whiteboxBevel: {
+        enabled: true,
+        edgeWidth: 0.18,
+        normalStrength: 0.9
+      },
       fogPath: "quality",
       waterPath: "performance",
       waterReflectionMode: "world",
@@ -274,6 +280,35 @@ describe("scene document JSON", () => {
     };
 
     expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(document);
+  });
+
+  it("migrates v32 scene documents without whitebox bevel settings to defaults", () => {
+    const emptyScene = createEmptySceneDocument({
+      name: "Legacy Whitebox Bevel Scene"
+    });
+    const { whiteboxBevel: _whiteboxBevel, ...legacyAdvancedRendering } =
+      emptyScene.world.advancedRendering;
+
+    const migratedDocument = migrateSceneDocument({
+      version: WHITEBOX_BEVEL_SCENE_DOCUMENT_VERSION,
+      name: emptyScene.name,
+      world: {
+        ...emptyScene.world,
+        advancedRendering: legacyAdvancedRendering
+      },
+      materials: emptyScene.materials,
+      textures: emptyScene.textures,
+      assets: emptyScene.assets,
+      brushes: emptyScene.brushes,
+      modelInstances: emptyScene.modelInstances,
+      entities: emptyScene.entities,
+      interactionLinks: emptyScene.interactionLinks
+    });
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.world.advancedRendering.whiteboxBevel).toEqual(
+      emptyScene.world.advancedRendering.whiteboxBevel
+    );
   });
 
   it("defaults missing water reflection mode and clamps legacy foam limits during migration", () => {
