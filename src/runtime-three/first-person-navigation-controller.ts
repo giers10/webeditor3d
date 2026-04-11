@@ -110,15 +110,25 @@ export class FirstPersonNavigationController implements NavigationController {
     this.context = ctx;
 
     if (!this.initializedFromSpawn) {
-      const spawn = ctx.getRuntimeScene().spawn;
+      const runtimeScene = ctx.getRuntimeScene();
+      const spawn = runtimeScene.spawn;
       this.feetPosition = {
         ...spawn.position
       };
+      this.standingPlayerShape = cloneFirstPersonPlayerShape(
+        runtimeScene.playerCollider
+      );
+      this.activePlayerShape = cloneFirstPersonPlayerShape(
+        runtimeScene.playerCollider
+      );
       this.yawRadians = (spawn.yawDegrees * Math.PI) / 180;
       this.pitchRadians = 0;
       this.verticalVelocity = 0;
       this.grounded = false;
-      this.locomotionState = "flying";
+      this.jumpPressed = false;
+      this.locomotionState = createIdleRuntimeLocomotionState(
+        runtimeScene.playerCollider.mode === "none" ? "flying" : "airborne"
+      );
       this.inWaterVolume = false;
       this.inFogVolume = false;
       this.initializedFromSpawn = true;
@@ -203,7 +213,14 @@ export class FirstPersonNavigationController implements NavigationController {
     this.pitchRadians = 0;
     this.verticalVelocity = 0;
     this.grounded = false;
-    this.locomotionState = "flying";
+    this.jumpPressed = false;
+    this.standingPlayerShape = cloneFirstPersonPlayerShape(
+      FIRST_PERSON_PLAYER_SHAPE
+    );
+    this.activePlayerShape = cloneFirstPersonPlayerShape(
+      FIRST_PERSON_PLAYER_SHAPE
+    );
+    this.locomotionState = createIdleRuntimeLocomotionState("flying");
     this.inWaterVolume = false;
     this.inFogVolume = false;
     this.pointerLocked = false;
