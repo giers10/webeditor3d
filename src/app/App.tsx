@@ -190,6 +190,9 @@ import {
   DEFAULT_SOUND_EMITTER_MAX_DISTANCE,
   DEFAULT_TELEPORT_TARGET_YAW_DEGREES,
   PLAYER_START_COLLIDER_MODES,
+  PLAYER_START_GAMEPAD_BINDINGS,
+  PLAYER_START_KEYBOARD_BINDING_CODES,
+  PLAYER_START_MOVEMENT_ACTIONS,
   PLAYER_START_NAVIGATION_MODES,
   DEFAULT_SPOT_LIGHT_ANGLE_DEGREES,
   DEFAULT_SPOT_LIGHT_COLOR_HEX,
@@ -198,8 +201,10 @@ import {
   DEFAULT_SPOT_LIGHT_INTENSITY,
   DEFAULT_TRIGGER_VOLUME_SIZE,
   areEntityInstancesEqual,
+  clonePlayerStartInputBindings,
   createInteractableEntity,
   createPointLightEntity,
+  createPlayerStartInputBindings,
   createPlayerStartEntity,
   createSceneEntryEntity,
   createSceneExitEntity,
@@ -214,6 +219,10 @@ import {
   normalizeYawDegrees,
   normalizeInteractablePrompt,
   type PlayerStartColliderMode,
+  type PlayerStartGamepadBinding,
+  type PlayerStartInputBindings,
+  type PlayerStartKeyboardBindingCode,
+  type PlayerStartMovementAction,
   type PlayerStartNavigationMode,
   type EntityInstance,
   type EntityKind
@@ -330,6 +339,75 @@ function getPlayerStartColliderModeDescription(
       return "Uses an axis-aligned box player collider for sharper footprint bounds.";
     case "none":
       return "Disables player collision detection. First-person traversal continues without world clipping.";
+  }
+}
+
+function getPlayerStartMovementActionLabel(
+  action: PlayerStartMovementAction
+): string {
+  switch (action) {
+    case "moveForward":
+      return "Forward";
+    case "moveBackward":
+      return "Backward";
+    case "moveLeft":
+      return "Left";
+    case "moveRight":
+      return "Right";
+  }
+}
+
+function formatPlayerStartKeyboardBindingLabel(
+  code: PlayerStartKeyboardBindingCode
+): string {
+  switch (code) {
+    case "KeyW":
+      return "W";
+    case "KeyA":
+      return "A";
+    case "KeyS":
+      return "S";
+    case "KeyD":
+      return "D";
+    case "ArrowUp":
+      return "Arrow Up";
+    case "ArrowLeft":
+      return "Arrow Left";
+    case "ArrowDown":
+      return "Arrow Down";
+    case "ArrowRight":
+      return "Arrow Right";
+    case "KeyI":
+      return "I";
+    case "KeyJ":
+      return "J";
+    case "KeyK":
+      return "K";
+    case "KeyL":
+      return "L";
+  }
+}
+
+function formatPlayerStartGamepadBindingLabel(
+  binding: PlayerStartGamepadBinding
+): string {
+  switch (binding) {
+    case "leftStickUp":
+      return "Left Stick Up";
+    case "leftStickDown":
+      return "Left Stick Down";
+    case "leftStickLeft":
+      return "Left Stick Left";
+    case "leftStickRight":
+      return "Left Stick Right";
+    case "dpadUp":
+      return "D-Pad Up";
+    case "dpadDown":
+      return "D-Pad Down";
+    case "dpadLeft":
+      return "D-Pad Left";
+    case "dpadRight":
+      return "D-Pad Right";
   }
 }
 
@@ -1366,6 +1444,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [playerStartBoxSizeDraft, setPlayerStartBoxSizeDraft] = useState(
     createVec3Draft(DEFAULT_PLAYER_START_BOX_SIZE)
   );
+  const [playerStartInputBindingsDraft, setPlayerStartInputBindingsDraft] =
+    useState<PlayerStartInputBindings>(createPlayerStartInputBindings());
   const [soundEmitterAudioAssetIdDraft, setSoundEmitterAudioAssetIdDraft] =
     useState(DEFAULT_SOUND_EMITTER_AUDIO_ASSET_ID ?? "");
   const [soundEmitterVolumeDraft, setSoundEmitterVolumeDraft] = useState(
@@ -1766,6 +1846,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
       setPlayerStartBoxSizeDraft(
         createVec3Draft(DEFAULT_PLAYER_START_BOX_SIZE)
       );
+      setPlayerStartInputBindingsDraft(createPlayerStartInputBindings());
       setSoundEmitterAudioAssetIdDraft(
         DEFAULT_SOUND_EMITTER_AUDIO_ASSET_ID ?? ""
       );
@@ -1823,6 +1904,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
         );
         setPlayerStartBoxSizeDraft(
           createVec3Draft(selectedEntity.collider.boxSize)
+        );
+        setPlayerStartInputBindingsDraft(
+          clonePlayerStartInputBindings(selectedEntity.inputBindings)
         );
         break;
       case "sceneEntry":
@@ -3835,6 +3919,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     overrides: {
       colliderMode?: PlayerStartColliderMode;
       navigationMode?: PlayerStartNavigationMode;
+      inputBindings?: PlayerStartInputBindings;
     } = {}
   ) => {
     if (selectedPlayerStart === null) {
@@ -3852,12 +3937,15 @@ export function App({ store, initialStatusMessage }: AppProps) {
         overrides.navigationMode ?? playerStartNavigationModeDraft;
       const colliderMode =
         overrides.colliderMode ?? playerStartColliderModeDraft;
+      const inputBindings =
+        overrides.inputBindings ?? playerStartInputBindingsDraft;
       const nextEntity = createPlayerStartEntity({
         id: selectedPlayerStart.id,
         name: selectedPlayerStart.name,
         position: snappedPosition,
         yawDegrees,
         navigationMode,
+        inputBindings,
         collider: {
           mode: colliderMode,
           eyeHeight: readPositiveNumberDraft(
@@ -3887,6 +3975,46 @@ export function App({ store, initialStatusMessage }: AppProps) {
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
     }
+  };
+
+  const handlePlayerStartKeyboardBindingChange = (
+    action: PlayerStartMovementAction,
+    nextCode: PlayerStartKeyboardBindingCode
+  ) => {
+    const nextBindings = createPlayerStartInputBindings({
+      keyboard: {
+        ...playerStartInputBindingsDraft.keyboard,
+        [action]: nextCode
+      } as PlayerStartInputBindings["keyboard"],
+      gamepad: playerStartInputBindingsDraft.gamepad
+    });
+
+    setPlayerStartInputBindingsDraft(nextBindings);
+    scheduleDraftCommit(() =>
+      applyPlayerStartChange({
+        inputBindings: nextBindings
+      })
+    );
+  };
+
+  const handlePlayerStartGamepadBindingChange = (
+    action: PlayerStartMovementAction,
+    nextBinding: PlayerStartGamepadBinding
+  ) => {
+    const nextBindings = createPlayerStartInputBindings({
+      keyboard: playerStartInputBindingsDraft.keyboard,
+      gamepad: {
+        ...playerStartInputBindingsDraft.gamepad,
+        [action]: nextBinding
+      } as PlayerStartInputBindings["gamepad"]
+    });
+
+    setPlayerStartInputBindingsDraft(nextBindings);
+    scheduleDraftCommit(() =>
+      applyPlayerStartChange({
+        inputBindings: nextBindings
+      })
+    );
   };
 
   const applySceneEntryChange = () => {
@@ -9966,6 +10094,68 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           {getPlayerStartColliderModeDescription(
                             playerStartColliderModeDraft
                           )}
+                        </div>
+                      </div>
+
+                      <div className="form-section">
+                        <div className="label">Input Bindings</div>
+                        {PLAYER_START_MOVEMENT_ACTIONS.map((action) => (
+                          <div
+                            key={action}
+                            className="vector-inputs vector-inputs--two"
+                          >
+                            <label className="form-field">
+                              <span className="label">
+                                {getPlayerStartMovementActionLabel(action)} Key
+                              </span>
+                              <select
+                                data-testid={`player-start-keyboard-binding-${action}`}
+                                className="select-input"
+                                value={playerStartInputBindingsDraft.keyboard[action]}
+                                onChange={(event) =>
+                                  handlePlayerStartKeyboardBindingChange(
+                                    action,
+                                    event.currentTarget
+                                      .value as PlayerStartKeyboardBindingCode
+                                  )
+                                }
+                              >
+                                {PLAYER_START_KEYBOARD_BINDING_CODES.map((code) => (
+                                  <option key={code} value={code}>
+                                    {formatPlayerStartKeyboardBindingLabel(code)}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                            <label className="form-field">
+                              <span className="label">
+                                {getPlayerStartMovementActionLabel(action)} Pad
+                              </span>
+                              <select
+                                data-testid={`player-start-gamepad-binding-${action}`}
+                                className="select-input"
+                                value={playerStartInputBindingsDraft.gamepad[action]}
+                                onChange={(event) =>
+                                  handlePlayerStartGamepadBindingChange(
+                                    action,
+                                    event.currentTarget
+                                      .value as PlayerStartGamepadBinding
+                                  )
+                                }
+                              >
+                                {PLAYER_START_GAMEPAD_BINDINGS.map((binding) => (
+                                  <option key={binding} value={binding}>
+                                    {formatPlayerStartGamepadBindingLabel(binding)}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                          </div>
+                        ))}
+
+                        <div className="material-summary">
+                          These bindings feed the same typed movement actions in
+                          First Person and Third Person.
                         </div>
                       </div>
                     </>
