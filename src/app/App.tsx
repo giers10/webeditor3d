@@ -3138,7 +3138,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
   const handleWhiteboxSnapToggle = () => {
     const nextEnabled = !whiteboxSnapEnabled;
-    setWhiteboxSnapEnabled(nextEnabled);
+    store.setWhiteboxSnapEnabled(nextEnabled);
     setStatusMessage(
       nextEnabled
         ? `Grid snap enabled at ${whiteboxSnapStep}m.`
@@ -3148,7 +3148,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
   const handleViewportGridToggle = () => {
     const nextVisible = !viewportGridVisible;
-    setViewportGridVisible(nextVisible);
+    store.setViewportGridVisible(nextVisible);
     setStatusMessage(
       nextVisible ? "Viewport grid enabled." : "Viewport grid hidden."
     );
@@ -3160,6 +3160,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
       DEFAULT_GRID_SIZE
     );
     setWhiteboxSnapStepDraft(String(normalizedStep));
+    store.setWhiteboxSnapStep(normalizedStep);
   };
 
   const handleWhiteboxSelectionModeChange = (mode: WhiteboxSelectionMode) => {
