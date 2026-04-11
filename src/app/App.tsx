@@ -349,6 +349,24 @@ function getPlayerStartColliderModeDescription(
   }
 }
 
+function getPlayerStartMovementTemplateLabel(
+  kind: PlayerStartMovementTemplate["kind"]
+): string {
+  switch (kind) {
+    case "default":
+      return "Default";
+  }
+}
+
+function getPlayerStartMovementTemplateDescription(
+  kind: PlayerStartMovementTemplate["kind"]
+): string {
+  switch (kind) {
+    case "default":
+      return "Shared movement basis for First Person and Third Person. Keeps the authored path typed and prepares explicit jump, sprint, and crouch capabilities for later slices.";
+  }
+}
+
 function getPlayerStartMovementActionLabel(
   action: PlayerStartMovementAction
 ): string {
