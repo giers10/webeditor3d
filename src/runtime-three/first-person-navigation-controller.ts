@@ -3,7 +3,6 @@ import { Euler } from "three";
 import type { Vec3 } from "../core/vector";
 
 import {
-  createPlayerControllerTelemetry,
   FIRST_PERSON_PLAYER_SHAPE,
   cloneFirstPersonPlayerShape,
   getFirstPersonPlayerEyeHeight
@@ -16,7 +15,7 @@ import {
   createIdleRuntimeLocomotionState,
   stepPlayerLocomotion
 } from "./player-locomotion";
-import { createEmptyRuntimeMovementTransitionSignals } from "./player-controller-telemetry";
+import { createPlayerControllerTelemetry } from "./player-controller-telemetry";
 import type { PlayerControllerTelemetry } from "./navigation-controller";
 import type {
   NavigationControllerDeactivateOptions,
@@ -204,8 +203,11 @@ export class FirstPersonNavigationController implements NavigationController {
     this.pointerLocked = false;
     this.suppressNextPointerLockError = false;
     this.jumpPressed = false;
+    this.latestJumpStarted = false;
+    this.latestHeadBump = false;
+    this.previousTelemetry = null;
     ctx.setRuntimeMessage(null);
-    ctx.setFirstPersonTelemetry(null);
+    ctx.setPlayerControllerTelemetry(null);
     this.context = null;
   }
 
@@ -233,6 +235,9 @@ export class FirstPersonNavigationController implements NavigationController {
     this.pointerLocked = false;
     this.suppressNextPointerLockError = false;
     this.initializedFromSpawn = false;
+    this.previousTelemetry = null;
+    this.latestJumpStarted = false;
+    this.latestHeadBump = false;
   }
 
   update(dt: number): void {
@@ -301,6 +306,8 @@ export class FirstPersonNavigationController implements NavigationController {
     this.activePlayerShape = locomotionStep.activeShape;
     this.verticalVelocity = locomotionStep.verticalVelocity;
     this.jumpPressed = locomotionStep.jumpPressed;
+    this.latestJumpStarted = locomotionStep.jumpStarted;
+    this.latestHeadBump = locomotionStep.headBump;
     this.locomotionState = locomotionStep.locomotionState;
     this.grounded = locomotionStep.locomotionState.grounded;
     this.inWaterVolume = locomotionStep.inWaterVolume;
@@ -328,6 +335,9 @@ export class FirstPersonNavigationController implements NavigationController {
     this.locomotionState = createIdleRuntimeLocomotionState(
       this.activePlayerShape.mode === "none" ? "flying" : "airborne"
     );
+    this.previousTelemetry = null;
+    this.latestJumpStarted = false;
+    this.latestHeadBump = false;
     this.inWaterVolume = false;
     this.inFogVolume = false;
     this.updateCameraTransform();
@@ -370,7 +380,7 @@ export class FirstPersonNavigationController implements NavigationController {
     const cameraVolumeState =
       this.context.resolvePlayerVolumeState(eyePosition);
 
-    this.context.setFirstPersonTelemetry({
+    const telemetry = createPlayerControllerTelemetry({
       feetPosition: {
         ...this.feetPosition
       },
@@ -384,8 +394,17 @@ export class FirstPersonNavigationController implements NavigationController {
       cameraSubmerged: cameraVolumeState.inWater,
       inFogVolume: this.inFogVolume,
       pointerLocked: this.pointerLocked,
-      spawn: this.context.getRuntimeScene().spawn
+      spawn: this.context.getRuntimeScene().spawn,
+      previousLocomotionState: this.previousTelemetry?.locomotionState ?? null,
+      previousInWaterVolume: this.previousTelemetry?.inWaterVolume ?? false,
+      jumpStarted: this.latestJumpStarted,
+      headBump: this.latestHeadBump
     });
+
+    this.context.setPlayerControllerTelemetry(telemetry);
+    this.previousTelemetry = telemetry;
+    this.latestJumpStarted = false;
+    this.latestHeadBump = false;
   }
 
   private syncPointerLockState() {
