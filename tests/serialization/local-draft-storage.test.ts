@@ -198,7 +198,12 @@ describe("local draft storage", () => {
         }),
         "scene-hall": createEmptyProjectScene({
           id: "scene-hall",
-          name: "Hallway"
+          name: "Hallway",
+          loadingScreen: {
+            colorHex: "#253142",
+            headline: "Crossing over",
+            description: "Preparing the next hallway scene."
+          }
         })
       }
     };
@@ -221,6 +226,11 @@ describe("local draft storage", () => {
       "scene-main",
       "scene-hall"
     ]);
+    expect(result.document.scenes["scene-hall"]?.loadingScreen).toEqual({
+      colorHex: "#253142",
+      headline: "Crossing over",
+      description: "Preparing the next hallway scene."
+    });
   });
 
   it("loads older raw scene-document drafts without requiring viewport layout state", () => {
