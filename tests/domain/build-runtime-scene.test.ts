@@ -397,6 +397,11 @@ describe("buildRuntimeSceneFromDocument", () => {
           },
           yawDegrees: 90,
           navigationMode: "firstPerson",
+          movement: {
+            templateKind: "default",
+            moveSpeed: DEFAULT_PLAYER_START_MOVE_SPEED,
+            capabilities: DEFAULT_PLAYER_START_MOVEMENT_CAPABILITIES
+          },
           inputBindings: playerStart.inputBindings,
           collider: {
             mode: "box",
@@ -566,6 +571,11 @@ describe("buildRuntimeSceneFromDocument", () => {
       },
       yawDegrees: 90,
       navigationMode: "firstPerson",
+      movement: {
+        templateKind: "default",
+        moveSpeed: DEFAULT_PLAYER_START_MOVE_SPEED,
+        capabilities: DEFAULT_PLAYER_START_MOVEMENT_CAPABILITIES
+      },
       inputBindings: playerStart.inputBindings,
       collider: {
         mode: "box",
@@ -585,6 +595,11 @@ describe("buildRuntimeSceneFromDocument", () => {
         y: 1.6,
         z: 0.7
       }
+    });
+    expect(runtimeScene.playerMovement).toEqual({
+      templateKind: "default",
+      moveSpeed: DEFAULT_PLAYER_START_MOVE_SPEED,
+      capabilities: DEFAULT_PLAYER_START_MOVEMENT_CAPABILITIES
     });
     expect(runtimeScene.playerInputBindings).toEqual(playerStart.inputBindings);
     expect(runtimeScene.navigationMode).toBe("firstPerson");
@@ -628,6 +643,11 @@ describe("buildRuntimeSceneFromDocument", () => {
       radius: 0.3,
       height: 1.8,
       eyeHeight: 1.6
+    });
+    expect(runtimeScene.playerMovement).toEqual({
+      templateKind: "default",
+      moveSpeed: DEFAULT_PLAYER_START_MOVE_SPEED,
+      capabilities: DEFAULT_PLAYER_START_MOVEMENT_CAPABILITIES
     });
     expect(runtimeScene.playerInputBindings).toEqual(
       createPlayerStartInputBindings()
