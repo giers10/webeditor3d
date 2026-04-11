@@ -28,6 +28,7 @@ export interface PlayerStartEntity extends PositionedEntity {
   kind: "playerStart";
   yawDegrees: number;
   navigationMode: PlayerStartNavigationMode;
+  inputBindings: PlayerStartInputBindings;
   collider: PlayerStartColliderSettings;
 }
 
@@ -44,6 +45,61 @@ export const PLAYER_START_NAVIGATION_MODES = [
 ] as const;
 export type PlayerStartNavigationMode =
   (typeof PLAYER_START_NAVIGATION_MODES)[number];
+export const PLAYER_START_MOVEMENT_ACTIONS = [
+  "moveForward",
+  "moveBackward",
+  "moveLeft",
+  "moveRight"
+] as const;
+export type PlayerStartMovementAction =
+  (typeof PLAYER_START_MOVEMENT_ACTIONS)[number];
+export const PLAYER_START_KEYBOARD_BINDING_CODES = [
+  "KeyW",
+  "KeyA",
+  "KeyS",
+  "KeyD",
+  "ArrowUp",
+  "ArrowLeft",
+  "ArrowDown",
+  "ArrowRight",
+  "KeyI",
+  "KeyJ",
+  "KeyK",
+  "KeyL"
+] as const;
+export type PlayerStartKeyboardBindingCode =
+  (typeof PLAYER_START_KEYBOARD_BINDING_CODES)[number];
+export const PLAYER_START_GAMEPAD_BINDINGS = [
+  "leftStickUp",
+  "leftStickDown",
+  "leftStickLeft",
+  "leftStickRight",
+  "dpadUp",
+  "dpadDown",
+  "dpadLeft",
+  "dpadRight"
+] as const;
+export type PlayerStartGamepadBinding =
+  (typeof PLAYER_START_GAMEPAD_BINDINGS)[number];
+
+export interface PlayerStartKeyboardBindings {
+  moveForward: PlayerStartKeyboardBindingCode;
+  moveBackward: PlayerStartKeyboardBindingCode;
+  moveLeft: PlayerStartKeyboardBindingCode;
+  moveRight: PlayerStartKeyboardBindingCode;
+}
+
+export interface PlayerStartGamepadBindings {
+  moveForward: PlayerStartGamepadBinding;
+  moveBackward: PlayerStartGamepadBinding;
+  moveLeft: PlayerStartGamepadBinding;
+  moveRight: PlayerStartGamepadBinding;
+}
+
+export interface PlayerStartInputBindings {
+  keyboard: PlayerStartKeyboardBindings;
+  gamepad: PlayerStartGamepadBindings;
+}
 
 export interface PlayerStartColliderSettings {
   mode: PlayerStartColliderMode;
@@ -155,6 +211,20 @@ export const DEFAULT_PLAYER_START_POSITION = DEFAULT_ENTITY_POSITION;
 export const DEFAULT_PLAYER_START_YAW_DEGREES = 0;
 export const DEFAULT_PLAYER_START_NAVIGATION_MODE: PlayerStartNavigationMode =
   "firstPerson";
+export const DEFAULT_PLAYER_START_KEYBOARD_BINDINGS: PlayerStartKeyboardBindings =
+  {
+    moveForward: "KeyW",
+    moveBackward: "KeyS",
+    moveLeft: "KeyA",
+    moveRight: "KeyD"
+  };
+export const DEFAULT_PLAYER_START_GAMEPAD_BINDINGS: PlayerStartGamepadBindings =
+  {
+    moveForward: "leftStickUp",
+    moveBackward: "leftStickDown",
+    moveLeft: "leftStickLeft",
+    moveRight: "leftStickRight"
+  };
 export const DEFAULT_SCENE_ENTRY_YAW_DEGREES = 0;
 export const DEFAULT_PLAYER_START_COLLIDER_MODE: PlayerStartColliderMode = "capsule";
 export const DEFAULT_PLAYER_START_EYE_HEIGHT = 1.6;
@@ -250,6 +320,22 @@ export function isPlayerStartNavigationMode(
   );
 }
 
+export function isPlayerStartKeyboardBindingCode(
+  value: string
+): value is PlayerStartKeyboardBindingCode {
+  return PLAYER_START_KEYBOARD_BINDING_CODES.includes(
+    value as PlayerStartKeyboardBindingCode
+  );
+}
+
+export function isPlayerStartGamepadBinding(
+  value: string
+): value is PlayerStartGamepadBinding {
+  return PLAYER_START_GAMEPAD_BINDINGS.includes(
+    value as PlayerStartGamepadBinding
+  );
+}
+
 export function clonePlayerStartColliderSettings(settings: PlayerStartColliderSettings): PlayerStartColliderSettings {
   return {
     mode: settings.mode,
@@ -258,6 +344,113 @@ export function clonePlayerStartColliderSettings(settings: PlayerStartColliderSe
     capsuleHeight: settings.capsuleHeight,
     boxSize: cloneVec3(settings.boxSize)
   };
+}
+
+export function clonePlayerStartInputBindings(
+  bindings: PlayerStartInputBindings
+): PlayerStartInputBindings {
+  return {
+    keyboard: {
+      moveForward: bindings.keyboard.moveForward,
+      moveBackward: bindings.keyboard.moveBackward,
+      moveLeft: bindings.keyboard.moveLeft,
+      moveRight: bindings.keyboard.moveRight
+    },
+    gamepad: {
+      moveForward: bindings.gamepad.moveForward,
+      moveBackward: bindings.gamepad.moveBackward,
+      moveLeft: bindings.gamepad.moveLeft,
+      moveRight: bindings.gamepad.moveRight
+    }
+  };
+}
+
+export function createPlayerStartInputBindings(
+  overrides: {
+    keyboard?: Partial<PlayerStartKeyboardBindings>;
+    gamepad?: Partial<PlayerStartGamepadBindings>;
+  } = {}
+): PlayerStartInputBindings {
+  const keyboard: PlayerStartKeyboardBindings = {
+    moveForward:
+      overrides.keyboard?.moveForward ??
+      DEFAULT_PLAYER_START_KEYBOARD_BINDINGS.moveForward,
+    moveBackward:
+      overrides.keyboard?.moveBackward ??
+      DEFAULT_PLAYER_START_KEYBOARD_BINDINGS.moveBackward,
+    moveLeft:
+      overrides.keyboard?.moveLeft ?? DEFAULT_PLAYER_START_KEYBOARD_BINDING_CODES[1],
+    moveRight:
+      overrides.keyboard?.moveRight ??
+      DEFAULT_PLAYER_START_KEYBOARD_BINDINGS.moveRight
+  };
+  const gamepad: PlayerStartGamepadBindings = {
+    moveForward:
+      overrides.gamepad?.moveForward ??
+      DEFAULT_PLAYER_START_GAMEPAD_BINDINGS.moveForward,
+    moveBackward:
+      overrides.gamepad?.moveBackward ??
+      DEFAULT_PLAYER_START_GAMEPAD_BINDINGS.moveBackward,
+    moveLeft:
+      overrides.gamepad?.moveLeft ??
+      DEFAULT_PLAYER_START_GAMEPAD_BINDINGS.moveLeft,
+    moveRight:
+      overrides.gamepad?.moveRight ??
+      DEFAULT_PLAYER_START_GAMEPAD_BINDINGS.moveRight
+  };
+
+  if (!isPlayerStartKeyboardBindingCode(keyboard.moveForward)) {
+    throw new Error("Player Start move-forward keyboard binding must be supported.");
+  }
+
+  if (!isPlayerStartKeyboardBindingCode(keyboard.moveBackward)) {
+    throw new Error("Player Start move-backward keyboard binding must be supported.");
+  }
+
+  if (!isPlayerStartKeyboardBindingCode(keyboard.moveLeft)) {
+    throw new Error("Player Start move-left keyboard binding must be supported.");
+  }
+
+  if (!isPlayerStartKeyboardBindingCode(keyboard.moveRight)) {
+    throw new Error("Player Start move-right keyboard binding must be supported.");
+  }
+
+  if (!isPlayerStartGamepadBinding(gamepad.moveForward)) {
+    throw new Error("Player Start move-forward gamepad binding must be supported.");
+  }
+
+  if (!isPlayerStartGamepadBinding(gamepad.moveBackward)) {
+    throw new Error("Player Start move-backward gamepad binding must be supported.");
+  }
+
+  if (!isPlayerStartGamepadBinding(gamepad.moveLeft)) {
+    throw new Error("Player Start move-left gamepad binding must be supported.");
+  }
+
+  if (!isPlayerStartGamepadBinding(gamepad.moveRight)) {
+    throw new Error("Player Start move-right gamepad binding must be supported.");
+  }
+
+  return {
+    keyboard,
+    gamepad
+  };
+}
+
+export function arePlayerStartInputBindingsEqual(
+  left: PlayerStartInputBindings,
+  right: PlayerStartInputBindings
+): boolean {
+  return (
+    left.keyboard.moveForward === right.keyboard.moveForward &&
+    left.keyboard.moveBackward === right.keyboard.moveBackward &&
+    left.keyboard.moveLeft === right.keyboard.moveLeft &&
+    left.keyboard.moveRight === right.keyboard.moveRight &&
+    left.gamepad.moveForward === right.gamepad.moveForward &&
+    left.gamepad.moveBackward === right.gamepad.moveBackward &&
+    left.gamepad.moveLeft === right.gamepad.moveLeft &&
+    left.gamepad.moveRight === right.gamepad.moveRight
+  );
 }
 
 export function getPlayerStartColliderHeight(settings: PlayerStartColliderSettings): number | null {
@@ -427,7 +620,13 @@ export function createPlayerStartEntity(
   overrides: Partial<
     Pick<
       PlayerStartEntity,
-      "id" | "name" | "position" | "yawDegrees" | "navigationMode" | "collider"
+      | "id"
+      | "name"
+      | "position"
+      | "yawDegrees"
+      | "navigationMode"
+      | "inputBindings"
+      | "collider"
     >
   > = {}
 ): PlayerStartEntity {
@@ -435,6 +634,7 @@ export function createPlayerStartEntity(
   const yawDegrees = overrides.yawDegrees ?? DEFAULT_PLAYER_START_YAW_DEGREES;
   const navigationMode =
     overrides.navigationMode ?? DEFAULT_PLAYER_START_NAVIGATION_MODE;
+  const inputBindings = createPlayerStartInputBindings(overrides.inputBindings);
   const collider = createPlayerStartColliderSettings(overrides.collider);
 
   assertFiniteVec3(position, "Player Start position");
@@ -456,6 +656,7 @@ export function createPlayerStartEntity(
     position,
     yawDegrees: normalizeYawDegrees(yawDegrees),
     navigationMode,
+    inputBindings,
     collider
   };
 }
@@ -794,6 +995,10 @@ export function areEntityInstancesEqual(left: EntityInstance, right: EntityInsta
       return (
         left.yawDegrees === typedRight.yawDegrees &&
         left.navigationMode === typedRight.navigationMode &&
+        arePlayerStartInputBindingsEqual(
+          left.inputBindings,
+          typedRight.inputBindings
+        ) &&
         left.collider.mode === typedRight.collider.mode &&
         left.collider.eyeHeight === typedRight.collider.eyeHeight &&
         left.collider.capsuleRadius === typedRight.collider.capsuleRadius &&
