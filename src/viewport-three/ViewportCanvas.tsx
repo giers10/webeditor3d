@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import type { LoadedModelAsset } from "../assets/gltf-model-import";
 import type { LoadedImageAsset } from "../assets/image-assets";
@@ -54,6 +54,7 @@ interface ViewportCanvasProps {
   toolPreview: ViewportToolPreview;
   transformSession: TransformSessionState;
   cameraState: ViewportPanelCameraState;
+  cameraSyncRequestId: number;
   viewMode: ViewportViewMode;
   displayMode: ViewportDisplayMode;
   layoutMode: ViewportLayoutMode;
@@ -85,6 +86,7 @@ export function ViewportCanvas({
   toolPreview,
   transformSession,
   cameraState,
+  cameraSyncRequestId,
   viewMode,
   displayMode,
   layoutMode,
@@ -136,19 +138,19 @@ export function ViewportCanvas({
     }
   }, []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     hostRef.current?.setRenderEnabled(shouldRenderPanel);
   }, [shouldRenderPanel]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     hostRef.current?.setPanelId(panelId);
   }, [panelId]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     hostRef.current?.updateWorld(world);
   }, [world]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     hostRef.current?.updateAssets(
       projectAssets,
       loadedModelAssets,
@@ -156,36 +158,36 @@ export function ViewportCanvas({
     );
   }, [projectAssets, loadedModelAssets, loadedImageAssets]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     hostRef.current?.setWhiteboxSnapSettings(
       whiteboxSnapEnabled,
       whiteboxSnapStep
     );
   }, [whiteboxSnapEnabled, whiteboxSnapStep]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     hostRef.current?.setGridVisible(viewportGridVisible);
   }, [viewportGridVisible]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     hostRef.current?.setWhiteboxSelectionMode(whiteboxSelectionMode);
   }, [whiteboxSelectionMode]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     hostRef.current?.updateDocument(sceneDocument, selection);
   }, [sceneDocument, selection]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     hostRef.current?.setViewMode(viewMode);
   }, [viewMode]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     hostRef.current?.setDisplayMode(displayMode);
   }, [displayMode]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     hostRef.current?.setCameraState(cameraState);
-  }, [cameraState, sceneDocument, transformSession.kind]);
+  }, [cameraState, cameraSyncRequestId]);
 
   useEffect(() => {
     hostRef.current?.setBrushSelectionChangeHandler(onSelectionChange);
@@ -230,11 +232,11 @@ export function ViewportCanvas({
     hostRef.current?.setTransformCancelHandler(onTransformCancel);
   }, [onTransformCancel]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     hostRef.current?.setToolMode(toolMode);
   }, [toolMode]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     hostRef.current?.setCreationPreview(
       toolMode === "create" && toolPreview.kind === "create"
         ? toolPreview
@@ -242,7 +244,7 @@ export function ViewportCanvas({
     );
   }, [toolMode, toolPreview]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     hostRef.current?.setTransformSession(transformSession);
   }, [transformSession]);
 
