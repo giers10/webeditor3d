@@ -97,6 +97,15 @@ describe("project document JSON", () => {
         }
       }
     };
+    document.scenes["scene-cellar"].world.advancedRendering = {
+      ...document.scenes["scene-cellar"].world.advancedRendering,
+      enabled: true,
+      whiteboxBevel: {
+        enabled: true,
+        edgeWidth: 0.16,
+        normalStrength: 0.85
+      }
+    };
 
     const serializedDocument = serializeProjectDocument(document);
 
