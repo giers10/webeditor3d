@@ -537,6 +537,7 @@ function buildRuntimeSceneCollections(document: SceneDocument): RuntimeSceneColl
           position: cloneVec3(entity.position),
           yawDegrees: entity.yawDegrees,
           navigationMode: entity.navigationMode,
+          movement: buildRuntimePlayerMovement(entity.movementTemplate),
           inputBindings: clonePlayerStartInputBindings(entity.inputBindings),
           collider: buildRuntimePlayerShape(entity)
         });
@@ -717,6 +718,9 @@ export function buildRuntimeSceneFromDocument(document: SceneDocument, options: 
   const collections = buildRuntimeSceneCollections(document);
   const interactionLinks = getInteractionLinks(document.interactionLinks).map((link) => cloneInteractionLink(link));
   const playerCollider = buildRuntimePlayerShape(playerStartEntity);
+  const playerMovement = buildRuntimePlayerMovement(
+    playerStartEntity?.movementTemplate
+  );
   const playerInputBindings = createPlayerStartInputBindings(
     playerStartEntity?.inputBindings
   );
@@ -744,6 +748,7 @@ export function buildRuntimeSceneFromDocument(document: SceneDocument, options: 
           position: cloneVec3(playerStartEntity.position),
           yawDegrees: playerStartEntity.yawDegrees,
           navigationMode,
+          movement: cloneRuntimePlayerMovement(playerMovement),
           inputBindings: clonePlayerStartInputBindings(playerInputBindings),
           collider: playerCollider
         };
@@ -760,6 +765,7 @@ export function buildRuntimeSceneFromDocument(document: SceneDocument, options: 
     interactionLinks,
     playerStart,
     playerCollider,
+    playerMovement,
     playerInputBindings,
     navigationMode,
     spawn: resolveRuntimeSpawn(
