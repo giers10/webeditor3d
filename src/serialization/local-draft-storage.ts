@@ -1,4 +1,7 @@
-import { createEmptySceneDocument, type SceneDocument } from "../document/scene-document";
+import {
+  createEmptyProjectDocument,
+  type ProjectDocument
+} from "../document/scene-document";
 import {
   VIEWPORT_PANEL_IDS,
   cloneViewportLayoutState,
@@ -8,7 +11,10 @@ import {
   type ViewportPanelId
 } from "../viewport-three/viewport-layout";
 
-import { parseSceneDocumentJson, serializeSceneDocument } from "./scene-document-json";
+import {
+  parseProjectDocumentJson,
+  serializeProjectDocument
+} from "./scene-document-json";
 
 export interface KeyValueStorage {
   getItem(key: string): string | null;
@@ -26,12 +32,12 @@ export type SaveSceneDocumentDraftResult =
   | { status: "error"; message: string };
 
 export type LoadSceneDocumentDraftResult =
-  | { status: "loaded"; document: SceneDocument; viewportLayoutState: ViewportLayoutState | null; message: string }
+  | { status: "loaded"; document: ProjectDocument; viewportLayoutState: ViewportLayoutState | null; message: string }
   | { status: "missing"; message: string }
   | { status: "error"; message: string };
 
 export interface LoadOrCreateSceneDocumentResult {
-  document: SceneDocument;
+  document: ProjectDocument;
   viewportLayoutState: ViewportLayoutState | null;
   diagnostic: string | null;
 }
@@ -189,12 +195,12 @@ export function getBrowserStorage(): KeyValueStorage | null {
 
 export function saveSceneDocumentDraft(
   storage: KeyValueStorage,
-  document: SceneDocument,
+  document: ProjectDocument,
   viewportLayoutState: ViewportLayoutState | null = null,
   key = DEFAULT_SCENE_DRAFT_STORAGE_KEY
 ): SaveSceneDocumentDraftResult {
   try {
-    const rawDocument = serializeSceneDocument(document);
+    const rawDocument = serializeProjectDocument(document);
     storage.setItem(
       key,
       JSON.stringify({
@@ -235,7 +241,7 @@ export function loadSceneDocumentDraft(
     if (isStoredEditorDraftEnvelope(parsedDraft)) {
       return {
         status: "loaded",
-        document: parseSceneDocumentJson(JSON.stringify(parsedDraft.document)),
+        document: parseProjectDocumentJson(JSON.stringify(parsedDraft.document)),
         viewportLayoutState: parseViewportLayoutState(parsedDraft.viewportLayoutState ?? null),
         message: "Recovered latest autosave."
       };
@@ -243,7 +249,7 @@ export function loadSceneDocumentDraft(
 
     return {
       status: "loaded",
-      document: parseSceneDocumentJson(rawDocument),
+      document: parseProjectDocumentJson(rawDocument),
       viewportLayoutState: null,
       message: "Recovered latest autosave."
     };
@@ -261,7 +267,7 @@ export function loadOrCreateSceneDocument(
 ): LoadOrCreateSceneDocumentResult {
   if (storage === null) {
     return {
-      document: createEmptySceneDocument(),
+      document: createEmptyProjectDocument(),
       viewportLayoutState: null,
       diagnostic: null
     };
@@ -278,13 +284,13 @@ export function loadOrCreateSceneDocument(
       };
     case "missing":
       return {
-        document: createEmptySceneDocument(),
+        document: createEmptyProjectDocument(),
         viewportLayoutState: null,
         diagnostic: null
       };
     case "error":
       return {
-        document: createEmptySceneDocument(),
+        document: createEmptyProjectDocument(),
         viewportLayoutState: null,
         diagnostic: `${draftResult.message} Starting with a fresh empty document.`
       };
