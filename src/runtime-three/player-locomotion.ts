@@ -23,6 +23,7 @@ const VERTICAL_ASCENT_EPSILON = 1e-4;
 const IDLE_SPEED_EPSILON = 0.05;
 const VARIABLE_JUMP_HOLD_GRAVITY_FACTOR = 0.45;
 const VARIABLE_JUMP_RELEASE_VELOCITY_FACTOR = 0.45;
+const SWIM_HEAD_CLEARANCE = 0.04;
 
 function clampPlanarSpeed(speed: number, maxSpeed: number): number {
   if (maxSpeed <= 0) {
@@ -121,10 +122,9 @@ export interface StepPlayerLocomotionResult {
 function readGroundProbe(
   feetPosition: Vec3,
   shape: FirstPersonPlayerShape,
-  volumeState: RuntimePlayerVolumeState,
   probeGround: StepPlayerLocomotionOptions["probeGround"]
 ): PlayerGroundProbeResult {
-  if (shape.mode === "none" || volumeState.inWater) {
+  if (shape.mode === "none") {
     return {
       grounded: false,
       distance: null,
@@ -139,14 +139,15 @@ function readGroundProbe(
 function resolveLocomotionMode(
   shape: FirstPersonPlayerShape,
   inWaterVolume: boolean,
-  grounded: boolean
+  grounded: boolean,
+  headSubmerged: boolean
 ): RuntimeLocomotionMode {
   if (shape.mode === "none") {
     return "flying";
   }
 
   if (inWaterVolume) {
-    return "swimming";
+    return headSubmerged ? "diving" : "swimming";
   }
 
   if (grounded) {
@@ -236,6 +237,29 @@ function computePlanarSpeedFromDisplacement(
   }
 
   return Math.hypot(displacement.x, displacement.z) / dt;
+}
+
+function isShallowWater(options: {
+  inWater: boolean;
+  waterSurfaceHeight: number | null;
+  feetPosition: Vec3;
+  shape: FirstPersonPlayerShape;
+  groundProbe: PlayerGroundProbeResult;
+}): boolean {
+  if (
+    !options.inWater ||
+    options.waterSurfaceHeight === null ||
+    options.groundProbe.grounded !== true ||
+    options.groundProbe.distance === null
+  ) {
+    return false;
+  }
+
+  const waterDepth =
+    options.waterSurfaceHeight -
+    (options.feetPosition.y - options.groundProbe.distance);
+
+  return waterDepth <= options.shape.eyeHeight + SWIM_HEAD_CLEARANCE;
 }
 
 function alignPlanarMotionToGround(
@@ -331,9 +355,19 @@ export function stepPlayerLocomotion(
   const currentGroundProbe = readGroundProbe(
     options.feetPosition,
     activeShape,
-    currentVolumeState,
     options.probeGround
   );
+  const currentShallowWater = isShallowWater({
+    inWater: currentVolumeState.inWater,
+    waterSurfaceHeight: currentVolumeState.waterSurfaceHeight,
+    feetPosition: options.feetPosition,
+    shape: activeShape,
+    groundProbe: currentGroundProbe
+  });
+  const currentSwimmableWater =
+    currentVolumeState.inWater &&
+    currentVolumeState.waterSurfaceHeight !== null &&
+    !currentShallowWater;
   // The probe can still see nearby floor on the frame after takeoff. While a
   // jump is still carrying positive upward velocity, don't let that probe pull
   // the controller back into grounded/stick-to-ground logic.
@@ -346,12 +380,20 @@ export function stepPlayerLocomotion(
     coyoteTimeRemainingMs = options.movement.jump.coyoteTimeMs;
   }
 
+  if (
+    options.movement.capabilities.jump &&
+    jumpJustPressed &&
+    !currentSwimmableWater
+  ) {
+    jumpBufferRemainingMs = options.movement.jump.bufferMs;
+  }
+
   const sprinting =
     options.movement.capabilities.sprint &&
     sprintPressed &&
     !crouched &&
     currentlyGrounded &&
-    !currentVolumeState.inWater;
+    !currentSwimmableWater;
   const previousRequestedPlanarSpeed = Math.max(
     0,
     options.previousLocomotionState?.requestedPlanarSpeed ?? 0
@@ -373,7 +415,7 @@ export function stepPlayerLocomotion(
     options.movement.capabilities.jump &&
     (jumpJustPressed || jumpBufferRemainingMs > 0) &&
     (currentlyGrounded || coyoteTimeRemainingMs > 0) &&
-    !currentVolumeState.inWater &&
+    !currentSwimmableWater &&
     activeShape.mode !== "none";
   const bufferedJumpTriggered =
     jumpTriggered && !jumpJustPressed && jumpBufferRemainingMs > 0;
@@ -402,7 +444,7 @@ export function stepPlayerLocomotion(
   }
 
   const requestedPlanarSpeed =
-    activeShape.mode !== "none" && !currentVolumeState.inWater
+    activeShape.mode !== "none" && !currentSwimmableWater
       ? jumpTriggered
         ? jumpRequestedPlanarSpeed
         : currentlyGrounded
@@ -417,7 +459,7 @@ export function stepPlayerLocomotion(
   );
   const preserveAirborneMomentum =
     activeShape.mode !== "none" &&
-    !currentVolumeState.inWater &&
+    !currentSwimmableWater &&
     (jumpTriggered || !currentlyGrounded) &&
     planarMotionFromInput.inputMagnitude <= 0;
   const planarMotion = preserveAirborneMomentum
@@ -441,9 +483,38 @@ export function stepPlayerLocomotion(
 
   let verticalVelocity = options.verticalVelocity;
   let verticalDisplacement = 0;
+  const waterVerticalInput =
+    (jumpPressed ? 1 : 0) - (sprintPressed ? 1 : 0);
+  const swimVerticalSpeed = options.movement.moveSpeed;
 
-  if (activeShape.mode === "none" || currentVolumeState.inWater) {
+  if (activeShape.mode === "none") {
     verticalVelocity = 0;
+    jumpHoldRemainingMs = 0;
+  } else if (currentSwimmableWater) {
+    const targetFeetY =
+      currentVolumeState.waterSurfaceHeight +
+      SWIM_HEAD_CLEARANCE -
+      activeShape.eyeHeight;
+    const currentHeadSubmerged =
+      options.feetPosition.y + activeShape.eyeHeight <
+      currentVolumeState.waterSurfaceHeight;
+
+    if (waterVerticalInput !== 0) {
+      verticalVelocity = waterVerticalInput * swimVerticalSpeed;
+      verticalDisplacement = verticalVelocity * options.dt;
+    } else if (!currentHeadSubmerged) {
+      const targetDelta = targetFeetY - options.feetPosition.y;
+      verticalDisplacement = Math.max(
+        -swimVerticalSpeed * options.dt,
+        Math.min(swimVerticalSpeed * options.dt, targetDelta)
+      );
+      verticalVelocity =
+        options.dt > 0 ? verticalDisplacement / options.dt : 0;
+    } else {
+      verticalVelocity = 0;
+      verticalDisplacement = 0;
+    }
+
     jumpHoldRemainingMs = 0;
   } else if (jumpTriggered) {
     verticalVelocity = options.movement.jump.speed;
@@ -497,9 +568,23 @@ export function stepPlayerLocomotion(
   const groundProbe = readGroundProbe(
     resolvedMotion.feetPosition,
     activeShape,
-    nextVolumeState,
     options.probeGround
   );
+  const nextShallowWater = isShallowWater({
+    inWater: nextVolumeState.inWater,
+    waterSurfaceHeight: nextVolumeState.waterSurfaceHeight,
+    feetPosition: resolvedMotion.feetPosition,
+    shape: activeShape,
+    groundProbe
+  });
+  const nextSwimmableWater =
+    nextVolumeState.inWater &&
+    nextVolumeState.waterSurfaceHeight !== null &&
+    !nextShallowWater;
+  const headSubmerged =
+    nextSwimmableWater &&
+    resolvedMotion.feetPosition.y + activeShape.eyeHeight <
+      nextVolumeState.waterSurfaceHeight;
   const headBump =
     verticalDisplacement > 0 &&
     resolvedMotion.collidedAxes.y &&
@@ -509,23 +594,19 @@ export function stepPlayerLocomotion(
     !jumpTriggered &&
     !ascending &&
     activeShape.mode !== "none" &&
-    !nextVolumeState.inWater &&
+    !nextSwimmableWater &&
     (resolvedMotion.grounded || groundProbe.grounded);
 
-  if (
-    activeShape.mode === "none" ||
-    nextVolumeState.inWater ||
-    grounded ||
-    headBump
-  ) {
+  if (activeShape.mode === "none" || grounded || headBump) {
     verticalVelocity = 0;
     jumpHoldRemainingMs = 0;
   }
 
   const locomotionMode = resolveLocomotionMode(
     activeShape,
-    nextVolumeState.inWater,
-    grounded
+    nextSwimmableWater,
+    grounded,
+    headSubmerged
   );
   const actualPlanarSpeed =
     options.dt > 0
@@ -564,7 +645,7 @@ export function stepPlayerLocomotion(
       verticalVelocity,
       contact: resolveContactState(resolvedMotion, groundProbe, grounded)
     },
-    inWaterVolume: nextVolumeState.inWater,
+    inWaterVolume: nextSwimmableWater,
     inFogVolume: nextVolumeState.inFog,
     planarDisplacement: {
       x: resolvedMotion.feetPosition.x - options.feetPosition.x,
