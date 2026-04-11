@@ -468,10 +468,13 @@ export class RapierCollisionWorld {
     );
     const supportGrounded = supportProbe.grounded;
 
-    const computeResolvedMovement = (allowAutostep: boolean) => {
+    const computeResolvedMovement = (
+      desiredMotion: Vec3,
+      allowAutostep: boolean
+    ) => {
       playerCollider.setTranslation(currentCenter);
 
-      if (motion.y > COLLISION_EPSILON && snapToGroundWasEnabled) {
+      if (desiredMotion.y > COLLISION_EPSILON && snapToGroundWasEnabled) {
         characterController.disableSnapToGround();
       }
 
@@ -487,7 +490,7 @@ export class RapierCollisionWorld {
         }
       }
 
-      characterController.computeColliderMovement(playerCollider, motion);
+      characterController.computeColliderMovement(playerCollider, desiredMotion);
 
       if (snapToGroundWasEnabled) {
         characterController.enableSnapToGround(
@@ -505,9 +508,9 @@ export class RapierCollisionWorld {
 
       const correctedMovement = characterController.computedMovement();
       const collidedAxes = {
-        x: Math.abs(correctedMovement.x - motion.x) > COLLISION_EPSILON,
-        y: Math.abs(correctedMovement.y - motion.y) > COLLISION_EPSILON,
-        z: Math.abs(correctedMovement.z - motion.z) > COLLISION_EPSILON
+        x: Math.abs(correctedMovement.x - desiredMotion.x) > COLLISION_EPSILON,
+        y: Math.abs(correctedMovement.y - desiredMotion.y) > COLLISION_EPSILON,
+        z: Math.abs(correctedMovement.z - desiredMotion.z) > COLLISION_EPSILON
       };
       const nextCenter = {
         x: currentCenter.x + correctedMovement.x,
@@ -544,7 +547,7 @@ export class RapierCollisionWorld {
     };
 
     const allowAutostep = autostepWasEnabled && supportGrounded;
-    let resolved = computeResolvedMovement(allowAutostep);
+    let resolved = computeResolvedMovement(motion, allowAutostep);
 
     if (
       allowAutostep &&
@@ -552,7 +555,61 @@ export class RapierCollisionWorld {
       resolved.correctedMovement.y > COLLISION_EPSILON &&
       (resolved.collidedAxes.x || resolved.collidedAxes.z)
     ) {
-      resolved = computeResolvedMovement(false);
+      resolved = computeResolvedMovement(motion, false);
+    }
+
+    if (
+      motion.y < -COLLISION_EPSILON &&
+      (resolved.collidedAxes.x || resolved.collidedAxes.z) &&
+      resolved.correctedMovement.y > motion.y + COLLISION_EPSILON
+    ) {
+      const fallingOnlyResolved = computeResolvedMovement(
+        {
+          x: 0,
+          y: motion.y,
+          z: 0
+        },
+        false
+      );
+
+      if (
+        fallingOnlyResolved.correctedMovement.y <
+        resolved.correctedMovement.y - COLLISION_EPSILON
+      ) {
+        resolved = {
+          ...resolved,
+          correctedMovement: {
+            x: resolved.correctedMovement.x,
+            y: fallingOnlyResolved.correctedMovement.y,
+            z: resolved.correctedMovement.z
+          },
+          collidedAxes: {
+            x: resolved.collidedAxes.x,
+            y: fallingOnlyResolved.collidedAxes.y,
+            z: resolved.collidedAxes.z
+          },
+          nextCenter: {
+            x: resolved.nextCenter.x,
+            y: currentCenter.y + fallingOnlyResolved.correctedMovement.y,
+            z: resolved.nextCenter.z
+          },
+          nextFeetPosition: {
+            x: resolved.nextFeetPosition.x,
+            y: colliderCenterToFeetPosition(
+              {
+                x: resolved.nextCenter.x,
+                y: currentCenter.y + fallingOnlyResolved.correctedMovement.y,
+                z: resolved.nextCenter.z
+              },
+              shape
+            ).y,
+            z: resolved.nextFeetPosition.z
+          },
+          groundCollisionNormal:
+            fallingOnlyResolved.groundCollisionNormal ??
+            resolved.groundCollisionNormal
+        };
+      }
     }
 
     playerCollider.setTranslation(resolved.nextCenter);
