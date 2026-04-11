@@ -1770,10 +1770,19 @@ export function App({ store, initialStatusMessage }: AppProps) {
       setSoundEmitterAutoplayDraft(false);
       setSoundEmitterLoopDraft(false);
       setTriggerVolumeSizeDraft(createVec3Draft(DEFAULT_TRIGGER_VOLUME_SIZE));
+      setSceneEntryYawDraft(String(DEFAULT_SCENE_ENTRY_YAW_DEGREES));
       setTeleportTargetYawDraft(String(DEFAULT_TELEPORT_TARGET_YAW_DEGREES));
       setInteractableRadiusDraft(String(DEFAULT_INTERACTABLE_RADIUS));
       setInteractablePromptDraft(DEFAULT_INTERACTABLE_PROMPT);
       setInteractableEnabledDraft(true);
+      setSceneExitRadiusDraft(String(DEFAULT_SCENE_EXIT_RADIUS));
+      setSceneExitPromptDraft(DEFAULT_SCENE_EXIT_PROMPT);
+      setSceneExitEnabledDraft(true);
+      setSceneExitTargetSceneIdDraft(sceneTargetOptions[0]?.id ?? "");
+      setSceneExitTargetEntryIdDraft(
+        (sceneEntryOptionsBySceneId[sceneTargetOptions[0]?.id ?? ""]?.[0]
+          ?.entity.id ?? "")
+      );
       return;
     }
 
@@ -1806,6 +1815,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
           createVec3Draft(selectedEntity.collider.boxSize)
         );
         break;
+      case "sceneEntry":
+        setSceneEntryYawDraft(String(selectedEntity.yawDegrees));
+        break;
       case "soundEmitter":
         setSoundEmitterAudioAssetIdDraft(selectedEntity.audioAssetId ?? "");
         setSoundEmitterVolumeDraft(String(selectedEntity.volume));
@@ -1825,8 +1837,15 @@ export function App({ store, initialStatusMessage }: AppProps) {
         setInteractablePromptDraft(selectedEntity.prompt);
         setInteractableEnabledDraft(selectedEntity.enabled);
         break;
+      case "sceneExit":
+        setSceneExitRadiusDraft(String(selectedEntity.radius));
+        setSceneExitPromptDraft(selectedEntity.prompt);
+        setSceneExitEnabledDraft(selectedEntity.enabled);
+        setSceneExitTargetSceneIdDraft(selectedEntity.targetSceneId);
+        setSceneExitTargetEntryIdDraft(selectedEntity.targetEntryEntityId);
+        break;
     }
-  }, [selectedEntity]);
+  }, [sceneEntryOptionsBySceneId, sceneTargetOptions, selectedEntity]);
 
   useEffect(() => {
     if (selectedModelInstance === null) {
