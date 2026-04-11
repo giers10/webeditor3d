@@ -166,4 +166,41 @@ describe("player-controller-telemetry", () => {
     expect(telemetry.hooks.animation.inWater).toBe(true);
     expect(telemetry.hooks.animation.signals.enteredWater).toBe(true);
   });
+
+  it("treats diving as submerged water locomotion for hook consumers", () => {
+    const runtimeScene = buildRuntimeSceneFromDocument(
+      createEmptySceneDocument()
+    );
+    const telemetry = createPlayerControllerTelemetry({
+      feetPosition: { x: 0, y: 0.5, z: 0 },
+      eyePosition: { x: 0, y: 2, z: 0 },
+      grounded: false,
+      locomotionState: createLocomotionState({
+        locomotionMode: "diving",
+        airborneKind: null,
+        grounded: false,
+        gait: "idle",
+        inputMagnitude: 0,
+        planarSpeed: 0,
+        verticalVelocity: -runtimeScene.playerMovement.moveSpeed
+      }),
+      movement: runtimeScene.playerMovement,
+      inWaterVolume: true,
+      cameraSubmerged: true,
+      inFogVolume: true,
+      pointerLocked: false,
+      spawn: runtimeScene.spawn,
+      previousLocomotionState: createLocomotionState({
+        locomotionMode: "swimming",
+        grounded: false
+      }),
+      previousInWaterVolume: true,
+      jumpStarted: false,
+      headBump: false
+    });
+
+    expect(telemetry.hooks.camera.swimming).toBe(true);
+    expect(telemetry.hooks.camera.underwaterAmount).toBe(1);
+    expect(telemetry.hooks.animation.locomotionMode).toBe("diving");
+  });
 });
