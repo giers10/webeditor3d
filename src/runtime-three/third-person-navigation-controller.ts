@@ -64,6 +64,7 @@ function cloneRuntimePlayerMovement(
   return {
     templateKind: movement.templateKind,
     moveSpeed: movement.moveSpeed,
+    maxSpeed: movement.maxSpeed,
     capabilities: {
       jump: movement.capabilities.jump,
       sprint: movement.capabilities.sprint,
@@ -74,7 +75,9 @@ function cloneRuntimePlayerMovement(
       bufferMs: movement.jump.bufferMs,
       coyoteTimeMs: movement.jump.coyoteTimeMs,
       variableHeight: movement.jump.variableHeight,
-      maxHoldMs: movement.jump.maxHoldMs
+      maxHoldMs: movement.jump.maxHoldMs,
+      bunnyHop: movement.jump.bunnyHop,
+      bunnyHopBoost: movement.jump.bunnyHopBoost
     },
     sprint: {
       speedMultiplier: movement.sprint.speedMultiplier
