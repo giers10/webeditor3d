@@ -46,6 +46,27 @@ describe("entity registry defaults", () => {
         capsuleRadius: DEFAULT_PLAYER_START_CAPSULE_RADIUS,
         capsuleHeight: DEFAULT_PLAYER_START_CAPSULE_HEIGHT,
         boxSize: DEFAULT_PLAYER_START_BOX_SIZE
+      },
+      inputBindings: {
+        keyboard: {
+          moveForward: "KeyW",
+          moveBackward: "KeyS",
+          moveLeft: "KeyA",
+          moveRight: "KeyD",
+          jump: "Space",
+          sprint: "ShiftLeft",
+          crouch: "ControlLeft"
+        },
+        gamepad: {
+          moveForward: "leftStickUp",
+          moveBackward: "leftStickDown",
+          moveLeft: "leftStickLeft",
+          moveRight: "leftStickRight",
+          jump: "buttonSouth",
+          sprint: "leftStickPress",
+          crouch: "buttonEast",
+          cameraLook: "rightStick"
+        }
       }
     });
 
