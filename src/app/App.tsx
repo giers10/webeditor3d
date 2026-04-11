@@ -1227,6 +1227,10 @@ function formatRunnerGroundContact(
     return "No ground";
   }
 
+  if (locomotionState === undefined) {
+    return "n/a";
+  }
+
   const slope = locomotionState.contact.slopeDegrees;
   const distance = locomotionState.contact.groundDistance;
 
