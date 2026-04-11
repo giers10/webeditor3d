@@ -465,16 +465,12 @@ export class RapierCollisionWorld {
     );
     const supportGrounded = supportProbe.grounded;
 
-    if (motion.y > COLLISION_EPSILON && snapToGroundWasEnabled) {
-      this.characterController.disableSnapToGround();
-    }
-
-    if (!supportGrounded && autostepWasEnabled) {
-      this.characterController.disableAutostep();
-    }
-
     const computeResolvedMovement = (allowAutostep: boolean) => {
       this.playerCollider.setTranslation(currentCenter);
+
+      if (motion.y > COLLISION_EPSILON && snapToGroundWasEnabled) {
+        this.characterController.disableSnapToGround();
+      }
 
       if (autostepWasEnabled) {
         if (allowAutostep) {
