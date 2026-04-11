@@ -268,7 +268,7 @@ describe("local draft storage", () => {
     const result = saveSceneDocumentDraft(new MemoryStorage(), {
       ...createProjectDocumentFromSceneDocument(createEmptySceneDocument()),
       scenes: {
-        scene-main: {
+        "scene-main": {
           id: "scene-main",
           name: "Untitled Scene",
           world: createEmptySceneDocument().world,
