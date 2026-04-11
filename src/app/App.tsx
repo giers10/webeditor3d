@@ -1756,6 +1756,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
       setSpotLightAngleDraft(String(DEFAULT_SPOT_LIGHT_ANGLE_DEGREES));
       setSpotLightDirectionDraft(createVec3Draft(DEFAULT_SPOT_LIGHT_DIRECTION));
       setPlayerStartYawDraft("0");
+      setPlayerStartNavigationModeDraft(DEFAULT_PLAYER_START_NAVIGATION_MODE);
       setPlayerStartColliderModeDraft("capsule");
       setPlayerStartEyeHeightDraft(String(DEFAULT_PLAYER_START_EYE_HEIGHT));
       setPlayerStartCapsuleRadiusDraft(
@@ -1813,6 +1814,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
         break;
       case "playerStart":
         setPlayerStartYawDraft(String(selectedEntity.yawDegrees));
+        setPlayerStartNavigationModeDraft(selectedEntity.navigationMode);
         setPlayerStartColliderModeDraft(selectedEntity.collider.mode);
         setPlayerStartEyeHeightDraft(String(selectedEntity.collider.eyeHeight));
         setPlayerStartCapsuleRadiusDraft(
@@ -3497,7 +3499,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
 
     return buildRuntimeSceneFromDocument(sceneDocument, {
-      navigationMode: preferredNavigationMode,
       loadedModelAssets,
       sceneEntryId: options.sceneEntryId
     });
