@@ -1225,6 +1225,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
     Object.values(editorState.document.modelInstances)
   );
   const whiteboxSelectionMode = editorState.whiteboxSelectionMode;
+  const whiteboxSnapEnabled = editorState.whiteboxSnapEnabled;
+  const viewportGridVisible = editorState.viewportGridVisible;
   const selectedFaceId = getSelectedBrushFaceId(editorState.selection);
   const selectedEdgeId = getSelectedBrushEdgeId(editorState.selection);
   const selectedVertexId = getSelectedBrushVertexId(editorState.selection);
@@ -1397,11 +1399,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
     useState("0.08");
   const [boxVolumeFogPaddingDraft, setBoxVolumeFogPaddingDraft] =
     useState("0.2");
-  const [whiteboxSnapEnabled, setWhiteboxSnapEnabled] = useState(true);
   const [whiteboxSnapStepDraft, setWhiteboxSnapStepDraft] = useState(
-    String(DEFAULT_GRID_SIZE)
+    String(editorState.whiteboxSnapStep)
   );
-  const [viewportGridVisible, setViewportGridVisible] = useState(true);
   const [uvOffsetDraft, setUvOffsetDraft] = useState(
     createVec2Draft(createDefaultFaceUvState().offset)
   );
