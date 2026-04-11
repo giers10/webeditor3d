@@ -3520,6 +3520,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     setRuntimeSceneLoadingScreen(
       cloneSceneLoadingScreenSettings(projectScene.loadingScreen)
     );
+    setActiveNavigationMode(nextRuntimeScene.navigationMode);
   };
 
   const handleRunnerSceneExitActivated = (
