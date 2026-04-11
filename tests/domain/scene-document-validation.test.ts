@@ -115,7 +115,7 @@ describe("validateSceneDocument", () => {
             z: 0
           },
           yawDegrees: Number.NaN,
-          navigationMode: "firstPerson",
+          navigationMode: "orbitVisitor" as unknown as "firstPerson",
           collider: {
             mode: "capsule",
             eyeHeight: 3,
@@ -138,6 +138,9 @@ describe("validateSceneDocument", () => {
         }),
         expect.objectContaining({
           code: "invalid-player-start-yaw"
+        }),
+        expect.objectContaining({
+          code: "invalid-player-start-navigation-mode"
         }),
         expect.objectContaining({
           code: "invalid-player-start-capsule-proportions"
