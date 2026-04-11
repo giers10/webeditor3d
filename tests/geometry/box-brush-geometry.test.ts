@@ -88,6 +88,25 @@ describe("box brush geometry", () => {
     expect(Array.from(derivedMesh.colliderIndices)).toHaveLength(36);
   });
 
+  it("builds normalized face-space UVs for whitebox bevel shading", () => {
+    const brush = createBoxBrush({
+      size: {
+        x: 6,
+        y: 4,
+        z: 8
+      }
+    });
+    const derivedMesh = buildBoxBrushDerivedMeshData(brush);
+    const faceUvAttribute = derivedMesh.geometry.getAttribute("faceUv");
+    const values = Array.from(faceUvAttribute.array);
+
+    expect(faceUvAttribute.itemSize).toBe(2);
+    expect(values.length).toBeGreaterThan(0);
+    expect(values.every((value) => Number.isFinite(value))).toBe(true);
+    expect(Math.min(...values)).toBeGreaterThanOrEqual(0);
+    expect(Math.max(...values)).toBeLessThanOrEqual(1);
+  });
+
   it("reports degenerate authored whitebox faces clearly", () => {
     const brush = createBoxBrush();
     const collapsedVertex = { x: 1, y: 1, z: 1 };
