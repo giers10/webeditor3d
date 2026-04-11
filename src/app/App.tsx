@@ -986,6 +986,29 @@ function getWhiteboxSelectionModeStatus(mode: WhiteboxSelectionMode): string {
   }
 }
 
+function resolveWhiteboxSelectionModeShortcut(
+  event: globalThis.KeyboardEvent
+): WhiteboxSelectionMode | null {
+  if (event.altKey || event.ctrlKey || event.metaKey) {
+    return null;
+  }
+
+  if (event.key === "^" || (event.shiftKey && event.code === "Digit6")) {
+    return "object";
+  }
+
+  switch (event.code) {
+    case "Digit1":
+      return "face";
+    case "Digit2":
+      return "edge";
+    case "Digit3":
+      return "vertex";
+    default:
+      return null;
+  }
+}
+
 function getInteractionTriggerLabel(trigger: InteractionTriggerKind): string {
   switch (trigger) {
     case "enter":
@@ -2778,6 +2801,15 @@ export function App({ store, initialStatusMessage }: AppProps) {
         if (transformOperation !== null) {
           event.preventDefault();
           beginTransformOperation(transformOperation, "keyboard");
+          return;
+        }
+
+        const whiteboxSelectionModeShortcut =
+          resolveWhiteboxSelectionModeShortcut(event);
+
+        if (whiteboxSelectionModeShortcut !== null) {
+          event.preventDefault();
+          handleWhiteboxSelectionModeChange(whiteboxSelectionModeShortcut);
           return;
         }
       }
