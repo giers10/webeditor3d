@@ -11,6 +11,7 @@ import {
   MODEL_ASSET_PIPELINE_SCENE_DOCUMENT_VERSION,
   PLAYER_START_COLLIDER_SETTINGS_SCENE_DOCUMENT_VERSION,
   PLAYER_START_INPUT_BINDINGS_SCENE_DOCUMENT_VERSION,
+  PLAYER_START_MOVEMENT_TEMPLATE_SCENE_DOCUMENT_VERSION,
   PLAYER_START_NAVIGATION_MODE_SCENE_DOCUMENT_VERSION,
   SCENE_EDITOR_PREFERENCES_SCENE_DOCUMENT_VERSION,
   SCENE_TRANSITION_ENTITIES_SCENE_DOCUMENT_VERSION,
@@ -808,6 +809,73 @@ describe("scene document JSON", () => {
         name: "Legacy Player Movement Template Scene"
       }),
       version: STATIC_SIMPLE_MODEL_COLLIDERS_SCENE_DOCUMENT_VERSION,
+      entities: {
+        [playerStart.id]: playerStart
+      }
+    };
+
+    const migratedDocument = migrateSceneDocument(legacyDocument);
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.entities[playerStart.id]).toEqual(
+      createPlayerStartEntity({
+        ...playerStart
+      })
+    );
+  });
+
+  it("migrates version 31 Player Start movement bindings to include default jump sprint and crouch actions", () => {
+    const playerStart = {
+      id: "entity-player-start-legacy-locomotion-bindings",
+      kind: "playerStart" as const,
+      position: {
+        x: 1,
+        y: 0,
+        z: -4
+      },
+      yawDegrees: 0,
+      navigationMode: "firstPerson" as const,
+      movementTemplate: {
+        kind: "default" as const,
+        moveSpeed: 4.5,
+        capabilities: {
+          jump: true,
+          sprint: true,
+          crouch: true
+        }
+      },
+      inputBindings: {
+        keyboard: {
+          moveForward: "KeyW",
+          moveBackward: "KeyS",
+          moveLeft: "KeyA",
+          moveRight: "KeyD"
+        },
+        gamepad: {
+          moveForward: "leftStickUp" as const,
+          moveBackward: "leftStickDown" as const,
+          moveLeft: "leftStickLeft" as const,
+          moveRight: "leftStickRight" as const,
+          cameraLook: "rightStick" as const
+        }
+      },
+      collider: {
+        mode: "capsule" as const,
+        eyeHeight: 1.6,
+        capsuleRadius: 0.3,
+        capsuleHeight: 1.8,
+        boxSize: {
+          x: 0.6,
+          y: 1.8,
+          z: 0.6
+        }
+      }
+    };
+    const legacyDocument = {
+      ...createEmptySceneDocument({
+        name: "Legacy Player Locomotion Binding Scene"
+      }),
+      version: PLAYER_START_MOVEMENT_TEMPLATE_SCENE_DOCUMENT_VERSION,
       entities: {
         [playerStart.id]: playerStart
       }
