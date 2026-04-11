@@ -10428,6 +10428,49 @@ export function App({ store, initialStatusMessage }: AppProps) {
                             />
                           </label>
                         </div>
+                        <div className="vector-inputs vector-inputs--two">
+                          <label className="form-field">
+                            <span className="label">Max Step Height</span>
+                            <input
+                              data-testid="player-start-movement-max-step-height"
+                              className="text-input"
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={playerStartMovementTemplateNumberDraft.maxStepHeight}
+                              onChange={(event) => {
+                                const nextValue = event.currentTarget.value;
+                                setPlayerStartMovementTemplateNumberDraft(
+                                  (draft) => ({
+                                    ...draft,
+                                    maxStepHeight: nextValue
+                                  })
+                                );
+                              }}
+                              onBlur={() =>
+                                commitPlayerStartMovementTemplateDraft()
+                              }
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(
+                                  event,
+                                  commitPlayerStartMovementTemplateDraft
+                                )
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(
+                                  event,
+                                  commitPlayerStartMovementTemplateDraft
+                                )
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(
+                                  event,
+                                  commitPlayerStartMovementTemplateDraft
+                                )
+                              }
+                            />
+                          </label>
+                        </div>
 
                         <div className="form-section">
                           <div className="label">Jump</div>
