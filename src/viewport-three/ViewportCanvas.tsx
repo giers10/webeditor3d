@@ -109,7 +109,7 @@ export function ViewportCanvas({
     string | null
   >(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const container = containerRef.current;
 
     if (container === null) {
