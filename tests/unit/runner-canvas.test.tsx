@@ -280,6 +280,9 @@ describe("RunnerCanvas", () => {
     const runtimeScene = buildRuntimeSceneFromDocument(
       createEmptySceneDocument()
     );
+    const onRuntimeMessageChange = vi.fn();
+    const onFirstPersonTelemetryChange = vi.fn();
+    const onInteractionPromptChange = vi.fn();
     const { rerender } = render(
       <RunnerCanvas
         runtimeScene={runtimeScene}
@@ -290,9 +293,9 @@ describe("RunnerCanvas", () => {
         loadedImageAssets={{}}
         loadedAudioAssets={{}}
         navigationMode="firstPerson"
-        onRuntimeMessageChange={vi.fn()}
-        onFirstPersonTelemetryChange={vi.fn()}
-        onInteractionPromptChange={vi.fn()}
+        onRuntimeMessageChange={onRuntimeMessageChange}
+        onFirstPersonTelemetryChange={onFirstPersonTelemetryChange}
+        onInteractionPromptChange={onInteractionPromptChange}
         onSceneExitActivated={vi.fn()}
       />
     );
@@ -312,9 +315,9 @@ describe("RunnerCanvas", () => {
         loadedImageAssets={{}}
         loadedAudioAssets={{}}
         navigationMode="firstPerson"
-        onRuntimeMessageChange={vi.fn()}
-        onFirstPersonTelemetryChange={vi.fn()}
-        onInteractionPromptChange={vi.fn()}
+        onRuntimeMessageChange={onRuntimeMessageChange}
+        onFirstPersonTelemetryChange={onFirstPersonTelemetryChange}
+        onInteractionPromptChange={onInteractionPromptChange}
         onSceneExitActivated={vi.fn()}
       />
     );
