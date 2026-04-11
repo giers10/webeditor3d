@@ -371,12 +371,12 @@ function getPlayerStartMovementTemplateDescription(
 ): string {
   switch (kind) {
     case "default":
-      return "Shared movement basis for First Person and Third Person. Keeps the authored path typed and prepares explicit jump, sprint, and crouch capabilities for later slices.";
+      return "Shared movement basis for First Person and Third Person with real jump, sprint, and crouch support on the runtime controller path.";
   }
 }
 
-function getPlayerStartMovementActionLabel(
-  action: PlayerStartMovementAction
+function getPlayerStartInputActionLabel(
+  action: PlayerStartInputAction
 ): string {
   switch (action) {
     case "moveForward":
@@ -387,6 +387,12 @@ function getPlayerStartMovementActionLabel(
       return "Left";
     case "moveRight":
       return "Right";
+    case "jump":
+      return "Jump";
+    case "sprint":
+      return "Sprint";
+    case "crouch":
+      return "Crouch";
   }
 }
 
@@ -445,6 +451,33 @@ function formatPlayerStartGamepadBindingLabel(
       return "D-Pad Left";
     case "dpadRight":
       return "D-Pad Right";
+  }
+}
+
+function formatPlayerStartGamepadActionBindingLabel(
+  binding: PlayerStartGamepadActionBinding
+): string {
+  switch (binding) {
+    case "buttonSouth":
+      return "South Button";
+    case "buttonEast":
+      return "East Button";
+    case "buttonWest":
+      return "West Button";
+    case "buttonNorth":
+      return "North Button";
+    case "leftShoulder":
+      return "Left Shoulder";
+    case "rightShoulder":
+      return "Right Shoulder";
+    case "leftTrigger":
+      return "Left Trigger";
+    case "rightTrigger":
+      return "Right Trigger";
+    case "leftStickPress":
+      return "Left Stick Press";
+    case "rightStickPress":
+      return "Right Stick Press";
   }
 }
 
