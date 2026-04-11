@@ -1237,6 +1237,90 @@ function formatRunnerGroundContact(
   return `${slope === null ? "?" : slope.toFixed(1)} deg @ ${distance === null ? "?" : distance.toFixed(2)}m`;
 }
 
+function formatRunnerMovementSignals(
+  telemetry: FirstPersonTelemetry | null
+): string {
+  if (telemetry === null) {
+    return "n/a";
+  }
+
+  const activeSignals: string[] = [];
+
+  if (telemetry.signals.jumpStarted) {
+    activeSignals.push("jump");
+  }
+
+  if (telemetry.signals.leftGround) {
+    activeSignals.push("left ground");
+  }
+
+  if (telemetry.signals.startedFalling) {
+    activeSignals.push("fall");
+  }
+
+  if (telemetry.signals.landed) {
+    activeSignals.push("land");
+  }
+
+  if (telemetry.signals.enteredWater) {
+    activeSignals.push("enter water");
+  }
+
+  if (telemetry.signals.exitedWater) {
+    activeSignals.push("exit water");
+  }
+
+  if (telemetry.signals.wallContactStarted) {
+    activeSignals.push("wall");
+  }
+
+  if (telemetry.signals.headBump) {
+    activeSignals.push("head bump");
+  }
+
+  return activeSignals.length > 0 ? activeSignals.join(", ") : "none";
+}
+
+function formatRunnerAudioHook(telemetry: FirstPersonTelemetry | null): string {
+  if (telemetry === null) {
+    return "n/a";
+  }
+
+  const underwaterAmount = telemetry.hooks.audio.underwaterAmount;
+
+  if (underwaterAmount >= 0.99) {
+    return "submerged";
+  }
+
+  if (underwaterAmount <= 0.01) {
+    return "dry";
+  }
+
+  return `wet ${underwaterAmount.toFixed(2)}`;
+}
+
+function formatRunnerAnimationHook(
+  telemetry: FirstPersonTelemetry | null
+): string {
+  if (telemetry === null) {
+    return "n/a";
+  }
+
+  const animationHook = telemetry.hooks.animation;
+
+  if (animationHook.locomotionMode === "airborne") {
+    return animationHook.airborneKind === "jumping" ? "jump" : "fall";
+  }
+
+  if (animationHook.locomotionMode === "swimming") {
+    return `swim ${animationHook.movementAmount.toFixed(2)}`;
+  }
+
+  return animationHook.moving
+    ? `${animationHook.gait} ${animationHook.movementAmount.toFixed(2)}`
+    : "idle";
+}
+
 function formatWorldBackgroundLabel(world: WorldSettings): string {
   if (world.background.mode === "solid") {
     return "Solid";
@@ -7284,6 +7368,24 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       : firstPersonTelemetry.inFogVolume
                         ? "inside"
                         : "outside"}
+                  </div>
+                </div>
+                <div className="stat-card">
+                  <div className="label">Signals</div>
+                  <div className="value">
+                    {formatRunnerMovementSignals(firstPersonTelemetry)}
+                  </div>
+                </div>
+                <div className="stat-card">
+                  <div className="label">Audio Hook</div>
+                  <div className="value">
+                    {formatRunnerAudioHook(firstPersonTelemetry)}
+                  </div>
+                </div>
+                <div className="stat-card">
+                  <div className="label">Animation Hook</div>
+                  <div className="value">
+                    {formatRunnerAnimationHook(firstPersonTelemetry)}
                   </div>
                 </div>
               </div>
