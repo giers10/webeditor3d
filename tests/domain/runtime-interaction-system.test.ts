@@ -17,6 +17,8 @@ import { RuntimeInteractionSystem } from "../../src/runtime-three/runtime-intera
 import type { RuntimeSceneDefinition } from "../../src/runtime-three/runtime-scene-build";
 
 function createRuntimeSceneFixture(): RuntimeSceneDefinition {
+  const movementTemplate = createPlayerStartMovementTemplate();
+
   return {
     world: {
       ...createDefaultWorldSettings(),
@@ -134,8 +136,11 @@ function createRuntimeSceneFixture(): RuntimeSceneDefinition {
     },
     playerMovement: {
       templateKind: "default",
-      moveSpeed: createPlayerStartMovementTemplate().moveSpeed,
-      capabilities: createPlayerStartMovementTemplate().capabilities
+      moveSpeed: movementTemplate.moveSpeed,
+      capabilities: movementTemplate.capabilities,
+      jump: movementTemplate.jump,
+      sprint: movementTemplate.sprint,
+      crouch: movementTemplate.crouch
     },
     navigationMode: "thirdPerson",
     spawn: {
