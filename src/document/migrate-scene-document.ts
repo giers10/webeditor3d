@@ -1507,6 +1507,10 @@ function readPlayerStartEntity(value: unknown, label: string): EntityInstance {
     name: readOptionalEntityName(value.name, `${label}.name`),
     position: readVec3(value.position, `${label}.position`),
     yawDegrees: expectFiniteNumber(value.yawDegrees, `${label}.yawDegrees`),
+    navigationMode: readPlayerStartNavigationMode(
+      value.navigationMode,
+      `${label}.navigationMode`
+    ),
     collider: readPlayerStartColliderSettings(
       value.collider,
       `${label}.collider`
