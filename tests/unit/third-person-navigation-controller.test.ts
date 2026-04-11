@@ -4,6 +4,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Vec3 } from "../../src/core/vector";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
 import { createPlayerStartEntity } from "../../src/entities/entity-instances";
+import type {
+  FirstPersonPlayerShape,
+  ResolvedPlayerMotion
+} from "../../src/runtime-three/player-collision";
 import { buildRuntimeSceneFromDocument } from "../../src/runtime-three/runtime-scene-build";
 import { ThirdPersonNavigationController } from "../../src/runtime-three/third-person-navigation-controller";
 
@@ -39,14 +43,19 @@ function createRuntimeControllerContext() {
       resolveFirstPersonMotion: (
         feetPosition: Vec3,
         motion: Vec3,
-        _shape
-      ) => ({
+        _shape: FirstPersonPlayerShape
+      ): ResolvedPlayerMotion => ({
         feetPosition: {
           x: feetPosition.x + motion.x,
           y: feetPosition.y + motion.y,
           z: feetPosition.z + motion.z
         },
-        grounded: false
+        grounded: false,
+        collidedAxes: {
+          x: false,
+          y: false,
+          z: false
+        }
       }),
       resolvePlayerVolumeState: () => ({
         inWater: false,
