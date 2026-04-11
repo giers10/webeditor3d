@@ -79,7 +79,9 @@ export function resolveRuntimePlayerMovementHooks(options: {
         options.signals.startedFalling ||
         options.locomotionState.airborneKind === "falling",
       landing: options.signals.landed,
-      swimming: options.locomotionState.locomotionMode === "swimming",
+      swimming:
+        options.locomotionState.locomotionMode === "swimming" ||
+        options.locomotionState.locomotionMode === "diving",
       underwaterAmount
     },
     audio: {
