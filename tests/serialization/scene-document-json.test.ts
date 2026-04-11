@@ -652,6 +652,23 @@ describe("scene document JSON", () => {
     );
   });
 
+  it("round-trips authored third-person Player Start navigation", () => {
+    const playerStart = createPlayerStartEntity({
+      id: "entity-player-start-third-person",
+      navigationMode: "thirdPerson"
+    });
+    const document = {
+      ...createEmptySceneDocument({ name: "Third Person Player Start Scene" }),
+      entities: {
+        [playerStart.id]: playerStart
+      }
+    };
+
+    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(
+      document
+    );
+  });
+
   it("round-trips the initial typed entity registry without mixing entities into model instances", () => {
     const playerStart = createPlayerStartEntity({
       id: "entity-player-start-main"
