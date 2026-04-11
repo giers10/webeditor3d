@@ -327,6 +327,61 @@ describe("player-locomotion", () => {
     expect(step?.verticalVelocity).toBeCloseTo(DEFAULT_MOVEMENT.jump.speed);
   });
 
+  it("stays airborne when a wall edge reports grounded without floor support", () => {
+    const step = stepPlayerLocomotion({
+      dt: 0.1,
+      feetPosition: {
+        x: 0,
+        y: 1,
+        z: 0
+      },
+      movementYawRadians: 0,
+      standingShape: FIRST_PERSON_PLAYER_SHAPE,
+      verticalVelocity: -1.5,
+      previousLocomotionState: createIdleRuntimeLocomotionState("airborne"),
+      previousPlanarDisplacement: {
+        x: 0,
+        y: 0,
+        z: 0.45
+      },
+      jumpBufferRemainingMs: 0,
+      coyoteTimeRemainingMs: 0,
+      jumpHoldRemainingMs: 0,
+      crouched: false,
+      wasJumpPressed: false,
+      input: FORWARD_INPUT,
+      movement: DEFAULT_MOVEMENT,
+      resolveMotion: (feetPosition, motion): ResolvedPlayerMotion => ({
+        feetPosition: {
+          x: feetPosition.x + motion.x * 0.2,
+          y: feetPosition.y + motion.y * 0.2,
+          z: feetPosition.z + motion.z * 0.2
+        },
+        grounded: true,
+        collisionCount: 1,
+        groundCollisionNormal: null,
+        collidedAxes: {
+          x: true,
+          y: false,
+          z: false
+        }
+      }),
+      resolveVolumeState: () => createVolumeState(),
+      probeGround: () => ({
+        grounded: false,
+        distance: null,
+        normal: null,
+        slopeDegrees: null
+      }),
+      canOccupyShape: () => true
+    });
+
+    expect(step).not.toBeNull();
+    expect(step?.locomotionState.grounded).toBe(false);
+    expect(step?.locomotionState.locomotionMode).toBe("airborne");
+    expect(step?.verticalVelocity).toBeLessThan(0);
+  });
+
   it("sinks toward the water surface while keeping the head above water", () => {
     const step = stepPlayerLocomotion({
       dt: 0.1,

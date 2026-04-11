@@ -641,7 +641,7 @@ export function stepPlayerLocomotion(
     !ascending &&
     activeShape.mode !== "none" &&
     !nextSwimmableWater &&
-    (resolvedMotion.grounded || groundProbe.grounded);
+    groundProbe.grounded;
 
   if (activeShape.mode === "none" || grounded || headBump) {
     verticalVelocity = 0;
