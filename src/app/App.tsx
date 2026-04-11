@@ -5638,7 +5638,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
       }
 
       const projectBytes = await saveProjectPackage(
-        editorState.document,
+        editorState.projectDocument,
         projectAssetStorage
       );
       const blobBytes = new Uint8Array(projectBytes);
