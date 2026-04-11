@@ -518,6 +518,63 @@ describe("transform foundation integration", () => {
     expect(screen.getByTestId("transform-translate-button")).not.toBeDisabled();
   });
 
+  it("switches whitebox selection modes through keyboard shortcuts", async () => {
+    const { store, brush } = await renderTransformFixtureApp();
+
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole("button", { name: /^Brush Transform Fixture$/ })
+      );
+    });
+
+    fireEvent.keyDown(window, {
+      key: "1",
+      code: "Digit1"
+    });
+
+    expect(store.getState().whiteboxSelectionMode).toBe("face");
+    expect(screen.getByText(/selection mode set to face/i)).toBeInTheDocument();
+
+    act(() => {
+      store.setSelection({
+        kind: "brushEdge",
+        brushId: brush.id,
+        edgeId: "edgeX_posY_negZ"
+      });
+    });
+
+    fireEvent.keyDown(window, {
+      key: "2",
+      code: "Digit2"
+    });
+
+    expect(store.getState().whiteboxSelectionMode).toBe("edge");
+    expect(store.getState().selection).toEqual({
+      kind: "brushEdge",
+      brushId: brush.id,
+      edgeId: "edgeX_posY_negZ"
+    });
+
+    fireEvent.keyDown(window, {
+      key: "3",
+      code: "Digit3"
+    });
+
+    expect(store.getState().whiteboxSelectionMode).toBe("vertex");
+    expect(store.getState().selection).toEqual({
+      kind: "none"
+    });
+
+    fireEvent.keyDown(window, {
+      key: "^",
+      code: "Digit6",
+      shiftKey: true
+    });
+
+    expect(store.getState().whiteboxSelectionMode).toBe("object");
+    expect(screen.getByText(/selection mode set to object/i)).toBeInTheDocument();
+  });
+
   it("moves an entity through the shared transform controller", async () => {
     const { store, playerStart, viewportHost } =
       await renderTransformFixtureApp();
