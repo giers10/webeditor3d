@@ -137,4 +137,46 @@ describe("Player Start inspector", () => {
       }
     });
   });
+
+  it("shows authored jump, sprint, and crouch bindings for a selected Player Start", async () => {
+    const playerStart = createPlayerStartEntity({
+      id: "entity-player-start-locomotion-bindings",
+      name: "Locomotion Bindings"
+    });
+    const store = createEditorStore({
+      initialDocument: {
+        ...createEmptySceneDocument({ name: "Player Start Binding Scene" }),
+        entities: {
+          [playerStart.id]: playerStart
+        }
+      }
+    });
+
+    render(<App store={store} />);
+
+    await waitFor(() => {
+      expect(viewportHostInstances.length).toBeGreaterThan(0);
+    });
+
+    act(() => {
+      store.setSelection({
+        kind: "entities",
+        ids: [playerStart.id]
+      });
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("player-start-keyboard-binding-jump")).toBeVisible();
+    });
+
+    expect(screen.getByTestId("player-start-gamepad-binding-jump")).toHaveValue(
+      "buttonSouth"
+    );
+    expect(
+      screen.getByTestId("player-start-gamepad-binding-sprint")
+    ).toHaveValue("leftStickPress");
+    expect(
+      screen.getByTestId("player-start-gamepad-binding-crouch")
+    ).toHaveValue("buttonEast");
+  });
 });
