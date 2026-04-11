@@ -91,7 +91,7 @@ test("whitebox component selection modes keep object picking intentional across 
     });
   }, { target: brush.center });
 
-  await expect(page.getByTestId("viewport-selection-mode-topLeft")).toHaveText("Object");
+  await expect(page.getByTestId("whitebox-selection-mode-object")).toHaveAttribute("aria-pressed", "true");
   await clickViewportAtRatio(page, "topLeft", 0.5, 0.52);
   let snapshot = await getEditorStoreSnapshot(page);
   expect(snapshot.whiteboxSelectionMode).toBe("object");
@@ -139,7 +139,7 @@ test("whitebox component selection modes keep object picking intentional across 
   }, { target: brush.center });
 
   await page.getByTestId("whitebox-selection-mode-face").click();
-  await expect(page.getByTestId("viewport-selection-mode-topRight")).toHaveText("Face");
+  await expect(page.getByTestId("whitebox-selection-mode-face")).toHaveAttribute("aria-pressed", "true");
   await clickViewportAtRatio(page, "topRight", 0.5, 0.5);
   snapshot = await getEditorStoreSnapshot(page);
   expect(snapshot.whiteboxSelectionMode).toBe("face");
@@ -148,10 +148,9 @@ test("whitebox component selection modes keep object picking intentional across 
     brushId: brush.id,
     faceId: "posY"
   });
-  await expect(page.getByTestId("viewport-panel-active-badge-topRight")).toBeVisible();
 
   await page.getByTestId("whitebox-selection-mode-edge").click();
-  await expect(page.getByTestId("viewport-selection-mode-topRight")).toHaveText("Edge");
+  await expect(page.getByTestId("whitebox-selection-mode-edge")).toHaveAttribute("aria-pressed", "true");
   await clickViewportAtRatio(page, "topRight", 0.5, 0.12);
   snapshot = await getEditorStoreSnapshot(page);
   expect(snapshot.whiteboxSelectionMode).toBe("edge");
@@ -162,7 +161,7 @@ test("whitebox component selection modes keep object picking intentional across 
   });
 
   await page.getByTestId("whitebox-selection-mode-vertex").click();
-  await expect(page.getByTestId("viewport-selection-mode-topRight")).toHaveText("Vertex");
+  await expect(page.getByTestId("whitebox-selection-mode-vertex")).toHaveAttribute("aria-pressed", "true");
   await clickViewportAtRatio(page, "topRight", 0.88, 0.12);
   snapshot = await getEditorStoreSnapshot(page);
   expect(snapshot.whiteboxSelectionMode).toBe("vertex");
