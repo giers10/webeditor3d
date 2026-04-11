@@ -66,7 +66,6 @@ export interface StepPlayerLocomotionOptions {
   dt: number;
   feetPosition: Vec3;
   movementYawRadians: number;
-  activeShape: FirstPersonPlayerShape;
   standingShape: FirstPersonPlayerShape;
   verticalVelocity: number;
   crouched: boolean;
