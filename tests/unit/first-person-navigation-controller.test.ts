@@ -297,7 +297,31 @@ describe("FirstPersonNavigationController", () => {
     });
   });
 
-  it("publishes jumping locomotion state when the jump action starts from grounded contact", () => {
+  it("keeps jump ascent alive when the ground probe still sees nearby floor", () => {
+    const probePlayerGround = vi.fn(
+      (
+        feetPosition: Vec3,
+        _shape: FirstPersonPlayerShape,
+        _maxDistance: number
+      ): PlayerGroundProbeResult => {
+        if (feetPosition.y <= 0.13) {
+          return {
+            grounded: true,
+            distance: feetPosition.y,
+            normal: { x: 0, y: 1, z: 0 },
+            slopeDegrees: 0
+          };
+        }
+
+        return {
+          grounded: false,
+          distance: null,
+          normal: null,
+          slopeDegrees: null
+        };
+      }
+    );
+
     const { context } = createRuntimeControllerContext(
       createPlayerStartEntity({
         id: "entity-player-start-jump"
@@ -318,41 +342,42 @@ describe("FirstPersonNavigationController", () => {
         }
       }),
       {
-        probePlayerGround: vi
-          .fn<
-            (
-              feetPosition: Vec3,
-              shape: FirstPersonPlayerShape,
-              maxDistance: number
-            ) => PlayerGroundProbeResult
-          >()
-          .mockReturnValue({
-            grounded: true,
-            distance: 0,
-            normal: { x: 0, y: 1, z: 0 },
-            slopeDegrees: 0
-          })
+        probePlayerGround
       }
     );
     const controller = new FirstPersonNavigationController();
 
     controller.activate(context);
-    controller.update(0.1);
+    controller.update(1 / 60);
     window.dispatchEvent(new KeyboardEvent("keydown", { code: "Space" }));
-    controller.update(0.1);
+    controller.update(1 / 60);
+
+    const jumpTelemetry =
+      context.setPlayerControllerTelemetry.mock.calls.at(-1)?.[0];
+
+    controller.update(1 / 60);
 
     const telemetry =
       context.setPlayerControllerTelemetry.mock.calls.at(-1)?.[0];
+
+    expect(jumpTelemetry?.grounded).toBe(false);
+    expect(jumpTelemetry?.locomotionState.locomotionMode).toBe("airborne");
+    expect(jumpTelemetry?.locomotionState.airborneKind).toBe("jumping");
+    expect(jumpTelemetry?.signals.jumpStarted).toBe(true);
+    expect(jumpTelemetry?.signals.leftGround).toBe(true);
 
     expect(telemetry?.grounded).toBe(false);
     expect(telemetry?.locomotionState.locomotionMode).toBe("airborne");
     expect(telemetry?.locomotionState.airborneKind).toBe("jumping");
     expect(telemetry?.locomotionState.verticalVelocity).toBeGreaterThan(0);
-    expect(telemetry?.feetPosition.y ?? 0).toBeGreaterThan(0);
-    expect(telemetry?.signals.jumpStarted).toBe(true);
-    expect(telemetry?.signals.leftGround).toBe(true);
+    expect(telemetry?.feetPosition.y ?? 0).toBeGreaterThan(
+      jumpTelemetry?.feetPosition.y ?? 0
+    );
+    expect(telemetry?.signals.jumpStarted).toBe(false);
+    expect(telemetry?.signals.leftGround).toBe(false);
     expect(telemetry?.hooks.camera.jumping).toBe(true);
     expect(telemetry?.hooks.animation.airborneKind).toBe("jumping");
+    expect(probePlayerGround).toHaveBeenCalled();
 
     window.dispatchEvent(new KeyboardEvent("keyup", { code: "Space" }));
     controller.deactivate(context, {
