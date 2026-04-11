@@ -72,7 +72,6 @@ import type {
   RuntimePlayerVolumeState
 } from "./navigation-controller";
 import { RapierCollisionWorld } from "./rapier-collision-world";
-import { createEmptyRuntimeMovementTransitionSignals } from "./player-controller-telemetry";
 import {
   RuntimeInteractionSystem,
   type RuntimeInteractionDispatcher,
