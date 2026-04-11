@@ -300,7 +300,8 @@ export class ThirdPersonNavigationController implements NavigationController {
         resolveVolumeState: (feetPosition) =>
           this.context?.resolvePlayerVolumeState(feetPosition) ?? {
             inWater: false,
-            inFog: false
+            inFog: false,
+            waterSurfaceHeight: null
           },
         probeGround: (feetPosition, shape, maxDistance) =>
           this.context?.probePlayerGround?.(feetPosition, shape, maxDistance) ?? {
@@ -435,6 +436,10 @@ export class ThirdPersonNavigationController implements NavigationController {
       y: this.context.camera.position.y,
       z: this.context.camera.position.z
     });
+    const cameraSubmerged =
+      cameraVolumeState.inWater &&
+      cameraVolumeState.waterSurfaceHeight !== null &&
+      this.context.camera.position.y < cameraVolumeState.waterSurfaceHeight;
 
     const telemetry = createPlayerControllerTelemetry({
       feetPosition: {
@@ -447,7 +452,7 @@ export class ThirdPersonNavigationController implements NavigationController {
         this.context.getRuntimeScene().playerMovement
       ),
       inWaterVolume: this.inWaterVolume,
-      cameraSubmerged: cameraVolumeState.inWater,
+      cameraSubmerged,
       inFogVolume: this.inFogVolume,
       pointerLocked: false,
       spawn: this.context.getRuntimeScene().spawn,
