@@ -1049,6 +1049,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [boxVolumeFogPaddingDraft, setBoxVolumeFogPaddingDraft] = useState("0.2");
   const [whiteboxSnapEnabled, setWhiteboxSnapEnabled] = useState(true);
   const [whiteboxSnapStepDraft, setWhiteboxSnapStepDraft] = useState(String(DEFAULT_GRID_SIZE));
+  const [viewportGridVisible, setViewportGridVisible] = useState(true);
   const [uvOffsetDraft, setUvOffsetDraft] = useState(createVec2Draft(createDefaultFaceUvState().offset));
   const [uvScaleDraft, setUvScaleDraft] = useState(createVec2Draft(createDefaultFaceUvState().scale));
   const [entityPositionDraft, setEntityPositionDraft] = useState(createVec3Draft(DEFAULT_ENTITY_POSITION));
@@ -2111,8 +2112,24 @@ export function App({ store, initialStatusMessage }: AppProps) {
       return;
     }
 
-    store.setTransformAxisConstraint(axis);
-    setStatusMessage(`Constrained ${getTransformOperationLabel(transformSession.operation).toLowerCase()} to ${axis.toUpperCase()}.`);
+    const nextAxisConstraintSpace =
+      transformSession.axisConstraint === axis ? (transformSession.axisConstraintSpace === "world" ? "local" : "world") : "world";
+
+    if (nextAxisConstraintSpace === "local" && !supportsLocalTransformAxisConstraint(transformSession, axis)) {
+      setStatusMessage(
+        `Local ${getTransformAxisLabel(axis)} is not supported for ${getTransformOperationLabel(transformSession.operation).toLowerCase()} on ${getTransformTargetLabel(
+          transformSession.target
+        )}.`
+      );
+      return;
+    }
+
+    store.setTransformAxisConstraint(axis, nextAxisConstraintSpace);
+    setStatusMessage(
+      `Constrained ${getTransformOperationLabel(transformSession.operation).toLowerCase()} to ${getTransformAxisSpaceLabel(
+        nextAxisConstraintSpace
+      ).toLowerCase()} ${getTransformAxisLabel(axis)}.`
+    );
   };
 
   const handleViewportQuadResizeStart =
@@ -2184,6 +2201,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
     const nextEnabled = !whiteboxSnapEnabled;
     setWhiteboxSnapEnabled(nextEnabled);
     setStatusMessage(nextEnabled ? `Grid snap enabled at ${whiteboxSnapStep}m.` : "Grid snap disabled for whitebox transforms.");
+  };
+
+  const handleViewportGridToggle = () => {
+    const nextVisible = !viewportGridVisible;
+    setViewportGridVisible(nextVisible);
+    setStatusMessage(nextVisible ? "Viewport grid enabled." : "Viewport grid hidden.");
   };
 
   const handleWhiteboxSnapStepBlur = () => {
@@ -5270,6 +5293,15 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
           <div className="toolbar__group" role="group" aria-label="Whitebox snap settings">
             <button
+              className={`toolbar__button ${viewportGridVisible ? "toolbar__button--active" : ""}`}
+              type="button"
+              data-testid="viewport-grid-toggle"
+              aria-pressed={viewportGridVisible}
+              onClick={handleViewportGridToggle}
+            >
+              {viewportGridVisible ? "Grid On" : "Grid Off"}
+            </button>
+            <button
               className={`toolbar__button ${whiteboxSnapEnabled ? "toolbar__button--active" : ""}`}
               type="button"
               data-testid="whitebox-snap-toggle"
@@ -5585,6 +5617,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 whiteboxSelectionMode={whiteboxSelectionMode}
                 whiteboxSnapEnabled={whiteboxSnapEnabled}
                 whiteboxSnapStep={whiteboxSnapStep}
+                viewportGridVisible={viewportGridVisible}
                 selection={editorState.selection}
                 toolMode={editorState.toolMode}
                 toolPreview={viewportToolPreview}
