@@ -1287,7 +1287,12 @@ export class RuntimeHost {
       mixer.update(dt);
     }
 
-    if (this.runtimeScene !== null && this.activeController === this.firstPersonController && this.currentFirstPersonTelemetry !== null) {
+    if (
+      this.sceneReady &&
+      this.runtimeScene !== null &&
+      this.activeController === this.firstPersonController &&
+      this.currentFirstPersonTelemetry !== null
+    ) {
       this.interactionSystem.updatePlayerPosition(this.currentFirstPersonTelemetry.feetPosition, this.runtimeScene, this.createInteractionDispatcher());
       this.camera.getWorldDirection(this.cameraForward);
       this.setInteractionPrompt(
@@ -1407,16 +1412,24 @@ export class RuntimeHost {
   }
 
   private handleRuntimeClick = () => {
-    this.audioSystem.handleUserGesture();
-
-    if (this.runtimeScene === null || this.activeController !== this.firstPersonController || this.currentInteractionPrompt === null) {
+    if (
+      !this.sceneReady ||
+      this.runtimeScene === null ||
+      this.activeController !== this.firstPersonController ||
+      this.currentInteractionPrompt === null
+    ) {
       return;
     }
 
+    this.audioSystem.handleUserGesture();
     this.interactionSystem.dispatchClickInteraction(this.currentInteractionPrompt.sourceEntityId, this.runtimeScene, this.createInteractionDispatcher());
   };
 
   private handleRuntimePointerDown = () => {
+    if (!this.sceneReady) {
+      return;
+    }
+
     this.audioSystem.handleUserGesture();
   };
 }
