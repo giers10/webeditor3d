@@ -109,10 +109,17 @@ describe("project document JSON", () => {
         version: PLAYER_START_GAMEPAD_CAMERA_LOOK_SCENE_DOCUMENT_VERSION,
         activeSceneId: "scene-main",
         scenes: {
-          "scene-main": createEmptyProjectScene({
-            id: "scene-main",
-            name: "Legacy Entry"
-          })
+          "scene-main": (() => {
+            const legacyScene = createEmptyProjectScene({
+              id: "scene-main",
+              name: "Legacy Entry"
+            });
+
+            return {
+              ...legacyScene,
+              editorPreferences: undefined
+            };
+          })()
         },
         materials: createEmptyProjectDocument().materials,
         textures: {},
