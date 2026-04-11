@@ -78,7 +78,6 @@ export function RunnerCanvas({
       runtimeHost.mount(container);
       runtimeHost.setRuntimeMessageHandler(onRuntimeMessageChange);
       runtimeHost.setSceneLoadStateHandler(setSceneLoadState);
-      runtimeHost.setSceneExitHandler(onSceneExitActivated);
       runtimeHost.setFirstPersonTelemetryHandler((telemetry) => {
         setFirstPersonTelemetry(telemetry);
         onFirstPersonTelemetryChange(telemetry);
@@ -116,9 +115,12 @@ export function RunnerCanvas({
   }, [
     onFirstPersonTelemetryChange,
     onInteractionPromptChange,
-    onSceneExitActivated,
     onRuntimeMessageChange
   ]);
+
+  useEffect(() => {
+    hostRef.current?.setSceneExitHandler(onSceneExitActivated);
+  }, [onSceneExitActivated]);
 
   useEffect(() => {
     hostRef.current?.updateAssets(
