@@ -7,14 +7,41 @@ import { createPlayerStartEntity } from "../../src/entities/entity-instances";
 import { buildRuntimeSceneFromDocument } from "../../src/runtime-three/runtime-scene-build";
 import { FirstPersonNavigationController } from "../../src/runtime-three/first-person-navigation-controller";
 
-function createRuntimeControllerContext() {
+function createMockGamepad(options: {
+  axes?: number[];
+  pressedButtons?: number[];
+} = {}): Gamepad {
+  return {
+    connected: true,
+    axes: options.axes ?? [0, 0],
+    buttons: Array.from({ length: 16 }, (_, index) => ({
+      pressed: options.pressedButtons?.includes(index) ?? false,
+      touched: false,
+      value: options.pressedButtons?.includes(index) ?? false ? 1 : 0
+    })),
+    id: "mock-standard-gamepad",
+    index: 0,
+    mapping: "standard",
+    timestamp: 0,
+    vibrationActuator: null,
+    hapticActuators: []
+  } as unknown as Gamepad;
+}
+
+function createRuntimeControllerContext(
+  playerStart = createPlayerStartEntity({
+    id: "entity-player-start-main"
+  }),
+  resolveFirstPersonMotion: (
+    feetPosition: Vec3,
+    motion: Vec3
+  ) => { feetPosition: Vec3; grounded: boolean } | null = () => null
+) {
   const runtimeScene = buildRuntimeSceneFromDocument(
     {
       ...createEmptySceneDocument({ name: "Pointer Lock Scene" }),
       entities: {
-        "entity-player-start-main": createPlayerStartEntity({
-          id: "entity-player-start-main"
-        })
+        [playerStart.id]: playerStart
       }
     },
     {
@@ -29,7 +56,11 @@ function createRuntimeControllerContext() {
       camera: new PerspectiveCamera(70, 1, 0.05, 1000),
       domElement,
       getRuntimeScene: () => runtimeScene,
-      resolveFirstPersonMotion: () => null,
+      resolveFirstPersonMotion: (
+        feetPosition: Vec3,
+        motion: Vec3,
+        _shape
+      ) => resolveFirstPersonMotion(feetPosition, motion),
       resolvePlayerVolumeState: () => ({
         inWater: false,
         inFog: false
@@ -93,5 +124,60 @@ describe("FirstPersonNavigationController", () => {
     controller.deactivate(context);
 
     expect(exitPointerLockSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("uses authored gamepad bindings instead of the hardcoded stick mapping", () => {
+    const playerStart = createPlayerStartEntity({
+      id: "entity-player-start-custom-gamepad",
+      inputBindings: {
+        gamepad: {
+          moveForward: "dpadUp",
+          moveBackward: "dpadDown",
+          moveLeft: "dpadLeft",
+          moveRight: "dpadRight"
+        }
+      }
+    });
+    const { context } = createRuntimeControllerContext(
+      playerStart,
+      (feetPosition, motion) => ({
+        feetPosition: {
+          x: feetPosition.x + motion.x,
+          y: feetPosition.y + motion.y,
+          z: feetPosition.z + motion.z
+        },
+        grounded: false
+      })
+    );
+    const controller = new FirstPersonNavigationController();
+    const getGamepads = vi.fn<() => Gamepad[]>(() => [
+      createMockGamepad({
+        axes: [0, -1]
+      })
+    ]);
+
+    Object.defineProperty(navigator, "getGamepads", {
+      configurable: true,
+      value: getGamepads
+    });
+
+    controller.activate(context);
+    controller.update(1);
+
+    expect(context.camera.position.z).toBe(0);
+
+    getGamepads.mockReturnValue([
+      createMockGamepad({
+        pressedButtons: [12]
+      })
+    ]);
+
+    controller.update(1);
+
+    expect(context.camera.position.z).toBeGreaterThan(0);
+
+    controller.deactivate(context, {
+      releasePointerLock: false
+    });
   });
 });
