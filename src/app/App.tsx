@@ -209,6 +209,7 @@ import {
   clonePlayerStartMovementTemplate,
   createInteractableEntity,
   createPointLightEntity,
+  inferPlayerStartMovementTemplateKind,
   createPlayerStartInputBindings,
   createPlayerStartMovementTemplate,
   createPlayerStartEntity,
@@ -320,6 +321,16 @@ interface Vec3Draft {
   z: string;
 }
 
+interface PlayerStartMovementTemplateNumberDraft {
+  moveSpeed: string;
+  jumpSpeed: string;
+  jumpBufferMs: string;
+  coyoteTimeMs: string;
+  variableJumpMaxHoldMs: string;
+  sprintSpeedMultiplier: string;
+  crouchSpeedMultiplier: string;
+}
+
 type InteractionSourceEntity = Extract<
   EntityInstance,
   { kind: "triggerVolume" | "interactable" }
@@ -363,6 +374,10 @@ function getPlayerStartMovementTemplateLabel(
   switch (kind) {
     case "default":
       return "Default";
+    case "responsive":
+      return "Responsive";
+    case "custom":
+      return "Custom";
   }
 }
 
@@ -372,6 +387,10 @@ function getPlayerStartMovementTemplateDescription(
   switch (kind) {
     case "default":
       return "Shared movement basis for First Person and Third Person with real jump, sprint, and crouch support on the runtime controller path.";
+    case "responsive":
+      return "Adds authored jump assists like jump buffering, coyote time, and variable jump height while keeping the same core movement basis.";
+    case "custom":
+      return "Uses the exact authored movement settings from the controls below.";
   }
 }
 
@@ -565,6 +584,20 @@ function createVec3Draft(vector: Vec3): Vec3Draft {
   };
 }
 
+function createPlayerStartMovementTemplateNumberDraft(
+  template: PlayerStartMovementTemplate
+): PlayerStartMovementTemplateNumberDraft {
+  return {
+    moveSpeed: String(template.moveSpeed),
+    jumpSpeed: String(template.jump.speed),
+    jumpBufferMs: String(template.jump.bufferMs),
+    coyoteTimeMs: String(template.jump.coyoteTimeMs),
+    variableJumpMaxHoldMs: String(template.jump.maxHoldMs),
+    sprintSpeedMultiplier: String(template.sprint.speedMultiplier),
+    crouchSpeedMultiplier: String(template.crouch.speedMultiplier)
+  };
+}
+
 function readVec2Draft(draft: Vec2Draft, label: string): Vec2 {
   const vector = {
     x: Number(draft.x),
@@ -679,6 +712,18 @@ function readPositiveNumberDraft(source: string, label: string): number {
 
   if (!Number.isFinite(value) || value <= 0) {
     throw new Error(`${label} must be a finite number greater than zero.`);
+  }
+
+  return value;
+}
+
+function readNonNegativeNumberDraft(source: string, label: string): number {
+  const value = Number(source);
+
+  if (!Number.isFinite(value) || value < 0) {
+    throw new Error(
+      `${label} must be a finite number greater than or equal to zero.`
+    );
   }
 
   return value;
