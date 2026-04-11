@@ -1581,7 +1581,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [playerStartInputBindingsDraft, setPlayerStartInputBindingsDraft] =
     useState<PlayerStartInputBindings>(createPlayerStartInputBindings());
   const [playerStartKeyboardCaptureAction, setPlayerStartKeyboardCaptureAction] =
-    useState<PlayerStartMovementAction | null>(null);
+    useState<PlayerStartInputAction | null>(null);
   const [soundEmitterAudioAssetIdDraft, setSoundEmitterAudioAssetIdDraft] =
     useState(DEFAULT_SOUND_EMITTER_AUDIO_ASSET_ID ?? "");
   const [soundEmitterVolumeDraft, setSoundEmitterVolumeDraft] = useState(
