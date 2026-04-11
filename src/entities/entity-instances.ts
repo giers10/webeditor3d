@@ -57,6 +57,16 @@ export const PLAYER_START_MOVEMENT_ACTIONS = [
 ] as const;
 export type PlayerStartMovementAction =
   (typeof PLAYER_START_MOVEMENT_ACTIONS)[number];
+export const PLAYER_START_LOCOMOTION_ACTIONS = [
+  "jump",
+  "sprint",
+  "crouch"
+] as const;
+export type PlayerStartLocomotionAction =
+  (typeof PLAYER_START_LOCOMOTION_ACTIONS)[number];
+export type PlayerStartInputAction =
+  | PlayerStartMovementAction
+  | PlayerStartLocomotionAction;
 export type PlayerStartKeyboardBindingCode = string;
 export const PLAYER_START_GAMEPAD_BINDINGS = [
   "leftStickUp",
@@ -70,6 +80,20 @@ export const PLAYER_START_GAMEPAD_BINDINGS = [
 ] as const;
 export type PlayerStartGamepadBinding =
   (typeof PLAYER_START_GAMEPAD_BINDINGS)[number];
+export const PLAYER_START_GAMEPAD_ACTION_BINDINGS = [
+  "buttonSouth",
+  "buttonEast",
+  "buttonWest",
+  "buttonNorth",
+  "leftShoulder",
+  "rightShoulder",
+  "leftTrigger",
+  "rightTrigger",
+  "leftStickPress",
+  "rightStickPress"
+] as const;
+export type PlayerStartGamepadActionBinding =
+  (typeof PLAYER_START_GAMEPAD_ACTION_BINDINGS)[number];
 export const PLAYER_START_GAMEPAD_CAMERA_LOOK_BINDINGS = [
   "rightStick"
 ] as const;
@@ -81,6 +105,9 @@ export interface PlayerStartKeyboardBindings {
   moveBackward: PlayerStartKeyboardBindingCode;
   moveLeft: PlayerStartKeyboardBindingCode;
   moveRight: PlayerStartKeyboardBindingCode;
+  jump: PlayerStartKeyboardBindingCode;
+  sprint: PlayerStartKeyboardBindingCode;
+  crouch: PlayerStartKeyboardBindingCode;
 }
 
 export interface PlayerStartGamepadBindings {
@@ -88,6 +115,9 @@ export interface PlayerStartGamepadBindings {
   moveBackward: PlayerStartGamepadBinding;
   moveLeft: PlayerStartGamepadBinding;
   moveRight: PlayerStartGamepadBinding;
+  jump: PlayerStartGamepadActionBinding;
+  sprint: PlayerStartGamepadActionBinding;
+  crouch: PlayerStartGamepadActionBinding;
   cameraLook: PlayerStartGamepadCameraLookBinding;
 }
 
@@ -245,7 +275,10 @@ export const DEFAULT_PLAYER_START_KEYBOARD_BINDINGS: PlayerStartKeyboardBindings
     moveForward: "KeyW",
     moveBackward: "KeyS",
     moveLeft: "KeyA",
-    moveRight: "KeyD"
+    moveRight: "KeyD",
+    jump: "Space",
+    sprint: "ShiftLeft",
+    crouch: "ControlLeft"
   };
 export const DEFAULT_PLAYER_START_GAMEPAD_BINDINGS: PlayerStartGamepadBindings =
   {
@@ -253,6 +286,9 @@ export const DEFAULT_PLAYER_START_GAMEPAD_BINDINGS: PlayerStartGamepadBindings =
     moveBackward: "leftStickDown",
     moveLeft: "leftStickLeft",
     moveRight: "leftStickRight",
+    jump: "buttonSouth",
+    sprint: "leftStickPress",
+    crouch: "buttonEast",
     cameraLook: "rightStick"
   };
 export const DEFAULT_SCENE_ENTRY_YAW_DEGREES = 0;
@@ -364,6 +400,14 @@ export function isPlayerStartGamepadBinding(
   );
 }
 
+export function isPlayerStartGamepadActionBinding(
+  value: string
+): value is PlayerStartGamepadActionBinding {
+  return PLAYER_START_GAMEPAD_ACTION_BINDINGS.includes(
+    value as PlayerStartGamepadActionBinding
+  );
+}
+
 export function isPlayerStartGamepadCameraLookBinding(
   value: string
 ): value is PlayerStartGamepadCameraLookBinding {
@@ -410,13 +454,19 @@ export function clonePlayerStartInputBindings(
       moveForward: bindings.keyboard.moveForward,
       moveBackward: bindings.keyboard.moveBackward,
       moveLeft: bindings.keyboard.moveLeft,
-      moveRight: bindings.keyboard.moveRight
+      moveRight: bindings.keyboard.moveRight,
+      jump: bindings.keyboard.jump,
+      sprint: bindings.keyboard.sprint,
+      crouch: bindings.keyboard.crouch
     },
     gamepad: {
       moveForward: bindings.gamepad.moveForward,
       moveBackward: bindings.gamepad.moveBackward,
       moveLeft: bindings.gamepad.moveLeft,
       moveRight: bindings.gamepad.moveRight,
+      jump: bindings.gamepad.jump,
+      sprint: bindings.gamepad.sprint,
+      crouch: bindings.gamepad.crouch,
       cameraLook: bindings.gamepad.cameraLook
     }
   };
@@ -437,7 +487,15 @@ export function createPlayerStartInputBindings(
       DEFAULT_PLAYER_START_KEYBOARD_BINDINGS.moveLeft,
     moveRight:
       overrides.keyboard?.moveRight ??
-      DEFAULT_PLAYER_START_KEYBOARD_BINDINGS.moveRight
+      DEFAULT_PLAYER_START_KEYBOARD_BINDINGS.moveRight,
+    jump:
+      overrides.keyboard?.jump ?? DEFAULT_PLAYER_START_KEYBOARD_BINDINGS.jump,
+    sprint:
+      overrides.keyboard?.sprint ??
+      DEFAULT_PLAYER_START_KEYBOARD_BINDINGS.sprint,
+    crouch:
+      overrides.keyboard?.crouch ??
+      DEFAULT_PLAYER_START_KEYBOARD_BINDINGS.crouch
   };
   const gamepad: PlayerStartGamepadBindings = {
     moveForward:
@@ -452,6 +510,14 @@ export function createPlayerStartInputBindings(
     moveRight:
       overrides.gamepad?.moveRight ??
       DEFAULT_PLAYER_START_GAMEPAD_BINDINGS.moveRight,
+    jump:
+      overrides.gamepad?.jump ?? DEFAULT_PLAYER_START_GAMEPAD_BINDINGS.jump,
+    sprint:
+      overrides.gamepad?.sprint ??
+      DEFAULT_PLAYER_START_GAMEPAD_BINDINGS.sprint,
+    crouch:
+      overrides.gamepad?.crouch ??
+      DEFAULT_PLAYER_START_GAMEPAD_BINDINGS.crouch,
     cameraLook:
       overrides.gamepad?.cameraLook ??
       DEFAULT_PLAYER_START_GAMEPAD_BINDINGS.cameraLook
@@ -473,6 +539,18 @@ export function createPlayerStartInputBindings(
     throw new Error("Player Start move-right keyboard binding must be supported.");
   }
 
+  if (!isPlayerStartKeyboardBindingCode(keyboard.jump)) {
+    throw new Error("Player Start jump keyboard binding must be supported.");
+  }
+
+  if (!isPlayerStartKeyboardBindingCode(keyboard.sprint)) {
+    throw new Error("Player Start sprint keyboard binding must be supported.");
+  }
+
+  if (!isPlayerStartKeyboardBindingCode(keyboard.crouch)) {
+    throw new Error("Player Start crouch keyboard binding must be supported.");
+  }
+
   if (!isPlayerStartGamepadBinding(gamepad.moveForward)) {
     throw new Error("Player Start move-forward gamepad binding must be supported.");
   }
@@ -487,6 +565,18 @@ export function createPlayerStartInputBindings(
 
   if (!isPlayerStartGamepadBinding(gamepad.moveRight)) {
     throw new Error("Player Start move-right gamepad binding must be supported.");
+  }
+
+  if (!isPlayerStartGamepadActionBinding(gamepad.jump)) {
+    throw new Error("Player Start jump gamepad binding must be supported.");
+  }
+
+  if (!isPlayerStartGamepadActionBinding(gamepad.sprint)) {
+    throw new Error("Player Start sprint gamepad binding must be supported.");
+  }
+
+  if (!isPlayerStartGamepadActionBinding(gamepad.crouch)) {
+    throw new Error("Player Start crouch gamepad binding must be supported.");
   }
 
   if (!isPlayerStartGamepadCameraLookBinding(gamepad.cameraLook)) {
@@ -562,10 +652,16 @@ export function arePlayerStartInputBindingsEqual(
     left.keyboard.moveBackward === right.keyboard.moveBackward &&
     left.keyboard.moveLeft === right.keyboard.moveLeft &&
     left.keyboard.moveRight === right.keyboard.moveRight &&
+    left.keyboard.jump === right.keyboard.jump &&
+    left.keyboard.sprint === right.keyboard.sprint &&
+    left.keyboard.crouch === right.keyboard.crouch &&
     left.gamepad.moveForward === right.gamepad.moveForward &&
     left.gamepad.moveBackward === right.gamepad.moveBackward &&
     left.gamepad.moveLeft === right.gamepad.moveLeft &&
     left.gamepad.moveRight === right.gamepad.moveRight &&
+    left.gamepad.jump === right.gamepad.jump &&
+    left.gamepad.sprint === right.gamepad.sprint &&
+    left.gamepad.crouch === right.gamepad.crouch &&
     left.gamepad.cameraLook === right.gamepad.cameraLook
   );
 }
