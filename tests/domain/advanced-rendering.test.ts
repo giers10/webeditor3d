@@ -224,7 +224,7 @@ describe("whitebox bevel materials", () => {
       fragmentShader: "#include <common>\n#include <normal_fragment_maps>\n"
     };
 
-    material.onBeforeCompile(shader as never);
+    material.onBeforeCompile(shader as never, {} as never);
 
     expect(shader.vertexShader).toContain("attribute vec2 faceUv;");
     expect(shader.vertexShader).toContain("vWhiteboxFaceUv = faceUv;");
