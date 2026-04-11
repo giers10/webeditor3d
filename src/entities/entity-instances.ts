@@ -147,6 +147,8 @@ export interface PlayerStartJumpSettings {
   coyoteTimeMs: number;
   variableHeight: boolean;
   maxHoldMs: number;
+  bunnyHop: boolean;
+  bunnyHopBoost: number;
 }
 
 export interface PlayerStartSprintSettings {
@@ -160,6 +162,7 @@ export interface PlayerStartCrouchSettings {
 export interface PlayerStartMovementTemplate {
   kind: PlayerStartMovementTemplateKind;
   moveSpeed: number;
+  maxSpeed: number;
   capabilities: PlayerStartMovementCapabilities;
   jump: PlayerStartJumpSettings;
   sprint: PlayerStartSprintSettings;
@@ -169,6 +172,7 @@ export interface PlayerStartMovementTemplate {
 export interface PlayerStartMovementTemplateOverrides {
   kind?: PlayerStartMovementTemplateKind;
   moveSpeed?: number;
+  maxSpeed?: number;
   capabilities?: Partial<PlayerStartMovementCapabilities>;
   jump?: Partial<PlayerStartJumpSettings>;
   sprint?: Partial<PlayerStartSprintSettings>;
@@ -288,11 +292,14 @@ export const DEFAULT_PLAYER_START_NAVIGATION_MODE: PlayerStartNavigationMode =
 export const DEFAULT_PLAYER_START_MOVEMENT_TEMPLATE_KIND: PlayerStartMovementTemplateKind =
   "default";
 export const DEFAULT_PLAYER_START_MOVE_SPEED = 4.5;
+export const DEFAULT_PLAYER_START_MAX_SPEED = 0;
 export const DEFAULT_PLAYER_START_JUMP_SPEED = 7.2;
 export const DEFAULT_PLAYER_START_JUMP_BUFFER_MS = 0;
 export const DEFAULT_PLAYER_START_COYOTE_TIME_MS = 0;
 export const DEFAULT_PLAYER_START_VARIABLE_JUMP_HEIGHT = false;
 export const DEFAULT_PLAYER_START_VARIABLE_JUMP_MAX_HOLD_MS = 160;
+export const DEFAULT_PLAYER_START_BUNNY_HOP = false;
+export const DEFAULT_PLAYER_START_BUNNY_HOP_BOOST = 0.05;
 export const DEFAULT_PLAYER_START_SPRINT_SPEED_MULTIPLIER = 1.65;
 export const DEFAULT_PLAYER_START_CROUCH_SPEED_MULTIPLIER = 0.45;
 export const DEFAULT_PLAYER_START_MOVEMENT_CAPABILITIES: PlayerStartMovementCapabilities =
@@ -306,7 +313,9 @@ export const DEFAULT_PLAYER_START_JUMP_SETTINGS: PlayerStartJumpSettings = {
   bufferMs: DEFAULT_PLAYER_START_JUMP_BUFFER_MS,
   coyoteTimeMs: DEFAULT_PLAYER_START_COYOTE_TIME_MS,
   variableHeight: DEFAULT_PLAYER_START_VARIABLE_JUMP_HEIGHT,
-  maxHoldMs: DEFAULT_PLAYER_START_VARIABLE_JUMP_MAX_HOLD_MS
+  maxHoldMs: DEFAULT_PLAYER_START_VARIABLE_JUMP_MAX_HOLD_MS,
+  bunnyHop: DEFAULT_PLAYER_START_BUNNY_HOP,
+  bunnyHopBoost: DEFAULT_PLAYER_START_BUNNY_HOP_BOOST
 };
 export const DEFAULT_PLAYER_START_SPRINT_SETTINGS: PlayerStartSprintSettings = {
   speedMultiplier: DEFAULT_PLAYER_START_SPRINT_SPEED_MULTIPLIER
@@ -322,7 +331,9 @@ export const RESPONSIVE_PLAYER_START_JUMP_SETTINGS: PlayerStartJumpSettings = {
   bufferMs: RESPONSIVE_PLAYER_START_JUMP_BUFFER_MS,
   coyoteTimeMs: RESPONSIVE_PLAYER_START_COYOTE_TIME_MS,
   variableHeight: true,
-  maxHoldMs: RESPONSIVE_PLAYER_START_VARIABLE_JUMP_MAX_HOLD_MS
+  maxHoldMs: RESPONSIVE_PLAYER_START_VARIABLE_JUMP_MAX_HOLD_MS,
+  bunnyHop: DEFAULT_PLAYER_START_BUNNY_HOP,
+  bunnyHopBoost: DEFAULT_PLAYER_START_BUNNY_HOP_BOOST
 };
 export const DEFAULT_PLAYER_START_KEYBOARD_BINDINGS: PlayerStartKeyboardBindings =
   {
@@ -498,7 +509,9 @@ function clonePlayerStartJumpSettings(
     bufferMs: settings.bufferMs,
     coyoteTimeMs: settings.coyoteTimeMs,
     variableHeight: settings.variableHeight,
-    maxHoldMs: settings.maxHoldMs
+    maxHoldMs: settings.maxHoldMs,
+    bunnyHop: settings.bunnyHop,
+    bunnyHopBoost: settings.bunnyHopBoost
   };
 }
 
@@ -524,6 +537,7 @@ export function clonePlayerStartMovementTemplate(
   return {
     kind: template.kind,
     moveSpeed: template.moveSpeed,
+    maxSpeed: template.maxSpeed,
     capabilities: clonePlayerStartMovementCapabilities(template.capabilities),
     jump: clonePlayerStartJumpSettings(template.jump),
     sprint: clonePlayerStartSprintSettings(template.sprint),
@@ -698,6 +712,7 @@ export function createPlayerStartMovementTemplate(
     kind === "responsive"
       ? {
           moveSpeed: DEFAULT_PLAYER_START_MOVE_SPEED,
+          maxSpeed: DEFAULT_PLAYER_START_MAX_SPEED,
           capabilities: DEFAULT_PLAYER_START_MOVEMENT_CAPABILITIES,
           jump: RESPONSIVE_PLAYER_START_JUMP_SETTINGS,
           sprint: DEFAULT_PLAYER_START_SPRINT_SETTINGS,
@@ -705,12 +720,14 @@ export function createPlayerStartMovementTemplate(
         }
       : {
           moveSpeed: DEFAULT_PLAYER_START_MOVE_SPEED,
+          maxSpeed: DEFAULT_PLAYER_START_MAX_SPEED,
           capabilities: DEFAULT_PLAYER_START_MOVEMENT_CAPABILITIES,
           jump: DEFAULT_PLAYER_START_JUMP_SETTINGS,
           sprint: DEFAULT_PLAYER_START_SPRINT_SETTINGS,
           crouch: DEFAULT_PLAYER_START_CROUCH_SETTINGS
         };
   const moveSpeed = overrides.moveSpeed ?? preset.moveSpeed;
+  const maxSpeed = overrides.maxSpeed ?? preset.maxSpeed;
   const capabilities: PlayerStartMovementCapabilities = {
     jump:
       overrides.capabilities?.jump ?? preset.capabilities.jump,
@@ -726,7 +743,10 @@ export function createPlayerStartMovementTemplate(
       overrides.jump?.coyoteTimeMs ?? preset.jump.coyoteTimeMs,
     variableHeight:
       overrides.jump?.variableHeight ?? preset.jump.variableHeight,
-    maxHoldMs: overrides.jump?.maxHoldMs ?? preset.jump.maxHoldMs
+    maxHoldMs: overrides.jump?.maxHoldMs ?? preset.jump.maxHoldMs,
+    bunnyHop: overrides.jump?.bunnyHop ?? preset.jump.bunnyHop,
+    bunnyHopBoost:
+      overrides.jump?.bunnyHopBoost ?? preset.jump.bunnyHopBoost
   };
   const sprint: PlayerStartSprintSettings = {
     speedMultiplier:
@@ -738,6 +758,7 @@ export function createPlayerStartMovementTemplate(
   };
 
   assertPositiveFiniteNumber(moveSpeed, "Player Start move speed");
+  assertNonNegativeFiniteNumber(maxSpeed, "Player Start max speed");
   assertBoolean(
     capabilities.jump,
     "Player Start movement template jump capability"
@@ -767,6 +788,11 @@ export function createPlayerStartMovementTemplate(
     jump.maxHoldMs,
     "Player Start variable jump max hold milliseconds"
   );
+  assertBoolean(jump.bunnyHop, "Player Start bunny hop setting");
+  assertNonNegativeFiniteNumber(
+    jump.bunnyHopBoost,
+    "Player Start bunny hop boost"
+  );
   assertPositiveFiniteNumber(
     sprint.speedMultiplier,
     "Player Start sprint speed multiplier"
@@ -779,6 +805,7 @@ export function createPlayerStartMovementTemplate(
   return {
     kind,
     moveSpeed,
+    maxSpeed,
     capabilities,
     jump,
     sprint,
@@ -792,6 +819,7 @@ export function inferPlayerStartMovementTemplateKind(
   const candidate = createPlayerStartMovementTemplate({
     kind: "custom",
     moveSpeed: template.moveSpeed,
+    maxSpeed: template.maxSpeed,
     capabilities: template.capabilities,
     jump: template.jump,
     sprint: template.sprint,
@@ -806,6 +834,8 @@ export function inferPlayerStartMovementTemplateKind(
     if (
       candidate.moveSpeed ===
         createPlayerStartMovementTemplate({ kind: presetKind }).moveSpeed &&
+      candidate.maxSpeed ===
+        createPlayerStartMovementTemplate({ kind: presetKind }).maxSpeed &&
       candidate.capabilities.jump ===
         createPlayerStartMovementTemplate({ kind: presetKind }).capabilities.jump &&
       candidate.capabilities.sprint ===
@@ -822,6 +852,10 @@ export function inferPlayerStartMovementTemplateKind(
         createPlayerStartMovementTemplate({ kind: presetKind }).jump.variableHeight &&
       candidate.jump.maxHoldMs ===
         createPlayerStartMovementTemplate({ kind: presetKind }).jump.maxHoldMs &&
+      candidate.jump.bunnyHop ===
+        createPlayerStartMovementTemplate({ kind: presetKind }).jump.bunnyHop &&
+      candidate.jump.bunnyHopBoost ===
+        createPlayerStartMovementTemplate({ kind: presetKind }).jump.bunnyHopBoost &&
       candidate.sprint.speedMultiplier ===
         createPlayerStartMovementTemplate({ kind: presetKind }).sprint.speedMultiplier &&
       candidate.crouch.speedMultiplier ===
