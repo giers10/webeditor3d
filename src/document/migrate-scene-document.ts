@@ -20,6 +20,7 @@ import {
   type ProjectAssetRecord
 } from "../assets/project-assets";
 import {
+  DEFAULT_PLAYER_START_GAMEPAD_CAMERA_LOOK_BINDINGS,
   DEFAULT_PLAYER_START_GAMEPAD_BINDINGS,
   DEFAULT_PLAYER_START_KEYBOARD_BINDINGS,
   createPlayerStartColliderSettings,
@@ -35,6 +36,7 @@ import {
   createTeleportTargetEntity,
   createTriggerVolumeEntity,
   isPlayerStartColliderMode,
+  isPlayerStartGamepadCameraLookBinding,
   isPlayerStartGamepadBinding,
   isPlayerStartKeyboardBindingCode,
   isPlayerStartNavigationMode,
@@ -81,6 +83,7 @@ import {
   LOCAL_LIGHTS_AND_SKYBOX_SCENE_DOCUMENT_VERSION,
   MULTI_SCENE_FOUNDATION_SCENE_DOCUMENT_VERSION,
   MODEL_ASSET_PIPELINE_SCENE_DOCUMENT_VERSION,
+  PLAYER_START_GAMEPAD_CAMERA_LOOK_SCENE_DOCUMENT_VERSION,
   PLAYER_START_NAVIGATION_MODE_SCENE_DOCUMENT_VERSION,
   PLAYER_START_COLLIDER_SETTINGS_SCENE_DOCUMENT_VERSION,
   RUNNER_V1_SCENE_DOCUMENT_VERSION,
@@ -942,6 +945,21 @@ function readPlayerStartGamepadBinding(
   );
 }
 
+function readPlayerStartGamepadCameraLookBinding(
+  value: unknown,
+  label: string,
+  fallback: (typeof DEFAULT_PLAYER_START_GAMEPAD_CAMERA_LOOK_BINDINGS)[number]
+) {
+  return readOptionalAllowedValue(
+    value,
+    label,
+    fallback,
+    (candidate): candidate is typeof fallback =>
+      typeof candidate === "string" &&
+      isPlayerStartGamepadCameraLookBinding(candidate)
+  );
+}
+
 function readPlayerStartInputBindings(value: unknown, label: string) {
   if (value === undefined) {
     return createPlayerStartInputBindings();
@@ -1005,6 +1023,11 @@ function readPlayerStartInputBindings(value: unknown, label: string) {
         gamepad?.moveRight,
         `${label}.gamepad.moveRight`,
         DEFAULT_PLAYER_START_GAMEPAD_BINDINGS.moveRight
+      ),
+      cameraLook: readPlayerStartGamepadCameraLookBinding(
+        gamepad?.cameraLook,
+        `${label}.gamepad.cameraLook`,
+        DEFAULT_PLAYER_START_GAMEPAD_CAMERA_LOOK_BINDINGS[0]
       )
     }
   });
@@ -2461,6 +2484,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
 
   if (
     source.version !== SCENE_DOCUMENT_VERSION &&
+    source.version !== PLAYER_START_GAMEPAD_CAMERA_LOOK_SCENE_DOCUMENT_VERSION &&
     source.version !== PLAYER_START_NAVIGATION_MODE_SCENE_DOCUMENT_VERSION &&
     source.version !== SCENE_TRANSITION_ENTITIES_SCENE_DOCUMENT_VERSION &&
     source.version !== RUNNER_LOADING_SCREEN_SCENE_DOCUMENT_VERSION &&
