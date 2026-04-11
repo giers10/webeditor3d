@@ -330,10 +330,6 @@ export function stepPlayerLocomotion(
   );
   let jumpHoldRemainingMs = Math.max(0, options.jumpHoldRemainingMs - dtMs);
 
-  if (options.movement.capabilities.jump && jumpJustPressed) {
-    jumpBufferRemainingMs = options.movement.jump.bufferMs;
-  }
-
   let crouched = options.crouched && canCrouch;
 
   if (canCrouch) {
