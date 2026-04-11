@@ -578,12 +578,7 @@ export class RapierCollisionWorld {
 
     const hit = this.world.castShape(
       pivot,
-      {
-        x: 0,
-        y: 0,
-        z: 0,
-        w: 1
-      },
+      IDENTITY_ROTATION,
       delta,
       new RAPIER.Ball(radius),
       0,
