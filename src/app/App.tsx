@@ -6811,8 +6811,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
           <main className="runner-region">
             <RunnerCanvas
               runtimeScene={runtimeScene}
-              sceneName={activeProjectScene.name}
-              sceneLoadingScreen={activeProjectScene.loadingScreen}
+              sceneName={runtimeSceneName ?? activeProjectScene.name}
+              sceneLoadingScreen={
+                runtimeSceneLoadingScreen ?? activeProjectScene.loadingScreen
+              }
               projectAssets={editorState.document.assets}
               loadedModelAssets={loadedModelAssets}
               loadedImageAssets={loadedImageAssets}
@@ -6821,12 +6823,19 @@ export function App({ store, initialStatusMessage }: AppProps) {
               onRuntimeMessageChange={setRuntimeMessage}
               onFirstPersonTelemetryChange={setFirstPersonTelemetry}
               onInteractionPromptChange={setRuntimeInteractionPrompt}
+              onSceneExitActivated={handleRunnerSceneExitActivated}
             />
           </main>
 
           <aside className="side-column">
             <Panel title="Runner">
               <div className="stat-grid">
+                <div className="stat-card">
+                  <div className="label">Scene</div>
+                  <div className="value" data-testid="runner-scene-name">
+                    {runtimeSceneName ?? activeProjectScene.name}
+                  </div>
+                </div>
                 <div className="stat-card">
                   <div className="label">Navigation</div>
                   <div className="value">
@@ -6840,7 +6849,18 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   <div className="value">
                     {runtimeScene.spawn.source === "playerStart"
                       ? "Player Start"
+                      : runtimeScene.spawn.source === "sceneEntry"
+                        ? "Scene Entry"
                       : "Fallback"}
+                  </div>
+                </div>
+                <div className="stat-card">
+                  <div className="label">Transitions</div>
+                  <div
+                    className="value"
+                    data-testid="runner-transition-count"
+                  >
+                    {runtimeGlobalState.transitionCount}
                   </div>
                 </div>
                 <div className="stat-card">
@@ -6912,6 +6932,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   Spawn:{" "}
                   {runtimeScene.spawn.source === "playerStart"
                     ? "Player Start"
+                    : runtimeScene.spawn.source === "sceneEntry"
+                      ? "Scene Entry"
                     : "Fallback"}{" "}
                   at {formatRunnerFeetPosition(runtimeScene.spawn.position)}
                 </div>
@@ -6941,6 +6963,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
               {runtimeMessage === null ? null : (
                 <div className="info-banner">{runtimeMessage}</div>
               )}
+              {runtimeGlobalState.lastSceneTransition === null ? null : (
+                <div className="info-banner">
+                  Last transition: {runtimeGlobalState.lastSceneTransition.fromSceneName} to{" "}
+                  {runtimeGlobalState.lastSceneTransition.toSceneName}
+                </div>
+              )}
               {activeNavigationMode === "firstPerson" ? (
                 <div
                   className="info-banner"
@@ -6965,6 +6993,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
             <span className="status-bar__strong">Spawn:</span>{" "}
             {runtimeScene.spawn.source === "playerStart"
               ? "Authored Player Start"
+              : runtimeScene.spawn.source === "sceneEntry"
+                ? "Scene Entry arrival"
               : "Fallback runtime spawn"}
           </div>
         </footer>
