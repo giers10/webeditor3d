@@ -416,6 +416,15 @@ describe("scene document JSON", () => {
         z: -2
       },
       yawDegrees: 135,
+      movementTemplate: {
+        kind: "default",
+        moveSpeed: 5.25,
+        capabilities: {
+          jump: true,
+          sprint: false,
+          crouch: true
+        }
+      },
       collider: {
         mode: "box",
         eyeHeight: 1.4,
