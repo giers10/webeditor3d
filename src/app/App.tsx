@@ -1802,6 +1802,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
   }, [editorState.document.name]);
 
   useEffect(() => {
+    setWhiteboxSnapStepDraft(String(editorState.whiteboxSnapStep));
+  }, [editorState.activeSceneId, editorState.whiteboxSnapStep]);
+
+  useEffect(() => {
     setSceneLoadingHeadlineDraft(
       activeProjectScene.loadingScreen.headline ?? ""
     );
