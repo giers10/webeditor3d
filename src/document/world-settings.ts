@@ -80,6 +80,12 @@ export interface AdvancedRenderingDepthOfFieldSettings {
   bokehScale: number;
 }
 
+export interface AdvancedRenderingWhiteboxBevelSettings {
+  enabled: boolean;
+  edgeWidth: number;
+  normalStrength: number;
+}
+
 export interface AdvancedRenderingSettings {
   enabled: boolean;
   shadows: AdvancedRenderingShadowsSettings;
@@ -87,6 +93,7 @@ export interface AdvancedRenderingSettings {
   bloom: AdvancedRenderingBloomSettings;
   toneMapping: AdvancedRenderingToneMappingSettings;
   depthOfField: AdvancedRenderingDepthOfFieldSettings;
+  whiteboxBevel: AdvancedRenderingWhiteboxBevelSettings;
   fogPath: BoxVolumeRenderPath;
   waterPath: BoxVolumeRenderPath;
   waterReflectionMode: AdvancedRenderingWaterReflectionMode;
@@ -116,6 +123,8 @@ const DEFAULT_ADVANCED_RENDERING_TONE_MAPPING_EXPOSURE = 1;
 const DEFAULT_ADVANCED_RENDERING_DEPTH_OF_FIELD_FOCUS_DISTANCE = 10;
 const DEFAULT_ADVANCED_RENDERING_DEPTH_OF_FIELD_FOCAL_LENGTH = 0.03;
 const DEFAULT_ADVANCED_RENDERING_DEPTH_OF_FIELD_BOKEH_SCALE = 1.5;
+const DEFAULT_ADVANCED_RENDERING_WHITEBOX_BEVEL_EDGE_WIDTH = 0.14;
+const DEFAULT_ADVANCED_RENDERING_WHITEBOX_BEVEL_NORMAL_STRENGTH = 0.75;
 const DEFAULT_BOX_VOLUME_RENDER_PATH: BoxVolumeRenderPath = "performance";
 const DEFAULT_ADVANCED_RENDERING_WATER_REFLECTION_MODE: AdvancedRenderingWaterReflectionMode = "none";
 
@@ -169,6 +178,11 @@ export function createDefaultAdvancedRenderingSettings(): AdvancedRenderingSetti
       focusDistance: DEFAULT_ADVANCED_RENDERING_DEPTH_OF_FIELD_FOCUS_DISTANCE,
       focalLength: DEFAULT_ADVANCED_RENDERING_DEPTH_OF_FIELD_FOCAL_LENGTH,
       bokehScale: DEFAULT_ADVANCED_RENDERING_DEPTH_OF_FIELD_BOKEH_SCALE
+    },
+    whiteboxBevel: {
+      enabled: false,
+      edgeWidth: DEFAULT_ADVANCED_RENDERING_WHITEBOX_BEVEL_EDGE_WIDTH,
+      normalStrength: DEFAULT_ADVANCED_RENDERING_WHITEBOX_BEVEL_NORMAL_STRENGTH
     },
     fogPath: DEFAULT_BOX_VOLUME_RENDER_PATH,
     waterPath: DEFAULT_BOX_VOLUME_RENDER_PATH,
@@ -262,6 +276,9 @@ export function cloneAdvancedRenderingSettings(settings: AdvancedRenderingSettin
     depthOfField: {
       ...settings.depthOfField
     },
+    whiteboxBevel: {
+      ...settings.whiteboxBevel
+    },
     fogPath: settings.fogPath,
     waterPath: settings.waterPath,
     waterReflectionMode: settings.waterReflectionMode
@@ -319,6 +336,9 @@ export function areAdvancedRenderingSettingsEqual(left: AdvancedRenderingSetting
     left.depthOfField.focusDistance === right.depthOfField.focusDistance &&
     left.depthOfField.focalLength === right.depthOfField.focalLength &&
     left.depthOfField.bokehScale === right.depthOfField.bokehScale &&
+    left.whiteboxBevel.enabled === right.whiteboxBevel.enabled &&
+    left.whiteboxBevel.edgeWidth === right.whiteboxBevel.edgeWidth &&
+    left.whiteboxBevel.normalStrength === right.whiteboxBevel.normalStrength &&
     left.fogPath === right.fogPath &&
     left.waterPath === right.waterPath &&
     left.waterReflectionMode === right.waterReflectionMode
