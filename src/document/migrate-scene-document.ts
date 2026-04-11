@@ -1767,6 +1767,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
 
   if (
     source.version !== SCENE_DOCUMENT_VERSION &&
+    source.version !== MULTI_SCENE_FOUNDATION_SCENE_DOCUMENT_VERSION &&
     source.version !== WATER_SURFACE_DISPLACEMENT_SCENE_DOCUMENT_VERSION &&
     source.version !== WHITEBOX_BOX_VOLUME_SCENE_DOCUMENT_VERSION &&
     source.version !== WHITEBOX_FLOAT_TRANSFORM_SCENE_DOCUMENT_VERSION &&
