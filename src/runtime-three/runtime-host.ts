@@ -64,12 +64,15 @@ import {
 
 import { FirstPersonNavigationController } from "./first-person-navigation-controller";
 import type {
-  FirstPersonTelemetry,
   NavigationController,
+  PlayerControllerTelemetry,
+  RuntimePlayerAnimationHookState,
   RuntimeControllerContext,
+  RuntimePlayerAudioHookState,
   RuntimePlayerVolumeState
 } from "./navigation-controller";
 import { RapierCollisionWorld } from "./rapier-collision-world";
+import { createEmptyRuntimeMovementTransitionSignals } from "./player-controller-telemetry";
 import {
   RuntimeInteractionSystem,
   type RuntimeInteractionDispatcher,
@@ -185,8 +188,8 @@ export class RuntimeHost {
   private activeController: NavigationController | null = null;
   private runtimeMessageHandler: ((message: string | null) => void) | null =
     null;
-  private firstPersonTelemetryHandler:
-    | ((telemetry: FirstPersonTelemetry | null) => void)
+  private playerControllerTelemetryHandler:
+    | ((telemetry: PlayerControllerTelemetry | null) => void)
     | null = null;
   private interactionPromptHandler:
     | ((prompt: RuntimeInteractionPrompt | null) => void)
@@ -198,9 +201,19 @@ export class RuntimeHost {
     | ((request: RuntimeSceneExitTransitionRequest) => void)
     | null = null;
   private currentRuntimeMessage: string | null = null;
-  private currentFirstPersonTelemetry: FirstPersonTelemetry | null = null;
+  private currentPlayerControllerTelemetry: PlayerControllerTelemetry | null =
+    null;
   private currentInteractionPrompt: RuntimeInteractionPrompt | null = null;
   private currentSceneLoadState: RuntimeSceneLoadState | null = null;
+  private currentPlayerAnimationHooks: RuntimePlayerAnimationHookState | null =
+    null;
+  private currentPlayerAudioHooks: RuntimePlayerAudioHookState | null = null;
+  private cameraEffectVerticalOffset = 0;
+  private cameraEffectVerticalVelocity = 0;
+  private cameraEffectPitchOffset = 0;
+  private cameraEffectPitchVelocity = 0;
+  private cameraEffectRollOffset = 0;
+  private baseCameraFov = 70;
 
   constructor(options: { enableRendering?: boolean } = {}) {
     const enableRendering = options.enableRendering ?? true;
@@ -274,9 +287,11 @@ export class RuntimeHost {
         this.currentRuntimeMessage = message;
         this.runtimeMessageHandler?.(message);
       },
-      setFirstPersonTelemetry: (telemetry) => {
-        this.currentFirstPersonTelemetry = telemetry;
-        this.firstPersonTelemetryHandler?.(telemetry);
+      setPlayerControllerTelemetry: (telemetry) => {
+        this.currentPlayerControllerTelemetry = telemetry;
+        this.currentPlayerAnimationHooks = telemetry?.hooks.animation ?? null;
+        this.currentPlayerAudioHooks = telemetry?.hooks.audio ?? null;
+        this.playerControllerTelemetryHandler?.(telemetry);
       }
     };
   }
