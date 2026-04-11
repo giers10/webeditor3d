@@ -1102,6 +1102,8 @@ function createProjectDownloadName(documentName: string): string {
 export function App({ store, initialStatusMessage }: AppProps) {
   const editorState = useEditorStoreState(store);
   const sceneList = Object.values(editorState.projectDocument.scenes);
+  const activeProjectScene =
+    editorState.projectDocument.scenes[editorState.activeSceneId];
   const brushList = Object.values(editorState.document.brushes);
   const layoutMode = editorState.viewportLayoutMode;
   const activePanelId = editorState.activeViewportPanelId;
