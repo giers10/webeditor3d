@@ -116,7 +116,7 @@ describe("ViewportCanvas", () => {
         whiteboxSelectionMode="object"
         whiteboxSnapEnabled
         whiteboxSnapStep={1}
-        viewportGridVisible
+        viewportGridVisible={true}
         selection={{ kind: "none" }}
         toolMode="create"
         toolPreview={toolPreview}
@@ -167,7 +167,7 @@ describe("ViewportCanvas", () => {
         whiteboxSelectionMode="object"
         whiteboxSnapEnabled
         whiteboxSnapStep={1}
-        viewportGridVisible
+        viewportGridVisible={true}
         selection={{ kind: "none" }}
         toolMode="select"
         toolPreview={{ kind: "none" }}
