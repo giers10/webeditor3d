@@ -904,7 +904,8 @@ function readPlayerStartNavigationMode(value: unknown, label: string) {
     value,
     label,
     "firstPerson",
-    isPlayerStartNavigationMode
+    (candidate): candidate is "firstPerson" | "thirdPerson" =>
+      typeof candidate === "string" && isPlayerStartNavigationMode(candidate)
   );
 }
 
