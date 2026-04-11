@@ -1594,6 +1594,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [viewportQuadResizeMode, setViewportQuadResizeMode] =
     useState<ViewportQuadResizeMode | null>(null);
   const documentValidation = validateSceneDocument(editorState.document);
+  const projectValidation = validateProjectDocument(editorState.projectDocument);
+  const activeSceneProjectDiagnostics = projectValidation.diagnostics.filter(
+    (diagnostic) =>
+      diagnostic.path?.startsWith(`scenes.${editorState.activeSceneId}.`) &&
+      (diagnostic.code === "missing-scene-exit-target-scene" ||
+        diagnostic.code === "missing-scene-exit-target-entry" ||
+        diagnostic.code === "scene-exit-target-entry-kind-mismatch")
+  );
   const runValidation = validateRuntimeSceneBuild(editorState.document, {
     navigationMode: preferredNavigationMode,
     loadedModelAssets
@@ -1601,6 +1609,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const diagnostics = [
     ...documentValidation.errors,
     ...documentValidation.warnings,
+    ...activeSceneProjectDiagnostics,
     ...runValidation.errors,
     ...runValidation.warnings
   ];
