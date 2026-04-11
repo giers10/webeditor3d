@@ -137,6 +137,7 @@ function createRuntimeSceneFixture(): RuntimeSceneDefinition {
     playerMovement: {
       templateKind: "default",
       moveSpeed: movementTemplate.moveSpeed,
+      maxSpeed: movementTemplate.maxSpeed,
       capabilities: movementTemplate.capabilities,
       jump: movementTemplate.jump,
       sprint: movementTemplate.sprint,
