@@ -10005,6 +10005,38 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     </>
                   ) : null}
 
+                  {selectedSceneEntry !== null ? (
+                    <div className="form-section">
+                      <div className="label">Arrival Facing</div>
+                      <label className="form-field">
+                        <span className="label">Yaw</span>
+                        <input
+                          data-testid="scene-entry-yaw"
+                          className="text-input"
+                          type="number"
+                          step="1"
+                          value={sceneEntryYawDraft}
+                          onChange={(event) =>
+                            setSceneEntryYawDraft(event.currentTarget.value)
+                          }
+                          onBlur={applySceneEntryChange}
+                          onKeyDown={(event) =>
+                            handleDraftVectorKeyDown(event, applySceneEntryChange)
+                          }
+                          onKeyUp={(event) =>
+                            handleNumberInputKeyUp(event, applySceneEntryChange)
+                          }
+                          onPointerUp={(event) =>
+                            handleNumberInputPointerUp(
+                              event,
+                              applySceneEntryChange
+                            )
+                          }
+                        />
+                      </label>
+                    </div>
+                  ) : null}
+
                   {selectedSoundEmitter !== null ? (
                     <>
                       <div className="form-section">
