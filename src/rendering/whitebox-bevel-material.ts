@@ -1,4 +1,4 @@
-import type { MeshStandardMaterial, Shader } from "three";
+import type { MeshStandardMaterial } from "three";
 
 import type {
   AdvancedRenderingSettings,
@@ -7,6 +7,13 @@ import type {
 
 const WHITEBOX_BEVEL_MIN_DETERMINANT = 1e-5;
 const WHITEBOX_BEVEL_MAX_EDGE_WIDTH = 0.49;
+
+type WhiteboxBevelCompileShader = Parameters<
+  MeshStandardMaterial["onBeforeCompile"]
+>[0];
+type WhiteboxBevelCompileRenderer = Parameters<
+  MeshStandardMaterial["onBeforeCompile"]
+>[1];
 
 function formatShaderFloat(value: number) {
   return value.toFixed(4);
@@ -34,7 +41,10 @@ export function applyWhiteboxBevelToMaterial(
   const normalStrength = Math.max(settings.normalStrength, 0);
   const shaderKey = `whitebox-bevel:${formatShaderFloat(edgeWidth)}:${formatShaderFloat(normalStrength)}`;
 
-  material.onBeforeCompile = (shader: Shader) => {
+  material.onBeforeCompile = (
+    shader: WhiteboxBevelCompileShader,
+    _renderer: WhiteboxBevelCompileRenderer
+  ) => {
     shader.vertexShader = shader.vertexShader
       .replace(
         "#include <common>",
