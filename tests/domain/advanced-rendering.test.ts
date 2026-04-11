@@ -1,4 +1,4 @@
-import { PerspectiveCamera, Scene, UnsignedByteType } from "three";
+import { MeshStandardMaterial, PerspectiveCamera, Scene, UnsignedByteType } from "three";
 import { describe, expect, it, vi } from "vitest";
 
 const postprocessingState = vi.hoisted(() => ({
@@ -85,6 +85,10 @@ vi.mock("postprocessing", () => {
 
 import { createDefaultWorldSettings } from "../../src/document/world-settings";
 import { createAdvancedRenderingComposer, resolveBoxVolumeRenderPaths } from "../../src/rendering/advanced-rendering";
+import {
+  applyWhiteboxBevelToMaterial,
+  shouldApplyWhiteboxBevel
+} from "../../src/rendering/whitebox-bevel-material";
 
 describe("resolveBoxVolumeRenderPaths", () => {
   it("uses authored fog and water paths when advanced rendering is enabled", () => {
@@ -191,5 +195,41 @@ describe("createAdvancedRenderingComposer", () => {
       }
     });
     expect(postprocessingState.ssaoCalls[1].options.radius).toBeCloseTo(0.07, 6);
+  });
+});
+
+describe("whitebox bevel materials", () => {
+  it("only applies when advanced rendering and the effect are both enabled", () => {
+    const settings = createDefaultWorldSettings().advancedRendering;
+
+    expect(shouldApplyWhiteboxBevel(settings)).toBe(false);
+
+    settings.enabled = true;
+    settings.whiteboxBevel.enabled = true;
+
+    expect(shouldApplyWhiteboxBevel(settings)).toBe(true);
+  });
+
+  it("injects face-space bevel shading into standard materials", () => {
+    const material = new MeshStandardMaterial();
+
+    applyWhiteboxBevelToMaterial(material, {
+      enabled: true,
+      edgeWidth: 0.18,
+      normalStrength: 0.9
+    });
+
+    const shader = {
+      vertexShader: "#include <common>\n#include <uv_vertex>\n",
+      fragmentShader: "#include <common>\n#include <normal_fragment_maps>\n"
+    };
+
+    material.onBeforeCompile(shader as never);
+
+    expect(shader.vertexShader).toContain("attribute vec2 faceUv;");
+    expect(shader.vertexShader).toContain("vWhiteboxFaceUv = faceUv;");
+    expect(shader.fragmentShader).toContain("varying vec2 vWhiteboxFaceUv;");
+    expect(shader.fragmentShader).toContain("whiteboxBevelMask");
+    expect(material.customProgramCacheKey?.()).toContain("whitebox-bevel:");
   });
 });
