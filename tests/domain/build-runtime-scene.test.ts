@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BoxGeometry } from "three";
+import { BoxGeometry, PlaneGeometry } from "three";
 
 import { createBoxBrush } from "../../src/document/brushes";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
@@ -787,6 +787,59 @@ describe("buildRuntimeSceneFromDocument", () => {
       visible: true
     });
     expect(runtimeScene.sceneBounds?.max.y).toBeGreaterThanOrEqual(2);
+  });
+
+  it("adds static-simple imported-model colliders as compound box pieces", () => {
+    const wallGeometry = new PlaneGeometry(4, 4, 4, 4);
+    wallGeometry.rotateY(Math.PI * 0.5);
+    const { asset, loadedAsset } = createFixtureLoadedModelAssetFromGeometry("asset-runtime-static-simple", wallGeometry);
+    const modelInstance = createModelInstance({
+      id: "model-instance-runtime-static-simple",
+      assetId: asset.id,
+      position: {
+        x: 2,
+        y: 2,
+        z: 0
+      },
+      collision: {
+        mode: "static-simple",
+        visible: true
+      }
+    });
+
+    const runtimeScene = buildRuntimeSceneFromDocument(
+      {
+        ...createEmptySceneDocument({ name: "Imported Static Simple Collider Scene" }),
+        assets: {
+          [asset.id]: asset
+        },
+        modelInstances: {
+          [modelInstance.id]: modelInstance
+        }
+      },
+      {
+        loadedModelAssets: {
+          [asset.id]: loadedAsset
+        }
+      }
+    );
+
+    expect(runtimeScene.colliders).toHaveLength(1);
+    expect(runtimeScene.colliders[0]).toMatchObject({
+      source: "modelInstance",
+      instanceId: modelInstance.id,
+      assetId: asset.id,
+      kind: "compound",
+      mode: "static-simple",
+      visible: true,
+      decomposition: "surface-voxel-boxes"
+    });
+
+    if (runtimeScene.colliders[0].source !== "modelInstance" || runtimeScene.colliders[0].kind !== "compound") {
+      throw new Error("Expected the runtime collider to be a generated compound model collider.");
+    }
+
+    expect(runtimeScene.colliders[0].pieces.every((piece) => piece.kind === "box")).toBe(true);
   });
 
   it("preserves rotated whitebox box transforms for runner rendering and collision bounds", () => {

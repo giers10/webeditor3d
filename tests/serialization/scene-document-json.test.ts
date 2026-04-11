@@ -12,6 +12,7 @@ import {
   PLAYER_START_COLLIDER_SETTINGS_SCENE_DOCUMENT_VERSION,
   PLAYER_START_INPUT_BINDINGS_SCENE_DOCUMENT_VERSION,
   PLAYER_START_NAVIGATION_MODE_SCENE_DOCUMENT_VERSION,
+  SCENE_EDITOR_PREFERENCES_SCENE_DOCUMENT_VERSION,
   SCENE_TRANSITION_ENTITIES_SCENE_DOCUMENT_VERSION,
   SCENE_DOCUMENT_VERSION,
   SPATIAL_AUDIO_SCENE_DOCUMENT_VERSION,
@@ -1030,6 +1031,130 @@ describe("scene document JSON", () => {
     };
 
     expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(document);
+  });
+
+  it("round-trips authored static-simple model-instance collision settings", () => {
+    const asset = {
+      id: "asset-model-static-simple-collider",
+      kind: "model",
+      sourceName: "collision-static-simple.glb",
+      mimeType: "model/gltf-binary",
+      storageKey: createProjectAssetStorageKey("asset-model-static-simple-collider"),
+      byteLength: 64,
+      metadata: {
+        kind: "model",
+        format: "glb",
+        sceneName: "Static Simple Collision Test Scene",
+        nodeCount: 1,
+        meshCount: 1,
+        materialNames: [],
+        textureNames: [],
+        animationNames: [],
+        boundingBox: {
+          min: {
+            x: -2,
+            y: 0,
+            z: -0.1
+          },
+          max: {
+            x: 2,
+            y: 4,
+            z: 0.1
+          },
+          size: {
+            x: 4,
+            y: 4,
+            z: 0.2
+          }
+        },
+        warnings: []
+      }
+    } satisfies ModelAssetRecord;
+    const modelInstance = createModelInstance({
+      id: "model-instance-static-simple-collider",
+      assetId: asset.id,
+      collision: {
+        mode: "static-simple",
+        visible: true
+      }
+    });
+    const document = {
+      ...createEmptySceneDocument({ name: "Static Simple Model Collision Scene" }),
+      assets: {
+        [asset.id]: asset
+      },
+      modelInstances: {
+        [modelInstance.id]: modelInstance
+      }
+    };
+
+    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(document);
+  });
+
+  it("migrates version 29 scene documents to preserve existing model collision settings", () => {
+    const asset = {
+      id: "asset-model-v29-collider",
+      kind: "model",
+      sourceName: "v29-collider.glb",
+      mimeType: "model/gltf-binary",
+      storageKey: createProjectAssetStorageKey("asset-model-v29-collider"),
+      byteLength: 64,
+      metadata: {
+        kind: "model",
+        format: "glb",
+        sceneName: "V29 Collider Scene",
+        nodeCount: 1,
+        meshCount: 1,
+        materialNames: [],
+        textureNames: [],
+        animationNames: [],
+        boundingBox: {
+          min: {
+            x: -1,
+            y: 0,
+            z: -1
+          },
+          max: {
+            x: 1,
+            y: 2,
+            z: 1
+          },
+          size: {
+            x: 2,
+            y: 2,
+            z: 2
+          }
+        },
+        warnings: []
+      }
+    } satisfies ModelAssetRecord;
+    const legacyDocument = {
+      ...createEmptySceneDocument({ name: "Legacy V29 Collider Scene" }),
+      version: SCENE_EDITOR_PREFERENCES_SCENE_DOCUMENT_VERSION,
+      assets: {
+        [asset.id]: asset
+      },
+      modelInstances: {
+        "model-instance-v29-collider": {
+          ...createModelInstance({
+            id: "model-instance-v29-collider",
+            assetId: asset.id,
+            collision: {
+              mode: "dynamic",
+              visible: true
+            }
+          })
+        }
+      }
+    };
+
+    const migratedDocument = migrateSceneDocument(legacyDocument);
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.modelInstances["model-instance-v29-collider"].collision).toEqual({
+      mode: "dynamic",
+      visible: true
+    });
   });
 
   it("round-trips canonical interaction links", () => {

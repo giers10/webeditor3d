@@ -197,6 +197,80 @@ describe("RapierCollisionWorld", () => {
     }
   });
 
+  it("blocks motion against static-simple boxified wall colliders derived from open meshes", async () => {
+    const floorBrush = createBoxBrush({
+      id: "brush-floor-static-simple-wall",
+      center: {
+        x: 0,
+        y: -0.5,
+        z: 0
+      },
+      size: {
+        x: 10,
+        y: 1,
+        z: 10
+      }
+    });
+    const wallGeometry = new PlaneGeometry(4, 4, 4, 4);
+    wallGeometry.rotateY(Math.PI * 0.5);
+    const { asset, loadedAsset } = createFixtureLoadedModelAssetFromGeometry("asset-model-static-simple-wall", wallGeometry);
+    const wallInstance = createModelInstance({
+      id: "model-instance-static-simple-wall",
+      assetId: asset.id,
+      position: {
+        x: 2,
+        y: 2,
+        z: 0
+      },
+      collision: {
+        mode: "static-simple",
+        visible: true
+      }
+    });
+    const runtimeScene = buildRuntimeSceneFromDocument(
+      {
+        ...createEmptySceneDocument({ name: "Static Simple Wall Collision Scene" }),
+        assets: {
+          [asset.id]: asset
+        },
+        brushes: {
+          [floorBrush.id]: floorBrush
+        },
+        modelInstances: {
+          [wallInstance.id]: wallInstance
+        }
+      },
+      {
+        loadedModelAssets: {
+          [asset.id]: loadedAsset
+        }
+      }
+    );
+    const collisionWorld = await RapierCollisionWorld.create(runtimeScene.colliders, runtimeScene.playerCollider);
+
+    try {
+      const blocked = collisionWorld.resolveFirstPersonMotion(
+        {
+          x: 0,
+          y: 0,
+          z: 0
+        },
+        {
+          x: 3,
+          y: 0,
+          z: 0
+        },
+        runtimeScene.playerCollider
+      );
+
+      expect(blocked.collidedAxes.x).toBe(true);
+      expect(blocked.feetPosition.x).toBeLessThan(1.8);
+      expect(blocked.feetPosition.y).toBeLessThan(0.02);
+    } finally {
+      collisionWorld.dispose();
+    }
+  });
+
   it("resolves motion against freely rotated whitebox box colliders", async () => {
     const floorBrush = createBoxBrush({
       id: "brush-floor-rotated-wall",

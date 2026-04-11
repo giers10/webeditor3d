@@ -66,6 +66,43 @@ describe("buildGeneratedModelCollider", () => {
     expect(Array.from(collider.indices)).toSatisfy((values: number[]) => values.every(Number.isInteger));
   });
 
+  it("builds a static-simple compound collider from thin open mesh surfaces", () => {
+    const geometry = new PlaneGeometry(4, 3, 4, 3);
+    geometry.rotateY(Math.PI * 0.5);
+    const { asset, loadedAsset } = createFixtureLoadedModelAssetFromGeometry("asset-model-static-simple", geometry);
+    const modelInstance = createModelInstance({
+      id: "model-instance-static-simple",
+      assetId: asset.id,
+      collision: {
+        mode: "static-simple",
+        visible: true
+      }
+    });
+
+    const collider = buildGeneratedModelCollider(modelInstance, asset, loadedAsset);
+
+    expect(collider).not.toBeNull();
+    expect(collider).toMatchObject({
+      kind: "compound",
+      mode: "static-simple",
+      decomposition: "surface-voxel-boxes",
+      runtimeBehavior: "fixedQueryOnly"
+    });
+
+    if (collider === null || collider.kind !== "compound") {
+      throw new Error("Expected a compound collider.");
+    }
+
+    expect(collider.pieces.length).toBeGreaterThanOrEqual(1);
+    expect(collider.pieces.every((piece) => piece.kind === "box")).toBe(true);
+
+    if (collider.pieces[0]?.kind !== "box") {
+      throw new Error("Expected the first static-simple collider piece to be a box.");
+    }
+
+    expect(collider.pieces[0].size.x).toBeGreaterThan(0.01);
+  });
+
   it("builds a terrain heightfield from a regular-grid mesh", () => {
     const geometry = new PlaneGeometry(4, 4, 2, 2);
     geometry.rotateX(-Math.PI * 0.5);
