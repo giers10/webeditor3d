@@ -26,7 +26,12 @@ import {
   hasPositiveBoxSize,
   isBoxBrushVolumeMode
 } from "./brushes";
-import type { SceneDocument } from "./scene-document";
+import {
+  createSceneDocumentFromProject,
+  type ProjectDocument,
+  type ProjectScene,
+  type SceneDocument
+} from "./scene-document";
 import {
   isAdvancedRenderingWaterReflectionMode,
   isAdvancedRenderingShadowMapSize,
@@ -1255,6 +1260,61 @@ function registerAuthoredId(id: string, path: string, seenIds: Map<string, strin
   seenIds.set(id, path);
 }
 
+function prefixDiagnosticPath(prefix: string, path?: string): string | undefined {
+  return path === undefined ? undefined : `${prefix}${path}`;
+}
+
+function validateProjectResources(
+  document: Pick<ProjectDocument, "materials" | "assets">,
+  diagnostics: SceneDiagnostic[]
+) {
+  const seenIds = new Map<string, string>();
+
+  for (const [materialKey, material] of Object.entries(document.materials)) {
+    const path = `materials.${materialKey}`;
+
+    if (material.id !== materialKey) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "material-id-mismatch",
+          "Material ids must match their registry key.",
+          `${path}.id`
+        )
+      );
+    }
+
+    registerAuthoredId(material.id, path, seenIds, diagnostics);
+  }
+
+  for (const [assetKey, asset] of Object.entries(document.assets)) {
+    const path = `assets.${assetKey}`;
+
+    if (asset.id !== assetKey) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "asset-id-mismatch",
+          "Asset ids must match their registry key.",
+          `${path}.id`
+        )
+      );
+    }
+
+    registerAuthoredId(asset.id, path, seenIds, diagnostics);
+    validateProjectAsset(asset, path, diagnostics);
+  }
+}
+
+function filterProjectSceneDiagnostics(diagnostics: SceneDiagnostic[]): SceneDiagnostic[] {
+  return diagnostics.filter(
+    (diagnostic) =>
+      diagnostic.path === undefined ||
+      (!diagnostic.path.startsWith("materials.") &&
+        !diagnostic.path.startsWith("assets."))
+  );
+}
+
 export function formatSceneDiagnostic(diagnostic: SceneDiagnostic): string {
   return diagnostic.path === undefined ? diagnostic.message : `${diagnostic.path}: ${diagnostic.message}`;
 }
@@ -1578,5 +1638,96 @@ export function assertSceneDocumentIsValid(document: SceneDocument) {
 
   if (validation.errors.length > 0) {
     throw new Error(`Scene document has ${validation.errors.length} validation error(s): ${formatSceneDiagnosticSummary(validation.errors)}`);
+  }
+}
+
+export function validateProjectDocument(
+  document: ProjectDocument
+): SceneDocumentValidationResult {
+  const diagnostics: SceneDiagnostic[] = [];
+
+  if (Object.keys(document.scenes).length === 0) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "missing-project-scenes",
+        "Project documents must contain at least one scene.",
+        "scenes"
+      )
+    );
+  }
+
+  if (document.scenes[document.activeSceneId] === undefined) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "missing-active-scene",
+        `Project active scene ${document.activeSceneId} does not exist.`,
+        "activeSceneId"
+      )
+    );
+  }
+
+  validateProjectResources(document, diagnostics);
+
+  for (const [sceneKey, scene] of Object.entries(document.scenes)) {
+    const scenePath = `scenes.${sceneKey}`;
+
+    if (scene.id !== sceneKey) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "scene-id-mismatch",
+          "Scene ids must match their registry key.",
+          `${scenePath}.id`
+        )
+      );
+    }
+
+    if (scene.name.trim().length === 0) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-scene-name",
+          "Scene names must be non-empty.",
+          `${scenePath}.name`
+        )
+      );
+    }
+
+    const sceneDocument = createSceneDocumentFromProject(
+      {
+        ...document,
+        activeSceneId: scene.id
+      },
+      scene.id
+    );
+
+    for (const diagnostic of filterProjectSceneDiagnostics(
+      validateSceneDocument(sceneDocument).diagnostics
+    )) {
+      diagnostics.push({
+        ...diagnostic,
+        path: prefixDiagnosticPath(`${scenePath}.`, diagnostic.path)
+      });
+    }
+  }
+
+  return {
+    diagnostics,
+    errors: diagnostics.filter((diagnostic) => diagnostic.severity === "error"),
+    warnings: diagnostics.filter(
+      (diagnostic) => diagnostic.severity === "warning"
+    )
+  };
+}
+
+export function assertProjectDocumentIsValid(document: ProjectDocument) {
+  const validation = validateProjectDocument(document);
+
+  if (validation.errors.length > 0) {
+    throw new Error(
+      `Project document has ${validation.errors.length} validation error(s): ${formatSceneDiagnosticSummary(validation.errors)}`
+    );
   }
 }
