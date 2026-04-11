@@ -412,6 +412,8 @@ export class RapierCollisionWorld {
           z: feetPosition.z + motion.z
         },
         grounded: false,
+        collisionCount: 0,
+        groundCollisionNormal: null,
         collidedAxes: {
           x: false,
           y: false,
@@ -419,6 +421,8 @@ export class RapierCollisionWorld {
         }
       };
     }
+
+    this.syncPlayerColliderShape(shape);
 
     const currentCenter = feetPositionToColliderCenter(feetPosition, shape);
     this.playerCollider.setTranslation(currentCenter);
@@ -435,14 +439,125 @@ export class RapierCollisionWorld {
       y: currentCenter.y + correctedMovement.y,
       z: currentCenter.z + correctedMovement.z
     };
+    const collisionCount = this.characterController.numComputedCollisions();
+    let groundCollisionNormal: Vec3 | null = null;
+
+    for (let index = 0; index < collisionCount; index += 1) {
+      const collision = this.characterController.computedCollision(index);
+
+      if (
+        collision === null ||
+        collision.normal1.y < GROUND_NORMAL_Y_THRESHOLD ||
+        (groundCollisionNormal !== null &&
+          collision.normal1.y <= groundCollisionNormal.y)
+      ) {
+        continue;
+      }
+
+      groundCollisionNormal = toVec3(collision.normal1);
+    }
 
     this.playerCollider.setTranslation(nextCenter);
 
     return {
       feetPosition: colliderCenterToFeetPosition(nextCenter, shape),
-      grounded: this.characterController.computedGrounded() || (motion.y < 0 && collidedAxes.y),
+      grounded:
+        this.characterController.computedGrounded() ||
+        groundCollisionNormal !== null ||
+        (motion.y < 0 && collidedAxes.y),
+      collisionCount,
+      groundCollisionNormal,
       collidedAxes
     };
+  }
+
+  probePlayerGround(
+    feetPosition: Vec3,
+    shape: FirstPersonPlayerShape,
+    maxDistance: number
+  ): PlayerGroundProbeResult {
+    if (
+      this.playerCollider === null ||
+      shape.mode === "none" ||
+      maxDistance <= COLLISION_EPSILON
+    ) {
+      return {
+        grounded: false,
+        distance: null,
+        normal: null,
+        slopeDegrees: null
+      };
+    }
+
+    this.syncPlayerColliderShape(shape);
+
+    const hit = this.world.castShape(
+      feetPositionToColliderCenter(feetPosition, shape),
+      IDENTITY_ROTATION,
+      {
+        x: 0,
+        y: -maxDistance,
+        z: 0
+      },
+      this.playerCollider.shape,
+      0,
+      1,
+      true,
+      undefined,
+      undefined,
+      this.playerCollider
+    );
+
+    if (hit === null) {
+      return {
+        grounded: false,
+        distance: null,
+        normal: null,
+        slopeDegrees: null
+      };
+    }
+
+    const normal = toVec3(hit.normal1);
+
+    return {
+      grounded: normal.y >= GROUND_NORMAL_Y_THRESHOLD,
+      distance: maxDistance * hit.time_of_impact,
+      normal,
+      slopeDegrees:
+        (Math.acos(Math.max(-1, Math.min(1, normal.y))) * 180) / Math.PI
+    };
+  }
+
+  canOccupyPlayerShape(
+    feetPosition: Vec3,
+    shape: FirstPersonPlayerShape
+  ): boolean {
+    if (shape.mode === "none") {
+      return true;
+    }
+
+    const queryShape = createPlayerQueryShape(shape);
+
+    if (queryShape === null) {
+      return true;
+    }
+
+    let intersects = false;
+
+    this.world.intersectionsWithShape(
+      feetPositionToColliderCenter(feetPosition, shape),
+      IDENTITY_ROTATION,
+      queryShape,
+      () => {
+        intersects = true;
+        return false;
+      },
+      undefined,
+      undefined,
+      this.playerCollider ?? undefined
+    );
+
+    return !intersects;
   }
 
   resolveThirdPersonCameraCollision(
