@@ -4172,6 +4172,43 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
+  const applySceneExitChange = (
+    overrides: {
+      enabled?: boolean;
+      targetSceneId?: string;
+      targetEntryEntityId?: string;
+    } = {}
+  ) => {
+    if (selectedSceneExit === null) {
+      setStatusMessage("Select a Scene Exit before editing it.");
+      return;
+    }
+
+    try {
+      const nextEntity = createSceneExitEntity({
+        id: selectedSceneExit.id,
+        name: selectedSceneExit.name,
+        position: snapVec3ToGrid(
+          readVec3Draft(entityPositionDraft, "Scene Exit position"),
+          DEFAULT_GRID_SIZE
+        ),
+        radius: readPositiveNumberDraft(
+          sceneExitRadiusDraft,
+          "Scene Exit radius"
+        ),
+        prompt: readInteractablePromptDraft(sceneExitPromptDraft),
+        enabled: overrides.enabled ?? sceneExitEnabledDraft,
+        targetSceneId: overrides.targetSceneId ?? sceneExitTargetSceneIdDraft,
+        targetEntryEntityId:
+          overrides.targetEntryEntityId ?? sceneExitTargetEntryIdDraft
+      });
+
+      commitEntityChange(selectedSceneExit, nextEntity, "Updated Scene Exit.");
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
   const commitInteractionLinkChange = (
     currentLink: InteractionLink,
     nextLink: InteractionLink,
