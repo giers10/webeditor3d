@@ -163,6 +163,10 @@ import {
 import { createFogQualityMaterial } from "../rendering/fog-material";
 import { updatePlanarReflectionCamera } from "../rendering/planar-reflection";
 import {
+  applyWhiteboxBevelToMaterial,
+  shouldApplyWhiteboxBevel
+} from "../rendering/whitebox-bevel-material";
+import {
   collectWaterContactPatches,
   createWaterMaterial
 } from "../rendering/water-material";
@@ -4104,6 +4108,7 @@ export class ViewportHost {
     const selectedFace = highlightState === "selected";
     const hoveredFace = highlightState === "hovered";
     const emphasizedFace = selectedFace || hoveredFace;
+    const whiteboxBevelSettings = this.currentWorld?.advancedRendering;
 
     if (brush.volume.mode === "water") {
       const quality = volumeRenderPaths.water === "quality";
@@ -4273,7 +4278,7 @@ export class ViewportHost {
     }
 
     if (material === undefined || face.materialId === null) {
-      return new MeshStandardMaterial({
+      const faceMaterial = new MeshStandardMaterial({
         color: selectedFace
           ? SELECTED_FACE_FALLBACK_COLOR
           : hoveredFace
@@ -4288,9 +4293,21 @@ export class ViewportHost {
         roughness: 0.9,
         metalness: 0.05
       });
+
+      if (
+        whiteboxBevelSettings !== undefined &&
+        shouldApplyWhiteboxBevel(whiteboxBevelSettings)
+      ) {
+        applyWhiteboxBevelToMaterial(
+          faceMaterial,
+          whiteboxBevelSettings.whiteboxBevel
+        );
+      }
+
+      return faceMaterial;
     }
 
-    return new MeshStandardMaterial({
+    const faceMaterial = new MeshStandardMaterial({
       color: 0xffffff,
       map: this.getOrCreateTexture(material),
       emissive: selectedFace
@@ -4302,6 +4319,18 @@ export class ViewportHost {
       roughness: 0.92,
       metalness: 0.02
     });
+
+    if (
+      whiteboxBevelSettings !== undefined &&
+      shouldApplyWhiteboxBevel(whiteboxBevelSettings)
+    ) {
+      applyWhiteboxBevelToMaterial(
+        faceMaterial,
+        whiteboxBevelSettings.whiteboxBevel
+      );
+    }
+
+    return faceMaterial;
   }
 
   private getWaterReflectionMode() {
