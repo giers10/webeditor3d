@@ -10,6 +10,7 @@ import type { ActiveTransformSession, TransformSessionState } from "../../src/co
 import { createBoxBrush } from "../../src/document/brushes";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
 import { createPlayerStartEntity } from "../../src/entities/entity-instances";
+import type { ViewportPanelCameraState } from "../../src/viewport-three/viewport-layout";
 
 const { MockViewportHost, viewportHostInstances } = vi.hoisted(() => {
   const viewportHostInstances: Array<{
@@ -246,6 +247,18 @@ function commitTransform(viewportHost: ReturnType<typeof getTopLeftViewportHost>
 
   act(() => {
     handler(transformSession);
+  });
+}
+
+function emitCameraStateChange(viewportHost: ReturnType<typeof getTopLeftViewportHost>, cameraState: ViewportPanelCameraState) {
+  const handler = viewportHost.setCameraStateChangeHandler.mock.calls.at(-1)?.[0] as ((cameraState: ViewportPanelCameraState) => void) | undefined;
+
+  if (handler === undefined) {
+    throw new Error("Camera state change handler was not registered.");
+  }
+
+  act(() => {
+    handler(cameraState);
   });
 }
 
