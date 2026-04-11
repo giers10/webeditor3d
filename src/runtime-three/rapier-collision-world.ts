@@ -19,6 +19,7 @@ import { getFirstPersonPlayerShapeSignature } from "./player-collision";
 import type { RuntimeBrushTriMeshCollider, RuntimeSceneCollider } from "./runtime-scene-build";
 
 const CHARACTER_CONTROLLER_OFFSET = 0.01;
+const CHARACTER_CONTROLLER_SNAP_TO_GROUND_DISTANCE = 0.2;
 const COLLISION_EPSILON = 1e-5;
 const CAMERA_COLLISION_EPSILON = 1e-3;
 const GROUND_NORMAL_Y_THRESHOLD = 0.45;
@@ -347,7 +348,9 @@ export class RapierCollisionWorld {
     if (characterController !== null) {
       characterController.setUp({ x: 0, y: 1, z: 0 });
       characterController.setSlideEnabled(true);
-      characterController.enableSnapToGround(0.2);
+      characterController.enableSnapToGround(
+        CHARACTER_CONTROLLER_SNAP_TO_GROUND_DISTANCE
+      );
       characterController.enableAutostep(0.35, 0.15, false);
       characterController.setMaxSlopeClimbAngle(Math.PI * 0.45);
       characterController.setMinSlopeSlideAngle(Math.PI * 0.5);
@@ -425,7 +428,19 @@ export class RapierCollisionWorld {
 
     const currentCenter = feetPositionToColliderCenter(feetPosition, shape);
     this.playerCollider.setTranslation(currentCenter);
+    const snapToGroundWasEnabled = this.characterController.snapToGroundEnabled();
+
+    if (motion.y > COLLISION_EPSILON && snapToGroundWasEnabled) {
+      this.characterController.disableSnapToGround();
+    }
+
     this.characterController.computeColliderMovement(this.playerCollider, motion);
+
+    if (snapToGroundWasEnabled) {
+      this.characterController.enableSnapToGround(
+        CHARACTER_CONTROLLER_SNAP_TO_GROUND_DISTANCE
+      );
+    }
 
     const correctedMovement = this.characterController.computedMovement();
     const collidedAxes = {
