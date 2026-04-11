@@ -41,6 +41,11 @@ export interface RuntimeControllerContext {
     shape: FirstPersonPlayerShape
   ): ResolvedPlayerMotion | null;
   resolvePlayerVolumeState(feetPosition: Vec3): RuntimePlayerVolumeState;
+  resolveThirdPersonCameraCollision(
+    pivot: Vec3,
+    desiredCameraPosition: Vec3,
+    radius: number
+  ): Vec3;
   setRuntimeMessage(message: string | null): void;
   setFirstPersonTelemetry(telemetry: FirstPersonTelemetry | null): void;
 }
