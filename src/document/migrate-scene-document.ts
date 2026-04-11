@@ -1235,7 +1235,6 @@ function readPlayerStartInputBindings(value: unknown, label: string) {
         DEFAULT_PLAYER_START_GAMEPAD_BINDINGS.cameraLook
       )
     }
-        source.version !== PLAYER_START_MOVEMENT_TEMPLATE_SCENE_DOCUMENT_VERSION &&
   });
 }
 
@@ -1243,12 +1242,10 @@ function readPlayerStartMovementTemplate(value: unknown, label: string) {
   if (value === undefined) {
     return createPlayerStartMovementTemplate();
   }
-        source.version !== PROJECT_NAME_SCENE_DOCUMENT_VERSION &&
 
   if (!isRecord(value)) {
     throw new Error(`${label} must be an object.`);
-        source.version !== WHITEBOX_GEOMETRY_SCENE_DOCUMENT_VERSION &&
-        source.version !== STATIC_SIMPLE_MODEL_COLLIDERS_SCENE_DOCUMENT_VERSION
+  }
 
   const kind = readOptionalAllowedValue(
     value.kind,
@@ -2745,6 +2742,8 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
 
   if (
     source.version !== SCENE_DOCUMENT_VERSION &&
+    source.version !== PLAYER_START_MOVEMENT_TEMPLATE_SCENE_DOCUMENT_VERSION &&
+    source.version !== PROJECT_NAME_SCENE_DOCUMENT_VERSION &&
     source.version !== STATIC_SIMPLE_MODEL_COLLIDERS_SCENE_DOCUMENT_VERSION &&
     source.version !== SCENE_EDITOR_PREFERENCES_SCENE_DOCUMENT_VERSION &&
     source.version !== PLAYER_START_GAMEPAD_CAMERA_LOOK_SCENE_DOCUMENT_VERSION &&
