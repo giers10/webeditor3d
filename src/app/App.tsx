@@ -8292,6 +8292,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 )}
               </div>
             </Panel>
+          </>
           ) : (
             <Panel title="Inspector">
               <div className="stat-card">
