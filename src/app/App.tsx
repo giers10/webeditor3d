@@ -3842,7 +3842,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
   };
 
   const applyPlayerStartChange = (
-    overrides: { colliderMode?: PlayerStartColliderMode } = {}
+    overrides: {
+      colliderMode?: PlayerStartColliderMode;
+      navigationMode?: PlayerStartNavigationMode;
+    } = {}
   ) => {
     if (selectedPlayerStart === null) {
       setStatusMessage("Select a Player Start before editing it.");
@@ -3855,6 +3858,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
         DEFAULT_GRID_SIZE
       );
       const yawDegrees = readYawDegreesDraft(playerStartYawDraft);
+      const navigationMode =
+        overrides.navigationMode ?? playerStartNavigationModeDraft;
       const colliderMode =
         overrides.colliderMode ?? playerStartColliderModeDraft;
       const nextEntity = createPlayerStartEntity({
@@ -3862,7 +3867,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
         name: selectedPlayerStart.name,
         position: snappedPosition,
         yawDegrees,
-        navigationMode: playerStartNavigationModeDraft,
+        navigationMode,
         collider: {
           mode: colliderMode,
           eyeHeight: readPositiveNumberDraft(
@@ -9700,7 +9705,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               const nextMode = event.currentTarget
                                 .value as PlayerStartNavigationMode;
                               setPlayerStartNavigationModeDraft(nextMode);
-                              scheduleDraftCommit(() => applyPlayerStartChange());
+                              scheduleDraftCommit(() =>
+                                applyPlayerStartChange({
+                                  navigationMode: nextMode
+                                })
+                              );
                             }}
                           >
                             {PLAYER_START_NAVIGATION_MODES.map((mode) => (
