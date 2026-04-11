@@ -11,6 +11,8 @@ import {
   createInteractableEntity,
   createPlayerStartEntity,
   createPointLightEntity,
+  createSceneEntryEntity,
+  createSceneExitEntity,
   createSoundEmitterEntity,
   createSpotLightEntity,
   createTeleportTargetEntity,
@@ -42,9 +44,13 @@ function createTransformCommandLabel(session: ActiveTransformSession): string {
                 ? "sound emitter"
                 : session.target.entityKind === "triggerVolume"
                   ? "trigger volume"
+                  : session.target.entityKind === "sceneEntry"
+                    ? "scene entry"
                   : session.target.entityKind === "teleportTarget"
                     ? "teleport target"
-                    : "interactable"
+                    : session.target.entityKind === "interactable"
+                      ? "interactable"
+                      : "scene exit"
         : "model instance"
   }`;
 }
@@ -188,6 +194,18 @@ export function createCommitTransformSessionCommand(document: SceneDocument, ses
             }),
             label: createTransformCommandLabel(session)
           });
+        case "sceneEntry":
+          return createUpsertEntityCommand({
+            entity: createSceneEntryEntity({
+              ...entity,
+              position: session.preview.position,
+              yawDegrees:
+                session.preview.rotation.kind === "yaw"
+                  ? session.preview.rotation.yawDegrees
+                  : entity.yawDegrees
+            }),
+            label: createTransformCommandLabel(session)
+          });
         case "soundEmitter":
           return createUpsertEntityCommand({
             entity: createSoundEmitterEntity({
@@ -216,6 +234,14 @@ export function createCommitTransformSessionCommand(document: SceneDocument, ses
         case "interactable":
           return createUpsertEntityCommand({
             entity: createInteractableEntity({
+              ...entity,
+              position: session.preview.position
+            }),
+            label: createTransformCommandLabel(session)
+          });
+        case "sceneExit":
+          return createUpsertEntityCommand({
+            entity: createSceneExitEntity({
               ...entity,
               position: session.preview.position
             }),
