@@ -4,6 +4,7 @@ import { createEditorStore } from "../../src/app/editor-store";
 import { createCreateBoxBrushCommand } from "../../src/commands/create-box-brush-command";
 import { createCreateSceneCommand } from "../../src/commands/create-scene-command";
 import { createSetActiveSceneCommand } from "../../src/commands/set-active-scene-command";
+import { createSetSceneLoadingScreenCommand } from "../../src/commands/set-scene-loading-screen-command";
 import { createSetSceneNameCommand } from "../../src/commands/set-scene-name-command";
 import { createTransformSession } from "../../src/core/transform-session";
 import { createBoxBrush } from "../../src/document/brushes";
@@ -107,6 +108,40 @@ describe("EditorStore", () => {
         store.getState().projectDocument.scenes[secondSceneId].brushes
       )
     ).toHaveLength(1);
+  });
+
+  it("updates scene loading overlay settings through commands and supports undo", () => {
+    const store = createEditorStore();
+    const sceneId = store.getState().activeSceneId;
+
+    store.executeCommand(
+      createSetSceneLoadingScreenCommand({
+        sceneId,
+        label: "Update scene loading overlay",
+        loadingScreen: {
+          colorHex: "#2b3141",
+          headline: "Entering the room",
+          description: "Preparing authored triggers."
+        }
+      })
+    );
+
+    expect(
+      store.getState().projectDocument.scenes[sceneId]?.loadingScreen
+    ).toEqual({
+      colorHex: "#2b3141",
+      headline: "Entering the room",
+      description: "Preparing authored triggers."
+    });
+
+    expect(store.undo()).toBe(true);
+    expect(
+      store.getState().projectDocument.scenes[sceneId]?.loadingScreen
+    ).toEqual({
+      colorHex: "#0d1117",
+      headline: null,
+      description: null
+    });
   });
 
   it("keeps scene-scoped command history targeting the authored scene after the active scene changes", () => {
