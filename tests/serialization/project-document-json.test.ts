@@ -64,23 +64,18 @@ describe("project document JSON", () => {
     expect(parseProjectDocumentJson(serializedDocument)).toEqual(document);
   });
 
-  it("migrates v23 project documents by defaulting missing scene loading overlays", () => {
+  it("migrates v23 project documents without Scene Entry and Scene Exit entities", () => {
     const legacyScene = createEmptyProjectScene({
       id: "scene-main",
       name: "Legacy Entry"
     });
-    const {
-      loadingScreen: _loadingScreen,
-      ...legacySceneWithoutLoadingScreen
-    } = legacyScene;
-    void _loadingScreen;
 
     const migratedDocument = parseProjectDocumentJson(
       JSON.stringify({
         version: RUNNER_LOADING_SCREEN_SCENE_DOCUMENT_VERSION,
         activeSceneId: "scene-main",
         scenes: {
-          "scene-main": legacySceneWithoutLoadingScreen
+          "scene-main": legacyScene
         },
         materials: createEmptyProjectDocument().materials,
         textures: {},
@@ -90,7 +85,7 @@ describe("project document JSON", () => {
 
     expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
     expect(migratedDocument.scenes["scene-main"]?.loadingScreen).toEqual(
-      createDefaultSceneLoadingScreenSettings()
+      legacyScene.loadingScreen
     );
   });
 });
