@@ -1,4 +1,5 @@
 import type {
+  PlayerStartGamepadActionBinding,
   PlayerStartGamepadCameraLookBinding,
   PlayerStartGamepadBinding,
   PlayerStartInputBindings
@@ -11,6 +12,13 @@ export interface PlayerStartMovementActionState {
   moveBackward: number;
   moveLeft: number;
   moveRight: number;
+}
+
+export interface PlayerStartActionInputState
+  extends PlayerStartMovementActionState {
+  jump: number;
+  sprint: number;
+  crouch: number;
 }
 
 export interface PlayerStartLookInputState {
@@ -115,6 +123,57 @@ function readGamepadBindingStrength(
   return strength;
 }
 
+function readSingleGamepadActionBinding(
+  gamepad: Gamepad,
+  binding: PlayerStartGamepadActionBinding
+): number {
+  switch (binding) {
+    case "buttonSouth":
+      return readGamepadButtonStrength(gamepad.buttons[0]);
+    case "buttonEast":
+      return readGamepadButtonStrength(gamepad.buttons[1]);
+    case "buttonWest":
+      return readGamepadButtonStrength(gamepad.buttons[2]);
+    case "buttonNorth":
+      return readGamepadButtonStrength(gamepad.buttons[3]);
+    case "leftShoulder":
+      return readGamepadButtonStrength(gamepad.buttons[4]);
+    case "rightShoulder":
+      return readGamepadButtonStrength(gamepad.buttons[5]);
+    case "leftTrigger":
+      return readGamepadButtonStrength(gamepad.buttons[6]);
+    case "rightTrigger":
+      return readGamepadButtonStrength(gamepad.buttons[7]);
+    case "leftStickPress":
+      return readGamepadButtonStrength(gamepad.buttons[10]);
+    case "rightStickPress":
+      return readGamepadButtonStrength(gamepad.buttons[11]);
+  }
+}
+
+function readGamepadActionBindingStrength(
+  gamepads: ArrayLike<Gamepad | null> | null | undefined,
+  binding: PlayerStartGamepadActionBinding
+): number {
+  if (gamepads === undefined || gamepads === null) {
+    return 0;
+  }
+
+  let strength = 0;
+
+  for (let index = 0; index < gamepads.length; index += 1) {
+    const gamepad = gamepads[index];
+
+    if (gamepad === null || gamepad === undefined || gamepad.connected === false) {
+      continue;
+    }
+
+    strength = Math.max(strength, readSingleGamepadActionBinding(gamepad, binding));
+  }
+
+  return strength;
+}
+
 function readSingleGamepadCameraLook(
   gamepad: Gamepad,
   binding: PlayerStartGamepadCameraLookBinding
@@ -182,6 +241,25 @@ export function resolvePlayerStartMovementActions(
   bindings: PlayerStartInputBindings,
   gamepads: ArrayLike<Gamepad | null> | null | undefined = getAvailableGamepads()
 ): PlayerStartMovementActionState {
+  const actionInputs = resolvePlayerStartActionInputs(
+    pressedKeys,
+    bindings,
+    gamepads
+  );
+
+  return {
+    moveForward: actionInputs.moveForward,
+    moveBackward: actionInputs.moveBackward,
+    moveLeft: actionInputs.moveLeft,
+    moveRight: actionInputs.moveRight
+  };
+}
+
+export function resolvePlayerStartActionInputs(
+  pressedKeys: ReadonlySet<string>,
+  bindings: PlayerStartInputBindings,
+  gamepads: ArrayLike<Gamepad | null> | null | undefined = getAvailableGamepads()
+): PlayerStartActionInputState {
   return {
     moveForward: Math.max(
       pressedKeys.has(bindings.keyboard.moveForward) ? 1 : 0,
@@ -198,6 +276,18 @@ export function resolvePlayerStartMovementActions(
     moveRight: Math.max(
       pressedKeys.has(bindings.keyboard.moveRight) ? 1 : 0,
       readGamepadBindingStrength(gamepads, bindings.gamepad.moveRight)
+    ),
+    jump: Math.max(
+      pressedKeys.has(bindings.keyboard.jump) ? 1 : 0,
+      readGamepadActionBindingStrength(gamepads, bindings.gamepad.jump)
+    ),
+    sprint: Math.max(
+      pressedKeys.has(bindings.keyboard.sprint) ? 1 : 0,
+      readGamepadActionBindingStrength(gamepads, bindings.gamepad.sprint)
+    ),
+    crouch: Math.max(
+      pressedKeys.has(bindings.keyboard.crouch) ? 1 : 0,
+      readGamepadActionBindingStrength(gamepads, bindings.gamepad.crouch)
     )
   };
 }
