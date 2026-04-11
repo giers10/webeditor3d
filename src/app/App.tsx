@@ -2506,6 +2506,72 @@ export function App({ store, initialStatusMessage }: AppProps) {
     setStatusMessage(`Switched to scene ${nextScene.name}.`);
   };
 
+  const applySceneLoadingScreen = (
+    loadingScreen: SceneLoadingScreenSettings,
+    label: string,
+    successMessage: string
+  ) => {
+    if (
+      areSceneLoadingScreenSettingsEqual(
+        activeProjectScene.loadingScreen,
+        loadingScreen
+      )
+    ) {
+      return;
+    }
+
+    store.executeCommand(
+      createSetSceneLoadingScreenCommand({
+        sceneId: activeProjectScene.id,
+        label,
+        loadingScreen
+      })
+    );
+    setStatusMessage(successMessage);
+  };
+
+  const applySceneLoadingColor = (colorHex: string) => {
+    applySceneLoadingScreen(
+      {
+        ...cloneSceneLoadingScreenSettings(activeProjectScene.loadingScreen),
+        colorHex
+      },
+      "Update scene loading overlay color",
+      "Updated the runner loading overlay color."
+    );
+  };
+
+  const applySceneLoadingHeadline = () => {
+    const normalizedHeadline = sceneLoadingHeadlineDraft.trim();
+
+    applySceneLoadingScreen(
+      {
+        ...cloneSceneLoadingScreenSettings(activeProjectScene.loadingScreen),
+        headline: normalizedHeadline.length === 0 ? null : normalizedHeadline
+      },
+      "Update scene loading overlay headline",
+      normalizedHeadline.length === 0
+        ? "Cleared the runner loading overlay headline."
+        : "Updated the runner loading overlay headline."
+    );
+  };
+
+  const applySceneLoadingDescription = () => {
+    const normalizedDescription = sceneLoadingDescriptionDraft.trim();
+
+    applySceneLoadingScreen(
+      {
+        ...cloneSceneLoadingScreenSettings(activeProjectScene.loadingScreen),
+        description:
+          normalizedDescription.length === 0 ? null : normalizedDescription
+      },
+      "Update scene loading overlay description",
+      normalizedDescription.length === 0
+        ? "Cleared the runner loading overlay description."
+        : "Updated the runner loading overlay description."
+    );
+  };
+
   const requestViewportFocus = (
     selection: EditorSelection,
     status?: string
