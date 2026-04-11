@@ -14,7 +14,51 @@ import type {
   RuntimeSpawnPoint
 } from "./runtime-scene-build";
 
-export interface FirstPersonTelemetry {
+export interface RuntimeMovementTransitionSignals {
+  jumpStarted: boolean;
+  leftGround: boolean;
+  startedFalling: boolean;
+  landed: boolean;
+  enteredWater: boolean;
+  exitedWater: boolean;
+  wallContactStarted: boolean;
+  headBump: boolean;
+}
+
+export interface RuntimePlayerCameraHookState {
+  jumping: boolean;
+  falling: boolean;
+  landing: boolean;
+  swimming: boolean;
+  underwaterAmount: number;
+}
+
+export interface RuntimePlayerAudioHookState {
+  underwaterAmount: number;
+  enteredWater: boolean;
+  exitedWater: boolean;
+}
+
+export interface RuntimePlayerAnimationHookState {
+  locomotionMode: RuntimeLocomotionMode;
+  airborneKind: RuntimeAirborneKind;
+  gait: RuntimeLocomotionGait;
+  moving: boolean;
+  movementAmount: number;
+  grounded: boolean;
+  crouched: boolean;
+  sprinting: boolean;
+  inWater: boolean;
+  signals: RuntimeMovementTransitionSignals;
+}
+
+export interface RuntimePlayerMovementHooks {
+  camera: RuntimePlayerCameraHookState;
+  audio: RuntimePlayerAudioHookState;
+  animation: RuntimePlayerAnimationHookState;
+}
+
+export interface PlayerControllerTelemetry {
   feetPosition: Vec3;
   eyePosition: Vec3;
   grounded: boolean;
@@ -25,7 +69,11 @@ export interface FirstPersonTelemetry {
   inFogVolume: boolean;
   pointerLocked: boolean;
   spawn: RuntimeSpawnPoint;
+  signals: RuntimeMovementTransitionSignals;
+  hooks: RuntimePlayerMovementHooks;
 }
+
+export type FirstPersonTelemetry = PlayerControllerTelemetry;
 
 export type RuntimeLocomotionMode =
   | "grounded"
@@ -95,7 +143,9 @@ export interface RuntimeControllerContext {
     radius: number
   ): Vec3;
   setRuntimeMessage(message: string | null): void;
-  setFirstPersonTelemetry(telemetry: FirstPersonTelemetry | null): void;
+  setPlayerControllerTelemetry(
+    telemetry: PlayerControllerTelemetry | null
+  ): void;
 }
 
 export interface NavigationControllerDeactivateOptions {

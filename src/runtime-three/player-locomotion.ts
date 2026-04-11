@@ -95,6 +95,8 @@ export interface StepPlayerLocomotionResult {
   verticalVelocity: number;
   crouched: boolean;
   jumpPressed: boolean;
+  jumpStarted: boolean;
+  headBump: boolean;
   locomotionState: RuntimeLocomotionState;
   inWaterVolume: boolean;
   inFogVolume: boolean;
@@ -338,9 +340,14 @@ export function stepPlayerLocomotion(
     options.probeGround
   );
   const grounded =
+    !jumpTriggered &&
     activeShape.mode !== "none" &&
     !nextVolumeState.inWater &&
     (resolvedMotion.grounded || groundProbe.grounded);
+  const headBump =
+    verticalDisplacement > 0 &&
+    resolvedMotion.collidedAxes.y &&
+    resolvedMotion.feetPosition.y <= options.feetPosition.y + 1e-4;
 
   if (activeShape.mode === "none" || nextVolumeState.inWater || grounded) {
     verticalVelocity = 0;
@@ -365,6 +372,8 @@ export function stepPlayerLocomotion(
     verticalVelocity,
     crouched,
     jumpPressed,
+    jumpStarted: jumpTriggered,
+    headBump,
     locomotionState: {
       locomotionMode,
       airborneKind: resolveAirborneKind(locomotionMode, verticalVelocity),
