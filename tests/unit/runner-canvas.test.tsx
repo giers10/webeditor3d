@@ -328,4 +328,51 @@ describe("RunnerCanvas", () => {
       runtimeHostInstances[0]?.setSceneExitHandler
     ).toHaveBeenCalledTimes(2);
   });
+
+  it("keeps first-person HUD affordances hidden in third-person mode", async () => {
+    const runtimeScene = buildRuntimeSceneFromDocument(
+      createEmptySceneDocument()
+    );
+
+    render(
+      <RunnerCanvas
+        runtimeScene={runtimeScene}
+        sceneName="Third Person Runner"
+        sceneLoadingScreen={createDefaultSceneLoadingScreenSettings()}
+        projectAssets={{}}
+        loadedModelAssets={{}}
+        loadedImageAssets={{}}
+        loadedAudioAssets={{}}
+        navigationMode="thirdPerson"
+        onRuntimeMessageChange={vi.fn()}
+        onFirstPersonTelemetryChange={vi.fn()}
+        onInteractionPromptChange={vi.fn()}
+        onSceneExitActivated={vi.fn()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(runtimeHostInstances).toHaveLength(1);
+      expect(
+        runtimeHostInstances[0]?.setSceneLoadStateHandler
+      ).toHaveBeenCalledTimes(1);
+    });
+
+    const publishSceneLoadState = runtimeHostInstances[0]
+      ?.setSceneLoadStateHandler.mock.calls[0]?.[0] as
+      | ((state: RuntimeSceneLoadState) => void)
+      | undefined;
+
+    act(() => {
+      publishSceneLoadState?.({
+        status: "ready",
+        message: null
+      });
+    });
+
+    expect(document.querySelector(".runner-canvas__crosshair")).toBeNull();
+    expect(
+      screen.queryByTestId("runner-interaction-prompt")
+    ).toBeNull();
+  });
 });
