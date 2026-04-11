@@ -96,6 +96,12 @@ export interface RuntimePlayerStart {
   collider: FirstPersonPlayerShape;
 }
 
+export interface RuntimeSceneEntry {
+  entityId: string;
+  position: Vec3;
+  yawDegrees: number;
+}
+
 export interface RuntimeSoundEmitter {
   entityId: string;
   position: Vec3;
@@ -127,6 +133,16 @@ export interface RuntimeInteractable {
   radius: number;
   prompt: string;
   enabled: boolean;
+}
+
+export interface RuntimeSceneExit {
+  entityId: string;
+  position: Vec3;
+  radius: number;
+  prompt: string;
+  enabled: boolean;
+  targetSceneId: string;
+  targetEntryEntityId: string;
 }
 
 export interface RuntimePointLight {
@@ -165,14 +181,16 @@ export interface RuntimeModelInstance {
 
 export interface RuntimeEntityCollection {
   playerStarts: RuntimePlayerStart[];
+  sceneEntries: RuntimeSceneEntry[];
   soundEmitters: RuntimeSoundEmitter[];
   triggerVolumes: RuntimeTriggerVolume[];
   teleportTargets: RuntimeTeleportTarget[];
   interactables: RuntimeInteractable[];
+  sceneExits: RuntimeSceneExit[];
 }
 
 export interface RuntimeSpawnPoint {
-  source: "playerStart" | "fallback";
+  source: "playerStart" | "sceneEntry" | "fallback";
   entityId: string | null;
   position: Vec3;
   yawDegrees: number;
@@ -193,9 +211,10 @@ export interface RuntimeSceneDefinition {
   spawn: RuntimeSpawnPoint;
 }
 
-interface BuildRuntimeSceneOptions {
+export interface BuildRuntimeSceneOptions {
   navigationMode?: RuntimeNavigationMode;
   loadedModelAssets?: Record<string, LoadedModelAsset>;
+  sceneEntryId?: string | null;
 }
 
 function cloneVec3(vector: Vec3): Vec3 {
@@ -411,10 +430,12 @@ interface RuntimeSceneCollections {
 function buildRuntimeSceneCollections(document: SceneDocument): RuntimeSceneCollections {
   const runtimeEntities: RuntimeEntityCollection = {
     playerStarts: [],
+    sceneEntries: [],
     soundEmitters: [],
     triggerVolumes: [],
     teleportTargets: [],
-    interactables: []
+    interactables: [],
+    sceneExits: []
   };
   const localLights: RuntimeLocalLightCollection = {
     pointLights: [],
@@ -449,6 +470,13 @@ function buildRuntimeSceneCollections(document: SceneDocument): RuntimeSceneColl
           position: cloneVec3(entity.position),
           yawDegrees: entity.yawDegrees,
           collider: buildRuntimePlayerShape(entity)
+        });
+        break;
+      case "sceneEntry":
+        runtimeEntities.sceneEntries.push({
+          entityId: entity.id,
+          position: cloneVec3(entity.position),
+          yawDegrees: entity.yawDegrees
         });
         break;
       case "soundEmitter":
@@ -493,6 +521,17 @@ function buildRuntimeSceneCollections(document: SceneDocument): RuntimeSceneColl
           enabled: entity.enabled
         });
         break;
+      case "sceneExit":
+        runtimeEntities.sceneExits.push({
+          entityId: entity.id,
+          position: cloneVec3(entity.position),
+          radius: entity.radius,
+          prompt: entity.prompt,
+          enabled: entity.enabled,
+          targetSceneId: entity.targetSceneId,
+          targetEntryEntityId: entity.targetEntryEntityId
+        });
+        break;
       default:
         assertNever(entity);
     }
@@ -535,6 +574,42 @@ function buildRuntimePlayerShape(
         eyeHeight: playerStartEntity.collider.eyeHeight
       };
   }
+}
+
+function resolveRuntimeSpawn(
+  playerStart: RuntimePlayerStart | null,
+  sceneEntries: RuntimeSceneEntry[],
+  sceneBounds: RuntimeSceneBounds | null,
+  sceneEntryId: string | null | undefined
+): RuntimeSpawnPoint {
+  if (sceneEntryId !== undefined && sceneEntryId !== null) {
+    const sceneEntry =
+      sceneEntries.find((entry) => entry.entityId === sceneEntryId) ?? null;
+
+    if (sceneEntry === null) {
+      throw new Error(
+        `Runtime build could not resolve Scene Entry ${sceneEntryId}.`
+      );
+    }
+
+    return {
+      source: "sceneEntry",
+      entityId: sceneEntry.entityId,
+      position: cloneVec3(sceneEntry.position),
+      yawDegrees: sceneEntry.yawDegrees
+    };
+  }
+
+  if (playerStart !== null) {
+    return {
+      source: "playerStart",
+      entityId: playerStart.entityId,
+      position: cloneVec3(playerStart.position),
+      yawDegrees: playerStart.yawDegrees
+    };
+  }
+
+  return buildFallbackSpawn(sceneBounds);
 }
 
 export function buildRuntimeSceneFromDocument(document: SceneDocument, options: BuildRuntimeSceneOptions = {}): RuntimeSceneDefinition {
@@ -606,14 +681,11 @@ export function buildRuntimeSceneFromDocument(document: SceneDocument, options: 
     interactionLinks,
     playerStart,
     playerCollider,
-    spawn:
-      playerStart === null
-        ? buildFallbackSpawn(combinedSceneBounds)
-        : {
-            source: "playerStart",
-            entityId: playerStart.entityId,
-            position: cloneVec3(playerStart.position),
-            yawDegrees: playerStart.yawDegrees
-          }
+    spawn: resolveRuntimeSpawn(
+      playerStart,
+      collections.entities.sceneEntries,
+      combinedSceneBounds,
+      options.sceneEntryId
+    )
   };
 }
