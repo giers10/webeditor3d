@@ -377,6 +377,7 @@ Example persisted project structure:
 ```ts
 interface ProjectDocument {
   version: number;
+  name: string;
   activeSceneId: string;
   scenes: Record<string, ProjectScene>;
   materials: Record<string, MaterialDef>;
@@ -387,6 +388,7 @@ interface ProjectDocument {
 interface ProjectScene {
   id: string;
   name: string;
+  loadingScreen: SceneLoadingScreenSettings;
   world: WorldSettings;
   brushes: Record<string, Brush>;
   modelInstances: Record<string, ModelInstance>;
