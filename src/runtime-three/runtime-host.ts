@@ -406,6 +406,7 @@ export class RuntimeHost {
     this.playerControllerTelemetryHandler?.(null);
     this.currentRuntimeMessage = null;
     this.runtimeMessageHandler?.(null);
+    this.resetPlayerCameraEffects();
     this.clearCollisionWorld();
     this.publishSceneLoadState({
       status: "loading",
@@ -503,6 +504,7 @@ export class RuntimeHost {
 
     this.activeController?.deactivate(this.controllerContext);
     this.activeController = null;
+    this.resetPlayerCameraEffects();
     this.setInteractionPrompt(null);
     this.resizeObserver?.disconnect();
     this.resizeObserver = null;
