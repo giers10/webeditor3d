@@ -9855,6 +9855,54 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       </div>
 
                       <div className="form-section">
+                        <div className="label">Movement Template</div>
+                        <label className="form-field">
+                          <span className="label">Template</span>
+                          <select
+                            data-testid="player-start-movement-template"
+                            className="select-input"
+                            value={playerStartMovementTemplateDraft.kind}
+                            onChange={(event) => {
+                              const nextKind = event.currentTarget
+                                .value as PlayerStartMovementTemplate["kind"];
+                              const nextTemplate =
+                                createPlayerStartMovementTemplate({
+                                  kind: nextKind,
+                                  moveSpeed:
+                                    playerStartMovementTemplateDraft.moveSpeed,
+                                  capabilities:
+                                    playerStartMovementTemplateDraft.capabilities
+                                });
+                              setPlayerStartMovementTemplateDraft(nextTemplate);
+                              scheduleDraftCommit(() =>
+                                applyPlayerStartChange({
+                                  movementTemplate: nextTemplate
+                                })
+                              );
+                            }}
+                          >
+                            {PLAYER_START_MOVEMENT_TEMPLATE_KINDS.map(
+                              (templateKind) => (
+                                <option
+                                  key={templateKind}
+                                  value={templateKind}
+                                >
+                                  {getPlayerStartMovementTemplateLabel(
+                                    templateKind
+                                  )}
+                                </option>
+                              )
+                            )}
+                          </select>
+                        </label>
+                        <div className="material-summary">
+                          {getPlayerStartMovementTemplateDescription(
+                            playerStartMovementTemplateDraft.kind
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="form-section">
                         <div className="label">Player Collider</div>
                         <label className="form-field">
                           <span className="label">Mode</span>
