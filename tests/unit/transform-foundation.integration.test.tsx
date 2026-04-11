@@ -16,6 +16,7 @@ const { MockViewportHost, viewportHostInstances } = vi.hoisted(() => {
   const viewportHostInstances: Array<{
     panelId: string | null;
     setPanelId: ReturnType<typeof vi.fn>;
+    setRenderEnabled: ReturnType<typeof vi.fn>;
     mount: ReturnType<typeof vi.fn>;
     dispose: ReturnType<typeof vi.fn>;
     updateWorld: ReturnType<typeof vi.fn>;
@@ -46,6 +47,7 @@ const { MockViewportHost, viewportHostInstances } = vi.hoisted(() => {
     setPanelId = vi.fn((panelId: string) => {
       this.panelId = panelId;
     });
+    setRenderEnabled = vi.fn();
     mount = vi.fn();
     dispose = vi.fn();
     updateWorld = vi.fn();
