@@ -25,6 +25,7 @@ import type { ViewportPanelId } from "../viewport-three/viewport-layout";
 
 export type TransformOperation = "translate" | "rotate" | "scale";
 export type TransformAxis = "x" | "y" | "z";
+export type TransformAxisSpace = "world" | "local";
 export type TransformSessionSource = "keyboard" | "gizmo" | "toolbar";
 
 export interface YawEntityRotationState {
@@ -145,6 +146,7 @@ export interface ActiveTransformSession {
   sourcePanelId: ViewportPanelId;
   operation: TransformOperation;
   axisConstraint: TransformAxis | null;
+  axisConstraintSpace: TransformAxisSpace;
   target: TransformTarget;
   preview: TransformPreview;
 }
@@ -307,6 +309,7 @@ export function cloneTransformSession(session: TransformSessionState): Transform
     sourcePanelId: session.sourcePanelId,
     operation: session.operation,
     axisConstraint: session.axisConstraint,
+    axisConstraintSpace: session.axisConstraintSpace,
     target: cloneTransformTarget(session.target),
     preview: cloneTransformPreview(session.preview)
   };
@@ -327,6 +330,7 @@ export function areTransformSessionsEqual(left: TransformSessionState, right: Tr
     left.sourcePanelId === right.sourcePanelId &&
     left.operation === right.operation &&
     left.axisConstraint === right.axisConstraint &&
+    left.axisConstraintSpace === right.axisConstraintSpace &&
     areTransformTargetsEqual(left.target, right.target) &&
     areTransformPreviewsEqual(left.preview, right.preview)
   );
@@ -428,6 +432,7 @@ export function createTransformSession(options: {
   sourcePanelId: ViewportPanelId;
   operation: TransformOperation;
   axisConstraint?: TransformAxis | null;
+  axisConstraintSpace?: TransformAxisSpace;
   target: TransformTarget;
 }): ActiveTransformSession {
   return {
@@ -437,6 +442,7 @@ export function createTransformSession(options: {
     sourcePanelId: options.sourcePanelId,
     operation: options.operation,
     axisConstraint: options.axisConstraint ?? null,
+    axisConstraintSpace: options.axisConstraintSpace ?? "world",
     target: cloneTransformTarget(options.target),
     preview: createTransformPreviewFromTarget(options.target)
   };
@@ -513,6 +519,15 @@ export function getTransformOperationLabel(operation: TransformOperation): strin
 
 export function getTransformAxisLabel(axis: TransformAxis): string {
   return axis.toUpperCase();
+}
+
+export function getTransformAxisSpaceLabel(axisSpace: TransformAxisSpace): string {
+  switch (axisSpace) {
+    case "world":
+      return "World";
+    case "local":
+      return "Local";
+  }
 }
 
 export function getTransformTargetLabel(target: TransformTarget): string {
@@ -605,6 +620,28 @@ export function supportsTransformAxisConstraint(session: ActiveTransformSession,
       }
 
       return true;
+  }
+}
+
+export function supportsLocalTransformAxisConstraint(session: ActiveTransformSession, axis: TransformAxis): boolean {
+  if (!supportsTransformAxisConstraint(session, axis)) {
+    return false;
+  }
+
+  if (session.operation === "scale") {
+    return false;
+  }
+
+  switch (session.target.kind) {
+    case "brush":
+    case "modelInstance":
+      return true;
+    case "entity":
+      return session.target.initialRotation.kind !== "none";
+    case "brushFace":
+    case "brushEdge":
+    case "brushVertex":
+      return false;
   }
 }
 
