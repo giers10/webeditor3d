@@ -804,10 +804,28 @@ export function inferPlayerStartMovementTemplateKind(
     }
 
     if (
-      arePlayerStartMovementTemplatesEqual(candidate, {
-        ...createPlayerStartMovementTemplate({ kind: presetKind }),
-        kind: presetKind
-      })
+      candidate.moveSpeed ===
+        createPlayerStartMovementTemplate({ kind: presetKind }).moveSpeed &&
+      candidate.capabilities.jump ===
+        createPlayerStartMovementTemplate({ kind: presetKind }).capabilities.jump &&
+      candidate.capabilities.sprint ===
+        createPlayerStartMovementTemplate({ kind: presetKind }).capabilities.sprint &&
+      candidate.capabilities.crouch ===
+        createPlayerStartMovementTemplate({ kind: presetKind }).capabilities.crouch &&
+      candidate.jump.speed ===
+        createPlayerStartMovementTemplate({ kind: presetKind }).jump.speed &&
+      candidate.jump.bufferMs ===
+        createPlayerStartMovementTemplate({ kind: presetKind }).jump.bufferMs &&
+      candidate.jump.coyoteTimeMs ===
+        createPlayerStartMovementTemplate({ kind: presetKind }).jump.coyoteTimeMs &&
+      candidate.jump.variableHeight ===
+        createPlayerStartMovementTemplate({ kind: presetKind }).jump.variableHeight &&
+      candidate.jump.maxHoldMs ===
+        createPlayerStartMovementTemplate({ kind: presetKind }).jump.maxHoldMs &&
+      candidate.sprint.speedMultiplier ===
+        createPlayerStartMovementTemplate({ kind: presetKind }).sprint.speedMultiplier &&
+      candidate.crouch.speedMultiplier ===
+        createPlayerStartMovementTemplate({ kind: presetKind }).crouch.speedMultiplier
     ) {
       return presetKind;
     }
