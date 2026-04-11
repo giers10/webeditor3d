@@ -286,7 +286,6 @@ export function stepPlayerLocomotion(
     options.movement.capabilities.sprint &&
     sprintPressed &&
     !crouched &&
-    currentlyGrounded &&
     !currentVolumeState.inWater;
   const requestedPlanarSpeed =
     options.movement.moveSpeed *

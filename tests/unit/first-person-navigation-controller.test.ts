@@ -385,6 +385,106 @@ describe("FirstPersonNavigationController", () => {
     });
   });
 
+  it("preserves sprint planar speed while jumping", () => {
+    const probePlayerGround = vi.fn(
+      (
+        feetPosition: Vec3,
+        _shape: FirstPersonPlayerShape,
+        _maxDistance: number
+      ): PlayerGroundProbeResult => {
+        if (feetPosition.y <= 0.13) {
+          return {
+            grounded: true,
+            distance: feetPosition.y,
+            normal: { x: 0, y: 1, z: 0 },
+            slopeDegrees: 0
+          };
+        }
+
+        return {
+          grounded: false,
+          distance: null,
+          normal: null,
+          slopeDegrees: null
+        };
+      }
+    );
+
+    const { context } = createRuntimeControllerContext(
+      createPlayerStartEntity({
+        id: "entity-player-start-sprint-jump"
+      }),
+      (feetPosition, motion) => ({
+        feetPosition: {
+          x: feetPosition.x + motion.x,
+          y: feetPosition.y + motion.y,
+          z: feetPosition.z + motion.z
+        },
+        grounded: false,
+        collisionCount: 0,
+        groundCollisionNormal: null,
+        collidedAxes: {
+          x: false,
+          y: false,
+          z: false
+        }
+      }),
+      {
+        probePlayerGround
+      }
+    );
+    const controller = new FirstPersonNavigationController();
+
+    controller.activate(context);
+    window.dispatchEvent(new KeyboardEvent("keydown", { code: "KeyW" }));
+    window.dispatchEvent(
+      new KeyboardEvent("keydown", { code: "ShiftLeft" })
+    );
+    controller.update(1 / 60);
+
+    const groundedTelemetry =
+      context.setPlayerControllerTelemetry.mock.calls.at(-1)?.[0];
+
+    window.dispatchEvent(new KeyboardEvent("keydown", { code: "Space" }));
+    controller.update(1 / 60);
+
+    const jumpTelemetry =
+      context.setPlayerControllerTelemetry.mock.calls.at(-1)?.[0];
+
+    controller.update(1 / 60);
+
+    const airborneTelemetry =
+      context.setPlayerControllerTelemetry.mock.calls.at(-1)?.[0];
+
+    expect(groundedTelemetry?.locomotionState.planarSpeed).toBeGreaterThan(7);
+    expect(groundedTelemetry?.locomotionState.sprinting).toBe(true);
+
+    expect(jumpTelemetry?.locomotionState.locomotionMode).toBe("airborne");
+    expect(jumpTelemetry?.locomotionState.requestedPlanarSpeed).toBeGreaterThan(
+      7
+    );
+    expect(jumpTelemetry?.locomotionState.planarSpeed).toBeGreaterThan(7);
+    expect(jumpTelemetry?.locomotionState.sprinting).toBe(true);
+
+    expect(airborneTelemetry?.locomotionState.locomotionMode).toBe(
+      "airborne"
+    );
+    expect(
+      airborneTelemetry?.locomotionState.requestedPlanarSpeed
+    ).toBeGreaterThan(7);
+    expect(airborneTelemetry?.locomotionState.planarSpeed).toBeGreaterThan(7);
+    expect(airborneTelemetry?.locomotionState.sprinting).toBe(true);
+
+    window.dispatchEvent(new KeyboardEvent("keyup", { code: "Space" }));
+    window.dispatchEvent(new KeyboardEvent("keyup", { code: "KeyW" }));
+    window.dispatchEvent(
+      new KeyboardEvent("keyup", { code: "ShiftLeft" })
+    );
+    controller.deactivate(context, {
+      releasePointerLock: false
+    });
+  });
+
   it("lowers the eye height and locomotion gait when crouch is held", () => {
     const { context } = createRuntimeControllerContext(
       createPlayerStartEntity({
