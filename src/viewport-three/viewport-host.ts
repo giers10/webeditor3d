@@ -1427,15 +1427,20 @@ export class ViewportHost {
   }
 
   private resolveObjectScaleConstraintAxis(
-    session: Extract<ActiveTransformSession, { target: { kind: "brush" | "modelInstance" } }>,
+    session: ActiveTransformSession,
     worldAxis: TransformAxis
   ): TransformAxis {
-    const rotationDegrees =
-      session.target.kind === "brush"
-        ? session.target.initialRotationDegrees
-        : session.target.initialRotationDegrees;
+    if (
+      session.target.kind !== "brush" &&
+      session.target.kind !== "modelInstance"
+    ) {
+      return worldAxis;
+    }
 
-    return resolveDominantLocalAxisForWorldAxis(rotationDegrees, worldAxis);
+    return resolveDominantLocalAxisForWorldAxis(
+      session.target.initialRotationDegrees,
+      worldAxis
+    );
   }
 
   private normalizeDegrees(value: number): number {
