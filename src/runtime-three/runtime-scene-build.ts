@@ -13,7 +13,11 @@ import {
 } from "../document/brushes";
 import type { SceneDocument } from "../document/scene-document";
 import { cloneWorldSettings, type WorldSettings } from "../document/world-settings";
-import { getEntityInstances, getPrimaryPlayerStartEntity, type EntityInstance } from "../entities/entity-instances";
+import {
+  getEntityInstances,
+  getPrimaryPlayerStartEntity,
+  type EntityInstance
+} from "../entities/entity-instances";
 import { getBoxBrushBounds } from "../geometry/box-brush";
 import { buildBoxBrushDerivedMeshData } from "../geometry/box-brush-mesh";
 import { buildGeneratedModelCollider, type GeneratedColliderBounds, type GeneratedModelCollider } from "../geometry/model-instance-collider-generation";
@@ -22,7 +26,7 @@ import { cloneMaterialDef, type MaterialDef } from "../materials/starter-materia
 import { assertRuntimeSceneBuildable } from "./runtime-scene-validation";
 import { FIRST_PERSON_PLAYER_SHAPE, type FirstPersonPlayerShape } from "./player-collision";
 
-export type RuntimeNavigationMode = "firstPerson" | "orbitVisitor";
+export type RuntimeNavigationMode = "firstPerson" | "thirdPerson";
 
 export interface RuntimeBrushFace {
   materialId: string | null;
@@ -93,6 +97,7 @@ export interface RuntimePlayerStart {
   entityId: string;
   position: Vec3;
   yawDegrees: number;
+  navigationMode: RuntimeNavigationMode;
   collider: FirstPersonPlayerShape;
 }
 
@@ -208,6 +213,7 @@ export interface RuntimeSceneDefinition {
   interactionLinks: InteractionLink[];
   playerStart: RuntimePlayerStart | null;
   playerCollider: FirstPersonPlayerShape;
+  navigationMode: RuntimeNavigationMode;
   spawn: RuntimeSpawnPoint;
 }
 
@@ -215,6 +221,17 @@ export interface BuildRuntimeSceneOptions {
   navigationMode?: RuntimeNavigationMode;
   loadedModelAssets?: Record<string, LoadedModelAsset>;
   sceneEntryId?: string | null;
+}
+
+export function resolveRuntimeNavigationMode(
+  playerStartEntity: ReturnType<typeof getPrimaryPlayerStartEntity>,
+  authoredOverride?: RuntimeNavigationMode
+): RuntimeNavigationMode {
+  if (authoredOverride !== undefined) {
+    return authoredOverride;
+  }
+
+  return playerStartEntity?.navigationMode ?? "thirdPerson";
 }
 
 function cloneVec3(vector: Vec3): Vec3 {
@@ -613,8 +630,14 @@ function resolveRuntimeSpawn(
 }
 
 export function buildRuntimeSceneFromDocument(document: SceneDocument, options: BuildRuntimeSceneOptions = {}): RuntimeSceneDefinition {
+  const playerStartEntity = getPrimaryPlayerStartEntity(document.entities);
+  const navigationMode = resolveRuntimeNavigationMode(
+    playerStartEntity,
+    options.navigationMode
+  );
+
   assertRuntimeSceneBuildable(document, {
-    navigationMode: options.navigationMode ?? "orbitVisitor",
+    navigationMode,
     loadedModelAssets: options.loadedModelAssets
   });
 
@@ -641,7 +664,6 @@ export function buildRuntimeSceneFromDocument(document: SceneDocument, options: 
   const modelInstances = getModelInstances(document.modelInstances).map(buildRuntimeModelInstance);
   const collections = buildRuntimeSceneCollections(document);
   const interactionLinks = getInteractionLinks(document.interactionLinks).map((link) => cloneInteractionLink(link));
-  const playerStartEntity = getPrimaryPlayerStartEntity(document.entities);
   const playerCollider = buildRuntimePlayerShape(playerStartEntity);
 
   for (const modelInstance of getModelInstances(document.modelInstances)) {
@@ -666,6 +688,7 @@ export function buildRuntimeSceneFromDocument(document: SceneDocument, options: 
           entityId: playerStartEntity.id,
           position: cloneVec3(playerStartEntity.position),
           yawDegrees: playerStartEntity.yawDegrees,
+          navigationMode,
           collider: playerCollider
         };
 
@@ -681,6 +704,7 @@ export function buildRuntimeSceneFromDocument(document: SceneDocument, options: 
     interactionLinks,
     playerStart,
     playerCollider,
+    navigationMode,
     spawn: resolveRuntimeSpawn(
       playerStart,
       collections.entities.sceneEntries,
