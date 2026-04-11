@@ -53,22 +53,7 @@ export const PLAYER_START_MOVEMENT_ACTIONS = [
 ] as const;
 export type PlayerStartMovementAction =
   (typeof PLAYER_START_MOVEMENT_ACTIONS)[number];
-export const PLAYER_START_KEYBOARD_BINDING_CODES = [
-  "KeyW",
-  "KeyA",
-  "KeyS",
-  "KeyD",
-  "ArrowUp",
-  "ArrowLeft",
-  "ArrowDown",
-  "ArrowRight",
-  "KeyI",
-  "KeyJ",
-  "KeyK",
-  "KeyL"
-] as const;
-export type PlayerStartKeyboardBindingCode =
-  (typeof PLAYER_START_KEYBOARD_BINDING_CODES)[number];
+export type PlayerStartKeyboardBindingCode = string;
 export const PLAYER_START_GAMEPAD_BINDINGS = [
   "leftStickUp",
   "leftStickDown",
@@ -81,6 +66,11 @@ export const PLAYER_START_GAMEPAD_BINDINGS = [
 ] as const;
 export type PlayerStartGamepadBinding =
   (typeof PLAYER_START_GAMEPAD_BINDINGS)[number];
+export const PLAYER_START_GAMEPAD_CAMERA_LOOK_BINDINGS = [
+  "rightStick"
+] as const;
+export type PlayerStartGamepadCameraLookBinding =
+  (typeof PLAYER_START_GAMEPAD_CAMERA_LOOK_BINDINGS)[number];
 
 export interface PlayerStartKeyboardBindings {
   moveForward: PlayerStartKeyboardBindingCode;
@@ -94,6 +84,7 @@ export interface PlayerStartGamepadBindings {
   moveBackward: PlayerStartGamepadBinding;
   moveLeft: PlayerStartGamepadBinding;
   moveRight: PlayerStartGamepadBinding;
+  cameraLook: PlayerStartGamepadCameraLookBinding;
 }
 
 export interface PlayerStartInputBindings {
@@ -228,7 +219,8 @@ export const DEFAULT_PLAYER_START_GAMEPAD_BINDINGS: PlayerStartGamepadBindings =
     moveForward: "leftStickUp",
     moveBackward: "leftStickDown",
     moveLeft: "leftStickLeft",
-    moveRight: "leftStickRight"
+    moveRight: "leftStickRight",
+    cameraLook: "rightStick"
   };
 export const DEFAULT_SCENE_ENTRY_YAW_DEGREES = 0;
 export const DEFAULT_PLAYER_START_COLLIDER_MODE: PlayerStartColliderMode = "capsule";
@@ -328,9 +320,7 @@ export function isPlayerStartNavigationMode(
 export function isPlayerStartKeyboardBindingCode(
   value: string
 ): value is PlayerStartKeyboardBindingCode {
-  return PLAYER_START_KEYBOARD_BINDING_CODES.includes(
-    value as PlayerStartKeyboardBindingCode
-  );
+  return value.trim().length > 0;
 }
 
 export function isPlayerStartGamepadBinding(
@@ -338,6 +328,14 @@ export function isPlayerStartGamepadBinding(
 ): value is PlayerStartGamepadBinding {
   return PLAYER_START_GAMEPAD_BINDINGS.includes(
     value as PlayerStartGamepadBinding
+  );
+}
+
+export function isPlayerStartGamepadCameraLookBinding(
+  value: string
+): value is PlayerStartGamepadCameraLookBinding {
+  return PLAYER_START_GAMEPAD_CAMERA_LOOK_BINDINGS.includes(
+    value as PlayerStartGamepadCameraLookBinding
   );
 }
 
@@ -365,7 +363,8 @@ export function clonePlayerStartInputBindings(
       moveForward: bindings.gamepad.moveForward,
       moveBackward: bindings.gamepad.moveBackward,
       moveLeft: bindings.gamepad.moveLeft,
-      moveRight: bindings.gamepad.moveRight
+      moveRight: bindings.gamepad.moveRight,
+      cameraLook: bindings.gamepad.cameraLook
     }
   };
 }
@@ -399,7 +398,10 @@ export function createPlayerStartInputBindings(
       DEFAULT_PLAYER_START_GAMEPAD_BINDINGS.moveLeft,
     moveRight:
       overrides.gamepad?.moveRight ??
-      DEFAULT_PLAYER_START_GAMEPAD_BINDINGS.moveRight
+      DEFAULT_PLAYER_START_GAMEPAD_BINDINGS.moveRight,
+    cameraLook:
+      overrides.gamepad?.cameraLook ??
+      DEFAULT_PLAYER_START_GAMEPAD_BINDINGS.cameraLook
   };
 
   if (!isPlayerStartKeyboardBindingCode(keyboard.moveForward)) {
@@ -434,6 +436,10 @@ export function createPlayerStartInputBindings(
     throw new Error("Player Start move-right gamepad binding must be supported.");
   }
 
+  if (!isPlayerStartGamepadCameraLookBinding(gamepad.cameraLook)) {
+    throw new Error("Player Start camera-look gamepad binding must be supported.");
+  }
+
   return {
     keyboard,
     gamepad
@@ -452,7 +458,8 @@ export function arePlayerStartInputBindingsEqual(
     left.gamepad.moveForward === right.gamepad.moveForward &&
     left.gamepad.moveBackward === right.gamepad.moveBackward &&
     left.gamepad.moveLeft === right.gamepad.moveLeft &&
-    left.gamepad.moveRight === right.gamepad.moveRight
+    left.gamepad.moveRight === right.gamepad.moveRight &&
+    left.gamepad.cameraLook === right.gamepad.cameraLook
   );
 }
 
