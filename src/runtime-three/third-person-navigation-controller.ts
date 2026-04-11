@@ -3,6 +3,7 @@ import { Vector3 } from "three";
 import type { Vec3 } from "../core/vector";
 
 import { getFirstPersonPlayerEyeHeight } from "./player-collision";
+import { resolvePlayerStartMovementActions } from "./player-input-bindings";
 import type {
   NavigationController,
   NavigationControllerDeactivateOptions,
@@ -103,7 +104,7 @@ export class ThirdPersonNavigationController implements NavigationController {
     window.addEventListener("pointerup", this.handlePointerUp);
 
     ctx.setRuntimeMessage(
-      "Third Person active. Drag to orbit the camera, use WASD to move, and scroll to zoom."
+      "Third Person active. Drag to orbit the camera, move with your authored keyboard or standard-gamepad bindings, and scroll to zoom."
     );
     this.updateCameraTransform();
     this.publishTelemetry();
@@ -157,15 +158,15 @@ export class ThirdPersonNavigationController implements NavigationController {
     }
 
     const playerShape = this.context.getRuntimeScene().playerCollider;
+    const inputState = resolvePlayerStartMovementActions(
+      this.pressedKeys,
+      this.context.getRuntimeScene().playerInputBindings
+    );
     const currentVolumeState = this.context.resolvePlayerVolumeState(
       this.feetPosition
     );
-    const inputX =
-      (this.pressedKeys.has("KeyD") ? 1 : 0) -
-      (this.pressedKeys.has("KeyA") ? 1 : 0);
-    const inputZ =
-      (this.pressedKeys.has("KeyW") ? 1 : 0) -
-      (this.pressedKeys.has("KeyS") ? 1 : 0);
+    const inputX = inputState.moveRight - inputState.moveLeft;
+    const inputZ = inputState.moveForward - inputState.moveBackward;
     const inputLength = Math.hypot(inputX, inputZ);
 
     let horizontalX = 0;
