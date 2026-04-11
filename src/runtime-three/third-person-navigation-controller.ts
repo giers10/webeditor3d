@@ -107,17 +107,27 @@ export class ThirdPersonNavigationController implements NavigationController {
     this.context = ctx;
 
     if (!this.initializedFromSpawn) {
-      const spawn = ctx.getRuntimeScene().spawn;
+      const runtimeScene = ctx.getRuntimeScene();
+      const spawn = runtimeScene.spawn;
       this.feetPosition = {
         ...spawn.position
       };
+      this.standingPlayerShape = cloneFirstPersonPlayerShape(
+        runtimeScene.playerCollider
+      );
+      this.activePlayerShape = cloneFirstPersonPlayerShape(
+        runtimeScene.playerCollider
+      );
       this.yawRadians = (spawn.yawDegrees * Math.PI) / 180;
       this.cameraYawRadians = this.yawRadians;
       this.pitchRadians = DEFAULT_PITCH_RADIANS;
       this.cameraDistance = DEFAULT_CAMERA_DISTANCE;
       this.verticalVelocity = 0;
       this.grounded = false;
-      this.locomotionState = "flying";
+      this.jumpPressed = false;
+      this.locomotionState = createIdleRuntimeLocomotionState(
+        runtimeScene.playerCollider.mode === "none" ? "flying" : "airborne"
+      );
       this.inWaterVolume = false;
       this.inFogVolume = false;
       this.initializedFromSpawn = true;
@@ -156,6 +166,7 @@ export class ThirdPersonNavigationController implements NavigationController {
     window.removeEventListener("pointerup", this.handlePointerUp);
     this.pressedKeys.clear();
     this.dragging = false;
+    this.jumpPressed = false;
     ctx.setRuntimeMessage(null);
     ctx.setFirstPersonTelemetry(null);
     this.context = null;
@@ -174,7 +185,14 @@ export class ThirdPersonNavigationController implements NavigationController {
     this.cameraDistance = DEFAULT_CAMERA_DISTANCE;
     this.verticalVelocity = 0;
     this.grounded = false;
-    this.locomotionState = "flying";
+    this.jumpPressed = false;
+    this.standingPlayerShape = cloneFirstPersonPlayerShape(
+      FIRST_PERSON_PLAYER_SHAPE
+    );
+    this.activePlayerShape = cloneFirstPersonPlayerShape(
+      FIRST_PERSON_PLAYER_SHAPE
+    );
+    this.locomotionState = createIdleRuntimeLocomotionState("flying");
     this.inWaterVolume = false;
     this.inFogVolume = false;
     this.dragging = false;
@@ -189,12 +207,14 @@ export class ThirdPersonNavigationController implements NavigationController {
     }
 
     const runtimeScene = this.context.getRuntimeScene();
-    const playerShape = runtimeScene.playerCollider;
+    this.standingPlayerShape = cloneFirstPersonPlayerShape(
+      runtimeScene.playerCollider
+    );
     const playerMovement = runtimeScene.playerMovement;
     const lookInput = resolvePlayerStartLookInput(
       runtimeScene.playerInputBindings
     );
-    const inputState = resolvePlayerStartMovementActions(
+    const inputState = resolvePlayerStartActionInputs(
       this.pressedKeys,
       runtimeScene.playerInputBindings
     );
@@ -206,92 +226,63 @@ export class ThirdPersonNavigationController implements NavigationController {
       );
     }
 
-    const currentVolumeState = this.context.resolvePlayerVolumeState(
-      this.feetPosition
-    );
-    const inputX = inputState.moveRight - inputState.moveLeft;
-    const inputZ = inputState.moveForward - inputState.moveBackward;
-    const inputLength = Math.hypot(inputX, inputZ);
-
-    let horizontalX = 0;
-    let horizontalZ = 0;
-    let nextYawRadians = this.yawRadians;
-
-    if (inputLength > 0) {
-      const normalizedInputX = inputX / inputLength;
-      const normalizedInputZ = inputZ / inputLength;
-      const moveDistance = playerMovement.moveSpeed * dt;
-
-      this.forwardVector.set(
-        Math.sin(this.cameraYawRadians),
-        0,
-        Math.cos(this.cameraYawRadians)
-      );
-      this.rightVector.set(
-        -Math.cos(this.cameraYawRadians),
-        0,
-        Math.sin(this.cameraYawRadians)
-      );
-
-      horizontalX =
-        (this.forwardVector.x * normalizedInputZ +
-          this.rightVector.x * normalizedInputX) *
-        moveDistance;
-      horizontalZ =
-        (this.forwardVector.z * normalizedInputZ +
-          this.rightVector.z * normalizedInputX) *
-        moveDistance;
-      nextYawRadians = Math.atan2(horizontalX, horizontalZ);
-    }
-
-    if (playerShape.mode === "none" || currentVolumeState.inWater) {
-      this.verticalVelocity = 0;
-    } else {
-      this.verticalVelocity -= GRAVITY * dt;
-    }
-
-    const resolvedMotion = this.context.resolveFirstPersonMotion(
-      this.feetPosition,
+    const locomotionStep = stepPlayerLocomotion(
       {
-        x: horizontalX,
-        y:
-          playerShape.mode === "none" || currentVolumeState.inWater
-            ? 0
-            : this.verticalVelocity * dt,
-        z: horizontalZ
-      },
-      playerShape
+        dt,
+        feetPosition: this.feetPosition,
+        movementYawRadians: this.cameraYawRadians,
+        activeShape: this.activePlayerShape,
+        standingShape: this.standingPlayerShape,
+        verticalVelocity: this.verticalVelocity,
+        crouched: this.locomotionState.crouched,
+        wasJumpPressed: this.jumpPressed,
+        input: inputState,
+        movement: playerMovement,
+        resolveMotion: (feetPosition, motion, shape) =>
+          this.context?.resolveFirstPersonMotion(feetPosition, motion, shape) ??
+          null,
+        resolveVolumeState: (feetPosition) =>
+          this.context?.resolvePlayerVolumeState(feetPosition) ?? {
+            inWater: false,
+            inFog: false
+          },
+        probeGround: (feetPosition, shape, maxDistance) =>
+          this.context?.probePlayerGround(feetPosition, shape, maxDistance) ?? {
+            grounded: false,
+            distance: null,
+            normal: null,
+            slopeDegrees: null
+          },
+        canOccupyShape: (feetPosition, shape) =>
+          this.context?.canOccupyPlayerShape(feetPosition, shape) ?? true
+      }
     );
 
-    if (resolvedMotion === null) {
+    if (locomotionStep === null) {
       this.updateCameraTransform();
       this.publishTelemetry();
       return;
     }
 
-    this.feetPosition = resolvedMotion.feetPosition;
-    this.yawRadians = nextYawRadians;
-    const nextVolumeState = this.context.resolvePlayerVolumeState(
-      this.feetPosition
-    );
-    this.inWaterVolume = nextVolumeState.inWater;
-    this.inFogVolume = nextVolumeState.inFog;
-    this.grounded = nextVolumeState.inWater ? false : resolvedMotion.grounded;
+    this.feetPosition = locomotionStep.feetPosition;
+    this.activePlayerShape = locomotionStep.activeShape;
+    this.verticalVelocity = locomotionStep.verticalVelocity;
+    this.jumpPressed = locomotionStep.jumpPressed;
+    this.locomotionState = locomotionStep.locomotionState;
+    this.grounded = locomotionStep.locomotionState.grounded;
+    this.inWaterVolume = locomotionStep.inWaterVolume;
+    this.inFogVolume = locomotionStep.inFogVolume;
 
-    if (playerShape.mode === "none") {
-      this.locomotionState = "flying";
-    } else if (this.inWaterVolume) {
-      this.locomotionState = "swimming";
-    } else if (this.grounded) {
-      this.locomotionState = "grounded";
-    } else {
-      this.locomotionState = "flying";
-    }
-
-    if (this.grounded && this.verticalVelocity < 0) {
-      this.verticalVelocity = 0;
-    } else if (this.inWaterVolume) {
-      this.verticalVelocity = 0;
+    if (
+      Math.hypot(
+        locomotionStep.planarDisplacement.x,
+        locomotionStep.planarDisplacement.z
+      ) > 1e-5
+    ) {
+      this.yawRadians = Math.atan2(
+        locomotionStep.planarDisplacement.x,
+        locomotionStep.planarDisplacement.z
+      );
     }
 
     this.updateCameraTransform();
@@ -307,7 +298,16 @@ export class ThirdPersonNavigationController implements NavigationController {
     this.pitchRadians = DEFAULT_PITCH_RADIANS;
     this.verticalVelocity = 0;
     this.grounded = false;
-    this.locomotionState = "flying";
+    this.jumpPressed = false;
+    this.activePlayerShape = cloneFirstPersonPlayerShape(
+      this.context?.getRuntimeScene().playerCollider ?? FIRST_PERSON_PLAYER_SHAPE
+    );
+    this.standingPlayerShape = cloneFirstPersonPlayerShape(
+      this.context?.getRuntimeScene().playerCollider ?? FIRST_PERSON_PLAYER_SHAPE
+    );
+    this.locomotionState = createIdleRuntimeLocomotionState(
+      this.activePlayerShape.mode === "none" ? "flying" : "airborne"
+    );
     this.inWaterVolume = false;
     this.inFogVolume = false;
     this.updateCameraTransform();
@@ -319,9 +319,7 @@ export class ThirdPersonNavigationController implements NavigationController {
       return;
     }
 
-    const eyeHeight = getFirstPersonPlayerEyeHeight(
-      this.context.getRuntimeScene().playerCollider
-    );
+    const eyeHeight = getFirstPersonPlayerEyeHeight(this.activePlayerShape);
     const pivot = {
       x: this.feetPosition.x,
       y: this.feetPosition.y + eyeHeight * CAMERA_PIVOT_EYE_HEIGHT_FACTOR,
@@ -357,9 +355,7 @@ export class ThirdPersonNavigationController implements NavigationController {
 
     const eyePosition = toEyePosition(
       this.feetPosition,
-      getFirstPersonPlayerEyeHeight(
-        this.context.getRuntimeScene().playerCollider
-      )
+      getFirstPersonPlayerEyeHeight(this.activePlayerShape)
     );
     const cameraVolumeState = this.context.resolvePlayerVolumeState({
       x: this.context.camera.position.x,
