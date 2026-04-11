@@ -342,11 +342,17 @@ export class RuntimeHost {
 
   loadScene(runtimeScene: RuntimeSceneDefinition) {
     const requestId = ++this.collisionWorldRequestId;
+    const preservePointerLockDuringLoad =
+      this.activeController === this.firstPersonController &&
+      this.desiredNavigationMode === "firstPerson" &&
+      document.pointerLockElement === this.domElement;
 
     this.sceneReady = false;
     this.runtimeScene = runtimeScene;
     this.currentWorld = runtimeScene.world;
-    this.activeController?.deactivate(this.controllerContext);
+    this.activeController?.deactivate(this.controllerContext, {
+      releasePointerLock: !preservePointerLockDuringLoad
+    });
     this.activeController = null;
     this.firstPersonController.resetSceneState();
     this.orbitVisitorController.resetSceneState();

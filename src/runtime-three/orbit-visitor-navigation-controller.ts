@@ -3,6 +3,7 @@ import { Vector3 } from "three";
 import type { Vec3 } from "../core/vector";
 
 import type {
+  NavigationControllerDeactivateOptions,
   NavigationController,
   RuntimeControllerContext
 } from "./navigation-controller";
@@ -83,7 +84,11 @@ export class OrbitVisitorNavigationController implements NavigationController {
     this.updateCameraTransform();
   }
 
-  deactivate(ctx: RuntimeControllerContext): void {
+  deactivate(
+    ctx: RuntimeControllerContext,
+    _options: NavigationControllerDeactivateOptions = {}
+  ): void {
+    void _options;
     ctx.domElement.removeEventListener("pointerdown", this.handlePointerDown);
     ctx.domElement.removeEventListener("wheel", this.handleWheel);
     ctx.domElement.removeEventListener("contextmenu", this.handleContextMenu);
