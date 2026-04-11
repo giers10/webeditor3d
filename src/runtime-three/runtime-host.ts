@@ -241,6 +241,19 @@ export class RuntimeHost {
           motion,
           shape
         ) ?? null,
+      probePlayerGround: (feetPosition, shape, maxDistance) =>
+        this.collisionWorld?.probePlayerGround(
+          feetPosition,
+          shape,
+          maxDistance
+        ) ?? {
+          grounded: false,
+          distance: null,
+          normal: null,
+          slopeDegrees: null
+        },
+      canOccupyPlayerShape: (feetPosition, shape) =>
+        this.collisionWorld?.canOccupyPlayerShape(feetPosition, shape) ?? true,
       resolvePlayerVolumeState: (feetPosition) =>
         this.resolvePlayerVolumeState(feetPosition),
       resolveThirdPersonCameraCollision: (
