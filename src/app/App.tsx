@@ -1318,8 +1318,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
     String(DEFAULT_GRID_SIZE)
   );
   const [viewportGridVisible, setViewportGridVisible] = useState(true);
-  const [viewportCameraSyncRequestId, setViewportCameraSyncRequestId] =
-    useState(0);
   const [uvOffsetDraft, setUvOffsetDraft] = useState(
     createVec2Draft(createDefaultFaceUvState().offset)
   );
@@ -2691,10 +2689,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
-  const requestViewportCameraSync = () => {
-    setViewportCameraSyncRequestId((current) => current + 1);
-  };
-
   const openAddMenuAt = (position: HierarchicalMenuPosition) => {
     setHoveredAssetId(null);
     setAddMenuPosition(position);
@@ -2834,7 +2828,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
 
     store.clearTransformSession();
-    requestViewportCameraSync();
     setStatusMessage(status);
   };
 
@@ -2843,7 +2836,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
   ) => {
     if (!doesTransformSessionChangeTarget(activeTransformSession)) {
       store.clearTransformSession();
-      requestViewportCameraSync();
       setStatusMessage("No transform change was committed.");
       return;
     }
@@ -2856,13 +2848,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
           activeTransformSession
         )
       );
-      requestViewportCameraSync();
       setStatusMessage(
         `${getTransformOperationPastTense(activeTransformSession.operation)} ${getTransformTargetLabel(activeTransformSession.target).toLowerCase()}.`
       );
     } catch (error) {
       store.clearTransformSession();
-      requestViewportCameraSync();
       setStatusMessage(getErrorMessage(error));
     }
   };
@@ -4392,7 +4382,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
     try {
       store.executeCommand(createDeleteBoxBrushCommand(brushId));
-      requestViewportCameraSync();
       setStatusMessage(`Deleted ${label}.`);
       return true;
     } catch (error) {
@@ -4414,7 +4403,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
     try {
       store.executeCommand(createDeleteEntityCommand(entityId));
-      requestViewportCameraSync();
       setStatusMessage(`Deleted ${label}.`);
       return true;
     } catch (error) {
@@ -4436,7 +4424,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
     try {
       store.executeCommand(createDeleteModelInstanceCommand(modelInstanceId));
-      requestViewportCameraSync();
       setStatusMessage(`Deleted ${label}.`);
       return true;
     } catch (error) {
@@ -7513,7 +7500,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 toolPreview={viewportToolPreview}
                 transformSession={transformSession}
                 cameraState={editorState.viewportPanels[panelId].cameraState}
-                cameraSyncRequestId={viewportCameraSyncRequestId}
                 focusRequestId={
                   focusRequest.panelId === panelId ? focusRequest.id : 0
                 }

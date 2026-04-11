@@ -54,7 +54,6 @@ interface ViewportCanvasProps {
   toolPreview: ViewportToolPreview;
   transformSession: TransformSessionState;
   cameraState: ViewportPanelCameraState;
-  cameraSyncRequestId: number;
   viewMode: ViewportViewMode;
   displayMode: ViewportDisplayMode;
   layoutMode: ViewportLayoutMode;
@@ -86,7 +85,6 @@ export function ViewportCanvas({
   toolPreview,
   transformSession,
   cameraState,
-  cameraSyncRequestId,
   viewMode,
   displayMode,
   layoutMode,
@@ -187,7 +185,7 @@ export function ViewportCanvas({
 
   useLayoutEffect(() => {
     hostRef.current?.setCameraState(cameraState);
-  }, [cameraState, cameraSyncRequestId]);
+  }, [cameraState]);
 
   useEffect(() => {
     hostRef.current?.setBrushSelectionChangeHandler(onSelectionChange);

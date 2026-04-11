@@ -727,7 +727,7 @@ describe("transform foundation integration", () => {
     ).toBeInTheDocument();
   });
 
-  it("keeps the persisted viewport camera state stable across transform commit, cancel, and delete", async () => {
+  it("does not reapply the persisted viewport camera state across transform commit, cancel, and delete", async () => {
     const { store, brush, viewportHost } = await renderTransformFixtureApp();
     const persistedCameraState: ViewportPanelCameraState = {
       target: {
@@ -780,12 +780,10 @@ describe("transform foundation integration", () => {
       }
     });
 
-    await waitFor(() => {
-      expect(viewportHost.setCameraState.mock.calls.length).toBeGreaterThan(
-        commitCameraCallCount
-      );
-    });
-    expect(viewportHost.setCameraState.mock.calls.at(-1)?.[0]).toEqual(
+    expect(viewportHost.setCameraState.mock.calls.length).toBe(
+      commitCameraCallCount
+    );
+    expect(store.getState().viewportPanels.topLeft.cameraState).toEqual(
       persistedCameraState
     );
 
@@ -801,12 +799,10 @@ describe("transform foundation integration", () => {
       code: "Escape"
     });
 
-    await waitFor(() => {
-      expect(viewportHost.setCameraState.mock.calls.length).toBeGreaterThan(
-        cancelCameraCallCount
-      );
-    });
-    expect(viewportHost.setCameraState.mock.calls.at(-1)?.[0]).toEqual(
+    expect(viewportHost.setCameraState.mock.calls.length).toBe(
+      cancelCameraCallCount
+    );
+    expect(store.getState().viewportPanels.topLeft.cameraState).toEqual(
       persistedCameraState
     );
 
@@ -818,12 +814,10 @@ describe("transform foundation integration", () => {
       code: "Delete"
     });
 
-    await waitFor(() => {
-      expect(viewportHost.setCameraState.mock.calls.length).toBeGreaterThan(
-        deleteCameraCallCount
-      );
-    });
-    expect(viewportHost.setCameraState.mock.calls.at(-1)?.[0]).toEqual(
+    expect(viewportHost.setCameraState.mock.calls.length).toBe(
+      deleteCameraCallCount
+    );
+    expect(store.getState().viewportPanels.topLeft.cameraState).toEqual(
       persistedCameraState
     );
   });
