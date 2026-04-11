@@ -395,6 +395,7 @@ describe("buildRuntimeSceneFromDocument", () => {
           },
           yawDegrees: 90,
           navigationMode: "firstPerson",
+          inputBindings: playerStart.inputBindings,
           collider: {
             mode: "box",
             eyeHeight: 1.4,
