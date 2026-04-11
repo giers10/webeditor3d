@@ -379,6 +379,7 @@ export class RapierCollisionWorld {
       world,
       characterController,
       playerCollider,
+      Math.max(CHARACTER_CONTROLLER_SNAP_TO_GROUND_DISTANCE, maxStepHeight),
       playerShape.mode === "none"
         ? null
         : getFirstPersonPlayerShapeSignature(playerShape)
@@ -389,6 +390,7 @@ export class RapierCollisionWorld {
     private readonly world: RAPIER.World,
     private readonly characterController: RAPIER.KinematicCharacterController | null,
     private readonly playerCollider: RAPIER.Collider | null,
+    private readonly snapToGroundDistance: number,
     private currentPlayerShapeSignature: string | null
   ) {}
 
@@ -455,7 +457,7 @@ export class RapierCollisionWorld {
 
     if (snapToGroundWasEnabled) {
       this.characterController.enableSnapToGround(
-        CHARACTER_CONTROLLER_SNAP_TO_GROUND_DISTANCE
+        this.snapToGroundDistance
       );
     }
 
