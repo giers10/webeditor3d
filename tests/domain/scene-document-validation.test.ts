@@ -6,6 +6,7 @@ import { validateSceneDocument } from "../../src/document/scene-document-validat
 import {
   createPointLightEntity,
   createInteractableEntity,
+  createPlayerStartInputBindings,
   createPlayerStartEntity,
   createSoundEmitterEntity,
   createSpotLightEntity,
@@ -116,6 +117,7 @@ describe("validateSceneDocument", () => {
           },
           yawDegrees: Number.NaN,
           navigationMode: "invalidMode" as unknown as "firstPerson",
+          inputBindings: createPlayerStartInputBindings(),
           collider: {
             mode: "capsule",
             eyeHeight: 3,
