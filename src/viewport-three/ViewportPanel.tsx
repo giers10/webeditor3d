@@ -123,23 +123,6 @@ export function ViewportPanel({
       onFocusCapture={() => onActivatePanel(panelId)}
     >
       <div className="viewport-panel__header">
-        {layoutMode !== "quad" ? null : (
-          <div className="viewport-panel__meta">
-            <div className="viewport-panel__title-row">
-              <div className="viewport-panel__title">
-                {getViewportPanelLabel(panelId)}
-              </div>
-              {!isActive ? null : (
-                <div
-                  className="viewport-panel__active-badge"
-                  data-testid={`viewport-panel-active-badge-${panelId}`}
-                >
-                  Active
-                </div>
-              )}
-            </div>
-          </div>
-        )}
         <div className="viewport-panel__controls">
           <div
             className="viewport-panel__control-group"
