@@ -405,8 +405,13 @@ export function stepPlayerLocomotion(
   // the controller back into grounded/stick-to-ground logic.
   const ascendingFromPreviousFrame =
     options.verticalVelocity > VERTICAL_ASCENT_EPSILON;
+  const canUseImmediateGrounding =
+    options.previousLocomotionState === undefined ||
+    options.previousLocomotionState.grounded;
   const currentlyGrounded =
-    currentGroundProbe.grounded && !ascendingFromPreviousFrame;
+    currentGroundProbe.grounded &&
+    !ascendingFromPreviousFrame &&
+    canUseImmediateGrounding;
 
   if (currentlyGrounded) {
     coyoteTimeRemainingMs = options.movement.jump.coyoteTimeMs;
