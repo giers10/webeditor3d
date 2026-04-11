@@ -141,7 +141,15 @@ describe("local draft storage", () => {
     viewportLayoutState.panels.topLeft.cameraState.perspectiveOrbit.theta = 1.25;
     viewportLayoutState.panels.topLeft.cameraState.orthographicZoom = 2.5;
 
-    expect(saveSceneDocumentDraft(storage, createEmptySceneDocument({ name: "Viewport Draft" }), viewportLayoutState)).toEqual({
+    expect(
+      saveSceneDocumentDraft(
+        storage,
+        createProjectDocumentFromSceneDocument(
+          createEmptySceneDocument({ name: "Viewport Draft" })
+        ),
+        viewportLayoutState
+      )
+    ).toEqual({
       status: "saved",
       message: "Autosave updated."
     });
