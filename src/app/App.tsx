@@ -1172,6 +1172,67 @@ function formatRunnerFeetPosition(position: Vec3 | null): string {
   return `${position.x.toFixed(2)}, ${position.y.toFixed(2)}, ${position.z.toFixed(2)}`;
 }
 
+function formatRunnerLocomotionMode(
+  locomotionState: RuntimeLocomotionState | undefined
+): string {
+  switch (locomotionState?.locomotionMode) {
+    case "grounded":
+      return "Grounded";
+    case "airborne":
+      return "Airborne";
+    case "flying":
+      return "Flying";
+    case "swimming":
+      return "Swimming";
+    default:
+      return "n/a";
+  }
+}
+
+function formatRunnerGait(
+  locomotionState: RuntimeLocomotionState | undefined
+): string {
+  switch (locomotionState?.gait) {
+    case "idle":
+      return "Idle";
+    case "walk":
+      return "Walk";
+    case "sprint":
+      return "Sprint";
+    case "crouch":
+      return "Crouch";
+    default:
+      return "n/a";
+  }
+}
+
+function formatRunnerAirborneKind(
+  locomotionState: RuntimeLocomotionState | undefined
+): string {
+  switch (locomotionState?.airborneKind) {
+    case "jumping":
+      return "Jumping";
+    case "falling":
+      return "Falling";
+    case null:
+    case undefined:
+      return "n/a";
+  }
+}
+
+function formatRunnerGroundContact(
+  locomotionState: RuntimeLocomotionState | undefined
+): string {
+  if (locomotionState?.contact.groundNormal === null) {
+    return "No ground";
+  }
+
+  const slope = locomotionState.contact.slopeDegrees;
+  const distance = locomotionState.contact.groundDistance;
+
+  return `${slope === null ? "?" : slope.toFixed(1)} deg @ ${distance === null ? "?" : distance.toFixed(2)}m`;
+}
+
 function formatWorldBackgroundLabel(world: WorldSettings): string {
   if (world.background.mode === "solid") {
     return "Solid";
