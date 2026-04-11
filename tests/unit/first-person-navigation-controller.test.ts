@@ -103,7 +103,7 @@ function createRuntimeControllerContext(
         ...desiredCameraPosition
       }),
       setRuntimeMessage: vi.fn(),
-      setFirstPersonTelemetry: vi.fn()
+      setPlayerControllerTelemetry: vi.fn()
     }
   };
 }
@@ -250,7 +250,8 @@ describe("FirstPersonNavigationController", () => {
     window.dispatchEvent(new KeyboardEvent("keydown", { code: "KeyW" }));
     controller.update(1);
 
-    const telemetry = context.setFirstPersonTelemetry.mock.calls.at(-1)?.[0];
+    const telemetry =
+      context.setPlayerControllerTelemetry.mock.calls.at(-1)?.[0];
 
     expect(telemetry?.feetPosition.z).toBeCloseTo(2.25);
     expect(telemetry?.movement).toMatchObject({
@@ -345,13 +346,18 @@ describe("FirstPersonNavigationController", () => {
     window.dispatchEvent(new KeyboardEvent("keydown", { code: "Space" }));
     controller.update(0.1);
 
-    const telemetry = context.setFirstPersonTelemetry.mock.calls.at(-1)?.[0];
+    const telemetry =
+      context.setPlayerControllerTelemetry.mock.calls.at(-1)?.[0];
 
     expect(telemetry?.grounded).toBe(false);
     expect(telemetry?.locomotionState.locomotionMode).toBe("airborne");
     expect(telemetry?.locomotionState.airborneKind).toBe("jumping");
     expect(telemetry?.locomotionState.verticalVelocity).toBeGreaterThan(0);
     expect(telemetry?.feetPosition.y ?? 0).toBeGreaterThan(0);
+    expect(telemetry?.signals.jumpStarted).toBe(true);
+    expect(telemetry?.signals.leftGround).toBe(true);
+    expect(telemetry?.hooks.camera.jumping).toBe(true);
+    expect(telemetry?.hooks.animation.airborneKind).toBe("jumping");
 
     window.dispatchEvent(new KeyboardEvent("keyup", { code: "Space" }));
     controller.deactivate(context, {
@@ -397,7 +403,8 @@ describe("FirstPersonNavigationController", () => {
     );
     controller.update(0.1);
 
-    const telemetry = context.setFirstPersonTelemetry.mock.calls.at(-1)?.[0];
+    const telemetry =
+      context.setPlayerControllerTelemetry.mock.calls.at(-1)?.[0];
 
     expect(telemetry?.locomotionState.gait).toBe("crouch");
     expect(telemetry?.locomotionState.crouched).toBe(true);

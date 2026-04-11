@@ -100,7 +100,7 @@ function createRuntimeControllerContext(
         ...desiredCameraPosition
       }),
       setRuntimeMessage: vi.fn(),
-      setFirstPersonTelemetry: vi.fn()
+      setPlayerControllerTelemetry: vi.fn()
     }
   };
 }
@@ -184,7 +184,8 @@ describe("ThirdPersonNavigationController", () => {
     window.dispatchEvent(new KeyboardEvent("keydown", { code: "ArrowUp" }));
     controller.update(1);
 
-    const telemetry = context.setFirstPersonTelemetry.mock.calls.at(-1)?.[0];
+    const telemetry =
+      context.setPlayerControllerTelemetry.mock.calls.at(-1)?.[0];
 
     expect(
       Math.hypot(
@@ -254,7 +255,8 @@ describe("ThirdPersonNavigationController", () => {
     );
     controller.update(1);
 
-    const telemetry = context.setFirstPersonTelemetry.mock.calls.at(-1)?.[0];
+    const telemetry =
+      context.setPlayerControllerTelemetry.mock.calls.at(-1)?.[0];
 
     expect(telemetry?.locomotionState.gait).toBe("sprint");
     expect(telemetry?.locomotionState.sprinting).toBe(true);

@@ -15,6 +15,17 @@ function createSwimmingTelemetry(
   runtimeScene: ReturnType<typeof buildRuntimeSceneFromDocument>,
   cameraSubmerged: boolean
 ): FirstPersonTelemetry {
+  const signals = {
+    jumpStarted: false,
+    leftGround: false,
+    startedFalling: false,
+    landed: false,
+    enteredWater: false,
+    exitedWater: false,
+    wallContactStarted: false,
+    headBump: false
+  };
+
   return {
     feetPosition: { x: 0, y: 0, z: 0 },
     eyePosition: { x: 0, y: cameraSubmerged ? 0.4 : 1.7, z: 0 },
@@ -47,7 +58,34 @@ function createSwimmingTelemetry(
     cameraSubmerged,
     inFogVolume: false,
     pointerLocked: true,
-    spawn: runtimeScene.spawn
+    spawn: runtimeScene.spawn,
+    signals,
+    hooks: {
+      camera: {
+        jumping: false,
+        falling: false,
+        landing: false,
+        swimming: true,
+        underwaterAmount: cameraSubmerged ? 1 : 0.55
+      },
+      audio: {
+        underwaterAmount: cameraSubmerged ? 1 : 0.55,
+        enteredWater: false,
+        exitedWater: false
+      },
+      animation: {
+        locomotionMode: "swimming",
+        airborneKind: null,
+        gait: "walk",
+        moving: true,
+        movementAmount: 1,
+        grounded: false,
+        crouched: false,
+        sprinting: false,
+        inWater: true,
+        signals
+      }
+    }
   };
 }
 
