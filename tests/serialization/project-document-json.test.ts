@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   DEFAULT_PROJECT_NAME,
+  DEFAULT_SCENE_EDITOR_SNAP_STEP,
   PLAYER_START_GAMEPAD_CAMERA_LOOK_SCENE_DOCUMENT_VERSION,
   RUNNER_LOADING_SCREEN_SCENE_DOCUMENT_VERSION,
   SCENE_DOCUMENT_VERSION,
@@ -62,6 +63,40 @@ describe("project document JSON", () => {
     };
     document.scenes["scene-main"].entities[mainExit.id] = mainExit;
     document.scenes["scene-cellar"].entities[cellarEntry.id] = cellarEntry;
+    document.scenes["scene-main"].editorPreferences = {
+      ...document.scenes["scene-main"].editorPreferences,
+      whiteboxSelectionMode: "face",
+      whiteboxSnapEnabled: false,
+      whiteboxSnapStep: 0.5,
+      viewportGridVisible: false,
+      viewportLayoutMode: "quad",
+      activeViewportPanelId: "bottomRight",
+      viewportQuadSplit: {
+        x: 0.42,
+        y: 0.58
+      },
+      viewportPanels: {
+        ...document.scenes["scene-main"].editorPreferences.viewportPanels,
+        topLeft: {
+          viewMode: "front",
+          displayMode: "wireframe"
+        }
+      }
+    };
+    document.scenes["scene-cellar"].editorPreferences = {
+      ...document.scenes["scene-cellar"].editorPreferences,
+      whiteboxSelectionMode: "vertex",
+      whiteboxSnapStep: 2,
+      viewportLayoutMode: "quad",
+      activeViewportPanelId: "topRight",
+      viewportPanels: {
+        ...document.scenes["scene-cellar"].editorPreferences.viewportPanels,
+        topLeft: {
+          viewMode: "side",
+          displayMode: "authoring"
+        }
+      }
+    };
 
     const serializedDocument = serializeProjectDocument(document);
 
@@ -88,6 +123,16 @@ describe("project document JSON", () => {
     expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
     expect(migratedDocument.name).toBe(DEFAULT_PROJECT_NAME);
     expect(migratedDocument.scenes["scene-main"]?.name).toBe("Legacy Entry");
+    expect(migratedDocument.scenes["scene-main"]?.editorPreferences).toMatchObject(
+      {
+        whiteboxSelectionMode: "object",
+        whiteboxSnapEnabled: true,
+        whiteboxSnapStep: DEFAULT_SCENE_EDITOR_SNAP_STEP,
+        viewportGridVisible: true,
+        viewportLayoutMode: "single",
+        activeViewportPanelId: "topLeft"
+      }
+    );
   });
 
   it("migrates v23 project documents without Scene Entry and Scene Exit entities", () => {
