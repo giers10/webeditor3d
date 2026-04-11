@@ -318,8 +318,8 @@ export class FirstPersonNavigationController implements NavigationController {
     this.pointerLocked = pointerLocked;
     this.context.setRuntimeMessage(
       pointerLocked
-        ? "Mouse look active. Press Escape to release the cursor or switch to Orbit Visitor."
-        : "Click inside the runner viewport to capture mouse look. If pointer lock fails, switch to Orbit Visitor."
+        ? "Mouse look active. Press Escape to release the cursor or switch to Third Person."
+        : "Click inside the runner viewport to capture mouse look. If pointer lock fails, switch to Third Person."
     );
     this.publishTelemetry();
   }
@@ -353,7 +353,7 @@ export class FirstPersonNavigationController implements NavigationController {
 
   private handlePointerLockError = () => {
     this.context?.setRuntimeMessage(
-      "Pointer lock was unavailable in this browser context. Orbit Visitor remains available as the non-FPS fallback."
+      "Pointer lock was unavailable in this browser context. Third Person remains available as the non-FPS fallback."
     );
   };
 
@@ -374,7 +374,7 @@ export class FirstPersonNavigationController implements NavigationController {
     if (pointerLockResult instanceof Promise) {
       pointerLockResult.catch(() => {
         this.context?.setRuntimeMessage(
-          "Pointer lock request was denied. Click again or use Orbit Visitor for non-locked navigation."
+          "Pointer lock request was denied. Click again or use Third Person for non-locked navigation."
         );
       });
     }
