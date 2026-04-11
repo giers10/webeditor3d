@@ -15,7 +15,7 @@ if (rootElement === null) {
 const storageAccess = getBrowserStorageAccess();
 const bootstrapResult = loadOrCreateSceneDocument(storageAccess.storage);
 const editorStore = createEditorStore({
-  initialDocument: bootstrapResult.document,
+  initialProjectDocument: bootstrapResult.document,
   initialViewportLayoutState: bootstrapResult.viewportLayoutState ?? undefined,
   storage: storageAccess.storage
 });
