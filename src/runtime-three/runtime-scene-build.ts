@@ -14,9 +14,12 @@ import {
 import type { SceneDocument } from "../document/scene-document";
 import { cloneWorldSettings, type WorldSettings } from "../document/world-settings";
 import {
+  clonePlayerStartInputBindings,
+  createPlayerStartInputBindings,
   getEntityInstances,
   getPrimaryPlayerStartEntity,
-  type EntityInstance
+  type EntityInstance,
+  type PlayerStartInputBindings
 } from "../entities/entity-instances";
 import { getBoxBrushBounds } from "../geometry/box-brush";
 import { buildBoxBrushDerivedMeshData } from "../geometry/box-brush-mesh";
@@ -98,6 +101,7 @@ export interface RuntimePlayerStart {
   position: Vec3;
   yawDegrees: number;
   navigationMode: RuntimeNavigationMode;
+  inputBindings: PlayerStartInputBindings;
   collider: FirstPersonPlayerShape;
 }
 
@@ -213,6 +217,7 @@ export interface RuntimeSceneDefinition {
   interactionLinks: InteractionLink[];
   playerStart: RuntimePlayerStart | null;
   playerCollider: FirstPersonPlayerShape;
+  playerInputBindings: PlayerStartInputBindings;
   navigationMode: RuntimeNavigationMode;
   spawn: RuntimeSpawnPoint;
 }
@@ -487,6 +492,7 @@ function buildRuntimeSceneCollections(document: SceneDocument): RuntimeSceneColl
           position: cloneVec3(entity.position),
           yawDegrees: entity.yawDegrees,
           navigationMode: entity.navigationMode,
+          inputBindings: clonePlayerStartInputBindings(entity.inputBindings),
           collider: buildRuntimePlayerShape(entity)
         });
         break;
@@ -666,6 +672,9 @@ export function buildRuntimeSceneFromDocument(document: SceneDocument, options: 
   const collections = buildRuntimeSceneCollections(document);
   const interactionLinks = getInteractionLinks(document.interactionLinks).map((link) => cloneInteractionLink(link));
   const playerCollider = buildRuntimePlayerShape(playerStartEntity);
+  const playerInputBindings = createPlayerStartInputBindings(
+    playerStartEntity?.inputBindings
+  );
 
   for (const modelInstance of getModelInstances(document.modelInstances)) {
     const asset = document.assets[modelInstance.assetId];
@@ -690,6 +699,7 @@ export function buildRuntimeSceneFromDocument(document: SceneDocument, options: 
           position: cloneVec3(playerStartEntity.position),
           yawDegrees: playerStartEntity.yawDegrees,
           navigationMode,
+          inputBindings: clonePlayerStartInputBindings(playerInputBindings),
           collider: playerCollider
         };
 
@@ -705,6 +715,7 @@ export function buildRuntimeSceneFromDocument(document: SceneDocument, options: 
     interactionLinks,
     playerStart,
     playerCollider,
+    playerInputBindings,
     navigationMode,
     spawn: resolveRuntimeSpawn(
       playerStart,
