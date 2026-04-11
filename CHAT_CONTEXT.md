@@ -1,198 +1,139 @@
 # CHAT_CONTEXT.md
 
-This file is the lightweight startup context for new Codex chats.
+This file is the small startup brief for new implementation chats.
 
 Read this after `AGENTS.md`.
-Then inspect only the relevant sections of `architecture.md`, `roadmap.md`, and `testing.md` for the active slice.
+Then inspect the code.
+Then open only the relevant sections of `architecture.md`, `roadmap.md`, and `testing.md`.
 
-This file does not replace the full docs.
-It exists to keep new chats focused and to reduce repeated context load.
-
----
-
-## Product summary
-
-This repo is a browser-based 3D scene authoring tool with a built-in runner.
-
-Core loop:
-
-1. author a scene
-2. save/load it reliably
-3. run it in-browser immediately
-
-The product prioritizes:
-
-- intuitive whiteboxing / level blocking for interactive 3D environments
-- imported assets as first-class additions
-- typed entities and simple interactions
-- browser-native delivery
-
-It is not:
-
-- an unlimited general-purpose engine platform
-- a Blender replacement
-- a general CAD tool
-- an R3F showcase
+The large docs are reference docs, not mandatory full reads.
 
 ---
 
-## Hard architectural rules
+## Current Status
 
-- The canonical `SceneDocument` is the source of truth.
-- The document must stay independent from three.js objects.
-- Editor-authored mutations should flow through commands.
-- The editor viewport is derived from the document.
-- The runner is a sibling system, not an editor hack.
-- Canonical document format is project JSON, not glTF/GLB.
-- Portable save/load for asset-bearing scenes should use a project package built around that JSON.
-- Runner/deployment output is downstream from the document/runtime build and is separate from editable project save/load.
-- Model instances are separate from typed entities.
+As of now, the repo is no longer in the very early “empty skeleton” phase.
 
----
+Broadly implemented already:
 
-## Early binding decisions
+- foundational document/command/persistence/test setup
+- box-based room authoring and per-face materials / UVs
+- built-in runner with edit -> run loop
+- world settings / lighting / environment basics
+- typed entities and trigger/action/target interaction flow
+- GLB/GLTF model import and model instances
+- local lights, animation playback, spatial audio
+- advanced rendering
+- better material-library workflow
+- runner package / embeddable runner work
+- multi-viewport editor foundations
+- unified creation/placement foundations
+- transform foundations
 
-These are fixed for the early milestones unless a later slice explicitly changes them.
+Important consequence:
 
-### Coordinates and units
+- many roadmap sections are now historical context, not literal todo items
+- do not assume Milestone 0-3 are untouched just because they are still documented
 
-- world is right-handed and **Y-up**
-- `+X` is right
-- `+Y` is up
-- units are meter-like
-
-### Repo shape
-
-- keep the repo as a single Vite app
-- keep domain folders under `src/`
-- do not split into a monorepo early
-
-### State ownership
-
-- do not use the React tree as the canonical state container
-- keep canonical state in a thin external editor store/service
-
-### Persistence
-
-- version the document from day one
-- keep migrations explicit
-- early project persistence can be local draft storage plus JSON import/export
-- once binary assets exist, portable save/load should use a project package such as `scene.json` plus bundled assets
-- canonical JSON stays the source document format underneath that project package
-- runner package output is a separate deployable artifact
-- binary assets must survive reload via embedded or project-scoped persistent storage
-- never rely on Blob URLs as the only persisted asset reference
-
-### Current box-solid foundation
-
-- early slices began with an axis-aligned box shape and stable face IDs
-- stable box face IDs are:
-  - `posX`
-  - `negX`
-  - `posY`
-  - `negY`
-  - `posZ`
-  - `negZ`
-- `posY` is top and `negY` is bottom
-
-### Whitebox direction
-
-- move away from grid-bound brush thinking toward whitebox solids
-- allow floating point transforms
-- allow free object rotation
-- use the grid as optional snap/reference help, not as a hard restriction
-- unify object / face / edge / vertex editing around one transform-driven interaction model
-- non-planar quads are acceptable if triangulated deterministically in derived geometry
-- non-convex whitebox solids are acceptable if the solid mesh/collider pipeline can support them
-
-### Early UV data
-
-Per face, keep explicit UV transform values such as:
-
-- `offset`
-- `scale`
-- `rotationQuarterTurns`
-- `flipU`
-- `flipV`
-
-“Fit to face” should rewrite explicit values, not add a magical persistent flag.
-
-### Model placement
-
-- imported assets live in the asset registry
-- placed imported models live in `modelInstances`
-- typed scene objects like `PlayerStart`, `TriggerVolume`, or lights live in `entities`
-- collision authoring for imported models belongs on `modelInstances`, not asset records
-- generated imported-model collider data should be derived from asset geometry + instance transform + authored settings
-- for imported-model collider types beyond simple boxes, prefer a Rapier-backed collision/query layer over extending the handcrafted collision code indefinitely
-- broad-phase and narrow-phase pruning should come from that collision/query layer, not custom app code
-
-### Interaction scope
-
-- keep `Trigger -> Action -> Target` typed and explicit
-- do not add actions for systems that do not exist yet
-
-### World environment vs local lights
-
-- global background / ambient / sun / fog belong in `world` settings
-- local authored lights belong in typed entity schemas
-- true skyboxes or environment textures belong after persistent asset storage exists
+When in doubt, inspect the current code before trusting old milestone wording.
 
 ---
 
-## What a good slice looks like
+## Current Product Direction
 
-Each slice should land the smallest coherent end-to-end version of the feature across the layers it touches:
+The product is a browser-native engine/editor for interactive 3D environments.
 
-- document data
-- commands
-- viewport behavior
-- runner behavior if relevant
-- persistence
-- UI
-- tests
+Key direction:
 
-Do not land speculative scaffolding with no immediate slice use.
+- intuitive whiteboxing / level blocking
+- imported assets as first-class content
+- typed entities and runtime interactions
+- fast built-in runner workflow
 
-If a roadmap item is too large, split it into smaller vertical slices.
+The geometry direction is shifting from old grid-bound “brush” thinking toward whitebox solids:
 
----
+- floating point transforms allowed
+- free object rotation allowed
+- grid is optional snap/reference help
+- object / face / edge / vertex editing should converge on one transform-driven model
+- non-planar quads are acceptable if triangulated deterministically
+- non-convex whitebox solids are acceptable if the solid mesh/collider path supports them
 
-## Required habits for implementation
-
-- Inspect the current repo first.
-- Extend the current implementation instead of restarting architecture.
-- If persisted schema changes, update versioning/migrations and add a compatibility test.
-- Run the narrowest relevant checks you can.
-- Report what was actually verified.
+Old code and docs may still say “brush” in places.
+Treat current box-brush structures as the starting point for whitebox solids unless the slice deliberately changes that.
 
 ---
 
-## Early slice ordering to keep in mind
+## Hard Current Assumptions
 
-- M0: foundation, document, commands, persistence, test setup
-- M1: axis-aligned box brushes, face materials/UVs, runner, first-room polish, world lighting basics
-- M2: typed entities, simple trigger/action/target interactions, click interactions
-- M3: GLB/GLTF import, local lights + skyboxes, animation, spatial audio
-- M4+: whitebox-solid interaction model, component editing, derived solid triangulation/collision
+- world is right-handed and Y-up
+- canonical state lives outside the React tree
+- document/project state remains source of truth
+- editor changes should flow through commands
+- model instances remain separate from entities
+- world settings own global background / ambient / sun / fog
+- local authored lights stay in typed entities
+- project save/load and runner export are separate concerns
 
-That ordering matters because:
+Imported model collision:
 
-- world settings do not need entity or asset pipelines
-- local lights need the entity system
-- skyboxes need persistent asset storage
-- animation and audio actions should land only with those runtime systems
+- authored collision settings belong on `modelInstances`
+- generated collider data is derived, not canonical
+- if non-box collider support needs broad-phase/narrow-phase pruning, prefer Rapier over custom app-side collision math
 
 ---
 
-## When to open the full docs
+## Reading Strategy
 
-Open the relevant full sections when:
+Default:
 
-- persistence schema changes
-- runtime/editor boundaries are being touched
-- a slice adds new tests or new failure modes
-- geometry semantics are non-trivial
-- import/export behavior changes
+1. read `AGENTS.md`
+2. read this file
+3. inspect the code paths touched by the slice
+4. open only the relevant sections of:
+   - `architecture.md`
+   - `roadmap.md`
+   - `testing.md`
 
-Otherwise, stay focused on the active slice and keep the implementation small.
+Open the larger docs only when needed:
+
+- `architecture.md`
+  - data-model boundaries
+  - runtime/editor integration
+  - geometry/collision semantics
+  - persistence/export/package architecture
+
+- `roadmap.md`
+  - whether a direction is already chosen
+  - whether something is intentionally deferred
+  - how a large topic should be split into slices
+
+- `testing.md`
+  - what test layers to add
+  - schema/migration expectations
+  - browser/e2e guidance
+
+If the slice is small and local, do not reread unrelated doc sections.
+
+---
+
+## What To Be Careful About
+
+- do not restart architecture just because the original docs were written earlier
+- extend existing paths instead of introducing parallel systems
+- if docs and code disagree on current behavior, trust the code and update docs if your slice changes direction materially
+- keep responses brief and verification scoped to the actual slice
+
+---
+
+## Likely Near-Term Themes
+
+The next large topics are more likely to be things like:
+
+- whitebox-solid editing model
+- multi-scene / project structure
+- richer runtime systems
+- remaining packaging / portability work
+- future primitives and topology tools after the whitebox direction is coherent
+
+Do not assume the old prompt list is still the whole plan.

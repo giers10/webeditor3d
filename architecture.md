@@ -1,5 +1,12 @@
 # architecture.md
 
+Use this as a selective reference doc.
+
+Do not read this file end-to-end by default.
+Read only the headings relevant to the active slice after reading `AGENTS.md`, `CHAT_CONTEXT.md`, and inspecting the current code.
+
+If examples in this file lag behind the code, trust the code for current behavior and update the docs when your slice materially changes direction.
+
 ## Overview
 
 This project is a browser-based 3D scene authoring tool with a built-in runtime runner.
