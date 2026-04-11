@@ -1,12 +1,20 @@
-import { Euler, Vector3 } from "three";
+import { Euler } from "three";
 
 import type { Vec3 } from "../core/vector";
 
-import { getFirstPersonPlayerEyeHeight } from "./player-collision";
 import {
+  FIRST_PERSON_PLAYER_SHAPE,
+  cloneFirstPersonPlayerShape,
+  getFirstPersonPlayerEyeHeight
+} from "./player-collision";
+import {
+  resolvePlayerStartActionInputs,
   resolvePlayerStartLookInput,
-  resolvePlayerStartMovementActions
 } from "./player-input-bindings";
+import {
+  createIdleRuntimeLocomotionState,
+  stepPlayerLocomotion
+} from "./player-locomotion";
 import type {
   NavigationControllerDeactivateOptions,
   NavigationController,
@@ -17,7 +25,6 @@ import type { RuntimePlayerMovement } from "./runtime-scene-build";
 
 const LOOK_SENSITIVITY = 0.0022;
 const GAMEPAD_LOOK_SPEED = 2.4;
-const GRAVITY = 22;
 const MAX_PITCH_RADIANS = Math.PI * 0.48;
 
 function clampPitch(pitchRadians: number): number {
@@ -75,18 +82,24 @@ export class FirstPersonNavigationController implements NavigationController {
   private context: RuntimeControllerContext | null = null;
   private readonly pressedKeys = new Set<string>();
   private readonly cameraRotation = new Euler(0, 0, 0, "YXZ");
-  private readonly forwardVector = new Vector3();
-  private readonly rightVector = new Vector3();
   private feetPosition = {
     x: 0,
     y: 0,
     z: 0
   };
+  private standingPlayerShape = cloneFirstPersonPlayerShape(
+    FIRST_PERSON_PLAYER_SHAPE
+  );
+  private activePlayerShape = cloneFirstPersonPlayerShape(
+    FIRST_PERSON_PLAYER_SHAPE
+  );
   private yawRadians = 0;
   private pitchRadians = 0;
   private verticalVelocity = 0;
   private grounded = false;
-  private locomotionState: RuntimeLocomotionState = "flying";
+  private jumpPressed = false;
+  private locomotionState: RuntimeLocomotionState =
+    createIdleRuntimeLocomotionState("flying");
   private inWaterVolume = false;
   private inFogVolume = false;
   private pointerLocked = false;
