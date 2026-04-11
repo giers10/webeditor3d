@@ -1179,10 +1179,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
       : null;
   const selectedTriggerVolume =
     selectedEntity?.kind === "triggerVolume" ? selectedEntity : null;
+  const selectedSceneEntry =
+    selectedEntity?.kind === "sceneEntry" ? selectedEntity : null;
   const selectedTeleportTarget =
     selectedEntity?.kind === "teleportTarget" ? selectedEntity : null;
   const selectedInteractable =
     selectedEntity?.kind === "interactable" ? selectedEntity : null;
+  const selectedSceneExit =
+    selectedEntity?.kind === "sceneExit" ? selectedEntity : null;
   const projectAssetList = Object.values(editorState.document.assets);
   const modelAssetList = projectAssetList.filter(isModelAsset);
   const imageAssetList = projectAssetList.filter(isImageAsset);
@@ -1212,6 +1216,33 @@ export function App({ store, initialStatusMessage }: AppProps) {
           editorState.document.interactionLinks,
           selectedInteractable.id
         );
+  const sceneTargetOptions = sceneList.map((scene) => ({
+    id: scene.id,
+    name: scene.name
+  }));
+  const sceneEntryOptionsBySceneId = Object.fromEntries(
+    sceneTargetOptions.map(({ id }) => {
+      const scene = editorState.projectDocument.scenes[id];
+      const sceneEntries = getSortedEntityDisplayLabels(
+        scene?.entities ?? {},
+        editorState.projectDocument.assets
+      ).filter(({ entity }) => entity.kind === "sceneEntry");
+
+      return [
+        id,
+        sceneEntries as Array<{
+          entity: Extract<EntityInstance, { kind: "sceneEntry" }>;
+          label: string;
+        }>
+      ];
+    })
+  ) as Record<
+    string,
+    Array<{
+      entity: Extract<EntityInstance, { kind: "sceneEntry" }>;
+      label: string;
+    }>
+  >;
   const teleportTargetOptions = entityDisplayList.filter(
     ({ entity }) => entity.kind === "teleportTarget"
   );
@@ -1483,6 +1514,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
     useState(false);
   const [runtimeScene, setRuntimeScene] =
     useState<RuntimeSceneDefinition | null>(null);
+  const [runtimeSceneId, setRuntimeSceneId] = useState<string | null>(null);
+  const [runtimeSceneName, setRuntimeSceneName] = useState<string | null>(null);
+  const [runtimeSceneLoadingScreen, setRuntimeSceneLoadingScreen] =
+    useState<SceneLoadingScreenSettings | null>(null);
+  const [runtimeGlobalState, setRuntimeGlobalState] =
+    useState<RuntimeGlobalState>(createDefaultRuntimeGlobalState());
   const [runtimeMessage, setRuntimeMessage] = useState<string | null>(null);
   const [firstPersonTelemetry, setFirstPersonTelemetry] =
     useState<FirstPersonTelemetry | null>(null);
