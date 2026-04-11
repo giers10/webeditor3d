@@ -275,4 +275,54 @@ describe("RunnerCanvas", () => {
     );
     expect(document.querySelector(".runner-canvas__crosshair")).toBeNull();
   });
+
+  it("does not recreate the runtime host when the scene-exit callback identity changes", async () => {
+    const runtimeScene = buildRuntimeSceneFromDocument(
+      createEmptySceneDocument()
+    );
+    const { rerender } = render(
+      <RunnerCanvas
+        runtimeScene={runtimeScene}
+        sceneName="Stable Runner"
+        sceneLoadingScreen={createDefaultSceneLoadingScreenSettings()}
+        projectAssets={{}}
+        loadedModelAssets={{}}
+        loadedImageAssets={{}}
+        loadedAudioAssets={{}}
+        navigationMode="firstPerson"
+        onRuntimeMessageChange={vi.fn()}
+        onFirstPersonTelemetryChange={vi.fn()}
+        onInteractionPromptChange={vi.fn()}
+        onSceneExitActivated={vi.fn()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(runtimeHostInstances).toHaveLength(1);
+      expect(runtimeHostInstances[0]?.loadScene).toHaveBeenCalledTimes(1);
+    });
+
+    rerender(
+      <RunnerCanvas
+        runtimeScene={runtimeScene}
+        sceneName="Stable Runner"
+        sceneLoadingScreen={createDefaultSceneLoadingScreenSettings()}
+        projectAssets={{}}
+        loadedModelAssets={{}}
+        loadedImageAssets={{}}
+        loadedAudioAssets={{}}
+        navigationMode="firstPerson"
+        onRuntimeMessageChange={vi.fn()}
+        onFirstPersonTelemetryChange={vi.fn()}
+        onInteractionPromptChange={vi.fn()}
+        onSceneExitActivated={vi.fn()}
+      />
+    );
+
+    expect(runtimeHostInstances).toHaveLength(1);
+    expect(runtimeHostInstances[0]?.loadScene).toHaveBeenCalledTimes(1);
+    expect(
+      runtimeHostInstances[0]?.setSceneExitHandler
+    ).toHaveBeenCalledTimes(2);
+  });
 });
