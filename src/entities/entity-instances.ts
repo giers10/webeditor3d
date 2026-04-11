@@ -163,6 +163,7 @@ export interface PlayerStartMovementTemplate {
   kind: PlayerStartMovementTemplateKind;
   moveSpeed: number;
   maxSpeed: number;
+  maxStepHeight: number;
   capabilities: PlayerStartMovementCapabilities;
   jump: PlayerStartJumpSettings;
   sprint: PlayerStartSprintSettings;
@@ -173,6 +174,7 @@ export interface PlayerStartMovementTemplateOverrides {
   kind?: PlayerStartMovementTemplateKind;
   moveSpeed?: number;
   maxSpeed?: number;
+  maxStepHeight?: number;
   capabilities?: Partial<PlayerStartMovementCapabilities>;
   jump?: Partial<PlayerStartJumpSettings>;
   sprint?: Partial<PlayerStartSprintSettings>;
@@ -293,6 +295,7 @@ export const DEFAULT_PLAYER_START_MOVEMENT_TEMPLATE_KIND: PlayerStartMovementTem
   "default";
 export const DEFAULT_PLAYER_START_MOVE_SPEED = 4.5;
 export const DEFAULT_PLAYER_START_MAX_SPEED = 0;
+export const DEFAULT_PLAYER_START_MAX_STEP_HEIGHT = 0.35;
 export const DEFAULT_PLAYER_START_JUMP_SPEED = 7.2;
 export const DEFAULT_PLAYER_START_JUMP_BUFFER_MS = 0;
 export const DEFAULT_PLAYER_START_COYOTE_TIME_MS = 0;
@@ -538,6 +541,7 @@ export function clonePlayerStartMovementTemplate(
     kind: template.kind,
     moveSpeed: template.moveSpeed,
     maxSpeed: template.maxSpeed,
+    maxStepHeight: template.maxStepHeight,
     capabilities: clonePlayerStartMovementCapabilities(template.capabilities),
     jump: clonePlayerStartJumpSettings(template.jump),
     sprint: clonePlayerStartSprintSettings(template.sprint),
@@ -713,6 +717,7 @@ export function createPlayerStartMovementTemplate(
       ? {
           moveSpeed: DEFAULT_PLAYER_START_MOVE_SPEED,
           maxSpeed: DEFAULT_PLAYER_START_MAX_SPEED,
+          maxStepHeight: DEFAULT_PLAYER_START_MAX_STEP_HEIGHT,
           capabilities: DEFAULT_PLAYER_START_MOVEMENT_CAPABILITIES,
           jump: RESPONSIVE_PLAYER_START_JUMP_SETTINGS,
           sprint: DEFAULT_PLAYER_START_SPRINT_SETTINGS,
@@ -721,6 +726,7 @@ export function createPlayerStartMovementTemplate(
       : {
           moveSpeed: DEFAULT_PLAYER_START_MOVE_SPEED,
           maxSpeed: DEFAULT_PLAYER_START_MAX_SPEED,
+          maxStepHeight: DEFAULT_PLAYER_START_MAX_STEP_HEIGHT,
           capabilities: DEFAULT_PLAYER_START_MOVEMENT_CAPABILITIES,
           jump: DEFAULT_PLAYER_START_JUMP_SETTINGS,
           sprint: DEFAULT_PLAYER_START_SPRINT_SETTINGS,
@@ -728,6 +734,7 @@ export function createPlayerStartMovementTemplate(
         };
   const moveSpeed = overrides.moveSpeed ?? preset.moveSpeed;
   const maxSpeed = overrides.maxSpeed ?? preset.maxSpeed;
+  const maxStepHeight = overrides.maxStepHeight ?? preset.maxStepHeight;
   const capabilities: PlayerStartMovementCapabilities = {
     jump:
       overrides.capabilities?.jump ?? preset.capabilities.jump,
@@ -759,6 +766,10 @@ export function createPlayerStartMovementTemplate(
 
   assertPositiveFiniteNumber(moveSpeed, "Player Start move speed");
   assertNonNegativeFiniteNumber(maxSpeed, "Player Start max speed");
+  assertNonNegativeFiniteNumber(
+    maxStepHeight,
+    "Player Start max step height"
+  );
   assertBoolean(
     capabilities.jump,
     "Player Start movement template jump capability"
@@ -806,6 +817,7 @@ export function createPlayerStartMovementTemplate(
     kind,
     moveSpeed,
     maxSpeed,
+    maxStepHeight,
     capabilities,
     jump,
     sprint,
@@ -820,6 +832,7 @@ export function inferPlayerStartMovementTemplateKind(
     kind: "custom",
     moveSpeed: template.moveSpeed,
     maxSpeed: template.maxSpeed,
+    maxStepHeight: template.maxStepHeight,
     capabilities: template.capabilities,
     jump: template.jump,
     sprint: template.sprint,
@@ -836,6 +849,8 @@ export function inferPlayerStartMovementTemplateKind(
         createPlayerStartMovementTemplate({ kind: presetKind }).moveSpeed &&
       candidate.maxSpeed ===
         createPlayerStartMovementTemplate({ kind: presetKind }).maxSpeed &&
+      candidate.maxStepHeight ===
+        createPlayerStartMovementTemplate({ kind: presetKind }).maxStepHeight &&
       candidate.capabilities.jump ===
         createPlayerStartMovementTemplate({ kind: presetKind }).capabilities.jump &&
       candidate.capabilities.sprint ===
@@ -899,6 +914,7 @@ export function arePlayerStartMovementTemplatesEqual(
     left.kind === right.kind &&
     left.moveSpeed === right.moveSpeed &&
     left.maxSpeed === right.maxSpeed &&
+    left.maxStepHeight === right.maxStepHeight &&
     left.capabilities.jump === right.capabilities.jump &&
     left.capabilities.sprint === right.capabilities.sprint &&
     left.capabilities.crouch === right.capabilities.crouch &&
