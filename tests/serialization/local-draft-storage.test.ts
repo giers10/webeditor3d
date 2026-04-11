@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import { createBoxBrush } from "../../src/document/brushes";
-import { SCENE_DOCUMENT_VERSION, createEmptySceneDocument } from "../../src/document/scene-document";
+import {
+  SCENE_DOCUMENT_VERSION,
+  createEmptyProjectDocument,
+  createEmptyProjectScene,
+  createEmptySceneDocument,
+  createProjectDocumentFromSceneDocument
+} from "../../src/document/scene-document";
 import { serializeSceneDocument } from "../../src/serialization/scene-document-json";
 import {
   DEFAULT_SCENE_DRAFT_STORAGE_KEY,
@@ -67,7 +73,7 @@ describe("local draft storage", () => {
     const result = loadOrCreateSceneDocument(storage);
 
     expect(result.document.version).toBe(SCENE_DOCUMENT_VERSION);
-    expect(result.document).toEqual(createEmptySceneDocument());
+    expect(result.document).toEqual(createEmptyProjectDocument());
     expect(result.diagnostic).toContain("Stored autosave could not be loaded.");
     expect(result.diagnostic).toContain("Starting with a fresh empty document.");
   });
@@ -113,7 +119,7 @@ describe("local draft storage", () => {
       new ThrowingStorage({
         onSetItem: new Error("quota exceeded")
       }),
-      createEmptySceneDocument()
+      createEmptyProjectDocument()
     );
 
     expect(result.status).toBe("error");
@@ -139,35 +145,74 @@ describe("local draft storage", () => {
       status: "saved",
       message: "Autosave updated."
     });
-
     const result = loadSceneDocumentDraft(storage);
 
-    expect(result).toMatchObject({
-      status: "loaded",
-      document: {
-        name: "Viewport Draft"
-      },
-      viewportLayoutState: {
-        layoutMode: "quad",
-        activePanelId: "bottomRight",
-        panels: {
-          topLeft: {
-            displayMode: "wireframe",
-            cameraState: {
-              target: {
-                x: 8,
-                y: 3,
-                z: -5
-              },
-              perspectiveOrbit: {
-                theta: 1.25
-              },
-              orthographicZoom: 2.5
-            }
+    expect(result.status).toBe("loaded");
+
+    if (result.status !== "loaded") {
+      return;
+    }
+
+    expect(
+      result.document.scenes[result.document.activeSceneId]?.name
+    ).toBe("Viewport Draft");
+    expect(result.viewportLayoutState).toMatchObject({
+      layoutMode: "quad",
+      activePanelId: "bottomRight",
+      panels: {
+        topLeft: {
+          displayMode: "wireframe",
+          cameraState: {
+            target: {
+              x: 8,
+              y: 3,
+              z: -5
+            },
+            perspectiveOrbit: {
+              theta: 1.25
+            },
+            orthographicZoom: 2.5
           }
         }
       }
     });
+  });
+
+  it("stores and restores all project scenes in autosave drafts", () => {
+    const storage = new MemoryStorage();
+    const document = {
+      ...createEmptyProjectDocument({ sceneName: "Entry" }),
+      activeSceneId: "scene-hall",
+      scenes: {
+        scene-main: createEmptyProjectScene({
+          id: "scene-main",
+          name: "Entry"
+        }),
+        scene-hall: createEmptyProjectScene({
+          id: "scene-hall",
+          name: "Hallway"
+        })
+      }
+    };
+
+    expect(saveSceneDocumentDraft(storage, document)).toEqual({
+      status: "saved",
+      message: "Autosave updated."
+    });
+
+    const result = loadSceneDocumentDraft(storage);
+
+    expect(result.status).toBe("loaded");
+
+    if (result.status !== "loaded") {
+      return;
+    }
+
+    expect(result.document.activeSceneId).toBe("scene-hall");
+    expect(Object.keys(result.document.scenes)).toEqual([
+      "scene-main",
+      "scene-hall"
+    ]);
   });
 
   it("loads older raw scene-document drafts without requiring viewport layout state", () => {
@@ -176,23 +221,33 @@ describe("local draft storage", () => {
 
     const result = loadSceneDocumentDraft(storage);
 
-    expect(result).toMatchObject({
-      status: "loaded",
-      document: {
-        name: "Legacy Draft"
-      },
-      viewportLayoutState: null,
-      message: "Recovered latest autosave."
-    });
+    expect(result.status).toBe("loaded");
+
+    if (result.status !== "loaded") {
+      return;
+    }
+
+    expect(
+      result.document.scenes[result.document.activeSceneId]?.name
+    ).toBe("Legacy Draft");
+    expect(result.viewportLayoutState).toBeNull();
+    expect(result.message).toBe("Recovered latest autosave.");
   });
 
   it("reports recovered autosaves through bootstrap diagnostics", () => {
     const storage = new MemoryStorage();
-    saveSceneDocumentDraft(storage, createEmptySceneDocument({ name: "Recovered Scene" }));
+    saveSceneDocumentDraft(
+      storage,
+      createProjectDocumentFromSceneDocument(
+        createEmptySceneDocument({ name: "Recovered Scene" })
+      )
+    );
 
     const result = loadOrCreateSceneDocument(storage);
 
-    expect(result.document.name).toBe("Recovered Scene");
+    expect(
+      result.document.scenes[result.document.activeSceneId]?.name
+    ).toBe("Recovered Scene");
     expect(result.diagnostic).toBe("Recovered latest autosave.");
   });
 
@@ -203,9 +258,19 @@ describe("local draft storage", () => {
     invalidBrush.faces.posX.materialId = "missing-material";
 
     const result = saveSceneDocumentDraft(new MemoryStorage(), {
-      ...createEmptySceneDocument(),
-      brushes: {
-        [invalidBrush.id]: invalidBrush
+      ...createProjectDocumentFromSceneDocument(createEmptySceneDocument()),
+      scenes: {
+        scene-main: {
+          id: "scene-main",
+          name: "Untitled Scene",
+          world: createEmptySceneDocument().world,
+          brushes: {
+            [invalidBrush.id]: invalidBrush
+          },
+          modelInstances: {},
+          entities: {},
+          interactionLinks: {}
+        }
       }
     });
 
