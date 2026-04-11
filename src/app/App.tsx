@@ -7217,49 +7217,75 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 <div className="stat-card">
                   <div className="label">Grounded</div>
                   <div className="value">
-                    {firstPersonTelemetry?.grounded
-                      ? "yes"
-                      : activeNavigationMode === "firstPerson"
-                        ? "no"
-                        : "n/a"}
+                    {firstPersonTelemetry === null
+                      ? "n/a"
+                      : firstPersonTelemetry.grounded
+                        ? "yes"
+                        : "no"}
                   </div>
                 </div>
                 <div className="stat-card">
                   <div className="label">Locomotion</div>
                   <div className="value">
-                    {activeNavigationMode === "firstPerson"
-                      ? firstPersonTelemetry?.locomotionState === "swimming"
-                        ? "Swimming"
-                        : firstPersonTelemetry?.locomotionState === "flying"
-                          ? "Flying"
-                          : "Grounded"
-                      : "n/a"}
+                    {formatRunnerLocomotionMode(
+                      firstPersonTelemetry?.locomotionState
+                    )}
+                  </div>
+                </div>
+                <div className="stat-card">
+                  <div className="label">Gait</div>
+                  <div className="value">
+                    {formatRunnerGait(firstPersonTelemetry?.locomotionState)}
+                  </div>
+                </div>
+                <div className="stat-card">
+                  <div className="label">Airborne</div>
+                  <div className="value">
+                    {formatRunnerAirborneKind(
+                      firstPersonTelemetry?.locomotionState
+                    )}
+                  </div>
+                </div>
+                <div className="stat-card">
+                  <div className="label">Planar Speed</div>
+                  <div className="value">
+                    {firstPersonTelemetry === null
+                      ? "n/a"
+                      : `${firstPersonTelemetry.locomotionState.planarSpeed.toFixed(2)} m/s`}
+                  </div>
+                </div>
+                <div className="stat-card">
+                  <div className="label">Ground Contact</div>
+                  <div className="value">
+                    {formatRunnerGroundContact(
+                      firstPersonTelemetry?.locomotionState
+                    )}
                   </div>
                 </div>
                 <div className="stat-card">
                   <div className="label">Water Volume</div>
                   <div className="value">
-                    {activeNavigationMode === "firstPerson"
-                      ? firstPersonTelemetry?.inWaterVolume
+                    {firstPersonTelemetry === null
+                      ? "n/a"
+                      : firstPersonTelemetry.inWaterVolume
                         ? "inside"
-                        : "outside"
-                      : "n/a"}
+                        : "outside"}
                   </div>
                 </div>
                 <div className="stat-card">
                   <div className="label">Fog Volume</div>
                   <div className="value">
-                    {activeNavigationMode === "firstPerson"
-                      ? firstPersonTelemetry?.inFogVolume
+                    {firstPersonTelemetry === null
+                      ? "n/a"
+                      : firstPersonTelemetry.inFogVolume
                         ? "inside"
-                        : "outside"
-                      : "n/a"}
+                        : "outside"}
                   </div>
                 </div>
               </div>
 
               <div className="stat-card">
-                <div className="label">FPS Feet Position</div>
+                <div className="label">Player Feet Position</div>
                 <div className="value" data-testid="runner-player-position">
                   {formatRunnerFeetPosition(
                     firstPersonTelemetry?.feetPosition ??
