@@ -3885,6 +3885,29 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
+  const applySceneEntryChange = () => {
+    if (selectedSceneEntry === null) {
+      setStatusMessage("Select a Scene Entry before editing it.");
+      return;
+    }
+
+    try {
+      const nextEntity = createSceneEntryEntity({
+        id: selectedSceneEntry.id,
+        name: selectedSceneEntry.name,
+        position: snapVec3ToGrid(
+          readVec3Draft(entityPositionDraft, "Scene Entry position"),
+          DEFAULT_GRID_SIZE
+        ),
+        yawDegrees: readYawDegreesDraft(sceneEntryYawDraft)
+      });
+
+      commitEntityChange(selectedSceneEntry, nextEntity, "Updated Scene Entry.");
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
   const applyPointLightChange = (overrides: { colorHex?: string } = {}) => {
     if (selectedPointLight === null) {
       setStatusMessage("Select a Point Light before editing it.");
@@ -3974,6 +3997,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
       case "playerStart":
         applyPlayerStartChange();
         break;
+      case "sceneEntry":
+        applySceneEntryChange();
+        break;
       case "soundEmitter":
         applySoundEmitterChange();
         break;
@@ -3985,6 +4011,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
         break;
       case "interactable":
         applyInteractableChange();
+        break;
+      case "sceneExit":
+        applySceneExitChange();
         break;
     }
   };
