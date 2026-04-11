@@ -8,6 +8,7 @@ import {
   DEFAULT_PLAYER_START_MOVEMENT_CAPABILITIES,
   createPointLightEntity,
   createInteractableEntity,
+  createPlayerStartMovementTemplate,
   createPlayerStartInputBindings,
   createPlayerStartEntity,
   createSceneEntryEntity,
@@ -22,6 +23,8 @@ import { createModelInstance } from "../../src/assets/model-instances";
 import { createProjectAssetStorageKey, type AudioAssetRecord } from "../../src/assets/project-assets";
 import { buildRuntimeSceneFromDocument } from "../../src/runtime-three/runtime-scene-build";
 import { createFixtureLoadedModelAssetFromGeometry } from "../helpers/model-collider-fixtures";
+
+const defaultMovementTemplate = createPlayerStartMovementTemplate();
 
 describe("buildRuntimeSceneFromDocument", () => {
   it("builds runtime brush data, colliders, and an authored player spawn from the document", () => {
@@ -400,7 +403,11 @@ describe("buildRuntimeSceneFromDocument", () => {
           movement: {
             templateKind: "default",
             moveSpeed: DEFAULT_PLAYER_START_MOVE_SPEED,
-            capabilities: DEFAULT_PLAYER_START_MOVEMENT_CAPABILITIES
+            maxSpeed: defaultMovementTemplate.maxSpeed,
+            capabilities: DEFAULT_PLAYER_START_MOVEMENT_CAPABILITIES,
+            jump: defaultMovementTemplate.jump,
+            sprint: defaultMovementTemplate.sprint,
+            crouch: defaultMovementTemplate.crouch
           },
           inputBindings: playerStart.inputBindings,
           collider: {
@@ -574,7 +581,11 @@ describe("buildRuntimeSceneFromDocument", () => {
       movement: {
         templateKind: "default",
         moveSpeed: DEFAULT_PLAYER_START_MOVE_SPEED,
-        capabilities: DEFAULT_PLAYER_START_MOVEMENT_CAPABILITIES
+        maxSpeed: defaultMovementTemplate.maxSpeed,
+        capabilities: DEFAULT_PLAYER_START_MOVEMENT_CAPABILITIES,
+        jump: defaultMovementTemplate.jump,
+        sprint: defaultMovementTemplate.sprint,
+        crouch: defaultMovementTemplate.crouch
       },
       inputBindings: playerStart.inputBindings,
       collider: {
@@ -599,7 +610,11 @@ describe("buildRuntimeSceneFromDocument", () => {
     expect(runtimeScene.playerMovement).toEqual({
       templateKind: "default",
       moveSpeed: DEFAULT_PLAYER_START_MOVE_SPEED,
-      capabilities: DEFAULT_PLAYER_START_MOVEMENT_CAPABILITIES
+      maxSpeed: defaultMovementTemplate.maxSpeed,
+      capabilities: DEFAULT_PLAYER_START_MOVEMENT_CAPABILITIES,
+      jump: defaultMovementTemplate.jump,
+      sprint: defaultMovementTemplate.sprint,
+      crouch: defaultMovementTemplate.crouch
     });
     expect(runtimeScene.playerInputBindings).toEqual(playerStart.inputBindings);
     expect(runtimeScene.navigationMode).toBe("firstPerson");
@@ -647,7 +662,11 @@ describe("buildRuntimeSceneFromDocument", () => {
     expect(runtimeScene.playerMovement).toEqual({
       templateKind: "default",
       moveSpeed: DEFAULT_PLAYER_START_MOVE_SPEED,
-      capabilities: DEFAULT_PLAYER_START_MOVEMENT_CAPABILITIES
+      maxSpeed: defaultMovementTemplate.maxSpeed,
+      capabilities: DEFAULT_PLAYER_START_MOVEMENT_CAPABILITIES,
+      jump: defaultMovementTemplate.jump,
+      sprint: defaultMovementTemplate.sprint,
+      crouch: defaultMovementTemplate.crouch
     });
     expect(runtimeScene.playerInputBindings).toEqual(
       createPlayerStartInputBindings()
