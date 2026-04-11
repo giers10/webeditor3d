@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { createPlayerStartInputBindings } from "../../src/entities/entity-instances";
+import {
+  createPlayerStartInputBindings,
+  createPlayerStartMovementTemplate
+} from "../../src/entities/entity-instances";
 import {
   createPlayAnimationInteractionLink,
   createPlaySoundInteractionLink,
@@ -128,6 +131,11 @@ function createRuntimeSceneFixture(): RuntimeSceneDefinition {
       radius: 0.3,
       height: 1.8,
       eyeHeight: 1.6
+    },
+    playerMovement: {
+      templateKind: "default",
+      moveSpeed: createPlayerStartMovementTemplate().moveSpeed,
+      capabilities: createPlayerStartMovementTemplate().capabilities
     },
     navigationMode: "thirdPerson",
     spawn: {
