@@ -22,7 +22,8 @@ const CHARACTER_CONTROLLER_OFFSET = 0.01;
 const CHARACTER_CONTROLLER_SNAP_TO_GROUND_DISTANCE = 0.2;
 const COLLISION_EPSILON = 1e-5;
 const CAMERA_COLLISION_EPSILON = 1e-3;
-const GROUND_NORMAL_Y_THRESHOLD = 0.45;
+const MAX_WALKABLE_SLOPE_RADIANS = Math.PI * 0.25;
+const GROUND_NORMAL_Y_THRESHOLD = Math.cos(MAX_WALKABLE_SLOPE_RADIANS);
 const IDENTITY_ROTATION = {
   x: 0,
   y: 0,
@@ -352,7 +353,7 @@ export class RapierCollisionWorld {
         CHARACTER_CONTROLLER_SNAP_TO_GROUND_DISTANCE
       );
       characterController.enableAutostep(0.35, 0.15, false);
-      characterController.setMaxSlopeClimbAngle(Math.PI * 0.45);
+      characterController.setMaxSlopeClimbAngle(MAX_WALKABLE_SLOPE_RADIANS);
       characterController.setMinSlopeSlideAngle(Math.PI * 0.5);
     }
 

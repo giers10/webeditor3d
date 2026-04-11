@@ -22,7 +22,6 @@ const JUMP_SPEED = 7.2;
 const SPRINT_SPEED_MULTIPLIER = 1.65;
 const CROUCH_SPEED_MULTIPLIER = 0.45;
 const GROUND_PROBE_DISTANCE = 0.12;
-const GROUND_STICK_DISTANCE = 0.08;
 const VERTICAL_ASCENT_EPSILON = 1e-4;
 const IDLE_SPEED_EPSILON = 0.05;
 
@@ -214,6 +213,25 @@ function computePlanarMotion(
   };
 }
 
+function alignPlanarMotionToGround(
+  planarMotion: Vec3,
+  groundNormal: Vec3 | null
+): Vec3 {
+  if (groundNormal === null || groundNormal.y <= VERTICAL_ASCENT_EPSILON) {
+    return planarMotion;
+  }
+
+  return {
+    x: planarMotion.x,
+    y:
+      -(
+        groundNormal.x * planarMotion.x +
+        groundNormal.z * planarMotion.z
+      ) / groundNormal.y,
+    z: planarMotion.z
+  };
+}
+
 function resolveContactState(
   resolvedMotion: ResolvedPlayerMotion,
   groundProbe: PlayerGroundProbeResult,
@@ -319,6 +337,13 @@ export function stepPlayerLocomotion(
     currentlyGrounded &&
     !currentVolumeState.inWater &&
     activeShape.mode !== "none";
+  const groundedPlanarMotion =
+    currentlyGrounded && !jumpTriggered
+      ? alignPlanarMotionToGround(
+          planarMotion.motion,
+          currentGroundProbe.normal
+        )
+      : planarMotion.motion;
 
   let verticalVelocity = options.verticalVelocity;
   let verticalDisplacement = 0;
@@ -330,7 +355,7 @@ export function stepPlayerLocomotion(
     verticalDisplacement = verticalVelocity * options.dt;
   } else if (currentlyGrounded) {
     verticalVelocity = 0;
-    verticalDisplacement = options.dt > 0 ? -GROUND_STICK_DISTANCE : 0;
+    verticalDisplacement = 0;
   } else {
     verticalVelocity -= GRAVITY * options.dt;
     verticalDisplacement = verticalVelocity * options.dt;
@@ -339,9 +364,9 @@ export function stepPlayerLocomotion(
   const resolvedMotion = options.resolveMotion(
     options.feetPosition,
     {
-      x: planarMotion.motion.x,
-      y: verticalDisplacement,
-      z: planarMotion.motion.z
+      x: groundedPlanarMotion.x,
+      y: verticalDisplacement + groundedPlanarMotion.y,
+      z: groundedPlanarMotion.z
     },
     activeShape
   );

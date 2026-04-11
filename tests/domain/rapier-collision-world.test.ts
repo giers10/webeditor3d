@@ -485,4 +485,102 @@ describe("RapierCollisionWorld", () => {
       collisionWorld.dispose();
     }
   });
+
+  it("treats only gentle ramps as walkable ground", async () => {
+    const walkableSlopeAngle = Math.PI / 6;
+    const steepSlopeAngle = Math.PI / 3;
+    const walkableGeometry = new PlaneGeometry(8, 8, 1, 1);
+    const steepGeometry = new PlaneGeometry(8, 8, 1, 1);
+
+    walkableGeometry.rotateX(-Math.PI / 2 - walkableSlopeAngle);
+    steepGeometry.rotateX(-Math.PI / 2 - steepSlopeAngle);
+
+    const walkableAssetFixture = createFixtureLoadedModelAssetFromGeometry(
+      "asset-model-walkable-slope",
+      walkableGeometry
+    );
+    const steepAssetFixture = createFixtureLoadedModelAssetFromGeometry(
+      "asset-model-steep-slope",
+      steepGeometry
+    );
+    const walkableSlope = createModelInstance({
+      id: "model-instance-walkable-slope",
+      assetId: walkableAssetFixture.asset.id,
+      position: {
+        x: -6,
+        y: 4 * Math.sin(walkableSlopeAngle),
+        z: 4 * Math.cos(walkableSlopeAngle)
+      },
+      collision: {
+        mode: "static",
+        visible: true
+      }
+    });
+    const steepSlope = createModelInstance({
+      id: "model-instance-steep-slope",
+      assetId: steepAssetFixture.asset.id,
+      position: {
+        x: 6,
+        y: 4 * Math.sin(steepSlopeAngle),
+        z: 4 * Math.cos(steepSlopeAngle)
+      },
+      collision: {
+        mode: "static",
+        visible: true
+      }
+    });
+    const runtimeScene = buildRuntimeSceneFromDocument(
+      {
+        ...createEmptySceneDocument({ name: "Slope Walkability Scene" }),
+        assets: {
+          [walkableAssetFixture.asset.id]: walkableAssetFixture.asset,
+          [steepAssetFixture.asset.id]: steepAssetFixture.asset
+        },
+        modelInstances: {
+          [walkableSlope.id]: walkableSlope,
+          [steepSlope.id]: steepSlope
+        }
+      },
+      {
+        loadedModelAssets: {
+          [walkableAssetFixture.asset.id]: walkableAssetFixture.loadedAsset,
+          [steepAssetFixture.asset.id]: steepAssetFixture.loadedAsset
+        }
+      }
+    );
+    const collisionWorld = await RapierCollisionWorld.create(
+      runtimeScene.colliders,
+      runtimeScene.playerCollider
+    );
+
+    try {
+      const walkableProbe = collisionWorld.probePlayerGround(
+        {
+          x: -6,
+          y: Math.tan(walkableSlopeAngle) * 2 + 0.05,
+          z: 2
+        },
+        runtimeScene.playerCollider,
+        0.2
+      );
+      const steepProbe = collisionWorld.probePlayerGround(
+        {
+          x: 6,
+          y: Math.tan(steepSlopeAngle) * 2 + 0.05,
+          z: 2
+        },
+        runtimeScene.playerCollider,
+        0.2
+      );
+
+      expect(walkableProbe.grounded).toBe(true);
+      expect(walkableProbe.slopeDegrees ?? 0).toBeGreaterThan(25);
+      expect(walkableProbe.slopeDegrees ?? 0).toBeLessThan(35);
+      expect(steepProbe.grounded).toBe(false);
+      expect(steepProbe.slopeDegrees ?? 0).toBeGreaterThan(55);
+      expect(steepProbe.slopeDegrees ?? 0).toBeLessThan(65);
+    } finally {
+      collisionWorld.dispose();
+    }
+  });
 });
