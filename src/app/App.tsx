@@ -3454,6 +3454,137 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
   };
 
+  const resolveDefaultSceneExitDestination = (
+    preferredSceneId = editorState.activeSceneId
+  ): {
+    targetSceneId: string;
+    targetEntryEntityId: string;
+  } | null => {
+    const preferredOrder = [
+      ...sceneTargetOptions
+        .map(({ id }) => id)
+        .filter((sceneId) => sceneId !== preferredSceneId),
+      preferredSceneId
+    ];
+
+    for (const sceneId of preferredOrder) {
+      const firstSceneEntry = sceneEntryOptionsBySceneId[sceneId]?.[0]?.entity;
+
+      if (firstSceneEntry !== undefined) {
+        return {
+          targetSceneId: sceneId,
+          targetEntryEntityId: firstSceneEntry.id
+        };
+      }
+    }
+
+    return null;
+  };
+
+  const buildRuntimeSceneForProjectScene = (
+    sceneId: string,
+    options: { sceneEntryId?: string | null } = {}
+  ): RuntimeSceneDefinition => {
+    const sceneDocument = createSceneDocumentFromProject(
+      editorState.projectDocument,
+      sceneId
+    );
+
+    return buildRuntimeSceneFromDocument(sceneDocument, {
+      navigationMode: preferredNavigationMode,
+      loadedModelAssets,
+      sceneEntryId: options.sceneEntryId
+    });
+  };
+
+  const applyRuntimeSceneSession = (
+    sceneId: string,
+    nextRuntimeScene: RuntimeSceneDefinition
+  ) => {
+    const projectScene = editorState.projectDocument.scenes[sceneId];
+
+    if (projectScene === undefined) {
+      throw new Error(`Project scene ${sceneId} does not exist.`);
+    }
+
+    setRuntimeScene(nextRuntimeScene);
+    setRuntimeSceneId(projectScene.id);
+    setRuntimeSceneName(projectScene.name);
+    setRuntimeSceneLoadingScreen(
+      cloneSceneLoadingScreenSettings(projectScene.loadingScreen)
+    );
+  };
+
+  const handleRunnerSceneExitActivated = (
+    request: RuntimeSceneExitTransitionRequest
+  ) => {
+    if (runtimeSceneId === null || runtimeSceneName === null) {
+      setRuntimeMessage("Scene transition failed: run mode is not active.");
+      return;
+    }
+
+    const sourceScene = editorState.projectDocument.scenes[runtimeSceneId];
+    const targetScene = editorState.projectDocument.scenes[request.targetSceneId];
+
+    if (sourceScene === undefined) {
+      setRuntimeMessage(
+        `Scene transition failed: source scene ${runtimeSceneId} is no longer available.`
+      );
+      return;
+    }
+
+    if (targetScene === undefined) {
+      setRuntimeMessage(
+        `Scene transition failed: target scene ${request.targetSceneId} does not exist.`
+      );
+      return;
+    }
+
+    const targetEntry = targetScene.entities[request.targetEntryEntityId];
+
+    if (targetEntry === undefined) {
+      setRuntimeMessage(
+        `Scene transition failed: target Scene Entry ${request.targetEntryEntityId} does not exist in ${targetScene.name}.`
+      );
+      return;
+    }
+
+    if (targetEntry.kind !== "sceneEntry") {
+      setRuntimeMessage(
+        `Scene transition failed: target ${request.targetEntryEntityId} in ${targetScene.name} is not a Scene Entry.`
+      );
+      return;
+    }
+
+    try {
+      const nextRuntimeScene = buildRuntimeSceneForProjectScene(targetScene.id, {
+        sceneEntryId: targetEntry.id
+      });
+
+      applyRuntimeSceneSession(targetScene.id, nextRuntimeScene);
+      setRuntimeMessage(null);
+      setFirstPersonTelemetry(null);
+      setRuntimeInteractionPrompt(null);
+      setRuntimeGlobalState((currentState) => ({
+        ...currentState,
+        transitionCount: currentState.transitionCount + 1,
+        lastSceneTransition: {
+          fromSceneId: sourceScene.id,
+          fromSceneName: sourceScene.name,
+          toSceneId: targetScene.id,
+          toSceneName: targetScene.name,
+          viaExitEntityId: request.sourceExitEntityId,
+          targetEntryEntityId: targetEntry.id
+        }
+      }));
+      setStatusMessage(`Loaded ${targetScene.name}.`);
+    } catch (error) {
+      const message = getErrorMessage(error);
+      setRuntimeMessage(`Scene transition failed: ${message}`);
+      setStatusMessage(`Scene transition failed: ${message}`);
+    }
+  };
+
   const handleCommitCreation = (
     creationPreview: CreationViewportToolPreview
   ): boolean => {
@@ -3555,6 +3686,17 @@ export function App({ store, initialStatusMessage }: AppProps) {
           );
           completeCreation("Placed Player Start.");
           return true;
+        case "sceneEntry":
+          store.executeCommand(
+            createUpsertEntityCommand({
+              entity: createSceneEntryEntity({
+                position
+              }),
+              label: "Place scene entry"
+            })
+          );
+          completeCreation("Placed Scene Entry.");
+          return true;
         case "soundEmitter": {
           const placedAudioAssetId =
             creationPreview.target.audioAssetId ??
@@ -3610,6 +3752,29 @@ export function App({ store, initialStatusMessage }: AppProps) {
           );
           completeCreation("Placed Interactable.");
           return true;
+        case "sceneExit": {
+          const destination = resolveDefaultSceneExitDestination();
+
+          if (destination === null) {
+            setStatusMessage(
+              "Author a Scene Entry before placing a Scene Exit."
+            );
+            return false;
+          }
+
+          store.executeCommand(
+            createUpsertEntityCommand({
+              entity: createSceneExitEntity({
+                position,
+                targetSceneId: destination.targetSceneId,
+                targetEntryEntityId: destination.targetEntryEntityId
+              }),
+              label: "Place scene exit"
+            })
+          );
+          completeCreation("Placed Scene Exit.");
+          return true;
+        }
       }
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
