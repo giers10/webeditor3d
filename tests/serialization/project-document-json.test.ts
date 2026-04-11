@@ -1,12 +1,16 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  MULTI_SCENE_FOUNDATION_SCENE_DOCUMENT_VERSION,
+  RUNNER_LOADING_SCREEN_SCENE_DOCUMENT_VERSION,
   SCENE_DOCUMENT_VERSION,
   createDefaultSceneLoadingScreenSettings,
   createEmptyProjectDocument,
   createEmptyProjectScene
 } from "../../src/document/scene-document";
+import {
+  createSceneEntryEntity,
+  createSceneExitEntity
+} from "../../src/entities/entity-instances";
 import {
   parseProjectDocumentJson,
   serializeProjectDocument
@@ -14,6 +18,25 @@ import {
 
 describe("project document JSON", () => {
   it("round-trips authored scene loading overlay settings", () => {
+    const cellarEntry = createSceneEntryEntity({
+      id: "entity-scene-entry-cellar-stairs",
+      position: {
+        x: 1,
+        y: 0,
+        z: -2
+      },
+      yawDegrees: 180
+    });
+    const mainExit = createSceneExitEntity({
+      id: "entity-scene-exit-main-hatch",
+      position: {
+        x: 0,
+        y: 1,
+        z: 3
+      },
+      targetSceneId: "scene-cellar",
+      targetEntryEntityId: cellarEntry.id
+    });
     const document = {
       ...createEmptyProjectDocument({ sceneName: "Entry" }),
       activeSceneId: "scene-cellar",
@@ -33,13 +56,15 @@ describe("project document JSON", () => {
         })
       }
     };
+    document.scenes["scene-main"].entities[mainExit.id] = mainExit;
+    document.scenes["scene-cellar"].entities[cellarEntry.id] = cellarEntry;
 
     const serializedDocument = serializeProjectDocument(document);
 
     expect(parseProjectDocumentJson(serializedDocument)).toEqual(document);
   });
 
-  it("migrates v22 project documents by defaulting missing scene loading overlays", () => {
+  it("migrates v23 project documents by defaulting missing scene loading overlays", () => {
     const legacyScene = createEmptyProjectScene({
       id: "scene-main",
       name: "Legacy Entry"
@@ -52,7 +77,7 @@ describe("project document JSON", () => {
 
     const migratedDocument = parseProjectDocumentJson(
       JSON.stringify({
-        version: MULTI_SCENE_FOUNDATION_SCENE_DOCUMENT_VERSION,
+        version: RUNNER_LOADING_SCREEN_SCENE_DOCUMENT_VERSION,
         activeSceneId: "scene-main",
         scenes: {
           "scene-main": legacySceneWithoutLoadingScreen
