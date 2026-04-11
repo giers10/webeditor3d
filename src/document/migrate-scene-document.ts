@@ -1796,7 +1796,8 @@ function readProjectScene(
   value: unknown,
   label: string,
   materials: Record<string, MaterialDef>,
-  assets: Record<string, ProjectAssetRecord>
+  assets: Record<string, ProjectAssetRecord>,
+  options: { allowMissingLoadingScreen: boolean }
 ): ProjectScene {
   if (!isRecord(value)) {
     throw new Error(`${label} must be an object.`);
@@ -1805,6 +1806,9 @@ function readProjectScene(
   return {
     id: expectString(value.id, `${label}.id`),
     name: expectString(value.name, `${label}.name`),
+    loadingScreen: readSceneLoadingScreen(value.loadingScreen, `${label}.loadingScreen`, {
+      allowMissing: options.allowMissingLoadingScreen
+    }),
     world: readWorldSettings(value.world),
     brushes: readBrushes(value.brushes, materials, false),
     modelInstances: readModelInstances(value.modelInstances, assets),
@@ -1819,19 +1823,25 @@ export function migrateProjectDocument(source: unknown): ProjectDocument {
   }
 
   if (
-    source.version === MULTI_SCENE_FOUNDATION_SCENE_DOCUMENT_VERSION &&
+    (source.version === MULTI_SCENE_FOUNDATION_SCENE_DOCUMENT_VERSION ||
+      source.version === RUNNER_LOADING_SCREEN_SCENE_DOCUMENT_VERSION) &&
     isRecord(source.scenes)
   ) {
     const materials = readMaterialRegistry(source.materials, "materials");
     const assets = readAssets(source.assets);
     const scenes: Record<string, ProjectScene> = {};
+    const allowMissingLoadingScreen =
+      source.version === MULTI_SCENE_FOUNDATION_SCENE_DOCUMENT_VERSION;
 
     for (const [sceneKey, sceneValue] of Object.entries(source.scenes)) {
       scenes[sceneKey] = readProjectScene(
         sceneValue,
         `scenes.${sceneKey}`,
         materials,
-        assets
+        assets,
+        {
+          allowMissingLoadingScreen
+        }
       );
     }
 
