@@ -1336,4 +1336,14 @@ button:disabled {
     padding: 12px 16px;
     overflow: visible;
   }
+
+  .status-bar__item {
+    white-space: normal;
+  }
+
+  .status-bar__item--message,
+  .status-bar__item--asset {
+    overflow: visible;
+    text-overflow: clip;
+  }
 }
