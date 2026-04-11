@@ -754,7 +754,6 @@ export function supportsLocalTransformAxisConstraint(
     case "entity":
       return session.target.initialRotation.kind !== "none";
     case "brushFace":
-      return false;
     case "brushEdge":
     case "brushVertex":
       return session.operation === "translate";
