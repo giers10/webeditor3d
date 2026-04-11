@@ -568,6 +568,11 @@ describe("validateSceneDocument", () => {
         ...document.world.advancedRendering.depthOfField,
         focalLength: 0,
         bokehScale: -2
+      },
+      whiteboxBevel: {
+        ...document.world.advancedRendering.whiteboxBevel,
+        edgeWidth: -0.1,
+        normalStrength: Number.NaN
       }
     } as any;
 
@@ -618,6 +623,14 @@ describe("validateSceneDocument", () => {
         expect.objectContaining({
           code: "invalid-advanced-rendering-dof-bokeh-scale",
           path: "world.advancedRendering.depthOfField.bokehScale"
+        }),
+        expect.objectContaining({
+          code: "invalid-advanced-rendering-whitebox-bevel-edge-width",
+          path: "world.advancedRendering.whiteboxBevel.edgeWidth"
+        }),
+        expect.objectContaining({
+          code: "invalid-advanced-rendering-whitebox-bevel-normal-strength",
+          path: "world.advancedRendering.whiteboxBevel.normalStrength"
         }),
         expect.objectContaining({
           code: "invalid-advanced-rendering-fog-path",
