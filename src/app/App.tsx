@@ -7234,64 +7234,136 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
         <aside className="side-column">
           {editorState.selection.kind === "none" ? (
-            <Panel title="World">
-              <div className="stat-card">
-                <div className="label">Background</div>
-                <div
-                  className="value"
-                  data-testid="world-background-mode-value"
-                >
-                  {formatWorldBackgroundLabel(editorState.document.world)}
-                </div>
-                <div
-                  className="world-background-preview"
-                  data-testid="world-background-preview"
-                  style={createWorldBackgroundStyle(
-                    editorState.document.world.background,
-                    editorState.document.world.background.mode === "image"
-                      ? (loadedImageAssets[
-                          editorState.document.world.background.assetId
-                        ]?.sourceUrl ?? null)
-                      : null
-                  )}
-                />
-                <div className="material-summary">
-                  {editorState.document.world.background.mode === "solid"
-                    ? editorState.document.world.background.colorHex
-                    : editorState.document.world.background.mode ===
-                        "verticalGradient"
-                      ? `${editorState.document.world.background.topColorHex} -> ${editorState.document.world.background.bottomColorHex}`
-                      : (editorState.document.assets[
-                          editorState.document.world.background.assetId
-                        ]?.sourceName ??
-                        editorState.document.world.background.assetId)}
-                </div>
-                {editorState.document.world.background.mode !==
-                "image" ? null : (
-                  <div
-                    className="material-summary"
-                    data-testid="world-background-asset-value"
-                  >
-                    Background Asset:{" "}
-                    {editorState.document.assets[
-                      editorState.document.world.background.assetId
-                    ]?.sourceName ??
-                      editorState.document.world.background.assetId}
+            <>
+              <Panel title="Scene">
+                <div className="stat-card">
+                  <div className="label">Active Scene</div>
+                  <div className="value">{activeProjectScene.name}</div>
+                  <div className="material-summary">
+                    Runner overlay data is authored per scene and shown during
+                    initial runtime load and future scene transitions.
                   </div>
-                )}
-              </div>
+                </div>
 
-              <div className="form-section">
-                <div className="label">Background Mode</div>
-                <div className="inline-actions">
-                  <button
-                    className={`toolbar__button ${editorState.document.world.background.mode === "solid" ? "toolbar__button--active" : ""}`}
-                    type="button"
-                    data-testid="world-background-mode-solid"
-                    onClick={() => applyWorldBackgroundMode("solid")}
+                <div className="form-section">
+                  <div className="label">Runner Loading Overlay</div>
+                  <label className="form-field">
+                    <span className="label">Fade Color</span>
+                    <input
+                      data-testid="scene-loading-color"
+                      className="color-input"
+                      type="color"
+                      value={activeProjectScene.loadingScreen.colorHex}
+                      onChange={(event) =>
+                        applySceneLoadingColor(event.currentTarget.value)
+                      }
+                    />
+                  </label>
+                  <label className="form-field">
+                    <span className="label">Headline</span>
+                    <input
+                      data-testid="scene-loading-headline"
+                      className="text-input"
+                      type="text"
+                      placeholder="Optional hint or location title"
+                      value={sceneLoadingHeadlineDraft}
+                      onChange={(event) =>
+                        setSceneLoadingHeadlineDraft(event.currentTarget.value)
+                      }
+                      onBlur={applySceneLoadingHeadline}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          applySceneLoadingHeadline();
+                        }
+                      }}
+                    />
+                  </label>
+                  <label className="form-field">
+                    <span className="label">Description</span>
+                    <input
+                      data-testid="scene-loading-description"
+                      className="text-input"
+                      type="text"
+                      placeholder="Optional loading note or gameplay tip"
+                      value={sceneLoadingDescriptionDraft}
+                      onChange={(event) =>
+                        setSceneLoadingDescriptionDraft(
+                          event.currentTarget.value
+                        )
+                      }
+                      onBlur={applySceneLoadingDescription}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          applySceneLoadingDescription();
+                        }
+                      }}
+                    />
+                  </label>
+                  <div className="material-summary">
+                    Scene name is always shown automatically. Headline and
+                    description are optional.
+                  </div>
+                </div>
+              </Panel>
+
+              <Panel title="World">
+                <div className="stat-card">
+                  <div className="label">Background</div>
+                  <div
+                    className="value"
+                    data-testid="world-background-mode-value"
                   >
-                    Solid
-                  </button>
+                    {formatWorldBackgroundLabel(editorState.document.world)}
+                  </div>
+                  <div
+                    className="world-background-preview"
+                    data-testid="world-background-preview"
+                    style={createWorldBackgroundStyle(
+                      editorState.document.world.background,
+                      editorState.document.world.background.mode === "image"
+                        ? (loadedImageAssets[
+                            editorState.document.world.background.assetId
+                          ]?.sourceUrl ?? null)
+                        : null
+                    )}
+                  />
+                  <div className="material-summary">
+                    {editorState.document.world.background.mode === "solid"
+                      ? editorState.document.world.background.colorHex
+                      : editorState.document.world.background.mode ===
+                          "verticalGradient"
+                        ? `${editorState.document.world.background.topColorHex} -> ${editorState.document.world.background.bottomColorHex}`
+                        : (editorState.document.assets[
+                            editorState.document.world.background.assetId
+                          ]?.sourceName ??
+                          editorState.document.world.background.assetId)}
+                  </div>
+                  {editorState.document.world.background.mode !==
+                  "image" ? null : (
+                    <div
+                      className="material-summary"
+                      data-testid="world-background-asset-value"
+                    >
+                      Background Asset:{" "}
+                      {editorState.document.assets[
+                        editorState.document.world.background.assetId
+                      ]?.sourceName ??
+                        editorState.document.world.background.assetId}
+                    </div>
+                  )}
+                </div>
+
+                <div className="form-section">
+                  <div className="label">Background Mode</div>
+                  <div className="inline-actions">
+                    <button
+                      className={`toolbar__button ${editorState.document.world.background.mode === "solid" ? "toolbar__button--active" : ""}`}
+                      type="button"
+                      data-testid="world-background-mode-solid"
+                      onClick={() => applyWorldBackgroundMode("solid")}
+                    >
+                      Solid
+                    </button>
                   <button
                     className={`toolbar__button ${
                       editorState.document.world.background.mode ===
