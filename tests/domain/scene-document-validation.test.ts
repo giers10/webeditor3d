@@ -117,6 +117,15 @@ describe("validateSceneDocument", () => {
           },
           yawDegrees: Number.NaN,
           navigationMode: "invalidMode" as unknown as "firstPerson",
+          movementTemplate: {
+            kind: "invalidTemplate",
+            moveSpeed: 0,
+            capabilities: {
+              jump: "yes",
+              sprint: 1,
+              crouch: null
+            }
+          } as unknown as ReturnType<typeof createPlayerStartEntity>["movementTemplate"],
           inputBindings: createPlayerStartInputBindings(),
           collider: {
             mode: "capsule",
@@ -143,6 +152,21 @@ describe("validateSceneDocument", () => {
         }),
         expect.objectContaining({
           code: "invalid-player-start-navigation-mode"
+        }),
+        expect.objectContaining({
+          code: "invalid-player-start-movement-template-kind"
+        }),
+        expect.objectContaining({
+          code: "invalid-player-start-movement-speed"
+        }),
+        expect.objectContaining({
+          code: "invalid-player-start-jump-capability"
+        }),
+        expect.objectContaining({
+          code: "invalid-player-start-sprint-capability"
+        }),
+        expect.objectContaining({
+          code: "invalid-player-start-crouch-capability"
         }),
         expect.objectContaining({
           code: "invalid-player-start-capsule-proportions"
