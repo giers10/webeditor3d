@@ -441,13 +441,19 @@ describe("scene document JSON", () => {
           moveForward: "KeyQ",
           moveBackward: "BracketLeft",
           moveLeft: "Comma",
-          moveRight: "Period"
+          moveRight: "Period",
+          jump: "Space",
+          sprint: "ShiftRight",
+          crouch: "KeyC"
         },
         gamepad: {
           moveForward: "dpadUp",
           moveBackward: "dpadDown",
           moveLeft: "dpadLeft",
           moveRight: "dpadRight",
+          jump: "buttonNorth",
+          sprint: "rightShoulder",
+          crouch: "buttonEast",
           cameraLook: "rightStick"
         }
       }
