@@ -66,6 +66,7 @@ interface ViewportPanelProps {
   cameraState: ViewportPanelCameraState;
   focusRequestId: number;
   focusSelection: EditorSelection;
+  isAddMenuOpen: boolean;
   onActivatePanel(panelId: ViewportPanelId): void;
   onOpenAddMenu(event: ReactMouseEvent<HTMLButtonElement>): void;
   onSetViewportLayoutMode(layoutMode: ViewportLayoutMode): void;
@@ -134,6 +135,7 @@ export function ViewportPanel({
   cameraState,
   focusRequestId,
   focusSelection,
+  isAddMenuOpen,
   onActivatePanel,
   onOpenAddMenu,
   onSetViewportLayoutMode,
@@ -212,7 +214,7 @@ export function ViewportPanel({
               "add-button"
             )}
             aria-haspopup="menu"
-            aria-expanded={undefined}
+            aria-expanded={isAddMenuOpen}
             onClick={onOpenAddMenu}
           >
             Add
