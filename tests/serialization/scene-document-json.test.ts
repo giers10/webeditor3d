@@ -418,12 +418,25 @@ describe("scene document JSON", () => {
       },
       yawDegrees: 135,
       movementTemplate: {
-        kind: "default",
+        kind: "custom",
         moveSpeed: 5.25,
         capabilities: {
           jump: true,
           sprint: false,
           crouch: true
+        },
+        jump: {
+          speed: 8.1,
+          bufferMs: 120,
+          coyoteTimeMs: 90,
+          variableHeight: true,
+          maxHoldMs: 220
+        },
+        sprint: {
+          speedMultiplier: 1.8
+        },
+        crouch: {
+          speedMultiplier: 0.55
         }
       },
       collider: {
