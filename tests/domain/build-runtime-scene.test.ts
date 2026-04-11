@@ -654,6 +654,26 @@ describe("buildRuntimeSceneFromDocument", () => {
     ).toThrow("First-person run requires an authored Player Start");
   });
 
+  it("uses the authored Player Start navigation mode for third-person scenes", () => {
+    const playerStart = createPlayerStartEntity({
+      id: "entity-player-start-third-person",
+      navigationMode: "thirdPerson"
+    });
+
+    const runtimeScene = buildRuntimeSceneFromDocument({
+      ...createEmptySceneDocument({ name: "Authored Third Person Scene" }),
+      entities: {
+        [playerStart.id]: playerStart
+      }
+    });
+
+    expect(runtimeScene.navigationMode).toBe("thirdPerson");
+    expect(runtimeScene.playerStart?.navigationMode).toBe("thirdPerson");
+    expect(runtimeScene.entities.playerStarts[0]?.navigationMode).toBe(
+      "thirdPerson"
+    );
+  });
+
   it("uses a requested Scene Entry as the runtime spawn without replacing the Player Start collider", () => {
     const playerStart = createPlayerStartEntity({
       id: "entity-player-start-main",
