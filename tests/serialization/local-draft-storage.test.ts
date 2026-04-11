@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { createBoxBrush } from "../../src/document/brushes";
 import {
+  DEFAULT_PROJECT_NAME,
   SCENE_DOCUMENT_VERSION,
   createEmptyProjectDocument,
   createEmptyProjectScene,
@@ -196,7 +197,10 @@ describe("local draft storage", () => {
   it("stores and restores all project scenes in autosave drafts", () => {
     const storage = new MemoryStorage();
     const document = {
-      ...createEmptyProjectDocument({ sceneName: "Entry" }),
+      ...createEmptyProjectDocument({
+        name: "Castle Campaign",
+        sceneName: "Entry"
+      }),
       activeSceneId: "scene-hall",
       scenes: {
         "scene-main": createEmptyProjectScene({
@@ -228,6 +232,7 @@ describe("local draft storage", () => {
       return;
     }
 
+    expect(result.document.name).toBe("Castle Campaign");
     expect(result.document.activeSceneId).toBe("scene-hall");
     expect(Object.keys(result.document.scenes)).toEqual([
       "scene-main",
@@ -255,6 +260,7 @@ describe("local draft storage", () => {
       return;
     }
 
+    expect(result.document.name).toBe(DEFAULT_PROJECT_NAME);
     expect(result.document.scenes[result.document.activeSceneId]?.name).toBe(
       "Legacy Draft"
     );

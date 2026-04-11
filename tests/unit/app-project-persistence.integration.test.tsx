@@ -94,7 +94,10 @@ import { App } from "../../src/app/App";
 import { createEditorStore } from "../../src/app/editor-store";
 
 describe("App project persistence controls", () => {
+  let clickedDownloads: string[];
+
   beforeEach(() => {
+    clickedDownloads = [];
     viewportHostInstances.length = 0;
     saveProjectPackageMock.mockClear();
     loadProjectPackageMock.mockClear();
@@ -103,7 +106,11 @@ describe("App project persistence controls", () => {
       createObjectURL: vi.fn(() => "blob:project"),
       revokeObjectURL: vi.fn()
     });
-    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(
+      function (this: HTMLAnchorElement) {
+        clickedDownloads.push(this.download);
+      }
+    );
   });
 
   afterEach(() => {
@@ -146,5 +153,43 @@ describe("App project persistence controls", () => {
         null
       );
     });
+  });
+
+  it("uses the project name rather than the active scene name for saved packages", async () => {
+    const store = createEditorStore();
+
+    render(<App store={store} />);
+
+    await waitFor(() => {
+      expect(viewportHostInstances.length).toBeGreaterThan(0);
+    });
+
+    fireEvent.change(screen.getByTestId("toolbar-scene-name"), {
+      target: { value: "Dungeon Scene" }
+    });
+    fireEvent.blur(screen.getByTestId("toolbar-scene-name"));
+
+    fireEvent.click(screen.getByRole("button", { name: "Save Project" }));
+
+    await waitFor(() => {
+      expect(clickedDownloads).toEqual(["untitled-project.we3d"]);
+    });
+
+    fireEvent.change(screen.getByTestId("toolbar-project-name"), {
+      target: { value: "Castle Layout" }
+    });
+    fireEvent.blur(screen.getByTestId("toolbar-project-name"));
+
+    fireEvent.click(screen.getByRole("button", { name: "Save Project" }));
+
+    await waitFor(() => {
+      expect(clickedDownloads).toEqual([
+        "untitled-project.we3d",
+        "castle-layout.we3d"
+      ]);
+    });
+
+    expect(store.getState().document.name).toBe("Dungeon Scene");
+    expect(store.getState().projectDocument.name).toBe("Castle Layout");
   });
 });

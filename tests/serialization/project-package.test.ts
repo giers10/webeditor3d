@@ -136,6 +136,7 @@ describe("project package serialization", () => {
       ...createProjectDocument(
         createEmptySceneDocument({ name: "Portable Entry" })
       ),
+      name: "Portable Campaign",
       activeSceneId: "scene-dungeon",
       scenes: {
         "scene-main": createEmptyProjectScene({

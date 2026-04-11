@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  DEFAULT_PROJECT_NAME,
+  PLAYER_START_GAMEPAD_CAMERA_LOOK_SCENE_DOCUMENT_VERSION,
   RUNNER_LOADING_SCREEN_SCENE_DOCUMENT_VERSION,
   SCENE_DOCUMENT_VERSION,
   createEmptyProjectDocument,
@@ -16,7 +18,7 @@ import {
 } from "../../src/serialization/scene-document-json";
 
 describe("project document JSON", () => {
-  it("round-trips authored scene loading overlay settings", () => {
+  it("round-trips the project name and authored scene loading overlay settings", () => {
     const cellarEntry = createSceneEntryEntity({
       id: "entity-scene-entry-cellar-stairs",
       position: {
@@ -37,7 +39,10 @@ describe("project document JSON", () => {
       targetEntryEntityId: cellarEntry.id
     });
     const document = {
-      ...createEmptyProjectDocument({ sceneName: "Entry" }),
+      ...createEmptyProjectDocument({
+        name: "Castle Project",
+        sceneName: "Entry"
+      }),
       activeSceneId: "scene-cellar",
       scenes: {
         "scene-main": createEmptyProjectScene({
@@ -61,6 +66,28 @@ describe("project document JSON", () => {
     const serializedDocument = serializeProjectDocument(document);
 
     expect(parseProjectDocumentJson(serializedDocument)).toEqual(document);
+  });
+
+  it("migrates pre-project-name multi-scene documents to Untitled Project", () => {
+    const migratedDocument = parseProjectDocumentJson(
+      JSON.stringify({
+        version: PLAYER_START_GAMEPAD_CAMERA_LOOK_SCENE_DOCUMENT_VERSION,
+        activeSceneId: "scene-main",
+        scenes: {
+          "scene-main": createEmptyProjectScene({
+            id: "scene-main",
+            name: "Legacy Entry"
+          })
+        },
+        materials: createEmptyProjectDocument().materials,
+        textures: {},
+        assets: {}
+      })
+    );
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.name).toBe(DEFAULT_PROJECT_NAME);
+    expect(migratedDocument.scenes["scene-main"]?.name).toBe("Legacy Entry");
   });
 
   it("migrates v23 project documents without Scene Entry and Scene Exit entities", () => {
