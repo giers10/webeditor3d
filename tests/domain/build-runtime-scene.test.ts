@@ -7,6 +7,8 @@ import {
   createPointLightEntity,
   createInteractableEntity,
   createPlayerStartEntity,
+  createSceneEntryEntity,
+  createSceneExitEntity,
   createSoundEmitterEntity,
   createSpotLightEntity,
   createTeleportTargetEntity,
@@ -103,6 +105,28 @@ describe("buildRuntimeSceneFromDocument", () => {
       radius: 1.5,
       prompt: "Use Console",
       enabled: true
+    });
+    const sceneEntry = createSceneEntryEntity({
+      id: "entity-scene-entry-house-front",
+      position: {
+        x: -3,
+        y: 0,
+        z: 2
+      },
+      yawDegrees: 135
+    });
+    const sceneExit = createSceneExitEntity({
+      id: "entity-scene-exit-house-door",
+      position: {
+        x: 3,
+        y: 1,
+        z: 0.5
+      },
+      radius: 2.25,
+      prompt: "Enter House",
+      enabled: true,
+      targetSceneId: "scene-house",
+      targetEntryEntityId: sceneEntry.id
     });
     const pointLight = createPointLightEntity({
       id: "entity-point-light-main",
@@ -230,6 +254,8 @@ describe("buildRuntimeSceneFromDocument", () => {
         [triggerVolume.id]: triggerVolume,
         [teleportTarget.id]: teleportTarget,
         [interactable.id]: interactable,
+        [sceneEntry.id]: sceneEntry,
+        [sceneExit.id]: sceneExit,
         [pointLight.id]: pointLight,
         [spotLight.id]: spotLight
       },
@@ -378,6 +404,17 @@ describe("buildRuntimeSceneFromDocument", () => {
           }
         }
       ],
+      sceneEntries: [
+        {
+          entityId: "entity-scene-entry-house-front",
+          position: {
+            x: -3,
+            y: 0,
+            z: 2
+          },
+          yawDegrees: 135
+        }
+      ],
       soundEmitters: [
         {
           entityId: "entity-sound-lobby",
@@ -433,6 +470,21 @@ describe("buildRuntimeSceneFromDocument", () => {
           radius: 1.5,
           prompt: "Use Console",
           enabled: true
+        }
+      ],
+      sceneExits: [
+        {
+          entityId: "entity-scene-exit-house-door",
+          position: {
+            x: 3,
+            y: 1,
+            z: 0.5
+          },
+          radius: 2.25,
+          prompt: "Enter House",
+          enabled: true,
+          targetSceneId: "scene-house",
+          targetEntryEntityId: "entity-scene-entry-house-front"
         }
       ]
     });
@@ -570,10 +622,12 @@ describe("buildRuntimeSceneFromDocument", () => {
     });
     expect(runtimeScene.entities).toEqual({
       playerStarts: [],
+      sceneEntries: [],
       soundEmitters: [],
       triggerVolumes: [],
       teleportTargets: [],
-      interactables: []
+      interactables: [],
+      sceneExits: []
     });
     expect(runtimeScene.interactionLinks).toEqual([]);
     expect(runtimeScene.spawn).toEqual({
@@ -594,6 +648,53 @@ describe("buildRuntimeSceneFromDocument", () => {
         navigationMode: "firstPerson"
       })
     ).toThrow("First-person run requires an authored Player Start");
+  });
+
+  it("uses a requested Scene Entry as the runtime spawn without replacing the Player Start collider", () => {
+    const playerStart = createPlayerStartEntity({
+      id: "entity-player-start-main",
+      position: {
+        x: 0,
+        y: 0,
+        z: 0
+      },
+      yawDegrees: 90
+    });
+    const sceneEntry = createSceneEntryEntity({
+      id: "entity-scene-entry-basement-door",
+      position: {
+        x: 4,
+        y: 0,
+        z: -2
+      },
+      yawDegrees: 270
+    });
+
+    const runtimeScene = buildRuntimeSceneFromDocument(
+      {
+        ...createEmptySceneDocument({ name: "Scene Entry Spawn" }),
+        entities: {
+          [playerStart.id]: playerStart,
+          [sceneEntry.id]: sceneEntry
+        }
+      },
+      {
+        navigationMode: "firstPerson",
+        sceneEntryId: sceneEntry.id
+      }
+    );
+
+    expect(runtimeScene.playerStart?.entityId).toBe(playerStart.id);
+    expect(runtimeScene.spawn).toEqual({
+      source: "sceneEntry",
+      entityId: sceneEntry.id,
+      position: {
+        x: 4,
+        y: 0,
+        z: -2
+      },
+      yawDegrees: 270
+    });
   });
 
   it("adds generated imported-model colliders to the runtime scene build", () => {
