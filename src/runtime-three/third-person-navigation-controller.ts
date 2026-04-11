@@ -68,6 +68,19 @@ function cloneRuntimePlayerMovement(
       jump: movement.capabilities.jump,
       sprint: movement.capabilities.sprint,
       crouch: movement.capabilities.crouch
+    },
+    jump: {
+      speed: movement.jump.speed,
+      bufferMs: movement.jump.bufferMs,
+      coyoteTimeMs: movement.jump.coyoteTimeMs,
+      variableHeight: movement.jump.variableHeight,
+      maxHoldMs: movement.jump.maxHoldMs
+    },
+    sprint: {
+      speedMultiplier: movement.sprint.speedMultiplier
+    },
+    crouch: {
+      speedMultiplier: movement.crouch.speedMultiplier
     }
   };
 }
@@ -107,6 +120,9 @@ export class ThirdPersonNavigationController implements NavigationController {
   private previousTelemetry: PlayerControllerTelemetry | null = null;
   private latestJumpStarted = false;
   private latestHeadBump = false;
+  private jumpBufferRemainingMs = 0;
+  private coyoteTimeRemainingMs = 0;
+  private jumpHoldRemainingMs = 0;
 
   activate(ctx: RuntimeControllerContext): void {
     this.context = ctx;
@@ -174,6 +190,9 @@ export class ThirdPersonNavigationController implements NavigationController {
     this.jumpPressed = false;
     this.latestJumpStarted = false;
     this.latestHeadBump = false;
+    this.jumpBufferRemainingMs = 0;
+    this.coyoteTimeRemainingMs = 0;
+    this.jumpHoldRemainingMs = 0;
     this.previousTelemetry = null;
     ctx.setRuntimeMessage(null);
     ctx.setPlayerControllerTelemetry(null);
@@ -210,6 +229,9 @@ export class ThirdPersonNavigationController implements NavigationController {
     this.previousTelemetry = null;
     this.latestJumpStarted = false;
     this.latestHeadBump = false;
+    this.jumpBufferRemainingMs = 0;
+    this.coyoteTimeRemainingMs = 0;
+    this.jumpHoldRemainingMs = 0;
   }
 
   update(dt: number): void {
@@ -245,6 +267,9 @@ export class ThirdPersonNavigationController implements NavigationController {
         standingShape: this.standingPlayerShape,
         verticalVelocity: this.verticalVelocity,
         previousLocomotionState: this.locomotionState,
+        jumpBufferRemainingMs: this.jumpBufferRemainingMs,
+        coyoteTimeRemainingMs: this.coyoteTimeRemainingMs,
+        jumpHoldRemainingMs: this.jumpHoldRemainingMs,
         crouched: this.locomotionState.crouched,
         wasJumpPressed: this.jumpPressed,
         input: inputState,
@@ -278,6 +303,9 @@ export class ThirdPersonNavigationController implements NavigationController {
     this.feetPosition = locomotionStep.feetPosition;
     this.activePlayerShape = locomotionStep.activeShape;
     this.verticalVelocity = locomotionStep.verticalVelocity;
+    this.jumpBufferRemainingMs = locomotionStep.jumpBufferRemainingMs;
+    this.coyoteTimeRemainingMs = locomotionStep.coyoteTimeRemainingMs;
+    this.jumpHoldRemainingMs = locomotionStep.jumpHoldRemainingMs;
     this.jumpPressed = locomotionStep.jumpPressed;
     this.latestJumpStarted = locomotionStep.jumpStarted;
     this.latestHeadBump = locomotionStep.headBump;
@@ -324,6 +352,9 @@ export class ThirdPersonNavigationController implements NavigationController {
     this.previousTelemetry = null;
     this.latestJumpStarted = false;
     this.latestHeadBump = false;
+    this.jumpBufferRemainingMs = 0;
+    this.coyoteTimeRemainingMs = 0;
+    this.jumpHoldRemainingMs = 0;
     this.inWaterVolume = false;
     this.inFogVolume = false;
     this.updateCameraTransform();
