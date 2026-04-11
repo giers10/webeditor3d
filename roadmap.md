@@ -1,5 +1,12 @@
 # roadmap.md
 
+Use this as a direction/scope doc, not as proof that every earlier slice is still unimplemented.
+
+Do not read this file end-to-end by default.
+Read only the relevant milestone/slice headings after checking the current code.
+
+Completed or partially completed historical slices may still be documented here for context.
+
 ## Overview
 
 This roadmap is organized as vertical slices.

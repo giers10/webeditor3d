@@ -1,5 +1,10 @@
 # testing.md
 
+Use this as a selective testing-policy reference.
+
+Do not read this file end-to-end by default.
+Read only the sections relevant to the slice you are changing after inspecting the code paths involved.
+
 ## Philosophy
 
 This project is a tool and a runtime.
