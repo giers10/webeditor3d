@@ -15,7 +15,8 @@ import {
   type WorldSettings
 } from "./world-settings";
 
-export const SCENE_DOCUMENT_VERSION = 32 as const;
+export const SCENE_DOCUMENT_VERSION = 33 as const;
+export const WHITEBOX_BEVEL_SCENE_DOCUMENT_VERSION = 32 as const;
 export const PLAYER_START_LOCOMOTION_CORE_SCENE_DOCUMENT_VERSION = 32 as const;
 export const PLAYER_START_MOVEMENT_TEMPLATE_SCENE_DOCUMENT_VERSION =
   31 as const;

@@ -498,6 +498,41 @@ function validateWorldSettings(
     );
   }
 
+  if (!isBoolean(advancedRendering.whiteboxBevel.enabled)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-whitebox-bevel-enabled",
+        "Advanced rendering whitebox bevel enabled must be a boolean.",
+        "world.advancedRendering.whiteboxBevel.enabled"
+      )
+    );
+  }
+
+  if (!isNonNegativeFiniteNumber(advancedRendering.whiteboxBevel.edgeWidth)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-whitebox-bevel-edge-width",
+        "Advanced rendering whitebox bevel edge width must be a non-negative finite number.",
+        "world.advancedRendering.whiteboxBevel.edgeWidth"
+      )
+    );
+  }
+
+  if (
+    !isNonNegativeFiniteNumber(advancedRendering.whiteboxBevel.normalStrength)
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-whitebox-bevel-normal-strength",
+        "Advanced rendering whitebox bevel normal strength must be a non-negative finite number.",
+        "world.advancedRendering.whiteboxBevel.normalStrength"
+      )
+    );
+  }
+
   if (!isBoxVolumeRenderPath(advancedRendering.fogPath)) {
     diagnostics.push(
       createDiagnostic(

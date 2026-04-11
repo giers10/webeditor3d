@@ -105,6 +105,7 @@ import {
   TRIGGER_ACTION_TARGET_FOUNDATION_SCENE_DOCUMENT_VERSION,
   RUNNER_LOADING_SCREEN_SCENE_DOCUMENT_VERSION,
   WATER_SURFACE_DISPLACEMENT_SCENE_DOCUMENT_VERSION,
+  WHITEBOX_BEVEL_SCENE_DOCUMENT_VERSION,
   WHITEBOX_BOX_VOLUME_SCENE_DOCUMENT_VERSION,
   WHITEBOX_FLOAT_TRANSFORM_SCENE_DOCUMENT_VERSION,
   WHITEBOX_GEOMETRY_SCENE_DOCUMENT_VERSION,
@@ -510,6 +511,10 @@ function readAdvancedRenderingSettings(
     throw new Error("world.advancedRendering.depthOfField must be an object.");
   }
 
+  if (value.whiteboxBevel !== undefined && !isRecord(value.whiteboxBevel)) {
+    throw new Error("world.advancedRendering.whiteboxBevel must be an object.");
+  }
+
   const shadows = value.shadows as Record<string, unknown> | undefined;
   const ambientOcclusion = value.ambientOcclusion as
     | Record<string, unknown>
@@ -517,6 +522,9 @@ function readAdvancedRenderingSettings(
   const bloom = value.bloom as Record<string, unknown> | undefined;
   const toneMapping = value.toneMapping as Record<string, unknown> | undefined;
   const depthOfField = value.depthOfField as
+    | Record<string, unknown>
+    | undefined;
+  const whiteboxBevel = value.whiteboxBevel as
     | Record<string, unknown>
     | undefined;
 
@@ -649,6 +657,23 @@ function readAdvancedRenderingSettings(
         depthOfField?.bokehScale,
         "world.advancedRendering.depthOfField.bokehScale",
         defaults.depthOfField.bokehScale
+      )
+    },
+    whiteboxBevel: {
+      enabled: readOptionalBoolean(
+        whiteboxBevel?.enabled,
+        "world.advancedRendering.whiteboxBevel.enabled",
+        defaults.whiteboxBevel.enabled
+      ),
+      edgeWidth: readOptionalNonNegativeFiniteNumber(
+        whiteboxBevel?.edgeWidth,
+        "world.advancedRendering.whiteboxBevel.edgeWidth",
+        defaults.whiteboxBevel.edgeWidth
+      ),
+      normalStrength: readOptionalNonNegativeFiniteNumber(
+        whiteboxBevel?.normalStrength,
+        "world.advancedRendering.whiteboxBevel.normalStrength",
+        defaults.whiteboxBevel.normalStrength
       )
     },
     fogPath,
@@ -2841,6 +2866,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     source.version !== RUNNER_LOADING_SCREEN_SCENE_DOCUMENT_VERSION &&
     source.version !== MULTI_SCENE_FOUNDATION_SCENE_DOCUMENT_VERSION &&
     source.version !== WATER_SURFACE_DISPLACEMENT_SCENE_DOCUMENT_VERSION &&
+    source.version !== WHITEBOX_BEVEL_SCENE_DOCUMENT_VERSION &&
     source.version !== WHITEBOX_BOX_VOLUME_SCENE_DOCUMENT_VERSION &&
     source.version !== WHITEBOX_FLOAT_TRANSFORM_SCENE_DOCUMENT_VERSION &&
     source.version !== WHITEBOX_GEOMETRY_SCENE_DOCUMENT_VERSION
