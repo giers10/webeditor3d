@@ -1,12 +1,19 @@
 import type { Vec3 } from "../core/vector";
 import type { InteractionLink } from "../interactions/interaction-links";
 
-import type { RuntimeInteractable, RuntimeSceneDefinition, RuntimeTeleportTarget, RuntimeTriggerVolume } from "./runtime-scene-build";
+import type {
+  RuntimeInteractable,
+  RuntimeSceneDefinition,
+  RuntimeSceneExit,
+  RuntimeTeleportTarget,
+  RuntimeTriggerVolume
+} from "./runtime-scene-build";
 
 const DEFAULT_INTERACTABLE_TARGET_RADIUS = 0.75;
 
 export interface RuntimeInteractionDispatcher {
   teleportPlayer(target: RuntimeTeleportTarget, link: InteractionLink): void;
+  activateSceneExit(sceneExit: RuntimeSceneExit): void;
   toggleBrushVisibility(brushId: string, visible: boolean | undefined, link: InteractionLink): void;
   playAnimation(instanceId: string, clipName: string, loop: boolean | undefined, link: InteractionLink): void;
   stopAnimation(instanceId: string, link: InteractionLink): void;
@@ -109,6 +116,42 @@ function getInteractableTargetRadius(interactable: RuntimeInteractable): number 
   return Math.min(DEFAULT_INTERACTABLE_TARGET_RADIUS, interactable.radius);
 }
 
+function updateBestPrompt(
+  currentBestPrompt: RuntimeInteractionPrompt | null,
+  currentBestHitDistance: number,
+  candidateEntityId: string,
+  candidatePrompt: string,
+  candidateDistance: number,
+  candidateRange: number,
+  candidateHitDistance: number
+): { prompt: RuntimeInteractionPrompt | null; hitDistance: number } {
+  const nextPrompt: RuntimeInteractionPrompt = {
+    sourceEntityId: candidateEntityId,
+    prompt: candidatePrompt,
+    distance: candidateDistance,
+    range: candidateRange
+  };
+
+  if (
+    candidateHitDistance < currentBestHitDistance ||
+    (candidateHitDistance === currentBestHitDistance &&
+      (currentBestPrompt === null ||
+        candidateDistance < currentBestPrompt.distance ||
+        (candidateDistance === currentBestPrompt.distance &&
+          candidateEntityId.localeCompare(currentBestPrompt.sourceEntityId) < 0)))
+  ) {
+    return {
+      prompt: nextPrompt,
+      hitDistance: candidateHitDistance
+    };
+  }
+
+  return {
+    prompt: currentBestPrompt,
+    hitDistance: currentBestHitDistance
+  };
+}
+
 export class RuntimeInteractionSystem {
   private readonly occupiedTriggerVolumes = new Set<string>();
 
@@ -166,30 +209,68 @@ export class RuntimeInteractionSystem {
       if (hitDistance === null) {
         continue;
       }
-
-      const nextPrompt: RuntimeInteractionPrompt = {
-        sourceEntityId: interactable.entityId,
-        prompt: interactable.prompt,
+      const next = updateBestPrompt(
+        bestPrompt,
+        bestHitDistance,
+        interactable.entityId,
+        interactable.prompt,
         distance,
-        range: interactable.radius
-      };
+        interactable.radius,
+        hitDistance
+      );
+      bestPrompt = next.prompt;
+      bestHitDistance = next.hitDistance;
+    }
 
-      if (
-        hitDistance < bestHitDistance ||
-        (hitDistance === bestHitDistance &&
-          (bestPrompt === null ||
-            distance < bestPrompt.distance ||
-            (distance === bestPrompt.distance && interactable.entityId.localeCompare(bestPrompt.sourceEntityId) < 0)))
-      ) {
-        bestHitDistance = hitDistance;
-        bestPrompt = nextPrompt;
+    for (const sceneExit of runtimeScene.entities.sceneExits) {
+      if (!sceneExit.enabled) {
+        continue;
       }
+
+      const distance = distanceBetweenVec3(viewOrigin, sceneExit.position);
+
+      if (distance > sceneExit.radius) {
+        continue;
+      }
+
+      const hitDistance = raySphereHitDistance(
+        viewOrigin,
+        normalizedViewDirection,
+        sceneExit.position,
+        Math.min(DEFAULT_INTERACTABLE_TARGET_RADIUS, sceneExit.radius)
+      );
+
+      if (hitDistance === null) {
+        continue;
+      }
+
+      const next = updateBestPrompt(
+        bestPrompt,
+        bestHitDistance,
+        sceneExit.entityId,
+        sceneExit.prompt,
+        distance,
+        sceneExit.radius,
+        hitDistance
+      );
+      bestPrompt = next.prompt;
+      bestHitDistance = next.hitDistance;
     }
 
     return bestPrompt;
   }
 
   dispatchClickInteraction(sourceEntityId: string, runtimeScene: RuntimeSceneDefinition, dispatcher: RuntimeInteractionDispatcher) {
+    const sceneExit =
+      runtimeScene.entities.sceneExits.find(
+        (candidate) => candidate.entityId === sourceEntityId
+      ) ?? null;
+
+    if (sceneExit !== null) {
+      dispatcher.activateSceneExit(sceneExit);
+      return;
+    }
+
     this.dispatchLinks(sourceEntityId, "click", runtimeScene, dispatcher);
   }
 
