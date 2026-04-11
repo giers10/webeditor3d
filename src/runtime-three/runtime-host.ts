@@ -414,7 +414,8 @@ export class RuntimeHost {
     void this.finalizeSceneLoad(
       requestId,
       runtimeScene.colliders,
-      runtimeScene.playerCollider
+      runtimeScene.playerCollider,
+      runtimeScene.playerMovement
     );
   }
 
