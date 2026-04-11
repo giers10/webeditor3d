@@ -1,9 +1,11 @@
-import type { CSSProperties } from "react";
+import type { CSSProperties, MouseEvent as ReactMouseEvent } from "react";
 
 import { ViewportCanvas } from "./ViewportCanvas";
 import {
   getViewportDisplayModeLabel,
+  getViewportLayoutModeLabel,
   getViewportPanelLabel,
+  VIEWPORT_LAYOUT_MODES,
   type ViewportPanelCameraState,
   type ViewportDisplayMode,
   type ViewportLayoutMode,
@@ -23,9 +25,14 @@ import type { LoadedModelAsset } from "../assets/gltf-model-import";
 import type { LoadedImageAsset } from "../assets/image-assets";
 import type { ProjectAssetRecord } from "../assets/project-assets";
 import type { EditorSelection } from "../core/selection";
-import type { WhiteboxSelectionMode } from "../core/whitebox-selection-mode";
+import {
+  getWhiteboxSelectionModeLabel,
+  WHITEBOX_SELECTION_MODES,
+  type WhiteboxSelectionMode
+} from "../core/whitebox-selection-mode";
 import type {
   ActiveTransformSession,
+  TransformOperation,
   TransformSessionState
 } from "../core/transform-session";
 import type { ToolMode } from "../core/tool-mode";
@@ -46,16 +53,22 @@ interface ViewportPanelProps {
   loadedImageAssets: Record<string, LoadedImageAsset>;
   whiteboxSelectionMode: WhiteboxSelectionMode;
   whiteboxSnapEnabled: boolean;
+  whiteboxSnapStepDraft: string;
   whiteboxSnapStep: number;
   viewportGridVisible: boolean;
   selection: EditorSelection;
   toolMode: ToolMode;
   toolPreview: ViewportToolPreview;
   transformSession: TransformSessionState;
+  canTranslateSelectedTarget: boolean;
+  canRotateSelectedTarget: boolean;
+  canScaleSelectedTarget: boolean;
   cameraState: ViewportPanelCameraState;
   focusRequestId: number;
   focusSelection: EditorSelection;
   onActivatePanel(panelId: ViewportPanelId): void;
+  onOpenAddMenu(event: ReactMouseEvent<HTMLButtonElement>): void;
+  onSetViewportLayoutMode(layoutMode: ViewportLayoutMode): void;
   onSetPanelViewMode(
     panelId: ViewportPanelId,
     viewMode: ViewportViewMode
@@ -67,10 +80,31 @@ interface ViewportPanelProps {
   onCommitCreation(toolPreview: CreationViewportToolPreview): boolean;
   onCameraStateChange(cameraState: ViewportPanelCameraState): void;
   onToolPreviewChange(toolPreview: ViewportToolPreview): void;
+  onBeginTransformOperation(operation: TransformOperation): void;
+  onWhiteboxSelectionModeChange(mode: WhiteboxSelectionMode): void;
+  onViewportGridToggle(): void;
+  onWhiteboxSnapToggle(): void;
+  onWhiteboxSnapStepDraftChange(value: string): void;
+  onWhiteboxSnapStepBlur(): void;
   onTransformSessionChange(transformSession: TransformSessionState): void;
   onTransformCommit(transformSession: ActiveTransformSession): void;
   onTransformCancel(): void;
   onSelectionChange(selection: EditorSelection): void;
+}
+
+const VIEWPORT_DISPLAY_MODES = ["normal", "authoring", "wireframe"] as const;
+
+function getPanelScopedTestId(panelId: ViewportPanelId, name: string): string {
+  return `viewport-panel-${panelId}-${name}`;
+}
+
+function getSharedControlTestId(
+  panelId: ViewportPanelId,
+  isActive: boolean,
+  sharedId: string,
+  fallbackId = sharedId
+): string {
+  return isActive ? sharedId : getPanelScopedTestId(panelId, fallbackId);
 }
 
 export function ViewportPanel({
@@ -87,21 +121,33 @@ export function ViewportPanel({
   loadedImageAssets,
   whiteboxSelectionMode,
   whiteboxSnapEnabled,
+  whiteboxSnapStepDraft,
   whiteboxSnapStep,
   viewportGridVisible,
   selection,
   toolMode,
   toolPreview,
   transformSession,
+  canTranslateSelectedTarget,
+  canRotateSelectedTarget,
+  canScaleSelectedTarget,
   cameraState,
   focusRequestId,
   focusSelection,
   onActivatePanel,
+  onOpenAddMenu,
+  onSetViewportLayoutMode,
   onSetPanelViewMode,
   onSetPanelDisplayMode,
   onCommitCreation,
   onCameraStateChange,
   onToolPreviewChange,
+  onBeginTransformOperation,
+  onWhiteboxSelectionModeChange,
+  onViewportGridToggle,
+  onWhiteboxSnapToggle,
+  onWhiteboxSnapStepDraftChange,
+  onWhiteboxSnapStepBlur,
   onTransformSessionChange,
   onTransformCommit,
   onTransformCancel,
@@ -109,6 +155,7 @@ export function ViewportPanel({
 }: ViewportPanelProps) {
   const shouldShow = layoutMode === "quad" || isActive;
   const panelStyle = shouldShow ? style : { ...(style ?? {}), display: "none" };
+  const transformButtonsDisabled = toolMode !== "select";
 
   return (
     <section
@@ -122,50 +169,6 @@ export function ViewportPanel({
       onPointerDownCapture={() => onActivatePanel(panelId)}
       onFocusCapture={() => onActivatePanel(panelId)}
     >
-      <div className="viewport-panel__header">
-        <div className="viewport-panel__controls">
-          <div
-            className="viewport-panel__control-group"
-            role="group"
-            aria-label={`${getViewportPanelLabel(panelId)} view mode`}
-          >
-            {VIEWPORT_VIEW_MODES.map((viewMode) => (
-              <button
-                key={viewMode}
-                className={`viewport-panel__button ${panelState.viewMode === viewMode ? "viewport-panel__button--active" : ""}`}
-                type="button"
-                data-testid={`viewport-panel-${panelId}-view-${viewMode}`}
-                aria-pressed={panelState.viewMode === viewMode}
-                onClick={() => onSetPanelViewMode(panelId, viewMode)}
-              >
-                {getViewportViewModeLabel(viewMode)}
-              </button>
-            ))}
-          </div>
-
-          <div
-            className="viewport-panel__control-group"
-            role="group"
-            aria-label={`${getViewportPanelLabel(panelId)} display mode`}
-          >
-            {(["normal", "authoring", "wireframe"] as const).map(
-              (displayMode) => (
-                <button
-                  key={displayMode}
-                  className={`viewport-panel__button ${panelState.displayMode === displayMode ? "viewport-panel__button--active" : ""}`}
-                  type="button"
-                  data-testid={`viewport-panel-${panelId}-display-${displayMode}`}
-                  aria-pressed={panelState.displayMode === displayMode}
-                  onClick={() => onSetPanelDisplayMode(panelId, displayMode)}
-                >
-                  {getViewportDisplayModeLabel(displayMode)}
-                </button>
-              )
-            )}
-          </div>
-        </div>
-      </div>
-
       <ViewportCanvas
         panelId={panelId}
         world={world}
@@ -196,6 +199,228 @@ export function ViewportPanel({
         onTransformCommit={onTransformCommit}
         onTransformCancel={onTransformCancel}
       />
+
+      <div className="viewport-panel__overlay viewport-panel__overlay--top">
+        <div className="viewport-panel__overlay-scroll">
+          <button
+            className="viewport-panel__button viewport-panel__button--accent"
+            type="button"
+            data-testid={getSharedControlTestId(
+              panelId,
+              isActive,
+              "outliner-add-button",
+              "add-button"
+            )}
+            aria-haspopup="menu"
+            aria-expanded={undefined}
+            onClick={onOpenAddMenu}
+          >
+            Add
+          </button>
+
+          <div
+            className="viewport-panel__control-group"
+            role="group"
+            aria-label="Viewport layout mode"
+          >
+            {VIEWPORT_LAYOUT_MODES.map((mode) => (
+              <button
+                key={mode}
+                className={`viewport-panel__button ${layoutMode === mode ? "viewport-panel__button--active" : ""}`}
+                type="button"
+                data-testid={getSharedControlTestId(
+                  panelId,
+                  isActive,
+                  `viewport-layout-${mode}`,
+                  `layout-${mode}`
+                )}
+                aria-pressed={layoutMode === mode}
+                onClick={() => onSetViewportLayoutMode(mode)}
+              >
+                {getViewportLayoutModeLabel(mode)}
+              </button>
+            ))}
+          </div>
+
+          <div
+            className="viewport-panel__control-group"
+            role="group"
+            aria-label={`${getViewportPanelLabel(panelId)} view mode`}
+          >
+            {VIEWPORT_VIEW_MODES.map((viewMode) => (
+              <button
+                key={viewMode}
+                className={`viewport-panel__button ${panelState.viewMode === viewMode ? "viewport-panel__button--active" : ""}`}
+                type="button"
+                data-testid={`viewport-panel-${panelId}-view-${viewMode}`}
+                aria-pressed={panelState.viewMode === viewMode}
+                onClick={() => onSetPanelViewMode(panelId, viewMode)}
+              >
+                {getViewportViewModeLabel(viewMode)}
+              </button>
+            ))}
+          </div>
+
+          <div
+            className="viewport-panel__control-group"
+            role="group"
+            aria-label={`${getViewportPanelLabel(panelId)} display mode`}
+          >
+            {VIEWPORT_DISPLAY_MODES.map((displayMode) => (
+              <button
+                key={displayMode}
+                className={`viewport-panel__button ${panelState.displayMode === displayMode ? "viewport-panel__button--active" : ""}`}
+                type="button"
+                data-testid={`viewport-panel-${panelId}-display-${displayMode}`}
+                aria-pressed={panelState.displayMode === displayMode}
+                onClick={() => onSetPanelDisplayMode(panelId, displayMode)}
+              >
+                {getViewportDisplayModeLabel(displayMode)}
+              </button>
+            ))}
+          </div>
+
+          <div
+            className="viewport-panel__control-group"
+            role="group"
+            aria-label="Whitebox snap settings"
+          >
+            <button
+              className={`viewport-panel__button ${viewportGridVisible ? "viewport-panel__button--active" : ""}`}
+              type="button"
+              data-testid={getSharedControlTestId(
+                panelId,
+                isActive,
+                "viewport-grid-toggle"
+              )}
+              aria-pressed={viewportGridVisible}
+              onClick={onViewportGridToggle}
+            >
+              {viewportGridVisible ? "Grid On" : "Grid Off"}
+            </button>
+            <button
+              className={`viewport-panel__button ${whiteboxSnapEnabled ? "viewport-panel__button--active" : ""}`}
+              type="button"
+              data-testid={getSharedControlTestId(
+                panelId,
+                isActive,
+                "whitebox-snap-toggle"
+              )}
+              aria-pressed={whiteboxSnapEnabled}
+              onClick={onWhiteboxSnapToggle}
+            >
+              {whiteboxSnapEnabled ? "Snap On" : "Snap Off"}
+            </button>
+            <label className="viewport-panel__inline-field">
+              <span className="viewport-panel__inline-label">Step</span>
+              <input
+                data-testid={getSharedControlTestId(
+                  panelId,
+                  isActive,
+                  "whitebox-snap-step"
+                )}
+                className="text-input viewport-panel__inline-input"
+                type="number"
+                min="0.01"
+                step="0.1"
+                value={whiteboxSnapStepDraft}
+                onChange={(event) =>
+                  onWhiteboxSnapStepDraftChange(event.currentTarget.value)
+                }
+                onBlur={onWhiteboxSnapStepBlur}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    onWhiteboxSnapStepBlur();
+                  }
+                }}
+              />
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div className="viewport-panel__overlay viewport-panel__overlay--left">
+        <div
+          className="viewport-panel__control-group viewport-panel__control-group--stack"
+          role="group"
+          aria-label="Transform operations"
+        >
+          <button
+            className={`viewport-panel__button ${transformSession.kind === "active" && transformSession.operation === "translate" ? "viewport-panel__button--active" : ""}`}
+            type="button"
+            data-testid={getSharedControlTestId(
+              panelId,
+              isActive,
+              "transform-translate-button"
+            )}
+            aria-pressed={
+              transformSession.kind === "active" &&
+              transformSession.operation === "translate"
+            }
+            disabled={transformButtonsDisabled || !canTranslateSelectedTarget}
+            onClick={() => onBeginTransformOperation("translate")}
+          >
+            Move
+          </button>
+          <button
+            className={`viewport-panel__button ${transformSession.kind === "active" && transformSession.operation === "rotate" ? "viewport-panel__button--active" : ""}`}
+            type="button"
+            data-testid={getSharedControlTestId(
+              panelId,
+              isActive,
+              "transform-rotate-button"
+            )}
+            aria-pressed={
+              transformSession.kind === "active" &&
+              transformSession.operation === "rotate"
+            }
+            disabled={transformButtonsDisabled || !canRotateSelectedTarget}
+            onClick={() => onBeginTransformOperation("rotate")}
+          >
+            Rotate
+          </button>
+          <button
+            className={`viewport-panel__button ${transformSession.kind === "active" && transformSession.operation === "scale" ? "viewport-panel__button--active" : ""}`}
+            type="button"
+            data-testid={getSharedControlTestId(
+              panelId,
+              isActive,
+              "transform-scale-button"
+            )}
+            aria-pressed={
+              transformSession.kind === "active" &&
+              transformSession.operation === "scale"
+            }
+            disabled={transformButtonsDisabled || !canScaleSelectedTarget}
+            onClick={() => onBeginTransformOperation("scale")}
+          >
+            Scale
+          </button>
+        </div>
+
+        <div
+          className="viewport-panel__control-group viewport-panel__control-group--stack"
+          role="group"
+          aria-label="Whitebox selection mode"
+        >
+          {WHITEBOX_SELECTION_MODES.map((mode) => (
+            <button
+              key={mode}
+              className={`viewport-panel__button ${whiteboxSelectionMode === mode ? "viewport-panel__button--active" : ""}`}
+              type="button"
+              data-testid={getSharedControlTestId(
+                panelId,
+                isActive,
+                `whitebox-selection-mode-${mode}`
+              )}
+              aria-pressed={whiteboxSelectionMode === mode}
+              onClick={() => onWhiteboxSelectionModeChange(mode)}
+            >
+              {getWhiteboxSelectionModeLabel(mode)}
+            </button>
+          ))}
+        </div>
+      </div>
     </section>
   );
 }
