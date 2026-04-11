@@ -20,6 +20,7 @@ import type { RuntimeBrushTriMeshCollider, RuntimeSceneCollider } from "./runtim
 
 const CHARACTER_CONTROLLER_OFFSET = 0.01;
 const CHARACTER_CONTROLLER_SNAP_TO_GROUND_DISTANCE = 0.2;
+const AUTOSTEP_MIN_WIDTH_FACTOR = 0.4285714286;
 const COLLISION_EPSILON = 1e-5;
 const CAMERA_COLLISION_EPSILON = 1e-3;
 const MAX_WALKABLE_SLOPE_RADIANS = Math.PI * 0.25;
@@ -326,7 +327,13 @@ export async function initializeRapierCollisionWorld(): Promise<typeof RAPIER> {
 }
 
 export class RapierCollisionWorld {
-  static async create(colliders: RuntimeSceneCollider[], playerShape: FirstPersonPlayerShape): Promise<RapierCollisionWorld> {
+  static async create(
+    colliders: RuntimeSceneCollider[],
+    playerShape: FirstPersonPlayerShape,
+    options: {
+      maxStepHeight?: number;
+    } = {}
+  ): Promise<RapierCollisionWorld> {
     const rapier = await initializeRapierCollisionWorld();
     const world = new rapier.World({
       x: 0,
@@ -345,14 +352,23 @@ export class RapierCollisionWorld {
 
     const playerCollider = createPlayerCollider(world, rapier, playerShape);
     const characterController = playerCollider === null ? null : world.createCharacterController(CHARACTER_CONTROLLER_OFFSET);
+    const maxStepHeight = Math.max(0, options.maxStepHeight ?? 0.35);
 
     if (characterController !== null) {
       characterController.setUp({ x: 0, y: 1, z: 0 });
       characterController.setSlideEnabled(true);
       characterController.enableSnapToGround(
-        CHARACTER_CONTROLLER_SNAP_TO_GROUND_DISTANCE
+        Math.max(CHARACTER_CONTROLLER_SNAP_TO_GROUND_DISTANCE, maxStepHeight)
       );
-      characterController.enableAutostep(0.35, 0.15, false);
+
+      if (maxStepHeight > COLLISION_EPSILON) {
+        characterController.enableAutostep(
+          maxStepHeight,
+          maxStepHeight * AUTOSTEP_MIN_WIDTH_FACTOR,
+          false
+        );
+      }
+
       characterController.setMaxSlopeClimbAngle(MAX_WALKABLE_SLOPE_RADIANS);
       characterController.setMinSlopeSlideAngle(Math.PI * 0.5);
     }
