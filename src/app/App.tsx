@@ -1738,10 +1738,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const canScaleSelectedTarget =
     selectedTransformTarget !== null &&
     supportsTransformOperation(selectedTransformTarget, "scale");
-  const whiteboxSnapStep = resolveOptionalPositiveNumber(
-    whiteboxSnapStepDraft,
-    DEFAULT_GRID_SIZE
-  );
+  const whiteboxSnapStep = editorState.whiteboxSnapStep;
   const whiteboxVectorInputStep = getWhiteboxInputStep(
     whiteboxSnapEnabled,
     whiteboxSnapStep
