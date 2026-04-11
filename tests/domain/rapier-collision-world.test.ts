@@ -554,6 +554,78 @@ describe("RapierCollisionWorld", () => {
     }
   });
 
+  it("keeps falling smoothly when airborne input pushes into a wall", async () => {
+    const floorBrush = createBoxBrush({
+      id: "brush-floor-airborne-wall-fall",
+      center: {
+        x: 0,
+        y: -0.5,
+        z: 0
+      },
+      size: {
+        x: 10,
+        y: 1,
+        z: 10
+      }
+    });
+    const wallBrush = createBoxBrush({
+      id: "brush-airborne-fall-wall",
+      center: {
+        x: 1.2,
+        y: 1,
+        z: 0
+      },
+      size: {
+        x: 0.4,
+        y: 2,
+        z: 4
+      }
+    });
+    const runtimeScene = buildRuntimeSceneFromDocument({
+      ...createEmptySceneDocument({ name: "Airborne Wall Fall Scene" }),
+      brushes: {
+        [floorBrush.id]: floorBrush,
+        [wallBrush.id]: wallBrush
+      }
+    });
+    const collisionWorld = await RapierCollisionWorld.create(
+      runtimeScene.colliders,
+      runtimeScene.playerCollider
+    );
+
+    try {
+      const start = {
+        x: 0.7,
+        y: 1.2,
+        z: 0
+      };
+      const fallingOnly = collisionWorld.resolveFirstPersonMotion(
+        start,
+        {
+          x: 0,
+          y: -0.2,
+          z: 0
+        },
+        runtimeScene.playerCollider
+      );
+      const againstWall = collisionWorld.resolveFirstPersonMotion(
+        start,
+        {
+          x: 0.3,
+          y: -0.2,
+          z: 0
+        },
+        runtimeScene.playerCollider
+      );
+
+      expect(againstWall.collidedAxes.x).toBe(true);
+      expect(againstWall.feetPosition.y).toBeCloseTo(fallingOnly.feetPosition.y, 5);
+      expect(againstWall.feetPosition.y).toBeLessThan(start.y - 0.15);
+    } finally {
+      collisionWorld.dispose();
+    }
+  });
+
   it("supports authored Player Start collision mode none without world clipping", async () => {
     const wallBrush = createBoxBrush({
       id: "brush-wall-no-collision",
