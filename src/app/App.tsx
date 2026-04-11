@@ -30,6 +30,7 @@ import { createSetBoxBrushFaceUvStateCommand } from "../commands/set-box-brush-f
 import { createSetActiveSceneCommand } from "../commands/set-active-scene-command";
 import { createDeleteInteractionLinkCommand } from "../commands/delete-interaction-link-command";
 import { createSetModelInstanceNameCommand } from "../commands/set-model-instance-name-command";
+import { createSetSceneLoadingScreenCommand } from "../commands/set-scene-loading-screen-command";
 import { createSetSceneNameCommand } from "../commands/set-scene-name-command";
 import { createSetWorldSettingsCommand } from "../commands/set-world-settings-command";
 import { createUpsertEntityCommand } from "../commands/upsert-entity-command";
@@ -147,6 +148,11 @@ import {
   type AdvancedRenderingToneMappingMode,
   type WorldSettings
 } from "../document/world-settings";
+import {
+  areSceneLoadingScreenSettingsEqual,
+  cloneSceneLoadingScreenSettings,
+  type SceneLoadingScreenSettings
+} from "../document/scene-document";
 import {
   formatSceneDiagnosticSummary,
   validateSceneDocument
