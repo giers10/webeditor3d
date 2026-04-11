@@ -19,7 +19,7 @@ export interface RuntimeSceneBuildValidationResult {
 }
 
 interface ValidateRuntimeSceneBuildOptions {
-  navigationMode: "firstPerson" | "orbitVisitor";
+  navigationMode: "firstPerson" | "thirdPerson";
   loadedModelAssets?: Record<string, LoadedModelAsset>;
 }
 
@@ -40,7 +40,7 @@ export function validateRuntimeSceneBuild(
       createDiagnostic(
         "error",
         "missing-player-start",
-        "First-person run requires an authored Player Start. Place one or switch to Orbit Visitor.",
+        "First-person run requires an authored Player Start. Place one or switch to Third Person.",
         "entities",
         "build"
       )
