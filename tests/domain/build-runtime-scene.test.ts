@@ -393,6 +393,7 @@ describe("buildRuntimeSceneFromDocument", () => {
             z: -1
           },
           yawDegrees: 90,
+          navigationMode: "firstPerson",
           collider: {
             mode: "box",
             eyeHeight: 1.4,
@@ -560,6 +561,7 @@ describe("buildRuntimeSceneFromDocument", () => {
         z: -1
       },
       yawDegrees: 90,
+      navigationMode: "firstPerson",
       collider: {
         mode: "box",
         eyeHeight: 1.4,
@@ -579,6 +581,7 @@ describe("buildRuntimeSceneFromDocument", () => {
         z: 0.7
       }
     });
+    expect(runtimeScene.navigationMode).toBe("firstPerson");
     expect(runtimeScene.spawn).toEqual({
       source: "playerStart",
       entityId: "entity-player-start-main",
@@ -620,6 +623,7 @@ describe("buildRuntimeSceneFromDocument", () => {
       height: 1.8,
       eyeHeight: 1.6
     });
+    expect(runtimeScene.navigationMode).toBe("thirdPerson");
     expect(runtimeScene.entities).toEqual({
       playerStarts: [],
       sceneEntries: [],
