@@ -168,6 +168,7 @@ import {
 } from "../rendering/water-material";
 import { resolveViewportFocusTarget } from "./viewport-focus";
 import { createSoundEmitterMarkerMeshes } from "./viewport-entity-markers";
+import { resolveTransformPointerDownIntent } from "./transform-pointer-intent";
 import { resolveDominantLocalAxisForWorldAxis } from "./transform-axis-mapping";
 import {
   getViewportViewModeDefinition,
@@ -5099,13 +5100,18 @@ export class ViewportHost {
       return;
     }
 
-    if (this.currentTransformSession.kind === "active") {
-      if (this.currentTransformSession.sourcePanelId !== this.panelId) {
-        return;
-      }
+    const transformPointerIntent = resolveTransformPointerDownIntent(
+      this.currentTransformSession,
+      this.panelId
+    );
 
+    if (transformPointerIntent.commitActiveTransform) {
       event.preventDefault();
       this.transformCommitHandler?.(this.currentTransformSession);
+      return;
+    }
+
+    if (!transformPointerIntent.allowGizmoInteraction) {
       return;
     }
 
