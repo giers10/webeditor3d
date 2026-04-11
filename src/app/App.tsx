@@ -1462,6 +1462,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [playerStartYawDraft, setPlayerStartYawDraft] = useState("0");
   const [playerStartNavigationModeDraft, setPlayerStartNavigationModeDraft] =
     useState<PlayerStartNavigationMode>(DEFAULT_PLAYER_START_NAVIGATION_MODE);
+  const [playerStartMovementTemplateDraft, setPlayerStartMovementTemplateDraft] =
+    useState<PlayerStartMovementTemplate>(createPlayerStartMovementTemplate());
   const [playerStartColliderModeDraft, setPlayerStartColliderModeDraft] =
     useState<PlayerStartColliderMode>("capsule");
   const [playerStartEyeHeightDraft, setPlayerStartEyeHeightDraft] = useState(
