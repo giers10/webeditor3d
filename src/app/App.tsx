@@ -10378,6 +10378,47 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               }
                             />
                           </label>
+                          <label className="form-field">
+                            <span className="label">Max Speed</span>
+                            <input
+                              data-testid="player-start-movement-max-speed"
+                              className="text-input"
+                              type="number"
+                              min="0"
+                              step="0.1"
+                              value={playerStartMovementTemplateNumberDraft.maxSpeed}
+                              onChange={(event) => {
+                                const nextValue = event.currentTarget.value;
+                                setPlayerStartMovementTemplateNumberDraft(
+                                  (draft) => ({
+                                    ...draft,
+                                    maxSpeed: nextValue
+                                  })
+                                );
+                              }}
+                              onBlur={() =>
+                                commitPlayerStartMovementTemplateDraft()
+                              }
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(
+                                  event,
+                                  commitPlayerStartMovementTemplateDraft
+                                )
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(
+                                  event,
+                                  commitPlayerStartMovementTemplateDraft
+                                )
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(
+                                  event,
+                                  commitPlayerStartMovementTemplateDraft
+                                )
+                              }
+                            />
+                          </label>
                         </div>
 
                         <div className="form-section">
@@ -10591,6 +10632,69 @@ export function App({ store, initialStatusMessage }: AppProps) {
                                   {
                                     schedule: true
                                   }
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field form-field--toggle">
+                            <span className="label">Bunny Hopping</span>
+                            <input
+                              data-testid="player-start-movement-bunny-hop-enabled"
+                              type="checkbox"
+                              checked={
+                                playerStartMovementTemplateDraft.jump.bunnyHop
+                              }
+                              onChange={(event) =>
+                                commitPlayerStartMovementTemplateDraft(
+                                  {
+                                    jump: {
+                                      bunnyHop: event.currentTarget.checked
+                                    }
+                                  },
+                                  {
+                                    schedule: true
+                                  }
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Bunny Hop Boost</span>
+                            <input
+                              data-testid="player-start-movement-bunny-hop-boost"
+                              className="text-input"
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={playerStartMovementTemplateNumberDraft.bunnyHopBoost}
+                              onChange={(event) => {
+                                const nextValue = event.currentTarget.value;
+                                setPlayerStartMovementTemplateNumberDraft(
+                                  (draft) => ({
+                                    ...draft,
+                                    bunnyHopBoost: nextValue
+                                  })
+                                );
+                              }}
+                              onBlur={() =>
+                                commitPlayerStartMovementTemplateDraft()
+                              }
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(
+                                  event,
+                                  commitPlayerStartMovementTemplateDraft
+                                )
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(
+                                  event,
+                                  commitPlayerStartMovementTemplateDraft
+                                )
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(
+                                  event,
+                                  commitPlayerStartMovementTemplateDraft
                                 )
                               }
                             />
