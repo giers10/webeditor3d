@@ -355,13 +355,21 @@ export class RapierCollisionWorld {
 
     world.step();
 
-    return new RapierCollisionWorld(world, characterController, playerCollider);
+    return new RapierCollisionWorld(
+      world,
+      characterController,
+      playerCollider,
+      playerShape.mode === "none"
+        ? null
+        : getFirstPersonPlayerShapeSignature(playerShape)
+    );
   }
 
   private constructor(
     private readonly world: RAPIER.World,
     private readonly characterController: RAPIER.KinematicCharacterController | null,
-    private readonly playerCollider: RAPIER.Collider | null
+    private readonly playerCollider: RAPIER.Collider | null,
+    private currentPlayerShapeSignature: string | null
   ) {}
 
   private syncPlayerColliderShape(shape: FirstPersonPlayerShape) {
@@ -371,14 +379,7 @@ export class RapierCollisionWorld {
 
     const nextSignature = getFirstPersonPlayerShapeSignature(shape);
 
-    if (
-      this.playerCollider.userData === nextSignature ||
-      this.playerCollider.userData === undefined
-    ) {
-      if (this.playerCollider.userData === undefined) {
-        this.playerCollider.userData = nextSignature;
-      }
-
+    if (this.currentPlayerShapeSignature === nextSignature) {
       return;
     }
 
@@ -400,7 +401,7 @@ export class RapierCollisionWorld {
         break;
     }
 
-    this.playerCollider.userData = nextSignature;
+    this.currentPlayerShapeSignature = nextSignature;
   }
 
   resolveFirstPersonMotion(feetPosition: Vec3, motion: Vec3, shape: FirstPersonPlayerShape): ResolvedPlayerMotion {
