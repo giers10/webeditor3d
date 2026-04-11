@@ -1897,6 +1897,20 @@ export function App({ store, initialStatusMessage }: AppProps) {
   ] = useState(
     String(editorState.document.world.advancedRendering.depthOfField.bokehScale)
   );
+  const [
+    advancedRenderingWhiteboxBevelEdgeWidthDraft,
+    setAdvancedRenderingWhiteboxBevelEdgeWidthDraft
+  ] = useState(
+    String(editorState.document.world.advancedRendering.whiteboxBevel.edgeWidth)
+  );
+  const [
+    advancedRenderingWhiteboxBevelNormalStrengthDraft,
+    setAdvancedRenderingWhiteboxBevelNormalStrengthDraft
+  ] = useState(
+    String(
+      editorState.document.world.advancedRendering.whiteboxBevel.normalStrength
+    )
+  );
   const [statusMessage, setStatusMessage] = useState(
     initialStatusMessage ?? "Slice 3.5 advanced rendering ready."
   );
@@ -2375,6 +2389,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
     setAdvancedRenderingDepthOfFieldBokehScaleDraft(
       String(advancedRendering.depthOfField.bokehScale)
+    );
+    setAdvancedRenderingWhiteboxBevelEdgeWidthDraft(
+      String(advancedRendering.whiteboxBevel.edgeWidth)
+    );
+    setAdvancedRenderingWhiteboxBevelNormalStrengthDraft(
+      String(advancedRendering.whiteboxBevel.normalStrength)
     );
   }, [editorState.document.world.advancedRendering]);
 
@@ -6567,6 +6587,53 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
+  const applyAdvancedRenderingWhiteboxBevelEnabled = (enabled: boolean) => {
+    applyAdvancedRenderingSettings(
+      "Set whitebox bevel",
+      enabled
+        ? "Whitebox bevel enabled."
+        : "Whitebox bevel disabled.",
+      (advancedRendering) => {
+        advancedRendering.whiteboxBevel.enabled = enabled;
+      }
+    );
+  };
+
+  const applyAdvancedRenderingWhiteboxBevelEdgeWidth = () => {
+    try {
+      applyAdvancedRenderingSettings(
+        "Set whitebox bevel edge width",
+        "Updated the whitebox bevel edge width.",
+        (advancedRendering) => {
+          advancedRendering.whiteboxBevel.edgeWidth = readNonNegativeNumberDraft(
+            advancedRenderingWhiteboxBevelEdgeWidthDraft,
+            "Whitebox bevel edge width"
+          );
+        }
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const applyAdvancedRenderingWhiteboxBevelNormalStrength = () => {
+    try {
+      applyAdvancedRenderingSettings(
+        "Set whitebox bevel normal strength",
+        "Updated the whitebox bevel normal strength.",
+        (advancedRendering) => {
+          advancedRendering.whiteboxBevel.normalStrength =
+            readNonNegativeNumberDraft(
+              advancedRenderingWhiteboxBevelNormalStrengthDraft,
+              "Whitebox bevel normal strength"
+            );
+        }
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
   const applyAdvancedRenderingFogPath = (path: BoxVolumeRenderPath) => {
     applyAdvancedRenderingSettings(
       "Set fog render path",
@@ -9167,6 +9234,98 @@ export function App({ store, initialStatusMessage }: AppProps) {
                             }
                           />
                         </label>
+                      </div>
+
+                      <div className="form-section">
+                        <div className="label">Whitebox Bevel</div>
+                        <label className="form-field form-field--toggle">
+                          <span className="label">Enabled</span>
+                          <input
+                            type="checkbox"
+                            checked={advancedRendering.whiteboxBevel.enabled}
+                            onChange={(event) =>
+                              applyAdvancedRenderingWhiteboxBevelEnabled(
+                                event.currentTarget.checked
+                              )
+                            }
+                          />
+                        </label>
+                        <div className="vector-inputs vector-inputs--two">
+                          <label className="form-field">
+                            <span className="label">Edge Width</span>
+                            <input
+                              className="text-input"
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={advancedRenderingWhiteboxBevelEdgeWidthDraft}
+                              onChange={(event) =>
+                                setAdvancedRenderingWhiteboxBevelEdgeWidthDraft(
+                                  event.currentTarget.value
+                                )
+                              }
+                              onBlur={
+                                applyAdvancedRenderingWhiteboxBevelEdgeWidth
+                              }
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(
+                                  event,
+                                  applyAdvancedRenderingWhiteboxBevelEdgeWidth
+                                )
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(
+                                  event,
+                                  applyAdvancedRenderingWhiteboxBevelEdgeWidth
+                                )
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(
+                                  event,
+                                  applyAdvancedRenderingWhiteboxBevelEdgeWidth
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Normal Strength</span>
+                            <input
+                              className="text-input"
+                              type="number"
+                              min="0"
+                              step="0.05"
+                              value={
+                                advancedRenderingWhiteboxBevelNormalStrengthDraft
+                              }
+                              onChange={(event) =>
+                                setAdvancedRenderingWhiteboxBevelNormalStrengthDraft(
+                                  event.currentTarget.value
+                                )
+                              }
+                              onBlur={
+                                applyAdvancedRenderingWhiteboxBevelNormalStrength
+                              }
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(
+                                  event,
+                                  applyAdvancedRenderingWhiteboxBevelNormalStrength
+                                )
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(
+                                  event,
+                                  applyAdvancedRenderingWhiteboxBevelNormalStrength
+                                )
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(
+                                  event,
+                                  applyAdvancedRenderingWhiteboxBevelNormalStrength
+                                )
+                              }
+                            />
+                          </label>
+                        </div>
                       </div>
 
                       <div className="form-section">
