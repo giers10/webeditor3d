@@ -51,12 +51,13 @@ function createRuntimeControllerContext(
       feetPosition: Vec3,
       shape: FirstPersonPlayerShape
     ) => boolean;
-  } = {}
-) {
-  const runtimeScene = buildRuntimeSceneFromDocument(
-    {
-      ...createEmptySceneDocument({ name: "Pointer Lock Scene" }),
-      entities: {
+            options.probePlayerGround?.(feetPosition, shape, maxDistance) ?? 
+            {
+              grounded: true,
+              distance: 0,
+              normal: { x: 0, y: 1, z: 0 },
+              slopeDegrees: 0
+            },
         [playerStart.id]: playerStart
       }
     },
