@@ -486,6 +486,7 @@ function buildRuntimeSceneCollections(document: SceneDocument): RuntimeSceneColl
           entityId: entity.id,
           position: cloneVec3(entity.position),
           yawDegrees: entity.yawDegrees,
+          navigationMode: entity.navigationMode,
           collider: buildRuntimePlayerShape(entity)
         });
         break;
