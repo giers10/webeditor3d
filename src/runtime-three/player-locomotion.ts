@@ -487,13 +487,16 @@ export function stepPlayerLocomotion(
     verticalVelocity = 0;
     jumpHoldRemainingMs = 0;
   } else if (currentSwimmableWater) {
+    const waterSurfaceHeight =
+      currentVolumeState.waterSurfaceHeight ??
+      options.feetPosition.y + activeShape.eyeHeight;
     const targetFeetY =
-      currentVolumeState.waterSurfaceHeight +
+      waterSurfaceHeight +
       SWIM_HEAD_CLEARANCE -
       activeShape.eyeHeight;
     const currentHeadSubmerged =
       options.feetPosition.y + activeShape.eyeHeight <
-      currentVolumeState.waterSurfaceHeight;
+      waterSurfaceHeight;
 
     if (waterVerticalInput !== 0) {
       verticalVelocity = waterVerticalInput * swimVerticalSpeed;
@@ -577,10 +580,13 @@ export function stepPlayerLocomotion(
     nextVolumeState.inWater &&
     nextVolumeState.waterSurfaceHeight !== null &&
     !nextShallowWater;
+  const nextWaterSurfaceHeight =
+    nextVolumeState.waterSurfaceHeight ??
+    resolvedMotion.feetPosition.y + activeShape.eyeHeight;
   const headSubmerged =
     nextSwimmableWater &&
     resolvedMotion.feetPosition.y + activeShape.eyeHeight <
-      nextVolumeState.waterSurfaceHeight;
+      nextWaterSurfaceHeight;
   const headBump =
     verticalDisplacement > 0 &&
     resolvedMotion.collidedAxes.y &&
