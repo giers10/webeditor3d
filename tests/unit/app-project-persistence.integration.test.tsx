@@ -139,7 +139,10 @@ describe("App project persistence controls", () => {
     });
 
     await waitFor(() => {
-      expect(saveProjectPackageMock).toHaveBeenCalledWith(store.getState().document, null);
+      expect(saveProjectPackageMock).toHaveBeenCalledWith(
+        store.getState().projectDocument,
+        null
+      );
     });
   });
 });
