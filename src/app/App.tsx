@@ -6528,22 +6528,47 @@ export function App({ store, initialStatusMessage }: AppProps) {
   return (
     <div className="app-shell">
       <header className="toolbar">
-        <label className="toolbar__scene-name">
-          <span className="visually-hidden">Scene Name</span>
-          <input
-            data-testid="toolbar-scene-name"
-            className="text-input toolbar__scene-name-input"
-            type="text"
-            value={sceneNameDraft}
-            onChange={(event) => setSceneNameDraft(event.currentTarget.value)}
-            onBlur={applySceneName}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                applySceneName();
-              }
-            }}
-          />
-        </label>
+        <div className="toolbar__scene-controls">
+          <label className="toolbar__scene-picker">
+            <span className="visually-hidden">Active Scene</span>
+            <select
+              data-testid="toolbar-scene-select"
+              className="select-input toolbar__scene-select"
+              value={editorState.activeSceneId}
+              onChange={handleActiveSceneChange}
+            >
+              {sceneList.map((scene) => (
+                <option key={scene.id} value={scene.id}>
+                  {scene.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button
+            className="toolbar__button"
+            type="button"
+            data-testid="toolbar-new-scene"
+            onClick={handleCreateScene}
+          >
+            New Scene
+          </button>
+          <label className="toolbar__scene-name">
+            <span className="visually-hidden">Scene Name</span>
+            <input
+              data-testid="toolbar-scene-name"
+              className="text-input toolbar__scene-name-input"
+              type="text"
+              value={sceneNameDraft}
+              onChange={(event) => setSceneNameDraft(event.currentTarget.value)}
+              onBlur={applySceneName}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  applySceneName();
+                }
+              }}
+            />
+          </label>
+        </div>
 
         <div className="toolbar__actions">
           <div className="toolbar__group">
