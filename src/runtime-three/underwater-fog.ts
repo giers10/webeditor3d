@@ -1,7 +1,6 @@
-import { Euler, Quaternion, Vector3 } from "three";
-
 import type { FirstPersonTelemetry } from "./navigation-controller";
-import type { RuntimeSceneDefinition, RuntimeWaterVolume } from "./runtime-scene-build";
+import type { RuntimeSceneDefinition } from "./runtime-scene-build";
+import { resolveWaterContact } from "./water-volume-utils";
 
 export interface UnderwaterFogState {
   colorHex: string;
@@ -15,36 +14,14 @@ function clampNumber(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
 }
 
-function getWaterVolumeLocalPoint(point: { x: number; y: number; z: number }, volume: RuntimeWaterVolume) {
-  const offset = new Vector3(point.x - volume.center.x, point.y - volume.center.y, point.z - volume.center.z);
-  const inverseRotation = new Quaternion()
-    .setFromEuler(
-      new Euler(
-        (volume.rotationDegrees.x * Math.PI) / 180,
-        (volume.rotationDegrees.y * Math.PI) / 180,
-        (volume.rotationDegrees.z * Math.PI) / 180,
-        "XYZ"
-      )
-    )
-    .invert();
+function resolveUnderwaterFogDensity(
+  contact: ReturnType<typeof resolveWaterContact>
+) {
+  if (contact === null) {
+    return MIN_UNDERWATER_FOG_DENSITY;
+  }
 
-  offset.applyQuaternion(inverseRotation);
-
-  return offset;
-}
-
-function isPointInsideWaterVolume(point: { x: number; y: number; z: number }, volume: RuntimeWaterVolume) {
-  const offset = getWaterVolumeLocalPoint(point, volume);
-
-  return (
-    Math.abs(offset.x) <= volume.size.x * 0.5 &&
-    Math.abs(offset.y) <= volume.size.y * 0.5 &&
-    Math.abs(offset.z) <= volume.size.z * 0.5
-  );
-}
-
-function resolveUnderwaterFogDensity(volume: RuntimeWaterVolume, point: { x: number; y: number; z: number }) {
-  const localPoint = getWaterVolumeLocalPoint(point, volume);
+  const { volume, localPoint } = contact;
   const halfHeight = Math.max(volume.size.y * 0.5, 0.0001);
   const submersionDepth = clampNumber((halfHeight - localPoint.y) / (halfHeight * 2), 0, 1);
 
@@ -63,14 +40,17 @@ export function resolveUnderwaterFogState(
     return null;
   }
 
-  const containingVolume = runtimeScene.volumes.water.find((volume) => isPointInsideWaterVolume(telemetry.eyePosition, volume));
+  const contact = resolveWaterContact(
+    telemetry.eyePosition,
+    runtimeScene.volumes.water
+  );
 
-  if (containingVolume === undefined) {
+  if (contact === null) {
     return null;
   }
 
   return {
-    colorHex: containingVolume.colorHex,
-    density: resolveUnderwaterFogDensity(containingVolume, telemetry.eyePosition)
+    colorHex: contact.volume.colorHex,
+    density: resolveUnderwaterFogDensity(contact)
   };
 }
