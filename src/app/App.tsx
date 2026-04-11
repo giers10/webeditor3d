@@ -9695,6 +9695,32 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       </div>
 
                       <div className="form-section">
+                        <div className="label">Navigation</div>
+                        <label className="form-field">
+                          <span className="label">Mode</span>
+                          <select
+                            data-testid="player-start-navigation-mode"
+                            className="select-input"
+                            value={playerStartNavigationModeDraft}
+                            onChange={(event) => {
+                              const nextMode = event.currentTarget
+                                .value as PlayerStartNavigationMode;
+                              setPlayerStartNavigationModeDraft(nextMode);
+                              scheduleDraftCommit(() => applyPlayerStartChange());
+                            }}
+                          >
+                            {PLAYER_START_NAVIGATION_MODES.map((mode) => (
+                              <option key={mode} value={mode}>
+                                {mode === "firstPerson"
+                                  ? "First Person"
+                                  : "Third Person"}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      </div>
+
+                      <div className="form-section">
                         <div className="label">Player Collider</div>
                         <label className="form-field">
                           <span className="label">Mode</span>
