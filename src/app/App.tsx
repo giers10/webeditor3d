@@ -1907,7 +1907,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
       );
       setPlayerStartKeyboardCaptureAction(null);
       setStatusMessage(
-        `Bound ${getPlayerStartMovementActionLabel(playerStartKeyboardCaptureAction)} to ${formatPlayerStartKeyboardBindingLabel(capturedCode)}.`
+        `Bound ${getPlayerStartInputActionLabel(playerStartKeyboardCaptureAction)} to ${formatPlayerStartKeyboardBindingLabel(capturedCode)}.`
       );
     };
 
