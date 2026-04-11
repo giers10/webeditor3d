@@ -57,6 +57,10 @@ import {
 import { createFogQualityMaterial } from "../rendering/fog-material";
 import { updatePlanarReflectionCamera } from "../rendering/planar-reflection";
 import {
+  applyWhiteboxBevelToMaterial,
+  shouldApplyWhiteboxBevel
+} from "../rendering/whitebox-bevel-material";
+import {
   areAdvancedRenderingSettingsEqual,
   cloneAdvancedRenderingSettings,
   type AdvancedRenderingSettings
@@ -1153,19 +1157,43 @@ export class RuntimeHost {
     }
 
     if (material === null) {
-      return new MeshStandardMaterial({
+      const faceMaterial = new MeshStandardMaterial({
         color: FALLBACK_FACE_COLOR,
         roughness: 0.9,
         metalness: 0.05
       });
+
+      if (
+        this.currentWorld !== null &&
+        shouldApplyWhiteboxBevel(this.currentWorld.advancedRendering)
+      ) {
+        applyWhiteboxBevelToMaterial(
+          faceMaterial,
+          this.currentWorld.advancedRendering.whiteboxBevel
+        );
+      }
+
+      return faceMaterial;
     }
 
-    return new MeshStandardMaterial({
+    const faceMaterial = new MeshStandardMaterial({
       color: 0xffffff,
       map: this.getOrCreateTexture(material),
       roughness: 0.92,
       metalness: 0.02
     });
+
+    if (
+      this.currentWorld !== null &&
+      shouldApplyWhiteboxBevel(this.currentWorld.advancedRendering)
+    ) {
+      applyWhiteboxBevelToMaterial(
+        faceMaterial,
+        this.currentWorld.advancedRendering.whiteboxBevel
+      );
+    }
+
+    return faceMaterial;
   }
 
   private updateUnderwaterSceneFog() {
