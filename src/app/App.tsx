@@ -1378,6 +1378,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [triggerVolumeSizeDraft, setTriggerVolumeSizeDraft] = useState(
     createVec3Draft(DEFAULT_TRIGGER_VOLUME_SIZE)
   );
+  const [sceneEntryYawDraft, setSceneEntryYawDraft] = useState(
+    String(DEFAULT_SCENE_ENTRY_YAW_DEGREES)
+  );
   const [teleportTargetYawDraft, setTeleportTargetYawDraft] = useState(
     String(DEFAULT_TELEPORT_TARGET_YAW_DEGREES)
   );
@@ -1389,6 +1392,17 @@ export function App({ store, initialStatusMessage }: AppProps) {
   );
   const [interactableEnabledDraft, setInteractableEnabledDraft] =
     useState(true);
+  const [sceneExitRadiusDraft, setSceneExitRadiusDraft] = useState(
+    String(DEFAULT_SCENE_EXIT_RADIUS)
+  );
+  const [sceneExitPromptDraft, setSceneExitPromptDraft] = useState(
+    DEFAULT_SCENE_EXIT_PROMPT
+  );
+  const [sceneExitEnabledDraft, setSceneExitEnabledDraft] = useState(true);
+  const [sceneExitTargetSceneIdDraft, setSceneExitTargetSceneIdDraft] =
+    useState("");
+  const [sceneExitTargetEntryIdDraft, setSceneExitTargetEntryIdDraft] =
+    useState("");
   const [modelPositionDraft, setModelPositionDraft] = useState(
     createVec3Draft(DEFAULT_MODEL_INSTANCE_POSITION)
   );
