@@ -5106,6 +5106,10 @@ export class ViewportHost {
     );
 
     if (transformPointerIntent.commitActiveTransform) {
+      if (this.currentTransformSession.kind !== "active") {
+        throw new Error("Active transform intent resolved without an active session.");
+      }
+
       event.preventDefault();
       this.transformCommitHandler?.(this.currentTransformSession);
       return;
