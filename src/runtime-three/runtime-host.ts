@@ -398,6 +398,93 @@ export class RuntimeHost {
     this.container = null;
   }
 
+  private publishSceneLoadState(state: RuntimeSceneLoadState) {
+    if (
+      this.currentSceneLoadState?.status === state.status &&
+      this.currentSceneLoadState.message === state.message
+    ) {
+      return;
+    }
+
+    this.currentSceneLoadState = state;
+    this.sceneLoadStateHandler?.(state);
+  }
+
+  private activateDesiredNavigationController() {
+    if (this.runtimeScene === null || !this.sceneReady) {
+      return;
+    }
+
+    const nextController =
+      this.desiredNavigationMode === "firstPerson"
+        ? this.firstPersonController
+        : this.orbitVisitorController;
+
+    if (this.activeController?.id === nextController.id) {
+      return;
+    }
+
+    if (
+      this.activeController === this.firstPersonController &&
+      this.currentFirstPersonTelemetry !== null &&
+      nextController === this.orbitVisitorController
+    ) {
+      this.orbitVisitorController.setFocusPoint(
+        this.currentFirstPersonTelemetry.feetPosition
+      );
+    }
+
+    this.activeController?.deactivate(this.controllerContext);
+    this.interactionSystem.reset();
+    this.setInteractionPrompt(null);
+    this.activeController = nextController;
+    this.activeController.activate(this.controllerContext);
+  }
+
+  private async finalizeSceneLoad(
+    requestId: number,
+    colliders: RuntimeSceneDefinition["colliders"],
+    playerShape: RuntimeSceneDefinition["playerCollider"]
+  ) {
+    try {
+      const nextCollisionWorld = await this.buildCollisionWorld(
+        requestId,
+        colliders,
+        playerShape
+      );
+
+      if (requestId !== this.collisionWorldRequestId) {
+        nextCollisionWorld.dispose();
+        return;
+      }
+
+      this.collisionWorld = nextCollisionWorld;
+      this.sceneReady = true;
+      this.publishSceneLoadState({
+        status: "ready",
+        message: null
+      });
+      this.activateDesiredNavigationController();
+    } catch (error) {
+      if (requestId !== this.collisionWorldRequestId) {
+        return;
+      }
+
+      const detail =
+        error instanceof Error && error.message.trim().length > 0
+          ? error.message.trim()
+          : "Unknown error.";
+      const message = `Runner scene failed to load: ${detail}`;
+      this.sceneReady = false;
+      this.currentRuntimeMessage = message;
+      this.runtimeMessageHandler?.(message);
+      this.publishSceneLoadState({
+        status: "error",
+        message
+      });
+    }
+  }
+
   private applyWorld() {
     if (this.currentWorld === null) {
       return;
