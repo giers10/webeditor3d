@@ -1229,6 +1229,13 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [sceneNameDraft, setSceneNameDraft] = useState(
     editorState.document.name
   );
+  const [sceneLoadingHeadlineDraft, setSceneLoadingHeadlineDraft] = useState(
+    activeProjectScene.loadingScreen.headline ?? ""
+  );
+  const [
+    sceneLoadingDescriptionDraft,
+    setSceneLoadingDescriptionDraft
+  ] = useState(activeProjectScene.loadingScreen.description ?? "");
   const [brushNameDraft, setBrushNameDraft] = useState("");
   const [entityNameDraft, setEntityNameDraft] = useState("");
   const [modelInstanceNameDraft, setModelInstanceNameDraft] = useState("");
@@ -1572,6 +1579,19 @@ export function App({ store, initialStatusMessage }: AppProps) {
   useEffect(() => {
     setSceneNameDraft(editorState.document.name);
   }, [editorState.document.name]);
+
+  useEffect(() => {
+    setSceneLoadingHeadlineDraft(
+      activeProjectScene.loadingScreen.headline ?? ""
+    );
+    setSceneLoadingDescriptionDraft(
+      activeProjectScene.loadingScreen.description ?? ""
+    );
+  }, [
+    activeProjectScene.id,
+    activeProjectScene.loadingScreen.headline,
+    activeProjectScene.loadingScreen.description
+  ]);
 
   useEffect(() => {
     setBrushNameDraft(selectedBrush?.name ?? "");
