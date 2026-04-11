@@ -262,6 +262,71 @@ describe("player-locomotion", () => {
     expect(step?.inWaterVolume).toBe(false);
   });
 
+  it("keeps a sprint jump airborne while crossing narrow water", () => {
+    const step = stepPlayerLocomotion({
+      dt: 0.1,
+      feetPosition: {
+        x: 0,
+        y: 0,
+        z: 0
+      },
+      movementYawRadians: 0,
+      standingShape: FIRST_PERSON_PLAYER_SHAPE,
+      verticalVelocity: 0,
+      previousLocomotionState: createIdleRuntimeLocomotionState("grounded"),
+      previousPlanarDisplacement: {
+        x: 0,
+        y: 0,
+        z: 0
+      },
+      jumpBufferRemainingMs: 0,
+      coyoteTimeRemainingMs: 0,
+      jumpHoldRemainingMs: 0,
+      crouched: false,
+      wasJumpPressed: false,
+      input: {
+        ...FORWARD_INPUT,
+        jump: 1,
+        sprint: 1
+      },
+      movement: DEFAULT_MOVEMENT,
+      resolveMotion: (feetPosition, motion): ResolvedPlayerMotion => ({
+        feetPosition: {
+          x: feetPosition.x + motion.x,
+          y: feetPosition.y + motion.y,
+          z: feetPosition.z + motion.z
+        },
+        grounded: false,
+        collisionCount: 0,
+        groundCollisionNormal: null,
+        collidedAxes: {
+          x: false,
+          y: false,
+          z: false
+        }
+      }),
+      resolveVolumeState: () =>
+        createVolumeState({
+          inWater: true,
+          waterSurfaceHeight: 1.5
+        }),
+      probeGround: () => ({
+        grounded: true,
+        distance: 0,
+        normal: { x: 0, y: 1, z: 0 },
+        slopeDegrees: 0
+      }),
+      canOccupyShape: () => true
+    });
+
+    expect(step).not.toBeNull();
+    expect(step?.jumpStarted).toBe(true);
+    expect(step?.locomotionState.locomotionMode).toBe("airborne");
+    expect(step?.inWaterVolume).toBe(false);
+    expect(step?.locomotionState.sprinting).toBe(true);
+    expect(step?.verticalVelocity).toBeCloseTo(DEFAULT_MOVEMENT.jump.speed);
+  });
+
   it("sinks toward the water surface while keeping the head above water", () => {
     const step = stepPlayerLocomotion({
       dt: 0.1,
