@@ -35,6 +35,19 @@ const FORWARD_INPUT: PlayerStartActionInputState = {
   crouch: 0
 };
 
+function createVolumeState(overrides: {
+  inWater?: boolean;
+  inFog?: boolean;
+  waterSurfaceHeight?: number | null;
+} = {}) {
+  return {
+    inWater: false,
+    inFog: false,
+    waterSurfaceHeight: null,
+    ...overrides
+  };
+}
+
 function createGroundProbeResult(normal: Vec3): PlayerGroundProbeResult {
   return {
     grounded: true,
@@ -85,8 +98,7 @@ function stepForwardOnSlope(normal: Vec3) {
       }
     }),
     resolveVolumeState: () => ({
-      inWater: false,
-      inFog: false
+      ...createVolumeState()
     }),
     probeGround: () => createGroundProbeResult(normal),
     canOccupyShape: () => true
@@ -173,8 +185,7 @@ describe("player-locomotion", () => {
         }
       }),
       resolveVolumeState: () => ({
-        inWater: false,
-        inFog: false
+        ...createVolumeState()
       }),
       probeGround: () => ({
         grounded: false,
@@ -191,5 +202,189 @@ describe("player-locomotion", () => {
     expect(step?.locomotionState.requestedPlanarSpeed).toBeCloseTo(4.5);
     expect(step?.locomotionState.planarSpeed).toBeCloseTo(4.5);
     expect(step?.planarDisplacement.z).toBeCloseTo(0.45);
+  });
+
+  it("keeps shallow water grounded instead of switching to swim locomotion", () => {
+    const step = stepPlayerLocomotion({
+      dt: 0.1,
+      feetPosition: {
+        x: 0,
+        y: 0,
+        z: 0
+      },
+      movementYawRadians: 0,
+      standingShape: FIRST_PERSON_PLAYER_SHAPE,
+      verticalVelocity: 0,
+      previousLocomotionState: createIdleRuntimeLocomotionState("grounded"),
+      previousPlanarDisplacement: {
+        x: 0,
+        y: 0,
+        z: 0
+      },
+      jumpBufferRemainingMs: 0,
+      coyoteTimeRemainingMs: 0,
+      jumpHoldRemainingMs: 0,
+      crouched: false,
+      wasJumpPressed: false,
+      input: FORWARD_INPUT,
+      movement: DEFAULT_MOVEMENT,
+      resolveMotion: (feetPosition, motion): ResolvedPlayerMotion => ({
+        feetPosition: {
+          x: feetPosition.x + motion.x,
+          y: feetPosition.y + motion.y,
+          z: feetPosition.z + motion.z
+        },
+        grounded: true,
+        collisionCount: 0,
+        groundCollisionNormal: { x: 0, y: 1, z: 0 },
+        collidedAxes: {
+          x: false,
+          y: false,
+          z: false
+        }
+      }),
+      resolveVolumeState: () =>
+        createVolumeState({
+          inWater: true,
+          waterSurfaceHeight: 1.5
+        }),
+      probeGround: () => ({
+        grounded: true,
+        distance: 0,
+        normal: { x: 0, y: 1, z: 0 },
+        slopeDegrees: 0
+      }),
+      canOccupyShape: () => true
+    });
+
+    expect(step).not.toBeNull();
+    expect(step?.locomotionState.locomotionMode).toBe("grounded");
+    expect(step?.inWaterVolume).toBe(false);
+  });
+
+  it("sinks toward the water surface while keeping the head above water", () => {
+    const step = stepPlayerLocomotion({
+      dt: 0.1,
+      feetPosition: {
+        x: 0,
+        y: 1.2,
+        z: 0
+      },
+      movementYawRadians: 0,
+      standingShape: FIRST_PERSON_PLAYER_SHAPE,
+      verticalVelocity: 0,
+      previousLocomotionState: createIdleRuntimeLocomotionState("swimming"),
+      previousPlanarDisplacement: {
+        x: 0,
+        y: 0,
+        z: 0
+      },
+      jumpBufferRemainingMs: 0,
+      coyoteTimeRemainingMs: 0,
+      jumpHoldRemainingMs: 0,
+      crouched: false,
+      wasJumpPressed: false,
+      input: {
+        ...FORWARD_INPUT,
+        moveForward: 0
+      },
+      movement: DEFAULT_MOVEMENT,
+      resolveMotion: (feetPosition, motion): ResolvedPlayerMotion => ({
+        feetPosition: {
+          x: feetPosition.x + motion.x,
+          y: feetPosition.y + motion.y,
+          z: feetPosition.z + motion.z
+        },
+        grounded: false,
+        collisionCount: 0,
+        groundCollisionNormal: null,
+        collidedAxes: {
+          x: false,
+          y: false,
+          z: false
+        }
+      }),
+      resolveVolumeState: () =>
+        createVolumeState({
+          inWater: true,
+          waterSurfaceHeight: 2.4
+        }),
+      probeGround: () => ({
+        grounded: false,
+        distance: null,
+        normal: null,
+        slopeDegrees: null
+      }),
+      canOccupyShape: () => true
+    });
+
+    expect(step).not.toBeNull();
+    expect(step?.locomotionState.locomotionMode).toBe("swimming");
+    expect(step?.inWaterVolume).toBe(true);
+    expect(step?.feetPosition.y).toBeCloseTo(0.84, 5);
+    expect((step?.feetPosition.y ?? 0) + FIRST_PERSON_PLAYER_SHAPE.eyeHeight).toBeGreaterThan(2.4);
+  });
+
+  it("uses sprint input to dive downward while submerged", () => {
+    const step = stepPlayerLocomotion({
+      dt: 0.1,
+      feetPosition: {
+        x: 0,
+        y: 0.5,
+        z: 0
+      },
+      movementYawRadians: 0,
+      standingShape: FIRST_PERSON_PLAYER_SHAPE,
+      verticalVelocity: 0,
+      previousLocomotionState: createIdleRuntimeLocomotionState("diving"),
+      previousPlanarDisplacement: {
+        x: 0,
+        y: 0,
+        z: 0
+      },
+      jumpBufferRemainingMs: 0,
+      coyoteTimeRemainingMs: 0,
+      jumpHoldRemainingMs: 0,
+      crouched: false,
+      wasJumpPressed: false,
+      input: {
+        ...FORWARD_INPUT,
+        moveForward: 0,
+        sprint: 1
+      },
+      movement: DEFAULT_MOVEMENT,
+      resolveMotion: (feetPosition, motion): ResolvedPlayerMotion => ({
+        feetPosition: {
+          x: feetPosition.x + motion.x,
+          y: feetPosition.y + motion.y,
+          z: feetPosition.z + motion.z
+        },
+        grounded: false,
+        collisionCount: 0,
+        groundCollisionNormal: null,
+        collidedAxes: {
+          x: false,
+          y: false,
+          z: false
+        }
+      }),
+      resolveVolumeState: () =>
+        createVolumeState({
+          inWater: true,
+          waterSurfaceHeight: 2.4
+        }),
+      probeGround: () => ({
+        grounded: false,
+        distance: null,
+        normal: null,
+        slopeDegrees: null
+      }),
+      canOccupyShape: () => true
+    });
+
+    expect(step).not.toBeNull();
+    expect(step?.locomotionState.locomotionMode).toBe("diving");
+    expect(step?.verticalVelocity).toBeCloseTo(-DEFAULT_MOVEMENT.moveSpeed);
+    expect(step?.feetPosition.y).toBeCloseTo(0.05, 5);
   });
 });
