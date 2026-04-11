@@ -18,6 +18,9 @@ describe("world settings helpers", () => {
     expect(clone.sunLight.direction).not.toBe(source.sunLight.direction);
     expect(clone.advancedRendering).not.toBe(source.advancedRendering);
     expect(clone.advancedRendering.shadows).not.toBe(source.advancedRendering.shadows);
+    expect(clone.advancedRendering.whiteboxBevel).not.toBe(
+      source.advancedRendering.whiteboxBevel
+    );
   });
 
   it("switches a solid background into a gradient while preserving the authored color as the top edge", () => {
@@ -91,6 +94,15 @@ describe("world settings helpers", () => {
     const right = cloneWorldSettings(left);
 
     right.advancedRendering.waterReflectionMode = "all";
+
+    expect(areWorldSettingsEqual(left, right)).toBe(false);
+  });
+
+  it("treats whitebox bevel settings as part of authored world equality", () => {
+    const left = createDefaultWorldSettings();
+    const right = cloneWorldSettings(left);
+
+    right.advancedRendering.whiteboxBevel.enabled = true;
 
     expect(areWorldSettingsEqual(left, right)).toBe(false);
   });
