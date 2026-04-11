@@ -79,6 +79,7 @@ import {
 import { RuntimeAudioSystem } from "./runtime-audio-system";
 import { ThirdPersonNavigationController } from "./third-person-navigation-controller";
 import { resolveUnderwaterFogState } from "./underwater-fog";
+import { resolveWaterContact } from "./water-volume-utils";
 import type {
   RuntimeBoxBrushInstance,
   RuntimeLocalLightCollection,
@@ -303,20 +304,23 @@ export class RuntimeHost {
     if (this.runtimeScene === null) {
       return {
         inWater: false,
-        inFog: false
+        inFog: false,
+        waterSurfaceHeight: null
       };
     }
 
-    const inWater = this.runtimeScene.volumes.water.some((volume) =>
-      this.isPointInsideOrientedVolume(feetPosition, volume)
+    const waterContact = resolveWaterContact(
+      feetPosition,
+      this.runtimeScene.volumes.water
     );
     const inFog = this.runtimeScene.volumes.fog.some((volume) =>
       this.isPointInsideOrientedVolume(feetPosition, volume)
     );
 
     return {
-      inWater,
-      inFog
+      inWater: waterContact !== null,
+      inFog,
+      waterSurfaceHeight: waterContact?.surfaceHeight ?? null
     };
   }
 
