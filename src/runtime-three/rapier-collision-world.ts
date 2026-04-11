@@ -15,6 +15,7 @@ import type { RuntimeBrushTriMeshCollider, RuntimeSceneCollider } from "./runtim
 
 const CHARACTER_CONTROLLER_OFFSET = 0.01;
 const COLLISION_EPSILON = 1e-5;
+const CAMERA_COLLISION_EPSILON = 1e-3;
 
 let rapierInitPromise: Promise<typeof RAPIER> | null = null;
 
@@ -340,6 +341,56 @@ export class RapierCollisionWorld {
       feetPosition: colliderCenterToFeetPosition(nextCenter, shape),
       grounded: this.characterController.computedGrounded() || (motion.y < 0 && collidedAxes.y),
       collidedAxes
+    };
+  }
+
+  resolveThirdPersonCameraCollision(
+    pivot: Vec3,
+    desiredCameraPosition: Vec3,
+    radius: number
+  ): Vec3 {
+    const delta = {
+      x: desiredCameraPosition.x - pivot.x,
+      y: desiredCameraPosition.y - pivot.y,
+      z: desiredCameraPosition.z - pivot.z
+    };
+    const distance = Math.hypot(delta.x, delta.y, delta.z);
+
+    if (distance <= COLLISION_EPSILON) {
+      return { ...desiredCameraPosition };
+    }
+
+    const hit = this.world.castShape(
+      pivot,
+      {
+        x: 0,
+        y: 0,
+        z: 0,
+        w: 1
+      },
+      delta,
+      new RAPIER.Ball(radius),
+      0,
+      1,
+      true,
+      undefined,
+      undefined,
+      this.playerCollider ?? undefined
+    );
+
+    if (hit === null) {
+      return { ...desiredCameraPosition };
+    }
+
+    const safeToi = Math.max(
+      0,
+      hit.time_of_impact - CAMERA_COLLISION_EPSILON / distance
+    );
+
+    return {
+      x: pivot.x + delta.x * safeToi,
+      y: pivot.y + delta.y * safeToi,
+      z: pivot.z + delta.z * safeToi
     };
   }
 
