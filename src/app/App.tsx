@@ -110,7 +110,6 @@ import type {
 import { getProjectAssetKindLabel } from "../assets/project-assets";
 import {
   getWhiteboxSelectionModeLabel,
-  WHITEBOX_SELECTION_MODES,
   type WhiteboxSelectionMode
 } from "../core/whitebox-selection-mode";
 import {
@@ -281,7 +280,6 @@ import {
   type ViewportViewMode
 } from "../viewport-three/viewport-view-modes";
 import {
-  VIEWPORT_LAYOUT_MODES,
   VIEWPORT_PANEL_IDS,
   getViewportDisplayModeLabel,
   getViewportLayoutModeLabel,
@@ -1098,17 +1096,6 @@ function getTransformOperationPastTense(operation: TransformOperation): string {
       return "Rotated";
     case "scale":
       return "Scaled";
-  }
-}
-
-function getTransformOperationShortcut(operation: TransformOperation): string {
-  switch (operation) {
-    case "translate":
-      return "G";
-    case "rotate":
-      return "R";
-    case "scale":
-      return "S";
   }
 }
 
@@ -7613,6 +7600,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   focusRequest.panelId === panelId ? focusRequest.id : 0
                 }
                 focusSelection={focusRequest.selection}
+                isAddMenuOpen={addMenuPosition !== null}
                 onActivatePanel={handleActivateViewportPanel}
                 onOpenAddMenu={handleOpenAddMenuFromButton}
                 onSetViewportLayoutMode={handleSetViewportLayoutMode}
