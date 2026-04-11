@@ -124,6 +124,19 @@ describe("validateSceneDocument", () => {
               jump: "yes",
               sprint: 1,
               crouch: null
+            },
+            jump: {
+              speed: 0,
+              bufferMs: -1,
+              coyoteTimeMs: -1,
+              variableHeight: "yes",
+              maxHoldMs: 0
+            },
+            sprint: {
+              speedMultiplier: 0
+            },
+            crouch: {
+              speedMultiplier: 0
             }
           } as unknown as ReturnType<typeof createPlayerStartEntity>["movementTemplate"],
           inputBindings: {
@@ -180,6 +193,27 @@ describe("validateSceneDocument", () => {
         }),
         expect.objectContaining({
           code: "invalid-player-start-crouch-capability"
+        }),
+        expect.objectContaining({
+          code: "invalid-player-start-jump-speed"
+        }),
+        expect.objectContaining({
+          code: "invalid-player-start-jump-buffer-ms"
+        }),
+        expect.objectContaining({
+          code: "invalid-player-start-coyote-time-ms"
+        }),
+        expect.objectContaining({
+          code: "invalid-player-start-variable-jump-height"
+        }),
+        expect.objectContaining({
+          code: "invalid-player-start-variable-jump-max-hold-ms"
+        }),
+        expect.objectContaining({
+          code: "invalid-player-start-sprint-speed-multiplier"
+        }),
+        expect.objectContaining({
+          code: "invalid-player-start-crouch-speed-multiplier"
         }),
         expect.objectContaining({
           code: "invalid-player-start-jump-keyboard-binding"
