@@ -20,7 +20,10 @@ import {
   type ProjectAssetRecord
 } from "../assets/project-assets";
 import {
+  DEFAULT_PLAYER_START_GAMEPAD_BINDINGS,
+  DEFAULT_PLAYER_START_KEYBOARD_BINDINGS,
   createPlayerStartColliderSettings,
+  createPlayerStartInputBindings,
   createInteractableEntity,
   normalizeEntityName,
   createPointLightEntity,
@@ -32,6 +35,8 @@ import {
   createTeleportTargetEntity,
   createTriggerVolumeEntity,
   isPlayerStartColliderMode,
+  isPlayerStartGamepadBinding,
+  isPlayerStartKeyboardBindingCode,
   isPlayerStartNavigationMode,
   type EntityInstance
 } from "../entities/entity-instances";
@@ -909,6 +914,102 @@ function readPlayerStartNavigationMode(value: unknown, label: string) {
   );
 }
 
+function readPlayerStartKeyboardBindingCode(
+  value: unknown,
+  label: string,
+  fallback: (typeof DEFAULT_PLAYER_START_KEYBOARD_BINDINGS)[keyof typeof DEFAULT_PLAYER_START_KEYBOARD_BINDINGS]
+) {
+  return readOptionalAllowedValue(
+    value,
+    label,
+    fallback,
+    (candidate): candidate is typeof fallback =>
+      typeof candidate === "string" && isPlayerStartKeyboardBindingCode(candidate)
+  );
+}
+
+function readPlayerStartGamepadBinding(
+  value: unknown,
+  label: string,
+  fallback: (typeof DEFAULT_PLAYER_START_GAMEPAD_BINDINGS)[keyof typeof DEFAULT_PLAYER_START_GAMEPAD_BINDINGS]
+) {
+  return readOptionalAllowedValue(
+    value,
+    label,
+    fallback,
+    (candidate): candidate is typeof fallback =>
+      typeof candidate === "string" && isPlayerStartGamepadBinding(candidate)
+  );
+}
+
+function readPlayerStartInputBindings(value: unknown, label: string) {
+  if (value === undefined) {
+    return createPlayerStartInputBindings();
+  }
+
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  const keyboard = value.keyboard;
+  const gamepad = value.gamepad;
+
+  if (keyboard !== undefined && !isRecord(keyboard)) {
+    throw new Error(`${label}.keyboard must be an object.`);
+  }
+
+  if (gamepad !== undefined && !isRecord(gamepad)) {
+    throw new Error(`${label}.gamepad must be an object.`);
+  }
+
+  return createPlayerStartInputBindings({
+    keyboard: {
+      moveForward: readPlayerStartKeyboardBindingCode(
+        keyboard?.moveForward,
+        `${label}.keyboard.moveForward`,
+        DEFAULT_PLAYER_START_KEYBOARD_BINDINGS.moveForward
+      ),
+      moveBackward: readPlayerStartKeyboardBindingCode(
+        keyboard?.moveBackward,
+        `${label}.keyboard.moveBackward`,
+        DEFAULT_PLAYER_START_KEYBOARD_BINDINGS.moveBackward
+      ),
+      moveLeft: readPlayerStartKeyboardBindingCode(
+        keyboard?.moveLeft,
+        `${label}.keyboard.moveLeft`,
+        DEFAULT_PLAYER_START_KEYBOARD_BINDINGS.moveLeft
+      ),
+      moveRight: readPlayerStartKeyboardBindingCode(
+        keyboard?.moveRight,
+        `${label}.keyboard.moveRight`,
+        DEFAULT_PLAYER_START_KEYBOARD_BINDINGS.moveRight
+      )
+    },
+    gamepad: {
+      moveForward: readPlayerStartGamepadBinding(
+        gamepad?.moveForward,
+        `${label}.gamepad.moveForward`,
+        DEFAULT_PLAYER_START_GAMEPAD_BINDINGS.moveForward
+      ),
+      moveBackward: readPlayerStartGamepadBinding(
+        gamepad?.moveBackward,
+        `${label}.gamepad.moveBackward`,
+        DEFAULT_PLAYER_START_GAMEPAD_BINDINGS.moveBackward
+      ),
+      moveLeft: readPlayerStartGamepadBinding(
+        gamepad?.moveLeft,
+        `${label}.gamepad.moveLeft`,
+        DEFAULT_PLAYER_START_GAMEPAD_BINDINGS.moveLeft
+      ),
+      moveRight: readPlayerStartGamepadBinding(
+        gamepad?.moveRight,
+        `${label}.gamepad.moveRight`,
+        DEFAULT_PLAYER_START_GAMEPAD_BINDINGS.moveRight
+      )
+    }
+  });
+}
+
 function readModelInstance(
   value: unknown,
   label: string,
@@ -1511,6 +1612,10 @@ function readPlayerStartEntity(value: unknown, label: string): EntityInstance {
     navigationMode: readPlayerStartNavigationMode(
       value.navigationMode,
       `${label}.navigationMode`
+    ),
+    inputBindings: readPlayerStartInputBindings(
+      value.inputBindings,
+      `${label}.inputBindings`
     ),
     collider: readPlayerStartColliderSettings(
       value.collider,
