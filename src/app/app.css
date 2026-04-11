@@ -103,10 +103,28 @@ button:disabled {
   line-height: 1.2;
 }
 
+.toolbar__scene-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 520px;
+  min-width: 260px;
+}
+
+.toolbar__scene-picker {
+  flex: 0 1 220px;
+  min-width: 160px;
+}
+
 .toolbar__scene-name {
   flex: 1 1 320px;
-  min-width: 220px;
+  min-width: 180px;
   max-width: 460px;
+}
+
+.toolbar__scene-select {
+  min-height: 36px;
+  width: 100%;
 }
 
 .toolbar__actions {
