@@ -2428,15 +2428,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
         event.preventDefault();
 
         if (event.shiftKey) {
-          if (store.redo()) {
-            setStatusMessage("Redid the last action.");
-          } else {
-            setStatusMessage("Nothing to redo.");
-          }
-        } else if (store.undo()) {
-          setStatusMessage("Undid the last action.");
+          handleRedo();
         } else {
-          setStatusMessage("Nothing to undo.");
+          handleUndo();
         }
 
         return;
@@ -2444,12 +2438,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
       if (hasPrimaryModifier && event.code === "KeyY") {
         event.preventDefault();
-
-        if (store.redo()) {
-          setStatusMessage("Redid the last action.");
-        } else {
-          setStatusMessage("Nothing to redo.");
-        }
+        handleRedo();
 
         return;
       }
@@ -2927,6 +2916,22 @@ export function App({ store, initialStatusMessage }: AppProps) {
     setStatusMessage(
       `Set the viewport panel to ${getViewportDisplayModeLabel(nextDisplayMode)} display.`
     );
+  };
+
+  const handleUndo = () => {
+    if (store.undo()) {
+      setStatusMessage("Undid the last action.");
+    } else {
+      setStatusMessage("Nothing to undo.");
+    }
+  };
+
+  const handleRedo = () => {
+    if (store.redo()) {
+      setStatusMessage("Redid the last action.");
+    } else {
+      setStatusMessage("Nothing to redo.");
+    }
   };
 
   const beginTransformOperation = (
