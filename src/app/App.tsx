@@ -6184,11 +6184,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
       const nextNavigationMode = preferredNavigationMode;
 
       setRuntimeScene(nextRuntimeScene);
-      setRuntimeMessage(
-        nextRuntimeScene.spawn.source === "playerStart"
-          ? "Running from the authored Player Start."
-          : "No Player Start is authored yet. Orbit Visitor opened first, with a fallback FPS spawn still available."
-      );
+      setRuntimeMessage(null);
       setFirstPersonTelemetry(null);
       setRuntimeInteractionPrompt(null);
       setActiveNavigationMode(nextNavigationMode);
@@ -6470,6 +6466,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
           <main className="runner-region">
             <RunnerCanvas
               runtimeScene={runtimeScene}
+              sceneName={activeProjectScene.name}
+              sceneLoadingScreen={activeProjectScene.loadingScreen}
               projectAssets={editorState.document.assets}
               loadedModelAssets={loadedModelAssets}
               loadedImageAssets={loadedImageAssets}
