@@ -15,7 +15,6 @@ import type { SceneDocument } from "../document/scene-document";
 import { cloneWorldSettings, type WorldSettings } from "../document/world-settings";
 import {
   clonePlayerStartInputBindings,
-  clonePlayerStartMovementTemplate,
   createPlayerStartMovementTemplate,
   createPlayerStartInputBindings,
   getEntityInstances,
