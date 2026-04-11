@@ -3,6 +3,7 @@ import { AudioListener, Group, PositionalAudio, Scene, Vector3, type Perspective
 import type { LoadedAudioAsset } from "../assets/audio-assets";
 import type { ProjectAssetRecord } from "../assets/project-assets";
 import type { InteractionLink } from "../interactions/interaction-links";
+import type { RuntimePlayerAudioHookState } from "./navigation-controller";
 import type { RuntimeSceneDefinition, RuntimeSoundEmitter } from "./runtime-scene-build";
 
 interface RuntimeSoundEmitterState {
@@ -65,6 +66,7 @@ export class RuntimeAudioSystem {
   private runtimeMessageHandler: ((message: string | null) => void) | null;
   private currentRuntimeMessage: string | null = null;
   private unlockRequested = false;
+  private playerAudioHooks: RuntimePlayerAudioHookState | null = null;
 
   constructor(
     scene: Scene,
@@ -107,6 +109,11 @@ export class RuntimeAudioSystem {
 
   updateListenerTransform() {
     this.listener?.updateMatrixWorld(true);
+    this.updateSoundEmitterVolumes();
+  }
+
+  setPlayerControllerAudioHooks(hooks: RuntimePlayerAudioHookState | null) {
+    this.playerAudioHooks = hooks;
     this.updateSoundEmitterVolumes();
   }
 
@@ -375,7 +382,10 @@ export class RuntimeAudioSystem {
     soundEmitter.group.getWorldPosition(_emitterPosition);
     const distance = _listenerPosition.distanceTo(_emitterPosition);
     const attenuation = computeSoundEmitterDistanceGain(distance, soundEmitter.entity.refDistance, soundEmitter.entity.maxDistance);
+    const underwaterDuck = 1 - (this.playerAudioHooks?.underwaterAmount ?? 0) * 0.4;
 
-    soundEmitter.audio.setVolume(soundEmitter.entity.volume * attenuation);
+    soundEmitter.audio.setVolume(
+      soundEmitter.entity.volume * attenuation * underwaterDuck
+    );
   }
 }
