@@ -28,12 +28,20 @@ export const FIRST_ROOM_POLISH_SCENE_DOCUMENT_VERSION = 5 as const;
 export const WORLD_ENVIRONMENT_SCENE_DOCUMENT_VERSION = 6 as const;
 export const ENTITY_SYSTEM_FOUNDATION_SCENE_DOCUMENT_VERSION = 7 as const;
 export const TRIGGER_ACTION_TARGET_FOUNDATION_SCENE_DOCUMENT_VERSION = 8 as const;
+export const RUNNER_LOADING_SCREEN_SCENE_DOCUMENT_VERSION = 23 as const;
 
 export const DEFAULT_PROJECT_SCENE_ID = "scene-main" as const;
+
+export interface SceneLoadingScreenSettings {
+  colorHex: string;
+  headline: string | null;
+  description: string | null;
+}
 
 export interface ProjectScene {
   id: string;
   name: string;
+  loadingScreen: SceneLoadingScreenSettings;
   world: WorldSettings;
   brushes: Record<string, Brush>;
   modelInstances: Record<string, ModelInstance>;
@@ -84,6 +92,7 @@ export function createEmptyProjectScene(
   return {
     id: overrides.id ?? createOpaqueId("scene"),
     name: overrides.name ?? "Untitled Scene",
+    loadingScreen: createDefaultSceneLoadingScreenSettings(),
     world: overrides.world ?? createDefaultWorldSettings(),
     brushes: {},
     modelInstances: {},
@@ -165,6 +174,7 @@ export function createProjectDocumentFromSceneDocument(
       [sceneId]: {
         id: sceneId,
         name: sceneDocument.name,
+        loadingScreen: createDefaultSceneLoadingScreenSettings(),
         world: sceneDocument.world,
         brushes: sceneDocument.brushes,
         modelInstances: sceneDocument.modelInstances,
@@ -204,4 +214,33 @@ export function applySceneDocumentToProject(
       }
     }
   };
+}
+
+export function createDefaultSceneLoadingScreenSettings(): SceneLoadingScreenSettings {
+  return {
+    colorHex: "#0d1117",
+    headline: null,
+    description: null
+  };
+}
+
+export function cloneSceneLoadingScreenSettings(
+  settings: SceneLoadingScreenSettings
+): SceneLoadingScreenSettings {
+  return {
+    colorHex: settings.colorHex,
+    headline: settings.headline,
+    description: settings.description
+  };
+}
+
+export function areSceneLoadingScreenSettingsEqual(
+  left: SceneLoadingScreenSettings,
+  right: SceneLoadingScreenSettings
+): boolean {
+  return (
+    left.colorHex === right.colorHex &&
+    left.headline === right.headline &&
+    left.description === right.description
+  );
 }
