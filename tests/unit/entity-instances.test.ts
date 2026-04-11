@@ -8,6 +8,8 @@ import {
   DEFAULT_PLAYER_START_CAPSULE_HEIGHT,
   DEFAULT_PLAYER_START_CAPSULE_RADIUS,
   DEFAULT_PLAYER_START_EYE_HEIGHT,
+  DEFAULT_PLAYER_START_MOVE_SPEED,
+  DEFAULT_PLAYER_START_MOVEMENT_CAPABILITIES,
   DEFAULT_SPOT_LIGHT_ANGLE_DEGREES,
   DEFAULT_SPOT_LIGHT_COLOR_HEX,
   DEFAULT_SPOT_LIGHT_DISTANCE,
@@ -33,6 +35,11 @@ describe("entity registry defaults", () => {
       position: { x: 0, y: 0, z: 0 },
       yawDegrees: 0,
       navigationMode: "firstPerson",
+      movementTemplate: {
+        kind: "default",
+        moveSpeed: DEFAULT_PLAYER_START_MOVE_SPEED,
+        capabilities: DEFAULT_PLAYER_START_MOVEMENT_CAPABILITIES
+      },
       collider: {
         mode: "capsule",
         eyeHeight: DEFAULT_PLAYER_START_EYE_HEIGHT,
