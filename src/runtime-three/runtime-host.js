@@ -861,14 +861,9 @@ export class RuntimeHost {
         for (const mixer of this.animationMixers.values()) {
             mixer.update(dt);
         }
-        if (this.runtimeScene !== null && this.activeController === this.firstPersonController && this.currentFirstPersonTelemetry !== null) {
+        if (this.sceneReady && this.runtimeScene !== null && this.currentFirstPersonTelemetry !== null) {
             this.interactionSystem.updatePlayerPosition(this.currentFirstPersonTelemetry.feetPosition, this.runtimeScene, this.createInteractionDispatcher());
-            this.camera.getWorldDirection(this.cameraForward);
-            this.setInteractionPrompt(this.interactionSystem.resolveClickInteractionPrompt(this.currentFirstPersonTelemetry.eyePosition, {
-                x: this.cameraForward.x,
-                y: this.cameraForward.y,
-                z: this.cameraForward.z
-            }, this.runtimeScene));
+            this.setInteractionPrompt(this.resolveInteractionPrompt());
         }
         else {
             this.setInteractionPrompt(null);
@@ -885,8 +880,11 @@ export class RuntimeHost {
         this.renderer?.render(this.scene, this.camera);
     };
     applyTeleportPlayerAction(target) {
+        if (this.activeController === this.thirdPersonController) {
+            this.thirdPersonController.teleportTo(target.position, target.yawDegrees);
+            return;
+        }
         this.firstPersonController.teleportTo(target.position, target.yawDegrees);
-        this.volumeAnimatedUniforms.length = 0;
     }
     applyToggleBrushVisibilityAction(brushId, visible) {
         const mesh = this.brushMeshes.get(brushId);
@@ -954,11 +952,37 @@ export class RuntimeHost {
         this.currentInteractionPrompt = prompt;
         this.interactionPromptHandler?.(prompt);
     }
+    resolveInteractionPrompt() {
+        if (this.runtimeScene === null ||
+            this.currentFirstPersonTelemetry === null ||
+            (this.activeController !== this.firstPersonController &&
+                this.activeController !== this.thirdPersonController)) {
+            return null;
+        }
+        this.camera.getWorldDirection(this.cameraForward);
+        const interactionOrigin = this.currentFirstPersonTelemetry.eyePosition;
+        const rayOrigin = this.activeController === this.thirdPersonController
+            ? {
+                x: this.camera.position.x,
+                y: this.camera.position.y,
+                z: this.camera.position.z
+            }
+            : interactionOrigin;
+        return this.interactionSystem.resolveClickInteractionPrompt(interactionOrigin, rayOrigin, {
+            x: this.cameraForward.x,
+            y: this.cameraForward.y,
+            z: this.cameraForward.z
+        }, this.runtimeScene);
+    }
     handleRuntimeClick = () => {
-        this.audioSystem.handleUserGesture();
-        if (this.runtimeScene === null || this.activeController !== this.firstPersonController || this.currentInteractionPrompt === null) {
+        if (!this.sceneReady ||
+            this.runtimeScene === null ||
+            (this.activeController !== this.firstPersonController &&
+                this.activeController !== this.thirdPersonController) ||
+            this.currentInteractionPrompt === null) {
             return;
         }
+        this.audioSystem.handleUserGesture();
         this.interactionSystem.dispatchClickInteraction(this.currentInteractionPrompt.sourceEntityId, this.runtimeScene, this.createInteractionDispatcher());
     };
     handleRuntimePointerDown = () => {

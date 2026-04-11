@@ -90,8 +90,8 @@ export class RuntimeInteractionSystem {
             }
         }
     }
-    resolveClickInteractionPrompt(viewOrigin, viewDirection, runtimeScene) {
-        const normalizedViewDirection = normalizeVec3(viewDirection);
+    resolveClickInteractionPrompt(interactionOrigin, rayOrigin, rayDirection, runtimeScene) {
+        const normalizedViewDirection = normalizeVec3(rayDirection);
         if (normalizedViewDirection === null) {
             return null;
         }
@@ -101,11 +101,11 @@ export class RuntimeInteractionSystem {
             if (!interactable.enabled || !hasTriggerLinks(runtimeScene, interactable.entityId, "click")) {
                 continue;
             }
-            const distance = distanceBetweenVec3(viewOrigin, interactable.position);
+            const distance = distanceBetweenVec3(interactionOrigin, interactable.position);
             if (distance > interactable.radius) {
                 continue;
             }
-            const hitDistance = raySphereHitDistance(viewOrigin, normalizedViewDirection, interactable.position, getInteractableTargetRadius(interactable));
+            const hitDistance = raySphereHitDistance(rayOrigin, normalizedViewDirection, interactable.position, getInteractableTargetRadius(interactable));
             if (hitDistance === null) {
                 continue;
             }
