@@ -1228,6 +1228,97 @@ function validatePlayerStartEntity(
     );
   }
 
+  if (
+    !isFiniteNumber(entity.movementTemplate?.jump?.speed) ||
+    (entity.movementTemplate?.jump?.speed ?? 0) <= 0
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-jump-speed",
+        "Player Start jump speed must remain a finite number greater than zero.",
+        `${path}.movementTemplate.jump.speed`
+      )
+    );
+  }
+
+  if (!isNonNegativeFiniteNumber(entity.movementTemplate?.jump?.bufferMs)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-jump-buffer-ms",
+        "Player Start jump buffer must remain a finite number zero or greater.",
+        `${path}.movementTemplate.jump.bufferMs`
+      )
+    );
+  }
+
+  if (
+    !isNonNegativeFiniteNumber(entity.movementTemplate?.jump?.coyoteTimeMs)
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-coyote-time-ms",
+        "Player Start coyote time must remain a finite number zero or greater.",
+        `${path}.movementTemplate.jump.coyoteTimeMs`
+      )
+    );
+  }
+
+  if (!isBoolean(entity.movementTemplate?.jump?.variableHeight)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-variable-jump-height",
+        "Player Start variable jump height setting must be a boolean.",
+        `${path}.movementTemplate.jump.variableHeight`
+      )
+    );
+  }
+
+  if (
+    !isFiniteNumber(entity.movementTemplate?.jump?.maxHoldMs) ||
+    (entity.movementTemplate?.jump?.maxHoldMs ?? 0) <= 0
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-variable-jump-max-hold-ms",
+        "Player Start variable jump max hold must remain a finite number greater than zero.",
+        `${path}.movementTemplate.jump.maxHoldMs`
+      )
+    );
+  }
+
+  if (
+    !isFiniteNumber(entity.movementTemplate?.sprint?.speedMultiplier) ||
+    (entity.movementTemplate?.sprint?.speedMultiplier ?? 0) <= 0
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-sprint-speed-multiplier",
+        "Player Start sprint speed multiplier must remain a finite number greater than zero.",
+        `${path}.movementTemplate.sprint.speedMultiplier`
+      )
+    );
+  }
+
+  if (
+    !isFiniteNumber(entity.movementTemplate?.crouch?.speedMultiplier) ||
+    (entity.movementTemplate?.crouch?.speedMultiplier ?? 0) <= 0
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-crouch-speed-multiplier",
+        "Player Start crouch speed multiplier must remain a finite number greater than zero.",
+        `${path}.movementTemplate.crouch.speedMultiplier`
+      )
+    );
+  }
+
   if (!isPlayerStartKeyboardBindingCode(entity.inputBindings?.keyboard.moveForward)) {
     diagnostics.push(
       createDiagnostic(
