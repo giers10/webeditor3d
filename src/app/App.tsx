@@ -2447,6 +2447,30 @@ export function App({ store, initialStatusMessage }: AppProps) {
     setStatusMessage(`Scene renamed to ${normalizedName}.`);
   };
 
+  const handleCreateScene = () => {
+    store.executeCommand(createCreateSceneCommand());
+    setStatusMessage("Created a new scene.");
+  };
+
+  const handleActiveSceneChange = (
+    event: ChangeEvent<HTMLSelectElement>
+  ) => {
+    const nextSceneId = event.currentTarget.value;
+
+    if (nextSceneId === editorState.activeSceneId) {
+      return;
+    }
+
+    const nextScene = editorState.projectDocument.scenes[nextSceneId];
+
+    if (nextScene === undefined) {
+      return;
+    }
+
+    store.executeCommand(createSetActiveSceneCommand(nextSceneId));
+    setStatusMessage(`Switched to scene ${nextScene.name}.`);
+  };
+
   const requestViewportFocus = (
     selection: EditorSelection,
     status?: string
