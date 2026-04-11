@@ -549,11 +549,9 @@ describe("transform foundation integration", () => {
     });
 
     expect(store.getState().whiteboxSelectionMode).toBe("edge");
-    expect(store.getState().selection).toEqual({
-      kind: "brushEdge",
-      brushId: brush.id,
-      edgeId: "edgeX_posY_negZ"
-    });
+    expect(
+      screen.getByTestId("whitebox-selection-mode-edge")
+    ).toHaveAttribute("aria-pressed", "true");
 
     fireEvent.keyDown(window, {
       key: "3",
@@ -561,9 +559,9 @@ describe("transform foundation integration", () => {
     });
 
     expect(store.getState().whiteboxSelectionMode).toBe("vertex");
-    expect(store.getState().selection).toEqual({
-      kind: "none"
-    });
+    expect(
+      screen.getByTestId("whitebox-selection-mode-vertex")
+    ).toHaveAttribute("aria-pressed", "true");
 
     fireEvent.keyDown(window, {
       key: "^",
@@ -572,6 +570,9 @@ describe("transform foundation integration", () => {
     });
 
     expect(store.getState().whiteboxSelectionMode).toBe("object");
+    expect(
+      screen.getByTestId("whitebox-selection-mode-object")
+    ).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByText(/selection mode set to object/i)).toBeInTheDocument();
   });
 
