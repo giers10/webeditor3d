@@ -372,15 +372,22 @@ Rules:
 - no three.js object references
 - should be testable in isolation
 
-Example structure:
+Example persisted project structure:
 
 ```ts
-interface SceneDocument {
+interface ProjectDocument {
   version: number;
-  world: WorldSettings;
+  activeSceneId: string;
+  scenes: Record<string, ProjectScene>;
   materials: Record<string, MaterialDef>;
   textures: Record<string, TextureDef>;
   assets: Record<string, AssetRecord>;
+}
+
+interface ProjectScene {
+  id: string;
+  name: string;
+  world: WorldSettings;
   brushes: Record<string, Brush>;
   modelInstances: Record<string, ModelInstance>;
   entities: Record<string, EntityInstance>;
@@ -837,6 +844,8 @@ At that point, the user-facing save/load format should be a **project package** 
 
 - `scene.json`
 - referenced asset payloads
+
+`scene.json` may still contain multiple authored scenes inside one project document; the file name does not imply a single loaded runtime scene.
 
 Recommended logical shape:
 
