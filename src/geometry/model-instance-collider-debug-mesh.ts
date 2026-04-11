@@ -22,6 +22,7 @@ const DEBUG_COLLIDER_COLORS = {
   simple: 0x87d2ff,
   terrain: 0x7be7b4,
   static: 0xffc66d,
+  "static-simple": 0xa3ff9c,
   dynamic: 0xff8b7a
 } as const;
 
@@ -102,15 +103,24 @@ function createHeightfieldColliderDebugMesh(collider: GeneratedModelHeightfieldC
 
 function createCompoundColliderDebugGroup(collider: GeneratedModelCompoundCollider): Group {
   const group = new Group();
+  const color = DEBUG_COLLIDER_COLORS[collider.mode];
 
   for (const piece of collider.pieces) {
+    if (piece.kind === "box") {
+      const mesh = new Mesh(new BoxGeometry(piece.size.x, piece.size.y, piece.size.z), createWireframeMaterial(color));
+      mesh.position.set(piece.center.x, piece.center.y, piece.center.z);
+      markDebugMesh(mesh);
+      group.add(mesh);
+      continue;
+    }
+
     const points: Vector3[] = [];
 
     for (let index = 0; index < piece.points.length; index += 3) {
       points.push(new Vector3(piece.points[index], piece.points[index + 1], piece.points[index + 2]));
     }
 
-    const mesh = new Mesh(new ConvexGeometry(points), createWireframeMaterial(DEBUG_COLLIDER_COLORS.dynamic));
+    const mesh = new Mesh(new ConvexGeometry(points), createWireframeMaterial(color));
     markDebugMesh(mesh);
     group.add(mesh);
   }

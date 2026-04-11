@@ -1070,7 +1070,7 @@ function validateModelInstance(
       createDiagnostic(
         "error",
         "invalid-model-instance-collision-mode",
-        "Model instance collision mode must be one of none, terrain, static, dynamic, or simple.",
+        "Model instance collision mode must be one of none, terrain, static, static-simple, dynamic, or simple.",
         `${path}.collision.mode`
       )
     );

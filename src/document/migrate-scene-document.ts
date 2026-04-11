@@ -77,6 +77,7 @@ import {
   DEFAULT_PROJECT_NAME,
   DEFAULT_PROJECT_SCENE_ID,
   SCENE_EDITOR_PREFERENCES_SCENE_DOCUMENT_VERSION,
+  STATIC_SIMPLE_MODEL_COLLIDERS_SCENE_DOCUMENT_VERSION,
   ENTITY_NAMES_SCENE_DOCUMENT_VERSION,
   ENTITY_SYSTEM_FOUNDATION_SCENE_DOCUMENT_VERSION,
   FACE_MATERIALS_SCENE_DOCUMENT_VERSION,
@@ -2636,6 +2637,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
 
   if (
     source.version !== SCENE_DOCUMENT_VERSION &&
+    source.version !== SCENE_EDITOR_PREFERENCES_SCENE_DOCUMENT_VERSION &&
     source.version !== PLAYER_START_GAMEPAD_CAMERA_LOOK_SCENE_DOCUMENT_VERSION &&
     source.version !== PLAYER_START_INPUT_BINDINGS_SCENE_DOCUMENT_VERSION &&
     source.version !== PLAYER_START_NAVIGATION_MODE_SCENE_DOCUMENT_VERSION &&
@@ -2747,7 +2749,7 @@ export function migrateProjectDocument(source: unknown): ProjectDocument {
     const allowMissingProjectName =
       source.version < PROJECT_NAME_SCENE_DOCUMENT_VERSION;
     const allowMissingEditorPreferences =
-      source.version < SCENE_EDITOR_PREFERENCES_SCENE_DOCUMENT_VERSION;
+      source.version < STATIC_SIMPLE_MODEL_COLLIDERS_SCENE_DOCUMENT_VERSION;
 
     for (const [sceneKey, sceneValue] of Object.entries(source.scenes)) {
       scenes[sceneKey] = readProjectScene(

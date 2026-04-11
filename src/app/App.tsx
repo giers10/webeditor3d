@@ -323,6 +323,8 @@ function getModelInstanceCollisionModeDescription(
       return "Builds a Rapier heightfield from a regular-grid terrain mesh. Unsupported terrain sources fail with build diagnostics.";
     case "static":
       return "Builds a fixed Rapier triangle-mesh collider from the imported model geometry.";
+    case "static-simple":
+      return "Builds a fixed compound collider by voxel-boxifying the imported mesh surface into merged structural slabs.";
     case "dynamic":
       return "Builds convex compound pieces for Rapier queries. In this slice they participate as fixed world collision, not fully simulated rigid bodies.";
     case "simple":

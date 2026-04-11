@@ -5,6 +5,7 @@ import {
   Matrix4,
   Mesh,
   Quaternion,
+  Triangle,
   Vector3,
   type BufferGeometry
 } from "three";
@@ -17,6 +18,11 @@ import type { Vec3 } from "../core/vector";
 const TERRAIN_GRID_EPSILON = 1e-4;
 const DYNAMIC_TRIANGLE_TARGET = 48;
 const DYNAMIC_SPLIT_DEPTH_LIMIT = 3;
+const STATIC_SIMPLE_VOXEL_LONGEST_AXIS_TARGET = 24;
+const STATIC_SIMPLE_MIN_VOXEL_LONGEST_AXIS_TARGET = 10;
+const STATIC_SIMPLE_VOXEL_AXIS_LIMIT = 28;
+const STATIC_SIMPLE_SURFACE_BAND_SCALE = 0.75;
+const STATIC_SIMPLE_MIN_THICKNESS = 0.05;
 
 interface LocalTriangle {
   readonly a: Vector3;
@@ -74,16 +80,29 @@ export interface GeneratedModelHeightfieldCollider extends GeneratedModelCollide
   maxZ: number;
 }
 
-export interface GeneratedModelCompoundColliderPiece {
+export interface GeneratedModelCompoundConvexHullColliderPiece {
   id: string;
+  kind: "convexHull";
   points: Float32Array;
   localBounds: GeneratedColliderBounds;
 }
 
+export interface GeneratedModelCompoundBoxColliderPiece {
+  id: string;
+  kind: "box";
+  center: Vec3;
+  size: Vec3;
+  localBounds: GeneratedColliderBounds;
+}
+
+export type GeneratedModelCompoundColliderPiece =
+  | GeneratedModelCompoundConvexHullColliderPiece
+  | GeneratedModelCompoundBoxColliderPiece;
+
 export interface GeneratedModelCompoundCollider extends GeneratedModelColliderBase {
   kind: "compound";
   pieces: GeneratedModelCompoundColliderPiece[];
-  decomposition: "spatial-bisect";
+  decomposition: "spatial-bisect" | "surface-voxel-boxes";
   runtimeBehavior: "fixedQueryOnly";
 }
 
@@ -123,6 +142,21 @@ function createBounds(min: Vector3, max: Vector3): GeneratedColliderBounds {
   return {
     min: vector3ToVec3(min),
     max: vector3ToVec3(max)
+  };
+}
+
+function createBoundsFromCenterAndSize(center: Vec3, size: Vec3): GeneratedColliderBounds {
+  return {
+    min: {
+      x: center.x - size.x * 0.5,
+      y: center.y - size.y * 0.5,
+      z: center.z - size.z * 0.5
+    },
+    max: {
+      x: center.x + size.x * 0.5,
+      y: center.y + size.y * 0.5,
+      z: center.z + size.z * 0.5
+    }
   };
 }
 
@@ -203,6 +237,22 @@ function computeWorldBoundsFromLocalBox(localBounds: GeneratedColliderBounds, mo
   ];
 
   return computeBoundsFromPoints(corners.map((corner) => corner.applyMatrix4(modelMatrix)));
+}
+
+function computeCompoundColliderLocalBounds(pieces: GeneratedModelCompoundColliderPiece[]): GeneratedColliderBounds {
+  const min = new Vector3(Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY);
+  const max = new Vector3(Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY);
+
+  for (const piece of pieces) {
+    min.x = Math.min(min.x, piece.localBounds.min.x);
+    min.y = Math.min(min.y, piece.localBounds.min.y);
+    min.z = Math.min(min.z, piece.localBounds.min.z);
+    max.x = Math.max(max.x, piece.localBounds.max.x);
+    max.y = Math.max(max.y, piece.localBounds.max.y);
+    max.z = Math.max(max.z, piece.localBounds.max.z);
+  }
+
+  return createBounds(min, max);
 }
 
 interface PositionLikeAttribute {
@@ -418,6 +468,376 @@ function dedupeTriangleClusterPoints(triangles: LocalTriangle[]): Float32Array {
   );
 }
 
+interface StaticSimpleVoxelAxis {
+  origin: number;
+  cellSize: number;
+  dimension: number;
+}
+
+interface StaticSimpleVoxelGrid {
+  origin: Vec3;
+  cellSize: Vec3;
+  dimensions: {
+    x: number;
+    y: number;
+    z: number;
+  };
+  occupancy: Uint8Array;
+}
+
+interface StaticSimpleVoxelBox {
+  minX: number;
+  minY: number;
+  minZ: number;
+  maxX: number;
+  maxY: number;
+  maxZ: number;
+}
+
+function createStaticSimpleVoxelAxis(min: number, max: number, baseCellSize: number): StaticSimpleVoxelAxis {
+  const extent = max - min;
+  const minimumThickness = Math.min(baseCellSize, STATIC_SIMPLE_MIN_THICKNESS);
+
+  if (extent <= minimumThickness) {
+    const center = (min + max) * 0.5;
+
+    return {
+      origin: center - minimumThickness * 0.5,
+      cellSize: minimumThickness,
+      dimension: 1
+    };
+  }
+
+  const dimension = Math.min(STATIC_SIMPLE_VOXEL_AXIS_LIMIT, Math.max(1, Math.ceil(extent / baseCellSize)));
+
+  return {
+    origin: min,
+    cellSize: extent / dimension,
+    dimension
+  };
+}
+
+function createStaticSimpleVoxelGrid(bounds: GeneratedColliderBounds, targetLongestAxis: number): StaticSimpleVoxelGrid {
+  const extentX = bounds.max.x - bounds.min.x;
+  const extentY = bounds.max.y - bounds.min.y;
+  const extentZ = bounds.max.z - bounds.min.z;
+  const longestExtent = Math.max(extentX, extentY, extentZ, STATIC_SIMPLE_MIN_THICKNESS);
+  const baseCellSize = longestExtent / Math.max(1, targetLongestAxis);
+  const xAxis = createStaticSimpleVoxelAxis(bounds.min.x, bounds.max.x, baseCellSize);
+  const yAxis = createStaticSimpleVoxelAxis(bounds.min.y, bounds.max.y, baseCellSize);
+  const zAxis = createStaticSimpleVoxelAxis(bounds.min.z, bounds.max.z, baseCellSize);
+
+  return {
+    origin: {
+      x: xAxis.origin,
+      y: yAxis.origin,
+      z: zAxis.origin
+    },
+    cellSize: {
+      x: xAxis.cellSize,
+      y: yAxis.cellSize,
+      z: zAxis.cellSize
+    },
+    dimensions: {
+      x: xAxis.dimension,
+      y: yAxis.dimension,
+      z: zAxis.dimension
+    },
+    occupancy: new Uint8Array(xAxis.dimension * yAxis.dimension * zAxis.dimension)
+  };
+}
+
+function getStaticSimpleVoxelIndex(grid: StaticSimpleVoxelGrid, x: number, y: number, z: number): number {
+  return x + y * grid.dimensions.x + z * grid.dimensions.x * grid.dimensions.y;
+}
+
+function clampGridRangeStart(value: number, origin: number, cellSize: number, dimension: number): number {
+  return Math.max(0, Math.min(dimension - 1, Math.floor((value - origin) / cellSize)));
+}
+
+function clampGridRangeEnd(value: number, origin: number, cellSize: number, dimension: number): number {
+  return Math.max(0, Math.min(dimension - 1, Math.floor((value - origin) / cellSize)));
+}
+
+function setStaticSimpleVoxelOccupied(grid: StaticSimpleVoxelGrid, x: number, y: number, z: number) {
+  grid.occupancy[getStaticSimpleVoxelIndex(grid, x, y, z)] = 1;
+}
+
+function isStaticSimpleVoxelOccupied(grid: StaticSimpleVoxelGrid, x: number, y: number, z: number, claimed?: Uint8Array): boolean {
+  const index = getStaticSimpleVoxelIndex(grid, x, y, z);
+  return grid.occupancy[index] === 1 && (claimed === undefined || claimed[index] === 0);
+}
+
+function voxelCenterCoordinate(origin: number, cellSize: number, index: number): number {
+  return origin + (index + 0.5) * cellSize;
+}
+
+function voxelBoxToBounds(grid: StaticSimpleVoxelGrid, box: StaticSimpleVoxelBox): GeneratedColliderBounds {
+  return {
+    min: {
+      x: grid.origin.x + box.minX * grid.cellSize.x,
+      y: grid.origin.y + box.minY * grid.cellSize.y,
+      z: grid.origin.z + box.minZ * grid.cellSize.z
+    },
+    max: {
+      x: grid.origin.x + box.maxX * grid.cellSize.x,
+      y: grid.origin.y + box.maxY * grid.cellSize.y,
+      z: grid.origin.z + box.maxZ * grid.cellSize.z
+    }
+  };
+}
+
+function voxelBoxToCenterAndSize(grid: StaticSimpleVoxelGrid, box: StaticSimpleVoxelBox): { center: Vec3; size: Vec3 } {
+  const bounds = voxelBoxToBounds(grid, box);
+
+  return {
+    center: {
+      x: (bounds.min.x + bounds.max.x) * 0.5,
+      y: (bounds.min.y + bounds.max.y) * 0.5,
+      z: (bounds.min.z + bounds.max.z) * 0.5
+    },
+    size: {
+      x: bounds.max.x - bounds.min.x,
+      y: bounds.max.y - bounds.min.y,
+      z: bounds.max.z - bounds.min.z
+    }
+  };
+}
+
+function markStaticSimpleSurfaceVoxels(grid: StaticSimpleVoxelGrid, triangles: LocalTriangle[]) {
+  const triangle = new Triangle();
+  const triangleBoundsMin = new Vector3();
+  const triangleBoundsMax = new Vector3();
+  const center = new Vector3();
+  const closestPoint = new Vector3();
+  const band =
+    Math.hypot(grid.cellSize.x, grid.cellSize.y, grid.cellSize.z) *
+    0.5 *
+    STATIC_SIMPLE_SURFACE_BAND_SCALE;
+
+  for (const sourceTriangle of triangles) {
+    triangle.set(sourceTriangle.a, sourceTriangle.b, sourceTriangle.c);
+    triangleBoundsMin.copy(sourceTriangle.a).min(sourceTriangle.b).min(sourceTriangle.c);
+    triangleBoundsMax.copy(sourceTriangle.a).max(sourceTriangle.b).max(sourceTriangle.c);
+
+    const startX = clampGridRangeStart(triangleBoundsMin.x - band, grid.origin.x, grid.cellSize.x, grid.dimensions.x);
+    const startY = clampGridRangeStart(triangleBoundsMin.y - band, grid.origin.y, grid.cellSize.y, grid.dimensions.y);
+    const startZ = clampGridRangeStart(triangleBoundsMin.z - band, grid.origin.z, grid.cellSize.z, grid.dimensions.z);
+    const endX = clampGridRangeEnd(triangleBoundsMax.x + band, grid.origin.x, grid.cellSize.x, grid.dimensions.x);
+    const endY = clampGridRangeEnd(triangleBoundsMax.y + band, grid.origin.y, grid.cellSize.y, grid.dimensions.y);
+    const endZ = clampGridRangeEnd(triangleBoundsMax.z + band, grid.origin.z, grid.cellSize.z, grid.dimensions.z);
+
+    for (let zIndex = startZ; zIndex <= endZ; zIndex += 1) {
+      for (let yIndex = startY; yIndex <= endY; yIndex += 1) {
+        for (let xIndex = startX; xIndex <= endX; xIndex += 1) {
+          center.set(
+            voxelCenterCoordinate(grid.origin.x, grid.cellSize.x, xIndex),
+            voxelCenterCoordinate(grid.origin.y, grid.cellSize.y, yIndex),
+            voxelCenterCoordinate(grid.origin.z, grid.cellSize.z, zIndex)
+          );
+
+          triangle.closestPointToPoint(center, closestPoint);
+
+          if (closestPoint.distanceToSquared(center) <= band * band) {
+            setStaticSimpleVoxelOccupied(grid, xIndex, yIndex, zIndex);
+          }
+        }
+      }
+    }
+  }
+}
+
+function dilateStaticSimpleSurfaceVoxels(grid: StaticSimpleVoxelGrid): Uint8Array {
+  const dilated = new Uint8Array(grid.occupancy);
+
+  for (let zIndex = 0; zIndex < grid.dimensions.z; zIndex += 1) {
+    for (let yIndex = 0; yIndex < grid.dimensions.y; yIndex += 1) {
+      for (let xIndex = 0; xIndex < grid.dimensions.x; xIndex += 1) {
+        if (!isStaticSimpleVoxelOccupied(grid, xIndex, yIndex, zIndex)) {
+          continue;
+        }
+
+        for (let zOffset = -1; zOffset <= 1; zOffset += 1) {
+          const nextZ = zIndex + zOffset;
+
+          if (nextZ < 0 || nextZ >= grid.dimensions.z) {
+            continue;
+          }
+
+          for (let yOffset = -1; yOffset <= 1; yOffset += 1) {
+            const nextY = yIndex + yOffset;
+
+            if (nextY < 0 || nextY >= grid.dimensions.y) {
+              continue;
+            }
+
+            for (let xOffset = -1; xOffset <= 1; xOffset += 1) {
+              const nextX = xIndex + xOffset;
+
+              if (nextX < 0 || nextX >= grid.dimensions.x) {
+                continue;
+              }
+
+              dilated[getStaticSimpleVoxelIndex(grid, nextX, nextY, nextZ)] = 1;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return dilated;
+}
+
+function canExpandStaticSimpleBoxAlongZ(
+  grid: StaticSimpleVoxelGrid,
+  claimed: Uint8Array,
+  minX: number,
+  maxX: number,
+  y: number,
+  z: number
+): boolean {
+  for (let xIndex = minX; xIndex <= maxX; xIndex += 1) {
+    if (!isStaticSimpleVoxelOccupied(grid, xIndex, y, z, claimed)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function canExpandStaticSimpleBoxAlongY(
+  grid: StaticSimpleVoxelGrid,
+  claimed: Uint8Array,
+  minX: number,
+  maxX: number,
+  minZ: number,
+  maxZ: number,
+  y: number
+): boolean {
+  for (let zIndex = minZ; zIndex <= maxZ; zIndex += 1) {
+    for (let xIndex = minX; xIndex <= maxX; xIndex += 1) {
+      if (!isStaticSimpleVoxelOccupied(grid, xIndex, y, zIndex, claimed)) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+function packStaticSimpleVoxelBoxes(grid: StaticSimpleVoxelGrid): StaticSimpleVoxelBox[] {
+  const claimed = new Uint8Array(grid.occupancy.length);
+  const boxes: StaticSimpleVoxelBox[] = [];
+
+  for (let yIndex = 0; yIndex < grid.dimensions.y; yIndex += 1) {
+    for (let zIndex = 0; zIndex < grid.dimensions.z; zIndex += 1) {
+      for (let xIndex = 0; xIndex < grid.dimensions.x; xIndex += 1) {
+        if (!isStaticSimpleVoxelOccupied(grid, xIndex, yIndex, zIndex, claimed)) {
+          continue;
+        }
+
+        let maxX = xIndex;
+
+        while (
+          maxX + 1 < grid.dimensions.x &&
+          isStaticSimpleVoxelOccupied(grid, maxX + 1, yIndex, zIndex, claimed)
+        ) {
+          maxX += 1;
+        }
+
+        let maxZ = zIndex;
+
+        while (
+          maxZ + 1 < grid.dimensions.z &&
+          canExpandStaticSimpleBoxAlongZ(grid, claimed, xIndex, maxX, yIndex, maxZ + 1)
+        ) {
+          maxZ += 1;
+        }
+
+        let maxY = yIndex;
+
+        while (
+          maxY + 1 < grid.dimensions.y &&
+          canExpandStaticSimpleBoxAlongY(grid, claimed, xIndex, maxX, zIndex, maxZ, maxY + 1)
+        ) {
+          maxY += 1;
+        }
+
+        for (let fillY = yIndex; fillY <= maxY; fillY += 1) {
+          for (let fillZ = zIndex; fillZ <= maxZ; fillZ += 1) {
+            for (let fillX = xIndex; fillX <= maxX; fillX += 1) {
+              claimed[getStaticSimpleVoxelIndex(grid, fillX, fillY, fillZ)] = 1;
+            }
+          }
+        }
+
+        boxes.push({
+          minX: xIndex,
+          minY: yIndex,
+          minZ: zIndex,
+          maxX: maxX + 1,
+          maxY: maxY + 1,
+          maxZ: maxZ + 1
+        });
+      }
+    }
+  }
+
+  return boxes;
+}
+
+function collectStaticSimpleBoxPieces(triangles: LocalTriangle[], modelInstanceId: string): GeneratedModelCompoundBoxColliderPiece[] {
+  const bounds = getTriangleBounds(triangles);
+  let targetLongestAxis = STATIC_SIMPLE_VOXEL_LONGEST_AXIS_TARGET;
+  let bestPieces: GeneratedModelCompoundBoxColliderPiece[] = [];
+
+  while (targetLongestAxis >= STATIC_SIMPLE_MIN_VOXEL_LONGEST_AXIS_TARGET) {
+    const grid = createStaticSimpleVoxelGrid(bounds, targetLongestAxis);
+
+    markStaticSimpleSurfaceVoxels(grid, triangles);
+    grid.occupancy = dilateStaticSimpleSurfaceVoxels(grid);
+
+    const pieces = packStaticSimpleVoxelBoxes(grid).map((box, index) => {
+      const { center, size } = voxelBoxToCenterAndSize(grid, box);
+
+      return {
+        id: `${modelInstanceId}-box-piece-${index + 1}`,
+        kind: "box" as const,
+        center,
+        size,
+        localBounds: createBoundsFromCenterAndSize(center, size)
+      };
+    });
+
+    if (pieces.length > 0) {
+      bestPieces = pieces;
+    }
+
+    if (pieces.length > 0 && pieces.length <= STATIC_SIMPLE_VOXEL_AXIS_LIMIT) {
+      break;
+    }
+
+    if (targetLongestAxis === STATIC_SIMPLE_MIN_VOXEL_LONGEST_AXIS_TARGET) {
+      break;
+    }
+
+    targetLongestAxis = Math.max(
+      STATIC_SIMPLE_MIN_VOXEL_LONGEST_AXIS_TARGET,
+      Math.floor(targetLongestAxis * 0.7)
+    );
+  }
+
+  if (bestPieces.length === 0) {
+    throw new ModelColliderGenerationError(
+      "unsupported-static-simple-model-collider",
+      `Model instance ${modelInstanceId} could not derive any voxel-box pieces for static-simple collision.`
+    );
+  }
+
+  return bestPieces;
+}
+
 function buildSimpleBoxCollider(modelInstance: ModelInstance, asset: ModelAssetRecord): GeneratedModelBoxCollider {
   const boundingBox = asset.metadata.boundingBox;
 
@@ -623,6 +1043,7 @@ function buildDynamicCollider(
     .flatMap((cluster) => collectConvexHullPointClouds(cluster.triangles))
     .map((points, index) => ({
       id: `${modelInstance.id}-piece-${index + 1}`,
+      kind: "convexHull" as const,
       points,
       localBounds: computeBoundsFromFloat32Points(points)
     }));
@@ -634,17 +1055,7 @@ function buildDynamicCollider(
     );
   }
 
-  const localBounds = computeBoundsFromPoints(
-    pieces.flatMap((piece) => {
-      const points: Vector3[] = [];
-
-      for (let pointIndex = 0; pointIndex < piece.points.length; pointIndex += 3) {
-        points.push(new Vector3(piece.points[pointIndex], piece.points[pointIndex + 1], piece.points[pointIndex + 2]));
-      }
-
-      return points;
-    })
-  );
+  const localBounds = computeCompoundColliderLocalBounds(pieces);
 
   return {
     source: "modelInstance",
@@ -656,6 +1067,54 @@ function buildDynamicCollider(
     transform: createModelTransform(modelInstance),
     pieces,
     decomposition: "spatial-bisect",
+    runtimeBehavior: "fixedQueryOnly",
+    localBounds,
+    worldBounds: computeWorldBoundsFromLocalBox(localBounds, createModelTransformMatrix(modelInstance))
+  };
+}
+
+function buildStaticSimpleCollider(
+  modelInstance: ModelInstance,
+  asset: ModelAssetRecord,
+  loadedAsset: LoadedModelAsset | undefined
+): GeneratedModelCompoundCollider {
+  if (loadedAsset === undefined) {
+    throw new ModelColliderGenerationError(
+      "missing-model-collider-geometry",
+      `Model instance ${modelInstance.id} cannot build static-simple collision until asset geometry has loaded.`
+    );
+  }
+
+  const triangleClusters = collectMeshTriangleClusters(loadedAsset.template);
+
+  if (triangleClusters.length === 0) {
+    throw new ModelColliderGenerationError(
+      "missing-model-collider-geometry",
+      `Model instance ${modelInstance.id} cannot use static-simple collision because the asset has no mesh triangles.`
+    );
+  }
+
+  const pieces = triangleClusters.flatMap((cluster) => collectStaticSimpleBoxPieces(cluster.triangles, modelInstance.id));
+
+  if (pieces.length === 0) {
+    throw new ModelColliderGenerationError(
+      "unsupported-static-simple-model-collider",
+      `Model instance ${modelInstance.id} could not derive any static-simple box pieces.`
+    );
+  }
+
+  const localBounds = computeCompoundColliderLocalBounds(pieces);
+
+  return {
+    source: "modelInstance",
+    instanceId: modelInstance.id,
+    assetId: asset.id,
+    mode: "static-simple",
+    kind: "compound",
+    visible: modelInstance.collision.visible,
+    transform: createModelTransform(modelInstance),
+    pieces,
+    decomposition: "surface-voxel-boxes",
     runtimeBehavior: "fixedQueryOnly",
     localBounds,
     worldBounds: computeWorldBoundsFromLocalBox(localBounds, createModelTransformMatrix(modelInstance))
@@ -674,6 +1133,8 @@ export function buildGeneratedModelCollider(
       return buildSimpleBoxCollider(modelInstance, asset);
     case "static":
       return buildTriMeshCollider(modelInstance, asset, loadedAsset);
+    case "static-simple":
+      return buildStaticSimpleCollider(modelInstance, asset, loadedAsset);
     case "terrain":
       return buildTerrainCollider(modelInstance, asset, loadedAsset);
     case "dynamic":

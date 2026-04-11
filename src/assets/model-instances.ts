@@ -2,7 +2,7 @@ import { createOpaqueId } from "../core/ids";
 import type { Vec3 } from "../core/vector";
 import type { ModelAssetRecord } from "./project-assets";
 
-export const MODEL_INSTANCE_COLLISION_MODES = ["none", "terrain", "static", "dynamic", "simple"] as const;
+export const MODEL_INSTANCE_COLLISION_MODES = ["none", "terrain", "static", "static-simple", "dynamic", "simple"] as const;
 
 export type ModelInstanceCollisionMode = (typeof MODEL_INSTANCE_COLLISION_MODES)[number];
 

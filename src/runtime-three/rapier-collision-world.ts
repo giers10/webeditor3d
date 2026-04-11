@@ -165,14 +165,36 @@ function attachDynamicModelCollider(world: RAPIER.World, collider: GeneratedMode
   const body = createFixedBodyForModelCollider(world, collider);
 
   for (const piece of collider.pieces) {
-    const scaledPoints = scaleVertices(piece.points, collider.transform.scale);
-    const descriptor = RAPIER.ColliderDesc.convexHull(scaledPoints);
+    if (piece.kind === "convexHull") {
+      const scaledPoints = scaleVertices(piece.points, collider.transform.scale);
+      const descriptor = RAPIER.ColliderDesc.convexHull(scaledPoints);
 
-    if (descriptor === null) {
-      throw new Error(`Dynamic collider piece ${piece.id} could not form a valid convex hull.`);
+      if (descriptor === null) {
+        throw new Error(`Dynamic collider piece ${piece.id} could not form a valid convex hull.`);
+      }
+
+      world.createCollider(descriptor, body);
+      continue;
     }
 
-    world.createCollider(descriptor, body);
+    const scaledCenter = componentScale(piece.center, collider.transform.scale);
+    const scaledHalfExtents = componentScale(
+      {
+        x: piece.size.x * 0.5,
+        y: piece.size.y * 0.5,
+        z: piece.size.z * 0.5
+      },
+      collider.transform.scale
+    );
+
+    world.createCollider(
+      RAPIER.ColliderDesc.cuboid(scaledHalfExtents.x, scaledHalfExtents.y, scaledHalfExtents.z).setTranslation(
+        scaledCenter.x,
+        scaledCenter.y,
+        scaledCenter.z
+      ),
+      body
+    );
   }
 }
 
