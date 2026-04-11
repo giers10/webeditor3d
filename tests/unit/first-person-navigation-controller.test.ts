@@ -4,6 +4,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Vec3 } from "../../src/core/vector";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
 import { createPlayerStartEntity } from "../../src/entities/entity-instances";
+import type {
+  FirstPersonPlayerShape,
+  ResolvedPlayerMotion
+} from "../../src/runtime-three/player-collision";
 import { buildRuntimeSceneFromDocument } from "../../src/runtime-three/runtime-scene-build";
 import { FirstPersonNavigationController } from "../../src/runtime-three/first-person-navigation-controller";
 
@@ -35,7 +39,7 @@ function createRuntimeControllerContext(
   resolveFirstPersonMotion: (
     feetPosition: Vec3,
     motion: Vec3
-  ) => { feetPosition: Vec3; grounded: boolean } | null = () => null
+  ) => ResolvedPlayerMotion | null = () => null
 ) {
   const runtimeScene = buildRuntimeSceneFromDocument(
     {
@@ -59,7 +63,7 @@ function createRuntimeControllerContext(
       resolveFirstPersonMotion: (
         feetPosition: Vec3,
         motion: Vec3,
-        _shape
+        _shape: FirstPersonPlayerShape
       ) => resolveFirstPersonMotion(feetPosition, motion),
       resolvePlayerVolumeState: () => ({
         inWater: false,
@@ -146,7 +150,12 @@ describe("FirstPersonNavigationController", () => {
           y: feetPosition.y + motion.y,
           z: feetPosition.z + motion.z
         },
-        grounded: false
+        grounded: false,
+        collidedAxes: {
+          x: false,
+          y: false,
+          z: false
+        }
       })
     );
     const controller = new FirstPersonNavigationController();
