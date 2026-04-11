@@ -1699,6 +1699,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
     useState<PlayerStartNavigationMode>(DEFAULT_PLAYER_START_NAVIGATION_MODE);
   const [playerStartMovementTemplateDraft, setPlayerStartMovementTemplateDraft] =
     useState<PlayerStartMovementTemplate>(createPlayerStartMovementTemplate());
+  const [
+    playerStartMovementTemplateNumberDraft,
+    setPlayerStartMovementTemplateNumberDraft
+  ] = useState<PlayerStartMovementTemplateNumberDraft>(
+    createPlayerStartMovementTemplateNumberDraft(
+      createPlayerStartMovementTemplate()
+    )
+  );
   const [playerStartColliderModeDraft, setPlayerStartColliderModeDraft] =
     useState<PlayerStartColliderMode>("capsule");
   const [playerStartEyeHeightDraft, setPlayerStartEyeHeightDraft] = useState(
@@ -2156,6 +2164,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
       setPlayerStartYawDraft("0");
       setPlayerStartNavigationModeDraft(DEFAULT_PLAYER_START_NAVIGATION_MODE);
       setPlayerStartMovementTemplateDraft(createPlayerStartMovementTemplate());
+      setPlayerStartMovementTemplateNumberDraft(
+        createPlayerStartMovementTemplateNumberDraft(
+          createPlayerStartMovementTemplate()
+        )
+      );
       setPlayerStartColliderModeDraft("capsule");
       setPlayerStartEyeHeightDraft(String(DEFAULT_PLAYER_START_EYE_HEIGHT));
       setPlayerStartCapsuleRadiusDraft(
@@ -2217,6 +2230,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
         setPlayerStartNavigationModeDraft(selectedEntity.navigationMode);
         setPlayerStartMovementTemplateDraft(
           clonePlayerStartMovementTemplate(selectedEntity.movementTemplate)
+        );
+        setPlayerStartMovementTemplateNumberDraft(
+          createPlayerStartMovementTemplateNumberDraft(
+            selectedEntity.movementTemplate
+          )
         );
         setPlayerStartColliderModeDraft(selectedEntity.collider.mode);
         setPlayerStartEyeHeightDraft(String(selectedEntity.collider.eyeHeight));
