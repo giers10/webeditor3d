@@ -37,6 +37,7 @@ interface ViewportPanelProps {
   whiteboxSelectionMode: WhiteboxSelectionMode;
   whiteboxSnapEnabled: boolean;
   whiteboxSnapStep: number;
+  viewportGridVisible: boolean;
   selection: EditorSelection;
   toolMode: ToolMode;
   toolPreview: ViewportToolPreview;
@@ -71,6 +72,7 @@ export function ViewportPanel({
   whiteboxSelectionMode,
   whiteboxSnapEnabled,
   whiteboxSnapStep,
+  viewportGridVisible,
   selection,
   toolMode,
   toolPreview,
@@ -160,6 +162,7 @@ export function ViewportPanel({
         whiteboxSelectionMode={whiteboxSelectionMode}
         whiteboxSnapEnabled={whiteboxSnapEnabled}
         whiteboxSnapStep={whiteboxSnapStep}
+        viewportGridVisible={viewportGridVisible}
         selection={selection}
         toolMode={toolMode}
         toolPreview={toolPreview}
