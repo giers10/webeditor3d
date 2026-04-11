@@ -2340,6 +2340,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
 
   if (
     source.version !== SCENE_DOCUMENT_VERSION &&
+    source.version !== RUNNER_LOADING_SCREEN_SCENE_DOCUMENT_VERSION &&
     source.version !== MULTI_SCENE_FOUNDATION_SCENE_DOCUMENT_VERSION &&
     source.version !== WATER_SURFACE_DISPLACEMENT_SCENE_DOCUMENT_VERSION &&
     source.version !== WHITEBOX_BOX_VOLUME_SCENE_DOCUMENT_VERSION &&
@@ -2404,7 +2405,8 @@ export function migrateProjectDocument(source: unknown): ProjectDocument {
 
   if (
     (source.version === MULTI_SCENE_FOUNDATION_SCENE_DOCUMENT_VERSION ||
-      source.version === RUNNER_LOADING_SCREEN_SCENE_DOCUMENT_VERSION) &&
+      source.version === RUNNER_LOADING_SCREEN_SCENE_DOCUMENT_VERSION ||
+      source.version === SCENE_TRANSITION_ENTITIES_SCENE_DOCUMENT_VERSION) &&
     isRecord(source.scenes)
   ) {
     const materials = readMaterialRegistry(source.materials, "materials");
