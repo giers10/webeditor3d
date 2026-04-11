@@ -787,7 +787,7 @@ function packStaticSimpleVoxelBoxes(grid: StaticSimpleVoxelGrid): StaticSimpleVo
   return boxes;
 }
 
-function collectStaticSimpleBoxPieces(triangles: LocalTriangle[], modelInstanceId: string): GeneratedModelCompoundBoxColliderPiece[] {
+function collectStaticSimpleBoxPieces(triangles: LocalTriangle[], pieceIdPrefix: string): GeneratedModelCompoundBoxColliderPiece[] {
   const bounds = getTriangleBounds(triangles);
   let targetLongestAxis = STATIC_SIMPLE_VOXEL_LONGEST_AXIS_TARGET;
   let bestPieces: GeneratedModelCompoundBoxColliderPiece[] = [];
@@ -802,7 +802,7 @@ function collectStaticSimpleBoxPieces(triangles: LocalTriangle[], modelInstanceI
       const { center, size } = voxelBoxToCenterAndSize(grid, box);
 
       return {
-        id: `${modelInstanceId}-box-piece-${index + 1}`,
+        id: `${pieceIdPrefix}-box-piece-${index + 1}`,
         kind: "box" as const,
         center,
         size,
@@ -831,7 +831,7 @@ function collectStaticSimpleBoxPieces(triangles: LocalTriangle[], modelInstanceI
   if (bestPieces.length === 0) {
     throw new ModelColliderGenerationError(
       "unsupported-static-simple-model-collider",
-      `Model instance ${modelInstanceId} could not derive any voxel-box pieces for static-simple collision.`
+      `Model instance ${pieceIdPrefix} could not derive any voxel-box pieces for static-simple collision.`
     );
   }
 
@@ -1094,7 +1094,9 @@ function buildStaticSimpleCollider(
     );
   }
 
-  const pieces = triangleClusters.flatMap((cluster) => collectStaticSimpleBoxPieces(cluster.triangles, modelInstance.id));
+  const pieces = triangleClusters.flatMap((cluster, index) =>
+    collectStaticSimpleBoxPieces(cluster.triangles, `${modelInstance.id}-cluster-${index + 1}`)
+  );
 
   if (pieces.length === 0) {
     throw new ModelColliderGenerationError(
