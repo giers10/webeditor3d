@@ -1314,6 +1314,51 @@ function filterProjectSceneDiagnostics(diagnostics: SceneDiagnostic[]): SceneDia
   );
 }
 
+function validateProjectSceneLoadingScreen(
+  scene: ProjectDocument["scenes"][string],
+  scenePath: string,
+  diagnostics: SceneDiagnostic[]
+) {
+  if (!isHexColorString(scene.loadingScreen.colorHex)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-scene-loading-color",
+        "Scene loading overlays must use #RRGGBB colors.",
+        `${scenePath}.loadingScreen.colorHex`
+      )
+    );
+  }
+
+  if (
+    scene.loadingScreen.headline !== null &&
+    scene.loadingScreen.headline.trim().length === 0
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-scene-loading-headline",
+        "Scene loading overlay headlines must be non-empty when authored.",
+        `${scenePath}.loadingScreen.headline`
+      )
+    );
+  }
+
+  if (
+    scene.loadingScreen.description !== null &&
+    scene.loadingScreen.description.trim().length === 0
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-scene-loading-description",
+        "Scene loading overlay descriptions must be non-empty when authored.",
+        `${scenePath}.loadingScreen.description`
+      )
+    );
+  }
+}
+
 export function formatSceneDiagnostic(diagnostic: SceneDiagnostic): string {
   return diagnostic.path === undefined ? diagnostic.message : `${diagnostic.path}: ${diagnostic.message}`;
 }
