@@ -589,7 +589,7 @@ Near-term runtime collision is intentionally narrower than a full game-engine ph
 Initial modes:
 
 - first-person
-- orbit visitor
+- third-person
 
 Later optional modes:
 

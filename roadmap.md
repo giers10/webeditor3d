@@ -187,7 +187,7 @@ This is the first proof that the product is real.
 
 - runtime build from document
 - first-person navigation
-- orbit visitor mode
+- third-person mode
 - mode switch
 - minimal typed `PlayerStart` support
 - basic collision against axis-aligned box brush geometry
@@ -197,7 +197,7 @@ This is the first proof that the product is real.
 
 - user can press Run and navigate the scene
 - first-person works with keyboard/mouse
-- orbit visitor works
+- third-person works
 - leaving run mode returns to editor state safely
 - `PlayerStart` does not need to be rebuilt later as a separate foundation
 
