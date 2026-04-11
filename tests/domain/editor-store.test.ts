@@ -112,6 +112,72 @@ describe("EditorStore", () => {
     ).toHaveLength(1);
   });
 
+  it("restores scene-scoped editor preferences when switching scenes", () => {
+    const store = createEditorStore();
+    const firstSceneId = store.getState().activeSceneId;
+
+    store.setWhiteboxSelectionMode("face");
+    store.setWhiteboxSnapEnabled(false);
+    store.setWhiteboxSnapStep(0.5);
+    store.setViewportGridVisible(false);
+    store.setViewportLayoutMode("quad");
+    store.setActiveViewportPanel("bottomRight");
+    store.setViewportPanelViewMode("topLeft", "front");
+    store.setViewportPanelDisplayMode("topLeft", "wireframe");
+
+    store.executeCommand(createCreateSceneCommand());
+    const secondSceneId = store.getState().activeSceneId;
+
+    expect(secondSceneId).not.toBe(firstSceneId);
+    expect(store.getState().whiteboxSelectionMode).toBe("object");
+    expect(store.getState().whiteboxSnapEnabled).toBe(true);
+    expect(store.getState().whiteboxSnapStep).toBe(1);
+    expect(store.getState().viewportGridVisible).toBe(true);
+    expect(store.getState().viewportLayoutMode).toBe("single");
+    expect(store.getState().activeViewportPanelId).toBe("topLeft");
+    expect(store.getState().viewportPanels.topLeft.viewMode).toBe(
+      "perspective"
+    );
+    expect(store.getState().viewportPanels.topLeft.displayMode).toBe(
+      "normal"
+    );
+
+    store.setWhiteboxSelectionMode("vertex");
+    store.setWhiteboxSnapEnabled(true);
+    store.setWhiteboxSnapStep(2);
+    store.setViewportGridVisible(true);
+    store.setViewportLayoutMode("quad");
+    store.setActiveViewportPanel("topRight");
+    store.setViewportPanelViewMode("topLeft", "side");
+    store.setViewportPanelDisplayMode("topLeft", "authoring");
+
+    store.executeCommand(createSetActiveSceneCommand(firstSceneId));
+
+    expect(store.getState().whiteboxSelectionMode).toBe("face");
+    expect(store.getState().whiteboxSnapEnabled).toBe(false);
+    expect(store.getState().whiteboxSnapStep).toBe(0.5);
+    expect(store.getState().viewportGridVisible).toBe(false);
+    expect(store.getState().viewportLayoutMode).toBe("quad");
+    expect(store.getState().activeViewportPanelId).toBe("bottomRight");
+    expect(store.getState().viewportPanels.topLeft.viewMode).toBe("front");
+    expect(store.getState().viewportPanels.topLeft.displayMode).toBe(
+      "wireframe"
+    );
+
+    store.executeCommand(createSetActiveSceneCommand(secondSceneId));
+
+    expect(store.getState().whiteboxSelectionMode).toBe("vertex");
+    expect(store.getState().whiteboxSnapEnabled).toBe(true);
+    expect(store.getState().whiteboxSnapStep).toBe(2);
+    expect(store.getState().viewportGridVisible).toBe(true);
+    expect(store.getState().viewportLayoutMode).toBe("quad");
+    expect(store.getState().activeViewportPanelId).toBe("topRight");
+    expect(store.getState().viewportPanels.topLeft.viewMode).toBe("side");
+    expect(store.getState().viewportPanels.topLeft.displayMode).toBe(
+      "authoring"
+    );
+  });
+
   it("updates scene loading overlay settings through commands and supports undo", () => {
     const store = createEditorStore();
     const sceneId = store.getState().activeSceneId;
