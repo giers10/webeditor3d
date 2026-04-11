@@ -3,7 +3,10 @@ import { Vector3 } from "three";
 import type { Vec3 } from "../core/vector";
 
 import { getFirstPersonPlayerEyeHeight } from "./player-collision";
-import { resolvePlayerStartMovementActions } from "./player-input-bindings";
+import {
+  resolvePlayerStartLookInput,
+  resolvePlayerStartMovementActions
+} from "./player-input-bindings";
 import type {
   NavigationController,
   NavigationControllerDeactivateOptions,
@@ -12,6 +15,7 @@ import type {
 } from "./navigation-controller";
 
 const LOOK_SENSITIVITY = 0.008;
+const GAMEPAD_LOOK_SPEED = 2.8;
 const MOVE_SPEED = 4.5;
 const GRAVITY = 22;
 const DEFAULT_CAMERA_DISTANCE = 4.5;
@@ -104,7 +108,7 @@ export class ThirdPersonNavigationController implements NavigationController {
     window.addEventListener("pointerup", this.handlePointerUp);
 
     ctx.setRuntimeMessage(
-      "Third Person active. Drag to orbit the camera, move with your authored keyboard or standard-gamepad bindings, and scroll to zoom."
+      "Third Person active. Drag to orbit the camera, use the right stick for gamepad camera look, move with your authored bindings, and scroll to zoom."
     );
     this.updateCameraTransform();
     this.publishTelemetry();
@@ -158,10 +162,21 @@ export class ThirdPersonNavigationController implements NavigationController {
     }
 
     const playerShape = this.context.getRuntimeScene().playerCollider;
+    const lookInput = resolvePlayerStartLookInput(
+      this.context.getRuntimeScene().playerInputBindings
+    );
     const inputState = resolvePlayerStartMovementActions(
       this.pressedKeys,
       this.context.getRuntimeScene().playerInputBindings
     );
+
+    if (lookInput.horizontal !== 0 || lookInput.vertical !== 0) {
+      this.cameraYawRadians -= lookInput.horizontal * GAMEPAD_LOOK_SPEED * dt;
+      this.pitchRadians = clampPitch(
+        this.pitchRadians - lookInput.vertical * GAMEPAD_LOOK_SPEED * dt
+      );
+    }
+
     const currentVolumeState = this.context.resolvePlayerVolumeState(
       this.feetPosition
     );
