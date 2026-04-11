@@ -455,10 +455,16 @@ export class RuntimeHost {
     this.audioSystem.setRuntimeMessageHandler(handler);
   }
 
-  setFirstPersonTelemetryHandler(
-    handler: ((telemetry: FirstPersonTelemetry | null) => void) | null
+  setPlayerControllerTelemetryHandler(
+    handler: ((telemetry: PlayerControllerTelemetry | null) => void) | null
   ) {
-    this.firstPersonTelemetryHandler = handler;
+    this.playerControllerTelemetryHandler = handler;
+  }
+
+  setFirstPersonTelemetryHandler(
+    handler: ((telemetry: PlayerControllerTelemetry | null) => void) | null
+  ) {
+    this.setPlayerControllerTelemetryHandler(handler);
   }
 
   setInteractionPromptHandler(
