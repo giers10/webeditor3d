@@ -57,6 +57,11 @@ function createRuntimeControllerContext(
     }
   );
   const domElement = document.createElement("canvas");
+  const createVolumeState = () => ({
+    inWater: false,
+    inFog: false,
+    waterSurfaceHeight: null
+  });
 
   return {
     context: {
@@ -89,10 +94,7 @@ function createRuntimeControllerContext(
         slopeDegrees: null
       }),
       canOccupyPlayerShape: () => true,
-      resolvePlayerVolumeState: () => ({
-        inWater: false,
-        inFog: false
-      }),
+      resolvePlayerVolumeState: () => createVolumeState(),
       resolveThirdPersonCameraCollision: (
         _pivot: Vec3,
         desiredCameraPosition: Vec3
