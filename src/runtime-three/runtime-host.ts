@@ -270,16 +270,36 @@ export class RuntimeHost {
   }
 
   loadScene(runtimeScene: RuntimeSceneDefinition) {
+    const requestId = ++this.collisionWorldRequestId;
+
+    this.sceneReady = false;
     this.runtimeScene = runtimeScene;
     this.currentWorld = runtimeScene.world;
+    this.activeController?.deactivate(this.controllerContext);
+    this.activeController = null;
+    this.firstPersonController.resetSceneState();
+    this.orbitVisitorController.resetSceneState();
     this.interactionSystem.reset();
     this.setInteractionPrompt(null);
+    this.currentFirstPersonTelemetry = null;
+    this.firstPersonTelemetryHandler?.(null);
+    this.currentRuntimeMessage = null;
+    this.runtimeMessageHandler?.(null);
+    this.clearCollisionWorld();
+    this.publishSceneLoadState({
+      status: "loading",
+      message: null
+    });
     this.applyWorld();
     this.rebuildLocalLights(runtimeScene.localLights);
     this.rebuildBrushMeshes(runtimeScene.brushes);
     this.rebuildModelInstances(runtimeScene.modelInstances);
-    void this.rebuildCollisionWorld(runtimeScene.colliders, runtimeScene.playerCollider);
     this.audioSystem.loadScene(runtimeScene);
+    void this.finalizeSceneLoad(
+      requestId,
+      runtimeScene.colliders,
+      runtimeScene.playerCollider
+    );
   }
 
   updateAssets(
@@ -304,25 +324,13 @@ export class RuntimeHost {
   }
 
   setNavigationMode(mode: RuntimeNavigationMode) {
-    if (this.runtimeScene === null) {
+    this.desiredNavigationMode = mode;
+
+    if (this.runtimeScene === null || !this.sceneReady) {
       return;
     }
 
-    const nextController = mode === "firstPerson" ? this.firstPersonController : this.orbitVisitorController;
-
-    if (this.activeController?.id === nextController.id) {
-      return;
-    }
-
-    if (this.activeController === this.firstPersonController && this.currentFirstPersonTelemetry !== null && nextController === this.orbitVisitorController) {
-      this.orbitVisitorController.setFocusPoint(this.currentFirstPersonTelemetry.feetPosition);
-    }
-
-    this.activeController?.deactivate(this.controllerContext);
-    this.interactionSystem.reset();
-    this.setInteractionPrompt(null);
-    this.activeController = nextController;
-    this.activeController.activate(this.controllerContext);
+    this.activateDesiredNavigationController();
   }
 
   setRuntimeMessageHandler(handler: ((message: string | null) => void) | null) {
@@ -336,6 +344,16 @@ export class RuntimeHost {
 
   setInteractionPromptHandler(handler: ((prompt: RuntimeInteractionPrompt | null) => void) | null) {
     this.interactionPromptHandler = handler;
+  }
+
+  setSceneLoadStateHandler(
+    handler: ((state: RuntimeSceneLoadState) => void) | null
+  ) {
+    this.sceneLoadStateHandler = handler;
+
+    if (handler !== null && this.currentSceneLoadState !== null) {
+      handler(this.currentSceneLoadState);
+    }
   }
 
   dispose() {
