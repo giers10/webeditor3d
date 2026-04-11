@@ -30,6 +30,7 @@ import { createSetBoxBrushFaceUvStateCommand } from "../commands/set-box-brush-f
 import { createSetActiveSceneCommand } from "../commands/set-active-scene-command";
 import { createDeleteInteractionLinkCommand } from "../commands/delete-interaction-link-command";
 import { createSetModelInstanceNameCommand } from "../commands/set-model-instance-name-command";
+import { createSetProjectNameCommand } from "../commands/set-project-name-command";
 import { createSetSceneLoadingScreenCommand } from "../commands/set-scene-loading-screen-command";
 import { createSetSceneNameCommand } from "../commands/set-scene-name-command";
 import { createSetWorldSettingsCommand } from "../commands/set-world-settings-command";
@@ -152,6 +153,7 @@ import {
   areSceneLoadingScreenSettingsEqual,
   cloneSceneLoadingScreenSettings,
   createSceneDocumentFromProject,
+  DEFAULT_PROJECT_NAME,
   type SceneLoadingScreenSettings
 } from "../document/scene-document";
 import {
@@ -1193,14 +1195,14 @@ function formatBoxVolumeRenderPathLabel(path: BoxVolumeRenderPath): string {
   }
 }
 
-function createProjectDownloadName(documentName: string): string {
-  const slug = documentName
+function createProjectDownloadName(projectName: string): string {
+  const slug = projectName
     .trim()
     .toLowerCase()
     .replace(/[^a-z0-9]+/gu, "-")
     .replace(/^-+|-+$/gu, "");
 
-  return `${slug.length > 0 ? slug : "scene"}${PROJECT_PACKAGE_FILE_EXTENSION}`;
+  return `${slug.length > 0 ? slug : "project"}${PROJECT_PACKAGE_FILE_EXTENSION}`;
 }
 
 export function App({ store, initialStatusMessage }: AppProps) {
@@ -1361,6 +1363,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
     label: getBrushLabel(brush, brushIndex)
   }));
 
+  const [projectNameDraft, setProjectNameDraft] = useState(
+    editorState.projectDocument.name
+  );
   const [sceneNameDraft, setSceneNameDraft] = useState(
     editorState.document.name
   );
@@ -1800,6 +1805,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
       window.removeEventListener("keydown", handleWindowKeyCapture, true);
     };
   }, [playerStartKeyboardCaptureAction]);
+
+  useEffect(() => {
+    setProjectNameDraft(editorState.projectDocument.name);
+  }, [editorState.projectDocument.name]);
 
   useEffect(() => {
     setSceneNameDraft(editorState.document.name);
@@ -2720,6 +2729,17 @@ export function App({ store, initialStatusMessage }: AppProps) {
       window.removeEventListener("keydown", handleWindowKeyDown);
     };
   }, [activeNavigationMode, editorState.toolMode, firstPersonTelemetry]);
+
+  const applyProjectName = () => {
+    const normalizedName = projectNameDraft.trim() || DEFAULT_PROJECT_NAME;
+
+    if (normalizedName === editorState.projectDocument.name) {
+      return;
+    }
+
+    store.executeCommand(createSetProjectNameCommand(normalizedName));
+    setStatusMessage(`Project renamed to ${normalizedName}.`);
+  };
 
   const applySceneName = () => {
     const normalizedName = sceneNameDraft.trim() || "Untitled Scene";
@@ -6292,7 +6312,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
       const anchor = document.createElement("a");
 
       anchor.href = objectUrl;
-      anchor.download = createProjectDownloadName(editorState.document.name);
+      anchor.download = createProjectDownloadName(
+        editorState.projectDocument.name
+      );
       anchor.click();
       URL.revokeObjectURL(objectUrl);
 
@@ -7169,6 +7191,24 @@ export function App({ store, initialStatusMessage }: AppProps) {
     <div className="app-shell">
       <header className="toolbar">
         <div className="toolbar__scene-controls">
+          <label className="toolbar__project-name">
+            <span className="visually-hidden">Project Name</span>
+            <input
+              data-testid="toolbar-project-name"
+              className="text-input toolbar__project-name-input"
+              type="text"
+              value={projectNameDraft}
+              onChange={(event) =>
+                setProjectNameDraft(event.currentTarget.value)
+              }
+              onBlur={applyProjectName}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  applyProjectName();
+                }
+              }}
+            />
+          </label>
           <label className="toolbar__scene-picker">
             <span className="visually-hidden">Active Scene</span>
             <select
