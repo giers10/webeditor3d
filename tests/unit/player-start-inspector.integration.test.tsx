@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -135,6 +135,108 @@ describe("Player Start inspector", () => {
       movementTemplate: {
         kind: "default"
       }
+    });
+
+    expect(screen.getByTestId("player-start-movement-move-speed")).toHaveValue(
+      4.5
+    );
+    expect(screen.getByTestId("player-start-movement-jump-enabled")).toBeChecked();
+  });
+
+  it("lets the inspector switch to a custom movement template and persist authored settings", async () => {
+    const playerStart = createPlayerStartEntity({
+      id: "entity-player-start-custom-template",
+      name: "Custom Template"
+    });
+    const store = createEditorStore({
+      initialDocument: {
+        ...createEmptySceneDocument({ name: "Custom Template Scene" }),
+        entities: {
+          [playerStart.id]: playerStart
+        }
+      }
+    });
+
+    render(<App store={store} />);
+
+    await waitFor(() => {
+      expect(viewportHostInstances.length).toBeGreaterThan(0);
+    });
+
+    act(() => {
+      store.setSelection({
+        kind: "entities",
+        ids: [playerStart.id]
+      });
+    });
+
+    const templateSelect = await screen.findByTestId(
+      "player-start-movement-template"
+    );
+    const moveSpeedInput = screen.getByTestId(
+      "player-start-movement-move-speed"
+    );
+    const variableJumpCheckbox = screen.getByTestId(
+      "player-start-movement-variable-jump-enabled"
+    );
+    const jumpBufferInput = screen.getByTestId(
+      "player-start-movement-jump-buffer"
+    );
+
+    act(() => {
+      fireEvent.change(templateSelect, {
+        target: {
+          value: "responsive"
+        }
+      });
+    });
+
+    await waitFor(() => {
+      expect(store.getState().document.entities[playerStart.id]).toMatchObject({
+        movementTemplate: {
+          kind: "responsive",
+          jump: {
+            bufferMs: 120,
+            coyoteTimeMs: 120,
+            variableHeight: true
+          }
+        }
+      });
+    });
+
+    act(() => {
+      fireEvent.change(moveSpeedInput, {
+        target: {
+          value: "5.7"
+        }
+      });
+      fireEvent.blur(moveSpeedInput);
+    });
+
+    act(() => {
+      fireEvent.click(variableJumpCheckbox);
+    });
+
+    act(() => {
+      fireEvent.change(jumpBufferInput, {
+        target: {
+          value: "75"
+        }
+      });
+      fireEvent.blur(jumpBufferInput);
+    });
+
+    await waitFor(() => {
+      expect(store.getState().document.entities[playerStart.id]).toMatchObject({
+        movementTemplate: {
+          kind: "custom",
+          moveSpeed: 5.7,
+          jump: {
+            bufferMs: 75,
+            variableHeight: false
+          }
+        }
+      });
     });
   });
 
