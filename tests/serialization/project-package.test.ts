@@ -10,13 +10,17 @@ import { loadImageAssetFromStorage } from "../../src/assets/image-assets";
 import { createModelInstance } from "../../src/assets/model-instances";
 import { createInMemoryProjectAssetStorage, type ProjectAssetStorage } from "../../src/assets/project-asset-storage";
 import { createProjectAssetStorageKey, type AudioAssetRecord, type ImageAssetRecord } from "../../src/assets/project-assets";
-import { createEmptySceneDocument } from "../../src/document/scene-document";
+import {
+  createEmptyProjectScene,
+  createEmptySceneDocument,
+  createProjectDocumentFromSceneDocument
+} from "../../src/document/scene-document";
 import {
   loadProjectPackage,
   PROJECT_PACKAGE_SCENE_PATH,
   saveProjectPackage
 } from "../../src/serialization/project-package";
-import { serializeSceneDocument } from "../../src/serialization/scene-document-json";
+import { serializeProjectDocument } from "../../src/serialization/scene-document-json";
 
 const tinyGlbFixturePath = path.resolve(process.cwd(), "fixtures/assets/tiny-triangle.glb");
 const externalTriangleGltfPath = path.resolve(process.cwd(), "fixtures/assets/external-triangle/scene.gltf");
@@ -79,6 +83,12 @@ function buildZipArchive(entries: Record<string, Uint8Array>): Uint8Array {
   return archiveBytes;
 }
 
+function createProjectDocument(
+  document: ReturnType<typeof createEmptySceneDocument>
+) {
+  return createProjectDocumentFromSceneDocument(document);
+}
+
 describe("project package serialization", () => {
   afterEach(() => {
     vi.restoreAllMocks();
@@ -86,7 +96,33 @@ describe("project package serialization", () => {
   });
 
   it("round-trips an asset-free scene through a .we3d package", async () => {
-    const document = createEmptySceneDocument({ name: "Portable Empty Scene" });
+    const document = createProjectDocument(
+      createEmptySceneDocument({ name: "Portable Empty Scene" })
+    );
+
+    const packageBytes = await saveProjectPackage(document, null);
+    const restoredDocument = await loadProjectPackage(packageBytes, null);
+
+    expect(restoredDocument).toEqual(document);
+  });
+
+  it("round-trips multiple scenes through a .we3d package", async () => {
+    const document = {
+      ...createProjectDocument(
+        createEmptySceneDocument({ name: "Portable Entry" })
+      ),
+      activeSceneId: "scene-dungeon",
+      scenes: {
+        scene-main: createEmptyProjectScene({
+          id: "scene-main",
+          name: "Portable Entry"
+        }),
+        scene-dungeon: createEmptyProjectScene({
+          id: "scene-dungeon",
+          name: "Portable Dungeon"
+        })
+      }
+    };
 
     const packageBytes = await saveProjectPackage(document, null);
     const restoredDocument = await loadProjectPackage(packageBytes, null);
@@ -192,7 +228,7 @@ describe("project package serialization", () => {
       ...importedModel.modelInstance,
       id: "model-instance-portable"
     });
-    const document = {
+    const document = createProjectDocument({
       ...createEmptySceneDocument({ name: "Portable Asset Scene" }),
       assets: {
         [importedModel.asset.id]: importedModel.asset,
@@ -202,7 +238,7 @@ describe("project package serialization", () => {
       modelInstances: {
         [portableModelInstance.id]: portableModelInstance
       }
-    };
+    });
 
     const packageBytes = await saveProjectPackage(document, storage);
     const restoredStorage = createInMemoryProjectAssetStorage();
@@ -231,12 +267,12 @@ describe("project package serialization", () => {
       ],
       storage
     );
-    const document = {
+    const document = createProjectDocument({
       ...createEmptySceneDocument({ name: "Portable Multi-file Scene" }),
       assets: {
         [importedModel.asset.id]: importedModel.asset
       }
-    };
+    });
 
     const packageBytes = await saveProjectPackage(document, storage);
     expect(listPackagedFiles(packageBytes)).toEqual([
@@ -272,12 +308,12 @@ describe("project package serialization", () => {
         warnings: []
       }
     } satisfies ImageAssetRecord;
-    const document = {
+    const document = createProjectDocument({
       ...createEmptySceneDocument({ name: "Broken Portable Scene" }),
       assets: {
         [imageAsset.id]: imageAsset
       }
-    };
+    });
 
     await expect(saveProjectPackage(document, storage)).rejects.toThrow("Missing stored binary data for image asset missing.png.");
   });
@@ -306,14 +342,14 @@ describe("project package serialization", () => {
         warnings: []
       }
     } satisfies ImageAssetRecord;
-    const document = {
+    const document = createProjectDocument({
       ...createEmptySceneDocument({ name: "Incomplete Portable Scene" }),
       assets: {
         [imageAsset.id]: imageAsset
       }
-    };
+    });
     const packageBytes = buildZipArchive({
-      [PROJECT_PACKAGE_SCENE_PATH]: strToU8(serializeSceneDocument(document))
+      [PROJECT_PACKAGE_SCENE_PATH]: strToU8(serializeProjectDocument(document))
     });
 
     await expect(loadProjectPackage(packageBytes, createInMemoryProjectAssetStorage())).rejects.toThrow(
@@ -322,7 +358,9 @@ describe("project package serialization", () => {
   });
 
   it("allows loading an asset-free package without project asset storage", async () => {
-    const document = createEmptySceneDocument({ name: "Portable Scene Without Storage" });
+    const document = createProjectDocument(
+      createEmptySceneDocument({ name: "Portable Scene Without Storage" })
+    );
     const packageBytes = await saveProjectPackage(document, createInMemoryProjectAssetStorage());
 
     await expect(loadProjectPackage(packageBytes, null as ProjectAssetStorage | null)).resolves.toEqual(document);
