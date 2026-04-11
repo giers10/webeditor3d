@@ -1563,7 +1563,6 @@ export class RuntimeHost {
     if (
       this.sceneReady &&
       this.runtimeScene !== null &&
-      this.activeController === this.firstPersonController &&
       this.currentFirstPersonTelemetry !== null
     ) {
       this.interactionSystem.updatePlayerPosition(
@@ -1571,18 +1570,23 @@ export class RuntimeHost {
         this.runtimeScene,
         this.createInteractionDispatcher()
       );
-      this.camera.getWorldDirection(this.cameraForward);
-      this.setInteractionPrompt(
-        this.interactionSystem.resolveClickInteractionPrompt(
-          this.currentFirstPersonTelemetry.eyePosition,
-          {
-            x: this.cameraForward.x,
-            y: this.cameraForward.y,
-            z: this.cameraForward.z
-          },
-          this.runtimeScene
-        )
-      );
+
+      if (this.activeController === this.firstPersonController) {
+        this.camera.getWorldDirection(this.cameraForward);
+        this.setInteractionPrompt(
+          this.interactionSystem.resolveClickInteractionPrompt(
+            this.currentFirstPersonTelemetry.eyePosition,
+            {
+              x: this.cameraForward.x,
+              y: this.cameraForward.y,
+              z: this.cameraForward.z
+            },
+            this.runtimeScene
+          )
+        );
+      } else {
+        this.setInteractionPrompt(null);
+      }
     } else {
       this.setInteractionPrompt(null);
     }
@@ -1603,6 +1607,11 @@ export class RuntimeHost {
   };
 
   private applyTeleportPlayerAction(target: RuntimeTeleportTarget) {
+    if (this.activeController === this.thirdPersonController) {
+      this.thirdPersonController.teleportTo(target.position, target.yawDegrees);
+      return;
+    }
+
     this.firstPersonController.teleportTo(target.position, target.yawDegrees);
   }
 
