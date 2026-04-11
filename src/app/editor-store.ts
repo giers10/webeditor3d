@@ -15,7 +15,10 @@ import {
   type TransformAxisSpace,
   type TransformSessionState
 } from "../core/transform-session";
-import { createEmptySceneDocument, type SceneDocument } from "../document/scene-document";
+import {
+  createEmptySceneDocument,
+  type SceneDocument
+} from "../document/scene-document";
 import {
   DEFAULT_SCENE_DRAFT_STORAGE_KEY,
   type LoadSceneDocumentDraftResult,
@@ -24,7 +27,10 @@ import {
   type SaveSceneDocumentDraftResult,
   saveSceneDocumentDraft
 } from "../serialization/local-draft-storage";
-import { parseSceneDocumentJson, serializeSceneDocument } from "../serialization/scene-document-json";
+import {
+  parseSceneDocumentJson,
+  serializeSceneDocument
+} from "../serialization/scene-document-json";
 import type { ViewportViewMode } from "../viewport-three/viewport-view-modes";
 import {
   areViewportToolPreviewsEqual,
@@ -110,7 +116,9 @@ export class EditorStore {
   };
 
   constructor(options: EditorStoreOptions = {}) {
-    const initialViewportLayoutState = cloneViewportLayoutState(options.initialViewportLayoutState ?? createDefaultViewportLayoutState());
+    const initialViewportLayoutState = cloneViewportLayoutState(
+      options.initialViewportLayoutState ?? createDefaultViewportLayoutState()
+    );
 
     this.document = options.initialDocument ?? createEmptySceneDocument();
     this.viewportLayoutMode = initialViewportLayoutState.layoutMode;
@@ -143,14 +151,22 @@ export class EditorStore {
 
     this.toolMode = toolMode;
 
-    if (!isViewportToolPreviewCompatible(toolMode, this.viewportTransientState.toolPreview)) {
+    if (
+      !isViewportToolPreviewCompatible(
+        toolMode,
+        this.viewportTransientState.toolPreview
+      )
+    ) {
       this.viewportTransientState = {
         ...this.viewportTransientState,
         toolPreview: createDefaultViewportTransientState().toolPreview
       };
     }
 
-    if (toolMode !== "select" && this.viewportTransientState.transformSession.kind !== "none") {
+    if (
+      toolMode !== "select" &&
+      this.viewportTransientState.transformSession.kind !== "none"
+    ) {
       this.viewportTransientState = {
         ...this.viewportTransientState,
         transformSession: createInactiveTransformSession()
@@ -178,7 +194,10 @@ export class EditorStore {
     this.emit();
   }
 
-  setViewportPanelViewMode(panelId: ViewportPanelId, viewMode: ViewportViewMode) {
+  setViewportPanelViewMode(
+    panelId: ViewportPanelId,
+    viewMode: ViewportViewMode
+  ) {
     if (this.viewportPanels[panelId].viewMode === viewMode) {
       return;
     }
@@ -193,7 +212,10 @@ export class EditorStore {
     this.emit();
   }
 
-  setViewportPanelDisplayMode(panelId: ViewportPanelId, displayMode: ViewportDisplayMode) {
+  setViewportPanelDisplayMode(
+    panelId: ViewportPanelId,
+    displayMode: ViewportDisplayMode
+  ) {
     if (this.viewportPanels[panelId].displayMode === displayMode) {
       return;
     }
@@ -208,8 +230,16 @@ export class EditorStore {
     this.emit();
   }
 
-  setViewportPanelCameraState(panelId: ViewportPanelId, cameraState: ViewportPanelCameraState) {
-    if (areViewportPanelCameraStatesEqual(this.viewportPanels[panelId].cameraState, cameraState)) {
+  setViewportPanelCameraState(
+    panelId: ViewportPanelId,
+    cameraState: ViewportPanelCameraState
+  ) {
+    if (
+      areViewportPanelCameraStatesEqual(
+        this.viewportPanels[panelId].cameraState,
+        cameraState
+      )
+    ) {
       return;
     }
 
@@ -224,7 +254,10 @@ export class EditorStore {
   }
 
   setViewportQuadSplit(viewportQuadSplit: ViewportQuadSplit) {
-    if (this.viewportQuadSplit.x === viewportQuadSplit.x && this.viewportQuadSplit.y === viewportQuadSplit.y) {
+    if (
+      this.viewportQuadSplit.x === viewportQuadSplit.x &&
+      this.viewportQuadSplit.y === viewportQuadSplit.y
+    ) {
       return;
     }
 
@@ -238,7 +271,12 @@ export class EditorStore {
   setViewportToolPreview(toolPreview: ViewportToolPreview) {
     const nextToolPreview = cloneViewportToolPreview(toolPreview);
 
-    if (areViewportToolPreviewsEqual(this.viewportTransientState.toolPreview, nextToolPreview)) {
+    if (
+      areViewportToolPreviewsEqual(
+        this.viewportTransientState.toolPreview,
+        nextToolPreview
+      )
+    ) {
       return;
     }
 
@@ -256,7 +294,10 @@ export class EditorStore {
       return;
     }
 
-    if (sourcePanelId !== undefined && currentToolPreview.sourcePanelId !== sourcePanelId) {
+    if (
+      sourcePanelId !== undefined &&
+      currentToolPreview.sourcePanelId !== sourcePanelId
+    ) {
       return;
     }
 
@@ -270,7 +311,12 @@ export class EditorStore {
   setTransformSession(transformSession: TransformSessionState) {
     const nextTransformSession = cloneTransformSession(transformSession);
 
-    if (areTransformSessionsEqual(this.viewportTransientState.transformSession, nextTransformSession)) {
+    if (
+      areTransformSessionsEqual(
+        this.viewportTransientState.transformSession,
+        nextTransformSession
+      )
+    ) {
       return;
     }
 
@@ -293,14 +339,19 @@ export class EditorStore {
     this.emit();
   }
 
-  setTransformAxisConstraint(axisConstraint: TransformAxis | null, axisConstraintSpace: TransformAxisSpace = "world") {
+  setTransformAxisConstraint(
+    axisConstraint: TransformAxis | null,
+    axisConstraintSpace: TransformAxisSpace = "world"
+  ) {
     if (this.viewportTransientState.transformSession.kind !== "active") {
       return;
     }
 
     if (
-      this.viewportTransientState.transformSession.axisConstraint === axisConstraint &&
-      this.viewportTransientState.transformSession.axisConstraintSpace === axisConstraintSpace
+      this.viewportTransientState.transformSession.axisConstraint ===
+        axisConstraint &&
+      this.viewportTransientState.transformSession.axisConstraintSpace ===
+        axisConstraintSpace
     ) {
       return;
     }
@@ -308,7 +359,9 @@ export class EditorStore {
     this.viewportTransientState = {
       ...this.viewportTransientState,
       transformSession: {
-        ...(cloneTransformSession(this.viewportTransientState.transformSession) as Extract<TransformSessionState, { kind: "active" }>),
+        ...(cloneTransformSession(
+          this.viewportTransientState.transformSession
+        ) as Extract<TransformSessionState, { kind: "active" }>),
         axisConstraint,
         axisConstraintSpace
       }
@@ -345,7 +398,10 @@ export class EditorStore {
   }
 
   setSelection(selection: EditorSelection) {
-    if (this.viewportTransientState.transformSession.kind === "active" && !areEditorSelectionsEqual(this.selection, selection)) {
+    if (
+      this.viewportTransientState.transformSession.kind === "active" &&
+      !areEditorSelectionsEqual(this.selection, selection)
+    ) {
       this.viewportTransientState = {
         ...this.viewportTransientState,
         transformSession: createInactiveTransformSession()
@@ -369,7 +425,10 @@ export class EditorStore {
     }
 
     this.whiteboxSelectionMode = mode;
-    this.selection = normalizeSelectionForWhiteboxSelectionMode(this.selection, mode);
+    this.selection = normalizeSelectionForWhiteboxSelectionMode(
+      this.selection,
+      mode
+    );
     this.emit();
   }
 
@@ -462,7 +521,12 @@ export class EditorStore {
       };
     }
 
-    return saveSceneDocumentDraft(this.storage, this.document, this.createViewportLayoutState(), this.storageKey);
+    return saveSceneDocumentDraft(
+      this.storage,
+      this.document,
+      this.createViewportLayoutState(),
+      this.storageKey
+    );
   }
 
   loadDraft(): EditorDraftLoadResult {
@@ -517,7 +581,8 @@ export class EditorStore {
   }
 
   private applyViewportLayoutState(viewportLayoutState: ViewportLayoutState) {
-    const nextViewportLayoutState = cloneViewportLayoutState(viewportLayoutState);
+    const nextViewportLayoutState =
+      cloneViewportLayoutState(viewportLayoutState);
 
     this.viewportLayoutMode = nextViewportLayoutState.layoutMode;
     this.activeViewportPanelId = nextViewportLayoutState.activePanelId;

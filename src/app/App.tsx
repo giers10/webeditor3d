@@ -97,7 +97,12 @@ import {
   type ImportedImageAssetResult,
   type LoadedImageAsset
 } from "../assets/image-assets";
-import type { AudioAssetRecord, ImageAssetRecord, ModelAssetRecord, ProjectAssetRecord } from "../assets/project-assets";
+import type {
+  AudioAssetRecord,
+  ImageAssetRecord,
+  ModelAssetRecord,
+  ProjectAssetRecord
+} from "../assets/project-assets";
 import { getProjectAssetKindLabel } from "../assets/project-assets";
 import {
   getWhiteboxSelectionModeLabel,
@@ -140,9 +145,19 @@ import {
   type AdvancedRenderingToneMappingMode,
   type WorldSettings
 } from "../document/world-settings";
-import { formatSceneDiagnosticSummary, validateSceneDocument } from "../document/scene-document-validation";
-import { getBrowserProjectAssetStorageAccess, type ProjectAssetStorage } from "../assets/project-asset-storage";
-import { DEFAULT_GRID_SIZE, snapPositiveSizeToGrid, snapVec3ToGrid } from "../geometry/grid-snapping";
+import {
+  formatSceneDiagnosticSummary,
+  validateSceneDocument
+} from "../document/scene-document-validation";
+import {
+  getBrowserProjectAssetStorageAccess,
+  type ProjectAssetStorage
+} from "../assets/project-asset-storage";
+import {
+  DEFAULT_GRID_SIZE,
+  snapPositiveSizeToGrid,
+  snapVec3ToGrid
+} from "../geometry/grid-snapping";
 import { createFitToFaceBoxBrushFaceUvState } from "../geometry/box-face-uvs";
 import {
   DEFAULT_ENTITY_POSITION,
@@ -185,7 +200,10 @@ import {
   type EntityInstance,
   type EntityKind
 } from "../entities/entity-instances";
-import { getEntityDisplayLabelById, getSortedEntityDisplayLabels } from "../entities/entity-labels";
+import {
+  getEntityDisplayLabelById,
+  getSortedEntityDisplayLabels
+} from "../entities/entity-labels";
 import {
   areInteractionLinksEqual,
   createPlayAnimationInteractionLink,
@@ -198,11 +216,18 @@ import {
   type InteractionLink,
   type InteractionTriggerKind
 } from "../interactions/interaction-links";
-import { STARTER_MATERIAL_LIBRARY, type MaterialDef } from "../materials/starter-material-library";
+import {
+  STARTER_MATERIAL_LIBRARY,
+  type MaterialDef
+} from "../materials/starter-material-library";
 import { RunnerCanvas } from "../runner-web/RunnerCanvas";
 import type { FirstPersonTelemetry } from "../runtime-three/navigation-controller";
 import type { RuntimeInteractionPrompt } from "../runtime-three/runtime-interaction-system";
-import { buildRuntimeSceneFromDocument, type RuntimeNavigationMode, type RuntimeSceneDefinition } from "../runtime-three/runtime-scene-build";
+import {
+  buildRuntimeSceneFromDocument,
+  type RuntimeNavigationMode,
+  type RuntimeSceneDefinition
+} from "../runtime-three/runtime-scene-build";
 import { validateRuntimeSceneBuild } from "../runtime-three/runtime-scene-validation";
 import { EditorAutosaveController } from "../serialization/editor-autosave";
 import { Panel } from "../shared-ui/Panel";
@@ -211,11 +236,18 @@ import {
   PROJECT_PACKAGE_FILE_EXTENSION,
   saveProjectPackage
 } from "../serialization/project-package";
-import { HierarchicalMenu, type HierarchicalMenuItem, type HierarchicalMenuPosition } from "../shared-ui/HierarchicalMenu";
+import {
+  HierarchicalMenu,
+  type HierarchicalMenuItem,
+  type HierarchicalMenuPosition
+} from "../shared-ui/HierarchicalMenu";
 import { createWorldBackgroundStyle } from "../shared-ui/world-background-style";
 import { ViewportPanel } from "../viewport-three/ViewportPanel";
 import type { CreationViewportToolPreview } from "../viewport-three/viewport-transient-state";
-import { getViewportViewModeLabel, type ViewportViewMode } from "../viewport-three/viewport-view-modes";
+import {
+  getViewportViewModeLabel,
+  type ViewportViewMode
+} from "../viewport-three/viewport-view-modes";
 import {
   VIEWPORT_LAYOUT_MODES,
   VIEWPORT_PANEL_IDS,
@@ -246,9 +278,14 @@ interface Vec3Draft {
   z: string;
 }
 
-type InteractionSourceEntity = Extract<EntityInstance, { kind: "triggerVolume" | "interactable" }>;
+type InteractionSourceEntity = Extract<
+  EntityInstance,
+  { kind: "triggerVolume" | "interactable" }
+>;
 
-function getModelInstanceCollisionModeDescription(mode: ModelInstanceCollisionMode): string {
+function getModelInstanceCollisionModeDescription(
+  mode: ModelInstanceCollisionMode
+): string {
   switch (mode) {
     case "none":
       return "No generated collider is built for this model instance.";
@@ -263,7 +300,9 @@ function getModelInstanceCollisionModeDescription(mode: ModelInstanceCollisionMo
   }
 }
 
-function getPlayerStartColliderModeDescription(mode: PlayerStartColliderMode): string {
+function getPlayerStartColliderModeDescription(
+  mode: PlayerStartColliderMode
+): string {
   switch (mode) {
     case "capsule":
       return "Uses a capsule player collider for standard grounded first-person traversal.";
@@ -274,7 +313,9 @@ function getPlayerStartColliderModeDescription(mode: PlayerStartColliderMode): s
   }
 }
 
-const STARTER_MATERIAL_ORDER = new Map(STARTER_MATERIAL_LIBRARY.map((material, index) => [material.id, index]));
+const STARTER_MATERIAL_ORDER = new Map(
+  STARTER_MATERIAL_LIBRARY.map((material, index) => [material.id, index])
+);
 const MIN_VIEWPORT_QUAD_SPLIT = 0.2;
 const MAX_VIEWPORT_QUAD_SPLIT = 0.8;
 
@@ -285,9 +326,14 @@ function formatVec3(vector: Vec3): string {
   return `${vector.x}, ${vector.y}, ${vector.z}`;
 }
 
-function resolveOptionalPositiveNumber(value: string, fallback: number): number {
+function resolveOptionalPositiveNumber(
+  value: string,
+  fallback: number
+): number {
   const parsedValue = Number(value);
-  return Number.isFinite(parsedValue) && parsedValue > 0 ? parsedValue : fallback;
+  return Number.isFinite(parsedValue) && parsedValue > 0
+    ? parsedValue
+    : fallback;
 }
 
 function getWhiteboxInputStep(enabled: boolean, step: number): NumberInputStep {
@@ -299,17 +345,24 @@ function formatDiagnosticCount(count: number, label: string): string {
 }
 
 function clampViewportQuadSplitValue(value: number): number {
-  return Math.min(MAX_VIEWPORT_QUAD_SPLIT, Math.max(MIN_VIEWPORT_QUAD_SPLIT, value));
+  return Math.min(
+    MAX_VIEWPORT_QUAD_SPLIT,
+    Math.max(MIN_VIEWPORT_QUAD_SPLIT, value)
+  );
 }
 
-function createViewportQuadPanelsStyle(viewportQuadSplit: ViewportQuadSplit): CSSProperties {
+function createViewportQuadPanelsStyle(
+  viewportQuadSplit: ViewportQuadSplit
+): CSSProperties {
   return {
     "--viewport-quad-split-x": String(viewportQuadSplit.x),
     "--viewport-quad-split-y": String(viewportQuadSplit.y)
   } as CSSProperties;
 }
 
-function getViewportQuadResizeCursor(resizeMode: ViewportQuadResizeMode): string {
+function getViewportQuadResizeCursor(
+  resizeMode: ViewportQuadResizeMode
+): string {
   switch (resizeMode) {
     case "vertical":
       return "col-resize";
@@ -375,7 +428,11 @@ function readVec3Draft(draft: Vec3Draft, label: string): Vec3 {
     z: Number(draft.z)
   };
 
-  if (!Number.isFinite(vector.x) || !Number.isFinite(vector.y) || !Number.isFinite(vector.z)) {
+  if (
+    !Number.isFinite(vector.x) ||
+    !Number.isFinite(vector.y) ||
+    !Number.isFinite(vector.z)
+  ) {
     throw new Error(`${label} values must be finite numbers.`);
   }
 
@@ -400,7 +457,9 @@ function readNonNegativeNumberDraft(source: string, label: string): number {
   const value = Number(source);
 
   if (!Number.isFinite(value) || value < 0) {
-    throw new Error(`${label} must be a finite number greater than or equal to zero.`);
+    throw new Error(
+      `${label} must be a finite number greater than or equal to zero.`
+    );
   }
 
   return value;
@@ -430,7 +489,9 @@ function readWaterFoamContactLimitDraft(source: string): number {
   const value = readPositiveIntegerDraft(source, "Water foam contact limit");
 
   if (value > MAX_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT) {
-    throw new Error(`Water foam contact limit must be ${MAX_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT} or less.`);
+    throw new Error(
+      `Water foam contact limit must be ${MAX_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT} or less.`
+    );
   }
 
   return value;
@@ -466,7 +527,11 @@ function maybeSnapVec3(vector: Vec3, enabled: boolean, step: number): Vec3 {
   };
 }
 
-function maybeSnapPositiveSize(size: Vec3, enabled: boolean, step: number): Vec3 {
+function maybeSnapPositiveSize(
+  size: Vec3,
+  enabled: boolean,
+  step: number
+): Vec3 {
   const clampComponent = (value: number) => Math.max(0.01, Math.abs(value));
 
   if (!enabled) {
@@ -494,7 +559,10 @@ function areFaceUvStatesEqual(left: FaceUvState, right: FaceUvState): boolean {
   );
 }
 
-function getSelectedBoxBrush(selection: EditorSelection, brushes: BoxBrush[]): BoxBrush | null {
+function getSelectedBoxBrush(
+  selection: EditorSelection,
+  brushes: BoxBrush[]
+): BoxBrush | null {
   const selectedBrushId = getSingleSelectedBrushId(selection);
 
   if (selectedBrushId === null) {
@@ -504,7 +572,10 @@ function getSelectedBoxBrush(selection: EditorSelection, brushes: BoxBrush[]): B
   return brushes.find((brush) => brush.id === selectedBrushId) ?? null;
 }
 
-function getSelectedEntity(selection: EditorSelection, entities: EntityInstance[]): EntityInstance | null {
+function getSelectedEntity(
+  selection: EditorSelection,
+  entities: EntityInstance[]
+): EntityInstance | null {
   const selectedEntityId = getSingleSelectedEntityId(selection);
 
   if (selectedEntityId === null) {
@@ -514,14 +585,21 @@ function getSelectedEntity(selection: EditorSelection, entities: EntityInstance[
   return entities.find((entity) => entity.id === selectedEntityId) ?? null;
 }
 
-function getSelectedModelInstance(selection: EditorSelection, modelInstances: ModelInstance[]): ModelInstance | null {
+function getSelectedModelInstance(
+  selection: EditorSelection,
+  modelInstances: ModelInstance[]
+): ModelInstance | null {
   const selectedModelInstanceId = getSingleSelectedModelInstanceId(selection);
 
   if (selectedModelInstanceId === null) {
     return null;
   }
 
-  return modelInstances.find((modelInstance) => modelInstance.id === selectedModelInstanceId) ?? null;
+  return (
+    modelInstances.find(
+      (modelInstance) => modelInstance.id === selectedModelInstanceId
+    ) ?? null
+  );
 }
 
 function isModelAsset(asset: ProjectAssetRecord): asset is ModelAssetRecord {
@@ -570,7 +648,9 @@ function formatModelAssetSummary(asset: ModelAssetRecord): string {
   ];
 
   if (asset.metadata.animationNames.length > 0) {
-    details.push(`${asset.metadata.animationNames.length} animation${asset.metadata.animationNames.length === 1 ? "" : "s"}`);
+    details.push(
+      `${asset.metadata.animationNames.length} animation${asset.metadata.animationNames.length === 1 ? "" : "s"}`
+    );
   }
 
   return details.join(" | ");
@@ -588,9 +668,15 @@ function formatImageAssetSummary(asset: ImageAssetRecord): string {
 
 function formatAudioAssetSummary(asset: AudioAssetRecord): string {
   const details = [
-    asset.metadata.durationSeconds === null ? "duration unavailable" : `${asset.metadata.durationSeconds.toFixed(2)}s`,
-    asset.metadata.channelCount === null ? "channels unavailable" : `${asset.metadata.channelCount} channel${asset.metadata.channelCount === 1 ? "" : "s"}`,
-    asset.metadata.sampleRateHz === null ? "sample rate unavailable" : `${asset.metadata.sampleRateHz} Hz`,
+    asset.metadata.durationSeconds === null
+      ? "duration unavailable"
+      : `${asset.metadata.durationSeconds.toFixed(2)}s`,
+    asset.metadata.channelCount === null
+      ? "channels unavailable"
+      : `${asset.metadata.channelCount} channel${asset.metadata.channelCount === 1 ? "" : "s"}`,
+    asset.metadata.sampleRateHz === null
+      ? "sample rate unavailable"
+      : `${asset.metadata.sampleRateHz} Hz`,
     formatByteLength(asset.byteLength)
   ];
 
@@ -626,10 +712,15 @@ function getBrushLabel(brush: BoxBrush, index: number): string {
 
 function getBrushLabelById(brushId: string, brushes: BoxBrush[]): string {
   const brushIndex = brushes.findIndex((brush) => brush.id === brushId);
-  return brushIndex === -1 ? "Whitebox Box" : getBrushLabel(brushes[brushIndex], brushIndex);
+  return brushIndex === -1
+    ? "Whitebox Box"
+    : getBrushLabel(brushes[brushIndex], brushIndex);
 }
 
-function getSelectedBrushLabel(selection: EditorSelection, brushes: BoxBrush[]): string {
+function getSelectedBrushLabel(
+  selection: EditorSelection,
+  brushes: BoxBrush[]
+): string {
   const selectedBrushId = getSingleSelectedBrushId(selection);
 
   if (selectedBrushId === null) {
@@ -707,7 +798,9 @@ function getInteractionActionLabel(link: InteractionLink): string {
   }
 }
 
-function getVisibilityModeSelectValue(visible: boolean | undefined): "toggle" | "show" | "hide" {
+function getVisibilityModeSelectValue(
+  visible: boolean | undefined
+): "toggle" | "show" | "hide" {
   if (visible === true) {
     return "show";
   }
@@ -719,7 +812,9 @@ function getVisibilityModeSelectValue(visible: boolean | undefined): "toggle" | 
   return "toggle";
 }
 
-function readVisibilityModeSelectValue(value: "toggle" | "show" | "hide"): boolean | undefined {
+function readVisibilityModeSelectValue(
+  value: "toggle" | "show" | "hide"
+): boolean | undefined {
   switch (value) {
     case "toggle":
       return undefined;
@@ -730,7 +825,10 @@ function readVisibilityModeSelectValue(value: "toggle" | "show" | "hide"): boole
   }
 }
 
-function getDefaultTriggerVolumeLinkTrigger(triggerOnEnter: boolean, triggerOnExit: boolean): InteractionTriggerKind {
+function getDefaultTriggerVolumeLinkTrigger(
+  triggerOnEnter: boolean,
+  triggerOnExit: boolean
+): InteractionTriggerKind {
   if (triggerOnEnter) {
     return "enter";
   }
@@ -742,17 +840,29 @@ function getDefaultTriggerVolumeLinkTrigger(triggerOnEnter: boolean, triggerOnEx
   return "enter";
 }
 
-function isInteractionSourceEntity(entity: EntityInstance | null): entity is InteractionSourceEntity {
-  return entity !== null && (entity.kind === "triggerVolume" || entity.kind === "interactable");
+function isInteractionSourceEntity(
+  entity: EntityInstance | null
+): entity is InteractionSourceEntity {
+  return (
+    entity !== null &&
+    (entity.kind === "triggerVolume" || entity.kind === "interactable")
+  );
 }
 
-function isSoundEmitterEntity(entity: EntityInstance | null): entity is Extract<EntityInstance, { kind: "soundEmitter" }> {
+function isSoundEmitterEntity(
+  entity: EntityInstance | null
+): entity is Extract<EntityInstance, { kind: "soundEmitter" }> {
   return entity !== null && entity.kind === "soundEmitter";
 }
 
-function getDefaultInteractionLinkTrigger(sourceEntity: InteractionSourceEntity): InteractionTriggerKind {
+function getDefaultInteractionLinkTrigger(
+  sourceEntity: InteractionSourceEntity
+): InteractionTriggerKind {
   return sourceEntity.kind === "triggerVolume"
-    ? getDefaultTriggerVolumeLinkTrigger(sourceEntity.triggerOnEnter, sourceEntity.triggerOnExit)
+    ? getDefaultTriggerVolumeLinkTrigger(
+        sourceEntity.triggerOnEnter,
+        sourceEntity.triggerOnExit
+      )
     : "click";
 }
 
@@ -793,23 +903,35 @@ function selectionCanBeDuplicated(selection: EditorSelection): boolean {
 }
 
 function isCommitIncrementKey(key: string): boolean {
-  return key === "ArrowUp" || key === "ArrowDown" || key === "PageUp" || key === "PageDown";
+  return (
+    key === "ArrowUp" ||
+    key === "ArrowDown" ||
+    key === "PageUp" ||
+    key === "PageDown"
+  );
 }
 
 function blurActiveTextEntry() {
   const activeElement = document.activeElement;
 
-  if (!(activeElement instanceof HTMLElement) || !isTextEntryTarget(activeElement)) {
+  if (
+    !(activeElement instanceof HTMLElement) ||
+    !isTextEntryTarget(activeElement)
+  ) {
     return;
   }
 
   activeElement.blur();
 }
 
-function sortDocumentMaterials(materials: Record<string, MaterialDef>): MaterialDef[] {
+function sortDocumentMaterials(
+  materials: Record<string, MaterialDef>
+): MaterialDef[] {
   return Object.values(materials).sort((left, right) => {
-    const leftStarterIndex = STARTER_MATERIAL_ORDER.get(left.id) ?? Number.MAX_SAFE_INTEGER;
-    const rightStarterIndex = STARTER_MATERIAL_ORDER.get(right.id) ?? Number.MAX_SAFE_INTEGER;
+    const leftStarterIndex =
+      STARTER_MATERIAL_ORDER.get(left.id) ?? Number.MAX_SAFE_INTEGER;
+    const rightStarterIndex =
+      STARTER_MATERIAL_ORDER.get(right.id) ?? Number.MAX_SAFE_INTEGER;
 
     if (leftStarterIndex !== rightStarterIndex) {
       return leftStarterIndex - rightStarterIndex;
@@ -848,7 +970,9 @@ function getMaterialPreviewStyle(material: MaterialDef): CSSProperties {
   }
 }
 
-function rotateQuarterTurns(rotationQuarterTurns: FaceUvRotationQuarterTurns): FaceUvRotationQuarterTurns {
+function rotateQuarterTurns(
+  rotationQuarterTurns: FaceUvRotationQuarterTurns
+): FaceUvRotationQuarterTurns {
   return ((rotationQuarterTurns + 1) % 4) as FaceUvRotationQuarterTurns;
 }
 
@@ -894,7 +1018,9 @@ function formatWorldBackgroundLabel(world: WorldSettings): string {
   return "Image";
 }
 
-function formatAdvancedRenderingShadowTypeLabel(type: AdvancedRenderingShadowType): string {
+function formatAdvancedRenderingShadowTypeLabel(
+  type: AdvancedRenderingShadowType
+): string {
   switch (type) {
     case "basic":
       return "Basic";
@@ -905,7 +1031,9 @@ function formatAdvancedRenderingShadowTypeLabel(type: AdvancedRenderingShadowTyp
   }
 }
 
-function formatAdvancedRenderingToneMappingLabel(mode: AdvancedRenderingToneMappingMode): string {
+function formatAdvancedRenderingToneMappingLabel(
+  mode: AdvancedRenderingToneMappingMode
+): string {
   switch (mode) {
     case "none":
       return "None";
@@ -920,7 +1048,9 @@ function formatAdvancedRenderingToneMappingLabel(mode: AdvancedRenderingToneMapp
   }
 }
 
-function formatAdvancedRenderingWaterReflectionModeLabel(mode: AdvancedRenderingWaterReflectionMode): string {
+function formatAdvancedRenderingWaterReflectionModeLabel(
+  mode: AdvancedRenderingWaterReflectionMode
+): string {
   switch (mode) {
     case "none":
       return "Nothing";
@@ -969,178 +1099,375 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const viewportToolPreview = editorState.viewportTransientState.toolPreview;
   const transformSession = editorState.viewportTransientState.transformSession;
   const entityList = getEntityInstances(editorState.document.entities);
-  const entityDisplayList = getSortedEntityDisplayLabels(editorState.document.entities, editorState.document.assets);
-  const primaryPlayerStart = getPrimaryPlayerStartEntity(editorState.document.entities);
+  const entityDisplayList = getSortedEntityDisplayLabels(
+    editorState.document.entities,
+    editorState.document.assets
+  );
+  const primaryPlayerStart = getPrimaryPlayerStartEntity(
+    editorState.document.entities
+  );
   const materialList = sortDocumentMaterials(editorState.document.materials);
   const selectedBrush = getSelectedBoxBrush(editorState.selection, brushList);
   const selectedEntity = getSelectedEntity(editorState.selection, entityList);
-  const selectedModelInstance = getSelectedModelInstance(editorState.selection, Object.values(editorState.document.modelInstances));
+  const selectedModelInstance = getSelectedModelInstance(
+    editorState.selection,
+    Object.values(editorState.document.modelInstances)
+  );
   const whiteboxSelectionMode = editorState.whiteboxSelectionMode;
   const selectedFaceId = getSelectedBrushFaceId(editorState.selection);
   const selectedEdgeId = getSelectedBrushEdgeId(editorState.selection);
   const selectedVertexId = getSelectedBrushVertexId(editorState.selection);
-  const selectedFace = selectedBrush !== null && selectedFaceId !== null ? selectedBrush.faces[selectedFaceId] : null;
+  const selectedFace =
+    selectedBrush !== null && selectedFaceId !== null
+      ? selectedBrush.faces[selectedFaceId]
+      : null;
   const selectedFaceMaterial =
-    selectedFace !== null && selectedFace.materialId !== null ? editorState.document.materials[selectedFace.materialId] ?? null : null;
+    selectedFace !== null && selectedFace.materialId !== null
+      ? (editorState.document.materials[selectedFace.materialId] ?? null)
+      : null;
   const selectedModelAsset =
-    selectedModelInstance !== null ? (editorState.document.assets[selectedModelInstance.assetId] ?? null) : null;
-  const selectedModelAssetRecord = selectedModelAsset !== null && selectedModelAsset.kind === "model" ? selectedModelAsset : null;
-  const selectedPlayerStart = selectedEntity?.kind === "playerStart" ? selectedEntity : null;
-  const selectedSoundEmitter = isSoundEmitterEntity(selectedEntity) ? selectedEntity : null;
+    selectedModelInstance !== null
+      ? (editorState.document.assets[selectedModelInstance.assetId] ?? null)
+      : null;
+  const selectedModelAssetRecord =
+    selectedModelAsset !== null && selectedModelAsset.kind === "model"
+      ? selectedModelAsset
+      : null;
+  const selectedPlayerStart =
+    selectedEntity?.kind === "playerStart" ? selectedEntity : null;
+  const selectedSoundEmitter = isSoundEmitterEntity(selectedEntity)
+    ? selectedEntity
+    : null;
   const selectedSoundEmitterAsset =
     selectedSoundEmitter === null
       ? null
       : selectedSoundEmitter.audioAssetId === null
         ? null
-        : editorState.document.assets[selectedSoundEmitter.audioAssetId] ?? null;
+        : (editorState.document.assets[selectedSoundEmitter.audioAssetId] ??
+          null);
   const selectedSoundEmitterAudioAssetRecord =
-    selectedSoundEmitterAsset !== null && selectedSoundEmitterAsset.kind === "audio" ? selectedSoundEmitterAsset : null;
-  const selectedTriggerVolume = selectedEntity?.kind === "triggerVolume" ? selectedEntity : null;
-  const selectedTeleportTarget = selectedEntity?.kind === "teleportTarget" ? selectedEntity : null;
-  const selectedInteractable = selectedEntity?.kind === "interactable" ? selectedEntity : null;
+    selectedSoundEmitterAsset !== null &&
+    selectedSoundEmitterAsset.kind === "audio"
+      ? selectedSoundEmitterAsset
+      : null;
+  const selectedTriggerVolume =
+    selectedEntity?.kind === "triggerVolume" ? selectedEntity : null;
+  const selectedTeleportTarget =
+    selectedEntity?.kind === "teleportTarget" ? selectedEntity : null;
+  const selectedInteractable =
+    selectedEntity?.kind === "interactable" ? selectedEntity : null;
   const projectAssetList = Object.values(editorState.document.assets);
   const modelAssetList = projectAssetList.filter(isModelAsset);
   const imageAssetList = projectAssetList.filter(isImageAsset);
   const audioAssetList = projectAssetList.filter(isAudioAsset);
-  const selectedPointLight = selectedEntity?.kind === "pointLight" ? selectedEntity : null;
-  const selectedSpotLight = selectedEntity?.kind === "spotLight" ? selectedEntity : null;
-  const modelInstanceDisplayList = getSortedModelInstanceDisplayLabels(editorState.document.modelInstances, editorState.document.assets);
-  const selectedInteractionSource = isInteractionSourceEntity(selectedEntity) ? selectedEntity : null;
+  const selectedPointLight =
+    selectedEntity?.kind === "pointLight" ? selectedEntity : null;
+  const selectedSpotLight =
+    selectedEntity?.kind === "spotLight" ? selectedEntity : null;
+  const modelInstanceDisplayList = getSortedModelInstanceDisplayLabels(
+    editorState.document.modelInstances,
+    editorState.document.assets
+  );
+  const selectedInteractionSource = isInteractionSourceEntity(selectedEntity)
+    ? selectedEntity
+    : null;
   const selectedTriggerVolumeLinks =
     selectedTriggerVolume === null
       ? []
-      : getInteractionLinksForSource(editorState.document.interactionLinks, selectedTriggerVolume.id);
+      : getInteractionLinksForSource(
+          editorState.document.interactionLinks,
+          selectedTriggerVolume.id
+        );
   const selectedInteractableLinks =
-    selectedInteractable === null ? [] : getInteractionLinksForSource(editorState.document.interactionLinks, selectedInteractable.id);
-  const teleportTargetOptions = entityDisplayList.filter(({ entity }) => entity.kind === "teleportTarget");
-  const soundEmitterOptions = entityDisplayList.filter(({ entity }) => entity.kind === "soundEmitter") as Array<{
+    selectedInteractable === null
+      ? []
+      : getInteractionLinksForSource(
+          editorState.document.interactionLinks,
+          selectedInteractable.id
+        );
+  const teleportTargetOptions = entityDisplayList.filter(
+    ({ entity }) => entity.kind === "teleportTarget"
+  );
+  const soundEmitterOptions = entityDisplayList.filter(
+    ({ entity }) => entity.kind === "soundEmitter"
+  ) as Array<{
     entity: Extract<EntityInstance, { kind: "soundEmitter" }>;
     label: string;
   }>;
-  const playableSoundEmitterOptions = soundEmitterOptions.filter(({ entity }) => {
-    if (entity.audioAssetId === null) {
-      return false;
-    }
+  const playableSoundEmitterOptions = soundEmitterOptions.filter(
+    ({ entity }) => {
+      if (entity.audioAssetId === null) {
+        return false;
+      }
 
-    return editorState.document.assets[entity.audioAssetId]?.kind === "audio";
-  });
+      return editorState.document.assets[entity.audioAssetId]?.kind === "audio";
+    }
+  );
   const visibilityBrushOptions = brushList.map((brush, brushIndex) => ({
     brush,
     label: getBrushLabel(brush, brushIndex)
   }));
 
-  const [sceneNameDraft, setSceneNameDraft] = useState(editorState.document.name);
+  const [sceneNameDraft, setSceneNameDraft] = useState(
+    editorState.document.name
+  );
   const [brushNameDraft, setBrushNameDraft] = useState("");
   const [entityNameDraft, setEntityNameDraft] = useState("");
   const [modelInstanceNameDraft, setModelInstanceNameDraft] = useState("");
-  const [positionDraft, setPositionDraft] = useState(createVec3Draft(DEFAULT_BOX_BRUSH_CENTER));
-  const [rotationDraft, setRotationDraft] = useState(createVec3Draft(DEFAULT_BOX_BRUSH_ROTATION_DEGREES));
-  const [sizeDraft, setSizeDraft] = useState(createVec3Draft(DEFAULT_BOX_BRUSH_SIZE));
-  const [boxVolumeModeDraft, setBoxVolumeModeDraft] = useState<BoxBrushVolumeMode>("none");
-  const [boxVolumeWaterColorDraft, setBoxVolumeWaterColorDraft] = useState("#4da6d9");
-  const [boxVolumeWaterSurfaceOpacityDraft, setBoxVolumeWaterSurfaceOpacityDraft] = useState("0.55");
-  const [boxVolumeWaterWaveStrengthDraft, setBoxVolumeWaterWaveStrengthDraft] = useState("0.35");
-  const [boxVolumeWaterFoamContactLimitDraft, setBoxVolumeWaterFoamContactLimitDraft] = useState(
-    String(DEFAULT_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT)
+  const [positionDraft, setPositionDraft] = useState(
+    createVec3Draft(DEFAULT_BOX_BRUSH_CENTER)
   );
-  const [boxVolumeWaterSurfaceDisplacementEnabledDraft, setBoxVolumeWaterSurfaceDisplacementEnabledDraft] = useState(false);
-  const [boxVolumeFogColorDraft, setBoxVolumeFogColorDraft] = useState("#9cb7c7");
-  const [boxVolumeFogDensityDraft, setBoxVolumeFogDensityDraft] = useState("0.08");
-  const [boxVolumeFogPaddingDraft, setBoxVolumeFogPaddingDraft] = useState("0.2");
+  const [rotationDraft, setRotationDraft] = useState(
+    createVec3Draft(DEFAULT_BOX_BRUSH_ROTATION_DEGREES)
+  );
+  const [sizeDraft, setSizeDraft] = useState(
+    createVec3Draft(DEFAULT_BOX_BRUSH_SIZE)
+  );
+  const [boxVolumeModeDraft, setBoxVolumeModeDraft] =
+    useState<BoxBrushVolumeMode>("none");
+  const [boxVolumeWaterColorDraft, setBoxVolumeWaterColorDraft] =
+    useState("#4da6d9");
+  const [
+    boxVolumeWaterSurfaceOpacityDraft,
+    setBoxVolumeWaterSurfaceOpacityDraft
+  ] = useState("0.55");
+  const [boxVolumeWaterWaveStrengthDraft, setBoxVolumeWaterWaveStrengthDraft] =
+    useState("0.35");
+  const [
+    boxVolumeWaterFoamContactLimitDraft,
+    setBoxVolumeWaterFoamContactLimitDraft
+  ] = useState(String(DEFAULT_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT));
+  const [
+    boxVolumeWaterSurfaceDisplacementEnabledDraft,
+    setBoxVolumeWaterSurfaceDisplacementEnabledDraft
+  ] = useState(false);
+  const [boxVolumeFogColorDraft, setBoxVolumeFogColorDraft] =
+    useState("#9cb7c7");
+  const [boxVolumeFogDensityDraft, setBoxVolumeFogDensityDraft] =
+    useState("0.08");
+  const [boxVolumeFogPaddingDraft, setBoxVolumeFogPaddingDraft] =
+    useState("0.2");
   const [whiteboxSnapEnabled, setWhiteboxSnapEnabled] = useState(true);
-  const [whiteboxSnapStepDraft, setWhiteboxSnapStepDraft] = useState(String(DEFAULT_GRID_SIZE));
-  const [viewportGridVisible, setViewportGridVisible] = useState(true);
-  const [uvOffsetDraft, setUvOffsetDraft] = useState(createVec2Draft(createDefaultFaceUvState().offset));
-  const [uvScaleDraft, setUvScaleDraft] = useState(createVec2Draft(createDefaultFaceUvState().scale));
-  const [entityPositionDraft, setEntityPositionDraft] = useState(createVec3Draft(DEFAULT_ENTITY_POSITION));
-  const [pointLightColorDraft, setPointLightColorDraft] = useState(DEFAULT_POINT_LIGHT_COLOR_HEX);
-  const [pointLightIntensityDraft, setPointLightIntensityDraft] = useState(String(DEFAULT_POINT_LIGHT_INTENSITY));
-  const [pointLightDistanceDraft, setPointLightDistanceDraft] = useState(String(DEFAULT_POINT_LIGHT_DISTANCE));
-  const [spotLightColorDraft, setSpotLightColorDraft] = useState(DEFAULT_SPOT_LIGHT_COLOR_HEX);
-  const [spotLightIntensityDraft, setSpotLightIntensityDraft] = useState(String(DEFAULT_SPOT_LIGHT_INTENSITY));
-  const [spotLightDistanceDraft, setSpotLightDistanceDraft] = useState(String(DEFAULT_SPOT_LIGHT_DISTANCE));
-  const [spotLightAngleDraft, setSpotLightAngleDraft] = useState(String(DEFAULT_SPOT_LIGHT_ANGLE_DEGREES));
-  const [spotLightDirectionDraft, setSpotLightDirectionDraft] = useState(createVec3Draft(DEFAULT_SPOT_LIGHT_DIRECTION));
-  const [playerStartYawDraft, setPlayerStartYawDraft] = useState("0");
-  const [playerStartColliderModeDraft, setPlayerStartColliderModeDraft] = useState<PlayerStartColliderMode>("capsule");
-  const [playerStartEyeHeightDraft, setPlayerStartEyeHeightDraft] = useState(String(DEFAULT_PLAYER_START_EYE_HEIGHT));
-  const [playerStartCapsuleRadiusDraft, setPlayerStartCapsuleRadiusDraft] = useState(String(DEFAULT_PLAYER_START_CAPSULE_RADIUS));
-  const [playerStartCapsuleHeightDraft, setPlayerStartCapsuleHeightDraft] = useState(String(DEFAULT_PLAYER_START_CAPSULE_HEIGHT));
-  const [playerStartBoxSizeDraft, setPlayerStartBoxSizeDraft] = useState(createVec3Draft(DEFAULT_PLAYER_START_BOX_SIZE));
-  const [soundEmitterAudioAssetIdDraft, setSoundEmitterAudioAssetIdDraft] = useState(DEFAULT_SOUND_EMITTER_AUDIO_ASSET_ID ?? "");
-  const [soundEmitterVolumeDraft, setSoundEmitterVolumeDraft] = useState(String(DEFAULT_SOUND_EMITTER_VOLUME));
-  const [soundEmitterRefDistanceDraft, setSoundEmitterRefDistanceDraft] = useState(String(DEFAULT_SOUND_EMITTER_REF_DISTANCE));
-  const [soundEmitterMaxDistanceDraft, setSoundEmitterMaxDistanceDraft] = useState(String(DEFAULT_SOUND_EMITTER_MAX_DISTANCE));
-  const [soundEmitterAutoplayDraft, setSoundEmitterAutoplayDraft] = useState(false);
-  const [soundEmitterLoopDraft, setSoundEmitterLoopDraft] = useState(false);
-  const [triggerVolumeSizeDraft, setTriggerVolumeSizeDraft] = useState(createVec3Draft(DEFAULT_TRIGGER_VOLUME_SIZE));
-  const [teleportTargetYawDraft, setTeleportTargetYawDraft] = useState(String(DEFAULT_TELEPORT_TARGET_YAW_DEGREES));
-  const [interactableRadiusDraft, setInteractableRadiusDraft] = useState(String(DEFAULT_INTERACTABLE_RADIUS));
-  const [interactablePromptDraft, setInteractablePromptDraft] = useState(DEFAULT_INTERACTABLE_PROMPT);
-  const [interactableEnabledDraft, setInteractableEnabledDraft] = useState(true);
-  const [modelPositionDraft, setModelPositionDraft] = useState(createVec3Draft(DEFAULT_MODEL_INSTANCE_POSITION));
-  const [modelRotationDraft, setModelRotationDraft] = useState(createVec3Draft(DEFAULT_MODEL_INSTANCE_ROTATION_DEGREES));
-  const [modelScaleDraft, setModelScaleDraft] = useState(createVec3Draft(DEFAULT_MODEL_INSTANCE_SCALE));
-  const [ambientLightIntensityDraft, setAmbientLightIntensityDraft] = useState(String(editorState.document.world.ambientLight.intensity));
-  const [sunLightIntensityDraft, setSunLightIntensityDraft] = useState(String(editorState.document.world.sunLight.intensity));
-  const [sunDirectionDraft, setSunDirectionDraft] = useState(createVec3Draft(editorState.document.world.sunLight.direction));
-  const [backgroundEnvironmentIntensityDraft, setBackgroundEnvironmentIntensityDraft] = useState(
-    editorState.document.world.background.mode === "image" ? String(editorState.document.world.background.environmentIntensity) : "0.5"
+  const [whiteboxSnapStepDraft, setWhiteboxSnapStepDraft] = useState(
+    String(DEFAULT_GRID_SIZE)
   );
-  const [advancedRenderingShadowBiasDraft, setAdvancedRenderingShadowBiasDraft] = useState(
+  const [viewportGridVisible, setViewportGridVisible] = useState(true);
+  const [uvOffsetDraft, setUvOffsetDraft] = useState(
+    createVec2Draft(createDefaultFaceUvState().offset)
+  );
+  const [uvScaleDraft, setUvScaleDraft] = useState(
+    createVec2Draft(createDefaultFaceUvState().scale)
+  );
+  const [entityPositionDraft, setEntityPositionDraft] = useState(
+    createVec3Draft(DEFAULT_ENTITY_POSITION)
+  );
+  const [pointLightColorDraft, setPointLightColorDraft] = useState(
+    DEFAULT_POINT_LIGHT_COLOR_HEX
+  );
+  const [pointLightIntensityDraft, setPointLightIntensityDraft] = useState(
+    String(DEFAULT_POINT_LIGHT_INTENSITY)
+  );
+  const [pointLightDistanceDraft, setPointLightDistanceDraft] = useState(
+    String(DEFAULT_POINT_LIGHT_DISTANCE)
+  );
+  const [spotLightColorDraft, setSpotLightColorDraft] = useState(
+    DEFAULT_SPOT_LIGHT_COLOR_HEX
+  );
+  const [spotLightIntensityDraft, setSpotLightIntensityDraft] = useState(
+    String(DEFAULT_SPOT_LIGHT_INTENSITY)
+  );
+  const [spotLightDistanceDraft, setSpotLightDistanceDraft] = useState(
+    String(DEFAULT_SPOT_LIGHT_DISTANCE)
+  );
+  const [spotLightAngleDraft, setSpotLightAngleDraft] = useState(
+    String(DEFAULT_SPOT_LIGHT_ANGLE_DEGREES)
+  );
+  const [spotLightDirectionDraft, setSpotLightDirectionDraft] = useState(
+    createVec3Draft(DEFAULT_SPOT_LIGHT_DIRECTION)
+  );
+  const [playerStartYawDraft, setPlayerStartYawDraft] = useState("0");
+  const [playerStartColliderModeDraft, setPlayerStartColliderModeDraft] =
+    useState<PlayerStartColliderMode>("capsule");
+  const [playerStartEyeHeightDraft, setPlayerStartEyeHeightDraft] = useState(
+    String(DEFAULT_PLAYER_START_EYE_HEIGHT)
+  );
+  const [playerStartCapsuleRadiusDraft, setPlayerStartCapsuleRadiusDraft] =
+    useState(String(DEFAULT_PLAYER_START_CAPSULE_RADIUS));
+  const [playerStartCapsuleHeightDraft, setPlayerStartCapsuleHeightDraft] =
+    useState(String(DEFAULT_PLAYER_START_CAPSULE_HEIGHT));
+  const [playerStartBoxSizeDraft, setPlayerStartBoxSizeDraft] = useState(
+    createVec3Draft(DEFAULT_PLAYER_START_BOX_SIZE)
+  );
+  const [soundEmitterAudioAssetIdDraft, setSoundEmitterAudioAssetIdDraft] =
+    useState(DEFAULT_SOUND_EMITTER_AUDIO_ASSET_ID ?? "");
+  const [soundEmitterVolumeDraft, setSoundEmitterVolumeDraft] = useState(
+    String(DEFAULT_SOUND_EMITTER_VOLUME)
+  );
+  const [soundEmitterRefDistanceDraft, setSoundEmitterRefDistanceDraft] =
+    useState(String(DEFAULT_SOUND_EMITTER_REF_DISTANCE));
+  const [soundEmitterMaxDistanceDraft, setSoundEmitterMaxDistanceDraft] =
+    useState(String(DEFAULT_SOUND_EMITTER_MAX_DISTANCE));
+  const [soundEmitterAutoplayDraft, setSoundEmitterAutoplayDraft] =
+    useState(false);
+  const [soundEmitterLoopDraft, setSoundEmitterLoopDraft] = useState(false);
+  const [triggerVolumeSizeDraft, setTriggerVolumeSizeDraft] = useState(
+    createVec3Draft(DEFAULT_TRIGGER_VOLUME_SIZE)
+  );
+  const [teleportTargetYawDraft, setTeleportTargetYawDraft] = useState(
+    String(DEFAULT_TELEPORT_TARGET_YAW_DEGREES)
+  );
+  const [interactableRadiusDraft, setInteractableRadiusDraft] = useState(
+    String(DEFAULT_INTERACTABLE_RADIUS)
+  );
+  const [interactablePromptDraft, setInteractablePromptDraft] = useState(
+    DEFAULT_INTERACTABLE_PROMPT
+  );
+  const [interactableEnabledDraft, setInteractableEnabledDraft] =
+    useState(true);
+  const [modelPositionDraft, setModelPositionDraft] = useState(
+    createVec3Draft(DEFAULT_MODEL_INSTANCE_POSITION)
+  );
+  const [modelRotationDraft, setModelRotationDraft] = useState(
+    createVec3Draft(DEFAULT_MODEL_INSTANCE_ROTATION_DEGREES)
+  );
+  const [modelScaleDraft, setModelScaleDraft] = useState(
+    createVec3Draft(DEFAULT_MODEL_INSTANCE_SCALE)
+  );
+  const [ambientLightIntensityDraft, setAmbientLightIntensityDraft] = useState(
+    String(editorState.document.world.ambientLight.intensity)
+  );
+  const [sunLightIntensityDraft, setSunLightIntensityDraft] = useState(
+    String(editorState.document.world.sunLight.intensity)
+  );
+  const [sunDirectionDraft, setSunDirectionDraft] = useState(
+    createVec3Draft(editorState.document.world.sunLight.direction)
+  );
+  const [
+    backgroundEnvironmentIntensityDraft,
+    setBackgroundEnvironmentIntensityDraft
+  ] = useState(
+    editorState.document.world.background.mode === "image"
+      ? String(editorState.document.world.background.environmentIntensity)
+      : "0.5"
+  );
+  const [
+    advancedRenderingShadowBiasDraft,
+    setAdvancedRenderingShadowBiasDraft
+  ] = useState(
     String(editorState.document.world.advancedRendering.shadows.bias)
   );
-  const [advancedRenderingAmbientOcclusionIntensityDraft, setAdvancedRenderingAmbientOcclusionIntensityDraft] = useState(
-    String(editorState.document.world.advancedRendering.ambientOcclusion.intensity)
+  const [
+    advancedRenderingAmbientOcclusionIntensityDraft,
+    setAdvancedRenderingAmbientOcclusionIntensityDraft
+  ] = useState(
+    String(
+      editorState.document.world.advancedRendering.ambientOcclusion.intensity
+    )
   );
-  const [advancedRenderingAmbientOcclusionRadiusDraft, setAdvancedRenderingAmbientOcclusionRadiusDraft] = useState(
+  const [
+    advancedRenderingAmbientOcclusionRadiusDraft,
+    setAdvancedRenderingAmbientOcclusionRadiusDraft
+  ] = useState(
     String(editorState.document.world.advancedRendering.ambientOcclusion.radius)
   );
-  const [advancedRenderingAmbientOcclusionSamplesDraft, setAdvancedRenderingAmbientOcclusionSamplesDraft] = useState(
-    String(editorState.document.world.advancedRendering.ambientOcclusion.samples)
+  const [
+    advancedRenderingAmbientOcclusionSamplesDraft,
+    setAdvancedRenderingAmbientOcclusionSamplesDraft
+  ] = useState(
+    String(
+      editorState.document.world.advancedRendering.ambientOcclusion.samples
+    )
   );
-  const [advancedRenderingBloomIntensityDraft, setAdvancedRenderingBloomIntensityDraft] = useState(
+  const [
+    advancedRenderingBloomIntensityDraft,
+    setAdvancedRenderingBloomIntensityDraft
+  ] = useState(
     String(editorState.document.world.advancedRendering.bloom.intensity)
   );
-  const [advancedRenderingBloomThresholdDraft, setAdvancedRenderingBloomThresholdDraft] = useState(
+  const [
+    advancedRenderingBloomThresholdDraft,
+    setAdvancedRenderingBloomThresholdDraft
+  ] = useState(
     String(editorState.document.world.advancedRendering.bloom.threshold)
   );
-  const [advancedRenderingBloomRadiusDraft, setAdvancedRenderingBloomRadiusDraft] = useState(
+  const [
+    advancedRenderingBloomRadiusDraft,
+    setAdvancedRenderingBloomRadiusDraft
+  ] = useState(
     String(editorState.document.world.advancedRendering.bloom.radius)
   );
-  const [advancedRenderingToneMappingExposureDraft, setAdvancedRenderingToneMappingExposureDraft] = useState(
+  const [
+    advancedRenderingToneMappingExposureDraft,
+    setAdvancedRenderingToneMappingExposureDraft
+  ] = useState(
     String(editorState.document.world.advancedRendering.toneMapping.exposure)
   );
-  const [advancedRenderingDepthOfFieldFocusDistanceDraft, setAdvancedRenderingDepthOfFieldFocusDistanceDraft] = useState(
-    String(editorState.document.world.advancedRendering.depthOfField.focusDistance)
+  const [
+    advancedRenderingDepthOfFieldFocusDistanceDraft,
+    setAdvancedRenderingDepthOfFieldFocusDistanceDraft
+  ] = useState(
+    String(
+      editorState.document.world.advancedRendering.depthOfField.focusDistance
+    )
   );
-  const [advancedRenderingDepthOfFieldFocalLengthDraft, setAdvancedRenderingDepthOfFieldFocalLengthDraft] = useState(
-    String(editorState.document.world.advancedRendering.depthOfField.focalLength)
+  const [
+    advancedRenderingDepthOfFieldFocalLengthDraft,
+    setAdvancedRenderingDepthOfFieldFocalLengthDraft
+  ] = useState(
+    String(
+      editorState.document.world.advancedRendering.depthOfField.focalLength
+    )
   );
-  const [advancedRenderingDepthOfFieldBokehScaleDraft, setAdvancedRenderingDepthOfFieldBokehScaleDraft] = useState(
+  const [
+    advancedRenderingDepthOfFieldBokehScaleDraft,
+    setAdvancedRenderingDepthOfFieldBokehScaleDraft
+  ] = useState(
     String(editorState.document.world.advancedRendering.depthOfField.bokehScale)
   );
-  const [statusMessage, setStatusMessage] = useState(initialStatusMessage ?? "Slice 3.5 advanced rendering ready.");
-  const [assetStatusMessage, setAssetStatusMessage] = useState<string | null>(null);
+  const [statusMessage, setStatusMessage] = useState(
+    initialStatusMessage ?? "Slice 3.5 advanced rendering ready."
+  );
+  const [assetStatusMessage, setAssetStatusMessage] = useState<string | null>(
+    null
+  );
   const [hoveredAssetId, setHoveredAssetId] = useState<string | null>(null);
-  const [hoveredViewportPanelId, setHoveredViewportPanelId] = useState<ViewportPanelId | null>(null);
-  const [addMenuPosition, setAddMenuPosition] = useState<HierarchicalMenuPosition | null>(null);
-  const [preferredNavigationMode, setPreferredNavigationMode] = useState<RuntimeNavigationMode>(
-    primaryPlayerStart === null ? "orbitVisitor" : "firstPerson"
-  );
-  const [activeNavigationMode, setActiveNavigationMode] = useState<RuntimeNavigationMode>(
-    primaryPlayerStart === null ? "orbitVisitor" : "firstPerson"
-  );
-  const [projectAssetStorage, setProjectAssetStorage] = useState<ProjectAssetStorage | null>(null);
-  const [projectAssetStorageReady, setProjectAssetStorageReady] = useState(false);
-  const [runtimeScene, setRuntimeScene] = useState<RuntimeSceneDefinition | null>(null);
+  const [hoveredViewportPanelId, setHoveredViewportPanelId] =
+    useState<ViewportPanelId | null>(null);
+  const [addMenuPosition, setAddMenuPosition] =
+    useState<HierarchicalMenuPosition | null>(null);
+  const [preferredNavigationMode, setPreferredNavigationMode] =
+    useState<RuntimeNavigationMode>(
+      primaryPlayerStart === null ? "orbitVisitor" : "firstPerson"
+    );
+  const [activeNavigationMode, setActiveNavigationMode] =
+    useState<RuntimeNavigationMode>(
+      primaryPlayerStart === null ? "orbitVisitor" : "firstPerson"
+    );
+  const [projectAssetStorage, setProjectAssetStorage] =
+    useState<ProjectAssetStorage | null>(null);
+  const [projectAssetStorageReady, setProjectAssetStorageReady] =
+    useState(false);
+  const [runtimeScene, setRuntimeScene] =
+    useState<RuntimeSceneDefinition | null>(null);
   const [runtimeMessage, setRuntimeMessage] = useState<string | null>(null);
-  const [firstPersonTelemetry, setFirstPersonTelemetry] = useState<FirstPersonTelemetry | null>(null);
-  const [runtimeInteractionPrompt, setRuntimeInteractionPrompt] = useState<RuntimeInteractionPrompt | null>(null);
-  const [loadedModelAssets, setLoadedModelAssets] = useState<Record<string, LoadedModelAsset>>({});
-  const [loadedImageAssets, setLoadedImageAssets] = useState<Record<string, LoadedImageAsset>>({});
-  const [loadedAudioAssets, setLoadedAudioAssets] = useState<Record<string, LoadedAudioAsset>>({});
-  const [focusRequest, setFocusRequest] = useState<{ id: number; selection: EditorSelection; panelId: ViewportPanelId }>({
+  const [firstPersonTelemetry, setFirstPersonTelemetry] =
+    useState<FirstPersonTelemetry | null>(null);
+  const [runtimeInteractionPrompt, setRuntimeInteractionPrompt] =
+    useState<RuntimeInteractionPrompt | null>(null);
+  const [loadedModelAssets, setLoadedModelAssets] = useState<
+    Record<string, LoadedModelAsset>
+  >({});
+  const [loadedImageAssets, setLoadedImageAssets] = useState<
+    Record<string, LoadedImageAsset>
+  >({});
+  const [loadedAudioAssets, setLoadedAudioAssets] = useState<
+    Record<string, LoadedAudioAsset>
+  >({});
+  const [focusRequest, setFocusRequest] = useState<{
+    id: number;
+    selection: EditorSelection;
+    panelId: ViewportPanelId;
+  }>({
     id: 0,
     panelId: "topLeft",
     selection: {
@@ -1162,17 +1489,29 @@ export function App({ store, initialStatusMessage }: AppProps) {
     x: Math.round(window.innerWidth * 0.5),
     y: Math.round(window.innerHeight * 0.5)
   });
-  const [viewportQuadResizeMode, setViewportQuadResizeMode] = useState<ViewportQuadResizeMode | null>(null);
+  const [viewportQuadResizeMode, setViewportQuadResizeMode] =
+    useState<ViewportQuadResizeMode | null>(null);
   const documentValidation = validateSceneDocument(editorState.document);
   const runValidation = validateRuntimeSceneBuild(editorState.document, {
     navigationMode: preferredNavigationMode,
     loadedModelAssets
   });
-  const diagnostics = [...documentValidation.errors, ...documentValidation.warnings, ...runValidation.errors, ...runValidation.warnings];
-  const blockingDiagnostics = diagnostics.filter((diagnostic) => diagnostic.severity === "error");
-  const warningDiagnostics = diagnostics.filter((diagnostic) => diagnostic.severity === "warning");
+  const diagnostics = [
+    ...documentValidation.errors,
+    ...documentValidation.warnings,
+    ...runValidation.errors,
+    ...runValidation.warnings
+  ];
+  const blockingDiagnostics = diagnostics.filter(
+    (diagnostic) => diagnostic.severity === "error"
+  );
+  const warningDiagnostics = diagnostics.filter(
+    (diagnostic) => diagnostic.severity === "warning"
+  );
   const documentStatusLabel =
-    documentValidation.errors.length === 0 ? "Valid" : formatDiagnosticCount(documentValidation.errors.length, "error");
+    documentValidation.errors.length === 0
+      ? "Valid"
+      : formatDiagnosticCount(documentValidation.errors.length, "error");
   const lastCommandLabel = editorState.lastCommandLabel ?? "No commands yet";
   const runReadyLabel =
     blockingDiagnostics.length > 0
@@ -1181,14 +1520,34 @@ export function App({ store, initialStatusMessage }: AppProps) {
         ? "Ready for First Person"
         : "Ready for Orbit Visitor";
   const advancedRendering = editorState.document.world.advancedRendering;
-  const hoveredAsset = hoveredAssetId === null ? null : editorState.document.assets[hoveredAssetId] ?? null;
-  const hoveredAssetStatusMessage = hoveredAsset === null ? null : formatAssetHoverStatus(hoveredAsset);
-  const selectedTransformTarget = resolveTransformTarget(editorState.document, editorState.selection, whiteboxSelectionMode).target;
-  const canTranslateSelectedTarget = selectedTransformTarget !== null && supportsTransformOperation(selectedTransformTarget, "translate");
-  const canRotateSelectedTarget = selectedTransformTarget !== null && supportsTransformOperation(selectedTransformTarget, "rotate");
-  const canScaleSelectedTarget = selectedTransformTarget !== null && supportsTransformOperation(selectedTransformTarget, "scale");
-  const whiteboxSnapStep = resolveOptionalPositiveNumber(whiteboxSnapStepDraft, DEFAULT_GRID_SIZE);
-  const whiteboxVectorInputStep = getWhiteboxInputStep(whiteboxSnapEnabled, whiteboxSnapStep);
+  const hoveredAsset =
+    hoveredAssetId === null
+      ? null
+      : (editorState.document.assets[hoveredAssetId] ?? null);
+  const hoveredAssetStatusMessage =
+    hoveredAsset === null ? null : formatAssetHoverStatus(hoveredAsset);
+  const selectedTransformTarget = resolveTransformTarget(
+    editorState.document,
+    editorState.selection,
+    whiteboxSelectionMode
+  ).target;
+  const canTranslateSelectedTarget =
+    selectedTransformTarget !== null &&
+    supportsTransformOperation(selectedTransformTarget, "translate");
+  const canRotateSelectedTarget =
+    selectedTransformTarget !== null &&
+    supportsTransformOperation(selectedTransformTarget, "rotate");
+  const canScaleSelectedTarget =
+    selectedTransformTarget !== null &&
+    supportsTransformOperation(selectedTransformTarget, "scale");
+  const whiteboxSnapStep = resolveOptionalPositiveNumber(
+    whiteboxSnapStepDraft,
+    DEFAULT_GRID_SIZE
+  );
+  const whiteboxVectorInputStep = getWhiteboxInputStep(
+    whiteboxSnapEnabled,
+    whiteboxSnapStep
+  );
 
   useEffect(() => {
     setSceneNameDraft(editorState.document.name);
@@ -1212,7 +1571,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
       setRotationDraft(createVec3Draft(DEFAULT_BOX_BRUSH_ROTATION_DEGREES));
       setSizeDraft(createVec3Draft(DEFAULT_BOX_BRUSH_SIZE));
       setBoxVolumeModeDraft("none");
-      setBoxVolumeWaterFoamContactLimitDraft(String(DEFAULT_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT));
+      setBoxVolumeWaterFoamContactLimitDraft(
+        String(DEFAULT_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT)
+      );
       setBoxVolumeWaterSurfaceDisplacementEnabledDraft(false);
       return;
     }
@@ -1225,10 +1586,18 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
     if (selectedBrush.volume.mode === "water") {
       setBoxVolumeWaterColorDraft(selectedBrush.volume.water.colorHex);
-      setBoxVolumeWaterSurfaceOpacityDraft(String(selectedBrush.volume.water.surfaceOpacity));
-      setBoxVolumeWaterWaveStrengthDraft(String(selectedBrush.volume.water.waveStrength));
-      setBoxVolumeWaterFoamContactLimitDraft(String(selectedBrush.volume.water.foamContactLimit));
-      setBoxVolumeWaterSurfaceDisplacementEnabledDraft(selectedBrush.volume.water.surfaceDisplacementEnabled);
+      setBoxVolumeWaterSurfaceOpacityDraft(
+        String(selectedBrush.volume.water.surfaceOpacity)
+      );
+      setBoxVolumeWaterWaveStrengthDraft(
+        String(selectedBrush.volume.water.waveStrength)
+      );
+      setBoxVolumeWaterFoamContactLimitDraft(
+        String(selectedBrush.volume.water.foamContactLimit)
+      );
+      setBoxVolumeWaterSurfaceDisplacementEnabledDraft(
+        selectedBrush.volume.water.surfaceDisplacementEnabled
+      );
     }
 
     if (selectedBrush.volume.mode === "fog") {
@@ -1264,13 +1633,25 @@ export function App({ store, initialStatusMessage }: AppProps) {
       setPlayerStartYawDraft("0");
       setPlayerStartColliderModeDraft("capsule");
       setPlayerStartEyeHeightDraft(String(DEFAULT_PLAYER_START_EYE_HEIGHT));
-      setPlayerStartCapsuleRadiusDraft(String(DEFAULT_PLAYER_START_CAPSULE_RADIUS));
-      setPlayerStartCapsuleHeightDraft(String(DEFAULT_PLAYER_START_CAPSULE_HEIGHT));
-      setPlayerStartBoxSizeDraft(createVec3Draft(DEFAULT_PLAYER_START_BOX_SIZE));
-      setSoundEmitterAudioAssetIdDraft(DEFAULT_SOUND_EMITTER_AUDIO_ASSET_ID ?? "");
+      setPlayerStartCapsuleRadiusDraft(
+        String(DEFAULT_PLAYER_START_CAPSULE_RADIUS)
+      );
+      setPlayerStartCapsuleHeightDraft(
+        String(DEFAULT_PLAYER_START_CAPSULE_HEIGHT)
+      );
+      setPlayerStartBoxSizeDraft(
+        createVec3Draft(DEFAULT_PLAYER_START_BOX_SIZE)
+      );
+      setSoundEmitterAudioAssetIdDraft(
+        DEFAULT_SOUND_EMITTER_AUDIO_ASSET_ID ?? ""
+      );
       setSoundEmitterVolumeDraft(String(DEFAULT_SOUND_EMITTER_VOLUME));
-      setSoundEmitterRefDistanceDraft(String(DEFAULT_SOUND_EMITTER_REF_DISTANCE));
-      setSoundEmitterMaxDistanceDraft(String(DEFAULT_SOUND_EMITTER_MAX_DISTANCE));
+      setSoundEmitterRefDistanceDraft(
+        String(DEFAULT_SOUND_EMITTER_REF_DISTANCE)
+      );
+      setSoundEmitterMaxDistanceDraft(
+        String(DEFAULT_SOUND_EMITTER_MAX_DISTANCE)
+      );
       setSoundEmitterAutoplayDraft(false);
       setSoundEmitterLoopDraft(false);
       setTriggerVolumeSizeDraft(createVec3Draft(DEFAULT_TRIGGER_VOLUME_SIZE));
@@ -1300,9 +1681,15 @@ export function App({ store, initialStatusMessage }: AppProps) {
         setPlayerStartYawDraft(String(selectedEntity.yawDegrees));
         setPlayerStartColliderModeDraft(selectedEntity.collider.mode);
         setPlayerStartEyeHeightDraft(String(selectedEntity.collider.eyeHeight));
-        setPlayerStartCapsuleRadiusDraft(String(selectedEntity.collider.capsuleRadius));
-        setPlayerStartCapsuleHeightDraft(String(selectedEntity.collider.capsuleHeight));
-        setPlayerStartBoxSizeDraft(createVec3Draft(selectedEntity.collider.boxSize));
+        setPlayerStartCapsuleRadiusDraft(
+          String(selectedEntity.collider.capsuleRadius)
+        );
+        setPlayerStartCapsuleHeightDraft(
+          String(selectedEntity.collider.capsuleHeight)
+        );
+        setPlayerStartBoxSizeDraft(
+          createVec3Draft(selectedEntity.collider.boxSize)
+        );
         break;
       case "soundEmitter":
         setSoundEmitterAudioAssetIdDraft(selectedEntity.audioAssetId ?? "");
@@ -1329,47 +1716,79 @@ export function App({ store, initialStatusMessage }: AppProps) {
   useEffect(() => {
     if (selectedModelInstance === null) {
       setModelPositionDraft(createVec3Draft(DEFAULT_MODEL_INSTANCE_POSITION));
-      setModelRotationDraft(createVec3Draft(DEFAULT_MODEL_INSTANCE_ROTATION_DEGREES));
+      setModelRotationDraft(
+        createVec3Draft(DEFAULT_MODEL_INSTANCE_ROTATION_DEGREES)
+      );
       setModelScaleDraft(createVec3Draft(DEFAULT_MODEL_INSTANCE_SCALE));
       return;
     }
 
     setModelPositionDraft(createVec3Draft(selectedModelInstance.position));
-    setModelRotationDraft(createVec3Draft(selectedModelInstance.rotationDegrees));
+    setModelRotationDraft(
+      createVec3Draft(selectedModelInstance.rotationDegrees)
+    );
     setModelScaleDraft(createVec3Draft(selectedModelInstance.scale));
   }, [selectedModelInstance]);
 
   useEffect(() => {
-    setAmbientLightIntensityDraft(String(editorState.document.world.ambientLight.intensity));
+    setAmbientLightIntensityDraft(
+      String(editorState.document.world.ambientLight.intensity)
+    );
   }, [editorState.document.world.ambientLight.intensity]);
 
   useEffect(() => {
     if (editorState.document.world.background.mode === "image") {
-      setBackgroundEnvironmentIntensityDraft(String(editorState.document.world.background.environmentIntensity));
+      setBackgroundEnvironmentIntensityDraft(
+        String(editorState.document.world.background.environmentIntensity)
+      );
     }
   }, [editorState.document.world.background]);
 
   useEffect(() => {
-    setSunLightIntensityDraft(String(editorState.document.world.sunLight.intensity));
+    setSunLightIntensityDraft(
+      String(editorState.document.world.sunLight.intensity)
+    );
   }, [editorState.document.world.sunLight.intensity]);
 
   useEffect(() => {
-    setSunDirectionDraft(createVec3Draft(editorState.document.world.sunLight.direction));
+    setSunDirectionDraft(
+      createVec3Draft(editorState.document.world.sunLight.direction)
+    );
   }, [editorState.document.world.sunLight.direction]);
 
   useEffect(() => {
     const advancedRendering = editorState.document.world.advancedRendering;
     setAdvancedRenderingShadowBiasDraft(String(advancedRendering.shadows.bias));
-    setAdvancedRenderingAmbientOcclusionIntensityDraft(String(advancedRendering.ambientOcclusion.intensity));
-    setAdvancedRenderingAmbientOcclusionRadiusDraft(String(advancedRendering.ambientOcclusion.radius));
-    setAdvancedRenderingAmbientOcclusionSamplesDraft(String(advancedRendering.ambientOcclusion.samples));
-    setAdvancedRenderingBloomIntensityDraft(String(advancedRendering.bloom.intensity));
-    setAdvancedRenderingBloomThresholdDraft(String(advancedRendering.bloom.threshold));
-    setAdvancedRenderingBloomRadiusDraft(String(advancedRendering.bloom.radius));
-    setAdvancedRenderingToneMappingExposureDraft(String(advancedRendering.toneMapping.exposure));
-    setAdvancedRenderingDepthOfFieldFocusDistanceDraft(String(advancedRendering.depthOfField.focusDistance));
-    setAdvancedRenderingDepthOfFieldFocalLengthDraft(String(advancedRendering.depthOfField.focalLength));
-    setAdvancedRenderingDepthOfFieldBokehScaleDraft(String(advancedRendering.depthOfField.bokehScale));
+    setAdvancedRenderingAmbientOcclusionIntensityDraft(
+      String(advancedRendering.ambientOcclusion.intensity)
+    );
+    setAdvancedRenderingAmbientOcclusionRadiusDraft(
+      String(advancedRendering.ambientOcclusion.radius)
+    );
+    setAdvancedRenderingAmbientOcclusionSamplesDraft(
+      String(advancedRendering.ambientOcclusion.samples)
+    );
+    setAdvancedRenderingBloomIntensityDraft(
+      String(advancedRendering.bloom.intensity)
+    );
+    setAdvancedRenderingBloomThresholdDraft(
+      String(advancedRendering.bloom.threshold)
+    );
+    setAdvancedRenderingBloomRadiusDraft(
+      String(advancedRendering.bloom.radius)
+    );
+    setAdvancedRenderingToneMappingExposureDraft(
+      String(advancedRendering.toneMapping.exposure)
+    );
+    setAdvancedRenderingDepthOfFieldFocusDistanceDraft(
+      String(advancedRendering.depthOfField.focusDistance)
+    );
+    setAdvancedRenderingDepthOfFieldFocalLengthDraft(
+      String(advancedRendering.depthOfField.focalLength)
+    );
+    setAdvancedRenderingDepthOfFieldBokehScaleDraft(
+      String(advancedRendering.depthOfField.bokehScale)
+    );
   }, [editorState.document.world.advancedRendering]);
 
   useEffect(() => {
@@ -1488,9 +1907,15 @@ export function App({ store, initialStatusMessage }: AppProps) {
     const previousLoadedModelAssets = loadedModelAssetsRef.current;
     const previousLoadedImageAssets = loadedImageAssetsRef.current;
     const previousLoadedAudioAssets = loadedAudioAssetsRef.current;
-    const previousLoadedModelAssetIds = new Set(Object.keys(previousLoadedModelAssets));
-    const previousLoadedImageAssetIds = new Set(Object.keys(previousLoadedImageAssets));
-    const previousLoadedAudioAssetIds = new Set(Object.keys(previousLoadedAudioAssets));
+    const previousLoadedModelAssetIds = new Set(
+      Object.keys(previousLoadedModelAssets)
+    );
+    const previousLoadedImageAssetIds = new Set(
+      Object.keys(previousLoadedImageAssets)
+    );
+    const previousLoadedAudioAssetIds = new Set(
+      Object.keys(previousLoadedAudioAssets)
+    );
     const nextLoadedModelAssets: Record<string, LoadedModelAsset> = {};
     const nextLoadedImageAssets: Record<string, LoadedImageAsset> = {};
     const nextLoadedAudioAssets: Record<string, LoadedAudioAsset> = {};
@@ -1524,15 +1949,23 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
           const cachedLoadedAsset = previousLoadedModelAssets[asset.id];
 
-          if (cachedLoadedAsset !== undefined && cachedLoadedAsset.storageKey === asset.storageKey) {
+          if (
+            cachedLoadedAsset !== undefined &&
+            cachedLoadedAsset.storageKey === asset.storageKey
+          ) {
             nextLoadedModelAssets[asset.id] = cachedLoadedAsset;
             continue;
           }
 
           try {
-            nextLoadedModelAssets[asset.id] = await loadModelAssetFromStorage(projectAssetStorage, asset);
+            nextLoadedModelAssets[asset.id] = await loadModelAssetFromStorage(
+              projectAssetStorage,
+              asset
+            );
           } catch (error) {
-            syncErrorMessages.push(`Model asset ${asset.sourceName} could not be restored: ${getErrorMessage(error)}`);
+            syncErrorMessages.push(
+              `Model asset ${asset.sourceName} could not be restored: ${getErrorMessage(error)}`
+            );
           }
 
           continue;
@@ -1543,15 +1976,23 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
           const cachedLoadedAsset = previousLoadedImageAssets[asset.id];
 
-          if (cachedLoadedAsset !== undefined && cachedLoadedAsset.storageKey === asset.storageKey) {
+          if (
+            cachedLoadedAsset !== undefined &&
+            cachedLoadedAsset.storageKey === asset.storageKey
+          ) {
             nextLoadedImageAssets[asset.id] = cachedLoadedAsset;
             continue;
           }
 
           try {
-            nextLoadedImageAssets[asset.id] = await loadImageAssetFromStorage(projectAssetStorage, asset);
+            nextLoadedImageAssets[asset.id] = await loadImageAssetFromStorage(
+              projectAssetStorage,
+              asset
+            );
           } catch (error) {
-            syncErrorMessages.push(`Image asset ${asset.sourceName} could not be restored: ${getErrorMessage(error)}`);
+            syncErrorMessages.push(
+              `Image asset ${asset.sourceName} could not be restored: ${getErrorMessage(error)}`
+            );
           }
           continue;
         }
@@ -1561,15 +2002,23 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
           const cachedLoadedAsset = previousLoadedAudioAssets[asset.id];
 
-          if (cachedLoadedAsset !== undefined && cachedLoadedAsset.storageKey === asset.storageKey) {
+          if (
+            cachedLoadedAsset !== undefined &&
+            cachedLoadedAsset.storageKey === asset.storageKey
+          ) {
             nextLoadedAudioAssets[asset.id] = cachedLoadedAsset;
             continue;
           }
 
           try {
-            nextLoadedAudioAssets[asset.id] = await loadAudioAssetFromStorage(projectAssetStorage, asset);
+            nextLoadedAudioAssets[asset.id] = await loadAudioAssetFromStorage(
+              projectAssetStorage,
+              asset
+            );
           } catch (error) {
-            syncErrorMessages.push(`Audio asset ${asset.sourceName} could not be restored: ${getErrorMessage(error)}`);
+            syncErrorMessages.push(
+              `Audio asset ${asset.sourceName} could not be restored: ${getErrorMessage(error)}`
+            );
           }
         }
       }
@@ -1612,7 +2061,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
       setLoadedModelAssets(nextLoadedModelAssets);
       setLoadedImageAssets(nextLoadedImageAssets);
       setLoadedAudioAssets(nextLoadedAudioAssets);
-      setAssetStatusMessage(syncErrorMessages.length === 0 ? null : syncErrorMessages.join(" | "));
+      setAssetStatusMessage(
+        syncErrorMessages.length === 0 ? null : syncErrorMessages.join(" | ")
+      );
     };
 
     void syncAssets();
@@ -1620,7 +2071,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
     return () => {
       cancelled = true;
     };
-  }, [editorState.document.assets, projectAssetStorage, projectAssetStorageReady]);
+  }, [
+    editorState.document.assets,
+    projectAssetStorage,
+    projectAssetStorageReady
+  ]);
 
   useEffect(() => {
     if (editorState.toolMode === "play") {
@@ -1634,11 +2089,17 @@ export function App({ store, initialStatusMessage }: AppProps) {
       };
 
       const hoveredViewportPanelElement =
-        event.target instanceof Element ? event.target.closest<HTMLElement>("[data-viewport-panel-id]") : null;
-      const hoveredPanelId = hoveredViewportPanelElement?.dataset.viewportPanelId;
+        event.target instanceof Element
+          ? event.target.closest<HTMLElement>("[data-viewport-panel-id]")
+          : null;
+      const hoveredPanelId =
+        hoveredViewportPanelElement?.dataset.viewportPanelId;
 
       setHoveredViewportPanelId(
-        hoveredPanelId === "topLeft" || hoveredPanelId === "topRight" || hoveredPanelId === "bottomLeft" || hoveredPanelId === "bottomRight"
+        hoveredPanelId === "topLeft" ||
+          hoveredPanelId === "topRight" ||
+          hoveredPanelId === "bottomLeft" ||
+          hoveredPanelId === "bottomRight"
           ? hoveredPanelId
           : null
       );
@@ -1649,7 +2110,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
         return;
       }
 
-      const hasPrimaryModifier = (event.metaKey || event.ctrlKey) && !event.altKey;
+      const hasPrimaryModifier =
+        (event.metaKey || event.ctrlKey) && !event.altKey;
 
       if (hasPrimaryModifier && event.code === "KeyR" && !event.shiftKey) {
         event.preventDefault();
@@ -1768,8 +2230,17 @@ export function App({ store, initialStatusMessage }: AppProps) {
       }
 
       const isDeletionKey = event.key === "Delete" || event.key === "Backspace";
-      const isDeleteShortcut = !event.altKey && !event.ctrlKey && !event.metaKey && (event.code === "KeyX" || isDeletionKey);
-      const isDuplicateShortcut = event.shiftKey && !event.altKey && !event.ctrlKey && !event.metaKey && event.code === "KeyD";
+      const isDeleteShortcut =
+        !event.altKey &&
+        !event.ctrlKey &&
+        !event.metaKey &&
+        (event.code === "KeyX" || isDeletionKey);
+      const isDuplicateShortcut =
+        event.shiftKey &&
+        !event.altKey &&
+        !event.ctrlKey &&
+        !event.metaKey &&
+        event.code === "KeyD";
 
       if (addMenuPosition !== null) {
         if (isDeletionKey) {
@@ -1803,14 +2274,21 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
       if (
         event.code !== "NumpadComma" &&
-        !(event.key === "," && event.location === globalThis.KeyboardEvent.DOM_KEY_LOCATION_NUMPAD)
+        !(
+          event.key === "," &&
+          event.location === globalThis.KeyboardEvent.DOM_KEY_LOCATION_NUMPAD
+        )
       ) {
         return;
       }
 
       event.preventDefault();
 
-      if (editorState.selection.kind === "none" && brushList.length === 0 && entityList.length === 0) {
+      if (
+        editorState.selection.kind === "none" &&
+        brushList.length === 0 &&
+        entityList.length === 0
+      ) {
         setStatusMessage("Nothing authored yet to frame in the viewport.");
         return;
       }
@@ -1820,7 +2298,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
         panelId: activePanelId,
         selection: editorState.selection
       }));
-      setStatusMessage(editorState.selection.kind === "none" ? "Framed the authored scene in the viewport." : "Framed the current selection.");
+      setStatusMessage(
+        editorState.selection.kind === "none"
+          ? "Framed the authored scene in the viewport."
+          : "Framed the current selection."
+      );
     };
 
     document.addEventListener("pointermove", handleWindowPointerMove);
@@ -1862,7 +2344,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
     const previousCursor = document.body.style.cursor;
     const previousUserSelect = document.body.style.userSelect;
-    document.body.style.cursor = getViewportQuadResizeCursor(viewportQuadResizeMode);
+    document.body.style.cursor = getViewportQuadResizeCursor(
+      viewportQuadResizeMode
+    );
     document.body.style.userSelect = "none";
 
     const handlePointerMove = (event: globalThis.PointerEvent) => {
@@ -1883,11 +2367,15 @@ export function App({ store, initialStatusMessage }: AppProps) {
       };
 
       if (viewportQuadResizeMode !== "horizontal") {
-        nextViewportQuadSplit.x = clampViewportQuadSplitValue((event.clientX - rect.left) / rect.width);
+        nextViewportQuadSplit.x = clampViewportQuadSplitValue(
+          (event.clientX - rect.left) / rect.width
+        );
       }
 
       if (viewportQuadResizeMode !== "vertical") {
-        nextViewportQuadSplit.y = clampViewportQuadSplitValue((event.clientY - rect.top) / rect.height);
+        nextViewportQuadSplit.y = clampViewportQuadSplitValue(
+          (event.clientY - rect.top) / rect.height
+        );
       }
 
       store.setViewportQuadSplit(nextViewportQuadSplit);
@@ -1924,7 +2412,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
         return;
       }
 
-      const pointerCaptured = activeNavigationMode === "firstPerson" && firstPersonTelemetry?.pointerLocked === true;
+      const pointerCaptured =
+        activeNavigationMode === "firstPerson" &&
+        firstPersonTelemetry?.pointerLocked === true;
 
       if (pointerCaptured) {
         return;
@@ -1952,7 +2442,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
     setStatusMessage(`Scene renamed to ${normalizedName}.`);
   };
 
-  const requestViewportFocus = (selection: EditorSelection, status?: string) => {
+  const requestViewportFocus = (
+    selection: EditorSelection,
+    status?: string
+  ) => {
     setFocusRequest((current) => ({
       id: current.id + 1,
       panelId: activePanelId,
@@ -1974,7 +2467,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
     setAddMenuPosition(null);
   };
 
-  const handleOpenAddMenuFromButton = (event: ReactMouseEvent<HTMLButtonElement>) => {
+  const handleOpenAddMenuFromButton = (
+    event: ReactMouseEvent<HTMLButtonElement>
+  ) => {
     const rect = event.currentTarget.getBoundingClientRect();
 
     openAddMenuAt({
@@ -1990,7 +2485,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
     blurActiveTextEntry();
     store.setViewportLayoutMode(nextLayoutMode);
-    setStatusMessage(`Switched the viewport to ${getViewportLayoutModeLabel(nextLayoutMode)}.`);
+    setStatusMessage(
+      `Switched the viewport to ${getViewportLayoutModeLabel(nextLayoutMode)}.`
+    );
   };
 
   const handleActivateViewportPanel = (panelId: ViewportPanelId) => {
@@ -2003,7 +2500,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
     setStatusMessage("Activated the viewport panel.");
   };
 
-  const handleSetViewportPanelViewMode = (panelId: ViewportPanelId, nextViewMode: ViewportViewMode) => {
+  const handleSetViewportPanelViewMode = (
+    panelId: ViewportPanelId,
+    nextViewMode: ViewportViewMode
+  ) => {
     if (editorState.viewportPanels[panelId].viewMode === nextViewMode) {
       return;
     }
@@ -2011,36 +2511,58 @@ export function App({ store, initialStatusMessage }: AppProps) {
     blurActiveTextEntry();
     store.setViewportPanelViewMode(panelId, nextViewMode);
 
-    setStatusMessage(`Set the viewport panel to ${getViewportViewModeLabel(nextViewMode)} view.`);
+    setStatusMessage(
+      `Set the viewport panel to ${getViewportViewModeLabel(nextViewMode)} view.`
+    );
   };
 
-  const handleSetViewportPanelDisplayMode = (panelId: ViewportPanelId, nextDisplayMode: ViewportDisplayMode) => {
+  const handleSetViewportPanelDisplayMode = (
+    panelId: ViewportPanelId,
+    nextDisplayMode: ViewportDisplayMode
+  ) => {
     if (editorState.viewportPanels[panelId].displayMode === nextDisplayMode) {
       return;
     }
 
     blurActiveTextEntry();
     store.setViewportPanelDisplayMode(panelId, nextDisplayMode);
-    setStatusMessage(`Set the viewport panel to ${getViewportDisplayModeLabel(nextDisplayMode)} display.`);
+    setStatusMessage(
+      `Set the viewport panel to ${getViewportDisplayModeLabel(nextDisplayMode)} display.`
+    );
   };
 
-  const beginTransformOperation = (operation: TransformOperation, source: TransformSessionSource) => {
+  const beginTransformOperation = (
+    operation: TransformOperation,
+    source: TransformSessionSource
+  ) => {
     if (editorState.toolMode !== "select") {
       return;
     }
 
-    const transformSourcePanelId = layoutMode === "quad" ? hoveredViewportPanelId ?? activePanelId : activePanelId;
+    const transformSourcePanelId =
+      layoutMode === "quad"
+        ? (hoveredViewportPanelId ?? activePanelId)
+        : activePanelId;
 
-    const transformTargetResult = resolveTransformTarget(editorState.document, editorState.selection, whiteboxSelectionMode);
+    const transformTargetResult = resolveTransformTarget(
+      editorState.document,
+      editorState.selection,
+      whiteboxSelectionMode
+    );
     const transformTarget = transformTargetResult.target;
 
     if (transformTarget === null) {
-      setStatusMessage(transformTargetResult.message ?? "Select a single brush, entity, or model instance before transforming it.");
+      setStatusMessage(
+        transformTargetResult.message ??
+          "Select a single brush, entity, or model instance before transforming it."
+      );
       return;
     }
 
     if (!supportsTransformOperation(transformTarget, operation)) {
-      setStatusMessage(`${getTransformOperationLabel(operation)} is not supported for ${getTransformTargetLabel(transformTarget)}.`);
+      setStatusMessage(
+        `${getTransformOperationLabel(operation)} is not supported for ${getTransformTargetLabel(transformTarget)}.`
+      );
       return;
     }
 
@@ -2066,7 +2588,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
   };
 
-  const cancelTransformSession = (status = "Cancelled the current transform.") => {
+  const cancelTransformSession = (
+    status = "Cancelled the current transform."
+  ) => {
     if (transformSession.kind === "none") {
       return;
     }
@@ -2075,7 +2599,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
     setStatusMessage(status);
   };
 
-  const commitTransformSession = (activeTransformSession: ActiveTransformSession) => {
+  const commitTransformSession = (
+    activeTransformSession: ActiveTransformSession
+  ) => {
     if (!doesTransformSessionChangeTarget(activeTransformSession)) {
       store.clearTransformSession();
       setStatusMessage("No transform change was committed.");
@@ -2084,7 +2610,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
     try {
       store.clearTransformSession();
-      store.executeCommand(createCommitTransformSessionCommand(editorState.document, activeTransformSession));
+      store.executeCommand(
+        createCommitTransformSessionCommand(
+          editorState.document,
+          activeTransformSession
+        )
+      );
       setStatusMessage(
         `${getTransformOperationPastTense(activeTransformSession.operation)} ${getTransformTargetLabel(activeTransformSession.target).toLowerCase()}.`
       );
@@ -2101,7 +2632,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
     if (!supportsTransformAxisConstraint(transformSession, axis)) {
       const supportedAxes = (["x", "y", "z"] as const)
-        .filter((candidateAxis) => supportsTransformAxisConstraint(transformSession, candidateAxis))
+        .filter((candidateAxis) =>
+          supportsTransformAxisConstraint(transformSession, candidateAxis)
+        )
         .map((candidateAxis) => candidateAxis.toUpperCase())
         .join("/");
       setStatusMessage(
@@ -2113,9 +2646,16 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
 
     const nextAxisConstraintSpace =
-      transformSession.axisConstraint === axis ? (transformSession.axisConstraintSpace === "world" ? "local" : "world") : "world";
+      transformSession.axisConstraint === axis
+        ? transformSession.axisConstraintSpace === "world"
+          ? "local"
+          : "world"
+        : "world";
 
-    if (nextAxisConstraintSpace === "local" && !supportsLocalTransformAxisConstraint(transformSession, axis)) {
+    if (
+      nextAxisConstraintSpace === "local" &&
+      !supportsLocalTransformAxisConstraint(transformSession, axis)
+    ) {
       setStatusMessage(
         `Local ${getTransformAxisLabel(axis)} is not supported for ${getTransformOperationLabel(transformSession.operation).toLowerCase()} on ${getTransformTargetLabel(
           transformSession.target
@@ -2133,7 +2673,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
   };
 
   const handleViewportQuadResizeStart =
-    (resizeMode: ViewportQuadResizeMode) => (event: ReactPointerEvent<HTMLDivElement>) => {
+    (resizeMode: ViewportQuadResizeMode) =>
+    (event: ReactPointerEvent<HTMLDivElement>) => {
       if (layoutMode !== "quad") {
         return;
       }
@@ -2156,11 +2697,15 @@ export function App({ store, initialStatusMessage }: AppProps) {
         };
 
         if (resizeMode !== "horizontal") {
-          nextViewportQuadSplit.x = clampViewportQuadSplitValue((event.clientX - rect.left) / rect.width);
+          nextViewportQuadSplit.x = clampViewportQuadSplitValue(
+            (event.clientX - rect.left) / rect.width
+          );
         }
 
         if (resizeMode !== "vertical") {
-          nextViewportQuadSplit.y = clampViewportQuadSplitValue((event.clientY - rect.top) / rect.height);
+          nextViewportQuadSplit.y = clampViewportQuadSplitValue(
+            (event.clientY - rect.top) / rect.height
+          );
         }
 
         store.setViewportQuadSplit(nextViewportQuadSplit);
@@ -2169,7 +2714,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
       setViewportQuadResizeMode(resizeMode);
     };
 
-  const beginCreation = (toolPreview: CreationViewportToolPreview, status: string) => {
+  const beginCreation = (
+    toolPreview: CreationViewportToolPreview,
+    status: string
+  ) => {
     blurActiveTextEntry();
     closeAddMenu();
     store.setToolMode("create");
@@ -2200,17 +2748,26 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const handleWhiteboxSnapToggle = () => {
     const nextEnabled = !whiteboxSnapEnabled;
     setWhiteboxSnapEnabled(nextEnabled);
-    setStatusMessage(nextEnabled ? `Grid snap enabled at ${whiteboxSnapStep}m.` : "Grid snap disabled for whitebox transforms.");
+    setStatusMessage(
+      nextEnabled
+        ? `Grid snap enabled at ${whiteboxSnapStep}m.`
+        : "Grid snap disabled for whitebox transforms."
+    );
   };
 
   const handleViewportGridToggle = () => {
     const nextVisible = !viewportGridVisible;
     setViewportGridVisible(nextVisible);
-    setStatusMessage(nextVisible ? "Viewport grid enabled." : "Viewport grid hidden.");
+    setStatusMessage(
+      nextVisible ? "Viewport grid enabled." : "Viewport grid hidden."
+    );
   };
 
   const handleWhiteboxSnapStepBlur = () => {
-    const normalizedStep = resolveOptionalPositiveNumber(whiteboxSnapStepDraft, DEFAULT_GRID_SIZE);
+    const normalizedStep = resolveOptionalPositiveNumber(
+      whiteboxSnapStepDraft,
+      DEFAULT_GRID_SIZE
+    );
     setWhiteboxSnapStepDraft(String(normalizedStep));
   };
 
@@ -2232,14 +2789,21 @@ export function App({ store, initialStatusMessage }: AppProps) {
     blurActiveTextEntry();
     store.setSelection(selection);
 
-    const suffix = source === "outliner" && options.focusViewport ? " and framed it in the viewport" : "";
+    const suffix =
+      source === "outliner" && options.focusViewport
+        ? " and framed it in the viewport"
+        : "";
 
     switch (selection.kind) {
       case "none":
-        setStatusMessage(`${source === "viewport" ? "Viewport" : "Editor"} selection cleared${suffix}.`);
+        setStatusMessage(
+          `${source === "viewport" ? "Viewport" : "Editor"} selection cleared${suffix}.`
+        );
         break;
       case "brushes":
-        setStatusMessage(`Selected ${getBrushLabelById(selection.ids[0], brushList)} from the ${source}${suffix}.`);
+        setStatusMessage(
+          `Selected ${getBrushLabelById(selection.ids[0], brushList)} from the ${source}${suffix}.`
+        );
         break;
       case "brushFace":
         setStatusMessage(
@@ -2257,7 +2821,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
         );
         break;
       case "entities":
-        setStatusMessage(`Selected ${getEntityDisplayLabelById(selection.ids[0], editorState.document.entities, editorState.document.assets)} from the ${source}${suffix}.`);
+        setStatusMessage(
+          `Selected ${getEntityDisplayLabelById(selection.ids[0], editorState.document.entities, editorState.document.assets)} from the ${source}${suffix}.`
+        );
         break;
       case "modelInstances":
         setStatusMessage(
@@ -2275,13 +2841,23 @@ export function App({ store, initialStatusMessage }: AppProps) {
   };
 
   const applyPositionChange = () => {
-    if (selectedBrush === null || editorState.selection.kind !== "brushes" || whiteboxSelectionMode !== "object") {
-      setStatusMessage("Switch to Object mode and select a whitebox box before moving it.");
+    if (
+      selectedBrush === null ||
+      editorState.selection.kind !== "brushes" ||
+      whiteboxSelectionMode !== "object"
+    ) {
+      setStatusMessage(
+        "Switch to Object mode and select a whitebox box before moving it."
+      );
       return;
     }
 
     try {
-      const nextCenter = maybeSnapVec3(readVec3Draft(positionDraft, "Whitebox box position"), whiteboxSnapEnabled, whiteboxSnapStep);
+      const nextCenter = maybeSnapVec3(
+        readVec3Draft(positionDraft, "Whitebox box position"),
+        whiteboxSnapEnabled,
+        whiteboxSnapStep
+      );
 
       if (areVec3Equal(nextCenter, selectedBrush.center)) {
         return;
@@ -2301,13 +2877,22 @@ export function App({ store, initialStatusMessage }: AppProps) {
   };
 
   const applyRotationChange = () => {
-    if (selectedBrush === null || editorState.selection.kind !== "brushes" || whiteboxSelectionMode !== "object") {
-      setStatusMessage("Switch to Object mode and select a whitebox box before rotating it.");
+    if (
+      selectedBrush === null ||
+      editorState.selection.kind !== "brushes" ||
+      whiteboxSelectionMode !== "object"
+    ) {
+      setStatusMessage(
+        "Switch to Object mode and select a whitebox box before rotating it."
+      );
       return;
     }
 
     try {
-      const nextRotationDegrees = readVec3Draft(rotationDraft, "Whitebox box rotation");
+      const nextRotationDegrees = readVec3Draft(
+        rotationDraft,
+        "Whitebox box rotation"
+      );
 
       if (areVec3Equal(nextRotationDegrees, selectedBrush.rotationDegrees)) {
         return;
@@ -2326,13 +2911,23 @@ export function App({ store, initialStatusMessage }: AppProps) {
   };
 
   const applySizeChange = () => {
-    if (selectedBrush === null || editorState.selection.kind !== "brushes" || whiteboxSelectionMode !== "object") {
-      setStatusMessage("Switch to Object mode and select a whitebox box before scaling it.");
+    if (
+      selectedBrush === null ||
+      editorState.selection.kind !== "brushes" ||
+      whiteboxSelectionMode !== "object"
+    ) {
+      setStatusMessage(
+        "Switch to Object mode and select a whitebox box before scaling it."
+      );
       return;
     }
 
     try {
-      const nextSize = maybeSnapPositiveSize(readVec3Draft(sizeDraft, "Whitebox box size"), whiteboxSnapEnabled, whiteboxSnapStep);
+      const nextSize = maybeSnapPositiveSize(
+        readVec3Draft(sizeDraft, "Whitebox box size"),
+        whiteboxSnapEnabled,
+        whiteboxSnapStep
+      );
 
       if (areVec3Equal(nextSize, selectedBrush.size)) {
         return;
@@ -2379,7 +2974,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
   const applyBoxVolumeModeChange = (mode: BoxBrushVolumeMode) => {
     if (selectedBrush === null) {
-      setStatusMessage("Select a whitebox box before changing the volume mode.");
+      setStatusMessage(
+        "Select a whitebox box before changing the volume mode."
+      );
       return;
     }
 
@@ -2402,10 +2999,19 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 mode: "water",
                 water: {
                   colorHex: boxVolumeWaterColorDraft,
-                  surfaceOpacity: readNonNegativeNumberDraft(boxVolumeWaterSurfaceOpacityDraft, "Water surface opacity"),
-                  waveStrength: readNonNegativeNumberDraft(boxVolumeWaterWaveStrengthDraft, "Water wave strength"),
-                  foamContactLimit: readWaterFoamContactLimitDraft(boxVolumeWaterFoamContactLimitDraft),
-                  surfaceDisplacementEnabled: boxVolumeWaterSurfaceDisplacementEnabledDraft
+                  surfaceOpacity: readNonNegativeNumberDraft(
+                    boxVolumeWaterSurfaceOpacityDraft,
+                    "Water surface opacity"
+                  ),
+                  waveStrength: readNonNegativeNumberDraft(
+                    boxVolumeWaterWaveStrengthDraft,
+                    "Water wave strength"
+                  ),
+                  foamContactLimit: readWaterFoamContactLimitDraft(
+                    boxVolumeWaterFoamContactLimitDraft
+                  ),
+                  surfaceDisplacementEnabled:
+                    boxVolumeWaterSurfaceDisplacementEnabledDraft
                 }
               };
         }
@@ -2416,8 +3022,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
               mode: "fog",
               fog: {
                 colorHex: boxVolumeFogColorDraft,
-                density: readNonNegativeNumberDraft(boxVolumeFogDensityDraft, "Fog density"),
-                padding: readNonNegativeNumberDraft(boxVolumeFogPaddingDraft, "Fog padding")
+                density: readNonNegativeNumberDraft(
+                  boxVolumeFogDensityDraft,
+                  "Fog density"
+                ),
+                padding: readNonNegativeNumberDraft(
+                  boxVolumeFogPaddingDraft,
+                  "Fog padding"
+                )
               }
             };
       },
@@ -2437,11 +3049,23 @@ export function App({ store, initialStatusMessage }: AppProps) {
   ) => ({
     colorHex: overrides.colorHex ?? boxVolumeWaterColorDraft,
     surfaceOpacity:
-      overrides.surfaceOpacity ?? readNonNegativeNumberDraft(boxVolumeWaterSurfaceOpacityDraft, "Water surface opacity"),
-    waveStrength: overrides.waveStrength ?? readNonNegativeNumberDraft(boxVolumeWaterWaveStrengthDraft, "Water wave strength"),
-    foamContactLimit: overrides.foamContactLimit ?? readWaterFoamContactLimitDraft(boxVolumeWaterFoamContactLimitDraft),
+      overrides.surfaceOpacity ??
+      readNonNegativeNumberDraft(
+        boxVolumeWaterSurfaceOpacityDraft,
+        "Water surface opacity"
+      ),
+    waveStrength:
+      overrides.waveStrength ??
+      readNonNegativeNumberDraft(
+        boxVolumeWaterWaveStrengthDraft,
+        "Water wave strength"
+      ),
+    foamContactLimit:
+      overrides.foamContactLimit ??
+      readWaterFoamContactLimitDraft(boxVolumeWaterFoamContactLimitDraft),
     surfaceDisplacementEnabled:
-      overrides.surfaceDisplacementEnabled ?? boxVolumeWaterSurfaceDisplacementEnabledDraft
+      overrides.surfaceDisplacementEnabled ??
+      boxVolumeWaterSurfaceDisplacementEnabledDraft
   });
 
   const applyBoxWaterSettings = (
@@ -2492,8 +3116,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
         mode: "fog",
         fog: {
           colorHex: boxVolumeFogColorDraft,
-          density: readNonNegativeNumberDraft(boxVolumeFogDensityDraft, "Fog density"),
-          padding: readNonNegativeNumberDraft(boxVolumeFogPaddingDraft, "Fog padding")
+          density: readNonNegativeNumberDraft(
+            boxVolumeFogDensityDraft,
+            "Fog density"
+          ),
+          padding: readNonNegativeNumberDraft(
+            boxVolumeFogPaddingDraft,
+            "Fog padding"
+          )
         }
       }),
       "Set box fog settings",
@@ -2511,8 +3141,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
         mode: "fog",
         fog: {
           colorHex,
-          density: readNonNegativeNumberDraft(boxVolumeFogDensityDraft, "Fog density"),
-          padding: readNonNegativeNumberDraft(boxVolumeFogPaddingDraft, "Fog padding")
+          density: readNonNegativeNumberDraft(
+            boxVolumeFogDensityDraft,
+            "Fog density"
+          ),
+          padding: readNonNegativeNumberDraft(
+            boxVolumeFogPaddingDraft,
+            "Fog padding"
+          )
         }
       }),
       "Set box fog color",
@@ -2520,7 +3156,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
   };
 
-  const commitEntityChange = (currentEntity: EntityInstance, nextEntity: EntityInstance, successMessage: string) => {
+  const commitEntityChange = (
+    currentEntity: EntityInstance,
+    nextEntity: EntityInstance,
+    successMessage: string
+  ) => {
     if (areEntityInstancesEqual(currentEntity, nextEntity)) {
       return;
     }
@@ -2534,7 +3174,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
     setStatusMessage(successMessage);
   };
 
-  const beginEntityCreation = (kind: EntityKind, options: { audioAssetId?: string | null } = {}) => {
+  const beginEntityCreation = (
+    kind: EntityKind,
+    options: { audioAssetId?: string | null } = {}
+  ) => {
     beginCreation(
       {
         kind: "create",
@@ -2572,10 +3215,13 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
   };
 
-  const handleCommitCreation = (creationPreview: CreationViewportToolPreview): boolean => {
+  const handleCommitCreation = (
+    creationPreview: CreationViewportToolPreview
+  ): boolean => {
     try {
       if (creationPreview.target.kind === "box-brush") {
-        const center = creationPreview.center === null ? undefined : creationPreview.center;
+        const center =
+          creationPreview.center === null ? undefined : creationPreview.center;
 
         store.executeCommand(
           createCreateBoxBrushCommand(
@@ -2604,17 +3250,22 @@ export function App({ store, initialStatusMessage }: AppProps) {
       }
 
       if (creationPreview.target.kind === "model-instance") {
-        const asset = editorState.document.assets[creationPreview.target.assetId];
+        const asset =
+          editorState.document.assets[creationPreview.target.assetId];
 
         if (asset === undefined || asset.kind !== "model") {
-          setStatusMessage("Select a model asset before placing a model instance.");
+          setStatusMessage(
+            "Select a model asset before placing a model instance."
+          );
           return false;
         }
 
         const nextModelInstance = createModelInstance({
           assetId: asset.id,
           position:
-            creationPreview.center === null ? createModelInstancePlacementPosition(asset, null) : creationPreview.center,
+            creationPreview.center === null
+              ? createModelInstancePlacementPosition(asset, null)
+              : creationPreview.center,
           rotationDegrees: DEFAULT_MODEL_INSTANCE_ROTATION_DEGREES,
           scale: DEFAULT_MODEL_INSTANCE_SCALE
         });
@@ -2666,7 +3317,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
           completeCreation("Placed Player Start.");
           return true;
         case "soundEmitter": {
-          const placedAudioAssetId = creationPreview.target.audioAssetId ?? audioAssetList[0]?.id ?? null;
+          const placedAudioAssetId =
+            creationPreview.target.audioAssetId ??
+            audioAssetList[0]?.id ??
+            null;
 
           store.executeCommand(
             createUpsertEntityCommand({
@@ -2725,7 +3379,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
     return false;
   };
 
-  const commitModelInstanceChange = (currentModelInstance: ModelInstance, nextModelInstance: ModelInstance, successMessage: string) => {
+  const commitModelInstanceChange = (
+    currentModelInstance: ModelInstance,
+    nextModelInstance: ModelInstance,
+    successMessage: string
+  ) => {
     if (areModelInstancesEqual(currentModelInstance, nextModelInstance)) {
       return;
     }
@@ -2752,28 +3410,41 @@ export function App({ store, initialStatusMessage }: AppProps) {
         name: selectedModelInstance.name,
         collision: selectedModelInstance.collision,
         position: readVec3Draft(modelPositionDraft, "Model instance position"),
-        rotationDegrees: readVec3Draft(modelRotationDraft, "Model instance rotation"),
+        rotationDegrees: readVec3Draft(
+          modelRotationDraft,
+          "Model instance rotation"
+        ),
         scale: readPositiveVec3Draft(modelScaleDraft, "Model instance scale"),
         animationClipName: selectedModelInstance.animationClipName,
         animationAutoplay: selectedModelInstance.animationAutoplay
       });
 
-      commitModelInstanceChange(selectedModelInstance, nextModelInstance, "Updated model instance.");
+      commitModelInstanceChange(
+        selectedModelInstance,
+        nextModelInstance,
+        "Updated model instance."
+      );
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
     }
   };
 
-  const applyPlayerStartChange = (overrides: { colliderMode?: PlayerStartColliderMode } = {}) => {
+  const applyPlayerStartChange = (
+    overrides: { colliderMode?: PlayerStartColliderMode } = {}
+  ) => {
     if (selectedPlayerStart === null) {
       setStatusMessage("Select a Player Start before editing it.");
       return;
     }
 
     try {
-      const snappedPosition = snapVec3ToGrid(readVec3Draft(entityPositionDraft, "Player Start position"), DEFAULT_GRID_SIZE);
+      const snappedPosition = snapVec3ToGrid(
+        readVec3Draft(entityPositionDraft, "Player Start position"),
+        DEFAULT_GRID_SIZE
+      );
       const yawDegrees = readYawDegreesDraft(playerStartYawDraft);
-      const colliderMode = overrides.colliderMode ?? playerStartColliderModeDraft;
+      const colliderMode =
+        overrides.colliderMode ?? playerStartColliderModeDraft;
       const nextEntity = createPlayerStartEntity({
         id: selectedPlayerStart.id,
         name: selectedPlayerStart.name,
@@ -2781,14 +3452,30 @@ export function App({ store, initialStatusMessage }: AppProps) {
         yawDegrees,
         collider: {
           mode: colliderMode,
-          eyeHeight: readPositiveNumberDraft(playerStartEyeHeightDraft, "Player Start eye height"),
-          capsuleRadius: readPositiveNumberDraft(playerStartCapsuleRadiusDraft, "Player Start capsule radius"),
-          capsuleHeight: readPositiveNumberDraft(playerStartCapsuleHeightDraft, "Player Start capsule height"),
-          boxSize: readPositiveVec3Draft(playerStartBoxSizeDraft, "Player Start box size")
+          eyeHeight: readPositiveNumberDraft(
+            playerStartEyeHeightDraft,
+            "Player Start eye height"
+          ),
+          capsuleRadius: readPositiveNumberDraft(
+            playerStartCapsuleRadiusDraft,
+            "Player Start capsule radius"
+          ),
+          capsuleHeight: readPositiveNumberDraft(
+            playerStartCapsuleHeightDraft,
+            "Player Start capsule height"
+          ),
+          boxSize: readPositiveVec3Draft(
+            playerStartBoxSizeDraft,
+            "Player Start box size"
+          )
         }
       });
 
-      commitEntityChange(selectedPlayerStart, nextEntity, "Updated Player Start.");
+      commitEntityChange(
+        selectedPlayerStart,
+        nextEntity,
+        "Updated Player Start."
+      );
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
     }
@@ -2804,13 +3491,26 @@ export function App({ store, initialStatusMessage }: AppProps) {
       const nextEntity = createPointLightEntity({
         id: selectedPointLight.id,
         name: selectedPointLight.name,
-        position: snapVec3ToGrid(readVec3Draft(entityPositionDraft, "Point Light position"), DEFAULT_GRID_SIZE),
+        position: snapVec3ToGrid(
+          readVec3Draft(entityPositionDraft, "Point Light position"),
+          DEFAULT_GRID_SIZE
+        ),
         colorHex: overrides.colorHex ?? pointLightColorDraft,
-        intensity: readNonNegativeNumberDraft(pointLightIntensityDraft, "Point Light intensity"),
-        distance: readPositiveNumberDraft(pointLightDistanceDraft, "Point Light distance")
+        intensity: readNonNegativeNumberDraft(
+          pointLightIntensityDraft,
+          "Point Light intensity"
+        ),
+        distance: readPositiveNumberDraft(
+          pointLightDistanceDraft,
+          "Point Light distance"
+        )
       });
 
-      commitEntityChange(selectedPointLight, nextEntity, "Updated Point Light.");
+      commitEntityChange(
+        selectedPointLight,
+        nextEntity,
+        "Updated Point Light."
+      );
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
     }
@@ -2826,12 +3526,27 @@ export function App({ store, initialStatusMessage }: AppProps) {
       const nextEntity = createSpotLightEntity({
         id: selectedSpotLight.id,
         name: selectedSpotLight.name,
-        position: snapVec3ToGrid(readVec3Draft(entityPositionDraft, "Spot Light position"), DEFAULT_GRID_SIZE),
-        direction: readVec3Draft(spotLightDirectionDraft, "Spot Light direction"),
+        position: snapVec3ToGrid(
+          readVec3Draft(entityPositionDraft, "Spot Light position"),
+          DEFAULT_GRID_SIZE
+        ),
+        direction: readVec3Draft(
+          spotLightDirectionDraft,
+          "Spot Light direction"
+        ),
         colorHex: overrides.colorHex ?? spotLightColorDraft,
-        intensity: readNonNegativeNumberDraft(spotLightIntensityDraft, "Spot Light intensity"),
-        distance: readPositiveNumberDraft(spotLightDistanceDraft, "Spot Light distance"),
-        angleDegrees: readPositiveNumberDraft(spotLightAngleDraft, "Spot Light angle")
+        intensity: readNonNegativeNumberDraft(
+          spotLightIntensityDraft,
+          "Spot Light intensity"
+        ),
+        distance: readPositiveNumberDraft(
+          spotLightDistanceDraft,
+          "Spot Light distance"
+        ),
+        angleDegrees: readPositiveNumberDraft(
+          spotLightAngleDraft,
+          "Spot Light angle"
+        )
       });
 
       commitEntityChange(selectedSpotLight, nextEntity, "Updated Spot Light.");
@@ -2871,7 +3586,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
   };
 
   const applySoundEmitterChange = (
-    overrides: { audioAssetId?: string | null; autoplay?: boolean; loop?: boolean } = {}
+    overrides: {
+      audioAssetId?: string | null;
+      autoplay?: boolean;
+      loop?: boolean;
+    } = {}
   ) => {
     if (selectedSoundEmitter === null) {
       setStatusMessage("Select a Sound Emitter before editing it.");
@@ -2889,16 +3608,32 @@ export function App({ store, initialStatusMessage }: AppProps) {
       const nextEntity = createSoundEmitterEntity({
         id: selectedSoundEmitter.id,
         name: selectedSoundEmitter.name,
-        position: snapVec3ToGrid(readVec3Draft(entityPositionDraft, "Sound Emitter position"), DEFAULT_GRID_SIZE),
+        position: snapVec3ToGrid(
+          readVec3Draft(entityPositionDraft, "Sound Emitter position"),
+          DEFAULT_GRID_SIZE
+        ),
         audioAssetId: nextAudioAssetId,
-        volume: readNonNegativeNumberDraft(soundEmitterVolumeDraft, "Sound Emitter volume"),
-        refDistance: readPositiveNumberDraft(soundEmitterRefDistanceDraft, "Sound Emitter ref distance"),
-        maxDistance: readPositiveNumberDraft(soundEmitterMaxDistanceDraft, "Sound Emitter max distance"),
+        volume: readNonNegativeNumberDraft(
+          soundEmitterVolumeDraft,
+          "Sound Emitter volume"
+        ),
+        refDistance: readPositiveNumberDraft(
+          soundEmitterRefDistanceDraft,
+          "Sound Emitter ref distance"
+        ),
+        maxDistance: readPositiveNumberDraft(
+          soundEmitterMaxDistanceDraft,
+          "Sound Emitter max distance"
+        ),
         autoplay: overrides.autoplay ?? soundEmitterAutoplayDraft,
         loop: overrides.loop ?? soundEmitterLoopDraft
       });
 
-      commitEntityChange(selectedSoundEmitter, nextEntity, "Updated Sound Emitter.");
+      commitEntityChange(
+        selectedSoundEmitter,
+        nextEntity,
+        "Updated Sound Emitter."
+      );
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
     }
@@ -2913,20 +3648,33 @@ export function App({ store, initialStatusMessage }: AppProps) {
     try {
       // Derive triggerOnEnter/triggerOnExit from the actual links so the flags
       // stay in sync automatically — no manual checkbox needed.
-      const links = getInteractionLinksForSource(editorState.document.interactionLinks, selectedTriggerVolume.id);
+      const links = getInteractionLinksForSource(
+        editorState.document.interactionLinks,
+        selectedTriggerVolume.id
+      );
       const triggerOnEnter = links.some((l) => l.trigger === "enter");
       const triggerOnExit = links.some((l) => l.trigger === "exit");
 
       const nextEntity = createTriggerVolumeEntity({
         id: selectedTriggerVolume.id,
         name: selectedTriggerVolume.name,
-        position: snapVec3ToGrid(readVec3Draft(entityPositionDraft, "Trigger Volume position"), DEFAULT_GRID_SIZE),
-        size: snapPositiveSizeToGrid(readVec3Draft(triggerVolumeSizeDraft, "Trigger Volume size"), DEFAULT_GRID_SIZE),
+        position: snapVec3ToGrid(
+          readVec3Draft(entityPositionDraft, "Trigger Volume position"),
+          DEFAULT_GRID_SIZE
+        ),
+        size: snapPositiveSizeToGrid(
+          readVec3Draft(triggerVolumeSizeDraft, "Trigger Volume size"),
+          DEFAULT_GRID_SIZE
+        ),
         triggerOnEnter,
         triggerOnExit
       });
 
-      commitEntityChange(selectedTriggerVolume, nextEntity, "Updated Trigger Volume.");
+      commitEntityChange(
+        selectedTriggerVolume,
+        nextEntity,
+        "Updated Trigger Volume."
+      );
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
     }
@@ -2942,11 +3690,18 @@ export function App({ store, initialStatusMessage }: AppProps) {
       const nextEntity = createTeleportTargetEntity({
         id: selectedTeleportTarget.id,
         name: selectedTeleportTarget.name,
-        position: snapVec3ToGrid(readVec3Draft(entityPositionDraft, "Teleport Target position"), DEFAULT_GRID_SIZE),
+        position: snapVec3ToGrid(
+          readVec3Draft(entityPositionDraft, "Teleport Target position"),
+          DEFAULT_GRID_SIZE
+        ),
         yawDegrees: readYawDegreesDraft(teleportTargetYawDraft)
       });
 
-      commitEntityChange(selectedTeleportTarget, nextEntity, "Updated Teleport Target.");
+      commitEntityChange(
+        selectedTeleportTarget,
+        nextEntity,
+        "Updated Teleport Target."
+      );
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
     }
@@ -2962,19 +3717,34 @@ export function App({ store, initialStatusMessage }: AppProps) {
       const nextEntity = createInteractableEntity({
         id: selectedInteractable.id,
         name: selectedInteractable.name,
-        position: snapVec3ToGrid(readVec3Draft(entityPositionDraft, "Interactable position"), DEFAULT_GRID_SIZE),
-        radius: readPositiveNumberDraft(interactableRadiusDraft, "Interactable radius"),
+        position: snapVec3ToGrid(
+          readVec3Draft(entityPositionDraft, "Interactable position"),
+          DEFAULT_GRID_SIZE
+        ),
+        radius: readPositiveNumberDraft(
+          interactableRadiusDraft,
+          "Interactable radius"
+        ),
         prompt: readInteractablePromptDraft(interactablePromptDraft),
         enabled: overrides.enabled ?? interactableEnabledDraft
       });
 
-      commitEntityChange(selectedInteractable, nextEntity, "Updated Interactable.");
+      commitEntityChange(
+        selectedInteractable,
+        nextEntity,
+        "Updated Interactable."
+      );
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
     }
   };
 
-  const commitInteractionLinkChange = (currentLink: InteractionLink, nextLink: InteractionLink, successMessage: string, label = "Update interaction link") => {
+  const commitInteractionLinkChange = (
+    currentLink: InteractionLink,
+    nextLink: InteractionLink,
+    successMessage: string,
+    label = "Update interaction link"
+  ) => {
     if (areInteractionLinksEqual(currentLink, nextLink)) {
       return;
     }
@@ -2988,21 +3758,33 @@ export function App({ store, initialStatusMessage }: AppProps) {
     setStatusMessage(successMessage);
   };
 
-  const getInteractionSourceEntityForLink = (link: InteractionLink): InteractionSourceEntity | null => {
+  const getInteractionSourceEntityForLink = (
+    link: InteractionLink
+  ): InteractionSourceEntity | null => {
     const sourceEntity = editorState.document.entities[link.sourceEntityId];
-    return sourceEntity?.kind === "triggerVolume" || sourceEntity?.kind === "interactable" ? sourceEntity : null;
+    return sourceEntity?.kind === "triggerVolume" ||
+      sourceEntity?.kind === "interactable"
+      ? sourceEntity
+      : null;
   };
 
   const handleAddTeleportInteractionLink = () => {
     if (selectedInteractionSource === null) {
-      setStatusMessage("Select a Trigger Volume or Interactable before adding links.");
+      setStatusMessage(
+        "Select a Trigger Volume or Interactable before adding links."
+      );
       return;
     }
 
     const defaultTarget = teleportTargetOptions[0]?.entity;
 
-    if (defaultTarget === undefined || defaultTarget.kind !== "teleportTarget") {
-      setStatusMessage("Author a Teleport Target before adding a teleport link.");
+    if (
+      defaultTarget === undefined ||
+      defaultTarget.kind !== "teleportTarget"
+    ) {
+      setStatusMessage(
+        "Author a Teleport Target before adding a teleport link."
+      );
       return;
     }
 
@@ -3016,19 +3798,25 @@ export function App({ store, initialStatusMessage }: AppProps) {
         label: "Add teleport interaction link"
       })
     );
-    setStatusMessage(`Added a teleport link to the selected ${selectedInteractionSource.kind === "triggerVolume" ? "Trigger Volume" : "Interactable"}.`);
+    setStatusMessage(
+      `Added a teleport link to the selected ${selectedInteractionSource.kind === "triggerVolume" ? "Trigger Volume" : "Interactable"}.`
+    );
   };
 
   const handleAddVisibilityInteractionLink = () => {
     if (selectedInteractionSource === null) {
-      setStatusMessage("Select a Trigger Volume or Interactable before adding links.");
+      setStatusMessage(
+        "Select a Trigger Volume or Interactable before adding links."
+      );
       return;
     }
 
     const defaultTarget = visibilityBrushOptions[0]?.brush;
 
     if (defaultTarget === undefined) {
-      setStatusMessage("Author at least one whitebox solid before adding a visibility link.");
+      setStatusMessage(
+        "Author at least one whitebox solid before adding a visibility link."
+      );
       return;
     }
 
@@ -3042,19 +3830,27 @@ export function App({ store, initialStatusMessage }: AppProps) {
         label: "Add visibility interaction link"
       })
     );
-    setStatusMessage(`Added a visibility link to the selected ${selectedInteractionSource.kind === "triggerVolume" ? "Trigger Volume" : "Interactable"}.`);
+    setStatusMessage(
+      `Added a visibility link to the selected ${selectedInteractionSource.kind === "triggerVolume" ? "Trigger Volume" : "Interactable"}.`
+    );
   };
 
-  const handleAddSoundInteractionLink = (actionType: "playSound" | "stopSound") => {
+  const handleAddSoundInteractionLink = (
+    actionType: "playSound" | "stopSound"
+  ) => {
     if (selectedInteractionSource === null) {
-      setStatusMessage("Select a Trigger Volume or Interactable before adding links.");
+      setStatusMessage(
+        "Select a Trigger Volume or Interactable before adding links."
+      );
       return;
     }
 
     const defaultTarget = playableSoundEmitterOptions[0]?.entity;
 
     if (defaultTarget === undefined) {
-      setStatusMessage("Author a Sound Emitter with an audio asset before adding sound links.");
+      setStatusMessage(
+        "Author a Sound Emitter with an audio asset before adding sound links."
+      );
       return;
     }
 
@@ -3062,19 +3858,26 @@ export function App({ store, initialStatusMessage }: AppProps) {
       actionType === "playSound"
         ? createPlaySoundInteractionLink({
             sourceEntityId: selectedInteractionSource.id,
-            trigger: getDefaultInteractionLinkTrigger(selectedInteractionSource),
+            trigger: getDefaultInteractionLinkTrigger(
+              selectedInteractionSource
+            ),
             targetSoundEmitterId: defaultTarget.id
           })
         : createStopSoundInteractionLink({
             sourceEntityId: selectedInteractionSource.id,
-            trigger: getDefaultInteractionLinkTrigger(selectedInteractionSource),
+            trigger: getDefaultInteractionLinkTrigger(
+              selectedInteractionSource
+            ),
             targetSoundEmitterId: defaultTarget.id
           });
 
     store.executeCommand(
       createUpsertInteractionLinkCommand({
         link,
-        label: actionType === "playSound" ? "Add play sound link" : "Add stop sound link"
+        label:
+          actionType === "playSound"
+            ? "Add play sound link"
+            : "Add stop sound link"
       })
     );
     setStatusMessage(
@@ -3092,7 +3895,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
   };
 
   const confirmDeleteSceneItem = (label: string) =>
-    globalThis.window.confirm(`Delete ${label}?\n\nThis can be undone with Undo.`);
+    globalThis.window.confirm(
+      `Delete ${label}?\n\nThis can be undone with Undo.`
+    );
 
   const handleDeleteBrush = (brushId: string) => {
     const label = getBrushLabelById(brushId, brushList);
@@ -3112,7 +3917,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
   };
 
   const handleDeleteEntity = (entityId: string) => {
-    const label = getEntityDisplayLabelById(entityId, editorState.document.entities, editorState.document.assets);
+    const label = getEntityDisplayLabelById(
+      entityId,
+      editorState.document.entities,
+      editorState.document.assets
+    );
 
     if (!confirmDeleteSceneItem(label)) {
       return false;
@@ -3162,7 +3971,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
       return handleDeleteEntity(selectedEntityId);
     }
 
-    const selectedModelInstanceId = getSingleSelectedModelInstanceId(editorState.selection);
+    const selectedModelInstanceId = getSingleSelectedModelInstanceId(
+      editorState.selection
+    );
 
     if (selectedModelInstanceId !== null) {
       return handleDeleteModelInstance(selectedModelInstanceId);
@@ -3182,16 +3993,28 @@ export function App({ store, initialStatusMessage }: AppProps) {
       const duplicatedState = store.getState();
       const duplicatedSelection = duplicatedState.selection;
       const canGrabDuplicatedSelection =
-        (duplicatedSelection.kind === "brushes" || duplicatedSelection.kind === "entities" || duplicatedSelection.kind === "modelInstances") &&
+        (duplicatedSelection.kind === "brushes" ||
+          duplicatedSelection.kind === "entities" ||
+          duplicatedSelection.kind === "modelInstances") &&
         duplicatedSelection.ids.length === 1;
 
       if (canGrabDuplicatedSelection) {
-        const transformSourcePanelId = layoutMode === "quad" ? hoveredViewportPanelId ?? activePanelId : activePanelId;
-        const transformTargetResult = resolveTransformTarget(duplicatedState.document, duplicatedSelection, whiteboxSelectionMode);
+        const transformSourcePanelId =
+          layoutMode === "quad"
+            ? (hoveredViewportPanelId ?? activePanelId)
+            : activePanelId;
+        const transformTargetResult = resolveTransformTarget(
+          duplicatedState.document,
+          duplicatedSelection,
+          whiteboxSelectionMode
+        );
         const transformTarget = transformTargetResult.target;
 
         if (transformTarget === null) {
-          setStatusMessage(transformTargetResult.message ?? "Duplicated selection, but could not start move transform.");
+          setStatusMessage(
+            transformTargetResult.message ??
+              "Duplicated selection, but could not start move transform."
+          );
           return true;
         }
 
@@ -3224,7 +4047,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
-  const updateInteractionLinkTrigger = (link: InteractionLink, trigger: InteractionTriggerKind) => {
+  const updateInteractionLinkTrigger = (
+    link: InteractionLink,
+    trigger: InteractionTriggerKind
+  ) => {
     const sourceEntity = getInteractionSourceEntityForLink(link);
 
     if (sourceEntity?.kind === "interactable" && trigger !== "click") {
@@ -3233,7 +4059,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
 
     if (sourceEntity?.kind === "triggerVolume" && trigger === "click") {
-      setStatusMessage("Trigger Volume links may only use enter or exit triggers.");
+      setStatusMessage(
+        "Trigger Volume links may only use enter or exit triggers."
+      );
       return;
     }
 
@@ -3293,10 +4121,17 @@ export function App({ store, initialStatusMessage }: AppProps) {
         break;
     }
 
-    commitInteractionLinkChange(link, nextLink, `Updated ${getInteractionTriggerLabel(trigger).toLowerCase()} trigger link.`);
+    commitInteractionLinkChange(
+      link,
+      nextLink,
+      `Updated ${getInteractionTriggerLabel(trigger).toLowerCase()} trigger link.`
+    );
   };
 
-  const updateInteractionLinkActionType = (link: InteractionLink, actionType: InteractionLink["action"]["type"]) => {
+  const updateInteractionLinkActionType = (
+    link: InteractionLink,
+    actionType: InteractionLink["action"]["type"]
+  ) => {
     const sourceEntity = getInteractionSourceEntityForLink(link);
 
     if (sourceEntity === null || link.action.type === actionType) {
@@ -3306,8 +4141,13 @@ export function App({ store, initialStatusMessage }: AppProps) {
     if (actionType === "teleportPlayer") {
       const defaultTarget = teleportTargetOptions[0]?.entity;
 
-      if (defaultTarget === undefined || defaultTarget.kind !== "teleportTarget") {
-        setStatusMessage("Author a Teleport Target before switching this link to teleport.");
+      if (
+        defaultTarget === undefined ||
+        defaultTarget.kind !== "teleportTarget"
+      ) {
+        setStatusMessage(
+          "Author a Teleport Target before switching this link to teleport."
+        );
         return;
       }
 
@@ -3326,17 +4166,23 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
     if (actionType === "playAnimation") {
       const targetModelInstance =
-        (link.action.type === "playAnimation" || link.action.type === "stopAnimation"
-          ? editorState.document.modelInstances[link.action.targetModelInstanceId]
+        (link.action.type === "playAnimation" ||
+        link.action.type === "stopAnimation"
+          ? editorState.document.modelInstances[
+              link.action.targetModelInstanceId
+            ]
           : undefined) ?? modelInstanceDisplayList[0]?.modelInstance;
 
       if (targetModelInstance === undefined) {
-        setStatusMessage("Place a model instance before switching this link to play animation.");
+        setStatusMessage(
+          "Place a model instance before switching this link to play animation."
+        );
         return;
       }
 
       const asset = editorState.document.assets[targetModelInstance.assetId];
-      const firstClip = asset?.kind === "model" ? (asset.metadata.animationNames[0] ?? "") : "";
+      const firstClip =
+        asset?.kind === "model" ? (asset.metadata.animationNames[0] ?? "") : "";
 
       if (firstClip === "") {
         setStatusMessage("The model instance has no animation clips.");
@@ -3359,12 +4205,17 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
     if (actionType === "stopAnimation") {
       const targetModelInstance =
-        (link.action.type === "playAnimation" || link.action.type === "stopAnimation"
-          ? editorState.document.modelInstances[link.action.targetModelInstanceId]
+        (link.action.type === "playAnimation" ||
+        link.action.type === "stopAnimation"
+          ? editorState.document.modelInstances[
+              link.action.targetModelInstanceId
+            ]
           : undefined) ?? modelInstanceDisplayList[0]?.modelInstance;
 
       if (targetModelInstance === undefined) {
-        setStatusMessage("Place a model instance before switching this link to stop animation.");
+        setStatusMessage(
+          "Place a model instance before switching this link to stop animation."
+        );
         return;
       }
 
@@ -3387,8 +4238,13 @@ export function App({ store, initialStatusMessage }: AppProps) {
           ? editorState.document.entities[link.action.targetSoundEmitterId]
           : undefined) ?? playableSoundEmitterOptions[0]?.entity;
 
-      if (targetSoundEmitter === undefined || targetSoundEmitter.kind !== "soundEmitter") {
-        setStatusMessage("Author a Sound Emitter with an audio asset before switching this link to sound playback.");
+      if (
+        targetSoundEmitter === undefined ||
+        targetSoundEmitter.kind !== "soundEmitter"
+      ) {
+        setStatusMessage(
+          "Author a Sound Emitter with an audio asset before switching this link to sound playback."
+        );
         return;
       }
 
@@ -3422,7 +4278,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
     const defaultBrush = visibilityBrushOptions[0]?.brush;
 
     if (defaultBrush === undefined) {
-      setStatusMessage("Author at least one whitebox solid before switching this link to visibility.");
+      setStatusMessage(
+        "Author at least one whitebox solid before switching this link to visibility."
+      );
       return;
     }
 
@@ -3438,7 +4296,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
   };
 
-  const updateTeleportInteractionLinkTarget = (link: InteractionLink, targetEntityId: string) => {
+  const updateTeleportInteractionLinkTarget = (
+    link: InteractionLink,
+    targetEntityId: string
+  ) => {
     if (link.action.type !== "teleportPlayer") {
       return;
     }
@@ -3455,7 +4316,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
   };
 
-  const updateVisibilityInteractionLinkTarget = (link: InteractionLink, targetBrushId: string) => {
+  const updateVisibilityInteractionLinkTarget = (
+    link: InteractionLink,
+    targetBrushId: string
+  ) => {
     if (link.action.type !== "toggleVisibility") {
       return;
     }
@@ -3473,7 +4337,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
   };
 
-  const updateVisibilityInteractionMode = (link: InteractionLink, mode: "toggle" | "show" | "hide") => {
+  const updateVisibilityInteractionMode = (
+    link: InteractionLink,
+    mode: "toggle" | "show" | "hide"
+  ) => {
     if (link.action.type !== "toggleVisibility") {
       return;
     }
@@ -3491,7 +4358,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
   };
 
-  const updateSoundInteractionLinkTarget = (link: InteractionLink, targetSoundEmitterId: string) => {
+  const updateSoundInteractionLinkTarget = (
+    link: InteractionLink,
+    targetSoundEmitterId: string
+  ) => {
     if (link.action.type !== "playSound" && link.action.type !== "stopSound") {
       return;
     }
@@ -3521,8 +4391,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
-  const updateAnimationInteractionLinkTarget = (link: InteractionLink, targetModelInstanceId: string) => {
-    if (link.action.type !== "playAnimation" && link.action.type !== "stopAnimation") {
+  const updateAnimationInteractionLinkTarget = (
+    link: InteractionLink,
+    targetModelInstanceId: string
+  ) => {
+    if (
+      link.action.type !== "playAnimation" &&
+      link.action.type !== "stopAnimation"
+    ) {
       return;
     }
 
@@ -3553,7 +4429,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
-  const updatePlayAnimationLinkClip = (link: InteractionLink, clipName: string) => {
+  const updatePlayAnimationLinkClip = (
+    link: InteractionLink,
+    clipName: string
+  ) => {
     if (link.action.type !== "playAnimation") {
       return;
     }
@@ -3572,7 +4451,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
   };
 
-  const updatePlayAnimationLinkLoop = (link: InteractionLink, loop: boolean) => {
+  const updatePlayAnimationLinkLoop = (
+    link: InteractionLink,
+    loop: boolean
+  ) => {
     if (link.action.type !== "playAnimation") {
       return;
     }
@@ -3591,16 +4473,22 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
   };
 
-  const handleAddPlayAnimationLink = (sourceEntity: InteractionSourceEntity) => {
+  const handleAddPlayAnimationLink = (
+    sourceEntity: InteractionSourceEntity
+  ) => {
     const firstInstance = modelInstanceDisplayList[0];
 
     if (firstInstance === undefined) {
-      setStatusMessage("Place a model instance before adding an animation link.");
+      setStatusMessage(
+        "Place a model instance before adding an animation link."
+      );
       return;
     }
 
-    const asset = editorState.document.assets[firstInstance.modelInstance.assetId];
-    const firstClip = asset?.kind === "model" ? (asset.metadata.animationNames[0] ?? "") : "";
+    const asset =
+      editorState.document.assets[firstInstance.modelInstance.assetId];
+    const firstClip =
+      asset?.kind === "model" ? (asset.metadata.animationNames[0] ?? "") : "";
 
     if (firstClip === "") {
       setStatusMessage("The model instance has no animation clips.");
@@ -3621,11 +4509,15 @@ export function App({ store, initialStatusMessage }: AppProps) {
     setStatusMessage("Added a play animation link.");
   };
 
-  const handleAddStopAnimationLink = (sourceEntity: InteractionSourceEntity) => {
+  const handleAddStopAnimationLink = (
+    sourceEntity: InteractionSourceEntity
+  ) => {
     const firstInstance = modelInstanceDisplayList[0];
 
     if (firstInstance === undefined) {
-      setStatusMessage("Place a model instance before adding an animation link.");
+      setStatusMessage(
+        "Place a model instance before adding an animation link."
+      );
       return;
     }
 
@@ -3654,7 +4546,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
       <div className="label">Links</div>
       {links.length === 0 ? (
         <div className="outliner-empty">
-          {sourceEntity.kind === "triggerVolume" ? "No trigger links authored yet." : "No click links authored yet."}
+          {sourceEntity.kind === "triggerVolume"
+            ? "No trigger links authored yet."
+            : "No click links authored yet."}
         </div>
       ) : (
         <div className="outliner-list">
@@ -3662,7 +4556,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
             <div key={link.id} className="outliner-item">
               <div className="outliner-item__select">
                 <span className="outliner-item__title">{`Link ${index + 1}`}</span>
-                <span className="outliner-item__meta">{getInteractionActionLabel(link)}</span>
+                <span className="outliner-item__meta">
+                  {getInteractionActionLabel(link)}
+                </span>
               </div>
 
               <div className="form-section">
@@ -3674,7 +4570,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         data-testid={`interaction-link-trigger-${link.id}`}
                         className="text-input"
                         value={link.trigger}
-                        onChange={(event) => updateInteractionLinkTrigger(link, event.currentTarget.value as InteractionTriggerKind)}
+                        onChange={(event) =>
+                          updateInteractionLinkTrigger(
+                            link,
+                            event.currentTarget.value as InteractionTriggerKind
+                          )
+                        }
                       >
                         <option value="enter">On Enter</option>
                         <option value="exit">On Exit</option>
@@ -3695,10 +4596,18 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       data-testid={`interaction-link-action-${link.id}`}
                       className="text-input"
                       value={link.action.type}
-                      onChange={(event) => updateInteractionLinkActionType(link, event.currentTarget.value as InteractionLink["action"]["type"])}
+                      onChange={(event) =>
+                        updateInteractionLinkActionType(
+                          link,
+                          event.currentTarget
+                            .value as InteractionLink["action"]["type"]
+                        )
+                      }
                     >
                       <option value="teleportPlayer">Teleport Player</option>
-                      <option value="toggleVisibility">Toggle Visibility</option>
+                      <option value="toggleVisibility">
+                        Toggle Visibility
+                      </option>
                       <option value="playAnimation">Play Animation</option>
                       <option value="stopAnimation">Stop Animation</option>
                       <option value="playSound">Play Sound</option>
@@ -3716,7 +4625,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       data-testid={`interaction-link-teleport-target-${link.id}`}
                       className="text-input"
                       value={link.action.targetEntityId}
-                      onChange={(event) => updateTeleportInteractionLinkTarget(link, event.currentTarget.value)}
+                      onChange={(event) =>
+                        updateTeleportInteractionLinkTarget(
+                          link,
+                          event.currentTarget.value
+                        )
+                      }
                     >
                       {teleportTargetOptions.map(({ entity, label }) => (
                         <option key={entity.id} value={entity.id}>
@@ -3735,7 +4649,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         data-testid={`interaction-link-visibility-target-${link.id}`}
                         className="text-input"
                         value={link.action.targetBrushId}
-                        onChange={(event) => updateVisibilityInteractionLinkTarget(link, event.currentTarget.value)}
+                        onChange={(event) =>
+                          updateVisibilityInteractionLinkTarget(
+                            link,
+                            event.currentTarget.value
+                          )
+                        }
                       >
                         {visibilityBrushOptions.map(({ brush, label }) => (
                           <option key={brush.id} value={brush.id}>
@@ -3749,9 +4668,16 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       <select
                         data-testid={`interaction-link-visibility-mode-${link.id}`}
                         className="text-input"
-                        value={getVisibilityModeSelectValue(link.action.visible)}
+                        value={getVisibilityModeSelectValue(
+                          link.action.visible
+                        )}
                         onChange={(event) =>
-                          updateVisibilityInteractionMode(link, event.currentTarget.value as ReturnType<typeof getVisibilityModeSelectValue>)
+                          updateVisibilityInteractionMode(
+                            link,
+                            event.currentTarget.value as ReturnType<
+                              typeof getVisibilityModeSelectValue
+                            >
+                          )
                         }
                       >
                         <option value="toggle">Toggle</option>
@@ -3770,13 +4696,23 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         data-testid={`interaction-link-play-anim-instance-${link.id}`}
                         className="text-input"
                         value={link.action.targetModelInstanceId}
-                        onChange={(event) => updateAnimationInteractionLinkTarget(link, event.currentTarget.value)}
+                        onChange={(event) =>
+                          updateAnimationInteractionLinkTarget(
+                            link,
+                            event.currentTarget.value
+                          )
+                        }
                       >
-                        {modelInstanceDisplayList.map(({ modelInstance, label }) => (
-                          <option key={modelInstance.id} value={modelInstance.id}>
-                            {label}
-                          </option>
-                        ))}
+                        {modelInstanceDisplayList.map(
+                          ({ modelInstance, label }) => (
+                            <option
+                              key={modelInstance.id}
+                              value={modelInstance.id}
+                            >
+                              {label}
+                            </option>
+                          )
+                        )}
                       </select>
                     </label>
                     <label className="form-field">
@@ -3785,13 +4721,33 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         data-testid={`interaction-link-play-anim-clip-${link.id}`}
                         className="text-input"
                         value={link.action.clipName}
-                        onChange={(event) => updatePlayAnimationLinkClip(link, event.currentTarget.value)}
+                        onChange={(event) =>
+                          updatePlayAnimationLinkClip(
+                            link,
+                            event.currentTarget.value
+                          )
+                        }
                       >
-                        {(editorState.document.assets[
-                          editorState.document.modelInstances[link.action.targetModelInstanceId]?.assetId ?? ""
-                        ] as { kind: "model"; metadata: { animationNames: string[] } } | undefined)?.metadata.animationNames.map((name) => (
-                          <option key={name} value={name}>{name}</option>
-                        )) ?? <option value={link.action.clipName}>{link.action.clipName}</option>}
+                        {(
+                          editorState.document.assets[
+                            editorState.document.modelInstances[
+                              link.action.targetModelInstanceId
+                            ]?.assetId ?? ""
+                          ] as
+                            | {
+                                kind: "model";
+                                metadata: { animationNames: string[] };
+                              }
+                            | undefined
+                        )?.metadata.animationNames.map((name) => (
+                          <option key={name} value={name}>
+                            {name}
+                          </option>
+                        )) ?? (
+                          <option value={link.action.clipName}>
+                            {link.action.clipName}
+                          </option>
+                        )}
                       </select>
                     </label>
                   </div>
@@ -3800,12 +4756,18 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       type="checkbox"
                       data-testid={`interaction-link-play-anim-loop-${link.id}`}
                       checked={link.action.loop !== false}
-                      onChange={(event) => updatePlayAnimationLinkLoop(link, event.currentTarget.checked)}
+                      onChange={(event) =>
+                        updatePlayAnimationLinkLoop(
+                          link,
+                          event.currentTarget.checked
+                        )
+                      }
                     />
                     <span className="label">Loop</span>
                   </label>
                 </div>
-              ) : link.action.type === "playSound" || link.action.type === "stopSound" ? (
+              ) : link.action.type === "playSound" ||
+                link.action.type === "stopSound" ? (
                 <div className="form-section">
                   <label className="form-field">
                     <span className="label">Emitter</span>
@@ -3813,7 +4775,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       data-testid={`interaction-link-sound-target-${link.id}`}
                       className="text-input"
                       value={link.action.targetSoundEmitterId}
-                      onChange={(event) => updateSoundInteractionLinkTarget(link, event.currentTarget.value)}
+                      onChange={(event) =>
+                        updateSoundInteractionLinkTarget(
+                          link,
+                          event.currentTarget.value
+                        )
+                      }
                     >
                       {soundEmitterOptions.map(({ entity, label }) => (
                         <option key={entity.id} value={entity.id}>
@@ -3831,13 +4798,23 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       data-testid={`interaction-link-stop-anim-instance-${link.id}`}
                       className="text-input"
                       value={link.action.targetModelInstanceId}
-                      onChange={(event) => updateAnimationInteractionLinkTarget(link, event.currentTarget.value)}
+                      onChange={(event) =>
+                        updateAnimationInteractionLinkTarget(
+                          link,
+                          event.currentTarget.value
+                        )
+                      }
                     >
-                      {modelInstanceDisplayList.map(({ modelInstance, label }) => (
-                        <option key={modelInstance.id} value={modelInstance.id}>
-                          {label}
-                        </option>
-                      ))}
+                      {modelInstanceDisplayList.map(
+                        ({ modelInstance, label }) => (
+                          <option
+                            key={modelInstance.id}
+                            value={modelInstance.id}
+                          >
+                            {label}
+                          </option>
+                        )
+                      )}
                     </select>
                   </label>
                 </div>
@@ -3853,7 +4830,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   Delete Link
                 </button>
               </div>
-
             </div>
           ))}
         </div>
@@ -3916,7 +4892,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
     </div>
   );
 
-  const applyWorldSettings = (nextWorld: WorldSettings, label: string, successMessage: string) => {
+  const applyWorldSettings = (
+    nextWorld: WorldSettings,
+    label: string,
+    successMessage: string
+  ) => {
     if (areWorldSettingsEqual(editorState.document.world, nextWorld)) {
       return;
     }
@@ -3944,25 +4924,37 @@ export function App({ store, initialStatusMessage }: AppProps) {
     applyWorldSettings(nextWorld, label, successMessage);
   };
 
-  const applyWorldBackgroundMode = (mode: WorldBackgroundMode, imageAssetId?: string) => {
+  const applyWorldBackgroundMode = (
+    mode: WorldBackgroundMode,
+    imageAssetId?: string
+  ) => {
     if (mode === "image") {
       const currentBackgroundAssetId =
-        editorState.document.world.background.mode === "image" ? editorState.document.world.background.assetId : null;
+        editorState.document.world.background.mode === "image"
+          ? editorState.document.world.background.assetId
+          : null;
       const nextImageAssetId =
         imageAssetId ??
-        (currentBackgroundAssetId !== null && editorState.document.assets[currentBackgroundAssetId]?.kind === "image"
+        (currentBackgroundAssetId !== null &&
+        editorState.document.assets[currentBackgroundAssetId]?.kind === "image"
           ? currentBackgroundAssetId
           : imageAssetList[0]?.id);
 
       if (nextImageAssetId === undefined) {
-        setStatusMessage("Import an image asset before using an image background.");
+        setStatusMessage(
+          "Import an image asset before using an image background."
+        );
         return;
       }
 
       applyWorldSettings(
         {
           ...editorState.document.world,
-          background: changeWorldBackgroundMode(editorState.document.world.background, "image", nextImageAssetId)
+          background: changeWorldBackgroundMode(
+            editorState.document.world.background,
+            "image",
+            nextImageAssetId
+          )
         },
         "Set world background image",
         `World background set to ${editorState.document.assets[nextImageAssetId]?.sourceName ?? nextImageAssetId}.`
@@ -3973,10 +4965,15 @@ export function App({ store, initialStatusMessage }: AppProps) {
     applyWorldSettings(
       {
         ...editorState.document.world,
-        background: changeWorldBackgroundMode(editorState.document.world.background, mode)
+        background: changeWorldBackgroundMode(
+          editorState.document.world.background,
+          mode
+        )
       },
       "Set world background mode",
-      mode === "solid" ? "World background set to a solid color." : "World background set to a vertical gradient."
+      mode === "solid"
+        ? "World background set to a solid color."
+        : "World background set to a vertical gradient."
     );
   };
 
@@ -3998,7 +4995,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
   };
 
-  const applyWorldGradientColor = (edge: "top" | "bottom", colorHex: string) => {
+  const applyWorldGradientColor = (
+    edge: "top" | "bottom",
+    colorHex: string
+  ) => {
     if (editorState.document.world.background.mode !== "verticalGradient") {
       return;
     }
@@ -4017,8 +5017,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 bottomColorHex: colorHex
               }
       },
-      edge === "top" ? "Set world gradient top color" : "Set world gradient bottom color",
-      edge === "top" ? "Updated the world gradient top color." : "Updated the world gradient bottom color."
+      edge === "top"
+        ? "Set world gradient top color"
+        : "Set world gradient bottom color",
+      edge === "top"
+        ? "Updated the world gradient top color."
+        : "Updated the world gradient bottom color."
     );
   };
 
@@ -4027,7 +5031,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
       return;
     }
 
-    const intensity = readNonNegativeNumberDraft(backgroundEnvironmentIntensityDraft, "Environment intensity");
+    const intensity = readNonNegativeNumberDraft(
+      backgroundEnvironmentIntensityDraft,
+      "Environment intensity"
+    );
     applyWorldSettings(
       {
         ...editorState.document.world,
@@ -4062,7 +5069,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
           ...editorState.document.world,
           ambientLight: {
             ...editorState.document.world.ambientLight,
-            intensity: readNonNegativeNumberDraft(ambientLightIntensityDraft, "Ambient light intensity")
+            intensity: readNonNegativeNumberDraft(
+              ambientLightIntensityDraft,
+              "Ambient light intensity"
+            )
           }
         },
         "Set world ambient light intensity",
@@ -4094,7 +5104,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
           ...editorState.document.world,
           sunLight: {
             ...editorState.document.world.sunLight,
-            intensity: readNonNegativeNumberDraft(sunLightIntensityDraft, "Sun intensity")
+            intensity: readNonNegativeNumberDraft(
+              sunLightIntensityDraft,
+              "Sun intensity"
+            )
           }
         },
         "Set world sun intensity",
@@ -4142,30 +5155,51 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const applyAdvancedRenderingShadowsEnabled = (enabled: boolean) => {
     applyAdvancedRenderingSettings(
       "Set advanced rendering shadows",
-      enabled ? "Advanced rendering shadows enabled." : "Advanced rendering shadows disabled.",
+      enabled
+        ? "Advanced rendering shadows enabled."
+        : "Advanced rendering shadows disabled.",
       (advancedRendering) => {
         advancedRendering.shadows.enabled = enabled;
       }
     );
   };
 
-  const applyAdvancedRenderingShadowMapSize = (shadowMapSize: AdvancedRenderingShadowMapSize) => {
-    applyAdvancedRenderingSettings("Set advanced rendering shadow map size", "Updated the shadow map size.", (advancedRendering) => {
-      advancedRendering.shadows.mapSize = shadowMapSize;
-    });
+  const applyAdvancedRenderingShadowMapSize = (
+    shadowMapSize: AdvancedRenderingShadowMapSize
+  ) => {
+    applyAdvancedRenderingSettings(
+      "Set advanced rendering shadow map size",
+      "Updated the shadow map size.",
+      (advancedRendering) => {
+        advancedRendering.shadows.mapSize = shadowMapSize;
+      }
+    );
   };
 
-  const applyAdvancedRenderingShadowType = (shadowType: AdvancedRenderingShadowType) => {
-    applyAdvancedRenderingSettings("Set advanced rendering shadow type", "Updated the shadow map type.", (advancedRendering) => {
-      advancedRendering.shadows.type = shadowType;
-    });
+  const applyAdvancedRenderingShadowType = (
+    shadowType: AdvancedRenderingShadowType
+  ) => {
+    applyAdvancedRenderingSettings(
+      "Set advanced rendering shadow type",
+      "Updated the shadow map type.",
+      (advancedRendering) => {
+        advancedRendering.shadows.type = shadowType;
+      }
+    );
   };
 
   const applyAdvancedRenderingShadowBias = () => {
     try {
-      applyAdvancedRenderingSettings("Set advanced rendering shadow bias", "Updated the shadow bias.", (advancedRendering) => {
-        advancedRendering.shadows.bias = readFiniteNumberDraft(advancedRenderingShadowBiasDraft, "Shadow bias");
-      });
+      applyAdvancedRenderingSettings(
+        "Set advanced rendering shadow bias",
+        "Updated the shadow bias.",
+        (advancedRendering) => {
+          advancedRendering.shadows.bias = readFiniteNumberDraft(
+            advancedRenderingShadowBiasDraft,
+            "Shadow bias"
+          );
+        }
+      );
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
     }
@@ -4187,10 +5221,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
         "Set ambient occlusion intensity",
         "Updated the ambient occlusion intensity.",
         (advancedRendering) => {
-          advancedRendering.ambientOcclusion.intensity = readNonNegativeNumberDraft(
-            advancedRenderingAmbientOcclusionIntensityDraft,
-            "Ambient occlusion intensity"
-          );
+          advancedRendering.ambientOcclusion.intensity =
+            readNonNegativeNumberDraft(
+              advancedRenderingAmbientOcclusionIntensityDraft,
+              "Ambient occlusion intensity"
+            );
         }
       );
     } catch (error) {
@@ -4200,12 +5235,17 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
   const applyAdvancedRenderingAmbientOcclusionRadius = () => {
     try {
-      applyAdvancedRenderingSettings("Set ambient occlusion radius", "Updated the ambient occlusion radius.", (advancedRendering) => {
-        advancedRendering.ambientOcclusion.radius = readNonNegativeNumberDraft(
-          advancedRenderingAmbientOcclusionRadiusDraft,
-          "Ambient occlusion radius"
-        );
-      });
+      applyAdvancedRenderingSettings(
+        "Set ambient occlusion radius",
+        "Updated the ambient occlusion radius.",
+        (advancedRendering) => {
+          advancedRendering.ambientOcclusion.radius =
+            readNonNegativeNumberDraft(
+              advancedRenderingAmbientOcclusionRadiusDraft,
+              "Ambient occlusion radius"
+            );
+        }
+      );
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
     }
@@ -4213,12 +5253,16 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
   const applyAdvancedRenderingAmbientOcclusionSamples = () => {
     try {
-      applyAdvancedRenderingSettings("Set ambient occlusion samples", "Updated the ambient occlusion samples.", (advancedRendering) => {
-        advancedRendering.ambientOcclusion.samples = readPositiveIntegerDraft(
-          advancedRenderingAmbientOcclusionSamplesDraft,
-          "Ambient occlusion samples"
-        );
-      });
+      applyAdvancedRenderingSettings(
+        "Set ambient occlusion samples",
+        "Updated the ambient occlusion samples.",
+        (advancedRendering) => {
+          advancedRendering.ambientOcclusion.samples = readPositiveIntegerDraft(
+            advancedRenderingAmbientOcclusionSamplesDraft,
+            "Ambient occlusion samples"
+          );
+        }
+      );
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
     }
@@ -4236,9 +5280,16 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
   const applyAdvancedRenderingBloomIntensity = () => {
     try {
-      applyAdvancedRenderingSettings("Set bloom intensity", "Updated the bloom intensity.", (advancedRendering) => {
-        advancedRendering.bloom.intensity = readNonNegativeNumberDraft(advancedRenderingBloomIntensityDraft, "Bloom intensity");
-      });
+      applyAdvancedRenderingSettings(
+        "Set bloom intensity",
+        "Updated the bloom intensity.",
+        (advancedRendering) => {
+          advancedRendering.bloom.intensity = readNonNegativeNumberDraft(
+            advancedRenderingBloomIntensityDraft,
+            "Bloom intensity"
+          );
+        }
+      );
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
     }
@@ -4246,9 +5297,16 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
   const applyAdvancedRenderingBloomThreshold = () => {
     try {
-      applyAdvancedRenderingSettings("Set bloom threshold", "Updated the bloom threshold.", (advancedRendering) => {
-        advancedRendering.bloom.threshold = readNonNegativeNumberDraft(advancedRenderingBloomThresholdDraft, "Bloom threshold");
-      });
+      applyAdvancedRenderingSettings(
+        "Set bloom threshold",
+        "Updated the bloom threshold.",
+        (advancedRendering) => {
+          advancedRendering.bloom.threshold = readNonNegativeNumberDraft(
+            advancedRenderingBloomThresholdDraft,
+            "Bloom threshold"
+          );
+        }
+      );
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
     }
@@ -4256,28 +5314,45 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
   const applyAdvancedRenderingBloomRadius = () => {
     try {
-      applyAdvancedRenderingSettings("Set bloom radius", "Updated the bloom radius.", (advancedRendering) => {
-        advancedRendering.bloom.radius = readNonNegativeNumberDraft(advancedRenderingBloomRadiusDraft, "Bloom radius");
-      });
+      applyAdvancedRenderingSettings(
+        "Set bloom radius",
+        "Updated the bloom radius.",
+        (advancedRendering) => {
+          advancedRendering.bloom.radius = readNonNegativeNumberDraft(
+            advancedRenderingBloomRadiusDraft,
+            "Bloom radius"
+          );
+        }
+      );
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
     }
   };
 
-  const applyAdvancedRenderingToneMappingMode = (mode: AdvancedRenderingToneMappingMode) => {
-    applyAdvancedRenderingSettings("Set tone mapping mode", "Updated the tone mapping mode.", (advancedRendering) => {
-      advancedRendering.toneMapping.mode = mode;
-    });
+  const applyAdvancedRenderingToneMappingMode = (
+    mode: AdvancedRenderingToneMappingMode
+  ) => {
+    applyAdvancedRenderingSettings(
+      "Set tone mapping mode",
+      "Updated the tone mapping mode.",
+      (advancedRendering) => {
+        advancedRendering.toneMapping.mode = mode;
+      }
+    );
   };
 
   const applyAdvancedRenderingToneMappingExposure = () => {
     try {
-      applyAdvancedRenderingSettings("Set tone mapping exposure", "Updated the tone mapping exposure.", (advancedRendering) => {
-        advancedRendering.toneMapping.exposure = readPositiveNumberDraft(
-          advancedRenderingToneMappingExposureDraft,
-          "Tone mapping exposure"
-        );
-      });
+      applyAdvancedRenderingSettings(
+        "Set tone mapping exposure",
+        "Updated the tone mapping exposure.",
+        (advancedRendering) => {
+          advancedRendering.toneMapping.exposure = readPositiveNumberDraft(
+            advancedRenderingToneMappingExposureDraft,
+            "Tone mapping exposure"
+          );
+        }
+      );
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
     }
@@ -4295,12 +5370,17 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
   const applyAdvancedRenderingDepthOfFieldFocusDistance = () => {
     try {
-      applyAdvancedRenderingSettings("Set focus distance", "Updated the focus distance.", (advancedRendering) => {
-        advancedRendering.depthOfField.focusDistance = readNonNegativeNumberDraft(
-          advancedRenderingDepthOfFieldFocusDistanceDraft,
-          "Focus distance"
-        );
-      });
+      applyAdvancedRenderingSettings(
+        "Set focus distance",
+        "Updated the focus distance.",
+        (advancedRendering) => {
+          advancedRendering.depthOfField.focusDistance =
+            readNonNegativeNumberDraft(
+              advancedRenderingDepthOfFieldFocusDistanceDraft,
+              "Focus distance"
+            );
+        }
+      );
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
     }
@@ -4308,12 +5388,16 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
   const applyAdvancedRenderingDepthOfFieldFocalLength = () => {
     try {
-      applyAdvancedRenderingSettings("Set focal length", "Updated the focal length.", (advancedRendering) => {
-        advancedRendering.depthOfField.focalLength = readPositiveNumberDraft(
-          advancedRenderingDepthOfFieldFocalLengthDraft,
-          "Focal length"
-        );
-      });
+      applyAdvancedRenderingSettings(
+        "Set focal length",
+        "Updated the focal length.",
+        (advancedRendering) => {
+          advancedRendering.depthOfField.focalLength = readPositiveNumberDraft(
+            advancedRenderingDepthOfFieldFocalLengthDraft,
+            "Focal length"
+          );
+        }
+      );
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
     }
@@ -4321,21 +5405,29 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
   const applyAdvancedRenderingDepthOfFieldBokehScale = () => {
     try {
-      applyAdvancedRenderingSettings("Set bokeh scale", "Updated the bokeh scale.", (advancedRendering) => {
-        advancedRendering.depthOfField.bokehScale = readPositiveNumberDraft(
-          advancedRenderingDepthOfFieldBokehScaleDraft,
-          "Bokeh scale"
-        );
-      });
+      applyAdvancedRenderingSettings(
+        "Set bokeh scale",
+        "Updated the bokeh scale.",
+        (advancedRendering) => {
+          advancedRendering.depthOfField.bokehScale = readPositiveNumberDraft(
+            advancedRenderingDepthOfFieldBokehScaleDraft,
+            "Bokeh scale"
+          );
+        }
+      );
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
     }
   };
 
   const applyAdvancedRenderingFogPath = (path: BoxVolumeRenderPath) => {
-    applyAdvancedRenderingSettings("Set fog render path", `Fog render path set to ${formatBoxVolumeRenderPathLabel(path)}.`, (advancedRendering) => {
-      advancedRendering.fogPath = path;
-    });
+    applyAdvancedRenderingSettings(
+      "Set fog render path",
+      `Fog render path set to ${formatBoxVolumeRenderPathLabel(path)}.`,
+      (advancedRendering) => {
+        advancedRendering.fogPath = path;
+      }
+    );
   };
 
   const applyAdvancedRenderingWaterPath = (path: BoxVolumeRenderPath) => {
@@ -4348,7 +5440,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
   };
 
-  const applyAdvancedRenderingWaterReflectionMode = (mode: AdvancedRenderingWaterReflectionMode) => {
+  const applyAdvancedRenderingWaterReflectionMode = (
+    mode: AdvancedRenderingWaterReflectionMode
+  ) => {
     applyAdvancedRenderingSettings(
       "Set water reflection mode",
       `Water reflection mode set to ${formatAdvancedRenderingWaterReflectionModeLabel(mode)}.`,
@@ -4377,7 +5471,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
           name: brushNameDraft
         })
       );
-      setStatusMessage(nextName === undefined ? "Cleared the authored brush name." : `Renamed brush to ${nextName}.`);
+      setStatusMessage(
+        nextName === undefined
+          ? "Cleared the authored brush name."
+          : `Renamed brush to ${nextName}.`
+      );
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
     }
@@ -4402,7 +5500,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
           name: entityNameDraft
         })
       );
-      setStatusMessage(nextName === undefined ? "Cleared the authored entity name." : `Renamed entity to ${nextName}.`);
+      setStatusMessage(
+        nextName === undefined
+          ? "Cleared the authored entity name."
+          : `Renamed entity to ${nextName}.`
+      );
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
     }
@@ -4427,7 +5529,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
           name: modelInstanceNameDraft
         })
       );
-      setStatusMessage(nextName === undefined ? "Cleared the authored model instance name." : `Renamed model instance to ${nextName}.`);
+      setStatusMessage(
+        nextName === undefined
+          ? "Cleared the authored model instance name."
+          : `Renamed model instance to ${nextName}.`
+      );
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
     }
@@ -4450,7 +5556,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
-  const handleDraftVectorKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>, applyChange: () => void) => {
+  const handleDraftVectorKeyDown = (
+    event: ReactKeyboardEvent<HTMLInputElement>,
+    applyChange: () => void
+  ) => {
     if (event.key === "Enter") {
       applyChange();
     }
@@ -4462,11 +5571,17 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }, 0);
   };
 
-  const handleNumberInputPointerUp = (_event: ReactPointerEvent<HTMLInputElement>, applyChange: () => void) => {
+  const handleNumberInputPointerUp = (
+    _event: ReactPointerEvent<HTMLInputElement>,
+    applyChange: () => void
+  ) => {
     scheduleDraftCommit(applyChange);
   };
 
-  const handleNumberInputKeyUp = (event: ReactKeyboardEvent<HTMLInputElement>, applyChange: () => void) => {
+  const handleNumberInputKeyUp = (
+    event: ReactKeyboardEvent<HTMLInputElement>,
+    applyChange: () => void
+  ) => {
     if (!isCommitIncrementKey(event.key)) {
       return;
     }
@@ -4477,12 +5592,19 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const handleSaveProject = async () => {
     try {
       if (!projectAssetStorageReady && projectAssetList.length > 0) {
-        throw new Error("Project save failed: project asset storage is still initializing for this asset-backed scene.");
+        throw new Error(
+          "Project save failed: project asset storage is still initializing for this asset-backed scene."
+        );
       }
 
-      const projectBytes = await saveProjectPackage(editorState.document, projectAssetStorage);
+      const projectBytes = await saveProjectPackage(
+        editorState.document,
+        projectAssetStorage
+      );
       const blobBytes = new Uint8Array(projectBytes);
-      const blob = new Blob([blobBytes.buffer as ArrayBuffer], { type: "application/zip" });
+      const blob = new Blob([blobBytes.buffer as ArrayBuffer], {
+        type: "application/zip"
+      });
       const objectUrl = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
 
@@ -4501,7 +5623,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
     importProjectInputRef.current?.click();
   };
 
-  const handleLoadProjectChange = async (event: ChangeEvent<HTMLInputElement>) => {
+  const handleLoadProjectChange = async (
+    event: ChangeEvent<HTMLInputElement>
+  ) => {
     const input = event.currentTarget;
     const file = input.files?.[0];
 
@@ -4511,7 +5635,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
     try {
       const projectBytes = new Uint8Array(await file.arrayBuffer());
-      const nextDocument = await loadProjectPackage(projectBytes, projectAssetStorage);
+      const nextDocument = await loadProjectPackage(
+        projectBytes,
+        projectAssetStorage
+      );
       store.replaceDocument(nextDocument);
       setStatusMessage(`Loaded project ${file.name}.`);
     } catch (error) {
@@ -4533,7 +5660,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
     importAudioInputRef.current?.click();
   };
 
-  const handleImportModelChange = async (event: ChangeEvent<HTMLInputElement>) => {
+  const handleImportModelChange = async (
+    event: ChangeEvent<HTMLInputElement>
+  ) => {
     const input = event.currentTarget;
     const files = Array.from(input.files ?? []);
 
@@ -4542,7 +5671,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
 
     if (projectAssetStorage === null) {
-      setAssetStatusMessage("Imported model assets require project asset storage. IndexedDB is unavailable in this browser.");
+      setAssetStatusMessage(
+        "Imported model assets require project asset storage. IndexedDB is unavailable in this browser."
+      );
       input.value = "";
       return;
     }
@@ -4550,9 +5681,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
     let importedModelForCleanup: ImportedModelAssetResult | null = null;
 
     try {
-      const importedModel = files.length === 1
-        ? await importModelAssetFromFile(files[0], projectAssetStorage)
-        : await importModelAssetFromFiles(files, projectAssetStorage);
+      const importedModel =
+        files.length === 1
+          ? await importModelAssetFromFile(files[0], projectAssetStorage)
+          : await importModelAssetFromFiles(files, projectAssetStorage);
       importedModelForCleanup = importedModel;
 
       store.executeCommand(
@@ -4572,10 +5704,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
         [importedModel.asset.id]: importedModel.loadedAsset
       }));
       setAssetStatusMessage(null);
-      setStatusMessage(`Imported ${importedModel.asset.sourceName} and placed a model instance.`);
+      setStatusMessage(
+        `Imported ${importedModel.asset.sourceName} and placed a model instance.`
+      );
     } catch (error) {
       if (importedModelForCleanup !== null) {
-        await projectAssetStorage.deleteAsset(importedModelForCleanup.asset.storageKey).catch(() => undefined);
+        await projectAssetStorage
+          .deleteAsset(importedModelForCleanup.asset.storageKey)
+          .catch(() => undefined);
         disposeModelTemplate(importedModelForCleanup.loadedAsset.template);
       }
 
@@ -4587,7 +5723,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
-  const handleImportBackgroundImageChange = async (event: ChangeEvent<HTMLInputElement>) => {
+  const handleImportBackgroundImageChange = async (
+    event: ChangeEvent<HTMLInputElement>
+  ) => {
     const input = event.currentTarget;
     const file = input.files?.[0];
 
@@ -4596,7 +5734,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
 
     if (projectAssetStorage === null) {
-      setAssetStatusMessage("Imported background images require project asset storage. IndexedDB is unavailable in this browser.");
+      setAssetStatusMessage(
+        "Imported background images require project asset storage. IndexedDB is unavailable in this browser."
+      );
       input.value = "";
       return;
     }
@@ -4604,7 +5744,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
     let importedImageForCleanup: ImportedImageAssetResult | null = null;
 
     try {
-      const importedImage = await importBackgroundImageAssetFromFile(file, projectAssetStorage);
+      const importedImage = await importBackgroundImageAssetFromFile(
+        file,
+        projectAssetStorage
+      );
       importedImageForCleanup = importedImage;
 
       store.executeCommand(
@@ -4612,7 +5755,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
           asset: importedImage.asset,
           world: {
             ...editorState.document.world,
-            background: changeWorldBackgroundMode(editorState.document.world.background, "image", importedImage.asset.id)
+            background: changeWorldBackgroundMode(
+              editorState.document.world.background,
+              "image",
+              importedImage.asset.id
+            )
           },
           label: `Import ${importedImage.asset.sourceName} as background`
         })
@@ -4627,10 +5774,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
         [importedImage.asset.id]: importedImage.loadedAsset
       }));
       setAssetStatusMessage(null);
-      setStatusMessage(`Imported ${importedImage.asset.sourceName} and set it as the world background.`);
+      setStatusMessage(
+        `Imported ${importedImage.asset.sourceName} and set it as the world background.`
+      );
     } catch (error) {
       if (importedImageForCleanup !== null) {
-        await projectAssetStorage.deleteAsset(importedImageForCleanup.asset.storageKey).catch(() => undefined);
+        await projectAssetStorage
+          .deleteAsset(importedImageForCleanup.asset.storageKey)
+          .catch(() => undefined);
         disposeLoadedImageAsset(importedImageForCleanup.loadedAsset);
       }
 
@@ -4642,7 +5793,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
-  const handleImportAudioChange = async (event: ChangeEvent<HTMLInputElement>) => {
+  const handleImportAudioChange = async (
+    event: ChangeEvent<HTMLInputElement>
+  ) => {
     const input = event.currentTarget;
     const file = input.files?.[0];
 
@@ -4651,15 +5804,23 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
 
     if (projectAssetStorage === null) {
-      setAssetStatusMessage("Imported audio assets require project asset storage. IndexedDB is unavailable in this browser.");
+      setAssetStatusMessage(
+        "Imported audio assets require project asset storage. IndexedDB is unavailable in this browser."
+      );
       input.value = "";
       return;
     }
 
-    let importedAudioForCleanup: { asset: AudioAssetRecord; loadedAsset: LoadedAudioAsset } | null = null;
+    let importedAudioForCleanup: {
+      asset: AudioAssetRecord;
+      loadedAsset: LoadedAudioAsset;
+    } | null = null;
 
     try {
-      const importedAudio = await importAudioAssetFromFile(file, projectAssetStorage);
+      const importedAudio = await importAudioAssetFromFile(
+        file,
+        projectAssetStorage
+      );
       importedAudioForCleanup = importedAudio;
 
       store.executeCommand(
@@ -4678,10 +5839,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
         [importedAudio.asset.id]: importedAudio.loadedAsset
       }));
       setAssetStatusMessage(null);
-      setStatusMessage(`Imported ${importedAudio.asset.sourceName} and registered it as an audio asset.`);
+      setStatusMessage(
+        `Imported ${importedAudio.asset.sourceName} and registered it as an audio asset.`
+      );
     } catch (error) {
       if (importedAudioForCleanup !== null) {
-        await projectAssetStorage.deleteAsset(importedAudioForCleanup.asset.storageKey).catch(() => undefined);
+        await projectAssetStorage
+          .deleteAsset(importedAudioForCleanup.asset.storageKey)
+          .catch(() => undefined);
       }
 
       const message = getErrorMessage(error);
@@ -4693,13 +5858,19 @@ export function App({ store, initialStatusMessage }: AppProps) {
   };
 
   const applyFaceMaterial = (materialId: string) => {
-    if (selectedBrush === null || selectedFaceId === null || selectedFace === null) {
+    if (
+      selectedBrush === null ||
+      selectedFaceId === null ||
+      selectedFace === null
+    ) {
       setStatusMessage("Select a single box face before applying a material.");
       return;
     }
 
     if (selectedFace.materialId === materialId) {
-      setStatusMessage(`${BOX_FACE_LABELS[selectedFaceId]} already uses that material.`);
+      setStatusMessage(
+        `${BOX_FACE_LABELS[selectedFaceId]} already uses that material.`
+      );
       return;
     }
 
@@ -4711,20 +5882,30 @@ export function App({ store, initialStatusMessage }: AppProps) {
           materialId
         })
       );
-      setStatusMessage(`Applied ${editorState.document.materials[materialId]?.name ?? materialId} to ${BOX_FACE_LABELS[selectedFaceId]}.`);
+      setStatusMessage(
+        `Applied ${editorState.document.materials[materialId]?.name ?? materialId} to ${BOX_FACE_LABELS[selectedFaceId]}.`
+      );
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
     }
   };
 
   const clearFaceMaterial = () => {
-    if (selectedBrush === null || selectedFaceId === null || selectedFace === null) {
-      setStatusMessage("Select a single box face before clearing its material.");
+    if (
+      selectedBrush === null ||
+      selectedFaceId === null ||
+      selectedFace === null
+    ) {
+      setStatusMessage(
+        "Select a single box face before clearing its material."
+      );
       return;
     }
 
     if (selectedFace.materialId === null) {
-      setStatusMessage(`${BOX_FACE_LABELS[selectedFaceId]} already uses the fallback face material.`);
+      setStatusMessage(
+        `${BOX_FACE_LABELS[selectedFaceId]} already uses the fallback face material.`
+      );
       return;
     }
 
@@ -4735,11 +5916,21 @@ export function App({ store, initialStatusMessage }: AppProps) {
         materialId: null
       })
     );
-    setStatusMessage(`Cleared the authored material on ${BOX_FACE_LABELS[selectedFaceId]}.`);
+    setStatusMessage(
+      `Cleared the authored material on ${BOX_FACE_LABELS[selectedFaceId]}.`
+    );
   };
 
-  const applyFaceUvState = (uvState: FaceUvState, label: string, successMessage: string) => {
-    if (selectedBrush === null || selectedFaceId === null || selectedFace === null) {
+  const applyFaceUvState = (
+    uvState: FaceUvState,
+    label: string,
+    successMessage: string
+  ) => {
+    if (
+      selectedBrush === null ||
+      selectedFaceId === null ||
+      selectedFace === null
+    ) {
       setStatusMessage("Select a single box face before editing UVs.");
       return;
     }
@@ -4794,7 +5985,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
     applyFaceUvState(
       {
         ...selectedFace.uv,
-        rotationQuarterTurns: rotateQuarterTurns(selectedFace.uv.rotationQuarterTurns)
+        rotationQuarterTurns: rotateQuarterTurns(
+          selectedFace.uv.rotationQuarterTurns
+        )
       },
       "Rotate face UV 90 degrees",
       "Rotated face UVs 90 degrees."
@@ -4833,15 +6026,20 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
   const handleEnterPlayMode = () => {
     if (blockingDiagnostics.length > 0) {
-      setStatusMessage(`Run mode blocked: ${formatSceneDiagnosticSummary(blockingDiagnostics)}`);
+      setStatusMessage(
+        `Run mode blocked: ${formatSceneDiagnosticSummary(blockingDiagnostics)}`
+      );
       return;
     }
 
     try {
-      const nextRuntimeScene = buildRuntimeSceneFromDocument(editorState.document, {
-        navigationMode: preferredNavigationMode,
-        loadedModelAssets
-      });
+      const nextRuntimeScene = buildRuntimeSceneFromDocument(
+        editorState.document,
+        {
+          navigationMode: preferredNavigationMode,
+          loadedModelAssets
+        }
+      );
       const nextNavigationMode = preferredNavigationMode;
 
       setRuntimeScene(nextRuntimeScene);
@@ -4873,24 +6071,38 @@ export function App({ store, initialStatusMessage }: AppProps) {
     setStatusMessage("Returned to editor mode.");
   };
 
-  const handleSetPreferredNavigationMode = (navigationMode: RuntimeNavigationMode) => {
+  const handleSetPreferredNavigationMode = (
+    navigationMode: RuntimeNavigationMode
+  ) => {
     setPreferredNavigationMode(navigationMode);
 
     if (navigationMode === "firstPerson" && primaryPlayerStart === null) {
-      setStatusMessage("First Person selected. Author a Player Start before running, or switch back to Orbit Visitor.");
+      setStatusMessage(
+        "First Person selected. Author a Player Start before running, or switch back to Orbit Visitor."
+      );
     }
 
     if (editorState.toolMode === "play") {
       setActiveNavigationMode(navigationMode);
-      setStatusMessage(navigationMode === "firstPerson" ? "Runner switched to first-person navigation." : "Runner switched to Orbit Visitor.");
+      setStatusMessage(
+        navigationMode === "firstPerson"
+          ? "Runner switched to first-person navigation."
+          : "Runner switched to Orbit Visitor."
+      );
     }
   };
 
-  const createAssetMenuHoverHandler = (assetId: string) => (hovered: boolean) => {
-    setHoveredAssetId((current) => (hovered ? assetId : current === assetId ? null : current));
-  };
+  const createAssetMenuHoverHandler =
+    (assetId: string) => (hovered: boolean) => {
+      setHoveredAssetId((current) =>
+        hovered ? assetId : current === assetId ? null : current
+      );
+    };
 
-  const createDisabledMenuAction = (label: string, testId: string): HierarchicalMenuItem => ({
+  const createDisabledMenuAction = (
+    label: string,
+    testId: string
+  ): HierarchicalMenuItem => ({
     kind: "action",
     label,
     testId,
@@ -4920,7 +6132,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
           kind: "action",
           label: "Sound Emitter",
           testId: "add-menu-sound-emitter",
-          onSelect: () => beginEntityCreation("soundEmitter", { audioAssetId: audioAssetList[0]?.id ?? null })
+          onSelect: () =>
+            beginEntityCreation("soundEmitter", {
+              audioAssetId: audioAssetList[0]?.id ?? null
+            })
         },
         {
           kind: "action",
@@ -4972,7 +6187,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
           testId: "add-menu-assets-models",
           children:
             modelAssetList.length === 0
-              ? [createDisabledMenuAction("No imported 3D models", "add-menu-assets-models-empty")]
+              ? [
+                  createDisabledMenuAction(
+                    "No imported 3D models",
+                    "add-menu-assets-models-empty"
+                  )
+                ]
               : modelAssetList.map((asset) => ({
                   kind: "action" as const,
                   label: asset.sourceName,
@@ -4987,7 +6207,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
           testId: "add-menu-assets-environments",
           children:
             imageAssetList.length === 0
-              ? [createDisabledMenuAction("No imported environments", "add-menu-assets-environments-empty")]
+              ? [
+                  createDisabledMenuAction(
+                    "No imported environments",
+                    "add-menu-assets-environments-empty"
+                  )
+                ]
               : imageAssetList.map((asset) => ({
                   kind: "action" as const,
                   label: asset.sourceName,
@@ -5002,12 +6227,20 @@ export function App({ store, initialStatusMessage }: AppProps) {
           testId: "add-menu-assets-audio",
           children:
             audioAssetList.length === 0
-              ? [createDisabledMenuAction("No imported audio", "add-menu-assets-audio-empty")]
+              ? [
+                  createDisabledMenuAction(
+                    "No imported audio",
+                    "add-menu-assets-audio-empty"
+                  )
+                ]
               : audioAssetList.map((asset) => ({
                   kind: "action" as const,
                   label: asset.sourceName,
                   testId: `add-menu-audio-asset-${asset.id}`,
-                  onSelect: () => beginEntityCreation("soundEmitter", { audioAssetId: asset.id }),
+                  onSelect: () =>
+                    beginEntityCreation("soundEmitter", {
+                      audioAssetId: asset.id
+                    }),
                   onHoverChange: createAssetMenuHoverHandler(asset.id)
                 }))
         }
@@ -5043,16 +6276,21 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   ];
 
-  const viewportPanelsStyle = layoutMode === "quad" ? createViewportQuadPanelsStyle(editorState.viewportQuadSplit) : undefined;
+  const viewportPanelsStyle =
+    layoutMode === "quad"
+      ? createViewportQuadPanelsStyle(editorState.viewportQuadSplit)
+      : undefined;
 
   if (editorState.toolMode === "play" && runtimeScene !== null) {
     return (
       <div className="app-shell app-shell--play">
         <header className="toolbar">
-            <div className="toolbar__brand">
-              <div className="toolbar__title">WebEditor3D</div>
-              <div className="toolbar__subtitle">Slice 3.1 GLB/GLTF import and unified creation</div>
+          <div className="toolbar__brand">
+            <div className="toolbar__title">WebEditor3D</div>
+            <div className="toolbar__subtitle">
+              Slice 3.1 GLB/GLTF import and unified creation
             </div>
+          </div>
 
           <div className="toolbar__actions">
             <div className="toolbar__group">
@@ -5075,7 +6313,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
             </div>
 
             <div className="toolbar__group">
-              <button className="toolbar__button toolbar__button--accent" type="button" data-testid="exit-run-mode" onClick={handleExitPlayMode}>
+              <button
+                className="toolbar__button toolbar__button--accent"
+                type="button"
+                data-testid="exit-run-mode"
+                onClick={handleExitPlayMode}
+              >
                 Return To Editor
               </button>
             </div>
@@ -5102,21 +6345,39 @@ export function App({ store, initialStatusMessage }: AppProps) {
               <div className="stat-grid">
                 <div className="stat-card">
                   <div className="label">Navigation</div>
-                  <div className="value">{activeNavigationMode === "firstPerson" ? "First Person" : "Orbit Visitor"}</div>
+                  <div className="value">
+                    {activeNavigationMode === "firstPerson"
+                      ? "First Person"
+                      : "Orbit Visitor"}
+                  </div>
                 </div>
                 <div className="stat-card">
                   <div className="label">Spawn Source</div>
-                  <div className="value">{runtimeScene.spawn.source === "playerStart" ? "Player Start" : "Fallback"}</div>
+                  <div className="value">
+                    {runtimeScene.spawn.source === "playerStart"
+                      ? "Player Start"
+                      : "Fallback"}
+                  </div>
                 </div>
                 <div className="stat-card">
                   <div className="label">Pointer Lock</div>
                   <div className="value">
-                    {activeNavigationMode === "firstPerson" ? (firstPersonTelemetry?.pointerLocked ? "active" : "idle") : "not used"}
+                    {activeNavigationMode === "firstPerson"
+                      ? firstPersonTelemetry?.pointerLocked
+                        ? "active"
+                        : "idle"
+                      : "not used"}
                   </div>
                 </div>
                 <div className="stat-card">
                   <div className="label">Grounded</div>
-                  <div className="value">{firstPersonTelemetry?.grounded ? "yes" : activeNavigationMode === "firstPerson" ? "no" : "n/a"}</div>
+                  <div className="value">
+                    {firstPersonTelemetry?.grounded
+                      ? "yes"
+                      : activeNavigationMode === "firstPerson"
+                        ? "no"
+                        : "n/a"}
+                  </div>
                 </div>
                 <div className="stat-card">
                   <div className="label">Locomotion</div>
@@ -5132,31 +6393,59 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 </div>
                 <div className="stat-card">
                   <div className="label">Water Volume</div>
-                  <div className="value">{activeNavigationMode === "firstPerson" ? (firstPersonTelemetry?.inWaterVolume ? "inside" : "outside") : "n/a"}</div>
+                  <div className="value">
+                    {activeNavigationMode === "firstPerson"
+                      ? firstPersonTelemetry?.inWaterVolume
+                        ? "inside"
+                        : "outside"
+                      : "n/a"}
+                  </div>
                 </div>
                 <div className="stat-card">
                   <div className="label">Fog Volume</div>
-                  <div className="value">{activeNavigationMode === "firstPerson" ? (firstPersonTelemetry?.inFogVolume ? "inside" : "outside") : "n/a"}</div>
+                  <div className="value">
+                    {activeNavigationMode === "firstPerson"
+                      ? firstPersonTelemetry?.inFogVolume
+                        ? "inside"
+                        : "outside"
+                      : "n/a"}
+                  </div>
                 </div>
               </div>
 
               <div className="stat-card">
                 <div className="label">FPS Feet Position</div>
                 <div className="value" data-testid="runner-player-position">
-                  {formatRunnerFeetPosition(firstPersonTelemetry?.feetPosition ?? runtimeScene.spawn.position)}
+                  {formatRunnerFeetPosition(
+                    firstPersonTelemetry?.feetPosition ??
+                      runtimeScene.spawn.position
+                  )}
                 </div>
-                <div className="material-summary" data-testid="runner-spawn-state">
-                  Spawn: {runtimeScene.spawn.source === "playerStart" ? "Player Start" : "Fallback"} at{" "}
-                  {formatRunnerFeetPosition(runtimeScene.spawn.position)}
+                <div
+                  className="material-summary"
+                  data-testid="runner-spawn-state"
+                >
+                  Spawn:{" "}
+                  {runtimeScene.spawn.source === "playerStart"
+                    ? "Player Start"
+                    : "Fallback"}{" "}
+                  at {formatRunnerFeetPosition(runtimeScene.spawn.position)}
                 </div>
               </div>
 
               <div className="stat-card">
                 <div className="label">Interaction</div>
                 <div className="value" data-testid="runner-interaction-state">
-                  {activeNavigationMode === "firstPerson" ? (runtimeInteractionPrompt === null ? "No target" : "Ready") : "Not available"}
+                  {activeNavigationMode === "firstPerson"
+                    ? runtimeInteractionPrompt === null
+                      ? "No target"
+                      : "Ready"
+                    : "Not available"}
                 </div>
-                <div className="material-summary" data-testid="runner-interaction-summary">
+                <div
+                  className="material-summary"
+                  data-testid="runner-interaction-summary"
+                >
                   {activeNavigationMode === "firstPerson"
                     ? runtimeInteractionPrompt === null
                       ? "Aim at an authored Interactable and click when a prompt appears."
@@ -5165,10 +6454,16 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 </div>
               </div>
 
-              {runtimeMessage === null ? null : <div className="info-banner">{runtimeMessage}</div>}
+              {runtimeMessage === null ? null : (
+                <div className="info-banner">{runtimeMessage}</div>
+              )}
               {activeNavigationMode === "firstPerson" ? (
-                <div className="info-banner" data-testid="runner-interaction-help">
-                  Mouse click activates the current prompt target. Keyboard/controller fallback is not active yet.
+                <div
+                  className="info-banner"
+                  data-testid="runner-interaction-help"
+                >
+                  Mouse click activates the current prompt target.
+                  Keyboard/controller fallback is not active yet.
                 </div>
               ) : null}
             </Panel>
@@ -5181,7 +6476,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
           </div>
           <div>
             <span className="status-bar__strong">Spawn:</span>{" "}
-            {runtimeScene.spawn.source === "playerStart" ? "Authored Player Start" : "Fallback runtime spawn"}
+            {runtimeScene.spawn.source === "playerStart"
+              ? "Authored Player Start"
+              : "Fallback runtime spawn"}
           </div>
         </footer>
       </div>
@@ -5220,15 +6517,29 @@ export function App({ store, initialStatusMessage }: AppProps) {
             >
               Add
             </button>
-            <button className="toolbar__button" type="button" data-testid="save-project-button" onClick={() => void handleSaveProject()}>
+            <button
+              className="toolbar__button"
+              type="button"
+              data-testid="save-project-button"
+              onClick={() => void handleSaveProject()}
+            >
               Save Project
             </button>
-            <button className="toolbar__button" type="button" data-testid="load-project-button" onClick={handleLoadProjectButtonClick}>
+            <button
+              className="toolbar__button"
+              type="button"
+              data-testid="load-project-button"
+              onClick={handleLoadProjectButtonClick}
+            >
               Load Project
             </button>
           </div>
 
-          <div className="toolbar__group" role="group" aria-label="Viewport layout mode">
+          <div
+            className="toolbar__group"
+            role="group"
+            aria-label="Viewport layout mode"
+          >
             {VIEWPORT_LAYOUT_MODES.map((mode) => (
               <button
                 key={mode}
@@ -5243,13 +6554,22 @@ export function App({ store, initialStatusMessage }: AppProps) {
             ))}
           </div>
 
-          <div className="toolbar__group" role="group" aria-label="Transform operations">
+          <div
+            className="toolbar__group"
+            role="group"
+            aria-label="Transform operations"
+          >
             <button
               className={`toolbar__button ${transformSession.kind === "active" && transformSession.operation === "translate" ? "toolbar__button--active" : ""}`}
               type="button"
               data-testid="transform-translate-button"
-              aria-pressed={transformSession.kind === "active" && transformSession.operation === "translate"}
-              disabled={editorState.toolMode !== "select" || !canTranslateSelectedTarget}
+              aria-pressed={
+                transformSession.kind === "active" &&
+                transformSession.operation === "translate"
+              }
+              disabled={
+                editorState.toolMode !== "select" || !canTranslateSelectedTarget
+              }
               onClick={() => beginTransformOperation("translate", "toolbar")}
             >
               Move ({getTransformOperationShortcut("translate")})
@@ -5258,8 +6578,13 @@ export function App({ store, initialStatusMessage }: AppProps) {
               className={`toolbar__button ${transformSession.kind === "active" && transformSession.operation === "rotate" ? "toolbar__button--active" : ""}`}
               type="button"
               data-testid="transform-rotate-button"
-              aria-pressed={transformSession.kind === "active" && transformSession.operation === "rotate"}
-              disabled={editorState.toolMode !== "select" || !canRotateSelectedTarget}
+              aria-pressed={
+                transformSession.kind === "active" &&
+                transformSession.operation === "rotate"
+              }
+              disabled={
+                editorState.toolMode !== "select" || !canRotateSelectedTarget
+              }
               onClick={() => beginTransformOperation("rotate", "toolbar")}
             >
               Rotate ({getTransformOperationShortcut("rotate")})
@@ -5268,15 +6593,24 @@ export function App({ store, initialStatusMessage }: AppProps) {
               className={`toolbar__button ${transformSession.kind === "active" && transformSession.operation === "scale" ? "toolbar__button--active" : ""}`}
               type="button"
               data-testid="transform-scale-button"
-              aria-pressed={transformSession.kind === "active" && transformSession.operation === "scale"}
-              disabled={editorState.toolMode !== "select" || !canScaleSelectedTarget}
+              aria-pressed={
+                transformSession.kind === "active" &&
+                transformSession.operation === "scale"
+              }
+              disabled={
+                editorState.toolMode !== "select" || !canScaleSelectedTarget
+              }
               onClick={() => beginTransformOperation("scale", "toolbar")}
             >
               Scale ({getTransformOperationShortcut("scale")})
             </button>
           </div>
 
-          <div className="toolbar__group" role="group" aria-label="Whitebox selection mode">
+          <div
+            className="toolbar__group"
+            role="group"
+            aria-label="Whitebox selection mode"
+          >
             {WHITEBOX_SELECTION_MODES.map((mode) => (
               <button
                 key={mode}
@@ -5291,7 +6625,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
             ))}
           </div>
 
-          <div className="toolbar__group" role="group" aria-label="Whitebox snap settings">
+          <div
+            className="toolbar__group"
+            role="group"
+            aria-label="Whitebox snap settings"
+          >
             <button
               className={`toolbar__button ${viewportGridVisible ? "toolbar__button--active" : ""}`}
               type="button"
@@ -5319,7 +6657,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 min="0.01"
                 step="0.1"
                 value={whiteboxSnapStepDraft}
-                onChange={(event) => setWhiteboxSnapStepDraft(event.currentTarget.value)}
+                onChange={(event) =>
+                  setWhiteboxSnapStepDraft(event.currentTarget.value)
+                }
                 onBlur={handleWhiteboxSnapStepBlur}
                 onKeyDown={(event) => {
                   if (event.key === "Enter") {
@@ -5359,10 +6699,20 @@ export function App({ store, initialStatusMessage }: AppProps) {
           </div>
 
           <div className="toolbar__group">
-            <button className="toolbar__button" type="button" disabled={!editorState.canUndo} onClick={() => store.undo()}>
+            <button
+              className="toolbar__button"
+              type="button"
+              disabled={!editorState.canUndo}
+              onClick={() => store.undo()}
+            >
               Undo
             </button>
-            <button className="toolbar__button" type="button" disabled={!editorState.canRedo} onClick={() => store.redo()}>
+            <button
+              className="toolbar__button"
+              type="button"
+              disabled={!editorState.canRedo}
+              onClick={() => store.redo()}
+            >
               Redo
             </button>
           </div>
@@ -5379,14 +6729,23 @@ export function App({ store, initialStatusMessage }: AppProps) {
             )}
 
             {projectAssetStorageReady && projectAssetStorage === null ? (
-              <div className="outliner-empty">Project asset storage is unavailable. Imported assets cannot be persisted.</div>
+              <div className="outliner-empty">
+                Project asset storage is unavailable. Imported assets cannot be
+                persisted.
+              </div>
             ) : null}
             <div className="outliner-section">
               <div className="label">Whitebox Solids</div>
               {brushList.length === 0 ? (
-                <div className="outliner-empty">Use Add &gt; Whitebox Box and click in the viewport to create the first solid.</div>
+                <div className="outliner-empty">
+                  Use Add &gt; Whitebox Box and click in the viewport to create
+                  the first solid.
+                </div>
               ) : (
-                <div className="outliner-list" data-testid="outliner-brush-list">
+                <div
+                  className="outliner-list"
+                  data-testid="outliner-brush-list"
+                >
                   {brushList.map((brush, brushIndex) => {
                     const label = getBrushLabel(brush, brushIndex);
                     const isSelected = selectedBrush?.id === brush.id;
@@ -5404,7 +6763,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               type="text"
                               value={brushNameDraft}
                               placeholder={`Whitebox Box ${brushIndex + 1}`}
-                              onChange={(event) => setBrushNameDraft(event.currentTarget.value)}
+                              onChange={(event) =>
+                                setBrushNameDraft(event.currentTarget.value)
+                              }
                               onBlur={applyBrushNameChange}
                               onFocus={(event) => event.currentTarget.select()}
                               onKeyDown={(event) =>
@@ -5431,7 +6792,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                                 )
                               }
                             >
-                              <span className="outliner-item__title">{label}</span>
+                              <span className="outliner-item__title">
+                                {label}
+                              </span>
                             </button>
                           )}
                           <button
@@ -5454,12 +6817,18 @@ export function App({ store, initialStatusMessage }: AppProps) {
             <div className="outliner-section">
               <div className="label">Model Instances</div>
               {modelInstanceDisplayList.length === 0 ? (
-                <div className="outliner-empty">No model instances placed yet.</div>
+                <div className="outliner-empty">
+                  No model instances placed yet.
+                </div>
               ) : (
-                <div className="outliner-list" data-testid="outliner-model-instance-list">
+                <div
+                  className="outliner-list"
+                  data-testid="outliner-model-instance-list"
+                >
                   {modelInstanceDisplayList.map(({ modelInstance, label }) => {
                     const isSelected =
-                      editorState.selection.kind === "modelInstances" && editorState.selection.ids.includes(modelInstance.id);
+                      editorState.selection.kind === "modelInstances" &&
+                      editorState.selection.ids.includes(modelInstance.id);
 
                     return (
                       <div
@@ -5473,13 +6842,23 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               data-testid="selected-model-instance-name"
                               type="text"
                               value={modelInstanceNameDraft}
-                              placeholder={editorState.document.assets[modelInstance.assetId]?.sourceName ?? "Model Instance"}
-                              onChange={(event) => setModelInstanceNameDraft(event.currentTarget.value)}
+                              placeholder={
+                                editorState.document.assets[
+                                  modelInstance.assetId
+                                ]?.sourceName ?? "Model Instance"
+                              }
+                              onChange={(event) =>
+                                setModelInstanceNameDraft(
+                                  event.currentTarget.value
+                                )
+                              }
                               onBlur={applyModelInstanceNameChange}
                               onFocus={(event) => event.currentTarget.select()}
                               onKeyDown={(event) =>
                                 handleInlineNameInputKeyDown(event, () => {
-                                  setModelInstanceNameDraft(selectedModelInstance?.name ?? "");
+                                  setModelInstanceNameDraft(
+                                    selectedModelInstance?.name ?? ""
+                                  );
                                 })
                               }
                             />
@@ -5501,7 +6880,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                                 )
                               }
                             >
-                              <span className="outliner-item__title">{label}</span>
+                              <span className="outliner-item__title">
+                                {label}
+                              </span>
                             </button>
                           )}
                           <button
@@ -5509,7 +6890,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                             type="button"
                             data-testid={`outliner-delete-model-instance-${modelInstance.id}`}
                             aria-label={`Delete ${label}`}
-                            onClick={() => handleDeleteModelInstance(modelInstance.id)}
+                            onClick={() =>
+                              handleDeleteModelInstance(modelInstance.id)
+                            }
                           >
                             x
                           </button>
@@ -5524,12 +6907,16 @@ export function App({ store, initialStatusMessage }: AppProps) {
             <div className="outliner-section">
               <div className="label">Entities</div>
 
-              {entityDisplayList.length === 0 ? <div className="outliner-empty">No entities authored yet.</div> : null}
+              {entityDisplayList.length === 0 ? (
+                <div className="outliner-empty">No entities authored yet.</div>
+              ) : null}
 
               {entityDisplayList.length === 0 ? null : (
                 <div className="outliner-list">
                   {entityDisplayList.map(({ entity, label }) => {
-                    const isSelected = editorState.selection.kind === "entities" && editorState.selection.ids.includes(entity.id);
+                    const isSelected =
+                      editorState.selection.kind === "entities" &&
+                      editorState.selection.ids.includes(entity.id);
 
                     return (
                       <div
@@ -5544,12 +6931,16 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               type="text"
                               value={entityNameDraft}
                               placeholder={getEntityKindLabel(entity.kind)}
-                              onChange={(event) => setEntityNameDraft(event.currentTarget.value)}
+                              onChange={(event) =>
+                                setEntityNameDraft(event.currentTarget.value)
+                              }
                               onBlur={applyEntityNameChange}
                               onFocus={(event) => event.currentTarget.select()}
                               onKeyDown={(event) =>
                                 handleInlineNameInputKeyDown(event, () => {
-                                  setEntityNameDraft(selectedEntity?.name ?? "");
+                                  setEntityNameDraft(
+                                    selectedEntity?.name ?? ""
+                                  );
                                 })
                               }
                             />
@@ -5571,7 +6962,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                                 )
                               }
                             >
-                              <span className="outliner-item__title">{label}</span>
+                              <span className="outliner-item__title">
+                                {label}
+                              </span>
                             </button>
                           )}
                           <button
@@ -5593,11 +6986,16 @@ export function App({ store, initialStatusMessage }: AppProps) {
           </Panel>
         </aside>
 
-        <main className={`viewport-region viewport-region--${layoutMode}`} data-testid="viewport-shell">
+        <main
+          className={`viewport-region viewport-region--${layoutMode}`}
+          data-testid="viewport-shell"
+        >
           <div
             ref={viewportPanelsRef}
             className={`viewport-region__panels viewport-region__panels--${layoutMode} ${
-              viewportQuadResizeMode === null ? "" : "viewport-region__panels--resizing"
+              viewportQuadResizeMode === null
+                ? ""
+                : "viewport-region__panels--resizing"
             }`.trim()}
             style={viewportPanelsStyle}
           >
@@ -5623,7 +7021,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 toolPreview={viewportToolPreview}
                 transformSession={transformSession}
                 cameraState={editorState.viewportPanels[panelId].cameraState}
-                focusRequestId={focusRequest.panelId === panelId ? focusRequest.id : 0}
+                focusRequestId={
+                  focusRequest.panelId === panelId ? focusRequest.id : 0
+                }
                 focusSelection={focusRequest.selection}
                 onActivatePanel={handleActivateViewportPanel}
                 onSetPanelViewMode={handleSetViewportPanelViewMode}
@@ -5640,7 +7040,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 }}
                 onTransformCommit={commitTransformSession}
                 onTransformCancel={() => cancelTransformSession()}
-                onSelectionChange={(selection) => applySelection(selection, "viewport")}
+                onSelectionChange={(selection) =>
+                  applySelection(selection, "viewport")
+                }
               />
             ))}
             {layoutMode !== "quad" ? null : (
@@ -5667,2231 +7069,3734 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
         <aside className="side-column">
           {editorState.selection.kind === "none" ? (
-          <Panel title="World">
-            <div className="stat-card">
-              <div className="label">Background</div>
-              <div className="value" data-testid="world-background-mode-value">
-                {formatWorldBackgroundLabel(editorState.document.world)}
-              </div>
-              <div
-                className="world-background-preview"
-                data-testid="world-background-preview"
-                style={createWorldBackgroundStyle(
-                  editorState.document.world.background,
-                  editorState.document.world.background.mode === "image"
-                    ? loadedImageAssets[editorState.document.world.background.assetId]?.sourceUrl ?? null
-                    : null
-                )}
-              />
-              <div className="material-summary">
-                {editorState.document.world.background.mode === "solid"
-                  ? editorState.document.world.background.colorHex
-                  : editorState.document.world.background.mode === "verticalGradient"
-                    ? `${editorState.document.world.background.topColorHex} -> ${editorState.document.world.background.bottomColorHex}`
-                    : editorState.document.assets[editorState.document.world.background.assetId]?.sourceName ??
+            <Panel title="World">
+              <div className="stat-card">
+                <div className="label">Background</div>
+                <div
+                  className="value"
+                  data-testid="world-background-mode-value"
+                >
+                  {formatWorldBackgroundLabel(editorState.document.world)}
+                </div>
+                <div
+                  className="world-background-preview"
+                  data-testid="world-background-preview"
+                  style={createWorldBackgroundStyle(
+                    editorState.document.world.background,
+                    editorState.document.world.background.mode === "image"
+                      ? (loadedImageAssets[
+                          editorState.document.world.background.assetId
+                        ]?.sourceUrl ?? null)
+                      : null
+                  )}
+                />
+                <div className="material-summary">
+                  {editorState.document.world.background.mode === "solid"
+                    ? editorState.document.world.background.colorHex
+                    : editorState.document.world.background.mode ===
+                        "verticalGradient"
+                      ? `${editorState.document.world.background.topColorHex} -> ${editorState.document.world.background.bottomColorHex}`
+                      : (editorState.document.assets[
+                          editorState.document.world.background.assetId
+                        ]?.sourceName ??
+                        editorState.document.world.background.assetId)}
+                </div>
+                {editorState.document.world.background.mode !==
+                "image" ? null : (
+                  <div
+                    className="material-summary"
+                    data-testid="world-background-asset-value"
+                  >
+                    Background Asset:{" "}
+                    {editorState.document.assets[
+                      editorState.document.world.background.assetId
+                    ]?.sourceName ??
                       editorState.document.world.background.assetId}
+                  </div>
+                )}
               </div>
-              {editorState.document.world.background.mode !== "image" ? null : (
-                <div className="material-summary" data-testid="world-background-asset-value">
-                  Background Asset:{" "}
-                  {editorState.document.assets[editorState.document.world.background.assetId]?.sourceName ??
-                    editorState.document.world.background.assetId}
+
+              <div className="form-section">
+                <div className="label">Background Mode</div>
+                <div className="inline-actions">
+                  <button
+                    className={`toolbar__button ${editorState.document.world.background.mode === "solid" ? "toolbar__button--active" : ""}`}
+                    type="button"
+                    data-testid="world-background-mode-solid"
+                    onClick={() => applyWorldBackgroundMode("solid")}
+                  >
+                    Solid
+                  </button>
+                  <button
+                    className={`toolbar__button ${
+                      editorState.document.world.background.mode ===
+                      "verticalGradient"
+                        ? "toolbar__button--active"
+                        : ""
+                    }`}
+                    type="button"
+                    data-testid="world-background-mode-gradient"
+                    onClick={() => applyWorldBackgroundMode("verticalGradient")}
+                  >
+                    Gradient
+                  </button>
+                  <button
+                    className={`toolbar__button ${editorState.document.world.background.mode === "image" ? "toolbar__button--active" : ""}`}
+                    type="button"
+                    data-testid="world-background-mode-image"
+                    onClick={() => applyWorldBackgroundMode("image")}
+                  >
+                    Image
+                  </button>
+                </div>
+              </div>
+
+              {editorState.document.world.background.mode === "image" && (
+                <div className="form-section">
+                  <div className="label">Environment Intensity</div>
+                  <label className="form-field">
+                    <span className="label">Intensity</span>
+                    <input
+                      data-testid="world-background-environment-intensity"
+                      className="text-input"
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      value={backgroundEnvironmentIntensityDraft}
+                      onChange={(event) =>
+                        setBackgroundEnvironmentIntensityDraft(
+                          event.currentTarget.value
+                        )
+                      }
+                      onBlur={applyBackgroundEnvironmentIntensity}
+                      onKeyDown={(event) =>
+                        handleDraftVectorKeyDown(
+                          event,
+                          applyBackgroundEnvironmentIntensity
+                        )
+                      }
+                      onKeyUp={(event) =>
+                        handleNumberInputKeyUp(
+                          event,
+                          applyBackgroundEnvironmentIntensity
+                        )
+                      }
+                      onPointerUp={(event) =>
+                        handleNumberInputPointerUp(
+                          event,
+                          applyBackgroundEnvironmentIntensity
+                        )
+                      }
+                    />
+                  </label>
                 </div>
               )}
-            </div>
 
-            <div className="form-section">
-              <div className="label">Background Mode</div>
-              <div className="inline-actions">
-                <button
-                  className={`toolbar__button ${editorState.document.world.background.mode === "solid" ? "toolbar__button--active" : ""}`}
-                  type="button"
-                  data-testid="world-background-mode-solid"
-                  onClick={() => applyWorldBackgroundMode("solid")}
-                >
-                  Solid
-                </button>
-                <button
-                  className={`toolbar__button ${
-                    editorState.document.world.background.mode === "verticalGradient" ? "toolbar__button--active" : ""
-                  }`}
-                  type="button"
-                  data-testid="world-background-mode-gradient"
-                  onClick={() => applyWorldBackgroundMode("verticalGradient")}
-                >
-                  Gradient
-                </button>
-                <button
-                  className={`toolbar__button ${editorState.document.world.background.mode === "image" ? "toolbar__button--active" : ""}`}
-                  type="button"
-                  data-testid="world-background-mode-image"
-                  onClick={() => applyWorldBackgroundMode("image")}
-                >
-                  Image
-                </button>
-              </div>
-            </div>
+              {editorState.document.world.background.mode !== "image" && (
+                <div className="form-section">
+                  <div className="label">Background Colors</div>
+                  {editorState.document.world.background.mode === "solid" ? (
+                    <label className="form-field">
+                      <span className="label">Color</span>
+                      <input
+                        data-testid="world-background-solid-color"
+                        className="color-input"
+                        type="color"
+                        value={editorState.document.world.background.colorHex}
+                        onChange={(event) =>
+                          applyWorldBackgroundColor(event.currentTarget.value)
+                        }
+                      />
+                    </label>
+                  ) : (
+                    <div className="vector-inputs vector-inputs--two">
+                      <label className="form-field">
+                        <span className="label">Top</span>
+                        <input
+                          data-testid="world-background-top-color"
+                          className="color-input"
+                          type="color"
+                          value={
+                            editorState.document.world.background.topColorHex
+                          }
+                          onChange={(event) =>
+                            applyWorldGradientColor(
+                              "top",
+                              event.currentTarget.value
+                            )
+                          }
+                        />
+                      </label>
+                      <label className="form-field">
+                        <span className="label">Bottom</span>
+                        <input
+                          data-testid="world-background-bottom-color"
+                          className="color-input"
+                          type="color"
+                          value={
+                            editorState.document.world.background.bottomColorHex
+                          }
+                          onChange={(event) =>
+                            applyWorldGradientColor(
+                              "bottom",
+                              event.currentTarget.value
+                            )
+                          }
+                        />
+                      </label>
+                    </div>
+                  )}
+                </div>
+              )}
 
-            {editorState.document.world.background.mode === "image" && (
               <div className="form-section">
-                <div className="label">Environment Intensity</div>
-                <label className="form-field">
-                  <span className="label">Intensity</span>
-                  <input
-                    data-testid="world-background-environment-intensity"
-                    className="text-input"
-                    type="number"
-                    min="0"
-                    step="0.1"
-                    value={backgroundEnvironmentIntensityDraft}
-                    onChange={(event) => setBackgroundEnvironmentIntensityDraft(event.currentTarget.value)}
-                    onBlur={applyBackgroundEnvironmentIntensity}
-                    onKeyDown={(event) => handleDraftVectorKeyDown(event, applyBackgroundEnvironmentIntensity)}
-                    onKeyUp={(event) => handleNumberInputKeyUp(event, applyBackgroundEnvironmentIntensity)}
-                    onPointerUp={(event) => handleNumberInputPointerUp(event, applyBackgroundEnvironmentIntensity)}
-                  />
-                </label>
-              </div>
-            )}
-
-            {editorState.document.world.background.mode !== "image" && (
-              <div className="form-section">
-                <div className="label">Background Colors</div>
-                {editorState.document.world.background.mode === "solid" ? (
+                <div className="label">Ambient Light</div>
+                <div className="vector-inputs vector-inputs--two">
                   <label className="form-field">
                     <span className="label">Color</span>
                     <input
-                      data-testid="world-background-solid-color"
+                      data-testid="world-ambient-color"
                       className="color-input"
                       type="color"
-                      value={editorState.document.world.background.colorHex}
-                      onChange={(event) => applyWorldBackgroundColor(event.currentTarget.value)}
+                      value={editorState.document.world.ambientLight.colorHex}
+                      onChange={(event) =>
+                        applyAmbientLightColor(event.currentTarget.value)
+                      }
                     />
                   </label>
-                ) : (
-                  <div className="vector-inputs vector-inputs--two">
-                    <label className="form-field">
-                      <span className="label">Top</span>
-                      <input
-                        data-testid="world-background-top-color"
-                        className="color-input"
-                        type="color"
-                        value={editorState.document.world.background.topColorHex}
-                        onChange={(event) => applyWorldGradientColor("top", event.currentTarget.value)}
-                      />
-                    </label>
-                    <label className="form-field">
-                      <span className="label">Bottom</span>
-                      <input
-                        data-testid="world-background-bottom-color"
-                        className="color-input"
-                        type="color"
-                        value={editorState.document.world.background.bottomColorHex}
-                        onChange={(event) => applyWorldGradientColor("bottom", event.currentTarget.value)}
-                      />
-                    </label>
-                  </div>
-                )}
-              </div>
-            )}
-
-            <div className="form-section">
-              <div className="label">Ambient Light</div>
-              <div className="vector-inputs vector-inputs--two">
-                <label className="form-field">
-                  <span className="label">Color</span>
-                  <input
-                    data-testid="world-ambient-color"
-                    className="color-input"
-                    type="color"
-                    value={editorState.document.world.ambientLight.colorHex}
-                    onChange={(event) => applyAmbientLightColor(event.currentTarget.value)}
-                  />
-                </label>
-                <label className="form-field">
-                  <span className="label">Intensity</span>
-                  <input
-                    data-testid="world-ambient-intensity"
-                    className="text-input"
-                    type="number"
-                    min="0"
-                    step="0.1"
-                    value={ambientLightIntensityDraft}
-                    onChange={(event) => setAmbientLightIntensityDraft(event.currentTarget.value)}
-                    onBlur={applyAmbientLightIntensity}
-                    onKeyDown={(event) => handleDraftVectorKeyDown(event, applyAmbientLightIntensity)}
-                    onKeyUp={(event) => handleNumberInputKeyUp(event, applyAmbientLightIntensity)}
-                    onPointerUp={(event) => handleNumberInputPointerUp(event, applyAmbientLightIntensity)}
-                  />
-                </label>
-              </div>
-            </div>
-
-            <div className="form-section">
-              <div className="label">Sun Light</div>
-              <div className="vector-inputs vector-inputs--two">
-                <label className="form-field">
-                  <span className="label">Color</span>
-                  <input
-                    data-testid="world-sun-color"
-                    className="color-input"
-                    type="color"
-                    value={editorState.document.world.sunLight.colorHex}
-                    onChange={(event) => applySunLightColor(event.currentTarget.value)}
-                  />
-                </label>
-                <label className="form-field">
-                  <span className="label">Intensity</span>
-                  <input
-                    data-testid="world-sun-intensity"
-                    className="text-input"
-                    type="number"
-                    min="0"
-                    step="0.1"
-                    value={sunLightIntensityDraft}
-                    onChange={(event) => setSunLightIntensityDraft(event.currentTarget.value)}
-                    onBlur={applySunLightIntensity}
-                    onKeyDown={(event) => handleDraftVectorKeyDown(event, applySunLightIntensity)}
-                    onKeyUp={(event) => handleNumberInputKeyUp(event, applySunLightIntensity)}
-                    onPointerUp={(event) => handleNumberInputPointerUp(event, applySunLightIntensity)}
-                  />
-                </label>
+                  <label className="form-field">
+                    <span className="label">Intensity</span>
+                    <input
+                      data-testid="world-ambient-intensity"
+                      className="text-input"
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      value={ambientLightIntensityDraft}
+                      onChange={(event) =>
+                        setAmbientLightIntensityDraft(event.currentTarget.value)
+                      }
+                      onBlur={applyAmbientLightIntensity}
+                      onKeyDown={(event) =>
+                        handleDraftVectorKeyDown(
+                          event,
+                          applyAmbientLightIntensity
+                        )
+                      }
+                      onKeyUp={(event) =>
+                        handleNumberInputKeyUp(
+                          event,
+                          applyAmbientLightIntensity
+                        )
+                      }
+                      onPointerUp={(event) =>
+                        handleNumberInputPointerUp(
+                          event,
+                          applyAmbientLightIntensity
+                        )
+                      }
+                    />
+                  </label>
+                </div>
               </div>
 
-              <div className="vector-inputs">
-                <label className="form-field">
-                  <span className="label">Dir X</span>
-                  <input
-                    data-testid="world-sun-direction-x"
-                    className="text-input"
-                    type="number"
-                    step="0.1"
-                    value={sunDirectionDraft.x}
-                    onChange={(event) => {
-                      const nextValue = event.currentTarget.value;
-                      setSunDirectionDraft((draft) => ({ ...draft, x: nextValue }));
-                    }}
-                    onBlur={applySunLightDirection}
-                    onKeyDown={(event) => handleDraftVectorKeyDown(event, applySunLightDirection)}
-                    onKeyUp={(event) => handleNumberInputKeyUp(event, applySunLightDirection)}
-                    onPointerUp={(event) => handleNumberInputPointerUp(event, applySunLightDirection)}
-                  />
-                </label>
-                <label className="form-field">
-                  <span className="label">Dir Y</span>
-                  <input
-                    data-testid="world-sun-direction-y"
-                    className="text-input"
-                    type="number"
-                    step="0.1"
-                    value={sunDirectionDraft.y}
-                    onChange={(event) => {
-                      const nextValue = event.currentTarget.value;
-                      setSunDirectionDraft((draft) => ({ ...draft, y: nextValue }));
-                    }}
-                    onBlur={applySunLightDirection}
-                    onKeyDown={(event) => handleDraftVectorKeyDown(event, applySunLightDirection)}
-                    onKeyUp={(event) => handleNumberInputKeyUp(event, applySunLightDirection)}
-                    onPointerUp={(event) => handleNumberInputPointerUp(event, applySunLightDirection)}
-                  />
-                </label>
-                <label className="form-field">
-                  <span className="label">Dir Z</span>
-                  <input
-                    data-testid="world-sun-direction-z"
-                    className="text-input"
-                    type="number"
-                    step="0.1"
-                    value={sunDirectionDraft.z}
-                    onChange={(event) => {
-                      const nextValue = event.currentTarget.value;
-                      setSunDirectionDraft((draft) => ({ ...draft, z: nextValue }));
-                    }}
-                    onBlur={applySunLightDirection}
-                    onKeyDown={(event) => handleDraftVectorKeyDown(event, applySunLightDirection)}
-                    onKeyUp={(event) => handleNumberInputKeyUp(event, applySunLightDirection)}
-                    onPointerUp={(event) => handleNumberInputPointerUp(event, applySunLightDirection)}
-                  />
-                </label>
+              <div className="form-section">
+                <div className="label">Sun Light</div>
+                <div className="vector-inputs vector-inputs--two">
+                  <label className="form-field">
+                    <span className="label">Color</span>
+                    <input
+                      data-testid="world-sun-color"
+                      className="color-input"
+                      type="color"
+                      value={editorState.document.world.sunLight.colorHex}
+                      onChange={(event) =>
+                        applySunLightColor(event.currentTarget.value)
+                      }
+                    />
+                  </label>
+                  <label className="form-field">
+                    <span className="label">Intensity</span>
+                    <input
+                      data-testid="world-sun-intensity"
+                      className="text-input"
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      value={sunLightIntensityDraft}
+                      onChange={(event) =>
+                        setSunLightIntensityDraft(event.currentTarget.value)
+                      }
+                      onBlur={applySunLightIntensity}
+                      onKeyDown={(event) =>
+                        handleDraftVectorKeyDown(event, applySunLightIntensity)
+                      }
+                      onKeyUp={(event) =>
+                        handleNumberInputKeyUp(event, applySunLightIntensity)
+                      }
+                      onPointerUp={(event) =>
+                        handleNumberInputPointerUp(
+                          event,
+                          applySunLightIntensity
+                        )
+                      }
+                    />
+                  </label>
+                </div>
+
+                <div className="vector-inputs">
+                  <label className="form-field">
+                    <span className="label">Dir X</span>
+                    <input
+                      data-testid="world-sun-direction-x"
+                      className="text-input"
+                      type="number"
+                      step="0.1"
+                      value={sunDirectionDraft.x}
+                      onChange={(event) => {
+                        const nextValue = event.currentTarget.value;
+                        setSunDirectionDraft((draft) => ({
+                          ...draft,
+                          x: nextValue
+                        }));
+                      }}
+                      onBlur={applySunLightDirection}
+                      onKeyDown={(event) =>
+                        handleDraftVectorKeyDown(event, applySunLightDirection)
+                      }
+                      onKeyUp={(event) =>
+                        handleNumberInputKeyUp(event, applySunLightDirection)
+                      }
+                      onPointerUp={(event) =>
+                        handleNumberInputPointerUp(
+                          event,
+                          applySunLightDirection
+                        )
+                      }
+                    />
+                  </label>
+                  <label className="form-field">
+                    <span className="label">Dir Y</span>
+                    <input
+                      data-testid="world-sun-direction-y"
+                      className="text-input"
+                      type="number"
+                      step="0.1"
+                      value={sunDirectionDraft.y}
+                      onChange={(event) => {
+                        const nextValue = event.currentTarget.value;
+                        setSunDirectionDraft((draft) => ({
+                          ...draft,
+                          y: nextValue
+                        }));
+                      }}
+                      onBlur={applySunLightDirection}
+                      onKeyDown={(event) =>
+                        handleDraftVectorKeyDown(event, applySunLightDirection)
+                      }
+                      onKeyUp={(event) =>
+                        handleNumberInputKeyUp(event, applySunLightDirection)
+                      }
+                      onPointerUp={(event) =>
+                        handleNumberInputPointerUp(
+                          event,
+                          applySunLightDirection
+                        )
+                      }
+                    />
+                  </label>
+                  <label className="form-field">
+                    <span className="label">Dir Z</span>
+                    <input
+                      data-testid="world-sun-direction-z"
+                      className="text-input"
+                      type="number"
+                      step="0.1"
+                      value={sunDirectionDraft.z}
+                      onChange={(event) => {
+                        const nextValue = event.currentTarget.value;
+                        setSunDirectionDraft((draft) => ({
+                          ...draft,
+                          z: nextValue
+                        }));
+                      }}
+                      onBlur={applySunLightDirection}
+                      onKeyDown={(event) =>
+                        handleDraftVectorKeyDown(event, applySunLightDirection)
+                      }
+                      onKeyUp={(event) =>
+                        handleNumberInputKeyUp(event, applySunLightDirection)
+                      }
+                      onPointerUp={(event) =>
+                        handleNumberInputPointerUp(
+                          event,
+                          applySunLightDirection
+                        )
+                      }
+                    />
+                  </label>
+                </div>
               </div>
-            </div>
 
-            <div className="form-section">
-              <div className="label">Advanced Rendering</div>
-              <label className="form-field form-field--toggle">
-                <span className="label">Advanced Rendering</span>
-                <input
-                  type="checkbox"
-                  checked={advancedRendering.enabled}
-                  onChange={(event) => applyAdvancedRenderingEnabled(event.currentTarget.checked)}
-                />
-              </label>
+              <div className="form-section">
+                <div className="label">Advanced Rendering</div>
+                <label className="form-field form-field--toggle">
+                  <span className="label">Advanced Rendering</span>
+                  <input
+                    type="checkbox"
+                    checked={advancedRendering.enabled}
+                    onChange={(event) =>
+                      applyAdvancedRenderingEnabled(event.currentTarget.checked)
+                    }
+                  />
+                </label>
 
-
-              {!advancedRendering.enabled ? null : (
-                <>
-                  <div className="form-section">
-                    <div className="label">Shadows</div>
-                    <label className="form-field form-field--toggle">
-                      <span className="label">Enabled</span>
-                      <input
-                        type="checkbox"
-                        checked={advancedRendering.shadows.enabled}
-                        onChange={(event) => applyAdvancedRenderingShadowsEnabled(event.currentTarget.checked)}
-                      />
-                    </label>
-                    <div className="vector-inputs vector-inputs--two">
-                      <label className="form-field">
-                        <span className="label">Shadow Map Size</span>
-                        <select
-                          className="select-input"
-                          value={advancedRendering.shadows.mapSize}
+                {!advancedRendering.enabled ? null : (
+                  <>
+                    <div className="form-section">
+                      <div className="label">Shadows</div>
+                      <label className="form-field form-field--toggle">
+                        <span className="label">Enabled</span>
+                        <input
+                          type="checkbox"
+                          checked={advancedRendering.shadows.enabled}
                           onChange={(event) =>
-                            applyAdvancedRenderingShadowMapSize(Number(event.currentTarget.value) as AdvancedRenderingShadowMapSize)
+                            applyAdvancedRenderingShadowsEnabled(
+                              event.currentTarget.checked
+                            )
                           }
-                        >
-                          {ADVANCED_RENDERING_SHADOW_MAP_SIZES.map((size) => (
-                            <option key={size} value={size}>
-                              {size}
-                            </option>
-                          ))}
-                        </select>
+                        />
                       </label>
+                      <div className="vector-inputs vector-inputs--two">
+                        <label className="form-field">
+                          <span className="label">Shadow Map Size</span>
+                          <select
+                            className="select-input"
+                            value={advancedRendering.shadows.mapSize}
+                            onChange={(event) =>
+                              applyAdvancedRenderingShadowMapSize(
+                                Number(
+                                  event.currentTarget.value
+                                ) as AdvancedRenderingShadowMapSize
+                              )
+                            }
+                          >
+                            {ADVANCED_RENDERING_SHADOW_MAP_SIZES.map((size) => (
+                              <option key={size} value={size}>
+                                {size}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <label className="form-field">
+                          <span className="label">Shadow Type</span>
+                          <select
+                            className="select-input"
+                            value={advancedRendering.shadows.type}
+                            onChange={(event) =>
+                              applyAdvancedRenderingShadowType(
+                                event.currentTarget
+                                  .value as AdvancedRenderingShadowType
+                              )
+                            }
+                          >
+                            {ADVANCED_RENDERING_SHADOW_TYPES.map(
+                              (shadowType) => (
+                                <option key={shadowType} value={shadowType}>
+                                  {formatAdvancedRenderingShadowTypeLabel(
+                                    shadowType
+                                  )}
+                                </option>
+                              )
+                            )}
+                          </select>
+                        </label>
+                      </div>
                       <label className="form-field">
-                        <span className="label">Shadow Type</span>
-                        <select
-                          className="select-input"
-                          value={advancedRendering.shadows.type}
-                          onChange={(event) => applyAdvancedRenderingShadowType(event.currentTarget.value as AdvancedRenderingShadowType)}
-                        >
-                          {ADVANCED_RENDERING_SHADOW_TYPES.map((shadowType) => (
-                            <option key={shadowType} value={shadowType}>
-                              {formatAdvancedRenderingShadowTypeLabel(shadowType)}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                    </div>
-                    <label className="form-field">
-                      <span className="label">Bias</span>
-                      <input
-                        className="text-input"
-                        type="number"
-                        step="0.0001"
-                        value={advancedRenderingShadowBiasDraft}
-                        onChange={(event) => setAdvancedRenderingShadowBiasDraft(event.currentTarget.value)}
-                        onBlur={applyAdvancedRenderingShadowBias}
-                        onKeyDown={(event) => handleDraftVectorKeyDown(event, applyAdvancedRenderingShadowBias)}
-                        onKeyUp={(event) => handleNumberInputKeyUp(event, applyAdvancedRenderingShadowBias)}
-                        onPointerUp={(event) => handleNumberInputPointerUp(event, applyAdvancedRenderingShadowBias)}
-                      />
-                    </label>
-                  </div>
-
-                  <div className="form-section">
-                    <div className="label">Ambient Occlusion</div>
-                    <label className="form-field form-field--toggle">
-                      <span className="label">Enabled</span>
-                      <input
-                        type="checkbox"
-                        checked={advancedRendering.ambientOcclusion.enabled}
-                        onChange={(event) => applyAdvancedRenderingAmbientOcclusionEnabled(event.currentTarget.checked)}
-                      />
-                    </label>
-                    <div className="vector-inputs vector-inputs--two">
-                      <label className="form-field">
-                        <span className="label">Intensity</span>
+                        <span className="label">Bias</span>
                         <input
                           className="text-input"
                           type="number"
-                          min="0"
-                          step="0.1"
-                          value={advancedRenderingAmbientOcclusionIntensityDraft}
-                          onChange={(event) => setAdvancedRenderingAmbientOcclusionIntensityDraft(event.currentTarget.value)}
-                          onBlur={applyAdvancedRenderingAmbientOcclusionIntensity}
-                          onKeyDown={(event) => handleDraftVectorKeyDown(event, applyAdvancedRenderingAmbientOcclusionIntensity)}
-                          onKeyUp={(event) => handleNumberInputKeyUp(event, applyAdvancedRenderingAmbientOcclusionIntensity)}
-                          onPointerUp={(event) => handleNumberInputPointerUp(event, applyAdvancedRenderingAmbientOcclusionIntensity)}
+                          step="0.0001"
+                          value={advancedRenderingShadowBiasDraft}
+                          onChange={(event) =>
+                            setAdvancedRenderingShadowBiasDraft(
+                              event.currentTarget.value
+                            )
+                          }
+                          onBlur={applyAdvancedRenderingShadowBias}
+                          onKeyDown={(event) =>
+                            handleDraftVectorKeyDown(
+                              event,
+                              applyAdvancedRenderingShadowBias
+                            )
+                          }
+                          onKeyUp={(event) =>
+                            handleNumberInputKeyUp(
+                              event,
+                              applyAdvancedRenderingShadowBias
+                            )
+                          }
+                          onPointerUp={(event) =>
+                            handleNumberInputPointerUp(
+                              event,
+                              applyAdvancedRenderingShadowBias
+                            )
+                          }
                         />
                       </label>
+                    </div>
+
+                    <div className="form-section">
+                      <div className="label">Ambient Occlusion</div>
+                      <label className="form-field form-field--toggle">
+                        <span className="label">Enabled</span>
+                        <input
+                          type="checkbox"
+                          checked={advancedRendering.ambientOcclusion.enabled}
+                          onChange={(event) =>
+                            applyAdvancedRenderingAmbientOcclusionEnabled(
+                              event.currentTarget.checked
+                            )
+                          }
+                        />
+                      </label>
+                      <div className="vector-inputs vector-inputs--two">
+                        <label className="form-field">
+                          <span className="label">Intensity</span>
+                          <input
+                            className="text-input"
+                            type="number"
+                            min="0"
+                            step="0.1"
+                            value={
+                              advancedRenderingAmbientOcclusionIntensityDraft
+                            }
+                            onChange={(event) =>
+                              setAdvancedRenderingAmbientOcclusionIntensityDraft(
+                                event.currentTarget.value
+                              )
+                            }
+                            onBlur={
+                              applyAdvancedRenderingAmbientOcclusionIntensity
+                            }
+                            onKeyDown={(event) =>
+                              handleDraftVectorKeyDown(
+                                event,
+                                applyAdvancedRenderingAmbientOcclusionIntensity
+                              )
+                            }
+                            onKeyUp={(event) =>
+                              handleNumberInputKeyUp(
+                                event,
+                                applyAdvancedRenderingAmbientOcclusionIntensity
+                              )
+                            }
+                            onPointerUp={(event) =>
+                              handleNumberInputPointerUp(
+                                event,
+                                applyAdvancedRenderingAmbientOcclusionIntensity
+                              )
+                            }
+                          />
+                        </label>
+                        <label className="form-field">
+                          <span className="label">Radius</span>
+                          <input
+                            className="text-input"
+                            type="number"
+                            min="0"
+                            step="0.1"
+                            value={advancedRenderingAmbientOcclusionRadiusDraft}
+                            onChange={(event) =>
+                              setAdvancedRenderingAmbientOcclusionRadiusDraft(
+                                event.currentTarget.value
+                              )
+                            }
+                            onBlur={
+                              applyAdvancedRenderingAmbientOcclusionRadius
+                            }
+                            onKeyDown={(event) =>
+                              handleDraftVectorKeyDown(
+                                event,
+                                applyAdvancedRenderingAmbientOcclusionRadius
+                              )
+                            }
+                            onKeyUp={(event) =>
+                              handleNumberInputKeyUp(
+                                event,
+                                applyAdvancedRenderingAmbientOcclusionRadius
+                              )
+                            }
+                            onPointerUp={(event) =>
+                              handleNumberInputPointerUp(
+                                event,
+                                applyAdvancedRenderingAmbientOcclusionRadius
+                              )
+                            }
+                          />
+                        </label>
+                      </div>
+                      <label className="form-field">
+                        <span className="label">Samples</span>
+                        <input
+                          className="text-input"
+                          type="number"
+                          min="1"
+                          step="1"
+                          value={advancedRenderingAmbientOcclusionSamplesDraft}
+                          onChange={(event) =>
+                            setAdvancedRenderingAmbientOcclusionSamplesDraft(
+                              event.currentTarget.value
+                            )
+                          }
+                          onBlur={applyAdvancedRenderingAmbientOcclusionSamples}
+                          onKeyDown={(event) =>
+                            handleDraftVectorKeyDown(
+                              event,
+                              applyAdvancedRenderingAmbientOcclusionSamples
+                            )
+                          }
+                          onKeyUp={(event) =>
+                            handleNumberInputKeyUp(
+                              event,
+                              applyAdvancedRenderingAmbientOcclusionSamples
+                            )
+                          }
+                          onPointerUp={(event) =>
+                            handleNumberInputPointerUp(
+                              event,
+                              applyAdvancedRenderingAmbientOcclusionSamples
+                            )
+                          }
+                        />
+                      </label>
+                    </div>
+
+                    <div className="form-section">
+                      <div className="label">Bloom</div>
+                      <label className="form-field form-field--toggle">
+                        <span className="label">Enabled</span>
+                        <input
+                          type="checkbox"
+                          checked={advancedRendering.bloom.enabled}
+                          onChange={(event) =>
+                            applyAdvancedRenderingBloomEnabled(
+                              event.currentTarget.checked
+                            )
+                          }
+                        />
+                      </label>
+                      <div className="vector-inputs vector-inputs--two">
+                        <label className="form-field">
+                          <span className="label">Intensity</span>
+                          <input
+                            className="text-input"
+                            type="number"
+                            min="0"
+                            step="0.1"
+                            value={advancedRenderingBloomIntensityDraft}
+                            onChange={(event) =>
+                              setAdvancedRenderingBloomIntensityDraft(
+                                event.currentTarget.value
+                              )
+                            }
+                            onBlur={applyAdvancedRenderingBloomIntensity}
+                            onKeyDown={(event) =>
+                              handleDraftVectorKeyDown(
+                                event,
+                                applyAdvancedRenderingBloomIntensity
+                              )
+                            }
+                            onKeyUp={(event) =>
+                              handleNumberInputKeyUp(
+                                event,
+                                applyAdvancedRenderingBloomIntensity
+                              )
+                            }
+                            onPointerUp={(event) =>
+                              handleNumberInputPointerUp(
+                                event,
+                                applyAdvancedRenderingBloomIntensity
+                              )
+                            }
+                          />
+                        </label>
+                        <label className="form-field">
+                          <span className="label">Threshold</span>
+                          <input
+                            className="text-input"
+                            type="number"
+                            min="0"
+                            step="0.05"
+                            value={advancedRenderingBloomThresholdDraft}
+                            onChange={(event) =>
+                              setAdvancedRenderingBloomThresholdDraft(
+                                event.currentTarget.value
+                              )
+                            }
+                            onBlur={applyAdvancedRenderingBloomThreshold}
+                            onKeyDown={(event) =>
+                              handleDraftVectorKeyDown(
+                                event,
+                                applyAdvancedRenderingBloomThreshold
+                              )
+                            }
+                            onKeyUp={(event) =>
+                              handleNumberInputKeyUp(
+                                event,
+                                applyAdvancedRenderingBloomThreshold
+                              )
+                            }
+                            onPointerUp={(event) =>
+                              handleNumberInputPointerUp(
+                                event,
+                                applyAdvancedRenderingBloomThreshold
+                              )
+                            }
+                          />
+                        </label>
+                      </div>
                       <label className="form-field">
                         <span className="label">Radius</span>
                         <input
                           className="text-input"
                           type="number"
                           min="0"
-                          step="0.1"
-                          value={advancedRenderingAmbientOcclusionRadiusDraft}
-                          onChange={(event) => setAdvancedRenderingAmbientOcclusionRadiusDraft(event.currentTarget.value)}
-                          onBlur={applyAdvancedRenderingAmbientOcclusionRadius}
-                          onKeyDown={(event) => handleDraftVectorKeyDown(event, applyAdvancedRenderingAmbientOcclusionRadius)}
-                          onKeyUp={(event) => handleNumberInputKeyUp(event, applyAdvancedRenderingAmbientOcclusionRadius)}
-                          onPointerUp={(event) => handleNumberInputPointerUp(event, applyAdvancedRenderingAmbientOcclusionRadius)}
-                        />
-                      </label>
-                    </div>
-                    <label className="form-field">
-                      <span className="label">Samples</span>
-                      <input
-                        className="text-input"
-                        type="number"
-                        min="1"
-                        step="1"
-                        value={advancedRenderingAmbientOcclusionSamplesDraft}
-                        onChange={(event) => setAdvancedRenderingAmbientOcclusionSamplesDraft(event.currentTarget.value)}
-                        onBlur={applyAdvancedRenderingAmbientOcclusionSamples}
-                        onKeyDown={(event) => handleDraftVectorKeyDown(event, applyAdvancedRenderingAmbientOcclusionSamples)}
-                        onKeyUp={(event) => handleNumberInputKeyUp(event, applyAdvancedRenderingAmbientOcclusionSamples)}
-                        onPointerUp={(event) => handleNumberInputPointerUp(event, applyAdvancedRenderingAmbientOcclusionSamples)}
-                      />
-                    </label>
-                  </div>
-
-                  <div className="form-section">
-                    <div className="label">Bloom</div>
-                    <label className="form-field form-field--toggle">
-                      <span className="label">Enabled</span>
-                      <input
-                        type="checkbox"
-                        checked={advancedRendering.bloom.enabled}
-                        onChange={(event) => applyAdvancedRenderingBloomEnabled(event.currentTarget.checked)}
-                      />
-                    </label>
-                    <div className="vector-inputs vector-inputs--two">
-                      <label className="form-field">
-                        <span className="label">Intensity</span>
-                        <input
-                          className="text-input"
-                          type="number"
-                          min="0"
-                          step="0.1"
-                          value={advancedRenderingBloomIntensityDraft}
-                          onChange={(event) => setAdvancedRenderingBloomIntensityDraft(event.currentTarget.value)}
-                          onBlur={applyAdvancedRenderingBloomIntensity}
-                          onKeyDown={(event) => handleDraftVectorKeyDown(event, applyAdvancedRenderingBloomIntensity)}
-                          onKeyUp={(event) => handleNumberInputKeyUp(event, applyAdvancedRenderingBloomIntensity)}
-                          onPointerUp={(event) => handleNumberInputPointerUp(event, applyAdvancedRenderingBloomIntensity)}
-                        />
-                      </label>
-                      <label className="form-field">
-                        <span className="label">Threshold</span>
-                        <input
-                          className="text-input"
-                          type="number"
-                          min="0"
                           step="0.05"
-                          value={advancedRenderingBloomThresholdDraft}
-                          onChange={(event) => setAdvancedRenderingBloomThresholdDraft(event.currentTarget.value)}
-                          onBlur={applyAdvancedRenderingBloomThreshold}
-                          onKeyDown={(event) => handleDraftVectorKeyDown(event, applyAdvancedRenderingBloomThreshold)}
-                          onKeyUp={(event) => handleNumberInputKeyUp(event, applyAdvancedRenderingBloomThreshold)}
-                          onPointerUp={(event) => handleNumberInputPointerUp(event, applyAdvancedRenderingBloomThreshold)}
+                          value={advancedRenderingBloomRadiusDraft}
+                          onChange={(event) =>
+                            setAdvancedRenderingBloomRadiusDraft(
+                              event.currentTarget.value
+                            )
+                          }
+                          onBlur={applyAdvancedRenderingBloomRadius}
+                          onKeyDown={(event) =>
+                            handleDraftVectorKeyDown(
+                              event,
+                              applyAdvancedRenderingBloomRadius
+                            )
+                          }
+                          onKeyUp={(event) =>
+                            handleNumberInputKeyUp(
+                              event,
+                              applyAdvancedRenderingBloomRadius
+                            )
+                          }
+                          onPointerUp={(event) =>
+                            handleNumberInputPointerUp(
+                              event,
+                              applyAdvancedRenderingBloomRadius
+                            )
+                          }
                         />
                       </label>
                     </div>
-                    <label className="form-field">
-                      <span className="label">Radius</span>
-                      <input
-                        className="text-input"
-                        type="number"
-                        min="0"
-                        step="0.05"
-                        value={advancedRenderingBloomRadiusDraft}
-                        onChange={(event) => setAdvancedRenderingBloomRadiusDraft(event.currentTarget.value)}
-                        onBlur={applyAdvancedRenderingBloomRadius}
-                        onKeyDown={(event) => handleDraftVectorKeyDown(event, applyAdvancedRenderingBloomRadius)}
-                        onKeyUp={(event) => handleNumberInputKeyUp(event, applyAdvancedRenderingBloomRadius)}
-                        onPointerUp={(event) => handleNumberInputPointerUp(event, applyAdvancedRenderingBloomRadius)}
-                      />
-                    </label>
-                  </div>
 
-                  <div className="form-section">
-                    <div className="label">Tone Mapping</div>
-                    <div className="vector-inputs vector-inputs--two">
-                      <label className="form-field">
-                        <span className="label">Mode</span>
-                        <select
-                          className="select-input"
-                          value={advancedRendering.toneMapping.mode}
+                    <div className="form-section">
+                      <div className="label">Tone Mapping</div>
+                      <div className="vector-inputs vector-inputs--two">
+                        <label className="form-field">
+                          <span className="label">Mode</span>
+                          <select
+                            className="select-input"
+                            value={advancedRendering.toneMapping.mode}
+                            onChange={(event) =>
+                              applyAdvancedRenderingToneMappingMode(
+                                event.currentTarget
+                                  .value as AdvancedRenderingToneMappingMode
+                              )
+                            }
+                          >
+                            {ADVANCED_RENDERING_TONE_MAPPING_MODES.map(
+                              (mode) => (
+                                <option key={mode} value={mode}>
+                                  {formatAdvancedRenderingToneMappingLabel(
+                                    mode
+                                  )}
+                                </option>
+                              )
+                            )}
+                          </select>
+                        </label>
+                        <label className="form-field">
+                          <span className="label">Exposure</span>
+                          <input
+                            className="text-input"
+                            type="number"
+                            min="0.001"
+                            step="0.1"
+                            value={advancedRenderingToneMappingExposureDraft}
+                            onChange={(event) =>
+                              setAdvancedRenderingToneMappingExposureDraft(
+                                event.currentTarget.value
+                              )
+                            }
+                            onBlur={applyAdvancedRenderingToneMappingExposure}
+                            onKeyDown={(event) =>
+                              handleDraftVectorKeyDown(
+                                event,
+                                applyAdvancedRenderingToneMappingExposure
+                              )
+                            }
+                            onKeyUp={(event) =>
+                              handleNumberInputKeyUp(
+                                event,
+                                applyAdvancedRenderingToneMappingExposure
+                              )
+                            }
+                            onPointerUp={(event) =>
+                              handleNumberInputPointerUp(
+                                event,
+                                applyAdvancedRenderingToneMappingExposure
+                              )
+                            }
+                          />
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="form-section">
+                      <div className="label">Depth of Field</div>
+                      <label className="form-field form-field--toggle">
+                        <span className="label">Enabled</span>
+                        <input
+                          type="checkbox"
+                          checked={advancedRendering.depthOfField.enabled}
                           onChange={(event) =>
-                            applyAdvancedRenderingToneMappingMode(event.currentTarget.value as AdvancedRenderingToneMappingMode)
+                            applyAdvancedRenderingDepthOfFieldEnabled(
+                              event.currentTarget.checked
+                            )
                           }
-                        >
-                          {ADVANCED_RENDERING_TONE_MAPPING_MODES.map((mode) => (
-                            <option key={mode} value={mode}>
-                              {formatAdvancedRenderingToneMappingLabel(mode)}
-                            </option>
-                          ))}
-                        </select>
+                        />
                       </label>
+                      <div className="vector-inputs vector-inputs--two">
+                        <label className="form-field">
+                          <span className="label">Focus Distance</span>
+                          <input
+                            className="text-input"
+                            type="number"
+                            min="0"
+                            step="0.1"
+                            value={
+                              advancedRenderingDepthOfFieldFocusDistanceDraft
+                            }
+                            onChange={(event) =>
+                              setAdvancedRenderingDepthOfFieldFocusDistanceDraft(
+                                event.currentTarget.value
+                              )
+                            }
+                            onBlur={
+                              applyAdvancedRenderingDepthOfFieldFocusDistance
+                            }
+                            onKeyDown={(event) =>
+                              handleDraftVectorKeyDown(
+                                event,
+                                applyAdvancedRenderingDepthOfFieldFocusDistance
+                              )
+                            }
+                            onKeyUp={(event) =>
+                              handleNumberInputKeyUp(
+                                event,
+                                applyAdvancedRenderingDepthOfFieldFocusDistance
+                              )
+                            }
+                            onPointerUp={(event) =>
+                              handleNumberInputPointerUp(
+                                event,
+                                applyAdvancedRenderingDepthOfFieldFocusDistance
+                              )
+                            }
+                          />
+                        </label>
+                        <label className="form-field">
+                          <span className="label">Focal Length</span>
+                          <input
+                            className="text-input"
+                            type="number"
+                            min="0.001"
+                            step="0.001"
+                            value={
+                              advancedRenderingDepthOfFieldFocalLengthDraft
+                            }
+                            onChange={(event) =>
+                              setAdvancedRenderingDepthOfFieldFocalLengthDraft(
+                                event.currentTarget.value
+                              )
+                            }
+                            onBlur={
+                              applyAdvancedRenderingDepthOfFieldFocalLength
+                            }
+                            onKeyDown={(event) =>
+                              handleDraftVectorKeyDown(
+                                event,
+                                applyAdvancedRenderingDepthOfFieldFocalLength
+                              )
+                            }
+                            onKeyUp={(event) =>
+                              handleNumberInputKeyUp(
+                                event,
+                                applyAdvancedRenderingDepthOfFieldFocalLength
+                              )
+                            }
+                            onPointerUp={(event) =>
+                              handleNumberInputPointerUp(
+                                event,
+                                applyAdvancedRenderingDepthOfFieldFocalLength
+                              )
+                            }
+                          />
+                        </label>
+                      </div>
                       <label className="form-field">
-                        <span className="label">Exposure</span>
+                        <span className="label">Bokeh Scale</span>
                         <input
                           className="text-input"
                           type="number"
                           min="0.001"
                           step="0.1"
-                          value={advancedRenderingToneMappingExposureDraft}
-                          onChange={(event) => setAdvancedRenderingToneMappingExposureDraft(event.currentTarget.value)}
-                          onBlur={applyAdvancedRenderingToneMappingExposure}
-                          onKeyDown={(event) => handleDraftVectorKeyDown(event, applyAdvancedRenderingToneMappingExposure)}
-                          onKeyUp={(event) => handleNumberInputKeyUp(event, applyAdvancedRenderingToneMappingExposure)}
-                          onPointerUp={(event) => handleNumberInputPointerUp(event, applyAdvancedRenderingToneMappingExposure)}
-                        />
-                      </label>
-                    </div>
-                  </div>
-
-                  <div className="form-section">
-                    <div className="label">Depth of Field</div>
-                    <label className="form-field form-field--toggle">
-                      <span className="label">Enabled</span>
-                      <input
-                        type="checkbox"
-                        checked={advancedRendering.depthOfField.enabled}
-                        onChange={(event) => applyAdvancedRenderingDepthOfFieldEnabled(event.currentTarget.checked)}
-                      />
-                    </label>
-                    <div className="vector-inputs vector-inputs--two">
-                      <label className="form-field">
-                        <span className="label">Focus Distance</span>
-                        <input
-                          className="text-input"
-                          type="number"
-                          min="0"
-                          step="0.1"
-                          value={advancedRenderingDepthOfFieldFocusDistanceDraft}
-                          onChange={(event) => setAdvancedRenderingDepthOfFieldFocusDistanceDraft(event.currentTarget.value)}
-                          onBlur={applyAdvancedRenderingDepthOfFieldFocusDistance}
-                          onKeyDown={(event) => handleDraftVectorKeyDown(event, applyAdvancedRenderingDepthOfFieldFocusDistance)}
-                          onKeyUp={(event) => handleNumberInputKeyUp(event, applyAdvancedRenderingDepthOfFieldFocusDistance)}
-                          onPointerUp={(event) => handleNumberInputPointerUp(event, applyAdvancedRenderingDepthOfFieldFocusDistance)}
-                        />
-                      </label>
-                      <label className="form-field">
-                        <span className="label">Focal Length</span>
-                        <input
-                          className="text-input"
-                          type="number"
-                          min="0.001"
-                          step="0.001"
-                          value={advancedRenderingDepthOfFieldFocalLengthDraft}
-                          onChange={(event) => setAdvancedRenderingDepthOfFieldFocalLengthDraft(event.currentTarget.value)}
-                          onBlur={applyAdvancedRenderingDepthOfFieldFocalLength}
-                          onKeyDown={(event) => handleDraftVectorKeyDown(event, applyAdvancedRenderingDepthOfFieldFocalLength)}
-                          onKeyUp={(event) => handleNumberInputKeyUp(event, applyAdvancedRenderingDepthOfFieldFocalLength)}
-                          onPointerUp={(event) => handleNumberInputPointerUp(event, applyAdvancedRenderingDepthOfFieldFocalLength)}
-                        />
-                      </label>
-                    </div>
-                    <label className="form-field">
-                      <span className="label">Bokeh Scale</span>
-                      <input
-                        className="text-input"
-                        type="number"
-                        min="0.001"
-                        step="0.1"
-                        value={advancedRenderingDepthOfFieldBokehScaleDraft}
-                        onChange={(event) => setAdvancedRenderingDepthOfFieldBokehScaleDraft(event.currentTarget.value)}
-                        onBlur={applyAdvancedRenderingDepthOfFieldBokehScale}
-                        onKeyDown={(event) => handleDraftVectorKeyDown(event, applyAdvancedRenderingDepthOfFieldBokehScale)}
-                        onKeyUp={(event) => handleNumberInputKeyUp(event, applyAdvancedRenderingDepthOfFieldBokehScale)}
-                        onPointerUp={(event) => handleNumberInputPointerUp(event, applyAdvancedRenderingDepthOfFieldBokehScale)}
-                      />
-                    </label>
-                  </div>
-
-                  <div className="form-section">
-                    <div className="label">Volume Rendering Paths</div>
-                    <div className="vector-inputs vector-inputs--two">
-                      <label className="form-field">
-                        <span className="label">Fog</span>
-                        <select
-                          className="select-input"
-                          value={advancedRendering.fogPath}
-                          onChange={(event) => applyAdvancedRenderingFogPath(event.currentTarget.value as BoxVolumeRenderPath)}
-                        >
-                          {BOX_VOLUME_RENDER_PATHS.map((path) => (
-                            <option key={path} value={path}>
-                              {formatBoxVolumeRenderPathLabel(path)}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      <label className="form-field">
-                        <span className="label">Water</span>
-                        <select
-                          className="select-input"
-                          value={advancedRendering.waterPath}
-                          onChange={(event) => applyAdvancedRenderingWaterPath(event.currentTarget.value as BoxVolumeRenderPath)}
-                        >
-                          {BOX_VOLUME_RENDER_PATHS.map((path) => (
-                            <option key={path} value={path}>
-                              {formatBoxVolumeRenderPathLabel(path)}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                    </div>
-                    {advancedRendering.waterPath === "quality" ? (
-                      <label className="form-field">
-                        <span className="label">Water Reflection</span>
-                        <select
-                          data-testid="advanced-rendering-water-reflection-mode"
-                          className="select-input"
-                          value={advancedRendering.waterReflectionMode}
+                          value={advancedRenderingDepthOfFieldBokehScaleDraft}
                           onChange={(event) =>
-                            applyAdvancedRenderingWaterReflectionMode(event.currentTarget.value as AdvancedRenderingWaterReflectionMode)
+                            setAdvancedRenderingDepthOfFieldBokehScaleDraft(
+                              event.currentTarget.value
+                            )
                           }
-                        >
-                          {ADVANCED_RENDERING_WATER_REFLECTION_MODES.map((mode) => (
-                            <option key={mode} value={mode}>
-                              {formatAdvancedRenderingWaterReflectionModeLabel(mode)}
-                            </option>
-                          ))}
-                        </select>
+                          onBlur={applyAdvancedRenderingDepthOfFieldBokehScale}
+                          onKeyDown={(event) =>
+                            handleDraftVectorKeyDown(
+                              event,
+                              applyAdvancedRenderingDepthOfFieldBokehScale
+                            )
+                          }
+                          onKeyUp={(event) =>
+                            handleNumberInputKeyUp(
+                              event,
+                              applyAdvancedRenderingDepthOfFieldBokehScale
+                            )
+                          }
+                          onPointerUp={(event) =>
+                            handleNumberInputPointerUp(
+                              event,
+                              applyAdvancedRenderingDepthOfFieldBokehScale
+                            )
+                          }
+                        />
                       </label>
-                    ) : null}
-                  </div>
-                </>
-              )}
-            </div>
-          </Panel>
-          ) : (
-          <Panel title="Inspector">
-            <div className="stat-card">
-              <div className="label">Selection</div>
-              <div className="value">
-                {describeSelection(editorState.selection, brushList, editorState.document.modelInstances, editorState.document.assets, editorState.document.entities)}
+                    </div>
+
+                    <div className="form-section">
+                      <div className="label">Volume Rendering Paths</div>
+                      <div className="vector-inputs vector-inputs--two">
+                        <label className="form-field">
+                          <span className="label">Fog</span>
+                          <select
+                            className="select-input"
+                            value={advancedRendering.fogPath}
+                            onChange={(event) =>
+                              applyAdvancedRenderingFogPath(
+                                event.currentTarget.value as BoxVolumeRenderPath
+                              )
+                            }
+                          >
+                            {BOX_VOLUME_RENDER_PATHS.map((path) => (
+                              <option key={path} value={path}>
+                                {formatBoxVolumeRenderPathLabel(path)}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <label className="form-field">
+                          <span className="label">Water</span>
+                          <select
+                            className="select-input"
+                            value={advancedRendering.waterPath}
+                            onChange={(event) =>
+                              applyAdvancedRenderingWaterPath(
+                                event.currentTarget.value as BoxVolumeRenderPath
+                              )
+                            }
+                          >
+                            {BOX_VOLUME_RENDER_PATHS.map((path) => (
+                              <option key={path} value={path}>
+                                {formatBoxVolumeRenderPathLabel(path)}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      </div>
+                      {advancedRendering.waterPath === "quality" ? (
+                        <label className="form-field">
+                          <span className="label">Water Reflection</span>
+                          <select
+                            data-testid="advanced-rendering-water-reflection-mode"
+                            className="select-input"
+                            value={advancedRendering.waterReflectionMode}
+                            onChange={(event) =>
+                              applyAdvancedRenderingWaterReflectionMode(
+                                event.currentTarget
+                                  .value as AdvancedRenderingWaterReflectionMode
+                              )
+                            }
+                          >
+                            {ADVANCED_RENDERING_WATER_REFLECTION_MODES.map(
+                              (mode) => (
+                                <option key={mode} value={mode}>
+                                  {formatAdvancedRenderingWaterReflectionModeLabel(
+                                    mode
+                                  )}
+                                </option>
+                              )
+                            )}
+                          </select>
+                        </label>
+                      ) : null}
+                    </div>
+                  </>
+                )}
               </div>
-            </div>
-
-            {selectedModelInstance !== null ? (
-              <>
-                <div className="stat-card">
-                  <div className="label">Model Asset</div>
-                  <div className="value">{selectedModelAsset?.sourceName ?? "Missing Asset"}</div>
-                  <div className="material-summary">
-                    {selectedModelAssetRecord === null
-                      ? "This model instance references an asset that is missing from the registry."
-                      : formatModelAssetSummary(selectedModelAssetRecord)}
-                  </div>
-                  {selectedModelAssetRecord === null ? null : (
-                    <div className="material-summary">{formatModelBoundingBoxLabel(selectedModelAssetRecord)}</div>
+            </Panel>
+          ) : (
+            <Panel title="Inspector">
+              <div className="stat-card">
+                <div className="label">Selection</div>
+                <div className="value">
+                  {describeSelection(
+                    editorState.selection,
+                    brushList,
+                    editorState.document.modelInstances,
+                    editorState.document.assets,
+                    editorState.document.entities
                   )}
                 </div>
+              </div>
 
-                <div className="form-section">
-                  <div className="label">Position</div>
-                  <div className="vector-inputs">
-                    <label className="form-field">
-                      <span className="label">X</span>
-                      <input
-                        data-testid="model-instance-position-x"
-                        className="text-input"
-                        type="number"
-                        step={DEFAULT_GRID_SIZE}
-                        value={modelPositionDraft.x}
-                        onChange={(event) => {
-                          const nextValue = event.currentTarget.value;
-                          setModelPositionDraft((draft) => ({ ...draft, x: nextValue }));
-                        }}
-                        onBlur={applyModelInstanceChange}
-                        onKeyDown={(event) => handleDraftVectorKeyDown(event, applyModelInstanceChange)}
-                        onKeyUp={(event) => handleNumberInputKeyUp(event, applyModelInstanceChange)}
-                        onPointerUp={(event) => handleNumberInputPointerUp(event, applyModelInstanceChange)}
-                      />
-                    </label>
-                    <label className="form-field">
-                      <span className="label">Y</span>
-                      <input
-                        data-testid="model-instance-position-y"
-                        className="text-input"
-                        type="number"
-                        step={DEFAULT_GRID_SIZE}
-                        value={modelPositionDraft.y}
-                        onChange={(event) => {
-                          const nextValue = event.currentTarget.value;
-                          setModelPositionDraft((draft) => ({ ...draft, y: nextValue }));
-                        }}
-                        onBlur={applyModelInstanceChange}
-                        onKeyDown={(event) => handleDraftVectorKeyDown(event, applyModelInstanceChange)}
-                        onKeyUp={(event) => handleNumberInputKeyUp(event, applyModelInstanceChange)}
-                        onPointerUp={(event) => handleNumberInputPointerUp(event, applyModelInstanceChange)}
-                      />
-                    </label>
-                    <label className="form-field">
-                      <span className="label">Z</span>
-                      <input
-                        data-testid="model-instance-position-z"
-                        className="text-input"
-                        type="number"
-                        step={DEFAULT_GRID_SIZE}
-                        value={modelPositionDraft.z}
-                        onChange={(event) => {
-                          const nextValue = event.currentTarget.value;
-                          setModelPositionDraft((draft) => ({ ...draft, z: nextValue }));
-                        }}
-                        onBlur={applyModelInstanceChange}
-                        onKeyDown={(event) => handleDraftVectorKeyDown(event, applyModelInstanceChange)}
-                        onKeyUp={(event) => handleNumberInputKeyUp(event, applyModelInstanceChange)}
-                        onPointerUp={(event) => handleNumberInputPointerUp(event, applyModelInstanceChange)}
-                      />
-                    </label>
+              {selectedModelInstance !== null ? (
+                <>
+                  <div className="stat-card">
+                    <div className="label">Model Asset</div>
+                    <div className="value">
+                      {selectedModelAsset?.sourceName ?? "Missing Asset"}
+                    </div>
+                    <div className="material-summary">
+                      {selectedModelAssetRecord === null
+                        ? "This model instance references an asset that is missing from the registry."
+                        : formatModelAssetSummary(selectedModelAssetRecord)}
+                    </div>
+                    {selectedModelAssetRecord === null ? null : (
+                      <div className="material-summary">
+                        {formatModelBoundingBoxLabel(selectedModelAssetRecord)}
+                      </div>
+                    )}
                   </div>
-                </div>
 
-                <div className="form-section">
-                  <div className="label">Rotation</div>
-                  <div className="vector-inputs">
-                    <label className="form-field">
-                      <span className="label">X</span>
-                      <input
-                        data-testid="model-instance-rotation-x"
-                        className="text-input"
-                        type="number"
-                        step="1"
-                        value={modelRotationDraft.x}
-                        onChange={(event) => {
-                          const nextValue = event.currentTarget.value;
-                          setModelRotationDraft((draft) => ({ ...draft, x: nextValue }));
-                        }}
-                        onBlur={applyModelInstanceChange}
-                        onKeyDown={(event) => handleDraftVectorKeyDown(event, applyModelInstanceChange)}
-                        onKeyUp={(event) => handleNumberInputKeyUp(event, applyModelInstanceChange)}
-                        onPointerUp={(event) => handleNumberInputPointerUp(event, applyModelInstanceChange)}
-                      />
-                    </label>
-                    <label className="form-field">
-                      <span className="label">Y</span>
-                      <input
-                        data-testid="model-instance-rotation-y"
-                        className="text-input"
-                        type="number"
-                        step="1"
-                        value={modelRotationDraft.y}
-                        onChange={(event) => {
-                          const nextValue = event.currentTarget.value;
-                          setModelRotationDraft((draft) => ({ ...draft, y: nextValue }));
-                        }}
-                        onBlur={applyModelInstanceChange}
-                        onKeyDown={(event) => handleDraftVectorKeyDown(event, applyModelInstanceChange)}
-                        onKeyUp={(event) => handleNumberInputKeyUp(event, applyModelInstanceChange)}
-                        onPointerUp={(event) => handleNumberInputPointerUp(event, applyModelInstanceChange)}
-                      />
-                    </label>
-                    <label className="form-field">
-                      <span className="label">Z</span>
-                      <input
-                        data-testid="model-instance-rotation-z"
-                        className="text-input"
-                        type="number"
-                        step="1"
-                        value={modelRotationDraft.z}
-                        onChange={(event) => {
-                          const nextValue = event.currentTarget.value;
-                          setModelRotationDraft((draft) => ({ ...draft, z: nextValue }));
-                        }}
-                        onBlur={applyModelInstanceChange}
-                        onKeyDown={(event) => handleDraftVectorKeyDown(event, applyModelInstanceChange)}
-                        onKeyUp={(event) => handleNumberInputKeyUp(event, applyModelInstanceChange)}
-                        onPointerUp={(event) => handleNumberInputPointerUp(event, applyModelInstanceChange)}
-                      />
-                    </label>
-                  </div>
-                </div>
-
-                <div className="form-section">
-                  <div className="label">Scale</div>
-                  <div className="vector-inputs">
-                    <label className="form-field">
-                      <span className="label">X</span>
-                      <input
-                        data-testid="model-instance-scale-x"
-                        className="text-input"
-                        type="number"
-                        min="0.001"
-                        step="0.1"
-                        value={modelScaleDraft.x}
-                        onChange={(event) => {
-                          const nextValue = event.currentTarget.value;
-                          setModelScaleDraft((draft) => ({ ...draft, x: nextValue }));
-                        }}
-                        onBlur={applyModelInstanceChange}
-                        onKeyDown={(event) => handleDraftVectorKeyDown(event, applyModelInstanceChange)}
-                        onKeyUp={(event) => handleNumberInputKeyUp(event, applyModelInstanceChange)}
-                        onPointerUp={(event) => handleNumberInputPointerUp(event, applyModelInstanceChange)}
-                      />
-                    </label>
-                    <label className="form-field">
-                      <span className="label">Y</span>
-                      <input
-                        data-testid="model-instance-scale-y"
-                        className="text-input"
-                        type="number"
-                        min="0.001"
-                        step="0.1"
-                        value={modelScaleDraft.y}
-                        onChange={(event) => {
-                          const nextValue = event.currentTarget.value;
-                          setModelScaleDraft((draft) => ({ ...draft, y: nextValue }));
-                        }}
-                        onBlur={applyModelInstanceChange}
-                        onKeyDown={(event) => handleDraftVectorKeyDown(event, applyModelInstanceChange)}
-                        onKeyUp={(event) => handleNumberInputKeyUp(event, applyModelInstanceChange)}
-                        onPointerUp={(event) => handleNumberInputPointerUp(event, applyModelInstanceChange)}
-                      />
-                    </label>
-                    <label className="form-field">
-                      <span className="label">Z</span>
-                      <input
-                        data-testid="model-instance-scale-z"
-                        className="text-input"
-                        type="number"
-                        min="0.001"
-                        step="0.1"
-                        value={modelScaleDraft.z}
-                        onChange={(event) => {
-                          const nextValue = event.currentTarget.value;
-                          setModelScaleDraft((draft) => ({ ...draft, z: nextValue }));
-                        }}
-                        onBlur={applyModelInstanceChange}
-                        onKeyDown={(event) => handleDraftVectorKeyDown(event, applyModelInstanceChange)}
-                        onKeyUp={(event) => handleNumberInputKeyUp(event, applyModelInstanceChange)}
-                        onPointerUp={(event) => handleNumberInputPointerUp(event, applyModelInstanceChange)}
-                      />
-                    </label>
-                  </div>
-                </div>
-
-                <div className="form-section">
-                  <div className="label">Collision</div>
-                  <label className="form-field">
-                    <span className="label">Mode</span>
-                    <select
-                      data-testid="model-instance-collision-mode"
-                      className="select-input"
-                      value={selectedModelInstance.collision.mode}
-                      onChange={(event) => {
-                        store.executeCommand(
-                          createUpsertModelInstanceCommand({
-                            modelInstance: {
-                              ...selectedModelInstance,
-                              collision: {
-                                ...selectedModelInstance.collision,
-                                mode: event.target.value as ModelInstanceCollisionMode
-                              }
-                            },
-                            label: "Set model collision mode"
-                          })
-                        );
-                      }}
-                    >
-                      {MODEL_INSTANCE_COLLISION_MODES.map((mode) => (
-                        <option key={mode} value={mode}>
-                          {mode}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="form-field">
-                    <input
-                      data-testid="model-instance-collision-visible"
-                      type="checkbox"
-                      checked={selectedModelInstance.collision.visible}
-                      onChange={(event) => {
-                        store.executeCommand(
-                          createUpsertModelInstanceCommand({
-                            modelInstance: {
-                              ...selectedModelInstance,
-                              collision: {
-                                ...selectedModelInstance.collision,
-                                visible: event.target.checked
-                              }
-                            },
-                            label: event.target.checked ? "Show model collision debug" : "Hide model collision debug"
-                          })
-                        );
-                      }}
-                    />
-                    <span className="label">Show generated collision debug</span>
-                  </label>
-                  <div className="material-summary">{getModelInstanceCollisionModeDescription(selectedModelInstance.collision.mode)}</div>
-                </div>
-
-                {selectedModelAssetRecord !== null && selectedModelAssetRecord.metadata.animationNames.length > 0 && (
                   <div className="form-section">
-                    <div className="label">Animation</div>
+                    <div className="label">Position</div>
+                    <div className="vector-inputs">
+                      <label className="form-field">
+                        <span className="label">X</span>
+                        <input
+                          data-testid="model-instance-position-x"
+                          className="text-input"
+                          type="number"
+                          step={DEFAULT_GRID_SIZE}
+                          value={modelPositionDraft.x}
+                          onChange={(event) => {
+                            const nextValue = event.currentTarget.value;
+                            setModelPositionDraft((draft) => ({
+                              ...draft,
+                              x: nextValue
+                            }));
+                          }}
+                          onBlur={applyModelInstanceChange}
+                          onKeyDown={(event) =>
+                            handleDraftVectorKeyDown(
+                              event,
+                              applyModelInstanceChange
+                            )
+                          }
+                          onKeyUp={(event) =>
+                            handleNumberInputKeyUp(
+                              event,
+                              applyModelInstanceChange
+                            )
+                          }
+                          onPointerUp={(event) =>
+                            handleNumberInputPointerUp(
+                              event,
+                              applyModelInstanceChange
+                            )
+                          }
+                        />
+                      </label>
+                      <label className="form-field">
+                        <span className="label">Y</span>
+                        <input
+                          data-testid="model-instance-position-y"
+                          className="text-input"
+                          type="number"
+                          step={DEFAULT_GRID_SIZE}
+                          value={modelPositionDraft.y}
+                          onChange={(event) => {
+                            const nextValue = event.currentTarget.value;
+                            setModelPositionDraft((draft) => ({
+                              ...draft,
+                              y: nextValue
+                            }));
+                          }}
+                          onBlur={applyModelInstanceChange}
+                          onKeyDown={(event) =>
+                            handleDraftVectorKeyDown(
+                              event,
+                              applyModelInstanceChange
+                            )
+                          }
+                          onKeyUp={(event) =>
+                            handleNumberInputKeyUp(
+                              event,
+                              applyModelInstanceChange
+                            )
+                          }
+                          onPointerUp={(event) =>
+                            handleNumberInputPointerUp(
+                              event,
+                              applyModelInstanceChange
+                            )
+                          }
+                        />
+                      </label>
+                      <label className="form-field">
+                        <span className="label">Z</span>
+                        <input
+                          data-testid="model-instance-position-z"
+                          className="text-input"
+                          type="number"
+                          step={DEFAULT_GRID_SIZE}
+                          value={modelPositionDraft.z}
+                          onChange={(event) => {
+                            const nextValue = event.currentTarget.value;
+                            setModelPositionDraft((draft) => ({
+                              ...draft,
+                              z: nextValue
+                            }));
+                          }}
+                          onBlur={applyModelInstanceChange}
+                          onKeyDown={(event) =>
+                            handleDraftVectorKeyDown(
+                              event,
+                              applyModelInstanceChange
+                            )
+                          }
+                          onKeyUp={(event) =>
+                            handleNumberInputKeyUp(
+                              event,
+                              applyModelInstanceChange
+                            )
+                          }
+                          onPointerUp={(event) =>
+                            handleNumberInputPointerUp(
+                              event,
+                              applyModelInstanceChange
+                            )
+                          }
+                        />
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="form-section">
+                    <div className="label">Rotation</div>
+                    <div className="vector-inputs">
+                      <label className="form-field">
+                        <span className="label">X</span>
+                        <input
+                          data-testid="model-instance-rotation-x"
+                          className="text-input"
+                          type="number"
+                          step="1"
+                          value={modelRotationDraft.x}
+                          onChange={(event) => {
+                            const nextValue = event.currentTarget.value;
+                            setModelRotationDraft((draft) => ({
+                              ...draft,
+                              x: nextValue
+                            }));
+                          }}
+                          onBlur={applyModelInstanceChange}
+                          onKeyDown={(event) =>
+                            handleDraftVectorKeyDown(
+                              event,
+                              applyModelInstanceChange
+                            )
+                          }
+                          onKeyUp={(event) =>
+                            handleNumberInputKeyUp(
+                              event,
+                              applyModelInstanceChange
+                            )
+                          }
+                          onPointerUp={(event) =>
+                            handleNumberInputPointerUp(
+                              event,
+                              applyModelInstanceChange
+                            )
+                          }
+                        />
+                      </label>
+                      <label className="form-field">
+                        <span className="label">Y</span>
+                        <input
+                          data-testid="model-instance-rotation-y"
+                          className="text-input"
+                          type="number"
+                          step="1"
+                          value={modelRotationDraft.y}
+                          onChange={(event) => {
+                            const nextValue = event.currentTarget.value;
+                            setModelRotationDraft((draft) => ({
+                              ...draft,
+                              y: nextValue
+                            }));
+                          }}
+                          onBlur={applyModelInstanceChange}
+                          onKeyDown={(event) =>
+                            handleDraftVectorKeyDown(
+                              event,
+                              applyModelInstanceChange
+                            )
+                          }
+                          onKeyUp={(event) =>
+                            handleNumberInputKeyUp(
+                              event,
+                              applyModelInstanceChange
+                            )
+                          }
+                          onPointerUp={(event) =>
+                            handleNumberInputPointerUp(
+                              event,
+                              applyModelInstanceChange
+                            )
+                          }
+                        />
+                      </label>
+                      <label className="form-field">
+                        <span className="label">Z</span>
+                        <input
+                          data-testid="model-instance-rotation-z"
+                          className="text-input"
+                          type="number"
+                          step="1"
+                          value={modelRotationDraft.z}
+                          onChange={(event) => {
+                            const nextValue = event.currentTarget.value;
+                            setModelRotationDraft((draft) => ({
+                              ...draft,
+                              z: nextValue
+                            }));
+                          }}
+                          onBlur={applyModelInstanceChange}
+                          onKeyDown={(event) =>
+                            handleDraftVectorKeyDown(
+                              event,
+                              applyModelInstanceChange
+                            )
+                          }
+                          onKeyUp={(event) =>
+                            handleNumberInputKeyUp(
+                              event,
+                              applyModelInstanceChange
+                            )
+                          }
+                          onPointerUp={(event) =>
+                            handleNumberInputPointerUp(
+                              event,
+                              applyModelInstanceChange
+                            )
+                          }
+                        />
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="form-section">
+                    <div className="label">Scale</div>
+                    <div className="vector-inputs">
+                      <label className="form-field">
+                        <span className="label">X</span>
+                        <input
+                          data-testid="model-instance-scale-x"
+                          className="text-input"
+                          type="number"
+                          min="0.001"
+                          step="0.1"
+                          value={modelScaleDraft.x}
+                          onChange={(event) => {
+                            const nextValue = event.currentTarget.value;
+                            setModelScaleDraft((draft) => ({
+                              ...draft,
+                              x: nextValue
+                            }));
+                          }}
+                          onBlur={applyModelInstanceChange}
+                          onKeyDown={(event) =>
+                            handleDraftVectorKeyDown(
+                              event,
+                              applyModelInstanceChange
+                            )
+                          }
+                          onKeyUp={(event) =>
+                            handleNumberInputKeyUp(
+                              event,
+                              applyModelInstanceChange
+                            )
+                          }
+                          onPointerUp={(event) =>
+                            handleNumberInputPointerUp(
+                              event,
+                              applyModelInstanceChange
+                            )
+                          }
+                        />
+                      </label>
+                      <label className="form-field">
+                        <span className="label">Y</span>
+                        <input
+                          data-testid="model-instance-scale-y"
+                          className="text-input"
+                          type="number"
+                          min="0.001"
+                          step="0.1"
+                          value={modelScaleDraft.y}
+                          onChange={(event) => {
+                            const nextValue = event.currentTarget.value;
+                            setModelScaleDraft((draft) => ({
+                              ...draft,
+                              y: nextValue
+                            }));
+                          }}
+                          onBlur={applyModelInstanceChange}
+                          onKeyDown={(event) =>
+                            handleDraftVectorKeyDown(
+                              event,
+                              applyModelInstanceChange
+                            )
+                          }
+                          onKeyUp={(event) =>
+                            handleNumberInputKeyUp(
+                              event,
+                              applyModelInstanceChange
+                            )
+                          }
+                          onPointerUp={(event) =>
+                            handleNumberInputPointerUp(
+                              event,
+                              applyModelInstanceChange
+                            )
+                          }
+                        />
+                      </label>
+                      <label className="form-field">
+                        <span className="label">Z</span>
+                        <input
+                          data-testid="model-instance-scale-z"
+                          className="text-input"
+                          type="number"
+                          min="0.001"
+                          step="0.1"
+                          value={modelScaleDraft.z}
+                          onChange={(event) => {
+                            const nextValue = event.currentTarget.value;
+                            setModelScaleDraft((draft) => ({
+                              ...draft,
+                              z: nextValue
+                            }));
+                          }}
+                          onBlur={applyModelInstanceChange}
+                          onKeyDown={(event) =>
+                            handleDraftVectorKeyDown(
+                              event,
+                              applyModelInstanceChange
+                            )
+                          }
+                          onKeyUp={(event) =>
+                            handleNumberInputKeyUp(
+                              event,
+                              applyModelInstanceChange
+                            )
+                          }
+                          onPointerUp={(event) =>
+                            handleNumberInputPointerUp(
+                              event,
+                              applyModelInstanceChange
+                            )
+                          }
+                        />
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="form-section">
+                    <div className="label">Collision</div>
                     <label className="form-field">
-                      <span className="label">Clip</span>
+                      <span className="label">Mode</span>
                       <select
+                        data-testid="model-instance-collision-mode"
                         className="select-input"
-                        value={selectedModelInstance.animationClipName ?? ""}
-                        onChange={(e) => {
-                          const clipName = e.target.value || undefined;
+                        value={selectedModelInstance.collision.mode}
+                        onChange={(event) => {
                           store.executeCommand(
                             createUpsertModelInstanceCommand({
-                              modelInstance: { ...selectedModelInstance, animationClipName: clipName },
-                              label: "Set animation clip"
+                              modelInstance: {
+                                ...selectedModelInstance,
+                                collision: {
+                                  ...selectedModelInstance.collision,
+                                  mode: event.target
+                                    .value as ModelInstanceCollisionMode
+                                }
+                              },
+                              label: "Set model collision mode"
                             })
                           );
                         }}
                       >
-                        <option value="">— none —</option>
-                        {selectedModelAssetRecord.metadata.animationNames.map((name) => (
-                          <option key={name} value={name}>{name}</option>
+                        {MODEL_INSTANCE_COLLISION_MODES.map((mode) => (
+                          <option key={mode} value={mode}>
+                            {mode}
+                          </option>
                         ))}
                       </select>
                     </label>
                     <label className="form-field">
                       <input
+                        data-testid="model-instance-collision-visible"
                         type="checkbox"
-                        checked={selectedModelInstance.animationAutoplay ?? false}
-                        onChange={(e) => {
+                        checked={selectedModelInstance.collision.visible}
+                        onChange={(event) => {
                           store.executeCommand(
                             createUpsertModelInstanceCommand({
-                              modelInstance: { ...selectedModelInstance, animationAutoplay: e.target.checked },
-                              label: "Set animation autoplay"
+                              modelInstance: {
+                                ...selectedModelInstance,
+                                collision: {
+                                  ...selectedModelInstance.collision,
+                                  visible: event.target.checked
+                                }
+                              },
+                              label: event.target.checked
+                                ? "Show model collision debug"
+                                : "Hide model collision debug"
                             })
                           );
                         }}
                       />
-                      <span className="label">Autoplay on scene load</span>
+                      <span className="label">
+                        Show generated collision debug
+                      </span>
                     </label>
+                    <div className="material-summary">
+                      {getModelInstanceCollisionModeDescription(
+                        selectedModelInstance.collision.mode
+                      )}
+                    </div>
                   </div>
-                )}
 
-                <div className="inline-actions">
-                  <button className="toolbar__button" type="button" data-testid="apply-model-instance" onClick={applyModelInstanceChange}>
-                    Apply Transform
-                  </button>
-                </div>
-              </>
-            ) : selectedEntity !== null ? (
-              <>
-                <div className="stat-card">
-                  <div className="label">Entity Kind</div>
-                  <div className="value">{getEntityKindLabel(selectedEntity.kind)}</div>
-                </div>
-
-                <div className="form-section">
-                  <div className="label">Position</div>
-                  <div className="vector-inputs">
-                    <label className="form-field">
-                      <span className="label">X</span>
-                      <input
-                        data-testid={selectedEntity.kind === "playerStart" ? "player-start-position-x" : `${selectedEntity.kind}-position-x`}
-                        className="text-input"
-                        type="number"
-                        step={DEFAULT_GRID_SIZE}
-                        value={entityPositionDraft.x}
-                        onChange={(event) => {
-                          const nextValue = event.currentTarget.value;
-                          setEntityPositionDraft((draft) => ({ ...draft, x: nextValue }));
-                        }}
-                        onBlur={applySelectedEntityDraftChange}
-                        onKeyDown={(event) => handleDraftVectorKeyDown(event, applySelectedEntityDraftChange)}
-                        onKeyUp={(event) => handleNumberInputKeyUp(event, applySelectedEntityDraftChange)}
-                        onPointerUp={(event) => handleNumberInputPointerUp(event, applySelectedEntityDraftChange)}
-                      />
-                    </label>
-                    <label className="form-field">
-                      <span className="label">Y</span>
-                      <input
-                        data-testid={selectedEntity.kind === "playerStart" ? "player-start-position-y" : `${selectedEntity.kind}-position-y`}
-                        className="text-input"
-                        type="number"
-                        step={DEFAULT_GRID_SIZE}
-                        value={entityPositionDraft.y}
-                        onChange={(event) => {
-                          const nextValue = event.currentTarget.value;
-                          setEntityPositionDraft((draft) => ({ ...draft, y: nextValue }));
-                        }}
-                        onBlur={applySelectedEntityDraftChange}
-                        onKeyDown={(event) => handleDraftVectorKeyDown(event, applySelectedEntityDraftChange)}
-                        onKeyUp={(event) => handleNumberInputKeyUp(event, applySelectedEntityDraftChange)}
-                        onPointerUp={(event) => handleNumberInputPointerUp(event, applySelectedEntityDraftChange)}
-                      />
-                    </label>
-                    <label className="form-field">
-                      <span className="label">Z</span>
-                      <input
-                        data-testid={selectedEntity.kind === "playerStart" ? "player-start-position-z" : `${selectedEntity.kind}-position-z`}
-                        className="text-input"
-                        type="number"
-                        step={DEFAULT_GRID_SIZE}
-                        value={entityPositionDraft.z}
-                        onChange={(event) => {
-                          const nextValue = event.currentTarget.value;
-                          setEntityPositionDraft((draft) => ({ ...draft, z: nextValue }));
-                        }}
-                        onBlur={applySelectedEntityDraftChange}
-                        onKeyDown={(event) => handleDraftVectorKeyDown(event, applySelectedEntityDraftChange)}
-                        onKeyUp={(event) => handleNumberInputKeyUp(event, applySelectedEntityDraftChange)}
-                        onPointerUp={(event) => handleNumberInputPointerUp(event, applySelectedEntityDraftChange)}
-                      />
-                    </label>
-                  </div>
-                </div>
-
-                {selectedPointLight !== null ? (
-                  <>
-                    <div className="form-section">
-                      <div className="label">Light</div>
-                      <div className="vector-inputs vector-inputs--two">
+                  {selectedModelAssetRecord !== null &&
+                    selectedModelAssetRecord.metadata.animationNames.length >
+                      0 && (
+                      <div className="form-section">
+                        <div className="label">Animation</div>
                         <label className="form-field">
-                          <span className="label">Color</span>
-                          <input
-                            data-testid="point-light-color"
-                            className="color-input"
-                            type="color"
-                            value={pointLightColorDraft}
-                            onChange={(event) => {
-                              const nextColorHex = event.currentTarget.value;
-                              setPointLightColorDraft(nextColorHex);
-                              scheduleDraftCommit(() => applyPointLightChange({ colorHex: nextColorHex }));
-                            }}
-                          />
-                        </label>
-                        <label className="form-field">
-                          <span className="label">Intensity</span>
-                          <input
-                            data-testid="point-light-intensity"
-                            className="text-input"
-                            type="number"
-                            min="0"
-                            step="0.1"
-                            value={pointLightIntensityDraft}
-                            onChange={(event) => setPointLightIntensityDraft(event.currentTarget.value)}
-                            onBlur={() => applyPointLightChange()}
-                            onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPointLightChange)}
-                            onKeyUp={(event) => handleNumberInputKeyUp(event, applyPointLightChange)}
-                            onPointerUp={(event) => handleNumberInputPointerUp(event, applyPointLightChange)}
-                          />
-                        </label>
-                      </div>
-                    </div>
-
-                    <div className="form-section">
-                      <div className="label">Range</div>
-                      <label className="form-field">
-                        <span className="label">Distance</span>
-                        <input
-                          data-testid="point-light-distance"
-                          className="text-input"
-                          type="number"
-                          min="0.1"
-                          step="0.1"
-                          value={pointLightDistanceDraft}
-                          onChange={(event) => setPointLightDistanceDraft(event.currentTarget.value)}
-                          onBlur={() => applyPointLightChange()}
-                          onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPointLightChange)}
-                          onKeyUp={(event) => handleNumberInputKeyUp(event, applyPointLightChange)}
-                          onPointerUp={(event) => handleNumberInputPointerUp(event, applyPointLightChange)}
-                        />
-                      </label>
-                    </div>
-                  </>
-                ) : null}
-
-                {selectedSpotLight !== null ? (
-                  <>
-                    <div className="form-section">
-                      <div className="label">Light</div>
-                      <div className="vector-inputs vector-inputs--two">
-                        <label className="form-field">
-                          <span className="label">Color</span>
-                          <input
-                            data-testid="spot-light-color"
-                            className="color-input"
-                            type="color"
-                            value={spotLightColorDraft}
-                            onChange={(event) => {
-                              const nextColorHex = event.currentTarget.value;
-                              setSpotLightColorDraft(nextColorHex);
-                              scheduleDraftCommit(() => applySpotLightChange({ colorHex: nextColorHex }));
-                            }}
-                          />
-                        </label>
-                        <label className="form-field">
-                          <span className="label">Intensity</span>
-                          <input
-                            data-testid="spot-light-intensity"
-                            className="text-input"
-                            type="number"
-                            min="0"
-                            step="0.1"
-                            value={spotLightIntensityDraft}
-                            onChange={(event) => setSpotLightIntensityDraft(event.currentTarget.value)}
-                            onBlur={() => applySpotLightChange()}
-                            onKeyDown={(event) => handleDraftVectorKeyDown(event, applySpotLightChange)}
-                            onKeyUp={(event) => handleNumberInputKeyUp(event, applySpotLightChange)}
-                            onPointerUp={(event) => handleNumberInputPointerUp(event, applySpotLightChange)}
-                          />
-                        </label>
-                      </div>
-                    </div>
-
-                    <div className="form-section">
-                      <div className="label">Range</div>
-                      <div className="vector-inputs vector-inputs--two">
-                        <label className="form-field">
-                          <span className="label">Distance</span>
-                          <input
-                            data-testid="spot-light-distance"
-                            className="text-input"
-                            type="number"
-                            min="0.1"
-                            step="0.1"
-                            value={spotLightDistanceDraft}
-                            onChange={(event) => setSpotLightDistanceDraft(event.currentTarget.value)}
-                            onBlur={() => applySpotLightChange()}
-                            onKeyDown={(event) => handleDraftVectorKeyDown(event, applySpotLightChange)}
-                            onKeyUp={(event) => handleNumberInputKeyUp(event, applySpotLightChange)}
-                            onPointerUp={(event) => handleNumberInputPointerUp(event, applySpotLightChange)}
-                          />
-                        </label>
-                        <label className="form-field">
-                          <span className="label">Angle</span>
-                          <input
-                            data-testid="spot-light-angle"
-                            className="text-input"
-                            type="number"
-                            min="1"
-                            max="179"
-                            step="1"
-                            value={spotLightAngleDraft}
-                            onChange={(event) => setSpotLightAngleDraft(event.currentTarget.value)}
-                            onBlur={() => applySpotLightChange()}
-                            onKeyDown={(event) => handleDraftVectorKeyDown(event, applySpotLightChange)}
-                            onKeyUp={(event) => handleNumberInputKeyUp(event, applySpotLightChange)}
-                            onPointerUp={(event) => handleNumberInputPointerUp(event, applySpotLightChange)}
-                          />
-                        </label>
-                      </div>
-                    </div>
-
-                    <div className="form-section">
-                      <div className="label">Direction</div>
-                      <div className="vector-inputs">
-                        <label className="form-field">
-                          <span className="label">X</span>
-                          <input
-                            data-testid="spot-light-direction-x"
-                            className="text-input"
-                            type="number"
-                            step="0.1"
-                            value={spotLightDirectionDraft.x}
-                            onChange={(event) => {
-                              const nextValue = event.currentTarget.value;
-                              setSpotLightDirectionDraft((draft) => ({ ...draft, x: nextValue }));
-                            }}
-                            onBlur={() => applySpotLightChange()}
-                            onKeyDown={(event) => handleDraftVectorKeyDown(event, applySpotLightChange)}
-                            onKeyUp={(event) => handleNumberInputKeyUp(event, applySpotLightChange)}
-                            onPointerUp={(event) => handleNumberInputPointerUp(event, applySpotLightChange)}
-                          />
-                        </label>
-                        <label className="form-field">
-                          <span className="label">Y</span>
-                          <input
-                            data-testid="spot-light-direction-y"
-                            className="text-input"
-                            type="number"
-                            step="0.1"
-                            value={spotLightDirectionDraft.y}
-                            onChange={(event) => {
-                              const nextValue = event.currentTarget.value;
-                              setSpotLightDirectionDraft((draft) => ({ ...draft, y: nextValue }));
-                            }}
-                            onBlur={() => applySpotLightChange()}
-                            onKeyDown={(event) => handleDraftVectorKeyDown(event, applySpotLightChange)}
-                            onKeyUp={(event) => handleNumberInputKeyUp(event, applySpotLightChange)}
-                            onPointerUp={(event) => handleNumberInputPointerUp(event, applySpotLightChange)}
-                          />
-                        </label>
-                        <label className="form-field">
-                          <span className="label">Z</span>
-                          <input
-                            data-testid="spot-light-direction-z"
-                            className="text-input"
-                            type="number"
-                            step="0.1"
-                            value={spotLightDirectionDraft.z}
-                            onChange={(event) => {
-                              const nextValue = event.currentTarget.value;
-                              setSpotLightDirectionDraft((draft) => ({ ...draft, z: nextValue }));
-                            }}
-                            onBlur={() => applySpotLightChange()}
-                            onKeyDown={(event) => handleDraftVectorKeyDown(event, applySpotLightChange)}
-                            onKeyUp={(event) => handleNumberInputKeyUp(event, applySpotLightChange)}
-                            onPointerUp={(event) => handleNumberInputPointerUp(event, applySpotLightChange)}
-                          />
-                        </label>
-                      </div>
-                    </div>
-                  </>
-                ) : null}
-
-                {selectedPlayerStart !== null ? (
-                  <>
-                    <div className="form-section">
-                      <div className="label">Yaw</div>
-                      <label className="form-field">
-                        <span className="label">Degrees</span>
-                        <input
-                          data-testid="player-start-yaw"
-                          className="text-input"
-                          type="number"
-                          step="1"
-                          value={playerStartYawDraft}
-                          onChange={(event) => setPlayerStartYawDraft(event.currentTarget.value)}
-                          onBlur={() => applyPlayerStartChange()}
-                          onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPlayerStartChange)}
-                          onKeyUp={(event) => handleNumberInputKeyUp(event, applyPlayerStartChange)}
-                          onPointerUp={(event) => handleNumberInputPointerUp(event, applyPlayerStartChange)}
-                        />
-                      </label>
-                    </div>
-
-                    <div className="form-section">
-                      <div className="label">Player Collider</div>
-                      <label className="form-field">
-                        <span className="label">Mode</span>
-                        <select
-                          data-testid="player-start-collider-mode"
-                          className="select-input"
-                          value={playerStartColliderModeDraft}
-                          onChange={(event) => {
-                            const nextMode = event.currentTarget.value as PlayerStartColliderMode;
-                            setPlayerStartColliderModeDraft(nextMode);
-                            scheduleDraftCommit(() => applyPlayerStartChange({ colliderMode: nextMode }));
-                          }}
-                        >
-                          {PLAYER_START_COLLIDER_MODES.map((mode) => (
-                            <option key={mode} value={mode}>
-                              {mode}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      <label className="form-field">
-                        <span className="label">Eye Height</span>
-                        <input
-                          data-testid="player-start-eye-height"
-                          className="text-input"
-                          type="number"
-                          min="0.01"
-                          step="0.1"
-                          value={playerStartEyeHeightDraft}
-                          onChange={(event) => setPlayerStartEyeHeightDraft(event.currentTarget.value)}
-                          onBlur={() => applyPlayerStartChange()}
-                          onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPlayerStartChange)}
-                          onKeyUp={(event) => handleNumberInputKeyUp(event, applyPlayerStartChange)}
-                          onPointerUp={(event) => handleNumberInputPointerUp(event, applyPlayerStartChange)}
-                        />
-                      </label>
-
-                      {playerStartColliderModeDraft === "capsule" ? (
-                        <div className="vector-inputs">
-                          <label className="form-field">
-                            <span className="label">Radius</span>
-                            <input
-                              data-testid="player-start-capsule-radius"
-                              className="text-input"
-                              type="number"
-                              min="0.01"
-                              step="0.1"
-                              value={playerStartCapsuleRadiusDraft}
-                              onChange={(event) => setPlayerStartCapsuleRadiusDraft(event.currentTarget.value)}
-                              onBlur={() => applyPlayerStartChange()}
-                              onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPlayerStartChange)}
-                              onKeyUp={(event) => handleNumberInputKeyUp(event, applyPlayerStartChange)}
-                              onPointerUp={(event) => handleNumberInputPointerUp(event, applyPlayerStartChange)}
-                            />
-                          </label>
-                          <label className="form-field">
-                            <span className="label">Height</span>
-                            <input
-                              data-testid="player-start-capsule-height"
-                              className="text-input"
-                              type="number"
-                              min="0.01"
-                              step="0.1"
-                              value={playerStartCapsuleHeightDraft}
-                              onChange={(event) => setPlayerStartCapsuleHeightDraft(event.currentTarget.value)}
-                              onBlur={() => applyPlayerStartChange()}
-                              onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPlayerStartChange)}
-                              onKeyUp={(event) => handleNumberInputKeyUp(event, applyPlayerStartChange)}
-                              onPointerUp={(event) => handleNumberInputPointerUp(event, applyPlayerStartChange)}
-                            />
-                          </label>
-                        </div>
-                      ) : null}
-
-                      {playerStartColliderModeDraft === "box" ? (
-                        <div className="vector-inputs">
-                          <label className="form-field">
-                            <span className="label">Size X</span>
-                            <input
-                              data-testid="player-start-box-size-x"
-                              className="text-input"
-                              type="number"
-                              min="0.01"
-                              step="0.1"
-                              value={playerStartBoxSizeDraft.x}
-                              onChange={(event) => {
-                                const nextValue = event.currentTarget.value;
-                                setPlayerStartBoxSizeDraft((draft) => ({ ...draft, x: nextValue }));
-                              }}
-                              onBlur={() => applyPlayerStartChange()}
-                              onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPlayerStartChange)}
-                              onKeyUp={(event) => handleNumberInputKeyUp(event, applyPlayerStartChange)}
-                              onPointerUp={(event) => handleNumberInputPointerUp(event, applyPlayerStartChange)}
-                            />
-                          </label>
-                          <label className="form-field">
-                            <span className="label">Size Y</span>
-                            <input
-                              data-testid="player-start-box-size-y"
-                              className="text-input"
-                              type="number"
-                              min="0.01"
-                              step="0.1"
-                              value={playerStartBoxSizeDraft.y}
-                              onChange={(event) => {
-                                const nextValue = event.currentTarget.value;
-                                setPlayerStartBoxSizeDraft((draft) => ({ ...draft, y: nextValue }));
-                              }}
-                              onBlur={() => applyPlayerStartChange()}
-                              onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPlayerStartChange)}
-                              onKeyUp={(event) => handleNumberInputKeyUp(event, applyPlayerStartChange)}
-                              onPointerUp={(event) => handleNumberInputPointerUp(event, applyPlayerStartChange)}
-                            />
-                          </label>
-                          <label className="form-field">
-                            <span className="label">Size Z</span>
-                            <input
-                              data-testid="player-start-box-size-z"
-                              className="text-input"
-                              type="number"
-                              min="0.01"
-                              step="0.1"
-                              value={playerStartBoxSizeDraft.z}
-                              onChange={(event) => {
-                                const nextValue = event.currentTarget.value;
-                                setPlayerStartBoxSizeDraft((draft) => ({ ...draft, z: nextValue }));
-                              }}
-                              onBlur={() => applyPlayerStartChange()}
-                              onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPlayerStartChange)}
-                              onKeyUp={(event) => handleNumberInputKeyUp(event, applyPlayerStartChange)}
-                              onPointerUp={(event) => handleNumberInputPointerUp(event, applyPlayerStartChange)}
-                            />
-                          </label>
-                        </div>
-                      ) : null}
-
-                      <div className="material-summary">{getPlayerStartColliderModeDescription(playerStartColliderModeDraft)}</div>
-                    </div>
-                  </>
-                ) : null}
-
-                {selectedSoundEmitter !== null ? (
-                  <>
-                    <div className="form-section">
-                      <div className="label">Audio Asset</div>
-                      <div className="stat-card">
-                        <div className="value">
-                          {selectedSoundEmitter.audioAssetId === null
-                            ? "Unassigned"
-                            : selectedSoundEmitterAudioAssetRecord?.sourceName ?? "Missing Audio Asset"}
-                        </div>
-                        <div className="material-summary">
-                          {selectedSoundEmitter.audioAssetId === null
-                            ? "Choose an audio asset to make this emitter playable."
-                            : selectedSoundEmitterAudioAssetRecord === null
-                              ? `This sound emitter references ${selectedSoundEmitter.audioAssetId}, but the asset is missing or not audio.`
-                              : formatAudioAssetSummary(selectedSoundEmitterAudioAssetRecord)}
-                        </div>
-                      </div>
-                      <label className="form-field">
-                        <span className="label">Audio</span>
-                        <select
-                          data-testid="sound-emitter-audio-asset"
-                          className="text-input"
-                          value={soundEmitterAudioAssetIdDraft}
-                          onChange={(event) => {
-                            const nextAudioAssetId = event.currentTarget.value.trim();
-                            setSoundEmitterAudioAssetIdDraft(nextAudioAssetId);
-                            scheduleDraftCommit(() =>
-                              applySoundEmitterChange({
-                                audioAssetId: nextAudioAssetId.length === 0 ? null : nextAudioAssetId
-                              })
-                            );
-                          }}
-                        >
-                          <option value="">— none —</option>
-                          {audioAssetList.map((asset) => (
-                            <option key={asset.id} value={asset.id}>
-                              {asset.sourceName}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                    </div>
-
-                    <div className="form-section">
-                      <div className="label">Volume</div>
-                      <label className="form-field">
-                        <span className="label">Amount</span>
-                        <input
-                          data-testid="sound-emitter-volume"
-                          className="text-input"
-                          type="number"
-                          min="0"
-                          step="0.1"
-                          value={soundEmitterVolumeDraft}
-                          onChange={(event) => setSoundEmitterVolumeDraft(event.currentTarget.value)}
-                          onBlur={() => applySoundEmitterChange()}
-                          onKeyDown={(event) => handleDraftVectorKeyDown(event, applySoundEmitterChange)}
-                          onKeyUp={(event) => handleNumberInputKeyUp(event, applySoundEmitterChange)}
-                          onPointerUp={(event) => handleNumberInputPointerUp(event, applySoundEmitterChange)}
-                        />
-                      </label>
-                    </div>
-
-                    <div className="form-section">
-                      <div className="label">Distance</div>
-                      <div className="vector-inputs vector-inputs--two">
-                        <label className="form-field">
-                          <span className="label">Ref Distance</span>
-                          <input
-                            data-testid="sound-emitter-ref-distance"
-                            className="text-input"
-                            type="number"
-                            min="0.1"
-                            step="0.1"
-                            value={soundEmitterRefDistanceDraft}
-                            onChange={(event) => setSoundEmitterRefDistanceDraft(event.currentTarget.value)}
-                            onBlur={() => applySoundEmitterChange()}
-                            onKeyDown={(event) => handleDraftVectorKeyDown(event, applySoundEmitterChange)}
-                            onKeyUp={(event) => handleNumberInputKeyUp(event, applySoundEmitterChange)}
-                            onPointerUp={(event) => handleNumberInputPointerUp(event, applySoundEmitterChange)}
-                          />
-                        </label>
-                        <label className="form-field">
-                          <span className="label">Max Distance</span>
-                          <input
-                            data-testid="sound-emitter-max-distance"
-                            className="text-input"
-                            type="number"
-                            min="0.1"
-                            step="0.1"
-                            value={soundEmitterMaxDistanceDraft}
-                            onChange={(event) => setSoundEmitterMaxDistanceDraft(event.currentTarget.value)}
-                            onBlur={() => applySoundEmitterChange()}
-                            onKeyDown={(event) => handleDraftVectorKeyDown(event, applySoundEmitterChange)}
-                            onKeyUp={(event) => handleNumberInputKeyUp(event, applySoundEmitterChange)}
-                            onPointerUp={(event) => handleNumberInputPointerUp(event, applySoundEmitterChange)}
-                          />
-                        </label>
-                      </div>
-                    </div>
-
-                    <div className="form-section">
-                      <div className="label">Playback</div>
-                      <div className="vector-inputs vector-inputs--two">
-                        <label className="form-field">
-                          <span className="label">Autoplay</span>
-                          <input
-                            data-testid="sound-emitter-autoplay"
-                            type="checkbox"
-                            checked={soundEmitterAutoplayDraft}
-                            onChange={(event) => {
-                              const nextAutoplay = event.currentTarget.checked;
-                              setSoundEmitterAutoplayDraft(nextAutoplay);
-                              scheduleDraftCommit(() => applySoundEmitterChange({ autoplay: nextAutoplay }));
-                            }}
-                          />
-                        </label>
-                        <label className="form-field">
-                          <span className="label">Loop</span>
-                          <input
-                            data-testid="sound-emitter-loop"
-                            type="checkbox"
-                            checked={soundEmitterLoopDraft}
-                            onChange={(event) => {
-                              const nextLoop = event.currentTarget.checked;
-                              setSoundEmitterLoopDraft(nextLoop);
-                              scheduleDraftCommit(() => applySoundEmitterChange({ loop: nextLoop }));
-                            }}
-                          />
-                        </label>
-                      </div>
-                    </div>
-                  </>
-                ) : null}
-
-                {selectedTriggerVolume !== null ? (
-                  <>
-                    <div className="form-section">
-                      <div className="label">Size</div>
-                      <div className="vector-inputs">
-                        <label className="form-field">
-                          <span className="label">X</span>
-                          <input
-                            data-testid="trigger-volume-size-x"
-                            className="text-input"
-                            type="number"
-                            min={DEFAULT_GRID_SIZE}
-                            step={DEFAULT_GRID_SIZE}
-                            value={triggerVolumeSizeDraft.x}
-                            onChange={(event) => {
-                              const nextValue = event.currentTarget.value;
-                              setTriggerVolumeSizeDraft((draft) => ({ ...draft, x: nextValue }));
-                            }}
-                            onBlur={applyTriggerVolumeChange}
-                            onKeyDown={(event) => handleDraftVectorKeyDown(event, applyTriggerVolumeChange)}
-                            onKeyUp={(event) => handleNumberInputKeyUp(event, applyTriggerVolumeChange)}
-                            onPointerUp={(event) => handleNumberInputPointerUp(event, applyTriggerVolumeChange)}
-                          />
-                        </label>
-                        <label className="form-field">
-                          <span className="label">Y</span>
-                          <input
-                            data-testid="trigger-volume-size-y"
-                            className="text-input"
-                            type="number"
-                            min={DEFAULT_GRID_SIZE}
-                            step={DEFAULT_GRID_SIZE}
-                            value={triggerVolumeSizeDraft.y}
-                            onChange={(event) => {
-                              const nextValue = event.currentTarget.value;
-                              setTriggerVolumeSizeDraft((draft) => ({ ...draft, y: nextValue }));
-                            }}
-                            onBlur={applyTriggerVolumeChange}
-                            onKeyDown={(event) => handleDraftVectorKeyDown(event, applyTriggerVolumeChange)}
-                            onKeyUp={(event) => handleNumberInputKeyUp(event, applyTriggerVolumeChange)}
-                            onPointerUp={(event) => handleNumberInputPointerUp(event, applyTriggerVolumeChange)}
-                          />
-                        </label>
-                        <label className="form-field">
-                          <span className="label">Z</span>
-                          <input
-                            data-testid="trigger-volume-size-z"
-                            className="text-input"
-                            type="number"
-                            min={DEFAULT_GRID_SIZE}
-                            step={DEFAULT_GRID_SIZE}
-                            value={triggerVolumeSizeDraft.z}
-                            onChange={(event) => {
-                              const nextValue = event.currentTarget.value;
-                              setTriggerVolumeSizeDraft((draft) => ({ ...draft, z: nextValue }));
-                            }}
-                            onBlur={applyTriggerVolumeChange}
-                            onKeyDown={(event) => handleDraftVectorKeyDown(event, applyTriggerVolumeChange)}
-                            onKeyUp={(event) => handleNumberInputKeyUp(event, applyTriggerVolumeChange)}
-                            onPointerUp={(event) => handleNumberInputPointerUp(event, applyTriggerVolumeChange)}
-                          />
-                        </label>
-                      </div>
-                    </div>
-
-                    {renderInteractionLinksSection(
-                      selectedTriggerVolume,
-                      selectedTriggerVolumeLinks,
-                      "add-trigger-teleport-link",
-                      "add-trigger-visibility-link",
-                      "add-trigger-play-sound-link",
-                      "add-trigger-stop-sound-link"
-                    )}
-                  </>
-                ) : null}
-
-                {selectedTeleportTarget !== null ? (
-                  <div className="form-section">
-                    <div className="label">Yaw</div>
-                    <label className="form-field">
-                      <span className="label">Degrees</span>
-                      <input
-                        data-testid="teleport-target-yaw"
-                        className="text-input"
-                        type="number"
-                        step="1"
-                        value={teleportTargetYawDraft}
-                        onChange={(event) => setTeleportTargetYawDraft(event.currentTarget.value)}
-                        onBlur={applyTeleportTargetChange}
-                        onKeyDown={(event) => handleDraftVectorKeyDown(event, applyTeleportTargetChange)}
-                        onKeyUp={(event) => handleNumberInputKeyUp(event, applyTeleportTargetChange)}
-                        onPointerUp={(event) => handleNumberInputPointerUp(event, applyTeleportTargetChange)}
-                      />
-                    </label>
-                  </div>
-                ) : null}
-
-                {selectedInteractable !== null ? (
-                  <>
-                    <div className="form-section">
-                      <div className="label">Interaction</div>
-                      <div className="vector-inputs vector-inputs--two">
-                        <label className="form-field">
-                          <span className="label">Range</span>
-                          <input
-                            data-testid="interactable-radius"
-                            className="text-input"
-                            type="number"
-                            min="0.1"
-                            step="0.1"
-                            value={interactableRadiusDraft}
-                            onChange={(event) => setInteractableRadiusDraft(event.currentTarget.value)}
-                            onBlur={() => applyInteractableChange()}
-                            onKeyDown={(event) => handleDraftVectorKeyDown(event, applyInteractableChange)}
-                            onKeyUp={(event) => handleNumberInputKeyUp(event, applyInteractableChange)}
-                            onPointerUp={(event) => handleNumberInputPointerUp(event, applyInteractableChange)}
-                          />
-                        </label>
-                        <label className="form-field">
-                          <span className="label">Enabled</span>
-                          <input
-                            data-testid="interactable-enabled"
-                            type="checkbox"
-                            checked={interactableEnabledDraft}
-                            onChange={(event) => {
-                              const nextEnabled = event.currentTarget.checked;
-                              setInteractableEnabledDraft(nextEnabled);
-                              scheduleDraftCommit(() => applyInteractableChange({ enabled: nextEnabled }));
-                            }}
-                          />
-                        </label>
-                      </div>
-                      <div className="material-summary">Range defines how close the player must be before the click prompt can activate.</div>
-                    </div>
-
-                    <div className="form-section">
-                      <div className="label">Prompt</div>
-                      <label className="form-field">
-                        <span className="label">Text</span>
-                        <input
-                          data-testid="interactable-prompt"
-                          className="text-input"
-                          type="text"
-                          value={interactablePromptDraft}
-                          onChange={(event) => setInteractablePromptDraft(event.currentTarget.value)}
-                          onBlur={() => applyInteractableChange()}
-                          onKeyDown={(event) => {
-                            if (event.key === "Enter") {
-                              applyInteractableChange();
+                          <span className="label">Clip</span>
+                          <select
+                            className="select-input"
+                            value={
+                              selectedModelInstance.animationClipName ?? ""
                             }
+                            onChange={(e) => {
+                              const clipName = e.target.value || undefined;
+                              store.executeCommand(
+                                createUpsertModelInstanceCommand({
+                                  modelInstance: {
+                                    ...selectedModelInstance,
+                                    animationClipName: clipName
+                                  },
+                                  label: "Set animation clip"
+                                })
+                              );
+                            }}
+                          >
+                            <option value="">— none —</option>
+                            {selectedModelAssetRecord.metadata.animationNames.map(
+                              (name) => (
+                                <option key={name} value={name}>
+                                  {name}
+                                </option>
+                              )
+                            )}
+                          </select>
+                        </label>
+                        <label className="form-field">
+                          <input
+                            type="checkbox"
+                            checked={
+                              selectedModelInstance.animationAutoplay ?? false
+                            }
+                            onChange={(e) => {
+                              store.executeCommand(
+                                createUpsertModelInstanceCommand({
+                                  modelInstance: {
+                                    ...selectedModelInstance,
+                                    animationAutoplay: e.target.checked
+                                  },
+                                  label: "Set animation autoplay"
+                                })
+                              );
+                            }}
+                          />
+                          <span className="label">Autoplay on scene load</span>
+                        </label>
+                      </div>
+                    )}
+
+                  <div className="inline-actions">
+                    <button
+                      className="toolbar__button"
+                      type="button"
+                      data-testid="apply-model-instance"
+                      onClick={applyModelInstanceChange}
+                    >
+                      Apply Transform
+                    </button>
+                  </div>
+                </>
+              ) : selectedEntity !== null ? (
+                <>
+                  <div className="stat-card">
+                    <div className="label">Entity Kind</div>
+                    <div className="value">
+                      {getEntityKindLabel(selectedEntity.kind)}
+                    </div>
+                  </div>
+
+                  <div className="form-section">
+                    <div className="label">Position</div>
+                    <div className="vector-inputs">
+                      <label className="form-field">
+                        <span className="label">X</span>
+                        <input
+                          data-testid={
+                            selectedEntity.kind === "playerStart"
+                              ? "player-start-position-x"
+                              : `${selectedEntity.kind}-position-x`
+                          }
+                          className="text-input"
+                          type="number"
+                          step={DEFAULT_GRID_SIZE}
+                          value={entityPositionDraft.x}
+                          onChange={(event) => {
+                            const nextValue = event.currentTarget.value;
+                            setEntityPositionDraft((draft) => ({
+                              ...draft,
+                              x: nextValue
+                            }));
                           }}
+                          onBlur={applySelectedEntityDraftChange}
+                          onKeyDown={(event) =>
+                            handleDraftVectorKeyDown(
+                              event,
+                              applySelectedEntityDraftChange
+                            )
+                          }
+                          onKeyUp={(event) =>
+                            handleNumberInputKeyUp(
+                              event,
+                              applySelectedEntityDraftChange
+                            )
+                          }
+                          onPointerUp={(event) =>
+                            handleNumberInputPointerUp(
+                              event,
+                              applySelectedEntityDraftChange
+                            )
+                          }
+                        />
+                      </label>
+                      <label className="form-field">
+                        <span className="label">Y</span>
+                        <input
+                          data-testid={
+                            selectedEntity.kind === "playerStart"
+                              ? "player-start-position-y"
+                              : `${selectedEntity.kind}-position-y`
+                          }
+                          className="text-input"
+                          type="number"
+                          step={DEFAULT_GRID_SIZE}
+                          value={entityPositionDraft.y}
+                          onChange={(event) => {
+                            const nextValue = event.currentTarget.value;
+                            setEntityPositionDraft((draft) => ({
+                              ...draft,
+                              y: nextValue
+                            }));
+                          }}
+                          onBlur={applySelectedEntityDraftChange}
+                          onKeyDown={(event) =>
+                            handleDraftVectorKeyDown(
+                              event,
+                              applySelectedEntityDraftChange
+                            )
+                          }
+                          onKeyUp={(event) =>
+                            handleNumberInputKeyUp(
+                              event,
+                              applySelectedEntityDraftChange
+                            )
+                          }
+                          onPointerUp={(event) =>
+                            handleNumberInputPointerUp(
+                              event,
+                              applySelectedEntityDraftChange
+                            )
+                          }
+                        />
+                      </label>
+                      <label className="form-field">
+                        <span className="label">Z</span>
+                        <input
+                          data-testid={
+                            selectedEntity.kind === "playerStart"
+                              ? "player-start-position-z"
+                              : `${selectedEntity.kind}-position-z`
+                          }
+                          className="text-input"
+                          type="number"
+                          step={DEFAULT_GRID_SIZE}
+                          value={entityPositionDraft.z}
+                          onChange={(event) => {
+                            const nextValue = event.currentTarget.value;
+                            setEntityPositionDraft((draft) => ({
+                              ...draft,
+                              z: nextValue
+                            }));
+                          }}
+                          onBlur={applySelectedEntityDraftChange}
+                          onKeyDown={(event) =>
+                            handleDraftVectorKeyDown(
+                              event,
+                              applySelectedEntityDraftChange
+                            )
+                          }
+                          onKeyUp={(event) =>
+                            handleNumberInputKeyUp(
+                              event,
+                              applySelectedEntityDraftChange
+                            )
+                          }
+                          onPointerUp={(event) =>
+                            handleNumberInputPointerUp(
+                              event,
+                              applySelectedEntityDraftChange
+                            )
+                          }
                         />
                       </label>
                     </div>
-
-                    {renderInteractionLinksSection(
-                      selectedInteractable,
-                      selectedInteractableLinks,
-                      "add-interactable-teleport-link",
-                      "add-interactable-visibility-link",
-                      "add-interactable-play-sound-link",
-                      "add-interactable-stop-sound-link"
-                    )}
-                  </>
-                ) : null}
-              </>
-            ) : selectedBrush === null ? (
-              <div className="outliner-empty">Select a whitebox solid or entity to edit authored properties.</div>
-            ) : (
-              <>
-                <div className="stat-card">
-                  <div className="label">Whitebox Solid Type</div>
-                  <div className="value">box</div>
-                </div>
-
-                <div className="stat-card">
-                  <div className="label">Selection Mode</div>
-                  <div className="value">{getWhiteboxSelectionModeLabel(whiteboxSelectionMode)}</div>
-                </div>
-
-                {whiteboxSelectionMode !== "object" ? (
-                  <div className="outliner-empty">
-                    {whiteboxSelectionMode === "face"
-                      ? "Face mode keeps whole-solid transforms out of the way. Select a face to edit its material or UV transform."
-                      : whiteboxSelectionMode === "edge"
-                        ? "Edge mode is selection-only in this slice. Edge transforms land next."
-                        : "Vertex mode is selection-only in this slice. Vertex transforms land next."}
                   </div>
-                ) : (
-                  <>
-                    <div className="form-section">
-                      <div className="label">Center</div>
-                      <div className="vector-inputs">
-                        <label className="form-field">
-                          <span className="label">X</span>
-                          <input
-                            data-testid="brush-center-x"
-                            className="text-input"
-                            type="number"
-                            step={whiteboxVectorInputStep}
-                            value={positionDraft.x}
-                            onChange={(event) => {
-                              const nextValue = event.currentTarget.value;
-                              setPositionDraft((draft) => ({ ...draft, x: nextValue }));
-                            }}
-                            onBlur={applyPositionChange}
-                            onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPositionChange)}
-                            onKeyUp={(event) => handleNumberInputKeyUp(event, applyPositionChange)}
-                            onPointerUp={(event) => handleNumberInputPointerUp(event, applyPositionChange)}
-                          />
-                        </label>
-                        <label className="form-field">
-                          <span className="label">Y</span>
-                          <input
-                            data-testid="brush-center-y"
-                            className="text-input"
-                            type="number"
-                            step={whiteboxVectorInputStep}
-                            value={positionDraft.y}
-                            onChange={(event) => {
-                              const nextValue = event.currentTarget.value;
-                              setPositionDraft((draft) => ({ ...draft, y: nextValue }));
-                            }}
-                            onBlur={applyPositionChange}
-                            onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPositionChange)}
-                            onKeyUp={(event) => handleNumberInputKeyUp(event, applyPositionChange)}
-                            onPointerUp={(event) => handleNumberInputPointerUp(event, applyPositionChange)}
-                          />
-                        </label>
-                        <label className="form-field">
-                          <span className="label">Z</span>
-                          <input
-                            data-testid="brush-center-z"
-                            className="text-input"
-                            type="number"
-                            step={whiteboxVectorInputStep}
-                            value={positionDraft.z}
-                            onChange={(event) => {
-                              const nextValue = event.currentTarget.value;
-                              setPositionDraft((draft) => ({ ...draft, z: nextValue }));
-                            }}
-                            onBlur={applyPositionChange}
-                            onKeyDown={(event) => handleDraftVectorKeyDown(event, applyPositionChange)}
-                            onKeyUp={(event) => handleNumberInputKeyUp(event, applyPositionChange)}
-                            onPointerUp={(event) => handleNumberInputPointerUp(event, applyPositionChange)}
-                          />
-                        </label>
-                      </div>
-                    </div>
 
-                    <div className="form-section">
-                      <div className="label">Rotation</div>
-                      <div className="vector-inputs">
-                        <label className="form-field">
-                          <span className="label">X</span>
-                          <input
-                            data-testid="brush-rotation-x"
-                            className="text-input"
-                            type="number"
-                            step="0.1"
-                            value={rotationDraft.x}
-                            onChange={(event) => {
-                              const nextValue = event.currentTarget.value;
-                              setRotationDraft((draft) => ({ ...draft, x: nextValue }));
-                            }}
-                            onBlur={applyRotationChange}
-                            onKeyDown={(event) => handleDraftVectorKeyDown(event, applyRotationChange)}
-                            onKeyUp={(event) => handleNumberInputKeyUp(event, applyRotationChange)}
-                            onPointerUp={(event) => handleNumberInputPointerUp(event, applyRotationChange)}
-                          />
-                        </label>
-                        <label className="form-field">
-                          <span className="label">Y</span>
-                          <input
-                            data-testid="brush-rotation-y"
-                            className="text-input"
-                            type="number"
-                            step="0.1"
-                            value={rotationDraft.y}
-                            onChange={(event) => {
-                              const nextValue = event.currentTarget.value;
-                              setRotationDraft((draft) => ({ ...draft, y: nextValue }));
-                            }}
-                            onBlur={applyRotationChange}
-                            onKeyDown={(event) => handleDraftVectorKeyDown(event, applyRotationChange)}
-                            onKeyUp={(event) => handleNumberInputKeyUp(event, applyRotationChange)}
-                            onPointerUp={(event) => handleNumberInputPointerUp(event, applyRotationChange)}
-                          />
-                        </label>
-                        <label className="form-field">
-                          <span className="label">Z</span>
-                          <input
-                            data-testid="brush-rotation-z"
-                            className="text-input"
-                            type="number"
-                            step="0.1"
-                            value={rotationDraft.z}
-                            onChange={(event) => {
-                              const nextValue = event.currentTarget.value;
-                              setRotationDraft((draft) => ({ ...draft, z: nextValue }));
-                            }}
-                            onBlur={applyRotationChange}
-                            onKeyDown={(event) => handleDraftVectorKeyDown(event, applyRotationChange)}
-                            onKeyUp={(event) => handleNumberInputKeyUp(event, applyRotationChange)}
-                            onPointerUp={(event) => handleNumberInputPointerUp(event, applyRotationChange)}
-                          />
-                        </label>
-                      </div>
-                    </div>
-
-                    <div className="form-section">
-                      <div className="label">Size</div>
-                      <div className="vector-inputs">
-                        <label className="form-field">
-                          <span className="label">X</span>
-                          <input
-                            data-testid="brush-size-x"
-                            className="text-input"
-                            type="number"
-                            min="0.01"
-                            step={whiteboxVectorInputStep}
-                            value={sizeDraft.x}
-                            onChange={(event) => {
-                              const nextValue = event.currentTarget.value;
-                              setSizeDraft((draft) => ({ ...draft, x: nextValue }));
-                            }}
-                            onBlur={applySizeChange}
-                            onKeyDown={(event) => handleDraftVectorKeyDown(event, applySizeChange)}
-                            onKeyUp={(event) => handleNumberInputKeyUp(event, applySizeChange)}
-                            onPointerUp={(event) => handleNumberInputPointerUp(event, applySizeChange)}
-                          />
-                        </label>
-                        <label className="form-field">
-                          <span className="label">Y</span>
-                          <input
-                            data-testid="brush-size-y"
-                            className="text-input"
-                            type="number"
-                            min="0.01"
-                            step={whiteboxVectorInputStep}
-                            value={sizeDraft.y}
-                            onChange={(event) => {
-                              const nextValue = event.currentTarget.value;
-                              setSizeDraft((draft) => ({ ...draft, y: nextValue }));
-                            }}
-                            onBlur={applySizeChange}
-                            onKeyDown={(event) => handleDraftVectorKeyDown(event, applySizeChange)}
-                            onKeyUp={(event) => handleNumberInputKeyUp(event, applySizeChange)}
-                            onPointerUp={(event) => handleNumberInputPointerUp(event, applySizeChange)}
-                          />
-                        </label>
-                        <label className="form-field">
-                          <span className="label">Z</span>
-                          <input
-                            data-testid="brush-size-z"
-                            className="text-input"
-                            type="number"
-                            min="0.01"
-                            step={whiteboxVectorInputStep}
-                            value={sizeDraft.z}
-                            onChange={(event) => {
-                              const nextValue = event.currentTarget.value;
-                              setSizeDraft((draft) => ({ ...draft, z: nextValue }));
-                            }}
-                            onBlur={applySizeChange}
-                            onKeyDown={(event) => handleDraftVectorKeyDown(event, applySizeChange)}
-                            onKeyUp={(event) => handleNumberInputKeyUp(event, applySizeChange)}
-                            onPointerUp={(event) => handleNumberInputPointerUp(event, applySizeChange)}
-                          />
-                        </label>
-                      </div>
-                    </div>
-
-                    <div className="form-section">
-                      <div className="label">Volume Mode</div>
-                      <label className="form-field">
-                        <span className="label">Mode</span>
-                        <select
-                          data-testid="brush-volume-mode"
-                          className="select-input"
-                          value={boxVolumeModeDraft}
-                          onChange={(event) => {
-                            const nextMode = event.currentTarget.value as BoxBrushVolumeMode;
-                            setBoxVolumeModeDraft(nextMode);
-                            applyBoxVolumeModeChange(nextMode);
-                          }}
-                        >
-                          {BOX_BRUSH_VOLUME_MODES.map((mode) => (
-                            <option key={mode} value={mode}>
-                              {formatBoxVolumeModeLabel(mode)}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-
-                      {boxVolumeModeDraft === "water" ? (
-                        <>
-                          <div className="vector-inputs vector-inputs--two">
-                            <label className="form-field">
-                              <span className="label">Color</span>
-                              <input
-                                data-testid="brush-water-color"
-                                className="color-input"
-                                type="color"
-                                value={boxVolumeWaterColorDraft}
-                                onChange={(event) => {
-                                  const nextColorHex = event.currentTarget.value;
-                                  setBoxVolumeWaterColorDraft(nextColorHex);
-                                  scheduleDraftCommit(() => applyBoxWaterColorDraft(nextColorHex));
-                                }}
-                              />
-                            </label>
-                            <label className="form-field">
-                              <span className="label">Surface Opacity</span>
-                              <input
-                                data-testid="brush-water-surface-opacity"
-                                className="text-input"
-                                type="number"
-                                min="0"
-                                step="0.05"
-                                value={boxVolumeWaterSurfaceOpacityDraft}
-                                onChange={(event) => setBoxVolumeWaterSurfaceOpacityDraft(event.currentTarget.value)}
-                                onBlur={() => applyBoxWaterSettings()}
-                                onKeyDown={(event) => handleDraftVectorKeyDown(event, applyBoxWaterSettings)}
-                                onKeyUp={(event) => handleNumberInputKeyUp(event, applyBoxWaterSettings)}
-                                onPointerUp={(event) => handleNumberInputPointerUp(event, applyBoxWaterSettings)}
-                              />
-                            </label>
-                          </div>
+                  {selectedPointLight !== null ? (
+                    <>
+                      <div className="form-section">
+                        <div className="label">Light</div>
+                        <div className="vector-inputs vector-inputs--two">
                           <label className="form-field">
-                            <span className="label">Wave Strength</span>
+                            <span className="label">Color</span>
                             <input
-                              data-testid="brush-water-wave-strength"
-                              className="text-input"
-                              type="number"
-                              min="0"
-                              step="0.05"
-                              value={boxVolumeWaterWaveStrengthDraft}
-                              onChange={(event) => setBoxVolumeWaterWaveStrengthDraft(event.currentTarget.value)}
-                              onBlur={() => applyBoxWaterSettings()}
-                              onKeyDown={(event) => handleDraftVectorKeyDown(event, applyBoxWaterSettings)}
-                              onKeyUp={(event) => handleNumberInputKeyUp(event, applyBoxWaterSettings)}
-                              onPointerUp={(event) => handleNumberInputPointerUp(event, applyBoxWaterSettings)}
-                            />
-                          </label>
-                          <label className="form-field">
-                            <span className="label">Foam Contact Limit</span>
-                            <input
-                              data-testid="brush-water-foam-contact-limit"
-                              className="text-input"
-                              type="number"
-                              min="1"
-                              max={String(MAX_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT)}
-                              step="1"
-                              value={boxVolumeWaterFoamContactLimitDraft}
-                              onChange={(event) => setBoxVolumeWaterFoamContactLimitDraft(event.currentTarget.value)}
-                              onBlur={() => applyBoxWaterSettings()}
-                              onKeyDown={(event) => handleDraftVectorKeyDown(event, applyBoxWaterSettings)}
-                              onKeyUp={(event) => handleNumberInputKeyUp(event, applyBoxWaterSettings)}
-                              onPointerUp={(event) => handleNumberInputPointerUp(event, applyBoxWaterSettings)}
-                            />
-                          </label>
-                          <label className="form-field form-field--toggle">
-                            <span className="label">Vertical Surface Motion</span>
-                            <input
-                              data-testid="brush-water-surface-displacement-enabled"
-                              type="checkbox"
-                              checked={boxVolumeWaterSurfaceDisplacementEnabledDraft}
+                              data-testid="point-light-color"
+                              className="color-input"
+                              type="color"
+                              value={pointLightColorDraft}
                               onChange={(event) => {
-                                const nextSurfaceDisplacementEnabled = event.currentTarget.checked;
-                                setBoxVolumeWaterSurfaceDisplacementEnabledDraft(nextSurfaceDisplacementEnabled);
+                                const nextColorHex = event.currentTarget.value;
+                                setPointLightColorDraft(nextColorHex);
                                 scheduleDraftCommit(() =>
-                                  applyBoxWaterSettings({
-                                    surfaceDisplacementEnabled: nextSurfaceDisplacementEnabled
+                                  applyPointLightChange({
+                                    colorHex: nextColorHex
                                   })
                                 );
                               }}
                             />
                           </label>
-                        </>
-                      ) : null}
+                          <label className="form-field">
+                            <span className="label">Intensity</span>
+                            <input
+                              data-testid="point-light-intensity"
+                              className="text-input"
+                              type="number"
+                              min="0"
+                              step="0.1"
+                              value={pointLightIntensityDraft}
+                              onChange={(event) =>
+                                setPointLightIntensityDraft(
+                                  event.currentTarget.value
+                                )
+                              }
+                              onBlur={() => applyPointLightChange()}
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(
+                                  event,
+                                  applyPointLightChange
+                                )
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(
+                                  event,
+                                  applyPointLightChange
+                                )
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(
+                                  event,
+                                  applyPointLightChange
+                                )
+                              }
+                            />
+                          </label>
+                        </div>
+                      </div>
 
-                      {boxVolumeModeDraft === "fog" ? (
-                        <>
-                          <div className="vector-inputs vector-inputs--two">
+                      <div className="form-section">
+                        <div className="label">Range</div>
+                        <label className="form-field">
+                          <span className="label">Distance</span>
+                          <input
+                            data-testid="point-light-distance"
+                            className="text-input"
+                            type="number"
+                            min="0.1"
+                            step="0.1"
+                            value={pointLightDistanceDraft}
+                            onChange={(event) =>
+                              setPointLightDistanceDraft(
+                                event.currentTarget.value
+                              )
+                            }
+                            onBlur={() => applyPointLightChange()}
+                            onKeyDown={(event) =>
+                              handleDraftVectorKeyDown(
+                                event,
+                                applyPointLightChange
+                              )
+                            }
+                            onKeyUp={(event) =>
+                              handleNumberInputKeyUp(
+                                event,
+                                applyPointLightChange
+                              )
+                            }
+                            onPointerUp={(event) =>
+                              handleNumberInputPointerUp(
+                                event,
+                                applyPointLightChange
+                              )
+                            }
+                          />
+                        </label>
+                      </div>
+                    </>
+                  ) : null}
+
+                  {selectedSpotLight !== null ? (
+                    <>
+                      <div className="form-section">
+                        <div className="label">Light</div>
+                        <div className="vector-inputs vector-inputs--two">
+                          <label className="form-field">
+                            <span className="label">Color</span>
+                            <input
+                              data-testid="spot-light-color"
+                              className="color-input"
+                              type="color"
+                              value={spotLightColorDraft}
+                              onChange={(event) => {
+                                const nextColorHex = event.currentTarget.value;
+                                setSpotLightColorDraft(nextColorHex);
+                                scheduleDraftCommit(() =>
+                                  applySpotLightChange({
+                                    colorHex: nextColorHex
+                                  })
+                                );
+                              }}
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Intensity</span>
+                            <input
+                              data-testid="spot-light-intensity"
+                              className="text-input"
+                              type="number"
+                              min="0"
+                              step="0.1"
+                              value={spotLightIntensityDraft}
+                              onChange={(event) =>
+                                setSpotLightIntensityDraft(
+                                  event.currentTarget.value
+                                )
+                              }
+                              onBlur={() => applySpotLightChange()}
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(
+                                  event,
+                                  applySpotLightChange
+                                )
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(
+                                  event,
+                                  applySpotLightChange
+                                )
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(
+                                  event,
+                                  applySpotLightChange
+                                )
+                              }
+                            />
+                          </label>
+                        </div>
+                      </div>
+
+                      <div className="form-section">
+                        <div className="label">Range</div>
+                        <div className="vector-inputs vector-inputs--two">
+                          <label className="form-field">
+                            <span className="label">Distance</span>
+                            <input
+                              data-testid="spot-light-distance"
+                              className="text-input"
+                              type="number"
+                              min="0.1"
+                              step="0.1"
+                              value={spotLightDistanceDraft}
+                              onChange={(event) =>
+                                setSpotLightDistanceDraft(
+                                  event.currentTarget.value
+                                )
+                              }
+                              onBlur={() => applySpotLightChange()}
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(
+                                  event,
+                                  applySpotLightChange
+                                )
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(
+                                  event,
+                                  applySpotLightChange
+                                )
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(
+                                  event,
+                                  applySpotLightChange
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Angle</span>
+                            <input
+                              data-testid="spot-light-angle"
+                              className="text-input"
+                              type="number"
+                              min="1"
+                              max="179"
+                              step="1"
+                              value={spotLightAngleDraft}
+                              onChange={(event) =>
+                                setSpotLightAngleDraft(
+                                  event.currentTarget.value
+                                )
+                              }
+                              onBlur={() => applySpotLightChange()}
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(
+                                  event,
+                                  applySpotLightChange
+                                )
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(
+                                  event,
+                                  applySpotLightChange
+                                )
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(
+                                  event,
+                                  applySpotLightChange
+                                )
+                              }
+                            />
+                          </label>
+                        </div>
+                      </div>
+
+                      <div className="form-section">
+                        <div className="label">Direction</div>
+                        <div className="vector-inputs">
+                          <label className="form-field">
+                            <span className="label">X</span>
+                            <input
+                              data-testid="spot-light-direction-x"
+                              className="text-input"
+                              type="number"
+                              step="0.1"
+                              value={spotLightDirectionDraft.x}
+                              onChange={(event) => {
+                                const nextValue = event.currentTarget.value;
+                                setSpotLightDirectionDraft((draft) => ({
+                                  ...draft,
+                                  x: nextValue
+                                }));
+                              }}
+                              onBlur={() => applySpotLightChange()}
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(
+                                  event,
+                                  applySpotLightChange
+                                )
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(
+                                  event,
+                                  applySpotLightChange
+                                )
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(
+                                  event,
+                                  applySpotLightChange
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Y</span>
+                            <input
+                              data-testid="spot-light-direction-y"
+                              className="text-input"
+                              type="number"
+                              step="0.1"
+                              value={spotLightDirectionDraft.y}
+                              onChange={(event) => {
+                                const nextValue = event.currentTarget.value;
+                                setSpotLightDirectionDraft((draft) => ({
+                                  ...draft,
+                                  y: nextValue
+                                }));
+                              }}
+                              onBlur={() => applySpotLightChange()}
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(
+                                  event,
+                                  applySpotLightChange
+                                )
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(
+                                  event,
+                                  applySpotLightChange
+                                )
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(
+                                  event,
+                                  applySpotLightChange
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Z</span>
+                            <input
+                              data-testid="spot-light-direction-z"
+                              className="text-input"
+                              type="number"
+                              step="0.1"
+                              value={spotLightDirectionDraft.z}
+                              onChange={(event) => {
+                                const nextValue = event.currentTarget.value;
+                                setSpotLightDirectionDraft((draft) => ({
+                                  ...draft,
+                                  z: nextValue
+                                }));
+                              }}
+                              onBlur={() => applySpotLightChange()}
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(
+                                  event,
+                                  applySpotLightChange
+                                )
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(
+                                  event,
+                                  applySpotLightChange
+                                )
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(
+                                  event,
+                                  applySpotLightChange
+                                )
+                              }
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    </>
+                  ) : null}
+
+                  {selectedPlayerStart !== null ? (
+                    <>
+                      <div className="form-section">
+                        <div className="label">Yaw</div>
+                        <label className="form-field">
+                          <span className="label">Degrees</span>
+                          <input
+                            data-testid="player-start-yaw"
+                            className="text-input"
+                            type="number"
+                            step="1"
+                            value={playerStartYawDraft}
+                            onChange={(event) =>
+                              setPlayerStartYawDraft(event.currentTarget.value)
+                            }
+                            onBlur={() => applyPlayerStartChange()}
+                            onKeyDown={(event) =>
+                              handleDraftVectorKeyDown(
+                                event,
+                                applyPlayerStartChange
+                              )
+                            }
+                            onKeyUp={(event) =>
+                              handleNumberInputKeyUp(
+                                event,
+                                applyPlayerStartChange
+                              )
+                            }
+                            onPointerUp={(event) =>
+                              handleNumberInputPointerUp(
+                                event,
+                                applyPlayerStartChange
+                              )
+                            }
+                          />
+                        </label>
+                      </div>
+
+                      <div className="form-section">
+                        <div className="label">Player Collider</div>
+                        <label className="form-field">
+                          <span className="label">Mode</span>
+                          <select
+                            data-testid="player-start-collider-mode"
+                            className="select-input"
+                            value={playerStartColliderModeDraft}
+                            onChange={(event) => {
+                              const nextMode = event.currentTarget
+                                .value as PlayerStartColliderMode;
+                              setPlayerStartColliderModeDraft(nextMode);
+                              scheduleDraftCommit(() =>
+                                applyPlayerStartChange({
+                                  colliderMode: nextMode
+                                })
+                              );
+                            }}
+                          >
+                            {PLAYER_START_COLLIDER_MODES.map((mode) => (
+                              <option key={mode} value={mode}>
+                                {mode}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <label className="form-field">
+                          <span className="label">Eye Height</span>
+                          <input
+                            data-testid="player-start-eye-height"
+                            className="text-input"
+                            type="number"
+                            min="0.01"
+                            step="0.1"
+                            value={playerStartEyeHeightDraft}
+                            onChange={(event) =>
+                              setPlayerStartEyeHeightDraft(
+                                event.currentTarget.value
+                              )
+                            }
+                            onBlur={() => applyPlayerStartChange()}
+                            onKeyDown={(event) =>
+                              handleDraftVectorKeyDown(
+                                event,
+                                applyPlayerStartChange
+                              )
+                            }
+                            onKeyUp={(event) =>
+                              handleNumberInputKeyUp(
+                                event,
+                                applyPlayerStartChange
+                              )
+                            }
+                            onPointerUp={(event) =>
+                              handleNumberInputPointerUp(
+                                event,
+                                applyPlayerStartChange
+                              )
+                            }
+                          />
+                        </label>
+
+                        {playerStartColliderModeDraft === "capsule" ? (
+                          <div className="vector-inputs">
                             <label className="form-field">
-                              <span className="label">Color</span>
+                              <span className="label">Radius</span>
                               <input
-                                data-testid="brush-fog-color"
-                                className="color-input"
-                                type="color"
-                                value={boxVolumeFogColorDraft}
-                                onChange={(event) => {
-                                  const nextColorHex = event.currentTarget.value;
-                                  setBoxVolumeFogColorDraft(nextColorHex);
-                                  scheduleDraftCommit(() => applyBoxFogColorDraft(nextColorHex));
-                                }}
+                                data-testid="player-start-capsule-radius"
+                                className="text-input"
+                                type="number"
+                                min="0.01"
+                                step="0.1"
+                                value={playerStartCapsuleRadiusDraft}
+                                onChange={(event) =>
+                                  setPlayerStartCapsuleRadiusDraft(
+                                    event.currentTarget.value
+                                  )
+                                }
+                                onBlur={() => applyPlayerStartChange()}
+                                onKeyDown={(event) =>
+                                  handleDraftVectorKeyDown(
+                                    event,
+                                    applyPlayerStartChange
+                                  )
+                                }
+                                onKeyUp={(event) =>
+                                  handleNumberInputKeyUp(
+                                    event,
+                                    applyPlayerStartChange
+                                  )
+                                }
+                                onPointerUp={(event) =>
+                                  handleNumberInputPointerUp(
+                                    event,
+                                    applyPlayerStartChange
+                                  )
+                                }
                               />
                             </label>
                             <label className="form-field">
-                              <span className="label">Density</span>
+                              <span className="label">Height</span>
                               <input
-                                data-testid="brush-fog-density"
+                                data-testid="player-start-capsule-height"
+                                className="text-input"
+                                type="number"
+                                min="0.01"
+                                step="0.1"
+                                value={playerStartCapsuleHeightDraft}
+                                onChange={(event) =>
+                                  setPlayerStartCapsuleHeightDraft(
+                                    event.currentTarget.value
+                                  )
+                                }
+                                onBlur={() => applyPlayerStartChange()}
+                                onKeyDown={(event) =>
+                                  handleDraftVectorKeyDown(
+                                    event,
+                                    applyPlayerStartChange
+                                  )
+                                }
+                                onKeyUp={(event) =>
+                                  handleNumberInputKeyUp(
+                                    event,
+                                    applyPlayerStartChange
+                                  )
+                                }
+                                onPointerUp={(event) =>
+                                  handleNumberInputPointerUp(
+                                    event,
+                                    applyPlayerStartChange
+                                  )
+                                }
+                              />
+                            </label>
+                          </div>
+                        ) : null}
+
+                        {playerStartColliderModeDraft === "box" ? (
+                          <div className="vector-inputs">
+                            <label className="form-field">
+                              <span className="label">Size X</span>
+                              <input
+                                data-testid="player-start-box-size-x"
+                                className="text-input"
+                                type="number"
+                                min="0.01"
+                                step="0.1"
+                                value={playerStartBoxSizeDraft.x}
+                                onChange={(event) => {
+                                  const nextValue = event.currentTarget.value;
+                                  setPlayerStartBoxSizeDraft((draft) => ({
+                                    ...draft,
+                                    x: nextValue
+                                  }));
+                                }}
+                                onBlur={() => applyPlayerStartChange()}
+                                onKeyDown={(event) =>
+                                  handleDraftVectorKeyDown(
+                                    event,
+                                    applyPlayerStartChange
+                                  )
+                                }
+                                onKeyUp={(event) =>
+                                  handleNumberInputKeyUp(
+                                    event,
+                                    applyPlayerStartChange
+                                  )
+                                }
+                                onPointerUp={(event) =>
+                                  handleNumberInputPointerUp(
+                                    event,
+                                    applyPlayerStartChange
+                                  )
+                                }
+                              />
+                            </label>
+                            <label className="form-field">
+                              <span className="label">Size Y</span>
+                              <input
+                                data-testid="player-start-box-size-y"
+                                className="text-input"
+                                type="number"
+                                min="0.01"
+                                step="0.1"
+                                value={playerStartBoxSizeDraft.y}
+                                onChange={(event) => {
+                                  const nextValue = event.currentTarget.value;
+                                  setPlayerStartBoxSizeDraft((draft) => ({
+                                    ...draft,
+                                    y: nextValue
+                                  }));
+                                }}
+                                onBlur={() => applyPlayerStartChange()}
+                                onKeyDown={(event) =>
+                                  handleDraftVectorKeyDown(
+                                    event,
+                                    applyPlayerStartChange
+                                  )
+                                }
+                                onKeyUp={(event) =>
+                                  handleNumberInputKeyUp(
+                                    event,
+                                    applyPlayerStartChange
+                                  )
+                                }
+                                onPointerUp={(event) =>
+                                  handleNumberInputPointerUp(
+                                    event,
+                                    applyPlayerStartChange
+                                  )
+                                }
+                              />
+                            </label>
+                            <label className="form-field">
+                              <span className="label">Size Z</span>
+                              <input
+                                data-testid="player-start-box-size-z"
+                                className="text-input"
+                                type="number"
+                                min="0.01"
+                                step="0.1"
+                                value={playerStartBoxSizeDraft.z}
+                                onChange={(event) => {
+                                  const nextValue = event.currentTarget.value;
+                                  setPlayerStartBoxSizeDraft((draft) => ({
+                                    ...draft,
+                                    z: nextValue
+                                  }));
+                                }}
+                                onBlur={() => applyPlayerStartChange()}
+                                onKeyDown={(event) =>
+                                  handleDraftVectorKeyDown(
+                                    event,
+                                    applyPlayerStartChange
+                                  )
+                                }
+                                onKeyUp={(event) =>
+                                  handleNumberInputKeyUp(
+                                    event,
+                                    applyPlayerStartChange
+                                  )
+                                }
+                                onPointerUp={(event) =>
+                                  handleNumberInputPointerUp(
+                                    event,
+                                    applyPlayerStartChange
+                                  )
+                                }
+                              />
+                            </label>
+                          </div>
+                        ) : null}
+
+                        <div className="material-summary">
+                          {getPlayerStartColliderModeDescription(
+                            playerStartColliderModeDraft
+                          )}
+                        </div>
+                      </div>
+                    </>
+                  ) : null}
+
+                  {selectedSoundEmitter !== null ? (
+                    <>
+                      <div className="form-section">
+                        <div className="label">Audio Asset</div>
+                        <div className="stat-card">
+                          <div className="value">
+                            {selectedSoundEmitter.audioAssetId === null
+                              ? "Unassigned"
+                              : (selectedSoundEmitterAudioAssetRecord?.sourceName ??
+                                "Missing Audio Asset")}
+                          </div>
+                          <div className="material-summary">
+                            {selectedSoundEmitter.audioAssetId === null
+                              ? "Choose an audio asset to make this emitter playable."
+                              : selectedSoundEmitterAudioAssetRecord === null
+                                ? `This sound emitter references ${selectedSoundEmitter.audioAssetId}, but the asset is missing or not audio.`
+                                : formatAudioAssetSummary(
+                                    selectedSoundEmitterAudioAssetRecord
+                                  )}
+                          </div>
+                        </div>
+                        <label className="form-field">
+                          <span className="label">Audio</span>
+                          <select
+                            data-testid="sound-emitter-audio-asset"
+                            className="text-input"
+                            value={soundEmitterAudioAssetIdDraft}
+                            onChange={(event) => {
+                              const nextAudioAssetId =
+                                event.currentTarget.value.trim();
+                              setSoundEmitterAudioAssetIdDraft(
+                                nextAudioAssetId
+                              );
+                              scheduleDraftCommit(() =>
+                                applySoundEmitterChange({
+                                  audioAssetId:
+                                    nextAudioAssetId.length === 0
+                                      ? null
+                                      : nextAudioAssetId
+                                })
+                              );
+                            }}
+                          >
+                            <option value="">— none —</option>
+                            {audioAssetList.map((asset) => (
+                              <option key={asset.id} value={asset.id}>
+                                {asset.sourceName}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      </div>
+
+                      <div className="form-section">
+                        <div className="label">Volume</div>
+                        <label className="form-field">
+                          <span className="label">Amount</span>
+                          <input
+                            data-testid="sound-emitter-volume"
+                            className="text-input"
+                            type="number"
+                            min="0"
+                            step="0.1"
+                            value={soundEmitterVolumeDraft}
+                            onChange={(event) =>
+                              setSoundEmitterVolumeDraft(
+                                event.currentTarget.value
+                              )
+                            }
+                            onBlur={() => applySoundEmitterChange()}
+                            onKeyDown={(event) =>
+                              handleDraftVectorKeyDown(
+                                event,
+                                applySoundEmitterChange
+                              )
+                            }
+                            onKeyUp={(event) =>
+                              handleNumberInputKeyUp(
+                                event,
+                                applySoundEmitterChange
+                              )
+                            }
+                            onPointerUp={(event) =>
+                              handleNumberInputPointerUp(
+                                event,
+                                applySoundEmitterChange
+                              )
+                            }
+                          />
+                        </label>
+                      </div>
+
+                      <div className="form-section">
+                        <div className="label">Distance</div>
+                        <div className="vector-inputs vector-inputs--two">
+                          <label className="form-field">
+                            <span className="label">Ref Distance</span>
+                            <input
+                              data-testid="sound-emitter-ref-distance"
+                              className="text-input"
+                              type="number"
+                              min="0.1"
+                              step="0.1"
+                              value={soundEmitterRefDistanceDraft}
+                              onChange={(event) =>
+                                setSoundEmitterRefDistanceDraft(
+                                  event.currentTarget.value
+                                )
+                              }
+                              onBlur={() => applySoundEmitterChange()}
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(
+                                  event,
+                                  applySoundEmitterChange
+                                )
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(
+                                  event,
+                                  applySoundEmitterChange
+                                )
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(
+                                  event,
+                                  applySoundEmitterChange
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Max Distance</span>
+                            <input
+                              data-testid="sound-emitter-max-distance"
+                              className="text-input"
+                              type="number"
+                              min="0.1"
+                              step="0.1"
+                              value={soundEmitterMaxDistanceDraft}
+                              onChange={(event) =>
+                                setSoundEmitterMaxDistanceDraft(
+                                  event.currentTarget.value
+                                )
+                              }
+                              onBlur={() => applySoundEmitterChange()}
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(
+                                  event,
+                                  applySoundEmitterChange
+                                )
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(
+                                  event,
+                                  applySoundEmitterChange
+                                )
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(
+                                  event,
+                                  applySoundEmitterChange
+                                )
+                              }
+                            />
+                          </label>
+                        </div>
+                      </div>
+
+                      <div className="form-section">
+                        <div className="label">Playback</div>
+                        <div className="vector-inputs vector-inputs--two">
+                          <label className="form-field">
+                            <span className="label">Autoplay</span>
+                            <input
+                              data-testid="sound-emitter-autoplay"
+                              type="checkbox"
+                              checked={soundEmitterAutoplayDraft}
+                              onChange={(event) => {
+                                const nextAutoplay =
+                                  event.currentTarget.checked;
+                                setSoundEmitterAutoplayDraft(nextAutoplay);
+                                scheduleDraftCommit(() =>
+                                  applySoundEmitterChange({
+                                    autoplay: nextAutoplay
+                                  })
+                                );
+                              }}
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Loop</span>
+                            <input
+                              data-testid="sound-emitter-loop"
+                              type="checkbox"
+                              checked={soundEmitterLoopDraft}
+                              onChange={(event) => {
+                                const nextLoop = event.currentTarget.checked;
+                                setSoundEmitterLoopDraft(nextLoop);
+                                scheduleDraftCommit(() =>
+                                  applySoundEmitterChange({ loop: nextLoop })
+                                );
+                              }}
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    </>
+                  ) : null}
+
+                  {selectedTriggerVolume !== null ? (
+                    <>
+                      <div className="form-section">
+                        <div className="label">Size</div>
+                        <div className="vector-inputs">
+                          <label className="form-field">
+                            <span className="label">X</span>
+                            <input
+                              data-testid="trigger-volume-size-x"
+                              className="text-input"
+                              type="number"
+                              min={DEFAULT_GRID_SIZE}
+                              step={DEFAULT_GRID_SIZE}
+                              value={triggerVolumeSizeDraft.x}
+                              onChange={(event) => {
+                                const nextValue = event.currentTarget.value;
+                                setTriggerVolumeSizeDraft((draft) => ({
+                                  ...draft,
+                                  x: nextValue
+                                }));
+                              }}
+                              onBlur={applyTriggerVolumeChange}
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(
+                                  event,
+                                  applyTriggerVolumeChange
+                                )
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(
+                                  event,
+                                  applyTriggerVolumeChange
+                                )
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(
+                                  event,
+                                  applyTriggerVolumeChange
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Y</span>
+                            <input
+                              data-testid="trigger-volume-size-y"
+                              className="text-input"
+                              type="number"
+                              min={DEFAULT_GRID_SIZE}
+                              step={DEFAULT_GRID_SIZE}
+                              value={triggerVolumeSizeDraft.y}
+                              onChange={(event) => {
+                                const nextValue = event.currentTarget.value;
+                                setTriggerVolumeSizeDraft((draft) => ({
+                                  ...draft,
+                                  y: nextValue
+                                }));
+                              }}
+                              onBlur={applyTriggerVolumeChange}
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(
+                                  event,
+                                  applyTriggerVolumeChange
+                                )
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(
+                                  event,
+                                  applyTriggerVolumeChange
+                                )
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(
+                                  event,
+                                  applyTriggerVolumeChange
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Z</span>
+                            <input
+                              data-testid="trigger-volume-size-z"
+                              className="text-input"
+                              type="number"
+                              min={DEFAULT_GRID_SIZE}
+                              step={DEFAULT_GRID_SIZE}
+                              value={triggerVolumeSizeDraft.z}
+                              onChange={(event) => {
+                                const nextValue = event.currentTarget.value;
+                                setTriggerVolumeSizeDraft((draft) => ({
+                                  ...draft,
+                                  z: nextValue
+                                }));
+                              }}
+                              onBlur={applyTriggerVolumeChange}
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(
+                                  event,
+                                  applyTriggerVolumeChange
+                                )
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(
+                                  event,
+                                  applyTriggerVolumeChange
+                                )
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(
+                                  event,
+                                  applyTriggerVolumeChange
+                                )
+                              }
+                            />
+                          </label>
+                        </div>
+                      </div>
+
+                      {renderInteractionLinksSection(
+                        selectedTriggerVolume,
+                        selectedTriggerVolumeLinks,
+                        "add-trigger-teleport-link",
+                        "add-trigger-visibility-link",
+                        "add-trigger-play-sound-link",
+                        "add-trigger-stop-sound-link"
+                      )}
+                    </>
+                  ) : null}
+
+                  {selectedTeleportTarget !== null ? (
+                    <div className="form-section">
+                      <div className="label">Yaw</div>
+                      <label className="form-field">
+                        <span className="label">Degrees</span>
+                        <input
+                          data-testid="teleport-target-yaw"
+                          className="text-input"
+                          type="number"
+                          step="1"
+                          value={teleportTargetYawDraft}
+                          onChange={(event) =>
+                            setTeleportTargetYawDraft(event.currentTarget.value)
+                          }
+                          onBlur={applyTeleportTargetChange}
+                          onKeyDown={(event) =>
+                            handleDraftVectorKeyDown(
+                              event,
+                              applyTeleportTargetChange
+                            )
+                          }
+                          onKeyUp={(event) =>
+                            handleNumberInputKeyUp(
+                              event,
+                              applyTeleportTargetChange
+                            )
+                          }
+                          onPointerUp={(event) =>
+                            handleNumberInputPointerUp(
+                              event,
+                              applyTeleportTargetChange
+                            )
+                          }
+                        />
+                      </label>
+                    </div>
+                  ) : null}
+
+                  {selectedInteractable !== null ? (
+                    <>
+                      <div className="form-section">
+                        <div className="label">Interaction</div>
+                        <div className="vector-inputs vector-inputs--two">
+                          <label className="form-field">
+                            <span className="label">Range</span>
+                            <input
+                              data-testid="interactable-radius"
+                              className="text-input"
+                              type="number"
+                              min="0.1"
+                              step="0.1"
+                              value={interactableRadiusDraft}
+                              onChange={(event) =>
+                                setInteractableRadiusDraft(
+                                  event.currentTarget.value
+                                )
+                              }
+                              onBlur={() => applyInteractableChange()}
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(
+                                  event,
+                                  applyInteractableChange
+                                )
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(
+                                  event,
+                                  applyInteractableChange
+                                )
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(
+                                  event,
+                                  applyInteractableChange
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Enabled</span>
+                            <input
+                              data-testid="interactable-enabled"
+                              type="checkbox"
+                              checked={interactableEnabledDraft}
+                              onChange={(event) => {
+                                const nextEnabled = event.currentTarget.checked;
+                                setInteractableEnabledDraft(nextEnabled);
+                                scheduleDraftCommit(() =>
+                                  applyInteractableChange({
+                                    enabled: nextEnabled
+                                  })
+                                );
+                              }}
+                            />
+                          </label>
+                        </div>
+                        <div className="material-summary">
+                          Range defines how close the player must be before the
+                          click prompt can activate.
+                        </div>
+                      </div>
+
+                      <div className="form-section">
+                        <div className="label">Prompt</div>
+                        <label className="form-field">
+                          <span className="label">Text</span>
+                          <input
+                            data-testid="interactable-prompt"
+                            className="text-input"
+                            type="text"
+                            value={interactablePromptDraft}
+                            onChange={(event) =>
+                              setInteractablePromptDraft(
+                                event.currentTarget.value
+                              )
+                            }
+                            onBlur={() => applyInteractableChange()}
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter") {
+                                applyInteractableChange();
+                              }
+                            }}
+                          />
+                        </label>
+                      </div>
+
+                      {renderInteractionLinksSection(
+                        selectedInteractable,
+                        selectedInteractableLinks,
+                        "add-interactable-teleport-link",
+                        "add-interactable-visibility-link",
+                        "add-interactable-play-sound-link",
+                        "add-interactable-stop-sound-link"
+                      )}
+                    </>
+                  ) : null}
+                </>
+              ) : selectedBrush === null ? (
+                <div className="outliner-empty">
+                  Select a whitebox solid or entity to edit authored properties.
+                </div>
+              ) : (
+                <>
+                  <div className="stat-card">
+                    <div className="label">Whitebox Solid Type</div>
+                    <div className="value">box</div>
+                  </div>
+
+                  <div className="stat-card">
+                    <div className="label">Selection Mode</div>
+                    <div className="value">
+                      {getWhiteboxSelectionModeLabel(whiteboxSelectionMode)}
+                    </div>
+                  </div>
+
+                  {whiteboxSelectionMode !== "object" ? (
+                    <div className="outliner-empty">
+                      {whiteboxSelectionMode === "face"
+                        ? "Face mode keeps whole-solid transforms out of the way. Select a face to edit its material or UV transform."
+                        : whiteboxSelectionMode === "edge"
+                          ? "Edge mode is selection-only in this slice. Edge transforms land next."
+                          : "Vertex mode is selection-only in this slice. Vertex transforms land next."}
+                    </div>
+                  ) : (
+                    <>
+                      <div className="form-section">
+                        <div className="label">Center</div>
+                        <div className="vector-inputs">
+                          <label className="form-field">
+                            <span className="label">X</span>
+                            <input
+                              data-testid="brush-center-x"
+                              className="text-input"
+                              type="number"
+                              step={whiteboxVectorInputStep}
+                              value={positionDraft.x}
+                              onChange={(event) => {
+                                const nextValue = event.currentTarget.value;
+                                setPositionDraft((draft) => ({
+                                  ...draft,
+                                  x: nextValue
+                                }));
+                              }}
+                              onBlur={applyPositionChange}
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(
+                                  event,
+                                  applyPositionChange
+                                )
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(
+                                  event,
+                                  applyPositionChange
+                                )
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(
+                                  event,
+                                  applyPositionChange
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Y</span>
+                            <input
+                              data-testid="brush-center-y"
+                              className="text-input"
+                              type="number"
+                              step={whiteboxVectorInputStep}
+                              value={positionDraft.y}
+                              onChange={(event) => {
+                                const nextValue = event.currentTarget.value;
+                                setPositionDraft((draft) => ({
+                                  ...draft,
+                                  y: nextValue
+                                }));
+                              }}
+                              onBlur={applyPositionChange}
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(
+                                  event,
+                                  applyPositionChange
+                                )
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(
+                                  event,
+                                  applyPositionChange
+                                )
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(
+                                  event,
+                                  applyPositionChange
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Z</span>
+                            <input
+                              data-testid="brush-center-z"
+                              className="text-input"
+                              type="number"
+                              step={whiteboxVectorInputStep}
+                              value={positionDraft.z}
+                              onChange={(event) => {
+                                const nextValue = event.currentTarget.value;
+                                setPositionDraft((draft) => ({
+                                  ...draft,
+                                  z: nextValue
+                                }));
+                              }}
+                              onBlur={applyPositionChange}
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(
+                                  event,
+                                  applyPositionChange
+                                )
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(
+                                  event,
+                                  applyPositionChange
+                                )
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(
+                                  event,
+                                  applyPositionChange
+                                )
+                              }
+                            />
+                          </label>
+                        </div>
+                      </div>
+
+                      <div className="form-section">
+                        <div className="label">Rotation</div>
+                        <div className="vector-inputs">
+                          <label className="form-field">
+                            <span className="label">X</span>
+                            <input
+                              data-testid="brush-rotation-x"
+                              className="text-input"
+                              type="number"
+                              step="0.1"
+                              value={rotationDraft.x}
+                              onChange={(event) => {
+                                const nextValue = event.currentTarget.value;
+                                setRotationDraft((draft) => ({
+                                  ...draft,
+                                  x: nextValue
+                                }));
+                              }}
+                              onBlur={applyRotationChange}
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(
+                                  event,
+                                  applyRotationChange
+                                )
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(
+                                  event,
+                                  applyRotationChange
+                                )
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(
+                                  event,
+                                  applyRotationChange
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Y</span>
+                            <input
+                              data-testid="brush-rotation-y"
+                              className="text-input"
+                              type="number"
+                              step="0.1"
+                              value={rotationDraft.y}
+                              onChange={(event) => {
+                                const nextValue = event.currentTarget.value;
+                                setRotationDraft((draft) => ({
+                                  ...draft,
+                                  y: nextValue
+                                }));
+                              }}
+                              onBlur={applyRotationChange}
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(
+                                  event,
+                                  applyRotationChange
+                                )
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(
+                                  event,
+                                  applyRotationChange
+                                )
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(
+                                  event,
+                                  applyRotationChange
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Z</span>
+                            <input
+                              data-testid="brush-rotation-z"
+                              className="text-input"
+                              type="number"
+                              step="0.1"
+                              value={rotationDraft.z}
+                              onChange={(event) => {
+                                const nextValue = event.currentTarget.value;
+                                setRotationDraft((draft) => ({
+                                  ...draft,
+                                  z: nextValue
+                                }));
+                              }}
+                              onBlur={applyRotationChange}
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(
+                                  event,
+                                  applyRotationChange
+                                )
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(
+                                  event,
+                                  applyRotationChange
+                                )
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(
+                                  event,
+                                  applyRotationChange
+                                )
+                              }
+                            />
+                          </label>
+                        </div>
+                      </div>
+
+                      <div className="form-section">
+                        <div className="label">Size</div>
+                        <div className="vector-inputs">
+                          <label className="form-field">
+                            <span className="label">X</span>
+                            <input
+                              data-testid="brush-size-x"
+                              className="text-input"
+                              type="number"
+                              min="0.01"
+                              step={whiteboxVectorInputStep}
+                              value={sizeDraft.x}
+                              onChange={(event) => {
+                                const nextValue = event.currentTarget.value;
+                                setSizeDraft((draft) => ({
+                                  ...draft,
+                                  x: nextValue
+                                }));
+                              }}
+                              onBlur={applySizeChange}
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(event, applySizeChange)
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(event, applySizeChange)
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(
+                                  event,
+                                  applySizeChange
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Y</span>
+                            <input
+                              data-testid="brush-size-y"
+                              className="text-input"
+                              type="number"
+                              min="0.01"
+                              step={whiteboxVectorInputStep}
+                              value={sizeDraft.y}
+                              onChange={(event) => {
+                                const nextValue = event.currentTarget.value;
+                                setSizeDraft((draft) => ({
+                                  ...draft,
+                                  y: nextValue
+                                }));
+                              }}
+                              onBlur={applySizeChange}
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(event, applySizeChange)
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(event, applySizeChange)
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(
+                                  event,
+                                  applySizeChange
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Z</span>
+                            <input
+                              data-testid="brush-size-z"
+                              className="text-input"
+                              type="number"
+                              min="0.01"
+                              step={whiteboxVectorInputStep}
+                              value={sizeDraft.z}
+                              onChange={(event) => {
+                                const nextValue = event.currentTarget.value;
+                                setSizeDraft((draft) => ({
+                                  ...draft,
+                                  z: nextValue
+                                }));
+                              }}
+                              onBlur={applySizeChange}
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(event, applySizeChange)
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(event, applySizeChange)
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(
+                                  event,
+                                  applySizeChange
+                                )
+                              }
+                            />
+                          </label>
+                        </div>
+                      </div>
+
+                      <div className="form-section">
+                        <div className="label">Volume Mode</div>
+                        <label className="form-field">
+                          <span className="label">Mode</span>
+                          <select
+                            data-testid="brush-volume-mode"
+                            className="select-input"
+                            value={boxVolumeModeDraft}
+                            onChange={(event) => {
+                              const nextMode = event.currentTarget
+                                .value as BoxBrushVolumeMode;
+                              setBoxVolumeModeDraft(nextMode);
+                              applyBoxVolumeModeChange(nextMode);
+                            }}
+                          >
+                            {BOX_BRUSH_VOLUME_MODES.map((mode) => (
+                              <option key={mode} value={mode}>
+                                {formatBoxVolumeModeLabel(mode)}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+
+                        {boxVolumeModeDraft === "water" ? (
+                          <>
+                            <div className="vector-inputs vector-inputs--two">
+                              <label className="form-field">
+                                <span className="label">Color</span>
+                                <input
+                                  data-testid="brush-water-color"
+                                  className="color-input"
+                                  type="color"
+                                  value={boxVolumeWaterColorDraft}
+                                  onChange={(event) => {
+                                    const nextColorHex =
+                                      event.currentTarget.value;
+                                    setBoxVolumeWaterColorDraft(nextColorHex);
+                                    scheduleDraftCommit(() =>
+                                      applyBoxWaterColorDraft(nextColorHex)
+                                    );
+                                  }}
+                                />
+                              </label>
+                              <label className="form-field">
+                                <span className="label">Surface Opacity</span>
+                                <input
+                                  data-testid="brush-water-surface-opacity"
+                                  className="text-input"
+                                  type="number"
+                                  min="0"
+                                  step="0.05"
+                                  value={boxVolumeWaterSurfaceOpacityDraft}
+                                  onChange={(event) =>
+                                    setBoxVolumeWaterSurfaceOpacityDraft(
+                                      event.currentTarget.value
+                                    )
+                                  }
+                                  onBlur={() => applyBoxWaterSettings()}
+                                  onKeyDown={(event) =>
+                                    handleDraftVectorKeyDown(
+                                      event,
+                                      applyBoxWaterSettings
+                                    )
+                                  }
+                                  onKeyUp={(event) =>
+                                    handleNumberInputKeyUp(
+                                      event,
+                                      applyBoxWaterSettings
+                                    )
+                                  }
+                                  onPointerUp={(event) =>
+                                    handleNumberInputPointerUp(
+                                      event,
+                                      applyBoxWaterSettings
+                                    )
+                                  }
+                                />
+                              </label>
+                            </div>
+                            <label className="form-field">
+                              <span className="label">Wave Strength</span>
+                              <input
+                                data-testid="brush-water-wave-strength"
+                                className="text-input"
+                                type="number"
+                                min="0"
+                                step="0.05"
+                                value={boxVolumeWaterWaveStrengthDraft}
+                                onChange={(event) =>
+                                  setBoxVolumeWaterWaveStrengthDraft(
+                                    event.currentTarget.value
+                                  )
+                                }
+                                onBlur={() => applyBoxWaterSettings()}
+                                onKeyDown={(event) =>
+                                  handleDraftVectorKeyDown(
+                                    event,
+                                    applyBoxWaterSettings
+                                  )
+                                }
+                                onKeyUp={(event) =>
+                                  handleNumberInputKeyUp(
+                                    event,
+                                    applyBoxWaterSettings
+                                  )
+                                }
+                                onPointerUp={(event) =>
+                                  handleNumberInputPointerUp(
+                                    event,
+                                    applyBoxWaterSettings
+                                  )
+                                }
+                              />
+                            </label>
+                            <label className="form-field">
+                              <span className="label">Foam Contact Limit</span>
+                              <input
+                                data-testid="brush-water-foam-contact-limit"
+                                className="text-input"
+                                type="number"
+                                min="1"
+                                max={String(
+                                  MAX_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT
+                                )}
+                                step="1"
+                                value={boxVolumeWaterFoamContactLimitDraft}
+                                onChange={(event) =>
+                                  setBoxVolumeWaterFoamContactLimitDraft(
+                                    event.currentTarget.value
+                                  )
+                                }
+                                onBlur={() => applyBoxWaterSettings()}
+                                onKeyDown={(event) =>
+                                  handleDraftVectorKeyDown(
+                                    event,
+                                    applyBoxWaterSettings
+                                  )
+                                }
+                                onKeyUp={(event) =>
+                                  handleNumberInputKeyUp(
+                                    event,
+                                    applyBoxWaterSettings
+                                  )
+                                }
+                                onPointerUp={(event) =>
+                                  handleNumberInputPointerUp(
+                                    event,
+                                    applyBoxWaterSettings
+                                  )
+                                }
+                              />
+                            </label>
+                            <label className="form-field form-field--toggle">
+                              <span className="label">
+                                Vertical Surface Motion
+                              </span>
+                              <input
+                                data-testid="brush-water-surface-displacement-enabled"
+                                type="checkbox"
+                                checked={
+                                  boxVolumeWaterSurfaceDisplacementEnabledDraft
+                                }
+                                onChange={(event) => {
+                                  const nextSurfaceDisplacementEnabled =
+                                    event.currentTarget.checked;
+                                  setBoxVolumeWaterSurfaceDisplacementEnabledDraft(
+                                    nextSurfaceDisplacementEnabled
+                                  );
+                                  scheduleDraftCommit(() =>
+                                    applyBoxWaterSettings({
+                                      surfaceDisplacementEnabled:
+                                        nextSurfaceDisplacementEnabled
+                                    })
+                                  );
+                                }}
+                              />
+                            </label>
+                          </>
+                        ) : null}
+
+                        {boxVolumeModeDraft === "fog" ? (
+                          <>
+                            <div className="vector-inputs vector-inputs--two">
+                              <label className="form-field">
+                                <span className="label">Color</span>
+                                <input
+                                  data-testid="brush-fog-color"
+                                  className="color-input"
+                                  type="color"
+                                  value={boxVolumeFogColorDraft}
+                                  onChange={(event) => {
+                                    const nextColorHex =
+                                      event.currentTarget.value;
+                                    setBoxVolumeFogColorDraft(nextColorHex);
+                                    scheduleDraftCommit(() =>
+                                      applyBoxFogColorDraft(nextColorHex)
+                                    );
+                                  }}
+                                />
+                              </label>
+                              <label className="form-field">
+                                <span className="label">Density</span>
+                                <input
+                                  data-testid="brush-fog-density"
+                                  className="text-input"
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
+                                  value={boxVolumeFogDensityDraft}
+                                  onChange={(event) =>
+                                    setBoxVolumeFogDensityDraft(
+                                      event.currentTarget.value
+                                    )
+                                  }
+                                  onBlur={applyBoxFogSettings}
+                                  onKeyDown={(event) =>
+                                    handleDraftVectorKeyDown(
+                                      event,
+                                      applyBoxFogSettings
+                                    )
+                                  }
+                                  onKeyUp={(event) =>
+                                    handleNumberInputKeyUp(
+                                      event,
+                                      applyBoxFogSettings
+                                    )
+                                  }
+                                  onPointerUp={(event) =>
+                                    handleNumberInputPointerUp(
+                                      event,
+                                      applyBoxFogSettings
+                                    )
+                                  }
+                                />
+                              </label>
+                            </div>
+                            <label className="form-field">
+                              <span className="label">Padding</span>
+                              <input
+                                data-testid="brush-fog-padding"
                                 className="text-input"
                                 type="number"
                                 min="0"
                                 step="0.01"
-                                value={boxVolumeFogDensityDraft}
-                                onChange={(event) => setBoxVolumeFogDensityDraft(event.currentTarget.value)}
+                                value={boxVolumeFogPaddingDraft}
+                                onChange={(event) =>
+                                  setBoxVolumeFogPaddingDraft(
+                                    event.currentTarget.value
+                                  )
+                                }
                                 onBlur={applyBoxFogSettings}
-                                onKeyDown={(event) => handleDraftVectorKeyDown(event, applyBoxFogSettings)}
-                                onKeyUp={(event) => handleNumberInputKeyUp(event, applyBoxFogSettings)}
-                                onPointerUp={(event) => handleNumberInputPointerUp(event, applyBoxFogSettings)}
+                                onKeyDown={(event) =>
+                                  handleDraftVectorKeyDown(
+                                    event,
+                                    applyBoxFogSettings
+                                  )
+                                }
+                                onKeyUp={(event) =>
+                                  handleNumberInputKeyUp(
+                                    event,
+                                    applyBoxFogSettings
+                                  )
+                                }
+                                onPointerUp={(event) =>
+                                  handleNumberInputPointerUp(
+                                    event,
+                                    applyBoxFogSettings
+                                  )
+                                }
                               />
                             </label>
-                          </div>
+                          </>
+                        ) : null}
+                      </div>
+                    </>
+                  )}
+
+                  <div className="form-section">
+                    <div className="label">Faces</div>
+                    <div className="face-grid">
+                      {BOX_FACE_IDS.map((faceId) => (
+                        <button
+                          key={faceId}
+                          type="button"
+                          data-testid={`face-button-${faceId}`}
+                          className={`face-chip ${isBrushFaceSelected(editorState.selection, selectedBrush.id, faceId) ? "face-chip--active" : ""}`}
+                          onClick={() => {
+                            store.setWhiteboxSelectionMode("face");
+                            applySelection(
+                              {
+                                kind: "brushFace",
+                                brushId: selectedBrush.id,
+                                faceId
+                              },
+                              "inspector"
+                            );
+                          }}
+                        >
+                          <span className="face-chip__title">
+                            {BOX_FACE_LABELS[faceId]}
+                          </span>
+                          <span className="face-chip__meta">{faceId}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {whiteboxSelectionMode === "edge" ? (
+                    selectedEdgeId === null ? (
+                      <div className="outliner-empty">
+                        Select an edge in the viewport to inspect it. Edge
+                        transforms land in the next slice.
+                      </div>
+                    ) : (
+                      <div className="stat-card">
+                        <div className="label">Active Edge</div>
+                        <div className="value">
+                          {BOX_EDGE_LABELS[selectedEdgeId]}
+                        </div>
+                        <div className="material-summary">
+                          Edge selection is visible in the viewport. Persistent
+                          edge transforms are still deferred.
+                        </div>
+                      </div>
+                    )
+                  ) : whiteboxSelectionMode === "vertex" ? (
+                    selectedVertexId === null ? (
+                      <div className="outliner-empty">
+                        Select a vertex in the viewport to inspect it. Vertex
+                        transforms land in the next slice.
+                      </div>
+                    ) : (
+                      <div className="stat-card">
+                        <div className="label">Active Vertex</div>
+                        <div className="value">
+                          {BOX_VERTEX_LABELS[selectedVertexId]}
+                        </div>
+                        <div className="material-summary">
+                          Vertex selection is visible in the viewport.
+                          Persistent vertex transforms are still deferred.
+                        </div>
+                      </div>
+                    )
+                  ) : whiteboxSelectionMode !== "face" ? (
+                    <div className="outliner-empty">
+                      Switch to Face mode or choose a face chip to edit
+                      materials and UVs.
+                    </div>
+                  ) : selectedFace === null || selectedFaceId === null ? (
+                    <div className="outliner-empty">
+                      Select a face to edit its material and UV transform.
+                    </div>
+                  ) : (
+                    <>
+                      <div className="stat-card">
+                        <div className="label">Active Face</div>
+                        <div className="value">
+                          {BOX_FACE_LABELS[selectedFaceId]}
+                        </div>
+                        <div
+                          className="material-summary"
+                          data-testid="selected-face-material-name"
+                        >
+                          Material:{" "}
+                          {selectedFaceMaterial?.name ?? "Fallback face color"}
+                        </div>
+                      </div>
+
+                      <div className="form-section">
+                        <div className="label">Material</div>
+                        <div className="material-browser">
+                          {materialList.map((material) => (
+                            <button
+                              key={material.id}
+                              type="button"
+                              data-testid={`material-button-${material.id}`}
+                              className={`material-item ${selectedFace.materialId === material.id ? "material-item--active" : ""}`}
+                              onClick={() => applyFaceMaterial(material.id)}
+                            >
+                              <span
+                                className="material-item__preview"
+                                style={getMaterialPreviewStyle(material)}
+                                aria-hidden="true"
+                              />
+                              <span className="material-item__text">
+                                <span className="material-item__title">
+                                  {material.name}
+                                </span>
+                                <span className="material-item__meta">
+                                  {material.tags.join(" | ")}
+                                </span>
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                        <div className="inline-actions">
+                          <button
+                            className="toolbar__button"
+                            type="button"
+                            onClick={clearFaceMaterial}
+                          >
+                            Clear Material
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="form-section">
+                        <div className="label">UV Offset</div>
+                        <div className="vector-inputs vector-inputs--two">
                           <label className="form-field">
-                            <span className="label">Padding</span>
+                            <span className="label">U</span>
                             <input
-                              data-testid="brush-fog-padding"
+                              data-testid="face-uv-offset-x"
                               className="text-input"
                               type="number"
-                              min="0"
-                              step="0.01"
-                              value={boxVolumeFogPaddingDraft}
-                              onChange={(event) => setBoxVolumeFogPaddingDraft(event.currentTarget.value)}
-                              onBlur={applyBoxFogSettings}
-                              onKeyDown={(event) => handleDraftVectorKeyDown(event, applyBoxFogSettings)}
-                              onKeyUp={(event) => handleNumberInputKeyUp(event, applyBoxFogSettings)}
-                              onPointerUp={(event) => handleNumberInputPointerUp(event, applyBoxFogSettings)}
+                              step="0.125"
+                              value={uvOffsetDraft.x}
+                              onChange={(event) => {
+                                const nextValue = event.currentTarget.value;
+                                setUvOffsetDraft((draft) => ({
+                                  ...draft,
+                                  x: nextValue
+                                }));
+                              }}
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(
+                                  event,
+                                  handleApplyUvDraft
+                                )
+                              }
                             />
                           </label>
-                        </>
-                      ) : null}
-                    </div>
-                  </>
-                )}
-
-                <div className="form-section">
-                  <div className="label">Faces</div>
-                  <div className="face-grid">
-                    {BOX_FACE_IDS.map((faceId) => (
-                      <button
-                        key={faceId}
-                        type="button"
-                        data-testid={`face-button-${faceId}`}
-                        className={`face-chip ${isBrushFaceSelected(editorState.selection, selectedBrush.id, faceId) ? "face-chip--active" : ""}`}
-                        onClick={() => {
-                          store.setWhiteboxSelectionMode("face");
-                          applySelection(
-                            {
-                              kind: "brushFace",
-                              brushId: selectedBrush.id,
-                              faceId
-                            },
-                            "inspector"
-                          );
-                        }}
-                      >
-                        <span className="face-chip__title">{BOX_FACE_LABELS[faceId]}</span>
-                        <span className="face-chip__meta">{faceId}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {whiteboxSelectionMode === "edge" ? (
-                  selectedEdgeId === null ? (
-                    <div className="outliner-empty">Select an edge in the viewport to inspect it. Edge transforms land in the next slice.</div>
-                  ) : (
-                    <div className="stat-card">
-                      <div className="label">Active Edge</div>
-                      <div className="value">{BOX_EDGE_LABELS[selectedEdgeId]}</div>
-                      <div className="material-summary">Edge selection is visible in the viewport. Persistent edge transforms are still deferred.</div>
-                    </div>
-                  )
-                ) : whiteboxSelectionMode === "vertex" ? (
-                  selectedVertexId === null ? (
-                    <div className="outliner-empty">Select a vertex in the viewport to inspect it. Vertex transforms land in the next slice.</div>
-                  ) : (
-                    <div className="stat-card">
-                      <div className="label">Active Vertex</div>
-                      <div className="value">{BOX_VERTEX_LABELS[selectedVertexId]}</div>
-                      <div className="material-summary">Vertex selection is visible in the viewport. Persistent vertex transforms are still deferred.</div>
-                    </div>
-                  )
-                ) : whiteboxSelectionMode !== "face" ? (
-                  <div className="outliner-empty">Switch to Face mode or choose a face chip to edit materials and UVs.</div>
-                ) : selectedFace === null || selectedFaceId === null ? (
-                  <div className="outliner-empty">
-                    Select a face to edit its material and UV transform.
-                  </div>
-                ) : (
-                  <>
-                    <div className="stat-card">
-                      <div className="label">Active Face</div>
-                      <div className="value">{BOX_FACE_LABELS[selectedFaceId]}</div>
-                      <div className="material-summary" data-testid="selected-face-material-name">
-                        Material: {selectedFaceMaterial?.name ?? "Fallback face color"}
+                          <label className="form-field">
+                            <span className="label">V</span>
+                            <input
+                              data-testid="face-uv-offset-y"
+                              className="text-input"
+                              type="number"
+                              step="0.125"
+                              value={uvOffsetDraft.y}
+                              onChange={(event) => {
+                                const nextValue = event.currentTarget.value;
+                                setUvOffsetDraft((draft) => ({
+                                  ...draft,
+                                  y: nextValue
+                                }));
+                              }}
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(
+                                  event,
+                                  handleApplyUvDraft
+                                )
+                              }
+                            />
+                          </label>
+                        </div>
                       </div>
-                    </div>
 
-                    <div className="form-section">
-                      <div className="label">Material</div>
-                      <div className="material-browser">
-                        {materialList.map((material) => (
-                          <button
-                            key={material.id}
-                            type="button"
-                            data-testid={`material-button-${material.id}`}
-                            className={`material-item ${selectedFace.materialId === material.id ? "material-item--active" : ""}`}
-                            onClick={() => applyFaceMaterial(material.id)}
-                          >
-                            <span className="material-item__preview" style={getMaterialPreviewStyle(material)} aria-hidden="true" />
-                            <span className="material-item__text">
-                              <span className="material-item__title">{material.name}</span>
-                              <span className="material-item__meta">{material.tags.join(" | ")}</span>
-                            </span>
-                          </button>
-                        ))}
+                      <div className="form-section">
+                        <div className="label">UV Scale</div>
+                        <div className="vector-inputs vector-inputs--two">
+                          <label className="form-field">
+                            <span className="label">U</span>
+                            <input
+                              data-testid="face-uv-scale-x"
+                              className="text-input"
+                              type="number"
+                              min="0.001"
+                              step="0.125"
+                              value={uvScaleDraft.x}
+                              onChange={(event) => {
+                                const nextValue = event.currentTarget.value;
+                                setUvScaleDraft((draft) => ({
+                                  ...draft,
+                                  x: nextValue
+                                }));
+                              }}
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(
+                                  event,
+                                  handleApplyUvDraft
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">V</span>
+                            <input
+                              data-testid="face-uv-scale-y"
+                              className="text-input"
+                              type="number"
+                              min="0.001"
+                              step="0.125"
+                              value={uvScaleDraft.y}
+                              onChange={(event) => {
+                                const nextValue = event.currentTarget.value;
+                                setUvScaleDraft((draft) => ({
+                                  ...draft,
+                                  y: nextValue
+                                }));
+                              }}
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(
+                                  event,
+                                  handleApplyUvDraft
+                                )
+                              }
+                            />
+                          </label>
+                        </div>
                       </div>
+
                       <div className="inline-actions">
-                        <button className="toolbar__button" type="button" onClick={clearFaceMaterial}>
-                          Clear Material
+                        <button
+                          className="toolbar__button"
+                          type="button"
+                          data-testid="apply-face-uv"
+                          onClick={handleApplyUvDraft}
+                        >
+                          Apply UV Offset/Scale
+                        </button>
+                        <button
+                          className="toolbar__button"
+                          type="button"
+                          onClick={handleRotateUv}
+                        >
+                          Rotate 90
+                        </button>
+                        <button
+                          className="toolbar__button"
+                          type="button"
+                          onClick={() => handleFlipUv("u")}
+                        >
+                          Flip U
+                        </button>
+                        <button
+                          className="toolbar__button"
+                          type="button"
+                          onClick={() => handleFlipUv("v")}
+                        >
+                          Flip V
+                        </button>
+                        <button
+                          className="toolbar__button"
+                          type="button"
+                          onClick={handleFitUvToFace}
+                        >
+                          Fit To Face
                         </button>
                       </div>
-                    </div>
 
-                    <div className="form-section">
-                      <div className="label">UV Offset</div>
-                      <div className="vector-inputs vector-inputs--two">
-                        <label className="form-field">
-                          <span className="label">U</span>
-                          <input
-                            data-testid="face-uv-offset-x"
-                            className="text-input"
-                            type="number"
-                            step="0.125"
-                            value={uvOffsetDraft.x}
-                            onChange={(event) => {
-                              const nextValue = event.currentTarget.value;
-                              setUvOffsetDraft((draft) => ({ ...draft, x: nextValue }));
-                            }}
-                            onKeyDown={(event) => handleDraftVectorKeyDown(event, handleApplyUvDraft)}
-                          />
-                        </label>
-                        <label className="form-field">
-                          <span className="label">V</span>
-                          <input
-                            data-testid="face-uv-offset-y"
-                            className="text-input"
-                            type="number"
-                            step="0.125"
-                            value={uvOffsetDraft.y}
-                            onChange={(event) => {
-                              const nextValue = event.currentTarget.value;
-                              setUvOffsetDraft((draft) => ({ ...draft, y: nextValue }));
-                            }}
-                            onKeyDown={(event) => handleDraftVectorKeyDown(event, handleApplyUvDraft)}
-                          />
-                        </label>
+                      <div className="stat-card">
+                        <div className="label">UV Flags</div>
+                        <div className="value">
+                          Rotation {selectedFace.uv.rotationQuarterTurns * 90}°
+                        </div>
+                        <div className="material-summary">
+                          U {selectedFace.uv.flipU ? "flipped" : "normal"} · V{" "}
+                          {selectedFace.uv.flipV ? "flipped" : "normal"}
+                        </div>
                       </div>
-                    </div>
-
-                    <div className="form-section">
-                      <div className="label">UV Scale</div>
-                      <div className="vector-inputs vector-inputs--two">
-                        <label className="form-field">
-                          <span className="label">U</span>
-                          <input
-                            data-testid="face-uv-scale-x"
-                            className="text-input"
-                            type="number"
-                            min="0.001"
-                            step="0.125"
-                            value={uvScaleDraft.x}
-                            onChange={(event) => {
-                              const nextValue = event.currentTarget.value;
-                              setUvScaleDraft((draft) => ({ ...draft, x: nextValue }));
-                            }}
-                            onKeyDown={(event) => handleDraftVectorKeyDown(event, handleApplyUvDraft)}
-                          />
-                        </label>
-                        <label className="form-field">
-                          <span className="label">V</span>
-                          <input
-                            data-testid="face-uv-scale-y"
-                            className="text-input"
-                            type="number"
-                            min="0.001"
-                            step="0.125"
-                            value={uvScaleDraft.y}
-                            onChange={(event) => {
-                              const nextValue = event.currentTarget.value;
-                              setUvScaleDraft((draft) => ({ ...draft, y: nextValue }));
-                            }}
-                            onKeyDown={(event) => handleDraftVectorKeyDown(event, handleApplyUvDraft)}
-                          />
-                        </label>
-                      </div>
-                    </div>
-
-                    <div className="inline-actions">
-                      <button className="toolbar__button" type="button" data-testid="apply-face-uv" onClick={handleApplyUvDraft}>
-                        Apply UV Offset/Scale
-                      </button>
-                      <button className="toolbar__button" type="button" onClick={handleRotateUv}>
-                        Rotate 90
-                      </button>
-                      <button className="toolbar__button" type="button" onClick={() => handleFlipUv("u")}>
-                        Flip U
-                      </button>
-                      <button className="toolbar__button" type="button" onClick={() => handleFlipUv("v")}>
-                        Flip V
-                      </button>
-                      <button className="toolbar__button" type="button" onClick={handleFitUvToFace}>
-                        Fit To Face
-                      </button>
-                    </div>
-
-                    <div className="stat-card">
-                      <div className="label">UV Flags</div>
-                      <div className="value">Rotation {selectedFace.uv.rotationQuarterTurns * 90}°</div>
-                      <div className="material-summary">
-                        U {selectedFace.uv.flipU ? "flipped" : "normal"} · V {selectedFace.uv.flipV ? "flipped" : "normal"}
-                      </div>
-                    </div>
-                  </>
-                )}
-              </>
-            )}
-          </Panel>
+                    </>
+                  )}
+                </>
+              )}
+            </Panel>
           )}
         </aside>
       </div>
 
       {addMenuPosition === null ? null : (
-        <HierarchicalMenu title="Add" position={addMenuPosition} items={addMenuItems} onClose={closeAddMenu} />
+        <HierarchicalMenu
+          title="Add"
+          position={addMenuPosition}
+          items={addMenuItems}
+          onClose={closeAddMenu}
+        />
       )}
 
       <footer className="status-bar">
         <div className="status-bar__item" data-testid="status-message">
           <span className="status-bar__strong">Status:</span> {statusMessage}
         </div>
-        <div className="status-bar__item" data-testid="status-whitebox-selection-mode">
-          <span className="status-bar__strong">Whitebox:</span> {getWhiteboxSelectionModeLabel(whiteboxSelectionMode)}
+        <div
+          className="status-bar__item"
+          data-testid="status-whitebox-selection-mode"
+        >
+          <span className="status-bar__strong">Whitebox:</span>{" "}
+          {getWhiteboxSelectionModeLabel(whiteboxSelectionMode)}
         </div>
         <div className="status-bar__item" data-testid="status-document">
-          <span className="status-bar__strong">Document:</span> {documentStatusLabel}
+          <span className="status-bar__strong">Document:</span>{" "}
+          {documentStatusLabel}
         </div>
         <div className="status-bar__item" data-testid="status-run-preflight">
           <span className="status-bar__strong">Run:</span> {runReadyLabel}
         </div>
         <div className="status-bar__item" data-testid="status-warnings">
-          <span className="status-bar__strong">Warnings:</span> {warningDiagnostics.length}
+          <span className="status-bar__strong">Warnings:</span>{" "}
+          {warningDiagnostics.length}
         </div>
         {hoveredAssetStatusMessage === null ? null : (
-          <div className="status-bar__item status-bar__item--asset" data-testid="status-asset-hover">
-            <span className="status-bar__strong">Asset:</span> {hoveredAssetStatusMessage}
+          <div
+            className="status-bar__item status-bar__item--asset"
+            data-testid="status-asset-hover"
+          >
+            <span className="status-bar__strong">Asset:</span>{" "}
+            {hoveredAssetStatusMessage}
           </div>
         )}
         <div className="status-bar__item" data-testid="status-last-command">

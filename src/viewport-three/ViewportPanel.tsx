@@ -10,14 +10,24 @@ import {
   type ViewportPanelId,
   type ViewportPanelState
 } from "./viewport-layout";
-import { VIEWPORT_VIEW_MODES, getViewportViewModeLabel, type ViewportViewMode } from "./viewport-view-modes";
-import type { CreationViewportToolPreview, ViewportToolPreview } from "./viewport-transient-state";
+import {
+  VIEWPORT_VIEW_MODES,
+  getViewportViewModeLabel,
+  type ViewportViewMode
+} from "./viewport-view-modes";
+import type {
+  CreationViewportToolPreview,
+  ViewportToolPreview
+} from "./viewport-transient-state";
 import type { LoadedModelAsset } from "../assets/gltf-model-import";
 import type { LoadedImageAsset } from "../assets/image-assets";
 import type { ProjectAssetRecord } from "../assets/project-assets";
 import type { EditorSelection } from "../core/selection";
 import type { WhiteboxSelectionMode } from "../core/whitebox-selection-mode";
-import type { ActiveTransformSession, TransformSessionState } from "../core/transform-session";
+import type {
+  ActiveTransformSession,
+  TransformSessionState
+} from "../core/transform-session";
 import type { ToolMode } from "../core/tool-mode";
 import type { SceneDocument } from "../document/scene-document";
 import type { WorldSettings } from "../document/world-settings";
@@ -46,8 +56,14 @@ interface ViewportPanelProps {
   focusRequestId: number;
   focusSelection: EditorSelection;
   onActivatePanel(panelId: ViewportPanelId): void;
-  onSetPanelViewMode(panelId: ViewportPanelId, viewMode: ViewportViewMode): void;
-  onSetPanelDisplayMode(panelId: ViewportPanelId, displayMode: ViewportDisplayMode): void;
+  onSetPanelViewMode(
+    panelId: ViewportPanelId,
+    viewMode: ViewportViewMode
+  ): void;
+  onSetPanelDisplayMode(
+    panelId: ViewportPanelId,
+    displayMode: ViewportDisplayMode
+  ): void;
   onCommitCreation(toolPreview: CreationViewportToolPreview): boolean;
   onCameraStateChange(cameraState: ViewportPanelCameraState): void;
   onToolPreviewChange(toolPreview: ViewportToolPreview): void;
@@ -110,9 +126,14 @@ export function ViewportPanel({
         {layoutMode !== "quad" ? null : (
           <div className="viewport-panel__meta">
             <div className="viewport-panel__title-row">
-              <div className="viewport-panel__title">{getViewportPanelLabel(panelId)}</div>
+              <div className="viewport-panel__title">
+                {getViewportPanelLabel(panelId)}
+              </div>
               {!isActive ? null : (
-                <div className="viewport-panel__active-badge" data-testid={`viewport-panel-active-badge-${panelId}`}>
+                <div
+                  className="viewport-panel__active-badge"
+                  data-testid={`viewport-panel-active-badge-${panelId}`}
+                >
                   Active
                 </div>
               )}
@@ -120,7 +141,11 @@ export function ViewportPanel({
           </div>
         )}
         <div className="viewport-panel__controls">
-          <div className="viewport-panel__control-group" role="group" aria-label={`${getViewportPanelLabel(panelId)} view mode`}>
+          <div
+            className="viewport-panel__control-group"
+            role="group"
+            aria-label={`${getViewportPanelLabel(panelId)} view mode`}
+          >
             {VIEWPORT_VIEW_MODES.map((viewMode) => (
               <button
                 key={viewMode}
@@ -135,19 +160,25 @@ export function ViewportPanel({
             ))}
           </div>
 
-          <div className="viewport-panel__control-group" role="group" aria-label={`${getViewportPanelLabel(panelId)} display mode`}>
-            {(["normal", "authoring", "wireframe"] as const).map((displayMode) => (
-              <button
-                key={displayMode}
-                className={`viewport-panel__button ${panelState.displayMode === displayMode ? "viewport-panel__button--active" : ""}`}
-                type="button"
-                data-testid={`viewport-panel-${panelId}-display-${displayMode}`}
-                aria-pressed={panelState.displayMode === displayMode}
-                onClick={() => onSetPanelDisplayMode(panelId, displayMode)}
-              >
-                {getViewportDisplayModeLabel(displayMode)}
-              </button>
-            ))}
+          <div
+            className="viewport-panel__control-group"
+            role="group"
+            aria-label={`${getViewportPanelLabel(panelId)} display mode`}
+          >
+            {(["normal", "authoring", "wireframe"] as const).map(
+              (displayMode) => (
+                <button
+                  key={displayMode}
+                  className={`viewport-panel__button ${panelState.displayMode === displayMode ? "viewport-panel__button--active" : ""}`}
+                  type="button"
+                  data-testid={`viewport-panel-${panelId}-display-${displayMode}`}
+                  aria-pressed={panelState.displayMode === displayMode}
+                  onClick={() => onSetPanelDisplayMode(panelId, displayMode)}
+                >
+                  {getViewportDisplayModeLabel(displayMode)}
+                </button>
+              )
+            )}
           </div>
         </div>
       </div>

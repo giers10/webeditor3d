@@ -20,7 +20,10 @@ import {
   type EntityInstance,
   type EntityKind
 } from "../entities/entity-instances";
-import { cloneModelInstance, getModelInstanceKindLabel } from "../assets/model-instances";
+import {
+  cloneModelInstance,
+  getModelInstanceKindLabel
+} from "../assets/model-instances";
 import type { ViewportPanelId } from "../viewport-three/viewport-layout";
 
 export type TransformOperation = "translate" | "rotate" | "scale";
@@ -42,7 +45,10 @@ export interface NoEntityRotationState {
   kind: "none";
 }
 
-export type EntityTransformRotationState = NoEntityRotationState | YawEntityRotationState | DirectionEntityRotationState;
+export type EntityTransformRotationState =
+  | NoEntityRotationState
+  | YawEntityRotationState
+  | DirectionEntityRotationState;
 
 export interface BrushTransformTarget {
   kind: "brush";
@@ -116,7 +122,10 @@ export interface BrushTransformPreview {
   geometry: BoxBrushGeometry;
 }
 
-function areBrushGeometriesEqual(left: BoxBrushGeometry, right: BoxBrushGeometry): boolean {
+function areBrushGeometriesEqual(
+  left: BoxBrushGeometry,
+  right: BoxBrushGeometry
+): boolean {
   return BOX_VERTEX_IDS.every((vertexId) => {
     const leftVertex = left.vertices[vertexId];
     const rightVertex = right.vertices[vertexId];
@@ -137,7 +146,10 @@ export interface EntityTransformPreview {
   rotation: EntityTransformRotationState;
 }
 
-export type TransformPreview = BrushTransformPreview | ModelInstanceTransformPreview | EntityTransformPreview;
+export type TransformPreview =
+  | BrushTransformPreview
+  | ModelInstanceTransformPreview
+  | EntityTransformPreview;
 
 export interface ActiveTransformSession {
   kind: "active";
@@ -170,7 +182,9 @@ function areVec3Equal(left: Vec3, right: Vec3): boolean {
   return left.x === right.x && left.y === right.y && left.z === right.z;
 }
 
-function cloneEntityTransformRotationState(rotation: EntityTransformRotationState): EntityTransformRotationState {
+function cloneEntityTransformRotationState(
+  rotation: EntityTransformRotationState
+): EntityTransformRotationState {
   switch (rotation.kind) {
     case "none":
       return {
@@ -189,7 +203,10 @@ function cloneEntityTransformRotationState(rotation: EntityTransformRotationStat
   }
 }
 
-function areEntityTransformRotationsEqual(left: EntityTransformRotationState, right: EntityTransformRotationState): boolean {
+function areEntityTransformRotationsEqual(
+  left: EntityTransformRotationState,
+  right: EntityTransformRotationState
+): boolean {
   if (left.kind !== right.kind) {
     return false;
   }
@@ -200,7 +217,10 @@ function areEntityTransformRotationsEqual(left: EntityTransformRotationState, ri
     case "yaw":
       return right.kind === "yaw" && left.yawDegrees === right.yawDegrees;
     case "direction":
-      return right.kind === "direction" && areVec3Equal(left.direction, right.direction);
+      return (
+        right.kind === "direction" &&
+        areVec3Equal(left.direction, right.direction)
+      );
   }
 }
 
@@ -266,12 +286,16 @@ export function cloneTransformTarget(target: TransformTarget): TransformTarget {
         entityId: target.entityId,
         entityKind: target.entityKind,
         initialPosition: cloneVec3(target.initialPosition),
-        initialRotation: cloneEntityTransformRotationState(target.initialRotation)
+        initialRotation: cloneEntityTransformRotationState(
+          target.initialRotation
+        )
       };
   }
 }
 
-export function cloneTransformPreview(preview: TransformPreview): TransformPreview {
+export function cloneTransformPreview(
+  preview: TransformPreview
+): TransformPreview {
   switch (preview.kind) {
     case "brush":
       return {
@@ -297,7 +321,9 @@ export function cloneTransformPreview(preview: TransformPreview): TransformPrevi
   }
 }
 
-export function cloneTransformSession(session: TransformSessionState): TransformSessionState {
+export function cloneTransformSession(
+  session: TransformSessionState
+): TransformSessionState {
   if (session.kind === "none") {
     return session;
   }
@@ -315,7 +341,10 @@ export function cloneTransformSession(session: TransformSessionState): Transform
   };
 }
 
-export function areTransformSessionsEqual(left: TransformSessionState, right: TransformSessionState): boolean {
+export function areTransformSessionsEqual(
+  left: TransformSessionState,
+  right: TransformSessionState
+): boolean {
   if (left.kind !== right.kind) {
     return false;
   }
@@ -336,7 +365,10 @@ export function areTransformSessionsEqual(left: TransformSessionState, right: Tr
   );
 }
 
-function areTransformTargetsEqual(left: TransformTarget, right: TransformTarget): boolean {
+function areTransformTargetsEqual(
+  left: TransformTarget,
+  right: TransformTarget
+): boolean {
   if (left.kind !== right.kind) {
     return false;
   }
@@ -347,7 +379,10 @@ function areTransformTargetsEqual(left: TransformTarget, right: TransformTarget)
         right.kind === "brush" &&
         left.brushId === right.brushId &&
         areVec3Equal(left.initialCenter, right.initialCenter) &&
-        areVec3Equal(left.initialRotationDegrees, right.initialRotationDegrees) &&
+        areVec3Equal(
+          left.initialRotationDegrees,
+          right.initialRotationDegrees
+        ) &&
         areVec3Equal(left.initialSize, right.initialSize) &&
         areBrushGeometriesEqual(left.initialGeometry, right.initialGeometry)
       );
@@ -357,7 +392,10 @@ function areTransformTargetsEqual(left: TransformTarget, right: TransformTarget)
         left.brushId === right.brushId &&
         left.faceId === right.faceId &&
         areVec3Equal(left.initialCenter, right.initialCenter) &&
-        areVec3Equal(left.initialRotationDegrees, right.initialRotationDegrees) &&
+        areVec3Equal(
+          left.initialRotationDegrees,
+          right.initialRotationDegrees
+        ) &&
         areVec3Equal(left.initialSize, right.initialSize) &&
         areBrushGeometriesEqual(left.initialGeometry, right.initialGeometry)
       );
@@ -367,7 +405,10 @@ function areTransformTargetsEqual(left: TransformTarget, right: TransformTarget)
         left.brushId === right.brushId &&
         left.edgeId === right.edgeId &&
         areVec3Equal(left.initialCenter, right.initialCenter) &&
-        areVec3Equal(left.initialRotationDegrees, right.initialRotationDegrees) &&
+        areVec3Equal(
+          left.initialRotationDegrees,
+          right.initialRotationDegrees
+        ) &&
         areVec3Equal(left.initialSize, right.initialSize) &&
         areBrushGeometriesEqual(left.initialGeometry, right.initialGeometry)
       );
@@ -377,7 +418,10 @@ function areTransformTargetsEqual(left: TransformTarget, right: TransformTarget)
         left.brushId === right.brushId &&
         left.vertexId === right.vertexId &&
         areVec3Equal(left.initialCenter, right.initialCenter) &&
-        areVec3Equal(left.initialRotationDegrees, right.initialRotationDegrees) &&
+        areVec3Equal(
+          left.initialRotationDegrees,
+          right.initialRotationDegrees
+        ) &&
         areVec3Equal(left.initialSize, right.initialSize) &&
         areBrushGeometriesEqual(left.initialGeometry, right.initialGeometry)
       );
@@ -387,7 +431,10 @@ function areTransformTargetsEqual(left: TransformTarget, right: TransformTarget)
         left.modelInstanceId === right.modelInstanceId &&
         left.assetId === right.assetId &&
         areVec3Equal(left.initialPosition, right.initialPosition) &&
-        areVec3Equal(left.initialRotationDegrees, right.initialRotationDegrees) &&
+        areVec3Equal(
+          left.initialRotationDegrees,
+          right.initialRotationDegrees
+        ) &&
         areVec3Equal(left.initialScale, right.initialScale)
       );
     case "entity":
@@ -396,12 +443,18 @@ function areTransformTargetsEqual(left: TransformTarget, right: TransformTarget)
         left.entityId === right.entityId &&
         left.entityKind === right.entityKind &&
         areVec3Equal(left.initialPosition, right.initialPosition) &&
-        areEntityTransformRotationsEqual(left.initialRotation, right.initialRotation)
+        areEntityTransformRotationsEqual(
+          left.initialRotation,
+          right.initialRotation
+        )
       );
   }
 }
 
-function areTransformPreviewsEqual(left: TransformPreview, right: TransformPreview): boolean {
+function areTransformPreviewsEqual(
+  left: TransformPreview,
+  right: TransformPreview
+): boolean {
   if (left.kind !== right.kind) {
     return false;
   }
@@ -423,7 +476,11 @@ function areTransformPreviewsEqual(left: TransformPreview, right: TransformPrevi
         areVec3Equal(left.scale, right.scale)
       );
     case "entity":
-      return right.kind === "entity" && areVec3Equal(left.position, right.position) && areEntityTransformRotationsEqual(left.rotation, right.rotation);
+      return (
+        right.kind === "entity" &&
+        areVec3Equal(left.position, right.position) &&
+        areEntityTransformRotationsEqual(left.rotation, right.rotation)
+      );
   }
 }
 
@@ -448,7 +505,9 @@ export function createTransformSession(options: {
   };
 }
 
-export function createTransformPreviewFromTarget(target: TransformTarget): TransformPreview {
+export function createTransformPreviewFromTarget(
+  target: TransformTarget
+): TransformPreview {
   switch (target.kind) {
     case "brush":
     case "brushFace":
@@ -477,7 +536,9 @@ export function createTransformPreviewFromTarget(target: TransformTarget): Trans
   }
 }
 
-export function doesTransformSessionChangeTarget(session: ActiveTransformSession): boolean {
+export function doesTransformSessionChangeTarget(
+  session: ActiveTransformSession
+): boolean {
   switch (session.target.kind) {
     case "brush":
     case "brushFace":
@@ -486,27 +547,47 @@ export function doesTransformSessionChangeTarget(session: ActiveTransformSession
       return (
         session.preview.kind === "brush" &&
         (!areVec3Equal(session.preview.center, session.target.initialCenter) ||
-          !areVec3Equal(session.preview.rotationDegrees, session.target.initialRotationDegrees) ||
+          !areVec3Equal(
+            session.preview.rotationDegrees,
+            session.target.initialRotationDegrees
+          ) ||
           !areVec3Equal(session.preview.size, session.target.initialSize) ||
-          !areBrushGeometriesEqual(session.preview.geometry, session.target.initialGeometry))
+          !areBrushGeometriesEqual(
+            session.preview.geometry,
+            session.target.initialGeometry
+          ))
       );
     case "modelInstance":
       return (
         session.preview.kind === "modelInstance" &&
-        (!areVec3Equal(session.preview.position, session.target.initialPosition) ||
-          !areVec3Equal(session.preview.rotationDegrees, session.target.initialRotationDegrees) ||
+        (!areVec3Equal(
+          session.preview.position,
+          session.target.initialPosition
+        ) ||
+          !areVec3Equal(
+            session.preview.rotationDegrees,
+            session.target.initialRotationDegrees
+          ) ||
           !areVec3Equal(session.preview.scale, session.target.initialScale))
       );
     case "entity":
       return (
         session.preview.kind === "entity" &&
-        (!areVec3Equal(session.preview.position, session.target.initialPosition) ||
-          !areEntityTransformRotationsEqual(session.preview.rotation, session.target.initialRotation))
+        (!areVec3Equal(
+          session.preview.position,
+          session.target.initialPosition
+        ) ||
+          !areEntityTransformRotationsEqual(
+            session.preview.rotation,
+            session.target.initialRotation
+          ))
       );
   }
 }
 
-export function getTransformOperationLabel(operation: TransformOperation): string {
+export function getTransformOperationLabel(
+  operation: TransformOperation
+): string {
   switch (operation) {
     case "translate":
       return "Move";
@@ -521,7 +602,9 @@ export function getTransformAxisLabel(axis: TransformAxis): string {
   return axis.toUpperCase();
 }
 
-export function getTransformAxisSpaceLabel(axisSpace: TransformAxisSpace): string {
+export function getTransformAxisSpaceLabel(
+  axisSpace: TransformAxisSpace
+): string {
   switch (axisSpace) {
     case "world":
       return "World";
@@ -547,7 +630,9 @@ export function getTransformTargetLabel(target: TransformTarget): string {
   }
 }
 
-export function getSupportedTransformOperations(target: TransformTarget): TransformOperation[] {
+export function getSupportedTransformOperations(
+  target: TransformTarget
+): TransformOperation[] {
   switch (target.kind) {
     case "brush":
     case "brushFace":
@@ -558,25 +643,43 @@ export function getSupportedTransformOperations(target: TransformTarget): Transf
     case "modelInstance":
       return ["translate", "rotate", "scale"];
     case "entity":
-      return target.initialRotation.kind === "none" ? ["translate"] : ["translate", "rotate"];
+      return target.initialRotation.kind === "none"
+        ? ["translate"]
+        : ["translate", "rotate"];
   }
 }
 
-export function supportsTransformOperation(target: TransformTarget, operation: TransformOperation): boolean {
+export function supportsTransformOperation(
+  target: TransformTarget,
+  operation: TransformOperation
+): boolean {
   return getSupportedTransformOperations(target).includes(operation);
 }
 
-export function supportsTransformAxisConstraint(session: ActiveTransformSession, axis: TransformAxis): boolean {
+export function supportsTransformAxisConstraint(
+  session: ActiveTransformSession,
+  axis: TransformAxis
+): boolean {
   switch (session.operation) {
     case "translate":
       return true;
     case "scale":
-      if (session.target.kind === "modelInstance" || session.target.kind === "brush" || session.target.kind === "brushVertex") {
+      if (
+        session.target.kind === "modelInstance" ||
+        session.target.kind === "brush" ||
+        session.target.kind === "brushVertex"
+      ) {
         return session.target.kind !== "brushVertex";
       }
 
       if (session.target.kind === "brushFace") {
-        const normalAxis = session.target.faceId === "posX" || session.target.faceId === "negX" ? "x" : session.target.faceId === "posY" || session.target.faceId === "negY" ? "y" : "z";
+        const normalAxis =
+          session.target.faceId === "posX" || session.target.faceId === "negX"
+            ? "x"
+            : session.target.faceId === "posY" ||
+                session.target.faceId === "negY"
+              ? "y"
+              : "z";
         return axis === normalAxis;
       }
 
@@ -594,12 +697,21 @@ export function supportsTransformAxisConstraint(session: ActiveTransformSession,
 
       return false;
     case "rotate":
-      if (session.target.kind === "entity" && session.target.initialRotation.kind === "yaw") {
+      if (
+        session.target.kind === "entity" &&
+        session.target.initialRotation.kind === "yaw"
+      ) {
         return axis === "y";
       }
 
       if (session.target.kind === "brushFace") {
-        const normalAxis = session.target.faceId === "posX" || session.target.faceId === "negX" ? "x" : session.target.faceId === "posY" || session.target.faceId === "negY" ? "y" : "z";
+        const normalAxis =
+          session.target.faceId === "posX" || session.target.faceId === "negX"
+            ? "x"
+            : session.target.faceId === "posY" ||
+                session.target.faceId === "negY"
+              ? "y"
+              : "z";
         return axis === normalAxis;
       }
 
@@ -623,7 +735,10 @@ export function supportsTransformAxisConstraint(session: ActiveTransformSession,
   }
 }
 
-export function supportsLocalTransformAxisConstraint(session: ActiveTransformSession, axis: TransformAxis): boolean {
+export function supportsLocalTransformAxisConstraint(
+  session: ActiveTransformSession,
+  axis: TransformAxis
+): boolean {
   if (!supportsTransformAxisConstraint(session, axis)) {
     return false;
   }
@@ -645,7 +760,9 @@ export function supportsLocalTransformAxisConstraint(session: ActiveTransformSes
   }
 }
 
-function resolveEntityRotation(entity: EntityInstance): EntityTransformRotationState {
+function resolveEntityRotation(
+  entity: EntityInstance
+): EntityTransformRotationState {
   switch (entity.kind) {
     case "playerStart":
     case "teleportTarget":
@@ -668,7 +785,10 @@ function resolveEntityRotation(entity: EntityInstance): EntityTransformRotationS
   }
 }
 
-function createBrushTransformTarget(document: SceneDocument, brushId: string): TransformTargetResolution {
+function createBrushTransformTarget(
+  document: SceneDocument,
+  brushId: string
+): TransformTargetResolution {
   const brush = document.brushes[brushId];
 
   if (brush === undefined || brush.kind !== "box") {
@@ -691,10 +811,17 @@ function createBrushTransformTarget(document: SceneDocument, brushId: string): T
   };
 }
 
-function createBrushFaceTransformTarget(document: SceneDocument, brushId: string, faceId: BoxFaceId): TransformTargetResolution {
+function createBrushFaceTransformTarget(
+  document: SceneDocument,
+  brushId: string,
+  faceId: BoxFaceId
+): TransformTargetResolution {
   const brushResolution = createBrushTransformTarget(document, brushId);
 
-  if (brushResolution.target === null || brushResolution.target.kind !== "brush") {
+  if (
+    brushResolution.target === null ||
+    brushResolution.target.kind !== "brush"
+  ) {
     return brushResolution;
   }
 
@@ -704,18 +831,29 @@ function createBrushFaceTransformTarget(document: SceneDocument, brushId: string
       brushId,
       faceId,
       initialCenter: cloneVec3(brushResolution.target.initialCenter),
-      initialRotationDegrees: cloneVec3(brushResolution.target.initialRotationDegrees),
+      initialRotationDegrees: cloneVec3(
+        brushResolution.target.initialRotationDegrees
+      ),
       initialSize: cloneVec3(brushResolution.target.initialSize),
-      initialGeometry: cloneBoxBrushGeometry(brushResolution.target.initialGeometry)
+      initialGeometry: cloneBoxBrushGeometry(
+        brushResolution.target.initialGeometry
+      )
     },
     message: null
   };
 }
 
-function createBrushEdgeTransformTarget(document: SceneDocument, brushId: string, edgeId: BoxEdgeId): TransformTargetResolution {
+function createBrushEdgeTransformTarget(
+  document: SceneDocument,
+  brushId: string,
+  edgeId: BoxEdgeId
+): TransformTargetResolution {
   const brushResolution = createBrushTransformTarget(document, brushId);
 
-  if (brushResolution.target === null || brushResolution.target.kind !== "brush") {
+  if (
+    brushResolution.target === null ||
+    brushResolution.target.kind !== "brush"
+  ) {
     return brushResolution;
   }
 
@@ -725,18 +863,29 @@ function createBrushEdgeTransformTarget(document: SceneDocument, brushId: string
       brushId,
       edgeId,
       initialCenter: cloneVec3(brushResolution.target.initialCenter),
-      initialRotationDegrees: cloneVec3(brushResolution.target.initialRotationDegrees),
+      initialRotationDegrees: cloneVec3(
+        brushResolution.target.initialRotationDegrees
+      ),
       initialSize: cloneVec3(brushResolution.target.initialSize),
-      initialGeometry: cloneBoxBrushGeometry(brushResolution.target.initialGeometry)
+      initialGeometry: cloneBoxBrushGeometry(
+        brushResolution.target.initialGeometry
+      )
     },
     message: null
   };
 }
 
-function createBrushVertexTransformTarget(document: SceneDocument, brushId: string, vertexId: BoxVertexId): TransformTargetResolution {
+function createBrushVertexTransformTarget(
+  document: SceneDocument,
+  brushId: string,
+  vertexId: BoxVertexId
+): TransformTargetResolution {
   const brushResolution = createBrushTransformTarget(document, brushId);
 
-  if (brushResolution.target === null || brushResolution.target.kind !== "brush") {
+  if (
+    brushResolution.target === null ||
+    brushResolution.target.kind !== "brush"
+  ) {
     return brushResolution;
   }
 
@@ -746,15 +895,22 @@ function createBrushVertexTransformTarget(document: SceneDocument, brushId: stri
       brushId,
       vertexId,
       initialCenter: cloneVec3(brushResolution.target.initialCenter),
-      initialRotationDegrees: cloneVec3(brushResolution.target.initialRotationDegrees),
+      initialRotationDegrees: cloneVec3(
+        brushResolution.target.initialRotationDegrees
+      ),
       initialSize: cloneVec3(brushResolution.target.initialSize),
-      initialGeometry: cloneBoxBrushGeometry(brushResolution.target.initialGeometry)
+      initialGeometry: cloneBoxBrushGeometry(
+        brushResolution.target.initialGeometry
+      )
     },
     message: null
   };
 }
 
-function createEntityTransformTarget(document: SceneDocument, entityId: string): TransformTargetResolution {
+function createEntityTransformTarget(
+  document: SceneDocument,
+  entityId: string
+): TransformTargetResolution {
   const entity = document.entities[entityId];
 
   if (entity === undefined) {
@@ -778,7 +934,10 @@ function createEntityTransformTarget(document: SceneDocument, entityId: string):
   };
 }
 
-function createModelInstanceTransformTarget(document: SceneDocument, modelInstanceId: string): TransformTargetResolution {
+function createModelInstanceTransformTarget(
+  document: SceneDocument,
+  modelInstanceId: string
+): TransformTargetResolution {
   const modelInstance = document.modelInstances[modelInstanceId];
 
   if (modelInstance === undefined) {
@@ -812,7 +971,8 @@ export function resolveTransformTarget(
     case "none":
       return {
         target: null,
-        message: "Select a single brush, entity, or model instance before transforming it."
+        message:
+          "Select a single brush, entity, or model instance before transforming it."
       };
     case "brushFace":
       if (whiteboxSelectionMode !== "face") {
@@ -822,7 +982,11 @@ export function resolveTransformTarget(
         };
       }
 
-      return createBrushFaceTransformTarget(document, selection.brushId, selection.faceId);
+      return createBrushFaceTransformTarget(
+        document,
+        selection.brushId,
+        selection.faceId
+      );
     case "brushEdge":
       if (whiteboxSelectionMode !== "edge") {
         return {
@@ -831,16 +995,25 @@ export function resolveTransformTarget(
         };
       }
 
-      return createBrushEdgeTransformTarget(document, selection.brushId, selection.edgeId);
+      return createBrushEdgeTransformTarget(
+        document,
+        selection.brushId,
+        selection.edgeId
+      );
     case "brushVertex":
       if (whiteboxSelectionMode !== "vertex") {
         return {
           target: null,
-          message: "Switch to Vertex mode to transform a selected whitebox vertex."
+          message:
+            "Switch to Vertex mode to transform a selected whitebox vertex."
         };
       }
 
-      return createBrushVertexTransformTarget(document, selection.brushId, selection.vertexId);
+      return createBrushVertexTransformTarget(
+        document,
+        selection.brushId,
+        selection.vertexId
+      );
     case "brushes":
       if (whiteboxSelectionMode !== "object") {
         return {

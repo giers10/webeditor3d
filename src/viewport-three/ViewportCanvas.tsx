@@ -6,7 +6,10 @@ import type { ProjectAssetRecord } from "../assets/project-assets";
 import type { EditorSelection } from "../core/selection";
 import { getWhiteboxSelectionFeedbackLabel } from "../core/whitebox-selection-feedback";
 import type { ToolMode } from "../core/tool-mode";
-import { getWhiteboxSelectionModeLabel, type WhiteboxSelectionMode } from "../core/whitebox-selection-mode";
+import {
+  getWhiteboxSelectionModeLabel,
+  type WhiteboxSelectionMode
+} from "../core/whitebox-selection-mode";
 import type { Vec3 } from "../core/vector";
 import {
   getTransformAxisLabel,
@@ -28,7 +31,10 @@ import {
   getViewportViewModeLabel,
   type ViewportViewMode
 } from "./viewport-view-modes";
-import type { CreationViewportToolPreview, ViewportToolPreview } from "./viewport-transient-state";
+import type {
+  CreationViewportToolPreview,
+  ViewportToolPreview
+} from "./viewport-transient-state";
 
 import { ViewportHost } from "./viewport-host";
 
@@ -97,7 +103,9 @@ export function ViewportCanvas({
   const hostRef = useRef<ViewportHost | null>(null);
   const shouldRenderPanel = layoutMode === "quad" || isActivePanel;
   const [viewportMessage, setViewportMessage] = useState<string | null>(null);
-  const [hoveredWhiteboxLabel, setHoveredWhiteboxLabel] = useState<string | null>(null);
+  const [hoveredWhiteboxLabel, setHoveredWhiteboxLabel] = useState<
+    string | null
+  >(null);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -119,7 +127,10 @@ export function ViewportCanvas({
         hostRef.current = null;
       };
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Viewport initialization failed.";
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Viewport initialization failed.";
       setViewportMessage(`Viewport initialization failed: ${message}`);
       return;
     }
@@ -138,11 +149,18 @@ export function ViewportCanvas({
   }, [world]);
 
   useEffect(() => {
-    hostRef.current?.updateAssets(projectAssets, loadedModelAssets, loadedImageAssets);
+    hostRef.current?.updateAssets(
+      projectAssets,
+      loadedModelAssets,
+      loadedImageAssets
+    );
   }, [projectAssets, loadedModelAssets, loadedImageAssets]);
 
   useEffect(() => {
-    hostRef.current?.setWhiteboxSnapSettings(whiteboxSnapEnabled, whiteboxSnapStep);
+    hostRef.current?.setWhiteboxSnapSettings(
+      whiteboxSnapEnabled,
+      whiteboxSnapStep
+    );
   }, [whiteboxSnapEnabled, whiteboxSnapStep]);
 
   useEffect(() => {
@@ -174,7 +192,9 @@ export function ViewportCanvas({
   }, [onSelectionChange]);
 
   useEffect(() => {
-    hostRef.current?.setWhiteboxHoverLabelChangeHandler(setHoveredWhiteboxLabel);
+    hostRef.current?.setWhiteboxHoverLabelChangeHandler(
+      setHoveredWhiteboxLabel
+    );
   }, []);
 
   useEffect(() => {
@@ -215,7 +235,11 @@ export function ViewportCanvas({
   }, [toolMode]);
 
   useEffect(() => {
-    hostRef.current?.setCreationPreview(toolMode === "create" && toolPreview.kind === "create" ? toolPreview : null);
+    hostRef.current?.setCreationPreview(
+      toolMode === "create" && toolPreview.kind === "create"
+        ? toolPreview
+        : null
+    );
   }, [toolMode, toolPreview]);
 
   useEffect(() => {
@@ -230,12 +254,23 @@ export function ViewportCanvas({
     hostRef.current?.focusSelection(sceneDocument, focusSelection);
   }, [focusRequestId, focusSelection, sceneDocument]);
 
-  const previewVisible = toolMode === "create" && toolPreview.kind === "create" && toolPreview.center !== null;
+  const previewVisible =
+    toolMode === "create" &&
+    toolPreview.kind === "create" &&
+    toolPreview.center !== null;
   const transformPreviewVisible = transformSession.kind === "active";
   const selectionModeVisible = toolMode === "select";
-  const selectedWhiteboxLabel = selectionModeVisible ? getWhiteboxSelectionFeedbackLabel(sceneDocument, selection) : null;
+  const selectedWhiteboxLabel = selectionModeVisible
+    ? getWhiteboxSelectionFeedbackLabel(sceneDocument, selection)
+    : null;
   const showViewModeOverlay = layoutMode === "quad";
-  const showOverlay = showViewModeOverlay || selectionModeVisible || previewVisible || transformPreviewVisible || selectedWhiteboxLabel !== null || hoveredWhiteboxLabel !== null;
+  const showOverlay =
+    showViewModeOverlay ||
+    selectionModeVisible ||
+    previewVisible ||
+    transformPreviewVisible ||
+    selectedWhiteboxLabel !== null ||
+    hoveredWhiteboxLabel !== null;
 
   return (
     <div
@@ -250,14 +285,25 @@ export function ViewportCanvas({
               backgroundColor: "#000000",
               backgroundImage: "none"
             }
-          : createWorldBackgroundStyle(world.background, world.background.mode === "image" ? loadedImageAssets[world.background.assetId]?.sourceUrl ?? null : null)
+          : createWorldBackgroundStyle(
+              world.background,
+              world.background.mode === "image"
+                ? (loadedImageAssets[world.background.assetId]?.sourceUrl ??
+                    null)
+                : null
+            )
       }
     >
       {!showOverlay ? null : (
-        <div className="viewport-canvas__overlay" data-testid={`viewport-overlay-${panelId}`}>
+        <div
+          className="viewport-canvas__overlay"
+          data-testid={`viewport-overlay-${panelId}`}
+        >
           {!showViewModeOverlay ? null : (
             <div className="viewport-canvas__overlay-badges">
-              <div className="viewport-canvas__overlay-badge viewport-canvas__overlay-badge--view">{getViewportViewModeLabel(viewMode)}</div>
+              <div className="viewport-canvas__overlay-badge viewport-canvas__overlay-badge--view">
+                {getViewportViewModeLabel(viewMode)}
+              </div>
               {!selectionModeVisible ? null : (
                 <div
                   className="viewport-canvas__overlay-badge viewport-canvas__overlay-badge--selection"
@@ -279,12 +325,19 @@ export function ViewportCanvas({
             </div>
           )}
           {!previewVisible ? null : (
-            <div className="viewport-canvas__overlay-preview" data-testid={`viewport-snap-preview-${panelId}`}>
-              Preview: {(toolPreview.center as Vec3).x}, {(toolPreview.center as Vec3).y}, {(toolPreview.center as Vec3).z}
+            <div
+              className="viewport-canvas__overlay-preview"
+              data-testid={`viewport-snap-preview-${panelId}`}
+            >
+              Preview: {(toolPreview.center as Vec3).x},{" "}
+              {(toolPreview.center as Vec3).y}, {(toolPreview.center as Vec3).z}
             </div>
           )}
           {!transformPreviewVisible ? null : (
-            <div className="viewport-canvas__overlay-preview" data-testid={`viewport-transform-preview-${panelId}`}>
+            <div
+              className="viewport-canvas__overlay-preview"
+              data-testid={`viewport-transform-preview-${panelId}`}
+            >
               {transformSession.kind !== "active"
                 ? null
                 : `${transformSession.operation}${
@@ -297,12 +350,18 @@ export function ViewportCanvas({
             </div>
           )}
           {selectedWhiteboxLabel === null ? null : (
-            <div className="viewport-canvas__overlay-preview" data-testid={`viewport-selected-whitebox-${panelId}`}>
+            <div
+              className="viewport-canvas__overlay-preview"
+              data-testid={`viewport-selected-whitebox-${panelId}`}
+            >
               Selected: {selectedWhiteboxLabel}
             </div>
           )}
           {hoveredWhiteboxLabel === null ? null : (
-            <div className="viewport-canvas__overlay-preview" data-testid={`viewport-hovered-whitebox-${panelId}`}>
+            <div
+              className="viewport-canvas__overlay-preview"
+              data-testid={`viewport-hovered-whitebox-${panelId}`}
+            >
               Hover: {hoveredWhiteboxLabel}
             </div>
           )}
@@ -311,7 +370,9 @@ export function ViewportCanvas({
 
       {viewportMessage === null ? null : (
         <div className="viewport-canvas__fallback" role="status">
-          <div className="viewport-canvas__fallback-title">Viewport Unavailable</div>
+          <div className="viewport-canvas__fallback-title">
+            Viewport Unavailable
+          </div>
           <div>{viewportMessage}</div>
           {toolMode !== "create" || toolPreview.kind !== "create" ? null : (
             <button

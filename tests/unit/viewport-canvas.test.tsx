@@ -1,11 +1,21 @@
 import { render, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { createInactiveTransformSession, type ActiveTransformSession, type TransformSessionState } from "../../src/core/transform-session";
+import {
+  createInactiveTransformSession,
+  type ActiveTransformSession,
+  type TransformSessionState
+} from "../../src/core/transform-session";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
 import { ViewportCanvas } from "../../src/viewport-three/ViewportCanvas";
-import { createDefaultViewportPanelCameraState, type ViewportPanelCameraState } from "../../src/viewport-three/viewport-layout";
-import type { CreationViewportToolPreview, ViewportToolPreview } from "../../src/viewport-three/viewport-transient-state";
+import {
+  createDefaultViewportPanelCameraState,
+  type ViewportPanelCameraState
+} from "../../src/viewport-three/viewport-layout";
+import type {
+  CreationViewportToolPreview,
+  ViewportToolPreview
+} from "../../src/viewport-three/viewport-transient-state";
 
 const { MockViewportHost, viewportHostInstances } = vi.hoisted(() => {
   const viewportHostInstances: Array<{
@@ -81,7 +91,9 @@ vi.mock("../../src/viewport-three/viewport-host", () => ({
 describe("ViewportCanvas", () => {
   beforeEach(() => {
     viewportHostInstances.length = 0;
-    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockImplementation(() => ({}) as never);
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockImplementation(
+      () => ({}) as never
+    );
   });
 
   afterEach(() => {
@@ -100,10 +112,18 @@ describe("ViewportCanvas", () => {
       center: null
     };
     const onCommitCreation = vi.fn(() => true);
-    const onCameraStateChange = vi.fn((_cameraState: ViewportPanelCameraState) => undefined);
-    const onToolPreviewChange = vi.fn((_toolPreview: ViewportToolPreview) => undefined);
-    const onTransformSessionChange = vi.fn((_transformSession: TransformSessionState) => undefined);
-    const onTransformCommit = vi.fn((_transformSession: ActiveTransformSession) => undefined);
+    const onCameraStateChange = vi.fn(
+      (_cameraState: ViewportPanelCameraState) => undefined
+    );
+    const onToolPreviewChange = vi.fn(
+      (_toolPreview: ViewportToolPreview) => undefined
+    );
+    const onTransformSessionChange = vi.fn(
+      (_transformSession: TransformSessionState) => undefined
+    );
+    const onTransformCommit = vi.fn(
+      (_transformSession: ActiveTransformSession) => undefined
+    );
     const onTransformCancel = vi.fn(() => undefined);
     const onSelectionChange = vi.fn();
 
@@ -142,10 +162,13 @@ describe("ViewportCanvas", () => {
 
     await waitFor(() => {
       expect(viewportHostInstances).toHaveLength(1);
-      expect(viewportHostInstances[0].setCreationCommitHandler).toHaveBeenCalledTimes(1);
+      expect(
+        viewportHostInstances[0].setCreationCommitHandler
+      ).toHaveBeenCalledTimes(1);
     });
 
-    const registeredHandler = viewportHostInstances[0].setCreationCommitHandler.mock.calls[0][0] as (
+    const registeredHandler = viewportHostInstances[0].setCreationCommitHandler
+      .mock.calls[0][0] as (
       toolPreview: CreationViewportToolPreview
     ) => boolean;
 
@@ -156,7 +179,9 @@ describe("ViewportCanvas", () => {
   it("applies and subscribes to persisted camera state through the viewport host", async () => {
     const sceneDocument = createEmptySceneDocument();
     const cameraState = createDefaultViewportPanelCameraState();
-    const onCameraStateChange = vi.fn((_cameraState: ViewportPanelCameraState) => undefined);
+    const onCameraStateChange = vi.fn(
+      (_cameraState: ViewportPanelCameraState) => undefined
+    );
 
     render(
       <ViewportCanvas
@@ -193,8 +218,12 @@ describe("ViewportCanvas", () => {
 
     await waitFor(() => {
       expect(viewportHostInstances).toHaveLength(1);
-      expect(viewportHostInstances[0].setCameraState).toHaveBeenCalledWith(cameraState);
-      expect(viewportHostInstances[0].setCameraStateChangeHandler).toHaveBeenCalledTimes(1);
+      expect(viewportHostInstances[0].setCameraState).toHaveBeenCalledWith(
+        cameraState
+      );
+      expect(
+        viewportHostInstances[0].setCameraStateChangeHandler
+      ).toHaveBeenCalledTimes(1);
     });
   });
 });

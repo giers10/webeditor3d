@@ -5,8 +5,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { App } from "../../src/app/App";
 import { createEditorStore } from "../../src/app/editor-store";
 import { createModelInstance } from "../../src/assets/model-instances";
-import { createProjectAssetStorageKey, type ModelAssetRecord } from "../../src/assets/project-assets";
-import type { ActiveTransformSession, TransformSessionState } from "../../src/core/transform-session";
+import {
+  createProjectAssetStorageKey,
+  type ModelAssetRecord
+} from "../../src/assets/project-assets";
+import type {
+  ActiveTransformSession,
+  TransformSessionState
+} from "../../src/core/transform-session";
 import { createBoxBrush } from "../../src/document/brushes";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
 import { createPlayerStartEntity } from "../../src/entities/entity-instances";
@@ -132,7 +138,9 @@ const modelAsset = {
 } satisfies ModelAssetRecord;
 
 function getTopLeftViewportHost() {
-  const viewportHost = viewportHostInstances.find((instance) => instance.panelId === "topLeft");
+  const viewportHost = viewportHostInstances.find(
+    (instance) => instance.panelId === "topLeft"
+  );
 
   if (viewportHost === undefined) {
     throw new Error("Top-left viewport host was not mounted.");
@@ -193,7 +201,9 @@ async function renderTransformFixtureApp() {
 
   await waitFor(() => {
     expect(viewportHostInstances.length).toBeGreaterThan(0);
-    expect(getTopLeftViewportHost().setTransformCommitHandler).toHaveBeenCalled();
+    expect(
+      getTopLeftViewportHost().setTransformCommitHandler
+    ).toHaveBeenCalled();
   });
 
   return {
@@ -215,8 +225,11 @@ async function renderQuadTransformFixtureApp() {
   return fixture;
 }
 
-function getLatestTransformSession(store: ReturnType<typeof createEditorStore>): ActiveTransformSession {
-  const transformSession = store.getState().viewportTransientState.transformSession;
+function getLatestTransformSession(
+  store: ReturnType<typeof createEditorStore>
+): ActiveTransformSession {
+  const transformSession =
+    store.getState().viewportTransientState.transformSession;
 
   if (transformSession.kind !== "active") {
     throw new Error("Expected an active transform session.");
@@ -229,7 +242,9 @@ function emitTransformPreview(
   viewportHost: ReturnType<typeof getTopLeftViewportHost>,
   transformSession: ActiveTransformSession
 ) {
-  const handler = viewportHost.setTransformSessionChangeHandler.mock.calls.at(-1)?.[0] as ((transformSession: TransformSessionState) => void) | undefined;
+  const handler = viewportHost.setTransformSessionChangeHandler.mock.calls.at(
+    -1
+  )?.[0] as ((transformSession: TransformSessionState) => void) | undefined;
 
   if (handler === undefined) {
     throw new Error("Transform session change handler was not registered.");
@@ -240,8 +255,13 @@ function emitTransformPreview(
   });
 }
 
-function commitTransform(viewportHost: ReturnType<typeof getTopLeftViewportHost>, transformSession: ActiveTransformSession) {
-  const handler = viewportHost.setTransformCommitHandler.mock.calls.at(-1)?.[0] as ((transformSession: ActiveTransformSession) => void) | undefined;
+function commitTransform(
+  viewportHost: ReturnType<typeof getTopLeftViewportHost>,
+  transformSession: ActiveTransformSession
+) {
+  const handler = viewportHost.setTransformCommitHandler.mock.calls.at(
+    -1
+  )?.[0] as ((transformSession: ActiveTransformSession) => void) | undefined;
 
   if (handler === undefined) {
     throw new Error("Transform commit handler was not registered.");
@@ -252,8 +272,13 @@ function commitTransform(viewportHost: ReturnType<typeof getTopLeftViewportHost>
   });
 }
 
-function emitCameraStateChange(viewportHost: ReturnType<typeof getTopLeftViewportHost>, cameraState: ViewportPanelCameraState) {
-  const handler = viewportHost.setCameraStateChangeHandler.mock.calls.at(-1)?.[0] as ((cameraState: ViewportPanelCameraState) => void) | undefined;
+function emitCameraStateChange(
+  viewportHost: ReturnType<typeof getTopLeftViewportHost>,
+  cameraState: ViewportPanelCameraState
+) {
+  const handler = viewportHost.setCameraStateChangeHandler.mock.calls.at(
+    -1
+  )?.[0] as ((cameraState: ViewportPanelCameraState) => void) | undefined;
 
   if (handler === undefined) {
     throw new Error("Camera state change handler was not registered.");
@@ -267,7 +292,9 @@ function emitCameraStateChange(viewportHost: ReturnType<typeof getTopLeftViewpor
 describe("transform foundation integration", () => {
   beforeEach(() => {
     viewportHostInstances.length = 0;
-    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockImplementation(() => ({}) as never);
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockImplementation(
+      () => ({}) as never
+    );
   });
 
   afterEach(() => {
@@ -278,7 +305,9 @@ describe("transform foundation integration", () => {
     const { store, brush, viewportHost } = await renderTransformFixtureApp();
 
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: /^Brush Transform Fixture$/ }));
+      fireEvent.click(
+        screen.getByRole("button", { name: /^Brush Transform Fixture$/ })
+      );
     });
 
     fireEvent.keyDown(window, {
@@ -286,7 +315,9 @@ describe("transform foundation integration", () => {
       code: "KeyG"
     });
 
-    expect(store.getState().viewportTransientState.transformSession).toMatchObject({
+    expect(
+      store.getState().viewportTransientState.transformSession
+    ).toMatchObject({
       kind: "active",
       operation: "translate",
       axisConstraint: null,
@@ -301,7 +332,9 @@ describe("transform foundation integration", () => {
       code: "KeyX"
     });
 
-    expect(store.getState().viewportTransientState.transformSession).toMatchObject({
+    expect(
+      store.getState().viewportTransientState.transformSession
+    ).toMatchObject({
       kind: "active",
       axisConstraint: "x"
     });
@@ -342,7 +375,9 @@ describe("transform foundation integration", () => {
     const { store, brush, viewportHost } = await renderTransformFixtureApp();
 
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: /^Brush Transform Fixture$/ }));
+      fireEvent.click(
+        screen.getByRole("button", { name: /^Brush Transform Fixture$/ })
+      );
     });
 
     fireEvent.click(screen.getByTestId("transform-rotate-button"));
@@ -369,11 +404,13 @@ describe("transform foundation integration", () => {
     emitTransformPreview(viewportHost, rotatePreviewSession);
     commitTransform(viewportHost, rotatePreviewSession);
 
-    expect(store.getState().document.brushes[brush.id].rotationDegrees).toEqual({
-      x: 0,
-      y: 37.5,
-      z: 12.5
-    });
+    expect(store.getState().document.brushes[brush.id].rotationDegrees).toEqual(
+      {
+        x: 0,
+        y: 37.5,
+        z: 12.5
+      }
+    );
 
     fireEvent.click(screen.getByTestId("transform-scale-button"));
 
@@ -425,7 +462,9 @@ describe("transform foundation integration", () => {
     const { store, brush } = await renderTransformFixtureApp();
 
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: /^Brush Transform Fixture$/ }));
+      fireEvent.click(
+        screen.getByRole("button", { name: /^Brush Transform Fixture$/ })
+      );
     });
 
     expect(screen.getByTestId("transform-translate-button")).not.toBeDisabled();
@@ -480,10 +519,13 @@ describe("transform foundation integration", () => {
   });
 
   it("moves an entity through the shared transform controller", async () => {
-    const { store, playerStart, viewportHost } = await renderTransformFixtureApp();
+    const { store, playerStart, viewportHost } =
+      await renderTransformFixtureApp();
 
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: /^Player Start Fixture$/ }));
+      fireEvent.click(
+        screen.getByRole("button", { name: /^Player Start Fixture$/ })
+      );
     });
 
     fireEvent.keyDown(window, {
@@ -520,10 +562,13 @@ describe("transform foundation integration", () => {
   });
 
   it("cancels an active transform with Escape without committing preview changes", async () => {
-    const { store, playerStart, viewportHost } = await renderTransformFixtureApp();
+    const { store, playerStart, viewportHost } =
+      await renderTransformFixtureApp();
 
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: /^Player Start Fixture$/ }));
+      fireEvent.click(
+        screen.getByRole("button", { name: /^Player Start Fixture$/ })
+      );
     });
 
     fireEvent.keyDown(window, {
@@ -555,14 +600,19 @@ describe("transform foundation integration", () => {
     expect(store.getState().viewportTransientState.transformSession).toEqual({
       kind: "none"
     });
-    expect(store.getState().document.entities[playerStart.id]).toEqual(playerStart);
+    expect(store.getState().document.entities[playerStart.id]).toEqual(
+      playerStart
+    );
   });
 
   it("moves a model instance through the shared transform controller", async () => {
-    const { store, modelInstance, viewportHost } = await renderTransformFixtureApp();
+    const { store, modelInstance, viewportHost } =
+      await renderTransformFixtureApp();
 
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: /^Model Transform Fixture$/ }));
+      fireEvent.click(
+        screen.getByRole("button", { name: /^Model Transform Fixture$/ })
+      );
     });
 
     fireEvent.keyDown(window, {
@@ -591,7 +641,9 @@ describe("transform foundation integration", () => {
     emitTransformPreview(viewportHost, previewSession);
     commitTransform(viewportHost, previewSession);
 
-    expect(store.getState().document.modelInstances[modelInstance.id]).toMatchObject({
+    expect(
+      store.getState().document.modelInstances[modelInstance.id]
+    ).toMatchObject({
       position: {
         x: -1,
         y: 0,
@@ -604,7 +656,9 @@ describe("transform foundation integration", () => {
     const { store, brush } = await renderQuadTransformFixtureApp();
 
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: /^Brush Transform Fixture$/ }));
+      fireEvent.click(
+        screen.getByRole("button", { name: /^Brush Transform Fixture$/ })
+      );
     });
 
     fireEvent.pointerMove(screen.getByTestId("viewport-panel-bottomRight"), {
@@ -617,7 +671,9 @@ describe("transform foundation integration", () => {
     });
 
     expect(store.getState().activeViewportPanelId).toBe("bottomRight");
-    expect(store.getState().viewportTransientState.transformSession).toMatchObject({
+    expect(
+      store.getState().viewportTransientState.transformSession
+    ).toMatchObject({
       kind: "active",
       operation: "translate",
       sourcePanelId: "bottomRight",
@@ -632,7 +688,9 @@ describe("transform foundation integration", () => {
     const { store } = await renderTransformFixtureApp();
 
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: /^Brush Transform Fixture$/ }));
+      fireEvent.click(
+        screen.getByRole("button", { name: /^Brush Transform Fixture$/ })
+      );
     });
 
     fireEvent.keyDown(window, {
@@ -644,7 +702,9 @@ describe("transform foundation integration", () => {
       code: "KeyZ"
     });
 
-    expect(store.getState().viewportTransientState.transformSession).toMatchObject({
+    expect(
+      store.getState().viewportTransientState.transformSession
+    ).toMatchObject({
       kind: "active",
       axisConstraint: "z",
       axisConstraintSpace: "world"
@@ -655,12 +715,16 @@ describe("transform foundation integration", () => {
       code: "KeyZ"
     });
 
-    expect(store.getState().viewportTransientState.transformSession).toMatchObject({
+    expect(
+      store.getState().viewportTransientState.transformSession
+    ).toMatchObject({
       kind: "active",
       axisConstraint: "z",
       axisConstraintSpace: "local"
     });
-    expect(screen.getByText(/constrained move to local z\./i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/constrained move to local z\./i)
+    ).toBeInTheDocument();
   });
 
   it("keeps the persisted viewport camera state stable across transform commit, cancel, and delete", async () => {
@@ -681,10 +745,14 @@ describe("transform foundation integration", () => {
 
     emitCameraStateChange(viewportHost, persistedCameraState);
 
-    expect(store.getState().viewportPanels.topLeft.cameraState).toEqual(persistedCameraState);
+    expect(store.getState().viewportPanels.topLeft.cameraState).toEqual(
+      persistedCameraState
+    );
 
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: /^Brush Transform Fixture$/ }));
+      fireEvent.click(
+        screen.getByRole("button", { name: /^Brush Transform Fixture$/ })
+      );
     });
 
     fireEvent.keyDown(window, {
@@ -713,9 +781,13 @@ describe("transform foundation integration", () => {
     });
 
     await waitFor(() => {
-      expect(viewportHost.setCameraState.mock.calls.length).toBeGreaterThan(commitCameraCallCount);
+      expect(viewportHost.setCameraState.mock.calls.length).toBeGreaterThan(
+        commitCameraCallCount
+      );
     });
-    expect(viewportHost.setCameraState.mock.calls.at(-1)?.[0]).toEqual(persistedCameraState);
+    expect(viewportHost.setCameraState.mock.calls.at(-1)?.[0]).toEqual(
+      persistedCameraState
+    );
 
     fireEvent.keyDown(window, {
       key: "g",
@@ -730,9 +802,13 @@ describe("transform foundation integration", () => {
     });
 
     await waitFor(() => {
-      expect(viewportHost.setCameraState.mock.calls.length).toBeGreaterThan(cancelCameraCallCount);
+      expect(viewportHost.setCameraState.mock.calls.length).toBeGreaterThan(
+        cancelCameraCallCount
+      );
     });
-    expect(viewportHost.setCameraState.mock.calls.at(-1)?.[0]).toEqual(persistedCameraState);
+    expect(viewportHost.setCameraState.mock.calls.at(-1)?.[0]).toEqual(
+      persistedCameraState
+    );
 
     vi.spyOn(window, "confirm").mockReturnValue(true);
     const deleteCameraCallCount = viewportHost.setCameraState.mock.calls.length;
@@ -743,9 +819,13 @@ describe("transform foundation integration", () => {
     });
 
     await waitFor(() => {
-      expect(viewportHost.setCameraState.mock.calls.length).toBeGreaterThan(deleteCameraCallCount);
+      expect(viewportHost.setCameraState.mock.calls.length).toBeGreaterThan(
+        deleteCameraCallCount
+      );
     });
-    expect(viewportHost.setCameraState.mock.calls.at(-1)?.[0]).toEqual(persistedCameraState);
+    expect(viewportHost.setCameraState.mock.calls.at(-1)?.[0]).toEqual(
+      persistedCameraState
+    );
   });
 
   it("toggles viewport grid visibility through the shared viewport host path", async () => {
@@ -756,7 +836,9 @@ describe("transform foundation integration", () => {
     fireEvent.click(screen.getByTestId("viewport-grid-toggle"));
 
     await waitFor(() => {
-      expect(viewportHost.setGridVisible.mock.calls.length).toBeGreaterThan(initialCallCount);
+      expect(viewportHost.setGridVisible.mock.calls.length).toBeGreaterThan(
+        initialCallCount
+      );
     });
     expect(viewportHost.setGridVisible.mock.calls.at(-1)?.[0]).toBe(false);
     expect(screen.getByText(/viewport grid hidden\./i)).toBeInTheDocument();

@@ -67,7 +67,10 @@ import {
 } from "../core/transform-session";
 import type { ToolMode } from "../core/tool-mode";
 import type { Vec3 } from "../core/vector";
-import { createModelInstanceRenderGroup, disposeModelInstance } from "../assets/model-instance-rendering";
+import {
+  createModelInstanceRenderGroup,
+  disposeModelInstance
+} from "../assets/model-instance-rendering";
 import type { LoadedModelAsset } from "../assets/gltf-model-import";
 import type { LoadedImageAsset } from "../assets/image-assets";
 import type { ProjectAssetRecord } from "../assets/project-assets";
@@ -143,7 +146,10 @@ import {
 import { createModelColliderDebugGroup } from "../geometry/model-instance-collider-debug-mesh";
 import { buildGeneratedModelCollider } from "../geometry/model-instance-collider-generation";
 import { DEFAULT_GRID_SIZE, snapValueToGrid } from "../geometry/grid-snapping";
-import { createStarterMaterialSignature, createStarterMaterialTexture } from "../materials/starter-material-textures";
+import {
+  createStarterMaterialSignature,
+  createStarterMaterialTexture
+} from "../materials/starter-material-textures";
 import type { MaterialDef } from "../materials/starter-material-library";
 import {
   applyAdvancedRenderingLightShadowFlags,
@@ -154,7 +160,10 @@ import {
 } from "../rendering/advanced-rendering";
 import { createFogQualityMaterial } from "../rendering/fog-material";
 import { updatePlanarReflectionCamera } from "../rendering/planar-reflection";
-import { collectWaterContactPatches, createWaterMaterial } from "../rendering/water-material";
+import {
+  collectWaterContactPatches,
+  createWaterMaterial
+} from "../rendering/water-material";
 import { resolveViewportFocusTarget } from "./viewport-focus";
 import { createSoundEmitterMarkerMeshes } from "./viewport-entity-markers";
 import {
@@ -281,8 +290,18 @@ export class ViewportHost {
   private readonly scene = new Scene();
   private readonly axesHelper = new AxesHelper(2);
   private readonly perspectiveCamera = new PerspectiveCamera(60, 1, 0.1, 1000);
-  private readonly orthographicCamera = new OrthographicCamera(-10, 10, 10, -10, 0.1, 1000);
-  private readonly renderer = new WebGLRenderer({ antialias: false, alpha: true });
+  private readonly orthographicCamera = new OrthographicCamera(
+    -10,
+    10,
+    10,
+    -10,
+    0.1,
+    1000
+  );
+  private readonly renderer = new WebGLRenderer({
+    antialias: false,
+    alpha: true
+  });
   private readonly cameraTarget = new Vector3(0, 0, 0);
   private readonly cameraOffset = new Vector3();
   private readonly cameraForward = new Vector3();
@@ -292,9 +311,24 @@ export class ViewportHost {
   private readonly fogLocalCameraPosition = new Vector3();
   private readonly cameraSpherical = new Spherical();
   private readonly gridHelpers: Record<ViewportGridPlane, GridHelper> = {
-    xz: new GridHelper(VIEWPORT_GRID_VISUAL_SIZE, VIEWPORT_GRID_VISUAL_DIVISIONS, 0xcf8354, 0x4e596b),
-    xy: new GridHelper(VIEWPORT_GRID_VISUAL_SIZE, VIEWPORT_GRID_VISUAL_DIVISIONS, 0xcf8354, 0x4e596b),
-    yz: new GridHelper(VIEWPORT_GRID_VISUAL_SIZE, VIEWPORT_GRID_VISUAL_DIVISIONS, 0xcf8354, 0x4e596b)
+    xz: new GridHelper(
+      VIEWPORT_GRID_VISUAL_SIZE,
+      VIEWPORT_GRID_VISUAL_DIVISIONS,
+      0xcf8354,
+      0x4e596b
+    ),
+    xy: new GridHelper(
+      VIEWPORT_GRID_VISUAL_SIZE,
+      VIEWPORT_GRID_VISUAL_DIVISIONS,
+      0xcf8354,
+      0x4e596b
+    ),
+    yz: new GridHelper(
+      VIEWPORT_GRID_VISUAL_SIZE,
+      VIEWPORT_GRID_VISUAL_DIVISIONS,
+      0xcf8354,
+      0x4e596b
+    )
   };
   private readonly ambientLight = new AmbientLight();
   private readonly sunLight = new DirectionalLight();
@@ -312,12 +346,19 @@ export class ViewportHost {
   private readonly transformGizmoGroup = new Group();
   private readonly brushRenderObjects = new Map<string, BrushRenderObjects>();
   private readonly entityRenderObjects = new Map<string, EntityRenderObjects>();
-  private readonly localLightRenderObjects = new Map<string, LocalLightRenderObjects>();
+  private readonly localLightRenderObjects = new Map<
+    string,
+    LocalLightRenderObjects
+  >();
   private readonly modelRenderObjects = new Map<string, Group>();
-  private readonly materialTextureCache = new Map<string, CachedMaterialTexture>();
+  private readonly materialTextureCache = new Map<
+    string,
+    CachedMaterialTexture
+  >();
   private currentDocument: SceneDocument | null = null;
   private currentWorld: WorldSettings | null = null;
-  private currentAdvancedRenderingSettings: AdvancedRenderingSettings | null = null;
+  private currentAdvancedRenderingSettings: AdvancedRenderingSettings | null =
+    null;
   private advancedRenderingComposer: EffectComposer | null = null;
   private currentSelection: EditorSelection = {
     kind: "none"
@@ -335,10 +376,18 @@ export class ViewportHost {
   private volumeTime = 0;
   private previousFrameTime = 0;
   private readonly volumeAnimatedUniforms: Array<{ value: number }> = [];
-  private readonly viewportWaterSurfaceBindings: ViewportWaterSurfaceBinding[] = [];
-  private preservedViewportWaterReflectionTargets: Map<string, WebGLRenderTarget | null> | null = null;
+  private readonly viewportWaterSurfaceBindings: ViewportWaterSurfaceBinding[] =
+    [];
+  private preservedViewportWaterReflectionTargets: Map<
+    string,
+    WebGLRenderTarget | null
+  > | null = null;
   private readonly boxCreatePreviewMesh = new Mesh(
-    new BoxGeometry(DEFAULT_BOX_BRUSH_SIZE.x, DEFAULT_BOX_BRUSH_SIZE.y, DEFAULT_BOX_BRUSH_SIZE.z),
+    new BoxGeometry(
+      DEFAULT_BOX_BRUSH_SIZE.x,
+      DEFAULT_BOX_BRUSH_SIZE.y,
+      DEFAULT_BOX_BRUSH_SIZE.z
+    ),
     new MeshStandardMaterial({
       color: BOX_CREATE_PREVIEW_FILL,
       emissive: BOX_CREATE_PREVIEW_FILL,
@@ -359,13 +408,27 @@ export class ViewportHost {
   private animationFrame = 0;
   private renderEnabled = false;
   private container: HTMLElement | null = null;
-  private brushSelectionChangeHandler: ((selection: EditorSelection) => void) | null = null;
-  private whiteboxHoverLabelChangeHandler: ((label: string | null) => void) | null = null;
-  private creationPreviewChangeHandler: ((toolPreview: ViewportToolPreview) => void) | null = null;
-  private creationCommitHandler: ((toolPreview: CreationViewportToolPreview) => boolean) | null = null;
-  private cameraStateChangeHandler: ((cameraState: ViewportPanelCameraState) => void) | null = null;
-  private transformSessionChangeHandler: ((transformSession: TransformSessionState) => void) | null = null;
-  private transformCommitHandler: ((transformSession: ActiveTransformSession) => void) | null = null;
+  private brushSelectionChangeHandler:
+    | ((selection: EditorSelection) => void)
+    | null = null;
+  private whiteboxHoverLabelChangeHandler:
+    | ((label: string | null) => void)
+    | null = null;
+  private creationPreviewChangeHandler:
+    | ((toolPreview: ViewportToolPreview) => void)
+    | null = null;
+  private creationCommitHandler:
+    | ((toolPreview: CreationViewportToolPreview) => boolean)
+    | null = null;
+  private cameraStateChangeHandler:
+    | ((cameraState: ViewportPanelCameraState) => void)
+    | null = null;
+  private transformSessionChangeHandler:
+    | ((transformSession: TransformSessionState) => void)
+    | null = null;
+  private transformCommitHandler:
+    | ((transformSession: ActiveTransformSession) => void)
+    | null = null;
   private transformCancelHandler: (() => void) | null = null;
   private toolMode: ToolMode = "select";
   private viewMode: ViewportViewMode = "perspective";
@@ -374,29 +437,26 @@ export class ViewportHost {
   private creationPreview: CreationViewportToolPreview | null = null;
   private creationPreviewTargetKey: string | null = null;
   private creationPreviewObject: Group | null = null;
-  private currentTransformSession: TransformSessionState = createInactiveTransformSession();
+  private currentTransformSession: TransformSessionState =
+    createInactiveTransformSession();
   private activeCameraDragPointerId: number | null = null;
   private lastCameraDragClientPosition: { x: number; y: number } | null = null;
-  private activeTransformDrag:
-    | {
-        pointerId: number;
-        sessionId: string;
-        axisConstraint: TransformAxis | null;
-        axisConstraintSpace: TransformAxisSpace;
-        initialClientPosition: {
-          x: number;
-          y: number;
-        };
-      }
-    | null = null;
+  private activeTransformDrag: {
+    pointerId: number;
+    sessionId: string;
+    axisConstraint: TransformAxis | null;
+    axisConstraintSpace: TransformAxisSpace;
+    initialClientPosition: {
+      x: number;
+      y: number;
+    };
+  } | null = null;
   private lastCanvasPointerPosition: { x: number; y: number } | null = null;
-  private keyboardTransformPointerOrigin:
-    | {
-        sessionId: string;
-        clientX: number;
-        clientY: number;
-      }
-    | null = null;
+  private keyboardTransformPointerOrigin: {
+    sessionId: string;
+    clientX: number;
+    clientY: number;
+  } | null = null;
   // Click-through cycling: track the last click position and the last picked object
   // so repeated clicks at the same spot cycle through overlapping objects.
   private lastClickPointer: { x: number; y: number } | null = null;
@@ -413,7 +473,11 @@ export class ViewportHost {
 
     for (const gridHelper of Object.values(this.gridHelpers)) {
       const gridMaterial = gridHelper.material as LineBasicMaterial;
-      const centerLineMaterial = (gridHelper.children[0] as LineSegments<BufferGeometry, LineBasicMaterial> | undefined)?.material;
+      const centerLineMaterial = (
+        gridHelper.children[0] as
+          | LineSegments<BufferGeometry, LineBasicMaterial>
+          | undefined
+      )?.material;
 
       gridMaterial.transparent = true;
       gridMaterial.opacity = 0.48;
@@ -453,14 +517,34 @@ export class ViewportHost {
     this.container = container;
     this.renderer.domElement.tabIndex = -1;
     container.appendChild(this.renderer.domElement);
-    this.renderer.domElement.addEventListener("pointerdown", this.handlePointerDown);
-    this.renderer.domElement.addEventListener("pointermove", this.handlePointerMove);
-    this.renderer.domElement.addEventListener("pointerup", this.handlePointerUp);
-    this.renderer.domElement.addEventListener("pointercancel", this.handlePointerUp);
-    this.renderer.domElement.addEventListener("pointerleave", this.handlePointerLeave);
-    this.renderer.domElement.addEventListener("wheel", this.handleWheel, { passive: false });
+    this.renderer.domElement.addEventListener(
+      "pointerdown",
+      this.handlePointerDown
+    );
+    this.renderer.domElement.addEventListener(
+      "pointermove",
+      this.handlePointerMove
+    );
+    this.renderer.domElement.addEventListener(
+      "pointerup",
+      this.handlePointerUp
+    );
+    this.renderer.domElement.addEventListener(
+      "pointercancel",
+      this.handlePointerUp
+    );
+    this.renderer.domElement.addEventListener(
+      "pointerleave",
+      this.handlePointerLeave
+    );
+    this.renderer.domElement.addEventListener("wheel", this.handleWheel, {
+      passive: false
+    });
     this.renderer.domElement.addEventListener("auxclick", this.handleAuxClick);
-    this.renderer.domElement.addEventListener("contextmenu", this.handleContextMenu);
+    this.renderer.domElement.addEventListener(
+      "contextmenu",
+      this.handleContextMenu
+    );
     window.addEventListener("pointermove", this.handleWindowPointerMove);
     this.resize();
 
@@ -541,32 +625,46 @@ export class ViewportHost {
     }
   }
 
-  setBrushSelectionChangeHandler(handler: ((selection: EditorSelection) => void) | null) {
+  setBrushSelectionChangeHandler(
+    handler: ((selection: EditorSelection) => void) | null
+  ) {
     this.brushSelectionChangeHandler = handler;
   }
 
-  setWhiteboxHoverLabelChangeHandler(handler: ((label: string | null) => void) | null) {
+  setWhiteboxHoverLabelChangeHandler(
+    handler: ((label: string | null) => void) | null
+  ) {
     this.whiteboxHoverLabelChangeHandler = handler;
     this.emitWhiteboxHoverLabelChange();
   }
 
-  setCreationPreviewChangeHandler(handler: ((toolPreview: ViewportToolPreview) => void) | null) {
+  setCreationPreviewChangeHandler(
+    handler: ((toolPreview: ViewportToolPreview) => void) | null
+  ) {
     this.creationPreviewChangeHandler = handler;
   }
 
-  setCreationCommitHandler(handler: ((toolPreview: CreationViewportToolPreview) => boolean) | null) {
+  setCreationCommitHandler(
+    handler: ((toolPreview: CreationViewportToolPreview) => boolean) | null
+  ) {
     this.creationCommitHandler = handler;
   }
 
-  setCameraStateChangeHandler(handler: ((cameraState: ViewportPanelCameraState) => void) | null) {
+  setCameraStateChangeHandler(
+    handler: ((cameraState: ViewportPanelCameraState) => void) | null
+  ) {
     this.cameraStateChangeHandler = handler;
   }
 
-  setTransformSessionChangeHandler(handler: ((transformSession: TransformSessionState) => void) | null) {
+  setTransformSessionChangeHandler(
+    handler: ((transformSession: TransformSessionState) => void) | null
+  ) {
     this.transformSessionChangeHandler = handler;
   }
 
-  setTransformCommitHandler(handler: ((transformSession: ActiveTransformSession) => void) | null) {
+  setTransformCommitHandler(
+    handler: ((transformSession: ActiveTransformSession) => void) | null
+  ) {
     this.transformCommitHandler = handler;
   }
 
@@ -575,11 +673,20 @@ export class ViewportHost {
   }
 
   setCameraState(cameraState: ViewportPanelCameraState) {
-    if (areViewportPanelCameraStatesEqual(this.createCameraStateSnapshot(), cameraState)) {
+    if (
+      areViewportPanelCameraStatesEqual(
+        this.createCameraStateSnapshot(),
+        cameraState
+      )
+    ) {
       return;
     }
 
-    this.cameraTarget.set(cameraState.target.x, cameraState.target.y, cameraState.target.z);
+    this.cameraTarget.set(
+      cameraState.target.x,
+      cameraState.target.y,
+      cameraState.target.z
+    );
     this.cameraSpherical.radius = cameraState.perspectiveOrbit.radius;
     this.cameraSpherical.theta = cameraState.perspectiveOrbit.theta;
     this.cameraSpherical.phi = cameraState.perspectiveOrbit.phi;
@@ -636,7 +743,9 @@ export class ViewportHost {
     } else if (
       this.currentTransformSession.sourcePanelId === this.panelId &&
       this.currentTransformSession.source !== "gizmo" &&
-      (this.keyboardTransformPointerOrigin === null || this.keyboardTransformPointerOrigin.sessionId !== this.currentTransformSession.id)
+      (this.keyboardTransformPointerOrigin === null ||
+        this.keyboardTransformPointerOrigin.sessionId !==
+          this.currentTransformSession.id)
     ) {
       const pointerOrigin = this.getPointerOriginForTransformSession();
       this.keyboardTransformPointerOrigin = {
@@ -650,12 +759,15 @@ export class ViewportHost {
       previousTransformSession.kind === "active" &&
       this.currentTransformSession.kind === "active" &&
       previousTransformSession.id === this.currentTransformSession.id &&
-      (previousTransformSession.axisConstraint !== this.currentTransformSession.axisConstraint ||
-        previousTransformSession.axisConstraintSpace !== this.currentTransformSession.axisConstraintSpace) &&
+      (previousTransformSession.axisConstraint !==
+        this.currentTransformSession.axisConstraint ||
+        previousTransformSession.axisConstraintSpace !==
+          this.currentTransformSession.axisConstraintSpace) &&
       this.currentTransformSession.sourcePanelId === this.panelId &&
       this.currentTransformSession.source !== "gizmo" &&
       this.keyboardTransformPointerOrigin !== null &&
-      this.keyboardTransformPointerOrigin.sessionId === this.currentTransformSession.id &&
+      this.keyboardTransformPointerOrigin.sessionId ===
+        this.currentTransformSession.id &&
       this.lastCanvasPointerPosition !== null
     ) {
       this.currentTransformSession = this.buildTransformPreviewFromPointer(
@@ -726,15 +838,28 @@ export class ViewportHost {
       return;
     }
 
-    this.cameraTarget.set(focusTarget.center.x, focusTarget.center.y, focusTarget.center.z);
+    this.cameraTarget.set(
+      focusTarget.center.x,
+      focusTarget.center.y,
+      focusTarget.center.z
+    );
 
     if (this.viewMode === "perspective") {
       const verticalHalfFov = (this.perspectiveCamera.fov * Math.PI) / 360;
-      const horizontalHalfFov = Math.atan(Math.tan(verticalHalfFov) * Math.max(this.perspectiveCamera.aspect, 0.0001));
-      const fitAngle = Math.max(0.1, Math.min(verticalHalfFov, horizontalHalfFov));
+      const horizontalHalfFov = Math.atan(
+        Math.tan(verticalHalfFov) *
+          Math.max(this.perspectiveCamera.aspect, 0.0001)
+      );
+      const fitAngle = Math.max(
+        0.1,
+        Math.min(verticalHalfFov, horizontalHalfFov)
+      );
       const fitDistance = Math.min(
         MAX_CAMERA_DISTANCE,
-        Math.max(MIN_CAMERA_DISTANCE, (focusTarget.radius / Math.sin(fitAngle)) * FOCUS_MARGIN)
+        Math.max(
+          MIN_CAMERA_DISTANCE,
+          (focusTarget.radius / Math.sin(fitAngle)) * FOCUS_MARGIN
+        )
       );
 
       this.cameraSpherical.radius = fitDistance;
@@ -749,9 +874,13 @@ export class ViewportHost {
     const aspect = containerWidth / containerHeight;
     const visibleWidth = ORTHOGRAPHIC_FRUSTUM_HEIGHT * aspect;
     const fitSize = Math.max(0.5, focusTarget.radius * 2 * FOCUS_MARGIN);
-    const fitZoom = Math.min(visibleWidth, ORTHOGRAPHIC_FRUSTUM_HEIGHT) / fitSize;
+    const fitZoom =
+      Math.min(visibleWidth, ORTHOGRAPHIC_FRUSTUM_HEIGHT) / fitSize;
 
-    this.orthographicCamera.zoom = Math.min(MAX_ORTHOGRAPHIC_ZOOM, Math.max(MIN_ORTHOGRAPHIC_ZOOM, fitZoom));
+    this.orthographicCamera.zoom = Math.min(
+      MAX_ORTHOGRAPHIC_ZOOM,
+      Math.max(MIN_ORTHOGRAPHIC_ZOOM, fitZoom)
+    );
     this.applyOrthographicCameraPose();
     this.emitCameraStateChange();
   }
@@ -764,14 +893,35 @@ export class ViewportHost {
 
     this.resizeObserver?.disconnect();
     this.resizeObserver = null;
-    this.renderer.domElement.removeEventListener("pointerdown", this.handlePointerDown);
-    this.renderer.domElement.removeEventListener("pointermove", this.handlePointerMove);
-    this.renderer.domElement.removeEventListener("pointerup", this.handlePointerUp);
-    this.renderer.domElement.removeEventListener("pointercancel", this.handlePointerUp);
-    this.renderer.domElement.removeEventListener("pointerleave", this.handlePointerLeave);
+    this.renderer.domElement.removeEventListener(
+      "pointerdown",
+      this.handlePointerDown
+    );
+    this.renderer.domElement.removeEventListener(
+      "pointermove",
+      this.handlePointerMove
+    );
+    this.renderer.domElement.removeEventListener(
+      "pointerup",
+      this.handlePointerUp
+    );
+    this.renderer.domElement.removeEventListener(
+      "pointercancel",
+      this.handlePointerUp
+    );
+    this.renderer.domElement.removeEventListener(
+      "pointerleave",
+      this.handlePointerLeave
+    );
     this.renderer.domElement.removeEventListener("wheel", this.handleWheel);
-    this.renderer.domElement.removeEventListener("auxclick", this.handleAuxClick);
-    this.renderer.domElement.removeEventListener("contextmenu", this.handleContextMenu);
+    this.renderer.domElement.removeEventListener(
+      "auxclick",
+      this.handleAuxClick
+    );
+    this.renderer.domElement.removeEventListener(
+      "contextmenu",
+      this.handleContextMenu
+    );
     window.removeEventListener("pointermove", this.handleWindowPointerMove);
     this.clearLocalLights();
     this.clearBrushMeshes();
@@ -804,7 +954,10 @@ export class ViewportHost {
     this.renderer.forceContextLoss();
     this.renderer.dispose();
 
-    if (this.container !== null && this.container.contains(this.renderer.domElement)) {
+    if (
+      this.container !== null &&
+      this.container.contains(this.renderer.domElement)
+    ) {
       this.container.removeChild(this.renderer.domElement);
     }
 
@@ -812,7 +965,9 @@ export class ViewportHost {
   }
 
   private getActiveCamera() {
-    return this.viewMode === "perspective" ? this.perspectiveCamera : this.orthographicCamera;
+    return this.viewMode === "perspective"
+      ? this.perspectiveCamera
+      : this.orthographicCamera;
   }
 
   private createCameraStateSnapshot(): ViewportPanelCameraState {
@@ -836,10 +991,18 @@ export class ViewportHost {
   }
 
   private updatePerspectiveCameraSphericalFromPose() {
-    this.cameraOffset.copy(this.perspectiveCamera.position).sub(this.cameraTarget);
+    this.cameraOffset
+      .copy(this.perspectiveCamera.position)
+      .sub(this.cameraTarget);
     this.cameraSpherical.setFromVector3(this.cameraOffset);
-    this.cameraSpherical.radius = Math.min(MAX_CAMERA_DISTANCE, Math.max(MIN_CAMERA_DISTANCE, this.cameraSpherical.radius));
-    this.cameraSpherical.phi = Math.min(MAX_POLAR_ANGLE, Math.max(MIN_POLAR_ANGLE, this.cameraSpherical.phi));
+    this.cameraSpherical.radius = Math.min(
+      MAX_CAMERA_DISTANCE,
+      Math.max(MIN_CAMERA_DISTANCE, this.cameraSpherical.radius)
+    );
+    this.cameraSpherical.phi = Math.min(
+      MAX_POLAR_ANGLE,
+      Math.max(MIN_POLAR_ANGLE, this.cameraSpherical.phi)
+    );
     this.cameraSpherical.makeSafe();
   }
 
@@ -866,29 +1029,50 @@ export class ViewportHost {
   }
 
   private applyPerspectiveCameraPose() {
-    this.cameraSpherical.radius = Math.min(MAX_CAMERA_DISTANCE, Math.max(MIN_CAMERA_DISTANCE, this.cameraSpherical.radius));
-    this.cameraSpherical.phi = Math.min(MAX_POLAR_ANGLE, Math.max(MIN_POLAR_ANGLE, this.cameraSpherical.phi));
+    this.cameraSpherical.radius = Math.min(
+      MAX_CAMERA_DISTANCE,
+      Math.max(MIN_CAMERA_DISTANCE, this.cameraSpherical.radius)
+    );
+    this.cameraSpherical.phi = Math.min(
+      MAX_POLAR_ANGLE,
+      Math.max(MIN_POLAR_ANGLE, this.cameraSpherical.phi)
+    );
     this.cameraSpherical.makeSafe();
     this.cameraOffset.setFromSpherical(this.cameraSpherical);
-    this.perspectiveCamera.position.copy(this.cameraTarget).add(this.cameraOffset);
+    this.perspectiveCamera.position
+      .copy(this.cameraTarget)
+      .add(this.cameraOffset);
     this.perspectiveCamera.lookAt(this.cameraTarget);
   }
 
   private applyOrthographicCameraPose() {
     const definition = getViewportViewModeDefinition(this.viewMode);
 
-    if (!isOrthographicViewportViewMode(this.viewMode) || definition.cameraDirection === null) {
+    if (
+      !isOrthographicViewportViewMode(this.viewMode) ||
+      definition.cameraDirection === null
+    ) {
       return;
     }
 
-    this.orthographicCamera.up.set(definition.cameraUp.x, definition.cameraUp.y, definition.cameraUp.z);
+    this.orthographicCamera.up.set(
+      definition.cameraUp.x,
+      definition.cameraUp.y,
+      definition.cameraUp.z
+    );
     this.orthographicCamera.position.set(
-      this.cameraTarget.x + definition.cameraDirection.x * ORTHOGRAPHIC_CAMERA_DISTANCE,
-      this.cameraTarget.y + definition.cameraDirection.y * ORTHOGRAPHIC_CAMERA_DISTANCE,
-      this.cameraTarget.z + definition.cameraDirection.z * ORTHOGRAPHIC_CAMERA_DISTANCE
+      this.cameraTarget.x +
+        definition.cameraDirection.x * ORTHOGRAPHIC_CAMERA_DISTANCE,
+      this.cameraTarget.y +
+        definition.cameraDirection.y * ORTHOGRAPHIC_CAMERA_DISTANCE,
+      this.cameraTarget.z +
+        definition.cameraDirection.z * ORTHOGRAPHIC_CAMERA_DISTANCE
     );
     this.orthographicCamera.lookAt(this.cameraTarget);
-    this.orthographicCamera.zoom = Math.min(MAX_ORTHOGRAPHIC_ZOOM, Math.max(MIN_ORTHOGRAPHIC_ZOOM, this.orthographicCamera.zoom));
+    this.orthographicCamera.zoom = Math.min(
+      MAX_ORTHOGRAPHIC_ZOOM,
+      Math.max(MIN_ORTHOGRAPHIC_ZOOM, this.orthographicCamera.zoom)
+    );
     this.orthographicCamera.updateProjectionMatrix();
   }
 
@@ -907,7 +1091,9 @@ export class ViewportHost {
 
   private updateGridPresentation() {
     const definition = getViewportViewModeDefinition(this.viewMode);
-    const visibleGridPlane = this.viewportGridVisible ? definition.gridPlane : null;
+    const visibleGridPlane = this.viewportGridVisible
+      ? definition.gridPlane
+      : null;
 
     this.gridHelpers.xz.visible = visibleGridPlane === "xz";
     this.gridHelpers.xy.visible = visibleGridPlane === "xy";
@@ -916,14 +1102,29 @@ export class ViewportHost {
   }
 
   private updateGridPositioning() {
-    const align = (value: number) => Math.round(value / DEFAULT_GRID_SIZE) * DEFAULT_GRID_SIZE;
+    const align = (value: number) =>
+      Math.round(value / DEFAULT_GRID_SIZE) * DEFAULT_GRID_SIZE;
 
-    this.gridHelpers.xz.position.set(align(this.cameraTarget.x), 0, align(this.cameraTarget.z));
-    this.gridHelpers.xy.position.set(align(this.cameraTarget.x), align(this.cameraTarget.y), 0);
-    this.gridHelpers.yz.position.set(0, align(this.cameraTarget.y), align(this.cameraTarget.z));
+    this.gridHelpers.xz.position.set(
+      align(this.cameraTarget.x),
+      0,
+      align(this.cameraTarget.z)
+    );
+    this.gridHelpers.xy.position.set(
+      align(this.cameraTarget.x),
+      align(this.cameraTarget.y),
+      0
+    );
+    this.gridHelpers.yz.position.set(
+      0,
+      align(this.cameraTarget.y),
+      align(this.cameraTarget.z)
+    );
   }
 
-  private createWireframeDisplayMaterial(material: Material): MeshBasicMaterial {
+  private createWireframeDisplayMaterial(
+    material: Material
+  ): MeshBasicMaterial {
     const source = material as Material & {
       color?: { getHex(): number };
       transparent?: boolean;
@@ -949,7 +1150,9 @@ export class ViewportHost {
 
       if (Array.isArray(maybeMesh.material)) {
         const originalMaterials = maybeMesh.material;
-        maybeMesh.material = originalMaterials.map((material) => this.createWireframeDisplayMaterial(material));
+        maybeMesh.material = originalMaterials.map((material) =>
+          this.createWireframeDisplayMaterial(material)
+        );
         for (const material of originalMaterials) {
           material.dispose();
         }
@@ -957,7 +1160,8 @@ export class ViewportHost {
       }
 
       const originalMaterial = maybeMesh.material;
-      maybeMesh.material = this.createWireframeDisplayMaterial(originalMaterial);
+      maybeMesh.material =
+        this.createWireframeDisplayMaterial(originalMaterial);
       originalMaterial.dispose();
     });
   }
@@ -993,7 +1197,14 @@ export class ViewportHost {
     this.ambientLight.intensity = world.ambientLight.intensity;
     this.sunLight.color.set(world.sunLight.colorHex);
     this.sunLight.intensity = world.sunLight.intensity;
-    this.sunLight.position.set(world.sunLight.direction.x, world.sunLight.direction.y, world.sunLight.direction.z).normalize().multiplyScalar(18);
+    this.sunLight.position
+      .set(
+        world.sunLight.direction.x,
+        world.sunLight.direction.y,
+        world.sunLight.direction.z
+      )
+      .normalize()
+      .multiplyScalar(18);
     this.ambientLight.visible = this.displayMode !== "wireframe";
     this.sunLight.visible = this.displayMode !== "wireframe";
     this.localLightGroup.visible = this.displayMode !== "wireframe";
@@ -1003,7 +1214,8 @@ export class ViewportHost {
       this.scene.environment = null;
       this.scene.environmentIntensity = 1;
     } else if (world.background.mode === "image") {
-      const texture = this.loadedImageAssets[world.background.assetId]?.texture ?? null;
+      const texture =
+        this.loadedImageAssets[world.background.assetId]?.texture ?? null;
       this.scene.background = texture;
       this.scene.environment = texture;
       this.scene.environmentIntensity = world.background.environmentIntensity;
@@ -1019,10 +1231,16 @@ export class ViewportHost {
   }
 
   private syncAdvancedRenderingComposer(settings: AdvancedRenderingSettings) {
-    const shouldUseComposer = settings.enabled && this.displayMode === "normal" && this.viewMode === "perspective";
+    const shouldUseComposer =
+      settings.enabled &&
+      this.displayMode === "normal" &&
+      this.viewMode === "perspective";
     const settingsChanged =
       this.currentAdvancedRenderingSettings === null ||
-      !areAdvancedRenderingSettingsEqual(this.currentAdvancedRenderingSettings, settings);
+      !areAdvancedRenderingSettingsEqual(
+        this.currentAdvancedRenderingSettings,
+        settings
+      );
 
     if (!shouldUseComposer) {
       if (this.advancedRenderingComposer !== null) {
@@ -1030,7 +1248,9 @@ export class ViewportHost {
         this.advancedRenderingComposer = null;
       }
 
-      this.currentAdvancedRenderingSettings = settings.enabled ? cloneAdvancedRenderingSettings(settings) : null;
+      this.currentAdvancedRenderingSettings = settings.enabled
+        ? cloneAdvancedRenderingSettings(settings)
+        : null;
       this.renderer.autoClear = true;
       return;
     }
@@ -1043,8 +1263,14 @@ export class ViewportHost {
       this.advancedRenderingComposer.dispose();
     }
 
-    this.advancedRenderingComposer = createAdvancedRenderingComposer(this.renderer, this.scene, this.perspectiveCamera, settings);
-    this.currentAdvancedRenderingSettings = cloneAdvancedRenderingSettings(settings);
+    this.advancedRenderingComposer = createAdvancedRenderingComposer(
+      this.renderer,
+      this.scene,
+      this.perspectiveCamera,
+      settings
+    );
+    this.currentAdvancedRenderingSettings =
+      cloneAdvancedRenderingSettings(settings);
     this.renderer.autoClear = false;
   }
 
@@ -1054,7 +1280,10 @@ export class ViewportHost {
     }
 
     const advancedRendering = this.currentWorld.advancedRendering;
-    const shadowsEnabled = advancedRendering.enabled && advancedRendering.shadows.enabled && this.displayMode === "normal";
+    const shadowsEnabled =
+      advancedRendering.enabled &&
+      advancedRendering.shadows.enabled &&
+      this.displayMode === "normal";
     const shadowSettings =
       this.displayMode === "normal"
         ? advancedRendering
@@ -1066,11 +1295,17 @@ export class ViewportHost {
     applyAdvancedRenderingLightShadowFlags(this.sunLight, shadowSettings);
 
     for (const renderObjects of this.localLightRenderObjects.values()) {
-      applyAdvancedRenderingLightShadowFlags(renderObjects.group, shadowSettings);
+      applyAdvancedRenderingLightShadowFlags(
+        renderObjects.group,
+        shadowSettings
+      );
     }
 
     for (const renderObjects of this.brushRenderObjects.values()) {
-      applyAdvancedRenderingRenderableShadowFlags(renderObjects.mesh, shadowsEnabled);
+      applyAdvancedRenderingRenderableShadowFlags(
+        renderObjects.mesh,
+        shadowsEnabled
+      );
     }
 
     for (const renderGroup of this.modelRenderObjects.values()) {
@@ -1104,11 +1339,18 @@ export class ViewportHost {
 
   private createRotationQuaternion(rotationDegrees: Vec3): Quaternion {
     return new Quaternion().setFromEuler(
-      new Euler((rotationDegrees.x * Math.PI) / 180, (rotationDegrees.y * Math.PI) / 180, (rotationDegrees.z * Math.PI) / 180, "XYZ")
+      new Euler(
+        (rotationDegrees.x * Math.PI) / 180,
+        (rotationDegrees.y * Math.PI) / 180,
+        (rotationDegrees.z * Math.PI) / 180,
+        "XYZ"
+      )
     );
   }
 
-  private getTransformTargetOrientation(session: ActiveTransformSession): Quaternion | null {
+  private getTransformTargetOrientation(
+    session: ActiveTransformSession
+  ): Quaternion | null {
     switch (session.target.kind) {
       case "brush":
         if (session.preview.kind !== "brush") {
@@ -1189,11 +1431,16 @@ export class ViewportHost {
   }
 
   private snapScaleValue(value: number): number {
-    return Math.max(MIN_SCALE_COMPONENT, Math.round(value / SCALE_SNAP_STEP) * SCALE_SNAP_STEP);
+    return Math.max(
+      MIN_SCALE_COMPONENT,
+      Math.round(value / SCALE_SNAP_STEP) * SCALE_SNAP_STEP
+    );
   }
 
   private snapWhiteboxPositionValue(value: number): number {
-    return this.whiteboxSnapEnabled ? snapValueToGrid(value, this.whiteboxSnapStep) : value;
+    return this.whiteboxSnapEnabled
+      ? snapValueToGrid(value, this.whiteboxSnapStep)
+      : value;
   }
 
   private snapWhiteboxSizeValue(value: number): number {
@@ -1205,7 +1452,10 @@ export class ViewportHost {
       return Math.max(MIN_BOX_SIZE_COMPONENT, Math.abs(value));
     }
 
-    return Math.max(MIN_BOX_SIZE_COMPONENT, snapValueToGrid(Math.abs(value), this.whiteboxSnapStep));
+    return Math.max(
+      MIN_BOX_SIZE_COMPONENT,
+      snapValueToGrid(Math.abs(value), this.whiteboxSnapStep)
+    );
   }
 
   private getAxisComponent(vector: Vec3, axis: TransformAxis): number {
@@ -1219,7 +1469,11 @@ export class ViewportHost {
     }
   }
 
-  private setAxisComponent(vector: Vec3, axis: TransformAxis, value: number): Vec3 {
+  private setAxisComponent(
+    vector: Vec3,
+    axis: TransformAxis,
+    value: number
+  ): Vec3 {
     switch (axis) {
       case "x":
         return {
@@ -1239,7 +1493,9 @@ export class ViewportHost {
     }
   }
 
-  private getEffectiveRotationAxis(session: ActiveTransformSession): TransformAxis {
+  private getEffectiveRotationAxis(
+    session: ActiveTransformSession
+  ): TransformAxis {
     if (session.target.kind === "brushFace") {
       return getBoxBrushFaceAxis(session.target.faceId);
     }
@@ -1248,7 +1504,10 @@ export class ViewportHost {
       return getBoxBrushEdgeAxis(session.target.edgeId);
     }
 
-    if (session.target.kind === "entity" && session.target.initialRotation.kind === "yaw") {
+    if (
+      session.target.kind === "entity" &&
+      session.target.initialRotation.kind === "yaw"
+    ) {
       return "y";
     }
 
@@ -1261,15 +1520,24 @@ export class ViewportHost {
 
       if (previewBrush !== null) {
         if (session.target.kind === "brushFace") {
-          return getBoxBrushFaceWorldCenter(previewBrush, session.target.faceId);
+          return getBoxBrushFaceWorldCenter(
+            previewBrush,
+            session.target.faceId
+          );
         }
 
         if (session.target.kind === "brushEdge") {
-          return getBoxBrushEdgeWorldSegment(previewBrush, session.target.edgeId).center;
+          return getBoxBrushEdgeWorldSegment(
+            previewBrush,
+            session.target.edgeId
+          ).center;
         }
 
         if (session.target.kind === "brushVertex") {
-          return getBoxBrushVertexWorldPosition(previewBrush, session.target.vertexId);
+          return getBoxBrushVertexWorldPosition(
+            previewBrush,
+            session.target.vertexId
+          );
         }
       }
     }
@@ -1284,7 +1552,9 @@ export class ViewportHost {
     }
   }
 
-  private createPreviewBrushForSession(session: ActiveTransformSession): BoxBrush | null {
+  private createPreviewBrushForSession(
+    session: ActiveTransformSession
+  ): BoxBrush | null {
     if (session.preview.kind !== "brush") {
       return null;
     }
@@ -1343,7 +1613,9 @@ export class ViewportHost {
     this.transformGizmoGroup.visible = false;
   }
 
-  private markTransformHandleObject<TObject extends Object3D>(object: TObject): TObject {
+  private markTransformHandleObject<TObject extends Object3D>(
+    object: TObject
+  ): TObject {
     object.renderOrder = GIZMO_RENDER_ORDER;
 
     object.traverse((child) => {
@@ -1353,11 +1625,19 @@ export class ViewportHost {
     return object;
   }
 
-  private createTransformHandleMaterial(color: number, isActive: boolean, transparent = false) {
+  private createTransformHandleMaterial(
+    color: number,
+    isActive: boolean,
+    transparent = false
+  ) {
     return new MeshBasicMaterial({
       color,
       transparent: transparent || isActive,
-      opacity: transparent ? 0.001 : isActive ? GIZMO_ACTIVE_OPACITY : GIZMO_INACTIVE_OPACITY,
+      opacity: transparent
+        ? 0.001
+        : isActive
+          ? GIZMO_ACTIVE_OPACITY
+          : GIZMO_INACTIVE_OPACITY,
       depthWrite: false,
       depthTest: false
     });
@@ -1376,13 +1656,22 @@ export class ViewportHost {
       this.createTransformHandleMaterial(color, isActive)
     );
     const pick = new Mesh(
-      new CylinderGeometry(GIZMO_PICK_THICKNESS, GIZMO_PICK_THICKNESS, GIZMO_TRANSLATE_LENGTH + 0.36, 10),
+      new CylinderGeometry(
+        GIZMO_PICK_THICKNESS,
+        GIZMO_PICK_THICKNESS,
+        GIZMO_TRANSLATE_LENGTH + 0.36,
+        10
+      ),
       this.createTransformHandleMaterial(color, isActive, true)
     );
 
     line.position.copy(axisVector).multiplyScalar(GIZMO_TRANSLATE_LENGTH * 0.5);
-    arrow.position.copy(axisVector).multiplyScalar(GIZMO_TRANSLATE_LENGTH + 0.18);
-    pick.position.copy(axisVector).multiplyScalar((GIZMO_TRANSLATE_LENGTH + 0.36) * 0.5);
+    arrow.position
+      .copy(axisVector)
+      .multiplyScalar(GIZMO_TRANSLATE_LENGTH + 0.18);
+    pick.position
+      .copy(axisVector)
+      .multiplyScalar((GIZMO_TRANSLATE_LENGTH + 0.36) * 0.5);
 
     if (axis === "x") {
       line.rotation.z = -Math.PI * 0.5;
@@ -1441,13 +1730,20 @@ export class ViewportHost {
       this.createTransformHandleMaterial(color, isActive)
     );
     const pick = new Mesh(
-      new CylinderGeometry(GIZMO_PICK_THICKNESS, GIZMO_PICK_THICKNESS, GIZMO_SCALE_LENGTH + 0.3, 10),
+      new CylinderGeometry(
+        GIZMO_PICK_THICKNESS,
+        GIZMO_PICK_THICKNESS,
+        GIZMO_SCALE_LENGTH + 0.3,
+        10
+      ),
       this.createTransformHandleMaterial(color, isActive, true)
     );
 
     line.position.copy(axisVector).multiplyScalar(GIZMO_SCALE_LENGTH * 0.5);
     cube.position.copy(axisVector).multiplyScalar(GIZMO_SCALE_LENGTH + 0.12);
-    pick.position.copy(axisVector).multiplyScalar((GIZMO_SCALE_LENGTH + 0.3) * 0.5);
+    pick.position
+      .copy(axisVector)
+      .multiplyScalar((GIZMO_SCALE_LENGTH + 0.3) * 0.5);
 
     if (axis === "x") {
       line.rotation.z = -Math.PI * 0.5;
@@ -1467,8 +1763,15 @@ export class ViewportHost {
 
   private createUniformScaleHandle(isActive: boolean): Mesh {
     const mesh = new Mesh(
-      new BoxGeometry(GIZMO_CENTER_HANDLE_SIZE, GIZMO_CENTER_HANDLE_SIZE, GIZMO_CENTER_HANDLE_SIZE),
-      this.createTransformHandleMaterial(isActive ? GIZMO_ACTIVE_COLOR : 0xe6edf8, isActive)
+      new BoxGeometry(
+        GIZMO_CENTER_HANDLE_SIZE,
+        GIZMO_CENTER_HANDLE_SIZE,
+        GIZMO_CENTER_HANDLE_SIZE
+      ),
+      this.createTransformHandleMaterial(
+        isActive ? GIZMO_ACTIVE_COLOR : 0xe6edf8,
+        isActive
+      )
     );
     mesh.userData.transformAxisConstraint = null;
     return this.markTransformHandleObject(mesh);
@@ -1483,9 +1786,16 @@ export class ViewportHost {
       return null;
     }
 
-    const transformTarget = resolveTransformTarget(this.currentDocument, this.currentSelection, this.whiteboxSelectionMode).target;
+    const transformTarget = resolveTransformTarget(
+      this.currentDocument,
+      this.currentSelection,
+      this.whiteboxSelectionMode
+    ).target;
 
-    if (transformTarget === null || !supportsTransformOperation(transformTarget, "translate")) {
+    if (
+      transformTarget === null ||
+      !supportsTransformOperation(transformTarget, "translate")
+    ) {
       return null;
     }
 
@@ -1511,19 +1821,30 @@ export class ViewportHost {
       return;
     }
 
-    const effectiveRotationAxis = session.operation === "rotate" ? this.getEffectiveRotationAxis(session) : null;
+    const effectiveRotationAxis =
+      session.operation === "rotate"
+        ? this.getEffectiveRotationAxis(session)
+        : null;
 
     if (session.operation === "translate") {
-      this.transformGizmoGroup.add(this.createTranslateHandle("x", session.axisConstraint === "x"));
-      this.transformGizmoGroup.add(this.createTranslateHandle("y", session.axisConstraint === "y"));
-      this.transformGizmoGroup.add(this.createTranslateHandle("z", session.axisConstraint === "z"));
+      this.transformGizmoGroup.add(
+        this.createTranslateHandle("x", session.axisConstraint === "x")
+      );
+      this.transformGizmoGroup.add(
+        this.createTranslateHandle("y", session.axisConstraint === "y")
+      );
+      this.transformGizmoGroup.add(
+        this.createTranslateHandle("z", session.axisConstraint === "z")
+      );
     } else if (session.operation === "rotate") {
       for (const axis of ["x", "y", "z"] as const) {
         if (!supportsTransformAxisConstraint(session, axis)) {
           continue;
         }
 
-        this.transformGizmoGroup.add(this.createRotateHandle(axis, effectiveRotationAxis === axis));
+        this.transformGizmoGroup.add(
+          this.createRotateHandle(axis, effectiveRotationAxis === axis)
+        );
       }
     } else if (
       session.operation === "scale" &&
@@ -1533,12 +1854,17 @@ export class ViewportHost {
         session.target.kind === "brushEdge")
     ) {
       for (const axis of ["x", "y", "z"] as const) {
-        this.transformGizmoGroup.add(this.createScaleHandle(axis, session.axisConstraint === axis));
+        this.transformGizmoGroup.add(
+          this.createScaleHandle(axis, session.axisConstraint === axis)
+        );
       }
-      this.transformGizmoGroup.add(this.createUniformScaleHandle(session.axisConstraint === null));
+      this.transformGizmoGroup.add(
+        this.createUniformScaleHandle(session.axisConstraint === null)
+      );
     }
 
-    this.transformGizmoGroup.visible = this.transformGizmoGroup.children.length > 0;
+    this.transformGizmoGroup.visible =
+      this.transformGizmoGroup.children.length > 0;
     this.updateTransformGizmoPose();
   }
 
@@ -1567,10 +1893,16 @@ export class ViewportHost {
       }
     }
 
-    let scale = GIZMO_SCREEN_SIZE_ORTHOGRAPHIC / Math.max(this.orthographicCamera.zoom, 0.0001);
+    let scale =
+      GIZMO_SCREEN_SIZE_ORTHOGRAPHIC /
+      Math.max(this.orthographicCamera.zoom, 0.0001);
 
     if (this.viewMode === "perspective") {
-      scale = Math.max(0.5, pivotVector.distanceTo(this.perspectiveCamera.position) * GIZMO_SCREEN_SIZE_PERSPECTIVE);
+      scale = Math.max(
+        0.5,
+        pivotVector.distanceTo(this.perspectiveCamera.position) *
+          GIZMO_SCREEN_SIZE_PERSPECTIVE
+      );
     }
 
     this.transformGizmoGroup.scale.setScalar(scale);
@@ -1588,7 +1920,10 @@ export class ViewportHost {
     }
   }
 
-  private setPointerFromClientPosition(clientX: number, clientY: number): boolean {
+  private setPointerFromClientPosition(
+    clientX: number,
+    clientY: number
+  ): boolean {
     const bounds = this.renderer.domElement.getBoundingClientRect();
 
     if (bounds.width === 0 || bounds.height === 0) {
@@ -1600,14 +1935,21 @@ export class ViewportHost {
     return true;
   }
 
-  private getPointerPlaneIntersection(clientX: number, clientY: number, plane: Plane): Vector3 | null {
+  private getPointerPlaneIntersection(
+    clientX: number,
+    clientY: number,
+    plane: Plane
+  ): Vector3 | null {
     if (!this.setPointerFromClientPosition(clientX, clientY)) {
       return null;
     }
 
     this.raycaster.setFromCamera(this.pointer, this.getActiveCamera());
 
-    if (this.raycaster.ray.intersectPlane(plane, this.transformIntersection) === null) {
+    if (
+      this.raycaster.ray.intersectPlane(plane, this.transformIntersection) ===
+      null
+    ) {
       return null;
     }
 
@@ -1624,7 +1966,8 @@ export class ViewportHost {
     if (this.viewMode === "perspective") {
       const pivotVector = new Vector3(pivot.x, pivot.y, pivot.z);
       const distance = pivotVector.distanceTo(this.perspectiveCamera.position);
-      const visibleHeight = 2 * Math.tan((this.perspectiveCamera.fov * Math.PI) / 360) * distance;
+      const visibleHeight =
+        2 * Math.tan((this.perspectiveCamera.fov * Math.PI) / 360) * distance;
       return visibleHeight / height;
     }
 
@@ -1639,12 +1982,24 @@ export class ViewportHost {
   ): number {
     const pivotVector = new Vector3(pivot.x, pivot.y, pivot.z);
     const projectedStart = pivotVector.clone().project(this.getActiveCamera());
-    const projectedEnd = pivotVector.clone().add(axisVector.clone().normalize()).project(this.getActiveCamera());
-    const screenDelta = new Vector2(projectedEnd.x - projectedStart.x, projectedEnd.y - projectedStart.y);
-    const pointerDelta = new Vector2(current.x - origin.x, current.y - origin.y);
+    const projectedEnd = pivotVector
+      .clone()
+      .add(axisVector.clone().normalize())
+      .project(this.getActiveCamera());
+    const screenDelta = new Vector2(
+      projectedEnd.x - projectedStart.x,
+      projectedEnd.y - projectedStart.y
+    );
+    const pointerDelta = new Vector2(
+      current.x - origin.x,
+      current.y - origin.y
+    );
 
     if (this.container !== null) {
-      screenDelta.set((screenDelta.x * this.container.clientWidth) * 0.5, (-screenDelta.y * this.container.clientHeight) * 0.5);
+      screenDelta.set(
+        screenDelta.x * this.container.clientWidth * 0.5,
+        -screenDelta.y * this.container.clientHeight * 0.5
+      );
     }
 
     const axisLength = screenDelta.length();
@@ -1665,8 +2020,16 @@ export class ViewportHost {
     session?: ActiveTransformSession,
     axisSpace: TransformAxisSpace = "world"
   ): number {
-    const axisVector = session === undefined ? this.axisVector(axis) : this.getConstraintAxisWorldVector(session, axis, axisSpace);
-    return this.getMovementDistanceAlongWorldAxis(axisVector, pivot, origin, current);
+    const axisVector =
+      session === undefined
+        ? this.axisVector(axis)
+        : this.getConstraintAxisWorldVector(session, axis, axisSpace);
+    return this.getMovementDistanceAlongWorldAxis(
+      axisVector,
+      pivot,
+      origin,
+      current
+    );
   }
 
   private buildTransformPreviewFromPointer(
@@ -1676,19 +2039,39 @@ export class ViewportHost {
     axisConstraint: TransformAxis | null,
     axisConstraintSpace: TransformAxisSpace
   ): ActiveTransformSession {
-    const nextSession = cloneTransformSession(session) as ActiveTransformSession;
+    const nextSession = cloneTransformSession(
+      session
+    ) as ActiveTransformSession;
     nextSession.axisConstraint = axisConstraint;
-    nextSession.axisConstraintSpace = axisConstraint === null ? "world" : axisConstraintSpace;
+    nextSession.axisConstraintSpace =
+      axisConstraint === null ? "world" : axisConstraintSpace;
 
     switch (session.operation) {
       case "translate":
-        nextSession.preview = this.buildTranslatedPreview(session, origin, current, axisConstraint, nextSession.axisConstraintSpace);
+        nextSession.preview = this.buildTranslatedPreview(
+          session,
+          origin,
+          current,
+          axisConstraint,
+          nextSession.axisConstraintSpace
+        );
         return nextSession;
       case "rotate":
-        nextSession.preview = this.buildRotatedPreview(session, origin, current, axisConstraint, nextSession.axisConstraintSpace);
+        nextSession.preview = this.buildRotatedPreview(
+          session,
+          origin,
+          current,
+          axisConstraint,
+          nextSession.axisConstraintSpace
+        );
         return nextSession;
       case "scale":
-        nextSession.preview = this.buildScaledPreview(session, origin, current, axisConstraint);
+        nextSession.preview = this.buildScaledPreview(
+          session,
+          origin,
+          current,
+          axisConstraint
+        );
         return nextSession;
     }
   }
@@ -1700,20 +2083,41 @@ export class ViewportHost {
     axisConstraint: TransformAxis | null,
     axisConstraintSpace: TransformAxisSpace
   ) {
-    if (session.target.kind === "brushFace" || session.target.kind === "brushEdge" || session.target.kind === "brushVertex") {
-      return this.buildComponentTranslatedBrushPreview(session, origin, current, axisConstraint);
+    if (
+      session.target.kind === "brushFace" ||
+      session.target.kind === "brushEdge" ||
+      session.target.kind === "brushVertex"
+    ) {
+      return this.buildComponentTranslatedBrushPreview(
+        session,
+        origin,
+        current,
+        axisConstraint
+      );
     }
 
     const initialPosition =
-      session.target.kind === "brush" ? session.target.initialCenter : session.target.kind === "modelInstance" ? session.target.initialPosition : session.target.initialPosition;
+      session.target.kind === "brush"
+        ? session.target.initialCenter
+        : session.target.kind === "modelInstance"
+          ? session.target.initialPosition
+          : session.target.initialPosition;
     let nextPosition = {
       ...initialPosition
     };
 
     if (axisConstraint === null) {
       const plane = this.getTransformPlaneForPivot(initialPosition);
-      const startIntersection = this.getPointerPlaneIntersection(origin.x, origin.y, plane);
-      const currentIntersection = this.getPointerPlaneIntersection(current.x, current.y, plane);
+      const startIntersection = this.getPointerPlaneIntersection(
+        origin.x,
+        origin.y,
+        plane
+      );
+      const currentIntersection = this.getPointerPlaneIntersection(
+        current.x,
+        current.y,
+        plane
+      );
 
       if (startIntersection !== null && currentIntersection !== null) {
         const delta = currentIntersection.sub(startIntersection);
@@ -1743,10 +2147,24 @@ export class ViewportHost {
             break;
         }
       }
-    } else if (axisConstraintSpace === "local" && supportsLocalTransformAxisConstraint(session, axisConstraint)) {
-      const axisVector = this.getConstraintAxisWorldVector(session, axisConstraint, axisConstraintSpace);
-      const axisDelta = this.getMovementDistanceAlongWorldAxis(axisVector, initialPosition, origin, current);
-      const snappedAxisDelta = this.whiteboxSnapEnabled ? snapValueToGrid(axisDelta, this.whiteboxSnapStep) : axisDelta;
+    } else if (
+      axisConstraintSpace === "local" &&
+      supportsLocalTransformAxisConstraint(session, axisConstraint)
+    ) {
+      const axisVector = this.getConstraintAxisWorldVector(
+        session,
+        axisConstraint,
+        axisConstraintSpace
+      );
+      const axisDelta = this.getMovementDistanceAlongWorldAxis(
+        axisVector,
+        initialPosition,
+        origin,
+        current
+      );
+      const snappedAxisDelta = this.whiteboxSnapEnabled
+        ? snapValueToGrid(axisDelta, this.whiteboxSnapStep)
+        : axisDelta;
 
       this.transformAxisDelta.copy(axisVector).multiplyScalar(snappedAxisDelta);
       nextPosition = {
@@ -1755,11 +2173,18 @@ export class ViewportHost {
         z: initialPosition.z + this.transformAxisDelta.z
       };
     } else {
-      const axisDelta = this.getAxisMovementDistance(axisConstraint, initialPosition, origin, current);
+      const axisDelta = this.getAxisMovementDistance(
+        axisConstraint,
+        initialPosition,
+        origin,
+        current
+      );
       nextPosition = this.setAxisComponent(
         nextPosition,
         axisConstraint,
-        this.snapWhiteboxPositionValue(this.getAxisComponent(initialPosition, axisConstraint) + axisDelta)
+        this.snapWhiteboxPositionValue(
+          this.getAxisComponent(initialPosition, axisConstraint) + axisDelta
+        )
       );
     }
 
@@ -1819,12 +2244,22 @@ export class ViewportHost {
     axisConstraint: TransformAxis | null,
     axisConstraintSpace: TransformAxisSpace
   ) {
-    if (session.target.kind === "brushFace" || session.target.kind === "brushEdge") {
-      return this.buildComponentRotatedBrushPreview(session, origin, current, axisConstraint);
+    if (
+      session.target.kind === "brushFace" ||
+      session.target.kind === "brushEdge"
+    ) {
+      return this.buildComponentRotatedBrushPreview(
+        session,
+        origin,
+        current,
+        axisConstraint
+      );
     }
 
-    const effectiveAxis = axisConstraint ?? this.getEffectiveRotationAxis(session);
-    const pointerDeltaDegrees = (current.x - origin.x - (current.y - origin.y)) * 0.5;
+    const effectiveAxis =
+      axisConstraint ?? this.getEffectiveRotationAxis(session);
+    const pointerDeltaDegrees =
+      (current.x - origin.x - (current.y - origin.y)) * 0.5;
     const pointerDeltaRadians = (pointerDeltaDegrees * Math.PI) / 180;
 
     if (session.target.kind === "brush") {
@@ -1833,16 +2268,24 @@ export class ViewportHost {
       };
 
       if (axisConstraint !== null) {
-        const initialOrientation = this.createRotationQuaternion(session.target.initialRotationDegrees);
-        const deltaRotation = new Quaternion().setFromAxisAngle(this.axisVector(effectiveAxis), pointerDeltaRadians);
+        const initialOrientation = this.createRotationQuaternion(
+          session.target.initialRotationDegrees
+        );
+        const deltaRotation = new Quaternion().setFromAxisAngle(
+          this.axisVector(effectiveAxis),
+          pointerDeltaRadians
+        );
 
         nextRotationDegrees = this.getQuaternionEulerDegrees(
-          axisConstraintSpace === "local" && supportsLocalTransformAxisConstraint(session, effectiveAxis)
+          axisConstraintSpace === "local" &&
+            supportsLocalTransformAxisConstraint(session, effectiveAxis)
             ? initialOrientation.multiply(deltaRotation)
             : deltaRotation.multiply(initialOrientation)
         );
       } else {
-        nextRotationDegrees[effectiveAxis] = this.normalizeDegrees(nextRotationDegrees[effectiveAxis] + pointerDeltaDegrees);
+        nextRotationDegrees[effectiveAxis] = this.normalizeDegrees(
+          nextRotationDegrees[effectiveAxis] + pointerDeltaDegrees
+        );
       }
 
       return {
@@ -1864,16 +2307,24 @@ export class ViewportHost {
       };
 
       if (axisConstraint !== null) {
-        const initialOrientation = this.createRotationQuaternion(session.target.initialRotationDegrees);
-        const deltaRotation = new Quaternion().setFromAxisAngle(this.axisVector(effectiveAxis), pointerDeltaRadians);
+        const initialOrientation = this.createRotationQuaternion(
+          session.target.initialRotationDegrees
+        );
+        const deltaRotation = new Quaternion().setFromAxisAngle(
+          this.axisVector(effectiveAxis),
+          pointerDeltaRadians
+        );
 
         nextRotationDegrees = this.getQuaternionEulerDegrees(
-          axisConstraintSpace === "local" && supportsLocalTransformAxisConstraint(session, effectiveAxis)
+          axisConstraintSpace === "local" &&
+            supportsLocalTransformAxisConstraint(session, effectiveAxis)
             ? initialOrientation.multiply(deltaRotation)
             : deltaRotation.multiply(initialOrientation)
         );
       } else {
-        nextRotationDegrees[effectiveAxis] = this.normalizeDegrees(nextRotationDegrees[effectiveAxis] + pointerDeltaDegrees);
+        nextRotationDegrees[effectiveAxis] = this.normalizeDegrees(
+          nextRotationDegrees[effectiveAxis] + pointerDeltaDegrees
+        );
       }
 
       return {
@@ -1889,18 +2340,29 @@ export class ViewportHost {
     }
 
     if (session.target.kind !== "entity") {
-      throw new Error("Rotation previews are only supported for model instances and rotatable entities.");
+      throw new Error(
+        "Rotation previews are only supported for model instances and rotatable entities."
+      );
     }
 
     if (session.target.initialRotation.kind === "yaw") {
-      if (axisConstraint !== null && axisConstraintSpace === "local" && supportsLocalTransformAxisConstraint(session, effectiveAxis)) {
+      if (
+        axisConstraint !== null &&
+        axisConstraintSpace === "local" &&
+        supportsLocalTransformAxisConstraint(session, effectiveAxis)
+      ) {
         const initialOrientation = this.createRotationQuaternion({
           x: 0,
           y: session.target.initialRotation.yawDegrees,
           z: 0
         });
-        const deltaRotation = new Quaternion().setFromAxisAngle(this.axisVector("y"), pointerDeltaRadians);
-        const nextRotationDegrees = this.getQuaternionEulerDegrees(initialOrientation.multiply(deltaRotation));
+        const deltaRotation = new Quaternion().setFromAxisAngle(
+          this.axisVector("y"),
+          pointerDeltaRadians
+        );
+        const nextRotationDegrees = this.getQuaternionEulerDegrees(
+          initialOrientation.multiply(deltaRotation)
+        );
 
         return {
           kind: "entity" as const,
@@ -1921,7 +2383,9 @@ export class ViewportHost {
         },
         rotation: {
           kind: "yaw" as const,
-          yawDegrees: normalizeYawDegrees(session.target.initialRotation.yawDegrees + pointerDeltaDegrees)
+          yawDegrees: normalizeYawDegrees(
+            session.target.initialRotation.yawDegrees + pointerDeltaDegrees
+          )
         }
       };
     }
@@ -1935,12 +2399,19 @@ export class ViewportHost {
           session.target.initialRotation.direction.z
         ).normalize()
       );
-      const deltaRotation = new Quaternion().setFromAxisAngle(this.axisVector(effectiveAxis), pointerDeltaRadians);
+      const deltaRotation = new Quaternion().setFromAxisAngle(
+        this.axisVector(effectiveAxis),
+        pointerDeltaRadians
+      );
       const nextOrientation =
-        axisConstraint !== null && axisConstraintSpace === "local" && supportsLocalTransformAxisConstraint(session, effectiveAxis)
+        axisConstraint !== null &&
+        axisConstraintSpace === "local" &&
+        supportsLocalTransformAxisConstraint(session, effectiveAxis)
           ? initialOrientation.multiply(deltaRotation)
           : deltaRotation.multiply(initialOrientation);
-      const direction = new Vector3(0, 1, 0).applyQuaternion(nextOrientation).normalize();
+      const direction = new Vector3(0, 1, 0)
+        .applyQuaternion(nextOrientation)
+        .normalize();
 
       return {
         kind: "entity" as const,
@@ -1975,8 +2446,16 @@ export class ViewportHost {
     current: { x: number; y: number },
     axisConstraint: TransformAxis | null
   ) {
-    if (session.target.kind === "brushFace" || session.target.kind === "brushEdge") {
-      return this.buildComponentScaledBrushPreview(session, origin, current, axisConstraint);
+    if (
+      session.target.kind === "brushFace" ||
+      session.target.kind === "brushEdge"
+    ) {
+      return this.buildComponentScaledBrushPreview(
+        session,
+        origin,
+        current,
+        axisConstraint
+      );
     }
 
     if (session.target.kind === "brush") {
@@ -1985,13 +2464,30 @@ export class ViewportHost {
       };
 
       if (axisConstraint === null) {
-        const uniformFactor = 1 + (current.x - origin.x - (current.y - origin.y)) * 0.01;
-        nextSize.x = this.snapWhiteboxSizeValue(session.target.initialSize.x * uniformFactor);
-        nextSize.y = this.snapWhiteboxSizeValue(session.target.initialSize.y * uniformFactor);
-        nextSize.z = this.snapWhiteboxSizeValue(session.target.initialSize.z * uniformFactor);
+        const uniformFactor =
+          1 + (current.x - origin.x - (current.y - origin.y)) * 0.01;
+        nextSize.x = this.snapWhiteboxSizeValue(
+          session.target.initialSize.x * uniformFactor
+        );
+        nextSize.y = this.snapWhiteboxSizeValue(
+          session.target.initialSize.y * uniformFactor
+        );
+        nextSize.z = this.snapWhiteboxSizeValue(
+          session.target.initialSize.z * uniformFactor
+        );
       } else {
-        const scaleFactor = 1 + this.getAxisMovementDistance(axisConstraint, session.target.initialCenter, origin, current) * 0.45;
-        nextSize[axisConstraint] = this.snapWhiteboxSizeValue(session.target.initialSize[axisConstraint] * scaleFactor);
+        const scaleFactor =
+          1 +
+          this.getAxisMovementDistance(
+            axisConstraint,
+            session.target.initialCenter,
+            origin,
+            current
+          ) *
+            0.45;
+        nextSize[axisConstraint] = this.snapWhiteboxSizeValue(
+          session.target.initialSize[axisConstraint] * scaleFactor
+        );
       }
 
       return {
@@ -2002,14 +2498,18 @@ export class ViewportHost {
         rotationDegrees: {
           ...session.target.initialRotationDegrees
         },
-        size: nextSize
-        ,
-        geometry: scaleBoxBrushGeometryToSize(session.target.initialGeometry, nextSize)
+        size: nextSize,
+        geometry: scaleBoxBrushGeometryToSize(
+          session.target.initialGeometry,
+          nextSize
+        )
       };
     }
 
     if (session.target.kind !== "modelInstance") {
-      throw new Error("Scale previews are only supported for model instances and whitebox boxes.");
+      throw new Error(
+        "Scale previews are only supported for model instances and whitebox boxes."
+      );
     }
 
     const nextScale = {
@@ -2017,13 +2517,30 @@ export class ViewportHost {
     };
 
     if (axisConstraint === null) {
-      const uniformFactor = 1 + (current.x - origin.x - (current.y - origin.y)) * 0.01;
-      nextScale.x = this.snapScaleValue(session.target.initialScale.x * uniformFactor);
-      nextScale.y = this.snapScaleValue(session.target.initialScale.y * uniformFactor);
-      nextScale.z = this.snapScaleValue(session.target.initialScale.z * uniformFactor);
+      const uniformFactor =
+        1 + (current.x - origin.x - (current.y - origin.y)) * 0.01;
+      nextScale.x = this.snapScaleValue(
+        session.target.initialScale.x * uniformFactor
+      );
+      nextScale.y = this.snapScaleValue(
+        session.target.initialScale.y * uniformFactor
+      );
+      nextScale.z = this.snapScaleValue(
+        session.target.initialScale.z * uniformFactor
+      );
     } else {
-      const scaleFactor = 1 + this.getAxisMovementDistance(axisConstraint, session.target.initialPosition, origin, current) * 0.45;
-      nextScale[axisConstraint] = this.snapScaleValue(session.target.initialScale[axisConstraint] * scaleFactor);
+      const scaleFactor =
+        1 +
+        this.getAxisMovementDistance(
+          axisConstraint,
+          session.target.initialPosition,
+          origin,
+          current
+        ) *
+          0.45;
+      nextScale[axisConstraint] = this.snapScaleValue(
+        session.target.initialScale[axisConstraint] * scaleFactor
+      );
     }
 
     return {
@@ -2038,7 +2555,9 @@ export class ViewportHost {
     };
   }
 
-  private createTargetPreviewBrush(session: ActiveTransformSession): BoxBrush | null {
+  private createTargetPreviewBrush(
+    session: ActiveTransformSession
+  ): BoxBrush | null {
     if (
       session.target.kind !== "brush" &&
       session.target.kind !== "brushFace" &&
@@ -2069,7 +2588,16 @@ export class ViewportHost {
     };
   }
 
-  private createBrushPreviewFromGeometry(brush: BoxBrush, geometry: BoxBrushGeometry): { kind: "brush"; center: Vec3; rotationDegrees: Vec3; size: Vec3; geometry: BoxBrushGeometry } {
+  private createBrushPreviewFromGeometry(
+    brush: BoxBrush,
+    geometry: BoxBrushGeometry
+  ): {
+    kind: "brush";
+    center: Vec3;
+    rotationDegrees: Vec3;
+    size: Vec3;
+    geometry: BoxBrushGeometry;
+  } {
     const nextGeometry = cloneBoxBrushGeometry(geometry);
 
     return {
@@ -2085,7 +2613,9 @@ export class ViewportHost {
     };
   }
 
-  private getComponentTargetVertexIds(target: ActiveTransformSession["target"]): BoxVertexId[] {
+  private getComponentTargetVertexIds(
+    target: ActiveTransformSession["target"]
+  ): BoxVertexId[] {
     switch (target.kind) {
       case "brushFace":
         return [...getBoxBrushFaceVertexIds(target.faceId)];
@@ -2100,7 +2630,11 @@ export class ViewportHost {
     }
   }
 
-  private applyDeltaToVertices(brush: BoxBrush, vertexIds: BoxVertexId[], delta: Vec3): BoxBrushGeometry {
+  private applyDeltaToVertices(
+    brush: BoxBrush,
+    vertexIds: BoxVertexId[],
+    delta: Vec3
+  ): BoxBrushGeometry {
     const nextGeometry = cloneBoxBrushGeometry(brush.geometry);
 
     for (const vertexId of vertexIds) {
@@ -2122,7 +2656,9 @@ export class ViewportHost {
     const initialBrush = this.createTargetPreviewBrush(session);
 
     if (initialBrush === null) {
-      throw new Error("Cannot build a component translation preview without a box brush target.");
+      throw new Error(
+        "Cannot build a component translation preview without a box brush target."
+      );
     }
 
     const initialPivot = this.getTransformPivotPosition({
@@ -2143,8 +2679,16 @@ export class ViewportHost {
 
     if (axisConstraint === null) {
       const plane = this.getTransformPlaneForPivot(initialPivot);
-      const startIntersection = this.getPointerPlaneIntersection(origin.x, origin.y, plane);
-      const currentIntersection = this.getPointerPlaneIntersection(current.x, current.y, plane);
+      const startIntersection = this.getPointerPlaneIntersection(
+        origin.x,
+        origin.y,
+        plane
+      );
+      const currentIntersection = this.getPointerPlaneIntersection(
+        current.x,
+        current.y,
+        plane
+      );
 
       if (startIntersection !== null && currentIntersection !== null) {
         const delta = currentIntersection.sub(startIntersection);
@@ -2155,13 +2699,25 @@ export class ViewportHost {
         };
       }
     } else {
-      const axisDelta = this.getAxisMovementDistance(axisConstraint, initialPivot, origin, current);
+      const axisDelta = this.getAxisMovementDistance(
+        axisConstraint,
+        initialPivot,
+        origin,
+        current
+      );
       worldDelta = this.setAxisComponent(worldDelta, axisConstraint, axisDelta);
     }
 
-    const localDelta = transformBoxBrushWorldVectorToLocal(initialBrush, worldDelta);
+    const localDelta = transformBoxBrushWorldVectorToLocal(
+      initialBrush,
+      worldDelta
+    );
     const vertexIds = this.getComponentTargetVertexIds(session.target);
-    const nextGeometry = this.applyDeltaToVertices(initialBrush, vertexIds, localDelta);
+    const nextGeometry = this.applyDeltaToVertices(
+      initialBrush,
+      vertexIds,
+      localDelta
+    );
 
     return this.createBrushPreviewFromGeometry(initialBrush, nextGeometry);
   }
@@ -2175,11 +2731,15 @@ export class ViewportHost {
     const initialBrush = this.createTargetPreviewBrush(session);
 
     if (initialBrush === null) {
-      throw new Error("Cannot build a component rotation preview without a box brush target.");
+      throw new Error(
+        "Cannot build a component rotation preview without a box brush target."
+      );
     }
 
-    const effectiveAxis = axisConstraint ?? this.getEffectiveRotationAxis(session);
-    const pointerDeltaDegrees = (current.x - origin.x - (current.y - origin.y)) * 0.5;
+    const effectiveAxis =
+      axisConstraint ?? this.getEffectiveRotationAxis(session);
+    const pointerDeltaDegrees =
+      (current.x - origin.x - (current.y - origin.y)) * 0.5;
     const pivotWorld = this.getTransformPivotPosition({
       ...session,
       preview: {
@@ -2190,14 +2750,21 @@ export class ViewportHost {
         geometry: cloneBoxBrushGeometry(initialBrush.geometry)
       }
     });
-    const pivotLocal = transformBoxBrushWorldPointToLocal(initialBrush, pivotWorld);
+    const pivotLocal = transformBoxBrushWorldPointToLocal(
+      initialBrush,
+      pivotWorld
+    );
     const rotationAxis = this.axisVector(effectiveAxis).normalize();
     const vertexIds = this.getComponentTargetVertexIds(session.target);
     const nextGeometry = cloneBoxBrushGeometry(initialBrush.geometry);
 
     for (const vertexId of vertexIds) {
       const vertex = getBoxBrushLocalVertexPosition(initialBrush, vertexId);
-      const next = new Vector3(vertex.x - pivotLocal.x, vertex.y - pivotLocal.y, vertex.z - pivotLocal.z)
+      const next = new Vector3(
+        vertex.x - pivotLocal.x,
+        vertex.y - pivotLocal.y,
+        vertex.z - pivotLocal.z
+      )
         .applyAxisAngle(rotationAxis, (pointerDeltaDegrees * Math.PI) / 180)
         .add(new Vector3(pivotLocal.x, pivotLocal.y, pivotLocal.z));
       nextGeometry.vertices[vertexId] = {
@@ -2219,7 +2786,9 @@ export class ViewportHost {
     const initialBrush = this.createTargetPreviewBrush(session);
 
     if (initialBrush === null) {
-      throw new Error("Cannot build a component scale preview without a box brush target.");
+      throw new Error(
+        "Cannot build a component scale preview without a box brush target."
+      );
     }
 
     const pivotWorld = this.getTransformPivotPosition({
@@ -2232,31 +2801,45 @@ export class ViewportHost {
         geometry: cloneBoxBrushGeometry(initialBrush.geometry)
       }
     });
-    const pivotLocal = transformBoxBrushWorldPointToLocal(initialBrush, pivotWorld);
+    const pivotLocal = transformBoxBrushWorldPointToLocal(
+      initialBrush,
+      pivotWorld
+    );
     const nextGeometry = cloneBoxBrushGeometry(initialBrush.geometry);
     const vertexIds = this.getComponentTargetVertexIds(session.target);
 
     if (session.target.kind === "brushFace") {
       const meta = getBoxBrushFaceTransformMeta(session.target.faceId);
       const axis = axisConstraint ?? meta.axis;
-      const scaleFactor = 1 + this.getAxisMovementDistance(axis, pivotWorld, origin, current) * 0.45;
+      const scaleFactor =
+        1 +
+        this.getAxisMovementDistance(axis, pivotWorld, origin, current) * 0.45;
 
       for (const vertexId of vertexIds) {
         const vertex = nextGeometry.vertices[vertexId];
-        vertex[axis] = this.snapWhiteboxPositionValue(pivotLocal[axis] + (vertex[axis] - pivotLocal[axis]) * scaleFactor);
+        vertex[axis] = this.snapWhiteboxPositionValue(
+          pivotLocal[axis] + (vertex[axis] - pivotLocal[axis]) * scaleFactor
+        );
       }
     } else if (session.target.kind === "brushEdge") {
       const meta = getBoxBrushEdgeTransformMeta(session.target.edgeId);
       const affectedAxes = (["x", "y", "z"] as const).filter(
-        (axis) => meta.signs[axis] !== null && (axisConstraint === null || axisConstraint === axis)
+        (axis) =>
+          meta.signs[axis] !== null &&
+          (axisConstraint === null || axisConstraint === axis)
       );
 
       for (const axis of affectedAxes) {
-        const scaleFactor = 1 + this.getAxisMovementDistance(axis, pivotWorld, origin, current) * 0.45;
+        const scaleFactor =
+          1 +
+          this.getAxisMovementDistance(axis, pivotWorld, origin, current) *
+            0.45;
 
         for (const vertexId of vertexIds) {
           const vertex = nextGeometry.vertices[vertexId];
-          vertex[axis] = this.snapWhiteboxPositionValue(pivotLocal[axis] + (vertex[axis] - pivotLocal[axis]) * scaleFactor);
+          vertex[axis] = this.snapWhiteboxPositionValue(
+            pivotLocal[axis] + (vertex[axis] - pivotLocal[axis]) * scaleFactor
+          );
         }
       }
     }
@@ -2293,7 +2876,11 @@ export class ViewportHost {
     }
   }
 
-  private applyBrushRenderObjectTransform(brushId: string, center: Vec3, rotationDegrees: Vec3) {
+  private applyBrushRenderObjectTransform(
+    brushId: string,
+    center: Vec3,
+    rotationDegrees: Vec3
+  ) {
     const renderObjects = this.brushRenderObjects.get(brushId);
 
     if (renderObjects === undefined) {
@@ -2316,9 +2903,20 @@ export class ViewportHost {
     renderObjects.edges.scale.set(1, 1, 1);
   }
 
-  private applySpotLightGroupTransform(group: Group, position: Vec3, direction: Vec3) {
-    const forward = new Vector3(direction.x, direction.y, direction.z).normalize();
-    const orientation = new Quaternion().setFromUnitVectors(new Vector3(0, 1, 0), forward);
+  private applySpotLightGroupTransform(
+    group: Group,
+    position: Vec3,
+    direction: Vec3
+  ) {
+    const forward = new Vector3(
+      direction.x,
+      direction.y,
+      direction.z
+    ).normalize();
+    const orientation = new Quaternion().setFromUnitVectors(
+      new Vector3(0, 1, 0),
+      forward
+    );
     group.position.set(position.x, position.y, position.z);
     group.quaternion.copy(orientation);
   }
@@ -2335,17 +2933,33 @@ export class ViewportHost {
       case "soundEmitter":
       case "triggerVolume":
       case "interactable":
-        renderObjects.group.position.set(entity.position.x, entity.position.y, entity.position.z);
+        renderObjects.group.position.set(
+          entity.position.x,
+          entity.position.y,
+          entity.position.z
+        );
         renderObjects.group.rotation.set(0, 0, 0);
         renderObjects.group.quaternion.identity();
         break;
       case "spotLight":
-        this.applySpotLightGroupTransform(renderObjects.group, entity.position, entity.direction);
+        this.applySpotLightGroupTransform(
+          renderObjects.group,
+          entity.position,
+          entity.direction
+        );
         break;
       case "playerStart":
       case "teleportTarget":
-        renderObjects.group.position.set(entity.position.x, entity.position.y, entity.position.z);
-        renderObjects.group.rotation.set(0, (entity.yawDegrees * Math.PI) / 180, 0);
+        renderObjects.group.position.set(
+          entity.position.x,
+          entity.position.y,
+          entity.position.z
+        );
+        renderObjects.group.rotation.set(
+          0,
+          (entity.yawDegrees * Math.PI) / 180,
+          0
+        );
         break;
     }
   }
@@ -2359,32 +2973,50 @@ export class ViewportHost {
 
     switch (entity.kind) {
       case "pointLight":
-        renderObjects.group.position.set(entity.position.x, entity.position.y, entity.position.z);
+        renderObjects.group.position.set(
+          entity.position.x,
+          entity.position.y,
+          entity.position.z
+        );
         renderObjects.group.rotation.set(0, 0, 0);
         renderObjects.group.quaternion.identity();
         break;
       case "spotLight":
-        this.applySpotLightGroupTransform(renderObjects.group, entity.position, entity.direction);
+        this.applySpotLightGroupTransform(
+          renderObjects.group,
+          entity.position,
+          entity.direction
+        );
         break;
       default:
         break;
     }
   }
 
-  private applyModelInstanceRenderObjectTransform(modelInstance: ModelInstance) {
+  private applyModelInstanceRenderObjectTransform(
+    modelInstance: ModelInstance
+  ) {
     const renderGroup = this.modelRenderObjects.get(modelInstance.id);
 
     if (renderGroup === undefined) {
       return;
     }
 
-    renderGroup.position.set(modelInstance.position.x, modelInstance.position.y, modelInstance.position.z);
+    renderGroup.position.set(
+      modelInstance.position.x,
+      modelInstance.position.y,
+      modelInstance.position.z
+    );
     renderGroup.rotation.set(
       (modelInstance.rotationDegrees.x * Math.PI) / 180,
       (modelInstance.rotationDegrees.y * Math.PI) / 180,
       (modelInstance.rotationDegrees.z * Math.PI) / 180
     );
-    renderGroup.scale.set(modelInstance.scale.x, modelInstance.scale.y, modelInstance.scale.z);
+    renderGroup.scale.set(
+      modelInstance.scale.x,
+      modelInstance.scale.y,
+      modelInstance.scale.z
+    );
   }
 
   private resetRenderObjectTransformsFromDocument() {
@@ -2394,7 +3026,11 @@ export class ViewportHost {
 
     for (const brush of Object.values(this.currentDocument.brushes)) {
       this.updateBrushRenderObjectGeometry(brush);
-      this.applyBrushRenderObjectTransform(brush.id, brush.center, brush.rotationDegrees);
+      this.applyBrushRenderObjectTransform(
+        brush.id,
+        brush.center,
+        brush.rotationDegrees
+      );
     }
 
     for (const entity of getEntityInstances(this.currentDocument.entities)) {
@@ -2402,7 +3038,9 @@ export class ViewportHost {
       this.applyLocalLightRenderObjectTransform(entity);
     }
 
-    for (const modelInstance of getModelInstances(this.currentDocument.modelInstances)) {
+    for (const modelInstance of getModelInstances(
+      this.currentDocument.modelInstances
+    )) {
       this.applyModelInstanceRenderObjectTransform(modelInstance);
     }
   }
@@ -2420,7 +3058,9 @@ export class ViewportHost {
       case "brushEdge":
       case "brushVertex":
         if (this.currentTransformSession.preview.kind === "brush") {
-          const previewBrush = this.createPreviewBrushForSession(this.currentTransformSession);
+          const previewBrush = this.createPreviewBrushForSession(
+            this.currentTransformSession
+          );
 
           if (previewBrush !== null) {
             this.updateBrushRenderObjectGeometry(previewBrush);
@@ -2440,18 +3080,25 @@ export class ViewportHost {
               id: this.currentTransformSession.target.modelInstanceId,
               assetId: this.currentTransformSession.target.assetId,
               position: this.currentTransformSession.preview.position,
-              rotationDegrees: this.currentTransformSession.preview.rotationDegrees,
+              rotationDegrees:
+                this.currentTransformSession.preview.rotationDegrees,
               scale: this.currentTransformSession.preview.scale
             })
           });
         }
         break;
       case "entity": {
-        if (this.currentTransformSession.preview.kind !== "entity" || this.currentDocument === null) {
+        if (
+          this.currentTransformSession.preview.kind !== "entity" ||
+          this.currentDocument === null
+        ) {
           break;
         }
 
-        const currentEntity = this.currentDocument.entities[this.currentTransformSession.target.entityId];
+        const currentEntity =
+          this.currentDocument.entities[
+            this.currentTransformSession.target.entityId
+          ];
 
         if (currentEntity === undefined) {
           break;
@@ -2466,28 +3113,30 @@ export class ViewportHost {
               ...currentEntity,
               position: this.currentTransformSession.preview.position
             });
-                this.applyLocalLightRenderObjectTransform({
-                  ...currentEntity,
-                  position: this.currentTransformSession.preview.position
-                });
+            this.applyLocalLightRenderObjectTransform({
+              ...currentEntity,
+              position: this.currentTransformSession.preview.position
+            });
             break;
           case "spotLight":
             this.applyEntityRenderObjectTransform({
               ...currentEntity,
               position: this.currentTransformSession.preview.position,
               direction:
-                this.currentTransformSession.preview.rotation.kind === "direction"
+                this.currentTransformSession.preview.rotation.kind ===
+                "direction"
                   ? this.currentTransformSession.preview.rotation.direction
                   : currentEntity.direction
             });
-                this.applyLocalLightRenderObjectTransform({
-                  ...currentEntity,
-                  position: this.currentTransformSession.preview.position,
-                  direction:
-                    this.currentTransformSession.preview.rotation.kind === "direction"
-                      ? this.currentTransformSession.preview.rotation.direction
-                      : currentEntity.direction
-                });
+            this.applyLocalLightRenderObjectTransform({
+              ...currentEntity,
+              position: this.currentTransformSession.preview.position,
+              direction:
+                this.currentTransformSession.preview.rotation.kind ===
+                "direction"
+                  ? this.currentTransformSession.preview.rotation.direction
+                  : currentEntity.direction
+            });
             break;
           case "playerStart":
           case "teleportTarget":
@@ -2537,13 +3186,21 @@ export class ViewportHost {
     this.applyShadowState();
   }
 
-  private rebuildBrushMeshes(document: SceneDocument, selection: EditorSelection) {
+  private rebuildBrushMeshes(
+    document: SceneDocument,
+    selection: EditorSelection
+  ) {
     this.clearBrushMeshes();
-    const volumeRenderPaths = resolveBoxVolumeRenderPaths(document.world.advancedRendering);
+    const volumeRenderPaths = resolveBoxVolumeRenderPaths(
+      document.world.advancedRendering
+    );
 
     for (const brush of Object.values(document.brushes)) {
       const geometry = buildBoxBrushDerivedMeshData(brush).geometry;
-      const contactPatches = brush.volume.mode === "water" ? this.collectViewportWaterContactPatches(document, brush) : [];
+      const contactPatches =
+        brush.volume.mode === "water"
+          ? this.collectViewportWaterContactPatches(document, brush)
+          : [];
 
       const materials =
         this.createFogMaterialSet(brush, volumeRenderPaths) ??
@@ -2574,8 +3231,12 @@ export class ViewportHost {
       );
       edges.visible = this.displayMode !== "wireframe";
 
-      const edgeHelpers = BOX_EDGE_IDS.map((edgeId) => this.createEdgeHelper(brush, edgeId));
-      const vertexHelpers = BOX_VERTEX_IDS.map((vertexId) => this.createVertexHelper(brush, vertexId));
+      const edgeHelpers = BOX_EDGE_IDS.map((edgeId) =>
+        this.createEdgeHelper(brush, edgeId)
+      );
+      const vertexHelpers = BOX_VERTEX_IDS.map((vertexId) =>
+        this.createVertexHelper(brush, vertexId)
+      );
 
       this.brushGroup.add(mesh);
       this.brushGroup.add(edges);
@@ -2591,18 +3252,27 @@ export class ViewportHost {
         edgeHelpers,
         vertexHelpers
       });
-      this.applyBrushRenderObjectTransform(brush.id, brush.center, brush.rotationDegrees);
+      this.applyBrushRenderObjectTransform(
+        brush.id,
+        brush.center,
+        brush.rotationDegrees
+      );
     }
 
     this.refreshBrushPresentation();
     this.applyShadowState();
   }
 
-  private configureFogVolumeMesh(mesh: Mesh<BufferGeometry, Material[]>, materials: Material[]) {
+  private configureFogVolumeMesh(
+    mesh: Mesh<BufferGeometry, Material[]>,
+    materials: Material[]
+  ) {
     const fogMaterials = Array.from(
       new Set(
         materials.filter(
-      (material): material is ShaderMaterial => material instanceof ShaderMaterial && material.uniforms["localCameraPosition"] !== undefined
+          (material): material is ShaderMaterial =>
+            material instanceof ShaderMaterial &&
+            material.uniforms["localCameraPosition"] !== undefined
         )
       )
     );
@@ -2612,23 +3282,36 @@ export class ViewportHost {
     }
 
     mesh.onBeforeRender = (_renderer, _scene, camera) => {
-      const localCameraPosition = mesh.worldToLocal(this.fogLocalCameraPosition.copy(camera.position));
+      const localCameraPosition = mesh.worldToLocal(
+        this.fogLocalCameraPosition.copy(camera.position)
+      );
 
       for (const material of fogMaterials) {
-        (material.uniforms["localCameraPosition"] as { value: Vector3 }).value.copy(localCameraPosition);
+        (
+          material.uniforms["localCameraPosition"] as { value: Vector3 }
+        ).value.copy(localCameraPosition);
       }
     };
   }
 
   private createFogMaterialSet(
     brush: BoxBrush,
-    volumeRenderPaths: { fog: "performance" | "quality"; water: "performance" | "quality" }
+    volumeRenderPaths: {
+      fog: "performance" | "quality";
+      water: "performance" | "quality";
+    }
   ): Material[] | null {
-    if (brush.volume.mode !== "fog" || this.displayMode === "wireframe" || this.displayMode === "authoring") {
+    if (
+      brush.volume.mode !== "fog" ||
+      this.displayMode === "wireframe" ||
+      this.displayMode === "authoring"
+    ) {
       return null;
     }
 
-    const highlightStates = BOX_FACE_IDS.map((faceId) => this.getFaceHighlightState(brush.id, faceId));
+    const highlightStates = BOX_FACE_IDS.map((faceId) =>
+      this.getFaceHighlightState(brush.id, faceId)
+    );
     const selectedFace = highlightStates.includes("selected");
     const hoveredFace = !selectedFace && highlightStates.includes("hovered");
     const quality = volumeRenderPaths.fog === "quality";
@@ -2654,7 +3337,10 @@ export class ViewportHost {
       return BOX_FACE_IDS.map(() => fogMaterial.material);
     }
 
-    const baseOpacity = Math.max(0.08, Math.min(0.82, brush.volume.fog.density * 0.9 + 0.1));
+    const baseOpacity = Math.max(
+      0.08,
+      Math.min(0.82, brush.volume.fog.density * 0.9 + 0.1)
+    );
     const fogMaterial = new MeshStandardMaterial({
       color: brush.volume.fog.colorHex,
       emissive: brush.volume.fog.colorHex,
@@ -2669,11 +3355,15 @@ export class ViewportHost {
     return BOX_FACE_IDS.map(() => fogMaterial);
   }
 
-  private rebuildEntityMarkers(document: SceneDocument, selection: EditorSelection) {
+  private rebuildEntityMarkers(
+    document: SceneDocument,
+    selection: EditorSelection
+  ) {
     this.clearEntityMarkers();
 
     for (const entity of getEntityInstances(document.entities)) {
-      const selected = selection.kind === "entities" && selection.ids.includes(entity.id);
+      const selected =
+        selection.kind === "entities" && selection.ids.includes(entity.id);
       const renderObjects = this.createEntityRenderObjects(entity, selected);
 
       if (this.displayMode === "wireframe") {
@@ -2685,7 +3375,10 @@ export class ViewportHost {
     }
   }
 
-  private rebuildModelInstances(document: SceneDocument, selection: EditorSelection) {
+  private rebuildModelInstances(
+    document: SceneDocument,
+    selection: EditorSelection
+  ) {
     this.clearModelInstances();
 
     for (const modelInstance of getModelInstances(document.modelInstances)) {
@@ -2703,7 +3396,11 @@ export class ViewportHost {
 
       if (asset?.kind === "model" && modelInstance.collision.visible) {
         try {
-          const generatedCollider = buildGeneratedModelCollider(modelInstance, asset, loadedAsset);
+          const generatedCollider = buildGeneratedModelCollider(
+            modelInstance,
+            asset,
+            loadedAsset
+          );
 
           if (generatedCollider !== null) {
             renderGroup.add(createModelColliderDebugGroup(generatedCollider));
@@ -2720,10 +3417,19 @@ export class ViewportHost {
     this.applyShadowState();
   }
 
-  private createEntityRenderObjects(entity: EntityInstance, selected: boolean): EntityRenderObjects {
+  private createEntityRenderObjects(
+    entity: EntityInstance,
+    selected: boolean
+  ): EntityRenderObjects {
     switch (entity.kind) {
       case "pointLight":
-        return this.createPointLightGizmoRenderObjects(entity.id, entity.position, entity.distance, entity.colorHex, selected);
+        return this.createPointLightGizmoRenderObjects(
+          entity.id,
+          entity.position,
+          entity.distance,
+          entity.colorHex,
+          selected
+        );
       case "spotLight":
         return this.createSpotLightGizmoRenderObjects(
           entity.id,
@@ -2735,19 +3441,51 @@ export class ViewportHost {
           selected
         );
       case "playerStart":
-        return this.createPlayerStartRenderObjects(entity.id, entity.position, entity.yawDegrees, entity.collider, selected);
+        return this.createPlayerStartRenderObjects(
+          entity.id,
+          entity.position,
+          entity.yawDegrees,
+          entity.collider,
+          selected
+        );
       case "soundEmitter":
-        return this.createSoundEmitterRenderObjects(entity.id, entity.position, entity.refDistance, entity.maxDistance, selected);
+        return this.createSoundEmitterRenderObjects(
+          entity.id,
+          entity.position,
+          entity.refDistance,
+          entity.maxDistance,
+          selected
+        );
       case "triggerVolume":
-        return this.createTriggerVolumeRenderObjects(entity.id, entity.position, entity.size, selected);
+        return this.createTriggerVolumeRenderObjects(
+          entity.id,
+          entity.position,
+          entity.size,
+          selected
+        );
       case "teleportTarget":
-        return this.createTeleportTargetRenderObjects(entity.id, entity.position, entity.yawDegrees, selected);
+        return this.createTeleportTargetRenderObjects(
+          entity.id,
+          entity.position,
+          entity.yawDegrees,
+          selected
+        );
       case "interactable":
-        return this.createInteractableRenderObjects(entity.id, entity.position, entity.radius, selected);
+        return this.createInteractableRenderObjects(
+          entity.id,
+          entity.position,
+          entity.radius,
+          selected
+        );
     }
   }
 
-  private tagEntityMesh(mesh: Mesh, entityId: string, entityKind: EntityInstance["kind"], group: Group) {
+  private tagEntityMesh(
+    mesh: Mesh,
+    entityId: string,
+    entityKind: EntityInstance["kind"],
+    group: Group
+  ) {
     mesh.userData.entityId = entityId;
     mesh.userData.entityKind = entityKind;
     group.add(mesh);
@@ -2815,10 +3553,20 @@ export class ViewportHost {
     const group = new Group();
     group.position.set(position.x, position.y, position.z);
 
-    const forward = new Vector3(direction.x, direction.y, direction.z).normalize();
+    const forward = new Vector3(
+      direction.x,
+      direction.y,
+      direction.z
+    ).normalize();
     const coneLength = Math.max(0.85, distance);
-    const coneRadius = Math.max(0.16, Math.tan((angleDegrees * Math.PI) / 360) * coneLength);
-    const orientation = new Quaternion().setFromUnitVectors(new Vector3(0, 1, 0), forward);
+    const coneRadius = Math.max(
+      0.16,
+      Math.tan((angleDegrees * Math.PI) / 360) * coneLength
+    );
+    const orientation = new Quaternion().setFromUnitVectors(
+      new Vector3(0, 1, 0),
+      forward
+    );
     group.quaternion.copy(orientation);
 
     const core = new Mesh(
@@ -2858,11 +3606,27 @@ export class ViewportHost {
     };
   }
 
-  private createSpotLightRuntimeObjects(entity: SpotLightEntity): LocalLightRenderObjects {
+  private createSpotLightRuntimeObjects(
+    entity: SpotLightEntity
+  ): LocalLightRenderObjects {
     const group = new Group();
-    const light = new SpotLight(entity.colorHex, entity.intensity, entity.distance, (entity.angleDegrees * Math.PI) / 180, 0.18, 1);
-    const direction = new Vector3(entity.direction.x, entity.direction.y, entity.direction.z).normalize();
-    const orientation = new Quaternion().setFromUnitVectors(new Vector3(0, 1, 0), direction);
+    const light = new SpotLight(
+      entity.colorHex,
+      entity.intensity,
+      entity.distance,
+      (entity.angleDegrees * Math.PI) / 180,
+      0.18,
+      1
+    );
+    const direction = new Vector3(
+      entity.direction.x,
+      entity.direction.y,
+      entity.direction.z
+    ).normalize();
+    const orientation = new Quaternion().setFromUnitVectors(
+      new Vector3(0, 1, 0),
+      direction
+    );
 
     group.position.set(entity.position.x, entity.position.y, entity.position.z);
     group.quaternion.copy(orientation);
@@ -2876,9 +3640,15 @@ export class ViewportHost {
     };
   }
 
-  private createPointLightRuntimeObjects(entity: PointLightEntity): LocalLightRenderObjects {
+  private createPointLightRuntimeObjects(
+    entity: PointLightEntity
+  ): LocalLightRenderObjects {
     const group = new Group();
-    const light = new PointLight(entity.colorHex, entity.intensity, entity.distance);
+    const light = new PointLight(
+      entity.colorHex,
+      entity.intensity,
+      entity.distance
+    );
 
     group.position.set(entity.position.x, entity.position.y, entity.position.z);
     light.position.set(0, 0, 0);
@@ -2896,7 +3666,9 @@ export class ViewportHost {
     collider: PlayerStartEntity["collider"],
     selected: boolean
   ): EntityRenderObjects {
-    const markerColor = selected ? PLAYER_START_SELECTED_COLOR : PLAYER_START_COLOR;
+    const markerColor = selected
+      ? PLAYER_START_SELECTED_COLOR
+      : PLAYER_START_COLOR;
     const group = new Group();
     group.position.set(position.x, position.y, position.z);
     const colliderMaterial = new MeshStandardMaterial({
@@ -2920,7 +3692,12 @@ export class ViewportHost {
     switch (collider.mode) {
       case "capsule": {
         const collisionMesh = new Mesh(
-          new CapsuleGeometry(collider.capsuleRadius, Math.max(0, collider.capsuleHeight - collider.capsuleRadius * 2), 6, 12),
+          new CapsuleGeometry(
+            collider.capsuleRadius,
+            Math.max(0, collider.capsuleHeight - collider.capsuleRadius * 2),
+            6,
+            12
+          ),
           colliderMaterial
         );
         collisionMesh.position.y = collider.capsuleHeight * 0.5;
@@ -2929,7 +3706,14 @@ export class ViewportHost {
         break;
       }
       case "box": {
-        const collisionMesh = new Mesh(new BoxGeometry(collider.boxSize.x, collider.boxSize.y, collider.boxSize.z), colliderMaterial);
+        const collisionMesh = new Mesh(
+          new BoxGeometry(
+            collider.boxSize.x,
+            collider.boxSize.y,
+            collider.boxSize.z
+          ),
+          colliderMaterial
+        );
         collisionMesh.position.y = collider.boxSize.y * 0.5;
         this.tagEntityMesh(collisionMesh, entityId, "playerStart", group);
         meshes.push(collisionMesh);
@@ -3022,7 +3806,9 @@ export class ViewportHost {
     position: Vec3,
     size: Vec3,
     selected: boolean,
-    markerColor = selected ? TRIGGER_VOLUME_SELECTED_COLOR : TRIGGER_VOLUME_COLOR
+    markerColor = selected
+      ? TRIGGER_VOLUME_SELECTED_COLOR
+      : TRIGGER_VOLUME_COLOR
   ): EntityRenderObjects {
     const group = new Group();
     group.position.set(position.x, position.y, position.z);
@@ -3069,7 +3855,9 @@ export class ViewportHost {
     position: Vec3,
     yawDegrees: number,
     selected: boolean,
-    markerColor = selected ? TELEPORT_TARGET_SELECTED_COLOR : TELEPORT_TARGET_COLOR
+    markerColor = selected
+      ? TELEPORT_TARGET_SELECTED_COLOR
+      : TELEPORT_TARGET_COLOR
   ): EntityRenderObjects {
     const group = new Group();
     group.position.set(position.x, position.y, position.z);
@@ -3170,7 +3958,12 @@ export class ViewportHost {
 
   private emitWhiteboxHoverLabelChange() {
     const label =
-      this.currentDocument === null ? null : getWhiteboxSelectionFeedbackLabel(this.currentDocument, this.hoveredSelection);
+      this.currentDocument === null
+        ? null
+        : getWhiteboxSelectionFeedbackLabel(
+            this.currentDocument,
+            this.hoveredSelection
+          );
     this.whiteboxHoverLabelChangeHandler?.(label);
   }
 
@@ -3184,12 +3977,19 @@ export class ViewportHost {
     this.emitWhiteboxHoverLabelChange();
   }
 
-  private getFaceHighlightState(brushId: string, faceId: BoxFaceId): "none" | "hovered" | "selected" {
+  private getFaceHighlightState(
+    brushId: string,
+    faceId: BoxFaceId
+  ): "none" | "hovered" | "selected" {
     if (isBrushFaceSelected(this.currentSelection, brushId, faceId)) {
       return "selected";
     }
 
-    if (this.hoveredSelection.kind === "brushFace" && this.hoveredSelection.brushId === brushId && this.hoveredSelection.faceId === faceId) {
+    if (
+      this.hoveredSelection.kind === "brushFace" &&
+      this.hoveredSelection.brushId === brushId &&
+      this.hoveredSelection.faceId === faceId
+    ) {
       return "hovered";
     }
 
@@ -3201,7 +4001,10 @@ export class ViewportHost {
     faceId: BoxFaceId,
     material: MaterialDef | undefined,
     highlightState: "none" | "hovered" | "selected",
-    volumeRenderPaths: { fog: "performance" | "quality"; water: "performance" | "quality" },
+    volumeRenderPaths: {
+      fog: "performance" | "quality";
+      water: "performance" | "quality";
+    },
     contactPatches: ReturnType<typeof collectWaterContactPatches>
   ): Material {
     const face = brush.faces[faceId];
@@ -3211,15 +4014,24 @@ export class ViewportHost {
 
     if (brush.volume.mode === "water") {
       const quality = volumeRenderPaths.water === "quality";
-      const baseOpacity = Math.max(0.08, Math.min(1, brush.volume.water.surfaceOpacity));
+      const baseOpacity = Math.max(
+        0.08,
+        Math.min(1, brush.volume.water.surfaceOpacity)
+      );
       const opacityBoost = faceId === "posY" ? 0.16 : 0;
-      const opacity = Math.min(1, baseOpacity + opacityBoost + (selectedFace ? 0.08 : hoveredFace ? 0.04 : 0));
+      const opacity = Math.min(
+        1,
+        baseOpacity +
+          opacityBoost +
+          (selectedFace ? 0.08 : hoveredFace ? 0.04 : 0)
+      );
 
       const waterMaterial = createWaterMaterial({
         colorHex: brush.volume.water.colorHex,
         surfaceOpacity: brush.volume.water.surfaceOpacity,
         waveStrength: brush.volume.water.waveStrength,
-        surfaceDisplacementEnabled: brush.volume.water.surfaceDisplacementEnabled,
+        surfaceDisplacementEnabled:
+          brush.volume.water.surfaceDisplacementEnabled,
         opacity,
         quality,
         wireframe: this.displayMode === "wireframe",
@@ -3240,8 +4052,13 @@ export class ViewportHost {
         this.volumeAnimatedUniforms.push(waterMaterial.animationUniform);
       }
 
-      if (faceId === "posY" && waterMaterial.reflectionMatrixUniform !== null && waterMaterial.reflectionEnabledUniform !== null) {
-        const preservedReflectionRenderTarget = this.claimPreservedViewportWaterReflectionTarget(brush.id);
+      if (
+        faceId === "posY" &&
+        waterMaterial.reflectionMatrixUniform !== null &&
+        waterMaterial.reflectionEnabledUniform !== null
+      ) {
+        const preservedReflectionRenderTarget =
+          this.claimPreservedViewportWaterReflectionTarget(brush.id);
         this.viewportWaterSurfaceBindings.push({
           brush,
           reflectionTextureUniform: waterMaterial.reflectionTextureUniform,
@@ -3249,7 +4066,9 @@ export class ViewportHost {
           reflectionEnabledUniform: waterMaterial.reflectionEnabledUniform,
           reflectionRenderTarget:
             preservedReflectionRenderTarget ??
-            (this.getWaterReflectionMode() !== "none" ? this.createWaterReflectionRenderTarget() : null),
+            (this.getWaterReflectionMode() !== "none"
+              ? this.createWaterReflectionRenderTarget()
+              : null),
           lastReflectionUpdateTime: Number.NEGATIVE_INFINITY
         });
       }
@@ -3259,8 +4078,14 @@ export class ViewportHost {
 
     if (brush.volume.mode === "fog") {
       const quality = volumeRenderPaths.fog === "quality";
-      const baseOpacity = Math.max(0.08, Math.min(0.82, brush.volume.fog.density * (quality ? 0.65 : 0.9) + 0.1));
-      const opacity = Math.min(0.92, baseOpacity + (selectedFace ? 0.08 : hoveredFace ? 0.04 : 0));
+      const baseOpacity = Math.max(
+        0.08,
+        Math.min(0.82, brush.volume.fog.density * (quality ? 0.65 : 0.9) + 0.1)
+      );
+      const opacity = Math.min(
+        0.92,
+        baseOpacity + (selectedFace ? 0.08 : hoveredFace ? 0.04 : 0)
+      );
 
       if (this.displayMode === "wireframe") {
         return new MeshBasicMaterial({
@@ -3283,7 +4108,9 @@ export class ViewportHost {
       if (quality) {
         const fogMaterial = createFogQualityMaterial({
           colorHex: brush.volume.fog.colorHex,
-          density: brush.volume.fog.density * (selectedFace ? 1.12 : hoveredFace ? 1.06 : 1),
+          density:
+            brush.volume.fog.density *
+            (selectedFace ? 1.12 : hoveredFace ? 1.06 : 1),
           padding: brush.volume.fog.padding,
           time: this.volumeTime,
           halfSize: {
@@ -3354,8 +4181,16 @@ export class ViewportHost {
 
     if (material === undefined || face.materialId === null) {
       return new MeshStandardMaterial({
-        color: selectedFace ? SELECTED_FACE_FALLBACK_COLOR : hoveredFace ? HOVERED_FACE_FALLBACK_COLOR : FALLBACK_FACE_COLOR,
-        emissive: selectedFace ? SELECTED_FACE_EMISSIVE : hoveredFace ? HOVERED_FACE_EMISSIVE : 0x000000,
+        color: selectedFace
+          ? SELECTED_FACE_FALLBACK_COLOR
+          : hoveredFace
+            ? HOVERED_FACE_FALLBACK_COLOR
+            : FALLBACK_FACE_COLOR,
+        emissive: selectedFace
+          ? SELECTED_FACE_EMISSIVE
+          : hoveredFace
+            ? HOVERED_FACE_EMISSIVE
+            : 0x000000,
         emissiveIntensity: selectedFace ? 0.28 : hoveredFace ? 0.18 : 0,
         roughness: 0.9,
         metalness: 0.05
@@ -3365,7 +4200,11 @@ export class ViewportHost {
     return new MeshStandardMaterial({
       color: 0xffffff,
       map: this.getOrCreateTexture(material),
-      emissive: selectedFace ? SELECTED_FACE_EMISSIVE : hoveredFace ? HOVERED_FACE_EMISSIVE : 0x000000,
+      emissive: selectedFace
+        ? SELECTED_FACE_EMISSIVE
+        : hoveredFace
+          ? HOVERED_FACE_EMISSIVE
+          : 0x000000,
       emissiveIntensity: selectedFace ? 0.32 : hoveredFace ? 0.18 : 0,
       roughness: 0.92,
       metalness: 0.02
@@ -3387,16 +4226,20 @@ export class ViewportHost {
   }
 
   private createWaterReflectionRenderTarget() {
-    const canvasWidth = this.container?.clientWidth ?? this.renderer.domElement.width;
-    const canvasHeight = this.container?.clientHeight ?? this.renderer.domElement.height;
+    const canvasWidth =
+      this.container?.clientWidth ?? this.renderer.domElement.width;
+    const canvasHeight =
+      this.container?.clientHeight ?? this.renderer.domElement.height;
     const width = Math.max(128, Math.round(Math.max(canvasWidth, 512) * 0.5));
     const height = Math.max(128, Math.round(Math.max(canvasHeight, 512) * 0.5));
     return new WebGLRenderTarget(width, height);
   }
 
   private resizeWaterReflectionTargets() {
-    const canvasWidth = this.container?.clientWidth ?? this.renderer.domElement.width;
-    const canvasHeight = this.container?.clientHeight ?? this.renderer.domElement.height;
+    const canvasWidth =
+      this.container?.clientWidth ?? this.renderer.domElement.width;
+    const canvasHeight =
+      this.container?.clientHeight ?? this.renderer.domElement.height;
     const width = Math.max(128, Math.round(Math.max(canvasWidth, 512) * 0.5));
     const height = Math.max(128, Math.round(Math.max(canvasHeight, 512) * 0.5));
 
@@ -3407,13 +4250,22 @@ export class ViewportHost {
   }
 
   private resetViewportWaterSurfaceBindings(preserveRenderTargets: boolean) {
-    const preservedReflectionTargets = new Map<string, WebGLRenderTarget | null>();
+    const preservedReflectionTargets = new Map<
+      string,
+      WebGLRenderTarget | null
+    >();
 
     this.volumeAnimatedUniforms.length = 0;
 
     for (const binding of this.viewportWaterSurfaceBindings) {
-      if (preserveRenderTargets && !preservedReflectionTargets.has(binding.brush.id)) {
-        preservedReflectionTargets.set(binding.brush.id, binding.reflectionRenderTarget);
+      if (
+        preserveRenderTargets &&
+        !preservedReflectionTargets.has(binding.brush.id)
+      ) {
+        preservedReflectionTargets.set(
+          binding.brush.id,
+          binding.reflectionRenderTarget
+        );
         continue;
       }
 
@@ -3430,7 +4282,8 @@ export class ViewportHost {
       return null;
     }
 
-    const reflectionRenderTarget = this.preservedViewportWaterReflectionTargets.get(brushId) ?? null;
+    const reflectionRenderTarget =
+      this.preservedViewportWaterReflectionTargets.get(brushId) ?? null;
     this.preservedViewportWaterReflectionTargets.delete(brushId);
     return reflectionRenderTarget;
   }
@@ -3476,7 +4329,8 @@ export class ViewportHost {
       }
 
       if (binding.reflectionRenderTarget === null) {
-        binding.reflectionRenderTarget = this.createWaterReflectionRenderTarget();
+        binding.reflectionRenderTarget =
+          this.createWaterReflectionRenderTarget();
       }
 
       const canRenderReflection = updatePlanarReflectionCamera(
@@ -3491,7 +4345,11 @@ export class ViewportHost {
         continue;
       }
 
-      if (binding.reflectionTextureUniform.value !== null && now - binding.lastReflectionUpdateTime < WATER_REFLECTION_UPDATE_INTERVAL_MS) {
+      if (
+        binding.reflectionTextureUniform.value !== null &&
+        now - binding.lastReflectionUpdateTime <
+          WATER_REFLECTION_UPDATE_INTERVAL_MS
+      ) {
         binding.reflectionEnabledUniform.value = 0.36;
         continue;
       }
@@ -3499,7 +4357,11 @@ export class ViewportHost {
       const hiddenObjects: Array<{ object: Object3D; visible: boolean }> = [];
       const hiddenObjectSet = new Set<Object3D>();
       const hideObject = (object: Object3D | null | undefined) => {
-        if (object === null || object === undefined || hiddenObjectSet.has(object)) {
+        if (
+          object === null ||
+          object === undefined ||
+          hiddenObjectSet.has(object)
+        ) {
           return;
         }
 
@@ -3509,7 +4371,9 @@ export class ViewportHost {
       };
 
       for (const waterBinding of this.viewportWaterSurfaceBindings) {
-        const renderObjects = this.brushRenderObjects.get(waterBinding.brush.id);
+        const renderObjects = this.brushRenderObjects.get(
+          waterBinding.brush.id
+        );
 
         if (renderObjects !== undefined) {
           hideObject(renderObjects.mesh);
@@ -3544,11 +4408,13 @@ export class ViewportHost {
 
       const previousAutoClear = this.renderer.autoClear;
       const previousRenderTarget = this.renderer.getRenderTarget();
-      const previousReflectionStates = this.viewportWaterSurfaceBindings.map((waterBinding) => ({
-        binding: waterBinding,
-        enabled: waterBinding.reflectionEnabledUniform?.value ?? 0,
-        texture: waterBinding.reflectionTextureUniform?.value ?? null
-      }));
+      const previousReflectionStates = this.viewportWaterSurfaceBindings.map(
+        (waterBinding) => ({
+          binding: waterBinding,
+          enabled: waterBinding.reflectionEnabledUniform?.value ?? 0,
+          texture: waterBinding.reflectionTextureUniform?.value ?? null
+        })
+      );
       try {
         for (const state of previousReflectionStates) {
           if (state.binding.reflectionEnabledUniform !== null) {
@@ -3577,7 +4443,8 @@ export class ViewportHost {
         }
       }
 
-      binding.reflectionTextureUniform.value = binding.reflectionRenderTarget.texture;
+      binding.reflectionTextureUniform.value =
+        binding.reflectionRenderTarget.texture;
       binding.reflectionEnabledUniform.value = 0.36;
       binding.lastReflectionUpdateTime = now;
     }
@@ -3603,7 +4470,10 @@ export class ViewportHost {
     return texture;
   }
 
-  private collectViewportWaterContactPatches(document: SceneDocument, waterBrush: BoxBrush) {
+  private collectViewportWaterContactPatches(
+    document: SceneDocument,
+    waterBrush: BoxBrush
+  ) {
     const contactBounds: Parameters<typeof collectWaterContactPatches>[1] = [];
 
     for (const brush of Object.values(document.brushes)) {
@@ -3641,7 +4511,11 @@ export class ViewportHost {
       }
 
       try {
-        const generatedCollider = buildGeneratedModelCollider(modelInstance, asset, this.loadedModelAssets[modelInstance.assetId]);
+        const generatedCollider = buildGeneratedModelCollider(
+          modelInstance,
+          asset,
+          this.loadedModelAssets[modelInstance.assetId]
+        );
 
         if (generatedCollider !== null) {
           if (generatedCollider.kind === "trimesh") {
@@ -3673,10 +4547,15 @@ export class ViewportHost {
   }
 
   private getViewportWaterFoamContactLimit(brush: BoxBrush) {
-    return brush.volume.mode === "water" ? brush.volume.water.foamContactLimit : 0;
+    return brush.volume.mode === "water"
+      ? brush.volume.water.foamContactLimit
+      : 0;
   }
 
-  private createEdgeHelper(brush: BoxBrush, edgeId: BoxEdgeId): { id: BoxEdgeId; line: Line<BufferGeometry, LineBasicMaterial> } {
+  private createEdgeHelper(
+    brush: BoxBrush,
+    edgeId: BoxEdgeId
+  ): { id: BoxEdgeId; line: Line<BufferGeometry, LineBasicMaterial> } {
     const segment = getBoxBrushEdgeWorldSegment(brush, edgeId);
     const geometry = new BufferGeometry().setFromPoints([
       new Vector3(segment.start.x, segment.start.y, segment.start.z),
@@ -3701,7 +4580,10 @@ export class ViewportHost {
     };
   }
 
-  private createVertexHelper(brush: BoxBrush, vertexId: BoxVertexId): { id: BoxVertexId; mesh: Mesh<SphereGeometry, MeshBasicMaterial> } {
+  private createVertexHelper(
+    brush: BoxBrush,
+    vertexId: BoxVertexId
+  ): { id: BoxVertexId; mesh: Mesh<SphereGeometry, MeshBasicMaterial> } {
     const position = getBoxBrushVertexWorldPosition(brush, vertexId);
     const mesh = new Mesh(
       new SphereGeometry(WHITEBOX_VERTEX_RADIUS, 10, 8),
@@ -3728,9 +4610,12 @@ export class ViewportHost {
       return;
     }
 
-    const volumeRenderPaths = resolveBoxVolumeRenderPaths(this.currentDocument.world.advancedRendering);
+    const volumeRenderPaths = resolveBoxVolumeRenderPaths(
+      this.currentDocument.world.advancedRendering
+    );
 
-    this.preservedViewportWaterReflectionTargets = this.resetViewportWaterSurfaceBindings(true);
+    this.preservedViewportWaterReflectionTargets =
+      this.resetViewportWaterSurfaceBindings(true);
 
     try {
       for (const brush of Object.values(this.currentDocument.brushes)) {
@@ -3741,39 +4626,72 @@ export class ViewportHost {
         }
 
         const brushSelected = isBrushSelected(this.currentSelection, brush.id);
-        const brushHovered = this.hoveredSelection.kind === "brushes" && this.hoveredSelection.ids.includes(brush.id);
+        const brushHovered =
+          this.hoveredSelection.kind === "brushes" &&
+          this.hoveredSelection.ids.includes(brush.id);
         renderObjects.edges.material.color.setHex(
-          brushSelected ? BRUSH_SELECTED_EDGE_COLOR : brushHovered && this.whiteboxSelectionMode === "object" ? BRUSH_HOVERED_EDGE_COLOR : BRUSH_EDGE_COLOR
+          brushSelected
+            ? BRUSH_SELECTED_EDGE_COLOR
+            : brushHovered && this.whiteboxSelectionMode === "object"
+              ? BRUSH_HOVERED_EDGE_COLOR
+              : BRUSH_EDGE_COLOR
         );
 
         const previousMaterials = renderObjects.mesh.material;
-        const contactPatches = brush.volume.mode === "water" ? this.collectViewportWaterContactPatches(this.currentDocument, brush) : [];
+        const contactPatches =
+          brush.volume.mode === "water"
+            ? this.collectViewportWaterContactPatches(
+                this.currentDocument,
+                brush
+              )
+            : [];
         renderObjects.mesh.material =
           this.createFogMaterialSet(brush, volumeRenderPaths) ??
           BOX_FACE_IDS.map((faceId) =>
             this.createFaceMaterial(
               brush,
               faceId,
-              this.currentDocument?.materials[brush.faces[faceId].materialId ?? ""],
+              this.currentDocument?.materials[
+                brush.faces[faceId].materialId ?? ""
+              ],
               this.getFaceHighlightState(brush.id, faceId),
               volumeRenderPaths,
               contactPatches
             )
           );
-        this.configureFogVolumeMesh(renderObjects.mesh, renderObjects.mesh.material);
+        this.configureFogVolumeMesh(
+          renderObjects.mesh,
+          renderObjects.mesh.material
+        );
 
         this.disposeUniqueMaterials(previousMaterials);
 
-        const hoveredEdgeId = this.hoveredSelection.kind === "brushEdge" && this.hoveredSelection.brushId === brush.id ? this.hoveredSelection.edgeId : null;
-        const hoveredVertexId = this.hoveredSelection.kind === "brushVertex" && this.hoveredSelection.brushId === brush.id ? this.hoveredSelection.vertexId : null;
+        const hoveredEdgeId =
+          this.hoveredSelection.kind === "brushEdge" &&
+          this.hoveredSelection.brushId === brush.id
+            ? this.hoveredSelection.edgeId
+            : null;
+        const hoveredVertexId =
+          this.hoveredSelection.kind === "brushVertex" &&
+          this.hoveredSelection.brushId === brush.id
+            ? this.hoveredSelection.vertexId
+            : null;
 
         for (const edgeHelper of renderObjects.edgeHelpers) {
-          const selected = isBrushEdgeSelected(this.currentSelection, brush.id, edgeHelper.id);
+          const selected = isBrushEdgeSelected(
+            this.currentSelection,
+            brush.id,
+            edgeHelper.id
+          );
           const hovered = hoveredEdgeId === edgeHelper.id;
 
           edgeHelper.line.visible = this.whiteboxSelectionMode === "edge";
           edgeHelper.line.material.color.setHex(
-            selected ? WHITEBOX_COMPONENT_SELECTED_COLOR : hovered ? WHITEBOX_COMPONENT_HOVERED_COLOR : WHITEBOX_COMPONENT_COLOR
+            selected
+              ? WHITEBOX_COMPONENT_SELECTED_COLOR
+              : hovered
+                ? WHITEBOX_COMPONENT_HOVERED_COLOR
+                : WHITEBOX_COMPONENT_COLOR
           );
           edgeHelper.line.material.opacity = selected
             ? WHITEBOX_COMPONENT_SELECTED_OPACITY
@@ -3783,12 +4701,20 @@ export class ViewportHost {
         }
 
         for (const vertexHelper of renderObjects.vertexHelpers) {
-          const selected = isBrushVertexSelected(this.currentSelection, brush.id, vertexHelper.id);
+          const selected = isBrushVertexSelected(
+            this.currentSelection,
+            brush.id,
+            vertexHelper.id
+          );
           const hovered = hoveredVertexId === vertexHelper.id;
 
           vertexHelper.mesh.visible = this.whiteboxSelectionMode === "vertex";
           vertexHelper.mesh.material.color.setHex(
-            selected ? WHITEBOX_COMPONENT_SELECTED_COLOR : hovered ? WHITEBOX_COMPONENT_HOVERED_COLOR : WHITEBOX_COMPONENT_COLOR
+            selected
+              ? WHITEBOX_COMPONENT_SELECTED_COLOR
+              : hovered
+                ? WHITEBOX_COMPONENT_HOVERED_COLOR
+                : WHITEBOX_COMPONENT_COLOR
           );
           vertexHelper.mesh.material.opacity = selected
             ? WHITEBOX_COMPONENT_SELECTED_OPACITY
@@ -3892,7 +4818,9 @@ export class ViewportHost {
     this.resizeWaterReflectionTargets();
   }
 
-  private pickTransformHandle(event: PointerEvent): { axisConstraint: TransformAxis | null } | null {
+  private pickTransformHandle(
+    event: PointerEvent
+  ): { axisConstraint: TransformAxis | null } | null {
     if (!this.transformGizmoGroup.visible) {
       return null;
     }
@@ -3903,12 +4831,20 @@ export class ViewportHost {
 
     this.raycaster.setFromCamera(this.pointer, this.getActiveCamera());
 
-    const hits = this.raycaster.intersectObjects(this.transformGizmoGroup.children, true);
+    const hits = this.raycaster.intersectObjects(
+      this.transformGizmoGroup.children,
+      true
+    );
 
     for (const hit of hits) {
       const axisConstraint = hit.object.userData.transformAxisConstraint;
 
-      if (axisConstraint === null || axisConstraint === "x" || axisConstraint === "y" || axisConstraint === "z") {
+      if (
+        axisConstraint === null ||
+        axisConstraint === "x" ||
+        axisConstraint === "y" ||
+        axisConstraint === "z"
+      ) {
         return {
           axisConstraint
         };
@@ -3922,11 +4858,18 @@ export class ViewportHost {
     switch (this.whiteboxSelectionMode) {
       case "object":
       case "face":
-        return Array.from(this.brushRenderObjects.values(), (renderObjects) => renderObjects.mesh);
+        return Array.from(
+          this.brushRenderObjects.values(),
+          (renderObjects) => renderObjects.mesh
+        );
       case "edge":
-        return Array.from(this.brushRenderObjects.values(), (renderObjects) => renderObjects.edgeHelpers.map((helper) => helper.line)).flat();
+        return Array.from(this.brushRenderObjects.values(), (renderObjects) =>
+          renderObjects.edgeHelpers.map((helper) => helper.line)
+        ).flat();
       case "vertex":
-        return Array.from(this.brushRenderObjects.values(), (renderObjects) => renderObjects.vertexHelpers.map((helper) => helper.mesh)).flat();
+        return Array.from(this.brushRenderObjects.values(), (renderObjects) =>
+          renderObjects.vertexHelpers.map((helper) => helper.mesh)
+        ).flat();
     }
   }
 
@@ -3949,7 +4892,10 @@ export class ViewportHost {
     }
   }
 
-  private createSelectionFromHit(hit: { object: Object3D; face?: { materialIndex?: number } | null }): EditorSelection | null {
+  private createSelectionFromHit(hit: {
+    object: Object3D;
+    face?: { materialIndex?: number } | null;
+  }): EditorSelection | null {
     if (hit.object.userData.nonPickable === true) {
       return null;
     }
@@ -3996,7 +4942,10 @@ export class ViewportHost {
 
     if (this.whiteboxSelectionMode === "face") {
       const faceMaterialIndex = hit.face?.materialIndex;
-      const faceId = typeof faceMaterialIndex === "number" ? BOX_FACE_IDS[faceMaterialIndex] ?? null : null;
+      const faceId =
+        typeof faceMaterialIndex === "number"
+          ? (BOX_FACE_IDS[faceMaterialIndex] ?? null)
+          : null;
 
       if (faceId === null) {
         return null;
@@ -4019,17 +4968,23 @@ export class ViewportHost {
     return null;
   }
 
-  private getSelectionCandidates(event: PointerEvent): Array<{ key: string; selection: EditorSelection }> {
+  private getSelectionCandidates(
+    event: PointerEvent
+  ): Array<{ key: string; selection: EditorSelection }> {
     if (!this.setPointerFromClientPosition(event.clientX, event.clientY)) {
       return [];
     }
 
     this.raycaster.setFromCamera(this.pointer, this.getActiveCamera());
-    this.raycaster.params.Line.threshold = this.whiteboxSelectionMode === "edge" ? WHITEBOX_EDGE_PICK_THRESHOLD : 1;
+    this.raycaster.params.Line.threshold =
+      this.whiteboxSelectionMode === "edge" ? WHITEBOX_EDGE_PICK_THRESHOLD : 1;
 
     const hits = this.raycaster.intersectObjects(
       [
-        ...Array.from(this.entityRenderObjects.values(), (renderObjects) => renderObjects.group),
+        ...Array.from(
+          this.entityRenderObjects.values(),
+          (renderObjects) => renderObjects.group
+        ),
         ...Array.from(this.modelRenderObjects.values()),
         ...this.getBrushPickableObjects()
       ],
@@ -4105,7 +5060,10 @@ export class ViewportHost {
 
       if (
         transformHandle.axisConstraint !== null &&
-        !supportsTransformAxisConstraint(interactionSession, transformHandle.axisConstraint)
+        !supportsTransformAxisConstraint(
+          interactionSession,
+          transformHandle.axisConstraint
+        )
       ) {
         return;
       }
@@ -4116,7 +5074,10 @@ export class ViewportHost {
           sourcePanelId: this.panelId,
           operation: interactionSession.operation,
           axisConstraint: transformHandle.axisConstraint,
-          axisConstraintSpace: transformHandle.axisConstraint === null ? "world" : interactionSession.axisConstraintSpace,
+          axisConstraintSpace:
+            transformHandle.axisConstraint === null
+              ? "world"
+              : interactionSession.axisConstraintSpace,
           target: interactionSession.target
         }),
         {
@@ -4128,7 +5089,9 @@ export class ViewportHost {
           y: event.clientY
         },
         transformHandle.axisConstraint,
-        transformHandle.axisConstraint === null ? "world" : interactionSession.axisConstraintSpace
+        transformHandle.axisConstraint === null
+          ? "world"
+          : interactionSession.axisConstraintSpace
       );
 
       this.currentTransformSession = nextSession;
@@ -4154,7 +5117,10 @@ export class ViewportHost {
         return;
       }
 
-      if (this.currentTransformSession.source !== "gizmo" || this.currentTransformSession.sourcePanelId === this.panelId) {
+      if (
+        this.currentTransformSession.source !== "gizmo" ||
+        this.currentTransformSession.sourcePanelId === this.panelId
+      ) {
         event.preventDefault();
         this.transformCommitHandler?.(this.currentTransformSession);
         return;
@@ -4162,7 +5128,10 @@ export class ViewportHost {
     }
 
     if (this.toolMode === "create" && this.creationPreview !== null) {
-      const previewCenter = this.getCreationPreviewCenter(event, this.creationPreview.target);
+      const previewCenter = this.getCreationPreviewCenter(
+        event,
+        this.creationPreview.target
+      );
       const nextCreationPreview = {
         ...this.creationPreview,
         center: previewCenter
@@ -4172,7 +5141,8 @@ export class ViewportHost {
       this.creationPreviewChangeHandler?.(nextCreationPreview);
 
       if (previewCenter !== null) {
-        const committed = this.creationCommitHandler?.(nextCreationPreview) === true;
+        const committed =
+          this.creationCommitHandler?.(nextCreationPreview) === true;
 
         if (committed) {
           this.syncCreationPreview(null);
@@ -4205,7 +5175,9 @@ export class ViewportHost {
 
     if (isSameSpot && this.lastClickSelectionKey !== null) {
       // Find where the previously selected item sits in the new hit list and advance by one.
-      const lastIndex = candidates.findIndex((c) => c.key === this.lastClickSelectionKey);
+      const lastIndex = candidates.findIndex(
+        (c) => c.key === this.lastClickSelectionKey
+      );
       if (lastIndex !== -1) {
         candidateIndex = (lastIndex + 1) % candidates.length;
       }
@@ -4224,7 +5196,10 @@ export class ViewportHost {
       y: event.clientY
     };
 
-    if (this.activeCameraDragPointerId === event.pointerId && this.lastCameraDragClientPosition !== null) {
+    if (
+      this.activeCameraDragPointerId === event.pointerId &&
+      this.lastCameraDragClientPosition !== null
+    ) {
       const deltaX = event.clientX - this.lastCameraDragClientPosition.x;
       const deltaY = event.clientY - this.lastCameraDragClientPosition.y;
 
@@ -4267,7 +5242,8 @@ export class ViewportHost {
     }
 
     if (this.toolMode === "select") {
-      const hoveredCandidate = this.getSelectionCandidates(event)[0]?.selection ?? { kind: "none" };
+      const hoveredCandidate = this.getSelectionCandidates(event)[0]
+        ?.selection ?? { kind: "none" };
       this.setHoveredSelection(hoveredCandidate);
       return;
     }
@@ -4280,7 +5256,10 @@ export class ViewportHost {
       return;
     }
 
-    const previewCenter = this.getCreationPreviewCenter(event, this.creationPreview.target);
+    const previewCenter = this.getCreationPreviewCenter(
+      event,
+      this.creationPreview.target
+    );
     const nextCreationPreview = {
       ...this.creationPreview,
       center: previewCenter
@@ -4291,12 +5270,18 @@ export class ViewportHost {
   };
 
   private handlePointerUp = (event: PointerEvent) => {
-    if (this.activeTransformDrag !== null && this.activeTransformDrag.pointerId === event.pointerId) {
+    if (
+      this.activeTransformDrag !== null &&
+      this.activeTransformDrag.pointerId === event.pointerId
+    ) {
       if (this.renderer.domElement.hasPointerCapture(event.pointerId)) {
         this.renderer.domElement.releasePointerCapture(event.pointerId);
       }
 
-      const completedSession = this.currentTransformSession.kind === "active" ? this.currentTransformSession : null;
+      const completedSession =
+        this.currentTransformSession.kind === "active"
+          ? this.currentTransformSession
+          : null;
       this.activeTransformDrag = null;
 
       if (completedSession !== null) {
@@ -4342,7 +5327,8 @@ export class ViewportHost {
       this.currentTransformSession.sourcePanelId !== this.panelId ||
       this.currentTransformSession.source === "gizmo" ||
       this.keyboardTransformPointerOrigin === null ||
-      this.keyboardTransformPointerOrigin.sessionId !== this.currentTransformSession.id
+      this.keyboardTransformPointerOrigin.sessionId !==
+        this.currentTransformSession.id
     ) {
       return;
     }
@@ -4373,7 +5359,10 @@ export class ViewportHost {
     if (this.viewMode === "perspective") {
       this.cameraSpherical.radius = Math.min(
         MAX_CAMERA_DISTANCE,
-        Math.max(MIN_CAMERA_DISTANCE, this.cameraSpherical.radius * Math.exp(event.deltaY * ZOOM_SPEED))
+        Math.max(
+          MIN_CAMERA_DISTANCE,
+          this.cameraSpherical.radius * Math.exp(event.deltaY * ZOOM_SPEED)
+        )
       );
       this.applyPerspectiveCameraPose();
       this.emitCameraStateChange();
@@ -4382,7 +5371,10 @@ export class ViewportHost {
 
     this.orthographicCamera.zoom = Math.min(
       MAX_ORTHOGRAPHIC_ZOOM,
-      Math.max(MIN_ORTHOGRAPHIC_ZOOM, this.orthographicCamera.zoom * Math.exp(-event.deltaY * ZOOM_SPEED))
+      Math.max(
+        MIN_ORTHOGRAPHIC_ZOOM,
+        this.orthographicCamera.zoom * Math.exp(-event.deltaY * ZOOM_SPEED)
+      )
     );
     this.orthographicCamera.updateProjectionMatrix();
     this.emitCameraStateChange();
@@ -4429,12 +5421,20 @@ export class ViewportHost {
     const height = Math.max(1, this.container.clientHeight);
 
     if (this.viewMode === "perspective") {
-      const visibleHeight = 2 * Math.tan((this.perspectiveCamera.fov * Math.PI) / 360) * this.cameraSpherical.radius;
-      const visibleWidth = visibleHeight * Math.max(this.perspectiveCamera.aspect, 0.0001);
+      const visibleHeight =
+        2 *
+        Math.tan((this.perspectiveCamera.fov * Math.PI) / 360) *
+        this.cameraSpherical.radius;
+      const visibleWidth =
+        visibleHeight * Math.max(this.perspectiveCamera.aspect, 0.0001);
 
       this.perspectiveCamera.getWorldDirection(this.cameraForward);
-      this.cameraRight.crossVectors(this.cameraForward, this.perspectiveCamera.up).normalize();
-      this.cameraUp.crossVectors(this.cameraRight, this.cameraForward).normalize();
+      this.cameraRight
+        .crossVectors(this.cameraForward, this.perspectiveCamera.up)
+        .normalize();
+      this.cameraUp
+        .crossVectors(this.cameraRight, this.cameraForward)
+        .normalize();
 
       this.cameraTarget
         .addScaledVector(this.cameraRight, (-deltaX / width) * visibleWidth)
@@ -4444,12 +5444,19 @@ export class ViewportHost {
       return;
     }
 
-    const visibleHeight = ORTHOGRAPHIC_FRUSTUM_HEIGHT / this.orthographicCamera.zoom;
-    const visibleWidth = (this.orthographicCamera.right - this.orthographicCamera.left) / this.orthographicCamera.zoom;
+    const visibleHeight =
+      ORTHOGRAPHIC_FRUSTUM_HEIGHT / this.orthographicCamera.zoom;
+    const visibleWidth =
+      (this.orthographicCamera.right - this.orthographicCamera.left) /
+      this.orthographicCamera.zoom;
 
     this.orthographicCamera.getWorldDirection(this.cameraForward);
-    this.cameraRight.crossVectors(this.cameraForward, this.orthographicCamera.up).normalize();
-    this.cameraUp.crossVectors(this.cameraRight, this.cameraForward).normalize();
+    this.cameraRight
+      .crossVectors(this.cameraForward, this.orthographicCamera.up)
+      .normalize();
+    this.cameraUp
+      .crossVectors(this.cameraRight, this.cameraForward)
+      .normalize();
 
     this.cameraTarget
       .addScaledVector(this.cameraRight, (-deltaX / width) * visibleWidth)
@@ -4458,14 +5465,20 @@ export class ViewportHost {
     this.applyOrthographicCameraPose();
   }
 
-  private getCreationPreviewCenter(event: PointerEvent, target: CreationTarget): Vec3 | null {
+  private getCreationPreviewCenter(
+    event: PointerEvent,
+    target: CreationTarget
+  ): Vec3 | null {
     switch (target.kind) {
       case "box-brush":
         return this.getBoxCreationPreviewCenter(event, DEFAULT_BOX_BRUSH_SIZE);
       case "entity":
         switch (target.entityKind) {
           case "triggerVolume":
-            return this.getBoxCreationPreviewCenter(event, DEFAULT_TRIGGER_VOLUME_SIZE);
+            return this.getBoxCreationPreviewCenter(
+              event,
+              DEFAULT_TRIGGER_VOLUME_SIZE
+            );
           case "pointLight":
           case "playerStart":
           case "soundEmitter":
@@ -4504,7 +5517,12 @@ export class ViewportHost {
 
     this.raycaster.setFromCamera(this.pointer, this.getActiveCamera());
 
-    if (this.raycaster.ray.intersectPlane(this.getBoxCreatePlane(), this.boxCreateIntersection) === null) {
+    if (
+      this.raycaster.ray.intersectPlane(
+        this.getBoxCreatePlane(),
+        this.boxCreateIntersection
+      ) === null
+    ) {
       return null;
     }
 
@@ -4531,7 +5549,10 @@ export class ViewportHost {
     }
   }
 
-  private getBoxCreationPreviewCenter(event: PointerEvent, size: Vec3): Vec3 | null {
+  private getBoxCreationPreviewCenter(
+    event: PointerEvent,
+    size: Vec3
+  ): Vec3 | null {
     const bounds = this.renderer.domElement.getBoundingClientRect();
 
     if (bounds.width === 0 || bounds.height === 0) {
@@ -4543,7 +5564,12 @@ export class ViewportHost {
 
     this.raycaster.setFromCamera(this.pointer, this.getActiveCamera());
 
-    if (this.raycaster.ray.intersectPlane(this.getBoxCreatePlane(), this.boxCreateIntersection) === null) {
+    if (
+      this.raycaster.ray.intersectPlane(
+        this.getBoxCreatePlane(),
+        this.boxCreateIntersection
+      ) === null
+    ) {
       return null;
     }
 
@@ -4593,7 +5619,9 @@ export class ViewportHost {
     this.creationPreviewTargetKey = null;
   }
 
-  private createCreationPreviewObject(toolPreview: CreationViewportToolPreview): Group {
+  private createCreationPreviewObject(
+    toolPreview: CreationViewportToolPreview
+  ): Group {
     const previewPosition = toolPreview.center ?? {
       x: 0,
       y: 0,
@@ -4721,33 +5749,41 @@ export class ViewportHost {
   }
 
   private syncCreationPreview(toolPreview: CreationViewportToolPreview | null) {
-    const currentToolPreview = this.creationPreview === null ? { kind: "none" as const } : this.creationPreview;
-    const nextToolPreview = toolPreview === null ? { kind: "none" as const } : toolPreview;
+    const currentToolPreview =
+      this.creationPreview === null
+        ? { kind: "none" as const }
+        : this.creationPreview;
+    const nextToolPreview =
+      toolPreview === null ? { kind: "none" as const } : toolPreview;
 
     if (areViewportToolPreviewsEqual(currentToolPreview, nextToolPreview)) {
       return;
     }
 
-    this.creationPreview = toolPreview === null ? null : {
-      kind: "create",
-      sourcePanelId: toolPreview.sourcePanelId,
-      target:
-        toolPreview.target.kind === "entity"
-          ? {
-              kind: "entity",
-              entityKind: toolPreview.target.entityKind,
-              audioAssetId: toolPreview.target.audioAssetId
-            }
-          : toolPreview.target.kind === "model-instance"
-            ? {
-                kind: "model-instance",
-                assetId: toolPreview.target.assetId
-              }
-            : {
-                kind: "box-brush"
-              },
-      center: toolPreview.center === null ? null : { ...toolPreview.center }
-    };
+    this.creationPreview =
+      toolPreview === null
+        ? null
+        : {
+            kind: "create",
+            sourcePanelId: toolPreview.sourcePanelId,
+            target:
+              toolPreview.target.kind === "entity"
+                ? {
+                    kind: "entity",
+                    entityKind: toolPreview.target.entityKind,
+                    audioAssetId: toolPreview.target.audioAssetId
+                  }
+                : toolPreview.target.kind === "model-instance"
+                  ? {
+                      kind: "model-instance",
+                      assetId: toolPreview.target.assetId
+                    }
+                  : {
+                      kind: "box-brush"
+                    },
+            center:
+              toolPreview.center === null ? null : { ...toolPreview.center }
+          };
 
     if (toolPreview === null) {
       this.boxCreatePreviewMesh.visible = false;
@@ -4761,8 +5797,16 @@ export class ViewportHost {
       this.boxCreatePreviewEdges.visible = toolPreview.center !== null;
 
       if (toolPreview.center !== null) {
-        this.boxCreatePreviewMesh.position.set(toolPreview.center.x, toolPreview.center.y, toolPreview.center.z);
-        this.boxCreatePreviewEdges.position.set(toolPreview.center.x, toolPreview.center.y, toolPreview.center.z);
+        this.boxCreatePreviewMesh.position.set(
+          toolPreview.center.x,
+          toolPreview.center.y,
+          toolPreview.center.z
+        );
+        this.boxCreatePreviewEdges.position.set(
+          toolPreview.center.x,
+          toolPreview.center.y,
+          toolPreview.center.z
+        );
       }
 
       this.clearCreationPreviewObject();
@@ -4775,11 +5819,18 @@ export class ViewportHost {
     this.boxCreatePreviewMesh.visible = false;
     this.boxCreatePreviewEdges.visible = false;
 
-    if (this.creationPreviewObject !== null && this.creationPreviewTargetKey === nextTargetKey) {
+    if (
+      this.creationPreviewObject !== null &&
+      this.creationPreviewTargetKey === nextTargetKey
+    ) {
       this.creationPreviewObject.visible = toolPreview.center !== null;
 
       if (toolPreview.center !== null) {
-        this.creationPreviewObject.position.set(toolPreview.center.x, toolPreview.center.y, toolPreview.center.z);
+        this.creationPreviewObject.position.set(
+          toolPreview.center.x,
+          toolPreview.center.y,
+          toolPreview.center.z
+        );
       }
 
       this.creationPreviewTargetKey = nextTargetKey;
@@ -4805,7 +5856,10 @@ export class ViewportHost {
     this.updateGridPositioning();
     this.updateTransformGizmoPose();
     const now = performance.now();
-    const dt = this.previousFrameTime === 0 ? 0 : Math.min((now - this.previousFrameTime) / 1000, 1 / 20);
+    const dt =
+      this.previousFrameTime === 0
+        ? 0
+        : Math.min((now - this.previousFrameTime) / 1000, 1 / 20);
     this.previousFrameTime = now;
     this.volumeTime += dt;
 

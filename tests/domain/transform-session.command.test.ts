@@ -2,7 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import { createEditorStore } from "../../src/app/editor-store";
 import { createModelInstance } from "../../src/assets/model-instances";
-import { createProjectAssetStorageKey, type ModelAssetRecord } from "../../src/assets/project-assets";
+import {
+  createProjectAssetStorageKey,
+  type ModelAssetRecord
+} from "../../src/assets/project-assets";
 import { createCommitTransformSessionCommand } from "../../src/commands/commit-transform-session-command";
 import {
   createTransformSession,
@@ -11,7 +14,10 @@ import {
   supportsTransformAxisConstraint,
   supportsTransformOperation
 } from "../../src/core/transform-session";
-import { cloneBoxBrushGeometry, createBoxBrush } from "../../src/document/brushes";
+import {
+  cloneBoxBrushGeometry,
+  createBoxBrush
+} from "../../src/document/brushes";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
 import { createPlayerStartEntity } from "../../src/entities/entity-instances";
 import { getBoxBrushLocalVertexPosition } from "../../src/geometry/box-brush-mesh";
@@ -137,17 +143,62 @@ describe("transform session commit commands", () => {
       initialSize: brush.size
     });
     expect(objectResolved.target).not.toBeNull();
-    expect(supportsTransformOperation(objectResolved.target as NonNullable<typeof objectResolved.target>, "translate")).toBe(true);
-    expect(supportsTransformOperation(objectResolved.target as NonNullable<typeof objectResolved.target>, "rotate")).toBe(true);
-    expect(supportsTransformOperation(objectResolved.target as NonNullable<typeof objectResolved.target>, "scale")).toBe(true);
+    expect(
+      supportsTransformOperation(
+        objectResolved.target as NonNullable<typeof objectResolved.target>,
+        "translate"
+      )
+    ).toBe(true);
+    expect(
+      supportsTransformOperation(
+        objectResolved.target as NonNullable<typeof objectResolved.target>,
+        "rotate"
+      )
+    ).toBe(true);
+    expect(
+      supportsTransformOperation(
+        objectResolved.target as NonNullable<typeof objectResolved.target>,
+        "scale"
+      )
+    ).toBe(true);
 
-    expect(supportsTransformOperation(faceResolved.target as NonNullable<typeof faceResolved.target>, "translate")).toBe(true);
-    expect(supportsTransformOperation(faceResolved.target as NonNullable<typeof faceResolved.target>, "rotate")).toBe(true);
-    expect(supportsTransformOperation(faceResolved.target as NonNullable<typeof faceResolved.target>, "scale")).toBe(true);
+    expect(
+      supportsTransformOperation(
+        faceResolved.target as NonNullable<typeof faceResolved.target>,
+        "translate"
+      )
+    ).toBe(true);
+    expect(
+      supportsTransformOperation(
+        faceResolved.target as NonNullable<typeof faceResolved.target>,
+        "rotate"
+      )
+    ).toBe(true);
+    expect(
+      supportsTransformOperation(
+        faceResolved.target as NonNullable<typeof faceResolved.target>,
+        "scale"
+      )
+    ).toBe(true);
 
-    expect(supportsTransformOperation(vertexResolved.target as NonNullable<typeof vertexResolved.target>, "translate")).toBe(true);
-    expect(supportsTransformOperation(vertexResolved.target as NonNullable<typeof vertexResolved.target>, "rotate")).toBe(false);
-    expect(supportsTransformOperation(vertexResolved.target as NonNullable<typeof vertexResolved.target>, "scale")).toBe(false);
+    expect(
+      supportsTransformOperation(
+        vertexResolved.target as NonNullable<typeof vertexResolved.target>,
+        "translate"
+      )
+    ).toBe(true);
+    expect(
+      supportsTransformOperation(
+        vertexResolved.target as NonNullable<typeof vertexResolved.target>,
+        "rotate"
+      )
+    ).toBe(false);
+    expect(
+      supportsTransformOperation(
+        vertexResolved.target as NonNullable<typeof vertexResolved.target>,
+        "scale"
+      )
+    ).toBe(false);
   });
 
   it("applies axis-constraint rules across object and component transform sessions", () => {
@@ -228,9 +279,15 @@ describe("transform session commit commands", () => {
     expect(supportsTransformAxisConstraint(edgeScaleSession, "y")).toBe(false);
     expect(supportsTransformAxisConstraint(edgeScaleSession, "z")).toBe(true);
 
-    expect(supportsTransformAxisConstraint(vertexTranslateSession, "x")).toBe(true);
-    expect(supportsTransformAxisConstraint(vertexTranslateSession, "y")).toBe(true);
-    expect(supportsTransformAxisConstraint(vertexTranslateSession, "z")).toBe(true);
+    expect(supportsTransformAxisConstraint(vertexTranslateSession, "x")).toBe(
+      true
+    );
+    expect(supportsTransformAxisConstraint(vertexTranslateSession, "y")).toBe(
+      true
+    );
+    expect(supportsTransformAxisConstraint(vertexTranslateSession, "z")).toBe(
+      true
+    );
   });
 
   it("only enables local axis toggling on supported transform targets", () => {
@@ -311,10 +368,18 @@ describe("transform session commit commands", () => {
       target: entityTarget
     });
 
-    expect(supportsLocalTransformAxisConstraint(brushTranslateSession, "z")).toBe(true);
-    expect(supportsLocalTransformAxisConstraint(brushScaleSession, "z")).toBe(false);
-    expect(supportsLocalTransformAxisConstraint(faceRotateSession, "x")).toBe(false);
-    expect(supportsLocalTransformAxisConstraint(entityTranslateSession, "x")).toBe(true);
+    expect(
+      supportsLocalTransformAxisConstraint(brushTranslateSession, "z")
+    ).toBe(true);
+    expect(supportsLocalTransformAxisConstraint(brushScaleSession, "z")).toBe(
+      false
+    );
+    expect(supportsLocalTransformAxisConstraint(faceRotateSession, "x")).toBe(
+      false
+    );
+    expect(
+      supportsLocalTransformAxisConstraint(entityTranslateSession, "x")
+    ).toBe(true);
   });
 
   it("commits whitebox box rotate and scale transforms with undo and redo", () => {
@@ -371,13 +436,20 @@ describe("transform session commit commands", () => {
       geometry: target.initialGeometry
     };
 
-    store.executeCommand(createCommitTransformSessionCommand(store.getState().document, rotateSession));
+    store.executeCommand(
+      createCommitTransformSessionCommand(
+        store.getState().document,
+        rotateSession
+      )
+    );
 
-    expect(store.getState().document.brushes[brush.id].rotationDegrees).toEqual({
-      x: 0,
-      y: 37.5,
-      z: 12.5
-    });
+    expect(store.getState().document.brushes[brush.id].rotationDegrees).toEqual(
+      {
+        x: 0,
+        y: 37.5,
+        z: 12.5
+      }
+    );
 
     const scaleTarget = resolveTransformTarget(store.getState().document, {
       kind: "brushes",
@@ -385,7 +457,9 @@ describe("transform session commit commands", () => {
     }).target;
 
     if (scaleTarget === null || scaleTarget.kind !== "brush") {
-      throw new Error("Expected a whitebox box transform target after rotation.");
+      throw new Error(
+        "Expected a whitebox box transform target after rotation."
+      );
     }
 
     const scaleSession = createTransformSession({
@@ -413,7 +487,12 @@ describe("transform session commit commands", () => {
       geometry: scaleTarget.initialGeometry
     };
 
-    store.executeCommand(createCommitTransformSessionCommand(store.getState().document, scaleSession));
+    store.executeCommand(
+      createCommitTransformSessionCommand(
+        store.getState().document,
+        scaleSession
+      )
+    );
 
     expect(store.getState().document.brushes[brush.id]).toMatchObject({
       rotationDegrees: {
@@ -504,7 +583,9 @@ describe("transform session commit commands", () => {
       geometry: createBoxBrush({ size: { x: 3, y: 2, z: 2 } }).geometry
     };
 
-    store.executeCommand(createCommitTransformSessionCommand(store.getState().document, session));
+    store.executeCommand(
+      createCommitTransformSessionCommand(store.getState().document, session)
+    );
 
     expect(store.getState().document.brushes[brush.id]).toMatchObject({
       center: { x: 0.5, y: 1, z: 0 },
@@ -569,7 +650,9 @@ describe("transform session commit commands", () => {
       geometry: createBoxBrush({ size: { x: 3, y: 3, z: 3 } }).geometry
     };
 
-    store.executeCommand(createCommitTransformSessionCommand(store.getState().document, session));
+    store.executeCommand(
+      createCommitTransformSessionCommand(store.getState().document, session)
+    );
 
     expect(store.getState().document.brushes[brush.id]).toMatchObject({
       center: { x: 0.5, y: 1.5, z: 0.5 },
@@ -640,11 +723,17 @@ describe("transform session commit commands", () => {
       geometry: deformedGeometry
     };
 
-    store.executeCommand(createCommitTransformSessionCommand(store.getState().document, session));
+    store.executeCommand(
+      createCommitTransformSessionCommand(store.getState().document, session)
+    );
 
     const committedBrush = store.getState().document.brushes[brush.id];
-    expect(getBoxBrushLocalVertexPosition(committedBrush, "posX_posY_posZ").x).toBe(2);
-    expect(getBoxBrushLocalVertexPosition(committedBrush, "posX_posY_negZ").x).toBe(1);
+    expect(
+      getBoxBrushLocalVertexPosition(committedBrush, "posX_posY_posZ").x
+    ).toBe(2);
+    expect(
+      getBoxBrushLocalVertexPosition(committedBrush, "posX_posY_negZ").x
+    ).toBe(1);
   });
 
   it("commits a model instance translate/rotate/scale transform with undo and redo", () => {
@@ -713,9 +802,13 @@ describe("transform session commit commands", () => {
       }
     };
 
-    store.executeCommand(createCommitTransformSessionCommand(store.getState().document, session));
+    store.executeCommand(
+      createCommitTransformSessionCommand(store.getState().document, session)
+    );
 
-    expect(store.getState().document.modelInstances[modelInstance.id]).toMatchObject({
+    expect(
+      store.getState().document.modelInstances[modelInstance.id]
+    ).toMatchObject({
       position: {
         x: 4,
         y: 1,
@@ -734,10 +827,14 @@ describe("transform session commit commands", () => {
     });
 
     expect(store.undo()).toBe(true);
-    expect(store.getState().document.modelInstances[modelInstance.id]).toEqual(modelInstance);
+    expect(store.getState().document.modelInstances[modelInstance.id]).toEqual(
+      modelInstance
+    );
 
     expect(store.redo()).toBe(true);
-    expect(store.getState().document.modelInstances[modelInstance.id]).toMatchObject({
+    expect(
+      store.getState().document.modelInstances[modelInstance.id]
+    ).toMatchObject({
       position: {
         x: 4,
         y: 1,
@@ -803,7 +900,9 @@ describe("transform session commit commands", () => {
       }
     };
 
-    store.executeCommand(createCommitTransformSessionCommand(store.getState().document, session));
+    store.executeCommand(
+      createCommitTransformSessionCommand(store.getState().document, session)
+    );
 
     expect(store.getState().document.entities[playerStart.id]).toMatchObject({
       position: {
@@ -815,7 +914,9 @@ describe("transform session commit commands", () => {
     });
 
     expect(store.undo()).toBe(true);
-    expect(store.getState().document.entities[playerStart.id]).toEqual(playerStart);
+    expect(store.getState().document.entities[playerStart.id]).toEqual(
+      playerStart
+    );
 
     expect(store.redo()).toBe(true);
     expect(store.getState().document.entities[playerStart.id]).toMatchObject({
