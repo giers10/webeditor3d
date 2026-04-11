@@ -552,15 +552,17 @@ describe("FirstPersonNavigationController", () => {
 
     const airborneTelemetry =
       context.setPlayerControllerTelemetry.mock.calls.at(-1)?.[0];
+    const baseMoveSpeed = airborneTelemetry?.movement.moveSpeed ?? 4.5;
 
     expect(crouchedGroundedTelemetry?.locomotionState.crouched).toBe(true);
-    expect(crouchedGroundedTelemetry?.locomotionState.requestedPlanarSpeed).toBe(
-      lessThanBaseMoveSpeedMatcher()
-    );
+    expect(
+      crouchedGroundedTelemetry?.locomotionState.requestedPlanarSpeed ??
+        Number.POSITIVE_INFINITY
+    ).toBeLessThan(baseMoveSpeed);
 
     expect(airborneTelemetry?.locomotionState.locomotionMode).toBe("airborne");
     expect(airborneTelemetry?.locomotionState.requestedPlanarSpeed).toBeCloseTo(
-      4.5
+      baseMoveSpeed
     );
     expect(airborneTelemetry?.locomotionState.planarSpeed).toBeCloseTo(4.5);
 
