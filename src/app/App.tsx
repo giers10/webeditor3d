@@ -4290,6 +4290,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
         playerStartMovementTemplateNumberDraft.moveSpeed,
         "Player Start move speed"
       ),
+      maxSpeed: readNonNegativeNumberDraft(
+        playerStartMovementTemplateNumberDraft.maxSpeed,
+        "Player Start max speed"
+      ),
       capabilities: {
         ...playerStartMovementTemplateDraft.capabilities,
         ...overrides.capabilities
@@ -4312,6 +4316,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
         maxHoldMs: readPositiveNumberDraft(
           playerStartMovementTemplateNumberDraft.variableJumpMaxHoldMs,
           "Player Start variable jump max hold"
+        ),
+        bunnyHopBoost: readNonNegativeNumberDraft(
+          playerStartMovementTemplateNumberDraft.bunnyHopBoost,
+          "Player Start bunny hop boost"
         )
       },
       sprint: {
