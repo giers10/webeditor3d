@@ -10293,6 +10293,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                                       kind: "custom",
                                       moveSpeed:
                                         playerStartMovementTemplateDraft.moveSpeed,
+                                      maxSpeed:
+                                        playerStartMovementTemplateDraft.maxSpeed,
                                       capabilities:
                                         playerStartMovementTemplateDraft.capabilities,
                                       jump: playerStartMovementTemplateDraft.jump,
