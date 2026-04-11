@@ -76,6 +76,7 @@ import {
   ANIMATION_PLAYBACK_SCENE_DOCUMENT_VERSION,
   DEFAULT_PROJECT_NAME,
   DEFAULT_PROJECT_SCENE_ID,
+  SCENE_EDITOR_PREFERENCES_SCENE_DOCUMENT_VERSION,
   ENTITY_NAMES_SCENE_DOCUMENT_VERSION,
   ENTITY_SYSTEM_FOUNDATION_SCENE_DOCUMENT_VERSION,
   FACE_MATERIALS_SCENE_DOCUMENT_VERSION,
@@ -101,9 +102,13 @@ import {
   WHITEBOX_FLOAT_TRANSFORM_SCENE_DOCUMENT_VERSION,
   WHITEBOX_GEOMETRY_SCENE_DOCUMENT_VERSION,
   WORLD_ENVIRONMENT_SCENE_DOCUMENT_VERSION,
+  cloneSceneEditorPreferences,
+  createDefaultSceneEditorPreferences,
   createDefaultSceneLoadingScreenSettings,
   createProjectDocumentFromSceneDocument,
   type ProjectDocument,
+  type SceneEditorPanelPreferences,
+  type SceneEditorPreferences,
   type ProjectScene,
   type SceneLoadingScreenSettings,
   type SceneDocument
@@ -194,6 +199,149 @@ function readSceneLoadingScreen(
       `${label}.description`
     )
   };
+}
+
+function readSceneEditorPanelPreferences(
+  value: unknown,
+  label: string
+): SceneEditorPanelPreferences {
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  const viewMode = expectString(value.viewMode, `${label}.viewMode`);
+  const displayMode = expectString(value.displayMode, `${label}.displayMode`);
+
+  if (
+    viewMode !== "perspective" &&
+    viewMode !== "top" &&
+    viewMode !== "front" &&
+    viewMode !== "side"
+  ) {
+    throw new Error(`${label}.viewMode must be a supported viewport view mode.`);
+  }
+
+  if (
+    displayMode !== "normal" &&
+    displayMode !== "authoring" &&
+    displayMode !== "wireframe"
+  ) {
+    throw new Error(
+      `${label}.displayMode must be a supported viewport display mode.`
+    );
+  }
+
+  return {
+    viewMode,
+    displayMode
+  };
+}
+
+function readSceneEditorPreferences(
+  value: unknown,
+  label: string,
+  options: { allowMissing: boolean }
+): SceneEditorPreferences {
+  if (value === undefined && options.allowMissing) {
+    return createDefaultSceneEditorPreferences();
+  }
+
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  const whiteboxSelectionMode = expectString(
+    value.whiteboxSelectionMode,
+    `${label}.whiteboxSelectionMode`
+  );
+  const viewportLayoutMode = expectString(
+    value.viewportLayoutMode,
+    `${label}.viewportLayoutMode`
+  );
+  const activeViewportPanelId = expectString(
+    value.activeViewportPanelId,
+    `${label}.activeViewportPanelId`
+  );
+
+  if (
+    whiteboxSelectionMode !== "object" &&
+    whiteboxSelectionMode !== "face" &&
+    whiteboxSelectionMode !== "edge" &&
+    whiteboxSelectionMode !== "vertex"
+  ) {
+    throw new Error(
+      `${label}.whiteboxSelectionMode must be a supported whitebox selection mode.`
+    );
+  }
+
+  if (viewportLayoutMode !== "single" && viewportLayoutMode !== "quad") {
+    throw new Error(
+      `${label}.viewportLayoutMode must be a supported viewport layout mode.`
+    );
+  }
+
+  if (
+    activeViewportPanelId !== "topLeft" &&
+    activeViewportPanelId !== "topRight" &&
+    activeViewportPanelId !== "bottomLeft" &&
+    activeViewportPanelId !== "bottomRight"
+  ) {
+    throw new Error(
+      `${label}.activeViewportPanelId must be a supported viewport panel id.`
+    );
+  }
+
+  const defaultPreferences = createDefaultSceneEditorPreferences();
+
+  return cloneSceneEditorPreferences({
+    whiteboxSelectionMode,
+    whiteboxSnapEnabled: expectBoolean(
+      value.whiteboxSnapEnabled,
+      `${label}.whiteboxSnapEnabled`
+    ),
+    whiteboxSnapStep: expectPositiveFiniteNumber(
+      value.whiteboxSnapStep,
+      `${label}.whiteboxSnapStep`
+    ),
+    viewportGridVisible: expectBoolean(
+      value.viewportGridVisible,
+      `${label}.viewportGridVisible`
+    ),
+    viewportLayoutMode,
+    activeViewportPanelId,
+    viewportQuadSplit: isRecord(value.viewportQuadSplit)
+      ? {
+          x: expectFiniteNumber(
+            value.viewportQuadSplit.x,
+            `${label}.viewportQuadSplit.x`
+          ),
+          y: expectFiniteNumber(
+            value.viewportQuadSplit.y,
+            `${label}.viewportQuadSplit.y`
+          )
+        }
+      : { ...defaultPreferences.viewportQuadSplit },
+    viewportPanels: isRecord(value.viewportPanels)
+      ? {
+          topLeft: readSceneEditorPanelPreferences(
+            value.viewportPanels.topLeft,
+            `${label}.viewportPanels.topLeft`
+          ),
+          topRight: readSceneEditorPanelPreferences(
+            value.viewportPanels.topRight,
+            `${label}.viewportPanels.topRight`
+          ),
+          bottomLeft: readSceneEditorPanelPreferences(
+            value.viewportPanels.bottomLeft,
+            `${label}.viewportPanels.bottomLeft`
+          ),
+          bottomRight: readSceneEditorPanelPreferences(
+            value.viewportPanels.bottomRight,
+            `${label}.viewportPanels.bottomRight`
+          )
+        }
+      : defaultPreferences.viewportPanels
+  });
 }
 
 function expectBoolean(value: unknown, label: string): boolean {
@@ -2526,7 +2674,10 @@ function readProjectScene(
   label: string,
   materials: Record<string, MaterialDef>,
   assets: Record<string, ProjectAssetRecord>,
-  options: { allowMissingLoadingScreen: boolean }
+  options: {
+    allowMissingLoadingScreen: boolean;
+    allowMissingEditorPreferences: boolean;
+  }
 ): ProjectScene {
   if (!isRecord(value)) {
     throw new Error(`${label} must be an object.`);
@@ -2540,6 +2691,13 @@ function readProjectScene(
       `${label}.loadingScreen`,
       {
         allowMissing: options.allowMissingLoadingScreen
+      }
+    ),
+    editorPreferences: readSceneEditorPreferences(
+      value.editorPreferences,
+      `${label}.editorPreferences`,
+      {
+        allowMissing: options.allowMissingEditorPreferences
       }
     ),
     world: readWorldSettings(value.world),
@@ -2588,6 +2746,8 @@ export function migrateProjectDocument(source: unknown): ProjectDocument {
       source.version === MULTI_SCENE_FOUNDATION_SCENE_DOCUMENT_VERSION;
     const allowMissingProjectName =
       source.version < PROJECT_NAME_SCENE_DOCUMENT_VERSION;
+    const allowMissingEditorPreferences =
+      source.version < SCENE_EDITOR_PREFERENCES_SCENE_DOCUMENT_VERSION;
 
     for (const [sceneKey, sceneValue] of Object.entries(source.scenes)) {
       scenes[sceneKey] = readProjectScene(
@@ -2596,7 +2756,8 @@ export function migrateProjectDocument(source: unknown): ProjectDocument {
         materials,
         assets,
         {
-          allowMissingLoadingScreen
+          allowMissingLoadingScreen,
+          allowMissingEditorPreferences
         }
       );
     }
