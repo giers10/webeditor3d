@@ -291,6 +291,11 @@ describe("local draft storage", () => {
         "scene-main": {
           id: "scene-main",
           name: "Untitled Scene",
+          loadingScreen: {
+            colorHex: "#0d1117",
+            headline: null,
+            description: null
+          },
           world: createEmptySceneDocument().world,
           brushes: {
             [invalidBrush.id]: invalidBrush
