@@ -1190,6 +1190,55 @@ function readPlayerStartInputBindings(value: unknown, label: string) {
   });
 }
 
+function readPlayerStartMovementTemplate(value: unknown, label: string) {
+  if (value === undefined) {
+    return createPlayerStartMovementTemplate();
+  }
+
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  const kind = readOptionalAllowedValue(
+    value.kind,
+    `${label}.kind`,
+    "default",
+    (candidate): candidate is PlayerStartMovementTemplateKind =>
+      typeof candidate === "string" &&
+      isPlayerStartMovementTemplateKind(candidate)
+  );
+  const capabilities = value.capabilities;
+
+  if (capabilities !== undefined && !isRecord(capabilities)) {
+    throw new Error(`${label}.capabilities must be an object.`);
+  }
+
+  return createPlayerStartMovementTemplate({
+    kind,
+    moveSpeed:
+      value.moveSpeed === undefined
+        ? undefined
+        : expectPositiveFiniteNumber(value.moveSpeed, `${label}.moveSpeed`),
+    capabilities: {
+      jump: readOptionalBoolean(
+        capabilities?.jump,
+        `${label}.capabilities.jump`,
+        DEFAULT_PLAYER_START_MOVEMENT_CAPABILITIES.jump
+      ),
+      sprint: readOptionalBoolean(
+        capabilities?.sprint,
+        `${label}.capabilities.sprint`,
+        DEFAULT_PLAYER_START_MOVEMENT_CAPABILITIES.sprint
+      ),
+      crouch: readOptionalBoolean(
+        capabilities?.crouch,
+        `${label}.capabilities.crouch`,
+        DEFAULT_PLAYER_START_MOVEMENT_CAPABILITIES.crouch
+      )
+    }
+  });
+}
+
 function readModelInstance(
   value: unknown,
   label: string,
