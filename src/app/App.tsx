@@ -324,6 +324,7 @@ interface Vec3Draft {
 interface PlayerStartMovementTemplateNumberDraft {
   moveSpeed: string;
   maxSpeed: string;
+  maxStepHeight: string;
   jumpSpeed: string;
   jumpBufferMs: string;
   coyoteTimeMs: string;
@@ -592,6 +593,7 @@ function createPlayerStartMovementTemplateNumberDraft(
   return {
     moveSpeed: String(template.moveSpeed),
     maxSpeed: String(template.maxSpeed),
+    maxStepHeight: String(template.maxStepHeight),
     jumpSpeed: String(template.jump.speed),
     jumpBufferMs: String(template.jump.bufferMs),
     coyoteTimeMs: String(template.jump.coyoteTimeMs),
