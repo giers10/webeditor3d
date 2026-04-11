@@ -623,7 +623,13 @@ describe("scene document JSON", () => {
     const migratedDocument = migrateSceneDocument(legacyDocument);
 
     expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
-    expect(migratedDocument.entities[playerStart.id]).toEqual(playerStart);
+    expect(migratedDocument.entities[playerStart.id]).toEqual(
+      createPlayerStartEntity({
+        id: playerStart.id,
+        position: playerStart.position,
+        yawDegrees: playerStart.yawDegrees
+      })
+    );
   });
 
   it("migrates version 24 Player Start entities to default to first-person navigation", () => {
