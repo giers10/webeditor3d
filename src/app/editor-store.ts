@@ -17,9 +17,14 @@ import {
 } from "../core/transform-session";
 import {
   applySceneDocumentToProject,
+  createDefaultSceneEditorPreferences,
   createEmptyProjectDocument,
+  createEmptyProjectScene,
+  cloneSceneEditorPreferences,
   createProjectDocumentFromSceneDocument,
   createSceneDocumentFromProject,
+  type SceneEditorPanelPreferences,
+  type SceneEditorPreferences,
   type ProjectDocument,
   type SceneDocument
 } from "../document/scene-document";
@@ -64,7 +69,10 @@ export interface EditorStoreState {
   document: SceneDocument;
   selection: EditorSelection;
   whiteboxSelectionMode: WhiteboxSelectionMode;
+  whiteboxSnapEnabled: boolean;
+  whiteboxSnapStep: number;
   toolMode: ToolMode;
+  viewportGridVisible: boolean;
   viewportLayoutMode: ViewportLayoutMode;
   activeViewportPanelId: ViewportPanelId;
   viewportPanels: Record<ViewportPanelId, ViewportPanelState>;
@@ -89,13 +97,122 @@ type EditorStoreListener = () => void;
 export type EditorDraftSaveResult = SaveSceneDocumentDraftResult;
 export type EditorDraftLoadResult = LoadSceneDocumentDraftResult;
 
+function getSceneEditorPreferences(
+  projectDocument: ProjectDocument,
+  sceneId = projectDocument.activeSceneId
+): SceneEditorPreferences {
+  const scene =
+    projectDocument.scenes[sceneId] ??
+    createEmptyProjectScene({
+      id: sceneId
+    });
+  const defaults = createDefaultSceneEditorPreferences();
+  const preferences =
+    (scene as ProjectDocument["scenes"][string] & {
+      editorPreferences?: Partial<SceneEditorPreferences>;
+    }).editorPreferences ?? defaults;
+
+  return cloneSceneEditorPreferences({
+    whiteboxSelectionMode:
+      preferences.whiteboxSelectionMode ?? defaults.whiteboxSelectionMode,
+    whiteboxSnapEnabled:
+      preferences.whiteboxSnapEnabled ?? defaults.whiteboxSnapEnabled,
+    whiteboxSnapStep: preferences.whiteboxSnapStep ?? defaults.whiteboxSnapStep,
+    viewportGridVisible:
+      preferences.viewportGridVisible ?? defaults.viewportGridVisible,
+    viewportLayoutMode:
+      preferences.viewportLayoutMode ?? defaults.viewportLayoutMode,
+    activeViewportPanelId:
+      preferences.activeViewportPanelId ?? defaults.activeViewportPanelId,
+    viewportQuadSplit: {
+      x: preferences.viewportQuadSplit?.x ?? defaults.viewportQuadSplit.x,
+      y: preferences.viewportQuadSplit?.y ?? defaults.viewportQuadSplit.y
+    },
+    viewportPanels: {
+      topLeft: {
+        ...defaults.viewportPanels.topLeft,
+        ...preferences.viewportPanels?.topLeft
+      },
+      topRight: {
+        ...defaults.viewportPanels.topRight,
+        ...preferences.viewportPanels?.topRight
+      },
+      bottomLeft: {
+        ...defaults.viewportPanels.bottomLeft,
+        ...preferences.viewportPanels?.bottomLeft
+      },
+      bottomRight: {
+        ...defaults.viewportPanels.bottomRight,
+        ...preferences.viewportPanels?.bottomRight
+      }
+    }
+  });
+}
+
+function createSceneEditorPanelPreferencesFromViewportPanels(
+  viewportPanels: Record<ViewportPanelId, ViewportPanelState>
+): Record<ViewportPanelId, SceneEditorPanelPreferences> {
+  return {
+    topLeft: {
+      viewMode: viewportPanels.topLeft.viewMode,
+      displayMode: viewportPanels.topLeft.displayMode
+    },
+    topRight: {
+      viewMode: viewportPanels.topRight.viewMode,
+      displayMode: viewportPanels.topRight.displayMode
+    },
+    bottomLeft: {
+      viewMode: viewportPanels.bottomLeft.viewMode,
+      displayMode: viewportPanels.bottomLeft.displayMode
+    },
+    bottomRight: {
+      viewMode: viewportPanels.bottomRight.viewMode,
+      displayMode: viewportPanels.bottomRight.displayMode
+    }
+  };
+}
+
+function applySceneEditorPreferencesToViewportPanels(
+  preferences: SceneEditorPreferences,
+  currentViewportPanels?: Record<ViewportPanelId, ViewportPanelState>
+): Record<ViewportPanelId, ViewportPanelState> {
+  const fallbackPanels =
+    currentViewportPanels ?? createDefaultViewportLayoutState().panels;
+
+  return {
+    topLeft: {
+      ...fallbackPanels.topLeft,
+      viewMode: preferences.viewportPanels.topLeft.viewMode,
+      displayMode: preferences.viewportPanels.topLeft.displayMode
+    },
+    topRight: {
+      ...fallbackPanels.topRight,
+      viewMode: preferences.viewportPanels.topRight.viewMode,
+      displayMode: preferences.viewportPanels.topRight.displayMode
+    },
+    bottomLeft: {
+      ...fallbackPanels.bottomLeft,
+      viewMode: preferences.viewportPanels.bottomLeft.viewMode,
+      displayMode: preferences.viewportPanels.bottomLeft.displayMode
+    },
+    bottomRight: {
+      ...fallbackPanels.bottomRight,
+      viewMode: preferences.viewportPanels.bottomRight.viewMode,
+      displayMode: preferences.viewportPanels.bottomRight.displayMode
+    }
+  };
+}
+
 export class EditorStore {
   private projectDocument: ProjectDocument;
   private document: SceneDocument;
   private commandTargetSceneId: string | null = null;
   private selection: EditorSelection = { kind: "none" };
   private whiteboxSelectionMode: WhiteboxSelectionMode = "object";
+  private whiteboxSnapEnabled = true;
+  private whiteboxSnapStep = 1;
   private toolMode: ToolMode = "select";
+  private viewportGridVisible = true;
   private viewportLayoutMode: ViewportLayoutMode;
   private activeViewportPanelId: ViewportPanelId;
   private viewportPanels: Record<ViewportPanelId, ViewportPanelState>;
@@ -149,10 +266,11 @@ export class EditorStore {
         ? createProjectDocumentFromSceneDocument(options.initialDocument)
         : createEmptyProjectDocument());
     this.document = createSceneDocumentFromProject(this.projectDocument);
-    this.viewportLayoutMode = initialViewportLayoutState.layoutMode;
-    this.activeViewportPanelId = initialViewportLayoutState.activePanelId;
-    this.viewportPanels = initialViewportLayoutState.panels;
-    this.viewportQuadSplit = initialViewportLayoutState.viewportQuadSplit;
+      this.viewportLayoutMode = initialViewportLayoutState.layoutMode;
+      this.activeViewportPanelId = initialViewportLayoutState.activePanelId;
+      this.viewportPanels = initialViewportLayoutState.panels;
+      this.viewportQuadSplit = initialViewportLayoutState.viewportQuadSplit;
+      this.applyActiveSceneEditorPreferences();
     this.storage = options.storage ?? null;
     this.storageKey = options.storageKey ?? DEFAULT_SCENE_DRAFT_STORAGE_KEY;
     this.snapshot = this.createSnapshot();
@@ -210,6 +328,10 @@ export class EditorStore {
     }
 
     this.viewportLayoutMode = viewportLayoutMode;
+    this.updateActiveSceneEditorPreferences((preferences) => ({
+      ...preferences,
+      viewportLayoutMode
+    }));
     this.emit();
   }
 
@@ -219,6 +341,10 @@ export class EditorStore {
     }
 
     this.activeViewportPanelId = panelId;
+    this.updateActiveSceneEditorPreferences((preferences) => ({
+      ...preferences,
+      activeViewportPanelId: panelId
+    }));
     this.emit();
   }
 
@@ -237,6 +363,12 @@ export class EditorStore {
         viewMode
       }
     };
+    this.updateActiveSceneEditorPreferences((preferences) => ({
+      ...preferences,
+      viewportPanels: createSceneEditorPanelPreferencesFromViewportPanels(
+        this.viewportPanels
+      )
+    }));
     this.emit();
   }
 
@@ -255,6 +387,12 @@ export class EditorStore {
         displayMode
       }
     };
+    this.updateActiveSceneEditorPreferences((preferences) => ({
+      ...preferences,
+      viewportPanels: createSceneEditorPanelPreferencesFromViewportPanels(
+        this.viewportPanels
+      )
+    }));
     this.emit();
   }
 
@@ -293,6 +431,51 @@ export class EditorStore {
       x: viewportQuadSplit.x,
       y: viewportQuadSplit.y
     };
+    this.updateActiveSceneEditorPreferences((preferences) => ({
+      ...preferences,
+      viewportQuadSplit: {
+        ...this.viewportQuadSplit
+      }
+    }));
+    this.emit();
+  }
+
+  setWhiteboxSnapEnabled(enabled: boolean) {
+    if (this.whiteboxSnapEnabled === enabled) {
+      return;
+    }
+
+    this.whiteboxSnapEnabled = enabled;
+    this.updateActiveSceneEditorPreferences((preferences) => ({
+      ...preferences,
+      whiteboxSnapEnabled: enabled
+    }));
+    this.emit();
+  }
+
+  setWhiteboxSnapStep(step: number) {
+    if (!Number.isFinite(step) || step <= 0 || this.whiteboxSnapStep === step) {
+      return;
+    }
+
+    this.whiteboxSnapStep = step;
+    this.updateActiveSceneEditorPreferences((preferences) => ({
+      ...preferences,
+      whiteboxSnapStep: step
+    }));
+    this.emit();
+  }
+
+  setViewportGridVisible(visible: boolean) {
+    if (this.viewportGridVisible === visible) {
+      return;
+    }
+
+    this.viewportGridVisible = visible;
+    this.updateActiveSceneEditorPreferences((preferences) => ({
+      ...preferences,
+      viewportGridVisible: visible
+    }));
     this.emit();
   }
 
@@ -457,6 +640,10 @@ export class EditorStore {
       this.selection,
       mode
     );
+    this.updateActiveSceneEditorPreferences((preferences) => ({
+      ...preferences,
+      whiteboxSelectionMode: mode
+    }));
     this.emit();
   }
 
@@ -535,7 +722,6 @@ export class EditorStore {
     this.syncActiveSceneDocument();
     this.commandTargetSceneId = null;
     this.selection = { kind: "none" };
-    this.whiteboxSelectionMode = "object";
     this.toolMode = "select";
     this.previousEditingToolMode = "select";
     this.viewportTransientState = createDefaultViewportTransientState();
@@ -632,7 +818,10 @@ export class EditorStore {
       document: this.document,
       selection: this.selection,
       whiteboxSelectionMode: this.whiteboxSelectionMode,
+      whiteboxSnapEnabled: this.whiteboxSnapEnabled,
+      whiteboxSnapStep: this.whiteboxSnapStep,
       toolMode: this.toolMode,
+      viewportGridVisible: this.viewportGridVisible,
       viewportLayoutMode: this.viewportLayoutMode,
       activeViewportPanelId: this.activeViewportPanelId,
       viewportPanels: this.viewportPanels,
@@ -647,6 +836,49 @@ export class EditorStore {
 
   private syncActiveSceneDocument() {
     this.document = createSceneDocumentFromProject(this.projectDocument);
+    this.applyActiveSceneEditorPreferences();
+  }
+
+  private applyActiveSceneEditorPreferences() {
+    const preferences = getSceneEditorPreferences(this.projectDocument);
+
+    this.whiteboxSelectionMode = preferences.whiteboxSelectionMode;
+    this.whiteboxSnapEnabled = preferences.whiteboxSnapEnabled;
+    this.whiteboxSnapStep = preferences.whiteboxSnapStep;
+    this.viewportGridVisible = preferences.viewportGridVisible;
+    this.viewportLayoutMode = preferences.viewportLayoutMode;
+    this.activeViewportPanelId = preferences.activeViewportPanelId;
+    this.viewportQuadSplit = {
+      ...preferences.viewportQuadSplit
+    };
+    this.viewportPanels = applySceneEditorPreferencesToViewportPanels(
+      preferences,
+      this.viewportPanels
+    );
+  }
+
+  private updateActiveSceneEditorPreferences(
+    updater: (preferences: SceneEditorPreferences) => SceneEditorPreferences
+  ) {
+    const sceneId = this.projectDocument.activeSceneId;
+    const scene = this.projectDocument.scenes[sceneId];
+
+    if (scene === undefined) {
+      return;
+    }
+
+    this.projectDocument = {
+      ...this.projectDocument,
+      scenes: {
+        ...this.projectDocument.scenes,
+        [sceneId]: {
+          ...scene,
+          editorPreferences: cloneSceneEditorPreferences(
+            updater(getSceneEditorPreferences(this.projectDocument, sceneId))
+          )
+        }
+      }
+    };
   }
 
   private resolveCommandSceneId(): string {
