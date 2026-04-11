@@ -97,6 +97,11 @@ const FALLBACK_FACE_COLOR = 0x747d89;
 const BOX_FACE_MATERIAL_COUNT = 6;
 const WATER_REFLECTION_UPDATE_INTERVAL_MS = 96;
 
+export interface RuntimeSceneLoadState {
+  status: "loading" | "ready" | "error";
+  message: string | null;
+}
+
 export class RuntimeHost {
   private readonly scene = new Scene();
   private readonly camera = new PerspectiveCamera(70, 1, 0.05, 1000);
@@ -130,6 +135,8 @@ export class RuntimeHost {
   private runtimeScene: RuntimeSceneDefinition | null = null;
   private collisionWorld: RapierCollisionWorld | null = null;
   private collisionWorldRequestId = 0;
+  private desiredNavigationMode: RuntimeNavigationMode = "firstPerson";
+  private sceneReady = false;
   private currentWorld: RuntimeSceneDefinition["world"] | null = null;
   private currentAdvancedRenderingSettings: AdvancedRenderingSettings | null = null;
   private advancedRenderingComposer: EffectComposer | null = null;
@@ -144,9 +151,13 @@ export class RuntimeHost {
   private runtimeMessageHandler: ((message: string | null) => void) | null = null;
   private firstPersonTelemetryHandler: ((telemetry: FirstPersonTelemetry | null) => void) | null = null;
   private interactionPromptHandler: ((prompt: RuntimeInteractionPrompt | null) => void) | null = null;
+  private sceneLoadStateHandler:
+    | ((state: RuntimeSceneLoadState) => void)
+    | null = null;
   private currentRuntimeMessage: string | null = null;
   private currentFirstPersonTelemetry: FirstPersonTelemetry | null = null;
   private currentInteractionPrompt: RuntimeInteractionPrompt | null = null;
+  private currentSceneLoadState: RuntimeSceneLoadState | null = null;
 
   constructor(options: { enableRendering?: boolean } = {}) {
     const enableRendering = options.enableRendering ?? true;

@@ -80,6 +80,21 @@ export class OrbitVisitorNavigationController implements NavigationController {
     this.context = null;
   }
 
+  resetSceneState(): void {
+    this.target = {
+      x: 0,
+      y: 0,
+      z: 0
+    };
+    this.distance = 8;
+    this.yawRadians = Math.PI * 0.25;
+    this.pitchRadians = Math.PI * 0.35;
+    this.dragging = false;
+    this.lastPointerClientX = 0;
+    this.lastPointerClientY = 0;
+    this.initializedFromScene = false;
+  }
+
   update(_dt: number): void {
     void _dt;
     this.updateCameraTransform();
