@@ -47,9 +47,12 @@ import {
 import {
   createTransformSession,
   doesTransformSessionChangeTarget,
+  getTransformAxisLabel,
+  getTransformAxisSpaceLabel,
   getTransformOperationLabel,
   getTransformTargetLabel,
   resolveTransformTarget,
+  supportsLocalTransformAxisConstraint,
   supportsTransformAxisConstraint,
   supportsTransformOperation,
   type ActiveTransformSession,

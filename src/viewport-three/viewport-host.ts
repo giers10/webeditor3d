@@ -384,6 +384,7 @@ export class ViewportHost {
         pointerId: number;
         sessionId: string;
         axisConstraint: TransformAxis | null;
+        axisConstraintSpace: TransformAxisSpace;
         initialClientPosition: {
           x: number;
           y: number;
@@ -411,9 +412,19 @@ export class ViewportHost {
 
     this.gridHelpers.xy.rotation.x = Math.PI * 0.5;
     this.gridHelpers.yz.rotation.z = Math.PI * 0.5;
-    this.gridHelpers.xz.visible = true;
-    this.gridHelpers.xy.visible = false;
-    this.gridHelpers.yz.visible = false;
+
+    for (const gridHelper of Object.values(this.gridHelpers)) {
+      const gridMaterial = gridHelper.material as LineBasicMaterial;
+      const centerLineMaterial = gridHelper.children[0]?.material as LineBasicMaterial | undefined;
+
+      gridMaterial.transparent = true;
+      gridMaterial.opacity = 0.48;
+
+      if (centerLineMaterial !== undefined) {
+        centerLineMaterial.transparent = true;
+        centerLineMaterial.opacity = 0.8;
+      }
+    }
 
     this.scene.add(this.gridHelpers.xz);
     this.scene.add(this.gridHelpers.xy);
@@ -593,6 +604,15 @@ export class ViewportHost {
     this.applyTransformPreview();
   }
 
+  setGridVisible(visible: boolean) {
+    if (this.viewportGridVisible === visible) {
+      return;
+    }
+
+    this.viewportGridVisible = visible;
+    this.updateGridPresentation();
+  }
+
   setWhiteboxSelectionMode(mode: WhiteboxSelectionMode) {
     if (this.whiteboxSelectionMode === mode) {
       return;
@@ -609,6 +629,7 @@ export class ViewportHost {
   }
 
   setTransformSession(transformSession: TransformSessionState) {
+    const previousTransformSession = this.currentTransformSession;
     this.currentTransformSession = cloneTransformSession(transformSession);
 
     if (this.currentTransformSession.kind === "none") {
@@ -625,6 +646,30 @@ export class ViewportHost {
         clientX: pointerOrigin.x,
         clientY: pointerOrigin.y
       };
+    }
+
+    if (
+      previousTransformSession.kind === "active" &&
+      this.currentTransformSession.kind === "active" &&
+      previousTransformSession.id === this.currentTransformSession.id &&
+      (previousTransformSession.axisConstraint !== this.currentTransformSession.axisConstraint ||
+        previousTransformSession.axisConstraintSpace !== this.currentTransformSession.axisConstraintSpace) &&
+      this.currentTransformSession.sourcePanelId === this.panelId &&
+      this.currentTransformSession.source !== "gizmo" &&
+      this.keyboardTransformPointerOrigin !== null &&
+      this.keyboardTransformPointerOrigin.sessionId === this.currentTransformSession.id &&
+      this.lastCanvasPointerPosition !== null
+    ) {
+      this.currentTransformSession = this.buildTransformPreviewFromPointer(
+        this.currentTransformSession,
+        {
+          x: this.keyboardTransformPointerOrigin.clientX,
+          y: this.keyboardTransformPointerOrigin.clientY
+        },
+        this.lastCanvasPointerPosition,
+        this.currentTransformSession.axisConstraint,
+        this.currentTransformSession.axisConstraintSpace
+      );
     }
 
     this.applyTransformPreview();
@@ -850,12 +895,9 @@ export class ViewportHost {
   }
 
   private applyViewModePose() {
+    this.updateGridPresentation();
+
     const definition = getViewportViewModeDefinition(this.viewMode);
-
-    this.gridHelpers.xz.visible = definition.gridPlane === "xz";
-    this.gridHelpers.xy.visible = definition.gridPlane === "xy";
-    this.gridHelpers.yz.visible = definition.gridPlane === "yz";
-
     if (definition.cameraType === "perspective") {
       this.applyPerspectiveCameraPose();
       return;
@@ -863,6 +905,24 @@ export class ViewportHost {
 
     this.updateOrthographicCameraFrustum();
     this.applyOrthographicCameraPose();
+  }
+
+  private updateGridPresentation() {
+    const definition = getViewportViewModeDefinition(this.viewMode);
+    const visibleGridPlane = this.viewportGridVisible ? definition.gridPlane : null;
+
+    this.gridHelpers.xz.visible = visibleGridPlane === "xz";
+    this.gridHelpers.xy.visible = visibleGridPlane === "xy";
+    this.gridHelpers.yz.visible = visibleGridPlane === "yz";
+    this.updateGridPositioning();
+  }
+
+  private updateGridPositioning() {
+    const align = (value: number) => Math.round(value / DEFAULT_GRID_SIZE) * DEFAULT_GRID_SIZE;
+
+    this.gridHelpers.xz.position.set(align(this.cameraTarget.x), 0, align(this.cameraTarget.z));
+    this.gridHelpers.xy.position.set(align(this.cameraTarget.x), align(this.cameraTarget.y), 0);
+    this.gridHelpers.yz.position.set(0, align(this.cameraTarget.y), align(this.cameraTarget.z));
   }
 
   private createWireframeDisplayMaterial(material: Material): MeshBasicMaterial {
@@ -1042,6 +1102,87 @@ export class ViewportHost {
       case "z":
         return new Vector3(0, 0, 1);
     }
+  }
+
+  private createRotationQuaternion(rotationDegrees: Vec3): Quaternion {
+    return new Quaternion().setFromEuler(
+      new Euler((rotationDegrees.x * Math.PI) / 180, (rotationDegrees.y * Math.PI) / 180, (rotationDegrees.z * Math.PI) / 180, "XYZ")
+    );
+  }
+
+  private getTransformTargetOrientation(session: ActiveTransformSession): Quaternion | null {
+    switch (session.target.kind) {
+      case "brush":
+        if (session.preview.kind !== "brush") {
+          return null;
+        }
+
+        return this.createRotationQuaternion(session.preview.rotationDegrees);
+      case "modelInstance":
+        if (session.preview.kind !== "modelInstance") {
+          return null;
+        }
+
+        return this.createRotationQuaternion(session.preview.rotationDegrees);
+      case "entity":
+        if (session.preview.kind !== "entity") {
+          return null;
+        }
+
+        switch (session.preview.rotation.kind) {
+          case "yaw":
+            return this.createRotationQuaternion({
+              x: 0,
+              y: session.preview.rotation.yawDegrees,
+              z: 0
+            });
+          case "direction":
+            return new Quaternion().setFromUnitVectors(
+              new Vector3(0, 1, 0),
+              new Vector3(
+                session.preview.rotation.direction.x,
+                session.preview.rotation.direction.y,
+                session.preview.rotation.direction.z
+              ).normalize()
+            );
+          case "none":
+            return null;
+        }
+      case "brushFace":
+      case "brushEdge":
+      case "brushVertex":
+        return null;
+    }
+  }
+
+  private getConstraintAxisWorldVector(
+    session: ActiveTransformSession,
+    axis: TransformAxis,
+    axisSpace: TransformAxisSpace
+  ): Vector3 {
+    const worldAxis = this.axisVector(axis);
+
+    if (axisSpace !== "local") {
+      return worldAxis;
+    }
+
+    const orientation = this.getTransformTargetOrientation(session);
+
+    if (orientation === null) {
+      return worldAxis;
+    }
+
+    return worldAxis.applyQuaternion(orientation).normalize();
+  }
+
+  private getQuaternionEulerDegrees(quaternion: Quaternion): Vec3 {
+    const euler = new Euler().setFromQuaternion(quaternion, "XYZ");
+
+    return {
+      x: this.normalizeDegrees((euler.x * 180) / Math.PI),
+      y: this.normalizeDegrees((euler.y * 180) / Math.PI),
+      z: this.normalizeDegrees((euler.z * 180) / Math.PI)
+    };
   }
 
   private normalizeDegrees(value: number): number {
@@ -1413,6 +1554,19 @@ export class ViewportHost {
     const pivotVector = new Vector3(pivot.x, pivot.y, pivot.z);
 
     this.transformGizmoGroup.position.copy(pivotVector);
+    this.transformGizmoGroup.quaternion.identity();
+
+    if (
+      session.axisConstraint !== null &&
+      session.axisConstraintSpace === "local" &&
+      supportsLocalTransformAxisConstraint(session, session.axisConstraint)
+    ) {
+      const orientation = this.getTransformTargetOrientation(session);
+
+      if (orientation !== null) {
+        this.transformGizmoGroup.quaternion.copy(orientation);
+      }
+    }
 
     let scale = GIZMO_SCREEN_SIZE_ORTHOGRAPHIC / Math.max(this.orthographicCamera.zoom, 0.0001);
 
@@ -1478,15 +1632,15 @@ export class ViewportHost {
     return ORTHOGRAPHIC_FRUSTUM_HEIGHT / this.orthographicCamera.zoom / height;
   }
 
-  private getAxisMovementDistance(
-    axis: TransformAxis,
+  private getMovementDistanceAlongWorldAxis(
+    axisVector: Vector3,
     pivot: Vec3,
     origin: { x: number; y: number },
     current: { x: number; y: number }
   ): number {
     const pivotVector = new Vector3(pivot.x, pivot.y, pivot.z);
     const projectedStart = pivotVector.clone().project(this.getActiveCamera());
-    const projectedEnd = pivotVector.clone().add(this.axisVector(axis)).project(this.getActiveCamera());
+    const projectedEnd = pivotVector.clone().add(axisVector.clone().normalize()).project(this.getActiveCamera());
     const screenDelta = new Vector2(projectedEnd.x - projectedStart.x, projectedEnd.y - projectedStart.y);
     const pointerDelta = new Vector2(current.x - origin.x, current.y - origin.y);
 
@@ -1504,21 +1658,35 @@ export class ViewportHost {
     return -(current.y - origin.y) * this.getFallbackWorldUnitsPerPixel(pivot);
   }
 
+  private getAxisMovementDistance(
+    axis: TransformAxis,
+    pivot: Vec3,
+    origin: { x: number; y: number },
+    current: { x: number; y: number },
+    session?: ActiveTransformSession,
+    axisSpace: TransformAxisSpace = "world"
+  ): number {
+    const axisVector = session === undefined ? this.axisVector(axis) : this.getConstraintAxisWorldVector(session, axis, axisSpace);
+    return this.getMovementDistanceAlongWorldAxis(axisVector, pivot, origin, current);
+  }
+
   private buildTransformPreviewFromPointer(
     session: ActiveTransformSession,
     origin: { x: number; y: number },
     current: { x: number; y: number },
-    axisConstraint: TransformAxis | null
+    axisConstraint: TransformAxis | null,
+    axisConstraintSpace: TransformAxisSpace
   ): ActiveTransformSession {
     const nextSession = cloneTransformSession(session) as ActiveTransformSession;
     nextSession.axisConstraint = axisConstraint;
+    nextSession.axisConstraintSpace = axisConstraint === null ? "world" : axisConstraintSpace;
 
     switch (session.operation) {
       case "translate":
-        nextSession.preview = this.buildTranslatedPreview(session, origin, current, axisConstraint);
+        nextSession.preview = this.buildTranslatedPreview(session, origin, current, axisConstraint, nextSession.axisConstraintSpace);
         return nextSession;
       case "rotate":
-        nextSession.preview = this.buildRotatedPreview(session, origin, current, axisConstraint);
+        nextSession.preview = this.buildRotatedPreview(session, origin, current, axisConstraint, nextSession.axisConstraintSpace);
         return nextSession;
       case "scale":
         nextSession.preview = this.buildScaledPreview(session, origin, current, axisConstraint);
@@ -1530,7 +1698,8 @@ export class ViewportHost {
     session: ActiveTransformSession,
     origin: { x: number; y: number },
     current: { x: number; y: number },
-    axisConstraint: TransformAxis | null
+    axisConstraint: TransformAxis | null,
+    axisConstraintSpace: TransformAxisSpace
   ) {
     if (session.target.kind === "brushFace" || session.target.kind === "brushEdge" || session.target.kind === "brushVertex") {
       return this.buildComponentTranslatedBrushPreview(session, origin, current, axisConstraint);
@@ -1575,6 +1744,17 @@ export class ViewportHost {
             break;
         }
       }
+    } else if (axisConstraintSpace === "local" && supportsLocalTransformAxisConstraint(session, axisConstraint)) {
+      const axisVector = this.getConstraintAxisWorldVector(session, axisConstraint, axisConstraintSpace);
+      const axisDelta = this.getMovementDistanceAlongWorldAxis(axisVector, initialPosition, origin, current);
+      const snappedAxisDelta = this.whiteboxSnapEnabled ? snapValueToGrid(axisDelta, this.whiteboxSnapStep) : axisDelta;
+
+      this.transformAxisDelta.copy(axisVector).multiplyScalar(snappedAxisDelta);
+      nextPosition = {
+        x: initialPosition.x + this.transformAxisDelta.x,
+        y: initialPosition.y + this.transformAxisDelta.y,
+        z: initialPosition.z + this.transformAxisDelta.z
+      };
     } else {
       const axisDelta = this.getAxisMovementDistance(axisConstraint, initialPosition, origin, current);
       nextPosition = this.setAxisComponent(
@@ -1637,7 +1817,8 @@ export class ViewportHost {
     session: ActiveTransformSession,
     origin: { x: number; y: number },
     current: { x: number; y: number },
-    axisConstraint: TransformAxis | null
+    axisConstraint: TransformAxis | null,
+    axisConstraintSpace: TransformAxisSpace
   ) {
     if (session.target.kind === "brushFace" || session.target.kind === "brushEdge") {
       return this.buildComponentRotatedBrushPreview(session, origin, current, axisConstraint);
@@ -1645,13 +1826,28 @@ export class ViewportHost {
 
     const effectiveAxis = axisConstraint ?? this.getEffectiveRotationAxis(session);
     const pointerDeltaDegrees = (current.x - origin.x - (current.y - origin.y)) * 0.5;
+    const pointerDeltaRadians = (pointerDeltaDegrees * Math.PI) / 180;
 
     if (session.target.kind === "brush") {
-      const nextRotationDegrees = {
+      let nextRotationDegrees = {
         ...session.target.initialRotationDegrees
       };
 
-      nextRotationDegrees[effectiveAxis] = this.normalizeDegrees(nextRotationDegrees[effectiveAxis] + pointerDeltaDegrees);
+      if (axisConstraint !== null) {
+        const initialOrientation = this.createRotationQuaternion(session.target.initialRotationDegrees);
+        const deltaRotation = new Quaternion().setFromAxisAngle(
+          this.getConstraintAxisWorldVector(session, effectiveAxis, axisConstraintSpace),
+          pointerDeltaRadians
+        );
+
+        nextRotationDegrees = this.getQuaternionEulerDegrees(
+          axisConstraintSpace === "local" && supportsLocalTransformAxisConstraint(session, effectiveAxis)
+            ? initialOrientation.multiply(deltaRotation)
+            : deltaRotation.multiply(initialOrientation)
+        );
+      } else {
+        nextRotationDegrees[effectiveAxis] = this.normalizeDegrees(nextRotationDegrees[effectiveAxis] + pointerDeltaDegrees);
+      }
 
       return {
         kind: "brush" as const,
@@ -1667,11 +1863,25 @@ export class ViewportHost {
     }
 
     if (session.target.kind === "modelInstance") {
-      const nextRotationDegrees = {
+      let nextRotationDegrees = {
         ...session.target.initialRotationDegrees
       };
 
-      nextRotationDegrees[effectiveAxis] = this.normalizeDegrees(nextRotationDegrees[effectiveAxis] + pointerDeltaDegrees);
+      if (axisConstraint !== null) {
+        const initialOrientation = this.createRotationQuaternion(session.target.initialRotationDegrees);
+        const deltaRotation = new Quaternion().setFromAxisAngle(
+          this.getConstraintAxisWorldVector(session, effectiveAxis, axisConstraintSpace),
+          pointerDeltaRadians
+        );
+
+        nextRotationDegrees = this.getQuaternionEulerDegrees(
+          axisConstraintSpace === "local" && supportsLocalTransformAxisConstraint(session, effectiveAxis)
+            ? initialOrientation.multiply(deltaRotation)
+            : deltaRotation.multiply(initialOrientation)
+        );
+      } else {
+        nextRotationDegrees[effectiveAxis] = this.normalizeDegrees(nextRotationDegrees[effectiveAxis] + pointerDeltaDegrees);
+      }
 
       return {
         kind: "modelInstance" as const,
@@ -1690,6 +1900,27 @@ export class ViewportHost {
     }
 
     if (session.target.initialRotation.kind === "yaw") {
+      if (axisConstraint !== null && axisConstraintSpace === "local" && supportsLocalTransformAxisConstraint(session, effectiveAxis)) {
+        const initialOrientation = this.createRotationQuaternion({
+          x: 0,
+          y: session.target.initialRotation.yawDegrees,
+          z: 0
+        });
+        const deltaRotation = new Quaternion().setFromAxisAngle(this.axisVector("y"), pointerDeltaRadians);
+        const nextRotationDegrees = this.getQuaternionEulerDegrees(initialOrientation.multiply(deltaRotation));
+
+        return {
+          kind: "entity" as const,
+          position: {
+            ...session.target.initialPosition
+          },
+          rotation: {
+            kind: "yaw" as const,
+            yawDegrees: normalizeYawDegrees(nextRotationDegrees.y)
+          }
+        };
+      }
+
       return {
         kind: "entity" as const,
         position: {
@@ -1703,14 +1934,23 @@ export class ViewportHost {
     }
 
     if (session.target.initialRotation.kind === "direction") {
-      const direction = new Vector3(
-        session.target.initialRotation.direction.x,
-        session.target.initialRotation.direction.y,
-        session.target.initialRotation.direction.z
-      )
-        .normalize()
-        .applyAxisAngle(this.axisVector(effectiveAxis).normalize(), (pointerDeltaDegrees * Math.PI) / 180)
-        .normalize();
+      const initialOrientation = new Quaternion().setFromUnitVectors(
+        new Vector3(0, 1, 0),
+        new Vector3(
+          session.target.initialRotation.direction.x,
+          session.target.initialRotation.direction.y,
+          session.target.initialRotation.direction.z
+        ).normalize()
+      );
+      const deltaRotation = new Quaternion().setFromAxisAngle(
+        this.getConstraintAxisWorldVector(session, effectiveAxis, axisConstraintSpace),
+        pointerDeltaRadians
+      );
+      const nextOrientation =
+        axisConstraint !== null && axisConstraintSpace === "local" && supportsLocalTransformAxisConstraint(session, effectiveAxis)
+          ? initialOrientation.multiply(deltaRotation)
+          : deltaRotation.multiply(initialOrientation);
+      const direction = new Vector3(0, 1, 0).applyQuaternion(nextOrientation).normalize();
 
       return {
         kind: "entity" as const,
@@ -3886,6 +4126,7 @@ export class ViewportHost {
           sourcePanelId: this.panelId,
           operation: interactionSession.operation,
           axisConstraint: transformHandle.axisConstraint,
+          axisConstraintSpace: transformHandle.axisConstraint === null ? "world" : interactionSession.axisConstraintSpace,
           target: interactionSession.target
         }),
         {
@@ -3896,7 +4137,8 @@ export class ViewportHost {
           x: event.clientX,
           y: event.clientY
         },
-        transformHandle.axisConstraint
+        transformHandle.axisConstraint,
+        transformHandle.axisConstraint === null ? "world" : interactionSession.axisConstraintSpace
       );
 
       this.currentTransformSession = nextSession;
@@ -3907,6 +4149,7 @@ export class ViewportHost {
         pointerId: event.pointerId,
         sessionId: nextSession.id,
         axisConstraint: transformHandle.axisConstraint,
+        axisConstraintSpace: nextSession.axisConstraintSpace,
         initialClientPosition: {
           x: event.clientX,
           y: event.clientY
@@ -4022,7 +4265,8 @@ export class ViewportHost {
           x: event.clientX,
           y: event.clientY
         },
-        this.activeTransformDrag.axisConstraint
+        this.activeTransformDrag.axisConstraint,
+        this.activeTransformDrag.axisConstraintSpace
       );
 
       this.currentTransformSession = nextSession;
@@ -4123,7 +4367,8 @@ export class ViewportHost {
         x: event.clientX,
         y: event.clientY
       },
-      this.currentTransformSession.axisConstraint
+      this.currentTransformSession.axisConstraint,
+      this.currentTransformSession.axisConstraintSpace
     );
 
     this.currentTransformSession = nextSession;
@@ -4567,6 +4812,7 @@ export class ViewportHost {
     }
 
     this.animationFrame = window.requestAnimationFrame(this.render);
+    this.updateGridPositioning();
     this.updateTransformGizmoPose();
     const now = performance.now();
     const dt = this.previousFrameTime === 0 ? 0 : Math.min((now - this.previousFrameTime) / 1000, 1 / 20);
