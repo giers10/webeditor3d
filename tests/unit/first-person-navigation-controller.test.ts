@@ -189,4 +189,31 @@ describe("FirstPersonNavigationController", () => {
       releasePointerLock: false
     });
   });
+
+  it("uses the gamepad right stick for camera look without requiring pointer lock", () => {
+    const { context } = createRuntimeControllerContext();
+    const controller = new FirstPersonNavigationController();
+    const getGamepads = vi.fn<() => Gamepad[]>(() => [
+      createMockGamepad({
+        axes: [0, 0, 1, 0]
+      })
+    ]);
+
+    Object.defineProperty(navigator, "getGamepads", {
+      configurable: true,
+      value: getGamepads
+    });
+
+    controller.activate(context);
+
+    const initialCameraYaw = context.camera.rotation.y;
+
+    controller.update(1);
+
+    expect(context.camera.rotation.y).not.toBe(initialCameraYaw);
+
+    controller.deactivate(context, {
+      releasePointerLock: false
+    });
+  });
 });
