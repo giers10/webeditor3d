@@ -56,6 +56,7 @@ export class FirstPersonNavigationController implements NavigationController {
   private inWaterVolume = false;
   private inFogVolume = false;
   private pointerLocked = false;
+  private suppressNextPointerLockError = false;
   private initializedFromSpawn = false;
 
   activate(ctx: RuntimeControllerContext): void {
@@ -88,6 +89,22 @@ export class FirstPersonNavigationController implements NavigationController {
     ctx.domElement.addEventListener("pointerdown", this.handlePointerDown);
 
     this.syncPointerLockState();
+
+    if (document.pointerLockElement !== ctx.domElement) {
+      const pointerLockCapableElement = ctx.domElement as HTMLCanvasElement & {
+        requestPointerLock?: () => void | Promise<void>;
+      };
+
+      if (typeof pointerLockCapableElement.requestPointerLock === "function") {
+        this.suppressNextPointerLockError = true;
+        const pointerLockResult = pointerLockCapableElement.requestPointerLock();
+
+        if (pointerLockResult instanceof Promise) {
+          pointerLockResult.catch(() => {});
+        }
+      }
+    }
+
     this.updateCameraTransform();
     this.publishTelemetry();
   }
@@ -119,6 +136,7 @@ export class FirstPersonNavigationController implements NavigationController {
     }
 
     this.pointerLocked = false;
+  this.suppressNextPointerLockError = false;
     ctx.setRuntimeMessage(null);
     ctx.setFirstPersonTelemetry(null);
     this.context = null;
@@ -139,6 +157,7 @@ export class FirstPersonNavigationController implements NavigationController {
     this.inWaterVolume = false;
     this.inFogVolume = false;
     this.pointerLocked = false;
+    this.suppressNextPointerLockError = false;
     this.initializedFromSpawn = false;
   }
 
@@ -364,10 +383,16 @@ export class FirstPersonNavigationController implements NavigationController {
   };
 
   private handlePointerLockChange = () => {
+    this.suppressNextPointerLockError = false;
     this.syncPointerLockState();
   };
 
   private handlePointerLockError = () => {
+    if (this.suppressNextPointerLockError) {
+      this.suppressNextPointerLockError = false;
+      return;
+    }
+
     this.context?.setRuntimeMessage(
       "Pointer lock was unavailable in this browser context. Third Person remains available as the non-FPS fallback."
     );
@@ -380,6 +405,8 @@ export class FirstPersonNavigationController implements NavigationController {
     ) {
       return;
     }
+
+    this.suppressNextPointerLockError = false;
 
     const pointerLockCapableElement = this.context
       .domElement as HTMLCanvasElement & {
