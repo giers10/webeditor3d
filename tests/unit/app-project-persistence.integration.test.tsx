@@ -13,6 +13,7 @@ const { MockViewportHost, viewportHostInstances } = vi.hoisted(() => {
     setPanelId: ReturnType<typeof vi.fn>;
     setViewMode: ReturnType<typeof vi.fn>;
     setDisplayMode: ReturnType<typeof vi.fn>;
+    setGridVisible: ReturnType<typeof vi.fn>;
     setCameraState: ReturnType<typeof vi.fn>;
     setBrushSelectionChangeHandler: ReturnType<typeof vi.fn>;
     setCameraStateChangeHandler: ReturnType<typeof vi.fn>;
@@ -39,6 +40,7 @@ const { MockViewportHost, viewportHostInstances } = vi.hoisted(() => {
     updateDocument = vi.fn();
     setViewMode = vi.fn();
     setDisplayMode = vi.fn();
+    setGridVisible = vi.fn();
     setCameraState = vi.fn();
     setBrushSelectionChangeHandler = vi.fn();
     setCameraStateChangeHandler = vi.fn();
