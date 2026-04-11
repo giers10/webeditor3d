@@ -1,4 +1,5 @@
 import type {
+  PlayerStartGamepadCameraLookBinding,
   PlayerStartGamepadBinding,
   PlayerStartInputBindings
 } from "../entities/entity-instances";
@@ -12,6 +13,11 @@ export interface PlayerStartMovementActionState {
   moveRight: number;
 }
 
+export interface PlayerStartLookInputState {
+  horizontal: number;
+  vertical: number;
+}
+
 function clampUnitInterval(value: number): number {
   return Math.max(0, Math.min(1, value));
 }
@@ -22,6 +28,24 @@ function readGamepadButtonStrength(button: GamepadButton | undefined): number {
   }
 
   return clampUnitInterval(button.pressed ? Math.max(button.value, 1) : button.value);
+}
+
+function readCenteredAxisValue(value: number | undefined): number {
+  if (value === undefined || !Number.isFinite(value)) {
+    return 0;
+  }
+
+  const magnitude = Math.abs(value);
+
+  if (magnitude <= GAMEPAD_AXIS_DEADZONE) {
+    return 0;
+  }
+
+  const normalizedMagnitude = clampUnitInterval(
+    (magnitude - GAMEPAD_AXIS_DEADZONE) / (1 - GAMEPAD_AXIS_DEADZONE)
+  );
+
+  return Math.sign(value) * normalizedMagnitude;
 }
 
 function readPositiveAxisStrength(value: number | undefined): number {
@@ -91,6 +115,57 @@ function readGamepadBindingStrength(
   return strength;
 }
 
+function readSingleGamepadCameraLook(
+  gamepad: Gamepad,
+  binding: PlayerStartGamepadCameraLookBinding
+): PlayerStartLookInputState {
+  switch (binding) {
+    case "rightStick":
+      return {
+        horizontal: readCenteredAxisValue(gamepad.axes[2]),
+        vertical: -readCenteredAxisValue(gamepad.axes[3])
+      };
+  }
+}
+
+function readGamepadCameraLook(
+  gamepads: ArrayLike<Gamepad | null> | null | undefined,
+  binding: PlayerStartGamepadCameraLookBinding
+): PlayerStartLookInputState {
+  if (gamepads === undefined || gamepads === null) {
+    return {
+      horizontal: 0,
+      vertical: 0
+    };
+  }
+
+  let horizontal = 0;
+  let vertical = 0;
+
+  for (let index = 0; index < gamepads.length; index += 1) {
+    const gamepad = gamepads[index];
+
+    if (gamepad === null || gamepad === undefined || gamepad.connected === false) {
+      continue;
+    }
+
+    const look = readSingleGamepadCameraLook(gamepad, binding);
+
+    if (Math.abs(look.horizontal) > Math.abs(horizontal)) {
+      horizontal = look.horizontal;
+    }
+
+    if (Math.abs(look.vertical) > Math.abs(vertical)) {
+      vertical = look.vertical;
+    }
+  }
+
+  return {
+    horizontal,
+    vertical
+  };
+}
+
 export function getAvailableGamepads(): ArrayLike<Gamepad | null> | undefined {
   if (
     typeof navigator === "undefined" ||
@@ -125,4 +200,11 @@ export function resolvePlayerStartMovementActions(
       readGamepadBindingStrength(gamepads, bindings.gamepad.moveRight)
     )
   };
+}
+
+export function resolvePlayerStartLookInput(
+  bindings: PlayerStartInputBindings,
+  gamepads: ArrayLike<Gamepad | null> | null | undefined = getAvailableGamepads()
+): PlayerStartLookInputState {
+  return readGamepadCameraLook(gamepads, bindings.gamepad.cameraLook);
 }
