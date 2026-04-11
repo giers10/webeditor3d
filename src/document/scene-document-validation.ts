@@ -9,6 +9,7 @@ import type { ModelInstance } from "../assets/model-instances";
 import { isModelInstanceCollisionMode } from "../assets/model-instances";
 import {
   isPlayerStartColliderMode,
+  isPlayerStartNavigationMode,
   getPlayerStartColliderHeight,
   type InteractableEntity,
   type PointLightEntity,
@@ -1148,6 +1149,17 @@ function validatePlayerStartEntity(
         "invalid-player-start-yaw",
         "Player Start yaw must remain a finite number.",
         `${path}.yawDegrees`
+      )
+    );
+  }
+
+  if (!isPlayerStartNavigationMode(entity.navigationMode)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-navigation-mode",
+        "Player Start navigation mode must be firstPerson or thirdPerson.",
+        `${path}.navigationMode`
       )
     );
   }
