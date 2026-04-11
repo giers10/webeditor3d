@@ -9,6 +9,7 @@ import type { ModelInstance } from "../assets/model-instances";
 import { isModelInstanceCollisionMode } from "../assets/model-instances";
 import {
   isPlayerStartColliderMode,
+  isPlayerStartGamepadCameraLookBinding,
   isPlayerStartGamepadBinding,
   isPlayerStartKeyboardBindingCode,
   isPlayerStartNavigationMode,
@@ -1250,6 +1251,21 @@ function validatePlayerStartEntity(
         "invalid-player-start-move-right-gamepad-binding",
         "Player Start move-right gamepad binding must be a supported standard-gamepad input.",
         `${path}.inputBindings.gamepad.moveRight`
+      )
+    );
+  }
+
+  if (
+    !isPlayerStartGamepadCameraLookBinding(
+      entity.inputBindings?.gamepad.cameraLook
+    )
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-camera-look-gamepad-binding",
+        "Player Start camera-look gamepad binding must be a supported standard-gamepad camera input.",
+        `${path}.inputBindings.gamepad.cameraLook`
       )
     );
   }
