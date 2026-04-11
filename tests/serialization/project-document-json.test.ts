@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 import {
   RUNNER_LOADING_SCREEN_SCENE_DOCUMENT_VERSION,
   SCENE_DOCUMENT_VERSION,
-  createDefaultSceneLoadingScreenSettings,
   createEmptyProjectDocument,
   createEmptyProjectScene
 } from "../../src/document/scene-document";
