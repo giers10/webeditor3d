@@ -357,6 +357,17 @@ Every slice should include:
 - browser(s) tested
 - screenshots or short recordings if helpful
 
+### Transform ergonomics slice checklist
+
+- Setup: open the editor with at least one whitebox box selected in the perspective viewport.
+- Steps: orbit/pan the camera away from the origin, run `G`, `R`, and `S`, then commit with click or `Enter`, cancel with `Escape`, and delete the selected target.
+- Expected result: the active viewport camera keeps its exact framing and does not snap back to the world origin after commit, cancel, or delete.
+- Steps: start a translate or rotate session on a rotated whitebox box or rotated model instance, press `X`, `Y`, or `Z`, then press the same axis again.
+- Expected result: the first press constrains to the world axis, the second press switches to the target's local axis, and unsupported local toggles surface a clear status message.
+- Steps: toggle the viewport grid off and on, then pan the perspective camera far from the origin.
+- Expected result: the grid hides immediately when disabled and, when re-enabled, stays world-aligned while appearing effectively infinite around the current camera framing.
+- Known limitations: local axis toggling is intentionally constrained to the supported target/operation combinations surfaced by the editor status messages.
+
 ---
 
 ## Test directory guidance
