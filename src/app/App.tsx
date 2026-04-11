@@ -6959,7 +6959,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 >
                   {activeNavigationMode === "firstPerson"
                     ? runtimeInteractionPrompt === null
-                      ? "Aim at an authored Interactable and click when a prompt appears."
+                      ? "Aim at an authored Interactable or Scene Exit and click when a prompt appears."
                       : `Click "${runtimeInteractionPrompt.prompt}" within ${runtimeInteractionPrompt.range.toFixed(1)}m.`
                     : "Switch to First Person to use click interactions."}
                 </div>
