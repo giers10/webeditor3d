@@ -6,10 +6,7 @@ import type { ProjectAssetRecord } from "../assets/project-assets";
 import type { EditorSelection } from "../core/selection";
 import { getWhiteboxSelectionFeedbackLabel } from "../core/whitebox-selection-feedback";
 import type { ToolMode } from "../core/tool-mode";
-import {
-  getWhiteboxSelectionModeLabel,
-  type WhiteboxSelectionMode
-} from "../core/whitebox-selection-mode";
+import { type WhiteboxSelectionMode } from "../core/whitebox-selection-mode";
 import type { Vec3 } from "../core/vector";
 import {
   getTransformAxisLabel,
@@ -27,10 +24,7 @@ import {
   type ViewportPanelCameraState,
   type ViewportPanelId
 } from "./viewport-layout";
-import {
-  getViewportViewModeLabel,
-  type ViewportViewMode
-} from "./viewport-view-modes";
+import { type ViewportViewMode } from "./viewport-view-modes";
 import type {
   CreationViewportToolPreview,
   ViewportToolPreview
@@ -259,14 +253,10 @@ export function ViewportCanvas({
     toolPreview.kind === "create" &&
     toolPreview.center !== null;
   const transformPreviewVisible = transformSession.kind === "active";
-  const selectionModeVisible = toolMode === "select";
-  const selectedWhiteboxLabel = selectionModeVisible
+  const selectedWhiteboxLabel = toolMode === "select"
     ? getWhiteboxSelectionFeedbackLabel(sceneDocument, selection)
     : null;
-  const showViewModeOverlay = layoutMode === "quad";
   const showOverlay =
-    showViewModeOverlay ||
-    selectionModeVisible ||
     previewVisible ||
     transformPreviewVisible ||
     selectedWhiteboxLabel !== null ||
@@ -299,31 +289,6 @@ export function ViewportCanvas({
           className="viewport-canvas__overlay"
           data-testid={`viewport-overlay-${panelId}`}
         >
-          {!showViewModeOverlay ? null : (
-            <div className="viewport-canvas__overlay-badges">
-              <div className="viewport-canvas__overlay-badge viewport-canvas__overlay-badge--view">
-                {getViewportViewModeLabel(viewMode)}
-              </div>
-              {!selectionModeVisible ? null : (
-                <div
-                  className="viewport-canvas__overlay-badge viewport-canvas__overlay-badge--selection"
-                  data-testid={`viewport-selection-mode-${panelId}`}
-                >
-                  {getWhiteboxSelectionModeLabel(whiteboxSelectionMode)}
-                </div>
-              )}
-            </div>
-          )}
-          {showViewModeOverlay || !selectionModeVisible ? null : (
-            <div className="viewport-canvas__overlay-badges">
-              <div
-                className="viewport-canvas__overlay-badge viewport-canvas__overlay-badge--selection"
-                data-testid={`viewport-selection-mode-${panelId}`}
-              >
-                {getWhiteboxSelectionModeLabel(whiteboxSelectionMode)}
-              </div>
-            </div>
-          )}
           {!previewVisible ? null : (
             <div
               className="viewport-canvas__overlay-preview"
