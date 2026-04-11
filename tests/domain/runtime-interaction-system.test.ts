@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { createPlayerStartInputBindings } from "../../src/entities/entity-instances";
 import {
-  createPlayerStartInputBindings,
   createPlayAnimationInteractionLink,
   createPlaySoundInteractionLink,
   createTeleportPlayerInteractionLink,
