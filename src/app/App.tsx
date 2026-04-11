@@ -1403,6 +1403,23 @@ export function App({ store, initialStatusMessage }: AppProps) {
     useState("");
   const [sceneExitTargetEntryIdDraft, setSceneExitTargetEntryIdDraft] =
     useState("");
+  const selectedSceneExitTargetEntryOptions = [
+    ...(sceneEntryOptionsBySceneId[sceneExitTargetSceneIdDraft] ?? [])
+  ];
+  if (
+    sceneExitTargetEntryIdDraft.trim().length > 0 &&
+    !selectedSceneExitTargetEntryOptions.some(
+      ({ entity }) => entity.id === sceneExitTargetEntryIdDraft
+    )
+  ) {
+    selectedSceneExitTargetEntryOptions.push({
+      entity: createSceneEntryEntity({
+        id: sceneExitTargetEntryIdDraft,
+        name: "Missing Scene Entry"
+      }),
+      label: `Missing Scene Entry (${sceneExitTargetEntryIdDraft})`
+    });
+  }
   const [modelPositionDraft, setModelPositionDraft] = useState(
     createVec3Draft(DEFAULT_MODEL_INSTANCE_POSITION)
   );
