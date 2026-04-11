@@ -4,6 +4,7 @@ import type { Vec3 } from "../core/vector";
 
 import { getFirstPersonPlayerEyeHeight } from "./player-collision";
 import type {
+  NavigationControllerDeactivateOptions,
   NavigationController,
   RuntimeControllerContext,
   RuntimeLocomotionState
@@ -86,7 +87,10 @@ export class FirstPersonNavigationController implements NavigationController {
     this.publishTelemetry();
   }
 
-  deactivate(ctx: RuntimeControllerContext): void {
+  deactivate(
+    ctx: RuntimeControllerContext,
+    options: NavigationControllerDeactivateOptions = {}
+  ): void {
     window.removeEventListener("keydown", this.handleKeyDown);
     window.removeEventListener("keyup", this.handleKeyUp);
     window.removeEventListener("blur", this.handleBlur);
@@ -102,7 +106,10 @@ export class FirstPersonNavigationController implements NavigationController {
     ctx.domElement.removeEventListener("pointerdown", this.handlePointerDown);
     this.pressedKeys.clear();
 
-    if (document.pointerLockElement === ctx.domElement) {
+    if (
+      (options.releasePointerLock ?? true) &&
+      document.pointerLockElement === ctx.domElement
+    ) {
       document.exitPointerLock();
     }
 
