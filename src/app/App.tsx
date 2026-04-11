@@ -4296,6 +4296,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
         playerStartMovementTemplateNumberDraft.maxSpeed,
         "Player Start max speed"
       ),
+      maxStepHeight: readNonNegativeNumberDraft(
+        playerStartMovementTemplateNumberDraft.maxStepHeight,
+        "Player Start max step height"
+      ),
       capabilities: {
         ...playerStartMovementTemplateDraft.capabilities,
         ...overrides.capabilities
