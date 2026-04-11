@@ -4,6 +4,8 @@ import { BoxGeometry, PlaneGeometry } from "three";
 import { createBoxBrush } from "../../src/document/brushes";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
 import {
+  DEFAULT_PLAYER_START_MOVE_SPEED,
+  DEFAULT_PLAYER_START_MOVEMENT_CAPABILITIES,
   createPointLightEntity,
   createInteractableEntity,
   createPlayerStartInputBindings,
