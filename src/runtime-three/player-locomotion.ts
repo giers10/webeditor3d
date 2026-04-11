@@ -239,6 +239,12 @@ function computePlanarSpeedFromDisplacement(
   return Math.hypot(displacement.x, displacement.z) / dt;
 }
 
+function isWaterLocomotionMode(
+  locomotionMode: RuntimeLocomotionMode | null | undefined
+): boolean {
+  return locomotionMode === "swimming" || locomotionMode === "diving";
+}
+
 function isShallowWater(options: {
   inWater: boolean;
   waterSurfaceHeight: number | null;
@@ -260,6 +266,28 @@ function isShallowWater(options: {
     (options.feetPosition.y - options.groundProbe.distance);
 
   return waterDepth <= options.shape.eyeHeight + SWIM_HEAD_CLEARANCE;
+}
+
+function shouldPreserveAirborneWaterCrossing(options: {
+  inWater: boolean;
+  waterSurfaceHeight: number | null;
+  feetPosition: Vec3;
+  shape: FirstPersonPlayerShape;
+  verticalVelocity: number;
+  previousLocomotionState?: RuntimeLocomotionState;
+}): boolean {
+  if (
+    !options.inWater ||
+    options.waterSurfaceHeight === null ||
+    options.verticalVelocity <= VERTICAL_ASCENT_EPSILON ||
+    isWaterLocomotionMode(options.previousLocomotionState?.locomotionMode)
+  ) {
+    return false;
+  }
+
+  const headHeight = options.feetPosition.y + options.shape.eyeHeight;
+
+  return headHeight >= options.waterSurfaceHeight;
 }
 
 function alignPlanarMotionToGround(
@@ -363,7 +391,15 @@ export function stepPlayerLocomotion(
   const currentSwimmableWater =
     currentVolumeState.inWater &&
     currentVolumeState.waterSurfaceHeight !== null &&
-    !currentShallowWater;
+    !currentShallowWater &&
+    !shouldPreserveAirborneWaterCrossing({
+      inWater: currentVolumeState.inWater,
+      waterSurfaceHeight: currentVolumeState.waterSurfaceHeight,
+      feetPosition: options.feetPosition,
+      shape: activeShape,
+      verticalVelocity: options.verticalVelocity,
+      previousLocomotionState: options.previousLocomotionState
+    });
   // The probe can still see nearby floor on the frame after takeoff. While a
   // jump is still carrying positive upward velocity, don't let that probe pull
   // the controller back into grounded/stick-to-ground logic.
@@ -579,7 +615,15 @@ export function stepPlayerLocomotion(
   const nextSwimmableWater =
     nextVolumeState.inWater &&
     nextVolumeState.waterSurfaceHeight !== null &&
-    !nextShallowWater;
+    !nextShallowWater &&
+    !shouldPreserveAirborneWaterCrossing({
+      inWater: nextVolumeState.inWater,
+      waterSurfaceHeight: nextVolumeState.waterSurfaceHeight,
+      feetPosition: resolvedMotion.feetPosition,
+      shape: activeShape,
+      verticalVelocity,
+      previousLocomotionState: options.previousLocomotionState
+    });
   const nextWaterSurfaceHeight =
     nextVolumeState.waterSurfaceHeight ??
     resolvedMotion.feetPosition.y + activeShape.eyeHeight;
