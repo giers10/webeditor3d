@@ -1169,6 +1169,64 @@ function validatePlayerStartEntity(
     );
   }
 
+  if (!isPlayerStartMovementTemplateKind(entity.movementTemplate?.kind)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-movement-template-kind",
+        "Player Start movement template must be a supported typed template.",
+        `${path}.movementTemplate.kind`
+      )
+    );
+  }
+
+  if (
+    !isFiniteNumber(entity.movementTemplate?.moveSpeed) ||
+    entity.movementTemplate.moveSpeed <= 0
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-movement-speed",
+        "Player Start movement template move speed must remain a finite number greater than zero.",
+        `${path}.movementTemplate.moveSpeed`
+      )
+    );
+  }
+
+  if (typeof entity.movementTemplate?.capabilities.jump !== "boolean") {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-jump-capability",
+        "Player Start movement template jump capability must be a boolean.",
+        `${path}.movementTemplate.capabilities.jump`
+      )
+    );
+  }
+
+  if (typeof entity.movementTemplate?.capabilities.sprint !== "boolean") {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-sprint-capability",
+        "Player Start movement template sprint capability must be a boolean.",
+        `${path}.movementTemplate.capabilities.sprint`
+      )
+    );
+  }
+
+  if (typeof entity.movementTemplate?.capabilities.crouch !== "boolean") {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-crouch-capability",
+        "Player Start movement template crouch capability must be a boolean.",
+        `${path}.movementTemplate.capabilities.crouch`
+      )
+    );
+  }
+
   if (!isPlayerStartKeyboardBindingCode(entity.inputBindings?.keyboard.moveForward)) {
     diagnostics.push(
       createDiagnostic(
