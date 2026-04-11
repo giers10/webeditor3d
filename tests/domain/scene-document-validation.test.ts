@@ -126,7 +126,20 @@ describe("validateSceneDocument", () => {
               crouch: null
             }
           } as unknown as ReturnType<typeof createPlayerStartEntity>["movementTemplate"],
-          inputBindings: createPlayerStartInputBindings(),
+          inputBindings: {
+            keyboard: {
+              ...createPlayerStartInputBindings().keyboard,
+              jump: "",
+              sprint: "",
+              crouch: ""
+            },
+            gamepad: {
+              ...createPlayerStartInputBindings().gamepad,
+              jump: "invalidButton",
+              sprint: "invalidButton",
+              crouch: "invalidButton"
+            }
+          } as unknown as ReturnType<typeof createPlayerStartEntity>["inputBindings"],
           collider: {
             mode: "capsule",
             eyeHeight: 3,
@@ -167,6 +180,24 @@ describe("validateSceneDocument", () => {
         }),
         expect.objectContaining({
           code: "invalid-player-start-crouch-capability"
+        }),
+        expect.objectContaining({
+          code: "invalid-player-start-jump-keyboard-binding"
+        }),
+        expect.objectContaining({
+          code: "invalid-player-start-sprint-keyboard-binding"
+        }),
+        expect.objectContaining({
+          code: "invalid-player-start-crouch-keyboard-binding"
+        }),
+        expect.objectContaining({
+          code: "invalid-player-start-jump-gamepad-binding"
+        }),
+        expect.objectContaining({
+          code: "invalid-player-start-sprint-gamepad-binding"
+        }),
+        expect.objectContaining({
+          code: "invalid-player-start-crouch-gamepad-binding"
         }),
         expect.objectContaining({
           code: "invalid-player-start-capsule-proportions"
