@@ -288,8 +288,6 @@ export class ViewportHost {
   private readonly cameraForward = new Vector3();
   private readonly cameraRight = new Vector3();
   private readonly cameraUp = new Vector3();
-  private readonly transformOrientation = new Quaternion();
-  private readonly transformOrientationInverse = new Quaternion();
   private readonly transformAxisDelta = new Vector3();
   private readonly fogLocalCameraPosition = new Vector3();
   private readonly cameraSpherical = new Spherical();
@@ -415,7 +413,7 @@ export class ViewportHost {
 
     for (const gridHelper of Object.values(this.gridHelpers)) {
       const gridMaterial = gridHelper.material as LineBasicMaterial;
-      const centerLineMaterial = gridHelper.children[0]?.material as LineBasicMaterial | undefined;
+      const centerLineMaterial = (gridHelper.children[0] as LineSegments<BufferGeometry, LineBasicMaterial> | undefined)?.material;
 
       gridMaterial.transparent = true;
       gridMaterial.opacity = 0.48;
