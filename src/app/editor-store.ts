@@ -18,7 +18,6 @@ import {
 import {
   applySceneDocumentToProject,
   createEmptyProjectDocument,
-  createEmptySceneDocument,
   createProjectDocumentFromSceneDocument,
   createSceneDocumentFromProject,
   type ProjectDocument,
