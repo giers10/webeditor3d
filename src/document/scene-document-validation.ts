@@ -7,6 +7,7 @@ import {
 } from "../assets/project-assets";
 import type { ModelInstance } from "../assets/model-instances";
 import { isModelInstanceCollisionMode } from "../assets/model-instances";
+import { WHITEBOX_SELECTION_MODES } from "../core/whitebox-selection-mode";
 import {
   isPlayerStartColliderMode,
   isPlayerStartGamepadCameraLookBinding,
@@ -2100,6 +2101,123 @@ function validateProjectSceneLoadingScreen(
   }
 }
 
+function validateProjectSceneEditorPreferences(
+  scene: ProjectDocument["scenes"][string],
+  scenePath: string,
+  diagnostics: SceneDiagnostic[]
+) {
+  const preferences = scene.editorPreferences;
+
+  if (!WHITEBOX_SELECTION_MODES.includes(preferences.whiteboxSelectionMode)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-scene-editor-selection-mode",
+        "Scene editor selection mode must be one of object, face, edge, or vertex.",
+        `${scenePath}.editorPreferences.whiteboxSelectionMode`
+      )
+    );
+  }
+
+  if (
+    preferences.viewportLayoutMode !== "single" &&
+    preferences.viewportLayoutMode !== "quad"
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-scene-editor-layout-mode",
+        "Scene editor viewport layout must be single or quad.",
+        `${scenePath}.editorPreferences.viewportLayoutMode`
+      )
+    );
+  }
+
+  if (
+    preferences.activeViewportPanelId !== "topLeft" &&
+    preferences.activeViewportPanelId !== "topRight" &&
+    preferences.activeViewportPanelId !== "bottomLeft" &&
+    preferences.activeViewportPanelId !== "bottomRight"
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-scene-editor-active-panel",
+        "Scene editor active viewport panel must reference a supported panel id.",
+        `${scenePath}.editorPreferences.activeViewportPanelId`
+      )
+    );
+  }
+
+  if (!isPositiveFiniteNumber(preferences.whiteboxSnapStep)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-scene-editor-snap-step",
+        "Scene editor snap step must be greater than zero.",
+        `${scenePath}.editorPreferences.whiteboxSnapStep`
+      )
+    );
+  }
+
+  if (!isFiniteNumber(preferences.viewportQuadSplit.x)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-scene-editor-quad-split-x",
+        "Scene editor quad split X must be finite.",
+        `${scenePath}.editorPreferences.viewportQuadSplit.x`
+      )
+    );
+  }
+
+  if (!isFiniteNumber(preferences.viewportQuadSplit.y)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-scene-editor-quad-split-y",
+        "Scene editor quad split Y must be finite.",
+        `${scenePath}.editorPreferences.viewportQuadSplit.y`
+      )
+    );
+  }
+
+  for (const [panelId, panelPreferences] of Object.entries(
+    preferences.viewportPanels
+  )) {
+    if (
+      panelPreferences.viewMode !== "perspective" &&
+      panelPreferences.viewMode !== "top" &&
+      panelPreferences.viewMode !== "front" &&
+      panelPreferences.viewMode !== "side"
+    ) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-scene-editor-panel-view-mode",
+          "Scene editor panel view mode must be perspective, top, front, or side.",
+          `${scenePath}.editorPreferences.viewportPanels.${panelId}.viewMode`
+        )
+      );
+    }
+
+    if (
+      panelPreferences.displayMode !== "normal" &&
+      panelPreferences.displayMode !== "authoring" &&
+      panelPreferences.displayMode !== "wireframe"
+    ) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-scene-editor-panel-display-mode",
+          "Scene editor panel display mode must be normal, authoring, or wireframe.",
+          `${scenePath}.editorPreferences.viewportPanels.${panelId}.displayMode`
+        )
+      );
+    }
+  }
+}
+
 export function formatSceneDiagnostic(diagnostic: SceneDiagnostic): string {
   return diagnostic.path === undefined
     ? diagnostic.message
@@ -2579,6 +2697,7 @@ export function validateProjectDocument(
     }
 
     validateProjectSceneLoadingScreen(scene, scenePath, diagnostics);
+    validateProjectSceneEditorPreferences(scene, scenePath, diagnostics);
 
     const sceneDocument = createSceneDocumentFromProject(document, sceneKey);
 
