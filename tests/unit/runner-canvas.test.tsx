@@ -22,6 +22,7 @@ const { MockRuntimeHost, runtimeHostInstances } = vi.hoisted(() => {
     setFirstPersonTelemetryHandler: ReturnType<typeof vi.fn>;
     setInteractionPromptHandler: ReturnType<typeof vi.fn>;
     setSceneLoadStateHandler: ReturnType<typeof vi.fn>;
+    setSceneExitHandler: ReturnType<typeof vi.fn>;
   }> = [];
 
   class MockRuntimeHost {
@@ -34,6 +35,7 @@ const { MockRuntimeHost, runtimeHostInstances } = vi.hoisted(() => {
     setFirstPersonTelemetryHandler = vi.fn();
     setInteractionPromptHandler = vi.fn();
     setSceneLoadStateHandler = vi.fn();
+    setSceneExitHandler = vi.fn();
 
     constructor() {
       runtimeHostInstances.push(this);
@@ -78,6 +80,7 @@ describe("RunnerCanvas", () => {
         onRuntimeMessageChange={vi.fn()}
         onFirstPersonTelemetryChange={onTelemetryChange}
         onInteractionPromptChange={vi.fn()}
+        onSceneExitActivated={vi.fn()}
       />
     );
 
@@ -171,6 +174,7 @@ describe("RunnerCanvas", () => {
         onRuntimeMessageChange={vi.fn()}
         onFirstPersonTelemetryChange={vi.fn()}
         onInteractionPromptChange={vi.fn()}
+        onSceneExitActivated={vi.fn()}
       />
     );
 
@@ -241,6 +245,7 @@ describe("RunnerCanvas", () => {
         onRuntimeMessageChange={vi.fn()}
         onFirstPersonTelemetryChange={vi.fn()}
         onInteractionPromptChange={vi.fn()}
+        onSceneExitActivated={vi.fn()}
       />
     );
 
