@@ -1920,6 +1920,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
       setSpotLightDirectionDraft(createVec3Draft(DEFAULT_SPOT_LIGHT_DIRECTION));
       setPlayerStartYawDraft("0");
       setPlayerStartNavigationModeDraft(DEFAULT_PLAYER_START_NAVIGATION_MODE);
+      setPlayerStartMovementTemplateDraft(createPlayerStartMovementTemplate());
       setPlayerStartColliderModeDraft("capsule");
       setPlayerStartEyeHeightDraft(String(DEFAULT_PLAYER_START_EYE_HEIGHT));
       setPlayerStartCapsuleRadiusDraft(
@@ -1979,6 +1980,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
       case "playerStart":
         setPlayerStartYawDraft(String(selectedEntity.yawDegrees));
         setPlayerStartNavigationModeDraft(selectedEntity.navigationMode);
+        setPlayerStartMovementTemplateDraft(
+          clonePlayerStartMovementTemplate(selectedEntity.movementTemplate)
+        );
         setPlayerStartColliderModeDraft(selectedEntity.collider.mode);
         setPlayerStartEyeHeightDraft(String(selectedEntity.collider.eyeHeight));
         setPlayerStartCapsuleRadiusDraft(
