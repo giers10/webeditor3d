@@ -364,6 +364,45 @@ export class RapierCollisionWorld {
     private readonly playerCollider: RAPIER.Collider | null
   ) {}
 
+  private syncPlayerColliderShape(shape: FirstPersonPlayerShape) {
+    if (this.playerCollider === null || shape.mode === "none") {
+      return;
+    }
+
+    const nextSignature = getFirstPersonPlayerShapeSignature(shape);
+
+    if (
+      this.playerCollider.userData === nextSignature ||
+      this.playerCollider.userData === undefined
+    ) {
+      if (this.playerCollider.userData === undefined) {
+        this.playerCollider.userData = nextSignature;
+      }
+
+      return;
+    }
+
+    switch (shape.mode) {
+      case "capsule":
+        this.playerCollider.setRadius(shape.radius);
+        this.playerCollider.setHalfHeight(
+          Math.max(0, (shape.height - shape.radius * 2) * 0.5)
+        );
+        break;
+      case "box":
+        this.playerCollider.setHalfExtents({
+          x: shape.size.x * 0.5,
+          y: shape.size.y * 0.5,
+          z: shape.size.z * 0.5
+        });
+        break;
+      case "none":
+        break;
+    }
+
+    this.playerCollider.userData = nextSignature;
+  }
+
   resolveFirstPersonMotion(feetPosition: Vec3, motion: Vec3, shape: FirstPersonPlayerShape): ResolvedPlayerMotion {
     if (this.playerCollider === null || this.characterController === null || shape.mode === "none") {
       return {
