@@ -6599,6 +6599,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
         },
         {
           kind: "action",
+          label: "Scene Entry",
+          testId: "add-menu-scene-entry",
+          onSelect: () => beginEntityCreation("sceneEntry")
+        },
+        {
+          kind: "action",
           label: "Sound Emitter",
           testId: "add-menu-sound-emitter",
           onSelect: () =>
@@ -6623,6 +6629,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
           label: "Interactable",
           testId: "add-menu-interactable",
           onSelect: () => beginEntityCreation("interactable")
+        },
+        {
+          kind: "action",
+          label: "Scene Exit",
+          testId: "add-menu-scene-exit",
+          onSelect: () => beginEntityCreation("sceneExit")
         }
       ]
     },
