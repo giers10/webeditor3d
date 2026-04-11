@@ -5099,13 +5099,18 @@ export class ViewportHost {
       return;
     }
 
+    if (this.currentTransformSession.kind === "active") {
+      if (this.currentTransformSession.sourcePanelId !== this.panelId) {
+        return;
+      }
+
+      event.preventDefault();
+      this.transformCommitHandler?.(this.currentTransformSession);
+      return;
+    }
+
     const transformHandle = this.pickTransformHandle(event);
-    const interactionSession =
-      this.currentTransformSession.kind === "active"
-        ? this.currentTransformSession.sourcePanelId === this.panelId
-          ? this.currentTransformSession
-          : null
-        : this.getDisplayedTransformSession();
+    const interactionSession = this.getDisplayedTransformSession();
 
     if (transformHandle !== null && interactionSession !== null) {
       event.preventDefault();
@@ -5162,21 +5167,6 @@ export class ViewportHost {
       };
       this.renderer.domElement.setPointerCapture(event.pointerId);
       return;
-    }
-
-    if (this.currentTransformSession.kind === "active") {
-      if (this.currentTransformSession.sourcePanelId !== this.panelId) {
-        return;
-      }
-
-      if (
-        this.currentTransformSession.source !== "gizmo" ||
-        this.currentTransformSession.sourcePanelId === this.panelId
-      ) {
-        event.preventDefault();
-        this.transformCommitHandler?.(this.currentTransformSession);
-        return;
-      }
     }
 
     if (this.toolMode === "create" && this.creationPreview !== null) {
