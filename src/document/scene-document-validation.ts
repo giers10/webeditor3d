@@ -10,6 +10,7 @@ import { isModelInstanceCollisionMode } from "../assets/model-instances";
 import { WHITEBOX_SELECTION_MODES } from "../core/whitebox-selection-mode";
 import {
   isPlayerStartColliderMode,
+  isPlayerStartGamepadActionBinding,
   isPlayerStartGamepadCameraLookBinding,
   isPlayerStartGamepadBinding,
   isPlayerStartKeyboardBindingCode,
@@ -1271,6 +1272,39 @@ function validatePlayerStartEntity(
     );
   }
 
+  if (!isPlayerStartKeyboardBindingCode(entity.inputBindings?.keyboard.jump)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-jump-keyboard-binding",
+        "Player Start jump keyboard binding must be a supported key code.",
+        `${path}.inputBindings.keyboard.jump`
+      )
+    );
+  }
+
+  if (!isPlayerStartKeyboardBindingCode(entity.inputBindings?.keyboard.sprint)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-sprint-keyboard-binding",
+        "Player Start sprint keyboard binding must be a supported key code.",
+        `${path}.inputBindings.keyboard.sprint`
+      )
+    );
+  }
+
+  if (!isPlayerStartKeyboardBindingCode(entity.inputBindings?.keyboard.crouch)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-crouch-keyboard-binding",
+        "Player Start crouch keyboard binding must be a supported key code.",
+        `${path}.inputBindings.keyboard.crouch`
+      )
+    );
+  }
+
   if (!isPlayerStartGamepadBinding(entity.inputBindings?.gamepad.moveForward)) {
     diagnostics.push(
       createDiagnostic(
@@ -1311,6 +1345,39 @@ function validatePlayerStartEntity(
         "invalid-player-start-move-right-gamepad-binding",
         "Player Start move-right gamepad binding must be a supported standard-gamepad input.",
         `${path}.inputBindings.gamepad.moveRight`
+      )
+    );
+  }
+
+  if (!isPlayerStartGamepadActionBinding(entity.inputBindings?.gamepad.jump)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-jump-gamepad-binding",
+        "Player Start jump gamepad binding must be a supported standard-gamepad action input.",
+        `${path}.inputBindings.gamepad.jump`
+      )
+    );
+  }
+
+  if (!isPlayerStartGamepadActionBinding(entity.inputBindings?.gamepad.sprint)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-sprint-gamepad-binding",
+        "Player Start sprint gamepad binding must be a supported standard-gamepad action input.",
+        `${path}.inputBindings.gamepad.sprint`
+      )
+    );
+  }
+
+  if (!isPlayerStartGamepadActionBinding(entity.inputBindings?.gamepad.crouch)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-crouch-gamepad-binding",
+        "Player Start crouch gamepad binding must be a supported standard-gamepad action input.",
+        `${path}.inputBindings.gamepad.crouch`
       )
     );
   }
