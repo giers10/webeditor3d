@@ -24,6 +24,14 @@ const IDLE_SPEED_EPSILON = 0.05;
 const VARIABLE_JUMP_HOLD_GRAVITY_FACTOR = 0.45;
 const VARIABLE_JUMP_RELEASE_VELOCITY_FACTOR = 0.45;
 
+function clampPlanarSpeed(speed: number, maxSpeed: number): number {
+  if (maxSpeed <= 0) {
+    return speed;
+  }
+
+  return Math.min(speed, maxSpeed);
+}
+
 function clampUnitInterval(value: number): number {
   return Math.max(0, Math.min(1, value));
 }
@@ -332,28 +340,22 @@ export function stepPlayerLocomotion(
     !crouched &&
     currentlyGrounded &&
     !currentVolumeState.inWater;
-  const groundedRequestedPlanarSpeed =
-    options.movement.moveSpeed *
-    (crouched
-      ? options.movement.crouch.speedMultiplier
-      : sprinting
-        ? options.movement.sprint.speedMultiplier
-        : 1);
-  const airborneRequestedPlanarSpeed = Math.max(
-    options.movement.moveSpeed,
+  const previousRequestedPlanarSpeed = Math.max(
+    0,
     options.previousLocomotionState?.requestedPlanarSpeed ?? 0
   );
-  const requestedPlanarSpeed =
-    activeShape.mode !== "none" &&
-    !currentVolumeState.inWater &&
-    !currentlyGrounded
-      ? airborneRequestedPlanarSpeed
-      : groundedRequestedPlanarSpeed;
-  const planarMotion = computePlanarMotion(
-    options.movementYawRadians,
-    options.input,
-    requestedPlanarSpeed,
-    options.dt
+  const groundedRequestedPlanarSpeed = clampPlanarSpeed(
+    options.movement.moveSpeed *
+      (crouched
+        ? options.movement.crouch.speedMultiplier
+        : sprinting
+          ? options.movement.sprint.speedMultiplier
+          : 1),
+    options.movement.maxSpeed
+  );
+  const airborneRequestedPlanarSpeed = clampPlanarSpeed(
+    Math.max(options.movement.moveSpeed, previousRequestedPlanarSpeed),
+    options.movement.maxSpeed
   );
   const jumpTriggered =
     options.movement.capabilities.jump &&
@@ -361,11 +363,44 @@ export function stepPlayerLocomotion(
     (currentlyGrounded || coyoteTimeRemainingMs > 0) &&
     !currentVolumeState.inWater &&
     activeShape.mode !== "none";
+  const bufferedJumpTriggered =
+    jumpTriggered && !jumpJustPressed && jumpBufferRemainingMs > 0;
+  const jumpRequestedPlanarSpeedBase = clampPlanarSpeed(
+    Math.max(
+      options.movement.moveSpeed,
+      groundedRequestedPlanarSpeed,
+      previousRequestedPlanarSpeed
+    ),
+    options.movement.maxSpeed
+  );
+  const jumpRequestedPlanarSpeed =
+    bufferedJumpTriggered && options.movement.jump.bunnyHop
+      ? clampPlanarSpeed(
+          jumpRequestedPlanarSpeedBase *
+            (1 + options.movement.jump.bunnyHopBoost),
+          options.movement.maxSpeed
+        )
+      : jumpRequestedPlanarSpeedBase;
 
   if (jumpTriggered) {
     jumpBufferRemainingMs = 0;
     coyoteTimeRemainingMs = 0;
   }
+
+  const requestedPlanarSpeed =
+    activeShape.mode !== "none" && !currentVolumeState.inWater
+      ? jumpTriggered
+        ? jumpRequestedPlanarSpeed
+        : currentlyGrounded
+          ? groundedRequestedPlanarSpeed
+          : airborneRequestedPlanarSpeed
+      : groundedRequestedPlanarSpeed;
+  const planarMotion = computePlanarMotion(
+    options.movementYawRadians,
+    options.input,
+    requestedPlanarSpeed,
+    options.dt
+  );
 
   const groundedPlanarMotion =
     currentlyGrounded && !jumpTriggered
