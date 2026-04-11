@@ -365,11 +365,13 @@ export function stepPlayerLocomotion(
     activeShape.mode !== "none";
   const bufferedJumpTriggered =
     jumpTriggered && !jumpJustPressed && jumpBufferRemainingMs > 0;
+  const preservePreviousJumpSpeed =
+    !currentlyGrounded || bufferedJumpTriggered;
   const jumpRequestedPlanarSpeedBase = clampPlanarSpeed(
     Math.max(
       options.movement.moveSpeed,
       groundedRequestedPlanarSpeed,
-      previousRequestedPlanarSpeed
+      preservePreviousJumpSpeed ? previousRequestedPlanarSpeed : 0
     ),
     options.movement.maxSpeed
   );
