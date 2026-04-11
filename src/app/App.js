@@ -1790,12 +1790,14 @@ export function App({ store, initialStatusMessage }) {
         try {
             const snappedPosition = snapVec3ToGrid(readVec3Draft(entityPositionDraft, "Player Start position"), DEFAULT_GRID_SIZE);
             const yawDegrees = readYawDegreesDraft(playerStartYawDraft);
+            const navigationMode = overrides.navigationMode ?? selectedPlayerStart.navigationMode;
             const colliderMode = overrides.colliderMode ?? playerStartColliderModeDraft;
             const nextEntity = createPlayerStartEntity({
                 id: selectedPlayerStart.id,
                 name: selectedPlayerStart.name,
                 position: snappedPosition,
                 yawDegrees,
+                navigationMode,
                 collider: {
                     mode: colliderMode,
                     eyeHeight: readPositiveNumberDraft(playerStartEyeHeightDraft, "Player Start eye height"),
