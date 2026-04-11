@@ -1399,7 +1399,11 @@ export class ViewportHost {
       case "brushFace":
       case "brushEdge":
       case "brushVertex":
-        return null;
+        if (session.preview.kind !== "brush") {
+          return null;
+        }
+
+        return this.createRotationQuaternion(session.preview.rotationDegrees);
     }
   }
 
@@ -2117,7 +2121,8 @@ export class ViewportHost {
         session,
         origin,
         current,
-        axisConstraint
+        axisConstraint,
+        axisConstraintSpace
       );
     }
 
@@ -2684,7 +2689,8 @@ export class ViewportHost {
     session: ActiveTransformSession,
     origin: { x: number; y: number },
     current: { x: number; y: number },
-    axisConstraint: TransformAxis | null
+    axisConstraint: TransformAxis | null,
+    axisConstraintSpace: TransformAxisSpace
   ) {
     const initialBrush = this.createTargetPreviewBrush(session);
 
@@ -2732,6 +2738,40 @@ export class ViewportHost {
         };
       }
     } else {
+      if (
+        axisConstraintSpace === "local" &&
+        supportsLocalTransformAxisConstraint(session, axisConstraint)
+      ) {
+        const axisVector = this.getConstraintAxisWorldVector(
+          session,
+          axisConstraint,
+          axisConstraintSpace
+        );
+        const axisDelta = this.getMovementDistanceAlongWorldAxis(
+          axisVector,
+          initialPivot,
+          origin,
+          current
+        );
+        const snappedAxisDelta = this.whiteboxSnapEnabled
+          ? snapValueToGrid(axisDelta, this.whiteboxSnapStep)
+          : axisDelta;
+        const localDelta = {
+          x: 0,
+          y: 0,
+          z: 0
+        };
+        localDelta[axisConstraint] = snappedAxisDelta;
+        const vertexIds = this.getComponentTargetVertexIds(session.target);
+        const nextGeometry = this.applyDeltaToVertices(
+          initialBrush,
+          vertexIds,
+          localDelta
+        );
+
+        return this.createBrushPreviewFromGeometry(initialBrush, nextGeometry);
+      }
+
       const axisDelta = this.getAxisMovementDistance(
         axisConstraint,
         initialPivot,
