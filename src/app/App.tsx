@@ -3862,6 +3862,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
         name: selectedPlayerStart.name,
         position: snappedPosition,
         yawDegrees,
+        navigationMode: playerStartNavigationModeDraft,
         collider: {
           mode: colliderMode,
           eyeHeight: readPositiveNumberDraft(
