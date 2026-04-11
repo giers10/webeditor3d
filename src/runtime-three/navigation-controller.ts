@@ -8,6 +8,7 @@ import type {
 } from "./player-collision";
 import type {
   RuntimeNavigationMode,
+  RuntimePlayerMovement,
   RuntimeSceneDefinition,
   RuntimeSpawnPoint
 } from "./runtime-scene-build";
@@ -17,6 +18,7 @@ export interface FirstPersonTelemetry {
   eyePosition: Vec3;
   grounded: boolean;
   locomotionState: RuntimeLocomotionState;
+  movement: RuntimePlayerMovement;
   inWaterVolume: boolean;
   cameraSubmerged: boolean;
   inFogVolume: boolean;
