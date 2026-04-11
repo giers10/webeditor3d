@@ -1206,6 +1206,17 @@ function validatePlayerStartEntity(
     );
   }
 
+  if (!isNonNegativeFiniteNumber(entity.movementTemplate?.maxStepHeight)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-max-step-height",
+        "Player Start max step height must remain a finite number zero or greater.",
+        `${path}.movementTemplate.maxStepHeight`
+      )
+    );
+  }
+
   if (typeof entity.movementTemplate?.capabilities?.jump !== "boolean") {
     diagnostics.push(
       createDiagnostic(
