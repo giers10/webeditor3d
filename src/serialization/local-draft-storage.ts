@@ -1,4 +1,5 @@
 import {
+  createProjectDocumentFromSceneDocument,
   createEmptyProjectDocument,
   type ProjectDocument
 } from "../document/scene-document";
@@ -12,6 +13,7 @@ import {
 } from "../viewport-three/viewport-layout";
 
 import {
+  parseSceneDocumentJson,
   parseProjectDocumentJson,
   serializeProjectDocument
 } from "./scene-document-json";
@@ -249,7 +251,13 @@ export function loadSceneDocumentDraft(
 
     return {
       status: "loaded",
-      document: parseProjectDocumentJson(rawDocument),
+      document:
+        isRecord(parsedDraft) &&
+        ("scenes" in parsedDraft || "activeSceneId" in parsedDraft)
+          ? parseProjectDocumentJson(rawDocument)
+          : createProjectDocumentFromSceneDocument(
+              parseSceneDocumentJson(rawDocument)
+            ),
       viewportLayoutState: null,
       message: "Recovered latest autosave."
     };
