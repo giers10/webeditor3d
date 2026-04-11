@@ -1195,6 +1195,17 @@ function validatePlayerStartEntity(
     );
   }
 
+  if (!isNonNegativeFiniteNumber(entity.movementTemplate?.maxSpeed)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-max-speed",
+        "Player Start max speed must remain a finite number zero or greater.",
+        `${path}.movementTemplate.maxSpeed`
+      )
+    );
+  }
+
   if (typeof entity.movementTemplate?.capabilities?.jump !== "boolean") {
     diagnostics.push(
       createDiagnostic(
@@ -1287,6 +1298,30 @@ function validatePlayerStartEntity(
         "invalid-player-start-variable-jump-max-hold-ms",
         "Player Start variable jump max hold must remain a finite number greater than zero.",
         `${path}.movementTemplate.jump.maxHoldMs`
+      )
+    );
+  }
+
+  if (!isBoolean(entity.movementTemplate?.jump?.bunnyHop)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-bunny-hop",
+        "Player Start bunny hop setting must be a boolean.",
+        `${path}.movementTemplate.jump.bunnyHop`
+      )
+    );
+  }
+
+  if (
+    !isNonNegativeFiniteNumber(entity.movementTemplate?.jump?.bunnyHopBoost)
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-bunny-hop-boost",
+        "Player Start bunny hop boost must remain a finite number zero or greater.",
+        `${path}.movementTemplate.jump.bunnyHopBoost`
       )
     );
   }
