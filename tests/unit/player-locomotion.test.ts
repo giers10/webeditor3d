@@ -7,6 +7,7 @@ import type {
   PlayerGroundProbeResult,
   ResolvedPlayerMotion
 } from "../../src/runtime-three/player-collision";
+import { createIdleRuntimeLocomotionState } from "../../src/runtime-three/player-locomotion";
 import { stepPlayerLocomotion } from "../../src/runtime-three/player-locomotion";
 import type { PlayerStartActionInputState } from "../../src/runtime-three/player-input-bindings";
 import type { RuntimePlayerMovement } from "../../src/runtime-three/runtime-scene-build";
