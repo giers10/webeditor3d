@@ -13,6 +13,7 @@ import {
   isPlayerStartGamepadCameraLookBinding,
   isPlayerStartGamepadBinding,
   isPlayerStartKeyboardBindingCode,
+  isPlayerStartMovementTemplateKind,
   isPlayerStartNavigationMode,
   getPlayerStartColliderHeight,
   type InteractableEntity,
