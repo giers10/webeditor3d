@@ -3,6 +3,7 @@ import { Euler, Vector3 } from "three";
 import type { Vec3 } from "../core/vector";
 
 import { getFirstPersonPlayerEyeHeight } from "./player-collision";
+import { resolvePlayerStartMovementActions } from "./player-input-bindings";
 import type {
   NavigationControllerDeactivateOptions,
   NavigationController,
@@ -143,15 +144,15 @@ export class FirstPersonNavigationController implements NavigationController {
     }
 
     const playerShape = this.context.getRuntimeScene().playerCollider;
+    const inputState = resolvePlayerStartMovementActions(
+      this.pressedKeys,
+      this.context.getRuntimeScene().playerInputBindings
+    );
     const currentVolumeState = this.context.resolvePlayerVolumeState(
       this.feetPosition
     );
-    const inputX =
-      (this.pressedKeys.has("KeyD") ? 1 : 0) -
-      (this.pressedKeys.has("KeyA") ? 1 : 0);
-    const inputZ =
-      (this.pressedKeys.has("KeyW") ? 1 : 0) -
-      (this.pressedKeys.has("KeyS") ? 1 : 0);
+    const inputX = inputState.moveRight - inputState.moveLeft;
+    const inputZ = inputState.moveForward - inputState.moveBackward;
     const inputLength = Math.hypot(inputX, inputZ);
 
     let horizontalX = 0;
