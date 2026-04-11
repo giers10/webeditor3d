@@ -103,7 +103,7 @@ describe("project document JSON", () => {
       });
 
     expect(() =>
-      parseProjectDocumentJson(serializeProjectDocument(document))
+      parseProjectDocumentJson(JSON.stringify(document))
     ).toThrow("target entry");
   });
 });
