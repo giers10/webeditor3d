@@ -9,6 +9,8 @@ import type { ModelInstance } from "../assets/model-instances";
 import { isModelInstanceCollisionMode } from "../assets/model-instances";
 import {
   isPlayerStartColliderMode,
+  isPlayerStartGamepadBinding,
+  isPlayerStartKeyboardBindingCode,
   isPlayerStartNavigationMode,
   getPlayerStartColliderHeight,
   type InteractableEntity,
@@ -1160,6 +1162,94 @@ function validatePlayerStartEntity(
         "invalid-player-start-navigation-mode",
         "Player Start navigation mode must be firstPerson or thirdPerson.",
         `${path}.navigationMode`
+      )
+    );
+  }
+
+  if (!isPlayerStartKeyboardBindingCode(entity.inputBindings?.keyboard.moveForward)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-move-forward-keyboard-binding",
+        "Player Start move-forward keyboard binding must be a supported key code.",
+        `${path}.inputBindings.keyboard.moveForward`
+      )
+    );
+  }
+
+  if (!isPlayerStartKeyboardBindingCode(entity.inputBindings?.keyboard.moveBackward)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-move-backward-keyboard-binding",
+        "Player Start move-backward keyboard binding must be a supported key code.",
+        `${path}.inputBindings.keyboard.moveBackward`
+      )
+    );
+  }
+
+  if (!isPlayerStartKeyboardBindingCode(entity.inputBindings?.keyboard.moveLeft)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-move-left-keyboard-binding",
+        "Player Start move-left keyboard binding must be a supported key code.",
+        `${path}.inputBindings.keyboard.moveLeft`
+      )
+    );
+  }
+
+  if (!isPlayerStartKeyboardBindingCode(entity.inputBindings?.keyboard.moveRight)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-move-right-keyboard-binding",
+        "Player Start move-right keyboard binding must be a supported key code.",
+        `${path}.inputBindings.keyboard.moveRight`
+      )
+    );
+  }
+
+  if (!isPlayerStartGamepadBinding(entity.inputBindings?.gamepad.moveForward)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-move-forward-gamepad-binding",
+        "Player Start move-forward gamepad binding must be a supported standard-gamepad input.",
+        `${path}.inputBindings.gamepad.moveForward`
+      )
+    );
+  }
+
+  if (!isPlayerStartGamepadBinding(entity.inputBindings?.gamepad.moveBackward)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-move-backward-gamepad-binding",
+        "Player Start move-backward gamepad binding must be a supported standard-gamepad input.",
+        `${path}.inputBindings.gamepad.moveBackward`
+      )
+    );
+  }
+
+  if (!isPlayerStartGamepadBinding(entity.inputBindings?.gamepad.moveLeft)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-move-left-gamepad-binding",
+        "Player Start move-left gamepad binding must be a supported standard-gamepad input.",
+        `${path}.inputBindings.gamepad.moveLeft`
+      )
+    );
+  }
+
+  if (!isPlayerStartGamepadBinding(entity.inputBindings?.gamepad.moveRight)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-move-right-gamepad-binding",
+        "Player Start move-right gamepad binding must be a supported standard-gamepad input.",
+        `${path}.inputBindings.gamepad.moveRight`
       )
     );
   }
