@@ -380,6 +380,10 @@ export class RapierCollisionWorld {
       characterController,
       playerCollider,
       Math.max(CHARACTER_CONTROLLER_SNAP_TO_GROUND_DISTANCE, maxStepHeight),
+      maxStepHeight > COLLISION_EPSILON ? maxStepHeight : null,
+      maxStepHeight > COLLISION_EPSILON
+        ? maxStepHeight * AUTOSTEP_MIN_WIDTH_FACTOR
+        : null,
       playerShape.mode === "none"
         ? null
         : getFirstPersonPlayerShapeSignature(playerShape)
@@ -391,6 +395,8 @@ export class RapierCollisionWorld {
     private readonly characterController: RAPIER.KinematicCharacterController | null,
     private readonly playerCollider: RAPIER.Collider | null,
     private readonly snapToGroundDistance: number,
+    private readonly autostepHeight: number | null,
+    private readonly autostepMinWidth: number | null,
     private currentPlayerShapeSignature: string | null
   ) {}
 
@@ -448,9 +454,23 @@ export class RapierCollisionWorld {
     const currentCenter = feetPositionToColliderCenter(feetPosition, shape);
     this.playerCollider.setTranslation(currentCenter);
     const snapToGroundWasEnabled = this.characterController.snapToGroundEnabled();
+    const autostepWasEnabled =
+      this.autostepHeight !== null &&
+      this.autostepMinWidth !== null &&
+      this.characterController.autostepEnabled();
+    const supportProbe = this.probePlayerGround(
+      feetPosition,
+      shape,
+      this.snapToGroundDistance
+    );
+    const supportGrounded = supportProbe.grounded;
 
     if (motion.y > COLLISION_EPSILON && snapToGroundWasEnabled) {
       this.characterController.disableSnapToGround();
+    }
+
+    if (!supportGrounded && autostepWasEnabled) {
+      this.characterController.disableAutostep();
     }
 
     this.characterController.computeColliderMovement(this.playerCollider, motion);
@@ -458,6 +478,14 @@ export class RapierCollisionWorld {
     if (snapToGroundWasEnabled) {
       this.characterController.enableSnapToGround(
         this.snapToGroundDistance
+      );
+    }
+
+    if (autostepWasEnabled) {
+      this.characterController.enableAutostep(
+        this.autostepHeight,
+        this.autostepMinWidth,
+        false
       );
     }
 
