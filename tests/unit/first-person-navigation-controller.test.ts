@@ -178,6 +178,8 @@ describe("FirstPersonNavigationController", () => {
           z: feetPosition.z + motion.z
         },
         grounded: false,
+        collisionCount: 0,
+        groundCollisionNormal: null,
         collidedAxes: {
           x: false,
           y: false,
@@ -233,6 +235,8 @@ describe("FirstPersonNavigationController", () => {
           z: feetPosition.z + motion.z
         },
         grounded: true,
+        collisionCount: 1,
+        groundCollisionNormal: { x: 0, y: 1, z: 0 },
         collidedAxes: {
           x: false,
           y: false,
