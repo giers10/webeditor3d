@@ -28,6 +28,7 @@ export interface PlayerStartEntity extends PositionedEntity {
   kind: "playerStart";
   yawDegrees: number;
   navigationMode: PlayerStartNavigationMode;
+  movementTemplate: PlayerStartMovementTemplate;
   inputBindings: PlayerStartInputBindings;
   collider: PlayerStartColliderSettings;
 }
@@ -45,6 +46,9 @@ export const PLAYER_START_NAVIGATION_MODES = [
 ] as const;
 export type PlayerStartNavigationMode =
   (typeof PLAYER_START_NAVIGATION_MODES)[number];
+export const PLAYER_START_MOVEMENT_TEMPLATE_KINDS = ["default"] as const;
+export type PlayerStartMovementTemplateKind =
+  (typeof PLAYER_START_MOVEMENT_TEMPLATE_KINDS)[number];
 export const PLAYER_START_MOVEMENT_ACTIONS = [
   "moveForward",
   "moveBackward",
@@ -95,6 +99,26 @@ export interface PlayerStartInputBindings {
 export interface PlayerStartInputBindingOverrides {
   keyboard?: Partial<PlayerStartKeyboardBindings>;
   gamepad?: Partial<PlayerStartGamepadBindings>;
+}
+
+export interface PlayerStartMovementCapabilities {
+  jump: boolean;
+  sprint: boolean;
+  crouch: boolean;
+}
+
+export interface DefaultPlayerStartMovementTemplate {
+  kind: "default";
+  moveSpeed: number;
+  capabilities: PlayerStartMovementCapabilities;
+}
+
+export type PlayerStartMovementTemplate = DefaultPlayerStartMovementTemplate;
+
+export interface PlayerStartMovementTemplateOverrides {
+  kind?: PlayerStartMovementTemplateKind;
+  moveSpeed?: number;
+  capabilities?: Partial<PlayerStartMovementCapabilities>;
 }
 
 export interface PlayerStartColliderSettings {
@@ -207,6 +231,15 @@ export const DEFAULT_PLAYER_START_POSITION = DEFAULT_ENTITY_POSITION;
 export const DEFAULT_PLAYER_START_YAW_DEGREES = 0;
 export const DEFAULT_PLAYER_START_NAVIGATION_MODE: PlayerStartNavigationMode =
   "firstPerson";
+export const DEFAULT_PLAYER_START_MOVEMENT_TEMPLATE_KIND: PlayerStartMovementTemplateKind =
+  "default";
+export const DEFAULT_PLAYER_START_MOVE_SPEED = 4.5;
+export const DEFAULT_PLAYER_START_MOVEMENT_CAPABILITIES: PlayerStartMovementCapabilities =
+  {
+    jump: true,
+    sprint: true,
+    crouch: true
+  };
 export const DEFAULT_PLAYER_START_KEYBOARD_BINDINGS: PlayerStartKeyboardBindings =
   {
     moveForward: "KeyW",
@@ -349,6 +382,26 @@ export function clonePlayerStartColliderSettings(settings: PlayerStartColliderSe
   };
 }
 
+function clonePlayerStartMovementCapabilities(
+  capabilities: PlayerStartMovementCapabilities
+): PlayerStartMovementCapabilities {
+  return {
+    jump: capabilities.jump,
+    sprint: capabilities.sprint,
+    crouch: capabilities.crouch
+  };
+}
+
+export function clonePlayerStartMovementTemplate(
+  template: PlayerStartMovementTemplate
+): PlayerStartMovementTemplate {
+  return {
+    kind: template.kind,
+    moveSpeed: template.moveSpeed,
+    capabilities: clonePlayerStartMovementCapabilities(template.capabilities)
+  };
+}
+
 export function clonePlayerStartInputBindings(
   bindings: PlayerStartInputBindings
 ): PlayerStartInputBindings {
@@ -446,6 +499,60 @@ export function createPlayerStartInputBindings(
   };
 }
 
+export function isPlayerStartMovementTemplateKind(
+  value: string
+): value is PlayerStartMovementTemplateKind {
+  return PLAYER_START_MOVEMENT_TEMPLATE_KINDS.includes(
+    value as PlayerStartMovementTemplateKind
+  );
+}
+
+export function createPlayerStartMovementTemplate(
+  overrides: PlayerStartMovementTemplateOverrides = {}
+): PlayerStartMovementTemplate {
+  const kind =
+    overrides.kind ?? DEFAULT_PLAYER_START_MOVEMENT_TEMPLATE_KIND;
+  const moveSpeed = overrides.moveSpeed ?? DEFAULT_PLAYER_START_MOVE_SPEED;
+  const capabilities: PlayerStartMovementCapabilities = {
+    jump:
+      overrides.capabilities?.jump ??
+      DEFAULT_PLAYER_START_MOVEMENT_CAPABILITIES.jump,
+    sprint:
+      overrides.capabilities?.sprint ??
+      DEFAULT_PLAYER_START_MOVEMENT_CAPABILITIES.sprint,
+    crouch:
+      overrides.capabilities?.crouch ??
+      DEFAULT_PLAYER_START_MOVEMENT_CAPABILITIES.crouch
+  };
+
+  if (!isPlayerStartMovementTemplateKind(kind)) {
+    throw new Error("Player Start movement template must be default.");
+  }
+
+  assertPositiveFiniteNumber(moveSpeed, "Player Start move speed");
+  assertBoolean(
+    capabilities.jump,
+    "Player Start movement template jump capability"
+  );
+  assertBoolean(
+    capabilities.sprint,
+    "Player Start movement template sprint capability"
+  );
+  assertBoolean(
+    capabilities.crouch,
+    "Player Start movement template crouch capability"
+  );
+
+  switch (kind) {
+    case "default":
+      return {
+        kind,
+        moveSpeed,
+        capabilities
+      };
+  }
+}
+
 export function arePlayerStartInputBindingsEqual(
   left: PlayerStartInputBindings,
   right: PlayerStartInputBindings
@@ -460,6 +567,19 @@ export function arePlayerStartInputBindingsEqual(
     left.gamepad.moveLeft === right.gamepad.moveLeft &&
     left.gamepad.moveRight === right.gamepad.moveRight &&
     left.gamepad.cameraLook === right.gamepad.cameraLook
+  );
+}
+
+export function arePlayerStartMovementTemplatesEqual(
+  left: PlayerStartMovementTemplate,
+  right: PlayerStartMovementTemplate
+): boolean {
+  return (
+    left.kind === right.kind &&
+    left.moveSpeed === right.moveSpeed &&
+    left.capabilities.jump === right.capabilities.jump &&
+    left.capabilities.sprint === right.capabilities.sprint &&
+    left.capabilities.crouch === right.capabilities.crouch
   );
 }
 
@@ -633,6 +753,7 @@ export function createPlayerStartEntity(
       "id" | "name" | "position" | "yawDegrees" | "navigationMode"
     >
   > & {
+    movementTemplate?: PlayerStartMovementTemplateOverrides;
     inputBindings?: PlayerStartInputBindingOverrides;
     collider?: Partial<PlayerStartColliderSettings>;
   } = {}
@@ -641,6 +762,9 @@ export function createPlayerStartEntity(
   const yawDegrees = overrides.yawDegrees ?? DEFAULT_PLAYER_START_YAW_DEGREES;
   const navigationMode =
     overrides.navigationMode ?? DEFAULT_PLAYER_START_NAVIGATION_MODE;
+  const movementTemplate = createPlayerStartMovementTemplate(
+    overrides.movementTemplate
+  );
   const inputBindings = createPlayerStartInputBindings(overrides.inputBindings);
   const collider = createPlayerStartColliderSettings(overrides.collider);
 
@@ -663,6 +787,7 @@ export function createPlayerStartEntity(
     position,
     yawDegrees: normalizeYawDegrees(yawDegrees),
     navigationMode,
+    movementTemplate,
     inputBindings,
     collider
   };
@@ -1002,6 +1127,10 @@ export function areEntityInstancesEqual(left: EntityInstance, right: EntityInsta
       return (
         left.yawDegrees === typedRight.yawDegrees &&
         left.navigationMode === typedRight.navigationMode &&
+        arePlayerStartMovementTemplatesEqual(
+          left.movementTemplate,
+          typedRight.movementTemplate
+        ) &&
         arePlayerStartInputBindingsEqual(
           left.inputBindings,
           typedRight.inputBindings
