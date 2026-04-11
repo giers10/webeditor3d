@@ -9,6 +9,7 @@ import {
   CylinderGeometry,
   DirectionalLight,
   EdgesGeometry,
+  Euler,
   GridHelper,
   Group,
   Line,
@@ -56,10 +57,12 @@ import {
   createTransformPreviewFromTarget,
   createTransformSession,
   resolveTransformTarget,
+  supportsLocalTransformAxisConstraint,
   supportsTransformOperation,
   supportsTransformAxisConstraint,
   type ActiveTransformSession,
   type TransformAxis,
+  type TransformAxisSpace,
   type TransformSessionState
 } from "../core/transform-session";
 import type { ToolMode } from "../core/tool-mode";
@@ -257,6 +260,8 @@ const SCALE_SNAP_STEP = 0.1;
 const MIN_SCALE_COMPONENT = 0.1;
 const MIN_BOX_SIZE_COMPONENT = 0.01;
 const WATER_REFLECTION_UPDATE_INTERVAL_MS = 96;
+const VIEWPORT_GRID_VISUAL_SIZE = 400;
+const VIEWPORT_GRID_VISUAL_DIVISIONS = 400;
 
 interface CachedMaterialTexture {
   signature: string;

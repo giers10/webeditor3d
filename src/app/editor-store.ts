@@ -12,6 +12,7 @@ import {
   cloneTransformSession,
   createInactiveTransformSession,
   type TransformAxis,
+  type TransformAxisSpace,
   type TransformSessionState
 } from "../core/transform-session";
 import { createEmptySceneDocument, type SceneDocument } from "../document/scene-document";
@@ -292,12 +293,15 @@ export class EditorStore {
     this.emit();
   }
 
-  setTransformAxisConstraint(axisConstraint: TransformAxis | null) {
+  setTransformAxisConstraint(axisConstraint: TransformAxis | null, axisConstraintSpace: TransformAxisSpace = "world") {
     if (this.viewportTransientState.transformSession.kind !== "active") {
       return;
     }
 
-    if (this.viewportTransientState.transformSession.axisConstraint === axisConstraint) {
+    if (
+      this.viewportTransientState.transformSession.axisConstraint === axisConstraint &&
+      this.viewportTransientState.transformSession.axisConstraintSpace === axisConstraintSpace
+    ) {
       return;
     }
 
@@ -305,7 +309,8 @@ export class EditorStore {
       ...this.viewportTransientState,
       transformSession: {
         ...(cloneTransformSession(this.viewportTransientState.transformSession) as Extract<TransformSessionState, { kind: "active" }>),
-        axisConstraint
+        axisConstraint,
+        axisConstraintSpace
       }
     };
     this.emit();
