@@ -658,11 +658,15 @@ export class RuntimeHost {
   private async buildCollisionWorld(
     requestId: number,
     colliders: RuntimeSceneDefinition["colliders"],
-    playerShape: RuntimeSceneDefinition["playerCollider"]
+    playerShape: RuntimeSceneDefinition["playerCollider"],
+    playerMovement: RuntimeSceneDefinition["playerMovement"]
   ) {
     const nextCollisionWorld = await RapierCollisionWorld.create(
       colliders,
-      playerShape
+      playerShape,
+      {
+        maxStepHeight: playerMovement.maxStepHeight
+      }
     );
 
     if (requestId !== this.collisionWorldRequestId) {
