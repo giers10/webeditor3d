@@ -27,6 +27,7 @@ export interface SpotLightEntity extends PositionedEntity {
 export interface PlayerStartEntity extends PositionedEntity {
   kind: "playerStart";
   yawDegrees: number;
+  navigationMode: PlayerStartNavigationMode;
   collider: PlayerStartColliderSettings;
 }
 
@@ -37,6 +38,12 @@ export interface SceneEntryEntity extends PositionedEntity {
 
 export const PLAYER_START_COLLIDER_MODES = ["capsule", "box", "none"] as const;
 export type PlayerStartColliderMode = (typeof PLAYER_START_COLLIDER_MODES)[number];
+export const PLAYER_START_NAVIGATION_MODES = [
+  "firstPerson",
+  "thirdPerson"
+] as const;
+export type PlayerStartNavigationMode =
+  (typeof PLAYER_START_NAVIGATION_MODES)[number];
 
 export interface PlayerStartColliderSettings {
   mode: PlayerStartColliderMode;
@@ -146,6 +153,8 @@ export const DEFAULT_ENTITY_POSITION: Vec3 = {
 
 export const DEFAULT_PLAYER_START_POSITION = DEFAULT_ENTITY_POSITION;
 export const DEFAULT_PLAYER_START_YAW_DEGREES = 0;
+export const DEFAULT_PLAYER_START_NAVIGATION_MODE: PlayerStartNavigationMode =
+  "firstPerson";
 export const DEFAULT_SCENE_ENTRY_YAW_DEGREES = 0;
 export const DEFAULT_PLAYER_START_COLLIDER_MODE: PlayerStartColliderMode = "capsule";
 export const DEFAULT_PLAYER_START_EYE_HEIGHT = 1.6;
@@ -231,6 +240,14 @@ function assertBoolean(value: boolean, label: string) {
 
 export function isPlayerStartColliderMode(value: string): value is PlayerStartColliderMode {
   return PLAYER_START_COLLIDER_MODES.includes(value as PlayerStartColliderMode);
+}
+
+export function isPlayerStartNavigationMode(
+  value: string
+): value is PlayerStartNavigationMode {
+  return PLAYER_START_NAVIGATION_MODES.includes(
+    value as PlayerStartNavigationMode
+  );
 }
 
 export function clonePlayerStartColliderSettings(settings: PlayerStartColliderSettings): PlayerStartColliderSettings {
@@ -407,10 +424,17 @@ export function createSpotLightEntity(
 }
 
 export function createPlayerStartEntity(
-  overrides: Partial<Pick<PlayerStartEntity, "id" | "name" | "position" | "yawDegrees" | "collider">> = {}
+  overrides: Partial<
+    Pick<
+      PlayerStartEntity,
+      "id" | "name" | "position" | "yawDegrees" | "navigationMode" | "collider"
+    >
+  > = {}
 ): PlayerStartEntity {
   const position = cloneVec3(overrides.position ?? DEFAULT_PLAYER_START_POSITION);
   const yawDegrees = overrides.yawDegrees ?? DEFAULT_PLAYER_START_YAW_DEGREES;
+  const navigationMode =
+    overrides.navigationMode ?? DEFAULT_PLAYER_START_NAVIGATION_MODE;
   const collider = createPlayerStartColliderSettings(overrides.collider);
 
   assertFiniteVec3(position, "Player Start position");
@@ -419,12 +443,19 @@ export function createPlayerStartEntity(
     throw new Error("Player Start yaw must be a finite number.");
   }
 
+  if (!isPlayerStartNavigationMode(navigationMode)) {
+    throw new Error(
+      "Player Start navigation mode must be firstPerson or thirdPerson."
+    );
+  }
+
   return {
     id: overrides.id ?? createOpaqueId("entity-player-start"),
     kind: "playerStart",
     name: normalizeEntityName(overrides.name),
     position,
     yawDegrees: normalizeYawDegrees(yawDegrees),
+    navigationMode,
     collider
   };
 }
@@ -623,7 +654,8 @@ export const ENTITY_REGISTRY: { [K in EntityKind]: EntityRegistryEntry<Extract<E
   playerStart: {
     kind: "playerStart",
     label: "Player Start",
-    description: "Primary authored spawn point for first-person runtime navigation.",
+    description:
+      "Primary authored spawn point for first-person or third-person runtime navigation.",
     createDefaultEntity: createPlayerStartEntity
   },
   sceneEntry: {
@@ -761,6 +793,7 @@ export function areEntityInstancesEqual(left: EntityInstance, right: EntityInsta
       const typedRight = right as PlayerStartEntity;
       return (
         left.yawDegrees === typedRight.yawDegrees &&
+        left.navigationMode === typedRight.navigationMode &&
         left.collider.mode === typedRight.collider.mode &&
         left.collider.eyeHeight === typedRight.collider.eyeHeight &&
         left.collider.capsuleRadius === typedRight.collider.capsuleRadius &&
