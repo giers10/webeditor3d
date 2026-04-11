@@ -53,6 +53,7 @@ interface ViewportPanelProps {
   toolPreview: ViewportToolPreview;
   transformSession: TransformSessionState;
   cameraState: ViewportPanelCameraState;
+  cameraSyncRequestId: number;
   focusRequestId: number;
   focusSelection: EditorSelection;
   onActivatePanel(panelId: ViewportPanelId): void;
@@ -94,6 +95,7 @@ export function ViewportPanel({
   toolPreview,
   transformSession,
   cameraState,
+  cameraSyncRequestId,
   focusRequestId,
   focusSelection,
   onActivatePanel,
@@ -199,6 +201,7 @@ export function ViewportPanel({
         toolPreview={toolPreview}
         transformSession={transformSession}
         cameraState={cameraState}
+        cameraSyncRequestId={cameraSyncRequestId}
         viewMode={panelState.viewMode}
         displayMode={panelState.displayMode}
         layoutMode={layoutMode}
