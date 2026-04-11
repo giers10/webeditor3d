@@ -625,4 +625,138 @@ describe("transform foundation integration", () => {
       }
     });
   });
+
+  it("toggles a repeated axis key from world to local on supported transform targets", async () => {
+    const { store } = await renderTransformFixtureApp();
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /^Brush Transform Fixture$/ }));
+    });
+
+    fireEvent.keyDown(window, {
+      key: "g",
+      code: "KeyG"
+    });
+    fireEvent.keyDown(window, {
+      key: "z",
+      code: "KeyZ"
+    });
+
+    expect(store.getState().viewportTransientState.transformSession).toMatchObject({
+      kind: "active",
+      axisConstraint: "z",
+      axisConstraintSpace: "world"
+    });
+
+    fireEvent.keyDown(window, {
+      key: "z",
+      code: "KeyZ"
+    });
+
+    expect(store.getState().viewportTransientState.transformSession).toMatchObject({
+      kind: "active",
+      axisConstraint: "z",
+      axisConstraintSpace: "local"
+    });
+    expect(screen.getByText(/constrained move to local z\./i)).toBeInTheDocument();
+  });
+
+  it("keeps the persisted viewport camera state stable across transform commit, cancel, and delete", async () => {
+    const { store, brush, viewportHost } = await renderTransformFixtureApp();
+    const persistedCameraState: ViewportPanelCameraState = {
+      target: {
+        x: 14,
+        y: 6,
+        z: -9
+      },
+      perspectiveOrbit: {
+        radius: 28,
+        theta: 0.84,
+        phi: 1.18
+      },
+      orthographicZoom: 2.4
+    };
+
+    emitCameraStateChange(viewportHost, persistedCameraState);
+
+    expect(store.getState().viewportPanels.topLeft.cameraState).toEqual(persistedCameraState);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /^Brush Transform Fixture$/ }));
+    });
+
+    fireEvent.keyDown(window, {
+      key: "g",
+      code: "KeyG"
+    });
+
+    const commitCameraCallCount = viewportHost.setCameraState.mock.calls.length;
+    commitTransform(viewportHost, {
+      ...getLatestTransformSession(store),
+      preview: {
+        kind: "brush",
+        center: {
+          x: brush.center.x + 3,
+          y: brush.center.y,
+          z: brush.center.z
+        },
+        rotationDegrees: {
+          ...brush.rotationDegrees
+        },
+        size: {
+          ...brush.size
+        },
+        geometry: createBoxBrush({ size: brush.size }).geometry
+      }
+    });
+
+    await waitFor(() => {
+      expect(viewportHost.setCameraState.mock.calls.length).toBeGreaterThan(commitCameraCallCount);
+    });
+    expect(viewportHost.setCameraState.mock.calls.at(-1)?.[0]).toEqual(persistedCameraState);
+
+    fireEvent.keyDown(window, {
+      key: "g",
+      code: "KeyG"
+    });
+
+    const cancelCameraCallCount = viewportHost.setCameraState.mock.calls.length;
+
+    fireEvent.keyDown(window, {
+      key: "Escape",
+      code: "Escape"
+    });
+
+    await waitFor(() => {
+      expect(viewportHost.setCameraState.mock.calls.length).toBeGreaterThan(cancelCameraCallCount);
+    });
+    expect(viewportHost.setCameraState.mock.calls.at(-1)?.[0]).toEqual(persistedCameraState);
+
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    const deleteCameraCallCount = viewportHost.setCameraState.mock.calls.length;
+
+    fireEvent.keyDown(window, {
+      key: "Delete",
+      code: "Delete"
+    });
+
+    await waitFor(() => {
+      expect(viewportHost.setCameraState.mock.calls.length).toBeGreaterThan(deleteCameraCallCount);
+    });
+    expect(viewportHost.setCameraState.mock.calls.at(-1)?.[0]).toEqual(persistedCameraState);
+  });
+
+  it("toggles viewport grid visibility through the shared viewport host path", async () => {
+    const { viewportHost } = await renderTransformFixtureApp();
+
+    const initialCallCount = viewportHost.setGridVisible.mock.calls.length;
+
+    fireEvent.click(screen.getByTestId("viewport-grid-toggle"));
+
+    await waitFor(() => {
+      expect(viewportHost.setGridVisible.mock.calls.length).toBeGreaterThan(initialCallCount);
+    });
+    expect(viewportHost.setGridVisible.mock.calls.at(-1)?.[0]).toBe(false);
+    expect(screen.getByText(/viewport grid hidden\./i)).toBeInTheDocument();
+  });
 });
