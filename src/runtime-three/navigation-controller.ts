@@ -38,5 +38,6 @@ export interface NavigationController {
   id: RuntimeNavigationMode;
   activate(ctx: RuntimeControllerContext): void;
   deactivate(ctx: RuntimeControllerContext): void;
+  resetSceneState(): void;
   update(dt: number): void;
 }
