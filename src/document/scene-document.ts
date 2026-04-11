@@ -14,7 +14,8 @@ import {
   type WorldSettings
 } from "./world-settings";
 
-export const SCENE_DOCUMENT_VERSION = 26 as const;
+export const SCENE_DOCUMENT_VERSION = 27 as const;
+export const PLAYER_START_GAMEPAD_CAMERA_LOOK_SCENE_DOCUMENT_VERSION = 27 as const;
 export const PLAYER_START_INPUT_BINDINGS_SCENE_DOCUMENT_VERSION = 26 as const;
 export const PLAYER_START_NAVIGATION_MODE_SCENE_DOCUMENT_VERSION = 25 as const;
 export const SCENE_TRANSITION_ENTITIES_SCENE_DOCUMENT_VERSION = 24 as const;
