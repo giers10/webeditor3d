@@ -20,10 +20,12 @@ import {
   type ProjectAssetRecord
 } from "../assets/project-assets";
 import {
+  DEFAULT_PLAYER_START_MOVEMENT_CAPABILITIES,
   DEFAULT_PLAYER_START_GAMEPAD_BINDINGS,
   DEFAULT_PLAYER_START_KEYBOARD_BINDINGS,
   createPlayerStartColliderSettings,
   createPlayerStartInputBindings,
+  createPlayerStartMovementTemplate,
   createInteractableEntity,
   normalizeEntityName,
   createPointLightEntity,
@@ -38,10 +40,12 @@ import {
   isPlayerStartGamepadCameraLookBinding,
   isPlayerStartGamepadBinding,
   isPlayerStartKeyboardBindingCode,
+  isPlayerStartMovementTemplateKind,
   isPlayerStartNavigationMode,
   type EntityInstance,
   type PlayerStartGamepadBinding,
-  type PlayerStartGamepadCameraLookBinding
+  type PlayerStartGamepadCameraLookBinding,
+  type PlayerStartMovementTemplateKind
 } from "../entities/entity-instances";
 import {
   createPlayAnimationInteractionLink,
@@ -95,6 +99,7 @@ import {
   SPATIAL_AUDIO_SCENE_DOCUMENT_VERSION,
   PROJECT_NAME_SCENE_DOCUMENT_VERSION,
   SCENE_DOCUMENT_VERSION,
+  STATIC_SIMPLE_MODEL_COLLIDERS_SCENE_DOCUMENT_VERSION,
   TRIGGER_ACTION_TARGET_FOUNDATION_SCENE_DOCUMENT_VERSION,
   RUNNER_LOADING_SCREEN_SCENE_DOCUMENT_VERSION,
   WATER_SURFACE_DISPLACEMENT_SCENE_DOCUMENT_VERSION,
