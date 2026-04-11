@@ -97,6 +97,8 @@ import {
   DEFAULT_PLAYER_START_EYE_HEIGHT,
   DEFAULT_PLAYER_START_YAW_DEGREES,
   DEFAULT_POINT_LIGHT_DISTANCE,
+  DEFAULT_SCENE_ENTRY_YAW_DEGREES,
+  DEFAULT_SCENE_EXIT_RADIUS,
   DEFAULT_SOUND_EMITTER_MAX_DISTANCE,
   DEFAULT_SOUND_EMITTER_REF_DISTANCE,
   DEFAULT_SPOT_LIGHT_ANGLE_DEGREES,
@@ -232,8 +234,12 @@ const TRIGGER_VOLUME_COLOR = 0x9f8cff;
 const TRIGGER_VOLUME_SELECTED_COLOR = 0xf0b07f;
 const TELEPORT_TARGET_COLOR = 0x7ee0ff;
 const TELEPORT_TARGET_SELECTED_COLOR = 0xf6c48a;
+const SCENE_ENTRY_COLOR = 0x75f0d8;
+const SCENE_ENTRY_SELECTED_COLOR = 0xf6c48a;
 const INTERACTABLE_COLOR = 0x92de7e;
 const INTERACTABLE_SELECTED_COLOR = 0xf1cf7e;
+const SCENE_EXIT_COLOR = 0xff9c6d;
+const SCENE_EXIT_SELECTED_COLOR = 0xf5dd88;
 const BOX_CREATE_PREVIEW_FILL = 0x89b6ff;
 const BOX_CREATE_PREVIEW_EDGE = 0xf3be8f;
 const PLACEMENT_PREVIEW_COLOR_HEX = "#89b6ff";
@@ -2959,6 +2965,7 @@ export class ViewportHost {
       case "soundEmitter":
       case "triggerVolume":
       case "interactable":
+      case "sceneExit":
         renderObjects.group.position.set(
           entity.position.x,
           entity.position.y,
@@ -2975,6 +2982,7 @@ export class ViewportHost {
         );
         break;
       case "playerStart":
+      case "sceneEntry":
       case "teleportTarget":
         renderObjects.group.position.set(
           entity.position.x,
@@ -3135,6 +3143,7 @@ export class ViewportHost {
           case "soundEmitter":
           case "triggerVolume":
           case "interactable":
+          case "sceneExit":
             this.applyEntityRenderObjectTransform({
               ...currentEntity,
               position: this.currentTransformSession.preview.position
@@ -3165,6 +3174,7 @@ export class ViewportHost {
             });
             break;
           case "playerStart":
+          case "sceneEntry":
           case "teleportTarget":
             this.applyEntityRenderObjectTransform({
               ...currentEntity,
@@ -3474,6 +3484,14 @@ export class ViewportHost {
           entity.collider,
           selected
         );
+      case "sceneEntry":
+        return this.createTeleportTargetRenderObjects(
+          entity.id,
+          entity.position,
+          entity.yawDegrees,
+          selected,
+          selected ? SCENE_ENTRY_SELECTED_COLOR : SCENE_ENTRY_COLOR
+        );
       case "soundEmitter":
         return this.createSoundEmitterRenderObjects(
           entity.id,
@@ -3502,6 +3520,14 @@ export class ViewportHost {
           entity.position,
           entity.radius,
           selected
+        );
+      case "sceneExit":
+        return this.createInteractableRenderObjects(
+          entity.id,
+          entity.position,
+          entity.radius,
+          selected,
+          selected ? SCENE_EXIT_SELECTED_COLOR : SCENE_EXIT_COLOR
         );
     }
   }
@@ -5507,9 +5533,11 @@ export class ViewportHost {
             );
           case "pointLight":
           case "playerStart":
+          case "sceneEntry":
           case "soundEmitter":
           case "teleportTarget":
           case "interactable":
+          case "sceneExit":
           case "spotLight":
             return this.getPlanarCreationAnchor(event);
         }
@@ -5699,6 +5727,15 @@ export class ViewportHost {
               false
             ).group;
             break;
+          case "sceneEntry":
+            previewGroup = this.createTeleportTargetRenderObjects(
+              "creation-preview",
+              previewPosition,
+              DEFAULT_SCENE_ENTRY_YAW_DEGREES,
+              false,
+              BOX_CREATE_PREVIEW_FILL
+            ).group;
+            break;
           case "soundEmitter":
             previewGroup = this.createSoundEmitterRenderObjects(
               "creation-preview",
@@ -5732,6 +5769,15 @@ export class ViewportHost {
               "creation-preview",
               previewPosition,
               DEFAULT_INTERACTABLE_RADIUS,
+              false,
+              BOX_CREATE_PREVIEW_FILL
+            ).group;
+            break;
+          case "sceneExit":
+            previewGroup = this.createInteractableRenderObjects(
+              "creation-preview",
+              previewPosition,
+              DEFAULT_SCENE_EXIT_RADIUS,
               false,
               BOX_CREATE_PREVIEW_FILL
             ).group;

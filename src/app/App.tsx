@@ -151,10 +151,12 @@ import {
 import {
   areSceneLoadingScreenSettingsEqual,
   cloneSceneLoadingScreenSettings,
+  createSceneDocumentFromProject,
   type SceneLoadingScreenSettings
 } from "../document/scene-document";
 import {
   formatSceneDiagnosticSummary,
+  validateProjectDocument,
   validateSceneDocument
 } from "../document/scene-document-validation";
 import {
@@ -180,6 +182,9 @@ import {
   DEFAULT_PLAYER_START_EYE_HEIGHT,
   DEFAULT_SOUND_EMITTER_AUDIO_ASSET_ID,
   DEFAULT_SOUND_EMITTER_VOLUME,
+  DEFAULT_SCENE_ENTRY_YAW_DEGREES,
+  DEFAULT_SCENE_EXIT_PROMPT,
+  DEFAULT_SCENE_EXIT_RADIUS,
   DEFAULT_SOUND_EMITTER_REF_DISTANCE,
   DEFAULT_SOUND_EMITTER_MAX_DISTANCE,
   DEFAULT_TELEPORT_TARGET_YAW_DEGREES,
@@ -194,6 +199,8 @@ import {
   createInteractableEntity,
   createPointLightEntity,
   createPlayerStartEntity,
+  createSceneEntryEntity,
+  createSceneExitEntity,
   createSoundEmitterEntity,
   createSpotLightEntity,
   createTeleportTargetEntity,
@@ -231,6 +238,8 @@ import {
 import { RunnerCanvas } from "../runner-web/RunnerCanvas";
 import type { FirstPersonTelemetry } from "../runtime-three/navigation-controller";
 import type { RuntimeInteractionPrompt } from "../runtime-three/runtime-interaction-system";
+import { createDefaultRuntimeGlobalState, type RuntimeGlobalState } from "../runtime-three/runtime-global-state";
+import type { RuntimeSceneExitTransitionRequest } from "../runtime-three/runtime-host";
 import {
   buildRuntimeSceneFromDocument,
   type RuntimeNavigationMode,
