@@ -25,7 +25,7 @@ import { areViewportToolPreviewsEqual } from "./viewport-transient-state";
 const BRUSH_SELECTED_EDGE_COLOR = 0xf7d2aa;
 const BRUSH_HOVERED_EDGE_COLOR = 0xb7cbec;
 const BRUSH_EDGE_COLOR = 0x0d1017;
-const FALLBACK_FACE_COLOR = 0x747d89;
+const FALLBACK_FACE_COLOR = 0xf2ece2;
 const HOVERED_FACE_FALLBACK_COLOR = 0xd9a56f;
 const SELECTED_FACE_FALLBACK_COLOR = 0xcf7b42;
 const HOVERED_FACE_EMISSIVE = 0x2f1d11;

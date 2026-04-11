@@ -13,7 +13,7 @@ import { RuntimeInteractionSystem } from "./runtime-interaction-system";
 import { RuntimeAudioSystem } from "./runtime-audio-system";
 import { OrbitVisitorNavigationController } from "./orbit-visitor-navigation-controller";
 import { resolveUnderwaterFogState } from "./underwater-fog";
-const FALLBACK_FACE_COLOR = 0x747d89;
+const FALLBACK_FACE_COLOR = 0xf2ece2;
 const BOX_FACE_MATERIAL_COUNT = 6;
 const WATER_REFLECTION_UPDATE_INTERVAL_MS = 96;
 export class RuntimeHost {
