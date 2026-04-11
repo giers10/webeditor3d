@@ -424,6 +424,73 @@ describe("RapierCollisionWorld", () => {
     }
   });
 
+  it("does not climb a wall when repeatedly walking into it from the ground", async () => {
+    const floorBrush = createBoxBrush({
+      id: "brush-floor-repeat-wall-walk",
+      center: {
+        x: 0,
+        y: -0.5,
+        z: 0
+      },
+      size: {
+        x: 10,
+        y: 1,
+        z: 10
+      }
+    });
+    const wallBrush = createBoxBrush({
+      id: "brush-repeat-wall-walk",
+      center: {
+        x: 1.2,
+        y: 1,
+        z: 0
+      },
+      size: {
+        x: 0.4,
+        y: 2,
+        z: 4
+      }
+    });
+    const runtimeScene = buildRuntimeSceneFromDocument({
+      ...createEmptySceneDocument({ name: "Repeat Wall Walk Scene" }),
+      brushes: {
+        [floorBrush.id]: floorBrush,
+        [wallBrush.id]: wallBrush
+      }
+    });
+    const collisionWorld = await RapierCollisionWorld.create(
+      runtimeScene.colliders,
+      runtimeScene.playerCollider
+    );
+
+    try {
+      let feetPosition = {
+        x: 0,
+        y: 0,
+        z: 0
+      };
+
+      for (let index = 0; index < 12; index += 1) {
+        const moved = collisionWorld.resolveFirstPersonMotion(
+          feetPosition,
+          {
+            x: 0.3,
+            y: 0,
+            z: 0
+          },
+          runtimeScene.playerCollider
+        );
+
+        feetPosition = moved.feetPosition;
+      }
+
+      expect(feetPosition.y).toBeLessThan(0.05);
+      expect(feetPosition.x).toBeLessThan(0.75);
+    } finally {
+      collisionWorld.dispose();
+    }
+  });
+
   it("does not autostep onto a ledge while airborne without floor support", async () => {
     const floorBrush = createBoxBrush({
       id: "brush-floor-airborne-ledge",
