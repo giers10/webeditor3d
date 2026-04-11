@@ -20,7 +20,6 @@ import {
   type ProjectAssetRecord
 } from "../assets/project-assets";
 import {
-  DEFAULT_PLAYER_START_GAMEPAD_CAMERA_LOOK_BINDINGS,
   DEFAULT_PLAYER_START_GAMEPAD_BINDINGS,
   DEFAULT_PLAYER_START_KEYBOARD_BINDINGS,
   createPlayerStartColliderSettings,
@@ -1027,7 +1026,7 @@ function readPlayerStartInputBindings(value: unknown, label: string) {
       cameraLook: readPlayerStartGamepadCameraLookBinding(
         gamepad?.cameraLook,
         `${label}.gamepad.cameraLook`,
-        DEFAULT_PLAYER_START_GAMEPAD_CAMERA_LOOK_BINDINGS[0]
+        DEFAULT_PLAYER_START_GAMEPAD_BINDINGS.cameraLook
       )
     }
   });
