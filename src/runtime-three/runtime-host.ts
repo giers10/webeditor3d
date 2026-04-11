@@ -117,6 +117,12 @@ export interface RuntimeSceneLoadState {
   message: string | null;
 }
 
+export interface RuntimeSceneExitTransitionRequest {
+  sourceExitEntityId: string;
+  targetSceneId: string;
+  targetEntryEntityId: string;
+}
+
 export class RuntimeHost {
   private readonly scene = new Scene();
   private readonly camera = new PerspectiveCamera(70, 1, 0.05, 1000);
@@ -187,6 +193,9 @@ export class RuntimeHost {
     | null = null;
   private sceneLoadStateHandler:
     | ((state: RuntimeSceneLoadState) => void)
+    | null = null;
+  private sceneExitHandler:
+    | ((request: RuntimeSceneExitTransitionRequest) => void)
     | null = null;
   private currentRuntimeMessage: string | null = null;
   private currentFirstPersonTelemetry: FirstPersonTelemetry | null = null;
@@ -420,6 +429,14 @@ export class RuntimeHost {
     if (handler !== null && this.currentSceneLoadState !== null) {
       handler(this.currentSceneLoadState);
     }
+  }
+
+  setSceneExitHandler(
+    handler:
+      | ((request: RuntimeSceneExitTransitionRequest) => void)
+      | null
+  ) {
+    this.sceneExitHandler = handler;
   }
 
   dispose() {
@@ -1641,6 +1658,13 @@ export class RuntimeHost {
     return {
       teleportPlayer: (target) => {
         this.applyTeleportPlayerAction(target);
+      },
+      activateSceneExit: (sceneExit) => {
+        this.sceneExitHandler?.({
+          sourceExitEntityId: sceneExit.entityId,
+          targetSceneId: sceneExit.targetSceneId,
+          targetEntryEntityId: sceneExit.targetEntryEntityId
+        });
       },
       toggleBrushVisibility: (brushId, visible) => {
         this.applyToggleBrushVisibilityAction(brushId, visible);
