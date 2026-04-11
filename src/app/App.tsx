@@ -190,8 +190,8 @@ import {
   DEFAULT_SOUND_EMITTER_MAX_DISTANCE,
   DEFAULT_TELEPORT_TARGET_YAW_DEGREES,
   PLAYER_START_COLLIDER_MODES,
+  PLAYER_START_GAMEPAD_CAMERA_LOOK_BINDINGS,
   PLAYER_START_GAMEPAD_BINDINGS,
-  PLAYER_START_KEYBOARD_BINDING_CODES,
   PLAYER_START_MOVEMENT_ACTIONS,
   PLAYER_START_NAVIGATION_MODES,
   DEFAULT_SPOT_LIGHT_ANGLE_DEGREES,
@@ -218,6 +218,7 @@ import {
   normalizeEntityName,
   normalizeYawDegrees,
   normalizeInteractablePrompt,
+  type PlayerStartGamepadCameraLookBinding,
   type PlayerStartColliderMode,
   type PlayerStartGamepadBinding,
   type PlayerStartInputBindings,
@@ -360,15 +361,15 @@ function getPlayerStartMovementActionLabel(
 function formatPlayerStartKeyboardBindingLabel(
   code: PlayerStartKeyboardBindingCode
 ): string {
+  if (/^Key[A-Z]$/.test(code)) {
+    return code.slice(3);
+  }
+
+  if (/^Digit[0-9]$/.test(code)) {
+    return code.slice(5);
+  }
+
   switch (code) {
-    case "KeyW":
-      return "W";
-    case "KeyA":
-      return "A";
-    case "KeyS":
-      return "S";
-    case "KeyD":
-      return "D";
     case "ArrowUp":
       return "Arrow Up";
     case "ArrowLeft":
@@ -377,14 +378,18 @@ function formatPlayerStartKeyboardBindingLabel(
       return "Arrow Down";
     case "ArrowRight":
       return "Arrow Right";
-    case "KeyI":
-      return "I";
-    case "KeyJ":
-      return "J";
-    case "KeyK":
-      return "K";
-    case "KeyL":
-      return "L";
+    case "Space":
+      return "Space";
+    case "Tab":
+      return "Tab";
+    case "Enter":
+      return "Enter";
+    case "Backspace":
+      return "Backspace";
+    case "Escape":
+      return "Escape";
+    default:
+      return code.replace(/([a-z0-9])([A-Z])/g, "$1 $2");
   }
 }
 
@@ -408,6 +413,15 @@ function formatPlayerStartGamepadBindingLabel(
       return "D-Pad Left";
     case "dpadRight":
       return "D-Pad Right";
+  }
+}
+
+function formatPlayerStartGamepadCameraLookBindingLabel(
+  binding: PlayerStartGamepadCameraLookBinding
+): string {
+  switch (binding) {
+    case "rightStick":
+      return "Right Stick";
   }
 }
 
@@ -1446,6 +1460,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
   );
   const [playerStartInputBindingsDraft, setPlayerStartInputBindingsDraft] =
     useState<PlayerStartInputBindings>(createPlayerStartInputBindings());
+  const [playerStartKeyboardCaptureAction, setPlayerStartKeyboardCaptureAction] =
+    useState<PlayerStartMovementAction | null>(null);
   const [soundEmitterAudioAssetIdDraft, setSoundEmitterAudioAssetIdDraft] =
     useState(DEFAULT_SOUND_EMITTER_AUDIO_ASSET_ID ?? "");
   const [soundEmitterVolumeDraft, setSoundEmitterVolumeDraft] = useState(
@@ -1738,6 +1754,52 @@ export function App({ store, initialStatusMessage }: AppProps) {
     whiteboxSnapEnabled,
     whiteboxSnapStep
   );
+
+  useEffect(() => {
+    setPlayerStartKeyboardCaptureAction(null);
+  }, [selectedPlayerStart?.id]);
+
+  useEffect(() => {
+    if (playerStartKeyboardCaptureAction === null) {
+      return;
+    }
+
+    const handleWindowKeyCapture = (event: globalThis.KeyboardEvent) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      if (event.repeat) {
+        return;
+      }
+
+      if (event.code === "Escape") {
+        setPlayerStartKeyboardCaptureAction(null);
+        setStatusMessage("Cancelled Player Start key capture.");
+        return;
+      }
+
+      const capturedCode = event.code.trim();
+
+      if (capturedCode.length === 0) {
+        return;
+      }
+
+      handlePlayerStartKeyboardBindingChange(
+        playerStartKeyboardCaptureAction,
+        capturedCode
+      );
+      setPlayerStartKeyboardCaptureAction(null);
+      setStatusMessage(
+        `Bound ${getPlayerStartMovementActionLabel(playerStartKeyboardCaptureAction)} to ${formatPlayerStartKeyboardBindingLabel(capturedCode)}.`
+      );
+    };
+
+    window.addEventListener("keydown", handleWindowKeyCapture, true);
+
+    return () => {
+      window.removeEventListener("keydown", handleWindowKeyCapture, true);
+    };
+  }, [playerStartKeyboardCaptureAction]);
 
   useEffect(() => {
     setSceneNameDraft(editorState.document.name);
@@ -4007,6 +4069,25 @@ export function App({ store, initialStatusMessage }: AppProps) {
         ...playerStartInputBindingsDraft.gamepad,
         [action]: nextBinding
       } as PlayerStartInputBindings["gamepad"]
+    });
+
+    setPlayerStartInputBindingsDraft(nextBindings);
+    scheduleDraftCommit(() =>
+      applyPlayerStartChange({
+        inputBindings: nextBindings
+      })
+    );
+  };
+
+  const handlePlayerStartGamepadCameraLookBindingChange = (
+    nextBinding: PlayerStartGamepadCameraLookBinding
+  ) => {
+    const nextBindings = createPlayerStartInputBindings({
+      keyboard: playerStartInputBindingsDraft.keyboard,
+      gamepad: {
+        ...playerStartInputBindingsDraft.gamepad,
+        cameraLook: nextBinding
+      }
     });
 
     setPlayerStartInputBindingsDraft(nextBindings);
@@ -10108,24 +10189,25 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               <span className="label">
                                 {getPlayerStartMovementActionLabel(action)} Key
                               </span>
-                              <select
+                              <button
+                                type="button"
                                 data-testid={`player-start-keyboard-binding-${action}`}
-                                className="select-input"
-                                value={playerStartInputBindingsDraft.keyboard[action]}
-                                onChange={(event) =>
-                                  handlePlayerStartKeyboardBindingChange(
-                                    action,
-                                    event.currentTarget
-                                      .value as PlayerStartKeyboardBindingCode
-                                  )
-                                }
+                                className="toolbar__button"
+                                onClick={() => {
+                                  setPlayerStartKeyboardCaptureAction(action);
+                                  setStatusMessage(
+                                    `Press any key for ${getPlayerStartMovementActionLabel(action)}. Press Escape to cancel.`
+                                  );
+                                }}
                               >
-                                {PLAYER_START_KEYBOARD_BINDING_CODES.map((code) => (
-                                  <option key={code} value={code}>
-                                    {formatPlayerStartKeyboardBindingLabel(code)}
-                                  </option>
-                                ))}
-                              </select>
+                                {playerStartKeyboardCaptureAction === action
+                                  ? "Press Any Key..."
+                                  : formatPlayerStartKeyboardBindingLabel(
+                                      playerStartInputBindingsDraft.keyboard[
+                                        action
+                                      ]
+                                    )}
+                              </button>
                             </label>
                             <label className="form-field">
                               <span className="label">
@@ -10153,9 +10235,35 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           </div>
                         ))}
 
+                        <label className="form-field">
+                          <span className="label">Camera Pad</span>
+                          <select
+                            data-testid="player-start-gamepad-camera-look-binding"
+                            className="select-input"
+                            value={playerStartInputBindingsDraft.gamepad.cameraLook}
+                            onChange={(event) =>
+                              handlePlayerStartGamepadCameraLookBindingChange(
+                                event.currentTarget
+                                  .value as PlayerStartGamepadCameraLookBinding
+                              )
+                            }
+                          >
+                            {PLAYER_START_GAMEPAD_CAMERA_LOOK_BINDINGS.map(
+                              (binding) => (
+                                <option key={binding} value={binding}>
+                                  {formatPlayerStartGamepadCameraLookBindingLabel(
+                                    binding
+                                  )}
+                                </option>
+                              )
+                            )}
+                          </select>
+                        </label>
+
                         <div className="material-summary">
-                          These bindings feed the same typed movement actions in
-                          First Person and Third Person.
+                          These bindings feed the same typed movement and camera
+                          actions in First Person and Third Person. Mouse look
+                          stays available as before.
                         </div>
                       </div>
                     </>
