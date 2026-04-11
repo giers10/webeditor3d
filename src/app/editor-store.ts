@@ -16,7 +16,12 @@ import {
   type TransformSessionState
 } from "../core/transform-session";
 import {
+  applySceneDocumentToProject,
+  createEmptyProjectDocument,
   createEmptySceneDocument,
+  createProjectDocumentFromSceneDocument,
+  createSceneDocumentFromProject,
+  type ProjectDocument,
   type SceneDocument
 } from "../document/scene-document";
 import {
@@ -28,8 +33,8 @@ import {
   saveSceneDocumentDraft
 } from "../serialization/local-draft-storage";
 import {
-  parseSceneDocumentJson,
-  serializeSceneDocument
+  parseProjectDocumentJson,
+  serializeProjectDocument
 } from "../serialization/scene-document-json";
 import type { ViewportViewMode } from "../viewport-three/viewport-view-modes";
 import {
@@ -55,6 +60,8 @@ import {
 } from "../viewport-three/viewport-layout";
 
 export interface EditorStoreState {
+  projectDocument: ProjectDocument;
+  activeSceneId: string;
   document: SceneDocument;
   selection: EditorSelection;
   whiteboxSelectionMode: WhiteboxSelectionMode;
@@ -72,6 +79,7 @@ export interface EditorStoreState {
 
 interface EditorStoreOptions {
   initialDocument?: SceneDocument;
+  initialProjectDocument?: ProjectDocument;
   initialViewportLayoutState?: ViewportLayoutState;
   storage?: KeyValueStorage | null;
   storageKey?: string;
@@ -83,7 +91,9 @@ export type EditorDraftSaveResult = SaveSceneDocumentDraftResult;
 export type EditorDraftLoadResult = LoadSceneDocumentDraftResult;
 
 export class EditorStore {
+  private projectDocument: ProjectDocument;
   private document: SceneDocument;
+  private commandTargetSceneId: string | null = null;
   private selection: EditorSelection = { kind: "none" };
   private whiteboxSelectionMode: WhiteboxSelectionMode = "object";
   private toolMode: ToolMode = "select";
@@ -101,9 +111,23 @@ export class EditorStore {
   private snapshot: EditorStoreState;
 
   private readonly commandContext: CommandContext = {
-    getDocument: () => this.document,
+    getDocument: () =>
+      createSceneDocumentFromProject(
+        this.projectDocument,
+        this.resolveCommandSceneId()
+      ),
     setDocument: (document) => {
-      this.document = document;
+      this.projectDocument = applySceneDocumentToProject(
+        this.projectDocument,
+        this.resolveCommandSceneId(),
+        document
+      );
+      this.syncActiveSceneDocument();
+    },
+    getProjectDocument: () => this.projectDocument,
+    setProjectDocument: (document) => {
+      this.projectDocument = document;
+      this.syncActiveSceneDocument();
     },
     getSelection: () => this.selection,
     setSelection: (selection) => {
@@ -120,7 +144,12 @@ export class EditorStore {
       options.initialViewportLayoutState ?? createDefaultViewportLayoutState()
     );
 
-    this.document = options.initialDocument ?? createEmptySceneDocument();
+    this.projectDocument =
+      options.initialProjectDocument ??
+      (options.initialDocument !== undefined
+        ? createProjectDocumentFromSceneDocument(options.initialDocument)
+        : createEmptyProjectDocument());
+    this.document = createSceneDocumentFromProject(this.projectDocument);
     this.viewportLayoutMode = initialViewportLayoutState.layoutMode;
     this.activeViewportPanelId = initialViewportLayoutState.activePanelId;
     this.viewportPanels = initialViewportLayoutState.panels;
@@ -440,7 +469,7 @@ export class EditorStore {
       };
     }
 
-    this.history.execute(command, this.commandContext);
+    this.history.execute(this.createScopedCommand(command), this.commandContext);
     this.lastCommandLabel = command.label;
     this.emit();
   }
@@ -497,8 +526,15 @@ export class EditorStore {
     return true;
   }
 
-  replaceDocument(document: SceneDocument, resetHistory = true) {
-    this.document = document;
+  replaceDocument(
+    document: SceneDocument | ProjectDocument,
+    resetHistory = true
+  ) {
+    this.projectDocument = isProjectDocument(document)
+      ? document
+      : createProjectDocumentFromSceneDocument(document);
+    this.syncActiveSceneDocument();
+    this.commandTargetSceneId = null;
     this.selection = { kind: "none" };
     this.whiteboxSelectionMode = "object";
     this.toolMode = "select";
@@ -523,7 +559,7 @@ export class EditorStore {
 
     return saveSceneDocumentDraft(
       this.storage,
-      this.document,
+      this.projectDocument,
       this.createViewportLayoutState(),
       this.storageKey
     );
@@ -554,11 +590,11 @@ export class EditorStore {
   }
 
   exportDocumentJson(): string {
-    return serializeSceneDocument(this.document);
+    return serializeProjectDocument(this.projectDocument);
   }
 
-  importDocumentJson(source: string): SceneDocument {
-    const document = parseSceneDocumentJson(source);
+  importDocumentJson(source: string): ProjectDocument {
+    const document = parseProjectDocumentJson(source);
     this.replaceDocument(document);
     return document;
   }
@@ -592,6 +628,8 @@ export class EditorStore {
 
   private createSnapshot(): EditorStoreState {
     return {
+      projectDocument: this.projectDocument,
+      activeSceneId: this.projectDocument.activeSceneId,
       document: this.document,
       selection: this.selection,
       whiteboxSelectionMode: this.whiteboxSelectionMode,
@@ -607,8 +645,45 @@ export class EditorStore {
       storageAvailable: this.storage !== null
     };
   }
+
+  private syncActiveSceneDocument() {
+    this.document = createSceneDocumentFromProject(this.projectDocument);
+  }
+
+  private resolveCommandSceneId(): string {
+    return this.commandTargetSceneId ?? this.projectDocument.activeSceneId;
+  }
+
+  private withCommandSceneScope<T>(sceneId: string, run: () => T): T {
+    const previousSceneId = this.commandTargetSceneId;
+    this.commandTargetSceneId = sceneId;
+
+    try {
+      return run();
+    } finally {
+      this.commandTargetSceneId = previousSceneId;
+    }
+  }
+
+  private createScopedCommand(command: EditorCommand): EditorCommand {
+    const sceneId = this.projectDocument.activeSceneId;
+
+    return {
+      ...command,
+      execute: (context) =>
+        this.withCommandSceneScope(sceneId, () => command.execute(context)),
+      undo: (context) =>
+        this.withCommandSceneScope(sceneId, () => command.undo(context))
+    };
+  }
 }
 
 export function createEditorStore(options?: EditorStoreOptions): EditorStore {
   return new EditorStore(options);
+}
+
+function isProjectDocument(
+  document: SceneDocument | ProjectDocument
+): document is ProjectDocument {
+  return "scenes" in document && "activeSceneId" in document;
 }
