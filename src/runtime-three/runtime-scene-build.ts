@@ -259,6 +259,40 @@ function cloneVec3(vector: Vec3): Vec3 {
   };
 }
 
+function clonePlayerStartMovementCapabilities(
+  capabilities: PlayerStartMovementCapabilities
+): PlayerStartMovementCapabilities {
+  return {
+    jump: capabilities.jump,
+    sprint: capabilities.sprint,
+    crouch: capabilities.crouch
+  };
+}
+
+function cloneRuntimePlayerMovement(
+  movement: RuntimePlayerMovement
+): RuntimePlayerMovement {
+  return {
+    templateKind: movement.templateKind,
+    moveSpeed: movement.moveSpeed,
+    capabilities: clonePlayerStartMovementCapabilities(movement.capabilities)
+  };
+}
+
+function buildRuntimePlayerMovement(
+  template: PlayerStartMovementTemplate | undefined
+): RuntimePlayerMovement {
+  const resolvedTemplate = createPlayerStartMovementTemplate(template);
+
+  return {
+    templateKind: resolvedTemplate.kind,
+    moveSpeed: resolvedTemplate.moveSpeed,
+    capabilities: clonePlayerStartMovementCapabilities(
+      resolvedTemplate.capabilities
+    )
+  };
+}
+
 function resolveRuntimeMaterial(document: SceneDocument, materialId: string | null): MaterialDef | null {
   if (materialId === null) {
     return null;
