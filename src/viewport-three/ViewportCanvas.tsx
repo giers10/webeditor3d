@@ -8,7 +8,12 @@ import { getWhiteboxSelectionFeedbackLabel } from "../core/whitebox-selection-fe
 import type { ToolMode } from "../core/tool-mode";
 import { getWhiteboxSelectionModeLabel, type WhiteboxSelectionMode } from "../core/whitebox-selection-mode";
 import type { Vec3 } from "../core/vector";
-import type { ActiveTransformSession, TransformSessionState } from "../core/transform-session";
+import {
+  getTransformAxisLabel,
+  getTransformAxisSpaceLabel,
+  type ActiveTransformSession,
+  type TransformSessionState
+} from "../core/transform-session";
 import type { SceneDocument } from "../document/scene-document";
 import type { WorldSettings } from "../document/world-settings";
 import { createWorldBackgroundStyle } from "../shared-ui/world-background-style";
@@ -282,7 +287,13 @@ export function ViewportCanvas({
             <div className="viewport-canvas__overlay-preview" data-testid={`viewport-transform-preview-${panelId}`}>
               {transformSession.kind !== "active"
                 ? null
-                : `${transformSession.operation}${transformSession.axisConstraint === null ? "" : ` · ${transformSession.axisConstraint.toUpperCase()}`}`}
+                : `${transformSession.operation}${
+                    transformSession.axisConstraint === null
+                      ? ""
+                      : ` · ${getTransformAxisSpaceLabel(transformSession.axisConstraintSpace)} ${getTransformAxisLabel(
+                          transformSession.axisConstraint
+                        )}`
+                  }`}
             </div>
           )}
           {selectedWhiteboxLabel === null ? null : (
