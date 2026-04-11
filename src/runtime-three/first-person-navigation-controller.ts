@@ -3,6 +3,7 @@ import { Euler } from "three";
 import type { Vec3 } from "../core/vector";
 
 import {
+  createPlayerControllerTelemetry,
   FIRST_PERSON_PLAYER_SHAPE,
   cloneFirstPersonPlayerShape,
   getFirstPersonPlayerEyeHeight
@@ -15,6 +16,8 @@ import {
   createIdleRuntimeLocomotionState,
   stepPlayerLocomotion
 } from "./player-locomotion";
+import { createEmptyRuntimeMovementTransitionSignals } from "./player-controller-telemetry";
+import type { PlayerControllerTelemetry } from "./navigation-controller";
 import type {
   NavigationControllerDeactivateOptions,
   NavigationController,
@@ -105,6 +108,9 @@ export class FirstPersonNavigationController implements NavigationController {
   private pointerLocked = false;
   private suppressNextPointerLockError = false;
   private initializedFromSpawn = false;
+  private previousTelemetry: PlayerControllerTelemetry | null = null;
+  private latestJumpStarted = false;
+  private latestHeadBump = false;
 
   activate(ctx: RuntimeControllerContext): void {
     this.context = ctx;
