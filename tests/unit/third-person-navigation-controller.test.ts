@@ -31,22 +31,24 @@ function createMockGamepad(options: {
   } as unknown as Gamepad;
 }
 
-function createRuntimeControllerContext() {
+function createRuntimeControllerContext(
+  playerStart = createPlayerStartEntity({
+    id: "entity-player-start-main",
+    inputBindings: {
+      keyboard: {
+        moveForward: "ArrowUp",
+        moveBackward: "ArrowDown",
+        moveLeft: "ArrowLeft",
+        moveRight: "ArrowRight"
+      }
+    }
+  })
+) {
   const runtimeScene = buildRuntimeSceneFromDocument(
     {
       ...createEmptySceneDocument({ name: "Third Person Binding Scene" }),
       entities: {
-        "entity-player-start-main": createPlayerStartEntity({
-          id: "entity-player-start-main",
-          inputBindings: {
-            keyboard: {
-              moveForward: "ArrowUp",
-              moveBackward: "ArrowDown",
-              moveLeft: "ArrowLeft",
-              moveRight: "ArrowRight"
-            }
-          }
-        })
+        [playerStart.id]: playerStart
       }
     },
     {
@@ -147,6 +149,45 @@ describe("ThirdPersonNavigationController", () => {
         context.camera.position.z !== initialCameraZ
     ).toBe(true);
 
+    controller.deactivate(context);
+  });
+
+  it("uses the authored movement template speed for third-person motion telemetry", () => {
+    const playerStart = createPlayerStartEntity({
+      id: "entity-player-start-custom-third-person-movement",
+      inputBindings: {
+        keyboard: {
+          moveForward: "ArrowUp",
+          moveBackward: "ArrowDown",
+          moveLeft: "ArrowLeft",
+          moveRight: "ArrowRight"
+        }
+      },
+      movementTemplate: {
+        moveSpeed: 2.25
+      }
+    });
+    const { context } = createRuntimeControllerContext(playerStart);
+    const controller = new ThirdPersonNavigationController();
+
+    controller.activate(context);
+    window.dispatchEvent(new KeyboardEvent("keydown", { code: "ArrowUp" }));
+    controller.update(1);
+
+    const telemetry = context.setFirstPersonTelemetry.mock.calls.at(-1)?.[0];
+
+    expect(telemetry?.feetPosition.z).toBeCloseTo(2.25);
+    expect(telemetry?.movement).toMatchObject({
+      templateKind: "default",
+      moveSpeed: 2.25,
+      capabilities: {
+        jump: true,
+        sprint: true,
+        crouch: true
+      }
+    });
+
+    window.dispatchEvent(new KeyboardEvent("keyup", { code: "ArrowUp" }));
     controller.deactivate(context);
   });
 });
