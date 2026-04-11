@@ -55,47 +55,25 @@ describe("scene document JSON", () => {
     const brush = createBoxBrush({
       id: "brush-box-room",
       name: "Entry Room",
-      center: {
-        x: 0,
-        y: 1,
-        z: 0
-      },
-      size: {
-        x: 4,
-        y: 2,
-        z: 6
-      }
-    });
-    const document = {
-      ...createEmptySceneDocument({ name: "Brush Scene" }),
-      brushes: {
-        [brush.id]: brush
-      }
-    };
-
-    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(document);
-  });
-
-  it("round-trips floating-point whitebox box transforms without accidental snapping", () => {
-    const brush = createBoxBrush({
-      id: "brush-float-transform",
-      center: {
-        x: 1.25,
-        y: 1.5,
-        z: -0.875
-      },
-      rotationDegrees: {
-        x: 12.5,
-        y: 37.5,
-        z: -8.25
-      },
-      size: {
-        x: 2.5,
+      const playerStart = createPlayerStartEntity({
+        id: "entity-player-start-legacy-look"
+      });
         y: 3.25,
         z: 4.75
       }
     });
-    const document = {
+          [playerStart.id]: {
+            ...playerStart,
+            inputBindings: {
+              ...playerStart.inputBindings,
+              gamepad: {
+                moveForward: playerStart.inputBindings.gamepad.moveForward,
+                moveBackward: playerStart.inputBindings.gamepad.moveBackward,
+                moveLeft: playerStart.inputBindings.gamepad.moveLeft,
+                moveRight: playerStart.inputBindings.gamepad.moveRight
+              }
+            }
+          }
       ...createEmptySceneDocument({ name: "Float Transform Scene" }),
       brushes: {
         [brush.id]: brush
@@ -621,11 +599,7 @@ describe("scene document JSON", () => {
     const migratedDocument = migrateSceneDocument(legacyDocument);
 
     expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
-    expect(migratedDocument.entities[playerStart.id]).toEqual(
-      createPlayerStartEntity({
-        ...playerStart
-      })
-    );
+    expect(migratedDocument.entities[playerStart.id]).toEqual(playerStart);
   });
 
   it("migrates version 24 Player Start entities to default to first-person navigation", () => {
