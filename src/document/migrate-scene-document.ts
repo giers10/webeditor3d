@@ -1286,6 +1286,13 @@ function readPlayerStartMovementTemplate(value: unknown, label: string) {
       value.maxSpeed === undefined
         ? preset.maxSpeed
         : expectNonNegativeFiniteNumber(value.maxSpeed, `${label}.maxSpeed`),
+    maxStepHeight:
+      value.maxStepHeight === undefined
+        ? preset.maxStepHeight
+        : expectNonNegativeFiniteNumber(
+            value.maxStepHeight,
+            `${label}.maxStepHeight`
+          ),
     capabilities: {
       jump: readOptionalBoolean(
         capabilities?.jump,
