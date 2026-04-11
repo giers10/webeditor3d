@@ -6764,25 +6764,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
           <div className="toolbar__actions">
             <div className="toolbar__group">
               <button
-                className={`toolbar__button ${activeNavigationMode === "firstPerson" ? "toolbar__button--active" : ""}`}
-                type="button"
-                data-testid="runner-mode-first-person"
-                onClick={() => handleSetPreferredNavigationMode("firstPerson")}
-              >
-                First Person
-              </button>
-              <button
-                className={`toolbar__button ${activeNavigationMode === "orbitVisitor" ? "toolbar__button--active" : ""}`}
-                type="button"
-                data-testid="runner-mode-orbit-visitor"
-                onClick={() => handleSetPreferredNavigationMode("orbitVisitor")}
-              >
-                Orbit Visitor
-              </button>
-            </div>
-
-            <div className="toolbar__group">
-              <button
                 className="toolbar__button toolbar__button--accent"
                 type="button"
                 data-testid="exit-run-mode"
@@ -6828,7 +6809,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   <div className="value">
                     {activeNavigationMode === "firstPerson"
                       ? "First Person"
-                      : "Orbit Visitor"}
+                      : "Third Person"}
                   </div>
                 </div>
                 <div className="stat-card">
