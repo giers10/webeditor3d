@@ -32,6 +32,7 @@ describe("entity registry defaults", () => {
       kind: "playerStart",
       position: { x: 0, y: 0, z: 0 },
       yawDegrees: 0,
+      navigationMode: "firstPerson",
       collider: {
         mode: "capsule",
         eyeHeight: DEFAULT_PLAYER_START_EYE_HEIGHT,
