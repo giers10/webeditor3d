@@ -25,6 +25,8 @@ import {
   normalizeEntityName,
   createPointLightEntity,
   createPlayerStartEntity,
+  createSceneEntryEntity,
+  createSceneExitEntity,
   createSoundEmitterEntity,
   createSpotLightEntity,
   createTeleportTargetEntity,
@@ -75,6 +77,7 @@ import {
   MODEL_ASSET_PIPELINE_SCENE_DOCUMENT_VERSION,
   PLAYER_START_COLLIDER_SETTINGS_SCENE_DOCUMENT_VERSION,
   RUNNER_V1_SCENE_DOCUMENT_VERSION,
+  SCENE_TRANSITION_ENTITIES_SCENE_DOCUMENT_VERSION,
   SPATIAL_AUDIO_SCENE_DOCUMENT_VERSION,
   SCENE_DOCUMENT_VERSION,
   TRIGGER_ACTION_TARGET_FOUNDATION_SCENE_DOCUMENT_VERSION,
@@ -1655,6 +1658,53 @@ function readInteractableEntity(value: unknown, label: string): EntityInstance {
   return entity;
 }
 
+function readSceneEntryEntity(value: unknown, label: string): EntityInstance {
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  const kind = expectLiteralString(value.kind, "sceneEntry", `${label}.kind`);
+  const entity = createSceneEntryEntity({
+    id: expectString(value.id, `${label}.id`),
+    name: readOptionalEntityName(value.name, `${label}.name`),
+    position: readVec3(value.position, `${label}.position`),
+    yawDegrees: expectFiniteNumber(value.yawDegrees, `${label}.yawDegrees`)
+  });
+
+  if (entity.kind !== kind) {
+    throw new Error(`${label}.kind must be sceneEntry.`);
+  }
+
+  return entity;
+}
+
+function readSceneExitEntity(value: unknown, label: string): EntityInstance {
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  const kind = expectLiteralString(value.kind, "sceneExit", `${label}.kind`);
+  const entity = createSceneExitEntity({
+    id: expectString(value.id, `${label}.id`),
+    name: readOptionalEntityName(value.name, `${label}.name`),
+    position: readVec3(value.position, `${label}.position`),
+    radius: expectPositiveFiniteNumber(value.radius, `${label}.radius`),
+    prompt: expectString(value.prompt, `${label}.prompt`),
+    enabled: expectBoolean(value.enabled, `${label}.enabled`),
+    targetSceneId: expectString(value.targetSceneId, `${label}.targetSceneId`),
+    targetEntryEntityId: expectString(
+      value.targetEntryEntityId,
+      `${label}.targetEntryEntityId`
+    )
+  });
+
+  if (entity.kind !== kind) {
+    throw new Error(`${label}.kind must be sceneExit.`);
+  }
+
+  return entity;
+}
+
 function readEntityInstance(
   value: unknown,
   label: string,
@@ -1671,6 +1721,8 @@ function readEntityInstance(
       return readSpotLightEntity(value, label);
     case "playerStart":
       return readPlayerStartEntity(value, label);
+    case "sceneEntry":
+      return readSceneEntryEntity(value, label);
     case "soundEmitter":
       return options.legacySoundEmitter
         ? readLegacySoundEmitterEntity(value, label)
@@ -1681,6 +1733,8 @@ function readEntityInstance(
       return readTeleportTargetEntity(value, label);
     case "interactable":
       return readInteractableEntity(value, label);
+    case "sceneExit":
+      return readSceneExitEntity(value, label);
     default:
       throw new Error(`${label}.kind must be a supported entity type.`);
   }
