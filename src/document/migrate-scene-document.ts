@@ -1282,6 +1282,10 @@ function readPlayerStartMovementTemplate(value: unknown, label: string) {
       value.moveSpeed === undefined
         ? undefined
         : expectPositiveFiniteNumber(value.moveSpeed, `${label}.moveSpeed`),
+    maxSpeed:
+      value.maxSpeed === undefined
+        ? preset.maxSpeed
+        : expectNonNegativeFiniteNumber(value.maxSpeed, `${label}.maxSpeed`),
     capabilities: {
       jump: readOptionalBoolean(
         capabilities?.jump,
@@ -1329,6 +1333,18 @@ function readPlayerStartMovementTemplate(value: unknown, label: string) {
           : expectPositiveFiniteNumber(
               jump.maxHoldMs,
               `${label}.jump.maxHoldMs`
+            ),
+      bunnyHop: readOptionalBoolean(
+        jump?.bunnyHop,
+        `${label}.jump.bunnyHop`,
+        preset.jump.bunnyHop
+      ),
+      bunnyHopBoost:
+        jump?.bunnyHopBoost === undefined
+          ? preset.jump.bunnyHopBoost
+          : expectNonNegativeFiniteNumber(
+              jump.bunnyHopBoost,
+              `${label}.jump.bunnyHopBoost`
             )
     },
     sprint: {
