@@ -1182,7 +1182,7 @@ function validatePlayerStartEntity(
 
   if (
     !isFiniteNumber(entity.movementTemplate?.moveSpeed) ||
-    entity.movementTemplate.moveSpeed <= 0
+    (entity.movementTemplate?.moveSpeed ?? 0) <= 0
   ) {
     diagnostics.push(
       createDiagnostic(
@@ -1194,7 +1194,7 @@ function validatePlayerStartEntity(
     );
   }
 
-  if (typeof entity.movementTemplate?.capabilities.jump !== "boolean") {
+  if (typeof entity.movementTemplate?.capabilities?.jump !== "boolean") {
     diagnostics.push(
       createDiagnostic(
         "error",
@@ -1205,7 +1205,7 @@ function validatePlayerStartEntity(
     );
   }
 
-  if (typeof entity.movementTemplate?.capabilities.sprint !== "boolean") {
+  if (typeof entity.movementTemplate?.capabilities?.sprint !== "boolean") {
     diagnostics.push(
       createDiagnostic(
         "error",
@@ -1216,7 +1216,7 @@ function validatePlayerStartEntity(
     );
   }
 
-  if (typeof entity.movementTemplate?.capabilities.crouch !== "boolean") {
+  if (typeof entity.movementTemplate?.capabilities?.crouch !== "boolean") {
     diagnostics.push(
       createDiagnostic(
         "error",
