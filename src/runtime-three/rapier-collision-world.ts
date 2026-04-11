@@ -473,66 +473,103 @@ export class RapierCollisionWorld {
       this.characterController.disableAutostep();
     }
 
-    this.characterController.computeColliderMovement(this.playerCollider, motion);
+    const computeResolvedMovement = (allowAutostep: boolean) => {
+      this.playerCollider.setTranslation(currentCenter);
 
-    if (snapToGroundWasEnabled) {
-      this.characterController.enableSnapToGround(
-        this.snapToGroundDistance
-      );
-    }
-
-    if (autostepWasEnabled) {
-      this.characterController.enableAutostep(
-        this.autostepHeight,
-        this.autostepMinWidth,
-        false
-      );
-    }
-
-    const correctedMovement = this.characterController.computedMovement();
-    const collidedAxes = {
-      x: Math.abs(correctedMovement.x - motion.x) > COLLISION_EPSILON,
-      y: Math.abs(correctedMovement.y - motion.y) > COLLISION_EPSILON,
-      z: Math.abs(correctedMovement.z - motion.z) > COLLISION_EPSILON
-    };
-    const nextCenter = {
-      x: currentCenter.x + correctedMovement.x,
-      y: currentCenter.y + correctedMovement.y,
-      z: currentCenter.z + correctedMovement.z
-    };
-    const nextFeetPosition = colliderCenterToFeetPosition(nextCenter, shape);
-    const collisionCount = this.characterController.numComputedCollisions();
-    let groundCollisionNormal: Vec3 | null = null;
-
-    for (let index = 0; index < collisionCount; index += 1) {
-      const collision = this.characterController.computedCollision(index);
-
-      if (
-        collision === null ||
-        collision.normal1.y < GROUND_NORMAL_Y_THRESHOLD ||
-        (groundCollisionNormal !== null &&
-          collision.normal1.y <= groundCollisionNormal.y)
-      ) {
-        continue;
+      if (autostepWasEnabled) {
+        if (allowAutostep) {
+          this.characterController.enableAutostep(
+            this.autostepHeight,
+            this.autostepMinWidth,
+            false
+          );
+        } else {
+          this.characterController.disableAutostep();
+        }
       }
 
-      groundCollisionNormal = toVec3(collision.normal1);
+      this.characterController.computeColliderMovement(this.playerCollider, motion);
+
+      if (snapToGroundWasEnabled) {
+        this.characterController.enableSnapToGround(
+          this.snapToGroundDistance
+        );
+      }
+
+      if (autostepWasEnabled) {
+        this.characterController.enableAutostep(
+          this.autostepHeight,
+          this.autostepMinWidth,
+          false
+        );
+      }
+
+      const correctedMovement = this.characterController.computedMovement();
+      const collidedAxes = {
+        x: Math.abs(correctedMovement.x - motion.x) > COLLISION_EPSILON,
+        y: Math.abs(correctedMovement.y - motion.y) > COLLISION_EPSILON,
+        z: Math.abs(correctedMovement.z - motion.z) > COLLISION_EPSILON
+      };
+      const nextCenter = {
+        x: currentCenter.x + correctedMovement.x,
+        y: currentCenter.y + correctedMovement.y,
+        z: currentCenter.z + correctedMovement.z
+      };
+      const nextFeetPosition = colliderCenterToFeetPosition(nextCenter, shape);
+      const collisionCount = this.characterController.numComputedCollisions();
+      let groundCollisionNormal: Vec3 | null = null;
+
+      for (let index = 0; index < collisionCount; index += 1) {
+        const collision = this.characterController.computedCollision(index);
+
+        if (
+          collision === null ||
+          collision.normal1.y < GROUND_NORMAL_Y_THRESHOLD ||
+          (groundCollisionNormal !== null &&
+            collision.normal1.y <= groundCollisionNormal.y)
+        ) {
+          continue;
+        }
+
+        groundCollisionNormal = toVec3(collision.normal1);
+      }
+
+      return {
+        correctedMovement,
+        collidedAxes,
+        nextCenter,
+        nextFeetPosition,
+        collisionCount,
+        groundCollisionNormal
+      };
+    };
+
+    const allowAutostep = autostepWasEnabled && supportGrounded;
+    let resolved = computeResolvedMovement(allowAutostep);
+
+    if (
+      allowAutostep &&
+      motion.y <= COLLISION_EPSILON &&
+      resolved.correctedMovement.y > COLLISION_EPSILON &&
+      (resolved.collidedAxes.x || resolved.collidedAxes.z)
+    ) {
+      resolved = computeResolvedMovement(false);
     }
 
-    this.playerCollider.setTranslation(nextCenter);
+    this.playerCollider.setTranslation(resolved.nextCenter);
 
     const groundedProbe = this.probePlayerGround(
-      nextFeetPosition,
+      resolved.nextFeetPosition,
       shape,
       this.snapToGroundDistance
     );
 
     return {
-      feetPosition: nextFeetPosition,
+      feetPosition: resolved.nextFeetPosition,
       grounded: groundedProbe.grounded,
-      collisionCount,
-      groundCollisionNormal,
-      collidedAxes
+      collisionCount: resolved.collisionCount,
+      groundCollisionNormal: resolved.groundCollisionNormal,
+      collidedAxes: resolved.collidedAxes
     };
   }
 
