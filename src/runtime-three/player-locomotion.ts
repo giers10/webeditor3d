@@ -76,6 +76,7 @@ export interface StepPlayerLocomotionOptions {
   standingShape: FirstPersonPlayerShape;
   verticalVelocity: number;
   previousLocomotionState?: RuntimeLocomotionState;
+  previousPlanarDisplacement: Vec3;
   jumpBufferRemainingMs: number;
   coyoteTimeRemainingMs: number;
   jumpHoldRemainingMs: number;
@@ -224,6 +225,17 @@ function computePlanarMotion(
     },
     inputMagnitude
   };
+}
+
+function computePlanarSpeedFromDisplacement(
+  displacement: Vec3,
+  dt: number
+): number {
+  if (dt <= 0) {
+    return 0;
+  }
+
+  return Math.hypot(displacement.x, displacement.z) / dt;
 }
 
 function alignPlanarMotionToGround(
@@ -397,12 +409,27 @@ export function stepPlayerLocomotion(
           ? groundedRequestedPlanarSpeed
           : airborneRequestedPlanarSpeed
       : groundedRequestedPlanarSpeed;
-  const planarMotion = computePlanarMotion(
+  const planarMotionFromInput = computePlanarMotion(
     options.movementYawRadians,
     options.input,
     requestedPlanarSpeed,
     options.dt
   );
+  const preserveAirborneMomentum =
+    activeShape.mode !== "none" &&
+    !currentVolumeState.inWater &&
+    (jumpTriggered || !currentlyGrounded) &&
+    planarMotionFromInput.inputMagnitude <= 0;
+  const planarMotion = preserveAirborneMomentum
+    ? {
+        motion: {
+          x: options.previousPlanarDisplacement.x,
+          y: 0,
+          z: options.previousPlanarDisplacement.z
+        },
+        inputMagnitude: 0
+      }
+    : planarMotionFromInput;
 
   const groundedPlanarMotion =
     currentlyGrounded && !jumpTriggered
@@ -527,8 +554,12 @@ export function stepPlayerLocomotion(
       crouched,
       sprinting,
       inputMagnitude: planarMotion.inputMagnitude,
-      requestedPlanarSpeed:
-        requestedPlanarSpeed * planarMotion.inputMagnitude,
+      requestedPlanarSpeed: preserveAirborneMomentum
+        ? computePlanarSpeedFromDisplacement(
+            options.previousPlanarDisplacement,
+            options.dt
+          )
+        : requestedPlanarSpeed * planarMotion.inputMagnitude,
       planarSpeed: actualPlanarSpeed,
       verticalVelocity,
       contact: resolveContactState(resolvedMotion, groundProbe, grounded)
