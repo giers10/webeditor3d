@@ -13,10 +13,10 @@ import type {
   RuntimeControllerContext,
   RuntimeLocomotionState
 } from "./navigation-controller";
+import type { RuntimePlayerMovement } from "./runtime-scene-build";
 
 const LOOK_SENSITIVITY = 0.008;
 const GAMEPAD_LOOK_SPEED = 2.8;
-const MOVE_SPEED = 4.5;
 const GRAVITY = 22;
 const DEFAULT_CAMERA_DISTANCE = 4.5;
 const MIN_CAMERA_DISTANCE = 1.5;
@@ -46,6 +46,20 @@ function toEyePosition(feetPosition: Vec3, eyeHeight: number): Vec3 {
     x: feetPosition.x,
     y: feetPosition.y + eyeHeight,
     z: feetPosition.z
+  };
+}
+
+function cloneRuntimePlayerMovement(
+  movement: RuntimePlayerMovement
+): RuntimePlayerMovement {
+  return {
+    templateKind: movement.templateKind,
+    moveSpeed: movement.moveSpeed,
+    capabilities: {
+      jump: movement.capabilities.jump,
+      sprint: movement.capabilities.sprint,
+      crouch: movement.capabilities.crouch
+    }
   };
 }
 
@@ -161,13 +175,15 @@ export class ThirdPersonNavigationController implements NavigationController {
       return;
     }
 
-    const playerShape = this.context.getRuntimeScene().playerCollider;
+    const runtimeScene = this.context.getRuntimeScene();
+    const playerShape = runtimeScene.playerCollider;
+    const playerMovement = runtimeScene.playerMovement;
     const lookInput = resolvePlayerStartLookInput(
-      this.context.getRuntimeScene().playerInputBindings
+      runtimeScene.playerInputBindings
     );
     const inputState = resolvePlayerStartMovementActions(
       this.pressedKeys,
-      this.context.getRuntimeScene().playerInputBindings
+      runtimeScene.playerInputBindings
     );
 
     if (lookInput.horizontal !== 0 || lookInput.vertical !== 0) {
@@ -191,7 +207,7 @@ export class ThirdPersonNavigationController implements NavigationController {
     if (inputLength > 0) {
       const normalizedInputX = inputX / inputLength;
       const normalizedInputZ = inputZ / inputLength;
-      const moveDistance = MOVE_SPEED * dt;
+      const moveDistance = playerMovement.moveSpeed * dt;
 
       this.forwardVector.set(
         Math.sin(this.cameraYawRadians),
@@ -345,6 +361,9 @@ export class ThirdPersonNavigationController implements NavigationController {
       eyePosition,
       grounded: this.grounded,
       locomotionState: this.locomotionState,
+      movement: cloneRuntimePlayerMovement(
+        this.context.getRuntimeScene().playerMovement
+      ),
       inWaterVolume: this.inWaterVolume,
       cameraSubmerged: cameraVolumeState.inWater,
       inFogVolume: this.inFogVolume,
