@@ -8,6 +8,7 @@ import type { SceneLoadingScreenSettings } from "../document/scene-document";
 import type { FirstPersonTelemetry } from "../runtime-three/navigation-controller";
 import {
   RuntimeHost,
+  type RuntimeSceneExitTransitionRequest,
   type RuntimeSceneLoadState
 } from "../runtime-three/runtime-host";
 import type { RuntimeInteractionPrompt } from "../runtime-three/runtime-interaction-system";
@@ -29,6 +30,7 @@ interface RunnerCanvasProps {
   onRuntimeMessageChange(message: string | null): void;
   onFirstPersonTelemetryChange(telemetry: FirstPersonTelemetry | null): void;
   onInteractionPromptChange(prompt: RuntimeInteractionPrompt | null): void;
+  onSceneExitActivated(request: RuntimeSceneExitTransitionRequest): void;
 }
 
 export function RunnerCanvas({
@@ -42,7 +44,8 @@ export function RunnerCanvas({
   navigationMode,
   onRuntimeMessageChange,
   onFirstPersonTelemetryChange,
-  onInteractionPromptChange
+  onInteractionPromptChange,
+  onSceneExitActivated
 }: RunnerCanvasProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const hostRef = useRef<RuntimeHost | null>(null);
@@ -75,6 +78,7 @@ export function RunnerCanvas({
       runtimeHost.mount(container);
       runtimeHost.setRuntimeMessageHandler(onRuntimeMessageChange);
       runtimeHost.setSceneLoadStateHandler(setSceneLoadState);
+      runtimeHost.setSceneExitHandler(onSceneExitActivated);
       runtimeHost.setFirstPersonTelemetryHandler((telemetry) => {
         setFirstPersonTelemetry(telemetry);
         onFirstPersonTelemetryChange(telemetry);
@@ -112,6 +116,7 @@ export function RunnerCanvas({
   }, [
     onFirstPersonTelemetryChange,
     onInteractionPromptChange,
+    onSceneExitActivated,
     onRuntimeMessageChange
   ]);
 
