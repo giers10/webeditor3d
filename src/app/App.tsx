@@ -4190,7 +4190,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
   };
 
   const handlePlayerStartKeyboardBindingChange = (
-    action: PlayerStartMovementAction,
+    action: PlayerStartInputAction,
     nextCode: PlayerStartKeyboardBindingCode
   ) => {
     const nextBindings = createPlayerStartInputBindings({
@@ -4209,9 +4209,29 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
   };
 
-  const handlePlayerStartGamepadBindingChange = (
+  const handlePlayerStartMovementGamepadBindingChange = (
     action: PlayerStartMovementAction,
     nextBinding: PlayerStartGamepadBinding
+  ) => {
+    const nextBindings = createPlayerStartInputBindings({
+      keyboard: playerStartInputBindingsDraft.keyboard,
+      gamepad: {
+        ...playerStartInputBindingsDraft.gamepad,
+        [action]: nextBinding
+      } as PlayerStartInputBindings["gamepad"]
+    });
+
+    setPlayerStartInputBindingsDraft(nextBindings);
+    scheduleDraftCommit(() =>
+      applyPlayerStartChange({
+        inputBindings: nextBindings
+      })
+    );
+  };
+
+  const handlePlayerStartGamepadActionBindingChange = (
+    action: PlayerStartLocomotionAction,
+    nextBinding: PlayerStartGamepadActionBinding
   ) => {
     const nextBindings = createPlayerStartInputBindings({
       keyboard: playerStartInputBindingsDraft.keyboard,
