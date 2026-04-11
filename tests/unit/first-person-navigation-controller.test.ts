@@ -47,9 +47,12 @@ describe("FirstPersonNavigationController", () => {
   it("can deactivate during a scene transition without releasing pointer lock", () => {
     const { context, domElement } = createRuntimeControllerContext();
     const controller = new FirstPersonNavigationController();
-    const exitPointerLockSpy = vi
-      .spyOn(document, "exitPointerLock")
-      .mockImplementation(() => undefined);
+    const exitPointerLockSpy = vi.fn();
+
+    Object.defineProperty(document, "exitPointerLock", {
+      configurable: true,
+      value: exitPointerLockSpy
+    });
 
     Object.defineProperty(document, "pointerLockElement", {
       configurable: true,
@@ -67,9 +70,12 @@ describe("FirstPersonNavigationController", () => {
   it("still releases pointer lock for a normal deactivation", () => {
     const { context, domElement } = createRuntimeControllerContext();
     const controller = new FirstPersonNavigationController();
-    const exitPointerLockSpy = vi
-      .spyOn(document, "exitPointerLock")
-      .mockImplementation(() => undefined);
+    const exitPointerLockSpy = vi.fn();
+
+    Object.defineProperty(document, "exitPointerLock", {
+      configurable: true,
+      value: exitPointerLockSpy
+    });
 
     Object.defineProperty(document, "pointerLockElement", {
       configurable: true,
