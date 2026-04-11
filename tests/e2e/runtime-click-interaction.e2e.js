@@ -31,6 +31,11 @@ for (const navigationMode of [
         await page.getByTestId("add-menu-player-start").click();
         await setViewportCreationPreview(page, "topLeft", { kind: "entity", entityKind: "playerStart", audioAssetId: null }, { x: 0, y: 0, z: 0 });
         await clickViewport(page, "topLeft");
+        await page
+            .getByTestId("player-start-navigation-mode")
+            .selectOption(navigationMode.buttonLabel === "First Person"
+            ? "firstPerson"
+            : "thirdPerson");
         await page.getByTestId("outliner-add-button").click();
         await page.getByTestId("add-menu-entities").click();
         await page.getByTestId("add-menu-interactable").click();
@@ -57,7 +62,6 @@ for (const navigationMode of [
             .first()
             .click();
         await page.getByTestId("add-interactable-teleport-link").click();
-        await page.getByRole("button", { name: navigationMode.buttonLabel }).first().click();
         await page.getByTestId("enter-run-mode").click();
         await expect(page.getByTestId("runner-shell")).toBeVisible();
         await expect(page.getByTestId("runner-interaction-state")).toContainText("Ready");
