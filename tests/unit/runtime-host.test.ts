@@ -35,6 +35,7 @@ describe("RuntimeHost", () => {
 
   it("delays controller activation until collision setup reports the scene as ready", async () => {
     const runtimeScene = buildRuntimeSceneFromDocument(createEmptySceneDocument());
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
     const collisionWorld = {
       dispose: vi.fn()
     } as unknown as RapierCollisionWorld;
