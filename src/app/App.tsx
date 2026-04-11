@@ -10,6 +10,7 @@ import {
 } from "react";
 
 import { createCreateBoxBrushCommand } from "../commands/create-box-brush-command";
+import { createCreateSceneCommand } from "../commands/create-scene-command";
 import { createDeleteBoxBrushCommand } from "../commands/delete-box-brush-command";
 import { createDeleteEntityCommand } from "../commands/delete-entity-command";
 import { createDuplicateSelectionCommand } from "../commands/duplicate-selection-command";
@@ -26,6 +27,7 @@ import { createSetBoxBrushNameCommand } from "../commands/set-box-brush-name-com
 import { createSetBoxBrushVolumeSettingsCommand } from "../commands/set-box-brush-volume-settings-command";
 import { createSetEntityNameCommand } from "../commands/set-entity-name-command";
 import { createSetBoxBrushFaceUvStateCommand } from "../commands/set-box-brush-face-uv-state-command";
+import { createSetActiveSceneCommand } from "../commands/set-active-scene-command";
 import { createDeleteInteractionLinkCommand } from "../commands/delete-interaction-link-command";
 import { createSetModelInstanceNameCommand } from "../commands/set-model-instance-name-command";
 import { createSetSceneNameCommand } from "../commands/set-scene-name-command";
