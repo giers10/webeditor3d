@@ -45,10 +45,17 @@ export interface RuntimeControllerContext {
   setFirstPersonTelemetry(telemetry: FirstPersonTelemetry | null): void;
 }
 
+export interface NavigationControllerDeactivateOptions {
+  releasePointerLock?: boolean;
+}
+
 export interface NavigationController {
   id: RuntimeNavigationMode;
   activate(ctx: RuntimeControllerContext): void;
-  deactivate(ctx: RuntimeControllerContext): void;
+  deactivate(
+    ctx: RuntimeControllerContext,
+    options?: NavigationControllerDeactivateOptions
+  ): void;
   resetSceneState(): void;
   update(dt: number): void;
 }
