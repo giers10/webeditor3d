@@ -3417,6 +3417,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
     kind: EntityKind,
     options: { audioAssetId?: string | null } = {}
   ) => {
+    if (kind === "sceneExit" && resolveDefaultSceneExitDestination() === null) {
+      setStatusMessage("Author a Scene Entry before placing a Scene Exit.");
+      return;
+    }
+
     beginCreation(
       {
         kind: "create",
