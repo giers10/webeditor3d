@@ -243,6 +243,16 @@ export class RuntimeHost {
         ) ?? null,
       resolvePlayerVolumeState: (feetPosition) =>
         this.resolvePlayerVolumeState(feetPosition),
+      resolveThirdPersonCameraCollision: (
+        pivot,
+        desiredCameraPosition,
+        radius
+      ) =>
+        this.collisionWorld?.resolveThirdPersonCameraCollision(
+          pivot,
+          desiredCameraPosition,
+          radius
+        ) ?? { ...desiredCameraPosition },
       setRuntimeMessage: (message) => {
         if (message === this.currentRuntimeMessage) {
           return;
@@ -355,7 +365,7 @@ export class RuntimeHost {
     });
     this.activeController = null;
     this.firstPersonController.resetSceneState();
-    this.orbitVisitorController.resetSceneState();
+    this.thirdPersonController.resetSceneState();
     this.interactionSystem.reset();
     this.setInteractionPrompt(null);
     this.currentFirstPersonTelemetry = null;
@@ -510,20 +520,10 @@ export class RuntimeHost {
     const nextController =
       this.desiredNavigationMode === "firstPerson"
         ? this.firstPersonController
-        : this.orbitVisitorController;
+        : this.thirdPersonController;
 
     if (this.activeController?.id === nextController.id) {
       return;
-    }
-
-    if (
-      this.activeController === this.firstPersonController &&
-      this.currentFirstPersonTelemetry !== null &&
-      nextController === this.orbitVisitorController
-    ) {
-      this.orbitVisitorController.setFocusPoint(
-        this.currentFirstPersonTelemetry.feetPosition
-      );
     }
 
     this.activeController?.deactivate(this.controllerContext);
