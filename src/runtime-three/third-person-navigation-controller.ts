@@ -3,6 +3,7 @@ import { Vector3 } from "three";
 import type { Vec3 } from "../core/vector";
 
 import {
+  createPlayerControllerTelemetry,
   FIRST_PERSON_PLAYER_SHAPE,
   cloneFirstPersonPlayerShape,
   getFirstPersonPlayerEyeHeight
@@ -15,6 +16,8 @@ import {
   createIdleRuntimeLocomotionState,
   stepPlayerLocomotion
 } from "./player-locomotion";
+import { createEmptyRuntimeMovementTransitionSignals } from "./player-controller-telemetry";
+import type { PlayerControllerTelemetry } from "./navigation-controller";
 import type {
   NavigationController,
   NavigationControllerDeactivateOptions,
@@ -102,6 +105,9 @@ export class ThirdPersonNavigationController implements NavigationController {
   private lastPointerClientX = 0;
   private lastPointerClientY = 0;
   private initializedFromSpawn = false;
+  private previousTelemetry: PlayerControllerTelemetry | null = null;
+  private latestJumpStarted = false;
+  private latestHeadBump = false;
 
   activate(ctx: RuntimeControllerContext): void {
     this.context = ctx;
