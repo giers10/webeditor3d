@@ -78,11 +78,23 @@ function isFiniteNumber(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value);
 }
 
-function isFiniteVec3(vector: { x: unknown; y: unknown; z: unknown }): vector is { x: number; y: number; z: number } {
-  return isFiniteNumber(vector.x) && isFiniteNumber(vector.y) && isFiniteNumber(vector.z);
+function isFiniteVec3(vector: {
+  x: unknown;
+  y: unknown;
+  z: unknown;
+}): vector is { x: number; y: number; z: number } {
+  return (
+    isFiniteNumber(vector.x) &&
+    isFiniteNumber(vector.y) &&
+    isFiniteNumber(vector.z)
+  );
 }
 
-function hasPositiveFiniteVec3(vector: { x: unknown; y: unknown; z: unknown }): vector is { x: number; y: number; z: number } {
+function hasPositiveFiniteVec3(vector: {
+  x: unknown;
+  y: unknown;
+  z: unknown;
+}): vector is { x: number; y: number; z: number } {
   return isFiniteVec3(vector) && vector.x > 0 && vector.y > 0 && vector.z > 0;
 }
 
@@ -98,7 +110,10 @@ function isPositiveInteger(value: unknown): value is number {
   return isFiniteNumber(value) && Number.isInteger(value) && value > 0;
 }
 
-function isPositiveIntegerInRange(value: unknown, max: number): value is number {
+function isPositiveIntegerInRange(
+  value: unknown,
+  max: number
+): value is number {
   return isPositiveInteger(value) && value <= max;
 }
 
@@ -106,11 +121,19 @@ function isBoolean(value: unknown): value is boolean {
   return typeof value === "boolean";
 }
 
-function hasNonZeroVectorLength(vector: { x: number; y: number; z: number }): boolean {
+function hasNonZeroVectorLength(vector: {
+  x: number;
+  y: number;
+  z: number;
+}): boolean {
   return vector.x !== 0 || vector.y !== 0 || vector.z !== 0;
 }
 
-function validateWorldSettings(world: WorldSettings, document: SceneDocument, diagnostics: SceneDiagnostic[]) {
+function validateWorldSettings(
+  world: WorldSettings,
+  document: SceneDocument,
+  diagnostics: SceneDiagnostic[]
+) {
   if (world.background.mode === "solid") {
     if (!isHexColorString(world.background.colorHex)) {
       diagnostics.push(
@@ -145,7 +168,10 @@ function validateWorldSettings(world: WorldSettings, document: SceneDocument, di
       );
     }
   } else {
-    if (typeof world.background.assetId !== "string" || world.background.assetId.trim().length === 0) {
+    if (
+      typeof world.background.assetId !== "string" ||
+      world.background.assetId.trim().length === 0
+    ) {
       diagnostics.push(
         createDiagnostic(
           "error",
@@ -214,7 +240,12 @@ function validateWorldSettings(world: WorldSettings, document: SceneDocument, di
 
   if (!isHexColorString(world.sunLight.colorHex)) {
     diagnostics.push(
-      createDiagnostic("error", "invalid-world-sun-color", "World sun color must use a #RRGGBB color.", "world.sunLight.colorHex")
+      createDiagnostic(
+        "error",
+        "invalid-world-sun-color",
+        "World sun color must use a #RRGGBB color.",
+        "world.sunLight.colorHex"
+      )
     );
   }
 
@@ -229,7 +260,10 @@ function validateWorldSettings(world: WorldSettings, document: SceneDocument, di
     );
   }
 
-  if (!isFiniteVec3(world.sunLight.direction) || !hasNonZeroVectorLength(world.sunLight.direction)) {
+  if (
+    !isFiniteVec3(world.sunLight.direction) ||
+    !hasNonZeroVectorLength(world.sunLight.direction)
+  ) {
     diagnostics.push(
       createDiagnostic(
         "error",
@@ -308,7 +342,9 @@ function validateWorldSettings(world: WorldSettings, document: SceneDocument, di
     );
   }
 
-  if (!isNonNegativeFiniteNumber(advancedRendering.ambientOcclusion.intensity)) {
+  if (
+    !isNonNegativeFiniteNumber(advancedRendering.ambientOcclusion.intensity)
+  ) {
     diagnostics.push(
       createDiagnostic(
         "error",
@@ -418,7 +454,9 @@ function validateWorldSettings(world: WorldSettings, document: SceneDocument, di
     );
   }
 
-  if (!isNonNegativeFiniteNumber(advancedRendering.depthOfField.focusDistance)) {
+  if (
+    !isNonNegativeFiniteNumber(advancedRendering.depthOfField.focusDistance)
+  ) {
     diagnostics.push(
       createDiagnostic(
         "error",
@@ -473,7 +511,11 @@ function validateWorldSettings(world: WorldSettings, document: SceneDocument, di
     );
   }
 
-  if (!isAdvancedRenderingWaterReflectionMode(advancedRendering.waterReflectionMode)) {
+  if (
+    !isAdvancedRenderingWaterReflectionMode(
+      advancedRendering.waterReflectionMode
+    )
+  ) {
     diagnostics.push(
       createDiagnostic(
         "error",
@@ -485,47 +527,132 @@ function validateWorldSettings(world: WorldSettings, document: SceneDocument, di
   }
 }
 
-function validatePointLightEntity(entity: PointLightEntity, path: string, diagnostics: SceneDiagnostic[]) {
+function validatePointLightEntity(
+  entity: PointLightEntity,
+  path: string,
+  diagnostics: SceneDiagnostic[]
+) {
   if (!isFiniteVec3(entity.position)) {
-    diagnostics.push(createDiagnostic("error", "invalid-point-light-position", "Point Light position must remain finite on every axis.", `${path}.position`));
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-point-light-position",
+        "Point Light position must remain finite on every axis.",
+        `${path}.position`
+      )
+    );
   }
 
   if (!isHexColorString(entity.colorHex)) {
-    diagnostics.push(createDiagnostic("error", "invalid-point-light-color", "Point Light color must use a #RRGGBB color.", `${path}.colorHex`));
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-point-light-color",
+        "Point Light color must use a #RRGGBB color.",
+        `${path}.colorHex`
+      )
+    );
   }
 
   if (!isNonNegativeFiniteNumber(entity.intensity)) {
-    diagnostics.push(createDiagnostic("error", "invalid-point-light-intensity", "Point Light intensity must remain finite and zero or greater.", `${path}.intensity`));
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-point-light-intensity",
+        "Point Light intensity must remain finite and zero or greater.",
+        `${path}.intensity`
+      )
+    );
   }
 
   if (!isPositiveFiniteNumber(entity.distance)) {
-    diagnostics.push(createDiagnostic("error", "invalid-point-light-distance", "Point Light distance must remain finite and greater than zero.", `${path}.distance`));
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-point-light-distance",
+        "Point Light distance must remain finite and greater than zero.",
+        `${path}.distance`
+      )
+    );
   }
 }
 
-function validateSpotLightEntity(entity: SpotLightEntity, path: string, diagnostics: SceneDiagnostic[]) {
+function validateSpotLightEntity(
+  entity: SpotLightEntity,
+  path: string,
+  diagnostics: SceneDiagnostic[]
+) {
   if (!isFiniteVec3(entity.position)) {
-    diagnostics.push(createDiagnostic("error", "invalid-spot-light-position", "Spot Light position must remain finite on every axis.", `${path}.position`));
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-spot-light-position",
+        "Spot Light position must remain finite on every axis.",
+        `${path}.position`
+      )
+    );
   }
 
-  if (!isFiniteVec3(entity.direction) || !hasNonZeroVectorLength(entity.direction)) {
-    diagnostics.push(createDiagnostic("error", "invalid-spot-light-direction", "Spot Light direction must remain finite and must not be the zero vector.", `${path}.direction`));
+  if (
+    !isFiniteVec3(entity.direction) ||
+    !hasNonZeroVectorLength(entity.direction)
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-spot-light-direction",
+        "Spot Light direction must remain finite and must not be the zero vector.",
+        `${path}.direction`
+      )
+    );
   }
 
   if (!isHexColorString(entity.colorHex)) {
-    diagnostics.push(createDiagnostic("error", "invalid-spot-light-color", "Spot Light color must use a #RRGGBB color.", `${path}.colorHex`));
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-spot-light-color",
+        "Spot Light color must use a #RRGGBB color.",
+        `${path}.colorHex`
+      )
+    );
   }
 
   if (!isNonNegativeFiniteNumber(entity.intensity)) {
-    diagnostics.push(createDiagnostic("error", "invalid-spot-light-intensity", "Spot Light intensity must remain finite and zero or greater.", `${path}.intensity`));
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-spot-light-intensity",
+        "Spot Light intensity must remain finite and zero or greater.",
+        `${path}.intensity`
+      )
+    );
   }
 
   if (!isPositiveFiniteNumber(entity.distance)) {
-    diagnostics.push(createDiagnostic("error", "invalid-spot-light-distance", "Spot Light distance must remain finite and greater than zero.", `${path}.distance`));
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-spot-light-distance",
+        "Spot Light distance must remain finite and greater than zero.",
+        `${path}.distance`
+      )
+    );
   }
 
-  if (!isFiniteNumber(entity.angleDegrees) || entity.angleDegrees <= 0 || entity.angleDegrees >= 180) {
-    diagnostics.push(createDiagnostic("error", "invalid-spot-light-angle", "Spot Light angle must remain a finite degree value between 0 and 180.", `${path}.angleDegrees`));
+  if (
+    !isFiniteNumber(entity.angleDegrees) ||
+    entity.angleDegrees <= 0 ||
+    entity.angleDegrees >= 180
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-spot-light-angle",
+        "Spot Light angle must remain a finite degree value between 0 and 180.",
+        `${path}.angleDegrees`
+      )
+    );
   }
 }
 
@@ -539,14 +666,33 @@ function validateProjectAssetBoundingBox(
   }
 
   if (!isFiniteVec3(boundingBox.min)) {
-    diagnostics.push(createDiagnostic("error", "invalid-asset-bounding-box-min", "Model asset bounding boxes must have finite minimum coordinates.", `${path}.min`));
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-asset-bounding-box-min",
+        "Model asset bounding boxes must have finite minimum coordinates.",
+        `${path}.min`
+      )
+    );
   }
 
   if (!isFiniteVec3(boundingBox.max)) {
-    diagnostics.push(createDiagnostic("error", "invalid-asset-bounding-box-max", "Model asset bounding boxes must have finite maximum coordinates.", `${path}.max`));
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-asset-bounding-box-max",
+        "Model asset bounding boxes must have finite maximum coordinates.",
+        `${path}.max`
+      )
+    );
   }
 
-  if (!isFiniteVec3(boundingBox.size) || boundingBox.size.x < 0 || boundingBox.size.y < 0 || boundingBox.size.z < 0) {
+  if (
+    !isFiniteVec3(boundingBox.size) ||
+    boundingBox.size.x < 0 ||
+    boundingBox.size.y < 0 ||
+    boundingBox.size.z < 0
+  ) {
     diagnostics.push(
       createDiagnostic(
         "error",
@@ -558,62 +704,180 @@ function validateProjectAssetBoundingBox(
   }
 }
 
-function validateModelAssetMetadata(metadata: ModelAssetMetadata, path: string, diagnostics: SceneDiagnostic[]) {
+function validateModelAssetMetadata(
+  metadata: ModelAssetMetadata,
+  path: string,
+  diagnostics: SceneDiagnostic[]
+) {
   if (metadata.format !== "glb" && metadata.format !== "gltf") {
-    diagnostics.push(createDiagnostic("error", "invalid-model-asset-format", "Model asset format must be glb or gltf.", `${path}.format`));
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-model-asset-format",
+        "Model asset format must be glb or gltf.",
+        `${path}.format`
+      )
+    );
   }
 
   if (metadata.sceneName !== null && metadata.sceneName.trim().length === 0) {
-    diagnostics.push(createDiagnostic("error", "invalid-model-asset-scene-name", "Model asset scene names must be non-empty when authored.", `${path}.sceneName`));
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-model-asset-scene-name",
+        "Model asset scene names must be non-empty when authored.",
+        `${path}.sceneName`
+      )
+    );
   }
 
   if (!isNonNegativeFiniteNumber(metadata.nodeCount)) {
-    diagnostics.push(createDiagnostic("error", "invalid-model-asset-node-count", "Model asset node counts must be finite and zero or greater.", `${path}.nodeCount`));
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-model-asset-node-count",
+        "Model asset node counts must be finite and zero or greater.",
+        `${path}.nodeCount`
+      )
+    );
   }
 
   if (!isNonNegativeFiniteNumber(metadata.meshCount)) {
-    diagnostics.push(createDiagnostic("error", "invalid-model-asset-mesh-count", "Model asset mesh counts must be finite and zero or greater.", `${path}.meshCount`));
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-model-asset-mesh-count",
+        "Model asset mesh counts must be finite and zero or greater.",
+        `${path}.meshCount`
+      )
+    );
   }
 
-  if (!Array.isArray(metadata.materialNames) || metadata.materialNames.some((name) => typeof name !== "string")) {
-    diagnostics.push(createDiagnostic("error", "invalid-model-asset-material-names", "Model asset material names must be string arrays.", `${path}.materialNames`));
+  if (
+    !Array.isArray(metadata.materialNames) ||
+    metadata.materialNames.some((name) => typeof name !== "string")
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-model-asset-material-names",
+        "Model asset material names must be string arrays.",
+        `${path}.materialNames`
+      )
+    );
   }
 
-  if (!Array.isArray(metadata.textureNames) || metadata.textureNames.some((name) => typeof name !== "string")) {
-    diagnostics.push(createDiagnostic("error", "invalid-model-asset-texture-names", "Model asset texture names must be string arrays.", `${path}.textureNames`));
+  if (
+    !Array.isArray(metadata.textureNames) ||
+    metadata.textureNames.some((name) => typeof name !== "string")
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-model-asset-texture-names",
+        "Model asset texture names must be string arrays.",
+        `${path}.textureNames`
+      )
+    );
   }
 
-  if (!Array.isArray(metadata.animationNames) || metadata.animationNames.some((name) => typeof name !== "string")) {
-    diagnostics.push(createDiagnostic("error", "invalid-model-asset-animation-names", "Model asset animation names must be string arrays.", `${path}.animationNames`));
+  if (
+    !Array.isArray(metadata.animationNames) ||
+    metadata.animationNames.some((name) => typeof name !== "string")
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-model-asset-animation-names",
+        "Model asset animation names must be string arrays.",
+        `${path}.animationNames`
+      )
+    );
   }
 
-  validateProjectAssetBoundingBox(metadata.boundingBox, `${path}.boundingBox`, diagnostics);
+  validateProjectAssetBoundingBox(
+    metadata.boundingBox,
+    `${path}.boundingBox`,
+    diagnostics
+  );
 
-  if (!Array.isArray(metadata.warnings) || metadata.warnings.some((warning) => typeof warning !== "string")) {
-    diagnostics.push(createDiagnostic("error", "invalid-model-asset-warnings", "Model asset warnings must be string arrays.", `${path}.warnings`));
+  if (
+    !Array.isArray(metadata.warnings) ||
+    metadata.warnings.some((warning) => typeof warning !== "string")
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-model-asset-warnings",
+        "Model asset warnings must be string arrays.",
+        `${path}.warnings`
+      )
+    );
   }
 }
 
-function validateImageAssetMetadata(metadata: ImageAssetMetadata, path: string, diagnostics: SceneDiagnostic[]) {
+function validateImageAssetMetadata(
+  metadata: ImageAssetMetadata,
+  path: string,
+  diagnostics: SceneDiagnostic[]
+) {
   if (!isPositiveFiniteNumber(metadata.width)) {
-    diagnostics.push(createDiagnostic("error", "invalid-image-asset-width", "Image asset width must be finite and greater than zero.", `${path}.width`));
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-image-asset-width",
+        "Image asset width must be finite and greater than zero.",
+        `${path}.width`
+      )
+    );
   }
 
   if (!isPositiveFiniteNumber(metadata.height)) {
-    diagnostics.push(createDiagnostic("error", "invalid-image-asset-height", "Image asset height must be finite and greater than zero.", `${path}.height`));
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-image-asset-height",
+        "Image asset height must be finite and greater than zero.",
+        `${path}.height`
+      )
+    );
   }
 
   if (!isBoolean(metadata.hasAlpha)) {
-    diagnostics.push(createDiagnostic("error", "invalid-image-asset-alpha", "Image asset alpha flags must be booleans.", `${path}.hasAlpha`));
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-image-asset-alpha",
+        "Image asset alpha flags must be booleans.",
+        `${path}.hasAlpha`
+      )
+    );
   }
 
-  if (!Array.isArray(metadata.warnings) || metadata.warnings.some((warning) => typeof warning !== "string")) {
-    diagnostics.push(createDiagnostic("error", "invalid-image-asset-warnings", "Image asset warnings must be string arrays.", `${path}.warnings`));
+  if (
+    !Array.isArray(metadata.warnings) ||
+    metadata.warnings.some((warning) => typeof warning !== "string")
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-image-asset-warnings",
+        "Image asset warnings must be string arrays.",
+        `${path}.warnings`
+      )
+    );
   }
 }
 
-function validateAudioAssetMetadata(metadata: AudioAssetMetadata, path: string, diagnostics: SceneDiagnostic[]) {
-  if (metadata.durationSeconds !== null && !isNonNegativeFiniteNumber(metadata.durationSeconds)) {
+function validateAudioAssetMetadata(
+  metadata: AudioAssetMetadata,
+  path: string,
+  diagnostics: SceneDiagnostic[]
+) {
+  if (
+    metadata.durationSeconds !== null &&
+    !isNonNegativeFiniteNumber(metadata.durationSeconds)
+  ) {
     diagnostics.push(
       createDiagnostic(
         "error",
@@ -624,7 +888,10 @@ function validateAudioAssetMetadata(metadata: AudioAssetMetadata, path: string, 
     );
   }
 
-  if (metadata.channelCount !== null && !isPositiveFiniteNumber(metadata.channelCount)) {
+  if (
+    metadata.channelCount !== null &&
+    !isPositiveFiniteNumber(metadata.channelCount)
+  ) {
     diagnostics.push(
       createDiagnostic(
         "error",
@@ -635,7 +902,10 @@ function validateAudioAssetMetadata(metadata: AudioAssetMetadata, path: string, 
     );
   }
 
-  if (metadata.sampleRateHz !== null && !isPositiveFiniteNumber(metadata.sampleRateHz)) {
+  if (
+    metadata.sampleRateHz !== null &&
+    !isPositiveFiniteNumber(metadata.sampleRateHz)
+  ) {
     diagnostics.push(
       createDiagnostic(
         "error",
@@ -646,56 +916,146 @@ function validateAudioAssetMetadata(metadata: AudioAssetMetadata, path: string, 
     );
   }
 
-  if (!Array.isArray(metadata.warnings) || metadata.warnings.some((warning) => typeof warning !== "string")) {
-    diagnostics.push(createDiagnostic("error", "invalid-audio-asset-warnings", "Audio asset warnings must be string arrays.", `${path}.warnings`));
+  if (
+    !Array.isArray(metadata.warnings) ||
+    metadata.warnings.some((warning) => typeof warning !== "string")
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-audio-asset-warnings",
+        "Audio asset warnings must be string arrays.",
+        `${path}.warnings`
+      )
+    );
   }
 }
 
-function validateProjectAsset(asset: ProjectAssetRecord, path: string, diagnostics: SceneDiagnostic[]) {
+function validateProjectAsset(
+  asset: ProjectAssetRecord,
+  path: string,
+  diagnostics: SceneDiagnostic[]
+) {
   if (asset.sourceName.trim().length === 0) {
-    diagnostics.push(createDiagnostic("error", "invalid-asset-source-name", "Asset source names must be non-empty strings.", `${path}.sourceName`));
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-asset-source-name",
+        "Asset source names must be non-empty strings.",
+        `${path}.sourceName`
+      )
+    );
   }
 
   if (asset.mimeType.trim().length === 0) {
-    diagnostics.push(createDiagnostic("error", "invalid-asset-mime-type", "Asset mime types must be non-empty strings.", `${path}.mimeType`));
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-asset-mime-type",
+        "Asset mime types must be non-empty strings.",
+        `${path}.mimeType`
+      )
+    );
   }
 
   if (asset.storageKey.trim().length === 0) {
-    diagnostics.push(createDiagnostic("error", "invalid-asset-storage-key", "Asset storage keys must be non-empty strings.", `${path}.storageKey`));
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-asset-storage-key",
+        "Asset storage keys must be non-empty strings.",
+        `${path}.storageKey`
+      )
+    );
   }
 
   if (!isPositiveFiniteNumber(asset.byteLength)) {
-    diagnostics.push(createDiagnostic("error", "invalid-asset-byte-length", "Asset byte lengths must be finite and greater than zero.", `${path}.byteLength`));
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-asset-byte-length",
+        "Asset byte lengths must be finite and greater than zero.",
+        `${path}.byteLength`
+      )
+    );
   }
 
   switch (asset.kind) {
     case "model":
-      validateModelAssetMetadata(asset.metadata, `${path}.metadata`, diagnostics);
+      validateModelAssetMetadata(
+        asset.metadata,
+        `${path}.metadata`,
+        diagnostics
+      );
       break;
     case "image":
-      validateImageAssetMetadata(asset.metadata, `${path}.metadata`, diagnostics);
+      validateImageAssetMetadata(
+        asset.metadata,
+        `${path}.metadata`,
+        diagnostics
+      );
       break;
     case "audio":
-      validateAudioAssetMetadata(asset.metadata, `${path}.metadata`, diagnostics);
+      validateAudioAssetMetadata(
+        asset.metadata,
+        `${path}.metadata`,
+        diagnostics
+      );
       break;
   }
 }
 
-function validateModelInstance(modelInstance: ModelInstance, path: string, document: SceneDocument, diagnostics: SceneDiagnostic[]) {
-  if (modelInstance.name !== undefined && modelInstance.name.trim().length === 0) {
-    diagnostics.push(createDiagnostic("error", "invalid-model-instance-name", "Model instance names must be non-empty when authored.", `${path}.name`));
+function validateModelInstance(
+  modelInstance: ModelInstance,
+  path: string,
+  document: SceneDocument,
+  diagnostics: SceneDiagnostic[]
+) {
+  if (
+    modelInstance.name !== undefined &&
+    modelInstance.name.trim().length === 0
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-model-instance-name",
+        "Model instance names must be non-empty when authored.",
+        `${path}.name`
+      )
+    );
   }
 
   if (!isFiniteVec3(modelInstance.position)) {
-    diagnostics.push(createDiagnostic("error", "invalid-model-instance-position", "Model instance positions must remain finite on every axis.", `${path}.position`));
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-model-instance-position",
+        "Model instance positions must remain finite on every axis.",
+        `${path}.position`
+      )
+    );
   }
 
   if (!isFiniteVec3(modelInstance.rotationDegrees)) {
-    diagnostics.push(createDiagnostic("error", "invalid-model-instance-rotation", "Model instance rotations must remain finite on every axis.", `${path}.rotationDegrees`));
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-model-instance-rotation",
+        "Model instance rotations must remain finite on every axis.",
+        `${path}.rotationDegrees`
+      )
+    );
   }
 
   if (!hasPositiveFiniteVec3(modelInstance.scale)) {
-    diagnostics.push(createDiagnostic("error", "invalid-model-instance-scale", "Model instance scales must remain finite and positive on every axis.", `${path}.scale`));
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-model-instance-scale",
+        "Model instance scales must remain finite and positive on every axis.",
+        `${path}.scale`
+      )
+    );
   }
 
   if (!isModelInstanceCollisionMode(modelInstance.collision.mode)) {
@@ -724,7 +1084,12 @@ function validateModelInstance(modelInstance: ModelInstance, path: string, docum
 
   if (asset === undefined) {
     diagnostics.push(
-      createDiagnostic("error", "missing-model-instance-asset", `Model instance asset ${modelInstance.assetId} does not exist.`, `${path}.assetId`)
+      createDiagnostic(
+        "error",
+        "missing-model-instance-asset",
+        `Model instance asset ${modelInstance.assetId} does not exist.`,
+        `${path}.assetId`
+      )
     );
     return;
   }
@@ -741,21 +1106,48 @@ function validateModelInstance(modelInstance: ModelInstance, path: string, docum
   }
 }
 
-function validateEntityName(name: string | undefined, path: string, diagnostics: SceneDiagnostic[]) {
+function validateEntityName(
+  name: string | undefined,
+  path: string,
+  diagnostics: SceneDiagnostic[]
+) {
   if (name !== undefined && name.trim().length === 0) {
-    diagnostics.push(createDiagnostic("error", "invalid-entity-name", "Entity names must be non-empty when authored.", `${path}.name`));
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-entity-name",
+        "Entity names must be non-empty when authored.",
+        `${path}.name`
+      )
+    );
   }
 }
 
-function validatePlayerStartEntity(entity: PlayerStartEntity, path: string, diagnostics: SceneDiagnostic[]) {
+function validatePlayerStartEntity(
+  entity: PlayerStartEntity,
+  path: string,
+  diagnostics: SceneDiagnostic[]
+) {
   if (!isFiniteVec3(entity.position)) {
     diagnostics.push(
-      createDiagnostic("error", "invalid-player-start-position", "Player Start position must remain finite on every axis.", `${path}.position`)
+      createDiagnostic(
+        "error",
+        "invalid-player-start-position",
+        "Player Start position must remain finite on every axis.",
+        `${path}.position`
+      )
     );
   }
 
   if (!isFiniteNumber(entity.yawDegrees)) {
-    diagnostics.push(createDiagnostic("error", "invalid-player-start-yaw", "Player Start yaw must remain a finite number.", `${path}.yawDegrees`));
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-yaw",
+        "Player Start yaw must remain a finite number.",
+        `${path}.yawDegrees`
+      )
+    );
   }
 
   if (!isPlayerStartColliderMode(entity.collider.mode)) {
@@ -769,7 +1161,10 @@ function validatePlayerStartEntity(entity: PlayerStartEntity, path: string, diag
     );
   }
 
-  if (!isFiniteNumber(entity.collider.eyeHeight) || entity.collider.eyeHeight <= 0) {
+  if (
+    !isFiniteNumber(entity.collider.eyeHeight) ||
+    entity.collider.eyeHeight <= 0
+  ) {
     diagnostics.push(
       createDiagnostic(
         "error",
@@ -780,7 +1175,10 @@ function validatePlayerStartEntity(entity: PlayerStartEntity, path: string, diag
     );
   }
 
-  if (!isFiniteNumber(entity.collider.capsuleRadius) || entity.collider.capsuleRadius <= 0) {
+  if (
+    !isFiniteNumber(entity.collider.capsuleRadius) ||
+    entity.collider.capsuleRadius <= 0
+  ) {
     diagnostics.push(
       createDiagnostic(
         "error",
@@ -791,7 +1189,10 @@ function validatePlayerStartEntity(entity: PlayerStartEntity, path: string, diag
     );
   }
 
-  if (!isFiniteNumber(entity.collider.capsuleHeight) || entity.collider.capsuleHeight <= 0) {
+  if (
+    !isFiniteNumber(entity.collider.capsuleHeight) ||
+    entity.collider.capsuleHeight <= 0
+  ) {
     diagnostics.push(
       createDiagnostic(
         "error",
@@ -893,16 +1294,31 @@ function validateSoundEmitterAudioAsset(
   return asset;
 }
 
-function validateSoundEmitterEntity(entity: SoundEmitterEntity, path: string, document: SceneDocument, diagnostics: SceneDiagnostic[]) {
+function validateSoundEmitterEntity(
+  entity: SoundEmitterEntity,
+  path: string,
+  document: SceneDocument,
+  diagnostics: SceneDiagnostic[]
+) {
   if (!isFiniteVec3(entity.position)) {
     diagnostics.push(
-      createDiagnostic("error", "invalid-sound-emitter-position", "Sound Emitter position must remain finite on every axis.", `${path}.position`)
+      createDiagnostic(
+        "error",
+        "invalid-sound-emitter-position",
+        "Sound Emitter position must remain finite on every axis.",
+        `${path}.position`
+      )
     );
   }
 
   if (!isNonNegativeFiniteNumber(entity.volume)) {
     diagnostics.push(
-      createDiagnostic("error", "invalid-sound-emitter-volume", "Sound Emitter volume must remain finite and zero or greater.", `${path}.volume`)
+      createDiagnostic(
+        "error",
+        "invalid-sound-emitter-volume",
+        "Sound Emitter volume must remain finite and zero or greater.",
+        `${path}.volume`
+      )
     );
   }
 
@@ -928,7 +1344,11 @@ function validateSoundEmitterEntity(entity: SoundEmitterEntity, path: string, do
     );
   }
 
-  if (isPositiveFiniteNumber(entity.refDistance) && isPositiveFiniteNumber(entity.maxDistance) && entity.maxDistance < entity.refDistance) {
+  if (
+    isPositiveFiniteNumber(entity.refDistance) &&
+    isPositiveFiniteNumber(entity.maxDistance) &&
+    entity.maxDistance < entity.refDistance
+  ) {
     diagnostics.push(
       createDiagnostic(
         "error",
@@ -941,21 +1361,48 @@ function validateSoundEmitterEntity(entity: SoundEmitterEntity, path: string, do
 
   if (!isBoolean(entity.autoplay)) {
     diagnostics.push(
-      createDiagnostic("error", "invalid-sound-emitter-autoplay", "Sound Emitter autoplay must remain a boolean.", `${path}.autoplay`)
+      createDiagnostic(
+        "error",
+        "invalid-sound-emitter-autoplay",
+        "Sound Emitter autoplay must remain a boolean.",
+        `${path}.autoplay`
+      )
     );
   }
 
   if (!isBoolean(entity.loop)) {
-    diagnostics.push(createDiagnostic("error", "invalid-sound-emitter-loop", "Sound Emitter loop must remain a boolean.", `${path}.loop`));
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-sound-emitter-loop",
+        "Sound Emitter loop must remain a boolean.",
+        `${path}.loop`
+      )
+    );
   }
 
-  validateSoundEmitterAudioAsset(entity, path, document, diagnostics, entity.autoplay ? "error" : "warning");
+  validateSoundEmitterAudioAsset(
+    entity,
+    path,
+    document,
+    diagnostics,
+    entity.autoplay ? "error" : "warning"
+  );
 }
 
-function validateTriggerVolumeEntity(entity: TriggerVolumeEntity, path: string, diagnostics: SceneDiagnostic[]) {
+function validateTriggerVolumeEntity(
+  entity: TriggerVolumeEntity,
+  path: string,
+  diagnostics: SceneDiagnostic[]
+) {
   if (!isFiniteVec3(entity.position)) {
     diagnostics.push(
-      createDiagnostic("error", "invalid-trigger-volume-position", "Trigger Volume position must remain finite on every axis.", `${path}.position`)
+      createDiagnostic(
+        "error",
+        "invalid-trigger-volume-position",
+        "Trigger Volume position must remain finite on every axis.",
+        `${path}.position`
+      )
     );
   }
 
@@ -993,45 +1440,90 @@ function validateTriggerVolumeEntity(entity: TriggerVolumeEntity, path: string, 
   }
 }
 
-function validateTeleportTargetEntity(entity: TeleportTargetEntity, path: string, diagnostics: SceneDiagnostic[]) {
+function validateTeleportTargetEntity(
+  entity: TeleportTargetEntity,
+  path: string,
+  diagnostics: SceneDiagnostic[]
+) {
   if (!isFiniteVec3(entity.position)) {
     diagnostics.push(
-      createDiagnostic("error", "invalid-teleport-target-position", "Teleport Target position must remain finite on every axis.", `${path}.position`)
+      createDiagnostic(
+        "error",
+        "invalid-teleport-target-position",
+        "Teleport Target position must remain finite on every axis.",
+        `${path}.position`
+      )
     );
   }
 
   if (!isFiniteNumber(entity.yawDegrees)) {
     diagnostics.push(
-      createDiagnostic("error", "invalid-teleport-target-yaw", "Teleport Target yaw must remain a finite number.", `${path}.yawDegrees`)
+      createDiagnostic(
+        "error",
+        "invalid-teleport-target-yaw",
+        "Teleport Target yaw must remain a finite number.",
+        `${path}.yawDegrees`
+      )
     );
   }
 }
 
-function validateInteractableEntity(entity: InteractableEntity, path: string, diagnostics: SceneDiagnostic[]) {
+function validateInteractableEntity(
+  entity: InteractableEntity,
+  path: string,
+  diagnostics: SceneDiagnostic[]
+) {
   if (!isFiniteVec3(entity.position)) {
     diagnostics.push(
-      createDiagnostic("error", "invalid-interactable-position", "Interactable position must remain finite on every axis.", `${path}.position`)
+      createDiagnostic(
+        "error",
+        "invalid-interactable-position",
+        "Interactable position must remain finite on every axis.",
+        `${path}.position`
+      )
     );
   }
 
   if (!isPositiveFiniteNumber(entity.radius)) {
     diagnostics.push(
-      createDiagnostic("error", "invalid-interactable-radius", "Interactable radius must remain finite and greater than zero.", `${path}.radius`)
+      createDiagnostic(
+        "error",
+        "invalid-interactable-radius",
+        "Interactable radius must remain finite and greater than zero.",
+        `${path}.radius`
+      )
     );
   }
 
   if (typeof entity.prompt !== "string" || entity.prompt.trim().length === 0) {
     diagnostics.push(
-      createDiagnostic("error", "invalid-interactable-prompt", "Interactable prompt must remain a non-empty string.", `${path}.prompt`)
+      createDiagnostic(
+        "error",
+        "invalid-interactable-prompt",
+        "Interactable prompt must remain a non-empty string.",
+        `${path}.prompt`
+      )
     );
   }
 
   if (!isBoolean(entity.enabled)) {
-    diagnostics.push(createDiagnostic("error", "invalid-interactable-enabled", "Interactable enabled must remain a boolean.", `${path}.enabled`));
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-interactable-enabled",
+        "Interactable enabled must remain a boolean.",
+        `${path}.enabled`
+      )
+    );
   }
 }
 
-function validateInteractionLink(link: InteractionLink, path: string, document: SceneDocument, diagnostics: SceneDiagnostic[]) {
+function validateInteractionLink(
+  link: InteractionLink,
+  path: string,
+  document: SceneDocument,
+  diagnostics: SceneDiagnostic[]
+) {
   const sourceEntity = document.entities[link.sourceEntityId];
 
   if (sourceEntity === undefined) {
@@ -1046,7 +1538,10 @@ function validateInteractionLink(link: InteractionLink, path: string, document: 
     return;
   }
 
-  if (sourceEntity.kind !== "triggerVolume" && sourceEntity.kind !== "interactable") {
+  if (
+    sourceEntity.kind !== "triggerVolume" &&
+    sourceEntity.kind !== "interactable"
+  ) {
     diagnostics.push(
       createDiagnostic(
         "error",
@@ -1121,7 +1616,10 @@ function validateInteractionLink(link: InteractionLink, path: string, document: 
         );
       }
 
-      if (link.action.visible !== undefined && typeof link.action.visible !== "boolean") {
+      if (
+        link.action.visible !== undefined &&
+        typeof link.action.visible !== "boolean"
+      ) {
         diagnostics.push(
           createDiagnostic(
             "error",
@@ -1132,56 +1630,58 @@ function validateInteractionLink(link: InteractionLink, path: string, document: 
         );
       }
       break;
-    case "playAnimation":
-      {
-        const targetModelInstance = document.modelInstances[link.action.targetModelInstanceId];
+    case "playAnimation": {
+      const targetModelInstance =
+        document.modelInstances[link.action.targetModelInstanceId];
 
-        if (targetModelInstance === undefined) {
-          diagnostics.push(
-            createDiagnostic(
-              "error",
-              "missing-play-animation-target-instance",
-              `Play animation target model instance ${link.action.targetModelInstanceId} does not exist.`,
-              `${path}.action.targetModelInstanceId`
-            )
-          );
-          return;
-        }
-
-        if (link.action.clipName.trim().length === 0) {
-          diagnostics.push(
-            createDiagnostic(
-              "error",
-              "invalid-play-animation-clip-name",
-              "Play animation clip name must be non-empty.",
-              `${path}.action.clipName`
-            )
-          );
-          return;
-        }
-
-        const targetAsset = document.assets[targetModelInstance.assetId];
-
-        if (targetAsset === undefined || targetAsset.kind !== "model") {
-          return;
-        }
-
-        if (!targetAsset.metadata.animationNames.includes(link.action.clipName)) {
-          diagnostics.push(
-            createDiagnostic(
-              "error",
-              "missing-play-animation-clip",
-              `Play animation clip ${link.action.clipName} does not exist on model asset ${targetAsset.id}.`,
-              `${path}.action.clipName`
-            )
-          );
-        }
-
-        break;
+      if (targetModelInstance === undefined) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "missing-play-animation-target-instance",
+            `Play animation target model instance ${link.action.targetModelInstanceId} does not exist.`,
+            `${path}.action.targetModelInstanceId`
+          )
+        );
+        return;
       }
+
+      if (link.action.clipName.trim().length === 0) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-play-animation-clip-name",
+            "Play animation clip name must be non-empty.",
+            `${path}.action.clipName`
+          )
+        );
+        return;
+      }
+
+      const targetAsset = document.assets[targetModelInstance.assetId];
+
+      if (targetAsset === undefined || targetAsset.kind !== "model") {
+        return;
+      }
+
+      if (!targetAsset.metadata.animationNames.includes(link.action.clipName)) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "missing-play-animation-clip",
+            `Play animation clip ${link.action.clipName} does not exist on model asset ${targetAsset.id}.`,
+            `${path}.action.clipName`
+          )
+        );
+      }
+
+      break;
+    }
     case "stopAnimation":
       // Validate that the target model instance exists in the document
-      if (document.modelInstances[link.action.targetModelInstanceId] === undefined) {
+      if (
+        document.modelInstances[link.action.targetModelInstanceId] === undefined
+      ) {
         diagnostics.push(
           createDiagnostic(
             "error",
@@ -1246,12 +1746,22 @@ function validateInteractionLink(link: InteractionLink, path: string, document: 
   }
 }
 
-function registerAuthoredId(id: string, path: string, seenIds: Map<string, string>, diagnostics: SceneDiagnostic[]) {
+function registerAuthoredId(
+  id: string,
+  path: string,
+  seenIds: Map<string, string>,
+  diagnostics: SceneDiagnostic[]
+) {
   const previousPath = seenIds.get(id);
 
   if (previousPath !== undefined) {
     diagnostics.push(
-      createDiagnostic("error", "duplicate-authored-id", `Duplicate authored id ${id} is already used at ${previousPath}.`, path)
+      createDiagnostic(
+        "error",
+        "duplicate-authored-id",
+        `Duplicate authored id ${id} is already used at ${previousPath}.`,
+        path
+      )
     );
     return;
   }
@@ -1259,7 +1769,10 @@ function registerAuthoredId(id: string, path: string, seenIds: Map<string, strin
   seenIds.set(id, path);
 }
 
-function prefixDiagnosticPath(prefix: string, path?: string): string | undefined {
+function prefixDiagnosticPath(
+  prefix: string,
+  path?: string
+): string | undefined {
   return path === undefined ? undefined : `${prefix}${path}`;
 }
 
@@ -1305,7 +1818,9 @@ function validateProjectResources(
   }
 }
 
-function filterProjectSceneDiagnostics(diagnostics: SceneDiagnostic[]): SceneDiagnostic[] {
+function filterProjectSceneDiagnostics(
+  diagnostics: SceneDiagnostic[]
+): SceneDiagnostic[] {
   return diagnostics.filter(
     (diagnostic) =>
       diagnostic.path === undefined ||
@@ -1360,22 +1875,31 @@ function validateProjectSceneLoadingScreen(
 }
 
 export function formatSceneDiagnostic(diagnostic: SceneDiagnostic): string {
-  return diagnostic.path === undefined ? diagnostic.message : `${diagnostic.path}: ${diagnostic.message}`;
+  return diagnostic.path === undefined
+    ? diagnostic.message
+    : `${diagnostic.path}: ${diagnostic.message}`;
 }
 
-export function formatSceneDiagnosticSummary(diagnostics: SceneDiagnostic[], limit = 3): string {
+export function formatSceneDiagnosticSummary(
+  diagnostics: SceneDiagnostic[],
+  limit = 3
+): string {
   if (diagnostics.length === 0) {
     return "No diagnostics.";
   }
 
   const visibleDiagnostics = diagnostics.slice(0, Math.max(1, limit));
-  const summary = visibleDiagnostics.map((diagnostic) => formatSceneDiagnostic(diagnostic)).join("; ");
+  const summary = visibleDiagnostics
+    .map((diagnostic) => formatSceneDiagnostic(diagnostic))
+    .join("; ");
   const remainingCount = diagnostics.length - visibleDiagnostics.length;
 
   return remainingCount > 0 ? `${summary}; +${remainingCount} more` : summary;
 }
 
-export function validateSceneDocument(document: SceneDocument): SceneDocumentValidationResult {
+export function validateSceneDocument(
+  document: SceneDocument
+): SceneDocumentValidationResult {
   const diagnostics: SceneDiagnostic[] = [];
   const seenIds = new Map<string, string>();
 
@@ -1386,7 +1910,12 @@ export function validateSceneDocument(document: SceneDocument): SceneDocumentVal
 
     if (material.id !== materialKey) {
       diagnostics.push(
-        createDiagnostic("error", "material-id-mismatch", "Material ids must match their registry key.", `${path}.id`)
+        createDiagnostic(
+          "error",
+          "material-id-mismatch",
+          "Material ids must match their registry key.",
+          `${path}.id`
+        )
       );
     }
 
@@ -1397,7 +1926,14 @@ export function validateSceneDocument(document: SceneDocument): SceneDocumentVal
     const path = `assets.${assetKey}`;
 
     if (asset.id !== assetKey) {
-      diagnostics.push(createDiagnostic("error", "asset-id-mismatch", "Asset ids must match their registry key.", `${path}.id`));
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "asset-id-mismatch",
+          "Asset ids must match their registry key.",
+          `${path}.id`
+        )
+      );
     }
 
     registerAuthoredId(asset.id, path, seenIds, diagnostics);
@@ -1408,18 +1944,37 @@ export function validateSceneDocument(document: SceneDocument): SceneDocumentVal
     const path = `brushes.${brushKey}`;
 
     if (brush.id !== brushKey) {
-      diagnostics.push(createDiagnostic("error", "brush-id-mismatch", "Brush ids must match their registry key.", `${path}.id`));
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "brush-id-mismatch",
+          "Brush ids must match their registry key.",
+          `${path}.id`
+        )
+      );
     }
 
     registerAuthoredId(brush.id, path, seenIds, diagnostics);
 
     if (brush.name !== undefined && brush.name.trim().length === 0) {
-      diagnostics.push(createDiagnostic("error", "invalid-box-name", "Box brush names must be non-empty when authored.", `${path}.name`));
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-box-name",
+          "Box brush names must be non-empty when authored.",
+          `${path}.name`
+        )
+      );
     }
 
     if (!isFiniteVec3(brush.center)) {
       diagnostics.push(
-        createDiagnostic("error", "invalid-box-center", "Box brush centers must remain finite on every axis.", `${path}.center`)
+        createDiagnostic(
+          "error",
+          "invalid-box-center",
+          "Box brush centers must remain finite on every axis.",
+          `${path}.center`
+        )
       );
     }
 
@@ -1436,7 +1991,12 @@ export function validateSceneDocument(document: SceneDocument): SceneDocumentVal
 
     if (!isFiniteVec3(brush.size) || !hasPositiveBoxSize(brush.size)) {
       diagnostics.push(
-        createDiagnostic("error", "invalid-box-size", "Box brush sizes must remain finite and positive on every axis.", `${path}.size`)
+        createDiagnostic(
+          "error",
+          "invalid-box-size",
+          "Box brush sizes must remain finite and positive on every axis.",
+          `${path}.size`
+        )
       );
     }
 
@@ -1495,7 +2055,10 @@ export function validateSceneDocument(document: SceneDocument): SceneDocumentVal
           )
         );
       } else {
-        if (typeof water.colorHex !== "string" || !isHexColorString(water.colorHex)) {
+        if (
+          typeof water.colorHex !== "string" ||
+          !isHexColorString(water.colorHex)
+        ) {
           diagnostics.push(
             createDiagnostic(
               "error",
@@ -1528,7 +2091,12 @@ export function validateSceneDocument(document: SceneDocument): SceneDocumentVal
           );
         }
 
-        if (!isPositiveIntegerInRange(water.foamContactLimit, MAX_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT)) {
+        if (
+          !isPositiveIntegerInRange(
+            water.foamContactLimit,
+            MAX_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT
+          )
+        ) {
           diagnostics.push(
             createDiagnostic(
               "error",
@@ -1565,7 +2133,10 @@ export function validateSceneDocument(document: SceneDocument): SceneDocumentVal
           )
         );
       } else {
-        if (typeof fog.colorHex !== "string" || !isHexColorString(fog.colorHex)) {
+        if (
+          typeof fog.colorHex !== "string" ||
+          !isHexColorString(fog.colorHex)
+        ) {
           diagnostics.push(
             createDiagnostic(
               "error",
@@ -1601,12 +2172,19 @@ export function validateSceneDocument(document: SceneDocument): SceneDocumentVal
     }
   }
 
-  for (const [modelInstanceKey, modelInstance] of Object.entries(document.modelInstances)) {
+  for (const [modelInstanceKey, modelInstance] of Object.entries(
+    document.modelInstances
+  )) {
     const path = `modelInstances.${modelInstanceKey}`;
 
     if (modelInstance.id !== modelInstanceKey) {
       diagnostics.push(
-        createDiagnostic("error", "model-instance-id-mismatch", "Model instance ids must match their registry key.", `${path}.id`)
+        createDiagnostic(
+          "error",
+          "model-instance-id-mismatch",
+          "Model instance ids must match their registry key.",
+          `${path}.id`
+        )
       );
     }
 
@@ -1618,7 +2196,14 @@ export function validateSceneDocument(document: SceneDocument): SceneDocumentVal
     const path = `entities.${entityKey}`;
 
     if (entity.id !== entityKey) {
-      diagnostics.push(createDiagnostic("error", "entity-id-mismatch", "Entity ids must match their registry key.", `${path}.id`));
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "entity-id-mismatch",
+          "Entity ids must match their registry key.",
+          `${path}.id`
+        )
+      );
     }
 
     registerAuthoredId(entity.id, path, seenIds, diagnostics);
@@ -1663,7 +2248,14 @@ export function validateSceneDocument(document: SceneDocument): SceneDocumentVal
     const path = `interactionLinks.${linkKey}`;
 
     if (link.id !== linkKey) {
-      diagnostics.push(createDiagnostic("error", "interaction-link-id-mismatch", "Interaction link ids must match their registry key.", `${path}.id`));
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "interaction-link-id-mismatch",
+          "Interaction link ids must match their registry key.",
+          `${path}.id`
+        )
+      );
     }
 
     registerAuthoredId(link.id, path, seenIds, diagnostics);
@@ -1673,7 +2265,9 @@ export function validateSceneDocument(document: SceneDocument): SceneDocumentVal
   return {
     diagnostics,
     errors: diagnostics.filter((diagnostic) => diagnostic.severity === "error"),
-    warnings: diagnostics.filter((diagnostic) => diagnostic.severity === "warning")
+    warnings: diagnostics.filter(
+      (diagnostic) => diagnostic.severity === "warning"
+    )
   };
 }
 
@@ -1681,7 +2275,9 @@ export function assertSceneDocumentIsValid(document: SceneDocument) {
   const validation = validateSceneDocument(document);
 
   if (validation.errors.length > 0) {
-    throw new Error(`Scene document has ${validation.errors.length} validation error(s): ${formatSceneDiagnosticSummary(validation.errors)}`);
+    throw new Error(
+      `Scene document has ${validation.errors.length} validation error(s): ${formatSceneDiagnosticSummary(validation.errors)}`
+    );
   }
 }
 
@@ -1741,10 +2337,7 @@ export function validateProjectDocument(
 
     validateProjectSceneLoadingScreen(scene, scenePath, diagnostics);
 
-    const sceneDocument = createSceneDocumentFromProject(
-      document,
-      sceneKey
-    );
+    const sceneDocument = createSceneDocumentFromProject(document, sceneKey);
 
     for (const diagnostic of filterProjectSceneDiagnostics(
       validateSceneDocument(sceneDocument).diagnostics

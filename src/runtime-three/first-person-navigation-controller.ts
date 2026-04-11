@@ -3,7 +3,11 @@ import { Euler, Vector3 } from "three";
 import type { Vec3 } from "../core/vector";
 
 import { getFirstPersonPlayerEyeHeight } from "./player-collision";
-import type { NavigationController, RuntimeControllerContext, RuntimeLocomotionState } from "./navigation-controller";
+import type {
+  NavigationController,
+  RuntimeControllerContext,
+  RuntimeLocomotionState
+} from "./navigation-controller";
 
 const LOOK_SENSITIVITY = 0.0022;
 const MOVE_SPEED = 4.5;
@@ -11,7 +15,10 @@ const GRAVITY = 22;
 const MAX_PITCH_RADIANS = Math.PI * 0.48;
 
 function clampPitch(pitchRadians: number): number {
-  return Math.max(-MAX_PITCH_RADIANS, Math.min(MAX_PITCH_RADIANS, pitchRadians));
+  return Math.max(
+    -MAX_PITCH_RADIANS,
+    Math.min(MAX_PITCH_RADIANS, pitchRadians)
+  );
 }
 
 function toEyePosition(feetPosition: Vec3, eyeHeight: number): Vec3 {
@@ -67,7 +74,10 @@ export class FirstPersonNavigationController implements NavigationController {
     window.addEventListener("keyup", this.handleKeyUp);
     window.addEventListener("blur", this.handleBlur);
     document.addEventListener("mousemove", this.handleMouseMove);
-    document.addEventListener("pointerlockchange", this.handlePointerLockChange);
+    document.addEventListener(
+      "pointerlockchange",
+      this.handlePointerLockChange
+    );
     document.addEventListener("pointerlockerror", this.handlePointerLockError);
     ctx.domElement.addEventListener("pointerdown", this.handlePointerDown);
 
@@ -81,8 +91,14 @@ export class FirstPersonNavigationController implements NavigationController {
     window.removeEventListener("keyup", this.handleKeyUp);
     window.removeEventListener("blur", this.handleBlur);
     document.removeEventListener("mousemove", this.handleMouseMove);
-    document.removeEventListener("pointerlockchange", this.handlePointerLockChange);
-    document.removeEventListener("pointerlockerror", this.handlePointerLockError);
+    document.removeEventListener(
+      "pointerlockchange",
+      this.handlePointerLockChange
+    );
+    document.removeEventListener(
+      "pointerlockerror",
+      this.handlePointerLockError
+    );
     ctx.domElement.removeEventListener("pointerdown", this.handlePointerDown);
     this.pressedKeys.clear();
 
@@ -120,9 +136,15 @@ export class FirstPersonNavigationController implements NavigationController {
     }
 
     const playerShape = this.context.getRuntimeScene().playerCollider;
-  const currentVolumeState = this.context.resolvePlayerVolumeState(this.feetPosition);
-    const inputX = (this.pressedKeys.has("KeyD") ? 1 : 0) - (this.pressedKeys.has("KeyA") ? 1 : 0);
-    const inputZ = (this.pressedKeys.has("KeyW") ? 1 : 0) - (this.pressedKeys.has("KeyS") ? 1 : 0);
+    const currentVolumeState = this.context.resolvePlayerVolumeState(
+      this.feetPosition
+    );
+    const inputX =
+      (this.pressedKeys.has("KeyD") ? 1 : 0) -
+      (this.pressedKeys.has("KeyA") ? 1 : 0);
+    const inputZ =
+      (this.pressedKeys.has("KeyW") ? 1 : 0) -
+      (this.pressedKeys.has("KeyS") ? 1 : 0);
     const inputLength = Math.hypot(inputX, inputZ);
 
     let horizontalX = 0;
@@ -133,11 +155,25 @@ export class FirstPersonNavigationController implements NavigationController {
       const normalizedInputZ = inputZ / inputLength;
       const moveDistance = MOVE_SPEED * dt;
 
-      this.forwardVector.set(Math.sin(this.yawRadians), 0, Math.cos(this.yawRadians));
-      this.rightVector.set(-Math.cos(this.yawRadians), 0, Math.sin(this.yawRadians));
+      this.forwardVector.set(
+        Math.sin(this.yawRadians),
+        0,
+        Math.cos(this.yawRadians)
+      );
+      this.rightVector.set(
+        -Math.cos(this.yawRadians),
+        0,
+        Math.sin(this.yawRadians)
+      );
 
-      horizontalX = (this.forwardVector.x * normalizedInputZ + this.rightVector.x * normalizedInputX) * moveDistance;
-      horizontalZ = (this.forwardVector.z * normalizedInputZ + this.rightVector.z * normalizedInputX) * moveDistance;
+      horizontalX =
+        (this.forwardVector.x * normalizedInputZ +
+          this.rightVector.x * normalizedInputX) *
+        moveDistance;
+      horizontalZ =
+        (this.forwardVector.z * normalizedInputZ +
+          this.rightVector.z * normalizedInputX) *
+        moveDistance;
     }
 
     if (playerShape.mode === "none") {
@@ -152,7 +188,10 @@ export class FirstPersonNavigationController implements NavigationController {
       this.feetPosition,
       {
         x: horizontalX,
-        y: playerShape.mode === "none" || currentVolumeState.inWater ? 0 : this.verticalVelocity * dt,
+        y:
+          playerShape.mode === "none" || currentVolumeState.inWater
+            ? 0
+            : this.verticalVelocity * dt,
         z: horizontalZ
       },
       playerShape
@@ -165,7 +204,9 @@ export class FirstPersonNavigationController implements NavigationController {
     }
 
     this.feetPosition = resolvedMotion.feetPosition;
-    const nextVolumeState = this.context.resolvePlayerVolumeState(this.feetPosition);
+    const nextVolumeState = this.context.resolvePlayerVolumeState(
+      this.feetPosition
+    );
     this.inWaterVolume = nextVolumeState.inWater;
     this.inFogVolume = nextVolumeState.inFog;
     this.grounded = nextVolumeState.inWater ? false : resolvedMotion.grounded;
@@ -210,7 +251,12 @@ export class FirstPersonNavigationController implements NavigationController {
       return;
     }
 
-    const eyePosition = toEyePosition(this.feetPosition, getFirstPersonPlayerEyeHeight(this.context.getRuntimeScene().playerCollider));
+    const eyePosition = toEyePosition(
+      this.feetPosition,
+      getFirstPersonPlayerEyeHeight(
+        this.context.getRuntimeScene().playerCollider
+      )
+    );
     this.cameraRotation.x = this.pitchRadians;
     // Authoring yaw treats 0 degrees as facing +Z, while a three.js camera
     // looks down -Z by default. Offset by 180 degrees so runtime view matches
@@ -218,7 +264,11 @@ export class FirstPersonNavigationController implements NavigationController {
     this.cameraRotation.y = this.yawRadians + Math.PI;
     this.cameraRotation.z = 0;
 
-    this.context.camera.position.set(eyePosition.x, eyePosition.y, eyePosition.z);
+    this.context.camera.position.set(
+      eyePosition.x,
+      eyePosition.y,
+      eyePosition.z
+    );
     this.context.camera.rotation.copy(this.cameraRotation);
   }
 
@@ -227,8 +277,14 @@ export class FirstPersonNavigationController implements NavigationController {
       return;
     }
 
-    const eyePosition = toEyePosition(this.feetPosition, getFirstPersonPlayerEyeHeight(this.context.getRuntimeScene().playerCollider));
-    const cameraVolumeState = this.context.resolvePlayerVolumeState(eyePosition);
+    const eyePosition = toEyePosition(
+      this.feetPosition,
+      getFirstPersonPlayerEyeHeight(
+        this.context.getRuntimeScene().playerCollider
+      )
+    );
+    const cameraVolumeState =
+      this.context.resolvePlayerVolumeState(eyePosition);
 
     this.context.setFirstPersonTelemetry({
       feetPosition: {
@@ -250,7 +306,8 @@ export class FirstPersonNavigationController implements NavigationController {
       return;
     }
 
-    const pointerLocked = document.pointerLockElement === this.context.domElement;
+    const pointerLocked =
+      document.pointerLockElement === this.context.domElement;
     this.pointerLocked = pointerLocked;
     this.context.setRuntimeMessage(
       pointerLocked
@@ -278,7 +335,9 @@ export class FirstPersonNavigationController implements NavigationController {
     }
 
     this.yawRadians -= event.movementX * LOOK_SENSITIVITY;
-    this.pitchRadians = clampPitch(this.pitchRadians - event.movementY * LOOK_SENSITIVITY);
+    this.pitchRadians = clampPitch(
+      this.pitchRadians - event.movementY * LOOK_SENSITIVITY
+    );
   };
 
   private handlePointerLockChange = () => {
@@ -292,11 +351,15 @@ export class FirstPersonNavigationController implements NavigationController {
   };
 
   private handlePointerDown = () => {
-    if (this.context === null || document.pointerLockElement === this.context.domElement) {
+    if (
+      this.context === null ||
+      document.pointerLockElement === this.context.domElement
+    ) {
       return;
     }
 
-    const pointerLockCapableElement = this.context.domElement as HTMLCanvasElement & {
+    const pointerLockCapableElement = this.context
+      .domElement as HTMLCanvasElement & {
       requestPointerLock(): void | Promise<void>;
     };
     const pointerLockResult = pointerLockCapableElement.requestPointerLock();

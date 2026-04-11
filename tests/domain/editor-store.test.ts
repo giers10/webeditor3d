@@ -84,7 +84,9 @@ describe("EditorStore", () => {
     const secondSceneId = store.getState().activeSceneId;
 
     expect(secondSceneId).not.toBe(firstSceneId);
-    expect(Object.keys(store.getState().projectDocument.scenes)).toHaveLength(2);
+    expect(Object.keys(store.getState().projectDocument.scenes)).toHaveLength(
+      2
+    );
     expect(store.getState().document.name).toBe("Scene 2");
 
     store.executeCommand(createCreateBoxBrushCommand());
@@ -269,9 +271,13 @@ describe("EditorStore", () => {
     expect(store.getState().whiteboxSelectionMode).toBe("object");
     expect(store.getState().viewportLayoutMode).toBe("single");
     expect(store.getState().activeViewportPanelId).toBe("topLeft");
-    expect(store.getState().viewportPanels.topLeft.viewMode).toBe("perspective");
+    expect(store.getState().viewportPanels.topLeft.viewMode).toBe(
+      "perspective"
+    );
     expect(store.getState().viewportPanels.topRight.viewMode).toBe("top");
-    expect(store.getState().viewportPanels.topRight.displayMode).toBe("authoring");
+    expect(store.getState().viewportPanels.topRight.displayMode).toBe(
+      "authoring"
+    );
     expect(store.getState().viewportQuadSplit).toEqual({
       x: 0.5,
       y: 0.5
@@ -289,7 +295,9 @@ describe("EditorStore", () => {
     expect(store.getState().viewportLayoutMode).toBe("quad");
     expect(store.getState().activeViewportPanelId).toBe("bottomRight");
     expect(store.getState().viewportPanels.bottomRight.viewMode).toBe("front");
-    expect(store.getState().viewportPanels.bottomRight.displayMode).toBe("normal");
+    expect(store.getState().viewportPanels.bottomRight.displayMode).toBe(
+      "normal"
+    );
     expect(store.getState().viewportQuadSplit).toEqual({
       x: 0.38,
       y: 0.62
@@ -482,7 +490,9 @@ describe("EditorStore", () => {
       })
     );
 
-    expect(store.getState().viewportTransientState.transformSession).toMatchObject({
+    expect(
+      store.getState().viewportTransientState.transformSession
+    ).toMatchObject({
       kind: "active",
       source: "keyboard",
       sourcePanelId: "bottomRight",

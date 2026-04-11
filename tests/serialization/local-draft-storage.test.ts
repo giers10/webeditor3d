@@ -75,11 +75,16 @@ describe("local draft storage", () => {
     expect(result.document.version).toBe(SCENE_DOCUMENT_VERSION);
     expect(result.document).toEqual(createEmptyProjectDocument());
     expect(result.diagnostic).toContain("Stored autosave could not be loaded.");
-    expect(result.diagnostic).toContain("Starting with a fresh empty document.");
+    expect(result.diagnostic).toContain(
+      "Starting with a fresh empty document."
+    );
   });
 
   it("reports browser storage access failures without throwing", () => {
-    const originalDescriptor = Object.getOwnPropertyDescriptor(window, "localStorage");
+    const originalDescriptor = Object.getOwnPropertyDescriptor(
+      window,
+      "localStorage"
+    );
 
     Object.defineProperty(window, "localStorage", {
       configurable: true,
@@ -92,7 +97,9 @@ describe("local draft storage", () => {
       const result = getBrowserStorageAccess();
 
       expect(result.storage).toBeNull();
-      expect(result.diagnostic).toContain("Browser local storage is unavailable.");
+      expect(result.diagnostic).toContain(
+        "Browser local storage is unavailable."
+      );
       expect(result.diagnostic).toContain("access denied");
     } finally {
       if (originalDescriptor !== undefined) {
@@ -161,9 +168,9 @@ describe("local draft storage", () => {
       return;
     }
 
-    expect(
-      result.document.scenes[result.document.activeSceneId]?.name
-    ).toBe("Viewport Draft");
+    expect(result.document.scenes[result.document.activeSceneId]?.name).toBe(
+      "Viewport Draft"
+    );
     expect(result.viewportLayoutState).toMatchObject({
       layoutMode: "quad",
       activePanelId: "bottomRight",
@@ -235,7 +242,10 @@ describe("local draft storage", () => {
 
   it("loads older raw scene-document drafts without requiring viewport layout state", () => {
     const storage = new MemoryStorage();
-    storage.setItem(DEFAULT_SCENE_DRAFT_STORAGE_KEY, serializeSceneDocument(createEmptySceneDocument({ name: "Legacy Draft" })));
+    storage.setItem(
+      DEFAULT_SCENE_DRAFT_STORAGE_KEY,
+      serializeSceneDocument(createEmptySceneDocument({ name: "Legacy Draft" }))
+    );
 
     const result = loadSceneDocumentDraft(storage);
 
@@ -245,9 +255,9 @@ describe("local draft storage", () => {
       return;
     }
 
-    expect(
-      result.document.scenes[result.document.activeSceneId]?.name
-    ).toBe("Legacy Draft");
+    expect(result.document.scenes[result.document.activeSceneId]?.name).toBe(
+      "Legacy Draft"
+    );
     expect(result.viewportLayoutState).toBeNull();
     expect(result.message).toBe("Recovered latest autosave.");
   });
@@ -263,9 +273,9 @@ describe("local draft storage", () => {
 
     const result = loadOrCreateSceneDocument(storage);
 
-    expect(
-      result.document.scenes[result.document.activeSceneId]?.name
-    ).toBe("Recovered Scene");
+    expect(result.document.scenes[result.document.activeSceneId]?.name).toBe(
+      "Recovered Scene"
+    );
     expect(result.diagnostic).toBe("Recovered latest autosave.");
   });
 

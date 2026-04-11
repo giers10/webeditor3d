@@ -5,11 +5,21 @@ import { strToU8, unzipSync, Zip, ZipDeflate } from "fflate";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { loadAudioAssetFromStorage } from "../../src/assets/audio-assets";
-import { loadModelAssetFromStorage, importModelAssetFromFiles } from "../../src/assets/gltf-model-import";
+import {
+  loadModelAssetFromStorage,
+  importModelAssetFromFiles
+} from "../../src/assets/gltf-model-import";
 import { loadImageAssetFromStorage } from "../../src/assets/image-assets";
 import { createModelInstance } from "../../src/assets/model-instances";
-import { createInMemoryProjectAssetStorage, type ProjectAssetStorage } from "../../src/assets/project-asset-storage";
-import { createProjectAssetStorageKey, type AudioAssetRecord, type ImageAssetRecord } from "../../src/assets/project-assets";
+import {
+  createInMemoryProjectAssetStorage,
+  type ProjectAssetStorage
+} from "../../src/assets/project-asset-storage";
+import {
+  createProjectAssetStorageKey,
+  type AudioAssetRecord,
+  type ImageAssetRecord
+} from "../../src/assets/project-assets";
 import {
   createEmptyProjectScene,
   createEmptySceneDocument,
@@ -22,11 +32,24 @@ import {
 } from "../../src/serialization/project-package";
 import { serializeProjectDocument } from "../../src/serialization/scene-document-json";
 
-const tinyGlbFixturePath = path.resolve(process.cwd(), "fixtures/assets/tiny-triangle.glb");
-const externalTriangleGltfPath = path.resolve(process.cwd(), "fixtures/assets/external-triangle/scene.gltf");
-const externalTriangleBinPath = path.resolve(process.cwd(), "fixtures/assets/external-triangle/triangle.bin");
+const tinyGlbFixturePath = path.resolve(
+  process.cwd(),
+  "fixtures/assets/tiny-triangle.glb"
+);
+const externalTriangleGltfPath = path.resolve(
+  process.cwd(),
+  "fixtures/assets/external-triangle/scene.gltf"
+);
+const externalTriangleBinPath = path.resolve(
+  process.cwd(),
+  "fixtures/assets/external-triangle/triangle.bin"
+);
 
-function createTestFile(bytes: Uint8Array | Buffer, name: string, type: string): File {
+function createTestFile(
+  bytes: Uint8Array | Buffer,
+  name: string,
+  type: string
+): File {
   const arrayBuffer = new ArrayBuffer(bytes.byteLength);
   new Uint8Array(arrayBuffer).set(bytes);
 
@@ -72,7 +95,9 @@ function buildZipArchive(entries: Record<string, Uint8Array>): Uint8Array {
 
   zip.end();
 
-  const archiveBytes = new Uint8Array(chunks.reduce((sum, chunk) => sum + chunk.byteLength, 0));
+  const archiveBytes = new Uint8Array(
+    chunks.reduce((sum, chunk) => sum + chunk.byteLength, 0)
+  );
   let offset = 0;
 
   for (const chunk of chunks) {
@@ -177,7 +202,11 @@ describe("project package serialization", () => {
     await storage.putAsset(imageAsset.storageKey, {
       files: {
         [imageAsset.sourceName]: {
-          bytes: cloneArrayBuffer(strToU8("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1024\" height=\"512\"></svg>")),
+          bytes: cloneArrayBuffer(
+            strToU8(
+              '<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="512"></svg>'
+            )
+          ),
           mimeType: imageAsset.mimeType
         }
       }
@@ -191,7 +220,10 @@ describe("project package serialization", () => {
       }
     });
 
-    const imageLoadListeners = new WeakMap<object, { load?: () => void; error?: () => void }>();
+    const imageLoadListeners = new WeakMap<
+      object,
+      { load?: () => void; error?: () => void }
+    >();
     const mockImageWidth = 1024;
     const mockImageHeight = 512;
 
@@ -247,18 +279,32 @@ describe("project package serialization", () => {
 
     const packageBytes = await saveProjectPackage(document, storage);
     const restoredStorage = createInMemoryProjectAssetStorage();
-    const restoredDocument = await loadProjectPackage(packageBytes, restoredStorage);
+    const restoredDocument = await loadProjectPackage(
+      packageBytes,
+      restoredStorage
+    );
 
     expect(restoredDocument).toEqual(document);
 
-    const restoredModel = await loadModelAssetFromStorage(restoredStorage, importedModel.asset);
-    const restoredImage = await loadImageAssetFromStorage(restoredStorage, imageAsset);
-    const restoredAudio = await loadAudioAssetFromStorage(restoredStorage, audioAsset);
+    const restoredModel = await loadModelAssetFromStorage(
+      restoredStorage,
+      importedModel.asset
+    );
+    const restoredImage = await loadImageAssetFromStorage(
+      restoredStorage,
+      imageAsset
+    );
+    const restoredAudio = await loadAudioAssetFromStorage(
+      restoredStorage,
+      audioAsset
+    );
 
     expect(restoredModel.metadata.format).toBe("glb");
     expect(restoredModel.template.children.length).toBeGreaterThan(0);
     expect(restoredImage.metadata.width).toBe(imageAsset.metadata.width);
-    expect(restoredAudio.metadata.durationSeconds).toBe(audioAsset.metadata.durationSeconds);
+    expect(restoredAudio.metadata.durationSeconds).toBe(
+      audioAsset.metadata.durationSeconds
+    );
   });
 
   it("preserves multi-file gltf asset bundles inside the packaged assets directory", async () => {
@@ -290,7 +336,10 @@ describe("project package serialization", () => {
 
     await loadProjectPackage(packageBytes, restoredStorage);
 
-    const restoredModel = await loadModelAssetFromStorage(restoredStorage, importedModel.asset);
+    const restoredModel = await loadModelAssetFromStorage(
+      restoredStorage,
+      importedModel.asset
+    );
 
     expect(restoredModel.metadata.format).toBe("gltf");
     expect(restoredModel.template.children.length).toBeGreaterThan(0);
@@ -320,7 +369,9 @@ describe("project package serialization", () => {
       }
     });
 
-    await expect(saveProjectPackage(document, storage)).rejects.toThrow("Missing stored binary data for image asset missing.png.");
+    await expect(saveProjectPackage(document, storage)).rejects.toThrow(
+      "Missing stored binary data for image asset missing.png."
+    );
   });
 
   it("fails project load when scene.json is missing", async () => {
@@ -328,7 +379,9 @@ describe("project package serialization", () => {
       "assets/readme.txt": strToU8("not a project")
     });
 
-    await expect(loadProjectPackage(packageBytes, null)).rejects.toThrow("project package is missing scene.json");
+    await expect(loadProjectPackage(packageBytes, null)).rejects.toThrow(
+      "project package is missing scene.json"
+    );
   });
 
   it("fails project load when a declared asset has no packaged files", async () => {
@@ -357,7 +410,9 @@ describe("project package serialization", () => {
       [PROJECT_PACKAGE_SCENE_PATH]: strToU8(serializeProjectDocument(document))
     });
 
-    await expect(loadProjectPackage(packageBytes, createInMemoryProjectAssetStorage())).rejects.toThrow(
+    await expect(
+      loadProjectPackage(packageBytes, createInMemoryProjectAssetStorage())
+    ).rejects.toThrow(
       "project package is missing bundled files for image asset missing.svg"
     );
   });
@@ -366,8 +421,13 @@ describe("project package serialization", () => {
     const document = createProjectDocument(
       createEmptySceneDocument({ name: "Portable Scene Without Storage" })
     );
-    const packageBytes = await saveProjectPackage(document, createInMemoryProjectAssetStorage());
+    const packageBytes = await saveProjectPackage(
+      document,
+      createInMemoryProjectAssetStorage()
+    );
 
-    await expect(loadProjectPackage(packageBytes, null as ProjectAssetStorage | null)).resolves.toEqual(document);
+    await expect(
+      loadProjectPackage(packageBytes, null as ProjectAssetStorage | null)
+    ).resolves.toEqual(document);
   });
 });

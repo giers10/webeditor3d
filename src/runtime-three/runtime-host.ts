@@ -26,13 +26,19 @@ import {
 } from "three";
 import { EffectComposer } from "postprocessing";
 
-import { createModelInstanceRenderGroup, disposeModelInstance } from "../assets/model-instance-rendering";
+import {
+  createModelInstanceRenderGroup,
+  disposeModelInstance
+} from "../assets/model-instance-rendering";
 import type { LoadedModelAsset } from "../assets/gltf-model-import";
 import type { LoadedImageAsset } from "../assets/image-assets";
 import type { LoadedAudioAsset } from "../assets/audio-assets";
 import type { ProjectAssetRecord } from "../assets/project-assets";
 import { buildBoxBrushDerivedMeshData } from "../geometry/box-brush-mesh";
-import { createStarterMaterialSignature, createStarterMaterialTexture } from "../materials/starter-material-textures";
+import {
+  createStarterMaterialSignature,
+  createStarterMaterialTexture
+} from "../materials/starter-material-textures";
 import {
   applyAdvancedRenderingLightShadowFlags,
   applyAdvancedRenderingRenderableShadowFlags,
@@ -57,9 +63,18 @@ import {
 } from "../document/world-settings";
 
 import { FirstPersonNavigationController } from "./first-person-navigation-controller";
-import type { FirstPersonTelemetry, NavigationController, RuntimeControllerContext, RuntimePlayerVolumeState } from "./navigation-controller";
+import type {
+  FirstPersonTelemetry,
+  NavigationController,
+  RuntimeControllerContext,
+  RuntimePlayerVolumeState
+} from "./navigation-controller";
 import { RapierCollisionWorld } from "./rapier-collision-world";
-import { RuntimeInteractionSystem, type RuntimeInteractionDispatcher, type RuntimeInteractionPrompt } from "./runtime-interaction-system";
+import {
+  RuntimeInteractionSystem,
+  type RuntimeInteractionDispatcher,
+  type RuntimeInteractionPrompt
+} from "./runtime-interaction-system";
 import { RuntimeAudioSystem } from "./runtime-audio-system";
 import { OrbitVisitorNavigationController } from "./orbit-visitor-navigation-controller";
 import { resolveUnderwaterFogState } from "./underwater-fog";
@@ -115,19 +130,32 @@ export class RuntimeHost {
   private readonly localLightGroup = new Group();
   private readonly brushGroup = new Group();
   private readonly modelGroup = new Group();
-  private readonly firstPersonController = new FirstPersonNavigationController();
-  private readonly orbitVisitorController = new OrbitVisitorNavigationController();
+  private readonly firstPersonController =
+    new FirstPersonNavigationController();
+  private readonly orbitVisitorController =
+    new OrbitVisitorNavigationController();
   private readonly interactionSystem = new RuntimeInteractionSystem();
-  private readonly audioSystem = new RuntimeAudioSystem(this.scene, this.camera, null);
+  private readonly audioSystem = new RuntimeAudioSystem(
+    this.scene,
+    this.camera,
+    null
+  );
   private readonly underwaterSceneFog = new FogExp2("#2c6f8d", 0.03);
   private readonly waterReflectionCamera = new PerspectiveCamera();
-  private readonly brushMeshes = new Map<string, Mesh<BufferGeometry, Material[]>>();
+  private readonly brushMeshes = new Map<
+    string,
+    Mesh<BufferGeometry, Material[]>
+  >();
   private volumeTime = 0;
   private readonly volumeAnimatedUniforms: Array<{ value: number }> = [];
-  private readonly runtimeWaterContactUniforms: RuntimeWaterContactUniformBinding[] = [];
+  private readonly runtimeWaterContactUniforms: RuntimeWaterContactUniformBinding[] =
+    [];
   private readonly localLightObjects = new Map<string, Group>();
   private readonly modelRenderObjects = new Map<string, Group>();
-  private readonly materialTextureCache = new Map<string, CachedMaterialTexture>();
+  private readonly materialTextureCache = new Map<
+    string,
+    CachedMaterialTexture
+  >();
   private readonly animationMixers = new Map<string, AnimationMixer>();
   private readonly instanceAnimationClips = new Map<string, AnimationClip[]>();
   private readonly controllerContext: RuntimeControllerContext;
@@ -138,7 +166,8 @@ export class RuntimeHost {
   private desiredNavigationMode: RuntimeNavigationMode = "firstPerson";
   private sceneReady = false;
   private currentWorld: RuntimeSceneDefinition["world"] | null = null;
-  private currentAdvancedRenderingSettings: AdvancedRenderingSettings | null = null;
+  private currentAdvancedRenderingSettings: AdvancedRenderingSettings | null =
+    null;
   private advancedRenderingComposer: EffectComposer | null = null;
   private projectAssets: Record<string, ProjectAssetRecord> = {};
   private loadedModelAssets: Record<string, LoadedModelAsset> = {};
@@ -148,9 +177,14 @@ export class RuntimeHost {
   private previousFrameTime = 0;
   private container: HTMLElement | null = null;
   private activeController: NavigationController | null = null;
-  private runtimeMessageHandler: ((message: string | null) => void) | null = null;
-  private firstPersonTelemetryHandler: ((telemetry: FirstPersonTelemetry | null) => void) | null = null;
-  private interactionPromptHandler: ((prompt: RuntimeInteractionPrompt | null) => void) | null = null;
+  private runtimeMessageHandler: ((message: string | null) => void) | null =
+    null;
+  private firstPersonTelemetryHandler:
+    | ((telemetry: FirstPersonTelemetry | null) => void)
+    | null = null;
+  private interactionPromptHandler:
+    | ((prompt: RuntimeInteractionPrompt | null) => void)
+    | null = null;
   private sceneLoadStateHandler:
     | ((state: RuntimeSceneLoadState) => void)
     | null = null;
@@ -169,8 +203,11 @@ export class RuntimeHost {
     this.scene.add(this.modelGroup);
     this.underwaterSceneFog.density = 0;
     this.scene.fog = this.underwaterSceneFog;
-    this.renderer = enableRendering ? new WebGLRenderer({ antialias: false, alpha: true }) : null;
-    this.domElement = this.renderer?.domElement ?? document.createElement("canvas");
+    this.renderer = enableRendering
+      ? new WebGLRenderer({ antialias: false, alpha: true })
+      : null;
+    this.domElement =
+      this.renderer?.domElement ?? document.createElement("canvas");
 
     if (this.renderer !== null) {
       this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -189,8 +226,14 @@ export class RuntimeHost {
 
         return this.runtimeScene;
       },
-      resolveFirstPersonMotion: (feetPosition, motion, shape) => this.collisionWorld?.resolveFirstPersonMotion(feetPosition, motion, shape) ?? null,
-      resolvePlayerVolumeState: (feetPosition) => this.resolvePlayerVolumeState(feetPosition),
+      resolveFirstPersonMotion: (feetPosition, motion, shape) =>
+        this.collisionWorld?.resolveFirstPersonMotion(
+          feetPosition,
+          motion,
+          shape
+        ) ?? null,
+      resolvePlayerVolumeState: (feetPosition) =>
+        this.resolvePlayerVolumeState(feetPosition),
       setRuntimeMessage: (message) => {
         if (message === this.currentRuntimeMessage) {
           return;
@@ -206,7 +249,11 @@ export class RuntimeHost {
     };
   }
 
-  private resolvePlayerVolumeState(feetPosition: { x: number; y: number; z: number }): RuntimePlayerVolumeState {
+  private resolvePlayerVolumeState(feetPosition: {
+    x: number;
+    y: number;
+    z: number;
+  }): RuntimePlayerVolumeState {
     if (this.runtimeScene === null) {
       return {
         inWater: false,
@@ -214,8 +261,12 @@ export class RuntimeHost {
       };
     }
 
-    const inWater = this.runtimeScene.volumes.water.some((volume) => this.isPointInsideOrientedVolume(feetPosition, volume));
-    const inFog = this.runtimeScene.volumes.fog.some((volume) => this.isPointInsideOrientedVolume(feetPosition, volume));
+    const inWater = this.runtimeScene.volumes.water.some((volume) =>
+      this.isPointInsideOrientedVolume(feetPosition, volume)
+    );
+    const inFog = this.runtimeScene.volumes.fog.some((volume) =>
+      this.isPointInsideOrientedVolume(feetPosition, volume)
+    );
 
     return {
       inWater,
@@ -225,9 +276,17 @@ export class RuntimeHost {
 
   private isPointInsideOrientedVolume(
     point: { x: number; y: number; z: number },
-    volume: { center: { x: number; y: number; z: number }; rotationDegrees: { x: number; y: number; z: number }; size: { x: number; y: number; z: number } }
+    volume: {
+      center: { x: number; y: number; z: number };
+      rotationDegrees: { x: number; y: number; z: number };
+      size: { x: number; y: number; z: number };
+    }
   ): boolean {
-    this.volumeOffset.set(point.x - volume.center.x, point.y - volume.center.y, point.z - volume.center.z);
+    this.volumeOffset.set(
+      point.x - volume.center.x,
+      point.y - volume.center.y,
+      point.z - volume.center.z
+    );
 
     this.volumeInverseRotation
       .setFromEuler(
@@ -257,7 +316,10 @@ export class RuntimeHost {
     this.container = container;
     container.appendChild(this.domElement);
     this.domElement.addEventListener("click", this.handleRuntimeClick);
-    this.domElement.addEventListener("pointerdown", this.handleRuntimePointerDown);
+    this.domElement.addEventListener(
+      "pointerdown",
+      this.handleRuntimePointerDown
+    );
     this.resize();
 
     this.resizeObserver = new ResizeObserver(() => {
@@ -338,11 +400,15 @@ export class RuntimeHost {
     this.audioSystem.setRuntimeMessageHandler(handler);
   }
 
-  setFirstPersonTelemetryHandler(handler: ((telemetry: FirstPersonTelemetry | null) => void) | null) {
+  setFirstPersonTelemetryHandler(
+    handler: ((telemetry: FirstPersonTelemetry | null) => void) | null
+  ) {
     this.firstPersonTelemetryHandler = handler;
   }
 
-  setInteractionPromptHandler(handler: ((prompt: RuntimeInteractionPrompt | null) => void) | null) {
+  setInteractionPromptHandler(
+    handler: ((prompt: RuntimeInteractionPrompt | null) => void) | null
+  ) {
     this.interactionPromptHandler = handler;
   }
 
@@ -389,7 +455,10 @@ export class RuntimeHost {
     this.renderer?.forceContextLoss();
     this.renderer?.dispose();
     this.domElement.removeEventListener("click", this.handleRuntimeClick);
-    this.domElement.removeEventListener("pointerdown", this.handleRuntimePointerDown);
+    this.domElement.removeEventListener(
+      "pointerdown",
+      this.handleRuntimePointerDown
+    );
 
     if (this.container !== null && this.container.contains(this.domElement)) {
       this.container.removeChild(this.domElement);
@@ -505,7 +574,8 @@ export class RuntimeHost {
       .multiplyScalar(18);
 
     if (world.background.mode === "image") {
-      const texture = this.loadedImageAssets[world.background.assetId]?.texture ?? null;
+      const texture =
+        this.loadedImageAssets[world.background.assetId]?.texture ?? null;
       this.scene.background = texture;
       this.scene.environment = texture;
       this.scene.environmentIntensity = world.background.environmentIntensity;
@@ -516,7 +586,10 @@ export class RuntimeHost {
     }
 
     if (this.renderer !== null) {
-      configureAdvancedRenderingRenderer(this.renderer, world.advancedRendering);
+      configureAdvancedRenderingRenderer(
+        this.renderer,
+        world.advancedRendering
+      );
       this.syncAdvancedRenderingComposer(world.advancedRendering);
     }
 
@@ -554,7 +627,10 @@ export class RuntimeHost {
     const shouldUseComposer = settings.enabled;
     const settingsChanged =
       this.currentAdvancedRenderingSettings === null ||
-      !areAdvancedRenderingSettingsEqual(this.currentAdvancedRenderingSettings, settings);
+      !areAdvancedRenderingSettingsEqual(
+        this.currentAdvancedRenderingSettings,
+        settings
+      );
 
     if (!shouldUseComposer) {
       if (this.advancedRenderingComposer !== null) {
@@ -575,8 +651,14 @@ export class RuntimeHost {
       this.advancedRenderingComposer.dispose();
     }
 
-    this.advancedRenderingComposer = createAdvancedRenderingComposer(this.renderer, this.scene, this.camera, settings);
-    this.currentAdvancedRenderingSettings = cloneAdvancedRenderingSettings(settings);
+    this.advancedRenderingComposer = createAdvancedRenderingComposer(
+      this.renderer,
+      this.scene,
+      this.camera,
+      settings
+    );
+    this.currentAdvancedRenderingSettings =
+      cloneAdvancedRenderingSettings(settings);
     this.renderer.autoClear = false;
   }
 
@@ -586,7 +668,8 @@ export class RuntimeHost {
     }
 
     const advancedRendering = this.currentWorld.advancedRendering;
-    const shadowsEnabled = advancedRendering.enabled && advancedRendering.shadows.enabled;
+    const shadowsEnabled =
+      advancedRendering.enabled && advancedRendering.shadows.enabled;
 
     applyAdvancedRenderingLightShadowFlags(this.sunLight, advancedRendering);
 
@@ -621,11 +704,21 @@ export class RuntimeHost {
     this.applyShadowState();
   }
 
-  private createPointLightRuntimeObjects(pointLight: RuntimeLocalLightCollection["pointLights"][number]): LocalLightRenderObjects {
+  private createPointLightRuntimeObjects(
+    pointLight: RuntimeLocalLightCollection["pointLights"][number]
+  ): LocalLightRenderObjects {
     const group = new Group();
-    const light = new PointLight(pointLight.colorHex, pointLight.intensity, pointLight.distance);
+    const light = new PointLight(
+      pointLight.colorHex,
+      pointLight.intensity,
+      pointLight.distance
+    );
 
-    group.position.set(pointLight.position.x, pointLight.position.y, pointLight.position.z);
+    group.position.set(
+      pointLight.position.x,
+      pointLight.position.y,
+      pointLight.position.z
+    );
     light.position.set(0, 0, 0);
     group.add(light);
 
@@ -634,7 +727,9 @@ export class RuntimeHost {
     };
   }
 
-  private createSpotLightRuntimeObjects(spotLight: RuntimeLocalLightCollection["spotLights"][number]): LocalLightRenderObjects {
+  private createSpotLightRuntimeObjects(
+    spotLight: RuntimeLocalLightCollection["spotLights"][number]
+  ): LocalLightRenderObjects {
     const group = new Group();
     const light = new SpotLight(
       spotLight.colorHex,
@@ -644,10 +739,21 @@ export class RuntimeHost {
       0.18,
       1
     );
-    const direction = new Vector3(spotLight.direction.x, spotLight.direction.y, spotLight.direction.z).normalize();
-    const orientation = new Quaternion().setFromUnitVectors(new Vector3(0, 1, 0), direction);
+    const direction = new Vector3(
+      spotLight.direction.x,
+      spotLight.direction.y,
+      spotLight.direction.z
+    ).normalize();
+    const orientation = new Quaternion().setFromUnitVectors(
+      new Vector3(0, 1, 0),
+      direction
+    );
 
-    group.position.set(spotLight.position.x, spotLight.position.y, spotLight.position.z);
+    group.position.set(
+      spotLight.position.x,
+      spotLight.position.y,
+      spotLight.position.z
+    );
     group.quaternion.copy(orientation);
     light.position.set(0, 0, 0);
     light.target.position.set(0, 1, 0);
@@ -662,26 +768,75 @@ export class RuntimeHost {
   private rebuildBrushMeshes(brushes: RuntimeBoxBrushInstance[]) {
     this.clearBrushMeshes();
     const volumeRenderPaths: ResolvedBoxVolumeRenderPaths =
-      this.currentWorld === null ? { fog: "performance", water: "performance" } : resolveBoxVolumeRenderPaths(this.currentWorld.advancedRendering);
+      this.currentWorld === null
+        ? { fog: "performance", water: "performance" }
+        : resolveBoxVolumeRenderPaths(this.currentWorld.advancedRendering);
 
     for (const brush of brushes) {
       const geometry = buildBoxBrushDerivedMeshData(brush).geometry;
-      const staticContactPatches = brush.volume.mode === "water" ? this.collectRuntimeStaticWaterContactPatches(brush) : [];
+      const staticContactPatches =
+        brush.volume.mode === "water"
+          ? this.collectRuntimeStaticWaterContactPatches(brush)
+          : [];
       const contactPatches =
         brush.volume.mode === "water"
-          ? this.mergeRuntimeWaterContactPatches(brush, staticContactPatches, this.collectRuntimePlayerWaterContactPatches(brush))
+          ? this.mergeRuntimeWaterContactPatches(
+              brush,
+              staticContactPatches,
+              this.collectRuntimePlayerWaterContactPatches(brush)
+            )
           : [];
 
-      const materials =
-        this.createFogMaterialSet(brush, volumeRenderPaths) ??
-        [
-          this.createFaceMaterial(brush, "posX", brush.faces.posX.material, volumeRenderPaths, contactPatches, staticContactPatches),
-          this.createFaceMaterial(brush, "negX", brush.faces.negX.material, volumeRenderPaths, contactPatches, staticContactPatches),
-          this.createFaceMaterial(brush, "posY", brush.faces.posY.material, volumeRenderPaths, contactPatches, staticContactPatches),
-          this.createFaceMaterial(brush, "negY", brush.faces.negY.material, volumeRenderPaths, contactPatches, staticContactPatches),
-          this.createFaceMaterial(brush, "posZ", brush.faces.posZ.material, volumeRenderPaths, contactPatches, staticContactPatches),
-          this.createFaceMaterial(brush, "negZ", brush.faces.negZ.material, volumeRenderPaths, contactPatches, staticContactPatches)
-        ];
+      const materials = this.createFogMaterialSet(brush, volumeRenderPaths) ?? [
+        this.createFaceMaterial(
+          brush,
+          "posX",
+          brush.faces.posX.material,
+          volumeRenderPaths,
+          contactPatches,
+          staticContactPatches
+        ),
+        this.createFaceMaterial(
+          brush,
+          "negX",
+          brush.faces.negX.material,
+          volumeRenderPaths,
+          contactPatches,
+          staticContactPatches
+        ),
+        this.createFaceMaterial(
+          brush,
+          "posY",
+          brush.faces.posY.material,
+          volumeRenderPaths,
+          contactPatches,
+          staticContactPatches
+        ),
+        this.createFaceMaterial(
+          brush,
+          "negY",
+          brush.faces.negY.material,
+          volumeRenderPaths,
+          contactPatches,
+          staticContactPatches
+        ),
+        this.createFaceMaterial(
+          brush,
+          "posZ",
+          brush.faces.posZ.material,
+          volumeRenderPaths,
+          contactPatches,
+          staticContactPatches
+        ),
+        this.createFaceMaterial(
+          brush,
+          "negZ",
+          brush.faces.negZ.material,
+          volumeRenderPaths,
+          contactPatches,
+          staticContactPatches
+        )
+      ];
 
       const mesh = new Mesh(geometry, materials);
       mesh.position.set(brush.center.x, brush.center.y, brush.center.z);
@@ -700,7 +855,10 @@ export class RuntimeHost {
 
   private createFogMaterialSet(
     brush: RuntimeBoxBrushInstance,
-    volumeRenderPaths: { fog: "performance" | "quality"; water: "performance" | "quality" }
+    volumeRenderPaths: {
+      fog: "performance" | "quality";
+      water: "performance" | "quality";
+    }
   ): Material[] | null {
     if (brush.volume.mode !== "fog") {
       return null;
@@ -720,10 +878,16 @@ export class RuntimeHost {
       });
 
       this.volumeAnimatedUniforms.push(fogMaterial.animationUniform);
-      return Array.from({ length: BOX_FACE_MATERIAL_COUNT }, () => fogMaterial.material);
+      return Array.from(
+        { length: BOX_FACE_MATERIAL_COUNT },
+        () => fogMaterial.material
+      );
     }
 
-    const densityOpacity = Math.max(0.06, Math.min(0.72, brush.volume.fog.density * 0.8 + 0.08));
+    const densityOpacity = Math.max(
+      0.06,
+      Math.min(0.72, brush.volume.fog.density * 0.8 + 0.08)
+    );
     const fogMaterial = new MeshBasicMaterial({
       color: brush.volume.fog.colorHex,
       transparent: true,
@@ -734,9 +898,14 @@ export class RuntimeHost {
     return Array.from({ length: BOX_FACE_MATERIAL_COUNT }, () => fogMaterial);
   }
 
-  private configureFogVolumeMesh(mesh: Mesh<BufferGeometry, Material[]>, materials: Material[]) {
+  private configureFogVolumeMesh(
+    mesh: Mesh<BufferGeometry, Material[]>,
+    materials: Material[]
+  ) {
     const fogMaterials = materials.filter(
-      (material): material is ShaderMaterial => material instanceof ShaderMaterial && material.uniforms["localCameraPosition"] !== undefined
+      (material): material is ShaderMaterial =>
+        material instanceof ShaderMaterial &&
+        material.uniforms["localCameraPosition"] !== undefined
     );
 
     if (fogMaterials.length === 0) {
@@ -744,15 +913,21 @@ export class RuntimeHost {
     }
 
     mesh.onBeforeRender = (_renderer, _scene, camera) => {
-      const localCameraPosition = mesh.worldToLocal(this.fogLocalCameraPosition.copy(camera.position));
+      const localCameraPosition = mesh.worldToLocal(
+        this.fogLocalCameraPosition.copy(camera.position)
+      );
 
       for (const material of fogMaterials) {
-        (material.uniforms["localCameraPosition"] as { value: Vector3 }).value.copy(localCameraPosition);
+        (
+          material.uniforms["localCameraPosition"] as { value: Vector3 }
+        ).value.copy(localCameraPosition);
       }
     };
   }
 
-  private rebuildModelInstances(modelInstances: RuntimeSceneDefinition["modelInstances"]) {
+  private rebuildModelInstances(
+    modelInstances: RuntimeSceneDefinition["modelInstances"]
+  ) {
     this.clearModelInstances();
 
     for (const modelInstance of modelInstances) {
@@ -782,10 +957,19 @@ export class RuntimeHost {
       if (loadedAsset?.animations && loadedAsset.animations.length > 0) {
         const mixer = new AnimationMixer(renderGroup);
         this.animationMixers.set(modelInstance.instanceId, mixer);
-        this.instanceAnimationClips.set(modelInstance.instanceId, loadedAsset.animations);
+        this.instanceAnimationClips.set(
+          modelInstance.instanceId,
+          loadedAsset.animations
+        );
 
-        if (modelInstance.animationAutoplay === true && modelInstance.animationClipName) {
-          const clip = AnimationClip.findByName(loadedAsset.animations, modelInstance.animationClipName);
+        if (
+          modelInstance.animationAutoplay === true &&
+          modelInstance.animationClipName
+        ) {
+          const clip = AnimationClip.findByName(
+            loadedAsset.animations,
+            modelInstance.animationClipName
+          );
           if (clip) {
             mixer.clipAction(clip).play();
           }
@@ -800,18 +984,28 @@ export class RuntimeHost {
     brush: RuntimeBoxBrushInstance,
     faceId: "posX" | "negX" | "posY" | "negY" | "posZ" | "negZ",
     material: RuntimeBoxBrushInstance["faces"]["posX"]["material"],
-    volumeRenderPaths: { fog: "performance" | "quality"; water: "performance" | "quality" },
+    volumeRenderPaths: {
+      fog: "performance" | "quality";
+      water: "performance" | "quality";
+    },
     contactPatches: ReturnType<typeof collectWaterContactPatches>,
     staticContactPatches: ReturnType<typeof collectWaterContactPatches>
   ): Material {
     if (brush.volume.mode === "water") {
-      const baseOpacity = Math.max(0.05, Math.min(1, brush.volume.water.surfaceOpacity));
+      const baseOpacity = Math.max(
+        0.05,
+        Math.min(1, brush.volume.water.surfaceOpacity)
+      );
       const waterMaterial = createWaterMaterial({
         colorHex: brush.volume.water.colorHex,
         surfaceOpacity: brush.volume.water.surfaceOpacity,
         waveStrength: brush.volume.water.waveStrength,
-        surfaceDisplacementEnabled: brush.volume.water.surfaceDisplacementEnabled,
-        opacity: faceId === "posY" ? Math.min(1, baseOpacity + 0.18) : baseOpacity * 0.5,
+        surfaceDisplacementEnabled:
+          brush.volume.water.surfaceDisplacementEnabled,
+        opacity:
+          faceId === "posY"
+            ? Math.min(1, baseOpacity + 0.18)
+            : baseOpacity * 0.5,
         quality: volumeRenderPaths.water === "quality",
         wireframe: false,
         isTopFace: faceId === "posY",
@@ -831,17 +1025,26 @@ export class RuntimeHost {
         this.volumeAnimatedUniforms.push(waterMaterial.animationUniform);
       }
 
-      if (faceId === "posY" && waterMaterial.contactPatchesUniform !== null && waterMaterial.contactPatchAxesUniform !== null) {
+      if (
+        faceId === "posY" &&
+        waterMaterial.contactPatchesUniform !== null &&
+        waterMaterial.contactPatchAxesUniform !== null
+      ) {
         this.runtimeWaterContactUniforms.push({
           brush,
           uniform: waterMaterial.contactPatchesUniform,
           axisUniform: waterMaterial.contactPatchAxesUniform,
-          shapeUniform: waterMaterial.contactPatchShapesUniform ?? { value: [] },
+          shapeUniform: waterMaterial.contactPatchShapesUniform ?? {
+            value: []
+          },
           staticContactPatches,
           reflectionTextureUniform: waterMaterial.reflectionTextureUniform,
           reflectionMatrixUniform: waterMaterial.reflectionMatrixUniform,
           reflectionEnabledUniform: waterMaterial.reflectionEnabledUniform,
-          reflectionRenderTarget: this.getWaterReflectionMode() !== "none" ? this.createWaterReflectionRenderTarget() : null,
+          reflectionRenderTarget:
+            this.getWaterReflectionMode() !== "none"
+              ? this.createWaterReflectionRenderTarget()
+              : null,
           lastReflectionUpdateTime: Number.NEGATIVE_INFINITY
         });
       }
@@ -867,7 +1070,10 @@ export class RuntimeHost {
         return fogMaterial.material;
       }
       // Performance fallback: simple transparent material
-      const densityOpacity = Math.max(0.06, Math.min(0.72, brush.volume.fog.density * 0.8 + 0.08));
+      const densityOpacity = Math.max(
+        0.06,
+        Math.min(0.72, brush.volume.fog.density * 0.8 + 0.08)
+      );
       return new MeshBasicMaterial({
         color: brush.volume.fog.colorHex,
         transparent: true,
@@ -895,7 +1101,10 @@ export class RuntimeHost {
   private updateUnderwaterSceneFog() {
     const fogState =
       this.activeController === this.firstPersonController
-        ? resolveUnderwaterFogState(this.runtimeScene, this.currentFirstPersonTelemetry)
+        ? resolveUnderwaterFogState(
+            this.runtimeScene,
+            this.currentFirstPersonTelemetry
+          )
         : null;
 
     if (fogState === null) {
@@ -908,7 +1117,11 @@ export class RuntimeHost {
   }
 
   private getWaterReflectionMode() {
-    if (this.currentWorld === null || !this.currentWorld.advancedRendering.enabled || this.currentWorld.advancedRendering.waterPath !== "quality") {
+    if (
+      this.currentWorld === null ||
+      !this.currentWorld.advancedRendering.enabled ||
+      this.currentWorld.advancedRendering.waterPath !== "quality"
+    ) {
       return "none" as const;
     }
 
@@ -957,7 +1170,8 @@ export class RuntimeHost {
       }
 
       if (binding.reflectionRenderTarget === null) {
-        binding.reflectionRenderTarget = this.createWaterReflectionRenderTarget();
+        binding.reflectionRenderTarget =
+          this.createWaterReflectionRenderTarget();
       }
 
       const canRenderReflection = updatePlanarReflectionCamera(
@@ -972,12 +1186,19 @@ export class RuntimeHost {
         continue;
       }
 
-      if (binding.reflectionTextureUniform.value !== null && now - binding.lastReflectionUpdateTime < WATER_REFLECTION_UPDATE_INTERVAL_MS) {
+      if (
+        binding.reflectionTextureUniform.value !== null &&
+        now - binding.lastReflectionUpdateTime <
+          WATER_REFLECTION_UPDATE_INTERVAL_MS
+      ) {
         binding.reflectionEnabledUniform.value = 0.36;
         continue;
       }
 
-      const hiddenWaterMeshes: Array<{ mesh: Mesh<BufferGeometry, Material[]>; visible: boolean }> = [];
+      const hiddenWaterMeshes: Array<{
+        mesh: Mesh<BufferGeometry, Material[]>;
+        visible: boolean;
+      }> = [];
       for (const runtimeBrush of this.runtimeScene.brushes) {
         if (runtimeBrush.volume.mode !== "water") {
           continue;
@@ -1000,11 +1221,13 @@ export class RuntimeHost {
       const previousAutoClear = this.renderer.autoClear;
       const previousRenderTarget = this.renderer.getRenderTarget();
       const previousFogDensity = this.underwaterSceneFog.density;
-      const previousReflectionStates = this.runtimeWaterContactUniforms.map((waterBinding) => ({
-        binding: waterBinding,
-        enabled: waterBinding.reflectionEnabledUniform?.value ?? 0,
-        texture: waterBinding.reflectionTextureUniform?.value ?? null
-      }));
+      const previousReflectionStates = this.runtimeWaterContactUniforms.map(
+        (waterBinding) => ({
+          binding: waterBinding,
+          enabled: waterBinding.reflectionEnabledUniform?.value ?? 0,
+          texture: waterBinding.reflectionTextureUniform?.value ?? null
+        })
+      );
 
       try {
         this.underwaterSceneFog.density = 0;
@@ -1037,13 +1260,16 @@ export class RuntimeHost {
         }
       }
 
-      binding.reflectionTextureUniform.value = binding.reflectionRenderTarget.texture;
+      binding.reflectionTextureUniform.value =
+        binding.reflectionRenderTarget.texture;
       binding.reflectionEnabledUniform.value = 0.36;
       binding.lastReflectionUpdateTime = now;
     }
   }
 
-  private getOrCreateTexture(material: NonNullable<RuntimeBoxBrushInstance["faces"]["posX"]["material"]>) {
+  private getOrCreateTexture(
+    material: NonNullable<RuntimeBoxBrushInstance["faces"]["posX"]["material"]>
+  ) {
     const signature = createStarterMaterialSignature(material);
     const cachedTexture = this.materialTextureCache.get(material.id);
 
@@ -1092,7 +1318,10 @@ export class RuntimeHost {
   }
 
   private createPlayerWaterContactBounds() {
-    if (this.runtimeScene === null || this.currentFirstPersonTelemetry === null) {
+    if (
+      this.runtimeScene === null ||
+      this.currentFirstPersonTelemetry === null
+    ) {
       return null;
     }
 
@@ -1131,16 +1360,27 @@ export class RuntimeHost {
     }
   }
 
-  private collectRuntimeStaticWaterContactPatches(brush: RuntimeBoxBrushInstance) {
+  private collectRuntimeStaticWaterContactPatches(
+    brush: RuntimeBoxBrushInstance
+  ) {
     const contactBounds: Parameters<typeof collectWaterContactPatches>[1] = [];
 
-    const runtimeBrushesById = new Map((this.runtimeScene?.brushes ?? []).map((runtimeBrush) => [runtimeBrush.id, runtimeBrush]));
+    const runtimeBrushesById = new Map(
+      (this.runtimeScene?.brushes ?? []).map((runtimeBrush) => [
+        runtimeBrush.id,
+        runtimeBrush
+      ])
+    );
 
     for (const collider of this.runtimeScene?.colliders ?? []) {
       if (collider.source === "brush") {
         const otherBrush = runtimeBrushesById.get(collider.brushId);
 
-        if (otherBrush === undefined || otherBrush.id === brush.id || otherBrush.volume.mode !== "none") {
+        if (
+          otherBrush === undefined ||
+          otherBrush.id === brush.id ||
+          otherBrush.volume.mode !== "none"
+        ) {
           continue;
         }
 
@@ -1189,7 +1429,9 @@ export class RuntimeHost {
     );
   }
 
-  private collectRuntimePlayerWaterContactPatches(brush: RuntimeBoxBrushInstance) {
+  private collectRuntimePlayerWaterContactPatches(
+    brush: RuntimeBoxBrushInstance
+  ) {
     const playerBounds = this.createPlayerWaterContactBounds();
 
     if (playerBounds === null) {
@@ -1208,7 +1450,9 @@ export class RuntimeHost {
   }
 
   private getRuntimeWaterFoamContactLimit(brush: RuntimeBoxBrushInstance) {
-    return brush.volume.mode === "water" ? brush.volume.water.foamContactLimit : 0;
+    return brush.volume.mode === "water"
+      ? brush.volume.water.foamContactLimit
+      : 0;
   }
 
   private mergeRuntimeWaterContactPatches(
@@ -1216,7 +1460,10 @@ export class RuntimeHost {
     staticContactPatches: ReturnType<typeof collectWaterContactPatches>,
     dynamicContactPatches: ReturnType<typeof collectWaterContactPatches>
   ) {
-    return [...dynamicContactPatches, ...staticContactPatches].slice(0, this.getRuntimeWaterFoamContactLimit(brush));
+    return [...dynamicContactPatches, ...staticContactPatches].slice(
+      0,
+      this.getRuntimeWaterFoamContactLimit(brush)
+    );
   }
 
   private updateRuntimeWaterContactUniforms() {
@@ -1226,9 +1473,12 @@ export class RuntimeHost {
         binding.staticContactPatches,
         this.collectRuntimePlayerWaterContactPatches(binding.brush)
       );
-      binding.uniform.value = createWaterContactPatchUniformValue(mergedPatches);
-      binding.axisUniform.value = createWaterContactPatchAxisUniformValue(mergedPatches);
-      binding.shapeUniform.value = createWaterContactPatchShapeUniformValue(mergedPatches);
+      binding.uniform.value =
+        createWaterContactPatchUniformValue(mergedPatches);
+      binding.axisUniform.value =
+        createWaterContactPatchAxisUniformValue(mergedPatches);
+      binding.shapeUniform.value =
+        createWaterContactPatchShapeUniformValue(mergedPatches);
     }
   }
 
@@ -1293,7 +1543,11 @@ export class RuntimeHost {
       this.activeController === this.firstPersonController &&
       this.currentFirstPersonTelemetry !== null
     ) {
-      this.interactionSystem.updatePlayerPosition(this.currentFirstPersonTelemetry.feetPosition, this.runtimeScene, this.createInteractionDispatcher());
+      this.interactionSystem.updatePlayerPosition(
+        this.currentFirstPersonTelemetry.feetPosition,
+        this.runtimeScene,
+        this.createInteractionDispatcher()
+      );
       this.camera.getWorldDirection(this.cameraForward);
       this.setInteractionPrompt(
         this.interactionSystem.resolveClickInteractionPrompt(
@@ -1329,7 +1583,10 @@ export class RuntimeHost {
     this.firstPersonController.teleportTo(target.position, target.yawDegrees);
   }
 
-  private applyToggleBrushVisibilityAction(brushId: string, visible: boolean | undefined) {
+  private applyToggleBrushVisibilityAction(
+    brushId: string,
+    visible: boolean | undefined
+  ) {
     const mesh = this.brushMeshes.get(brushId);
 
     if (mesh === undefined) {
@@ -1339,7 +1596,11 @@ export class RuntimeHost {
     mesh.visible = visible ?? !mesh.visible;
   }
 
-  private applyPlayAnimationAction(instanceId: string, clipName: string, loop: boolean | undefined) {
+  private applyPlayAnimationAction(
+    instanceId: string,
+    clipName: string,
+    loop: boolean | undefined
+  ) {
     const mixer = this.animationMixers.get(instanceId);
     const clips = this.instanceAnimationClips.get(instanceId);
 
@@ -1351,7 +1612,9 @@ export class RuntimeHost {
     const clip = AnimationClip.findByName(clips, clipName);
 
     if (!clip) {
-      console.warn(`playAnimation: clip "${clipName}" not found on instance ${instanceId}`);
+      console.warn(
+        `playAnimation: clip "${clipName}" not found on instance ${instanceId}`
+      );
       return;
     }
 
@@ -1399,7 +1662,8 @@ export class RuntimeHost {
 
   private setInteractionPrompt(prompt: RuntimeInteractionPrompt | null) {
     if (
-      this.currentInteractionPrompt?.sourceEntityId === prompt?.sourceEntityId &&
+      this.currentInteractionPrompt?.sourceEntityId ===
+        prompt?.sourceEntityId &&
       this.currentInteractionPrompt?.prompt === prompt?.prompt &&
       this.currentInteractionPrompt?.distance === prompt?.distance &&
       this.currentInteractionPrompt?.range === prompt?.range
@@ -1422,7 +1686,11 @@ export class RuntimeHost {
     }
 
     this.audioSystem.handleUserGesture();
-    this.interactionSystem.dispatchClickInteraction(this.currentInteractionPrompt.sourceEntityId, this.runtimeScene, this.createInteractionDispatcher());
+    this.interactionSystem.dispatchClickInteraction(
+      this.currentInteractionPrompt.sourceEntityId,
+      this.runtimeScene,
+      this.createInteractionDispatcher()
+    );
   };
 
   private handleRuntimePointerDown = () => {

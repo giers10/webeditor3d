@@ -70,7 +70,9 @@ export function createSetSceneLoadingScreenCommand(
           ...currentProjectDocument.scenes,
           [options.sceneId]: {
             ...currentScene,
-            loadingScreen: cloneSceneLoadingScreenSettings(previousLoadingScreen)
+            loadingScreen: cloneSceneLoadingScreenSettings(
+              previousLoadingScreen
+            )
           }
         }
       });

@@ -60,7 +60,9 @@ describe("RunnerCanvas", () => {
   });
 
   it("only shows the underwater overlay when the camera is submerged", async () => {
-    const runtimeScene = buildRuntimeSceneFromDocument(createEmptySceneDocument());
+    const runtimeScene = buildRuntimeSceneFromDocument(
+      createEmptySceneDocument()
+    );
     const onTelemetryChange = vi.fn();
 
     render(
@@ -81,12 +83,20 @@ describe("RunnerCanvas", () => {
 
     await waitFor(() => {
       expect(runtimeHostInstances).toHaveLength(1);
-      expect(runtimeHostInstances[0]?.setFirstPersonTelemetryHandler).toHaveBeenCalledTimes(1);
-      expect(runtimeHostInstances[0]?.setSceneLoadStateHandler).toHaveBeenCalledTimes(1);
+      expect(
+        runtimeHostInstances[0]?.setFirstPersonTelemetryHandler
+      ).toHaveBeenCalledTimes(1);
+      expect(
+        runtimeHostInstances[0]?.setSceneLoadStateHandler
+      ).toHaveBeenCalledTimes(1);
     });
 
-    const publishTelemetry = runtimeHostInstances[0]?.setFirstPersonTelemetryHandler.mock.calls[0]?.[0] as ((telemetry: FirstPersonTelemetry | null) => void) | undefined;
-    const publishSceneLoadState = runtimeHostInstances[0]?.setSceneLoadStateHandler.mock.calls[0]?.[0] as
+    const publishTelemetry = runtimeHostInstances[0]
+      ?.setFirstPersonTelemetryHandler.mock.calls[0]?.[0] as
+      | ((telemetry: FirstPersonTelemetry | null) => void)
+      | undefined;
+    const publishSceneLoadState = runtimeHostInstances[0]
+      ?.setSceneLoadStateHandler.mock.calls[0]?.[0] as
       | ((state: RuntimeSceneLoadState) => void)
       | undefined;
 
@@ -114,7 +124,9 @@ describe("RunnerCanvas", () => {
       });
     });
 
-    expect(screen.queryByLabelText("Built-in scene runner")?.className).not.toContain("runner-canvas--underwater");
+    expect(
+      screen.queryByLabelText("Built-in scene runner")?.className
+    ).not.toContain("runner-canvas--underwater");
     expect(document.querySelector(".runner-canvas__underwater")).toBeNull();
 
     act(() => {
@@ -131,12 +143,16 @@ describe("RunnerCanvas", () => {
       });
     });
 
-    expect(screen.getByLabelText("Built-in scene runner").className).toContain("runner-canvas--underwater");
+    expect(screen.getByLabelText("Built-in scene runner").className).toContain(
+      "runner-canvas--underwater"
+    );
     expect(document.querySelector(".runner-canvas__underwater")).not.toBeNull();
   });
 
   it("shows the loading overlay until the runtime host reports readiness", async () => {
-    const runtimeScene = buildRuntimeSceneFromDocument(createEmptySceneDocument());
+    const runtimeScene = buildRuntimeSceneFromDocument(
+      createEmptySceneDocument()
+    );
 
     render(
       <RunnerCanvas
@@ -160,28 +176,31 @@ describe("RunnerCanvas", () => {
 
     await waitFor(() => {
       expect(runtimeHostInstances).toHaveLength(1);
-      expect(runtimeHostInstances[0]?.setSceneLoadStateHandler).toHaveBeenCalledTimes(1);
+      expect(
+        runtimeHostInstances[0]?.setSceneLoadStateHandler
+      ).toHaveBeenCalledTimes(1);
     });
 
-    expect(screen.getByTestId("runner-loading-overlay").className).not.toContain(
-      "runner-canvas__loading-overlay--hidden"
-    );
+    expect(
+      screen.getByTestId("runner-loading-overlay").className
+    ).not.toContain("runner-canvas__loading-overlay--hidden");
     expect(screen.getByTestId("runner-loading-scene-name")).toHaveTextContent(
       "Dungeon Entry"
     );
     expect(screen.getByTestId("runner-loading-headline")).toHaveTextContent(
       "Preparing encounter"
     );
-    expect(
-      screen.getByTestId("runner-loading-description")
-    ).toHaveTextContent("Enemies and triggers are being wired up.");
+    expect(screen.getByTestId("runner-loading-description")).toHaveTextContent(
+      "Enemies and triggers are being wired up."
+    );
     expect(document.querySelector(".runner-canvas__crosshair")).toBeNull();
     expect(screen.getByTestId("runner-shell")).toHaveAttribute(
       "aria-busy",
       "true"
     );
 
-    const publishSceneLoadState = runtimeHostInstances[0]?.setSceneLoadStateHandler.mock.calls[0]?.[0] as
+    const publishSceneLoadState = runtimeHostInstances[0]
+      ?.setSceneLoadStateHandler.mock.calls[0]?.[0] as
       | ((state: RuntimeSceneLoadState) => void)
       | undefined;
 
@@ -205,7 +224,9 @@ describe("RunnerCanvas", () => {
   });
 
   it("keeps the overlay visible and shows load errors from the runtime host", async () => {
-    const runtimeScene = buildRuntimeSceneFromDocument(createEmptySceneDocument());
+    const runtimeScene = buildRuntimeSceneFromDocument(
+      createEmptySceneDocument()
+    );
 
     render(
       <RunnerCanvas
@@ -224,10 +245,13 @@ describe("RunnerCanvas", () => {
     );
 
     await waitFor(() => {
-      expect(runtimeHostInstances[0]?.setSceneLoadStateHandler).toHaveBeenCalledTimes(1);
+      expect(
+        runtimeHostInstances[0]?.setSceneLoadStateHandler
+      ).toHaveBeenCalledTimes(1);
     });
 
-    const publishSceneLoadState = runtimeHostInstances[0]?.setSceneLoadStateHandler.mock.calls[0]?.[0] as
+    const publishSceneLoadState = runtimeHostInstances[0]
+      ?.setSceneLoadStateHandler.mock.calls[0]?.[0] as
       | ((state: RuntimeSceneLoadState) => void)
       | undefined;
 
@@ -238,9 +262,9 @@ describe("RunnerCanvas", () => {
       });
     });
 
-    expect(screen.getByTestId("runner-loading-overlay").className).not.toContain(
-      "runner-canvas__loading-overlay--hidden"
-    );
+    expect(
+      screen.getByTestId("runner-loading-overlay").className
+    ).not.toContain("runner-canvas__loading-overlay--hidden");
     expect(screen.getByTestId("runner-loading-error")).toHaveTextContent(
       "Runner scene failed to load: collision bootstrap exploded."
     );

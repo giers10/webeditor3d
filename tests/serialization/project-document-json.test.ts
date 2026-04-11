@@ -44,8 +44,10 @@ describe("project document JSON", () => {
       id: "scene-main",
       name: "Legacy Entry"
     });
-    const { loadingScreen: _loadingScreen, ...legacySceneWithoutLoadingScreen } =
-      legacyScene;
+    const {
+      loadingScreen: _loadingScreen,
+      ...legacySceneWithoutLoadingScreen
+    } = legacyScene;
     void _loadingScreen;
 
     const migratedDocument = parseProjectDocumentJson(

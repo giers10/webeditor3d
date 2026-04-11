@@ -1,4 +1,8 @@
-import { createStarterMaterialRegistry, type MaterialDef, type MaterialPattern } from "../materials/starter-material-library";
+import {
+  createStarterMaterialRegistry,
+  type MaterialDef,
+  type MaterialPattern
+} from "../materials/starter-material-library";
 import {
   createModelInstanceCollisionSettings,
   createModelInstance,
@@ -140,7 +144,10 @@ function expectString(value: unknown, label: string): string {
   return value;
 }
 
-function readOptionalSceneLoadingText(value: unknown, label: string): string | null {
+function readOptionalSceneLoadingText(
+  value: unknown,
+  label: string
+): string | null {
   if (value === undefined || value === null) {
     return null;
   }
@@ -181,7 +188,10 @@ function expectBoolean(value: unknown, label: string): boolean {
 }
 
 function expectStringArray(value: unknown, label: string): string[] {
-  if (!Array.isArray(value) || value.some((entry) => typeof entry !== "string")) {
+  if (
+    !Array.isArray(value) ||
+    value.some((entry) => typeof entry !== "string")
+  ) {
     throw new Error(`${label} must be a string array.`);
   }
 
@@ -198,7 +208,11 @@ function expectHexColor(value: unknown, label: string): string {
   return normalizedValue;
 }
 
-function expectLiteralString<T extends string>(value: unknown, expectedValue: T, label: string): T {
+function expectLiteralString<T extends string>(
+  value: unknown,
+  expectedValue: T,
+  label: string
+): T {
   if (value !== expectedValue) {
     throw new Error(`${label} must be ${expectedValue}.`);
   }
@@ -206,7 +220,11 @@ function expectLiteralString<T extends string>(value: unknown, expectedValue: T,
   return expectedValue;
 }
 
-function readOptionalBoolean(value: unknown, label: string, fallback: boolean): boolean {
+function readOptionalBoolean(
+  value: unknown,
+  label: string,
+  fallback: boolean
+): boolean {
   if (value === undefined) {
     return fallback;
   }
@@ -214,7 +232,11 @@ function readOptionalBoolean(value: unknown, label: string, fallback: boolean): 
   return expectBoolean(value, label);
 }
 
-function readOptionalFiniteNumber(value: unknown, label: string, fallback: number): number {
+function readOptionalFiniteNumber(
+  value: unknown,
+  label: string,
+  fallback: number
+): number {
   if (value === undefined) {
     return fallback;
   }
@@ -222,7 +244,11 @@ function readOptionalFiniteNumber(value: unknown, label: string, fallback: numbe
   return expectFiniteNumber(value, label);
 }
 
-function readOptionalNonNegativeFiniteNumber(value: unknown, label: string, fallback: number): number {
+function readOptionalNonNegativeFiniteNumber(
+  value: unknown,
+  label: string,
+  fallback: number
+): number {
   if (value === undefined) {
     return fallback;
   }
@@ -230,7 +256,11 @@ function readOptionalNonNegativeFiniteNumber(value: unknown, label: string, fall
   return expectNonNegativeFiniteNumber(value, label);
 }
 
-function readOptionalPositiveInteger(value: unknown, label: string, fallback: number): number {
+function readOptionalPositiveInteger(
+  value: unknown,
+  label: string,
+  fallback: number
+): number {
   if (value === undefined) {
     return fallback;
   }
@@ -244,11 +274,21 @@ function readOptionalPositiveInteger(value: unknown, label: string, fallback: nu
   return integerValue;
 }
 
-function readOptionalPositiveIntegerWithMax(value: unknown, label: string, fallback: number, max: number): number {
+function readOptionalPositiveIntegerWithMax(
+  value: unknown,
+  label: string,
+  fallback: number,
+  max: number
+): number {
   return Math.min(readOptionalPositiveInteger(value, label, fallback), max);
 }
 
-function readOptionalAllowedValue<T>(value: unknown, label: string, fallback: T, guard: (candidate: unknown) => candidate is T): T {
+function readOptionalAllowedValue<T>(
+  value: unknown,
+  label: string,
+  fallback: T,
+  guard: (candidate: unknown) => candidate is T
+): T {
   if (value === undefined) {
     return fallback;
   }
@@ -260,7 +300,9 @@ function readOptionalAllowedValue<T>(value: unknown, label: string, fallback: T,
   return value;
 }
 
-function readAdvancedRenderingSettings(value: unknown): AdvancedRenderingSettings {
+function readAdvancedRenderingSettings(
+  value: unknown
+): AdvancedRenderingSettings {
   const defaults = createDefaultAdvancedRenderingSettings();
 
   if (value === undefined) {
@@ -275,8 +317,13 @@ function readAdvancedRenderingSettings(value: unknown): AdvancedRenderingSetting
     throw new Error("world.advancedRendering.shadows must be an object.");
   }
 
-  if (value.ambientOcclusion !== undefined && !isRecord(value.ambientOcclusion)) {
-    throw new Error("world.advancedRendering.ambientOcclusion must be an object.");
+  if (
+    value.ambientOcclusion !== undefined &&
+    !isRecord(value.ambientOcclusion)
+  ) {
+    throw new Error(
+      "world.advancedRendering.ambientOcclusion must be an object."
+    );
   }
 
   if (value.bloom !== undefined && !isRecord(value.bloom)) {
@@ -292,10 +339,14 @@ function readAdvancedRenderingSettings(value: unknown): AdvancedRenderingSetting
   }
 
   const shadows = value.shadows as Record<string, unknown> | undefined;
-  const ambientOcclusion = value.ambientOcclusion as Record<string, unknown> | undefined;
+  const ambientOcclusion = value.ambientOcclusion as
+    | Record<string, unknown>
+    | undefined;
   const bloom = value.bloom as Record<string, unknown> | undefined;
   const toneMapping = value.toneMapping as Record<string, unknown> | undefined;
-  const depthOfField = value.depthOfField as Record<string, unknown> | undefined;
+  const depthOfField = value.depthOfField as
+    | Record<string, unknown>
+    | undefined;
 
   const shadowsMapSize = readOptionalAllowedValue(
     shadows?.mapSize,
@@ -315,8 +366,18 @@ function readAdvancedRenderingSettings(value: unknown): AdvancedRenderingSetting
     defaults.toneMapping.mode,
     isAdvancedRenderingToneMappingMode
   );
-  const fogPath = readOptionalAllowedValue(value.fogPath, "world.advancedRendering.fogPath", defaults.fogPath, isBoxVolumeRenderPath);
-  const waterPath = readOptionalAllowedValue(value.waterPath, "world.advancedRendering.waterPath", defaults.waterPath, isBoxVolumeRenderPath);
+  const fogPath = readOptionalAllowedValue(
+    value.fogPath,
+    "world.advancedRendering.fogPath",
+    defaults.fogPath,
+    isBoxVolumeRenderPath
+  );
+  const waterPath = readOptionalAllowedValue(
+    value.waterPath,
+    "world.advancedRendering.waterPath",
+    defaults.waterPath,
+    isBoxVolumeRenderPath
+  );
   const waterReflectionMode = readOptionalAllowedValue(
     value.waterReflectionMode,
     "world.advancedRendering.waterReflectionMode",
@@ -325,12 +386,24 @@ function readAdvancedRenderingSettings(value: unknown): AdvancedRenderingSetting
   );
 
   return {
-    enabled: readOptionalBoolean(value.enabled, "world.advancedRendering.enabled", defaults.enabled),
+    enabled: readOptionalBoolean(
+      value.enabled,
+      "world.advancedRendering.enabled",
+      defaults.enabled
+    ),
     shadows: {
-      enabled: readOptionalBoolean(shadows?.enabled, "world.advancedRendering.shadows.enabled", defaults.shadows.enabled),
+      enabled: readOptionalBoolean(
+        shadows?.enabled,
+        "world.advancedRendering.shadows.enabled",
+        defaults.shadows.enabled
+      ),
       mapSize: shadowsMapSize,
       type: shadowsType,
-      bias: readOptionalFiniteNumber(shadows?.bias, "world.advancedRendering.shadows.bias", defaults.shadows.bias)
+      bias: readOptionalFiniteNumber(
+        shadows?.bias,
+        "world.advancedRendering.shadows.bias",
+        defaults.shadows.bias
+      )
     },
     ambientOcclusion: {
       enabled: readOptionalBoolean(
@@ -355,7 +428,11 @@ function readAdvancedRenderingSettings(value: unknown): AdvancedRenderingSetting
       )
     },
     bloom: {
-      enabled: readOptionalBoolean(bloom?.enabled, "world.advancedRendering.bloom.enabled", defaults.bloom.enabled),
+      enabled: readOptionalBoolean(
+        bloom?.enabled,
+        "world.advancedRendering.bloom.enabled",
+        defaults.bloom.enabled
+      ),
       intensity: readOptionalNonNegativeFiniteNumber(
         bloom?.intensity,
         "world.advancedRendering.bloom.intensity",
@@ -366,11 +443,19 @@ function readAdvancedRenderingSettings(value: unknown): AdvancedRenderingSetting
         "world.advancedRendering.bloom.threshold",
         defaults.bloom.threshold
       ),
-      radius: readOptionalNonNegativeFiniteNumber(bloom?.radius, "world.advancedRendering.bloom.radius", defaults.bloom.radius)
+      radius: readOptionalNonNegativeFiniteNumber(
+        bloom?.radius,
+        "world.advancedRendering.bloom.radius",
+        defaults.bloom.radius
+      )
     },
     toneMapping: {
       mode: toneMappingMode,
-      exposure: readOptionalFiniteNumber(toneMapping?.exposure, "world.advancedRendering.toneMapping.exposure", defaults.toneMapping.exposure)
+      exposure: readOptionalFiniteNumber(
+        toneMapping?.exposure,
+        "world.advancedRendering.toneMapping.exposure",
+        defaults.toneMapping.exposure
+      )
     },
     depthOfField: {
       enabled: readOptionalBoolean(
@@ -400,7 +485,10 @@ function readAdvancedRenderingSettings(value: unknown): AdvancedRenderingSetting
   };
 }
 
-function readBoxBrushVolumeSettings(value: unknown, label: string): BoxBrushVolumeSettings {
+function readBoxBrushVolumeSettings(
+  value: unknown,
+  label: string
+): BoxBrushVolumeSettings {
   if (value === undefined) {
     return {
       mode: "none"
@@ -411,7 +499,12 @@ function readBoxBrushVolumeSettings(value: unknown, label: string): BoxBrushVolu
     throw new Error(`${label} must be an object.`);
   }
 
-  const mode = readOptionalAllowedValue(value.mode, `${label}.mode`, "none", isBoxBrushVolumeMode);
+  const mode = readOptionalAllowedValue(
+    value.mode,
+    `${label}.mode`,
+    "none",
+    isBoxBrushVolumeMode
+  );
 
   if (mode === "none") {
     return {
@@ -431,13 +524,20 @@ function readBoxBrushVolumeSettings(value: unknown, label: string): BoxBrushVolu
     return {
       mode: "water",
       water: {
-        colorHex: water.colorHex === undefined ? defaults.colorHex : expectHexColor(water.colorHex, `${label}.water.colorHex`),
+        colorHex:
+          water.colorHex === undefined
+            ? defaults.colorHex
+            : expectHexColor(water.colorHex, `${label}.water.colorHex`),
         surfaceOpacity: readOptionalNonNegativeFiniteNumber(
           water.surfaceOpacity,
           `${label}.water.surfaceOpacity`,
           defaults.surfaceOpacity
         ),
-        waveStrength: readOptionalNonNegativeFiniteNumber(water.waveStrength, `${label}.water.waveStrength`, defaults.waveStrength),
+        waveStrength: readOptionalNonNegativeFiniteNumber(
+          water.waveStrength,
+          `${label}.water.waveStrength`,
+          defaults.waveStrength
+        ),
         foamContactLimit: readOptionalPositiveIntegerWithMax(
           water.foamContactLimit,
           `${label}.water.foamContactLimit`,
@@ -464,14 +564,28 @@ function readBoxBrushVolumeSettings(value: unknown, label: string): BoxBrushVolu
   return {
     mode: "fog",
     fog: {
-      colorHex: fog.colorHex === undefined ? defaults.colorHex : expectHexColor(fog.colorHex, `${label}.fog.colorHex`),
-      density: readOptionalNonNegativeFiniteNumber(fog.density, `${label}.fog.density`, defaults.density),
-      padding: readOptionalNonNegativeFiniteNumber(fog.padding, `${label}.fog.padding`, defaults.padding)
+      colorHex:
+        fog.colorHex === undefined
+          ? defaults.colorHex
+          : expectHexColor(fog.colorHex, `${label}.fog.colorHex`),
+      density: readOptionalNonNegativeFiniteNumber(
+        fog.density,
+        `${label}.fog.density`,
+        defaults.density
+      ),
+      padding: readOptionalNonNegativeFiniteNumber(
+        fog.padding,
+        `${label}.fog.padding`,
+        defaults.padding
+      )
     }
   };
 }
 
-function expectOptionalString(value: unknown, label: string): string | undefined {
+function expectOptionalString(
+  value: unknown,
+  label: string
+): string | undefined {
   if (value === undefined) {
     return undefined;
   }
@@ -479,15 +593,24 @@ function expectOptionalString(value: unknown, label: string): string | undefined
   return expectString(value, label);
 }
 
-function readOptionalBrushName(value: unknown, label: string): string | undefined {
+function readOptionalBrushName(
+  value: unknown,
+  label: string
+): string | undefined {
   return normalizeBrushName(expectOptionalString(value, label));
 }
 
-function readOptionalEntityName(value: unknown, label: string): string | undefined {
+function readOptionalEntityName(
+  value: unknown,
+  label: string
+): string | undefined {
   return normalizeEntityName(expectOptionalString(value, label));
 }
 
-function expectEmptyCollection(value: unknown, label: string): Record<string, never> {
+function expectEmptyCollection(
+  value: unknown,
+  label: string
+): Record<string, never> {
   if (!isRecord(value)) {
     throw new Error(`${label} must be a record.`);
   }
@@ -499,7 +622,10 @@ function expectEmptyCollection(value: unknown, label: string): Record<string, ne
   return {};
 }
 
-function readProjectAssetBoundingBox(value: unknown, label: string): ProjectAssetBoundingBox {
+function readProjectAssetBoundingBox(
+  value: unknown,
+  label: string
+): ProjectAssetBoundingBox {
   if (!isRecord(value)) {
     throw new Error(`${label} must be an object.`);
   }
@@ -519,7 +645,10 @@ function readProjectAssetBoundingBox(value: unknown, label: string): ProjectAsse
   };
 }
 
-function readModelAssetMetadata(value: unknown, label: string): ModelAssetMetadata {
+function readModelAssetMetadata(
+  value: unknown,
+  label: string
+): ModelAssetMetadata {
   if (!isRecord(value)) {
     throw new Error(`${label} must be an object.`);
   }
@@ -530,23 +659,50 @@ function readModelAssetMetadata(value: unknown, label: string): ModelAssetMetada
     throw new Error(`${label}.format must be glb or gltf.`);
   }
 
-  const sceneName = value.sceneName === null ? null : expectOptionalString(value.sceneName, `${label}.sceneName`) ?? null;
+  const sceneName =
+    value.sceneName === null
+      ? null
+      : (expectOptionalString(value.sceneName, `${label}.sceneName`) ?? null);
 
   return {
     kind: "model",
     format,
     sceneName,
-    nodeCount: expectNonNegativeFiniteNumber(value.nodeCount, `${label}.nodeCount`),
-    meshCount: expectNonNegativeFiniteNumber(value.meshCount, `${label}.meshCount`),
-    materialNames: expectStringArray(value.materialNames, `${label}.materialNames`),
-    textureNames: expectStringArray(value.textureNames, `${label}.textureNames`),
-    animationNames: expectStringArray(value.animationNames, `${label}.animationNames`),
-    boundingBox: value.boundingBox === null ? null : readProjectAssetBoundingBox(value.boundingBox, `${label}.boundingBox`),
+    nodeCount: expectNonNegativeFiniteNumber(
+      value.nodeCount,
+      `${label}.nodeCount`
+    ),
+    meshCount: expectNonNegativeFiniteNumber(
+      value.meshCount,
+      `${label}.meshCount`
+    ),
+    materialNames: expectStringArray(
+      value.materialNames,
+      `${label}.materialNames`
+    ),
+    textureNames: expectStringArray(
+      value.textureNames,
+      `${label}.textureNames`
+    ),
+    animationNames: expectStringArray(
+      value.animationNames,
+      `${label}.animationNames`
+    ),
+    boundingBox:
+      value.boundingBox === null
+        ? null
+        : readProjectAssetBoundingBox(
+            value.boundingBox,
+            `${label}.boundingBox`
+          ),
     warnings: expectStringArray(value.warnings, `${label}.warnings`)
   };
 }
 
-function readImageAssetMetadata(value: unknown, label: string): ImageAssetMetadata {
+function readImageAssetMetadata(
+  value: unknown,
+  label: string
+): ImageAssetMetadata {
   if (!isRecord(value)) {
     throw new Error(`${label} must be an object.`);
   }
@@ -560,7 +716,10 @@ function readImageAssetMetadata(value: unknown, label: string): ImageAssetMetada
   };
 }
 
-function readAudioAssetMetadata(value: unknown, label: string): AudioAssetMetadata {
+function readAudioAssetMetadata(
+  value: unknown,
+  label: string
+): AudioAssetMetadata {
   if (!isRecord(value)) {
     throw new Error(`${label} must be an object.`);
   }
@@ -570,11 +729,24 @@ function readAudioAssetMetadata(value: unknown, label: string): AudioAssetMetada
     durationSeconds:
       value.durationSeconds === null
         ? null
-        : expectNonNegativeFiniteNumber(value.durationSeconds, `${label}.durationSeconds`),
+        : expectNonNegativeFiniteNumber(
+            value.durationSeconds,
+            `${label}.durationSeconds`
+          ),
     channelCount:
-      value.channelCount === null ? null : expectPositiveFiniteNumber(value.channelCount, `${label}.channelCount`),
+      value.channelCount === null
+        ? null
+        : expectPositiveFiniteNumber(
+            value.channelCount,
+            `${label}.channelCount`
+          ),
     sampleRateHz:
-      value.sampleRateHz === null ? null : expectPositiveFiniteNumber(value.sampleRateHz, `${label}.sampleRateHz`),
+      value.sampleRateHz === null
+        ? null
+        : expectPositiveFiniteNumber(
+            value.sampleRateHz,
+            `${label}.sampleRateHz`
+          ),
     warnings: expectStringArray(value.warnings, `${label}.warnings`)
   };
 }
@@ -594,7 +766,10 @@ function readProjectAsset(value: unknown, label: string): ProjectAssetRecord {
   const sourceName = expectString(value.sourceName, `${label}.sourceName`);
   const mimeType = expectString(value.mimeType, `${label}.mimeType`);
   const storageKey = expectString(value.storageKey, `${label}.storageKey`);
-  const byteLength = expectPositiveFiniteNumber(value.byteLength, `${label}.byteLength`);
+  const byteLength = expectPositiveFiniteNumber(
+    value.byteLength,
+    `${label}.byteLength`
+  );
 
   switch (kind) {
     case "model":
@@ -650,7 +825,10 @@ function readAssets(value: unknown): SceneDocument["assets"] {
   return assets;
 }
 
-function readModelInstanceCollisionSettings(value: unknown, label: string): ModelInstanceCollisionSettings {
+function readModelInstanceCollisionSettings(
+  value: unknown,
+  label: string
+): ModelInstanceCollisionSettings {
   if (value === undefined) {
     return createModelInstanceCollisionSettings();
   }
@@ -659,7 +837,12 @@ function readModelInstanceCollisionSettings(value: unknown, label: string): Mode
     throw new Error(`${label} must be an object.`);
   }
 
-  const mode = readOptionalAllowedValue(value.mode, `${label}.mode`, "none", isModelInstanceCollisionMode);
+  const mode = readOptionalAllowedValue(
+    value.mode,
+    `${label}.mode`,
+    "none",
+    isModelInstanceCollisionMode
+  );
 
   return createModelInstanceCollisionSettings({
     mode,
@@ -680,21 +863,42 @@ function readPlayerStartColliderSettings(value: unknown, label: string) {
     value.mode,
     `${label}.mode`,
     "capsule",
-    (candidate): candidate is "capsule" | "box" | "none" => typeof candidate === "string" && isPlayerStartColliderMode(candidate)
+    (candidate): candidate is "capsule" | "box" | "none" =>
+      typeof candidate === "string" && isPlayerStartColliderMode(candidate)
   );
 
   return createPlayerStartColliderSettings({
     mode,
-    eyeHeight: value.eyeHeight === undefined ? undefined : expectPositiveFiniteNumber(value.eyeHeight, `${label}.eyeHeight`),
+    eyeHeight:
+      value.eyeHeight === undefined
+        ? undefined
+        : expectPositiveFiniteNumber(value.eyeHeight, `${label}.eyeHeight`),
     capsuleRadius:
-      value.capsuleRadius === undefined ? undefined : expectPositiveFiniteNumber(value.capsuleRadius, `${label}.capsuleRadius`),
+      value.capsuleRadius === undefined
+        ? undefined
+        : expectPositiveFiniteNumber(
+            value.capsuleRadius,
+            `${label}.capsuleRadius`
+          ),
     capsuleHeight:
-      value.capsuleHeight === undefined ? undefined : expectPositiveFiniteNumber(value.capsuleHeight, `${label}.capsuleHeight`),
-    boxSize: value.boxSize === undefined ? undefined : readVec3(value.boxSize, `${label}.boxSize`)
+      value.capsuleHeight === undefined
+        ? undefined
+        : expectPositiveFiniteNumber(
+            value.capsuleHeight,
+            `${label}.capsuleHeight`
+          ),
+    boxSize:
+      value.boxSize === undefined
+        ? undefined
+        : readVec3(value.boxSize, `${label}.boxSize`)
   });
 }
 
-function readModelInstance(value: unknown, label: string, assets: SceneDocument["assets"]): ModelInstance {
+function readModelInstance(
+  value: unknown,
+  label: string,
+  assets: SceneDocument["assets"]
+): ModelInstance {
   if (!isRecord(value)) {
     throw new Error(`${label} must be an object.`);
   }
@@ -713,24 +917,39 @@ function readModelInstance(value: unknown, label: string, assets: SceneDocument[
   return createModelInstance({
     id: expectString(value.id, `${label}.id`),
     assetId,
-    name: normalizeModelInstanceName(expectOptionalString(value.name, `${label}.name`)),
+    name: normalizeModelInstanceName(
+      expectOptionalString(value.name, `${label}.name`)
+    ),
     position: readVec3(value.position, `${label}.position`),
-    rotationDegrees: readVec3(value.rotationDegrees, `${label}.rotationDegrees`),
+    rotationDegrees: readVec3(
+      value.rotationDegrees,
+      `${label}.rotationDegrees`
+    ),
     scale: readVec3(value.scale, `${label}.scale`),
-    collision: readModelInstanceCollisionSettings(value.collision, `${label}.collision`),
+    collision: readModelInstanceCollisionSettings(
+      value.collision,
+      `${label}.collision`
+    ),
     animationClipName: (() => {
-      const raw = expectOptionalString(value.animationClipName, `${label}.animationClipName`);
+      const raw = expectOptionalString(
+        value.animationClipName,
+        `${label}.animationClipName`
+      );
       if (raw === undefined) return undefined;
       const trimmed = raw.trim();
       return trimmed.length === 0 ? undefined : trimmed;
     })(),
-    animationAutoplay: value.animationAutoplay === undefined
-      ? undefined
-      : expectBoolean(value.animationAutoplay, `${label}.animationAutoplay`)
+    animationAutoplay:
+      value.animationAutoplay === undefined
+        ? undefined
+        : expectBoolean(value.animationAutoplay, `${label}.animationAutoplay`)
   });
 }
 
-function readModelInstances(value: unknown, assets: SceneDocument["assets"]): SceneDocument["modelInstances"] {
+function readModelInstances(
+  value: unknown,
+  assets: SceneDocument["assets"]
+): SceneDocument["modelInstances"] {
   if (!isRecord(value)) {
     throw new Error("modelInstances must be a record.");
   }
@@ -738,10 +957,16 @@ function readModelInstances(value: unknown, assets: SceneDocument["assets"]): Sc
   const modelInstances: SceneDocument["modelInstances"] = {};
 
   for (const [modelInstanceId, modelInstanceValue] of Object.entries(value)) {
-    const modelInstance = readModelInstance(modelInstanceValue, `modelInstances.${modelInstanceId}`, assets);
+    const modelInstance = readModelInstance(
+      modelInstanceValue,
+      `modelInstances.${modelInstanceId}`,
+      assets
+    );
 
     if (modelInstance.id !== modelInstanceId) {
-      throw new Error(`modelInstances.${modelInstanceId}.id must match the registry key.`);
+      throw new Error(
+        `modelInstances.${modelInstanceId}.id must match the registry key.`
+      );
     }
 
     modelInstances[modelInstanceId] = modelInstance;
@@ -773,7 +998,11 @@ function readVec3(value: unknown, label: string) {
   };
 }
 
-function readOptionalVec3(value: unknown, label: string, fallback: { x: number; y: number; z: number }) {
+function readOptionalVec3(
+  value: unknown,
+  label: string,
+  fallback: { x: number; y: number; z: number }
+) {
   if (value === undefined) {
     return {
       x: fallback.x,
@@ -785,21 +1014,32 @@ function readOptionalVec3(value: unknown, label: string, fallback: { x: number; 
   return readVec3(value, label);
 }
 
-function assertNonZeroVec3(vector: { x: number; y: number; z: number }, label: string) {
+function assertNonZeroVec3(
+  vector: { x: number; y: number; z: number },
+  label: string
+) {
   if (vector.x === 0 && vector.y === 0 && vector.z === 0) {
     throw new Error(`${label} must not be the zero vector.`);
   }
 }
 
 function expectMaterialPattern(value: unknown, label: string): MaterialPattern {
-  if (value !== "grid" && value !== "checker" && value !== "stripes" && value !== "diamond") {
+  if (
+    value !== "grid" &&
+    value !== "checker" &&
+    value !== "stripes" &&
+    value !== "diamond"
+  ) {
     throw new Error(`${label} must be a supported starter material pattern.`);
   }
 
   return value;
 }
 
-function readMaterialRegistry(value: unknown, label: string): SceneDocument["materials"] {
+function readMaterialRegistry(
+  value: unknown,
+  label: string
+): SceneDocument["materials"] {
   if (!isRecord(value)) {
     throw new Error(`${label} must be a record.`);
   }
@@ -814,9 +1054,18 @@ function readMaterialRegistry(value: unknown, label: string): SceneDocument["mat
     const material: MaterialDef = {
       id: expectString(materialValue.id, `${label}.${materialId}.id`),
       name: expectString(materialValue.name, `${label}.${materialId}.name`),
-      baseColorHex: expectHexColor(materialValue.baseColorHex, `${label}.${materialId}.baseColorHex`),
-      accentColorHex: expectHexColor(materialValue.accentColorHex, `${label}.${materialId}.accentColorHex`),
-      pattern: expectMaterialPattern(materialValue.pattern, `${label}.${materialId}.pattern`),
+      baseColorHex: expectHexColor(
+        materialValue.baseColorHex,
+        `${label}.${materialId}.baseColorHex`
+      ),
+      accentColorHex: expectHexColor(
+        materialValue.accentColorHex,
+        `${label}.${materialId}.accentColorHex`
+      ),
+      pattern: expectMaterialPattern(
+        materialValue.pattern,
+        `${label}.${materialId}.pattern`
+      ),
       tags: expectStringArray(materialValue.tags, `${label}.${materialId}.tags`)
     };
 
@@ -835,7 +1084,10 @@ function readFaceUvState(value: unknown, label: string): FaceUvState {
     throw new Error(`${label} must be an object.`);
   }
 
-  const rotationQuarterTurns = expectFiniteNumber(value.rotationQuarterTurns, `${label}.rotationQuarterTurns`);
+  const rotationQuarterTurns = expectFiniteNumber(
+    value.rotationQuarterTurns,
+    `${label}.rotationQuarterTurns`
+  );
 
   if (!isFaceUvRotationQuarterTurns(rotationQuarterTurns)) {
     throw new Error(`${label}.rotationQuarterTurns must be 0, 1, 2, or 3.`);
@@ -868,12 +1120,22 @@ function readBrushFace(
 
   const materialId = value.materialId;
 
-  if (materialId !== null && materialId !== undefined && typeof materialId !== "string") {
+  if (
+    materialId !== null &&
+    materialId !== undefined &&
+    typeof materialId !== "string"
+  ) {
     throw new Error(`${label}.materialId must be a string or null.`);
   }
 
-  if (materialId !== null && materialId !== undefined && materials[materialId] === undefined) {
-    throw new Error(`${label}.materialId references missing material ${materialId}.`);
+  if (
+    materialId !== null &&
+    materialId !== undefined &&
+    materials[materialId] === undefined
+  ) {
+    throw new Error(
+      `${label}.materialId references missing material ${materialId}.`
+    );
   }
 
   return {
@@ -895,23 +1157,61 @@ function readBoxBrushFaces(
     throw new Error(`${label} must be an object.`);
   }
 
-  const extraFaceKeys = Object.keys(value).filter((faceId) => !isBoxFaceId(faceId));
+  const extraFaceKeys = Object.keys(value).filter(
+    (faceId) => !isBoxFaceId(faceId)
+  );
 
   if (extraFaceKeys.length > 0) {
-    throw new Error(`${label} contains unsupported face ids: ${extraFaceKeys.join(", ")}.`);
+    throw new Error(
+      `${label} contains unsupported face ids: ${extraFaceKeys.join(", ")}.`
+    );
   }
 
   return {
-    posX: readBrushFace(value.posX, `${label}.posX`, materials, allowMissingUvState),
-    negX: readBrushFace(value.negX, `${label}.negX`, materials, allowMissingUvState),
-    posY: readBrushFace(value.posY, `${label}.posY`, materials, allowMissingUvState),
-    negY: readBrushFace(value.negY, `${label}.negY`, materials, allowMissingUvState),
-    posZ: readBrushFace(value.posZ, `${label}.posZ`, materials, allowMissingUvState),
-    negZ: readBrushFace(value.negZ, `${label}.negZ`, materials, allowMissingUvState)
+    posX: readBrushFace(
+      value.posX,
+      `${label}.posX`,
+      materials,
+      allowMissingUvState
+    ),
+    negX: readBrushFace(
+      value.negX,
+      `${label}.negX`,
+      materials,
+      allowMissingUvState
+    ),
+    posY: readBrushFace(
+      value.posY,
+      `${label}.posY`,
+      materials,
+      allowMissingUvState
+    ),
+    negY: readBrushFace(
+      value.negY,
+      `${label}.negY`,
+      materials,
+      allowMissingUvState
+    ),
+    posZ: readBrushFace(
+      value.posZ,
+      `${label}.posZ`,
+      materials,
+      allowMissingUvState
+    ),
+    negZ: readBrushFace(
+      value.negZ,
+      `${label}.negZ`,
+      materials,
+      allowMissingUvState
+    )
   };
 }
 
-function readBoxBrushGeometry(value: unknown, label: string, size: { x: number; y: number; z: number }) {
+function readBoxBrushGeometry(
+  value: unknown,
+  label: string,
+  size: { x: number; y: number; z: number }
+) {
   if (value === undefined) {
     return createDefaultBoxBrushGeometry(size);
   }
@@ -925,23 +1225,50 @@ function readBoxBrushGeometry(value: unknown, label: string, size: { x: number; 
   }
 
   const extraVertexKeys = Object.keys(value.vertices).filter(
-    (vertexId) => !BOX_VERTEX_IDS.includes(vertexId as (typeof BOX_VERTEX_IDS)[number])
+    (vertexId) =>
+      !BOX_VERTEX_IDS.includes(vertexId as (typeof BOX_VERTEX_IDS)[number])
   );
 
   if (extraVertexKeys.length > 0) {
-    throw new Error(`${label}.vertices contains unsupported vertex ids: ${extraVertexKeys.join(", ")}.`);
+    throw new Error(
+      `${label}.vertices contains unsupported vertex ids: ${extraVertexKeys.join(", ")}.`
+    );
   }
 
   return {
     vertices: {
-      negX_negY_negZ: readVec3(value.vertices.negX_negY_negZ, `${label}.vertices.negX_negY_negZ`),
-      posX_negY_negZ: readVec3(value.vertices.posX_negY_negZ, `${label}.vertices.posX_negY_negZ`),
-      negX_posY_negZ: readVec3(value.vertices.negX_posY_negZ, `${label}.vertices.negX_posY_negZ`),
-      posX_posY_negZ: readVec3(value.vertices.posX_posY_negZ, `${label}.vertices.posX_posY_negZ`),
-      negX_negY_posZ: readVec3(value.vertices.negX_negY_posZ, `${label}.vertices.negX_negY_posZ`),
-      posX_negY_posZ: readVec3(value.vertices.posX_negY_posZ, `${label}.vertices.posX_negY_posZ`),
-      negX_posY_posZ: readVec3(value.vertices.negX_posY_posZ, `${label}.vertices.negX_posY_posZ`),
-      posX_posY_posZ: readVec3(value.vertices.posX_posY_posZ, `${label}.vertices.posX_posY_posZ`)
+      negX_negY_negZ: readVec3(
+        value.vertices.negX_negY_negZ,
+        `${label}.vertices.negX_negY_negZ`
+      ),
+      posX_negY_negZ: readVec3(
+        value.vertices.posX_negY_negZ,
+        `${label}.vertices.posX_negY_negZ`
+      ),
+      negX_posY_negZ: readVec3(
+        value.vertices.negX_posY_negZ,
+        `${label}.vertices.negX_posY_negZ`
+      ),
+      posX_posY_negZ: readVec3(
+        value.vertices.posX_posY_negZ,
+        `${label}.vertices.posX_posY_negZ`
+      ),
+      negX_negY_posZ: readVec3(
+        value.vertices.negX_negY_posZ,
+        `${label}.vertices.negX_negY_posZ`
+      ),
+      posX_negY_posZ: readVec3(
+        value.vertices.posX_negY_posZ,
+        `${label}.vertices.posX_negY_posZ`
+      ),
+      negX_posY_posZ: readVec3(
+        value.vertices.negX_posY_posZ,
+        `${label}.vertices.negX_posY_posZ`
+      ),
+      posX_posY_posZ: readVec3(
+        value.vertices.posX_posY_posZ,
+        `${label}.vertices.posX_posY_posZ`
+      )
     }
   };
 }
@@ -983,11 +1310,29 @@ function readBrushes(
         DEFAULT_BOX_BRUSH_ROTATION_DEGREES
       ),
       size,
-      geometry: readBoxBrushGeometry(brushValue.geometry, `brushes.${brushId}.geometry`, size),
-      faces: readBoxBrushFaces(brushValue.faces, `brushes.${brushId}.faces`, materials, allowMissingUvState),
-      volume: readBoxBrushVolumeSettings(brushValue.volume, `brushes.${brushId}.volume`),
-      layerId: expectOptionalString(brushValue.layerId, `brushes.${brushId}.layerId`),
-      groupId: expectOptionalString(brushValue.groupId, `brushes.${brushId}.groupId`)
+      geometry: readBoxBrushGeometry(
+        brushValue.geometry,
+        `brushes.${brushId}.geometry`,
+        size
+      ),
+      faces: readBoxBrushFaces(
+        brushValue.faces,
+        `brushes.${brushId}.faces`,
+        materials,
+        allowMissingUvState
+      ),
+      volume: readBoxBrushVolumeSettings(
+        brushValue.volume,
+        `brushes.${brushId}.volume`
+      ),
+      layerId: expectOptionalString(
+        brushValue.layerId,
+        `brushes.${brushId}.layerId`
+      ),
+      groupId: expectOptionalString(
+        brushValue.groupId,
+        `brushes.${brushId}.groupId`
+      )
     });
   }
 
@@ -1022,7 +1367,9 @@ function readWorldSettings(value: unknown): WorldSettings {
   let resolvedBackground: WorldBackgroundSettings;
 
   if (!isWorldBackgroundMode(backgroundMode)) {
-    throw new Error("world.background.mode must be a supported background mode.");
+    throw new Error(
+      "world.background.mode must be a supported background mode."
+    );
   }
 
   if (backgroundMode === "solid") {
@@ -1033,29 +1380,47 @@ function readWorldSettings(value: unknown): WorldSettings {
   } else if (backgroundMode === "verticalGradient") {
     resolvedBackground = {
       mode: "verticalGradient",
-      topColorHex: expectHexColor(background.topColorHex, "world.background.topColorHex"),
-      bottomColorHex: expectHexColor(background.bottomColorHex, "world.background.bottomColorHex")
+      topColorHex: expectHexColor(
+        background.topColorHex,
+        "world.background.topColorHex"
+      ),
+      bottomColorHex: expectHexColor(
+        background.bottomColorHex,
+        "world.background.bottomColorHex"
+      )
     };
   } else {
     resolvedBackground = {
       mode: "image",
       assetId: expectString(background.assetId, "world.background.assetId"),
       // Default to 0.5 for documents saved before environmentIntensity was added
-      environmentIntensity: typeof background.environmentIntensity === "number" && isFinite(background.environmentIntensity) && background.environmentIntensity >= 0
-        ? background.environmentIntensity
-        : 0.5
+      environmentIntensity:
+        typeof background.environmentIntensity === "number" &&
+        isFinite(background.environmentIntensity) &&
+        background.environmentIntensity >= 0
+          ? background.environmentIntensity
+          : 0.5
     };
   }
 
   return {
     background: resolvedBackground,
     ambientLight: {
-      colorHex: expectHexColor(ambientLight.colorHex, "world.ambientLight.colorHex"),
-      intensity: expectNonNegativeFiniteNumber(ambientLight.intensity, "world.ambientLight.intensity")
+      colorHex: expectHexColor(
+        ambientLight.colorHex,
+        "world.ambientLight.colorHex"
+      ),
+      intensity: expectNonNegativeFiniteNumber(
+        ambientLight.intensity,
+        "world.ambientLight.intensity"
+      )
     },
     sunLight: {
       colorHex: expectHexColor(sunLight.colorHex, "world.sunLight.colorHex"),
-      intensity: expectNonNegativeFiniteNumber(sunLight.intensity, "world.sunLight.intensity"),
+      intensity: expectNonNegativeFiniteNumber(
+        sunLight.intensity,
+        "world.sunLight.intensity"
+      ),
       direction
     },
     advancedRendering: readAdvancedRenderingSettings(value.advancedRendering)
@@ -1073,7 +1438,10 @@ function readPointLightEntity(value: unknown, label: string): EntityInstance {
     name: readOptionalEntityName(value.name, `${label}.name`),
     position: readVec3(value.position, `${label}.position`),
     colorHex: expectHexColor(value.colorHex, `${label}.colorHex`),
-    intensity: expectNonNegativeFiniteNumber(value.intensity, `${label}.intensity`),
+    intensity: expectNonNegativeFiniteNumber(
+      value.intensity,
+      `${label}.intensity`
+    ),
     distance: expectPositiveFiniteNumber(value.distance, `${label}.distance`)
   });
 
@@ -1096,9 +1464,15 @@ function readSpotLightEntity(value: unknown, label: string): EntityInstance {
     position: readVec3(value.position, `${label}.position`),
     direction: readVec3(value.direction, `${label}.direction`),
     colorHex: expectHexColor(value.colorHex, `${label}.colorHex`),
-    intensity: expectNonNegativeFiniteNumber(value.intensity, `${label}.intensity`),
+    intensity: expectNonNegativeFiniteNumber(
+      value.intensity,
+      `${label}.intensity`
+    ),
     distance: expectPositiveFiniteNumber(value.distance, `${label}.distance`),
-    angleDegrees: expectFiniteNumber(value.angleDegrees, `${label}.angleDegrees`)
+    angleDegrees: expectFiniteNumber(
+      value.angleDegrees,
+      `${label}.angleDegrees`
+    )
   });
 
   if (entity.kind !== kind) {
@@ -1119,7 +1493,10 @@ function readPlayerStartEntity(value: unknown, label: string): EntityInstance {
     name: readOptionalEntityName(value.name, `${label}.name`),
     position: readVec3(value.position, `${label}.position`),
     yawDegrees: expectFiniteNumber(value.yawDegrees, `${label}.yawDegrees`),
-    collider: readPlayerStartColliderSettings(value.collider, `${label}.collider`)
+    collider: readPlayerStartColliderSettings(
+      value.collider,
+      `${label}.collider`
+    )
   });
 
   if (entity.kind !== kind) {
@@ -1144,8 +1521,14 @@ function readSoundEmitterEntity(value: unknown, label: string): EntityInstance {
         ? undefined
         : expectString(value.audioAssetId, `${label}.audioAssetId`),
     volume: expectNonNegativeFiniteNumber(value.volume, `${label}.volume`),
-    refDistance: expectPositiveFiniteNumber(value.refDistance, `${label}.refDistance`),
-    maxDistance: expectPositiveFiniteNumber(value.maxDistance, `${label}.maxDistance`),
+    refDistance: expectPositiveFiniteNumber(
+      value.refDistance,
+      `${label}.refDistance`
+    ),
+    maxDistance: expectPositiveFiniteNumber(
+      value.maxDistance,
+      `${label}.maxDistance`
+    ),
     autoplay: expectBoolean(value.autoplay, `${label}.autoplay`),
     loop: expectBoolean(value.loop, `${label}.loop`)
   });
@@ -1157,7 +1540,10 @@ function readSoundEmitterEntity(value: unknown, label: string): EntityInstance {
   return entity;
 }
 
-function readLegacySoundEmitterEntity(value: unknown, label: string): EntityInstance {
+function readLegacySoundEmitterEntity(
+  value: unknown,
+  label: string
+): EntityInstance {
   if (!isRecord(value)) {
     throw new Error(`${label} must be an object.`);
   }
@@ -1182,12 +1568,19 @@ function readLegacySoundEmitterEntity(value: unknown, label: string): EntityInst
   return entity;
 }
 
-function readTriggerVolumeEntity(value: unknown, label: string): EntityInstance {
+function readTriggerVolumeEntity(
+  value: unknown,
+  label: string
+): EntityInstance {
   if (!isRecord(value)) {
     throw new Error(`${label} must be an object.`);
   }
 
-  const kind = expectLiteralString(value.kind, "triggerVolume", `${label}.kind`);
+  const kind = expectLiteralString(
+    value.kind,
+    "triggerVolume",
+    `${label}.kind`
+  );
   const size = readVec3(value.size, `${label}.size`);
 
   if (size.x <= 0 || size.y <= 0 || size.z <= 0) {
@@ -1199,7 +1592,10 @@ function readTriggerVolumeEntity(value: unknown, label: string): EntityInstance 
     name: readOptionalEntityName(value.name, `${label}.name`),
     position: readVec3(value.position, `${label}.position`),
     size,
-    triggerOnEnter: expectBoolean(value.triggerOnEnter, `${label}.triggerOnEnter`),
+    triggerOnEnter: expectBoolean(
+      value.triggerOnEnter,
+      `${label}.triggerOnEnter`
+    ),
     triggerOnExit: expectBoolean(value.triggerOnExit, `${label}.triggerOnExit`)
   });
 
@@ -1210,12 +1606,19 @@ function readTriggerVolumeEntity(value: unknown, label: string): EntityInstance 
   return entity;
 }
 
-function readTeleportTargetEntity(value: unknown, label: string): EntityInstance {
+function readTeleportTargetEntity(
+  value: unknown,
+  label: string
+): EntityInstance {
   if (!isRecord(value)) {
     throw new Error(`${label} must be an object.`);
   }
 
-  const kind = expectLiteralString(value.kind, "teleportTarget", `${label}.kind`);
+  const kind = expectLiteralString(
+    value.kind,
+    "teleportTarget",
+    `${label}.kind`
+  );
   const entity = createTeleportTargetEntity({
     id: expectString(value.id, `${label}.id`),
     name: readOptionalEntityName(value.name, `${label}.name`),
@@ -1252,7 +1655,11 @@ function readInteractableEntity(value: unknown, label: string): EntityInstance {
   return entity;
 }
 
-function readEntityInstance(value: unknown, label: string, options: { legacySoundEmitter: boolean }): EntityInstance {
+function readEntityInstance(
+  value: unknown,
+  label: string,
+  options: { legacySoundEmitter: boolean }
+): EntityInstance {
   if (!isRecord(value)) {
     throw new Error(`${label} must be an object.`);
   }
@@ -1265,7 +1672,9 @@ function readEntityInstance(value: unknown, label: string, options: { legacySoun
     case "playerStart":
       return readPlayerStartEntity(value, label);
     case "soundEmitter":
-      return options.legacySoundEmitter ? readLegacySoundEmitterEntity(value, label) : readSoundEmitterEntity(value, label);
+      return options.legacySoundEmitter
+        ? readLegacySoundEmitterEntity(value, label)
+        : readSoundEmitterEntity(value, label);
     case "triggerVolume":
       return readTriggerVolumeEntity(value, label);
     case "teleportTarget":
@@ -1277,7 +1686,10 @@ function readEntityInstance(value: unknown, label: string, options: { legacySoun
   }
 }
 
-function readEntities(value: unknown, options: { legacySoundEmitter: boolean }): SceneDocument["entities"] {
+function readEntities(
+  value: unknown,
+  options: { legacySoundEmitter: boolean }
+): SceneDocument["entities"] {
   if (!isRecord(value)) {
     throw new Error("entities must be a record.");
   }
@@ -1289,7 +1701,11 @@ function readEntities(value: unknown, options: { legacySoundEmitter: boolean }):
       throw new Error(`entities.${entityId} must be an object.`);
     }
 
-    const entity = readEntityInstance(entityValue, `entities.${entityId}`, options);
+    const entity = readEntityInstance(
+      entityValue,
+      `entities.${entityId}`,
+      options
+    );
 
     if (entity.id !== entityId) {
       throw new Error(`entities.${entityId}.id must match the registry key.`);
@@ -1301,7 +1717,10 @@ function readEntities(value: unknown, options: { legacySoundEmitter: boolean }):
   return entities;
 }
 
-function readInteractionAction(value: unknown, label: string): InteractionLink["action"] {
+function readInteractionAction(
+  value: unknown,
+  label: string
+): InteractionLink["action"] {
   if (!isRecord(value)) {
     throw new Error(`${label} must be an object.`);
   }
@@ -1310,19 +1729,28 @@ function readInteractionAction(value: unknown, label: string): InteractionLink["
     case "teleportPlayer":
       return createTeleportPlayerInteractionLink({
         sourceEntityId: "interaction-source-placeholder",
-        targetEntityId: expectString(value.targetEntityId, `${label}.targetEntityId`)
+        targetEntityId: expectString(
+          value.targetEntityId,
+          `${label}.targetEntityId`
+        )
       }).action;
     case "toggleVisibility":
       return createToggleVisibilityInteractionLink({
         sourceEntityId: "interaction-source-placeholder",
-        targetBrushId: expectString(value.targetBrushId, `${label}.targetBrushId`),
+        targetBrushId: expectString(
+          value.targetBrushId,
+          `${label}.targetBrushId`
+        ),
         visible:
           value.visible === undefined
             ? undefined
             : expectBoolean(value.visible, `${label}.visible`)
       }).action;
     case "playAnimation": {
-      const targetModelInstanceId = expectString(value.targetModelInstanceId, `${label}.targetModelInstanceId`);
+      const targetModelInstanceId = expectString(
+        value.targetModelInstanceId,
+        `${label}.targetModelInstanceId`
+      );
       if (targetModelInstanceId.trim().length === 0) {
         throw new Error(`${label}.targetModelInstanceId must be non-empty.`);
       }
@@ -1334,11 +1762,17 @@ function readInteractionAction(value: unknown, label: string): InteractionLink["
         sourceEntityId: "interaction-source-placeholder",
         targetModelInstanceId,
         clipName,
-        loop: value.loop === undefined ? undefined : expectBoolean(value.loop, `${label}.loop`)
+        loop:
+          value.loop === undefined
+            ? undefined
+            : expectBoolean(value.loop, `${label}.loop`)
       }).action;
     }
     case "stopAnimation": {
-      const targetModelInstanceId = expectString(value.targetModelInstanceId, `${label}.targetModelInstanceId`);
+      const targetModelInstanceId = expectString(
+        value.targetModelInstanceId,
+        `${label}.targetModelInstanceId`
+      );
       if (targetModelInstanceId.trim().length === 0) {
         throw new Error(`${label}.targetModelInstanceId must be non-empty.`);
       }
@@ -1348,7 +1782,10 @@ function readInteractionAction(value: unknown, label: string): InteractionLink["
       }).action;
     }
     case "playSound": {
-      const targetSoundEmitterId = expectString(value.targetSoundEmitterId, `${label}.targetSoundEmitterId`);
+      const targetSoundEmitterId = expectString(
+        value.targetSoundEmitterId,
+        `${label}.targetSoundEmitterId`
+      );
       if (targetSoundEmitterId.trim().length === 0) {
         throw new Error(`${label}.targetSoundEmitterId must be non-empty.`);
       }
@@ -1358,7 +1795,10 @@ function readInteractionAction(value: unknown, label: string): InteractionLink["
       }).action;
     }
     case "stopSound": {
-      const targetSoundEmitterId = expectString(value.targetSoundEmitterId, `${label}.targetSoundEmitterId`);
+      const targetSoundEmitterId = expectString(
+        value.targetSoundEmitterId,
+        `${label}.targetSoundEmitterId`
+      );
       if (targetSoundEmitterId.trim().length === 0) {
         throw new Error(`${label}.targetSoundEmitterId must be non-empty.`);
       }
@@ -1380,7 +1820,9 @@ function readInteractionLink(value: unknown, label: string): InteractionLink {
   const trigger = expectString(value.trigger, `${label}.trigger`);
 
   if (!isInteractionTriggerKind(trigger)) {
-    throw new Error(`${label}.trigger must be a supported interaction trigger.`);
+    throw new Error(
+      `${label}.trigger must be a supported interaction trigger.`
+    );
   }
 
   const action = readInteractionAction(value.action, `${label}.action`);
@@ -1389,14 +1831,20 @@ function readInteractionLink(value: unknown, label: string): InteractionLink {
     case "teleportPlayer":
       return createTeleportPlayerInteractionLink({
         id: expectString(value.id, `${label}.id`),
-        sourceEntityId: expectString(value.sourceEntityId, `${label}.sourceEntityId`),
+        sourceEntityId: expectString(
+          value.sourceEntityId,
+          `${label}.sourceEntityId`
+        ),
         trigger,
         targetEntityId: action.targetEntityId
       });
     case "toggleVisibility":
       return createToggleVisibilityInteractionLink({
         id: expectString(value.id, `${label}.id`),
-        sourceEntityId: expectString(value.sourceEntityId, `${label}.sourceEntityId`),
+        sourceEntityId: expectString(
+          value.sourceEntityId,
+          `${label}.sourceEntityId`
+        ),
         trigger,
         targetBrushId: action.targetBrushId,
         visible: action.visible
@@ -1404,7 +1852,10 @@ function readInteractionLink(value: unknown, label: string): InteractionLink {
     case "playAnimation":
       return createPlayAnimationInteractionLink({
         id: expectString(value.id, `${label}.id`),
-        sourceEntityId: expectString(value.sourceEntityId, `${label}.sourceEntityId`),
+        sourceEntityId: expectString(
+          value.sourceEntityId,
+          `${label}.sourceEntityId`
+        ),
         trigger,
         targetModelInstanceId: action.targetModelInstanceId,
         clipName: action.clipName,
@@ -1413,28 +1864,39 @@ function readInteractionLink(value: unknown, label: string): InteractionLink {
     case "stopAnimation":
       return createStopAnimationInteractionLink({
         id: expectString(value.id, `${label}.id`),
-        sourceEntityId: expectString(value.sourceEntityId, `${label}.sourceEntityId`),
+        sourceEntityId: expectString(
+          value.sourceEntityId,
+          `${label}.sourceEntityId`
+        ),
         trigger,
         targetModelInstanceId: action.targetModelInstanceId
       });
     case "playSound":
       return createPlaySoundInteractionLink({
         id: expectString(value.id, `${label}.id`),
-        sourceEntityId: expectString(value.sourceEntityId, `${label}.sourceEntityId`),
+        sourceEntityId: expectString(
+          value.sourceEntityId,
+          `${label}.sourceEntityId`
+        ),
         trigger,
         targetSoundEmitterId: action.targetSoundEmitterId
       });
     case "stopSound":
       return createStopSoundInteractionLink({
         id: expectString(value.id, `${label}.id`),
-        sourceEntityId: expectString(value.sourceEntityId, `${label}.sourceEntityId`),
+        sourceEntityId: expectString(
+          value.sourceEntityId,
+          `${label}.sourceEntityId`
+        ),
         trigger,
         targetSoundEmitterId: action.targetSoundEmitterId
       });
   }
 }
 
-function readInteractionLinks(value: unknown): SceneDocument["interactionLinks"] {
+function readInteractionLinks(
+  value: unknown
+): SceneDocument["interactionLinks"] {
   if (!isRecord(value)) {
     throw new Error("interactionLinks must be a record.");
   }
@@ -1442,10 +1904,15 @@ function readInteractionLinks(value: unknown): SceneDocument["interactionLinks"]
   const interactionLinks: SceneDocument["interactionLinks"] = {};
 
   for (const [linkId, linkValue] of Object.entries(value)) {
-    const interactionLink = readInteractionLink(linkValue, `interactionLinks.${linkId}`);
+    const interactionLink = readInteractionLink(
+      linkValue,
+      `interactionLinks.${linkId}`
+    );
 
     if (interactionLink.id !== linkId) {
-      throw new Error(`interactionLinks.${linkId}.id must match the registry key.`);
+      throw new Error(
+        `interactionLinks.${linkId}.id must match the registry key.`
+      );
     }
 
     interactionLinks[linkId] = interactionLink;
@@ -1471,9 +1938,15 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       textures: expectEmptyCollection(source.textures, "textures"),
       assets: expectEmptyCollection(source.assets, "assets"),
       brushes: {},
-      modelInstances: expectEmptyCollection(source.modelInstances, "modelInstances"),
+      modelInstances: expectEmptyCollection(
+        source.modelInstances,
+        "modelInstances"
+      ),
       entities: expectEmptyCollection(source.entities, "entities"),
-      interactionLinks: expectEmptyCollection(source.interactionLinks, "interactionLinks")
+      interactionLinks: expectEmptyCollection(
+        source.interactionLinks,
+        "interactionLinks"
+      )
     };
   }
 
@@ -1489,9 +1962,15 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       textures: expectEmptyCollection(source.textures, "textures"),
       assets: expectEmptyCollection(source.assets, "assets"),
       brushes: readBrushes(source.brushes, materials, true),
-      modelInstances: expectEmptyCollection(source.modelInstances, "modelInstances"),
+      modelInstances: expectEmptyCollection(
+        source.modelInstances,
+        "modelInstances"
+      ),
       entities: expectEmptyCollection(source.entities, "entities"),
-      interactionLinks: expectEmptyCollection(source.interactionLinks, "interactionLinks")
+      interactionLinks: expectEmptyCollection(
+        source.interactionLinks,
+        "interactionLinks"
+      )
     };
   }
 
@@ -1506,9 +1985,15 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       textures: expectEmptyCollection(source.textures, "textures"),
       assets: expectEmptyCollection(source.assets, "assets"),
       brushes: readBrushes(source.brushes, materials, false),
-      modelInstances: expectEmptyCollection(source.modelInstances, "modelInstances"),
+      modelInstances: expectEmptyCollection(
+        source.modelInstances,
+        "modelInstances"
+      ),
       entities: expectEmptyCollection(source.entities, "entities"),
-      interactionLinks: expectEmptyCollection(source.interactionLinks, "interactionLinks")
+      interactionLinks: expectEmptyCollection(
+        source.interactionLinks,
+        "interactionLinks"
+      )
     };
   }
 
@@ -1523,9 +2008,15 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       textures: expectEmptyCollection(source.textures, "textures"),
       assets: expectEmptyCollection(source.assets, "assets"),
       brushes: readBrushes(source.brushes, materials, false),
-      modelInstances: expectEmptyCollection(source.modelInstances, "modelInstances"),
+      modelInstances: expectEmptyCollection(
+        source.modelInstances,
+        "modelInstances"
+      ),
       entities: readEntities(source.entities, { legacySoundEmitter: false }),
-      interactionLinks: expectEmptyCollection(source.interactionLinks, "interactionLinks")
+      interactionLinks: expectEmptyCollection(
+        source.interactionLinks,
+        "interactionLinks"
+      )
     };
   }
 
@@ -1540,9 +2031,15 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       textures: expectEmptyCollection(source.textures, "textures"),
       assets: expectEmptyCollection(source.assets, "assets"),
       brushes: readBrushes(source.brushes, materials, false),
-      modelInstances: expectEmptyCollection(source.modelInstances, "modelInstances"),
+      modelInstances: expectEmptyCollection(
+        source.modelInstances,
+        "modelInstances"
+      ),
       entities: readEntities(source.entities, { legacySoundEmitter: false }),
-      interactionLinks: expectEmptyCollection(source.interactionLinks, "interactionLinks")
+      interactionLinks: expectEmptyCollection(
+        source.interactionLinks,
+        "interactionLinks"
+      )
     };
   }
 
@@ -1557,9 +2054,15 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       textures: expectEmptyCollection(source.textures, "textures"),
       assets: expectEmptyCollection(source.assets, "assets"),
       brushes: readBrushes(source.brushes, materials, false),
-      modelInstances: expectEmptyCollection(source.modelInstances, "modelInstances"),
+      modelInstances: expectEmptyCollection(
+        source.modelInstances,
+        "modelInstances"
+      ),
       entities: readEntities(source.entities, { legacySoundEmitter: false }),
-      interactionLinks: expectEmptyCollection(source.interactionLinks, "interactionLinks")
+      interactionLinks: expectEmptyCollection(
+        source.interactionLinks,
+        "interactionLinks"
+      )
     };
   }
 
@@ -1574,13 +2077,21 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       textures: expectEmptyCollection(source.textures, "textures"),
       assets: expectEmptyCollection(source.assets, "assets"),
       brushes: readBrushes(source.brushes, materials, false),
-      modelInstances: expectEmptyCollection(source.modelInstances, "modelInstances"),
+      modelInstances: expectEmptyCollection(
+        source.modelInstances,
+        "modelInstances"
+      ),
       entities: readEntities(source.entities, { legacySoundEmitter: false }),
-      interactionLinks: expectEmptyCollection(source.interactionLinks, "interactionLinks")
+      interactionLinks: expectEmptyCollection(
+        source.interactionLinks,
+        "interactionLinks"
+      )
     };
   }
 
-  if (source.version === TRIGGER_ACTION_TARGET_FOUNDATION_SCENE_DOCUMENT_VERSION) {
+  if (
+    source.version === TRIGGER_ACTION_TARGET_FOUNDATION_SCENE_DOCUMENT_VERSION
+  ) {
     const materials = readMaterialRegistry(source.materials, "materials");
 
     return {
@@ -1591,7 +2102,10 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       textures: expectEmptyCollection(source.textures, "textures"),
       assets: expectEmptyCollection(source.assets, "assets"),
       brushes: readBrushes(source.brushes, materials, false),
-      modelInstances: expectEmptyCollection(source.modelInstances, "modelInstances"),
+      modelInstances: expectEmptyCollection(
+        source.modelInstances,
+        "modelInstances"
+      ),
       entities: readEntities(source.entities, { legacySoundEmitter: false }),
       interactionLinks: readInteractionLinks(source.interactionLinks)
     };
@@ -1608,7 +2122,10 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       textures: expectEmptyCollection(source.textures, "textures"),
       assets: expectEmptyCollection(source.assets, "assets"),
       brushes: readBrushes(source.brushes, materials, false),
-      modelInstances: expectEmptyCollection(source.modelInstances, "modelInstances"),
+      modelInstances: expectEmptyCollection(
+        source.modelInstances,
+        "modelInstances"
+      ),
       entities: readEntities(source.entities, { legacySoundEmitter: false }),
       interactionLinks: readInteractionLinks(source.interactionLinks)
     };
@@ -1709,7 +2226,9 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
   }
 
   // v17 -> v18: box-based whitebox solids gained authored object rotation.
-  if (source.version === PLAYER_START_COLLIDER_SETTINGS_SCENE_DOCUMENT_VERSION) {
+  if (
+    source.version === PLAYER_START_COLLIDER_SETTINGS_SCENE_DOCUMENT_VERSION
+  ) {
     const materials = readMaterialRegistry(source.materials, "materials");
     const assets = readAssets(source.assets);
 
@@ -1773,7 +2292,9 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     source.version !== WHITEBOX_FLOAT_TRANSFORM_SCENE_DOCUMENT_VERSION &&
     source.version !== WHITEBOX_GEOMETRY_SCENE_DOCUMENT_VERSION
   ) {
-    throw new Error(`Unsupported scene document version: ${String(source.version)}.`);
+    throw new Error(
+      `Unsupported scene document version: ${String(source.version)}.`
+    );
   }
 
   const materials = readMaterialRegistry(source.materials, "materials");
@@ -1807,9 +2328,13 @@ function readProjectScene(
   return {
     id: expectString(value.id, `${label}.id`),
     name: expectString(value.name, `${label}.name`),
-    loadingScreen: readSceneLoadingScreen(value.loadingScreen, `${label}.loadingScreen`, {
-      allowMissing: options.allowMissingLoadingScreen
-    }),
+    loadingScreen: readSceneLoadingScreen(
+      value.loadingScreen,
+      `${label}.loadingScreen`,
+      {
+        allowMissing: options.allowMissingLoadingScreen
+      }
+    ),
     world: readWorldSettings(value.world),
     brushes: readBrushes(value.brushes, materials, false),
     modelInstances: readModelInstances(value.modelInstances, assets),

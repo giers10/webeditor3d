@@ -6,9 +6,15 @@ import type { LoadedImageAsset } from "../assets/image-assets";
 import type { ProjectAssetRecord } from "../assets/project-assets";
 import type { SceneLoadingScreenSettings } from "../document/scene-document";
 import type { FirstPersonTelemetry } from "../runtime-three/navigation-controller";
-import { RuntimeHost, type RuntimeSceneLoadState } from "../runtime-three/runtime-host";
+import {
+  RuntimeHost,
+  type RuntimeSceneLoadState
+} from "../runtime-three/runtime-host";
 import type { RuntimeInteractionPrompt } from "../runtime-three/runtime-interaction-system";
-import type { RuntimeNavigationMode, RuntimeSceneDefinition } from "../runtime-three/runtime-scene-build";
+import type {
+  RuntimeNavigationMode,
+  RuntimeSceneDefinition
+} from "../runtime-three/runtime-scene-build";
 import { createWorldBackgroundStyle } from "../shared-ui/world-background-style";
 
 interface RunnerCanvasProps {
@@ -45,10 +51,13 @@ export function RunnerCanvas({
     status: "loading",
     message: null
   });
-  const [interactionPrompt, setInteractionPrompt] = useState<RuntimeInteractionPrompt | null>(null);
-  const [firstPersonTelemetry, setFirstPersonTelemetry] = useState<FirstPersonTelemetry | null>(null);
+  const [interactionPrompt, setInteractionPrompt] =
+    useState<RuntimeInteractionPrompt | null>(null);
+  const [firstPersonTelemetry, setFirstPersonTelemetry] =
+    useState<FirstPersonTelemetry | null>(null);
   const overlayMessage = runnerMessage ?? sceneLoadState.message;
-  const overlayStatus = overlayMessage !== null ? "error" : sceneLoadState.status;
+  const overlayStatus =
+    overlayMessage !== null ? "error" : sceneLoadState.status;
   const runnerReady = overlayStatus === "ready";
 
   useEffect(() => {
@@ -86,7 +95,9 @@ export function RunnerCanvas({
       };
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Runner initialization failed.";
+        error instanceof Error
+          ? error.message
+          : "Runner initialization failed.";
       const failureMessage = `Runner initialization failed: ${message}`;
       setRunnerMessage(failureMessage);
       setSceneLoadState({
@@ -98,10 +109,19 @@ export function RunnerCanvas({
       onFirstPersonTelemetryChange(null);
       return;
     }
-  }, [onFirstPersonTelemetryChange, onInteractionPromptChange, onRuntimeMessageChange]);
+  }, [
+    onFirstPersonTelemetryChange,
+    onInteractionPromptChange,
+    onRuntimeMessageChange
+  ]);
 
   useEffect(() => {
-    hostRef.current?.updateAssets(projectAssets, loadedModelAssets, loadedImageAssets, loadedAudioAssets);
+    hostRef.current?.updateAssets(
+      projectAssets,
+      loadedModelAssets,
+      loadedImageAssets,
+      loadedAudioAssets
+    );
   }, [projectAssets, loadedModelAssets, loadedImageAssets, loadedAudioAssets]);
 
   useEffect(() => {
@@ -116,7 +136,12 @@ export function RunnerCanvas({
     onFirstPersonTelemetryChange(null);
     onRuntimeMessageChange(null);
     hostRef.current?.loadScene(runtimeScene);
-  }, [onFirstPersonTelemetryChange, onInteractionPromptChange, onRuntimeMessageChange, runtimeScene]);
+  }, [
+    onFirstPersonTelemetryChange,
+    onInteractionPromptChange,
+    onRuntimeMessageChange,
+    runtimeScene
+  ]);
 
   useEffect(() => {
     hostRef.current?.setNavigationMode(navigationMode);
@@ -131,7 +156,10 @@ export function RunnerCanvas({
       aria-busy={!runnerReady}
       style={createWorldBackgroundStyle(
         runtimeScene.world.background,
-        runtimeScene.world.background.mode === "image" ? loadedImageAssets[runtimeScene.world.background.assetId]?.sourceUrl ?? null : null
+        runtimeScene.world.background.mode === "image"
+          ? (loadedImageAssets[runtimeScene.world.background.assetId]
+              ?.sourceUrl ?? null)
+          : null
       )}
     >
       <div
@@ -191,19 +219,33 @@ export function RunnerCanvas({
       {runnerReady &&
       navigationMode === "firstPerson" &&
       interactionPrompt !== null ? (
-        <div className="runner-canvas__prompt" data-testid="runner-interaction-prompt" role="status" aria-live="polite">
+        <div
+          className="runner-canvas__prompt"
+          data-testid="runner-interaction-prompt"
+          role="status"
+          aria-live="polite"
+        >
           <div className="runner-canvas__prompt-badge">Click</div>
-          <div className="runner-canvas__prompt-text" data-testid="runner-interaction-prompt-text">
+          <div
+            className="runner-canvas__prompt-text"
+            data-testid="runner-interaction-prompt-text"
+          >
             {interactionPrompt.prompt}
           </div>
-          <div className="runner-canvas__prompt-meta" data-testid="runner-interaction-prompt-meta">
-            {interactionPrompt.distance.toFixed(1)}m away · {interactionPrompt.range.toFixed(1)}m range
+          <div
+            className="runner-canvas__prompt-meta"
+            data-testid="runner-interaction-prompt-meta"
+          >
+            {interactionPrompt.distance.toFixed(1)}m away ·{" "}
+            {interactionPrompt.range.toFixed(1)}m range
           </div>
         </div>
       ) : null}
       {runnerMessage === null ? null : (
         <div className="runner-canvas__fallback" role="status">
-          <div className="runner-canvas__fallback-title">Runner Unavailable</div>
+          <div className="runner-canvas__fallback-title">
+            Runner Unavailable
+          </div>
           <div>{runnerMessage}</div>
         </div>
       )}

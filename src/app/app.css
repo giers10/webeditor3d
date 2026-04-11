@@ -32,7 +32,11 @@ body {
   min-height: 100vh;
   overflow: hidden;
   background:
-    radial-gradient(circle at top, rgba(80, 96, 120, 0.35) 0%, rgba(23, 28, 37, 0) 42%),
+    radial-gradient(
+      circle at top,
+      rgba(80, 96, 120, 0.35) 0%,
+      rgba(23, 28, 37, 0) 42%
+    ),
     linear-gradient(180deg, #1b2029 0%, #101318 100%);
   color: var(--color-text);
 }
@@ -203,7 +207,10 @@ button:disabled {
 
 .workspace {
   display: grid;
-  grid-template-columns: minmax(240px, 280px) minmax(0, 1fr) minmax(280px, 320px);
+  grid-template-columns: minmax(240px, 280px) minmax(0, 1fr) minmax(
+      280px,
+      320px
+    );
   gap: 12px;
   min-height: 0;
   overflow: hidden;
@@ -296,7 +303,11 @@ button:disabled {
 
 .stat-card {
   padding: 12px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.02) 100%);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.04) 0%,
+    rgba(255, 255, 255, 0.02) 100%
+  );
   border: 1px solid var(--color-border);
   border-radius: 14px;
 }
@@ -988,7 +999,11 @@ button:disabled {
   flex: 1 1 auto;
   min-height: 0;
   background:
-    radial-gradient(circle at top, rgba(130, 154, 188, 0.28) 0%, rgba(130, 154, 188, 0) 38%),
+    radial-gradient(
+      circle at top,
+      rgba(130, 154, 188, 0.28) 0%,
+      rgba(130, 154, 188, 0) 38%
+    ),
     linear-gradient(180deg, #55657c 0%, #2c3440 34%, #151920 100%);
 }
 
@@ -1145,7 +1160,11 @@ button:disabled {
   gap: 8px;
   padding: 18px;
   color: #f3e8da;
-  background: linear-gradient(180deg, rgba(8, 10, 14, 0.12) 0%, rgba(8, 10, 14, 0.58) 100%);
+  background: linear-gradient(
+    180deg,
+    rgba(8, 10, 14, 0.12) 0%,
+    rgba(8, 10, 14, 0.58) 100%
+  );
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 18px;
   pointer-events: auto;
@@ -1263,7 +1282,11 @@ button:disabled {
   z-index: 2;
   pointer-events: none;
   background:
-    radial-gradient(circle at 50% 18%, rgba(146, 223, 255, 0.2), transparent 42%),
+    radial-gradient(
+      circle at 50% 18%,
+      rgba(146, 223, 255, 0.2),
+      transparent 42%
+    ),
     linear-gradient(180deg, rgba(38, 113, 153, 0.16), rgba(8, 40, 63, 0.42));
   backdrop-filter: blur(1.5px) saturate(1.08);
   mix-blend-mode: screen;

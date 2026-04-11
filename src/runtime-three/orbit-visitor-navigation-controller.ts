@@ -2,7 +2,10 @@ import { Vector3 } from "three";
 
 import type { Vec3 } from "../core/vector";
 
-import type { NavigationController, RuntimeControllerContext } from "./navigation-controller";
+import type {
+  NavigationController,
+  RuntimeControllerContext
+} from "./navigation-controller";
 
 const MIN_DISTANCE = 2;
 const MAX_DISTANCE = 48;
@@ -48,9 +51,16 @@ export class OrbitVisitorNavigationController implements NavigationController {
 
     if (!this.initializedFromScene) {
       const runtimeScene = ctx.getRuntimeScene();
-      const focusPoint = runtimeScene.playerStart?.position ?? runtimeScene.sceneBounds?.center ?? this.target;
+      const focusPoint =
+        runtimeScene.playerStart?.position ??
+        runtimeScene.sceneBounds?.center ??
+        this.target;
       const focusDistance = runtimeScene.sceneBounds
-        ? Math.max(runtimeScene.sceneBounds.size.x, runtimeScene.sceneBounds.size.y, runtimeScene.sceneBounds.size.z) * 1.1
+        ? Math.max(
+            runtimeScene.sceneBounds.size.x,
+            runtimeScene.sceneBounds.size.y,
+            runtimeScene.sceneBounds.size.z
+          ) * 1.1
         : 8;
 
       this.target = cloneVec3(focusPoint);
@@ -59,12 +69,16 @@ export class OrbitVisitorNavigationController implements NavigationController {
     }
 
     ctx.domElement.addEventListener("pointerdown", this.handlePointerDown);
-    ctx.domElement.addEventListener("wheel", this.handleWheel, { passive: false });
+    ctx.domElement.addEventListener("wheel", this.handleWheel, {
+      passive: false
+    });
     ctx.domElement.addEventListener("contextmenu", this.handleContextMenu);
     window.addEventListener("pointermove", this.handlePointerMove);
     window.addEventListener("pointerup", this.handlePointerUp);
 
-    ctx.setRuntimeMessage("Orbit Visitor active. Drag to orbit around the scene and use the mouse wheel to zoom.");
+    ctx.setRuntimeMessage(
+      "Orbit Visitor active. Drag to orbit around the scene and use the mouse wheel to zoom."
+    );
     ctx.setFirstPersonTelemetry(null);
     this.updateCameraTransform();
   }
@@ -117,7 +131,11 @@ export class OrbitVisitorNavigationController implements NavigationController {
       z: this.target.z + Math.cos(this.yawRadians) * horizontalDistance
     };
 
-    this.context.camera.position.set(cameraPosition.x, cameraPosition.y, cameraPosition.z);
+    this.context.camera.position.set(
+      cameraPosition.x,
+      cameraPosition.y,
+      cameraPosition.z
+    );
     this.lookAtVector.set(this.target.x, this.target.y, this.target.z);
     this.context.camera.lookAt(this.lookAtVector);
   }
