@@ -1688,6 +1688,10 @@ export class RuntimeHost {
     this.previousFrameTime = now;
 
     this.activeController?.update(dt);
+    this.applyPlayerCameraEffects(dt);
+    this.audioSystem.setPlayerControllerAudioHooks(
+      this.currentPlayerAudioHooks
+    );
     this.audioSystem.updateListenerTransform();
 
     this.volumeTime += dt;
