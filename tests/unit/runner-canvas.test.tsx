@@ -11,6 +11,46 @@ import type { FirstPersonTelemetry } from "../../src/runtime-three/navigation-co
 import type { RuntimeSceneLoadState } from "../../src/runtime-three/runtime-host";
 import { buildRuntimeSceneFromDocument } from "../../src/runtime-three/runtime-scene-build";
 
+function createSwimmingTelemetry(
+  runtimeScene: ReturnType<typeof buildRuntimeSceneFromDocument>,
+  cameraSubmerged: boolean
+): FirstPersonTelemetry {
+  return {
+    feetPosition: { x: 0, y: 0, z: 0 },
+    eyePosition: { x: 0, y: cameraSubmerged ? 0.4 : 1.7, z: 0 },
+    grounded: false,
+    locomotionState: {
+      locomotionMode: "swimming",
+      airborneKind: null,
+      gait: "walk",
+      grounded: false,
+      crouched: false,
+      sprinting: false,
+      inputMagnitude: 1,
+      requestedPlanarSpeed: runtimeScene.playerMovement.moveSpeed,
+      planarSpeed: runtimeScene.playerMovement.moveSpeed,
+      verticalVelocity: 0,
+      contact: {
+        collisionCount: 0,
+        collidedAxes: {
+          x: false,
+          y: false,
+          z: false
+        },
+        groundNormal: null,
+        groundDistance: null,
+        slopeDegrees: null
+      }
+    },
+    movement: runtimeScene.playerMovement,
+    inWaterVolume: true,
+    cameraSubmerged,
+    inFogVolume: false,
+    pointerLocked: true,
+    spawn: runtimeScene.spawn
+  };
+}
+
 const { MockRuntimeHost, runtimeHostInstances } = vi.hoisted(() => {
   const runtimeHostInstances: Array<{
     mount: ReturnType<typeof vi.fn>;
@@ -114,18 +154,7 @@ describe("RunnerCanvas", () => {
     });
 
     act(() => {
-      publishTelemetry?.({
-        feetPosition: { x: 0, y: 0, z: 0 },
-        eyePosition: { x: 0, y: 1.7, z: 0 },
-        grounded: false,
-        locomotionState: "swimming",
-        movement: runtimeScene.playerMovement,
-        inWaterVolume: true,
-        cameraSubmerged: false,
-        inFogVolume: false,
-        pointerLocked: true,
-        spawn: runtimeScene.spawn
-      });
+      publishTelemetry?.(createSwimmingTelemetry(runtimeScene, false));
     });
 
     expect(
@@ -134,18 +163,7 @@ describe("RunnerCanvas", () => {
     expect(document.querySelector(".runner-canvas__underwater")).toBeNull();
 
     act(() => {
-      publishTelemetry?.({
-        feetPosition: { x: 0, y: 0, z: 0 },
-        eyePosition: { x: 0, y: 0.4, z: 0 },
-        grounded: false,
-        locomotionState: "swimming",
-        movement: runtimeScene.playerMovement,
-        inWaterVolume: true,
-        cameraSubmerged: true,
-        inFogVolume: false,
-        pointerLocked: true,
-        spawn: runtimeScene.spawn
-      });
+      publishTelemetry?.(createSwimmingTelemetry(runtimeScene, true));
     });
 
     expect(screen.getByLabelText("Built-in scene runner").className).toContain(
