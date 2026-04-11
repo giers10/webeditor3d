@@ -28,7 +28,7 @@ describe("validateRuntimeSceneBuild", () => {
         }
       },
       {
-        navigationMode: "orbitVisitor",
+        navigationMode: "thirdPerson",
         loadedModelAssets: {}
       }
     );
@@ -57,7 +57,7 @@ describe("validateRuntimeSceneBuild", () => {
         }
       },
       {
-        navigationMode: "orbitVisitor",
+        navigationMode: "thirdPerson",
         loadedModelAssets: {
           [asset.id]: loadedAsset
         }
@@ -88,7 +88,7 @@ describe("validateRuntimeSceneBuild", () => {
         }
       },
       {
-        navigationMode: "orbitVisitor",
+        navigationMode: "thirdPerson",
         loadedModelAssets: {
           [asset.id]: loadedAsset
         }

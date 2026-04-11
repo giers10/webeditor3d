@@ -127,6 +127,7 @@ function createRuntimeSceneFixture(): RuntimeSceneDefinition {
       height: 1.8,
       eyeHeight: 1.6
     },
+    navigationMode: "thirdPerson",
     spawn: {
       source: "fallback",
       entityId: null,

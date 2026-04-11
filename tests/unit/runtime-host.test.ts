@@ -59,7 +59,7 @@ describe("RuntimeHost", () => {
     });
 
     host.loadScene(runtimeScene);
-    host.setNavigationMode("orbitVisitor");
+    host.setNavigationMode("thirdPerson");
 
     expect(sceneLoadStates).toEqual([
       {
@@ -77,7 +77,7 @@ describe("RuntimeHost", () => {
         message: null
       });
       expect(runtimeMessages).toContain(
-        "Orbit Visitor active. Drag to orbit around the scene and use the mouse wheel to zoom."
+        "Third Person active. Drag to orbit the camera, use WASD to move, and scroll to zoom."
       );
     });
 

@@ -33,6 +33,9 @@ function createRuntimeControllerContext() {
         inWater: false,
         inFog: false
       }),
+      resolveThirdPersonCameraCollision: (_pivot, desiredCameraPosition) => ({
+        ...desiredCameraPosition
+      }),
       setRuntimeMessage: vi.fn(),
       setFirstPersonTelemetry: vi.fn()
     }
