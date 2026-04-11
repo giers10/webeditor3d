@@ -397,8 +397,6 @@ export class RapierCollisionWorld {
           z: shape.size.z * 0.5
         });
         break;
-      case "none":
-        break;
     }
 
     this.currentPlayerShapeSignature = nextSignature;
