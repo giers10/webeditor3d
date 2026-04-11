@@ -46,7 +46,11 @@ export const PLAYER_START_NAVIGATION_MODES = [
 ] as const;
 export type PlayerStartNavigationMode =
   (typeof PLAYER_START_NAVIGATION_MODES)[number];
-export const PLAYER_START_MOVEMENT_TEMPLATE_KINDS = ["default"] as const;
+export const PLAYER_START_MOVEMENT_TEMPLATE_KINDS = [
+  "default",
+  "responsive",
+  "custom"
+] as const;
 export type PlayerStartMovementTemplateKind =
   (typeof PLAYER_START_MOVEMENT_TEMPLATE_KINDS)[number];
 export const PLAYER_START_MOVEMENT_ACTIONS = [
@@ -137,18 +141,38 @@ export interface PlayerStartMovementCapabilities {
   crouch: boolean;
 }
 
-export interface DefaultPlayerStartMovementTemplate {
-  kind: "default";
-  moveSpeed: number;
-  capabilities: PlayerStartMovementCapabilities;
+export interface PlayerStartJumpSettings {
+  speed: number;
+  bufferMs: number;
+  coyoteTimeMs: number;
+  variableHeight: boolean;
+  maxHoldMs: number;
 }
 
-export type PlayerStartMovementTemplate = DefaultPlayerStartMovementTemplate;
+export interface PlayerStartSprintSettings {
+  speedMultiplier: number;
+}
+
+export interface PlayerStartCrouchSettings {
+  speedMultiplier: number;
+}
+
+export interface PlayerStartMovementTemplate {
+  kind: PlayerStartMovementTemplateKind;
+  moveSpeed: number;
+  capabilities: PlayerStartMovementCapabilities;
+  jump: PlayerStartJumpSettings;
+  sprint: PlayerStartSprintSettings;
+  crouch: PlayerStartCrouchSettings;
+}
 
 export interface PlayerStartMovementTemplateOverrides {
   kind?: PlayerStartMovementTemplateKind;
   moveSpeed?: number;
   capabilities?: Partial<PlayerStartMovementCapabilities>;
+  jump?: Partial<PlayerStartJumpSettings>;
+  sprint?: Partial<PlayerStartSprintSettings>;
+  crouch?: Partial<PlayerStartCrouchSettings>;
 }
 
 export interface PlayerStartColliderSettings {
@@ -264,12 +288,42 @@ export const DEFAULT_PLAYER_START_NAVIGATION_MODE: PlayerStartNavigationMode =
 export const DEFAULT_PLAYER_START_MOVEMENT_TEMPLATE_KIND: PlayerStartMovementTemplateKind =
   "default";
 export const DEFAULT_PLAYER_START_MOVE_SPEED = 4.5;
+export const DEFAULT_PLAYER_START_JUMP_SPEED = 7.2;
+export const DEFAULT_PLAYER_START_JUMP_BUFFER_MS = 0;
+export const DEFAULT_PLAYER_START_COYOTE_TIME_MS = 0;
+export const DEFAULT_PLAYER_START_VARIABLE_JUMP_HEIGHT = false;
+export const DEFAULT_PLAYER_START_VARIABLE_JUMP_MAX_HOLD_MS = 160;
+export const DEFAULT_PLAYER_START_SPRINT_SPEED_MULTIPLIER = 1.65;
+export const DEFAULT_PLAYER_START_CROUCH_SPEED_MULTIPLIER = 0.45;
 export const DEFAULT_PLAYER_START_MOVEMENT_CAPABILITIES: PlayerStartMovementCapabilities =
   {
     jump: true,
     sprint: true,
     crouch: true
   };
+export const DEFAULT_PLAYER_START_JUMP_SETTINGS: PlayerStartJumpSettings = {
+  speed: DEFAULT_PLAYER_START_JUMP_SPEED,
+  bufferMs: DEFAULT_PLAYER_START_JUMP_BUFFER_MS,
+  coyoteTimeMs: DEFAULT_PLAYER_START_COYOTE_TIME_MS,
+  variableHeight: DEFAULT_PLAYER_START_VARIABLE_JUMP_HEIGHT,
+  maxHoldMs: DEFAULT_PLAYER_START_VARIABLE_JUMP_MAX_HOLD_MS
+};
+export const DEFAULT_PLAYER_START_SPRINT_SETTINGS: PlayerStartSprintSettings = {
+  speedMultiplier: DEFAULT_PLAYER_START_SPRINT_SPEED_MULTIPLIER
+};
+export const DEFAULT_PLAYER_START_CROUCH_SETTINGS: PlayerStartCrouchSettings = {
+  speedMultiplier: DEFAULT_PLAYER_START_CROUCH_SPEED_MULTIPLIER
+};
+export const RESPONSIVE_PLAYER_START_JUMP_BUFFER_MS = 120;
+export const RESPONSIVE_PLAYER_START_COYOTE_TIME_MS = 120;
+export const RESPONSIVE_PLAYER_START_VARIABLE_JUMP_MAX_HOLD_MS = 180;
+export const RESPONSIVE_PLAYER_START_JUMP_SETTINGS: PlayerStartJumpSettings = {
+  speed: DEFAULT_PLAYER_START_JUMP_SPEED,
+  bufferMs: RESPONSIVE_PLAYER_START_JUMP_BUFFER_MS,
+  coyoteTimeMs: RESPONSIVE_PLAYER_START_COYOTE_TIME_MS,
+  variableHeight: true,
+  maxHoldMs: RESPONSIVE_PLAYER_START_VARIABLE_JUMP_MAX_HOLD_MS
+};
 export const DEFAULT_PLAYER_START_KEYBOARD_BINDINGS: PlayerStartKeyboardBindings =
   {
     moveForward: "KeyW",
@@ -436,13 +490,44 @@ function clonePlayerStartMovementCapabilities(
   };
 }
 
+function clonePlayerStartJumpSettings(
+  settings: PlayerStartJumpSettings
+): PlayerStartJumpSettings {
+  return {
+    speed: settings.speed,
+    bufferMs: settings.bufferMs,
+    coyoteTimeMs: settings.coyoteTimeMs,
+    variableHeight: settings.variableHeight,
+    maxHoldMs: settings.maxHoldMs
+  };
+}
+
+function clonePlayerStartSprintSettings(
+  settings: PlayerStartSprintSettings
+): PlayerStartSprintSettings {
+  return {
+    speedMultiplier: settings.speedMultiplier
+  };
+}
+
+function clonePlayerStartCrouchSettings(
+  settings: PlayerStartCrouchSettings
+): PlayerStartCrouchSettings {
+  return {
+    speedMultiplier: settings.speedMultiplier
+  };
+}
+
 export function clonePlayerStartMovementTemplate(
   template: PlayerStartMovementTemplate
 ): PlayerStartMovementTemplate {
   return {
     kind: template.kind,
     moveSpeed: template.moveSpeed,
-    capabilities: clonePlayerStartMovementCapabilities(template.capabilities)
+    capabilities: clonePlayerStartMovementCapabilities(template.capabilities),
+    jump: clonePlayerStartJumpSettings(template.jump),
+    sprint: clonePlayerStartSprintSettings(template.sprint),
+    crouch: clonePlayerStartCrouchSettings(template.crouch)
   };
 }
 
@@ -602,22 +687,55 @@ export function createPlayerStartMovementTemplate(
 ): PlayerStartMovementTemplate {
   const kind =
     overrides.kind ?? DEFAULT_PLAYER_START_MOVEMENT_TEMPLATE_KIND;
-  const moveSpeed = overrides.moveSpeed ?? DEFAULT_PLAYER_START_MOVE_SPEED;
-  const capabilities: PlayerStartMovementCapabilities = {
-    jump:
-      overrides.capabilities?.jump ??
-      DEFAULT_PLAYER_START_MOVEMENT_CAPABILITIES.jump,
-    sprint:
-      overrides.capabilities?.sprint ??
-      DEFAULT_PLAYER_START_MOVEMENT_CAPABILITIES.sprint,
-    crouch:
-      overrides.capabilities?.crouch ??
-      DEFAULT_PLAYER_START_MOVEMENT_CAPABILITIES.crouch
-  };
 
   if (!isPlayerStartMovementTemplateKind(kind)) {
-    throw new Error("Player Start movement template must be default.");
+    throw new Error(
+      "Player Start movement template must be default, responsive, or custom."
+    );
   }
+
+  const preset =
+    kind === "responsive"
+      ? {
+          moveSpeed: DEFAULT_PLAYER_START_MOVE_SPEED,
+          capabilities: DEFAULT_PLAYER_START_MOVEMENT_CAPABILITIES,
+          jump: RESPONSIVE_PLAYER_START_JUMP_SETTINGS,
+          sprint: DEFAULT_PLAYER_START_SPRINT_SETTINGS,
+          crouch: DEFAULT_PLAYER_START_CROUCH_SETTINGS
+        }
+      : {
+          moveSpeed: DEFAULT_PLAYER_START_MOVE_SPEED,
+          capabilities: DEFAULT_PLAYER_START_MOVEMENT_CAPABILITIES,
+          jump: DEFAULT_PLAYER_START_JUMP_SETTINGS,
+          sprint: DEFAULT_PLAYER_START_SPRINT_SETTINGS,
+          crouch: DEFAULT_PLAYER_START_CROUCH_SETTINGS
+        };
+  const moveSpeed = overrides.moveSpeed ?? preset.moveSpeed;
+  const capabilities: PlayerStartMovementCapabilities = {
+    jump:
+      overrides.capabilities?.jump ?? preset.capabilities.jump,
+    sprint:
+      overrides.capabilities?.sprint ?? preset.capabilities.sprint,
+    crouch:
+      overrides.capabilities?.crouch ?? preset.capabilities.crouch
+  };
+  const jump: PlayerStartJumpSettings = {
+    speed: overrides.jump?.speed ?? preset.jump.speed,
+    bufferMs: overrides.jump?.bufferMs ?? preset.jump.bufferMs,
+    coyoteTimeMs:
+      overrides.jump?.coyoteTimeMs ?? preset.jump.coyoteTimeMs,
+    variableHeight:
+      overrides.jump?.variableHeight ?? preset.jump.variableHeight,
+    maxHoldMs: overrides.jump?.maxHoldMs ?? preset.jump.maxHoldMs
+  };
+  const sprint: PlayerStartSprintSettings = {
+    speedMultiplier:
+      overrides.sprint?.speedMultiplier ?? preset.sprint.speedMultiplier
+  };
+  const crouch: PlayerStartCrouchSettings = {
+    speedMultiplier:
+      overrides.crouch?.speedMultiplier ?? preset.crouch.speedMultiplier
+  };
 
   assertPositiveFiniteNumber(moveSpeed, "Player Start move speed");
   assertBoolean(
@@ -632,15 +750,70 @@ export function createPlayerStartMovementTemplate(
     capabilities.crouch,
     "Player Start movement template crouch capability"
   );
+  assertPositiveFiniteNumber(jump.speed, "Player Start jump speed");
+  assertNonNegativeFiniteNumber(
+    jump.bufferMs,
+    "Player Start jump buffer milliseconds"
+  );
+  assertNonNegativeFiniteNumber(
+    jump.coyoteTimeMs,
+    "Player Start coyote time milliseconds"
+  );
+  assertBoolean(
+    jump.variableHeight,
+    "Player Start variable jump height setting"
+  );
+  assertPositiveFiniteNumber(
+    jump.maxHoldMs,
+    "Player Start variable jump max hold milliseconds"
+  );
+  assertPositiveFiniteNumber(
+    sprint.speedMultiplier,
+    "Player Start sprint speed multiplier"
+  );
+  assertPositiveFiniteNumber(
+    crouch.speedMultiplier,
+    "Player Start crouch speed multiplier"
+  );
 
-  switch (kind) {
-    case "default":
-      return {
-        kind,
-        moveSpeed,
-        capabilities
-      };
+  return {
+    kind,
+    moveSpeed,
+    capabilities,
+    jump,
+    sprint,
+    crouch
+  };
+}
+
+export function inferPlayerStartMovementTemplateKind(
+  template: Omit<PlayerStartMovementTemplate, "kind"> | PlayerStartMovementTemplate
+): PlayerStartMovementTemplateKind {
+  const candidate = createPlayerStartMovementTemplate({
+    kind: "custom",
+    moveSpeed: template.moveSpeed,
+    capabilities: template.capabilities,
+    jump: template.jump,
+    sprint: template.sprint,
+    crouch: template.crouch
+  });
+
+  for (const presetKind of PLAYER_START_MOVEMENT_TEMPLATE_KINDS) {
+    if (presetKind === "custom") {
+      continue;
+    }
+
+    if (
+      arePlayerStartMovementTemplatesEqual(candidate, {
+        ...createPlayerStartMovementTemplate({ kind: presetKind }),
+        kind: presetKind
+      })
+    ) {
+      return presetKind;
+    }
   }
+
+  return "custom";
 }
 
 export function arePlayerStartInputBindingsEqual(
@@ -675,7 +848,14 @@ export function arePlayerStartMovementTemplatesEqual(
     left.moveSpeed === right.moveSpeed &&
     left.capabilities.jump === right.capabilities.jump &&
     left.capabilities.sprint === right.capabilities.sprint &&
-    left.capabilities.crouch === right.capabilities.crouch
+    left.capabilities.crouch === right.capabilities.crouch &&
+    left.jump.speed === right.jump.speed &&
+    left.jump.bufferMs === right.jump.bufferMs &&
+    left.jump.coyoteTimeMs === right.jump.coyoteTimeMs &&
+    left.jump.variableHeight === right.jump.variableHeight &&
+    left.jump.maxHoldMs === right.jump.maxHoldMs &&
+    left.sprint.speedMultiplier === right.sprint.speedMultiplier &&
+    left.crouch.speedMultiplier === right.crouch.speedMultiplier
   );
 }
 
