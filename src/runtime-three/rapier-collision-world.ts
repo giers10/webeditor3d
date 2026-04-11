@@ -449,15 +449,18 @@ export class RapierCollisionWorld {
       };
     }
 
+    const playerCollider = this.playerCollider;
+    const characterController = this.characterController;
+
     this.syncPlayerColliderShape(shape);
 
     const currentCenter = feetPositionToColliderCenter(feetPosition, shape);
-    this.playerCollider.setTranslation(currentCenter);
-    const snapToGroundWasEnabled = this.characterController.snapToGroundEnabled();
+    playerCollider.setTranslation(currentCenter);
+    const snapToGroundWasEnabled = characterController.snapToGroundEnabled();
     const autostepWasEnabled =
       this.autostepHeight !== null &&
       this.autostepMinWidth !== null &&
-      this.characterController.autostepEnabled();
+      characterController.autostepEnabled();
     const supportProbe = this.probePlayerGround(
       feetPosition,
       shape,
@@ -466,41 +469,41 @@ export class RapierCollisionWorld {
     const supportGrounded = supportProbe.grounded;
 
     const computeResolvedMovement = (allowAutostep: boolean) => {
-      this.playerCollider.setTranslation(currentCenter);
+      playerCollider.setTranslation(currentCenter);
 
       if (motion.y > COLLISION_EPSILON && snapToGroundWasEnabled) {
-        this.characterController.disableSnapToGround();
+        characterController.disableSnapToGround();
       }
 
       if (autostepWasEnabled) {
         if (allowAutostep) {
-          this.characterController.enableAutostep(
+          characterController.enableAutostep(
             this.autostepHeight,
             this.autostepMinWidth,
             false
           );
         } else {
-          this.characterController.disableAutostep();
+          characterController.disableAutostep();
         }
       }
 
-      this.characterController.computeColliderMovement(this.playerCollider, motion);
+      characterController.computeColliderMovement(playerCollider, motion);
 
       if (snapToGroundWasEnabled) {
-        this.characterController.enableSnapToGround(
+        characterController.enableSnapToGround(
           this.snapToGroundDistance
         );
       }
 
       if (autostepWasEnabled) {
-        this.characterController.enableAutostep(
+        characterController.enableAutostep(
           this.autostepHeight,
           this.autostepMinWidth,
           false
         );
       }
 
-      const correctedMovement = this.characterController.computedMovement();
+      const correctedMovement = characterController.computedMovement();
       const collidedAxes = {
         x: Math.abs(correctedMovement.x - motion.x) > COLLISION_EPSILON,
         y: Math.abs(correctedMovement.y - motion.y) > COLLISION_EPSILON,
@@ -512,11 +515,11 @@ export class RapierCollisionWorld {
         z: currentCenter.z + correctedMovement.z
       };
       const nextFeetPosition = colliderCenterToFeetPosition(nextCenter, shape);
-      const collisionCount = this.characterController.numComputedCollisions();
+      const collisionCount = characterController.numComputedCollisions();
       let groundCollisionNormal: Vec3 | null = null;
 
       for (let index = 0; index < collisionCount; index += 1) {
-        const collision = this.characterController.computedCollision(index);
+        const collision = characterController.computedCollision(index);
 
         if (
           collision === null ||
@@ -552,7 +555,7 @@ export class RapierCollisionWorld {
       resolved = computeResolvedMovement(false);
     }
 
-    this.playerCollider.setTranslation(resolved.nextCenter);
+    playerCollider.setTranslation(resolved.nextCenter);
 
     const groundedProbe = this.probePlayerGround(
       resolved.nextFeetPosition,
