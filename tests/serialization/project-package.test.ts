@@ -119,7 +119,12 @@ describe("project package serialization", () => {
         }),
         "scene-dungeon": createEmptyProjectScene({
           id: "scene-dungeon",
-          name: "Portable Dungeon"
+          name: "Portable Dungeon",
+          loadingScreen: {
+            colorHex: "#1f2d42",
+            headline: "Heading underground",
+            description: "Preparing dungeon encounter state."
+          }
         })
       }
     };
