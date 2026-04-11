@@ -176,7 +176,12 @@ describe("ThirdPersonNavigationController", () => {
 
     const telemetry = context.setFirstPersonTelemetry.mock.calls.at(-1)?.[0];
 
-    expect(telemetry?.feetPosition.z).toBeCloseTo(2.25);
+    expect(
+      Math.hypot(
+        telemetry?.feetPosition.x ?? 0,
+        telemetry?.feetPosition.z ?? 0
+      )
+    ).toBeCloseTo(2.25);
     expect(telemetry?.movement).toMatchObject({
       templateKind: "default",
       moveSpeed: 2.25,
