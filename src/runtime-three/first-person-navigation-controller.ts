@@ -35,6 +35,26 @@ function toEyePosition(feetPosition: Vec3, eyeHeight: number): Vec3 {
   };
 }
 
+function shouldAutoCapturePointerLockOnActivate(): boolean {
+  if (typeof navigator === "undefined") {
+    return true;
+  }
+
+  const userAgent = navigator.userAgent;
+  const vendor = navigator.vendor;
+  const isSafari =
+    vendor.includes("Apple") &&
+    userAgent.includes("Safari/") &&
+    !userAgent.includes("Chrome/") &&
+    !userAgent.includes("Chromium/") &&
+    !userAgent.includes("CriOS/") &&
+    !userAgent.includes("Edg/") &&
+    !userAgent.includes("OPR/") &&
+    !userAgent.includes("Firefox/");
+
+  return !isSafari;
+}
+
 export class FirstPersonNavigationController implements NavigationController {
   readonly id = "firstPerson" as const;
 
@@ -90,7 +110,10 @@ export class FirstPersonNavigationController implements NavigationController {
 
     this.syncPointerLockState();
 
-    if (document.pointerLockElement !== ctx.domElement) {
+    if (
+      shouldAutoCapturePointerLockOnActivate() &&
+      document.pointerLockElement !== ctx.domElement
+    ) {
       const pointerLockCapableElement = ctx.domElement as HTMLCanvasElement & {
         requestPointerLock?: () => void | Promise<void>;
       };
