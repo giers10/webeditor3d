@@ -523,29 +523,22 @@ export class RuntimeHost {
     this.applyShadowState();
   }
 
-  private async rebuildCollisionWorld(colliders: RuntimeSceneDefinition["colliders"], playerShape: RuntimeSceneDefinition["playerCollider"]) {
-    const requestId = ++this.collisionWorldRequestId;
+  private async buildCollisionWorld(
+    requestId: number,
+    colliders: RuntimeSceneDefinition["colliders"],
+    playerShape: RuntimeSceneDefinition["playerCollider"]
+  ) {
+    const nextCollisionWorld = await RapierCollisionWorld.create(
+      colliders,
+      playerShape
+    );
 
-    this.clearCollisionWorld();
-
-    try {
-      const nextCollisionWorld = await RapierCollisionWorld.create(colliders, playerShape);
-
-      if (requestId !== this.collisionWorldRequestId) {
-        nextCollisionWorld.dispose();
-        return;
-      }
-
-      this.collisionWorld = nextCollisionWorld;
-    } catch (error) {
-      if (requestId !== this.collisionWorldRequestId) {
-        return;
-      }
-
-      const message = error instanceof Error ? error.message : "Runner collision initialization failed.";
-      this.currentRuntimeMessage = `Runner collision initialization failed: ${message}`;
-      this.runtimeMessageHandler?.(this.currentRuntimeMessage);
+    if (requestId !== this.collisionWorldRequestId) {
+      nextCollisionWorld.dispose();
+      throw new Error("Scene load was superseded by a newer request.");
     }
+
+    return nextCollisionWorld;
   }
 
   private clearCollisionWorld() {
