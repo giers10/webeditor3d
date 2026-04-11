@@ -4274,6 +4274,111 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
+  const setPlayerStartMovementTemplateEditorDraft = (
+    template: PlayerStartMovementTemplate
+  ) => {
+    setPlayerStartMovementTemplateDraft(template);
+    setPlayerStartMovementTemplateNumberDraft(
+      createPlayerStartMovementTemplateNumberDraft(template)
+    );
+  };
+
+  const buildPlayerStartMovementTemplateFromDraft = (
+    overrides: {
+      kind?: PlayerStartMovementTemplate["kind"];
+      capabilities?: Partial<PlayerStartMovementTemplate["capabilities"]>;
+      jump?: Partial<PlayerStartMovementTemplate["jump"]>;
+      sprint?: Partial<PlayerStartMovementTemplate["sprint"]>;
+      crouch?: Partial<PlayerStartMovementTemplate["crouch"]>;
+    } = {}
+  ): PlayerStartMovementTemplate => {
+    const rawTemplate = createPlayerStartMovementTemplate({
+      kind: overrides.kind ?? playerStartMovementTemplateDraft.kind,
+      moveSpeed: readPositiveNumberDraft(
+        playerStartMovementTemplateNumberDraft.moveSpeed,
+        "Player Start move speed"
+      ),
+      capabilities: {
+        ...playerStartMovementTemplateDraft.capabilities,
+        ...overrides.capabilities
+      },
+      jump: {
+        ...playerStartMovementTemplateDraft.jump,
+        ...overrides.jump,
+        speed: readPositiveNumberDraft(
+          playerStartMovementTemplateNumberDraft.jumpSpeed,
+          "Player Start jump speed"
+        ),
+        bufferMs: readNonNegativeNumberDraft(
+          playerStartMovementTemplateNumberDraft.jumpBufferMs,
+          "Player Start jump buffer"
+        ),
+        coyoteTimeMs: readNonNegativeNumberDraft(
+          playerStartMovementTemplateNumberDraft.coyoteTimeMs,
+          "Player Start coyote time"
+        ),
+        maxHoldMs: readPositiveNumberDraft(
+          playerStartMovementTemplateNumberDraft.variableJumpMaxHoldMs,
+          "Player Start variable jump max hold"
+        )
+      },
+      sprint: {
+        ...playerStartMovementTemplateDraft.sprint,
+        ...overrides.sprint,
+        speedMultiplier: readPositiveNumberDraft(
+          playerStartMovementTemplateNumberDraft.sprintSpeedMultiplier,
+          "Player Start sprint speed multiplier"
+        )
+      },
+      crouch: {
+        ...playerStartMovementTemplateDraft.crouch,
+        ...overrides.crouch,
+        speedMultiplier: readPositiveNumberDraft(
+          playerStartMovementTemplateNumberDraft.crouchSpeedMultiplier,
+          "Player Start crouch speed multiplier"
+        )
+      }
+    });
+
+    return createPlayerStartMovementTemplate({
+      ...rawTemplate,
+      kind: overrides.kind ?? inferPlayerStartMovementTemplateKind(rawTemplate)
+    });
+  };
+
+  const commitPlayerStartMovementTemplateDraft = (
+    overrides: {
+      kind?: PlayerStartMovementTemplate["kind"];
+      capabilities?: Partial<PlayerStartMovementTemplate["capabilities"]>;
+      jump?: Partial<PlayerStartMovementTemplate["jump"]>;
+      sprint?: Partial<PlayerStartMovementTemplate["sprint"]>;
+      crouch?: Partial<PlayerStartMovementTemplate["crouch"]>;
+    } = {},
+    options: {
+      schedule?: boolean;
+    } = {}
+  ) => {
+    try {
+      const nextTemplate = buildPlayerStartMovementTemplateFromDraft(overrides);
+      setPlayerStartMovementTemplateDraft(nextTemplate);
+
+      if (options.schedule === true) {
+        scheduleDraftCommit(() =>
+          applyPlayerStartChange({
+            movementTemplate: nextTemplate
+          })
+        );
+        return;
+      }
+
+      applyPlayerStartChange({
+        movementTemplate: nextTemplate
+      });
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
   const applyPlayerStartChange = (
     overrides: {
       colliderMode?: PlayerStartColliderMode;
