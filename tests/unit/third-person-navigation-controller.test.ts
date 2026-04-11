@@ -6,6 +6,7 @@ import { createEmptySceneDocument } from "../../src/document/scene-document";
 import { createPlayerStartEntity } from "../../src/entities/entity-instances";
 import type {
   FirstPersonPlayerShape,
+  PlayerGroundProbeResult,
   ResolvedPlayerMotion
 } from "../../src/runtime-three/player-collision";
 import { buildRuntimeSceneFromDocument } from "../../src/runtime-three/runtime-scene-build";
@@ -73,12 +74,21 @@ function createRuntimeControllerContext(
           z: feetPosition.z + motion.z
         },
         grounded: false,
+        collisionCount: 0,
+        groundCollisionNormal: null,
         collidedAxes: {
           x: false,
           y: false,
           z: false
         }
       }),
+      probePlayerGround: (): PlayerGroundProbeResult => ({
+        grounded: false,
+        distance: null,
+        normal: null,
+        slopeDegrees: null
+      }),
+      canOccupyPlayerShape: () => true,
       resolvePlayerVolumeState: () => ({
         inWater: false,
         inFog: false
@@ -193,6 +203,73 @@ describe("ThirdPersonNavigationController", () => {
     });
 
     window.dispatchEvent(new KeyboardEvent("keyup", { code: "ArrowUp" }));
+    controller.deactivate(context);
+  });
+
+  it("uses sprint input to raise gait and planar travel speed when grounded", () => {
+    const playerStart = createPlayerStartEntity({
+      id: "entity-player-start-third-person-sprint",
+      inputBindings: {
+        keyboard: {
+          moveForward: "ArrowUp",
+          moveBackward: "ArrowDown",
+          moveLeft: "ArrowLeft",
+          moveRight: "ArrowRight",
+          sprint: "ShiftLeft"
+        }
+      }
+    });
+    const { context } = createRuntimeControllerContext(playerStart);
+    context.probePlayerGround = vi.fn(() => ({
+      grounded: true,
+      distance: 0,
+      normal: { x: 0, y: 1, z: 0 },
+      slopeDegrees: 0
+    }));
+    context.resolveFirstPersonMotion = (
+      feetPosition: Vec3,
+      motion: Vec3,
+      _shape: FirstPersonPlayerShape
+    ) => ({
+      feetPosition: {
+        x: feetPosition.x + motion.x,
+        y: feetPosition.y,
+        z: feetPosition.z + motion.z
+      },
+      grounded: true,
+      collisionCount: 1,
+      groundCollisionNormal: { x: 0, y: 1, z: 0 },
+      collidedAxes: {
+        x: false,
+        y: true,
+        z: false
+      }
+    });
+    const controller = new ThirdPersonNavigationController();
+
+    controller.activate(context);
+    window.dispatchEvent(new KeyboardEvent("keydown", { code: "ArrowUp" }));
+    window.dispatchEvent(
+      new KeyboardEvent("keydown", { code: "ShiftLeft" })
+    );
+    controller.update(1);
+
+    const telemetry = context.setFirstPersonTelemetry.mock.calls.at(-1)?.[0];
+
+    expect(telemetry?.locomotionState.gait).toBe("sprint");
+    expect(telemetry?.locomotionState.sprinting).toBe(true);
+    expect(telemetry?.locomotionState.locomotionMode).toBe("grounded");
+    expect(
+      Math.hypot(
+        telemetry?.feetPosition.x ?? 0,
+        telemetry?.feetPosition.z ?? 0
+      )
+    ).toBeGreaterThan(7);
+
+    window.dispatchEvent(new KeyboardEvent("keyup", { code: "ArrowUp" }));
+    window.dispatchEvent(
+      new KeyboardEvent("keyup", { code: "ShiftLeft" })
+    );
     controller.deactivate(context);
   });
 });
