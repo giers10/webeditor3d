@@ -10297,6 +10297,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                                         playerStartMovementTemplateDraft.moveSpeed,
                                       maxSpeed:
                                         playerStartMovementTemplateDraft.maxSpeed,
+                                      maxStepHeight:
+                                        playerStartMovementTemplateDraft.maxStepHeight,
                                       capabilities:
                                         playerStartMovementTemplateDraft.capabilities,
                                       jump: playerStartMovementTemplateDraft.jump,
