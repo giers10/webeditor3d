@@ -21,7 +21,10 @@ import {
   getPrimaryPlayerStartEntity,
   type EntityInstance,
   type PlayerStartInputBindings,
+  type PlayerStartJumpSettings,
   type PlayerStartMovementCapabilities,
+  type PlayerStartCrouchSettings,
+  type PlayerStartSprintSettings,
   type PlayerStartMovementTemplate
 } from "../entities/entity-instances";
 import { getBoxBrushBounds } from "../geometry/box-brush";
@@ -113,6 +116,9 @@ export interface RuntimePlayerMovement {
   templateKind: PlayerStartMovementTemplate["kind"];
   moveSpeed: number;
   capabilities: PlayerStartMovementCapabilities;
+  jump: PlayerStartJumpSettings;
+  sprint: PlayerStartSprintSettings;
+  crouch: PlayerStartCrouchSettings;
 }
 
 export interface RuntimeSceneEntry {
@@ -268,13 +274,44 @@ function clonePlayerStartMovementCapabilities(
   };
 }
 
+function clonePlayerStartJumpSettings(
+  jump: PlayerStartJumpSettings
+): PlayerStartJumpSettings {
+  return {
+    speed: jump.speed,
+    bufferMs: jump.bufferMs,
+    coyoteTimeMs: jump.coyoteTimeMs,
+    variableHeight: jump.variableHeight,
+    maxHoldMs: jump.maxHoldMs
+  };
+}
+
+function clonePlayerStartSprintSettings(
+  sprint: PlayerStartSprintSettings
+): PlayerStartSprintSettings {
+  return {
+    speedMultiplier: sprint.speedMultiplier
+  };
+}
+
+function clonePlayerStartCrouchSettings(
+  crouch: PlayerStartCrouchSettings
+): PlayerStartCrouchSettings {
+  return {
+    speedMultiplier: crouch.speedMultiplier
+  };
+}
+
 function cloneRuntimePlayerMovement(
   movement: RuntimePlayerMovement
 ): RuntimePlayerMovement {
   return {
     templateKind: movement.templateKind,
     moveSpeed: movement.moveSpeed,
-    capabilities: clonePlayerStartMovementCapabilities(movement.capabilities)
+    capabilities: clonePlayerStartMovementCapabilities(movement.capabilities),
+    jump: clonePlayerStartJumpSettings(movement.jump),
+    sprint: clonePlayerStartSprintSettings(movement.sprint),
+    crouch: clonePlayerStartCrouchSettings(movement.crouch)
   };
 }
 
@@ -288,7 +325,10 @@ function buildRuntimePlayerMovement(
     moveSpeed: resolvedTemplate.moveSpeed,
     capabilities: clonePlayerStartMovementCapabilities(
       resolvedTemplate.capabilities
-    )
+    ),
+    jump: clonePlayerStartJumpSettings(resolvedTemplate.jump),
+    sprint: clonePlayerStartSprintSettings(resolvedTemplate.sprint),
+    crouch: clonePlayerStartCrouchSettings(resolvedTemplate.crouch)
   };
 }
 
