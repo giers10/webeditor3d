@@ -2461,6 +2461,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
 
   if (
     source.version !== SCENE_DOCUMENT_VERSION &&
+    source.version !== PLAYER_START_NAVIGATION_MODE_SCENE_DOCUMENT_VERSION &&
     source.version !== SCENE_TRANSITION_ENTITIES_SCENE_DOCUMENT_VERSION &&
     source.version !== RUNNER_LOADING_SCREEN_SCENE_DOCUMENT_VERSION &&
     source.version !== MULTI_SCENE_FOUNDATION_SCENE_DOCUMENT_VERSION &&
