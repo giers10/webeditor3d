@@ -87,4 +87,23 @@ describe("project document JSON", () => {
       legacyScene.loadingScreen
     );
   });
+
+  it("rejects Scene Exit targets that point at a missing Scene Entry", () => {
+    const document = createEmptyProjectDocument({ sceneName: "Outside" });
+    const targetScene = createEmptyProjectScene({
+      id: "scene-house",
+      name: "House"
+    });
+    document.scenes[targetScene.id] = targetScene;
+    document.scenes["scene-main"].entities["entity-scene-exit-door"] =
+      createSceneExitEntity({
+        id: "entity-scene-exit-door",
+        targetSceneId: targetScene.id,
+        targetEntryEntityId: "missing-entry"
+      });
+
+    expect(() =>
+      parseProjectDocumentJson(serializeProjectDocument(document))
+    ).toThrow("target entry");
+  });
 });
