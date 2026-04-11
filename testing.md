@@ -375,6 +375,8 @@ Every slice should include:
 - Setup: open the editor with at least one whitebox box selected in the perspective viewport.
 - Steps: orbit/pan the camera away from the origin, run `G`, `R`, and `S`, then commit with click or `Enter`, cancel with `Escape`, and delete the selected target.
 - Expected result: the active viewport camera keeps its exact framing and does not snap back to the world origin after commit, cancel, or delete.
+- Steps: with the editor footer visible, trigger `G`, `R`, and `S`, then press `X`, `Y`, or `Z` while watching the perspective viewport bounds.
+- Expected result: long transform status messages stay on one footer row, the footer height does not grow, and the viewport does not flicker or resize as the status text changes.
 - Steps: start a translate or rotate session on a rotated whitebox box or rotated model instance, press `X`, `Y`, or `Z`, then press the same axis again.
 - Expected result: the first press constrains to the world axis, the second press switches to the target's local axis, and unsupported local toggles surface a clear status message.
 - Steps: toggle the viewport grid off and on, then pan the perspective camera far from the origin.

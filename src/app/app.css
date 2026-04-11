@@ -1222,9 +1222,10 @@ button:disabled {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 12px;
   min-height: 36px;
+  height: 36px;
   padding: 6px 12px;
   background: rgba(18, 22, 28, 0.88);
   border: 1px solid var(--color-border);
@@ -1232,13 +1233,24 @@ button:disabled {
   color: var(--color-muted);
   font-size: 0.8rem;
   line-height: 1.2;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
 }
 
 .status-bar__item {
   display: flex;
   align-items: baseline;
   gap: 4px;
+  flex: 0 0 auto;
   min-width: 0;
+  white-space: nowrap;
+}
+
+.status-bar__item--message {
+  flex: 1 1 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .status-bar__item--asset {
@@ -1320,6 +1332,8 @@ button:disabled {
   .status-bar {
     flex-direction: column;
     align-items: flex-start;
+    height: auto;
     padding: 12px 16px;
+    overflow: visible;
   }
 }

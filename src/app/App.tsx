@@ -6484,10 +6484,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
         </div>
 
         <footer className="status-bar">
-          <div>
+          <div className="status-bar__item status-bar__item--message" title={statusMessage}>
             <span className="status-bar__strong">Status:</span> {statusMessage}
           </div>
-          <div>
+          <div className="status-bar__item">
             <span className="status-bar__strong">Spawn:</span>{" "}
             {runtimeScene.spawn.source === "playerStart"
               ? "Authored Player Start"
@@ -10783,7 +10783,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
       )}
 
       <footer className="status-bar">
-        <div className="status-bar__item" data-testid="status-message">
+        <div
+          className="status-bar__item status-bar__item--message"
+          data-testid="status-message"
+          title={statusMessage}
+        >
           <span className="status-bar__strong">Status:</span> {statusMessage}
         </div>
         <div
@@ -10808,12 +10812,17 @@ export function App({ store, initialStatusMessage }: AppProps) {
           <div
             className="status-bar__item status-bar__item--asset"
             data-testid="status-asset-hover"
+            title={hoveredAssetStatusMessage}
           >
             <span className="status-bar__strong">Asset:</span>{" "}
             {hoveredAssetStatusMessage}
           </div>
         )}
-        <div className="status-bar__item" data-testid="status-last-command">
+        <div
+          className="status-bar__item"
+          data-testid="status-last-command"
+          title={lastCommandLabel}
+        >
           <span className="status-bar__strong">Last:</span> {lastCommandLabel}
         </div>
       </footer>
