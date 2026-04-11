@@ -1842,6 +1842,10 @@ function readPlayerStartEntity(value: unknown, label: string): EntityInstance {
       value.navigationMode,
       `${label}.navigationMode`
     ),
+    movementTemplate: readPlayerStartMovementTemplate(
+      value.movementTemplate,
+      `${label}.movementTemplate`
+    ),
     inputBindings: readPlayerStartInputBindings(
       value.inputBindings,
       `${label}.inputBindings`
