@@ -1,4 +1,5 @@
 import { createOpaqueId } from "../core/ids";
+import type { WhiteboxSelectionMode } from "../core/whitebox-selection-mode";
 import type { Brush } from "./brushes";
 import type { ModelInstance } from "../assets/model-instances";
 import type { ProjectAssetRecord } from "../assets/project-assets";
@@ -14,7 +15,8 @@ import {
   type WorldSettings
 } from "./world-settings";
 
-export const SCENE_DOCUMENT_VERSION = 28 as const;
+export const SCENE_DOCUMENT_VERSION = 29 as const;
+export const SCENE_EDITOR_PREFERENCES_SCENE_DOCUMENT_VERSION = 29 as const;
 export const PROJECT_NAME_SCENE_DOCUMENT_VERSION = 28 as const;
 export const PLAYER_START_GAMEPAD_CAMERA_LOOK_SCENE_DOCUMENT_VERSION = 27 as const;
 export const PLAYER_START_INPUT_BINDINGS_SCENE_DOCUMENT_VERSION = 26 as const;
@@ -46,6 +48,42 @@ export const RUNNER_LOADING_SCREEN_SCENE_DOCUMENT_VERSION = 23 as const;
 
 export const DEFAULT_PROJECT_NAME = "Untitled Project" as const;
 export const DEFAULT_PROJECT_SCENE_ID = "scene-main" as const;
+export const DEFAULT_SCENE_EDITOR_SNAP_STEP = 1 as const;
+
+export type SceneEditorViewportLayoutMode = "single" | "quad";
+export type SceneEditorViewportPanelId =
+  | "topLeft"
+  | "topRight"
+  | "bottomLeft"
+  | "bottomRight";
+export type SceneEditorViewportViewMode =
+  | "perspective"
+  | "top"
+  | "front"
+  | "side";
+export type SceneEditorViewportDisplayMode =
+  | "normal"
+  | "authoring"
+  | "wireframe";
+
+export interface SceneEditorPanelPreferences {
+  viewMode: SceneEditorViewportViewMode;
+  displayMode: SceneEditorViewportDisplayMode;
+}
+
+export interface SceneEditorPreferences {
+  whiteboxSelectionMode: WhiteboxSelectionMode;
+  whiteboxSnapEnabled: boolean;
+  whiteboxSnapStep: number;
+  viewportGridVisible: boolean;
+  viewportLayoutMode: SceneEditorViewportLayoutMode;
+  activeViewportPanelId: SceneEditorViewportPanelId;
+  viewportQuadSplit: {
+    x: number;
+    y: number;
+  };
+  viewportPanels: Record<SceneEditorViewportPanelId, SceneEditorPanelPreferences>;
+}
 
 export interface SceneLoadingScreenSettings {
   colorHex: string;
@@ -57,6 +95,7 @@ export interface ProjectScene {
   id: string;
   name: string;
   loadingScreen: SceneLoadingScreenSettings;
+  editorPreferences: SceneEditorPreferences;
   world: WorldSettings;
   brushes: Record<string, Brush>;
   modelInstances: Record<string, ModelInstance>;
@@ -108,7 +147,10 @@ export function createEmptySceneDocument(
 
 export function createEmptyProjectScene(
   overrides: Partial<
-    Pick<ProjectScene, "id" | "name" | "loadingScreen" | "world">
+    Pick<
+      ProjectScene,
+      "id" | "name" | "loadingScreen" | "editorPreferences" | "world"
+    >
   > = {}
 ): ProjectScene {
   return {
@@ -116,6 +158,9 @@ export function createEmptyProjectScene(
     name: overrides.name ?? "Untitled Scene",
     loadingScreen: cloneSceneLoadingScreenSettings(
       overrides.loadingScreen ?? createDefaultSceneLoadingScreenSettings()
+    ),
+    editorPreferences: cloneSceneEditorPreferences(
+      overrides.editorPreferences ?? createDefaultSceneEditorPreferences()
     ),
     world: overrides.world ?? createDefaultWorldSettings(),
     brushes: {},
@@ -206,6 +251,7 @@ export function createProjectDocumentFromSceneDocument(
         id: sceneId,
         name: sceneDocument.name,
         loadingScreen: createDefaultSceneLoadingScreenSettings(),
+        editorPreferences: createDefaultSceneEditorPreferences(),
         world: sceneDocument.world,
         brushes: sceneDocument.brushes,
         modelInstances: sceneDocument.modelInstances,
@@ -252,6 +298,69 @@ export function createDefaultSceneLoadingScreenSettings(): SceneLoadingScreenSet
     colorHex: "#0d1117",
     headline: null,
     description: null
+  };
+}
+
+export function createDefaultSceneEditorPreferences(): SceneEditorPreferences {
+  return {
+    whiteboxSelectionMode: "object",
+    whiteboxSnapEnabled: true,
+    whiteboxSnapStep: DEFAULT_SCENE_EDITOR_SNAP_STEP,
+    viewportGridVisible: true,
+    viewportLayoutMode: "single",
+    activeViewportPanelId: "topLeft",
+    viewportQuadSplit: {
+      x: 0.5,
+      y: 0.5
+    },
+    viewportPanels: {
+      topLeft: {
+        viewMode: "perspective",
+        displayMode: "normal"
+      },
+      topRight: {
+        viewMode: "top",
+        displayMode: "authoring"
+      },
+      bottomLeft: {
+        viewMode: "front",
+        displayMode: "authoring"
+      },
+      bottomRight: {
+        viewMode: "side",
+        displayMode: "authoring"
+      }
+    }
+  };
+}
+
+export function cloneSceneEditorPreferences(
+  preferences: SceneEditorPreferences
+): SceneEditorPreferences {
+  return {
+    whiteboxSelectionMode: preferences.whiteboxSelectionMode,
+    whiteboxSnapEnabled: preferences.whiteboxSnapEnabled,
+    whiteboxSnapStep: preferences.whiteboxSnapStep,
+    viewportGridVisible: preferences.viewportGridVisible,
+    viewportLayoutMode: preferences.viewportLayoutMode,
+    activeViewportPanelId: preferences.activeViewportPanelId,
+    viewportQuadSplit: {
+      ...preferences.viewportQuadSplit
+    },
+    viewportPanels: {
+      topLeft: {
+        ...preferences.viewportPanels.topLeft
+      },
+      topRight: {
+        ...preferences.viewportPanels.topRight
+      },
+      bottomLeft: {
+        ...preferences.viewportPanels.bottomLeft
+      },
+      bottomRight: {
+        ...preferences.viewportPanels.bottomRight
+      }
+    }
   };
 }
 
