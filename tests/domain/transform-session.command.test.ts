@@ -7,6 +7,7 @@ import { createCommitTransformSessionCommand } from "../../src/commands/commit-t
 import {
   createTransformSession,
   resolveTransformTarget,
+  supportsLocalTransformAxisConstraint,
   supportsTransformAxisConstraint,
   supportsTransformOperation
 } from "../../src/core/transform-session";
@@ -230,6 +231,90 @@ describe("transform session commit commands", () => {
     expect(supportsTransformAxisConstraint(vertexTranslateSession, "x")).toBe(true);
     expect(supportsTransformAxisConstraint(vertexTranslateSession, "y")).toBe(true);
     expect(supportsTransformAxisConstraint(vertexTranslateSession, "z")).toBe(true);
+  });
+
+  it("only enables local axis toggling on supported transform targets", () => {
+    const brush = createBoxBrush({
+      id: "brush-local-axis"
+    });
+    const playerStart = createPlayerStartEntity({
+      id: "entity-local-axis-player",
+      position: {
+        x: 1,
+        y: 0,
+        z: 1
+      },
+      yawDegrees: 45
+    });
+    const document = {
+      ...createEmptySceneDocument(),
+      brushes: {
+        [brush.id]: brush
+      },
+      entities: {
+        [playerStart.id]: playerStart
+      }
+    };
+
+    const brushTarget = resolveTransformTarget(document, {
+      kind: "brushes",
+      ids: [brush.id]
+    }).target;
+    const faceTarget = resolveTransformTarget(
+      document,
+      {
+        kind: "brushFace",
+        brushId: brush.id,
+        faceId: "posX"
+      },
+      "face"
+    ).target;
+    const entityTarget = resolveTransformTarget(document, {
+      kind: "entities",
+      ids: [playerStart.id]
+    }).target;
+
+    if (brushTarget === null || brushTarget.kind !== "brush") {
+      throw new Error("Expected a brush transform target.");
+    }
+
+    if (faceTarget === null || faceTarget.kind !== "brushFace") {
+      throw new Error("Expected a face transform target.");
+    }
+
+    if (entityTarget === null || entityTarget.kind !== "entity") {
+      throw new Error("Expected an entity transform target.");
+    }
+
+    const brushTranslateSession = createTransformSession({
+      source: "keyboard",
+      sourcePanelId: "topLeft",
+      operation: "translate",
+      target: brushTarget
+    });
+    const brushScaleSession = createTransformSession({
+      source: "keyboard",
+      sourcePanelId: "topLeft",
+      operation: "scale",
+      target: brushTarget
+    });
+    const faceRotateSession = createTransformSession({
+      source: "keyboard",
+      sourcePanelId: "topLeft",
+      operation: "rotate",
+      target: faceTarget
+    });
+    const entityTranslateSession = createTransformSession({
+      source: "keyboard",
+      sourcePanelId: "topLeft",
+      operation: "translate",
+      target: entityTarget
+    });
+
+    expect(supportsLocalTransformAxisConstraint(brushTranslateSession, "z")).toBe(true);
+    expect(supportsLocalTransformAxisConstraint(brushScaleSession, "z")).toBe(false);
+    expect(supportsLocalTransformAxisConstraint(faceRotateSession, "x")).toBe(false);
+    expect(supportsLocalTransformAxisConstraint(entityTranslateSession, "x")).toBe(true);
   });
 
   it("commits whitebox box rotate and scale transforms with undo and redo", () => {
