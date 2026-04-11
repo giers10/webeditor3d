@@ -6517,19 +6517,17 @@ export function App({ store, initialStatusMessage }: AppProps) {
       const nextRuntimeScene = buildRuntimeSceneForProjectScene(
         editorState.activeSceneId
       );
-      const nextNavigationMode = preferredNavigationMode;
 
       applyRuntimeSceneSession(editorState.activeSceneId, nextRuntimeScene);
       setRuntimeMessage(null);
       setFirstPersonTelemetry(null);
       setRuntimeInteractionPrompt(null);
       setRuntimeGlobalState(createDefaultRuntimeGlobalState());
-      setActiveNavigationMode(nextNavigationMode);
       store.enterPlayMode();
       setStatusMessage(
-        nextNavigationMode === "firstPerson"
+        nextRuntimeScene.navigationMode === "firstPerson"
           ? "Entered run mode with first-person navigation."
-          : "Entered run mode with Orbit Visitor."
+          : "Entered run mode with third-person navigation."
       );
     } catch (error) {
       setStatusMessage(`Run mode could not start: ${getErrorMessage(error)}`);
@@ -6545,29 +6543,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
     setRuntimeMessage(null);
     setFirstPersonTelemetry(null);
     setRuntimeInteractionPrompt(null);
+    setActiveNavigationMode("thirdPerson");
     store.exitPlayMode();
     setStatusMessage("Returned to editor mode.");
-  };
-
-  const handleSetPreferredNavigationMode = (
-    navigationMode: RuntimeNavigationMode
-  ) => {
-    setPreferredNavigationMode(navigationMode);
-
-    if (navigationMode === "firstPerson" && primaryPlayerStart === null) {
-      setStatusMessage(
-        "First Person selected. Author a Player Start before running, or switch back to Orbit Visitor."
-      );
-    }
-
-    if (editorState.toolMode === "play") {
-      setActiveNavigationMode(navigationMode);
-      setStatusMessage(
-        navigationMode === "firstPerson"
-          ? "Runner switched to first-person navigation."
-          : "Runner switched to Orbit Visitor."
-      );
-    }
   };
 
   const createAssetMenuHoverHandler =
