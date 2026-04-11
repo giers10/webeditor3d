@@ -186,6 +186,7 @@ Examples:
 - imported-model collider generation honors the authored mode semantics:
   - terrain -> heightfield
   - static -> triangle mesh
+  - static-simple -> compound box pieces
   - dynamic -> compound convex pieces
   - simple -> primitive or convex hull
 - unsupported imported-model collision modes fail clearly instead of producing silent garbage

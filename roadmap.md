@@ -374,6 +374,7 @@ The tool becomes more than brush-only by supporting imported assets, authored li
   - none = no collider
   - terrain = heightfield collider, static only
   - static = triangle mesh collider, fixed only
+  - static-simple = voxel-boxified fixed compound collider for static environment use
   - dynamic = convex decomposition into compound collider, dynamic/kinematic capable
   - simple = one cheap primitive or one convex hull
 - generated collision survives save/load through canonical settings and deterministic rebuild behavior

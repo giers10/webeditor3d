@@ -771,6 +771,7 @@ type ModelInstanceCollisionMode =
   | "none"
   | "terrain"
   | "static"
+  | "static-simple"
   | "dynamic"
   | "simple";
 
@@ -799,6 +800,7 @@ Rules:
   - `none` = no collider
   - `terrain` = heightfield collider, static only
   - `static` = triangle mesh collider, fixed only
+  - `static-simple` = voxel-boxified fixed compound collider for static environment use
   - `dynamic` = convex decomposition into compound collider, dynamic/kinematic capable
   - `simple` = one cheap primitive or one convex hull
 - initial support may be staged, but unsupported modes must fail clearly instead of silently degrading to random approximations
