@@ -379,7 +379,8 @@ export function createPlayerStartInputBindings(
       overrides.keyboard?.moveBackward ??
       DEFAULT_PLAYER_START_KEYBOARD_BINDINGS.moveBackward,
     moveLeft:
-      overrides.keyboard?.moveLeft ?? DEFAULT_PLAYER_START_KEYBOARD_BINDING_CODES[1],
+      overrides.keyboard?.moveLeft ??
+      DEFAULT_PLAYER_START_KEYBOARD_BINDINGS.moveLeft,
     moveRight:
       overrides.keyboard?.moveRight ??
       DEFAULT_PLAYER_START_KEYBOARD_BINDINGS.moveRight
