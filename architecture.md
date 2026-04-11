@@ -598,6 +598,8 @@ Later optional modes:
 - click-to-teleport
 - controller-supported variants where applicable
 
+Every new movement mode or controller feature must ship with default keyboard and standard-gamepad bindings, even if the authored inspector UI stays simple.
+
 These modes should share a common interface:
 
 ```ts
