@@ -96,6 +96,24 @@ export class FirstPersonNavigationController implements NavigationController {
     this.context = null;
   }
 
+  resetSceneState(): void {
+    this.pressedKeys.clear();
+    this.feetPosition = {
+      x: 0,
+      y: 0,
+      z: 0
+    };
+    this.yawRadians = 0;
+    this.pitchRadians = 0;
+    this.verticalVelocity = 0;
+    this.grounded = false;
+    this.locomotionState = "flying";
+    this.inWaterVolume = false;
+    this.inFogVolume = false;
+    this.pointerLocked = false;
+    this.initializedFromSpawn = false;
+  }
+
   update(dt: number): void {
     if (this.context === null) {
       return;
