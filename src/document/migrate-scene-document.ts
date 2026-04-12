@@ -85,6 +85,7 @@ import {
 import {
   BOX_BRUSH_SCENE_DOCUMENT_VERSION,
   ANIMATION_PLAYBACK_SCENE_DOCUMENT_VERSION,
+  AUTHORED_OBJECT_STATE_SCENE_DOCUMENT_VERSION,
   DEFAULT_PROJECT_NAME,
   DEFAULT_PROJECT_SCENE_ID,
   SCENE_EDITOR_PREFERENCES_SCENE_DOCUMENT_VERSION,
@@ -99,6 +100,7 @@ import {
   MODEL_ASSET_PIPELINE_SCENE_DOCUMENT_VERSION,
   PLAYER_START_AIR_DIRECTION_CONTROL_SCENE_DOCUMENT_VERSION,
   PLAYER_START_MOVEMENT_TEMPLATE_SCENE_DOCUMENT_VERSION,
+  PROJECT_TIME_SYSTEM_SCENE_DOCUMENT_VERSION,
   PLAYER_START_AIR_CONTROL_SCENE_DOCUMENT_VERSION,
   PLAYER_START_GAMEPAD_CAMERA_LOOK_SCENE_DOCUMENT_VERSION,
   PLAYER_START_INPUT_BINDINGS_SCENE_DOCUMENT_VERSION,
@@ -129,6 +131,11 @@ import {
   type SceneLoadingScreenSettings,
   type SceneDocument
 } from "./scene-document";
+import {
+  createDefaultProjectTimeSettings,
+  normalizeTimeOfDayHours,
+  type ProjectTimeSettings
+} from "./project-time-settings";
 import {
   isAdvancedRenderingWaterReflectionMode,
   createDefaultAdvancedRenderingSettings,
@@ -435,6 +442,18 @@ function readOptionalNonNegativeFiniteNumber(
   }
 
   return expectNonNegativeFiniteNumber(value, label);
+}
+
+function readOptionalPositiveFiniteNumber(
+  value: unknown,
+  label: string,
+  fallback: number
+): number {
+  if (value === undefined) {
+    return fallback;
+  }
+
+  return expectPositiveFiniteNumber(value, label);
 }
 
 function readOptionalPositiveInteger(
