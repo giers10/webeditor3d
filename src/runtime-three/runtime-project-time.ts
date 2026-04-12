@@ -3,6 +3,7 @@ import {
   formatTimeOfDayHours,
   HOURS_PER_DAY,
   normalizeTimeOfDayHours,
+  type ProjectTimePhaseProfile,
   type ProjectTimeSettings
 } from "../document/project-time-settings";
 import {
@@ -13,11 +14,6 @@ import {
   type WorldSunLightSettings
 } from "../document/world-settings";
 
-const NIGHT_AMBIENT_COLOR = "#162033";
-const NIGHT_SUN_COLOR = "#6f7fb5";
-const NIGHT_SOLID_BACKGROUND_COLOR = "#09111f";
-const NIGHT_GRADIENT_TOP_COLOR = "#0b1730";
-const NIGHT_GRADIENT_BOTTOM_COLOR = "#182134";
 const DEFAULT_NOON_DIRECTION: Vec3 = {
   x: 0.45,
   y: 0.88,
@@ -38,8 +34,16 @@ export interface RuntimeClockState {
 export interface RuntimeDayNightWorldState {
   ambientLight: WorldAmbientLightSettings;
   sunLight: WorldSunLightSettings;
+  moonLight: WorldSunLightSettings | null;
   background: WorldBackgroundSettings;
   daylightFactor: number;
+}
+
+interface RuntimeDayNightPhaseWeights {
+  day: number;
+  dawn: number;
+  dusk: number;
+  night: number;
 }
 
 function clamp(value: number, min: number, max: number): number {
@@ -144,6 +148,69 @@ function blendHexColors(leftHex: string, rightHex: string, amount: number): stri
   });
 }
 
+function blendHexColorsByWeights(
+  dayHex: string,
+  dawnHex: string,
+  duskHex: string,
+  nightHex: string,
+  weights: RuntimeDayNightPhaseWeights
+): string {
+  const totalWeight =
+    weights.day + weights.dawn + weights.dusk + weights.night;
+
+  if (totalWeight <= 1e-6) {
+    return dayHex;
+  }
+
+  const day = parseHexColor(dayHex);
+  const dawn = parseHexColor(dawnHex);
+  const dusk = parseHexColor(duskHex);
+  const night = parseHexColor(nightHex);
+
+  return formatHexColor({
+    r:
+      (day.r * weights.day +
+        dawn.r * weights.dawn +
+        dusk.r * weights.dusk +
+        night.r * weights.night) /
+      totalWeight,
+    g:
+      (day.g * weights.day +
+        dawn.g * weights.dawn +
+        dusk.g * weights.dusk +
+        night.g * weights.night) /
+      totalWeight,
+    b:
+      (day.b * weights.day +
+        dawn.b * weights.dawn +
+        dusk.b * weights.dusk +
+        night.b * weights.night) /
+      totalWeight
+  });
+}
+
+function blendScalarByWeights(
+  dayValue: number,
+  dawnValue: number,
+  duskValue: number,
+  nightValue: number,
+  weights: RuntimeDayNightPhaseWeights
+): number {
+  const totalWeight =
+    weights.day + weights.dawn + weights.dusk + weights.night;
+
+  if (totalWeight <= 1e-6) {
+    return dayValue;
+  }
+
+  return (
+    dayValue * weights.day +
+    dawnValue * weights.dawn +
+    duskValue * weights.dusk +
+    nightValue * weights.night
+  ) / totalWeight;
+}
+
 function resolveNoonSunDirection(direction: Vec3): Vec3 {
   const normalizedDirection = normalizeVec3(direction);
 
@@ -158,8 +225,141 @@ function resolveNoonSunDirection(direction: Vec3): Vec3 {
   });
 }
 
+function unwrapTimeAroundReference(hours: number, referenceHours: number): number {
+  let unwrappedHours = normalizeTimeOfDayHours(hours);
+
+  while (unwrappedHours - referenceHours > HOURS_PER_DAY / 2) {
+    unwrappedHours -= HOURS_PER_DAY;
+  }
+
+  while (referenceHours - unwrappedHours > HOURS_PER_DAY / 2) {
+    unwrappedHours += HOURS_PER_DAY;
+  }
+
+  return unwrappedHours;
+}
+
+function resolveRuntimeDayNightPhaseWeights(
+  settings: ProjectTimeSettings,
+  timeOfDayHours: number
+): RuntimeDayNightPhaseWeights {
+  const normalizedTime = normalizeTimeOfDayHours(timeOfDayHours);
+  const sunrise = unwrapTimeAroundReference(
+    settings.sunriseTimeOfDayHours,
+    normalizedTime
+  );
+  const sunset = unwrapTimeAroundReference(
+    settings.sunsetTimeOfDayHours,
+    normalizedTime
+  );
+  const dawnHalfDuration = Math.max(settings.dawnDurationHours, 0.001) / 2;
+  const duskHalfDuration = Math.max(settings.duskDurationHours, 0.001) / 2;
+  const dawnStart = sunrise - dawnHalfDuration;
+  const dawnEnd = sunrise + dawnHalfDuration;
+  const duskStart = sunset - duskHalfDuration;
+  const duskEnd = sunset + duskHalfDuration;
+
+  if (normalizedTime < dawnStart || normalizedTime >= duskEnd) {
+    return {
+      day: 0,
+      dawn: 0,
+      dusk: 0,
+      night: 1
+    };
+  }
+
+  if (normalizedTime < sunrise) {
+    const amount = smoothstep(dawnStart, sunrise, normalizedTime);
+
+    return {
+      day: 0,
+      dawn: amount,
+      dusk: 0,
+      night: 1 - amount
+    };
+  }
+
+  if (normalizedTime < dawnEnd) {
+    const amount = smoothstep(sunrise, dawnEnd, normalizedTime);
+
+    return {
+      day: amount,
+      dawn: 1 - amount,
+      dusk: 0,
+      night: 0
+    };
+  }
+
+  if (normalizedTime < duskStart) {
+    return {
+      day: 1,
+      dawn: 0,
+      dusk: 0,
+      night: 0
+    };
+  }
+
+  if (normalizedTime < sunset) {
+    const amount = smoothstep(duskStart, sunset, normalizedTime);
+
+    return {
+      day: 1 - amount,
+      dawn: 0,
+      dusk: amount,
+      night: 0
+    };
+  }
+
+  const amount = smoothstep(sunset, duskEnd, normalizedTime);
+
+  return {
+    day: 0,
+    dawn: 0,
+    dusk: 1 - amount,
+    night: amount
+  };
+}
+
+function resolveTimeDrivenSunOrbitRadians(
+  settings: ProjectTimeSettings,
+  timeOfDayHours: number
+): number {
+  const normalizedTime = normalizeTimeOfDayHours(timeOfDayHours);
+  const sunrise = unwrapTimeAroundReference(
+    settings.sunriseTimeOfDayHours,
+    normalizedTime
+  );
+  const sunset = unwrapTimeAroundReference(
+    settings.sunsetTimeOfDayHours,
+    normalizedTime
+  );
+
+  if (normalizedTime >= sunrise && normalizedTime <= sunset) {
+    const daytimeDuration = Math.max(sunset - sunrise, 0.001);
+    const daytimeProgress = clamp(
+      (normalizedTime - sunrise) / daytimeDuration,
+      0,
+      1
+    );
+
+    return lerp(-Math.PI / 2, Math.PI / 2, daytimeProgress);
+  }
+
+  const previousSunset = sunset > normalizedTime ? sunset - HOURS_PER_DAY : sunset;
+  const nextSunrise = sunrise <= normalizedTime ? sunrise + HOURS_PER_DAY : sunrise;
+  const nighttimeDuration = Math.max(nextSunrise - previousSunset, 0.001);
+  const nighttimeProgress = clamp(
+    (normalizedTime - previousSunset) / nighttimeDuration,
+    0,
+    1
+  );
+
+  return lerp(Math.PI / 2, Math.PI * 1.5, nighttimeProgress);
+}
+
 function resolveTimeDrivenSunDirection(
   noonDirection: Vec3,
+  settings: ProjectTimeSettings,
   timeOfDayHours: number
 ): Vec3 {
   const orbitAxisCandidate = cross(noonDirection, UP_AXIS);
@@ -175,24 +375,32 @@ function resolveTimeDrivenSunDirection(
           z: 0
         }
       : normalizeVec3(orbitAxisCandidate);
-  const orbitRadians =
-    ((normalizeTimeOfDayHours(timeOfDayHours) - 12) / HOURS_PER_DAY) *
-    Math.PI * 2;
+  const orbitRadians = resolveTimeDrivenSunOrbitRadians(
+    settings,
+    timeOfDayHours
+  );
 
   return rotateAroundAxis(noonDirection, orbitAxis, orbitRadians);
 }
 
+function resolvePhaseSolidBackgroundColor(profile: ProjectTimePhaseProfile): string {
+  return blendHexColors(profile.skyTopColorHex, profile.skyBottomColorHex, 0.65);
+}
+
 function resolveTimeDrivenBackground(
   background: WorldBackgroundSettings,
-  daylightFactor: number
+  settings: ProjectTimeSettings,
+  weights: RuntimeDayNightPhaseWeights
 ): WorldBackgroundSettings {
   if (background.mode === "solid") {
     return {
       mode: "solid",
-      colorHex: blendHexColors(
-        NIGHT_SOLID_BACKGROUND_COLOR,
+      colorHex: blendHexColorsByWeights(
         background.colorHex,
-        daylightFactor
+        resolvePhaseSolidBackgroundColor(settings.dawn),
+        resolvePhaseSolidBackgroundColor(settings.dusk),
+        resolvePhaseSolidBackgroundColor(settings.night),
+        weights
       )
     };
   }
@@ -200,15 +408,19 @@ function resolveTimeDrivenBackground(
   if (background.mode === "verticalGradient") {
     return {
       mode: "verticalGradient",
-      topColorHex: blendHexColors(
-        NIGHT_GRADIENT_TOP_COLOR,
+      topColorHex: blendHexColorsByWeights(
         background.topColorHex,
-        daylightFactor
+        settings.dawn.skyTopColorHex,
+        settings.dusk.skyTopColorHex,
+        settings.night.skyTopColorHex,
+        weights
       ),
-      bottomColorHex: blendHexColors(
-        NIGHT_GRADIENT_BOTTOM_COLOR,
+      bottomColorHex: blendHexColorsByWeights(
         background.bottomColorHex,
-        daylightFactor
+        settings.dawn.skyBottomColorHex,
+        settings.dusk.skyBottomColorHex,
+        settings.night.skyBottomColorHex,
+        weights
       )
     };
   }
@@ -221,7 +433,7 @@ export function createRuntimeClockState(
 ): RuntimeClockState {
   return {
     timeOfDayHours: normalizeTimeOfDayHours(settings.startTimeOfDayHours),
-    dayCount: 0,
+    dayCount: settings.startDayNumber - 1,
     dayLengthMinutes: settings.dayLengthMinutes
   };
 }
@@ -283,9 +495,10 @@ export function formatRuntimeClockTime(state: RuntimeClockState): string {
 
 export function resolveRuntimeDayNightWorldState(
   world: WorldSettings,
+  settings: ProjectTimeSettings,
   clock: RuntimeClockState | null
 ): RuntimeDayNightWorldState {
-  if (clock === null) {
+  if (clock === null || !world.projectTimeLightingEnabled) {
     return {
       ambientLight: {
         colorHex: world.ambientLight.colorHex,
@@ -298,39 +511,119 @@ export function resolveRuntimeDayNightWorldState(
           ...world.sunLight.direction
         }
       },
+      moonLight: null,
       background: cloneWorldBackgroundSettings(world.background),
       daylightFactor: 1
     };
   }
 
+  const normalizedTime = normalizeTimeOfDayHours(clock.timeOfDayHours);
+  const phaseWeights = resolveRuntimeDayNightPhaseWeights(
+    settings,
+    normalizedTime
+  );
   const noonDirection = resolveNoonSunDirection(world.sunLight.direction);
   const sunDirection = resolveTimeDrivenSunDirection(
     noonDirection,
-    clock.timeOfDayHours
+    settings,
+    normalizedTime
   );
-  const daylightFactor = smoothstep(-0.2, 0.18, sunDirection.y);
-  const ambientFactor = lerp(0.18, 1, daylightFactor);
-  const sunFactor = lerp(0.02, 1, smoothstep(-0.05, 0.22, sunDirection.y));
+  const daylightFactor = clamp(
+    phaseWeights.day +
+      phaseWeights.dawn * 0.7 +
+      phaseWeights.dusk * 0.5 +
+      phaseWeights.night * 0.08,
+    0,
+    1
+  );
+  const sunFactor =
+    blendScalarByWeights(
+      1,
+      settings.dawn.lightIntensityFactor,
+      settings.dusk.lightIntensityFactor,
+      0,
+      phaseWeights
+    ) * smoothstep(-0.16, 0.18, sunDirection.y);
+  const ambientFactor = blendScalarByWeights(
+    1,
+    settings.dawn.ambientIntensityFactor,
+    settings.dusk.ambientIntensityFactor,
+    settings.night.ambientIntensityFactor,
+    phaseWeights
+  );
+
+  const beforeSunrise = normalizedTime < settings.sunriseTimeOfDayHours;
+  const afterSunset = normalizedTime >= settings.sunsetTimeOfDayHours;
+  let moonLight: WorldSunLightSettings | null = null;
+
+  if (beforeSunrise || afterSunset || phaseWeights.night > 0) {
+    let moonColorHex = settings.night.lightColorHex;
+    let moonVisibilityFactor = phaseWeights.night;
+
+    if (beforeSunrise && phaseWeights.dawn > 0) {
+      const twilightBlend =
+        phaseWeights.dawn /
+        Math.max(phaseWeights.dawn + phaseWeights.night, 0.001);
+      moonColorHex = blendHexColors(
+        settings.night.lightColorHex,
+        settings.dawn.lightColorHex,
+        twilightBlend
+      );
+      moonVisibilityFactor = phaseWeights.night + phaseWeights.dawn * 0.45;
+    } else if (afterSunset && phaseWeights.dusk > 0) {
+      const twilightBlend =
+        phaseWeights.dusk /
+        Math.max(phaseWeights.dusk + phaseWeights.night, 0.001);
+      moonColorHex = blendHexColors(
+        settings.night.lightColorHex,
+        settings.dusk.lightColorHex,
+        twilightBlend
+      );
+      moonVisibilityFactor = phaseWeights.night + phaseWeights.dusk * 0.45;
+    }
+
+    moonVisibilityFactor = clamp(moonVisibilityFactor, 0, 1);
+
+    if (moonVisibilityFactor > 1e-4) {
+      moonLight = {
+        colorHex: moonColorHex,
+        intensity:
+          world.sunLight.intensity *
+          settings.night.lightIntensityFactor *
+          moonVisibilityFactor,
+        direction: scaleVec3(sunDirection, -1)
+      };
+    }
+  }
 
   return {
     ambientLight: {
-      colorHex: blendHexColors(
-        NIGHT_AMBIENT_COLOR,
+      colorHex: blendHexColorsByWeights(
         world.ambientLight.colorHex,
-        lerp(0.15, 1, daylightFactor)
+        settings.dawn.ambientColorHex,
+        settings.dusk.ambientColorHex,
+        settings.night.ambientColorHex,
+        phaseWeights
       ),
       intensity: world.ambientLight.intensity * ambientFactor
     },
     sunLight: {
-      colorHex: blendHexColors(
-        NIGHT_SUN_COLOR,
+      colorHex: blendHexColorsByWeights(
         world.sunLight.colorHex,
-        lerp(0.1, 1, daylightFactor)
+        settings.dawn.lightColorHex,
+        settings.dusk.lightColorHex,
+        settings.night.lightColorHex,
+        phaseWeights
       ),
       intensity: world.sunLight.intensity * sunFactor,
       direction: sunDirection
     },
-    background: resolveTimeDrivenBackground(world.background, daylightFactor),
+    moonLight,
+    background: resolveTimeDrivenBackground(
+      world.background,
+      settings,
+      phaseWeights
+    ),
     daylightFactor
   };
 }
