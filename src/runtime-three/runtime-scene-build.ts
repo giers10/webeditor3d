@@ -12,6 +12,10 @@ import {
   type FaceUvState
 } from "../document/brushes";
 import type { SceneDocument } from "../document/scene-document";
+import {
+  cloneProjectTimeSettings,
+  type ProjectTimeSettings
+} from "../document/project-time-settings";
 import { cloneWorldSettings, type WorldSettings } from "../document/world-settings";
 import {
   clonePlayerStartInputBindings,
@@ -51,14 +55,9 @@ export interface RuntimeBoxBrushInstance {
   rotationDegrees: Vec3;
   size: Vec3;
   geometry: BoxBrushGeometry;
-  import {
-    cloneProjectTimeSettings,
-    type ProjectTimeSettings
-  } from "../document/project-time-settings";
   faces: Record<BoxFaceId, RuntimeBrushFace>;
   volume: BoxBrushVolumeSettings;
 }
-    time: ProjectTimeSettings;
 
 export interface RuntimeFogVolume {
   brushId: string;
@@ -231,6 +230,7 @@ export interface RuntimeSpawnPoint {
 }
 
 export interface RuntimeSceneDefinition {
+  time: ProjectTimeSettings;
   world: WorldSettings;
   localLights: RuntimeLocalLightCollection;
   brushes: RuntimeBoxBrushInstance[];
