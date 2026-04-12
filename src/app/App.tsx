@@ -8985,18 +8985,52 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 <div className="stat-card">
                   <div className="label">Clock</div>
                   <div className="value">
-                    {formatTimeOfDayHours(
+                    Day {editorState.projectDocument.time.startDayNumber} · {formatTimeOfDayHours(
                       editorState.projectDocument.time.startTimeOfDayHours
                     )}
                   </div>
                   <div className="material-summary">
-                    Runner sessions begin at the authored start time and keep advancing across scene transitions.
+                    Runner sessions begin on the authored start day and time, then keep advancing across scene transitions.
                   </div>
                 </div>
 
                 <div className="form-section">
                   <div className="label">Cycle Settings</div>
                   <div className="vector-inputs vector-inputs--two">
+                    <label className="form-field">
+                      <span className="label">Start Day</span>
+                      <input
+                        className="text-input"
+                        type="number"
+                        min="1"
+                        step="1"
+                        value={projectTimeStartDayNumberDraft}
+                        onChange={(event) =>
+                          setProjectTimeStartDayNumberDraft(
+                            event.currentTarget.value
+                          )
+                        }
+                        onBlur={applyProjectTimeStartDayNumber}
+                        onKeyDown={(event) =>
+                          handleDraftVectorKeyDown(
+                            event,
+                            applyProjectTimeStartDayNumber
+                          )
+                        }
+                        onKeyUp={(event) =>
+                          handleNumberInputKeyUp(
+                            event,
+                            applyProjectTimeStartDayNumber
+                          )
+                        }
+                        onPointerUp={(event) =>
+                          handleNumberInputPointerUp(
+                            event,
+                            applyProjectTimeStartDayNumber
+                          )
+                        }
+                      />
+                    </label>
                     <label className="form-field">
                       <span className="label">Start Time</span>
                       <input
@@ -9033,6 +9067,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         }
                       />
                     </label>
+                  </div>
+                  <div className="vector-inputs vector-inputs--two">
                     <label className="form-field">
                       <span className="label">Minutes Per Day</span>
                       <input
@@ -9068,9 +9104,536 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         }
                       />
                     </label>
+                    <div className="material-summary">
+                      Daylight uses each scene's authored World settings as the daytime baseline.
+                    </div>
                   </div>
                   <div className="material-summary">
                     Default is 24 real minutes for one full 24-hour cycle.
+                  </div>
+                </div>
+
+                <div className="form-section">
+                  <div className="label">Sun Windows</div>
+                  <div className="vector-inputs vector-inputs--two">
+                    <label className="form-field">
+                      <span className="label">Sunrise</span>
+                      <input
+                        className="text-input"
+                        type="number"
+                        min="0"
+                        max="24"
+                        step="0.25"
+                        value={projectTimeSunriseTimeOfDayDraft}
+                        onChange={(event) =>
+                          setProjectTimeSunriseTimeOfDayDraft(
+                            event.currentTarget.value
+                          )
+                        }
+                        onBlur={applyProjectTimeSunriseTimeOfDay}
+                        onKeyDown={(event) =>
+                          handleDraftVectorKeyDown(
+                            event,
+                            applyProjectTimeSunriseTimeOfDay
+                          )
+                        }
+                        onKeyUp={(event) =>
+                          handleNumberInputKeyUp(
+                            event,
+                            applyProjectTimeSunriseTimeOfDay
+                          )
+                        }
+                        onPointerUp={(event) =>
+                          handleNumberInputPointerUp(
+                            event,
+                            applyProjectTimeSunriseTimeOfDay
+                          )
+                        }
+                      />
+                    </label>
+                    <label className="form-field">
+                      <span className="label">Sunset</span>
+                      <input
+                        className="text-input"
+                        type="number"
+                        min="0"
+                        max="24"
+                        step="0.25"
+                        value={projectTimeSunsetTimeOfDayDraft}
+                        onChange={(event) =>
+                          setProjectTimeSunsetTimeOfDayDraft(
+                            event.currentTarget.value
+                          )
+                        }
+                        onBlur={applyProjectTimeSunsetTimeOfDay}
+                        onKeyDown={(event) =>
+                          handleDraftVectorKeyDown(
+                            event,
+                            applyProjectTimeSunsetTimeOfDay
+                          )
+                        }
+                        onKeyUp={(event) =>
+                          handleNumberInputKeyUp(
+                            event,
+                            applyProjectTimeSunsetTimeOfDay
+                          )
+                        }
+                        onPointerUp={(event) =>
+                          handleNumberInputPointerUp(
+                            event,
+                            applyProjectTimeSunsetTimeOfDay
+                          )
+                        }
+                      />
+                    </label>
+                  </div>
+                  <div className="vector-inputs vector-inputs--two">
+                    <label className="form-field">
+                      <span className="label">Dawn Hours</span>
+                      <input
+                        className="text-input"
+                        type="number"
+                        min="0.1"
+                        step="0.1"
+                        value={projectTimeDawnDurationHoursDraft}
+                        onChange={(event) =>
+                          setProjectTimeDawnDurationHoursDraft(
+                            event.currentTarget.value
+                          )
+                        }
+                        onBlur={applyProjectTimeDawnDurationHours}
+                        onKeyDown={(event) =>
+                          handleDraftVectorKeyDown(
+                            event,
+                            applyProjectTimeDawnDurationHours
+                          )
+                        }
+                        onKeyUp={(event) =>
+                          handleNumberInputKeyUp(
+                            event,
+                            applyProjectTimeDawnDurationHours
+                          )
+                        }
+                        onPointerUp={(event) =>
+                          handleNumberInputPointerUp(
+                            event,
+                            applyProjectTimeDawnDurationHours
+                          )
+                        }
+                      />
+                    </label>
+                    <label className="form-field">
+                      <span className="label">Dusk Hours</span>
+                      <input
+                        className="text-input"
+                        type="number"
+                        min="0.1"
+                        step="0.1"
+                        value={projectTimeDuskDurationHoursDraft}
+                        onChange={(event) =>
+                          setProjectTimeDuskDurationHoursDraft(
+                            event.currentTarget.value
+                          )
+                        }
+                        onBlur={applyProjectTimeDuskDurationHours}
+                        onKeyDown={(event) =>
+                          handleDraftVectorKeyDown(
+                            event,
+                            applyProjectTimeDuskDurationHours
+                          )
+                        }
+                        onKeyUp={(event) =>
+                          handleNumberInputKeyUp(
+                            event,
+                            applyProjectTimeDuskDurationHours
+                          )
+                        }
+                        onPointerUp={(event) =>
+                          handleNumberInputPointerUp(
+                            event,
+                            applyProjectTimeDuskDurationHours
+                          )
+                        }
+                      />
+                    </label>
+                  </div>
+                  <div className="material-summary">
+                    Sunrise must stay earlier than sunset. Dawn and dusk durations define how broadly the twilight profile blends around each boundary.
+                  </div>
+                </div>
+
+                <div className="form-section">
+                  <div className="label">Dawn Profile</div>
+                  <div className="vector-inputs">
+                    <label className="form-field">
+                      <span className="label">Sky Top</span>
+                      <input
+                        className="color-input"
+                        type="color"
+                        value={editorState.projectDocument.time.dawn.skyTopColorHex}
+                        onChange={(event) =>
+                          applyProjectTimePhaseColor(
+                            "dawn",
+                            "skyTopColorHex",
+                            event.currentTarget.value,
+                            "Set dawn sky top color",
+                            "Updated the dawn sky top color."
+                          )
+                        }
+                      />
+                    </label>
+                    <label className="form-field">
+                      <span className="label">Sky Bottom</span>
+                      <input
+                        className="color-input"
+                        type="color"
+                        value={editorState.projectDocument.time.dawn.skyBottomColorHex}
+                        onChange={(event) =>
+                          applyProjectTimePhaseColor(
+                            "dawn",
+                            "skyBottomColorHex",
+                            event.currentTarget.value,
+                            "Set dawn sky bottom color",
+                            "Updated the dawn sky bottom color."
+                          )
+                        }
+                      />
+                    </label>
+                    <label className="form-field">
+                      <span className="label">Ambient Color</span>
+                      <input
+                        className="color-input"
+                        type="color"
+                        value={editorState.projectDocument.time.dawn.ambientColorHex}
+                        onChange={(event) =>
+                          applyProjectTimePhaseColor(
+                            "dawn",
+                            "ambientColorHex",
+                            event.currentTarget.value,
+                            "Set dawn ambient color",
+                            "Updated the dawn ambient color."
+                          )
+                        }
+                      />
+                    </label>
+                    <label className="form-field">
+                      <span className="label">Ambient Factor</span>
+                      <input
+                        className="text-input"
+                        type="number"
+                        min="0"
+                        step="0.05"
+                        value={projectTimeDawnAmbientIntensityFactorDraft}
+                        onChange={(event) =>
+                          setProjectTimeDawnAmbientIntensityFactorDraft(
+                            event.currentTarget.value
+                          )
+                        }
+                        onBlur={() =>
+                          applyProjectTimePhaseNumericField(
+                            "dawn",
+                            "ambientIntensityFactor",
+                            projectTimeDawnAmbientIntensityFactorDraft,
+                            "Set dawn ambient factor",
+                            "Dawn ambient factor",
+                            "Updated the dawn ambient factor."
+                          )
+                        }
+                      />
+                    </label>
+                    <label className="form-field">
+                      <span className="label">Light Color</span>
+                      <input
+                        className="color-input"
+                        type="color"
+                        value={editorState.projectDocument.time.dawn.lightColorHex}
+                        onChange={(event) =>
+                          applyProjectTimePhaseColor(
+                            "dawn",
+                            "lightColorHex",
+                            event.currentTarget.value,
+                            "Set dawn light color",
+                            "Updated the dawn light color."
+                          )
+                        }
+                      />
+                    </label>
+                    <label className="form-field">
+                      <span className="label">Light Factor</span>
+                      <input
+                        className="text-input"
+                        type="number"
+                        min="0"
+                        step="0.05"
+                        value={projectTimeDawnLightIntensityFactorDraft}
+                        onChange={(event) =>
+                          setProjectTimeDawnLightIntensityFactorDraft(
+                            event.currentTarget.value
+                          )
+                        }
+                        onBlur={() =>
+                          applyProjectTimePhaseNumericField(
+                            "dawn",
+                            "lightIntensityFactor",
+                            projectTimeDawnLightIntensityFactorDraft,
+                            "Set dawn light factor",
+                            "Dawn light factor",
+                            "Updated the dawn light factor."
+                          )
+                        }
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                <div className="form-section">
+                  <div className="label">Dusk Profile</div>
+                  <div className="vector-inputs">
+                    <label className="form-field">
+                      <span className="label">Sky Top</span>
+                      <input
+                        className="color-input"
+                        type="color"
+                        value={editorState.projectDocument.time.dusk.skyTopColorHex}
+                        onChange={(event) =>
+                          applyProjectTimePhaseColor(
+                            "dusk",
+                            "skyTopColorHex",
+                            event.currentTarget.value,
+                            "Set dusk sky top color",
+                            "Updated the dusk sky top color."
+                          )
+                        }
+                      />
+                    </label>
+                    <label className="form-field">
+                      <span className="label">Sky Bottom</span>
+                      <input
+                        className="color-input"
+                        type="color"
+                        value={editorState.projectDocument.time.dusk.skyBottomColorHex}
+                        onChange={(event) =>
+                          applyProjectTimePhaseColor(
+                            "dusk",
+                            "skyBottomColorHex",
+                            event.currentTarget.value,
+                            "Set dusk sky bottom color",
+                            "Updated the dusk sky bottom color."
+                          )
+                        }
+                      />
+                    </label>
+                    <label className="form-field">
+                      <span className="label">Ambient Color</span>
+                      <input
+                        className="color-input"
+                        type="color"
+                        value={editorState.projectDocument.time.dusk.ambientColorHex}
+                        onChange={(event) =>
+                          applyProjectTimePhaseColor(
+                            "dusk",
+                            "ambientColorHex",
+                            event.currentTarget.value,
+                            "Set dusk ambient color",
+                            "Updated the dusk ambient color."
+                          )
+                        }
+                      />
+                    </label>
+                    <label className="form-field">
+                      <span className="label">Ambient Factor</span>
+                      <input
+                        className="text-input"
+                        type="number"
+                        min="0"
+                        step="0.05"
+                        value={projectTimeDuskAmbientIntensityFactorDraft}
+                        onChange={(event) =>
+                          setProjectTimeDuskAmbientIntensityFactorDraft(
+                            event.currentTarget.value
+                          )
+                        }
+                        onBlur={() =>
+                          applyProjectTimePhaseNumericField(
+                            "dusk",
+                            "ambientIntensityFactor",
+                            projectTimeDuskAmbientIntensityFactorDraft,
+                            "Set dusk ambient factor",
+                            "Dusk ambient factor",
+                            "Updated the dusk ambient factor."
+                          )
+                        }
+                      />
+                    </label>
+                    <label className="form-field">
+                      <span className="label">Light Color</span>
+                      <input
+                        className="color-input"
+                        type="color"
+                        value={editorState.projectDocument.time.dusk.lightColorHex}
+                        onChange={(event) =>
+                          applyProjectTimePhaseColor(
+                            "dusk",
+                            "lightColorHex",
+                            event.currentTarget.value,
+                            "Set dusk light color",
+                            "Updated the dusk light color."
+                          )
+                        }
+                      />
+                    </label>
+                    <label className="form-field">
+                      <span className="label">Light Factor</span>
+                      <input
+                        className="text-input"
+                        type="number"
+                        min="0"
+                        step="0.05"
+                        value={projectTimeDuskLightIntensityFactorDraft}
+                        onChange={(event) =>
+                          setProjectTimeDuskLightIntensityFactorDraft(
+                            event.currentTarget.value
+                          )
+                        }
+                        onBlur={() =>
+                          applyProjectTimePhaseNumericField(
+                            "dusk",
+                            "lightIntensityFactor",
+                            projectTimeDuskLightIntensityFactorDraft,
+                            "Set dusk light factor",
+                            "Dusk light factor",
+                            "Updated the dusk light factor."
+                          )
+                        }
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                <div className="form-section">
+                  <div className="label">Night Profile</div>
+                  <div className="vector-inputs">
+                    <label className="form-field">
+                      <span className="label">Sky Top</span>
+                      <input
+                        className="color-input"
+                        type="color"
+                        value={editorState.projectDocument.time.night.skyTopColorHex}
+                        onChange={(event) =>
+                          applyProjectTimePhaseColor(
+                            "night",
+                            "skyTopColorHex",
+                            event.currentTarget.value,
+                            "Set night sky top color",
+                            "Updated the night sky top color."
+                          )
+                        }
+                      />
+                    </label>
+                    <label className="form-field">
+                      <span className="label">Sky Bottom</span>
+                      <input
+                        className="color-input"
+                        type="color"
+                        value={editorState.projectDocument.time.night.skyBottomColorHex}
+                        onChange={(event) =>
+                          applyProjectTimePhaseColor(
+                            "night",
+                            "skyBottomColorHex",
+                            event.currentTarget.value,
+                            "Set night sky bottom color",
+                            "Updated the night sky bottom color."
+                          )
+                        }
+                      />
+                    </label>
+                    <label className="form-field">
+                      <span className="label">Ambient Color</span>
+                      <input
+                        className="color-input"
+                        type="color"
+                        value={editorState.projectDocument.time.night.ambientColorHex}
+                        onChange={(event) =>
+                          applyProjectTimePhaseColor(
+                            "night",
+                            "ambientColorHex",
+                            event.currentTarget.value,
+                            "Set night ambient color",
+                            "Updated the night ambient color."
+                          )
+                        }
+                      />
+                    </label>
+                    <label className="form-field">
+                      <span className="label">Ambient Factor</span>
+                      <input
+                        className="text-input"
+                        type="number"
+                        min="0"
+                        step="0.05"
+                        value={projectTimeNightAmbientIntensityFactorDraft}
+                        onChange={(event) =>
+                          setProjectTimeNightAmbientIntensityFactorDraft(
+                            event.currentTarget.value
+                          )
+                        }
+                        onBlur={() =>
+                          applyProjectTimePhaseNumericField(
+                            "night",
+                            "ambientIntensityFactor",
+                            projectTimeNightAmbientIntensityFactorDraft,
+                            "Set night ambient factor",
+                            "Night ambient factor",
+                            "Updated the night ambient factor."
+                          )
+                        }
+                      />
+                    </label>
+                    <label className="form-field">
+                      <span className="label">Moon / Night Light</span>
+                      <input
+                        className="color-input"
+                        type="color"
+                        value={editorState.projectDocument.time.night.lightColorHex}
+                        onChange={(event) =>
+                          applyProjectTimePhaseColor(
+                            "night",
+                            "lightColorHex",
+                            event.currentTarget.value,
+                            "Set night light color",
+                            "Updated the night light color."
+                          )
+                        }
+                      />
+                    </label>
+                    <label className="form-field">
+                      <span className="label">Moon / Night Factor</span>
+                      <input
+                        className="text-input"
+                        type="number"
+                        min="0"
+                        step="0.05"
+                        value={projectTimeNightLightIntensityFactorDraft}
+                        onChange={(event) =>
+                          setProjectTimeNightLightIntensityFactorDraft(
+                            event.currentTarget.value
+                          )
+                        }
+                        onBlur={() =>
+                          applyProjectTimePhaseNumericField(
+                            "night",
+                            "lightIntensityFactor",
+                            projectTimeNightLightIntensityFactorDraft,
+                            "Set night light factor",
+                            "Night light factor",
+                            "Updated the night light factor."
+                          )
+                        }
+                      />
+                    </label>
+                  </div>
+                  <div className="material-summary">
+                    Dawn, dusk, and night profiles blend over each scene's authored World settings whenever the scene enables global time influence.
                   </div>
                 </div>
               </Panel>
@@ -9083,6 +9646,24 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     data-testid="world-background-mode-value"
                   >
                     {formatWorldBackgroundLabel(editorState.document.world)}
+
+                <div className="form-section">
+                  <label className="form-field form-field--toggle">
+                    <span className="label">Follow Project Time</span>
+                    <input
+                      type="checkbox"
+                      checked={editorState.document.world.projectTimeLightingEnabled}
+                      onChange={(event) =>
+                        applySceneProjectTimeLightingEnabled(
+                          event.currentTarget.checked
+                        )
+                      }
+                    />
+                  </label>
+                  <div className="material-summary">
+                    Disable this when a scene should keep its authored world sky and lighting instead of the global sunrise, sunset, dawn, dusk, and night profile.
+                  </div>
+                </div>
                   </div>
                   <div
                     className="world-background-preview"
