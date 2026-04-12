@@ -8,6 +8,8 @@ import {
   createModelInstance,
   isModelInstanceCollisionMode,
   normalizeModelInstanceName,
+  DEFAULT_MODEL_INSTANCE_ENABLED,
+  DEFAULT_MODEL_INSTANCE_VISIBLE,
   type ModelInstanceCollisionSettings,
   type ModelInstance
 } from "../assets/model-instances";
@@ -35,6 +37,8 @@ import {
   createSpotLightEntity,
   createTeleportTargetEntity,
   createTriggerVolumeEntity,
+  DEFAULT_ENTITY_ENABLED,
+  DEFAULT_ENTITY_VISIBLE,
   isPlayerStartColliderMode,
   isPlayerStartGamepadActionBinding,
   isPlayerStartGamepadCameraLookBinding,
@@ -66,7 +70,9 @@ import {
   createDefaultBoxBrushFogSettings,
   createDefaultBoxBrushWaterSettings,
   createDefaultFaceUvState,
+  DEFAULT_BOX_BRUSH_ENABLED,
   DEFAULT_BOX_BRUSH_ROTATION_DEGREES,
+  DEFAULT_BOX_BRUSH_VISIBLE,
   isBoxBrushVolumeMode,
   isBoxFaceId,
   isFaceUvRotationQuarterTurns,
@@ -91,6 +97,7 @@ import {
   LOCAL_LIGHTS_AND_SKYBOX_SCENE_DOCUMENT_VERSION,
   MULTI_SCENE_FOUNDATION_SCENE_DOCUMENT_VERSION,
   MODEL_ASSET_PIPELINE_SCENE_DOCUMENT_VERSION,
+  PLAYER_START_AIR_DIRECTION_CONTROL_SCENE_DOCUMENT_VERSION,
   PLAYER_START_MOVEMENT_TEMPLATE_SCENE_DOCUMENT_VERSION,
   PLAYER_START_AIR_CONTROL_SCENE_DOCUMENT_VERSION,
   PLAYER_START_GAMEPAD_CAMERA_LOOK_SCENE_DOCUMENT_VERSION,
@@ -1442,6 +1449,16 @@ function readModelInstance(
     name: normalizeModelInstanceName(
       expectOptionalString(value.name, `${label}.name`)
     ),
+    visible: readOptionalBoolean(
+      value.visible,
+      `${label}.visible`,
+      DEFAULT_MODEL_INSTANCE_VISIBLE
+    ),
+    enabled: readOptionalBoolean(
+      value.enabled,
+      `${label}.enabled`,
+      DEFAULT_MODEL_INSTANCE_ENABLED
+    ),
     position: readVec3(value.position, `${label}.position`),
     rotationDegrees: readVec3(
       value.rotationDegrees,
@@ -1825,6 +1842,16 @@ function readBrushes(
     brushes[brushId] = createBoxBrush({
       id: expectString(brushValue.id, `brushes.${brushId}.id`),
       name: readOptionalBrushName(brushValue.name, `brushes.${brushId}.name`),
+      visible: readOptionalBoolean(
+        brushValue.visible,
+        `brushes.${brushId}.visible`,
+        DEFAULT_BOX_BRUSH_VISIBLE
+      ),
+      enabled: readOptionalBoolean(
+        brushValue.enabled,
+        `brushes.${brushId}.enabled`,
+        DEFAULT_BOX_BRUSH_ENABLED
+      ),
       center,
       rotationDegrees: readOptionalVec3(
         brushValue.rotationDegrees,
@@ -1958,6 +1985,8 @@ function readPointLightEntity(value: unknown, label: string): EntityInstance {
   const entity = createPointLightEntity({
     id: expectString(value.id, `${label}.id`),
     name: readOptionalEntityName(value.name, `${label}.name`),
+    visible: readOptionalBoolean(value.visible, `${label}.visible`, DEFAULT_ENTITY_VISIBLE),
+    enabled: readOptionalBoolean(value.enabled, `${label}.enabled`, DEFAULT_ENTITY_ENABLED),
     position: readVec3(value.position, `${label}.position`),
     colorHex: expectHexColor(value.colorHex, `${label}.colorHex`),
     intensity: expectNonNegativeFiniteNumber(
@@ -1983,6 +2012,8 @@ function readSpotLightEntity(value: unknown, label: string): EntityInstance {
   const entity = createSpotLightEntity({
     id: expectString(value.id, `${label}.id`),
     name: readOptionalEntityName(value.name, `${label}.name`),
+    visible: readOptionalBoolean(value.visible, `${label}.visible`, DEFAULT_ENTITY_VISIBLE),
+    enabled: readOptionalBoolean(value.enabled, `${label}.enabled`, DEFAULT_ENTITY_ENABLED),
     position: readVec3(value.position, `${label}.position`),
     direction: readVec3(value.direction, `${label}.direction`),
     colorHex: expectHexColor(value.colorHex, `${label}.colorHex`),
@@ -2013,6 +2044,8 @@ function readPlayerStartEntity(value: unknown, label: string): EntityInstance {
   const entity = createPlayerStartEntity({
     id: expectString(value.id, `${label}.id`),
     name: readOptionalEntityName(value.name, `${label}.name`),
+    visible: readOptionalBoolean(value.visible, `${label}.visible`, DEFAULT_ENTITY_VISIBLE),
+    enabled: readOptionalBoolean(value.enabled, `${label}.enabled`, DEFAULT_ENTITY_ENABLED),
     position: readVec3(value.position, `${label}.position`),
     yawDegrees: expectFiniteNumber(value.yawDegrees, `${label}.yawDegrees`),
     navigationMode: readPlayerStartNavigationMode(
@@ -2049,6 +2082,8 @@ function readSoundEmitterEntity(value: unknown, label: string): EntityInstance {
   const entity = createSoundEmitterEntity({
     id: expectString(value.id, `${label}.id`),
     name: readOptionalEntityName(value.name, `${label}.name`),
+    visible: readOptionalBoolean(value.visible, `${label}.visible`, DEFAULT_ENTITY_VISIBLE),
+    enabled: readOptionalBoolean(value.enabled, `${label}.enabled`, DEFAULT_ENTITY_ENABLED),
     position: readVec3(value.position, `${label}.position`),
     audioAssetId:
       value.audioAssetId === undefined || value.audioAssetId === null
@@ -2087,6 +2122,8 @@ function readLegacySoundEmitterEntity(
   const entity = createSoundEmitterEntity({
     id: expectString(value.id, `${label}.id`),
     name: readOptionalEntityName(value.name, `${label}.name`),
+    visible: readOptionalBoolean(value.visible, `${label}.visible`, DEFAULT_ENTITY_VISIBLE),
+    enabled: readOptionalBoolean(value.enabled, `${label}.enabled`, DEFAULT_ENTITY_ENABLED),
     position: readVec3(value.position, `${label}.position`),
     refDistance: radius,
     maxDistance: radius,
@@ -2124,6 +2161,8 @@ function readTriggerVolumeEntity(
   const entity = createTriggerVolumeEntity({
     id: expectString(value.id, `${label}.id`),
     name: readOptionalEntityName(value.name, `${label}.name`),
+    visible: readOptionalBoolean(value.visible, `${label}.visible`, DEFAULT_ENTITY_VISIBLE),
+    enabled: readOptionalBoolean(value.enabled, `${label}.enabled`, DEFAULT_ENTITY_ENABLED),
     position: readVec3(value.position, `${label}.position`),
     size,
     triggerOnEnter: expectBoolean(
@@ -2156,6 +2195,8 @@ function readTeleportTargetEntity(
   const entity = createTeleportTargetEntity({
     id: expectString(value.id, `${label}.id`),
     name: readOptionalEntityName(value.name, `${label}.name`),
+    visible: readOptionalBoolean(value.visible, `${label}.visible`, DEFAULT_ENTITY_VISIBLE),
+    enabled: readOptionalBoolean(value.enabled, `${label}.enabled`, DEFAULT_ENTITY_ENABLED),
     position: readVec3(value.position, `${label}.position`),
     yawDegrees: expectFiniteNumber(value.yawDegrees, `${label}.yawDegrees`)
   });
@@ -2173,13 +2214,22 @@ function readInteractableEntity(value: unknown, label: string): EntityInstance {
   }
 
   const kind = expectLiteralString(value.kind, "interactable", `${label}.kind`);
+  const interactionEnabled =
+    value.interactionEnabled === undefined
+      ? expectBoolean(value.enabled, `${label}.enabled`)
+      : expectBoolean(value.interactionEnabled, `${label}.interactionEnabled`);
   const entity = createInteractableEntity({
     id: expectString(value.id, `${label}.id`),
     name: readOptionalEntityName(value.name, `${label}.name`),
+    visible: readOptionalBoolean(value.visible, `${label}.visible`, DEFAULT_ENTITY_VISIBLE),
+    enabled:
+      value.interactionEnabled === undefined
+        ? DEFAULT_ENTITY_ENABLED
+        : readOptionalBoolean(value.enabled, `${label}.enabled`, DEFAULT_ENTITY_ENABLED),
     position: readVec3(value.position, `${label}.position`),
     radius: expectPositiveFiniteNumber(value.radius, `${label}.radius`),
     prompt: expectString(value.prompt, `${label}.prompt`),
-    enabled: expectBoolean(value.enabled, `${label}.enabled`)
+    interactionEnabled
   });
 
   if (entity.kind !== kind) {
@@ -2198,6 +2248,8 @@ function readSceneEntryEntity(value: unknown, label: string): EntityInstance {
   const entity = createSceneEntryEntity({
     id: expectString(value.id, `${label}.id`),
     name: readOptionalEntityName(value.name, `${label}.name`),
+    visible: readOptionalBoolean(value.visible, `${label}.visible`, DEFAULT_ENTITY_VISIBLE),
+    enabled: readOptionalBoolean(value.enabled, `${label}.enabled`, DEFAULT_ENTITY_ENABLED),
     position: readVec3(value.position, `${label}.position`),
     yawDegrees: expectFiniteNumber(value.yawDegrees, `${label}.yawDegrees`)
   });
@@ -2215,13 +2267,22 @@ function readSceneExitEntity(value: unknown, label: string): EntityInstance {
   }
 
   const kind = expectLiteralString(value.kind, "sceneExit", `${label}.kind`);
+  const interactionEnabled =
+    value.interactionEnabled === undefined
+      ? expectBoolean(value.enabled, `${label}.enabled`)
+      : expectBoolean(value.interactionEnabled, `${label}.interactionEnabled`);
   const entity = createSceneExitEntity({
     id: expectString(value.id, `${label}.id`),
     name: readOptionalEntityName(value.name, `${label}.name`),
+    visible: readOptionalBoolean(value.visible, `${label}.visible`, DEFAULT_ENTITY_VISIBLE),
+    enabled:
+      value.interactionEnabled === undefined
+        ? DEFAULT_ENTITY_ENABLED
+        : readOptionalBoolean(value.enabled, `${label}.enabled`, DEFAULT_ENTITY_ENABLED),
     position: readVec3(value.position, `${label}.position`),
     radius: expectPositiveFiniteNumber(value.radius, `${label}.radius`),
     prompt: expectString(value.prompt, `${label}.prompt`),
-    enabled: expectBoolean(value.enabled, `${label}.enabled`),
+    interactionEnabled,
     targetSceneId: expectString(value.targetSceneId, `${label}.targetSceneId`),
     targetEntryEntityId: expectString(
       value.targetEntryEntityId,
@@ -2872,6 +2933,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
   if (
     source.version !== SCENE_DOCUMENT_VERSION &&
     source.version !== 33 &&
+    source.version !== PLAYER_START_AIR_DIRECTION_CONTROL_SCENE_DOCUMENT_VERSION &&
     source.version !== PLAYER_START_AIR_CONTROL_SCENE_DOCUMENT_VERSION &&
     source.version !== PLAYER_START_MOVEMENT_TEMPLATE_SCENE_DOCUMENT_VERSION &&
     source.version !== PROJECT_NAME_SCENE_DOCUMENT_VERSION &&
