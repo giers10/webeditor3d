@@ -7648,7 +7648,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
       setRuntimeMessage(null);
       setFirstPersonTelemetry(null);
       setRuntimeInteractionPrompt(null);
-      setRuntimeGlobalState(createDefaultRuntimeGlobalState());
+      setRuntimeGlobalState(
+        createDefaultRuntimeGlobalState(editorState.projectDocument.time)
+      );
       store.enterPlayMode();
       setStatusMessage(
         nextRuntimeScene.navigationMode === "firstPerson"
@@ -7665,7 +7667,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
     setRuntimeSceneId(null);
     setRuntimeSceneName(null);
     setRuntimeSceneLoadingScreen(null);
-    setRuntimeGlobalState(createDefaultRuntimeGlobalState());
+    setRuntimeGlobalState(
+      createDefaultRuntimeGlobalState(editorState.projectDocument.time)
+    );
     setRuntimeMessage(null);
     setFirstPersonTelemetry(null);
     setRuntimeInteractionPrompt(null);
