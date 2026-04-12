@@ -162,8 +162,10 @@ import {
 } from "../document/scene-document";
 import {
   areProjectTimeSettingsEqual,
+  cloneProjectTimeSettings,
   formatTimeOfDayHours,
-  normalizeTimeOfDayHours
+  normalizeTimeOfDayHours,
+  type ProjectTimeSettings
 } from "../document/project-time-settings";
 import {
   formatSceneDiagnosticSummary,
@@ -352,6 +354,16 @@ interface PlayerStartMovementTemplateNumberDraft {
   sprintSpeedMultiplier: string;
   crouchSpeedMultiplier: string;
 }
+
+type ProjectTimePhaseKey = "dawn" | "dusk" | "night";
+type ProjectTimePhaseColorField =
+  | "skyTopColorHex"
+  | "skyBottomColorHex"
+  | "ambientColorHex"
+  | "lightColorHex";
+type ProjectTimePhaseNumericField =
+  | "ambientIntensityFactor"
+  | "lightIntensityFactor";
 
 type InteractionSourceEntity = Extract<
   EntityInstance,
