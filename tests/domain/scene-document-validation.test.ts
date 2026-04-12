@@ -296,7 +296,8 @@ describe("validateSceneDocument", () => {
         [interactable.id]: {
           ...interactable,
           prompt: "   ",
-          enabled: "yes" as unknown as boolean
+          enabled: "yes" as unknown as boolean,
+          interactionEnabled: "yes" as unknown as boolean
         }
       }
     });
@@ -316,7 +317,10 @@ describe("validateSceneDocument", () => {
           code: "invalid-interactable-prompt"
         }),
         expect.objectContaining({
-          code: "invalid-interactable-enabled"
+          code: "invalid-entity-enabled"
+        }),
+        expect.objectContaining({
+          code: "invalid-interactable-interaction-enabled"
         })
       ])
     );
