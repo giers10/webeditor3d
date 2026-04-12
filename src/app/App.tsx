@@ -2445,16 +2445,38 @@ export function App({ store, initialStatusMessage }: AppProps) {
   }, [selectedModelInstance]);
 
   useEffect(() => {
-    setProjectTimeStartTimeOfDayDraft(
-      String(editorState.projectDocument.time.startTimeOfDayHours)
-    );
-  }, [editorState.projectDocument.time.startTimeOfDayHours]);
+    const projectTime = editorState.projectDocument.time;
 
-  useEffect(() => {
-    setProjectTimeDayLengthMinutesDraft(
-      String(editorState.projectDocument.time.dayLengthMinutes)
+    setProjectTimeStartDayNumberDraft(String(projectTime.startDayNumber));
+    setProjectTimeStartTimeOfDayDraft(String(projectTime.startTimeOfDayHours));
+    setProjectTimeDayLengthMinutesDraft(String(projectTime.dayLengthMinutes));
+    setProjectTimeSunriseTimeOfDayDraft(
+      String(projectTime.sunriseTimeOfDayHours)
     );
-  }, [editorState.projectDocument.time.dayLengthMinutes]);
+    setProjectTimeSunsetTimeOfDayDraft(
+      String(projectTime.sunsetTimeOfDayHours)
+    );
+    setProjectTimeDawnDurationHoursDraft(String(projectTime.dawnDurationHours));
+    setProjectTimeDuskDurationHoursDraft(String(projectTime.duskDurationHours));
+    setProjectTimeDawnAmbientIntensityFactorDraft(
+      String(projectTime.dawn.ambientIntensityFactor)
+    );
+    setProjectTimeDawnLightIntensityFactorDraft(
+      String(projectTime.dawn.lightIntensityFactor)
+    );
+    setProjectTimeDuskAmbientIntensityFactorDraft(
+      String(projectTime.dusk.ambientIntensityFactor)
+    );
+    setProjectTimeDuskLightIntensityFactorDraft(
+      String(projectTime.dusk.lightIntensityFactor)
+    );
+    setProjectTimeNightAmbientIntensityFactorDraft(
+      String(projectTime.night.ambientIntensityFactor)
+    );
+    setProjectTimeNightLightIntensityFactorDraft(
+      String(projectTime.night.lightIntensityFactor)
+    );
+  }, [editorState.projectDocument.time]);
 
   useEffect(() => {
     setAmbientLightIntensityDraft(
