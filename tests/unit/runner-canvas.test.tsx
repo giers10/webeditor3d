@@ -391,6 +391,21 @@ describe("RunnerCanvas", () => {
 
   it("renders the night background overlay behind the scene when the night profile is active", async () => {
     const document = createEmptySceneDocument();
+    document.assets["asset-night-sky"] = {
+      id: "asset-night-sky",
+      kind: "image",
+      sourceName: "night-sky.png",
+      mimeType: "image/png",
+      storageKey: "project-asset:asset-night-sky",
+      byteLength: 2048,
+      metadata: {
+        kind: "image",
+        width: 1024,
+        height: 512,
+        hasAlpha: false,
+        warnings: []
+      }
+    };
     document.time.nightBackground.assetId = "asset-night-sky";
     const runtimeScene = buildRuntimeSceneFromDocument(document);
 
