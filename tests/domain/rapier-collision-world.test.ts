@@ -657,12 +657,12 @@ describe("RapierCollisionWorld", () => {
       id: "brush-stair-step-two",
       center: {
         x: 0,
-        y: 0.3,
+        y: 0.2,
         z: 1.25
       },
       size: {
         x: 2,
-        y: 0.6,
+        y: 0.4,
         z: 0.5
       }
     });
