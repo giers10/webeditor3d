@@ -8808,6 +8808,100 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 </div>
               </Panel>
 
+              <Panel title="Project Time">
+                <div className="stat-card">
+                  <div className="label">Clock</div>
+                  <div className="value">
+                    {formatTimeOfDayHours(
+                      editorState.projectDocument.time.startTimeOfDayHours
+                    )}
+                  </div>
+                  <div className="material-summary">
+                    Runner sessions begin at the authored start time and keep advancing across scene transitions.
+                  </div>
+                </div>
+
+                <div className="form-section">
+                  <div className="label">Cycle Settings</div>
+                  <div className="vector-inputs vector-inputs--two">
+                    <label className="form-field">
+                      <span className="label">Start Time</span>
+                      <input
+                        data-testid="project-time-start-hours"
+                        className="text-input"
+                        type="number"
+                        min="0"
+                        max="24"
+                        step="0.25"
+                        value={projectTimeStartTimeOfDayDraft}
+                        onChange={(event) =>
+                          setProjectTimeStartTimeOfDayDraft(
+                            event.currentTarget.value
+                          )
+                        }
+                        onBlur={applyProjectTimeStartTimeOfDay}
+                        onKeyDown={(event) =>
+                          handleDraftVectorKeyDown(
+                            event,
+                            applyProjectTimeStartTimeOfDay
+                          )
+                        }
+                        onKeyUp={(event) =>
+                          handleNumberInputKeyUp(
+                            event,
+                            applyProjectTimeStartTimeOfDay
+                          )
+                        }
+                        onPointerUp={(event) =>
+                          handleNumberInputPointerUp(
+                            event,
+                            applyProjectTimeStartTimeOfDay
+                          )
+                        }
+                      />
+                    </label>
+                    <label className="form-field">
+                      <span className="label">Minutes Per Day</span>
+                      <input
+                        data-testid="project-time-day-length-minutes"
+                        className="text-input"
+                        type="number"
+                        min="1"
+                        step="1"
+                        value={projectTimeDayLengthMinutesDraft}
+                        onChange={(event) =>
+                          setProjectTimeDayLengthMinutesDraft(
+                            event.currentTarget.value
+                          )
+                        }
+                        onBlur={applyProjectTimeDayLengthMinutes}
+                        onKeyDown={(event) =>
+                          handleDraftVectorKeyDown(
+                            event,
+                            applyProjectTimeDayLengthMinutes
+                          )
+                        }
+                        onKeyUp={(event) =>
+                          handleNumberInputKeyUp(
+                            event,
+                            applyProjectTimeDayLengthMinutes
+                          )
+                        }
+                        onPointerUp={(event) =>
+                          handleNumberInputPointerUp(
+                            event,
+                            applyProjectTimeDayLengthMinutes
+                          )
+                        }
+                      />
+                    </label>
+                  </div>
+                  <div className="material-summary">
+                    Default is 24 real minutes for one full 24-hour cycle.
+                  </div>
+                </div>
+              </Panel>
+
               <Panel title="World">
                 <div className="stat-card">
                   <div className="label">Background</div>
