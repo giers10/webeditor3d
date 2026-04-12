@@ -100,6 +100,7 @@ import {
   MODEL_ASSET_PIPELINE_SCENE_DOCUMENT_VERSION,
   PLAYER_START_AIR_DIRECTION_CONTROL_SCENE_DOCUMENT_VERSION,
   PLAYER_START_MOVEMENT_TEMPLATE_SCENE_DOCUMENT_VERSION,
+  PROJECT_TIME_DAY_NIGHT_PROFILE_SCENE_DOCUMENT_VERSION,
   PROJECT_TIME_SYSTEM_SCENE_DOCUMENT_VERSION,
   PLAYER_START_AIR_CONTROL_SCENE_DOCUMENT_VERSION,
   PLAYER_START_GAMEPAD_CAMERA_LOOK_SCENE_DOCUMENT_VERSION,
@@ -133,8 +134,10 @@ import {
 } from "./scene-document";
 import {
   createDefaultProjectTimePhaseProfile,
+  createDefaultProjectTimeNightBackgroundSettings,
   createDefaultProjectTimeSettings,
   normalizeProjectStartDayNumber,
+  type ProjectTimeNightBackgroundSettings,
   normalizeTimeOfDayHours,
   type ProjectTimePhaseProfile,
   type ProjectTimeSettings
@@ -772,6 +775,41 @@ function readProjectTimeSettings(
     };
   };
 
+  const readProjectTimeNightBackgroundSettings = (
+    backgroundValue: unknown,
+    backgroundLabel: string
+  ): ProjectTimeNightBackgroundSettings => {
+    const backgroundDefaults =
+      createDefaultProjectTimeNightBackgroundSettings();
+
+    if (backgroundValue === undefined) {
+      return backgroundDefaults;
+    }
+
+    if (!isRecord(backgroundValue)) {
+      throw new Error(`${backgroundLabel} must be an object.`);
+    }
+
+    let assetId = backgroundDefaults.assetId;
+
+    if (backgroundValue.assetId !== undefined && backgroundValue.assetId !== null) {
+      const nextAssetId = expectString(
+        backgroundValue.assetId,
+        `${backgroundLabel}.assetId`
+      ).trim();
+      assetId = nextAssetId.length === 0 ? null : nextAssetId;
+    }
+
+    return {
+      assetId,
+      environmentIntensity: readOptionalNonNegativeFiniteNumber(
+        backgroundValue.environmentIntensity,
+        `${backgroundLabel}.environmentIntensity`,
+        backgroundDefaults.environmentIntensity
+      )
+    };
+  };
+
   return {
     startDayNumber: normalizeProjectStartDayNumber(
       readOptionalPositiveFiniteNumber(
@@ -822,6 +860,10 @@ function readProjectTimeSettings(
       value.night,
       `${label}.night`,
       "night"
+    ),
+    nightBackground: readProjectTimeNightBackgroundSettings(
+      value.nightBackground,
+      `${label}.nightBackground`
     )
   };
 }
