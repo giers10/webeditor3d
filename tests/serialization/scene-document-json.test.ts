@@ -1017,9 +1017,29 @@ describe("scene document JSON", () => {
     const brush = createBoxBrush({
       id: "brush-authored-state-legacy"
     });
+    const modelAsset: ModelAssetRecord = {
+      id: "asset-model-authored-state-legacy",
+      kind: "model",
+      sourceName: "legacy-authored-state.glb",
+      mimeType: "model/gltf-binary",
+      storageKey: createProjectAssetStorageKey("asset-model-authored-state-legacy"),
+      byteLength: 2048,
+      metadata: {
+        kind: "model",
+        format: "glb",
+        sceneName: null,
+        nodeCount: 1,
+        meshCount: 1,
+        materialNames: [],
+        textureNames: [],
+        animationNames: [],
+        boundingBox: null,
+        warnings: []
+      }
+    };
     const modelInstance = createModelInstance({
       id: "model-instance-authored-state-legacy",
-      assetId: "asset-model-authored-state-legacy"
+      assetId: modelAsset.id
     });
     const interactable = createInteractableEntity({
       id: "entity-interactable-authored-state-legacy",
@@ -1057,6 +1077,9 @@ describe("scene document JSON", () => {
     const migratedDocument = migrateSceneDocument({
       ...createEmptySceneDocument({ name: "Legacy Authored State Scene" }),
       version: PLAYER_START_AIR_DIRECTION_CONTROL_SCENE_DOCUMENT_VERSION,
+      assets: {
+        [modelAsset.id]: modelAsset
+      },
       brushes: {
         [brush.id]: legacyBrush
       },
@@ -2016,11 +2039,14 @@ describe("scene document JSON", () => {
     expect(migratedDocument.entities["entity-sound-main"]).toEqual({
       id: "entity-sound-main",
       kind: "soundEmitter",
+      name: undefined,
       position: {
         x: 1,
         y: 2,
         z: 3
       },
+      visible: true,
+      enabled: true,
       audioAssetId: null,
       volume: 0.4,
       refDistance: 9,
