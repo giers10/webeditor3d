@@ -3450,6 +3450,35 @@ export function App({ store, initialStatusMessage }: AppProps) {
     });
   };
 
+  const applyProjectTimeNightBackgroundAssetId = (assetId: string | null) => {
+    updateProjectTimeSettings(
+      assetId === null
+        ? "Clear night background image"
+        : "Set night background image",
+      assetId === null
+        ? "Night background image cleared."
+        : `Night background image set to ${
+            editorState.document.assets[assetId]?.sourceName ?? assetId
+          }.`,
+      (time) => {
+        time.nightBackground.assetId = assetId;
+      }
+    );
+  };
+
+  const applyProjectTimeNightBackgroundEnvironmentIntensity = () => {
+    updateProjectTimeSettings(
+      "Set night background environment intensity",
+      "Updated the night background environment intensity.",
+      (time) => {
+        time.nightBackground.environmentIntensity = readNonNegativeNumberDraft(
+          projectTimeNightBackgroundEnvironmentIntensityDraft,
+          "Night background environment intensity"
+        );
+      }
+    );
+  };
+
   const applySceneName = () => {
     const normalizedName = sceneNameDraft.trim() || "Untitled Scene";
 
