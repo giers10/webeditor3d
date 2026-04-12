@@ -919,6 +919,7 @@ export class RuntimeHost {
         (brush.rotationDegrees.y * Math.PI) / 180,
         (brush.rotationDegrees.z * Math.PI) / 180
       );
+      mesh.visible = brush.visible;
       this.configureFogVolumeMesh(mesh, materials);
       this.brushGroup.add(mesh);
       this.brushMeshes.set(brush.id, mesh);
@@ -1013,6 +1014,8 @@ export class RuntimeHost {
           kind: "modelInstance",
           assetId: modelInstance.assetId,
           name: modelInstance.name,
+          visible: modelInstance.visible,
+          enabled: true,
           position: modelInstance.position,
           rotationDegrees: modelInstance.rotationDegrees,
           scale: modelInstance.scale,
@@ -1025,6 +1028,7 @@ export class RuntimeHost {
         loadedAsset,
         false
       );
+      renderGroup.visible = modelInstance.visible;
       this.modelGroup.add(renderGroup);
       this.modelRenderObjects.set(modelInstance.instanceId, renderGroup);
 
