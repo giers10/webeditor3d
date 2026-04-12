@@ -43,6 +43,7 @@ import {
 } from "./scene-document";
 import {
   HOURS_PER_DAY,
+  type ProjectTimePhaseProfile,
   type ProjectTimeSettings
 } from "./project-time-settings";
 import {
@@ -148,6 +149,17 @@ function validateWorldSettings(
   document: SceneDocument,
   diagnostics: SceneDiagnostic[]
 ) {
+  if (!isBoolean(world.projectTimeLightingEnabled)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-world-project-time-lighting-enabled",
+        "Scene world project-time lighting toggle must be true or false.",
+        "world.projectTimeLightingEnabled"
+      )
+    );
+  }
+
   if (world.background.mode === "solid") {
     if (!isHexColorString(world.background.colorHex)) {
       diagnostics.push(
@@ -576,11 +588,95 @@ function validateWorldSettings(
   }
 }
 
+function validateProjectTimePhaseProfile(
+  profile: ProjectTimePhaseProfile,
+  diagnostics: SceneDiagnostic[],
+  path: string,
+  label: string
+) {
+  if (!isHexColorString(profile.skyTopColorHex)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        `invalid-${label}-sky-top-color`,
+        `${label} sky top color must use a #RRGGBB color.`,
+        `${path}.skyTopColorHex`
+      )
+    );
+  }
+
+  if (!isHexColorString(profile.skyBottomColorHex)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        `invalid-${label}-sky-bottom-color`,
+        `${label} sky bottom color must use a #RRGGBB color.`,
+        `${path}.skyBottomColorHex`
+      )
+    );
+  }
+
+  if (!isHexColorString(profile.ambientColorHex)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        `invalid-${label}-ambient-color`,
+        `${label} ambient color must use a #RRGGBB color.`,
+        `${path}.ambientColorHex`
+      )
+    );
+  }
+
+  if (!isNonNegativeFiniteNumber(profile.ambientIntensityFactor)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        `invalid-${label}-ambient-intensity-factor`,
+        `${label} ambient intensity factor must be a non-negative finite number.`,
+        `${path}.ambientIntensityFactor`
+      )
+    );
+  }
+
+  if (!isHexColorString(profile.lightColorHex)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        `invalid-${label}-light-color`,
+        `${label} light color must use a #RRGGBB color.`,
+        `${path}.lightColorHex`
+      )
+    );
+  }
+
+  if (!isNonNegativeFiniteNumber(profile.lightIntensityFactor)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        `invalid-${label}-light-intensity-factor`,
+        `${label} light intensity factor must be a non-negative finite number.`,
+        `${path}.lightIntensityFactor`
+      )
+    );
+  }
+}
+
 function validateProjectTimeSettings(
   time: ProjectTimeSettings,
   diagnostics: SceneDiagnostic[],
   path = "time"
 ) {
+  if (!isPositiveInteger(time.startDayNumber)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-project-time-start-day-number",
+        "Project start day must be a positive integer.",
+        `${path}.startDayNumber`
+      )
+    );
+  }
+
   if (!isFiniteNumber(time.startTimeOfDayHours)) {
     diagnostics.push(
       createDiagnostic(
@@ -604,6 +700,67 @@ function validateProjectTimeSettings(
     );
   }
 
+  if (!isFiniteNumber(time.sunriseTimeOfDayHours)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-project-time-sunrise-hours",
+        "Project sunrise must be a finite hour value.",
+        `${path}.sunriseTimeOfDayHours`
+      )
+    );
+  } else if (
+    time.sunriseTimeOfDayHours < 0 ||
+    time.sunriseTimeOfDayHours >= HOURS_PER_DAY
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-project-time-sunrise-range",
+        "Project sunrise must stay within the 0..24 hour range.",
+        `${path}.sunriseTimeOfDayHours`
+      )
+    );
+  }
+
+  if (!isFiniteNumber(time.sunsetTimeOfDayHours)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-project-time-sunset-hours",
+        "Project sunset must be a finite hour value.",
+        `${path}.sunsetTimeOfDayHours`
+      )
+    );
+  } else if (
+    time.sunsetTimeOfDayHours < 0 ||
+    time.sunsetTimeOfDayHours >= HOURS_PER_DAY
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-project-time-sunset-range",
+        "Project sunset must stay within the 0..24 hour range.",
+        `${path}.sunsetTimeOfDayHours`
+      )
+    );
+  }
+
+  if (
+    isFiniteNumber(time.sunriseTimeOfDayHours) &&
+    isFiniteNumber(time.sunsetTimeOfDayHours) &&
+    time.sunriseTimeOfDayHours >= time.sunsetTimeOfDayHours
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-project-time-sun-window",
+        "Project sunrise must be earlier than project sunset.",
+        `${path}.sunriseTimeOfDayHours`
+      )
+    );
+  }
+
   if (!isPositiveFiniteNumber(time.dayLengthMinutes)) {
     diagnostics.push(
       createDiagnostic(
@@ -614,6 +771,38 @@ function validateProjectTimeSettings(
       )
     );
   }
+
+  if (
+    !isPositiveFiniteNumber(time.dawnDurationHours) ||
+    time.dawnDurationHours >= HOURS_PER_DAY
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-project-time-dawn-duration",
+        "Project dawn duration must be a positive finite number shorter than one day.",
+        `${path}.dawnDurationHours`
+      )
+    );
+  }
+
+  if (
+    !isPositiveFiniteNumber(time.duskDurationHours) ||
+    time.duskDurationHours >= HOURS_PER_DAY
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-project-time-dusk-duration",
+        "Project dusk duration must be a positive finite number shorter than one day.",
+        `${path}.duskDurationHours`
+      )
+    );
+  }
+
+  validateProjectTimePhaseProfile(time.dawn, diagnostics, `${path}.dawn`, "dawn");
+  validateProjectTimePhaseProfile(time.dusk, diagnostics, `${path}.dusk`, "dusk");
+  validateProjectTimePhaseProfile(time.night, diagnostics, `${path}.night`, "night");
 }
 
 function validatePointLightEntity(
