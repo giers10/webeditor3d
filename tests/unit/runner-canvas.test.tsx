@@ -96,6 +96,7 @@ const { MockRuntimeHost, runtimeHostInstances } = vi.hoisted(() => {
     loadScene: ReturnType<typeof vi.fn>;
     updateAssets: ReturnType<typeof vi.fn>;
     setNavigationMode: ReturnType<typeof vi.fn>;
+    setRuntimeClockStateHandler: ReturnType<typeof vi.fn>;
     setRuntimeMessageHandler: ReturnType<typeof vi.fn>;
     setFirstPersonTelemetryHandler: ReturnType<typeof vi.fn>;
     setInteractionPromptHandler: ReturnType<typeof vi.fn>;
@@ -109,6 +110,7 @@ const { MockRuntimeHost, runtimeHostInstances } = vi.hoisted(() => {
     loadScene = vi.fn();
     updateAssets = vi.fn();
     setNavigationMode = vi.fn();
+    setRuntimeClockStateHandler = vi.fn();
     setRuntimeMessageHandler = vi.fn();
     setFirstPersonTelemetryHandler = vi.fn();
     setInteractionPromptHandler = vi.fn();
@@ -385,6 +387,44 @@ describe("RunnerCanvas", () => {
     expect(
       runtimeHostInstances[0]?.setSceneExitHandler
     ).toHaveBeenCalledTimes(2);
+  });
+
+  it("renders the night background overlay behind the scene when the night profile is active", async () => {
+    const document = createEmptySceneDocument();
+    document.time.nightBackground.assetId = "asset-night-sky";
+    const runtimeScene = buildRuntimeSceneFromDocument(document);
+
+    render(
+      <RunnerCanvas
+        runtimeScene={runtimeScene}
+        runtimeClock={{
+          timeOfDayHours: 0,
+          dayCount: 0,
+          dayLengthMinutes: runtimeScene.time.dayLengthMinutes
+        }}
+        sceneName="Night Runner"
+        sceneLoadingScreen={createDefaultSceneLoadingScreenSettings()}
+        projectAssets={{}}
+        loadedModelAssets={{}}
+        loadedImageAssets={{
+          "asset-night-sky": {
+            sourceUrl: "/night-sky.png"
+          } as never
+        }}
+        loadedAudioAssets={{}}
+        navigationMode="firstPerson"
+        onRuntimeMessageChange={vi.fn()}
+        onFirstPersonTelemetryChange={vi.fn()}
+        onInteractionPromptChange={vi.fn()}
+        onSceneExitActivated={vi.fn()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(runtimeHostInstances).toHaveLength(1);
+    });
+
+    expect(screen.getByTestId("runner-night-background-overlay")).toBeVisible();
   });
 
   it("keeps the crosshair hidden in third-person mode while still showing interaction prompts", async () => {
