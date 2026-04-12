@@ -74,10 +74,14 @@ describe("runtime project time", () => {
       noon.ambientLight.intensity
     );
     expect(dawn.sunLight.colorHex).not.toBe(noon.sunLight.colorHex);
-    expect(dawn.sunLight.intensity).toBeGreaterThan(preSunrise.sunLight.intensity);
-    expect(postSunset.sunLight.intensity).toBeLessThan(noon.sunLight.intensity);
-    expect(postSunset.sunLight.intensity).toBeGreaterThan(
-      midnight.sunLight.intensity
+    expect(dawn.ambientLight.intensity).toBeGreaterThan(
+      preSunrise.ambientLight.intensity
+    );
+    expect(postSunset.ambientLight.intensity).toBeLessThan(
+      noon.ambientLight.intensity
+    );
+    expect(postSunset.ambientLight.intensity).toBeGreaterThan(
+      midnight.ambientLight.intensity
     );
     expect(midnight.moonLight?.intensity ?? 0).toBeGreaterThan(0);
     expect(preSunrise.moonLight?.intensity ?? 0).toBeGreaterThan(0);
