@@ -1882,10 +1882,44 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [sunDirectionDraft, setSunDirectionDraft] = useState(
     createVec3Draft(editorState.document.world.sunLight.direction)
   );
+  const [projectTimeStartDayNumberDraft, setProjectTimeStartDayNumberDraft] =
+    useState(String(editorState.projectDocument.time.startDayNumber));
   const [projectTimeStartTimeOfDayDraft, setProjectTimeStartTimeOfDayDraft] =
     useState(String(editorState.projectDocument.time.startTimeOfDayHours));
   const [projectTimeDayLengthMinutesDraft, setProjectTimeDayLengthMinutesDraft] =
     useState(String(editorState.projectDocument.time.dayLengthMinutes));
+  const [projectTimeSunriseTimeOfDayDraft, setProjectTimeSunriseTimeOfDayDraft] =
+    useState(String(editorState.projectDocument.time.sunriseTimeOfDayHours));
+  const [projectTimeSunsetTimeOfDayDraft, setProjectTimeSunsetTimeOfDayDraft] =
+    useState(String(editorState.projectDocument.time.sunsetTimeOfDayHours));
+  const [projectTimeDawnDurationHoursDraft, setProjectTimeDawnDurationHoursDraft] =
+    useState(String(editorState.projectDocument.time.dawnDurationHours));
+  const [projectTimeDuskDurationHoursDraft, setProjectTimeDuskDurationHoursDraft] =
+    useState(String(editorState.projectDocument.time.duskDurationHours));
+  const [
+    projectTimeDawnAmbientIntensityFactorDraft,
+    setProjectTimeDawnAmbientIntensityFactorDraft
+  ] = useState(String(editorState.projectDocument.time.dawn.ambientIntensityFactor));
+  const [
+    projectTimeDawnLightIntensityFactorDraft,
+    setProjectTimeDawnLightIntensityFactorDraft
+  ] = useState(String(editorState.projectDocument.time.dawn.lightIntensityFactor));
+  const [
+    projectTimeDuskAmbientIntensityFactorDraft,
+    setProjectTimeDuskAmbientIntensityFactorDraft
+  ] = useState(String(editorState.projectDocument.time.dusk.ambientIntensityFactor));
+  const [
+    projectTimeDuskLightIntensityFactorDraft,
+    setProjectTimeDuskLightIntensityFactorDraft
+  ] = useState(String(editorState.projectDocument.time.dusk.lightIntensityFactor));
+  const [
+    projectTimeNightAmbientIntensityFactorDraft,
+    setProjectTimeNightAmbientIntensityFactorDraft
+  ] = useState(String(editorState.projectDocument.time.night.ambientIntensityFactor));
+  const [
+    projectTimeNightLightIntensityFactorDraft,
+    setProjectTimeNightLightIntensityFactorDraft
+  ] = useState(String(editorState.projectDocument.time.night.lightIntensityFactor));
   const [
     backgroundEnvironmentIntensityDraft,
     setBackgroundEnvironmentIntensityDraft
