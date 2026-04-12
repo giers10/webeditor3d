@@ -110,7 +110,7 @@ describe("buildRuntimeSceneFromDocument", () => {
       },
       radius: 1.5,
       prompt: "Use Console",
-      enabled: true
+      interactionEnabled: true
     });
     const sceneEntry = createSceneEntryEntity({
       id: "entity-scene-entry-house-front",
@@ -130,7 +130,7 @@ describe("buildRuntimeSceneFromDocument", () => {
       },
       radius: 2.25,
       prompt: "Enter House",
-      enabled: true,
+      interactionEnabled: true,
       targetSceneId: "scene-house",
       targetEntryEntityId: sceneEntry.id
     });
@@ -310,6 +310,7 @@ describe("buildRuntimeSceneFromDocument", () => {
         instanceId: "model-instance-triangle",
         assetId: "asset-model-triangle",
         name: undefined,
+        visible: true,
         position: {
           x: -2,
           y: 0,
@@ -487,7 +488,7 @@ describe("buildRuntimeSceneFromDocument", () => {
           },
           radius: 1.5,
           prompt: "Use Console",
-          enabled: true
+          interactionEnabled: true
         }
       ],
       sceneExits: [
@@ -500,7 +501,7 @@ describe("buildRuntimeSceneFromDocument", () => {
           },
           radius: 2.25,
           prompt: "Enter House",
-          enabled: true,
+          interactionEnabled: true,
           targetSceneId: "scene-house",
           targetEntryEntityId: "entity-scene-entry-house-front"
         }
