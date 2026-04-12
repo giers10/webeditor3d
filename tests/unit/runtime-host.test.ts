@@ -80,7 +80,7 @@ describe("RuntimeHost", () => {
         message: null
       });
       expect(runtimeMessages).toContain(
-        "Third Person active. Drag to orbit the camera, use WASD to move, and scroll to zoom."
+        "Third Person active. Drag to orbit the camera, use the right stick for gamepad camera look, move with your authored bindings, and scroll to zoom."
       );
     });
 
