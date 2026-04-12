@@ -12,6 +12,7 @@ import {
   createStopAnimationInteractionLink,
   createStopSoundInteractionLink
 } from "../../src/interactions/interaction-links";
+import { createDefaultProjectTimeSettings } from "../../src/document/project-time-settings";
 import { createDefaultWorldSettings } from "../../src/document/world-settings";
 import { RuntimeInteractionSystem } from "../../src/runtime-three/runtime-interaction-system";
 import type { RuntimeSceneDefinition } from "../../src/runtime-three/runtime-scene-build";
@@ -20,6 +21,7 @@ function createRuntimeSceneFixture(): RuntimeSceneDefinition {
   const movementTemplate = createPlayerStartMovementTemplate();
 
   return {
+    time: createDefaultProjectTimeSettings(),
     world: {
       ...createDefaultWorldSettings(),
       background: {
