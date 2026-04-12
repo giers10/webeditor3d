@@ -2841,6 +2841,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     const assets = readAssets(source.assets);
 
     return {
+      time: createDefaultProjectTimeSettings(),
       version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
       world: readWorldSettings(source.world),
@@ -2859,6 +2860,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     const assets = readAssets(source.assets);
 
     return {
+      time: createDefaultProjectTimeSettings(),
       version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
       world: readWorldSettings(source.world),
@@ -2880,6 +2882,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     const assets = readAssets(source.assets);
 
     return {
+      time: createDefaultProjectTimeSettings(),
       version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
       world: readWorldSettings(source.world),
@@ -2898,6 +2901,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     const assets = readAssets(source.assets);
 
     return {
+      time: createDefaultProjectTimeSettings(),
       version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
       world: readWorldSettings(source.world),
@@ -2917,6 +2921,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     const assets = readAssets(source.assets);
 
     return {
+      time: createDefaultProjectTimeSettings(),
       version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
       world: readWorldSettings(source.world),
@@ -2938,6 +2943,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     const assets = readAssets(source.assets);
 
     return {
+      time: createDefaultProjectTimeSettings(),
       version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
       world: readWorldSettings(source.world),
@@ -2957,6 +2963,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     const assets = readAssets(source.assets);
 
     return {
+      time: createDefaultProjectTimeSettings(),
       version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
       world: readWorldSettings(source.world),
@@ -2976,6 +2983,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     const assets = readAssets(source.assets);
 
     return {
+      time: createDefaultProjectTimeSettings(),
       version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
       world: readWorldSettings(source.world),
