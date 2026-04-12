@@ -14,8 +14,13 @@ import {
   createDefaultWorldSettings,
   type WorldSettings
 } from "./world-settings";
+import {
+  createDefaultProjectTimeSettings,
+  type ProjectTimeSettings
+} from "./project-time-settings";
 
-export const SCENE_DOCUMENT_VERSION = 36 as const;
+export const SCENE_DOCUMENT_VERSION = 37 as const;
+export const PROJECT_TIME_SYSTEM_SCENE_DOCUMENT_VERSION = 37 as const;
 export const AUTHORED_OBJECT_STATE_SCENE_DOCUMENT_VERSION = 36 as const;
 export const PLAYER_START_AIR_DIRECTION_CONTROL_SCENE_DOCUMENT_VERSION =
   35 as const;
@@ -115,6 +120,7 @@ export interface ProjectScene {
 export interface ProjectDocument {
   version: typeof SCENE_DOCUMENT_VERSION;
   name: string;
+  time: ProjectTimeSettings;
   activeSceneId: string;
   scenes: Record<string, ProjectScene>;
   materials: Record<string, MaterialDef>;
@@ -125,6 +131,7 @@ export interface ProjectDocument {
 export interface SceneDocument {
   version: typeof SCENE_DOCUMENT_VERSION;
   name: string;
+  time: ProjectTimeSettings;
   world: WorldSettings;
   materials: Record<string, MaterialDef>;
   textures: Record<string, never>;
@@ -136,11 +143,14 @@ export interface SceneDocument {
 }
 
 export function createEmptySceneDocument(
-  overrides: Partial<Pick<SceneDocument, "name" | "world" | "materials">> = {}
+  overrides: Partial<
+    Pick<SceneDocument, "name" | "time" | "world" | "materials">
+  > = {}
 ): SceneDocument {
   return {
     version: SCENE_DOCUMENT_VERSION,
     name: overrides.name ?? "Untitled Scene",
+    time: overrides.time ?? createDefaultProjectTimeSettings(),
     world: overrides.world ?? createDefaultWorldSettings(),
     materials: cloneMaterialRegistry(
       overrides.materials ?? createStarterMaterialRegistry()
@@ -183,7 +193,12 @@ export function createEmptyProjectDocument(
   overrides: Partial<
     Pick<
       ProjectDocument,
-      "name" | "activeSceneId" | "materials" | "textures" | "assets"
+      | "name"
+      | "time"
+      | "activeSceneId"
+      | "materials"
+      | "textures"
+      | "assets"
     >
   > & {
     sceneId?: string;
@@ -201,6 +216,7 @@ export function createEmptyProjectDocument(
   return {
     version: SCENE_DOCUMENT_VERSION,
     name: overrides.name ?? DEFAULT_PROJECT_NAME,
+    time: overrides.time ?? createDefaultProjectTimeSettings(),
     activeSceneId: initialScene.id,
     scenes: {
       [initialScene.id]: initialScene
@@ -235,6 +251,7 @@ export function createSceneDocumentFromProject(
   return {
     version: projectDocument.version,
     name: scene.name,
+    time: projectDocument.time,
     world: scene.world,
     materials: projectDocument.materials,
     textures: projectDocument.textures,
@@ -254,6 +271,7 @@ export function createProjectDocumentFromSceneDocument(
   return {
     version: SCENE_DOCUMENT_VERSION,
     name: projectName,
+    time: sceneDocument.time,
     activeSceneId: sceneId,
     scenes: {
       [sceneId]: {
@@ -284,6 +302,7 @@ export function applySceneDocumentToProject(
   return {
     ...projectDocument,
     version: SCENE_DOCUMENT_VERSION,
+    time: sceneDocument.time,
     materials: sceneDocument.materials,
     textures: sceneDocument.textures,
     assets: sceneDocument.assets,
