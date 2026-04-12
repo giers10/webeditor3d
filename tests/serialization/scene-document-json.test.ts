@@ -465,7 +465,9 @@ describe("scene document JSON", () => {
           bufferMs: 120,
           coyoteTimeMs: 90,
           variableHeight: true,
-          maxHoldMs: 220
+          maxHoldMs: 220,
+          moveWhileJumping: false,
+          moveWhileFalling: false
         },
         sprint: {
           speedMultiplier: 1.8
@@ -937,6 +939,40 @@ describe("scene document JSON", () => {
         ...playerStart
       })
     );
+  });
+
+  it("migrates version 33 Player Start jump settings to include default air movement flags", () => {
+    const playerStart = createPlayerStartEntity({
+      id: "entity-player-start-legacy-air-move-flags",
+      movementTemplate: {
+        kind: "responsive"
+      }
+    });
+    const {
+      moveWhileJumping: _moveWhileJumping,
+      moveWhileFalling: _moveWhileFalling,
+      ...legacyJump
+    } = playerStart.movementTemplate.jump;
+    const legacyDocument = {
+      ...createEmptySceneDocument({
+        name: "Legacy Player Air Movement Scene"
+      }),
+      version: 33,
+      entities: {
+        [playerStart.id]: {
+          ...playerStart,
+          movementTemplate: {
+            ...playerStart.movementTemplate,
+            jump: legacyJump
+          }
+        }
+      }
+    };
+
+    const migratedDocument = migrateSceneDocument(legacyDocument);
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.entities[playerStart.id]).toEqual(playerStart);
   });
 
   it("round-trips authored third-person Player Start navigation", () => {

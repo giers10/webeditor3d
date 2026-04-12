@@ -130,7 +130,9 @@ describe("validateSceneDocument", () => {
               bufferMs: -1,
               coyoteTimeMs: -1,
               variableHeight: "yes",
-              maxHoldMs: 0
+              maxHoldMs: 0,
+              moveWhileJumping: "yes",
+              moveWhileFalling: 1
             },
             sprint: {
               speedMultiplier: 0
@@ -208,6 +210,12 @@ describe("validateSceneDocument", () => {
         }),
         expect.objectContaining({
           code: "invalid-player-start-variable-jump-max-hold-ms"
+        }),
+        expect.objectContaining({
+          code: "invalid-player-start-move-while-jumping"
+        }),
+        expect.objectContaining({
+          code: "invalid-player-start-move-while-falling"
         }),
         expect.objectContaining({
           code: "invalid-player-start-sprint-speed-multiplier"
