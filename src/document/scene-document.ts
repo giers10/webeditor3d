@@ -19,7 +19,8 @@ import {
   type ProjectTimeSettings
 } from "./project-time-settings";
 
-export const SCENE_DOCUMENT_VERSION = 37 as const;
+export const SCENE_DOCUMENT_VERSION = 38 as const;
+export const PROJECT_TIME_DAY_NIGHT_PROFILE_SCENE_DOCUMENT_VERSION = 38 as const;
 export const PROJECT_TIME_SYSTEM_SCENE_DOCUMENT_VERSION = 37 as const;
 export const AUTHORED_OBJECT_STATE_SCENE_DOCUMENT_VERSION = 36 as const;
 export const PLAYER_START_AIR_DIRECTION_CONTROL_SCENE_DOCUMENT_VERSION =

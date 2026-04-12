@@ -100,6 +100,7 @@ export interface AdvancedRenderingSettings {
 }
 
 export interface WorldSettings {
+  projectTimeLightingEnabled: boolean;
   background: WorldBackgroundSettings;
   ambientLight: WorldAmbientLightSettings;
   sunLight: WorldSunLightSettings;
@@ -192,6 +193,7 @@ export function createDefaultAdvancedRenderingSettings(): AdvancedRenderingSetti
 
 export function createDefaultWorldSettings(): WorldSettings {
   return {
+    projectTimeLightingEnabled: true,
     background: {
       mode: "solid",
       colorHex: DEFAULT_SOLID_BACKGROUND_COLOR
@@ -244,6 +246,7 @@ export function cloneWorldBackgroundSettings(background: WorldBackgroundSettings
 
 export function cloneWorldSettings(world: WorldSettings): WorldSettings {
   return {
+    projectTimeLightingEnabled: world.projectTimeLightingEnabled,
     background: cloneWorldBackgroundSettings(world.background),
     ambientLight: {
       ...world.ambientLight
@@ -303,6 +306,7 @@ export function areWorldBackgroundSettingsEqual(left: WorldBackgroundSettings, r
 
 export function areWorldSettingsEqual(left: WorldSettings, right: WorldSettings): boolean {
   return (
+    left.projectTimeLightingEnabled === right.projectTimeLightingEnabled &&
     areWorldBackgroundSettingsEqual(left.background, right.background) &&
     left.ambientLight.colorHex === right.ambientLight.colorHex &&
     left.ambientLight.intensity === right.ambientLight.intensity &&
