@@ -35,14 +35,25 @@ describe("runtime project time", () => {
     time.sunsetTimeOfDayHours = 20;
     time.dawnDurationHours = 2;
     time.duskDurationHours = 2;
+    time.nightBackground.assetId = "asset-night-sky";
 
     const noon = resolveRuntimeDayNightWorldState(world, time, {
       timeOfDayHours: 12,
       dayCount: 0,
       dayLengthMinutes: 24
     });
-    const dawn = resolveRuntimeDayNightWorldState(world, time, {
+    const preSunrise = resolveRuntimeDayNightWorldState(world, time, {
       timeOfDayHours: 6.5,
+      dayCount: 0,
+      dayLengthMinutes: 24
+    });
+    const dawn = resolveRuntimeDayNightWorldState(world, time, {
+      timeOfDayHours: 7.5,
+      dayCount: 0,
+      dayLengthMinutes: 24
+    });
+    const postSunset = resolveRuntimeDayNightWorldState(world, time, {
+      timeOfDayHours: 20.5,
       dayCount: 0,
       dayLengthMinutes: 24
     });
@@ -56,9 +67,24 @@ describe("runtime project time", () => {
     expect(midnight.ambientLight.intensity).toBeLessThan(
       noon.ambientLight.intensity
     );
+    expect(preSunrise.sunLight.intensity).toBeGreaterThan(
+      midnight.sunLight.intensity
+    );
+    expect(preSunrise.sunLight.intensity).toBeLessThan(noon.sunLight.intensity);
     expect(dawn.sunLight.colorHex).not.toBe(noon.sunLight.colorHex);
+    expect(dawn.sunLight.intensity).toBeGreaterThan(preSunrise.sunLight.intensity);
+    expect(postSunset.sunLight.intensity).toBeLessThan(noon.sunLight.intensity);
+    expect(postSunset.sunLight.intensity).toBeGreaterThan(
+      midnight.sunLight.intensity
+    );
     expect(midnight.moonLight?.intensity ?? 0).toBeGreaterThan(0);
+    expect(preSunrise.moonLight?.intensity ?? 0).toBeGreaterThan(0);
+    expect(postSunset.moonLight?.intensity ?? 0).toBeGreaterThan(0);
     expect(noon.moonLight).toBeNull();
+    expect(preSunrise.nightBackgroundOverlay?.assetId).toBe("asset-night-sky");
+    expect(preSunrise.nightBackgroundOverlay?.opacity ?? 0).toBeGreaterThan(0);
+    expect(postSunset.nightBackgroundOverlay?.opacity ?? 0).toBeGreaterThan(0);
+    expect(midnight.nightBackgroundOverlay?.opacity ?? 0).toBeCloseTo(1);
     expect(noon.sunLight.direction.y).toBeGreaterThan(0);
     expect(midnight.sunLight.direction.y).toBeLessThan(0);
 
