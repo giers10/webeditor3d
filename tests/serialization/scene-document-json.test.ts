@@ -10,6 +10,7 @@ import {
   LOCAL_LIGHTS_AND_SKYBOX_SCENE_DOCUMENT_VERSION,
   MODEL_ASSET_PIPELINE_SCENE_DOCUMENT_VERSION,
   PLAYER_START_AIR_CONTROL_SCENE_DOCUMENT_VERSION,
+  PLAYER_START_AIR_DIRECTION_CONTROL_SCENE_DOCUMENT_VERSION,
   PLAYER_START_COLLIDER_SETTINGS_SCENE_DOCUMENT_VERSION,
   PLAYER_START_INPUT_BINDINGS_SCENE_DOCUMENT_VERSION,
   PLAYER_START_MOVEMENT_TEMPLATE_SCENE_DOCUMENT_VERSION,
@@ -30,6 +31,7 @@ import {
   createPointLightEntity,
   createInteractableEntity,
   createPlayerStartEntity,
+  createSceneExitEntity,
   createSoundEmitterEntity,
   createSpotLightEntity,
   createTeleportTargetEntity,
@@ -1009,6 +1011,89 @@ describe("scene document JSON", () => {
 
     expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
     expect(migratedDocument.entities[playerStart.id]).toEqual(playerStart);
+  });
+
+  it("migrates version 35 documents to default authored visible and enabled state while preserving interaction enablement", () => {
+    const brush = createBoxBrush({
+      id: "brush-authored-state-legacy"
+    });
+    const modelInstance = createModelInstance({
+      id: "model-instance-authored-state-legacy",
+      assetId: "asset-model-authored-state-legacy"
+    });
+    const interactable = createInteractableEntity({
+      id: "entity-interactable-authored-state-legacy",
+      interactionEnabled: false
+    });
+    const sceneExit = createSceneExitEntity({
+      id: "entity-scene-exit-authored-state-legacy",
+      interactionEnabled: false,
+      targetSceneId: "scene-target-legacy",
+      targetEntryEntityId: "entity-scene-entry-target-legacy"
+    });
+    const {
+      visible: _legacyBrushVisible,
+      enabled: _legacyBrushEnabled,
+      ...legacyBrush
+    } = brush;
+    const {
+      visible: _legacyModelVisible,
+      enabled: _legacyModelEnabled,
+      ...legacyModelInstance
+    } = modelInstance;
+    const {
+      visible: _legacyInteractableVisible,
+      enabled: _legacyInteractableEnabled,
+      interactionEnabled: legacyInteractableInteractionEnabled,
+      ...legacyInteractable
+    } = interactable;
+    const {
+      visible: _legacySceneExitVisible,
+      enabled: _legacySceneExitEnabled,
+      interactionEnabled: legacySceneExitInteractionEnabled,
+      ...legacySceneExit
+    } = sceneExit;
+
+    const migratedDocument = migrateSceneDocument({
+      ...createEmptySceneDocument({ name: "Legacy Authored State Scene" }),
+      version: PLAYER_START_AIR_DIRECTION_CONTROL_SCENE_DOCUMENT_VERSION,
+      brushes: {
+        [brush.id]: legacyBrush
+      },
+      modelInstances: {
+        [modelInstance.id]: legacyModelInstance
+      },
+      entities: {
+        [interactable.id]: {
+          ...legacyInteractable,
+          enabled: legacyInteractableInteractionEnabled
+        },
+        [sceneExit.id]: {
+          ...legacySceneExit,
+          enabled: legacySceneExitInteractionEnabled
+        }
+      }
+    });
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.brushes[brush.id]).toMatchObject({
+      visible: true,
+      enabled: true
+    });
+    expect(migratedDocument.modelInstances[modelInstance.id]).toMatchObject({
+      visible: true,
+      enabled: true
+    });
+    expect(migratedDocument.entities[interactable.id]).toMatchObject({
+      visible: true,
+      enabled: true,
+      interactionEnabled: false
+    });
+    expect(migratedDocument.entities[sceneExit.id]).toMatchObject({
+      visible: true,
+      enabled: true,
+      interactionEnabled: false
+    });
   });
 
   it("round-trips authored third-person Player Start navigation", () => {
