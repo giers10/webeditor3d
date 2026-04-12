@@ -1,3 +1,10 @@
+import { createDefaultProjectTimeSettings } from "../document/project-time-settings";
+
+import {
+  createRuntimeClockState,
+  type RuntimeClockState
+} from "./runtime-project-time";
+
 export interface RuntimeSceneTransitionRecord {
   fromSceneId: string;
   fromSceneName: string;
@@ -12,13 +19,17 @@ export interface RuntimeGlobalState {
   activeMusicCueId: string | null;
   transitionCount: number;
   lastSceneTransition: RuntimeSceneTransitionRecord | null;
+  clock: RuntimeClockState;
 }
 
-export function createDefaultRuntimeGlobalState(): RuntimeGlobalState {
+export function createDefaultRuntimeGlobalState(
+  timeSettings = createDefaultProjectTimeSettings()
+): RuntimeGlobalState {
   return {
     flags: {},
     activeMusicCueId: null,
     transitionCount: 0,
-    lastSceneTransition: null
+    lastSceneTransition: null,
+    clock: createRuntimeClockState(timeSettings)
   };
 }
