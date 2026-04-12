@@ -5,6 +5,7 @@ import {
   DEFAULT_PROJECT_NAME,
   DEFAULT_SCENE_EDITOR_SNAP_STEP,
   PLAYER_START_GAMEPAD_CAMERA_LOOK_SCENE_DOCUMENT_VERSION,
+  PROJECT_TIME_DAY_NIGHT_PROFILE_SCENE_DOCUMENT_VERSION,
   RUNNER_LOADING_SCREEN_SCENE_DOCUMENT_VERSION,
   SCENE_DOCUMENT_VERSION,
   createEmptyProjectDocument,
@@ -189,7 +190,7 @@ describe("project document JSON", () => {
     expect(migratedDocument.time).toEqual(createDefaultProjectTimeSettings());
   });
 
-  it("migrates first-slice project time documents to the richer day-night profile defaults", () => {
+  it("migrates v38 project time documents to default night background settings", () => {
     const legacyProject = createEmptyProjectDocument({
       name: "Legacy Time Project",
       sceneName: "Atrium"
@@ -202,7 +203,7 @@ describe("project document JSON", () => {
 
     const migratedDocument = parseProjectDocumentJson(
       JSON.stringify({
-        version: 37,
+        version: PROJECT_TIME_DAY_NIGHT_PROFILE_SCENE_DOCUMENT_VERSION,
         name: legacyProject.name,
         activeSceneId: legacyProject.activeSceneId,
         scenes: {
@@ -218,21 +219,35 @@ describe("project document JSON", () => {
         textures: legacyProject.textures,
         assets: legacyProject.assets,
         time: {
+          startDayNumber: 2,
           startTimeOfDayHours: 17.5,
-          dayLengthMinutes: 20
+          dayLengthMinutes: 20,
+          sunriseTimeOfDayHours: 6.25,
+          sunsetTimeOfDayHours: 19.5,
+          dawnDurationHours: 1.25,
+          duskDurationHours: 1.75,
+          dawn: {
+            ...createDefaultProjectTimeSettings().dawn,
+            ambientIntensityFactor: 0.74
+          },
+          dusk: {
+            ...createDefaultProjectTimeSettings().dusk,
+            lightIntensityFactor: 0.63
+          },
+          night: {
+            ...createDefaultProjectTimeSettings().night,
+            lightIntensityFactor: 0.21
+          }
         }
       })
     );
 
     expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.time.startDayNumber).toBe(2);
     expect(migratedDocument.time.startTimeOfDayHours).toBe(17.5);
     expect(migratedDocument.time.dayLengthMinutes).toBe(20);
-    expect(migratedDocument.time.sunriseTimeOfDayHours).toBe(
-      createDefaultProjectTimeSettings().sunriseTimeOfDayHours
-    );
-    expect(migratedDocument.time.night).toEqual(
-      createDefaultProjectTimeSettings().night
-    );
+    expect(migratedDocument.time.sunriseTimeOfDayHours).toBe(6.25);
+    expect(migratedDocument.time.night.lightIntensityFactor).toBe(0.21);
     expect(migratedDocument.time.nightBackground).toEqual(
       createDefaultProjectTimeSettings().nightBackground
     );
