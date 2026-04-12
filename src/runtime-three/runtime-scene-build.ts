@@ -18,7 +18,7 @@ import {
   createPlayerStartMovementTemplate,
   createPlayerStartInputBindings,
   getEntityInstances,
-  getPrimaryPlayerStartEntity,
+  getPrimaryEnabledPlayerStartEntity,
   type EntityInstance,
   type PlayerStartInputBindings,
   type PlayerStartJumpSettings,
@@ -46,6 +46,7 @@ export interface RuntimeBrushFace {
 export interface RuntimeBoxBrushInstance {
   id: string;
   kind: "box";
+  visible: boolean;
   center: Vec3;
   rotationDegrees: Vec3;
   size: Vec3;
@@ -159,7 +160,7 @@ export interface RuntimeInteractable {
   position: Vec3;
   radius: number;
   prompt: string;
-  enabled: boolean;
+  interactionEnabled: boolean;
 }
 
 export interface RuntimeSceneExit {
@@ -167,7 +168,7 @@ export interface RuntimeSceneExit {
   position: Vec3;
   radius: number;
   prompt: string;
-  enabled: boolean;
+  interactionEnabled: boolean;
   targetSceneId: string;
   targetEntryEntityId: string;
 }
@@ -199,6 +200,7 @@ export interface RuntimeModelInstance {
   instanceId: string;
   assetId: string;
   name?: string;
+  visible: boolean;
   position: Vec3;
   rotationDegrees: Vec3;
   scale: Vec3;
@@ -248,7 +250,7 @@ export interface BuildRuntimeSceneOptions {
 }
 
 export function resolveRuntimeNavigationMode(
-  playerStartEntity: ReturnType<typeof getPrimaryPlayerStartEntity>,
+  playerStartEntity: ReturnType<typeof getPrimaryEnabledPlayerStartEntity>,
   authoredOverride?: RuntimeNavigationMode
 ): RuntimeNavigationMode {
   if (authoredOverride !== undefined) {
@@ -361,6 +363,7 @@ function buildRuntimeBrush(brush: BoxBrush, document: SceneDocument): RuntimeBox
   return {
     id: brush.id,
     kind: "box",
+    visible: brush.visible,
     center: cloneVec3(brush.center),
     rotationDegrees: cloneVec3(brush.rotationDegrees),
     size: cloneVec3(brush.size),
@@ -457,6 +460,7 @@ function buildRuntimeModelInstance(modelInstance: SceneDocument["modelInstances"
     instanceId: modelInstance.id,
     assetId: modelInstance.assetId,
     name: modelInstance.name,
+    visible: modelInstance.visible,
     position: cloneVec3(modelInstance.position),
     rotationDegrees: cloneVec3(modelInstance.rotationDegrees),
     scale: cloneVec3(modelInstance.scale),
@@ -561,6 +565,10 @@ function buildRuntimeSceneCollections(document: SceneDocument): RuntimeSceneColl
   };
 
   for (const entity of getEntityInstances(document.entities)) {
+    if (!entity.enabled) {
+      continue;
+    }
+
     switch (entity.kind) {
       case "pointLight":
         localLights.pointLights.push({
@@ -639,7 +647,7 @@ function buildRuntimeSceneCollections(document: SceneDocument): RuntimeSceneColl
           position: cloneVec3(entity.position),
           radius: entity.radius,
           prompt: entity.prompt,
-          enabled: entity.enabled
+          interactionEnabled: entity.interactionEnabled
         });
         break;
       case "sceneExit":
@@ -648,7 +656,7 @@ function buildRuntimeSceneCollections(document: SceneDocument): RuntimeSceneColl
           position: cloneVec3(entity.position),
           radius: entity.radius,
           prompt: entity.prompt,
-          enabled: entity.enabled,
+          interactionEnabled: entity.interactionEnabled,
           targetSceneId: entity.targetSceneId,
           targetEntryEntityId: entity.targetEntryEntityId
         });
@@ -669,7 +677,7 @@ function assertNever(value: never): never {
 }
 
 function buildRuntimePlayerShape(
-  playerStartEntity: ReturnType<typeof getPrimaryPlayerStartEntity>
+  playerStartEntity: ReturnType<typeof getPrimaryEnabledPlayerStartEntity>
 ): FirstPersonPlayerShape {
   if (playerStartEntity === null) {
     return FIRST_PERSON_PLAYER_SHAPE;
@@ -734,7 +742,7 @@ function resolveRuntimeSpawn(
 }
 
 export function buildRuntimeSceneFromDocument(document: SceneDocument, options: BuildRuntimeSceneOptions = {}): RuntimeSceneDefinition {
-  const playerStartEntity = getPrimaryPlayerStartEntity(document.entities);
+  const playerStartEntity = getPrimaryEnabledPlayerStartEntity(document.entities);
   const navigationMode = resolveRuntimeNavigationMode(
     playerStartEntity,
     options.navigationMode
@@ -745,14 +753,15 @@ export function buildRuntimeSceneFromDocument(document: SceneDocument, options: 
     loadedModelAssets: options.loadedModelAssets
   });
 
-  const brushes = Object.values(document.brushes).map((brush) => buildRuntimeBrush(brush, document));
+  const enabledBrushes = Object.values(document.brushes).filter((brush) => brush.enabled);
+  const brushes = enabledBrushes.map((brush) => buildRuntimeBrush(brush, document));
   const colliders: RuntimeSceneCollider[] = [];
   const volumes: RuntimeBoxVolumeCollection = {
     fog: [],
     water: []
   };
 
-  for (const brush of Object.values(document.brushes)) {
+  for (const brush of enabledBrushes) {
     if (brush.volume.mode === "none") {
       colliders.push(buildRuntimeCollider(brush));
       continue;
@@ -765,9 +774,36 @@ export function buildRuntimeSceneFromDocument(document: SceneDocument, options: 
 
     volumes.water.push(buildRuntimeWaterVolume(brush));
   }
-  const modelInstances = getModelInstances(document.modelInstances).map(buildRuntimeModelInstance);
+  const enabledModelInstances = getModelInstances(document.modelInstances).filter((modelInstance) => modelInstance.enabled);
+  const modelInstances = enabledModelInstances.map(buildRuntimeModelInstance);
   const collections = buildRuntimeSceneCollections(document);
-  const interactionLinks = getInteractionLinks(document.interactionLinks).map((link) => cloneInteractionLink(link));
+  const enabledBrushIds = new Set(enabledBrushes.map((brush) => brush.id));
+  const enabledModelInstanceIds = new Set(enabledModelInstances.map((modelInstance) => modelInstance.id));
+  const enabledEntityIds = new Set(
+    getEntityInstances(document.entities)
+      .filter((entity) => entity.enabled)
+      .map((entity) => entity.id)
+  );
+  const interactionLinks = getInteractionLinks(document.interactionLinks)
+    .filter((link) => {
+      if (!enabledEntityIds.has(link.sourceEntityId)) {
+        return false;
+      }
+
+      switch (link.action.type) {
+        case "teleportPlayer":
+          return enabledEntityIds.has(link.action.targetEntityId);
+        case "toggleVisibility":
+          return enabledBrushIds.has(link.action.targetBrushId);
+        case "playAnimation":
+        case "stopAnimation":
+          return enabledModelInstanceIds.has(link.action.targetModelInstanceId);
+        case "playSound":
+        case "stopSound":
+          return enabledEntityIds.has(link.action.targetSoundEmitterId);
+      }
+    })
+    .map((link) => cloneInteractionLink(link));
   const playerCollider = buildRuntimePlayerShape(playerStartEntity);
   const playerMovement = buildRuntimePlayerMovement(
     playerStartEntity?.movementTemplate
@@ -776,7 +812,7 @@ export function buildRuntimeSceneFromDocument(document: SceneDocument, options: 
     playerStartEntity?.inputBindings
   );
 
-  for (const modelInstance of getModelInstances(document.modelInstances)) {
+  for (const modelInstance of enabledModelInstances) {
     const asset = document.assets[modelInstance.assetId];
 
     if (asset === undefined || asset.kind !== "model") {
