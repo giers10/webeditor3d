@@ -2983,6 +2983,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
   if (
     source.version !== SCENE_DOCUMENT_VERSION &&
     source.version !== 33 &&
+    source.version !== AUTHORED_OBJECT_STATE_SCENE_DOCUMENT_VERSION &&
     source.version !== PLAYER_START_AIR_DIRECTION_CONTROL_SCENE_DOCUMENT_VERSION &&
     source.version !== PLAYER_START_AIR_CONTROL_SCENE_DOCUMENT_VERSION &&
     source.version !== PLAYER_START_MOVEMENT_TEMPLATE_SCENE_DOCUMENT_VERSION &&
@@ -3012,6 +3013,9 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
   return {
     version: SCENE_DOCUMENT_VERSION,
     name: expectString(source.name, "name"),
+    time: readProjectTimeSettings(source.time, "time", {
+      allowMissing: source.version < PROJECT_TIME_SYSTEM_SCENE_DOCUMENT_VERSION
+    }),
     world: readWorldSettings(source.world),
     materials,
     textures: expectEmptyCollection(source.textures, "textures"),
