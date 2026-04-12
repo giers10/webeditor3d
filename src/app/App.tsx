@@ -754,6 +754,12 @@ function readPositiveNumberDraft(source: string, label: string): number {
   return value;
 }
 
+function assertProjectTimeSettingsAreOrdered(time: ProjectTimeSettings) {
+  if (time.sunriseTimeOfDayHours >= time.sunsetTimeOfDayHours) {
+    throw new Error("Project sunrise must be earlier than project sunset.");
+  }
+}
+
 function areVec2Equal(left: Vec2, right: Vec2): boolean {
   return left.x === right.x && left.y === right.y;
 }
