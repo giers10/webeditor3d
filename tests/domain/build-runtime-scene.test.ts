@@ -298,9 +298,15 @@ describe("buildRuntimeSceneFromDocument", () => {
       y: 1.2,
       z: 0.1
     };
+    document.time = {
+      startTimeOfDayHours: 18.5,
+      dayLengthMinutes: 16
+    };
 
     const runtimeScene = buildRuntimeSceneFromDocument(document);
 
+    expect(runtimeScene.time).toEqual(document.time);
+    expect(runtimeScene.time).not.toBe(document.time);
     expect(runtimeScene.world).toEqual(document.world);
     expect(runtimeScene.world).not.toBe(document.world);
     expect(runtimeScene.world.sunLight.direction).not.toBe(document.world.sunLight.direction);

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  AUTHORED_OBJECT_STATE_SCENE_DOCUMENT_VERSION,
   DEFAULT_PROJECT_NAME,
   DEFAULT_SCENE_EDITOR_SNAP_STEP,
   PLAYER_START_GAMEPAD_CAMERA_LOOK_SCENE_DOCUMENT_VERSION,
@@ -9,6 +10,7 @@ import {
   createEmptyProjectDocument,
   createEmptyProjectScene
 } from "../../src/document/scene-document";
+import { createDefaultProjectTimeSettings } from "../../src/document/project-time-settings";
 import {
   createSceneEntryEntity,
   createSceneExitEntity
@@ -106,10 +108,36 @@ describe("project document JSON", () => {
         normalStrength: 0.85
       }
     };
+    document.time = {
+      startTimeOfDayHours: 18.5,
+      dayLengthMinutes: 16
+    };
 
     const serializedDocument = serializeProjectDocument(document);
 
     expect(parseProjectDocumentJson(serializedDocument)).toEqual(document);
+  });
+
+  it("migrates pre-project-time multi-scene documents to default project time settings", () => {
+    const migratedDocument = parseProjectDocumentJson(
+      JSON.stringify({
+        version: AUTHORED_OBJECT_STATE_SCENE_DOCUMENT_VERSION,
+        name: "Legacy Project",
+        activeSceneId: "scene-main",
+        scenes: {
+          "scene-main": createEmptyProjectScene({
+            id: "scene-main",
+            name: "Legacy Entry"
+          })
+        },
+        materials: createEmptyProjectDocument().materials,
+        textures: {},
+        assets: {}
+      })
+    );
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.time).toEqual(createDefaultProjectTimeSettings());
   });
 
   it("migrates pre-project-name multi-scene documents to Untitled Project", () => {
