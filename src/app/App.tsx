@@ -2302,12 +2302,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
       case "interactable":
         setInteractableRadiusDraft(String(selectedEntity.radius));
         setInteractablePromptDraft(selectedEntity.prompt);
-        setInteractableEnabledDraft(selectedEntity.enabled);
+        setInteractableEnabledDraft(selectedEntity.interactionEnabled);
         break;
       case "sceneExit":
         setSceneExitRadiusDraft(String(selectedEntity.radius));
         setSceneExitPromptDraft(selectedEntity.prompt);
-        setSceneExitEnabledDraft(selectedEntity.enabled);
+        setSceneExitEnabledDraft(selectedEntity.interactionEnabled);
         setSceneExitTargetSceneIdDraft(selectedEntity.targetSceneId);
         setSceneExitTargetEntryIdDraft(selectedEntity.targetEntryEntityId);
         break;
@@ -4913,7 +4913,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
-  const applyInteractableChange = (overrides: { enabled?: boolean } = {}) => {
+  const applyInteractableChange = (
+    overrides: { interactionEnabled?: boolean } = {}
+  ) => {
     if (selectedInteractable === null) {
       setStatusMessage("Select an Interactable before editing it.");
       return;
@@ -4932,7 +4934,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
           "Interactable radius"
         ),
         prompt: readInteractablePromptDraft(interactablePromptDraft),
-        enabled: overrides.enabled ?? interactableEnabledDraft
+        interactionEnabled:
+          overrides.interactionEnabled ?? interactableEnabledDraft
       });
 
       commitEntityChange(
@@ -4947,7 +4950,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
   const applySceneExitChange = (
     overrides: {
-      enabled?: boolean;
+      interactionEnabled?: boolean;
       targetSceneId?: string;
       targetEntryEntityId?: string;
     } = {}
@@ -4970,7 +4973,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
           "Scene Exit radius"
         ),
         prompt: readInteractablePromptDraft(sceneExitPromptDraft),
-        enabled: overrides.enabled ?? sceneExitEnabledDraft,
+        interactionEnabled:
+          overrides.interactionEnabled ?? sceneExitEnabledDraft,
         targetSceneId: overrides.targetSceneId ?? sceneExitTargetSceneIdDraft,
         targetEntryEntityId:
           overrides.targetEntryEntityId ?? sceneExitTargetEntryIdDraft
