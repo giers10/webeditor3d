@@ -1124,6 +1124,28 @@ function validateModelInstance(
     );
   }
 
+  if (!isBoolean(modelInstance.visible)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-model-instance-visible",
+        "Model instance visible must be a boolean.",
+        `${path}.visible`
+      )
+    );
+  }
+
+  if (!isBoolean(modelInstance.enabled)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-model-instance-enabled",
+        "Model instance enabled must be a boolean.",
+        `${path}.enabled`
+      )
+    );
+  }
+
   const asset = document.assets[modelInstance.assetId];
 
   if (asset === undefined) {
@@ -1167,11 +1189,41 @@ function validateEntityName(
   }
 }
 
+function validateAuthoredEntityState(
+  entity: EntityInstance,
+  path: string,
+  diagnostics: SceneDiagnostic[]
+) {
+  if (!isBoolean(entity.visible)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-entity-visible",
+        "Entity visible must remain a boolean.",
+        `${path}.visible`
+      )
+    );
+  }
+
+  if (!isBoolean(entity.enabled)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-entity-enabled",
+        "Entity enabled must remain a boolean.",
+        `${path}.enabled`
+      )
+    );
+  }
+}
+
 function validatePlayerStartEntity(
   entity: PlayerStartEntity,
   path: string,
   diagnostics: SceneDiagnostic[]
 ) {
+  validateAuthoredEntityState(entity, path, diagnostics);
+
   if (!isFiniteVec3(entity.position)) {
     diagnostics.push(
       createDiagnostic(
@@ -1752,6 +1804,8 @@ function validateSoundEmitterEntity(
   document: SceneDocument,
   diagnostics: SceneDiagnostic[]
 ) {
+  validateAuthoredEntityState(entity, path, diagnostics);
+
   if (!isFiniteVec3(entity.position)) {
     diagnostics.push(
       createDiagnostic(
@@ -1847,6 +1901,8 @@ function validateTriggerVolumeEntity(
   path: string,
   diagnostics: SceneDiagnostic[]
 ) {
+  validateAuthoredEntityState(entity, path, diagnostics);
+
   if (!isFiniteVec3(entity.position)) {
     diagnostics.push(
       createDiagnostic(
@@ -1897,6 +1953,8 @@ function validateTeleportTargetEntity(
   path: string,
   diagnostics: SceneDiagnostic[]
 ) {
+  validateAuthoredEntityState(entity, path, diagnostics);
+
   if (!isFiniteVec3(entity.position)) {
     diagnostics.push(
       createDiagnostic(
@@ -1925,6 +1983,8 @@ function validateInteractableEntity(
   path: string,
   diagnostics: SceneDiagnostic[]
 ) {
+  validateAuthoredEntityState(entity, path, diagnostics);
+
   if (!isFiniteVec3(entity.position)) {
     diagnostics.push(
       createDiagnostic(
@@ -1958,13 +2018,13 @@ function validateInteractableEntity(
     );
   }
 
-  if (!isBoolean(entity.enabled)) {
+  if (!isBoolean(entity.interactionEnabled)) {
     diagnostics.push(
       createDiagnostic(
         "error",
-        "invalid-interactable-enabled",
-        "Interactable enabled must remain a boolean.",
-        `${path}.enabled`
+        "invalid-interactable-interaction-enabled",
+        "Interactable interactionEnabled must remain a boolean.",
+        `${path}.interactionEnabled`
       )
     );
   }
@@ -1975,6 +2035,8 @@ function validateSceneEntryEntity(
   path: string,
   diagnostics: SceneDiagnostic[]
 ) {
+  validateAuthoredEntityState(entity, path, diagnostics);
+
   if (!isFiniteVec3(entity.position)) {
     diagnostics.push(
       createDiagnostic(
@@ -2003,6 +2065,8 @@ function validateSceneExitEntity(
   path: string,
   diagnostics: SceneDiagnostic[]
 ) {
+  validateAuthoredEntityState(entity, path, diagnostics);
+
   if (!isFiniteVec3(entity.position)) {
     diagnostics.push(
       createDiagnostic(
@@ -2036,13 +2100,13 @@ function validateSceneExitEntity(
     );
   }
 
-  if (!isBoolean(entity.enabled)) {
+  if (!isBoolean(entity.interactionEnabled)) {
     diagnostics.push(
       createDiagnostic(
         "error",
-        "invalid-scene-exit-enabled",
-        "Scene Exit enabled must remain a boolean.",
-        `${path}.enabled`
+        "invalid-scene-exit-interaction-enabled",
+        "Scene Exit interactionEnabled must remain a boolean.",
+        `${path}.interactionEnabled`
       )
     );
   }
@@ -2630,6 +2694,28 @@ export function validateSceneDocument(
     }
 
     registerAuthoredId(brush.id, path, seenIds, diagnostics);
+
+    if (!isBoolean(brush.visible)) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-box-visible",
+          "Box brush visible must remain a boolean.",
+          `${path}.visible`
+        )
+      );
+    }
+
+    if (!isBoolean(brush.enabled)) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-box-enabled",
+          "Box brush enabled must remain a boolean.",
+          `${path}.enabled`
+        )
+      );
+    }
 
     if (brush.name !== undefined && brush.name.trim().length === 0) {
       diagnostics.push(
