@@ -645,12 +645,12 @@ describe("RapierCollisionWorld", () => {
       center: {
         x: 0,
         y: 0.1,
-        z: 0.75
+        z: 0.9
       },
       size: {
         x: 2,
         y: 0.2,
-        z: 0.5
+        z: 0.8
       }
     });
     const stepTwo = createBoxBrush({
@@ -658,12 +658,12 @@ describe("RapierCollisionWorld", () => {
       center: {
         x: 0,
         y: 0.2,
-        z: 1.25
+        z: 1.7
       },
       size: {
         x: 2,
         y: 0.4,
-        z: 0.5
+        z: 0.8
       }
     });
     const stepThree = createBoxBrush({
@@ -671,12 +671,12 @@ describe("RapierCollisionWorld", () => {
       center: {
         x: 0,
         y: 0.5,
-        z: 1.75
+        z: 2.5
       },
       size: {
         x: 2,
         y: 1,
-        z: 0.5
+        z: 0.8
       }
     });
     const runtimeScene = buildRuntimeSceneFromDocument({
@@ -703,7 +703,7 @@ describe("RapierCollisionWorld", () => {
         z: -0.4
       };
 
-      for (let index = 0; index < 10; index += 1) {
+      for (let index = 0; index < 14; index += 1) {
         feetPosition = collisionWorld.resolveFirstPersonMotion(
           feetPosition,
           {
@@ -715,7 +715,7 @@ describe("RapierCollisionWorld", () => {
         ).feetPosition;
       }
 
-      expect(feetPosition.z).toBeGreaterThan(1.6);
+      expect(feetPosition.z).toBeGreaterThan(2.2);
       expect(feetPosition.y).toBeGreaterThan(0.45);
       expect(feetPosition.y).toBeLessThan(0.62);
     } finally {
