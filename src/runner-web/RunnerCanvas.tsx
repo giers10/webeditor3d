@@ -190,6 +190,26 @@ export function RunnerCanvas({
           : null
       )}
     >
+      {resolvedWorld.nightBackgroundOverlay === null ? null : (
+        <div
+          className="runner-canvas__background-overlay"
+          aria-hidden="true"
+          style={{
+            ...createWorldBackgroundStyle(
+              {
+                mode: "image",
+                assetId: resolvedWorld.nightBackgroundOverlay.assetId,
+                environmentIntensity:
+                  resolvedWorld.nightBackgroundOverlay.environmentIntensity
+              },
+              loadedImageAssets[
+                resolvedWorld.nightBackgroundOverlay.assetId
+              ]?.sourceUrl ?? null
+            ),
+            opacity: resolvedWorld.nightBackgroundOverlay.opacity
+          }}
+        />
+      )}
       <div
         className={`runner-canvas__loading-overlay ${runnerReady ? "runner-canvas__loading-overlay--hidden" : ""}`}
         data-testid="runner-loading-overlay"

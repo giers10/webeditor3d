@@ -1252,6 +1252,14 @@ button:disabled {
   pointer-events: auto;
 }
 
+.runner-canvas__background-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  transition: opacity 180ms linear;
+}
+
 .runner-canvas__loading-overlay--hidden {
   opacity: 0;
   visibility: hidden;
