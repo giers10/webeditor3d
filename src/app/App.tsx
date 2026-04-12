@@ -9667,6 +9667,94 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       />
                     </label>
                   </div>
+                  <div className="form-section">
+                    <div className="label">Night Background Image</div>
+                    <label className="form-field">
+                      <span className="label">Image</span>
+                      <select
+                        className="text-input"
+                        value={
+                          editorState.projectDocument.time.nightBackground
+                            .assetId ?? ""
+                        }
+                        onChange={(event) =>
+                          applyProjectTimeNightBackgroundAssetId(
+                            event.currentTarget.value.trim().length === 0
+                              ? null
+                              : event.currentTarget.value
+                          )
+                        }
+                      >
+                        <option value="">None</option>
+                        {imageAssetList.map((asset) => (
+                          <option key={asset.id} value={asset.id}>
+                            {asset.sourceName}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    {editorState.projectDocument.time.nightBackground.assetId ===
+                    null ? (
+                      imageAssetList.length === 0 ? (
+                        <div className="material-summary">
+                          Import an image asset to author a dedicated night sky image.
+                        </div>
+                      ) : (
+                        <div className="material-summary">
+                          Night falls back to the blended dawn/dusk/night sky colors until an image is selected.
+                        </div>
+                      )
+                    ) : (
+                      <>
+                        <label className="form-field">
+                          <span className="label">Environment Intensity</span>
+                          <input
+                            className="text-input"
+                            type="number"
+                            min="0"
+                            step="0.1"
+                            value={
+                              projectTimeNightBackgroundEnvironmentIntensityDraft
+                            }
+                            onChange={(event) =>
+                              setProjectTimeNightBackgroundEnvironmentIntensityDraft(
+                                event.currentTarget.value
+                              )
+                            }
+                            onBlur={
+                              applyProjectTimeNightBackgroundEnvironmentIntensity
+                            }
+                            onKeyDown={(event) =>
+                              handleDraftVectorKeyDown(
+                                event,
+                                applyProjectTimeNightBackgroundEnvironmentIntensity
+                              )
+                            }
+                            onKeyUp={(event) =>
+                              handleNumberInputKeyUp(
+                                event,
+                                applyProjectTimeNightBackgroundEnvironmentIntensity
+                              )
+                            }
+                            onPointerUp={(event) =>
+                              handleNumberInputPointerUp(
+                                event,
+                                applyProjectTimeNightBackgroundEnvironmentIntensity
+                              )
+                            }
+                          />
+                        </label>
+                        <div className="material-summary">
+                          {editorState.document.assets[
+                            editorState.projectDocument.time.nightBackground
+                              .assetId
+                          ]?.sourceName ??
+                            editorState.projectDocument.time.nightBackground
+                              .assetId}
+                        </div>
+                      </>
+                    )}
+                  </div>
                   <div className="material-summary">
                     Dawn, dusk, and night profiles blend over each scene's authored World settings whenever the scene enables global time influence.
                   </div>
