@@ -7917,7 +7917,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
               loadedImageAssets={loadedImageAssets}
               loadedAudioAssets={loadedAudioAssets}
               navigationMode={activeNavigationMode}
+              runtimeClock={runtimeGlobalState.clock}
               onRuntimeMessageChange={setRuntimeMessage}
+              onRuntimeClockChange={handleRuntimeClockChange}
               onFirstPersonTelemetryChange={setFirstPersonTelemetry}
               onInteractionPromptChange={setRuntimeInteractionPrompt}
               onSceneExitActivated={handleRunnerSceneExitActivated}
@@ -7958,6 +7960,17 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     data-testid="runner-transition-count"
                   >
                     {runtimeGlobalState.transitionCount}
+                  </div>
+                </div>
+                <div className="stat-card">
+                  <div className="label">Project Time</div>
+                  <div className="value" data-testid="runner-project-time">
+                    {formatTimeOfDayHours(runtimeGlobalState.clock.timeOfDayHours)}
+                  </div>
+                  <div className="material-summary">
+                    Day {runtimeGlobalState.clock.dayCount + 1} · {Number.isInteger(runtimeGlobalState.clock.dayLengthMinutes)
+                      ? runtimeGlobalState.clock.dayLengthMinutes.toFixed(0)
+                      : runtimeGlobalState.clock.dayLengthMinutes.toFixed(1)} min/day
                   </div>
                 </div>
                 <div className="stat-card">
