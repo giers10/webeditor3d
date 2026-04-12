@@ -132,8 +132,11 @@ import {
   type SceneDocument
 } from "./scene-document";
 import {
+  createDefaultProjectTimePhaseProfile,
   createDefaultProjectTimeSettings,
+  normalizeProjectStartDayNumber,
   normalizeTimeOfDayHours,
+  type ProjectTimePhaseProfile,
   type ProjectTimeSettings
 } from "./project-time-settings";
 import {
@@ -724,7 +727,59 @@ function readProjectTimeSettings(
 
   const defaults = createDefaultProjectTimeSettings();
 
+  const readProjectTimePhaseProfile = (
+    phaseValue: unknown,
+    phaseLabel: string,
+    phase: "dawn" | "dusk" | "night"
+  ): ProjectTimePhaseProfile => {
+    const phaseDefaults = createDefaultProjectTimePhaseProfile(phase);
+
+    if (phaseValue === undefined) {
+      return phaseDefaults;
+    }
+
+    if (!isRecord(phaseValue)) {
+      throw new Error(`${phaseLabel} must be an object.`);
+    }
+
+    return {
+      skyTopColorHex: expectHexColor(
+        phaseValue.skyTopColorHex ?? phaseDefaults.skyTopColorHex,
+        `${phaseLabel}.skyTopColorHex`
+      ),
+      skyBottomColorHex: expectHexColor(
+        phaseValue.skyBottomColorHex ?? phaseDefaults.skyBottomColorHex,
+        `${phaseLabel}.skyBottomColorHex`
+      ),
+      ambientColorHex: expectHexColor(
+        phaseValue.ambientColorHex ?? phaseDefaults.ambientColorHex,
+        `${phaseLabel}.ambientColorHex`
+      ),
+      ambientIntensityFactor: readOptionalNonNegativeFiniteNumber(
+        phaseValue.ambientIntensityFactor,
+        `${phaseLabel}.ambientIntensityFactor`,
+        phaseDefaults.ambientIntensityFactor
+      ),
+      lightColorHex: expectHexColor(
+        phaseValue.lightColorHex ?? phaseDefaults.lightColorHex,
+        `${phaseLabel}.lightColorHex`
+      ),
+      lightIntensityFactor: readOptionalNonNegativeFiniteNumber(
+        phaseValue.lightIntensityFactor,
+        `${phaseLabel}.lightIntensityFactor`,
+        phaseDefaults.lightIntensityFactor
+      )
+    };
+  };
+
   return {
+    startDayNumber: normalizeProjectStartDayNumber(
+      readOptionalPositiveFiniteNumber(
+        value.startDayNumber,
+        `${label}.startDayNumber`,
+        defaults.startDayNumber
+      )
+    ),
     startTimeOfDayHours: normalizeTimeOfDayHours(
       readOptionalFiniteNumber(
         value.startTimeOfDayHours,
@@ -736,6 +791,37 @@ function readProjectTimeSettings(
       value.dayLengthMinutes,
       `${label}.dayLengthMinutes`,
       defaults.dayLengthMinutes
+    ),
+    sunriseTimeOfDayHours: normalizeTimeOfDayHours(
+      readOptionalFiniteNumber(
+        value.sunriseTimeOfDayHours,
+        `${label}.sunriseTimeOfDayHours`,
+        defaults.sunriseTimeOfDayHours
+      )
+    ),
+    sunsetTimeOfDayHours: normalizeTimeOfDayHours(
+      readOptionalFiniteNumber(
+        value.sunsetTimeOfDayHours,
+        `${label}.sunsetTimeOfDayHours`,
+        defaults.sunsetTimeOfDayHours
+      )
+    ),
+    dawnDurationHours: readOptionalPositiveFiniteNumber(
+      value.dawnDurationHours,
+      `${label}.dawnDurationHours`,
+      defaults.dawnDurationHours
+    ),
+    duskDurationHours: readOptionalPositiveFiniteNumber(
+      value.duskDurationHours,
+      `${label}.duskDurationHours`,
+      defaults.duskDurationHours
+    ),
+    dawn: readProjectTimePhaseProfile(value.dawn, `${label}.dawn`, "dawn"),
+    dusk: readProjectTimePhaseProfile(value.dusk, `${label}.dusk`, "dusk"),
+    night: readProjectTimePhaseProfile(
+      value.night,
+      `${label}.night`,
+      "night"
     )
   };
 }
@@ -2003,6 +2089,11 @@ function readWorldSettings(value: unknown): WorldSettings {
   }
 
   return {
+    projectTimeLightingEnabled: readOptionalBoolean(
+      value.projectTimeLightingEnabled,
+      "world.projectTimeLightingEnabled",
+      true
+    ),
     background: resolvedBackground,
     ambientLight: {
       colorHex: expectHexColor(
