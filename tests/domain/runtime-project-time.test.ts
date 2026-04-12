@@ -52,6 +52,11 @@ describe("runtime project time", () => {
       dayCount: 0,
       dayLengthMinutes: 24
     });
+    const lateDawn = resolveRuntimeDayNightWorldState(world, time, {
+      timeOfDayHours: 7.9,
+      dayCount: 0,
+      dayLengthMinutes: 24
+    });
     const postSunset = resolveRuntimeDayNightWorldState(world, time, {
       timeOfDayHours: 20.5,
       dayCount: 0,
@@ -85,6 +90,10 @@ describe("runtime project time", () => {
     );
     expect(midnight.moonLight?.intensity ?? 0).toBeGreaterThan(0);
     expect(preSunrise.moonLight?.intensity ?? 0).toBeGreaterThan(0);
+    expect(dawn.moonLight?.intensity ?? 0).toBeGreaterThan(0);
+    expect(lateDawn.moonLight?.intensity ?? 0).toBeLessThan(
+      dawn.moonLight?.intensity ?? 0
+    );
     expect(postSunset.moonLight?.intensity ?? 0).toBeGreaterThan(0);
     expect(noon.moonLight).toBeNull();
     expect(preSunrise.nightBackgroundOverlay?.assetId).toBe("asset-night-sky");
