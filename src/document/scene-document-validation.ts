@@ -43,6 +43,7 @@ import {
 } from "./scene-document";
 import {
   HOURS_PER_DAY,
+  type ProjectTimeNightBackgroundSettings,
   type ProjectTimePhaseProfile,
   type ProjectTimeSettings
 } from "./project-time-settings";
