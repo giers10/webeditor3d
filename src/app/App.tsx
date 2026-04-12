@@ -1986,6 +1986,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const loadedModelAssetsRef = useRef<Record<string, LoadedModelAsset>>({});
   const loadedImageAssetsRef = useRef<Record<string, LoadedImageAsset>>({});
   const loadedAudioAssetsRef = useRef<Record<string, LoadedAudioAsset>>({});
+  const previousProjectAssetsRef = useRef<Record<string, ProjectAssetRecord>>(
+    editorState.document.assets
+  );
+  const deletedProjectAssetStorageRecordsRef = useRef<
+    Record<string, ProjectAssetStorageRecord>
+  >({});
   const autosaveControllerRef = useRef<EditorAutosaveController | null>(null);
   const lastAutosaveErrorRef = useRef<string | null>(null);
   const viewportQuadSplitRef = useRef(editorState.viewportQuadSplit);
