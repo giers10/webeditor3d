@@ -77,6 +77,8 @@ function cloneRuntimePlayerMovement(
       coyoteTimeMs: movement.jump.coyoteTimeMs,
       variableHeight: movement.jump.variableHeight,
       maxHoldMs: movement.jump.maxHoldMs,
+      moveWhileJumping: movement.jump.moveWhileJumping,
+      moveWhileFalling: movement.jump.moveWhileFalling,
       bunnyHop: movement.jump.bunnyHop,
       bunnyHopBoost: movement.jump.bunnyHopBoost
     },

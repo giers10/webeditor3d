@@ -239,6 +239,18 @@ function computePlanarSpeedFromDisplacement(
   return Math.hypot(displacement.x, displacement.z) / dt;
 }
 
+function clearPlanarMovementInput(
+  input: PlayerStartActionInputState
+): PlayerStartActionInputState {
+  return {
+    ...input,
+    moveForward: 0,
+    moveBackward: 0,
+    moveLeft: 0,
+    moveRight: 0
+  };
+}
+
 function isWaterLocomotionMode(
   locomotionMode: RuntimeLocomotionMode | null | undefined
 ): boolean {
@@ -480,6 +492,17 @@ export function stepPlayerLocomotion(
     coyoteTimeRemainingMs = 0;
   }
 
+  const airMovementAllowed =
+    currentlyGrounded ||
+    jumpTriggered ||
+    currentSwimmableWater ||
+    (options.verticalVelocity > VERTICAL_ASCENT_EPSILON
+      ? options.movement.jump.moveWhileJumping
+      : options.movement.jump.moveWhileFalling);
+  const planarInput = airMovementAllowed
+    ? options.input
+    : clearPlanarMovementInput(options.input);
+
   const requestedPlanarSpeed =
     activeShape.mode !== "none" && !currentSwimmableWater
       ? jumpTriggered
@@ -490,7 +513,7 @@ export function stepPlayerLocomotion(
       : groundedRequestedPlanarSpeed;
   const planarMotionFromInput = computePlanarMotion(
     options.movementYawRadians,
-    options.input,
+    planarInput,
     requestedPlanarSpeed,
     options.dt
   );

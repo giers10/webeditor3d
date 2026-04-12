@@ -10879,6 +10879,52 @@ export function App({ store, initialStatusMessage }: AppProps) {
                             />
                           </label>
                           <label className="form-field form-field--toggle">
+                            <span className="label">Air Move: Jump</span>
+                            <input
+                              data-testid="player-start-movement-air-move-jump-enabled"
+                              type="checkbox"
+                              checked={
+                                playerStartMovementTemplateDraft.jump.moveWhileJumping
+                              }
+                              onChange={(event) =>
+                                commitPlayerStartMovementTemplateDraft(
+                                  {
+                                    jump: {
+                                      moveWhileJumping:
+                                        event.currentTarget.checked
+                                    }
+                                  },
+                                  {
+                                    schedule: true
+                                  }
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field form-field--toggle">
+                            <span className="label">Air Move: Fall</span>
+                            <input
+                              data-testid="player-start-movement-air-move-fall-enabled"
+                              type="checkbox"
+                              checked={
+                                playerStartMovementTemplateDraft.jump.moveWhileFalling
+                              }
+                              onChange={(event) =>
+                                commitPlayerStartMovementTemplateDraft(
+                                  {
+                                    jump: {
+                                      moveWhileFalling:
+                                        event.currentTarget.checked
+                                    }
+                                  },
+                                  {
+                                    schedule: true
+                                  }
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field form-field--toggle">
                             <span className="label">Bunny Hopping</span>
                             <input
                               data-testid="player-start-movement-bunny-hop-enabled"

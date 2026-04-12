@@ -1359,6 +1359,16 @@ function readPlayerStartMovementTemplate(value: unknown, label: string) {
         `${label}.jump.variableHeight`,
         preset.jump.variableHeight
       ),
+      moveWhileJumping: readOptionalBoolean(
+        jump?.moveWhileJumping,
+        `${label}.jump.moveWhileJumping`,
+        preset.jump.moveWhileJumping
+      ),
+      moveWhileFalling: readOptionalBoolean(
+        jump?.moveWhileFalling,
+        `${label}.jump.moveWhileFalling`,
+        preset.jump.moveWhileFalling
+      ),
       maxHoldMs:
         jump?.maxHoldMs === undefined
           ? preset.jump.maxHoldMs

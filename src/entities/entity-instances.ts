@@ -147,6 +147,8 @@ export interface PlayerStartJumpSettings {
   coyoteTimeMs: number;
   variableHeight: boolean;
   maxHoldMs: number;
+  moveWhileJumping: boolean;
+  moveWhileFalling: boolean;
   bunnyHop: boolean;
   bunnyHopBoost: number;
 }
@@ -301,6 +303,8 @@ export const DEFAULT_PLAYER_START_JUMP_BUFFER_MS = 0;
 export const DEFAULT_PLAYER_START_COYOTE_TIME_MS = 0;
 export const DEFAULT_PLAYER_START_VARIABLE_JUMP_HEIGHT = false;
 export const DEFAULT_PLAYER_START_VARIABLE_JUMP_MAX_HOLD_MS = 160;
+export const DEFAULT_PLAYER_START_MOVE_WHILE_JUMPING = true;
+export const DEFAULT_PLAYER_START_MOVE_WHILE_FALLING = true;
 export const DEFAULT_PLAYER_START_BUNNY_HOP = false;
 export const DEFAULT_PLAYER_START_BUNNY_HOP_BOOST = 0.05;
 export const DEFAULT_PLAYER_START_SPRINT_SPEED_MULTIPLIER = 1.65;
@@ -317,6 +321,8 @@ export const DEFAULT_PLAYER_START_JUMP_SETTINGS: PlayerStartJumpSettings = {
   coyoteTimeMs: DEFAULT_PLAYER_START_COYOTE_TIME_MS,
   variableHeight: DEFAULT_PLAYER_START_VARIABLE_JUMP_HEIGHT,
   maxHoldMs: DEFAULT_PLAYER_START_VARIABLE_JUMP_MAX_HOLD_MS,
+  moveWhileJumping: DEFAULT_PLAYER_START_MOVE_WHILE_JUMPING,
+  moveWhileFalling: DEFAULT_PLAYER_START_MOVE_WHILE_FALLING,
   bunnyHop: DEFAULT_PLAYER_START_BUNNY_HOP,
   bunnyHopBoost: DEFAULT_PLAYER_START_BUNNY_HOP_BOOST
 };
@@ -335,6 +341,8 @@ export const RESPONSIVE_PLAYER_START_JUMP_SETTINGS: PlayerStartJumpSettings = {
   coyoteTimeMs: RESPONSIVE_PLAYER_START_COYOTE_TIME_MS,
   variableHeight: true,
   maxHoldMs: RESPONSIVE_PLAYER_START_VARIABLE_JUMP_MAX_HOLD_MS,
+  moveWhileJumping: DEFAULT_PLAYER_START_MOVE_WHILE_JUMPING,
+  moveWhileFalling: DEFAULT_PLAYER_START_MOVE_WHILE_FALLING,
   bunnyHop: DEFAULT_PLAYER_START_BUNNY_HOP,
   bunnyHopBoost: DEFAULT_PLAYER_START_BUNNY_HOP_BOOST
 };
@@ -513,6 +521,8 @@ function clonePlayerStartJumpSettings(
     coyoteTimeMs: settings.coyoteTimeMs,
     variableHeight: settings.variableHeight,
     maxHoldMs: settings.maxHoldMs,
+    moveWhileJumping: settings.moveWhileJumping,
+    moveWhileFalling: settings.moveWhileFalling,
     bunnyHop: settings.bunnyHop,
     bunnyHopBoost: settings.bunnyHopBoost
   };
@@ -751,6 +761,10 @@ export function createPlayerStartMovementTemplate(
     variableHeight:
       overrides.jump?.variableHeight ?? preset.jump.variableHeight,
     maxHoldMs: overrides.jump?.maxHoldMs ?? preset.jump.maxHoldMs,
+    moveWhileJumping:
+      overrides.jump?.moveWhileJumping ?? preset.jump.moveWhileJumping,
+    moveWhileFalling:
+      overrides.jump?.moveWhileFalling ?? preset.jump.moveWhileFalling,
     bunnyHop: overrides.jump?.bunnyHop ?? preset.jump.bunnyHop,
     bunnyHopBoost:
       overrides.jump?.bunnyHopBoost ?? preset.jump.bunnyHopBoost
@@ -798,6 +812,14 @@ export function createPlayerStartMovementTemplate(
   assertPositiveFiniteNumber(
     jump.maxHoldMs,
     "Player Start variable jump max hold milliseconds"
+  );
+  assertBoolean(
+    jump.moveWhileJumping,
+    "Player Start move while jumping setting"
+  );
+  assertBoolean(
+    jump.moveWhileFalling,
+    "Player Start move while falling setting"
   );
   assertBoolean(jump.bunnyHop, "Player Start bunny hop setting");
   assertNonNegativeFiniteNumber(
@@ -867,6 +889,10 @@ export function inferPlayerStartMovementTemplateKind(
         createPlayerStartMovementTemplate({ kind: presetKind }).jump.variableHeight &&
       candidate.jump.maxHoldMs ===
         createPlayerStartMovementTemplate({ kind: presetKind }).jump.maxHoldMs &&
+      candidate.jump.moveWhileJumping ===
+        createPlayerStartMovementTemplate({ kind: presetKind }).jump.moveWhileJumping &&
+      candidate.jump.moveWhileFalling ===
+        createPlayerStartMovementTemplate({ kind: presetKind }).jump.moveWhileFalling &&
       candidate.jump.bunnyHop ===
         createPlayerStartMovementTemplate({ kind: presetKind }).jump.bunnyHop &&
       candidate.jump.bunnyHopBoost ===
@@ -923,6 +949,8 @@ export function arePlayerStartMovementTemplatesEqual(
     left.jump.coyoteTimeMs === right.jump.coyoteTimeMs &&
     left.jump.variableHeight === right.jump.variableHeight &&
     left.jump.maxHoldMs === right.jump.maxHoldMs &&
+    left.jump.moveWhileJumping === right.jump.moveWhileJumping &&
+    left.jump.moveWhileFalling === right.jump.moveWhileFalling &&
     left.jump.bunnyHop === right.jump.bunnyHop &&
     left.jump.bunnyHopBoost === right.jump.bunnyHopBoost &&
     left.sprint.speedMultiplier === right.sprint.speedMultiplier &&

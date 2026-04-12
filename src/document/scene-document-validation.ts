@@ -1348,6 +1348,28 @@ function validatePlayerStartEntity(
     );
   }
 
+  if (!isBoolean(entity.movementTemplate?.jump?.moveWhileJumping)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-move-while-jumping",
+        "Player Start move while jumping setting must be a boolean.",
+        `${path}.movementTemplate.jump.moveWhileJumping`
+      )
+    );
+  }
+
+  if (!isBoolean(entity.movementTemplate?.jump?.moveWhileFalling)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-move-while-falling",
+        "Player Start move while falling setting must be a boolean.",
+        `${path}.movementTemplate.jump.moveWhileFalling`
+      )
+    );
+  }
+
   if (!isBoolean(entity.movementTemplate?.jump?.bunnyHop)) {
     diagnostics.push(
       createDiagnostic(
