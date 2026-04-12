@@ -11,6 +11,7 @@ import { createIdleRuntimeLocomotionState } from "../../src/runtime-three/player
 import { stepPlayerLocomotion } from "../../src/runtime-three/player-locomotion";
 import type { PlayerStartActionInputState } from "../../src/runtime-three/player-input-bindings";
 import type { RuntimePlayerMovement } from "../../src/runtime-three/runtime-scene-build";
+import { smoothGroundedStairHeight } from "../../src/runtime-three/stair-height-smoothing";
 
 const movementTemplate = createPlayerStartMovementTemplate();
 
@@ -636,6 +637,43 @@ describe("player-locomotion", () => {
     expect(step?.planarDisplacement.z).toBeCloseTo(0);
     expect(step?.locomotionState.requestedPlanarSpeed).toBeCloseTo(4.5);
     expect(step?.locomotionState.planarSpeed).toBeCloseTo(4.5);
+  });
+
+  it("smooths grounded stair height changes instead of snapping", () => {
+    const smoothedHeight = smoothGroundedStairHeight({
+      currentSmoothedFeetY: 0,
+      targetFeetY: 0.2,
+      grounded: true,
+      dt: 1 / 60,
+      maxStepHeight: 0.5
+    });
+
+    expect(smoothedHeight).toBeGreaterThan(0);
+    expect(smoothedHeight).toBeLessThan(0.2);
+  });
+
+  it("snaps grounded height smoothing when the player leaves the ground", () => {
+    const smoothedHeight = smoothGroundedStairHeight({
+      currentSmoothedFeetY: 0,
+      targetFeetY: 0.2,
+      grounded: false,
+      dt: 1 / 60,
+      maxStepHeight: 0.5
+    });
+
+    expect(smoothedHeight).toBeCloseTo(0.2);
+  });
+
+  it("snaps grounded height smoothing for ledge-sized vertical jumps", () => {
+    const smoothedHeight = smoothGroundedStairHeight({
+      currentSmoothedFeetY: 0,
+      targetFeetY: 1,
+      grounded: true,
+      dt: 1 / 60,
+      maxStepHeight: 0.35
+    });
+
+    expect(smoothedHeight).toBeCloseTo(1);
   });
 
   it("sinks toward the water surface while keeping the head above water", () => {

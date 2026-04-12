@@ -626,6 +626,103 @@ describe("RapierCollisionWorld", () => {
     }
   });
 
+  it("autosteps up authored stairs when the top surface is within the max step height", async () => {
+    const floorBrush = createBoxBrush({
+      id: "brush-floor-stair-climb",
+      center: {
+        x: 0,
+        y: -0.5,
+        z: 0
+      },
+      size: {
+        x: 8,
+        y: 1,
+        z: 10
+      }
+    });
+    const stepOne = createBoxBrush({
+      id: "brush-stair-step-one",
+      center: {
+        x: 0,
+        y: 0.1,
+        z: 0.75
+      },
+      size: {
+        x: 2,
+        y: 0.2,
+        z: 0.5
+      }
+    });
+    const stepTwo = createBoxBrush({
+      id: "brush-stair-step-two",
+      center: {
+        x: 0,
+        y: 0.3,
+        z: 1.25
+      },
+      size: {
+        x: 2,
+        y: 0.6,
+        z: 0.5
+      }
+    });
+    const stepThree = createBoxBrush({
+      id: "brush-stair-step-three",
+      center: {
+        x: 0,
+        y: 0.5,
+        z: 1.75
+      },
+      size: {
+        x: 2,
+        y: 1,
+        z: 0.5
+      }
+    });
+    const runtimeScene = buildRuntimeSceneFromDocument({
+      ...createEmptySceneDocument({ name: "Stair Climb Scene" }),
+      brushes: {
+        [floorBrush.id]: floorBrush,
+        [stepOne.id]: stepOne,
+        [stepTwo.id]: stepTwo,
+        [stepThree.id]: stepThree
+      }
+    });
+    const collisionWorld = await RapierCollisionWorld.create(
+      runtimeScene.colliders,
+      runtimeScene.playerCollider,
+      {
+        maxStepHeight: 0.25
+      }
+    );
+
+    try {
+      let feetPosition = {
+        x: 0,
+        y: 0,
+        z: -0.4
+      };
+
+      for (let index = 0; index < 10; index += 1) {
+        feetPosition = collisionWorld.resolveFirstPersonMotion(
+          feetPosition,
+          {
+            x: 0,
+            y: 0,
+            z: 0.25
+          },
+          runtimeScene.playerCollider
+        ).feetPosition;
+      }
+
+      expect(feetPosition.z).toBeGreaterThan(1.6);
+      expect(feetPosition.y).toBeGreaterThan(0.45);
+      expect(feetPosition.y).toBeLessThan(0.62);
+    } finally {
+      collisionWorld.dispose();
+    }
+  });
+
   it("supports authored Player Start collision mode none without world clipping", async () => {
     const wallBrush = createBoxBrush({
       id: "brush-wall-no-collision",

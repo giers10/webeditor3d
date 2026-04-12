@@ -16,6 +16,7 @@ import {
   stepPlayerLocomotion
 } from "./player-locomotion";
 import { createPlayerControllerTelemetry } from "./player-controller-telemetry";
+import { smoothGroundedStairHeight } from "./stair-height-smoothing";
 import type { PlayerControllerTelemetry } from "./navigation-controller";
 import type {
   NavigationControllerDeactivateOptions,
@@ -130,6 +131,7 @@ export class FirstPersonNavigationController implements NavigationController {
   private previousTelemetry: PlayerControllerTelemetry | null = null;
   private latestJumpStarted = false;
   private latestHeadBump = false;
+  private smoothedFeetY = 0;
   private previousPlanarDisplacement = {
     x: 0,
     y: 0,
@@ -159,6 +161,7 @@ export class FirstPersonNavigationController implements NavigationController {
       this.verticalVelocity = 0;
       this.grounded = false;
       this.jumpPressed = false;
+      this.smoothedFeetY = this.feetPosition.y;
       this.locomotionState = createIdleRuntimeLocomotionState(
         runtimeScene.playerCollider.mode === "none" ? "flying" : "airborne"
       );
@@ -259,6 +262,7 @@ export class FirstPersonNavigationController implements NavigationController {
     this.verticalVelocity = 0;
     this.grounded = false;
     this.jumpPressed = false;
+    this.smoothedFeetY = 0;
     this.standingPlayerShape = cloneFirstPersonPlayerShape(
       FIRST_PERSON_PLAYER_SHAPE
     );
@@ -367,6 +371,13 @@ export class FirstPersonNavigationController implements NavigationController {
     this.grounded = locomotionStep.locomotionState.grounded;
     this.inWaterVolume = locomotionStep.inWaterVolume;
     this.inFogVolume = locomotionStep.inFogVolume;
+    this.smoothedFeetY = smoothGroundedStairHeight({
+      currentSmoothedFeetY: this.smoothedFeetY,
+      targetFeetY: this.feetPosition.y,
+      grounded: this.grounded,
+      dt,
+      maxStepHeight: playerMovement.maxStepHeight
+    });
 
     this.updateCameraTransform();
     this.publishTelemetry();
@@ -381,6 +392,7 @@ export class FirstPersonNavigationController implements NavigationController {
     this.verticalVelocity = 0;
     this.grounded = false;
     this.jumpPressed = false;
+    this.smoothedFeetY = this.feetPosition.y;
     this.activePlayerShape = cloneFirstPersonPlayerShape(
       this.context?.getRuntimeScene().playerCollider ?? FIRST_PERSON_PLAYER_SHAPE
     );
@@ -412,8 +424,13 @@ export class FirstPersonNavigationController implements NavigationController {
       return;
     }
 
+    const renderedFeetPosition = {
+      x: this.feetPosition.x,
+      y: this.smoothedFeetY,
+      z: this.feetPosition.z
+    };
     const eyePosition = toEyePosition(
-      this.feetPosition,
+      renderedFeetPosition,
       getFirstPersonPlayerEyeHeight(this.activePlayerShape)
     );
     this.cameraRotation.x = this.pitchRadians;
@@ -436,8 +453,13 @@ export class FirstPersonNavigationController implements NavigationController {
       return;
     }
 
+    const renderedFeetPosition = {
+      x: this.feetPosition.x,
+      y: this.smoothedFeetY,
+      z: this.feetPosition.z
+    };
     const eyePosition = toEyePosition(
-      this.feetPosition,
+      renderedFeetPosition,
       getFirstPersonPlayerEyeHeight(this.activePlayerShape)
     );
     const cameraVolumeState =

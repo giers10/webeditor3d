@@ -21,6 +21,8 @@ import type { RuntimeBrushTriMeshCollider, RuntimeSceneCollider } from "./runtim
 const CHARACTER_CONTROLLER_OFFSET = 0.01;
 const CHARACTER_CONTROLLER_SNAP_TO_GROUND_DISTANCE = 0.2;
 const AUTOSTEP_MIN_WIDTH_FACTOR = 0.4285714286;
+const AUTOSTEP_SURFACE_PROBE_DISTANCE = 0.08;
+const AUTOSTEP_PLANAR_PROGRESS_EPSILON = 0.02;
 const COLLISION_EPSILON = 1e-5;
 const CAMERA_COLLISION_EPSILON = 1e-3;
 const MAX_WALKABLE_SLOPE_RADIANS = Math.PI * 0.25;
@@ -321,6 +323,10 @@ function toVec3(vector: RAPIER.Vector): Vec3 {
   };
 }
 
+function computePlanarDistance(vector: Vec3): number {
+  return Math.hypot(vector.x, vector.z);
+}
+
 export async function initializeRapierCollisionWorld(): Promise<typeof RAPIER> {
   rapierInitPromise ??= RAPIER.init().then(() => RAPIER);
   return rapierInitPromise;
@@ -555,7 +561,20 @@ export class RapierCollisionWorld {
       resolved.correctedMovement.y > COLLISION_EPSILON &&
       (resolved.collidedAxes.x || resolved.collidedAxes.z)
     ) {
-      resolved = computeResolvedMovement(motion, false);
+      const withoutAutostep = computeResolvedMovement(motion, false);
+      const landedOnStepSurface = this.probePlayerGround(
+        resolved.nextFeetPosition,
+        shape,
+        AUTOSTEP_SURFACE_PROBE_DISTANCE
+      ).grounded;
+      const improvedPlanarDistance =
+        computePlanarDistance(resolved.correctedMovement) >
+        computePlanarDistance(withoutAutostep.correctedMovement) +
+          AUTOSTEP_PLANAR_PROGRESS_EPSILON;
+
+      if (!landedOnStepSurface || !improvedPlanarDistance) {
+        resolved = withoutAutostep;
+      }
     }
 
     if (

@@ -16,6 +16,7 @@ import {
   stepPlayerLocomotion
 } from "./player-locomotion";
 import { createPlayerControllerTelemetry } from "./player-controller-telemetry";
+import { smoothGroundedStairHeight } from "./stair-height-smoothing";
 import type { PlayerControllerTelemetry } from "./navigation-controller";
 import type {
   NavigationController,
@@ -127,6 +128,7 @@ export class ThirdPersonNavigationController implements NavigationController {
   private previousTelemetry: PlayerControllerTelemetry | null = null;
   private latestJumpStarted = false;
   private latestHeadBump = false;
+  private smoothedFeetY = 0;
   private previousPlanarDisplacement = {
     x: 0,
     y: 0,
@@ -158,6 +160,7 @@ export class ThirdPersonNavigationController implements NavigationController {
       this.verticalVelocity = 0;
       this.grounded = false;
       this.jumpPressed = false;
+      this.smoothedFeetY = this.feetPosition.y;
       this.locomotionState = createIdleRuntimeLocomotionState(
         runtimeScene.playerCollider.mode === "none" ? "flying" : "airborne"
       );
@@ -230,6 +233,7 @@ export class ThirdPersonNavigationController implements NavigationController {
     this.verticalVelocity = 0;
     this.grounded = false;
     this.jumpPressed = false;
+    this.smoothedFeetY = 0;
     this.standingPlayerShape = cloneFirstPersonPlayerShape(
       FIRST_PERSON_PLAYER_SHAPE
     );
@@ -339,6 +343,13 @@ export class ThirdPersonNavigationController implements NavigationController {
     this.grounded = locomotionStep.locomotionState.grounded;
     this.inWaterVolume = locomotionStep.inWaterVolume;
     this.inFogVolume = locomotionStep.inFogVolume;
+    this.smoothedFeetY = smoothGroundedStairHeight({
+      currentSmoothedFeetY: this.smoothedFeetY,
+      targetFeetY: this.feetPosition.y,
+      grounded: this.grounded,
+      dt,
+      maxStepHeight: playerMovement.maxStepHeight
+    });
 
     if (
       Math.hypot(
@@ -366,6 +377,7 @@ export class ThirdPersonNavigationController implements NavigationController {
     this.verticalVelocity = 0;
     this.grounded = false;
     this.jumpPressed = false;
+    this.smoothedFeetY = this.feetPosition.y;
     this.activePlayerShape = cloneFirstPersonPlayerShape(
       this.context?.getRuntimeScene().playerCollider ?? FIRST_PERSON_PLAYER_SHAPE
     );
@@ -400,7 +412,7 @@ export class ThirdPersonNavigationController implements NavigationController {
     const eyeHeight = getFirstPersonPlayerEyeHeight(this.activePlayerShape);
     const pivot = {
       x: this.feetPosition.x,
-      y: this.feetPosition.y + eyeHeight * CAMERA_PIVOT_EYE_HEIGHT_FACTOR,
+      y: this.smoothedFeetY + eyeHeight * CAMERA_PIVOT_EYE_HEIGHT_FACTOR,
       z: this.feetPosition.z
     };
     const horizontalDistance =
