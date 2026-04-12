@@ -709,6 +709,37 @@ function readAdvancedRenderingSettings(
   };
 }
 
+function readProjectTimeSettings(
+  value: unknown,
+  label: string,
+  options: { allowMissing: boolean }
+): ProjectTimeSettings {
+  if (value === undefined && options.allowMissing) {
+    return createDefaultProjectTimeSettings();
+  }
+
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  const defaults = createDefaultProjectTimeSettings();
+
+  return {
+    startTimeOfDayHours: normalizeTimeOfDayHours(
+      readOptionalFiniteNumber(
+        value.startTimeOfDayHours,
+        `${label}.startTimeOfDayHours`,
+        defaults.startTimeOfDayHours
+      )
+    ),
+    dayLengthMinutes: readOptionalPositiveFiniteNumber(
+      value.dayLengthMinutes,
+      `${label}.dayLengthMinutes`,
+      defaults.dayLengthMinutes
+    )
+  };
+}
+
 function readBoxBrushVolumeSettings(
   value: unknown,
   label: string
