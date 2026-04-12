@@ -6,6 +6,8 @@ export const DEFAULT_PROJECT_SUNRISE_TIME_OF_DAY_HOURS = 6.5 as const;
 export const DEFAULT_PROJECT_SUNSET_TIME_OF_DAY_HOURS = 18.5 as const;
 export const DEFAULT_PROJECT_DAWN_DURATION_HOURS = 1.5 as const;
 export const DEFAULT_PROJECT_DUSK_DURATION_HOURS = 1.5 as const;
+export const DEFAULT_PROJECT_NIGHT_BACKGROUND_ENVIRONMENT_INTENSITY =
+  0.35 as const;
 
 export type ProjectTimePhase = "dawn" | "dusk" | "night";
 
@@ -16,6 +18,11 @@ export interface ProjectTimePhaseProfile {
   ambientIntensityFactor: number;
   lightColorHex: string;
   lightIntensityFactor: number;
+}
+
+export interface ProjectTimeNightBackgroundSettings {
+  assetId: string | null;
+  environmentIntensity: number;
 }
 
 export interface ProjectTimeSettings {
@@ -29,6 +36,7 @@ export interface ProjectTimeSettings {
   dawn: ProjectTimePhaseProfile;
   dusk: ProjectTimePhaseProfile;
   night: ProjectTimePhaseProfile;
+  nightBackground: ProjectTimeNightBackgroundSettings;
 }
 
 export function normalizeProjectStartDayNumber(dayNumber: number): number {
@@ -87,6 +95,13 @@ export function createDefaultProjectTimePhaseProfile(
   }
 }
 
+export function createDefaultProjectTimeNightBackgroundSettings(): ProjectTimeNightBackgroundSettings {
+  return {
+    assetId: null,
+    environmentIntensity: DEFAULT_PROJECT_NIGHT_BACKGROUND_ENVIRONMENT_INTENSITY
+  };
+}
+
 export function cloneProjectTimePhaseProfile(
   profile: ProjectTimePhaseProfile
 ): ProjectTimePhaseProfile {
@@ -97,6 +112,15 @@ export function cloneProjectTimePhaseProfile(
     ambientIntensityFactor: profile.ambientIntensityFactor,
     lightColorHex: profile.lightColorHex,
     lightIntensityFactor: profile.lightIntensityFactor
+  };
+}
+
+export function cloneProjectTimeNightBackgroundSettings(
+  settings: ProjectTimeNightBackgroundSettings
+): ProjectTimeNightBackgroundSettings {
+  return {
+    assetId: settings.assetId,
+    environmentIntensity: settings.environmentIntensity
   };
 }
 
@@ -114,6 +138,16 @@ export function areProjectTimePhaseProfilesEqual(
   );
 }
 
+export function areProjectTimeNightBackgroundSettingsEqual(
+  left: ProjectTimeNightBackgroundSettings,
+  right: ProjectTimeNightBackgroundSettings
+): boolean {
+  return (
+    left.assetId === right.assetId &&
+    left.environmentIntensity === right.environmentIntensity
+  );
+}
+
 export function createDefaultProjectTimeSettings(): ProjectTimeSettings {
   return {
     startDayNumber: DEFAULT_PROJECT_START_DAY_NUMBER,
@@ -125,7 +159,8 @@ export function createDefaultProjectTimeSettings(): ProjectTimeSettings {
     duskDurationHours: DEFAULT_PROJECT_DUSK_DURATION_HOURS,
     dawn: createDefaultProjectTimePhaseProfile("dawn"),
     dusk: createDefaultProjectTimePhaseProfile("dusk"),
-    night: createDefaultProjectTimePhaseProfile("night")
+    night: createDefaultProjectTimePhaseProfile("night"),
+    nightBackground: createDefaultProjectTimeNightBackgroundSettings()
   };
 }
 
@@ -142,7 +177,10 @@ export function cloneProjectTimeSettings(
     duskDurationHours: settings.duskDurationHours,
     dawn: cloneProjectTimePhaseProfile(settings.dawn),
     dusk: cloneProjectTimePhaseProfile(settings.dusk),
-    night: cloneProjectTimePhaseProfile(settings.night)
+    night: cloneProjectTimePhaseProfile(settings.night),
+    nightBackground: cloneProjectTimeNightBackgroundSettings(
+      settings.nightBackground
+    )
   };
 }
 
@@ -160,6 +198,10 @@ export function areProjectTimeSettingsEqual(
     left.duskDurationHours === right.duskDurationHours &&
     areProjectTimePhaseProfilesEqual(left.dawn, right.dawn) &&
     areProjectTimePhaseProfilesEqual(left.dusk, right.dusk) &&
-    areProjectTimePhaseProfilesEqual(left.night, right.night)
+    areProjectTimePhaseProfilesEqual(left.night, right.night) &&
+    areProjectTimeNightBackgroundSettingsEqual(
+      left.nightBackground,
+      right.nightBackground
+    )
   );
 }
