@@ -194,7 +194,7 @@ export class RuntimeInteractionSystem {
     let bestHitDistance = Number.POSITIVE_INFINITY;
 
     for (const interactable of runtimeScene.entities.interactables) {
-      if (!interactable.enabled || !hasTriggerLinks(runtimeScene, interactable.entityId, "click")) {
+      if (!interactable.interactionEnabled || !hasTriggerLinks(runtimeScene, interactable.entityId, "click")) {
         continue;
       }
 
@@ -231,7 +231,7 @@ export class RuntimeInteractionSystem {
     }
 
     for (const sceneExit of runtimeScene.entities.sceneExits) {
-      if (!sceneExit.enabled) {
+      if (!sceneExit.interactionEnabled) {
         continue;
       }
 

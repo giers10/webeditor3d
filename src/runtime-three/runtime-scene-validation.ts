@@ -8,7 +8,7 @@ import {
   formatSceneDiagnosticSummary,
   type SceneDiagnostic
 } from "../document/scene-document-validation";
-import { getPrimaryPlayerStartEntity } from "../entities/entity-instances";
+import { getPrimaryEnabledPlayerStartEntity } from "../entities/entity-instances";
 import { validateBoxBrushGeometry } from "../geometry/box-brush-mesh";
 import { buildGeneratedModelCollider, ModelColliderGenerationError } from "../geometry/model-instance-collider-generation";
 
@@ -35,7 +35,7 @@ export function validateRuntimeSceneBuild(
 ): RuntimeSceneBuildValidationResult {
   const diagnostics: SceneDiagnostic[] = [];
 
-  if (options.navigationMode === "firstPerson" && getPrimaryPlayerStartEntity(document.entities) === null) {
+  if (options.navigationMode === "firstPerson" && getPrimaryEnabledPlayerStartEntity(document.entities) === null) {
     diagnostics.push(
       createDiagnostic(
         "error",
@@ -48,10 +48,18 @@ export function validateRuntimeSceneBuild(
   }
 
   for (const brush of Object.values(document.brushes)) {
+    if (!brush.enabled) {
+      continue;
+    }
+
     validateBrushGeometry(brush, `brushes.${brush.id}`, diagnostics);
   }
 
   for (const modelInstance of getModelInstances(document.modelInstances)) {
+    if (!modelInstance.enabled) {
+      continue;
+    }
+
     const path = `modelInstances.${modelInstance.id}.collision.mode`;
     const asset = document.assets[modelInstance.assetId];
 
