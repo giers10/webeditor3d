@@ -1921,6 +1921,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
     setProjectTimeNightLightIntensityFactorDraft
   ] = useState(String(editorState.projectDocument.time.night.lightIntensityFactor));
   const [
+    projectTimeNightBackgroundEnvironmentIntensityDraft,
+    setProjectTimeNightBackgroundEnvironmentIntensityDraft
+  ] = useState(
+    String(editorState.projectDocument.time.nightBackground.environmentIntensity)
+  );
+  const [
     backgroundEnvironmentIntensityDraft,
     setBackgroundEnvironmentIntensityDraft
   ] = useState(
