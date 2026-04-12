@@ -153,6 +153,7 @@ export class RuntimeHost {
   private readonly domElement: HTMLCanvasElement;
   private readonly ambientLight = new AmbientLight();
   private readonly sunLight = new DirectionalLight();
+  private readonly moonLight = new DirectionalLight();
   private readonly localLightGroup = new Group();
   private readonly brushGroup = new Group();
   private readonly modelGroup = new Group();
@@ -241,6 +242,7 @@ export class RuntimeHost {
 
     this.scene.add(this.ambientLight);
     this.scene.add(this.sunLight);
+    this.scene.add(this.moonLight);
     this.scene.add(this.localLightGroup);
     this.scene.add(this.brushGroup);
     this.scene.add(this.modelGroup);
@@ -258,6 +260,9 @@ export class RuntimeHost {
     } else {
       this.domElement.className = "runner-canvas__surface";
     }
+
+    this.moonLight.intensity = 0;
+    this.moonLight.visible = false;
 
     this.controllerContext = {
       camera: this.camera,
@@ -714,12 +719,13 @@ export class RuntimeHost {
   }
 
   private applyDayNightLighting() {
-    if (this.currentWorld === null) {
+    if (this.currentWorld === null || this.runtimeScene === null) {
       return;
     }
 
     const resolvedWorld = resolveRuntimeDayNightWorldState(
       this.currentWorld,
+      this.runtimeScene.time,
       this.currentClockState
     );
 
@@ -735,6 +741,24 @@ export class RuntimeHost {
       )
       .normalize()
       .multiplyScalar(18);
+
+    if (resolvedWorld.moonLight === null) {
+      this.moonLight.visible = false;
+      this.moonLight.intensity = 0;
+      return;
+    }
+
+    this.moonLight.visible = resolvedWorld.moonLight.intensity > 1e-4;
+    this.moonLight.color.set(resolvedWorld.moonLight.colorHex);
+    this.moonLight.intensity = resolvedWorld.moonLight.intensity;
+    this.moonLight.position
+      .set(
+        resolvedWorld.moonLight.direction.x,
+        resolvedWorld.moonLight.direction.y,
+        resolvedWorld.moonLight.direction.z
+      )
+      .normalize()
+      .multiplyScalar(16);
   }
 
   private async buildCollisionWorld(
@@ -817,6 +841,8 @@ export class RuntimeHost {
       advancedRendering.enabled && advancedRendering.shadows.enabled;
 
     applyAdvancedRenderingLightShadowFlags(this.sunLight, advancedRendering);
+    this.moonLight.castShadow = false;
+    this.moonLight.shadow.autoUpdate = false;
 
     for (const renderGroup of this.localLightObjects.values()) {
       applyAdvancedRenderingLightShadowFlags(renderGroup, advancedRendering);

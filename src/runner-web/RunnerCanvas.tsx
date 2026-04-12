@@ -73,6 +73,7 @@ export function RunnerCanvas({
   const runnerReady = overlayStatus === "ready";
   const resolvedWorld = resolveRuntimeDayNightWorldState(
     runtimeScene.world,
+    runtimeScene.time,
     runtimeClock
   );
 
