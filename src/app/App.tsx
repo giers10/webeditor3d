@@ -221,7 +221,7 @@ import {
   createTriggerVolumeEntity,
   getEntityInstances,
   getEntityKindLabel,
-  getPrimaryPlayerStartEntity,
+  getPrimaryEnabledPlayerStartEntity,
   normalizeEntityName,
   normalizeYawDegrees,
   normalizeInteractablePrompt,
@@ -899,6 +899,14 @@ function formatAudioAssetSummary(asset: AudioAssetRecord): string {
   return details.join(" | ");
 }
 
+function formatProjectAssetSummary(asset: ProjectAssetRecord): string {
+  return asset.kind === "model"
+    ? formatModelAssetSummary(asset)
+    : asset.kind === "image"
+      ? formatImageAssetSummary(asset)
+      : formatAudioAssetSummary(asset);
+}
+
 function formatAssetHoverStatus(asset: ProjectAssetRecord): string {
   const details = [
     `${getProjectAssetKindLabel(asset.kind)} asset`,
@@ -924,6 +932,23 @@ function formatAssetHoverStatus(asset: ProjectAssetRecord): string {
 
 function getBrushLabel(brush: BoxBrush, index: number): string {
   return brush.name ?? `Whitebox Box ${index + 1}`;
+}
+
+function formatAuthoredObjectStateSummary(state: {
+  visible: boolean;
+  enabled: boolean;
+}): string | null {
+  const parts: string[] = [];
+
+  if (!state.enabled) {
+    parts.push("Disabled");
+  }
+
+  if (!state.visible) {
+    parts.push("Hidden");
+  }
+
+  return parts.length === 0 ? null : parts.join(" | ");
 }
 
 function getBrushLabelById(brushId: string, brushes: BoxBrush[]): string {
@@ -1490,7 +1515,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     editorState.document.entities,
     editorState.document.assets
   );
-  const primaryPlayerStart = getPrimaryPlayerStartEntity(
+  const primaryPlayerStart = getPrimaryEnabledPlayerStartEntity(
     editorState.document.entities
   );
   const materialList = sortDocumentMaterials(editorState.document.materials);
@@ -1550,6 +1575,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const selectedSceneExit =
     selectedEntity?.kind === "sceneExit" ? selectedEntity : null;
   const projectAssetList = Object.values(editorState.document.assets);
+  const projectAssetDisplayList = [...projectAssetList].sort(
+    (left, right) =>
+      left.kind.localeCompare(right.kind) ||
+      left.sourceName.localeCompare(right.sourceName)
+  );
   const modelAssetList = projectAssetList.filter(isModelAsset);
   const imageAssetList = projectAssetList.filter(isImageAsset);
   const audioAssetList = projectAssetList.filter(isAudioAsset);
@@ -5146,6 +5176,131 @@ export function App({ store, initialStatusMessage }: AppProps) {
       `Delete ${label}?\n\nThis can be undone with Undo.`
     );
 
+  const confirmDeleteProjectAsset = (label: string) =>
+    globalThis.window.confirm(
+      `Delete ${label} and remove its project-wide references?\n\nThis also deletes the stored binary asset data, and it can be undone with Undo.`
+    );
+
+  const handleSetBrushVisible = (brush: BoxBrush, visible: boolean) => {
+    try {
+      store.executeCommand(
+        createSetBoxBrushAuthoredStateCommand({
+          brushId: brush.id,
+          visible
+        })
+      );
+      setStatusMessage(
+        visible
+          ? `Shown ${getBrushLabelById(brush.id, brushList)} in the editor and runner.`
+          : `Hidden ${getBrushLabelById(brush.id, brushList)} in the editor and runner.`
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const handleSetBrushEnabled = (brush: BoxBrush, enabled: boolean) => {
+    try {
+      store.executeCommand(
+        createSetBoxBrushAuthoredStateCommand({
+          brushId: brush.id,
+          enabled
+        })
+      );
+      setStatusMessage(
+        enabled
+          ? `Enabled ${getBrushLabelById(brush.id, brushList)}.`
+          : `Disabled ${getBrushLabelById(brush.id, brushList)}.`
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const handleSetModelInstanceVisible = (
+    modelInstance: ModelInstance,
+    visible: boolean
+  ) => {
+    try {
+      store.executeCommand(
+        createSetModelInstanceAuthoredStateCommand({
+          modelInstanceId: modelInstance.id,
+          visible
+        })
+      );
+      setStatusMessage(
+        visible
+          ? `Shown ${getModelInstanceDisplayLabelById(modelInstance.id, editorState.document.modelInstances, editorState.document.assets)} in the editor and runner.`
+          : `Hidden ${getModelInstanceDisplayLabelById(modelInstance.id, editorState.document.modelInstances, editorState.document.assets)} in the editor and runner.`
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const handleSetModelInstanceEnabled = (
+    modelInstance: ModelInstance,
+    enabled: boolean
+  ) => {
+    try {
+      store.executeCommand(
+        createSetModelInstanceAuthoredStateCommand({
+          modelInstanceId: modelInstance.id,
+          enabled
+        })
+      );
+      setStatusMessage(
+        enabled
+          ? `Enabled ${getModelInstanceDisplayLabelById(modelInstance.id, editorState.document.modelInstances, editorState.document.assets)}.`
+          : `Disabled ${getModelInstanceDisplayLabelById(modelInstance.id, editorState.document.modelInstances, editorState.document.assets)}.`
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const handleSetEntityVisible = (
+    entity: EntityInstance,
+    visible: boolean
+  ) => {
+    try {
+      store.executeCommand(
+        createSetEntityAuthoredStateCommand({
+          entityId: entity.id,
+          visible
+        })
+      );
+      setStatusMessage(
+        visible
+          ? `Shown ${getEntityDisplayLabelById(entity.id, editorState.document.entities, editorState.document.assets)} in the editor and runner.`
+          : `Hidden ${getEntityDisplayLabelById(entity.id, editorState.document.entities, editorState.document.assets)} in the editor and runner.`
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const handleSetEntityEnabled = (
+    entity: EntityInstance,
+    enabled: boolean
+  ) => {
+    try {
+      store.executeCommand(
+        createSetEntityAuthoredStateCommand({
+          entityId: entity.id,
+          enabled
+        })
+      );
+      setStatusMessage(
+        enabled
+          ? `Enabled ${getEntityDisplayLabelById(entity.id, editorState.document.entities, editorState.document.assets)}.`
+          : `Disabled ${getEntityDisplayLabelById(entity.id, editorState.document.entities, editorState.document.assets)}.`
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
   const handleDeleteBrush = (brushId: string) => {
     const label = getBrushLabelById(brushId, brushList);
 
@@ -5198,6 +5353,21 @@ export function App({ store, initialStatusMessage }: AppProps) {
     try {
       store.executeCommand(createDeleteModelInstanceCommand(modelInstanceId));
       setStatusMessage(`Deleted ${label}.`);
+      return true;
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+      return false;
+    }
+  };
+
+  const handleDeleteProjectAsset = (asset: ProjectAssetRecord) => {
+    if (!confirmDeleteProjectAsset(asset.sourceName)) {
+      return false;
+    }
+
+    try {
+      store.executeCommand(createDeleteProjectAssetCommand(asset.id));
+      setStatusMessage(`Deleted ${asset.sourceName} and cleaned up project references.`);
       return true;
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
@@ -7963,13 +8133,29 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   {brushList.map((brush, brushIndex) => {
                     const label = getBrushLabel(brush, brushIndex);
                     const isSelected = selectedBrush?.id === brush.id;
+                    const authoredStateSummary = formatAuthoredObjectStateSummary(
+                      brush
+                    );
 
                     return (
                       <div
                         key={brush.id}
-                        className={`outliner-item outliner-item--compact ${isBrushSelected(editorState.selection, brush.id) ? "outliner-item--selected" : ""}`}
+                        className={`outliner-item outliner-item--compact ${isBrushSelected(editorState.selection, brush.id) ? "outliner-item--selected" : ""} ${brush.enabled ? "" : "outliner-item--disabled"}`}
                       >
                         <div className="outliner-item__row">
+                          <input
+                            className="outliner-item__toggle"
+                            data-testid={`outliner-enable-brush-${brush.id}`}
+                            type="checkbox"
+                            checked={brush.enabled}
+                            aria-label={`${brush.enabled ? "Disable" : "Enable"} ${label}`}
+                            onChange={(event) =>
+                              handleSetBrushEnabled(
+                                brush,
+                                event.currentTarget.checked
+                              )
+                            }
+                          />
                           {isSelected ? (
                             <input
                               className="outliner-item__rename"
@@ -8021,6 +8207,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
                             x
                           </button>
                         </div>
+                        {authoredStateSummary === null ? null : (
+                          <div className="outliner-item__meta">
+                            {authoredStateSummary}
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -8043,13 +8234,29 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     const isSelected =
                       editorState.selection.kind === "modelInstances" &&
                       editorState.selection.ids.includes(modelInstance.id);
+                    const authoredStateSummary = formatAuthoredObjectStateSummary(
+                      modelInstance
+                    );
 
                     return (
                       <div
                         key={modelInstance.id}
-                        className={`outliner-item ${isSelected ? "outliner-item--selected" : ""} outliner-item--compact`}
+                        className={`outliner-item ${isSelected ? "outliner-item--selected" : ""} outliner-item--compact ${modelInstance.enabled ? "" : "outliner-item--disabled"}`}
                       >
                         <div className="outliner-item__row">
+                          <input
+                            className="outliner-item__toggle"
+                            data-testid={`outliner-enable-model-instance-${modelInstance.id}`}
+                            type="checkbox"
+                            checked={modelInstance.enabled}
+                            aria-label={`${modelInstance.enabled ? "Disable" : "Enable"} ${label}`}
+                            onChange={(event) =>
+                              handleSetModelInstanceEnabled(
+                                modelInstance,
+                                event.currentTarget.checked
+                              )
+                            }
+                          />
                           {isSelected ? (
                             <input
                               className="outliner-item__rename"
@@ -8111,6 +8318,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
                             x
                           </button>
                         </div>
+                        {authoredStateSummary === null ? null : (
+                          <div className="outliner-item__meta">
+                            {authoredStateSummary}
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -8131,13 +8343,29 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     const isSelected =
                       editorState.selection.kind === "entities" &&
                       editorState.selection.ids.includes(entity.id);
+                    const authoredStateSummary = formatAuthoredObjectStateSummary(
+                      entity
+                    );
 
                     return (
                       <div
                         key={entity.id}
-                        className={`outliner-item ${isSelected ? "outliner-item--selected" : ""} outliner-item--compact`}
+                        className={`outliner-item ${isSelected ? "outliner-item--selected" : ""} outliner-item--compact ${entity.enabled ? "" : "outliner-item--disabled"}`}
                       >
                         <div className="outliner-item__row">
+                          <input
+                            className="outliner-item__toggle"
+                            data-testid={`outliner-enable-entity-${entity.id}`}
+                            type="checkbox"
+                            checked={entity.enabled}
+                            aria-label={`${entity.enabled ? "Disable" : "Enable"} ${label}`}
+                            onChange={(event) =>
+                              handleSetEntityEnabled(
+                                entity,
+                                event.currentTarget.checked
+                              )
+                            }
+                          />
                           {isSelected ? (
                             <input
                               className="outliner-item__rename"
@@ -8191,9 +8419,59 @@ export function App({ store, initialStatusMessage }: AppProps) {
                             x
                           </button>
                         </div>
+                        {authoredStateSummary === null ? null : (
+                          <div className="outliner-item__meta">
+                            {authoredStateSummary}
+                          </div>
+                        )}
                       </div>
                     );
                   })}
+                </div>
+              )}
+            </div>
+
+            <div className="outliner-section">
+              <div className="label">Imported Assets</div>
+
+              {projectAssetDisplayList.length === 0 ? (
+                <div className="outliner-empty">
+                  No imported assets are stored in this project.
+                </div>
+              ) : (
+                <div
+                  className="outliner-list"
+                  data-testid="outliner-project-asset-list"
+                >
+                  {projectAssetDisplayList.map((asset) => (
+                    <div
+                      key={asset.id}
+                      className="outliner-item outliner-item--compact"
+                    >
+                      <div className="outliner-item__row">
+                        <div className="asset-item__content">
+                          <span className="outliner-item__title">
+                            {asset.sourceName}
+                          </span>
+                          <span className="outliner-item__meta">
+                            {getProjectAssetKindLabel(asset.kind)}
+                          </span>
+                        </div>
+                        <button
+                          className="outliner-item__delete"
+                          type="button"
+                          data-testid={`outliner-delete-project-asset-${asset.id}`}
+                          aria-label={`Delete ${asset.sourceName}`}
+                          onClick={() => handleDeleteProjectAsset(asset)}
+                        >
+                          x
+                        </button>
+                      </div>
+                      <div className="outliner-item__meta">
+                        {formatProjectAssetSummary(asset)}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
@@ -9517,6 +9795,43 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   </div>
 
                   <div className="form-section">
+                    <div className="label">Authored State</div>
+                    <label className="form-field form-field--toggle">
+                      <span className="label">Visible in editor and runner</span>
+                      <input
+                        data-testid="model-instance-visible"
+                        type="checkbox"
+                        checked={selectedModelInstance.visible}
+                        onChange={(event) =>
+                          handleSetModelInstanceVisible(
+                            selectedModelInstance,
+                            event.currentTarget.checked
+                          )
+                        }
+                      />
+                    </label>
+                    <label className="form-field form-field--toggle">
+                      <span className="label">Enabled in scene</span>
+                      <input
+                        data-testid="model-instance-enabled"
+                        type="checkbox"
+                        checked={selectedModelInstance.enabled}
+                        onChange={(event) =>
+                          handleSetModelInstanceEnabled(
+                            selectedModelInstance,
+                            event.currentTarget.checked
+                          )
+                        }
+                      />
+                    </label>
+                    <div className="material-summary">
+                      Hidden model instances stay authored and keep their runtime
+                      collision behavior. Disabled instances are removed from the
+                      editor viewport, picking, and runtime build.
+                    </div>
+                  </div>
+
+                  <div className="form-section">
                     <div className="label">Position</div>
                     <div className="vector-inputs">
                       <label className="form-field">
@@ -10000,6 +10315,43 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     <div className="label">Entity Kind</div>
                     <div className="value">
                       {getEntityKindLabel(selectedEntity.kind)}
+                    </div>
+                  </div>
+
+                  <div className="form-section">
+                    <div className="label">Authored State</div>
+                    <label className="form-field form-field--toggle">
+                      <span className="label">Visible in editor and runner</span>
+                      <input
+                        data-testid="entity-visible"
+                        type="checkbox"
+                        checked={selectedEntity.visible}
+                        onChange={(event) =>
+                          handleSetEntityVisible(
+                            selectedEntity,
+                            event.currentTarget.checked
+                          )
+                        }
+                      />
+                    </label>
+                    <label className="form-field form-field--toggle">
+                      <span className="label">Enabled in scene</span>
+                      <input
+                        data-testid="entity-enabled"
+                        type="checkbox"
+                        checked={selectedEntity.enabled}
+                        onChange={(event) =>
+                          handleSetEntityEnabled(
+                            selectedEntity,
+                            event.currentTarget.checked
+                          )
+                        }
+                      />
+                    </label>
+                    <div className="material-summary">
+                      Hidden entities stay active for authored runtime behavior.
+                      Disable them to remove them from the editor viewport,
+                      picking, and runtime build.
                     </div>
                   </div>
 
@@ -12087,7 +12439,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                             />
                           </label>
                           <label className="form-field">
-                            <span className="label">Enabled</span>
+                            <span className="label">Interaction Enabled</span>
                             <input
                               data-testid="interactable-enabled"
                               type="checkbox"
@@ -12097,7 +12449,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                                 setInteractableEnabledDraft(nextEnabled);
                                 scheduleDraftCommit(() =>
                                   applyInteractableChange({
-                                    enabled: nextEnabled
+                                    interactionEnabled: nextEnabled
                                   })
                                 );
                               }}
@@ -12186,7 +12538,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                             />
                           </label>
                           <label className="form-field">
-                            <span className="label">Enabled</span>
+                            <span className="label">Interaction Enabled</span>
                             <input
                               data-testid="scene-exit-enabled"
                               type="checkbox"
@@ -12196,7 +12548,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                                 setSceneExitEnabledDraft(nextEnabled);
                                 scheduleDraftCommit(() =>
                                   applySceneExitChange({
-                                    enabled: nextEnabled
+                                    interactionEnabled: nextEnabled
                                   })
                                 );
                               }}
@@ -12294,7 +12646,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 </>
               ) : selectedBrush === null ? (
                 <div className="outliner-empty">
-                  Select a whitebox solid or entity to edit authored properties.
+                  Select a whitebox solid, model instance, or entity to edit
+                  authored properties.
                 </div>
               ) : (
                 <>
@@ -12307,6 +12660,43 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     <div className="label">Selection Mode</div>
                     <div className="value">
                       {getWhiteboxSelectionModeLabel(whiteboxSelectionMode)}
+                    </div>
+                  </div>
+
+                  <div className="form-section">
+                    <div className="label">Authored State</div>
+                    <label className="form-field form-field--toggle">
+                      <span className="label">Visible in editor and runner</span>
+                      <input
+                        data-testid="brush-visible"
+                        type="checkbox"
+                        checked={selectedBrush.visible}
+                        onChange={(event) =>
+                          handleSetBrushVisible(
+                            selectedBrush,
+                            event.currentTarget.checked
+                          )
+                        }
+                      />
+                    </label>
+                    <label className="form-field form-field--toggle">
+                      <span className="label">Enabled in scene</span>
+                      <input
+                        data-testid="brush-enabled"
+                        type="checkbox"
+                        checked={selectedBrush.enabled}
+                        onChange={(event) =>
+                          handleSetBrushEnabled(
+                            selectedBrush,
+                            event.currentTarget.checked
+                          )
+                        }
+                      />
+                    </label>
+                    <div className="material-summary">
+                      Hidden solids keep their collision and volume behavior.
+                      Disable them to remove them from the editor viewport,
+                      picking, and runtime build.
                     </div>
                   </div>
 

@@ -486,6 +486,14 @@ button:disabled {
   border-color: rgba(207, 123, 66, 0.55);
 }
 
+.outliner-item--disabled {
+  border-style: dashed;
+}
+
+.outliner-item--disabled:not(.outliner-item--selected) {
+  background: rgba(255, 255, 255, 0.02);
+}
+
 .outliner-item--compact {
   gap: 6px;
   padding: 8px 10px;
@@ -497,6 +505,14 @@ button:disabled {
   gap: 8px;
   width: 100%;
   min-width: 0;
+}
+
+.outliner-item__toggle {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--color-accent);
 }
 
 .outliner-item__title {
