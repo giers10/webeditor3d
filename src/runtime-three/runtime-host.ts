@@ -34,6 +34,7 @@ import type { LoadedModelAsset } from "../assets/gltf-model-import";
 import type { LoadedImageAsset } from "../assets/image-assets";
 import type { LoadedAudioAsset } from "../assets/audio-assets";
 import type { ProjectAssetRecord } from "../assets/project-assets";
+import type { BoxBrush } from "../document/brushes";
 import { buildBoxBrushDerivedMeshData } from "../geometry/box-brush-mesh";
 import {
   createStarterMaterialSignature,
@@ -847,7 +848,19 @@ export class RuntimeHost {
         : resolveBoxVolumeRenderPaths(this.currentWorld.advancedRendering);
 
     for (const brush of brushes) {
-      const geometry = buildBoxBrushDerivedMeshData(brush).geometry;
+      const geometryBrush: BoxBrush = {
+        id: brush.id,
+        name: undefined,
+        visible: brush.visible,
+        enabled: true,
+        center: brush.center,
+        rotationDegrees: brush.rotationDegrees,
+        size: brush.size,
+        geometry: brush.geometry,
+        faces: brush.faces,
+        volume: brush.volume
+      };
+      const geometry = buildBoxBrushDerivedMeshData(geometryBrush).geometry;
       const staticContactPatches =
         brush.volume.mode === "water"
           ? this.collectRuntimeStaticWaterContactPatches(brush)
