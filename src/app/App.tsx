@@ -6630,6 +6630,21 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
+  const applySceneProjectTimeLightingEnabled = (enabled: boolean) => {
+    applyWorldSettings(
+      {
+        ...editorState.document.world,
+        projectTimeLightingEnabled: enabled
+      },
+      enabled
+        ? "Enable scene project time lighting"
+        : "Disable scene project time lighting",
+      enabled
+        ? "This scene now follows the global project time profile."
+        : "This scene now keeps its authored world lighting and sky."
+    );
+  };
+
   const applyAdvancedRenderingSettings = (
     label: string,
     successMessage: string,
