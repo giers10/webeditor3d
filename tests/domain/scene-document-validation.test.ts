@@ -110,6 +110,8 @@ describe("validateSceneDocument", () => {
         "entity-player-start-main": {
           id: "entity-player-start-main",
           kind: "playerStart",
+          visible: true,
+          enabled: true,
           position: {
             x: 0,
             y: Number.NaN,
