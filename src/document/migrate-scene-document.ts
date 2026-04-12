@@ -2627,6 +2627,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     expectEmptyCollection(source.brushes, "brushes");
 
     return {
+      time: createDefaultProjectTimeSettings(),
       version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
       world: readWorldSettings(source.world),
@@ -2651,6 +2652,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     const materials = createStarterMaterialRegistry();
 
     return {
+      time: createDefaultProjectTimeSettings(),
       version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
       world: readWorldSettings(source.world),
@@ -2674,6 +2676,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     const materials = readMaterialRegistry(source.materials, "materials");
 
     return {
+      time: createDefaultProjectTimeSettings(),
       version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
       world: readWorldSettings(source.world),
@@ -2697,6 +2700,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     const materials = readMaterialRegistry(source.materials, "materials");
 
     return {
+      time: createDefaultProjectTimeSettings(),
       version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
       world: readWorldSettings(source.world),
@@ -2720,6 +2724,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     const materials = readMaterialRegistry(source.materials, "materials");
 
     return {
+      time: createDefaultProjectTimeSettings(),
       version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
       world: readWorldSettings(source.world),
@@ -2743,6 +2748,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     const materials = readMaterialRegistry(source.materials, "materials");
 
     return {
+      time: createDefaultProjectTimeSettings(),
       version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
       world: readWorldSettings(source.world),
@@ -2766,6 +2772,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     const materials = readMaterialRegistry(source.materials, "materials");
 
     return {
+      time: createDefaultProjectTimeSettings(),
       version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
       world: readWorldSettings(source.world),
@@ -2791,6 +2798,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     const materials = readMaterialRegistry(source.materials, "materials");
 
     return {
+      time: createDefaultProjectTimeSettings(),
       version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
       world: readWorldSettings(source.world),
@@ -2811,6 +2819,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     const materials = readMaterialRegistry(source.materials, "materials");
 
     return {
+      time: createDefaultProjectTimeSettings(),
       version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
       world: readWorldSettings(source.world),
