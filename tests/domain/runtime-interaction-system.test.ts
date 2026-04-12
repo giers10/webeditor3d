@@ -110,7 +110,7 @@ function createRuntimeSceneFixture(): RuntimeSceneDefinition {
           },
           radius: 2,
           prompt: "Use Console",
-          enabled: true
+          interactionEnabled: true
         },
         {
           entityId: "entity-interactable-disabled",
@@ -121,7 +121,7 @@ function createRuntimeSceneFixture(): RuntimeSceneDefinition {
           },
           radius: 2,
           prompt: "Disabled Prompt",
-          enabled: false
+          interactionEnabled: false
         }
       ],
       sceneExits: []
@@ -535,7 +535,7 @@ describe("RuntimeInteractionSystem", () => {
       },
       radius: 2,
       prompt: "Enter House",
-      enabled: true,
+      interactionEnabled: true,
       targetSceneId: "scene-house",
       targetEntryEntityId: "entity-scene-entry-house-front"
     });
@@ -581,7 +581,7 @@ describe("RuntimeInteractionSystem", () => {
       },
       radius: 2,
       prompt: "Enter House",
-      enabled: true,
+      interactionEnabled: true,
       targetSceneId: "scene-house",
       targetEntryEntityId: "entity-scene-entry-house-front"
     });
