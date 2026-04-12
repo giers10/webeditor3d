@@ -3106,6 +3106,8 @@ export function migrateProjectDocument(source: unknown): ProjectDocument {
       source.version < PROJECT_NAME_SCENE_DOCUMENT_VERSION;
     const allowMissingEditorPreferences =
       source.version < SCENE_EDITOR_PREFERENCES_SCENE_DOCUMENT_VERSION;
+    const allowMissingTimeSettings =
+      source.version < PROJECT_TIME_SYSTEM_SCENE_DOCUMENT_VERSION;
 
     for (const [sceneKey, sceneValue] of Object.entries(source.scenes)) {
       scenes[sceneKey] = readProjectScene(
@@ -3124,6 +3126,9 @@ export function migrateProjectDocument(source: unknown): ProjectDocument {
       version: SCENE_DOCUMENT_VERSION,
       name: readProjectName(source.name, "name", {
         allowMissing: allowMissingProjectName
+      }),
+      time: readProjectTimeSettings(source.time, "time", {
+        allowMissing: allowMissingTimeSettings
       }),
       activeSceneId: expectString(source.activeSceneId, "activeSceneId"),
       scenes,
