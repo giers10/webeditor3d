@@ -13,6 +13,7 @@ import {
 } from "../runtime-three/runtime-host";
 import type { RuntimeInteractionPrompt } from "../runtime-three/runtime-interaction-system";
 import {
+  areRuntimeClockStatesEqual,
   createRuntimeClockState,
   resolveRuntimeDayNightWorldState,
   type RuntimeClockState
@@ -22,6 +23,8 @@ import type {
   RuntimeSceneDefinition
 } from "../runtime-three/runtime-scene-build";
 import { createWorldBackgroundStyle } from "../shared-ui/world-background-style";
+
+const FORWARD_RUNTIME_CLOCK_INTERVAL_MS = 240;
 
 interface RunnerCanvasProps {
   runtimeScene: RuntimeSceneDefinition;
@@ -58,6 +61,9 @@ export function RunnerCanvas({
 }: RunnerCanvasProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const hostRef = useRef<RuntimeHost | null>(null);
+  const onRuntimeClockChangeRef = useRef(onRuntimeClockChange);
+  const lastForwardedRuntimeClockRef = useRef(runtimeClock);
+  const lastForwardedRuntimeClockAtRef = useRef(0);
   const [runnerMessage, setRunnerMessage] = useState<string | null>(null);
   const [sceneLoadState, setSceneLoadState] = useState<RuntimeSceneLoadState>({
     status: "loading",
@@ -67,6 +73,7 @@ export function RunnerCanvas({
     useState<RuntimeInteractionPrompt | null>(null);
   const [firstPersonTelemetry, setFirstPersonTelemetry] =
     useState<FirstPersonTelemetry | null>(null);
+  const [visualRuntimeClock, setVisualRuntimeClock] = useState(runtimeClock);
   const overlayMessage = runnerMessage ?? sceneLoadState.message;
   const overlayStatus =
     overlayMessage !== null ? "error" : sceneLoadState.status;
@@ -74,8 +81,19 @@ export function RunnerCanvas({
   const resolvedWorld = resolveRuntimeDayNightWorldState(
     runtimeScene.world,
     runtimeScene.time,
-    runtimeClock
+    visualRuntimeClock
   );
+
+  onRuntimeClockChangeRef.current = onRuntimeClockChange;
+
+  useEffect(() => {
+    lastForwardedRuntimeClockRef.current = runtimeClock;
+    setVisualRuntimeClock((currentClock) =>
+      areRuntimeClockStatesEqual(currentClock, runtimeClock)
+        ? currentClock
+        : runtimeClock
+    );
+  }, [runtimeClock.dayCount, runtimeClock.dayLengthMinutes, runtimeClock.timeOfDayHours]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -92,7 +110,33 @@ export function RunnerCanvas({
       runtimeHost.mount(container);
       runtimeHost.setRuntimeMessageHandler(onRuntimeMessageChange);
       runtimeHost.setSceneLoadStateHandler(setSceneLoadState);
-      runtimeHost.setRuntimeClockStateHandler?.(onRuntimeClockChange);
+      runtimeHost.setRuntimeClockStateHandler?.((clock) => {
+        setVisualRuntimeClock((currentClock) =>
+          areRuntimeClockStatesEqual(currentClock, clock)
+            ? currentClock
+            : clock
+        );
+
+        const now = performance.now();
+
+        if (
+          areRuntimeClockStatesEqual(lastForwardedRuntimeClockRef.current, clock)
+        ) {
+          return;
+        }
+
+        if (
+          now - lastForwardedRuntimeClockAtRef.current <
+            FORWARD_RUNTIME_CLOCK_INTERVAL_MS &&
+          clock.dayCount === lastForwardedRuntimeClockRef.current.dayCount
+        ) {
+          return;
+        }
+
+        lastForwardedRuntimeClockRef.current = clock;
+        lastForwardedRuntimeClockAtRef.current = now;
+        onRuntimeClockChangeRef.current(clock);
+      });
       runtimeHost.setFirstPersonTelemetryHandler((telemetry) => {
         setFirstPersonTelemetry(telemetry);
         onFirstPersonTelemetryChange(telemetry);
@@ -138,8 +182,8 @@ export function RunnerCanvas({
   }, [onSceneExitActivated]);
 
   useEffect(() => {
-    hostRef.current?.setRuntimeClockStateHandler?.(onRuntimeClockChange);
-  }, [onRuntimeClockChange]);
+    lastForwardedRuntimeClockRef.current = runtimeClock;
+  }, [runtimeClock.dayCount, runtimeClock.dayLengthMinutes, runtimeClock.timeOfDayHours]);
 
   useEffect(() => {
     hostRef.current?.updateAssets(
@@ -193,6 +237,7 @@ export function RunnerCanvas({
       {resolvedWorld.nightBackgroundOverlay === null ? null : (
         <div
           className="runner-canvas__background-overlay"
+          data-testid="runner-night-background-overlay"
           aria-hidden="true"
           style={{
             ...createWorldBackgroundStyle(

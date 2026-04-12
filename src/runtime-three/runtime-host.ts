@@ -126,6 +126,7 @@ interface RuntimeWaterContactUniformBinding {
 
 const FALLBACK_FACE_COLOR = 0xf2ece2;
 const BOX_FACE_MATERIAL_COUNT = 6;
+const RUNTIME_CLOCK_PUBLISH_INTERVAL_SECONDS = 1 / 30;
 const WATER_REFLECTION_UPDATE_INTERVAL_MS = 96;
 
 function dampScalar(current: number, target: number, rate: number, dt: number) {
@@ -1854,7 +1855,7 @@ export class RuntimeHost {
       this.applyDayNightLighting();
       this.clockPublishAccumulator += dt;
 
-      if (this.clockPublishAccumulator >= 0.25) {
+      if (this.clockPublishAccumulator >= RUNTIME_CLOCK_PUBLISH_INTERVAL_SECONDS) {
         this.clockPublishAccumulator = 0;
         this.publishRuntimeClockState();
       }
