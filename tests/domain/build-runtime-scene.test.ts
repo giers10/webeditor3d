@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { BoxGeometry, PlaneGeometry } from "three";
 
 import { createBoxBrush } from "../../src/document/brushes";
+import { createDefaultProjectTimeSettings } from "../../src/document/project-time-settings";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
 import {
   DEFAULT_PLAYER_START_MOVE_SPEED,
@@ -299,6 +300,7 @@ describe("buildRuntimeSceneFromDocument", () => {
       z: 0.1
     };
     document.time = {
+      ...createDefaultProjectTimeSettings(),
       startTimeOfDayHours: 18.5,
       dayLengthMinutes: 16
     };
