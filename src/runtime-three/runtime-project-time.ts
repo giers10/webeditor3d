@@ -2,6 +2,7 @@ import type { Vec3 } from "../core/vector";
 import {
   formatTimeOfDayHours,
   HOURS_PER_DAY,
+  type ProjectTimeNightBackgroundSettings,
   normalizeTimeOfDayHours,
   type ProjectTimePhaseProfile,
   type ProjectTimeSettings
@@ -36,6 +37,11 @@ export interface RuntimeDayNightWorldState {
   sunLight: WorldSunLightSettings;
   moonLight: WorldSunLightSettings | null;
   background: WorldBackgroundSettings;
+  nightBackgroundOverlay: {
+    assetId: string;
+    environmentIntensity: number;
+    opacity: number;
+  } | null;
   daylightFactor: number;
 }
 
@@ -225,51 +231,32 @@ function resolveNoonSunDirection(direction: Vec3): Vec3 {
   });
 }
 
-function unwrapTimeAroundReference(hours: number, referenceHours: number): number {
-  let unwrappedHours = normalizeTimeOfDayHours(hours);
+function wrapTimeForward(hours: number, originHours: number): number {
+  let wrappedHours = normalizeTimeOfDayHours(hours);
 
-  while (unwrappedHours - referenceHours > HOURS_PER_DAY / 2) {
-    unwrappedHours -= HOURS_PER_DAY;
+  while (wrappedHours < originHours) {
+    wrappedHours += HOURS_PER_DAY;
   }
 
-  while (referenceHours - unwrappedHours > HOURS_PER_DAY / 2) {
-    unwrappedHours += HOURS_PER_DAY;
-  }
-
-  return unwrappedHours;
+  return wrappedHours;
 }
 
 function resolveRuntimeDayNightPhaseWeights(
   settings: ProjectTimeSettings,
   timeOfDayHours: number
 ): RuntimeDayNightPhaseWeights {
-  const normalizedTime = normalizeTimeOfDayHours(timeOfDayHours);
-  const sunrise = unwrapTimeAroundReference(
-    settings.sunriseTimeOfDayHours,
-    normalizedTime
-  );
-  const sunset = unwrapTimeAroundReference(
-    settings.sunsetTimeOfDayHours,
-    normalizedTime
-  );
   const dawnHalfDuration = Math.max(settings.dawnDurationHours, 0.001) / 2;
   const duskHalfDuration = Math.max(settings.duskDurationHours, 0.001) / 2;
-  const dawnStart = sunrise - dawnHalfDuration;
+  const dawnStart = settings.sunriseTimeOfDayHours - dawnHalfDuration;
+  const currentTime = wrapTimeForward(timeOfDayHours, dawnStart);
+  const sunrise = wrapTimeForward(settings.sunriseTimeOfDayHours, dawnStart);
   const dawnEnd = sunrise + dawnHalfDuration;
+  const sunset = wrapTimeForward(settings.sunsetTimeOfDayHours, dawnStart);
   const duskStart = sunset - duskHalfDuration;
   const duskEnd = sunset + duskHalfDuration;
 
-  if (normalizedTime < dawnStart || normalizedTime >= duskEnd) {
-    return {
-      day: 0,
-      dawn: 0,
-      dusk: 0,
-      night: 1
-    };
-  }
-
-  if (normalizedTime < sunrise) {
-    const amount = smoothstep(dawnStart, sunrise, normalizedTime);
+  if (currentTime < sunrise) {
+    const amount = smoothstep(dawnStart, sunrise, currentTime);
 
     return {
       day: 0,
@@ -279,8 +266,8 @@ function resolveRuntimeDayNightPhaseWeights(
     };
   }
 
-  if (normalizedTime < dawnEnd) {
-    const amount = smoothstep(sunrise, dawnEnd, normalizedTime);
+  if (currentTime < dawnEnd) {
+    const amount = smoothstep(sunrise, dawnEnd, currentTime);
 
     return {
       day: amount,
@@ -290,7 +277,7 @@ function resolveRuntimeDayNightPhaseWeights(
     };
   }
 
-  if (normalizedTime < duskStart) {
+  if (currentTime < duskStart) {
     return {
       day: 1,
       dawn: 0,
@@ -299,8 +286,8 @@ function resolveRuntimeDayNightPhaseWeights(
     };
   }
 
-  if (normalizedTime < sunset) {
-    const amount = smoothstep(duskStart, sunset, normalizedTime);
+  if (currentTime < sunset) {
+    const amount = smoothstep(duskStart, sunset, currentTime);
 
     return {
       day: 1 - amount,
@@ -310,13 +297,22 @@ function resolveRuntimeDayNightPhaseWeights(
     };
   }
 
-  const amount = smoothstep(sunset, duskEnd, normalizedTime);
+  if (currentTime < duskEnd) {
+    const amount = smoothstep(sunset, duskEnd, currentTime);
+
+    return {
+      day: 0,
+      dawn: 0,
+      dusk: 1 - amount,
+      night: amount
+    };
+  }
 
   return {
     day: 0,
     dawn: 0,
-    dusk: 1 - amount,
-    night: amount
+    dusk: 0,
+    night: 1
   };
 }
 
@@ -324,32 +320,22 @@ function resolveTimeDrivenSunOrbitRadians(
   settings: ProjectTimeSettings,
   timeOfDayHours: number
 ): number {
-  const normalizedTime = normalizeTimeOfDayHours(timeOfDayHours);
-  const sunrise = unwrapTimeAroundReference(
-    settings.sunriseTimeOfDayHours,
-    normalizedTime
+  const sunrise = settings.sunriseTimeOfDayHours;
+  const daytimeDuration = Math.max(
+    settings.sunsetTimeOfDayHours - settings.sunriseTimeOfDayHours,
+    0.001
   );
-  const sunset = unwrapTimeAroundReference(
-    settings.sunsetTimeOfDayHours,
-    normalizedTime
-  );
+  const relativeTime = wrapTimeForward(timeOfDayHours, sunrise) - sunrise;
 
-  if (normalizedTime >= sunrise && normalizedTime <= sunset) {
-    const daytimeDuration = Math.max(sunset - sunrise, 0.001);
-    const daytimeProgress = clamp(
-      (normalizedTime - sunrise) / daytimeDuration,
-      0,
-      1
-    );
+  if (relativeTime <= daytimeDuration) {
+    const daytimeProgress = clamp(relativeTime / daytimeDuration, 0, 1);
 
     return lerp(-Math.PI / 2, Math.PI / 2, daytimeProgress);
   }
 
-  const previousSunset = sunset > normalizedTime ? sunset - HOURS_PER_DAY : sunset;
-  const nextSunrise = sunrise <= normalizedTime ? sunrise + HOURS_PER_DAY : sunrise;
-  const nighttimeDuration = Math.max(nextSunrise - previousSunset, 0.001);
+  const nighttimeDuration = Math.max(HOURS_PER_DAY - daytimeDuration, 0.001);
   const nighttimeProgress = clamp(
-    (normalizedTime - previousSunset) / nighttimeDuration,
+    (relativeTime - daytimeDuration) / nighttimeDuration,
     0,
     1
   );
@@ -426,6 +412,31 @@ function resolveTimeDrivenBackground(
   }
 
   return cloneWorldBackgroundSettings(background);
+}
+
+function resolveNightBackgroundOverlay(
+  nightBackground: ProjectTimeNightBackgroundSettings,
+  weights: RuntimeDayNightPhaseWeights
+): RuntimeDayNightWorldState["nightBackgroundOverlay"] {
+  if (nightBackground.assetId === null) {
+    return null;
+  }
+
+  const opacity = clamp(
+    weights.night + weights.dawn * 0.5 + weights.dusk * 0.5,
+    0,
+    1
+  );
+
+  if (opacity <= 1e-4) {
+    return null;
+  }
+
+  return {
+    assetId: nightBackground.assetId,
+    environmentIntensity: nightBackground.environmentIntensity,
+    opacity
+  };
 }
 
 export function createRuntimeClockState(
@@ -513,6 +524,7 @@ export function resolveRuntimeDayNightWorldState(
       },
       moonLight: null,
       background: cloneWorldBackgroundSettings(world.background),
+      nightBackgroundOverlay: null,
       daylightFactor: 1
     };
   }
@@ -622,6 +634,10 @@ export function resolveRuntimeDayNightWorldState(
     background: resolveTimeDrivenBackground(
       world.background,
       settings,
+      phaseWeights
+    ),
+    nightBackgroundOverlay: resolveNightBackgroundOverlay(
+      settings.nightBackground,
       phaseWeights
     ),
     daylightFactor
