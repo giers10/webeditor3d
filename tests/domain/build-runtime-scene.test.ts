@@ -841,9 +841,7 @@ describe("buildRuntimeSceneFromDocument", () => {
     );
 
     expect(runtimeScene.playerStart?.entityId).toBe(enabledPlayerStart.id);
-    expect(runtimeScene.brushes.map((brush) => brush.brushId)).toEqual([
-      hiddenBrush.id
-    ]);
+    expect(runtimeScene.brushes.map((brush) => brush.id)).toEqual([hiddenBrush.id]);
     expect(runtimeScene.brushes[0]?.visible).toBe(false);
     expect(runtimeScene.modelInstances).toEqual([
       expect.objectContaining({
