@@ -17,6 +17,7 @@ import {
   isPlayerStartMovementTemplateKind,
   isPlayerStartNavigationMode,
   getPlayerStartColliderHeight,
+  type EntityInstance,
   type InteractableEntity,
   type PointLightEntity,
   type PlayerStartEntity,

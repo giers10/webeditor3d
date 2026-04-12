@@ -13,6 +13,7 @@ import { createCreateBoxBrushCommand } from "../commands/create-box-brush-comman
 import { createCreateSceneCommand } from "../commands/create-scene-command";
 import { createDeleteBoxBrushCommand } from "../commands/delete-box-brush-command";
 import { createDeleteEntityCommand } from "../commands/delete-entity-command";
+import { createDeleteProjectAssetCommand } from "../commands/delete-project-asset-command";
 import { createDuplicateSelectionCommand } from "../commands/duplicate-selection-command";
 import { createImportAudioAssetCommand } from "../commands/import-audio-asset-command";
 import { createImportBackgroundImageAssetCommand } from "../commands/import-background-image-asset-command";
@@ -23,12 +24,15 @@ import { createMoveBoxBrushCommand } from "../commands/move-box-brush-command";
 import { createRotateBoxBrushCommand } from "../commands/rotate-box-brush-command";
 import { createResizeBoxBrushCommand } from "../commands/resize-box-brush-command";
 import { createSetBoxBrushFaceMaterialCommand } from "../commands/set-box-brush-face-material-command";
+import { createSetBoxBrushAuthoredStateCommand } from "../commands/set-box-brush-authored-state-command";
 import { createSetBoxBrushNameCommand } from "../commands/set-box-brush-name-command";
 import { createSetBoxBrushVolumeSettingsCommand } from "../commands/set-box-brush-volume-settings-command";
+import { createSetEntityAuthoredStateCommand } from "../commands/set-entity-authored-state-command";
 import { createSetEntityNameCommand } from "../commands/set-entity-name-command";
 import { createSetBoxBrushFaceUvStateCommand } from "../commands/set-box-brush-face-uv-state-command";
 import { createSetActiveSceneCommand } from "../commands/set-active-scene-command";
 import { createDeleteInteractionLinkCommand } from "../commands/delete-interaction-link-command";
+import { createSetModelInstanceAuthoredStateCommand } from "../commands/set-model-instance-authored-state-command";
 import { createSetModelInstanceNameCommand } from "../commands/set-model-instance-name-command";
 import { createSetProjectNameCommand } from "../commands/set-project-name-command";
 import { createSetSceneLoadingScreenCommand } from "../commands/set-scene-loading-screen-command";
@@ -161,8 +165,10 @@ import {
   validateSceneDocument
 } from "../document/scene-document-validation";
 import {
+  cloneProjectAssetStorageRecord,
   getBrowserProjectAssetStorageAccess,
-  type ProjectAssetStorage
+  type ProjectAssetStorage,
+  type ProjectAssetStorageRecord
 } from "../assets/project-asset-storage";
 import {
   DEFAULT_GRID_SIZE,
@@ -1999,6 +2005,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const loadedModelAssetsRef = useRef<Record<string, LoadedModelAsset>>({});
   const loadedImageAssetsRef = useRef<Record<string, LoadedImageAsset>>({});
   const loadedAudioAssetsRef = useRef<Record<string, LoadedAudioAsset>>({});
+  const previousProjectAssetsRef = useRef<Record<string, ProjectAssetRecord>>(
+    editorState.document.assets
+  );
+  const deletedProjectAssetStorageRecordsRef = useRef<
+    Record<string, ProjectAssetStorageRecord>
+  >({});
   const autosaveControllerRef = useRef<EditorAutosaveController | null>(null);
   const lastAutosaveErrorRef = useRef<string | null>(null);
   const viewportQuadSplitRef = useRef(editorState.viewportQuadSplit);
@@ -2559,16 +2571,19 @@ export function App({ store, initialStatusMessage }: AppProps) {
     const nextLoadedAudioAssets: Record<string, LoadedAudioAsset> = {};
     const syncErrorMessages: string[] = [];
 
-    const restoreDeletedStoredAsset = async (asset: ProjectAssetRecord) => {
+    const restoreDeletedStoredAsset = async (
+      storage: ProjectAssetStorage,
+      asset: ProjectAssetRecord
+    ) => {
       const deletedRecord =
         deletedProjectAssetStorageRecordsRef.current[asset.storageKey];
 
-      if (projectAssetStorage === null || deletedRecord === undefined) {
+      if (deletedRecord === undefined) {
         return false;
       }
 
       try {
-        await projectAssetStorage.putAsset(
+        await storage.putAsset(
           asset.storageKey,
           cloneProjectAssetStorageRecord(deletedRecord)
         );
@@ -2582,36 +2597,45 @@ export function App({ store, initialStatusMessage }: AppProps) {
       }
     };
 
-    const syncModelAsset = async (asset: ModelAssetRecord) => {
+    const syncModelAsset = async (
+      storage: ProjectAssetStorage,
+      asset: ModelAssetRecord
+    ) => {
       try {
-        return await loadModelAssetFromStorage(projectAssetStorage, asset);
+        return await loadModelAssetFromStorage(storage, asset);
       } catch (error) {
-        if (await restoreDeletedStoredAsset(asset)) {
-          return loadModelAssetFromStorage(projectAssetStorage, asset);
+        if (await restoreDeletedStoredAsset(storage, asset)) {
+          return loadModelAssetFromStorage(storage, asset);
         }
 
         throw error;
       }
     };
 
-    const syncImageAsset = async (asset: ImageAssetRecord) => {
+    const syncImageAsset = async (
+      storage: ProjectAssetStorage,
+      asset: ImageAssetRecord
+    ) => {
       try {
-        return await loadImageAssetFromStorage(projectAssetStorage, asset);
+        return await loadImageAssetFromStorage(storage, asset);
       } catch (error) {
-        if (await restoreDeletedStoredAsset(asset)) {
-          return loadImageAssetFromStorage(projectAssetStorage, asset);
+        if (await restoreDeletedStoredAsset(storage, asset)) {
+          return loadImageAssetFromStorage(storage, asset);
         }
 
         throw error;
       }
     };
 
-    const syncAudioAsset = async (asset: AudioAssetRecord) => {
+    const syncAudioAsset = async (
+      storage: ProjectAssetStorage,
+      asset: AudioAssetRecord
+    ) => {
       try {
-        return await loadAudioAssetFromStorage(projectAssetStorage, asset);
+        return await loadAudioAssetFromStorage(storage, asset);
       } catch (error) {
-        if (await restoreDeletedStoredAsset(asset)) {
-          return loadAudioAssetFromStorage(projectAssetStorage, asset);
+        if (await restoreDeletedStoredAsset(storage, asset)) {
+          return loadAudioAssetFromStorage(storage, asset);
         }
 
         throw error;
@@ -2641,6 +2665,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
         return;
       }
 
+      const storage = projectAssetStorage;
+
       for (const asset of Object.values(currentAssets)) {
         if (isModelAsset(asset)) {
           previousLoadedModelAssetIds.delete(asset.id);
@@ -2656,7 +2682,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
           }
 
           try {
-            nextLoadedModelAssets[asset.id] = await syncModelAsset(asset);
+            nextLoadedModelAssets[asset.id] = await syncModelAsset(
+              storage,
+              asset
+            );
           } catch (error) {
             syncErrorMessages.push(
               `Model asset ${asset.sourceName} could not be restored: ${getErrorMessage(error)}`
@@ -2680,7 +2709,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
           }
 
           try {
-            nextLoadedImageAssets[asset.id] = await syncImageAsset(asset);
+            nextLoadedImageAssets[asset.id] = await syncImageAsset(
+              storage,
+              asset
+            );
           } catch (error) {
             syncErrorMessages.push(
               `Image asset ${asset.sourceName} could not be restored: ${getErrorMessage(error)}`
@@ -2703,7 +2735,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
           }
 
           try {
-            nextLoadedAudioAssets[asset.id] = await syncAudioAsset(asset);
+            nextLoadedAudioAssets[asset.id] = await syncAudioAsset(
+              storage,
+              asset
+            );
           } catch (error) {
             syncErrorMessages.push(
               `Audio asset ${asset.sourceName} could not be restored: ${getErrorMessage(error)}`
@@ -2734,15 +2769,13 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
       for (const removedAsset of removedAssets) {
         try {
-          const storedAsset = await projectAssetStorage.getAsset(
-            removedAsset.storageKey
-          );
+          const storedAsset = await storage.getAsset(removedAsset.storageKey);
 
           if (storedAsset !== null) {
             deletedProjectAssetStorageRecordsRef.current[
               removedAsset.storageKey
             ] = cloneProjectAssetStorageRecord(storedAsset);
-            await projectAssetStorage.deleteAsset(removedAsset.storageKey);
+            await storage.deleteAsset(removedAsset.storageKey);
           }
         } catch (error) {
           syncErrorMessages.push(
