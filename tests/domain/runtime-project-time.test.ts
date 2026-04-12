@@ -67,10 +67,12 @@ describe("runtime project time", () => {
     expect(midnight.ambientLight.intensity).toBeLessThan(
       noon.ambientLight.intensity
     );
-    expect(preSunrise.sunLight.intensity).toBeGreaterThan(
-      midnight.sunLight.intensity
+    expect(preSunrise.ambientLight.intensity).toBeGreaterThan(
+      midnight.ambientLight.intensity
     );
-    expect(preSunrise.sunLight.intensity).toBeLessThan(noon.sunLight.intensity);
+    expect(preSunrise.ambientLight.intensity).toBeLessThan(
+      noon.ambientLight.intensity
+    );
     expect(dawn.sunLight.colorHex).not.toBe(noon.sunLight.colorHex);
     expect(dawn.sunLight.intensity).toBeGreaterThan(preSunrise.sunLight.intensity);
     expect(postSunset.sunLight.intensity).toBeLessThan(noon.sunLight.intensity);
@@ -89,6 +91,7 @@ describe("runtime project time", () => {
     expect(midnight.sunLight.direction.y).toBeLessThan(0);
 
     if (
+      preSunrise.background.mode !== "verticalGradient" ||
       dawn.background.mode !== "verticalGradient" ||
       noon.background.mode !== "verticalGradient" ||
       midnight.background.mode !== "verticalGradient"
@@ -96,6 +99,9 @@ describe("runtime project time", () => {
       throw new Error("Expected a gradient background for the day/night test.");
     }
 
+    expect(preSunrise.background.topColorHex).not.toBe(
+      midnight.background.topColorHex
+    );
     expect(dawn.background.topColorHex).not.toBe(noon.background.topColorHex);
     expect(midnight.background.topColorHex).not.toBe(noon.background.topColorHex);
     expect(midnight.background.bottomColorHex).not.toBe(
