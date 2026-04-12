@@ -15,7 +15,8 @@ import {
   type WorldSettings
 } from "./world-settings";
 
-export const SCENE_DOCUMENT_VERSION = 35 as const;
+export const SCENE_DOCUMENT_VERSION = 36 as const;
+export const AUTHORED_OBJECT_STATE_SCENE_DOCUMENT_VERSION = 36 as const;
 export const PLAYER_START_AIR_DIRECTION_CONTROL_SCENE_DOCUMENT_VERSION =
   35 as const;
 export const PLAYER_START_AIR_CONTROL_SCENE_DOCUMENT_VERSION = 34 as const;
