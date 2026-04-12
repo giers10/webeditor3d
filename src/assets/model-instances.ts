@@ -16,6 +16,8 @@ export interface ModelInstance {
   kind: "modelInstance";
   assetId: string;
   name?: string;
+  visible: boolean;
+  enabled: boolean;
   position: Vec3;
   rotationDegrees: Vec3;
   scale: Vec3;
@@ -41,6 +43,9 @@ export const DEFAULT_MODEL_INSTANCE_SCALE: Vec3 = {
   y: 1,
   z: 1
 };
+
+export const DEFAULT_MODEL_INSTANCE_VISIBLE = true;
+export const DEFAULT_MODEL_INSTANCE_ENABLED = true;
 
 export const DEFAULT_MODEL_INSTANCE_COLLISION_SETTINGS: ModelInstanceCollisionSettings = {
   mode: "none",
@@ -117,7 +122,7 @@ function assertPositiveFiniteVec3(vector: Vec3, label: string) {
 
 export function createModelInstance(
   overrides: Partial<
-    Pick<ModelInstance, "id" | "name" | "position" | "rotationDegrees" | "scale" | "collision" | "animationClipName" | "animationAutoplay">
+    Pick<ModelInstance, "id" | "name" | "visible" | "enabled" | "position" | "rotationDegrees" | "scale" | "collision" | "animationClipName" | "animationAutoplay">
   > &
     Pick<ModelInstance, "assetId">
 ): ModelInstance {
@@ -125,6 +130,8 @@ export function createModelInstance(
   const rotationDegrees = cloneVec3(overrides.rotationDegrees ?? DEFAULT_MODEL_INSTANCE_ROTATION_DEGREES);
   const scale = cloneVec3(overrides.scale ?? DEFAULT_MODEL_INSTANCE_SCALE);
   const collision = cloneModelInstanceCollisionSettings(overrides.collision ?? DEFAULT_MODEL_INSTANCE_COLLISION_SETTINGS);
+  const visible = overrides.visible ?? DEFAULT_MODEL_INSTANCE_VISIBLE;
+  const enabled = overrides.enabled ?? DEFAULT_MODEL_INSTANCE_ENABLED;
 
   if (overrides.assetId.trim().length === 0) {
     throw new Error("Model instance assetId must be a non-empty string.");
@@ -134,11 +141,21 @@ export function createModelInstance(
   assertFiniteVec3(rotationDegrees, "Model instance rotation");
   assertPositiveFiniteVec3(scale, "Model instance scale");
 
+  if (typeof visible !== "boolean") {
+    throw new Error("Model instance visible must be a boolean.");
+  }
+
+  if (typeof enabled !== "boolean") {
+    throw new Error("Model instance enabled must be a boolean.");
+  }
+
   return {
     id: overrides.id ?? createOpaqueId("model-instance"),
     kind: "modelInstance",
     assetId: overrides.assetId,
     name: normalizeModelInstanceName(overrides.name),
+    visible,
+    enabled,
     position,
     rotationDegrees,
     scale,
@@ -178,6 +195,8 @@ export function areModelInstancesEqual(left: ModelInstance, right: ModelInstance
     left.kind === right.kind &&
     left.assetId === right.assetId &&
     left.name === right.name &&
+    left.visible === right.visible &&
+    left.enabled === right.enabled &&
     areVec3Equal(left.position, right.position) &&
     areVec3Equal(left.rotationDegrees, right.rotationDegrees) &&
     areVec3Equal(left.scale, right.scale) &&

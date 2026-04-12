@@ -5,6 +5,8 @@ import { isHexColorString } from "../document/world-settings";
 interface PositionedEntity {
   id: string;
   name?: string;
+  visible: boolean;
+  enabled: boolean;
   position: Vec3;
 }
 
@@ -218,14 +220,14 @@ export interface InteractableEntity extends PositionedEntity {
   kind: "interactable";
   radius: number;
   prompt: string;
-  enabled: boolean;
+  interactionEnabled: boolean;
 }
 
 export interface SceneExitEntity extends PositionedEntity {
   kind: "sceneExit";
   radius: number;
   prompt: string;
-  enabled: boolean;
+  interactionEnabled: boolean;
   targetSceneId: string;
   targetEntryEntityId: string;
 }
@@ -289,6 +291,9 @@ export const DEFAULT_ENTITY_POSITION: Vec3 = {
   y: 0,
   z: 0
 };
+
+export const DEFAULT_ENTITY_VISIBLE = true;
+export const DEFAULT_ENTITY_ENABLED = true;
 
 export const DEFAULT_PLAYER_START_POSITION = DEFAULT_ENTITY_POSITION;
 export const DEFAULT_PLAYER_START_YAW_DEGREES = 0;
@@ -1062,6 +1067,20 @@ export function normalizeEntityName(name: string | null | undefined): string | u
   return trimmedName.length === 0 ? undefined : trimmedName;
 }
 
+function resolveAuthoredEntityVisibility(visible: boolean | undefined): boolean {
+  const resolvedVisible = visible ?? DEFAULT_ENTITY_VISIBLE;
+
+  assertBoolean(resolvedVisible, "Entity visible");
+  return resolvedVisible;
+}
+
+function resolveAuthoredEntityEnabled(enabled: boolean | undefined): boolean {
+  const resolvedEnabled = enabled ?? DEFAULT_ENTITY_ENABLED;
+
+  assertBoolean(resolvedEnabled, "Entity enabled");
+  return resolvedEnabled;
+}
+
 export function normalizeYawDegrees(yawDegrees: number): number {
   const normalizedYaw = yawDegrees % 360;
   return normalizedYaw < 0 ? normalizedYaw + 360 : normalizedYaw;
@@ -1078,7 +1097,7 @@ export function normalizeInteractablePrompt(prompt: string): string {
 }
 
 export function createPointLightEntity(
-  overrides: Partial<Pick<PointLightEntity, "id" | "name" | "position" | "colorHex" | "intensity" | "distance">> = {}
+  overrides: Partial<Pick<PointLightEntity, "id" | "name" | "visible" | "enabled" | "position" | "colorHex" | "intensity" | "distance">> = {}
 ): PointLightEntity {
   const position = cloneVec3(overrides.position ?? DEFAULT_POINT_LIGHT_POSITION);
   const colorHex = overrides.colorHex ?? DEFAULT_POINT_LIGHT_COLOR_HEX;
@@ -1094,6 +1113,8 @@ export function createPointLightEntity(
     id: overrides.id ?? createOpaqueId("entity-point-light"),
     kind: "pointLight",
     name: normalizeEntityName(overrides.name),
+    visible: resolveAuthoredEntityVisibility(overrides.visible),
+    enabled: resolveAuthoredEntityEnabled(overrides.enabled),
     position,
     colorHex,
     intensity,
@@ -1102,7 +1123,7 @@ export function createPointLightEntity(
 }
 
 export function createSpotLightEntity(
-  overrides: Partial<Pick<SpotLightEntity, "id" | "name" | "position" | "direction" | "colorHex" | "intensity" | "distance" | "angleDegrees">> = {}
+  overrides: Partial<Pick<SpotLightEntity, "id" | "name" | "visible" | "enabled" | "position" | "direction" | "colorHex" | "intensity" | "distance" | "angleDegrees">> = {}
 ): SpotLightEntity {
   const position = cloneVec3(overrides.position ?? DEFAULT_SPOT_LIGHT_POSITION);
   const direction = cloneVec3(overrides.direction ?? DEFAULT_SPOT_LIGHT_DIRECTION);
@@ -1126,6 +1147,8 @@ export function createSpotLightEntity(
     id: overrides.id ?? createOpaqueId("entity-spot-light"),
     kind: "spotLight",
     name: normalizeEntityName(overrides.name),
+    visible: resolveAuthoredEntityVisibility(overrides.visible),
+    enabled: resolveAuthoredEntityEnabled(overrides.enabled),
     position,
     direction,
     colorHex,
@@ -1139,7 +1162,7 @@ export function createPlayerStartEntity(
   overrides: Partial<
     Pick<
       PlayerStartEntity,
-      "id" | "name" | "position" | "yawDegrees" | "navigationMode"
+      "id" | "name" | "visible" | "enabled" | "position" | "yawDegrees" | "navigationMode"
     >
   > & {
     movementTemplate?: PlayerStartMovementTemplateOverrides;
@@ -1173,6 +1196,8 @@ export function createPlayerStartEntity(
     id: overrides.id ?? createOpaqueId("entity-player-start"),
     kind: "playerStart",
     name: normalizeEntityName(overrides.name),
+    visible: resolveAuthoredEntityVisibility(overrides.visible),
+    enabled: resolveAuthoredEntityEnabled(overrides.enabled),
     position,
     yawDegrees: normalizeYawDegrees(yawDegrees),
     navigationMode,
@@ -1183,7 +1208,7 @@ export function createPlayerStartEntity(
 }
 
 export function createSceneEntryEntity(
-  overrides: Partial<Pick<SceneEntryEntity, "id" | "name" | "position" | "yawDegrees">> = {}
+  overrides: Partial<Pick<SceneEntryEntity, "id" | "name" | "visible" | "enabled" | "position" | "yawDegrees">> = {}
 ): SceneEntryEntity {
   const position = cloneVec3(overrides.position ?? DEFAULT_ENTITY_POSITION);
   const yawDegrees = overrides.yawDegrees ?? DEFAULT_SCENE_ENTRY_YAW_DEGREES;
@@ -1198,6 +1223,8 @@ export function createSceneEntryEntity(
     id: overrides.id ?? createOpaqueId("entity-scene-entry"),
     kind: "sceneEntry",
     name: normalizeEntityName(overrides.name),
+    visible: resolveAuthoredEntityVisibility(overrides.visible),
+    enabled: resolveAuthoredEntityEnabled(overrides.enabled),
     position,
     yawDegrees: normalizeYawDegrees(yawDegrees)
   };
@@ -1207,7 +1234,7 @@ export function createSoundEmitterEntity(
   overrides: Partial<
     Pick<
       SoundEmitterEntity,
-      "id" | "name" | "position" | "audioAssetId" | "volume" | "refDistance" | "maxDistance" | "autoplay" | "loop"
+      "id" | "name" | "visible" | "enabled" | "position" | "audioAssetId" | "volume" | "refDistance" | "maxDistance" | "autoplay" | "loop"
     >
   > = {}
 ): SoundEmitterEntity {
@@ -1235,6 +1262,8 @@ export function createSoundEmitterEntity(
     id: overrides.id ?? createOpaqueId("entity-sound-emitter"),
     kind: "soundEmitter",
     name: normalizeEntityName(overrides.name),
+    visible: resolveAuthoredEntityVisibility(overrides.visible),
+    enabled: resolveAuthoredEntityEnabled(overrides.enabled),
     position,
     audioAssetId,
     volume,
@@ -1246,7 +1275,7 @@ export function createSoundEmitterEntity(
 }
 
 export function createTriggerVolumeEntity(
-  overrides: Partial<Pick<TriggerVolumeEntity, "id" | "name" | "position" | "size" | "triggerOnEnter" | "triggerOnExit">> = {}
+  overrides: Partial<Pick<TriggerVolumeEntity, "id" | "name" | "visible" | "enabled" | "position" | "size" | "triggerOnEnter" | "triggerOnExit">> = {}
 ): TriggerVolumeEntity {
   const position = cloneVec3(overrides.position ?? DEFAULT_ENTITY_POSITION);
   const size = cloneVec3(overrides.size ?? DEFAULT_TRIGGER_VOLUME_SIZE);
@@ -1262,6 +1291,8 @@ export function createTriggerVolumeEntity(
     id: overrides.id ?? createOpaqueId("entity-trigger-volume"),
     kind: "triggerVolume",
     name: normalizeEntityName(overrides.name),
+    visible: resolveAuthoredEntityVisibility(overrides.visible),
+    enabled: resolveAuthoredEntityEnabled(overrides.enabled),
     position,
     size,
     triggerOnEnter,
@@ -1270,7 +1301,7 @@ export function createTriggerVolumeEntity(
 }
 
 export function createTeleportTargetEntity(
-  overrides: Partial<Pick<TeleportTargetEntity, "id" | "name" | "position" | "yawDegrees">> = {}
+  overrides: Partial<Pick<TeleportTargetEntity, "id" | "name" | "visible" | "enabled" | "position" | "yawDegrees">> = {}
 ): TeleportTargetEntity {
   const position = cloneVec3(overrides.position ?? DEFAULT_ENTITY_POSITION);
   const yawDegrees = overrides.yawDegrees ?? DEFAULT_TELEPORT_TARGET_YAW_DEGREES;
@@ -1285,31 +1316,35 @@ export function createTeleportTargetEntity(
     id: overrides.id ?? createOpaqueId("entity-teleport-target"),
     kind: "teleportTarget",
     name: normalizeEntityName(overrides.name),
+    visible: resolveAuthoredEntityVisibility(overrides.visible),
+    enabled: resolveAuthoredEntityEnabled(overrides.enabled),
     position,
     yawDegrees: normalizeYawDegrees(yawDegrees)
   };
 }
 
 export function createInteractableEntity(
-  overrides: Partial<Pick<InteractableEntity, "id" | "name" | "position" | "radius" | "prompt" | "enabled">> = {}
+  overrides: Partial<Pick<InteractableEntity, "id" | "name" | "visible" | "enabled" | "position" | "radius" | "prompt" | "interactionEnabled">> = {}
 ): InteractableEntity {
   const position = cloneVec3(overrides.position ?? DEFAULT_ENTITY_POSITION);
   const radius = overrides.radius ?? DEFAULT_INTERACTABLE_RADIUS;
   const prompt = normalizeInteractablePrompt(overrides.prompt ?? DEFAULT_INTERACTABLE_PROMPT);
-  const enabled = overrides.enabled ?? true;
+  const interactionEnabled = overrides.interactionEnabled ?? true;
 
   assertFiniteVec3(position, "Interactable position");
   assertPositiveFiniteNumber(radius, "Interactable radius");
-  assertBoolean(enabled, "Interactable enabled");
+  assertBoolean(interactionEnabled, "Interactable interactionEnabled");
 
   return {
     id: overrides.id ?? createOpaqueId("entity-interactable"),
     kind: "interactable",
     name: normalizeEntityName(overrides.name),
+    visible: resolveAuthoredEntityVisibility(overrides.visible),
+    enabled: resolveAuthoredEntityEnabled(overrides.enabled),
     position,
     radius,
     prompt,
-    enabled
+    interactionEnabled
   };
 }
 
@@ -1319,10 +1354,12 @@ export function createSceneExitEntity(
       SceneExitEntity,
       | "id"
       | "name"
+      | "visible"
+      | "enabled"
       | "position"
       | "radius"
       | "prompt"
-      | "enabled"
+      | "interactionEnabled"
       | "targetSceneId"
       | "targetEntryEntityId"
     >
@@ -1333,7 +1370,7 @@ export function createSceneExitEntity(
   const prompt = normalizeInteractablePrompt(
     overrides.prompt ?? DEFAULT_SCENE_EXIT_PROMPT
   );
-  const enabled = overrides.enabled ?? true;
+  const interactionEnabled = overrides.interactionEnabled ?? true;
   const targetSceneId = normalizeSceneReferenceId(
     overrides.targetSceneId,
     "Scene Exit target scene id"
@@ -1345,16 +1382,18 @@ export function createSceneExitEntity(
 
   assertFiniteVec3(position, "Scene Exit position");
   assertPositiveFiniteNumber(radius, "Scene Exit radius");
-  assertBoolean(enabled, "Scene Exit enabled");
+  assertBoolean(interactionEnabled, "Scene Exit interactionEnabled");
 
   return {
     id: overrides.id ?? createOpaqueId("entity-scene-exit"),
     kind: "sceneExit",
     name: normalizeEntityName(overrides.name),
+    visible: resolveAuthoredEntityVisibility(overrides.visible),
+    enabled: resolveAuthoredEntityEnabled(overrides.enabled),
     position,
     radius,
     prompt,
-    enabled,
+    interactionEnabled,
     targetSceneId,
     targetEntryEntityId
   };
@@ -1488,7 +1527,14 @@ export function cloneEntityRegistry(entities: Record<string, EntityInstance>): R
 }
 
 export function areEntityInstancesEqual(left: EntityInstance, right: EntityInstance): boolean {
-  if (left.kind !== right.kind || left.id !== right.id || left.name !== right.name || !areVec3Equal(left.position, right.position)) {
+  if (
+    left.kind !== right.kind ||
+    left.id !== right.id ||
+    left.name !== right.name ||
+    left.visible !== right.visible ||
+    left.enabled !== right.enabled ||
+    !areVec3Equal(left.position, right.position)
+  ) {
     return false;
   }
 
@@ -1560,14 +1606,18 @@ export function areEntityInstancesEqual(left: EntityInstance, right: EntityInsta
     }
     case "interactable": {
       const typedRight = right as InteractableEntity;
-      return left.radius === typedRight.radius && left.prompt === typedRight.prompt && left.enabled === typedRight.enabled;
+      return (
+        left.radius === typedRight.radius &&
+        left.prompt === typedRight.prompt &&
+        left.interactionEnabled === typedRight.interactionEnabled
+      );
     }
     case "sceneExit": {
       const typedRight = right as SceneExitEntity;
       return (
         left.radius === typedRight.radius &&
         left.prompt === typedRight.prompt &&
-        left.enabled === typedRight.enabled &&
+        left.interactionEnabled === typedRight.interactionEnabled &&
         left.targetSceneId === typedRight.targetSceneId &&
         left.targetEntryEntityId === typedRight.targetEntryEntityId
       );
@@ -1603,6 +1653,10 @@ export function getPlayerStartEntities(entities: Record<string, EntityInstance>)
 
 export function getPrimaryPlayerStartEntity(entities: Record<string, EntityInstance>): PlayerStartEntity | null {
   return getPlayerStartEntities(entities)[0] ?? null;
+}
+
+export function getPrimaryEnabledPlayerStartEntity(entities: Record<string, EntityInstance>): PlayerStartEntity | null {
+  return getPlayerStartEntities(entities).find((entity) => entity.enabled) ?? null;
 }
 
 export function getEntityKindLabel(kind: EntityKind): string {

@@ -122,6 +122,8 @@ export interface BoxBrush {
   id: string;
   kind: "box";
   name?: string;
+  visible: boolean;
+  enabled: boolean;
   center: Vec3;
   rotationDegrees: Vec3;
   size: Vec3;
@@ -151,6 +153,9 @@ export const DEFAULT_BOX_BRUSH_ROTATION_DEGREES: Vec3 = {
   y: 0,
   z: 0
 };
+
+export const DEFAULT_BOX_BRUSH_VISIBLE = true;
+export const DEFAULT_BOX_BRUSH_ENABLED = true;
 
 export const DEFAULT_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT = 6;
 export const MAX_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT = 24;
@@ -482,7 +487,7 @@ export function cloneBoxBrushVolumeSettings(volume: BoxBrushVolumeSettings): Box
 
 export function createBoxBrush(
   overrides: Partial<
-    Pick<BoxBrush, "id" | "name" | "center" | "rotationDegrees" | "size" | "geometry" | "faces" | "volume" | "layerId" | "groupId">
+    Pick<BoxBrush, "id" | "name" | "visible" | "enabled" | "center" | "rotationDegrees" | "size" | "geometry" | "faces" | "volume" | "layerId" | "groupId">
   > = {}
 ): BoxBrush {
   const center = cloneVec3(overrides.center ?? DEFAULT_BOX_BRUSH_CENTER);
@@ -490,15 +495,27 @@ export function createBoxBrush(
   const fallbackSize = cloneVec3(overrides.size ?? DEFAULT_BOX_BRUSH_SIZE);
   const geometry = overrides.geometry === undefined ? createDefaultBoxBrushGeometry(fallbackSize) : cloneBoxBrushGeometry(overrides.geometry);
   const size = deriveBoxBrushSizeFromGeometry(geometry);
+  const visible = overrides.visible ?? DEFAULT_BOX_BRUSH_VISIBLE;
+  const enabled = overrides.enabled ?? DEFAULT_BOX_BRUSH_ENABLED;
 
   if (!hasPositiveBoxSize(size)) {
     throw new Error("Box brush size must remain positive on every axis.");
+  }
+
+  if (typeof visible !== "boolean") {
+    throw new Error("Box brush visible must be a boolean.");
+  }
+
+  if (typeof enabled !== "boolean") {
+    throw new Error("Box brush enabled must be a boolean.");
   }
 
   return {
     id: overrides.id ?? createOpaqueId("brush"),
     kind: "box",
     name: normalizeBrushName(overrides.name),
+    visible,
+    enabled,
     center,
     rotationDegrees,
     size,
