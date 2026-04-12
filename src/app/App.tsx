@@ -3292,16 +3292,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
   };
 
   const applyProjectTimeSettings = (
-    startTimeOfDayHours: number,
-    dayLengthMinutes: number,
+    nextTime: ProjectTimeSettings,
     label: string,
     successMessage: string
   ) => {
-    const nextTime = {
-      startTimeOfDayHours,
-      dayLengthMinutes
-    };
-
     if (areProjectTimeSettingsEqual(editorState.projectDocument.time, nextTime)) {
       return;
     }
@@ -3319,42 +3313,132 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
-  const applyProjectTimeStartTimeOfDay = () => {
+  const updateProjectTimeSettings = (
+    label: string,
+    successMessage: string,
+    mutate: (time: ProjectTimeSettings) => void
+  ) => {
     try {
-      const startTimeOfDayHours = normalizeTimeOfDayHours(
-        readFiniteNumberDraft(
-          projectTimeStartTimeOfDayDraft,
-          "Project start time"
-        )
-      );
-
-      applyProjectTimeSettings(
-        startTimeOfDayHours,
-        editorState.projectDocument.time.dayLengthMinutes,
-        "Set project start time",
-        `Project time will start at ${formatTimeOfDayHours(startTimeOfDayHours)}.`
-      );
+      const nextTime = cloneProjectTimeSettings(editorState.projectDocument.time);
+      mutate(nextTime);
+      assertProjectTimeSettingsAreOrdered(nextTime);
+      applyProjectTimeSettings(nextTime, label, successMessage);
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
     }
   };
 
-  const applyProjectTimeDayLengthMinutes = () => {
-    try {
-      const dayLengthMinutes = readPositiveNumberDraft(
-        projectTimeDayLengthMinutesDraft,
-        "Project day duration"
-      );
+  const applyProjectTimeStartDayNumber = () => {
+    updateProjectTimeSettings(
+      "Set project start day",
+      `Runner sessions will begin on day ${projectTimeStartDayNumberDraft}.`,
+      (time) => {
+        time.startDayNumber = readPositiveIntegerDraft(
+          projectTimeStartDayNumberDraft,
+          "Project start day"
+        );
+      }
+    );
+  };
 
-      applyProjectTimeSettings(
-        editorState.projectDocument.time.startTimeOfDayHours,
-        dayLengthMinutes,
-        "Set project day length",
-        `Project time will advance one full day every ${dayLengthMinutes} real minutes.`
-      );
-    } catch (error) {
-      setStatusMessage(getErrorMessage(error));
-    }
+  const applyProjectTimeStartTimeOfDay = () => {
+    updateProjectTimeSettings(
+      "Set project start time",
+      `Project time will start at ${formatTimeOfDayHours(Number(projectTimeStartTimeOfDayDraft))}.`,
+      (time) => {
+        time.startTimeOfDayHours = normalizeTimeOfDayHours(
+          readFiniteNumberDraft(projectTimeStartTimeOfDayDraft, "Project start time")
+        );
+      }
+    );
+  };
+
+  const applyProjectTimeDayLengthMinutes = () => {
+    updateProjectTimeSettings(
+      "Set project day length",
+      `Project time will advance one full day every ${projectTimeDayLengthMinutesDraft} real minutes.`,
+      (time) => {
+        time.dayLengthMinutes = readPositiveNumberDraft(
+          projectTimeDayLengthMinutesDraft,
+          "Project day duration"
+        );
+      }
+    );
+  };
+
+  const applyProjectTimeSunriseTimeOfDay = () => {
+    updateProjectTimeSettings(
+      "Set project sunrise",
+      `Project sunrise will occur at ${formatTimeOfDayHours(Number(projectTimeSunriseTimeOfDayDraft))}.`,
+      (time) => {
+        time.sunriseTimeOfDayHours = normalizeTimeOfDayHours(
+          readFiniteNumberDraft(projectTimeSunriseTimeOfDayDraft, "Project sunrise")
+        );
+      }
+    );
+  };
+
+  const applyProjectTimeSunsetTimeOfDay = () => {
+    updateProjectTimeSettings(
+      "Set project sunset",
+      `Project sunset will occur at ${formatTimeOfDayHours(Number(projectTimeSunsetTimeOfDayDraft))}.`,
+      (time) => {
+        time.sunsetTimeOfDayHours = normalizeTimeOfDayHours(
+          readFiniteNumberDraft(projectTimeSunsetTimeOfDayDraft, "Project sunset")
+        );
+      }
+    );
+  };
+
+  const applyProjectTimeDawnDurationHours = () => {
+    updateProjectTimeSettings(
+      "Set project dawn duration",
+      `Project dawn will blend over ${projectTimeDawnDurationHoursDraft} in-game hours.`,
+      (time) => {
+        time.dawnDurationHours = readPositiveNumberDraft(
+          projectTimeDawnDurationHoursDraft,
+          "Project dawn duration"
+        );
+      }
+    );
+  };
+
+  const applyProjectTimeDuskDurationHours = () => {
+    updateProjectTimeSettings(
+      "Set project dusk duration",
+      `Project dusk will blend over ${projectTimeDuskDurationHoursDraft} in-game hours.`,
+      (time) => {
+        time.duskDurationHours = readPositiveNumberDraft(
+          projectTimeDuskDurationHoursDraft,
+          "Project dusk duration"
+        );
+      }
+    );
+  };
+
+  const applyProjectTimePhaseColor = (
+    phase: ProjectTimePhaseKey,
+    field: ProjectTimePhaseColorField,
+    colorHex: string,
+    label: string,
+    successMessage: string
+  ) => {
+    updateProjectTimeSettings(label, successMessage, (time) => {
+      time[phase][field] = colorHex;
+    });
+  };
+
+  const applyProjectTimePhaseNumericField = (
+    phase: ProjectTimePhaseKey,
+    field: ProjectTimePhaseNumericField,
+    draftValue: string,
+    label: string,
+    draftLabel: string,
+    successMessage: string
+  ) => {
+    updateProjectTimeSettings(label, successMessage, (time) => {
+      time[phase][field] = readNonNegativeNumberDraft(draftValue, draftLabel);
+    });
   };
 
   const applySceneName = () => {
