@@ -563,49 +563,34 @@ export function resolveRuntimeDayNightWorldState(
     settings.night.ambientIntensityFactor,
     phaseWeights
   );
-
-  const beforeSunrise = normalizedTime < settings.sunriseTimeOfDayHours;
-  const afterSunset = normalizedTime >= settings.sunsetTimeOfDayHours;
   let moonLight: WorldSunLightSettings | null = null;
 
-  if (beforeSunrise || afterSunset || phaseWeights.night > 0) {
-    let moonColorHex = settings.night.lightColorHex;
-    let moonVisibilityFactor = phaseWeights.night;
+  const moonVisibilityFactor = clamp(
+    phaseWeights.night + phaseWeights.dawn * 0.45 + phaseWeights.dusk * 0.45,
+    0,
+    1
+  );
 
-    if (beforeSunrise && phaseWeights.dawn > 0) {
-      const twilightBlend =
-        phaseWeights.dawn /
-        Math.max(phaseWeights.dawn + phaseWeights.night, 0.001);
-      moonColorHex = blendHexColors(
+  if (moonVisibilityFactor > 1e-4) {
+    moonLight = {
+      colorHex: blendHexColorsByWeights(
         settings.night.lightColorHex,
         settings.dawn.lightColorHex,
-        twilightBlend
-      );
-      moonVisibilityFactor = phaseWeights.night + phaseWeights.dawn * 0.45;
-    } else if (afterSunset && phaseWeights.dusk > 0) {
-      const twilightBlend =
-        phaseWeights.dusk /
-        Math.max(phaseWeights.dusk + phaseWeights.night, 0.001);
-      moonColorHex = blendHexColors(
-        settings.night.lightColorHex,
         settings.dusk.lightColorHex,
-        twilightBlend
-      );
-      moonVisibilityFactor = phaseWeights.night + phaseWeights.dusk * 0.45;
-    }
-
-    moonVisibilityFactor = clamp(moonVisibilityFactor, 0, 1);
-
-    if (moonVisibilityFactor > 1e-4) {
-      moonLight = {
-        colorHex: moonColorHex,
-        intensity:
-          world.sunLight.intensity *
-          settings.night.lightIntensityFactor *
-          moonVisibilityFactor,
-        direction: scaleVec3(sunDirection, -1)
-      };
-    }
+        settings.night.lightColorHex,
+        {
+          day: 0,
+          dawn: phaseWeights.dawn,
+          dusk: phaseWeights.dusk,
+          night: phaseWeights.night
+        }
+      ),
+      intensity:
+        world.sunLight.intensity *
+        settings.night.lightIntensityFactor *
+        moonVisibilityFactor,
+      direction: scaleVec3(sunDirection, -1)
+    };
   }
 
   return {
