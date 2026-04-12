@@ -2482,6 +2482,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
     setProjectTimeNightLightIntensityFactorDraft(
       String(projectTime.night.lightIntensityFactor)
     );
+    setProjectTimeNightBackgroundEnvironmentIntensityDraft(
+      String(projectTime.nightBackground.environmentIntensity)
+    );
   }, [editorState.projectDocument.time]);
 
   useEffect(() => {
