@@ -850,6 +850,7 @@ export class RuntimeHost {
     for (const brush of brushes) {
       const geometryBrush: BoxBrush = {
         id: brush.id,
+        kind: "box",
         name: undefined,
         visible: brush.visible,
         enabled: true,
