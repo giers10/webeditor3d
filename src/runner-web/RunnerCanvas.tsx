@@ -13,6 +13,7 @@ import {
 } from "../runtime-three/runtime-host";
 import type { RuntimeInteractionPrompt } from "../runtime-three/runtime-interaction-system";
 import {
+  createRuntimeClockState,
   resolveRuntimeDayNightWorldState,
   type RuntimeClockState
 } from "../runtime-three/runtime-project-time";
@@ -31,9 +32,9 @@ interface RunnerCanvasProps {
   loadedImageAssets: Record<string, LoadedImageAsset>;
   loadedAudioAssets: Record<string, LoadedAudioAsset>;
   navigationMode: RuntimeNavigationMode;
-  runtimeClock: RuntimeClockState;
+  runtimeClock?: RuntimeClockState;
   onRuntimeMessageChange(message: string | null): void;
-  onRuntimeClockChange(clock: RuntimeClockState): void;
+  onRuntimeClockChange?(clock: RuntimeClockState): void;
   onFirstPersonTelemetryChange(telemetry: FirstPersonTelemetry | null): void;
   onInteractionPromptChange(prompt: RuntimeInteractionPrompt | null): void;
   onSceneExitActivated(request: RuntimeSceneExitTransitionRequest): void;
@@ -48,9 +49,9 @@ export function RunnerCanvas({
   loadedImageAssets,
   loadedAudioAssets,
   navigationMode,
-  runtimeClock,
+  runtimeClock = createRuntimeClockState(runtimeScene.time),
   onRuntimeMessageChange,
-  onRuntimeClockChange,
+  onRuntimeClockChange = () => {},
   onFirstPersonTelemetryChange,
   onInteractionPromptChange,
   onSceneExitActivated
@@ -90,7 +91,7 @@ export function RunnerCanvas({
       runtimeHost.mount(container);
       runtimeHost.setRuntimeMessageHandler(onRuntimeMessageChange);
       runtimeHost.setSceneLoadStateHandler(setSceneLoadState);
-      runtimeHost.setRuntimeClockStateHandler(onRuntimeClockChange);
+      runtimeHost.setRuntimeClockStateHandler?.(onRuntimeClockChange);
       runtimeHost.setFirstPersonTelemetryHandler((telemetry) => {
         setFirstPersonTelemetry(telemetry);
         onFirstPersonTelemetryChange(telemetry);
@@ -136,7 +137,7 @@ export function RunnerCanvas({
   }, [onSceneExitActivated]);
 
   useEffect(() => {
-    hostRef.current?.setRuntimeClockStateHandler(onRuntimeClockChange);
+    hostRef.current?.setRuntimeClockStateHandler?.(onRuntimeClockChange);
   }, [onRuntimeClockChange]);
 
   useEffect(() => {
