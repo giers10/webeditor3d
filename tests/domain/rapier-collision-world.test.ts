@@ -703,13 +703,13 @@ describe("RapierCollisionWorld", () => {
         z: -0.4
       };
 
-      for (let index = 0; index < 14; index += 1) {
+      for (let index = 0; index < 32; index += 1) {
         feetPosition = collisionWorld.resolveFirstPersonMotion(
           feetPosition,
           {
             x: 0,
             y: 0,
-            z: 0.25
+            z: 0.1
           },
           runtimeScene.playerCollider
         ).feetPosition;
