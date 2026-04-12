@@ -8,7 +8,10 @@ import {
   type AudioAssetRecord,
   type ImageAssetRecord
 } from "../../src/assets/project-assets";
-import { createEmptyProjectDocument } from "../../src/document/scene-document";
+import {
+  createEmptyProjectDocument,
+  type ProjectDocument
+} from "../../src/document/scene-document";
 import { createDefaultWorldSettings } from "../../src/document/world-settings";
 import {
   createSoundEmitterEntity,
@@ -80,7 +83,7 @@ function createProjectDocumentFixture() {
     autoplay: true,
     loop: true
   });
-  const projectDocument = {
+  const projectDocument: ProjectDocument = {
     ...baseProjectDocument,
     assets: {
       ...baseProjectDocument.assets,
