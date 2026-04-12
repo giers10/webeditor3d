@@ -3217,6 +3217,72 @@ export function App({ store, initialStatusMessage }: AppProps) {
     setStatusMessage(`Project renamed to ${normalizedName}.`);
   };
 
+  const applyProjectTimeSettings = (
+    startTimeOfDayHours: number,
+    dayLengthMinutes: number,
+    label: string,
+    successMessage: string
+  ) => {
+    const nextTime = {
+      startTimeOfDayHours,
+      dayLengthMinutes
+    };
+
+    if (areProjectTimeSettingsEqual(editorState.projectDocument.time, nextTime)) {
+      return;
+    }
+
+    try {
+      store.executeCommand(
+        createSetProjectTimeSettingsCommand({
+          label,
+          time: nextTime
+        })
+      );
+      setStatusMessage(successMessage);
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const applyProjectTimeStartTimeOfDay = () => {
+    try {
+      const startTimeOfDayHours = normalizeTimeOfDayHours(
+        readFiniteNumberDraft(
+          projectTimeStartTimeOfDayDraft,
+          "Project start time"
+        )
+      );
+
+      applyProjectTimeSettings(
+        startTimeOfDayHours,
+        editorState.projectDocument.time.dayLengthMinutes,
+        "Set project start time",
+        `Project time will start at ${formatTimeOfDayHours(startTimeOfDayHours)}.`
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const applyProjectTimeDayLengthMinutes = () => {
+    try {
+      const dayLengthMinutes = readPositiveNumberDraft(
+        projectTimeDayLengthMinutesDraft,
+        "Project day duration"
+      );
+
+      applyProjectTimeSettings(
+        editorState.projectDocument.time.startTimeOfDayHours,
+        dayLengthMinutes,
+        "Set project day length",
+        `Project time will advance one full day every ${dayLengthMinutes} real minutes.`
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
   const applySceneName = () => {
     const normalizedName = sceneNameDraft.trim() || "Untitled Scene";
 
@@ -4170,6 +4236,17 @@ export function App({ store, initialStatusMessage }: AppProps) {
       cloneSceneLoadingScreenSettings(projectScene.loadingScreen)
     );
     setActiveNavigationMode(nextRuntimeScene.navigationMode);
+  };
+
+  const handleRuntimeClockChange = (clock: RuntimeClockState) => {
+    setRuntimeGlobalState((currentState) =>
+      areRuntimeClockStatesEqual(currentState.clock, clock)
+        ? currentState
+        : {
+            ...currentState,
+            clock
+          }
+    );
   };
 
   const handleRunnerSceneExitActivated = (
