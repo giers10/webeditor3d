@@ -9104,12 +9104,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         }
                       />
                     </label>
-                    <div className="material-summary">
-                      Daylight uses each scene's authored World settings as the daytime baseline.
-                    </div>
                   </div>
                   <div className="material-summary">
-                    Default is 24 real minutes for one full 24-hour cycle.
+                    Default is 24 real minutes for one full 24-hour cycle. Daylight uses each scene's authored World settings as the daytime baseline.
                   </div>
                 </div>
 
