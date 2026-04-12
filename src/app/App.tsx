@@ -13,6 +13,7 @@ import { createCreateBoxBrushCommand } from "../commands/create-box-brush-comman
 import { createCreateSceneCommand } from "../commands/create-scene-command";
 import { createDeleteBoxBrushCommand } from "../commands/delete-box-brush-command";
 import { createDeleteEntityCommand } from "../commands/delete-entity-command";
+import { createDeleteProjectAssetCommand } from "../commands/delete-project-asset-command";
 import { createDuplicateSelectionCommand } from "../commands/duplicate-selection-command";
 import { createImportAudioAssetCommand } from "../commands/import-audio-asset-command";
 import { createImportBackgroundImageAssetCommand } from "../commands/import-background-image-asset-command";
@@ -24,11 +25,14 @@ import { createRotateBoxBrushCommand } from "../commands/rotate-box-brush-comman
 import { createResizeBoxBrushCommand } from "../commands/resize-box-brush-command";
 import { createSetBoxBrushFaceMaterialCommand } from "../commands/set-box-brush-face-material-command";
 import { createSetBoxBrushNameCommand } from "../commands/set-box-brush-name-command";
+import { createSetBoxBrushAuthoredStateCommand } from "../commands/set-box-brush-authored-state-command";
 import { createSetBoxBrushVolumeSettingsCommand } from "../commands/set-box-brush-volume-settings-command";
+import { createSetEntityAuthoredStateCommand } from "../commands/set-entity-authored-state-command";
 import { createSetEntityNameCommand } from "../commands/set-entity-name-command";
 import { createSetBoxBrushFaceUvStateCommand } from "../commands/set-box-brush-face-uv-state-command";
 import { createSetActiveSceneCommand } from "../commands/set-active-scene-command";
 import { createDeleteInteractionLinkCommand } from "../commands/delete-interaction-link-command";
+import { createSetModelInstanceAuthoredStateCommand } from "../commands/set-model-instance-authored-state-command";
 import { createSetModelInstanceNameCommand } from "../commands/set-model-instance-name-command";
 import { createSetProjectNameCommand } from "../commands/set-project-name-command";
 import { createSetSceneLoadingScreenCommand } from "../commands/set-scene-loading-screen-command";
@@ -161,7 +165,9 @@ import {
   validateSceneDocument
 } from "../document/scene-document-validation";
 import {
+  cloneProjectAssetStorageRecord,
   getBrowserProjectAssetStorageAccess,
+  type ProjectAssetStorageRecord,
   type ProjectAssetStorage
 } from "../assets/project-asset-storage";
 import {
@@ -221,7 +227,7 @@ import {
   createTriggerVolumeEntity,
   getEntityInstances,
   getEntityKindLabel,
-  getPrimaryPlayerStartEntity,
+  getPrimaryEnabledPlayerStartEntity,
   normalizeEntityName,
   normalizeYawDegrees,
   normalizeInteractablePrompt,
@@ -899,6 +905,17 @@ function formatAudioAssetSummary(asset: AudioAssetRecord): string {
   return details.join(" | ");
 }
 
+function formatProjectAssetSummary(asset: ProjectAssetRecord): string {
+  switch (asset.kind) {
+    case "model":
+      return formatModelAssetSummary(asset);
+    case "image":
+      return formatImageAssetSummary(asset);
+    case "audio":
+      return formatAudioAssetSummary(asset);
+  }
+}
+
 function formatAssetHoverStatus(asset: ProjectAssetRecord): string {
   const details = [
     `${getProjectAssetKindLabel(asset.kind)} asset`,
@@ -1490,7 +1507,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     editorState.document.entities,
     editorState.document.assets
   );
-  const primaryPlayerStart = getPrimaryPlayerStartEntity(
+  const primaryPlayerStart = getPrimaryEnabledPlayerStartEntity(
     editorState.document.entities
   );
   const materialList = sortDocumentMaterials(editorState.document.materials);
