@@ -576,6 +576,8 @@ function validatePointLightEntity(
   path: string,
   diagnostics: SceneDiagnostic[]
 ) {
+  validateAuthoredEntityState(entity, path, diagnostics);
+
   if (!isFiniteVec3(entity.position)) {
     diagnostics.push(
       createDiagnostic(
@@ -626,6 +628,8 @@ function validateSpotLightEntity(
   path: string,
   diagnostics: SceneDiagnostic[]
 ) {
+  validateAuthoredEntityState(entity, path, diagnostics);
+
   if (!isFiniteVec3(entity.position)) {
     diagnostics.push(
       createDiagnostic(
