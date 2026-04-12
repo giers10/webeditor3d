@@ -1,6 +1,5 @@
 import type { ProjectDocument, ProjectScene } from "../document/scene-document";
 import { createDefaultWorldSettings } from "../document/world-settings";
-import type { InteractionLink } from "../interactions/interaction-links";
 
 import type { ProjectAssetRecord } from "./project-assets";
 
