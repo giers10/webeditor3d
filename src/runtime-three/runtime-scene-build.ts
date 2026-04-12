@@ -846,6 +846,7 @@ export function buildRuntimeSceneFromDocument(document: SceneDocument, options: 
         };
 
   return {
+    time: cloneProjectTimeSettings(document.time),
     world: cloneWorldSettings(document.world),
     localLights: collections.localLights,
     brushes,
