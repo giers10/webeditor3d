@@ -82,6 +82,15 @@ import {
   type RuntimeInteractionPrompt
 } from "./runtime-interaction-system";
 import { RuntimeAudioSystem } from "./runtime-audio-system";
+import {
+  advanceRuntimeClockState,
+  areRuntimeClockStatesEqual,
+  cloneRuntimeClockState,
+  createRuntimeClockState,
+  reconfigureRuntimeClockState,
+  resolveRuntimeDayNightWorldState,
+  type RuntimeClockState
+} from "./runtime-project-time";
 import { ThirdPersonNavigationController } from "./third-person-navigation-controller";
 import { resolveUnderwaterFogState } from "./underwater-fog";
 import { resolveWaterContact } from "./water-volume-utils";
@@ -213,7 +222,13 @@ export class RuntimeHost {
     null;
   private currentInteractionPrompt: RuntimeInteractionPrompt | null = null;
   private currentSceneLoadState: RuntimeSceneLoadState | null = null;
+  private currentClockState: RuntimeClockState | null = null;
+  private lastPublishedClockState: RuntimeClockState | null = null;
   private currentPlayerAudioHooks: RuntimePlayerAudioHookState | null = null;
+  private runtimeClockStateHandler:
+    | ((state: RuntimeClockState) => void)
+    | null = null;
+  private clockPublishAccumulator = 0;
   private cameraEffectVerticalOffset = 0;
   private cameraEffectVerticalVelocity = 0;
   private cameraEffectPitchOffset = 0;
@@ -396,6 +411,7 @@ export class RuntimeHost {
     this.sceneReady = false;
     this.runtimeScene = runtimeScene;
     this.currentWorld = runtimeScene.world;
+    this.syncRuntimeClockState(runtimeScene.time);
     this.activeController?.deactivate(this.controllerContext, {
       releasePointerLock: !preservePointerLockDuringLoad
     });
@@ -492,6 +508,16 @@ export class RuntimeHost {
     }
   }
 
+  setRuntimeClockStateHandler(
+    handler: ((state: RuntimeClockState) => void) | null
+  ) {
+    this.runtimeClockStateHandler = handler;
+
+    if (handler !== null && this.currentClockState !== null) {
+      handler(cloneRuntimeClockState(this.currentClockState));
+    }
+  }
+
   setSceneExitHandler(
     handler:
       | ((request: RuntimeSceneExitTransitionRequest) => void)
@@ -522,6 +548,8 @@ export class RuntimeHost {
     this.advancedRenderingComposer = null;
     this.currentAdvancedRenderingSettings = null;
     this.scene.fog = null;
+    this.currentClockState = null;
+    this.lastPublishedClockState = null;
     if (this.renderer !== null) {
       this.renderer.autoClear = true;
     }
@@ -556,6 +584,34 @@ export class RuntimeHost {
 
     this.currentSceneLoadState = state;
     this.sceneLoadStateHandler?.(state);
+  }
+
+  private syncRuntimeClockState(timeSettings: RuntimeSceneDefinition["time"]) {
+    this.currentClockState =
+      this.currentClockState === null
+        ? createRuntimeClockState(timeSettings)
+        : reconfigureRuntimeClockState(this.currentClockState, timeSettings);
+    this.clockPublishAccumulator = 0;
+    this.publishRuntimeClockState(true);
+  }
+
+  private publishRuntimeClockState(force = false) {
+    if (this.currentClockState === null) {
+      return;
+    }
+
+    const nextState = cloneRuntimeClockState(this.currentClockState);
+
+    if (
+      !force &&
+      this.lastPublishedClockState !== null &&
+      areRuntimeClockStatesEqual(this.lastPublishedClockState, nextState)
+    ) {
+      return;
+    }
+
+    this.lastPublishedClockState = nextState;
+    this.runtimeClockStateHandler?.(cloneRuntimeClockState(nextState));
   }
 
   private activateDesiredNavigationController() {
@@ -631,18 +687,6 @@ export class RuntimeHost {
     }
 
     const world = this.currentWorld;
-    this.ambientLight.color.set(world.ambientLight.colorHex);
-    this.ambientLight.intensity = world.ambientLight.intensity;
-    this.sunLight.color.set(world.sunLight.colorHex);
-    this.sunLight.intensity = world.sunLight.intensity;
-    this.sunLight.position
-      .set(
-        world.sunLight.direction.x,
-        world.sunLight.direction.y,
-        world.sunLight.direction.z
-      )
-      .normalize()
-      .multiplyScalar(18);
 
     if (world.background.mode === "image") {
       const texture =
@@ -656,6 +700,8 @@ export class RuntimeHost {
       this.scene.environmentIntensity = 1;
     }
 
+    this.applyDayNightLighting();
+
     if (this.renderer !== null) {
       configureAdvancedRenderingRenderer(
         this.renderer,
@@ -665,6 +711,30 @@ export class RuntimeHost {
     }
 
     this.applyShadowState();
+  }
+
+  private applyDayNightLighting() {
+    if (this.currentWorld === null) {
+      return;
+    }
+
+    const resolvedWorld = resolveRuntimeDayNightWorldState(
+      this.currentWorld,
+      this.currentClockState
+    );
+
+    this.ambientLight.color.set(resolvedWorld.ambientLight.colorHex);
+    this.ambientLight.intensity = resolvedWorld.ambientLight.intensity;
+    this.sunLight.color.set(resolvedWorld.sunLight.colorHex);
+    this.sunLight.intensity = resolvedWorld.sunLight.intensity;
+    this.sunLight.position
+      .set(
+        resolvedWorld.sunLight.direction.x,
+        resolvedWorld.sunLight.direction.y,
+        resolvedWorld.sunLight.direction.z
+      )
+      .normalize()
+      .multiplyScalar(18);
   }
 
   private async buildCollisionWorld(
@@ -1748,6 +1818,20 @@ export class RuntimeHost {
     this.volumeTime += dt;
     for (const uniform of this.volumeAnimatedUniforms) {
       uniform.value = this.volumeTime;
+    }
+
+    if (this.currentClockState !== null) {
+      this.currentClockState = advanceRuntimeClockState(
+        this.currentClockState,
+        dt
+      );
+      this.applyDayNightLighting();
+      this.clockPublishAccumulator += dt;
+
+      if (this.clockPublishAccumulator >= 0.25) {
+        this.clockPublishAccumulator = 0;
+        this.publishRuntimeClockState();
+      }
     }
 
     for (const mixer of this.animationMixers.values()) {
