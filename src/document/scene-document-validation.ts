@@ -42,6 +42,10 @@ import {
   type SceneDocument
 } from "./scene-document";
 import {
+  HOURS_PER_DAY,
+  type ProjectTimeSettings
+} from "./project-time-settings";
+import {
   isAdvancedRenderingWaterReflectionMode,
   isAdvancedRenderingShadowMapSize,
   isAdvancedRenderingShadowType,
@@ -567,6 +571,46 @@ function validateWorldSettings(
         "invalid-advanced-rendering-water-reflection-mode",
         "Advanced rendering water reflection mode must be none, world, or all.",
         "world.advancedRendering.waterReflectionMode"
+      )
+    );
+  }
+}
+
+function validateProjectTimeSettings(
+  time: ProjectTimeSettings,
+  diagnostics: SceneDiagnostic[],
+  path = "time"
+) {
+  if (!isFiniteNumber(time.startTimeOfDayHours)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-project-time-start-hours",
+        "Project time start-of-day must be a finite hour value.",
+        `${path}.startTimeOfDayHours`
+      )
+    );
+  } else if (
+    time.startTimeOfDayHours < 0 ||
+    time.startTimeOfDayHours >= HOURS_PER_DAY
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-project-time-start-range",
+        "Project time start-of-day must stay within the 0..24 hour range.",
+        `${path}.startTimeOfDayHours`
+      )
+    );
+  }
+
+  if (!isPositiveFiniteNumber(time.dayLengthMinutes)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-project-time-day-length",
+        "Project time day length must be a positive finite number of real minutes.",
+        `${path}.dayLengthMinutes`
       )
     );
   }
@@ -2452,6 +2496,7 @@ function filterProjectSceneDiagnostics(
     (diagnostic) =>
       diagnostic.path === undefined ||
       (!diagnostic.path.startsWith("materials.") &&
+        !diagnostic.path.startsWith("time.") &&
         !diagnostic.path.startsWith("assets."))
   );
 }
@@ -2647,6 +2692,7 @@ export function validateSceneDocument(
   const diagnostics: SceneDiagnostic[] = [];
   const seenIds = new Map<string, string>();
 
+  validateProjectTimeSettings(document.time, diagnostics);
   validateWorldSettings(document.world, document, diagnostics);
 
   for (const [materialKey, material] of Object.entries(document.materials)) {
@@ -3091,6 +3137,7 @@ export function validateProjectDocument(
     );
   }
 
+  validateProjectTimeSettings(document.time, diagnostics);
   validateProjectResources(document, diagnostics);
 
   for (const [sceneKey, scene] of Object.entries(document.scenes)) {
