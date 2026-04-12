@@ -2,12 +2,16 @@ import { createOpaqueId } from "../core/ids";
 import { cloneEditorSelection, type EditorSelection } from "../core/selection";
 import type { ToolMode } from "../core/tool-mode";
 import { deleteProjectAssetFromProjectDocument } from "../assets/delete-project-asset";
+import type {
+  ProjectDocument,
+  SceneDocument
+} from "../document/scene-document";
 
 import type { EditorCommand } from "./command";
 
 function selectionTargetsMissingObject(
   selection: EditorSelection,
-  activeScene: ReturnType<EditorCommand["execute"]> extends never ? never : { modelInstances: Record<string, unknown>; entities: Record<string, unknown> }
+  activeScene: Pick<SceneDocument, "modelInstances" | "entities">
 ): boolean {
   if (selection.kind === "modelInstances") {
     return selection.ids.some((id) => activeScene.modelInstances[id] === undefined);
@@ -23,8 +27,7 @@ function selectionTargetsMissingObject(
 export function createDeleteProjectAssetCommand(assetId: string): EditorCommand {
   let previousSelection: EditorSelection | null = null;
   let previousToolMode: ToolMode | null = null;
-  let previousProjectDocument = null;
-  let assetLabel: string | null = null;
+  let previousProjectDocument: ProjectDocument | null = null;
 
   return {
     id: createOpaqueId("command"),
@@ -49,14 +52,14 @@ export function createDeleteProjectAssetCommand(assetId: string): EditorCommand 
         previousToolMode = context.getToolMode();
       }
 
-      assetLabel = currentAsset.sourceName;
       const nextProjectDocument = deleteProjectAssetFromProjectDocument(
         currentProjectDocument,
         assetId
       );
       context.setProjectDocument(nextProjectDocument);
 
-      const activeScene = nextProjectDocument.scenes[nextProjectDocument.activeSceneId];
+      const activeScene =
+        nextProjectDocument.scenes[nextProjectDocument.activeSceneId];
 
       if (selectionTargetsMissingObject(context.getSelection(), activeScene)) {
         context.setSelection({ kind: "none" });
