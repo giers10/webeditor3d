@@ -727,6 +727,152 @@ describe("buildRuntimeSceneFromDocument", () => {
     );
   });
 
+  it("keeps hidden authored objects active but excludes disabled authored objects from the runtime build", () => {
+    const hiddenBrush = createBoxBrush({
+      id: "brush-hidden-runtime",
+      visible: false
+    });
+    const disabledBrush = createBoxBrush({
+      id: "brush-disabled-runtime",
+      enabled: false
+    });
+    const { asset, loadedAsset } = createFixtureLoadedModelAssetFromGeometry(
+      "asset-authored-state-runtime",
+      new BoxGeometry(1, 1, 1)
+    );
+    const hiddenModelInstance = createModelInstance({
+      id: "model-instance-hidden-runtime",
+      assetId: asset.id,
+      visible: false,
+      collision: {
+        mode: "static",
+        visible: false
+      }
+    });
+    const disabledModelInstance = createModelInstance({
+      id: "model-instance-disabled-runtime",
+      assetId: asset.id,
+      enabled: false,
+      collision: {
+        mode: "static",
+        visible: false
+      }
+    });
+    const disabledPlayerStart = createPlayerStartEntity({
+      id: "entity-player-start-disabled-runtime",
+      enabled: false,
+      position: {
+        x: -4,
+        y: 0,
+        z: 0
+      }
+    });
+    const enabledPlayerStart = createPlayerStartEntity({
+      id: "entity-player-start-enabled-runtime",
+      position: {
+        x: 4,
+        y: 0,
+        z: 0
+      }
+    });
+    const hiddenInteractable = createInteractableEntity({
+      id: "entity-interactable-hidden-runtime",
+      visible: false,
+      interactionEnabled: true,
+      prompt: "Hidden but active"
+    });
+    const disabledInteractable = createInteractableEntity({
+      id: "entity-interactable-disabled-runtime",
+      enabled: false,
+      interactionEnabled: true,
+      prompt: "Disabled"
+    });
+    const teleportTarget = createTeleportTargetEntity({
+      id: "entity-teleport-target-runtime",
+      position: {
+        x: 12,
+        y: 0,
+        z: 0
+      }
+    });
+
+    const runtimeScene = buildRuntimeSceneFromDocument(
+      {
+        ...createEmptySceneDocument({ name: "Authored State Runtime Scene" }),
+        assets: {
+          [asset.id]: asset
+        },
+        brushes: {
+          [hiddenBrush.id]: hiddenBrush,
+          [disabledBrush.id]: disabledBrush
+        },
+        modelInstances: {
+          [hiddenModelInstance.id]: hiddenModelInstance,
+          [disabledModelInstance.id]: disabledModelInstance
+        },
+        entities: {
+          [disabledPlayerStart.id]: disabledPlayerStart,
+          [enabledPlayerStart.id]: enabledPlayerStart,
+          [hiddenInteractable.id]: hiddenInteractable,
+          [disabledInteractable.id]: disabledInteractable,
+          [teleportTarget.id]: teleportTarget
+        },
+        interactionLinks: {
+          "link-hidden-click": createTeleportPlayerInteractionLink({
+            id: "link-hidden-click",
+            sourceEntityId: hiddenInteractable.id,
+            trigger: "click",
+            targetEntityId: teleportTarget.id
+          }),
+          "link-disabled-click": createTeleportPlayerInteractionLink({
+            id: "link-disabled-click",
+            sourceEntityId: disabledInteractable.id,
+            trigger: "click",
+            targetEntityId: teleportTarget.id
+          })
+        }
+      },
+      {
+        navigationMode: "firstPerson",
+        loadedModelAssets: {
+          [asset.id]: loadedAsset
+        }
+      }
+    );
+
+    expect(runtimeScene.playerStart?.entityId).toBe(enabledPlayerStart.id);
+    expect(runtimeScene.brushes.map((brush) => brush.brushId)).toEqual([
+      hiddenBrush.id
+    ]);
+    expect(runtimeScene.brushes[0]?.visible).toBe(false);
+    expect(runtimeScene.modelInstances).toEqual([
+      expect.objectContaining({
+        instanceId: hiddenModelInstance.id,
+        assetId: asset.id,
+        visible: false
+      })
+    ]);
+    expect(
+      runtimeScene.entities.interactables.map((entity) => entity.entityId)
+    ).toEqual([hiddenInteractable.id]);
+    expect(runtimeScene.colliders).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          source: "brush",
+          brushId: hiddenBrush.id
+        }),
+        expect.objectContaining({
+          source: "modelInstance",
+          instanceId: hiddenModelInstance.id,
+          assetId: asset.id
+        })
+      ])
+    );
+    expect(runtimeScene.interactionLinks.map((link) => link.id)).toEqual([
+      "link-hidden-click"
+    ]);
+  });
+
   it("uses a requested Scene Entry as the runtime spawn without replacing the Player Start collider", () => {
     const playerStart = createPlayerStartEntity({
       id: "entity-player-start-main",
