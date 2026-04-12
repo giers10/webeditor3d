@@ -109,6 +109,21 @@ describe("project document JSON", () => {
       }
     };
     document.scenes["scene-cellar"].world.projectTimeLightingEnabled = false;
+    document.assets["asset-night-sky"] = {
+      id: "asset-night-sky",
+      kind: "image",
+      sourceName: "night-sky.png",
+      mimeType: "image/png",
+      storageKey: "project-asset:asset-night-sky",
+      byteLength: 2048,
+      metadata: {
+        kind: "image",
+        width: 1024,
+        height: 512,
+        hasAlpha: false,
+        warnings: []
+      }
+    };
     document.time = {
       startDayNumber: 3,
       startTimeOfDayHours: 18.5,
@@ -140,6 +155,10 @@ describe("project document JSON", () => {
         ambientIntensityFactor: 0.22,
         lightColorHex: "#95b0ff",
         lightIntensityFactor: 0.19
+      },
+      nightBackground: {
+        assetId: "asset-night-sky",
+        environmentIntensity: 0.42
       }
     };
 
@@ -213,6 +232,9 @@ describe("project document JSON", () => {
     );
     expect(migratedDocument.time.night).toEqual(
       createDefaultProjectTimeSettings().night
+    );
+    expect(migratedDocument.time.nightBackground).toEqual(
+      createDefaultProjectTimeSettings().nightBackground
     );
     expect(
       migratedDocument.scenes[migratedDocument.activeSceneId]?.world
