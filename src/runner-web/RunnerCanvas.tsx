@@ -12,6 +12,10 @@ import {
   type RuntimeSceneLoadState
 } from "../runtime-three/runtime-host";
 import type { RuntimeInteractionPrompt } from "../runtime-three/runtime-interaction-system";
+import {
+  resolveRuntimeDayNightWorldState,
+  type RuntimeClockState
+} from "../runtime-three/runtime-project-time";
 import type {
   RuntimeNavigationMode,
   RuntimeSceneDefinition
@@ -27,7 +31,9 @@ interface RunnerCanvasProps {
   loadedImageAssets: Record<string, LoadedImageAsset>;
   loadedAudioAssets: Record<string, LoadedAudioAsset>;
   navigationMode: RuntimeNavigationMode;
+  runtimeClock: RuntimeClockState;
   onRuntimeMessageChange(message: string | null): void;
+  onRuntimeClockChange(clock: RuntimeClockState): void;
   onFirstPersonTelemetryChange(telemetry: FirstPersonTelemetry | null): void;
   onInteractionPromptChange(prompt: RuntimeInteractionPrompt | null): void;
   onSceneExitActivated(request: RuntimeSceneExitTransitionRequest): void;
@@ -42,7 +48,9 @@ export function RunnerCanvas({
   loadedImageAssets,
   loadedAudioAssets,
   navigationMode,
+  runtimeClock,
   onRuntimeMessageChange,
+  onRuntimeClockChange,
   onFirstPersonTelemetryChange,
   onInteractionPromptChange,
   onSceneExitActivated
@@ -62,6 +70,10 @@ export function RunnerCanvas({
   const overlayStatus =
     overlayMessage !== null ? "error" : sceneLoadState.status;
   const runnerReady = overlayStatus === "ready";
+  const resolvedWorld = resolveRuntimeDayNightWorldState(
+    runtimeScene.world,
+    runtimeClock
+  );
 
   useEffect(() => {
     const container = containerRef.current;
@@ -78,6 +90,7 @@ export function RunnerCanvas({
       runtimeHost.mount(container);
       runtimeHost.setRuntimeMessageHandler(onRuntimeMessageChange);
       runtimeHost.setSceneLoadStateHandler(setSceneLoadState);
+      runtimeHost.setRuntimeClockStateHandler(onRuntimeClockChange);
       runtimeHost.setFirstPersonTelemetryHandler((telemetry) => {
         setFirstPersonTelemetry(telemetry);
         onFirstPersonTelemetryChange(telemetry);
@@ -123,6 +136,10 @@ export function RunnerCanvas({
   }, [onSceneExitActivated]);
 
   useEffect(() => {
+    hostRef.current?.setRuntimeClockStateHandler(onRuntimeClockChange);
+  }, [onRuntimeClockChange]);
+
+  useEffect(() => {
     hostRef.current?.updateAssets(
       projectAssets,
       loadedModelAssets,
@@ -164,9 +181,9 @@ export function RunnerCanvas({
       aria-label="Built-in scene runner"
       aria-busy={!runnerReady}
       style={createWorldBackgroundStyle(
-        runtimeScene.world.background,
-        runtimeScene.world.background.mode === "image"
-          ? (loadedImageAssets[runtimeScene.world.background.assetId]
+        resolvedWorld.background,
+        resolvedWorld.background.mode === "image"
+          ? (loadedImageAssets[resolvedWorld.background.assetId]
               ?.sourceUrl ?? null)
           : null
       )}
