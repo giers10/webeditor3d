@@ -378,6 +378,7 @@ Example persisted project structure:
 interface ProjectDocument {
   version: number;
   name: string;
+  time: ProjectTimeSettings;
   activeSceneId: string;
   scenes: Record<string, ProjectScene>;
   materials: Record<string, MaterialDef>;
@@ -405,6 +406,8 @@ Imported model collision settings should be represented canonically on the relev
 - global ambient light settings
 - one authored global directional light / sun for early slices
 - fog settings where supported
+
+`ProjectTimeSettings` is the correct home for project-wide clock and day/night settings that persist across scene transitions.
 
 Do not model global world lighting as ad hoc hidden viewport state.
 
@@ -985,6 +988,7 @@ Recommended separation:
 - playing sounds
 - trigger occupancy
 - animation playback state
+- project clock state
 
 Keep ephemeral rendering and interaction state out of the serialized document.
 
