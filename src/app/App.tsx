@@ -35,6 +35,7 @@ import { createDeleteInteractionLinkCommand } from "../commands/delete-interacti
 import { createSetModelInstanceAuthoredStateCommand } from "../commands/set-model-instance-authored-state-command";
 import { createSetModelInstanceNameCommand } from "../commands/set-model-instance-name-command";
 import { createSetProjectNameCommand } from "../commands/set-project-name-command";
+import { createSetProjectTimeSettingsCommand } from "../commands/set-project-time-settings-command";
 import { createSetSceneLoadingScreenCommand } from "../commands/set-scene-loading-screen-command";
 import { createSetSceneNameCommand } from "../commands/set-scene-name-command";
 import { createSetWorldSettingsCommand } from "../commands/set-world-settings-command";
@@ -160,6 +161,11 @@ import {
   type SceneLoadingScreenSettings
 } from "../document/scene-document";
 import {
+  areProjectTimeSettingsEqual,
+  formatTimeOfDayHours,
+  normalizeTimeOfDayHours
+} from "../document/project-time-settings";
+import {
   formatSceneDiagnosticSummary,
   validateProjectDocument,
   validateSceneDocument
@@ -271,8 +277,15 @@ import type {
   RuntimeLocomotionState
 } from "../runtime-three/navigation-controller";
 import type { RuntimeInteractionPrompt } from "../runtime-three/runtime-interaction-system";
-import { createDefaultRuntimeGlobalState, type RuntimeGlobalState } from "../runtime-three/runtime-global-state";
+import {
+  createDefaultRuntimeGlobalState,
+  type RuntimeGlobalState
+} from "../runtime-three/runtime-global-state";
 import type { RuntimeSceneExitTransitionRequest } from "../runtime-three/runtime-host";
+import {
+  areRuntimeClockStatesEqual,
+  type RuntimeClockState
+} from "../runtime-three/runtime-project-time";
 import {
   buildRuntimeSceneFromDocument,
   type RuntimeNavigationMode,
@@ -1851,6 +1864,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [sunDirectionDraft, setSunDirectionDraft] = useState(
     createVec3Draft(editorState.document.world.sunLight.direction)
   );
+  const [projectTimeStartTimeOfDayDraft, setProjectTimeStartTimeOfDayDraft] =
+    useState(String(editorState.projectDocument.time.startTimeOfDayHours));
+  const [projectTimeDayLengthMinutesDraft, setProjectTimeDayLengthMinutesDraft] =
+    useState(String(editorState.projectDocument.time.dayLengthMinutes));
   const [
     backgroundEnvironmentIntensityDraft,
     setBackgroundEnvironmentIntensityDraft
@@ -1971,7 +1988,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [runtimeSceneLoadingScreen, setRuntimeSceneLoadingScreen] =
     useState<SceneLoadingScreenSettings | null>(null);
   const [runtimeGlobalState, setRuntimeGlobalState] =
-    useState<RuntimeGlobalState>(createDefaultRuntimeGlobalState());
+    useState<RuntimeGlobalState>(
+      createDefaultRuntimeGlobalState(editorState.projectDocument.time)
+    );
   const [runtimeMessage, setRuntimeMessage] = useState<string | null>(null);
   const [firstPersonTelemetry, setFirstPersonTelemetry] =
     useState<FirstPersonTelemetry | null>(null);
@@ -2372,6 +2391,18 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
     setModelScaleDraft(createVec3Draft(selectedModelInstance.scale));
   }, [selectedModelInstance]);
+
+  useEffect(() => {
+    setProjectTimeStartTimeOfDayDraft(
+      String(editorState.projectDocument.time.startTimeOfDayHours)
+    );
+  }, [editorState.projectDocument.time.startTimeOfDayHours]);
+
+  useEffect(() => {
+    setProjectTimeDayLengthMinutesDraft(
+      String(editorState.projectDocument.time.dayLengthMinutes)
+    );
+  }, [editorState.projectDocument.time.dayLengthMinutes]);
 
   useEffect(() => {
     setAmbientLightIntensityDraft(
