@@ -170,6 +170,50 @@ describe("project document JSON", () => {
     expect(migratedDocument.time).toEqual(createDefaultProjectTimeSettings());
   });
 
+  it("migrates first-slice project time documents to the richer day-night profile defaults", () => {
+    const legacyProject = createEmptyProjectDocument({
+      name: "Legacy Time Project",
+      sceneName: "Atrium"
+    });
+    legacyProject.version = 37;
+    legacyProject.time = {
+      startDayNumber: 1,
+      startTimeOfDayHours: 17.5,
+      dayLengthMinutes: 20,
+      sunriseTimeOfDayHours: undefined as never,
+      sunsetTimeOfDayHours: undefined as never,
+      dawnDurationHours: undefined as never,
+      duskDurationHours: undefined as never,
+      dawn: undefined as never,
+      dusk: undefined as never,
+      night: undefined as never
+    };
+
+    const migratedDocument = parseProjectDocumentJson(
+      JSON.stringify({
+        ...legacyProject,
+        time: {
+          startTimeOfDayHours: 17.5,
+          dayLengthMinutes: 20
+        }
+      })
+    );
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.time.startTimeOfDayHours).toBe(17.5);
+    expect(migratedDocument.time.dayLengthMinutes).toBe(20);
+    expect(migratedDocument.time.sunriseTimeOfDayHours).toBe(
+      createDefaultProjectTimeSettings().sunriseTimeOfDayHours
+    );
+    expect(migratedDocument.time.night).toEqual(
+      createDefaultProjectTimeSettings().night
+    );
+    expect(
+      migratedDocument.scenes[migratedDocument.activeSceneId]?.world
+        .projectTimeLightingEnabled
+    ).toBe(true);
+  });
+
   it("migrates pre-project-name multi-scene documents to Untitled Project", () => {
     const migratedDocument = parseProjectDocumentJson(
       JSON.stringify({
