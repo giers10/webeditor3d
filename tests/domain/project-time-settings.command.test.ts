@@ -10,10 +10,13 @@ describe("createSetProjectTimeSettingsCommand", () => {
     const originalTime = cloneProjectTimeSettings(
       store.getState().projectDocument.time
     );
-    const nextTime = {
-      startTimeOfDayHours: 18.5,
-      dayLengthMinutes: 12
-    };
+    const nextTime = cloneProjectTimeSettings(originalTime);
+    nextTime.startDayNumber = 4;
+    nextTime.startTimeOfDayHours = 18.5;
+    nextTime.dayLengthMinutes = 12;
+    nextTime.sunriseTimeOfDayHours = 5.75;
+    nextTime.sunsetTimeOfDayHours = 20.25;
+    nextTime.night.lightIntensityFactor = 0.28;
 
     store.executeCommand(
       createSetProjectTimeSettingsCommand({

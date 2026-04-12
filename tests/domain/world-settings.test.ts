@@ -106,4 +106,13 @@ describe("world settings helpers", () => {
 
     expect(areWorldSettingsEqual(left, right)).toBe(false);
   });
+
+  it("treats the scene project-time lighting toggle as part of authored world equality", () => {
+    const left = createDefaultWorldSettings();
+    const right = cloneWorldSettings(left);
+
+    right.projectTimeLightingEnabled = false;
+
+    expect(areWorldSettingsEqual(left, right)).toBe(false);
+  });
 });

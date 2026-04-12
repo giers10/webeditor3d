@@ -108,9 +108,39 @@ describe("project document JSON", () => {
         normalStrength: 0.85
       }
     };
+    document.scenes["scene-cellar"].world.projectTimeLightingEnabled = false;
     document.time = {
+      startDayNumber: 3,
       startTimeOfDayHours: 18.5,
-      dayLengthMinutes: 16
+      dayLengthMinutes: 16,
+      sunriseTimeOfDayHours: 5.5,
+      sunsetTimeOfDayHours: 19.75,
+      dawnDurationHours: 1.25,
+      duskDurationHours: 1.75,
+      dawn: {
+        skyTopColorHex: "#6680bc",
+        skyBottomColorHex: "#f3b07a",
+        ambientColorHex: "#ffe0ba",
+        ambientIntensityFactor: 0.78,
+        lightColorHex: "#ffd29d",
+        lightIntensityFactor: 0.82
+      },
+      dusk: {
+        skyTopColorHex: "#313d70",
+        skyBottomColorHex: "#e27b5e",
+        ambientColorHex: "#f0bf9f",
+        ambientIntensityFactor: 0.58,
+        lightColorHex: "#ff9d79",
+        lightIntensityFactor: 0.61
+      },
+      night: {
+        skyTopColorHex: "#070f1c",
+        skyBottomColorHex: "#18253b",
+        ambientColorHex: "#1a2941",
+        ambientIntensityFactor: 0.22,
+        lightColorHex: "#95b0ff",
+        lightIntensityFactor: 0.19
+      }
     };
 
     const serializedDocument = serializeProjectDocument(document);
