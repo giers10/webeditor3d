@@ -1810,9 +1810,42 @@ export class ViewportHost {
     return this.markTransformHandleObject(mesh);
   }
 
+  private isBrushDisplayedInViewport(brushId: string): boolean {
+    const brush = this.currentDocument?.brushes[brushId];
+    return brush?.enabled === true && brush.visible === true;
+  }
+
+  private isEntityDisplayedInViewport(entityId: string): boolean {
+    const entity = this.currentDocument?.entities[entityId];
+    return entity?.enabled === true && entity.visible === true;
+  }
+
+  private isModelInstanceDisplayedInViewport(modelInstanceId: string): boolean {
+    const modelInstance = this.currentDocument?.modelInstances[modelInstanceId];
+    return modelInstance?.enabled === true && modelInstance.visible === true;
+  }
+
+  private isTransformTargetDisplayedInViewport(session: ActiveTransformSession): boolean {
+    switch (session.target.kind) {
+      case "brush":
+      case "brushFace":
+      case "brushEdge":
+      case "brushVertex":
+        return this.isBrushDisplayedInViewport(session.target.brushId);
+      case "entity":
+        return this.isEntityDisplayedInViewport(session.target.entityId);
+      case "modelInstance":
+        return this.isModelInstanceDisplayedInViewport(
+          session.target.modelInstanceId
+        );
+    }
+  }
+
   private getDisplayedTransformSession(): ActiveTransformSession | null {
     if (this.currentTransformSession.kind === "active") {
-      return this.currentTransformSession;
+      return this.isTransformTargetDisplayedInViewport(this.currentTransformSession)
+        ? this.currentTransformSession
+        : null;
     }
 
     if (this.toolMode !== "select" || this.currentDocument === null) {
@@ -1832,7 +1865,7 @@ export class ViewportHost {
       return null;
     }
 
-    return {
+    const selectionSession: ActiveTransformSession = {
       kind: "active",
       id: "__selection-translate-gizmo__",
       source: "gizmo",
@@ -1843,6 +1876,10 @@ export class ViewportHost {
       target: transformTarget,
       preview: createTransformPreviewFromTarget(transformTarget)
     };
+
+    return this.isTransformTargetDisplayedInViewport(selectionSession)
+      ? selectionSession
+      : null;
   }
 
   private syncTransformGizmo() {
@@ -3248,6 +3285,10 @@ export class ViewportHost {
     this.clearLocalLights();
 
     for (const entity of getEntityInstances(document.entities)) {
+      if (!entity.enabled) {
+        continue;
+      }
+
       switch (entity.kind) {
         case "pointLight": {
           const renderObjects = this.createPointLightRuntimeObjects(entity);
@@ -3277,6 +3318,10 @@ export class ViewportHost {
     );
 
     for (const brush of Object.values(document.brushes)) {
+      if (!brush.enabled || !brush.visible) {
+        continue;
+      }
+
       const geometry = buildBoxBrushDerivedMeshData(brush).geometry;
       const contactPatches =
         brush.volume.mode === "water"
@@ -3443,6 +3488,10 @@ export class ViewportHost {
     this.clearEntityMarkers();
 
     for (const entity of getEntityInstances(document.entities)) {
+      if (!entity.enabled || !entity.visible) {
+        continue;
+      }
+
       const selected =
         selection.kind === "entities" && selection.ids.includes(entity.id);
       const renderObjects = this.createEntityRenderObjects(entity, selected);
@@ -3463,6 +3512,10 @@ export class ViewportHost {
     this.clearModelInstances();
 
     for (const modelInstance of getModelInstances(document.modelInstances)) {
+      if (!modelInstance.enabled || !modelInstance.visible) {
+        continue;
+      }
+
       const selected = isModelInstanceSelected(selection, modelInstance.id);
       const asset = this.projectAssets[modelInstance.assetId];
       const loadedAsset = this.loadedModelAssets[modelInstance.assetId];
