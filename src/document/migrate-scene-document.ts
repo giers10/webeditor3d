@@ -92,6 +92,7 @@ import {
   MULTI_SCENE_FOUNDATION_SCENE_DOCUMENT_VERSION,
   MODEL_ASSET_PIPELINE_SCENE_DOCUMENT_VERSION,
   PLAYER_START_MOVEMENT_TEMPLATE_SCENE_DOCUMENT_VERSION,
+  PLAYER_START_AIR_CONTROL_SCENE_DOCUMENT_VERSION,
   PLAYER_START_GAMEPAD_CAMERA_LOOK_SCENE_DOCUMENT_VERSION,
   PLAYER_START_INPUT_BINDINGS_SCENE_DOCUMENT_VERSION,
   PLAYER_START_NAVIGATION_MODE_SCENE_DOCUMENT_VERSION,
@@ -1368,6 +1369,11 @@ function readPlayerStartMovementTemplate(value: unknown, label: string) {
         jump?.moveWhileFalling,
         `${label}.jump.moveWhileFalling`,
         preset.jump.moveWhileFalling
+      ),
+      directionOnly: readOptionalBoolean(
+        jump?.directionOnly,
+        `${label}.jump.directionOnly`,
+        preset.jump.directionOnly
       ),
       maxHoldMs:
         jump?.maxHoldMs === undefined
@@ -2866,6 +2872,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
   if (
     source.version !== SCENE_DOCUMENT_VERSION &&
     source.version !== 33 &&
+    source.version !== PLAYER_START_AIR_CONTROL_SCENE_DOCUMENT_VERSION &&
     source.version !== PLAYER_START_MOVEMENT_TEMPLATE_SCENE_DOCUMENT_VERSION &&
     source.version !== PROJECT_NAME_SCENE_DOCUMENT_VERSION &&
     source.version !== STATIC_SIMPLE_MODEL_COLLIDERS_SCENE_DOCUMENT_VERSION &&

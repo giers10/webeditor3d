@@ -287,6 +287,7 @@ function clonePlayerStartJumpSettings(
     maxHoldMs: jump.maxHoldMs,
     moveWhileJumping: jump.moveWhileJumping,
     moveWhileFalling: jump.moveWhileFalling,
+    directionOnly: jump.directionOnly,
     bunnyHop: jump.bunnyHop,
     bunnyHopBoost: jump.bunnyHopBoost
   };

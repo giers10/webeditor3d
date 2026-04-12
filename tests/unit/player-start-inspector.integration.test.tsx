@@ -179,6 +179,9 @@ describe("Player Start inspector", () => {
     const variableJumpCheckbox = screen.getByTestId(
       "player-start-movement-variable-jump-enabled"
     );
+    const airDirectionOnlyCheckbox = screen.getByTestId(
+      "player-start-movement-air-direction-only-enabled"
+    );
     const jumpBufferInput = screen.getByTestId(
       "player-start-movement-jump-buffer"
     );
@@ -218,6 +221,10 @@ describe("Player Start inspector", () => {
     });
 
     act(() => {
+      fireEvent.click(airDirectionOnlyCheckbox);
+    });
+
+    act(() => {
       fireEvent.change(jumpBufferInput, {
         target: {
           value: "75"
@@ -233,7 +240,8 @@ describe("Player Start inspector", () => {
           moveSpeed: 5.7,
           jump: {
             bufferMs: 75,
-            variableHeight: false
+            variableHeight: false,
+            directionOnly: true
           }
         }
       });

@@ -74,6 +74,7 @@ export interface StepPlayerLocomotionOptions {
   dt: number;
   feetPosition: Vec3;
   movementYawRadians: number;
+  airDirectionYawRadians?: number;
   standingShape: FirstPersonPlayerShape;
   verticalVelocity: number;
   previousLocomotionState?: RuntimeLocomotionState;
@@ -190,18 +191,50 @@ function computePlanarMotion(
   requestedPlanarSpeed: number,
   dt: number
 ): { motion: Vec3; inputMagnitude: number } {
-  const inputX = input.moveRight - input.moveLeft;
-  const inputZ = input.moveForward - input.moveBackward;
-  const rawMagnitude = Math.hypot(inputX, inputZ);
-  const inputMagnitude = clampUnitInterval(rawMagnitude);
+  const directionResult = computePlanarInputDirection(
+    movementYawRadians,
+    input
+  );
 
-  if (rawMagnitude <= 0 || requestedPlanarSpeed <= 0 || dt <= 0) {
+  if (
+    directionResult.direction === null ||
+    requestedPlanarSpeed <= 0 ||
+    dt <= 0
+  ) {
     return {
       motion: {
         x: 0,
         y: 0,
         z: 0
       },
+      inputMagnitude: directionResult.inputMagnitude
+    };
+  }
+
+  const planarDistance = requestedPlanarSpeed * dt;
+
+  return {
+    motion: {
+      x: directionResult.direction.x * planarDistance,
+      y: 0,
+      z: directionResult.direction.z * planarDistance
+    },
+    inputMagnitude: directionResult.inputMagnitude
+  };
+}
+
+function computePlanarInputDirection(
+  movementYawRadians: number,
+  input: PlayerStartActionInputState
+): { direction: Vec3 | null; inputMagnitude: number } {
+  const inputX = input.moveRight - input.moveLeft;
+  const inputZ = input.moveForward - input.moveBackward;
+  const rawMagnitude = Math.hypot(inputX, inputZ);
+  const inputMagnitude = clampUnitInterval(rawMagnitude);
+
+  if (rawMagnitude <= 0) {
+    return {
+      direction: null,
       inputMagnitude
     };
   }
@@ -212,17 +245,24 @@ function computePlanarMotion(
   const forwardZ = Math.cos(movementYawRadians);
   const rightX = -Math.cos(movementYawRadians);
   const rightZ = Math.sin(movementYawRadians);
-  const planarDistance = requestedPlanarSpeed * dt;
+  const directionX =
+    forwardX * normalizedInputZ + rightX * normalizedInputX;
+  const directionZ =
+    forwardZ * normalizedInputZ + rightZ * normalizedInputX;
+  const directionMagnitude = Math.hypot(directionX, directionZ);
+
+  if (directionMagnitude <= 0) {
+    return {
+      direction: null,
+      inputMagnitude
+    };
+  }
 
   return {
-    motion: {
-      x:
-        (forwardX * normalizedInputZ + rightX * normalizedInputX) *
-        planarDistance,
+    direction: {
+      x: directionX / directionMagnitude,
       y: 0,
-      z:
-        (forwardZ * normalizedInputZ + rightZ * normalizedInputX) *
-        planarDistance
+      z: directionZ / directionMagnitude
     },
     inputMagnitude
   };
@@ -248,6 +288,48 @@ function clearPlanarMovementInput(
     moveBackward: 0,
     moveLeft: 0,
     moveRight: 0
+  };
+}
+
+function computeDirectionalAirMotion(options: {
+  directionYawRadians: number;
+  input: PlayerStartActionInputState;
+  previousPlanarDisplacement: Vec3;
+  dt: number;
+}): { motion: Vec3; inputMagnitude: number } {
+  const directionResult = computePlanarInputDirection(
+    options.directionYawRadians,
+    options.input
+  );
+  const planarSpeed = computePlanarSpeedFromDisplacement(
+    options.previousPlanarDisplacement,
+    options.dt
+  );
+
+  if (
+    directionResult.direction === null ||
+    planarSpeed <= 0 ||
+    options.dt <= 0
+  ) {
+    return {
+      motion: {
+        x: 0,
+        y: 0,
+        z: 0
+      },
+      inputMagnitude: directionResult.inputMagnitude
+    };
+  }
+
+  const planarDistance = planarSpeed * options.dt;
+
+  return {
+    motion: {
+      x: directionResult.direction.x * planarDistance,
+      y: 0,
+      z: directionResult.direction.z * planarDistance
+    },
+    inputMagnitude: directionResult.inputMagnitude
   };
 }
 
@@ -502,6 +584,16 @@ export function stepPlayerLocomotion(
   const planarInput = airMovementAllowed
     ? options.input
     : clearPlanarMovementInput(options.input);
+  const directionalAirControlActive =
+    !currentlyGrounded &&
+    !jumpTriggered &&
+    !currentSwimmableWater &&
+    airMovementAllowed &&
+    options.movement.jump.directionOnly;
+  const previousPlanarSpeed = computePlanarSpeedFromDisplacement(
+    options.previousPlanarDisplacement,
+    options.dt
+  );
 
   const requestedPlanarSpeed =
     activeShape.mode !== "none" && !currentSwimmableWater
@@ -511,12 +603,20 @@ export function stepPlayerLocomotion(
           ? groundedRequestedPlanarSpeed
           : airborneRequestedPlanarSpeed
       : groundedRequestedPlanarSpeed;
-  const planarMotionFromInput = computePlanarMotion(
-    options.movementYawRadians,
-    planarInput,
-    requestedPlanarSpeed,
-    options.dt
-  );
+  const planarMotionFromInput = directionalAirControlActive
+    ? computeDirectionalAirMotion({
+        directionYawRadians:
+          options.airDirectionYawRadians ?? options.movementYawRadians,
+        input: planarInput,
+        previousPlanarDisplacement: options.previousPlanarDisplacement,
+        dt: options.dt
+      })
+    : computePlanarMotion(
+        options.movementYawRadians,
+        planarInput,
+        requestedPlanarSpeed,
+        options.dt
+      );
   const preserveAirborneMomentum =
     activeShape.mode !== "none" &&
     !currentSwimmableWater &&
@@ -710,11 +810,10 @@ export function stepPlayerLocomotion(
       sprinting,
       inputMagnitude: planarMotion.inputMagnitude,
       requestedPlanarSpeed: preserveAirborneMomentum
-        ? computePlanarSpeedFromDisplacement(
-            options.previousPlanarDisplacement,
-            options.dt
-          )
-        : requestedPlanarSpeed * planarMotion.inputMagnitude,
+        ? previousPlanarSpeed
+        : (directionalAirControlActive
+            ? previousPlanarSpeed
+            : requestedPlanarSpeed) * planarMotion.inputMagnitude,
       planarSpeed: actualPlanarSpeed,
       verticalVelocity,
       contact: resolveContactState(resolvedMotion, groundProbe, grounded)

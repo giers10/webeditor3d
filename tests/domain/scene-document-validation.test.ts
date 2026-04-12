@@ -132,7 +132,8 @@ describe("validateSceneDocument", () => {
               variableHeight: "yes",
               maxHoldMs: 0,
               moveWhileJumping: "yes",
-              moveWhileFalling: 1
+              moveWhileFalling: 1,
+              directionOnly: "left"
             },
             sprint: {
               speedMultiplier: 0
@@ -216,6 +217,9 @@ describe("validateSceneDocument", () => {
         }),
         expect.objectContaining({
           code: "invalid-player-start-move-while-falling"
+        }),
+        expect.objectContaining({
+          code: "invalid-player-start-air-direction-only"
         }),
         expect.objectContaining({
           code: "invalid-player-start-sprint-speed-multiplier"

@@ -1370,6 +1370,17 @@ function validatePlayerStartEntity(
     );
   }
 
+  if (!isBoolean(entity.movementTemplate?.jump?.directionOnly)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-air-direction-only",
+        "Player Start air direction only setting must be a boolean.",
+        `${path}.movementTemplate.jump.directionOnly`
+      )
+    );
+  }
+
   if (!isBoolean(entity.movementTemplate?.jump?.bunnyHop)) {
     diagnostics.push(
       createDiagnostic(

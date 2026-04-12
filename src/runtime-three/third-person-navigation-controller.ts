@@ -79,6 +79,7 @@ function cloneRuntimePlayerMovement(
       maxHoldMs: movement.jump.maxHoldMs,
       moveWhileJumping: movement.jump.moveWhileJumping,
       moveWhileFalling: movement.jump.moveWhileFalling,
+      directionOnly: movement.jump.directionOnly,
       bunnyHop: movement.jump.bunnyHop,
       bunnyHopBoost: movement.jump.bunnyHopBoost
     },
@@ -285,6 +286,7 @@ export class ThirdPersonNavigationController implements NavigationController {
         dt,
         feetPosition: this.feetPosition,
         movementYawRadians: this.cameraYawRadians,
+        airDirectionYawRadians: this.yawRadians,
         standingShape: this.standingPlayerShape,
         verticalVelocity: this.verticalVelocity,
         previousLocomotionState: this.locomotionState,

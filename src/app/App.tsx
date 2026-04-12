@@ -10925,6 +10925,29 @@ export function App({ store, initialStatusMessage }: AppProps) {
                             />
                           </label>
                           <label className="form-field form-field--toggle">
+                            <span className="label">Air Direction Only</span>
+                            <input
+                              data-testid="player-start-movement-air-direction-only-enabled"
+                              type="checkbox"
+                              checked={
+                                playerStartMovementTemplateDraft.jump.directionOnly
+                              }
+                              onChange={(event) =>
+                                commitPlayerStartMovementTemplateDraft(
+                                  {
+                                    jump: {
+                                      directionOnly:
+                                        event.currentTarget.checked
+                                    }
+                                  },
+                                  {
+                                    schedule: true
+                                  }
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field form-field--toggle">
                             <span className="label">Bunny Hopping</span>
                             <input
                               data-testid="player-start-movement-bunny-hop-enabled"

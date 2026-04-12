@@ -149,6 +149,7 @@ export interface PlayerStartJumpSettings {
   maxHoldMs: number;
   moveWhileJumping: boolean;
   moveWhileFalling: boolean;
+  directionOnly: boolean;
   bunnyHop: boolean;
   bunnyHopBoost: number;
 }
@@ -305,6 +306,7 @@ export const DEFAULT_PLAYER_START_VARIABLE_JUMP_HEIGHT = false;
 export const DEFAULT_PLAYER_START_VARIABLE_JUMP_MAX_HOLD_MS = 160;
 export const DEFAULT_PLAYER_START_MOVE_WHILE_JUMPING = true;
 export const DEFAULT_PLAYER_START_MOVE_WHILE_FALLING = true;
+export const DEFAULT_PLAYER_START_AIR_DIRECTION_ONLY = false;
 export const DEFAULT_PLAYER_START_BUNNY_HOP = false;
 export const DEFAULT_PLAYER_START_BUNNY_HOP_BOOST = 0.05;
 export const DEFAULT_PLAYER_START_SPRINT_SPEED_MULTIPLIER = 1.65;
@@ -323,6 +325,7 @@ export const DEFAULT_PLAYER_START_JUMP_SETTINGS: PlayerStartJumpSettings = {
   maxHoldMs: DEFAULT_PLAYER_START_VARIABLE_JUMP_MAX_HOLD_MS,
   moveWhileJumping: DEFAULT_PLAYER_START_MOVE_WHILE_JUMPING,
   moveWhileFalling: DEFAULT_PLAYER_START_MOVE_WHILE_FALLING,
+  directionOnly: DEFAULT_PLAYER_START_AIR_DIRECTION_ONLY,
   bunnyHop: DEFAULT_PLAYER_START_BUNNY_HOP,
   bunnyHopBoost: DEFAULT_PLAYER_START_BUNNY_HOP_BOOST
 };
@@ -343,6 +346,7 @@ export const RESPONSIVE_PLAYER_START_JUMP_SETTINGS: PlayerStartJumpSettings = {
   maxHoldMs: RESPONSIVE_PLAYER_START_VARIABLE_JUMP_MAX_HOLD_MS,
   moveWhileJumping: DEFAULT_PLAYER_START_MOVE_WHILE_JUMPING,
   moveWhileFalling: DEFAULT_PLAYER_START_MOVE_WHILE_FALLING,
+  directionOnly: DEFAULT_PLAYER_START_AIR_DIRECTION_ONLY,
   bunnyHop: DEFAULT_PLAYER_START_BUNNY_HOP,
   bunnyHopBoost: DEFAULT_PLAYER_START_BUNNY_HOP_BOOST
 };
@@ -523,6 +527,7 @@ function clonePlayerStartJumpSettings(
     maxHoldMs: settings.maxHoldMs,
     moveWhileJumping: settings.moveWhileJumping,
     moveWhileFalling: settings.moveWhileFalling,
+    directionOnly: settings.directionOnly,
     bunnyHop: settings.bunnyHop,
     bunnyHopBoost: settings.bunnyHopBoost
   };
@@ -765,6 +770,8 @@ export function createPlayerStartMovementTemplate(
       overrides.jump?.moveWhileJumping ?? preset.jump.moveWhileJumping,
     moveWhileFalling:
       overrides.jump?.moveWhileFalling ?? preset.jump.moveWhileFalling,
+    directionOnly:
+      overrides.jump?.directionOnly ?? preset.jump.directionOnly,
     bunnyHop: overrides.jump?.bunnyHop ?? preset.jump.bunnyHop,
     bunnyHopBoost:
       overrides.jump?.bunnyHopBoost ?? preset.jump.bunnyHopBoost
@@ -820,6 +827,10 @@ export function createPlayerStartMovementTemplate(
   assertBoolean(
     jump.moveWhileFalling,
     "Player Start move while falling setting"
+  );
+  assertBoolean(
+    jump.directionOnly,
+    "Player Start air direction only setting"
   );
   assertBoolean(jump.bunnyHop, "Player Start bunny hop setting");
   assertNonNegativeFiniteNumber(
@@ -893,6 +904,8 @@ export function inferPlayerStartMovementTemplateKind(
         createPlayerStartMovementTemplate({ kind: presetKind }).jump.moveWhileJumping &&
       candidate.jump.moveWhileFalling ===
         createPlayerStartMovementTemplate({ kind: presetKind }).jump.moveWhileFalling &&
+      candidate.jump.directionOnly ===
+        createPlayerStartMovementTemplate({ kind: presetKind }).jump.directionOnly &&
       candidate.jump.bunnyHop ===
         createPlayerStartMovementTemplate({ kind: presetKind }).jump.bunnyHop &&
       candidate.jump.bunnyHopBoost ===
@@ -951,6 +964,7 @@ export function arePlayerStartMovementTemplatesEqual(
     left.jump.maxHoldMs === right.jump.maxHoldMs &&
     left.jump.moveWhileJumping === right.jump.moveWhileJumping &&
     left.jump.moveWhileFalling === right.jump.moveWhileFalling &&
+    left.jump.directionOnly === right.jump.directionOnly &&
     left.jump.bunnyHop === right.jump.bunnyHop &&
     left.jump.bunnyHopBoost === right.jump.bunnyHopBoost &&
     left.sprint.speedMultiplier === right.sprint.speedMultiplier &&

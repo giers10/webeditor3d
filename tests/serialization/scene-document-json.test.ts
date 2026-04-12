@@ -9,6 +9,7 @@ import {
   IMPORTED_MODEL_COLLIDERS_SCENE_DOCUMENT_VERSION,
   LOCAL_LIGHTS_AND_SKYBOX_SCENE_DOCUMENT_VERSION,
   MODEL_ASSET_PIPELINE_SCENE_DOCUMENT_VERSION,
+  PLAYER_START_AIR_CONTROL_SCENE_DOCUMENT_VERSION,
   PLAYER_START_COLLIDER_SETTINGS_SCENE_DOCUMENT_VERSION,
   PLAYER_START_INPUT_BINDINGS_SCENE_DOCUMENT_VERSION,
   PLAYER_START_MOVEMENT_TEMPLATE_SCENE_DOCUMENT_VERSION,
@@ -467,7 +468,8 @@ describe("scene document JSON", () => {
           variableHeight: true,
           maxHoldMs: 220,
           moveWhileJumping: false,
-          moveWhileFalling: false
+          moveWhileFalling: false,
+          directionOnly: true
         },
         sprint: {
           speedMultiplier: 1.8
@@ -951,6 +953,7 @@ describe("scene document JSON", () => {
     const {
       moveWhileJumping: _moveWhileJumping,
       moveWhileFalling: _moveWhileFalling,
+      directionOnly: _directionOnly,
       ...legacyJump
     } = playerStart.movementTemplate.jump;
     const legacyDocument = {
@@ -958,6 +961,39 @@ describe("scene document JSON", () => {
         name: "Legacy Player Air Movement Scene"
       }),
       version: 33,
+      entities: {
+        [playerStart.id]: {
+          ...playerStart,
+          movementTemplate: {
+            ...playerStart.movementTemplate,
+            jump: legacyJump
+          }
+        }
+      }
+    };
+
+    const migratedDocument = migrateSceneDocument(legacyDocument);
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.entities[playerStart.id]).toEqual(playerStart);
+  });
+
+  it("migrates version 34 Player Start jump settings to include default air direction mode", () => {
+    const playerStart = createPlayerStartEntity({
+      id: "entity-player-start-legacy-air-direction",
+      movementTemplate: {
+        kind: "responsive"
+      }
+    });
+    const {
+      directionOnly: _directionOnly,
+      ...legacyJump
+    } = playerStart.movementTemplate.jump;
+    const legacyDocument = {
+      ...createEmptySceneDocument({
+        name: "Legacy Player Air Direction Scene"
+      }),
+      version: PLAYER_START_AIR_CONTROL_SCENE_DOCUMENT_VERSION,
       entities: {
         [playerStart.id]: {
           ...playerStart,
