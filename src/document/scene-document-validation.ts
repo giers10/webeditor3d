@@ -2942,7 +2942,7 @@ export function validateSceneDocument(
   const diagnostics: SceneDiagnostic[] = [];
   const seenIds = new Map<string, string>();
 
-  validateProjectTimeSettings(document.time, diagnostics);
+  validateProjectTimeSettings(document.time, document.assets, diagnostics);
   validateWorldSettings(document.world, document, diagnostics);
 
   for (const [materialKey, material] of Object.entries(document.materials)) {
@@ -3387,7 +3387,7 @@ export function validateProjectDocument(
     );
   }
 
-  validateProjectTimeSettings(document.time, diagnostics);
+  validateProjectTimeSettings(document.time, document.assets, diagnostics);
   validateProjectResources(document, diagnostics);
 
   for (const [sceneKey, scene] of Object.entries(document.scenes)) {
