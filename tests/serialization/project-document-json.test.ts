@@ -175,23 +175,29 @@ describe("project document JSON", () => {
       name: "Legacy Time Project",
       sceneName: "Atrium"
     });
-    legacyProject.version = 37;
-    legacyProject.time = {
-      startDayNumber: 1,
-      startTimeOfDayHours: 17.5,
-      dayLengthMinutes: 20,
-      sunriseTimeOfDayHours: undefined as never,
-      sunsetTimeOfDayHours: undefined as never,
-      dawnDurationHours: undefined as never,
-      duskDurationHours: undefined as never,
-      dawn: undefined as never,
-      dusk: undefined as never,
-      night: undefined as never
-    };
+    const legacyScene = legacyProject.scenes[legacyProject.activeSceneId];
+
+    if (legacyScene === undefined) {
+      throw new Error("Expected the legacy project to contain an active scene.");
+    }
 
     const migratedDocument = parseProjectDocumentJson(
       JSON.stringify({
-        ...legacyProject,
+        version: 37,
+        name: legacyProject.name,
+        activeSceneId: legacyProject.activeSceneId,
+        scenes: {
+          [legacyScene.id]: {
+            ...legacyScene,
+            world: {
+              ...legacyScene.world,
+              projectTimeLightingEnabled: undefined
+            }
+          }
+        },
+        materials: legacyProject.materials,
+        textures: legacyProject.textures,
+        assets: legacyProject.assets,
         time: {
           startTimeOfDayHours: 17.5,
           dayLengthMinutes: 20
