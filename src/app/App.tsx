@@ -13,7 +13,6 @@ import { createCreateBoxBrushCommand } from "../commands/create-box-brush-comman
 import { createCreateSceneCommand } from "../commands/create-scene-command";
 import { createDeleteBoxBrushCommand } from "../commands/delete-box-brush-command";
 import { createDeleteEntityCommand } from "../commands/delete-entity-command";
-import { createDeleteProjectAssetCommand } from "../commands/delete-project-asset-command";
 import { createDuplicateSelectionCommand } from "../commands/duplicate-selection-command";
 import { createImportAudioAssetCommand } from "../commands/import-audio-asset-command";
 import { createImportBackgroundImageAssetCommand } from "../commands/import-background-image-asset-command";
@@ -25,14 +24,11 @@ import { createRotateBoxBrushCommand } from "../commands/rotate-box-brush-comman
 import { createResizeBoxBrushCommand } from "../commands/resize-box-brush-command";
 import { createSetBoxBrushFaceMaterialCommand } from "../commands/set-box-brush-face-material-command";
 import { createSetBoxBrushNameCommand } from "../commands/set-box-brush-name-command";
-import { createSetBoxBrushAuthoredStateCommand } from "../commands/set-box-brush-authored-state-command";
 import { createSetBoxBrushVolumeSettingsCommand } from "../commands/set-box-brush-volume-settings-command";
-import { createSetEntityAuthoredStateCommand } from "../commands/set-entity-authored-state-command";
 import { createSetEntityNameCommand } from "../commands/set-entity-name-command";
 import { createSetBoxBrushFaceUvStateCommand } from "../commands/set-box-brush-face-uv-state-command";
 import { createSetActiveSceneCommand } from "../commands/set-active-scene-command";
 import { createDeleteInteractionLinkCommand } from "../commands/delete-interaction-link-command";
-import { createSetModelInstanceAuthoredStateCommand } from "../commands/set-model-instance-authored-state-command";
 import { createSetModelInstanceNameCommand } from "../commands/set-model-instance-name-command";
 import { createSetProjectNameCommand } from "../commands/set-project-name-command";
 import { createSetSceneLoadingScreenCommand } from "../commands/set-scene-loading-screen-command";
@@ -165,9 +161,7 @@ import {
   validateSceneDocument
 } from "../document/scene-document-validation";
 import {
-  cloneProjectAssetStorageRecord,
   getBrowserProjectAssetStorageAccess,
-  type ProjectAssetStorageRecord,
   type ProjectAssetStorage
 } from "../assets/project-asset-storage";
 import {
@@ -227,7 +221,7 @@ import {
   createTriggerVolumeEntity,
   getEntityInstances,
   getEntityKindLabel,
-  getPrimaryEnabledPlayerStartEntity,
+  getPrimaryPlayerStartEntity,
   normalizeEntityName,
   normalizeYawDegrees,
   normalizeInteractablePrompt,
@@ -905,17 +899,6 @@ function formatAudioAssetSummary(asset: AudioAssetRecord): string {
   return details.join(" | ");
 }
 
-function formatProjectAssetSummary(asset: ProjectAssetRecord): string {
-  switch (asset.kind) {
-    case "model":
-      return formatModelAssetSummary(asset);
-    case "image":
-      return formatImageAssetSummary(asset);
-    case "audio":
-      return formatAudioAssetSummary(asset);
-  }
-}
-
 function formatAssetHoverStatus(asset: ProjectAssetRecord): string {
   const details = [
     `${getProjectAssetKindLabel(asset.kind)} asset`,
@@ -1507,7 +1490,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     editorState.document.entities,
     editorState.document.assets
   );
-  const primaryPlayerStart = getPrimaryEnabledPlayerStartEntity(
+  const primaryPlayerStart = getPrimaryPlayerStartEntity(
     editorState.document.entities
   );
   const materialList = sortDocumentMaterials(editorState.document.materials);
@@ -1986,12 +1969,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const loadedModelAssetsRef = useRef<Record<string, LoadedModelAsset>>({});
   const loadedImageAssetsRef = useRef<Record<string, LoadedImageAsset>>({});
   const loadedAudioAssetsRef = useRef<Record<string, LoadedAudioAsset>>({});
-  const previousProjectAssetsRef = useRef<Record<string, ProjectAssetRecord>>(
-    editorState.document.assets
-  );
-  const deletedProjectAssetStorageRecordsRef = useRef<
-    Record<string, ProjectAssetStorageRecord>
-  >({});
   const autosaveControllerRef = useRef<EditorAutosaveController | null>(null);
   const lastAutosaveErrorRef = useRef<string | null>(null);
   const viewportQuadSplitRef = useRef(editorState.viewportQuadSplit);
@@ -2534,6 +2511,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
     let cancelled = false;
     const currentAssets = editorState.document.assets;
+    const previousAssets = previousProjectAssetsRef.current;
     const previousLoadedModelAssets = loadedModelAssetsRef.current;
     const previousLoadedImageAssets = loadedImageAssetsRef.current;
     const previousLoadedAudioAssets = loadedAudioAssetsRef.current;
@@ -2551,6 +2529,65 @@ export function App({ store, initialStatusMessage }: AppProps) {
     const nextLoadedAudioAssets: Record<string, LoadedAudioAsset> = {};
     const syncErrorMessages: string[] = [];
 
+    const restoreDeletedStoredAsset = async (asset: ProjectAssetRecord) => {
+      const deletedRecord =
+        deletedProjectAssetStorageRecordsRef.current[asset.storageKey];
+
+      if (projectAssetStorage === null || deletedRecord === undefined) {
+        return false;
+      }
+
+      try {
+        await projectAssetStorage.putAsset(
+          asset.storageKey,
+          cloneProjectAssetStorageRecord(deletedRecord)
+        );
+        delete deletedProjectAssetStorageRecordsRef.current[asset.storageKey];
+        return true;
+      } catch (error) {
+        syncErrorMessages.push(
+          `Stored data for ${asset.sourceName} could not be restored: ${getErrorMessage(error)}`
+        );
+        return false;
+      }
+    };
+
+    const syncModelAsset = async (asset: ModelAssetRecord) => {
+      try {
+        return await loadModelAssetFromStorage(projectAssetStorage, asset);
+      } catch (error) {
+        if (await restoreDeletedStoredAsset(asset)) {
+          return loadModelAssetFromStorage(projectAssetStorage, asset);
+        }
+
+        throw error;
+      }
+    };
+
+    const syncImageAsset = async (asset: ImageAssetRecord) => {
+      try {
+        return await loadImageAssetFromStorage(projectAssetStorage, asset);
+      } catch (error) {
+        if (await restoreDeletedStoredAsset(asset)) {
+          return loadImageAssetFromStorage(projectAssetStorage, asset);
+        }
+
+        throw error;
+      }
+    };
+
+    const syncAudioAsset = async (asset: AudioAssetRecord) => {
+      try {
+        return await loadAudioAssetFromStorage(projectAssetStorage, asset);
+      } catch (error) {
+        if (await restoreDeletedStoredAsset(asset)) {
+          return loadAudioAssetFromStorage(projectAssetStorage, asset);
+        }
+
+        throw error;
+      }
+    };
+
     const syncAssets = async () => {
       if (projectAssetStorage === null) {
         for (const loadedAsset of Object.values(previousLoadedModelAssets)) {
@@ -2565,6 +2602,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
           loadedModelAssetsRef.current = {};
           loadedImageAssetsRef.current = {};
           loadedAudioAssetsRef.current = {};
+          previousProjectAssetsRef.current = currentAssets;
           setLoadedModelAssets({});
           setLoadedImageAssets({});
           setLoadedAudioAssets({});
@@ -2588,10 +2626,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
           }
 
           try {
-            nextLoadedModelAssets[asset.id] = await loadModelAssetFromStorage(
-              projectAssetStorage,
-              asset
-            );
+            nextLoadedModelAssets[asset.id] = await syncModelAsset(asset);
           } catch (error) {
             syncErrorMessages.push(
               `Model asset ${asset.sourceName} could not be restored: ${getErrorMessage(error)}`
@@ -2615,10 +2650,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
           }
 
           try {
-            nextLoadedImageAssets[asset.id] = await loadImageAssetFromStorage(
-              projectAssetStorage,
-              asset
-            );
+            nextLoadedImageAssets[asset.id] = await syncImageAsset(asset);
           } catch (error) {
             syncErrorMessages.push(
               `Image asset ${asset.sourceName} could not be restored: ${getErrorMessage(error)}`
@@ -2641,10 +2673,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
           }
 
           try {
-            nextLoadedAudioAssets[asset.id] = await loadAudioAssetFromStorage(
-              projectAssetStorage,
-              asset
-            );
+            nextLoadedAudioAssets[asset.id] = await syncAudioAsset(asset);
           } catch (error) {
             syncErrorMessages.push(
               `Audio asset ${asset.sourceName} could not be restored: ${getErrorMessage(error)}`
@@ -2669,6 +2698,29 @@ export function App({ store, initialStatusMessage }: AppProps) {
         return;
       }
 
+      const removedAssets = Object.values(previousAssets).filter(
+        (asset) => currentAssets[asset.id] === undefined
+      );
+
+      for (const removedAsset of removedAssets) {
+        try {
+          const storedAsset = await projectAssetStorage.getAsset(
+            removedAsset.storageKey
+          );
+
+          if (storedAsset !== null) {
+            deletedProjectAssetStorageRecordsRef.current[
+              removedAsset.storageKey
+            ] = cloneProjectAssetStorageRecord(storedAsset);
+            await projectAssetStorage.deleteAsset(removedAsset.storageKey);
+          }
+        } catch (error) {
+          syncErrorMessages.push(
+            `Stored data for ${removedAsset.sourceName} could not be deleted: ${getErrorMessage(error)}`
+          );
+        }
+      }
+
       for (const assetId of previousLoadedModelAssetIds) {
         const removedAsset = previousLoadedModelAssets[assetId];
 
@@ -2688,6 +2740,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
       loadedModelAssetsRef.current = nextLoadedModelAssets;
       loadedImageAssetsRef.current = nextLoadedImageAssets;
       loadedAudioAssetsRef.current = nextLoadedAudioAssets;
+      previousProjectAssetsRef.current = currentAssets;
       setLoadedModelAssets(nextLoadedModelAssets);
       setLoadedImageAssets(nextLoadedImageAssets);
       setLoadedAudioAssets(nextLoadedAudioAssets);
