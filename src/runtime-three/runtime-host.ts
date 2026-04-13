@@ -456,7 +456,7 @@ export class RuntimeHost {
     this.runtimeScene = runtimeScene;
     this.currentWorld = runtimeScene.world;
     this.syncRuntimeClockState(runtimeScene.time);
-    this.syncRuntimeNpcPresenceToCurrentClock();
+    this.syncRuntimeNpcScheduleToCurrentClock();
     this.activeController?.deactivate(this.controllerContext, {
       releasePointerLock: !preservePointerLockDuringLoad
     });
