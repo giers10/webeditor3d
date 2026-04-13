@@ -1593,10 +1593,8 @@ export class RuntimeHost {
           }
         }
         binding.reflectionTextureUniform.value = null;
-        this.renderer.autoClear = true;
         this.renderer.setRenderTarget(binding.reflectionRenderTarget);
-        this.renderer.clear();
-        this.renderer.render(this.scene, this.waterReflectionCamera);
+        this.renderSceneWithBackground(this.waterReflectionCamera);
       } finally {
         this.renderer.setRenderTarget(previousRenderTarget);
         this.renderer.autoClear = previousAutoClear;
@@ -1935,11 +1933,12 @@ export class RuntimeHost {
     this.updateUnderwaterSceneFog();
 
     if (this.advancedRenderingComposer !== null) {
+      this.worldBackgroundRenderer.syncToCamera(this.camera);
       this.advancedRenderingComposer.render(dt);
       return;
     }
 
-    this.renderer?.render(this.scene, this.camera);
+    this.renderSceneWithBackground(this.camera);
   };
 
   private applyTeleportPlayerAction(target: RuntimeTeleportTarget) {
