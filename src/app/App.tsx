@@ -5268,6 +5268,41 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
+  const applyNpcChange = (
+    overrides: {
+      modelAssetId?: string | null;
+    } = {}
+  ) => {
+    if (selectedNpc === null) {
+      setStatusMessage("Select an NPC before editing it.");
+      return;
+    }
+
+    try {
+      const trimmedModelAssetId = npcModelAssetIdDraft.trim();
+      const nextEntity = createNpcEntity({
+        id: selectedNpc.id,
+        name: selectedNpc.name,
+        actorId: npcActorIdDraft,
+        position: snapVec3ToGrid(
+          readVec3Draft(entityPositionDraft, "NPC position"),
+          DEFAULT_GRID_SIZE
+        ),
+        yawDegrees: readYawDegreesDraft(npcYawDraft),
+        modelAssetId:
+          overrides.modelAssetId !== undefined
+            ? overrides.modelAssetId
+            : trimmedModelAssetId.length === 0
+              ? null
+              : trimmedModelAssetId
+      });
+
+      commitEntityChange(selectedNpc, nextEntity, "Updated NPC.");
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
   const applyPointLightChange = (overrides: { colorHex?: string } = {}) => {
     if (selectedPointLight === null) {
       setStatusMessage("Select a Point Light before editing it.");
@@ -5359,6 +5394,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
         break;
       case "sceneEntry":
         applySceneEntryChange();
+        break;
+      case "npc":
+        applyNpcChange();
         break;
       case "soundEmitter":
         applySoundEmitterChange();
