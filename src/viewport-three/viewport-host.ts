@@ -3209,6 +3209,10 @@ export class ViewportHost {
     )) {
       this.applyModelInstanceRenderObjectTransform(modelInstance);
     }
+
+    for (const path of getScenePaths(this.currentDocument.paths)) {
+      this.updatePathRenderObjectState(path);
+    }
   }
 
   private applyTransformPreview() {
@@ -5237,21 +5241,37 @@ export class ViewportHost {
       }
 
       const selected = isPathSelected(this.currentSelection, path.id);
-      const hovered =
-        this.hoveredSelection.kind === "paths" &&
-        this.hoveredSelection.ids.includes(path.id);
+      const hovered = isPathSelected(this.hoveredSelection, path.id);
 
       renderObjects.line.material.color.setHex(
         selected ? PATH_SELECTED_COLOR : hovered ? PATH_HOVERED_COLOR : PATH_COLOR
       );
 
       for (const pointMesh of renderObjects.pointMeshes) {
+        const pointSelected = isPathPointSelected(
+          this.currentSelection,
+          path.id,
+          pointMesh.pointId
+        );
+        const pointHovered = isPathPointSelected(
+          this.hoveredSelection,
+          path.id,
+          pointMesh.pointId
+        );
+
         pointMesh.mesh.material.color.setHex(
-          selected
+          pointSelected
             ? PATH_POINT_SELECTED_COLOR
-            : hovered
+            : pointHovered || selected
               ? PATH_POINT_HOVERED_COLOR
               : PATH_POINT_COLOR
+        );
+        pointMesh.mesh.scale.setScalar(
+          pointSelected
+            ? PATH_POINT_SELECTED_SCALE
+            : pointHovered
+              ? PATH_POINT_HOVERED_SCALE
+              : 1
         );
       }
     }
