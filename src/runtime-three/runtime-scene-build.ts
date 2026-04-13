@@ -614,7 +614,9 @@ function getColliderBounds(collider: RuntimeSceneCollider): GeneratedColliderBou
   };
 }
 
-function buildRuntimeNpcCollider(npc: RuntimeNpc): RuntimeNpcCollider | null {
+export function buildRuntimeNpcCollider(
+  npc: RuntimeNpc | RuntimeNpcDefinition
+): RuntimeNpcCollider | null {
   if (npc.collider.mode === "none") {
     return null;
   }
