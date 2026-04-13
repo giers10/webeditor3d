@@ -2,6 +2,7 @@ import type { LoadedModelAsset } from "../assets/gltf-model-import";
 import type { Vec3 } from "../core/vector";
 import { getModelInstances } from "../assets/model-instances";
 import {
+  createActorControlTargetRef,
   createControlTargetDescriptor,
   createDefaultResolvedControlSource,
   createEmptyRuntimeResolvedControlState,
@@ -43,14 +44,12 @@ import {
 } from "../document/world-settings";
 import {
   type CharacterColliderSettings,
-  cloneNpcPresence,
   clonePlayerStartInputBindings,
   createPlayerStartMovementTemplate,
   createPlayerStartInputBindings,
   getEntityInstances,
   getPrimaryEnabledPlayerStartEntity,
   type EntityInstance,
-  type NpcPresence,
   type PlayerStartInputBindings,
   type PlayerStartJumpSettings,
   type PlayerStartMovementCapabilities,
@@ -74,8 +73,15 @@ import {
   cloneMaterialDef,
   type MaterialDef
 } from "../materials/starter-material-library";
+import { cloneProjectScheduler } from "../scheduler/project-scheduler";
+import {
+  applyRuntimeProjectScheduleToControlState,
+  createRuntimeProjectSchedulerState,
+  resolveRuntimeProjectScheduleState,
+  type RuntimeProjectSchedulerState,
+  type RuntimeResolvedProjectScheduleState
+} from "./runtime-project-scheduler";
 import { assertRuntimeSceneBuildable } from "./runtime-scene-validation";
-import { resolveNpcPresenceActive } from "./runtime-npc-presence";
 import type { RuntimeClockState } from "./runtime-project-time";
 import {
   FIRST_PERSON_PLAYER_SHAPE,
