@@ -7,6 +7,7 @@ import { createEmptySceneDocument } from "../../src/document/scene-document";
 import {
   DEFAULT_PLAYER_START_MOVE_SPEED,
   DEFAULT_PLAYER_START_MOVEMENT_CAPABILITIES,
+  createNpcEntity,
   createPointLightEntity,
   createInteractableEntity,
   createPlayerStartMovementTemplate,
@@ -121,6 +122,17 @@ describe("buildRuntimeSceneFromDocument", () => {
         z: 2
       },
       yawDegrees: 135
+    });
+    const npc = createNpcEntity({
+      id: "entity-npc-guide",
+      actorId: "actor-house-guide",
+      position: {
+        x: -1,
+        y: 0,
+        z: -2
+      },
+      yawDegrees: 45,
+      modelAssetId: modelAsset.id
     });
     const sceneExit = createSceneExitEntity({
       id: "entity-scene-exit-house-door",
@@ -257,6 +269,7 @@ describe("buildRuntimeSceneFromDocument", () => {
       },
       entities: {
         [playerStart.id]: playerStart,
+        [npc.id]: npc,
         [soundEmitter.id]: soundEmitter,
         [triggerVolume.id]: triggerVolume,
         [teleportTarget.id]: teleportTarget,
@@ -440,6 +453,21 @@ describe("buildRuntimeSceneFromDocument", () => {
             z: 2
           },
           yawDegrees: 135
+        }
+      ],
+      npcs: [
+        {
+          entityId: "entity-npc-guide",
+          actorId: "actor-house-guide",
+          name: undefined,
+          visible: true,
+          position: {
+            x: -1,
+            y: 0,
+            z: -2
+          },
+          yawDegrees: 45,
+          modelAssetId: modelAsset.id
         }
       ],
       soundEmitters: [
@@ -688,6 +716,7 @@ describe("buildRuntimeSceneFromDocument", () => {
     expect(runtimeScene.entities).toEqual({
       playerStarts: [],
       sceneEntries: [],
+      npcs: [],
       soundEmitters: [],
       triggerVolumes: [],
       teleportTargets: [],
