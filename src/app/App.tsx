@@ -4828,6 +4828,25 @@ export function App({ store, initialStatusMessage }: AppProps) {
           );
           completeCreation("Placed Scene Entry.");
           return true;
+        case "npc": {
+          const placedModelAssetId = creationPreview.target.modelAssetId ?? null;
+
+          store.executeCommand(
+            createUpsertEntityCommand({
+              entity: createNpcEntity({
+                position,
+                modelAssetId: placedModelAssetId
+              }),
+              label: "Place npc"
+            })
+          );
+          completeCreation(
+            placedModelAssetId === null
+              ? "Placed NPC."
+              : `Placed NPC using ${editorState.document.assets[placedModelAssetId]?.sourceName ?? "the authored model asset"}.`
+          );
+          return true;
+        }
         case "soundEmitter": {
           const placedAudioAssetId =
             creationPreview.target.audioAssetId ??
