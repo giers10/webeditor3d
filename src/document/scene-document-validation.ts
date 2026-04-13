@@ -7,6 +7,11 @@ import {
 } from "../assets/project-assets";
 import type { ModelInstance } from "../assets/model-instances";
 import { isModelInstanceCollisionMode } from "../assets/model-instances";
+import {
+  type ControlEffect,
+  type InteractionControlTargetRef,
+  type LightControlTargetRef
+} from "../controls/control-surface";
 import { WHITEBOX_SELECTION_MODES } from "../core/whitebox-selection-mode";
 import {
   isNpcPresenceMode,
@@ -3071,14 +3076,12 @@ function validateInteractionLink(
 
       break;
     }
-    default:
-      diagnostics.push(
-        createDiagnostic(
-          "error",
-          "unsupported-interaction-action",
-          `Unsupported interaction action ${(link.action as { type: string }).type}.`,
-          `${path}.action.type`
-        )
+    case "control":
+      validateControlEffect(
+        link.action.effect,
+        `${path}.action.effect`,
+        document,
+        diagnostics
       );
       break;
   }
