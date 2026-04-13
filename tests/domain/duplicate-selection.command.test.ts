@@ -6,7 +6,10 @@ import { createEditorStore } from "../../src/app/editor-store";
 import { createDuplicateSelectionCommand } from "../../src/commands/duplicate-selection-command";
 import { createBoxBrush } from "../../src/document/brushes";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
-import { createTriggerVolumeEntity } from "../../src/entities/entity-instances";
+import {
+  createNpcEntity,
+  createTriggerVolumeEntity
+} from "../../src/entities/entity-instances";
 
 const modelAsset = {
   id: "asset-model-duplicate",
@@ -215,6 +218,53 @@ describe("duplicate selection command", () => {
       kind: "entities",
       ids: [duplicatedEntity.id]
     });
+  });
+
+  it("duplicates NPCs with a fresh stable actor id", () => {
+    const sourceNpc = createNpcEntity({
+      id: "entity-npc-source",
+      actorId: "actor-town-merchant",
+      position: {
+        x: 3,
+        y: 0,
+        z: -6
+      },
+      yawDegrees: 45
+    });
+    const store = createEditorStore({
+      initialDocument: {
+        ...createEmptySceneDocument({ name: "Duplicate NPC" }),
+        entities: {
+          [sourceNpc.id]: sourceNpc
+        }
+      }
+    });
+
+    store.setSelection({
+      kind: "entities",
+      ids: [sourceNpc.id]
+    });
+    store.executeCommand(createDuplicateSelectionCommand());
+
+    const selection = store.getState().selection;
+
+    expect(selection.kind).toBe("entities");
+    if (selection.kind !== "entities") {
+      throw new Error("Expected duplicated NPC selection.");
+    }
+
+    const duplicatedNpc = store.getState().document.entities[selection.ids[0]];
+
+    expect(duplicatedNpc).toMatchObject({
+      kind: "npc",
+      position: sourceNpc.position,
+      yawDegrees: sourceNpc.yawDegrees
+    });
+    expect(duplicatedNpc.id).not.toBe(sourceNpc.id);
+    if (duplicatedNpc.kind !== "npc") {
+      throw new Error("Expected duplicated entity to stay an NPC.");
+    }
+    expect(duplicatedNpc.actorId).not.toBe(sourceNpc.actorId);
   });
 
   it("duplicates multiple selected whitebox solids in one operation", () => {
