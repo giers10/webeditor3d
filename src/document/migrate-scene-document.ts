@@ -606,16 +606,16 @@ function readAdvancedRenderingSettings(
       defaults.enabled
     ),
     shadows: {
+      enabled: readOptionalBoolean(
+        shadows?.enabled,
+        "world.advancedRendering.shadows.enabled",
+        defaults.shadows.enabled
+      ),
       mapSize: shadowsMapSize,
+      type: shadowsType,
       bias: readOptionalFiniteNumber(
+        shadows?.bias,
         "world.advancedRendering.shadows.bias",
-      createDefaultWorldTimeOfDaySettings,
-      createDefaultWorldTimePhaseProfile,
-      DEFAULT_NIGHT_IMAGE_ENVIRONMENT_INTENSITY,
-      cloneWorldBackgroundSettings,
-      createDefaultWorldTimeOfDaySettings,
-      createDefaultWorldTimePhaseProfile,
-      DEFAULT_NIGHT_IMAGE_ENVIRONMENT_INTENSITY,
         defaults.shadows.bias
       )
     },
@@ -625,10 +625,6 @@ function readAdvancedRenderingSettings(
         "world.advancedRendering.ambientOcclusion.enabled",
         defaults.ambientOcclusion.enabled
       ),
-      type WorldTimeOfDaySettings,
-      type WorldTimePhaseProfile,
-      type WorldTimeOfDaySettings,
-      type WorldTimePhaseProfile,
       intensity: readOptionalNonNegativeFiniteNumber(
         ambientOcclusion?.intensity,
         "world.advancedRendering.ambientOcclusion.intensity",
