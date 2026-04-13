@@ -24,12 +24,15 @@ import {
 import {
   DEFAULT_PLAYER_START_GAMEPAD_BINDINGS,
   DEFAULT_PLAYER_START_KEYBOARD_BINDINGS,
+  createNpcAlwaysPresence,
   createNpcEntity,
   createNpcColliderSettings,
+  createNpcTimeWindowPresence,
   createPlayerStartColliderSettings,
   createPlayerStartInputBindings,
   createPlayerStartMovementTemplate,
   createInteractableEntity,
+  isNpcPresenceMode,
   normalizeEntityName,
   createPointLightEntity,
   createPlayerStartEntity,
@@ -49,6 +52,7 @@ import {
   isPlayerStartMovementTemplateKind,
   isPlayerStartNavigationMode,
   type EntityInstance,
+  type NpcPresence,
   type PlayerStartGamepadActionBinding,
   type PlayerStartGamepadBinding,
   type PlayerStartGamepadCameraLookBinding,
@@ -116,6 +120,7 @@ import {
   PROJECT_NAME_SCENE_DOCUMENT_VERSION,
   NPC_COLLIDER_SCENE_DOCUMENT_VERSION,
   NPC_ENTITY_FOUNDATION_SCENE_DOCUMENT_VERSION,
+  NPC_PRESENCE_SCENE_DOCUMENT_VERSION,
   SCENE_DOCUMENT_VERSION,
   STATIC_SIMPLE_MODEL_COLLIDERS_SCENE_DOCUMENT_VERSION,
   TRIGGER_ACTION_TARGET_FOUNDATION_SCENE_DOCUMENT_VERSION,
@@ -2621,6 +2626,7 @@ function readNpcEntity(value: unknown, label: string): EntityInstance {
     ),
     position: readVec3(value.position, `${label}.position`),
     actorId: expectString(value.actorId, `${label}.actorId`),
+    presence: readNpcPresence(value.presence, `${label}.presence`),
     yawDegrees: expectFiniteNumber(value.yawDegrees, `${label}.yawDegrees`),
     modelAssetId:
       value.modelAssetId === undefined || value.modelAssetId === null
@@ -2634,6 +2640,32 @@ function readNpcEntity(value: unknown, label: string): EntityInstance {
   }
 
   return entity;
+}
+
+function readNpcPresence(value: unknown, label: string): NpcPresence {
+  if (value === undefined) {
+    return createNpcAlwaysPresence();
+  }
+
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  const mode = expectString(value.mode, `${label}.mode`);
+
+  if (!isNpcPresenceMode(mode)) {
+    throw new Error(`${label}.mode must be always or timeWindow.`);
+  }
+
+  switch (mode) {
+    case "always":
+      return createNpcAlwaysPresence();
+    case "timeWindow":
+      return createNpcTimeWindowPresence({
+        startHour: expectFiniteNumber(value.startHour, `${label}.startHour`),
+        endHour: expectFiniteNumber(value.endHour, `${label}.endHour`)
+      });
+  }
 }
 
 function readSceneExitEntity(value: unknown, label: string): EntityInstance {
@@ -3403,6 +3435,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
 
   if (
     source.version !== SCENE_DOCUMENT_VERSION &&
+    source.version !== NPC_PRESENCE_SCENE_DOCUMENT_VERSION &&
     source.version !== NPC_ENTITY_FOUNDATION_SCENE_DOCUMENT_VERSION &&
     source.version !== WORLD_TIME_ENVIRONMENT_SCENE_DOCUMENT_VERSION &&
     source.version !== PROJECT_TIME_NIGHT_BACKGROUND_SCENE_DOCUMENT_VERSION &&
