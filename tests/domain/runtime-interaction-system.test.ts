@@ -47,6 +47,7 @@ function createRuntimeSceneFixture(): RuntimeSceneDefinition {
       fog: [],
       water: []
     },
+    staticColliders: [],
     colliders: [],
     sceneBounds: null,
     playerInputBindings: createPlayerStartInputBindings(),
@@ -56,6 +57,7 @@ function createRuntimeSceneFixture(): RuntimeSceneDefinition {
     },
     modelInstances: [],
     paths: [],
+    npcDefinitions: [],
     entities: {
       playerStarts: [],
       sceneEntries: [],
