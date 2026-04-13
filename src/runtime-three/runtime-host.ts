@@ -49,6 +49,10 @@ import {
   type ResolvedBoxVolumeRenderPaths
 } from "../rendering/advanced-rendering";
 import {
+  resolveWorldEnvironmentState,
+  WorldBackgroundRenderer
+} from "../rendering/world-background-renderer";
+import {
   collectWaterContactPatches,
   createWaterContactPatchAxisUniformValue,
   createWaterContactPatchShapeUniformValue,
@@ -146,6 +150,7 @@ export interface RuntimeSceneExitTransitionRequest {
 
 export class RuntimeHost {
   private readonly scene = new Scene();
+  private readonly worldBackgroundRenderer = new WorldBackgroundRenderer();
   private readonly camera = new PerspectiveCamera(70, 1, 0.05, 1000);
   private readonly cameraForward = new Vector3();
   private readonly volumeOffset = new Vector3();
@@ -565,6 +570,7 @@ export class RuntimeHost {
     }
 
     this.materialTextureCache.clear();
+    this.worldBackgroundRenderer.dispose();
     this.renderer?.forceContextLoss();
     this.renderer?.dispose();
     this.domElement.removeEventListener("click", this.handleRuntimeClick);
@@ -694,17 +700,9 @@ export class RuntimeHost {
 
     const world = this.currentWorld;
 
-    if (world.background.mode === "image") {
-      const texture =
-        this.loadedImageAssets[world.background.assetId]?.texture ?? null;
-      this.scene.background = texture;
-      this.scene.environment = texture;
-      this.scene.environmentIntensity = world.background.environmentIntensity;
-    } else {
-      this.scene.background = null;
-      this.scene.environment = null;
-      this.scene.environmentIntensity = 1;
-    }
+    this.scene.background = null;
+    this.scene.environment = null;
+    this.scene.environmentIntensity = 1;
 
     this.applyDayNightLighting();
 
@@ -729,6 +727,37 @@ export class RuntimeHost {
       this.runtimeScene.time,
       this.currentClockState
     );
+    const backgroundTexture =
+      resolvedWorld.background.mode === "image"
+        ? this.loadedImageAssets[resolvedWorld.background.assetId]?.texture ??
+          null
+        : null;
+    const nightBackgroundOverlay = resolvedWorld.nightBackgroundOverlay;
+    const backgroundOverlayState =
+      nightBackgroundOverlay === null
+        ? null
+        : {
+            texture:
+              this.loadedImageAssets[nightBackgroundOverlay.assetId]?.texture ??
+              null,
+            opacity: nightBackgroundOverlay.opacity,
+            environmentIntensity:
+              nightBackgroundOverlay.environmentIntensity
+          };
+    const environmentState = resolveWorldEnvironmentState(
+      resolvedWorld.background,
+      backgroundTexture,
+      backgroundOverlayState
+    );
+
+    this.worldBackgroundRenderer.update(
+      resolvedWorld.background,
+      backgroundTexture,
+      backgroundOverlayState
+    );
+    this.scene.background = null;
+    this.scene.environment = environmentState.texture;
+    this.scene.environmentIntensity = environmentState.intensity;
 
     this.ambientLight.color.set(resolvedWorld.ambientLight.colorHex);
     this.ambientLight.intensity = resolvedWorld.ambientLight.intensity;
@@ -825,7 +854,8 @@ export class RuntimeHost {
       this.renderer,
       this.scene,
       this.camera,
-      settings
+      settings,
+      this.worldBackgroundRenderer.scene
     );
     this.currentAdvancedRenderingSettings =
       cloneAdvancedRenderingSettings(settings);
@@ -856,6 +886,22 @@ export class RuntimeHost {
     for (const renderGroup of this.modelRenderObjects.values()) {
       applyAdvancedRenderingRenderableShadowFlags(renderGroup, shadowsEnabled);
     }
+  }
+
+  private renderSceneWithBackground(camera: PerspectiveCamera) {
+    if (this.renderer === null) {
+      return;
+    }
+
+    this.worldBackgroundRenderer.syncToCamera(camera);
+
+    const previousAutoClear = this.renderer.autoClear;
+    this.renderer.autoClear = true;
+    this.renderer.clear();
+    this.renderer.render(this.worldBackgroundRenderer.scene, camera);
+    this.renderer.autoClear = false;
+    this.renderer.render(this.scene, camera);
+    this.renderer.autoClear = previousAutoClear;
   }
 
   private rebuildLocalLights(localLights: RuntimeLocalLightCollection) {
