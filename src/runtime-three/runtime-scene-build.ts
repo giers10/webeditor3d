@@ -1304,11 +1304,9 @@ export function buildRuntimeSceneFromDocument(
   const paths = getScenePaths(document.paths)
     .filter((path) => path.enabled)
     .map(buildRuntimePath);
-  const runtimeTimeOfDayHours =
-    options.runtimeClock?.timeOfDayHours ?? document.time.startTimeOfDayHours;
   const collections = buildRuntimeSceneCollections(
     document,
-    runtimeTimeOfDayHours
+    options.runtimeClock ?? null
   );
   const control = buildRuntimeControlSurface(
     document,
@@ -1406,6 +1404,10 @@ export function buildRuntimeSceneFromDocument(
 
   return {
     time: cloneProjectTimeSettings(document.time),
+    scheduler: createRuntimeProjectSchedulerState({
+      document: cloneProjectScheduler(document.scheduler),
+      resolved: collections.scheduler
+    }),
     world: cloneWorldSettings(document.world),
     control,
     localLights: collections.localLights,
