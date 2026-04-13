@@ -4131,7 +4131,7 @@ export function migrateProjectDocument(source: unknown): ProjectDocument {
       );
     }
 
-    return {
+    return migrateLegacyProjectNpcPresenceToScheduler({
       version: SCENE_DOCUMENT_VERSION,
       name: readProjectName(source.name, "name", {
         allowMissing: allowMissingProjectName
@@ -4139,12 +4139,16 @@ export function migrateProjectDocument(source: unknown): ProjectDocument {
       time: readProjectTimeSettings(source.time, "time", {
         allowMissing: allowMissingTimeSettings
       }),
+      scheduler: readProjectScheduler(source.scheduler, "scheduler", {
+        allowMissing:
+          source.version < PROJECT_SCHEDULER_FOUNDATION_SCENE_DOCUMENT_VERSION
+      }),
       activeSceneId: expectString(source.activeSceneId, "activeSceneId"),
       scenes,
       materials,
       textures: expectEmptyCollection(source.textures, "textures"),
       assets
-    };
+    });
   }
 
   return createProjectDocumentFromSceneDocument(
