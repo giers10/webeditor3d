@@ -16,9 +16,11 @@ import {
   isPlayerStartKeyboardBindingCode,
   isPlayerStartMovementTemplateKind,
   isPlayerStartNavigationMode,
+  getNpcColliderHeight,
   getPlayerStartColliderHeight,
   type EntityInstance,
   type InteractableEntity,
+  type CharacterColliderSettings,
   type NpcEntity,
   type PointLightEntity,
   type PlayerStartEntity,
@@ -2139,90 +2141,112 @@ function validateSoundEmitterEntity(
     );
   }
 
-  if (!isNonNegativeFiniteNumber(entity.volume)) {
+  validateCharacterColliderSettings(
+    entity.collider,
+    path,
+    diagnostics,
+    {
+      codePrefix: "player-start",
+      label: "Player Start",
+      getHeight: getPlayerStartColliderHeight
+    }
+  );
+) {
+
+function validateCharacterColliderSettings(
+  collider: CharacterColliderSettings,
+  path: string,
+  diagnostics: SceneDiagnostic[],
+  options: {
+    codePrefix: string;
+    label: string;
+    getHeight: (collider: CharacterColliderSettings) => number | null;
+  }
+) {
+  if (!isPlayerStartColliderMode(collider.mode)) {
     diagnostics.push(
       createDiagnostic(
         "error",
-        "invalid-sound-emitter-volume",
-        "Sound Emitter volume must remain finite and zero or greater.",
-        `${path}.volume`
+        `invalid-${options.codePrefix}-collider-mode`,
+        `${options.label} collider mode must be capsule, box, or none.`,
+        `${path}.collider.mode`
       )
     );
   }
 
-  if (!isPositiveFiniteNumber(entity.refDistance)) {
+  if (!isPositiveFiniteNumber(collider.eyeHeight)) {
     diagnostics.push(
       createDiagnostic(
         "error",
-        "invalid-sound-emitter-ref-distance",
-        "Sound Emitter ref distance must remain finite and greater than zero.",
-        `${path}.refDistance`
+        `invalid-${options.codePrefix}-eye-height`,
+        `${options.label} eye height must remain finite and greater than zero.`,
+        `${path}.collider.eyeHeight`
       )
     );
   }
 
-  if (!isPositiveFiniteNumber(entity.maxDistance)) {
+  if (!isPositiveFiniteNumber(collider.capsuleRadius)) {
     diagnostics.push(
       createDiagnostic(
         "error",
-        "invalid-sound-emitter-max-distance",
-        "Sound Emitter max distance must remain finite and greater than zero.",
-        `${path}.maxDistance`
+        `invalid-${options.codePrefix}-capsule-radius`,
+        `${options.label} capsule radius must remain finite and greater than zero.`,
+        `${path}.collider.capsuleRadius`
+      )
+    );
+  }
+
+  if (!isPositiveFiniteNumber(collider.capsuleHeight)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        `invalid-${options.codePrefix}-capsule-height`,
+        `${options.label} capsule height must remain finite and greater than zero.`,
+        `${path}.collider.capsuleHeight`
       )
     );
   }
 
   if (
-    isPositiveFiniteNumber(entity.refDistance) &&
-    isPositiveFiniteNumber(entity.maxDistance) &&
-    entity.maxDistance < entity.refDistance
+    !isFiniteVec3(collider.boxSize) ||
+    collider.boxSize.x <= 0 ||
+    collider.boxSize.y <= 0 ||
+    collider.boxSize.z <= 0
   ) {
     diagnostics.push(
       createDiagnostic(
         "error",
-        "invalid-sound-emitter-distance-order",
-        "Sound Emitter max distance must be greater than or equal to ref distance.",
-        `${path}.maxDistance`
+        `invalid-${options.codePrefix}-box-size`,
+        `${options.label} box size must remain finite and positive on every axis.`,
+        `${path}.collider.boxSize`
       )
     );
   }
 
-  if (!isBoolean(entity.autoplay)) {
+  if (collider.capsuleHeight < collider.capsuleRadius * 2) {
     diagnostics.push(
       createDiagnostic(
         "error",
-        "invalid-sound-emitter-autoplay",
-        "Sound Emitter autoplay must remain a boolean.",
-        `${path}.autoplay`
+        `invalid-${options.codePrefix}-capsule-proportions`,
+        `${options.label} capsule height must be at least twice the capsule radius.`,
+        `${path}.collider.capsuleHeight`
       )
     );
   }
 
-  if (!isBoolean(entity.loop)) {
+  const colliderHeight = options.getHeight(collider);
+
+  if (colliderHeight !== null && collider.eyeHeight > colliderHeight) {
     diagnostics.push(
       createDiagnostic(
         "error",
-        "invalid-sound-emitter-loop",
-        "Sound Emitter loop must remain a boolean.",
-        `${path}.loop`
+        `invalid-${options.codePrefix}-eye-height`,
+        `${options.label} eye height must fit within the authored collider height.`,
+        `${path}.collider.eyeHeight`
       )
     );
   }
-
-  validateSoundEmitterAudioAsset(
-    entity,
-    path,
-    document,
-    diagnostics,
-    entity.autoplay ? "error" : "warning"
-  );
 }
-
-function validateTriggerVolumeEntity(
-  entity: TriggerVolumeEntity,
-  path: string,
-  diagnostics: SceneDiagnostic[]
-) {
   validateAuthoredEntityState(entity, path, diagnostics);
 
   if (!isFiniteVec3(entity.position)) {
@@ -2475,6 +2499,11 @@ function validateNpcEntity(
   }
 
   validateNpcModelAssetId(entity, path, document, diagnostics);
+  validateCharacterColliderSettings(entity.collider, path, diagnostics, {
+    codePrefix: "npc",
+    label: "NPC",
+    getHeight: getNpcColliderHeight
+  });
 }
 
 function validateSceneExitEntity(
