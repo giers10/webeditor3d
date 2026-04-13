@@ -858,6 +858,7 @@ interface RuntimeSceneCollections {
   entities: RuntimeEntityCollection;
   localLights: RuntimeLocalLightCollection;
   npcDefinitions: RuntimeNpcDefinition[];
+  scheduler: RuntimeResolvedProjectScheduleState;
 }
 
 function buildRuntimeControlSurface(
@@ -869,6 +870,20 @@ function buildRuntimeControlSurface(
   const channels: RuntimeControlSurfaceDefinition["channels"] = [];
   const resolved = createEmptyRuntimeResolvedControlState();
   const defaultSource = createDefaultResolvedControlSource();
+  const seenActorIds = new Set<string>();
+
+  for (const npc of collections.npcDefinitions) {
+    if (seenActorIds.has(npc.actorId)) {
+      continue;
+    }
+
+    seenActorIds.add(npc.actorId);
+    targets.push(
+      createControlTargetDescriptor(createActorControlTargetRef(npc.actorId), [
+        "actorPresence"
+      ])
+    );
+  }
 
   for (const pointLight of collections.localLights.pointLights) {
     const target = createLightControlTargetRef(
@@ -1006,7 +1021,10 @@ function buildRuntimeControlSurface(
   return createRuntimeControlSurfaceDefinition({
     targets,
     channels,
-    resolved
+    resolved: applyRuntimeProjectScheduleToControlState(
+      resolved,
+      collections.scheduler
+    )
   });
 }
 
