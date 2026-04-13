@@ -409,6 +409,23 @@ Imported model collision settings should be represented canonically on the relev
 
 `ProjectTimeSettings` is the correct home for project-wide clock and day/night settings that persist across scene transitions.
 
+Time architecture direction:
+
+- the project clock is global and should survive scene transitions inside a run session
+- scenes may opt in/out of time-driven lighting, but should not own separate main clock progression
+- authored day/night semantics such as sunrise, sunset, and day phases belong in project-level time settings or a tightly related typed structure
+- runtime should derive visible day/night state from:
+  - project time
+  - authored day/night settings
+  - scene world settings
+- do not hide time semantics only inside renderer-side constants; keep reusable pure resolution logic where practical
+- generic schedules, NPC routines, dialogue variants, and interaction availability should eventually resolve from:
+  - global time
+  - world/quest flags
+  - scene/location context
+- unloaded scenes should be reconstructible from those rules rather than fully simulated in the background
+- future loop/reset mechanics should clear or reinitialize cycle-scoped state, then re-resolve current world state deterministically
+
 Do not model global world lighting as ad hoc hidden viewport state.
 
 ---

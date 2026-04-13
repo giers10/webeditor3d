@@ -84,6 +84,24 @@ This is not:
 - Global ambient/sun/background/fog belong in `world` settings.
 - Local authored lights belong in typed entity schemas.
 
+### Project time and living-world direction
+
+- Project time is a global project-level system, not a separate main clock per scene.
+- Scene world settings may opt in/out of time-driven lighting, but scenes should not own independent core time progression.
+- Near-term time slices should prioritize authored day/night control:
+  - sunrise/sunset
+  - day phases
+  - night/dawn/dusk appearance
+  - scene-level lighting opt-in/out
+- Do not build a large generic schedule editor before the runtime hooks it would drive are real.
+- Long-term world logic should resolve deterministically from:
+  - global time
+  - persistent/cycle flags
+  - scene/location context
+- Prefer deterministic resolution over fully simulating unloaded scenes.
+- NPC presence, routines, dialogue variants, interaction availability, and path progress should eventually be reconstructible from authored rules plus global state.
+- If loop/reset mechanics are added later, they should reset/re-resolve cycle-scoped state rather than trying to rewind arbitrary runtime simulation.
+
 ### Imported model collision
 
 - Collision authoring for imported models belongs on `modelInstances`, not assets.

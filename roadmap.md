@@ -621,11 +621,25 @@ These items are also likely candidates for sub-slices if needed.
 
 Expand capability without compromising the core.
 
+### Directional note
+
+The time/living-world direction should stay closer to Majora's Mask than to a fully simulated always-loaded sandbox:
+
+- one global project clock
+- deterministic resolution from time + flags + scene context
+- unloaded scenes reconstructed on demand instead of fully simulated all the time
+- authored day/night comes before a large generic scheduling UI
+
 ### Candidate slices
 
+- authored day/night refinement on top of project-global time
+- small reusable time-query/day-phase foundation
+- typed NPC/runtime actor foundation
+- spline/path authoring for camera/object/NPC motion
+- deterministic schedules/routines driven by time windows and flags
+- cycle/reset mechanics if loop gameplay becomes a core pillar
 - advanced UV tools
 - nav waypoints authoring
-- camera zones / guided tours
 - ambient zones and audio buses
 - lightweight scripting
 - plugin/tool API

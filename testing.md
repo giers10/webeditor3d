@@ -47,6 +47,8 @@ Highest-priority confidence areas:
 9. runner navigation/input reliability
 10. spatial audio and interaction basics
 11. critical regressions caught in CI
+12. project-time/day-phase determinism where time-driven runtime systems exist
+13. later schedule/routine resolution from time + flags + scene context
 
 ---
 
@@ -474,6 +476,8 @@ The following invariants are important enough to deserve repeated coverage:
 - missing optional systems fail gracefully
 - navigation controller activation is exclusive and consistent
 - interactions target the correct entities or model instances
+- project-global time survives scene transitions where intended
+- time-driven scene state resolves deterministically from canonical/authored inputs
 
 ---
 
