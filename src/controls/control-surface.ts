@@ -897,19 +897,23 @@ export function applyControlEffectToResolvedState(
       return nextResolved;
     }
     case "setLightIntensity": {
-      const nextValue = createResolvedLightIntensityChannelValue({
-        descriptor: createLightIntensityControlChannelDescriptor({
-          target: effect.target,
-          defaultValue: effect.intensity
-        }),
-        value: effect.intensity,
-        source
+      const nextDescriptor = createLightIntensityControlChannelDescriptor({
+        target: effect.target,
+        defaultValue: effect.intensity
       });
-      const descriptorKey = getControlChannelDescriptorKey(nextValue.descriptor);
+      const descriptorKey = getControlChannelDescriptorKey(nextDescriptor);
       const existingIndex = nextResolved.channels.findIndex(
         (candidate) =>
           getControlChannelDescriptorKey(candidate.descriptor) === descriptorKey
       );
+      const nextValue = createResolvedLightIntensityChannelValue({
+        descriptor:
+          existingIndex >= 0
+            ? nextResolved.channels[existingIndex].descriptor
+            : nextDescriptor,
+        value: effect.intensity,
+        source
+      });
 
       if (existingIndex >= 0) {
         nextResolved.channels[existingIndex] = nextValue;
