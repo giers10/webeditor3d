@@ -634,12 +634,17 @@ export class ViewportHost {
     }
 
     if (this.currentDocument !== null) {
+      this.rebuildEntityMarkers(this.currentDocument, this.currentSelection);
       this.rebuildModelInstances(this.currentDocument, this.currentSelection);
       this.applyTransformPreview();
       this.syncTransformGizmo();
     }
 
-    if (this.creationPreview?.target.kind === "model-instance") {
+    if (
+      this.creationPreview?.target.kind === "model-instance" ||
+      (this.creationPreview?.target.kind === "entity" &&
+        this.creationPreview.target.entityKind === "npc")
+    ) {
       const currentPreview = this.creationPreview;
       this.creationPreview = null;
       this.clearCreationPreviewObject();
