@@ -14,6 +14,7 @@ import {
 } from "../../src/document/scene-document";
 import { createDefaultWorldSettings } from "../../src/document/world-settings";
 import {
+  createNpcEntity,
   createSoundEmitterEntity,
   createTeleportTargetEntity,
   createTriggerVolumeEntity
@@ -83,6 +84,11 @@ function createProjectDocumentFixture() {
     autoplay: true,
     loop: true
   });
+  const npc = createNpcEntity({
+    id: "entity-npc-cleanup",
+    actorId: "actor-cleanup-guide",
+    modelAssetId: modelAsset.id
+  });
   const projectDocument: ProjectDocument = {
     ...baseProjectDocument,
     assets: {
@@ -109,7 +115,8 @@ function createProjectDocumentFixture() {
         entities: {
           [triggerVolume.id]: triggerVolume,
           [teleportTarget.id]: teleportTarget,
-          [soundEmitter.id]: soundEmitter
+          [soundEmitter.id]: soundEmitter,
+          [npc.id]: npc
         },
         interactionLinks: {
           "link-play-animation": createPlayAnimationInteractionLink({
@@ -150,6 +157,7 @@ function createProjectDocumentFixture() {
     imageAsset,
     audioAsset,
     modelInstance,
+    npc,
     soundEmitter
   };
 }
@@ -166,6 +174,10 @@ describe("deleteProjectAssetFromProjectDocument", () => {
 
     expect(nextProjectDocument.assets[fixture.modelAsset.id]).toBeUndefined();
     expect(nextScene.modelInstances).toEqual({});
+    expect(nextScene.entities[fixture.npc.id]).toMatchObject({
+      kind: "npc",
+      modelAssetId: null
+    });
     expect(Object.keys(nextScene.interactionLinks).sort()).toEqual([
       "link-play-sound",
       "link-stop-sound",
