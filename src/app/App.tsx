@@ -1887,6 +1887,20 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [npcYawDraft, setNpcYawDraft] = useState(
     String(DEFAULT_NPC_YAW_DEGREES)
   );
+  const [npcColliderModeDraft, setNpcColliderModeDraft] =
+    useState<PlayerStartColliderMode>(createNpcColliderSettings().mode);
+  const [npcEyeHeightDraft, setNpcEyeHeightDraft] = useState(
+    String(createNpcColliderSettings().eyeHeight)
+  );
+  const [npcCapsuleRadiusDraft, setNpcCapsuleRadiusDraft] = useState(
+    String(createNpcColliderSettings().capsuleRadius)
+  );
+  const [npcCapsuleHeightDraft, setNpcCapsuleHeightDraft] = useState(
+    String(createNpcColliderSettings().capsuleHeight)
+  );
+  const [npcBoxSizeDraft, setNpcBoxSizeDraft] = useState(
+    createVec3Draft(createNpcColliderSettings().boxSize)
+  );
   const [npcModelAssetIdDraft, setNpcModelAssetIdDraft] = useState(
     DEFAULT_NPC_MODEL_ASSET_ID ?? ""
   );
