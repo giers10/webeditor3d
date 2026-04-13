@@ -3282,6 +3282,7 @@ export class ViewportHost {
 
         if (
           activeTransformSession.kind !== "active" ||
+          activeTransformSession.target.kind !== "pathPoint" ||
           activeTransformSession.preview.kind !== "pathPoint" ||
           this.currentDocument === null
         ) {
