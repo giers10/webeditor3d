@@ -3994,7 +3994,8 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     source.version !== WHITEBOX_BOX_VOLUME_SCENE_DOCUMENT_VERSION &&
     source.version !== WHITEBOX_FLOAT_TRANSFORM_SCENE_DOCUMENT_VERSION &&
     source.version !== WHITEBOX_GEOMETRY_SCENE_DOCUMENT_VERSION &&
-    source.version !== NPC_COLLIDER_SCENE_DOCUMENT_VERSION
+    source.version !== NPC_COLLIDER_SCENE_DOCUMENT_VERSION &&
+    source.version !== PROJECT_SCHEDULER_FOUNDATION_SCENE_DOCUMENT_VERSION
   ) {
     throw new Error(
       `Unsupported scene document version: ${String(source.version)}.`
@@ -4004,11 +4005,15 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
   const materials = readMaterialRegistry(source.materials, "materials");
   const assets = readAssets(source.assets);
 
-  return {
+  return migrateLegacySceneNpcPresenceToScheduler({
     version: SCENE_DOCUMENT_VERSION,
     name: expectString(source.name, "name"),
     time: readProjectTimeSettings(source.time, "time", {
       allowMissing: source.version < PROJECT_TIME_SYSTEM_SCENE_DOCUMENT_VERSION
+    }),
+    scheduler: readProjectScheduler(source.scheduler, "scheduler", {
+      allowMissing:
+        source.version < PROJECT_SCHEDULER_FOUNDATION_SCENE_DOCUMENT_VERSION
     }),
     world: readWorldSettings(source.world, {
       legacyProjectTimeValue:
@@ -4022,7 +4027,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     modelInstances: readModelInstances(source.modelInstances, assets),
     entities: readEntities(source.entities, { legacySoundEmitter: false }),
     interactionLinks: readInteractionLinks(source.interactionLinks)
-  };
+  });
 }
 
 function readProjectScene(
