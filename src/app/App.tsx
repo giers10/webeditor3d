@@ -2538,6 +2538,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
       setTriggerVolumeSizeDraft(createVec3Draft(DEFAULT_TRIGGER_VOLUME_SIZE));
       setSceneEntryYawDraft(String(DEFAULT_SCENE_ENTRY_YAW_DEGREES));
       setNpcActorIdDraft("");
+      setNpcPresenceModeDraft(createNpcAlwaysPresence().mode);
+      setNpcPresenceStartHourDraft(String(DEFAULT_NPC_TIME_WINDOW_START_HOUR));
+      setNpcPresenceEndHourDraft(String(DEFAULT_NPC_TIME_WINDOW_END_HOUR));
       setNpcYawDraft(String(DEFAULT_NPC_YAW_DEGREES));
       setNpcColliderModeDraft(createNpcColliderSettings().mode);
       setNpcEyeHeightDraft(String(createNpcColliderSettings().eyeHeight));
@@ -2610,6 +2613,16 @@ export function App({ store, initialStatusMessage }: AppProps) {
         break;
       case "npc":
         setNpcActorIdDraft(selectedEntity.actorId);
+        setNpcPresenceModeDraft(selectedEntity.presence.mode);
+        if (selectedEntity.presence.mode === "timeWindow") {
+          setNpcPresenceStartHourDraft(String(selectedEntity.presence.startHour));
+          setNpcPresenceEndHourDraft(String(selectedEntity.presence.endHour));
+        } else {
+          setNpcPresenceStartHourDraft(
+            String(DEFAULT_NPC_TIME_WINDOW_START_HOUR)
+          );
+          setNpcPresenceEndHourDraft(String(DEFAULT_NPC_TIME_WINDOW_END_HOUR));
+        }
         setNpcYawDraft(String(selectedEntity.yawDegrees));
         setNpcColliderModeDraft(selectedEntity.collider.mode);
         setNpcEyeHeightDraft(String(selectedEntity.collider.eyeHeight));
@@ -4830,6 +4843,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
     return buildRuntimeSceneFromDocument(sceneDocument, {
       loadedModelAssets,
+      runtimeClock: runtimeGlobalState.clock,
       sceneEntryId: options.sceneEntryId
     });
   };
