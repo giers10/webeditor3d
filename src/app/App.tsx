@@ -9575,7 +9575,27 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
                 {editorState.document.world.background.mode === "image" && (
                   <div className="form-section">
-                    <div className="label">Environment Intensity</div>
+                    <div className="label">Image Background</div>
+                    <label className="form-field">
+                      <span className="label">Image</span>
+                      <select
+                        data-testid="world-background-asset-select"
+                        className="text-input"
+                        value={editorState.document.world.background.assetId}
+                        onChange={(event) =>
+                          applyWorldBackgroundMode(
+                            "image",
+                            event.currentTarget.value
+                          )
+                        }
+                      >
+                        {imageAssetList.map((asset) => (
+                          <option key={asset.id} value={asset.id}>
+                            {asset.sourceName}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
                     <label className="form-field">
                       <span className="label">Intensity</span>
                       <input
