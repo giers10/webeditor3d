@@ -6,7 +6,10 @@ import { cloneScenePath, type ScenePath } from "../document/paths";
 import type { EditorCommand } from "./command";
 
 function selectionIncludesPath(selection: EditorSelection, pathId: string): boolean {
-  return selection.kind === "paths" && selection.ids.includes(pathId);
+  return (
+    (selection.kind === "paths" && selection.ids.includes(pathId)) ||
+    (selection.kind === "pathPoint" && selection.pathId === pathId)
+  );
 }
 
 export function createDeletePathCommand(pathId: string): EditorCommand {

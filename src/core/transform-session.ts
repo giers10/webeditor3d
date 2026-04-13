@@ -1067,7 +1067,7 @@ export function resolveTransformTarget(
       return {
         target: null,
         message:
-          "Select a single brush, entity, or model instance before transforming it."
+          "Select a single brush, path point, entity, or model instance before transforming it."
       };
     case "brushFace":
       if (whiteboxSelectionMode !== "face") {
@@ -1138,7 +1138,7 @@ export function resolveTransformTarget(
       return {
         target: null,
         message:
-          "Path transforms are not available in this slice. Edit path points in the Inspector."
+          "Select a path point before transforming a path."
       };
     case "pathPoint":
       return createPathPointTransformTarget(

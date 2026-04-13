@@ -2,7 +2,8 @@ import {
   getSingleSelectedBrushId,
   getSingleSelectedEntityId,
   getSingleSelectedModelInstanceId,
-  getSingleSelectedPathId,
+  getSingleSelectedPathOwnerId,
+  getSingleSelectedPathPoint,
   type EditorSelection
 } from "../core/selection";
 import type { Vec3 } from "../core/vector";
@@ -246,6 +247,22 @@ function createPathFocusTarget(path: ScenePath): ViewportFocusTarget | null {
   return finishBounds(bounds);
 }
 
+function createPathPointFocusTarget(position: Vec3): ViewportFocusTarget {
+  return createBoundsFocusTarget(
+    {
+      x: position.x,
+      y: position.y,
+      z: position.z
+    },
+    {
+      x: 0.25,
+      y: 0.25,
+      z: 0.25
+    },
+    0.5
+  );
+}
+
 function includeSphereEntity(bounds: FocusBoundsAccumulator, position: Vec3, radius: number) {
   includeBounds(
     bounds,
@@ -417,7 +434,20 @@ export function resolveViewportFocusTarget(document: SceneDocument, selection: E
     }
   }
 
-  const selectedPathId = getSingleSelectedPathId(selection);
+  const selectedPathPoint = getSingleSelectedPathPoint(selection);
+
+  if (selectedPathPoint !== null) {
+    const path = document.paths[selectedPathPoint.pathId];
+    const point = path?.points.find(
+      (candidatePoint) => candidatePoint.id === selectedPathPoint.pointId
+    );
+
+    if (point !== undefined) {
+      return createPathPointFocusTarget(point.position);
+    }
+  }
+
+  const selectedPathId = getSingleSelectedPathOwnerId(selection);
 
   if (selectedPathId !== null) {
     const path = document.paths[selectedPathId];
