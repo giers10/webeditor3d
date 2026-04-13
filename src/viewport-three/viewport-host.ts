@@ -5694,6 +5694,7 @@ export class ViewportHost {
           case "pointLight":
           case "playerStart":
           case "sceneEntry":
+          case "npc":
           case "soundEmitter":
           case "teleportTarget":
           case "interactable":
@@ -5815,7 +5816,7 @@ export class ViewportHost {
       case "box-brush":
         return "box-brush";
       case "entity":
-        return `entity:${target.entityKind}:${target.audioAssetId}`;
+        return `entity:${target.entityKind}:${target.audioAssetId}:${target.modelAssetId}`;
       case "model-instance":
         return `model-instance:${target.assetId}`;
     }
@@ -5892,6 +5893,15 @@ export class ViewportHost {
               "creation-preview",
               previewPosition,
               DEFAULT_SCENE_ENTRY_YAW_DEGREES,
+              false,
+              BOX_CREATE_PREVIEW_FILL
+            ).group;
+            break;
+          case "npc":
+            previewGroup = this.createNpcRenderObjects(
+              "creation-preview",
+              previewPosition,
+              DEFAULT_NPC_YAW_DEGREES,
               false,
               BOX_CREATE_PREVIEW_FILL
             ).group;
@@ -6003,7 +6013,8 @@ export class ViewportHost {
                 ? {
                     kind: "entity",
                     entityKind: toolPreview.target.entityKind,
-                    audioAssetId: toolPreview.target.audioAssetId
+                    audioAssetId: toolPreview.target.audioAssetId,
+                    modelAssetId: toolPreview.target.modelAssetId
                   }
                 : toolPreview.target.kind === "model-instance"
                   ? {
