@@ -176,7 +176,6 @@ import {
 } from "../rendering/water-material";
 import { resolveViewportFocusTarget } from "./viewport-focus";
 import {
-  createNpcMarkerMeshes,
   createSoundEmitterMarkerMeshes
 } from "./viewport-entity-markers";
 import { resolveTransformPointerDownIntent } from "./transform-pointer-intent";
