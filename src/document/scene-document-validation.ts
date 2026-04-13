@@ -2861,6 +2861,238 @@ function validateSceneExitEntity(
   }
 }
 
+function validateLightControlTarget(
+  target: LightControlTargetRef,
+  path: string,
+  document: SceneDocument,
+  diagnostics: SceneDiagnostic[]
+) {
+  const targetEntity = document.entities[target.entityId];
+
+  if (targetEntity === undefined) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "missing-control-light-entity",
+        `Light control target entity ${target.entityId} does not exist.`,
+        `${path}.entityId`
+      )
+    );
+    return;
+  }
+
+  if (
+    targetEntity.kind !== target.entityKind ||
+    (targetEntity.kind !== "pointLight" && targetEntity.kind !== "spotLight")
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-control-light-target-kind",
+        "Light control effects must target a Point Light or Spot Light entity of the authored target kind.",
+        `${path}.entityKind`
+      )
+    );
+  }
+}
+
+function validateInteractionControlTarget(
+  target: InteractionControlTargetRef,
+  path: string,
+  document: SceneDocument,
+  diagnostics: SceneDiagnostic[]
+) {
+  const targetEntity = document.entities[target.entityId];
+
+  if (targetEntity === undefined) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "missing-control-interaction-entity",
+        `Interaction control target entity ${target.entityId} does not exist.`,
+        `${path}.entityId`
+      )
+    );
+    return;
+  }
+
+  if (
+    targetEntity.kind !== target.interactionKind ||
+    (targetEntity.kind !== "interactable" && targetEntity.kind !== "sceneExit")
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-control-interaction-target-kind",
+        "Interaction control effects must target an Interactable or Scene Exit entity of the authored target kind.",
+        `${path}.interactionKind`
+      )
+    );
+  }
+}
+
+function validateControlEffect(
+  effect: ControlEffect,
+  path: string,
+  document: SceneDocument,
+  diagnostics: SceneDiagnostic[]
+) {
+  switch (effect.type) {
+    case "playModelAnimation": {
+      const targetModelInstance =
+        document.modelInstances[effect.target.modelInstanceId];
+
+      if (targetModelInstance === undefined) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "missing-control-play-animation-target-instance",
+            `Control play animation target model instance ${effect.target.modelInstanceId} does not exist.`,
+            `${path}.target.modelInstanceId`
+          )
+        );
+        return;
+      }
+
+      if (effect.clipName.trim().length === 0) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-control-play-animation-clip-name",
+            "Control play animation clip name must be non-empty.",
+            `${path}.clipName`
+          )
+        );
+        return;
+      }
+
+      const targetAsset = document.assets[targetModelInstance.assetId];
+
+      if (targetAsset === undefined || targetAsset.kind !== "model") {
+        return;
+      }
+
+      if (!targetAsset.metadata.animationNames.includes(effect.clipName)) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "missing-control-play-animation-clip",
+            `Control play animation clip ${effect.clipName} does not exist on model asset ${targetAsset.id}.`,
+            `${path}.clipName`
+          )
+        );
+      }
+      return;
+    }
+    case "stopModelAnimation":
+      if (document.modelInstances[effect.target.modelInstanceId] === undefined) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "missing-control-stop-animation-target-instance",
+            `Control stop animation target model instance ${effect.target.modelInstanceId} does not exist.`,
+            `${path}.target.modelInstanceId`
+          )
+        );
+      }
+      return;
+    case "playSound":
+    case "stopSound": {
+      const targetEntity = document.entities[effect.target.entityId];
+
+      if (targetEntity === undefined) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "missing-control-sound-emitter-entity",
+            `Control sound emitter entity ${effect.target.entityId} does not exist.`,
+            `${path}.target.entityId`
+          )
+        );
+        return;
+      }
+
+      if (targetEntity.kind !== effect.target.entityKind || targetEntity.kind !== "soundEmitter") {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-control-sound-emitter-kind",
+            "Control sound playback effects must target a Sound Emitter entity.",
+            `${path}.target.entityKind`
+          )
+        );
+        return;
+      }
+
+      if (targetEntity.audioAssetId === null) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "missing-control-sound-emitter-audio-asset",
+            "Control sound playback effects require a Sound Emitter that references an audio asset.",
+            `${path}.target.entityId`
+          )
+        );
+      }
+      return;
+    }
+    case "setInteractionEnabled":
+      validateInteractionControlTarget(
+        effect.target,
+        `${path}.target`,
+        document,
+        diagnostics
+      );
+      if (!isBoolean(effect.enabled)) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-control-interaction-enabled",
+            "Interaction control enabled must remain a boolean.",
+            `${path}.enabled`
+          )
+        );
+      }
+      return;
+    case "setLightEnabled":
+      validateLightControlTarget(
+        effect.target,
+        `${path}.target`,
+        document,
+        diagnostics
+      );
+      if (!isBoolean(effect.enabled)) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-control-light-enabled",
+            "Light control enabled must remain a boolean.",
+            `${path}.enabled`
+          )
+        );
+      }
+      return;
+    case "setLightIntensity":
+      validateLightControlTarget(
+        effect.target,
+        `${path}.target`,
+        document,
+        diagnostics
+      );
+      if (!isNonNegativeFiniteNumber(effect.intensity)) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-control-light-intensity",
+            "Light control intensity must remain finite and zero or greater.",
+            `${path}.intensity`
+          )
+        );
+      }
+      return;
+  }
+}
+
 function validateInteractionLink(
   link: InteractionLink,
   path: string,
