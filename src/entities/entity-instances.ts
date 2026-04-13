@@ -40,11 +40,24 @@ export interface SceneEntryEntity extends PositionedEntity {
   yawDegrees: number;
 }
 
+export interface CharacterColliderSettings {
+  mode: PlayerStartColliderMode;
+  eyeHeight: number;
+  capsuleRadius: number;
+  capsuleHeight: number;
+  boxSize: Vec3;
+}
+
+export interface PlayerStartColliderSettings extends CharacterColliderSettings {}
+
+export interface NpcColliderSettings extends CharacterColliderSettings {}
+
 export interface NpcEntity extends PositionedEntity {
   kind: "npc";
   actorId: string;
   yawDegrees: number;
   modelAssetId: string | null;
+  collider: NpcColliderSettings;
 }
 
 export const PLAYER_START_COLLIDER_MODES = ["capsule", "box", "none"] as const;
@@ -191,14 +204,6 @@ export interface PlayerStartMovementTemplateOverrides {
   jump?: Partial<PlayerStartJumpSettings>;
   sprint?: Partial<PlayerStartSprintSettings>;
   crouch?: Partial<PlayerStartCrouchSettings>;
-}
-
-export interface PlayerStartColliderSettings {
-  mode: PlayerStartColliderMode;
-  eyeHeight: number;
-  capsuleRadius: number;
-  capsuleHeight: number;
-  boxSize: Vec3;
 }
 
 export interface SoundEmitterEntity extends PositionedEntity {
@@ -388,6 +393,7 @@ export const DEFAULT_PLAYER_START_GAMEPAD_BINDINGS: PlayerStartGamepadBindings =
 export const DEFAULT_SCENE_ENTRY_YAW_DEGREES = 0;
 export const DEFAULT_NPC_YAW_DEGREES = 0;
 export const DEFAULT_NPC_MODEL_ASSET_ID: string | null = null;
+export const DEFAULT_NPC_COLLIDER_MODE: PlayerStartColliderMode = "capsule";
 export const DEFAULT_PLAYER_START_COLLIDER_MODE: PlayerStartColliderMode = "capsule";
 export const DEFAULT_PLAYER_START_EYE_HEIGHT = 1.6;
 export const DEFAULT_PLAYER_START_CAPSULE_RADIUS = 0.3;
@@ -512,7 +518,9 @@ export function isPlayerStartGamepadCameraLookBinding(
   );
 }
 
-export function clonePlayerStartColliderSettings(settings: PlayerStartColliderSettings): PlayerStartColliderSettings {
+function cloneCharacterColliderSettings(
+  settings: CharacterColliderSettings
+): CharacterColliderSettings {
   return {
     mode: settings.mode,
     eyeHeight: settings.eyeHeight,
@@ -520,6 +528,18 @@ export function clonePlayerStartColliderSettings(settings: PlayerStartColliderSe
     capsuleHeight: settings.capsuleHeight,
     boxSize: cloneVec3(settings.boxSize)
   };
+}
+
+export function clonePlayerStartColliderSettings(
+  settings: PlayerStartColliderSettings
+): PlayerStartColliderSettings {
+  return cloneCharacterColliderSettings(settings);
+}
+
+export function cloneNpcColliderSettings(
+  settings: NpcColliderSettings
+): NpcColliderSettings {
+  return cloneCharacterColliderSettings(settings);
 }
 
 function clonePlayerStartMovementCapabilities(
@@ -988,7 +1008,9 @@ export function arePlayerStartMovementTemplatesEqual(
   );
 }
 
-export function getPlayerStartColliderHeight(settings: PlayerStartColliderSettings): number | null {
+function getCharacterColliderHeight(
+  settings: CharacterColliderSettings
+): number | null {
   switch (settings.mode) {
     case "capsule":
       return settings.capsuleHeight;
@@ -999,34 +1021,63 @@ export function getPlayerStartColliderHeight(settings: PlayerStartColliderSettin
   }
 }
 
-export function createPlayerStartColliderSettings(
-  overrides: Partial<PlayerStartColliderSettings> = {}
-): PlayerStartColliderSettings {
-  const mode = overrides.mode ?? DEFAULT_PLAYER_START_COLLIDER_MODE;
-  const eyeHeight = overrides.eyeHeight ?? DEFAULT_PLAYER_START_EYE_HEIGHT;
-  const capsuleRadius = overrides.capsuleRadius ?? DEFAULT_PLAYER_START_CAPSULE_RADIUS;
-  const capsuleHeight = overrides.capsuleHeight ?? DEFAULT_PLAYER_START_CAPSULE_HEIGHT;
-  const boxSize = cloneVec3(overrides.boxSize ?? DEFAULT_PLAYER_START_BOX_SIZE);
+export function getPlayerStartColliderHeight(
+  settings: PlayerStartColliderSettings
+): number | null {
+  return getCharacterColliderHeight(settings);
+}
+
+export function getNpcColliderHeight(
+  settings: NpcColliderSettings
+): number | null {
+  return getCharacterColliderHeight(settings);
+}
+
+function createCharacterColliderSettings(
+  label: string,
+  overrides: Partial<CharacterColliderSettings> = {},
+  defaults: Partial<CharacterColliderSettings> = {}
+): CharacterColliderSettings {
+  const mode = overrides.mode ?? defaults.mode ?? DEFAULT_PLAYER_START_COLLIDER_MODE;
+  const eyeHeight =
+    overrides.eyeHeight ?? defaults.eyeHeight ?? DEFAULT_PLAYER_START_EYE_HEIGHT;
+  const capsuleRadius =
+    overrides.capsuleRadius ??
+    defaults.capsuleRadius ??
+    DEFAULT_PLAYER_START_CAPSULE_RADIUS;
+  const capsuleHeight =
+    overrides.capsuleHeight ??
+    defaults.capsuleHeight ??
+    DEFAULT_PLAYER_START_CAPSULE_HEIGHT;
+  const boxSize = cloneVec3(
+    overrides.boxSize ?? defaults.boxSize ?? DEFAULT_PLAYER_START_BOX_SIZE
+  );
 
   if (!isPlayerStartColliderMode(mode)) {
-    throw new Error("Player Start collider mode must be capsule, box, or none.");
+    throw new Error(`${label} collider mode must be capsule, box, or none.`);
   }
 
-  assertPositiveFiniteNumber(eyeHeight, "Player Start eye height");
-  assertPositiveFiniteNumber(capsuleRadius, "Player Start capsule radius");
-  assertPositiveFiniteNumber(capsuleHeight, "Player Start capsule height");
-  assertPositiveFiniteVec3(boxSize, "Player Start box size");
+  assertPositiveFiniteNumber(eyeHeight, `${label} eye height`);
+  assertPositiveFiniteNumber(capsuleRadius, `${label} capsule radius`);
+  assertPositiveFiniteNumber(capsuleHeight, `${label} capsule height`);
+  assertPositiveFiniteVec3(boxSize, `${label} box size`);
 
   if (capsuleHeight < capsuleRadius * 2) {
-    throw new Error("Player Start capsule height must be at least twice the capsule radius.");
+    throw new Error(
+      `${label} capsule height must be at least twice the capsule radius.`
+    );
   }
 
   if (mode === "capsule" && eyeHeight > capsuleHeight) {
-    throw new Error("Player Start eye height must be less than or equal to the capsule height.");
+    throw new Error(
+      `${label} eye height must be less than or equal to the capsule height.`
+    );
   }
 
   if (mode === "box" && eyeHeight > boxSize.y) {
-    throw new Error("Player Start eye height must be less than or equal to the box height.");
+    throw new Error(
+      `${label} eye height must be less than or equal to the box height.`
+    );
   }
 
   return {
@@ -1036,6 +1087,24 @@ export function createPlayerStartColliderSettings(
     capsuleHeight,
     boxSize
   };
+}
+
+export function createPlayerStartColliderSettings(
+  overrides: Partial<PlayerStartColliderSettings> = {}
+): PlayerStartColliderSettings {
+  return createCharacterColliderSettings("Player Start", overrides);
+}
+
+export function createNpcColliderSettings(
+  overrides: Partial<NpcColliderSettings> = {}
+): NpcColliderSettings {
+  return createCharacterColliderSettings("NPC", overrides, {
+    mode: DEFAULT_NPC_COLLIDER_MODE,
+    eyeHeight: DEFAULT_PLAYER_START_EYE_HEIGHT,
+    capsuleRadius: DEFAULT_PLAYER_START_CAPSULE_RADIUS,
+    capsuleHeight: DEFAULT_PLAYER_START_CAPSULE_HEIGHT,
+    boxSize: DEFAULT_PLAYER_START_BOX_SIZE
+  });
 }
 
 function normalizeSoundEmitterAudioAssetId(audioAssetId: string | null | undefined): string | null {
@@ -1279,6 +1348,7 @@ export function createNpcEntity(
       | "actorId"
       | "yawDegrees"
       | "modelAssetId"
+      | "collider"
     >
   > = {}
 ): NpcEntity {
@@ -1288,6 +1358,7 @@ export function createNpcEntity(
   const modelAssetId = normalizeNpcModelAssetId(
     overrides.modelAssetId ?? DEFAULT_NPC_MODEL_ASSET_ID
   );
+  const collider = createNpcColliderSettings(overrides.collider);
 
   assertFiniteVec3(position, "NPC position");
 
@@ -1304,7 +1375,8 @@ export function createNpcEntity(
     position,
     actorId,
     yawDegrees: normalizeYawDegrees(yawDegrees),
-    modelAssetId
+    modelAssetId,
+    collider
   };
 }
 
@@ -1676,7 +1748,12 @@ export function areEntityInstancesEqual(left: EntityInstance, right: EntityInsta
       return (
         left.actorId === typedRight.actorId &&
         left.yawDegrees === typedRight.yawDegrees &&
-        left.modelAssetId === typedRight.modelAssetId
+        left.modelAssetId === typedRight.modelAssetId &&
+        left.collider.mode === typedRight.collider.mode &&
+        left.collider.eyeHeight === typedRight.collider.eyeHeight &&
+        left.collider.capsuleRadius === typedRight.collider.capsuleRadius &&
+        left.collider.capsuleHeight === typedRight.collider.capsuleHeight &&
+        areVec3Equal(left.collider.boxSize, typedRight.collider.boxSize)
       );
     }
     case "soundEmitter": {
