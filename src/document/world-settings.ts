@@ -1,6 +1,7 @@
 import { DEFAULT_SUN_DIRECTION, type Vec3 } from "../core/vector";
 
 export type WorldBackgroundMode = "solid" | "verticalGradient" | "image";
+export type WorldTimePhase = "dawn" | "dusk" | "night";
 
 export const ADVANCED_RENDERING_SHADOW_MAP_SIZES = [512, 1024, 2048, 4096] as const;
 export const ADVANCED_RENDERING_SHADOW_TYPES = ["basic", "pcf", "pcfSoft"] as const;
@@ -45,6 +46,29 @@ export interface WorldSunLightSettings {
   colorHex: string;
   intensity: number;
   direction: Vec3;
+}
+
+export interface WorldTimePhaseProfile {
+  skyTopColorHex: string;
+  skyBottomColorHex: string;
+  ambientColorHex: string;
+  ambientIntensityFactor: number;
+  lightColorHex: string;
+  lightIntensityFactor: number;
+}
+
+export interface WorldNightEnvironmentSettings {
+  background: WorldBackgroundSettings;
+  ambientColorHex: string;
+  ambientIntensityFactor: number;
+  lightColorHex: string;
+  lightIntensityFactor: number;
+}
+
+export interface WorldTimeOfDaySettings {
+  dawn: WorldTimePhaseProfile;
+  dusk: WorldTimePhaseProfile;
+  night: WorldNightEnvironmentSettings;
 }
 
 export interface AdvancedRenderingShadowsSettings {
@@ -104,12 +128,14 @@ export interface WorldSettings {
   background: WorldBackgroundSettings;
   ambientLight: WorldAmbientLightSettings;
   sunLight: WorldSunLightSettings;
+  timeOfDay: WorldTimeOfDaySettings;
   advancedRendering: AdvancedRenderingSettings;
 }
 
 const DEFAULT_SOLID_BACKGROUND_COLOR = "#2f3947";
 const DEFAULT_GRADIENT_TOP_COLOR = DEFAULT_SOLID_BACKGROUND_COLOR;
 const DEFAULT_GRADIENT_BOTTOM_COLOR = "#141a22";
+const DEFAULT_NIGHT_IMAGE_ENVIRONMENT_INTENSITY = 0.35;
 const DEFAULT_ADVANCED_RENDERING_SHADOW_MAP_SIZE: AdvancedRenderingShadowMapSize = 2048;
 const DEFAULT_ADVANCED_RENDERING_SHADOW_TYPE: AdvancedRenderingShadowType = "pcfSoft";
 const DEFAULT_ADVANCED_RENDERING_SHADOW_BIAS = -0.0005;
@@ -191,6 +217,60 @@ export function createDefaultAdvancedRenderingSettings(): AdvancedRenderingSetti
   };
 }
 
+export function createDefaultWorldTimePhaseProfile(
+  phase: WorldTimePhase
+): WorldTimePhaseProfile {
+  switch (phase) {
+    case "dawn":
+      return {
+        skyTopColorHex: "#5877b2",
+        skyBottomColorHex: "#f6a66f",
+        ambientColorHex: "#ffd7b0",
+        ambientIntensityFactor: 0.72,
+        lightColorHex: "#ffc98d",
+        lightIntensityFactor: 0.78
+      };
+    case "dusk":
+      return {
+        skyTopColorHex: "#304076",
+        skyBottomColorHex: "#f08b5b",
+        ambientColorHex: "#f0b69a",
+        ambientIntensityFactor: 0.6,
+        lightColorHex: "#ffae7d",
+        lightIntensityFactor: 0.66
+      };
+    case "night":
+      return {
+        skyTopColorHex: "#081120",
+        skyBottomColorHex: "#1a2438",
+        ambientColorHex: "#1d2d45",
+        ambientIntensityFactor: 0.24,
+        lightColorHex: "#99b5ff",
+        lightIntensityFactor: 0.16
+      };
+  }
+}
+
+export function createDefaultWorldTimeOfDaySettings(): WorldTimeOfDaySettings {
+  const nightProfile = createDefaultWorldTimePhaseProfile("night");
+
+  return {
+    dawn: createDefaultWorldTimePhaseProfile("dawn"),
+    dusk: createDefaultWorldTimePhaseProfile("dusk"),
+    night: {
+      background: {
+        mode: "verticalGradient",
+        topColorHex: nightProfile.skyTopColorHex,
+        bottomColorHex: nightProfile.skyBottomColorHex
+      },
+      ambientColorHex: nightProfile.ambientColorHex,
+      ambientIntensityFactor: nightProfile.ambientIntensityFactor,
+      lightColorHex: nightProfile.lightColorHex,
+      lightIntensityFactor: nightProfile.lightIntensityFactor
+    }
+  };
+}
+
 export function createDefaultWorldSettings(): WorldSettings {
   return {
     projectTimeLightingEnabled: true,
@@ -209,6 +289,7 @@ export function createDefaultWorldSettings(): WorldSettings {
         ...DEFAULT_SUN_DIRECTION
       }
     },
+    timeOfDay: createDefaultWorldTimeOfDaySettings(),
     advancedRendering: createDefaultAdvancedRenderingSettings()
   };
 }
@@ -244,6 +325,41 @@ export function cloneWorldBackgroundSettings(background: WorldBackgroundSettings
   };
 }
 
+export function cloneWorldTimePhaseProfile(
+  profile: WorldTimePhaseProfile
+): WorldTimePhaseProfile {
+  return {
+    skyTopColorHex: profile.skyTopColorHex,
+    skyBottomColorHex: profile.skyBottomColorHex,
+    ambientColorHex: profile.ambientColorHex,
+    ambientIntensityFactor: profile.ambientIntensityFactor,
+    lightColorHex: profile.lightColorHex,
+    lightIntensityFactor: profile.lightIntensityFactor
+  };
+}
+
+export function cloneWorldNightEnvironmentSettings(
+  settings: WorldNightEnvironmentSettings
+): WorldNightEnvironmentSettings {
+  return {
+    background: cloneWorldBackgroundSettings(settings.background),
+    ambientColorHex: settings.ambientColorHex,
+    ambientIntensityFactor: settings.ambientIntensityFactor,
+    lightColorHex: settings.lightColorHex,
+    lightIntensityFactor: settings.lightIntensityFactor
+  };
+}
+
+export function cloneWorldTimeOfDaySettings(
+  settings: WorldTimeOfDaySettings
+): WorldTimeOfDaySettings {
+  return {
+    dawn: cloneWorldTimePhaseProfile(settings.dawn),
+    dusk: cloneWorldTimePhaseProfile(settings.dusk),
+    night: cloneWorldNightEnvironmentSettings(settings.night)
+  };
+}
+
 export function cloneWorldSettings(world: WorldSettings): WorldSettings {
   return {
     projectTimeLightingEnabled: world.projectTimeLightingEnabled,
@@ -257,6 +373,7 @@ export function cloneWorldSettings(world: WorldSettings): WorldSettings {
         ...world.sunLight.direction
       }
     },
+    timeOfDay: cloneWorldTimeOfDaySettings(world.timeOfDay),
     advancedRendering: cloneAdvancedRenderingSettings(world.advancedRendering)
   };
 }
@@ -304,6 +421,44 @@ export function areWorldBackgroundSettingsEqual(left: WorldBackgroundSettings, r
   return left.mode === "image" && right.mode === "image" && left.assetId === right.assetId && left.environmentIntensity === right.environmentIntensity;
 }
 
+export function areWorldTimePhaseProfilesEqual(
+  left: WorldTimePhaseProfile,
+  right: WorldTimePhaseProfile
+): boolean {
+  return (
+    left.skyTopColorHex === right.skyTopColorHex &&
+    left.skyBottomColorHex === right.skyBottomColorHex &&
+    left.ambientColorHex === right.ambientColorHex &&
+    left.ambientIntensityFactor === right.ambientIntensityFactor &&
+    left.lightColorHex === right.lightColorHex &&
+    left.lightIntensityFactor === right.lightIntensityFactor
+  );
+}
+
+export function areWorldNightEnvironmentSettingsEqual(
+  left: WorldNightEnvironmentSettings,
+  right: WorldNightEnvironmentSettings
+): boolean {
+  return (
+    areWorldBackgroundSettingsEqual(left.background, right.background) &&
+    left.ambientColorHex === right.ambientColorHex &&
+    left.ambientIntensityFactor === right.ambientIntensityFactor &&
+    left.lightColorHex === right.lightColorHex &&
+    left.lightIntensityFactor === right.lightIntensityFactor
+  );
+}
+
+export function areWorldTimeOfDaySettingsEqual(
+  left: WorldTimeOfDaySettings,
+  right: WorldTimeOfDaySettings
+): boolean {
+  return (
+    areWorldTimePhaseProfilesEqual(left.dawn, right.dawn) &&
+    areWorldTimePhaseProfilesEqual(left.dusk, right.dusk) &&
+    areWorldNightEnvironmentSettingsEqual(left.night, right.night)
+  );
+}
+
 export function areWorldSettingsEqual(left: WorldSettings, right: WorldSettings): boolean {
   return (
     left.projectTimeLightingEnabled === right.projectTimeLightingEnabled &&
@@ -315,6 +470,7 @@ export function areWorldSettingsEqual(left: WorldSettings, right: WorldSettings)
     left.sunLight.direction.x === right.sunLight.direction.x &&
     left.sunLight.direction.y === right.sunLight.direction.y &&
     left.sunLight.direction.z === right.sunLight.direction.z &&
+    areWorldTimeOfDaySettingsEqual(left.timeOfDay, right.timeOfDay) &&
     areAdvancedRenderingSettingsEqual(left.advancedRendering, right.advancedRendering)
   );
 }
