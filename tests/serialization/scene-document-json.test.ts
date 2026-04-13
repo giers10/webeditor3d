@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { createBoxBrush, deriveBoxBrushSizeFromGeometry } from "../../src/document/brushes";
+import { createDefaultProjectTimeSettings } from "../../src/document/project-time-settings";
 import {
   ANIMATION_PLAYBACK_SCENE_DOCUMENT_VERSION,
   ENTITY_NAMES_SCENE_DOCUMENT_VERSION,
