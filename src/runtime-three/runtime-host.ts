@@ -101,10 +101,6 @@ import {
 } from "./runtime-interaction-system";
 import { RuntimeAudioSystem } from "./runtime-audio-system";
 import {
-  hasNpcPresenceActivityChanged,
-  resolveNpcPresenceActive
-} from "./runtime-npc-presence";
-import {
   advanceRuntimeClockState,
   areRuntimeClockStatesEqual,
   cloneRuntimeClockState,
@@ -114,6 +110,10 @@ import {
   resolveRuntimeTimeState,
   type RuntimeClockState
 } from "./runtime-project-time";
+import {
+  applyRuntimeProjectScheduleToControlState,
+  resolveRuntimeProjectScheduleState
+} from "./runtime-project-scheduler";
 import { ThirdPersonNavigationController } from "./third-person-navigation-controller";
 import { resolveUnderwaterFogState } from "./underwater-fog";
 import { resolveWaterContact } from "./water-volume-utils";
