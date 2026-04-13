@@ -1159,6 +1159,93 @@ export class RuntimeHost {
     };
   }
 
+  private createNpcColliderFallbackRenderGroup(npc: RuntimeNpc): Group {
+    const group = new Group();
+    const colliderMaterial = new MeshStandardMaterial({
+      color: 0xa0df7a,
+      emissive: 0xa0df7a,
+      emissiveIntensity: 0.05,
+      roughness: 0.52,
+      metalness: 0.02,
+      transparent: true,
+      opacity: 0.3
+    });
+    const facingMaterial = new MeshStandardMaterial({
+      color: 0xa0df7a,
+      emissive: 0xa0df7a,
+      emissiveIntensity: 0.08,
+      roughness: 0.42,
+      metalness: 0.03
+    });
+
+    group.position.set(npc.position.x, npc.position.y, npc.position.z);
+
+    switch (npc.collider.mode) {
+      case "capsule": {
+        const collisionMesh = new Mesh(
+          new CapsuleGeometry(
+            npc.collider.radius,
+            Math.max(0, npc.collider.height - npc.collider.radius * 2),
+            8,
+            14
+          ),
+          colliderMaterial
+        );
+        collisionMesh.position.y = npc.collider.height * 0.5;
+        group.add(collisionMesh);
+        break;
+      }
+      case "box": {
+        const collisionMesh = new Mesh(
+          new BoxGeometry(
+            npc.collider.size.x,
+            npc.collider.size.y,
+            npc.collider.size.z
+          ),
+          colliderMaterial
+        );
+        collisionMesh.position.y = npc.collider.size.y * 0.5;
+        group.add(collisionMesh);
+        break;
+      }
+      case "none":
+        break;
+    }
+
+    const facingGroup = new Group();
+    facingGroup.rotation.y = (npc.yawDegrees * Math.PI) / 180;
+    group.add(facingGroup);
+    const colliderTop = getNpcColliderHeight({
+      mode: npc.collider.mode,
+      eyeHeight: npc.collider.eyeHeight,
+      capsuleRadius: npc.collider.mode === "capsule" ? npc.collider.radius : 0.35,
+      capsuleHeight: npc.collider.mode === "capsule" ? npc.collider.height : 1.8,
+      boxSize:
+        npc.collider.mode === "box"
+          ? npc.collider.size
+          : {
+              x: 0.7,
+              y: 1.8,
+              z: 0.7
+            }
+    }) ?? 0.18;
+
+    const body = new Mesh(new BoxGeometry(0.08, 0.08, 0.34), facingMaterial);
+    body.position.set(0, colliderTop + 0.12, 0.06);
+
+    const arrowHead = new Mesh(
+      new ConeGeometry(0.1, 0.22, 14),
+      facingMaterial
+    );
+    arrowHead.rotation.x = Math.PI * 0.5;
+    arrowHead.position.set(0, colliderTop + 0.12, 0.28);
+
+    facingGroup.add(body);
+    facingGroup.add(arrowHead);
+
+    return group;
+  }
+
   private rebuildModelRenderObjects(
     modelInstances: RuntimeSceneDefinition["modelInstances"],
     npcs: RuntimeNpc[]
@@ -1216,40 +1303,37 @@ export class RuntimeHost {
     }
 
     for (const npc of npcs) {
-      if (npc.modelAssetId === null) {
-        continue;
-      }
-
-      const asset = this.projectAssets[npc.modelAssetId];
-      const loadedAsset = this.loadedModelAssets[npc.modelAssetId];
-      const renderGroup = createModelInstanceRenderGroup(
-        {
-          id: npc.entityId,
-          kind: "modelInstance",
-          assetId: npc.modelAssetId,
-          name: npc.name,
-          visible: npc.visible,
-          enabled: true,
-          position: npc.position,
-          rotationDegrees: {
-            x: 0,
-            y: npc.yawDegrees,
-            z: 0
-          },
-          scale: {
-            x: 1,
-            y: 1,
-            z: 1
-          },
-          collision: {
-            mode: "none",
-            visible: false
-          }
-        },
-        asset,
-        loadedAsset,
-        false
-      );
+      const renderGroup =
+        npc.modelAssetId === null
+          ? this.createNpcColliderFallbackRenderGroup(npc)
+          : createModelInstanceRenderGroup(
+              {
+                id: npc.entityId,
+                kind: "modelInstance",
+                assetId: npc.modelAssetId,
+                name: npc.name,
+                visible: npc.visible,
+                enabled: true,
+                position: npc.position,
+                rotationDegrees: {
+                  x: 0,
+                  y: npc.yawDegrees,
+                  z: 0
+                },
+                scale: {
+                  x: 1,
+                  y: 1,
+                  z: 1
+                },
+                collision: {
+                  mode: "none",
+                  visible: false
+                }
+              },
+              this.projectAssets[npc.modelAssetId],
+              this.loadedModelAssets[npc.modelAssetId],
+              false
+            );
       renderGroup.visible = npc.visible;
       this.modelGroup.add(renderGroup);
       this.modelRenderObjects.set(npc.entityId, renderGroup);
