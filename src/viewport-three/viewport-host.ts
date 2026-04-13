@@ -96,6 +96,7 @@ import {
 } from "../document/world-settings";
 import type { WorldSettings } from "../document/world-settings";
 import {
+  createNpcAlwaysPresence,
   createNpcColliderSettings,
   DEFAULT_INTERACTABLE_RADIUS,
   DEFAULT_NPC_YAW_DEGREES,
@@ -6348,6 +6349,7 @@ export class ViewportHost {
                 position: previewPosition,
                 yawDegrees: DEFAULT_NPC_YAW_DEGREES,
                 actorId: "creation-preview",
+                presence: createNpcAlwaysPresence(),
                 modelAssetId: toolPreview.target.modelAssetId ?? null,
                 collider: createNpcColliderSettings()
               },
