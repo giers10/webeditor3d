@@ -4,6 +4,7 @@ import {
   AUTHORED_OBJECT_STATE_SCENE_DOCUMENT_VERSION,
   DEFAULT_PROJECT_NAME,
   DEFAULT_SCENE_EDITOR_SNAP_STEP,
+  NPC_COLLIDER_SCENE_DOCUMENT_VERSION,
   PLAYER_START_GAMEPAD_CAMERA_LOOK_SCENE_DOCUMENT_VERSION,
   PROJECT_TIME_DAY_NIGHT_PROFILE_SCENE_DOCUMENT_VERSION,
   RUNNER_LOADING_SCREEN_SCENE_DOCUMENT_VERSION,
@@ -11,6 +12,7 @@ import {
   createEmptyProjectDocument,
   createEmptyProjectScene
 } from "../../src/document/scene-document";
+import { createScenePath } from "../../src/document/paths";
 import { createDefaultProjectTimeSettings } from "../../src/document/project-time-settings";
 import {
   createDefaultWorldSettings,
@@ -167,10 +169,66 @@ describe("project document JSON", () => {
         lightIntensityFactor: 0.19
       }
     };
+    document.scenes["scene-cellar"].paths["path-cellar-patrol"] = createScenePath(
+      {
+        id: "path-cellar-patrol",
+        name: "Cellar Patrol",
+        loop: true,
+        points: [
+          {
+            id: "path-point-a",
+            position: {
+              x: -2,
+              y: 0,
+              z: 1
+            }
+          },
+          {
+            id: "path-point-b",
+            position: {
+              x: 0,
+              y: 0,
+              z: 3
+            }
+          },
+          {
+            id: "path-point-c",
+            position: {
+              x: 2,
+              y: 0,
+              z: 1
+            }
+          }
+        ]
+      }
+    );
 
     const serializedDocument = serializeProjectDocument(document);
 
     expect(parseProjectDocumentJson(serializedDocument)).toEqual(document);
+  });
+
+  it("migrates pre-path project documents to empty scene path registries", () => {
+    const migratedDocument = parseProjectDocumentJson(
+      JSON.stringify({
+        version: NPC_COLLIDER_SCENE_DOCUMENT_VERSION,
+        name: "Legacy Pathless Project",
+        activeSceneId: "scene-main",
+        scenes: {
+          "scene-main": createEmptyProjectScene({
+            id: "scene-main",
+            name: "Legacy Scene"
+          })
+        },
+        materials: createEmptyProjectDocument().materials,
+        textures: {},
+        assets: {},
+        time: createDefaultProjectTimeSettings()
+      })
+    );
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.scenes["scene-main"]?.paths).toEqual({});
   });
 
   it("migrates pre-project-time multi-scene documents to default project time settings", () => {
