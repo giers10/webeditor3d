@@ -1874,6 +1874,11 @@ export class ViewportHost {
     return modelInstance?.enabled === true && modelInstance.visible === true;
   }
 
+  private isPathDisplayedInViewport(pathId: string): boolean {
+    const path = this.currentDocument?.paths[pathId];
+    return path?.enabled === true && path.visible === true;
+  }
+
   private isTransformTargetDisplayedInViewport(session: ActiveTransformSession): boolean {
     switch (session.target.kind) {
       case "brush":
@@ -1881,6 +1886,8 @@ export class ViewportHost {
       case "brushEdge":
       case "brushVertex":
         return this.isBrushDisplayedInViewport(session.target.brushId);
+      case "pathPoint":
+        return this.isPathDisplayedInViewport(session.target.pathId);
       case "entity":
         return this.isEntityDisplayedInViewport(session.target.entityId);
       case "modelInstance":
