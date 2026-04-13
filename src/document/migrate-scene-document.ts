@@ -24,6 +24,7 @@ import {
 import {
   DEFAULT_PLAYER_START_GAMEPAD_BINDINGS,
   DEFAULT_PLAYER_START_KEYBOARD_BINDINGS,
+  createNpcEntity,
   createPlayerStartColliderSettings,
   createPlayerStartInputBindings,
   createPlayerStartMovementTemplate,
@@ -101,6 +102,8 @@ import {
   PLAYER_START_AIR_DIRECTION_CONTROL_SCENE_DOCUMENT_VERSION,
   PLAYER_START_MOVEMENT_TEMPLATE_SCENE_DOCUMENT_VERSION,
   PROJECT_TIME_SYSTEM_SCENE_DOCUMENT_VERSION,
+  PROJECT_TIME_DAY_NIGHT_PROFILE_SCENE_DOCUMENT_VERSION,
+  PROJECT_TIME_NIGHT_BACKGROUND_SCENE_DOCUMENT_VERSION,
   PLAYER_START_AIR_CONTROL_SCENE_DOCUMENT_VERSION,
   PLAYER_START_GAMEPAD_CAMERA_LOOK_SCENE_DOCUMENT_VERSION,
   PLAYER_START_INPUT_BINDINGS_SCENE_DOCUMENT_VERSION,
@@ -119,6 +122,7 @@ import {
   WHITEBOX_BOX_VOLUME_SCENE_DOCUMENT_VERSION,
   WHITEBOX_FLOAT_TRANSFORM_SCENE_DOCUMENT_VERSION,
   WHITEBOX_GEOMETRY_SCENE_DOCUMENT_VERSION,
+  WORLD_TIME_ENVIRONMENT_SCENE_DOCUMENT_VERSION,
   WORLD_ENVIRONMENT_SCENE_DOCUMENT_VERSION,
   cloneSceneEditorPreferences,
   createDefaultSceneEditorPreferences,
@@ -2543,6 +2547,41 @@ function readSceneEntryEntity(value: unknown, label: string): EntityInstance {
   return entity;
 }
 
+function readNpcEntity(value: unknown, label: string): EntityInstance {
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  const kind = expectLiteralString(value.kind, "npc", `${label}.kind`);
+  const entity = createNpcEntity({
+    id: expectString(value.id, `${label}.id`),
+    name: readOptionalEntityName(value.name, `${label}.name`),
+    visible: readOptionalBoolean(
+      value.visible,
+      `${label}.visible`,
+      DEFAULT_ENTITY_VISIBLE
+    ),
+    enabled: readOptionalBoolean(
+      value.enabled,
+      `${label}.enabled`,
+      DEFAULT_ENTITY_ENABLED
+    ),
+    position: readVec3(value.position, `${label}.position`),
+    actorId: expectString(value.actorId, `${label}.actorId`),
+    yawDegrees: expectFiniteNumber(value.yawDegrees, `${label}.yawDegrees`),
+    modelAssetId:
+      value.modelAssetId === undefined || value.modelAssetId === null
+        ? undefined
+        : expectString(value.modelAssetId, `${label}.modelAssetId`)
+  });
+
+  if (entity.kind !== kind) {
+    throw new Error(`${label}.kind must be npc.`);
+  }
+
+  return entity;
+}
+
 function readSceneExitEntity(value: unknown, label: string): EntityInstance {
   if (!isRecord(value)) {
     throw new Error(`${label} must be an object.`);
@@ -2597,6 +2636,8 @@ function readEntityInstance(
       return readPlayerStartEntity(value, label);
     case "sceneEntry":
       return readSceneEntryEntity(value, label);
+    case "npc":
+      return readNpcEntity(value, label);
     case "soundEmitter":
       return options.legacySoundEmitter
         ? readLegacySoundEmitterEntity(value, label)
@@ -3231,7 +3272,8 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
 
   if (
     source.version !== SCENE_DOCUMENT_VERSION &&
-    source.version !== 39 &&
+    source.version !== WORLD_TIME_ENVIRONMENT_SCENE_DOCUMENT_VERSION &&
+    source.version !== PROJECT_TIME_NIGHT_BACKGROUND_SCENE_DOCUMENT_VERSION &&
     source.version !== 33 &&
     source.version !== AUTHORED_OBJECT_STATE_SCENE_DOCUMENT_VERSION &&
     source.version !== PLAYER_START_AIR_DIRECTION_CONTROL_SCENE_DOCUMENT_VERSION &&
@@ -3246,7 +3288,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     source.version !== SCENE_TRANSITION_ENTITIES_SCENE_DOCUMENT_VERSION &&
     source.version !== RUNNER_LOADING_SCREEN_SCENE_DOCUMENT_VERSION &&
     source.version !== MULTI_SCENE_FOUNDATION_SCENE_DOCUMENT_VERSION &&
-    source.version !== 38 &&
+    source.version !== PROJECT_TIME_DAY_NIGHT_PROFILE_SCENE_DOCUMENT_VERSION &&
     source.version !== WATER_SURFACE_DISPLACEMENT_SCENE_DOCUMENT_VERSION &&
     source.version !== WHITEBOX_BEVEL_SCENE_DOCUMENT_VERSION &&
     source.version !== WHITEBOX_BOX_VOLUME_SCENE_DOCUMENT_VERSION &&
