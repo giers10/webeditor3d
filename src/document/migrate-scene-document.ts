@@ -2985,7 +2985,7 @@ function readScenePaths(
   value: unknown,
   options: { allowMissing: boolean }
 ): SceneDocument["paths"] {
-  if (value === undefined && options.allowMissing) {
+  if (value === undefined) {
     return {};
   }
 
