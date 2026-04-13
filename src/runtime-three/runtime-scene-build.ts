@@ -934,6 +934,20 @@ function buildRuntimeControlSurface(
   }
 
   for (const modelInstance of modelInstances) {
+    const authoredModelInstance = document.modelInstances[modelInstance.instanceId];
+    const asset =
+      authoredModelInstance === undefined
+        ? undefined
+        : document.assets[authoredModelInstance.assetId];
+
+    if (
+      asset === undefined ||
+      asset.kind !== "model" ||
+      asset.metadata.animationNames.length === 0
+    ) {
+      continue;
+    }
+
     targets.push(
       createControlTargetDescriptor(
         createModelInstanceControlTargetRef(modelInstance.instanceId),
