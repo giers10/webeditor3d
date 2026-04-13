@@ -20,7 +20,8 @@ import {
 } from "./project-time-settings";
 import { type ScenePath } from "./paths";
 
-export const SCENE_DOCUMENT_VERSION = 44 as const;
+export const SCENE_DOCUMENT_VERSION = 45 as const;
+export const CONTROL_SURFACE_FOUNDATION_SCENE_DOCUMENT_VERSION = 45 as const;
 export const NPC_PRESENCE_SCENE_DOCUMENT_VERSION = 44 as const;
 export const PATH_FOUNDATION_SCENE_DOCUMENT_VERSION = 43 as const;
 export const NPC_COLLIDER_SCENE_DOCUMENT_VERSION = 42 as const;
