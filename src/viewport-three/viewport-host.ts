@@ -3625,12 +3625,7 @@ export class ViewportHost {
           selected
         );
       case "npc":
-        return this.createNpcRenderObjects(
-          entity.id,
-          entity.position,
-          entity.yawDegrees,
-          selected
-        );
+        return this.createNpcRenderObjects(entity, selected);
       case "triggerVolume":
         return this.createTriggerVolumeRenderObjects(
           entity.id,
