@@ -4295,6 +4295,8 @@ export function validateSceneDocument(
     validateInteractionLink(link, path, document, diagnostics);
   }
 
+  validateProjectSchedulerAgainstScene(document.scheduler, document, diagnostics);
+
   return {
     diagnostics,
     errors: diagnostics.filter((diagnostic) => diagnostic.severity === "error"),
@@ -4355,6 +4357,61 @@ export function validateProjectDocument(
   validateProjectTimeSettings(document.time, diagnostics);
   validateProjectResources(document, diagnostics);
 
+  const projectActorIds = new Set<string>();
+
+  for (const scene of Object.values(document.scenes)) {
+    for (const entity of Object.values(scene.entities)) {
+      if (entity.kind !== "npc") {
+        continue;
+      }
+
+      projectActorIds.add(entity.actorId);
+    }
+  }
+
+  validateProjectSchedulerAgainstScene(
+    document.scheduler,
+    {
+      ...createSceneDocumentFromProject(document),
+      scheduler: createEmptyProjectScheduler(),
+      entities: Object.fromEntries(
+        [...projectActorIds].map((actorId, index) => [
+          `scheduler-actor-${index}`,
+          {
+            id: `scheduler-actor-${index}`,
+            kind: "npc" as const,
+            actorId,
+            presence: {
+              mode: "always" as const
+            },
+            name: actorId,
+            visible: true,
+            enabled: true,
+            position: {
+              x: 0,
+              y: 0,
+              z: 0
+            },
+            yawDegrees: 0,
+            modelAssetId: null,
+            collider: {
+              mode: "none" as const,
+              eyeHeight: 1.6,
+              capsuleRadius: 0.35,
+              capsuleHeight: 1.8,
+              boxSize: {
+                x: 0.7,
+                y: 1.8,
+                z: 0.7
+              }
+            }
+          }
+        ])
+      )
+    },
+    diagnostics
+  );
+
   for (const [sceneKey, scene] of Object.entries(document.scenes)) {
     const scenePath = `scenes.${sceneKey}`;
 
@@ -4383,7 +4440,10 @@ export function validateProjectDocument(
     validateProjectSceneLoadingScreen(scene, scenePath, diagnostics);
     validateProjectSceneEditorPreferences(scene, scenePath, diagnostics);
 
-    const sceneDocument = createSceneDocumentFromProject(document, sceneKey);
+    const sceneDocument = {
+      ...createSceneDocumentFromProject(document, sceneKey),
+      scheduler: createEmptyProjectScheduler()
+    };
 
     for (const diagnostic of filterProjectSceneDiagnostics(
       validateSceneDocument(sceneDocument).diagnostics
