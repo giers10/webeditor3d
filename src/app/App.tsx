@@ -1660,7 +1660,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
     editorState.selection,
     selectedPath
   );
-  const selectedPathPoint = selectedPathPointState?.point ?? null;
   const selectedPathPointIndex = selectedPathPointState?.index ?? null;
   const selectedEntity = getSelectedEntity(editorState.selection, entityList);
   const selectedModelInstance = getSelectedModelInstance(
