@@ -6383,13 +6383,20 @@ export function App({ store, initialStatusMessage }: AppProps) {
   };
 
   const handleDeleteSelectedSceneItem = () => {
+    const selectedPathPoint = getSingleSelectedPathPoint(editorState.selection);
+
+    if (selectedPathPoint !== null) {
+      handleDeletePathPoint(selectedPathPoint.pointId);
+      return true;
+    }
+
     const selectedBrushId = getSingleSelectedBrushId(editorState.selection);
 
     if (selectedBrushId !== null) {
       return handleDeleteBrush(selectedBrushId);
     }
 
-    const selectedPathId = getSingleSelectedPathId(editorState.selection);
+    const selectedPathId = getSingleSelectedPathOwnerId(editorState.selection);
 
     if (selectedPathId !== null) {
       return handleDeletePath(selectedPathId);
