@@ -3601,6 +3601,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
         ? "Updated the night gradient top color."
         : "Updated the night gradient bottom color.",
       (world) => {
+        if (world.timeOfDay.night.background.mode !== "verticalGradient") {
+          return;
+        }
+
         world.timeOfDay.night.background =
           edge === "top"
             ? {
@@ -3625,6 +3629,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
         "Set night background environment intensity",
         "Updated the night background environment intensity.",
         (world) => {
+          if (world.timeOfDay.night.background.mode !== "image") {
+            return;
+          }
+
           world.timeOfDay.night.background = {
             ...world.timeOfDay.night.background,
             environmentIntensity: readNonNegativeNumberDraft(
