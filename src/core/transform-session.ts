@@ -13,6 +13,7 @@ import {
   type BoxFaceId,
   type BoxVertexId
 } from "../document/brushes";
+import { getScenePathPoint } from "../document/paths";
 import type { SceneDocument } from "../document/scene-document";
 import {
   cloneEntityInstance,
@@ -98,6 +99,13 @@ export interface ModelInstanceTransformTarget {
   initialScale: Vec3;
 }
 
+export interface PathPointTransformTarget {
+  kind: "pathPoint";
+  pathId: string;
+  pointId: string;
+  initialPosition: Vec3;
+}
+
 export interface EntityTransformTarget {
   kind: "entity";
   entityId: string;
@@ -112,6 +120,7 @@ export type TransformTarget =
   | BrushEdgeTransformTarget
   | BrushVertexTransformTarget
   | ModelInstanceTransformTarget
+  | PathPointTransformTarget
   | EntityTransformTarget;
 
 export interface BrushTransformPreview {
@@ -140,6 +149,11 @@ export interface ModelInstanceTransformPreview {
   scale: Vec3;
 }
 
+export interface PathPointTransformPreview {
+  kind: "pathPoint";
+  position: Vec3;
+}
+
 export interface EntityTransformPreview {
   kind: "entity";
   position: Vec3;
@@ -149,6 +163,7 @@ export interface EntityTransformPreview {
 export type TransformPreview =
   | BrushTransformPreview
   | ModelInstanceTransformPreview
+  | PathPointTransformPreview
   | EntityTransformPreview;
 
 export interface ActiveTransformSession {
@@ -280,6 +295,13 @@ export function cloneTransformTarget(target: TransformTarget): TransformTarget {
         initialRotationDegrees: cloneVec3(target.initialRotationDegrees),
         initialScale: cloneVec3(target.initialScale)
       };
+    case "pathPoint":
+      return {
+        kind: "pathPoint",
+        pathId: target.pathId,
+        pointId: target.pointId,
+        initialPosition: cloneVec3(target.initialPosition)
+      };
     case "entity":
       return {
         kind: "entity",
@@ -311,6 +333,11 @@ export function cloneTransformPreview(
         position: cloneVec3(preview.position),
         rotationDegrees: cloneVec3(preview.rotationDegrees),
         scale: cloneVec3(preview.scale)
+      };
+    case "pathPoint":
+      return {
+        kind: "pathPoint",
+        position: cloneVec3(preview.position)
       };
     case "entity":
       return {
@@ -437,6 +464,13 @@ function areTransformTargetsEqual(
         ) &&
         areVec3Equal(left.initialScale, right.initialScale)
       );
+    case "pathPoint":
+      return (
+        right.kind === "pathPoint" &&
+        left.pathId === right.pathId &&
+        left.pointId === right.pointId &&
+        areVec3Equal(left.initialPosition, right.initialPosition)
+      );
     case "entity":
       return (
         right.kind === "entity" &&
@@ -474,6 +508,11 @@ function areTransformPreviewsEqual(
         areVec3Equal(left.position, right.position) &&
         areVec3Equal(left.rotationDegrees, right.rotationDegrees) &&
         areVec3Equal(left.scale, right.scale)
+      );
+    case "pathPoint":
+      return (
+        right.kind === "pathPoint" &&
+        areVec3Equal(left.position, right.position)
       );
     case "entity":
       return (
@@ -527,6 +566,11 @@ export function createTransformPreviewFromTarget(
         rotationDegrees: cloneVec3(target.initialRotationDegrees),
         scale: cloneVec3(target.initialScale)
       };
+    case "pathPoint":
+      return {
+        kind: "pathPoint",
+        position: cloneVec3(target.initialPosition)
+      };
     case "entity":
       return {
         kind: "entity",
@@ -569,6 +613,14 @@ export function doesTransformSessionChangeTarget(
             session.target.initialRotationDegrees
           ) ||
           !areVec3Equal(session.preview.scale, session.target.initialScale))
+      );
+    case "pathPoint":
+      return (
+        session.preview.kind === "pathPoint" &&
+        !areVec3Equal(
+          session.preview.position,
+          session.target.initialPosition
+        )
       );
     case "entity":
       return (
@@ -625,6 +677,8 @@ export function getTransformTargetLabel(target: TransformTarget): string {
       return `Whitebox Vertex (${BOX_VERTEX_LABELS[target.vertexId]})`;
     case "modelInstance":
       return getModelInstanceKindLabel();
+    case "pathPoint":
+      return "Path Point";
     case "entity":
       return getEntityKindLabel(target.entityKind);
   }
@@ -639,6 +693,7 @@ export function getSupportedTransformOperations(
     case "brushEdge":
       return ["translate", "rotate", "scale"];
     case "brushVertex":
+    case "pathPoint":
       return ["translate"];
     case "modelInstance":
       return ["translate", "rotate", "scale"];
@@ -667,9 +722,10 @@ export function supportsTransformAxisConstraint(
       if (
         session.target.kind === "modelInstance" ||
         session.target.kind === "brush" ||
-        session.target.kind === "brushVertex"
+        session.target.kind === "brushVertex" ||
+        session.target.kind === "pathPoint"
       ) {
-        return session.target.kind !== "brushVertex";
+        return session.target.kind !== "brushVertex" && session.target.kind !== "pathPoint";
       }
 
       if (session.target.kind === "brushFace") {
@@ -757,6 +813,8 @@ export function supportsLocalTransformAxisConstraint(
     case "brushEdge":
     case "brushVertex":
       return session.operation === "translate";
+    case "pathPoint":
+      return false;
   }
 }
 
@@ -965,6 +1023,40 @@ function createModelInstanceTransformTarget(
   };
 }
 
+function createPathPointTransformTarget(
+  document: SceneDocument,
+  pathId: string,
+  pointId: string
+): TransformTargetResolution {
+  const path = document.paths[pathId];
+
+  if (path === undefined) {
+    return {
+      target: null,
+      message: "Select a path point before transforming it."
+    };
+  }
+
+  const point = getScenePathPoint(path, pointId);
+
+  if (point === null) {
+    return {
+      target: null,
+      message: "Select a valid path point before transforming it."
+    };
+  }
+
+  return {
+    target: {
+      kind: "pathPoint",
+      pathId,
+      pointId,
+      initialPosition: cloneVec3(point.position)
+    },
+    message: null
+  };
+}
+
 export function resolveTransformTarget(
   document: SceneDocument,
   selection: EditorSelection,
@@ -1048,6 +1140,12 @@ export function resolveTransformTarget(
         message:
           "Path transforms are not available in this slice. Edit path points in the Inspector."
       };
+    case "pathPoint":
+      return createPathPointTransformTarget(
+        document,
+        selection.pathId,
+        selection.pointId
+      );
     case "modelInstances":
       if (selection.ids.length !== 1) {
         return {
