@@ -16,7 +16,11 @@ import type {
   ResolvedPlayerMotion
 } from "./player-collision";
 import { getFirstPersonPlayerShapeSignature } from "./player-collision";
-import type { RuntimeBrushTriMeshCollider, RuntimeSceneCollider } from "./runtime-scene-build";
+import type {
+  RuntimeBrushTriMeshCollider,
+  RuntimeNpcCollider,
+  RuntimeSceneCollider
+} from "./runtime-scene-build";
 
 const CHARACTER_CONTROLLER_OFFSET = 0.01;
 const CHARACTER_CONTROLLER_SNAP_TO_GROUND_DISTANCE = 0.2;
@@ -232,6 +236,48 @@ function attachModelCollider(world: RAPIER.World, collider: GeneratedModelCollid
   }
 }
 
+function createColliderDescForCharacterShape(
+  rapier: typeof RAPIER,
+  shape: FirstPersonPlayerShape
+): RAPIER.ColliderDesc | null {
+  switch (shape.mode) {
+    case "capsule":
+      return rapier.ColliderDesc.capsule(
+        Math.max(0, (shape.height - shape.radius * 2) * 0.5),
+        shape.radius
+      );
+    case "box":
+      return rapier.ColliderDesc.cuboid(
+        shape.size.x * 0.5,
+        shape.size.y * 0.5,
+        shape.size.z * 0.5
+      );
+    case "none":
+      return null;
+  }
+}
+
+function attachNpcCollider(
+  world: RAPIER.World,
+  rapier: typeof RAPIER,
+  collider: RuntimeNpcCollider
+) {
+  const descriptor = createColliderDescForCharacterShape(rapier, collider.shape);
+
+  if (descriptor === null) {
+    return;
+  }
+
+  const center = feetPositionToColliderCenter(collider.position, collider.shape);
+  const body = world.createRigidBody(
+    RAPIER.RigidBodyDesc.fixed()
+      .setTranslation(center.x, center.y, center.z)
+      .setRotation(createRapierQuaternion(collider.rotationDegrees))
+  );
+
+  world.createCollider(descriptor, body);
+}
+
 function feetPositionToColliderCenter(feetPosition: Vec3, shape: FirstPersonPlayerShape): Vec3 {
   switch (shape.mode) {
     case "capsule": {
@@ -281,18 +327,9 @@ function colliderCenterToFeetPosition(center: Vec3, shape: FirstPersonPlayerShap
 }
 
 function createPlayerCollider(world: RAPIER.World, rapier: typeof RAPIER, playerShape: FirstPersonPlayerShape): RAPIER.Collider | null {
-  switch (playerShape.mode) {
-    case "capsule":
-      return world.createCollider(
-        rapier.ColliderDesc.capsule(Math.max(0, (playerShape.height - playerShape.radius * 2) * 0.5), playerShape.radius)
-      );
-    case "box":
-      return world.createCollider(
-        rapier.ColliderDesc.cuboid(playerShape.size.x * 0.5, playerShape.size.y * 0.5, playerShape.size.z * 0.5)
-      );
-    case "none":
-      return null;
-  }
+  const descriptor = createColliderDescForCharacterShape(rapier, playerShape);
+
+  return descriptor === null ? null : world.createCollider(descriptor);
 }
 
 function createPlayerQueryShape(
@@ -350,6 +387,11 @@ export class RapierCollisionWorld {
     for (const collider of colliders) {
       if (collider.source === "brush") {
         attachBrushCollider(world, collider);
+        continue;
+      }
+
+      if (collider.source === "npc") {
+        attachNpcCollider(world, rapier, collider);
         continue;
       }
 
