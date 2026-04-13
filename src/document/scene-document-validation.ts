@@ -3398,6 +3398,196 @@ function validateInteractionLink(
   }
 }
 
+function validateProjectSchedulerAgainstScene(
+  scheduler: ProjectScheduler,
+  document: SceneDocument,
+  diagnostics: SceneDiagnostic[]
+) {
+  for (const [routineKey, routine] of Object.entries(scheduler.routines)) {
+    const path = `scheduler.routines.${routineKey}`;
+
+    if (routine.id !== routineKey) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "project-schedule-routine-id-mismatch",
+          "Project schedule routine ids must match their registry key.",
+          `${path}.id`
+        )
+      );
+    }
+
+    if (routine.title.trim().length === 0) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-project-schedule-routine-title",
+          "Project schedule routine titles must be non-empty.",
+          `${path}.title`
+        )
+      );
+    }
+
+    if (!isBoolean(routine.enabled)) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-project-schedule-routine-enabled",
+          "Project schedule routines must remain explicitly enabled or disabled.",
+          `${path}.enabled`
+        )
+      );
+    }
+
+    if (routine.target.kind !== "actor") {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-project-schedule-target-kind",
+          "Project schedule routines must target authored actors in this slice.",
+          `${path}.target.kind`
+        )
+      );
+    } else {
+      validateActorControlTarget(routine.target, `${path}.target`, document, diagnostics);
+    }
+
+    switch (routine.days.mode) {
+      case "everyDay":
+        break;
+      case "selectedDays":
+        if (routine.days.days.length === 0) {
+          diagnostics.push(
+            createDiagnostic(
+              "error",
+              "invalid-project-schedule-routine-days-empty",
+              "Selected-day routines must include at least one weekday.",
+              `${path}.days.days`
+            )
+          );
+        }
+
+        for (const [dayIndex, day] of routine.days.days.entries()) {
+          if (!isProjectScheduleWeekday(day)) {
+            diagnostics.push(
+              createDiagnostic(
+                "error",
+                "invalid-project-schedule-routine-day",
+                "Project schedule days must use supported weekday ids.",
+                `${path}.days.days.${dayIndex}`
+              )
+            );
+          }
+        }
+        break;
+      default:
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-project-schedule-routine-days-mode",
+            "Project schedule day selection must use everyDay or selectedDays.",
+            `${path}.days.mode`
+          )
+        );
+        break;
+    }
+
+    if (!isFiniteNumber(routine.startHour)) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-project-schedule-start-hour",
+          "Project schedule start hours must be finite numbers.",
+          `${path}.startHour`
+        )
+      );
+    } else if (routine.startHour < 0 || routine.startHour >= HOURS_PER_DAY) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-project-schedule-start-range",
+          "Project schedule start hours must stay within the 0..24 hour range.",
+          `${path}.startHour`
+        )
+      );
+    }
+
+    if (!isFiniteNumber(routine.endHour)) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-project-schedule-end-hour",
+          "Project schedule end hours must be finite numbers.",
+          `${path}.endHour`
+        )
+      );
+    } else if (routine.endHour < 0 || routine.endHour >= HOURS_PER_DAY) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-project-schedule-end-range",
+          "Project schedule end hours must stay within the 0..24 hour range.",
+          `${path}.endHour`
+        )
+      );
+    }
+
+    if (
+      isFiniteNumber(routine.startHour) &&
+      isFiniteNumber(routine.endHour) &&
+      routine.startHour === routine.endHour
+    ) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-project-schedule-zero-window",
+          "Project schedule routines must span at least part of the day.",
+          `${path}.startHour`
+        )
+      );
+    }
+
+    if (!isFiniteNumber(routine.priority) || !Number.isInteger(routine.priority)) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-project-schedule-priority",
+          "Project schedule priorities must remain finite integers.",
+          `${path}.priority`
+        )
+      );
+    }
+
+    if (routine.effect.type !== "setActorPresence") {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-project-schedule-effect-type",
+          "Project schedule routines must currently assign actor presence control effects.",
+          `${path}.effect.type`
+        )
+      );
+      continue;
+    }
+
+    if (
+      routine.effect.target.kind !== "actor" ||
+      routine.effect.target.actorId !== routine.target.actorId
+    ) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "project-schedule-effect-target-mismatch",
+          "Project schedule effect targets must match the authored routine target.",
+          `${path}.effect.target`
+        )
+      );
+    }
+
+    validateControlEffect(routine.effect, `${path}.effect`, document, diagnostics);
+  }
+}
+
 function registerAuthoredId(
   id: string,
   path: string,
