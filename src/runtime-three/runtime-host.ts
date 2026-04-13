@@ -108,7 +108,6 @@ import { ThirdPersonNavigationController } from "./third-person-navigation-contr
 import { resolveUnderwaterFogState } from "./underwater-fog";
 import { resolveWaterContact } from "./water-volume-utils";
 import type {
-  createRuntimeNpcFromDefinition,
   RuntimeNpcDefinition,
   RuntimeBoxBrushInstance,
   RuntimeLocalLightCollection,
