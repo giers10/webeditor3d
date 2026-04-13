@@ -3278,15 +3278,18 @@ export class ViewportHost {
         }
         break;
       case "pathPoint": {
+        const activeTransformSession = this.currentTransformSession;
+
         if (
-          this.currentTransformSession.preview.kind !== "pathPoint" ||
+          activeTransformSession.kind !== "active" ||
+          activeTransformSession.preview.kind !== "pathPoint" ||
           this.currentDocument === null
         ) {
           break;
         }
 
         const currentPath =
-          this.currentDocument.paths[this.currentTransformSession.target.pathId];
+          this.currentDocument.paths[activeTransformSession.target.pathId];
 
         if (currentPath === undefined) {
           break;
@@ -3296,10 +3299,10 @@ export class ViewportHost {
           {
             ...currentPath,
             points: currentPath.points.map((point) =>
-              point.id === this.currentTransformSession.target.pointId
+              point.id === activeTransformSession.target.pointId
                 ? {
                     ...point,
-                    position: this.currentTransformSession.preview.position
+                    position: activeTransformSession.preview.position
                   }
                 : point
             )
