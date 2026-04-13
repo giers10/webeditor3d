@@ -9243,6 +9243,108 @@ export function App({ store, initialStatusMessage }: AppProps) {
             </div>
 
             <div className="outliner-section">
+              <div className="label">Paths</div>
+              {pathList.length === 0 ? (
+                <div className="outliner-empty">
+                  Use Add &gt; Path to author the first shared motion path.
+                </div>
+              ) : (
+                <div className="outliner-list" data-testid="outliner-path-list">
+                  {pathList.map((path, pathIndex) => {
+                    const label = getScenePathLabel(path, pathIndex);
+                    const isSelected =
+                      editorState.selection.kind === "paths" &&
+                      editorState.selection.ids.includes(path.id);
+                    const authoredStateSummary =
+                      formatAuthoredObjectStateSummary(path);
+
+                    return (
+                      <div
+                        key={path.id}
+                        className={`outliner-item outliner-item--compact ${isPathSelected(editorState.selection, path.id) ? "outliner-item--selected" : ""} ${path.enabled ? "" : "outliner-item--disabled"}`}
+                      >
+                        <div className="outliner-item__row">
+                          <input
+                            className="outliner-item__toggle"
+                            data-testid={`outliner-enable-path-${path.id}`}
+                            type="checkbox"
+                            checked={path.enabled}
+                            aria-label={`${path.enabled ? "Disable" : "Enable"} ${label}`}
+                            onChange={(event) =>
+                              handleSetPathEnabled(
+                                path,
+                                event.currentTarget.checked
+                              )
+                            }
+                          />
+                          {isSelected ? (
+                            <input
+                              className="outliner-item__rename"
+                              data-testid="selected-path-name"
+                              type="text"
+                              value={pathNameDraft}
+                              placeholder={`Path ${pathIndex + 1}`}
+                              onChange={(event) =>
+                                setPathNameDraft(event.currentTarget.value)
+                              }
+                              onBlur={applyPathNameChange}
+                              onFocus={(event) => event.currentTarget.select()}
+                              onKeyDown={(event) =>
+                                handleInlineNameInputKeyDown(event, () => {
+                                  setPathNameDraft(selectedPath?.name ?? "");
+                                })
+                              }
+                            />
+                          ) : (
+                            <button
+                              className="outliner-item__select"
+                              type="button"
+                              data-testid={`outliner-path-${path.id}`}
+                              onClick={() =>
+                                applySelection(
+                                  {
+                                    kind: "paths",
+                                    ids: [path.id]
+                                  },
+                                  "outliner",
+                                  {
+                                    focusViewport: true
+                                  }
+                                )
+                              }
+                            >
+                              <span className="outliner-item__title">
+                                {label}
+                              </span>
+                            </button>
+                          )}
+                          <button
+                            className="outliner-item__delete"
+                            type="button"
+                            data-testid={`outliner-delete-path-${path.id}`}
+                            aria-label={`Delete ${label}`}
+                            onClick={() => handleDeletePath(path.id)}
+                          >
+                            x
+                          </button>
+                        </div>
+                        <div className="outliner-item__meta">
+                          {[
+                            authoredStateSummary,
+                            path.loop ? "Looping" : null,
+                            `${path.points.length} point${path.points.length === 1 ? "" : "s"}`
+                          ]
+                            .filter((part): part is string => part !== null)
+                            .join(" | ")}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div className="outliner-section">
               <div className="label">Model Instances</div>
               {modelInstanceDisplayList.length === 0 ? (
                 <div className="outliner-empty">
