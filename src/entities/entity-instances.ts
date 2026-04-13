@@ -40,6 +40,13 @@ export interface SceneEntryEntity extends PositionedEntity {
   yawDegrees: number;
 }
 
+export interface NpcEntity extends PositionedEntity {
+  kind: "npc";
+  actorId: string;
+  yawDegrees: number;
+  modelAssetId: string | null;
+}
+
 export const PLAYER_START_COLLIDER_MODES = ["capsule", "box", "none"] as const;
 export type PlayerStartColliderMode = (typeof PLAYER_START_COLLIDER_MODES)[number];
 export const PLAYER_START_NAVIGATION_MODES = [
@@ -237,6 +244,7 @@ export type EntityInstance =
   | SpotLightEntity
   | PlayerStartEntity
   | SceneEntryEntity
+  | NpcEntity
   | SoundEmitterEntity
   | TriggerVolumeEntity
   | TeleportTargetEntity
@@ -257,6 +265,7 @@ export const ENTITY_KIND_ORDER = [
   "spotLight",
   "playerStart",
   "sceneEntry",
+  "npc",
   "soundEmitter",
   "triggerVolume",
   "teleportTarget",
@@ -377,6 +386,8 @@ export const DEFAULT_PLAYER_START_GAMEPAD_BINDINGS: PlayerStartGamepadBindings =
     cameraLook: "rightStick"
   };
 export const DEFAULT_SCENE_ENTRY_YAW_DEGREES = 0;
+export const DEFAULT_NPC_YAW_DEGREES = 0;
+export const DEFAULT_NPC_MODEL_ASSET_ID: string | null = null;
 export const DEFAULT_PLAYER_START_COLLIDER_MODE: PlayerStartColliderMode = "capsule";
 export const DEFAULT_PLAYER_START_EYE_HEIGHT = 1.6;
 export const DEFAULT_PLAYER_START_CAPSULE_RADIUS = 0.3;
@@ -1086,6 +1097,32 @@ export function normalizeYawDegrees(yawDegrees: number): number {
   return normalizedYaw < 0 ? normalizedYaw + 360 : normalizedYaw;
 }
 
+export function createNpcActorId(): string {
+  return createOpaqueId("actor");
+}
+
+function normalizeNpcActorId(actorId: string | undefined): string {
+  const resolvedActorId = actorId ?? createNpcActorId();
+  const normalizedActorId = resolvedActorId.trim();
+
+  if (normalizedActorId.length === 0) {
+    throw new Error("NPC actorId must be a non-empty string.");
+  }
+
+  return normalizedActorId;
+}
+
+function normalizeNpcModelAssetId(
+  modelAssetId: string | null | undefined
+): string | null {
+  if (modelAssetId === undefined || modelAssetId === null) {
+    return null;
+  }
+
+  const normalizedModelAssetId = modelAssetId.trim();
+  return normalizedModelAssetId.length === 0 ? null : normalizedModelAssetId;
+}
+
 export function normalizeInteractablePrompt(prompt: string): string {
   const normalizedPrompt = prompt.trim();
 
@@ -1227,6 +1264,47 @@ export function createSceneEntryEntity(
     enabled: resolveAuthoredEntityEnabled(overrides.enabled),
     position,
     yawDegrees: normalizeYawDegrees(yawDegrees)
+  };
+}
+
+export function createNpcEntity(
+  overrides: Partial<
+    Pick<
+      NpcEntity,
+      | "id"
+      | "name"
+      | "visible"
+      | "enabled"
+      | "position"
+      | "actorId"
+      | "yawDegrees"
+      | "modelAssetId"
+    >
+  > = {}
+): NpcEntity {
+  const position = cloneVec3(overrides.position ?? DEFAULT_ENTITY_POSITION);
+  const actorId = normalizeNpcActorId(overrides.actorId);
+  const yawDegrees = overrides.yawDegrees ?? DEFAULT_NPC_YAW_DEGREES;
+  const modelAssetId = normalizeNpcModelAssetId(
+    overrides.modelAssetId ?? DEFAULT_NPC_MODEL_ASSET_ID
+  );
+
+  assertFiniteVec3(position, "NPC position");
+
+  if (!Number.isFinite(yawDegrees)) {
+    throw new Error("NPC yaw must be a finite number.");
+  }
+
+  return {
+    id: overrides.id ?? createOpaqueId("entity-npc"),
+    kind: "npc",
+    name: normalizeEntityName(overrides.name),
+    visible: resolveAuthoredEntityVisibility(overrides.visible),
+    enabled: resolveAuthoredEntityEnabled(overrides.enabled),
+    position,
+    actorId,
+    yawDegrees: normalizeYawDegrees(yawDegrees),
+    modelAssetId
   };
 }
 
@@ -1426,6 +1504,13 @@ export const ENTITY_REGISTRY: { [K in EntityKind]: EntityRegistryEntry<Extract<E
       "Explicit authored scene-transition arrival point with a facing direction.",
     createDefaultEntity: createSceneEntryEntity
   },
+  npc: {
+    kind: "npc",
+    label: "NPC",
+    description:
+      "Typed actor entity with a stable authored actor id and optional model visual for runner presence.",
+    createDefaultEntity: createNpcEntity
+  },
   soundEmitter: {
     kind: "soundEmitter",
     label: "Sound Emitter",
@@ -1469,6 +1554,7 @@ export function getEntityRegistryEntry<K extends EntityKind>(kind: K): EntityReg
 
 export function createDefaultEntityInstance(kind: "playerStart", overrides?: Partial<PlayerStartEntity>): PlayerStartEntity;
 export function createDefaultEntityInstance(kind: "sceneEntry", overrides?: Partial<SceneEntryEntity>): SceneEntryEntity;
+export function createDefaultEntityInstance(kind: "npc", overrides?: Partial<NpcEntity>): NpcEntity;
 export function createDefaultEntityInstance(kind: "pointLight", overrides?: Partial<PointLightEntity>): PointLightEntity;
 export function createDefaultEntityInstance(kind: "spotLight", overrides?: Partial<SpotLightEntity>): SpotLightEntity;
 export function createDefaultEntityInstance(kind: "soundEmitter", overrides?: Partial<SoundEmitterEntity>): SoundEmitterEntity;
@@ -1486,6 +1572,8 @@ export function createDefaultEntityInstance(kind: EntityKind, overrides: Partial
       return createPlayerStartEntity(overrides);
     case "sceneEntry":
       return createSceneEntryEntity(overrides);
+    case "npc":
+      return createNpcEntity(overrides);
     case "soundEmitter":
       return createSoundEmitterEntity(overrides);
     case "triggerVolume":
@@ -1509,6 +1597,8 @@ export function cloneEntityInstance(entity: EntityInstance): EntityInstance {
       return createPlayerStartEntity(entity);
     case "sceneEntry":
       return createSceneEntryEntity(entity);
+    case "npc":
+      return createNpcEntity(entity);
     case "soundEmitter":
       return createSoundEmitterEntity(entity);
     case "triggerVolume":
@@ -1580,6 +1670,14 @@ export function areEntityInstancesEqual(left: EntityInstance, right: EntityInsta
     case "sceneEntry": {
       const typedRight = right as SceneEntryEntity;
       return left.yawDegrees === typedRight.yawDegrees;
+    }
+    case "npc": {
+      const typedRight = right as NpcEntity;
+      return (
+        left.actorId === typedRight.actorId &&
+        left.yawDegrees === typedRight.yawDegrees &&
+        left.modelAssetId === typedRight.modelAssetId
+      );
     }
     case "soundEmitter": {
       const typedRight = right as SoundEmitterEntity;
