@@ -1113,8 +1113,42 @@ export class RuntimeHost {
     }
   }
 
+  private applyActorPresenceControl(actorId: string, active: boolean) {
+    if (this.runtimeScene === null) {
+      return;
+    }
+
+    let changed = false;
+
+    for (const npc of this.runtimeScene.npcDefinitions) {
+      if (npc.actorId !== actorId || npc.active === active) {
+        continue;
+      }
+
+      npc.active = active;
+      npc.activeRoutineId = null;
+      npc.activeRoutineTitle = null;
+      changed = true;
+      const renderGroup = this.modelRenderObjects.get(npc.entityId);
+
+      if (renderGroup !== undefined) {
+        renderGroup.visible = npc.visible && npc.active;
+      }
+    }
+
+    if (!changed) {
+      return;
+    }
+
+    this.refreshRuntimeNpcCollections();
+    this.refreshCollisionWorldForNpcSchedule();
+  }
+
   private applyControlEffect(effect: ControlEffect, link: InteractionLink) {
     switch (effect.type) {
+      case "setActorPresence":
+        this.applyActorPresenceControl(effect.target.actorId, effect.active);
+        break;
       case "playModelAnimation":
         this.applyPlayAnimationAction(
           effect.target.modelInstanceId,
