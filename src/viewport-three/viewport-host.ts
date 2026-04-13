@@ -3508,6 +3508,33 @@ export class ViewportHost {
     this.refreshPathPresentation();
   }
 
+  private updatePathRenderObjectState(path: ScenePath) {
+    const renderObjects = this.pathRenderObjects.get(path.id);
+
+    if (renderObjects === undefined) {
+      return;
+    }
+
+    renderObjects.line.geometry.dispose();
+    renderObjects.line.geometry = this.createPathLineGeometry(path);
+
+    for (const pointMesh of renderObjects.pointMeshes) {
+      const point = path.points.find(
+        (candidatePoint) => candidatePoint.id === pointMesh.pointId
+      );
+
+      if (point === undefined) {
+        continue;
+      }
+
+      pointMesh.mesh.position.set(
+        point.position.x,
+        point.position.y,
+        point.position.z
+      );
+    }
+  }
+
   private configureFogVolumeMesh(
     mesh: Mesh<BufferGeometry, Material[]>,
     materials: Material[]
