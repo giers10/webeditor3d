@@ -292,7 +292,10 @@ import {
 } from "../entities/entity-labels";
 import { listNpcActorUsages } from "../entities/npc-actor-registry";
 import {
+  formatControlEffectValue,
+  formatControlTargetRef,
   areInteractionLinksEqual,
+  createControlInteractionLink,
   createPlayAnimationInteractionLink,
   createPlaySoundInteractionLink,
   createStopAnimationInteractionLink,
@@ -1197,6 +1200,8 @@ function getInteractionActionLabel(link: InteractionLink): string {
       return "Play Sound";
     case "stopSound":
       return "Stop Sound";
+    case "control":
+      return "Control Effect";
   }
 }
 
@@ -6626,6 +6631,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
           targetSoundEmitterId: link.action.targetSoundEmitterId
         });
         break;
+      case "control":
+        nextLink = createControlInteractionLink({
+          id: link.id,
+          sourceEntityId: link.sourceEntityId,
+          trigger,
+          effect: link.action.effect
+        });
+        break;
     }
 
     commitInteractionLinkChange(
@@ -6642,6 +6655,13 @@ export function App({ store, initialStatusMessage }: AppProps) {
     const sourceEntity = getInteractionSourceEntityForLink(link);
 
     if (sourceEntity === null || link.action.type === actionType) {
+      return;
+    }
+
+    if (actionType === "control") {
+      setStatusMessage(
+        "Control links are not authored from this inspector yet."
+      );
       return;
     }
 
@@ -7119,6 +7139,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       <option value="stopAnimation">Stop Animation</option>
                       <option value="playSound">Play Sound</option>
                       <option value="stopSound">Stop Sound</option>
+                      <option value="control">Control Effect</option>
                     </select>
                   </label>
                 </div>
@@ -7297,7 +7318,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     </select>
                   </label>
                 </div>
-              ) : (
+              ) : link.action.type === "stopAnimation" ? (
                 <div className="form-section">
                   <label className="form-field">
                     <span className="label">Instance</span>
@@ -7324,6 +7345,29 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       )}
                     </select>
                   </label>
+                </div>
+              ) : (
+                <div className="form-section">
+                  <div className="vector-inputs vector-inputs--two">
+                    <label className="form-field">
+                      <span className="label">Target</span>
+                      <input
+                        className="text-input"
+                        type="text"
+                        value={formatControlTargetRef(link.action.effect.target)}
+                        readOnly
+                      />
+                    </label>
+                    <label className="form-field">
+                      <span className="label">Value</span>
+                      <input
+                        className="text-input"
+                        type="text"
+                        value={formatControlEffectValue(link.action.effect)}
+                        readOnly
+                      />
+                    </label>
+                  </div>
                 </div>
               )}
 
