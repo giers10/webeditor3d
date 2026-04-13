@@ -208,11 +208,12 @@ export interface RuntimeNpc {
   yawDegrees: number;
   modelAssetId: string | null;
   collider: FirstPersonPlayerShape;
+  activeRoutineTitle: string | null;
 }
 
 export interface RuntimeNpcDefinition extends RuntimeNpc {
-  presence: NpcPresence;
   active: boolean;
+  activeRoutineId: string | null;
 }
 
 export interface RuntimeSoundEmitter {
@@ -341,6 +342,7 @@ export interface RuntimeSpawnPoint {
 
 export interface RuntimeSceneDefinition {
   time: ProjectTimeSettings;
+  scheduler: RuntimeProjectSchedulerState;
   world: WorldSettings;
   control: RuntimeControlSurfaceDefinition;
   localLights: RuntimeLocalLightCollection;
@@ -449,7 +451,8 @@ export function createRuntimeNpcFromDefinition(
     position: cloneVec3(npc.position),
     yawDegrees: npc.yawDegrees,
     modelAssetId: npc.modelAssetId,
-    collider: cloneRuntimeCharacterShape(npc.collider)
+    collider: cloneRuntimeCharacterShape(npc.collider),
+    activeRoutineTitle: npc.activeRoutineTitle
   };
 }
 
