@@ -17,6 +17,7 @@ export type CreationTarget =
       kind: "entity";
       entityKind: EntityKind;
       audioAssetId: string | null;
+      modelAssetId: string | null;
     }
   | {
       kind: "model-instance";
@@ -59,7 +60,8 @@ export function cloneViewportToolPreview(toolPreview: ViewportToolPreview): View
         ? {
             kind: "entity",
             entityKind: toolPreview.target.entityKind,
-            audioAssetId: toolPreview.target.audioAssetId
+            audioAssetId: toolPreview.target.audioAssetId,
+            modelAssetId: toolPreview.target.modelAssetId
           }
         : toolPreview.target.kind === "model-instance"
           ? {
@@ -95,7 +97,11 @@ export function areViewportToolPreviewsEqual(left: ViewportToolPreview, right: V
   }
 
   if (left.target.kind === "entity" && right.target.kind === "entity") {
-    if (left.target.entityKind !== right.target.entityKind || left.target.audioAssetId !== right.target.audioAssetId) {
+    if (
+      left.target.entityKind !== right.target.entityKind ||
+      left.target.audioAssetId !== right.target.audioAssetId ||
+      left.target.modelAssetId !== right.target.modelAssetId
+    ) {
       return false;
     }
   }
