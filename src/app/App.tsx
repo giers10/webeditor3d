@@ -12293,6 +12293,233 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     </button>
                   </div>
                 </>
+              ) : selectedPath !== null ? (
+                <>
+                  <div className="stat-card">
+                    <div className="label">Path</div>
+                    <div className="value">
+                      {getPathLabelById(selectedPath.id, pathList)}
+                    </div>
+                    <div className="material-summary">
+                      {selectedPath.points.length} point
+                      {selectedPath.points.length === 1 ? "" : "s"} ·{" "}
+                      {selectedPath.loop ? "Looping" : "Open"}
+                    </div>
+                  </div>
+
+                  <div className="form-section">
+                    <div className="label">Authored State</div>
+                    <label className="form-field form-field--toggle">
+                      <span className="label">Visible in editor</span>
+                      <input
+                        data-testid="path-visible"
+                        type="checkbox"
+                        checked={selectedPath.visible}
+                        onChange={(event) =>
+                          handleSetPathVisible(
+                            selectedPath,
+                            event.currentTarget.checked
+                          )
+                        }
+                      />
+                    </label>
+                    <label className="form-field form-field--toggle">
+                      <span className="label">Enabled for runtime build</span>
+                      <input
+                        data-testid="path-enabled"
+                        type="checkbox"
+                        checked={selectedPath.enabled}
+                        onChange={(event) =>
+                          handleSetPathEnabled(
+                            selectedPath,
+                            event.currentTarget.checked
+                          )
+                        }
+                      />
+                    </label>
+                    <div className="material-summary">
+                      Hidden paths stay authored but disappear from the editor
+                      viewport. Disabled paths are omitted from the runtime
+                      path registry.
+                    </div>
+                  </div>
+
+                  <div className="form-section">
+                    <div className="label">Name</div>
+                    <label className="form-field">
+                      <span className="label">Path Name</span>
+                      <input
+                        data-testid="path-name"
+                        className="text-input"
+                        type="text"
+                        value={pathNameDraft}
+                        placeholder="Path"
+                        onChange={(event) =>
+                          setPathNameDraft(event.currentTarget.value)
+                        }
+                        onBlur={applyPathNameChange}
+                        onKeyDown={(event) =>
+                          handleInlineNameInputKeyDown(event, () => {
+                            setPathNameDraft(selectedPath.name ?? "");
+                          })
+                        }
+                      />
+                    </label>
+                  </div>
+
+                  <div className="form-section">
+                    <div className="label">Loop</div>
+                    <label className="form-field form-field--toggle">
+                      <span className="label">Close last point back to first</span>
+                      <input
+                        data-testid="path-loop"
+                        type="checkbox"
+                        checked={selectedPath.loop}
+                        onChange={(event) =>
+                          handlePathLoopChange(event.currentTarget.checked)
+                        }
+                      />
+                    </label>
+                  </div>
+
+                  <div className="form-section">
+                    <div className="label">Points</div>
+                    <div className="material-summary">
+                      Edit authored point positions directly. Keep at least{" "}
+                      {MIN_SCENE_PATH_POINT_COUNT} points.
+                    </div>
+                    {selectedPath.points.map((point, pointIndex) => (
+                      <div key={point.id} className="stat-card">
+                        <div className="label">Point {pointIndex + 1}</div>
+                        <div className="material-summary">{point.id}</div>
+                        <div className="vector-inputs">
+                          <label className="form-field">
+                            <span className="label">X</span>
+                            <input
+                              data-testid={`path-point-${pointIndex}-x`}
+                              className="text-input"
+                              type="number"
+                              step={DEFAULT_GRID_SIZE}
+                              value={pathPointDrafts[pointIndex]?.x ?? ""}
+                              onChange={(event) =>
+                                handlePathPointDraftChange(
+                                  pointIndex,
+                                  "x",
+                                  event.currentTarget.value
+                                )
+                              }
+                              onBlur={applyPathChange}
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(event, applyPathChange)
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(event, applyPathChange)
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(
+                                  event,
+                                  applyPathChange
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Y</span>
+                            <input
+                              data-testid={`path-point-${pointIndex}-y`}
+                              className="text-input"
+                              type="number"
+                              step={DEFAULT_GRID_SIZE}
+                              value={pathPointDrafts[pointIndex]?.y ?? ""}
+                              onChange={(event) =>
+                                handlePathPointDraftChange(
+                                  pointIndex,
+                                  "y",
+                                  event.currentTarget.value
+                                )
+                              }
+                              onBlur={applyPathChange}
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(event, applyPathChange)
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(event, applyPathChange)
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(
+                                  event,
+                                  applyPathChange
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Z</span>
+                            <input
+                              data-testid={`path-point-${pointIndex}-z`}
+                              className="text-input"
+                              type="number"
+                              step={DEFAULT_GRID_SIZE}
+                              value={pathPointDrafts[pointIndex]?.z ?? ""}
+                              onChange={(event) =>
+                                handlePathPointDraftChange(
+                                  pointIndex,
+                                  "z",
+                                  event.currentTarget.value
+                                )
+                              }
+                              onBlur={applyPathChange}
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(event, applyPathChange)
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(event, applyPathChange)
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(
+                                  event,
+                                  applyPathChange
+                                )
+                              }
+                            />
+                          </label>
+                        </div>
+                        <div className="inline-actions">
+                          <button
+                            className="toolbar__button"
+                            type="button"
+                            data-testid={`remove-path-point-${pointIndex}`}
+                            disabled={
+                              selectedPath.points.length <=
+                              MIN_SCENE_PATH_POINT_COUNT
+                            }
+                            onClick={() => handleDeletePathPoint(pointIndex)}
+                          >
+                            Remove Point
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                    <div className="inline-actions">
+                      <button
+                        className="toolbar__button"
+                        type="button"
+                        data-testid="add-path-point"
+                        onClick={handleAddPathPoint}
+                      >
+                        Add Point
+                      </button>
+                      <button
+                        className="toolbar__button"
+                        type="button"
+                        data-testid="apply-path-points"
+                        onClick={applyPathChange}
+                      >
+                        Apply Points
+                      </button>
+                    </div>
+                  </div>
+                </>
               ) : selectedEntity !== null ? (
                 <>
                   <div className="stat-card">
