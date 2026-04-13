@@ -6,6 +6,7 @@ import { validateSceneDocument } from "../../src/document/scene-document-validat
 import {
   createPointLightEntity,
   createInteractableEntity,
+  createNpcEntity,
   createPlayerStartInputBindings,
   createPlayerStartEntity,
   createSoundEmitterEntity,
@@ -397,6 +398,88 @@ describe("validateSceneDocument", () => {
         expect.objectContaining({
           code: "invalid-sound-emitter-audio-asset-kind",
           path: "entities.entity-sound-wrong-kind.audioAssetId"
+        })
+      ])
+    );
+  });
+
+  it("validates NPC actor ids and model asset references", () => {
+    const modelAsset = {
+      id: "asset-model-main",
+      kind: "model" as const,
+      sourceName: "fixture.glb",
+      mimeType: "model/gltf-binary",
+      storageKey: createProjectAssetStorageKey("asset-model-main"),
+      byteLength: 128,
+      metadata: {
+        kind: "model" as const,
+        format: "glb" as const,
+        sceneName: null,
+        nodeCount: 1,
+        meshCount: 1,
+        materialNames: [],
+        textureNames: [],
+        animationNames: [],
+        boundingBox: null,
+        warnings: []
+      }
+    } satisfies ModelAssetRecord;
+    const missingModelNpc = createNpcEntity({
+      id: "entity-npc-missing-model",
+      actorId: "actor-town-guide",
+      modelAssetId: "asset-model-missing"
+    });
+    const wrongKindModelNpc = createNpcEntity({
+      id: "entity-npc-wrong-kind",
+      actorId: "actor-town-baker",
+      modelAssetId: "asset-audio-main"
+    });
+    const duplicateActorNpc = createNpcEntity({
+      id: "entity-npc-duplicate",
+      actorId: "actor-town-guide",
+      modelAssetId: modelAsset.id
+    });
+
+    const validation = validateSceneDocument({
+      ...createEmptySceneDocument(),
+      assets: {
+        "asset-audio-main": {
+          id: "asset-audio-main",
+          kind: "audio",
+          sourceName: "voice.ogg",
+          mimeType: "audio/ogg",
+          storageKey: createProjectAssetStorageKey("asset-audio-main"),
+          byteLength: 32,
+          metadata: {
+            kind: "audio",
+            durationSeconds: 1,
+            channelCount: 1,
+            sampleRateHz: 44100,
+            warnings: []
+          }
+        },
+        [modelAsset.id]: modelAsset
+      },
+      entities: {
+        [missingModelNpc.id]: missingModelNpc,
+        [wrongKindModelNpc.id]: wrongKindModelNpc,
+        [duplicateActorNpc.id]: duplicateActorNpc
+      }
+    });
+
+    expect(validation.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "missing-npc-model-asset",
+          path: "entities.entity-npc-missing-model.modelAssetId"
+        }),
+        expect.objectContaining({
+          code: "invalid-npc-model-asset-kind",
+          path: "entities.entity-npc-wrong-kind.modelAssetId"
+        }),
+        expect.objectContaining({
+          code: "duplicate-npc-actor-id",
+          path: "entities.entity-npc-duplicate.actorId"
         })
       ])
     );
