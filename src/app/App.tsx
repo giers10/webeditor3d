@@ -14446,6 +14446,97 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       </div>
 
                       <div className="form-section">
+                        <div className="label">Presence</div>
+                        <label className="form-field">
+                          <span className="label">Mode</span>
+                          <select
+                            data-testid="npc-presence-mode"
+                            className="select-input"
+                            value={npcPresenceModeDraft}
+                            onChange={(event) => {
+                              const nextMode =
+                                event.currentTarget.value as NpcPresenceMode;
+                              setNpcPresenceModeDraft(nextMode);
+                              scheduleDraftCommit(() => applyNpcChange());
+                            }}
+                          >
+                            {NPC_PRESENCE_MODES.map((mode) => (
+                              <option key={mode} value={mode}>
+                                {mode}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+
+                        {npcPresenceModeDraft === "timeWindow" ? (
+                          <div className="vector-inputs">
+                            <label className="form-field">
+                              <span className="label">Start Hour</span>
+                              <input
+                                data-testid="npc-presence-start-hour"
+                                className="text-input"
+                                type="number"
+                                step="0.25"
+                                value={npcPresenceStartHourDraft}
+                                onChange={(event) =>
+                                  setNpcPresenceStartHourDraft(
+                                    event.currentTarget.value
+                                  )
+                                }
+                                onBlur={() => applyNpcChange()}
+                                onKeyDown={(event) =>
+                                  handleDraftVectorKeyDown(event, applyNpcChange)
+                                }
+                                onKeyUp={(event) =>
+                                  handleNumberInputKeyUp(event, applyNpcChange)
+                                }
+                                onPointerUp={(event) =>
+                                  handleNumberInputPointerUp(
+                                    event,
+                                    applyNpcChange
+                                  )
+                                }
+                              />
+                            </label>
+                            <label className="form-field">
+                              <span className="label">End Hour</span>
+                              <input
+                                data-testid="npc-presence-end-hour"
+                                className="text-input"
+                                type="number"
+                                step="0.25"
+                                value={npcPresenceEndHourDraft}
+                                onChange={(event) =>
+                                  setNpcPresenceEndHourDraft(
+                                    event.currentTarget.value
+                                  )
+                                }
+                                onBlur={() => applyNpcChange()}
+                                onKeyDown={(event) =>
+                                  handleDraftVectorKeyDown(event, applyNpcChange)
+                                }
+                                onKeyUp={(event) =>
+                                  handleNumberInputKeyUp(event, applyNpcChange)
+                                }
+                                onPointerUp={(event) =>
+                                  handleNumberInputPointerUp(
+                                    event,
+                                    applyNpcChange
+                                  )
+                                }
+                              />
+                            </label>
+                          </div>
+                        ) : null}
+
+                        <div className="material-summary">
+                          {npcPresenceModeDraft === "always"
+                            ? "Always keeps this NPC active in the runner."
+                            : "Time windows use project-global in-game hours and can cross midnight."}
+                        </div>
+                      </div>
+
+                      <div className="form-section">
                         <div className="label">Facing</div>
                         <label className="form-field">
                           <span className="label">Yaw</span>
