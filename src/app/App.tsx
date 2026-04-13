@@ -2362,12 +2362,24 @@ export function App({ store, initialStatusMessage }: AppProps) {
   }, [selectedBrush]);
 
   useEffect(() => {
+    setPathNameDraft(selectedPath?.name ?? "");
+  }, [selectedPath]);
+
+  useEffect(() => {
     setEntityNameDraft(selectedEntity?.name ?? "");
   }, [selectedEntity]);
 
   useEffect(() => {
     setModelInstanceNameDraft(selectedModelInstance?.name ?? "");
   }, [selectedModelInstance]);
+
+  useEffect(() => {
+    setPathPointDrafts(
+      selectedPath === null
+        ? []
+        : selectedPath.points.map((point) => createVec3Draft(point.position))
+    );
+  }, [selectedPath]);
 
   useEffect(() => {
     if (selectedBrush === null) {
