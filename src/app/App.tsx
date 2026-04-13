@@ -13623,6 +13623,32 @@ export function App({ store, initialStatusMessage }: AppProps) {
                             }}
                           />
                         </label>
+                        <div className="stat-card">
+                          <div className="value">
+                            {selectedNpcSameSceneActorUsages.length > 0
+                              ? "Duplicate In Scene"
+                              : selectedNpcOtherSceneActorUsages.length > 0
+                                ? "Reused Across Scenes"
+                                : "Unique In Project"}
+                          </div>
+                          <div className="material-summary">
+                            {selectedNpcSameSceneActorUsages.length > 0
+                              ? `This actor id is also used by ${selectedNpcSameSceneActorUsages.length} other NPC${selectedNpcSameSceneActorUsages.length === 1 ? "" : "s"} in this scene.`
+                              : selectedNpcOtherSceneActorUsages.length > 0
+                                ? `This actor id is reused by ${selectedNpcOtherSceneActorUsages.length} NPC${selectedNpcOtherSceneActorUsages.length === 1 ? "" : "s"} in other scenes.`
+                                : "This actor id is currently unique across the project."}
+                          </div>
+                        </div>
+                        {selectedNpcOtherActorUsages.map((usage) => (
+                          <div
+                            key={`${usage.sceneId}:${usage.entityId}`}
+                            className="material-summary"
+                          >
+                            {usage.sceneId === editorState.activeSceneId
+                              ? `Also in this scene: ${usage.entityName ?? usage.entityId}`
+                              : `Also in ${usage.sceneName}: ${usage.entityName ?? usage.entityId}`}
+                          </div>
+                        ))}
                         <div className="material-summary">
                           Actor IDs are stable authored identities for this NPC
                           and are intended to stay consistent across scenes.
@@ -13654,6 +13680,258 @@ export function App({ store, initialStatusMessage }: AppProps) {
                             }
                           />
                         </label>
+                      </div>
+
+                      <div className="form-section">
+                        <div className="label">Collision</div>
+                        <label className="form-field">
+                          <span className="label">Mode</span>
+                          <select
+                            data-testid="npc-collider-mode"
+                            className="select-input"
+                            value={npcColliderModeDraft}
+                            onChange={(event) => {
+                              const nextMode =
+                                event.currentTarget.value as PlayerStartColliderMode;
+                              setNpcColliderModeDraft(nextMode);
+                              scheduleDraftCommit(() =>
+                                applyNpcChange({
+                                  colliderMode: nextMode
+                                })
+                              );
+                            }}
+                          >
+                            {PLAYER_START_COLLIDER_MODES.map((mode) => (
+                              <option key={mode} value={mode}>
+                                {mode}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+
+                        <label className="form-field">
+                          <span className="label">Eye Height</span>
+                          <input
+                            data-testid="npc-eye-height"
+                            className="text-input"
+                            type="number"
+                            min="0.01"
+                            step="0.1"
+                            value={npcEyeHeightDraft}
+                            onChange={(event) =>
+                              setNpcEyeHeightDraft(event.currentTarget.value)
+                            }
+                            onBlur={() => applyNpcChange()}
+                            onKeyDown={(event) =>
+                              handleDraftVectorKeyDown(event, applyNpcChange)
+                            }
+                            onKeyUp={(event) =>
+                              handleNumberInputKeyUp(event, applyNpcChange)
+                            }
+                            onPointerUp={(event) =>
+                              handleNumberInputPointerUp(event, applyNpcChange)
+                            }
+                          />
+                        </label>
+
+                        {npcColliderModeDraft === "capsule" ? (
+                          <div className="vector-inputs">
+                            <label className="form-field">
+                              <span className="label">Radius</span>
+                              <input
+                                data-testid="npc-capsule-radius"
+                                className="text-input"
+                                type="number"
+                                min="0.01"
+                                step="0.1"
+                                value={npcCapsuleRadiusDraft}
+                                onChange={(event) =>
+                                  setNpcCapsuleRadiusDraft(
+                                    event.currentTarget.value
+                                  )
+                                }
+                                onBlur={() => applyNpcChange()}
+                                onKeyDown={(event) =>
+                                  handleDraftVectorKeyDown(
+                                    event,
+                                    applyNpcChange
+                                  )
+                                }
+                                onKeyUp={(event) =>
+                                  handleNumberInputKeyUp(
+                                    event,
+                                    applyNpcChange
+                                  )
+                                }
+                                onPointerUp={(event) =>
+                                  handleNumberInputPointerUp(
+                                    event,
+                                    applyNpcChange
+                                  )
+                                }
+                              />
+                            </label>
+                            <label className="form-field">
+                              <span className="label">Height</span>
+                              <input
+                                data-testid="npc-capsule-height"
+                                className="text-input"
+                                type="number"
+                                min="0.01"
+                                step="0.1"
+                                value={npcCapsuleHeightDraft}
+                                onChange={(event) =>
+                                  setNpcCapsuleHeightDraft(
+                                    event.currentTarget.value
+                                  )
+                                }
+                                onBlur={() => applyNpcChange()}
+                                onKeyDown={(event) =>
+                                  handleDraftVectorKeyDown(
+                                    event,
+                                    applyNpcChange
+                                  )
+                                }
+                                onKeyUp={(event) =>
+                                  handleNumberInputKeyUp(
+                                    event,
+                                    applyNpcChange
+                                  )
+                                }
+                                onPointerUp={(event) =>
+                                  handleNumberInputPointerUp(
+                                    event,
+                                    applyNpcChange
+                                  )
+                                }
+                              />
+                            </label>
+                          </div>
+                        ) : null}
+
+                        {npcColliderModeDraft === "box" ? (
+                          <div className="vector-inputs">
+                            <label className="form-field">
+                              <span className="label">Size X</span>
+                              <input
+                                data-testid="npc-box-size-x"
+                                className="text-input"
+                                type="number"
+                                min="0.01"
+                                step="0.1"
+                                value={npcBoxSizeDraft.x}
+                                onChange={(event) => {
+                                  const nextValue = event.currentTarget.value;
+                                  setNpcBoxSizeDraft((draft) => ({
+                                    ...draft,
+                                    x: nextValue
+                                  }));
+                                }}
+                                onBlur={() => applyNpcChange()}
+                                onKeyDown={(event) =>
+                                  handleDraftVectorKeyDown(
+                                    event,
+                                    applyNpcChange
+                                  )
+                                }
+                                onKeyUp={(event) =>
+                                  handleNumberInputKeyUp(
+                                    event,
+                                    applyNpcChange
+                                  )
+                                }
+                                onPointerUp={(event) =>
+                                  handleNumberInputPointerUp(
+                                    event,
+                                    applyNpcChange
+                                  )
+                                }
+                              />
+                            </label>
+                            <label className="form-field">
+                              <span className="label">Size Y</span>
+                              <input
+                                data-testid="npc-box-size-y"
+                                className="text-input"
+                                type="number"
+                                min="0.01"
+                                step="0.1"
+                                value={npcBoxSizeDraft.y}
+                                onChange={(event) => {
+                                  const nextValue = event.currentTarget.value;
+                                  setNpcBoxSizeDraft((draft) => ({
+                                    ...draft,
+                                    y: nextValue
+                                  }));
+                                }}
+                                onBlur={() => applyNpcChange()}
+                                onKeyDown={(event) =>
+                                  handleDraftVectorKeyDown(
+                                    event,
+                                    applyNpcChange
+                                  )
+                                }
+                                onKeyUp={(event) =>
+                                  handleNumberInputKeyUp(
+                                    event,
+                                    applyNpcChange
+                                  )
+                                }
+                                onPointerUp={(event) =>
+                                  handleNumberInputPointerUp(
+                                    event,
+                                    applyNpcChange
+                                  )
+                                }
+                              />
+                            </label>
+                            <label className="form-field">
+                              <span className="label">Size Z</span>
+                              <input
+                                data-testid="npc-box-size-z"
+                                className="text-input"
+                                type="number"
+                                min="0.01"
+                                step="0.1"
+                                value={npcBoxSizeDraft.z}
+                                onChange={(event) => {
+                                  const nextValue = event.currentTarget.value;
+                                  setNpcBoxSizeDraft((draft) => ({
+                                    ...draft,
+                                    z: nextValue
+                                  }));
+                                }}
+                                onBlur={() => applyNpcChange()}
+                                onKeyDown={(event) =>
+                                  handleDraftVectorKeyDown(
+                                    event,
+                                    applyNpcChange
+                                  )
+                                }
+                                onKeyUp={(event) =>
+                                  handleNumberInputKeyUp(
+                                    event,
+                                    applyNpcChange
+                                  )
+                                }
+                                onPointerUp={(event) =>
+                                  handleNumberInputPointerUp(
+                                    event,
+                                    applyNpcChange
+                                  )
+                                }
+                              />
+                            </label>
+                          </div>
+                        ) : null}
+
+                        <div className="material-summary">
+                          {getNpcColliderModeDescription(npcColliderModeDraft)}
+                        </div>
+                        <div className="material-summary">
+                          When no model is assigned, the editor and runner use
+                          this collider as the NPC preview volume.
+                        </div>
                       </div>
 
                       <div className="form-section">
