@@ -13515,6 +13515,112 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     </div>
                   ) : null}
 
+                  {selectedNpc !== null ? (
+                    <>
+                      <div className="form-section">
+                        <div className="label">Actor</div>
+                        <label className="form-field">
+                          <span className="label">Actor ID</span>
+                          <input
+                            data-testid="npc-actor-id"
+                            className="text-input"
+                            type="text"
+                            value={npcActorIdDraft}
+                            onChange={(event) =>
+                              setNpcActorIdDraft(event.currentTarget.value)
+                            }
+                            onBlur={() => applyNpcChange()}
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter") {
+                                applyNpcChange();
+                              }
+                            }}
+                          />
+                        </label>
+                        <div className="material-summary">
+                          Actor IDs are stable authored identities for this NPC
+                          and are intended to stay consistent across scenes.
+                        </div>
+                      </div>
+
+                      <div className="form-section">
+                        <div className="label">Facing</div>
+                        <label className="form-field">
+                          <span className="label">Yaw</span>
+                          <input
+                            data-testid="npc-yaw"
+                            className="text-input"
+                            type="number"
+                            step="1"
+                            value={npcYawDraft}
+                            onChange={(event) =>
+                              setNpcYawDraft(event.currentTarget.value)
+                            }
+                            onBlur={() => applyNpcChange()}
+                            onKeyDown={(event) =>
+                              handleDraftVectorKeyDown(event, applyNpcChange)
+                            }
+                            onKeyUp={(event) =>
+                              handleNumberInputKeyUp(event, applyNpcChange)
+                            }
+                            onPointerUp={(event) =>
+                              handleNumberInputPointerUp(event, applyNpcChange)
+                            }
+                          />
+                        </label>
+                      </div>
+
+                      <div className="form-section">
+                        <div className="label">Model Asset</div>
+                        <div className="stat-card">
+                          <div className="value">
+                            {selectedNpc.modelAssetId === null
+                              ? "Unassigned"
+                              : (selectedNpcModelAssetRecord?.sourceName ??
+                                "Missing Model Asset")}
+                          </div>
+                          <div className="material-summary">
+                            {selectedNpc.modelAssetId === null
+                              ? "Choose a model asset to render this NPC in the editor and runner."
+                              : selectedNpcModelAssetRecord === null
+                                ? `This NPC references ${selectedNpc.modelAssetId}, but the asset is missing or not a model.`
+                                : formatModelAssetSummary(
+                                    selectedNpcModelAssetRecord
+                                  )}
+                          </div>
+                        </div>
+                        <label className="form-field">
+                          <span className="label">Model</span>
+                          <select
+                            data-testid="npc-model-asset"
+                            className="select-input"
+                            value={npcModelAssetIdDraft}
+                            onChange={(event) => {
+                              const nextModelAssetId =
+                                event.currentTarget.value.trim();
+                              setNpcModelAssetIdDraft(nextModelAssetId);
+                              scheduleDraftCommit(() =>
+                                applyNpcChange({
+                                  modelAssetId:
+                                    nextModelAssetId.length === 0
+                                      ? null
+                                      : nextModelAssetId
+                                })
+                              );
+                            }}
+                          >
+                            <option value="">— none —</option>
+                            {modelAssetList.map((asset) => (
+                              <option key={asset.id} value={asset.id}>
+                                {asset.sourceName}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      </div>
+                    </>
+                  ) : null}
+
                   {selectedSoundEmitter !== null ? (
                     <>
                       <div className="form-section">
