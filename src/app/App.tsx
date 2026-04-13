@@ -1902,34 +1902,36 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [projectTimeDuskDurationHoursDraft, setProjectTimeDuskDurationHoursDraft] =
     useState(String(editorState.projectDocument.time.duskDurationHours));
   const [
-    projectTimeDawnAmbientIntensityFactorDraft,
-    setProjectTimeDawnAmbientIntensityFactorDraft
-  ] = useState(String(editorState.projectDocument.time.dawn.ambientIntensityFactor));
+    worldDawnAmbientIntensityFactorDraft,
+    setWorldDawnAmbientIntensityFactorDraft
+  ] = useState(String(editorState.document.world.timeOfDay.dawn.ambientIntensityFactor));
   const [
-    projectTimeDawnLightIntensityFactorDraft,
-    setProjectTimeDawnLightIntensityFactorDraft
-  ] = useState(String(editorState.projectDocument.time.dawn.lightIntensityFactor));
+    worldDawnLightIntensityFactorDraft,
+    setWorldDawnLightIntensityFactorDraft
+  ] = useState(String(editorState.document.world.timeOfDay.dawn.lightIntensityFactor));
   const [
-    projectTimeDuskAmbientIntensityFactorDraft,
-    setProjectTimeDuskAmbientIntensityFactorDraft
-  ] = useState(String(editorState.projectDocument.time.dusk.ambientIntensityFactor));
+    worldDuskAmbientIntensityFactorDraft,
+    setWorldDuskAmbientIntensityFactorDraft
+  ] = useState(String(editorState.document.world.timeOfDay.dusk.ambientIntensityFactor));
   const [
-    projectTimeDuskLightIntensityFactorDraft,
-    setProjectTimeDuskLightIntensityFactorDraft
-  ] = useState(String(editorState.projectDocument.time.dusk.lightIntensityFactor));
+    worldDuskLightIntensityFactorDraft,
+    setWorldDuskLightIntensityFactorDraft
+  ] = useState(String(editorState.document.world.timeOfDay.dusk.lightIntensityFactor));
   const [
-    projectTimeNightAmbientIntensityFactorDraft,
-    setProjectTimeNightAmbientIntensityFactorDraft
-  ] = useState(String(editorState.projectDocument.time.night.ambientIntensityFactor));
+    worldNightAmbientIntensityFactorDraft,
+    setWorldNightAmbientIntensityFactorDraft
+  ] = useState(String(editorState.document.world.timeOfDay.night.ambientIntensityFactor));
   const [
-    projectTimeNightLightIntensityFactorDraft,
-    setProjectTimeNightLightIntensityFactorDraft
-  ] = useState(String(editorState.projectDocument.time.night.lightIntensityFactor));
+    worldNightLightIntensityFactorDraft,
+    setWorldNightLightIntensityFactorDraft
+  ] = useState(String(editorState.document.world.timeOfDay.night.lightIntensityFactor));
   const [
-    projectTimeNightBackgroundEnvironmentIntensityDraft,
-    setProjectTimeNightBackgroundEnvironmentIntensityDraft
+    worldNightBackgroundEnvironmentIntensityDraft,
+    setWorldNightBackgroundEnvironmentIntensityDraft
   ] = useState(
-    String(editorState.projectDocument.time.nightBackground.environmentIntensity)
+    editorState.document.world.timeOfDay.night.background.mode === "image"
+      ? String(editorState.document.world.timeOfDay.night.background.environmentIntensity)
+      : "0.5"
   );
   const [
     backgroundEnvironmentIntensityDraft,
@@ -2469,28 +2471,35 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
     setProjectTimeDawnDurationHoursDraft(String(projectTime.dawnDurationHours));
     setProjectTimeDuskDurationHoursDraft(String(projectTime.duskDurationHours));
-    setProjectTimeDawnAmbientIntensityFactorDraft(
-      String(projectTime.dawn.ambientIntensityFactor)
-    );
-    setProjectTimeDawnLightIntensityFactorDraft(
-      String(projectTime.dawn.lightIntensityFactor)
-    );
-    setProjectTimeDuskAmbientIntensityFactorDraft(
-      String(projectTime.dusk.ambientIntensityFactor)
-    );
-    setProjectTimeDuskLightIntensityFactorDraft(
-      String(projectTime.dusk.lightIntensityFactor)
-    );
-    setProjectTimeNightAmbientIntensityFactorDraft(
-      String(projectTime.night.ambientIntensityFactor)
-    );
-    setProjectTimeNightLightIntensityFactorDraft(
-      String(projectTime.night.lightIntensityFactor)
-    );
-    setProjectTimeNightBackgroundEnvironmentIntensityDraft(
-      String(projectTime.nightBackground.environmentIntensity)
-    );
   }, [editorState.projectDocument.time]);
+
+  useEffect(() => {
+    const worldTimeOfDay = editorState.document.world.timeOfDay;
+
+    setWorldDawnAmbientIntensityFactorDraft(
+      String(worldTimeOfDay.dawn.ambientIntensityFactor)
+    );
+    setWorldDawnLightIntensityFactorDraft(
+      String(worldTimeOfDay.dawn.lightIntensityFactor)
+    );
+    setWorldDuskAmbientIntensityFactorDraft(
+      String(worldTimeOfDay.dusk.ambientIntensityFactor)
+    );
+    setWorldDuskLightIntensityFactorDraft(
+      String(worldTimeOfDay.dusk.lightIntensityFactor)
+    );
+    setWorldNightAmbientIntensityFactorDraft(
+      String(worldTimeOfDay.night.ambientIntensityFactor)
+    );
+    setWorldNightLightIntensityFactorDraft(
+      String(worldTimeOfDay.night.lightIntensityFactor)
+    );
+    setWorldNightBackgroundEnvironmentIntensityDraft(
+      worldTimeOfDay.night.background.mode === "image"
+        ? String(worldTimeOfDay.night.background.environmentIntensity)
+        : "0.5"
+    );
+  }, [editorState.document.world.timeOfDay]);
 
   useEffect(() => {
     setAmbientLightIntensityDraft(
