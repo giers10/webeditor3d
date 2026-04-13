@@ -439,6 +439,19 @@ describe("validateSceneDocument", () => {
       actorId: "actor-town-guide",
       modelAssetId: modelAsset.id
     });
+    const invalidColliderNpc = createNpcEntity({
+      id: "entity-npc-invalid-collider",
+      actorId: "actor-town-guard",
+      collider: {
+        mode: "box",
+        eyeHeight: 2,
+        boxSize: {
+          x: 0.7,
+          y: 1.2,
+          z: 0.7
+        }
+      }
+    });
 
     const validation = validateSceneDocument({
       ...createEmptySceneDocument(),
@@ -463,7 +476,8 @@ describe("validateSceneDocument", () => {
       entities: {
         [missingModelNpc.id]: missingModelNpc,
         [wrongKindModelNpc.id]: wrongKindModelNpc,
-        [duplicateActorNpc.id]: duplicateActorNpc
+        [duplicateActorNpc.id]: duplicateActorNpc,
+        [invalidColliderNpc.id]: invalidColliderNpc
       }
     });
 
@@ -480,6 +494,10 @@ describe("validateSceneDocument", () => {
         expect.objectContaining({
           code: "duplicate-npc-actor-id",
           path: "entities.entity-npc-duplicate.actorId"
+        }),
+        expect.objectContaining({
+          code: "invalid-npc-eye-height",
+          path: "entities.entity-npc-invalid-collider.collider.eyeHeight"
         })
       ])
     );
