@@ -18,7 +18,9 @@ import { createDuplicateSelectionCommand } from "../commands/duplicate-selection
 import { createImportAudioAssetCommand } from "../commands/import-audio-asset-command";
 import { createImportBackgroundImageAssetCommand } from "../commands/import-background-image-asset-command";
 import { createImportModelAssetCommand } from "../commands/import-model-asset-command";
+import { createAddPathPointCommand } from "../commands/add-path-point-command";
 import { createDeletePathCommand } from "../commands/delete-path-command";
+import { createDeletePathPointCommand } from "../commands/delete-path-point-command";
 import { createDeleteModelInstanceCommand } from "../commands/delete-model-instance-command";
 import { createCommitTransformSessionCommand } from "../commands/commit-transform-session-command";
 import { createMoveBoxBrushCommand } from "../commands/move-box-brush-command";
@@ -53,9 +55,11 @@ import {
   getSingleSelectedBrushId,
   getSingleSelectedEntityId,
   getSingleSelectedModelInstanceId,
-  getSingleSelectedPathId,
+  getSingleSelectedPathOwnerId,
+  getSingleSelectedPathPoint,
   isBrushFaceSelected,
   isBrushSelected,
+  isPathPointSelected,
   isPathSelected,
   type EditorSelection
 } from "../core/selection";
@@ -173,9 +177,11 @@ import {
   createAppendedScenePathPoint,
   createScenePath,
   getScenePathLabel,
+  getScenePathPointIndex,
   getScenePaths,
   normalizeScenePathName,
-  type ScenePath
+  type ScenePath,
+  type ScenePathPoint
 } from "../document/paths";
 import {
   areProjectTimeSettingsEqual,
