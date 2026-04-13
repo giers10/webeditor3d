@@ -91,6 +91,10 @@ import {
 } from "./runtime-interaction-system";
 import { RuntimeAudioSystem } from "./runtime-audio-system";
 import {
+  hasNpcPresenceActivityChanged,
+  resolveNpcPresenceActive
+} from "./runtime-npc-presence";
+import {
   advanceRuntimeClockState,
   areRuntimeClockStatesEqual,
   cloneRuntimeClockState,
@@ -104,6 +108,7 @@ import { ThirdPersonNavigationController } from "./third-person-navigation-contr
 import { resolveUnderwaterFogState } from "./underwater-fog";
 import { resolveWaterContact } from "./water-volume-utils";
 import type {
+  RuntimeNpcDefinition,
   RuntimeBoxBrushInstance,
   RuntimeLocalLightCollection,
   RuntimeNavigationMode,
@@ -111,6 +116,7 @@ import type {
   RuntimeSceneDefinition,
   RuntimeTeleportTarget
 } from "./runtime-scene-build";
+import { buildRuntimeNpcCollider } from "./runtime-scene-build";
 
 interface CachedMaterialTexture {
   signature: string;
@@ -141,6 +147,10 @@ const WATER_REFLECTION_UPDATE_INTERVAL_MS = 96;
 
 function dampScalar(current: number, target: number, rate: number, dt: number) {
   return current + (target - current) * Math.min(1, dt * rate);
+}
+
+function isNonNull<T>(value: T | null): value is T {
+  return value !== null;
 }
 
 export interface RuntimeSceneLoadState {
@@ -429,6 +439,7 @@ export class RuntimeHost {
     this.runtimeScene = runtimeScene;
     this.currentWorld = runtimeScene.world;
     this.syncRuntimeClockState(runtimeScene.time);
+    this.syncRuntimeNpcPresenceToCurrentClock();
     this.activeController?.deactivate(this.controllerContext, {
       releasePointerLock: !preservePointerLockDuringLoad
     });
@@ -453,7 +464,7 @@ export class RuntimeHost {
     this.rebuildBrushMeshes(runtimeScene.brushes);
     this.rebuildModelRenderObjects(
       runtimeScene.modelInstances,
-      runtimeScene.entities.npcs
+      runtimeScene.npcDefinitions
     );
     this.audioSystem.loadScene(runtimeScene);
     void this.finalizeSceneLoad(
@@ -481,7 +492,7 @@ export class RuntimeHost {
     if (this.runtimeScene !== null) {
       this.rebuildModelRenderObjects(
         this.runtimeScene.modelInstances,
-        this.runtimeScene.entities.npcs
+        this.runtimeScene.npcDefinitions
       );
     }
 
@@ -1248,7 +1259,7 @@ export class RuntimeHost {
 
   private rebuildModelRenderObjects(
     modelInstances: RuntimeSceneDefinition["modelInstances"],
-    npcs: RuntimeNpc[]
+    npcs: RuntimeNpcDefinition[]
   ) {
     this.clearModelRenderObjects();
 
@@ -1338,7 +1349,7 @@ export class RuntimeHost {
               this.loadedModelAssets[npc.modelAssetId],
               false
             );
-      renderGroup.visible = npc.visible;
+      renderGroup.visible = npc.visible && npc.active;
       this.modelGroup.add(renderGroup);
       this.modelRenderObjects.set(npc.entityId, renderGroup);
     }
@@ -2030,9 +2041,14 @@ export class RuntimeHost {
     }
 
     if (this.currentClockState !== null) {
+      const previousTimeOfDayHours = this.currentClockState.timeOfDayHours;
       this.currentClockState = advanceRuntimeClockState(
         this.currentClockState,
         dt
+      );
+      this.updateRuntimeNpcPresenceAfterClockAdvance(
+        previousTimeOfDayHours,
+        this.currentClockState.timeOfDayHours
       );
       this.applyDayNightLighting();
       this.clockPublishAccumulator += dt;
@@ -2097,6 +2113,133 @@ export class RuntimeHost {
     }
 
     this.firstPersonController.teleportTo(target.position, target.yawDegrees);
+  }
+
+  private syncRuntimeNpcPresenceToCurrentClock() {
+    if (this.runtimeScene === null || this.currentClockState === null) {
+      return;
+    }
+
+    let changed = false;
+
+    for (const npc of this.runtimeScene.npcDefinitions) {
+      const nextActive = resolveNpcPresenceActive(
+        npc.presence,
+        this.currentClockState.timeOfDayHours
+      );
+
+      if (npc.active === nextActive) {
+        continue;
+      }
+
+      npc.active = nextActive;
+      changed = true;
+    }
+
+    if (changed) {
+      this.refreshRuntimeNpcCollections();
+    }
+  }
+
+  private updateRuntimeNpcPresenceAfterClockAdvance(
+    previousTimeOfDayHours: number,
+    currentTimeOfDayHours: number
+  ) {
+    if (this.runtimeScene === null) {
+      return;
+    }
+
+    let changed = false;
+
+    for (const npc of this.runtimeScene.npcDefinitions) {
+      if (
+        !hasNpcPresenceActivityChanged(
+          npc.presence,
+          previousTimeOfDayHours,
+          currentTimeOfDayHours
+        )
+      ) {
+        continue;
+      }
+
+      const nextActive = resolveNpcPresenceActive(
+        npc.presence,
+        currentTimeOfDayHours
+      );
+
+      if (npc.active === nextActive) {
+        continue;
+      }
+
+      npc.active = nextActive;
+      changed = true;
+      const renderGroup = this.modelRenderObjects.get(npc.entityId);
+
+      if (renderGroup !== undefined) {
+        renderGroup.visible = npc.visible && npc.active;
+      }
+    }
+
+    if (!changed) {
+      return;
+    }
+
+    this.refreshRuntimeNpcCollections();
+    this.refreshCollisionWorldForNpcPresence();
+  }
+
+  private refreshRuntimeNpcCollections() {
+    if (this.runtimeScene === null) {
+      return;
+    }
+
+    this.runtimeScene.entities.npcs = this.runtimeScene.npcDefinitions.filter(
+      (npc) => npc.active
+    );
+    this.runtimeScene.colliders = [
+      ...this.runtimeScene.staticColliders,
+      ...this.runtimeScene.entities.npcs
+        .map((npc) => buildRuntimeNpcCollider(npc))
+        .filter(isNonNull)
+    ];
+  }
+
+  private refreshCollisionWorldForNpcPresence() {
+    if (this.runtimeScene === null) {
+      return;
+    }
+
+    const requestId = ++this.collisionWorldRequestId;
+    const previousCollisionWorld = this.collisionWorld;
+
+    void this.buildCollisionWorld(
+      requestId,
+      this.runtimeScene.colliders,
+      this.runtimeScene.playerCollider,
+      this.runtimeScene.playerMovement
+    )
+      .then((nextCollisionWorld) => {
+        if (requestId !== this.collisionWorldRequestId) {
+          nextCollisionWorld.dispose();
+          return;
+        }
+
+        this.collisionWorld = nextCollisionWorld;
+        previousCollisionWorld?.dispose();
+      })
+      .catch((error) => {
+        if (requestId !== this.collisionWorldRequestId) {
+          return;
+        }
+
+        const detail =
+          error instanceof Error && error.message.trim().length > 0
+            ? error.message.trim()
+            : "Unknown error.";
+        const message = `Runner collision refresh failed: ${detail}`;
+        this.currentRuntimeMessage = message;
+        this.runtimeMessageHandler?.(message);
+      });
   }
 
   private applyToggleBrushVisibilityAction(
