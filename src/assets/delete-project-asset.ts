@@ -59,6 +59,8 @@ function cleanupSceneForDeletedAsset(
 
   if (asset.kind === "model") {
     const remainingModelInstances: ProjectScene["modelInstances"] = {};
+    const updatedEntities: ProjectScene["entities"] = {};
+    let didChangeEntities = false;
 
     for (const [modelInstanceId, modelInstance] of Object.entries(
       scene.modelInstances
@@ -73,6 +75,23 @@ function cleanupSceneForDeletedAsset(
 
     if (removedModelInstanceIds.size > 0) {
       nextModelInstances = remainingModelInstances;
+    }
+
+    for (const [entityId, entity] of Object.entries(scene.entities)) {
+      if (entity.kind === "npc" && entity.modelAssetId === asset.id) {
+        updatedEntities[entityId] = {
+          ...entity,
+          modelAssetId: null
+        };
+        didChangeEntities = true;
+        continue;
+      }
+
+      updatedEntities[entityId] = entity;
+    }
+
+    if (didChangeEntities) {
+      nextEntities = updatedEntities;
     }
   }
 
