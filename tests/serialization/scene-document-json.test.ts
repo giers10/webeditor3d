@@ -320,6 +320,7 @@ describe("scene document JSON", () => {
     const migratedDocument = migrateSceneDocument({
       version: SCENE_DOCUMENT_VERSION,
       name: "Legacy Water Settings",
+      time: createDefaultProjectTimeSettings(),
       world: {
         ...createEmptySceneDocument().world,
         advancedRendering: {
@@ -2349,6 +2350,7 @@ describe("scene document JSON", () => {
               }
             }
           },
+          time: createDefaultProjectTimeSettings(),
           modelInstances: {},
           entities: {
             "shared-id": {
