@@ -928,7 +928,11 @@ function getSelectedPathPointState(
 ): { point: ScenePathPoint; index: number } | null {
   const selectedPathPoint = getSingleSelectedPathPoint(selection);
 
-  if (selectedPathPoint === null || path === null || selectedPathPoint.pathId !== path.id) {
+  if (
+    selectedPathPoint === null ||
+    path === null ||
+    selectedPathPoint.pathId !== path.id
+  ) {
     return null;
   }
 
@@ -1062,7 +1066,9 @@ function getBrushLabel(brush: BoxBrush, index: number): string {
 
 function getPathLabelById(pathId: string, paths: ScenePath[]): string {
   const pathIndex = paths.findIndex((path) => path.id === pathId);
-  return pathIndex === -1 ? "Path" : getScenePathLabel(paths[pathIndex], pathIndex);
+  return pathIndex === -1
+    ? "Path"
+    : getScenePathLabel(paths[pathIndex], pathIndex);
 }
 
 function formatAuthoredObjectStateSummary(state: {
@@ -1124,12 +1130,15 @@ function describeSelection(
     case "paths":
       return `${selection.ids.length} path${selection.ids.length === 1 ? "" : "s"} selected (${getPathLabelById(selection.ids[0], paths)})`;
     case "pathPoint": {
-      const path = paths.find((candidatePath) => candidatePath.id === selection.pathId);
+      const path = paths.find(
+        (candidatePath) => candidatePath.id === selection.pathId
+      );
       const pointIndex =
         path === undefined
           ? -1
           : getScenePathPointIndex(path, selection.pointId);
-      const pointLabel = pointIndex === -1 ? "Path Point" : `Point ${pointIndex + 1}`;
+      const pointLabel =
+        pointIndex === -1 ? "Path Point" : `Point ${pointIndex + 1}`;
       return `${pointLabel} selected (${getPathLabelById(selection.pathId, paths)})`;
     }
     case "entities":
@@ -1555,7 +1564,9 @@ function formatRunnerAnimationHook(
     : "idle";
 }
 
-function formatWorldBackgroundLabel(background: WorldBackgroundSettings): string {
+function formatWorldBackgroundLabel(
+  background: WorldBackgroundSettings
+): string {
   if (background.mode === "solid") {
     return "Solid";
   }
@@ -1937,8 +1948,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [playerStartYawDraft, setPlayerStartYawDraft] = useState("0");
   const [playerStartNavigationModeDraft, setPlayerStartNavigationModeDraft] =
     useState<PlayerStartNavigationMode>(DEFAULT_PLAYER_START_NAVIGATION_MODE);
-  const [playerStartMovementTemplateDraft, setPlayerStartMovementTemplateDraft] =
-    useState<PlayerStartMovementTemplate>(createPlayerStartMovementTemplate());
+  const [
+    playerStartMovementTemplateDraft,
+    setPlayerStartMovementTemplateDraft
+  ] = useState<PlayerStartMovementTemplate>(
+    createPlayerStartMovementTemplate()
+  );
   const [
     playerStartMovementTemplateNumberDraft,
     setPlayerStartMovementTemplateNumberDraft
@@ -1961,8 +1976,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
   );
   const [playerStartInputBindingsDraft, setPlayerStartInputBindingsDraft] =
     useState<PlayerStartInputBindings>(createPlayerStartInputBindings());
-  const [playerStartKeyboardCaptureAction, setPlayerStartKeyboardCaptureAction] =
-    useState<PlayerStartInputAction | null>(null);
+  const [
+    playerStartKeyboardCaptureAction,
+    setPlayerStartKeyboardCaptureAction
+  ] = useState<PlayerStartInputAction | null>(null);
   const [soundEmitterAudioAssetIdDraft, setSoundEmitterAudioAssetIdDraft] =
     useState(DEFAULT_SOUND_EMITTER_AUDIO_ASSET_ID ?? "");
   const [soundEmitterVolumeDraft, setSoundEmitterVolumeDraft] = useState(
@@ -2071,46 +2088,69 @@ export function App({ store, initialStatusMessage }: AppProps) {
     useState(String(editorState.projectDocument.time.startDayNumber));
   const [projectTimeStartTimeOfDayDraft, setProjectTimeStartTimeOfDayDraft] =
     useState(String(editorState.projectDocument.time.startTimeOfDayHours));
-  const [projectTimeDayLengthMinutesDraft, setProjectTimeDayLengthMinutesDraft] =
-    useState(String(editorState.projectDocument.time.dayLengthMinutes));
-  const [projectTimeSunriseTimeOfDayDraft, setProjectTimeSunriseTimeOfDayDraft] =
-    useState(String(editorState.projectDocument.time.sunriseTimeOfDayHours));
+  const [
+    projectTimeDayLengthMinutesDraft,
+    setProjectTimeDayLengthMinutesDraft
+  ] = useState(String(editorState.projectDocument.time.dayLengthMinutes));
+  const [
+    projectTimeSunriseTimeOfDayDraft,
+    setProjectTimeSunriseTimeOfDayDraft
+  ] = useState(String(editorState.projectDocument.time.sunriseTimeOfDayHours));
   const [projectTimeSunsetTimeOfDayDraft, setProjectTimeSunsetTimeOfDayDraft] =
     useState(String(editorState.projectDocument.time.sunsetTimeOfDayHours));
-  const [projectTimeDawnDurationHoursDraft, setProjectTimeDawnDurationHoursDraft] =
-    useState(String(editorState.projectDocument.time.dawnDurationHours));
-  const [projectTimeDuskDurationHoursDraft, setProjectTimeDuskDurationHoursDraft] =
-    useState(String(editorState.projectDocument.time.duskDurationHours));
+  const [
+    projectTimeDawnDurationHoursDraft,
+    setProjectTimeDawnDurationHoursDraft
+  ] = useState(String(editorState.projectDocument.time.dawnDurationHours));
+  const [
+    projectTimeDuskDurationHoursDraft,
+    setProjectTimeDuskDurationHoursDraft
+  ] = useState(String(editorState.projectDocument.time.duskDurationHours));
   const [
     worldDawnAmbientIntensityFactorDraft,
     setWorldDawnAmbientIntensityFactorDraft
-  ] = useState(String(editorState.document.world.timeOfDay.dawn.ambientIntensityFactor));
+  ] = useState(
+    String(editorState.document.world.timeOfDay.dawn.ambientIntensityFactor)
+  );
   const [
     worldDawnLightIntensityFactorDraft,
     setWorldDawnLightIntensityFactorDraft
-  ] = useState(String(editorState.document.world.timeOfDay.dawn.lightIntensityFactor));
+  ] = useState(
+    String(editorState.document.world.timeOfDay.dawn.lightIntensityFactor)
+  );
   const [
     worldDuskAmbientIntensityFactorDraft,
     setWorldDuskAmbientIntensityFactorDraft
-  ] = useState(String(editorState.document.world.timeOfDay.dusk.ambientIntensityFactor));
+  ] = useState(
+    String(editorState.document.world.timeOfDay.dusk.ambientIntensityFactor)
+  );
   const [
     worldDuskLightIntensityFactorDraft,
     setWorldDuskLightIntensityFactorDraft
-  ] = useState(String(editorState.document.world.timeOfDay.dusk.lightIntensityFactor));
+  ] = useState(
+    String(editorState.document.world.timeOfDay.dusk.lightIntensityFactor)
+  );
   const [
     worldNightAmbientIntensityFactorDraft,
     setWorldNightAmbientIntensityFactorDraft
-  ] = useState(String(editorState.document.world.timeOfDay.night.ambientIntensityFactor));
+  ] = useState(
+    String(editorState.document.world.timeOfDay.night.ambientIntensityFactor)
+  );
   const [
     worldNightLightIntensityFactorDraft,
     setWorldNightLightIntensityFactorDraft
-  ] = useState(String(editorState.document.world.timeOfDay.night.lightIntensityFactor));
+  ] = useState(
+    String(editorState.document.world.timeOfDay.night.lightIntensityFactor)
+  );
   const [
     worldNightBackgroundEnvironmentIntensityDraft,
     setWorldNightBackgroundEnvironmentIntensityDraft
   ] = useState(
     editorState.document.world.timeOfDay.night.background.mode === "image"
-      ? String(editorState.document.world.timeOfDay.night.background.environmentIntensity)
+      ? String(
+          editorState.document.world.timeOfDay.night.background
+            .environmentIntensity
+        )
       : "0.5"
   );
   const [
@@ -2285,7 +2325,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [viewportQuadResizeMode, setViewportQuadResizeMode] =
     useState<ViewportQuadResizeMode | null>(null);
   const documentValidation = validateSceneDocument(editorState.document);
-  const projectValidation = validateProjectDocument(editorState.projectDocument);
+  const projectValidation = validateProjectDocument(
+    editorState.projectDocument
+  );
   const activeSceneProjectDiagnostics = projectValidation.diagnostics.filter(
     (diagnostic) =>
       diagnostic.path?.startsWith(`scenes.${editorState.activeSceneId}.`) &&
@@ -2568,8 +2610,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
       setSceneExitEnabledDraft(true);
       setSceneExitTargetSceneIdDraft(sceneTargetOptions[0]?.id ?? "");
       setSceneExitTargetEntryIdDraft(
-        (sceneEntryOptionsBySceneId[sceneTargetOptions[0]?.id ?? ""]?.[0]
-          ?.entity.id ?? "")
+        sceneEntryOptionsBySceneId[sceneTargetOptions[0]?.id ?? ""]?.[0]?.entity
+          .id ?? ""
       );
       return;
     }
@@ -2622,7 +2664,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
         setNpcActorIdDraft(selectedEntity.actorId);
         setNpcPresenceModeDraft(selectedEntity.presence.mode);
         if (selectedEntity.presence.mode === "timeWindow") {
-          setNpcPresenceStartHourDraft(String(selectedEntity.presence.startHour));
+          setNpcPresenceStartHourDraft(
+            String(selectedEntity.presence.startHour)
+          );
           setNpcPresenceEndHourDraft(String(selectedEntity.presence.endHour));
         } else {
           setNpcPresenceStartHourDraft(
@@ -2633,12 +2677,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
         setNpcYawDraft(String(selectedEntity.yawDegrees));
         setNpcColliderModeDraft(selectedEntity.collider.mode);
         setNpcEyeHeightDraft(String(selectedEntity.collider.eyeHeight));
-        setNpcCapsuleRadiusDraft(
-          String(selectedEntity.collider.capsuleRadius)
-        );
-        setNpcCapsuleHeightDraft(
-          String(selectedEntity.collider.capsuleHeight)
-        );
+        setNpcCapsuleRadiusDraft(String(selectedEntity.collider.capsuleRadius));
+        setNpcCapsuleHeightDraft(String(selectedEntity.collider.capsuleHeight));
         setNpcBoxSizeDraft(createVec3Draft(selectedEntity.collider.boxSize));
         setNpcModelAssetIdDraft(selectedEntity.modelAssetId ?? "");
         break;
@@ -3565,7 +3605,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
     label: string,
     successMessage: string
   ) => {
-    if (areProjectTimeSettingsEqual(editorState.projectDocument.time, nextTime)) {
+    if (
+      areProjectTimeSettingsEqual(editorState.projectDocument.time, nextTime)
+    ) {
       return;
     }
 
@@ -3588,7 +3630,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
     mutate: (time: ProjectTimeSettings) => void
   ) => {
     try {
-      const nextTime = cloneProjectTimeSettings(editorState.projectDocument.time);
+      const nextTime = cloneProjectTimeSettings(
+        editorState.projectDocument.time
+      );
       mutate(nextTime);
       assertProjectTimeSettingsAreOrdered(nextTime);
       applyProjectTimeSettings(nextTime, label, successMessage);
@@ -3616,7 +3660,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
       `Project time will start at ${formatTimeOfDayHours(Number(projectTimeStartTimeOfDayDraft))}.`,
       (time) => {
         time.startTimeOfDayHours = normalizeTimeOfDayHours(
-          readFiniteNumberDraft(projectTimeStartTimeOfDayDraft, "Project start time")
+          readFiniteNumberDraft(
+            projectTimeStartTimeOfDayDraft,
+            "Project start time"
+          )
         );
       }
     );
@@ -3641,7 +3688,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
       `Project sunrise will occur at ${formatTimeOfDayHours(Number(projectTimeSunriseTimeOfDayDraft))}.`,
       (time) => {
         time.sunriseTimeOfDayHours = normalizeTimeOfDayHours(
-          readFiniteNumberDraft(projectTimeSunriseTimeOfDayDraft, "Project sunrise")
+          readFiniteNumberDraft(
+            projectTimeSunriseTimeOfDayDraft,
+            "Project sunrise"
+          )
         );
       }
     );
@@ -3653,7 +3703,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
       `Project sunset will occur at ${formatTimeOfDayHours(Number(projectTimeSunsetTimeOfDayDraft))}.`,
       (time) => {
         time.sunsetTimeOfDayHours = normalizeTimeOfDayHours(
-          readFiniteNumberDraft(projectTimeSunsetTimeOfDayDraft, "Project sunset")
+          readFiniteNumberDraft(
+            projectTimeSunsetTimeOfDayDraft,
+            "Project sunset"
+          )
         );
       }
     );
@@ -3761,7 +3814,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
     mode: WorldBackgroundMode,
     imageAssetId?: string
   ) => {
-    const currentBackground = editorState.document.world.timeOfDay.night.background;
+    const currentBackground =
+      editorState.document.world.timeOfDay.night.background;
 
     if (mode === "image") {
       const currentBackgroundAssetId =
@@ -3812,7 +3866,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
   };
 
   const applyNightBackgroundColor = (colorHex: string) => {
-    if (editorState.document.world.timeOfDay.night.background.mode !== "solid") {
+    if (
+      editorState.document.world.timeOfDay.night.background.mode !== "solid"
+    ) {
       return;
     }
 
@@ -3866,7 +3922,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
   };
 
   const applyNightBackgroundEnvironmentIntensity = () => {
-    if (editorState.document.world.timeOfDay.night.background.mode !== "image") {
+    if (
+      editorState.document.world.timeOfDay.night.background.mode !== "image"
+    ) {
       return;
     }
 
@@ -4894,7 +4952,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
 
     const sourceScene = editorState.projectDocument.scenes[runtimeSceneId];
-    const targetScene = editorState.projectDocument.scenes[request.targetSceneId];
+    const targetScene =
+      editorState.projectDocument.scenes[request.targetSceneId];
 
     if (sourceScene === undefined) {
       setRuntimeMessage(
@@ -4927,9 +4986,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
 
     try {
-      const nextRuntimeScene = buildRuntimeSceneForProjectScene(targetScene.id, {
-        sceneEntryId: targetEntry.id
-      });
+      const nextRuntimeScene = buildRuntimeSceneForProjectScene(
+        targetScene.id,
+        {
+          sceneEntryId: targetEntry.id
+        }
+      );
 
       applyRuntimeSceneSession(targetScene.id, nextRuntimeScene);
       setRuntimeMessage(null);
@@ -5068,7 +5130,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
           completeCreation("Placed Scene Entry.");
           return true;
         case "npc": {
-          const placedModelAssetId = creationPreview.target.modelAssetId ?? null;
+          const placedModelAssetId =
+            creationPreview.target.modelAssetId ?? null;
 
           store.executeCommand(
             createUpsertEntityCommand({
@@ -5655,7 +5718,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
         yawDegrees: readYawDegreesDraft(sceneEntryYawDraft)
       });
 
-      commitEntityChange(selectedSceneEntry, nextEntity, "Updated Scene Entry.");
+      commitEntityChange(
+        selectedSceneEntry,
+        nextEntity,
+        "Updated Scene Entry."
+      );
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
     }
@@ -5697,9 +5764,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
         presence.mode === "timeWindow" &&
         presence.startHour === presence.endHour
       ) {
-        throw new Error(
-          "NPC presence window start and end hours must differ."
-        );
+        throw new Error("NPC presence window start and end hours must differ.");
       }
 
       const nextEntity = createNpcEntity({
@@ -5720,7 +5785,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
               : trimmedModelAssetId,
         collider: {
           mode: colliderMode,
-          eyeHeight: readPositiveNumberDraft(npcEyeHeightDraft, "NPC eye height"),
+          eyeHeight: readPositiveNumberDraft(
+            npcEyeHeightDraft,
+            "NPC eye height"
+          ),
           capsuleRadius: readPositiveNumberDraft(
             npcCapsuleRadiusDraft,
             "NPC capsule radius"
@@ -6326,10 +6394,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
-  const handleSetEntityVisible = (
-    entity: EntityInstance,
-    visible: boolean
-  ) => {
+  const handleSetEntityVisible = (entity: EntityInstance, visible: boolean) => {
     try {
       store.executeCommand(
         createSetEntityAuthoredStateCommand({
@@ -6347,10 +6412,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
-  const handleSetEntityEnabled = (
-    entity: EntityInstance,
-    enabled: boolean
-  ) => {
+  const handleSetEntityEnabled = (entity: EntityInstance, enabled: boolean) => {
     try {
       store.executeCommand(
         createSetEntityAuthoredStateCommand({
@@ -6451,7 +6513,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
     try {
       store.executeCommand(createDeleteProjectAssetCommand(asset.id));
-      setStatusMessage(`Deleted ${asset.sourceName} and cleaned up project references.`);
+      setStatusMessage(
+        `Deleted ${asset.sourceName} and cleaned up project references.`
+      );
       return true;
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
@@ -7356,7 +7420,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       <input
                         className="text-input"
                         type="text"
-                        value={formatControlTargetRef(link.action.effect.target)}
+                        value={formatControlTargetRef(
+                          link.action.effect.target
+                        )}
                         readOnly
                       />
                     </label>
@@ -7991,9 +8057,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const applyAdvancedRenderingWhiteboxBevelEnabled = (enabled: boolean) => {
     applyAdvancedRenderingSettings(
       "Set whitebox bevel",
-      enabled
-        ? "Whitebox bevel enabled."
-        : "Whitebox bevel disabled.",
+      enabled ? "Whitebox bevel enabled." : "Whitebox bevel disabled.",
       (advancedRendering) => {
         advancedRendering.whiteboxBevel.enabled = enabled;
       }
@@ -8006,10 +8070,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
         "Set whitebox bevel edge width",
         "Updated the whitebox bevel edge width.",
         (advancedRendering) => {
-          advancedRendering.whiteboxBevel.edgeWidth = readNonNegativeNumberDraft(
-            advancedRenderingWhiteboxBevelEdgeWidthDraft,
-            "Whitebox bevel edge width"
-          );
+          advancedRendering.whiteboxBevel.edgeWidth =
+            readNonNegativeNumberDraft(
+              advancedRenderingWhiteboxBevelEdgeWidthDraft,
+              "Whitebox bevel edge width"
+            );
         }
       );
     } catch (error) {
@@ -9004,27 +9069,30 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       ? "Player Start"
                       : runtimeScene.spawn.source === "sceneEntry"
                         ? "Scene Entry"
-                      : "Fallback"}
+                        : "Fallback"}
                   </div>
                 </div>
                 <div className="stat-card">
                   <div className="label">Transitions</div>
-                  <div
-                    className="value"
-                    data-testid="runner-transition-count"
-                  >
+                  <div className="value" data-testid="runner-transition-count">
                     {runtimeGlobalState.transitionCount}
                   </div>
                 </div>
                 <div className="stat-card">
                   <div className="label">Project Time</div>
                   <div className="value" data-testid="runner-project-time">
-                    {formatTimeOfDayHours(runtimeGlobalState.clock.timeOfDayHours)}
+                    {formatTimeOfDayHours(
+                      runtimeGlobalState.clock.timeOfDayHours
+                    )}
                   </div>
                   <div className="material-summary">
-                    Day {runtimeGlobalState.clock.dayCount + 1} · {Number.isInteger(runtimeGlobalState.clock.dayLengthMinutes)
+                    Day {runtimeGlobalState.clock.dayCount + 1} ·{" "}
+                    {Number.isInteger(runtimeGlobalState.clock.dayLengthMinutes)
                       ? runtimeGlobalState.clock.dayLengthMinutes.toFixed(0)
-                      : runtimeGlobalState.clock.dayLengthMinutes.toFixed(1)} min/day
+                      : runtimeGlobalState.clock.dayLengthMinutes.toFixed(
+                          1
+                        )}{" "}
+                    min/day
                   </div>
                 </div>
                 <div className="stat-card">
@@ -9142,7 +9210,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     ? "Player Start"
                     : runtimeScene.spawn.source === "sceneEntry"
                       ? "Scene Entry"
-                    : "Fallback"}{" "}
+                      : "Fallback"}{" "}
                   at {formatRunnerFeetPosition(runtimeScene.spawn.position)}
                 </div>
               </div>
@@ -9167,7 +9235,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
               )}
               {runtimeGlobalState.lastSceneTransition === null ? null : (
                 <div className="info-banner">
-                  Last transition: {runtimeGlobalState.lastSceneTransition.fromSceneName} to{" "}
+                  Last transition:{" "}
+                  {runtimeGlobalState.lastSceneTransition.fromSceneName} to{" "}
                   {runtimeGlobalState.lastSceneTransition.toSceneName}
                 </div>
               )}
@@ -9197,7 +9266,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
               ? "Authored Player Start"
               : runtimeScene.spawn.source === "sceneEntry"
                 ? "Scene Entry arrival"
-              : "Fallback runtime spawn"}
+                : "Fallback runtime spawn"}
           </div>
         </footer>
       </div>
@@ -9345,9 +9414,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   {brushList.map((brush, brushIndex) => {
                     const label = getBrushLabel(brush, brushIndex);
                     const isSelected = selectedBrush?.id === brush.id;
-                    const authoredStateSummary = formatAuthoredObjectStateSummary(
-                      brush
-                    );
+                    const authoredStateSummary =
+                      formatAuthoredObjectStateSummary(brush);
 
                     return (
                       <div
@@ -9549,9 +9617,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     const isSelected =
                       editorState.selection.kind === "modelInstances" &&
                       editorState.selection.ids.includes(modelInstance.id);
-                    const authoredStateSummary = formatAuthoredObjectStateSummary(
-                      modelInstance
-                    );
+                    const authoredStateSummary =
+                      formatAuthoredObjectStateSummary(modelInstance);
 
                     return (
                       <div
@@ -9658,9 +9725,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     const isSelected =
                       editorState.selection.kind === "entities" &&
                       editorState.selection.ids.includes(entity.id);
-                    const authoredStateSummary = formatAuthoredObjectStateSummary(
-                      entity
-                    );
+                    const authoredStateSummary =
+                      formatAuthoredObjectStateSummary(entity);
 
                     return (
                       <div
@@ -9969,12 +10035,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 <div className="stat-card">
                   <div className="label">Clock</div>
                   <div className="value">
-                    Day {editorState.projectDocument.time.startDayNumber} · {formatTimeOfDayHours(
+                    Day {editorState.projectDocument.time.startDayNumber} ·{" "}
+                    {formatTimeOfDayHours(
                       editorState.projectDocument.time.startTimeOfDayHours
                     )}
                   </div>
                   <div className="material-summary">
-                    Runner sessions begin on the authored start day and time, then keep advancing across scene transitions.
+                    Runner sessions begin on the authored start day and time,
+                    then keep advancing across scene transitions.
                   </div>
                 </div>
 
@@ -10239,12 +10307,15 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     </label>
                   </div>
                   <div className="material-summary">
-                    Sunrise must stay earlier than sunset. Dawn and dusk durations define how broadly the twilight transition blends around each boundary.
+                    Sunrise must stay earlier than sunset. Dawn and dusk
+                    durations define how broadly the twilight transition blends
+                    around each boundary.
                   </div>
                 </div>
 
                 <div className="material-summary">
-                  Environment authoring lives in World. Project Time now only defines the shared clock and daylight window.
+                  Environment authoring lives in World. Project Time now only
+                  defines the shared clock and daylight window.
                 </div>
               </Panel>
 
@@ -10255,7 +10326,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     className="value"
                     data-testid="world-background-mode-value"
                   >
-                    {formatWorldBackgroundLabel(editorState.document.world.background)}
+                    {formatWorldBackgroundLabel(
+                      editorState.document.world.background
+                    )}
                   </div>
                   <div className="material-summary">
                     {editorState.document.world.projectTimeLightingEnabled
@@ -10269,7 +10342,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     <span className="label">Follow Project Time</span>
                     <input
                       type="checkbox"
-                      checked={editorState.document.world.projectTimeLightingEnabled}
+                      checked={
+                        editorState.document.world.projectTimeLightingEnabled
+                      }
                       onChange={(event) =>
                         applySceneProjectTimeLightingEnabled(
                           event.currentTarget.checked
@@ -10278,412 +10353,434 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     />
                   </label>
                   <div className="material-summary">
-                    Disable this when a scene should keep its authored world sky and lighting instead of the global sunrise, sunset, dawn, dusk, and night overrides.
+                    Disable this when a scene should keep its authored world sky
+                    and lighting instead of the global sunrise, sunset, dawn,
+                    dusk, and night overrides.
                   </div>
                 </div>
 
                 <Panel title="Day Environment">
                   <div className="stat-card">
-                  <div
-                    className="world-background-preview"
-                    data-testid="world-background-preview"
-                    style={createWorldBackgroundStyle(
-                      editorState.document.world.background,
-                      editorState.document.world.background.mode === "image"
-                        ? (loadedImageAssets[
-                            editorState.document.world.background.assetId
-                          ]?.sourceUrl ?? null)
-                        : null
-                    )}
-                  />
-                  <div className="material-summary">
-                    {editorState.document.world.background.mode === "solid"
-                      ? editorState.document.world.background.colorHex
-                      : editorState.document.world.background.mode ===
-                          "verticalGradient"
-                        ? `${editorState.document.world.background.topColorHex} -> ${editorState.document.world.background.bottomColorHex}`
-                        : (editorState.document.assets[
-                            editorState.document.world.background.assetId
-                          ]?.sourceName ??
-                          editorState.document.world.background.assetId)}
-                  </div>
-                  {editorState.document.world.background.mode !==
-                  "image" ? null : (
                     <div
-                      className="material-summary"
-                      data-testid="world-background-asset-value"
-                    >
-                      Background Asset:{" "}
-                      {editorState.document.assets[
-                        editorState.document.world.background.assetId
-                      ]?.sourceName ??
-                        editorState.document.world.background.assetId}
+                      className="world-background-preview"
+                      data-testid="world-background-preview"
+                      style={createWorldBackgroundStyle(
+                        editorState.document.world.background,
+                        editorState.document.world.background.mode === "image"
+                          ? (loadedImageAssets[
+                              editorState.document.world.background.assetId
+                            ]?.sourceUrl ?? null)
+                          : null
+                      )}
+                    />
+                    <div className="material-summary">
+                      {editorState.document.world.background.mode === "solid"
+                        ? editorState.document.world.background.colorHex
+                        : editorState.document.world.background.mode ===
+                            "verticalGradient"
+                          ? `${editorState.document.world.background.topColorHex} -> ${editorState.document.world.background.bottomColorHex}`
+                          : (editorState.document.assets[
+                              editorState.document.world.background.assetId
+                            ]?.sourceName ??
+                            editorState.document.world.background.assetId)}
                     </div>
-                  )}
-                  </div>
-
-                <div className="form-section">
-                  <div className="label">Background Mode</div>
-                  <div className="inline-actions">
-                    <button
-                      className={`toolbar__button ${editorState.document.world.background.mode === "solid" ? "toolbar__button--active" : ""}`}
-                      type="button"
-                      data-testid="world-background-mode-solid"
-                      onClick={() => applyWorldBackgroundMode("solid")}
-                    >
-                      Solid
-                    </button>
-                    <button
-                      className={`toolbar__button ${
-                        editorState.document.world.background.mode ===
-                        "verticalGradient"
-                          ? "toolbar__button--active"
-                          : ""
-                      }`}
-                      type="button"
-                      data-testid="world-background-mode-gradient"
-                      onClick={() =>
-                        applyWorldBackgroundMode("verticalGradient")
-                      }
-                    >
-                      Gradient
-                    </button>
-                    <button
-                      className={`toolbar__button ${editorState.document.world.background.mode === "image" ? "toolbar__button--active" : ""}`}
-                      type="button"
-                      data-testid="world-background-mode-image"
-                      onClick={() => applyWorldBackgroundMode("image")}
-                    >
-                      Image
-                    </button>
-                  </div>
-                </div>
-
-                {editorState.document.world.background.mode === "image" && (
-                  <div className="form-section">
-                    <div className="label">Image Background</div>
-                    <label className="form-field">
-                      <span className="label">Image</span>
-                      <select
-                        data-testid="world-background-asset-select"
-                        className="text-input"
-                        value={editorState.document.world.background.assetId}
-                        onChange={(event) =>
-                          applyWorldBackgroundMode(
-                            "image",
-                            event.currentTarget.value
-                          )
-                        }
+                    {editorState.document.world.background.mode !==
+                    "image" ? null : (
+                      <div
+                        className="material-summary"
+                        data-testid="world-background-asset-value"
                       >
-                        {imageAssetList.map((asset) => (
-                          <option key={asset.id} value={asset.id}>
-                            {asset.sourceName}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <label className="form-field">
-                      <span className="label">Intensity</span>
-                      <input
-                        data-testid="world-background-environment-intensity"
-                        className="text-input"
-                        type="number"
-                        min="0"
-                        step="0.1"
-                        value={backgroundEnvironmentIntensityDraft}
-                        onChange={(event) =>
-                          setBackgroundEnvironmentIntensityDraft(
-                            event.currentTarget.value
-                          )
-                        }
-                        onBlur={applyBackgroundEnvironmentIntensity}
-                        onKeyDown={(event) =>
-                          handleDraftVectorKeyDown(
-                            event,
-                            applyBackgroundEnvironmentIntensity
-                          )
-                        }
-                        onKeyUp={(event) =>
-                          handleNumberInputKeyUp(
-                            event,
-                            applyBackgroundEnvironmentIntensity
-                          )
-                        }
-                        onPointerUp={(event) =>
-                          handleNumberInputPointerUp(
-                            event,
-                            applyBackgroundEnvironmentIntensity
-                          )
-                        }
-                      />
-                    </label>
-                  </div>
-                )}
-
-                {editorState.document.world.background.mode !== "image" && (
-                  <div className="form-section">
-                    <div className="label">Background Colors</div>
-                    {editorState.document.world.background.mode === "solid" ? (
-                      <label className="form-field">
-                        <span className="label">Color</span>
-                        <input
-                          data-testid="world-background-solid-color"
-                          className="color-input"
-                          type="color"
-                          value={editorState.document.world.background.colorHex}
-                          onChange={(event) =>
-                            applyWorldBackgroundColor(event.currentTarget.value)
-                          }
-                        />
-                      </label>
-                    ) : (
-                      <div className="vector-inputs vector-inputs--two">
-                        <label className="form-field">
-                          <span className="label">Top</span>
-                          <input
-                            data-testid="world-background-top-color"
-                            className="color-input"
-                            type="color"
-                            value={
-                              editorState.document.world.background.topColorHex
-                            }
-                            onChange={(event) =>
-                              applyWorldGradientColor(
-                                "top",
-                                event.currentTarget.value
-                              )
-                            }
-                          />
-                        </label>
-                        <label className="form-field">
-                          <span className="label">Bottom</span>
-                          <input
-                            data-testid="world-background-bottom-color"
-                            className="color-input"
-                            type="color"
-                            value={
-                              editorState.document.world.background
-                                .bottomColorHex
-                            }
-                            onChange={(event) =>
-                              applyWorldGradientColor(
-                                "bottom",
-                                event.currentTarget.value
-                              )
-                            }
-                          />
-                        </label>
+                        Background Asset:{" "}
+                        {editorState.document.assets[
+                          editorState.document.world.background.assetId
+                        ]?.sourceName ??
+                          editorState.document.world.background.assetId}
                       </div>
                     )}
                   </div>
-                )}
 
-                <div className="form-section">
-                  <div className="label">Ambient Light</div>
-                  <div className="vector-inputs vector-inputs--two">
-                    <label className="form-field">
-                      <span className="label">Color</span>
-                      <input
-                        data-testid="world-ambient-color"
-                        className="color-input"
-                        type="color"
-                        value={editorState.document.world.ambientLight.colorHex}
-                        onChange={(event) =>
-                          applyAmbientLightColor(event.currentTarget.value)
+                  <div className="form-section">
+                    <div className="label">Background Mode</div>
+                    <div className="inline-actions">
+                      <button
+                        className={`toolbar__button ${editorState.document.world.background.mode === "solid" ? "toolbar__button--active" : ""}`}
+                        type="button"
+                        data-testid="world-background-mode-solid"
+                        onClick={() => applyWorldBackgroundMode("solid")}
+                      >
+                        Solid
+                      </button>
+                      <button
+                        className={`toolbar__button ${
+                          editorState.document.world.background.mode ===
+                          "verticalGradient"
+                            ? "toolbar__button--active"
+                            : ""
+                        }`}
+                        type="button"
+                        data-testid="world-background-mode-gradient"
+                        onClick={() =>
+                          applyWorldBackgroundMode("verticalGradient")
                         }
-                      />
-                    </label>
-                    <label className="form-field">
-                      <span className="label">Intensity</span>
-                      <input
-                        data-testid="world-ambient-intensity"
-                        className="text-input"
-                        type="number"
-                        min="0"
-                        step="0.1"
-                        value={ambientLightIntensityDraft}
-                        onChange={(event) =>
-                          setAmbientLightIntensityDraft(
-                            event.currentTarget.value
-                          )
-                        }
-                        onBlur={applyAmbientLightIntensity}
-                        onKeyDown={(event) =>
-                          handleDraftVectorKeyDown(
-                            event,
-                            applyAmbientLightIntensity
-                          )
-                        }
-                        onKeyUp={(event) =>
-                          handleNumberInputKeyUp(
-                            event,
-                            applyAmbientLightIntensity
-                          )
-                        }
-                        onPointerUp={(event) =>
-                          handleNumberInputPointerUp(
-                            event,
-                            applyAmbientLightIntensity
-                          )
-                        }
-                      />
-                    </label>
-                  </div>
-                </div>
-
-                <div className="form-section">
-                  <div className="label">Sun Light</div>
-                  <div className="vector-inputs vector-inputs--two">
-                    <label className="form-field">
-                      <span className="label">Color</span>
-                      <input
-                        data-testid="world-sun-color"
-                        className="color-input"
-                        type="color"
-                        value={editorState.document.world.sunLight.colorHex}
-                        onChange={(event) =>
-                          applySunLightColor(event.currentTarget.value)
-                        }
-                      />
-                    </label>
-                    <label className="form-field">
-                      <span className="label">Intensity</span>
-                      <input
-                        data-testid="world-sun-intensity"
-                        className="text-input"
-                        type="number"
-                        min="0"
-                        step="0.1"
-                        value={sunLightIntensityDraft}
-                        onChange={(event) =>
-                          setSunLightIntensityDraft(event.currentTarget.value)
-                        }
-                        onBlur={applySunLightIntensity}
-                        onKeyDown={(event) =>
-                          handleDraftVectorKeyDown(
-                            event,
-                            applySunLightIntensity
-                          )
-                        }
-                        onKeyUp={(event) =>
-                          handleNumberInputKeyUp(event, applySunLightIntensity)
-                        }
-                        onPointerUp={(event) =>
-                          handleNumberInputPointerUp(
-                            event,
-                            applySunLightIntensity
-                          )
-                        }
-                      />
-                    </label>
+                      >
+                        Gradient
+                      </button>
+                      <button
+                        className={`toolbar__button ${editorState.document.world.background.mode === "image" ? "toolbar__button--active" : ""}`}
+                        type="button"
+                        data-testid="world-background-mode-image"
+                        onClick={() => applyWorldBackgroundMode("image")}
+                      >
+                        Image
+                      </button>
+                    </div>
                   </div>
 
-                  <div className="vector-inputs">
-                    <label className="form-field">
-                      <span className="label">Dir X</span>
-                      <input
-                        data-testid="world-sun-direction-x"
-                        className="text-input"
-                        type="number"
-                        step="0.1"
-                        value={sunDirectionDraft.x}
-                        onChange={(event) => {
-                          const nextValue = event.currentTarget.value;
-                          setSunDirectionDraft((draft) => ({
-                            ...draft,
-                            x: nextValue
-                          }));
-                        }}
-                        onBlur={applySunLightDirection}
-                        onKeyDown={(event) =>
-                          handleDraftVectorKeyDown(
-                            event,
-                            applySunLightDirection
-                          )
-                        }
-                        onKeyUp={(event) =>
-                          handleNumberInputKeyUp(event, applySunLightDirection)
-                        }
-                        onPointerUp={(event) =>
-                          handleNumberInputPointerUp(
-                            event,
-                            applySunLightDirection
-                          )
-                        }
-                      />
-                    </label>
-                    <label className="form-field">
-                      <span className="label">Dir Y</span>
-                      <input
-                        data-testid="world-sun-direction-y"
-                        className="text-input"
-                        type="number"
-                        step="0.1"
-                        value={sunDirectionDraft.y}
-                        onChange={(event) => {
-                          const nextValue = event.currentTarget.value;
-                          setSunDirectionDraft((draft) => ({
-                            ...draft,
-                            y: nextValue
-                          }));
-                        }}
-                        onBlur={applySunLightDirection}
-                        onKeyDown={(event) =>
-                          handleDraftVectorKeyDown(
-                            event,
-                            applySunLightDirection
-                          )
-                        }
-                        onKeyUp={(event) =>
-                          handleNumberInputKeyUp(event, applySunLightDirection)
-                        }
-                        onPointerUp={(event) =>
-                          handleNumberInputPointerUp(
-                            event,
-                            applySunLightDirection
-                          )
-                        }
-                      />
-                    </label>
-                    <label className="form-field">
-                      <span className="label">Dir Z</span>
-                      <input
-                        data-testid="world-sun-direction-z"
-                        className="text-input"
-                        type="number"
-                        step="0.1"
-                        value={sunDirectionDraft.z}
-                        onChange={(event) => {
-                          const nextValue = event.currentTarget.value;
-                          setSunDirectionDraft((draft) => ({
-                            ...draft,
-                            z: nextValue
-                          }));
-                        }}
-                        onBlur={applySunLightDirection}
-                        onKeyDown={(event) =>
-                          handleDraftVectorKeyDown(
-                            event,
-                            applySunLightDirection
-                          )
-                        }
-                        onKeyUp={(event) =>
-                          handleNumberInputKeyUp(event, applySunLightDirection)
-                        }
-                        onPointerUp={(event) =>
-                          handleNumberInputPointerUp(
-                            event,
-                            applySunLightDirection
-                          )
-                        }
-                      />
-                    </label>
-                  </div>
-                </div>
+                  {editorState.document.world.background.mode === "image" && (
+                    <div className="form-section">
+                      <div className="label">Image Background</div>
+                      <label className="form-field">
+                        <span className="label">Image</span>
+                        <select
+                          data-testid="world-background-asset-select"
+                          className="text-input"
+                          value={editorState.document.world.background.assetId}
+                          onChange={(event) =>
+                            applyWorldBackgroundMode(
+                              "image",
+                              event.currentTarget.value
+                            )
+                          }
+                        >
+                          {imageAssetList.map((asset) => (
+                            <option key={asset.id} value={asset.id}>
+                              {asset.sourceName}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label className="form-field">
+                        <span className="label">Intensity</span>
+                        <input
+                          data-testid="world-background-environment-intensity"
+                          className="text-input"
+                          type="number"
+                          min="0"
+                          step="0.1"
+                          value={backgroundEnvironmentIntensityDraft}
+                          onChange={(event) =>
+                            setBackgroundEnvironmentIntensityDraft(
+                              event.currentTarget.value
+                            )
+                          }
+                          onBlur={applyBackgroundEnvironmentIntensity}
+                          onKeyDown={(event) =>
+                            handleDraftVectorKeyDown(
+                              event,
+                              applyBackgroundEnvironmentIntensity
+                            )
+                          }
+                          onKeyUp={(event) =>
+                            handleNumberInputKeyUp(
+                              event,
+                              applyBackgroundEnvironmentIntensity
+                            )
+                          }
+                          onPointerUp={(event) =>
+                            handleNumberInputPointerUp(
+                              event,
+                              applyBackgroundEnvironmentIntensity
+                            )
+                          }
+                        />
+                      </label>
+                    </div>
+                  )}
 
+                  {editorState.document.world.background.mode !== "image" && (
+                    <div className="form-section">
+                      <div className="label">Background Colors</div>
+                      {editorState.document.world.background.mode ===
+                      "solid" ? (
+                        <label className="form-field">
+                          <span className="label">Color</span>
+                          <input
+                            data-testid="world-background-solid-color"
+                            className="color-input"
+                            type="color"
+                            value={
+                              editorState.document.world.background.colorHex
+                            }
+                            onChange={(event) =>
+                              applyWorldBackgroundColor(
+                                event.currentTarget.value
+                              )
+                            }
+                          />
+                        </label>
+                      ) : (
+                        <div className="vector-inputs vector-inputs--two">
+                          <label className="form-field">
+                            <span className="label">Top</span>
+                            <input
+                              data-testid="world-background-top-color"
+                              className="color-input"
+                              type="color"
+                              value={
+                                editorState.document.world.background
+                                  .topColorHex
+                              }
+                              onChange={(event) =>
+                                applyWorldGradientColor(
+                                  "top",
+                                  event.currentTarget.value
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Bottom</span>
+                            <input
+                              data-testid="world-background-bottom-color"
+                              className="color-input"
+                              type="color"
+                              value={
+                                editorState.document.world.background
+                                  .bottomColorHex
+                              }
+                              onChange={(event) =>
+                                applyWorldGradientColor(
+                                  "bottom",
+                                  event.currentTarget.value
+                                )
+                              }
+                            />
+                          </label>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="form-section">
+                    <div className="label">Ambient Light</div>
+                    <div className="vector-inputs vector-inputs--two">
+                      <label className="form-field">
+                        <span className="label">Color</span>
+                        <input
+                          data-testid="world-ambient-color"
+                          className="color-input"
+                          type="color"
+                          value={
+                            editorState.document.world.ambientLight.colorHex
+                          }
+                          onChange={(event) =>
+                            applyAmbientLightColor(event.currentTarget.value)
+                          }
+                        />
+                      </label>
+                      <label className="form-field">
+                        <span className="label">Intensity</span>
+                        <input
+                          data-testid="world-ambient-intensity"
+                          className="text-input"
+                          type="number"
+                          min="0"
+                          step="0.1"
+                          value={ambientLightIntensityDraft}
+                          onChange={(event) =>
+                            setAmbientLightIntensityDraft(
+                              event.currentTarget.value
+                            )
+                          }
+                          onBlur={applyAmbientLightIntensity}
+                          onKeyDown={(event) =>
+                            handleDraftVectorKeyDown(
+                              event,
+                              applyAmbientLightIntensity
+                            )
+                          }
+                          onKeyUp={(event) =>
+                            handleNumberInputKeyUp(
+                              event,
+                              applyAmbientLightIntensity
+                            )
+                          }
+                          onPointerUp={(event) =>
+                            handleNumberInputPointerUp(
+                              event,
+                              applyAmbientLightIntensity
+                            )
+                          }
+                        />
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="form-section">
+                    <div className="label">Sun Light</div>
+                    <div className="vector-inputs vector-inputs--two">
+                      <label className="form-field">
+                        <span className="label">Color</span>
+                        <input
+                          data-testid="world-sun-color"
+                          className="color-input"
+                          type="color"
+                          value={editorState.document.world.sunLight.colorHex}
+                          onChange={(event) =>
+                            applySunLightColor(event.currentTarget.value)
+                          }
+                        />
+                      </label>
+                      <label className="form-field">
+                        <span className="label">Intensity</span>
+                        <input
+                          data-testid="world-sun-intensity"
+                          className="text-input"
+                          type="number"
+                          min="0"
+                          step="0.1"
+                          value={sunLightIntensityDraft}
+                          onChange={(event) =>
+                            setSunLightIntensityDraft(event.currentTarget.value)
+                          }
+                          onBlur={applySunLightIntensity}
+                          onKeyDown={(event) =>
+                            handleDraftVectorKeyDown(
+                              event,
+                              applySunLightIntensity
+                            )
+                          }
+                          onKeyUp={(event) =>
+                            handleNumberInputKeyUp(
+                              event,
+                              applySunLightIntensity
+                            )
+                          }
+                          onPointerUp={(event) =>
+                            handleNumberInputPointerUp(
+                              event,
+                              applySunLightIntensity
+                            )
+                          }
+                        />
+                      </label>
+                    </div>
+
+                    <div className="vector-inputs">
+                      <label className="form-field">
+                        <span className="label">Dir X</span>
+                        <input
+                          data-testid="world-sun-direction-x"
+                          className="text-input"
+                          type="number"
+                          step="0.1"
+                          value={sunDirectionDraft.x}
+                          onChange={(event) => {
+                            const nextValue = event.currentTarget.value;
+                            setSunDirectionDraft((draft) => ({
+                              ...draft,
+                              x: nextValue
+                            }));
+                          }}
+                          onBlur={applySunLightDirection}
+                          onKeyDown={(event) =>
+                            handleDraftVectorKeyDown(
+                              event,
+                              applySunLightDirection
+                            )
+                          }
+                          onKeyUp={(event) =>
+                            handleNumberInputKeyUp(
+                              event,
+                              applySunLightDirection
+                            )
+                          }
+                          onPointerUp={(event) =>
+                            handleNumberInputPointerUp(
+                              event,
+                              applySunLightDirection
+                            )
+                          }
+                        />
+                      </label>
+                      <label className="form-field">
+                        <span className="label">Dir Y</span>
+                        <input
+                          data-testid="world-sun-direction-y"
+                          className="text-input"
+                          type="number"
+                          step="0.1"
+                          value={sunDirectionDraft.y}
+                          onChange={(event) => {
+                            const nextValue = event.currentTarget.value;
+                            setSunDirectionDraft((draft) => ({
+                              ...draft,
+                              y: nextValue
+                            }));
+                          }}
+                          onBlur={applySunLightDirection}
+                          onKeyDown={(event) =>
+                            handleDraftVectorKeyDown(
+                              event,
+                              applySunLightDirection
+                            )
+                          }
+                          onKeyUp={(event) =>
+                            handleNumberInputKeyUp(
+                              event,
+                              applySunLightDirection
+                            )
+                          }
+                          onPointerUp={(event) =>
+                            handleNumberInputPointerUp(
+                              event,
+                              applySunLightDirection
+                            )
+                          }
+                        />
+                      </label>
+                      <label className="form-field">
+                        <span className="label">Dir Z</span>
+                        <input
+                          data-testid="world-sun-direction-z"
+                          className="text-input"
+                          type="number"
+                          step="0.1"
+                          value={sunDirectionDraft.z}
+                          onChange={(event) => {
+                            const nextValue = event.currentTarget.value;
+                            setSunDirectionDraft((draft) => ({
+                              ...draft,
+                              z: nextValue
+                            }));
+                          }}
+                          onBlur={applySunLightDirection}
+                          onKeyDown={(event) =>
+                            handleDraftVectorKeyDown(
+                              event,
+                              applySunLightDirection
+                            )
+                          }
+                          onKeyUp={(event) =>
+                            handleNumberInputKeyUp(
+                              event,
+                              applySunLightDirection
+                            )
+                          }
+                          onPointerUp={(event) =>
+                            handleNumberInputPointerUp(
+                              event,
+                              applySunLightDirection
+                            )
+                          }
+                        />
+                      </label>
+                    </div>
+                  </div>
                 </Panel>
 
-                {!editorState.document.world.projectTimeLightingEnabled ? null : (
+                {!editorState.document.world
+                  .projectTimeLightingEnabled ? null : (
                   <>
                     <Panel title="Dawn Override" defaultExpanded={false}>
                       <div className="material-summary">
@@ -10695,7 +10792,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           <input
                             className="color-input"
                             type="color"
-                            value={editorState.document.world.timeOfDay.dawn.skyTopColorHex}
+                            value={
+                              editorState.document.world.timeOfDay.dawn
+                                .skyTopColorHex
+                            }
                             onChange={(event) =>
                               applyWorldTimePhaseColor(
                                 "dawn",
@@ -10712,7 +10812,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           <input
                             className="color-input"
                             type="color"
-                            value={editorState.document.world.timeOfDay.dawn.skyBottomColorHex}
+                            value={
+                              editorState.document.world.timeOfDay.dawn
+                                .skyBottomColorHex
+                            }
                             onChange={(event) =>
                               applyWorldTimePhaseColor(
                                 "dawn",
@@ -10729,7 +10832,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           <input
                             className="color-input"
                             type="color"
-                            value={editorState.document.world.timeOfDay.dawn.ambientColorHex}
+                            value={
+                              editorState.document.world.timeOfDay.dawn
+                                .ambientColorHex
+                            }
                             onChange={(event) =>
                               applyWorldTimePhaseColor(
                                 "dawn",
@@ -10771,7 +10877,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           <input
                             className="color-input"
                             type="color"
-                            value={editorState.document.world.timeOfDay.dawn.lightColorHex}
+                            value={
+                              editorState.document.world.timeOfDay.dawn
+                                .lightColorHex
+                            }
                             onChange={(event) =>
                               applyWorldTimePhaseColor(
                                 "dawn",
@@ -10821,7 +10930,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           <input
                             className="color-input"
                             type="color"
-                            value={editorState.document.world.timeOfDay.dusk.skyTopColorHex}
+                            value={
+                              editorState.document.world.timeOfDay.dusk
+                                .skyTopColorHex
+                            }
                             onChange={(event) =>
                               applyWorldTimePhaseColor(
                                 "dusk",
@@ -10838,7 +10950,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           <input
                             className="color-input"
                             type="color"
-                            value={editorState.document.world.timeOfDay.dusk.skyBottomColorHex}
+                            value={
+                              editorState.document.world.timeOfDay.dusk
+                                .skyBottomColorHex
+                            }
                             onChange={(event) =>
                               applyWorldTimePhaseColor(
                                 "dusk",
@@ -10855,7 +10970,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           <input
                             className="color-input"
                             type="color"
-                            value={editorState.document.world.timeOfDay.dusk.ambientColorHex}
+                            value={
+                              editorState.document.world.timeOfDay.dusk
+                                .ambientColorHex
+                            }
                             onChange={(event) =>
                               applyWorldTimePhaseColor(
                                 "dusk",
@@ -10897,7 +11015,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           <input
                             className="color-input"
                             type="color"
-                            value={editorState.document.world.timeOfDay.dusk.lightColorHex}
+                            value={
+                              editorState.document.world.timeOfDay.dusk
+                                .lightColorHex
+                            }
                             onChange={(event) =>
                               applyWorldTimePhaseColor(
                                 "dusk",
@@ -10942,16 +11063,18 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         <div className="label">Background</div>
                         <div className="value">
                           {formatWorldBackgroundLabel(
-                            editorState.document.world.timeOfDay.night.background
+                            editorState.document.world.timeOfDay.night
+                              .background
                           )}
                         </div>
                         <div
                           className="world-background-preview"
                           data-testid="world-night-background-preview"
                           style={createWorldBackgroundStyle(
-                            editorState.document.world.timeOfDay.night.background,
-                            editorState.document.world.timeOfDay.night.background
-                              .mode === "image"
+                            editorState.document.world.timeOfDay.night
+                              .background,
+                            editorState.document.world.timeOfDay.night
+                              .background.mode === "image"
                               ? (loadedImageAssets[
                                   editorState.document.world.timeOfDay.night
                                     .background.assetId
@@ -10962,10 +11085,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         <div className="material-summary">
                           {editorState.document.world.timeOfDay.night.background
                             .mode === "solid"
-                            ? editorState.document.world.timeOfDay.night.background
-                                .colorHex
-                            : editorState.document.world.timeOfDay.night.background
-                                  .mode === "verticalGradient"
+                            ? editorState.document.world.timeOfDay.night
+                                .background.colorHex
+                            : editorState.document.world.timeOfDay.night
+                                  .background.mode === "verticalGradient"
                               ? `${editorState.document.world.timeOfDay.night.background.topColorHex} -> ${editorState.document.world.timeOfDay.night.background.bottomColorHex}`
                               : (editorState.document.assets[
                                   editorState.document.world.timeOfDay.night
@@ -11019,7 +11142,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
                             <select
                               data-testid="world-night-background-asset-select"
                               className="text-input"
-                              value={editorState.document.world.timeOfDay.night.background.assetId}
+                              value={
+                                editorState.document.world.timeOfDay.night
+                                  .background.assetId
+                              }
                               onChange={(event) =>
                                 applyNightBackgroundMode(
                                   "image",
@@ -11041,7 +11167,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               type="number"
                               min="0"
                               step="0.1"
-                              value={worldNightBackgroundEnvironmentIntensityDraft}
+                              value={
+                                worldNightBackgroundEnvironmentIntensityDraft
+                              }
                               onChange={(event) =>
                                 setWorldNightBackgroundEnvironmentIntensityDraft(
                                   event.currentTarget.value
@@ -11079,7 +11207,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               <input
                                 className="color-input"
                                 type="color"
-                                value={editorState.document.world.timeOfDay.night.background.colorHex}
+                                value={
+                                  editorState.document.world.timeOfDay.night
+                                    .background.colorHex
+                                }
                                 onChange={(event) =>
                                   applyNightBackgroundColor(
                                     event.currentTarget.value
@@ -11094,7 +11225,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
                                 <input
                                   className="color-input"
                                   type="color"
-                                  value={editorState.document.world.timeOfDay.night.background.topColorHex}
+                                  value={
+                                    editorState.document.world.timeOfDay.night
+                                      .background.topColorHex
+                                  }
                                   onChange={(event) =>
                                     applyNightGradientColor(
                                       "top",
@@ -11108,7 +11242,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
                                 <input
                                   className="color-input"
                                   type="color"
-                                  value={editorState.document.world.timeOfDay.night.background.bottomColorHex}
+                                  value={
+                                    editorState.document.world.timeOfDay.night
+                                      .background.bottomColorHex
+                                  }
                                   onChange={(event) =>
                                     applyNightGradientColor(
                                       "bottom",
@@ -11128,7 +11265,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           <input
                             className="color-input"
                             type="color"
-                            value={editorState.document.world.timeOfDay.night.ambientColorHex}
+                            value={
+                              editorState.document.world.timeOfDay.night
+                                .ambientColorHex
+                            }
                             onChange={(event) =>
                               applyWorldNightEnvironmentColor(
                                 "ambientColorHex",
@@ -11168,7 +11308,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           <input
                             className="color-input"
                             type="color"
-                            value={editorState.document.world.timeOfDay.night.lightColorHex}
+                            value={
+                              editorState.document.world.timeOfDay.night
+                                .lightColorHex
+                            }
                             onChange={(event) =>
                               applyWorldNightEnvironmentColor(
                                 "lightColorHex",
@@ -11327,7 +11470,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                             <span className="label">Enabled</span>
                             <input
                               type="checkbox"
-                              checked={advancedRendering.ambientOcclusion.enabled}
+                              checked={
+                                advancedRendering.ambientOcclusion.enabled
+                              }
                               onChange={(event) =>
                                 applyAdvancedRenderingAmbientOcclusionEnabled(
                                   event.currentTarget.checked
@@ -11606,13 +11751,17 @@ export function App({ store, initialStatusMessage }: AppProps) {
                                 type="number"
                                 min="0.001"
                                 step="0.1"
-                                value={advancedRenderingToneMappingExposureDraft}
+                                value={
+                                  advancedRenderingToneMappingExposureDraft
+                                }
                                 onChange={(event) =>
                                   setAdvancedRenderingToneMappingExposureDraft(
                                     event.currentTarget.value
                                   )
                                 }
-                                onBlur={applyAdvancedRenderingToneMappingExposure}
+                                onBlur={
+                                  applyAdvancedRenderingToneMappingExposure
+                                }
                                 onKeyDown={(event) =>
                                   handleDraftVectorKeyDown(
                                     event,
@@ -11735,7 +11884,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               type="number"
                               min="0.001"
                               step="0.1"
-                              value={advancedRenderingDepthOfFieldBokehScaleDraft}
+                              value={
+                                advancedRenderingDepthOfFieldBokehScaleDraft
+                              }
                               onChange={(event) =>
                                 setAdvancedRenderingDepthOfFieldBokehScaleDraft(
                                   event.currentTarget.value
@@ -11788,7 +11939,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                                 type="number"
                                 min="0"
                                 step="0.01"
-                                value={advancedRenderingWhiteboxBevelEdgeWidthDraft}
+                                value={
+                                  advancedRenderingWhiteboxBevelEdgeWidthDraft
+                                }
                                 onChange={(event) =>
                                   setAdvancedRenderingWhiteboxBevelEdgeWidthDraft(
                                     event.currentTarget.value
@@ -11971,7 +12124,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   <div className="form-section">
                     <div className="label">Authored State</div>
                     <label className="form-field form-field--toggle">
-                      <span className="label">Visible in editor and runner</span>
+                      <span className="label">
+                        Visible in editor and runner
+                      </span>
                       <input
                         data-testid="model-instance-visible"
                         type="checkbox"
@@ -11999,9 +12154,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       />
                     </label>
                     <div className="material-summary">
-                      Hidden model instances stay authored and keep their runtime
-                      collision behavior. Disabled instances are removed from the
-                      editor viewport, picking, and runtime build.
+                      Hidden model instances stay authored and keep their
+                      runtime collision behavior. Disabled instances are removed
+                      from the editor viewport, picking, and runtime build.
                     </div>
                   </div>
 
@@ -12529,8 +12684,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     </label>
                     <div className="material-summary">
                       Hidden paths stay authored but disappear from the editor
-                      viewport. Disabled paths are omitted from the runtime
-                      path registry.
+                      viewport. Disabled paths are omitted from the runtime path
+                      registry.
                     </div>
                   </div>
 
@@ -12560,7 +12715,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   <div className="form-section">
                     <div className="label">Loop</div>
                     <label className="form-field form-field--toggle">
-                      <span className="label">Close last point back to first</span>
+                      <span className="label">
+                        Close last point back to first
+                      </span>
                       <input
                         data-testid="path-loop"
                         type="checkbox"
@@ -12737,7 +12894,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   <div className="form-section">
                     <div className="label">Authored State</div>
                     <label className="form-field form-field--toggle">
-                      <span className="label">Visible in editor and runner</span>
+                      <span className="label">
+                        Visible in editor and runner
+                      </span>
                       <input
                         data-testid="entity-visible"
                         type="checkbox"
@@ -13365,10 +13524,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           >
                             {PLAYER_START_MOVEMENT_TEMPLATE_KINDS.map(
                               (templateKind) => (
-                                <option
-                                  key={templateKind}
-                                  value={templateKind}
-                                >
+                                <option key={templateKind} value={templateKind}>
                                   {getPlayerStartMovementTemplateLabel(
                                     templateKind
                                   )}
@@ -13392,7 +13548,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               type="number"
                               min="0.01"
                               step="0.1"
-                              value={playerStartMovementTemplateNumberDraft.moveSpeed}
+                              value={
+                                playerStartMovementTemplateNumberDraft.moveSpeed
+                              }
                               onChange={(event) => {
                                 const nextValue = event.currentTarget.value;
                                 setPlayerStartMovementTemplateNumberDraft(
@@ -13433,7 +13591,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               type="number"
                               min="0"
                               step="0.1"
-                              value={playerStartMovementTemplateNumberDraft.maxSpeed}
+                              value={
+                                playerStartMovementTemplateNumberDraft.maxSpeed
+                              }
                               onChange={(event) => {
                                 const nextValue = event.currentTarget.value;
                                 setPlayerStartMovementTemplateNumberDraft(
@@ -13476,7 +13636,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               type="number"
                               min="0"
                               step="0.01"
-                              value={playerStartMovementTemplateNumberDraft.maxStepHeight}
+                              value={
+                                playerStartMovementTemplateNumberDraft.maxStepHeight
+                              }
                               onChange={(event) => {
                                 const nextValue = event.currentTarget.value;
                                 setPlayerStartMovementTemplateNumberDraft(
@@ -13519,7 +13681,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               data-testid="player-start-movement-jump-enabled"
                               type="checkbox"
                               checked={
-                                playerStartMovementTemplateDraft.capabilities.jump
+                                playerStartMovementTemplateDraft.capabilities
+                                  .jump
                               }
                               onChange={(event) =>
                                 commitPlayerStartMovementTemplateDraft(
@@ -13544,7 +13707,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                                 type="number"
                                 min="0.01"
                                 step="0.1"
-                                value={playerStartMovementTemplateNumberDraft.jumpSpeed}
+                                value={
+                                  playerStartMovementTemplateNumberDraft.jumpSpeed
+                                }
                                 onChange={(event) => {
                                   const nextValue = event.currentTarget.value;
                                   setPlayerStartMovementTemplateNumberDraft(
@@ -13585,7 +13750,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                                 type="number"
                                 min="0"
                                 step="1"
-                                value={playerStartMovementTemplateNumberDraft.jumpBufferMs}
+                                value={
+                                  playerStartMovementTemplateNumberDraft.jumpBufferMs
+                                }
                                 onChange={(event) => {
                                   const nextValue = event.currentTarget.value;
                                   setPlayerStartMovementTemplateNumberDraft(
@@ -13628,7 +13795,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                                 type="number"
                                 min="0"
                                 step="1"
-                                value={playerStartMovementTemplateNumberDraft.coyoteTimeMs}
+                                value={
+                                  playerStartMovementTemplateNumberDraft.coyoteTimeMs
+                                }
                                 onChange={(event) => {
                                   const nextValue = event.currentTarget.value;
                                   setPlayerStartMovementTemplateNumberDraft(
@@ -13669,7 +13838,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                                 type="number"
                                 min="0.01"
                                 step="1"
-                                value={playerStartMovementTemplateNumberDraft.variableJumpMaxHoldMs}
+                                value={
+                                  playerStartMovementTemplateNumberDraft.variableJumpMaxHoldMs
+                                }
                                 onChange={(event) => {
                                   const nextValue = event.currentTarget.value;
                                   setPlayerStartMovementTemplateNumberDraft(
@@ -13709,7 +13880,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               data-testid="player-start-movement-variable-jump-enabled"
                               type="checkbox"
                               checked={
-                                playerStartMovementTemplateDraft.jump.variableHeight
+                                playerStartMovementTemplateDraft.jump
+                                  .variableHeight
                               }
                               onChange={(event) =>
                                 commitPlayerStartMovementTemplateDraft(
@@ -13732,7 +13904,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               data-testid="player-start-movement-air-move-jump-enabled"
                               type="checkbox"
                               checked={
-                                playerStartMovementTemplateDraft.jump.moveWhileJumping
+                                playerStartMovementTemplateDraft.jump
+                                  .moveWhileJumping
                               }
                               onChange={(event) =>
                                 commitPlayerStartMovementTemplateDraft(
@@ -13755,7 +13928,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               data-testid="player-start-movement-air-move-fall-enabled"
                               type="checkbox"
                               checked={
-                                playerStartMovementTemplateDraft.jump.moveWhileFalling
+                                playerStartMovementTemplateDraft.jump
+                                  .moveWhileFalling
                               }
                               onChange={(event) =>
                                 commitPlayerStartMovementTemplateDraft(
@@ -13778,14 +13952,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               data-testid="player-start-movement-air-direction-only-enabled"
                               type="checkbox"
                               checked={
-                                playerStartMovementTemplateDraft.jump.directionOnly
+                                playerStartMovementTemplateDraft.jump
+                                  .directionOnly
                               }
                               onChange={(event) =>
                                 commitPlayerStartMovementTemplateDraft(
                                   {
                                     jump: {
-                                      directionOnly:
-                                        event.currentTarget.checked
+                                      directionOnly: event.currentTarget.checked
                                     }
                                   },
                                   {
@@ -13825,7 +13999,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               type="number"
                               min="0"
                               step="0.01"
-                              value={playerStartMovementTemplateNumberDraft.bunnyHopBoost}
+                              value={
+                                playerStartMovementTemplateNumberDraft.bunnyHopBoost
+                              }
                               onChange={(event) => {
                                 const nextValue = event.currentTarget.value;
                                 setPlayerStartMovementTemplateNumberDraft(
@@ -13868,7 +14044,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               data-testid="player-start-movement-sprint-enabled"
                               type="checkbox"
                               checked={
-                                playerStartMovementTemplateDraft.capabilities.sprint
+                                playerStartMovementTemplateDraft.capabilities
+                                  .sprint
                               }
                               onChange={(event) =>
                                 commitPlayerStartMovementTemplateDraft(
@@ -13892,7 +14069,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               type="number"
                               min="0.01"
                               step="0.05"
-                              value={playerStartMovementTemplateNumberDraft.sprintSpeedMultiplier}
+                              value={
+                                playerStartMovementTemplateNumberDraft.sprintSpeedMultiplier
+                              }
                               onChange={(event) => {
                                 const nextValue = event.currentTarget.value;
                                 setPlayerStartMovementTemplateNumberDraft(
@@ -13935,7 +14114,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               data-testid="player-start-movement-crouch-enabled"
                               type="checkbox"
                               checked={
-                                playerStartMovementTemplateDraft.capabilities.crouch
+                                playerStartMovementTemplateDraft.capabilities
+                                  .crouch
                               }
                               onChange={(event) =>
                                 commitPlayerStartMovementTemplateDraft(
@@ -13959,7 +14139,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               type="number"
                               min="0.01"
                               step="0.05"
-                              value={playerStartMovementTemplateNumberDraft.crouchSpeedMultiplier}
+                              value={
+                                playerStartMovementTemplateNumberDraft.crouchSpeedMultiplier
+                              }
                               onChange={(event) => {
                                 const nextValue = event.currentTarget.value;
                                 setPlayerStartMovementTemplateNumberDraft(
@@ -14293,7 +14475,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               <select
                                 data-testid={`player-start-gamepad-binding-${action}`}
                                 className="select-input"
-                                value={playerStartInputBindingsDraft.gamepad[action]}
+                                value={
+                                  playerStartInputBindingsDraft.gamepad[action]
+                                }
                                 onChange={(event) =>
                                   handlePlayerStartMovementGamepadBindingChange(
                                     action,
@@ -14302,11 +14486,15 @@ export function App({ store, initialStatusMessage }: AppProps) {
                                   )
                                 }
                               >
-                                {PLAYER_START_GAMEPAD_BINDINGS.map((binding) => (
-                                  <option key={binding} value={binding}>
-                                    {formatPlayerStartGamepadBindingLabel(binding)}
-                                  </option>
-                                ))}
+                                {PLAYER_START_GAMEPAD_BINDINGS.map(
+                                  (binding) => (
+                                    <option key={binding} value={binding}>
+                                      {formatPlayerStartGamepadBindingLabel(
+                                        binding
+                                      )}
+                                    </option>
+                                  )
+                                )}
                               </select>
                             </label>
                           </div>
@@ -14348,7 +14536,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               <select
                                 data-testid={`player-start-gamepad-binding-${action}`}
                                 className="select-input"
-                                value={playerStartInputBindingsDraft.gamepad[action]}
+                                value={
+                                  playerStartInputBindingsDraft.gamepad[action]
+                                }
                                 onChange={(event) =>
                                   handlePlayerStartGamepadActionBindingChange(
                                     action,
@@ -14376,7 +14566,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           <select
                             data-testid="player-start-gamepad-camera-look-binding"
                             className="select-input"
-                            value={playerStartInputBindingsDraft.gamepad.cameraLook}
+                            value={
+                              playerStartInputBindingsDraft.gamepad.cameraLook
+                            }
                             onChange={(event) =>
                               handlePlayerStartGamepadCameraLookBindingChange(
                                 event.currentTarget
@@ -14421,7 +14613,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           }
                           onBlur={applySceneEntryChange}
                           onKeyDown={(event) =>
-                            handleDraftVectorKeyDown(event, applySceneEntryChange)
+                            handleDraftVectorKeyDown(
+                              event,
+                              applySceneEntryChange
+                            )
                           }
                           onKeyUp={(event) =>
                             handleNumberInputKeyUp(event, applySceneEntryChange)
@@ -14500,8 +14695,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                             className="select-input"
                             value={npcPresenceModeDraft}
                             onChange={(event) => {
-                              const nextMode =
-                                event.currentTarget.value as NpcPresenceMode;
+                              const nextMode = event.currentTarget
+                                .value as NpcPresenceMode;
                               setNpcPresenceModeDraft(nextMode);
                               scheduleDraftCommit(() => applyNpcChange());
                             }}
@@ -14531,7 +14726,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
                                 }
                                 onBlur={() => applyNpcChange()}
                                 onKeyDown={(event) =>
-                                  handleDraftVectorKeyDown(event, applyNpcChange)
+                                  handleDraftVectorKeyDown(
+                                    event,
+                                    applyNpcChange
+                                  )
                                 }
                                 onKeyUp={(event) =>
                                   handleNumberInputKeyUp(event, applyNpcChange)
@@ -14559,7 +14757,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
                                 }
                                 onBlur={() => applyNpcChange()}
                                 onKeyDown={(event) =>
-                                  handleDraftVectorKeyDown(event, applyNpcChange)
+                                  handleDraftVectorKeyDown(
+                                    event,
+                                    applyNpcChange
+                                  )
                                 }
                                 onKeyUp={(event) =>
                                   handleNumberInputKeyUp(event, applyNpcChange)
@@ -14618,8 +14819,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                             className="select-input"
                             value={npcColliderModeDraft}
                             onChange={(event) => {
-                              const nextMode =
-                                event.currentTarget.value as PlayerStartColliderMode;
+                              const nextMode = event.currentTarget
+                                .value as PlayerStartColliderMode;
                               setNpcColliderModeDraft(nextMode);
                               scheduleDraftCommit(() =>
                                 applyNpcChange({
@@ -14685,10 +14886,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                                   )
                                 }
                                 onKeyUp={(event) =>
-                                  handleNumberInputKeyUp(
-                                    event,
-                                    applyNpcChange
-                                  )
+                                  handleNumberInputKeyUp(event, applyNpcChange)
                                 }
                                 onPointerUp={(event) =>
                                   handleNumberInputPointerUp(
@@ -14720,10 +14918,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                                   )
                                 }
                                 onKeyUp={(event) =>
-                                  handleNumberInputKeyUp(
-                                    event,
-                                    applyNpcChange
-                                  )
+                                  handleNumberInputKeyUp(event, applyNpcChange)
                                 }
                                 onPointerUp={(event) =>
                                   handleNumberInputPointerUp(
@@ -14762,10 +14957,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                                   )
                                 }
                                 onKeyUp={(event) =>
-                                  handleNumberInputKeyUp(
-                                    event,
-                                    applyNpcChange
-                                  )
+                                  handleNumberInputKeyUp(event, applyNpcChange)
                                 }
                                 onPointerUp={(event) =>
                                   handleNumberInputPointerUp(
@@ -14799,10 +14991,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                                   )
                                 }
                                 onKeyUp={(event) =>
-                                  handleNumberInputKeyUp(
-                                    event,
-                                    applyNpcChange
-                                  )
+                                  handleNumberInputKeyUp(event, applyNpcChange)
                                 }
                                 onPointerUp={(event) =>
                                   handleNumberInputPointerUp(
@@ -14836,10 +15025,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                                   )
                                 }
                                 onKeyUp={(event) =>
-                                  handleNumberInputKeyUp(
-                                    event,
-                                    applyNpcChange
-                                  )
+                                  handleNumberInputKeyUp(event, applyNpcChange)
                                 }
                                 onPointerUp={(event) =>
                                   handleNumberInputPointerUp(
@@ -15458,9 +15644,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                             type="text"
                             value={sceneExitPromptDraft}
                             onChange={(event) =>
-                              setSceneExitPromptDraft(
-                                event.currentTarget.value
-                              )
+                              setSceneExitPromptDraft(event.currentTarget.value)
                             }
                             onBlur={() => applySceneExitChange()}
                             onKeyDown={(event) => {
@@ -15557,7 +15741,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   <div className="form-section">
                     <div className="label">Authored State</div>
                     <label className="form-field form-field--toggle">
-                      <span className="label">Visible in editor and runner</span>
+                      <span className="label">
+                        Visible in editor and runner
+                      </span>
                       <input
                         data-testid="brush-visible"
                         type="checkbox"

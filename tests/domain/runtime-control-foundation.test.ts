@@ -17,9 +17,7 @@ import {
   createSetLightEnabledControlEffect
 } from "../../src/controls/control-surface";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
-import {
-  createControlInteractionLink
-} from "../../src/interactions/interaction-links";
+import { createControlInteractionLink } from "../../src/interactions/interaction-links";
 import { RuntimeInteractionSystem } from "../../src/runtime-three/runtime-interaction-system";
 import { buildRuntimeSceneFromDocument } from "../../src/runtime-three/runtime-scene-build";
 
@@ -230,8 +228,7 @@ describe("runtime control foundation", () => {
         dispatchControlEffect: (effect, link) => {
           dispatches.push({
             type: `${link.id}:${effect.type}`,
-            enabled:
-              effect.type === "setLightEnabled" ? effect.enabled : true
+            enabled: effect.type === "setLightEnabled" ? effect.enabled : true
           });
         }
       }

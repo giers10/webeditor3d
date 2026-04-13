@@ -18,8 +18,17 @@ const DEFAULT_INTERACTABLE_TARGET_RADIUS = 0.75;
 export interface RuntimeInteractionDispatcher {
   teleportPlayer(target: RuntimeTeleportTarget, link: InteractionLink): void;
   activateSceneExit(sceneExit: RuntimeSceneExit): void;
-  toggleBrushVisibility(brushId: string, visible: boolean | undefined, link: InteractionLink): void;
-  playAnimation(instanceId: string, clipName: string, loop: boolean | undefined, link: InteractionLink): void;
+  toggleBrushVisibility(
+    brushId: string,
+    visible: boolean | undefined,
+    link: InteractionLink
+  ): void;
+  playAnimation(
+    instanceId: string,
+    clipName: string,
+    loop: boolean | undefined,
+    link: InteractionLink
+  ): void;
   stopAnimation(instanceId: string, link: InteractionLink): void;
   playSound(soundEmitterId: string, link: InteractionLink): void;
   stopSound(soundEmitterId: string, link: InteractionLink): void;
@@ -71,7 +80,10 @@ function normalizeVec3(vector: Vec3): Vec3 | null {
   return scaleVec3(vector, 1 / Math.sqrt(lengthSquared));
 }
 
-function isPointInsideTriggerVolume(position: Vec3, triggerVolume: RuntimeTriggerVolume): boolean {
+function isPointInsideTriggerVolume(
+  position: Vec3,
+  triggerVolume: RuntimeTriggerVolume
+): boolean {
   const halfSize = {
     x: triggerVolume.size.x * 0.5,
     y: triggerVolume.size.y * 0.5,
@@ -88,7 +100,12 @@ function isPointInsideTriggerVolume(position: Vec3, triggerVolume: RuntimeTrigge
   );
 }
 
-function raySphereHitDistance(origin: Vec3, direction: Vec3, center: Vec3, radius: number): number | null {
+function raySphereHitDistance(
+  origin: Vec3,
+  direction: Vec3,
+  center: Vec3,
+  radius: number
+): number | null {
   const offset = subtractVec3(origin, center);
   const halfB = dotVec3(offset, direction);
   const c = dotVec3(offset, offset) - radius * radius;
@@ -109,15 +126,30 @@ function raySphereHitDistance(origin: Vec3, direction: Vec3, center: Vec3, radiu
   return farHit >= 0 ? 0 : null;
 }
 
-function resolveTeleportTarget(runtimeScene: RuntimeSceneDefinition, entityId: string): RuntimeTeleportTarget | null {
-  return runtimeScene.entities.teleportTargets.find((teleportTarget) => teleportTarget.entityId === entityId) ?? null;
+function resolveTeleportTarget(
+  runtimeScene: RuntimeSceneDefinition,
+  entityId: string
+): RuntimeTeleportTarget | null {
+  return (
+    runtimeScene.entities.teleportTargets.find(
+      (teleportTarget) => teleportTarget.entityId === entityId
+    ) ?? null
+  );
 }
 
-function hasTriggerLinks(runtimeScene: RuntimeSceneDefinition, sourceEntityId: string, trigger: InteractionLink["trigger"]): boolean {
-  return runtimeScene.interactionLinks.some((link) => link.sourceEntityId === sourceEntityId && link.trigger === trigger);
+function hasTriggerLinks(
+  runtimeScene: RuntimeSceneDefinition,
+  sourceEntityId: string,
+  trigger: InteractionLink["trigger"]
+): boolean {
+  return runtimeScene.interactionLinks.some(
+    (link) => link.sourceEntityId === sourceEntityId && link.trigger === trigger
+  );
 }
 
-function getInteractableTargetRadius(interactable: RuntimeInteractable): number {
+function getInteractableTargetRadius(
+  interactable: RuntimeInteractable
+): number {
   return Math.min(DEFAULT_INTERACTABLE_TARGET_RADIUS, interactable.radius);
 }
 
@@ -143,7 +175,8 @@ function updateBestPrompt(
       (currentBestPrompt === null ||
         candidateDistance < currentBestPrompt.distance ||
         (candidateDistance === currentBestPrompt.distance &&
-          candidateEntityId.localeCompare(currentBestPrompt.sourceEntityId) < 0)))
+          candidateEntityId.localeCompare(currentBestPrompt.sourceEntityId) <
+            0)))
   ) {
     return {
       prompt: nextPrompt,
@@ -164,15 +197,42 @@ export class RuntimeInteractionSystem {
     this.occupiedTriggerVolumes.clear();
   }
 
-  updatePlayerPosition(feetPosition: Vec3, runtimeScene: RuntimeSceneDefinition, dispatcher: RuntimeInteractionDispatcher) {
+  updatePlayerPosition(
+    feetPosition: Vec3,
+    runtimeScene: RuntimeSceneDefinition,
+    dispatcher: RuntimeInteractionDispatcher
+  ) {
     for (const triggerVolume of runtimeScene.entities.triggerVolumes) {
-      const containsPlayer = isPointInsideTriggerVolume(feetPosition, triggerVolume);
-      const wasOccupied = this.occupiedTriggerVolumes.has(triggerVolume.entityId);
+      const containsPlayer = isPointInsideTriggerVolume(
+        feetPosition,
+        triggerVolume
+      );
+      const wasOccupied = this.occupiedTriggerVolumes.has(
+        triggerVolume.entityId
+      );
 
-      if (!wasOccupied && containsPlayer && hasTriggerLinks(runtimeScene, triggerVolume.entityId, "enter")) {
-        this.dispatchLinks(triggerVolume.entityId, "enter", runtimeScene, dispatcher);
-      } else if (wasOccupied && !containsPlayer && hasTriggerLinks(runtimeScene, triggerVolume.entityId, "exit")) {
-        this.dispatchLinks(triggerVolume.entityId, "exit", runtimeScene, dispatcher);
+      if (
+        !wasOccupied &&
+        containsPlayer &&
+        hasTriggerLinks(runtimeScene, triggerVolume.entityId, "enter")
+      ) {
+        this.dispatchLinks(
+          triggerVolume.entityId,
+          "enter",
+          runtimeScene,
+          dispatcher
+        );
+      } else if (
+        wasOccupied &&
+        !containsPlayer &&
+        hasTriggerLinks(runtimeScene, triggerVolume.entityId, "exit")
+      ) {
+        this.dispatchLinks(
+          triggerVolume.entityId,
+          "exit",
+          runtimeScene,
+          dispatcher
+        );
       }
 
       if (containsPlayer) {
@@ -199,7 +259,10 @@ export class RuntimeInteractionSystem {
     let bestHitDistance = Number.POSITIVE_INFINITY;
 
     for (const interactable of runtimeScene.entities.interactables) {
-      if (!interactable.interactionEnabled || !hasTriggerLinks(runtimeScene, interactable.entityId, "click")) {
+      if (
+        !interactable.interactionEnabled ||
+        !hasTriggerLinks(runtimeScene, interactable.entityId, "click")
+      ) {
         continue;
       }
 
@@ -240,7 +303,10 @@ export class RuntimeInteractionSystem {
         continue;
       }
 
-      const distance = distanceBetweenVec3(interactionOrigin, sceneExit.position);
+      const distance = distanceBetweenVec3(
+        interactionOrigin,
+        sceneExit.position
+      );
 
       if (distance > sceneExit.radius) {
         continue;
@@ -273,7 +339,11 @@ export class RuntimeInteractionSystem {
     return bestPrompt;
   }
 
-  dispatchClickInteraction(sourceEntityId: string, runtimeScene: RuntimeSceneDefinition, dispatcher: RuntimeInteractionDispatcher) {
+  dispatchClickInteraction(
+    sourceEntityId: string,
+    runtimeScene: RuntimeSceneDefinition,
+    dispatcher: RuntimeInteractionDispatcher
+  ) {
     const sceneExit =
       runtimeScene.entities.sceneExits.find(
         (candidate) => candidate.entityId === sourceEntityId
@@ -300,14 +370,20 @@ export class RuntimeInteractionSystem {
 
       const controlEffect = getInteractionActionControlEffect(link.action);
 
-      if (controlEffect !== null && dispatcher.dispatchControlEffect !== undefined) {
+      if (
+        controlEffect !== null &&
+        dispatcher.dispatchControlEffect !== undefined
+      ) {
         dispatcher.dispatchControlEffect(controlEffect, link);
         continue;
       }
 
       switch (link.action.type) {
         case "teleportPlayer": {
-          const teleportTarget = resolveTeleportTarget(runtimeScene, link.action.targetEntityId);
+          const teleportTarget = resolveTeleportTarget(
+            runtimeScene,
+            link.action.targetEntityId
+          );
 
           if (teleportTarget !== null) {
             dispatcher.teleportPlayer(teleportTarget, link);
@@ -315,10 +391,19 @@ export class RuntimeInteractionSystem {
           break;
         }
         case "toggleVisibility":
-          dispatcher.toggleBrushVisibility(link.action.targetBrushId, link.action.visible, link);
+          dispatcher.toggleBrushVisibility(
+            link.action.targetBrushId,
+            link.action.visible,
+            link
+          );
           break;
         case "playAnimation":
-          dispatcher.playAnimation(link.action.targetModelInstanceId, link.action.clipName, link.action.loop, link);
+          dispatcher.playAnimation(
+            link.action.targetModelInstanceId,
+            link.action.clipName,
+            link.action.loop,
+            link
+          );
           break;
         case "stopAnimation":
           dispatcher.stopAnimation(link.action.targetModelInstanceId, link);

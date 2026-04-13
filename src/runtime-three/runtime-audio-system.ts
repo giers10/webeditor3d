@@ -1,10 +1,20 @@
-import { AudioListener, Group, PositionalAudio, Scene, Vector3, type PerspectiveCamera } from "three";
+import {
+  AudioListener,
+  Group,
+  PositionalAudio,
+  Scene,
+  Vector3,
+  type PerspectiveCamera
+} from "three";
 
 import type { LoadedAudioAsset } from "../assets/audio-assets";
 import type { ProjectAssetRecord } from "../assets/project-assets";
 import type { InteractionLink } from "../interactions/interaction-links";
 import type { RuntimePlayerAudioHookState } from "./navigation-controller";
-import type { RuntimeSceneDefinition, RuntimeSoundEmitter } from "./runtime-scene-build";
+import type {
+  RuntimeSceneDefinition,
+  RuntimeSoundEmitter
+} from "./runtime-scene-build";
 
 interface RuntimeSoundEmitterState {
   entity: RuntimeSoundEmitter;
@@ -24,12 +34,23 @@ function getErrorDetail(error: unknown): string {
   return "Unknown error.";
 }
 
-function formatSoundEmitterLabel(entityId: string, link: InteractionLink | null): string {
+function formatSoundEmitterLabel(
+  entityId: string,
+  link: InteractionLink | null
+): string {
   return link === null ? entityId : `${entityId} (${link.id})`;
 }
 
-export function computeSoundEmitterDistanceGain(distance: number, refDistance: number, maxDistance: number): number {
-  if (!Number.isFinite(distance) || !Number.isFinite(refDistance) || !Number.isFinite(maxDistance)) {
+export function computeSoundEmitterDistanceGain(
+  distance: number,
+  refDistance: number,
+  maxDistance: number
+): number {
+  if (
+    !Number.isFinite(distance) ||
+    !Number.isFinite(refDistance) ||
+    !Number.isFinite(maxDistance)
+  ) {
     return 0;
   }
 
@@ -45,7 +66,8 @@ export function computeSoundEmitterDistanceGain(distance: number, refDistance: n
     return 0;
   }
 
-  const normalizedDistance = (distance - refDistance) / (maxDistance - refDistance);
+  const normalizedDistance =
+    (distance - refDistance) / (maxDistance - refDistance);
   const clampedDistance = Math.min(1, Math.max(0, normalizedDistance));
   const proximity = 1 - clampedDistance;
   const easedProximity = proximity * proximity * proximity * proximity;
@@ -84,7 +106,9 @@ export class RuntimeAudioSystem {
       listener = new AudioListener();
       this.camera.add(listener);
     } catch (error) {
-      console.warn(`Audio is unavailable in this browser environment: ${getErrorDetail(error)}`);
+      console.warn(
+        `Audio is unavailable in this browser environment: ${getErrorDetail(error)}`
+      );
     }
 
     this.listener = listener;
@@ -100,7 +124,10 @@ export class RuntimeAudioSystem {
     this.queueAutoplayEmitters();
   }
 
-  updateAssets(projectAssets: Record<string, ProjectAssetRecord>, loadedAudioAssets: Record<string, LoadedAudioAsset>) {
+  updateAssets(
+    projectAssets: Record<string, ProjectAssetRecord>,
+    loadedAudioAssets: Record<string, LoadedAudioAsset>
+  ) {
     this.projectAssets = projectAssets;
     this.loadedAudioAssets = loadedAudioAssets;
     this.rebuildSoundEmitters();
@@ -151,25 +178,37 @@ export class RuntimeAudioSystem {
     const soundEmitter = this.soundEmitters.get(soundEmitterId);
 
     if (soundEmitter === undefined) {
-      this.setRuntimeMessage(`Sound emitter ${formatSoundEmitterLabel(soundEmitterId, link)} could not be found.`);
+      this.setRuntimeMessage(
+        `Sound emitter ${formatSoundEmitterLabel(soundEmitterId, link)} could not be found.`
+      );
       return;
     }
 
     if (this.listener === null) {
-      this.setRuntimeMessage("Audio is unavailable in this browser environment.");
+      this.setRuntimeMessage(
+        "Audio is unavailable in this browser environment."
+      );
       return;
     }
 
     if (soundEmitter.buffer === null) {
-      const assetLabel = this.describeAudioAssetAvailability(soundEmitter.entity.audioAssetId);
-      this.setRuntimeMessage(`Sound emitter ${formatSoundEmitterLabel(soundEmitterId, link)} cannot play because ${assetLabel}.`);
-      console.warn(`playSound: ${soundEmitterId} has no playable audio buffer.`);
+      const assetLabel = this.describeAudioAssetAvailability(
+        soundEmitter.entity.audioAssetId
+      );
+      this.setRuntimeMessage(
+        `Sound emitter ${formatSoundEmitterLabel(soundEmitterId, link)} cannot play because ${assetLabel}.`
+      );
+      console.warn(
+        `playSound: ${soundEmitterId} has no playable audio buffer.`
+      );
       return;
     }
 
     if (this.listener.context.state !== "running") {
       this.pendingPlayEmitterIds.add(soundEmitterId);
-      this.setRuntimeMessage("Audio is locked. Click the runner to enable sound.");
+      this.setRuntimeMessage(
+        "Audio is locked. Click the runner to enable sound."
+      );
       return;
     }
 
@@ -188,7 +227,9 @@ export class RuntimeAudioSystem {
     try {
       soundEmitter.audio.stop();
     } catch (error) {
-      console.warn(`stopSound: ${soundEmitterId} could not be stopped: ${getErrorDetail(error)}`);
+      console.warn(
+        `stopSound: ${soundEmitterId} could not be stopped: ${getErrorDetail(error)}`
+      );
     }
   }
 
@@ -240,7 +281,11 @@ export class RuntimeAudioSystem {
 
     for (const entity of this.runtimeScene.entities.soundEmitters) {
       const group = new Group();
-      group.position.set(entity.position.x, entity.position.y, entity.position.z);
+      group.position.set(
+        entity.position.x,
+        entity.position.y,
+        entity.position.z
+      );
 
       let audio: PositionalAudio | null = null;
 
@@ -339,7 +384,11 @@ export class RuntimeAudioSystem {
   private playBufferedSound(soundEmitterId: string) {
     const soundEmitter = this.soundEmitters.get(soundEmitterId);
 
-    if (soundEmitter === undefined || soundEmitter.audio === null || soundEmitter.buffer === null) {
+    if (
+      soundEmitter === undefined ||
+      soundEmitter.audio === null ||
+      soundEmitter.buffer === null
+    ) {
       return;
     }
 
@@ -355,7 +404,10 @@ export class RuntimeAudioSystem {
     soundEmitter.audio.play();
   }
 
-  private configurePositionalAudio(audio: PositionalAudio, entity: RuntimeSoundEmitter) {
+  private configurePositionalAudio(
+    audio: PositionalAudio,
+    entity: RuntimeSoundEmitter
+  ) {
     audio.setLoop(entity.loop);
     audio.setRefDistance(entity.refDistance);
     audio.setMaxDistance(entity.maxDistance);
@@ -381,8 +433,13 @@ export class RuntimeAudioSystem {
     this.camera.getWorldPosition(_listenerPosition);
     soundEmitter.group.getWorldPosition(_emitterPosition);
     const distance = _listenerPosition.distanceTo(_emitterPosition);
-    const attenuation = computeSoundEmitterDistanceGain(distance, soundEmitter.entity.refDistance, soundEmitter.entity.maxDistance);
-    const underwaterDuck = 1 - (this.playerAudioHooks?.underwaterAmount ?? 0) * 0.4;
+    const attenuation = computeSoundEmitterDistanceGain(
+      distance,
+      soundEmitter.entity.refDistance,
+      soundEmitter.entity.maxDistance
+    );
+    const underwaterDuck =
+      1 - (this.playerAudioHooks?.underwaterAmount ?? 0) * 0.4;
 
     soundEmitter.audio.setVolume(
       soundEmitter.entity.volume * attenuation * underwaterDuck

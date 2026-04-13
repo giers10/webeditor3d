@@ -28,7 +28,8 @@ export const NPC_COLLIDER_SCENE_DOCUMENT_VERSION = 42 as const;
 export const NPC_ENTITY_FOUNDATION_SCENE_DOCUMENT_VERSION = 41 as const;
 export const WORLD_TIME_ENVIRONMENT_SCENE_DOCUMENT_VERSION = 40 as const;
 export const PROJECT_TIME_NIGHT_BACKGROUND_SCENE_DOCUMENT_VERSION = 39 as const;
-export const PROJECT_TIME_DAY_NIGHT_PROFILE_SCENE_DOCUMENT_VERSION = 38 as const;
+export const PROJECT_TIME_DAY_NIGHT_PROFILE_SCENE_DOCUMENT_VERSION =
+  38 as const;
 export const PROJECT_TIME_SYSTEM_SCENE_DOCUMENT_VERSION = 37 as const;
 export const AUTHORED_OBJECT_STATE_SCENE_DOCUMENT_VERSION = 36 as const;
 export const PLAYER_START_AIR_DIRECTION_CONTROL_SCENE_DOCUMENT_VERSION =
@@ -41,7 +42,8 @@ export const PLAYER_START_MOVEMENT_TEMPLATE_SCENE_DOCUMENT_VERSION =
 export const STATIC_SIMPLE_MODEL_COLLIDERS_SCENE_DOCUMENT_VERSION = 30 as const;
 export const SCENE_EDITOR_PREFERENCES_SCENE_DOCUMENT_VERSION = 29 as const;
 export const PROJECT_NAME_SCENE_DOCUMENT_VERSION = 28 as const;
-export const PLAYER_START_GAMEPAD_CAMERA_LOOK_SCENE_DOCUMENT_VERSION = 27 as const;
+export const PLAYER_START_GAMEPAD_CAMERA_LOOK_SCENE_DOCUMENT_VERSION =
+  27 as const;
 export const PLAYER_START_INPUT_BINDINGS_SCENE_DOCUMENT_VERSION = 26 as const;
 export const PLAYER_START_NAVIGATION_MODE_SCENE_DOCUMENT_VERSION = 25 as const;
 export const SCENE_TRANSITION_ENTITIES_SCENE_DOCUMENT_VERSION = 24 as const;
@@ -105,7 +107,10 @@ export interface SceneEditorPreferences {
     x: number;
     y: number;
   };
-  viewportPanels: Record<SceneEditorViewportPanelId, SceneEditorPanelPreferences>;
+  viewportPanels: Record<
+    SceneEditorViewportPanelId,
+    SceneEditorPanelPreferences
+  >;
 }
 
 export interface SceneLoadingScreenSettings {
@@ -206,12 +211,7 @@ export function createEmptyProjectDocument(
   overrides: Partial<
     Pick<
       ProjectDocument,
-      | "name"
-      | "time"
-      | "activeSceneId"
-      | "materials"
-      | "textures"
-      | "assets"
+      "name" | "time" | "activeSceneId" | "materials" | "textures" | "assets"
     >
   > & {
     sceneId?: string;

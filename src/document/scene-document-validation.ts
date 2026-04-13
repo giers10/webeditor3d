@@ -55,10 +55,7 @@ import {
   HOURS_PER_DAY,
   type ProjectTimeSettings
 } from "./project-time-settings";
-import {
-  MIN_SCENE_PATH_POINT_COUNT,
-  type ScenePath
-} from "./paths";
+import { MIN_SCENE_PATH_POINT_COUNT, type ScenePath } from "./paths";
 import {
   isAdvancedRenderingWaterReflectionMode,
   isAdvancedRenderingShadowMapSize,
@@ -368,7 +365,9 @@ function validateWorldSettings(
     );
   }
 
-  if (!isNonNegativeFiniteNumber(world.timeOfDay.night.ambientIntensityFactor)) {
+  if (
+    !isNonNegativeFiniteNumber(world.timeOfDay.night.ambientIntensityFactor)
+  ) {
     diagnostics.push(
       createDiagnostic(
         "error",
@@ -1524,7 +1523,11 @@ function validateEntityName(
   }
 }
 
-function validateScenePath(pathValue: ScenePath, path: string, diagnostics: SceneDiagnostic[]) {
+function validateScenePath(
+  pathValue: ScenePath,
+  path: string,
+  diagnostics: SceneDiagnostic[]
+) {
   if (!isBoolean(pathValue.visible)) {
     diagnostics.push(
       createDiagnostic(
@@ -1793,9 +1796,7 @@ function validatePlayerStartEntity(
     );
   }
 
-  if (
-    !isNonNegativeFiniteNumber(entity.movementTemplate?.jump?.coyoteTimeMs)
-  ) {
+  if (!isNonNegativeFiniteNumber(entity.movementTemplate?.jump?.coyoteTimeMs)) {
     diagnostics.push(
       createDiagnostic(
         "error",
@@ -1916,7 +1917,11 @@ function validatePlayerStartEntity(
     );
   }
 
-  if (!isPlayerStartKeyboardBindingCode(entity.inputBindings?.keyboard.moveForward)) {
+  if (
+    !isPlayerStartKeyboardBindingCode(
+      entity.inputBindings?.keyboard.moveForward
+    )
+  ) {
     diagnostics.push(
       createDiagnostic(
         "error",
@@ -1927,7 +1932,11 @@ function validatePlayerStartEntity(
     );
   }
 
-  if (!isPlayerStartKeyboardBindingCode(entity.inputBindings?.keyboard.moveBackward)) {
+  if (
+    !isPlayerStartKeyboardBindingCode(
+      entity.inputBindings?.keyboard.moveBackward
+    )
+  ) {
     diagnostics.push(
       createDiagnostic(
         "error",
@@ -1938,7 +1947,9 @@ function validatePlayerStartEntity(
     );
   }
 
-  if (!isPlayerStartKeyboardBindingCode(entity.inputBindings?.keyboard.moveLeft)) {
+  if (
+    !isPlayerStartKeyboardBindingCode(entity.inputBindings?.keyboard.moveLeft)
+  ) {
     diagnostics.push(
       createDiagnostic(
         "error",
@@ -1949,7 +1960,9 @@ function validatePlayerStartEntity(
     );
   }
 
-  if (!isPlayerStartKeyboardBindingCode(entity.inputBindings?.keyboard.moveRight)) {
+  if (
+    !isPlayerStartKeyboardBindingCode(entity.inputBindings?.keyboard.moveRight)
+  ) {
     diagnostics.push(
       createDiagnostic(
         "error",
@@ -1971,7 +1984,9 @@ function validatePlayerStartEntity(
     );
   }
 
-  if (!isPlayerStartKeyboardBindingCode(entity.inputBindings?.keyboard.sprint)) {
+  if (
+    !isPlayerStartKeyboardBindingCode(entity.inputBindings?.keyboard.sprint)
+  ) {
     diagnostics.push(
       createDiagnostic(
         "error",
@@ -1982,7 +1997,9 @@ function validatePlayerStartEntity(
     );
   }
 
-  if (!isPlayerStartKeyboardBindingCode(entity.inputBindings?.keyboard.crouch)) {
+  if (
+    !isPlayerStartKeyboardBindingCode(entity.inputBindings?.keyboard.crouch)
+  ) {
     diagnostics.push(
       createDiagnostic(
         "error",
@@ -2004,7 +2021,9 @@ function validatePlayerStartEntity(
     );
   }
 
-  if (!isPlayerStartGamepadBinding(entity.inputBindings?.gamepad.moveBackward)) {
+  if (
+    !isPlayerStartGamepadBinding(entity.inputBindings?.gamepad.moveBackward)
+  ) {
     diagnostics.push(
       createDiagnostic(
         "error",
@@ -2048,7 +2067,9 @@ function validatePlayerStartEntity(
     );
   }
 
-  if (!isPlayerStartGamepadActionBinding(entity.inputBindings?.gamepad.sprint)) {
+  if (
+    !isPlayerStartGamepadActionBinding(entity.inputBindings?.gamepad.sprint)
+  ) {
     diagnostics.push(
       createDiagnostic(
         "error",
@@ -2059,7 +2080,9 @@ function validatePlayerStartEntity(
     );
   }
 
-  if (!isPlayerStartGamepadActionBinding(entity.inputBindings?.gamepad.crouch)) {
+  if (
+    !isPlayerStartGamepadActionBinding(entity.inputBindings?.gamepad.crouch)
+  ) {
     diagnostics.push(
       createDiagnostic(
         "error",
@@ -2761,7 +2784,10 @@ function validateNpcEntity(
     );
   }
 
-  if (typeof entity.actorId !== "string" || entity.actorId.trim().length === 0) {
+  if (
+    typeof entity.actorId !== "string" ||
+    entity.actorId.trim().length === 0
+  ) {
     diagnostics.push(
       createDiagnostic(
         "error",
@@ -2985,7 +3011,9 @@ function validateControlEffect(
       return;
     }
     case "stopModelAnimation":
-      if (document.modelInstances[effect.target.modelInstanceId] === undefined) {
+      if (
+        document.modelInstances[effect.target.modelInstanceId] === undefined
+      ) {
         diagnostics.push(
           createDiagnostic(
             "error",
@@ -3012,7 +3040,10 @@ function validateControlEffect(
         return;
       }
 
-      if (targetEntity.kind !== effect.target.entityKind || targetEntity.kind !== "soundEmitter") {
+      if (
+        targetEntity.kind !== effect.target.entityKind ||
+        targetEntity.kind !== "soundEmitter"
+      ) {
         diagnostics.push(
           createDiagnostic(
             "error",
@@ -3886,9 +3917,7 @@ export function validateSceneDocument(
     }
   }
 
-  for (const [pathKey, pathValue] of Object.entries(
-    document.paths
-  )) {
+  for (const [pathKey, pathValue] of Object.entries(document.paths)) {
     const path = `paths.${pathKey}`;
 
     if (pathValue.id !== pathKey) {
@@ -4133,8 +4162,7 @@ export function validateProjectDocument(
       }
 
       const targetScenePath = `${scenePath}.entities.${entityId}.targetSceneId`;
-      const targetEntryPath =
-        `${scenePath}.entities.${entityId}.targetEntryEntityId`;
+      const targetEntryPath = `${scenePath}.entities.${entityId}.targetEntryEntityId`;
       const targetScene = document.scenes[entity.targetSceneId];
 
       if (targetScene === undefined) {

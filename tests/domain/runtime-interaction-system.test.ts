@@ -249,7 +249,10 @@ describe("RuntimeInteractionSystem", () => {
     const interactionSystem = new RuntimeInteractionSystem();
     const dispatches: string[] = [];
 
-    interactionSystem.dispatchClickInteraction("entity-interactable-console", runtimeScene, {
+    interactionSystem.dispatchClickInteraction(
+      "entity-interactable-console",
+      runtimeScene,
+      {
         teleportPlayer: () => {
           throw new Error("Teleport should not dispatch in this fixture.");
         },
@@ -260,14 +263,17 @@ describe("RuntimeInteractionSystem", () => {
           throw new Error("Visibility should not dispatch in this fixture.");
         },
         playAnimation: (instanceId, clipName, loop, link) => {
-          dispatches.push(`${link.id}:${instanceId}:${clipName}:${loop === false ? "once" : "loop"}`);
+          dispatches.push(
+            `${link.id}:${instanceId}:${clipName}:${loop === false ? "once" : "loop"}`
+          );
         },
         stopAnimation: (instanceId, link) => {
           dispatches.push(`${link.id}:${instanceId}`);
         },
         playSound: () => {},
         stopSound: () => {}
-      });
+      }
+    );
 
     expect(dispatches).toEqual([
       "link-play-animation:model-instance-animated:Walk:once",
@@ -288,7 +294,8 @@ describe("RuntimeInteractionSystem", () => {
     ];
 
     const interactionSystem = new RuntimeInteractionSystem();
-    const dispatches: Array<{ brushId: string; visible: boolean | undefined }> = [];
+    const dispatches: Array<{ brushId: string; visible: boolean | undefined }> =
+      [];
 
     interactionSystem.updatePlayerPosition(
       {
@@ -466,21 +473,29 @@ describe("RuntimeInteractionSystem", () => {
     const interactionSystem = new RuntimeInteractionSystem();
     const dispatches: string[] = [];
 
-    interactionSystem.dispatchClickInteraction("entity-interactable-console", runtimeScene, {
-      teleportPlayer: (target, link) => {
-        dispatches.push(`${link.id}:${target.entityId}:${target.position.x}`);
-      },
-      activateSceneExit: () => {
-        throw new Error("Scene exit should not dispatch for this click fixture.");
-      },
-      toggleBrushVisibility: () => {
-        throw new Error("Visibility should not dispatch for this click fixture.");
-      },
-      playAnimation: () => {},
-      stopAnimation: () => {},
-      playSound: () => {},
-      stopSound: () => {}
-    });
+    interactionSystem.dispatchClickInteraction(
+      "entity-interactable-console",
+      runtimeScene,
+      {
+        teleportPlayer: (target, link) => {
+          dispatches.push(`${link.id}:${target.entityId}:${target.position.x}`);
+        },
+        activateSceneExit: () => {
+          throw new Error(
+            "Scene exit should not dispatch for this click fixture."
+          );
+        },
+        toggleBrushVisibility: () => {
+          throw new Error(
+            "Visibility should not dispatch for this click fixture."
+          );
+        },
+        playAnimation: () => {},
+        stopAnimation: () => {},
+        playSound: () => {},
+        stopSound: () => {}
+      }
+    );
 
     expect(dispatches).toEqual(["link-click-teleport:entity-teleport-main:8"]);
   });
@@ -505,31 +520,38 @@ describe("RuntimeInteractionSystem", () => {
     const interactionSystem = new RuntimeInteractionSystem();
     const dispatches: string[] = [];
 
-    interactionSystem.dispatchClickInteraction("entity-interactable-console", runtimeScene, {
-      teleportPlayer: () => {
-        throw new Error("Teleport should not dispatch in this fixture.");
-      },
-      activateSceneExit: () => {
-        throw new Error("Scene exit should not dispatch in this fixture.");
-      },
-      toggleBrushVisibility: () => {
-        throw new Error("Visibility should not dispatch in this fixture.");
-      },
-      playAnimation: () => {
-        throw new Error("Animation should not dispatch in this fixture.");
-      },
-      stopAnimation: () => {
-        throw new Error("Animation should not dispatch in this fixture.");
-      },
-      playSound: (soundEmitterId, link) => {
-        dispatches.push(`${link.id}:${soundEmitterId}`);
-      },
-      stopSound: (soundEmitterId, link) => {
-        dispatches.push(`${link.id}:${soundEmitterId}`);
+    interactionSystem.dispatchClickInteraction(
+      "entity-interactable-console",
+      runtimeScene,
+      {
+        teleportPlayer: () => {
+          throw new Error("Teleport should not dispatch in this fixture.");
+        },
+        activateSceneExit: () => {
+          throw new Error("Scene exit should not dispatch in this fixture.");
+        },
+        toggleBrushVisibility: () => {
+          throw new Error("Visibility should not dispatch in this fixture.");
+        },
+        playAnimation: () => {
+          throw new Error("Animation should not dispatch in this fixture.");
+        },
+        stopAnimation: () => {
+          throw new Error("Animation should not dispatch in this fixture.");
+        },
+        playSound: (soundEmitterId, link) => {
+          dispatches.push(`${link.id}:${soundEmitterId}`);
+        },
+        stopSound: (soundEmitterId, link) => {
+          dispatches.push(`${link.id}:${soundEmitterId}`);
+        }
       }
-    });
+    );
 
-    expect(dispatches).toEqual(["link-play-sound:entity-sound-lobby", "link-stop-sound:entity-sound-lobby"]);
+    expect(dispatches).toEqual([
+      "link-play-sound:entity-sound-lobby",
+      "link-stop-sound:entity-sound-lobby"
+    ]);
   });
 
   it("shows a click prompt for enabled Scene Exits within range", () => {

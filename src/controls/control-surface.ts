@@ -199,7 +199,9 @@ function assertNonEmptyString(value: string, label: string) {
 
 function assertNonNegativeFiniteNumber(value: number, label: string) {
   if (!Number.isFinite(value) || value < 0) {
-    throw new Error(`${label} must be a finite number greater than or equal to zero.`);
+    throw new Error(
+      `${label} must be a finite number greater than or equal to zero.`
+    );
   }
 }
 
@@ -212,9 +214,7 @@ function assertBoolean(value: boolean, label: string) {
 export function isControlEntityTargetKind(
   value: unknown
 ): value is ControlEntityTargetKind {
-  return CONTROL_ENTITY_TARGET_KINDS.includes(
-    value as ControlEntityTargetKind
-  );
+  return CONTROL_ENTITY_TARGET_KINDS.includes(value as ControlEntityTargetKind);
 }
 
 export function isControlInteractionTargetKind(
@@ -412,10 +412,7 @@ export function createLightIntensityControlChannelDescriptor(options: {
     options.defaultValue,
     "Control light intensity default"
   );
-  assertNonNegativeFiniteNumber(
-    minValue,
-    "Control light intensity minimum"
-  );
+  assertNonNegativeFiniteNumber(minValue, "Control light intensity minimum");
 
   return {
     channel: "light.intensity",
@@ -751,7 +748,9 @@ export function areControlEffectsEqual(
     return false;
   }
 
-  if (getControlTargetRefKey(left.target) !== getControlTargetRefKey(right.target)) {
+  if (
+    getControlTargetRefKey(left.target) !== getControlTargetRefKey(right.target)
+  ) {
     return false;
   }
 
@@ -767,8 +766,7 @@ export function areControlEffectsEqual(
       return true;
     case "setInteractionEnabled":
       return (
-        left.enabled ===
-        (right as SetInteractionEnabledControlEffect).enabled
+        left.enabled === (right as SetInteractionEnabledControlEffect).enabled
       );
     case "setLightEnabled":
       return left.enabled === (right as SetLightEnabledControlEffect).enabled;
@@ -868,7 +866,8 @@ export function applyControlEffectToResolvedState(
       });
       const stateKey = getResolvedDiscreteControlStateKey(nextState);
       const existingIndex = nextResolved.discrete.findIndex(
-        (candidate) => getResolvedDiscreteControlStateKey(candidate) === stateKey
+        (candidate) =>
+          getResolvedDiscreteControlStateKey(candidate) === stateKey
       );
 
       if (existingIndex >= 0) {
@@ -886,7 +885,8 @@ export function applyControlEffectToResolvedState(
       });
       const stateKey = getResolvedDiscreteControlStateKey(nextState);
       const existingIndex = nextResolved.discrete.findIndex(
-        (candidate) => getResolvedDiscreteControlStateKey(candidate) === stateKey
+        (candidate) =>
+          getResolvedDiscreteControlStateKey(candidate) === stateKey
       );
 
       if (existingIndex >= 0) {

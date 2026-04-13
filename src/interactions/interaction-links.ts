@@ -206,7 +206,9 @@ export function createToggleVisibilityInteractionLink(
   assertNonEmptyString(options.targetBrushId, "Visibility target brush id");
 
   if (options.visible !== undefined && typeof options.visible !== "boolean") {
-    throw new Error("Visibility action visible must be a boolean when authored.");
+    throw new Error(
+      "Visibility action visible must be a boolean when authored."
+    );
   }
 
   return {
@@ -326,13 +328,17 @@ export function getInteractionActionControlEffect(
   switch (action.type) {
     case "playAnimation":
       return createPlayModelAnimationControlEffect({
-        target: createModelInstanceControlTargetRef(action.targetModelInstanceId),
+        target: createModelInstanceControlTargetRef(
+          action.targetModelInstanceId
+        ),
         clipName: action.clipName,
         loop: action.loop
       });
     case "stopAnimation":
       return createStopModelAnimationControlEffect({
-        target: createModelInstanceControlTargetRef(action.targetModelInstanceId)
+        target: createModelInstanceControlTargetRef(
+          action.targetModelInstanceId
+        )
       });
     case "playSound":
       return createPlaySoundControlEffect({
@@ -410,7 +416,8 @@ export function areInteractionLinksEqual(
       return (
         left.action.targetModelInstanceId ===
           (right.action as PlayAnimationAction).targetModelInstanceId &&
-        left.action.clipName === (right.action as PlayAnimationAction).clipName &&
+        left.action.clipName ===
+          (right.action as PlayAnimationAction).clipName &&
         left.action.loop === (right.action as PlayAnimationAction).loop
       );
     case "stopAnimation":

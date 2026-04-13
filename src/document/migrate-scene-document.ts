@@ -288,7 +288,9 @@ function readSceneEditorPanelPreferences(
     viewMode !== "front" &&
     viewMode !== "side"
   ) {
-    throw new Error(`${label}.viewMode must be a supported viewport view mode.`);
+    throw new Error(
+      `${label}.viewMode must be a supported viewport view mode.`
+    );
   }
 
   if (
@@ -1287,7 +1289,8 @@ function readPlayerStartKeyboardBindingCode(
     label,
     fallback,
     (candidate): candidate is typeof fallback =>
-      typeof candidate === "string" && isPlayerStartKeyboardBindingCode(candidate)
+      typeof candidate === "string" &&
+      isPlayerStartKeyboardBindingCode(candidate)
   );
 }
 
@@ -2254,7 +2257,7 @@ function readWorldTimeOfDaySettings(
       ),
       ambientColorHex: expectHexColor(
         isRecord(nightValue)
-          ? nightValue.ambientColorHex ?? nightDefaults.ambientColorHex
+          ? (nightValue.ambientColorHex ?? nightDefaults.ambientColorHex)
           : nightDefaults.ambientColorHex,
         `${label}.night.ambientColorHex`
       ),
@@ -2265,7 +2268,7 @@ function readWorldTimeOfDaySettings(
       ),
       lightColorHex: expectHexColor(
         isRecord(nightValue)
-          ? nightValue.lightColorHex ?? nightDefaults.lightColorHex
+          ? (nightValue.lightColorHex ?? nightDefaults.lightColorHex)
           : nightDefaults.lightColorHex,
         `${label}.night.lightColorHex`
       ),
@@ -2351,8 +2354,16 @@ function readPointLightEntity(value: unknown, label: string): EntityInstance {
   const entity = createPointLightEntity({
     id: expectString(value.id, `${label}.id`),
     name: readOptionalEntityName(value.name, `${label}.name`),
-    visible: readOptionalBoolean(value.visible, `${label}.visible`, DEFAULT_ENTITY_VISIBLE),
-    enabled: readOptionalBoolean(value.enabled, `${label}.enabled`, DEFAULT_ENTITY_ENABLED),
+    visible: readOptionalBoolean(
+      value.visible,
+      `${label}.visible`,
+      DEFAULT_ENTITY_VISIBLE
+    ),
+    enabled: readOptionalBoolean(
+      value.enabled,
+      `${label}.enabled`,
+      DEFAULT_ENTITY_ENABLED
+    ),
     position: readVec3(value.position, `${label}.position`),
     colorHex: expectHexColor(value.colorHex, `${label}.colorHex`),
     intensity: expectNonNegativeFiniteNumber(
@@ -2378,8 +2389,16 @@ function readSpotLightEntity(value: unknown, label: string): EntityInstance {
   const entity = createSpotLightEntity({
     id: expectString(value.id, `${label}.id`),
     name: readOptionalEntityName(value.name, `${label}.name`),
-    visible: readOptionalBoolean(value.visible, `${label}.visible`, DEFAULT_ENTITY_VISIBLE),
-    enabled: readOptionalBoolean(value.enabled, `${label}.enabled`, DEFAULT_ENTITY_ENABLED),
+    visible: readOptionalBoolean(
+      value.visible,
+      `${label}.visible`,
+      DEFAULT_ENTITY_VISIBLE
+    ),
+    enabled: readOptionalBoolean(
+      value.enabled,
+      `${label}.enabled`,
+      DEFAULT_ENTITY_ENABLED
+    ),
     position: readVec3(value.position, `${label}.position`),
     direction: readVec3(value.direction, `${label}.direction`),
     colorHex: expectHexColor(value.colorHex, `${label}.colorHex`),
@@ -2410,8 +2429,16 @@ function readPlayerStartEntity(value: unknown, label: string): EntityInstance {
   const entity = createPlayerStartEntity({
     id: expectString(value.id, `${label}.id`),
     name: readOptionalEntityName(value.name, `${label}.name`),
-    visible: readOptionalBoolean(value.visible, `${label}.visible`, DEFAULT_ENTITY_VISIBLE),
-    enabled: readOptionalBoolean(value.enabled, `${label}.enabled`, DEFAULT_ENTITY_ENABLED),
+    visible: readOptionalBoolean(
+      value.visible,
+      `${label}.visible`,
+      DEFAULT_ENTITY_VISIBLE
+    ),
+    enabled: readOptionalBoolean(
+      value.enabled,
+      `${label}.enabled`,
+      DEFAULT_ENTITY_ENABLED
+    ),
     position: readVec3(value.position, `${label}.position`),
     yawDegrees: expectFiniteNumber(value.yawDegrees, `${label}.yawDegrees`),
     navigationMode: readPlayerStartNavigationMode(
@@ -2448,8 +2475,16 @@ function readSoundEmitterEntity(value: unknown, label: string): EntityInstance {
   const entity = createSoundEmitterEntity({
     id: expectString(value.id, `${label}.id`),
     name: readOptionalEntityName(value.name, `${label}.name`),
-    visible: readOptionalBoolean(value.visible, `${label}.visible`, DEFAULT_ENTITY_VISIBLE),
-    enabled: readOptionalBoolean(value.enabled, `${label}.enabled`, DEFAULT_ENTITY_ENABLED),
+    visible: readOptionalBoolean(
+      value.visible,
+      `${label}.visible`,
+      DEFAULT_ENTITY_VISIBLE
+    ),
+    enabled: readOptionalBoolean(
+      value.enabled,
+      `${label}.enabled`,
+      DEFAULT_ENTITY_ENABLED
+    ),
     position: readVec3(value.position, `${label}.position`),
     audioAssetId:
       value.audioAssetId === undefined || value.audioAssetId === null
@@ -2488,8 +2523,16 @@ function readLegacySoundEmitterEntity(
   const entity = createSoundEmitterEntity({
     id: expectString(value.id, `${label}.id`),
     name: readOptionalEntityName(value.name, `${label}.name`),
-    visible: readOptionalBoolean(value.visible, `${label}.visible`, DEFAULT_ENTITY_VISIBLE),
-    enabled: readOptionalBoolean(value.enabled, `${label}.enabled`, DEFAULT_ENTITY_ENABLED),
+    visible: readOptionalBoolean(
+      value.visible,
+      `${label}.visible`,
+      DEFAULT_ENTITY_VISIBLE
+    ),
+    enabled: readOptionalBoolean(
+      value.enabled,
+      `${label}.enabled`,
+      DEFAULT_ENTITY_ENABLED
+    ),
     position: readVec3(value.position, `${label}.position`),
     refDistance: radius,
     maxDistance: radius,
@@ -2527,8 +2570,16 @@ function readTriggerVolumeEntity(
   const entity = createTriggerVolumeEntity({
     id: expectString(value.id, `${label}.id`),
     name: readOptionalEntityName(value.name, `${label}.name`),
-    visible: readOptionalBoolean(value.visible, `${label}.visible`, DEFAULT_ENTITY_VISIBLE),
-    enabled: readOptionalBoolean(value.enabled, `${label}.enabled`, DEFAULT_ENTITY_ENABLED),
+    visible: readOptionalBoolean(
+      value.visible,
+      `${label}.visible`,
+      DEFAULT_ENTITY_VISIBLE
+    ),
+    enabled: readOptionalBoolean(
+      value.enabled,
+      `${label}.enabled`,
+      DEFAULT_ENTITY_ENABLED
+    ),
     position: readVec3(value.position, `${label}.position`),
     size,
     triggerOnEnter: expectBoolean(
@@ -2561,8 +2612,16 @@ function readTeleportTargetEntity(
   const entity = createTeleportTargetEntity({
     id: expectString(value.id, `${label}.id`),
     name: readOptionalEntityName(value.name, `${label}.name`),
-    visible: readOptionalBoolean(value.visible, `${label}.visible`, DEFAULT_ENTITY_VISIBLE),
-    enabled: readOptionalBoolean(value.enabled, `${label}.enabled`, DEFAULT_ENTITY_ENABLED),
+    visible: readOptionalBoolean(
+      value.visible,
+      `${label}.visible`,
+      DEFAULT_ENTITY_VISIBLE
+    ),
+    enabled: readOptionalBoolean(
+      value.enabled,
+      `${label}.enabled`,
+      DEFAULT_ENTITY_ENABLED
+    ),
     position: readVec3(value.position, `${label}.position`),
     yawDegrees: expectFiniteNumber(value.yawDegrees, `${label}.yawDegrees`)
   });
@@ -2587,11 +2646,19 @@ function readInteractableEntity(value: unknown, label: string): EntityInstance {
   const entity = createInteractableEntity({
     id: expectString(value.id, `${label}.id`),
     name: readOptionalEntityName(value.name, `${label}.name`),
-    visible: readOptionalBoolean(value.visible, `${label}.visible`, DEFAULT_ENTITY_VISIBLE),
+    visible: readOptionalBoolean(
+      value.visible,
+      `${label}.visible`,
+      DEFAULT_ENTITY_VISIBLE
+    ),
     enabled:
       value.interactionEnabled === undefined
         ? DEFAULT_ENTITY_ENABLED
-        : readOptionalBoolean(value.enabled, `${label}.enabled`, DEFAULT_ENTITY_ENABLED),
+        : readOptionalBoolean(
+            value.enabled,
+            `${label}.enabled`,
+            DEFAULT_ENTITY_ENABLED
+          ),
     position: readVec3(value.position, `${label}.position`),
     radius: expectPositiveFiniteNumber(value.radius, `${label}.radius`),
     prompt: expectString(value.prompt, `${label}.prompt`),
@@ -2614,8 +2681,16 @@ function readSceneEntryEntity(value: unknown, label: string): EntityInstance {
   const entity = createSceneEntryEntity({
     id: expectString(value.id, `${label}.id`),
     name: readOptionalEntityName(value.name, `${label}.name`),
-    visible: readOptionalBoolean(value.visible, `${label}.visible`, DEFAULT_ENTITY_VISIBLE),
-    enabled: readOptionalBoolean(value.enabled, `${label}.enabled`, DEFAULT_ENTITY_ENABLED),
+    visible: readOptionalBoolean(
+      value.visible,
+      `${label}.visible`,
+      DEFAULT_ENTITY_VISIBLE
+    ),
+    enabled: readOptionalBoolean(
+      value.enabled,
+      `${label}.enabled`,
+      DEFAULT_ENTITY_ENABLED
+    ),
     position: readVec3(value.position, `${label}.position`),
     yawDegrees: expectFiniteNumber(value.yawDegrees, `${label}.yawDegrees`)
   });
@@ -2703,11 +2778,19 @@ function readSceneExitEntity(value: unknown, label: string): EntityInstance {
   const entity = createSceneExitEntity({
     id: expectString(value.id, `${label}.id`),
     name: readOptionalEntityName(value.name, `${label}.name`),
-    visible: readOptionalBoolean(value.visible, `${label}.visible`, DEFAULT_ENTITY_VISIBLE),
+    visible: readOptionalBoolean(
+      value.visible,
+      `${label}.visible`,
+      DEFAULT_ENTITY_VISIBLE
+    ),
     enabled:
       value.interactionEnabled === undefined
         ? DEFAULT_ENTITY_ENABLED
-        : readOptionalBoolean(value.enabled, `${label}.enabled`, DEFAULT_ENTITY_ENABLED),
+        : readOptionalBoolean(
+            value.enabled,
+            `${label}.enabled`,
+            DEFAULT_ENTITY_ENABLED
+          ),
     position: readVec3(value.position, `${label}.position`),
     radius: expectPositiveFiniteNumber(value.radius, `${label}.radius`),
     prompt: expectString(value.prompt, `${label}.prompt`),
@@ -2811,7 +2894,9 @@ function readControlTargetRef(value: unknown, label: string): ControlTargetRef {
       const entityKind = expectString(value.entityKind, `${label}.entityKind`);
 
       if (!isControlEntityTargetKind(entityKind)) {
-        throw new Error(`${label}.entityKind must be a supported control entity kind.`);
+        throw new Error(
+          `${label}.entityKind must be a supported control entity kind.`
+        );
       }
 
       return createEntityControlTargetRef(
@@ -3169,7 +3254,9 @@ function readScenePathValue(value: unknown, label: string): ScenePath {
   return createScenePath({
     id: expectString(value.id, `${label}.id`),
     name:
-      value.name === undefined ? undefined : expectString(value.name, `${label}.name`),
+      value.name === undefined
+        ? undefined
+        : expectString(value.name, `${label}.name`),
     visible: expectBoolean(value.visible, `${label}.visible`),
     enabled: expectBoolean(value.enabled, `${label}.enabled`),
     loop: expectBoolean(value.loop, `${label}.loop`),
@@ -3609,13 +3696,15 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     source.version !== PROJECT_TIME_NIGHT_BACKGROUND_SCENE_DOCUMENT_VERSION &&
     source.version !== 33 &&
     source.version !== AUTHORED_OBJECT_STATE_SCENE_DOCUMENT_VERSION &&
-    source.version !== PLAYER_START_AIR_DIRECTION_CONTROL_SCENE_DOCUMENT_VERSION &&
+    source.version !==
+      PLAYER_START_AIR_DIRECTION_CONTROL_SCENE_DOCUMENT_VERSION &&
     source.version !== PLAYER_START_AIR_CONTROL_SCENE_DOCUMENT_VERSION &&
     source.version !== PLAYER_START_MOVEMENT_TEMPLATE_SCENE_DOCUMENT_VERSION &&
     source.version !== PROJECT_NAME_SCENE_DOCUMENT_VERSION &&
     source.version !== STATIC_SIMPLE_MODEL_COLLIDERS_SCENE_DOCUMENT_VERSION &&
     source.version !== SCENE_EDITOR_PREFERENCES_SCENE_DOCUMENT_VERSION &&
-    source.version !== PLAYER_START_GAMEPAD_CAMERA_LOOK_SCENE_DOCUMENT_VERSION &&
+    source.version !==
+      PLAYER_START_GAMEPAD_CAMERA_LOOK_SCENE_DOCUMENT_VERSION &&
     source.version !== PLAYER_START_INPUT_BINDINGS_SCENE_DOCUMENT_VERSION &&
     source.version !== PLAYER_START_NAVIGATION_MODE_SCENE_DOCUMENT_VERSION &&
     source.version !== SCENE_TRANSITION_ENTITIES_SCENE_DOCUMENT_VERSION &&

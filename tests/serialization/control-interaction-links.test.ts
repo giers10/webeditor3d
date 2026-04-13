@@ -4,7 +4,11 @@ import {
   createLightControlTargetRef,
   createSetLightEnabledControlEffect
 } from "../../src/controls/control-surface";
-import { createEmptySceneDocument, NPC_PRESENCE_SCENE_DOCUMENT_VERSION, SCENE_DOCUMENT_VERSION } from "../../src/document/scene-document";
+import {
+  createEmptySceneDocument,
+  NPC_PRESENCE_SCENE_DOCUMENT_VERSION,
+  SCENE_DOCUMENT_VERSION
+} from "../../src/document/scene-document";
 import { migrateSceneDocument } from "../../src/document/migrate-scene-document";
 import {
   createPointLightEntity,

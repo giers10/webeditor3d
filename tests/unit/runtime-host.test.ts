@@ -143,7 +143,10 @@ describe("RuntimeHost", () => {
     });
     const hostInternals = host as unknown as {
       createInteractionDispatcher(): {
-        dispatchControlEffect(effect: ControlEffect, link: InteractionLink): void;
+        dispatchControlEffect(
+          effect: ControlEffect,
+          link: InteractionLink
+        ): void;
       };
       localLightObjects: Map<
         string,

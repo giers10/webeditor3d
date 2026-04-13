@@ -37,7 +37,10 @@ import {
   type ScenePath,
   type ScenePathPoint
 } from "../document/paths";
-import { cloneWorldSettings, type WorldSettings } from "../document/world-settings";
+import {
+  cloneWorldSettings,
+  type WorldSettings
+} from "../document/world-settings";
 import {
   type CharacterColliderSettings,
   cloneNpcPresence,
@@ -57,13 +60,27 @@ import {
 } from "../entities/entity-instances";
 import { getBoxBrushBounds } from "../geometry/box-brush";
 import { buildBoxBrushDerivedMeshData } from "../geometry/box-brush-mesh";
-import { buildGeneratedModelCollider, type GeneratedColliderBounds, type GeneratedModelCollider } from "../geometry/model-instance-collider-generation";
-import { cloneInteractionLink, getInteractionLinks, type InteractionLink } from "../interactions/interaction-links";
-import { cloneMaterialDef, type MaterialDef } from "../materials/starter-material-library";
+import {
+  buildGeneratedModelCollider,
+  type GeneratedColliderBounds,
+  type GeneratedModelCollider
+} from "../geometry/model-instance-collider-generation";
+import {
+  cloneInteractionLink,
+  getInteractionLinks,
+  type InteractionLink
+} from "../interactions/interaction-links";
+import {
+  cloneMaterialDef,
+  type MaterialDef
+} from "../materials/starter-material-library";
 import { assertRuntimeSceneBuildable } from "./runtime-scene-validation";
 import { resolveNpcPresenceActive } from "./runtime-npc-presence";
 import type { RuntimeClockState } from "./runtime-project-time";
-import { FIRST_PERSON_PLAYER_SHAPE, type FirstPersonPlayerShape } from "./player-collision";
+import {
+  FIRST_PERSON_PLAYER_SHAPE,
+  type FirstPersonPlayerShape
+} from "./player-collision";
 
 export type RuntimeNavigationMode = "firstPerson" | "thirdPerson";
 
@@ -507,7 +524,10 @@ function buildRuntimePlayerMovement(
   };
 }
 
-function resolveRuntimeMaterial(document: SceneDocument, materialId: string | null): MaterialDef | null {
+function resolveRuntimeMaterial(
+  document: SceneDocument,
+  materialId: string | null
+): MaterialDef | null {
   if (materialId === null) {
     return null;
   }
@@ -521,7 +541,10 @@ function resolveRuntimeMaterial(document: SceneDocument, materialId: string | nu
   return cloneMaterialDef(material);
 }
 
-function buildRuntimeBrush(brush: BoxBrush, document: SceneDocument): RuntimeBoxBrushInstance {
+function buildRuntimeBrush(
+  brush: BoxBrush,
+  document: SceneDocument
+): RuntimeBoxBrushInstance {
   return {
     id: brush.id,
     kind: "box",
@@ -584,7 +607,9 @@ function buildRuntimeFogVolume(brush: BoxBrush): RuntimeFogVolume {
 
 function buildRuntimeWaterVolume(brush: BoxBrush): RuntimeWaterVolume {
   if (brush.volume.mode !== "water") {
-    throw new Error(`Cannot build water volume from non-water brush ${brush.id}.`);
+    throw new Error(
+      `Cannot build water volume from non-water brush ${brush.id}.`
+    );
   }
 
   return {
@@ -617,7 +642,9 @@ function buildRuntimeCollider(brush: BoxBrush): RuntimeBrushTriMeshCollider {
   };
 }
 
-function buildRuntimeModelInstance(modelInstance: SceneDocument["modelInstances"][string]): RuntimeModelInstance {
+function buildRuntimeModelInstance(
+  modelInstance: SceneDocument["modelInstances"][string]
+): RuntimeModelInstance {
   return {
     instanceId: modelInstance.id,
     assetId: modelInstance.assetId,
@@ -663,7 +690,9 @@ function buildRuntimePath(path: ScenePath): RuntimePath {
   };
 }
 
-function getColliderBounds(collider: RuntimeSceneCollider): GeneratedColliderBounds {
+function getColliderBounds(
+  collider: RuntimeSceneCollider
+): GeneratedColliderBounds {
   return {
     min: cloneVec3(collider.worldBounds.min),
     max: cloneVec3(collider.worldBounds.max)
@@ -751,7 +780,9 @@ export function buildRuntimeNpcCollider(
   }
 }
 
-function combineColliderBounds(colliders: RuntimeSceneCollider[]): RuntimeSceneBounds | null {
+function combineColliderBounds(
+  colliders: RuntimeSceneCollider[]
+): RuntimeSceneBounds | null {
   if (colliders.length === 0) {
     return null;
   }
@@ -786,7 +817,9 @@ function combineColliderBounds(colliders: RuntimeSceneCollider[]): RuntimeSceneB
   };
 }
 
-function buildFallbackSpawn(sceneBounds: RuntimeSceneBounds | null): RuntimeSpawnPoint {
+function buildFallbackSpawn(
+  sceneBounds: RuntimeSceneBounds | null
+): RuntimeSpawnPoint {
   if (sceneBounds === null) {
     return {
       source: "fallback",
@@ -829,7 +862,10 @@ function buildRuntimeControlSurface(
   const defaultSource = createDefaultResolvedControlSource();
 
   for (const pointLight of collections.localLights.pointLights) {
-    const target = createLightControlTargetRef("pointLight", pointLight.entityId);
+    const target = createLightControlTargetRef(
+      "pointLight",
+      pointLight.entityId
+    );
     const descriptor = createLightIntensityControlChannelDescriptor({
       target,
       defaultValue: pointLight.intensity
@@ -843,7 +879,8 @@ function buildRuntimeControlSurface(
     resolved.discrete.push(
       createResolvedLightEnabledState({
         target,
-        value: sourceEntity?.kind === "pointLight" ? sourceEntity.visible : true,
+        value:
+          sourceEntity?.kind === "pointLight" ? sourceEntity.visible : true,
         source: defaultSource
       })
     );
@@ -934,7 +971,8 @@ function buildRuntimeControlSurface(
   }
 
   for (const modelInstance of modelInstances) {
-    const authoredModelInstance = document.modelInstances[modelInstance.instanceId];
+    const authoredModelInstance =
+      document.modelInstances[modelInstance.instanceId];
     const asset =
       authoredModelInstance === undefined
         ? undefined
@@ -1112,7 +1150,9 @@ function buildRuntimeSceneCollections(
 }
 
 function assertNever(value: never): never {
-  throw new Error(`Unsupported runtime entity: ${String((value as EntityInstance).kind)}`);
+  throw new Error(
+    `Unsupported runtime entity: ${String((value as EntityInstance).kind)}`
+  );
 }
 
 function buildRuntimePlayerShape(
@@ -1161,8 +1201,13 @@ function resolveRuntimeSpawn(
   return buildFallbackSpawn(sceneBounds);
 }
 
-export function buildRuntimeSceneFromDocument(document: SceneDocument, options: BuildRuntimeSceneOptions = {}): RuntimeSceneDefinition {
-  const playerStartEntity = getPrimaryEnabledPlayerStartEntity(document.entities);
+export function buildRuntimeSceneFromDocument(
+  document: SceneDocument,
+  options: BuildRuntimeSceneOptions = {}
+): RuntimeSceneDefinition {
+  const playerStartEntity = getPrimaryEnabledPlayerStartEntity(
+    document.entities
+  );
   const navigationMode = resolveRuntimeNavigationMode(
     playerStartEntity,
     options.navigationMode
@@ -1173,8 +1218,12 @@ export function buildRuntimeSceneFromDocument(document: SceneDocument, options: 
     loadedModelAssets: options.loadedModelAssets
   });
 
-  const enabledBrushes = Object.values(document.brushes).filter((brush) => brush.enabled);
-  const brushes = enabledBrushes.map((brush) => buildRuntimeBrush(brush, document));
+  const enabledBrushes = Object.values(document.brushes).filter(
+    (brush) => brush.enabled
+  );
+  const brushes = enabledBrushes.map((brush) =>
+    buildRuntimeBrush(brush, document)
+  );
   const staticColliders: RuntimeSceneCollider[] = [];
   const volumes: RuntimeBoxVolumeCollection = {
     fog: [],
@@ -1194,7 +1243,9 @@ export function buildRuntimeSceneFromDocument(document: SceneDocument, options: 
 
     volumes.water.push(buildRuntimeWaterVolume(brush));
   }
-  const enabledModelInstances = getModelInstances(document.modelInstances).filter((modelInstance) => modelInstance.enabled);
+  const enabledModelInstances = getModelInstances(
+    document.modelInstances
+  ).filter((modelInstance) => modelInstance.enabled);
   const modelInstances = enabledModelInstances.map(buildRuntimeModelInstance);
   const paths = getScenePaths(document.paths)
     .filter((path) => path.enabled)
@@ -1205,9 +1256,15 @@ export function buildRuntimeSceneFromDocument(document: SceneDocument, options: 
     document,
     runtimeTimeOfDayHours
   );
-  const control = buildRuntimeControlSurface(document, collections, modelInstances);
+  const control = buildRuntimeControlSurface(
+    document,
+    collections,
+    modelInstances
+  );
   const enabledBrushIds = new Set(enabledBrushes.map((brush) => brush.id));
-  const enabledModelInstanceIds = new Set(enabledModelInstances.map((modelInstance) => modelInstance.id));
+  const enabledModelInstanceIds = new Set(
+    enabledModelInstances.map((modelInstance) => modelInstance.id)
+  );
   const enabledEntityIds = new Set(
     getEntityInstances(document.entities)
       .filter((entity) => entity.enabled)
@@ -1267,7 +1324,11 @@ export function buildRuntimeSceneFromDocument(document: SceneDocument, options: 
       continue;
     }
 
-    const generatedCollider = buildGeneratedModelCollider(modelInstance, asset, options.loadedModelAssets?.[modelInstance.assetId]);
+    const generatedCollider = buildGeneratedModelCollider(
+      modelInstance,
+      asset,
+      options.loadedModelAssets?.[modelInstance.assetId]
+    );
 
     if (generatedCollider !== null) {
       staticColliders.push(generatedCollider);

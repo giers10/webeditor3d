@@ -213,7 +213,10 @@ export class RuntimeHost {
   private readonly volumeAnimatedUniforms: Array<{ value: number }> = [];
   private readonly runtimeWaterContactUniforms: RuntimeWaterContactUniformBinding[] =
     [];
-  private readonly localLightObjects = new Map<string, LocalLightRenderObjects>();
+  private readonly localLightObjects = new Map<
+    string,
+    LocalLightRenderObjects
+  >();
   private readonly modelRenderObjects = new Map<string, Group>();
   private readonly materialTextureCache = new Map<
     string,
@@ -568,9 +571,7 @@ export class RuntimeHost {
   }
 
   setSceneExitHandler(
-    handler:
-      | ((request: RuntimeSceneExitTransitionRequest) => void)
-      | null
+    handler: ((request: RuntimeSceneExitTransitionRequest) => void) | null
   ) {
     this.sceneExitHandler = handler;
   }
@@ -763,7 +764,10 @@ export class RuntimeHost {
     const resolvedTime =
       this.currentClockState === null
         ? null
-        : resolveRuntimeTimeState(this.runtimeScene.time, this.currentClockState);
+        : resolveRuntimeTimeState(
+            this.runtimeScene.time,
+            this.currentClockState
+          );
 
     const resolvedWorld = resolveRuntimeDayNightWorldState(
       this.currentWorld,
@@ -773,8 +777,8 @@ export class RuntimeHost {
     );
     const backgroundTexture =
       resolvedWorld.background.mode === "image"
-        ? this.loadedImageAssets[resolvedWorld.background.assetId]?.texture ??
-          null
+        ? (this.loadedImageAssets[resolvedWorld.background.assetId]?.texture ??
+          null)
         : null;
     const nightBackgroundOverlay = resolvedWorld.nightBackgroundOverlay;
     const backgroundOverlayState =
@@ -785,8 +789,7 @@ export class RuntimeHost {
               this.loadedImageAssets[nightBackgroundOverlay.assetId]?.texture ??
               null,
             opacity: nightBackgroundOverlay.opacity,
-            environmentIntensity:
-              nightBackgroundOverlay.environmentIntensity
+            environmentIntensity: nightBackgroundOverlay.environmentIntensity
           };
     const environmentState = resolveWorldEnvironmentState(
       resolvedWorld.background,
@@ -1380,28 +1383,28 @@ export class RuntimeHost {
     const facingGroup = new Group();
     facingGroup.rotation.y = (npc.yawDegrees * Math.PI) / 180;
     group.add(facingGroup);
-    const colliderTop = getNpcColliderHeight({
-      mode: npc.collider.mode,
-      eyeHeight: npc.collider.eyeHeight,
-      capsuleRadius: npc.collider.mode === "capsule" ? npc.collider.radius : 0.35,
-      capsuleHeight: npc.collider.mode === "capsule" ? npc.collider.height : 1.8,
-      boxSize:
-        npc.collider.mode === "box"
-          ? npc.collider.size
-          : {
-              x: 0.7,
-              y: 1.8,
-              z: 0.7
-            }
-    }) ?? 0.18;
+    const colliderTop =
+      getNpcColliderHeight({
+        mode: npc.collider.mode,
+        eyeHeight: npc.collider.eyeHeight,
+        capsuleRadius:
+          npc.collider.mode === "capsule" ? npc.collider.radius : 0.35,
+        capsuleHeight:
+          npc.collider.mode === "capsule" ? npc.collider.height : 1.8,
+        boxSize:
+          npc.collider.mode === "box"
+            ? npc.collider.size
+            : {
+                x: 0.7,
+                y: 1.8,
+                z: 0.7
+              }
+      }) ?? 0.18;
 
     const body = new Mesh(new BoxGeometry(0.08, 0.08, 0.34), facingMaterial);
     body.position.set(0, colliderTop + 0.12, 0.06);
 
-    const arrowHead = new Mesh(
-      new ConeGeometry(0.1, 0.22, 14),
-      facingMaterial
-    );
+    const arrowHead = new Mesh(new ConeGeometry(0.1, 0.22, 14), facingMaterial);
     arrowHead.rotation.x = Math.PI * 0.5;
     arrowHead.position.set(0, colliderTop + 0.12, 0.28);
 
@@ -1471,7 +1474,7 @@ export class RuntimeHost {
       const asset =
         npc.modelAssetId === null
           ? null
-          : this.projectAssets[npc.modelAssetId] ?? null;
+          : (this.projectAssets[npc.modelAssetId] ?? null);
       const renderGroup =
         npc.modelAssetId === null || asset?.kind !== "model"
           ? this.createNpcColliderFallbackRenderGroup(npc)
@@ -2209,7 +2212,9 @@ export class RuntimeHost {
       this.applyDayNightLighting();
       this.clockPublishAccumulator += dt;
 
-      if (this.clockPublishAccumulator >= RUNTIME_CLOCK_PUBLISH_INTERVAL_SECONDS) {
+      if (
+        this.clockPublishAccumulator >= RUNTIME_CLOCK_PUBLISH_INTERVAL_SECONDS
+      ) {
         this.clockPublishAccumulator = 0;
         this.publishRuntimeClockState();
       }
@@ -2349,9 +2354,9 @@ export class RuntimeHost {
       return;
     }
 
-    this.runtimeScene.entities.npcs = this.runtimeScene.npcDefinitions.filter(
-      (npc) => npc.active
-    ).map((npc) => createRuntimeNpcFromDefinition(npc));
+    this.runtimeScene.entities.npcs = this.runtimeScene.npcDefinitions
+      .filter((npc) => npc.active)
+      .map((npc) => createRuntimeNpcFromDefinition(npc));
     this.runtimeScene.colliders = [
       ...this.runtimeScene.staticColliders,
       ...this.runtimeScene.entities.npcs
