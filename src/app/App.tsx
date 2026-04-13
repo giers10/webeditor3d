@@ -9464,12 +9464,19 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
               <Panel title="World">
                 <div className="stat-card">
-                  <div className="label">Background</div>
+                  <div className="label">Day Environment</div>
                   <div
                     className="value"
                     data-testid="world-background-mode-value"
                   >
-                    {formatWorldBackgroundLabel(editorState.document.world)}
+                    {formatWorldBackgroundLabel(editorState.document.world.background)}
+                  </div>
+                  <div className="material-summary">
+                    {editorState.document.world.projectTimeLightingEnabled
+                      ? "This scene uses its authored day environment plus dawn, dusk, and night overrides from this panel."
+                      : "This scene keeps its authored day environment at all times."}
+                  </div>
+                </div>
 
                 <div className="form-section">
                   <label className="form-field form-field--toggle">
@@ -9485,10 +9492,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     />
                   </label>
                   <div className="material-summary">
-                    Disable this when a scene should keep its authored world sky and lighting instead of the global sunrise, sunset, dawn, dusk, and night profile.
+                    Disable this when a scene should keep its authored world sky and lighting instead of the global sunrise, sunset, dawn, dusk, and night overrides.
                   </div>
                 </div>
-                  </div>
+
+                <Panel title="Day Environment">
+                  <div className="stat-card">
                   <div
                     className="world-background-preview"
                     data-testid="world-background-preview"
@@ -9525,7 +9534,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         editorState.document.world.background.assetId}
                     </div>
                   )}
-                </div>
+                  </div>
 
                 <div className="form-section">
                   <div className="label">Background Mode</div>
