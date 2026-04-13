@@ -3669,6 +3669,26 @@ export class ViewportHost {
     group.add(mesh);
   }
 
+  private tagEntityGroup(
+    group: Group,
+    entityId: string,
+    entityKind: EntityInstance["kind"]
+  ): Mesh[] {
+    const meshes: Mesh[] = [];
+
+    group.traverse((object) => {
+      if (!(object instanceof Mesh)) {
+        return;
+      }
+
+      object.userData.entityId = entityId;
+      object.userData.entityKind = entityKind;
+      meshes.push(object);
+    });
+
+    return meshes;
+  }
+
   private createPointLightGizmoRenderObjects(
     entityId: string,
     position: Vec3,
