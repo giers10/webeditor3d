@@ -1239,10 +1239,6 @@ export function buildRuntimeSceneFromDocument(document: SceneDocument, options: 
               return enabledModelInstanceIds.has(
                 link.action.effect.target.modelInstanceId
               );
-            case "actor":
-            case "scene":
-            case "global":
-              return true;
           }
       }
     })
