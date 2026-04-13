@@ -43,8 +43,6 @@ import {
 } from "./scene-document";
 import {
   HOURS_PER_DAY,
-  type ProjectTimeNightBackgroundSettings,
-  type ProjectTimePhaseProfile,
   type ProjectTimeSettings
 } from "./project-time-settings";
 import {
@@ -54,6 +52,8 @@ import {
   isBoxVolumeRenderPath,
   isAdvancedRenderingToneMappingMode,
   isHexColorString,
+  type WorldBackgroundSettings,
+  type WorldTimePhaseProfile,
   type WorldSettings
 } from "./world-settings";
 
