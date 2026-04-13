@@ -399,17 +399,28 @@ function getModelInstanceCollisionModeDescription(
   }
 }
 
-function getPlayerStartColliderModeDescription(
-  mode: PlayerStartColliderMode
+function getCharacterColliderModeDescription(
+  mode: PlayerStartColliderMode,
+  subject: "Player Start" | "NPC"
 ): string {
   switch (mode) {
     case "capsule":
-      return "Uses a capsule player collider for standard grounded first-person traversal.";
+      return `Uses a capsule ${subject.toLowerCase()} collider for standard grounded traversal.`;
     case "box":
-      return "Uses an axis-aligned box player collider for sharper footprint bounds.";
+      return `Uses an axis-aligned box ${subject.toLowerCase()} collider for sharper footprint bounds.`;
     case "none":
-      return "Disables player collision detection. First-person traversal continues without world clipping.";
+      return `Disables ${subject.toLowerCase()} collision. ${subject} still renders and keeps its authored facing.`;
   }
+}
+
+function getPlayerStartColliderModeDescription(
+  mode: PlayerStartColliderMode
+): string {
+  return getCharacterColliderModeDescription(mode, "Player Start");
+}
+
+function getNpcColliderModeDescription(mode: PlayerStartColliderMode): string {
+  return getCharacterColliderModeDescription(mode, "NPC");
 }
 
 function getPlayerStartMovementTemplateLabel(
