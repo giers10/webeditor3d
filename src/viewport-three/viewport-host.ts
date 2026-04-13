@@ -301,6 +301,7 @@ interface CachedMaterialTexture {
 interface EntityRenderObjects {
   group: Group;
   meshes: Mesh[];
+  dispose?: () => void;
 }
 
 interface LocalLightRenderObjects {
