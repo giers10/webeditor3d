@@ -292,8 +292,6 @@ import {
 } from "../entities/entity-labels";
 import { listNpcActorUsages } from "../entities/npc-actor-registry";
 import {
-  formatControlEffectValue,
-  formatControlTargetRef,
   areInteractionLinksEqual,
   createControlInteractionLink,
   createPlayAnimationInteractionLink,
@@ -306,6 +304,10 @@ import {
   type InteractionLink,
   type InteractionTriggerKind
 } from "../interactions/interaction-links";
+import {
+  formatControlEffectValue,
+  formatControlTargetRef
+} from "../controls/control-surface";
 import {
   STARTER_MATERIAL_LIBRARY,
   type MaterialDef
