@@ -3071,6 +3071,7 @@ export class ViewportHost {
         break;
       case "playerStart":
       case "sceneEntry":
+      case "npc":
       case "teleportTarget":
         renderObjects.group.position.set(
           entity.position.x,
@@ -3263,6 +3264,7 @@ export class ViewportHost {
             break;
           case "playerStart":
           case "sceneEntry":
+          case "npc":
           case "teleportTarget":
             this.applyEntityRenderObjectTransform({
               ...currentEntity,
