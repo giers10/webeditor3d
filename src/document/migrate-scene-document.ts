@@ -2981,10 +2981,7 @@ function readScenePathValue(value: unknown, label: string): ScenePath {
   });
 }
 
-function readScenePaths(
-  value: unknown,
-  options: { allowMissing: boolean }
-): SceneDocument["paths"] {
+function readScenePaths(value: unknown): SceneDocument["paths"] {
   if (value === undefined) {
     return {};
   }
@@ -3454,9 +3451,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     textures: expectEmptyCollection(source.textures, "textures"),
     assets,
     brushes: readBrushes(source.brushes, materials, false),
-    paths: readScenePaths(source.paths, {
-      allowMissing: source.version < PATH_FOUNDATION_SCENE_DOCUMENT_VERSION
-    }),
+    paths: readScenePaths(source.paths),
     modelInstances: readModelInstances(source.modelInstances, assets),
     entities: readEntities(source.entities, { legacySoundEmitter: false }),
     interactionLinks: readInteractionLinks(source.interactionLinks)
@@ -3500,9 +3495,7 @@ function readProjectScene(
       legacyProjectTimeValue: options.legacyProjectTimeValue
     }),
     brushes: readBrushes(value.brushes, materials, false),
-    paths: readScenePaths(value.paths, {
-      allowMissing: options.allowMissingPaths
-    }),
+    paths: readScenePaths(value.paths),
     modelInstances: readModelInstances(value.modelInstances, assets),
     entities: readEntities(value.entities, { legacySoundEmitter: false }),
     interactionLinks: readInteractionLinks(value.interactionLinks)
