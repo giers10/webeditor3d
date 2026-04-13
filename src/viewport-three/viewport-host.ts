@@ -3296,14 +3296,17 @@ export class ViewportHost {
           break;
         }
 
+        const previewPointId = activeTransformSession.target.pointId;
+        const previewPosition = activeTransformSession.preview.position;
+
         this.updatePathRenderObjectState(
           {
             ...currentPath,
             points: currentPath.points.map((point) =>
-              point.id === activeTransformSession.target.pointId
+              point.id === previewPointId
                 ? {
                     ...point,
-                    position: activeTransformSession.preview.position
+                    position: previewPosition
                   }
                 : point
             )
