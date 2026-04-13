@@ -1030,7 +1030,7 @@ function buildRuntimeControlSurface(
 
 function buildRuntimeSceneCollections(
   document: SceneDocument,
-  timeOfDayHours: number
+  runtimeClock: RuntimeClockState | null
 ): RuntimeSceneCollections {
   const runtimeEntities: RuntimeEntityCollection = {
     playerStarts: [],
@@ -1099,16 +1099,14 @@ function buildRuntimeSceneCollections(
           name: entity.name,
           visible: entity.visible,
           position: cloneVec3(entity.position),
-          presence: cloneNpcPresence(entity.presence),
-          active: resolveNpcPresenceActive(entity.presence, timeOfDayHours),
+          active: true,
+          activeRoutineId: null,
+          activeRoutineTitle: null,
           yawDegrees: entity.yawDegrees,
           modelAssetId: entity.modelAssetId,
           collider: createRuntimeCharacterShape(entity.collider)
         };
         npcDefinitions.push(npc);
-        if (npc.active) {
-          runtimeEntities.npcs.push(createRuntimeNpcFromDefinition(npc));
-        }
         break;
       }
       case "soundEmitter":
@@ -1169,10 +1167,39 @@ function buildRuntimeSceneCollections(
     }
   }
 
+  const scheduler = resolveRuntimeProjectScheduleState({
+    scheduler: document.scheduler,
+    actorIds: npcDefinitions.map((npc) => npc.actorId),
+    dayNumber:
+      runtimeClock === null
+        ? document.time.startDayNumber
+        : runtimeClock.dayCount + 1,
+    timeOfDayHours:
+      runtimeClock === null
+        ? document.time.startTimeOfDayHours
+        : runtimeClock.timeOfDayHours
+  });
+  const scheduleByActorId = new Map(
+    scheduler.actors.map((actorState) => [actorState.actorId, actorState])
+  );
+
+  for (const npc of npcDefinitions) {
+    const actorState = scheduleByActorId.get(npc.actorId);
+
+    npc.active = actorState?.active ?? true;
+    npc.activeRoutineId = actorState?.activeRoutineId ?? null;
+    npc.activeRoutineTitle = actorState?.activeRoutineTitle ?? null;
+
+    if (npc.active) {
+      runtimeEntities.npcs.push(createRuntimeNpcFromDefinition(npc));
+    }
+  }
+
   return {
     entities: runtimeEntities,
     localLights,
-    npcDefinitions
+    npcDefinitions,
+    scheduler
   };
 }
 
