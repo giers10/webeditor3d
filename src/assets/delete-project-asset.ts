@@ -20,6 +20,23 @@ function removeInvalidatedInteractionLinks(
         case "playSound":
         case "stopSound":
           return silencedSoundEmitterIds.has(link.action.targetSoundEmitterId);
+        case "control":
+          switch (link.action.effect.type) {
+            case "playModelAnimation":
+            case "stopModelAnimation":
+              return removedModelInstanceIds.has(
+                link.action.effect.target.modelInstanceId
+              );
+            case "playSound":
+            case "stopSound":
+              return silencedSoundEmitterIds.has(
+                link.action.effect.target.entityId
+              );
+            case "setInteractionEnabled":
+            case "setLightEnabled":
+            case "setLightIntensity":
+              return false;
+          }
         default:
           return false;
       }
