@@ -6060,9 +6060,18 @@ export class ViewportHost {
             break;
           case "npc":
             previewGroup = this.createNpcRenderObjects(
-              "creation-preview",
-              previewPosition,
-              DEFAULT_NPC_YAW_DEGREES,
+              {
+                id: "creation-preview",
+                kind: "npc",
+                name: undefined,
+                visible: true,
+                enabled: true,
+                position: previewPosition,
+                yawDegrees: DEFAULT_NPC_YAW_DEGREES,
+                actorId: "creation-preview",
+                modelAssetId: toolPreview.target.modelAssetId ?? null,
+                collider: createNpcColliderSettings()
+              },
               false,
               BOX_CREATE_PREVIEW_FILL
             ).group;
