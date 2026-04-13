@@ -12,7 +12,10 @@ import {
   createEmptyProjectScene
 } from "../../src/document/scene-document";
 import { createDefaultProjectTimeSettings } from "../../src/document/project-time-settings";
-import { createDefaultWorldSettings } from "../../src/document/world-settings";
+import {
+  createDefaultWorldSettings,
+  createDefaultWorldTimePhaseProfile
+} from "../../src/document/world-settings";
 import {
   createSceneEntryEntity,
   createSceneExitEntity
@@ -229,15 +232,15 @@ describe("project document JSON", () => {
           dawnDurationHours: 1.25,
           duskDurationHours: 1.75,
           dawn: {
-            ...createDefaultProjectTimeSettings().dawn,
+            ...createDefaultWorldSettings().timeOfDay.dawn,
             ambientIntensityFactor: 0.74
           },
           dusk: {
-            ...createDefaultProjectTimeSettings().dusk,
+            ...createDefaultWorldSettings().timeOfDay.dusk,
             lightIntensityFactor: 0.63
           },
           night: {
-            ...createDefaultProjectTimeSettings().night,
+            ...createDefaultWorldTimePhaseProfile("night"),
             lightIntensityFactor: 0.21
           }
         }
