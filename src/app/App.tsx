@@ -189,6 +189,8 @@ import {
   DEFAULT_ENTITY_POSITION,
   DEFAULT_INTERACTABLE_PROMPT,
   DEFAULT_INTERACTABLE_RADIUS,
+  DEFAULT_NPC_MODEL_ASSET_ID,
+  DEFAULT_NPC_YAW_DEGREES,
   DEFAULT_POINT_LIGHT_COLOR_HEX,
   DEFAULT_POINT_LIGHT_DISTANCE,
   DEFAULT_POINT_LIGHT_INTENSITY,
@@ -223,6 +225,7 @@ import {
   clonePlayerStartInputBindings,
   clonePlayerStartMovementTemplate,
   createInteractableEntity,
+  createNpcEntity,
   createPointLightEntity,
   inferPlayerStartMovementTemplateKind,
   createPlayerStartInputBindings,
@@ -1610,6 +1613,17 @@ export function App({ store, initialStatusMessage }: AppProps) {
     selectedEntity?.kind === "triggerVolume" ? selectedEntity : null;
   const selectedSceneEntry =
     selectedEntity?.kind === "sceneEntry" ? selectedEntity : null;
+  const selectedNpc = selectedEntity?.kind === "npc" ? selectedEntity : null;
+  const selectedNpcAsset =
+    selectedNpc === null
+      ? null
+      : selectedNpc.modelAssetId === null
+        ? null
+        : (editorState.document.assets[selectedNpc.modelAssetId] ?? null);
+  const selectedNpcModelAssetRecord =
+    selectedNpcAsset !== null && selectedNpcAsset.kind === "model"
+      ? selectedNpcAsset
+      : null;
   const selectedTeleportTarget =
     selectedEntity?.kind === "teleportTarget" ? selectedEntity : null;
   const selectedInteractable =
@@ -1829,6 +1843,13 @@ export function App({ store, initialStatusMessage }: AppProps) {
   );
   const [sceneEntryYawDraft, setSceneEntryYawDraft] = useState(
     String(DEFAULT_SCENE_ENTRY_YAW_DEGREES)
+  );
+  const [npcActorIdDraft, setNpcActorIdDraft] = useState("");
+  const [npcYawDraft, setNpcYawDraft] = useState(
+    String(DEFAULT_NPC_YAW_DEGREES)
+  );
+  const [npcModelAssetIdDraft, setNpcModelAssetIdDraft] = useState(
+    DEFAULT_NPC_MODEL_ASSET_ID ?? ""
   );
   const [teleportTargetYawDraft, setTeleportTargetYawDraft] = useState(
     String(DEFAULT_TELEPORT_TARGET_YAW_DEGREES)
@@ -2352,6 +2373,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
       setSoundEmitterLoopDraft(false);
       setTriggerVolumeSizeDraft(createVec3Draft(DEFAULT_TRIGGER_VOLUME_SIZE));
       setSceneEntryYawDraft(String(DEFAULT_SCENE_ENTRY_YAW_DEGREES));
+      setNpcActorIdDraft("");
+      setNpcYawDraft(String(DEFAULT_NPC_YAW_DEGREES));
+      setNpcModelAssetIdDraft(DEFAULT_NPC_MODEL_ASSET_ID ?? "");
       setTeleportTargetYawDraft(String(DEFAULT_TELEPORT_TARGET_YAW_DEGREES));
       setInteractableRadiusDraft(String(DEFAULT_INTERACTABLE_RADIUS));
       setInteractablePromptDraft(DEFAULT_INTERACTABLE_PROMPT);
@@ -2410,6 +2434,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
         break;
       case "sceneEntry":
         setSceneEntryYawDraft(String(selectedEntity.yawDegrees));
+        break;
+      case "npc":
+        setNpcActorIdDraft(selectedEntity.actorId);
+        setNpcYawDraft(String(selectedEntity.yawDegrees));
+        setNpcModelAssetIdDraft(selectedEntity.modelAssetId ?? "");
         break;
       case "soundEmitter":
         setSoundEmitterAudioAssetIdDraft(selectedEntity.audioAssetId ?? "");
@@ -4497,7 +4526,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
   const beginEntityCreation = (
     kind: EntityKind,
-    options: { audioAssetId?: string | null } = {}
+    options: {
+      audioAssetId?: string | null;
+      modelAssetId?: string | null;
+    } = {}
   ) => {
     if (kind === "sceneExit" && resolveDefaultSceneExitDestination() === null) {
       setStatusMessage("Author a Scene Entry before placing a Scene Exit.");
@@ -4511,7 +4543,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
         target: {
           kind: "entity",
           entityKind: kind,
-          audioAssetId: options.audioAssetId ?? null
+          audioAssetId: options.audioAssetId ?? null,
+          modelAssetId: options.modelAssetId ?? null
         },
         center: null
       },
