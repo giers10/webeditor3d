@@ -975,6 +975,7 @@ export class ViewportHost {
     window.removeEventListener("pointermove", this.handleWindowPointerMove);
     this.clearLocalLights();
     this.clearBrushMeshes();
+    this.clearPaths();
     this.clearEntityMarkers();
     this.creationPreviewChangeHandler = null;
     this.creationCommitHandler = null;
@@ -5404,6 +5405,8 @@ export class ViewportHost {
         return `brushEdge:${selection.brushId}:${selection.edgeId}`;
       case "brushVertex":
         return `brushVertex:${selection.brushId}:${selection.vertexId}`;
+      case "paths":
+        return selection.ids.length === 1 ? `path:${selection.ids[0]}` : null;
       case "entities":
         return selection.ids.length === 1 ? `entity:${selection.ids[0]}` : null;
       case "modelInstances":
@@ -5424,6 +5427,14 @@ export class ViewportHost {
       return {
         kind: "entities",
         ids: [entityId]
+      };
+    }
+
+    const pathId = hit.object.userData.pathId;
+    if (typeof pathId === "string") {
+      return {
+        kind: "paths",
+        ids: [pathId]
       };
     }
 
@@ -5504,6 +5515,10 @@ export class ViewportHost {
           this.entityRenderObjects.values(),
           (renderObjects) => renderObjects.group
         ),
+        ...Array.from(this.pathRenderObjects.values(), (renderObjects) => [
+          renderObjects.line,
+          ...renderObjects.pointMeshes.map((pointMesh) => pointMesh.mesh)
+        ]).flat(),
         ...Array.from(this.modelRenderObjects.values()),
         ...this.getBrushPickableObjects()
       ],

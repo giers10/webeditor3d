@@ -3554,12 +3554,12 @@ export function validateSceneDocument(
     }
   }
 
-  for (const [modelInstanceKey, modelInstance] of Object.entries(
+  for (const [pathKey, pathValue] of Object.entries(
     document.paths
   )) {
-    const path = `paths.${modelInstanceKey}`;
+    const path = `paths.${pathKey}`;
 
-    if (modelInstance.id !== modelInstanceKey) {
+    if (pathValue.id !== pathKey) {
       diagnostics.push(
         createDiagnostic(
           "error",
@@ -3570,8 +3570,8 @@ export function validateSceneDocument(
       );
     }
 
-    registerAuthoredId(modelInstance.id, path, seenIds, diagnostics);
-    validateScenePath(modelInstance, path, diagnostics);
+    registerAuthoredId(pathValue.id, path, seenIds, diagnostics);
+    validateScenePath(pathValue, path, diagnostics);
   }
 
   for (const [modelInstanceKey, modelInstance] of Object.entries(

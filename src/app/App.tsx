@@ -18,6 +18,7 @@ import { createDuplicateSelectionCommand } from "../commands/duplicate-selection
 import { createImportAudioAssetCommand } from "../commands/import-audio-asset-command";
 import { createImportBackgroundImageAssetCommand } from "../commands/import-background-image-asset-command";
 import { createImportModelAssetCommand } from "../commands/import-model-asset-command";
+import { createDeletePathCommand } from "../commands/delete-path-command";
 import { createDeleteModelInstanceCommand } from "../commands/delete-model-instance-command";
 import { createCommitTransformSessionCommand } from "../commands/commit-transform-session-command";
 import { createMoveBoxBrushCommand } from "../commands/move-box-brush-command";
@@ -34,6 +35,8 @@ import { createSetActiveSceneCommand } from "../commands/set-active-scene-comman
 import { createDeleteInteractionLinkCommand } from "../commands/delete-interaction-link-command";
 import { createSetModelInstanceAuthoredStateCommand } from "../commands/set-model-instance-authored-state-command";
 import { createSetModelInstanceNameCommand } from "../commands/set-model-instance-name-command";
+import { createSetPathAuthoredStateCommand } from "../commands/set-path-authored-state-command";
+import { createSetPathNameCommand } from "../commands/set-path-name-command";
 import { createSetProjectNameCommand } from "../commands/set-project-name-command";
 import { createSetProjectTimeSettingsCommand } from "../commands/set-project-time-settings-command";
 import { createSetSceneLoadingScreenCommand } from "../commands/set-scene-loading-screen-command";
@@ -41,6 +44,7 @@ import { createSetSceneNameCommand } from "../commands/set-scene-name-command";
 import { createSetWorldSettingsCommand } from "../commands/set-world-settings-command";
 import { createUpsertEntityCommand } from "../commands/upsert-entity-command";
 import { createUpsertModelInstanceCommand } from "../commands/upsert-model-instance-command";
+import { createUpsertPathCommand } from "../commands/upsert-path-command";
 import { createUpsertInteractionLinkCommand } from "../commands/upsert-interaction-link-command";
 import {
   getSelectedBrushEdgeId,
@@ -49,8 +53,10 @@ import {
   getSingleSelectedBrushId,
   getSingleSelectedEntityId,
   getSingleSelectedModelInstanceId,
+  getSingleSelectedPathId,
   isBrushFaceSelected,
   isBrushSelected,
+  isPathSelected,
   type EditorSelection
 } from "../core/selection";
 import {
@@ -161,6 +167,16 @@ import {
   DEFAULT_PROJECT_NAME,
   type SceneLoadingScreenSettings
 } from "../document/scene-document";
+import {
+  MIN_SCENE_PATH_POINT_COUNT,
+  areScenePathsEqual,
+  createAppendedScenePathPoint,
+  createScenePath,
+  getScenePathLabel,
+  getScenePaths,
+  normalizeScenePathName,
+  type ScenePath
+} from "../document/paths";
 import {
   areProjectTimeSettingsEqual,
   cloneProjectTimeSettings,
@@ -876,6 +892,19 @@ function getSelectedModelInstance(
   );
 }
 
+function getSelectedPath(
+  selection: EditorSelection,
+  paths: ScenePath[]
+): ScenePath | null {
+  const selectedPathId = getSingleSelectedPathId(selection);
+
+  if (selectedPathId === null) {
+    return null;
+  }
+
+  return paths.find((path) => path.id === selectedPathId) ?? null;
+}
+
 function isModelAsset(asset: ProjectAssetRecord): asset is ModelAssetRecord {
   return asset.kind === "model";
 }
@@ -992,6 +1021,11 @@ function getBrushLabel(brush: BoxBrush, index: number): string {
   return brush.name ?? `Whitebox Box ${index + 1}`;
 }
 
+function getPathLabelById(pathId: string, paths: ScenePath[]): string {
+  const pathIndex = paths.findIndex((path) => path.id === pathId);
+  return pathIndex === -1 ? "Path" : getScenePathLabel(paths[pathIndex], pathIndex);
+}
+
 function formatAuthoredObjectStateSummary(state: {
   visible: boolean;
   enabled: boolean;
@@ -1032,6 +1066,7 @@ function getSelectedBrushLabel(
 function describeSelection(
   selection: EditorSelection,
   brushes: BoxBrush[],
+  paths: ScenePath[],
   modelInstances: Record<string, ModelInstance>,
   assets: Record<string, ProjectAssetRecord>,
   entities: Record<string, EntityInstance>
@@ -1047,6 +1082,8 @@ function describeSelection(
       return `1 edge selected (${BOX_EDGE_LABELS[selection.edgeId]} on ${getBrushLabelById(selection.brushId, brushes)})`;
     case "brushVertex":
       return `1 vertex selected (${BOX_VERTEX_LABELS[selection.vertexId]} on ${getBrushLabelById(selection.brushId, brushes)})`;
+    case "paths":
+      return `${selection.ids.length} path${selection.ids.length === 1 ? "" : "s"} selected (${getPathLabelById(selection.ids[0], paths)})`;
     case "entities":
       return `${selection.ids.length} entity selected (${getEntityDisplayLabelById(selection.ids[0], entities, assets)})`;
     case "modelInstances":
@@ -1212,6 +1249,7 @@ function isTextEntryTarget(target: EventTarget | null): boolean {
 function selectionCanBeDuplicated(selection: EditorSelection): boolean {
   switch (selection.kind) {
     case "brushes":
+    case "paths":
     case "entities":
     case "modelInstances":
       return selection.ids.length > 0;
@@ -1564,6 +1602,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
   }
 
   const brushList = Object.values(editorState.document.brushes);
+  const pathList = getScenePaths(editorState.document.paths);
   const layoutMode = editorState.viewportLayoutMode;
   const activePanelId = editorState.activeViewportPanelId;
   const viewportToolPreview = editorState.viewportTransientState.toolPreview;
@@ -1578,6 +1617,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
   );
   const materialList = sortDocumentMaterials(editorState.document.materials);
   const selectedBrush = getSelectedBoxBrush(editorState.selection, brushList);
+  const selectedPath = getSelectedPath(editorState.selection, pathList);
   const selectedEntity = getSelectedEntity(editorState.selection, entityList);
   const selectedModelInstance = getSelectedModelInstance(
     editorState.selection,
