@@ -1254,6 +1254,10 @@ describe("scene document JSON", () => {
     const npc = createNpcEntity({
       id: "entity-npc-guide",
       actorId: "actor-town-guide",
+      presence: createNpcTimeWindowPresence({
+        startHour: 21.5,
+        endHour: 2.5
+      }),
       position: {
         x: 4,
         y: 0,
