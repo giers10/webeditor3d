@@ -18,6 +18,7 @@ import {
 } from "../document/project-time-settings";
 import { cloneWorldSettings, type WorldSettings } from "../document/world-settings";
 import {
+  type CharacterColliderSettings,
   clonePlayerStartInputBindings,
   createPlayerStartMovementTemplate,
   createPlayerStartInputBindings,
@@ -98,7 +99,23 @@ export interface RuntimeBrushTriMeshCollider {
   };
 }
 
-export type RuntimeSceneCollider = RuntimeBrushTriMeshCollider | GeneratedModelCollider;
+export interface RuntimeNpcCollider {
+  kind: "character";
+  source: "npc";
+  entityId: string;
+  position: Vec3;
+  rotationDegrees: Vec3;
+  shape: FirstPersonPlayerShape;
+  worldBounds: {
+    min: Vec3;
+    max: Vec3;
+  };
+}
+
+export type RuntimeSceneCollider =
+  | RuntimeBrushTriMeshCollider
+  | GeneratedModelCollider
+  | RuntimeNpcCollider;
 
 export interface RuntimeSceneBounds {
   min: Vec3;
@@ -142,6 +159,7 @@ export interface RuntimeNpc {
   position: Vec3;
   yawDegrees: number;
   modelAssetId: string | null;
+  collider: FirstPersonPlayerShape;
 }
 
 export interface RuntimeSoundEmitter {
@@ -282,6 +300,31 @@ function cloneVec3(vector: Vec3): Vec3 {
     y: vector.y,
     z: vector.z
   };
+}
+
+function createRuntimeCharacterShape(
+  collider: CharacterColliderSettings
+): FirstPersonPlayerShape {
+  switch (collider.mode) {
+    case "capsule":
+      return {
+        mode: "capsule",
+        radius: collider.capsuleRadius,
+        height: collider.capsuleHeight,
+        eyeHeight: collider.eyeHeight
+      };
+    case "box":
+      return {
+        mode: "box",
+        size: cloneVec3(collider.boxSize),
+        eyeHeight: collider.eyeHeight
+      };
+    case "none":
+      return {
+        mode: "none",
+        eyeHeight: collider.eyeHeight
+      };
+  }
 }
 
 function clonePlayerStartMovementCapabilities(
@@ -486,17 +529,93 @@ function buildRuntimeModelInstance(modelInstance: SceneDocument["modelInstances"
 }
 
 function getColliderBounds(collider: RuntimeSceneCollider): GeneratedColliderBounds {
-  if (collider.source === "brush") {
-    return {
-      min: cloneVec3(collider.worldBounds.min),
-      max: cloneVec3(collider.worldBounds.max)
-    };
-  }
-
   return {
     min: cloneVec3(collider.worldBounds.min),
     max: cloneVec3(collider.worldBounds.max)
   };
+}
+
+function buildRuntimeNpcCollider(npc: RuntimeNpc): RuntimeNpcCollider | null {
+  if (npc.collider.mode === "none") {
+    return null;
+  }
+
+  const rotationDegrees = {
+    x: 0,
+    y: npc.yawDegrees,
+    z: 0
+  };
+
+  switch (npc.collider.mode) {
+    case "capsule": {
+      const halfHeight = npc.collider.height * 0.5;
+
+      return {
+        kind: "character",
+        source: "npc",
+        entityId: npc.entityId,
+        position: cloneVec3(npc.position),
+        rotationDegrees,
+        shape: {
+          mode: "capsule",
+          radius: npc.collider.radius,
+          height: npc.collider.height,
+          eyeHeight: npc.collider.eyeHeight
+        },
+        worldBounds: {
+          min: {
+            x: npc.position.x - npc.collider.radius,
+            y: npc.position.y,
+            z: npc.position.z - npc.collider.radius
+          },
+          max: {
+            x: npc.position.x + npc.collider.radius,
+            y: npc.position.y + npc.collider.height,
+            z: npc.position.z + npc.collider.radius
+          }
+        }
+      };
+    }
+    case "box": {
+      const halfExtents = {
+        x: npc.collider.size.x * 0.5,
+        y: npc.collider.size.y * 0.5,
+        z: npc.collider.size.z * 0.5
+      };
+      const yawRadians = (rotationDegrees.y * Math.PI) / 180;
+      const cosine = Math.abs(Math.cos(yawRadians));
+      const sine = Math.abs(Math.sin(yawRadians));
+      const rotatedHalfX = halfExtents.x * cosine + halfExtents.z * sine;
+      const rotatedHalfZ = halfExtents.x * sine + halfExtents.z * cosine;
+
+      return {
+        kind: "character",
+        source: "npc",
+        entityId: npc.entityId,
+        position: cloneVec3(npc.position),
+        rotationDegrees,
+        shape: {
+          mode: "box",
+          size: cloneVec3(npc.collider.size),
+          eyeHeight: npc.collider.eyeHeight
+        },
+        worldBounds: {
+          min: {
+            x: npc.position.x - rotatedHalfX,
+            y: npc.position.y,
+            z: npc.position.z - rotatedHalfZ
+          },
+          max: {
+            x: npc.position.x + rotatedHalfX,
+            y: npc.position.y + npc.collider.size.y,
+            z: npc.position.z + rotatedHalfZ
+          }
+        }
+      };
+    }
+    case "none":
+      return null;
+  }
 }
 
 function combineColliderBounds(colliders: RuntimeSceneCollider[]): RuntimeSceneBounds | null {
@@ -633,7 +752,8 @@ function buildRuntimeSceneCollections(document: SceneDocument): RuntimeSceneColl
           visible: entity.visible,
           position: cloneVec3(entity.position),
           yawDegrees: entity.yawDegrees,
-          modelAssetId: entity.modelAssetId
+          modelAssetId: entity.modelAssetId,
+          collider: createRuntimeCharacterShape(entity.collider)
         });
         break;
       case "soundEmitter":
@@ -711,26 +831,7 @@ function buildRuntimePlayerShape(
     return FIRST_PERSON_PLAYER_SHAPE;
   }
 
-  switch (playerStartEntity.collider.mode) {
-    case "capsule":
-      return {
-        mode: "capsule",
-        radius: playerStartEntity.collider.capsuleRadius,
-        height: playerStartEntity.collider.capsuleHeight,
-        eyeHeight: playerStartEntity.collider.eyeHeight
-      };
-    case "box":
-      return {
-        mode: "box",
-        size: cloneVec3(playerStartEntity.collider.boxSize),
-        eyeHeight: playerStartEntity.collider.eyeHeight
-      };
-    case "none":
-      return {
-        mode: "none",
-        eyeHeight: playerStartEntity.collider.eyeHeight
-      };
-  }
+  return createRuntimeCharacterShape(playerStartEntity.collider);
 }
 
 function resolveRuntimeSpawn(
@@ -839,6 +940,14 @@ export function buildRuntimeSceneFromDocument(document: SceneDocument, options: 
   const playerInputBindings = createPlayerStartInputBindings(
     playerStartEntity?.inputBindings
   );
+
+  for (const npc of collections.entities.npcs) {
+    const collider = buildRuntimeNpcCollider(npc);
+
+    if (collider !== null) {
+      colliders.push(collider);
+    }
+  }
 
   for (const modelInstance of enabledModelInstances) {
     const asset = document.assets[modelInstance.assetId];
