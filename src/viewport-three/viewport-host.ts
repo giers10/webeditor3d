@@ -1631,6 +1631,8 @@ export class ViewportHost {
         return session.preview.center;
       case "modelInstance":
         return session.preview.position;
+      case "pathPoint":
+        return session.preview.position;
       case "entity":
         return session.preview.position;
     }
