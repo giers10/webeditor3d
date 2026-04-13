@@ -12,6 +12,7 @@ import {
   createEmptyProjectScene
 } from "../../src/document/scene-document";
 import { createDefaultProjectTimeSettings } from "../../src/document/project-time-settings";
+import { createDefaultWorldSettings } from "../../src/document/world-settings";
 import {
   createSceneEntryEntity,
   createSceneExitEntity
@@ -132,7 +133,9 @@ describe("project document JSON", () => {
       sunriseTimeOfDayHours: 5.5,
       sunsetTimeOfDayHours: 19.75,
       dawnDurationHours: 1.25,
-      duskDurationHours: 1.75,
+      duskDurationHours: 1.75
+    };
+    document.scenes["scene-cellar"].world.timeOfDay = {
       dawn: {
         skyTopColorHex: "#6680bc",
         skyBottomColorHex: "#f3b07a",
@@ -150,16 +153,15 @@ describe("project document JSON", () => {
         lightIntensityFactor: 0.61
       },
       night: {
-        skyTopColorHex: "#070f1c",
-        skyBottomColorHex: "#18253b",
+        background: {
+          mode: "image",
+          assetId: "asset-night-sky",
+          environmentIntensity: 0.42
+        },
         ambientColorHex: "#1a2941",
         ambientIntensityFactor: 0.22,
         lightColorHex: "#95b0ff",
         lightIntensityFactor: 0.19
-      },
-      nightBackground: {
-        assetId: "asset-night-sky",
-        environmentIntensity: 0.42
       }
     };
 
@@ -190,7 +192,7 @@ describe("project document JSON", () => {
     expect(migratedDocument.time).toEqual(createDefaultProjectTimeSettings());
   });
 
-  it("migrates v38 project time documents to default night background settings", () => {
+  it("migrates legacy project time environment profiles into scene world settings", () => {
     const legacyProject = createEmptyProjectDocument({
       name: "Legacy Time Project",
       sceneName: "Atrium"
@@ -247,9 +249,23 @@ describe("project document JSON", () => {
     expect(migratedDocument.time.startTimeOfDayHours).toBe(17.5);
     expect(migratedDocument.time.dayLengthMinutes).toBe(20);
     expect(migratedDocument.time.sunriseTimeOfDayHours).toBe(6.25);
-    expect(migratedDocument.time.night.lightIntensityFactor).toBe(0.21);
-    expect(migratedDocument.time.nightBackground).toEqual(
-      createDefaultProjectTimeSettings().nightBackground
+    expect(
+      migratedDocument.scenes[migratedDocument.activeSceneId]?.world.timeOfDay
+        .dawn.ambientIntensityFactor
+    ).toBe(0.74);
+    expect(
+      migratedDocument.scenes[migratedDocument.activeSceneId]?.world.timeOfDay
+        .dusk.lightIntensityFactor
+    ).toBe(0.63);
+    expect(
+      migratedDocument.scenes[migratedDocument.activeSceneId]?.world.timeOfDay
+        .night.lightIntensityFactor
+    ).toBe(0.21);
+    expect(
+      migratedDocument.scenes[migratedDocument.activeSceneId]?.world.timeOfDay
+        .night.background
+    ).toEqual(
+      createDefaultWorldSettings().timeOfDay.night.background
     );
     expect(
       migratedDocument.scenes[migratedDocument.activeSceneId]?.world
