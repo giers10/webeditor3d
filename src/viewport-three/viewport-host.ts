@@ -47,6 +47,7 @@ import {
   isBrushSelected,
   isBrushVertexSelected,
   isModelInstanceSelected,
+  isPathPointSelected,
   isPathSelected,
   type EditorSelection
 } from "../core/selection";
@@ -273,6 +274,8 @@ const PATH_POINT_COLOR = 0xb7cbec;
 const PATH_POINT_HOVERED_COLOR = 0xf3be8f;
 const PATH_POINT_SELECTED_COLOR = 0xcf7b42;
 const PATH_POINT_RADIUS = 0.12;
+const PATH_POINT_HOVERED_SCALE = 1.18;
+const PATH_POINT_SELECTED_SCALE = 1.35;
 const BOX_CREATE_PREVIEW_FILL = 0x89b6ff;
 const BOX_CREATE_PREVIEW_EDGE = 0xf3be8f;
 const PLACEMENT_PREVIEW_COLOR_HEX = "#89b6ff";
