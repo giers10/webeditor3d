@@ -85,6 +85,7 @@ import {
   type FaceUvState
 } from "./brushes";
 import {
+  PATH_FOUNDATION_SCENE_DOCUMENT_VERSION,
   BOX_BRUSH_SCENE_DOCUMENT_VERSION,
   ANIMATION_PLAYBACK_SCENE_DOCUMENT_VERSION,
   AUTHORED_OBJECT_STATE_SCENE_DOCUMENT_VERSION,
@@ -138,6 +139,12 @@ import {
   type SceneLoadingScreenSettings,
   type SceneDocument
 } from "./scene-document";
+import {
+  createScenePath,
+  createScenePathPoint,
+  type ScenePath,
+  type ScenePathPoint
+} from "./paths";
 import {
   createDefaultProjectTimeSettings,
   normalizeProjectStartDayNumber,
@@ -2938,6 +2945,69 @@ function readInteractionLinks(
   return interactionLinks;
 }
 
+function readScenePathPointValue(
+  value: unknown,
+  label: string
+): ScenePathPoint {
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  return createScenePathPoint({
+    id: expectString(value.id, `${label}.id`),
+    position: readVec3(value.position, `${label}.position`)
+  });
+}
+
+function readScenePathValue(value: unknown, label: string): ScenePath {
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  if (!Array.isArray(value.points)) {
+    throw new Error(`${label}.points must be an array.`);
+  }
+
+  return createScenePath({
+    id: expectString(value.id, `${label}.id`),
+    name:
+      value.name === undefined ? undefined : expectString(value.name, `${label}.name`),
+    visible: expectBoolean(value.visible, `${label}.visible`),
+    enabled: expectBoolean(value.enabled, `${label}.enabled`),
+    loop: expectBoolean(value.loop, `${label}.loop`),
+    points: value.points.map((pointValue, index) =>
+      readScenePathPointValue(pointValue, `${label}.points.${index}`)
+    )
+  });
+}
+
+function readScenePaths(
+  value: unknown,
+  options: { allowMissing: boolean }
+): SceneDocument["paths"] {
+  if (value === undefined && options.allowMissing) {
+    return {};
+  }
+
+  if (!isRecord(value)) {
+    throw new Error("paths must be a record.");
+  }
+
+  const paths: SceneDocument["paths"] = {};
+
+  for (const [pathId, pathValue] of Object.entries(value)) {
+    const path = readScenePathValue(pathValue, `paths.${pathId}`);
+
+    if (path.id !== pathId) {
+      throw new Error(`paths.${pathId}.id must match the registry key.`);
+    }
+
+    paths[pathId] = path;
+  }
+
+  return paths;
+}
+
 export function migrateSceneDocument(source: unknown): SceneDocument {
   if (!isRecord(source)) {
     throw new Error("Scene document must be a JSON object.");
@@ -2956,6 +3026,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       textures: expectEmptyCollection(source.textures, "textures"),
       assets: expectEmptyCollection(source.assets, "assets"),
       brushes: {},
+      paths: {},
       modelInstances: expectEmptyCollection(
         source.modelInstances,
         "modelInstances"
@@ -2981,6 +3052,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       textures: expectEmptyCollection(source.textures, "textures"),
       assets: expectEmptyCollection(source.assets, "assets"),
       brushes: readBrushes(source.brushes, materials, true),
+      paths: {},
       modelInstances: expectEmptyCollection(
         source.modelInstances,
         "modelInstances"
@@ -3005,6 +3077,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       textures: expectEmptyCollection(source.textures, "textures"),
       assets: expectEmptyCollection(source.assets, "assets"),
       brushes: readBrushes(source.brushes, materials, false),
+      paths: {},
       modelInstances: expectEmptyCollection(
         source.modelInstances,
         "modelInstances"
@@ -3029,6 +3102,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       textures: expectEmptyCollection(source.textures, "textures"),
       assets: expectEmptyCollection(source.assets, "assets"),
       brushes: readBrushes(source.brushes, materials, false),
+      paths: {},
       modelInstances: expectEmptyCollection(
         source.modelInstances,
         "modelInstances"
@@ -3053,6 +3127,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       textures: expectEmptyCollection(source.textures, "textures"),
       assets: expectEmptyCollection(source.assets, "assets"),
       brushes: readBrushes(source.brushes, materials, false),
+      paths: {},
       modelInstances: expectEmptyCollection(
         source.modelInstances,
         "modelInstances"
@@ -3077,6 +3152,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       textures: expectEmptyCollection(source.textures, "textures"),
       assets: expectEmptyCollection(source.assets, "assets"),
       brushes: readBrushes(source.brushes, materials, false),
+      paths: {},
       modelInstances: expectEmptyCollection(
         source.modelInstances,
         "modelInstances"
@@ -3101,6 +3177,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       textures: expectEmptyCollection(source.textures, "textures"),
       assets: expectEmptyCollection(source.assets, "assets"),
       brushes: readBrushes(source.brushes, materials, false),
+      paths: {},
       modelInstances: expectEmptyCollection(
         source.modelInstances,
         "modelInstances"
@@ -3127,6 +3204,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       textures: expectEmptyCollection(source.textures, "textures"),
       assets: expectEmptyCollection(source.assets, "assets"),
       brushes: readBrushes(source.brushes, materials, false),
+      paths: {},
       modelInstances: expectEmptyCollection(
         source.modelInstances,
         "modelInstances"
@@ -3148,6 +3226,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       textures: expectEmptyCollection(source.textures, "textures"),
       assets: expectEmptyCollection(source.assets, "assets"),
       brushes: readBrushes(source.brushes, materials, false),
+      paths: {},
       modelInstances: expectEmptyCollection(
         source.modelInstances,
         "modelInstances"
@@ -3170,6 +3249,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       textures: expectEmptyCollection(source.textures, "textures"),
       assets,
       brushes: readBrushes(source.brushes, materials, false),
+      paths: {},
       modelInstances: readModelInstances(source.modelInstances, assets),
       entities: readEntities(source.entities, { legacySoundEmitter: false }),
       interactionLinks: readInteractionLinks(source.interactionLinks)
@@ -3189,6 +3269,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       textures: expectEmptyCollection(source.textures, "textures"),
       assets,
       brushes: readBrushes(source.brushes, materials, false),
+      paths: {},
       modelInstances: readModelInstances(source.modelInstances, assets),
       entities: readEntities(source.entities, { legacySoundEmitter: true }),
       interactionLinks: readInteractionLinks(source.interactionLinks)
@@ -3211,6 +3292,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       textures: expectEmptyCollection(source.textures, "textures"),
       assets,
       brushes: readBrushes(source.brushes, materials, false),
+      paths: {},
       modelInstances: readModelInstances(source.modelInstances, assets),
       entities: readEntities(source.entities, { legacySoundEmitter: false }),
       interactionLinks: readInteractionLinks(source.interactionLinks)
@@ -3230,6 +3312,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       textures: expectEmptyCollection(source.textures, "textures"),
       assets,
       brushes: readBrushes(source.brushes, materials, false),
+      paths: {},
       modelInstances: readModelInstances(source.modelInstances, assets),
       entities: readEntities(source.entities, { legacySoundEmitter: false }),
       interactionLinks: readInteractionLinks(source.interactionLinks)
@@ -3250,6 +3333,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       textures: expectEmptyCollection(source.textures, "textures"),
       assets,
       brushes: readBrushes(source.brushes, materials, false),
+      paths: {},
       modelInstances: readModelInstances(source.modelInstances, assets),
       entities: readEntities(source.entities, { legacySoundEmitter: false }),
       interactionLinks: readInteractionLinks(source.interactionLinks)
@@ -3272,6 +3356,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       textures: expectEmptyCollection(source.textures, "textures"),
       assets,
       brushes: readBrushes(source.brushes, materials, false),
+      paths: {},
       modelInstances: readModelInstances(source.modelInstances, assets),
       entities: readEntities(source.entities, { legacySoundEmitter: false }),
       interactionLinks: readInteractionLinks(source.interactionLinks)
@@ -3292,6 +3377,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       textures: expectEmptyCollection(source.textures, "textures"),
       assets,
       brushes: readBrushes(source.brushes, materials, false),
+      paths: {},
       modelInstances: readModelInstances(source.modelInstances, assets),
       entities: readEntities(source.entities, { legacySoundEmitter: false }),
       interactionLinks: readInteractionLinks(source.interactionLinks)
@@ -3312,6 +3398,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       textures: expectEmptyCollection(source.textures, "textures"),
       assets,
       brushes: readBrushes(source.brushes, materials, false),
+      paths: {},
       modelInstances: readModelInstances(source.modelInstances, assets),
       entities: readEntities(source.entities, { legacySoundEmitter: false }),
       interactionLinks: readInteractionLinks(source.interactionLinks)
@@ -3367,6 +3454,9 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     textures: expectEmptyCollection(source.textures, "textures"),
     assets,
     brushes: readBrushes(source.brushes, materials, false),
+    paths: readScenePaths(source.paths, {
+      allowMissing: source.version < PATH_FOUNDATION_SCENE_DOCUMENT_VERSION
+    }),
     modelInstances: readModelInstances(source.modelInstances, assets),
     entities: readEntities(source.entities, { legacySoundEmitter: false }),
     interactionLinks: readInteractionLinks(source.interactionLinks)
@@ -3381,6 +3471,7 @@ function readProjectScene(
   options: {
     allowMissingLoadingScreen: boolean;
     allowMissingEditorPreferences: boolean;
+    allowMissingPaths: boolean;
     legacyProjectTimeValue?: unknown;
   }
 ): ProjectScene {
@@ -3409,6 +3500,9 @@ function readProjectScene(
       legacyProjectTimeValue: options.legacyProjectTimeValue
     }),
     brushes: readBrushes(value.brushes, materials, false),
+    paths: readScenePaths(value.paths, {
+      allowMissing: options.allowMissingPaths
+    }),
     modelInstances: readModelInstances(value.modelInstances, assets),
     entities: readEntities(value.entities, { legacySoundEmitter: false }),
     interactionLinks: readInteractionLinks(value.interactionLinks)
@@ -3455,6 +3549,8 @@ export function migrateProjectDocument(source: unknown): ProjectDocument {
       source.version < PROJECT_NAME_SCENE_DOCUMENT_VERSION;
     const allowMissingEditorPreferences =
       source.version < SCENE_EDITOR_PREFERENCES_SCENE_DOCUMENT_VERSION;
+    const allowMissingPaths =
+      source.version < PATH_FOUNDATION_SCENE_DOCUMENT_VERSION;
     const allowMissingTimeSettings =
       source.version < PROJECT_TIME_SYSTEM_SCENE_DOCUMENT_VERSION;
 
@@ -3467,6 +3563,7 @@ export function migrateProjectDocument(source: unknown): ProjectDocument {
         {
           allowMissingLoadingScreen,
           allowMissingEditorPreferences,
+          allowMissingPaths,
           legacyProjectTimeValue:
             source.version < SCENE_DOCUMENT_VERSION ? source.time : undefined
         }

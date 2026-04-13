@@ -1303,8 +1303,12 @@ export class RuntimeHost {
     }
 
     for (const npc of npcs) {
-      const renderGroup =
+      const asset =
         npc.modelAssetId === null
+          ? null
+          : this.projectAssets[npc.modelAssetId] ?? null;
+      const renderGroup =
+        npc.modelAssetId === null || asset?.kind !== "model"
           ? this.createNpcColliderFallbackRenderGroup(npc)
           : createModelInstanceRenderGroup(
               {
@@ -1330,7 +1334,7 @@ export class RuntimeHost {
                   visible: false
                 }
               },
-              this.projectAssets[npc.modelAssetId],
+              asset,
               this.loadedModelAssets[npc.modelAssetId],
               false
             );

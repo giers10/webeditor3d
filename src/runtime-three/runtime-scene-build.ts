@@ -611,8 +611,6 @@ function buildRuntimeNpcCollider(npc: RuntimeNpc): RuntimeNpcCollider | null {
         }
       };
     }
-    case "none":
-      return null;
   }
 }
 

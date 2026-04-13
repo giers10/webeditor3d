@@ -1662,6 +1662,7 @@ describe("scene document JSON", () => {
     const migratedDocument = migrateSceneDocument({
       version: NPC_ENTITY_FOUNDATION_SCENE_DOCUMENT_VERSION,
       name: "NPC Collider Migration",
+      time: createDefaultProjectTimeSettings(),
       world: createEmptySceneDocument().world,
       materials: createEmptySceneDocument().materials,
       textures: {},

@@ -4,7 +4,10 @@ import { BoxGeometry, PlaneGeometry } from "three";
 import { createModelInstance } from "../../src/assets/model-instances";
 import { createBoxBrush } from "../../src/document/brushes";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
-import { createPlayerStartEntity } from "../../src/entities/entity-instances";
+import {
+  createNpcEntity,
+  createPlayerStartEntity
+} from "../../src/entities/entity-instances";
 import { RapierCollisionWorld } from "../../src/runtime-three/rapier-collision-world";
 import { buildRuntimeSceneFromDocument } from "../../src/runtime-three/runtime-scene-build";
 import { createFixtureLoadedModelAssetFromGeometry } from "../helpers/model-collider-fixtures";
@@ -77,6 +80,75 @@ describe("RapierCollisionWorld", () => {
       expect(landing.grounded).toBe(true);
       expect(landing.feetPosition.y).toBeLessThan(0.02);
 
+      const blocked = collisionWorld.resolveFirstPersonMotion(
+        {
+          x: 0,
+          y: 0,
+          z: 0
+        },
+        {
+          x: 3,
+          y: 0,
+          z: 0
+        },
+        runtimeScene.playerCollider
+      );
+
+      expect(blocked.feetPosition.x).toBeLessThan(1.21);
+      expect(blocked.feetPosition.y).toBeLessThan(0.02);
+      expect(blocked.collidedAxes.x).toBe(true);
+    } finally {
+      collisionWorld.dispose();
+    }
+  });
+
+  it("blocks first-person motion against authored NPC colliders", async () => {
+    const floorBrush = createBoxBrush({
+      id: "brush-floor-npc-collision",
+      center: {
+        x: 0,
+        y: -0.5,
+        z: 0
+      },
+      size: {
+        x: 10,
+        y: 1,
+        z: 10
+      }
+    });
+    const npc = createNpcEntity({
+      id: "entity-npc-guard",
+      actorId: "actor-gate-guard",
+      position: {
+        x: 2,
+        y: 0,
+        z: 0
+      },
+      collider: {
+        mode: "box",
+        eyeHeight: 1.6,
+        boxSize: {
+          x: 1,
+          y: 1.8,
+          z: 1
+        }
+      }
+    });
+    const runtimeScene = buildRuntimeSceneFromDocument({
+      ...createEmptySceneDocument({ name: "NPC Collision Scene" }),
+      brushes: {
+        [floorBrush.id]: floorBrush
+      },
+      entities: {
+        [npc.id]: npc
+      }
+    });
+    const collisionWorld = await RapierCollisionWorld.create(
+      runtimeScene.colliders,
+      runtimeScene.playerCollider
+    );
+
+    try {
       const blocked = collisionWorld.resolveFirstPersonMotion(
         {
           x: 0,

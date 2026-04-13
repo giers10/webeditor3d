@@ -18,8 +18,10 @@ import {
   createDefaultProjectTimeSettings,
   type ProjectTimeSettings
 } from "./project-time-settings";
+import { type ScenePath } from "./paths";
 
-export const SCENE_DOCUMENT_VERSION = 42 as const;
+export const SCENE_DOCUMENT_VERSION = 43 as const;
+export const PATH_FOUNDATION_SCENE_DOCUMENT_VERSION = 43 as const;
 export const NPC_COLLIDER_SCENE_DOCUMENT_VERSION = 42 as const;
 export const NPC_ENTITY_FOUNDATION_SCENE_DOCUMENT_VERSION = 41 as const;
 export const WORLD_TIME_ENVIRONMENT_SCENE_DOCUMENT_VERSION = 40 as const;
@@ -117,6 +119,7 @@ export interface ProjectScene {
   editorPreferences: SceneEditorPreferences;
   world: WorldSettings;
   brushes: Record<string, Brush>;
+  paths: Record<string, ScenePath>;
   modelInstances: Record<string, ModelInstance>;
   entities: Record<string, EntityInstance>;
   interactionLinks: Record<string, InteractionLink>;
@@ -142,6 +145,7 @@ export interface SceneDocument {
   textures: Record<string, never>;
   assets: Record<string, ProjectAssetRecord>;
   brushes: Record<string, Brush>;
+  paths: Record<string, ScenePath>;
   modelInstances: Record<string, ModelInstance>;
   entities: Record<string, EntityInstance>;
   interactionLinks: Record<string, InteractionLink>;
@@ -163,6 +167,7 @@ export function createEmptySceneDocument(
     textures: {},
     assets: {},
     brushes: {},
+    paths: {},
     modelInstances: {},
     entities: {},
     interactionLinks: {}
@@ -188,6 +193,7 @@ export function createEmptyProjectScene(
     ),
     world: overrides.world ?? createDefaultWorldSettings(),
     brushes: {},
+    paths: {},
     modelInstances: {},
     entities: {},
     interactionLinks: {}
@@ -262,6 +268,7 @@ export function createSceneDocumentFromProject(
     textures: projectDocument.textures,
     assets: projectDocument.assets,
     brushes: scene.brushes,
+    paths: scene.paths,
     modelInstances: scene.modelInstances,
     entities: scene.entities,
     interactionLinks: scene.interactionLinks
@@ -286,6 +293,7 @@ export function createProjectDocumentFromSceneDocument(
         editorPreferences: createDefaultSceneEditorPreferences(),
         world: sceneDocument.world,
         brushes: sceneDocument.brushes,
+        paths: sceneDocument.paths,
         modelInstances: sceneDocument.modelInstances,
         entities: sceneDocument.entities,
         interactionLinks: sceneDocument.interactionLinks
@@ -318,6 +326,7 @@ export function applySceneDocumentToProject(
         name: sceneDocument.name,
         world: sceneDocument.world,
         brushes: sceneDocument.brushes,
+        paths: sceneDocument.paths,
         modelInstances: sceneDocument.modelInstances,
         entities: sceneDocument.entities,
         interactionLinks: sceneDocument.interactionLinks

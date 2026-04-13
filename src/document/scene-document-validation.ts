@@ -2141,17 +2141,84 @@ function validateSoundEmitterEntity(
     );
   }
 
-  validateCharacterColliderSettings(
-    entity.collider,
+  if (!isNonNegativeFiniteNumber(entity.volume)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-sound-emitter-volume",
+        "Sound Emitter volume must remain a finite number zero or greater.",
+        `${path}.volume`
+      )
+    );
+  }
+
+  if (!isPositiveFiniteNumber(entity.refDistance)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-sound-emitter-ref-distance",
+        "Sound Emitter ref distance must remain a finite number greater than zero.",
+        `${path}.refDistance`
+      )
+    );
+  }
+
+  if (!isPositiveFiniteNumber(entity.maxDistance)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-sound-emitter-max-distance",
+        "Sound Emitter max distance must remain a finite number greater than zero.",
+        `${path}.maxDistance`
+      )
+    );
+  }
+
+  if (
+    isPositiveFiniteNumber(entity.refDistance) &&
+    isPositiveFiniteNumber(entity.maxDistance) &&
+    entity.maxDistance < entity.refDistance
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-sound-emitter-distance-range",
+        "Sound Emitter max distance must be greater than or equal to ref distance.",
+        `${path}.maxDistance`
+      )
+    );
+  }
+
+  if (!isBoolean(entity.autoplay)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-sound-emitter-autoplay-flag",
+        "Sound Emitter autoplay must remain a boolean.",
+        `${path}.autoplay`
+      )
+    );
+  }
+
+  if (!isBoolean(entity.loop)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-sound-emitter-loop-flag",
+        "Sound Emitter loop must remain a boolean.",
+        `${path}.loop`
+      )
+    );
+  }
+
+  validateSoundEmitterAudioAsset(
+    entity,
     path,
+    document,
     diagnostics,
-    {
-      codePrefix: "player-start",
-      label: "Player Start",
-      getHeight: getPlayerStartColliderHeight
-    }
+    entity.autoplay === true ? "error" : "warning"
   );
-) {
+}
 
 function validateCharacterColliderSettings(
   collider: CharacterColliderSettings,
@@ -2247,6 +2314,12 @@ function validateCharacterColliderSettings(
     );
   }
 }
+
+function validateTriggerVolumeEntity(
+  entity: TriggerVolumeEntity,
+  path: string,
+  diagnostics: SceneDiagnostic[]
+) {
   validateAuthoredEntityState(entity, path, diagnostics);
 
   if (!isFiniteVec3(entity.position)) {

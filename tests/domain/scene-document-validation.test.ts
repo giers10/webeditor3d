@@ -444,7 +444,7 @@ describe("validateSceneDocument", () => {
       actorId: "actor-town-guard",
       collider: {
         mode: "box",
-        eyeHeight: 2,
+        eyeHeight: 1.2,
         boxSize: {
           x: 0.7,
           y: 1.2,
@@ -452,6 +452,7 @@ describe("validateSceneDocument", () => {
         }
       }
     });
+    invalidColliderNpc.collider.eyeHeight = 2;
 
     const validation = validateSceneDocument({
       ...createEmptySceneDocument(),

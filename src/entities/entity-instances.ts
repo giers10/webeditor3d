@@ -1348,9 +1348,10 @@ export function createNpcEntity(
       | "actorId"
       | "yawDegrees"
       | "modelAssetId"
-      | "collider"
     >
-  > = {}
+  > & {
+    collider?: Partial<NpcColliderSettings>;
+  } = {}
 ): NpcEntity {
   const position = cloneVec3(overrides.position ?? DEFAULT_ENTITY_POSITION);
   const actorId = normalizeNpcActorId(overrides.actorId);

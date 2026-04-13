@@ -397,17 +397,17 @@ describe("buildRuntimeSceneFromDocument", () => {
       },
       max: {
         x: 4,
-        y: 0,
+        y: 1.8,
         z: 4
       },
       center: {
         x: 0,
-        y: -0.5,
+        y: 0.4,
         z: 0
       },
       size: {
         x: 8,
-        y: 1,
+        y: 2.8,
         z: 8
       }
     });
@@ -470,7 +470,7 @@ describe("buildRuntimeSceneFromDocument", () => {
           modelAssetId: modelAsset.id,
           collider: {
             mode: "capsule",
-            radius: 0.35,
+            radius: 0.3,
             height: 1.8,
             eyeHeight: 1.6
           }
@@ -659,20 +659,20 @@ describe("buildRuntimeSceneFromDocument", () => {
       },
       shape: {
         mode: "capsule",
-        radius: 0.35,
+        radius: 0.3,
         height: 1.8,
         eyeHeight: 1.6
       },
       worldBounds: {
         min: {
-          x: -1.35,
+          x: -1.3,
           y: 0,
-          z: -2.35
+          z: -2.3
         },
         max: {
-          x: -0.65,
+          x: -0.7,
           y: 1.8,
-          z: -1.65
+          z: -1.7
         }
       }
     });

@@ -4091,8 +4091,12 @@ export class ViewportHost {
     selected: boolean,
     previewShellColor?: number
   ): EntityRenderObjects {
-    if (entity.modelAssetId !== null) {
-      const asset = this.projectAssets[entity.modelAssetId];
+    const asset =
+      entity.modelAssetId === null
+        ? null
+        : this.projectAssets[entity.modelAssetId] ?? null;
+
+    if (entity.modelAssetId !== null && asset?.kind === "model") {
       const loadedAsset = this.loadedModelAssets[entity.modelAssetId];
       const renderGroup = createModelInstanceRenderGroup(
         {
