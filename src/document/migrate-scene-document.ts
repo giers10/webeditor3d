@@ -59,6 +59,7 @@ import {
   type PlayerStartMovementTemplateKind
 } from "../entities/entity-instances";
 import {
+  createActorControlTargetRef,
   createActiveSceneControlTargetRef,
   createEntityControlTargetRef,
   createInteractionControlTargetRef,
@@ -67,6 +68,7 @@ import {
   createPlayModelAnimationControlEffect,
   createPlaySoundControlEffect,
   createProjectGlobalControlTargetRef,
+  createSetActorPresenceControlEffect,
   createSetInteractionEnabledControlEffect,
   createSetLightEnabledControlEffect,
   createSetLightIntensityControlEffect,
@@ -136,6 +138,7 @@ import {
   PLAYER_START_NAVIGATION_MODE_SCENE_DOCUMENT_VERSION,
   PLAYER_START_COLLIDER_SETTINGS_SCENE_DOCUMENT_VERSION,
   PATH_FOUNDATION_SCENE_DOCUMENT_VERSION,
+  PROJECT_SCHEDULER_FOUNDATION_SCENE_DOCUMENT_VERSION,
   RUNNER_V1_SCENE_DOCUMENT_VERSION,
   SCENE_TRANSITION_ENTITIES_SCENE_DOCUMENT_VERSION,
   SPATIAL_AUDIO_SCENE_DOCUMENT_VERSION,
@@ -177,6 +180,12 @@ import {
   normalizeTimeOfDayHours,
   type ProjectTimeSettings
 } from "./project-time-settings";
+import {
+  createEmptyProjectScheduler,
+  createProjectScheduleEveryDaySelection,
+  createProjectScheduleRoutine,
+  type ProjectScheduler
+} from "../scheduler/project-scheduler";
 import {
   cloneWorldBackgroundSettings,
   createDefaultWorldTimeOfDaySettings,
@@ -2886,10 +2895,9 @@ function readControlTargetRef(value: unknown, label: string): ControlTargetRef {
 
   switch (kind) {
     case "actor":
-      return {
-        kind: "actor",
-        actorId: expectString(value.actorId, `${label}.actorId`)
-      };
+      return createActorControlTargetRef(
+        expectString(value.actorId, `${label}.actorId`)
+      );
     case "entity": {
       const entityKind = expectString(value.entityKind, `${label}.entityKind`);
 
@@ -2944,6 +2952,14 @@ function readControlEffect(value: unknown, label: string): ControlEffect {
   const type = expectString(value.type, `${label}.type`);
 
   switch (type) {
+    case "setActorPresence":
+      return createSetActorPresenceControlEffect({
+        target: readControlTargetRef(
+          value.target,
+          `${label}.target`
+        ) as ReturnType<typeof createActorControlTargetRef>,
+        active: expectBoolean(value.active, `${label}.active`)
+      });
     case "playModelAnimation":
       return createPlayModelAnimationControlEffect({
         target: readControlTargetRef(
