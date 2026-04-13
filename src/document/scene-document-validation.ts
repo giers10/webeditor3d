@@ -3398,9 +3398,11 @@ function validateInteractionLink(
   }
 }
 
-function validateProjectSchedulerAgainstScene(
+function validateProjectScheduler(
   scheduler: ProjectScheduler,
-  document: SceneDocument,
+  options: {
+    actorExists(actorId: string): boolean;
+  },
   diagnostics: SceneDiagnostic[]
 ) {
   for (const [routineKey, routine] of Object.entries(scheduler.routines)) {
@@ -3449,7 +3451,16 @@ function validateProjectSchedulerAgainstScene(
         )
       );
     } else {
-      validateActorControlTarget(routine.target, `${path}.target`, document, diagnostics);
+      if (!options.actorExists(routine.target.actorId)) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "missing-control-actor-target",
+            `Actor control target ${routine.target.actorId} does not exist in this document.`,
+            `${path}.target.actorId`
+          )
+        );
+      }
     }
 
     switch (routine.days.mode) {
@@ -3584,7 +3595,16 @@ function validateProjectSchedulerAgainstScene(
       );
     }
 
-    validateControlEffect(routine.effect, `${path}.effect`, document, diagnostics);
+    if (!isBoolean(routine.effect.active)) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-control-actor-active",
+          "Actor presence control values must remain boolean.",
+          `${path}.effect.active`
+        )
+      );
+    }
   }
 }
 
