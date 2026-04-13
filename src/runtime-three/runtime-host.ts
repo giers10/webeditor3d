@@ -213,7 +213,7 @@ export class RuntimeHost {
   private readonly volumeAnimatedUniforms: Array<{ value: number }> = [];
   private readonly runtimeWaterContactUniforms: RuntimeWaterContactUniformBinding[] =
     [];
-  private readonly localLightObjects = new Map<string, Group>();
+  private readonly localLightObjects = new Map<string, LocalLightRenderObjects>();
   private readonly modelRenderObjects = new Map<string, Group>();
   private readonly materialTextureCache = new Map<
     string,
@@ -919,8 +919,11 @@ export class RuntimeHost {
     this.moonLight.castShadow = false;
     this.moonLight.shadow.autoUpdate = false;
 
-    for (const renderGroup of this.localLightObjects.values()) {
-      applyAdvancedRenderingLightShadowFlags(renderGroup, advancedRendering);
+    for (const renderObjects of this.localLightObjects.values()) {
+      applyAdvancedRenderingLightShadowFlags(
+        renderObjects.group,
+        advancedRendering
+      );
     }
 
     for (const mesh of this.brushMeshes.values()) {
@@ -1943,8 +1946,8 @@ export class RuntimeHost {
   }
 
   private clearLocalLights() {
-    for (const renderGroup of this.localLightObjects.values()) {
-      this.localLightGroup.remove(renderGroup);
+    for (const renderObjects of this.localLightObjects.values()) {
+      this.localLightGroup.remove(renderObjects.group);
     }
 
     this.localLightObjects.clear();
