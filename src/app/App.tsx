@@ -4295,6 +4295,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
           `Selected ${BOX_VERTEX_LABELS[selection.vertexId]} on ${getBrushLabelById(selection.brushId, brushList)} from the ${source}${suffix}.`
         );
         break;
+      case "paths":
+        setStatusMessage(
+          `Selected ${getPathLabelById(selection.ids[0], pathList)} from the ${source}${suffix}.`
+        );
+        break;
       case "entities":
         setStatusMessage(
           `Selected ${getEntityDisplayLabelById(selection.ids[0], editorState.document.entities, editorState.document.assets)} from the ${source}${suffix}.`
@@ -7874,6 +7879,35 @@ export function App({ store, initialStatusMessage }: AppProps) {
         nextName === undefined
           ? "Cleared the authored brush name."
           : `Renamed brush to ${nextName}.`
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const applyPathNameChange = () => {
+    if (selectedPath === null) {
+      setStatusMessage("Select a path before renaming it.");
+      return;
+    }
+
+    const nextName = normalizeScenePathName(pathNameDraft);
+
+    if (selectedPath.name === nextName) {
+      return;
+    }
+
+    try {
+      store.executeCommand(
+        createSetPathNameCommand({
+          pathId: selectedPath.id,
+          name: pathNameDraft
+        })
+      );
+      setStatusMessage(
+        nextName === undefined
+          ? "Cleared the authored path name."
+          : `Renamed path to ${nextName}.`
       );
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
