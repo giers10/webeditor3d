@@ -2198,16 +2198,12 @@ export class RuntimeHost {
     }
 
     if (this.currentClockState !== null) {
-      const previousTimeOfDayHours = this.currentClockState.timeOfDayHours;
       this.currentClockState = advanceRuntimeClockState(
         this.currentClockState,
         dt
       );
       if (this.sceneReady) {
-        this.updateRuntimeNpcPresenceAfterClockAdvance(
-          previousTimeOfDayHours,
-          this.currentClockState.timeOfDayHours
-        );
+        this.syncRuntimeNpcScheduleToCurrentClock();
       }
       this.applyDayNightLighting();
       this.clockPublishAccumulator += dt;
@@ -2276,63 +2272,39 @@ export class RuntimeHost {
     this.firstPersonController.teleportTo(target.position, target.yawDegrees);
   }
 
-  private syncRuntimeNpcPresenceToCurrentClock() {
+  private syncRuntimeNpcScheduleToCurrentClock() {
     if (this.runtimeScene === null || this.currentClockState === null) {
       return;
     }
 
+    const nextResolvedScheduler = resolveRuntimeProjectScheduleState({
+      scheduler: this.runtimeScene.scheduler.document,
+      actorIds: this.runtimeScene.npcDefinitions.map((npc) => npc.actorId),
+      dayNumber: this.currentClockState.dayCount + 1,
+      timeOfDayHours: this.currentClockState.timeOfDayHours
+    });
+    const actorStates = new Map(
+      nextResolvedScheduler.actors.map((state) => [state.actorId, state])
+    );
     let changed = false;
 
     for (const npc of this.runtimeScene.npcDefinitions) {
-      const nextActive = resolveNpcPresenceActive(
-        npc.presence,
-        this.currentClockState.timeOfDayHours
-      );
+      const actorState = actorStates.get(npc.actorId);
+      const nextActive = actorState?.active ?? true;
+      const nextRoutineId = actorState?.activeRoutineId ?? null;
+      const nextRoutineTitle = actorState?.activeRoutineTitle ?? null;
 
-      if (npc.active === nextActive) {
-        continue;
-      }
-
-      npc.active = nextActive;
-      changed = true;
-    }
-
-    if (changed) {
-      this.refreshRuntimeNpcCollections();
-    }
-  }
-
-  private updateRuntimeNpcPresenceAfterClockAdvance(
-    previousTimeOfDayHours: number,
-    currentTimeOfDayHours: number
-  ) {
-    if (this.runtimeScene === null) {
-      return;
-    }
-
-    let changed = false;
-
-    for (const npc of this.runtimeScene.npcDefinitions) {
       if (
-        !hasNpcPresenceActivityChanged(
-          npc.presence,
-          previousTimeOfDayHours,
-          currentTimeOfDayHours
-        )
+        npc.active === nextActive &&
+        npc.activeRoutineId === nextRoutineId &&
+        npc.activeRoutineTitle === nextRoutineTitle
       ) {
         continue;
       }
 
-      const nextActive = resolveNpcPresenceActive(
-        npc.presence,
-        currentTimeOfDayHours
-      );
-
-      if (npc.active === nextActive) {
-        continue;
-      }
-
       npc.active = nextActive;
+      npc.activeRoutineId = nextRoutineId;
+      npc.activeRoutineTitle = nextRoutineTitle;
       changed = true;
       const renderGroup = this.modelRenderObjects.get(npc.entityId);
 
@@ -2341,12 +2313,16 @@ export class RuntimeHost {
       }
     }
 
-    if (!changed) {
-      return;
-    }
+    this.runtimeScene.scheduler.resolved = nextResolvedScheduler;
+    this.runtimeScene.control.resolved = applyRuntimeProjectScheduleToControlState(
+      this.runtimeScene.control.resolved,
+      nextResolvedScheduler
+    );
 
-    this.refreshRuntimeNpcCollections();
-    this.refreshCollisionWorldForNpcPresence();
+    if (changed) {
+      this.refreshRuntimeNpcCollections();
+      this.refreshCollisionWorldForNpcSchedule();
+    }
   }
 
   private refreshRuntimeNpcCollections() {
@@ -2365,7 +2341,7 @@ export class RuntimeHost {
     ];
   }
 
-  private refreshCollisionWorldForNpcPresence() {
+  private refreshCollisionWorldForNpcSchedule() {
     if (this.runtimeScene === null) {
       return;
     }
