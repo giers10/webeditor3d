@@ -766,6 +766,7 @@ function resolveEntityRotation(
   switch (entity.kind) {
     case "playerStart":
     case "sceneEntry":
+    case "npc":
     case "teleportTarget":
       return {
         kind: "yaw",
