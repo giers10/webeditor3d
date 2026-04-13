@@ -211,6 +211,51 @@ describe("resolveViewportFocusTarget", () => {
     });
   });
 
+  it("frames a selected Path Point tightly around its authored position", () => {
+    const path = createScenePath({
+      id: "path-point-focus",
+      points: [
+        {
+          id: "point-focus-a",
+          position: {
+            x: -2,
+            y: 0,
+            z: 1
+          }
+        },
+        {
+          id: "point-focus-b",
+          position: {
+            x: 4,
+            y: 2,
+            z: 3
+          }
+        }
+      ]
+    });
+    const document = {
+      ...createEmptySceneDocument(),
+      paths: {
+        [path.id]: path
+      }
+    };
+
+    const focusTarget = resolveViewportFocusTarget(document, {
+      kind: "pathPoint",
+      pathId: path.id,
+      pointId: path.points[1].id
+    });
+
+    expect(focusTarget).toEqual({
+      center: {
+        x: 4,
+        y: 2,
+        z: 3
+      },
+      radius: 0.5
+    });
+  });
+
   it("frames the selected Spot Light helper", () => {
     const spotLight = createSpotLightEntity({
       id: "entity-spot-light-main",
