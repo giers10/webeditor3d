@@ -721,11 +721,16 @@ export function supportsTransformAxisConstraint(
     case "scale":
       if (
         session.target.kind === "modelInstance" ||
-        session.target.kind === "brush" ||
+        session.target.kind === "brush"
+      ) {
+        return true;
+      }
+
+      if (
         session.target.kind === "brushVertex" ||
         session.target.kind === "pathPoint"
       ) {
-        return session.target.kind !== "brushVertex" && session.target.kind !== "pathPoint";
+        return false;
       }
 
       if (session.target.kind === "brushFace") {
