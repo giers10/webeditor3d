@@ -2994,6 +2994,24 @@ function validateControlEffect(
   diagnostics: SceneDiagnostic[]
 ) {
   switch (effect.type) {
+    case "setActorPresence":
+      validateActorControlTarget(
+        effect.target,
+        `${path}.target`,
+        document,
+        diagnostics
+      );
+      if (!isBoolean(effect.active)) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-control-actor-active",
+            "Actor presence control values must remain boolean.",
+            `${path}.active`
+          )
+        );
+      }
+      return;
     case "playModelAnimation": {
       const targetModelInstance =
         document.modelInstances[effect.target.modelInstanceId];
