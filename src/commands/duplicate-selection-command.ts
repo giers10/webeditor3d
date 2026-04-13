@@ -4,7 +4,11 @@ import { cloneEditorSelection, type EditorSelection } from "../core/selection";
 import type { ToolMode } from "../core/tool-mode";
 import { cloneBoxBrush, type BoxBrush } from "../document/brushes";
 import type { SceneDocument } from "../document/scene-document";
-import { cloneEntityInstance, type EntityInstance } from "../entities/entity-instances";
+import {
+  cloneEntityInstance,
+  createNpcActorId,
+  type EntityInstance
+} from "../entities/entity-instances";
 
 import type { EditorCommand } from "./command";
 
@@ -24,6 +28,11 @@ function duplicateBrush(brush: BoxBrush): BoxBrush {
 function duplicateEntity(entity: EntityInstance): EntityInstance {
   const duplicatedEntity = cloneEntityInstance(entity);
   duplicatedEntity.id = createOpaqueId(`entity-${duplicatedEntity.kind}`);
+
+  if (duplicatedEntity.kind === "npc") {
+    duplicatedEntity.actorId = createNpcActorId();
+  }
+
   return duplicatedEntity;
 }
 
