@@ -902,13 +902,35 @@ function getSelectedPath(
   selection: EditorSelection,
   paths: ScenePath[]
 ): ScenePath | null {
-  const selectedPathId = getSingleSelectedPathId(selection);
+  const selectedPathId = getSingleSelectedPathOwnerId(selection);
 
   if (selectedPathId === null) {
     return null;
   }
 
   return paths.find((path) => path.id === selectedPathId) ?? null;
+}
+
+function getSelectedPathPointState(
+  selection: EditorSelection,
+  path: ScenePath | null
+): { point: ScenePathPoint; index: number } | null {
+  const selectedPathPoint = getSingleSelectedPathPoint(selection);
+
+  if (selectedPathPoint === null || path === null || selectedPathPoint.pathId !== path.id) {
+    return null;
+  }
+
+  const pointIndex = getScenePathPointIndex(path, selectedPathPoint.pointId);
+
+  if (pointIndex === -1) {
+    return null;
+  }
+
+  return {
+    point: path.points[pointIndex],
+    index: pointIndex
+  };
 }
 
 function isModelAsset(asset: ProjectAssetRecord): asset is ModelAssetRecord {
