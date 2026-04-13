@@ -888,22 +888,6 @@ export class RuntimeHost {
     }
   }
 
-  private renderSceneWithBackground(camera: PerspectiveCamera) {
-    if (this.renderer === null) {
-      return;
-    }
-
-    this.worldBackgroundRenderer.syncToCamera(camera);
-
-    const previousAutoClear = this.renderer.autoClear;
-    this.renderer.autoClear = true;
-    this.renderer.clear();
-    this.renderer.render(this.worldBackgroundRenderer.scene, camera);
-    this.renderer.autoClear = false;
-    this.renderer.render(this.scene, camera);
-    this.renderer.autoClear = previousAutoClear;
-  }
-
   private rebuildLocalLights(localLights: RuntimeLocalLightCollection) {
     this.clearLocalLights();
 
@@ -1594,7 +1578,15 @@ export class RuntimeHost {
         }
         binding.reflectionTextureUniform.value = null;
         this.renderer.setRenderTarget(binding.reflectionRenderTarget);
-        this.renderSceneWithBackground(this.waterReflectionCamera);
+          this.renderSceneWithBackground(this.waterReflectionCamera);
+        this.renderer.autoClear = true;
+        this.renderer.clear();
+        this.renderer.render(
+          this.worldBackgroundRenderer.scene,
+          this.waterReflectionCamera
+        );
+        this.renderer.autoClear = false;
+        this.renderer.render(this.scene, this.waterReflectionCamera);
       } finally {
         this.renderer.setRenderTarget(previousRenderTarget);
         this.renderer.autoClear = previousAutoClear;
@@ -1938,7 +1930,18 @@ export class RuntimeHost {
       return;
     }
 
-    this.renderSceneWithBackground(this.camera);
+    if (this.renderer === null) {
+      return;
+    }
+
+    this.worldBackgroundRenderer.syncToCamera(this.camera);
+    const previousAutoClear = this.renderer.autoClear;
+    this.renderer.autoClear = true;
+    this.renderer.clear();
+    this.renderer.render(this.worldBackgroundRenderer.scene, this.camera);
+    this.renderer.autoClear = false;
+    this.renderer.render(this.scene, this.camera);
+    this.renderer.autoClear = previousAutoClear;
   };
 
   private applyTeleportPlayerAction(target: RuntimeTeleportTarget) {

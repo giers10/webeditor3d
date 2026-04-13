@@ -132,16 +132,16 @@ import {
   type SceneDocument
 } from "./scene-document";
 import {
-  createDefaultProjectTimePhaseProfile,
-  createDefaultProjectTimeNightBackgroundSettings,
   createDefaultProjectTimeSettings,
   normalizeProjectStartDayNumber,
-  type ProjectTimeNightBackgroundSettings,
   normalizeTimeOfDayHours,
-  type ProjectTimePhaseProfile,
   type ProjectTimeSettings
 } from "./project-time-settings";
 import {
+  cloneWorldBackgroundSettings,
+  createDefaultWorldTimeOfDaySettings,
+  createDefaultWorldTimePhaseProfile,
+  DEFAULT_NIGHT_IMAGE_ENVIRONMENT_INTENSITY,
   isAdvancedRenderingWaterReflectionMode,
   createDefaultAdvancedRenderingSettings,
   isBoxVolumeRenderPath,
@@ -151,6 +151,8 @@ import {
   isWorldBackgroundMode,
   type AdvancedRenderingSettings,
   type WorldBackgroundSettings,
+  type WorldTimeOfDaySettings,
+  type WorldTimePhaseProfile,
   type WorldSettings
 } from "./world-settings";
 
@@ -604,16 +606,16 @@ function readAdvancedRenderingSettings(
       defaults.enabled
     ),
     shadows: {
-      enabled: readOptionalBoolean(
-        shadows?.enabled,
-        "world.advancedRendering.shadows.enabled",
-        defaults.shadows.enabled
-      ),
       mapSize: shadowsMapSize,
-      type: shadowsType,
       bias: readOptionalFiniteNumber(
-        shadows?.bias,
         "world.advancedRendering.shadows.bias",
+      createDefaultWorldTimeOfDaySettings,
+      createDefaultWorldTimePhaseProfile,
+      DEFAULT_NIGHT_IMAGE_ENVIRONMENT_INTENSITY,
+      cloneWorldBackgroundSettings,
+      createDefaultWorldTimeOfDaySettings,
+      createDefaultWorldTimePhaseProfile,
+      DEFAULT_NIGHT_IMAGE_ENVIRONMENT_INTENSITY,
         defaults.shadows.bias
       )
     },
@@ -623,6 +625,10 @@ function readAdvancedRenderingSettings(
         "world.advancedRendering.ambientOcclusion.enabled",
         defaults.ambientOcclusion.enabled
       ),
+      type WorldTimeOfDaySettings,
+      type WorldTimePhaseProfile,
+      type WorldTimeOfDaySettings,
+      type WorldTimePhaseProfile,
       intensity: readOptionalNonNegativeFiniteNumber(
         ambientOcclusion?.intensity,
         "world.advancedRendering.ambientOcclusion.intensity",
@@ -729,86 +735,6 @@ function readProjectTimeSettings(
 
   const defaults = createDefaultProjectTimeSettings();
 
-  const readProjectTimePhaseProfile = (
-    phaseValue: unknown,
-    phaseLabel: string,
-    phase: "dawn" | "dusk" | "night"
-  ): ProjectTimePhaseProfile => {
-    const phaseDefaults = createDefaultProjectTimePhaseProfile(phase);
-
-    if (phaseValue === undefined) {
-      return phaseDefaults;
-    }
-
-    if (!isRecord(phaseValue)) {
-      throw new Error(`${phaseLabel} must be an object.`);
-    }
-
-    return {
-      skyTopColorHex: expectHexColor(
-        phaseValue.skyTopColorHex ?? phaseDefaults.skyTopColorHex,
-        `${phaseLabel}.skyTopColorHex`
-      ),
-      skyBottomColorHex: expectHexColor(
-        phaseValue.skyBottomColorHex ?? phaseDefaults.skyBottomColorHex,
-        `${phaseLabel}.skyBottomColorHex`
-      ),
-      ambientColorHex: expectHexColor(
-        phaseValue.ambientColorHex ?? phaseDefaults.ambientColorHex,
-        `${phaseLabel}.ambientColorHex`
-      ),
-      ambientIntensityFactor: readOptionalNonNegativeFiniteNumber(
-        phaseValue.ambientIntensityFactor,
-        `${phaseLabel}.ambientIntensityFactor`,
-        phaseDefaults.ambientIntensityFactor
-      ),
-      lightColorHex: expectHexColor(
-        phaseValue.lightColorHex ?? phaseDefaults.lightColorHex,
-        `${phaseLabel}.lightColorHex`
-      ),
-      lightIntensityFactor: readOptionalNonNegativeFiniteNumber(
-        phaseValue.lightIntensityFactor,
-        `${phaseLabel}.lightIntensityFactor`,
-        phaseDefaults.lightIntensityFactor
-      )
-    };
-  };
-
-  const readProjectTimeNightBackgroundSettings = (
-    backgroundValue: unknown,
-    backgroundLabel: string
-  ): ProjectTimeNightBackgroundSettings => {
-    const backgroundDefaults =
-      createDefaultProjectTimeNightBackgroundSettings();
-
-    if (backgroundValue === undefined) {
-      return backgroundDefaults;
-    }
-
-    if (!isRecord(backgroundValue)) {
-      throw new Error(`${backgroundLabel} must be an object.`);
-    }
-
-    let assetId = backgroundDefaults.assetId;
-
-    if (backgroundValue.assetId !== undefined && backgroundValue.assetId !== null) {
-      const nextAssetId = expectString(
-        backgroundValue.assetId,
-        `${backgroundLabel}.assetId`
-      ).trim();
-      assetId = nextAssetId.length === 0 ? null : nextAssetId;
-    }
-
-    return {
-      assetId,
-      environmentIntensity: readOptionalNonNegativeFiniteNumber(
-        backgroundValue.environmentIntensity,
-        `${backgroundLabel}.environmentIntensity`,
-        backgroundDefaults.environmentIntensity
-      )
-    };
-  };
-
   return {
     startDayNumber: normalizeProjectStartDayNumber(
       readOptionalPositiveFiniteNumber(
@@ -840,188 +766,6 @@ function readProjectTimeSettings(
       readOptionalFiniteNumber(
         value.sunsetTimeOfDayHours,
         `${label}.sunsetTimeOfDayHours`,
-        defaults.sunsetTimeOfDayHours
-      )
-    ),
-    dawnDurationHours: readOptionalPositiveFiniteNumber(
-      value.dawnDurationHours,
-      `${label}.dawnDurationHours`,
-      defaults.dawnDurationHours
-    ),
-    duskDurationHours: readOptionalPositiveFiniteNumber(
-      value.duskDurationHours,
-      `${label}.duskDurationHours`,
-      defaults.duskDurationHours
-    ),
-    dawn: readProjectTimePhaseProfile(value.dawn, `${label}.dawn`, "dawn"),
-    dusk: readProjectTimePhaseProfile(value.dusk, `${label}.dusk`, "dusk"),
-    night: readProjectTimePhaseProfile(
-      value.night,
-      `${label}.night`,
-      "night"
-    ),
-    nightBackground: readProjectTimeNightBackgroundSettings(
-      value.nightBackground,
-      `${label}.nightBackground`
-    )
-  };
-}
-
-function readBoxBrushVolumeSettings(
-  value: unknown,
-  label: string
-): BoxBrushVolumeSettings {
-  if (value === undefined) {
-    return {
-      mode: "none"
-    };
-  }
-
-  if (!isRecord(value)) {
-    throw new Error(`${label} must be an object.`);
-  }
-
-  const mode = readOptionalAllowedValue(
-    value.mode,
-    `${label}.mode`,
-    "none",
-    isBoxBrushVolumeMode
-  );
-
-  if (mode === "none") {
-    return {
-      mode: "none"
-    };
-  }
-
-  if (mode === "water") {
-    const defaults = createDefaultBoxBrushWaterSettings();
-
-    if (value.water !== undefined && !isRecord(value.water)) {
-      throw new Error(`${label}.water must be an object.`);
-    }
-
-    const water = (value.water ?? {}) as Record<string, unknown>;
-
-    return {
-      mode: "water",
-      water: {
-        colorHex:
-          water.colorHex === undefined
-            ? defaults.colorHex
-            : expectHexColor(water.colorHex, `${label}.water.colorHex`),
-        surfaceOpacity: readOptionalNonNegativeFiniteNumber(
-          water.surfaceOpacity,
-          `${label}.water.surfaceOpacity`,
-          defaults.surfaceOpacity
-        ),
-        waveStrength: readOptionalNonNegativeFiniteNumber(
-          water.waveStrength,
-          `${label}.water.waveStrength`,
-          defaults.waveStrength
-        ),
-        foamContactLimit: readOptionalPositiveIntegerWithMax(
-          water.foamContactLimit,
-          `${label}.water.foamContactLimit`,
-          defaults.foamContactLimit,
-          MAX_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT
-        ),
-        surfaceDisplacementEnabled: readOptionalBoolean(
-          water.surfaceDisplacementEnabled,
-          `${label}.water.surfaceDisplacementEnabled`,
-          defaults.surfaceDisplacementEnabled
-        )
-      }
-    };
-  }
-
-  const defaults = createDefaultBoxBrushFogSettings();
-
-  if (value.fog !== undefined && !isRecord(value.fog)) {
-    throw new Error(`${label}.fog must be an object.`);
-  }
-
-  const fog = (value.fog ?? {}) as Record<string, unknown>;
-
-  return {
-    mode: "fog",
-    fog: {
-      colorHex:
-        fog.colorHex === undefined
-          ? defaults.colorHex
-          : expectHexColor(fog.colorHex, `${label}.fog.colorHex`),
-      density: readOptionalNonNegativeFiniteNumber(
-        fog.density,
-        `${label}.fog.density`,
-        defaults.density
-      ),
-      padding: readOptionalNonNegativeFiniteNumber(
-        fog.padding,
-        `${label}.fog.padding`,
-        defaults.padding
-      )
-    }
-  };
-}
-
-function expectOptionalString(
-  value: unknown,
-  label: string
-): string | undefined {
-  if (value === undefined) {
-    return undefined;
-  }
-
-  return expectString(value, label);
-}
-
-function readOptionalBrushName(
-  value: unknown,
-  label: string
-): string | undefined {
-  return normalizeBrushName(expectOptionalString(value, label));
-}
-
-function readOptionalEntityName(
-  value: unknown,
-  label: string
-): string | undefined {
-  return normalizeEntityName(expectOptionalString(value, label));
-}
-
-function expectEmptyCollection(
-  value: unknown,
-  label: string
-): Record<string, never> {
-  if (!isRecord(value)) {
-    throw new Error(`${label} must be a record.`);
-  }
-
-  if (Object.keys(value).length > 0) {
-    throw new Error(`${label} must be empty in the current schema.`);
-  }
-
-  return {};
-}
-
-function readProjectAssetBoundingBox(
-  value: unknown,
-  label: string
-): ProjectAssetBoundingBox {
-  if (!isRecord(value)) {
-    throw new Error(`${label} must be an object.`);
-  }
-
-  const min = readVec3(value.min, `${label}.min`);
-  const max = readVec3(value.max, `${label}.max`);
-  const size = readVec3(value.size, `${label}.size`);
-
-  if (size.x < 0 || size.y < 0 || size.z < 0) {
-    throw new Error(`${label}.size values must remain zero or greater.`);
-  }
-
-  return {
-    min,
     max,
     size
   };
@@ -2065,7 +1809,238 @@ function readBrushes(
   return brushes;
 }
 
-function readWorldSettings(value: unknown): WorldSettings {
+function readWorldBackgroundSettings(
+  value: unknown,
+  label: string,
+  options: {
+    allowMissing?: boolean;
+    defaultValue?: WorldBackgroundSettings;
+  } = {}
+): WorldBackgroundSettings {
+  if (value === undefined) {
+    if (options.allowMissing && options.defaultValue !== undefined) {
+      return cloneWorldBackgroundSettings(options.defaultValue);
+    }
+
+    throw new Error(`${label} must be an object.`);
+  }
+
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  const backgroundMode = expectString(value.mode, `${label}.mode`);
+
+  if (!isWorldBackgroundMode(backgroundMode)) {
+    throw new Error(`${label}.mode must be a supported background mode.`);
+  }
+
+  if (backgroundMode === "solid") {
+    return {
+      mode: "solid",
+      colorHex: expectHexColor(value.colorHex, `${label}.colorHex`)
+    };
+  }
+
+  if (backgroundMode === "verticalGradient") {
+    return {
+      mode: "verticalGradient",
+      topColorHex: expectHexColor(value.topColorHex, `${label}.topColorHex`),
+      bottomColorHex: expectHexColor(
+        value.bottomColorHex,
+        `${label}.bottomColorHex`
+      )
+    };
+  }
+
+  return {
+    mode: "image",
+    assetId: expectString(value.assetId, `${label}.assetId`),
+    environmentIntensity:
+      typeof value.environmentIntensity === "number" &&
+      isFinite(value.environmentIntensity) &&
+      value.environmentIntensity >= 0
+        ? value.environmentIntensity
+        : 0.5
+  };
+}
+
+function readWorldTimePhaseProfile(
+  value: unknown,
+  label: string,
+  phase: "dawn" | "dusk" | "night"
+): WorldTimePhaseProfile {
+  const defaults = createDefaultWorldTimePhaseProfile(phase);
+
+  if (value === undefined) {
+    return defaults;
+  }
+
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  return {
+    skyTopColorHex: expectHexColor(
+      value.skyTopColorHex ?? defaults.skyTopColorHex,
+      `${label}.skyTopColorHex`
+    ),
+    skyBottomColorHex: expectHexColor(
+      value.skyBottomColorHex ?? defaults.skyBottomColorHex,
+      `${label}.skyBottomColorHex`
+    ),
+    ambientColorHex: expectHexColor(
+      value.ambientColorHex ?? defaults.ambientColorHex,
+      `${label}.ambientColorHex`
+    ),
+    ambientIntensityFactor: readOptionalNonNegativeFiniteNumber(
+      value.ambientIntensityFactor,
+      `${label}.ambientIntensityFactor`,
+      defaults.ambientIntensityFactor
+    ),
+    lightColorHex: expectHexColor(
+      value.lightColorHex ?? defaults.lightColorHex,
+      `${label}.lightColorHex`
+    ),
+    lightIntensityFactor: readOptionalNonNegativeFiniteNumber(
+      value.lightIntensityFactor,
+      `${label}.lightIntensityFactor`,
+      defaults.lightIntensityFactor
+    )
+  };
+}
+
+function readLegacyWorldTimeOfDaySettings(
+  value: unknown,
+  label: string
+): WorldTimeOfDaySettings {
+  const defaults = createDefaultWorldTimeOfDaySettings();
+
+  if (!isRecord(value)) {
+    return defaults;
+  }
+
+  const dawn = readWorldTimePhaseProfile(value.dawn, `${label}.dawn`, "dawn");
+  const dusk = readWorldTimePhaseProfile(value.dusk, `${label}.dusk`, "dusk");
+  const nightProfile = readWorldTimePhaseProfile(
+    value.night,
+    `${label}.night`,
+    "night"
+  );
+
+  let nightBackground: WorldBackgroundSettings = {
+    mode: "verticalGradient",
+    topColorHex: nightProfile.skyTopColorHex,
+    bottomColorHex: nightProfile.skyBottomColorHex
+  };
+
+  if (isRecord(value.nightBackground)) {
+    const legacyNightBackground = value.nightBackground;
+    const assetId =
+      typeof legacyNightBackground.assetId === "string"
+        ? legacyNightBackground.assetId.trim()
+        : "";
+
+    if (assetId.length > 0) {
+      nightBackground = {
+        mode: "image",
+        assetId,
+        environmentIntensity:
+          typeof legacyNightBackground.environmentIntensity === "number" &&
+          isFinite(legacyNightBackground.environmentIntensity) &&
+          legacyNightBackground.environmentIntensity >= 0
+            ? legacyNightBackground.environmentIntensity
+            : DEFAULT_NIGHT_IMAGE_ENVIRONMENT_INTENSITY
+      };
+    }
+  }
+
+  return {
+    dawn,
+    dusk,
+    night: {
+      background: nightBackground,
+      ambientColorHex: nightProfile.ambientColorHex,
+      ambientIntensityFactor: nightProfile.ambientIntensityFactor,
+      lightColorHex: nightProfile.lightColorHex,
+      lightIntensityFactor: nightProfile.lightIntensityFactor
+    }
+  };
+    timeOfDay: readWorldTimeOfDaySettings(value.timeOfDay, "world.timeOfDay", {
+      legacyProjectTimeValue: options.legacyProjectTimeValue
+    }),
+    timeOfDay: readWorldTimeOfDaySettings(value.timeOfDay, "world.timeOfDay", {
+      legacyProjectTimeValue: options.legacyProjectTimeValue
+    }),
+}
+
+function readWorldTimeOfDaySettings(
+  value: unknown,
+  label: string,
+  options: { legacyProjectTimeValue?: unknown } = {}
+): WorldTimeOfDaySettings {
+  const defaults = createDefaultWorldTimeOfDaySettings();
+
+  if (value === undefined) {
+    if (options.legacyProjectTimeValue !== undefined) {
+      return readLegacyWorldTimeOfDaySettings(
+        options.legacyProjectTimeValue,
+        "time"
+      );
+    }
+
+    return defaults;
+  }
+
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  const nightDefaults = defaults.night;
+  const nightValue = value.night;
+
+  return {
+    dawn: readWorldTimePhaseProfile(value.dawn, `${label}.dawn`, "dawn"),
+    dusk: readWorldTimePhaseProfile(value.dusk, `${label}.dusk`, "dusk"),
+    night: {
+      background: readWorldBackgroundSettings(
+        isRecord(nightValue) ? nightValue.background : undefined,
+        `${label}.night.background`,
+        {
+          allowMissing: true,
+          defaultValue: nightDefaults.background
+        }
+      ),
+      ambientColorHex: expectHexColor(
+        isRecord(nightValue)
+          ? nightValue.ambientColorHex ?? nightDefaults.ambientColorHex
+          : nightDefaults.ambientColorHex,
+        `${label}.night.ambientColorHex`
+      ),
+      ambientIntensityFactor: readOptionalNonNegativeFiniteNumber(
+        isRecord(nightValue) ? nightValue.ambientIntensityFactor : undefined,
+        `${label}.night.ambientIntensityFactor`,
+        nightDefaults.ambientIntensityFactor
+      ),
+      lightColorHex: expectHexColor(
+        isRecord(nightValue)
+          ? nightValue.lightColorHex ?? nightDefaults.lightColorHex
+          : nightDefaults.lightColorHex,
+        `${label}.night.lightColorHex`
+      ),
+      lightIntensityFactor: readOptionalNonNegativeFiniteNumber(
+        isRecord(nightValue) ? nightValue.lightIntensityFactor : undefined,
+        `${label}.night.lightIntensityFactor`,
+        nightDefaults.lightIntensityFactor
+      )
+    }
+  };
+}
+
+function readWorldSettings(
+  value: unknown,
+  options: { legacyProjectTimeValue?: unknown } = {}
+): WorldSettings {
   if (!isRecord(value)) {
     throw new Error("world must be an object.");
   }
@@ -2089,45 +2064,10 @@ function readWorldSettings(value: unknown): WorldSettings {
   const direction = readVec3(sunLight.direction, "world.sunLight.direction");
   assertNonZeroVec3(direction, "world.sunLight.direction");
 
-  const backgroundMode = expectString(background.mode, "world.background.mode");
-  let resolvedBackground: WorldBackgroundSettings;
-
-  if (!isWorldBackgroundMode(backgroundMode)) {
-    throw new Error(
-      "world.background.mode must be a supported background mode."
-    );
-  }
-
-  if (backgroundMode === "solid") {
-    resolvedBackground = {
-      mode: "solid",
-      colorHex: expectHexColor(background.colorHex, "world.background.colorHex")
-    };
-  } else if (backgroundMode === "verticalGradient") {
-    resolvedBackground = {
-      mode: "verticalGradient",
-      topColorHex: expectHexColor(
-        background.topColorHex,
-        "world.background.topColorHex"
-      ),
-      bottomColorHex: expectHexColor(
-        background.bottomColorHex,
-        "world.background.bottomColorHex"
-      )
-    };
-  } else {
-    resolvedBackground = {
-      mode: "image",
-      assetId: expectString(background.assetId, "world.background.assetId"),
-      // Default to 0.5 for documents saved before environmentIntensity was added
-      environmentIntensity:
-        typeof background.environmentIntensity === "number" &&
-        isFinite(background.environmentIntensity) &&
-        background.environmentIntensity >= 0
-          ? background.environmentIntensity
-          : 0.5
-    };
-  }
+  const resolvedBackground = readWorldBackgroundSettings(
+    background,
+    "world.background"
+  );
 
   return {
     projectTimeLightingEnabled: readOptionalBoolean(
@@ -2154,6 +2094,9 @@ function readWorldSettings(value: unknown): WorldSettings {
       ),
       direction
     },
+    timeOfDay: readWorldTimeOfDaySettings(value.timeOfDay, "world.timeOfDay", {
+      legacyProjectTimeValue: options.legacyProjectTimeValue
+    }),
     advancedRendering: readAdvancedRenderingSettings(value.advancedRendering)
   };
 }
@@ -3131,6 +3074,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
 
   if (
     source.version !== SCENE_DOCUMENT_VERSION &&
+    source.version !== 39 &&
     source.version !== 33 &&
     source.version !== AUTHORED_OBJECT_STATE_SCENE_DOCUMENT_VERSION &&
     source.version !== PLAYER_START_AIR_DIRECTION_CONTROL_SCENE_DOCUMENT_VERSION &&
@@ -3145,6 +3089,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     source.version !== SCENE_TRANSITION_ENTITIES_SCENE_DOCUMENT_VERSION &&
     source.version !== RUNNER_LOADING_SCREEN_SCENE_DOCUMENT_VERSION &&
     source.version !== MULTI_SCENE_FOUNDATION_SCENE_DOCUMENT_VERSION &&
+    source.version !== 38 &&
     source.version !== WATER_SURFACE_DISPLACEMENT_SCENE_DOCUMENT_VERSION &&
     source.version !== WHITEBOX_BEVEL_SCENE_DOCUMENT_VERSION &&
     source.version !== WHITEBOX_BOX_VOLUME_SCENE_DOCUMENT_VERSION &&
@@ -3165,7 +3110,10 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     time: readProjectTimeSettings(source.time, "time", {
       allowMissing: source.version < PROJECT_TIME_SYSTEM_SCENE_DOCUMENT_VERSION
     }),
-    world: readWorldSettings(source.world),
+    world: readWorldSettings(source.world, {
+      legacyProjectTimeValue:
+        source.version < SCENE_DOCUMENT_VERSION ? source.time : undefined
+    }),
     materials,
     textures: expectEmptyCollection(source.textures, "textures"),
     assets,
@@ -3184,6 +3132,7 @@ function readProjectScene(
   options: {
     allowMissingLoadingScreen: boolean;
     allowMissingEditorPreferences: boolean;
+    legacyProjectTimeValue?: unknown;
   }
 ): ProjectScene {
   if (!isRecord(value)) {
@@ -3207,7 +3156,9 @@ function readProjectScene(
         allowMissing: options.allowMissingEditorPreferences
       }
     ),
-    world: readWorldSettings(value.world),
+    world: readWorldSettings(value.world, {
+      legacyProjectTimeValue: options.legacyProjectTimeValue
+    }),
     brushes: readBrushes(value.brushes, materials, false),
     modelInstances: readModelInstances(value.modelInstances, assets),
     entities: readEntities(value.entities, { legacySoundEmitter: false }),
@@ -3266,7 +3217,9 @@ export function migrateProjectDocument(source: unknown): ProjectDocument {
         assets,
         {
           allowMissingLoadingScreen,
-          allowMissingEditorPreferences
+          allowMissingEditorPreferences,
+          legacyProjectTimeValue:
+            source.version < SCENE_DOCUMENT_VERSION ? source.time : undefined
         }
       );
     }
