@@ -143,17 +143,6 @@ function formatHexColor(color: { r: number; g: number; b: number }): string {
   return `#${toHex(color.r)}${toHex(color.g)}${toHex(color.b)}`;
 }
 
-function blendHexColors(leftHex: string, rightHex: string, amount: number): string {
-  const left = parseHexColor(leftHex);
-  const right = parseHexColor(rightHex);
-
-  return formatHexColor({
-    r: lerp(left.r, right.r, amount),
-    g: lerp(left.g, right.g, amount),
-    b: lerp(left.b, right.b, amount)
-  });
-}
-
 function blendHexColorsByWeights(
   dayHex: string,
   dawnHex: string,
