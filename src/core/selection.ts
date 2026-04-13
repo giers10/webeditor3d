@@ -8,6 +8,7 @@ export type EditorSelection =
   | { kind: "brushEdge"; brushId: string; edgeId: BoxEdgeId }
   | { kind: "brushVertex"; brushId: string; vertexId: BoxVertexId }
   | { kind: "paths"; ids: string[] }
+  | { kind: "pathPoint"; pathId: string; pointId: string }
   | { kind: "entities"; ids: string[] }
   | { kind: "modelInstances"; ids: string[] };
 
@@ -42,6 +43,14 @@ export function cloneEditorSelection(selection: EditorSelection): EditorSelectio
     };
   }
 
+  if (selection.kind === "pathPoint") {
+    return {
+      kind: "pathPoint",
+      pathId: selection.pathId,
+      pointId: selection.pointId
+    };
+  }
+
   return {
     kind: selection.kind,
     ids: [...selection.ids]
@@ -62,6 +71,8 @@ export function areEditorSelectionsEqual(left: EditorSelection, right: EditorSel
       return right.kind === "brushEdge" && left.brushId === right.brushId && left.edgeId === right.edgeId;
     case "brushVertex":
       return right.kind === "brushVertex" && left.brushId === right.brushId && left.vertexId === right.vertexId;
+    case "pathPoint":
+      return right.kind === "pathPoint" && left.pathId === right.pathId && left.pointId === right.pointId;
     case "brushes":
     case "paths":
     case "entities":
@@ -122,6 +133,25 @@ export function getSingleSelectedPathId(selection: EditorSelection): string | nu
   return selection.ids[0];
 }
 
+export function getSingleSelectedPathPoint(selection: EditorSelection): { pathId: string; pointId: string } | null {
+  if (selection.kind !== "pathPoint") {
+    return null;
+  }
+
+  return {
+    pathId: selection.pathId,
+    pointId: selection.pointId
+  };
+}
+
+export function getSingleSelectedPathOwnerId(selection: EditorSelection): string | null {
+  if (selection.kind === "pathPoint") {
+    return selection.pathId;
+  }
+
+  return getSingleSelectedPathId(selection);
+}
+
 export function getSingleSelectedModelInstanceId(selection: EditorSelection): string | null {
   if (selection.kind !== "modelInstances" || selection.ids.length !== 1) {
     return null;
@@ -155,7 +185,14 @@ export function isModelInstanceSelected(selection: EditorSelection, modelInstanc
 }
 
 export function isPathSelected(selection: EditorSelection, pathId: string): boolean {
-  return selection.kind === "paths" && selection.ids.includes(pathId);
+  return (
+    (selection.kind === "paths" && selection.ids.includes(pathId)) ||
+    (selection.kind === "pathPoint" && selection.pathId === pathId)
+  );
+}
+
+export function isPathPointSelected(selection: EditorSelection, pathId: string, pointId: string): boolean {
+  return selection.kind === "pathPoint" && selection.pathId === pathId && selection.pointId === pointId;
 }
 
 export function normalizeSelectionForWhiteboxSelectionMode(selection: EditorSelection, mode: WhiteboxSelectionMode): EditorSelection {
