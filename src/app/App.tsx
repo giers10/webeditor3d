@@ -5129,6 +5129,28 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
+  const handlePathLoopChange = (loop: boolean) => {
+    if (selectedPath === null) {
+      setStatusMessage("Select a path before changing its loop state.");
+      return;
+    }
+
+    try {
+      const nextPath = createScenePath({
+        ...selectedPath,
+        loop
+      });
+
+      commitPathChange(
+        selectedPath,
+        nextPath,
+        loop ? "Enabled Path looping." : "Disabled Path looping."
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
   const handlePathPointDraftChange = (
     pointIndex: number,
     axis: keyof Vec3Draft,
