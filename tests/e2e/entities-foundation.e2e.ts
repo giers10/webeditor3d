@@ -179,7 +179,8 @@ test("escape cancels a typed entity creation preview", async ({ page }) => {
         target: {
           kind: "entity",
           entityKind: "playerStart",
-          audioAssetId: null
+          audioAssetId: null,
+          modelAssetId: null
         },
         center: null
       }
