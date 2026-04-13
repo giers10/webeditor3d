@@ -78,6 +78,8 @@ Treat current box-brush structures as the starting point for whitebox solids unl
 - project save/load and runner export are separate concerns
 - project time is global, not per scene
 - current day/night logic exists, but it is still a small dedicated driver rather than a generic schedule system
+- scheduler/notebook work should sit on top of a shared control surface, not a growing pile of one-off scheduler-only effect types
+- when a new capability is added that is meaningfully steerable over time, prefer making it control-surface-addressable and scheduler-available instead of adding isolated time fields
 
 Imported model collision:
 
@@ -139,6 +141,7 @@ The next large topics are more likely to be things like:
 - richer runtime systems
 - authored day/night refinement on top of project-global time
 - later deterministic schedule/routine/event systems driven by global time + flags + scene context
+- scheduler/control-surface convergence so newly steerable runtime features are naturally available in the notebook
 - remaining packaging / portability work
 - future primitives and topology tools after the whitebox direction is coherent
 

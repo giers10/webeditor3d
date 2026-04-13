@@ -99,6 +99,12 @@ This is not:
   - persistent/cycle flags
   - scene/location context
 - Prefer deterministic resolution over fully simulating unloaded scenes.
+- The scheduler/notebook should be the default authoring surface for time-based orchestration.
+- Do not keep adding one-off per-entity or per-system time fields once a scheduler/control-surface path exists.
+- When a new typed runtime/editor capability is added and it is meaningfully time-steerable, extend the control surface and make it schedulable in the same direction of work or document clearly why it is intentionally deferred.
+- Treat this as a product rule, not a nice-to-have:
+  - new schedulable capability -> control-surface support
+  - control-surface support -> scheduler/notebook availability
 - NPC presence, routines, dialogue variants, interaction availability, and path progress should eventually be reconstructible from authored rules plus global state.
 - If loop/reset mechanics are added later, they should reset/re-resolve cycle-scoped state rather than trying to rewind arbitrary runtime simulation.
 
