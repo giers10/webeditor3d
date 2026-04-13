@@ -1711,6 +1711,55 @@ describe("scene document JSON", () => {
     );
   });
 
+  it("migrates pre-presence NPC entities to always-authored presence", () => {
+    const migratedDocument = migrateSceneDocument({
+      version: PATH_FOUNDATION_SCENE_DOCUMENT_VERSION,
+      name: "NPC Presence Migration",
+      time: createDefaultProjectTimeSettings(),
+      world: createEmptySceneDocument().world,
+      materials: createEmptySceneDocument().materials,
+      textures: {},
+      assets: {},
+      brushes: {},
+      paths: {},
+      modelInstances: {},
+      entities: {
+        "entity-npc-guide": {
+          id: "entity-npc-guide",
+          kind: "npc",
+          position: {
+            x: 1,
+            y: 0,
+            z: 2
+          },
+          visible: true,
+          enabled: true,
+          actorId: "actor-town-guide",
+          yawDegrees: 30,
+          modelAssetId: null,
+          collider: createNpcEntity().collider
+        }
+      },
+      interactionLinks: {}
+    });
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.entities["entity-npc-guide"]).toEqual(
+      createNpcEntity({
+        id: "entity-npc-guide",
+        actorId: "actor-town-guide",
+        presence: createNpcAlwaysPresence(),
+        position: {
+          x: 1,
+          y: 0,
+          z: 2
+        },
+        yawDegrees: 30,
+        modelAssetId: null
+      })
+    );
+  });
+
   it("migrates slice 3.0 documents to the current schema version without changing empty asset collections", () => {
     const migratedDocument = migrateSceneDocument({
       version: MODEL_ASSET_PIPELINE_SCENE_DOCUMENT_VERSION,
