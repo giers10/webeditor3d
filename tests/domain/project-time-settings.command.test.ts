@@ -16,7 +16,7 @@ describe("createSetProjectTimeSettingsCommand", () => {
     nextTime.dayLengthMinutes = 12;
     nextTime.sunriseTimeOfDayHours = 5.75;
     nextTime.sunsetTimeOfDayHours = 20.25;
-    nextTime.night.lightIntensityFactor = 0.28;
+    nextTime.dawnDurationHours = 1.5;
 
     store.executeCommand(
       createSetProjectTimeSettingsCommand({
