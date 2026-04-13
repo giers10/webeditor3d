@@ -355,7 +355,7 @@ describe("buildRuntimeSceneFromDocument", () => {
       z: 0
     });
     expect(runtimeScene.brushes[0].faces.posY.material?.id).toBe("starter-concrete-checker");
-    expect(runtimeScene.colliders).toHaveLength(1);
+    expect(runtimeScene.colliders).toHaveLength(2);
     expect(runtimeScene.colliders[0]).toMatchObject({
       kind: "trimesh",
       source: "brush",
@@ -467,7 +467,13 @@ describe("buildRuntimeSceneFromDocument", () => {
             z: -2
           },
           yawDegrees: 45,
-          modelAssetId: modelAsset.id
+          modelAssetId: modelAsset.id,
+          collider: {
+            mode: "capsule",
+            radius: 0.35,
+            height: 1.8,
+            eyeHeight: 1.6
+          }
         }
       ],
       soundEmitters: [
@@ -634,6 +640,39 @@ describe("buildRuntimeSceneFromDocument", () => {
           x: 0.8,
           y: 1.6,
           z: 0.7
+        }
+      }
+    });
+    expect(runtimeScene.colliders[1]).toMatchObject({
+      kind: "character",
+      source: "npc",
+      entityId: "entity-npc-guide",
+      position: {
+        x: -1,
+        y: 0,
+        z: -2
+      },
+      rotationDegrees: {
+        x: 0,
+        y: 45,
+        z: 0
+      },
+      shape: {
+        mode: "capsule",
+        radius: 0.35,
+        height: 1.8,
+        eyeHeight: 1.6
+      },
+      worldBounds: {
+        min: {
+          x: -1.35,
+          y: 0,
+          z: -2.35
+        },
+        max: {
+          x: -0.65,
+          y: 1.8,
+          z: -1.65
         }
       }
     });
