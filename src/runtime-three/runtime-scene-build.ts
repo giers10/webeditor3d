@@ -25,12 +25,14 @@ import {
 import { cloneWorldSettings, type WorldSettings } from "../document/world-settings";
 import {
   type CharacterColliderSettings,
+  cloneNpcPresence,
   clonePlayerStartInputBindings,
   createPlayerStartMovementTemplate,
   createPlayerStartInputBindings,
   getEntityInstances,
   getPrimaryEnabledPlayerStartEntity,
   type EntityInstance,
+  type NpcPresence,
   type PlayerStartInputBindings,
   type PlayerStartJumpSettings,
   type PlayerStartMovementCapabilities,
@@ -44,6 +46,8 @@ import { buildGeneratedModelCollider, type GeneratedColliderBounds, type Generat
 import { cloneInteractionLink, getInteractionLinks, type InteractionLink } from "../interactions/interaction-links";
 import { cloneMaterialDef, type MaterialDef } from "../materials/starter-material-library";
 import { assertRuntimeSceneBuildable } from "./runtime-scene-validation";
+import { resolveNpcPresenceActive } from "./runtime-npc-presence";
+import type { RuntimeClockState } from "./runtime-project-time";
 import { FIRST_PERSON_PLAYER_SHAPE, type FirstPersonPlayerShape } from "./player-collision";
 
 export type RuntimeNavigationMode = "firstPerson" | "thirdPerson";
@@ -166,6 +170,11 @@ export interface RuntimeNpc {
   yawDegrees: number;
   modelAssetId: string | null;
   collider: FirstPersonPlayerShape;
+}
+
+export interface RuntimeNpcDefinition extends RuntimeNpc {
+  presence: NpcPresence;
+  active: boolean;
 }
 
 export interface RuntimeSoundEmitter {
@@ -298,10 +307,12 @@ export interface RuntimeSceneDefinition {
   localLights: RuntimeLocalLightCollection;
   brushes: RuntimeBoxBrushInstance[];
   volumes: RuntimeBoxVolumeCollection;
+  staticColliders: RuntimeSceneCollider[];
   colliders: RuntimeSceneCollider[];
   sceneBounds: RuntimeSceneBounds | null;
   modelInstances: RuntimeModelInstance[];
   paths: RuntimePath[];
+  npcDefinitions: RuntimeNpcDefinition[];
   entities: RuntimeEntityCollection;
   interactionLinks: InteractionLink[];
   playerStart: RuntimePlayerStart | null;
@@ -315,6 +326,7 @@ export interface RuntimeSceneDefinition {
 export interface BuildRuntimeSceneOptions {
   navigationMode?: RuntimeNavigationMode;
   loadedModelAssets?: Record<string, LoadedModelAsset>;
+  runtimeClock?: RuntimeClockState;
   sceneEntryId?: string | null;
 }
 
