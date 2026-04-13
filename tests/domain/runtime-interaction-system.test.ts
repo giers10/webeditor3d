@@ -55,6 +55,7 @@ function createRuntimeSceneFixture(): RuntimeSceneDefinition {
       spotLights: []
     },
     modelInstances: [],
+    paths: [],
     entities: {
       playerStarts: [],
       sceneEntries: [],
