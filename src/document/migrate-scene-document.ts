@@ -3125,6 +3125,251 @@ function readInteractionAction(
   }
 }
 
+function readProjectScheduler(
+  value: unknown,
+  label: string,
+  options: { allowMissing: boolean }
+): ProjectScheduler {
+  if (value === undefined && options.allowMissing) {
+    return createEmptyProjectScheduler();
+  }
+
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  const routinesValue = value.routines;
+
+  if (!isRecord(routinesValue)) {
+    throw new Error(`${label}.routines must be an object.`);
+  }
+
+  const routines = Object.fromEntries(
+    Object.entries(routinesValue).map(([routineId, routineValue]) => {
+      if (!isRecord(routineValue)) {
+        throw new Error(`${label}.routines.${routineId} must be an object.`);
+      }
+
+      const target = readControlTargetRef(
+        routineValue.target,
+        `${label}.routines.${routineId}.target`
+      );
+      const effect = readControlEffect(
+        routineValue.effect,
+        `${label}.routines.${routineId}.effect`
+      );
+
+      return [
+        routineId,
+        createProjectScheduleRoutine({
+          id: expectString(routineValue.id, `${label}.routines.${routineId}.id`),
+          title: expectString(
+            routineValue.title,
+            `${label}.routines.${routineId}.title`
+          ),
+          enabled: readOptionalBoolean(
+            routineValue.enabled,
+            `${label}.routines.${routineId}.enabled`,
+            true
+          ),
+          target: target as ReturnType<typeof createActorControlTargetRef>,
+          days:
+            routineValue.days === undefined
+              ? createProjectScheduleEveryDaySelection()
+              : (() => {
+                  if (!isRecord(routineValue.days)) {
+                    throw new Error(
+                      `${label}.routines.${routineId}.days must be an object.`
+                    );
+                  }
+
+                  const mode = expectString(
+                    routineValue.days.mode,
+                    `${label}.routines.${routineId}.days.mode`
+                  );
+
+                  if (mode === "everyDay") {
+                    return createProjectScheduleEveryDaySelection();
+                  }
+
+                  if (mode !== "selectedDays") {
+                    throw new Error(
+                      `${label}.routines.${routineId}.days.mode must be everyDay or selectedDays.`
+                    );
+                  }
+
+                  return {
+                    mode: "selectedDays" as const,
+                    days: expectStringArray(
+                      routineValue.days.days,
+                      `${label}.routines.${routineId}.days.days`
+                    ).map((day) => {
+                      switch (day) {
+                        case "monday":
+                        case "tuesday":
+                        case "wednesday":
+                        case "thursday":
+                        case "friday":
+                        case "saturday":
+                        case "sunday":
+                          return day;
+                        default:
+                          throw new Error(
+                            `${label}.routines.${routineId}.days.days must only contain supported weekdays.`
+                          );
+                      }
+                    })
+                  };
+                })(),
+          startHour: expectFiniteNumber(
+            routineValue.startHour,
+            `${label}.routines.${routineId}.startHour`
+          ),
+          endHour: expectFiniteNumber(
+            routineValue.endHour,
+            `${label}.routines.${routineId}.endHour`
+          ),
+          priority: readOptionalFiniteNumber(
+            routineValue.priority,
+            `${label}.routines.${routineId}.priority`,
+            0
+          ),
+          effect: effect as ReturnType<typeof createSetActorPresenceControlEffect>
+        })
+      ];
+    })
+  );
+
+  return {
+    routines
+  };
+}
+
+function migrateLegacySceneNpcPresenceToScheduler(
+  document: SceneDocument
+): SceneDocument {
+  let nextScheduler = createEmptyProjectScheduler();
+  let nextEntities = document.entities;
+  let migrated = false;
+
+  for (const [entityId, entity] of Object.entries(document.entities)) {
+    if (entity.kind !== "npc" || entity.presence.mode !== "timeWindow") {
+      continue;
+    }
+
+    if (!migrated) {
+      nextScheduler = readProjectScheduler(document.scheduler, "scheduler", {
+        allowMissing: true
+      });
+      nextEntities = {
+        ...document.entities
+      };
+      migrated = true;
+    }
+
+    nextScheduler.routines[`schedule-routine-${entityId}`] =
+      createProjectScheduleRoutine({
+        id: `schedule-routine-${entityId}`,
+        title: entity.name?.trim() || entity.actorId,
+        target: createActorControlTargetRef(entity.actorId),
+        days: createProjectScheduleEveryDaySelection(),
+        startHour: entity.presence.startHour,
+        endHour: entity.presence.endHour,
+        priority: 0,
+        effect: createSetActorPresenceControlEffect({
+          target: createActorControlTargetRef(entity.actorId),
+          active: true
+        })
+      });
+    nextEntities[entityId] = createNpcEntity({
+      ...entity,
+      presence: createNpcAlwaysPresence()
+    });
+  }
+
+  if (!migrated) {
+    return {
+      ...document,
+      scheduler: readProjectScheduler(document.scheduler, "scheduler", {
+        allowMissing: true
+      })
+    };
+  }
+
+  return {
+    ...document,
+    scheduler: nextScheduler,
+    entities: nextEntities
+  };
+}
+
+function migrateLegacyProjectNpcPresenceToScheduler(
+  document: ProjectDocument
+): ProjectDocument {
+  let nextScheduler = readProjectScheduler(document.scheduler, "scheduler", {
+    allowMissing: true
+  });
+  let nextScenes = document.scenes;
+  let migrated = false;
+
+  for (const [sceneId, scene] of Object.entries(document.scenes)) {
+    let nextEntities = scene.entities;
+    let sceneChanged = false;
+
+    for (const [entityId, entity] of Object.entries(scene.entities)) {
+      if (entity.kind !== "npc" || entity.presence.mode !== "timeWindow") {
+        continue;
+      }
+
+      if (!migrated) {
+        nextScenes = {
+          ...document.scenes
+        };
+        migrated = true;
+      }
+
+      if (!sceneChanged) {
+        nextEntities = {
+          ...scene.entities
+        };
+        sceneChanged = true;
+      }
+
+      nextScheduler.routines[`schedule-routine-${sceneId}-${entityId}`] =
+        createProjectScheduleRoutine({
+          id: `schedule-routine-${sceneId}-${entityId}`,
+          title: entity.name?.trim() || entity.actorId,
+          target: createActorControlTargetRef(entity.actorId),
+          days: createProjectScheduleEveryDaySelection(),
+          startHour: entity.presence.startHour,
+          endHour: entity.presence.endHour,
+          priority: 0,
+          effect: createSetActorPresenceControlEffect({
+            target: createActorControlTargetRef(entity.actorId),
+            active: true
+          })
+        });
+      nextEntities[entityId] = createNpcEntity({
+        ...entity,
+        presence: createNpcAlwaysPresence()
+      });
+    }
+
+    if (sceneChanged) {
+      nextScenes[sceneId] = {
+        ...scene,
+        entities: nextEntities
+      };
+    }
+  }
+
+  return {
+    ...document,
+    scheduler: nextScheduler,
+    scenes: nextScenes
+  };
+}
+
 function readInteractionLink(value: unknown, label: string): InteractionLink {
   if (!isRecord(value)) {
     throw new Error(`${label} must be an object.`);
