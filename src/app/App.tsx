@@ -1637,6 +1637,32 @@ export function App({ store, initialStatusMessage }: AppProps) {
     selectedNpcAsset !== null && selectedNpcAsset.kind === "model"
       ? selectedNpcAsset
       : null;
+  const selectedNpcActorUsages =
+    selectedNpc === null
+      ? []
+      : listNpcActorUsages(editorState.projectDocument, selectedNpc.actorId);
+  const selectedNpcOtherActorUsages =
+    selectedNpc === null
+      ? []
+      : selectedNpcActorUsages.filter(
+          (usage) =>
+            !(
+              usage.sceneId === editorState.activeSceneId &&
+              usage.entityId === selectedNpc.id
+            )
+        );
+  const selectedNpcSameSceneActorUsages =
+    selectedNpc === null
+      ? []
+      : selectedNpcOtherActorUsages.filter(
+          (usage) => usage.sceneId === editorState.activeSceneId
+        );
+  const selectedNpcOtherSceneActorUsages =
+    selectedNpc === null
+      ? []
+      : selectedNpcOtherActorUsages.filter(
+          (usage) => usage.sceneId !== editorState.activeSceneId
+        );
   const selectedTeleportTarget =
     selectedEntity?.kind === "teleportTarget" ? selectedEntity : null;
   const selectedInteractable =
