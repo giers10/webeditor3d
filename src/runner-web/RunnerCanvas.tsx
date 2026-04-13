@@ -15,14 +15,12 @@ import type { RuntimeInteractionPrompt } from "../runtime-three/runtime-interact
 import {
   areRuntimeClockStatesEqual,
   createRuntimeClockState,
-  resolveRuntimeDayNightWorldState,
   type RuntimeClockState
 } from "../runtime-three/runtime-project-time";
 import type {
   RuntimeNavigationMode,
   RuntimeSceneDefinition
 } from "../runtime-three/runtime-scene-build";
-import { createWorldBackgroundStyle } from "../shared-ui/world-background-style";
 
 const FORWARD_RUNTIME_CLOCK_INTERVAL_MS = 240;
 
@@ -73,27 +71,12 @@ export function RunnerCanvas({
     useState<RuntimeInteractionPrompt | null>(null);
   const [firstPersonTelemetry, setFirstPersonTelemetry] =
     useState<FirstPersonTelemetry | null>(null);
-  const [visualRuntimeClock, setVisualRuntimeClock] = useState(runtimeClock);
   const overlayMessage = runnerMessage ?? sceneLoadState.message;
   const overlayStatus =
     overlayMessage !== null ? "error" : sceneLoadState.status;
   const runnerReady = overlayStatus === "ready";
-  const resolvedWorld = resolveRuntimeDayNightWorldState(
-    runtimeScene.world,
-    runtimeScene.time,
-    visualRuntimeClock
-  );
 
   onRuntimeClockChangeRef.current = onRuntimeClockChange;
-
-  useEffect(() => {
-    lastForwardedRuntimeClockRef.current = runtimeClock;
-    setVisualRuntimeClock((currentClock) =>
-      areRuntimeClockStatesEqual(currentClock, runtimeClock)
-        ? currentClock
-        : runtimeClock
-    );
-  }, [runtimeClock.dayCount, runtimeClock.dayLengthMinutes, runtimeClock.timeOfDayHours]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -111,12 +94,6 @@ export function RunnerCanvas({
       runtimeHost.setRuntimeMessageHandler(onRuntimeMessageChange);
       runtimeHost.setSceneLoadStateHandler(setSceneLoadState);
       runtimeHost.setRuntimeClockStateHandler?.((clock) => {
-        setVisualRuntimeClock((currentClock) =>
-          areRuntimeClockStatesEqual(currentClock, clock)
-            ? currentClock
-            : clock
-        );
-
         const now = performance.now();
 
         if (
@@ -226,35 +203,7 @@ export function RunnerCanvas({
       data-testid="runner-shell"
       aria-label="Built-in scene runner"
       aria-busy={!runnerReady}
-      style={createWorldBackgroundStyle(
-        resolvedWorld.background,
-        resolvedWorld.background.mode === "image"
-          ? (loadedImageAssets[resolvedWorld.background.assetId]
-              ?.sourceUrl ?? null)
-          : null
-      )}
     >
-      {resolvedWorld.nightBackgroundOverlay === null ? null : (
-        <div
-          className="runner-canvas__background-overlay"
-          data-testid="runner-night-background-overlay"
-          aria-hidden="true"
-          style={{
-            ...createWorldBackgroundStyle(
-              {
-                mode: "image",
-                assetId: resolvedWorld.nightBackgroundOverlay.assetId,
-                environmentIntensity:
-                  resolvedWorld.nightBackgroundOverlay.environmentIntensity
-              },
-              loadedImageAssets[
-                resolvedWorld.nightBackgroundOverlay.assetId
-              ]?.sourceUrl ?? null
-            ),
-            opacity: resolvedWorld.nightBackgroundOverlay.opacity
-          }}
-        />
-      )}
       <div
         className={`runner-canvas__loading-overlay ${runnerReady ? "runner-canvas__loading-overlay--hidden" : ""}`}
         data-testid="runner-loading-overlay"

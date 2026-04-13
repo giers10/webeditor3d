@@ -389,7 +389,7 @@ describe("RunnerCanvas", () => {
     ).toHaveBeenCalledTimes(2);
   });
 
-  it("renders the night background overlay behind the scene when the night profile is active", async () => {
+  it("does not render a DOM night background overlay because the runtime host owns background blending", async () => {
     const document = createEmptySceneDocument();
     document.assets["asset-night-sky"] = {
       id: "asset-night-sky",
@@ -439,7 +439,9 @@ describe("RunnerCanvas", () => {
       expect(runtimeHostInstances).toHaveLength(1);
     });
 
-    expect(screen.getByTestId("runner-night-background-overlay")).toBeVisible();
+    expect(
+      screen.queryByTestId("runner-night-background-overlay")
+    ).toBeNull();
   });
 
   it("keeps the crosshair hidden in third-person mode while still showing interaction prompts", async () => {
