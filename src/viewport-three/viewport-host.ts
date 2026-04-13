@@ -5507,6 +5507,8 @@ export class ViewportHost {
         return `brushVertex:${selection.brushId}:${selection.vertexId}`;
       case "paths":
         return selection.ids.length === 1 ? `path:${selection.ids[0]}` : null;
+      case "pathPoint":
+        return `pathPoint:${selection.pathId}:${selection.pointId}`;
       case "entities":
         return selection.ids.length === 1 ? `entity:${selection.ids[0]}` : null;
       case "modelInstances":
@@ -5531,6 +5533,16 @@ export class ViewportHost {
     }
 
     const pathId = hit.object.userData.pathId;
+    const pathPointId = hit.object.userData.pathPointId;
+
+    if (typeof pathId === "string" && typeof pathPointId === "string") {
+      return {
+        kind: "pathPoint",
+        pathId,
+        pointId: pathPointId
+      };
+    }
+
     if (typeof pathId === "string") {
       return {
         kind: "paths",
