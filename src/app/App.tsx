@@ -6042,6 +6042,42 @@ export function App({ store, initialStatusMessage }: AppProps) {
       `Delete ${label} and remove its project-wide references?\n\nThis also deletes the stored binary asset data, and it can be undone with Undo.`
     );
 
+  const handleSetPathVisible = (path: ScenePath, visible: boolean) => {
+    try {
+      store.executeCommand(
+        createSetPathAuthoredStateCommand({
+          pathId: path.id,
+          visible
+        })
+      );
+      setStatusMessage(
+        visible
+          ? `Shown ${getPathLabelById(path.id, pathList)} in the editor.`
+          : `Hidden ${getPathLabelById(path.id, pathList)} in the editor.`
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const handleSetPathEnabled = (path: ScenePath, enabled: boolean) => {
+    try {
+      store.executeCommand(
+        createSetPathAuthoredStateCommand({
+          pathId: path.id,
+          enabled
+        })
+      );
+      setStatusMessage(
+        enabled
+          ? `Enabled ${getPathLabelById(path.id, pathList)}.`
+          : `Disabled ${getPathLabelById(path.id, pathList)}.`
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
   const handleSetBrushVisible = (brush: BoxBrush, visible: boolean) => {
     try {
       store.executeCommand(
@@ -6179,6 +6215,23 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
+  const handleDeletePath = (pathId: string) => {
+    const label = getPathLabelById(pathId, pathList);
+
+    if (!confirmDeleteSceneItem(label)) {
+      return false;
+    }
+
+    try {
+      store.executeCommand(createDeletePathCommand(pathId));
+      setStatusMessage(`Deleted ${label}.`);
+      return true;
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+      return false;
+    }
+  };
+
   const handleDeleteEntity = (entityId: string) => {
     const label = getEntityDisplayLabelById(
       entityId,
@@ -6241,6 +6294,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
     if (selectedBrushId !== null) {
       return handleDeleteBrush(selectedBrushId);
+    }
+
+    const selectedPathId = getSingleSelectedPathId(editorState.selection);
+
+    if (selectedPathId !== null) {
+      return handleDeletePath(selectedPathId);
     }
 
     const selectedEntityId = getSingleSelectedEntityId(editorState.selection);
