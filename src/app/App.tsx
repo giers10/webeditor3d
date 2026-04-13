@@ -12475,8 +12475,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     <div className="label">Points</div>
                     <div className="material-summary">
                       Edit authored point positions directly. Keep at least{" "}
-                      {MIN_SCENE_PATH_POINT_COUNT} points. `Shift+W` appends a
-                      new point to the end of the selected path.
+                      {MIN_SCENE_PATH_POINT_COUNT} points. <code>Shift+W</code>{" "}
+                      appends a new point to the end of the selected path.
                     </div>
                     {selectedPathPointIndex === null ? null : (
                       <div className="material-summary">
