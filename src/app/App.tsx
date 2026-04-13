@@ -10620,7 +10620,536 @@ export function App({ store, initialStatusMessage }: AppProps) {
               </Panel>
             </>
           ) : (
-            <Panel title="Inspector">
+
+                </Panel>
+
+                {!editorState.document.world.projectTimeLightingEnabled ? null : (
+                  <>
+                    <Panel title="Dawn Override" defaultExpanded={false}>
+                      <div className="material-summary">
+                        Blends over the authored day environment around sunrise.
+                      </div>
+                      <div className="vector-inputs">
+                        <label className="form-field">
+                          <span className="label">Sky Top</span>
+                          <input
+                            className="color-input"
+                            type="color"
+                            value={editorState.document.world.timeOfDay.dawn.skyTopColorHex}
+                            onChange={(event) =>
+                              applyWorldTimePhaseColor(
+                                "dawn",
+                                "skyTopColorHex",
+                                event.currentTarget.value,
+                                "Set dawn sky top color",
+                                "Updated the dawn sky top color."
+                              )
+                            }
+                          />
+                        </label>
+                        <label className="form-field">
+                          <span className="label">Sky Bottom</span>
+                          <input
+                            className="color-input"
+                            type="color"
+                            value={editorState.document.world.timeOfDay.dawn.skyBottomColorHex}
+                            onChange={(event) =>
+                              applyWorldTimePhaseColor(
+                                "dawn",
+                                "skyBottomColorHex",
+                                event.currentTarget.value,
+                                "Set dawn sky bottom color",
+                                "Updated the dawn sky bottom color."
+                              )
+                            }
+                          />
+                        </label>
+                        <label className="form-field">
+                          <span className="label">Ambient Color</span>
+                          <input
+                            className="color-input"
+                            type="color"
+                            value={editorState.document.world.timeOfDay.dawn.ambientColorHex}
+                            onChange={(event) =>
+                              applyWorldTimePhaseColor(
+                                "dawn",
+                                "ambientColorHex",
+                                event.currentTarget.value,
+                                "Set dawn ambient color",
+                                "Updated the dawn ambient color."
+                              )
+                            }
+                          />
+                        </label>
+                        <label className="form-field">
+                          <span className="label">Ambient Factor</span>
+                          <input
+                            className="text-input"
+                            type="number"
+                            min="0"
+                            step="0.05"
+                            value={worldDawnAmbientIntensityFactorDraft}
+                            onChange={(event) =>
+                              setWorldDawnAmbientIntensityFactorDraft(
+                                event.currentTarget.value
+                              )
+                            }
+                            onBlur={() =>
+                              applyWorldTimePhaseNumericField(
+                                "dawn",
+                                "ambientIntensityFactor",
+                                worldDawnAmbientIntensityFactorDraft,
+                                "Set dawn ambient factor",
+                                "Dawn ambient factor",
+                                "Updated the dawn ambient factor."
+                              )
+                            }
+                          />
+                        </label>
+                        <label className="form-field">
+                          <span className="label">Light Color</span>
+                          <input
+                            className="color-input"
+                            type="color"
+                            value={editorState.document.world.timeOfDay.dawn.lightColorHex}
+                            onChange={(event) =>
+                              applyWorldTimePhaseColor(
+                                "dawn",
+                                "lightColorHex",
+                                event.currentTarget.value,
+                                "Set dawn light color",
+                                "Updated the dawn light color."
+                              )
+                            }
+                          />
+                        </label>
+                        <label className="form-field">
+                          <span className="label">Light Factor</span>
+                          <input
+                            className="text-input"
+                            type="number"
+                            min="0"
+                            step="0.05"
+                            value={worldDawnLightIntensityFactorDraft}
+                            onChange={(event) =>
+                              setWorldDawnLightIntensityFactorDraft(
+                                event.currentTarget.value
+                              )
+                            }
+                            onBlur={() =>
+                              applyWorldTimePhaseNumericField(
+                                "dawn",
+                                "lightIntensityFactor",
+                                worldDawnLightIntensityFactorDraft,
+                                "Set dawn light factor",
+                                "Dawn light factor",
+                                "Updated the dawn light factor."
+                              )
+                            }
+                          />
+                        </label>
+                      </div>
+                    </Panel>
+
+                    <Panel title="Dusk Override" defaultExpanded={false}>
+                      <div className="material-summary">
+                        Blends over the authored day environment around sunset.
+                      </div>
+                      <div className="vector-inputs">
+                        <label className="form-field">
+                          <span className="label">Sky Top</span>
+                          <input
+                            className="color-input"
+                            type="color"
+                            value={editorState.document.world.timeOfDay.dusk.skyTopColorHex}
+                            onChange={(event) =>
+                              applyWorldTimePhaseColor(
+                                "dusk",
+                                "skyTopColorHex",
+                                event.currentTarget.value,
+                                "Set dusk sky top color",
+                                "Updated the dusk sky top color."
+                              )
+                            }
+                          />
+                        </label>
+                        <label className="form-field">
+                          <span className="label">Sky Bottom</span>
+                          <input
+                            className="color-input"
+                            type="color"
+                            value={editorState.document.world.timeOfDay.dusk.skyBottomColorHex}
+                            onChange={(event) =>
+                              applyWorldTimePhaseColor(
+                                "dusk",
+                                "skyBottomColorHex",
+                                event.currentTarget.value,
+                                "Set dusk sky bottom color",
+                                "Updated the dusk sky bottom color."
+                              )
+                            }
+                          />
+                        </label>
+                        <label className="form-field">
+                          <span className="label">Ambient Color</span>
+                          <input
+                            className="color-input"
+                            type="color"
+                            value={editorState.document.world.timeOfDay.dusk.ambientColorHex}
+                            onChange={(event) =>
+                              applyWorldTimePhaseColor(
+                                "dusk",
+                                "ambientColorHex",
+                                event.currentTarget.value,
+                                "Set dusk ambient color",
+                                "Updated the dusk ambient color."
+                              )
+                            }
+                          />
+                        </label>
+                        <label className="form-field">
+                          <span className="label">Ambient Factor</span>
+                          <input
+                            className="text-input"
+                            type="number"
+                            min="0"
+                            step="0.05"
+                            value={worldDuskAmbientIntensityFactorDraft}
+                            onChange={(event) =>
+                              setWorldDuskAmbientIntensityFactorDraft(
+                                event.currentTarget.value
+                              )
+                            }
+                            onBlur={() =>
+                              applyWorldTimePhaseNumericField(
+                                "dusk",
+                                "ambientIntensityFactor",
+                                worldDuskAmbientIntensityFactorDraft,
+                                "Set dusk ambient factor",
+                                "Dusk ambient factor",
+                                "Updated the dusk ambient factor."
+                              )
+                            }
+                          />
+                        </label>
+                        <label className="form-field">
+                          <span className="label">Light Color</span>
+                          <input
+                            className="color-input"
+                            type="color"
+                            value={editorState.document.world.timeOfDay.dusk.lightColorHex}
+                            onChange={(event) =>
+                              applyWorldTimePhaseColor(
+                                "dusk",
+                                "lightColorHex",
+                                event.currentTarget.value,
+                                "Set dusk light color",
+                                "Updated the dusk light color."
+                              )
+                            }
+                          />
+                        </label>
+                        <label className="form-field">
+                          <span className="label">Light Factor</span>
+                          <input
+                            className="text-input"
+                            type="number"
+                            min="0"
+                            step="0.05"
+                            value={worldDuskLightIntensityFactorDraft}
+                            onChange={(event) =>
+                              setWorldDuskLightIntensityFactorDraft(
+                                event.currentTarget.value
+                              )
+                            }
+                            onBlur={() =>
+                              applyWorldTimePhaseNumericField(
+                                "dusk",
+                                "lightIntensityFactor",
+                                worldDuskLightIntensityFactorDraft,
+                                "Set dusk light factor",
+                                "Dusk light factor",
+                                "Updated the dusk light factor."
+                              )
+                            }
+                          />
+                        </label>
+                      </div>
+                    </Panel>
+
+                    <Panel title="Night Environment" defaultExpanded={false}>
+                      <div className="stat-card">
+                        <div className="label">Background</div>
+                        <div className="value">
+                          {formatWorldBackgroundLabel(
+                            editorState.document.world.timeOfDay.night.background
+                          )}
+                        </div>
+                        <div
+                          className="world-background-preview"
+                          data-testid="world-night-background-preview"
+                          style={createWorldBackgroundStyle(
+                            editorState.document.world.timeOfDay.night.background,
+                            editorState.document.world.timeOfDay.night.background
+                              .mode === "image"
+                              ? (loadedImageAssets[
+                                  editorState.document.world.timeOfDay.night
+                                    .background.assetId
+                                ]?.sourceUrl ?? null)
+                              : null
+                          )}
+                        />
+                        <div className="material-summary">
+                          {editorState.document.world.timeOfDay.night.background
+                            .mode === "solid"
+                            ? editorState.document.world.timeOfDay.night.background
+                                .colorHex
+                            : editorState.document.world.timeOfDay.night.background
+                                  .mode === "verticalGradient"
+                              ? `${editorState.document.world.timeOfDay.night.background.topColorHex} -> ${editorState.document.world.timeOfDay.night.background.bottomColorHex}`
+                              : (editorState.document.assets[
+                                  editorState.document.world.timeOfDay.night
+                                    .background.assetId
+                                ]?.sourceName ??
+                                editorState.document.world.timeOfDay.night
+                                  .background.assetId)}
+                        </div>
+                      </div>
+
+                      <div className="form-section">
+                        <div className="label">Background Mode</div>
+                        <div className="inline-actions">
+                          <button
+                            className={`toolbar__button ${editorState.document.world.timeOfDay.night.background.mode === "solid" ? "toolbar__button--active" : ""}`}
+                            type="button"
+                            onClick={() => applyNightBackgroundMode("solid")}
+                          >
+                            Solid
+                          </button>
+                          <button
+                            className={`toolbar__button ${
+                              editorState.document.world.timeOfDay.night
+                                .background.mode === "verticalGradient"
+                                ? "toolbar__button--active"
+                                : ""
+                            }`}
+                            type="button"
+                            onClick={() =>
+                              applyNightBackgroundMode("verticalGradient")
+                            }
+                          >
+                            Gradient
+                          </button>
+                          <button
+                            className={`toolbar__button ${editorState.document.world.timeOfDay.night.background.mode === "image" ? "toolbar__button--active" : ""}`}
+                            type="button"
+                            onClick={() => applyNightBackgroundMode("image")}
+                          >
+                            Image
+                          </button>
+                        </div>
+                      </div>
+
+                      {editorState.document.world.timeOfDay.night.background
+                        .mode === "image" ? (
+                        <div className="form-section">
+                          <div className="label">Night Image</div>
+                          <label className="form-field">
+                            <span className="label">Image</span>
+                            <select
+                              data-testid="world-night-background-asset-select"
+                              className="text-input"
+                              value={editorState.document.world.timeOfDay.night.background.assetId}
+                              onChange={(event) =>
+                                applyNightBackgroundMode(
+                                  "image",
+                                  event.currentTarget.value
+                                )
+                              }
+                            >
+                              {imageAssetList.map((asset) => (
+                                <option key={asset.id} value={asset.id}>
+                                  {asset.sourceName}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Intensity</span>
+                            <input
+                              className="text-input"
+                              type="number"
+                              min="0"
+                              step="0.1"
+                              value={worldNightBackgroundEnvironmentIntensityDraft}
+                              onChange={(event) =>
+                                setWorldNightBackgroundEnvironmentIntensityDraft(
+                                  event.currentTarget.value
+                                )
+                              }
+                              onBlur={applyNightBackgroundEnvironmentIntensity}
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(
+                                  event,
+                                  applyNightBackgroundEnvironmentIntensity
+                                )
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(
+                                  event,
+                                  applyNightBackgroundEnvironmentIntensity
+                                )
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(
+                                  event,
+                                  applyNightBackgroundEnvironmentIntensity
+                                )
+                              }
+                            />
+                          </label>
+                        </div>
+                      ) : (
+                        <div className="form-section">
+                          <div className="label">Background Colors</div>
+                          {editorState.document.world.timeOfDay.night.background
+                            .mode === "solid" ? (
+                            <label className="form-field">
+                              <span className="label">Color</span>
+                              <input
+                                className="color-input"
+                                type="color"
+                                value={editorState.document.world.timeOfDay.night.background.colorHex}
+                                onChange={(event) =>
+                                  applyNightBackgroundColor(
+                                    event.currentTarget.value
+                                  )
+                                }
+                              />
+                            </label>
+                          ) : (
+                            <div className="vector-inputs vector-inputs--two">
+                              <label className="form-field">
+                                <span className="label">Top</span>
+                                <input
+                                  className="color-input"
+                                  type="color"
+                                  value={editorState.document.world.timeOfDay.night.background.topColorHex}
+                                  onChange={(event) =>
+                                    applyNightGradientColor(
+                                      "top",
+                                      event.currentTarget.value
+                                    )
+                                  }
+                                />
+                              </label>
+                              <label className="form-field">
+                                <span className="label">Bottom</span>
+                                <input
+                                  className="color-input"
+                                  type="color"
+                                  value={editorState.document.world.timeOfDay.night.background.bottomColorHex}
+                                  onChange={(event) =>
+                                    applyNightGradientColor(
+                                      "bottom",
+                                      event.currentTarget.value
+                                    )
+                                  }
+                                />
+                              </label>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      <div className="vector-inputs">
+                        <label className="form-field">
+                          <span className="label">Ambient Color</span>
+                          <input
+                            className="color-input"
+                            type="color"
+                            value={editorState.document.world.timeOfDay.night.ambientColorHex}
+                            onChange={(event) =>
+                              applyWorldNightEnvironmentColor(
+                                "ambientColorHex",
+                                event.currentTarget.value,
+                                "Set night ambient color",
+                                "Updated the night ambient color."
+                              )
+                            }
+                          />
+                        </label>
+                        <label className="form-field">
+                          <span className="label">Ambient Factor</span>
+                          <input
+                            className="text-input"
+                            type="number"
+                            min="0"
+                            step="0.05"
+                            value={worldNightAmbientIntensityFactorDraft}
+                            onChange={(event) =>
+                              setWorldNightAmbientIntensityFactorDraft(
+                                event.currentTarget.value
+                              )
+                            }
+                            onBlur={() =>
+                              applyWorldNightEnvironmentNumericField(
+                                "ambientIntensityFactor",
+                                worldNightAmbientIntensityFactorDraft,
+                                "Set night ambient factor",
+                                "Night ambient factor",
+                                "Updated the night ambient factor."
+                              )
+                            }
+                          />
+                        </label>
+                        <label className="form-field">
+                          <span className="label">Moon / Night Light</span>
+                          <input
+                            className="color-input"
+                            type="color"
+                            value={editorState.document.world.timeOfDay.night.lightColorHex}
+                            onChange={(event) =>
+                              applyWorldNightEnvironmentColor(
+                                "lightColorHex",
+                                event.currentTarget.value,
+                                "Set night light color",
+                                "Updated the night light color."
+                              )
+                            }
+                          />
+                        </label>
+                        <label className="form-field">
+                          <span className="label">Moon / Night Factor</span>
+                          <input
+                            className="text-input"
+                            type="number"
+                            min="0"
+                            step="0.05"
+                            value={worldNightLightIntensityFactorDraft}
+                            onChange={(event) =>
+                              setWorldNightLightIntensityFactorDraft(
+                                event.currentTarget.value
+                              )
+                            }
+                            onBlur={() =>
+                              applyWorldNightEnvironmentNumericField(
+                                "lightIntensityFactor",
+                                worldNightLightIntensityFactorDraft,
+                                "Set night light factor",
+                                "Night light factor",
+                                "Updated the night light factor."
+                              )
+                            }
+                          />
+                        </label>
+                      </div>
+                    </Panel>
+                  </>
+                )}
+
+                <Panel title="Advanced Rendering" defaultExpanded={false}>
+                <div className="form-section">
               <div className="stat-card">
                 <div className="label">Selection</div>
                 <div className="value">
