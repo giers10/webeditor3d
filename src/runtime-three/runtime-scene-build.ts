@@ -548,8 +548,6 @@ function buildRuntimeNpcCollider(npc: RuntimeNpc): RuntimeNpcCollider | null {
 
   switch (npc.collider.mode) {
     case "capsule": {
-      const halfHeight = npc.collider.height * 0.5;
-
       return {
         kind: "character",
         source: "npc",
