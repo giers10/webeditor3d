@@ -6,9 +6,11 @@ import { createScenePath } from "../../src/document/paths";
 import { createDefaultProjectTimeSettings } from "../../src/document/project-time-settings";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
 import {
+  createNpcAlwaysPresence,
   DEFAULT_PLAYER_START_MOVE_SPEED,
   DEFAULT_PLAYER_START_MOVEMENT_CAPABILITIES,
   createNpcEntity,
+  createNpcTimeWindowPresence,
   createPointLightEntity,
   createInteractableEntity,
   createPlayerStartMovementTemplate,
