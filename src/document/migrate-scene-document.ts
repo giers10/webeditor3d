@@ -25,6 +25,7 @@ import {
   DEFAULT_PLAYER_START_GAMEPAD_BINDINGS,
   DEFAULT_PLAYER_START_KEYBOARD_BINDINGS,
   createNpcEntity,
+  createNpcColliderSettings,
   createPlayerStartColliderSettings,
   createPlayerStartInputBindings,
   createPlayerStartMovementTemplate,
@@ -113,6 +114,8 @@ import {
   SCENE_TRANSITION_ENTITIES_SCENE_DOCUMENT_VERSION,
   SPATIAL_AUDIO_SCENE_DOCUMENT_VERSION,
   PROJECT_NAME_SCENE_DOCUMENT_VERSION,
+  NPC_COLLIDER_SCENE_DOCUMENT_VERSION,
+  NPC_ENTITY_FOUNDATION_SCENE_DOCUMENT_VERSION,
   SCENE_DOCUMENT_VERSION,
   STATIC_SIMPLE_MODEL_COLLIDERS_SCENE_DOCUMENT_VERSION,
   TRIGGER_ACTION_TARGET_FOUNDATION_SCENE_DOCUMENT_VERSION,
@@ -1161,6 +1164,50 @@ function readPlayerStartColliderSettings(value: unknown, label: string) {
   );
 
   return createPlayerStartColliderSettings({
+    mode,
+    eyeHeight:
+      value.eyeHeight === undefined
+        ? undefined
+        : expectPositiveFiniteNumber(value.eyeHeight, `${label}.eyeHeight`),
+    capsuleRadius:
+      value.capsuleRadius === undefined
+        ? undefined
+        : expectPositiveFiniteNumber(
+            value.capsuleRadius,
+            `${label}.capsuleRadius`
+          ),
+    capsuleHeight:
+      value.capsuleHeight === undefined
+        ? undefined
+        : expectPositiveFiniteNumber(
+            value.capsuleHeight,
+            `${label}.capsuleHeight`
+          ),
+    boxSize:
+      value.boxSize === undefined
+        ? undefined
+        : readVec3(value.boxSize, `${label}.boxSize`)
+  });
+}
+
+function readNpcColliderSettings(value: unknown, label: string) {
+  if (value === undefined) {
+    return createNpcColliderSettings();
+  }
+
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  const mode = readOptionalAllowedValue(
+    value.mode,
+    `${label}.mode`,
+    "capsule",
+    (candidate): candidate is "capsule" | "box" | "none" =>
+      typeof candidate === "string" && isPlayerStartColliderMode(candidate)
+  );
+
+  return createNpcColliderSettings({
     mode,
     eyeHeight:
       value.eyeHeight === undefined
@@ -2572,7 +2619,8 @@ function readNpcEntity(value: unknown, label: string): EntityInstance {
     modelAssetId:
       value.modelAssetId === undefined || value.modelAssetId === null
         ? undefined
-        : expectString(value.modelAssetId, `${label}.modelAssetId`)
+        : expectString(value.modelAssetId, `${label}.modelAssetId`),
+    collider: readNpcColliderSettings(value.collider, `${label}.collider`)
   });
 
   if (entity.kind !== kind) {
@@ -3272,6 +3320,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
 
   if (
     source.version !== SCENE_DOCUMENT_VERSION &&
+    source.version !== NPC_ENTITY_FOUNDATION_SCENE_DOCUMENT_VERSION &&
     source.version !== WORLD_TIME_ENVIRONMENT_SCENE_DOCUMENT_VERSION &&
     source.version !== PROJECT_TIME_NIGHT_BACKGROUND_SCENE_DOCUMENT_VERSION &&
     source.version !== 33 &&
@@ -3293,7 +3342,8 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     source.version !== WHITEBOX_BEVEL_SCENE_DOCUMENT_VERSION &&
     source.version !== WHITEBOX_BOX_VOLUME_SCENE_DOCUMENT_VERSION &&
     source.version !== WHITEBOX_FLOAT_TRANSFORM_SCENE_DOCUMENT_VERSION &&
-    source.version !== WHITEBOX_GEOMETRY_SCENE_DOCUMENT_VERSION
+    source.version !== WHITEBOX_GEOMETRY_SCENE_DOCUMENT_VERSION &&
+    source.version !== NPC_COLLIDER_SCENE_DOCUMENT_VERSION
   ) {
     throw new Error(
       `Unsupported scene document version: ${String(source.version)}.`

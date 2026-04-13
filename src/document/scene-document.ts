@@ -19,7 +19,8 @@ import {
   type ProjectTimeSettings
 } from "./project-time-settings";
 
-export const SCENE_DOCUMENT_VERSION = 41 as const;
+export const SCENE_DOCUMENT_VERSION = 42 as const;
+export const NPC_COLLIDER_SCENE_DOCUMENT_VERSION = 42 as const;
 export const NPC_ENTITY_FOUNDATION_SCENE_DOCUMENT_VERSION = 41 as const;
 export const WORLD_TIME_ENVIRONMENT_SCENE_DOCUMENT_VERSION = 40 as const;
 export const PROJECT_TIME_NIGHT_BACKGROUND_SCENE_DOCUMENT_VERSION = 39 as const;
