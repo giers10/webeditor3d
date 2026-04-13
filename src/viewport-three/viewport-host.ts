@@ -5141,6 +5141,11 @@ export class ViewportHost {
     for (const renderObjects of this.entityRenderObjects.values()) {
       this.entityGroup.remove(renderObjects.group);
 
+      if (renderObjects.dispose !== undefined) {
+        renderObjects.dispose();
+        continue;
+      }
+
       for (const mesh of renderObjects.meshes) {
         mesh.geometry.dispose();
 
