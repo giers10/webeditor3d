@@ -1966,12 +1966,6 @@ function readLegacyWorldTimeOfDaySettings(
       lightIntensityFactor: nightProfile.lightIntensityFactor
     }
   };
-    timeOfDay: readWorldTimeOfDaySettings(value.timeOfDay, "world.timeOfDay", {
-      legacyProjectTimeValue: options.legacyProjectTimeValue
-    }),
-    timeOfDay: readWorldTimeOfDaySettings(value.timeOfDay, "world.timeOfDay", {
-      legacyProjectTimeValue: options.legacyProjectTimeValue
-    }),
 }
 
 function readWorldTimeOfDaySettings(
