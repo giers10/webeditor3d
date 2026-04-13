@@ -145,6 +145,102 @@ function hasNonZeroVectorLength(vector: {
   return vector.x !== 0 || vector.y !== 0 || vector.z !== 0;
 }
 
+function validateWorldBackgroundSettings(
+  background: WorldBackgroundSettings,
+  document: SceneDocument | ProjectDocument,
+  diagnostics: SceneDiagnostic[],
+  path: string,
+  label: string
+) {
+  if (background.mode === "solid") {
+    if (!isHexColorString(background.colorHex)) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          `invalid-${label}-color`,
+          `${label} must use a #RRGGBB color.`,
+          `${path}.colorHex`
+        )
+      );
+    }
+
+    return;
+  }
+
+  if (background.mode === "verticalGradient") {
+    if (!isHexColorString(background.topColorHex)) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          `invalid-${label}-top-color`,
+          `${label} top color must use a #RRGGBB color.`,
+          `${path}.topColorHex`
+        )
+      );
+    }
+
+    if (!isHexColorString(background.bottomColorHex)) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          `invalid-${label}-bottom-color`,
+          `${label} bottom color must use a #RRGGBB color.`,
+          `${path}.bottomColorHex`
+        )
+      );
+    }
+
+    return;
+  }
+
+  if (
+    typeof background.assetId !== "string" ||
+    background.assetId.trim().length === 0
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        `invalid-${label}-asset-id`,
+        `${label} must reference a non-empty image asset id.`,
+        `${path}.assetId`
+      )
+    );
+  } else {
+    const backgroundAsset = document.assets[background.assetId];
+
+    if (backgroundAsset === undefined) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          `missing-${label}-asset`,
+          `${label} asset ${background.assetId} does not exist.`,
+          `${path}.assetId`
+        )
+      );
+    } else if (backgroundAsset.kind !== "image") {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          `invalid-${label}-asset-kind`,
+          `${label} must reference an image asset.`,
+          `${path}.assetId`
+        )
+      );
+    }
+  }
+
+  if (!isNonNegativeFiniteNumber(background.environmentIntensity)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        `invalid-${label}-environment-intensity`,
+        `${label} environment intensity must be a non-negative finite number.`,
+        `${path}.environmentIntensity`
+      )
+    );
+  }
+}
+
 function validateWorldSettings(
   world: WorldSettings,
   document: SceneDocument,
