@@ -2,6 +2,21 @@ import type { LoadedModelAsset } from "../assets/gltf-model-import";
 import type { Vec3 } from "../core/vector";
 import { getModelInstances } from "../assets/model-instances";
 import {
+  createControlTargetDescriptor,
+  createDefaultResolvedControlSource,
+  createEmptyRuntimeResolvedControlState,
+  createInteractionControlTargetRef,
+  createLightControlTargetRef,
+  createLightIntensityControlChannelDescriptor,
+  createModelInstanceControlTargetRef,
+  createResolvedInteractionEnabledState,
+  createResolvedLightEnabledState,
+  createResolvedLightIntensityChannelValue,
+  createRuntimeControlSurfaceDefinition,
+  createSoundEmitterControlTargetRef,
+  type RuntimeControlSurfaceDefinition
+} from "../controls/control-surface";
+import {
   cloneBoxBrushGeometry,
   cloneBoxBrushVolumeSettings,
   cloneFaceUvState,
@@ -304,6 +319,7 @@ export interface RuntimeSpawnPoint {
 export interface RuntimeSceneDefinition {
   time: ProjectTimeSettings;
   world: WorldSettings;
+  control: RuntimeControlSurfaceDefinition;
   localLights: RuntimeLocalLightCollection;
   brushes: RuntimeBoxBrushInstance[];
   volumes: RuntimeBoxVolumeCollection;
@@ -802,6 +818,133 @@ interface RuntimeSceneCollections {
   npcDefinitions: RuntimeNpcDefinition[];
 }
 
+function buildRuntimeControlSurface(
+  document: SceneDocument,
+  collections: RuntimeSceneCollections,
+  modelInstances: RuntimeModelInstance[]
+): RuntimeControlSurfaceDefinition {
+  const targets: RuntimeControlSurfaceDefinition["targets"] = [];
+  const channels: RuntimeControlSurfaceDefinition["channels"] = [];
+  const resolved = createEmptyRuntimeResolvedControlState();
+  const defaultSource = createDefaultResolvedControlSource();
+
+  for (const pointLight of collections.localLights.pointLights) {
+    const target = createLightControlTargetRef("pointLight", pointLight.entityId);
+    const descriptor = createLightIntensityControlChannelDescriptor({
+      target,
+      defaultValue: pointLight.intensity
+    });
+    const sourceEntity = document.entities[pointLight.entityId];
+
+    targets.push(
+      createControlTargetDescriptor(target, ["lightEnabled", "lightIntensity"])
+    );
+    channels.push(descriptor);
+    resolved.discrete.push(
+      createResolvedLightEnabledState({
+        target,
+        value: sourceEntity?.kind === "pointLight" ? sourceEntity.visible : true,
+        source: defaultSource
+      })
+    );
+    resolved.channels.push(
+      createResolvedLightIntensityChannelValue({
+        descriptor,
+        value: pointLight.intensity,
+        source: defaultSource
+      })
+    );
+  }
+
+  for (const spotLight of collections.localLights.spotLights) {
+    const target = createLightControlTargetRef("spotLight", spotLight.entityId);
+    const descriptor = createLightIntensityControlChannelDescriptor({
+      target,
+      defaultValue: spotLight.intensity
+    });
+    const sourceEntity = document.entities[spotLight.entityId];
+
+    targets.push(
+      createControlTargetDescriptor(target, ["lightEnabled", "lightIntensity"])
+    );
+    channels.push(descriptor);
+    resolved.discrete.push(
+      createResolvedLightEnabledState({
+        target,
+        value: sourceEntity?.kind === "spotLight" ? sourceEntity.visible : true,
+        source: defaultSource
+      })
+    );
+    resolved.channels.push(
+      createResolvedLightIntensityChannelValue({
+        descriptor,
+        value: spotLight.intensity,
+        source: defaultSource
+      })
+    );
+  }
+
+  for (const soundEmitter of collections.entities.soundEmitters) {
+    targets.push(
+      createControlTargetDescriptor(
+        createSoundEmitterControlTargetRef(soundEmitter.entityId),
+        ["soundPlayback"]
+      )
+    );
+  }
+
+  for (const interactable of collections.entities.interactables) {
+    const target = createInteractionControlTargetRef(
+      "interactable",
+      interactable.entityId
+    );
+
+    targets.push(
+      createControlTargetDescriptor(target, ["interactionAvailability"])
+    );
+    resolved.discrete.push(
+      createResolvedInteractionEnabledState({
+        target,
+        value: interactable.interactionEnabled,
+        source: defaultSource
+      })
+    );
+  }
+
+  for (const sceneExit of collections.entities.sceneExits) {
+    const target = createInteractionControlTargetRef(
+      "sceneExit",
+      sceneExit.entityId
+    );
+
+    targets.push(
+      createControlTargetDescriptor(target, ["interactionAvailability"])
+    );
+    resolved.discrete.push(
+      createResolvedInteractionEnabledState({
+        target,
+        value: sceneExit.interactionEnabled,
+        source: defaultSource
+      })
+    );
+  }
+
+  for (const modelInstance of modelInstances) {
+    targets.push(
+      createControlTargetDescriptor(
+        createModelInstanceControlTargetRef(modelInstance.instanceId),
+        ["animationPlayback"]
+      )
+    );
+  }
+
+  return createRuntimeControlSurfaceDefinition({
+    targets,
+    channels,
+    resolved
+  });
+}
+
 function buildRuntimeSceneCollections(
   document: SceneDocument,
   timeOfDayHours: number
@@ -1044,6 +1187,7 @@ export function buildRuntimeSceneFromDocument(document: SceneDocument, options: 
     document,
     runtimeTimeOfDayHours
   );
+  const control = buildRuntimeControlSurface(document, collections, modelInstances);
   const enabledBrushIds = new Set(enabledBrushes.map((brush) => brush.id));
   const enabledModelInstanceIds = new Set(enabledModelInstances.map((modelInstance) => modelInstance.id));
   const enabledEntityIds = new Set(
@@ -1068,6 +1212,20 @@ export function buildRuntimeSceneFromDocument(document: SceneDocument, options: 
         case "playSound":
         case "stopSound":
           return enabledEntityIds.has(link.action.targetSoundEmitterId);
+        case "control":
+          switch (link.action.effect.target.kind) {
+            case "entity":
+            case "interaction":
+              return enabledEntityIds.has(link.action.effect.target.entityId);
+            case "modelInstance":
+              return enabledModelInstanceIds.has(
+                link.action.effect.target.modelInstanceId
+              );
+            case "actor":
+            case "scene":
+            case "global":
+              return true;
+          }
       }
     })
     .map((link) => cloneInteractionLink(link));
@@ -1120,6 +1278,7 @@ export function buildRuntimeSceneFromDocument(document: SceneDocument, options: 
   return {
     time: cloneProjectTimeSettings(document.time),
     world: cloneWorldSettings(document.world),
+    control,
     localLights: collections.localLights,
     brushes,
     volumes,
