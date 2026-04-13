@@ -40,6 +40,7 @@ import { createSetModelInstanceNameCommand } from "../commands/set-model-instanc
 import { createSetPathAuthoredStateCommand } from "../commands/set-path-authored-state-command";
 import { createSetPathNameCommand } from "../commands/set-path-name-command";
 import { createSetProjectNameCommand } from "../commands/set-project-name-command";
+import { createSetProjectSchedulerCommand } from "../commands/set-project-scheduler-command";
 import { createSetProjectTimeSettingsCommand } from "../commands/set-project-time-settings-command";
 import { createSetSceneLoadingScreenCommand } from "../commands/set-scene-loading-screen-command";
 import { createSetSceneNameCommand } from "../commands/set-scene-name-command";
@@ -290,7 +291,10 @@ import {
   getEntityDisplayLabelById,
   getSortedEntityDisplayLabels
 } from "../entities/entity-labels";
-import { listNpcActorUsages } from "../entities/npc-actor-registry";
+import {
+  listNpcActorUsages,
+  listProjectNpcActors
+} from "../entities/npc-actor-registry";
 import {
   areInteractionLinksEqual,
   createControlInteractionLink,
@@ -305,6 +309,8 @@ import {
   type InteractionTriggerKind
 } from "../interactions/interaction-links";
 import {
+  createActorControlTargetRef,
+  createSetActorPresenceControlEffect,
   formatControlEffectValue,
   formatControlTargetRef
 } from "../controls/control-surface";
@@ -335,6 +341,18 @@ import {
 import { validateRuntimeSceneBuild } from "../runtime-three/runtime-scene-validation";
 import { EditorAutosaveController } from "../serialization/editor-autosave";
 import { Panel } from "../shared-ui/Panel";
+import { ProjectSchedulePane } from "./ProjectSchedulePane";
+import {
+  areProjectSchedulersEqual,
+  cloneProjectScheduleRoutine,
+  cloneProjectScheduler,
+  createProjectScheduleEveryDaySelection,
+  createProjectScheduleRoutine,
+  removeProjectScheduleRoutine,
+  upsertProjectScheduleRoutine,
+  type ProjectScheduleRoutine,
+  type ProjectScheduleWeekday
+} from "../scheduler/project-scheduler";
 import {
   loadProjectPackage,
   PROJECT_PACKAGE_FILE_EXTENSION,
