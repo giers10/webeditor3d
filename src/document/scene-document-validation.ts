@@ -9,6 +9,7 @@ import type { ModelInstance } from "../assets/model-instances";
 import { isModelInstanceCollisionMode } from "../assets/model-instances";
 import { WHITEBOX_SELECTION_MODES } from "../core/whitebox-selection-mode";
 import {
+  isNpcPresenceMode,
   isPlayerStartColliderMode,
   isPlayerStartGamepadActionBinding,
   isPlayerStartGamepadCameraLookBinding,
@@ -21,6 +22,7 @@ import {
   type EntityInstance,
   type InteractableEntity,
   type CharacterColliderSettings,
+  type NpcPresence,
   type NpcEntity,
   type PointLightEntity,
   type PlayerStartEntity,
@@ -2630,6 +2632,83 @@ function validateNpcModelAssetId(
   }
 }
 
+function validateNpcPresence(
+  presence: NpcPresence,
+  path: string,
+  diagnostics: SceneDiagnostic[]
+) {
+  if (!isNpcPresenceMode(presence.mode)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-npc-presence-mode",
+        "NPC presence mode must be always or timeWindow.",
+        `${path}.mode`
+      )
+    );
+    return;
+  }
+
+  if (presence.mode !== "timeWindow") {
+    return;
+  }
+
+  if (!isFiniteNumber(presence.startHour)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-npc-presence-start-hour",
+        "NPC presence window start hour must be a finite number.",
+        `${path}.startHour`
+      )
+    );
+  } else if (presence.startHour < 0 || presence.startHour >= HOURS_PER_DAY) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-npc-presence-start-range",
+        "NPC presence window start hour must stay within the 0..24 hour range.",
+        `${path}.startHour`
+      )
+    );
+  }
+
+  if (!isFiniteNumber(presence.endHour)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-npc-presence-end-hour",
+        "NPC presence window end hour must be a finite number.",
+        `${path}.endHour`
+      )
+    );
+  } else if (presence.endHour < 0 || presence.endHour >= HOURS_PER_DAY) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-npc-presence-end-range",
+        "NPC presence window end hour must stay within the 0..24 hour range.",
+        `${path}.endHour`
+      )
+    );
+  }
+
+  if (
+    isFiniteNumber(presence.startHour) &&
+    isFiniteNumber(presence.endHour) &&
+    presence.startHour === presence.endHour
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-npc-presence-zero-window",
+        "NPC presence time windows must span at least part of the day.",
+        `${path}.startHour`
+      )
+    );
+  }
+}
+
 function validateNpcEntity(
   entity: NpcEntity,
   path: string,
@@ -2671,6 +2750,7 @@ function validateNpcEntity(
     );
   }
 
+  validateNpcPresence(entity.presence, `${path}.presence`, diagnostics);
   validateNpcModelAssetId(entity, path, document, diagnostics);
   validateCharacterColliderSettings(entity.collider, path, diagnostics, {
     codePrefix: "npc",
