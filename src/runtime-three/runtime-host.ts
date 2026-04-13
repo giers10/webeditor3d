@@ -1578,7 +1578,6 @@ export class RuntimeHost {
         }
         binding.reflectionTextureUniform.value = null;
         this.renderer.setRenderTarget(binding.reflectionRenderTarget);
-          this.renderSceneWithBackground(this.waterReflectionCamera);
         this.renderer.autoClear = true;
         this.renderer.clear();
         this.renderer.render(
