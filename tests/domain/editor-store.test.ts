@@ -473,7 +473,8 @@ describe("EditorStore", () => {
       target: {
         kind: "entity",
         entityKind: "pointLight",
-        audioAssetId: null
+        audioAssetId: null,
+        modelAssetId: null
       },
       center: {
         x: 2,
@@ -488,7 +489,8 @@ describe("EditorStore", () => {
       target: {
         kind: "entity",
         entityKind: "pointLight",
-        audioAssetId: null
+        audioAssetId: null,
+        modelAssetId: null
       },
       center: {
         x: 2,
@@ -504,7 +506,8 @@ describe("EditorStore", () => {
       target: {
         kind: "entity",
         entityKind: "pointLight",
-        audioAssetId: null
+        audioAssetId: null,
+        modelAssetId: null
       },
       center: {
         x: 2,
