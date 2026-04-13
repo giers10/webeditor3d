@@ -132,7 +132,7 @@ describe("buildRuntimeSceneFromDocument", () => {
         z: -2
       },
       yawDegrees: 45,
-      modelAssetId: modelAsset.id
+      modelAssetId: "asset-model-triangle"
     });
     const sceneExit = createSceneExitEntity({
       id: "entity-scene-exit-house-door",
