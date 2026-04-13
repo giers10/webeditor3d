@@ -9340,9 +9340,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 <div className="outliner-list" data-testid="outliner-path-list">
                   {pathList.map((path, pathIndex) => {
                     const label = getScenePathLabel(path, pathIndex);
-                    const isSelected =
-                      editorState.selection.kind === "paths" &&
-                      editorState.selection.ids.includes(path.id);
+                    const isSelected = isPathSelected(
+                      editorState.selection,
+                      path.id
+                    );
                     const authoredStateSummary =
                       formatAuthoredObjectStateSummary(path);
 
