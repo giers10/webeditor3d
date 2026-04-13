@@ -1805,8 +1805,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [sceneLoadingDescriptionDraft, setSceneLoadingDescriptionDraft] =
     useState(activeProjectScene.loadingScreen.description ?? "");
   const [brushNameDraft, setBrushNameDraft] = useState("");
+  const [pathNameDraft, setPathNameDraft] = useState("");
   const [entityNameDraft, setEntityNameDraft] = useState("");
   const [modelInstanceNameDraft, setModelInstanceNameDraft] = useState("");
+  const [pathPointDrafts, setPathPointDrafts] = useState<Vec3Draft[]>([]);
   const [positionDraft, setPositionDraft] = useState(
     createVec3Draft(DEFAULT_BOX_BRUSH_CENTER)
   );
