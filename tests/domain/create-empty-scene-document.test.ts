@@ -68,6 +68,7 @@ describe("createEmptySceneDocument", () => {
       }
     });
     expect(document.brushes).toEqual({});
+    expect(document.paths).toEqual({});
     expect(document.entities).toEqual({});
     expect(document.modelInstances).toEqual({});
     expect(document.interactionLinks).toEqual({});
