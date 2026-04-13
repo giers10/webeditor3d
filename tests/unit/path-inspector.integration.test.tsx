@@ -103,7 +103,7 @@ describe("Path inspector", () => {
       expect(viewportHostInstances.length).toBeGreaterThan(0);
     });
 
-    fireEvent.click(screen.getByTestId("add-button"));
+    fireEvent.click(screen.getByRole("button", { name: "Add" }));
     fireEvent.click(await screen.findByTestId("add-menu-path"));
 
     await waitFor(() => {
