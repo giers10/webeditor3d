@@ -3329,6 +3329,21 @@ export function App({ store, initialStatusMessage }: AppProps) {
         return;
       }
 
+      const isAppendPathPointShortcut =
+        event.shiftKey &&
+        !event.altKey &&
+        !event.ctrlKey &&
+        !event.metaKey &&
+        event.code === "KeyW";
+
+      if (isAppendPathPointShortcut) {
+        if (editorState.toolMode === "select" && selectedPath !== null) {
+          event.preventDefault();
+          handleAddPathPoint();
+        }
+        return;
+      }
+
       if (isDeleteShortcut) {
         if (editorState.toolMode !== "create") {
           const deleted = handleDeleteSelectedSceneItem();
