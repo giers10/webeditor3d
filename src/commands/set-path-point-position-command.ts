@@ -99,6 +99,8 @@ export function createSetPathPointPositionCommand(
         return;
       }
 
+      const restoredPosition = cloneVec3(previousPosition);
+
       const currentDocument = context.getDocument();
       const path = currentDocument.paths[options.pathId];
 
@@ -122,7 +124,7 @@ export function createSetPathPointPositionCommand(
               index === pointIndex
                 ? {
                     ...point,
-                    position: cloneVec3(previousPosition)
+                    position: cloneVec3(restoredPosition)
                   }
                 : point
             )
