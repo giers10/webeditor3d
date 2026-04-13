@@ -383,6 +383,90 @@ describe("buildRuntimeSceneFromDocument", () => {
         }
       }
     ]);
+    expect(runtimeScene.paths).toEqual([
+      {
+        id: "path-lobby-route",
+        name: "Lobby Route",
+        visible: true,
+        enabled: true,
+        loop: false,
+        points: [
+          {
+            pointId: "path-point-a",
+            position: {
+              x: -2,
+              y: 0,
+              z: -2
+            }
+          },
+          {
+            pointId: "path-point-b",
+            position: {
+              x: -2,
+              y: 0,
+              z: 1
+            }
+          },
+          {
+            pointId: "path-point-c",
+            position: {
+              x: 2,
+              y: 0,
+              z: 1
+            }
+          }
+        ],
+        segments: [
+          {
+            index: 0,
+            startPointId: "path-point-a",
+            endPointId: "path-point-b",
+            start: {
+              x: -2,
+              y: 0,
+              z: -2
+            },
+            end: {
+              x: -2,
+              y: 0,
+              z: 1
+            },
+            length: 3,
+            distanceStart: 0,
+            distanceEnd: 3,
+            tangent: {
+              x: 0,
+              y: 0,
+              z: 1
+            }
+          },
+          {
+            index: 1,
+            startPointId: "path-point-b",
+            endPointId: "path-point-c",
+            start: {
+              x: -2,
+              y: 0,
+              z: 1
+            },
+            end: {
+              x: 2,
+              y: 0,
+              z: 1
+            },
+            length: 4,
+            distanceStart: 3,
+            distanceEnd: 7,
+            tangent: {
+              x: 1,
+              y: 0,
+              z: 0
+            }
+          }
+        ],
+        totalLength: 7
+      }
+    ]);
     expect(runtimeScene.brushes[0].rotationDegrees).toEqual({
       x: 0,
       y: 0,
