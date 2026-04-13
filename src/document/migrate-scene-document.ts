@@ -60,11 +60,9 @@ import {
 } from "../entities/entity-instances";
 import {
   createActiveSceneControlTargetRef,
-  createControlTargetDescriptor,
   createEntityControlTargetRef,
   createInteractionControlTargetRef,
   createLightControlTargetRef,
-  createLightIntensityControlChannelDescriptor,
   createModelInstanceControlTargetRef,
   createPlayModelAnimationControlEffect,
   createPlaySoundControlEffect,
@@ -77,7 +75,6 @@ import {
   createStopSoundControlEffect,
   isControlEntityTargetKind,
   isControlInteractionTargetKind,
-  type ControlChannelDescriptor,
   type ControlEffect,
   type ControlTargetRef
 } from "../controls/control-surface";
