@@ -38,6 +38,15 @@ import type { LoadedImageAsset } from "../assets/image-assets";
 import type { LoadedAudioAsset } from "../assets/audio-assets";
 import type { ProjectAssetRecord } from "../assets/project-assets";
 import type { BoxBrush } from "../document/brushes";
+import {
+  applyControlEffectToResolvedState,
+  createInteractionLinkResolvedControlSource,
+  type ControlEffect,
+  type InteractionControlTargetRef,
+  type LightControlTargetRef,
+  type RuntimeResolvedControlChannelValue,
+  type RuntimeResolvedDiscreteControlState
+} from "../controls/control-surface";
 import { buildBoxBrushDerivedMeshData } from "../geometry/box-brush-mesh";
 import {
   createStarterMaterialSignature,
@@ -85,6 +94,7 @@ import type {
 } from "./navigation-controller";
 import { RapierCollisionWorld } from "./rapier-collision-world";
 import {
+  type InteractionLink,
   RuntimeInteractionSystem,
   type RuntimeInteractionDispatcher,
   type RuntimeInteractionPrompt
@@ -128,6 +138,7 @@ interface CachedMaterialTexture {
 
 interface LocalLightRenderObjects {
   group: Group;
+  light: PointLight | SpotLight;
 }
 
 interface RuntimeWaterContactUniformBinding {
@@ -464,6 +475,7 @@ export class RuntimeHost {
     });
     this.applyWorld();
     this.rebuildLocalLights(runtimeScene.localLights);
+    this.syncResolvedControlStateToRuntime(runtimeScene.control.resolved);
     this.rebuildBrushMeshes(runtimeScene.brushes);
     this.rebuildModelRenderObjects(
       runtimeScene.modelInstances,
@@ -926,13 +938,13 @@ export class RuntimeHost {
     for (const pointLight of localLights.pointLights) {
       const renderObjects = this.createPointLightRuntimeObjects(pointLight);
       this.localLightGroup.add(renderObjects.group);
-      this.localLightObjects.set(pointLight.entityId, renderObjects.group);
+      this.localLightObjects.set(pointLight.entityId, renderObjects);
     }
 
     for (const spotLight of localLights.spotLights) {
       const renderObjects = this.createSpotLightRuntimeObjects(spotLight);
       this.localLightGroup.add(renderObjects.group);
-      this.localLightObjects.set(spotLight.entityId, renderObjects.group);
+      this.localLightObjects.set(spotLight.entityId, renderObjects);
     }
 
     this.applyShadowState();
@@ -957,7 +969,8 @@ export class RuntimeHost {
     group.add(light);
 
     return {
-      group
+      group,
+      light
     };
   }
 
@@ -995,8 +1008,143 @@ export class RuntimeHost {
     group.add(light.target);
 
     return {
-      group
+      group,
+      light
     };
+  }
+
+  private syncResolvedControlStateToRuntime(
+    resolved: RuntimeSceneDefinition["control"]["resolved"]
+  ) {
+    for (const state of resolved.discrete) {
+      this.applyResolvedDiscreteControlState(state);
+    }
+
+    for (const channelValue of resolved.channels) {
+      this.applyResolvedControlChannelValue(channelValue);
+    }
+  }
+
+  private applyResolvedDiscreteControlState(
+    state: RuntimeResolvedDiscreteControlState
+  ) {
+    switch (state.type) {
+      case "lightEnabled":
+        this.applyLightEnabledControl(state.target, state.value);
+        return;
+      case "interactionEnabled":
+        this.applyInteractionEnabledControl(state.target, state.value);
+        return;
+    }
+  }
+
+  private applyResolvedControlChannelValue(
+    channelValue: RuntimeResolvedControlChannelValue
+  ) {
+    switch (channelValue.type) {
+      case "lightIntensity":
+        this.applyLightIntensityControl(
+          channelValue.descriptor.target,
+          channelValue.value
+        );
+        return;
+    }
+  }
+
+  private applyLightEnabledControl(
+    target: LightControlTargetRef,
+    enabled: boolean
+  ) {
+    const renderObjects = this.localLightObjects.get(target.entityId);
+
+    if (renderObjects === undefined) {
+      return;
+    }
+
+    renderObjects.group.visible = enabled;
+  }
+
+  private applyLightIntensityControl(
+    target: LightControlTargetRef,
+    intensity: number
+  ) {
+    const renderObjects = this.localLightObjects.get(target.entityId);
+
+    if (renderObjects === undefined) {
+      return;
+    }
+
+    renderObjects.light.intensity = intensity;
+  }
+
+  private applyInteractionEnabledControl(
+    target: InteractionControlTargetRef,
+    enabled: boolean
+  ) {
+    if (this.runtimeScene === null) {
+      return;
+    }
+
+    if (target.interactionKind === "interactable") {
+      const interactable =
+        this.runtimeScene.entities.interactables.find(
+          (candidate) => candidate.entityId === target.entityId
+        ) ?? null;
+
+      if (interactable !== null) {
+        interactable.interactionEnabled = enabled;
+      }
+      return;
+    }
+
+    const sceneExit =
+      this.runtimeScene.entities.sceneExits.find(
+        (candidate) => candidate.entityId === target.entityId
+      ) ?? null;
+
+    if (sceneExit !== null) {
+      sceneExit.interactionEnabled = enabled;
+    }
+  }
+
+  private applyControlEffect(effect: ControlEffect, link: InteractionLink) {
+    switch (effect.type) {
+      case "playModelAnimation":
+        this.applyPlayAnimationAction(
+          effect.target.modelInstanceId,
+          effect.clipName,
+          effect.loop
+        );
+        break;
+      case "stopModelAnimation":
+        this.applyStopAnimationAction(effect.target.modelInstanceId);
+        break;
+      case "playSound":
+        this.audioSystem.playSound(effect.target.entityId, link);
+        break;
+      case "stopSound":
+        this.audioSystem.stopSound(effect.target.entityId);
+        break;
+      case "setInteractionEnabled":
+        this.applyInteractionEnabledControl(effect.target, effect.enabled);
+        break;
+      case "setLightEnabled":
+        this.applyLightEnabledControl(effect.target, effect.enabled);
+        break;
+      case "setLightIntensity":
+        this.applyLightIntensityControl(effect.target, effect.intensity);
+        break;
+    }
+
+    if (this.runtimeScene === null) {
+      return;
+    }
+
+    this.runtimeScene.control.resolved = applyControlEffectToResolvedState(
+      this.runtimeScene.control.resolved,
+      effect,
+      createInteractionLinkResolvedControlSource(link.id)
+    );
   }
 
   private rebuildBrushMeshes(brushes: RuntimeBoxBrushInstance[]) {
@@ -2327,6 +2475,9 @@ export class RuntimeHost {
       },
       stopSound: (soundEmitterId) => {
         this.audioSystem.stopSound(soundEmitterId);
+      },
+      dispatchControlEffect: (effect, link) => {
+        this.applyControlEffect(effect, link);
       }
     };
   }
