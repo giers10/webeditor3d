@@ -1256,7 +1256,16 @@ describe("scene document JSON", () => {
         z: -2
       },
       yawDegrees: 225,
-      modelAssetId: modelAsset.id
+      modelAssetId: modelAsset.id,
+      collider: {
+        mode: "box",
+        eyeHeight: 1.4,
+        boxSize: {
+          x: 0.9,
+          y: 1.7,
+          z: 0.8
+        }
+      }
     });
     const document = {
       ...createEmptySceneDocument({ name: "NPC Round Trip Scene" }),
