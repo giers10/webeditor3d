@@ -2,6 +2,7 @@ import type { Page } from "@playwright/test";
 
 import type { TransformSessionState } from "../../src/core/transform-session";
 import type { SceneDocument } from "../../src/document/scene-document";
+import type { EntityKind } from "../../src/entities/entity-instances";
 import type { CreationTarget, ViewportToolPreview } from "../../src/viewport-three/viewport-transient-state";
 import type { ViewportPanelId } from "../../src/viewport-three/viewport-layout";
 
@@ -86,9 +87,26 @@ export async function replaceSceneDocument(page: Page, document: SceneDocument) 
 export async function setViewportCreationPreview(
   page: Page,
   panelId: ViewportPanelId,
-  target: CreationTarget,
+  target:
+    | CreationTarget
+    | {
+        kind: "entity";
+        entityKind: EntityKind;
+        audioAssetId?: string | null;
+        modelAssetId?: string | null;
+      },
   center: { x: number; y: number; z: number } | null
 ) {
+  const normalizedTarget: CreationTarget =
+    target.kind === "entity"
+      ? {
+          kind: "entity",
+          entityKind: target.entityKind,
+          audioAssetId: target.audioAssetId ?? null,
+          modelAssetId: target.modelAssetId ?? null
+        }
+      : target;
+
   await page.evaluate(
     ({ sourcePanelId, nextTarget, nextCenter }) => {
       const store = (window as Window & {
@@ -110,7 +128,7 @@ export async function setViewportCreationPreview(
     },
     {
       sourcePanelId: panelId,
-      nextTarget: target,
+      nextTarget: normalizedTarget,
       nextCenter: center
     }
   );
