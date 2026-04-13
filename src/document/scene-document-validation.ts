@@ -4315,7 +4315,17 @@ export function validateSceneDocument(
     validateInteractionLink(link, path, document, diagnostics);
   }
 
-  validateProjectSchedulerAgainstScene(document.scheduler, document, diagnostics);
+  validateProjectScheduler(
+    document.scheduler,
+    {
+      actorExists(actorId) {
+        return Object.values(document.entities).some(
+          (entity) => entity.kind === "npc" && entity.actorId === actorId
+        );
+      }
+    },
+    diagnostics
+  );
 
   return {
     diagnostics,
@@ -4389,45 +4399,12 @@ export function validateProjectDocument(
     }
   }
 
-  validateProjectSchedulerAgainstScene(
+  validateProjectScheduler(
     document.scheduler,
     {
-      ...createSceneDocumentFromProject(document),
-      scheduler: createEmptyProjectScheduler(),
-      entities: Object.fromEntries(
-        [...projectActorIds].map((actorId, index) => [
-          `scheduler-actor-${index}`,
-          {
-            id: `scheduler-actor-${index}`,
-            kind: "npc" as const,
-            actorId,
-            presence: {
-              mode: "always" as const
-            },
-            name: actorId,
-            visible: true,
-            enabled: true,
-            position: {
-              x: 0,
-              y: 0,
-              z: 0
-            },
-            yawDegrees: 0,
-            modelAssetId: null,
-            collider: {
-              mode: "none" as const,
-              eyeHeight: 1.6,
-              capsuleRadius: 0.35,
-              capsuleHeight: 1.8,
-              boxSize: {
-                x: 0.7,
-                y: 1.8,
-                z: 0.7
-              }
-            }
-          }
-        ])
-      )
+      actorExists(actorId) {
+        return projectActorIds.has(actorId);
+      }
     },
     diagnostics
   );
