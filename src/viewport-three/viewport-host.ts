@@ -1330,6 +1330,13 @@ export class ViewportHost {
       );
     }
 
+    for (const renderObjects of this.entityRenderObjects.values()) {
+      applyAdvancedRenderingRenderableShadowFlags(
+        renderObjects.group,
+        shadowsEnabled
+      );
+    }
+
     for (const renderGroup of this.modelRenderObjects.values()) {
       applyAdvancedRenderingRenderableShadowFlags(renderGroup, shadowsEnabled);
     }
