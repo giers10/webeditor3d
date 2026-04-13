@@ -369,10 +369,6 @@ function resolveTimeDrivenSunDirection(
   return rotateAroundAxis(noonDirection, orbitAxis, orbitRadians);
 }
 
-function resolvePhaseSolidBackgroundColor(profile: WorldTimePhaseProfile): string {
-  return blendHexColors(profile.skyTopColorHex, profile.skyBottomColorHex, 0.65);
-}
-
 function createPhaseGradientBackground(
   profile: WorldTimePhaseProfile
 ): WorldBackgroundSettings {
@@ -439,21 +435,31 @@ function blendNonImageBackgrounds(
     return cloneWorldBackgroundSettings(activeContributions[0].background);
   }
 
+  const blendColor = (
+    resolveColor: (background: WorldBackgroundSettings) => string
+  ): string => {
+    let red = 0;
+    let green = 0;
+    let blue = 0;
+
+    for (const { background, weight } of activeContributions) {
+      const color = parseHexColor(resolveColor(background));
+      red += color.r * weight;
+      green += color.g * weight;
+      blue += color.b * weight;
+    }
+
+    return formatHexColor({
+      r: red / totalWeight,
+      g: green / totalWeight,
+      b: blue / totalWeight
+    });
+  };
+
   const hasGradient = activeContributions.some(
     ({ background }) => background.mode === "verticalGradient"
   );
-  const blendedTopColorHex = blendHexColorsByWeights(
-    resolveBackgroundTopColor(activeContributions[0].background),
-    resolveBackgroundTopColor(activeContributions[Math.min(1, activeContributions.length - 1)].background),
-    resolveBackgroundTopColor(activeContributions[Math.min(2, activeContributions.length - 1)].background),
-    resolveBackgroundTopColor(activeContributions[Math.min(3, activeContributions.length - 1)].background),
-    {
-      day: activeContributions[0]?.weight ?? 0,
-      dawn: activeContributions[1]?.weight ?? 0,
-      dusk: activeContributions[2]?.weight ?? 0,
-      night: activeContributions[3]?.weight ?? 0
-    }
-  );
+  const blendedTopColorHex = blendColor(resolveBackgroundTopColor);
 
   if (!hasGradient) {
     return {
@@ -462,18 +468,7 @@ function blendNonImageBackgrounds(
     };
   }
 
-  const blendedBottomColorHex = blendHexColorsByWeights(
-    resolveBackgroundBottomColor(activeContributions[0].background),
-    resolveBackgroundBottomColor(activeContributions[Math.min(1, activeContributions.length - 1)].background),
-    resolveBackgroundBottomColor(activeContributions[Math.min(2, activeContributions.length - 1)].background),
-    resolveBackgroundBottomColor(activeContributions[Math.min(3, activeContributions.length - 1)].background),
-    {
-      day: activeContributions[0]?.weight ?? 0,
-      dawn: activeContributions[1]?.weight ?? 0,
-      dusk: activeContributions[2]?.weight ?? 0,
-      night: activeContributions[3]?.weight ?? 0
-    }
-  );
+  const blendedBottomColorHex = blendColor(resolveBackgroundBottomColor);
 
   return {
     mode: "verticalGradient",
@@ -595,13 +590,6 @@ function resolveTimeDrivenBackground(
     ]),
     nightBackgroundOverlay: null
   };
-}
-
-function resolveNightBackgroundOverlay(
-  _nightBackground: WorldBackgroundSettings,
-  _weights: RuntimeDayNightPhaseWeights
-): RuntimeDayNightWorldState["nightBackgroundOverlay"] {
-  return null;
 }
 
 export function createRuntimeClockState(
