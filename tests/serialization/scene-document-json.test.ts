@@ -23,11 +23,13 @@ import {
   TRIGGER_ACTION_TARGET_FOUNDATION_SCENE_DOCUMENT_VERSION,
   WHITEBOX_BEVEL_SCENE_DOCUMENT_VERSION,
   WHITEBOX_GEOMETRY_SCENE_DOCUMENT_VERSION,
+  WORLD_TIME_ENVIRONMENT_SCENE_DOCUMENT_VERSION,
   WORLD_ENVIRONMENT_SCENE_DOCUMENT_VERSION,
   createEmptySceneDocument
 } from "../../src/document/scene-document";
 import { migrateSceneDocument } from "../../src/document/migrate-scene-document";
 import {
+  createNpcEntity,
   createPointLightEntity,
   createInteractableEntity,
   createPlayerStartEntity,
@@ -1222,6 +1224,53 @@ describe("scene document JSON", () => {
     expect(roundTripDocument.modelInstances).toEqual({});
   });
 
+  it("round-trips NPC entities with stable actor ids and optional model refs", () => {
+    const modelAsset = {
+      id: "asset-model-npc",
+      kind: "model" as const,
+      sourceName: "npc-guide.glb",
+      mimeType: "model/gltf-binary",
+      storageKey: createProjectAssetStorageKey("asset-model-npc"),
+      byteLength: 512,
+      metadata: {
+        kind: "model" as const,
+        format: "glb" as const,
+        sceneName: "NPC Guide",
+        nodeCount: 1,
+        meshCount: 1,
+        materialNames: [],
+        textureNames: [],
+        animationNames: [],
+        boundingBox: null,
+        warnings: []
+      }
+    } satisfies ModelAssetRecord;
+    const npc = createNpcEntity({
+      id: "entity-npc-guide",
+      actorId: "actor-town-guide",
+      position: {
+        x: 4,
+        y: 0,
+        z: -2
+      },
+      yawDegrees: 225,
+      modelAssetId: modelAsset.id
+    });
+    const document = {
+      ...createEmptySceneDocument({ name: "NPC Round Trip Scene" }),
+      assets: {
+        [modelAsset.id]: modelAsset
+      },
+      entities: {
+        [npc.id]: npc
+      }
+    };
+
+    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(
+      document
+    );
+  });
+
   it("round-trips authored playSound and stopSound interaction links", () => {
     const audioAsset = {
       id: "asset-audio-main",
@@ -1614,6 +1663,24 @@ describe("scene document JSON", () => {
     expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
     expect(migratedDocument.assets).toEqual({});
     expect(migratedDocument.modelInstances).toEqual({});
+  });
+
+  it("migrates v40 scene documents to the current schema version without changing authored entities", () => {
+    const interactable = createInteractableEntity({
+      id: "entity-interactable-v40",
+      prompt: "Inspect"
+    });
+
+    const migratedDocument = migrateSceneDocument({
+      ...createEmptySceneDocument({ name: "v40 Compatibility Scene" }),
+      version: WORLD_TIME_ENVIRONMENT_SCENE_DOCUMENT_VERSION,
+      entities: {
+        [interactable.id]: interactable
+      }
+    });
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.entities[interactable.id]).toEqual(interactable);
   });
 
   it("migrates slice 1.1 box brushes to explicit per-face UV state", () => {
