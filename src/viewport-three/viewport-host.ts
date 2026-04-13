@@ -1425,6 +1425,8 @@ export class ViewportHost {
         }
 
         return this.createRotationQuaternion(session.preview.rotationDegrees);
+      case "pathPoint":
+        return null;
       case "entity":
         if (session.preview.kind !== "entity") {
           return null;
