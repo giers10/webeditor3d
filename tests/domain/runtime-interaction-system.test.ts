@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { createEmptyRuntimeControlSurfaceDefinition } from "../../src/controls/control-surface";
 import {
-  createEmptyRuntimeControlSurfaceDefinition,
   createPlayerStartInputBindings,
   createPlayerStartMovementTemplate
 } from "../../src/entities/entity-instances";
@@ -134,6 +134,7 @@ function createRuntimeSceneFixture(): RuntimeSceneDefinition {
       sceneExits: []
     },
     interactionLinks: [],
+    control: createEmptyRuntimeControlSurfaceDefinition(),
     playerStart: null,
     playerCollider: {
       mode: "capsule",
