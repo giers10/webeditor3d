@@ -757,9 +757,13 @@ function buildFallbackSpawn(sceneBounds: RuntimeSceneBounds | null): RuntimeSpaw
 interface RuntimeSceneCollections {
   entities: RuntimeEntityCollection;
   localLights: RuntimeLocalLightCollection;
+  npcDefinitions: RuntimeNpcDefinition[];
 }
 
-function buildRuntimeSceneCollections(document: SceneDocument): RuntimeSceneCollections {
+function buildRuntimeSceneCollections(
+  document: SceneDocument,
+  timeOfDayHours: number
+): RuntimeSceneCollections {
   const runtimeEntities: RuntimeEntityCollection = {
     playerStarts: [],
     sceneEntries: [],
@@ -774,6 +778,7 @@ function buildRuntimeSceneCollections(document: SceneDocument): RuntimeSceneColl
     pointLights: [],
     spotLights: []
   };
+  const npcDefinitions: RuntimeNpcDefinition[] = [];
 
   for (const entity of getEntityInstances(document.entities)) {
     if (!entity.enabled) {
@@ -819,18 +824,25 @@ function buildRuntimeSceneCollections(document: SceneDocument): RuntimeSceneColl
           yawDegrees: entity.yawDegrees
         });
         break;
-      case "npc":
-        runtimeEntities.npcs.push({
+      case "npc": {
+        const npc: RuntimeNpcDefinition = {
           entityId: entity.id,
           actorId: entity.actorId,
           name: entity.name,
           visible: entity.visible,
           position: cloneVec3(entity.position),
+          presence: cloneNpcPresence(entity.presence),
+          active: resolveNpcPresenceActive(entity.presence, timeOfDayHours),
           yawDegrees: entity.yawDegrees,
           modelAssetId: entity.modelAssetId,
           collider: createRuntimeCharacterShape(entity.collider)
-        });
+        };
+        npcDefinitions.push(npc);
+        if (npc.active) {
+          runtimeEntities.npcs.push(npc);
+        }
         break;
+      }
       case "soundEmitter":
         runtimeEntities.soundEmitters.push({
           entityId: entity.id,
@@ -891,7 +903,8 @@ function buildRuntimeSceneCollections(document: SceneDocument): RuntimeSceneColl
 
   return {
     entities: runtimeEntities,
-    localLights
+    localLights,
+    npcDefinitions
   };
 }
 
