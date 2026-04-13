@@ -212,6 +212,8 @@ import {
   DEFAULT_INTERACTABLE_PROMPT,
   DEFAULT_INTERACTABLE_RADIUS,
   DEFAULT_NPC_MODEL_ASSET_ID,
+  DEFAULT_NPC_TIME_WINDOW_END_HOUR,
+  DEFAULT_NPC_TIME_WINDOW_START_HOUR,
   DEFAULT_NPC_YAW_DEGREES,
   DEFAULT_POINT_LIGHT_COLOR_HEX,
   DEFAULT_POINT_LIGHT_DISTANCE,
@@ -243,12 +245,15 @@ import {
   DEFAULT_SPOT_LIGHT_DIRECTION,
   DEFAULT_SPOT_LIGHT_INTENSITY,
   DEFAULT_TRIGGER_VOLUME_SIZE,
+  NPC_PRESENCE_MODES,
   areEntityInstancesEqual,
   clonePlayerStartInputBindings,
   clonePlayerStartMovementTemplate,
   createInteractableEntity,
+  createNpcAlwaysPresence,
   createNpcColliderSettings,
   createNpcEntity,
+  createNpcTimeWindowPresence,
   createPointLightEntity,
   inferPlayerStartMovementTemplateKind,
   createPlayerStartInputBindings,
@@ -278,7 +283,8 @@ import {
   type PlayerStartMovementTemplate,
   type PlayerStartNavigationMode,
   type EntityInstance,
-  type EntityKind
+  type EntityKind,
+  type NpcPresenceMode
 } from "../entities/entity-instances";
 import {
   getEntityDisplayLabelById,
