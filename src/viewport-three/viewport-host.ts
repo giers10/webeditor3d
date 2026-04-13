@@ -4413,6 +4413,7 @@ export class ViewportHost {
 
     this.hoveredSelection = selection;
     this.refreshBrushPresentation();
+    this.refreshPathPresentation();
     this.emitWhiteboxHoverLabelChange();
   }
 
