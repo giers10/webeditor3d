@@ -829,6 +829,90 @@ describe("buildRuntimeSceneFromDocument", () => {
     });
   });
 
+  it("filters active NPC presence from the current project-global runtime clock", () => {
+    const alwaysNpc = createNpcEntity({
+      id: "entity-npc-always",
+      actorId: "actor-town-always",
+      presence: createNpcAlwaysPresence()
+    });
+    const daytimeNpc = createNpcEntity({
+      id: "entity-npc-daytime",
+      actorId: "actor-town-daytime",
+      presence: createNpcTimeWindowPresence({
+        startHour: 9,
+        endHour: 17
+      })
+    });
+    const overnightNpc = createNpcEntity({
+      id: "entity-npc-overnight",
+      actorId: "actor-town-overnight",
+      presence: createNpcTimeWindowPresence({
+        startHour: 22,
+        endHour: 2
+      })
+    });
+    const document = {
+      ...createEmptySceneDocument({ name: "NPC Presence Scene" }),
+      entities: {
+        [alwaysNpc.id]: alwaysNpc,
+        [daytimeNpc.id]: daytimeNpc,
+        [overnightNpc.id]: overnightNpc
+      }
+    };
+
+    const daytimeRuntimeScene = buildRuntimeSceneFromDocument(document, {
+      runtimeClock: {
+        timeOfDayHours: 10,
+        dayCount: 2,
+        dayLengthMinutes: 24
+      }
+    });
+    const overnightRuntimeScene = buildRuntimeSceneFromDocument(document, {
+      runtimeClock: {
+        timeOfDayHours: 23.5,
+        dayCount: 2,
+        dayLengthMinutes: 24
+      }
+    });
+
+    expect(
+      daytimeRuntimeScene.entities.npcs.map((npc) => npc.entityId)
+    ).toEqual(["entity-npc-always", "entity-npc-daytime"]);
+    expect(
+      daytimeRuntimeScene.npcDefinitions.map((npc) => ({
+        entityId: npc.entityId,
+        active: npc.active
+      }))
+    ).toEqual([
+      {
+        entityId: "entity-npc-always",
+        active: true
+      },
+      {
+        entityId: "entity-npc-daytime",
+        active: true
+      },
+      {
+        entityId: "entity-npc-overnight",
+        active: false
+      }
+    ]);
+    expect(
+      daytimeRuntimeScene.colliders
+        .filter((collider) => collider.source === "npc")
+        .map((collider) => collider.entityId)
+    ).toEqual(["entity-npc-always", "entity-npc-daytime"]);
+
+    expect(
+      overnightRuntimeScene.entities.npcs.map((npc) => npc.entityId)
+    ).toEqual(["entity-npc-always", "entity-npc-overnight"]);
+    expect(
+      overnightRuntimeScene.colliders
+        .filter((collider) => collider.source === "npc")
+        .map((collider) => collider.entityId)
+    ).toEqual(["entity-npc-always", "entity-npc-overnight"]);
+  });
+
   it("builds a deterministic fallback spawn when no PlayerStart is authored", () => {
     const brush = createBoxBrush({
       id: "brush-room-wall",
