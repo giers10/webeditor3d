@@ -8554,6 +8554,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
       onSelect: beginBoxCreation
     },
     {
+      kind: "action",
+      label: "Path",
+      testId: "add-menu-path",
+      onSelect: handleCreatePath
+    },
+    {
       kind: "group",
       label: "Entities",
       testId: "add-menu-entities",
