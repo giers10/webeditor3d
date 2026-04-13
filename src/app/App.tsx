@@ -5342,6 +5342,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const applyNpcChange = (
     overrides: {
       modelAssetId?: string | null;
+      colliderMode?: PlayerStartColliderMode;
     } = {}
   ) => {
     if (selectedNpc === null) {
@@ -5351,6 +5352,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
     try {
       const trimmedModelAssetId = npcModelAssetIdDraft.trim();
+      const colliderMode = overrides.colliderMode ?? npcColliderModeDraft;
       const nextEntity = createNpcEntity({
         id: selectedNpc.id,
         name: selectedNpc.name,
@@ -5365,7 +5367,20 @@ export function App({ store, initialStatusMessage }: AppProps) {
             ? overrides.modelAssetId
             : trimmedModelAssetId.length === 0
               ? null
-              : trimmedModelAssetId
+              : trimmedModelAssetId,
+        collider: {
+          mode: colliderMode,
+          eyeHeight: readPositiveNumberDraft(npcEyeHeightDraft, "NPC eye height"),
+          capsuleRadius: readPositiveNumberDraft(
+            npcCapsuleRadiusDraft,
+            "NPC capsule radius"
+          ),
+          capsuleHeight: readPositiveNumberDraft(
+            npcCapsuleHeightDraft,
+            "NPC capsule height"
+          ),
+          boxSize: readPositiveVec3Draft(npcBoxSizeDraft, "NPC box size")
+        }
       });
 
       commitEntityChange(selectedNpc, nextEntity, "Updated NPC.");
