@@ -145,6 +145,7 @@ import {
   changeWorldBackgroundMode,
   cloneWorldSettings,
   type WorldBackgroundMode,
+  type WorldBackgroundSettings,
   type AdvancedRenderingSettings,
   type BoxVolumeRenderPath,
   type AdvancedRenderingWaterReflectionMode,
@@ -355,13 +356,17 @@ interface PlayerStartMovementTemplateNumberDraft {
   crouchSpeedMultiplier: string;
 }
 
-type ProjectTimePhaseKey = "dawn" | "dusk" | "night";
-type ProjectTimePhaseColorField =
+type WorldTimePhaseKey = "dawn" | "dusk";
+type WorldTimePhaseColorField =
   | "skyTopColorHex"
   | "skyBottomColorHex"
   | "ambientColorHex"
   | "lightColorHex";
-type ProjectTimePhaseNumericField =
+type WorldTimePhaseNumericField =
+  | "ambientIntensityFactor"
+  | "lightIntensityFactor";
+type WorldNightEnvironmentColorField = "ambientColorHex" | "lightColorHex";
+type WorldNightEnvironmentNumericField =
   | "ambientIntensityFactor"
   | "lightIntensityFactor";
 
@@ -1445,12 +1450,12 @@ function formatRunnerAnimationHook(
     : "idle";
 }
 
-function formatWorldBackgroundLabel(world: WorldSettings): string {
-  if (world.background.mode === "solid") {
+function formatWorldBackgroundLabel(background: WorldBackgroundSettings): string {
+  if (background.mode === "solid") {
     return "Solid";
   }
 
-  if (world.background.mode === "verticalGradient") {
+  if (background.mode === "verticalGradient") {
     return "Vertical Gradient";
   }
 
