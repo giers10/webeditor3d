@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  createEmptyRuntimeControlSurfaceDefinition,
   createPlayerStartInputBindings,
   createPlayerStartMovementTemplate
 } from "../../src/entities/entity-instances";
