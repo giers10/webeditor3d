@@ -103,6 +103,7 @@ import type {
   RuntimeBoxBrushInstance,
   RuntimeLocalLightCollection,
   RuntimeNavigationMode,
+  RuntimeNpc,
   RuntimeSceneDefinition,
   RuntimeTeleportTarget
 } from "./runtime-scene-build";
@@ -446,7 +447,10 @@ export class RuntimeHost {
     this.applyWorld();
     this.rebuildLocalLights(runtimeScene.localLights);
     this.rebuildBrushMeshes(runtimeScene.brushes);
-    this.rebuildModelInstances(runtimeScene.modelInstances);
+    this.rebuildModelRenderObjects(
+      runtimeScene.modelInstances,
+      runtimeScene.entities.npcs
+    );
     this.audioSystem.loadScene(runtimeScene);
     void this.finalizeSceneLoad(
       requestId,
@@ -471,7 +475,10 @@ export class RuntimeHost {
     }
 
     if (this.runtimeScene !== null) {
-      this.rebuildModelInstances(this.runtimeScene.modelInstances);
+      this.rebuildModelRenderObjects(
+        this.runtimeScene.modelInstances,
+        this.runtimeScene.entities.npcs
+      );
     }
 
     this.audioSystem.updateAssets(projectAssets, loadedAudioAssets);
@@ -552,7 +559,7 @@ export class RuntimeHost {
     this.resizeObserver = null;
     this.clearLocalLights();
     this.clearBrushMeshes();
-    this.clearModelInstances();
+    this.clearModelRenderObjects();
     this.collisionWorldRequestId += 1;
     this.clearCollisionWorld();
     this.audioSystem.dispose();
@@ -1148,10 +1155,11 @@ export class RuntimeHost {
     };
   }
 
-  private rebuildModelInstances(
-    modelInstances: RuntimeSceneDefinition["modelInstances"]
+  private rebuildModelRenderObjects(
+    modelInstances: RuntimeSceneDefinition["modelInstances"],
+    npcs: RuntimeNpc[]
   ) {
-    this.clearModelInstances();
+    this.clearModelRenderObjects();
 
     for (const modelInstance of modelInstances) {
       const asset = this.projectAssets[modelInstance.assetId];
@@ -1201,6 +1209,46 @@ export class RuntimeHost {
           }
         }
       }
+    }
+
+    for (const npc of npcs) {
+      if (npc.modelAssetId === null) {
+        continue;
+      }
+
+      const asset = this.projectAssets[npc.modelAssetId];
+      const loadedAsset = this.loadedModelAssets[npc.modelAssetId];
+      const renderGroup = createModelInstanceRenderGroup(
+        {
+          id: npc.entityId,
+          kind: "modelInstance",
+          assetId: npc.modelAssetId,
+          name: npc.name,
+          visible: npc.visible,
+          enabled: true,
+          position: npc.position,
+          rotationDegrees: {
+            x: 0,
+            y: npc.yawDegrees,
+            z: 0
+          },
+          scale: {
+            x: 1,
+            y: 1,
+            z: 1
+          },
+          collision: {
+            mode: "none",
+            visible: false
+          }
+        },
+        asset,
+        loadedAsset,
+        false
+      );
+      renderGroup.visible = npc.visible;
+      this.modelGroup.add(renderGroup);
+      this.modelRenderObjects.set(npc.entityId, renderGroup);
     }
 
     this.applyShadowState();
@@ -1834,7 +1882,7 @@ export class RuntimeHost {
     }
   }
 
-  private clearModelInstances() {
+  private clearModelRenderObjects() {
     for (const mixer of this.animationMixers.values()) {
       mixer.stopAllAction();
     }
