@@ -406,7 +406,11 @@ describe("RunnerCanvas", () => {
         warnings: []
       }
     };
-    document.time.nightBackground.assetId = "asset-night-sky";
+    document.world.timeOfDay.night.background = {
+      mode: "image",
+      assetId: "asset-night-sky",
+      environmentIntensity: 0.42
+    };
     const runtimeScene = buildRuntimeSceneFromDocument(document);
 
     render(
