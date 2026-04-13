@@ -19,6 +19,7 @@ import {
   DEFAULT_SPOT_LIGHT_DIRECTION,
   DEFAULT_SPOT_LIGHT_INTENSITY,
   DEFAULT_INTERACTABLE_PROMPT,
+  DEFAULT_NPC_YAW_DEGREES,
   DEFAULT_SOUND_EMITTER_AUDIO_ASSET_ID,
   DEFAULT_SOUND_EMITTER_MAX_DISTANCE,
   DEFAULT_SOUND_EMITTER_REF_DISTANCE,
@@ -27,6 +28,7 @@ import {
   createPointLightEntity,
   createDefaultEntityInstance,
   createInteractableEntity,
+  createNpcEntity,
   createSpotLightEntity,
   getEntityRegistryEntry
 } from "../../src/entities/entity-instances";
@@ -119,6 +121,13 @@ describe("entity registry defaults", () => {
       yawDegrees: 0
     });
 
+    expect(createDefaultEntityInstance("npc")).toMatchObject({
+      kind: "npc",
+      position: { x: 0, y: 0, z: 0 },
+      yawDegrees: DEFAULT_NPC_YAW_DEGREES,
+      modelAssetId: null
+    });
+
     expect(createDefaultEntityInstance("interactable")).toMatchObject({
       kind: "interactable",
       position: { x: 0, y: 0, z: 0 },
@@ -161,5 +170,11 @@ describe("entity registry defaults", () => {
         }
       })
     ).toThrow("Spot Light direction must not be the zero vector.");
+
+    expect(() =>
+      createNpcEntity({
+        actorId: "   "
+      })
+    ).toThrow("NPC actorId must be a non-empty string.");
   });
 });
