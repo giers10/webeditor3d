@@ -73,6 +73,7 @@ import {
   cloneAdvancedRenderingSettings,
   type AdvancedRenderingSettings
 } from "../document/world-settings";
+import { getNpcColliderHeight } from "../entities/entity-instances";
 
 import { FirstPersonNavigationController } from "./first-person-navigation-controller";
 import type {
