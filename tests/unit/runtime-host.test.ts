@@ -3,12 +3,16 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   createLightControlTargetRef,
+  type ControlEffect,
   createSetLightEnabledControlEffect,
   createSetLightIntensityControlEffect
 } from "../../src/controls/control-surface";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
 import { createPointLightEntity } from "../../src/entities/entity-instances";
-import { createControlInteractionLink } from "../../src/interactions/interaction-links";
+import {
+  createControlInteractionLink,
+  type InteractionLink
+} from "../../src/interactions/interaction-links";
 import { RapierCollisionWorld } from "../../src/runtime-three/rapier-collision-world";
 import {
   RuntimeHost,
@@ -139,7 +143,7 @@ describe("RuntimeHost", () => {
     });
     const hostInternals = host as unknown as {
       createInteractionDispatcher(): {
-        dispatchControlEffect(effect: typeof disableEffect, link: typeof disableLink): void;
+        dispatchControlEffect(effect: ControlEffect, link: InteractionLink): void;
       };
       localLightObjects: Map<
         string,
