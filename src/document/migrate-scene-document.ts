@@ -762,8 +762,19 @@ function readProjectTimeSettings(
       readOptionalFiniteNumber(
         value.sunsetTimeOfDayHours,
         `${label}.sunsetTimeOfDayHours`,
-    max,
-    size
+        defaults.sunsetTimeOfDayHours
+      )
+    ),
+    dawnDurationHours: readOptionalPositiveFiniteNumber(
+      value.dawnDurationHours,
+      `${label}.dawnDurationHours`,
+      defaults.dawnDurationHours
+    ),
+    duskDurationHours: readOptionalPositiveFiniteNumber(
+      value.duskDurationHours,
+      `${label}.duskDurationHours`,
+      defaults.duskDurationHours
+    )
   };
 }
 
