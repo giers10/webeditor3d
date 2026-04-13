@@ -32,6 +32,16 @@ export interface RuntimeClockState {
   dayLengthMinutes: number;
 }
 
+export type RuntimeDayPhase = "night" | "dawn" | "day" | "dusk";
+
+export interface RuntimeResolvedTimeState {
+  timeOfDayHours: number;
+  dayCount: number;
+  dayLengthMinutes: number;
+  dayPhase: RuntimeDayPhase;
+  isNight: boolean;
+}
+
 export interface RuntimeDayNightWorldState {
   ambientLight: WorldAmbientLightSettings;
   sunLight: WorldSunLightSettings;
@@ -51,6 +61,16 @@ interface RuntimeDayNightPhaseWeights {
   dusk: number;
   night: number;
 }
+
+interface RuntimeDayPhaseWindowBoundaries {
+  dawnStart: number;
+  dawnEnd: number;
+  duskStart: number;
+  duskEnd: number;
+}
+
+const MIN_RUNTIME_TIME_WINDOW_HOURS = 0.001;
+const TIME_WINDOW_EPSILON = 1e-6;
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
@@ -230,19 +250,171 @@ function wrapTimeForward(hours: number, originHours: number): number {
   return wrappedHours;
 }
 
+function areTimesEquivalent(leftHours: number, rightHours: number): boolean {
+  return (
+    Math.abs(
+      normalizeTimeOfDayHours(leftHours) - normalizeTimeOfDayHours(rightHours)
+    ) <= TIME_WINDOW_EPSILON
+  );
+}
+
+function resolveRuntimeDayPhaseWindowBoundaries(
+  settings: ProjectTimeSettings
+): RuntimeDayPhaseWindowBoundaries {
+  const dawnHalfDuration =
+    Math.max(settings.dawnDurationHours, MIN_RUNTIME_TIME_WINDOW_HOURS) / 2;
+  const duskHalfDuration =
+    Math.max(settings.duskDurationHours, MIN_RUNTIME_TIME_WINDOW_HOURS) / 2;
+
+  return {
+    dawnStart: settings.sunriseTimeOfDayHours - dawnHalfDuration,
+    dawnEnd: settings.sunriseTimeOfDayHours + dawnHalfDuration,
+    duskStart: settings.sunsetTimeOfDayHours - duskHalfDuration,
+    duskEnd: settings.sunsetTimeOfDayHours + duskHalfDuration
+  };
+}
+
+function hasTimeBoundaryBeenCrossed(
+  previousTimeOfDayHours: number,
+  currentTimeOfDayHours: number,
+  boundaryTimeOfDayHours: number
+): boolean {
+  const normalizedPreviousTime = normalizeTimeOfDayHours(previousTimeOfDayHours);
+
+  if (areTimesEquivalent(normalizedPreviousTime, boundaryTimeOfDayHours)) {
+    return false;
+  }
+
+  const wrappedCurrentTime = wrapTimeForward(
+    currentTimeOfDayHours,
+    normalizedPreviousTime
+  );
+  const wrappedBoundaryTime = wrapTimeForward(
+    boundaryTimeOfDayHours,
+    normalizedPreviousTime
+  );
+
+  return (
+    wrappedBoundaryTime - normalizedPreviousTime > TIME_WINDOW_EPSILON &&
+    wrappedBoundaryTime <= wrappedCurrentTime + TIME_WINDOW_EPSILON
+  );
+}
+
+export function isWithinTimeWindow(
+  startTimeOfDayHours: number,
+  endTimeOfDayHours: number,
+  timeOfDayHours: number
+): boolean {
+  const normalizedStartTime = normalizeTimeOfDayHours(startTimeOfDayHours);
+  const normalizedEndTime = normalizeTimeOfDayHours(endTimeOfDayHours);
+  const normalizedTime = normalizeTimeOfDayHours(timeOfDayHours);
+
+  if (areTimesEquivalent(normalizedStartTime, normalizedEndTime)) {
+    return false;
+  }
+
+  if (normalizedStartTime < normalizedEndTime) {
+    return (
+      normalizedTime >= normalizedStartTime &&
+      normalizedTime < normalizedEndTime
+    );
+  }
+
+  return (
+    normalizedTime >= normalizedStartTime || normalizedTime < normalizedEndTime
+  );
+}
+
+export function hasTimeWindowJustStarted(
+  previousTimeOfDayHours: number,
+  currentTimeOfDayHours: number,
+  startTimeOfDayHours: number,
+  endTimeOfDayHours: number
+): boolean {
+  if (areTimesEquivalent(startTimeOfDayHours, endTimeOfDayHours)) {
+    return false;
+  }
+
+  return hasTimeBoundaryBeenCrossed(
+    previousTimeOfDayHours,
+    currentTimeOfDayHours,
+    startTimeOfDayHours
+  );
+}
+
+export function hasTimeWindowJustEnded(
+  previousTimeOfDayHours: number,
+  currentTimeOfDayHours: number,
+  startTimeOfDayHours: number,
+  endTimeOfDayHours: number
+): boolean {
+  if (areTimesEquivalent(startTimeOfDayHours, endTimeOfDayHours)) {
+    return false;
+  }
+
+  return hasTimeBoundaryBeenCrossed(
+    previousTimeOfDayHours,
+    currentTimeOfDayHours,
+    endTimeOfDayHours
+  );
+}
+
+export function resolveRuntimeDayPhase(
+  settings: ProjectTimeSettings,
+  timeOfDayHours: number
+): RuntimeDayPhase {
+  const normalizedTime = normalizeTimeOfDayHours(timeOfDayHours);
+  const boundaries = resolveRuntimeDayPhaseWindowBoundaries(settings);
+
+  if (
+    isWithinTimeWindow(boundaries.dawnStart, boundaries.dawnEnd, normalizedTime)
+  ) {
+    return "dawn";
+  }
+
+  if (
+    isWithinTimeWindow(boundaries.duskStart, boundaries.duskEnd, normalizedTime)
+  ) {
+    return "dusk";
+  }
+
+  if (
+    isWithinTimeWindow(boundaries.dawnEnd, boundaries.duskStart, normalizedTime)
+  ) {
+    return "day";
+  }
+
+  return "night";
+}
+
+export function resolveRuntimeTimeState(
+  settings: ProjectTimeSettings,
+  clock: RuntimeClockState
+): RuntimeResolvedTimeState {
+  const timeOfDayHours = normalizeTimeOfDayHours(clock.timeOfDayHours);
+  const dayPhase = resolveRuntimeDayPhase(settings, timeOfDayHours);
+
+  return {
+    timeOfDayHours,
+    dayCount: clock.dayCount,
+    dayLengthMinutes: clock.dayLengthMinutes,
+    dayPhase,
+    isNight: dayPhase === "night"
+  };
+}
+
 function resolveRuntimeDayNightPhaseWeights(
   settings: ProjectTimeSettings,
   timeOfDayHours: number
 ): RuntimeDayNightPhaseWeights {
-  const dawnHalfDuration = Math.max(settings.dawnDurationHours, 0.001) / 2;
-  const duskHalfDuration = Math.max(settings.duskDurationHours, 0.001) / 2;
-  const dawnStart = settings.sunriseTimeOfDayHours - dawnHalfDuration;
+  const boundaries = resolveRuntimeDayPhaseWindowBoundaries(settings);
+  const dawnStart = boundaries.dawnStart;
   const currentTime = wrapTimeForward(timeOfDayHours, dawnStart);
   const sunrise = wrapTimeForward(settings.sunriseTimeOfDayHours, dawnStart);
-  const dawnEnd = sunrise + dawnHalfDuration;
+  const dawnEnd = wrapTimeForward(boundaries.dawnEnd, dawnStart);
   const sunset = wrapTimeForward(settings.sunsetTimeOfDayHours, dawnStart);
-  const duskStart = sunset - duskHalfDuration;
-  const duskEnd = sunset + duskHalfDuration;
+  const duskStart = wrapTimeForward(boundaries.duskStart, dawnStart);
+  const duskEnd = wrapTimeForward(boundaries.duskEnd, dawnStart);
 
   if (currentTime < sunrise) {
     const amount = smoothstep(dawnStart, sunrise, currentTime);
@@ -649,9 +821,11 @@ export function formatRuntimeClockTime(state: RuntimeClockState): string {
 export function resolveRuntimeDayNightWorldState(
   world: WorldSettings,
   settings: ProjectTimeSettings,
-  clock: RuntimeClockState | null
+  clock: RuntimeClockState | null,
+  resolvedTime: RuntimeResolvedTimeState | null =
+    clock === null ? null : resolveRuntimeTimeState(settings, clock)
 ): RuntimeDayNightWorldState {
-  if (clock === null || !world.projectTimeLightingEnabled) {
+  if (clock === null || resolvedTime === null || !world.projectTimeLightingEnabled) {
     return {
       ambientLight: {
         colorHex: world.ambientLight.colorHex,
@@ -671,7 +845,7 @@ export function resolveRuntimeDayNightWorldState(
     };
   }
 
-  const normalizedTime = normalizeTimeOfDayHours(clock.timeOfDayHours);
+  const normalizedTime = resolvedTime.timeOfDayHours;
   const phaseWeights = resolveRuntimeDayNightPhaseWeights(
     settings,
     normalizedTime

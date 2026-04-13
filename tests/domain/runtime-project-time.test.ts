@@ -5,7 +5,12 @@ import { createDefaultWorldSettings } from "../../src/document/world-settings";
 import {
   advanceRuntimeClockState,
   createRuntimeClockState,
+  hasTimeWindowJustEnded,
+  hasTimeWindowJustStarted,
+  isWithinTimeWindow,
+  resolveRuntimeDayPhase,
   resolveRuntimeDayNightWorldState
+  ,resolveRuntimeTimeState
 } from "../../src/runtime-three/runtime-project-time";
 
 describe("runtime project time", () => {
@@ -21,6 +26,68 @@ describe("runtime project time", () => {
     expect(advancedClock.timeOfDayHours).toBeCloseTo(0.5);
     expect(advancedClock.dayCount).toBe(3);
     expect(advancedClock.dayLengthMinutes).toBe(24);
+  });
+
+  it("resolves reusable runtime day semantics from the authored sun windows", () => {
+    const settings = createDefaultProjectTimeSettings();
+    settings.startDayNumber = 4;
+    settings.dayLengthMinutes = 30;
+    settings.sunriseTimeOfDayHours = 7;
+    settings.sunsetTimeOfDayHours = 20;
+    settings.dawnDurationHours = 2;
+    settings.duskDurationHours = 2;
+
+    const resolvedNight = resolveRuntimeTimeState(settings, {
+      timeOfDayHours: 2,
+      dayCount: 4,
+      dayLengthMinutes: 30
+    });
+    const resolvedDawn = resolveRuntimeTimeState(settings, {
+      timeOfDayHours: 6.5,
+      dayCount: 4,
+      dayLengthMinutes: 30
+    });
+    const resolvedDay = resolveRuntimeTimeState(settings, {
+      timeOfDayHours: 12,
+      dayCount: 4,
+      dayLengthMinutes: 30
+    });
+    const resolvedDusk = resolveRuntimeTimeState(settings, {
+      timeOfDayHours: 20.5,
+      dayCount: 4,
+      dayLengthMinutes: 30
+    });
+
+    expect(resolveRuntimeDayPhase(settings, 2)).toBe("night");
+    expect(resolveRuntimeDayPhase(settings, 6.5)).toBe("dawn");
+    expect(resolveRuntimeDayPhase(settings, 12)).toBe("day");
+    expect(resolveRuntimeDayPhase(settings, 20.5)).toBe("dusk");
+
+    expect(resolvedNight).toMatchObject({
+      timeOfDayHours: 2,
+      dayCount: 4,
+      dayLengthMinutes: 30,
+      dayPhase: "night",
+      isNight: true
+    });
+    expect(resolvedDawn.dayPhase).toBe("dawn");
+    expect(resolvedDawn.isNight).toBe(false);
+    expect(resolvedDay.dayPhase).toBe("day");
+    expect(resolvedDay.isNight).toBe(false);
+    expect(resolvedDusk.dayPhase).toBe("dusk");
+  });
+
+  it("handles forward time windows across midnight", () => {
+    expect(isWithinTimeWindow(22, 2, 23.5)).toBe(true);
+    expect(isWithinTimeWindow(22, 2, 1.5)).toBe(true);
+    expect(isWithinTimeWindow(22, 2, 12)).toBe(false);
+
+    expect(hasTimeWindowJustStarted(21.5, 23.5, 22, 2)).toBe(true);
+    expect(hasTimeWindowJustStarted(23.5, 1, 22, 2)).toBe(false);
+    expect(hasTimeWindowJustEnded(23.5, 2.5, 22, 2)).toBe(true);
+
+    expect(hasTimeWindowJustStarted(21, 3, 22, 2)).toBe(true);
+    expect(hasTimeWindowJustEnded(21, 3, 22, 2)).toBe(true);
   });
 
   it("derives authored dawn, day, and night lighting from the global time profile", () => {

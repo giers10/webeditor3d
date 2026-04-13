@@ -1,7 +1,12 @@
-import { createDefaultProjectTimeSettings } from "../document/project-time-settings";
+import {
+  createDefaultProjectTimeSettings,
+  type ProjectTimeSettings
+} from "../document/project-time-settings";
 
 import {
   createRuntimeClockState,
+  resolveRuntimeTimeState,
+  type RuntimeResolvedTimeState,
   type RuntimeClockState
 } from "./runtime-project-time";
 
@@ -32,4 +37,11 @@ export function createDefaultRuntimeGlobalState(
     lastSceneTransition: null,
     clock: createRuntimeClockState(timeSettings)
   };
+}
+
+export function resolveRuntimeGlobalTimeState(
+  state: RuntimeGlobalState,
+  timeSettings: ProjectTimeSettings
+): RuntimeResolvedTimeState {
+  return resolveRuntimeTimeState(timeSettings, state.clock);
 }

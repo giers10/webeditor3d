@@ -93,6 +93,7 @@ import {
   createRuntimeClockState,
   reconfigureRuntimeClockState,
   resolveRuntimeDayNightWorldState,
+  resolveRuntimeTimeState,
   type RuntimeClockState
 } from "./runtime-project-time";
 import { ThirdPersonNavigationController } from "./third-person-navigation-controller";
@@ -722,10 +723,16 @@ export class RuntimeHost {
       return;
     }
 
+    const resolvedTime =
+      this.currentClockState === null
+        ? null
+        : resolveRuntimeTimeState(this.runtimeScene.time, this.currentClockState);
+
     const resolvedWorld = resolveRuntimeDayNightWorldState(
       this.currentWorld,
       this.runtimeScene.time,
-      this.currentClockState
+      this.currentClockState,
+      resolvedTime
     );
     const backgroundTexture =
       resolvedWorld.background.mode === "image"
