@@ -3439,58 +3439,204 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
   };
 
-  const applyProjectTimePhaseColor = (
-    phase: ProjectTimePhaseKey,
-    field: ProjectTimePhaseColorField,
+  const updateWorldTimeOfDaySettings = (
+    label: string,
+    successMessage: string,
+    mutate: (world: WorldSettings) => void
+  ) => {
+    const nextWorld = cloneWorldSettings(editorState.document.world);
+    mutate(nextWorld);
+    applyWorldSettings(nextWorld, label, successMessage);
+  };
+
+  const applyWorldTimePhaseColor = (
+    phase: WorldTimePhaseKey,
+    field: WorldTimePhaseColorField,
     colorHex: string,
     label: string,
     successMessage: string
   ) => {
-    updateProjectTimeSettings(label, successMessage, (time) => {
-      time[phase][field] = colorHex;
+    updateWorldTimeOfDaySettings(label, successMessage, (world) => {
+      world.timeOfDay[phase][field] = colorHex;
     });
   };
 
-  const applyProjectTimePhaseNumericField = (
-    phase: ProjectTimePhaseKey,
-    field: ProjectTimePhaseNumericField,
+  const applyWorldTimePhaseNumericField = (
+    phase: WorldTimePhaseKey,
+    field: WorldTimePhaseNumericField,
     draftValue: string,
     label: string,
     draftLabel: string,
     successMessage: string
   ) => {
-    updateProjectTimeSettings(label, successMessage, (time) => {
-      time[phase][field] = readNonNegativeNumberDraft(draftValue, draftLabel);
+    try {
+      updateWorldTimeOfDaySettings(label, successMessage, (world) => {
+        world.timeOfDay[phase][field] = readNonNegativeNumberDraft(
+          draftValue,
+          draftLabel
+        );
+      });
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const applyWorldNightEnvironmentColor = (
+    field: WorldNightEnvironmentColorField,
+    colorHex: string,
+    label: string,
+    successMessage: string
+  ) => {
+    updateWorldTimeOfDaySettings(label, successMessage, (world) => {
+      world.timeOfDay.night[field] = colorHex;
     });
   };
 
-  const applyProjectTimeNightBackgroundAssetId = (assetId: string | null) => {
-    updateProjectTimeSettings(
-      assetId === null
-        ? "Clear night background image"
-        : "Set night background image",
-      assetId === null
-        ? "Night background image cleared."
-        : `Night background image set to ${
-            editorState.document.assets[assetId]?.sourceName ?? assetId
-          }.`,
-      (time) => {
-        time.nightBackground.assetId = assetId;
+  const applyWorldNightEnvironmentNumericField = (
+    field: WorldNightEnvironmentNumericField,
+    draftValue: string,
+    label: string,
+    draftLabel: string,
+    successMessage: string
+  ) => {
+    try {
+      updateWorldTimeOfDaySettings(label, successMessage, (world) => {
+        world.timeOfDay.night[field] = readNonNegativeNumberDraft(
+          draftValue,
+          draftLabel
+        );
+      });
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const applyNightBackgroundMode = (
+    mode: WorldBackgroundMode,
+    imageAssetId?: string
+  ) => {
+    const currentBackground = editorState.document.world.timeOfDay.night.background;
+
+    if (mode === "image") {
+      const currentBackgroundAssetId =
+        currentBackground.mode === "image" ? currentBackground.assetId : null;
+      const nextImageAssetId =
+        imageAssetId ??
+        (currentBackgroundAssetId !== null &&
+        editorState.document.assets[currentBackgroundAssetId]?.kind === "image"
+          ? currentBackgroundAssetId
+          : imageAssetList[0]?.id);
+
+      if (nextImageAssetId === undefined) {
+        setStatusMessage(
+          "Import an image asset before using a night image background."
+        );
+        return;
+      }
+
+      updateWorldTimeOfDaySettings(
+        "Set night background image",
+        `Night background set to ${
+          editorState.document.assets[nextImageAssetId]?.sourceName ??
+          nextImageAssetId
+        }.`,
+        (world) => {
+          world.timeOfDay.night.background = changeWorldBackgroundMode(
+            world.timeOfDay.night.background,
+            "image",
+            nextImageAssetId
+          );
+        }
+      );
+      return;
+    }
+
+    updateWorldTimeOfDaySettings(
+      "Set night background mode",
+      mode === "solid"
+        ? "Night background set to a solid color."
+        : "Night background set to a vertical gradient.",
+      (world) => {
+        world.timeOfDay.night.background = changeWorldBackgroundMode(
+          world.timeOfDay.night.background,
+          mode
+        );
       }
     );
   };
 
-  const applyProjectTimeNightBackgroundEnvironmentIntensity = () => {
-    updateProjectTimeSettings(
-      "Set night background environment intensity",
-      "Updated the night background environment intensity.",
-      (time) => {
-        time.nightBackground.environmentIntensity = readNonNegativeNumberDraft(
-          projectTimeNightBackgroundEnvironmentIntensityDraft,
-          "Night background environment intensity"
-        );
+  const applyNightBackgroundColor = (colorHex: string) => {
+    if (editorState.document.world.timeOfDay.night.background.mode !== "solid") {
+      return;
+    }
+
+    updateWorldTimeOfDaySettings(
+      "Set night background color",
+      "Updated the night background color.",
+      (world) => {
+        world.timeOfDay.night.background = {
+          mode: "solid",
+          colorHex
+        };
       }
     );
+  };
+
+  const applyNightGradientColor = (
+    edge: "top" | "bottom",
+    colorHex: string
+  ) => {
+    if (
+      editorState.document.world.timeOfDay.night.background.mode !==
+      "verticalGradient"
+    ) {
+      return;
+    }
+
+    updateWorldTimeOfDaySettings(
+      edge === "top"
+        ? "Set night gradient top color"
+        : "Set night gradient bottom color",
+      edge === "top"
+        ? "Updated the night gradient top color."
+        : "Updated the night gradient bottom color.",
+      (world) => {
+        world.timeOfDay.night.background =
+          edge === "top"
+            ? {
+                ...world.timeOfDay.night.background,
+                topColorHex: colorHex
+              }
+            : {
+                ...world.timeOfDay.night.background,
+                bottomColorHex: colorHex
+              };
+      }
+    );
+  };
+
+  const applyNightBackgroundEnvironmentIntensity = () => {
+    if (editorState.document.world.timeOfDay.night.background.mode !== "image") {
+      return;
+    }
+
+    try {
+      updateWorldTimeOfDaySettings(
+        "Set night background environment intensity",
+        "Updated the night background environment intensity.",
+        (world) => {
+          world.timeOfDay.night.background = {
+            ...world.timeOfDay.night.background,
+            environmentIntensity: readNonNegativeNumberDraft(
+              worldNightBackgroundEnvironmentIntensityDraft,
+              "Night background environment intensity"
+            )
+          };
+        }
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
   };
 
   const applySceneName = () => {
