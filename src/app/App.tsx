@@ -2428,6 +2428,15 @@ export function App({ store, initialStatusMessage }: AppProps) {
       setSceneEntryYawDraft(String(DEFAULT_SCENE_ENTRY_YAW_DEGREES));
       setNpcActorIdDraft("");
       setNpcYawDraft(String(DEFAULT_NPC_YAW_DEGREES));
+      setNpcColliderModeDraft(createNpcColliderSettings().mode);
+      setNpcEyeHeightDraft(String(createNpcColliderSettings().eyeHeight));
+      setNpcCapsuleRadiusDraft(
+        String(createNpcColliderSettings().capsuleRadius)
+      );
+      setNpcCapsuleHeightDraft(
+        String(createNpcColliderSettings().capsuleHeight)
+      );
+      setNpcBoxSizeDraft(createVec3Draft(createNpcColliderSettings().boxSize));
       setNpcModelAssetIdDraft(DEFAULT_NPC_MODEL_ASSET_ID ?? "");
       setTeleportTargetYawDraft(String(DEFAULT_TELEPORT_TARGET_YAW_DEGREES));
       setInteractableRadiusDraft(String(DEFAULT_INTERACTABLE_RADIUS));
@@ -2491,6 +2500,15 @@ export function App({ store, initialStatusMessage }: AppProps) {
       case "npc":
         setNpcActorIdDraft(selectedEntity.actorId);
         setNpcYawDraft(String(selectedEntity.yawDegrees));
+        setNpcColliderModeDraft(selectedEntity.collider.mode);
+        setNpcEyeHeightDraft(String(selectedEntity.collider.eyeHeight));
+        setNpcCapsuleRadiusDraft(
+          String(selectedEntity.collider.capsuleRadius)
+        );
+        setNpcCapsuleHeightDraft(
+          String(selectedEntity.collider.capsuleHeight)
+        );
+        setNpcBoxSizeDraft(createVec3Draft(selectedEntity.collider.boxSize));
         setNpcModelAssetIdDraft(selectedEntity.modelAssetId ?? "");
         break;
       case "soundEmitter":
