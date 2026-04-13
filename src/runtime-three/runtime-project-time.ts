@@ -2,15 +2,15 @@ import type { Vec3 } from "../core/vector";
 import {
   formatTimeOfDayHours,
   HOURS_PER_DAY,
-  type ProjectTimeNightBackgroundSettings,
   normalizeTimeOfDayHours,
-  type ProjectTimePhaseProfile,
   type ProjectTimeSettings
 } from "../document/project-time-settings";
 import {
   cloneWorldBackgroundSettings,
   type WorldAmbientLightSettings,
   type WorldBackgroundSettings,
+  type WorldTimeOfDaySettings,
+  type WorldTimePhaseProfile,
   type WorldSettings,
   type WorldSunLightSettings
 } from "../document/world-settings";
@@ -369,74 +369,239 @@ function resolveTimeDrivenSunDirection(
   return rotateAroundAxis(noonDirection, orbitAxis, orbitRadians);
 }
 
-function resolvePhaseSolidBackgroundColor(profile: ProjectTimePhaseProfile): string {
+function resolvePhaseSolidBackgroundColor(profile: WorldTimePhaseProfile): string {
   return blendHexColors(profile.skyTopColorHex, profile.skyBottomColorHex, 0.65);
 }
 
-function resolveTimeDrivenBackground(
-  background: WorldBackgroundSettings,
-  settings: ProjectTimeSettings,
-  weights: RuntimeDayNightPhaseWeights
+function createPhaseGradientBackground(
+  profile: WorldTimePhaseProfile
 ): WorldBackgroundSettings {
+  return {
+    mode: "verticalGradient",
+    topColorHex: profile.skyTopColorHex,
+    bottomColorHex: profile.skyBottomColorHex
+  };
+}
+
+function resolveBackgroundTopColor(background: WorldBackgroundSettings): string {
   if (background.mode === "solid") {
-    return {
-      mode: "solid",
-      colorHex: blendHexColorsByWeights(
-        background.colorHex,
-        resolvePhaseSolidBackgroundColor(settings.dawn),
-        resolvePhaseSolidBackgroundColor(settings.dusk),
-        resolvePhaseSolidBackgroundColor(settings.night),
-        weights
-      )
-    };
+    return background.colorHex;
   }
 
   if (background.mode === "verticalGradient") {
+    return background.topColorHex;
+  }
+
+  return "#000000";
+}
+
+function resolveBackgroundBottomColor(background: WorldBackgroundSettings): string {
+  if (background.mode === "solid") {
+    return background.colorHex;
+  }
+
+  if (background.mode === "verticalGradient") {
+    return background.bottomColorHex;
+  }
+
+  return "#000000";
+}
+
+function blendNonImageBackgrounds(
+  contributions: Array<{
+    background: WorldBackgroundSettings;
+    weight: number;
+  }>
+): WorldBackgroundSettings {
+  const activeContributions = contributions.filter(
+    ({ background, weight }) => background.mode !== "image" && weight > 1e-6
+  );
+
+  if (activeContributions.length === 0) {
+    const fallbackBackground = contributions.find(
+      ({ background }) => background.mode !== "image"
+    )?.background;
+
+    return fallbackBackground === undefined
+      ? {
+          mode: "solid",
+          colorHex: "#000000"
+        }
+      : cloneWorldBackgroundSettings(fallbackBackground);
+  }
+
+  const totalWeight = activeContributions.reduce(
+    (sum, { weight }) => sum + weight,
+    0
+  );
+
+  if (totalWeight <= 1e-6) {
+    return cloneWorldBackgroundSettings(activeContributions[0].background);
+  }
+
+  const hasGradient = activeContributions.some(
+    ({ background }) => background.mode === "verticalGradient"
+  );
+  const blendedTopColorHex = blendHexColorsByWeights(
+    resolveBackgroundTopColor(activeContributions[0].background),
+    resolveBackgroundTopColor(activeContributions[Math.min(1, activeContributions.length - 1)].background),
+    resolveBackgroundTopColor(activeContributions[Math.min(2, activeContributions.length - 1)].background),
+    resolveBackgroundTopColor(activeContributions[Math.min(3, activeContributions.length - 1)].background),
+    {
+      day: activeContributions[0]?.weight ?? 0,
+      dawn: activeContributions[1]?.weight ?? 0,
+      dusk: activeContributions[2]?.weight ?? 0,
+      night: activeContributions[3]?.weight ?? 0
+    }
+  );
+
+  if (!hasGradient) {
     return {
-      mode: "verticalGradient",
-      topColorHex: blendHexColorsByWeights(
-        background.topColorHex,
-        settings.dawn.skyTopColorHex,
-        settings.dusk.skyTopColorHex,
-        settings.night.skyTopColorHex,
-        weights
-      ),
-      bottomColorHex: blendHexColorsByWeights(
-        background.bottomColorHex,
-        settings.dawn.skyBottomColorHex,
-        settings.dusk.skyBottomColorHex,
-        settings.night.skyBottomColorHex,
-        weights
-      )
+      mode: "solid",
+      colorHex: blendedTopColorHex
     };
   }
 
-  return cloneWorldBackgroundSettings(background);
+  const blendedBottomColorHex = blendHexColorsByWeights(
+    resolveBackgroundBottomColor(activeContributions[0].background),
+    resolveBackgroundBottomColor(activeContributions[Math.min(1, activeContributions.length - 1)].background),
+    resolveBackgroundBottomColor(activeContributions[Math.min(2, activeContributions.length - 1)].background),
+    resolveBackgroundBottomColor(activeContributions[Math.min(3, activeContributions.length - 1)].background),
+    {
+      day: activeContributions[0]?.weight ?? 0,
+      dawn: activeContributions[1]?.weight ?? 0,
+      dusk: activeContributions[2]?.weight ?? 0,
+      night: activeContributions[3]?.weight ?? 0
+    }
+  );
+
+  return {
+    mode: "verticalGradient",
+    topColorHex: blendedTopColorHex,
+    bottomColorHex: blendedBottomColorHex
+  };
 }
 
-function resolveNightBackgroundOverlay(
-  nightBackground: ProjectTimeNightBackgroundSettings,
-  weights: RuntimeDayNightPhaseWeights
+function resolveBackgroundImageOverlay(
+  background: WorldBackgroundSettings,
+  opacity: number
 ): RuntimeDayNightWorldState["nightBackgroundOverlay"] {
-  if (nightBackground.assetId === null) {
+  if (background.mode !== "image") {
     return null;
   }
 
-  const opacity = clamp(
-    weights.night + weights.dawn * 0.5 + weights.dusk * 0.5,
-    0,
-    1
-  );
+  const clampedOpacity = clamp(opacity, 0, 1);
 
-  if (opacity <= 1e-4) {
+  if (clampedOpacity <= 1e-4) {
     return null;
   }
 
   return {
-    assetId: nightBackground.assetId,
-    environmentIntensity: nightBackground.environmentIntensity,
-    opacity
+    assetId: background.assetId,
+    environmentIntensity: background.environmentIntensity,
+    opacity: clampedOpacity
   };
+}
+
+function resolveTimeDrivenBackground(
+  dayBackground: WorldBackgroundSettings,
+  timeOfDay: WorldTimeOfDaySettings,
+  weights: RuntimeDayNightPhaseWeights
+): {
+  background: WorldBackgroundSettings;
+  nightBackgroundOverlay: RuntimeDayNightWorldState["nightBackgroundOverlay"];
+} {
+  const dawnBackground = createPhaseGradientBackground(timeOfDay.dawn);
+  const duskBackground = createPhaseGradientBackground(timeOfDay.dusk);
+  const nightBackground = timeOfDay.night.background;
+  const twilightNightOpacity =
+    weights.night + weights.dawn * 0.5 + weights.dusk * 0.5;
+  const twilightDayOpacity = weights.day + weights.dawn * 0.5 + weights.dusk * 0.5;
+
+  if (dayBackground.mode === "image" && nightBackground.mode === "image") {
+    return {
+      background: cloneWorldBackgroundSettings(dayBackground),
+      nightBackgroundOverlay: resolveBackgroundImageOverlay(
+        nightBackground,
+        twilightNightOpacity
+      )
+    };
+  }
+
+  if (dayBackground.mode === "image") {
+    return {
+      background: blendNonImageBackgrounds([
+        {
+          background: dawnBackground,
+          weight: weights.dawn
+        },
+        {
+          background: duskBackground,
+          weight: weights.dusk
+        },
+        {
+          background: nightBackground,
+          weight: weights.night
+        }
+      ]),
+      nightBackgroundOverlay: resolveBackgroundImageOverlay(
+        dayBackground,
+        twilightDayOpacity
+      )
+    };
+  }
+
+  if (nightBackground.mode === "image") {
+    return {
+      background: blendNonImageBackgrounds([
+        {
+          background: dayBackground,
+          weight: weights.day
+        },
+        {
+          background: dawnBackground,
+          weight: weights.dawn
+        },
+        {
+          background: duskBackground,
+          weight: weights.dusk
+        }
+      ]),
+      nightBackgroundOverlay: resolveBackgroundImageOverlay(
+        nightBackground,
+        twilightNightOpacity
+      )
+    };
+  }
+
+  return {
+    background: blendNonImageBackgrounds([
+      {
+        background: dayBackground,
+        weight: weights.day
+      },
+      {
+        background: dawnBackground,
+        weight: weights.dawn
+      },
+      {
+        background: duskBackground,
+        weight: weights.dusk
+      },
+      {
+        background: nightBackground,
+        weight: weights.night
+      }
+    ]),
+    nightBackgroundOverlay: null
+  };
+}
+
+function resolveNightBackgroundOverlay(
+  _nightBackground: WorldBackgroundSettings,
+  _weights: RuntimeDayNightPhaseWeights
+): RuntimeDayNightWorldState["nightBackgroundOverlay"] {
+  return null;
 }
 
 export function createRuntimeClockState(
@@ -534,6 +699,7 @@ export function resolveRuntimeDayNightWorldState(
     settings,
     normalizedTime
   );
+  const timeOfDay = world.timeOfDay;
   const noonDirection = resolveNoonSunDirection(world.sunLight.direction);
   const sunDirection = resolveTimeDrivenSunDirection(
     noonDirection,
@@ -551,16 +717,21 @@ export function resolveRuntimeDayNightWorldState(
   const sunFactor =
     blendScalarByWeights(
       1,
-      settings.dawn.lightIntensityFactor,
-      settings.dusk.lightIntensityFactor,
+      timeOfDay.dawn.lightIntensityFactor,
+      timeOfDay.dusk.lightIntensityFactor,
       0,
       phaseWeights
     ) * smoothstep(-0.16, 0.18, sunDirection.y);
   const ambientFactor = blendScalarByWeights(
     1,
-    settings.dawn.ambientIntensityFactor,
-    settings.dusk.ambientIntensityFactor,
-    settings.night.ambientIntensityFactor,
+    timeOfDay.dawn.ambientIntensityFactor,
+    timeOfDay.dusk.ambientIntensityFactor,
+    timeOfDay.night.ambientIntensityFactor,
+    phaseWeights
+  );
+  const resolvedBackground = resolveTimeDrivenBackground(
+    world.background,
+    timeOfDay,
     phaseWeights
   );
   let moonLight: WorldSunLightSettings | null = null;
@@ -574,10 +745,10 @@ export function resolveRuntimeDayNightWorldState(
   if (moonVisibilityFactor > 1e-4) {
     moonLight = {
       colorHex: blendHexColorsByWeights(
-        settings.night.lightColorHex,
-        settings.dawn.lightColorHex,
-        settings.dusk.lightColorHex,
-        settings.night.lightColorHex,
+        timeOfDay.night.lightColorHex,
+        timeOfDay.dawn.lightColorHex,
+        timeOfDay.dusk.lightColorHex,
+        timeOfDay.night.lightColorHex,
         {
           day: 0,
           dawn: phaseWeights.dawn,
@@ -587,7 +758,7 @@ export function resolveRuntimeDayNightWorldState(
       ),
       intensity:
         world.sunLight.intensity *
-        settings.night.lightIntensityFactor *
+        timeOfDay.night.lightIntensityFactor *
         moonVisibilityFactor,
       direction: scaleVec3(sunDirection, -1)
     };
@@ -597,9 +768,9 @@ export function resolveRuntimeDayNightWorldState(
     ambientLight: {
       colorHex: blendHexColorsByWeights(
         world.ambientLight.colorHex,
-        settings.dawn.ambientColorHex,
-        settings.dusk.ambientColorHex,
-        settings.night.ambientColorHex,
+        timeOfDay.dawn.ambientColorHex,
+        timeOfDay.dusk.ambientColorHex,
+        timeOfDay.night.ambientColorHex,
         phaseWeights
       ),
       intensity: world.ambientLight.intensity * ambientFactor
@@ -607,24 +778,17 @@ export function resolveRuntimeDayNightWorldState(
     sunLight: {
       colorHex: blendHexColorsByWeights(
         world.sunLight.colorHex,
-        settings.dawn.lightColorHex,
-        settings.dusk.lightColorHex,
-        settings.night.lightColorHex,
+        timeOfDay.dawn.lightColorHex,
+        timeOfDay.dusk.lightColorHex,
+        timeOfDay.night.lightColorHex,
         phaseWeights
       ),
       intensity: world.sunLight.intensity * sunFactor,
       direction: sunDirection
     },
     moonLight,
-    background: resolveTimeDrivenBackground(
-      world.background,
-      settings,
-      phaseWeights
-    ),
-    nightBackgroundOverlay: resolveNightBackgroundOverlay(
-      settings.nightBackground,
-      phaseWeights
-    ),
+    background: resolvedBackground.background,
+    nightBackgroundOverlay: resolvedBackground.nightBackgroundOverlay,
     daylightFactor
   };
 }
