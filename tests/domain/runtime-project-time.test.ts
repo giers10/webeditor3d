@@ -9,8 +9,8 @@ import {
   hasTimeWindowJustStarted,
   isWithinTimeWindow,
   resolveRuntimeDayPhase,
-  resolveRuntimeDayNightWorldState
-  ,resolveRuntimeTimeState
+  resolveRuntimeDayNightWorldState,
+  resolveRuntimeTimeState
 } from "../../src/runtime-three/runtime-project-time";
 
 describe("runtime project time", () => {
