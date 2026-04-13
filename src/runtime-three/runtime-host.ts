@@ -108,6 +108,7 @@ import { ThirdPersonNavigationController } from "./third-person-navigation-contr
 import { resolveUnderwaterFogState } from "./underwater-fog";
 import { resolveWaterContact } from "./water-volume-utils";
 import type {
+  createRuntimeNpcFromDefinition,
   RuntimeNpcDefinition,
   RuntimeBoxBrushInstance,
   RuntimeLocalLightCollection,
@@ -116,7 +117,10 @@ import type {
   RuntimeSceneDefinition,
   RuntimeTeleportTarget
 } from "./runtime-scene-build";
-import { buildRuntimeNpcCollider } from "./runtime-scene-build";
+import {
+  buildRuntimeNpcCollider,
+  createRuntimeNpcFromDefinition
+} from "./runtime-scene-build";
 
 interface CachedMaterialTexture {
   signature: string;
@@ -2197,7 +2201,7 @@ export class RuntimeHost {
 
     this.runtimeScene.entities.npcs = this.runtimeScene.npcDefinitions.filter(
       (npc) => npc.active
-    );
+    ).map((npc) => createRuntimeNpcFromDefinition(npc));
     this.runtimeScene.colliders = [
       ...this.runtimeScene.staticColliders,
       ...this.runtimeScene.entities.npcs
