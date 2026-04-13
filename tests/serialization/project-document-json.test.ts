@@ -216,7 +216,8 @@ describe("project document JSON", () => {
             ...legacyScene,
             world: {
               ...legacyScene.world,
-              projectTimeLightingEnabled: undefined
+              projectTimeLightingEnabled: undefined,
+              timeOfDay: undefined
             }
           }
         },
