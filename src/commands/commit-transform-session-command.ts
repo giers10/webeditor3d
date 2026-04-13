@@ -9,6 +9,7 @@ import type { SceneDocument } from "../document/scene-document";
 import { createModelInstance } from "../assets/model-instances";
 import {
   createInteractableEntity,
+  createNpcEntity,
   createPlayerStartEntity,
   createPointLightEntity,
   createSceneEntryEntity,
@@ -36,6 +37,8 @@ function createTransformCommandLabel(session: ActiveTransformSession): string {
       : session.target.kind === "entity"
         ? session.target.entityKind === "playerStart"
           ? "player start"
+          : session.target.entityKind === "npc"
+            ? "NPC"
           : session.target.entityKind === "pointLight"
             ? "point light"
             : session.target.entityKind === "spotLight"
@@ -197,6 +200,18 @@ export function createCommitTransformSessionCommand(document: SceneDocument, ses
         case "sceneEntry":
           return createUpsertEntityCommand({
             entity: createSceneEntryEntity({
+              ...entity,
+              position: session.preview.position,
+              yawDegrees:
+                session.preview.rotation.kind === "yaw"
+                  ? session.preview.rotation.yawDegrees
+                  : entity.yawDegrees
+            }),
+            label: createTransformCommandLabel(session)
+          });
+        case "npc":
+          return createUpsertEntityCommand({
+            entity: createNpcEntity({
               ...entity,
               position: session.preview.position,
               yawDegrees:
