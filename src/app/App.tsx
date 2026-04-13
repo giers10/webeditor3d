@@ -12475,12 +12475,27 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     <div className="label">Points</div>
                     <div className="material-summary">
                       Edit authored point positions directly. Keep at least{" "}
-                      {MIN_SCENE_PATH_POINT_COUNT} points.
+                      {MIN_SCENE_PATH_POINT_COUNT} points. `Shift+W` appends a
+                      new point to the end of the selected path.
                     </div>
+                    {selectedPathPointIndex === null ? null : (
+                      <div className="material-summary">
+                        Selected in viewport: Point {selectedPathPointIndex + 1}
+                      </div>
+                    )}
                     {selectedPath.points.map((point, pointIndex) => (
                       <div key={point.id} className="stat-card">
                         <div className="label">Point {pointIndex + 1}</div>
-                        <div className="material-summary">{point.id}</div>
+                        <div className="material-summary">
+                          {point.id}
+                          {isPathPointSelected(
+                            editorState.selection,
+                            selectedPath.id,
+                            point.id
+                          )
+                            ? " · Selected in viewport"
+                            : ""}
+                        </div>
                         <div className="vector-inputs">
                           <label className="form-field">
                             <span className="label">X</span>
@@ -12582,7 +12597,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               selectedPath.points.length <=
                               MIN_SCENE_PATH_POINT_COUNT
                             }
-                            onClick={() => handleDeletePathPoint(pointIndex)}
+                            onClick={() => handleDeletePathPoint(point.id)}
                           >
                             Remove Point
                           </button>
