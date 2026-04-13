@@ -1112,6 +1112,15 @@ function describeSelection(
       return `1 vertex selected (${BOX_VERTEX_LABELS[selection.vertexId]} on ${getBrushLabelById(selection.brushId, brushes)})`;
     case "paths":
       return `${selection.ids.length} path${selection.ids.length === 1 ? "" : "s"} selected (${getPathLabelById(selection.ids[0], paths)})`;
+    case "pathPoint": {
+      const path = paths.find((candidatePath) => candidatePath.id === selection.pathId);
+      const pointIndex =
+        path === undefined
+          ? -1
+          : getScenePathPointIndex(path, selection.pointId);
+      const pointLabel = pointIndex === -1 ? "Path Point" : `Point ${pointIndex + 1}`;
+      return `${pointLabel} selected (${getPathLabelById(selection.pathId, paths)})`;
+    }
     case "entities":
       return `${selection.ids.length} entity selected (${getEntityDisplayLabelById(selection.ids[0], entities, assets)})`;
     case "modelInstances":
@@ -1285,6 +1294,7 @@ function selectionCanBeDuplicated(selection: EditorSelection): boolean {
     case "brushEdge":
     case "brushVertex":
       return true;
+    case "pathPoint":
     case "none":
       return false;
   }
