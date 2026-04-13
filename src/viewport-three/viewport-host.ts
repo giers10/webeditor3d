@@ -2232,6 +2232,8 @@ export class ViewportHost {
         ? session.target.initialCenter
         : session.target.kind === "modelInstance"
           ? session.target.initialPosition
+          : session.target.kind === "pathPoint"
+            ? session.target.initialPosition
           : session.target.initialPosition;
     let nextPosition = {
       ...initialPosition
@@ -2343,6 +2345,13 @@ export class ViewportHost {
         scale: {
           ...session.target.initialScale
         }
+      };
+    }
+
+    if (session.target.kind === "pathPoint") {
+      return {
+        kind: "pathPoint" as const,
+        position: nextPosition
       };
     }
 
@@ -3268,6 +3277,36 @@ export class ViewportHost {
           });
         }
         break;
+      case "pathPoint": {
+        if (
+          this.currentTransformSession.preview.kind !== "pathPoint" ||
+          this.currentDocument === null
+        ) {
+          break;
+        }
+
+        const currentPath =
+          this.currentDocument.paths[this.currentTransformSession.target.pathId];
+
+        if (currentPath === undefined) {
+          break;
+        }
+
+        this.updatePathRenderObjectState(
+          {
+            ...currentPath,
+            points: currentPath.points.map((point) =>
+              point.id === this.currentTransformSession.target.pointId
+                ? {
+                    ...point,
+                    position: this.currentTransformSession.preview.position
+                  }
+                : point
+            )
+          }
+        );
+        break;
+      }
       case "entity": {
         if (
           this.currentTransformSession.preview.kind !== "entity" ||
