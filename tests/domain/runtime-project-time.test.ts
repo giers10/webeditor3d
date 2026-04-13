@@ -31,11 +31,15 @@ describe("runtime project time", () => {
       topColorHex: "#88ccff",
       bottomColorHex: "#f2b774"
     };
+    world.timeOfDay.night.background = {
+      mode: "verticalGradient",
+      topColorHex: "#07101f",
+      bottomColorHex: "#18253b"
+    };
     time.sunriseTimeOfDayHours = 7;
     time.sunsetTimeOfDayHours = 20;
     time.dawnDurationHours = 2;
     time.duskDurationHours = 2;
-    time.nightBackground.assetId = "asset-night-sky";
 
     const noon = resolveRuntimeDayNightWorldState(world, time, {
       timeOfDayHours: 12,
@@ -96,10 +100,6 @@ describe("runtime project time", () => {
     );
     expect(postSunset.moonLight?.intensity ?? 0).toBeGreaterThan(0);
     expect(noon.moonLight).toBeNull();
-    expect(preSunrise.nightBackgroundOverlay?.assetId).toBe("asset-night-sky");
-    expect(preSunrise.nightBackgroundOverlay?.opacity ?? 0).toBeGreaterThan(0);
-    expect(postSunset.nightBackgroundOverlay?.opacity ?? 0).toBeGreaterThan(0);
-    expect(midnight.nightBackgroundOverlay?.opacity ?? 0).toBeCloseTo(1);
     expect(noon.sunLight.direction.y).toBeGreaterThan(0);
     expect(midnight.sunLight.direction.y).toBeLessThan(0);
 
@@ -120,6 +120,41 @@ describe("runtime project time", () => {
     expect(midnight.background.bottomColorHex).not.toBe(
       noon.background.bottomColorHex
     );
+  });
+
+  it("uses the scene night image as a runtime overlay when the night background is an image", () => {
+    const world = createDefaultWorldSettings();
+    const time = createDefaultProjectTimeSettings();
+    time.sunriseTimeOfDayHours = 7;
+    time.sunsetTimeOfDayHours = 20;
+    time.dawnDurationHours = 2;
+    time.duskDurationHours = 2;
+    world.timeOfDay.night.background = {
+      mode: "image",
+      assetId: "asset-night-sky",
+      environmentIntensity: 0.42
+    };
+
+    const preSunrise = resolveRuntimeDayNightWorldState(world, time, {
+      timeOfDayHours: 6.5,
+      dayCount: 0,
+      dayLengthMinutes: 24
+    });
+    const postSunset = resolveRuntimeDayNightWorldState(world, time, {
+      timeOfDayHours: 20.5,
+      dayCount: 0,
+      dayLengthMinutes: 24
+    });
+    const midnight = resolveRuntimeDayNightWorldState(world, time, {
+      timeOfDayHours: 0,
+      dayCount: 0,
+      dayLengthMinutes: 24
+    });
+
+    expect(preSunrise.nightBackgroundOverlay?.assetId).toBe("asset-night-sky");
+    expect(preSunrise.nightBackgroundOverlay?.opacity ?? 0).toBeGreaterThan(0);
+    expect(postSunset.nightBackgroundOverlay?.opacity ?? 0).toBeGreaterThan(0);
+    expect(midnight.nightBackgroundOverlay?.opacity ?? 0).toBeCloseTo(1);
   });
 
   it("leaves scene lighting untouched when the scene disables project time influence", () => {
