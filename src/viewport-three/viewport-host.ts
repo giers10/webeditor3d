@@ -91,6 +91,7 @@ import {
 import type { WorldSettings } from "../document/world-settings";
 import {
   DEFAULT_INTERACTABLE_RADIUS,
+  DEFAULT_NPC_YAW_DEGREES,
   DEFAULT_PLAYER_START_BOX_SIZE,
   DEFAULT_PLAYER_START_CAPSULE_HEIGHT,
   DEFAULT_PLAYER_START_CAPSULE_RADIUS,
@@ -171,7 +172,10 @@ import {
   createWaterMaterial
 } from "../rendering/water-material";
 import { resolveViewportFocusTarget } from "./viewport-focus";
-import { createSoundEmitterMarkerMeshes } from "./viewport-entity-markers";
+import {
+  createNpcMarkerMeshes,
+  createSoundEmitterMarkerMeshes
+} from "./viewport-entity-markers";
 import { resolveTransformPointerDownIntent } from "./transform-pointer-intent";
 import { resolveDominantLocalAxisForWorldAxis } from "./transform-axis-mapping";
 import {
@@ -241,6 +245,8 @@ const TELEPORT_TARGET_COLOR = 0x7ee0ff;
 const TELEPORT_TARGET_SELECTED_COLOR = 0xf6c48a;
 const SCENE_ENTRY_COLOR = 0x75f0d8;
 const SCENE_ENTRY_SELECTED_COLOR = 0xf6c48a;
+const NPC_COLOR = 0xa0df7a;
+const NPC_SELECTED_COLOR = 0xf4cd83;
 const INTERACTABLE_COLOR = 0x92de7e;
 const INTERACTABLE_SELECTED_COLOR = 0xf1cf7e;
 const SCENE_EXIT_COLOR = 0xff9c6d;
