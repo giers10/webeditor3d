@@ -308,6 +308,7 @@ describe("local draft storage", () => {
           brushes: {
             [invalidBrush.id]: invalidBrush
           },
+          paths: {},
           modelInstances: {},
           entities: {},
           interactionLinks: {}
