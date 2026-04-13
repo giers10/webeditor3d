@@ -19,8 +19,13 @@ import {
   type ProjectTimeSettings
 } from "./project-time-settings";
 import { type ScenePath } from "./paths";
+import {
+  createEmptyProjectScheduler,
+  type ProjectScheduler
+} from "../scheduler/project-scheduler";
 
-export const SCENE_DOCUMENT_VERSION = 45 as const;
+export const SCENE_DOCUMENT_VERSION = 46 as const;
+export const PROJECT_SCHEDULER_FOUNDATION_SCENE_DOCUMENT_VERSION = 46 as const;
 export const CONTROL_SURFACE_FOUNDATION_SCENE_DOCUMENT_VERSION = 45 as const;
 export const NPC_PRESENCE_SCENE_DOCUMENT_VERSION = 44 as const;
 export const PATH_FOUNDATION_SCENE_DOCUMENT_VERSION = 43 as const;
@@ -136,6 +141,7 @@ export interface ProjectDocument {
   version: typeof SCENE_DOCUMENT_VERSION;
   name: string;
   time: ProjectTimeSettings;
+  scheduler: ProjectScheduler;
   activeSceneId: string;
   scenes: Record<string, ProjectScene>;
   materials: Record<string, MaterialDef>;
@@ -147,6 +153,7 @@ export interface SceneDocument {
   version: typeof SCENE_DOCUMENT_VERSION;
   name: string;
   time: ProjectTimeSettings;
+  scheduler: ProjectScheduler;
   world: WorldSettings;
   materials: Record<string, MaterialDef>;
   textures: Record<string, never>;
@@ -167,6 +174,7 @@ export function createEmptySceneDocument(
     version: SCENE_DOCUMENT_VERSION,
     name: overrides.name ?? "Untitled Scene",
     time: overrides.time ?? createDefaultProjectTimeSettings(),
+    scheduler: createEmptyProjectScheduler(),
     world: overrides.world ?? createDefaultWorldSettings(),
     materials: cloneMaterialRegistry(
       overrides.materials ?? createStarterMaterialRegistry()
@@ -211,7 +219,13 @@ export function createEmptyProjectDocument(
   overrides: Partial<
     Pick<
       ProjectDocument,
-      "name" | "time" | "activeSceneId" | "materials" | "textures" | "assets"
+      | "name"
+      | "time"
+      | "scheduler"
+      | "activeSceneId"
+      | "materials"
+      | "textures"
+      | "assets"
     >
   > & {
     sceneId?: string;
@@ -230,6 +244,7 @@ export function createEmptyProjectDocument(
     version: SCENE_DOCUMENT_VERSION,
     name: overrides.name ?? DEFAULT_PROJECT_NAME,
     time: overrides.time ?? createDefaultProjectTimeSettings(),
+    scheduler: overrides.scheduler ?? createEmptyProjectScheduler(),
     activeSceneId: initialScene.id,
     scenes: {
       [initialScene.id]: initialScene
@@ -265,6 +280,7 @@ export function createSceneDocumentFromProject(
     version: projectDocument.version,
     name: scene.name,
     time: projectDocument.time,
+    scheduler: projectDocument.scheduler,
     world: scene.world,
     materials: projectDocument.materials,
     textures: projectDocument.textures,
@@ -286,6 +302,7 @@ export function createProjectDocumentFromSceneDocument(
     version: SCENE_DOCUMENT_VERSION,
     name: projectName,
     time: sceneDocument.time,
+    scheduler: sceneDocument.scheduler,
     activeSceneId: sceneId,
     scenes: {
       [sceneId]: {
@@ -318,6 +335,7 @@ export function applySceneDocumentToProject(
     ...projectDocument,
     version: SCENE_DOCUMENT_VERSION,
     time: sceneDocument.time,
+    scheduler: sceneDocument.scheduler,
     materials: sceneDocument.materials,
     textures: sceneDocument.textures,
     assets: sceneDocument.assets,
