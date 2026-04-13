@@ -506,6 +506,57 @@ describe("validateSceneDocument", () => {
     );
   });
 
+  it("validates authored NPC presence windows", () => {
+    const zeroWindowNpc = createNpcEntity({
+      id: "entity-npc-zero-window",
+      actorId: "actor-town-zero-window",
+      presence: createNpcTimeWindowPresence({
+        startHour: 8,
+        endHour: 12
+      })
+    });
+    zeroWindowNpc.presence = {
+      mode: "timeWindow",
+      startHour: 8,
+      endHour: 8
+    };
+
+    const invalidRangeNpc = createNpcEntity({
+      id: "entity-npc-invalid-range",
+      actorId: "actor-town-invalid-range",
+      presence: createNpcTimeWindowPresence({
+        startHour: 20,
+        endHour: 2
+      })
+    });
+    invalidRangeNpc.presence = {
+      mode: "timeWindow",
+      startHour: 25,
+      endHour: 2
+    };
+
+    const validation = validateSceneDocument({
+      ...createEmptySceneDocument(),
+      entities: {
+        [zeroWindowNpc.id]: zeroWindowNpc,
+        [invalidRangeNpc.id]: invalidRangeNpc
+      }
+    });
+
+    expect(validation.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "invalid-npc-presence-zero-window",
+          path: "entities.entity-npc-zero-window.presence.startHour"
+        }),
+        expect.objectContaining({
+          code: "invalid-npc-presence-start-range",
+          path: "entities.entity-npc-invalid-range.presence.startHour"
+        })
+      ])
+    );
+  });
+
   it("accepts authored point and spot lights with an active image background asset", () => {
     const imageAsset = {
       id: "asset-background-panorama",
