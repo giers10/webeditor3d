@@ -83,6 +83,7 @@ import {
   type AdvancedRenderingSettings
 } from "../document/world-settings";
 import { getNpcColliderHeight } from "../entities/entity-instances";
+import type { InteractionLink } from "../interactions/interaction-links";
 
 import { FirstPersonNavigationController } from "./first-person-navigation-controller";
 import type {
@@ -94,7 +95,6 @@ import type {
 } from "./navigation-controller";
 import { RapierCollisionWorld } from "./rapier-collision-world";
 import {
-  type InteractionLink,
   RuntimeInteractionSystem,
   type RuntimeInteractionDispatcher,
   type RuntimeInteractionPrompt
