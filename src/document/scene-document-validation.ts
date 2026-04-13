@@ -8,6 +8,7 @@ import {
 import type { ModelInstance } from "../assets/model-instances";
 import { isModelInstanceCollisionMode } from "../assets/model-instances";
 import {
+  type ActorControlTargetRef,
   type ControlEffect,
   type InteractionControlTargetRef,
   type LightControlTargetRef
@@ -67,6 +68,11 @@ import {
   type WorldTimePhaseProfile,
   type WorldSettings
 } from "./world-settings";
+import {
+  createEmptyProjectScheduler,
+  isProjectScheduleWeekday,
+  type ProjectScheduler
+} from "../scheduler/project-scheduler";
 
 export type SceneDiagnosticSeverity = "error" | "warning";
 export type SceneDiagnosticScope = "document" | "build";
