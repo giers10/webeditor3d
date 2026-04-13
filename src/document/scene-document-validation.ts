@@ -675,8 +675,8 @@ function validateWorldSettings(
   }
 }
 
-function validateProjectTimePhaseProfile(
-  profile: ProjectTimePhaseProfile,
+function validateWorldTimePhaseProfile(
+  profile: WorldTimePhaseProfile,
   diagnostics: SceneDiagnostic[],
   path: string,
   label: string
@@ -748,62 +748,8 @@ function validateProjectTimePhaseProfile(
   }
 }
 
-function validateProjectTimeNightBackgroundSettings(
-  nightBackground: ProjectTimeNightBackgroundSettings,
-  assets: Record<string, ProjectAssetRecord>,
-  diagnostics: SceneDiagnostic[],
-  path: string
-) {
-  if (nightBackground.assetId !== null) {
-    if (nightBackground.assetId.trim().length === 0) {
-      diagnostics.push(
-        createDiagnostic(
-          "error",
-          "invalid-project-time-night-background-asset-id",
-          "Night background image ids must be non-empty when authored.",
-          `${path}.assetId`
-        )
-      );
-    } else {
-      const backgroundAsset = assets[nightBackground.assetId];
-
-      if (backgroundAsset === undefined) {
-        diagnostics.push(
-          createDiagnostic(
-            "error",
-            "missing-project-time-night-background-asset",
-            `Night background image asset ${nightBackground.assetId} does not exist.`,
-            `${path}.assetId`
-          )
-        );
-      } else if (backgroundAsset.kind !== "image") {
-        diagnostics.push(
-          createDiagnostic(
-            "error",
-            "invalid-project-time-night-background-asset-kind",
-            "Night background images must reference image assets.",
-            `${path}.assetId`
-          )
-        );
-      }
-    }
-  }
-
-  if (!isNonNegativeFiniteNumber(nightBackground.environmentIntensity)) {
-    diagnostics.push(
-      createDiagnostic(
-        "error",
-        "invalid-project-time-night-background-environment-intensity",
-        "Night background environment intensity must be a non-negative finite number.",
-        `${path}.environmentIntensity`
-      )
-    );
-  }
-}
-
 function validateProjectTimeSettings(
   time: ProjectTimeSettings,
-  assets: Record<string, ProjectAssetRecord>,
   diagnostics: SceneDiagnostic[],
   path = "time"
 ) {
@@ -940,16 +886,6 @@ function validateProjectTimeSettings(
       )
     );
   }
-
-  validateProjectTimePhaseProfile(time.dawn, diagnostics, `${path}.dawn`, "dawn");
-  validateProjectTimePhaseProfile(time.dusk, diagnostics, `${path}.dusk`, "dusk");
-  validateProjectTimePhaseProfile(time.night, diagnostics, `${path}.night`, "night");
-  validateProjectTimeNightBackgroundSettings(
-    time.nightBackground,
-    assets,
-    diagnostics,
-    `${path}.nightBackground`
-  );
 }
 
 function validatePointLightEntity(
