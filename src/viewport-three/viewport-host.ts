@@ -90,6 +90,7 @@ import {
 } from "../document/world-settings";
 import type { WorldSettings } from "../document/world-settings";
 import {
+  createNpcColliderSettings,
   DEFAULT_INTERACTABLE_RADIUS,
   DEFAULT_NPC_YAW_DEGREES,
   DEFAULT_PLAYER_START_BOX_SIZE,
@@ -107,10 +108,12 @@ import {
   DEFAULT_SPOT_LIGHT_DISTANCE,
   DEFAULT_TELEPORT_TARGET_YAW_DEGREES,
   DEFAULT_TRIGGER_VOLUME_SIZE,
+  getNpcColliderHeight,
   getPlayerStartColliderHeight,
   getEntityInstances,
   normalizeYawDegrees,
   type EntityInstance,
+  type NpcEntity,
   type PlayerStartEntity,
   type PointLightEntity,
   type SpotLightEntity
