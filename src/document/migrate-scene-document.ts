@@ -59,6 +59,30 @@ import {
   type PlayerStartMovementTemplateKind
 } from "../entities/entity-instances";
 import {
+  createActiveSceneControlTargetRef,
+  createControlTargetDescriptor,
+  createEntityControlTargetRef,
+  createInteractionControlTargetRef,
+  createLightControlTargetRef,
+  createLightIntensityControlChannelDescriptor,
+  createModelInstanceControlTargetRef,
+  createPlayModelAnimationControlEffect,
+  createPlaySoundControlEffect,
+  createProjectGlobalControlTargetRef,
+  createSetInteractionEnabledControlEffect,
+  createSetLightEnabledControlEffect,
+  createSetLightIntensityControlEffect,
+  createSoundEmitterControlTargetRef,
+  createStopModelAnimationControlEffect,
+  createStopSoundControlEffect,
+  isControlEntityTargetKind,
+  isControlInteractionTargetKind,
+  type ControlChannelDescriptor,
+  type ControlEffect,
+  type ControlTargetRef
+} from "../controls/control-surface";
+import {
+  createControlInteractionLink,
   createPlayAnimationInteractionLink,
   createPlaySoundInteractionLink,
   createStopAnimationInteractionLink,
@@ -2773,6 +2797,136 @@ function readEntities(
   return entities;
 }
 
+function readControlTargetRef(value: unknown, label: string): ControlTargetRef {
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  const kind = expectString(value.kind, `${label}.kind`);
+
+  switch (kind) {
+    case "actor":
+      return {
+        kind: "actor",
+        actorId: expectString(value.actorId, `${label}.actorId`)
+      };
+    case "entity": {
+      const entityKind = expectString(value.entityKind, `${label}.entityKind`);
+
+      if (!isControlEntityTargetKind(entityKind)) {
+        throw new Error(`${label}.entityKind must be a supported control entity kind.`);
+      }
+
+      return createEntityControlTargetRef(
+        entityKind,
+        expectString(value.entityId, `${label}.entityId`)
+      );
+    }
+    case "interaction": {
+      const interactionKind = expectString(
+        value.interactionKind,
+        `${label}.interactionKind`
+      );
+
+      if (!isControlInteractionTargetKind(interactionKind)) {
+        throw new Error(
+          `${label}.interactionKind must be a supported control interaction kind.`
+        );
+      }
+
+      return createInteractionControlTargetRef(
+        interactionKind,
+        expectString(value.entityId, `${label}.entityId`)
+      );
+    }
+    case "scene":
+      expectLiteralString(value.scope, "activeScene", `${label}.scope`);
+      return createActiveSceneControlTargetRef();
+    case "global":
+      expectLiteralString(value.scope, "project", `${label}.scope`);
+      return createProjectGlobalControlTargetRef();
+    case "modelInstance":
+      return createModelInstanceControlTargetRef(
+        expectString(value.modelInstanceId, `${label}.modelInstanceId`)
+      );
+    default:
+      throw new Error(`${label}.kind must be a supported control target kind.`);
+  }
+}
+
+function readControlEffect(value: unknown, label: string): ControlEffect {
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  const type = expectString(value.type, `${label}.type`);
+
+  switch (type) {
+    case "playModelAnimation":
+      return createPlayModelAnimationControlEffect({
+        target: readControlTargetRef(
+          value.target,
+          `${label}.target`
+        ) as ReturnType<typeof createModelInstanceControlTargetRef>,
+        clipName: expectString(value.clipName, `${label}.clipName`),
+        loop:
+          value.loop === undefined
+            ? undefined
+            : expectBoolean(value.loop, `${label}.loop`)
+      });
+    case "stopModelAnimation":
+      return createStopModelAnimationControlEffect({
+        target: readControlTargetRef(
+          value.target,
+          `${label}.target`
+        ) as ReturnType<typeof createModelInstanceControlTargetRef>
+      });
+    case "playSound":
+      return createPlaySoundControlEffect({
+        target: readControlTargetRef(
+          value.target,
+          `${label}.target`
+        ) as ReturnType<typeof createSoundEmitterControlTargetRef>
+      });
+    case "stopSound":
+      return createStopSoundControlEffect({
+        target: readControlTargetRef(
+          value.target,
+          `${label}.target`
+        ) as ReturnType<typeof createSoundEmitterControlTargetRef>
+      });
+    case "setInteractionEnabled":
+      return createSetInteractionEnabledControlEffect({
+        target: readControlTargetRef(
+          value.target,
+          `${label}.target`
+        ) as ReturnType<typeof createInteractionControlTargetRef>,
+        enabled: expectBoolean(value.enabled, `${label}.enabled`)
+      });
+    case "setLightEnabled":
+      return createSetLightEnabledControlEffect({
+        target: readControlTargetRef(
+          value.target,
+          `${label}.target`
+        ) as ReturnType<typeof createLightControlTargetRef>,
+        enabled: expectBoolean(value.enabled, `${label}.enabled`)
+      });
+    case "setLightIntensity":
+      return createSetLightIntensityControlEffect({
+        target: readControlTargetRef(
+          value.target,
+          `${label}.target`
+        ) as ReturnType<typeof createLightControlTargetRef>,
+        intensity: expectNonNegativeFiniteNumber(
+          value.intensity,
+          `${label}.intensity`
+        )
+      });
+    default:
+      throw new Error(`${label}.type must be a supported control effect.`);
+  }
+}
+
 function readInteractionAction(
   value: unknown,
   label: string
@@ -2863,6 +3017,11 @@ function readInteractionAction(
         targetSoundEmitterId
       }).action;
     }
+    case "control":
+      return createControlInteractionLink({
+        sourceEntityId: "interaction-source-placeholder",
+        effect: readControlEffect(value.effect, `${label}.effect`)
+      }).action;
     default:
       throw new Error(`${label}.type must be a supported interaction action.`);
   }
@@ -2946,6 +3105,16 @@ function readInteractionLink(value: unknown, label: string): InteractionLink {
         ),
         trigger,
         targetSoundEmitterId: action.targetSoundEmitterId
+      });
+    case "control":
+      return createControlInteractionLink({
+        id: expectString(value.id, `${label}.id`),
+        sourceEntityId: expectString(
+          value.sourceEntityId,
+          `${label}.sourceEntityId`
+        ),
+        trigger,
+        effect: action.effect
       });
   }
 }
