@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { createBoxBrush } from "../../src/document/brushes";
+import { createScenePath } from "../../src/document/paths";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
 import { validateSceneDocument } from "../../src/document/scene-document-validation";
 import {
@@ -843,6 +844,62 @@ describe("validateSceneDocument", () => {
         expect.objectContaining({
           code: "invalid-box-fog-padding",
           path: "brushes.brush-invalid-volume-fog.volume.fog.padding"
+        })
+      ])
+    );
+  });
+
+  it("detects invalid authored path foundations", () => {
+    const invalidPath = createScenePath({
+      id: "path-invalid",
+      points: [
+        {
+          id: "path-point-a",
+          position: {
+            x: 0,
+            y: 0,
+            z: 0
+          }
+        },
+        {
+          id: "path-point-b",
+          position: {
+            x: 1,
+            y: 0,
+            z: 0
+          }
+        }
+      ]
+    });
+
+    invalidPath.name = "   ";
+    invalidPath.points = [
+      {
+        id: "path-point-a",
+        position: {
+          x: 0,
+          y: 0,
+          z: 0
+        }
+      }
+    ] as typeof invalidPath.points;
+
+    const validation = validateSceneDocument({
+      ...createEmptySceneDocument(),
+      paths: {
+        [invalidPath.id]: invalidPath
+      }
+    });
+
+    expect(validation.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "invalid-path-name",
+          path: "paths.path-invalid.name"
+        }),
+        expect.objectContaining({
+          code: "invalid-path-point-count",
+          path: "paths.path-invalid.points"
         })
       ])
     );
