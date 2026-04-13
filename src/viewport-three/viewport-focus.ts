@@ -309,6 +309,7 @@ function includeEntity(bounds: FocusBoundsAccumulator, entity: EntityInstance) {
       break;
     case "playerStart":
     case "sceneEntry":
+    case "npc":
       includePlayerStart(bounds, entity.position);
       break;
     case "soundEmitter":
@@ -335,6 +336,7 @@ function createEntityFocusTarget(entity: EntityInstance): ViewportFocusTarget {
       return createSphereEntityFocusTarget(entity.position, Math.max(0.8, entity.distance), 0.9);
     case "playerStart":
     case "sceneEntry":
+    case "npc":
       return createPlayerStartFocusTarget(entity.position);
     case "soundEmitter":
       return createSphereEntityFocusTarget(entity.position, entity.maxDistance, 0.75);
