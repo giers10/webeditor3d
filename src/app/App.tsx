@@ -11149,7 +11149,732 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 )}
 
                 <Panel title="Advanced Rendering" defaultExpanded={false}>
-                <div className="form-section">
+                  <div className="form-section">
+                    <label className="form-field form-field--toggle">
+                      <span className="label">Advanced Rendering</span>
+                      <input
+                        type="checkbox"
+                        checked={advancedRendering.enabled}
+                        onChange={(event) =>
+                          applyAdvancedRenderingEnabled(
+                            event.currentTarget.checked
+                          )
+                        }
+                      />
+                    </label>
+
+                    {!advancedRendering.enabled ? null : (
+                      <>
+                        <div className="form-section">
+                          <div className="label">Shadows</div>
+                          <label className="form-field form-field--toggle">
+                            <span className="label">Enabled</span>
+                            <input
+                              type="checkbox"
+                              checked={advancedRendering.shadows.enabled}
+                              onChange={(event) =>
+                                applyAdvancedRenderingShadowsEnabled(
+                                  event.currentTarget.checked
+                                )
+                              }
+                            />
+                          </label>
+                          <div className="vector-inputs vector-inputs--two">
+                            <label className="form-field">
+                              <span className="label">Shadow Map Size</span>
+                              <select
+                                className="select-input"
+                                value={advancedRendering.shadows.mapSize}
+                                onChange={(event) =>
+                                  applyAdvancedRenderingShadowMapSize(
+                                    Number(
+                                      event.currentTarget.value
+                                    ) as AdvancedRenderingShadowMapSize
+                                  )
+                                }
+                              >
+                                {ADVANCED_RENDERING_SHADOW_MAP_SIZES.map(
+                                  (size) => (
+                                    <option key={size} value={size}>
+                                      {size}
+                                    </option>
+                                  )
+                                )}
+                              </select>
+                            </label>
+                            <label className="form-field">
+                              <span className="label">Shadow Type</span>
+                              <select
+                                className="select-input"
+                                value={advancedRendering.shadows.type}
+                                onChange={(event) =>
+                                  applyAdvancedRenderingShadowType(
+                                    event.currentTarget
+                                      .value as AdvancedRenderingShadowType
+                                  )
+                                }
+                              >
+                                {ADVANCED_RENDERING_SHADOW_TYPES.map(
+                                  (shadowType) => (
+                                    <option key={shadowType} value={shadowType}>
+                                      {formatAdvancedRenderingShadowTypeLabel(
+                                        shadowType
+                                      )}
+                                    </option>
+                                  )
+                                )}
+                              </select>
+                            </label>
+                          </div>
+                          <label className="form-field">
+                            <span className="label">Bias</span>
+                            <input
+                              className="text-input"
+                              type="number"
+                              step="0.0001"
+                              value={advancedRenderingShadowBiasDraft}
+                              onChange={(event) =>
+                                setAdvancedRenderingShadowBiasDraft(
+                                  event.currentTarget.value
+                                )
+                              }
+                              onBlur={applyAdvancedRenderingShadowBias}
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(
+                                  event,
+                                  applyAdvancedRenderingShadowBias
+                                )
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(
+                                  event,
+                                  applyAdvancedRenderingShadowBias
+                                )
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(
+                                  event,
+                                  applyAdvancedRenderingShadowBias
+                                )
+                              }
+                            />
+                          </label>
+                        </div>
+
+                        <div className="form-section">
+                          <div className="label">Ambient Occlusion</div>
+                          <label className="form-field form-field--toggle">
+                            <span className="label">Enabled</span>
+                            <input
+                              type="checkbox"
+                              checked={advancedRendering.ambientOcclusion.enabled}
+                              onChange={(event) =>
+                                applyAdvancedRenderingAmbientOcclusionEnabled(
+                                  event.currentTarget.checked
+                                )
+                              }
+                            />
+                          </label>
+                          <div className="vector-inputs vector-inputs--two">
+                            <label className="form-field">
+                              <span className="label">Intensity</span>
+                              <input
+                                className="text-input"
+                                type="number"
+                                min="0"
+                                step="0.1"
+                                value={
+                                  advancedRenderingAmbientOcclusionIntensityDraft
+                                }
+                                onChange={(event) =>
+                                  setAdvancedRenderingAmbientOcclusionIntensityDraft(
+                                    event.currentTarget.value
+                                  )
+                                }
+                                onBlur={
+                                  applyAdvancedRenderingAmbientOcclusionIntensity
+                                }
+                                onKeyDown={(event) =>
+                                  handleDraftVectorKeyDown(
+                                    event,
+                                    applyAdvancedRenderingAmbientOcclusionIntensity
+                                  )
+                                }
+                                onKeyUp={(event) =>
+                                  handleNumberInputKeyUp(
+                                    event,
+                                    applyAdvancedRenderingAmbientOcclusionIntensity
+                                  )
+                                }
+                                onPointerUp={(event) =>
+                                  handleNumberInputPointerUp(
+                                    event,
+                                    applyAdvancedRenderingAmbientOcclusionIntensity
+                                  )
+                                }
+                              />
+                            </label>
+                            <label className="form-field">
+                              <span className="label">Radius</span>
+                              <input
+                                className="text-input"
+                                type="number"
+                                min="0"
+                                step="0.1"
+                                value={
+                                  advancedRenderingAmbientOcclusionRadiusDraft
+                                }
+                                onChange={(event) =>
+                                  setAdvancedRenderingAmbientOcclusionRadiusDraft(
+                                    event.currentTarget.value
+                                  )
+                                }
+                                onBlur={
+                                  applyAdvancedRenderingAmbientOcclusionRadius
+                                }
+                                onKeyDown={(event) =>
+                                  handleDraftVectorKeyDown(
+                                    event,
+                                    applyAdvancedRenderingAmbientOcclusionRadius
+                                  )
+                                }
+                                onKeyUp={(event) =>
+                                  handleNumberInputKeyUp(
+                                    event,
+                                    applyAdvancedRenderingAmbientOcclusionRadius
+                                  )
+                                }
+                                onPointerUp={(event) =>
+                                  handleNumberInputPointerUp(
+                                    event,
+                                    applyAdvancedRenderingAmbientOcclusionRadius
+                                  )
+                                }
+                              />
+                            </label>
+                          </div>
+                          <label className="form-field">
+                            <span className="label">Samples</span>
+                            <input
+                              className="text-input"
+                              type="number"
+                              min="1"
+                              step="1"
+                              value={
+                                advancedRenderingAmbientOcclusionSamplesDraft
+                              }
+                              onChange={(event) =>
+                                setAdvancedRenderingAmbientOcclusionSamplesDraft(
+                                  event.currentTarget.value
+                                )
+                              }
+                              onBlur={
+                                applyAdvancedRenderingAmbientOcclusionSamples
+                              }
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(
+                                  event,
+                                  applyAdvancedRenderingAmbientOcclusionSamples
+                                )
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(
+                                  event,
+                                  applyAdvancedRenderingAmbientOcclusionSamples
+                                )
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(
+                                  event,
+                                  applyAdvancedRenderingAmbientOcclusionSamples
+                                )
+                              }
+                            />
+                          </label>
+                        </div>
+
+                        <div className="form-section">
+                          <div className="label">Bloom</div>
+                          <label className="form-field form-field--toggle">
+                            <span className="label">Enabled</span>
+                            <input
+                              type="checkbox"
+                              checked={advancedRendering.bloom.enabled}
+                              onChange={(event) =>
+                                applyAdvancedRenderingBloomEnabled(
+                                  event.currentTarget.checked
+                                )
+                              }
+                            />
+                          </label>
+                          <div className="vector-inputs vector-inputs--two">
+                            <label className="form-field">
+                              <span className="label">Intensity</span>
+                              <input
+                                className="text-input"
+                                type="number"
+                                min="0"
+                                step="0.1"
+                                value={advancedRenderingBloomIntensityDraft}
+                                onChange={(event) =>
+                                  setAdvancedRenderingBloomIntensityDraft(
+                                    event.currentTarget.value
+                                  )
+                                }
+                                onBlur={applyAdvancedRenderingBloomIntensity}
+                                onKeyDown={(event) =>
+                                  handleDraftVectorKeyDown(
+                                    event,
+                                    applyAdvancedRenderingBloomIntensity
+                                  )
+                                }
+                                onKeyUp={(event) =>
+                                  handleNumberInputKeyUp(
+                                    event,
+                                    applyAdvancedRenderingBloomIntensity
+                                  )
+                                }
+                                onPointerUp={(event) =>
+                                  handleNumberInputPointerUp(
+                                    event,
+                                    applyAdvancedRenderingBloomIntensity
+                                  )
+                                }
+                              />
+                            </label>
+                            <label className="form-field">
+                              <span className="label">Threshold</span>
+                              <input
+                                className="text-input"
+                                type="number"
+                                min="0"
+                                step="0.05"
+                                value={advancedRenderingBloomThresholdDraft}
+                                onChange={(event) =>
+                                  setAdvancedRenderingBloomThresholdDraft(
+                                    event.currentTarget.value
+                                  )
+                                }
+                                onBlur={applyAdvancedRenderingBloomThreshold}
+                                onKeyDown={(event) =>
+                                  handleDraftVectorKeyDown(
+                                    event,
+                                    applyAdvancedRenderingBloomThreshold
+                                  )
+                                }
+                                onKeyUp={(event) =>
+                                  handleNumberInputKeyUp(
+                                    event,
+                                    applyAdvancedRenderingBloomThreshold
+                                  )
+                                }
+                                onPointerUp={(event) =>
+                                  handleNumberInputPointerUp(
+                                    event,
+                                    applyAdvancedRenderingBloomThreshold
+                                  )
+                                }
+                              />
+                            </label>
+                          </div>
+                          <label className="form-field">
+                            <span className="label">Radius</span>
+                            <input
+                              className="text-input"
+                              type="number"
+                              min="0"
+                              step="0.05"
+                              value={advancedRenderingBloomRadiusDraft}
+                              onChange={(event) =>
+                                setAdvancedRenderingBloomRadiusDraft(
+                                  event.currentTarget.value
+                                )
+                              }
+                              onBlur={applyAdvancedRenderingBloomRadius}
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(
+                                  event,
+                                  applyAdvancedRenderingBloomRadius
+                                )
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(
+                                  event,
+                                  applyAdvancedRenderingBloomRadius
+                                )
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(
+                                  event,
+                                  applyAdvancedRenderingBloomRadius
+                                )
+                              }
+                            />
+                          </label>
+                        </div>
+
+                        <div className="form-section">
+                          <div className="label">Tone Mapping</div>
+                          <div className="vector-inputs vector-inputs--two">
+                            <label className="form-field">
+                              <span className="label">Mode</span>
+                              <select
+                                className="select-input"
+                                value={advancedRendering.toneMapping.mode}
+                                onChange={(event) =>
+                                  applyAdvancedRenderingToneMappingMode(
+                                    event.currentTarget
+                                      .value as AdvancedRenderingToneMappingMode
+                                  )
+                                }
+                              >
+                                {ADVANCED_RENDERING_TONE_MAPPING_MODES.map(
+                                  (mode) => (
+                                    <option key={mode} value={mode}>
+                                      {formatAdvancedRenderingToneMappingLabel(
+                                        mode
+                                      )}
+                                    </option>
+                                  )
+                                )}
+                              </select>
+                            </label>
+                            <label className="form-field">
+                              <span className="label">Exposure</span>
+                              <input
+                                className="text-input"
+                                type="number"
+                                min="0.001"
+                                step="0.1"
+                                value={advancedRenderingToneMappingExposureDraft}
+                                onChange={(event) =>
+                                  setAdvancedRenderingToneMappingExposureDraft(
+                                    event.currentTarget.value
+                                  )
+                                }
+                                onBlur={applyAdvancedRenderingToneMappingExposure}
+                                onKeyDown={(event) =>
+                                  handleDraftVectorKeyDown(
+                                    event,
+                                    applyAdvancedRenderingToneMappingExposure
+                                  )
+                                }
+                                onKeyUp={(event) =>
+                                  handleNumberInputKeyUp(
+                                    event,
+                                    applyAdvancedRenderingToneMappingExposure
+                                  )
+                                }
+                                onPointerUp={(event) =>
+                                  handleNumberInputPointerUp(
+                                    event,
+                                    applyAdvancedRenderingToneMappingExposure
+                                  )
+                                }
+                              />
+                            </label>
+                          </div>
+                        </div>
+
+                        <div className="form-section">
+                          <div className="label">Depth of Field</div>
+                          <label className="form-field form-field--toggle">
+                            <span className="label">Enabled</span>
+                            <input
+                              type="checkbox"
+                              checked={advancedRendering.depthOfField.enabled}
+                              onChange={(event) =>
+                                applyAdvancedRenderingDepthOfFieldEnabled(
+                                  event.currentTarget.checked
+                                )
+                              }
+                            />
+                          </label>
+                          <div className="vector-inputs vector-inputs--two">
+                            <label className="form-field">
+                              <span className="label">Focus Distance</span>
+                              <input
+                                className="text-input"
+                                type="number"
+                                min="0"
+                                step="0.1"
+                                value={
+                                  advancedRenderingDepthOfFieldFocusDistanceDraft
+                                }
+                                onChange={(event) =>
+                                  setAdvancedRenderingDepthOfFieldFocusDistanceDraft(
+                                    event.currentTarget.value
+                                  )
+                                }
+                                onBlur={
+                                  applyAdvancedRenderingDepthOfFieldFocusDistance
+                                }
+                                onKeyDown={(event) =>
+                                  handleDraftVectorKeyDown(
+                                    event,
+                                    applyAdvancedRenderingDepthOfFieldFocusDistance
+                                  )
+                                }
+                                onKeyUp={(event) =>
+                                  handleNumberInputKeyUp(
+                                    event,
+                                    applyAdvancedRenderingDepthOfFieldFocusDistance
+                                  )
+                                }
+                                onPointerUp={(event) =>
+                                  handleNumberInputPointerUp(
+                                    event,
+                                    applyAdvancedRenderingDepthOfFieldFocusDistance
+                                  )
+                                }
+                              />
+                            </label>
+                            <label className="form-field">
+                              <span className="label">Focal Length</span>
+                              <input
+                                className="text-input"
+                                type="number"
+                                min="0.001"
+                                step="0.001"
+                                value={
+                                  advancedRenderingDepthOfFieldFocalLengthDraft
+                                }
+                                onChange={(event) =>
+                                  setAdvancedRenderingDepthOfFieldFocalLengthDraft(
+                                    event.currentTarget.value
+                                  )
+                                }
+                                onBlur={
+                                  applyAdvancedRenderingDepthOfFieldFocalLength
+                                }
+                                onKeyDown={(event) =>
+                                  handleDraftVectorKeyDown(
+                                    event,
+                                    applyAdvancedRenderingDepthOfFieldFocalLength
+                                  )
+                                }
+                                onKeyUp={(event) =>
+                                  handleNumberInputKeyUp(
+                                    event,
+                                    applyAdvancedRenderingDepthOfFieldFocalLength
+                                  )
+                                }
+                                onPointerUp={(event) =>
+                                  handleNumberInputPointerUp(
+                                    event,
+                                    applyAdvancedRenderingDepthOfFieldFocalLength
+                                  )
+                                }
+                              />
+                            </label>
+                          </div>
+                          <label className="form-field">
+                            <span className="label">Bokeh Scale</span>
+                            <input
+                              className="text-input"
+                              type="number"
+                              min="0.001"
+                              step="0.1"
+                              value={advancedRenderingDepthOfFieldBokehScaleDraft}
+                              onChange={(event) =>
+                                setAdvancedRenderingDepthOfFieldBokehScaleDraft(
+                                  event.currentTarget.value
+                                )
+                              }
+                              onBlur={
+                                applyAdvancedRenderingDepthOfFieldBokehScale
+                              }
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(
+                                  event,
+                                  applyAdvancedRenderingDepthOfFieldBokehScale
+                                )
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(
+                                  event,
+                                  applyAdvancedRenderingDepthOfFieldBokehScale
+                                )
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(
+                                  event,
+                                  applyAdvancedRenderingDepthOfFieldBokehScale
+                                )
+                              }
+                            />
+                          </label>
+                        </div>
+
+                        <div className="form-section">
+                          <div className="label">Whitebox Bevel</div>
+                          <label className="form-field form-field--toggle">
+                            <span className="label">Enabled</span>
+                            <input
+                              type="checkbox"
+                              checked={advancedRendering.whiteboxBevel.enabled}
+                              onChange={(event) =>
+                                applyAdvancedRenderingWhiteboxBevelEnabled(
+                                  event.currentTarget.checked
+                                )
+                              }
+                            />
+                          </label>
+                          <div className="vector-inputs vector-inputs--two">
+                            <label className="form-field">
+                              <span className="label">Edge Width</span>
+                              <input
+                                className="text-input"
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={advancedRenderingWhiteboxBevelEdgeWidthDraft}
+                                onChange={(event) =>
+                                  setAdvancedRenderingWhiteboxBevelEdgeWidthDraft(
+                                    event.currentTarget.value
+                                  )
+                                }
+                                onBlur={
+                                  applyAdvancedRenderingWhiteboxBevelEdgeWidth
+                                }
+                                onKeyDown={(event) =>
+                                  handleDraftVectorKeyDown(
+                                    event,
+                                    applyAdvancedRenderingWhiteboxBevelEdgeWidth
+                                  )
+                                }
+                                onKeyUp={(event) =>
+                                  handleNumberInputKeyUp(
+                                    event,
+                                    applyAdvancedRenderingWhiteboxBevelEdgeWidth
+                                  )
+                                }
+                                onPointerUp={(event) =>
+                                  handleNumberInputPointerUp(
+                                    event,
+                                    applyAdvancedRenderingWhiteboxBevelEdgeWidth
+                                  )
+                                }
+                              />
+                            </label>
+                            <label className="form-field">
+                              <span className="label">Normal Strength</span>
+                              <input
+                                className="text-input"
+                                type="number"
+                                min="0"
+                                step="0.05"
+                                value={
+                                  advancedRenderingWhiteboxBevelNormalStrengthDraft
+                                }
+                                onChange={(event) =>
+                                  setAdvancedRenderingWhiteboxBevelNormalStrengthDraft(
+                                    event.currentTarget.value
+                                  )
+                                }
+                                onBlur={
+                                  applyAdvancedRenderingWhiteboxBevelNormalStrength
+                                }
+                                onKeyDown={(event) =>
+                                  handleDraftVectorKeyDown(
+                                    event,
+                                    applyAdvancedRenderingWhiteboxBevelNormalStrength
+                                  )
+                                }
+                                onKeyUp={(event) =>
+                                  handleNumberInputKeyUp(
+                                    event,
+                                    applyAdvancedRenderingWhiteboxBevelNormalStrength
+                                  )
+                                }
+                                onPointerUp={(event) =>
+                                  handleNumberInputPointerUp(
+                                    event,
+                                    applyAdvancedRenderingWhiteboxBevelNormalStrength
+                                  )
+                                }
+                              />
+                            </label>
+                          </div>
+                        </div>
+
+                        <div className="form-section">
+                          <div className="label">Volume Rendering Paths</div>
+                          <div className="vector-inputs vector-inputs--two">
+                            <label className="form-field">
+                              <span className="label">Fog</span>
+                              <select
+                                className="select-input"
+                                value={advancedRendering.fogPath}
+                                onChange={(event) =>
+                                  applyAdvancedRenderingFogPath(
+                                    event.currentTarget
+                                      .value as BoxVolumeRenderPath
+                                  )
+                                }
+                              >
+                                {BOX_VOLUME_RENDER_PATHS.map((path) => (
+                                  <option key={path} value={path}>
+                                    {formatBoxVolumeRenderPathLabel(path)}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                            <label className="form-field">
+                              <span className="label">Water</span>
+                              <select
+                                className="select-input"
+                                value={advancedRendering.waterPath}
+                                onChange={(event) =>
+                                  applyAdvancedRenderingWaterPath(
+                                    event.currentTarget
+                                      .value as BoxVolumeRenderPath
+                                  )
+                                }
+                              >
+                                {BOX_VOLUME_RENDER_PATHS.map((path) => (
+                                  <option key={path} value={path}>
+                                    {formatBoxVolumeRenderPathLabel(path)}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                          </div>
+                          {advancedRendering.waterPath === "quality" ? (
+                            <label className="form-field">
+                              <span className="label">Water Reflection</span>
+                              <select
+                                data-testid="advanced-rendering-water-reflection-mode"
+                                className="select-input"
+                                value={advancedRendering.waterReflectionMode}
+                                onChange={(event) =>
+                                  applyAdvancedRenderingWaterReflectionMode(
+                                    event.currentTarget
+                                      .value as AdvancedRenderingWaterReflectionMode
+                                  )
+                                }
+                              >
+                                {ADVANCED_RENDERING_WATER_REFLECTION_MODES.map(
+                                  (mode) => (
+                                    <option key={mode} value={mode}>
+                                      {formatAdvancedRenderingWaterReflectionModeLabel(
+                                        mode
+                                      )}
+                                    </option>
+                                  )
+                                )}
+                              </select>
+                            </label>
+                          ) : null}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </Panel>
+              </Panel>
+            </>
+          ) : (
+            <Panel title="Inspector">
               <div className="stat-card">
                 <div className="label">Selection</div>
                 <div className="value">
