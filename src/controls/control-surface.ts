@@ -8,6 +8,7 @@ export const CONTROL_INTERACTION_TARGET_KINDS = [
   "sceneExit"
 ] as const;
 export const CONTROL_CAPABILITY_KINDS = [
+  "actorPresence",
   "animationPlayback",
   "soundPlayback",
   "interactionAvailability",
@@ -82,6 +83,12 @@ export interface PlayModelAnimationControlEffect {
   loop?: boolean;
 }
 
+export interface SetActorPresenceControlEffect {
+  type: "setActorPresence";
+  target: ActorControlTargetRef;
+  active: boolean;
+}
+
 export interface StopModelAnimationControlEffect {
   type: "stopModelAnimation";
   target: ModelInstanceControlTargetRef;
@@ -116,6 +123,7 @@ export interface SetLightIntensityControlEffect {
 }
 
 export type ControlEffect =
+  | SetActorPresenceControlEffect
   | PlayModelAnimationControlEffect
   | StopModelAnimationControlEffect
   | PlaySoundControlEffect
@@ -159,6 +167,13 @@ export interface RuntimeResolvedLightEnabledState {
   source: RuntimeResolvedControlSource;
 }
 
+export interface RuntimeResolvedActorPresenceState {
+  type: "actorPresence";
+  target: ActorControlTargetRef;
+  value: boolean;
+  source: RuntimeResolvedControlSource;
+}
+
 export interface RuntimeResolvedInteractionEnabledState {
   type: "interactionEnabled";
   target: InteractionControlTargetRef;
@@ -167,6 +182,7 @@ export interface RuntimeResolvedInteractionEnabledState {
 }
 
 export type RuntimeResolvedDiscreteControlState =
+  | RuntimeResolvedActorPresenceState
   | RuntimeResolvedLightEnabledState
   | RuntimeResolvedInteractionEnabledState;
 
@@ -428,6 +444,17 @@ export function createDefaultResolvedControlSource(): DefaultResolvedControlSour
   };
 }
 
+export function createSchedulerResolvedControlSource(
+  scheduleId: string
+): SchedulerResolvedControlSource {
+  assertNonEmptyString(scheduleId, "Resolved control scheduler id");
+
+  return {
+    kind: "scheduler",
+    scheduleId
+  };
+}
+
 export function createInteractionLinkResolvedControlSource(
   linkId: string
 ): InteractionLinkResolvedControlSource {
@@ -436,6 +463,19 @@ export function createInteractionLinkResolvedControlSource(
   return {
     kind: "interactionLink",
     linkId
+  };
+}
+
+export function createSetActorPresenceControlEffect(options: {
+  target: ActorControlTargetRef;
+  active: boolean;
+}): SetActorPresenceControlEffect {
+  assertBoolean(options.active, "Control actor active");
+
+  return {
+    type: "setActorPresence",
+    target: cloneControlTargetRef(options.target) as ActorControlTargetRef,
+    active: options.active
   };
 }
 
@@ -449,6 +489,21 @@ export function createResolvedLightEnabledState(options: {
   return {
     type: "lightEnabled",
     target: cloneControlTargetRef(options.target) as LightControlTargetRef,
+    value: options.value,
+    source: cloneResolvedControlSource(options.source)
+  };
+}
+
+export function createResolvedActorPresenceState(options: {
+  target: ActorControlTargetRef;
+  value: boolean;
+  source: RuntimeResolvedControlSource;
+}): RuntimeResolvedActorPresenceState {
+  assertBoolean(options.value, "Resolved control actor active");
+
+  return {
+    type: "actorPresence",
+    target: cloneControlTargetRef(options.target) as ActorControlTargetRef,
     value: options.value,
     source: cloneResolvedControlSource(options.source)
   };
@@ -552,6 +607,8 @@ function getResolvedDiscreteControlStateKey(
   state: RuntimeResolvedDiscreteControlState
 ): string {
   switch (state.type) {
+    case "actorPresence":
+      return `state:${state.type}:${getControlTargetRefKey(state.target)}`;
     case "lightEnabled":
       return `state:${state.type}:${getControlTargetRefKey(state.target)}`;
     case "interactionEnabled":
@@ -632,6 +689,12 @@ export function cloneControlEffect<TEffect extends ControlEffect>(
   effect: TEffect
 ): TEffect {
   switch (effect.type) {
+    case "setActorPresence":
+      return {
+        type: "setActorPresence",
+        target: cloneControlTargetRef(effect.target),
+        active: effect.active
+      } as TEffect;
     case "playModelAnimation":
       return {
         type: "playModelAnimation",
@@ -693,6 +756,12 @@ export function cloneRuntimeResolvedDiscreteControlState<
   TState extends RuntimeResolvedDiscreteControlState
 >(state: TState): TState {
   switch (state.type) {
+    case "actorPresence":
+      return createResolvedActorPresenceState({
+        target: state.target,
+        value: state.value,
+        source: state.source
+      }) as TState;
     case "lightEnabled":
       return createResolvedLightEnabledState({
         target: state.target,
@@ -755,6 +824,8 @@ export function areControlEffectsEqual(
   }
 
   switch (left.type) {
+    case "setActorPresence":
+      return left.active === (right as SetActorPresenceControlEffect).active;
     case "playModelAnimation":
       return (
         left.clipName === (right as PlayModelAnimationControlEffect).clipName &&
@@ -779,6 +850,8 @@ export function areControlEffectsEqual(
 
 export function getControlEffectLabel(effect: ControlEffect): string {
   switch (effect.type) {
+    case "setActorPresence":
+      return "Set Actor Presence";
     case "playModelAnimation":
       return "Play Animation";
     case "stopModelAnimation":
@@ -832,6 +905,8 @@ function formatTargetKindLabel(
 
 export function formatControlEffectValue(effect: ControlEffect): string {
   switch (effect.type) {
+    case "setActorPresence":
+      return effect.active ? "Present" : "Hidden";
     case "playModelAnimation":
       return effect.loop === false
         ? `${effect.clipName} (Once)`
@@ -858,6 +933,25 @@ export function applyControlEffectToResolvedState(
   const nextResolved = cloneRuntimeResolvedControlState(resolved);
 
   switch (effect.type) {
+    case "setActorPresence": {
+      const nextState = createResolvedActorPresenceState({
+        target: effect.target,
+        value: effect.active,
+        source
+      });
+      const stateKey = getResolvedDiscreteControlStateKey(nextState);
+      const existingIndex = nextResolved.discrete.findIndex(
+        (candidate) =>
+          getResolvedDiscreteControlStateKey(candidate) === stateKey
+      );
+
+      if (existingIndex >= 0) {
+        nextResolved.discrete[existingIndex] = nextState;
+      } else {
+        nextResolved.discrete.push(nextState);
+      }
+      return nextResolved;
+    }
     case "setLightEnabled": {
       const nextState = createResolvedLightEnabledState({
         target: effect.target,
