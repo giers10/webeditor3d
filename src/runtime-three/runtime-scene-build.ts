@@ -974,7 +974,7 @@ export function buildRuntimeSceneFromDocument(document: SceneDocument, options: 
 
   const enabledBrushes = Object.values(document.brushes).filter((brush) => brush.enabled);
   const brushes = enabledBrushes.map((brush) => buildRuntimeBrush(brush, document));
-  const colliders: RuntimeSceneCollider[] = [];
+  const staticColliders: RuntimeSceneCollider[] = [];
   const volumes: RuntimeBoxVolumeCollection = {
     fog: [],
     water: []
@@ -982,7 +982,7 @@ export function buildRuntimeSceneFromDocument(document: SceneDocument, options: 
 
   for (const brush of enabledBrushes) {
     if (brush.volume.mode === "none") {
-      colliders.push(buildRuntimeCollider(brush));
+      staticColliders.push(buildRuntimeCollider(brush));
       continue;
     }
 
@@ -998,7 +998,12 @@ export function buildRuntimeSceneFromDocument(document: SceneDocument, options: 
   const paths = getScenePaths(document.paths)
     .filter((path) => path.enabled)
     .map(buildRuntimePath);
-  const collections = buildRuntimeSceneCollections(document);
+  const runtimeTimeOfDayHours =
+    options.runtimeClock?.timeOfDayHours ?? document.time.startTimeOfDayHours;
+  const collections = buildRuntimeSceneCollections(
+    document,
+    runtimeTimeOfDayHours
+  );
   const enabledBrushIds = new Set(enabledBrushes.map((brush) => brush.id));
   const enabledModelInstanceIds = new Set(enabledModelInstances.map((modelInstance) => modelInstance.id));
   const enabledEntityIds = new Set(
@@ -1033,6 +1038,7 @@ export function buildRuntimeSceneFromDocument(document: SceneDocument, options: 
   const playerInputBindings = createPlayerStartInputBindings(
     playerStartEntity?.inputBindings
   );
+  const colliders = [...staticColliders];
 
   for (const npc of collections.entities.npcs) {
     const collider = buildRuntimeNpcCollider(npc);
@@ -1052,6 +1058,7 @@ export function buildRuntimeSceneFromDocument(document: SceneDocument, options: 
     const generatedCollider = buildGeneratedModelCollider(modelInstance, asset, options.loadedModelAssets?.[modelInstance.assetId]);
 
     if (generatedCollider !== null) {
+      staticColliders.push(generatedCollider);
       colliders.push(generatedCollider);
     }
   }
@@ -1076,10 +1083,12 @@ export function buildRuntimeSceneFromDocument(document: SceneDocument, options: 
     localLights: collections.localLights,
     brushes,
     volumes,
+    staticColliders,
     colliders,
     sceneBounds: combinedSceneBounds,
     modelInstances,
     paths,
+    npcDefinitions: collections.npcDefinitions,
     entities: collections.entities,
     interactionLinks,
     playerStart,
