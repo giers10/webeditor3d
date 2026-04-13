@@ -225,6 +225,7 @@ import {
   clonePlayerStartInputBindings,
   clonePlayerStartMovementTemplate,
   createInteractableEntity,
+  createNpcColliderSettings,
   createNpcEntity,
   createPointLightEntity,
   inferPlayerStartMovementTemplateKind,
@@ -261,6 +262,7 @@ import {
   getEntityDisplayLabelById,
   getSortedEntityDisplayLabels
 } from "../entities/entity-labels";
+import { listNpcActorUsages } from "../entities/npc-actor-registry";
 import {
   areInteractionLinksEqual,
   createPlayAnimationInteractionLink,
