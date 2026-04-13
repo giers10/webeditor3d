@@ -3606,6 +3606,13 @@ export class ViewportHost {
           entity.maxDistance,
           selected
         );
+      case "npc":
+        return this.createNpcRenderObjects(
+          entity.id,
+          entity.position,
+          entity.yawDegrees,
+          selected
+        );
       case "triggerVolume":
         return this.createTriggerVolumeRenderObjects(
           entity.id,
@@ -3956,6 +3963,29 @@ export class ViewportHost {
     return {
       group,
       meshes: [...speakerMeshes, refDistanceShell, maxDistanceShell]
+    };
+  }
+
+  private createNpcRenderObjects(
+    entityId: string,
+    position: Vec3,
+    yawDegrees: number,
+    selected: boolean,
+    markerColor = selected ? NPC_SELECTED_COLOR : NPC_COLOR
+  ): EntityRenderObjects {
+    const group = new Group();
+    group.position.set(position.x, position.y, position.z);
+    group.rotation.y = (yawDegrees * Math.PI) / 180;
+
+    const markerMeshes = createNpcMarkerMeshes(markerColor, selected);
+
+    for (const mesh of markerMeshes) {
+      this.tagEntityMesh(mesh, entityId, "npc", group);
+    }
+
+    return {
+      group,
+      meshes: markerMeshes
     };
   }
 
