@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { createBoxBrush } from "../../src/document/brushes";
+import { createScenePath } from "../../src/document/paths";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
 import { createPointLightEntity, createPlayerStartEntity, createSpotLightEntity, createTriggerVolumeEntity } from "../../src/entities/entity-instances";
 import { resolveViewportFocusTarget } from "../../src/viewport-three/viewport-focus";
@@ -163,6 +164,50 @@ describe("resolveViewportFocusTarget", () => {
         z: -1
       },
       radius: 8
+    });
+  });
+
+  it("frames the selected Path around its authored point bounds", () => {
+    const path = createScenePath({
+      id: "path-focus",
+      points: [
+        {
+          id: "point-a",
+          position: {
+            x: -2,
+            y: 0,
+            z: 1
+          }
+        },
+        {
+          id: "point-b",
+          position: {
+            x: 4,
+            y: 2,
+            z: 3
+          }
+        }
+      ]
+    });
+    const document = {
+      ...createEmptySceneDocument(),
+      paths: {
+        [path.id]: path
+      }
+    };
+
+    const focusTarget = resolveViewportFocusTarget(document, {
+      kind: "paths",
+      ids: [path.id]
+    });
+
+    expect(focusTarget).toEqual({
+      center: {
+        x: 1,
+        y: 1,
+        z: 2
+      },
+      radius: Math.hypot(6, 2, 2) * 0.5
     });
   });
 
