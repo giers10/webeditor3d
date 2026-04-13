@@ -2633,10 +2633,27 @@ function validateNpcModelAssetId(
 }
 
 function validateNpcPresence(
-  presence: NpcPresence,
+  presence: NpcPresence | undefined,
   path: string,
   diagnostics: SceneDiagnostic[]
 ) {
+  if (
+    presence === undefined ||
+    typeof presence !== "object" ||
+    presence === null ||
+    !("mode" in presence)
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "missing-npc-presence",
+        "NPC presence must remain explicitly authored.",
+        path
+      )
+    );
+    return;
+  }
+
   if (!isNpcPresenceMode(presence.mode)) {
     diagnostics.push(
       createDiagnostic(
