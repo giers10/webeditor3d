@@ -215,10 +215,13 @@ describe("project document JSON", () => {
         name: "Legacy Pathless Project",
         activeSceneId: "scene-main",
         scenes: {
-          "scene-main": createEmptyProjectScene({
-            id: "scene-main",
-            name: "Legacy Scene"
-          })
+          "scene-main": {
+            ...createEmptyProjectScene({
+              id: "scene-main",
+              name: "Legacy Scene"
+            }),
+            paths: undefined
+          }
         },
         materials: createEmptyProjectDocument().materials,
         textures: {},
