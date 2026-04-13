@@ -1,6 +1,7 @@
 import { createMoveBoxBrushCommand } from "./move-box-brush-command";
 import { createResizeBoxBrushCommand } from "./resize-box-brush-command";
 import { createRotateBoxBrushCommand } from "./rotate-box-brush-command";
+import { createSetPathPointPositionCommand } from "./set-path-point-position-command";
 import { createSetBoxBrushTransformCommand } from "./set-box-brush-transform-command";
 import { createUpsertEntityCommand } from "./upsert-entity-command";
 import { createUpsertModelInstanceCommand } from "./upsert-model-instance-command";
@@ -51,9 +52,11 @@ function createTransformCommandLabel(session: ActiveTransformSession): string {
                     ? "scene entry"
                   : session.target.entityKind === "teleportTarget"
                     ? "teleport target"
-                    : session.target.entityKind === "interactable"
+            : session.target.entityKind === "interactable"
                       ? "interactable"
                       : "scene exit"
+        : session.target.kind === "pathPoint"
+          ? "path point"
         : "model instance"
   }`;
 }
@@ -136,6 +139,17 @@ export function createCommitTransformSessionCommand(document: SceneDocument, ses
         rotationDegrees: session.preview.rotationDegrees,
         size: session.preview.size,
         geometry: session.preview.geometry,
+        label: createTransformCommandLabel(session)
+      });
+    case "pathPoint":
+      if (session.preview.kind !== "pathPoint") {
+        throw new Error("Path point transform preview is invalid.");
+      }
+
+      return createSetPathPointPositionCommand({
+        pathId: session.target.pathId,
+        pointId: session.target.pointId,
+        position: session.preview.position,
         label: createTransformCommandLabel(session)
       });
     case "modelInstance": {
