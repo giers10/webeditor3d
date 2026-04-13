@@ -3527,6 +3527,8 @@ export class ViewportHost {
       this.entityGroup.add(renderObjects.group);
       this.entityRenderObjects.set(entity.id, renderObjects);
     }
+
+    this.applyShadowState();
   }
 
   private rebuildModelInstances(
