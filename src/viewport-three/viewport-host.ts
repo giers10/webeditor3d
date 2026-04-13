@@ -3999,27 +3999,150 @@ export class ViewportHost {
     };
   }
 
-  private createNpcRenderObjects(
+  private createNpcColliderRenderObjects(
     entityId: string,
     position: Vec3,
     yawDegrees: number,
+    collider: NpcEntity["collider"],
     selected: boolean,
     markerColor = selected ? NPC_SELECTED_COLOR : NPC_COLOR
   ): EntityRenderObjects {
     const group = new Group();
     group.position.set(position.x, position.y, position.z);
-    group.rotation.y = (yawDegrees * Math.PI) / 180;
+    const colliderMaterial = new MeshStandardMaterial({
+      color: markerColor,
+      emissive: markerColor,
+      emissiveIntensity: selected ? 0.14 : 0.05,
+      roughness: 0.5,
+      metalness: 0.02,
+      transparent: true,
+      opacity: selected ? 0.46 : 0.28
+    });
+    const facingMaterial = new MeshStandardMaterial({
+      color: markerColor,
+      emissive: markerColor,
+      emissiveIntensity: selected ? 0.22 : 0.08,
+      roughness: 0.4,
+      metalness: 0.03
+    });
+    const meshes: Mesh[] = [];
 
-    const markerMeshes = createNpcMarkerMeshes(markerColor, selected);
+    switch (collider.mode) {
+      case "capsule": {
+        const collisionMesh = new Mesh(
+          new CapsuleGeometry(
+            collider.capsuleRadius,
+            Math.max(0, collider.capsuleHeight - collider.capsuleRadius * 2),
+            6,
+            12
+          ),
+          colliderMaterial
+        );
+        collisionMesh.position.y = collider.capsuleHeight * 0.5;
+        this.tagEntityMesh(collisionMesh, entityId, "npc", group);
+        meshes.push(collisionMesh);
+        break;
+      }
+      case "box": {
+        const collisionMesh = new Mesh(
+          new BoxGeometry(
+            collider.boxSize.x,
+            collider.boxSize.y,
+            collider.boxSize.z
+          ),
+          colliderMaterial
+        );
+        collisionMesh.position.y = collider.boxSize.y * 0.5;
+        this.tagEntityMesh(collisionMesh, entityId, "npc", group);
+        meshes.push(collisionMesh);
+        break;
+      }
+      case "none":
+        break;
+    }
 
-    for (const mesh of markerMeshes) {
-      this.tagEntityMesh(mesh, entityId, "npc", group);
+    const facingGroup = new Group();
+    facingGroup.rotation.y = (yawDegrees * Math.PI) / 180;
+    group.add(facingGroup);
+    const colliderTop = getNpcColliderHeight(collider) ?? 0.18;
+
+    const body = new Mesh(new BoxGeometry(0.08, 0.08, 0.34), facingMaterial);
+    body.position.set(0, colliderTop + 0.12, 0.06);
+
+    const arrowHead = new Mesh(
+      new ConeGeometry(0.1, 0.22, 14),
+      facingMaterial
+    );
+    arrowHead.rotation.x = Math.PI * 0.5;
+    arrowHead.position.set(0, colliderTop + 0.12, 0.28);
+
+    for (const mesh of [body, arrowHead]) {
+      this.tagEntityMesh(mesh, entityId, "npc", facingGroup);
+      meshes.push(mesh);
     }
 
     return {
       group,
-      meshes: markerMeshes
+      meshes
     };
+  }
+
+  private createNpcRenderObjects(
+    entity: NpcEntity,
+    selected: boolean,
+    previewShellColor?: number
+  ): EntityRenderObjects {
+    if (entity.modelAssetId !== null) {
+      const asset = this.projectAssets[entity.modelAssetId];
+      const loadedAsset = this.loadedModelAssets[entity.modelAssetId];
+      const renderGroup = createModelInstanceRenderGroup(
+        {
+          id: entity.id,
+          kind: "modelInstance",
+          assetId: entity.modelAssetId,
+          name: entity.name,
+          visible: entity.visible,
+          enabled: entity.enabled,
+          position: entity.position,
+          rotationDegrees: {
+            x: 0,
+            y: entity.yawDegrees,
+            z: 0
+          },
+          scale: {
+            x: 1,
+            y: 1,
+            z: 1
+          },
+          collision: {
+            mode: "none",
+            visible: false
+          }
+        },
+        asset,
+        loadedAsset,
+        selected,
+        previewShellColor,
+        this.displayMode === "wireframe" ? "wireframe" : "normal"
+      );
+
+      return {
+        group: renderGroup,
+        meshes: this.tagEntityGroup(renderGroup, entity.id, "npc"),
+        dispose: () => {
+          disposeModelInstance(renderGroup);
+        }
+      };
+    }
+
+    return this.createNpcColliderRenderObjects(
+      entity.id,
+      entity.position,
+      entity.yawDegrees,
+      entity.collider,
+      selected,
+      previewShellColor ?? (selected ? NPC_SELECTED_COLOR : NPC_COLOR)
+    );
   }
 
   private createTriggerVolumeRenderObjects(
