@@ -147,7 +147,7 @@ export class RuntimeAudioSystem {
       });
   }
 
-  playSound(soundEmitterId: string, link: InteractionLink) {
+  playSound(soundEmitterId: string, link: InteractionLink | null = null) {
     const soundEmitter = this.soundEmitters.get(soundEmitterId);
 
     if (soundEmitter === undefined) {

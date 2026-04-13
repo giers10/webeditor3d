@@ -1,5 +1,9 @@
 import type { Vec3 } from "../core/vector";
-import type { InteractionLink } from "../interactions/interaction-links";
+import type { ControlEffect } from "../controls/control-surface";
+import {
+  getInteractionActionControlEffect,
+  type InteractionLink
+} from "../interactions/interaction-links";
 
 import type {
   RuntimeInteractable,
@@ -19,6 +23,7 @@ export interface RuntimeInteractionDispatcher {
   stopAnimation(instanceId: string, link: InteractionLink): void;
   playSound(soundEmitterId: string, link: InteractionLink): void;
   stopSound(soundEmitterId: string, link: InteractionLink): void;
+  dispatchControlEffect?(effect: ControlEffect, link: InteractionLink): void;
 }
 
 export interface RuntimeInteractionPrompt {
@@ -293,6 +298,13 @@ export class RuntimeInteractionSystem {
         continue;
       }
 
+      const controlEffect = getInteractionActionControlEffect(link.action);
+
+      if (controlEffect !== null && dispatcher.dispatchControlEffect !== undefined) {
+        dispatcher.dispatchControlEffect(controlEffect, link);
+        continue;
+      }
+
       switch (link.action.type) {
         case "teleportPlayer": {
           const teleportTarget = resolveTeleportTarget(runtimeScene, link.action.targetEntityId);
@@ -317,6 +329,10 @@ export class RuntimeInteractionSystem {
         case "stopSound":
           dispatcher.stopSound(link.action.targetSoundEmitterId, link);
           break;
+        case "control":
+          throw new Error(
+            `Runtime control action ${link.action.effect.type} could not be dispatched because the runtime dispatcher does not support control effects.`
+          );
       }
     }
   }
