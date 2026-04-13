@@ -1656,6 +1656,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const materialList = sortDocumentMaterials(editorState.document.materials);
   const selectedBrush = getSelectedBoxBrush(editorState.selection, brushList);
   const selectedPath = getSelectedPath(editorState.selection, pathList);
+  const selectedPathPointState = getSelectedPathPointState(
+    editorState.selection,
+    selectedPath
+  );
+  const selectedPathPoint = selectedPathPointState?.point ?? null;
+  const selectedPathPointIndex = selectedPathPointState?.index ?? null;
   const selectedEntity = getSelectedEntity(editorState.selection, entityList);
   const selectedModelInstance = getSelectedModelInstance(
     editorState.selection,
@@ -4338,6 +4344,22 @@ export function App({ store, initialStatusMessage }: AppProps) {
           `Selected ${getPathLabelById(selection.ids[0], pathList)} from the ${source}${suffix}.`
         );
         break;
+      case "pathPoint": {
+        const pointIndex =
+          selectedPath !== null && selectedPath.id === selection.pathId
+            ? getScenePathPointIndex(selectedPath, selection.pointId)
+            : getScenePathPointIndex(
+                editorState.document.paths[selection.pathId] ?? {
+                  points: []
+                },
+                selection.pointId
+              );
+
+        setStatusMessage(
+          `Selected path point ${pointIndex === -1 ? selection.pointId : pointIndex + 1} on ${getPathLabelById(selection.pathId, pathList)} from the ${source}${suffix}.`
+        );
+        break;
+      }
       case "entities":
         setStatusMessage(
           `Selected ${getEntityDisplayLabelById(selection.ids[0], editorState.document.entities, editorState.document.assets)} from the ${source}${suffix}.`
