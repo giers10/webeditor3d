@@ -8,6 +8,7 @@ import {
   createPointLightEntity,
   createInteractableEntity,
   createNpcEntity,
+  createNpcTimeWindowPresence,
   createPlayerStartInputBindings,
   createPlayerStartEntity,
   createSoundEmitterEntity,
