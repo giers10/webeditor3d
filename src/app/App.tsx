@@ -5058,6 +5058,132 @@ export function App({ store, initialStatusMessage }: AppProps) {
     return false;
   };
 
+  const handleCreatePath = () => {
+    try {
+      const nextPath = createScenePath();
+
+      store.executeCommand(
+        createUpsertPathCommand({
+          path: nextPath,
+          label: "Create path"
+        })
+      );
+      requestViewportFocus({
+        kind: "paths",
+        ids: [nextPath.id]
+      });
+      setStatusMessage("Created Path and framed it in the viewport.");
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const commitPathChange = (
+    currentPath: ScenePath,
+    nextPath: ScenePath,
+    successMessage: string
+  ) => {
+    if (areScenePathsEqual(currentPath, nextPath)) {
+      return;
+    }
+
+    store.executeCommand(
+      createUpsertPathCommand({
+        path: nextPath,
+        label: "Update path"
+      })
+    );
+    setStatusMessage(successMessage);
+  };
+
+  const applyPathChange = () => {
+    if (selectedPath === null) {
+      setStatusMessage("Select a path before editing it.");
+      return;
+    }
+
+    try {
+      const nextPath = createScenePath({
+        id: selectedPath.id,
+        name: selectedPath.name,
+        visible: selectedPath.visible,
+        enabled: selectedPath.enabled,
+        loop: selectedPath.loop,
+        points: selectedPath.points.map((point, index) => ({
+          id: point.id,
+          position: readVec3Draft(
+            pathPointDrafts[index] ?? createVec3Draft(point.position),
+            `Path point ${index + 1}`
+          )
+        }))
+      });
+
+      commitPathChange(selectedPath, nextPath, "Updated Path points.");
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const handlePathPointDraftChange = (
+    pointIndex: number,
+    axis: keyof Vec3Draft,
+    value: string
+  ) => {
+    setPathPointDrafts((currentDrafts) =>
+      currentDrafts.map((draft, index) =>
+        index === pointIndex
+          ? {
+              ...draft,
+              [axis]: value
+            }
+          : draft
+      )
+    );
+  };
+
+  const handleAddPathPoint = () => {
+    if (selectedPath === null) {
+      setStatusMessage("Select a path before adding a point.");
+      return;
+    }
+
+    try {
+      const nextPath = createScenePath({
+        ...selectedPath,
+        points: [...selectedPath.points, createAppendedScenePathPoint(selectedPath)]
+      });
+
+      commitPathChange(selectedPath, nextPath, "Added a Path point.");
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const handleDeletePathPoint = (pointIndex: number) => {
+    if (selectedPath === null) {
+      setStatusMessage("Select a path before removing a point.");
+      return;
+    }
+
+    if (selectedPath.points.length <= MIN_SCENE_PATH_POINT_COUNT) {
+      setStatusMessage(
+        `Paths must keep at least ${MIN_SCENE_PATH_POINT_COUNT} points.`
+      );
+      return;
+    }
+
+    try {
+      const nextPath = createScenePath({
+        ...selectedPath,
+        points: selectedPath.points.filter((_, index) => index !== pointIndex)
+      });
+
+      commitPathChange(selectedPath, nextPath, "Removed a Path point.");
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
   const commitModelInstanceChange = (
     currentModelInstance: ModelInstance,
     nextModelInstance: ModelInstance,
