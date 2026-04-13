@@ -110,7 +110,8 @@ export function createAdvancedRenderingComposer(
   renderer: WebGLRenderer,
   scene: Scene,
   camera: PerspectiveCamera,
-  settings: AdvancedRenderingSettings
+  settings: AdvancedRenderingSettings,
+  backgroundScene: Scene | null = null
 ): EffectComposer {
   // The scene is always rendered into the composer's offscreen targets first,
   // so those targets need depth for correct visibility even when no effect samples it.
@@ -121,7 +122,14 @@ export function createAdvancedRenderingComposer(
     frameBufferType: renderer.capabilities.isWebGL2 ? HalfFloatType : UnsignedByteType
   });
 
-  composer.addPass(new RenderPass(scene, camera));
+  if (backgroundScene !== null) {
+    composer.addPass(new RenderPass(backgroundScene, camera));
+    const mainRenderPass = new RenderPass(scene, camera);
+    mainRenderPass.clear = false;
+    composer.addPass(mainRenderPass);
+  } else {
+    composer.addPass(new RenderPass(scene, camera));
+  }
 
   const effects: Array<BloomEffect | DepthOfFieldEffect | ToneMappingEffect | SMAAEffect> = [];
 
