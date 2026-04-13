@@ -11,6 +11,7 @@ import {
   LOCAL_LIGHTS_AND_SKYBOX_SCENE_DOCUMENT_VERSION,
   MODEL_ASSET_PIPELINE_SCENE_DOCUMENT_VERSION,
   NPC_ENTITY_FOUNDATION_SCENE_DOCUMENT_VERSION,
+  PATH_FOUNDATION_SCENE_DOCUMENT_VERSION,
   PLAYER_START_AIR_CONTROL_SCENE_DOCUMENT_VERSION,
   PLAYER_START_AIR_DIRECTION_CONTROL_SCENE_DOCUMENT_VERSION,
   PLAYER_START_COLLIDER_SETTINGS_SCENE_DOCUMENT_VERSION,
@@ -31,7 +32,9 @@ import {
 } from "../../src/document/scene-document";
 import { migrateSceneDocument } from "../../src/document/migrate-scene-document";
 import {
+  createNpcAlwaysPresence,
   createNpcEntity,
+  createNpcTimeWindowPresence,
   createPointLightEntity,
   createInteractableEntity,
   createPlayerStartEntity,
