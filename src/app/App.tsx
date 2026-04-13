@@ -8191,6 +8191,15 @@ export function App({ store, initialStatusMessage }: AppProps) {
         },
         {
           kind: "action",
+          label: "NPC",
+          testId: "add-menu-npc",
+          onSelect: () =>
+            beginEntityCreation("npc", {
+              modelAssetId: modelAssetList[0]?.id ?? null
+            })
+        },
+        {
+          kind: "action",
           label: "Sound Emitter",
           testId: "add-menu-sound-emitter",
           onSelect: () =>
