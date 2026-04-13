@@ -19,6 +19,7 @@ import {
   getPlayerStartColliderHeight,
   type EntityInstance,
   type InteractableEntity,
+  type NpcEntity,
   type PointLightEntity,
   type PlayerStartEntity,
   type SceneEntryEntity,
@@ -2381,6 +2382,101 @@ function validateSceneEntryEntity(
   }
 }
 
+function validateNpcModelAssetId(
+  entity: NpcEntity,
+  path: string,
+  document: SceneDocument,
+  diagnostics: SceneDiagnostic[]
+) {
+  if (entity.modelAssetId === null) {
+    return;
+  }
+
+  if (
+    typeof entity.modelAssetId !== "string" ||
+    entity.modelAssetId.trim().length === 0
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-npc-model-asset-id",
+        "NPC modelAssetId must be null or reference a non-empty model asset id.",
+        `${path}.modelAssetId`
+      )
+    );
+    return;
+  }
+
+  const asset = document.assets[entity.modelAssetId];
+
+  if (asset === undefined) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "missing-npc-model-asset",
+        `NPC model asset ${entity.modelAssetId} does not exist.`,
+        `${path}.modelAssetId`
+      )
+    );
+    return;
+  }
+
+  if (asset.kind !== "model") {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-npc-model-asset-kind",
+        "NPC modelAssetId must reference a model asset.",
+        `${path}.modelAssetId`
+      )
+    );
+  }
+}
+
+function validateNpcEntity(
+  entity: NpcEntity,
+  path: string,
+  document: SceneDocument,
+  diagnostics: SceneDiagnostic[]
+) {
+  validateAuthoredEntityState(entity, path, diagnostics);
+
+  if (!isFiniteVec3(entity.position)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-npc-position",
+        "NPC position must remain finite on every axis.",
+        `${path}.position`
+      )
+    );
+  }
+
+  if (!isFiniteNumber(entity.yawDegrees)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-npc-yaw",
+        "NPC yaw must remain a finite number.",
+        `${path}.yawDegrees`
+      )
+    );
+  }
+
+  if (typeof entity.actorId !== "string" || entity.actorId.trim().length === 0) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-npc-actor-id",
+        "NPC actorId must remain a non-empty string.",
+        `${path}.actorId`
+      )
+    );
+  }
+
+  validateNpcModelAssetId(entity, path, document, diagnostics);
+}
+
 function validateSceneExitEntity(
   entity: SceneExitEntity,
   path: string,
@@ -3276,6 +3372,8 @@ export function validateSceneDocument(
     validateModelInstance(modelInstance, path, document, diagnostics);
   }
 
+  const seenNpcActorIds = new Map<string, string>();
+
   for (const [entityKey, entity] of Object.entries(document.entities)) {
     const path = `entities.${entityKey}`;
 
@@ -3306,6 +3404,30 @@ export function validateSceneDocument(
       case "sceneEntry":
         validateSceneEntryEntity(entity, path, diagnostics);
         break;
+      case "npc": {
+        validateNpcEntity(entity, path, document, diagnostics);
+
+        const normalizedActorId =
+          typeof entity.actorId === "string" ? entity.actorId.trim() : "";
+
+        if (normalizedActorId.length > 0) {
+          const previousPath = seenNpcActorIds.get(normalizedActorId);
+
+          if (previousPath !== undefined) {
+            diagnostics.push(
+              createDiagnostic(
+                "error",
+                "duplicate-npc-actor-id",
+                `NPC actorId ${normalizedActorId} is already used by ${previousPath}.`,
+                `${path}.actorId`
+              )
+            );
+          } else {
+            seenNpcActorIds.set(normalizedActorId, path);
+          }
+        }
+        break;
+      }
       case "soundEmitter":
         validateSoundEmitterEntity(entity, path, document, diagnostics);
         break;
