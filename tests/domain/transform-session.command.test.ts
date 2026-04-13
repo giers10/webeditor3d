@@ -18,6 +18,7 @@ import {
   cloneBoxBrushGeometry,
   createBoxBrush
 } from "../../src/document/brushes";
+import { createScenePath } from "../../src/document/paths";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
 import { createPlayerStartEntity } from "../../src/entities/entity-instances";
 import { getBoxBrushLocalVertexPosition } from "../../src/geometry/box-brush-mesh";
@@ -64,10 +65,34 @@ describe("transform session commit commands", () => {
     const brush = createBoxBrush({
       id: "brush-main"
     });
+    const path = createScenePath({
+      id: "path-main",
+      points: [
+        {
+          id: "path-point-a",
+          position: {
+            x: -1,
+            y: 0,
+            z: 0
+          }
+        },
+        {
+          id: "path-point-b",
+          position: {
+            x: 2,
+            y: 1,
+            z: 0
+          }
+        }
+      ]
+    });
     const document = {
       ...createEmptySceneDocument(),
       brushes: {
         [brush.id]: brush
+      },
+      paths: {
+        [path.id]: path
       }
     };
 
@@ -115,6 +140,15 @@ describe("transform session commit commands", () => {
       kind: "brushes",
       ids: [brush.id]
     });
+    const pathObjectResolved = resolveTransformTarget(document, {
+      kind: "paths",
+      ids: [path.id]
+    });
+    const pathPointResolved = resolveTransformTarget(document, {
+      kind: "pathPoint",
+      pathId: path.id,
+      pointId: path.points[1].id
+    });
 
     expect(faceWrongModeResolved.target).toBeNull();
     expect(faceWrongModeResolved.message).toContain("Face mode");
@@ -141,6 +175,14 @@ describe("transform session commit commands", () => {
       initialCenter: brush.center,
       initialRotationDegrees: brush.rotationDegrees,
       initialSize: brush.size
+    });
+    expect(pathObjectResolved.target).toBeNull();
+    expect(pathObjectResolved.message).toContain("path point");
+    expect(pathPointResolved.target).toMatchObject({
+      kind: "pathPoint",
+      pathId: path.id,
+      pointId: path.points[1].id,
+      initialPosition: path.points[1].position
     });
     expect(objectResolved.target).not.toBeNull();
     expect(
@@ -196,6 +238,25 @@ describe("transform session commit commands", () => {
     expect(
       supportsTransformOperation(
         vertexResolved.target as NonNullable<typeof vertexResolved.target>,
+        "scale"
+      )
+    ).toBe(false);
+
+    expect(
+      supportsTransformOperation(
+        pathPointResolved.target as NonNullable<typeof pathPointResolved.target>,
+        "translate"
+      )
+    ).toBe(true);
+    expect(
+      supportsTransformOperation(
+        pathPointResolved.target as NonNullable<typeof pathPointResolved.target>,
+        "rotate"
+      )
+    ).toBe(false);
+    expect(
+      supportsTransformOperation(
+        pathPointResolved.target as NonNullable<typeof pathPointResolved.target>,
         "scale"
       )
     ).toBe(false);
@@ -294,6 +355,27 @@ describe("transform session commit commands", () => {
     const brush = createBoxBrush({
       id: "brush-local-axis"
     });
+    const path = createScenePath({
+      id: "path-local-axis",
+      points: [
+        {
+          id: "path-local-point-a",
+          position: {
+            x: -2,
+            y: 0,
+            z: 0
+          }
+        },
+        {
+          id: "path-local-point-b",
+          position: {
+            x: 1,
+            y: 0,
+            z: 3
+          }
+        }
+      ]
+    });
     const playerStart = createPlayerStartEntity({
       id: "entity-local-axis-player",
       position: {
@@ -307,6 +389,9 @@ describe("transform session commit commands", () => {
       ...createEmptySceneDocument(),
       brushes: {
         [brush.id]: brush
+      },
+      paths: {
+        [path.id]: path
       },
       entities: {
         [playerStart.id]: playerStart
@@ -330,6 +415,11 @@ describe("transform session commit commands", () => {
       kind: "entities",
       ids: [playerStart.id]
     }).target;
+    const pathPointTarget = resolveTransformTarget(document, {
+      kind: "pathPoint",
+      pathId: path.id,
+      pointId: path.points[0].id
+    }).target;
 
     if (brushTarget === null || brushTarget.kind !== "brush") {
       throw new Error("Expected a brush transform target.");
@@ -341,6 +431,10 @@ describe("transform session commit commands", () => {
 
     if (entityTarget === null || entityTarget.kind !== "entity") {
       throw new Error("Expected an entity transform target.");
+    }
+
+    if (pathPointTarget === null || pathPointTarget.kind !== "pathPoint") {
+      throw new Error("Expected a path point transform target.");
     }
 
     const brushTranslateSession = createTransformSession({
@@ -367,6 +461,12 @@ describe("transform session commit commands", () => {
       operation: "translate",
       target: entityTarget
     });
+    const pathPointTranslateSession = createTransformSession({
+      source: "keyboard",
+      sourcePanelId: "topLeft",
+      operation: "translate",
+      target: pathPointTarget
+    });
 
     expect(
       supportsLocalTransformAxisConstraint(brushTranslateSession, "z")
@@ -380,6 +480,103 @@ describe("transform session commit commands", () => {
     expect(
       supportsLocalTransformAxisConstraint(entityTranslateSession, "x")
     ).toBe(true);
+    expect(
+      supportsTransformAxisConstraint(pathPointTranslateSession, "z")
+    ).toBe(true);
+    expect(
+      supportsLocalTransformAxisConstraint(pathPointTranslateSession, "z")
+    ).toBe(false);
+  });
+
+  it("commits translated path points through the shared transform command path", () => {
+    const path = createScenePath({
+      id: "path-transform-main",
+      points: [
+        {
+          id: "path-transform-point-a",
+          position: {
+            x: -1,
+            y: 0,
+            z: 0
+          }
+        },
+        {
+          id: "path-transform-point-b",
+          position: {
+            x: 1,
+            y: 0,
+            z: 1
+          }
+        }
+      ]
+    });
+    const store = createEditorStore({
+      initialDocument: {
+        ...createEmptySceneDocument({ name: "Path Transform Fixture" }),
+        paths: {
+          [path.id]: path
+        }
+      }
+    });
+    const target = resolveTransformTarget(store.getState().document, {
+      kind: "pathPoint",
+      pathId: path.id,
+      pointId: path.points[1].id
+    }).target;
+
+    if (target === null || target.kind !== "pathPoint") {
+      throw new Error("Expected a path point transform target.");
+    }
+
+    const translateSession = createTransformSession({
+      source: "keyboard",
+      sourcePanelId: "topLeft",
+      operation: "translate",
+      target
+    });
+
+    translateSession.preview = {
+      kind: "pathPoint",
+      position: {
+        x: 4,
+        y: 2,
+        z: -3
+      }
+    };
+
+    store.executeCommand(
+      createCommitTransformSessionCommand(
+        store.getState().document,
+        translateSession
+      )
+    );
+
+    expect(
+      store.getState().document.paths[path.id]?.points[1]?.position
+    ).toEqual({
+      x: 4,
+      y: 2,
+      z: -3
+    });
+    expect(store.getState().selection).toEqual({
+      kind: "pathPoint",
+      pathId: path.id,
+      pointId: path.points[1].id
+    });
+
+    expect(store.undo()).toBe(true);
+    expect(
+      store.getState().document.paths[path.id]?.points[1]?.position
+    ).toEqual(path.points[1].position);
+
+    expect(store.redo()).toBe(true);
+    expect(
+      store.getState().document.paths[path.id]?.points[1]?.position
+    ).toEqual({
+      x: 4,
+      y: 2,
+      z: -3
+    });
   });
 
   it("commits whitebox box rotate and scale transforms with undo and redo", () => {
