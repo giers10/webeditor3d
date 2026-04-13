@@ -2046,10 +2046,12 @@ export class RuntimeHost {
         this.currentClockState,
         dt
       );
-      this.updateRuntimeNpcPresenceAfterClockAdvance(
-        previousTimeOfDayHours,
-        this.currentClockState.timeOfDayHours
-      );
+      if (this.sceneReady) {
+        this.updateRuntimeNpcPresenceAfterClockAdvance(
+          previousTimeOfDayHours,
+          this.currentClockState.timeOfDayHours
+        );
+      }
       this.applyDayNightLighting();
       this.clockPublishAccumulator += dt;
 
