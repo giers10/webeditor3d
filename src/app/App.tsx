@@ -5235,37 +5235,43 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
 
     try {
-      const nextPath = createScenePath({
-        ...selectedPath,
-        points: [...selectedPath.points, createAppendedScenePathPoint(selectedPath)]
-      });
+      const nextPoint = createAppendedScenePathPoint(selectedPath);
 
-      commitPathChange(selectedPath, nextPath, "Added a Path point.");
+      store.executeCommand(
+        createAddPathPointCommand({
+          pathId: selectedPath.id,
+          point: nextPoint,
+          label: "Add path point"
+        })
+      );
+      requestViewportFocus(
+        {
+          kind: "pathPoint",
+          pathId: selectedPath.id,
+          pointId: nextPoint.id
+        },
+        `Appended path point ${selectedPath.points.length + 1} to ${getPathLabelById(selectedPath.id, pathList)}.`
+      );
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
     }
   };
 
-  const handleDeletePathPoint = (pointIndex: number) => {
+  const handleDeletePathPoint = (pointId: string) => {
     if (selectedPath === null) {
       setStatusMessage("Select a path before removing a point.");
       return;
     }
 
-    if (selectedPath.points.length <= MIN_SCENE_PATH_POINT_COUNT) {
-      setStatusMessage(
-        `Paths must keep at least ${MIN_SCENE_PATH_POINT_COUNT} points.`
-      );
-      return;
-    }
-
     try {
-      const nextPath = createScenePath({
-        ...selectedPath,
-        points: selectedPath.points.filter((_, index) => index !== pointIndex)
-      });
-
-      commitPathChange(selectedPath, nextPath, "Removed a Path point.");
+      store.executeCommand(
+        createDeletePathPointCommand({
+          pathId: selectedPath.id,
+          pointId,
+          label: "Delete path point"
+        })
+      );
+      setStatusMessage("Removed the selected path point.");
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
     }
