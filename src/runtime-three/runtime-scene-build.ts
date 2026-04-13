@@ -374,6 +374,46 @@ function createRuntimeCharacterShape(
   }
 }
 
+function cloneRuntimeCharacterShape(
+  shape: FirstPersonPlayerShape
+): FirstPersonPlayerShape {
+  switch (shape.mode) {
+    case "capsule":
+      return {
+        mode: "capsule",
+        radius: shape.radius,
+        height: shape.height,
+        eyeHeight: shape.eyeHeight
+      };
+    case "box":
+      return {
+        mode: "box",
+        size: cloneVec3(shape.size),
+        eyeHeight: shape.eyeHeight
+      };
+    case "none":
+      return {
+        mode: "none",
+        eyeHeight: shape.eyeHeight
+      };
+  }
+}
+
+export function createRuntimeNpcFromDefinition(
+  npc: RuntimeNpcDefinition
+): RuntimeNpc {
+  return {
+    entityId: npc.entityId,
+    actorId: npc.actorId,
+    name: npc.name,
+    visible: npc.visible,
+    position: cloneVec3(npc.position),
+    yawDegrees: npc.yawDegrees,
+    modelAssetId: npc.modelAssetId,
+    collider: cloneRuntimeCharacterShape(npc.collider)
+  };
+}
+
 function clonePlayerStartMovementCapabilities(
   capabilities: PlayerStartMovementCapabilities
 ): PlayerStartMovementCapabilities {
@@ -841,7 +881,7 @@ function buildRuntimeSceneCollections(
         };
         npcDefinitions.push(npc);
         if (npc.active) {
-          runtimeEntities.npcs.push(npc);
+          runtimeEntities.npcs.push(createRuntimeNpcFromDefinition(npc));
         }
         break;
       }
