@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { BoxGeometry, PlaneGeometry } from "three";
 
 import { createBoxBrush } from "../../src/document/brushes";
+import { createScenePath } from "../../src/document/paths";
 import { createDefaultProjectTimeSettings } from "../../src/document/project-time-settings";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
 import {
@@ -253,11 +254,44 @@ describe("buildRuntimeSceneFromDocument", () => {
         z: 2
       }
     });
+    const path = createScenePath({
+      id: "path-lobby-route",
+      name: "Lobby Route",
+      points: [
+        {
+          id: "path-point-a",
+          position: {
+            x: -2,
+            y: 0,
+            z: -2
+          }
+        },
+        {
+          id: "path-point-b",
+          position: {
+            x: -2,
+            y: 0,
+            z: 1
+          }
+        },
+        {
+          id: "path-point-c",
+          position: {
+            x: 2,
+            y: 0,
+            z: 1
+          }
+        }
+      ]
+    });
 
     const document = {
       ...createEmptySceneDocument({ name: "Runtime Slice" }),
       brushes: {
         [brush.id]: brush
+      },
+      paths: {
+        [path.id]: path
       },
       assets: {
         [audioAsset.id]: audioAsset,
