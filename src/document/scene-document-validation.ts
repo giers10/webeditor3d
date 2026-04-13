@@ -2928,6 +2928,30 @@ function validateLightControlTarget(
   }
 }
 
+function validateActorControlTarget(
+  target: ActorControlTargetRef,
+  path: string,
+  document: SceneDocument,
+  diagnostics: SceneDiagnostic[]
+) {
+  const matchingActor = Object.values(document.entities).find(
+    (entity) => entity.kind === "npc" && entity.actorId === target.actorId
+  );
+
+  if (matchingActor !== undefined) {
+    return;
+  }
+
+  diagnostics.push(
+    createDiagnostic(
+      "error",
+      "missing-control-actor-target",
+      `Actor control target ${target.actorId} does not exist in this document.`,
+      `${path}.actorId`
+    )
+  );
+}
+
 function validateInteractionControlTarget(
   target: InteractionControlTargetRef,
   path: string,
