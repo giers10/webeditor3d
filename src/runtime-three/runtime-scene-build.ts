@@ -134,6 +134,16 @@ export interface RuntimeSceneEntry {
   yawDegrees: number;
 }
 
+export interface RuntimeNpc {
+  entityId: string;
+  actorId: string;
+  name?: string;
+  visible: boolean;
+  position: Vec3;
+  yawDegrees: number;
+  modelAssetId: string | null;
+}
+
 export interface RuntimeSoundEmitter {
   entityId: string;
   position: Vec3;
@@ -215,6 +225,7 @@ export interface RuntimeModelInstance {
 export interface RuntimeEntityCollection {
   playerStarts: RuntimePlayerStart[];
   sceneEntries: RuntimeSceneEntry[];
+  npcs: RuntimeNpc[];
   soundEmitters: RuntimeSoundEmitter[];
   triggerVolumes: RuntimeTriggerVolume[];
   teleportTargets: RuntimeTeleportTarget[];
@@ -558,6 +569,7 @@ function buildRuntimeSceneCollections(document: SceneDocument): RuntimeSceneColl
   const runtimeEntities: RuntimeEntityCollection = {
     playerStarts: [],
     sceneEntries: [],
+    npcs: [],
     soundEmitters: [],
     triggerVolumes: [],
     teleportTargets: [],
@@ -611,6 +623,17 @@ function buildRuntimeSceneCollections(document: SceneDocument): RuntimeSceneColl
           entityId: entity.id,
           position: cloneVec3(entity.position),
           yawDegrees: entity.yawDegrees
+        });
+        break;
+      case "npc":
+        runtimeEntities.npcs.push({
+          entityId: entity.id,
+          actorId: entity.actorId,
+          name: entity.name,
+          visible: entity.visible,
+          position: cloneVec3(entity.position),
+          yawDegrees: entity.yawDegrees,
+          modelAssetId: entity.modelAssetId
         });
         break;
       case "soundEmitter":
