@@ -304,6 +304,21 @@ export function getScenePathLabel(path: ScenePath, index: number): string {
   return path.name ?? `Path ${index + 1}`;
 }
 
+export function getScenePathPointIndex(
+  path: Pick<ScenePath, "points">,
+  pointId: string
+): number {
+  return path.points.findIndex((point) => point.id === pointId);
+}
+
+export function getScenePathPoint(
+  path: Pick<ScenePath, "points">,
+  pointId: string
+): ScenePathPoint | null {
+  const pointIndex = getScenePathPointIndex(path, pointId);
+  return pointIndex === -1 ? null : cloneScenePathPoint(path.points[pointIndex]);
+}
+
 export function createAppendedScenePathPoint(path: ScenePath): ScenePathPoint {
   const lastPoint = path.points.at(-1);
   const previousPoint =
