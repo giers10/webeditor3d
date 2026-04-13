@@ -85,7 +85,6 @@ import {
   type FaceUvState
 } from "./brushes";
 import {
-  PATH_FOUNDATION_SCENE_DOCUMENT_VERSION,
   BOX_BRUSH_SCENE_DOCUMENT_VERSION,
   ANIMATION_PLAYBACK_SCENE_DOCUMENT_VERSION,
   AUTHORED_OBJECT_STATE_SCENE_DOCUMENT_VERSION,
@@ -3466,7 +3465,6 @@ function readProjectScene(
   options: {
     allowMissingLoadingScreen: boolean;
     allowMissingEditorPreferences: boolean;
-    allowMissingPaths: boolean;
     legacyProjectTimeValue?: unknown;
   }
 ): ProjectScene {
@@ -3542,8 +3540,6 @@ export function migrateProjectDocument(source: unknown): ProjectDocument {
       source.version < PROJECT_NAME_SCENE_DOCUMENT_VERSION;
     const allowMissingEditorPreferences =
       source.version < SCENE_EDITOR_PREFERENCES_SCENE_DOCUMENT_VERSION;
-    const allowMissingPaths =
-      source.version < PATH_FOUNDATION_SCENE_DOCUMENT_VERSION;
     const allowMissingTimeSettings =
       source.version < PROJECT_TIME_SYSTEM_SCENE_DOCUMENT_VERSION;
 
@@ -3556,7 +3552,6 @@ export function migrateProjectDocument(source: unknown): ProjectDocument {
         {
           allowMissingLoadingScreen,
           allowMissingEditorPreferences,
-          allowMissingPaths,
           legacyProjectTimeValue:
             source.version < SCENE_DOCUMENT_VERSION ? source.time : undefined
         }
