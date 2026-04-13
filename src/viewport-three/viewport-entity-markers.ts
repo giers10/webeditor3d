@@ -1,4 +1,11 @@
-import { BoxGeometry, CylinderGeometry, Mesh, MeshStandardMaterial, TorusGeometry } from "three";
+import {
+  BoxGeometry,
+  CylinderGeometry,
+  Mesh,
+  MeshStandardMaterial,
+  SphereGeometry,
+  TorusGeometry
+} from "three";
 
 const SOUND_EMITTER_CABINET_SIZE = {
   x: 0.38,
@@ -57,4 +64,43 @@ export function createSoundEmitterMarkerMeshes(markerColor: number, selected: bo
   wooferCone.position.set(0, SOUND_EMITTER_WOOFER_Y, SOUND_EMITTER_FRONT_OFFSET + 0.007);
 
   return [cabinet, tweeterRing, tweeterCone, wooferRing, wooferCone];
+}
+
+export function createNpcMarkerMeshes(
+  markerColor: number,
+  selected: boolean
+): Mesh[] {
+  const footing = new Mesh(
+    new TorusGeometry(0.24, 0.03, 8, 20),
+    createSpeakerMaterial(markerColor, selected, 0.18, 0.45, 0.04)
+  );
+  footing.rotation.x = Math.PI * 0.5;
+  footing.position.y = 0.04;
+
+  const torso = new Mesh(
+    new CylinderGeometry(0.1, 0.13, 0.42, 14),
+    createSpeakerMaterial(0x20252d, selected, 0.06, 0.78, 0.02)
+  );
+  torso.position.y = 0.26;
+
+  const shoulders = new Mesh(
+    new TorusGeometry(0.17, 0.024, 8, 18),
+    createSpeakerMaterial(markerColor, selected, 0.2, 0.42, 0.04)
+  );
+  shoulders.rotation.x = Math.PI * 0.5;
+  shoulders.position.y = 0.34;
+
+  const head = new Mesh(
+    new SphereGeometry(0.11, 16, 12),
+    createSpeakerMaterial(markerColor, selected, 0.24, 0.34, 0.03)
+  );
+  head.position.y = 0.58;
+
+  const sightLine = new Mesh(
+    new BoxGeometry(0.04, 0.04, 0.2),
+    createSpeakerMaterial(markerColor, selected, 0.2, 0.38, 0.04)
+  );
+  sightLine.position.set(0, 0.48, 0.18);
+
+  return [footing, torso, shoulders, head, sightLine];
 }
