@@ -257,87 +257,13 @@ function validateWorldSettings(
     );
   }
 
-  if (world.background.mode === "solid") {
-    if (!isHexColorString(world.background.colorHex)) {
-      diagnostics.push(
-        createDiagnostic(
-          "error",
-          "invalid-world-background-color",
-          "Solid world backgrounds must use #RRGGBB colors.",
-          "world.background.colorHex"
-        )
-      );
-    }
-  } else if (world.background.mode === "verticalGradient") {
-    if (!isHexColorString(world.background.topColorHex)) {
-      diagnostics.push(
-        createDiagnostic(
-          "error",
-          "invalid-world-background-top-color",
-          "Gradient world backgrounds must use #RRGGBB colors for the top color.",
-          "world.background.topColorHex"
-        )
-      );
-    }
-
-    if (!isHexColorString(world.background.bottomColorHex)) {
-      diagnostics.push(
-        createDiagnostic(
-          "error",
-          "invalid-world-background-bottom-color",
-          "Gradient world backgrounds must use #RRGGBB colors for the bottom color.",
-          "world.background.bottomColorHex"
-        )
-      );
-    }
-  } else {
-    if (
-      typeof world.background.assetId !== "string" ||
-      world.background.assetId.trim().length === 0
-    ) {
-      diagnostics.push(
-        createDiagnostic(
-          "error",
-          "invalid-world-background-asset-id",
-          "World background images must reference a non-empty asset id.",
-          "world.background.assetId"
-        )
-      );
-    } else {
-      const backgroundAsset = document.assets[world.background.assetId];
-
-      if (backgroundAsset === undefined) {
-        diagnostics.push(
-          createDiagnostic(
-            "error",
-            "missing-world-background-asset",
-            `World background image asset ${world.background.assetId} does not exist.`,
-            "world.background.assetId"
-          )
-        );
-      } else if (backgroundAsset.kind !== "image") {
-        diagnostics.push(
-          createDiagnostic(
-            "error",
-            "invalid-world-background-asset-kind",
-            "World background images must reference image assets.",
-            "world.background.assetId"
-          )
-        );
-      }
-    }
-
-    if (!isNonNegativeFiniteNumber(world.background.environmentIntensity)) {
-      diagnostics.push(
-        createDiagnostic(
-          "error",
-          "invalid-world-background-environment-intensity",
-          "World background environment intensity must be a non-negative finite number.",
-          "world.background.environmentIntensity"
-        )
-      );
-    }
-  }
+  validateWorldBackgroundSettings(
+    world.background,
+    document,
+    diagnostics,
+    "world.background",
+    "world-background"
+  );
 
   if (!isHexColorString(world.ambientLight.colorHex)) {
     diagnostics.push(
@@ -393,6 +319,70 @@ function validateWorldSettings(
         "invalid-world-sun-direction",
         "World sun direction must remain finite and must not be the zero vector.",
         "world.sunLight.direction"
+      )
+    );
+  }
+
+  validateWorldTimePhaseProfile(
+    world.timeOfDay.dawn,
+    diagnostics,
+    "world.timeOfDay.dawn",
+    "dawn"
+  );
+  validateWorldTimePhaseProfile(
+    world.timeOfDay.dusk,
+    diagnostics,
+    "world.timeOfDay.dusk",
+    "dusk"
+  );
+  validateWorldBackgroundSettings(
+    world.timeOfDay.night.background,
+    document,
+    diagnostics,
+    "world.timeOfDay.night.background",
+    "night-background"
+  );
+
+  if (!isHexColorString(world.timeOfDay.night.ambientColorHex)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-night-ambient-color",
+        "night ambient color must use a #RRGGBB color.",
+        "world.timeOfDay.night.ambientColorHex"
+      )
+    );
+  }
+
+  if (!isNonNegativeFiniteNumber(world.timeOfDay.night.ambientIntensityFactor)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-night-ambient-intensity-factor",
+        "night ambient intensity factor must be a non-negative finite number.",
+        "world.timeOfDay.night.ambientIntensityFactor"
+      )
+    );
+  }
+
+  if (!isHexColorString(world.timeOfDay.night.lightColorHex)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-night-light-color",
+        "night light color must use a #RRGGBB color.",
+        "world.timeOfDay.night.lightColorHex"
+      )
+    );
+  }
+
+  if (!isNonNegativeFiniteNumber(world.timeOfDay.night.lightIntensityFactor)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-night-light-intensity-factor",
+        "night light intensity factor must be a non-negative finite number.",
+        "world.timeOfDay.night.lightIntensityFactor"
       )
     );
   }
