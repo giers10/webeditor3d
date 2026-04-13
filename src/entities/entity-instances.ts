@@ -1,5 +1,6 @@
 import { createOpaqueId } from "../core/ids";
 import type { Vec3 } from "../core/vector";
+import { normalizeTimeOfDayHours } from "../document/project-time-settings";
 import { isHexColorString } from "../document/world-settings";
 
 interface PositionedEntity {
@@ -52,9 +53,25 @@ export interface PlayerStartColliderSettings extends CharacterColliderSettings {
 
 export interface NpcColliderSettings extends CharacterColliderSettings {}
 
+export const NPC_PRESENCE_MODES = ["always", "timeWindow"] as const;
+export type NpcPresenceMode = (typeof NPC_PRESENCE_MODES)[number];
+
+export interface NpcAlwaysPresence {
+  mode: "always";
+}
+
+export interface NpcTimeWindowPresence {
+  mode: "timeWindow";
+  startHour: number;
+  endHour: number;
+}
+
+export type NpcPresence = NpcAlwaysPresence | NpcTimeWindowPresence;
+
 export interface NpcEntity extends PositionedEntity {
   kind: "npc";
   actorId: string;
+  presence: NpcPresence;
   yawDegrees: number;
   modelAssetId: string | null;
   collider: NpcColliderSettings;
@@ -394,6 +411,8 @@ export const DEFAULT_SCENE_ENTRY_YAW_DEGREES = 0;
 export const DEFAULT_NPC_YAW_DEGREES = 0;
 export const DEFAULT_NPC_MODEL_ASSET_ID: string | null = null;
 export const DEFAULT_NPC_COLLIDER_MODE: PlayerStartColliderMode = "capsule";
+export const DEFAULT_NPC_TIME_WINDOW_START_HOUR = 9;
+export const DEFAULT_NPC_TIME_WINDOW_END_HOUR = 17;
 export const DEFAULT_PLAYER_START_COLLIDER_MODE: PlayerStartColliderMode = "capsule";
 export const DEFAULT_PLAYER_START_EYE_HEIGHT = 1.6;
 export const DEFAULT_PLAYER_START_CAPSULE_RADIUS = 0.3;
@@ -1170,6 +1189,84 @@ export function createNpcActorId(): string {
   return createOpaqueId("actor");
 }
 
+export function isNpcPresenceMode(value: unknown): value is NpcPresenceMode {
+  return typeof value === "string" && NPC_PRESENCE_MODES.includes(value as NpcPresenceMode);
+}
+
+export function createNpcAlwaysPresence(): NpcAlwaysPresence {
+  return {
+    mode: "always"
+  };
+}
+
+export function createNpcTimeWindowPresence(
+  overrides: Partial<Pick<NpcTimeWindowPresence, "startHour" | "endHour">> = {}
+): NpcTimeWindowPresence {
+  const startHour = normalizeTimeOfDayHours(
+    overrides.startHour ?? DEFAULT_NPC_TIME_WINDOW_START_HOUR
+  );
+  const endHour = normalizeTimeOfDayHours(
+    overrides.endHour ?? DEFAULT_NPC_TIME_WINDOW_END_HOUR
+  );
+
+  if (!Number.isFinite(startHour)) {
+    throw new Error("NPC presence window start hour must be a finite number.");
+  }
+
+  if (!Number.isFinite(endHour)) {
+    throw new Error("NPC presence window end hour must be a finite number.");
+  }
+
+  return {
+    mode: "timeWindow",
+    startHour,
+    endHour
+  };
+}
+
+export function cloneNpcPresence(presence: NpcPresence): NpcPresence {
+  switch (presence.mode) {
+    case "always":
+      return createNpcAlwaysPresence();
+    case "timeWindow":
+      return createNpcTimeWindowPresence(presence);
+  }
+}
+
+export function areNpcPresencesEqual(
+  left: NpcPresence,
+  right: NpcPresence
+): boolean {
+  if (left.mode !== right.mode) {
+    return false;
+  }
+
+  if (left.mode === "always") {
+    return true;
+  }
+
+  return (
+    right.mode === "timeWindow" &&
+    left.startHour === right.startHour &&
+    left.endHour === right.endHour
+  );
+}
+
+function normalizeNpcPresence(
+  presence: NpcPresence | undefined
+): NpcPresence {
+  if (presence === undefined) {
+    return createNpcAlwaysPresence();
+  }
+
+  switch (presence.mode) {
+    case "always":
+      return createNpcAlwaysPresence();
+    case "timeWindow":
+      return createNpcTimeWindowPresence(presence);
+  }
+}
+
 function normalizeNpcActorId(actorId: string | undefined): string {
   const resolvedActorId = actorId ?? createNpcActorId();
   const normalizedActorId = resolvedActorId.trim();
@@ -1346,6 +1443,7 @@ export function createNpcEntity(
       | "enabled"
       | "position"
       | "actorId"
+      | "presence"
       | "yawDegrees"
       | "modelAssetId"
     >
@@ -1355,6 +1453,7 @@ export function createNpcEntity(
 ): NpcEntity {
   const position = cloneVec3(overrides.position ?? DEFAULT_ENTITY_POSITION);
   const actorId = normalizeNpcActorId(overrides.actorId);
+  const presence = normalizeNpcPresence(overrides.presence);
   const yawDegrees = overrides.yawDegrees ?? DEFAULT_NPC_YAW_DEGREES;
   const modelAssetId = normalizeNpcModelAssetId(
     overrides.modelAssetId ?? DEFAULT_NPC_MODEL_ASSET_ID
@@ -1375,6 +1474,7 @@ export function createNpcEntity(
     enabled: resolveAuthoredEntityEnabled(overrides.enabled),
     position,
     actorId,
+    presence,
     yawDegrees: normalizeYawDegrees(yawDegrees),
     modelAssetId,
     collider
@@ -1748,6 +1848,7 @@ export function areEntityInstancesEqual(left: EntityInstance, right: EntityInsta
       const typedRight = right as NpcEntity;
       return (
         left.actorId === typedRight.actorId &&
+        areNpcPresencesEqual(left.presence, typedRight.presence) &&
         left.yawDegrees === typedRight.yawDegrees &&
         left.modelAssetId === typedRight.modelAssetId &&
         left.collider.mode === typedRight.collider.mode &&
