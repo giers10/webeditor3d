@@ -885,6 +885,10 @@ function buildRuntimeControlSurface(
   }
 
   for (const soundEmitter of collections.entities.soundEmitters) {
+    if (soundEmitter.audioAssetId === null) {
+      continue;
+    }
+
     targets.push(
       createControlTargetDescriptor(
         createSoundEmitterControlTargetRef(soundEmitter.entityId),
