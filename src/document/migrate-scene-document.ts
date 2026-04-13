@@ -778,6 +778,162 @@ function readProjectTimeSettings(
   };
 }
 
+function expectOptionalString(
+  value: unknown,
+  label: string
+): string | undefined {
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+
+  return expectString(value, label);
+}
+
+function readProjectAssetBoundingBox(
+  value: unknown,
+  label: string
+): ProjectAssetBoundingBox {
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  return {
+    min: readVec3(value.min, `${label}.min`),
+    max: readVec3(value.max, `${label}.max`),
+    size: readVec3(value.size, `${label}.size`)
+  };
+}
+
+function readOptionalBrushName(
+  value: unknown,
+  label: string
+): string | undefined {
+  return normalizeBrushName(expectOptionalString(value, label));
+}
+
+function readOptionalEntityName(
+  value: unknown,
+  label: string
+): string | undefined {
+  return normalizeEntityName(expectOptionalString(value, label));
+}
+
+function readBoxBrushVolumeSettings(
+  value: unknown,
+  label: string
+): BoxBrushVolumeSettings {
+  if (value === undefined) {
+    return {
+      mode: "none"
+    };
+  }
+
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  const mode = readOptionalAllowedValue(
+    value.mode,
+    `${label}.mode`,
+    "none",
+    isBoxBrushVolumeMode
+  );
+
+  if (mode === "none") {
+    return {
+      mode: "none"
+    };
+  }
+
+  if (mode === "water") {
+    const defaults = createDefaultBoxBrushWaterSettings();
+
+    if (value.water !== undefined && !isRecord(value.water)) {
+      throw new Error(`${label}.water must be an object.`);
+    }
+
+    const water = (value.water ?? {}) as Record<string, unknown>;
+
+    return {
+      mode: "water",
+      water: {
+        colorHex:
+          water.colorHex === undefined
+            ? defaults.colorHex
+            : expectHexColor(water.colorHex, `${label}.water.colorHex`),
+        surfaceOpacity: readOptionalNonNegativeFiniteNumber(
+          water.surfaceOpacity,
+          `${label}.water.surfaceOpacity`,
+          defaults.surfaceOpacity
+        ),
+        waveStrength: readOptionalNonNegativeFiniteNumber(
+          water.waveStrength,
+          `${label}.water.waveStrength`,
+          defaults.waveStrength
+        ),
+        foamContactLimit: readOptionalPositiveIntegerWithMax(
+          water.foamContactLimit,
+          `${label}.water.foamContactLimit`,
+          defaults.foamContactLimit,
+          MAX_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT
+        ),
+        surfaceDisplacementEnabled: readOptionalBoolean(
+          water.surfaceDisplacementEnabled,
+          `${label}.water.surfaceDisplacementEnabled`,
+          defaults.surfaceDisplacementEnabled
+        )
+      }
+    };
+  }
+
+  const defaults = createDefaultBoxBrushFogSettings();
+
+  if (value.fog !== undefined && !isRecord(value.fog)) {
+    throw new Error(`${label}.fog must be an object.`);
+  }
+
+  const fog = (value.fog ?? {}) as Record<string, unknown>;
+
+  return {
+    mode: "fog",
+    fog: {
+      colorHex:
+        fog.colorHex === undefined
+          ? defaults.colorHex
+          : expectHexColor(fog.colorHex, `${label}.fog.colorHex`),
+      density: readOptionalNonNegativeFiniteNumber(
+        fog.density,
+        `${label}.fog.density`,
+        defaults.density
+      ),
+      padding: readOptionalNonNegativeFiniteNumber(
+        fog.padding,
+        `${label}.fog.padding`,
+        defaults.padding
+      )
+    }
+  };
+}
+
+function expectEmptyCollection<T extends Record<string, unknown>>(
+  value: unknown,
+  label: string
+): T {
+  if (value === undefined) {
+    return {} as T;
+  }
+
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  if (Object.keys(value).length > 0) {
+    throw new Error(`${label} must be empty.`);
+  }
+
+  return value as T;
+}
+
 function readModelAssetMetadata(
   value: unknown,
   label: string
