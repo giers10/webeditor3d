@@ -26,39 +26,51 @@ import {
 } from "../core/transform-session";
 
 function createTransformCommandLabel(session: ActiveTransformSession): string {
-  return `${getTransformOperationLabel(session.operation)} ${
-    session.target.kind === "brush"
-      ? "whitebox box"
-      : session.target.kind === "brushFace"
-        ? "whitebox face"
-        : session.target.kind === "brushEdge"
-          ? "whitebox edge"
-          : session.target.kind === "brushVertex"
-            ? "whitebox vertex"
-      : session.target.kind === "entity"
-        ? session.target.entityKind === "playerStart"
+  let targetLabel = "model instance";
+
+  switch (session.target.kind) {
+    case "brush":
+      targetLabel = "whitebox box";
+      break;
+    case "brushFace":
+      targetLabel = "whitebox face";
+      break;
+    case "brushEdge":
+      targetLabel = "whitebox edge";
+      break;
+    case "brushVertex":
+      targetLabel = "whitebox vertex";
+      break;
+    case "pathPoint":
+      targetLabel = "path point";
+      break;
+    case "entity":
+      targetLabel =
+        session.target.entityKind === "playerStart"
           ? "player start"
           : session.target.entityKind === "npc"
             ? "NPC"
-          : session.target.entityKind === "pointLight"
-            ? "point light"
-            : session.target.entityKind === "spotLight"
-              ? "spot light"
-              : session.target.entityKind === "soundEmitter"
-                ? "sound emitter"
-                : session.target.entityKind === "triggerVolume"
-                  ? "trigger volume"
-                  : session.target.entityKind === "sceneEntry"
-                    ? "scene entry"
-                  : session.target.entityKind === "teleportTarget"
-                    ? "teleport target"
-            : session.target.entityKind === "interactable"
-                      ? "interactable"
-                      : "scene exit"
-        : session.target.kind === "pathPoint"
-          ? "path point"
-        : "model instance"
-  }`;
+            : session.target.entityKind === "pointLight"
+              ? "point light"
+              : session.target.entityKind === "spotLight"
+                ? "spot light"
+                : session.target.entityKind === "soundEmitter"
+                  ? "sound emitter"
+                  : session.target.entityKind === "triggerVolume"
+                    ? "trigger volume"
+                    : session.target.entityKind === "sceneEntry"
+                      ? "scene entry"
+                      : session.target.entityKind === "teleportTarget"
+                        ? "teleport target"
+                        : session.target.entityKind === "interactable"
+                          ? "interactable"
+                          : "scene exit";
+      break;
+    case "modelInstance":
+      break;
+  }
+
+  return `${getTransformOperationLabel(session.operation)} ${targetLabel}`;
 }
 
 export function createCommitTransformSessionCommand(document: SceneDocument, session: ActiveTransformSession): EditorCommand {
