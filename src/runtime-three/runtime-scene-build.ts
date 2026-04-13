@@ -16,6 +16,12 @@ import {
   cloneProjectTimeSettings,
   type ProjectTimeSettings
 } from "../document/project-time-settings";
+import {
+  getScenePaths,
+  resolveScenePath,
+  type ScenePath,
+  type ScenePathPoint
+} from "../document/paths";
 import { cloneWorldSettings, type WorldSettings } from "../document/world-settings";
 import {
   type CharacterColliderSettings,
@@ -240,6 +246,34 @@ export interface RuntimeModelInstance {
   animationAutoplay?: boolean;
 }
 
+export interface RuntimePathPoint {
+  pointId: string;
+  position: Vec3;
+}
+
+export interface RuntimePathSegment {
+  index: number;
+  startPointId: string;
+  endPointId: string;
+  start: Vec3;
+  end: Vec3;
+  length: number;
+  distanceStart: number;
+  distanceEnd: number;
+  tangent: Vec3;
+}
+
+export interface RuntimePath {
+  id: string;
+  name?: string;
+  visible: boolean;
+  enabled: boolean;
+  loop: boolean;
+  points: RuntimePathPoint[];
+  segments: RuntimePathSegment[];
+  totalLength: number;
+}
+
 export interface RuntimeEntityCollection {
   playerStarts: RuntimePlayerStart[];
   sceneEntries: RuntimeSceneEntry[];
@@ -267,6 +301,7 @@ export interface RuntimeSceneDefinition {
   colliders: RuntimeSceneCollider[];
   sceneBounds: RuntimeSceneBounds | null;
   modelInstances: RuntimeModelInstance[];
+  paths: RuntimePath[];
   entities: RuntimeEntityCollection;
   interactionLinks: InteractionLink[];
   playerStart: RuntimePlayerStart | null;
@@ -525,6 +560,38 @@ function buildRuntimeModelInstance(modelInstance: SceneDocument["modelInstances"
     scale: cloneVec3(modelInstance.scale),
     animationClipName: modelInstance.animationClipName,
     animationAutoplay: modelInstance.animationAutoplay
+  };
+}
+
+function buildRuntimePathPoint(point: ScenePathPoint): RuntimePathPoint {
+  return {
+    pointId: point.id,
+    position: cloneVec3(point.position)
+  };
+}
+
+function buildRuntimePath(path: ScenePath): RuntimePath {
+  const resolvedPath = resolveScenePath(path);
+
+  return {
+    id: path.id,
+    name: path.name,
+    visible: path.visible,
+    enabled: path.enabled,
+    loop: path.loop,
+    points: resolvedPath.points.map(buildRuntimePathPoint),
+    segments: resolvedPath.segments.map((segment) => ({
+      index: segment.index,
+      startPointId: segment.startPointId,
+      endPointId: segment.endPointId,
+      start: cloneVec3(segment.start),
+      end: cloneVec3(segment.end),
+      length: segment.length,
+      distanceStart: segment.distanceStart,
+      distanceEnd: segment.distanceEnd,
+      tangent: cloneVec3(segment.tangent)
+    })),
+    totalLength: resolvedPath.totalLength
   };
 }
 
@@ -901,6 +968,9 @@ export function buildRuntimeSceneFromDocument(document: SceneDocument, options: 
   }
   const enabledModelInstances = getModelInstances(document.modelInstances).filter((modelInstance) => modelInstance.enabled);
   const modelInstances = enabledModelInstances.map(buildRuntimeModelInstance);
+  const paths = getScenePaths(document.paths)
+    .filter((path) => path.enabled)
+    .map(buildRuntimePath);
   const collections = buildRuntimeSceneCollections(document);
   const enabledBrushIds = new Set(enabledBrushes.map((brush) => brush.id));
   const enabledModelInstanceIds = new Set(enabledModelInstances.map((modelInstance) => modelInstance.id));
@@ -982,6 +1052,7 @@ export function buildRuntimeSceneFromDocument(document: SceneDocument, options: 
     colliders,
     sceneBounds: combinedSceneBounds,
     modelInstances,
+    paths,
     entities: collections.entities,
     interactionLinks,
     playerStart,

@@ -49,6 +49,10 @@ import {
   type ProjectTimeSettings
 } from "./project-time-settings";
 import {
+  MIN_SCENE_PATH_POINT_COUNT,
+  type ScenePath
+} from "./paths";
+import {
   isAdvancedRenderingWaterReflectionMode,
   isAdvancedRenderingShadowMapSize,
   isAdvancedRenderingShadowType,
@@ -1510,6 +1514,102 @@ function validateEntityName(
         `${path}.name`
       )
     );
+  }
+}
+
+function validateScenePath(pathValue: ScenePath, path: string, diagnostics: SceneDiagnostic[]) {
+  if (!isBoolean(pathValue.visible)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-path-visible",
+        "Path visible must remain a boolean.",
+        `${path}.visible`
+      )
+    );
+  }
+
+  if (!isBoolean(pathValue.enabled)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-path-enabled",
+        "Path enabled must remain a boolean.",
+        `${path}.enabled`
+      )
+    );
+  }
+
+  if (pathValue.name !== undefined && pathValue.name.trim().length === 0) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-path-name",
+        "Path names must be non-empty when authored.",
+        `${path}.name`
+      )
+    );
+  }
+
+  if (!isBoolean(pathValue.loop)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-path-loop",
+        "Path loop must remain a boolean.",
+        `${path}.loop`
+      )
+    );
+  }
+
+  if (pathValue.points.length < MIN_SCENE_PATH_POINT_COUNT) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-path-point-count",
+        `Paths must define at least ${MIN_SCENE_PATH_POINT_COUNT} points.`,
+        `${path}.points`
+      )
+    );
+  }
+
+  const seenPointIds = new Set<string>();
+
+  for (const [pointIndex, point] of pathValue.points.entries()) {
+    const pointPath = `${path}.points.${pointIndex}`;
+
+    if (point.id.trim().length === 0) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-path-point-id",
+          "Path point ids must be non-empty strings.",
+          `${pointPath}.id`
+        )
+      );
+    } else if (seenPointIds.has(point.id)) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "duplicate-path-point-id",
+          `Path point id ${point.id} is already used within this path.`,
+          `${pointPath}.id`
+        )
+      );
+    } else {
+      seenPointIds.add(point.id);
+    }
+
+    if (!isFiniteVec3(point.position)) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-path-point-position",
+          "Path point positions must remain finite on every axis.",
+          `${pointPath}.position`
+        )
+      );
+    }
   }
 }
 
@@ -3452,6 +3552,26 @@ export function validateSceneDocument(
         }
       }
     }
+  }
+
+  for (const [modelInstanceKey, modelInstance] of Object.entries(
+    document.paths
+  )) {
+    const path = `paths.${modelInstanceKey}`;
+
+    if (modelInstance.id !== modelInstanceKey) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "path-id-mismatch",
+          "Path ids must match their registry key.",
+          `${path}.id`
+        )
+      );
+    }
+
+    registerAuthoredId(modelInstance.id, path, seenIds, diagnostics);
+    validateScenePath(modelInstance, path, diagnostics);
   }
 
   for (const [modelInstanceKey, modelInstance] of Object.entries(

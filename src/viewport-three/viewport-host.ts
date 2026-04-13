@@ -47,6 +47,7 @@ import {
   isBrushSelected,
   isBrushVertexSelected,
   isModelInstanceSelected,
+  isPathSelected,
   type EditorSelection
 } from "../core/selection";
 import { getWhiteboxSelectionFeedbackLabel } from "../core/whitebox-selection-feedback";
@@ -83,6 +84,10 @@ import {
   type ModelInstance
 } from "../assets/model-instances";
 import type { SceneDocument } from "../document/scene-document";
+import {
+  getScenePaths,
+  type ScenePath
+} from "../document/paths";
 import {
   areAdvancedRenderingSettingsEqual,
   cloneAdvancedRenderingSettings,
@@ -212,6 +217,14 @@ interface BrushRenderObjects {
   }>;
 }
 
+interface PathRenderObjects {
+  line: Line<BufferGeometry, LineBasicMaterial>;
+  pointMeshes: Array<{
+    pointId: string;
+    mesh: Mesh<SphereGeometry, MeshBasicMaterial>;
+  }>;
+}
+
 interface ViewportWaterSurfaceBinding {
   brush: BoxBrush;
   reflectionTextureUniform: { value: unknown } | null;
@@ -253,6 +266,13 @@ const INTERACTABLE_COLOR = 0x92de7e;
 const INTERACTABLE_SELECTED_COLOR = 0xf1cf7e;
 const SCENE_EXIT_COLOR = 0xff9c6d;
 const SCENE_EXIT_SELECTED_COLOR = 0xf5dd88;
+const PATH_COLOR = 0x4b82d6;
+const PATH_HOVERED_COLOR = 0x86b6ff;
+const PATH_SELECTED_COLOR = 0xf3be8f;
+const PATH_POINT_COLOR = 0xb7cbec;
+const PATH_POINT_HOVERED_COLOR = 0xf3be8f;
+const PATH_POINT_SELECTED_COLOR = 0xcf7b42;
+const PATH_POINT_RADIUS = 0.12;
 const BOX_CREATE_PREVIEW_FILL = 0x89b6ff;
 const BOX_CREATE_PREVIEW_EDGE = 0xf3be8f;
 const PLACEMENT_PREVIEW_COLOR_HEX = "#89b6ff";
@@ -355,6 +375,7 @@ export class ViewportHost {
   private readonly sunLight = new DirectionalLight();
   private readonly localLightGroup = new Group();
   private readonly brushGroup = new Group();
+  private readonly pathGroup = new Group();
   private readonly entityGroup = new Group();
   private readonly modelGroup = new Group();
   private readonly waterReflectionCamera = new PerspectiveCamera();
@@ -366,6 +387,7 @@ export class ViewportHost {
   private readonly transformIntersection = new Vector3();
   private readonly transformGizmoGroup = new Group();
   private readonly brushRenderObjects = new Map<string, BrushRenderObjects>();
+  private readonly pathRenderObjects = new Map<string, PathRenderObjects>();
   private readonly entityRenderObjects = new Map<string, EntityRenderObjects>();
   private readonly localLightRenderObjects = new Map<
     string,
@@ -517,6 +539,7 @@ export class ViewportHost {
     this.scene.add(this.sunLight);
     this.scene.add(this.localLightGroup);
     this.scene.add(this.brushGroup);
+    this.scene.add(this.pathGroup);
     this.scene.add(this.entityGroup);
     this.scene.add(this.modelGroup);
     this.transformGizmoGroup.visible = false;
@@ -613,6 +636,7 @@ export class ViewportHost {
     });
     this.rebuildLocalLights(document);
     this.rebuildBrushMeshes(document, selection);
+    this.rebuildPaths(document, selection);
     this.rebuildEntityMarkers(document, selection);
     this.rebuildModelInstances(document, selection);
     this.applyTransformPreview();
@@ -3412,6 +3436,74 @@ export class ViewportHost {
     this.applyShadowState();
   }
 
+  private createPathLineGeometry(path: ScenePath): BufferGeometry {
+    const points = path.points.map(
+      (point) =>
+        new Vector3(point.position.x, point.position.y, point.position.z)
+    );
+
+    if (path.loop && points.length > 1) {
+      points.push(
+        new Vector3(
+          path.points[0].position.x,
+          path.points[0].position.y,
+          path.points[0].position.z
+        )
+      );
+    }
+
+    return new BufferGeometry().setFromPoints(points);
+  }
+
+  private rebuildPaths(document: SceneDocument, selection: EditorSelection) {
+    this.clearPaths();
+
+    for (const path of getScenePaths(document.paths)) {
+      if (!path.enabled || !path.visible) {
+        continue;
+      }
+
+      const line = new Line(
+        this.createPathLineGeometry(path),
+        new LineBasicMaterial({
+          color: isPathSelected(selection, path.id)
+            ? PATH_SELECTED_COLOR
+            : PATH_COLOR
+        })
+      );
+      line.userData.pathId = path.id;
+
+      const pointMeshes = path.points.map((point) => {
+        const mesh = new Mesh(
+          new SphereGeometry(PATH_POINT_RADIUS, 12, 12),
+          new MeshBasicMaterial({
+            color: isPathSelected(selection, path.id)
+              ? PATH_POINT_SELECTED_COLOR
+              : PATH_POINT_COLOR
+          })
+        );
+
+        mesh.position.set(point.position.x, point.position.y, point.position.z);
+        mesh.userData.pathId = path.id;
+        mesh.userData.pathPointId = point.id;
+        this.pathGroup.add(mesh);
+
+        return {
+          pointId: point.id,
+          mesh
+        };
+      });
+
+      this.pathGroup.add(line);
+      this.pathRenderObjects.set(path.id, {
+        line,
+        pointMeshes
+      });
+    }
+
+    this.refreshPathPresentation();
+  }
+
   private configureFogVolumeMesh(
     mesh: Mesh<BufferGeometry, Material[]>,
     materials: Material[]
@@ -5100,6 +5192,39 @@ export class ViewportHost {
     }
   }
 
+  private refreshPathPresentation() {
+    if (this.currentDocument === null) {
+      return;
+    }
+
+    for (const path of Object.values(this.currentDocument.paths)) {
+      const renderObjects = this.pathRenderObjects.get(path.id);
+
+      if (renderObjects === undefined) {
+        continue;
+      }
+
+      const selected = isPathSelected(this.currentSelection, path.id);
+      const hovered =
+        this.hoveredSelection.kind === "paths" &&
+        this.hoveredSelection.ids.includes(path.id);
+
+      renderObjects.line.material.color.setHex(
+        selected ? PATH_SELECTED_COLOR : hovered ? PATH_HOVERED_COLOR : PATH_COLOR
+      );
+
+      for (const pointMesh of renderObjects.pointMeshes) {
+        pointMesh.mesh.material.color.setHex(
+          selected
+            ? PATH_POINT_SELECTED_COLOR
+            : hovered
+              ? PATH_POINT_HOVERED_COLOR
+              : PATH_POINT_COLOR
+        );
+      }
+    }
+  }
+
   private disposeUniqueMaterials(materials: Material[]) {
     for (const material of new Set(materials)) {
       material.dispose();
@@ -5138,6 +5263,22 @@ export class ViewportHost {
     this.brushRenderObjects.clear();
     this.disposePreservedViewportWaterReflectionTargets();
     this.resetViewportWaterSurfaceBindings(false);
+  }
+
+  private clearPaths() {
+    for (const renderObjects of this.pathRenderObjects.values()) {
+      this.pathGroup.remove(renderObjects.line);
+      renderObjects.line.geometry.dispose();
+      renderObjects.line.material.dispose();
+
+      for (const pointMesh of renderObjects.pointMeshes) {
+        this.pathGroup.remove(pointMesh.mesh);
+        pointMesh.mesh.geometry.dispose();
+        pointMesh.mesh.material.dispose();
+      }
+    }
+
+    this.pathRenderObjects.clear();
   }
 
   private clearEntityMarkers() {

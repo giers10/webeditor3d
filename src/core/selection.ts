@@ -7,6 +7,7 @@ export type EditorSelection =
   | { kind: "brushFace"; brushId: string; faceId: BoxFaceId }
   | { kind: "brushEdge"; brushId: string; edgeId: BoxEdgeId }
   | { kind: "brushVertex"; brushId: string; vertexId: BoxVertexId }
+  | { kind: "paths"; ids: string[] }
   | { kind: "entities"; ids: string[] }
   | { kind: "modelInstances"; ids: string[] };
 
@@ -62,6 +63,7 @@ export function areEditorSelectionsEqual(left: EditorSelection, right: EditorSel
     case "brushVertex":
       return right.kind === "brushVertex" && left.brushId === right.brushId && left.vertexId === right.vertexId;
     case "brushes":
+    case "paths":
     case "entities":
     case "modelInstances":
       return right.kind === left.kind && left.ids.length === right.ids.length && left.ids.every((id, index) => id === right.ids[index]);
@@ -112,6 +114,14 @@ export function getSingleSelectedEntityId(selection: EditorSelection): string | 
   return selection.ids[0];
 }
 
+export function getSingleSelectedPathId(selection: EditorSelection): string | null {
+  if (selection.kind !== "paths" || selection.ids.length !== 1) {
+    return null;
+  }
+
+  return selection.ids[0];
+}
+
 export function getSingleSelectedModelInstanceId(selection: EditorSelection): string | null {
   if (selection.kind !== "modelInstances" || selection.ids.length !== 1) {
     return null;
@@ -142,6 +152,10 @@ export function isBrushVertexSelected(selection: EditorSelection, brushId: strin
 
 export function isModelInstanceSelected(selection: EditorSelection, modelInstanceId: string): boolean {
   return selection.kind === "modelInstances" && selection.ids.includes(modelInstanceId);
+}
+
+export function isPathSelected(selection: EditorSelection, pathId: string): boolean {
+  return selection.kind === "paths" && selection.ids.includes(pathId);
 }
 
 export function normalizeSelectionForWhiteboxSelectionMode(selection: EditorSelection, mode: WhiteboxSelectionMode): EditorSelection {

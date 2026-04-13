@@ -3,6 +3,7 @@ import { createOpaqueId } from "../core/ids";
 import { cloneEditorSelection, type EditorSelection } from "../core/selection";
 import type { ToolMode } from "../core/tool-mode";
 import { cloneBoxBrush, type BoxBrush } from "../document/brushes";
+import { cloneScenePath, type ScenePath } from "../document/paths";
 import type { SceneDocument } from "../document/scene-document";
 import {
   cloneEntityInstance,
@@ -15,6 +16,7 @@ import type { EditorCommand } from "./command";
 interface DuplicateSelectionResult {
   selection: EditorSelection;
   brushes: BoxBrush[] | null;
+  paths: ScenePath[] | null;
   entities: EntityInstance[] | null;
   modelInstances: ModelInstance[] | null;
 }
@@ -23,6 +25,16 @@ function duplicateBrush(brush: BoxBrush): BoxBrush {
   const duplicatedBrush = cloneBoxBrush(brush);
   duplicatedBrush.id = createOpaqueId("brush");
   return duplicatedBrush;
+}
+
+function duplicatePath(path: ScenePath): ScenePath {
+  const duplicatedPath = cloneScenePath(path);
+  duplicatedPath.id = createOpaqueId("path");
+  duplicatedPath.points = duplicatedPath.points.map((point) => ({
+    ...point,
+    id: createOpaqueId("path-point")
+  }));
+  return duplicatedPath;
 }
 
 function duplicateEntity(entity: EntityInstance): EntityInstance {
@@ -83,6 +95,34 @@ function createDuplicateSelectionResult(currentDocument: SceneDocument, selectio
         ids: duplicatedBrushes.map((brush) => brush.id)
       },
       brushes: duplicatedBrushes,
+      paths: null,
+      entities: null,
+      modelInstances: null
+    };
+  }
+
+  if (selection.kind === "paths") {
+    if (selection.ids.length === 0) {
+      throw new Error("Select at least one path to duplicate.");
+    }
+
+    const duplicatedPaths = selection.ids.map((pathId) => {
+      const sourcePath = currentDocument.paths[pathId];
+
+      if (sourcePath === undefined) {
+        throw new Error(`Path ${pathId} does not exist.`);
+      }
+
+      return duplicatePath(sourcePath);
+    });
+
+    return {
+      selection: {
+        kind: "paths",
+        ids: duplicatedPaths.map((path) => path.id)
+      },
+      brushes: null,
+      paths: duplicatedPaths,
       entities: null,
       modelInstances: null
     };
@@ -109,6 +149,7 @@ function createDuplicateSelectionResult(currentDocument: SceneDocument, selectio
         ids: duplicatedEntities.map((entity) => entity.id)
       },
       brushes: null,
+      paths: null,
       entities: duplicatedEntities,
       modelInstances: null
     };
@@ -135,12 +176,13 @@ function createDuplicateSelectionResult(currentDocument: SceneDocument, selectio
         ids: duplicatedModelInstances.map((modelInstance) => modelInstance.id)
       },
       brushes: null,
+      paths: null,
       entities: null,
       modelInstances: duplicatedModelInstances
     };
   }
 
-  throw new Error("Selection must contain whitebox solids, entities, or model instances to duplicate.");
+  throw new Error("Selection must contain whitebox solids, paths, entities, or model instances to duplicate.");
 }
 
 export function createDuplicateSelectionCommand(): EditorCommand {
@@ -172,6 +214,16 @@ export function createDuplicateSelectionCommand(): EditorCommand {
           brushes: {
             ...currentDocument.brushes,
             ...Object.fromEntries(duplicateSelectionResult.brushes.map((brush) => [brush.id, cloneBoxBrush(brush)]))
+          }
+        });
+      } else if (duplicateSelectionResult.paths !== null) {
+        context.setDocument({
+          ...currentDocument,
+          paths: {
+            ...currentDocument.paths,
+            ...Object.fromEntries(
+              duplicateSelectionResult.paths.map((path) => [path.id, cloneScenePath(path)])
+            )
           }
         });
       } else if (duplicateSelectionResult.entities !== null) {
@@ -216,6 +268,19 @@ export function createDuplicateSelectionCommand(): EditorCommand {
         context.setDocument({
           ...currentDocument,
           brushes: nextBrushes
+        });
+      } else if (duplicateSelectionResult.paths !== null) {
+        const nextPaths = {
+          ...currentDocument.paths
+        };
+
+        for (const duplicatedPath of duplicateSelectionResult.paths) {
+          delete nextPaths[duplicatedPath.id];
+        }
+
+        context.setDocument({
+          ...currentDocument,
+          paths: nextPaths
         });
       } else if (duplicateSelectionResult.entities !== null) {
         const nextEntities = {

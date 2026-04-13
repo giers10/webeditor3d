@@ -1042,6 +1042,12 @@ export function resolveTransformTarget(
       }
 
       return createEntityTransformTarget(document, selection.ids[0]);
+    case "paths":
+      return {
+        target: null,
+        message:
+          "Path transforms are not available in this slice. Edit path points in the Inspector."
+      };
     case "modelInstances":
       if (selection.ids.length !== 1) {
         return {

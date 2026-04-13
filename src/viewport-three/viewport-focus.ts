@@ -2,11 +2,13 @@ import {
   getSingleSelectedBrushId,
   getSingleSelectedEntityId,
   getSingleSelectedModelInstanceId,
+  getSingleSelectedPathId,
   type EditorSelection
 } from "../core/selection";
 import type { Vec3 } from "../core/vector";
 import type { BoxBrush } from "../document/brushes";
 import type { SceneDocument } from "../document/scene-document";
+import type { ScenePath } from "../document/paths";
 import type { EntityInstance } from "../entities/entity-instances";
 import type { ModelInstance } from "../assets/model-instances";
 import type { ProjectAssetRecord } from "../assets/project-assets";
@@ -232,6 +234,18 @@ function createModelInstanceFocusTarget(modelInstance: ModelInstance, asset: Pro
   );
 }
 
+function includePath(bounds: FocusBoundsAccumulator, path: ScenePath) {
+  for (const point of path.points) {
+    includeBounds(bounds, point.position, point.position);
+  }
+}
+
+function createPathFocusTarget(path: ScenePath): ViewportFocusTarget | null {
+  const bounds = createEmptyBoundsAccumulator();
+  includePath(bounds, path);
+  return finishBounds(bounds);
+}
+
 function includeSphereEntity(bounds: FocusBoundsAccumulator, position: Vec3, radius: number) {
   includeBounds(
     bounds,
@@ -361,6 +375,10 @@ function getSceneFocusTarget(document: SceneDocument): ViewportFocusTarget | nul
     includeModelInstance(bounds, modelInstance, document.assets[modelInstance.assetId]);
   }
 
+  for (const path of Object.values(document.paths)) {
+    includePath(bounds, path);
+  }
+
   for (const entity of Object.values(document.entities)) {
     includeEntity(bounds, entity);
   }
@@ -396,6 +414,16 @@ export function resolveViewportFocusTarget(document: SceneDocument, selection: E
 
     if (modelInstance !== undefined) {
       return createModelInstanceFocusTarget(modelInstance, document.assets[modelInstance.assetId]);
+    }
+  }
+
+  const selectedPathId = getSingleSelectedPathId(selection);
+
+  if (selectedPathId !== null) {
+    const path = document.paths[selectedPathId];
+
+    if (path !== undefined) {
+      return createPathFocusTarget(path);
     }
   }
 
