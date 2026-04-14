@@ -4736,7 +4736,8 @@ function validateProjectDialogue(
 function validateProjectSequence(
   sequence: ProjectSequence,
   path: string,
-  document: Pick<ProjectDocument, "dialogues"> & SceneDocument,
+  dialogues: Pick<ProjectDocument, "dialogues">,
+  context: ProjectSchedulerValidationContext,
   diagnostics: SceneDiagnostic[]
 ) {
   if (sequence.title.trim().length === 0) {
@@ -4767,10 +4768,15 @@ function validateProjectSequence(
 
     switch (step.type) {
       case "controlEffect":
-        validateControlEffect(step.effect, `${stepPath}.effect`, document, diagnostics);
+        validateProjectSchedulerEffect(
+          step.effect,
+          `${stepPath}.effect`,
+          context,
+          diagnostics
+        );
         break;
       case "startDialogue":
-        if (document.dialogues.dialogues[step.dialogueId] === undefined) {
+        if (dialogues.dialogues.dialogues[step.dialogueId] === undefined) {
           diagnostics.push(
             createDiagnostic(
               "error",
@@ -4789,8 +4795,8 @@ function validateProjectSequence(
 }
 
 function validateProjectResources(
-  document: Pick<ProjectDocument, "materials" | "assets" | "dialogues" | "sequences"> &
-    SceneDocument,
+  document: Pick<ProjectDocument, "materials" | "assets" | "dialogues" | "sequences">,
+  context: ProjectSchedulerValidationContext,
   diagnostics: SceneDiagnostic[]
 ) {
   const seenIds = new Map<string, string>();
@@ -4863,7 +4869,7 @@ function validateProjectResources(
     }
 
     registerAuthoredId(sequence.id, path, seenIds, diagnostics);
-    validateProjectSequence(sequence, path, document, diagnostics);
+    validateProjectSequence(sequence, path, document, context, diagnostics);
   }
 }
 
