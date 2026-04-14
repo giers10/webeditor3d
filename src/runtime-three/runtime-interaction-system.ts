@@ -21,6 +21,7 @@ export interface RuntimeDialogueStartSource {
   kind: "interactionLink" | "npc" | "direct";
   sourceEntityId: string | null;
   linkId: string | null;
+  trigger: InteractionLink["trigger"] | null;
 }
 
 export interface RuntimeInteractionDispatcher {
@@ -642,7 +643,8 @@ export class RuntimeInteractionSystem {
         dispatcher.startDialogue(npc.dialogueId, {
           kind: "npc",
           sourceEntityId: npc.entityId,
-          linkId: null
+          linkId: null,
+          trigger: "click"
         });
         return;
       }
@@ -712,7 +714,8 @@ export class RuntimeInteractionSystem {
           dispatcher.startDialogue(link.action.dialogueId, {
             kind: "interactionLink",
             sourceEntityId: link.sourceEntityId,
-            linkId: link.id
+            linkId: link.id,
+            trigger: link.trigger
           });
           break;
         case "control":
