@@ -392,24 +392,24 @@ export function ProjectSequencerPane({
           </div>
         </div>
         <div className="schedule-pane__actions">
-          <button
-            className={`toolbar__button toolbar__button--compact ${
-              mode === "timeline" ? "toolbar__button--primary" : ""
-            }`.trim()}
-            type="button"
-            onClick={() => onSetMode("timeline")}
-          >
-            Timeline
-          </button>
-          <button
-            className={`toolbar__button toolbar__button--compact ${
-              mode === "sequence" ? "toolbar__button--primary" : ""
-            }`.trim()}
-            type="button"
-            onClick={() => onSetMode("sequence")}
-          >
-            Sequence Editor
-          </button>
+          {mode !== "timeline" ? (
+            <button
+              className="toolbar__button toolbar__button--compact"
+              type="button"
+              onClick={() => onSetMode("timeline")}
+            >
+              Timeline
+            </button>
+          ) : null}
+          {mode !== "sequence" ? (
+            <button
+              className="toolbar__button toolbar__button--compact"
+              type="button"
+              onClick={() => onSetMode("sequence")}
+            >
+              Sequence Editor
+            </button>
+          ) : null}
           <button
             className="toolbar__button toolbar__button--compact"
             type="button"
