@@ -2945,6 +2945,94 @@ export function App({ store, initialStatusMessage }: AppProps) {
   }, [editorState.projectDocument.time]);
 
   useEffect(() => {
+    setEditorSimulationClockOverride((currentClock) => {
+      if (currentClock === null) {
+        return null;
+      }
+
+      const reconfiguredClock = reconfigureRuntimeClockState(
+        currentClock,
+        editorState.projectDocument.time
+      );
+
+      return areRuntimeClockStatesEqual(currentClock, reconfiguredClock)
+        ? currentClock
+        : reconfiguredClock;
+    });
+  }, [editorState.projectDocument.time.dayLengthMinutes]);
+
+  useEffect(() => {
+    if (editorState.toolMode !== "play") {
+      return;
+    }
+
+    setEditorSimulationPlaying(false);
+  }, [editorState.toolMode]);
+
+  useEffect(() => {
+    if (editorState.toolMode === "play" || !editorSimulationPlaying) {
+      return;
+    }
+
+    let animationFrame = 0;
+    let previousFrameTime: number | null = null;
+
+    const tick = (timestamp: number) => {
+      if (previousFrameTime !== null) {
+        const dtSeconds = Math.min(0.25, (timestamp - previousFrameTime) / 1000);
+        setEditorSimulationClockOverride((currentClock) =>
+          advanceRuntimeClockState(
+            currentClock ?? createRuntimeClockState(editorState.projectDocument.time),
+            dtSeconds
+          )
+        );
+      }
+
+      previousFrameTime = timestamp;
+      animationFrame = window.requestAnimationFrame(tick);
+    };
+
+    animationFrame = window.requestAnimationFrame(tick);
+
+    return () => {
+      if (animationFrame !== 0) {
+        window.cancelAnimationFrame(animationFrame);
+      }
+    };
+  }, [
+    editorSimulationPlaying,
+    editorState.projectDocument.time,
+    editorState.toolMode
+  ]);
+
+  useEffect(() => {
+    if (editorState.toolMode === "play") {
+      return;
+    }
+
+    try {
+      const nextEditorSimulationScene = applyResolvedControlStateToRuntimeScene(
+        buildRuntimeSceneFromDocument(editorState.document, {
+          loadedModelAssets,
+          runtimeClock: editorSimulationClock
+        })
+      );
+      setEditorSimulationScene(nextEditorSimulationScene);
+      setEditorSimulationMessage(null);
+    } catch (error) {
+      setEditorSimulationScene(null);
+      setEditorSimulationMessage(getErrorMessage(error));
+    }
+  }, [
+    editorSimulationClock.dayCount,
+    editorSimulationClock.dayLengthMinutes,
+    editorSimulationClock.timeOfDayHours,
+    editorState.document,
+    editorState.toolMode,
+    loadedModelAssets
+  ]);
+
+  useEffect(() => {
     if (selectedScheduleRoutineId === null) {
       return;
     }
