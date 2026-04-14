@@ -12,8 +12,8 @@ import {
 import {
   getProjectSequenceHeldSteps,
   getProjectSequenceImpulseSteps,
-  getSequenceStepLabel,
-  type SequenceStep
+  getSequenceClipLabel,
+  type SequenceClip
 } from "../sequencer/project-sequence-steps";
 import {
   getProjectSequences,
@@ -82,8 +82,8 @@ function commitOnEnter(
   commit();
 }
 
-function getControlStepNumericValue(step: Extract<SequenceStep, { type: "controlEffect" }>): number | null {
-  switch (step.effect.type) {
+function getControlClipNumericValue(clip: Extract<SequenceClip, { type: "controlEffect" }>): number | null {
+  switch (clip.effect.type) {
     case "setSoundVolume":
       return step.effect.volume;
     case "setLightIntensity":
@@ -95,8 +95,8 @@ function getControlStepNumericValue(step: Extract<SequenceStep, { type: "control
   }
 }
 
-function getControlStepColorValue(step: Extract<SequenceStep, { type: "controlEffect" }>): string | null {
-  switch (step.effect.type) {
+function getControlClipColorValue(clip: Extract<SequenceClip, { type: "controlEffect" }>): string | null {
+  switch (clip.effect.type) {
     case "setLightColor":
     case "setAmbientLightColor":
     case "setSunLightColor":
@@ -158,6 +158,8 @@ export function ProjectSequencesPanel({
                 >
                   <span className="outliner-item__title">{sequence.title}</span>
                   <span className="outliner-item__meta">
+                    {sequence.clips.length} clip
+                    {sequence.clips.length === 1 ? "" : "s"} ·{" "}
                     {getProjectSequenceHeldSteps(sequence).length} held ·{" "}
                     {getProjectSequenceImpulseSteps(sequence).length} impulse
                   </span>
@@ -189,8 +191,9 @@ export function ProjectSequencesPanel({
       ) : (
         <div className="form-section">
           <div className="material-summary">
-            Held steps are resolved by sequencer timeline clips. Impulse steps
-            can be started immediately from interaction links.
+            Build a sequence from clips. Held clips resolve over a timeline
+            placement; impulse clips can be started immediately from
+            interaction links.
           </div>
           <label className="form-field">
             <span className="label">Title</span>
@@ -210,17 +213,17 @@ export function ProjectSequencesPanel({
           </label>
 
           <div className="label">Steps</div>
-          {selectedSequence.steps.length === 0 ? (
+          {selectedSequence.clips.length === 0 ? (
             <div className="outliner-empty">
-              Add held control, impulse control, or dialogue steps. Interaction
+              Add held control, impulse control, or dialogue clips. Interaction
               links can only run sequences that contain at least one impulse
-              step.
+              clip.
             </div>
           ) : (
             <div className="outliner-list">
-              {selectedSequence.steps.map((step, stepIndex) => {
-                if (step.type === "controlEffect") {
-                  const targetKey = getControlTargetRefKey(step.effect.target);
+              {selectedSequence.clips.map((clip, clipIndex) => {
+                if (clip.type === "controlEffect") {
+                  const targetKey = getControlTargetRefKey(clip.effect.target);
                   const targetOption =
                     getProjectScheduleTargetOptionByKey(targetOptions, targetKey);
                   const effectOptions =
@@ -232,7 +235,7 @@ export function ProjectSequencesPanel({
                       ? null
                       : (() => {
                           try {
-                            return getProjectScheduleEffectOptionId(step.effect);
+                            return getProjectScheduleEffectOptionId(clip.effect);
                           } catch {
                             return null;
                           }
@@ -244,15 +247,15 @@ export function ProjectSequencesPanel({
                         null;
 
                   return (
-                    <div key={`${selectedSequence.id}-${stepIndex}`} className="outliner-item">
+                    <div key={`${selectedSequence.id}-${clipIndex}`} className="outliner-item">
                       <div className="outliner-item__row">
                         <div className="outliner-item__meta">
-                          {getSequenceStepLabel(step)}
+                          {getSequenceClipLabel(clip)}
                         </div>
                         <button
                           className="outliner-item__delete"
                           type="button"
-                          onClick={() => onDeleteStep(selectedSequence.id, stepIndex)}
+                          onClick={() => onDeleteStep(selectedSequence.id, clipIndex)}
                         >
                           x
                         </button>
@@ -260,7 +263,7 @@ export function ProjectSequencesPanel({
 
                       {targetOption === null || effectOptionId === null ? (
                         <div className="material-summary">
-                          {formatControlEffectValue(step.effect)}. This control step
+                          {formatControlEffectValue(clip.effect)}. This control clip
                           is preserved, but the current sequence editor can only edit
                           control targets/effects that are exposed through the
                           existing sequencer target catalog.
@@ -285,7 +288,7 @@ export function ProjectSequencesPanel({
                                 onChange={(event) =>
                                   onSetControlStepTarget(
                                     selectedSequence.id,
-                                    stepIndex,
+                                    clipIndex,
                                     event.currentTarget.value
                                   )
                                 }
@@ -306,7 +309,7 @@ export function ProjectSequencesPanel({
                               onChange={(event) =>
                                 onSetControlStepEffectOption(
                                   selectedSequence.id,
-                                  stepIndex,
+                                  clipIndex,
                                   event.currentTarget
                                     .value as ProjectScheduleEffectOptionId
                                 )
@@ -330,11 +333,11 @@ export function ProjectSequencesPanel({
                                 type="number"
                                 min={selectedEffectOption.min ?? 0}
                                 step={selectedEffectOption.step ?? 0.1}
-                                defaultValue={getControlStepNumericValue(step) ?? 0}
+                                defaultValue={getControlClipNumericValue(clip) ?? 0}
                                 onBlur={(event) =>
                                   onSetControlStepNumericValue(
                                     selectedSequence.id,
-                                    stepIndex,
+                                    clipIndex,
                                     Number(event.currentTarget.value)
                                   )
                                 }
@@ -342,7 +345,7 @@ export function ProjectSequencesPanel({
                                   commitOnEnter(event, () =>
                                     onSetControlStepNumericValue(
                                       selectedSequence.id,
-                                      stepIndex,
+                                      clipIndex,
                                       Number(event.currentTarget.value)
                                     )
                                   )
@@ -359,11 +362,11 @@ export function ProjectSequencesPanel({
                               <input
                                 className="color-input"
                                 type="color"
-                                value={getControlStepColorValue(step) ?? "#ffffff"}
+                                value={getControlClipColorValue(clip) ?? "#ffffff"}
                                 onChange={(event) =>
                                   onSetControlStepColorValue(
                                     selectedSequence.id,
-                                    stepIndex,
+                                    clipIndex,
                                     event.currentTarget.value
                                   )
                                 }
@@ -378,15 +381,15 @@ export function ProjectSequencesPanel({
                                 <select
                                   className="select-input"
                                   value={
-                                    step.effect.type === "playModelAnimation"
-                                      ? step.effect.clipName
+                                    clip.effect.type === "playModelAnimation"
+                                      ? clip.effect.clipName
                                       : targetOption.defaults.animationClipNames?.[0] ??
                                         ""
                                   }
                                   onChange={(event) =>
                                     onSetControlStepAnimationClip(
                                       selectedSequence.id,
-                                      stepIndex,
+                                      clipIndex,
                                       event.currentTarget.value
                                     )
                                   }
@@ -404,14 +407,14 @@ export function ProjectSequencesPanel({
                                 <input
                                   type="checkbox"
                                   checked={
-                                    step.effect.type === "playModelAnimation"
-                                      ? step.effect.loop !== false
+                                    clip.effect.type === "playModelAnimation"
+                                      ? clip.effect.loop !== false
                                       : true
                                   }
                                   onChange={(event) =>
                                     onSetControlStepAnimationLoop(
                                       selectedSequence.id,
-                                      stepIndex,
+                                      clipIndex,
                                       event.currentTarget.checked
                                     )
                                   }
@@ -426,17 +429,17 @@ export function ProjectSequencesPanel({
                   );
                 }
 
-                if (step.type === "startDialogue") {
+                if (clip.type === "startDialogue") {
                   return (
-                    <div key={`${selectedSequence.id}-${stepIndex}`} className="outliner-item">
+                    <div key={`${selectedSequence.id}-${clipIndex}`} className="outliner-item">
                       <div className="outliner-item__row">
                         <div className="outliner-item__meta">
-                          {getSequenceStepLabel(step)}
+                          {getSequenceClipLabel(clip)}
                         </div>
                         <button
                           className="outliner-item__delete"
                           type="button"
-                          onClick={() => onDeleteStep(selectedSequence.id, stepIndex)}
+                          onClick={() => onDeleteStep(selectedSequence.id, clipIndex)}
                         >
                           x
                         </button>
@@ -446,11 +449,11 @@ export function ProjectSequencesPanel({
                         <span className="label">Dialogue</span>
                         <select
                           className="select-input"
-                          value={step.dialogueId}
+                          value={clip.dialogueId}
                           onChange={(event) =>
                             onSetDialogueStepDialogueId(
                               selectedSequence.id,
-                              stepIndex,
+                              clipIndex,
                               event.currentTarget.value
                             )
                           }
@@ -467,22 +470,22 @@ export function ProjectSequencesPanel({
                 }
 
                 return (
-                  <div key={`${selectedSequence.id}-${stepIndex}`} className="outliner-item">
+                  <div key={`${selectedSequence.id}-${clipIndex}`} className="outliner-item">
                     <div className="outliner-item__row">
                       <div className="outliner-item__meta">
-                        {getSequenceStepLabel(step)}
+                        {getSequenceClipLabel(clip)}
                       </div>
                       <button
                         className="outliner-item__delete"
                         type="button"
-                        onClick={() => onDeleteStep(selectedSequence.id, stepIndex)}
+                        onClick={() => onDeleteStep(selectedSequence.id, clipIndex)}
                       >
                         x
                       </button>
                     </div>
 
                     <div className="material-summary">
-                      This impulse step is preserved, but the current sequence
+                      This impulse clip is preserved, but the current sequence
                       editor only exposes direct dialogue authoring for authored
                       project sequences.
                     </div>
@@ -501,7 +504,7 @@ export function ProjectSequencesPanel({
                 onAddHeldControlStep(selectedSequence.id, targetOptions[0]?.key ?? "")
               }
             >
-              Add Held Control Step
+              Add Held Control Clip
             </button>
             <button
               className="toolbar__button"
@@ -514,7 +517,7 @@ export function ProjectSequencesPanel({
                 )
               }
             >
-              Add Impulse Control Step
+              Add Impulse Control Clip
             </button>
             <button
               className="toolbar__button"
@@ -524,7 +527,7 @@ export function ProjectSequencesPanel({
                 onAddDialogueStep(selectedSequence.id, dialogueList[0]?.id ?? "")
               }
             >
-              Add Dialogue Step
+              Add Dialogue Clip
             </button>
           </div>
         </div>
