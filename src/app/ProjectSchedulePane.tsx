@@ -109,7 +109,11 @@ function getRoutineSummary(
       summaryParts.push(formatControlEffectValue(pathEffect));
     }
   } else {
-    summaryParts.push(formatControlEffectValue(routine.effects[0]!));
+    const effect = heldSteps[0];
+
+    if (effect?.type === "controlEffect") {
+      summaryParts.push(formatControlEffectValue(effect.effect));
+    }
   }
 
   summaryParts.push(`P${routine.priority}`);
@@ -128,7 +132,8 @@ function isRoutineEffectInactive(
     );
   }
 
-  const effect = routine.effects[0];
+  const effect =
+    heldSteps[0]?.type === "controlEffect" ? heldSteps[0].effect : undefined;
 
   if (effect === undefined) {
     return false;
