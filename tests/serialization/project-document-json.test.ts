@@ -2,12 +2,15 @@ import { describe, expect, it } from "vitest";
 
 import {
   createActorControlTargetRef,
+  createLightControlTargetRef,
+  createSetLightIntensityControlEffect,
   createSetActorPresenceControlEffect
 } from "../../src/controls/control-surface";
 import {
   AUTHORED_OBJECT_STATE_SCENE_DOCUMENT_VERSION,
   DEFAULT_PROJECT_NAME,
   DEFAULT_SCENE_EDITOR_SNAP_STEP,
+  EXPANDED_CONTROL_SURFACE_SCENE_DOCUMENT_VERSION,
   NPC_COLLIDER_SCENE_DOCUMENT_VERSION,
   NPC_PRESENCE_SCENE_DOCUMENT_VERSION,
   PLAYER_START_GAMEPAD_CAMERA_LOOK_SCENE_DOCUMENT_VERSION,
@@ -24,6 +27,7 @@ import {
   createDefaultWorldTimePhaseProfile
 } from "../../src/document/world-settings";
 import {
+  createPointLightEntity,
   createNpcEntity,
   createNpcTimeWindowPresence,
   createSceneEntryEntity,
@@ -243,6 +247,104 @@ describe("project document JSON", () => {
     expect(
       parseProjectDocumentJson(serializeProjectDocument(document))
     ).toEqual(document);
+  });
+
+  it("round-trips project scheduler routines bound to typed light control effects", () => {
+    const document = createEmptyProjectDocument({
+      name: "Lighting Project"
+    });
+    const pointLight = createPointLightEntity({
+      id: "entity-point-light-main",
+      intensity: 1.25
+    });
+
+    document.scenes[document.activeSceneId].entities[pointLight.id] = pointLight;
+    document.scheduler.routines["routine-night-light"] =
+      createProjectScheduleRoutine({
+        id: "routine-night-light",
+        title: "Night Light",
+        target: createLightControlTargetRef("pointLight", pointLight.id),
+        startHour: 18,
+        endHour: 6,
+        effect: createSetLightIntensityControlEffect({
+          target: createLightControlTargetRef("pointLight", pointLight.id),
+          intensity: 0.35
+        })
+      });
+
+    expect(
+      parseProjectDocumentJson(serializeProjectDocument(document))
+    ).toEqual(document);
+  });
+
+  it("migrates v47 project documents with typed scheduler control effects to the current version", () => {
+    const pointLight = createPointLightEntity({
+      id: "entity-point-light-main",
+      intensity: 1.25
+    });
+    const migratedDocument = parseProjectDocumentJson(
+      JSON.stringify({
+        ...createEmptyProjectDocument({
+          name: "Legacy Scheduler Project"
+        }),
+        version: EXPANDED_CONTROL_SURFACE_SCENE_DOCUMENT_VERSION,
+        scenes: {
+          "scene-main": {
+            ...createEmptyProjectScene({
+              id: "scene-main",
+              name: "Legacy Scene"
+            }),
+            entities: {
+              [pointLight.id]: pointLight
+            }
+          }
+        },
+        scheduler: {
+          routines: {
+            "routine-night-light": {
+              id: "routine-night-light",
+              title: "Night Light",
+              enabled: true,
+              target: {
+                kind: "entity",
+                entityKind: "pointLight",
+                entityId: pointLight.id
+              },
+              days: {
+                mode: "everyDay"
+              },
+              startHour: 18,
+              endHour: 6,
+              priority: 0,
+              effect: {
+                type: "setLightIntensity",
+                target: {
+                  kind: "entity",
+                  entityKind: "pointLight",
+                  entityId: pointLight.id
+                },
+                intensity: 0.35
+              }
+            }
+          }
+        }
+      })
+    );
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.scheduler.routines["routine-night-light"]).toEqual(
+      createProjectScheduleRoutine({
+        id: "routine-night-light",
+        title: "Night Light",
+        target: createLightControlTargetRef("pointLight", pointLight.id),
+        startHour: 18,
+        endHour: 6,
+        effect: createSetLightIntensityControlEffect({
+          target: createLightControlTargetRef("pointLight", pointLight.id),
+          intensity: 0.35
+        })
+      })
+    );
   });
 
   it("migrates pre-path project documents to empty scene path registries", () => {
