@@ -14,6 +14,7 @@ import {
   DEFAULT_SCENE_EDITOR_SNAP_STEP,
   NPC_COLLIDER_SCENE_DOCUMENT_VERSION,
   PROJECT_DIALOGUE_LIBRARY_SCENE_DOCUMENT_VERSION,
+  PROJECT_SEQUENCE_EFFECTS_SCENE_DOCUMENT_VERSION,
   PROJECT_SEQUENCE_TIMING_SCENE_DOCUMENT_VERSION,
   SCHEDULER_ACTOR_ROUTINE_EFFECTS_SCENE_DOCUMENT_VERSION,
   NPC_PRESENCE_SCENE_DOCUMENT_VERSION,
@@ -303,6 +304,88 @@ describe("project document JSON", () => {
             stepClass: "impulse",
             type: "startDialogue",
             dialogueId: "dialogue-legacy"
+          }
+        ]
+      })
+    );
+  });
+
+  it("migrates legacy toggle visibility sequence effects to unified visibility effects", () => {
+    const document = createEmptyProjectDocument({
+      name: "Legacy Visibility Sequence Project"
+    });
+
+    document.sequences.sequences["sequence-legacy-visibility"] =
+      createProjectSequence({
+        id: "sequence-legacy-visibility",
+        title: "Legacy Visibility Sequence",
+        effects: [
+          {
+            stepClass: "impulse",
+            type: "setVisibility",
+            target: {
+              kind: "brush",
+              brushId: "brush-legacy-wall"
+            },
+            mode: "hide"
+          }
+        ]
+      });
+    document.scenes[document.activeSceneId]!.brushes["brush-legacy-wall"] = {
+      id: "brush-legacy-wall",
+      name: "Legacy Wall",
+      visible: true,
+      enabled: true,
+      materialId: "material-starter-wall",
+      geometry: {
+        type: "box",
+        width: 1,
+        height: 1,
+        depth: 1
+      },
+      transform: {
+        position: { x: 0, y: 0, z: 0 },
+        rotationDegrees: { x: 0, y: 0, z: 0 },
+        scale: { x: 1, y: 1, z: 1 }
+      },
+      faces: {}
+    } as never;
+
+    const legacyDocument = JSON.parse(
+      serializeProjectDocument(document)
+    ) as Record<string, unknown>;
+    legacyDocument.version = PROJECT_SEQUENCE_EFFECTS_SCENE_DOCUMENT_VERSION;
+    const legacySequence = (
+      legacyDocument.sequences as { sequences: Record<string, unknown> }
+    ).sequences["sequence-legacy-visibility"] as {
+      effects: Array<Record<string, unknown>>;
+    };
+    legacySequence.effects = [
+      {
+        stepClass: "impulse",
+        type: "toggleVisibility",
+        targetBrushId: "brush-legacy-wall",
+        visible: false
+      }
+    ];
+
+    const migratedDocument = parseProjectDocumentJson(
+      JSON.stringify(legacyDocument)
+    );
+
+    expect(
+      migratedDocument.sequences.sequences["sequence-legacy-visibility"]
+    ).toEqual(
+      expect.objectContaining({
+        effects: [
+          {
+            stepClass: "impulse",
+            type: "setVisibility",
+            target: {
+              kind: "brush",
+              brushId: "brush-legacy-wall"
+            },
+            mode: "hide"
           }
         ]
       })
