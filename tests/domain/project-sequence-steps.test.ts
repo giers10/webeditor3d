@@ -73,9 +73,12 @@ describe("project sequence steps", () => {
     expect(getInteractionLinkSequenceSteps(visibilityLink)).toEqual([
       {
         stepClass: "impulse",
-        type: "toggleVisibility",
-        targetBrushId: "brush-main",
-        visible: false
+        type: "setVisibility",
+        target: {
+          kind: "brush",
+          brushId: "brush-main"
+        },
+        mode: "hide"
       }
     ]);
   });
