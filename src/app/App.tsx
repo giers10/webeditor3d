@@ -303,6 +303,7 @@ import {
 import {
   createFollowActorPathControlEffect,
   createPlayActorAnimationControlEffect,
+  createSetActorPresenceControlEffect,
   formatControlEffectValue,
   formatControlTargetRef,
   getControlTargetRefKey
@@ -10381,26 +10382,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
                     upsertActorRoutineEffect(
                       routine,
-                      createProjectScheduleRoutine({
-                        title: routine.title,
-                        target: routine.target,
-                        effects: routine.effects
-                      }).effects.find(
-                        (effect) => effect.type === "setActorPresence"
-                      ) ?? {
-                        type: "setActorPresence",
+                      createSetActorPresenceControlEffect({
                         target: routine.target,
                         active
-                      }
+                      })
                     );
-                    const effect = findProjectScheduleRoutineEffect(
-                      routine,
-                      "setActorPresence"
-                    );
-
-                    if (effect !== null) {
-                      effect.active = active;
-                    }
                   }
                 )
               }
