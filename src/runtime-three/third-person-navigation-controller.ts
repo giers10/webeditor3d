@@ -498,7 +498,10 @@ export class ThirdPersonNavigationController implements NavigationController {
   };
 
   private handlePointerDown = (event: PointerEvent) => {
-    if (event.button !== 0) {
+    if (
+      event.button !== 0 ||
+      this.context?.isInputSuspended() === true
+    ) {
       return;
     }
 
@@ -508,7 +511,10 @@ export class ThirdPersonNavigationController implements NavigationController {
   };
 
   private handlePointerMove = (event: PointerEvent) => {
-    if (!this.dragging) {
+    if (
+      !this.dragging ||
+      this.context?.isInputSuspended() === true
+    ) {
       return;
     }
 
@@ -528,6 +534,10 @@ export class ThirdPersonNavigationController implements NavigationController {
   };
 
   private handleWheel = (event: WheelEvent) => {
+    if (this.context?.isInputSuspended() === true) {
+      return;
+    }
+
     event.preventDefault();
     this.cameraDistance = clampCameraDistance(
       this.cameraDistance + event.deltaY * 0.01
