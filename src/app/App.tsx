@@ -370,7 +370,6 @@ import { ProjectDialoguesPanel } from "./ProjectDialoguesPanel";
 import { ProjectSequencesPanel } from "./ProjectSequencesPanel";
 import { ProjectSequencerPane } from "./ProjectSequencerPane";
 import {
-  getHeldSequenceControlEffects,
   getProjectSequenceHeldSteps,
   getProjectSequenceImpulseSteps
 } from "../sequencer/project-sequence-steps";
@@ -1911,9 +1910,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
   );
   const projectSequenceList = getProjectSequences(
     editorState.projectDocument.sequences
-  );
-  const projectHeldSequenceList = projectSequenceList.filter(
-    (sequence) => getProjectSequenceHeldSteps(sequence).length > 0
   );
   const projectImpulseSequenceList = projectSequenceList.filter(
     (sequence) => getProjectSequenceImpulseSteps(sequence).length > 0
