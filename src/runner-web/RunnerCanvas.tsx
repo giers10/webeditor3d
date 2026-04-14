@@ -9,6 +9,7 @@ import type { FirstPersonTelemetry } from "../runtime-three/navigation-controlle
 import {
   RuntimeHost,
   type RuntimeDialogueState,
+  type RuntimePauseState,
   type RuntimeSceneExitTransitionRequest,
   type RuntimeSceneLoadState
 } from "../runtime-three/runtime-host";
@@ -72,6 +73,10 @@ export function RunnerCanvas({
     useState<RuntimeInteractionPrompt | null>(null);
   const [runtimeDialogue, setRuntimeDialogue] =
     useState<RuntimeDialogueState | null>(null);
+  const [runtimePauseState, setRuntimePauseState] = useState<RuntimePauseState>({
+    paused: false,
+    source: null
+  });
   const [firstPersonTelemetry, setFirstPersonTelemetry] =
     useState<FirstPersonTelemetry | null>(null);
   const overlayMessage = runnerMessage ?? sceneLoadState.message;
@@ -126,6 +131,7 @@ export function RunnerCanvas({
         onInteractionPromptChange(prompt);
       });
       runtimeHost.setRuntimeDialogueHandler(setRuntimeDialogue);
+      runtimeHost.setRuntimePauseStateHandler(setRuntimePauseState);
       setRunnerMessage(null);
 
       return () => {
@@ -134,6 +140,10 @@ export function RunnerCanvas({
         setFirstPersonTelemetry(null);
         setInteractionPrompt(null);
         setRuntimeDialogue(null);
+        setRuntimePauseState({
+          paused: false,
+          source: null
+        });
         runtimeHost.dispose();
         hostRef.current = null;
       };
@@ -204,7 +214,7 @@ export function RunnerCanvas({
   return (
     <div
       ref={containerRef}
-      className={`runner-canvas ${navigationMode === "firstPerson" && firstPersonTelemetry?.cameraSubmerged ? "runner-canvas--underwater" : ""}`}
+      className={`runner-canvas ${navigationMode === "firstPerson" && firstPersonTelemetry?.cameraSubmerged ? "runner-canvas--underwater" : ""} ${runnerReady && runtimePauseState.paused ? "runner-canvas--paused" : ""}`}
       data-testid="runner-shell"
       aria-label="Built-in scene runner"
       aria-busy={!runnerReady}
@@ -260,7 +270,21 @@ export function RunnerCanvas({
       firstPersonTelemetry?.cameraSubmerged ? (
         <div className="runner-canvas__underwater" aria-hidden="true" />
       ) : null}
-      {runnerReady && navigationMode === "firstPerson" ? (
+      {runnerReady && runtimePauseState.paused ? (
+        <>
+          <div className="runner-canvas__pause-veil" aria-hidden="true" />
+          <div
+            className="runner-canvas__pause-title"
+            data-testid="runner-pause-overlay"
+            aria-hidden="true"
+          >
+            Pause
+          </div>
+        </>
+      ) : null}
+      {runnerReady &&
+      navigationMode === "firstPerson" &&
+      !runtimePauseState.paused ? (
         <div className="runner-canvas__crosshair" aria-hidden="true" />
       ) : null}
       {runnerReady && interactionPrompt !== null ? (
