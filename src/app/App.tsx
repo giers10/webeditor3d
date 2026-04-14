@@ -7369,11 +7369,13 @@ export function App({ store, initialStatusMessage }: AppProps) {
       return;
     }
 
-    const defaultSequence = ensureDefaultImpulseProjectSequence(
-      selectedInteractionSource
-    );
+    const defaultSequence = projectImpulseSequenceList[0] ?? null;
 
     if (defaultSequence === null) {
+      openSequencerSequenceEditor();
+      setStatusMessage(
+        "Open the Sequencer sequence editor and author a sequence with at least one impulse clip before adding a sequence link."
+      );
       return;
     }
 
@@ -7902,9 +7904,13 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
 
     if (actionType === "runSequence") {
-      const defaultSequence = ensureDefaultImpulseProjectSequence(sourceEntity);
+      const defaultSequence = projectImpulseSequenceList[0] ?? null;
 
       if (defaultSequence === null) {
+        openSequencerSequenceEditor();
+        setStatusMessage(
+          "Open the Sequencer sequence editor and author a sequence with at least one impulse clip before switching this link to run sequence."
+        );
         return;
       }
 
