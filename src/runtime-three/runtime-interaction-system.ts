@@ -5,7 +5,9 @@ import {
 } from "../interactions/interaction-links";
 import {
   getInteractionLinkImpulseSteps,
-  type ImpulseSequenceStep
+  type ImpulseSequenceStep,
+  type SequenceVisibilityMode,
+  type SequenceVisibilityTarget
 } from "../sequencer/project-sequence-steps";
 
 import type {
@@ -33,6 +35,11 @@ export interface RuntimeInteractionDispatcher {
   toggleBrushVisibility(
     brushId: string,
     visible: boolean | undefined,
+    link: InteractionLink
+  ): void;
+  setVisibility?(
+    target: SequenceVisibilityTarget,
+    mode: SequenceVisibilityMode,
     link: InteractionLink
   ): void;
   playAnimation(
@@ -757,6 +764,25 @@ export class RuntimeInteractionSystem {
           step.targetBrushId,
           step.visible,
           link
+        );
+        return;
+      case "setVisibility":
+        if (dispatcher.setVisibility !== undefined) {
+          dispatcher.setVisibility(step.target, step.mode, link);
+          return;
+        }
+
+        if (step.target.kind === "brush") {
+          dispatcher.toggleBrushVisibility(
+            step.target.brushId,
+            step.mode === "toggle" ? undefined : step.mode === "show",
+            link
+          );
+          return;
+        }
+
+        throw new Error(
+          "Runtime visibility steps targeting model instances require dispatcher.setVisibility support."
         );
         return;
       case "startDialogue":
