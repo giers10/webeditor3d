@@ -41,6 +41,7 @@ import type { BoxBrush } from "../document/brushes";
 import {
   applyControlEffectToResolvedState,
   createInteractionLinkResolvedControlSource,
+  type ActorControlTargetRef,
   type ControlEffect,
   type InteractionControlTargetRef,
   type LightControlTargetRef,
@@ -130,6 +131,7 @@ import type {
   RuntimeTeleportTarget
 } from "./runtime-scene-build";
 import {
+  applyActorScheduleStateToNpcDefinition,
   buildRuntimeNpcCollider,
   createRuntimeNpcFromDefinition
 } from "./runtime-scene-build";
