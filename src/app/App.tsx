@@ -4324,6 +4324,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
         `Created sequencer clip for ${targetOption.label}.`
       );
       setSchedulePaneOpen(true);
+      setSequencerMode("timeline");
       setSelectedScheduleRoutineId(nextRoutine.id);
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
@@ -11968,7 +11969,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   <button
                     className="toolbar__button toolbar__button--compact"
                     type="button"
-                    onClick={() => setSchedulePaneOpen(true)}
+                    onClick={() => {
+                      setSchedulePaneOpen(true);
+                      setSequencerMode("timeline");
+                    }}
                   >
                     Open Sequencer
                   </button>
@@ -16757,6 +16761,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           type="button"
                           onClick={() => {
                             setSchedulePaneOpen(true);
+                            setSequencerMode("timeline");
                             const matchingRoutine = Object.values(
                               editorState.projectDocument.scheduler.routines
                             ).find(
