@@ -88,6 +88,10 @@ import {
 } from "../document/world-settings";
 import { getNpcColliderHeight } from "../entities/entity-instances";
 import type { InteractionLink } from "../interactions/interaction-links";
+import type {
+  SequenceVisibilityMode,
+  SequenceVisibilityTarget
+} from "../sequencer/project-sequence-steps";
 
 import { FirstPersonNavigationController } from "./first-person-navigation-controller";
 import type {
@@ -3074,7 +3078,47 @@ export class RuntimeHost {
       return;
     }
 
+    if (this.runtimeScene !== null) {
+      const brush =
+        this.runtimeScene.brushes.find((candidate) => candidate.brushId === brushId) ??
+        null;
+
+      if (brush !== null) {
+        brush.visible = visible ?? !brush.visible;
+      }
+    }
+
     mesh.visible = visible ?? !mesh.visible;
+  }
+
+  private applyVisibilitySequenceEffect(
+    target: SequenceVisibilityTarget,
+    mode: SequenceVisibilityMode
+  ) {
+    const explicitVisible =
+      mode === "toggle" ? undefined : mode === "show";
+
+    if (target.kind === "brush") {
+      this.applyToggleBrushVisibilityAction(target.brushId, explicitVisible);
+      return;
+    }
+
+    const runtimeModelInstance =
+      this.runtimeScene?.modelInstances.find(
+        (candidate) => candidate.instanceId === target.modelInstanceId
+      ) ?? null;
+    const currentVisible =
+      runtimeModelInstance?.visible ??
+      this.modelRenderObjects.get(target.modelInstanceId)?.visible ??
+      true;
+
+    this.applyModelInstanceVisibilityControl(
+      {
+        kind: "modelInstance",
+        modelInstanceId: target.modelInstanceId
+      },
+      explicitVisible ?? !currentVisible
+    );
   }
 
   private applyPlayAnimationAction(
@@ -3132,6 +3176,9 @@ export class RuntimeHost {
       },
       toggleBrushVisibility: (brushId, visible) => {
         this.applyToggleBrushVisibilityAction(brushId, visible);
+      },
+      setVisibility: (target, mode) => {
+        this.applyVisibilitySequenceEffect(target, mode);
       },
       playAnimation: (instanceId, clipName, loop) => {
         this.applyPlayAnimationAction(instanceId, clipName, loop);
