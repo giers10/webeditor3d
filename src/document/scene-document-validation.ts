@@ -3103,6 +3103,17 @@ function validateControlEffect(
         );
       }
       return;
+    case "playActorAnimation":
+    case "followActorPath":
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "unsupported-scene-control-actor-routine-effect",
+          "Actor animation and actor path routine effects are scheduler-owned in this slice and are not supported on scene interaction control actions.",
+          `${path}.type`
+        )
+      );
+      return;
     case "playModelAnimation": {
       const targetModelInstance =
         document.modelInstances[effect.target.modelInstanceId];
