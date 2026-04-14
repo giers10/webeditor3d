@@ -43,6 +43,32 @@ import {
 } from "../../src/serialization/scene-document-json";
 
 describe("project document JSON", () => {
+  it("round-trips project dialogue library resources", () => {
+    const document = createEmptyProjectDocument({
+      name: "Dialogue Project"
+    });
+    document.dialogues.dialogues["dialogue-market"] = {
+      id: "dialogue-market",
+      title: "Market Greeting",
+      lines: [
+        {
+          id: "dialogue-line-1",
+          speakerName: "Merchant",
+          text: "Fresh fruit, just in."
+        },
+        {
+          id: "dialogue-line-2",
+          speakerName: null,
+          text: "The crowd keeps moving around you."
+        }
+      ]
+    };
+
+    expect(parseProjectDocumentJson(serializeProjectDocument(document))).toEqual(
+      document
+    );
+  });
+
   it("round-trips the project name and authored scene loading overlay settings", () => {
     const cellarEntry = createSceneEntryEntity({
       id: "entity-scene-entry-cellar-stairs",
@@ -415,6 +441,34 @@ describe("project document JSON", () => {
         })
       })
     );
+  });
+
+  it("migrates v49 project documents without dialogue libraries to the current version", () => {
+    const migratedDocument = parseProjectDocumentJson(
+      JSON.stringify({
+        version: SCHEDULER_ACTOR_ROUTINE_EFFECTS_SCENE_DOCUMENT_VERSION,
+        name: "Legacy Dialogue Project",
+        time: createDefaultProjectTimeSettings(),
+        scheduler: {
+          routines: {}
+        },
+        activeSceneId: "scene-main",
+        scenes: {
+          "scene-main": createEmptyProjectScene({
+            id: "scene-main",
+            name: "Main"
+          })
+        },
+        materials: {},
+        textures: {},
+        assets: {}
+      })
+    );
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.dialogues).toEqual({
+      dialogues: {}
+    });
   });
 
   it("migrates pre-path project documents to empty scene path registries", () => {
