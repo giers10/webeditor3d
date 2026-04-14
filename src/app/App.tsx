@@ -10596,6 +10596,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   isActive={activePanelId === panelId}
                   world={editorState.document.world}
                   sceneDocument={editorState.document}
+                  editorSimulationScene={editorSimulationScene}
+                  editorSimulationClock={editorSimulationClock}
                   projectAssets={editorState.document.assets}
                   loadedModelAssets={loadedModelAssets}
                   loadedImageAssets={loadedImageAssets}
