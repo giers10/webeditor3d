@@ -1016,6 +1016,7 @@ export function arePlayerStartInputBindingsEqual(
     left.keyboard.jump === right.keyboard.jump &&
     left.keyboard.sprint === right.keyboard.sprint &&
     left.keyboard.crouch === right.keyboard.crouch &&
+    left.keyboard.pauseTime === right.keyboard.pauseTime &&
     left.gamepad.moveForward === right.gamepad.moveForward &&
     left.gamepad.moveBackward === right.gamepad.moveBackward &&
     left.gamepad.moveLeft === right.gamepad.moveLeft &&
@@ -1023,6 +1024,7 @@ export function arePlayerStartInputBindingsEqual(
     left.gamepad.jump === right.gamepad.jump &&
     left.gamepad.sprint === right.gamepad.sprint &&
     left.gamepad.crouch === right.gamepad.crouch &&
+    left.gamepad.pauseTime === right.gamepad.pauseTime &&
     left.gamepad.cameraLook === right.gamepad.cameraLook
   );
 }

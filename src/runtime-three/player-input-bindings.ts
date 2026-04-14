@@ -19,6 +19,7 @@ export interface PlayerStartActionInputState
   jump: number;
   sprint: number;
   crouch: number;
+  pauseTime: number;
 }
 
 export interface PlayerStartLookInputState {
@@ -136,6 +137,8 @@ function readSingleGamepadActionBinding(
       return readGamepadButtonStrength(gamepad.buttons[2]);
     case "buttonNorth":
       return readGamepadButtonStrength(gamepad.buttons[3]);
+    case "buttonMenu":
+      return readGamepadButtonStrength(gamepad.buttons[9]);
     case "leftShoulder":
       return readGamepadButtonStrength(gamepad.buttons[4]);
     case "rightShoulder":
@@ -288,8 +291,21 @@ export function resolvePlayerStartActionInputs(
     crouch: Math.max(
       pressedKeys.has(bindings.keyboard.crouch) ? 1 : 0,
       readGamepadActionBindingStrength(gamepads, bindings.gamepad.crouch)
+    ),
+    pauseTime: Math.max(
+      pressedKeys.has(bindings.keyboard.pauseTime) ? 1 : 0,
+      readGamepadActionBindingStrength(gamepads, bindings.gamepad.pauseTime)
     )
   };
+}
+
+export function resolvePlayerStartPauseInput(
+  pressedKeys: ReadonlySet<string>,
+  bindings: PlayerStartInputBindings,
+  gamepads: ArrayLike<Gamepad | null> | null | undefined = getAvailableGamepads()
+): number {
+  return resolvePlayerStartActionInputs(pressedKeys, bindings, gamepads)
+    .pauseTime;
 }
 
 export function resolvePlayerStartLookInput(

@@ -525,7 +525,10 @@ export class FirstPersonNavigationController implements NavigationController {
   };
 
   private handleMouseMove = (event: MouseEvent) => {
-    if (!this.pointerLocked) {
+    if (
+      !this.pointerLocked ||
+      this.context?.isInputSuspended() === true
+    ) {
       return;
     }
 
@@ -554,6 +557,7 @@ export class FirstPersonNavigationController implements NavigationController {
   private handlePointerDown = () => {
     if (
       this.context === null ||
+      this.context.isInputSuspended() ||
       document.pointerLockElement === this.context.domElement
     ) {
       return;

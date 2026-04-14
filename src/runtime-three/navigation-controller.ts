@@ -144,6 +144,7 @@ export interface RuntimeControllerContext {
     desiredCameraPosition: Vec3,
     radius: number
   ): Vec3;
+  isInputSuspended(): boolean;
   setRuntimeMessage(message: string | null): void;
   setPlayerControllerTelemetry(
     telemetry: PlayerControllerTelemetry | null
