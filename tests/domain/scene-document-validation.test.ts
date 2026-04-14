@@ -29,7 +29,10 @@ import {
   createTriggerVolumeEntity
 } from "../../src/entities/entity-instances";
 import { createProjectAssetStorageKey, type AudioAssetRecord, type ModelAssetRecord } from "../../src/assets/project-assets";
-import { createControlInteractionLink } from "../../src/interactions/interaction-links";
+import {
+  createControlInteractionLink,
+  createStartDialogueInteractionLink
+} from "../../src/interactions/interaction-links";
 import { createProjectScheduleRoutine } from "../../src/scheduler/project-scheduler";
 
 describe("validateSceneDocument", () => {
@@ -185,6 +188,32 @@ describe("validateSceneDocument", () => {
         expect.objectContaining({
           code: "invalid-control-ambient-light-color",
           path: "interactionLinks.link-ambient-color.action.effect.colorHex"
+        })
+      ])
+    );
+  });
+
+  it("rejects interaction dialogue links that reference missing dialogue resources", () => {
+    const interactable = createInteractableEntity({
+      id: "entity-interactable-main"
+    });
+    const document = createEmptySceneDocument();
+    document.entities[interactable.id] = interactable;
+    document.interactionLinks["link-dialogue-missing"] =
+      createStartDialogueInteractionLink({
+        id: "link-dialogue-missing",
+        sourceEntityId: interactable.id,
+        trigger: "click",
+        dialogueId: "dialogue-missing"
+      });
+
+    const validation = validateSceneDocument(document);
+
+    expect(validation.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "missing-dialogue-resource",
+          path: "interactionLinks.link-dialogue-missing.action.dialogueId"
         })
       ])
     );
