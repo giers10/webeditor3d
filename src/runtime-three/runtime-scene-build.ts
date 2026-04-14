@@ -58,6 +58,10 @@ import {
   type WorldSettings
 } from "../document/world-settings";
 import {
+  cloneProjectDialogueLibrary,
+  type ProjectDialogueLibrary
+} from "../dialogues/project-dialogues";
+import {
   type CharacterColliderSettings,
   clonePlayerStartInputBindings,
   createPlayerStartMovementTemplate,
@@ -379,6 +383,7 @@ export interface RuntimeSpawnPoint {
 export interface RuntimeSceneDefinition {
   time: ProjectTimeSettings;
   scheduler: RuntimeProjectSchedulerState;
+  dialogues: ProjectDialogueLibrary;
   world: WorldSettings;
   control: RuntimeControlSurfaceDefinition;
   localLights: RuntimeLocalLightCollection;
@@ -1657,6 +1662,7 @@ export function buildRuntimeSceneFromDocument(
       document: cloneProjectScheduler(document.scheduler),
       resolved: collections.scheduler
     }),
+    dialogues: cloneProjectDialogueLibrary(document.dialogues),
     world: cloneWorldSettings(document.world),
     control,
     localLights: collections.localLights,
