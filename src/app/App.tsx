@@ -189,6 +189,7 @@ import {
   areProjectTimeSettingsEqual,
   cloneProjectTimeSettings,
   formatTimeOfDayHours,
+  HOURS_PER_DAY,
   normalizeTimeOfDayHours,
   type ProjectTimeSettings
 } from "../document/project-time-settings";
@@ -337,7 +338,11 @@ import {
 } from "../runtime-three/runtime-global-state";
 import type { RuntimeSceneExitTransitionRequest } from "../runtime-three/runtime-host";
 import {
+  advanceRuntimeClockState,
   areRuntimeClockStatesEqual,
+  createRuntimeClockState,
+  reconfigureRuntimeClockState,
+  resolveRuntimeTimeState,
   type RuntimeClockState
 } from "../runtime-three/runtime-project-time";
 import {
@@ -345,6 +350,7 @@ import {
   type RuntimeNavigationMode,
   type RuntimeSceneDefinition
 } from "../runtime-three/runtime-scene-build";
+import { applyResolvedControlStateToRuntimeScene } from "../runtime-three/runtime-scene-editor-simulation";
 import { validateRuntimeSceneBuild } from "../runtime-three/runtime-scene-validation";
 import { EditorAutosaveController } from "../serialization/editor-autosave";
 import { Panel } from "../shared-ui/Panel";
