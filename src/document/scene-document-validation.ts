@@ -4044,6 +4044,7 @@ function createProjectSchedulerValidationContextFromProjectDocument(
 
   for (const scene of Object.values(document.scenes)) {
     recordProjectSchedulerSceneTargets(context, {
+      brushes: scene.brushes,
       entities: scene.entities,
       modelInstances: scene.modelInstances,
       assets: document.assets,
