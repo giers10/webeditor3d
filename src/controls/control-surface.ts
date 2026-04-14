@@ -360,6 +360,7 @@ export interface RuntimeResolvedControlState {
 export interface RuntimeControlSurfaceDefinition {
   targets: ControlTargetDescriptor[];
   channels: ControlChannelDescriptor[];
+  baselineResolved: RuntimeResolvedControlState;
   resolved: RuntimeResolvedControlState;
 }
 
@@ -1062,6 +1063,7 @@ export function createEmptyRuntimeControlSurfaceDefinition(): RuntimeControlSurf
   return {
     targets: [],
     channels: [],
+    baselineResolved: createEmptyRuntimeResolvedControlState(),
     resolved: createEmptyRuntimeResolvedControlState()
   };
 }
@@ -1069,11 +1071,15 @@ export function createEmptyRuntimeControlSurfaceDefinition(): RuntimeControlSurf
 export function createRuntimeControlSurfaceDefinition(options: {
   targets: ControlTargetDescriptor[];
   channels?: ControlChannelDescriptor[];
+  baselineResolved?: RuntimeResolvedControlState;
   resolved?: RuntimeResolvedControlState;
 }): RuntimeControlSurfaceDefinition {
   return {
     targets: options.targets.map(cloneControlTargetDescriptor),
     channels: (options.channels ?? []).map(cloneControlChannelDescriptor),
+    baselineResolved: cloneRuntimeResolvedControlState(
+      options.baselineResolved ?? options.resolved ?? createEmptyRuntimeResolvedControlState()
+    ),
     resolved: cloneRuntimeResolvedControlState(
       options.resolved ?? createEmptyRuntimeResolvedControlState()
     )
@@ -1451,6 +1457,9 @@ export function cloneRuntimeControlSurfaceDefinition(
   return {
     targets: controlSurface.targets.map(cloneControlTargetDescriptor),
     channels: controlSurface.channels.map(cloneControlChannelDescriptor),
+    baselineResolved: cloneRuntimeResolvedControlState(
+      controlSurface.baselineResolved
+    ),
     resolved: cloneRuntimeResolvedControlState(controlSurface.resolved)
   };
 }
