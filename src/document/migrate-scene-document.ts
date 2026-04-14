@@ -157,6 +157,7 @@ import {
   NPC_DIALOGUE_REFERENCE_SCENE_DOCUMENT_VERSION,
   PROJECT_DIALOGUE_LIBRARY_SCENE_DOCUMENT_VERSION,
   PROJECT_SEQUENCE_LIBRARY_SCENE_DOCUMENT_VERSION,
+  PROJECT_SEQUENCE_TIMING_SCENE_DOCUMENT_VERSION,
   RUNNER_V1_SCENE_DOCUMENT_VERSION,
   SCENE_TRANSITION_ENTITIES_SCENE_DOCUMENT_VERSION,
   SPATIAL_AUDIO_SCENE_DOCUMENT_VERSION,
@@ -198,8 +199,6 @@ import {
   type ProjectSequenceLibrary
 } from "../sequencer/project-sequences";
 import {
-  DEFAULT_IMPULSE_SEQUENCE_CLIP_DURATION_MINUTES,
-  LEGACY_PROJECT_SEQUENCE_DURATION_MINUTES,
   type SequenceClip
 } from "../sequencer/project-sequence-steps";
 import {
@@ -3521,7 +3520,7 @@ function readProjectDialogueLibrary(
   };
 }
 
-function readProjectSequenceClip(value: unknown, label: string): SequenceClip {
+function readProjectSequenceEffect(value: unknown, label: string): SequenceClip {
   if (!isRecord(value)) {
     throw new Error(`${label} must be an object.`);
   }
@@ -3533,35 +3532,9 @@ function readProjectSequenceClip(value: unknown, label: string): SequenceClip {
     throw new Error(`${label}.stepClass must be held or impulse.`);
   }
 
-  const startMinute =
-    value.startMinute === undefined
-      ? 0
-      : Math.trunc(expectNonNegativeFiniteNumber(value.startMinute, `${label}.startMinute`));
-  const durationMinutes =
-    value.durationMinutes === undefined
-      ? stepClass === "held"
-        ? LEGACY_PROJECT_SEQUENCE_DURATION_MINUTES
-        : DEFAULT_IMPULSE_SEQUENCE_CLIP_DURATION_MINUTES
-      : Math.max(
-          1,
-          Math.trunc(
-            expectPositiveFiniteNumber(
-              value.durationMinutes,
-              `${label}.durationMinutes`
-            )
-          )
-        );
-  const lane =
-    value.lane === undefined
-      ? 0
-      : Math.trunc(expectNonNegativeFiniteNumber(value.lane, `${label}.lane`));
-
   switch (type) {
     case "controlEffect":
       return {
-        startMinute,
-        durationMinutes,
-        lane,
         stepClass,
         type: "controlEffect",
         effect: readControlEffect(value.effect, `${label}.effect`)
@@ -3572,9 +3545,6 @@ function readProjectSequenceClip(value: unknown, label: string): SequenceClip {
       }
 
       return {
-        startMinute,
-        durationMinutes,
-        lane,
         stepClass: "impulse",
         type: "startDialogue",
         dialogueId: expectString(value.dialogueId, `${label}.dialogueId`)
@@ -3585,9 +3555,6 @@ function readProjectSequenceClip(value: unknown, label: string): SequenceClip {
       }
 
       return {
-        startMinute,
-        durationMinutes,
-        lane,
         stepClass: "impulse",
         type: "teleportPlayer",
         targetEntityId: expectString(
@@ -3601,9 +3568,6 @@ function readProjectSequenceClip(value: unknown, label: string): SequenceClip {
       }
 
       return {
-        startMinute,
-        durationMinutes,
-        lane,
         stepClass: "impulse",
         type: "toggleVisibility",
         targetBrushId: expectString(value.targetBrushId, `${label}.targetBrushId`),
@@ -3613,7 +3577,7 @@ function readProjectSequenceClip(value: unknown, label: string): SequenceClip {
             : expectBoolean(value.visible, `${label}.visible`)
       };
     default:
-      throw new Error(`${label}.type must be a supported sequence clip.`);
+      throw new Error(`${label}.type must be a supported sequence effect.`);
   }
 }
 
@@ -3645,13 +3609,15 @@ function readProjectSequenceLibrary(
       throw new Error(`${label}.sequences.${sequenceKey} must be an object.`);
     }
 
-    const clipsValue = Array.isArray(sequenceValue.clips)
-      ? sequenceValue.clips
-      : sequenceValue.steps;
+    const effectsValue = Array.isArray(sequenceValue.effects)
+      ? sequenceValue.effects
+      : Array.isArray(sequenceValue.clips)
+        ? sequenceValue.clips
+        : sequenceValue.steps;
 
-    if (!Array.isArray(clipsValue)) {
+    if (!Array.isArray(effectsValue)) {
       throw new Error(
-        `${label}.sequences.${sequenceKey}.clips must be an array.`
+        `${label}.sequences.${sequenceKey}.effects must be an array.`
       );
     }
 
@@ -3661,22 +3627,10 @@ function readProjectSequenceLibrary(
         sequenceValue.title,
         `${label}.sequences.${sequenceKey}.title`
       ),
-      durationMinutes:
-        sequenceValue.durationMinutes === undefined
-          ? undefined
-          : Math.max(
-              1,
-              Math.trunc(
-                expectPositiveFiniteNumber(
-                  sequenceValue.durationMinutes,
-                  `${label}.sequences.${sequenceKey}.durationMinutes`
-                )
-              )
-            ),
-      clips: clipsValue.map((clipValue, clipIndex) =>
-        readProjectSequenceClip(
-          clipValue,
-          `${label}.sequences.${sequenceKey}.clips.${clipIndex}`
+      effects: effectsValue.map((effectValue, effectIndex) =>
+        readProjectSequenceEffect(
+          effectValue,
+          `${label}.sequences.${sequenceKey}.effects.${effectIndex}`
         )
       )
     });
@@ -4497,7 +4451,8 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     source.version !== NPC_DIALOGUE_REFERENCE_SCENE_DOCUMENT_VERSION &&
     source.version !== PROJECT_DIALOGUE_LIBRARY_SCENE_DOCUMENT_VERSION &&
     source.version !== PLAYER_START_PAUSE_BINDINGS_SCENE_DOCUMENT_VERSION &&
-    source.version !== PROJECT_SEQUENCE_LIBRARY_SCENE_DOCUMENT_VERSION
+    source.version !== PROJECT_SEQUENCE_LIBRARY_SCENE_DOCUMENT_VERSION &&
+    source.version !== PROJECT_SEQUENCE_TIMING_SCENE_DOCUMENT_VERSION
   ) {
     throw new Error(
       `Unsupported scene document version: ${String(source.version)}.`
