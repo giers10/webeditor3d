@@ -2588,6 +2588,22 @@ export function App({ store, initialStatusMessage }: AppProps) {
   ]);
 
   useEffect(() => {
+    if (
+      selectedSequenceId !== null &&
+      editorState.projectDocument.sequences.sequences[selectedSequenceId] !==
+        undefined
+    ) {
+      return;
+    }
+
+    setSelectedSequenceId(projectSequenceList[0]?.id ?? null);
+  }, [
+    editorState.projectDocument.sequences.sequences,
+    projectSequenceList,
+    selectedSequenceId
+  ]);
+
+  useEffect(() => {
     schedulePaneHeightRef.current = schedulePaneHeight;
   }, [schedulePaneHeight]);
 
