@@ -368,7 +368,9 @@ describe("RuntimeHost", () => {
       .mockImplementation(() => undefined);
     hostInternals.animationMixers.set(
       modelInstance.id,
-      {} as unknown as AnimationMixer
+      {
+        stopAllAction: vi.fn()
+      } as unknown as AnimationMixer
     );
     const playAnimationSpy = vi
       .spyOn(hostInternals, "applyPlayAnimationAction")
