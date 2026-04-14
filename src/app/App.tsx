@@ -10735,7 +10735,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   } satisfies CSSProperties
                 }
               >
-                <ProjectSchedulePane
+                <ProjectSequencerPane
                   targetOptions={projectScheduleTargetOptions}
                   scheduler={editorState.projectDocument.scheduler}
                   selectedRoutineId={selectedScheduleRoutineId}
@@ -10746,15 +10746,15 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   onSetRoutineTarget={(routineId, targetKey) =>
                     updateProjectScheduleRoutine(
                       routineId,
-                      "Set project schedule target",
-                      "Retargeted schedule routine.",
+                      "Set project sequencer target",
+                      "Retargeted sequencer clip.",
                       (routine) => {
                         const targetOption =
                           resolveProjectScheduleTargetOption(targetKey);
 
                         if (targetOption === null) {
                           throw new Error(
-                            "Selected schedule target no longer exists."
+                            "Selected sequencer target no longer exists."
                           );
                         }
 
@@ -10780,7 +10780,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
                         if (nextEffectOptionId === undefined) {
                           throw new Error(
-                            "Selected schedule target does not expose a schedulable effect."
+                            "Selected sequencer target does not expose a schedulable effect."
                           );
                         }
 
@@ -10798,8 +10798,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   onSetRoutineTitle={(routineId, title) =>
                     updateProjectScheduleRoutine(
                       routineId,
-                      "Rename project schedule routine",
-                      "Updated schedule routine title.",
+                      "Rename project sequencer clip",
+                      "Updated sequencer clip title.",
                       (routine) => {
                         routine.title = title.trim();
                       }
@@ -10808,10 +10808,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   onSetRoutineEnabled={(routineId, enabled) =>
                     updateProjectScheduleRoutine(
                       routineId,
-                      "Toggle project schedule routine",
+                      "Toggle project sequencer clip",
                       enabled
-                        ? "Enabled schedule routine."
-                        : "Disabled schedule routine.",
+                        ? "Enabled sequencer clip."
+                        : "Disabled sequencer clip.",
                       (routine) => {
                         routine.enabled = enabled;
                       }
@@ -10820,13 +10820,13 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   onSetRoutineStartHour={(routineId, startHour) =>
                     updateProjectScheduleRoutine(
                       routineId,
-                      "Set project schedule start time",
-                      "Updated schedule routine start time.",
+                      "Set project sequencer start time",
+                      "Updated sequencer clip start time.",
                       (routine) => {
                         routine.startHour = normalizeTimeOfDayHours(startHour);
                         if (routine.startHour === routine.endHour) {
                           throw new Error(
-                            "Schedule routine start and end hours must differ."
+                            "Sequencer clip start and end hours must differ."
                           );
                         }
                       }
@@ -10835,13 +10835,13 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   onSetRoutineEndHour={(routineId, endHour) =>
                     updateProjectScheduleRoutine(
                       routineId,
-                      "Set project schedule end time",
-                      "Updated schedule routine end time.",
+                      "Set project sequencer end time",
+                      "Updated sequencer clip end time.",
                       (routine) => {
                         routine.endHour = normalizeTimeOfDayHours(endHour);
                         if (routine.startHour === routine.endHour) {
                           throw new Error(
-                            "Schedule routine start and end hours must differ."
+                            "Sequencer clip start and end hours must differ."
                           );
                         }
                       }
@@ -10850,12 +10850,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   onSetRoutinePriority={(routineId, priority) =>
                     updateProjectScheduleRoutine(
                       routineId,
-                      "Set project schedule priority",
-                      "Updated schedule routine priority.",
+                      "Set project sequencer priority",
+                      "Updated sequencer clip priority.",
                       (routine) => {
                         if (!Number.isFinite(priority)) {
                           throw new Error(
-                            "Schedule routine priority must be a finite number."
+                            "Sequencer clip priority must be a finite number."
                           );
                         }
 
@@ -10866,8 +10866,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   onSetRoutineEffectOption={(routineId, effectOptionId) =>
                     updateProjectScheduleRoutine(
                       routineId,
-                      "Set project schedule effect",
-                      "Updated schedule routine effect.",
+                      "Set project sequencer effect",
+                      "Updated sequencer clip effect.",
                       (routine) => {
                         if (routine.target.kind === "actor") {
                           throw new Error(
@@ -10882,7 +10882,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
                         if (targetOption === null) {
                           throw new Error(
-                            "The current schedule target no longer exists in the project."
+                            "The current sequencer target no longer exists in the project."
                           );
                         }
 
@@ -10899,8 +10899,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   onSetRoutineDays={(routineId, mode, days) =>
                     updateProjectScheduleRoutine(
                       routineId,
-                      "Set project schedule days",
-                      "Updated schedule routine days.",
+                      "Set project sequencer days",
+                      "Updated sequencer clip days.",
                       (routine) => {
                         routine.days =
                           mode === "everyDay"
@@ -10915,12 +10915,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   onSetRoutineNumericValue={(routineId, value) =>
                     updateProjectScheduleRoutine(
                       routineId,
-                      "Set project schedule numeric value",
-                      "Updated schedule routine value.",
+                      "Set project sequencer numeric value",
+                      "Updated sequencer clip value.",
                       (routine) => {
                         if (!Number.isFinite(value) || value < 0) {
                           throw new Error(
-                            "Schedule routine numeric values must be finite and zero or greater."
+                            "Sequencer clip numeric values must be finite and zero or greater."
                           );
                         }
 
@@ -10928,7 +10928,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
                         if (effect === undefined) {
                           throw new Error(
-                            "The current schedule routine does not expose a numeric value."
+                            "The current sequencer clip does not expose a numeric value."
                           );
                         }
 
@@ -10952,14 +10952,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   onSetRoutineColorValue={(routineId, colorHex) =>
                     updateProjectScheduleRoutine(
                       routineId,
-                      "Set project schedule color",
-                      "Updated schedule routine color.",
+                      "Set project sequencer color",
+                      "Updated sequencer clip color.",
                       (routine) => {
                         const effect = routine.effects[0];
 
                         if (effect === undefined) {
                           throw new Error(
-                            "The current schedule routine does not expose a color value."
+                            "The current sequencer clip does not expose a color value."
                           );
                         }
 
@@ -10980,14 +10980,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   onSetRoutineAnimationClip={(routineId, clipName) =>
                     updateProjectScheduleRoutine(
                       routineId,
-                      "Set project schedule animation clip",
-                      "Updated schedule animation clip.",
+                      "Set project sequencer animation clip",
+                      "Updated sequencer animation clip.",
                       (routine) => {
                         const effect = routine.effects[0];
 
                         if (effect?.type !== "playModelAnimation") {
                           throw new Error(
-                            "The current schedule effect does not expose an animation clip."
+                            "The current sequencer effect does not expose an animation clip."
                           );
                         }
 
@@ -10998,16 +10998,16 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   onSetRoutineAnimationLoop={(routineId, loop) =>
                     updateProjectScheduleRoutine(
                       routineId,
-                      "Set project schedule animation loop",
+                      "Set project sequencer animation loop",
                       loop
-                        ? "Schedule animation now loops."
-                        : "Schedule animation now plays once.",
+                        ? "Sequencer animation now loops."
+                        : "Sequencer animation now plays once.",
                       (routine) => {
                         const effect = routine.effects[0];
 
                         if (effect?.type !== "playModelAnimation") {
                           throw new Error(
-                            "The current schedule effect does not expose animation looping."
+                            "The current sequencer effect does not expose animation looping."
                           );
                         }
 
@@ -11018,7 +11018,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   onSetActorRoutinePresence={(routineId, active) =>
                     updateProjectScheduleRoutine(
                       routineId,
-                      "Set actor schedule presence",
+                      "Set actor sequencer presence",
                       active
                         ? "Actor routine now keeps the NPC present."
                         : "Actor routine now hides the NPC during this block.",
