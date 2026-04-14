@@ -2924,6 +2924,7 @@ export class RuntimeHost {
 
     const nextResolvedScheduler = resolveRuntimeProjectScheduleState({
       scheduler: this.runtimeScene.scheduler.document,
+      sequences: this.runtimeScene.sequences,
       actorIds: this.runtimeScene.npcDefinitions.map((npc) => npc.actorId),
       dayNumber: this.currentClockState.dayCount + 1,
       timeOfDayHours: this.currentClockState.timeOfDayHours,
