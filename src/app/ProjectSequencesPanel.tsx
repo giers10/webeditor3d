@@ -555,7 +555,7 @@ export function ProjectSequencesPanel({
                   );
                 }
 
-                if (effect.type === "toggleVisibility") {
+                if (effect.type === "setVisibility") {
                   return (
                     <div key={`${selectedSequence.id}-${effectIndex}`} className="outliner-item">
                       <div className="outliner-item__row">
@@ -572,10 +572,14 @@ export function ProjectSequencesPanel({
                       </div>
                       <div className="vector-inputs vector-inputs--two">
                         <label className="form-field">
-                          <span className="label">Whitebox Solid</span>
+                          <span className="label">Target</span>
                           <select
                             className="select-input"
-                            value={effect.targetBrushId}
+                            value={
+                              effect.target.kind === "brush"
+                                ? `brush:${effect.target.brushId}`
+                                : `modelInstance:${effect.target.modelInstanceId}`
+                            }
                             onChange={(event) =>
                               onSetVisibilityStepTarget(
                                 selectedSequence.id,
@@ -585,7 +589,7 @@ export function ProjectSequencesPanel({
                             }
                           >
                             {visibilityTargetOptions.map((target) => (
-                              <option key={target.brushId} value={target.brushId}>
+                              <option key={target.targetKey} value={target.targetKey}>
                                 {target.label}
                               </option>
                             ))}
@@ -595,12 +599,12 @@ export function ProjectSequencesPanel({
                           <span className="label">Mode</span>
                           <select
                             className="select-input"
-                            value={getVisibilityModeSelectValue(effect.visible)}
+                            value={effect.mode}
                             onChange={(event) =>
                               onSetVisibilityStepMode(
                                 selectedSequence.id,
                                 effectIndex,
-                                event.currentTarget.value as "toggle" | "show" | "hide"
+                                event.currentTarget.value as SequenceVisibilityMode
                               )
                             }
                           >
@@ -689,11 +693,63 @@ export function ProjectSequencesPanel({
               onClick={() =>
                 onAddVisibilityStep(
                   selectedSequence.id,
-                  visibilityTargetOptions[0]?.brushId ?? ""
+                  visibilityTargetOptions[0]?.targetKey ?? ""
                 )
               }
             >
               Add Visibility Effect
+            </button>
+            <button
+              className="toolbar__button toolbar__button--compact"
+              type="button"
+              disabled={modelAnimationTargetOptions.length === 0}
+              onClick={() =>
+                onAddPlayAnimationStep(
+                  selectedSequence.id,
+                  modelAnimationTargetOptions[0]?.targetKey ?? ""
+                )
+              }
+            >
+              Add Play Animation Effect
+            </button>
+            <button
+              className="toolbar__button toolbar__button--compact"
+              type="button"
+              disabled={modelAnimationTargetOptions.length === 0}
+              onClick={() =>
+                onAddStopAnimationStep(
+                  selectedSequence.id,
+                  modelAnimationTargetOptions[0]?.targetKey ?? ""
+                )
+              }
+            >
+              Add Stop Animation Effect
+            </button>
+            <button
+              className="toolbar__button toolbar__button--compact"
+              type="button"
+              disabled={soundTargetOptions.length === 0}
+              onClick={() =>
+                onAddPlaySoundStep(
+                  selectedSequence.id,
+                  soundTargetOptions[0]?.targetKey ?? ""
+                )
+              }
+            >
+              Add Play Sound Effect
+            </button>
+            <button
+              className="toolbar__button toolbar__button--compact"
+              type="button"
+              disabled={soundTargetOptions.length === 0}
+              onClick={() =>
+                onAddStopSoundStep(
+                  selectedSequence.id,
+                  soundTargetOptions[0]?.targetKey ?? ""
+                )
+              }
+            >
+              Add Stop Sound Effect
             </button>
           </div>
         </div>
