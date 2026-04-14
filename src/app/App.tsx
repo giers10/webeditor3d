@@ -3790,8 +3790,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
 
     try {
-      const nextRoutine = cloneProjectScheduleRoutine(currentRoutine);
-      mutate(nextRoutine);
+      const draftRoutine = cloneProjectScheduleRoutine(currentRoutine);
+      mutate(draftRoutine);
+      const nextRoutine = createProjectScheduleRoutine(draftRoutine);
       const nextScheduler = upsertProjectScheduleRoutine(
         cloneProjectScheduler(editorState.projectDocument.scheduler),
         nextRoutine
@@ -10262,6 +10263,21 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   <div className="material-summary">
                     Runner sessions begin on the authored start day and time,
                     then keep advancing across scene transitions.
+                  </div>
+                </div>
+
+                <div className="form-section">
+                  <div className="label">Notebook</div>
+                  <button
+                    className="toolbar__button toolbar__button--compact"
+                    type="button"
+                    onClick={() => setSchedulePaneOpen(true)}
+                  >
+                    Open Schedule
+                  </button>
+                  <div className="material-summary">
+                    Actor routines now own time-based presence orchestration and
+                    resolve through the shared control surface.
                   </div>
                 </div>
 
