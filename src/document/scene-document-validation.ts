@@ -3146,62 +3146,60 @@ function validateControlEffect(
       return;
     }
     case "stopModelAnimation":
-      if (
-        document.modelInstances[effect.target.modelInstanceId] === undefined
-      ) {
+      validateModelInstanceControlTarget(
+        effect.target,
+        `${path}.target`,
+        document,
+        diagnostics
+      );
+      return;
+    case "setModelInstanceVisible":
+      validateModelInstanceControlTarget(
+        effect.target,
+        `${path}.target`,
+        document,
+        diagnostics
+      );
+      if (!isBoolean(effect.visible)) {
         diagnostics.push(
           createDiagnostic(
             "error",
-            "missing-control-stop-animation-target-instance",
-            `Control stop animation target model instance ${effect.target.modelInstanceId} does not exist.`,
-            `${path}.target.modelInstanceId`
+            "invalid-control-model-instance-visible",
+            "Model visibility control values must remain boolean.",
+            `${path}.visible`
           )
         );
       }
       return;
     case "playSound":
-    case "stopSound": {
-      const targetEntity = document.entities[effect.target.entityId];
-
-      if (targetEntity === undefined) {
+    case "stopSound":
+      validateSoundEmitterControlTarget(
+        effect.target,
+        `${path}.target`,
+        document,
+        diagnostics,
+        { requireAudioAsset: true }
+      );
+      return;
+    case "setSoundVolume":
+      validateSoundEmitterControlTarget(
+        effect.target,
+        `${path}.target`,
+        document,
+        diagnostics,
+        { requireAudioAsset: false }
+      );
+      if (!isNonNegativeFiniteNumber(effect.volume)) {
         diagnostics.push(
           createDiagnostic(
             "error",
-            "missing-control-sound-emitter-entity",
-            `Control sound emitter entity ${effect.target.entityId} does not exist.`,
-            `${path}.target.entityId`
-          )
-        );
-        return;
-      }
-
-      if (
-        targetEntity.kind !== effect.target.entityKind ||
-        targetEntity.kind !== "soundEmitter"
-      ) {
-        diagnostics.push(
-          createDiagnostic(
-            "error",
-            "invalid-control-sound-emitter-kind",
-            "Control sound playback effects must target a Sound Emitter entity.",
-            `${path}.target.entityKind`
-          )
-        );
-        return;
-      }
-
-      if (targetEntity.audioAssetId === null) {
-        diagnostics.push(
-          createDiagnostic(
-            "error",
-            "missing-control-sound-emitter-audio-asset",
-            "Control sound playback effects require a Sound Emitter that references an audio asset.",
-            `${path}.target.entityId`
+            "invalid-control-sound-volume",
+            "Sound control volume must remain finite and zero or greater.",
+            `${path}.volume`
           )
         );
       }
       return;
-    }
     case "setInteractionEnabled":
       validateInteractionControlTarget(
         effect.target,
@@ -3252,6 +3250,76 @@ function validateControlEffect(
             "invalid-control-light-intensity",
             "Light control intensity must remain finite and zero or greater.",
             `${path}.intensity`
+          )
+        );
+      }
+      return;
+    case "setLightColor":
+      validateLightControlTarget(
+        effect.target,
+        `${path}.target`,
+        document,
+        diagnostics
+      );
+      if (!isHexColorString(effect.colorHex)) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-control-light-color",
+            "Light control color must remain a valid hex color string.",
+            `${path}.colorHex`
+          )
+        );
+      }
+      return;
+    case "setAmbientLightIntensity":
+      validateSceneControlTarget(effect.target, `${path}.target`, diagnostics);
+      if (!isNonNegativeFiniteNumber(effect.intensity)) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-control-ambient-light-intensity",
+            "Ambient light control intensity must remain finite and zero or greater.",
+            `${path}.intensity`
+          )
+        );
+      }
+      return;
+    case "setAmbientLightColor":
+      validateSceneControlTarget(effect.target, `${path}.target`, diagnostics);
+      if (!isHexColorString(effect.colorHex)) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-control-ambient-light-color",
+            "Ambient light control color must remain a valid hex color string.",
+            `${path}.colorHex`
+          )
+        );
+      }
+      return;
+    case "setSunLightIntensity":
+      validateSceneControlTarget(effect.target, `${path}.target`, diagnostics);
+      if (!isNonNegativeFiniteNumber(effect.intensity)) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-control-sun-light-intensity",
+            "Sun light control intensity must remain finite and zero or greater.",
+            `${path}.intensity`
+          )
+        );
+      }
+      return;
+    case "setSunLightColor":
+      validateSceneControlTarget(effect.target, `${path}.target`, diagnostics);
+      if (!isHexColorString(effect.colorHex)) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-control-sun-light-color",
+            "Sun light control color must remain a valid hex color string.",
+            `${path}.colorHex`
           )
         );
       }
