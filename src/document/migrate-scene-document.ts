@@ -3391,7 +3391,11 @@ function readProjectDialogueLibrary(
   label: string,
   options: { allowMissing: boolean }
 ): ProjectDialogueLibrary {
-  if (value === undefined && options.allowMissing) {
+  if (value === undefined) {
+    if (options.allowMissing) {
+      return createEmptyProjectDialogueLibrary();
+    }
+
     return createEmptyProjectDialogueLibrary();
   }
 
