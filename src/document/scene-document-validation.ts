@@ -80,10 +80,7 @@ import {
   isProjectScheduleWeekday,
   type ProjectScheduler
 } from "../scheduler/project-scheduler";
-import type {
-  ProjectDialogue,
-  ProjectDialogueLibrary
-} from "../dialogues/project-dialogues";
+import type { ProjectDialogue } from "../dialogues/project-dialogues";
 
 export type SceneDiagnosticSeverity = "error" | "warning";
 export type SceneDiagnosticScope = "document" | "build";
@@ -4673,31 +4670,6 @@ function validateProjectDialogue(
         )
       );
     }
-  }
-}
-
-function validateProjectDialogueLibrary(
-  dialogues: ProjectDialogueLibrary,
-  diagnostics: SceneDiagnostic[]
-) {
-  const seenIds = new Map<string, string>();
-
-  for (const [dialogueKey, dialogue] of Object.entries(dialogues.dialogues)) {
-    const path = `dialogues.dialogues.${dialogueKey}`;
-
-    if (dialogue.id !== dialogueKey) {
-      diagnostics.push(
-        createDiagnostic(
-          "error",
-          "dialogue-id-mismatch",
-          "Dialogue ids must match their registry key.",
-          `${path}.id`
-        )
-      );
-    }
-
-    registerAuthoredId(dialogue.id, path, seenIds, diagnostics);
-    validateProjectDialogue(dialogue, path, seenIds, diagnostics);
   }
 }
 
