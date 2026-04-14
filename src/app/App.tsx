@@ -4384,7 +4384,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const createDefaultProjectSequenceControlStep = (
     stepClass: "held" | "impulse",
     targetKey: string,
-    previousStep?: Extract<ProjectSequence["clips"][number], { type: "controlEffect" }> | null
+    previousStep?: Extract<ProjectSequence["clips"][number], { type: "controlEffect" }> | null,
+    timing?: Partial<
+      Pick<ProjectSequence["clips"][number], "startMinute" | "durationMinutes" | "lane">
+    >
   ): Extract<ProjectSequence["clips"][number], { type: "controlEffect" }> => {
     const targetOption = resolveSequenceControlTargetOption(targetKey);
 
@@ -4401,6 +4404,13 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
 
     return {
+      startMinute: timing?.startMinute ?? 0,
+      durationMinutes:
+        timing?.durationMinutes ??
+        (stepClass === "held"
+          ? DEFAULT_HELD_SEQUENCE_CLIP_DURATION_MINUTES
+          : DEFAULT_IMPULSE_SEQUENCE_CLIP_DURATION_MINUTES),
+      lane: timing?.lane ?? 0,
       stepClass,
       type: "controlEffect",
       effect: createProjectScheduleEffectFromOption({
@@ -4410,6 +4420,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
       })
     };
   };
+
+  const getNextProjectSequenceClipLane = (sequence: ProjectSequence): number =>
+    getNextSequenceClipLane(sequence.clips);
 
   const updateProjectSequence = (
     sequenceId: string,
@@ -4447,7 +4460,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
   };
 
   const handleAddProjectSequence = () => {
-    const nextSequence = createProjectSequence();
+    const nextSequence = createProjectSequence({
+      durationMinutes: DEFAULT_PROJECT_SEQUENCE_DURATION_MINUTES
+    });
 
     updateProjectSequences(
       "Add project sequence",
@@ -4532,7 +4547,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
         : "Added impulse control clip.",
       (sequence) => {
         sequence.clips.push(
-          createDefaultProjectSequenceControlStep(stepClass, targetKey)
+          createDefaultProjectSequenceControlStep(stepClass, targetKey, null, {
+            startMinute: 0,
+            durationMinutes:
+              stepClass === "held"
+                ? DEFAULT_HELD_SEQUENCE_CLIP_DURATION_MINUTES
+                : DEFAULT_IMPULSE_SEQUENCE_CLIP_DURATION_MINUTES,
+            lane: getNextProjectSequenceClipLane(sequence)
+          })
         );
       }
     );
@@ -4548,6 +4570,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
       "Added dialogue clip.",
       (sequence) => {
         sequence.clips.push({
+          startMinute: 0,
+          durationMinutes: DEFAULT_IMPULSE_SEQUENCE_CLIP_DURATION_MINUTES,
+          lane: getNextProjectSequenceClipLane(sequence),
           stepClass: "impulse",
           type: "startDialogue",
           dialogueId
@@ -4767,6 +4792,75 @@ export function App({ store, initialStatusMessage }: AppProps) {
         step.dialogueId = dialogueId;
       }
     );
+  };
+
+  const updateProjectSequenceDurationMinutes = (
+    sequenceId: string,
+    durationMinutes: number
+  ) => {
+    updateProjectSequence(
+      sequenceId,
+      "Set project sequence duration",
+      "Updated sequence duration.",
+      (sequence) => {
+        if (!Number.isFinite(durationMinutes) || durationMinutes < 1) {
+          throw new Error(
+            "Sequence duration must be a finite number of minutes greater than zero."
+          );
+        }
+
+        sequence.durationMinutes = Math.max(1, Math.trunc(durationMinutes));
+
+        for (const clip of sequence.clips) {
+          if (clip.startMinute >= sequence.durationMinutes) {
+            clip.startMinute = Math.max(0, sequence.durationMinutes - 1);
+          }
+
+          if (clip.startMinute + clip.durationMinutes > sequence.durationMinutes) {
+            clip.durationMinutes = Math.max(
+              1,
+              sequence.durationMinutes - clip.startMinute
+            );
+          }
+        }
+      }
+    );
+  };
+
+  const updateProjectSequenceClipTiming = (
+    sequenceId: string,
+    stepIndex: number,
+    timing: {
+      startMinute: number;
+      durationMinutes: number;
+      lane: number;
+    }
+  ) => {
+    updateProjectSequence(sequenceId, "Set project sequence clip timing", "Updated sequence clip timing.", (sequence) => {
+      const clip = sequence.clips[stepIndex];
+
+      if (clip === undefined) {
+        throw new Error("Selected project sequence clip no longer exists.");
+      }
+
+      if (
+        !Number.isFinite(timing.startMinute) ||
+        !Number.isFinite(timing.durationMinutes) ||
+        !Number.isFinite(timing.lane)
+      ) {
+        throw new Error("Sequence clip timing must use finite minute values.");
+      }
+
+      clip.startMinute = Math.min(
+        Math.max(0, Math.trunc(timing.startMinute)),
+        Math.max(0, sequence.durationMinutes - 1)
+      );
+      clip.durationMinutes = Math.min(
+        Math.max(1, Math.trunc(timing.durationMinutes)),
+        Math.max(1, sequence.durationMinutes - clip.startMinute)
+      );
+      clip.lane = Math.max(0, Math.trunc(timing.lane));
+    });
   };
 
   const updateWorldTimeOfDaySettings = (
