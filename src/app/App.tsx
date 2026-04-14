@@ -1305,6 +1305,12 @@ function getInteractionActionLabel(link: InteractionLink): string {
   }
 }
 
+function isLegacyInteractionActionType(
+  actionType: InteractionLink["action"]["type"]
+): boolean {
+  return actionType !== "runSequence";
+}
+
 function getVisibilityModeSelectValue(
   visible: boolean | undefined
 ): "toggle" | "show" | "hide" {
@@ -7314,153 +7320,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
       : null;
   };
 
-  const handleAddTeleportInteractionLink = () => {
-    if (selectedInteractionSource === null) {
-      setStatusMessage(
-        "Select a Trigger Volume or Interactable before adding links."
-      );
-      return;
-    }
-
-    const defaultTarget = teleportTargetOptions[0]?.entity;
-
-    if (
-      defaultTarget === undefined ||
-      defaultTarget.kind !== "teleportTarget"
-    ) {
-      setStatusMessage(
-        "Author a Teleport Target before adding a teleport link."
-      );
-      return;
-    }
-
-    store.executeCommand(
-      createUpsertInteractionLinkCommand({
-        link: createTeleportPlayerInteractionLink({
-          sourceEntityId: selectedInteractionSource.id,
-          trigger: getDefaultInteractionLinkTrigger(selectedInteractionSource),
-          targetEntityId: defaultTarget.id
-        }),
-        label: "Add teleport interaction link"
-      })
-    );
-    setStatusMessage(
-      `Added a teleport link to the selected ${selectedInteractionSource.kind === "triggerVolume" ? "Trigger Volume" : "Interactable"}.`
-    );
-  };
-
-  const handleAddVisibilityInteractionLink = () => {
-    if (selectedInteractionSource === null) {
-      setStatusMessage(
-        "Select a Trigger Volume or Interactable before adding links."
-      );
-      return;
-    }
-
-    const defaultTarget = visibilityBrushOptions[0]?.brush;
-
-    if (defaultTarget === undefined) {
-      setStatusMessage(
-        "Author at least one whitebox solid before adding a visibility link."
-      );
-      return;
-    }
-
-    store.executeCommand(
-      createUpsertInteractionLinkCommand({
-        link: createToggleVisibilityInteractionLink({
-          sourceEntityId: selectedInteractionSource.id,
-          trigger: getDefaultInteractionLinkTrigger(selectedInteractionSource),
-          targetBrushId: defaultTarget.id
-        }),
-        label: "Add visibility interaction link"
-      })
-    );
-    setStatusMessage(
-      `Added a visibility link to the selected ${selectedInteractionSource.kind === "triggerVolume" ? "Trigger Volume" : "Interactable"}.`
-    );
-  };
-
-  const handleAddSoundInteractionLink = (
-    actionType: "playSound" | "stopSound"
-  ) => {
-    if (selectedInteractionSource === null) {
-      setStatusMessage(
-        "Select a Trigger Volume or Interactable before adding links."
-      );
-      return;
-    }
-
-    const defaultTarget = playableSoundEmitterOptions[0]?.entity;
-
-    if (defaultTarget === undefined) {
-      setStatusMessage(
-        "Author a Sound Emitter with an audio asset before adding sound links."
-      );
-      return;
-    }
-
-    const link =
-      actionType === "playSound"
-        ? createPlaySoundInteractionLink({
-            sourceEntityId: selectedInteractionSource.id,
-            trigger: getDefaultInteractionLinkTrigger(
-              selectedInteractionSource
-            ),
-            targetSoundEmitterId: defaultTarget.id
-          })
-        : createStopSoundInteractionLink({
-            sourceEntityId: selectedInteractionSource.id,
-            trigger: getDefaultInteractionLinkTrigger(
-              selectedInteractionSource
-            ),
-            targetSoundEmitterId: defaultTarget.id
-          });
-
-    store.executeCommand(
-      createUpsertInteractionLinkCommand({
-        link,
-        label:
-          actionType === "playSound"
-            ? "Add play sound link"
-            : "Add stop sound link"
-      })
-    );
-    setStatusMessage(
-      `Added a ${actionType === "playSound" ? "play sound" : "stop sound"} link to the selected ${selectedInteractionSource.kind === "triggerVolume" ? "Trigger Volume" : "Interactable"}.`
-    );
-  };
-
-  const handleAddDialogueInteractionLink = () => {
-    if (selectedInteractionSource === null) {
-      setStatusMessage(
-        "Select a Trigger Volume or Interactable before adding links."
-      );
-      return;
-    }
-
-    const defaultDialogue = projectDialogueList[0] ?? null;
-
-    if (defaultDialogue === null) {
-      setStatusMessage("Author a project dialogue before adding a dialogue link.");
-      return;
-    }
-
-    store.executeCommand(
-      createUpsertInteractionLinkCommand({
-        link: createStartDialogueInteractionLink({
-          sourceEntityId: selectedInteractionSource.id,
-          trigger: getDefaultInteractionLinkTrigger(selectedInteractionSource),
-          dialogueId: defaultDialogue.id
-        }),
-        label: "Add start dialogue interaction link"
-      })
-    );
-    setStatusMessage(
-      `Added a dialogue link to the selected ${selectedInteractionSource.kind === "triggerVolume" ? "Trigger Volume" : "Interactable"}.`
-    );
-  };
-
   const handleAddSequenceInteractionLink = () => {
     if (selectedInteractionSource === null) {
       setStatusMessage(
@@ -8402,74 +8261,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
   };
 
-  const handleAddPlayAnimationLink = (
-    sourceEntity: InteractionSourceEntity
-  ) => {
-    const firstInstance = modelInstanceDisplayList[0];
-
-    if (firstInstance === undefined) {
-      setStatusMessage(
-        "Place a model instance before adding an animation link."
-      );
-      return;
-    }
-
-    const asset =
-      editorState.document.assets[firstInstance.modelInstance.assetId];
-    const firstClip =
-      asset?.kind === "model" ? (asset.metadata.animationNames[0] ?? "") : "";
-
-    if (firstClip === "") {
-      setStatusMessage("The model instance has no animation clips.");
-      return;
-    }
-
-    store.executeCommand(
-      createUpsertInteractionLinkCommand({
-        link: createPlayAnimationInteractionLink({
-          sourceEntityId: sourceEntity.id,
-          trigger: getDefaultInteractionLinkTrigger(sourceEntity),
-          targetModelInstanceId: firstInstance.modelInstance.id,
-          clipName: firstClip
-        }),
-        label: "Add play animation link"
-      })
-    );
-    setStatusMessage("Added a play animation link.");
-  };
-
-  const handleAddStopAnimationLink = (
-    sourceEntity: InteractionSourceEntity
-  ) => {
-    const firstInstance = modelInstanceDisplayList[0];
-
-    if (firstInstance === undefined) {
-      setStatusMessage(
-        "Place a model instance before adding an animation link."
-      );
-      return;
-    }
-
-    store.executeCommand(
-      createUpsertInteractionLinkCommand({
-        link: createStopAnimationInteractionLink({
-          sourceEntityId: sourceEntity.id,
-          trigger: getDefaultInteractionLinkTrigger(sourceEntity),
-          targetModelInstanceId: firstInstance.modelInstance.id
-        }),
-        label: "Add stop animation link"
-      })
-    );
-    setStatusMessage("Added a stop animation link.");
-  };
-
   const renderInteractionLinksSection = (
     sourceEntity: InteractionSourceEntity,
-    links: InteractionLink[],
-    addTeleportTestId: string,
-    addVisibilityTestId: string,
-    addPlaySoundTestId: string,
-    addStopSoundTestId: string
+    links: InteractionLink[]
   ) => (
     <div className="form-section">
       <div className="label">Links</div>
