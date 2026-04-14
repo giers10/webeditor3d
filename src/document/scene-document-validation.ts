@@ -2990,6 +2990,90 @@ function validateInteractionControlTarget(
   }
 }
 
+function validateModelInstanceControlTarget(
+  target: ModelInstanceControlTargetRef,
+  path: string,
+  document: SceneDocument,
+  diagnostics: SceneDiagnostic[]
+) {
+  if (document.modelInstances[target.modelInstanceId] !== undefined) {
+    return;
+  }
+
+  diagnostics.push(
+    createDiagnostic(
+      "error",
+      "missing-control-model-instance-target",
+      `Control model instance target ${target.modelInstanceId} does not exist.`,
+      `${path}.modelInstanceId`
+    )
+  );
+}
+
+function validateSoundEmitterControlTarget(
+  target: SoundEmitterControlTargetRef,
+  path: string,
+  document: SceneDocument,
+  diagnostics: SceneDiagnostic[],
+  options: { requireAudioAsset: boolean }
+) {
+  const targetEntity = document.entities[target.entityId];
+
+  if (targetEntity === undefined) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "missing-control-sound-emitter-entity",
+        `Control sound emitter entity ${target.entityId} does not exist.`,
+        `${path}.entityId`
+      )
+    );
+    return;
+  }
+
+  if (targetEntity.kind !== target.entityKind || targetEntity.kind !== "soundEmitter") {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-control-sound-emitter-kind",
+        "Control sound effects must target a Sound Emitter entity.",
+        `${path}.entityKind`
+      )
+    );
+    return;
+  }
+
+  if (options.requireAudioAsset && targetEntity.audioAssetId === null) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "missing-control-sound-emitter-audio-asset",
+        "Control sound playback effects require a Sound Emitter that references an audio asset.",
+        `${path}.entityId`
+      )
+    );
+  }
+}
+
+function validateSceneControlTarget(
+  target: SceneControlTargetRef,
+  path: string,
+  diagnostics: SceneDiagnostic[]
+) {
+  if (target.kind === "scene" && target.scope === "activeScene") {
+    return;
+  }
+
+  diagnostics.push(
+    createDiagnostic(
+      "error",
+      "invalid-control-scene-target",
+      "Scene control effects must target the active scene scope.",
+      `${path}.scope`
+    )
+  );
+}
+
 function validateControlEffect(
   effect: ControlEffect,
   path: string,
