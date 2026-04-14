@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { createEmptyRuntimeControlSurfaceDefinition } from "../../src/controls/control-surface";
 import { createEmptyProjectDialogueLibrary } from "../../src/dialogues/project-dialogues";
+import { createEmptyProjectSequenceLibrary } from "../../src/sequencer/project-sequences";
 import {
   createPlayerStartInputBindings,
   createPlayerStartMovementTemplate
@@ -32,6 +33,7 @@ function createRuntimeSceneFixture(): RuntimeSceneDefinition {
       document: createEmptyProjectScheduler()
     }),
     dialogues: createEmptyProjectDialogueLibrary(),
+    sequences: createEmptyProjectSequenceLibrary(),
     world: {
       ...createDefaultWorldSettings(),
       background: {
