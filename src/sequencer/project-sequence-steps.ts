@@ -3,37 +3,54 @@ import {
   cloneControlEffect,
   type ControlEffect
 } from "../controls/control-surface";
+import { HOURS_PER_DAY } from "../document/project-time-settings";
 import {
   getInteractionActionControlEffect,
   type InteractionLink
 } from "../interactions/interaction-links";
 import type { ProjectScheduleRoutine } from "../scheduler/project-scheduler";
 
-export interface HeldControlSequenceStep {
+export const DEFAULT_PROJECT_SEQUENCE_DURATION_MINUTES = 240 as const;
+export const LEGACY_PROJECT_SEQUENCE_DURATION_MINUTES = HOURS_PER_DAY * 60;
+export const DEFAULT_HELD_SEQUENCE_CLIP_DURATION_MINUTES = 60 as const;
+export const DEFAULT_IMPULSE_SEQUENCE_CLIP_DURATION_MINUTES = 1 as const;
+export const MIN_PROJECT_SEQUENCE_CLIP_DURATION_MINUTES = 1 as const;
+
+export interface SequenceClipTiming {
+  startMinute: number;
+  durationMinutes: number;
+  lane: number;
+}
+
+interface BaseSequenceClip extends SequenceClipTiming {
+  stepClass: "held" | "impulse";
+}
+
+export interface HeldControlSequenceStep extends BaseSequenceClip {
   stepClass: "held";
   type: "controlEffect";
   effect: ControlEffect;
 }
 
-export interface ImpulseControlSequenceStep {
+export interface ImpulseControlSequenceStep extends BaseSequenceClip {
   stepClass: "impulse";
   type: "controlEffect";
   effect: ControlEffect;
 }
 
-export interface StartDialogueSequenceStep {
+export interface StartDialogueSequenceStep extends BaseSequenceClip {
   stepClass: "impulse";
   type: "startDialogue";
   dialogueId: string;
 }
 
-export interface TeleportPlayerSequenceStep {
+export interface TeleportPlayerSequenceStep extends BaseSequenceClip {
   stepClass: "impulse";
   type: "teleportPlayer";
   targetEntityId: string;
 }
 
-export interface ToggleVisibilitySequenceStep {
+export interface ToggleVisibilitySequenceStep extends BaseSequenceClip {
   stepClass: "impulse";
   type: "toggleVisibility";
   targetBrushId: string;
@@ -60,28 +77,85 @@ export type ImpulseSequenceStep =
 export type SequenceClip = HeldSequenceStep | ImpulseSequenceStep;
 export type SequenceStep = SequenceClip;
 
+function normalizeSequenceClipStartMinute(value: number | undefined): number {
+  if (value === undefined || !Number.isFinite(value)) {
+    return 0;
+  }
+
+  return Math.max(0, Math.trunc(value));
+}
+
+function getDefaultSequenceClipDurationMinutes(
+  stepClass: SequenceClip["stepClass"]
+): number {
+  return stepClass === "held"
+    ? LEGACY_PROJECT_SEQUENCE_DURATION_MINUTES
+    : DEFAULT_IMPULSE_SEQUENCE_CLIP_DURATION_MINUTES;
+}
+
+function normalizeSequenceClipDurationMinutes(
+  value: number | undefined,
+  stepClass: SequenceClip["stepClass"]
+): number {
+  if (value === undefined || !Number.isFinite(value)) {
+    return getDefaultSequenceClipDurationMinutes(stepClass);
+  }
+
+  return Math.max(
+    MIN_PROJECT_SEQUENCE_CLIP_DURATION_MINUTES,
+    Math.trunc(value)
+  );
+}
+
+function normalizeSequenceClipLane(value: number | undefined): number {
+  if (value === undefined || !Number.isFinite(value)) {
+    return 0;
+  }
+
+  return Math.max(0, Math.trunc(value));
+}
+
+function cloneSequenceClipTiming(
+  clip: Pick<SequenceClip, "stepClass" | "startMinute" | "durationMinutes" | "lane">
+): SequenceClipTiming {
+  return {
+    startMinute: normalizeSequenceClipStartMinute(clip.startMinute),
+    durationMinutes: normalizeSequenceClipDurationMinutes(
+      clip.durationMinutes,
+      clip.stepClass
+    ),
+    lane: normalizeSequenceClipLane(clip.lane)
+  };
+}
+
 export function cloneSequenceClip(clip: SequenceClip): SequenceClip {
+  const timing = cloneSequenceClipTiming(clip);
+
   switch (clip.type) {
     case "controlEffect":
       return {
+        ...timing,
         stepClass: clip.stepClass,
         type: "controlEffect",
         effect: cloneControlEffect(clip.effect)
       };
     case "startDialogue":
       return {
+        ...timing,
         stepClass: "impulse",
         type: "startDialogue",
         dialogueId: clip.dialogueId
       };
     case "teleportPlayer":
       return {
+        ...timing,
         stepClass: "impulse",
         type: "teleportPlayer",
         targetEntityId: clip.targetEntityId
       };
     case "toggleVisibility":
       return {
+        ...timing,
         stepClass: "impulse",
         type: "toggleVisibility",
         targetBrushId: clip.targetBrushId,
@@ -171,6 +245,117 @@ export function getProjectSequenceImpulseClips(
   return getImpulseSequenceClips(sequence.clips);
 }
 
+export function getSequenceClipEndMinute(
+  clip: Pick<SequenceClip, "startMinute" | "durationMinutes">
+): number {
+  return clip.startMinute + clip.durationMinutes;
+}
+
+export function getProjectSequenceDurationMinutes(sequence: SequenceDefinitionLike): number {
+  return sequence.clips.reduce((maxDuration, clip) => {
+    return Math.max(maxDuration, getSequenceClipEndMinute(clip));
+  }, DEFAULT_PROJECT_SEQUENCE_DURATION_MINUTES);
+}
+
+export function isHeldSequenceClipActiveAtMinute(
+  clip: HeldSequenceStep,
+  minute: number
+): boolean {
+  if (!Number.isFinite(minute) || minute < 0) {
+    return false;
+  }
+
+  return minute >= clip.startMinute && minute < getSequenceClipEndMinute(clip);
+}
+
+export interface ActiveHeldSequenceClip<
+  TClip extends HeldSequenceStep = HeldSequenceStep
+> {
+  clip: TClip;
+  elapsedMinutes: number;
+  clipIndex: number;
+}
+
+export function getActiveHeldSequenceClipsAtMinute(
+  sequence: SequenceDefinitionLike,
+  minute: number
+): ActiveHeldSequenceClip[] {
+  if (!Number.isFinite(minute) || minute < 0) {
+    return [];
+  }
+
+  const active: ActiveHeldSequenceClip[] = [];
+
+  for (const [clipIndex, clip] of sequence.clips.entries()) {
+    if (clip.stepClass !== "held" || !isHeldSequenceClipActiveAtMinute(clip, minute)) {
+      continue;
+    }
+
+    active.push({
+      clip,
+      elapsedMinutes: minute - clip.startMinute,
+      clipIndex
+    });
+  }
+
+  return active;
+}
+
+export interface ResolvedHeldControlSequenceEffect {
+  effect: ControlEffect;
+  elapsedMinutes: number;
+  source: "inline" | "sequence";
+  clipIndex: number | null;
+}
+
+export function getProjectScheduleRoutineResolvedHeldControlEffectsAtMinute(
+  routine: ProjectScheduleRoutine,
+  sequenceLibrary: SequenceLibraryLike | null | undefined,
+  routineElapsedMinutes: number | null
+): ResolvedHeldControlSequenceEffect[] {
+  const resolvedByKey = new Map<string, ResolvedHeldControlSequenceEffect>();
+
+  for (const effect of routine.effects) {
+    resolvedByKey.set(JSON.stringify(effect.target) + effect.type, {
+      effect: cloneControlEffect(effect),
+      elapsedMinutes: Math.max(0, routineElapsedMinutes ?? 0),
+      source: "inline",
+      clipIndex: null
+    });
+  }
+
+  if (routine.sequenceId === null || routineElapsedMinutes === null) {
+    return [...resolvedByKey.values()];
+  }
+
+  const sequence = sequenceLibrary?.sequences[routine.sequenceId] ?? null;
+
+  if (sequence === null) {
+    return [...resolvedByKey.values()];
+  }
+
+  for (const activeClip of getActiveHeldSequenceClipsAtMinute(
+    sequence,
+    routineElapsedMinutes
+  )) {
+    if (activeClip.clip.type !== "controlEffect") {
+      continue;
+    }
+
+    resolvedByKey.set(
+      JSON.stringify(activeClip.clip.effect.target) + activeClip.clip.effect.type,
+      {
+        effect: cloneControlEffect(activeClip.clip.effect),
+        elapsedMinutes: activeClip.elapsedMinutes,
+        source: "sequence",
+        clipIndex: activeClip.clipIndex
+      }
+    );
+  }
+
+  return [...resolvedByKey.values()];
+}
+
 export function getInteractionLinkImpulseSteps(
   link: InteractionLink,
   sequenceLibrary?: SequenceLibraryLike | null
@@ -187,6 +372,9 @@ export function getInteractionLinkImpulseClips(
   if (controlEffect !== null) {
     return [
       {
+        startMinute: 0,
+        durationMinutes: DEFAULT_IMPULSE_SEQUENCE_CLIP_DURATION_MINUTES,
+        lane: 0,
         stepClass: "impulse",
         type: "controlEffect",
         effect: controlEffect
@@ -198,6 +386,9 @@ export function getInteractionLinkImpulseClips(
     case "teleportPlayer":
       return [
         {
+          startMinute: 0,
+          durationMinutes: DEFAULT_IMPULSE_SEQUENCE_CLIP_DURATION_MINUTES,
+          lane: 0,
           stepClass: "impulse",
           type: "teleportPlayer",
           targetEntityId: link.action.targetEntityId
@@ -206,6 +397,9 @@ export function getInteractionLinkImpulseClips(
     case "toggleVisibility":
       return [
         {
+          startMinute: 0,
+          durationMinutes: DEFAULT_IMPULSE_SEQUENCE_CLIP_DURATION_MINUTES,
+          lane: 0,
           stepClass: "impulse",
           type: "toggleVisibility",
           targetBrushId: link.action.targetBrushId,
@@ -215,6 +409,9 @@ export function getInteractionLinkImpulseClips(
     case "startDialogue":
       return [
         {
+          startMinute: 0,
+          durationMinutes: DEFAULT_IMPULSE_SEQUENCE_CLIP_DURATION_MINUTES,
+          lane: 0,
           stepClass: "impulse",
           type: "startDialogue",
           dialogueId: link.action.dialogueId
@@ -270,6 +467,9 @@ export function getProjectScheduleRoutineHeldClips(
   }
 
   return routine.effects.map((effect) => ({
+    startMinute: 0,
+    durationMinutes: LEGACY_PROJECT_SEQUENCE_DURATION_MINUTES,
+    lane: 0,
     stepClass: "held" as const,
     type: "controlEffect" as const,
     effect: cloneControlEffect(effect)
