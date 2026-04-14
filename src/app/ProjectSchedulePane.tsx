@@ -20,12 +20,18 @@ import {
 } from "../sequencer/project-sequencer-control-options";
 import {
   findHeldSequenceControlEffect,
-  getProjectScheduleRoutineHeldSteps
+  getProjectScheduleRoutineHeldSteps,
+  getProjectSequenceHeldSteps
 } from "../sequencer/project-sequence-steps";
+import {
+  getProjectSequences,
+  type ProjectSequenceLibrary
+} from "../sequencer/project-sequences";
 
 interface ProjectSequencerPaneProps {
   targetOptions: ProjectScheduleTargetOption[];
   scheduler: ProjectScheduler;
+  sequences: ProjectSequenceLibrary;
   selectedRoutineId: string | null;
   onSelectRoutine(routineId: string | null): void;
   onAddRoutine(targetKey: string): void;
@@ -37,6 +43,7 @@ interface ProjectSequencerPaneProps {
   onSetRoutineStartHour(routineId: string, startHour: number): void;
   onSetRoutineEndHour(routineId: string, endHour: number): void;
   onSetRoutinePriority(routineId: string, priority: number): void;
+  onSetRoutineSequenceId(routineId: string, sequenceId: string | null): void;
   onSetRoutineEffectOption(
     routineId: string,
     effectOptionId: ProjectScheduleEffectOptionId
@@ -68,12 +75,15 @@ function handleCommitOnEnter(
   commit();
 }
 
-function getRoutineSummary(routine: ProjectScheduleRoutine): string {
+function getRoutineSummary(
+  routine: ProjectScheduleRoutine,
+  sequences: ProjectSequenceLibrary
+): string {
   const summaryParts = [
     formatProjectScheduleDaySelection(routine.days),
     `${formatTimeOfDayHours(routine.startHour)}-${formatTimeOfDayHours(routine.endHour)}`
   ];
-  const heldSteps = getProjectScheduleRoutineHeldSteps(routine);
+  const heldSteps = getProjectScheduleRoutineHeldSteps(routine, sequences);
 
   if (routine.target.kind === "actor") {
     const presenceEffect = findHeldSequenceControlEffect(
@@ -106,8 +116,11 @@ function getRoutineSummary(routine: ProjectScheduleRoutine): string {
   return summaryParts.join(" · ");
 }
 
-function isRoutineEffectInactive(routine: ProjectScheduleRoutine): boolean {
-  const heldSteps = getProjectScheduleRoutineHeldSteps(routine);
+function isRoutineEffectInactive(
+  routine: ProjectScheduleRoutine,
+  sequences: ProjectSequenceLibrary
+): boolean {
+  const heldSteps = getProjectScheduleRoutineHeldSteps(routine, sequences);
 
   if (routine.target.kind === "actor") {
     return (
