@@ -2614,11 +2614,14 @@ export class RuntimeHost {
       }
     }
 
-    this.runtimeScene.scheduler.resolved = nextResolvedScheduler;
-    this.runtimeScene.control.resolved = applyRuntimeProjectScheduleToControlState(
+    const nextResolvedControl = applyRuntimeProjectScheduleToControlState(
       this.runtimeScene.control.resolved,
-      nextResolvedScheduler
+      nextResolvedScheduler,
+      this.runtimeScene.control.baselineResolved
     );
+    this.syncResolvedControlStateToRuntime(nextResolvedControl);
+    this.runtimeScene.scheduler.resolved = nextResolvedScheduler;
+    this.runtimeScene.control.resolved = nextResolvedControl;
 
     if (changed) {
       this.refreshRuntimeNpcCollections();
