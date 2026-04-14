@@ -4217,7 +4217,9 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     source.version !== WHITEBOX_GEOMETRY_SCENE_DOCUMENT_VERSION &&
     source.version !== NPC_COLLIDER_SCENE_DOCUMENT_VERSION &&
     source.version !== PROJECT_SCHEDULER_FOUNDATION_SCENE_DOCUMENT_VERSION &&
-    source.version !== EXPANDED_CONTROL_SURFACE_SCENE_DOCUMENT_VERSION
+    source.version !== EXPANDED_CONTROL_SURFACE_SCENE_DOCUMENT_VERSION &&
+    source.version !== SCHEDULER_ACTOR_ROUTINE_EFFECTS_SCENE_DOCUMENT_VERSION &&
+    source.version !== PROJECT_DIALOGUE_LIBRARY_SCENE_DOCUMENT_VERSION
   ) {
     throw new Error(
       `Unsupported scene document version: ${String(source.version)}.`
@@ -4236,6 +4238,9 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     scheduler: readProjectScheduler(source.scheduler, "scheduler", {
       allowMissing:
         source.version < PROJECT_SCHEDULER_FOUNDATION_SCENE_DOCUMENT_VERSION
+    }),
+    dialogues: readProjectDialogueLibrary(source.dialogues, "dialogues", {
+      allowMissing: source.version < PROJECT_DIALOGUE_LIBRARY_SCENE_DOCUMENT_VERSION
     }),
     world: readWorldSettings(source.world, {
       legacyProjectTimeValue:
@@ -4369,7 +4374,11 @@ export function migrateProjectDocument(source: unknown): ProjectDocument {
         allowMissing:
           source.version < PROJECT_SCHEDULER_FOUNDATION_SCENE_DOCUMENT_VERSION
       }),
-      activeSceneId: expectString(source.activeSceneId, "activeSceneId"),
+    activeSceneId: expectString(source.activeSceneId, "activeSceneId"),
+      dialogues: readProjectDialogueLibrary(source.dialogues, "dialogues", {
+        allowMissing:
+          source.version < PROJECT_DIALOGUE_LIBRARY_SCENE_DOCUMENT_VERSION
+      }),
       scenes,
       materials,
       textures: expectEmptyCollection(source.textures, "textures"),
