@@ -713,7 +713,7 @@ describe("RuntimeInteractionSystem", () => {
     const prompt = interactionSystem.resolveClickInteractionPrompt(
       {
         x: 0,
-        y: 1.6,
+        y: 1,
         z: 0
       },
       {
