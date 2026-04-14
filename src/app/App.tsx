@@ -2013,14 +2013,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
     String(DEFAULT_SCENE_ENTRY_YAW_DEGREES)
   );
   const [npcActorIdDraft, setNpcActorIdDraft] = useState("");
-  const [npcPresenceModeDraft, setNpcPresenceModeDraft] =
-    useState<NpcPresenceMode>(createNpcAlwaysPresence().mode);
-  const [npcPresenceStartHourDraft, setNpcPresenceStartHourDraft] = useState(
-    String(DEFAULT_NPC_TIME_WINDOW_START_HOUR)
-  );
-  const [npcPresenceEndHourDraft, setNpcPresenceEndHourDraft] = useState(
-    String(DEFAULT_NPC_TIME_WINDOW_END_HOUR)
-  );
   const [npcYawDraft, setNpcYawDraft] = useState(
     String(DEFAULT_NPC_YAW_DEGREES)
   );
