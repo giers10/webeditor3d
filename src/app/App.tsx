@@ -2124,6 +2124,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
     projectTimeDuskDurationHoursDraft,
     setProjectTimeDuskDurationHoursDraft
   ] = useState(String(editorState.projectDocument.time.duskDurationHours));
+  const [schedulePaneOpen, setSchedulePaneOpen] = useState(false);
+  const [selectedScheduleRoutineId, setSelectedScheduleRoutineId] = useState<
+    string | null
+  >(null);
   const [
     worldDawnAmbientIntensityFactorDraft,
     setWorldDawnAmbientIntensityFactorDraft
