@@ -3080,7 +3080,7 @@ export class RuntimeHost {
 
     if (this.runtimeScene !== null) {
       const brush =
-        this.runtimeScene.brushes.find((candidate) => candidate.brushId === brushId) ??
+        this.runtimeScene.brushes.find((candidate) => candidate.id === brushId) ??
         null;
 
       if (brush !== null) {
