@@ -49,6 +49,9 @@ describe("project sequence steps", () => {
 
     expect(getInteractionLinkSequenceSteps(playSoundLink)).toEqual([
       {
+        startMinute: 0,
+        durationMinutes: 1,
+        lane: 0,
         stepClass: "impulse",
         type: "controlEffect",
         effect: createPlaySoundControlEffect({
@@ -58,6 +61,9 @@ describe("project sequence steps", () => {
     ]);
     expect(getInteractionLinkSequenceSteps(dialogueLink)).toEqual([
       {
+        startMinute: 0,
+        durationMinutes: 1,
+        lane: 0,
         stepClass: "impulse",
         type: "startDialogue",
         dialogueId: "dialogue-main"
@@ -65,6 +71,9 @@ describe("project sequence steps", () => {
     ]);
     expect(getInteractionLinkSequenceSteps(teleportLink)).toEqual([
       {
+        startMinute: 0,
+        durationMinutes: 1,
+        lane: 0,
         stepClass: "impulse",
         type: "teleportPlayer",
         targetEntityId: "entity-teleport-target"
@@ -72,6 +81,9 @@ describe("project sequence steps", () => {
     ]);
     expect(getInteractionLinkSequenceSteps(visibilityLink)).toEqual([
       {
+        startMinute: 0,
+        durationMinutes: 1,
+        lane: 0,
         stepClass: "impulse",
         type: "toggleVisibility",
         targetBrushId: "brush-main",
@@ -117,6 +129,9 @@ describe("project sequence steps", () => {
 
     expect(getProjectScheduleRoutineHeldSteps(actorRoutine)).toEqual([
       {
+        startMinute: 0,
+        durationMinutes: 1440,
+        lane: 0,
         stepClass: "held",
         type: "controlEffect",
         effect: createSetActorPresenceControlEffect({
@@ -127,6 +142,9 @@ describe("project sequence steps", () => {
     ]);
     expect(getInteractionLinkImpulseSteps(directControlLink)).toEqual([
       {
+        startMinute: 0,
+        durationMinutes: 1,
+        lane: 0,
         stepClass: "impulse",
         type: "controlEffect",
         effect: createSetLightEnabledControlEffect({
@@ -137,6 +155,9 @@ describe("project sequence steps", () => {
     ]);
     expect(getProjectScheduleRoutineSequenceSteps(lightRoutine)).toEqual([
       {
+        startMinute: 0,
+        durationMinutes: 1440,
+        lane: 0,
         stepClass: "held",
         type: "controlEffect",
         effect: createSetLightEnabledControlEffect({
