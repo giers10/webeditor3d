@@ -108,6 +108,84 @@ describe("validateSceneDocument", () => {
     );
   });
 
+  it("rejects invalid expanded control-surface effect values", () => {
+    const audioAsset = {
+      id: "asset-audio-main",
+      kind: "audio" as const,
+      sourceName: "loop.ogg",
+      mimeType: "audio/ogg",
+      storageKey: createProjectAssetStorageKey("asset-audio-main"),
+      byteLength: 1024,
+      metadata: {
+        kind: "audio" as const,
+        durationSeconds: 3,
+        channelCount: 2,
+        sampleRateHz: 48000,
+        warnings: []
+      }
+    } satisfies AudioAssetRecord;
+    const triggerVolume = createTriggerVolumeEntity({
+      id: "entity-trigger-main"
+    });
+    const soundEmitter = createSoundEmitterEntity({
+      id: "entity-sound-main",
+      audioAssetId: audioAsset.id
+    });
+    const document = {
+      ...createEmptySceneDocument(),
+      assets: {
+        [audioAsset.id]: audioAsset
+      },
+      entities: {
+        [triggerVolume.id]: triggerVolume,
+        [soundEmitter.id]: soundEmitter
+      },
+      interactionLinks: {
+        "link-sound-volume": createControlInteractionLink({
+          id: "link-sound-volume",
+          sourceEntityId: triggerVolume.id,
+          effect: createSetSoundVolumeControlEffect({
+            target: createSoundEmitterControlTargetRef(soundEmitter.id),
+            volume: 0.4
+          })
+        }),
+        "link-ambient-color": createControlInteractionLink({
+          id: "link-ambient-color",
+          sourceEntityId: triggerVolume.id,
+          effect: createSetAmbientLightColorControlEffect({
+            target: createActiveSceneControlTargetRef(),
+            colorHex: "#112233"
+          })
+        })
+      }
+    };
+    (
+      document.interactionLinks["link-sound-volume"].action.effect as {
+        volume: number;
+      }
+    ).volume = Number.NaN;
+    (
+      document.interactionLinks["link-ambient-color"].action.effect as {
+        colorHex: string;
+      }
+    ).colorHex = "not-a-color";
+
+    const validation = validateSceneDocument(document);
+
+    expect(validation.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "invalid-control-sound-volume",
+          path: "interactionLinks.link-sound-volume.action.effect.volume"
+        }),
+        expect.objectContaining({
+          code: "invalid-control-ambient-light-color",
+          path: "interactionLinks.link-ambient-color.action.effect.colorHex"
+        })
+      ])
+    );
+  });
+
   it("detects invalid box sizes and missing material references", () => {
     const brush = createBoxBrush({
       id: "brush-invalid"
