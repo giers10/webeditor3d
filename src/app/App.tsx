@@ -42,6 +42,7 @@ import { createSetPathNameCommand } from "../commands/set-path-name-command";
 import { createSetProjectNameCommand } from "../commands/set-project-name-command";
 import { createSetProjectSchedulerCommand } from "../commands/set-project-scheduler-command";
 import { createSetProjectDialoguesCommand } from "../commands/set-project-dialogues-command";
+import { createSetProjectSequencesCommand } from "../commands/set-project-sequences-command";
 import { createSetProjectTimeSettingsCommand } from "../commands/set-project-time-settings-command";
 import { createSetSceneLoadingScreenCommand } from "../commands/set-scene-loading-screen-command";
 import { createSetSceneNameCommand } from "../commands/set-scene-name-command";
@@ -298,6 +299,14 @@ import type {
   ProjectDialogueLine
 } from "../dialogues/project-dialogues";
 import {
+  areProjectSequenceLibrariesEqual,
+  cloneProjectSequenceLibrary,
+  createProjectSequence,
+  getProjectSequences,
+  type ProjectSequence,
+  type ProjectSequenceLibrary
+} from "../sequencer/project-sequences";
+import {
   getEntityDisplayLabelById,
   getSortedEntityDisplayLabels
 } from "../entities/entity-labels";
@@ -306,6 +315,7 @@ import {
   areInteractionLinksEqual,
   createControlInteractionLink,
   createPlayAnimationInteractionLink,
+  createRunSequenceInteractionLink,
   createStartDialogueInteractionLink,
   createPlaySoundInteractionLink,
   createStopAnimationInteractionLink,
@@ -357,6 +367,7 @@ import { validateRuntimeSceneBuild } from "../runtime-three/runtime-scene-valida
 import { EditorAutosaveController } from "../serialization/editor-autosave";
 import { Panel } from "../shared-ui/Panel";
 import { ProjectDialoguesPanel } from "./ProjectDialoguesPanel";
+import { ProjectSequencesPanel } from "./ProjectSequencesPanel";
 import { ProjectSequencerPane } from "./ProjectSequencerPane";
 import {
   areProjectSchedulersEqual,
