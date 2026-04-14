@@ -1,5 +1,8 @@
 import type { ProjectDialogue } from "../dialogues/project-dialogues";
-import type { InteractableEntity, TriggerVolumeEntity } from "../entities/entity-instances";
+import type {
+  InteractableEntity,
+  TriggerVolumeEntity
+} from "../entities/entity-instances";
 import {
   createProjectScheduleEffectFromOption,
   listProjectScheduleEffectOptions,
@@ -8,8 +11,9 @@ import {
 
 import { createProjectSequence, type ProjectSequence } from "./project-sequences";
 
-type SequenceInteractionSource = Pick<InteractableEntity, "id" | "kind" | "name"> &
-  Partial<Pick<TriggerVolumeEntity, "name">>;
+type SequenceInteractionSource =
+  | Pick<InteractableEntity, "id" | "kind" | "name">
+  | Pick<TriggerVolumeEntity, "id" | "kind" | "name">;
 
 function formatSequenceSourceLabel(source: SequenceInteractionSource): string {
   const normalizedName = source.name?.trim() ?? "";
