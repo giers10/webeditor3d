@@ -1,0 +1,660 @@
+import type { KeyboardEvent as ReactKeyboardEvent } from "react";
+
+import {
+  HOURS_PER_DAY,
+  formatTimeOfDayHours
+} from "../document/project-time-settings";
+import { formatControlEffectValue, getControlTargetRefKey } from "../controls/control-surface";
+import {
+  PROJECT_SCHEDULE_WEEKDAYS,
+  formatProjectScheduleDaySelection,
+  formatProjectScheduleWeekdayLabel,
+  getProjectScheduleTimelineSegments,
+  type ProjectScheduler,
+  type ProjectScheduleRoutine,
+  type ProjectScheduleWeekday
+} from "../scheduler/project-scheduler";
+import {
+  getProjectScheduleEffectOptionId,
+  getProjectScheduleTargetOptionForRoutine,
+  listProjectScheduleEffectOptions,
+  type ProjectScheduleEffectOptionId,
+  type ProjectScheduleTargetOption
+} from "../scheduler/project-schedule-control-options";
+
+interface ProjectSchedulePaneProps {
+  targetOptions: ProjectScheduleTargetOption[];
+  scheduler: ProjectScheduler;
+  selectedRoutineId: string | null;
+  onSelectRoutine(routineId: string | null): void;
+  onAddRoutine(targetKey: string): void;
+  onDeleteRoutine(routineId: string): void;
+  onClose(): void;
+  onSetRoutineTarget(routineId: string, targetKey: string): void;
+  onSetRoutineTitle(routineId: string, title: string): void;
+  onSetRoutineEnabled(routineId: string, enabled: boolean): void;
+  onSetRoutineStartHour(routineId: string, startHour: number): void;
+  onSetRoutineEndHour(routineId: string, endHour: number): void;
+  onSetRoutinePriority(routineId: string, priority: number): void;
+  onSetRoutineEffectOption(
+    routineId: string,
+    effectOptionId: ProjectScheduleEffectOptionId
+  ): void;
+  onSetRoutineDays(
+    routineId: string,
+    mode: "everyDay" | "selectedDays",
+    days: ProjectScheduleWeekday[]
+  ): void;
+  onSetRoutineNumericValue(routineId: string, value: number): void;
+  onSetRoutineColorValue(routineId: string, colorHex: string): void;
+  onSetRoutineAnimationClip(routineId: string, clipName: string): void;
+  onSetRoutineAnimationLoop(routineId: string, loop: boolean): void;
+}
+
+function handleCommitOnEnter(
+  event: ReactKeyboardEvent<HTMLInputElement>,
+  commit: () => void
+) {
+  if (event.key !== "Enter") {
+    return;
+  }
+
+  event.currentTarget.blur();
+  commit();
+}
+
+function getRoutineSummary(routine: ProjectScheduleRoutine): string {
+  return `${formatProjectScheduleDaySelection(routine.days)} · ${formatTimeOfDayHours(routine.startHour)}-${formatTimeOfDayHours(routine.endHour)} · ${formatControlEffectValue(routine.effect)} · P${routine.priority}`;
+}
+
+function isRoutineEffectInactive(routine: ProjectScheduleRoutine): boolean {
+  switch (routine.effect.type) {
+    case "setActorPresence":
+      return !routine.effect.active;
+    case "stopModelAnimation":
+    case "stopSound":
+      return true;
+    case "setModelInstanceVisible":
+      return !routine.effect.visible;
+    case "setInteractionEnabled":
+    case "setLightEnabled":
+      return !routine.effect.enabled;
+    default:
+      return false;
+  }
+}
+
+function getRoutineNumericValue(routine: ProjectScheduleRoutine): number | null {
+  switch (routine.effect.type) {
+    case "setSoundVolume":
+      return routine.effect.volume;
+    case "setLightIntensity":
+    case "setAmbientLightIntensity":
+    case "setSunLightIntensity":
+      return routine.effect.intensity;
+    default:
+      return null;
+  }
+}
+
+function getRoutineColorValue(routine: ProjectScheduleRoutine): string | null {
+  switch (routine.effect.type) {
+    case "setLightColor":
+    case "setAmbientLightColor":
+    case "setSunLightColor":
+      return routine.effect.colorHex;
+    default:
+      return null;
+  }
+}
+
+function groupTargetOptions(
+  targetOptions: ProjectScheduleTargetOption[]
+): Array<{ groupLabel: string; options: ProjectScheduleTargetOption[] }> {
+  const grouped = new Map<string, ProjectScheduleTargetOption[]>();
+
+  for (const option of targetOptions) {
+    const entries = grouped.get(option.groupLabel) ?? [];
+    entries.push(option);
+    grouped.set(option.groupLabel, entries);
+  }
+
+  return [...grouped.entries()].map(([groupLabel, options]) => ({
+    groupLabel,
+    options
+  }));
+}
+
+export function ProjectSchedulePane({
+  targetOptions,
+  scheduler,
+  selectedRoutineId,
+  onSelectRoutine,
+  onAddRoutine,
+  onDeleteRoutine,
+  onClose,
+  onSetRoutineTarget,
+  onSetRoutineTitle,
+  onSetRoutineEnabled,
+  onSetRoutineStartHour,
+  onSetRoutineEndHour,
+  onSetRoutinePriority,
+  onSetRoutineEffectOption,
+  onSetRoutineDays,
+  onSetRoutineNumericValue,
+  onSetRoutineColorValue,
+  onSetRoutineAnimationClip,
+  onSetRoutineAnimationLoop
+}: ProjectSchedulePaneProps) {
+  const selectedRoutine =
+    selectedRoutineId === null ? null : scheduler.routines[selectedRoutineId] ?? null;
+  const selectedTargetOption =
+    selectedRoutine === null
+      ? null
+      : getProjectScheduleTargetOptionForRoutine(
+          targetOptions,
+          selectedRoutine.target
+        );
+  const selectedEffectOptionId =
+    selectedRoutine === null
+      ? null
+      : getProjectScheduleEffectOptionId(selectedRoutine.effect);
+  const selectedEffectOptions =
+    selectedTargetOption === null
+      ? []
+      : listProjectScheduleEffectOptions(selectedTargetOption);
+  const selectedRoutineDays =
+    selectedRoutine === null
+      ? PROJECT_SCHEDULE_WEEKDAYS
+      : selectedRoutine.days.mode === "everyDay"
+        ? PROJECT_SCHEDULE_WEEKDAYS
+        : selectedRoutine.days.days;
+  const hourTicks = Array.from({ length: HOURS_PER_DAY }, (_, hour) => hour);
+
+  return (
+    <section className="schedule-pane" data-testid="project-schedule-pane">
+      <div className="schedule-pane__header">
+        <div>
+          <div className="label">Schedule</div>
+          <div className="schedule-pane__summary">
+            Scheduler-owned orchestration over typed control targets and global
+            project time.
+          </div>
+        </div>
+        <div className="schedule-pane__actions">
+          <button
+            className="toolbar__button toolbar__button--compact"
+            type="button"
+            disabled={targetOptions.length === 0}
+            onClick={() =>
+              onAddRoutine(
+                selectedTargetOption?.key ?? targetOptions[0]?.key ?? ""
+              )
+            }
+          >
+            Add Routine
+          </button>
+          <button
+            className="toolbar__button toolbar__button--compact"
+            type="button"
+            onClick={onClose}
+          >
+            Close
+          </button>
+        </div>
+      </div>
+
+      <div className="schedule-pane__body">
+        <div className="schedule-pane__timeline">
+          <div className="schedule-ruler">
+            <div className="schedule-ruler__label">Targets</div>
+            <div className="schedule-ruler__track">
+              {hourTicks.map((hour) => (
+                <div key={hour} className="schedule-ruler__tick">
+                  <span>{String(hour).padStart(2, "0")}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {targetOptions.length === 0 ? (
+            <div className="schedule-pane__empty">
+              No scheduler-addressable control targets are authored in this
+              project yet.
+            </div>
+          ) : (
+            targetOptions.map((targetOption) => {
+              const routines = Object.values(scheduler.routines)
+                .filter(
+                  (routine) =>
+                    getControlTargetRefKey(routine.target) === targetOption.key
+                )
+                .sort((left, right) => left.startHour - right.startHour);
+
+              return (
+                <div key={targetOption.key} className="schedule-row">
+                  <div className="schedule-row__label">
+                    <button
+                      className="schedule-row__add"
+                      type="button"
+                      onClick={() => onAddRoutine(targetOption.key)}
+                    >
+                      +
+                    </button>
+                    <div className="schedule-row__meta">
+                      <div className="schedule-row__title">{targetOption.label}</div>
+                      <div className="schedule-row__subtitle">
+                        {targetOption.groupLabel} · {targetOption.subtitle}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="schedule-row__track">
+                    <div className="schedule-row__grid" />
+                    {routines.map((routine) =>
+                      getProjectScheduleTimelineSegments(routine).map(
+                        (segment) => (
+                          <button
+                            key={segment.key}
+                            className={`schedule-block ${
+                              selectedRoutineId === routine.id
+                                ? "schedule-block--selected"
+                                : ""
+                            } ${
+                              isRoutineEffectInactive(routine)
+                                ? "schedule-block--inactive"
+                                : ""
+                            } ${
+                              routine.enabled ? "" : "schedule-block--disabled"
+                            }`.trim()}
+                            type="button"
+                            title={`${routine.title} · ${getRoutineSummary(routine)}`}
+                            style={{
+                              left: `${(segment.startHour / HOURS_PER_DAY) * 100}%`,
+                              width: `${((segment.endHour - segment.startHour) / HOURS_PER_DAY) * 100}%`
+                            }}
+                            onClick={() => onSelectRoutine(routine.id)}
+                          >
+                            <span className="schedule-block__title">
+                              {routine.title}
+                            </span>
+                          </button>
+                        )
+                      )
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        <aside className="schedule-pane__editor">
+          {selectedRoutine === null || selectedTargetOption === null ? (
+            <div className="schedule-pane__empty">
+              Select a routine block or create a new schedule routine.
+            </div>
+          ) : (
+            <>
+              <div className="form-section">
+                <div className="label">Routine</div>
+                <label className="form-field">
+                  <span className="label">Title</span>
+                  <input
+                    key={`${selectedRoutine.id}-title`}
+                    className="text-input"
+                    type="text"
+                    defaultValue={selectedRoutine.title}
+                    onBlur={(event) =>
+                      onSetRoutineTitle(
+                        selectedRoutine.id,
+                        event.currentTarget.value
+                      )
+                    }
+                    onKeyDown={(event) =>
+                      handleCommitOnEnter(event, () =>
+                        onSetRoutineTitle(
+                          selectedRoutine.id,
+                          event.currentTarget.value
+                        )
+                      )
+                    }
+                  />
+                </label>
+                <label className="form-field">
+                  <span className="label">Target</span>
+                  <select
+                    className="select-input"
+                    value={selectedTargetOption.key}
+                    onChange={(event) =>
+                      onSetRoutineTarget(selectedRoutine.id, event.currentTarget.value)
+                    }
+                  >
+                    {groupTargetOptions(targetOptions).map((group) => (
+                      <optgroup key={group.groupLabel} label={group.groupLabel}>
+                        {group.options.map((option) => (
+                          <option key={option.key} value={option.key}>
+                            {option.label} ({option.subtitle})
+                          </option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </select>
+                </label>
+                <label className="form-field">
+                  <span className="label">Effect</span>
+                  <select
+                    className="select-input"
+                    value={selectedEffectOptionId ?? ""}
+                    onChange={(event) =>
+                      onSetRoutineEffectOption(
+                        selectedRoutine.id,
+                        event.currentTarget.value as ProjectScheduleEffectOptionId
+                      )
+                    }
+                  >
+                    {selectedEffectOptions.map((effectOption) => (
+                      <option key={effectOption.id} value={effectOption.id}>
+                        {effectOption.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="form-field form-field--inline">
+                  <input
+                    type="checkbox"
+                    checked={selectedRoutine.enabled}
+                    onChange={(event) =>
+                      onSetRoutineEnabled(
+                        selectedRoutine.id,
+                        event.currentTarget.checked
+                      )
+                    }
+                  />
+                  <span className="label">Enabled</span>
+                </label>
+              </div>
+
+              <div className="form-section">
+                <div className="label">Days</div>
+                <div className="schedule-days">
+                  <button
+                    className={`schedule-day ${
+                      selectedRoutine.days.mode === "everyDay"
+                        ? "schedule-day--active"
+                        : ""
+                    }`.trim()}
+                    type="button"
+                    onClick={() =>
+                      onSetRoutineDays(selectedRoutine.id, "everyDay", [])
+                    }
+                  >
+                    Every
+                  </button>
+                  {PROJECT_SCHEDULE_WEEKDAYS.map((weekday) => {
+                    const selected = selectedRoutineDays.includes(weekday);
+                    const nextDays =
+                      selectedRoutine.days.mode === "everyDay"
+                        ? PROJECT_SCHEDULE_WEEKDAYS.filter(
+                            (entry) => entry !== weekday
+                          )
+                        : selected
+                          ? selectedRoutineDays.filter(
+                              (entry) => entry !== weekday
+                            )
+                          : [...selectedRoutineDays, weekday];
+
+                    return (
+                      <button
+                        key={weekday}
+                        className={`schedule-day ${
+                          selected ? "schedule-day--active" : ""
+                        }`.trim()}
+                        type="button"
+                        onClick={() =>
+                          onSetRoutineDays(
+                            selectedRoutine.id,
+                            nextDays.length === PROJECT_SCHEDULE_WEEKDAYS.length
+                              ? "everyDay"
+                              : "selectedDays",
+                            nextDays.length === 0 ? [weekday] : nextDays
+                          )
+                        }
+                      >
+                        {formatProjectScheduleWeekdayLabel(weekday)}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="form-section">
+                <div className="label">Window</div>
+                <div className="vector-inputs vector-inputs--two">
+                  <label className="form-field">
+                    <span className="label">Start</span>
+                    <input
+                      key={`${selectedRoutine.id}-start`}
+                      className="text-input"
+                      type="number"
+                      min="0"
+                      max="24"
+                      step="0.25"
+                      defaultValue={selectedRoutine.startHour}
+                      onBlur={(event) =>
+                        onSetRoutineStartHour(
+                          selectedRoutine.id,
+                          Number(event.currentTarget.value)
+                        )
+                      }
+                      onKeyDown={(event) =>
+                        handleCommitOnEnter(event, () =>
+                          onSetRoutineStartHour(
+                            selectedRoutine.id,
+                            Number(event.currentTarget.value)
+                          )
+                        )
+                      }
+                    />
+                  </label>
+                  <label className="form-field">
+                    <span className="label">End</span>
+                    <input
+                      key={`${selectedRoutine.id}-end`}
+                      className="text-input"
+                      type="number"
+                      min="0"
+                      max="24"
+                      step="0.25"
+                      defaultValue={selectedRoutine.endHour}
+                      onBlur={(event) =>
+                        onSetRoutineEndHour(
+                          selectedRoutine.id,
+                          Number(event.currentTarget.value)
+                        )
+                      }
+                      onKeyDown={(event) =>
+                        handleCommitOnEnter(event, () =>
+                          onSetRoutineEndHour(
+                            selectedRoutine.id,
+                            Number(event.currentTarget.value)
+                          )
+                        )
+                      }
+                    />
+                  </label>
+                </div>
+                <label className="form-field">
+                  <span className="label">Priority</span>
+                  <input
+                    key={`${selectedRoutine.id}-priority`}
+                    className="text-input"
+                    type="number"
+                    step="1"
+                    defaultValue={selectedRoutine.priority}
+                    onBlur={(event) =>
+                      onSetRoutinePriority(
+                        selectedRoutine.id,
+                        Number(event.currentTarget.value)
+                      )
+                    }
+                    onKeyDown={(event) =>
+                      handleCommitOnEnter(event, () =>
+                        onSetRoutinePriority(
+                          selectedRoutine.id,
+                          Number(event.currentTarget.value)
+                        )
+                      )
+                    }
+                  />
+                </label>
+              </div>
+
+              {selectedEffectOptions.find(
+                (effectOption) => effectOption.id === selectedEffectOptionId
+              )?.valueKind === "number" ? (
+                <div className="form-section">
+                  <div className="label">Value</div>
+                  <label className="form-field">
+                    <span className="label">
+                      {selectedEffectOptions.find(
+                        (effectOption) => effectOption.id === selectedEffectOptionId
+                      )?.valueLabel ?? "Value"}
+                    </span>
+                    <input
+                      key={`${selectedRoutine.id}-numeric`}
+                      className="text-input"
+                      type="number"
+                      min={
+                        selectedEffectOptions.find(
+                          (effectOption) =>
+                            effectOption.id === selectedEffectOptionId
+                        )?.min ?? 0
+                      }
+                      step={
+                        selectedEffectOptions.find(
+                          (effectOption) =>
+                            effectOption.id === selectedEffectOptionId
+                        )?.step ?? 0.1
+                      }
+                      defaultValue={getRoutineNumericValue(selectedRoutine) ?? 0}
+                      onBlur={(event) =>
+                        onSetRoutineNumericValue(
+                          selectedRoutine.id,
+                          Number(event.currentTarget.value)
+                        )
+                      }
+                      onKeyDown={(event) =>
+                        handleCommitOnEnter(event, () =>
+                          onSetRoutineNumericValue(
+                            selectedRoutine.id,
+                            Number(event.currentTarget.value)
+                          )
+                        )
+                      }
+                    />
+                  </label>
+                </div>
+              ) : null}
+
+              {selectedEffectOptions.find(
+                (effectOption) => effectOption.id === selectedEffectOptionId
+              )?.valueKind === "color" ? (
+                <div className="form-section">
+                  <div className="label">Value</div>
+                  <label className="form-field">
+                    <span className="label">
+                      {selectedEffectOptions.find(
+                        (effectOption) => effectOption.id === selectedEffectOptionId
+                      )?.valueLabel ?? "Color"}
+                    </span>
+                    <input
+                      className="color-input"
+                      type="color"
+                      value={getRoutineColorValue(selectedRoutine) ?? "#ffffff"}
+                      onChange={(event) =>
+                        onSetRoutineColorValue(
+                          selectedRoutine.id,
+                          event.currentTarget.value
+                        )
+                      }
+                    />
+                  </label>
+                </div>
+              ) : null}
+
+              {selectedEffectOptions.find(
+                (effectOption) => effectOption.id === selectedEffectOptionId
+              )?.valueKind === "animation" ? (
+                <div className="form-section">
+                  <div className="label">Animation</div>
+                  <label className="form-field">
+                    <span className="label">Clip</span>
+                    <select
+                      className="select-input"
+                      value={
+                        selectedRoutine.effect.type === "playModelAnimation"
+                          ? selectedRoutine.effect.clipName
+                          : selectedTargetOption.defaults.animationClipNames?.[0] ?? ""
+                      }
+                      onChange={(event) =>
+                        onSetRoutineAnimationClip(
+                          selectedRoutine.id,
+                          event.currentTarget.value
+                        )
+                      }
+                    >
+                      {(selectedTargetOption.defaults.animationClipNames ?? []).map(
+                        (clipName) => (
+                          <option key={clipName} value={clipName}>
+                            {clipName}
+                          </option>
+                        )
+                      )}
+                    </select>
+                  </label>
+                  <label className="form-field form-field--inline">
+                    <input
+                      type="checkbox"
+                      checked={
+                        selectedRoutine.effect.type === "playModelAnimation"
+                          ? selectedRoutine.effect.loop !== false
+                          : true
+                      }
+                      onChange={(event) =>
+                        onSetRoutineAnimationLoop(
+                          selectedRoutine.id,
+                          event.currentTarget.checked
+                        )
+                      }
+                    />
+                    <span className="label">Loop</span>
+                  </label>
+                </div>
+              ) : null}
+
+              <div className="form-section">
+                <div className="label">Details</div>
+                <div className="schedule-pane__summary">
+                  {selectedTargetOption.groupLabel} · {selectedTargetOption.label}
+                </div>
+                <div className="schedule-pane__summary">
+                  {getRoutineSummary(selectedRoutine)}
+                </div>
+              </div>
+
+              <div className="form-section">
+                <button
+                  className="toolbar__button toolbar__button--compact"
+                  type="button"
+                  onClick={() => onDeleteRoutine(selectedRoutine.id)}
+                >
+                  Delete Routine
+                </button>
+              </div>
+            </>
+          )}
+        </aside>
+      </div>
+    </section>
+  );
+}
