@@ -42,7 +42,7 @@ export interface ToggleVisibilitySequenceStep {
 
 type SequenceDefinitionLike = {
   id: string;
-  steps: SequenceStep[];
+  clips: SequenceClip[];
 };
 
 type SequenceLibraryLike = {
@@ -57,46 +57,55 @@ export type ImpulseSequenceStep =
   | TeleportPlayerSequenceStep
   | ToggleVisibilitySequenceStep;
 
-export type SequenceStep = HeldSequenceStep | ImpulseSequenceStep;
+export type SequenceClip = HeldSequenceStep | ImpulseSequenceStep;
+export type SequenceStep = SequenceClip;
 
-export function cloneSequenceStep(step: SequenceStep): SequenceStep {
-  switch (step.type) {
+export function cloneSequenceClip(clip: SequenceClip): SequenceClip {
+  switch (clip.type) {
     case "controlEffect":
       return {
-        stepClass: step.stepClass,
+        stepClass: clip.stepClass,
         type: "controlEffect",
-        effect: cloneControlEffect(step.effect)
+        effect: cloneControlEffect(clip.effect)
       };
     case "startDialogue":
       return {
         stepClass: "impulse",
         type: "startDialogue",
-        dialogueId: step.dialogueId
+        dialogueId: clip.dialogueId
       };
     case "teleportPlayer":
       return {
         stepClass: "impulse",
         type: "teleportPlayer",
-        targetEntityId: step.targetEntityId
+        targetEntityId: clip.targetEntityId
       };
     case "toggleVisibility":
       return {
         stepClass: "impulse",
         type: "toggleVisibility",
-        targetBrushId: step.targetBrushId,
-        visible: step.visible
+        targetBrushId: clip.targetBrushId,
+        visible: clip.visible
       };
   }
 }
 
-export function cloneSequenceSteps(steps: SequenceStep[]): SequenceStep[] {
-  return steps.map(cloneSequenceStep);
+export function cloneSequenceStep(step: SequenceStep): SequenceStep {
+  return cloneSequenceClip(step);
 }
 
-export function getSequenceStepLabel(step: SequenceStep): string {
-  switch (step.type) {
+export function cloneSequenceClips(clips: SequenceClip[]): SequenceClip[] {
+  return clips.map(cloneSequenceClip);
+}
+
+export function cloneSequenceSteps(steps: SequenceStep[]): SequenceStep[] {
+  return cloneSequenceClips(steps);
+}
+
+export function getSequenceClipLabel(clip: SequenceClip): string {
+  switch (clip.type) {
     case "controlEffect":
-      return `${step.stepClass === "held" ? "Held" : "Impulse"}: ${getControlEffectLabel(step.effect)}`;
+      return `${clip.stepClass === "held" ? "Held" : "Impulse"}: ${getControlEffectLabel(clip.effect)}`;
     case "startDialogue":
       return "Impulse: Start Dialogue";
     case "teleportPlayer":
@@ -106,35 +115,70 @@ export function getSequenceStepLabel(step: SequenceStep): string {
   }
 }
 
+export function getSequenceStepLabel(step: SequenceStep): string {
+  return getSequenceClipLabel(step);
+}
+
 export function getHeldSequenceSteps(
   steps: readonly SequenceStep[]
 ): HeldSequenceStep[] {
-  return steps
-    .filter((step): step is HeldSequenceStep => step.stepClass === "held")
-    .map(cloneSequenceStep) as HeldSequenceStep[];
+  return getHeldSequenceClips(steps);
 }
 
 export function getImpulseSequenceSteps(
   steps: readonly SequenceStep[]
 ): ImpulseSequenceStep[] {
-  return steps
-    .filter((step): step is ImpulseSequenceStep => step.stepClass === "impulse")
-    .map(cloneSequenceStep) as ImpulseSequenceStep[];
+  return getImpulseSequenceClips(steps);
+}
+
+export function getHeldSequenceClips(
+  clips: readonly SequenceClip[]
+): HeldSequenceStep[] {
+  return clips
+    .filter((clip): clip is HeldSequenceStep => clip.stepClass === "held")
+    .map(cloneSequenceClip) as HeldSequenceStep[];
+}
+
+export function getImpulseSequenceClips(
+  clips: readonly SequenceClip[]
+): ImpulseSequenceStep[] {
+  return clips
+    .filter((clip): clip is ImpulseSequenceStep => clip.stepClass === "impulse")
+    .map(cloneSequenceClip) as ImpulseSequenceStep[];
 }
 
 export function getProjectSequenceHeldSteps(
   sequence: SequenceDefinitionLike
 ): HeldSequenceStep[] {
-  return getHeldSequenceSteps(sequence.steps);
+  return getProjectSequenceHeldClips(sequence);
 }
 
 export function getProjectSequenceImpulseSteps(
   sequence: SequenceDefinitionLike
 ): ImpulseSequenceStep[] {
-  return getImpulseSequenceSteps(sequence.steps);
+  return getProjectSequenceImpulseClips(sequence);
+}
+
+export function getProjectSequenceHeldClips(
+  sequence: SequenceDefinitionLike
+): HeldSequenceStep[] {
+  return getHeldSequenceClips(sequence.clips);
+}
+
+export function getProjectSequenceImpulseClips(
+  sequence: SequenceDefinitionLike
+): ImpulseSequenceStep[] {
+  return getImpulseSequenceClips(sequence.clips);
 }
 
 export function getInteractionLinkImpulseSteps(
+  link: InteractionLink,
+  sequenceLibrary?: SequenceLibraryLike | null
+): ImpulseSequenceStep[] {
+  return getInteractionLinkImpulseClips(link, sequenceLibrary);
+}
+
+export function getInteractionLinkImpulseClips(
   link: InteractionLink,
   sequenceLibrary?: SequenceLibraryLike | null
 ): ImpulseSequenceStep[] {
@@ -179,7 +223,7 @@ export function getInteractionLinkImpulseSteps(
     case "runSequence": {
       const sequence =
         sequenceLibrary?.sequences[link.action.sequenceId] ?? null;
-      return sequence === null ? [] : getProjectSequenceImpulseSteps(sequence);
+      return sequence === null ? [] : getProjectSequenceImpulseClips(sequence);
     }
     case "playAnimation":
     case "stopAnimation":
@@ -196,10 +240,24 @@ export function getInteractionLinkSequenceSteps(
   link: InteractionLink,
   sequenceLibrary?: SequenceLibraryLike | null
 ): SequenceStep[] {
-  return getInteractionLinkImpulseSteps(link, sequenceLibrary);
+  return getInteractionLinkSequenceClips(link, sequenceLibrary);
+}
+
+export function getInteractionLinkSequenceClips(
+  link: InteractionLink,
+  sequenceLibrary?: SequenceLibraryLike | null
+): SequenceClip[] {
+  return getInteractionLinkImpulseClips(link, sequenceLibrary);
 }
 
 export function getProjectScheduleRoutineHeldSteps(
+  routine: ProjectScheduleRoutine,
+  sequenceLibrary?: SequenceLibraryLike | null
+): HeldSequenceStep[] {
+  return getProjectScheduleRoutineHeldClips(routine, sequenceLibrary);
+}
+
+export function getProjectScheduleRoutineHeldClips(
   routine: ProjectScheduleRoutine,
   sequenceLibrary?: SequenceLibraryLike | null
 ): HeldSequenceStep[] {
@@ -207,7 +265,7 @@ export function getProjectScheduleRoutineHeldSteps(
     const sequence = sequenceLibrary?.sequences[routine.sequenceId] ?? null;
 
     if (sequence !== null) {
-      return getProjectSequenceHeldSteps(sequence);
+      return getProjectSequenceHeldClips(sequence);
     }
   }
 
@@ -222,7 +280,14 @@ export function getProjectScheduleRoutineSequenceSteps(
   routine: ProjectScheduleRoutine,
   sequenceLibrary?: SequenceLibraryLike | null
 ): SequenceStep[] {
-  return getProjectScheduleRoutineHeldSteps(routine, sequenceLibrary);
+  return getProjectScheduleRoutineSequenceClips(routine, sequenceLibrary);
+}
+
+export function getProjectScheduleRoutineSequenceClips(
+  routine: ProjectScheduleRoutine,
+  sequenceLibrary?: SequenceLibraryLike | null
+): SequenceClip[] {
+  return getProjectScheduleRoutineHeldClips(routine, sequenceLibrary);
 }
 
 export function getHeldSequenceControlEffects(
