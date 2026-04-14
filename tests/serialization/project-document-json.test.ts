@@ -171,6 +171,9 @@ describe("project document JSON", () => {
       title: "Market Greeting Sequence",
       steps: [
         {
+          startMinute: 0,
+          durationMinutes: 1,
+          lane: 0,
           stepClass: "impulse",
           type: "startDialogue",
           dialogueId: "dialogue-market"
@@ -182,6 +185,9 @@ describe("project document JSON", () => {
       title: "Vendor Open",
       steps: [
         {
+          startMinute: 0,
+          durationMinutes: 480,
+          lane: 0,
           stepClass: "held",
           type: "controlEffect",
           effect: createSetActorPresenceControlEffect({
@@ -258,6 +264,9 @@ describe("project document JSON", () => {
       title: "Legacy Dialogue Sequence",
       steps: [
         {
+          startMinute: 0,
+          durationMinutes: 1,
+          lane: 0,
           stepClass: "impulse",
           type: "startDialogue",
           dialogueId: "dialogue-legacy"

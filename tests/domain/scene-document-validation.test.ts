@@ -267,6 +267,9 @@ describe("validateSceneDocument", () => {
       title: "Held Only",
       steps: [
         {
+          startMinute: 0,
+          durationMinutes: 120,
+          lane: 0,
           stepClass: "held",
           type: "controlEffect",
           effect: createSetSoundVolumeControlEffect({
