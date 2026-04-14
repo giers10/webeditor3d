@@ -4607,8 +4607,102 @@ function prefixDiagnosticPath(
   return path === undefined ? undefined : `${prefix}${path}`;
 }
 
+function validateProjectDialogue(
+  dialogue: ProjectDialogue,
+  path: string,
+  seenIds: Map<string, string>,
+  diagnostics: SceneDiagnostic[]
+) {
+  if (dialogue.id.trim().length === 0) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-dialogue-id",
+        "Dialogue ids must be non-empty.",
+        `${path}.id`
+      )
+    );
+  }
+
+  if (dialogue.title.trim().length === 0) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-dialogue-title",
+        "Dialogue titles must be non-empty.",
+        `${path}.title`
+      )
+    );
+  }
+
+  if (dialogue.lines.length === 0) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "missing-dialogue-lines",
+        "Dialogues must contain at least one line.",
+        `${path}.lines`
+      )
+    );
+    return;
+  }
+
+  for (const [lineIndex, line] of dialogue.lines.entries()) {
+    const linePath = `${path}.lines.${lineIndex}`;
+
+    registerAuthoredId(line.id, linePath, seenIds, diagnostics);
+
+    if (line.text.trim().length === 0) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-dialogue-line-text",
+          "Dialogue line text must be non-empty.",
+          `${linePath}.text`
+        )
+      );
+    }
+
+    if (line.speakerName !== null && line.speakerName.trim().length === 0) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-dialogue-line-speaker",
+          "Dialogue speaker names must be non-empty when authored.",
+          `${linePath}.speakerName`
+        )
+      );
+    }
+  }
+}
+
+function validateProjectDialogueLibrary(
+  dialogues: ProjectDialogueLibrary,
+  diagnostics: SceneDiagnostic[]
+) {
+  const seenIds = new Map<string, string>();
+
+  for (const [dialogueKey, dialogue] of Object.entries(dialogues.dialogues)) {
+    const path = `dialogues.dialogues.${dialogueKey}`;
+
+    if (dialogue.id !== dialogueKey) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "dialogue-id-mismatch",
+          "Dialogue ids must match their registry key.",
+          `${path}.id`
+        )
+      );
+    }
+
+    registerAuthoredId(dialogue.id, path, seenIds, diagnostics);
+    validateProjectDialogue(dialogue, path, seenIds, diagnostics);
+  }
+}
+
 function validateProjectResources(
-  document: Pick<ProjectDocument, "materials" | "assets">,
+  document: Pick<ProjectDocument, "materials" | "assets" | "dialogues">,
   diagnostics: SceneDiagnostic[]
 ) {
   const seenIds = new Map<string, string>();
@@ -4647,6 +4741,24 @@ function validateProjectResources(
     registerAuthoredId(asset.id, path, seenIds, diagnostics);
     validateProjectAsset(asset, path, diagnostics);
   }
+
+  for (const [dialogueKey, dialogue] of Object.entries(document.dialogues.dialogues)) {
+    const path = `dialogues.dialogues.${dialogueKey}`;
+
+    if (dialogue.id !== dialogueKey) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "dialogue-id-mismatch",
+          "Dialogue ids must match their registry key.",
+          `${path}.id`
+        )
+      );
+    }
+
+    registerAuthoredId(dialogue.id, path, seenIds, diagnostics);
+    validateProjectDialogue(dialogue, path, seenIds, diagnostics);
+  }
 }
 
 function filterProjectSceneDiagnostics(
@@ -4657,7 +4769,8 @@ function filterProjectSceneDiagnostics(
       diagnostic.path === undefined ||
       (!diagnostic.path.startsWith("materials.") &&
         !diagnostic.path.startsWith("time.") &&
-        !diagnostic.path.startsWith("assets."))
+        !diagnostic.path.startsWith("assets.") &&
+        !diagnostic.path.startsWith("dialogues."))
   );
 }
 
