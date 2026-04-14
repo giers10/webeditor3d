@@ -17350,11 +17350,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
                       {renderInteractionLinksSection(
                         selectedTriggerVolume,
-                        selectedTriggerVolumeLinks,
-                        "add-trigger-teleport-link",
-                        "add-trigger-visibility-link",
-                        "add-trigger-play-sound-link",
-                        "add-trigger-stop-sound-link"
+                        selectedTriggerVolumeLinks
                       )}
                     </>
                   ) : null}
@@ -17487,11 +17483,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
                       {renderInteractionLinksSection(
                         selectedInteractable,
-                        selectedInteractableLinks,
-                        "add-interactable-teleport-link",
-                        "add-interactable-visibility-link",
-                        "add-interactable-play-sound-link",
-                        "add-interactable-stop-sound-link"
+                        selectedInteractableLinks
                       )}
                     </>
                   ) : null}
