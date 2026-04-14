@@ -526,6 +526,7 @@ export class RuntimeHost {
     this.manualPauseActive = false;
     this.controlPauseActive = false;
     this.previousPauseInputActive = false;
+    this.pressedKeys.clear();
     this.publishRuntimePauseState(true);
     this.currentPlayerControllerTelemetry = null;
     this.currentPlayerAudioHooks = null;
@@ -727,6 +728,7 @@ export class RuntimeHost {
     this.manualPauseActive = false;
     this.controlPauseActive = false;
     this.previousPauseInputActive = false;
+    this.pressedKeys.clear();
     this.publishRuntimePauseState(true);
     if (this.renderer !== null) {
       this.renderer.autoClear = true;
