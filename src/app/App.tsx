@@ -372,6 +372,7 @@ import { ProjectSequencerPane } from "./ProjectSequencerPane";
 import {
   getProjectSequenceImpulseSteps
 } from "../sequencer/project-sequence-steps";
+import { createDefaultInteractionProjectSequence } from "../sequencer/project-sequence-templates";
 import {
   areProjectSchedulersEqual,
   cloneProjectScheduleRoutine,
@@ -4466,6 +4467,41 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
+  const ensureDefaultImpulseProjectSequence = (
+    sourceEntity: typeof selectedInteractionSource
+  ): ProjectSequence | null => {
+    const defaultSequence = projectImpulseSequenceList[0] ?? null;
+
+    if (defaultSequence !== null) {
+      return defaultSequence;
+    }
+
+    if (sourceEntity === null) {
+      return null;
+    }
+
+    try {
+      const nextSequence = createDefaultInteractionProjectSequence({
+        source: sourceEntity,
+        dialogues: projectDialogueList,
+        targetOptions: projectScheduleTargetOptions
+      });
+
+      updateProjectSequences(
+        "Create project sequence",
+        "Created project sequence for the new sequence link.",
+        (sequences) => {
+          sequences.sequences[nextSequence.id] = nextSequence;
+        }
+      );
+      setSelectedSequenceId(nextSequence.id);
+      return nextSequence;
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+      return null;
+    }
+  };
+
   const updateProjectDialogue = (
     dialogueId: string,
     label: string,
@@ -7358,12 +7394,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
       return;
     }
 
-    const defaultSequence = projectImpulseSequenceList[0] ?? null;
+    const defaultSequence = ensureDefaultImpulseProjectSequence(
+      selectedInteractionSource
+    );
 
     if (defaultSequence === null) {
-      setStatusMessage(
-        "Author a project sequence with at least one impulse step before adding a sequence link."
-      );
       return;
     }
 
@@ -7892,12 +7927,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
 
     if (actionType === "runSequence") {
-      const defaultSequence = projectImpulseSequenceList[0] ?? null;
+      const defaultSequence = ensureDefaultImpulseProjectSequence(sourceEntity);
 
       if (defaultSequence === null) {
-        setStatusMessage(
-          "Author a project sequence with at least one impulse step before switching this link to run sequence."
-        );
         return;
       }
 
@@ -8795,7 +8827,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
         <button
           className="toolbar__button"
           type="button"
-          disabled={projectImpulseSequenceList.length === 0}
           onClick={handleAddSequenceInteractionLink}
         >
           Add Sequence Link
