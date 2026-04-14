@@ -7686,6 +7686,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       <option value="stopAnimation">Stop Animation</option>
                       <option value="playSound">Play Sound</option>
                       <option value="stopSound">Stop Sound</option>
+                      <option value="startDialogue">Start Dialogue</option>
                       <option value="control">Control Effect</option>
                     </select>
                   </label>
@@ -7865,6 +7866,28 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     </select>
                   </label>
                 </div>
+              ) : link.action.type === "startDialogue" ? (
+                <div className="form-section">
+                  <label className="form-field">
+                    <span className="label">Dialogue</span>
+                    <select
+                      className="text-input"
+                      value={link.action.dialogueId}
+                      onChange={(event) =>
+                        updateDialogueInteractionLinkTarget(
+                          link,
+                          event.currentTarget.value
+                        )
+                      }
+                    >
+                      {projectDialogueList.map((dialogue) => (
+                        <option key={dialogue.id} value={dialogue.id}>
+                          {dialogue.title}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
               ) : link.action.type === "stopAnimation" ? (
                 <div className="form-section">
                   <label className="form-field">
@@ -7987,6 +8010,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
           onClick={() => handleAddSoundInteractionLink("stopSound")}
         >
           Add Stop Sound Link
+        </button>
+        <button
+          className="toolbar__button"
+          type="button"
+          disabled={projectDialogueList.length === 0}
+          onClick={handleAddDialogueInteractionLink}
+        >
+          Add Dialogue Link
         </button>
       </div>
     </div>
