@@ -649,6 +649,9 @@ describe("RuntimeInteractionSystem", () => {
         title: "Console Dialogue Sequence",
         steps: [
           {
+            startMinute: 0,
+            durationMinutes: 1,
+            lane: 0,
             stepClass: "impulse",
             type: "startDialogue",
             dialogueId: "dialogue-sequence"
