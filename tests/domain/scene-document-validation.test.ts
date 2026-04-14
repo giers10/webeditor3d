@@ -31,9 +31,11 @@ import {
 import { createProjectAssetStorageKey, type AudioAssetRecord, type ModelAssetRecord } from "../../src/assets/project-assets";
 import {
   createControlInteractionLink,
+  createRunSequenceInteractionLink,
   createStartDialogueInteractionLink
 } from "../../src/interactions/interaction-links";
 import { createProjectScheduleRoutine } from "../../src/scheduler/project-scheduler";
+import { createProjectSequence } from "../../src/sequencer/project-sequences";
 
 describe("validateSceneDocument", () => {
   it("accepts a valid first-room document", () => {
@@ -110,6 +112,37 @@ describe("validateSceneDocument", () => {
         expect.objectContaining({
           code: "missing-control-actor-target",
           path: "scheduler.routines.routine-missing-actor.target.actorId"
+        })
+      ])
+    );
+  });
+
+  it("rejects project schedule routines that reference missing project sequences", () => {
+    const npc = createNpcEntity({
+      id: "entity-npc-sequence-guide",
+      actorId: "actor-sequence-guide"
+    });
+    const document = createEmptySceneDocument();
+    document.entities[npc.id] = npc;
+    document.scheduler.routines["routine-sequence-missing"] =
+      createProjectScheduleRoutine({
+        id: "routine-sequence-missing",
+        title: "Missing Sequence",
+        target: createActorControlTargetRef(npc.actorId),
+        sequenceId: "sequence-missing",
+        effect: createSetActorPresenceControlEffect({
+          target: createActorControlTargetRef(npc.actorId),
+          active: true
+        })
+      });
+
+    const validation = validateSceneDocument(document);
+
+    expect(validation.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "missing-routine-sequence-resource",
+          path: "scheduler.routines.routine-sequence-missing.sequenceId"
         })
       ])
     );
@@ -214,6 +247,50 @@ describe("validateSceneDocument", () => {
         expect.objectContaining({
           code: "missing-dialogue-resource",
           path: "interactionLinks.link-dialogue-missing.action.dialogueId"
+        })
+      ])
+    );
+  });
+
+  it("rejects interaction run-sequence links that do not resolve impulse steps", () => {
+    const interactable = createInteractableEntity({
+      id: "entity-interactable-sequence"
+    });
+    const soundEmitter = createSoundEmitterEntity({
+      id: "entity-sound-sequence"
+    });
+    const document = createEmptySceneDocument();
+    document.entities[interactable.id] = interactable;
+    document.entities[soundEmitter.id] = soundEmitter;
+    document.sequences.sequences["sequence-held-only"] = createProjectSequence({
+      id: "sequence-held-only",
+      title: "Held Only",
+      steps: [
+        {
+          stepClass: "held",
+          type: "controlEffect",
+          effect: createSetSoundVolumeControlEffect({
+            target: createSoundEmitterControlTargetRef(soundEmitter.id),
+            volume: 0.5
+          })
+        }
+      ]
+    });
+    document.interactionLinks["link-run-held-sequence"] =
+      createRunSequenceInteractionLink({
+        id: "link-run-held-sequence",
+        sourceEntityId: interactable.id,
+        trigger: "click",
+        sequenceId: "sequence-held-only"
+      });
+
+    const validation = validateSceneDocument(document);
+
+    expect(validation.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "invalid-link-sequence-no-impulse-steps",
+          path: "interactionLinks.link-run-held-sequence.action.sequenceId"
         })
       ])
     );
