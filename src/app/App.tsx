@@ -11342,6 +11342,70 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 </div>
               </Panel>
 
+              <Panel title="Dialogues">
+                <ProjectDialoguesPanel
+                  dialogues={editorState.projectDocument.dialogues}
+                  selectedDialogueId={selectedDialogueId}
+                  onSelectDialogue={setSelectedDialogueId}
+                  onAddDialogue={handleAddProjectDialogue}
+                  onDeleteDialogue={handleDeleteProjectDialogue}
+                  onSetDialogueTitle={(dialogueId, title) =>
+                    updateProjectDialogue(
+                      dialogueId,
+                      "Rename project dialogue",
+                      "Updated dialogue title.",
+                      (dialogue) => {
+                        dialogue.title = title.trim() || "Untitled Dialogue";
+                      }
+                    )
+                  }
+                  onAddDialogueLine={(dialogueId) =>
+                    updateProjectDialogue(
+                      dialogueId,
+                      "Add dialogue line",
+                      "Added dialogue line.",
+                      (dialogue) => {
+                        dialogue.lines.push(createProjectDialogueLine());
+                      }
+                    )
+                  }
+                  onDeleteDialogueLine={(dialogueId, lineId) =>
+                    updateProjectDialogue(
+                      dialogueId,
+                      "Delete dialogue line",
+                      "Deleted dialogue line.",
+                      (dialogue) => {
+                        dialogue.lines = dialogue.lines.filter(
+                          (line) => line.id !== lineId
+                        );
+                      }
+                    )
+                  }
+                  onSetDialogueLineSpeaker={(dialogueId, lineId, speakerName) =>
+                    updateProjectDialogueLine(
+                      dialogueId,
+                      lineId,
+                      "Set dialogue speaker",
+                      "Updated dialogue speaker.",
+                      (line) => {
+                        line.speakerName = speakerName?.trim() || null;
+                      }
+                    )
+                  }
+                  onSetDialogueLineText={(dialogueId, lineId, text) =>
+                    updateProjectDialogueLine(
+                      dialogueId,
+                      lineId,
+                      "Set dialogue line text",
+                      "Updated dialogue line text.",
+                      (line) => {
+                        line.text = text.trim() || "...";
+                      }
+                    )
+                  }
+                />
+              </Panel>
+
               <Panel title="World">
                 <div className="stat-card">
                   <div className="label">Day Environment</div>
