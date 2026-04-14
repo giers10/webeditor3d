@@ -4790,7 +4790,7 @@ function validateProjectDialogue(
 function validateProjectSequence(
   sequence: ProjectSequence,
   path: string,
-  dialogues: Pick<ProjectDocument, "dialogues">,
+  projectResources: Pick<ProjectDocument, "dialogues">,
   context: ProjectSchedulerValidationContext,
   diagnostics: SceneDiagnostic[]
 ) {
@@ -4830,7 +4830,9 @@ function validateProjectSequence(
         );
         break;
       case "startDialogue":
-        if (dialogues.dialogues[step.dialogueId] === undefined) {
+        if (
+          projectResources.dialogues.dialogues[step.dialogueId] === undefined
+        ) {
           diagnostics.push(
             createDiagnostic(
               "error",
