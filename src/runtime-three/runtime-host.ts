@@ -3074,7 +3074,11 @@ export class RuntimeHost {
       this.currentDialogue?.lineCount === dialogue?.lineCount &&
       this.currentDialogue?.speakerName === dialogue?.speakerName &&
       this.currentDialogue?.text === dialogue?.text &&
-      this.currentDialogue?.title === dialogue?.title
+      this.currentDialogue?.title === dialogue?.title &&
+      this.currentDialogue?.source.kind === dialogue?.source.kind &&
+      this.currentDialogue?.source.sourceEntityId ===
+        dialogue?.source.sourceEntityId &&
+      this.currentDialogue?.source.linkId === dialogue?.source.linkId
     ) {
       return;
     }
