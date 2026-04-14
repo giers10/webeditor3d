@@ -630,6 +630,56 @@ describe("RuntimeInteractionSystem", () => {
     expect(dispatches).toEqual(["link-start-dialogue:dialogue-console"]);
   });
 
+  it("dispatches run-sequence links through authored impulse steps", () => {
+    const runtimeScene = createRuntimeSceneFixture();
+    runtimeScene.dialogues.dialogues["dialogue-sequence"] = {
+      id: "dialogue-sequence",
+      title: "Sequence Dialogue",
+      lines: [
+        {
+          id: "dialogue-line-sequence-1",
+          speakerName: "Console",
+          text: "Sequence started."
+        }
+      ]
+    };
+    runtimeScene.sequences.sequences["sequence-console-dialogue"] =
+      createProjectSequence({
+        id: "sequence-console-dialogue",
+        title: "Console Dialogue Sequence",
+        steps: [
+          {
+            stepClass: "impulse",
+            type: "startDialogue",
+            dialogueId: "dialogue-sequence"
+          }
+        ]
+      });
+    runtimeScene.interactionLinks = [
+      createRunSequenceInteractionLink({
+        id: "link-run-sequence-dialogue",
+        sourceEntityId: "entity-interactable-console",
+        trigger: "click",
+        sequenceId: "sequence-console-dialogue"
+      })
+    ];
+
+    const dispatches: string[] = [];
+    const interactionSystem = new RuntimeInteractionSystem();
+
+    interactionSystem.dispatchClickInteraction(
+      "entity-interactable-console",
+      runtimeScene,
+      createDispatcher({
+        startDialogue: (dialogueId, source) => {
+          dispatches.push(`${source?.linkId}:${dialogueId}`);
+        }
+      })
+    );
+
+    expect(dispatches).toEqual(["link-run-sequence-dialogue:dialogue-sequence"]);
+  });
+
   it("treats interactable dialogue links as click interactions even when the stored trigger is non-click", () => {
     const runtimeScene = createRuntimeSceneFixture();
     runtimeScene.dialogues.dialogues["dialogue-console"] = {
