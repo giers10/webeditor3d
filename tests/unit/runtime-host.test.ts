@@ -4,8 +4,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   createActiveSceneControlTargetRef,
   createActorControlTargetRef,
+  createFollowActorPathControlEffect,
   createLightControlTargetRef,
   createModelInstanceControlTargetRef,
+  createPlayActorAnimationControlEffect,
   createPlayModelAnimationControlEffect,
   createPlaySoundControlEffect,
   createSetActorPresenceControlEffect,
@@ -23,6 +25,7 @@ import {
   createStopModelAnimationControlEffect,
   createStopSoundControlEffect
 } from "../../src/controls/control-surface";
+import { createScenePath } from "../../src/document/paths";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
 import {
   createNpcEntity,
@@ -47,7 +50,8 @@ import {
   type RuntimeSceneLoadState
 } from "../../src/runtime-three/runtime-host";
 import { buildRuntimeSceneFromDocument } from "../../src/runtime-three/runtime-scene-build";
-import type { AnimationMixer } from "three";
+import { AnimationClip, BoxGeometry, type AnimationMixer } from "three";
+import { createFixtureLoadedModelAssetFromGeometry } from "../helpers/model-collider-fixtures";
 
 function createDeferred<T>() {
   let resolve: ((value: T) => void) | null = null;
