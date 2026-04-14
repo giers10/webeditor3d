@@ -11286,6 +11286,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 <ProjectSequencerPane
                   targetOptions={projectScheduleTargetOptions}
                   scheduler={editorState.projectDocument.scheduler}
+                  sequences={editorState.projectDocument.sequences}
                   selectedRoutineId={selectedScheduleRoutineId}
                   onSelectRoutine={setSelectedScheduleRoutineId}
                   onAddRoutine={handleCreateScheduleRoutine}
@@ -11308,6 +11309,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
                         if (targetOption.target.kind === "actor") {
                           routine.target = targetOption.target;
+                          routine.sequenceId = null;
                           routine.effects = [];
                           return;
                         }
@@ -11333,6 +11335,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         }
 
                         routine.target = targetOption.target;
+                        routine.sequenceId = null;
                         routine.effects = [
                           createProjectScheduleEffectFromOption({
                             targetOption,
@@ -11408,6 +11411,18 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         }
 
                         routine.priority = Math.trunc(priority);
+                      }
+                    )
+                  }
+                  onSetRoutineSequenceId={(routineId, sequenceId) =>
+                    updateProjectScheduleRoutine(
+                      routineId,
+                      "Set project sequencer sequence",
+                      sequenceId === null
+                        ? "Routine now uses inline effects."
+                        : "Routine now resolves a project sequence.",
+                      (routine) => {
+                        routine.sequenceId = sequenceId;
                       }
                     )
                   }
