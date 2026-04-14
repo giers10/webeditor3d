@@ -629,14 +629,6 @@ describe("RuntimeHost", () => {
     const host = new RuntimeHost({
       enableRendering: false
     });
-    host.updateAssets(
-      document.assets,
-      {
-        [asset.id]: loadedAsset
-      },
-      {},
-      {}
-    );
     host.loadScene(runtimeScene);
 
     const hostInternals = host as unknown as {
@@ -773,6 +765,14 @@ describe("RuntimeHost", () => {
     const host = new RuntimeHost({
       enableRendering: false
     });
+    host.updateAssets(
+      document.assets,
+      {
+        [asset.id]: loadedAsset
+      },
+      {},
+      {}
+    );
     host.loadScene(runtimeScene);
 
     const hostInternals = host as unknown as {
