@@ -100,6 +100,7 @@ import type {
 import { RapierCollisionWorld } from "./rapier-collision-world";
 import {
   RuntimeInteractionSystem,
+  type RuntimeDialogueStartSource,
   type RuntimeInteractionDispatcher,
   type RuntimeInteractionPrompt
 } from "./runtime-interaction-system";
@@ -191,6 +192,7 @@ export interface RuntimeDialogueState {
   lineCount: number;
   speakerName: string | null;
   text: string;
+  source: RuntimeDialogueStartSource;
 }
 
 export class RuntimeHost {
