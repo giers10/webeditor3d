@@ -624,6 +624,73 @@ describe("RuntimeInteractionSystem", () => {
     expect(dispatches).toEqual(["link-start-dialogue:dialogue-console"]);
   });
 
+  it("treats interactable dialogue links as click interactions even when the stored trigger is non-click", () => {
+    const runtimeScene = createRuntimeSceneFixture();
+    runtimeScene.dialogues.dialogues["dialogue-console"] = {
+      id: "dialogue-console",
+      title: "Console",
+      lines: [
+        {
+          id: "dialogue-line-console-1",
+          speakerName: "System",
+          text: "Console online."
+        }
+      ]
+    };
+    runtimeScene.interactionLinks = [
+      createStartDialogueInteractionLink({
+        id: "link-start-dialogue-console",
+        sourceEntityId: "entity-interactable-console",
+        trigger: "enter",
+        dialogueId: "dialogue-console"
+      })
+    ];
+
+    const interactionSystem = new RuntimeInteractionSystem();
+    const prompt = interactionSystem.resolveClickInteractionPrompt(
+      {
+        x: 0,
+        y: 1.6,
+        z: 0
+      },
+      {
+        x: 0,
+        y: 1.6,
+        z: 0
+      },
+      {
+        x: 0,
+        y: 0,
+        z: 1
+      },
+      runtimeScene
+    );
+
+    expect(prompt).toEqual(
+      expect.objectContaining({
+        sourceEntityId: "entity-interactable-console",
+        prompt: "Use Console"
+      })
+    );
+
+    const dispatches: string[] = [];
+    interactionSystem.dispatchClickInteraction(
+      "entity-interactable-console",
+      runtimeScene,
+      createDispatcher({
+        startDialogue: (dialogueId, source) => {
+          dispatches.push(
+            `${source?.kind}:${source?.sourceEntityId}:${source?.trigger}:${dialogueId}`
+          );
+        }
+      })
+    );
+
+    expect(dispatches).toEqual([
+      "interactionLink:entity-interactable-console:enter:dialogue-console"
+    ]);
+  });
+
   it("dispatches trigger-volume dialogue starts once on enter", () => {
     const runtimeScene = createRuntimeSceneFixture();
     runtimeScene.dialogues.dialogues["dialogue-threshold"] = {
@@ -677,6 +744,52 @@ describe("RuntimeInteractionSystem", () => {
     );
 
     expect(dispatches).toEqual(["link-trigger-dialogue:dialogue-threshold"]);
+  });
+
+  it("treats trigger-volume dialogue links authored with click as enter interactions", () => {
+    const runtimeScene = createRuntimeSceneFixture();
+    runtimeScene.dialogues.dialogues["dialogue-threshold"] = {
+      id: "dialogue-threshold",
+      title: "Threshold",
+      lines: [
+        {
+          id: "dialogue-line-threshold-1",
+          speakerName: null,
+          text: "Welcome."
+        }
+      ]
+    };
+    runtimeScene.interactionLinks = [
+      createStartDialogueInteractionLink({
+        id: "link-trigger-dialogue-click",
+        sourceEntityId: "entity-trigger-main",
+        trigger: "click",
+        dialogueId: "dialogue-threshold"
+      })
+    ];
+
+    const dispatches: string[] = [];
+    const interactionSystem = new RuntimeInteractionSystem();
+
+    interactionSystem.updatePlayerPosition(
+      {
+        x: 0,
+        y: 0,
+        z: 0
+      },
+      runtimeScene,
+      createDispatcher({
+        startDialogue: (dialogueId, source) => {
+          dispatches.push(
+            `${source?.kind}:${source?.sourceEntityId}:${source?.trigger}:${dialogueId}`
+          );
+        }
+      })
+    );
+
+    expect(dispatches).toEqual([
+      "interactionLink:entity-trigger-main:click:dialogue-threshold"
+    ]);
   });
 
   it("treats the player body segment as entering a trigger volume, not just the feet point", () => {
