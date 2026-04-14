@@ -253,7 +253,7 @@ export function getSequenceClipEndMinute(
 }
 
 export function getProjectSequenceDurationMinutes(sequence: SequenceDefinitionLike): number {
-  return sequence.clips.reduce((maxDuration, clip) => {
+  return sequence.clips.reduce<number>((maxDuration, clip) => {
     return Math.max(maxDuration, getSequenceClipEndMinute(clip));
   }, DEFAULT_PROJECT_SEQUENCE_DURATION_MINUTES);
 }
