@@ -437,6 +437,7 @@ export function ProjectSequencerPane({
             />
           </div>
         ) : (
+        <>
         <div className="schedule-pane__timeline">
           <div className="schedule-ruler">
             <div className="schedule-ruler__label">Targets</div>
@@ -1059,6 +1060,7 @@ export function ProjectSequencerPane({
             </>
           )}
         </aside>
+        </>
         )}
       </div>
     </section>
