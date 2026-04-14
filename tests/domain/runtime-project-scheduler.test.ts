@@ -22,7 +22,8 @@ import {
 } from "../../src/sequencer/project-sequences";
 import {
   applyRuntimeProjectScheduleToControlState,
-  resolveRuntimeProjectScheduleState
+  resolveRuntimeProjectScheduleState,
+  type RuntimeProjectSchedulePathDefinition
 } from "../../src/runtime-three/runtime-project-scheduler";
 
 describe("runtime project scheduler", () => {
@@ -289,27 +290,54 @@ describe("runtime project scheduler", () => {
         })
       ]
     });
+    const pathsById = new Map<string, RuntimeProjectSchedulePathDefinition>([
+      [
+        "path-market",
+        {
+          id: "path-market",
+          loop: false,
+          points: [
+            { position: { x: 0, y: 0, z: 0 } },
+            { position: { x: 4, y: 0, z: 0 } }
+          ],
+          segments: [
+            {
+              start: { x: 0, y: 0, z: 0 },
+              end: { x: 4, y: 0, z: 0 },
+              length: 4,
+              distanceStart: 0,
+              distanceEnd: 4,
+              tangent: { x: 1, y: 0, z: 0 }
+            }
+          ],
+          totalLength: 4
+        }
+      ]
+    ]);
 
     const beforePresence = resolveRuntimeProjectScheduleState({
       scheduler,
       sequences,
       actorIds: ["actor-timed-sequence"],
       dayNumber: 1,
-      timeOfDayHours: 9.25
+      timeOfDayHours: 9.25,
+      pathsById
     });
     const duringPresence = resolveRuntimeProjectScheduleState({
       scheduler,
       sequences,
       actorIds: ["actor-timed-sequence"],
       dayNumber: 1,
-      timeOfDayHours: 9.75
+      timeOfDayHours: 9.75,
+      pathsById
     });
     const duringPath = resolveRuntimeProjectScheduleState({
       scheduler,
       sequences,
       actorIds: ["actor-timed-sequence"],
       dayNumber: 1,
-      timeOfDayHours: 10.5
+      timeOfDayHours: 10.5,
+      pathsById
     });
 
     expect(beforePresence.actors[0]).toEqual(
