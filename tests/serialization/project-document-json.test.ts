@@ -216,6 +216,35 @@ describe("project document JSON", () => {
     expect(parseProjectDocumentJson(serializedDocument)).toEqual(document);
   });
 
+  it("round-trips project scheduler routines bound to actor presence control", () => {
+    const document = createEmptyProjectDocument({
+      name: "Routine Project"
+    });
+    const npc = createNpcEntity({
+      id: "entity-npc-vendor",
+      actorId: "actor-vendor"
+    });
+
+    document.scenes[document.activeSceneId].entities[npc.id] = npc;
+    document.scheduler.routines["routine-vendor-open"] =
+      createProjectScheduleRoutine({
+        id: "routine-vendor-open",
+        title: "Vendor Open",
+        target: createActorControlTargetRef(npc.actorId),
+        startHour: 8,
+        endHour: 16,
+        priority: 2,
+        effect: createSetActorPresenceControlEffect({
+          target: createActorControlTargetRef(npc.actorId),
+          active: true
+        })
+      });
+
+    expect(
+      parseProjectDocumentJson(serializeProjectDocument(document))
+    ).toEqual(document);
+  });
+
   it("migrates pre-path project documents to empty scene path registries", () => {
     const migratedDocument = parseProjectDocumentJson(
       JSON.stringify({
@@ -408,6 +437,68 @@ describe("project document JSON", () => {
     expect(migratedDocument.scenes["scene-main"]?.loadingScreen).toEqual(
       legacyScene.loadingScreen
     );
+  });
+
+  it("migrates legacy NPC time-window presence into project scheduler routines", () => {
+    const legacyNpc = createNpcEntity({
+      id: "entity-npc-night-guard",
+      actorId: "actor-night-guard",
+      presence: createNpcTimeWindowPresence({
+        startHour: 20,
+        endHour: 4
+      })
+    });
+
+    const migratedDocument = parseProjectDocumentJson(
+      JSON.stringify({
+        version: NPC_PRESENCE_SCENE_DOCUMENT_VERSION,
+        activeSceneId: "scene-main",
+        scenes: {
+          "scene-main": {
+            ...createEmptyProjectScene({
+              id: "scene-main",
+              name: "Main"
+            }),
+            entities: {
+              [legacyNpc.id]: legacyNpc
+            }
+          }
+        },
+        materials: createEmptyProjectDocument().materials,
+        textures: {},
+        assets: {}
+      })
+    );
+
+    expect(migratedDocument.scenes["scene-main"]?.entities[legacyNpc.id]).toEqual(
+      createNpcEntity({
+        ...legacyNpc,
+        presence: {
+          mode: "always"
+        }
+      })
+    );
+    expect(migratedDocument.scheduler.routines).toEqual({
+      "schedule-routine-scene-main-entity-npc-night-guard":
+        expect.objectContaining({
+          id: "schedule-routine-scene-main-entity-npc-night-guard",
+          title: legacyNpc.actorId,
+          startHour: 20,
+          endHour: 4,
+          target: {
+            kind: "actor",
+            actorId: legacyNpc.actorId
+          },
+          effect: {
+            type: "setActorPresence",
+            target: {
+              kind: "actor",
+              actorId: legacyNpc.actorId
+            },
+            active: true
+          }
+        })
+    });
   });
 
   it("rejects Scene Exit targets that point at a missing Scene Entry", () => {
