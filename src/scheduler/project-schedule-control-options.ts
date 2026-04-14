@@ -28,7 +28,7 @@ import {
 } from "../controls/control-surface";
 import { getModelInstances } from "../assets/model-instances";
 import { getModelInstanceDisplayLabel } from "../assets/model-instance-labels";
-import { getEntityDisplayLabel, getSortedEntityDisplayLabels } from "../entities/entity-labels";
+import { getSortedEntityDisplayLabels } from "../entities/entity-labels";
 import { listProjectNpcActors } from "../entities/npc-actor-registry";
 
 export const PROJECT_SCHEDULE_EFFECT_OPTION_IDS = [
@@ -311,7 +311,7 @@ export function listProjectScheduleTargetOptions(
         groupLabel: "Model Instances",
         defaults: {
           animationClipNames,
-          animationLoop: modelInstance.animationLoop ?? true
+          animationLoop: true
         }
       });
     }
@@ -690,4 +690,3 @@ export function createProjectScheduleEffectFromOption(options: {
       });
   }
 }
-

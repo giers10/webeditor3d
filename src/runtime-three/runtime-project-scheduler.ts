@@ -20,6 +20,14 @@ import {
   type ProjectScheduleRoutine
 } from "../scheduler/project-scheduler";
 
+type ActorPresenceScheduleRoutine = ProjectScheduleRoutine & {
+  target: {
+    kind: "actor";
+    actorId: string;
+  };
+  effect: SetActorPresenceControlEffect;
+};
+
 export interface RuntimeResolvedActorScheduleState {
   actorId: string;
   hasRules: boolean;
@@ -97,10 +105,10 @@ export function createRuntimeProjectSchedulerState(options: {
 function resolveActorScheduleRules(
   scheduler: ProjectScheduler,
   actorId: string
-): ProjectScheduleRoutine[] {
+): ActorPresenceScheduleRoutine[] {
   return Object.values(scheduler.routines)
     .filter(
-      (routine) =>
+      (routine): routine is ActorPresenceScheduleRoutine =>
         routine.enabled &&
         routine.target.kind === "actor" &&
         routine.target.actorId === actorId &&
