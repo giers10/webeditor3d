@@ -3618,6 +3618,33 @@ function validateInteractionLink(
         );
       }
       break;
+    case "runSequence": {
+      const sequence = document.sequences.sequences[link.action.sequenceId] ?? null;
+
+      if (sequence === null) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "missing-sequence-resource",
+            `Sequence ${link.action.sequenceId} does not exist in the project sequence library.`,
+            `${path}.action.sequenceId`
+          )
+        );
+        break;
+      }
+
+      if (getProjectSequenceImpulseSteps(sequence).length === 0) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-link-sequence-no-impulse-steps",
+            "Interaction link sequences must expose at least one impulse step.",
+            `${path}.action.sequenceId`
+          )
+        );
+      }
+      break;
+    }
     case "control":
       validateControlEffect(
         link.action.effect,
