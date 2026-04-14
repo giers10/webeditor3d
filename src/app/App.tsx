@@ -7127,6 +7127,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
           targetSoundEmitterId: link.action.targetSoundEmitterId
         });
         break;
+      case "startDialogue":
+        nextLink = createStartDialogueInteractionLink({
+          id: link.id,
+          sourceEntityId: link.sourceEntityId,
+          trigger,
+          dialogueId: link.action.dialogueId
+        });
+        break;
       case "control":
         nextLink = createControlInteractionLink({
           id: link.id,
@@ -7157,6 +7165,29 @@ export function App({ store, initialStatusMessage }: AppProps) {
     if (actionType === "control") {
       setStatusMessage(
         "Control links are not authored from this inspector yet."
+      );
+      return;
+    }
+
+    if (actionType === "startDialogue") {
+      const defaultDialogue = projectDialogueList[0] ?? null;
+
+      if (defaultDialogue === null) {
+        setStatusMessage(
+          "Author a project dialogue before switching this link to dialogue."
+        );
+        return;
+      }
+
+      commitInteractionLinkChange(
+        link,
+        createStartDialogueInteractionLink({
+          id: link.id,
+          sourceEntityId: sourceEntity.id,
+          trigger: link.trigger,
+          dialogueId: defaultDialogue.id
+        }),
+        "Switched link action to start dialogue."
       );
       return;
     }
@@ -7316,6 +7347,26 @@ export function App({ store, initialStatusMessage }: AppProps) {
         targetBrushId: defaultBrush.id
       }),
       "Switched link action to toggle visibility."
+    );
+  };
+
+  const updateDialogueInteractionLinkTarget = (
+    link: InteractionLink,
+    dialogueId: string
+  ) => {
+    if (link.action.type !== "startDialogue") {
+      return;
+    }
+
+    commitInteractionLinkChange(
+      link,
+      createStartDialogueInteractionLink({
+        id: link.id,
+        sourceEntityId: link.sourceEntityId,
+        trigger: link.trigger,
+        dialogueId
+      }),
+      "Updated dialogue link target."
     );
   };
 
