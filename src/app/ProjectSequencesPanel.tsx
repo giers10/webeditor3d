@@ -276,7 +276,7 @@ export function ProjectSequencesPanel({
                               <input
                                 className="text-input"
                                 type="text"
-                                value={step.stepClass === "held" ? "Held" : "Impulse"}
+                                value={clip.stepClass === "held" ? "Held" : "Impulse"}
                                 readOnly
                               />
                             </label>
