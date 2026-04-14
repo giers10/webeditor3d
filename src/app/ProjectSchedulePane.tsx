@@ -1053,7 +1053,7 @@ export function ProjectSequencerPane({
                   type="button"
                   onClick={() => onDeleteRoutine(selectedRoutine.id)}
                 >
-                  Delete Routine
+                  Delete Clip
                 </button>
               </div>
             </>
