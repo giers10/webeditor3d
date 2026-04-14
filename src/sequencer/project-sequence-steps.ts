@@ -258,6 +258,12 @@ export function getProjectSequenceDurationMinutes(sequence: SequenceDefinitionLi
   }, DEFAULT_PROJECT_SEQUENCE_DURATION_MINUTES);
 }
 
+export function getNextSequenceClipLane(
+  clips: readonly Pick<SequenceClip, "lane">[]
+): number {
+  return clips.reduce((maxLane, clip) => Math.max(maxLane, clip.lane), -1) + 1;
+}
+
 export function isHeldSequenceClipActiveAtMinute(
   clip: HeldSequenceStep,
   minute: number
