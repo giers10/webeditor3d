@@ -453,6 +453,7 @@ describe("project document JSON", () => {
       JSON.stringify({
         version: NPC_PRESENCE_SCENE_DOCUMENT_VERSION,
         name: "Legacy Presence Project",
+        time: createDefaultProjectTimeSettings(),
         activeSceneId: "scene-main",
         scenes: {
           "scene-main": {
