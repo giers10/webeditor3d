@@ -1596,6 +1596,8 @@ export function buildRuntimeSceneFromDocument(
         case "playSound":
         case "stopSound":
           return enabledEntityIds.has(link.action.targetSoundEmitterId);
+        case "startDialogue":
+          return document.dialogues.dialogues[link.action.dialogueId] !== undefined;
         case "control":
           switch (link.action.effect.target.kind) {
             case "entity":

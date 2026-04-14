@@ -27,7 +27,11 @@ import {
   createTeleportTargetEntity,
   createTriggerVolumeEntity
 } from "../../src/entities/entity-instances";
-import { createTeleportPlayerInteractionLink, createToggleVisibilityInteractionLink } from "../../src/interactions/interaction-links";
+import {
+  createStartDialogueInteractionLink,
+  createTeleportPlayerInteractionLink,
+  createToggleVisibilityInteractionLink
+} from "../../src/interactions/interaction-links";
 import { createProjectScheduleRoutine } from "../../src/scheduler/project-scheduler";
 import { createModelInstance } from "../../src/assets/model-instances";
 import { createProjectAssetStorageKey, type AudioAssetRecord } from "../../src/assets/project-assets";
@@ -339,8 +343,31 @@ describe("buildRuntimeSceneFromDocument", () => {
           sourceEntityId: interactable.id,
           trigger: "click",
           targetEntityId: teleportTarget.id
+        }),
+        "link-interactable-dialogue": createStartDialogueInteractionLink({
+          id: "link-interactable-dialogue",
+          sourceEntityId: interactable.id,
+          trigger: "click",
+          dialogueId: "dialogue-warning"
+        }),
+        "link-trigger-dialogue": createStartDialogueInteractionLink({
+          id: "link-trigger-dialogue",
+          sourceEntityId: triggerVolume.id,
+          trigger: "enter",
+          dialogueId: "dialogue-warning"
         })
       }
+    };
+    document.dialogues.dialogues["dialogue-warning"] = {
+      id: "dialogue-warning",
+      title: "Warning",
+      lines: [
+        {
+          id: "dialogue-line-warning-1",
+          speakerName: "Operator",
+          text: "The generator is unstable."
+        }
+      ]
     };
     document.world.background = {
       mode: "image",
@@ -726,6 +753,15 @@ describe("buildRuntimeSceneFromDocument", () => {
         }
       },
       {
+        id: "link-interactable-dialogue",
+        sourceEntityId: "entity-interactable-console",
+        trigger: "click",
+        action: {
+          type: "startDialogue",
+          dialogueId: "dialogue-warning"
+        }
+      },
+      {
         id: "link-teleport",
         sourceEntityId: "entity-trigger-door",
         trigger: "enter",
@@ -742,6 +778,15 @@ describe("buildRuntimeSceneFromDocument", () => {
           type: "toggleVisibility",
           targetBrushId: "brush-room-floor",
           visible: false
+        }
+      },
+      {
+        id: "link-trigger-dialogue",
+        sourceEntityId: "entity-trigger-door",
+        trigger: "enter",
+        action: {
+          type: "startDialogue",
+          dialogueId: "dialogue-warning"
         }
       }
     ]);
