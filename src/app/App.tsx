@@ -239,6 +239,7 @@ import {
   PLAYER_START_GAMEPAD_BINDINGS,
   PLAYER_START_LOCOMOTION_ACTIONS,
   PLAYER_START_MOVEMENT_ACTIONS,
+  PLAYER_START_SYSTEM_ACTIONS,
   PLAYER_START_NAVIGATION_MODES,
   DEFAULT_SPOT_LIGHT_ANGLE_DEGREES,
   DEFAULT_SPOT_LIGHT_COLOR_HEX,
@@ -279,6 +280,7 @@ import {
   type PlayerStartKeyboardBindingCode,
   type PlayerStartLocomotionAction,
   type PlayerStartMovementAction,
+  type PlayerStartSystemAction,
   type PlayerStartMovementTemplate,
   type PlayerStartNavigationMode,
   type EntityInstance,
@@ -543,6 +545,8 @@ function getPlayerStartInputActionLabel(
       return "Sprint";
     case "crouch":
       return "Crouch";
+    case "pauseTime":
+      return "Pause";
   }
 }
 
@@ -616,6 +620,8 @@ function formatPlayerStartGamepadActionBindingLabel(
       return "West Button";
     case "buttonNorth":
       return "North Button";
+    case "buttonMenu":
+      return "Menu / Start";
     case "leftShoulder":
       return "Left Shoulder";
     case "rightShoulder":
