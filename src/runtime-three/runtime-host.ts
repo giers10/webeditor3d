@@ -136,6 +136,7 @@ import {
   buildRuntimeNpcCollider,
   createRuntimeNpcFromDefinition
 } from "./runtime-scene-build";
+import { resolvePlayerStartPauseInput } from "./player-input-bindings";
 
 interface CachedMaterialTexture {
   signature: string;
@@ -325,6 +326,7 @@ export class RuntimeHost {
   private baseCameraFov = 70;
   private manualPauseActive = false;
   private controlPauseActive = false;
+  private previousPauseInputActive = false;
 
   constructor(options: { enableRendering?: boolean } = {}) {
     const enableRendering = options.enableRendering ?? true;
@@ -394,6 +396,7 @@ export class RuntimeHost {
           desiredCameraPosition,
           radius
         ) ?? { ...desiredCameraPosition },
+      isInputSuspended: () => this.isRuntimePaused(),
       setRuntimeMessage: (message) => {
         if (message === this.currentRuntimeMessage) {
           return;
@@ -519,6 +522,7 @@ export class RuntimeHost {
     this.setRuntimeDialogue(null);
     this.manualPauseActive = false;
     this.controlPauseActive = false;
+    this.previousPauseInputActive = false;
     this.publishRuntimePauseState(true);
     this.currentPlayerControllerTelemetry = null;
     this.currentPlayerAudioHooks = null;
@@ -719,6 +723,7 @@ export class RuntimeHost {
     this.lastPublishedClockState = null;
     this.manualPauseActive = false;
     this.controlPauseActive = false;
+    this.previousPauseInputActive = false;
     this.publishRuntimePauseState(true);
     if (this.renderer !== null) {
       this.renderer.autoClear = true;
@@ -2808,6 +2813,7 @@ export class RuntimeHost {
     const now = performance.now();
     const dt = Math.min((now - this.previousFrameTime) / 1000, 1 / 20);
     this.previousFrameTime = now;
+    this.updatePauseInputState();
     const simulationDt = this.isRuntimePaused() ? 0 : dt;
 
     this.activeController?.update(simulationDt);
@@ -3316,7 +3322,7 @@ export class RuntimeHost {
       isEditableEventTarget(event.target) ||
       this.runtimeScene === null ||
       !this.sceneReady ||
-      event.key.toLowerCase() !== "p"
+      event.code !== this.runtimeScene.playerInputBindings.keyboard.pauseTime
     ) {
       return;
     }
@@ -3324,4 +3330,27 @@ export class RuntimeHost {
     event.preventDefault();
     this.toggleManualPause();
   };
+
+  private updatePauseInputState() {
+    if (this.runtimeScene === null || !this.sceneReady) {
+      this.previousPauseInputActive = false;
+      return;
+    }
+
+    const pauseInputActive =
+      resolvePlayerStartPauseInput(
+        this.activeController?.id === "firstPerson"
+          ? this.firstPersonController["pressedKeys"]
+          : this.activeController?.id === "thirdPerson"
+            ? this.thirdPersonController["pressedKeys"]
+            : new Set<string>(),
+        this.runtimeScene.playerInputBindings
+      ) >= 0.5;
+
+    if (pauseInputActive && !this.previousPauseInputActive) {
+      this.toggleManualPause();
+    }
+
+    this.previousPauseInputActive = pauseInputActive;
+  }
 }
