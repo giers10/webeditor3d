@@ -1105,6 +1105,39 @@ export function getControlChannelDescriptorKey(
   )}`;
 }
 
+export function getControlEffectResolutionKey(effect: ControlEffect): string {
+  switch (effect.type) {
+    case "setActorPresence":
+      return `state:actorPresence:${getControlTargetRefKey(effect.target)}`;
+    case "playModelAnimation":
+    case "stopModelAnimation":
+      return `state:modelAnimationPlayback:${getControlTargetRefKey(effect.target)}`;
+    case "setModelInstanceVisible":
+      return `state:modelVisibility:${getControlTargetRefKey(effect.target)}`;
+    case "playSound":
+    case "stopSound":
+      return `state:soundPlayback:${getControlTargetRefKey(effect.target)}`;
+    case "setSoundVolume":
+      return `channel:sound.volume:${getControlTargetRefKey(effect.target)}`;
+    case "setInteractionEnabled":
+      return `state:interactionEnabled:${getControlTargetRefKey(effect.target)}`;
+    case "setLightEnabled":
+      return `state:lightEnabled:${getControlTargetRefKey(effect.target)}`;
+    case "setLightIntensity":
+      return `channel:light.intensity:${getControlTargetRefKey(effect.target)}`;
+    case "setLightColor":
+      return `state:lightColor:${getControlTargetRefKey(effect.target)}`;
+    case "setAmbientLightIntensity":
+      return `channel:ambientLight.intensity:${getControlTargetRefKey(effect.target)}`;
+    case "setAmbientLightColor":
+      return `state:ambientLightColor:${getControlTargetRefKey(effect.target)}`;
+    case "setSunLightIntensity":
+      return `channel:sunLight.intensity:${getControlTargetRefKey(effect.target)}`;
+    case "setSunLightColor":
+      return `state:sunLightColor:${getControlTargetRefKey(effect.target)}`;
+  }
+}
+
 function getResolvedDiscreteControlStateKey(
   state: RuntimeResolvedDiscreteControlState
 ): string {
