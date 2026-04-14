@@ -1906,6 +1906,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const projectDialogueList = getProjectDialogues(
     editorState.projectDocument.dialogues
   );
+  const projectSequenceList = getProjectSequences(
+    editorState.projectDocument.sequences
+  );
   const selectedInteractionSource = isInteractionSourceEntity(selectedEntity)
     ? selectedEntity
     : null;
@@ -2217,6 +2220,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
     string | null
   >(null);
   const [selectedDialogueId, setSelectedDialogueId] = useState<string | null>(
+    null
+  );
+  const [selectedSequenceId, setSelectedSequenceId] = useState<string | null>(
     null
   );
   const [
