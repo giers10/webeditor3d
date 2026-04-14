@@ -476,6 +476,23 @@ function cloneRuntimeCharacterShape(
   }
 }
 
+function cloneRuntimeResolvedNpcPathState(
+  pathState: RuntimeResolvedNpcPathState
+): RuntimeResolvedNpcPathState {
+  return {
+    pathId: pathState.pathId,
+    progressMode: pathState.progressMode,
+    speed: pathState.speed,
+    loop: pathState.loop,
+    elapsedHours: pathState.elapsedHours,
+    distance: pathState.distance,
+    progress: pathState.progress,
+    position: cloneVec3(pathState.position),
+    tangent: cloneVec3(pathState.tangent),
+    yawDegrees: pathState.yawDegrees
+  };
+}
+
 export function createRuntimeNpcFromDefinition(
   npc: RuntimeNpcDefinition
 ): RuntimeNpc {
@@ -488,7 +505,13 @@ export function createRuntimeNpcFromDefinition(
     yawDegrees: npc.yawDegrees,
     modelAssetId: npc.modelAssetId,
     collider: cloneRuntimeCharacterShape(npc.collider),
-    activeRoutineTitle: npc.activeRoutineTitle
+    activeRoutineTitle: npc.activeRoutineTitle,
+    animationClipName: npc.animationClipName,
+    animationLoop: npc.animationLoop,
+    resolvedPath:
+      npc.resolvedPath === null
+        ? null
+        : cloneRuntimeResolvedNpcPathState(npc.resolvedPath)
   };
 }
 
@@ -736,6 +759,55 @@ function buildRuntimePath(path: ScenePath): RuntimePath {
   };
 }
 
+function createRuntimePathLookup(
+  paths: RuntimePath[]
+): ReadonlyMap<string, RuntimePath> {
+  return new Map(paths.map((path) => [path.id, path]));
+}
+
+function cloneResolvedActorPathToNpcPathState(
+  pathState: NonNullable<
+    RuntimeResolvedProjectScheduleState["actors"][number]["resolvedPath"]
+  >
+): RuntimeResolvedNpcPathState {
+  return {
+    pathId: pathState.pathId,
+    progressMode: pathState.progressMode,
+    speed: pathState.speed,
+    loop: pathState.loop,
+    elapsedHours: pathState.elapsedHours,
+    distance: pathState.distance,
+    progress: pathState.progress,
+    position: cloneVec3(pathState.position),
+    tangent: cloneVec3(pathState.tangent),
+    yawDegrees: pathState.yawDegrees
+  };
+}
+
+function applyActorScheduleStateToNpcDefinition(
+  npc: RuntimeNpcDefinition,
+  actorState: RuntimeResolvedProjectScheduleState["actors"][number] | null
+) {
+  npc.active = actorState?.active ?? true;
+  npc.activeRoutineId = actorState?.activeRoutineId ?? null;
+  npc.activeRoutineTitle = actorState?.activeRoutineTitle ?? null;
+  npc.animationClipName = actorState?.animationEffect?.clipName ?? null;
+  npc.animationLoop = actorState?.animationEffect?.loop;
+  npc.resolvedPath =
+    actorState?.resolvedPath === null || actorState?.resolvedPath === undefined
+      ? null
+      : cloneResolvedActorPathToNpcPathState(actorState.resolvedPath);
+
+  if (npc.resolvedPath !== null) {
+    npc.position = cloneVec3(npc.resolvedPath.position);
+    npc.yawDegrees = npc.resolvedPath.yawDegrees ?? npc.authoredYawDegrees;
+    return;
+  }
+
+  npc.position = cloneVec3(npc.authoredPosition);
+  npc.yawDegrees = npc.authoredYawDegrees;
+}
+
 function getColliderBounds(
   collider: RuntimeSceneCollider
 ): GeneratedColliderBounds {
@@ -959,10 +1031,43 @@ function buildRuntimeControlSurface(
     }
 
     seenActorIds.add(npc.actorId);
+    const target = createActorControlTargetRef(npc.actorId);
+    const capabilities: Array<
+      "actorPresence" | "actorAnimationPlayback" | "actorPathFollow"
+    > = ["actorPresence"];
+    const actorModelAsset =
+      npc.modelAssetId === null ? undefined : document.assets[npc.modelAssetId];
+
+    if (
+      actorModelAsset !== undefined &&
+      actorModelAsset.kind === "model" &&
+      actorModelAsset.metadata.animationNames.length > 0
+    ) {
+      capabilities.push("actorAnimationPlayback");
+    }
+
+    if (getScenePaths(document.paths).some((path) => path.enabled)) {
+      capabilities.push("actorPathFollow");
+    }
+
     targets.push(
-      createControlTargetDescriptor(createActorControlTargetRef(npc.actorId), [
-        "actorPresence"
-      ])
+      createControlTargetDescriptor(target, capabilities)
+    );
+    resolved.discrete.push(
+      createResolvedActorAnimationPlaybackState({
+        target,
+        clipName: null,
+        loop: undefined,
+        source: defaultSource
+      }),
+      createResolvedActorPathAssignmentState({
+        target,
+        pathId: null,
+        speed: null,
+        loop: false,
+        progressMode: null,
+        source: defaultSource
+      })
     );
   }
 
@@ -1167,7 +1272,8 @@ function buildRuntimeControlSurface(
 
 function buildRuntimeSceneCollections(
   document: SceneDocument,
-  runtimeClock: RuntimeClockState | null
+  runtimeClock: RuntimeClockState | null,
+  paths: RuntimePath[]
 ): RuntimeSceneCollections {
   const runtimeEntities: RuntimeEntityCollection = {
     playerStarts: [],
@@ -1241,9 +1347,14 @@ function buildRuntimeSceneCollections(
           active: true,
           activeRoutineId: null,
           activeRoutineTitle: null,
+          authoredPosition: cloneVec3(entity.position),
           yawDegrees: entity.yawDegrees,
+          authoredYawDegrees: entity.yawDegrees,
           modelAssetId: entity.modelAssetId,
-          collider: createRuntimeCharacterShape(entity.collider)
+          collider: createRuntimeCharacterShape(entity.collider),
+          animationClipName: null,
+          animationLoop: undefined,
+          resolvedPath: null
         };
         npcDefinitions.push(npc);
         break;
@@ -1316,7 +1427,8 @@ function buildRuntimeSceneCollections(
     timeOfDayHours:
       runtimeClock === null
         ? document.time.startTimeOfDayHours
-        : runtimeClock.timeOfDayHours
+        : runtimeClock.timeOfDayHours,
+    pathsById: createRuntimePathLookup(paths)
   });
   const scheduleByActorId = new Map(
     scheduler.actors.map((actorState) => [actorState.actorId, actorState])
@@ -1324,10 +1436,7 @@ function buildRuntimeSceneCollections(
 
   for (const npc of npcDefinitions) {
     const actorState = scheduleByActorId.get(npc.actorId);
-
-    npc.active = actorState?.active ?? true;
-    npc.activeRoutineId = actorState?.activeRoutineId ?? null;
-    npc.activeRoutineTitle = actorState?.activeRoutineTitle ?? null;
+    applyActorScheduleStateToNpcDefinition(npc, actorState ?? null);
 
     if (npc.active) {
       runtimeEntities.npcs.push(createRuntimeNpcFromDefinition(npc));
