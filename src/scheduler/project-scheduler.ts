@@ -3,11 +3,11 @@ import {
   areControlEffectsEqual,
   cloneControlEffect,
   cloneControlTargetRef,
+  type ControlEffect,
+  type ControlTargetRef,
   createActorControlTargetRef,
   createSetActorPresenceControlEffect,
-  getControlTargetRefKey,
-  type ActorControlTargetRef,
-  type SetActorPresenceControlEffect
+  getControlTargetRefKey
 } from "../controls/control-surface";
 import {
   HOURS_PER_DAY,
@@ -44,12 +44,12 @@ export interface ProjectScheduleRoutine {
   id: string;
   title: string;
   enabled: boolean;
-  target: ActorControlTargetRef;
+  target: ControlTargetRef;
   days: ProjectScheduleDaySelection;
   startHour: number;
   endHour: number;
   priority: number;
-  effect: SetActorPresenceControlEffect;
+  effect: ControlEffect;
 }
 
 export interface ProjectScheduler {
@@ -124,22 +124,25 @@ function normalizeProjectScheduleHours(value: number, label: string): number {
 }
 
 function normalizeProjectScheduleEffectTarget(
-  target: ActorControlTargetRef,
-  effect: SetActorPresenceControlEffect | undefined
-): SetActorPresenceControlEffect {
+  target: ControlTargetRef,
+  effect: ControlEffect | undefined
+): ControlEffect {
   if (effect === undefined) {
+    if (target.kind !== "actor") {
+      throw new Error(
+        "Project schedule routines must author an explicit control effect for non-actor targets."
+      );
+    }
+
     return createSetActorPresenceControlEffect({
       target,
       active: true
     });
   }
 
-  if (
-    effect.type !== "setActorPresence" ||
-    getControlTargetRefKey(effect.target) !== getControlTargetRefKey(target)
-  ) {
+  if (getControlTargetRefKey(effect.target) !== getControlTargetRefKey(target)) {
     throw new Error(
-      "Project schedule routine effects must target the same authored actor target."
+      "Project schedule routine effects must target the same authored control target."
     );
   }
 
