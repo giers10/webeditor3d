@@ -1351,6 +1351,19 @@ function getDefaultInteractionLinkTrigger(
     : "click";
 }
 
+function getCanonicalInteractionLinkTrigger(
+  sourceEntity: InteractionSourceEntity,
+  trigger: InteractionTriggerKind
+): InteractionTriggerKind {
+  if (sourceEntity.kind === "triggerVolume") {
+    return trigger === "click"
+      ? getDefaultInteractionLinkTrigger(sourceEntity)
+      : trigger;
+  }
+
+  return "click";
+}
+
 function getErrorMessage(error: unknown): string {
   if (error instanceof Error) {
     return error.message;
@@ -7392,7 +7405,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
         createStartDialogueInteractionLink({
           id: link.id,
           sourceEntityId: sourceEntity.id,
-          trigger: link.trigger,
+          trigger: getCanonicalInteractionLinkTrigger(sourceEntity, link.trigger),
           dialogueId: defaultDialogue.id
         }),
         "Switched link action to start dialogue."
@@ -7851,7 +7864,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       <select
                         data-testid={`interaction-link-trigger-${link.id}`}
                         className="text-input"
-                        value={link.trigger}
+                        value={getCanonicalInteractionLinkTrigger(
+                          sourceEntity,
+                          link.trigger
+                        )}
                         onChange={(event) =>
                           updateInteractionLinkTrigger(
                             link,
@@ -7867,7 +7883,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         data-testid={`interaction-link-trigger-${link.id}`}
                         className="text-input"
                         type="text"
-                        value={getInteractionTriggerLabel(link.trigger)}
+                        value={getInteractionTriggerLabel(
+                          getCanonicalInteractionLinkTrigger(
+                            sourceEntity,
+                            link.trigger
+                          )
+                        )}
                         readOnly
                       />
                     )}
