@@ -33,11 +33,28 @@ export interface TeleportPlayerSequenceEffect {
   targetEntityId: string;
 }
 
-export interface ToggleVisibilitySequenceEffect {
+export const SEQUENCE_VISIBILITY_MODES = ["toggle", "show", "hide"] as const;
+export type SequenceVisibilityMode = (typeof SEQUENCE_VISIBILITY_MODES)[number];
+
+export interface BrushSequenceVisibilityTarget {
+  kind: "brush";
+  brushId: string;
+}
+
+export interface ModelInstanceSequenceVisibilityTarget {
+  kind: "modelInstance";
+  modelInstanceId: string;
+}
+
+export type SequenceVisibilityTarget =
+  | BrushSequenceVisibilityTarget
+  | ModelInstanceSequenceVisibilityTarget;
+
+export interface SetVisibilitySequenceEffect {
   stepClass: "impulse";
-  type: "toggleVisibility";
-  targetBrushId: string;
-  visible?: boolean;
+  type: "setVisibility";
+  target: SequenceVisibilityTarget;
+  mode: SequenceVisibilityMode;
 }
 
 type SequenceDefinitionLike = {
@@ -55,7 +72,7 @@ export type ImpulseSequenceStep =
   | ImpulseControlSequenceEffect
   | StartDialogueSequenceEffect
   | TeleportPlayerSequenceEffect
-  | ToggleVisibilitySequenceEffect;
+  | SetVisibilitySequenceEffect;
 
 export type SequenceEffect = HeldSequenceStep | ImpulseSequenceStep;
 export type SequenceClip = SequenceEffect;
@@ -81,12 +98,21 @@ export function cloneSequenceEffect(effect: SequenceEffect): SequenceEffect {
         type: "teleportPlayer",
         targetEntityId: effect.targetEntityId
       };
-    case "toggleVisibility":
+    case "setVisibility":
       return {
         stepClass: "impulse",
-        type: "toggleVisibility",
-        targetBrushId: effect.targetBrushId,
-        visible: effect.visible
+        type: "setVisibility",
+        target:
+          effect.target.kind === "brush"
+            ? {
+                kind: "brush",
+                brushId: effect.target.brushId
+              }
+            : {
+                kind: "modelInstance",
+                modelInstanceId: effect.target.modelInstanceId
+              },
+        mode: effect.mode
       };
   }
 }
@@ -119,8 +145,15 @@ export function getSequenceEffectLabel(effect: SequenceEffect): string {
       return "Impulse: Start Dialogue";
     case "teleportPlayer":
       return "Impulse: Teleport Player";
-    case "toggleVisibility":
-      return "Impulse: Toggle Visibility";
+    case "setVisibility":
+      switch (effect.mode) {
+        case "show":
+          return "Impulse: Show";
+        case "hide":
+          return "Impulse: Hide";
+        case "toggle":
+          return "Impulse: Toggle Visibility";
+      }
   }
 }
 
@@ -237,9 +270,26 @@ export function getInteractionLinkImpulseEffects(
       return [
         {
           stepClass: "impulse",
-          type: "toggleVisibility",
-          targetBrushId: link.action.targetBrushId,
-          visible: link.action.visible
+          type: "setVisibility",
+          target: {
+            kind: "brush",
+            brushId: link.action.targetBrushId
+          },
+          mode:
+            link.action.visible === undefined
+              ? "toggle"
+              : link.action.visible
+                ? "show"
+                : "hide"
+        }
+      ];
+    case "setVisibility":
+      return [
+        {
+          stepClass: "impulse",
+          type: "setVisibility",
+          target: link.action.target,
+          mode: link.action.mode
         }
       ];
     case "startDialogue":
