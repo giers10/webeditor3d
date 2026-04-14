@@ -27,6 +27,7 @@ import {
   createEmptyProjectDocument,
   createEmptyProjectScene
 } from "../../src/document/scene-document";
+import { createBoxBrush } from "../../src/document/brushes";
 import { createScenePath } from "../../src/document/paths";
 import { createDefaultProjectTimeSettings } from "../../src/document/project-time-settings";
 import {
@@ -330,6 +331,11 @@ describe("project document JSON", () => {
             mode: "hide"
           }
         ]
+      });
+    document.scenes[document.activeSceneId]!.brushes["brush-legacy-wall"] =
+      createBoxBrush({
+        id: "brush-legacy-wall",
+        name: "Legacy Wall"
       });
 
     const legacyDocument = JSON.parse(
