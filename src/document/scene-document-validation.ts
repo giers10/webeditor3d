@@ -80,6 +80,10 @@ import {
   isProjectScheduleWeekday,
   type ProjectScheduler
 } from "../scheduler/project-scheduler";
+import type {
+  ProjectDialogue,
+  ProjectDialogueLibrary
+} from "../dialogues/project-dialogues";
 
 export type SceneDiagnosticSeverity = "error" | "warning";
 export type SceneDiagnosticScope = "document" | "build";
