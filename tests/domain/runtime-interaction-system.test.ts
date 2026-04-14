@@ -615,13 +615,141 @@ describe("RuntimeInteractionSystem", () => {
       "entity-interactable-console",
       runtimeScene,
       createDispatcher({
-        startDialogue: (dialogueId, link) => {
-          dispatches.push(`${link.id}:${dialogueId}`);
+        startDialogue: (dialogueId, source) => {
+          dispatches.push(`${source?.linkId}:${dialogueId}`);
         }
       })
     );
 
     expect(dispatches).toEqual(["link-start-dialogue:dialogue-console"]);
+  });
+
+  it("dispatches trigger-volume dialogue starts once on enter", () => {
+    const runtimeScene = createRuntimeSceneFixture();
+    runtimeScene.dialogues.dialogues["dialogue-threshold"] = {
+      id: "dialogue-threshold",
+      title: "Threshold",
+      lines: [
+        {
+          id: "dialogue-line-threshold-1",
+          speakerName: null,
+          text: "You crossed the threshold."
+        }
+      ]
+    };
+    runtimeScene.interactionLinks = [
+      createStartDialogueInteractionLink({
+        id: "link-trigger-dialogue",
+        sourceEntityId: "entity-trigger-main",
+        trigger: "enter",
+        dialogueId: "dialogue-threshold"
+      })
+    ];
+
+    const dispatches: string[] = [];
+    const interactionSystem = new RuntimeInteractionSystem();
+
+    interactionSystem.updatePlayerPosition(
+      {
+        x: 0,
+        y: 0,
+        z: 0
+      },
+      runtimeScene,
+      createDispatcher({
+        startDialogue: (dialogueId, source) => {
+          dispatches.push(`${source?.linkId}:${dialogueId}`);
+        }
+      })
+    );
+    interactionSystem.updatePlayerPosition(
+      {
+        x: 0.25,
+        y: 0,
+        z: 0.25
+      },
+      runtimeScene,
+      createDispatcher({
+        startDialogue: (dialogueId, source) => {
+          dispatches.push(`${source?.linkId}:${dialogueId}`);
+        }
+      })
+    );
+
+    expect(dispatches).toEqual(["link-trigger-dialogue:dialogue-threshold"]);
+  });
+
+  it("resolves direct NPC dialogue prompts and dispatches them through the shared start path", () => {
+    const runtimeScene = createRuntimeSceneFixture();
+    runtimeScene.entities.interactables = [];
+    runtimeScene.entities.npcs = [
+      {
+        entityId: "entity-npc-merchant",
+        actorId: "actor-merchant",
+        name: "Merchant",
+        visible: true,
+        position: {
+          x: 0,
+          y: 1,
+          z: 1.5
+        },
+        yawDegrees: 180,
+        modelAssetId: null,
+        dialogueId: "dialogue-merchant",
+        collider: {
+          mode: "capsule",
+          radius: 0.3,
+          height: 1.8,
+          eyeHeight: 1.6
+        },
+        activeRoutineTitle: "Greeting",
+        animationClipName: null,
+        animationLoop: undefined,
+        resolvedPath: null
+      }
+    ];
+
+    const interactionSystem = new RuntimeInteractionSystem();
+    const prompt = interactionSystem.resolveClickInteractionPrompt(
+      {
+        x: 0,
+        y: 1.6,
+        z: 0
+      },
+      {
+        x: 0,
+        y: 1.6,
+        z: 0
+      },
+      {
+        x: 0,
+        y: 0,
+        z: 1
+      },
+      runtimeScene
+    );
+
+    expect(prompt).toEqual(
+      expect.objectContaining({
+        sourceEntityId: "entity-npc-merchant",
+        prompt: "Talk to Merchant"
+      })
+    );
+
+    const dispatches: string[] = [];
+    interactionSystem.dispatchClickInteraction(
+      "entity-npc-merchant",
+      runtimeScene,
+      createDispatcher({
+        startDialogue: (dialogueId, source) => {
+          dispatches.push(
+            `${source?.kind}:${source?.sourceEntityId}:${dialogueId}`
+          );
+        }
+      })
+    );
+
+    expect(dispatches).toEqual(["npc:entity-npc-merchant:dialogue-merchant"]);
   });
 
   it("shows a click prompt for enabled Scene Exits within range", () => {
