@@ -1398,6 +1398,10 @@ export class RuntimeHost {
         .map((npc) => npc.entityId) ?? [];
 
     for (const npcId of npcIds) {
+      if (!this.animationMixers.has(npcId)) {
+        continue;
+      }
+
       if (clipName === null) {
         this.applyStopAnimationAction(npcId);
       } else {
