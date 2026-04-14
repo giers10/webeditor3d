@@ -44,8 +44,11 @@ import {
   type ControlEffect,
   type InteractionControlTargetRef,
   type LightControlTargetRef,
+  type ModelInstanceControlTargetRef,
   type RuntimeResolvedControlChannelValue,
-  type RuntimeResolvedDiscreteControlState
+  type RuntimeResolvedDiscreteControlState,
+  type SceneControlTargetRef,
+  type SoundEmitterControlTargetRef
 } from "../controls/control-surface";
 import { buildBoxBrushDerivedMeshData } from "../geometry/box-brush-mesh";
 import {
@@ -476,9 +479,9 @@ export class RuntimeHost {
       status: "loading",
       message: null
     });
+    this.syncResolvedControlStateToRuntime(runtimeScene.control.resolved);
     this.applyWorld();
     this.rebuildLocalLights(runtimeScene.localLights);
-    this.syncResolvedControlStateToRuntime(runtimeScene.control.resolved);
     this.rebuildBrushMeshes(runtimeScene.brushes);
     this.rebuildModelRenderObjects(
       runtimeScene.modelInstances,
@@ -971,6 +974,7 @@ export class RuntimeHost {
       pointLight.position.y,
       pointLight.position.z
     );
+    group.visible = pointLight.enabled;
     light.position.set(0, 0, 0);
     group.add(light);
 
@@ -1008,6 +1012,7 @@ export class RuntimeHost {
       spotLight.position.z
     );
     group.quaternion.copy(orientation);
+    group.visible = spotLight.enabled;
     light.position.set(0, 0, 0);
     light.target.position.set(0, 1, 0);
     group.add(light);
@@ -1035,11 +1040,36 @@ export class RuntimeHost {
     state: RuntimeResolvedDiscreteControlState
   ) {
     switch (state.type) {
+      case "actorPresence":
+        this.applyActorPresenceControl(state.target.actorId, state.value);
+        return;
+      case "modelVisibility":
+        this.applyModelInstanceVisibilityControl(state.target, state.value);
+        return;
+      case "soundPlayback":
+        this.applySoundPlaybackControl(state.target, state.value);
+        return;
+      case "modelAnimationPlayback":
+        this.applyModelAnimationPlaybackControl(
+          state.target,
+          state.clipName,
+          state.loop
+        );
+        return;
       case "lightEnabled":
         this.applyLightEnabledControl(state.target, state.value);
         return;
+      case "lightColor":
+        this.applyLightColorControl(state.target, state.value);
+        return;
       case "interactionEnabled":
         this.applyInteractionEnabledControl(state.target, state.value);
+        return;
+      case "ambientLightColor":
+        this.applyAmbientLightColorControl(state.target, state.value);
+        return;
+      case "sunLightColor":
+        this.applySunLightColorControl(state.target, state.value);
         return;
     }
   }
@@ -1054,6 +1084,47 @@ export class RuntimeHost {
           channelValue.value
         );
         return;
+      case "soundVolume":
+        this.applySoundVolumeControl(
+          channelValue.descriptor.target,
+          channelValue.value
+        );
+        return;
+      case "ambientLightIntensity":
+        this.applyAmbientLightIntensityControl(
+          channelValue.descriptor.target,
+          channelValue.value
+        );
+        return;
+      case "sunLightIntensity":
+        this.applySunLightIntensityControl(
+          channelValue.descriptor.target,
+          channelValue.value
+        );
+        return;
+    }
+  }
+
+  private mutateRuntimeLightState(
+    target: LightControlTargetRef,
+    mutate: (
+      light:
+        | RuntimeSceneDefinition["localLights"]["pointLights"][number]
+        | RuntimeSceneDefinition["localLights"]["spotLights"][number]
+    ) => void
+  ) {
+    if (this.runtimeScene === null) {
+      return;
+    }
+
+    const lights =
+      target.entityKind === "pointLight"
+        ? this.runtimeScene.localLights.pointLights
+        : this.runtimeScene.localLights.spotLights;
+    const light = lights.find((candidate) => candidate.entityId === target.entityId);
+
+    if (light !== undefined) {
+      mutate(light);
     }
   }
 
@@ -1061,6 +1132,10 @@ export class RuntimeHost {
     target: LightControlTargetRef,
     enabled: boolean
   ) {
+    this.mutateRuntimeLightState(target, (light) => {
+      light.enabled = enabled;
+    });
+
     const renderObjects = this.localLightObjects.get(target.entityId);
 
     if (renderObjects === undefined) {
@@ -1074,6 +1149,10 @@ export class RuntimeHost {
     target: LightControlTargetRef,
     intensity: number
   ) {
+    this.mutateRuntimeLightState(target, (light) => {
+      light.intensity = intensity;
+    });
+
     const renderObjects = this.localLightObjects.get(target.entityId);
 
     if (renderObjects === undefined) {
@@ -1081,6 +1160,165 @@ export class RuntimeHost {
     }
 
     renderObjects.light.intensity = intensity;
+  }
+
+  private applyLightColorControl(target: LightControlTargetRef, colorHex: string) {
+    this.mutateRuntimeLightState(target, (light) => {
+      light.colorHex = colorHex;
+    });
+
+    const renderObjects = this.localLightObjects.get(target.entityId);
+
+    if (renderObjects === undefined) {
+      return;
+    }
+
+    renderObjects.light.color.set(colorHex);
+  }
+
+  private applyAmbientLightIntensityControl(
+    _target: SceneControlTargetRef,
+    intensity: number
+  ) {
+    if (this.runtimeScene === null || this.currentWorld === null) {
+      return;
+    }
+
+    this.runtimeScene.world.ambientLight.intensity = intensity;
+    this.currentWorld.ambientLight.intensity = intensity;
+    this.applyDayNightLighting();
+  }
+
+  private applyAmbientLightColorControl(
+    _target: SceneControlTargetRef,
+    colorHex: string
+  ) {
+    if (this.runtimeScene === null || this.currentWorld === null) {
+      return;
+    }
+
+    this.runtimeScene.world.ambientLight.colorHex = colorHex;
+    this.currentWorld.ambientLight.colorHex = colorHex;
+    this.applyDayNightLighting();
+  }
+
+  private applySunLightIntensityControl(
+    _target: SceneControlTargetRef,
+    intensity: number
+  ) {
+    if (this.runtimeScene === null || this.currentWorld === null) {
+      return;
+    }
+
+    this.runtimeScene.world.sunLight.intensity = intensity;
+    this.currentWorld.sunLight.intensity = intensity;
+    this.applyDayNightLighting();
+  }
+
+  private applySunLightColorControl(
+    _target: SceneControlTargetRef,
+    colorHex: string
+  ) {
+    if (this.runtimeScene === null || this.currentWorld === null) {
+      return;
+    }
+
+    this.runtimeScene.world.sunLight.colorHex = colorHex;
+    this.currentWorld.sunLight.colorHex = colorHex;
+    this.applyDayNightLighting();
+  }
+
+  private applyModelInstanceVisibilityControl(
+    target: ModelInstanceControlTargetRef,
+    visible: boolean
+  ) {
+    if (this.runtimeScene !== null) {
+      const modelInstance =
+        this.runtimeScene.modelInstances.find(
+          (candidate) => candidate.instanceId === target.modelInstanceId
+        ) ?? null;
+
+      if (modelInstance !== null) {
+        modelInstance.visible = visible;
+      }
+    }
+
+    const renderGroup = this.modelRenderObjects.get(target.modelInstanceId);
+
+    if (renderGroup !== undefined) {
+      renderGroup.visible = visible;
+    }
+  }
+
+  private applyModelAnimationPlaybackControl(
+    target: ModelInstanceControlTargetRef,
+    clipName: string | null,
+    loop: boolean | undefined
+  ) {
+    if (this.runtimeScene !== null) {
+      const modelInstance =
+        this.runtimeScene.modelInstances.find(
+          (candidate) => candidate.instanceId === target.modelInstanceId
+        ) ?? null;
+
+      if (modelInstance !== null) {
+        modelInstance.animationClipName = clipName ?? undefined;
+        modelInstance.animationAutoplay = clipName !== null;
+        modelInstance.animationLoop = clipName === null ? undefined : loop;
+      }
+    }
+
+    if (clipName === null) {
+      this.applyStopAnimationAction(target.modelInstanceId);
+      return;
+    }
+
+    this.applyPlayAnimationAction(target.modelInstanceId, clipName, loop);
+  }
+
+  private applySoundPlaybackControl(
+    target: SoundEmitterControlTargetRef,
+    playing: boolean,
+    link: InteractionLink | null = null
+  ) {
+    if (this.runtimeScene !== null) {
+      const soundEmitter =
+        this.runtimeScene.entities.soundEmitters.find(
+          (candidate) => candidate.entityId === target.entityId
+        ) ?? null;
+
+      if (soundEmitter !== null) {
+        soundEmitter.autoplay = playing;
+      }
+    }
+
+    if (!this.audioSystem.hasSoundEmitter(target.entityId)) {
+      return;
+    }
+
+    if (playing) {
+      this.audioSystem.playSound(target.entityId, link);
+    } else {
+      this.audioSystem.stopSound(target.entityId);
+    }
+  }
+
+  private applySoundVolumeControl(
+    target: SoundEmitterControlTargetRef,
+    volume: number
+  ) {
+    if (this.runtimeScene !== null) {
+      const soundEmitter =
+        this.runtimeScene.entities.soundEmitters.find(
+          (candidate) => candidate.entityId === target.entityId
+        ) ?? null;
+
+      if (soundEmitter !== null) {
+        soundEmitter.volume = volume;
+      }
+    }
+
+    this.audioSystem.setSoundEmitterVolume(target.entityId, volume);
   }
 
   private applyInteractionEnabledControl(
@@ -1150,20 +1388,26 @@ export class RuntimeHost {
         this.applyActorPresenceControl(effect.target.actorId, effect.active);
         break;
       case "playModelAnimation":
-        this.applyPlayAnimationAction(
-          effect.target.modelInstanceId,
+        this.applyModelAnimationPlaybackControl(
+          effect.target,
           effect.clipName,
           effect.loop
         );
         break;
       case "stopModelAnimation":
-        this.applyStopAnimationAction(effect.target.modelInstanceId);
+        this.applyModelAnimationPlaybackControl(effect.target, null, undefined);
+        break;
+      case "setModelInstanceVisible":
+        this.applyModelInstanceVisibilityControl(effect.target, effect.visible);
         break;
       case "playSound":
-        this.audioSystem.playSound(effect.target.entityId, link);
+        this.applySoundPlaybackControl(effect.target, true, link);
         break;
       case "stopSound":
-        this.audioSystem.stopSound(effect.target.entityId);
+        this.applySoundPlaybackControl(effect.target, false);
+        break;
+      case "setSoundVolume":
+        this.applySoundVolumeControl(effect.target, effect.volume);
         break;
       case "setInteractionEnabled":
         this.applyInteractionEnabledControl(effect.target, effect.enabled);
@@ -1173,6 +1417,21 @@ export class RuntimeHost {
         break;
       case "setLightIntensity":
         this.applyLightIntensityControl(effect.target, effect.intensity);
+        break;
+      case "setLightColor":
+        this.applyLightColorControl(effect.target, effect.colorHex);
+        break;
+      case "setAmbientLightIntensity":
+        this.applyAmbientLightIntensityControl(effect.target, effect.intensity);
+        break;
+      case "setAmbientLightColor":
+        this.applyAmbientLightColorControl(effect.target, effect.colorHex);
+        break;
+      case "setSunLightIntensity":
+        this.applySunLightIntensityControl(effect.target, effect.intensity);
+        break;
+      case "setSunLightColor":
+        this.applySunLightColorControl(effect.target, effect.colorHex);
         break;
     }
 
@@ -1498,7 +1757,11 @@ export class RuntimeHost {
             modelInstance.animationClipName
           );
           if (clip) {
-            mixer.clipAction(clip).play();
+            const action = mixer.clipAction(clip);
+            action.loop =
+              modelInstance.animationLoop === false ? LoopOnce : LoopRepeat;
+            action.clampWhenFinished = modelInstance.animationLoop === false;
+            action.reset().play();
           }
         }
       }

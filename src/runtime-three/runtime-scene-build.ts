@@ -274,6 +274,7 @@ export interface RuntimeSceneExit {
 
 export interface RuntimePointLight {
   entityId: string;
+  enabled: boolean;
   position: Vec3;
   colorHex: string;
   intensity: number;
@@ -282,6 +283,7 @@ export interface RuntimePointLight {
 
 export interface RuntimeSpotLight {
   entityId: string;
+  enabled: boolean;
   position: Vec3;
   direction: Vec3;
   colorHex: string;
@@ -305,6 +307,7 @@ export interface RuntimeModelInstance {
   scale: Vec3;
   animationClipName?: string;
   animationAutoplay?: boolean;
+  animationLoop?: boolean;
 }
 
 export interface RuntimePathPoint {
@@ -676,7 +679,8 @@ function buildRuntimeModelInstance(
     rotationDegrees: cloneVec3(modelInstance.rotationDegrees),
     scale: cloneVec3(modelInstance.scale),
     animationClipName: modelInstance.animationClipName,
-    animationAutoplay: modelInstance.animationAutoplay
+    animationAutoplay: modelInstance.animationAutoplay,
+    animationLoop: undefined
   };
 }
 
@@ -884,6 +888,50 @@ function buildRuntimeControlSurface(
   const resolved = createEmptyRuntimeResolvedControlState();
   const defaultSource = createDefaultResolvedControlSource();
   const seenActorIds = new Set<string>();
+  const sceneTarget = createActiveSceneControlTargetRef();
+  const ambientLightDescriptor =
+    createAmbientLightIntensityControlChannelDescriptor({
+      target: sceneTarget,
+      defaultValue: document.world.ambientLight.intensity
+    });
+  const sunLightDescriptor = createSunLightIntensityControlChannelDescriptor({
+    target: sceneTarget,
+    defaultValue: document.world.sunLight.intensity
+  });
+
+  targets.push(
+    createControlTargetDescriptor(sceneTarget, [
+      "ambientLightIntensity",
+      "ambientLightColor",
+      "sunLightIntensity",
+      "sunLightColor"
+    ])
+  );
+  channels.push(ambientLightDescriptor, sunLightDescriptor);
+  resolved.discrete.push(
+    createResolvedAmbientLightColorState({
+      target: sceneTarget,
+      value: document.world.ambientLight.colorHex,
+      source: defaultSource
+    }),
+    createResolvedSunLightColorState({
+      target: sceneTarget,
+      value: document.world.sunLight.colorHex,
+      source: defaultSource
+    })
+  );
+  resolved.channels.push(
+    createResolvedAmbientLightIntensityChannelValue({
+      descriptor: ambientLightDescriptor,
+      value: document.world.ambientLight.intensity,
+      source: defaultSource
+    }),
+    createResolvedSunLightIntensityChannelValue({
+      descriptor: sunLightDescriptor,
+      value: document.world.sunLight.intensity,
+      source: defaultSource
+    })
+  );
 
   for (const npc of collections.npcDefinitions) {
     if (seenActorIds.has(npc.actorId)) {
@@ -907,17 +955,24 @@ function buildRuntimeControlSurface(
       target,
       defaultValue: pointLight.intensity
     });
-    const sourceEntity = document.entities[pointLight.entityId];
 
     targets.push(
-      createControlTargetDescriptor(target, ["lightEnabled", "lightIntensity"])
+      createControlTargetDescriptor(target, [
+        "lightEnabled",
+        "lightIntensity",
+        "lightColor"
+      ])
     );
     channels.push(descriptor);
     resolved.discrete.push(
       createResolvedLightEnabledState({
         target,
-        value:
-          sourceEntity?.kind === "pointLight" ? sourceEntity.visible : true,
+        value: pointLight.enabled,
+        source: defaultSource
+      }),
+      createResolvedLightColorState({
+        target,
+        value: pointLight.colorHex,
         source: defaultSource
       })
     );
@@ -936,16 +991,24 @@ function buildRuntimeControlSurface(
       target,
       defaultValue: spotLight.intensity
     });
-    const sourceEntity = document.entities[spotLight.entityId];
 
     targets.push(
-      createControlTargetDescriptor(target, ["lightEnabled", "lightIntensity"])
+      createControlTargetDescriptor(target, [
+        "lightEnabled",
+        "lightIntensity",
+        "lightColor"
+      ])
     );
     channels.push(descriptor);
     resolved.discrete.push(
       createResolvedLightEnabledState({
         target,
-        value: sourceEntity?.kind === "spotLight" ? sourceEntity.visible : true,
+        value: spotLight.enabled,
+        source: defaultSource
+      }),
+      createResolvedLightColorState({
+        target,
+        value: spotLight.colorHex,
         source: defaultSource
       })
     );
@@ -963,11 +1026,29 @@ function buildRuntimeControlSurface(
       continue;
     }
 
+    const target = createSoundEmitterControlTargetRef(soundEmitter.entityId);
+    const descriptor = createSoundVolumeControlChannelDescriptor({
+      target,
+      defaultValue: soundEmitter.volume
+    });
+
     targets.push(
-      createControlTargetDescriptor(
-        createSoundEmitterControlTargetRef(soundEmitter.entityId),
-        ["soundPlayback"]
-      )
+      createControlTargetDescriptor(target, ["soundPlayback", "soundVolume"])
+    );
+    channels.push(descriptor);
+    resolved.discrete.push(
+      createResolvedSoundPlaybackState({
+        target,
+        value: soundEmitter.autoplay,
+        source: defaultSource
+      })
+    );
+    resolved.channels.push(
+      createResolvedSoundVolumeChannelValue({
+        descriptor,
+        value: soundEmitter.volume,
+        source: defaultSource
+      })
     );
   }
 
@@ -1014,21 +1095,42 @@ function buildRuntimeControlSurface(
       authoredModelInstance === undefined
         ? undefined
         : document.assets[authoredModelInstance.assetId];
+    const target = createModelInstanceControlTargetRef(modelInstance.instanceId);
+    const hasAnimationPlayback =
+      asset !== undefined &&
+      asset.kind === "model" &&
+      asset.metadata.animationNames.length > 0;
+    const capabilities: Array<"animationPlayback" | "modelVisibility"> = [
+      "modelVisibility"
+    ];
 
-    if (
-      asset === undefined ||
-      asset.kind !== "model" ||
-      asset.metadata.animationNames.length === 0
-    ) {
-      continue;
+    if (hasAnimationPlayback) {
+      capabilities.unshift("animationPlayback");
     }
 
-    targets.push(
-      createControlTargetDescriptor(
-        createModelInstanceControlTargetRef(modelInstance.instanceId),
-        ["animationPlayback"]
-      )
+    targets.push(createControlTargetDescriptor(target, capabilities));
+    resolved.discrete.push(
+      createResolvedModelInstanceVisibilityState({
+        target,
+        value: modelInstance.visible,
+        source: defaultSource
+      })
     );
+
+    if (hasAnimationPlayback) {
+      resolved.discrete.push(
+        createResolvedModelAnimationPlaybackState({
+          target,
+          clipName:
+            modelInstance.animationAutoplay === true &&
+            typeof modelInstance.animationClipName === "string"
+              ? modelInstance.animationClipName
+              : null,
+          loop: modelInstance.animationLoop,
+          source: defaultSource
+        })
+      );
+    }
   }
 
   return createRuntimeControlSurfaceDefinition({
@@ -1070,6 +1172,7 @@ function buildRuntimeSceneCollections(
       case "pointLight":
         localLights.pointLights.push({
           entityId: entity.id,
+          enabled: entity.visible,
           position: cloneVec3(entity.position),
           colorHex: entity.colorHex,
           intensity: entity.intensity,
@@ -1079,6 +1182,7 @@ function buildRuntimeSceneCollections(
       case "spotLight":
         localLights.spotLights.push({
           entityId: entity.id,
+          enabled: entity.visible,
           position: cloneVec3(entity.position),
           direction: cloneVec3(entity.direction),
           colorHex: entity.colorHex,

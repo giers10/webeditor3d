@@ -215,6 +215,10 @@ export class RuntimeAudioSystem {
     this.playBufferedSound(soundEmitterId);
   }
 
+  hasSoundEmitter(soundEmitterId: string): boolean {
+    return this.soundEmitters.has(soundEmitterId);
+  }
+
   stopSound(soundEmitterId: string) {
     this.pendingPlayEmitterIds.delete(soundEmitterId);
 
@@ -231,6 +235,17 @@ export class RuntimeAudioSystem {
         `stopSound: ${soundEmitterId} could not be stopped: ${getErrorDetail(error)}`
       );
     }
+  }
+
+  setSoundEmitterVolume(soundEmitterId: string, volume: number) {
+    const soundEmitter = this.soundEmitters.get(soundEmitterId);
+
+    if (soundEmitter === undefined) {
+      return;
+    }
+
+    soundEmitter.entity.volume = volume;
+    this.updateSoundEmitterVolume(soundEmitter);
   }
 
   dispose() {
