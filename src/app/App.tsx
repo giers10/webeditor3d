@@ -1788,6 +1788,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
       : selectedNpcOtherActorUsages.filter(
           (usage) => usage.sceneId !== editorState.activeSceneId
         );
+  const projectNpcActors = listProjectNpcActors(editorState.projectDocument);
   const selectedTeleportTarget =
     selectedEntity?.kind === "teleportTarget" ? selectedEntity : null;
   const selectedInteractable =
