@@ -1338,18 +1338,6 @@ function readVisibilityModeSelectValue(
   }
 }
 
-function getSequenceVisibilityTargetKey(target: {
-  kind: "brush";
-  brushId: string;
-} | {
-  kind: "modelInstance";
-  modelInstanceId: string;
-}): string {
-  return target.kind === "brush"
-    ? `brush:${target.brushId}`
-    : `modelInstance:${target.modelInstanceId}`;
-}
-
 function readSequenceVisibilityTargetKey(
   value: string
 ):
