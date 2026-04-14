@@ -2768,6 +2768,21 @@ export function App({ store, initialStatusMessage }: AppProps) {
   }, [editorState.projectDocument.time]);
 
   useEffect(() => {
+    if (selectedScheduleRoutineId === null) {
+      return;
+    }
+
+    if (
+      editorState.projectDocument.scheduler.routines[selectedScheduleRoutineId] !==
+      undefined
+    ) {
+      return;
+    }
+
+    setSelectedScheduleRoutineId(null);
+  }, [editorState.projectDocument.scheduler, selectedScheduleRoutineId]);
+
+  useEffect(() => {
     const worldTimeOfDay = editorState.document.world.timeOfDay;
 
     setWorldDawnAmbientIntensityFactorDraft(
