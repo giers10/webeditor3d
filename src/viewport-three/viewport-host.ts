@@ -3849,7 +3849,38 @@ export class ViewportHost {
   ) {
     this.clearModelInstances();
 
-    for (const modelInstance of getModelInstances(document.modelInstances)) {
+    const runtimeModelInstances = this.currentSimulationScene?.modelInstances ?? null;
+    const authoredModelInstancesById = new Map(
+      getModelInstances(document.modelInstances).map((modelInstance) => [
+        modelInstance.id,
+        modelInstance
+      ])
+    );
+    const displayedModelInstances =
+      runtimeModelInstances?.map((runtimeModelInstance) => {
+        const authoredModelInstance =
+          authoredModelInstancesById.get(runtimeModelInstance.instanceId);
+
+        return createModelInstance({
+          id: runtimeModelInstance.instanceId,
+          assetId: runtimeModelInstance.assetId,
+          name: runtimeModelInstance.name ?? authoredModelInstance?.name,
+          enabled: authoredModelInstance?.enabled ?? true,
+          visible: runtimeModelInstance.visible,
+          position: runtimeModelInstance.position,
+          rotationDegrees: runtimeModelInstance.rotationDegrees,
+          scale: runtimeModelInstance.scale,
+          collision:
+            authoredModelInstance?.collision ?? {
+              mode: "none",
+              visible: false
+            },
+          animationClipName: runtimeModelInstance.animationClipName,
+          animationAutoplay: runtimeModelInstance.animationAutoplay
+        });
+      }) ?? getModelInstances(document.modelInstances);
+
+    for (const modelInstance of displayedModelInstances) {
       if (!modelInstance.enabled || !modelInstance.visible) {
         continue;
       }
@@ -3957,7 +3988,8 @@ export class ViewportHost {
           entity.id,
           entity.position,
           entity.radius,
-          selected
+          selected,
+          entity.interactionEnabled
         );
       case "sceneExit":
         return this.createInteractableRenderObjects(
@@ -3965,6 +3997,7 @@ export class ViewportHost {
           entity.position,
           entity.radius,
           selected,
+          entity.interactionEnabled,
           selected ? SCENE_EXIT_SELECTED_COLOR : SCENE_EXIT_COLOR
         );
     }
@@ -4117,7 +4150,10 @@ export class ViewportHost {
   }
 
   private createSpotLightRuntimeObjects(
-    entity: SpotLightEntity
+    entity: Pick<
+      SpotLightEntity,
+      "position" | "direction" | "colorHex" | "intensity" | "distance" | "angleDegrees"
+    >
   ): LocalLightRenderObjects {
     const group = new Group();
     const light = new SpotLight(
@@ -4146,12 +4182,16 @@ export class ViewportHost {
     group.add(light.target);
 
     return {
-      group
+      group,
+      light
     };
   }
 
   private createPointLightRuntimeObjects(
-    entity: PointLightEntity
+    entity: Pick<
+      PointLightEntity,
+      "position" | "colorHex" | "intensity" | "distance"
+    >
   ): LocalLightRenderObjects {
     const group = new Group();
     const light = new PointLight(
@@ -4165,7 +4205,8 @@ export class ViewportHost {
     group.add(light);
 
     return {
-      group
+      group,
+      light
     };
   }
 
@@ -4576,20 +4617,24 @@ export class ViewportHost {
     position: Vec3,
     radius: number,
     selected: boolean,
+    interactionEnabled = true,
     markerColor = selected ? INTERACTABLE_SELECTED_COLOR : INTERACTABLE_COLOR
   ): EntityRenderObjects {
     const displayRadius = Math.max(0.45, radius);
     const group = new Group();
     group.position.set(position.x, position.y, position.z);
+    const inactiveOpacity = selected ? 0.72 : 0.42;
 
     const core = new Mesh(
       new SphereGeometry(0.16, 12, 10),
       new MeshStandardMaterial({
         color: markerColor,
         emissive: markerColor,
-        emissiveIntensity: selected ? 0.18 : 0.08,
+        emissiveIntensity: selected ? 0.18 : interactionEnabled ? 0.08 : 0.025,
         roughness: 0.34,
-        metalness: 0.04
+        metalness: 0.04,
+        transparent: !interactionEnabled,
+        opacity: interactionEnabled ? 1 : inactiveOpacity
       })
     );
 
@@ -4598,9 +4643,11 @@ export class ViewportHost {
       new MeshStandardMaterial({
         color: markerColor,
         emissive: markerColor,
-        emissiveIntensity: selected ? 0.1 : 0.04,
+        emissiveIntensity: selected ? 0.1 : interactionEnabled ? 0.04 : 0.015,
         roughness: 0.55,
-        metalness: 0.02
+        metalness: 0.02,
+        transparent: !interactionEnabled,
+        opacity: interactionEnabled ? 1 : 0.32
       })
     );
     radiusRing.rotation.x = Math.PI * 0.5;
