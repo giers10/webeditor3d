@@ -6,6 +6,9 @@ import {
   createDefaultResolvedControlSource,
   createSchedulerResolvedControlSource,
   createSetActorPresenceControlEffect,
+  getControlEffectResolutionKey,
+  type ControlEffect,
+  type ControlTargetRef,
   type RuntimeResolvedControlState,
   type SetActorPresenceControlEffect
 } from "../controls/control-surface";
@@ -26,8 +29,17 @@ export interface RuntimeResolvedActorScheduleState {
   effect: SetActorPresenceControlEffect | null;
 }
 
+export interface RuntimeResolvedScheduledControlRoutine {
+  routineId: string;
+  title: string;
+  target: ControlTargetRef;
+  effect: ControlEffect;
+  resolutionKey: string;
+}
+
 export interface RuntimeResolvedProjectScheduleState {
   actors: RuntimeResolvedActorScheduleState[];
+  controls: RuntimeResolvedScheduledControlRoutine[];
 }
 
 export interface RuntimeProjectSchedulerState {
@@ -52,13 +64,21 @@ export function cloneRuntimeResolvedProjectScheduleState(
   state: RuntimeResolvedProjectScheduleState
 ): RuntimeResolvedProjectScheduleState {
   return {
-    actors: state.actors.map(cloneRuntimeResolvedActorScheduleState)
+    actors: state.actors.map(cloneRuntimeResolvedActorScheduleState),
+    controls: state.controls.map((routine) => ({
+      routineId: routine.routineId,
+      title: routine.title,
+      target: cloneControlEffect(routine.effect).target,
+      effect: cloneControlEffect(routine.effect),
+      resolutionKey: routine.resolutionKey
+    }))
   };
 }
 
 export function createEmptyRuntimeResolvedProjectScheduleState(): RuntimeResolvedProjectScheduleState {
   return {
-    actors: []
+    actors: [],
+    controls: []
   };
 }
 
@@ -142,8 +162,50 @@ export function resolveRuntimeProjectScheduleState(options: {
         dayNumber: options.dayNumber,
         timeOfDayHours: options.timeOfDayHours
       })
-    )
+    ),
+    controls: resolveRuntimeScheduledControlRoutines(options)
   };
+}
+
+function resolveRuntimeScheduledControlRoutines(options: {
+  scheduler: ProjectScheduler;
+  dayNumber: number;
+  timeOfDayHours: number;
+}): RuntimeResolvedScheduledControlRoutine[] {
+  const activeRoutines = Object.values(options.scheduler.routines)
+    .filter((routine) =>
+      isProjectScheduleRoutineActiveAt(
+        routine,
+        options.dayNumber,
+        options.timeOfDayHours
+      )
+    )
+    .sort(compareProjectScheduleRoutinePriority);
+  const seenResolutionKeys = new Set<string>();
+  const resolved: RuntimeResolvedScheduledControlRoutine[] = [];
+
+  for (const routine of activeRoutines) {
+    if (routine.effect.type === "setActorPresence") {
+      continue;
+    }
+
+    const resolutionKey = getControlEffectResolutionKey(routine.effect);
+
+    if (seenResolutionKeys.has(resolutionKey)) {
+      continue;
+    }
+
+    seenResolutionKeys.add(resolutionKey);
+    resolved.push({
+      routineId: routine.id,
+      title: routine.title,
+      target: cloneControlEffect(routine.effect).target,
+      effect: cloneControlEffect(routine.effect),
+      resolutionKey
+    });
+  }
+
+  return resolved;
 }
 
 export function applyRuntimeProjectScheduleToControlState(
@@ -152,7 +214,10 @@ export function applyRuntimeProjectScheduleToControlState(
 ): RuntimeResolvedControlState {
   let nextResolved = cloneRuntimeResolvedControlState(resolved);
   nextResolved.discrete = nextResolved.discrete.filter(
-    (state) => state.type !== "actorPresence"
+    (state) => state.type !== "actorPresence" && state.source.kind !== "scheduler"
+  );
+  nextResolved.channels = nextResolved.channels.filter(
+    (channel) => channel.source.kind !== "scheduler"
   );
 
   for (const actorState of schedule.actors) {
@@ -168,6 +233,14 @@ export function applyRuntimeProjectScheduleToControlState(
       actorState.activeRoutineId === null
         ? createDefaultResolvedControlSource()
         : createSchedulerResolvedControlSource(actorState.activeRoutineId)
+    );
+  }
+
+  for (const controlRoutine of schedule.controls) {
+    nextResolved = applyControlEffectToResolvedState(
+      nextResolved,
+      controlRoutine.effect,
+      createSchedulerResolvedControlSource(controlRoutine.routineId)
     );
   }
 
