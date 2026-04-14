@@ -679,6 +679,194 @@ describe("RuntimeHost", () => {
     host.dispose();
   });
 
+  it("re-resolves NPC animation and follow-path pose from the project scheduler", () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    vi.spyOn(RapierCollisionWorld, "create").mockResolvedValue({
+      dispose: vi.fn(),
+      resolveThirdPersonCameraCollision: vi.fn(
+        (_pivot, desiredCameraPosition) => desiredCameraPosition
+      )
+    } as unknown as RapierCollisionWorld);
+
+    const actorTarget = createActorControlTargetRef("actor-patroller");
+    const { asset, loadedAsset } = createFixtureLoadedModelAssetFromGeometry(
+      "asset-npc-patroller",
+      new BoxGeometry(0.8, 1.8, 0.6)
+    );
+    asset.metadata.animationNames = ["Walk"];
+    loadedAsset.animations = [new AnimationClip("Walk", 1, [])];
+    const npc = createNpcEntity({
+      id: "entity-npc-patroller",
+      actorId: actorTarget.actorId,
+      modelAssetId: asset.id,
+      yawDegrees: 15
+    });
+    const path = createScenePath({
+      id: "path-patrol",
+      points: [
+        {
+          id: "path-point-start",
+          position: {
+            x: 0,
+            y: 0,
+            z: 0
+          }
+        },
+        {
+          id: "path-point-end",
+          position: {
+            x: 8,
+            y: 0,
+            z: 0
+          }
+        }
+      ]
+    });
+    const document = createEmptySceneDocument();
+    document.assets[asset.id] = asset;
+    document.entities[npc.id] = npc;
+    document.paths[path.id] = path;
+    document.scheduler.routines["routine-patrol"] = createProjectScheduleRoutine({
+      id: "routine-patrol",
+      title: "Patrolling",
+      target: actorTarget,
+      startHour: 9,
+      endHour: 13,
+      effects: [
+        createSetActorPresenceControlEffect({
+          target: actorTarget,
+          active: true
+        }),
+        createPlayActorAnimationControlEffect({
+          target: actorTarget,
+          clipName: "Walk",
+          loop: true
+        }),
+        createFollowActorPathControlEffect({
+          target: actorTarget,
+          pathId: path.id,
+          speed: 2,
+          loop: false,
+          progressMode: "deriveFromTime"
+        })
+      ]
+    });
+
+    const runtimeScene = buildRuntimeSceneFromDocument(document, {
+      runtimeClock: {
+        timeOfDayHours: 6,
+        dayCount: 0,
+        dayLengthMinutes: 24
+      },
+      loadedModelAssets: {
+        [asset.id]: loadedAsset
+      }
+    });
+    const host = new RuntimeHost({
+      enableRendering: false
+    });
+    host.loadScene(runtimeScene);
+
+    const hostInternals = host as unknown as {
+      currentClockState: {
+        timeOfDayHours: number;
+        dayCount: number;
+        dayLengthMinutes: number;
+      } | null;
+      sceneReady: boolean;
+      runtimeScene: typeof runtimeScene | null;
+      modelRenderObjects: Map<
+        string,
+        {
+          visible: boolean;
+          position: { x: number; y: number; z: number };
+          rotation: { y: number };
+        }
+      >;
+      applyPlayAnimationAction(
+        instanceId: string,
+        clipName: string,
+        loop: boolean | undefined
+      ): void;
+      syncRuntimeScheduleToCurrentClock(): void;
+    };
+    const playAnimationSpy = vi
+      .spyOn(hostInternals, "applyPlayAnimationAction")
+      .mockImplementation(() => undefined);
+
+    hostInternals.sceneReady = true;
+    hostInternals.currentClockState = {
+      timeOfDayHours: 11,
+      dayCount: 0,
+      dayLengthMinutes: 24
+    };
+    hostInternals.syncRuntimeScheduleToCurrentClock();
+
+    expect(playAnimationSpy).toHaveBeenCalledWith(npc.id, "Walk", true);
+    expect(hostInternals.runtimeScene?.entities.npcs).toEqual([
+      expect.objectContaining({
+        entityId: npc.id,
+        activeRoutineTitle: "Patrolling",
+        animationClipName: "Walk",
+        position: {
+          x: 4,
+          y: 0,
+          z: 0
+        }
+      })
+    ]);
+    expect(hostInternals.runtimeScene?.npcDefinitions[0]).toEqual(
+      expect.objectContaining({
+        entityId: npc.id,
+        animationClipName: "Walk",
+        yawDegrees: 90,
+        resolvedPath: expect.objectContaining({
+          pathId: path.id,
+          progress: 0.5
+        })
+      })
+    );
+    expect(hostInternals.modelRenderObjects.get(npc.id)).toEqual(
+      expect.objectContaining({
+        visible: true,
+        position: expect.objectContaining({
+          x: 4,
+          y: 0,
+          z: 0
+        }),
+        rotation: expect.objectContaining({
+          y: Math.PI / 2
+        })
+      })
+    );
+
+    hostInternals.currentClockState = {
+      timeOfDayHours: 14,
+      dayCount: 0,
+      dayLengthMinutes: 24
+    };
+    hostInternals.syncRuntimeScheduleToCurrentClock();
+
+    expect(hostInternals.runtimeScene?.entities.npcs).toEqual([]);
+    expect(hostInternals.runtimeScene?.npcDefinitions[0]).toEqual(
+      expect.objectContaining({
+        entityId: npc.id,
+        active: false,
+        activeRoutineTitle: null,
+        animationClipName: null,
+        yawDegrees: 15,
+        position: {
+          x: 0,
+          y: 0,
+          z: 0
+        },
+        resolvedPath: null
+      })
+    );
+
+    host.dispose();
+  });
+
   it("applies scheduler-controlled light effects and restores authored defaults when the routine ends", () => {
     vi.spyOn(console, "warn").mockImplementation(() => undefined);
     vi.spyOn(RapierCollisionWorld, "create").mockResolvedValue({
