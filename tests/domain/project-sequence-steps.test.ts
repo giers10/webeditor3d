@@ -17,7 +17,9 @@ import {
 } from "../../src/interactions/interaction-links";
 import { createProjectScheduleRoutine } from "../../src/scheduler/project-scheduler";
 import {
+  getInteractionLinkImpulseSteps,
   getInteractionLinkSequenceSteps,
+  getProjectScheduleRoutineHeldSteps,
   getProjectScheduleRoutineSequenceSteps
 } from "../../src/sequencer/project-sequence-steps";
 
@@ -47,6 +49,7 @@ describe("project sequence steps", () => {
 
     expect(getInteractionLinkSequenceSteps(playSoundLink)).toEqual([
       {
+        stepClass: "impulse",
         type: "controlEffect",
         effect: createPlaySoundControlEffect({
           target: createSoundEmitterControlTargetRef("entity-sound-main")
@@ -55,18 +58,21 @@ describe("project sequence steps", () => {
     ]);
     expect(getInteractionLinkSequenceSteps(dialogueLink)).toEqual([
       {
+        stepClass: "impulse",
         type: "startDialogue",
         dialogueId: "dialogue-main"
       }
     ]);
     expect(getInteractionLinkSequenceSteps(teleportLink)).toEqual([
       {
+        stepClass: "impulse",
         type: "teleportPlayer",
         targetEntityId: "entity-teleport-target"
       }
     ]);
     expect(getInteractionLinkSequenceSteps(visibilityLink)).toEqual([
       {
+        stepClass: "impulse",
         type: "toggleVisibility",
         targetBrushId: "brush-main",
         visible: false
@@ -109,12 +115,23 @@ describe("project sequence steps", () => {
       })
     });
 
-    expect(getProjectScheduleRoutineSequenceSteps(actorRoutine)).toEqual([
+    expect(getProjectScheduleRoutineHeldSteps(actorRoutine)).toEqual([
       {
+        stepClass: "held",
         type: "controlEffect",
         effect: createSetActorPresenceControlEffect({
           target: actorTarget,
           active: true
+        })
+      }
+    ]);
+    expect(getInteractionLinkImpulseSteps(directControlLink)).toEqual([
+      {
+        stepClass: "impulse",
+        type: "controlEffect",
+        effect: createSetLightEnabledControlEffect({
+          target: lightTarget,
+          enabled: false
         })
       }
     ]);
