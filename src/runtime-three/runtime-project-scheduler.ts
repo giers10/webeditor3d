@@ -21,12 +21,16 @@ import { normalizeYawDegrees } from "../entities/entity-instances";
 import {
   cloneProjectScheduler,
   compareProjectScheduleRoutinePriority,
-  findProjectScheduleRoutineEffect,
   getProjectScheduleRoutineElapsedHoursAt,
   isProjectScheduleRoutineActiveAt,
   type ProjectScheduler,
   type ProjectScheduleRoutine
-} from "../scheduler/project-scheduler";
+} from "../sequencer/project-sequencer";
+import {
+  findHeldSequenceControlEffect,
+  getHeldSequenceControlEffects,
+  getProjectScheduleRoutineHeldSteps
+} from "../sequencer/project-sequence-steps";
 
 type ActorScheduleRoutine = ProjectScheduleRoutine & {
   target: {
@@ -421,15 +425,20 @@ export function resolveRuntimeActorScheduleState(options: {
     };
   }
 
+  const heldSteps = getProjectScheduleRoutineHeldSteps(activeRoutine);
+
   const presenceEffect =
-    findProjectScheduleRoutineEffect(activeRoutine, "setActorPresence") ??
+    findHeldSequenceControlEffect(heldSteps, "setActorPresence") ??
     createSetActorPresenceControlEffect({
       target: createActorControlTargetRef(options.actorId),
       active: true
     });
   const animationEffect =
-    findProjectScheduleRoutineEffect(activeRoutine, "playActorAnimation");
-  const pathEffect = findProjectScheduleRoutineEffect(activeRoutine, "followActorPath");
+    findHeldSequenceControlEffect(heldSteps, "playActorAnimation");
+  const pathEffect = findHeldSequenceControlEffect(
+    heldSteps,
+    "followActorPath"
+  );
   const elapsedHours = getProjectScheduleRoutineElapsedHoursAt(
     activeRoutine,
     options.dayNumber,
@@ -502,7 +511,9 @@ function resolveRuntimeScheduledControlRoutines(options: {
       continue;
     }
 
-    for (const effect of routine.effects) {
+    for (const effect of getHeldSequenceControlEffects(
+      getProjectScheduleRoutineHeldSteps(routine)
+    )) {
       const resolutionKey = getControlEffectResolutionKey(effect);
 
       if (seenResolutionKeys.has(resolutionKey)) {

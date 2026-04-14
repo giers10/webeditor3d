@@ -4,8 +4,8 @@ import {
   type InteractionLink
 } from "../interactions/interaction-links";
 import {
-  getInteractionLinkSequenceSteps,
-  type SequenceStep
+  getInteractionLinkImpulseSteps,
+  type ImpulseSequenceStep
 } from "../sequencer/project-sequence-steps";
 
 import type {
@@ -699,14 +699,14 @@ export class RuntimeInteractionSystem {
         continue;
       }
 
-      for (const step of getInteractionLinkSequenceSteps(link)) {
+      for (const step of getInteractionLinkImpulseSteps(link)) {
         this.dispatchSequenceStep(step, link, runtimeScene, dispatcher);
       }
     }
   }
 
   private dispatchSequenceStep(
-    step: SequenceStep,
+    step: ImpulseSequenceStep,
     link: InteractionLink,
     runtimeScene: RuntimeSceneDefinition,
     dispatcher: RuntimeInteractionDispatcher
