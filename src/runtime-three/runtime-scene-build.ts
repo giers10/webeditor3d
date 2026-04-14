@@ -12,6 +12,7 @@ import {
   createLightControlTargetRef,
   createLightIntensityControlChannelDescriptor,
   createModelInstanceControlTargetRef,
+  createProjectGlobalControlTargetRef,
   createResolvedAmbientLightColorState,
   createResolvedActorAnimationPlaybackState,
   createResolvedActorPathAssignmentState,
@@ -22,6 +23,7 @@ import {
   createResolvedLightIntensityChannelValue,
   createResolvedModelAnimationPlaybackState,
   createResolvedModelInstanceVisibilityState,
+  createResolvedProjectTimePausedState,
   createResolvedSoundPlaybackState,
   createResolvedSoundVolumeChannelValue,
   createResolvedSunLightColorState,
@@ -987,6 +989,7 @@ function buildRuntimeControlSurface(
   const resolved = createEmptyRuntimeResolvedControlState();
   const defaultSource = createDefaultResolvedControlSource();
   const seenActorIds = new Set<string>();
+  const globalTarget = createProjectGlobalControlTargetRef();
   const sceneTarget = createActiveSceneControlTargetRef();
   const ambientLightDescriptor =
     createAmbientLightIntensityControlChannelDescriptor({
@@ -997,6 +1000,17 @@ function buildRuntimeControlSurface(
     target: sceneTarget,
     defaultValue: document.world.sunLight.intensity
   });
+
+  targets.push(
+    createControlTargetDescriptor(globalTarget, ["projectTimePause"])
+  );
+  resolved.discrete.push(
+    createResolvedProjectTimePausedState({
+      target: globalTarget,
+      value: false,
+      source: defaultSource
+    })
+  );
 
   targets.push(
     createControlTargetDescriptor(sceneTarget, [
