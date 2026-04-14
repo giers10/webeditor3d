@@ -3810,6 +3810,25 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
+  const upsertActorRoutineEffect = (
+    routine: ProjectScheduleRoutine,
+    effect: ProjectScheduleRoutine["effects"][number]
+  ) => {
+    routine.effects = [
+      ...routine.effects.filter((candidate) => candidate.type !== effect.type),
+      effect
+    ];
+  };
+
+  const removeActorRoutineEffect = (
+    routine: ProjectScheduleRoutine,
+    effectType: ProjectScheduleRoutine["effects"][number]["type"]
+  ) => {
+    routine.effects = routine.effects.filter(
+      (candidate) => candidate.type !== effectType
+    );
+  };
+
   const resolveProjectScheduleTargetOption = (targetKey: string) =>
     getProjectScheduleTargetOptionByKey(projectScheduleTargetOptions, targetKey);
 
