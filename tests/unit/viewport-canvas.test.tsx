@@ -7,6 +7,8 @@ import {
   type TransformSessionState
 } from "../../src/core/transform-session";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
+import { createRuntimeClockState } from "../../src/runtime-three/runtime-project-time";
+import { buildRuntimeSceneFromDocument } from "../../src/runtime-three/runtime-scene-build";
 import { ViewportCanvas } from "../../src/viewport-three/ViewportCanvas";
 import {
   createDefaultViewportPanelCameraState,
@@ -230,6 +232,55 @@ describe("ViewportCanvas", () => {
       expect(
         viewportHostInstances[0].setCameraStateChangeHandler
       ).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it("pushes editor simulation scene state into the viewport host", async () => {
+    const sceneDocument = createEmptySceneDocument();
+    const editorSimulationScene = buildRuntimeSceneFromDocument(sceneDocument);
+    const editorSimulationClock = createRuntimeClockState(sceneDocument.time);
+
+    render(
+      <ViewportCanvas
+        panelId="topLeft"
+        world={sceneDocument.world}
+        sceneDocument={sceneDocument}
+        editorSimulationScene={editorSimulationScene}
+        editorSimulationClock={editorSimulationClock}
+        projectAssets={sceneDocument.assets}
+        loadedModelAssets={{}}
+        loadedImageAssets={{}}
+        whiteboxSelectionMode="object"
+        whiteboxSnapEnabled
+        whiteboxSnapStep={1}
+        viewportGridVisible={true}
+        selection={{ kind: "none" }}
+        toolMode="select"
+        toolPreview={{ kind: "none" }}
+        transformSession={createInactiveTransformSession()}
+        cameraState={createDefaultViewportPanelCameraState()}
+        viewMode="perspective"
+        displayMode="normal"
+        layoutMode="single"
+        isActivePanel
+        focusRequestId={0}
+        focusSelection={{ kind: "none" }}
+        onSelectionChange={vi.fn()}
+        onCommitCreation={vi.fn(() => true)}
+        onCameraStateChange={vi.fn()}
+        onToolPreviewChange={vi.fn()}
+        onTransformSessionChange={vi.fn()}
+        onTransformCommit={vi.fn()}
+        onTransformCancel={vi.fn()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(viewportHostInstances).toHaveLength(1);
+      expect(viewportHostInstances[0].updateSimulation).toHaveBeenCalledWith(
+        editorSimulationScene,
+        editorSimulationClock
+      );
     });
   });
 });
