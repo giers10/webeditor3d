@@ -71,10 +71,20 @@ interface ProjectSequencerPaneProps {
   onSetActorRoutinePathSpeed(routineId: string, speed: number): void;
   onSetActorRoutinePathLoop(routineId: string, loop: boolean): void;
   onSetSequenceTitle(sequenceId: string, title: string): void;
+  onSetSequenceDurationMinutes(sequenceId: string, durationMinutes: number): void;
   onAddHeldControlStep(sequenceId: string, targetKey: string): void;
   onAddImpulseControlStep(sequenceId: string, targetKey: string): void;
   onAddDialogueStep(sequenceId: string, dialogueId: string): void;
   onDeleteStep(sequenceId: string, stepIndex: number): void;
+  onSetClipTiming(
+    sequenceId: string,
+    stepIndex: number,
+    timing: {
+      startMinute: number;
+      durationMinutes: number;
+      lane: number;
+    }
+  ): void;
   onSetControlStepTarget(
     sequenceId: string,
     stepIndex: number,
@@ -122,6 +132,30 @@ function handleCommitOnEnter(
 
   event.currentTarget.blur();
   commit();
+}
+
+function parseTimeOfDayInputHours(value: string, label: string): number {
+  const match = /^(?<hours>\d{1,2}):(?<minutes>\d{2})$/.exec(value.trim());
+
+  if (match?.groups === undefined) {
+    throw new Error(`${label} must use HH:MM.`);
+  }
+
+  const hours = Number(match.groups.hours);
+  const minutes = Number(match.groups.minutes);
+
+  if (
+    !Number.isFinite(hours) ||
+    !Number.isFinite(minutes) ||
+    hours < 0 ||
+    hours >= HOURS_PER_DAY ||
+    minutes < 0 ||
+    minutes >= 60
+  ) {
+    throw new Error(`${label} must be a valid time of day.`);
+  }
+
+  return hours + minutes / 60;
 }
 
 function getRoutineSummary(
