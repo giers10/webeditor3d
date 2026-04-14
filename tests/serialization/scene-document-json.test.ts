@@ -326,6 +326,7 @@ describe("scene document JSON", () => {
       version: SCENE_DOCUMENT_VERSION,
       name: "Legacy Water Settings",
       time: createDefaultProjectTimeSettings(),
+      scheduler: createEmptySceneDocument().scheduler,
       world: {
         ...createEmptySceneDocument().world,
         advancedRendering: {
@@ -2381,6 +2382,8 @@ describe("scene document JSON", () => {
       migrateSceneDocument({
         version: SCENE_DOCUMENT_VERSION,
         name: "Bad Animation Scene",
+        time: createDefaultProjectTimeSettings(),
+        scheduler: createEmptySceneDocument().scheduler,
         world: createEmptySceneDocument().world,
         materials: createEmptySceneDocument().materials,
         textures: {},
@@ -2435,6 +2438,7 @@ describe("scene document JSON", () => {
         JSON.stringify({
           version: SCENE_DOCUMENT_VERSION,
           name: "Duplicate Id Scene",
+          scheduler: createEmptySceneDocument().scheduler,
           world: createEmptySceneDocument().world,
           materials: createEmptySceneDocument().materials,
           textures: {},
