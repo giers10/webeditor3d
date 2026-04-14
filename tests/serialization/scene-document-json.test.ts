@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
 
+import {
+  createActorControlTargetRef,
+  createSetActorPresenceControlEffect
+} from "../../src/controls/control-surface";
 import { createBoxBrush, deriveBoxBrushSizeFromGeometry } from "../../src/document/brushes";
 import { createDefaultProjectTimeSettings } from "../../src/document/project-time-settings";
 import {
@@ -44,6 +48,7 @@ import {
   createTeleportTargetEntity,
   createTriggerVolumeEntity
 } from "../../src/entities/entity-instances";
+import { createProjectScheduleRoutine } from "../../src/scheduler/project-scheduler";
 import {
   createPlayAnimationInteractionLink,
   createPlaySoundInteractionLink,
