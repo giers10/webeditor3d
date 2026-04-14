@@ -3321,6 +3321,14 @@ export class RuntimeHost {
   };
 
   private handleRuntimeKeyDown = (event: KeyboardEvent) => {
+    if (
+      this.runtimeScene === null ||
+      !this.sceneReady ||
+      event.code !== this.runtimeScene.playerInputBindings.keyboard.pauseTime
+    ) {
+      return;
+    }
+
     this.pressedKeys.add(event.code);
 
     if (
@@ -3329,16 +3337,14 @@ export class RuntimeHost {
       event.altKey ||
       event.ctrlKey ||
       event.metaKey ||
-      isEditableEventTarget(event.target) ||
-      this.runtimeScene === null ||
-      !this.sceneReady ||
-      event.code !== this.runtimeScene.playerInputBindings.keyboard.pauseTime
+      isEditableEventTarget(event.target)
     ) {
       return;
     }
 
     event.preventDefault();
     this.toggleManualPause();
+    this.previousPauseInputActive = true;
   };
 
   private handleRuntimeKeyUp = (event: KeyboardEvent) => {
