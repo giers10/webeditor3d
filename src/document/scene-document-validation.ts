@@ -9,6 +9,8 @@ import type { ModelInstance } from "../assets/model-instances";
 import { isModelInstanceCollisionMode } from "../assets/model-instances";
 import {
   type ActorControlTargetRef,
+  getControlEffectResolutionKey,
+  isActorPathProgressMode,
   type ControlEffect,
   type ControlTargetRef,
   type InteractionControlTargetRef,
