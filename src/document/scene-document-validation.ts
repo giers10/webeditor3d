@@ -3919,6 +3919,7 @@ function validateProjectScheduler(
 interface ProjectSchedulerValidationContext {
   actorIds: Set<string>;
   actorUsagesById: Map<string, ProjectSchedulerActorValidationUsage[]>;
+  brushCounts: Map<string, number>;
   entityCounts: Map<string, number>;
   entityKindsById: Map<string, Set<EntityInstance["kind"]>>;
   modelInstanceCounts: Map<string, number>;
@@ -3956,6 +3957,7 @@ function createEmptyProjectSchedulerValidationContext(): ProjectSchedulerValidat
   return {
     actorIds: new Set<string>(),
     actorUsagesById: new Map<string, ProjectSchedulerActorValidationUsage[]>(),
+    brushCounts: new Map<string, number>(),
     entityCounts: new Map<string, number>(),
     entityKindsById: new Map<string, Set<EntityInstance["kind"]>>(),
     modelInstanceCounts: new Map<string, number>(),
@@ -3966,7 +3968,10 @@ function createEmptyProjectSchedulerValidationContext(): ProjectSchedulerValidat
 
 function recordProjectSchedulerSceneTargets(
   context: ProjectSchedulerValidationContext,
-  scene: Pick<SceneDocument, "entities" | "modelInstances" | "assets" | "paths">,
+  scene: Pick<
+    SceneDocument,
+    "brushes" | "entities" | "modelInstances" | "assets" | "paths"
+  >,
   sceneId: string
 ) {
   const pathIds = new Set(Object.keys(scene.paths));
@@ -3975,6 +3980,10 @@ function recordProjectSchedulerSceneTargets(
       .filter((path) => path.enabled)
       .map((path) => path.id)
   );
+
+  for (const brush of Object.values(scene.brushes)) {
+    incrementSchedulerValidationCount(context.brushCounts, brush.id);
+  }
 
   for (const entity of Object.values(scene.entities)) {
     incrementSchedulerValidationCount(context.entityCounts, entity.id);
@@ -4847,7 +4856,7 @@ function validateProjectSequence(
         break;
       case "setVisibility":
         if (effect.target.kind === "brush") {
-          if (context.document.brushes[effect.target.brushId] === undefined) {
+          if ((context.brushCounts.get(effect.target.brushId) ?? 0) === 0) {
             diagnostics.push(
               createDiagnostic(
                 "error",
@@ -4857,10 +4866,7 @@ function validateProjectSequence(
               )
             );
           }
-        } else if (
-          context.document.modelInstances[effect.target.modelInstanceId] ===
-          undefined
-        ) {
+        } else if ((context.modelInstanceCounts.get(effect.target.modelInstanceId) ?? 0) === 0) {
           diagnostics.push(
             createDiagnostic(
               "error",
