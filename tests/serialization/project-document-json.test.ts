@@ -13,6 +13,7 @@ import {
   DEFAULT_PROJECT_NAME,
   DEFAULT_SCENE_EDITOR_SNAP_STEP,
   NPC_COLLIDER_SCENE_DOCUMENT_VERSION,
+  PROJECT_DIALOGUE_LIBRARY_SCENE_DOCUMENT_VERSION,
   SCHEDULER_ACTOR_ROUTINE_EFFECTS_SCENE_DOCUMENT_VERSION,
   NPC_PRESENCE_SCENE_DOCUMENT_VERSION,
   PLAYER_START_GAMEPAD_CAMERA_LOOK_SCENE_DOCUMENT_VERSION,
@@ -66,6 +67,76 @@ describe("project document JSON", () => {
 
     expect(parseProjectDocumentJson(serializeProjectDocument(document))).toEqual(
       document
+    );
+  });
+
+  it("round-trips NPC dialogue references in project scenes", () => {
+    const document = createEmptyProjectDocument({
+      name: "NPC Dialogue Project"
+    });
+    const npc = createNpcEntity({
+      id: "entity-npc-merchant",
+      actorId: "actor-merchant",
+      dialogueId: "dialogue-market"
+    });
+    document.dialogues.dialogues["dialogue-market"] = {
+      id: "dialogue-market",
+      title: "Market",
+      lines: [
+        {
+          id: "dialogue-line-market-1",
+          speakerName: "Merchant",
+          text: "Fresh bread."
+        }
+      ]
+    };
+    document.scenes[document.activeSceneId]!.entities[npc.id] = npc;
+
+    expect(parseProjectDocumentJson(serializeProjectDocument(document))).toEqual(
+      document
+    );
+  });
+
+  it("migrates project NPCs without dialogue references from v50 to null dialogue ids", () => {
+    const document = createEmptyProjectDocument({
+      name: "Legacy NPC Dialogue Project"
+    });
+    const npc = createNpcEntity({
+      id: "entity-npc-guide",
+      actorId: "actor-guide"
+    });
+    document.scenes[document.activeSceneId]!.entities[npc.id] = npc;
+
+    const legacyDocument = JSON.parse(
+      serializeProjectDocument(document)
+    ) as Record<string, unknown>;
+    legacyDocument.version = PROJECT_DIALOGUE_LIBRARY_SCENE_DOCUMENT_VERSION;
+    delete (legacyDocument.scenes as Record<string, unknown>)[
+      document.activeSceneId
+    ];
+    legacyDocument.scenes = {
+      [document.activeSceneId]: {
+        ...document.scenes[document.activeSceneId],
+        entities: {
+          [npc.id]: {
+            ...document.scenes[document.activeSceneId]!.entities[npc.id],
+            dialogueId: undefined
+          }
+        }
+      }
+    };
+
+    const migratedDocument = parseProjectDocumentJson(
+      JSON.stringify(legacyDocument)
+    );
+    const migratedNpc = migratedDocument.scenes[migratedDocument.activeSceneId]!
+      .entities[npc.id];
+
+    expect(migratedNpc).toEqual(
+      expect.objectContaining({
+        kind: "npc",
+        dialogueId: null
+      })
     );
   });
 
