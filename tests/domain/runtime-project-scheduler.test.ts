@@ -179,6 +179,9 @@ describe("runtime project scheduler", () => {
       title: "Vendor Open Sequence",
       steps: [
         {
+          startMinute: 0,
+          durationMinutes: 480,
+          lane: 0,
           stepClass: "held",
           type: "controlEffect",
           effect: createSetActorPresenceControlEffect({
@@ -187,6 +190,9 @@ describe("runtime project scheduler", () => {
           })
         },
         {
+          startMinute: 0,
+          durationMinutes: 480,
+          lane: 1,
           stepClass: "held",
           type: "controlEffect",
           effect: createPlayActorAnimationControlEffect({
@@ -229,6 +235,103 @@ describe("runtime project scheduler", () => {
           clipName: "Wave",
           loop: true
         })
+      })
+    );
+  });
+
+  it("resolves timed held sequence clips against local routine minutes", () => {
+    const actorTarget = createActorControlTargetRef("actor-timed-sequence");
+    const scheduler = createEmptyProjectScheduler();
+    const sequences = createEmptyProjectSequenceLibrary();
+    sequences.sequences["sequence-timed-open"] = createProjectSequence({
+      id: "sequence-timed-open",
+      title: "Timed Open Sequence",
+      durationMinutes: 180,
+      clips: [
+        {
+          startMinute: 30,
+          durationMinutes: 60,
+          lane: 0,
+          stepClass: "held",
+          type: "controlEffect",
+          effect: createSetActorPresenceControlEffect({
+            target: actorTarget,
+            active: true
+          })
+        },
+        {
+          startMinute: 60,
+          durationMinutes: 90,
+          lane: 1,
+          stepClass: "held",
+          type: "controlEffect",
+          effect: createFollowActorPathControlEffect({
+            target: actorTarget,
+            pathId: "path-market",
+            speed: 2,
+            loop: false,
+            progressMode: "deriveFromTime"
+          })
+        }
+      ]
+    });
+    scheduler.routines["routine-timed-open"] = createProjectScheduleRoutine({
+      id: "routine-timed-open",
+      title: "Timed Open",
+      target: actorTarget,
+      startHour: 9,
+      endHour: 12,
+      sequenceId: "sequence-timed-open",
+      effects: [
+        createSetActorPresenceControlEffect({
+          target: actorTarget,
+          active: false
+        })
+      ]
+    });
+
+    const beforePresence = resolveRuntimeProjectScheduleState({
+      scheduler,
+      sequences,
+      actorIds: ["actor-timed-sequence"],
+      dayNumber: 1,
+      timeOfDayHours: 9.25
+    });
+    const duringPresence = resolveRuntimeProjectScheduleState({
+      scheduler,
+      sequences,
+      actorIds: ["actor-timed-sequence"],
+      dayNumber: 1,
+      timeOfDayHours: 9.75
+    });
+    const duringPath = resolveRuntimeProjectScheduleState({
+      scheduler,
+      sequences,
+      actorIds: ["actor-timed-sequence"],
+      dayNumber: 1,
+      timeOfDayHours: 10.5
+    });
+
+    expect(beforePresence.actors[0]).toEqual(
+      expect.objectContaining({
+        active: false
+      })
+    );
+    expect(duringPresence.actors[0]).toEqual(
+      expect.objectContaining({
+        active: true
+      })
+    );
+    expect(duringPath.actors[0].pathEffect).toEqual(
+      expect.objectContaining({
+        type: "followActorPath",
+        pathId: "path-market"
+      })
+    );
+    expect(duringPath.actors[0].resolvedPath).toEqual(
+      expect.objectContaining({
+        elapsedHours: 0.5,
+        distance: 1
       })
     );
   });
