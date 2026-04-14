@@ -13,6 +13,8 @@ import {
   createLightIntensityControlChannelDescriptor,
   createModelInstanceControlTargetRef,
   createResolvedAmbientLightColorState,
+  createResolvedActorAnimationPlaybackState,
+  createResolvedActorPathAssignmentState,
   createResolvedAmbientLightIntensityChannelValue,
   createResolvedInteractionEnabledState,
   createResolvedLightColorState,
@@ -222,11 +224,29 @@ export interface RuntimeNpc {
   modelAssetId: string | null;
   collider: FirstPersonPlayerShape;
   activeRoutineTitle: string | null;
+  animationClipName: string | null;
+  animationLoop: boolean | undefined;
+  resolvedPath: RuntimeResolvedNpcPathState | null;
 }
 
 export interface RuntimeNpcDefinition extends RuntimeNpc {
   active: boolean;
   activeRoutineId: string | null;
+  authoredPosition: Vec3;
+  authoredYawDegrees: number;
+}
+
+export interface RuntimeResolvedNpcPathState {
+  pathId: string;
+  progressMode: "deriveFromTime";
+  speed: number;
+  loop: boolean;
+  elapsedHours: number;
+  distance: number;
+  progress: number;
+  position: Vec3;
+  tangent: Vec3;
+  yawDegrees: number | null;
 }
 
 export interface RuntimeSoundEmitter {
