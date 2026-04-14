@@ -272,8 +272,37 @@ function hasTriggerLinks(
   trigger: InteractionLink["trigger"]
 ): boolean {
   return runtimeScene.interactionLinks.some(
-    (link) => link.sourceEntityId === sourceEntityId && link.trigger === trigger
+    (link) =>
+      link.sourceEntityId === sourceEntityId &&
+      resolveEffectiveInteractionTrigger(runtimeScene, link) === trigger
   );
+}
+
+function resolveEffectiveInteractionTrigger(
+  runtimeScene: RuntimeSceneDefinition,
+  link: InteractionLink
+): InteractionLink["trigger"] {
+  if (
+    runtimeScene.entities.interactables.some(
+      (entity) => entity.entityId === link.sourceEntityId
+    ) ||
+    runtimeScene.entities.sceneExits.some(
+      (entity) => entity.entityId === link.sourceEntityId
+    ) ||
+    runtimeScene.entities.npcs.some((entity) => entity.entityId === link.sourceEntityId)
+  ) {
+    return "click";
+  }
+
+  if (
+    runtimeScene.entities.triggerVolumes.some(
+      (entity) => entity.entityId === link.sourceEntityId
+    )
+  ) {
+    return link.trigger === "click" ? "enter" : link.trigger;
+  }
+
+  return link.trigger;
 }
 
 function getInteractableTargetRadius(
@@ -660,7 +689,10 @@ export class RuntimeInteractionSystem {
     dispatcher: RuntimeInteractionDispatcher
   ) {
     for (const link of runtimeScene.interactionLinks) {
-      if (link.sourceEntityId !== sourceEntityId || link.trigger !== trigger) {
+      if (
+        link.sourceEntityId !== sourceEntityId ||
+        resolveEffectiveInteractionTrigger(runtimeScene, link) !== trigger
+      ) {
         continue;
       }
 
