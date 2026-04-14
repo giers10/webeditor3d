@@ -8267,11 +8267,16 @@ export function App({ store, initialStatusMessage }: AppProps) {
   ) => (
     <div className="form-section">
       <div className="label">Links</div>
+      <div className="material-summary">
+        Links now start sequences. Build teleport, dialogue, animation, audio,
+        visibility, and control behavior as sequence effects in the Sequencer,
+        then reference the sequence here.
+      </div>
       {links.length === 0 ? (
         <div className="outliner-empty">
           {sourceEntity.kind === "triggerVolume"
-            ? "No trigger links authored yet."
-            : "No click links authored yet."}
+            ? "No sequence links authored for this Trigger Volume yet."
+            : "No sequence links authored for this Interactable yet."}
         </div>
       ) : (
         <div className="outliner-list">
@@ -8335,21 +8340,24 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         )
                       }
                     >
-                      <option value="teleportPlayer">Teleport Player</option>
-                      <option value="toggleVisibility">
-                        Toggle Visibility
-                      </option>
-                      <option value="playAnimation">Play Animation</option>
-                      <option value="stopAnimation">Stop Animation</option>
-                      <option value="playSound">Play Sound</option>
-                      <option value="stopSound">Stop Sound</option>
-                      <option value="startDialogue">Start Dialogue</option>
                       <option value="runSequence">Run Sequence</option>
-                      <option value="control">Control Effect</option>
+                      {isLegacyInteractionActionType(link.action.type) ? (
+                        <option value={link.action.type}>
+                          {getInteractionActionLabel(link)} (Legacy)
+                        </option>
+                      ) : null}
                     </select>
                   </label>
                 </div>
               </div>
+
+              {isLegacyInteractionActionType(link.action.type) ? (
+                <div className="material-summary">
+                  This link still uses a legacy direct action. New authoring
+                  should move this behavior into a reusable sequence effect and
+                  switch the link to Run Sequence.
+                </div>
+              ) : null}
 
               {link.action.type === "teleportPlayer" ? (
                 <div className="form-section">
@@ -8581,8 +8589,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         </button>
                       </div>
                       <div className="material-summary">
-                        Run Sequence links can only reference sequences that
-                        contain at least one impulse effect.
+                        Run Sequence links can reference any authored sequence,
+                        but only its impulse effects fire from interactions.
                       </div>
                     </div>
                   );
@@ -8661,69 +8669,16 @@ export function App({ store, initialStatusMessage }: AppProps) {
         <button
           className="toolbar__button"
           type="button"
-          data-testid={addTeleportTestId}
-          disabled={teleportTargetOptions.length === 0}
-          onClick={handleAddTeleportInteractionLink}
-        >
-          Add Teleport Link
-        </button>
-        <button
-          className="toolbar__button"
-          type="button"
-          data-testid={addVisibilityTestId}
-          disabled={visibilityBrushOptions.length === 0}
-          onClick={handleAddVisibilityInteractionLink}
-        >
-          Add Visibility Link
-        </button>
-        <button
-          className="toolbar__button"
-          type="button"
-          disabled={modelInstanceDisplayList.length === 0}
-          onClick={() => handleAddPlayAnimationLink(sourceEntity)}
-        >
-          Add Play Anim Link
-        </button>
-        <button
-          className="toolbar__button"
-          type="button"
-          disabled={modelInstanceDisplayList.length === 0}
-          onClick={() => handleAddStopAnimationLink(sourceEntity)}
-        >
-          Add Stop Anim Link
-        </button>
-        <button
-          className="toolbar__button"
-          type="button"
-          data-testid={addPlaySoundTestId}
-          disabled={playableSoundEmitterOptions.length === 0}
-          onClick={() => handleAddSoundInteractionLink("playSound")}
-        >
-          Add Play Sound Link
-        </button>
-        <button
-          className="toolbar__button"
-          type="button"
-          data-testid={addStopSoundTestId}
-          disabled={playableSoundEmitterOptions.length === 0}
-          onClick={() => handleAddSoundInteractionLink("stopSound")}
-        >
-          Add Stop Sound Link
-        </button>
-        <button
-          className="toolbar__button"
-          type="button"
-          disabled={projectDialogueList.length === 0}
-          onClick={handleAddDialogueInteractionLink}
-        >
-          Add Dialogue Link
-        </button>
-        <button
-          className="toolbar__button"
-          type="button"
           onClick={handleAddSequenceInteractionLink}
         >
           Add Sequence Link
+        </button>
+        <button
+          className="toolbar__button"
+          type="button"
+          onClick={() => openSequencerSequenceEditor()}
+        >
+          Open Sequence Editor
         </button>
       </div>
     </div>
