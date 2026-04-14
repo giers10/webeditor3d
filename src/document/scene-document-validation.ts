@@ -4776,7 +4776,7 @@ function validateProjectSequence(
         );
         break;
       case "startDialogue":
-        if (dialogues.dialogues.dialogues[step.dialogueId] === undefined) {
+        if (dialogues.dialogues[step.dialogueId] === undefined) {
           diagnostics.push(
             createDiagnostic(
               "error",
