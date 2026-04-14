@@ -771,6 +771,15 @@ describe("buildRuntimeSceneFromDocument", () => {
         }
       },
       {
+        id: "link-trigger-dialogue",
+        sourceEntityId: "entity-trigger-door",
+        trigger: "enter",
+        action: {
+          type: "startDialogue",
+          dialogueId: "dialogue-warning"
+        }
+      },
+      {
         id: "link-hide-brush",
         sourceEntityId: "entity-trigger-door",
         trigger: "exit",
@@ -778,15 +787,6 @@ describe("buildRuntimeSceneFromDocument", () => {
           type: "toggleVisibility",
           targetBrushId: "brush-room-floor",
           visible: false
-        }
-      },
-      {
-        id: "link-trigger-dialogue",
-        sourceEntityId: "entity-trigger-door",
-        trigger: "enter",
-        action: {
-          type: "startDialogue",
-          dialogueId: "dialogue-warning"
         }
       }
     ]);
