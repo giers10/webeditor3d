@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { createEmptyRuntimeControlSurfaceDefinition } from "../../src/controls/control-surface";
+import { createEmptyProjectDialogueLibrary } from "../../src/dialogues/project-dialogues";
 import {
   createPlayerStartInputBindings,
   createPlayerStartMovementTemplate
@@ -8,6 +9,7 @@ import {
 import {
   createPlayAnimationInteractionLink,
   createPlaySoundInteractionLink,
+  createStartDialogueInteractionLink,
   createTeleportPlayerInteractionLink,
   createToggleVisibilityInteractionLink,
   createStopAnimationInteractionLink,
@@ -19,6 +21,7 @@ import { createEmptyProjectScheduler } from "../../src/scheduler/project-schedul
 import { RuntimeInteractionSystem } from "../../src/runtime-three/runtime-interaction-system";
 import { createRuntimeProjectSchedulerState } from "../../src/runtime-three/runtime-project-scheduler";
 import type { RuntimeSceneDefinition } from "../../src/runtime-three/runtime-scene-build";
+import type { RuntimeInteractionDispatcher } from "../../src/runtime-three/runtime-interaction-system";
 
 function createRuntimeSceneFixture(): RuntimeSceneDefinition {
   const movementTemplate = createPlayerStartMovementTemplate();
@@ -28,6 +31,7 @@ function createRuntimeSceneFixture(): RuntimeSceneDefinition {
     scheduler: createRuntimeProjectSchedulerState({
       document: createEmptyProjectScheduler()
     }),
+    dialogues: createEmptyProjectDialogueLibrary(),
     world: {
       ...createDefaultWorldSettings(),
       background: {
@@ -168,6 +172,22 @@ function createRuntimeSceneFixture(): RuntimeSceneDefinition {
       },
       yawDegrees: 0
     }
+  };
+}
+
+function createDispatcher(
+  overrides: Partial<RuntimeInteractionDispatcher> = {}
+): RuntimeInteractionDispatcher {
+  return {
+    teleportPlayer: () => {},
+    activateSceneExit: () => {},
+    toggleBrushVisibility: () => {},
+    playAnimation: () => {},
+    stopAnimation: () => {},
+    playSound: () => {},
+    stopSound: () => {},
+    startDialogue: () => {},
+    ...overrides
   };
 }
 
