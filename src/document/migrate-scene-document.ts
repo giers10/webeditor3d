@@ -1436,6 +1436,11 @@ function readPlayerStartInputBindings(value: unknown, label: string) {
         keyboard?.crouch,
         `${label}.keyboard.crouch`,
         DEFAULT_PLAYER_START_KEYBOARD_BINDINGS.crouch
+      ),
+      pauseTime: readPlayerStartKeyboardBindingCode(
+        keyboard?.pauseTime,
+        `${label}.keyboard.pauseTime`,
+        DEFAULT_PLAYER_START_KEYBOARD_BINDINGS.pauseTime
       )
     },
     gamepad: {
@@ -1473,6 +1478,11 @@ function readPlayerStartInputBindings(value: unknown, label: string) {
         gamepad?.crouch,
         `${label}.gamepad.crouch`,
         DEFAULT_PLAYER_START_GAMEPAD_BINDINGS.crouch
+      ),
+      pauseTime: readPlayerStartGamepadActionBinding(
+        gamepad?.pauseTime,
+        `${label}.gamepad.pauseTime`,
+        DEFAULT_PLAYER_START_GAMEPAD_BINDINGS.pauseTime
       ),
       cameraLook: readPlayerStartGamepadCameraLookBinding(
         gamepad?.cameraLook,
