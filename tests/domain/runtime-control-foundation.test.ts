@@ -16,6 +16,7 @@ import {
 import {
   createActorControlTargetRef,
   createLightControlTargetRef,
+  createProjectGlobalControlTargetRef,
   createSetActorPresenceControlEffect,
   createSetLightEnabledControlEffect
 } from "../../src/controls/control-surface";
@@ -127,6 +128,13 @@ describe("runtime control foundation", () => {
       expect.arrayContaining([
         expect.objectContaining({
           target: {
+            kind: "global",
+            scope: "project"
+          },
+          capabilities: ["projectTimePause"]
+        }),
+        expect.objectContaining({
+          target: {
             kind: "scene",
             scope: "activeScene"
           },
@@ -216,6 +224,11 @@ describe("runtime control foundation", () => {
     );
     expect(runtimeScene.control.resolved.discrete).toEqual(
       expect.arrayContaining([
+        expect.objectContaining({
+          type: "projectTimePaused",
+          target: createProjectGlobalControlTargetRef(),
+          value: false
+        }),
         expect.objectContaining({
           type: "ambientLightColor",
           target: {
