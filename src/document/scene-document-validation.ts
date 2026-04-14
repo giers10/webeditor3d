@@ -3950,6 +3950,42 @@ function validateProjectSchedulerActorTarget(
   );
 }
 
+function getProjectSchedulerActorValidationUsages(
+  context: ProjectSchedulerValidationContext,
+  actorId: string
+): ProjectSchedulerActorValidationUsage[] {
+  return context.actorUsagesById.get(actorId) ?? [];
+}
+
+function validateProjectSchedulerSingleActorUsage(
+  target: ActorControlTargetRef,
+  path: string,
+  context: ProjectSchedulerValidationContext,
+  diagnostics: SceneDiagnostic[],
+  capabilityLabel: string
+): ProjectSchedulerActorValidationUsage | null {
+  validateProjectSchedulerActorTarget(target, path, context, diagnostics);
+
+  const usages = getProjectSchedulerActorValidationUsages(context, target.actorId);
+
+  if (usages.length === 1) {
+    return usages[0] ?? null;
+  }
+
+  if (usages.length > 1) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "ambiguous-project-schedule-actor-usage",
+        `${capabilityLabel} currently requires an actor with exactly one NPC usage in the project.`,
+        `${path}.actorId`
+      )
+    );
+  }
+
+  return null;
+}
+
 function validateProjectSchedulerEntityTarget(
   target: ControlTargetRef & { kind: "entity" },
   path: string,
