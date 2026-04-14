@@ -2,7 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import { createEmptyRuntimeControlSurfaceDefinition } from "../../src/controls/control-surface";
 import { createEmptyProjectDialogueLibrary } from "../../src/dialogues/project-dialogues";
-import { createEmptyProjectSequenceLibrary } from "../../src/sequencer/project-sequences";
+import {
+  createEmptyProjectSequenceLibrary,
+  createProjectSequence
+} from "../../src/sequencer/project-sequences";
 import {
   createPlayerStartInputBindings,
   createPlayerStartMovementTemplate
@@ -10,6 +13,7 @@ import {
 import {
   createPlayAnimationInteractionLink,
   createPlaySoundInteractionLink,
+  createRunSequenceInteractionLink,
   createStartDialogueInteractionLink,
   createTeleportPlayerInteractionLink,
   createToggleVisibilityInteractionLink,
