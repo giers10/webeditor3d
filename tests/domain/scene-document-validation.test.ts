@@ -4,8 +4,10 @@ import { createBoxBrush } from "../../src/document/brushes";
 import {
   createActiveSceneControlTargetRef,
   createActorControlTargetRef,
+  createLightControlTargetRef,
   createSetActorPresenceControlEffect,
   createSetAmbientLightColorControlEffect,
+  createSetLightIntensityControlEffect,
   createSetSoundVolumeControlEffect,
   createSoundEmitterControlTargetRef
 } from "../../src/controls/control-surface";
@@ -184,6 +186,31 @@ describe("validateSceneDocument", () => {
         })
       ])
     );
+  });
+
+  it("accepts typed scheduler light control effects in the scene document", () => {
+    const pointLight = createPointLightEntity({
+      id: "entity-point-light-main",
+      intensity: 1.25
+    });
+    const document = createEmptySceneDocument();
+    document.entities[pointLight.id] = pointLight;
+    document.scheduler.routines["routine-night-light"] =
+      createProjectScheduleRoutine({
+        id: "routine-night-light",
+        title: "Night Light",
+        target: createLightControlTargetRef("pointLight", pointLight.id),
+        startHour: 18,
+        endHour: 6,
+        effect: createSetLightIntensityControlEffect({
+          target: createLightControlTargetRef("pointLight", pointLight.id),
+          intensity: 0.35
+        })
+      });
+
+    const validation = validateSceneDocument(document);
+
+    expect(validation.errors).toEqual([]);
   });
 
   it("detects invalid box sizes and missing material references", () => {
