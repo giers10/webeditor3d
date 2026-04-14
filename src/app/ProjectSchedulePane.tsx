@@ -73,6 +73,12 @@ export function ProjectSchedulePane({
   const selectedRoutine =
     selectedRoutineId === null ? null : scheduler.routines[selectedRoutineId] ?? null;
   const hourTicks = Array.from({ length: HOURS_PER_DAY }, (_, hour) => hour);
+  const selectedRoutineDays =
+    selectedRoutine === null
+      ? PROJECT_SCHEDULE_WEEKDAYS
+      : selectedRoutine.days.mode === "everyDay"
+        ? PROJECT_SCHEDULE_WEEKDAYS
+        : selectedRoutine.days.days;
 
   return (
     <section className="schedule-pane" data-testid="project-schedule-pane">
@@ -272,19 +278,17 @@ export function ProjectSchedulePane({
                     Every
                   </button>
                   {PROJECT_SCHEDULE_WEEKDAYS.map((weekday) => {
-                    const selected =
-                      selectedRoutine.days.mode === "everyDay" ||
-                      selectedRoutine.days.days.includes(weekday);
+                    const selected = selectedRoutineDays.includes(weekday);
                     const nextDays =
                       selectedRoutine.days.mode === "everyDay"
                         ? PROJECT_SCHEDULE_WEEKDAYS.filter(
                             (entry) => entry !== weekday
                           )
                         : selected
-                          ? selectedRoutine.days.days.filter(
+                          ? selectedRoutineDays.filter(
                               (entry) => entry !== weekday
                             )
-                          : [...selectedRoutine.days.days, weekday];
+                          : [...selectedRoutineDays, weekday];
 
                     return (
                       <button
