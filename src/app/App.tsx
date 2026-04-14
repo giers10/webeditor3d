@@ -10113,13 +10113,22 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       throw new Error("Selected schedule target no longer exists.");
                     }
 
+                    if (targetOption.target.kind === "actor") {
+                      routine.target = targetOption.target;
+                      routine.effects = [];
+                      return;
+                    }
+
                     const effectOptions = listProjectScheduleEffectOptions(targetOption);
+                    const currentPrimaryEffect = routine.effects[0] ?? null;
                     const nextEffectOptionId =
-                      effectOptions.find(
-                        (effectOption) =>
-                          effectOption.id ===
-                          getProjectScheduleEffectOptionId(routine.effect)
-                      )?.id ?? effectOptions[0]?.id;
+                      currentPrimaryEffect === null
+                        ? effectOptions[0]?.id
+                        : effectOptions.find(
+                            (effectOption) =>
+                              effectOption.id ===
+                              getProjectScheduleEffectOptionId(currentPrimaryEffect)
+                          )?.id ?? effectOptions[0]?.id;
 
                     if (nextEffectOptionId === undefined) {
                       throw new Error(
@@ -10128,11 +10137,13 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     }
 
                     routine.target = targetOption.target;
-                    routine.effect = createProjectScheduleEffectFromOption({
-                      targetOption,
-                      effectOptionId: nextEffectOptionId,
-                      previousEffect: routine.effect
-                    });
+                    routine.effects = [
+                      createProjectScheduleEffectFromOption({
+                        targetOption,
+                        effectOptionId: nextEffectOptionId,
+                        previousEffect: currentPrimaryEffect
+                      })
+                    ];
                   }
                 )
               }
@@ -10210,6 +10221,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   "Set project schedule effect",
                   "Updated schedule routine effect.",
                   (routine) => {
+                    if (routine.target.kind === "actor") {
+                      throw new Error(
+                        "Actor routines use dedicated presence, animation, and path controls."
+                      );
+                    }
+
                     const targetOption = getProjectScheduleTargetOptionByKey(
                       projectScheduleTargetOptions,
                       getControlTargetRefKey(routine.target)
@@ -10221,11 +10238,13 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       );
                     }
 
-                    routine.effect = createProjectScheduleEffectFromOption({
-                      targetOption,
-                      effectOptionId,
-                      previousEffect: routine.effect
-                    });
+                    routine.effects = [
+                      createProjectScheduleEffectFromOption({
+                        targetOption,
+                        effectOptionId,
+                        previousEffect: routine.effects[0] ?? null
+                      })
+                    ];
                   }
                 )
               }
@@ -10257,14 +10276,22 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       );
                     }
 
-                    switch (routine.effect.type) {
+                    const effect = routine.effects[0];
+
+                    if (effect === undefined) {
+                      throw new Error(
+                        "The current schedule routine does not expose a numeric value."
+                      );
+                    }
+
+                    switch (effect.type) {
                       case "setSoundVolume":
-                        routine.effect.volume = value;
+                        effect.volume = value;
                         return;
                       case "setLightIntensity":
                       case "setAmbientLightIntensity":
                       case "setSunLightIntensity":
-                        routine.effect.intensity = value;
+                        effect.intensity = value;
                         return;
                       default:
                         throw new Error(
@@ -10280,11 +10307,19 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   "Set project schedule color",
                   "Updated schedule routine color.",
                   (routine) => {
-                    switch (routine.effect.type) {
+                    const effect = routine.effects[0];
+
+                    if (effect === undefined) {
+                      throw new Error(
+                        "The current schedule routine does not expose a color value."
+                      );
+                    }
+
+                    switch (effect.type) {
                       case "setLightColor":
                       case "setAmbientLightColor":
                       case "setSunLightColor":
-                        routine.effect.colorHex = colorHex;
+                        effect.colorHex = colorHex;
                         return;
                       default:
                         throw new Error(
@@ -10300,13 +10335,15 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   "Set project schedule animation clip",
                   "Updated schedule animation clip.",
                   (routine) => {
-                    if (routine.effect.type !== "playModelAnimation") {
+                    const effect = routine.effects[0];
+
+                    if (effect?.type !== "playModelAnimation") {
                       throw new Error(
                         "The current schedule effect does not expose an animation clip."
                       );
                     }
 
-                    routine.effect.clipName = clipName;
+                    effect.clipName = clipName;
                   }
                 )
               }
@@ -10318,13 +10355,212 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     ? "Schedule animation now loops."
                     : "Schedule animation now plays once.",
                   (routine) => {
-                    if (routine.effect.type !== "playModelAnimation") {
+                    const effect = routine.effects[0];
+
+                    if (effect?.type !== "playModelAnimation") {
                       throw new Error(
                         "The current schedule effect does not expose animation looping."
                       );
                     }
 
-                    routine.effect.loop = loop;
+                    effect.loop = loop;
+                  }
+                )
+              }
+              onSetActorRoutinePresence={(routineId, active) =>
+                updateProjectScheduleRoutine(
+                  routineId,
+                  "Set actor schedule presence",
+                  active
+                    ? "Actor routine now keeps the NPC present."
+                    : "Actor routine now hides the NPC during this block.",
+                  (routine) => {
+                    if (routine.target.kind !== "actor") {
+                      throw new Error("Only actor routines expose presence.");
+                    }
+
+                    upsertActorRoutineEffect(
+                      routine,
+                      createProjectScheduleRoutine({
+                        title: routine.title,
+                        target: routine.target,
+                        effects: routine.effects
+                      }).effects.find(
+                        (effect) => effect.type === "setActorPresence"
+                      ) ?? {
+                        type: "setActorPresence",
+                        target: routine.target,
+                        active
+                      }
+                    );
+                    const effect = findProjectScheduleRoutineEffect(
+                      routine,
+                      "setActorPresence"
+                    );
+
+                    if (effect !== null) {
+                      effect.active = active;
+                    }
+                  }
+                )
+              }
+              onSetActorRoutineAnimationClip={(routineId, clipName) =>
+                updateProjectScheduleRoutine(
+                  routineId,
+                  "Set actor routine animation",
+                  clipName === null
+                    ? "Removed actor routine animation."
+                    : "Updated actor routine animation.",
+                  (routine) => {
+                    if (routine.target.kind !== "actor") {
+                      throw new Error("Only actor routines expose animation.");
+                    }
+
+                    if (clipName === null) {
+                      removeActorRoutineEffect(routine, "playActorAnimation");
+                      return;
+                    }
+
+                    const previousEffect = findProjectScheduleRoutineEffect(
+                      routine,
+                      "playActorAnimation"
+                    );
+
+                    upsertActorRoutineEffect(
+                      routine,
+                      createPlayActorAnimationControlEffect({
+                        target: routine.target,
+                        clipName,
+                        loop: previousEffect?.loop ?? true
+                      })
+                    );
+                  }
+                )
+              }
+              onSetActorRoutineAnimationLoop={(routineId, loop) =>
+                updateProjectScheduleRoutine(
+                  routineId,
+                  "Set actor routine animation loop",
+                  loop
+                    ? "Actor routine animation now loops."
+                    : "Actor routine animation now plays once.",
+                  (routine) => {
+                    if (routine.target.kind !== "actor") {
+                      throw new Error("Only actor routines expose animation.");
+                    }
+
+                    const effect = findProjectScheduleRoutineEffect(
+                      routine,
+                      "playActorAnimation"
+                    );
+
+                    if (effect === null) {
+                      throw new Error(
+                        "Select an actor animation clip before changing loop behavior."
+                      );
+                    }
+
+                    effect.loop = loop;
+                  }
+                )
+              }
+              onSetActorRoutinePath={(routineId, pathId) =>
+                updateProjectScheduleRoutine(
+                  routineId,
+                  "Set actor routine path",
+                  pathId === null
+                    ? "Removed actor routine path."
+                    : "Updated actor routine path.",
+                  (routine) => {
+                    if (routine.target.kind !== "actor") {
+                      throw new Error("Only actor routines expose follow-path.");
+                    }
+
+                    if (pathId === null) {
+                      removeActorRoutineEffect(routine, "followActorPath");
+                      return;
+                    }
+
+                    const targetOption = getProjectScheduleTargetOptionByKey(
+                      projectScheduleTargetOptions,
+                      getControlTargetRefKey(routine.target)
+                    );
+                    const pathOption =
+                      targetOption?.defaults.actorPathOptions?.find(
+                        (option) => option.pathId === pathId
+                      ) ?? null;
+                    const previousEffect = findProjectScheduleRoutineEffect(
+                      routine,
+                      "followActorPath"
+                    );
+
+                    upsertActorRoutineEffect(
+                      routine,
+                      createFollowActorPathControlEffect({
+                        target: routine.target,
+                        pathId,
+                        speed:
+                          previousEffect?.speed ??
+                          targetOption?.defaults.actorPathSpeed ??
+                          1,
+                        loop: previousEffect?.loop ?? pathOption?.loop ?? false,
+                        progressMode: "deriveFromTime"
+                      })
+                    );
+                  }
+                )
+              }
+              onSetActorRoutinePathSpeed={(routineId, speed) =>
+                updateProjectScheduleRoutine(
+                  routineId,
+                  "Set actor routine path speed",
+                  "Updated actor routine path speed.",
+                  (routine) => {
+                    if (routine.target.kind !== "actor") {
+                      throw new Error("Only actor routines expose follow-path.");
+                    }
+
+                    const effect = findProjectScheduleRoutineEffect(
+                      routine,
+                      "followActorPath"
+                    );
+
+                    if (effect === null) {
+                      throw new Error("Select an actor path before changing speed.");
+                    }
+
+                    if (!Number.isFinite(speed) || speed <= 0) {
+                      throw new Error(
+                        "Actor path speed must be a finite number greater than zero."
+                      );
+                    }
+
+                    effect.speed = speed;
+                  }
+                )
+              }
+              onSetActorRoutinePathLoop={(routineId, loop) =>
+                updateProjectScheduleRoutine(
+                  routineId,
+                  "Set actor routine path loop",
+                  loop
+                    ? "Actor routine path now loops."
+                    : "Actor routine path now clamps at the end.",
+                  (routine) => {
+                    if (routine.target.kind !== "actor") {
+                      throw new Error("Only actor routines expose follow-path.");
+                    }
+
+                    const effect = findProjectScheduleRoutineEffect(
+                      routine,
+                      "followActorPath"
+                    );
+
+                    if (effect === null) {
+                      throw new Error("Select an actor path before changing loop.");
+                    }
+
+                    effect.loop = loop;
                   }
                 )
               }
