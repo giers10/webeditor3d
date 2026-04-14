@@ -9951,103 +9951,230 @@ export function App({ store, initialStatusMessage }: AppProps) {
           </Panel>
         </aside>
 
-        <main
-          className={`viewport-region viewport-region--${layoutMode}`}
-          data-testid="viewport-shell"
-        >
-          <div
-            ref={viewportPanelsRef}
-            className={`viewport-region__panels viewport-region__panels--${layoutMode} ${
-              viewportQuadResizeMode === null
-                ? ""
-                : "viewport-region__panels--resizing"
-            }`.trim()}
-            style={viewportPanelsStyle}
+        <div className="editor-main-region">
+          <main
+            className={`viewport-region viewport-region--${layoutMode}`}
+            data-testid="viewport-shell"
           >
-            {VIEWPORT_PANEL_IDS.map((panelId) => (
-              <ViewportPanel
-                key={panelId}
-                panelId={panelId}
-                className={`viewport-panel--${panelId}`}
-                panelState={editorState.viewportPanels[panelId]}
-                layoutMode={layoutMode}
-                isActive={activePanelId === panelId}
-                world={editorState.document.world}
-                sceneDocument={editorState.document}
-                projectAssets={editorState.document.assets}
-                loadedModelAssets={loadedModelAssets}
-                loadedImageAssets={loadedImageAssets}
-                whiteboxSelectionMode={whiteboxSelectionMode}
-                whiteboxSnapEnabled={whiteboxSnapEnabled}
-                whiteboxSnapStepDraft={whiteboxSnapStepDraft}
-                whiteboxSnapStep={whiteboxSnapStep}
-                viewportGridVisible={viewportGridVisible}
-                selection={editorState.selection}
-                toolMode={editorState.toolMode}
-                toolPreview={viewportToolPreview}
-                transformSession={transformSession}
-                canTranslateSelectedTarget={canTranslateSelectedTarget}
-                canRotateSelectedTarget={canRotateSelectedTarget}
-                canScaleSelectedTarget={canScaleSelectedTarget}
-                cameraState={editorState.viewportPanels[panelId].cameraState}
-                focusRequestId={
-                  focusRequest.panelId === panelId ? focusRequest.id : 0
-                }
-                focusSelection={focusRequest.selection}
-                isAddMenuOpen={addMenuPosition !== null}
-                onActivatePanel={handleActivateViewportPanel}
-                onOpenAddMenu={handleOpenAddMenuFromButton}
-                onSetViewportLayoutMode={handleSetViewportLayoutMode}
-                onSetPanelViewMode={handleSetViewportPanelViewMode}
-                onSetPanelDisplayMode={handleSetViewportPanelDisplayMode}
-                onCommitCreation={handleCommitCreation}
-                onCameraStateChange={(cameraState) => {
-                  store.setViewportPanelCameraState(panelId, cameraState);
-                }}
-                onToolPreviewChange={(toolPreview) => {
-                  store.setViewportToolPreview(toolPreview);
-                }}
-                onBeginTransformOperation={(operation) =>
-                  beginTransformOperation(operation, "toolbar")
-                }
-                onWhiteboxSelectionModeChange={
-                  handleWhiteboxSelectionModeChange
-                }
-                onViewportGridToggle={handleViewportGridToggle}
-                onWhiteboxSnapToggle={handleWhiteboxSnapToggle}
-                onWhiteboxSnapStepDraftChange={setWhiteboxSnapStepDraft}
-                onWhiteboxSnapStepBlur={handleWhiteboxSnapStepBlur}
-                onTransformSessionChange={(nextTransformSession) => {
-                  store.setTransformSession(nextTransformSession);
-                }}
-                onTransformCommit={commitTransformSession}
-                onTransformCancel={() => cancelTransformSession()}
-                onSelectionChange={(selection) =>
-                  applySelection(selection, "viewport")
-                }
-              />
-            ))}
-            {layoutMode !== "quad" ? null : (
-              <>
-                <div
-                  className="viewport-region__splitter viewport-region__splitter--vertical"
-                  data-testid="viewport-quad-splitter-vertical"
-                  onPointerDown={handleViewportQuadResizeStart("vertical")}
+            <div
+              ref={viewportPanelsRef}
+              className={`viewport-region__panels viewport-region__panels--${layoutMode} ${
+                viewportQuadResizeMode === null
+                  ? ""
+                  : "viewport-region__panels--resizing"
+              }`.trim()}
+              style={viewportPanelsStyle}
+            >
+              {VIEWPORT_PANEL_IDS.map((panelId) => (
+                <ViewportPanel
+                  key={panelId}
+                  panelId={panelId}
+                  className={`viewport-panel--${panelId}`}
+                  panelState={editorState.viewportPanels[panelId]}
+                  layoutMode={layoutMode}
+                  isActive={activePanelId === panelId}
+                  world={editorState.document.world}
+                  sceneDocument={editorState.document}
+                  projectAssets={editorState.document.assets}
+                  loadedModelAssets={loadedModelAssets}
+                  loadedImageAssets={loadedImageAssets}
+                  whiteboxSelectionMode={whiteboxSelectionMode}
+                  whiteboxSnapEnabled={whiteboxSnapEnabled}
+                  whiteboxSnapStepDraft={whiteboxSnapStepDraft}
+                  whiteboxSnapStep={whiteboxSnapStep}
+                  viewportGridVisible={viewportGridVisible}
+                  selection={editorState.selection}
+                  toolMode={editorState.toolMode}
+                  toolPreview={viewportToolPreview}
+                  transformSession={transformSession}
+                  canTranslateSelectedTarget={canTranslateSelectedTarget}
+                  canRotateSelectedTarget={canRotateSelectedTarget}
+                  canScaleSelectedTarget={canScaleSelectedTarget}
+                  cameraState={editorState.viewportPanels[panelId].cameraState}
+                  focusRequestId={
+                    focusRequest.panelId === panelId ? focusRequest.id : 0
+                  }
+                  focusSelection={focusRequest.selection}
+                  isAddMenuOpen={addMenuPosition !== null}
+                  onActivatePanel={handleActivateViewportPanel}
+                  onOpenAddMenu={handleOpenAddMenuFromButton}
+                  onSetViewportLayoutMode={handleSetViewportLayoutMode}
+                  onSetPanelViewMode={handleSetViewportPanelViewMode}
+                  onSetPanelDisplayMode={handleSetViewportPanelDisplayMode}
+                  onCommitCreation={handleCommitCreation}
+                  onCameraStateChange={(cameraState) => {
+                    store.setViewportPanelCameraState(panelId, cameraState);
+                  }}
+                  onToolPreviewChange={(toolPreview) => {
+                    store.setViewportToolPreview(toolPreview);
+                  }}
+                  onBeginTransformOperation={(operation) =>
+                    beginTransformOperation(operation, "toolbar")
+                  }
+                  onWhiteboxSelectionModeChange={
+                    handleWhiteboxSelectionModeChange
+                  }
+                  onViewportGridToggle={handleViewportGridToggle}
+                  onWhiteboxSnapToggle={handleWhiteboxSnapToggle}
+                  onWhiteboxSnapStepDraftChange={setWhiteboxSnapStepDraft}
+                  onWhiteboxSnapStepBlur={handleWhiteboxSnapStepBlur}
+                  onTransformSessionChange={(nextTransformSession) => {
+                    store.setTransformSession(nextTransformSession);
+                  }}
+                  onTransformCommit={commitTransformSession}
+                  onTransformCancel={() => cancelTransformSession()}
+                  onSelectionChange={(selection) =>
+                    applySelection(selection, "viewport")
+                  }
                 />
-                <div
-                  className="viewport-region__splitter viewport-region__splitter--horizontal"
-                  data-testid="viewport-quad-splitter-horizontal"
-                  onPointerDown={handleViewportQuadResizeStart("horizontal")}
-                />
-                <div
-                  className="viewport-region__splitter viewport-region__splitter--center"
-                  data-testid="viewport-quad-splitter-center"
-                  onPointerDown={handleViewportQuadResizeStart("center")}
-                />
-              </>
-            )}
-          </div>
-        </main>
+              ))}
+              {layoutMode !== "quad" ? null : (
+                <>
+                  <div
+                    className="viewport-region__splitter viewport-region__splitter--vertical"
+                    data-testid="viewport-quad-splitter-vertical"
+                    onPointerDown={handleViewportQuadResizeStart("vertical")}
+                  />
+                  <div
+                    className="viewport-region__splitter viewport-region__splitter--horizontal"
+                    data-testid="viewport-quad-splitter-horizontal"
+                    onPointerDown={handleViewportQuadResizeStart("horizontal")}
+                  />
+                  <div
+                    className="viewport-region__splitter viewport-region__splitter--center"
+                    data-testid="viewport-quad-splitter-center"
+                    onPointerDown={handleViewportQuadResizeStart("center")}
+                  />
+                </>
+              )}
+            </div>
+          </main>
+
+          {schedulePaneOpen ? (
+            <ProjectSchedulePane
+              actors={projectNpcActors}
+              scheduler={editorState.projectDocument.scheduler}
+              selectedRoutineId={selectedScheduleRoutineId}
+              onSelectRoutine={setSelectedScheduleRoutineId}
+              onAddRoutine={handleCreateScheduleRoutine}
+              onDeleteRoutine={handleDeleteScheduleRoutine}
+              onClose={() => setSchedulePaneOpen(false)}
+              onSetRoutineActor={(routineId, actorId) =>
+                updateProjectScheduleRoutine(
+                  routineId,
+                  "Set project schedule target actor",
+                  `Retargeted schedule routine to ${actorId}.`,
+                  (routine) => {
+                    routine.target = createActorControlTargetRef(actorId);
+                    routine.effect = createSetActorPresenceControlEffect({
+                      target: createActorControlTargetRef(actorId),
+                      active: routine.effect.active
+                    });
+                  }
+                )
+              }
+              onSetRoutineTitle={(routineId, title) =>
+                updateProjectScheduleRoutine(
+                  routineId,
+                  "Rename project schedule routine",
+                  "Updated schedule routine title.",
+                  (routine) => {
+                    routine.title = title.trim();
+                  }
+                )
+              }
+              onSetRoutineEnabled={(routineId, enabled) =>
+                updateProjectScheduleRoutine(
+                  routineId,
+                  "Toggle project schedule routine",
+                  enabled
+                    ? "Enabled schedule routine."
+                    : "Disabled schedule routine.",
+                  (routine) => {
+                    routine.enabled = enabled;
+                  }
+                )
+              }
+              onSetRoutineStartHour={(routineId, startHour) =>
+                updateProjectScheduleRoutine(
+                  routineId,
+                  "Set project schedule start time",
+                  "Updated schedule routine start time.",
+                  (routine) => {
+                    routine.startHour = normalizeTimeOfDayHours(startHour);
+                    if (routine.startHour === routine.endHour) {
+                      throw new Error(
+                        "Schedule routine start and end hours must differ."
+                      );
+                    }
+                  }
+                )
+              }
+              onSetRoutineEndHour={(routineId, endHour) =>
+                updateProjectScheduleRoutine(
+                  routineId,
+                  "Set project schedule end time",
+                  "Updated schedule routine end time.",
+                  (routine) => {
+                    routine.endHour = normalizeTimeOfDayHours(endHour);
+                    if (routine.startHour === routine.endHour) {
+                      throw new Error(
+                        "Schedule routine start and end hours must differ."
+                      );
+                    }
+                  }
+                )
+              }
+              onSetRoutinePriority={(routineId, priority) =>
+                updateProjectScheduleRoutine(
+                  routineId,
+                  "Set project schedule priority",
+                  "Updated schedule routine priority.",
+                  (routine) => {
+                    if (!Number.isFinite(priority)) {
+                      throw new Error(
+                        "Schedule routine priority must be a finite number."
+                      );
+                    }
+
+                    routine.priority = Math.trunc(priority);
+                  }
+                )
+              }
+              onSetRoutinePresence={(routineId, active) =>
+                updateProjectScheduleRoutine(
+                  routineId,
+                  "Set project schedule effect",
+                  active
+                    ? "Schedule routine now keeps the actor present."
+                    : "Schedule routine now hides the actor.",
+                  (routine) => {
+                    routine.effect = createSetActorPresenceControlEffect({
+                      target: routine.target,
+                      active
+                    });
+                  }
+                )
+              }
+              onSetRoutineDays={(routineId, mode, days) =>
+                updateProjectScheduleRoutine(
+                  routineId,
+                  "Set project schedule days",
+                  "Updated schedule routine days.",
+                  (routine) => {
+                    routine.days =
+                      mode === "everyDay"
+                        ? createProjectScheduleEveryDaySelection()
+                        : {
+                            mode: "selectedDays",
+                            days
+                          };
+                  }
+                )
+              }
+            />
+          ) : null}
+        </div>
 
         <aside className="side-column">
           {editorState.selection.kind === "none" ? (
