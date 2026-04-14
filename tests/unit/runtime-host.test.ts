@@ -287,6 +287,7 @@ describe("RuntimeHost", () => {
             kind: "interactionLink" | "npc" | "direct";
             sourceEntityId: string | null;
             linkId: string | null;
+            trigger: "enter" | "exit" | "click" | null;
           }
         ): void;
       };
@@ -297,7 +298,8 @@ describe("RuntimeHost", () => {
     dispatcher.startDialogue("dialogue-warning", {
       kind: "interactionLink",
       sourceEntityId: dialogueLink.sourceEntityId,
-      linkId: dialogueLink.id
+      linkId: dialogueLink.id,
+      trigger: "enter"
     });
     host.advanceRuntimeDialogue();
     host.advanceRuntimeDialogue();
@@ -311,7 +313,8 @@ describe("RuntimeHost", () => {
         source: {
           kind: "interactionLink",
           sourceEntityId: triggerVolume.id,
-          linkId: dialogueLink.id
+          linkId: dialogueLink.id,
+          trigger: "enter"
         }
       }),
       expect.objectContaining({
@@ -322,7 +325,8 @@ describe("RuntimeHost", () => {
         source: {
           kind: "interactionLink",
           sourceEntityId: triggerVolume.id,
-          linkId: dialogueLink.id
+          linkId: dialogueLink.id,
+          trigger: "enter"
         }
       }),
       null
@@ -377,6 +381,7 @@ describe("RuntimeHost", () => {
             kind: "interactionLink" | "npc" | "direct";
             sourceEntityId: string | null;
             linkId: string | null;
+            trigger: "enter" | "exit" | "click" | null;
           }
         ): void;
       };
@@ -386,7 +391,8 @@ describe("RuntimeHost", () => {
     dispatcher.startDialogue("dialogue-a", {
       kind: "interactionLink",
       sourceEntityId: "entity-trigger-a",
-      linkId: "link-dialogue-a"
+      linkId: "link-dialogue-a",
+      trigger: "enter"
     });
 
     const dialogueStates: Array<RuntimeDialogueState | null> = [];
@@ -397,12 +403,14 @@ describe("RuntimeHost", () => {
     dispatcher.startDialogue("dialogue-a", {
       kind: "interactionLink",
       sourceEntityId: "entity-trigger-a",
-      linkId: "link-dialogue-a"
+      linkId: "link-dialogue-a",
+      trigger: "enter"
     });
     dispatcher.startDialogue("dialogue-b", {
       kind: "npc",
       sourceEntityId: "entity-npc-merchant",
-      linkId: null
+      linkId: null,
+      trigger: "click"
     });
 
     expect(dialogueStates).toEqual([
@@ -412,7 +420,8 @@ describe("RuntimeHost", () => {
         source: {
           kind: "interactionLink",
           sourceEntityId: "entity-trigger-a",
-          linkId: "link-dialogue-a"
+          linkId: "link-dialogue-a",
+          trigger: "enter"
         }
       }),
       expect.objectContaining({
@@ -421,10 +430,81 @@ describe("RuntimeHost", () => {
         source: {
           kind: "npc",
           sourceEntityId: "entity-npc-merchant",
-          linkId: null
+          linkId: null,
+          trigger: "click"
         }
       })
     ]);
+
+    host.dispose();
+  });
+
+  it("does not consume a trigger-started one-line dialogue on the immediate next click", () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    vi.spyOn(RapierCollisionWorld, "create").mockResolvedValue({
+      dispose: vi.fn(),
+      resolveThirdPersonCameraCollision: vi.fn(
+        (_pivot, desiredCameraPosition) => desiredCameraPosition
+      )
+    } as unknown as RapierCollisionWorld);
+
+    const document = createEmptySceneDocument();
+    document.dialogues.dialogues["dialogue-trigger"] = {
+      id: "dialogue-trigger",
+      title: "Trigger",
+      lines: [
+        {
+          id: "dialogue-line-trigger-1",
+          speakerName: null,
+          text: "Triggered."
+        }
+      ]
+    };
+
+    const host = new RuntimeHost({
+      enableRendering: false
+    });
+    host.loadScene(buildRuntimeSceneFromDocument(document));
+
+    const hostInternals = host as unknown as {
+      createInteractionDispatcher(): {
+        startDialogue(
+          dialogueId: string,
+          source?: {
+            kind: "interactionLink" | "npc" | "direct";
+            sourceEntityId: string | null;
+            linkId: string | null;
+            trigger: "enter" | "exit" | "click" | null;
+          }
+        ): void;
+      };
+      sceneReady: boolean;
+      runtimeScene: unknown;
+      activeController: unknown;
+      thirdPersonController: unknown;
+      handleRuntimeClick(): void;
+      currentDialogue: RuntimeDialogueState | null;
+    };
+    hostInternals.sceneReady = true;
+    hostInternals.activeController = hostInternals.thirdPersonController;
+
+    const dispatcher = hostInternals.createInteractionDispatcher();
+    dispatcher.startDialogue("dialogue-trigger", {
+      kind: "interactionLink",
+      sourceEntityId: "entity-trigger-main",
+      linkId: "link-trigger-dialogue",
+      trigger: "enter"
+    });
+
+    hostInternals.handleRuntimeClick();
+    expect(hostInternals.currentDialogue).toEqual(
+      expect.objectContaining({
+        dialogueId: "dialogue-trigger"
+      })
+    );
+
+    hostInternals.handleRuntimeClick();
+    expect(hostInternals.currentDialogue).toBeNull();
 
     host.dispose();
   });
