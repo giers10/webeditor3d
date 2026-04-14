@@ -3496,6 +3496,121 @@ function readProjectDialogueLibrary(
   };
 }
 
+function readProjectSequenceStep(value: unknown, label: string): SequenceStep {
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  const type = expectString(value.type, `${label}.type`);
+  const stepClass = expectString(value.stepClass, `${label}.stepClass`);
+
+  if (stepClass !== "held" && stepClass !== "impulse") {
+    throw new Error(`${label}.stepClass must be held or impulse.`);
+  }
+
+  switch (type) {
+    case "controlEffect":
+      return {
+        stepClass,
+        type: "controlEffect",
+        effect: readControlEffect(value.effect, `${label}.effect`)
+      };
+    case "startDialogue":
+      if (stepClass !== "impulse") {
+        throw new Error(`${label}.startDialogue steps must use the impulse class.`);
+      }
+
+      return {
+        stepClass: "impulse",
+        type: "startDialogue",
+        dialogueId: expectString(value.dialogueId, `${label}.dialogueId`)
+      };
+    case "teleportPlayer":
+      if (stepClass !== "impulse") {
+        throw new Error(`${label}.teleportPlayer steps must use the impulse class.`);
+      }
+
+      return {
+        stepClass: "impulse",
+        type: "teleportPlayer",
+        targetEntityId: expectString(
+          value.targetEntityId,
+          `${label}.targetEntityId`
+        )
+      };
+    case "toggleVisibility":
+      if (stepClass !== "impulse") {
+        throw new Error(`${label}.toggleVisibility steps must use the impulse class.`);
+      }
+
+      return {
+        stepClass: "impulse",
+        type: "toggleVisibility",
+        targetBrushId: expectString(value.targetBrushId, `${label}.targetBrushId`),
+        visible:
+          value.visible === undefined
+            ? undefined
+            : expectBoolean(value.visible, `${label}.visible`)
+      };
+    default:
+      throw new Error(`${label}.type must be a supported sequence step.`);
+  }
+}
+
+function readProjectSequenceLibrary(
+  value: unknown,
+  label: string,
+  options: { allowMissing: boolean }
+): ProjectSequenceLibrary {
+  if (value === undefined) {
+    if (options.allowMissing) {
+      return createEmptyProjectSequenceLibrary();
+    }
+
+    return createEmptyProjectSequenceLibrary();
+  }
+
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  if (!isRecord(value.sequences)) {
+    throw new Error(`${label}.sequences must be an object.`);
+  }
+
+  const sequences: ProjectSequenceLibrary["sequences"] = {};
+
+  for (const [sequenceKey, sequenceValue] of Object.entries(value.sequences)) {
+    if (!isRecord(sequenceValue)) {
+      throw new Error(`${label}.sequences.${sequenceKey} must be an object.`);
+    }
+
+    const stepsValue = sequenceValue.steps;
+
+    if (!Array.isArray(stepsValue)) {
+      throw new Error(`${label}.sequences.${sequenceKey}.steps must be an array.`);
+    }
+
+    sequences[sequenceKey] = createProjectSequence({
+      id: expectString(sequenceValue.id, `${label}.sequences.${sequenceKey}.id`),
+      title: expectString(
+        sequenceValue.title,
+        `${label}.sequences.${sequenceKey}.title`
+      ),
+      steps: stepsValue.map((stepValue, stepIndex) =>
+        readProjectSequenceStep(
+          stepValue,
+          `${label}.sequences.${sequenceKey}.steps.${stepIndex}`
+        )
+      )
+    });
+  }
+
+  return {
+    sequences
+  };
+}
+
 function migrateLegacySceneNpcPresenceToScheduler(
   document: SceneDocument
 ): SceneDocument {
