@@ -2,29 +2,52 @@ import { waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
+  createActiveSceneControlTargetRef,
   createActorControlTargetRef,
   createLightControlTargetRef,
+  createModelInstanceControlTargetRef,
+  createPlayModelAnimationControlEffect,
+  createPlaySoundControlEffect,
   createSetActorPresenceControlEffect,
   type ControlEffect,
+  createSetAmbientLightColorControlEffect,
+  createSetAmbientLightIntensityControlEffect,
   createSetLightEnabledControlEffect,
-  createSetLightIntensityControlEffect
+  createSetLightColorControlEffect,
+  createSetLightIntensityControlEffect,
+  createSetModelInstanceVisibleControlEffect,
+  createSetSoundVolumeControlEffect,
+  createSetSunLightColorControlEffect,
+  createSetSunLightIntensityControlEffect,
+  createSoundEmitterControlTargetRef,
+  createStopModelAnimationControlEffect,
+  createStopSoundControlEffect
 } from "../../src/controls/control-surface";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
 import {
   createNpcEntity,
-  createPointLightEntity
+  createPointLightEntity,
+  createSoundEmitterEntity,
+  createTriggerVolumeEntity
 } from "../../src/entities/entity-instances";
 import {
   createControlInteractionLink,
   type InteractionLink
 } from "../../src/interactions/interaction-links";
 import { createProjectScheduleRoutine } from "../../src/scheduler/project-scheduler";
+import {
+  createProjectAssetStorageKey,
+  type AudioAssetRecord,
+  type ModelAssetRecord
+} from "../../src/assets/project-assets";
+import { createModelInstance } from "../../src/assets/model-instances";
 import { RapierCollisionWorld } from "../../src/runtime-three/rapier-collision-world";
 import {
   RuntimeHost,
   type RuntimeSceneLoadState
 } from "../../src/runtime-three/runtime-host";
 import { buildRuntimeSceneFromDocument } from "../../src/runtime-three/runtime-scene-build";
+import type { AnimationMixer } from "three";
 
 function createDeferred<T>() {
   let resolve: ((value: T) => void) | null = null;
