@@ -2142,6 +2142,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [selectedScheduleRoutineId, setSelectedScheduleRoutineId] = useState<
     string | null
   >(null);
+  const [selectedDialogueId, setSelectedDialogueId] = useState<string | null>(
+    null
+  );
   const [
     worldDawnAmbientIntensityFactorDraft,
     setWorldDawnAmbientIntensityFactorDraft
