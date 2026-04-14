@@ -1,4 +1,5 @@
 import {
+  getControlEffectLabel,
   cloneControlEffect,
   type ControlEffect
 } from "../controls/control-surface";
@@ -38,6 +39,15 @@ export interface ToggleVisibilitySequenceStep {
   targetBrushId: string;
   visible?: boolean;
 }
+
+type SequenceDefinitionLike = {
+  id: string;
+  steps: SequenceStep[];
+};
+
+type SequenceLibraryLike = {
+  sequences: Record<string, SequenceDefinitionLike>;
+};
 
 export type HeldSequenceStep = HeldControlSequenceStep;
 
@@ -83,8 +93,50 @@ export function cloneSequenceSteps(steps: SequenceStep[]): SequenceStep[] {
   return steps.map(cloneSequenceStep);
 }
 
+export function getSequenceStepLabel(step: SequenceStep): string {
+  switch (step.type) {
+    case "controlEffect":
+      return `${step.stepClass === "held" ? "Held" : "Impulse"}: ${getControlEffectLabel(step.effect)}`;
+    case "startDialogue":
+      return "Impulse: Start Dialogue";
+    case "teleportPlayer":
+      return "Impulse: Teleport Player";
+    case "toggleVisibility":
+      return "Impulse: Toggle Visibility";
+  }
+}
+
+export function getHeldSequenceSteps(
+  steps: readonly SequenceStep[]
+): HeldSequenceStep[] {
+  return steps
+    .filter((step): step is HeldSequenceStep => step.stepClass === "held")
+    .map(cloneSequenceStep) as HeldSequenceStep[];
+}
+
+export function getImpulseSequenceSteps(
+  steps: readonly SequenceStep[]
+): ImpulseSequenceStep[] {
+  return steps
+    .filter((step): step is ImpulseSequenceStep => step.stepClass === "impulse")
+    .map(cloneSequenceStep) as ImpulseSequenceStep[];
+}
+
+export function getProjectSequenceHeldSteps(
+  sequence: SequenceDefinitionLike
+): HeldSequenceStep[] {
+  return getHeldSequenceSteps(sequence.steps);
+}
+
+export function getProjectSequenceImpulseSteps(
+  sequence: SequenceDefinitionLike
+): ImpulseSequenceStep[] {
+  return getImpulseSequenceSteps(sequence.steps);
+}
+
 export function getInteractionLinkImpulseSteps(
-  link: InteractionLink
+  link: InteractionLink,
+  sequenceLibrary?: SequenceLibraryLike | null
 ): ImpulseSequenceStep[] {
   const controlEffect = getInteractionActionControlEffect(link.action);
 
@@ -124,6 +176,11 @@ export function getInteractionLinkImpulseSteps(
           dialogueId: link.action.dialogueId
         }
       ];
+    case "runSequence": {
+      const sequence =
+        sequenceLibrary?.sequences[link.action.sequenceId] ?? null;
+      return sequence === null ? [] : getProjectSequenceImpulseSteps(sequence);
+    }
     case "playAnimation":
     case "stopAnimation":
     case "playSound":
@@ -136,14 +193,24 @@ export function getInteractionLinkImpulseSteps(
 }
 
 export function getInteractionLinkSequenceSteps(
-  link: InteractionLink
+  link: InteractionLink,
+  sequenceLibrary?: SequenceLibraryLike | null
 ): SequenceStep[] {
-  return getInteractionLinkImpulseSteps(link);
+  return getInteractionLinkImpulseSteps(link, sequenceLibrary);
 }
 
 export function getProjectScheduleRoutineHeldSteps(
-  routine: ProjectScheduleRoutine
+  routine: ProjectScheduleRoutine,
+  sequenceLibrary?: SequenceLibraryLike | null
 ): HeldSequenceStep[] {
+  if (routine.sequenceId !== null) {
+    const sequence = sequenceLibrary?.sequences[routine.sequenceId] ?? null;
+
+    if (sequence !== null) {
+      return getProjectSequenceHeldSteps(sequence);
+    }
+  }
+
   return routine.effects.map((effect) => ({
     stepClass: "held" as const,
     type: "controlEffect" as const,
@@ -152,9 +219,10 @@ export function getProjectScheduleRoutineHeldSteps(
 }
 
 export function getProjectScheduleRoutineSequenceSteps(
-  routine: ProjectScheduleRoutine
+  routine: ProjectScheduleRoutine,
+  sequenceLibrary?: SequenceLibraryLike | null
 ): SequenceStep[] {
-  return getProjectScheduleRoutineHeldSteps(routine);
+  return getProjectScheduleRoutineHeldSteps(routine, sequenceLibrary);
 }
 
 export function getHeldSequenceControlEffects(

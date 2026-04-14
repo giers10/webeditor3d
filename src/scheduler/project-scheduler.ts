@@ -46,6 +46,7 @@ export interface ProjectScheduleRoutine {
   title: string;
   enabled: boolean;
   target: ControlTargetRef;
+  sequenceId: string | null;
   days: ProjectScheduleDaySelection;
   startHour: number;
   endHour: number;
@@ -117,6 +118,22 @@ function normalizeProjectScheduleTitle(title: string | undefined): string {
   }
 
   return normalizedTitle;
+}
+
+function normalizeProjectScheduleSequenceId(
+  sequenceId: string | null | undefined
+): string | null {
+  if (sequenceId === undefined || sequenceId === null) {
+    return null;
+  }
+
+  const normalizedSequenceId = sequenceId.trim();
+
+  if (normalizedSequenceId.length === 0) {
+    throw new Error("Project schedule routine sequence ids must be non-empty.");
+  }
+
+  return normalizedSequenceId;
 }
 
 function normalizeProjectScheduleHours(value: number, label: string): number {
@@ -249,7 +266,16 @@ export function createProjectScheduleRoutine(
   overrides: Partial<
     Pick<
       ProjectScheduleRoutine,
-      "id" | "title" | "enabled" | "target" | "days" | "startHour" | "endHour" | "priority" | "effects"
+      | "id"
+      | "title"
+      | "enabled"
+      | "target"
+      | "sequenceId"
+      | "days"
+      | "startHour"
+      | "endHour"
+      | "priority"
+      | "effects"
     >
   > & {
     effect?: ControlEffect;
@@ -278,6 +304,7 @@ export function createProjectScheduleRoutine(
     title: normalizeProjectScheduleTitle(overrides.title),
     enabled: overrides.enabled ?? true,
     target,
+    sequenceId: normalizeProjectScheduleSequenceId(overrides.sequenceId),
     days: normalizeProjectScheduleDays(overrides.days),
     startHour,
     endHour,
@@ -308,6 +335,7 @@ export function cloneProjectScheduleRoutine(
     title: routine.title,
     enabled: routine.enabled,
     target: cloneControlTargetRef(routine.target),
+    sequenceId: routine.sequenceId,
     days: cloneProjectScheduleDaySelection(routine.days),
     startHour: routine.startHour,
     endHour: routine.endHour,
@@ -357,6 +385,7 @@ export function areProjectScheduleRoutinesEqual(
     left.title === right.title &&
     left.enabled === right.enabled &&
     getControlTargetRefKey(left.target) === getControlTargetRefKey(right.target) &&
+    left.sequenceId === right.sequenceId &&
     areProjectScheduleDaySelectionsEqual(left.days, right.days) &&
     left.startHour === right.startHour &&
     left.endHour === right.endHour &&

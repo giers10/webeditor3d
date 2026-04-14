@@ -53,6 +53,11 @@ export interface StartDialogueAction {
   dialogueId: string;
 }
 
+export interface RunSequenceAction {
+  type: "runSequence";
+  sequenceId: string;
+}
+
 export interface ControlInteractionAction {
   type: "control";
   effect: ControlEffect;
@@ -66,6 +71,7 @@ export type InteractionAction =
   | PlaySoundAction
   | StopSoundAction
   | StartDialogueAction
+  | RunSequenceAction
   | ControlInteractionAction;
 
 export interface InteractionLink {
@@ -134,6 +140,13 @@ export interface CreateControlInteractionLinkOptions {
   effect: ControlEffect;
 }
 
+export interface CreateRunSequenceInteractionLinkOptions {
+  id?: string;
+  sourceEntityId: string;
+  trigger?: InteractionTriggerKind;
+  sequenceId: string;
+}
+
 function assertNonEmptyString(value: string, label: string) {
   if (value.trim().length === 0) {
     throw new Error(`${label} must be non-empty.`);
@@ -179,6 +192,11 @@ function cloneAction(action: InteractionAction): InteractionAction {
       return {
         type: "startDialogue",
         dialogueId: action.dialogueId
+      };
+    case "runSequence":
+      return {
+        type: "runSequence",
+        sequenceId: action.sequenceId
       };
     case "control":
       return {
@@ -357,6 +375,23 @@ export function createControlInteractionLink(
   };
 }
 
+export function createRunSequenceInteractionLink(
+  options: CreateRunSequenceInteractionLinkOptions
+): InteractionLink {
+  assertNonEmptyString(options.sourceEntityId, "Interaction source entity id");
+  assertNonEmptyString(options.sequenceId, "Sequence id");
+
+  return {
+    id: options.id ?? createOpaqueId("interaction-link"),
+    sourceEntityId: options.sourceEntityId,
+    trigger: options.trigger ?? "enter",
+    action: {
+      type: "runSequence",
+      sequenceId: options.sequenceId
+    }
+  };
+}
+
 export function getInteractionActionControlEffect(
   action: InteractionAction
 ): ControlEffect | null {
@@ -384,6 +419,7 @@ export function getInteractionActionControlEffect(
         target: createSoundEmitterControlTargetRef(action.targetSoundEmitterId)
       });
     case "startDialogue":
+    case "runSequence":
       return null;
     case "control":
       return cloneControlEffect(action.effect);
@@ -409,6 +445,8 @@ export function getInteractionActionLabel(action: InteractionAction): string {
       return "Stop Sound";
     case "startDialogue":
       return "Start Dialogue";
+    case "runSequence":
+      return "Run Sequence";
     case "control":
       return getControlEffectLabel(action.effect);
   }
@@ -478,6 +516,10 @@ export function areInteractionLinksEqual(
       return (
         left.action.dialogueId ===
         (right.action as StartDialogueAction).dialogueId
+      );
+    case "runSequence":
+      return (
+        left.action.sequenceId === (right.action as RunSequenceAction).sequenceId
       );
     case "control":
       return areControlEffectsEqual(
