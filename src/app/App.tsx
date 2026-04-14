@@ -4701,8 +4701,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
   const handleAddProjectSequenceVisibilityStep = (
     sequenceId: string,
-    targetBrushId: string
+    targetKey: string
   ) => {
+    const target = readSequenceVisibilityTargetKey(targetKey);
+
     updateProjectSequence(
       sequenceId,
       "Add project sequence visibility effect",
@@ -4710,11 +4712,67 @@ export function App({ store, initialStatusMessage }: AppProps) {
       (sequence) => {
         sequence.effects.push({
           stepClass: "impulse",
-          type: "toggleVisibility",
-          targetBrushId,
-          visible: undefined
+          type: "setVisibility",
+          target,
+          mode: "toggle"
         });
       }
+    );
+  };
+
+  const handleAddProjectSequencePlayAnimationStep = (
+    sequenceId: string,
+    targetKey: string
+  ) => {
+    handleAddProjectSequenceSpecificControlStep(
+      sequenceId,
+      "impulse",
+      targetKey,
+      "model.playAnimation",
+      "Add project sequence play animation effect",
+      "Added play animation effect."
+    );
+  };
+
+  const handleAddProjectSequenceStopAnimationStep = (
+    sequenceId: string,
+    targetKey: string
+  ) => {
+    handleAddProjectSequenceSpecificControlStep(
+      sequenceId,
+      "impulse",
+      targetKey,
+      "model.stopAnimation",
+      "Add project sequence stop animation effect",
+      "Added stop animation effect."
+    );
+  };
+
+  const handleAddProjectSequencePlaySoundStep = (
+    sequenceId: string,
+    targetKey: string
+  ) => {
+    handleAddProjectSequenceSpecificControlStep(
+      sequenceId,
+      "impulse",
+      targetKey,
+      "sound.play",
+      "Add project sequence play sound effect",
+      "Added play sound effect."
+    );
+  };
+
+  const handleAddProjectSequenceStopSoundStep = (
+    sequenceId: string,
+    targetKey: string
+  ) => {
+    handleAddProjectSequenceSpecificControlStep(
+      sequenceId,
+      "impulse",
+      targetKey,
+      "sound.stop",
+      "Add project sequence stop sound effect",
+      "Added stop sound effect."
     );
   };
 
@@ -4954,19 +5012,21 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const updateProjectSequenceVisibilityStepTarget = (
     sequenceId: string,
     stepIndex: number,
-    targetBrushId: string
+    targetKey: string
   ) => {
+    const target = readSequenceVisibilityTargetKey(targetKey);
+
     updateProjectSequenceStep(
       sequenceId,
       stepIndex,
       "Set project sequence visibility target",
       "Updated visibility target.",
       (step) => {
-        if (step.type !== "toggleVisibility") {
+        if (step.type !== "setVisibility") {
           throw new Error("Only visibility effects expose a whitebox solid target.");
         }
 
-        step.targetBrushId = targetBrushId;
+        step.target = target;
       }
     );
   };
@@ -4982,12 +5042,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
       "Set project sequence visibility mode",
       "Updated visibility mode.",
       (step) => {
-        if (step.type !== "toggleVisibility") {
+        if (step.type !== "setVisibility") {
           throw new Error("Only visibility effects expose a visibility mode.");
         }
 
-        step.visible =
-          mode === "toggle" ? undefined : mode === "show";
+        step.mode = mode;
       }
     );
   };
