@@ -184,7 +184,7 @@ export function ProjectSequencesPanel({
 
       <div className="inline-actions">
         <button className="toolbar__button" type="button" onClick={onAddSequence}>
-          Add Sequence
+          Create Sequence
         </button>
       </div>
 
