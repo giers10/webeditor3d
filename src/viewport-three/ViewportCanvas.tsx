@@ -16,6 +16,11 @@ import {
 } from "../core/transform-session";
 import type { SceneDocument } from "../document/scene-document";
 import type { WorldSettings } from "../document/world-settings";
+import {
+  resolveRuntimeDayNightWorldState,
+  type RuntimeClockState
+} from "../runtime-three/runtime-project-time";
+import type { RuntimeSceneDefinition } from "../runtime-three/runtime-scene-build";
 import { createWorldBackgroundStyle } from "../shared-ui/world-background-style";
 import {
   getViewportPanelLabel,
@@ -36,6 +41,8 @@ interface ViewportCanvasProps {
   panelId: ViewportPanelId;
   world: WorldSettings;
   sceneDocument: SceneDocument;
+  editorSimulationScene: RuntimeSceneDefinition | null;
+  editorSimulationClock: RuntimeClockState | null;
   projectAssets: Record<string, ProjectAssetRecord>;
   loadedModelAssets: Record<string, LoadedModelAsset>;
   loadedImageAssets: Record<string, LoadedImageAsset>;
@@ -67,6 +74,8 @@ export function ViewportCanvas({
   panelId,
   world,
   sceneDocument,
+  editorSimulationScene,
+  editorSimulationClock,
   projectAssets,
   loadedModelAssets,
   loadedImageAssets,
@@ -141,6 +150,15 @@ export function ViewportCanvas({
   useLayoutEffect(() => {
     hostRef.current?.updateWorld(world);
   }, [world]);
+
+  useLayoutEffect(() => {
+    hostRef.current?.updateSimulation(editorSimulationScene, editorSimulationClock);
+  }, [
+    editorSimulationScene,
+    editorSimulationClock?.dayCount,
+    editorSimulationClock?.dayLengthMinutes,
+    editorSimulationClock?.timeOfDayHours
+  ]);
 
   useLayoutEffect(() => {
     hostRef.current?.updateAssets(
@@ -256,6 +274,14 @@ export function ViewportCanvas({
   const selectedWhiteboxLabel = toolMode === "select"
     ? getWhiteboxSelectionFeedbackLabel(sceneDocument, selection)
     : null;
+  const resolvedViewportBackground =
+    editorSimulationScene !== null && editorSimulationClock !== null
+      ? resolveRuntimeDayNightWorldState(
+          editorSimulationScene.world,
+          editorSimulationScene.time,
+          editorSimulationClock
+        ).background
+      : world.background;
   const showOverlay =
     previewVisible ||
     transformPreviewVisible ||
@@ -276,9 +302,9 @@ export function ViewportCanvas({
               backgroundImage: "none"
             }
           : createWorldBackgroundStyle(
-              world.background,
-              world.background.mode === "image"
-                ? (loadedImageAssets[world.background.assetId]?.sourceUrl ??
+              resolvedViewportBackground,
+              resolvedViewportBackground.mode === "image"
+                ? (loadedImageAssets[resolvedViewportBackground.assetId]?.sourceUrl ??
                     null)
                 : null
             )
