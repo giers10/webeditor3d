@@ -1833,6 +1833,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
     editorState.document.modelInstances,
     editorState.document.assets
   );
+  const projectDialogueList = getProjectDialogues(
+    editorState.projectDocument.dialogues
+  );
   const selectedInteractionSource = isInteractionSourceEntity(selectedEntity)
     ? selectedEntity
     : null;
