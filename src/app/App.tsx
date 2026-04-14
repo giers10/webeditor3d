@@ -8673,6 +8673,21 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       ))}
                     </select>
                   </label>
+                  <div className="inline-actions">
+                    <button
+                      className="toolbar__button toolbar__button--compact"
+                      type="button"
+                      onClick={() =>
+                        openSequencerSequenceEditor(link.action.sequenceId)
+                      }
+                    >
+                      Edit in Sequencer
+                    </button>
+                  </div>
+                  <div className="material-summary">
+                    Run Sequence links can only reference sequences that contain
+                    at least one impulse clip.
+                  </div>
                 </div>
               ) : link.action.type === "stopAnimation" ? (
                 <div className="form-section">
