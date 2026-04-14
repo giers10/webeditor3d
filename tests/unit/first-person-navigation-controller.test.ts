@@ -104,6 +104,7 @@ function createRuntimeControllerContext(
       ) => ({
         ...desiredCameraPosition
       }),
+      isInputSuspended: () => false,
       setRuntimeMessage: vi.fn(),
       setPlayerControllerTelemetry: vi.fn()
     }
@@ -215,6 +216,34 @@ describe("FirstPersonNavigationController", () => {
     controller.update(1);
 
     expect(context.camera.position.z).toBeGreaterThan(0);
+
+    controller.deactivate(context, {
+      releasePointerLock: false
+    });
+  });
+
+  it("ignores mouse look while input is suspended", () => {
+    const { context, domElement } = createRuntimeControllerContext();
+    const controller = new FirstPersonNavigationController();
+
+    context.isInputSuspended = () => true;
+    Object.defineProperty(document, "pointerLockElement", {
+      configurable: true,
+      get: () => domElement
+    });
+
+    controller.activate(context);
+
+    const initialQuaternion = context.camera.quaternion.clone();
+    document.dispatchEvent(
+      new MouseEvent("mousemove", {
+        movementX: 40,
+        movementY: 20
+      })
+    );
+    controller.update(0);
+
+    expect(context.camera.quaternion.equals(initialQuaternion)).toBe(true);
 
     controller.deactivate(context, {
       releasePointerLock: false
