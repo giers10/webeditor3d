@@ -10,11 +10,13 @@ import { isModelInstanceCollisionMode } from "../assets/model-instances";
 import {
   type ActorControlTargetRef,
   type ControlEffect,
+  type ControlTargetRef,
   type InteractionControlTargetRef,
   type LightControlTargetRef,
   type ModelInstanceControlTargetRef,
   type SceneControlTargetRef,
-  type SoundEmitterControlTargetRef
+  type SoundEmitterControlTargetRef,
+  getControlTargetRefKey
 } from "../controls/control-surface";
 import { WHITEBOX_SELECTION_MODES } from "../core/whitebox-selection-mode";
 import {
