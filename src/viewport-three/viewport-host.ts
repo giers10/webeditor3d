@@ -6567,6 +6567,7 @@ export class ViewportHost {
               previewPosition,
               DEFAULT_INTERACTABLE_RADIUS,
               false,
+              true,
               BOX_CREATE_PREVIEW_FILL
             ).group;
             break;
@@ -6576,6 +6577,7 @@ export class ViewportHost {
               previewPosition,
               DEFAULT_SCENE_EXIT_RADIUS,
               false,
+              true,
               BOX_CREATE_PREVIEW_FILL
             ).group;
             break;
