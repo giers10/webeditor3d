@@ -224,7 +224,8 @@ describe("RuntimeInteractionSystem", () => {
         playAnimation: () => {},
         stopAnimation: () => {},
         playSound: () => {},
-        stopSound: () => {}
+        stopSound: () => {},
+        startDialogue: () => {}
       }
     );
     interactionSystem.updatePlayerPosition(
@@ -245,7 +246,8 @@ describe("RuntimeInteractionSystem", () => {
         playAnimation: () => {},
         stopAnimation: () => {},
         playSound: () => {},
-        stopSound: () => {}
+        stopSound: () => {},
+        startDialogue: () => {}
       }
     );
 
@@ -296,7 +298,8 @@ describe("RuntimeInteractionSystem", () => {
           dispatches.push(`${link.id}:${instanceId}`);
         },
         playSound: () => {},
-        stopSound: () => {}
+        stopSound: () => {},
+        startDialogue: () => {}
       }
     );
 
@@ -345,7 +348,8 @@ describe("RuntimeInteractionSystem", () => {
         playAnimation: () => {},
         stopAnimation: () => {},
         playSound: () => {},
-        stopSound: () => {}
+        stopSound: () => {},
+        startDialogue: () => {}
       }
     );
     interactionSystem.updatePlayerPosition(
@@ -371,7 +375,8 @@ describe("RuntimeInteractionSystem", () => {
         playAnimation: () => {},
         stopAnimation: () => {},
         playSound: () => {},
-        stopSound: () => {}
+        stopSound: () => {},
+        startDialogue: () => {}
       }
     );
 
@@ -518,7 +523,8 @@ describe("RuntimeInteractionSystem", () => {
         playAnimation: () => {},
         stopAnimation: () => {},
         playSound: () => {},
-        stopSound: () => {}
+        stopSound: () => {},
+        startDialogue: () => {}
       }
     );
 
@@ -569,7 +575,8 @@ describe("RuntimeInteractionSystem", () => {
         },
         stopSound: (soundEmitterId, link) => {
           dispatches.push(`${link.id}:${soundEmitterId}`);
-        }
+        },
+        startDialogue: () => {}
       }
     );
 
@@ -661,7 +668,8 @@ describe("RuntimeInteractionSystem", () => {
         playAnimation: () => {},
         stopAnimation: () => {},
         playSound: () => {},
-        stopSound: () => {}
+        stopSound: () => {},
+        startDialogue: () => {}
       }
     );
 
