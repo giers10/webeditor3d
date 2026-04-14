@@ -11241,15 +11241,63 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 <div className="stat-card">
                   <div className="label">Clock</div>
                   <div className="value">
-                    Day {editorState.projectDocument.time.startDayNumber} ·{" "}
-                    {formatTimeOfDayHours(
-                      editorState.projectDocument.time.startTimeOfDayHours
-                    )}
+                    Day {editorSimulationClock.dayCount + 1} ·{" "}
+                    {formatTimeOfDayHours(editorSimulationClock.timeOfDayHours)} ·{" "}
+                    {formatRuntimeDayPhaseLabel(editorSimulationTimeState.dayPhase)}
                   </div>
                   <div className="material-summary">
-                    Runner sessions begin on the authored start day and time,
-                    then keep advancing across scene transitions.
+                    {editorSimulationClockOverride === null
+                      ? "The editor viewport follows the authored project start day and time."
+                      : editorSimulationPlaying
+                        ? "The editor viewport is running on an overridden clock."
+                        : "The editor viewport is paused on an overridden clock."}
                   </div>
+                  {editorSimulationClockOverride === null ? null : (
+                    <div className="material-summary">
+                      Authored start: Day{" "}
+                      {editorState.projectDocument.time.startDayNumber} ·{" "}
+                      {formatTimeOfDayHours(
+                        editorState.projectDocument.time.startTimeOfDayHours
+                      )}
+                    </div>
+                  )}
+                  <div className="inline-actions">
+                    <button
+                      className="toolbar__button toolbar__button--compact"
+                      type="button"
+                      onClick={() => handleStepEditorSimulation(-0.25)}
+                    >
+                      -15m
+                    </button>
+                    <button
+                      className="toolbar__button toolbar__button--compact"
+                      type="button"
+                      onClick={() => handleStepEditorSimulation(0.25)}
+                    >
+                      +15m
+                    </button>
+                    <button
+                      className="toolbar__button toolbar__button--compact"
+                      type="button"
+                      onClick={
+                        editorSimulationPlaying
+                          ? handlePauseEditorSimulation
+                          : handlePlayEditorSimulation
+                      }
+                    >
+                      {editorSimulationPlaying ? "Pause" : "Play"}
+                    </button>
+                    <button
+                      className="toolbar__button toolbar__button--compact"
+                      type="button"
+                      onClick={handleResetEditorSimulation}
+                    >
+                      Reset
+                    </button>
+                  </div>
+                  {editorSimulationMessage === null ? null : (
+                    <div className="material-summary">{editorSimulationMessage}</div>
+                  )}
                 </div>
 
                 <div className="form-section">
