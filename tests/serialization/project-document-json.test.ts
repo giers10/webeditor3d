@@ -37,7 +37,8 @@ import {
   createNpcEntity,
   createNpcTimeWindowPresence,
   createSceneEntryEntity,
-  createSceneExitEntity
+  createSceneExitEntity,
+  createTriggerVolumeEntity
 } from "../../src/entities/entity-instances";
 import { createProjectScheduleRoutine } from "../../src/scheduler/project-scheduler";
 import { createProjectSequence } from "../../src/sequencer/project-sequences";
@@ -195,6 +196,10 @@ describe("project document JSON", () => {
         active: false
       })
     });
+    document.scenes[document.activeSceneId]!.entities["entity-trigger-sequence"] =
+      createTriggerVolumeEntity({
+        id: "entity-trigger-sequence"
+      });
     document.scenes[document.activeSceneId]!.interactionLinks["link-sequence"] =
       createRunSequenceInteractionLink({
         id: "link-sequence",
