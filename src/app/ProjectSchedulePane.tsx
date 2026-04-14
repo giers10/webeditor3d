@@ -195,7 +195,6 @@ export function ProjectSequencerPane({
   onSetRoutineEndHour,
   onSetRoutinePriority,
   onSetRoutineEffectOption,
-  onSetRoutineDays,
   onSetRoutineNumericValue,
   onSetRoutineColorValue,
   onSetRoutineAnimationClip,
