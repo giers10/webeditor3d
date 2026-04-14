@@ -35,6 +35,7 @@ import {
 } from "../../src/entities/entity-instances";
 import {
   createControlInteractionLink,
+  createStartDialogueInteractionLink,
   type InteractionLink
 } from "../../src/interactions/interaction-links";
 import { createProjectScheduleRoutine } from "../../src/scheduler/project-scheduler";
@@ -47,6 +48,7 @@ import { createModelInstance } from "../../src/assets/model-instances";
 import { RapierCollisionWorld } from "../../src/runtime-three/rapier-collision-world";
 import {
   RuntimeHost,
+  type RuntimeDialogueState,
   type RuntimeSceneLoadState
 } from "../../src/runtime-three/runtime-host";
 import { buildRuntimeSceneFromDocument } from "../../src/runtime-three/runtime-scene-build";
