@@ -3785,6 +3785,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     return {
       time: createDefaultProjectTimeSettings(),
       scheduler: createEmptyProjectScheduler(),
+      dialogues: createEmptyProjectDialogueLibrary(),
       version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
       world: readWorldSettings(source.world),
@@ -3812,6 +3813,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     return {
       time: createDefaultProjectTimeSettings(),
       scheduler: createEmptyProjectScheduler(),
+      dialogues: createEmptyProjectDialogueLibrary(),
       version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
       world: readWorldSettings(source.world),
@@ -3838,6 +3840,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     return {
       time: createDefaultProjectTimeSettings(),
       scheduler: createEmptyProjectScheduler(),
+      dialogues: createEmptyProjectDialogueLibrary(),
       version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
       world: readWorldSettings(source.world),
@@ -3864,6 +3867,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     return {
       time: createDefaultProjectTimeSettings(),
       scheduler: createEmptyProjectScheduler(),
+      dialogues: createEmptyProjectDialogueLibrary(),
       version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
       world: readWorldSettings(source.world),
@@ -3890,6 +3894,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     return {
       time: createDefaultProjectTimeSettings(),
       scheduler: createEmptyProjectScheduler(),
+      dialogues: createEmptyProjectDialogueLibrary(),
       version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
       world: readWorldSettings(source.world),
@@ -3916,6 +3921,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     return {
       time: createDefaultProjectTimeSettings(),
       scheduler: createEmptyProjectScheduler(),
+      dialogues: createEmptyProjectDialogueLibrary(),
       version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
       world: readWorldSettings(source.world),
@@ -3942,6 +3948,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     return {
       time: createDefaultProjectTimeSettings(),
       scheduler: createEmptyProjectScheduler(),
+      dialogues: createEmptyProjectDialogueLibrary(),
       version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
       world: readWorldSettings(source.world),
@@ -3970,6 +3977,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     return {
       time: createDefaultProjectTimeSettings(),
       scheduler: createEmptyProjectScheduler(),
+      dialogues: createEmptyProjectDialogueLibrary(),
       version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
       world: readWorldSettings(source.world),
@@ -3993,6 +4001,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     return {
       time: createDefaultProjectTimeSettings(),
       scheduler: createEmptyProjectScheduler(),
+      dialogues: createEmptyProjectDialogueLibrary(),
       version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
       world: readWorldSettings(source.world),
@@ -4017,6 +4026,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     return {
       time: createDefaultProjectTimeSettings(),
       scheduler: createEmptyProjectScheduler(),
+      dialogues: createEmptyProjectDialogueLibrary(),
       version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
       world: readWorldSettings(source.world),
@@ -4038,6 +4048,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     return {
       time: createDefaultProjectTimeSettings(),
       scheduler: createEmptyProjectScheduler(),
+      dialogues: createEmptyProjectDialogueLibrary(),
       version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
       world: readWorldSettings(source.world),
@@ -4062,6 +4073,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     return {
       time: createDefaultProjectTimeSettings(),
       scheduler: createEmptyProjectScheduler(),
+      dialogues: createEmptyProjectDialogueLibrary(),
       version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
       world: readWorldSettings(source.world),
@@ -4083,6 +4095,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     return {
       time: createDefaultProjectTimeSettings(),
       scheduler: createEmptyProjectScheduler(),
+      dialogues: createEmptyProjectDialogueLibrary(),
       version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
       world: readWorldSettings(source.world),
@@ -4105,6 +4118,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     return {
       time: createDefaultProjectTimeSettings(),
       scheduler: createEmptyProjectScheduler(),
+      dialogues: createEmptyProjectDialogueLibrary(),
       version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
       world: readWorldSettings(source.world),
@@ -4129,6 +4143,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     return {
       time: createDefaultProjectTimeSettings(),
       scheduler: createEmptyProjectScheduler(),
+      dialogues: createEmptyProjectDialogueLibrary(),
       version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
       world: readWorldSettings(source.world),
@@ -4151,6 +4166,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     return {
       time: createDefaultProjectTimeSettings(),
       scheduler: createEmptyProjectScheduler(),
+      dialogues: createEmptyProjectDialogueLibrary(),
       version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
       world: readWorldSettings(source.world),
@@ -4173,6 +4189,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     return {
       time: createDefaultProjectTimeSettings(),
       scheduler: createEmptyProjectScheduler(),
+      dialogues: createEmptyProjectDialogueLibrary(),
       version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
       world: readWorldSettings(source.world),
