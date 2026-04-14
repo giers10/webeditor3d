@@ -283,15 +283,6 @@ export function getInteractionLinkImpulseEffects(
                 : "hide"
         }
       ];
-    case "setVisibility":
-      return [
-        {
-          stepClass: "impulse",
-          type: "setVisibility",
-          target: link.action.target,
-          mode: link.action.mode
-        }
-      ];
     case "startDialogue":
       return [
         {
