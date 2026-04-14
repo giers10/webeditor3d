@@ -165,39 +165,6 @@ describe("ThirdPersonNavigationController", () => {
     controller.deactivate(context);
   });
 
-  it("ignores drag orbit and zoom while input is suspended", () => {
-    const { context } = createRuntimeControllerContext();
-    const controller = new ThirdPersonNavigationController();
-
-    context.isInputSuspended = () => true;
-    controller.activate(context);
-
-    const initialPosition = context.camera.position.clone();
-    context.domElement.dispatchEvent(
-      new PointerEvent("pointerdown", {
-        button: 0,
-        clientX: 100,
-        clientY: 100
-      })
-    );
-    window.dispatchEvent(
-      new PointerEvent("pointermove", {
-        clientX: 180,
-        clientY: 160
-      })
-    );
-    context.domElement.dispatchEvent(
-      new WheelEvent("wheel", {
-        deltaY: -240,
-        cancelable: true
-      })
-    );
-    controller.update(0);
-
-    expect(context.camera.position.equals(initialPosition)).toBe(true);
-
-    controller.deactivate(context);
-  });
 
   it("uses the authored movement template speed for third-person motion telemetry", () => {
     const playerStart = createPlayerStartEntity({

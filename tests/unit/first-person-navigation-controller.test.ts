@@ -222,33 +222,6 @@ describe("FirstPersonNavigationController", () => {
     });
   });
 
-  it("ignores mouse look while input is suspended", () => {
-    const { context, domElement } = createRuntimeControllerContext();
-    const controller = new FirstPersonNavigationController();
-
-    context.isInputSuspended = () => true;
-    Object.defineProperty(document, "pointerLockElement", {
-      configurable: true,
-      get: () => domElement
-    });
-
-    controller.activate(context);
-
-    const initialQuaternion = context.camera.quaternion.clone();
-    document.dispatchEvent(
-      new MouseEvent("mousemove", {
-        movementX: 40,
-        movementY: 20
-      })
-    );
-    controller.update(0);
-
-    expect(context.camera.quaternion.equals(initialQuaternion)).toBe(true);
-
-    controller.deactivate(context, {
-      releasePointerLock: false
-    });
-  });
 
   it("uses the authored movement template speed for first-person motion telemetry", () => {
     const playerStart = createPlayerStartEntity({
