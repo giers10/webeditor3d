@@ -5886,36 +5886,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
     try {
       const trimmedModelAssetId = npcModelAssetIdDraft.trim();
       const colliderMode = overrides.colliderMode ?? npcColliderModeDraft;
-      const presence =
-        npcPresenceModeDraft === "always"
-          ? createNpcAlwaysPresence()
-          : createNpcTimeWindowPresence({
-              startHour: normalizeTimeOfDayHours(
-                readFiniteNumberDraft(
-                  npcPresenceStartHourDraft,
-                  "NPC presence start hour"
-                )
-              ),
-              endHour: normalizeTimeOfDayHours(
-                readFiniteNumberDraft(
-                  npcPresenceEndHourDraft,
-                  "NPC presence end hour"
-                )
-              )
-            });
-
-      if (
-        presence.mode === "timeWindow" &&
-        presence.startHour === presence.endHour
-      ) {
-        throw new Error("NPC presence window start and end hours must differ.");
-      }
 
       const nextEntity = createNpcEntity({
         id: selectedNpc.id,
         name: selectedNpc.name,
         actorId: npcActorIdDraft,
-        presence,
+        presence: createNpcAlwaysPresence(),
         position: snapVec3ToGrid(
           readVec3Draft(entityPositionDraft, "NPC position"),
           DEFAULT_GRID_SIZE
