@@ -3794,6 +3794,33 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
+  const applyProjectDialogues = (
+    nextDialogues: typeof editorState.projectDocument.dialogues,
+    label: string,
+    successMessage: string
+  ) => {
+    if (
+      areProjectDialogueLibrariesEqual(
+        editorState.projectDocument.dialogues,
+        nextDialogues
+      )
+    ) {
+      return;
+    }
+
+    try {
+      store.executeCommand(
+        createSetProjectDialoguesCommand({
+          label,
+          dialogues: nextDialogues
+        })
+      );
+      setStatusMessage(successMessage);
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
   const updateProjectTimeSettings = (
     label: string,
     successMessage: string,
