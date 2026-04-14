@@ -3662,6 +3662,33 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
+  const applyProjectScheduler = (
+    nextScheduler: typeof editorState.projectDocument.scheduler,
+    label: string,
+    successMessage: string
+  ) => {
+    if (
+      areProjectSchedulersEqual(
+        editorState.projectDocument.scheduler,
+        nextScheduler
+      )
+    ) {
+      return;
+    }
+
+    try {
+      store.executeCommand(
+        createSetProjectSchedulerCommand({
+          label,
+          scheduler: nextScheduler
+        })
+      );
+      setStatusMessage(successMessage);
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
   const updateProjectTimeSettings = (
     label: string,
     successMessage: string,
