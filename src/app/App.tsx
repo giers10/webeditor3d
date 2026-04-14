@@ -8439,6 +8439,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       <option value="playSound">Play Sound</option>
                       <option value="stopSound">Stop Sound</option>
                       <option value="startDialogue">Start Dialogue</option>
+                      <option value="runSequence">Run Sequence</option>
                       <option value="control">Control Effect</option>
                     </select>
                   </label>
@@ -8640,6 +8641,28 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     </select>
                   </label>
                 </div>
+              ) : link.action.type === "runSequence" ? (
+                <div className="form-section">
+                  <label className="form-field">
+                    <span className="label">Sequence</span>
+                    <select
+                      className="text-input"
+                      value={link.action.sequenceId}
+                      onChange={(event) =>
+                        updateSequenceInteractionLinkTarget(
+                          link,
+                          event.currentTarget.value
+                        )
+                      }
+                    >
+                      {projectImpulseSequenceList.map((sequence) => (
+                        <option key={sequence.id} value={sequence.id}>
+                          {sequence.title}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
               ) : link.action.type === "stopAnimation" ? (
                 <div className="form-section">
                   <label className="form-field">
@@ -8770,6 +8793,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
           onClick={handleAddDialogueInteractionLink}
         >
           Add Dialogue Link
+        </button>
+        <button
+          className="toolbar__button"
+          type="button"
+          disabled={projectImpulseSequenceList.length === 0}
+          onClick={handleAddSequenceInteractionLink}
+        >
+          Add Sequence Link
         </button>
       </div>
     </div>
