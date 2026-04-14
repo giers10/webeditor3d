@@ -3,6 +3,8 @@ import type { Vec3 } from "../core/vector";
 import { getModelInstances } from "../assets/model-instances";
 import {
   createActorControlTargetRef,
+  createActiveSceneControlTargetRef,
+  createAmbientLightIntensityControlChannelDescriptor,
   createControlTargetDescriptor,
   createDefaultResolvedControlSource,
   createEmptyRuntimeResolvedControlState,
@@ -10,11 +12,22 @@ import {
   createLightControlTargetRef,
   createLightIntensityControlChannelDescriptor,
   createModelInstanceControlTargetRef,
+  createResolvedAmbientLightColorState,
+  createResolvedAmbientLightIntensityChannelValue,
   createResolvedInteractionEnabledState,
+  createResolvedLightColorState,
   createResolvedLightEnabledState,
   createResolvedLightIntensityChannelValue,
+  createResolvedModelAnimationPlaybackState,
+  createResolvedModelInstanceVisibilityState,
+  createResolvedSoundPlaybackState,
+  createResolvedSoundVolumeChannelValue,
+  createResolvedSunLightColorState,
+  createResolvedSunLightIntensityChannelValue,
   createRuntimeControlSurfaceDefinition,
   createSoundEmitterControlTargetRef,
+  createSoundVolumeControlChannelDescriptor,
+  createSunLightIntensityControlChannelDescriptor,
   type RuntimeControlSurfaceDefinition
 } from "../controls/control-surface";
 import {
