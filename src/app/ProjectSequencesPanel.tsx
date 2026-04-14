@@ -13,7 +13,8 @@ import {
   getProjectSequenceHeldSteps,
   getProjectSequenceImpulseSteps,
   getSequenceEffectLabel,
-  type SequenceEffect
+  type SequenceEffect,
+  type SequenceVisibilityMode
 } from "../sequencer/project-sequence-steps";
 import {
   getProjectSequences,
@@ -29,7 +30,15 @@ interface ProjectSequencesPanelProps {
     label: string;
   }>;
   visibilityTargetOptions: Array<{
-    brushId: string;
+    targetKey: string;
+    label: string;
+  }>;
+  modelAnimationTargetOptions: Array<{
+    targetKey: string;
+    label: string;
+  }>;
+  soundTargetOptions: Array<{
+    targetKey: string;
     label: string;
   }>;
   selectedSequenceId: string | null;
@@ -41,7 +50,11 @@ interface ProjectSequencesPanelProps {
   onAddImpulseControlStep(sequenceId: string, targetKey: string): void;
   onAddDialogueStep(sequenceId: string, dialogueId: string): void;
   onAddTeleportStep(sequenceId: string, targetEntityId: string): void;
-  onAddVisibilityStep(sequenceId: string, targetBrushId: string): void;
+  onAddVisibilityStep(sequenceId: string, targetKey: string): void;
+  onAddPlayAnimationStep(sequenceId: string, targetKey: string): void;
+  onAddStopAnimationStep(sequenceId: string, targetKey: string): void;
+  onAddPlaySoundStep(sequenceId: string, targetKey: string): void;
+  onAddStopSoundStep(sequenceId: string, targetKey: string): void;
   onDeleteStep(sequenceId: string, stepIndex: number): void;
   onSetControlStepTarget(
     sequenceId: string,
@@ -86,12 +99,12 @@ interface ProjectSequencesPanelProps {
   onSetVisibilityStepTarget(
     sequenceId: string,
     stepIndex: number,
-    targetBrushId: string
+    targetKey: string
   ): void;
   onSetVisibilityStepMode(
     sequenceId: string,
     stepIndex: number,
-    mode: "toggle" | "show" | "hide"
+    mode: SequenceVisibilityMode
   ): void;
 }
 
@@ -135,22 +148,14 @@ function getControlEffectColorValue(
   }
 }
 
-function getVisibilityModeSelectValue(
-  visible: boolean | undefined
-): "toggle" | "show" | "hide" {
-  if (visible === undefined) {
-    return "toggle";
-  }
-
-  return visible ? "show" : "hide";
-}
-
 export function ProjectSequencesPanel({
   sequences,
   dialogues,
   targetOptions,
   teleportTargetOptions,
   visibilityTargetOptions,
+  modelAnimationTargetOptions,
+  soundTargetOptions,
   selectedSequenceId,
   onSelectSequence,
   onAddSequence,
@@ -161,6 +166,10 @@ export function ProjectSequencesPanel({
   onAddDialogueStep,
   onAddTeleportStep,
   onAddVisibilityStep,
+  onAddPlayAnimationStep,
+  onAddStopAnimationStep,
+  onAddPlaySoundStep,
+  onAddStopSoundStep,
   onDeleteStep,
   onSetControlStepTarget,
   onSetControlStepEffectOption,
