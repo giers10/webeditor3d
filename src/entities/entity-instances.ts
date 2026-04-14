@@ -108,9 +108,13 @@ export const PLAYER_START_LOCOMOTION_ACTIONS = [
 ] as const;
 export type PlayerStartLocomotionAction =
   (typeof PLAYER_START_LOCOMOTION_ACTIONS)[number];
+export const PLAYER_START_SYSTEM_ACTIONS = ["pauseTime"] as const;
+export type PlayerStartSystemAction =
+  (typeof PLAYER_START_SYSTEM_ACTIONS)[number];
 export type PlayerStartInputAction =
   | PlayerStartMovementAction
-  | PlayerStartLocomotionAction;
+  | PlayerStartLocomotionAction
+  | PlayerStartSystemAction;
 export type PlayerStartKeyboardBindingCode = string;
 export const PLAYER_START_GAMEPAD_BINDINGS = [
   "leftStickUp",
@@ -129,6 +133,7 @@ export const PLAYER_START_GAMEPAD_ACTION_BINDINGS = [
   "buttonEast",
   "buttonWest",
   "buttonNorth",
+  "buttonMenu",
   "leftShoulder",
   "rightShoulder",
   "leftTrigger",
@@ -152,6 +157,7 @@ export interface PlayerStartKeyboardBindings {
   jump: PlayerStartKeyboardBindingCode;
   sprint: PlayerStartKeyboardBindingCode;
   crouch: PlayerStartKeyboardBindingCode;
+  pauseTime: PlayerStartKeyboardBindingCode;
 }
 
 export interface PlayerStartGamepadBindings {
@@ -162,6 +168,7 @@ export interface PlayerStartGamepadBindings {
   jump: PlayerStartGamepadActionBinding;
   sprint: PlayerStartGamepadActionBinding;
   crouch: PlayerStartGamepadActionBinding;
+  pauseTime: PlayerStartGamepadActionBinding;
   cameraLook: PlayerStartGamepadCameraLookBinding;
 }
 
@@ -395,7 +402,8 @@ export const DEFAULT_PLAYER_START_KEYBOARD_BINDINGS: PlayerStartKeyboardBindings
     moveRight: "KeyD",
     jump: "Space",
     sprint: "ShiftLeft",
-    crouch: "ControlLeft"
+    crouch: "ControlLeft",
+    pauseTime: "KeyP"
   };
 export const DEFAULT_PLAYER_START_GAMEPAD_BINDINGS: PlayerStartGamepadBindings =
   {
@@ -406,6 +414,7 @@ export const DEFAULT_PLAYER_START_GAMEPAD_BINDINGS: PlayerStartGamepadBindings =
     jump: "buttonSouth",
     sprint: "leftStickPress",
     crouch: "buttonEast",
+    pauseTime: "buttonMenu",
     cameraLook: "rightStick"
   };
 export const DEFAULT_SCENE_ENTRY_YAW_DEGREES = 0;
@@ -632,7 +641,8 @@ export function clonePlayerStartInputBindings(
       moveRight: bindings.keyboard.moveRight,
       jump: bindings.keyboard.jump,
       sprint: bindings.keyboard.sprint,
-      crouch: bindings.keyboard.crouch
+      crouch: bindings.keyboard.crouch,
+      pauseTime: bindings.keyboard.pauseTime
     },
     gamepad: {
       moveForward: bindings.gamepad.moveForward,
@@ -642,6 +652,7 @@ export function clonePlayerStartInputBindings(
       jump: bindings.gamepad.jump,
       sprint: bindings.gamepad.sprint,
       crouch: bindings.gamepad.crouch,
+      pauseTime: bindings.gamepad.pauseTime,
       cameraLook: bindings.gamepad.cameraLook
     }
   };
@@ -670,7 +681,10 @@ export function createPlayerStartInputBindings(
       DEFAULT_PLAYER_START_KEYBOARD_BINDINGS.sprint,
     crouch:
       overrides.keyboard?.crouch ??
-      DEFAULT_PLAYER_START_KEYBOARD_BINDINGS.crouch
+      DEFAULT_PLAYER_START_KEYBOARD_BINDINGS.crouch,
+    pauseTime:
+      overrides.keyboard?.pauseTime ??
+      DEFAULT_PLAYER_START_KEYBOARD_BINDINGS.pauseTime
   };
   const gamepad: PlayerStartGamepadBindings = {
     moveForward:
@@ -693,6 +707,9 @@ export function createPlayerStartInputBindings(
     crouch:
       overrides.gamepad?.crouch ??
       DEFAULT_PLAYER_START_GAMEPAD_BINDINGS.crouch,
+    pauseTime:
+      overrides.gamepad?.pauseTime ??
+      DEFAULT_PLAYER_START_GAMEPAD_BINDINGS.pauseTime,
     cameraLook:
       overrides.gamepad?.cameraLook ??
       DEFAULT_PLAYER_START_GAMEPAD_BINDINGS.cameraLook
@@ -726,6 +743,10 @@ export function createPlayerStartInputBindings(
     throw new Error("Player Start crouch keyboard binding must be supported.");
   }
 
+  if (!isPlayerStartKeyboardBindingCode(keyboard.pauseTime)) {
+    throw new Error("Player Start pause keyboard binding must be supported.");
+  }
+
   if (!isPlayerStartGamepadBinding(gamepad.moveForward)) {
     throw new Error("Player Start move-forward gamepad binding must be supported.");
   }
@@ -752,6 +773,10 @@ export function createPlayerStartInputBindings(
 
   if (!isPlayerStartGamepadActionBinding(gamepad.crouch)) {
     throw new Error("Player Start crouch gamepad binding must be supported.");
+  }
+
+  if (!isPlayerStartGamepadActionBinding(gamepad.pauseTime)) {
+    throw new Error("Player Start pause gamepad binding must be supported.");
   }
 
   if (!isPlayerStartGamepadCameraLookBinding(gamepad.cameraLook)) {
