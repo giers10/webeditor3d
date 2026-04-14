@@ -7,13 +7,10 @@ import {
 import { formatControlEffectValue, getControlTargetRefKey } from "../controls/control-surface";
 import {
   findProjectScheduleRoutineEffect,
-  PROJECT_SCHEDULE_WEEKDAYS,
   formatProjectScheduleDaySelection,
-  formatProjectScheduleWeekdayLabel,
   getProjectScheduleTimelineSegments,
   type ProjectScheduler,
-  type ProjectScheduleRoutine,
-  type ProjectScheduleWeekday
+  type ProjectScheduleRoutine
 } from "../sequencer/project-sequencer";
 import {
   getProjectScheduleEffectOptionId,
@@ -40,11 +37,6 @@ interface ProjectSequencerPaneProps {
   onSetRoutineEffectOption(
     routineId: string,
     effectOptionId: ProjectScheduleEffectOptionId
-  ): void;
-  onSetRoutineDays(
-    routineId: string,
-    mode: "everyDay" | "selectedDays",
-    days: ProjectScheduleWeekday[]
   ): void;
   onSetRoutineNumericValue(routineId: string, value: number): void;
   onSetRoutineColorValue(routineId: string, colorHex: string): void;
@@ -244,12 +236,6 @@ export function ProjectSequencerPane({
     selectedRoutine === null || selectedRoutine.target.kind !== "actor"
       ? null
       : findProjectScheduleRoutineEffect(selectedRoutine, "followActorPath");
-  const selectedRoutineDays =
-    selectedRoutine === null
-      ? PROJECT_SCHEDULE_WEEKDAYS
-      : selectedRoutine.days.mode === "everyDay"
-        ? PROJECT_SCHEDULE_WEEKDAYS
-        : selectedRoutine.days.days;
   const hourTicks = Array.from({ length: HOURS_PER_DAY }, (_, hour) => hour);
 
   return (
@@ -481,55 +467,14 @@ export function ProjectSequencerPane({
               </div>
 
               <div className="form-section">
-                <div className="label">Days</div>
-                <div className="schedule-days">
-                  <button
-                    className={`schedule-day ${
-                      selectedRoutine.days.mode === "everyDay"
-                        ? "schedule-day--active"
-                        : ""
-                    }`.trim()}
-                    type="button"
-                    onClick={() =>
-                      onSetRoutineDays(selectedRoutine.id, "everyDay", [])
-                    }
-                  >
-                    Every
-                  </button>
-                  {PROJECT_SCHEDULE_WEEKDAYS.map((weekday) => {
-                    const selected = selectedRoutineDays.includes(weekday);
-                    const nextDays =
-                      selectedRoutine.days.mode === "everyDay"
-                        ? PROJECT_SCHEDULE_WEEKDAYS.filter(
-                            (entry) => entry !== weekday
-                          )
-                        : selected
-                          ? selectedRoutineDays.filter(
-                              (entry) => entry !== weekday
-                            )
-                          : [...selectedRoutineDays, weekday];
-
-                    return (
-                      <button
-                        key={weekday}
-                        className={`schedule-day ${
-                          selected ? "schedule-day--active" : ""
-                        }`.trim()}
-                        type="button"
-                        onClick={() =>
-                          onSetRoutineDays(
-                            selectedRoutine.id,
-                            nextDays.length === PROJECT_SCHEDULE_WEEKDAYS.length
-                              ? "everyDay"
-                              : "selectedDays",
-                            nextDays.length === 0 ? [weekday] : nextDays
-                          )
-                        }
-                      >
-                        {formatProjectScheduleWeekdayLabel(weekday)}
-                      </button>
-                    );
-                  })}
+                <div className="label">Legacy Day Filter</div>
+                <div className="schedule-pane__summary">
+                  {formatProjectScheduleDaySelection(selectedRoutine.days)}
+                </div>
+                <div className="material-summary">
+                  Day-specific routine filters are preserved for compatibility.
+                  New sequencer authoring should prefer timeline clips; a later
+                  multi-day timeline will replace this legacy filter.
                 </div>
               </div>
 
