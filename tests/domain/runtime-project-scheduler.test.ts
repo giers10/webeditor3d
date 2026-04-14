@@ -16,6 +16,7 @@ import {
   createProjectScheduleRoutine,
   createProjectScheduleSelectedDaysSelection
 } from "../../src/scheduler/project-scheduler";
+import { createEmptyProjectSequenceLibrary } from "../../src/sequencer/project-sequences";
 import {
   applyRuntimeProjectScheduleToControlState,
   resolveRuntimeProjectScheduleState
@@ -25,6 +26,7 @@ describe("runtime project scheduler", () => {
   it("resolves cross-midnight actor routines and keeps unscheduled actors implicitly active", () => {
     const actorTarget = createActorControlTargetRef("actor-night-watch");
     const scheduler = createEmptyProjectScheduler();
+    const sequences = createEmptyProjectSequenceLibrary();
     scheduler.routines["routine-night-watch"] = createProjectScheduleRoutine({
       id: "routine-night-watch",
       title: "Night Watch",
@@ -41,6 +43,7 @@ describe("runtime project scheduler", () => {
     expect(
       resolveRuntimeProjectScheduleState({
         scheduler,
+        sequences,
         actorIds: ["actor-night-watch", "actor-always-on"],
         dayNumber: 1,
         timeOfDayHours: 23
@@ -67,6 +70,7 @@ describe("runtime project scheduler", () => {
     expect(
       resolveRuntimeProjectScheduleState({
         scheduler,
+        sequences,
         actorIds: ["actor-night-watch"],
         dayNumber: 2,
         timeOfDayHours: 1.5
@@ -82,6 +86,7 @@ describe("runtime project scheduler", () => {
     expect(
       resolveRuntimeProjectScheduleState({
         scheduler,
+        sequences,
         actorIds: ["actor-night-watch"],
         dayNumber: 2,
         timeOfDayHours: 3
@@ -100,6 +105,7 @@ describe("runtime project scheduler", () => {
   it("prefers the highest-priority active routine and writes actor presence into resolved control state", () => {
     const actorTarget = createActorControlTargetRef("actor-market-vendor");
     const scheduler = createEmptyProjectScheduler();
+    const sequences = createEmptyProjectSequenceLibrary();
     scheduler.routines["routine-open"] = createProjectScheduleRoutine({
       id: "routine-open",
       title: "Open Stall",
@@ -127,6 +133,7 @@ describe("runtime project scheduler", () => {
 
     const resolvedSchedule = resolveRuntimeProjectScheduleState({
       scheduler,
+      sequences,
       actorIds: ["actor-market-vendor"],
       dayNumber: 1,
       timeOfDayHours: 12.25
@@ -166,6 +173,7 @@ describe("runtime project scheduler", () => {
       "entity-point-light-main"
     );
     const scheduler = createEmptyProjectScheduler();
+    const sequences = createEmptyProjectSequenceLibrary();
     scheduler.routines["routine-night-light"] = createProjectScheduleRoutine({
       id: "routine-night-light",
       title: "Night Light",
@@ -188,6 +196,7 @@ describe("runtime project scheduler", () => {
     );
     const activeSchedule = resolveRuntimeProjectScheduleState({
       scheduler,
+      sequences,
       actorIds: [],
       dayNumber: 1,
       timeOfDayHours: 21
@@ -199,6 +208,7 @@ describe("runtime project scheduler", () => {
     );
     const inactiveSchedule = resolveRuntimeProjectScheduleState({
       scheduler,
+      sequences,
       actorIds: [],
       dayNumber: 2,
       timeOfDayHours: 9
@@ -244,6 +254,7 @@ describe("runtime project scheduler", () => {
   it("resolves actor animation and deterministic follow-path state from the active routine window", () => {
     const actorTarget = createActorControlTargetRef("actor-patrol");
     const scheduler = createEmptyProjectScheduler();
+    const sequences = createEmptyProjectSequenceLibrary();
     scheduler.routines["routine-patrol"] = createProjectScheduleRoutine({
       id: "routine-patrol",
       title: "Patrolling",
@@ -272,6 +283,7 @@ describe("runtime project scheduler", () => {
 
     const resolved = resolveRuntimeProjectScheduleState({
       scheduler,
+      sequences,
       actorIds: ["actor-patrol"],
       dayNumber: 2,
       timeOfDayHours: 1,
