@@ -2463,6 +2463,15 @@ export function App({ store, initialStatusMessage }: AppProps) {
       : authoredNavigationMode === "firstPerson"
         ? "Ready for First Person"
         : "Ready for Third Person";
+  const authoredEditorSimulationClock = createRuntimeClockState(
+    editorState.projectDocument.time
+  );
+  const editorSimulationClock =
+    editorSimulationClockOverride ?? authoredEditorSimulationClock;
+  const editorSimulationTimeState = resolveRuntimeTimeState(
+    editorState.projectDocument.time,
+    editorSimulationClock
+  );
   const advancedRendering = editorState.document.world.advancedRendering;
   const hoveredAsset =
     hoveredAssetId === null
