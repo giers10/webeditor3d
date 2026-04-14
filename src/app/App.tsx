@@ -7828,6 +7828,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
           dialogueId: link.action.dialogueId
         });
         break;
+      case "runSequence":
+        nextLink = createRunSequenceInteractionLink({
+          id: link.id,
+          sourceEntityId: link.sourceEntityId,
+          trigger,
+          sequenceId: link.action.sequenceId
+        });
+        break;
       case "control":
         nextLink = createControlInteractionLink({
           id: link.id,
@@ -7881,6 +7889,29 @@ export function App({ store, initialStatusMessage }: AppProps) {
           dialogueId: defaultDialogue.id
         }),
         "Switched link action to start dialogue."
+      );
+      return;
+    }
+
+    if (actionType === "runSequence") {
+      const defaultSequence = projectImpulseSequenceList[0] ?? null;
+
+      if (defaultSequence === null) {
+        setStatusMessage(
+          "Author a project sequence with at least one impulse step before switching this link to run sequence."
+        );
+        return;
+      }
+
+      commitInteractionLinkChange(
+        link,
+        createRunSequenceInteractionLink({
+          id: link.id,
+          sourceEntityId: sourceEntity.id,
+          trigger: getCanonicalInteractionLinkTrigger(sourceEntity, link.trigger),
+          sequenceId: defaultSequence.id
+        }),
+        "Switched link action to run sequence."
       );
       return;
     }
@@ -8060,6 +8091,26 @@ export function App({ store, initialStatusMessage }: AppProps) {
         dialogueId
       }),
       "Updated dialogue link target."
+    );
+  };
+
+  const updateSequenceInteractionLinkTarget = (
+    link: InteractionLink,
+    sequenceId: string
+  ) => {
+    if (link.action.type !== "runSequence") {
+      return;
+    }
+
+    commitInteractionLinkChange(
+      link,
+      createRunSequenceInteractionLink({
+        id: link.id,
+        sourceEntityId: link.sourceEntityId,
+        trigger: link.trigger,
+        sequenceId
+      }),
+      "Updated sequence link target."
     );
   };
 
