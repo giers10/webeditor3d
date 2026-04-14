@@ -372,14 +372,14 @@ export function ProjectSequencerPane({
                                 ? "schedule-block--selected"
                                 : ""
                             } ${
-                              isRoutineEffectInactive(routine)
+                              isRoutineEffectInactive(routine, sequences)
                                 ? "schedule-block--inactive"
                                 : ""
                             } ${
                               routine.enabled ? "" : "schedule-block--disabled"
                             }`.trim()}
                             type="button"
-                            title={`${routine.title} · ${getRoutineSummary(routine)}`}
+                            title={`${routine.title} · ${getRoutineSummary(routine, sequences)}`}
                             style={{
                               left: `${(segment.startHour / HOURS_PER_DAY) * 100}%`,
                               width: `${((segment.endHour - segment.startHour) / HOURS_PER_DAY) * 100}%`
@@ -872,7 +872,7 @@ export function ProjectSequencerPane({
                   {selectedTargetOption.groupLabel} · {selectedTargetOption.label}
                 </div>
                 <div className="schedule-pane__summary">
-                  {getRoutineSummary(selectedRoutine)}
+                  {getRoutineSummary(selectedRoutine, sequences)}
                 </div>
               </div>
 
