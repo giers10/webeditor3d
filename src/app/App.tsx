@@ -1300,6 +1300,8 @@ function getInteractionActionLabel(link: InteractionLink): string {
       return "Stop Sound";
     case "startDialogue":
       return "Start Dialogue";
+    case "runSequence":
+      return "Run Sequence";
     case "control":
       return "Control Effect";
   }
