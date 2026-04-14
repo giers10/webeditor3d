@@ -18,6 +18,7 @@ import {
   LOCAL_LIGHTS_AND_SKYBOX_SCENE_DOCUMENT_VERSION,
   MODEL_ASSET_PIPELINE_SCENE_DOCUMENT_VERSION,
   NPC_ENTITY_FOUNDATION_SCENE_DOCUMENT_VERSION,
+  NPC_DIALOGUE_REFERENCE_SCENE_DOCUMENT_VERSION,
   PATH_FOUNDATION_SCENE_DOCUMENT_VERSION,
   PLAYER_START_AIR_CONTROL_SCENE_DOCUMENT_VERSION,
   PLAYER_START_AIR_DIRECTION_CONTROL_SCENE_DOCUMENT_VERSION,
@@ -625,7 +626,8 @@ describe("scene document JSON", () => {
           moveRight: "Period",
           jump: "Space",
           sprint: "ShiftRight",
-          crouch: "KeyC"
+          crouch: "KeyC",
+          pauseTime: "KeyP"
         },
         gamepad: {
           moveForward: "dpadUp",
@@ -635,6 +637,7 @@ describe("scene document JSON", () => {
           jump: "buttonNorth",
           sprint: "rightShoulder",
           crouch: "buttonEast",
+          pauseTime: "buttonMenu",
           cameraLook: "rightStick"
         }
       }
@@ -934,6 +937,47 @@ describe("scene document JSON", () => {
               moveBackward: playerStart.inputBindings.gamepad.moveBackward,
               moveLeft: playerStart.inputBindings.gamepad.moveLeft,
               moveRight: playerStart.inputBindings.gamepad.moveRight
+            }
+          }
+        }
+      }
+    };
+
+    const migratedDocument = migrateSceneDocument(legacyDocument);
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.entities[playerStart.id]).toEqual(playerStart);
+  });
+
+  it("migrates version 51 Player Start input bindings to include default pause bindings", () => {
+    const playerStart = createPlayerStartEntity({
+      id: "entity-player-start-legacy-pause-binding"
+    });
+    const legacyDocument = {
+      ...createEmptySceneDocument({ name: "Legacy Player Pause Binding Scene" }),
+      version: NPC_DIALOGUE_REFERENCE_SCENE_DOCUMENT_VERSION,
+      entities: {
+        [playerStart.id]: {
+          ...playerStart,
+          inputBindings: {
+            keyboard: {
+              moveForward: playerStart.inputBindings.keyboard.moveForward,
+              moveBackward: playerStart.inputBindings.keyboard.moveBackward,
+              moveLeft: playerStart.inputBindings.keyboard.moveLeft,
+              moveRight: playerStart.inputBindings.keyboard.moveRight,
+              jump: playerStart.inputBindings.keyboard.jump,
+              sprint: playerStart.inputBindings.keyboard.sprint,
+              crouch: playerStart.inputBindings.keyboard.crouch
+            },
+            gamepad: {
+              moveForward: playerStart.inputBindings.gamepad.moveForward,
+              moveBackward: playerStart.inputBindings.gamepad.moveBackward,
+              moveLeft: playerStart.inputBindings.gamepad.moveLeft,
+              moveRight: playerStart.inputBindings.gamepad.moveRight,
+              jump: playerStart.inputBindings.gamepad.jump,
+              sprint: playerStart.inputBindings.gamepad.sprint,
+              crouch: playerStart.inputBindings.gamepad.crouch,
+              cameraLook: playerStart.inputBindings.gamepad.cameraLook
             }
           }
         }
