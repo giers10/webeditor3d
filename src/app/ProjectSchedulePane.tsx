@@ -19,6 +19,10 @@ import {
   type ProjectScheduleEffectOptionId,
   type ProjectScheduleTargetOption
 } from "../sequencer/project-sequencer-control-options";
+import {
+  findHeldSequenceControlEffect,
+  getProjectScheduleRoutineHeldSteps
+} from "../sequencer/project-sequence-steps";
 
 interface ProjectSequencerPaneProps {
   targetOptions: ProjectScheduleTargetOption[];
@@ -70,17 +74,21 @@ function getRoutineSummary(routine: ProjectScheduleRoutine): string {
     formatProjectScheduleDaySelection(routine.days),
     `${formatTimeOfDayHours(routine.startHour)}-${formatTimeOfDayHours(routine.endHour)}`
   ];
+  const heldSteps = getProjectScheduleRoutineHeldSteps(routine);
 
   if (routine.target.kind === "actor") {
-    const presenceEffect = findProjectScheduleRoutineEffect(
-      routine,
+    const presenceEffect = findHeldSequenceControlEffect(
+      heldSteps,
       "setActorPresence"
     );
-    const animationEffect = findProjectScheduleRoutineEffect(
-      routine,
+    const animationEffect = findHeldSequenceControlEffect(
+      heldSteps,
       "playActorAnimation"
     );
-    const pathEffect = findProjectScheduleRoutineEffect(routine, "followActorPath");
+    const pathEffect = findHeldSequenceControlEffect(
+      heldSteps,
+      "followActorPath"
+    );
 
     summaryParts.push(presenceEffect?.active === false ? "Hidden" : "Present");
 
@@ -100,10 +108,11 @@ function getRoutineSummary(routine: ProjectScheduleRoutine): string {
 }
 
 function isRoutineEffectInactive(routine: ProjectScheduleRoutine): boolean {
+  const heldSteps = getProjectScheduleRoutineHeldSteps(routine);
+
   if (routine.target.kind === "actor") {
     return (
-      findProjectScheduleRoutineEffect(routine, "setActorPresence")?.active ===
-      false
+      findHeldSequenceControlEffect(heldSteps, "setActorPresence")?.active === false
     );
   }
 
@@ -226,15 +235,24 @@ export function ProjectSequencerPane({
   const selectedActorPresenceEffect =
     selectedRoutine === null || selectedRoutine.target.kind !== "actor"
       ? null
-      : findProjectScheduleRoutineEffect(selectedRoutine, "setActorPresence");
+      : findHeldSequenceControlEffect(
+          getProjectScheduleRoutineHeldSteps(selectedRoutine),
+          "setActorPresence"
+        );
   const selectedActorAnimationEffect =
     selectedRoutine === null || selectedRoutine.target.kind !== "actor"
       ? null
-      : findProjectScheduleRoutineEffect(selectedRoutine, "playActorAnimation");
+      : findHeldSequenceControlEffect(
+          getProjectScheduleRoutineHeldSteps(selectedRoutine),
+          "playActorAnimation"
+        );
   const selectedActorPathEffect =
     selectedRoutine === null || selectedRoutine.target.kind !== "actor"
       ? null
-      : findProjectScheduleRoutineEffect(selectedRoutine, "followActorPath");
+      : findHeldSequenceControlEffect(
+          getProjectScheduleRoutineHeldSteps(selectedRoutine),
+          "followActorPath"
+        );
   const hourTicks = Array.from({ length: HOURS_PER_DAY }, (_, hour) => hour);
 
   return (
