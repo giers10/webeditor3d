@@ -6351,6 +6351,7 @@ export class ViewportHost {
                 actorId: "creation-preview",
                 presence: createNpcAlwaysPresence(),
                 modelAssetId: toolPreview.target.modelAssetId ?? null,
+                dialogueId: null,
                 collider: createNpcColliderSettings()
               },
               false,
