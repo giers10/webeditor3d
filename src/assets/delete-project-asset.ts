@@ -22,6 +22,7 @@ function removeInvalidatedInteractionLinks(
           return silencedSoundEmitterIds.has(link.action.targetSoundEmitterId);
         case "control":
           switch (link.action.effect.type) {
+            case "setProjectTimePaused":
             case "setActorPresence":
             case "playActorAnimation":
             case "followActorPath":

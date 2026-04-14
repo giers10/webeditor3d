@@ -613,6 +613,10 @@ function cloneDiscreteStateAsEffect(
   state: RuntimeResolvedControlState["discrete"][number]
 ): ControlEffect {
   switch (state.type) {
+    case "projectTimePaused":
+      throw new Error(
+        "Project time pause is intentionally not cloned into scheduler routine effects because pausing the scheduler clock would deadlock time progression."
+      );
     case "actorPresence":
       return createSetActorPresenceControlEffect({
         target: state.target,

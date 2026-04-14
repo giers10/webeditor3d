@@ -534,6 +534,10 @@ export function getProjectScheduleEffectOptionId(
   effect: ControlEffect
 ): ProjectScheduleEffectOptionId {
   switch (effect.type) {
+    case "setProjectTimePaused":
+      throw new Error(
+        "Project time pause is intentionally not exposed in the schedule editor because a scheduler routine cannot safely pause its own project clock."
+      );
     case "setActorPresence":
       return effect.active ? "actor.present" : "actor.hidden";
     case "playActorAnimation":
