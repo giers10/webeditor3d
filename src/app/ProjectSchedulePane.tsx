@@ -6,7 +6,6 @@ import {
 } from "../document/project-time-settings";
 import { formatControlEffectValue, getControlTargetRefKey } from "../controls/control-surface";
 import {
-  findProjectScheduleRoutineEffect,
   formatProjectScheduleDaySelection,
   getProjectScheduleTimelineSegments,
   type ProjectScheduler,
