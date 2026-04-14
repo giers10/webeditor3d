@@ -1499,6 +1499,7 @@ describe("buildRuntimeSceneFromDocument", () => {
       id: "entity-npc-patroller",
       actorId: actorTarget.actorId,
       modelAssetId: asset.id,
+      dialogueId: "dialogue-patrol",
       yawDegrees: 15
     });
     const path = createScenePath({
@@ -1525,6 +1526,17 @@ describe("buildRuntimeSceneFromDocument", () => {
     const document = createEmptySceneDocument();
     document.assets[asset.id] = asset;
     document.entities[npc.id] = npc;
+    document.dialogues.dialogues["dialogue-patrol"] = {
+      id: "dialogue-patrol",
+      title: "Patrol",
+      lines: [
+        {
+          id: "dialogue-line-patrol-1",
+          speakerName: "Guard",
+          text: "All clear."
+        }
+      ]
+    };
     document.paths[path.id] = path;
     document.scheduler.routines["routine-patrol"] = createProjectScheduleRoutine({
       id: "routine-patrol",
@@ -1587,6 +1599,7 @@ describe("buildRuntimeSceneFromDocument", () => {
       expect.objectContaining({
         entityId: npc.id,
         animationClipName: "Walk",
+        dialogueId: "dialogue-patrol",
         position: {
           x: 4,
           y: 0,
