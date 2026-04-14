@@ -24,6 +24,14 @@ interface ProjectSequencesPanelProps {
   sequences: ProjectSequenceLibrary;
   dialogues: ProjectDialogueLibrary;
   targetOptions: ProjectScheduleTargetOption[];
+  teleportTargetOptions: Array<{
+    entityId: string;
+    label: string;
+  }>;
+  visibilityTargetOptions: Array<{
+    brushId: string;
+    label: string;
+  }>;
   selectedSequenceId: string | null;
   onSelectSequence(sequenceId: string | null): void;
   onAddSequence(): void;
@@ -32,6 +40,8 @@ interface ProjectSequencesPanelProps {
   onAddHeldControlStep(sequenceId: string, targetKey: string): void;
   onAddImpulseControlStep(sequenceId: string, targetKey: string): void;
   onAddDialogueStep(sequenceId: string, dialogueId: string): void;
+  onAddTeleportStep(sequenceId: string, targetEntityId: string): void;
+  onAddVisibilityStep(sequenceId: string, targetBrushId: string): void;
   onDeleteStep(sequenceId: string, stepIndex: number): void;
   onSetControlStepTarget(
     sequenceId: string,
@@ -67,6 +77,21 @@ interface ProjectSequencesPanelProps {
     sequenceId: string,
     stepIndex: number,
     dialogueId: string
+  ): void;
+  onSetTeleportStepTarget(
+    sequenceId: string,
+    stepIndex: number,
+    targetEntityId: string
+  ): void;
+  onSetVisibilityStepTarget(
+    sequenceId: string,
+    stepIndex: number,
+    targetBrushId: string
+  ): void;
+  onSetVisibilityStepMode(
+    sequenceId: string,
+    stepIndex: number,
+    mode: "toggle" | "show" | "hide"
   ): void;
 }
 
@@ -110,10 +135,22 @@ function getControlEffectColorValue(
   }
 }
 
+function getVisibilityModeSelectValue(
+  visible: boolean | undefined
+): "toggle" | "show" | "hide" {
+  if (visible === undefined) {
+    return "toggle";
+  }
+
+  return visible ? "show" : "hide";
+}
+
 export function ProjectSequencesPanel({
   sequences,
   dialogues,
   targetOptions,
+  teleportTargetOptions,
+  visibilityTargetOptions,
   selectedSequenceId,
   onSelectSequence,
   onAddSequence,
@@ -122,6 +159,8 @@ export function ProjectSequencesPanel({
   onAddHeldControlStep,
   onAddImpulseControlStep,
   onAddDialogueStep,
+  onAddTeleportStep,
+  onAddVisibilityStep,
   onDeleteStep,
   onSetControlStepTarget,
   onSetControlStepEffectOption,
@@ -129,7 +168,10 @@ export function ProjectSequencesPanel({
   onSetControlStepColorValue,
   onSetControlStepAnimationClip,
   onSetControlStepAnimationLoop,
-  onSetDialogueStepDialogueId
+  onSetDialogueStepDialogueId,
+  onSetTeleportStepTarget,
+  onSetVisibilityStepTarget,
+  onSetVisibilityStepMode
 }: ProjectSequencesPanelProps) {
   const sequenceList = getProjectSequences(sequences);
   const dialogueList = getProjectDialogues(dialogues);
@@ -196,8 +238,8 @@ export function ProjectSequencesPanel({
         <div className="form-section">
           <div className="material-summary">
             A sequence is a reusable bundle of engine effects. Held effects stay
-            active for the whole scheduled window. Impulse effects fire when the
-            sequence is started from an interaction.
+            active for the whole placement window. Impulse effects fire when the
+            sequence starts from an interaction or future event trigger.
           </div>
           <label className="form-field">
             <span className="label">Title</span>
@@ -465,6 +507,104 @@ export function ProjectSequencesPanel({
                   );
                 }
 
+                if (effect.type === "teleportPlayer") {
+                  return (
+                    <div key={`${selectedSequence.id}-${effectIndex}`} className="outliner-item">
+                      <div className="outliner-item__row">
+                        <div className="outliner-item__meta">
+                          {getSequenceEffectLabel(effect)}
+                        </div>
+                        <button
+                          className="outliner-item__delete"
+                          type="button"
+                          onClick={() => onDeleteStep(selectedSequence.id, effectIndex)}
+                        >
+                          x
+                        </button>
+                      </div>
+                      <label className="form-field">
+                        <span className="label">Teleport Target</span>
+                        <select
+                          className="select-input"
+                          value={effect.targetEntityId}
+                          onChange={(event) =>
+                            onSetTeleportStepTarget(
+                              selectedSequence.id,
+                              effectIndex,
+                              event.currentTarget.value
+                            )
+                          }
+                        >
+                          {teleportTargetOptions.map((target) => (
+                            <option key={target.entityId} value={target.entityId}>
+                              {target.label}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
+                  );
+                }
+
+                if (effect.type === "toggleVisibility") {
+                  return (
+                    <div key={`${selectedSequence.id}-${effectIndex}`} className="outliner-item">
+                      <div className="outliner-item__row">
+                        <div className="outliner-item__meta">
+                          {getSequenceEffectLabel(effect)}
+                        </div>
+                        <button
+                          className="outliner-item__delete"
+                          type="button"
+                          onClick={() => onDeleteStep(selectedSequence.id, effectIndex)}
+                        >
+                          x
+                        </button>
+                      </div>
+                      <div className="vector-inputs vector-inputs--two">
+                        <label className="form-field">
+                          <span className="label">Whitebox Solid</span>
+                          <select
+                            className="select-input"
+                            value={effect.targetBrushId}
+                            onChange={(event) =>
+                              onSetVisibilityStepTarget(
+                                selectedSequence.id,
+                                effectIndex,
+                                event.currentTarget.value
+                              )
+                            }
+                          >
+                            {visibilityTargetOptions.map((target) => (
+                              <option key={target.brushId} value={target.brushId}>
+                                {target.label}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <label className="form-field">
+                          <span className="label">Mode</span>
+                          <select
+                            className="select-input"
+                            value={getVisibilityModeSelectValue(effect.visible)}
+                            onChange={(event) =>
+                              onSetVisibilityStepMode(
+                                selectedSequence.id,
+                                effectIndex,
+                                event.currentTarget.value as "toggle" | "show" | "hide"
+                              )
+                            }
+                          >
+                            <option value="toggle">Toggle</option>
+                            <option value="show">Show</option>
+                            <option value="hide">Hide</option>
+                          </select>
+                        </label>
+                      </div>
+                    </div>
+                  );
+                }
+
                 return (
                   <div key={`${selectedSequence.id}-${effectIndex}`} className="outliner-item">
                     <div className="outliner-item__row">
@@ -480,8 +620,8 @@ export function ProjectSequencesPanel({
                       </button>
                     </div>
                     <div className="material-summary">
-                      This impulse effect is preserved, but the current editor only
-                      exposes direct editing for dialogue and control effects.
+                      This effect is preserved, but the current editor does not
+                      expose direct editing for it yet.
                     </div>
                   </div>
                 );
@@ -519,6 +659,32 @@ export function ProjectSequencesPanel({
               }
             >
               Add Dialogue Effect
+            </button>
+            <button
+              className="toolbar__button toolbar__button--compact"
+              type="button"
+              disabled={teleportTargetOptions.length === 0}
+              onClick={() =>
+                onAddTeleportStep(
+                  selectedSequence.id,
+                  teleportTargetOptions[0]?.entityId ?? ""
+                )
+              }
+            >
+              Add Teleport Effect
+            </button>
+            <button
+              className="toolbar__button toolbar__button--compact"
+              type="button"
+              disabled={visibilityTargetOptions.length === 0}
+              onClick={() =>
+                onAddVisibilityStep(
+                  selectedSequence.id,
+                  visibilityTargetOptions[0]?.brushId ?? ""
+                )
+              }
+            >
+              Add Visibility Effect
             </button>
           </div>
         </div>
