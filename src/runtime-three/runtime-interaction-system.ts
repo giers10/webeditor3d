@@ -51,6 +51,11 @@ export interface RuntimeInteractionPrompt {
   range: number;
 }
 
+export interface RuntimePlayerTriggerProbe {
+  feetPosition: Vec3;
+  eyePosition: Vec3;
+}
+
 function subtractVec3(left: Vec3, right: Vec3): Vec3 {
   return {
     x: left.x - right.x,
@@ -106,6 +111,94 @@ function isPointInsideTriggerVolume(
     position.y <= triggerVolume.position.y + halfSize.y &&
     position.z >= triggerVolume.position.z - halfSize.z &&
     position.z <= triggerVolume.position.z + halfSize.z
+  );
+}
+
+function isVec3(value: Vec3 | RuntimePlayerTriggerProbe): value is Vec3 {
+  return "x" in value;
+}
+
+function rayAxisAlignedBoxHitDistance(
+  origin: Vec3,
+  direction: Vec3,
+  bounds: { min: Vec3; max: Vec3 }
+): number | null {
+  let near = Number.NEGATIVE_INFINITY;
+  let far = Number.POSITIVE_INFINITY;
+
+  for (const axis of ["x", "y", "z"] as const) {
+    const axisOrigin = origin[axis];
+    const axisDirection = direction[axis];
+    const axisMin = bounds.min[axis];
+    const axisMax = bounds.max[axis];
+
+    if (Math.abs(axisDirection) <= Number.EPSILON) {
+      if (axisOrigin < axisMin || axisOrigin > axisMax) {
+        return null;
+      }
+      continue;
+    }
+
+    const inverseDirection = 1 / axisDirection;
+    let entry = (axisMin - axisOrigin) * inverseDirection;
+    let exit = (axisMax - axisOrigin) * inverseDirection;
+
+    if (entry > exit) {
+      const swap = entry;
+      entry = exit;
+      exit = swap;
+    }
+
+    near = Math.max(near, entry);
+    far = Math.min(far, exit);
+
+    if (near > far) {
+      return null;
+    }
+  }
+
+  if (far < 0) {
+    return null;
+  }
+
+  return near >= 0 ? near : 0;
+}
+
+function isPlayerInsideTriggerVolume(
+  feetPosition: Vec3,
+  eyePosition: Vec3,
+  triggerVolume: RuntimeTriggerVolume
+): boolean {
+  if (
+    isPointInsideTriggerVolume(feetPosition, triggerVolume) ||
+    isPointInsideTriggerVolume(eyePosition, triggerVolume)
+  ) {
+    return true;
+  }
+
+  const halfSize = {
+    x: triggerVolume.size.x * 0.5,
+    y: triggerVolume.size.y * 0.5,
+    z: triggerVolume.size.z * 0.5
+  };
+
+  return (
+    rayAxisAlignedBoxHitDistance(
+      feetPosition,
+      subtractVec3(eyePosition, feetPosition),
+      {
+        min: {
+          x: triggerVolume.position.x - halfSize.x,
+          y: triggerVolume.position.y - halfSize.y,
+          z: triggerVolume.position.z - halfSize.z
+        },
+        max: {
+          x: triggerVolume.position.x + halfSize.x,
+          y: triggerVolume.position.y + halfSize.y,
+          z: triggerVolume.position.z + halfSize.z
+        }
+      }
+    ) !== null
   );
 }
 
@@ -194,6 +287,85 @@ function getNpcDialoguePrompt(
     : hasClickLinks
       ? "Interact"
       : "Talk";
+}
+
+function getNpcDialogueTargetBounds(npc: RuntimeNpc): {
+  min: Vec3;
+  max: Vec3;
+  center: Vec3;
+  range: number;
+} {
+  switch (npc.collider.mode) {
+    case "capsule": {
+      return {
+        min: {
+          x: npc.position.x - npc.collider.radius,
+          y: npc.position.y,
+          z: npc.position.z - npc.collider.radius
+        },
+        max: {
+          x: npc.position.x + npc.collider.radius,
+          y: npc.position.y + npc.collider.height,
+          z: npc.position.z + npc.collider.radius
+        },
+        center: {
+          x: npc.position.x,
+          y: npc.position.y + npc.collider.height * 0.5,
+          z: npc.position.z
+        },
+        range: Math.max(
+          DEFAULT_NPC_DIALOGUE_TARGET_RADIUS,
+          npc.collider.height * 0.5
+        )
+      };
+    }
+    case "box": {
+      return {
+        min: {
+          x: npc.position.x - npc.collider.size.x * 0.5,
+          y: npc.position.y,
+          z: npc.position.z - npc.collider.size.z * 0.5
+        },
+        max: {
+          x: npc.position.x + npc.collider.size.x * 0.5,
+          y: npc.position.y + npc.collider.size.y,
+          z: npc.position.z + npc.collider.size.z * 0.5
+        },
+        center: {
+          x: npc.position.x,
+          y: npc.position.y + npc.collider.size.y * 0.5,
+          z: npc.position.z
+        },
+        range: Math.max(
+          DEFAULT_NPC_DIALOGUE_TARGET_RADIUS,
+          Math.max(
+            npc.collider.size.x,
+            npc.collider.size.y,
+            npc.collider.size.z
+          ) * 0.5
+        )
+      };
+    }
+    case "none":
+      return {
+        min: {
+          x: npc.position.x - DEFAULT_NPC_DIALOGUE_TARGET_RADIUS * 0.5,
+          y: npc.position.y,
+          z: npc.position.z - DEFAULT_NPC_DIALOGUE_TARGET_RADIUS * 0.5
+        },
+        max: {
+          x: npc.position.x + DEFAULT_NPC_DIALOGUE_TARGET_RADIUS * 0.5,
+          y: npc.position.y + 1.8,
+          z: npc.position.z + DEFAULT_NPC_DIALOGUE_TARGET_RADIUS * 0.5
+        },
+        center: {
+          x: npc.position.x,
+          y: npc.position.y + 0.9,
+          z: npc.position.z
+        },
+        range: DEFAULT_NPC_DIALOGUE_TARGET_RADIUS
+      };
+  }
 }
 
 function updateBestPrompt(
