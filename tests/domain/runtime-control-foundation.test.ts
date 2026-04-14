@@ -8,16 +8,20 @@ import {
 } from "../../src/assets/project-assets";
 import {
   createInteractableEntity,
+  createNpcEntity,
   createPointLightEntity,
   createSoundEmitterEntity,
   createTriggerVolumeEntity
 } from "../../src/entities/entity-instances";
 import {
+  createActorControlTargetRef,
   createLightControlTargetRef,
+  createSetActorPresenceControlEffect,
   createSetLightEnabledControlEffect
 } from "../../src/controls/control-surface";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
 import { createControlInteractionLink } from "../../src/interactions/interaction-links";
+import { createProjectScheduleRoutine } from "../../src/scheduler/project-scheduler";
 import { RuntimeInteractionSystem } from "../../src/runtime-three/runtime-interaction-system";
 import { buildRuntimeSceneFromDocument } from "../../src/runtime-three/runtime-scene-build";
 
@@ -35,6 +39,10 @@ describe("runtime control foundation", () => {
     const soundEmitter = createSoundEmitterEntity({
       id: "entity-sound-main",
       audioAssetId: "asset-audio-main"
+    });
+    const npc = createNpcEntity({
+      id: "entity-npc-vendor",
+      actorId: "actor-market-vendor"
     });
     const triggerVolume = createTriggerVolumeEntity({
       id: "entity-trigger-main"
@@ -79,8 +87,22 @@ describe("runtime control foundation", () => {
       assetId: modelAsset.id
     });
 
+    const document = createEmptySceneDocument();
+    document.scheduler.routines["routine-market-vendor"] =
+      createProjectScheduleRoutine({
+        id: "routine-market-vendor",
+        title: "Market Hours",
+        target: createActorControlTargetRef(npc.actorId),
+        startHour: 9,
+        endHour: 17,
+        effect: createSetActorPresenceControlEffect({
+          target: createActorControlTargetRef(npc.actorId),
+          active: true
+        })
+      });
+
     const runtimeScene = buildRuntimeSceneFromDocument({
-      ...createEmptySceneDocument(),
+      ...document,
       assets: {
         [modelAsset.id]: modelAsset,
         [audioAsset.id]: audioAsset
@@ -92,12 +114,20 @@ describe("runtime control foundation", () => {
         [pointLight.id]: pointLight,
         [interactable.id]: interactable,
         [soundEmitter.id]: soundEmitter,
+        [npc.id]: npc,
         [triggerVolume.id]: triggerVolume
       }
     });
 
     expect(runtimeScene.control.targets).toEqual(
       expect.arrayContaining([
+        expect.objectContaining({
+          target: {
+            kind: "actor",
+            actorId: npc.actorId
+          },
+          capabilities: ["actorPresence"]
+        }),
         expect.objectContaining({
           target: {
             kind: "entity",
@@ -145,6 +175,14 @@ describe("runtime control foundation", () => {
     ]);
     expect(runtimeScene.control.resolved.discrete).toEqual(
       expect.arrayContaining([
+        expect.objectContaining({
+          type: "actorPresence",
+          target: {
+            kind: "actor",
+            actorId: npc.actorId
+          },
+          value: true
+        }),
         expect.objectContaining({
           type: "lightEnabled",
           target: {
