@@ -11439,7 +11439,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     </label>
                   </div>
                   <div className="material-summary">
-                    Default is 24 real minutes for one full 24-hour cycle.
+                    Start Day and Start Time now immediately reseed the editor
+                    viewport. Default is 24 real minutes for one full 24-hour
+                    cycle.
                   </div>
                 </div>
 
