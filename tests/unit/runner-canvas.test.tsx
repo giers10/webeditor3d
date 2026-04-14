@@ -100,6 +100,7 @@ const { MockRuntimeHost, runtimeHostInstances } = vi.hoisted(() => {
     setRuntimeMessageHandler: ReturnType<typeof vi.fn>;
     setFirstPersonTelemetryHandler: ReturnType<typeof vi.fn>;
     setInteractionPromptHandler: ReturnType<typeof vi.fn>;
+    setRuntimeDialogueHandler: ReturnType<typeof vi.fn>;
     setRuntimePauseStateHandler: ReturnType<typeof vi.fn>;
     setSceneLoadStateHandler: ReturnType<typeof vi.fn>;
     setSceneExitHandler: ReturnType<typeof vi.fn>;
@@ -115,6 +116,7 @@ const { MockRuntimeHost, runtimeHostInstances } = vi.hoisted(() => {
     setRuntimeMessageHandler = vi.fn();
     setFirstPersonTelemetryHandler = vi.fn();
     setInteractionPromptHandler = vi.fn();
+    setRuntimeDialogueHandler = vi.fn();
     setRuntimePauseStateHandler = vi.fn();
     setSceneLoadStateHandler = vi.fn();
     setSceneExitHandler = vi.fn();
