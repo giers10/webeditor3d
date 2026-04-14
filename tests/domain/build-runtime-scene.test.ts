@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { BoxGeometry, PlaneGeometry } from "three";
+import { AnimationClip, BoxGeometry, PlaneGeometry } from "three";
 
 import {
   createActorControlTargetRef,
+  createFollowActorPathControlEffect,
+  createPlayActorAnimationControlEffect,
   createSetActorPresenceControlEffect
 } from "../../src/controls/control-surface";
 import { createBoxBrush } from "../../src/document/brushes";
