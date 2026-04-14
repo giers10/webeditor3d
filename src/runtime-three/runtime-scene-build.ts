@@ -1554,7 +1554,8 @@ export function buildRuntimeSceneFromDocument(
     .map(buildRuntimePath);
   const collections = buildRuntimeSceneCollections(
     document,
-    options.runtimeClock ?? null
+    options.runtimeClock ?? null,
+    paths
   );
   const control = buildRuntimeControlSurface(
     document,
