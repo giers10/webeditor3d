@@ -832,27 +832,18 @@ describe("buildRuntimeSceneFromDocument", () => {
     });
   });
 
-  it("filters active NPC presence from the current project-global runtime clock", () => {
+  it("filters active NPCs from the project scheduler against the current runtime clock", () => {
     const alwaysNpc = createNpcEntity({
       id: "entity-npc-always",
-      actorId: "actor-town-always",
-      presence: createNpcAlwaysPresence()
+      actorId: "actor-town-always"
     });
     const daytimeNpc = createNpcEntity({
       id: "entity-npc-daytime",
-      actorId: "actor-town-daytime",
-      presence: createNpcTimeWindowPresence({
-        startHour: 9,
-        endHour: 17
-      })
+      actorId: "actor-town-daytime"
     });
     const overnightNpc = createNpcEntity({
       id: "entity-npc-overnight",
-      actorId: "actor-town-overnight",
-      presence: createNpcTimeWindowPresence({
-        startHour: 22,
-        endHour: 2
-      })
+      actorId: "actor-town-overnight"
     });
     const document = {
       ...createEmptySceneDocument({ name: "NPC Presence Scene" }),
@@ -862,6 +853,28 @@ describe("buildRuntimeSceneFromDocument", () => {
         [overnightNpc.id]: overnightNpc
       }
     };
+    document.scheduler.routines["routine-daytime"] = createProjectScheduleRoutine({
+      id: "routine-daytime",
+      title: "Day Shift",
+      target: createActorControlTargetRef(daytimeNpc.actorId),
+      startHour: 9,
+      endHour: 17,
+      effect: createSetActorPresenceControlEffect({
+        target: createActorControlTargetRef(daytimeNpc.actorId),
+        active: true
+      })
+    });
+    document.scheduler.routines["routine-overnight"] = createProjectScheduleRoutine({
+      id: "routine-overnight",
+      title: "Night Shift",
+      target: createActorControlTargetRef(overnightNpc.actorId),
+      startHour: 22,
+      endHour: 2,
+      effect: createSetActorPresenceControlEffect({
+        target: createActorControlTargetRef(overnightNpc.actorId),
+        active: true
+      })
+    });
 
     const daytimeRuntimeScene = buildRuntimeSceneFromDocument(document, {
       runtimeClock: {
@@ -914,6 +927,15 @@ describe("buildRuntimeSceneFromDocument", () => {
         .filter((collider) => collider.source === "npc")
         .map((collider) => collider.entityId)
     ).toEqual(["entity-npc-always", "entity-npc-overnight"]);
+    expect(
+      overnightRuntimeScene.entities.npcs.find(
+        (npc) => npc.entityId === overnightNpc.id
+      )
+    ).toEqual(
+      expect.objectContaining({
+        activeRoutineTitle: "Night Shift"
+      })
+    );
   });
 
   it("builds a deterministic fallback spawn when no PlayerStart is authored", () => {
