@@ -10550,17 +10550,16 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         if (routine.target.kind !== "actor") {
                           throw new Error("Only actor routines expose presence.");
                         }
-
-                    upsertActorRoutineEffect(
-                      routine,
-                      createSetActorPresenceControlEffect({
-                        target: routine.target,
-                        active
-                      })
-                    );
+                        upsertActorRoutineEffect(
+                          routine,
+                          createSetActorPresenceControlEffect({
+                            target: routine.target,
+                            active
+                          })
+                        );
+                      }
+                    )
                   }
-                )
-              }
               onSetActorRoutineAnimationClip={(routineId, clipName) =>
                 updateProjectScheduleRoutine(
                   routineId,
@@ -10696,9 +10695,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   }
                 )
               }
-              onSetActorRoutinePathLoop={(routineId, loop) =>
-                updateProjectScheduleRoutine(
-                  routineId,
+                  onSetActorRoutinePathLoop={(routineId, loop) =>
+                    updateProjectScheduleRoutine(
+                      routineId,
                   "Set actor routine path loop",
                   loop
                     ? "Actor routine path now loops."
@@ -10718,10 +10717,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     }
 
                     effect.loop = loop;
+                      }
+                    )
                   }
-                )
-              }
-            />
+                />
+              </div>
+            </>
           ) : null}
         </div>
 

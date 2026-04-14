@@ -236,8 +236,10 @@ button:disabled {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  flex: 1 1 auto;
   min-height: 0;
   min-width: 0;
+  overflow: hidden;
 }
 
 .runner-workspace {
@@ -868,7 +870,9 @@ button:disabled {
 
 .viewport-region {
   display: flex;
+  flex: 1 1 auto;
   min-height: 0;
+  min-width: 0;
   background: rgba(20, 24, 31, 0.92);
   border: 1px solid var(--color-border);
   border-radius: 24px;
@@ -876,10 +880,64 @@ button:disabled {
   box-shadow: var(--shadow-panel);
 }
 
+.schedule-pane-shell {
+  flex: 0 0 auto;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.schedule-pane-splitter {
+  position: relative;
+  flex: 0 0 auto;
+  height: 12px;
+  margin: -2px 0;
+  background: transparent;
+  border: 0;
+  cursor: row-resize;
+  touch-action: none;
+}
+
+.schedule-pane-splitter::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 16px;
+  right: 16px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.12);
+  transform: translateY(-50%);
+}
+
+.schedule-pane-splitter::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 64px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  transform: translate(-50%, -50%);
+}
+
+.schedule-pane-splitter:hover::after,
+.schedule-pane-splitter--active::after,
+.schedule-pane-splitter:focus-visible::after {
+  background: rgba(207, 123, 66, 0.22);
+  border-color: rgba(207, 123, 66, 0.46);
+}
+
+.schedule-pane-splitter:focus-visible {
+  outline: none;
+}
+
 .schedule-pane {
   display: flex;
   flex-direction: column;
-  min-height: 280px;
+  height: 100%;
+  min-height: 0;
   background: rgba(16, 20, 26, 0.96);
   border: 1px solid var(--color-border);
   border-radius: 24px;
