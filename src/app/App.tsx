@@ -357,7 +357,7 @@ import { validateRuntimeSceneBuild } from "../runtime-three/runtime-scene-valida
 import { EditorAutosaveController } from "../serialization/editor-autosave";
 import { Panel } from "../shared-ui/Panel";
 import { ProjectDialoguesPanel } from "./ProjectDialoguesPanel";
-import { ProjectSequencerPane } from "./ProjectSchedulePane";
+import { ProjectSequencerPane } from "./ProjectSequencerPane";
 import {
   areProjectSchedulersEqual,
   cloneProjectScheduleRoutine,
@@ -10893,22 +10893,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
                             previousEffect: routine.effects[0] ?? null
                           })
                         ];
-                      }
-                    )
-                  }
-                  onSetRoutineDays={(routineId, mode, days) =>
-                    updateProjectScheduleRoutine(
-                      routineId,
-                      "Set project sequencer days",
-                      "Updated sequencer clip days.",
-                      (routine) => {
-                        routine.days =
-                          mode === "everyDay"
-                            ? createProjectScheduleEveryDaySelection()
-                            : {
-                                mode: "selectedDays",
-                                days
-                              };
                       }
                     )
                   }
