@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import {
   createActorControlTargetRef,
+  createFollowActorPathControlEffect,
   createLightControlTargetRef,
+  createPlayActorAnimationControlEffect,
   createSetLightIntensityControlEffect,
   createSetActorPresenceControlEffect
 } from "../../src/controls/control-surface";
@@ -16,6 +18,7 @@ import {
   PLAYER_START_GAMEPAD_CAMERA_LOOK_SCENE_DOCUMENT_VERSION,
   PROJECT_TIME_DAY_NIGHT_PROFILE_SCENE_DOCUMENT_VERSION,
   RUNNER_LOADING_SCREEN_SCENE_DOCUMENT_VERSION,
+  SCHEDULER_CONTROL_EFFECTS_SCENE_DOCUMENT_VERSION,
   SCENE_DOCUMENT_VERSION,
   createEmptyProjectDocument,
   createEmptyProjectScene
@@ -249,6 +252,73 @@ describe("project document JSON", () => {
     ).toEqual(document);
   });
 
+  it("round-trips actor scheduler routines with animation and follow-path effects", () => {
+    const document = createEmptyProjectDocument({
+      name: "Routine Project"
+    });
+    const npcModelAsset = {
+      id: "asset-model-patroller",
+      kind: "model" as const,
+      sourceName: "patroller.glb",
+      mimeType: "model/gltf-binary",
+      storageKey: "asset:model:patroller",
+      byteLength: 1024,
+      metadata: {
+        kind: "model" as const,
+        format: "glb" as const,
+        sceneName: null,
+        nodeCount: 1,
+        meshCount: 1,
+        materialNames: [],
+        textureNames: [],
+        animationNames: ["Walk"],
+        boundingBox: null,
+        warnings: []
+      }
+    };
+    const npc = createNpcEntity({
+      id: "entity-npc-patroller",
+      actorId: "actor-patroller",
+      modelAssetId: npcModelAsset.id
+    });
+    const path = createScenePath({
+      id: "path-patrol"
+    });
+
+    document.assets[npcModelAsset.id] = npcModelAsset;
+    document.scenes[document.activeSceneId].entities[npc.id] = npc;
+    document.scenes[document.activeSceneId].paths[path.id] = path;
+    document.scheduler.routines["routine-patrol"] = createProjectScheduleRoutine({
+      id: "routine-patrol",
+      title: "Patrolling",
+      target: createActorControlTargetRef(npc.actorId),
+      startHour: 9,
+      endHour: 13,
+      effects: [
+        createSetActorPresenceControlEffect({
+          target: createActorControlTargetRef(npc.actorId),
+          active: true
+        }),
+        createPlayActorAnimationControlEffect({
+          target: createActorControlTargetRef(npc.actorId),
+          clipName: "Walk",
+          loop: true
+        }),
+        createFollowActorPathControlEffect({
+          target: createActorControlTargetRef(npc.actorId),
+          pathId: path.id,
+          speed: 2,
+          loop: false,
+          progressMode: "deriveFromTime"
+        })
+      ]
+    });
+
+    expect(
+      parseProjectDocumentJson(serializeProjectDocument(document))
+    ).toEqual(document);
+  });
+
   it("round-trips project scheduler routines bound to typed light control effects", () => {
     const document = createEmptyProjectDocument({
       name: "Lighting Project"
@@ -277,7 +347,7 @@ describe("project document JSON", () => {
     ).toEqual(document);
   });
 
-  it("migrates v47 project documents with typed scheduler control effects to the current version", () => {
+  it("migrates v48 project documents with legacy single-effect scheduler routines to the current version", () => {
     const pointLight = createPointLightEntity({
       id: "entity-point-light-main",
       intensity: 1.25
@@ -287,7 +357,7 @@ describe("project document JSON", () => {
         ...createEmptyProjectDocument({
           name: "Legacy Scheduler Project"
         }),
-        version: EXPANDED_CONTROL_SURFACE_SCENE_DOCUMENT_VERSION,
+        version: SCHEDULER_CONTROL_EFFECTS_SCENE_DOCUMENT_VERSION,
         scenes: {
           "scene-main": {
             ...createEmptyProjectScene({
