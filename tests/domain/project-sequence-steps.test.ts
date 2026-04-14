@@ -135,8 +135,15 @@ describe("project sequence steps", () => {
         })
       }
     ]);
-    expect(getProjectScheduleRoutineSequenceSteps(lightRoutine)).toEqual(
-      getInteractionLinkSequenceSteps(directControlLink)
-    );
+    expect(getProjectScheduleRoutineSequenceSteps(lightRoutine)).toEqual([
+      {
+        stepClass: "held",
+        type: "controlEffect",
+        effect: createSetLightEnabledControlEffect({
+          target: lightTarget,
+          enabled: false
+        })
+      }
+    ]);
   });
 });
