@@ -400,6 +400,10 @@ interface Vec3Draft {
   z: string;
 }
 
+const DEFAULT_SCHEDULE_PANE_HEIGHT = 320;
+const MIN_SCHEDULE_PANE_HEIGHT = 180;
+const MIN_VIEWPORT_REGION_HEIGHT = 180;
+
 interface PlayerStartMovementTemplateNumberDraft {
   moveSpeed: string;
   maxSpeed: string;
@@ -2324,6 +2328,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const importBackgroundImageInputRef = useRef<HTMLInputElement | null>(null);
   const importAudioInputRef = useRef<HTMLInputElement | null>(null);
   const viewportPanelsRef = useRef<HTMLDivElement | null>(null);
+  const editorMainRegionRef = useRef<HTMLDivElement | null>(null);
   const loadedModelAssetsRef = useRef<Record<string, LoadedModelAsset>>({});
   const loadedImageAssetsRef = useRef<Record<string, LoadedImageAsset>>({});
   const loadedAudioAssetsRef = useRef<Record<string, LoadedAudioAsset>>({});
@@ -2342,6 +2347,16 @@ export function App({ store, initialStatusMessage }: AppProps) {
   });
   const [viewportQuadResizeMode, setViewportQuadResizeMode] =
     useState<ViewportQuadResizeMode | null>(null);
+  const [schedulePaneHeight, setSchedulePaneHeight] = useState(
+    DEFAULT_SCHEDULE_PANE_HEIGHT
+  );
+  const schedulePaneHeightRef = useRef(DEFAULT_SCHEDULE_PANE_HEIGHT);
+  const schedulePaneResizeStartRef = useRef<{
+    startY: number;
+    startHeight: number;
+  } | null>(null);
+  const [schedulePaneResizeActive, setSchedulePaneResizeActive] =
+    useState(false);
   const documentValidation = validateSceneDocument(editorState.document);
   const projectValidation = validateProjectDocument(
     editorState.projectDocument
@@ -2410,9 +2425,99 @@ export function App({ store, initialStatusMessage }: AppProps) {
     whiteboxSnapStep
   );
 
+  const clampSchedulePaneHeight = (nextHeight: number) => {
+    const editorMainRegionHeight =
+      editorMainRegionRef.current?.clientHeight ??
+      DEFAULT_SCHEDULE_PANE_HEIGHT + MIN_VIEWPORT_REGION_HEIGHT;
+    const maxHeight = Math.max(
+      96,
+      editorMainRegionHeight - MIN_VIEWPORT_REGION_HEIGHT
+    );
+    const minHeight = Math.min(MIN_SCHEDULE_PANE_HEIGHT, maxHeight);
+
+    return Math.min(Math.max(nextHeight, minHeight), maxHeight);
+  };
+
+  const commitSchedulePaneHeight = (
+    nextHeight:
+      | number
+      | ((previousHeight: number) => number)
+  ) => {
+    setSchedulePaneHeight((previousHeight) => {
+      const resolvedHeight =
+        typeof nextHeight === "function" ? nextHeight(previousHeight) : nextHeight;
+      const clampedHeight = clampSchedulePaneHeight(resolvedHeight);
+      schedulePaneHeightRef.current = clampedHeight;
+      return clampedHeight;
+    });
+  };
+
   useEffect(() => {
     setPlayerStartKeyboardCaptureAction(null);
   }, [selectedPlayerStart?.id]);
+
+  useEffect(() => {
+    schedulePaneHeightRef.current = schedulePaneHeight;
+  }, [schedulePaneHeight]);
+
+  useEffect(() => {
+    if (!schedulePaneOpen) {
+      setSchedulePaneResizeActive(false);
+      schedulePaneResizeStartRef.current = null;
+      return;
+    }
+
+    const syncSchedulePaneHeight = () => {
+      commitSchedulePaneHeight(schedulePaneHeightRef.current);
+    };
+
+    syncSchedulePaneHeight();
+    window.addEventListener("resize", syncSchedulePaneHeight);
+
+    return () => {
+      window.removeEventListener("resize", syncSchedulePaneHeight);
+    };
+  }, [schedulePaneOpen]);
+
+  useEffect(() => {
+    if (!schedulePaneOpen || !schedulePaneResizeActive) {
+      return;
+    }
+
+    const previousCursor = document.body.style.cursor;
+    const previousUserSelect = document.body.style.userSelect;
+    document.body.style.cursor = "row-resize";
+    document.body.style.userSelect = "none";
+
+    const handlePointerMove = (event: globalThis.PointerEvent) => {
+      const resizeStart = schedulePaneResizeStartRef.current;
+
+      if (resizeStart === null) {
+        return;
+      }
+
+      commitSchedulePaneHeight(
+        resizeStart.startHeight - (event.clientY - resizeStart.startY)
+      );
+    };
+
+    const stopSchedulePaneResize = () => {
+      schedulePaneResizeStartRef.current = null;
+      setSchedulePaneResizeActive(false);
+    };
+
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", stopSchedulePaneResize);
+    window.addEventListener("pointercancel", stopSchedulePaneResize);
+
+    return () => {
+      document.body.style.cursor = previousCursor;
+      document.body.style.userSelect = previousUserSelect;
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", stopSchedulePaneResize);
+      window.removeEventListener("pointercancel", stopSchedulePaneResize);
+    };
+  }, [schedulePaneOpen, schedulePaneResizeActive]);
 
   useEffect(() => {
     if (playerStartKeyboardCaptureAction === null) {
