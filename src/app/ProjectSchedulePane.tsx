@@ -39,7 +39,15 @@ interface ProjectSequencerPaneProps {
     label: string;
   }>;
   visibilityTargetOptions: Array<{
-    brushId: string;
+    targetKey: string;
+    label: string;
+  }>;
+  modelAnimationTargetOptions: Array<{
+    targetKey: string;
+    label: string;
+  }>;
+  soundTargetOptions: Array<{
+    targetKey: string;
     label: string;
   }>;
   scheduler: ProjectScheduler;
@@ -83,7 +91,11 @@ interface ProjectSequencerPaneProps {
   onAddImpulseControlStep(sequenceId: string, targetKey: string): void;
   onAddDialogueStep(sequenceId: string, dialogueId: string): void;
   onAddTeleportStep(sequenceId: string, targetEntityId: string): void;
-  onAddVisibilityStep(sequenceId: string, targetBrushId: string): void;
+  onAddVisibilityStep(sequenceId: string, targetKey: string): void;
+  onAddPlayAnimationStep(sequenceId: string, targetKey: string): void;
+  onAddStopAnimationStep(sequenceId: string, targetKey: string): void;
+  onAddPlaySoundStep(sequenceId: string, targetKey: string): void;
+  onAddStopSoundStep(sequenceId: string, targetKey: string): void;
   onDeleteStep(sequenceId: string, stepIndex: number): void;
   onSetControlStepTarget(
     sequenceId: string,
@@ -128,7 +140,7 @@ interface ProjectSequencerPaneProps {
   onSetVisibilityStepTarget(
     sequenceId: string,
     stepIndex: number,
-    targetBrushId: string
+    targetKey: string
   ): void;
   onSetVisibilityStepMode(
     sequenceId: string,
@@ -310,6 +322,8 @@ export function ProjectSequencerPane({
   targetOptions,
   teleportTargetOptions,
   visibilityTargetOptions,
+  modelAnimationTargetOptions,
+  soundTargetOptions,
   scheduler,
   sequences,
   dialogues,
@@ -346,6 +360,10 @@ export function ProjectSequencerPane({
   onAddDialogueStep,
   onAddTeleportStep,
   onAddVisibilityStep,
+  onAddPlayAnimationStep,
+  onAddStopAnimationStep,
+  onAddPlaySoundStep,
+  onAddStopSoundStep,
   onDeleteStep,
   onSetControlStepTarget,
   onSetControlStepEffectOption,
@@ -476,6 +494,8 @@ export function ProjectSequencerPane({
               targetOptions={targetOptions}
               teleportTargetOptions={teleportTargetOptions}
               visibilityTargetOptions={visibilityTargetOptions}
+              modelAnimationTargetOptions={modelAnimationTargetOptions}
+              soundTargetOptions={soundTargetOptions}
               selectedSequenceId={selectedSequenceId}
               onSelectSequence={onSelectSequence}
               onAddSequence={onAddSequence}
@@ -486,6 +506,10 @@ export function ProjectSequencerPane({
               onAddDialogueStep={onAddDialogueStep}
               onAddTeleportStep={onAddTeleportStep}
               onAddVisibilityStep={onAddVisibilityStep}
+              onAddPlayAnimationStep={onAddPlayAnimationStep}
+              onAddStopAnimationStep={onAddStopAnimationStep}
+              onAddPlaySoundStep={onAddPlaySoundStep}
+              onAddStopSoundStep={onAddStopSoundStep}
               onDeleteStep={onDeleteStep}
               onSetControlStepTarget={onSetControlStepTarget}
               onSetControlStepEffectOption={onSetControlStepEffectOption}
