@@ -14,6 +14,7 @@ import {
   DEFAULT_SCENE_EDITOR_SNAP_STEP,
   NPC_COLLIDER_SCENE_DOCUMENT_VERSION,
   PROJECT_DIALOGUE_LIBRARY_SCENE_DOCUMENT_VERSION,
+  PROJECT_SEQUENCE_LIBRARY_SCENE_DOCUMENT_VERSION,
   SCHEDULER_ACTOR_ROUTINE_EFFECTS_SCENE_DOCUMENT_VERSION,
   NPC_PRESENCE_SCENE_DOCUMENT_VERSION,
   PLAYER_START_PAUSE_BINDINGS_SCENE_DOCUMENT_VERSION,
@@ -234,6 +235,55 @@ describe("project document JSON", () => {
     expect(migratedDocument.sequences).toEqual({
       sequences: {}
     });
+  });
+
+  it("migrates legacy project sequence steps into clips", () => {
+    const document = createEmptyProjectDocument({
+      name: "Legacy Sequence Clip Project"
+    });
+
+    document.sequences.sequences["sequence-legacy-dialogue"] = createProjectSequence({
+      id: "sequence-legacy-dialogue",
+      title: "Legacy Dialogue Sequence",
+      steps: [
+        {
+          stepClass: "impulse",
+          type: "startDialogue",
+          dialogueId: "dialogue-legacy"
+        }
+      ]
+    });
+
+    const legacyDocument = JSON.parse(
+      serializeProjectDocument(document)
+    ) as Record<string, unknown>;
+    legacyDocument.version = PROJECT_SEQUENCE_LIBRARY_SCENE_DOCUMENT_VERSION;
+    const legacySequences = (legacyDocument.sequences as { sequences: Record<string, unknown> })
+      .sequences;
+    const legacySequence = legacySequences["sequence-legacy-dialogue"] as {
+      clips?: unknown;
+      steps?: unknown;
+    };
+    legacySequence.steps = legacySequence.clips;
+    delete legacySequence.clips;
+
+    const migratedDocument = parseProjectDocumentJson(
+      JSON.stringify(legacyDocument)
+    );
+
+    expect(
+      migratedDocument.sequences.sequences["sequence-legacy-dialogue"]
+    ).toEqual(
+      expect.objectContaining({
+        clips: [
+          {
+            stepClass: "impulse",
+            type: "startDialogue",
+            dialogueId: "dialogue-legacy"
+          }
+        ]
+      })
+    );
   });
 
   it("round-trips the project name and authored scene loading overlay settings", () => {
