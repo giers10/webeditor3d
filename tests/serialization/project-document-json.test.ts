@@ -149,6 +149,10 @@ describe("project document JSON", () => {
     const document = createEmptyProjectDocument({
       name: "Sequence Project"
     });
+    const npc = createNpcEntity({
+      id: "entity-npc-vendor-sequence",
+      actorId: "actor-vendor"
+    });
 
     document.dialogues.dialogues["dialogue-market"] = {
       id: "dialogue-market",
@@ -161,6 +165,7 @@ describe("project document JSON", () => {
         }
       ]
     };
+    document.scenes[document.activeSceneId]!.entities[npc.id] = npc;
     document.sequences.sequences["sequence-market-dialogue"] = createProjectSequence({
       id: "sequence-market-dialogue",
       title: "Market Greeting Sequence",
