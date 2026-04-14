@@ -1958,16 +1958,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const projectImpulseSequenceList = projectSequenceList.filter(
     (sequence) => getProjectSequenceImpulseSteps(sequence).length > 0
   );
-  const sequenceVisibilityTargetOptions = [
-    ...visibilityBrushOptions.map(({ brush, label }) => ({
-      targetKey: `brush:${brush.id}`,
-      label: `Whitebox Solid · ${label}`
-    })),
-    ...modelInstanceDisplayList.map(({ modelInstance, label }) => ({
-      targetKey: `modelInstance:${modelInstance.id}`,
-      label: `Model Instance · ${label}`
-    }))
-  ];
   const sequenceAnimationTargetOptions = projectScheduleTargetOptions
     .filter(
       (option) =>
@@ -2054,6 +2044,16 @@ export function App({ store, initialStatusMessage }: AppProps) {
     brush,
     label: getBrushLabel(brush, brushIndex)
   }));
+  const sequenceVisibilityTargetOptions = [
+    ...visibilityBrushOptions.map(({ brush, label }) => ({
+      targetKey: `brush:${brush.id}`,
+      label: `Whitebox Solid · ${label}`
+    })),
+    ...modelInstanceDisplayList.map(({ modelInstance, label }) => ({
+      targetKey: `modelInstance:${modelInstance.id}`,
+      label: `Model Instance · ${label}`
+    }))
+  ];
 
   const [projectNameDraft, setProjectNameDraft] = useState(
     editorState.projectDocument.name
