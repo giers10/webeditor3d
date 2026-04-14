@@ -88,7 +88,8 @@ import type {
 import {
   getHeldSequenceControlEffects,
   getProjectScheduleRoutineHeldSteps,
-  getProjectSequenceImpulseSteps
+  getProjectSequenceImpulseSteps,
+  getSequenceClipEndMinute
 } from "../sequencer/project-sequence-steps";
 
 export type SceneDiagnosticSeverity = "error" | "warning";
@@ -4817,8 +4818,114 @@ function validateProjectSequence(
     return;
   }
 
+  if (!isFiniteNumber(sequence.durationMinutes)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-project-sequence-duration",
+        "Project sequence duration must be a finite positive number of minutes.",
+        `${path}.durationMinutes`
+      )
+    );
+  } else if (
+    sequence.durationMinutes < 1 ||
+    sequence.durationMinutes > HOURS_PER_DAY * 60 ||
+    Math.trunc(sequence.durationMinutes) !== sequence.durationMinutes
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-project-sequence-duration-range",
+        "Project sequence duration must be an integer minute value between 1 and 1440.",
+        `${path}.durationMinutes`
+      )
+    );
+  }
+
   for (const [clipIndex, clip] of sequence.clips.entries()) {
     const clipPath = `${path}.clips.${clipIndex}`;
+
+    if (!isFiniteNumber(clip.startMinute)) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-project-sequence-clip-start",
+          "Sequence clip start must be a finite non-negative integer minute value.",
+          `${clipPath}.startMinute`
+        )
+      );
+    } else if (
+      clip.startMinute < 0 ||
+      Math.trunc(clip.startMinute) !== clip.startMinute
+    ) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-project-sequence-clip-start-range",
+          "Sequence clip start must be a non-negative integer minute value.",
+          `${clipPath}.startMinute`
+        )
+      );
+    }
+
+    if (!isFiniteNumber(clip.durationMinutes)) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-project-sequence-clip-duration",
+          "Sequence clip duration must be a finite positive integer minute value.",
+          `${clipPath}.durationMinutes`
+        )
+      );
+    } else if (
+      clip.durationMinutes < 1 ||
+      Math.trunc(clip.durationMinutes) !== clip.durationMinutes
+    ) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-project-sequence-clip-duration-range",
+          "Sequence clip duration must be a positive integer minute value.",
+          `${clipPath}.durationMinutes`
+        )
+      );
+    }
+
+    if (!isFiniteNumber(clip.lane)) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-project-sequence-clip-lane",
+          "Sequence clip lane must be a finite non-negative integer value.",
+          `${clipPath}.lane`
+        )
+      );
+    } else if (clip.lane < 0 || Math.trunc(clip.lane) !== clip.lane) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-project-sequence-clip-lane-range",
+          "Sequence clip lane must be a non-negative integer value.",
+          `${clipPath}.lane`
+        )
+      );
+    }
+
+    if (
+      isFiniteNumber(sequence.durationMinutes) &&
+      isFiniteNumber(clip.startMinute) &&
+      isFiniteNumber(clip.durationMinutes) &&
+      getSequenceClipEndMinute(clip) > sequence.durationMinutes
+    ) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-project-sequence-clip-overflow",
+          "Sequence clips must fit within the authored sequence duration.",
+          `${clipPath}.durationMinutes`
+        )
+      );
+    }
 
     switch (clip.type) {
       case "controlEffect":
