@@ -327,6 +327,7 @@ export class RuntimeHost {
   private manualPauseActive = false;
   private controlPauseActive = false;
   private previousPauseInputActive = false;
+  private readonly pressedKeys = new Set<string>();
 
   constructor(options: { enableRendering?: boolean } = {}) {
     const enableRendering = options.enableRendering ?? true;
@@ -488,6 +489,8 @@ export class RuntimeHost {
       this.handleRuntimePointerDown
     );
     window.addEventListener("keydown", this.handleRuntimeKeyDown);
+    window.addEventListener("keyup", this.handleRuntimeKeyUp);
+    window.addEventListener("blur", this.handleRuntimeBlur);
     this.resize();
 
     this.resizeObserver = new ResizeObserver(() => {
@@ -743,6 +746,9 @@ export class RuntimeHost {
       this.handleRuntimePointerDown
     );
     window.removeEventListener("keydown", this.handleRuntimeKeyDown);
+    window.removeEventListener("keyup", this.handleRuntimeKeyUp);
+    window.removeEventListener("blur", this.handleRuntimeBlur);
+    this.pressedKeys.clear();
 
     if (this.container !== null && this.container.contains(this.domElement)) {
       this.container.removeChild(this.domElement);
