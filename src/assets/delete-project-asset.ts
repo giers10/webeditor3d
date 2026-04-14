@@ -23,6 +23,8 @@ function removeInvalidatedInteractionLinks(
         case "control":
           switch (link.action.effect.type) {
             case "setActorPresence":
+            case "playActorAnimation":
+            case "followActorPath":
               return false;
             case "playModelAnimation":
             case "stopModelAnimation":
