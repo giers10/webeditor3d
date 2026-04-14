@@ -1,16 +1,24 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  createActiveSceneControlTargetRef,
   createLightControlTargetRef,
-  createSetLightEnabledControlEffect
+  createModelInstanceControlTargetRef,
+  createSetAmbientLightColorControlEffect,
+  createSetLightEnabledControlEffect,
+  createSetModelInstanceVisibleControlEffect,
+  createSetSoundVolumeControlEffect,
+  createSoundEmitterControlTargetRef
 } from "../../src/controls/control-surface";
 import {
   createEmptySceneDocument,
   NPC_PRESENCE_SCENE_DOCUMENT_VERSION,
+  PROJECT_SCHEDULER_FOUNDATION_SCENE_DOCUMENT_VERSION,
   SCENE_DOCUMENT_VERSION
 } from "../../src/document/scene-document";
 import { migrateSceneDocument } from "../../src/document/migrate-scene-document";
 import {
+  createPointLightEntity,
   createPointLightEntity,
   createSoundEmitterEntity,
   createTriggerVolumeEntity
@@ -21,8 +29,10 @@ import {
 } from "../../src/interactions/interaction-links";
 import {
   createProjectAssetStorageKey,
-  type AudioAssetRecord
+  type AudioAssetRecord,
+  type ModelAssetRecord
 } from "../../src/assets/project-assets";
+import { createModelInstance } from "../../src/assets/model-instances";
 import {
   parseSceneDocumentJson,
   serializeSceneDocument
