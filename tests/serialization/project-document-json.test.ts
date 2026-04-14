@@ -295,8 +295,12 @@ describe("project document JSON", () => {
       migratedDocument.sequences.sequences["sequence-legacy-dialogue"]
     ).toEqual(
       expect.objectContaining({
+        durationMinutes: 1440,
         clips: [
           {
+            startMinute: 0,
+            durationMinutes: 1,
+            lane: 0,
             stepClass: "impulse",
             type: "startDialogue",
             dialogueId: "dialogue-legacy"
