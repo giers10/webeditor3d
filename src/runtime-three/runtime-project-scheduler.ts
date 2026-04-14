@@ -210,14 +210,40 @@ function resolveRuntimeScheduledControlRoutines(options: {
 
 export function applyRuntimeProjectScheduleToControlState(
   resolved: RuntimeResolvedControlState,
-  schedule: RuntimeResolvedProjectScheduleState
+  schedule: RuntimeResolvedProjectScheduleState,
+  baselineResolved: RuntimeResolvedControlState = resolved
 ): RuntimeResolvedControlState {
-  let nextResolved = cloneRuntimeResolvedControlState(resolved);
+  let nextResolved = cloneRuntimeResolvedControlState(baselineResolved);
+
+  for (const state of resolved.discrete) {
+    if (
+      state.source.kind === "default" ||
+      state.source.kind === "scheduler" ||
+      state.type === "actorPresence"
+    ) {
+      continue;
+    }
+
+    nextResolved = applyControlEffectToResolvedState(
+      nextResolved,
+      cloneDiscreteStateAsEffect(state),
+      state.source
+    );
+  }
+
+  for (const channel of resolved.channels) {
+    if (
+      channel.source.kind === "default" ||
+      channel.source.kind === "scheduler"
+    ) {
+      continue;
+    }
+
+    nextResolved = applyChannelValueAsEffect(nextResolved, channel);
+  }
+
   nextResolved.discrete = nextResolved.discrete.filter(
-    (state) => state.type !== "actorPresence" && state.source.kind !== "scheduler"
-  );
-  nextResolved.channels = nextResolved.channels.filter(
-    (channel) => channel.source.kind !== "scheduler"
+    (state) => state.type !== "actorPresence"
   );
 
   for (const actorState of schedule.actors) {
@@ -245,4 +271,122 @@ export function applyRuntimeProjectScheduleToControlState(
   }
 
   return nextResolved;
+}
+
+function cloneDiscreteStateAsEffect(
+  state: RuntimeResolvedControlState["discrete"][number]
+): ControlEffect {
+  switch (state.type) {
+    case "actorPresence":
+      return createSetActorPresenceControlEffect({
+        target: state.target,
+        active: state.value
+      });
+    case "modelVisibility":
+      return {
+        type: "setModelInstanceVisible",
+        target: state.target,
+        visible: state.value
+      };
+    case "soundPlayback":
+      return state.value
+        ? {
+            type: "playSound",
+            target: state.target
+          }
+        : {
+            type: "stopSound",
+            target: state.target
+          };
+    case "modelAnimationPlayback":
+      return state.clipName === null
+        ? {
+            type: "stopModelAnimation",
+            target: state.target
+          }
+        : {
+            type: "playModelAnimation",
+            target: state.target,
+            clipName: state.clipName,
+            loop: state.loop
+          };
+    case "lightEnabled":
+      return {
+        type: "setLightEnabled",
+        target: state.target,
+        enabled: state.value
+      };
+    case "lightColor":
+      return {
+        type: "setLightColor",
+        target: state.target,
+        colorHex: state.value
+      };
+    case "interactionEnabled":
+      return {
+        type: "setInteractionEnabled",
+        target: state.target,
+        enabled: state.value
+      };
+    case "ambientLightColor":
+      return {
+        type: "setAmbientLightColor",
+        target: state.target,
+        colorHex: state.value
+      };
+    case "sunLightColor":
+      return {
+        type: "setSunLightColor",
+        target: state.target,
+        colorHex: state.value
+      };
+  }
+}
+
+function applyChannelValueAsEffect(
+  resolved: RuntimeResolvedControlState,
+  channel: RuntimeResolvedControlState["channels"][number]
+): RuntimeResolvedControlState {
+  switch (channel.type) {
+    case "lightIntensity":
+      return applyControlEffectToResolvedState(
+        resolved,
+        {
+          type: "setLightIntensity",
+          target: channel.descriptor.target,
+          intensity: channel.value
+        },
+        channel.source
+      );
+    case "soundVolume":
+      return applyControlEffectToResolvedState(
+        resolved,
+        {
+          type: "setSoundVolume",
+          target: channel.descriptor.target,
+          volume: channel.value
+        },
+        channel.source
+      );
+    case "ambientLightIntensity":
+      return applyControlEffectToResolvedState(
+        resolved,
+        {
+          type: "setAmbientLightIntensity",
+          target: channel.descriptor.target,
+          intensity: channel.value
+        },
+        channel.source
+      );
+    case "sunLightIntensity":
+      return applyControlEffectToResolvedState(
+        resolved,
+        {
+          type: "setSunLightIntensity",
+          target: channel.descriptor.target,
+          intensity: channel.value
+        },
+        channel.source
+      );
+  }
 }
