@@ -577,7 +577,7 @@ export class RuntimeHost {
   ) {
     this.runtimeDialogueHandler = handler;
 
-    if (handler !== null) {
+    if (handler !== null && this.currentDialogue !== null) {
       handler(this.currentDialogue);
     }
   }
