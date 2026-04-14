@@ -459,7 +459,7 @@ export class RuntimeHost {
     this.runtimeScene = runtimeScene;
     this.currentWorld = runtimeScene.world;
     this.syncRuntimeClockState(runtimeScene.time);
-    this.syncRuntimeNpcScheduleToCurrentClock();
+    this.syncRuntimeScheduleToCurrentClock();
     this.activeController?.deactivate(this.controllerContext, {
       releasePointerLock: !preservePointerLockDuringLoad
     });
@@ -2504,7 +2504,7 @@ export class RuntimeHost {
         dt
       );
       if (this.sceneReady) {
-        this.syncRuntimeNpcScheduleToCurrentClock();
+        this.syncRuntimeScheduleToCurrentClock();
       }
       this.applyDayNightLighting();
       this.clockPublishAccumulator += dt;
@@ -2573,7 +2573,7 @@ export class RuntimeHost {
     this.firstPersonController.teleportTo(target.position, target.yawDegrees);
   }
 
-  private syncRuntimeNpcScheduleToCurrentClock() {
+  private syncRuntimeScheduleToCurrentClock() {
     if (this.runtimeScene === null || this.currentClockState === null) {
       return;
     }
