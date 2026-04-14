@@ -3279,6 +3279,18 @@ function readInteractionAction(
         dialogueId
       }).action;
     }
+    case "runSequence": {
+      const sequenceId = expectString(value.sequenceId, `${label}.sequenceId`);
+
+      if (sequenceId.trim().length === 0) {
+        throw new Error(`${label}.sequenceId must be non-empty.`);
+      }
+
+      return createRunSequenceInteractionLink({
+        sourceEntityId: "interaction-source-placeholder",
+        sequenceId
+      }).action;
+    }
     case "control":
       return createControlInteractionLink({
         sourceEntityId: "interaction-source-placeholder",
@@ -3349,6 +3361,14 @@ function readProjectScheduler(
             true
           ),
           target: target as ReturnType<typeof createActorControlTargetRef>,
+          sequenceId:
+            routineValue.sequenceId === undefined ||
+            routineValue.sequenceId === null
+              ? null
+              : expectString(
+                  routineValue.sequenceId,
+                  `${label}.routines.${routineId}.sequenceId`
+                ),
           days:
             routineValue.days === undefined
               ? createProjectScheduleEveryDaySelection()
@@ -4392,7 +4412,9 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     source.version !== EXPANDED_CONTROL_SURFACE_SCENE_DOCUMENT_VERSION &&
     source.version !== SCHEDULER_ACTOR_ROUTINE_EFFECTS_SCENE_DOCUMENT_VERSION &&
     source.version !== NPC_DIALOGUE_REFERENCE_SCENE_DOCUMENT_VERSION &&
-    source.version !== PROJECT_DIALOGUE_LIBRARY_SCENE_DOCUMENT_VERSION
+    source.version !== PROJECT_DIALOGUE_LIBRARY_SCENE_DOCUMENT_VERSION &&
+    source.version !== PLAYER_START_PAUSE_BINDINGS_SCENE_DOCUMENT_VERSION &&
+    source.version !== PROJECT_SEQUENCE_LIBRARY_SCENE_DOCUMENT_VERSION
   ) {
     throw new Error(
       `Unsupported scene document version: ${String(source.version)}.`
@@ -4414,6 +4436,9 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     }),
     dialogues: readProjectDialogueLibrary(source.dialogues, "dialogues", {
       allowMissing: source.version < PROJECT_DIALOGUE_LIBRARY_SCENE_DOCUMENT_VERSION
+    }),
+    sequences: readProjectSequenceLibrary(source.sequences, "sequences", {
+      allowMissing: source.version < PROJECT_SEQUENCE_LIBRARY_SCENE_DOCUMENT_VERSION
     }),
     world: readWorldSettings(source.world, {
       legacyProjectTimeValue:
@@ -4550,6 +4575,10 @@ export function migrateProjectDocument(source: unknown): ProjectDocument {
       dialogues: readProjectDialogueLibrary(source.dialogues, "dialogues", {
         allowMissing:
           source.version < PROJECT_DIALOGUE_LIBRARY_SCENE_DOCUMENT_VERSION
+      }),
+      sequences: readProjectSequenceLibrary(source.sequences, "sequences", {
+        allowMissing:
+          source.version < PROJECT_SEQUENCE_LIBRARY_SCENE_DOCUMENT_VERSION
       }),
       activeSceneId: expectString(source.activeSceneId, "activeSceneId"),
       scenes,
