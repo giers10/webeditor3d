@@ -38,6 +38,8 @@ import type {
 import type { ToolMode } from "../core/tool-mode";
 import type { SceneDocument } from "../document/scene-document";
 import type { WorldSettings } from "../document/world-settings";
+import type { RuntimeClockState } from "../runtime-three/runtime-project-time";
+import type { RuntimeSceneDefinition } from "../runtime-three/runtime-scene-build";
 
 interface ViewportPanelProps {
   panelId: ViewportPanelId;
@@ -48,6 +50,8 @@ interface ViewportPanelProps {
   style?: CSSProperties;
   world: WorldSettings;
   sceneDocument: SceneDocument;
+  editorSimulationScene: RuntimeSceneDefinition | null;
+  editorSimulationClock: RuntimeClockState | null;
   projectAssets: Record<string, ProjectAssetRecord>;
   loadedModelAssets: Record<string, LoadedModelAsset>;
   loadedImageAssets: Record<string, LoadedImageAsset>;
@@ -117,6 +121,8 @@ export function ViewportPanel({
   style,
   world,
   sceneDocument,
+  editorSimulationScene,
+  editorSimulationClock,
   projectAssets,
   loadedModelAssets,
   loadedImageAssets,
@@ -175,6 +181,8 @@ export function ViewportPanel({
         panelId={panelId}
         world={world}
         sceneDocument={sceneDocument}
+        editorSimulationScene={editorSimulationScene}
+        editorSimulationClock={editorSimulationClock}
         projectAssets={projectAssets}
         loadedModelAssets={loadedModelAssets}
         loadedImageAssets={loadedImageAssets}
