@@ -576,6 +576,10 @@ export class RuntimeHost {
     handler: ((dialogue: RuntimeDialogueState | null) => void) | null
   ) {
     this.runtimeDialogueHandler = handler;
+
+    if (handler !== null) {
+      handler(this.currentDialogue);
+    }
   }
 
   advanceRuntimeDialogue() {
@@ -600,7 +604,11 @@ export class RuntimeHost {
     }
 
     this.setRuntimeDialogue(
-      this.createRuntimeDialogueState(dialogue.id, nextLineIndex)
+      this.createRuntimeDialogueState(
+        dialogue.id,
+        nextLineIndex,
+        this.currentDialogue.source
+      )
     );
   }
 
