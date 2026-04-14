@@ -38,7 +38,9 @@ describe("runtime control foundation", () => {
     });
     const soundEmitter = createSoundEmitterEntity({
       id: "entity-sound-main",
-      audioAssetId: "asset-audio-main"
+      audioAssetId: "asset-audio-main",
+      autoplay: true,
+      volume: 0.4
     });
     const npc = createNpcEntity({
       id: "entity-npc-vendor",
@@ -84,7 +86,9 @@ describe("runtime control foundation", () => {
     } satisfies AudioAssetRecord;
     const modelInstance = createModelInstance({
       id: "model-instance-animated",
-      assetId: modelAsset.id
+      assetId: modelAsset.id,
+      animationClipName: "Idle",
+      animationAutoplay: true
     });
 
     const document = createEmptySceneDocument();
@@ -123,6 +127,18 @@ describe("runtime control foundation", () => {
       expect.arrayContaining([
         expect.objectContaining({
           target: {
+            kind: "scene",
+            scope: "activeScene"
+          },
+          capabilities: [
+            "ambientLightIntensity",
+            "ambientLightColor",
+            "sunLightIntensity",
+            "sunLightColor"
+          ]
+        }),
+        expect.objectContaining({
+          target: {
             kind: "actor",
             actorId: npc.actorId
           },
@@ -134,7 +150,7 @@ describe("runtime control foundation", () => {
             entityKind: "pointLight",
             entityId: pointLight.id
           },
-          capabilities: ["lightEnabled", "lightIntensity"]
+          capabilities: ["lightEnabled", "lightIntensity", "lightColor"]
         }),
         expect.objectContaining({
           target: {
@@ -150,31 +166,70 @@ describe("runtime control foundation", () => {
             entityKind: "soundEmitter",
             entityId: soundEmitter.id
           },
-          capabilities: ["soundPlayback"]
+          capabilities: ["soundPlayback", "soundVolume"]
         }),
         expect.objectContaining({
           target: {
             kind: "modelInstance",
             modelInstanceId: modelInstance.id
           },
-          capabilities: ["animationPlayback"]
+          capabilities: ["animationPlayback", "modelVisibility"]
         })
       ])
     );
-    expect(runtimeScene.control.channels).toEqual([
-      {
-        channel: "light.intensity",
-        target: {
-          kind: "entity",
-          entityKind: "pointLight",
-          entityId: pointLight.id
-        },
-        minValue: 0,
-        defaultValue: 2.5
-      }
-    ]);
+    expect(runtimeScene.control.channels).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          channel: "ambientLight.intensity",
+          target: {
+            kind: "scene",
+            scope: "activeScene"
+          }
+        }),
+        expect.objectContaining({
+          channel: "sunLight.intensity",
+          target: {
+            kind: "scene",
+            scope: "activeScene"
+          }
+        }),
+        expect.objectContaining({
+          channel: "light.intensity",
+          target: {
+            kind: "entity",
+            entityKind: "pointLight",
+            entityId: pointLight.id
+          },
+          minValue: 0,
+          defaultValue: 2.5
+        }),
+        expect.objectContaining({
+          channel: "sound.volume",
+          target: {
+            kind: "entity",
+            entityKind: "soundEmitter",
+            entityId: soundEmitter.id
+          },
+          defaultValue: 0.4
+        })
+      ])
+    );
     expect(runtimeScene.control.resolved.discrete).toEqual(
       expect.arrayContaining([
+        expect.objectContaining({
+          type: "ambientLightColor",
+          target: {
+            kind: "scene",
+            scope: "activeScene"
+          }
+        }),
+        expect.objectContaining({
+          type: "sunLightColor",
+          target: {
+            kind: "scene",
+            scope: "activeScene"
+          }
+        }),
         expect.objectContaining({
           type: "actorPresence",
           target: {
@@ -193,6 +248,15 @@ describe("runtime control foundation", () => {
           value: false
         }),
         expect.objectContaining({
+          type: "lightColor",
+          target: {
+            kind: "entity",
+            entityKind: "pointLight",
+            entityId: pointLight.id
+          },
+          value: pointLight.colorHex
+        }),
+        expect.objectContaining({
           type: "interactionEnabled",
           target: {
             kind: "interaction",
@@ -200,23 +264,82 @@ describe("runtime control foundation", () => {
             entityId: interactable.id
           },
           value: false
+        }),
+        expect.objectContaining({
+          type: "soundPlayback",
+          target: {
+            kind: "entity",
+            entityKind: "soundEmitter",
+            entityId: soundEmitter.id
+          },
+          value: true
+        }),
+        expect.objectContaining({
+          type: "modelVisibility",
+          target: {
+            kind: "modelInstance",
+            modelInstanceId: modelInstance.id
+          },
+          value: true
+        }),
+        expect.objectContaining({
+          type: "modelAnimationPlayback",
+          target: {
+            kind: "modelInstance",
+            modelInstanceId: modelInstance.id
+          },
+          clipName: "Idle"
         })
       ])
     );
-    expect(runtimeScene.control.resolved.channels).toEqual([
-      expect.objectContaining({
-        type: "lightIntensity",
-        descriptor: expect.objectContaining({
-          channel: "light.intensity",
-          target: {
-            kind: "entity",
-            entityKind: "pointLight",
-            entityId: pointLight.id
-          }
+    expect(runtimeScene.control.resolved.channels).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "ambientLightIntensity",
+          descriptor: expect.objectContaining({
+            channel: "ambientLight.intensity",
+            target: {
+              kind: "scene",
+              scope: "activeScene"
+            }
+          })
         }),
-        value: 2.5
-      })
-    ]);
+        expect.objectContaining({
+          type: "sunLightIntensity",
+          descriptor: expect.objectContaining({
+            channel: "sunLight.intensity",
+            target: {
+              kind: "scene",
+              scope: "activeScene"
+            }
+          })
+        }),
+        expect.objectContaining({
+          type: "lightIntensity",
+          descriptor: expect.objectContaining({
+            channel: "light.intensity",
+            target: {
+              kind: "entity",
+              entityKind: "pointLight",
+              entityId: pointLight.id
+            }
+          }),
+          value: 2.5
+        }),
+        expect.objectContaining({
+          type: "soundVolume",
+          descriptor: expect.objectContaining({
+            channel: "sound.volume",
+            target: {
+              kind: "entity",
+              entityKind: "soundEmitter",
+              entityId: soundEmitter.id
+            }
+          }),
+          value: 0.4
+        })
+      ])
+    );
   });
 
   it("dispatches authored control effects through the interaction system", () => {
