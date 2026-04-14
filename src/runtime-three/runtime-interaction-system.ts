@@ -164,6 +164,32 @@ function rayAxisAlignedBoxHitDistance(
   return near >= 0 ? near : 0;
 }
 
+function distanceToAxisAlignedBox(
+  position: Vec3,
+  bounds: { min: Vec3; max: Vec3 }
+): number {
+  const dx =
+    position.x < bounds.min.x
+      ? bounds.min.x - position.x
+      : position.x > bounds.max.x
+        ? position.x - bounds.max.x
+        : 0;
+  const dy =
+    position.y < bounds.min.y
+      ? bounds.min.y - position.y
+      : position.y > bounds.max.y
+        ? position.y - bounds.max.y
+        : 0;
+  const dz =
+    position.z < bounds.min.z
+      ? bounds.min.z - position.z
+      : position.z > bounds.max.z
+        ? position.z - bounds.max.z
+        : 0;
+
+  return Math.sqrt(dx * dx + dy * dy + dz * dz);
+}
+
 function isPlayerInsideTriggerVolume(
   feetPosition: Vec3,
   eyePosition: Vec3,
@@ -554,7 +580,7 @@ export class RuntimeInteractionSystem {
       }
 
       const bounds = getNpcDialogueTargetBounds(npc);
-      const distance = distanceBetweenVec3(interactionOrigin, bounds.center);
+      const distance = distanceToAxisAlignedBox(interactionOrigin, bounds);
 
       if (distance > bounds.range) {
         continue;
