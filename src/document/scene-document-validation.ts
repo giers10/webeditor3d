@@ -5024,13 +5024,7 @@ export function validateSceneDocument(
 
   validateProjectScheduler(
     document.scheduler,
-    {
-      actorExists(actorId) {
-        return Object.values(document.entities).some(
-          (entity) => entity.kind === "npc" && entity.actorId === actorId
-        );
-      }
-    },
+    createProjectSchedulerValidationContextFromSceneDocument(document),
     diagnostics
   );
 
@@ -5094,25 +5088,9 @@ export function validateProjectDocument(
   validateProjectTimeSettings(document.time, diagnostics);
   validateProjectResources(document, diagnostics);
 
-  const projectActorIds = new Set<string>();
-
-  for (const scene of Object.values(document.scenes)) {
-    for (const entity of Object.values(scene.entities)) {
-      if (entity.kind !== "npc") {
-        continue;
-      }
-
-      projectActorIds.add(entity.actorId);
-    }
-  }
-
   validateProjectScheduler(
     document.scheduler,
-    {
-      actorExists(actorId) {
-        return projectActorIds.has(actorId);
-      }
-    },
+    createProjectSchedulerValidationContextFromProjectDocument(document),
     diagnostics
   );
 

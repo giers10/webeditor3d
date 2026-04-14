@@ -3303,7 +3303,7 @@ function readProjectScheduler(
             `${label}.routines.${routineId}.priority`,
             0
           ),
-          effect: effect as ReturnType<typeof createSetActorPresenceControlEffect>
+          effect
         })
       ];
     })
