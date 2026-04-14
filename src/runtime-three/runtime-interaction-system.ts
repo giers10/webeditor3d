@@ -713,13 +713,34 @@ export class RuntimeInteractionSystem {
   ) {
     switch (step.type) {
       case "controlEffect":
-        if (dispatcher.dispatchControlEffect === undefined) {
-          throw new Error(
-            `Runtime control step ${step.effect.type} could not be dispatched because the runtime dispatcher does not support control effects.`
-          );
+        if (dispatcher.dispatchControlEffect !== undefined) {
+          dispatcher.dispatchControlEffect(step.effect, link);
+          return;
         }
-        dispatcher.dispatchControlEffect(step.effect, link);
-        return;
+
+        switch (step.effect.type) {
+          case "playModelAnimation":
+            dispatcher.playAnimation(
+              step.effect.target.modelInstanceId,
+              step.effect.clipName,
+              step.effect.loop,
+              link
+            );
+            return;
+          case "stopModelAnimation":
+            dispatcher.stopAnimation(step.effect.target.modelInstanceId, link);
+            return;
+          case "playSound":
+            dispatcher.playSound(step.effect.target.entityId, link);
+            return;
+          case "stopSound":
+            dispatcher.stopSound(step.effect.target.entityId, link);
+            return;
+          default:
+            throw new Error(
+              `Runtime control step ${step.effect.type} could not be dispatched because the runtime dispatcher does not support control effects.`
+            );
+        }
       case "teleportPlayer": {
         const teleportTarget = resolveTeleportTarget(
           runtimeScene,
