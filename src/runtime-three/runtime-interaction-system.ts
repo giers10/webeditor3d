@@ -1,9 +1,12 @@
 import type { Vec3 } from "../core/vector";
 import type { ControlEffect } from "../controls/control-surface";
 import {
-  getInteractionActionControlEffect,
   type InteractionLink
 } from "../interactions/interaction-links";
+import {
+  getInteractionLinkSequenceSteps,
+  type SequenceStep
+} from "../sequencer/project-sequence-steps";
 
 import type {
   RuntimeInteractable,
@@ -696,65 +699,53 @@ export class RuntimeInteractionSystem {
         continue;
       }
 
-      const controlEffect = getInteractionActionControlEffect(link.action);
-
-      if (
-        controlEffect !== null &&
-        dispatcher.dispatchControlEffect !== undefined
-      ) {
-        dispatcher.dispatchControlEffect(controlEffect, link);
-        continue;
+      for (const step of getInteractionLinkSequenceSteps(link)) {
+        this.dispatchSequenceStep(step, link, runtimeScene, dispatcher);
       }
+    }
+  }
 
-      switch (link.action.type) {
-        case "teleportPlayer": {
-          const teleportTarget = resolveTeleportTarget(
-            runtimeScene,
-            link.action.targetEntityId
-          );
-
-          if (teleportTarget !== null) {
-            dispatcher.teleportPlayer(teleportTarget, link);
-          }
-          break;
-        }
-        case "toggleVisibility":
-          dispatcher.toggleBrushVisibility(
-            link.action.targetBrushId,
-            link.action.visible,
-            link
-          );
-          break;
-        case "playAnimation":
-          dispatcher.playAnimation(
-            link.action.targetModelInstanceId,
-            link.action.clipName,
-            link.action.loop,
-            link
-          );
-          break;
-        case "stopAnimation":
-          dispatcher.stopAnimation(link.action.targetModelInstanceId, link);
-          break;
-        case "playSound":
-          dispatcher.playSound(link.action.targetSoundEmitterId, link);
-          break;
-        case "stopSound":
-          dispatcher.stopSound(link.action.targetSoundEmitterId, link);
-          break;
-        case "startDialogue":
-          dispatcher.startDialogue(link.action.dialogueId, {
-            kind: "interactionLink",
-            sourceEntityId: link.sourceEntityId,
-            linkId: link.id,
-            trigger: link.trigger
-          });
-          break;
-        case "control":
+  private dispatchSequenceStep(
+    step: SequenceStep,
+    link: InteractionLink,
+    runtimeScene: RuntimeSceneDefinition,
+    dispatcher: RuntimeInteractionDispatcher
+  ) {
+    switch (step.type) {
+      case "controlEffect":
+        if (dispatcher.dispatchControlEffect === undefined) {
           throw new Error(
-            `Runtime control action ${link.action.effect.type} could not be dispatched because the runtime dispatcher does not support control effects.`
+            `Runtime control step ${step.effect.type} could not be dispatched because the runtime dispatcher does not support control effects.`
           );
+        }
+        dispatcher.dispatchControlEffect(step.effect, link);
+        return;
+      case "teleportPlayer": {
+        const teleportTarget = resolveTeleportTarget(
+          runtimeScene,
+          step.targetEntityId
+        );
+
+        if (teleportTarget !== null) {
+          dispatcher.teleportPlayer(teleportTarget, link);
+        }
+        return;
       }
+      case "toggleVisibility":
+        dispatcher.toggleBrushVisibility(
+          step.targetBrushId,
+          step.visible,
+          link
+        );
+        return;
+      case "startDialogue":
+        dispatcher.startDialogue(step.dialogueId, {
+          kind: "interactionLink",
+          sourceEntityId: link.sourceEntityId,
+          linkId: link.id,
+          trigger: link.trigger
+        });
+        return;
     }
   }
 }
