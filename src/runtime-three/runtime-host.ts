@@ -2778,6 +2778,22 @@ export class RuntimeHost {
         renderGroup.position.set(npc.position.x, npc.position.y, npc.position.z);
         renderGroup.rotation.set(0, (npc.yawDegrees * Math.PI) / 180, 0);
       }
+
+      if (
+        this.animationMixers.has(npc.entityId) &&
+        (npc.animationClipName !== previousAnimationClipName ||
+          npc.animationLoop !== previousAnimationLoop)
+      ) {
+        if (npc.animationClipName === null) {
+          this.applyStopAnimationAction(npc.entityId);
+        } else {
+          this.applyPlayAnimationAction(
+            npc.entityId,
+            npc.animationClipName,
+            npc.animationLoop
+          );
+        }
+      }
     }
 
     const nextResolvedControl = applyRuntimeProjectScheduleToControlState(
