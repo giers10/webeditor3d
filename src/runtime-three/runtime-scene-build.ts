@@ -64,6 +64,10 @@ import {
   type ProjectDialogueLibrary
 } from "../dialogues/project-dialogues";
 import {
+  cloneProjectSequenceLibrary,
+  type ProjectSequenceLibrary
+} from "../sequencer/project-sequences";
+import {
   type CharacterColliderSettings,
   clonePlayerStartInputBindings,
   createPlayerStartMovementTemplate,
@@ -90,6 +94,7 @@ import {
   getInteractionLinks,
   type InteractionLink
 } from "../interactions/interaction-links";
+import { getInteractionLinkImpulseSteps } from "../sequencer/project-sequence-steps";
 import {
   cloneMaterialDef,
   type MaterialDef
@@ -387,6 +392,7 @@ export interface RuntimeSceneDefinition {
   time: ProjectTimeSettings;
   scheduler: RuntimeProjectSchedulerState;
   dialogues: ProjectDialogueLibrary;
+  sequences: ProjectSequenceLibrary;
   world: WorldSettings;
   control: RuntimeControlSurfaceDefinition;
   localLights: RuntimeLocalLightCollection;
@@ -1612,6 +1618,8 @@ export function buildRuntimeSceneFromDocument(
           return enabledEntityIds.has(link.action.targetSoundEmitterId);
         case "startDialogue":
           return document.dialogues.dialogues[link.action.dialogueId] !== undefined;
+        case "runSequence":
+          return getInteractionLinkImpulseSteps(link, document.sequences).length > 0;
         case "control":
           switch (link.action.effect.target.kind) {
             case "entity":
@@ -1682,6 +1690,7 @@ export function buildRuntimeSceneFromDocument(
       resolved: collections.scheduler
     }),
     dialogues: cloneProjectDialogueLibrary(document.dialogues),
+    sequences: cloneProjectSequenceLibrary(document.sequences),
     world: cloneWorldSettings(document.world),
     control,
     localLights: collections.localLights,
