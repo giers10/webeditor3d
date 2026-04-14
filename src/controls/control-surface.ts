@@ -10,6 +10,7 @@ export const CONTROL_INTERACTION_TARGET_KINDS = [
   "sceneExit"
 ] as const;
 export const CONTROL_CAPABILITY_KINDS = [
+  "projectTimePause",
   "actorPresence",
   "actorAnimationPlayback",
   "actorPathFollow",
@@ -94,6 +95,12 @@ export interface SetActorPresenceControlEffect {
   type: "setActorPresence";
   target: ActorControlTargetRef;
   active: boolean;
+}
+
+export interface SetProjectTimePausedControlEffect {
+  type: "setProjectTimePaused";
+  target: GlobalControlTargetRef;
+  paused: boolean;
 }
 
 export interface PlayActorAnimationControlEffect {
@@ -195,6 +202,7 @@ export interface SetSunLightColorControlEffect {
 }
 
 export type ControlEffect =
+  | SetProjectTimePausedControlEffect
   | SetActorPresenceControlEffect
   | PlayActorAnimationControlEffect
   | FollowActorPathControlEffect
@@ -278,6 +286,13 @@ export interface RuntimeResolvedLightEnabledState {
   source: RuntimeResolvedControlSource;
 }
 
+export interface RuntimeResolvedProjectTimePausedState {
+  type: "projectTimePaused";
+  target: GlobalControlTargetRef;
+  value: boolean;
+  source: RuntimeResolvedControlSource;
+}
+
 export interface RuntimeResolvedActorPresenceState {
   type: "actorPresence";
   target: ActorControlTargetRef;
@@ -354,6 +369,7 @@ export interface RuntimeResolvedSunLightColorState {
 }
 
 export type RuntimeResolvedDiscreteControlState =
+  | RuntimeResolvedProjectTimePausedState
   | RuntimeResolvedActorPresenceState
   | RuntimeResolvedActorAnimationPlaybackState
   | RuntimeResolvedActorPathAssignmentState
@@ -594,6 +610,19 @@ export function createSetActorPresenceControlEffect(options: {
     type: "setActorPresence",
     target: cloneControlTargetRef(options.target) as ActorControlTargetRef,
     active: options.active
+  };
+}
+
+export function createSetProjectTimePausedControlEffect(options: {
+  target: GlobalControlTargetRef;
+  paused: boolean;
+}): SetProjectTimePausedControlEffect {
+  assertBoolean(options.paused, "Control project time paused");
+
+  return {
+    type: "setProjectTimePaused",
+    target: cloneControlTargetRef(options.target) as GlobalControlTargetRef,
+    paused: options.paused
   };
 }
 
@@ -952,6 +981,21 @@ export function createResolvedLightEnabledState(options: {
   };
 }
 
+export function createResolvedProjectTimePausedState(options: {
+  target: GlobalControlTargetRef;
+  value: boolean;
+  source: RuntimeResolvedControlSource;
+}): RuntimeResolvedProjectTimePausedState {
+  assertBoolean(options.value, "Resolved control project time paused");
+
+  return {
+    type: "projectTimePaused",
+    target: cloneControlTargetRef(options.target) as GlobalControlTargetRef,
+    value: options.value,
+    source: cloneResolvedControlSource(options.source)
+  };
+}
+
 export function createResolvedActorPresenceState(options: {
   target: ActorControlTargetRef;
   value: boolean;
@@ -1280,6 +1324,8 @@ export function getControlChannelDescriptorKey(
 
 export function getControlEffectResolutionKey(effect: ControlEffect): string {
   switch (effect.type) {
+    case "setProjectTimePaused":
+      return `state:projectTimePaused:${getControlTargetRefKey(effect.target)}`;
     case "setActorPresence":
       return `state:actorPresence:${getControlTargetRefKey(effect.target)}`;
     case "playActorAnimation":
@@ -1394,6 +1440,12 @@ export function cloneControlEffect<TEffect extends ControlEffect>(
   effect: TEffect
 ): TEffect {
   switch (effect.type) {
+    case "setProjectTimePaused":
+      return {
+        type: "setProjectTimePaused",
+        target: cloneControlTargetRef(effect.target),
+        paused: effect.paused
+      } as TEffect;
     case "setActorPresence":
       return {
         type: "setActorPresence",
@@ -1540,6 +1592,12 @@ export function cloneRuntimeResolvedDiscreteControlState<
   TState extends RuntimeResolvedDiscreteControlState
 >(state: TState): TState {
   switch (state.type) {
+    case "projectTimePaused":
+      return createResolvedProjectTimePausedState({
+        target: state.target,
+        value: state.value,
+        source: state.source
+      }) as TState;
     case "actorPresence":
       return createResolvedActorPresenceState({
         target: state.target,
@@ -1682,6 +1740,8 @@ export function areControlEffectsEqual(
   }
 
   switch (left.type) {
+    case "setProjectTimePaused":
+      return left.paused === (right as SetProjectTimePausedControlEffect).paused;
     case "setActorPresence":
       return left.active === (right as SetActorPresenceControlEffect).active;
     case "playActorAnimation":
@@ -1746,6 +1806,8 @@ export function areControlEffectsEqual(
 
 export function getControlEffectLabel(effect: ControlEffect): string {
   switch (effect.type) {
+    case "setProjectTimePaused":
+      return "Set Project Time Paused";
     case "setActorPresence":
       return "Set Actor Presence";
     case "playActorAnimation":
@@ -1819,6 +1881,8 @@ function formatTargetKindLabel(
 
 export function formatControlEffectValue(effect: ControlEffect): string {
   switch (effect.type) {
+    case "setProjectTimePaused":
+      return effect.paused ? "Paused" : "Running";
     case "setActorPresence":
       return effect.active ? "Present" : "Hidden";
     case "playActorAnimation":
@@ -1865,6 +1929,16 @@ export function applyControlEffectToResolvedState(
   const nextResolved = cloneRuntimeResolvedControlState(resolved);
 
   switch (effect.type) {
+    case "setProjectTimePaused":
+      upsertResolvedDiscreteState(
+        nextResolved,
+        createResolvedProjectTimePausedState({
+          target: effect.target,
+          value: effect.paused,
+          source
+        })
+      );
+      return nextResolved;
     case "setActorPresence":
       upsertResolvedDiscreteState(
         nextResolved,
