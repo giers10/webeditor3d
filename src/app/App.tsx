@@ -11888,6 +11888,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       }
                     )
                   }
+                  onSetSequenceDurationMinutes={updateProjectSequenceDurationMinutes}
                   onAddHeldControlStep={(sequenceId, targetKey) =>
                     handleAddProjectSequenceControlStep(
                       sequenceId,
@@ -11904,6 +11905,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   }
                   onAddDialogueStep={handleAddProjectSequenceDialogueStep}
                   onDeleteStep={handleDeleteProjectSequenceStep}
+                  onSetClipTiming={updateProjectSequenceClipTiming}
                   onSetControlStepTarget={updateProjectSequenceControlStepTarget}
                   onSetControlStepEffectOption={
                     updateProjectSequenceControlStepEffectOption

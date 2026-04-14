@@ -324,10 +324,12 @@ export function ProjectSequencerPane({
   onSetActorRoutinePathSpeed,
   onSetActorRoutinePathLoop,
   onSetSequenceTitle,
+  onSetSequenceDurationMinutes,
   onAddHeldControlStep,
   onAddImpulseControlStep,
   onAddDialogueStep,
   onDeleteStep,
+  onSetClipTiming,
   onSetControlStepTarget,
   onSetControlStepEffectOption,
   onSetControlStepNumericValue,
@@ -457,10 +459,12 @@ export function ProjectSequencerPane({
               onAddSequence={onAddSequence}
               onDeleteSequence={onDeleteSequence}
               onSetSequenceTitle={onSetSequenceTitle}
+              onSetSequenceDurationMinutes={onSetSequenceDurationMinutes}
               onAddHeldControlStep={onAddHeldControlStep}
               onAddImpulseControlStep={onAddImpulseControlStep}
               onAddDialogueStep={onAddDialogueStep}
               onDeleteStep={onDeleteStep}
+              onSetClipTiming={onSetClipTiming}
               onSetControlStepTarget={onSetControlStepTarget}
               onSetControlStepEffectOption={onSetControlStepEffectOption}
               onSetControlStepNumericValue={onSetControlStepNumericValue}
@@ -736,22 +740,26 @@ export function ProjectSequencerPane({
                     <input
                       key={`${selectedRoutine.id}-start`}
                       className="text-input"
-                      type="number"
-                      min="0"
-                      max="24"
-                      step="0.25"
-                      defaultValue={selectedRoutine.startHour}
+                      type="time"
+                      step="60"
+                      defaultValue={formatTimeOfDayHours(selectedRoutine.startHour)}
                       onBlur={(event) =>
                         onSetRoutineStartHour(
                           selectedRoutine.id,
-                          Number(event.currentTarget.value)
+                          parseTimeOfDayInputHours(
+                            event.currentTarget.value,
+                            "Clip start"
+                          )
                         )
                       }
                       onKeyDown={(event) =>
                         handleCommitOnEnter(event, () =>
                           onSetRoutineStartHour(
                             selectedRoutine.id,
-                            Number(event.currentTarget.value)
+                            parseTimeOfDayInputHours(
+                              event.currentTarget.value,
+                              "Clip start"
+                            )
                           )
                         )
                       }
@@ -762,22 +770,26 @@ export function ProjectSequencerPane({
                     <input
                       key={`${selectedRoutine.id}-end`}
                       className="text-input"
-                      type="number"
-                      min="0"
-                      max="24"
-                      step="0.25"
-                      defaultValue={selectedRoutine.endHour}
+                      type="time"
+                      step="60"
+                      defaultValue={formatTimeOfDayHours(selectedRoutine.endHour)}
                       onBlur={(event) =>
                         onSetRoutineEndHour(
                           selectedRoutine.id,
-                          Number(event.currentTarget.value)
+                          parseTimeOfDayInputHours(
+                            event.currentTarget.value,
+                            "Clip end"
+                          )
                         )
                       }
                       onKeyDown={(event) =>
                         handleCommitOnEnter(event, () =>
                           onSetRoutineEndHour(
                             selectedRoutine.id,
-                            Number(event.currentTarget.value)
+                            parseTimeOfDayInputHours(
+                              event.currentTarget.value,
+                              "Clip end"
+                            )
                           )
                         )
                       }
