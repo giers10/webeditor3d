@@ -370,6 +370,11 @@ import { ProjectDialoguesPanel } from "./ProjectDialoguesPanel";
 import { ProjectSequencesPanel } from "./ProjectSequencesPanel";
 import { ProjectSequencerPane } from "./ProjectSequencerPane";
 import {
+  getHeldSequenceControlEffects,
+  getProjectSequenceHeldSteps,
+  getProjectSequenceImpulseSteps
+} from "../sequencer/project-sequence-steps";
+import {
   areProjectSchedulersEqual,
   cloneProjectScheduleRoutine,
   cloneProjectScheduler,
