@@ -4602,6 +4602,39 @@ export function App({ store, initialStatusMessage }: AppProps) {
       setViewportQuadResizeMode(resizeMode);
     };
 
+  const handleSchedulePaneResizeStart = (
+    event: ReactPointerEvent<HTMLDivElement>
+  ) => {
+    if (!schedulePaneOpen) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    blurActiveTextEntry();
+    schedulePaneResizeStartRef.current = {
+      startY: event.clientY,
+      startHeight: schedulePaneHeightRef.current
+    };
+    setSchedulePaneResizeActive(true);
+  };
+
+  const handleSchedulePaneResizeKeyDown = (
+    event: ReactKeyboardEvent<HTMLDivElement>
+  ) => {
+    if (!schedulePaneOpen) {
+      return;
+    }
+
+    if (event.key !== "ArrowUp" && event.key !== "ArrowDown") {
+      return;
+    }
+
+    event.preventDefault();
+    const delta = event.key === "ArrowUp" ? 24 : -24;
+    commitSchedulePaneHeight(schedulePaneHeightRef.current + delta);
+  };
+
   const beginCreation = (
     toolPreview: CreationViewportToolPreview,
     status: string
