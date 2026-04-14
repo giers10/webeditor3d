@@ -452,7 +452,37 @@ export function ProjectSequencerPane({
                     ))}
                   </select>
                 </label>
-                {selectedRoutine.target.kind === "actor" ? (
+                <label className="form-field">
+                  <span className="label">Sequence</span>
+                  <select
+                    className="select-input"
+                    value={selectedRoutine.sequenceId ?? ""}
+                    onChange={(event) =>
+                      onSetRoutineSequenceId(
+                        selectedRoutine.id,
+                        event.currentTarget.value === ""
+                          ? null
+                          : event.currentTarget.value
+                      )
+                    }
+                  >
+                    <option value="">Inline Routine Effects</option>
+                    {compatibleHeldSequences.map((sequence) => (
+                      <option key={sequence.id} value={sequence.id}>
+                        {sequence.title}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                {selectedRoutine.sequenceId !== null ? (
+                  <div className="material-summary">
+                    This clip resolves held steps from the selected project
+                    sequence. Inline routine controls stay preserved as
+                    fallback, but are not edited while a sequence is attached.
+                  </div>
+                ) : null}
+                {selectedRoutine.sequenceId === null &&
+                selectedRoutine.target.kind === "actor" ? (
                   <>
                     <label className="form-field">
                       <span className="label">Presence</span>
@@ -475,7 +505,7 @@ export function ProjectSequencerPane({
                       </select>
                     </label>
                   </>
-                ) : (
+                ) : selectedRoutine.sequenceId === null ? (
                   <label className="form-field">
                     <span className="label">Effect</span>
                     <select
@@ -495,7 +525,7 @@ export function ProjectSequencerPane({
                       ))}
                     </select>
                   </label>
-                )}
+                ) : null}
                 <label className="form-field form-field--inline">
                   <input
                     type="checkbox"
