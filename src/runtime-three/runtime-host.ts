@@ -2739,7 +2739,9 @@ export class RuntimeHost {
         this.createInteractionDispatcher()
       );
 
-      this.setInteractionPrompt(this.resolveInteractionPrompt());
+      this.setInteractionPrompt(
+        this.currentDialogue === null ? this.resolveInteractionPrompt() : null
+      );
     } else {
       this.setInteractionPrompt(null);
     }
@@ -3007,8 +3009,8 @@ export class RuntimeHost {
       stopSound: (soundEmitterId) => {
         this.audioSystem.stopSound(soundEmitterId);
       },
-      startDialogue: (dialogueId) => {
-        this.openRuntimeDialogue(dialogueId);
+      startDialogue: (dialogueId, source) => {
+        this.openRuntimeDialogue(dialogueId, source);
       },
       dispatchControlEffect: (effect, link) => {
         this.applyControlEffect(effect, link);
@@ -3033,7 +3035,8 @@ export class RuntimeHost {
 
   private createRuntimeDialogueState(
     dialogueId: string,
-    lineIndex: number
+    lineIndex: number,
+    source: RuntimeDialogueStartSource
   ): RuntimeDialogueState | null {
     if (this.runtimeScene === null) {
       return null;
@@ -3058,7 +3061,8 @@ export class RuntimeHost {
       lineIndex,
       lineCount: dialogue.lines.length,
       speakerName: line.speakerName,
-      text: line.text
+      text: line.text,
+      source
     };
   }
 
@@ -3079,8 +3083,19 @@ export class RuntimeHost {
     this.runtimeDialogueHandler?.(dialogue);
   }
 
-  private openRuntimeDialogue(dialogueId: string) {
-    const dialogue = this.createRuntimeDialogueState(dialogueId, 0);
+  private openRuntimeDialogue(
+    dialogueId: string,
+    source: RuntimeDialogueStartSource = {
+      kind: "direct",
+      sourceEntityId: null,
+      linkId: null
+    }
+  ) {
+    if (this.currentDialogue?.dialogueId === dialogueId) {
+      return;
+    }
+
+    const dialogue = this.createRuntimeDialogueState(dialogueId, 0, source);
 
     if (dialogue === null) {
       console.warn(`dialogue: missing dialogue ${dialogueId}`);
