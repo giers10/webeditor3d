@@ -231,6 +231,85 @@ describe("RuntimeHost", () => {
     host.dispose();
   });
 
+  it("opens, advances, and closes project dialogues through the runtime host", () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    vi.spyOn(RapierCollisionWorld, "create").mockResolvedValue({
+      dispose: vi.fn(),
+      resolveThirdPersonCameraCollision: vi.fn(
+        (_pivot, desiredCameraPosition) => desiredCameraPosition
+      )
+    } as unknown as RapierCollisionWorld);
+
+    const triggerVolume = createTriggerVolumeEntity({
+      id: "entity-trigger-main"
+    });
+    const document = createEmptySceneDocument();
+    document.entities[triggerVolume.id] = triggerVolume;
+    document.dialogues.dialogues["dialogue-warning"] = {
+      id: "dialogue-warning",
+      title: "Generator Warning",
+      lines: [
+        {
+          id: "dialogue-line-warning-1",
+          speakerName: "Operator",
+          text: "The generator is unstable."
+        },
+        {
+          id: "dialogue-line-warning-2",
+          speakerName: null,
+          text: "A low hum fills the room."
+        }
+      ]
+    };
+    document.interactionLinks["link-start-dialogue"] =
+      createStartDialogueInteractionLink({
+        id: "link-start-dialogue",
+        sourceEntityId: triggerVolume.id,
+        trigger: "enter",
+        dialogueId: "dialogue-warning"
+      });
+
+    const runtimeScene = buildRuntimeSceneFromDocument(document);
+    const host = new RuntimeHost({
+      enableRendering: false
+    });
+    const dialogueStates: Array<RuntimeDialogueState | null> = [];
+    host.setRuntimeDialogueHandler((dialogue) => {
+      dialogueStates.push(dialogue);
+    });
+    host.loadScene(runtimeScene);
+
+    const hostInternals = host as unknown as {
+      createInteractionDispatcher(): {
+        startDialogue(dialogueId: string, link: InteractionLink): void;
+      };
+    };
+    const dispatcher = hostInternals.createInteractionDispatcher();
+    const dialogueLink = document.interactionLinks["link-start-dialogue"]!;
+
+    dispatcher.startDialogue("dialogue-warning", dialogueLink);
+    host.advanceRuntimeDialogue();
+    host.advanceRuntimeDialogue();
+
+    expect(dialogueStates).toEqual([
+      expect.objectContaining({
+        dialogueId: "dialogue-warning",
+        lineIndex: 0,
+        speakerName: "Operator",
+        text: "The generator is unstable."
+      }),
+      expect.objectContaining({
+        dialogueId: "dialogue-warning",
+        lineIndex: 1,
+        speakerName: null,
+        text: "A low hum fills the room."
+      }),
+      null
+    ]);
+
+    host.dispose();
+  });
+
   it("applies expanded typed control effects for model, sound, and scene lighting", () => {
     vi.spyOn(console, "warn").mockImplementation(() => undefined);
     vi.spyOn(RapierCollisionWorld, "create").mockResolvedValue({
