@@ -3921,6 +3921,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
           time: nextTime
         })
       );
+      if (!editorSimulationPlaying) {
+        setEditorSimulationClockOverride(null);
+      }
       setStatusMessage(successMessage);
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
