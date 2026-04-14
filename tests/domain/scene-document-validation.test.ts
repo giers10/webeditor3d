@@ -4,7 +4,9 @@ import { createBoxBrush } from "../../src/document/brushes";
 import {
   createActiveSceneControlTargetRef,
   createActorControlTargetRef,
+  createFollowActorPathControlEffect,
   createLightControlTargetRef,
+  createPlayActorAnimationControlEffect,
   createSetActorPresenceControlEffect,
   createSetAmbientLightColorControlEffect,
   createSetLightIntensityControlEffect,
@@ -207,6 +209,71 @@ describe("validateSceneDocument", () => {
           intensity: 0.35
         })
       });
+
+    const validation = validateSceneDocument(document);
+
+    expect(validation.errors).toEqual([]);
+  });
+
+  it("accepts actor scheduler animation and follow-path effects when the actor has one bound NPC usage", () => {
+    const actorTarget = createActorControlTargetRef("actor-patroller");
+    const npcModelAsset = {
+      id: "asset-model-patroller",
+      kind: "model" as const,
+      sourceName: "patroller.glb",
+      mimeType: "model/gltf-binary",
+      storageKey: createProjectAssetStorageKey("asset-model-patroller"),
+      byteLength: 1024,
+      metadata: {
+        kind: "model" as const,
+        format: "glb" as const,
+        sceneName: null,
+        nodeCount: 1,
+        meshCount: 1,
+        materialNames: [],
+        textureNames: [],
+        animationNames: ["Walk"],
+        boundingBox: null,
+        warnings: []
+      }
+    } satisfies ModelAssetRecord;
+    const npc = createNpcEntity({
+      id: "entity-npc-patroller",
+      actorId: actorTarget.actorId,
+      modelAssetId: npcModelAsset.id
+    });
+    const path = createScenePath({
+      id: "path-patrol"
+    });
+    const document = createEmptySceneDocument();
+    document.assets[npcModelAsset.id] = npcModelAsset;
+    document.entities[npc.id] = npc;
+    document.paths[path.id] = path;
+    document.scheduler.routines["routine-patrol"] = createProjectScheduleRoutine({
+      id: "routine-patrol",
+      title: "Patrolling",
+      target: actorTarget,
+      startHour: 9,
+      endHour: 13,
+      effects: [
+        createSetActorPresenceControlEffect({
+          target: actorTarget,
+          active: true
+        }),
+        createPlayActorAnimationControlEffect({
+          target: actorTarget,
+          clipName: "Walk",
+          loop: true
+        }),
+        createFollowActorPathControlEffect({
+          target: actorTarget,
+          pathId: path.id,
+          speed: 2,
+          loop: false,
+          progressMode: "deriveFromTime"
+        })
+      ]
+    });
 
     const validation = validateSceneDocument(document);
 
