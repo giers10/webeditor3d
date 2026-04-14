@@ -699,7 +699,7 @@ export class RuntimeInteractionSystem {
         continue;
       }
 
-      for (const step of getInteractionLinkImpulseSteps(link)) {
+      for (const step of getInteractionLinkImpulseSteps(link, runtimeScene.sequences)) {
         this.dispatchSequenceStep(step, link, runtimeScene, dispatcher);
       }
     }
