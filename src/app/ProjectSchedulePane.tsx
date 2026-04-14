@@ -458,7 +458,7 @@ export function ProjectSequencerPane({
                   </select>
                 </label>
                 <label className="form-field">
-                  <span className="label">Sequence</span>
+                  <span className="label">Held Sequence</span>
                   <select
                     className="select-input"
                     value={selectedRoutine.sequenceId ?? ""}
@@ -471,7 +471,7 @@ export function ProjectSequencerPane({
                       )
                     }
                   >
-                    <option value="">Inline Routine Effects</option>
+                    <option value="">This Clip (inline held steps)</option>
                     {compatibleHeldSequences.map((sequence) => (
                       <option key={sequence.id} value={sequence.id}>
                         {sequence.title}
@@ -484,6 +484,14 @@ export function ProjectSequencerPane({
                     This clip resolves held steps from the selected project
                     sequence. Inline routine controls stay preserved as
                     fallback, but are not edited while a sequence is attached.
+                  </div>
+                ) : null}
+                {selectedRoutine.sequenceId === null &&
+                compatibleHeldSequences.length === 0 ? (
+                  <div className="material-summary">
+                    No compatible held project sequences are authored for this
+                    target yet. Use the Sequences panel to author held steps, or
+                    keep this clip on its own inline held controls.
                   </div>
                 ) : null}
                 {selectedRoutine.sequenceId === null &&

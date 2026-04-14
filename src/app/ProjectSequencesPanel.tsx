@@ -10,6 +10,8 @@ import {
   type ProjectScheduleTargetOption
 } from "../scheduler/project-schedule-control-options";
 import {
+  getProjectSequenceHeldSteps,
+  getProjectSequenceImpulseSteps,
   getSequenceStepLabel,
   type SequenceStep
 } from "../sequencer/project-sequence-steps";
@@ -156,8 +158,8 @@ export function ProjectSequencesPanel({
                 >
                   <span className="outliner-item__title">{sequence.title}</span>
                   <span className="outliner-item__meta">
-                    {sequence.steps.length} step
-                    {sequence.steps.length === 1 ? "" : "s"}
+                    {getProjectSequenceHeldSteps(sequence).length} held ·{" "}
+                    {getProjectSequenceImpulseSteps(sequence).length} impulse
                   </span>
                 </button>
                 <button
@@ -186,6 +188,10 @@ export function ProjectSequencesPanel({
         </div>
       ) : (
         <div className="form-section">
+          <div className="material-summary">
+            Held steps are resolved by sequencer timeline clips. Impulse steps
+            can be started immediately from interaction links.
+          </div>
           <label className="form-field">
             <span className="label">Title</span>
             <input
@@ -206,7 +212,9 @@ export function ProjectSequencesPanel({
           <div className="label">Steps</div>
           {selectedSequence.steps.length === 0 ? (
             <div className="outliner-empty">
-              Add held control, impulse control, or dialogue steps.
+              Add held control, impulse control, or dialogue steps. Interaction
+              links can only run sequences that contain at least one impulse
+              step.
             </div>
           ) : (
             <div className="outliner-list">
