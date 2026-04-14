@@ -594,6 +594,18 @@ export function ProjectSequencerPane({
                     ))}
                   </select>
                 </label>
+                <div className="inline-actions">
+                  <button
+                    className="toolbar__button toolbar__button--compact"
+                    type="button"
+                    onClick={() => {
+                      onSelectSequence(selectedRoutine.sequenceId ?? selectedSequenceId);
+                      onSetMode("sequence");
+                    }}
+                  >
+                    Edit Sequences
+                  </button>
+                </div>
                 {selectedRoutine.sequenceId !== null ? (
                   <div className="material-summary">
                     This timeline clip resolves held clips from the selected
