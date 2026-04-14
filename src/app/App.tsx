@@ -8654,42 +8654,46 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   </label>
                 </div>
               ) : link.action.type === "runSequence" ? (
-                <div className="form-section">
-                  <label className="form-field">
-                    <span className="label">Sequence</span>
-                    <select
-                      className="text-input"
-                      value={link.action.sequenceId}
-                      onChange={(event) =>
-                        updateSequenceInteractionLinkTarget(
-                          link,
-                          event.currentTarget.value
-                        )
-                      }
-                    >
-                      {projectImpulseSequenceList.map((sequence) => (
-                        <option key={sequence.id} value={sequence.id}>
-                          {sequence.title}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <div className="inline-actions">
-                    <button
-                      className="toolbar__button toolbar__button--compact"
-                      type="button"
-                      onClick={() =>
-                        openSequencerSequenceEditor(link.action.sequenceId)
-                      }
-                    >
-                      Edit in Sequencer
-                    </button>
-                  </div>
-                  <div className="material-summary">
-                    Run Sequence links can only reference sequences that contain
-                    at least one impulse clip.
-                  </div>
-                </div>
+                (() => {
+                  const sequenceId = link.action.sequenceId;
+
+                  return (
+                    <div className="form-section">
+                      <label className="form-field">
+                        <span className="label">Sequence</span>
+                        <select
+                          className="text-input"
+                          value={sequenceId}
+                          onChange={(event) =>
+                            updateSequenceInteractionLinkTarget(
+                              link,
+                              event.currentTarget.value
+                            )
+                          }
+                        >
+                          {projectImpulseSequenceList.map((sequence) => (
+                            <option key={sequence.id} value={sequence.id}>
+                              {sequence.title}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <div className="inline-actions">
+                        <button
+                          className="toolbar__button toolbar__button--compact"
+                          type="button"
+                          onClick={() => openSequencerSequenceEditor(sequenceId)}
+                        >
+                          Edit in Sequencer
+                        </button>
+                      </div>
+                      <div className="material-summary">
+                        Run Sequence links can only reference sequences that
+                        contain at least one impulse clip.
+                      </div>
+                    </div>
+                  );
+                })()
               ) : link.action.type === "stopAnimation" ? (
                 <div className="form-section">
                   <label className="form-field">
