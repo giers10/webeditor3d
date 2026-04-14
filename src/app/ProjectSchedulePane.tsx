@@ -4,7 +4,9 @@ import {
   HOURS_PER_DAY,
   formatTimeOfDayHours
 } from "../document/project-time-settings";
+import type { ProjectDialogueLibrary } from "../dialogues/project-dialogues";
 import { formatControlEffectValue, getControlTargetRefKey } from "../controls/control-surface";
+import { ProjectSequencesPanel } from "./ProjectSequencesPanel";
 import {
   formatProjectScheduleDaySelection,
   getProjectScheduleTimelineSegments,
@@ -29,13 +31,20 @@ import {
 } from "../sequencer/project-sequences";
 
 interface ProjectSequencerPaneProps {
+  mode: "timeline" | "sequence";
+  onSetMode(mode: "timeline" | "sequence"): void;
   targetOptions: ProjectScheduleTargetOption[];
   scheduler: ProjectScheduler;
   sequences: ProjectSequenceLibrary;
+  dialogues: ProjectDialogueLibrary;
   selectedRoutineId: string | null;
+  selectedSequenceId: string | null;
   onSelectRoutine(routineId: string | null): void;
+  onSelectSequence(sequenceId: string | null): void;
   onAddRoutine(targetKey: string): void;
+  onAddSequence(): void;
   onDeleteRoutine(routineId: string): void;
+  onDeleteSequence(sequenceId: string): void;
   onClose(): void;
   onSetRoutineTarget(routineId: string, targetKey: string): void;
   onSetRoutineTitle(routineId: string, title: string): void;
@@ -61,6 +70,46 @@ interface ProjectSequencerPaneProps {
   onSetActorRoutinePath(routineId: string, pathId: string | null): void;
   onSetActorRoutinePathSpeed(routineId: string, speed: number): void;
   onSetActorRoutinePathLoop(routineId: string, loop: boolean): void;
+  onSetSequenceTitle(sequenceId: string, title: string): void;
+  onAddHeldControlStep(sequenceId: string, targetKey: string): void;
+  onAddImpulseControlStep(sequenceId: string, targetKey: string): void;
+  onAddDialogueStep(sequenceId: string, dialogueId: string): void;
+  onDeleteStep(sequenceId: string, stepIndex: number): void;
+  onSetControlStepTarget(
+    sequenceId: string,
+    stepIndex: number,
+    targetKey: string
+  ): void;
+  onSetControlStepEffectOption(
+    sequenceId: string,
+    stepIndex: number,
+    effectOptionId: ProjectScheduleEffectOptionId
+  ): void;
+  onSetControlStepNumericValue(
+    sequenceId: string,
+    stepIndex: number,
+    value: number
+  ): void;
+  onSetControlStepColorValue(
+    sequenceId: string,
+    stepIndex: number,
+    colorHex: string
+  ): void;
+  onSetControlStepAnimationClip(
+    sequenceId: string,
+    stepIndex: number,
+    clipName: string
+  ): void;
+  onSetControlStepAnimationLoop(
+    sequenceId: string,
+    stepIndex: number,
+    loop: boolean
+  ): void;
+  onSetDialogueStepDialogueId(
+    sequenceId: string,
+    stepIndex: number,
+    dialogueId: string
+  ): void;
 }
 
 function handleCommitOnEnter(
