@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import { createBoxBrush } from "../../src/document/brushes";
+import {
+  createActorControlTargetRef,
+  createSetActorPresenceControlEffect
+} from "../../src/controls/control-surface";
 import { createScenePath } from "../../src/document/paths";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
 import { validateSceneDocument } from "../../src/document/scene-document-validation";
@@ -17,6 +21,7 @@ import {
   createTriggerVolumeEntity
 } from "../../src/entities/entity-instances";
 import { createProjectAssetStorageKey, type AudioAssetRecord, type ModelAssetRecord } from "../../src/assets/project-assets";
+import { createProjectScheduleRoutine } from "../../src/scheduler/project-scheduler";
 
 describe("validateSceneDocument", () => {
   it("accepts a valid first-room document", () => {
@@ -68,6 +73,31 @@ describe("validateSceneDocument", () => {
         }),
         expect.objectContaining({
           code: "duplicate-authored-id"
+        })
+      ])
+    );
+  });
+
+  it("rejects project schedule routines that target missing actors", () => {
+    const document = createEmptySceneDocument();
+    document.scheduler.routines["routine-missing-actor"] =
+      createProjectScheduleRoutine({
+        id: "routine-missing-actor",
+        title: "Missing Actor",
+        target: createActorControlTargetRef("actor-missing"),
+        effect: createSetActorPresenceControlEffect({
+          target: createActorControlTargetRef("actor-missing"),
+          active: true
+        })
+      });
+
+    const validation = validateSceneDocument(document);
+
+    expect(validation.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "missing-control-actor-target",
+          path: "scheduler.routines.routine-missing-actor.target.actorId"
         })
       ])
     );
