@@ -219,6 +219,27 @@ describe("validateSceneDocument", () => {
     );
   });
 
+  it("rejects NPC dialogue references that point to missing dialogue resources", () => {
+    const npc = createNpcEntity({
+      id: "entity-npc-guide",
+      actorId: "actor-guide",
+      dialogueId: "dialogue-missing"
+    });
+    const document = createEmptySceneDocument();
+    document.entities[npc.id] = npc;
+
+    const validation = validateSceneDocument(document);
+
+    expect(validation.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "missing-dialogue-resource",
+          path: `entities.${npc.id}.dialogueId`
+        })
+      ])
+    );
+  });
+
   it("accepts typed scheduler light control effects in the scene document", () => {
     const pointLight = createPointLightEntity({
       id: "entity-point-light-main",
