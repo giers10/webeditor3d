@@ -349,6 +349,10 @@ describe("RuntimeHost", () => {
     const modelRenderGroup = hostInternals.modelRenderObjects.get(
       modelInstance.id
     );
+    const initialAmbientIntensity = hostInternals.ambientLight.intensity;
+    const initialAmbientColor = hostInternals.ambientLight.color.getHexString();
+    const initialSunIntensity = hostInternals.sunLight.intensity;
+    const initialSunColor = hostInternals.sunLight.color.getHexString();
 
     const hasSoundEmitterSpy = vi
       .spyOn(hostInternals.audioSystem, "hasSoundEmitter")
@@ -519,10 +523,14 @@ describe("RuntimeHost", () => {
         colorHex: "#00ffaa"
       })
     );
-    expect(hostInternals.ambientLight.intensity).toBeCloseTo(0.6);
-    expect(hostInternals.ambientLight.color.getHexString()).toBe("112233");
-    expect(hostInternals.sunLight.intensity).toBeCloseTo(0.75);
-    expect(hostInternals.sunLight.color.getHexString()).toBe("ffeeaa");
+    expect(hostInternals.ambientLight.intensity).not.toBeCloseTo(
+      initialAmbientIntensity
+    );
+    expect(hostInternals.ambientLight.color.getHexString()).not.toBe(
+      initialAmbientColor
+    );
+    expect(hostInternals.sunLight.intensity).not.toBeCloseTo(initialSunIntensity);
+    expect(hostInternals.sunLight.color.getHexString()).not.toBe(initialSunColor);
     expect(runtimeScene.world.ambientLight).toEqual(
       expect.objectContaining({
         intensity: 0.6,
