@@ -4805,40 +4805,40 @@ function validateProjectSequence(
     );
   }
 
-  if (sequence.steps.length === 0) {
+  if (sequence.clips.length === 0) {
     diagnostics.push(
       createDiagnostic(
         "error",
-        "invalid-project-sequence-steps-empty",
-        "Project sequences must contain at least one step.",
-        `${path}.steps`
+        "invalid-project-sequence-clips-empty",
+        "Project sequences must contain at least one clip.",
+        `${path}.clips`
       )
     );
     return;
   }
 
-  for (const [stepIndex, step] of sequence.steps.entries()) {
-    const stepPath = `${path}.steps.${stepIndex}`;
+  for (const [clipIndex, clip] of sequence.clips.entries()) {
+    const clipPath = `${path}.clips.${clipIndex}`;
 
-    switch (step.type) {
+    switch (clip.type) {
       case "controlEffect":
         validateProjectSchedulerEffect(
-          step.effect,
-          `${stepPath}.effect`,
+          clip.effect,
+          `${clipPath}.effect`,
           context,
           diagnostics
         );
         break;
       case "startDialogue":
         if (
-          projectResources.dialogues.dialogues[step.dialogueId] === undefined
+          projectResources.dialogues.dialogues[clip.dialogueId] === undefined
         ) {
           diagnostics.push(
             createDiagnostic(
               "error",
               "missing-sequence-dialogue-resource",
-              `Dialogue ${step.dialogueId} does not exist in the project dialogue library.`,
-              `${stepPath}.dialogueId`
+              `Dialogue ${clip.dialogueId} does not exist in the project dialogue library.`,
+              `${clipPath}.dialogueId`
             )
           );
         }

@@ -1,14 +1,15 @@
 import { createOpaqueId } from "../core/ids";
 
 import {
-  cloneSequenceStep,
+  cloneSequenceClip,
+  type SequenceClip,
   type SequenceStep
 } from "./project-sequence-steps";
 
 export interface ProjectSequence {
   id: string;
   title: string;
-  steps: SequenceStep[];
+  clips: SequenceClip[];
 }
 
 export interface ProjectSequenceLibrary {
@@ -33,13 +34,14 @@ export function createEmptyProjectSequenceLibrary(): ProjectSequenceLibrary {
 
 export function createProjectSequence(
   overrides: Partial<Pick<ProjectSequence, "id" | "title">> & {
+    clips?: SequenceClip[];
     steps?: SequenceStep[];
   } = {}
 ): ProjectSequence {
   return {
     id: overrides.id ?? createOpaqueId("sequence"),
     title: normalizeProjectSequenceTitle(overrides.title ?? "Sequence"),
-    steps: overrides.steps?.map(cloneSequenceStep) ?? []
+    clips: (overrides.clips ?? overrides.steps)?.map(cloneSequenceClip) ?? []
   };
 }
 
@@ -49,7 +51,7 @@ export function cloneProjectSequence(
   return {
     id: sequence.id,
     title: sequence.title,
-    steps: sequence.steps.map(cloneSequenceStep)
+    clips: sequence.clips.map(cloneSequenceClip)
   };
 }
 
@@ -73,19 +75,19 @@ export function areProjectSequencesEqual(
   if (
     left.id !== right.id ||
     left.title !== right.title ||
-    left.steps.length !== right.steps.length
+    left.clips.length !== right.clips.length
   ) {
     return false;
   }
 
-  return left.steps.every((step, index) => {
-    const rightStep = right.steps[index];
+  return left.clips.every((clip, index) => {
+    const rightClip = right.clips[index];
 
-    if (rightStep === undefined) {
+    if (rightClip === undefined) {
       return false;
     }
 
-    return JSON.stringify(step) === JSON.stringify(rightStep);
+    return JSON.stringify(clip) === JSON.stringify(rightClip);
   });
 }
 

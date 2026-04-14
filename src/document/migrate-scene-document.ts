@@ -197,7 +197,7 @@ import {
   createProjectSequence,
   type ProjectSequenceLibrary
 } from "../sequencer/project-sequences";
-import type { SequenceStep } from "../sequencer/project-sequence-steps";
+import type { SequenceClip } from "../sequencer/project-sequence-steps";
 import {
   createScenePath,
   createScenePathPoint,
@@ -3517,7 +3517,7 @@ function readProjectDialogueLibrary(
   };
 }
 
-function readProjectSequenceStep(value: unknown, label: string): SequenceStep {
+function readProjectSequenceClip(value: unknown, label: string): SequenceClip {
   if (!isRecord(value)) {
     throw new Error(`${label} must be an object.`);
   }
@@ -3574,7 +3574,7 @@ function readProjectSequenceStep(value: unknown, label: string): SequenceStep {
             : expectBoolean(value.visible, `${label}.visible`)
       };
     default:
-      throw new Error(`${label}.type must be a supported sequence step.`);
+      throw new Error(`${label}.type must be a supported sequence clip.`);
   }
 }
 
@@ -3606,10 +3606,14 @@ function readProjectSequenceLibrary(
       throw new Error(`${label}.sequences.${sequenceKey} must be an object.`);
     }
 
-    const stepsValue = sequenceValue.steps;
+    const clipsValue = Array.isArray(sequenceValue.clips)
+      ? sequenceValue.clips
+      : sequenceValue.steps;
 
-    if (!Array.isArray(stepsValue)) {
-      throw new Error(`${label}.sequences.${sequenceKey}.steps must be an array.`);
+    if (!Array.isArray(clipsValue)) {
+      throw new Error(
+        `${label}.sequences.${sequenceKey}.clips must be an array.`
+      );
     }
 
     sequences[sequenceKey] = createProjectSequence({
@@ -3618,10 +3622,10 @@ function readProjectSequenceLibrary(
         sequenceValue.title,
         `${label}.sequences.${sequenceKey}.title`
       ),
-      steps: stepsValue.map((stepValue, stepIndex) =>
-        readProjectSequenceStep(
-          stepValue,
-          `${label}.sequences.${sequenceKey}.steps.${stepIndex}`
+      clips: clipsValue.map((clipValue, clipIndex) =>
+        readProjectSequenceClip(
+          clipValue,
+          `${label}.sequences.${sequenceKey}.clips.${clipIndex}`
         )
       )
     });

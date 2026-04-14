@@ -32,7 +32,8 @@ import {
   type ProjectSequenceLibrary
 } from "../sequencer/project-sequences";
 
-export const SCENE_DOCUMENT_VERSION = 53 as const;
+export const SCENE_DOCUMENT_VERSION = 54 as const;
+export const PROJECT_SEQUENCE_CLIPS_SCENE_DOCUMENT_VERSION = 54 as const;
 export const PROJECT_SEQUENCE_LIBRARY_SCENE_DOCUMENT_VERSION = 53 as const;
 export const PLAYER_START_PAUSE_BINDINGS_SCENE_DOCUMENT_VERSION = 52 as const;
 export const NPC_DIALOGUE_REFERENCE_SCENE_DOCUMENT_VERSION = 51 as const;
