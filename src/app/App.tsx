@@ -4044,6 +4044,33 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
+  const applyProjectSequences = (
+    nextSequences: ProjectSequenceLibrary,
+    label: string,
+    successMessage: string
+  ) => {
+    if (
+      areProjectSequenceLibrariesEqual(
+        editorState.projectDocument.sequences,
+        nextSequences
+      )
+    ) {
+      return;
+    }
+
+    try {
+      store.executeCommand(
+        createSetProjectSequencesCommand({
+          label,
+          sequences: nextSequences
+        })
+      );
+      setStatusMessage(successMessage);
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
   const updateProjectDialogues = (
     label: string,
     successMessage: string,
@@ -4055,6 +4082,22 @@ export function App({ store, initialStatusMessage }: AppProps) {
       );
       mutate(nextDialogues);
       applyProjectDialogues(nextDialogues, label, successMessage);
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const updateProjectSequences = (
+    label: string,
+    successMessage: string,
+    mutate: (sequences: ProjectSequenceLibrary) => void
+  ) => {
+    try {
+      const nextSequences = cloneProjectSequenceLibrary(
+        editorState.projectDocument.sequences
+      );
+      mutate(nextSequences);
+      applyProjectSequences(nextSequences, label, successMessage);
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
     }
