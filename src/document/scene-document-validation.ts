@@ -3558,6 +3558,18 @@ function validateInteractionLink(
 
       break;
     }
+    case "startDialogue":
+      if (document.dialogues.dialogues[link.action.dialogueId] === undefined) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "missing-dialogue-resource",
+            `Dialogue ${link.action.dialogueId} does not exist in the project dialogue library.`,
+            `${path}.action.dialogueId`
+          )
+        );
+      }
+      break;
     case "control":
       validateControlEffect(
         link.action.effect,
