@@ -22,6 +22,8 @@ function removeInvalidatedInteractionLinks(
           return silencedSoundEmitterIds.has(link.action.targetSoundEmitterId);
         case "control":
           switch (link.action.effect.type) {
+            case "setActorPresence":
+              return false;
             case "playModelAnimation":
             case "stopModelAnimation":
               return removedModelInstanceIds.has(
