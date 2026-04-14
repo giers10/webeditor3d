@@ -11,6 +11,8 @@ export const CONTROL_INTERACTION_TARGET_KINDS = [
 ] as const;
 export const CONTROL_CAPABILITY_KINDS = [
   "actorPresence",
+  "actorAnimationPlayback",
+  "actorPathFollow",
   "animationPlayback",
   "modelVisibility",
   "soundPlayback",
@@ -30,6 +32,9 @@ export type ControlEntityTargetKind =
 export type ControlInteractionTargetKind =
   (typeof CONTROL_INTERACTION_TARGET_KINDS)[number];
 export type ControlCapabilityKind = (typeof CONTROL_CAPABILITY_KINDS)[number];
+
+export const ACTOR_PATH_PROGRESS_MODES = ["deriveFromTime"] as const;
+export type ActorPathProgressMode = (typeof ACTOR_PATH_PROGRESS_MODES)[number];
 
 export interface ActorControlTargetRef {
   kind: "actor";
@@ -89,6 +94,22 @@ export interface SetActorPresenceControlEffect {
   type: "setActorPresence";
   target: ActorControlTargetRef;
   active: boolean;
+}
+
+export interface PlayActorAnimationControlEffect {
+  type: "playActorAnimation";
+  target: ActorControlTargetRef;
+  clipName: string;
+  loop?: boolean;
+}
+
+export interface FollowActorPathControlEffect {
+  type: "followActorPath";
+  target: ActorControlTargetRef;
+  pathId: string;
+  speed: number;
+  loop: boolean;
+  progressMode: ActorPathProgressMode;
 }
 
 export interface PlayModelAnimationControlEffect {
@@ -175,6 +196,8 @@ export interface SetSunLightColorControlEffect {
 
 export type ControlEffect =
   | SetActorPresenceControlEffect
+  | PlayActorAnimationControlEffect
+  | FollowActorPathControlEffect
   | PlayModelAnimationControlEffect
   | StopModelAnimationControlEffect
   | SetModelInstanceVisibleControlEffect
@@ -257,6 +280,24 @@ export interface RuntimeResolvedActorPresenceState {
   source: RuntimeResolvedControlSource;
 }
 
+export interface RuntimeResolvedActorAnimationPlaybackState {
+  type: "actorAnimationPlayback";
+  target: ActorControlTargetRef;
+  clipName: string | null;
+  loop: boolean | undefined;
+  source: RuntimeResolvedControlSource;
+}
+
+export interface RuntimeResolvedActorPathAssignmentState {
+  type: "actorPathAssignment";
+  target: ActorControlTargetRef;
+  pathId: string | null;
+  speed: number | null;
+  loop: boolean;
+  progressMode: ActorPathProgressMode | null;
+  source: RuntimeResolvedControlSource;
+}
+
 export interface RuntimeResolvedInteractionEnabledState {
   type: "interactionEnabled";
   target: InteractionControlTargetRef;
@@ -309,6 +350,8 @@ export interface RuntimeResolvedSunLightColorState {
 
 export type RuntimeResolvedDiscreteControlState =
   | RuntimeResolvedActorPresenceState
+  | RuntimeResolvedActorAnimationPlaybackState
+  | RuntimeResolvedActorPathAssignmentState
   | RuntimeResolvedLightEnabledState
   | RuntimeResolvedInteractionEnabledState
   | RuntimeResolvedModelInstanceVisibilityState
