@@ -11353,12 +11353,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       label
                     })
                   )}
-                  visibilityTargetOptions={visibilityBrushOptions.map(
-                    ({ brush, label }) => ({
-                      brushId: brush.id,
-                      label
-                    })
-                  )}
+                  visibilityTargetOptions={sequenceVisibilityTargetOptions}
+                  modelAnimationTargetOptions={sequenceAnimationTargetOptions}
+                  soundTargetOptions={sequenceSoundTargetOptions}
                   scheduler={editorState.projectDocument.scheduler}
                   sequences={editorState.projectDocument.sequences}
                   dialogues={editorState.projectDocument.dialogues}
@@ -11849,6 +11846,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   onAddDialogueStep={handleAddProjectSequenceDialogueStep}
                   onAddTeleportStep={handleAddProjectSequenceTeleportStep}
                   onAddVisibilityStep={handleAddProjectSequenceVisibilityStep}
+                  onAddPlayAnimationStep={
+                    handleAddProjectSequencePlayAnimationStep
+                  }
+                  onAddStopAnimationStep={
+                    handleAddProjectSequenceStopAnimationStep
+                  }
+                  onAddPlaySoundStep={handleAddProjectSequencePlaySoundStep}
+                  onAddStopSoundStep={handleAddProjectSequenceStopSoundStep}
                   onDeleteStep={handleDeleteProjectSequenceStep}
                   onSetControlStepTarget={updateProjectSequenceControlStepTarget}
                   onSetControlStepEffectOption={
