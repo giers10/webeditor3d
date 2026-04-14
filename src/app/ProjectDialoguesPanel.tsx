@@ -152,7 +152,10 @@ export function ProjectDialoguesPanel({
               className="text-input"
               type="text"
               value={titleDraft}
-              onChange={(event) => setTitleDraft(event.currentTarget.value)}
+              onChange={(event) => {
+                const nextValue = event.currentTarget.value;
+                setTitleDraft(nextValue);
+              }}
               onBlur={commitTitle}
               onKeyDown={(event) => commitOnEnter(event, commitTitle)}
             />
@@ -183,15 +186,17 @@ export function ProjectDialoguesPanel({
                       type="text"
                       placeholder="Optional"
                       value={draft.speakerName}
-                      onChange={(event) =>
+                      onChange={(event) => {
+                        const nextSpeakerName = event.currentTarget.value;
+
                         setLineDrafts((current) => ({
                           ...current,
                           [line.id]: {
                             ...draft,
-                            speakerName: event.currentTarget.value
+                            speakerName: nextSpeakerName
                           }
-                        }))
-                      }
+                        }));
+                      }}
                       onBlur={() =>
                         onSetDialogueLineSpeaker(
                           selectedDialogue.id,
@@ -207,15 +212,17 @@ export function ProjectDialoguesPanel({
                       className="text-input"
                       rows={3}
                       value={draft.text}
-                      onChange={(event) =>
+                      onChange={(event) => {
+                        const nextText = event.currentTarget.value;
+
                         setLineDrafts((current) => ({
                           ...current,
                           [line.id]: {
                             ...draft,
-                            text: event.currentTarget.value
+                            text: nextText
                           }
-                        }))
-                      }
+                        }));
+                      }}
                       onBlur={() =>
                         onSetDialogueLineText(
                           selectedDialogue.id,
