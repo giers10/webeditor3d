@@ -33,7 +33,8 @@ const FORWARD_INPUT: PlayerStartActionInputState = {
   moveRight: 0,
   jump: 0,
   sprint: 0,
-  crouch: 0
+  crouch: 0,
+  pauseTime: 0
 };
 
 function createVolumeState(overrides: {
