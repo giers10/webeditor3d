@@ -28,8 +28,8 @@ import {
 } from "../sequencer/project-sequencer";
 import {
   findHeldSequenceControlEffect,
-  getProjectScheduleRoutineHeldSteps,
-  getProjectScheduleRoutineResolvedHeldControlEffectsAtMinute
+  getHeldSequenceControlEffects,
+  getProjectScheduleRoutineHeldSteps
 } from "../sequencer/project-sequence-steps";
 import type { ProjectSequenceLibrary } from "../sequencer/project-sequences";
 
@@ -431,42 +431,23 @@ export function resolveRuntimeActorScheduleState(options: {
     activeRoutine,
     options.sequences
   );
-  const elapsedHours = getProjectScheduleRoutineElapsedHoursAt(
-    activeRoutine,
-    options.dayNumber,
-    options.timeOfDayHours
-  );
-  const resolvedHeldEffects =
-    elapsedHours === null
-      ? []
-      : getProjectScheduleRoutineResolvedHeldControlEffectsAtMinute(
-          activeRoutine,
-          options.sequences,
-          elapsedHours * 60
-        );
-
   const presenceEffect =
-    (resolvedHeldEffects.find(
-      (entry): entry is typeof entry & { effect: SetActorPresenceControlEffect } =>
-        entry.effect.type === "setActorPresence"
-    )?.effect ??
-      findHeldSequenceControlEffect(heldSteps, "setActorPresence")) ??
+    findHeldSequenceControlEffect(heldSteps, "setActorPresence") ??
     createSetActorPresenceControlEffect({
       target: createActorControlTargetRef(options.actorId),
       active: true
     });
   const animationEffect =
-    resolvedHeldEffects.find(
-      (entry): entry is typeof entry & { effect: PlayActorAnimationControlEffect } =>
-        entry.effect.type === "playActorAnimation"
-    )?.effect ?? findHeldSequenceControlEffect(heldSteps, "playActorAnimation");
-  const pathEffectEntry = resolvedHeldEffects.find(
-    (entry): entry is typeof entry & { effect: FollowActorPathControlEffect } =>
-      entry.effect.type === "followActorPath"
+    findHeldSequenceControlEffect(heldSteps, "playActorAnimation");
+  const pathEffect = findHeldSequenceControlEffect(
+    heldSteps,
+    "followActorPath"
   );
-  const pathEffect =
-    pathEffectEntry?.effect ??
-    findHeldSequenceControlEffect(heldSteps, "followActorPath");
+  const elapsedHours = getProjectScheduleRoutineElapsedHoursAt(
+    activeRoutine,
+    options.dayNumber,
+    options.timeOfDayHours
+  );
 
   return {
     actorId: options.actorId,
@@ -483,10 +464,7 @@ export function resolveRuntimeActorScheduleState(options: {
         ? null
         : resolveActorSchedulePathState({
             effect: pathEffect,
-            elapsedHours:
-              pathEffectEntry === undefined
-                ? elapsedHours
-                : pathEffectEntry.elapsedMinutes / 60,
+            elapsedHours,
             path: options.pathsById?.get(pathEffect.pathId) ?? null
           })
   };
@@ -540,18 +518,9 @@ function resolveRuntimeScheduledControlRoutines(options: {
       continue;
     }
 
-    const elapsedHours = getProjectScheduleRoutineElapsedHoursAt(
-      routine,
-      options.dayNumber,
-      options.timeOfDayHours
-    );
-    const effects = getProjectScheduleRoutineResolvedHeldControlEffectsAtMinute(
-      routine,
-      options.sequences,
-      elapsedHours === null ? null : elapsedHours * 60
-    ).map((entry) => cloneControlEffect(entry.effect));
-
-    for (const effect of effects) {
+    for (const effect of getHeldSequenceControlEffects(
+      getProjectScheduleRoutineHeldSteps(routine, options.sequences)
+    )) {
       const resolutionKey = getControlEffectResolutionKey(effect);
 
       if (seenResolutionKeys.has(resolutionKey)) {

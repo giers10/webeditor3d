@@ -1,18 +1,16 @@
 import { createOpaqueId } from "../core/ids";
 
 import {
-  cloneSequenceClip,
-  DEFAULT_PROJECT_SEQUENCE_DURATION_MINUTES,
-  getProjectSequenceDurationMinutes,
+  cloneSequenceEffect,
   type SequenceClip,
+  type SequenceEffect,
   type SequenceStep
 } from "./project-sequence-steps";
 
 export interface ProjectSequence {
   id: string;
   title: string;
-  durationMinutes: number;
-  clips: SequenceClip[];
+  effects: SequenceEffect[];
 }
 
 export interface ProjectSequenceLibrary {
@@ -29,16 +27,6 @@ function normalizeProjectSequenceTitle(title: string | undefined): string {
   return normalizedTitle;
 }
 
-function normalizeProjectSequenceDurationMinutes(
-  value: number | undefined
-): number {
-  if (value === undefined || !Number.isFinite(value)) {
-    return DEFAULT_PROJECT_SEQUENCE_DURATION_MINUTES;
-  }
-
-  return Math.max(1, Math.trunc(value));
-}
-
 export function createEmptyProjectSequenceLibrary(): ProjectSequenceLibrary {
   return {
     sequences: {}
@@ -46,21 +34,18 @@ export function createEmptyProjectSequenceLibrary(): ProjectSequenceLibrary {
 }
 
 export function createProjectSequence(
-  overrides: Partial<Pick<ProjectSequence, "id" | "title" | "durationMinutes">> & {
+  overrides: Partial<Pick<ProjectSequence, "id" | "title">> & {
+    effects?: SequenceEffect[];
     clips?: SequenceClip[];
     steps?: SequenceStep[];
   } = {}
 ): ProjectSequence {
-  const clips = (overrides.clips ?? overrides.steps)?.map(cloneSequenceClip) ?? [];
-
   return {
     id: overrides.id ?? createOpaqueId("sequence"),
     title: normalizeProjectSequenceTitle(overrides.title ?? "Sequence"),
-    durationMinutes: normalizeProjectSequenceDurationMinutes(
-      overrides.durationMinutes ??
-        (clips.length > 0 ? getProjectSequenceDurationMinutes({ id: "sequence", clips }) : undefined)
-    ),
-    clips
+    effects: (overrides.effects ?? overrides.clips ?? overrides.steps)?.map(
+      cloneSequenceEffect
+    ) ?? []
   };
 }
 
@@ -70,8 +55,7 @@ export function cloneProjectSequence(
   return {
     id: sequence.id,
     title: sequence.title,
-    durationMinutes: sequence.durationMinutes,
-    clips: sequence.clips.map(cloneSequenceClip)
+    effects: sequence.effects.map(cloneSequenceEffect)
   };
 }
 
@@ -95,20 +79,19 @@ export function areProjectSequencesEqual(
   if (
     left.id !== right.id ||
     left.title !== right.title ||
-    left.durationMinutes !== right.durationMinutes ||
-    left.clips.length !== right.clips.length
+    left.effects.length !== right.effects.length
   ) {
     return false;
   }
 
-  return left.clips.every((clip, index) => {
-    const rightClip = right.clips[index];
+  return left.effects.every((effect, index) => {
+    const rightEffect = right.effects[index];
 
-    if (rightClip === undefined) {
+    if (rightEffect === undefined) {
       return false;
     }
 
-    return JSON.stringify(clip) === JSON.stringify(rightClip);
+    return JSON.stringify(effect) === JSON.stringify(rightEffect);
   });
 }
 
