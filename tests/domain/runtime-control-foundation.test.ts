@@ -386,6 +386,7 @@ describe("runtime control foundation", () => {
         stopAnimation: () => {},
         playSound: () => {},
         stopSound: () => {},
+        startDialogue: () => {},
         dispatchControlEffect: (effect, link) => {
           dispatches.push({
             type: `${link.id}:${effect.type}`,
