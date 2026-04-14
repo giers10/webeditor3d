@@ -10,7 +10,9 @@ import {
   createPlayActorAnimationControlEffect,
   createPlayModelAnimationControlEffect,
   createPlaySoundControlEffect,
+  createProjectGlobalControlTargetRef,
   createSetActorPresenceControlEffect,
+  createSetProjectTimePausedControlEffect,
   type ControlEffect,
   createSetAmbientLightColorControlEffect,
   createSetAmbientLightIntensityControlEffect,
@@ -49,6 +51,7 @@ import { RapierCollisionWorld } from "../../src/runtime-three/rapier-collision-w
 import {
   RuntimeHost,
   type RuntimeDialogueState,
+  type RuntimePauseState,
   type RuntimeSceneLoadState
 } from "../../src/runtime-three/runtime-host";
 import { buildRuntimeSceneFromDocument } from "../../src/runtime-three/runtime-scene-build";
@@ -227,6 +230,88 @@ describe("RuntimeHost", () => {
         })
       ])
     );
+
+    host.dispose();
+  });
+
+  it("applies project time pause control effects through the runtime dispatcher", () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    vi.spyOn(RapierCollisionWorld, "create").mockResolvedValue({
+      dispose: vi.fn(),
+      resolveThirdPersonCameraCollision: vi.fn(
+        (_pivot, desiredCameraPosition) => desiredCameraPosition
+      )
+    } as unknown as RapierCollisionWorld);
+
+    const runtimeScene = buildRuntimeSceneFromDocument(
+      createEmptySceneDocument()
+    );
+    const host = new RuntimeHost({
+      enableRendering: false
+    });
+    const pauseStates: RuntimePauseState[] = [];
+    host.setRuntimePauseStateHandler((state) => {
+      pauseStates.push(state);
+    });
+    host.loadScene(runtimeScene);
+
+    const pauseEffect = createSetProjectTimePausedControlEffect({
+      target: createProjectGlobalControlTargetRef(),
+      paused: true
+    });
+    const resumeEffect = createSetProjectTimePausedControlEffect({
+      target: createProjectGlobalControlTargetRef(),
+      paused: false
+    });
+    const pauseLink = createControlInteractionLink({
+      id: "link-pause-time",
+      sourceEntityId: "entity-trigger-main",
+      effect: pauseEffect
+    });
+    const resumeLink = createControlInteractionLink({
+      id: "link-resume-time",
+      sourceEntityId: "entity-trigger-main",
+      effect: resumeEffect
+    });
+    const hostInternals = host as unknown as {
+      createInteractionDispatcher(): {
+        dispatchControlEffect(
+          effect: ControlEffect,
+          link: InteractionLink
+        ): void;
+      };
+    };
+    const dispatcher = hostInternals.createInteractionDispatcher();
+
+    dispatcher.dispatchControlEffect(pauseEffect, pauseLink);
+
+    expect(pauseStates).toContainEqual({
+      paused: true,
+      source: "control"
+    });
+    expect(runtimeScene.control.resolved.discrete).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "projectTimePaused",
+          target: {
+            kind: "global",
+            scope: "project"
+          },
+          value: true,
+          source: {
+            kind: "interactionLink",
+            linkId: pauseLink.id
+          }
+        })
+      ])
+    );
+
+    dispatcher.dispatchControlEffect(resumeEffect, resumeLink);
+
+    expect(pauseStates).toContainEqual({
+      paused: false,
+      source: null
+    });
 
     host.dispose();
   });
