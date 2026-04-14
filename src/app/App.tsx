@@ -3821,6 +3821,22 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
+  const updateProjectDialogues = (
+    label: string,
+    successMessage: string,
+    mutate: (dialogues: typeof editorState.projectDocument.dialogues) => void
+  ) => {
+    try {
+      const nextDialogues = cloneProjectDialogueLibrary(
+        editorState.projectDocument.dialogues
+      );
+      mutate(nextDialogues);
+      applyProjectDialogues(nextDialogues, label, successMessage);
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
   const updateProjectTimeSettings = (
     label: string,
     successMessage: string,
