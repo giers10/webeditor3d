@@ -345,8 +345,7 @@ import {
   createProjectScheduleRoutine,
   removeProjectScheduleRoutine,
   upsertProjectScheduleRoutine,
-  type ProjectScheduleRoutine,
-  type ProjectScheduleWeekday
+  type ProjectScheduleRoutine
 } from "../scheduler/project-scheduler";
 import {
   loadProjectPackage,
