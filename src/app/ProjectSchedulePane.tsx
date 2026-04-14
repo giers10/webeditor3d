@@ -6,6 +6,7 @@ import {
 } from "../document/project-time-settings";
 import { formatControlEffectValue, getControlTargetRefKey } from "../controls/control-surface";
 import {
+  findProjectScheduleRoutineEffect,
   PROJECT_SCHEDULE_WEEKDAYS,
   formatProjectScheduleDaySelection,
   formatProjectScheduleWeekdayLabel,
@@ -49,6 +50,15 @@ interface ProjectSchedulePaneProps {
   onSetRoutineColorValue(routineId: string, colorHex: string): void;
   onSetRoutineAnimationClip(routineId: string, clipName: string): void;
   onSetRoutineAnimationLoop(routineId: string, loop: boolean): void;
+  onSetActorRoutinePresence(routineId: string, active: boolean): void;
+  onSetActorRoutineAnimationClip(
+    routineId: string,
+    clipName: string | null
+  ): void;
+  onSetActorRoutineAnimationLoop(routineId: string, loop: boolean): void;
+  onSetActorRoutinePath(routineId: string, pathId: string | null): void;
+  onSetActorRoutinePathSpeed(routineId: string, speed: number): void;
+  onSetActorRoutinePathLoop(routineId: string, loop: boolean): void;
 }
 
 function handleCommitOnEnter(
@@ -64,45 +74,98 @@ function handleCommitOnEnter(
 }
 
 function getRoutineSummary(routine: ProjectScheduleRoutine): string {
-  return `${formatProjectScheduleDaySelection(routine.days)} · ${formatTimeOfDayHours(routine.startHour)}-${formatTimeOfDayHours(routine.endHour)} · ${formatControlEffectValue(routine.effect)} · P${routine.priority}`;
+  const summaryParts = [
+    formatProjectScheduleDaySelection(routine.days),
+    `${formatTimeOfDayHours(routine.startHour)}-${formatTimeOfDayHours(routine.endHour)}`
+  ];
+
+  if (routine.target.kind === "actor") {
+    const presenceEffect = findProjectScheduleRoutineEffect(
+      routine,
+      "setActorPresence"
+    );
+    const animationEffect = findProjectScheduleRoutineEffect(
+      routine,
+      "playActorAnimation"
+    );
+    const pathEffect = findProjectScheduleRoutineEffect(routine, "followActorPath");
+
+    summaryParts.push(presenceEffect?.active === false ? "Hidden" : "Present");
+
+    if (animationEffect !== null) {
+      summaryParts.push(formatControlEffectValue(animationEffect));
+    }
+
+    if (pathEffect !== null) {
+      summaryParts.push(formatControlEffectValue(pathEffect));
+    }
+  } else {
+    summaryParts.push(formatControlEffectValue(routine.effects[0]!));
+  }
+
+  summaryParts.push(`P${routine.priority}`);
+  return summaryParts.join(" · ");
 }
 
 function isRoutineEffectInactive(routine: ProjectScheduleRoutine): boolean {
-  switch (routine.effect.type) {
-    case "setActorPresence":
-      return !routine.effect.active;
+  if (routine.target.kind === "actor") {
+    return (
+      findProjectScheduleRoutineEffect(routine, "setActorPresence")?.active ===
+      false
+    );
+  }
+
+  const effect = routine.effects[0];
+
+  if (effect === undefined) {
+    return false;
+  }
+
+  switch (effect.type) {
     case "stopModelAnimation":
     case "stopSound":
       return true;
     case "setModelInstanceVisible":
-      return !routine.effect.visible;
+      return !effect.visible;
     case "setInteractionEnabled":
     case "setLightEnabled":
-      return !routine.effect.enabled;
+      return !effect.enabled;
     default:
       return false;
   }
 }
 
 function getRoutineNumericValue(routine: ProjectScheduleRoutine): number | null {
-  switch (routine.effect.type) {
+  const effect = routine.effects[0];
+
+  if (effect === undefined) {
+    return null;
+  }
+
+  switch (effect.type) {
     case "setSoundVolume":
-      return routine.effect.volume;
+      return effect.volume;
     case "setLightIntensity":
     case "setAmbientLightIntensity":
     case "setSunLightIntensity":
-      return routine.effect.intensity;
+      return effect.intensity;
     default:
       return null;
   }
 }
 
 function getRoutineColorValue(routine: ProjectScheduleRoutine): string | null {
-  switch (routine.effect.type) {
+  const effect = routine.effects[0];
+
+  if (effect === undefined) {
+    return null;
+  }
+
+  switch (effect.type) {
     case "setLightColor":
     case "setAmbientLightColor":
     case "setSunLightColor":
-      return routine.effect.colorHex;
+      return effect.colorHex;
     default:
       return null;
   }
