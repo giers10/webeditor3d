@@ -409,13 +409,15 @@ describe("validateSceneDocument", () => {
               ...createPlayerStartInputBindings().keyboard,
               jump: "",
               sprint: "",
-              crouch: ""
+              crouch: "",
+              pauseTime: ""
             },
             gamepad: {
               ...createPlayerStartInputBindings().gamepad,
               jump: "invalidButton",
               sprint: "invalidButton",
-              crouch: "invalidButton"
+              crouch: "invalidButton",
+              pauseTime: "invalidButton"
             }
           } as unknown as ReturnType<typeof createPlayerStartEntity>["inputBindings"],
           collider: {
@@ -499,6 +501,9 @@ describe("validateSceneDocument", () => {
           code: "invalid-player-start-crouch-keyboard-binding"
         }),
         expect.objectContaining({
+          code: "invalid-player-start-pause-keyboard-binding"
+        }),
+        expect.objectContaining({
           code: "invalid-player-start-jump-gamepad-binding"
         }),
         expect.objectContaining({
@@ -506,6 +511,9 @@ describe("validateSceneDocument", () => {
         }),
         expect.objectContaining({
           code: "invalid-player-start-crouch-gamepad-binding"
+        }),
+        expect.objectContaining({
+          code: "invalid-player-start-pause-gamepad-binding"
         }),
         expect.objectContaining({
           code: "invalid-player-start-capsule-proportions"
