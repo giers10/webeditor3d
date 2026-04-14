@@ -418,6 +418,46 @@ export function ProjectSequencesPanel({
                   );
                 }
 
+                if (step.type === "startDialogue") {
+                  return (
+                    <div key={`${selectedSequence.id}-${stepIndex}`} className="outliner-item">
+                      <div className="outliner-item__row">
+                        <div className="outliner-item__meta">
+                          {getSequenceStepLabel(step)}
+                        </div>
+                        <button
+                          className="outliner-item__delete"
+                          type="button"
+                          onClick={() => onDeleteStep(selectedSequence.id, stepIndex)}
+                        >
+                          x
+                        </button>
+                      </div>
+
+                      <label className="form-field">
+                        <span className="label">Dialogue</span>
+                        <select
+                          className="select-input"
+                          value={step.dialogueId}
+                          onChange={(event) =>
+                            onSetDialogueStepDialogueId(
+                              selectedSequence.id,
+                              stepIndex,
+                              event.currentTarget.value
+                            )
+                          }
+                        >
+                          {dialogueList.map((dialogue) => (
+                            <option key={dialogue.id} value={dialogue.id}>
+                              {dialogue.title}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
+                  );
+                }
+
                 return (
                   <div key={`${selectedSequence.id}-${stepIndex}`} className="outliner-item">
                     <div className="outliner-item__row">
@@ -433,26 +473,11 @@ export function ProjectSequencesPanel({
                       </button>
                     </div>
 
-                    <label className="form-field">
-                      <span className="label">Dialogue</span>
-                      <select
-                        className="select-input"
-                        value={step.dialogueId}
-                        onChange={(event) =>
-                          onSetDialogueStepDialogueId(
-                            selectedSequence.id,
-                            stepIndex,
-                            event.currentTarget.value
-                          )
-                        }
-                      >
-                        {dialogueList.map((dialogue) => (
-                          <option key={dialogue.id} value={dialogue.id}>
-                            {dialogue.title}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
+                    <div className="material-summary">
+                      This impulse step is preserved, but the current sequence
+                      editor only exposes direct dialogue authoring for authored
+                      project sequences.
+                    </div>
                   </div>
                 );
               })}
