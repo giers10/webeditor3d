@@ -300,7 +300,11 @@ import {
   type InteractionLink,
   type InteractionTriggerKind
 } from "../interactions/interaction-links";
-import { formatControlEffectValue, formatControlTargetRef } from "../controls/control-surface";
+import {
+  formatControlEffectValue,
+  formatControlTargetRef,
+  getControlTargetRefKey
+} from "../controls/control-surface";
 import {
   STARTER_MATERIAL_LIBRARY,
   type MaterialDef
@@ -1782,7 +1786,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
       : selectedNpcOtherActorUsages.filter(
           (usage) => usage.sceneId !== editorState.activeSceneId
         );
-  const projectNpcActors = listProjectNpcActors(editorState.projectDocument);
+  const projectScheduleTargetOptions = listProjectScheduleTargetOptions(
+    editorState.projectDocument
+  );
   const selectedTeleportTarget =
     selectedEntity?.kind === "teleportTarget" ? selectedEntity : null;
   const selectedInteractable =
@@ -3802,23 +3808,38 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
-  const handleCreateScheduleRoutine = (actorId: string) => {
-    if (actorId.trim().length === 0) {
-      setStatusMessage("Author an NPC actor before creating a schedule routine.");
+  const resolveProjectScheduleTargetOption = (targetKey: string) =>
+    getProjectScheduleTargetOptionByKey(projectScheduleTargetOptions, targetKey);
+
+  const handleCreateScheduleRoutine = (targetKey: string) => {
+    const targetOption = resolveProjectScheduleTargetOption(targetKey);
+
+    if (targetOption === null) {
+      setStatusMessage(
+        "Author a scheduler-addressable control target before creating a schedule routine."
+      );
       return;
     }
 
     try {
+      const effectOption = listProjectScheduleEffectOptions(targetOption)[0] ?? null;
+
+      if (effectOption === null) {
+        throw new Error(
+          "This control target does not expose a schedulable effect in the current slice."
+        );
+      }
+
       const nextRoutine = createProjectScheduleRoutine({
-        title: "Presence",
-        target: createActorControlTargetRef(actorId),
+        title: targetOption.label,
+        target: targetOption.target,
         days: createProjectScheduleEveryDaySelection(),
         startHour: 9,
         endHour: 17,
         priority: 0,
-        effect: createSetActorPresenceControlEffect({
-          target: createActorControlTargetRef(actorId),
-          active: true
+        effect: createProjectScheduleEffectFromOption({
+          targetOption,
+          effectOptionId: effectOption.id
         })
       });
       const nextScheduler = upsertProjectScheduleRoutine(
@@ -3829,7 +3850,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
       applyProjectScheduler(
         nextScheduler,
         "Create project schedule routine",
-        `Created schedule routine for ${actorId}.`
+        `Created schedule routine for ${targetOption.label}.`
       );
       setSchedulePaneOpen(true);
       setSelectedScheduleRoutineId(nextRoutine.id);
@@ -10052,23 +10073,44 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
           {schedulePaneOpen ? (
             <ProjectSchedulePane
-              actors={projectNpcActors}
+              targetOptions={projectScheduleTargetOptions}
               scheduler={editorState.projectDocument.scheduler}
               selectedRoutineId={selectedScheduleRoutineId}
               onSelectRoutine={setSelectedScheduleRoutineId}
               onAddRoutine={handleCreateScheduleRoutine}
               onDeleteRoutine={handleDeleteScheduleRoutine}
               onClose={() => setSchedulePaneOpen(false)}
-              onSetRoutineActor={(routineId, actorId) =>
+              onSetRoutineTarget={(routineId, targetKey) =>
                 updateProjectScheduleRoutine(
                   routineId,
-                  "Set project schedule target actor",
-                  `Retargeted schedule routine to ${actorId}.`,
+                  "Set project schedule target",
+                  "Retargeted schedule routine.",
                   (routine) => {
-                    routine.target = createActorControlTargetRef(actorId);
-                    routine.effect = createSetActorPresenceControlEffect({
-                      target: createActorControlTargetRef(actorId),
-                      active: routine.effect.active
+                    const targetOption = resolveProjectScheduleTargetOption(targetKey);
+
+                    if (targetOption === null) {
+                      throw new Error("Selected schedule target no longer exists.");
+                    }
+
+                    const effectOptions = listProjectScheduleEffectOptions(targetOption);
+                    const nextEffectOptionId =
+                      effectOptions.find(
+                        (effectOption) =>
+                          effectOption.id ===
+                          getProjectScheduleEffectOptionId(routine.effect)
+                      )?.id ?? effectOptions[0]?.id;
+
+                    if (nextEffectOptionId === undefined) {
+                      throw new Error(
+                        "Selected schedule target does not expose a schedulable effect."
+                      );
+                    }
+
+                    routine.target = targetOption.target;
+                    routine.effect = createProjectScheduleEffectFromOption({
+                      targetOption,
+                      effectOptionId: nextEffectOptionId,
+                      previousEffect: routine.effect
                     });
                   }
                 )
@@ -10141,17 +10183,27 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   }
                 )
               }
-              onSetRoutinePresence={(routineId, active) =>
+              onSetRoutineEffectOption={(routineId, effectOptionId) =>
                 updateProjectScheduleRoutine(
                   routineId,
                   "Set project schedule effect",
-                  active
-                    ? "Schedule routine now keeps the actor present."
-                    : "Schedule routine now hides the actor.",
+                  "Updated schedule routine effect.",
                   (routine) => {
-                    routine.effect = createSetActorPresenceControlEffect({
-                      target: routine.target,
-                      active
+                    const targetOption = getProjectScheduleTargetOptionByKey(
+                      projectScheduleTargetOptions,
+                      getControlTargetRefKey(routine.target)
+                    );
+
+                    if (targetOption === null) {
+                      throw new Error(
+                        "The current schedule target no longer exists in the project."
+                      );
+                    }
+
+                    routine.effect = createProjectScheduleEffectFromOption({
+                      targetOption,
+                      effectOptionId,
+                      previousEffect: routine.effect
                     });
                   }
                 )
@@ -10169,6 +10221,89 @@ export function App({ store, initialStatusMessage }: AppProps) {
                             mode: "selectedDays",
                             days
                           };
+                  }
+                )
+              }
+              onSetRoutineNumericValue={(routineId, value) =>
+                updateProjectScheduleRoutine(
+                  routineId,
+                  "Set project schedule numeric value",
+                  "Updated schedule routine value.",
+                  (routine) => {
+                    if (!Number.isFinite(value) || value < 0) {
+                      throw new Error(
+                        "Schedule routine numeric values must be finite and zero or greater."
+                      );
+                    }
+
+                    switch (routine.effect.type) {
+                      case "setSoundVolume":
+                        routine.effect.volume = value;
+                        return;
+                      case "setLightIntensity":
+                      case "setAmbientLightIntensity":
+                      case "setSunLightIntensity":
+                        routine.effect.intensity = value;
+                        return;
+                      default:
+                        throw new Error(
+                          "The current schedule effect does not expose a numeric value."
+                        );
+                    }
+                  }
+                )
+              }
+              onSetRoutineColorValue={(routineId, colorHex) =>
+                updateProjectScheduleRoutine(
+                  routineId,
+                  "Set project schedule color",
+                  "Updated schedule routine color.",
+                  (routine) => {
+                    switch (routine.effect.type) {
+                      case "setLightColor":
+                      case "setAmbientLightColor":
+                      case "setSunLightColor":
+                        routine.effect.colorHex = colorHex;
+                        return;
+                      default:
+                        throw new Error(
+                          "The current schedule effect does not expose a color value."
+                        );
+                    }
+                  }
+                )
+              }
+              onSetRoutineAnimationClip={(routineId, clipName) =>
+                updateProjectScheduleRoutine(
+                  routineId,
+                  "Set project schedule animation clip",
+                  "Updated schedule animation clip.",
+                  (routine) => {
+                    if (routine.effect.type !== "playModelAnimation") {
+                      throw new Error(
+                        "The current schedule effect does not expose an animation clip."
+                      );
+                    }
+
+                    routine.effect.clipName = clipName;
+                  }
+                )
+              }
+              onSetRoutineAnimationLoop={(routineId, loop) =>
+                updateProjectScheduleRoutine(
+                  routineId,
+                  "Set project schedule animation loop",
+                  loop
+                    ? "Schedule animation now loops."
+                    : "Schedule animation now plays once.",
+                  (routine) => {
+                    if (routine.effect.type !== "playModelAnimation") {
+                      throw new Error(
+                        "The current schedule effect does not expose animation looping."
+                      );
+                    }
+
+                    routine.effect.loop = loop;
                   }
                 )
               }
