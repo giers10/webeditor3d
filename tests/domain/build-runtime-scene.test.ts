@@ -594,6 +594,9 @@ describe("buildRuntimeSceneFromDocument", () => {
           yawDegrees: 45,
           modelAssetId: modelAsset.id,
           activeRoutineTitle: null,
+          animationClipName: null,
+          animationLoop: undefined,
+          resolvedPath: null,
           collider: {
             mode: "capsule",
             radius: 0.3,
