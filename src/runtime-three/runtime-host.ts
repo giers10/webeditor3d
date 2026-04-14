@@ -183,6 +183,16 @@ export interface RuntimeSceneExitTransitionRequest {
   targetEntryEntityId: string;
 }
 
+export interface RuntimeDialogueState {
+  dialogueId: string;
+  title: string;
+  lineId: string;
+  lineIndex: number;
+  lineCount: number;
+  speakerName: string | null;
+  text: string;
+}
+
 export class RuntimeHost {
   private readonly scene = new Scene();
   private readonly worldBackgroundRenderer = new WorldBackgroundRenderer();
@@ -256,6 +266,9 @@ export class RuntimeHost {
   private interactionPromptHandler:
     | ((prompt: RuntimeInteractionPrompt | null) => void)
     | null = null;
+  private runtimeDialogueHandler:
+    | ((dialogue: RuntimeDialogueState | null) => void)
+    | null = null;
   private sceneLoadStateHandler:
     | ((state: RuntimeSceneLoadState) => void)
     | null = null;
@@ -266,6 +279,7 @@ export class RuntimeHost {
   private currentPlayerControllerTelemetry: PlayerControllerTelemetry | null =
     null;
   private currentInteractionPrompt: RuntimeInteractionPrompt | null = null;
+  private currentDialogue: RuntimeDialogueState | null = null;
   private currentSceneLoadState: RuntimeSceneLoadState | null = null;
   private currentClockState: RuntimeClockState | null = null;
   private lastPublishedClockState: RuntimeClockState | null = null;
@@ -470,6 +484,7 @@ export class RuntimeHost {
     this.thirdPersonController.resetSceneState();
     this.interactionSystem.reset();
     this.setInteractionPrompt(null);
+    this.setRuntimeDialogue(null);
     this.currentPlayerControllerTelemetry = null;
     this.currentPlayerAudioHooks = null;
     this.playerControllerTelemetryHandler?.(null);
@@ -553,6 +568,42 @@ export class RuntimeHost {
     handler: ((prompt: RuntimeInteractionPrompt | null) => void) | null
   ) {
     this.interactionPromptHandler = handler;
+  }
+
+  setRuntimeDialogueHandler(
+    handler: ((dialogue: RuntimeDialogueState | null) => void) | null
+  ) {
+    this.runtimeDialogueHandler = handler;
+  }
+
+  advanceRuntimeDialogue() {
+    if (this.runtimeScene === null || this.currentDialogue === null) {
+      return;
+    }
+
+    const dialogue =
+      this.runtimeScene.dialogues.dialogues[this.currentDialogue.dialogueId] ??
+      null;
+
+    if (dialogue === null) {
+      this.setRuntimeDialogue(null);
+      return;
+    }
+
+    const nextLineIndex = this.currentDialogue.lineIndex + 1;
+
+    if (nextLineIndex >= dialogue.lines.length) {
+      this.setRuntimeDialogue(null);
+      return;
+    }
+
+    this.setRuntimeDialogue(
+      this.createRuntimeDialogueState(dialogue.id, nextLineIndex)
+    );
+  }
+
+  closeRuntimeDialogue() {
+    this.setRuntimeDialogue(null);
   }
 
   setSceneLoadStateHandler(
@@ -2946,6 +2997,9 @@ export class RuntimeHost {
       stopSound: (soundEmitterId) => {
         this.audioSystem.stopSound(soundEmitterId);
       },
+      startDialogue: (dialogueId) => {
+        this.openRuntimeDialogue(dialogueId);
+      },
       dispatchControlEffect: (effect, link) => {
         this.applyControlEffect(effect, link);
       }
@@ -2965,6 +3019,65 @@ export class RuntimeHost {
 
     this.currentInteractionPrompt = prompt;
     this.interactionPromptHandler?.(prompt);
+  }
+
+  private createRuntimeDialogueState(
+    dialogueId: string,
+    lineIndex: number
+  ): RuntimeDialogueState | null {
+    if (this.runtimeScene === null) {
+      return null;
+    }
+
+    const dialogue = this.runtimeScene.dialogues.dialogues[dialogueId];
+
+    if (dialogue === undefined) {
+      return null;
+    }
+
+    const line = dialogue.lines[lineIndex];
+
+    if (line === undefined) {
+      return null;
+    }
+
+    return {
+      dialogueId,
+      title: dialogue.title,
+      lineId: line.id,
+      lineIndex,
+      lineCount: dialogue.lines.length,
+      speakerName: line.speakerName,
+      text: line.text
+    };
+  }
+
+  private setRuntimeDialogue(dialogue: RuntimeDialogueState | null) {
+    if (
+      this.currentDialogue?.dialogueId === dialogue?.dialogueId &&
+      this.currentDialogue?.lineId === dialogue?.lineId &&
+      this.currentDialogue?.lineIndex === dialogue?.lineIndex &&
+      this.currentDialogue?.lineCount === dialogue?.lineCount &&
+      this.currentDialogue?.speakerName === dialogue?.speakerName &&
+      this.currentDialogue?.text === dialogue?.text &&
+      this.currentDialogue?.title === dialogue?.title
+    ) {
+      return;
+    }
+
+    this.currentDialogue = dialogue;
+    this.runtimeDialogueHandler?.(dialogue);
+  }
+
+  private openRuntimeDialogue(dialogueId: string) {
+    const dialogue = this.createRuntimeDialogueState(dialogueId, 0);
+
+    if (dialogue === null) {
+      console.warn(`dialogue: missing dialogue ${dialogueId}`);
+      return;
+    }
+
+    this.setRuntimeDialogue(dialogue);
   }
 
   private resolveInteractionPrompt(): RuntimeInteractionPrompt | null {
@@ -3006,13 +3119,22 @@ export class RuntimeHost {
       !this.sceneReady ||
       this.runtimeScene === null ||
       (this.activeController !== this.firstPersonController &&
-        this.activeController !== this.thirdPersonController) ||
-      this.currentInteractionPrompt === null
+        this.activeController !== this.thirdPersonController)
     ) {
       return;
     }
 
     this.audioSystem.handleUserGesture();
+
+    if (this.currentDialogue !== null) {
+      this.advanceRuntimeDialogue();
+      return;
+    }
+
+    if (this.currentInteractionPrompt === null) {
+      return;
+    }
+
     this.interactionSystem.dispatchClickInteraction(
       this.currentInteractionPrompt.sourceEntityId,
       this.runtimeScene,
