@@ -4733,8 +4733,64 @@ function validateProjectDialogue(
   }
 }
 
+function validateProjectSequence(
+  sequence: ProjectSequence,
+  path: string,
+  document: Pick<ProjectDocument, "dialogues"> & SceneDocument,
+  diagnostics: SceneDiagnostic[]
+) {
+  if (sequence.title.trim().length === 0) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-project-sequence-title",
+        "Project sequence titles must be non-empty.",
+        `${path}.title`
+      )
+    );
+  }
+
+  if (sequence.steps.length === 0) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-project-sequence-steps-empty",
+        "Project sequences must contain at least one step.",
+        `${path}.steps`
+      )
+    );
+    return;
+  }
+
+  for (const [stepIndex, step] of sequence.steps.entries()) {
+    const stepPath = `${path}.steps.${stepIndex}`;
+
+    switch (step.type) {
+      case "controlEffect":
+        validateControlEffect(step.effect, `${stepPath}.effect`, document, diagnostics);
+        break;
+      case "startDialogue":
+        if (document.dialogues.dialogues[step.dialogueId] === undefined) {
+          diagnostics.push(
+            createDiagnostic(
+              "error",
+              "missing-sequence-dialogue-resource",
+              `Dialogue ${step.dialogueId} does not exist in the project dialogue library.`,
+              `${stepPath}.dialogueId`
+            )
+          );
+        }
+        break;
+      case "teleportPlayer":
+      case "toggleVisibility":
+        break;
+    }
+  }
+}
+
 function validateProjectResources(
-  document: Pick<ProjectDocument, "materials" | "assets" | "dialogues">,
+  document: Pick<ProjectDocument, "materials" | "assets" | "dialogues" | "sequences"> &
+    SceneDocument,
   diagnostics: SceneDiagnostic[]
 ) {
   const seenIds = new Map<string, string>();
@@ -4791,6 +4847,24 @@ function validateProjectResources(
     registerAuthoredId(dialogue.id, path, seenIds, diagnostics);
     validateProjectDialogue(dialogue, path, seenIds, diagnostics);
   }
+
+  for (const [sequenceKey, sequence] of Object.entries(document.sequences.sequences)) {
+    const path = `sequences.sequences.${sequenceKey}`;
+
+    if (sequence.id !== sequenceKey) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "sequence-id-mismatch",
+          "Sequence ids must match their registry key.",
+          `${path}.id`
+        )
+      );
+    }
+
+    registerAuthoredId(sequence.id, path, seenIds, diagnostics);
+    validateProjectSequence(sequence, path, document, diagnostics);
+  }
 }
 
 function filterProjectSceneDiagnostics(
@@ -4802,7 +4876,8 @@ function filterProjectSceneDiagnostics(
       (!diagnostic.path.startsWith("materials.") &&
         !diagnostic.path.startsWith("time.") &&
         !diagnostic.path.startsWith("assets.") &&
-        !diagnostic.path.startsWith("dialogues."))
+        !diagnostic.path.startsWith("dialogues.") &&
+        !diagnostic.path.startsWith("sequences."))
   );
 }
 
