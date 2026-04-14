@@ -3846,6 +3846,16 @@ function readInteractionLink(value: unknown, label: string): InteractionLink {
         trigger,
         dialogueId: action.dialogueId
       });
+    case "runSequence":
+      return createRunSequenceInteractionLink({
+        id: expectString(value.id, `${label}.id`),
+        sourceEntityId: expectString(
+          value.sourceEntityId,
+          `${label}.sourceEntityId`
+        ),
+        trigger,
+        sequenceId: action.sequenceId
+      });
     case "control":
       return createControlInteractionLink({
         id: expectString(value.id, `${label}.id`),
