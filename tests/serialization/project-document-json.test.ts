@@ -14,7 +14,7 @@ import {
   DEFAULT_SCENE_EDITOR_SNAP_STEP,
   NPC_COLLIDER_SCENE_DOCUMENT_VERSION,
   PROJECT_DIALOGUE_LIBRARY_SCENE_DOCUMENT_VERSION,
-  PROJECT_SEQUENCE_LIBRARY_SCENE_DOCUMENT_VERSION,
+  PROJECT_SEQUENCE_TIMING_SCENE_DOCUMENT_VERSION,
   SCHEDULER_ACTOR_ROUTINE_EFFECTS_SCENE_DOCUMENT_VERSION,
   NPC_PRESENCE_SCENE_DOCUMENT_VERSION,
   PLAYER_START_PAUSE_BINDINGS_SCENE_DOCUMENT_VERSION,
@@ -171,9 +171,6 @@ describe("project document JSON", () => {
       title: "Market Greeting Sequence",
       steps: [
         {
-          startMinute: 0,
-          durationMinutes: 1,
-          lane: 0,
           stepClass: "impulse",
           type: "startDialogue",
           dialogueId: "dialogue-market"
@@ -185,9 +182,6 @@ describe("project document JSON", () => {
       title: "Vendor Open",
       steps: [
         {
-          startMinute: 0,
-          durationMinutes: 480,
-          lane: 0,
           stepClass: "held",
           type: "controlEffect",
           effect: createSetActorPresenceControlEffect({
@@ -243,7 +237,7 @@ describe("project document JSON", () => {
     });
   });
 
-  it("migrates legacy project sequence steps into clips", () => {
+  it("migrates legacy project sequence steps and timed clips into effects", () => {
     const document = createEmptyProjectDocument({
       name: "Legacy Sequence Clip Project"
     });
@@ -264,9 +258,6 @@ describe("project document JSON", () => {
       title: "Legacy Dialogue Sequence",
       steps: [
         {
-          startMinute: 0,
-          durationMinutes: 1,
-          lane: 0,
           stepClass: "impulse",
           type: "startDialogue",
           dialogueId: "dialogue-legacy"
@@ -277,15 +268,27 @@ describe("project document JSON", () => {
     const legacyDocument = JSON.parse(
       serializeProjectDocument(document)
     ) as Record<string, unknown>;
-    legacyDocument.version = PROJECT_SEQUENCE_LIBRARY_SCENE_DOCUMENT_VERSION;
+    legacyDocument.version = PROJECT_SEQUENCE_TIMING_SCENE_DOCUMENT_VERSION;
     const legacySequences = (legacyDocument.sequences as { sequences: Record<string, unknown> })
       .sequences;
     const legacySequence = legacySequences["sequence-legacy-dialogue"] as {
       clips?: unknown;
       steps?: unknown;
+      effects?: unknown;
+      durationMinutes?: unknown;
     };
-    legacySequence.steps = legacySequence.clips;
-    delete legacySequence.clips;
+    legacySequence.clips = [
+      {
+        stepClass: "impulse",
+        type: "startDialogue",
+        dialogueId: "dialogue-legacy",
+        startMinute: 30,
+        durationMinutes: 15,
+        lane: 2
+      }
+    ];
+    delete legacySequence.steps;
+    legacySequence.durationMinutes = 180;
 
     const migratedDocument = parseProjectDocumentJson(
       JSON.stringify(legacyDocument)
@@ -295,12 +298,8 @@ describe("project document JSON", () => {
       migratedDocument.sequences.sequences["sequence-legacy-dialogue"]
     ).toEqual(
       expect.objectContaining({
-        durationMinutes: 240,
-        clips: [
+        effects: [
           {
-            startMinute: 0,
-            durationMinutes: 1,
-            lane: 0,
             stepClass: "impulse",
             type: "startDialogue",
             dialogueId: "dialogue-legacy"
