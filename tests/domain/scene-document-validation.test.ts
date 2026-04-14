@@ -159,16 +159,16 @@ describe("validateSceneDocument", () => {
         })
       }
     };
-    (
-      document.interactionLinks["link-sound-volume"].action.effect as {
-        volume: number;
-      }
-    ).volume = Number.NaN;
-    (
-      document.interactionLinks["link-ambient-color"].action.effect as {
-        colorHex: string;
-      }
-    ).colorHex = "not-a-color";
+    const soundVolumeAction = document.interactionLinks["link-sound-volume"]
+      .action as typeof document.interactionLinks["link-sound-volume"]["action"] & {
+      effect: { volume: number };
+    };
+    const ambientColorAction = document.interactionLinks["link-ambient-color"]
+      .action as typeof document.interactionLinks["link-ambient-color"]["action"] & {
+      effect: { colorHex: string };
+    };
+    soundVolumeAction.effect.volume = Number.NaN;
+    ambientColorAction.effect.colorHex = "not-a-color";
 
     const validation = validateSceneDocument(document);
 
