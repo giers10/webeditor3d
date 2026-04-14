@@ -3564,19 +3564,69 @@ function readProjectSequenceEffect(value: unknown, label: string): SequenceClip 
         )
       };
     case "toggleVisibility":
+    case "setVisibility": {
+      const isLegacyToggle = value.type === "toggleVisibility";
+
       if (stepClass !== "impulse") {
-        throw new Error(`${label}.toggleVisibility effects must use the impulse class.`);
+        throw new Error(`${label}.${String(value.type)} effects must use the impulse class.`);
+      }
+
+      if (isLegacyToggle) {
+        const visible =
+          value.visible === undefined
+            ? undefined
+            : expectBoolean(value.visible, `${label}.visible`);
+
+        return {
+          stepClass: "impulse",
+          type: "setVisibility",
+          target: {
+            kind: "brush",
+            brushId: expectString(value.targetBrushId, `${label}.targetBrushId`)
+          },
+          mode:
+            visible === undefined ? "toggle" : visible ? "show" : "hide"
+        };
+      }
+
+      if (!isRecord(value.target)) {
+        throw new Error(`${label}.target must be an object.`);
+      }
+
+      const targetKind = expectString(value.target.kind, `${label}.target.kind`);
+
+      if (targetKind !== "brush" && targetKind !== "modelInstance") {
+        throw new Error(`${label}.target.kind must be brush or modelInstance.`);
+      }
+
+      const mode = expectString(value.mode, `${label}.mode`);
+
+      if (mode !== "toggle" && mode !== "show" && mode !== "hide") {
+        throw new Error(`${label}.mode must be toggle, show, or hide.`);
       }
 
       return {
         stepClass: "impulse",
-        type: "toggleVisibility",
-        targetBrushId: expectString(value.targetBrushId, `${label}.targetBrushId`),
-        visible:
-          value.visible === undefined
-            ? undefined
-            : expectBoolean(value.visible, `${label}.visible`)
+        type: "setVisibility",
+        target:
+          targetKind === "brush"
+            ? {
+                kind: "brush",
+                brushId: expectString(
+                  value.target.brushId,
+                  `${label}.target.brushId`
+                )
+              }
+            : {
+                kind: "modelInstance",
+                modelInstanceId: expectString(
+                  value.target.modelInstanceId,
+                  `${label}.target.modelInstanceId`
+                )
+              },
+        mode
       };
+    }
     default:
       throw new Error(`${label}.type must be a supported sequence effect.`);
   }
