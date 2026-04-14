@@ -4468,38 +4468,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
-  const ensureDefaultImpulseProjectSequence = (
-    sourceEntity: typeof selectedInteractionSource
-  ): ProjectSequence | null => {
-    const defaultSequence = projectImpulseSequenceList[0] ?? null;
+  const openSequencerSequenceEditor = (sequenceId?: string | null) => {
+    setSchedulePaneOpen(true);
+    setSequencerMode("sequence");
 
-    if (defaultSequence !== null) {
-      return defaultSequence;
-    }
-
-    if (sourceEntity === null) {
-      return null;
-    }
-
-    try {
-      const nextSequence = createDefaultInteractionProjectSequence({
-        source: sourceEntity,
-        dialogues: projectDialogueList,
-        targetOptions: projectScheduleTargetOptions
-      });
-
-      updateProjectSequences(
-        "Create project sequence",
-        "Created project sequence for the new sequence link.",
-        (sequences) => {
-          sequences.sequences[nextSequence.id] = nextSequence;
-        }
-      );
-      setSelectedSequenceId(nextSequence.id);
-      return nextSequence;
-    } catch (error) {
-      setStatusMessage(getErrorMessage(error));
-      return null;
+    if (sequenceId !== undefined) {
+      setSelectedSequenceId(sequenceId);
     }
   };
 
