@@ -536,6 +536,11 @@ export function getProjectScheduleEffectOptionId(
   switch (effect.type) {
     case "setActorPresence":
       return effect.active ? "actor.present" : "actor.hidden";
+    case "playActorAnimation":
+    case "followActorPath":
+      throw new Error(
+        "Actor animation and follow-path effects use the dedicated actor routine editor."
+      );
     case "playModelAnimation":
       return "model.playAnimation";
     case "stopModelAnimation":
