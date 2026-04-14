@@ -286,10 +286,7 @@ import {
   getEntityDisplayLabelById,
   getSortedEntityDisplayLabels
 } from "../entities/entity-labels";
-import {
-  listNpcActorUsages,
-  listProjectNpcActors
-} from "../entities/npc-actor-registry";
+import { listNpcActorUsages } from "../entities/npc-actor-registry";
 import {
   areInteractionLinksEqual,
   createControlInteractionLink,
@@ -303,12 +300,7 @@ import {
   type InteractionLink,
   type InteractionTriggerKind
 } from "../interactions/interaction-links";
-import {
-  createActorControlTargetRef,
-  createSetActorPresenceControlEffect,
-  formatControlEffectValue,
-  formatControlTargetRef
-} from "../controls/control-surface";
+import { formatControlEffectValue, formatControlTargetRef } from "../controls/control-surface";
 import {
   STARTER_MATERIAL_LIBRARY,
   type MaterialDef
@@ -347,6 +339,14 @@ import {
   upsertProjectScheduleRoutine,
   type ProjectScheduleRoutine
 } from "../scheduler/project-scheduler";
+import {
+  createProjectScheduleEffectFromOption,
+  getProjectScheduleEffectOptionId,
+  getProjectScheduleTargetOptionByKey,
+  listProjectScheduleEffectOptions,
+  listProjectScheduleTargetOptions,
+  type ProjectScheduleEffectOptionId
+} from "../scheduler/project-schedule-control-options";
 import {
   loadProjectPackage,
   PROJECT_PACKAGE_FILE_EXTENSION,
