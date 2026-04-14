@@ -16,7 +16,10 @@ import {
   createProjectScheduleRoutine,
   createProjectScheduleSelectedDaysSelection
 } from "../../src/scheduler/project-scheduler";
-import { createEmptyProjectSequenceLibrary } from "../../src/sequencer/project-sequences";
+import {
+  createEmptyProjectSequenceLibrary,
+  createProjectSequence
+} from "../../src/sequencer/project-sequences";
 import {
   applyRuntimeProjectScheduleToControlState,
   resolveRuntimeProjectScheduleState
@@ -165,6 +168,69 @@ describe("runtime project scheduler", () => {
         }
       })
     ]);
+  });
+
+  it("resolves actor held steps from referenced project sequences", () => {
+    const actorTarget = createActorControlTargetRef("actor-sequenced-vendor");
+    const scheduler = createEmptyProjectScheduler();
+    const sequences = createEmptyProjectSequenceLibrary();
+    sequences.sequences["sequence-vendor-open"] = createProjectSequence({
+      id: "sequence-vendor-open",
+      title: "Vendor Open Sequence",
+      steps: [
+        {
+          stepClass: "held",
+          type: "controlEffect",
+          effect: createSetActorPresenceControlEffect({
+            target: actorTarget,
+            active: true
+          })
+        },
+        {
+          stepClass: "held",
+          type: "controlEffect",
+          effect: createPlayActorAnimationControlEffect({
+            target: actorTarget,
+            clipName: "Wave",
+            loop: true
+          })
+        }
+      ]
+    });
+    scheduler.routines["routine-vendor-open"] = createProjectScheduleRoutine({
+      id: "routine-vendor-open",
+      title: "Vendor Open",
+      target: actorTarget,
+      startHour: 8,
+      endHour: 16,
+      sequenceId: "sequence-vendor-open",
+      effect: createSetActorPresenceControlEffect({
+        target: actorTarget,
+        active: false
+      })
+    });
+
+    const resolved = resolveRuntimeProjectScheduleState({
+      scheduler,
+      sequences,
+      actorIds: ["actor-sequenced-vendor"],
+      dayNumber: 1,
+      timeOfDayHours: 10
+    });
+
+    expect(resolved.actors[0]).toEqual(
+      expect.objectContaining({
+        actorId: "actor-sequenced-vendor",
+        active: true,
+        activeRoutineId: "routine-vendor-open",
+        activeRoutineTitle: "Vendor Open",
+        animationEffect: expect.objectContaining({
+          type: "playActorAnimation",
+          clipName: "Wave",
+          loop: true
+        })
+      })
+    );
   });
 
   it("applies non-actor scheduler effects over baseline control state and restores defaults when inactive", () => {
