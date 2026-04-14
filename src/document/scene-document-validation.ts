@@ -81,6 +81,15 @@ import {
   type ProjectScheduler
 } from "../scheduler/project-scheduler";
 import type { ProjectDialogue } from "../dialogues/project-dialogues";
+import type {
+  ProjectSequence,
+  ProjectSequenceLibrary
+} from "../sequencer/project-sequences";
+import {
+  getHeldSequenceControlEffects,
+  getProjectScheduleRoutineHeldSteps,
+  getProjectSequenceImpulseSteps
+} from "../sequencer/project-sequence-steps";
 
 export type SceneDiagnosticSeverity = "error" | "warning";
 export type SceneDiagnosticScope = "document" | "build";
