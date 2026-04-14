@@ -7,6 +7,7 @@ import {
 
 import type {
   RuntimeInteractable,
+  RuntimeNpc,
   RuntimeSceneDefinition,
   RuntimeSceneExit,
   RuntimeTeleportTarget,
@@ -14,6 +15,13 @@ import type {
 } from "./runtime-scene-build";
 
 const DEFAULT_INTERACTABLE_TARGET_RADIUS = 0.75;
+const DEFAULT_NPC_DIALOGUE_TARGET_RADIUS = 1.5;
+
+export interface RuntimeDialogueStartSource {
+  kind: "interactionLink" | "npc" | "direct";
+  sourceEntityId: string | null;
+  linkId: string | null;
+}
 
 export interface RuntimeInteractionDispatcher {
   teleportPlayer(target: RuntimeTeleportTarget, link: InteractionLink): void;
@@ -32,7 +40,7 @@ export interface RuntimeInteractionDispatcher {
   stopAnimation(instanceId: string, link: InteractionLink): void;
   playSound(soundEmitterId: string, link: InteractionLink): void;
   stopSound(soundEmitterId: string, link: InteractionLink): void;
-  startDialogue(dialogueId: string, link: InteractionLink): void;
+  startDialogue(dialogueId: string, source?: RuntimeDialogueStartSource): void;
   dispatchControlEffect?(effect: ControlEffect, link: InteractionLink): void;
 }
 
@@ -152,6 +160,40 @@ function getInteractableTargetRadius(
   interactable: RuntimeInteractable
 ): number {
   return Math.min(DEFAULT_INTERACTABLE_TARGET_RADIUS, interactable.radius);
+}
+
+function getNpcDialogueTargetRadius(npc: RuntimeNpc): number {
+  switch (npc.collider.mode) {
+    case "capsule":
+      return Math.max(
+        DEFAULT_NPC_DIALOGUE_TARGET_RADIUS,
+        npc.collider.radius * 2
+      );
+    case "box":
+      return Math.max(
+        DEFAULT_NPC_DIALOGUE_TARGET_RADIUS,
+        Math.max(npc.collider.size.x, npc.collider.size.z) * 0.75
+      );
+    case "none":
+      return DEFAULT_NPC_DIALOGUE_TARGET_RADIUS;
+  }
+}
+
+function getNpcDialoguePrompt(
+  npc: RuntimeNpc,
+  hasClickLinks: boolean
+): string {
+  const trimmedName = npc.name?.trim() ?? "";
+
+  if (npc.dialogueId !== null) {
+    return trimmedName.length > 0 ? `Talk to ${trimmedName}` : "Talk";
+  }
+
+  return trimmedName.length > 0
+    ? `Interact with ${trimmedName}`
+    : hasClickLinks
+      ? "Interact"
+      : "Talk";
 }
 
 function updateBestPrompt(
@@ -337,6 +379,48 @@ export class RuntimeInteractionSystem {
       bestHitDistance = next.hitDistance;
     }
 
+    for (const npc of runtimeScene.entities.npcs) {
+      if (!npc.visible) {
+        continue;
+      }
+
+      const hasClickLinks = hasTriggerLinks(runtimeScene, npc.entityId, "click");
+
+      if (!hasClickLinks && npc.dialogueId === null) {
+        continue;
+      }
+
+      const radius = getNpcDialogueTargetRadius(npc);
+      const distance = distanceBetweenVec3(interactionOrigin, npc.position);
+
+      if (distance > radius) {
+        continue;
+      }
+
+      const hitDistance = raySphereHitDistance(
+        rayOrigin,
+        normalizedViewDirection,
+        npc.position,
+        radius
+      );
+
+      if (hitDistance === null) {
+        continue;
+      }
+
+      const next = updateBestPrompt(
+        bestPrompt,
+        bestHitDistance,
+        npc.entityId,
+        getNpcDialoguePrompt(npc, hasClickLinks),
+        distance,
+        radius,
+        hitDistance
+      );
+      bestPrompt = next.prompt;
+      bestHitDistance = next.hitDistance;
+    }
+
     return bestPrompt;
   }
 
@@ -353,6 +437,27 @@ export class RuntimeInteractionSystem {
     if (sceneExit !== null) {
       dispatcher.activateSceneExit(sceneExit);
       return;
+    }
+
+    const npc =
+      runtimeScene.entities.npcs.find(
+        (candidate) => candidate.entityId === sourceEntityId
+      ) ?? null;
+
+    if (npc !== null) {
+      if (hasTriggerLinks(runtimeScene, npc.entityId, "click")) {
+        this.dispatchLinks(sourceEntityId, "click", runtimeScene, dispatcher);
+        return;
+      }
+
+      if (npc.dialogueId !== null) {
+        dispatcher.startDialogue(npc.dialogueId, {
+          kind: "npc",
+          sourceEntityId: npc.entityId,
+          linkId: null
+        });
+        return;
+      }
     }
 
     this.dispatchLinks(sourceEntityId, "click", runtimeScene, dispatcher);
@@ -416,7 +521,11 @@ export class RuntimeInteractionSystem {
           dispatcher.stopSound(link.action.targetSoundEmitterId, link);
           break;
         case "startDialogue":
-          dispatcher.startDialogue(link.action.dialogueId, link);
+          dispatcher.startDialogue(link.action.dialogueId, {
+            kind: "interactionLink",
+            sourceEntityId: link.sourceEntityId,
+            linkId: link.id
+          });
           break;
         case "control":
           throw new Error(

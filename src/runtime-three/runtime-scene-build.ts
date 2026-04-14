@@ -226,6 +226,7 @@ export interface RuntimeNpc {
   position: Vec3;
   yawDegrees: number;
   modelAssetId: string | null;
+  dialogueId: string | null;
   collider: FirstPersonPlayerShape;
   activeRoutineTitle: string | null;
   animationClipName: string | null;
@@ -509,6 +510,7 @@ export function createRuntimeNpcFromDefinition(
     position: cloneVec3(npc.position),
     yawDegrees: npc.yawDegrees,
     modelAssetId: npc.modelAssetId,
+    dialogueId: npc.dialogueId,
     collider: cloneRuntimeCharacterShape(npc.collider),
     activeRoutineTitle: npc.activeRoutineTitle,
     animationClipName: npc.animationClipName,
@@ -1356,6 +1358,7 @@ function buildRuntimeSceneCollections(
           yawDegrees: entity.yawDegrees,
           authoredYawDegrees: entity.yawDegrees,
           modelAssetId: entity.modelAssetId,
+          dialogueId: entity.dialogueId,
           collider: createRuntimeCharacterShape(entity.collider),
           animationClipName: null,
           animationLoop: undefined,

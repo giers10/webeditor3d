@@ -28,7 +28,8 @@ import {
   type ProjectDialogueLibrary
 } from "../dialogues/project-dialogues";
 
-export const SCENE_DOCUMENT_VERSION = 50 as const;
+export const SCENE_DOCUMENT_VERSION = 51 as const;
+export const NPC_DIALOGUE_REFERENCE_SCENE_DOCUMENT_VERSION = 51 as const;
 export const PROJECT_DIALOGUE_LIBRARY_SCENE_DOCUMENT_VERSION = 50 as const;
 export const SCHEDULER_ACTOR_ROUTINE_EFFECTS_SCENE_DOCUMENT_VERSION = 49 as const;
 export const SCHEDULER_CONTROL_EFFECTS_SCENE_DOCUMENT_VERSION = 48 as const;

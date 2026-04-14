@@ -152,6 +152,7 @@ import {
   PROJECT_SCHEDULER_FOUNDATION_SCENE_DOCUMENT_VERSION,
   SCHEDULER_ACTOR_ROUTINE_EFFECTS_SCENE_DOCUMENT_VERSION,
   EXPANDED_CONTROL_SURFACE_SCENE_DOCUMENT_VERSION,
+  NPC_DIALOGUE_REFERENCE_SCENE_DOCUMENT_VERSION,
   PROJECT_DIALOGUE_LIBRARY_SCENE_DOCUMENT_VERSION,
   RUNNER_V1_SCENE_DOCUMENT_VERSION,
   SCENE_TRANSITION_ENTITIES_SCENE_DOCUMENT_VERSION,
@@ -275,6 +276,18 @@ function readOptionalSceneLoadingText(
 
   const normalizedValue = expectString(value, label).trim();
   return normalizedValue.length === 0 ? null : normalizedValue;
+}
+
+function readOptionalDialogueResourceId(
+  value: unknown,
+  label: string
+): string | null {
+  if (value === undefined || value === null) {
+    return null;
+  }
+
+  const dialogueId = expectString(value, label).trim();
+  return dialogueId.length === 0 ? null : dialogueId;
 }
 
 function readSceneLoadingScreen(
@@ -2758,6 +2771,10 @@ function readNpcEntity(value: unknown, label: string): EntityInstance {
       value.modelAssetId === undefined || value.modelAssetId === null
         ? undefined
         : expectString(value.modelAssetId, `${label}.modelAssetId`),
+    dialogueId: readOptionalDialogueResourceId(
+      value.dialogueId,
+      `${label}.dialogueId`
+    ),
     collider: readNpcColliderSettings(value.collider, `${label}.collider`)
   });
 
@@ -4241,6 +4258,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     source.version !== PROJECT_SCHEDULER_FOUNDATION_SCENE_DOCUMENT_VERSION &&
     source.version !== EXPANDED_CONTROL_SURFACE_SCENE_DOCUMENT_VERSION &&
     source.version !== SCHEDULER_ACTOR_ROUTINE_EFFECTS_SCENE_DOCUMENT_VERSION &&
+    source.version !== NPC_DIALOGUE_REFERENCE_SCENE_DOCUMENT_VERSION &&
     source.version !== PROJECT_DIALOGUE_LIBRARY_SCENE_DOCUMENT_VERSION
   ) {
     throw new Error(

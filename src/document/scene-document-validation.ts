@@ -2814,6 +2814,19 @@ function validateNpcEntity(
 
   validateNpcPresence(entity.presence, `${path}.presence`, diagnostics);
   validateNpcModelAssetId(entity, path, document, diagnostics);
+  if (
+    entity.dialogueId !== null &&
+    document.dialogues.dialogues[entity.dialogueId] === undefined
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "missing-dialogue-resource",
+        `Dialogue ${entity.dialogueId} does not exist in the project dialogue library.`,
+        `${path}.dialogueId`
+      )
+    );
+  }
   validateCharacterColliderSettings(entity.collider, path, diagnostics, {
     codePrefix: "npc",
     label: "NPC",
