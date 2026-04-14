@@ -6,6 +6,8 @@ import {
   createDefaultResolvedControlSource,
   createEmptyRuntimeResolvedControlState,
   createLightControlTargetRef,
+  createFollowActorPathControlEffect,
+  createPlayActorAnimationControlEffect,
   createSetActorPresenceControlEffect
 } from "../../src/controls/control-surface";
 import { createSetLightIntensityControlEffect } from "../../src/controls/control-surface";
@@ -233,6 +235,133 @@ describe("runtime project scheduler", () => {
           value: 1.25,
           source: {
             kind: "default"
+          }
+        })
+      ])
+    );
+  });
+
+  it("resolves actor animation and deterministic follow-path state from the active routine window", () => {
+    const actorTarget = createActorControlTargetRef("actor-patrol");
+    const scheduler = createEmptyProjectScheduler();
+    scheduler.routines["routine-patrol"] = createProjectScheduleRoutine({
+      id: "routine-patrol",
+      title: "Patrolling",
+      target: actorTarget,
+      startHour: 22,
+      endHour: 2,
+      effects: [
+        createSetActorPresenceControlEffect({
+          target: actorTarget,
+          active: true
+        }),
+        createPlayActorAnimationControlEffect({
+          target: actorTarget,
+          clipName: "Walk",
+          loop: true
+        }),
+        createFollowActorPathControlEffect({
+          target: actorTarget,
+          pathId: "path-patrol",
+          speed: 2,
+          loop: false,
+          progressMode: "deriveFromTime"
+        })
+      ]
+    });
+
+    const resolved = resolveRuntimeProjectScheduleState({
+      scheduler,
+      actorIds: ["actor-patrol"],
+      dayNumber: 2,
+      timeOfDayHours: 1,
+      pathsById: new Map([
+        [
+          "path-patrol",
+          {
+            id: "path-patrol",
+            loop: false,
+            points: [
+              {
+                position: { x: 0, y: 0, z: 0 }
+              },
+              {
+                position: { x: 8, y: 0, z: 0 }
+              }
+            ],
+            segments: [
+              {
+                start: { x: 0, y: 0, z: 0 },
+                end: { x: 8, y: 0, z: 0 },
+                length: 8,
+                distanceStart: 0,
+                distanceEnd: 8,
+                tangent: { x: 1, y: 0, z: 0 }
+              }
+            ],
+            totalLength: 8
+          }
+        ]
+      ])
+    });
+    const actorState = resolved.actors[0];
+    const resolvedControl = applyRuntimeProjectScheduleToControlState(
+      createEmptyRuntimeResolvedControlState(),
+      resolved
+    );
+
+    expect(actorState).toEqual(
+      expect.objectContaining({
+        actorId: "actor-patrol",
+        active: true,
+        activeRoutineId: "routine-patrol",
+        activeRoutineTitle: "Patrolling",
+        animationEffect: expect.objectContaining({
+          type: "playActorAnimation",
+          clipName: "Walk"
+        }),
+        pathEffect: expect.objectContaining({
+          type: "followActorPath",
+          pathId: "path-patrol",
+          speed: 2
+        }),
+        resolvedPath: expect.objectContaining({
+          progress: 0.75,
+          elapsedHours: 3,
+          position: {
+            x: 6,
+            y: 0,
+            z: 0
+          },
+          yawDegrees: 90
+        })
+      })
+    );
+    expect(resolvedControl.discrete).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "actorPresence",
+          value: true,
+          source: {
+            kind: "scheduler",
+            scheduleId: "routine-patrol"
+          }
+        }),
+        expect.objectContaining({
+          type: "actorAnimationPlayback",
+          clipName: "Walk",
+          source: {
+            kind: "scheduler",
+            scheduleId: "routine-patrol"
+          }
+        }),
+        expect.objectContaining({
+          type: "actorPathAssignment",
+          pathId: "path-patrol",
+          speed: 2,
+          source: {
+            kind: "scheduler",
+            scheduleId: "routine-patrol"
           }
         })
       ])
