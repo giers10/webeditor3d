@@ -3342,6 +3342,7 @@ export class RuntimeHost {
       return;
     }
 
+    this.pressedKeys.add(event.code);
     event.preventDefault();
     this.toggleManualPause();
     this.previousPauseInputActive = true;
