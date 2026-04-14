@@ -635,7 +635,8 @@ export function ProjectSequencerPane({
                 </label>
               </div>
 
-              {selectedRoutine.target.kind === "actor" ? (
+              {selectedRoutine.sequenceId === null &&
+              selectedRoutine.target.kind === "actor" ? (
                 <>
                   <div className="form-section">
                     <div className="label">Animation</div>
@@ -765,7 +766,7 @@ export function ProjectSequencerPane({
                     ) : null}
                   </div>
                 </>
-              ) : (
+              ) : selectedRoutine.sequenceId === null ? (
                 <>
                   {selectedEffectOptions.find(
                     (effectOption) => effectOption.id === selectedEffectOptionId
@@ -894,7 +895,7 @@ export function ProjectSequencerPane({
                     </div>
                   ) : null}
                 </>
-              )}
+              ) : null}
 
               <div className="form-section">
                 <div className="label">Details</div>
