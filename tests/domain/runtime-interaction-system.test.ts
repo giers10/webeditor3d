@@ -798,13 +798,15 @@ describe("RuntimeInteractionSystem", () => {
       createDispatcher({
         startDialogue: (dialogueId, source) => {
           dispatches.push(
-            `${source?.kind}:${source?.sourceEntityId}:${dialogueId}`
+            `${source?.kind}:${source?.sourceEntityId}:${source?.trigger}:${dialogueId}`
           );
         }
       })
     );
 
-    expect(dispatches).toEqual(["npc:entity-npc-merchant:dialogue-merchant"]);
+    expect(dispatches).toEqual([
+      "npc:entity-npc-merchant:click:dialogue-merchant"
+    ]);
   });
 
   it("shows a click prompt for enabled Scene Exits within range", () => {
