@@ -28,7 +28,6 @@ import {
 } from "../sequencer/project-sequencer";
 import {
   findHeldSequenceControlEffect,
-  getHeldSequenceControlEffects,
   getProjectScheduleRoutineHeldSteps,
   getProjectScheduleRoutineResolvedHeldControlEffectsAtMinute
 } from "../sequencer/project-sequence-steps";
