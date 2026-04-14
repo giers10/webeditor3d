@@ -593,6 +593,7 @@ describe("buildRuntimeSceneFromDocument", () => {
           },
           yawDegrees: 45,
           modelAssetId: modelAsset.id,
+          dialogueId: null,
           activeRoutineTitle: null,
           animationClipName: null,
           animationLoop: undefined,
