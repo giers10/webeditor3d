@@ -784,7 +784,7 @@ function cloneResolvedActorPathToNpcPathState(
   };
 }
 
-function applyActorScheduleStateToNpcDefinition(
+export function applyActorScheduleStateToNpcDefinition(
   npc: RuntimeNpcDefinition,
   actorState: RuntimeResolvedProjectScheduleState["actors"][number] | null
 ) {
