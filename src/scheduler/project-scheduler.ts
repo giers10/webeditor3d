@@ -3,6 +3,7 @@ import {
   areControlEffectsEqual,
   cloneControlEffect,
   cloneControlTargetRef,
+  getControlEffectResolutionKey,
   type ControlEffect,
   type ControlTargetRef,
   createActorControlTargetRef,
@@ -49,7 +50,7 @@ export interface ProjectScheduleRoutine {
   startHour: number;
   endHour: number;
   priority: number;
-  effect: ControlEffect;
+  effects: ControlEffect[];
 }
 
 export interface ProjectScheduler {
@@ -123,30 +124,98 @@ function normalizeProjectScheduleHours(value: number, label: string): number {
   return normalizeTimeOfDayHours(value);
 }
 
-function normalizeProjectScheduleEffectTarget(
-  target: ControlTargetRef,
-  effect: ControlEffect | undefined
-): ControlEffect {
-  if (effect === undefined) {
-    if (target.kind !== "actor") {
-      throw new Error(
-        "Project schedule routines must author an explicit control effect for non-actor targets."
-      );
+function compareProjectScheduleEffectOrder(
+  left: ControlEffect,
+  right: ControlEffect
+): number {
+  const getOrder = (effect: ControlEffect): number => {
+    switch (effect.type) {
+      case "setActorPresence":
+        return 0;
+      case "playActorAnimation":
+        return 1;
+      case "followActorPath":
+        return 2;
+      default:
+        return 10;
     }
+  };
 
-    return createSetActorPresenceControlEffect({
-      target,
-      active: true
-    });
+  return (
+    getOrder(left) - getOrder(right) ||
+    getControlEffectResolutionKey(left).localeCompare(
+      getControlEffectResolutionKey(right)
+    )
+  );
+}
+
+function normalizeProjectScheduleEffects(
+  target: ControlTargetRef,
+  options: {
+    effect?: ControlEffect;
+    effects?: ControlEffect[];
   }
+): ControlEffect[] {
+  const authoredEffects =
+    options.effects !== undefined
+      ? options.effects
+      : options.effect === undefined
+        ? []
+        : [options.effect];
+  const normalizedEffects = authoredEffects.map(cloneControlEffect);
 
-  if (getControlTargetRefKey(effect.target) !== getControlTargetRefKey(target)) {
+  if (normalizedEffects.length === 0 && target.kind !== "actor") {
     throw new Error(
-      "Project schedule routine effects must target the same authored control target."
+      "Project schedule routines must author an explicit control effect for non-actor targets."
     );
   }
 
-  return cloneControlEffect(effect);
+  for (const effect of normalizedEffects) {
+    if (getControlTargetRefKey(effect.target) !== getControlTargetRefKey(target)) {
+      throw new Error(
+        "Project schedule routine effects must target the same authored control target."
+      );
+    }
+  }
+
+  if (
+    target.kind === "actor" &&
+    !normalizedEffects.some((effect) => effect.type === "setActorPresence")
+  ) {
+    normalizedEffects.push(
+      createSetActorPresenceControlEffect({
+        target,
+        active: true
+      })
+    );
+  }
+
+  if (normalizedEffects.length === 0) {
+    throw new Error("Project schedule routines must contain at least one control effect.");
+  }
+
+  if (target.kind !== "actor" && normalizedEffects.length !== 1) {
+    throw new Error(
+      "Non-actor project schedule routines must currently author exactly one control effect."
+    );
+  }
+
+  const seenResolutionKeys = new Set<string>();
+
+  for (const effect of normalizedEffects) {
+    const resolutionKey = getControlEffectResolutionKey(effect);
+
+    if (seenResolutionKeys.has(resolutionKey)) {
+      throw new Error(
+        `Project schedule routines cannot author multiple effects for ${resolutionKey}.`
+      );
+    }
+
+    seenResolutionKeys.add(resolutionKey);
+  }
+
+  normalizedEffects.sort(compareProjectScheduleEffectOrder);
+  return normalizedEffects;
 }
 
 export function isProjectScheduleWeekday(
@@ -180,9 +249,11 @@ export function createProjectScheduleRoutine(
   overrides: Partial<
     Pick<
       ProjectScheduleRoutine,
-      "id" | "title" | "enabled" | "target" | "days" | "startHour" | "endHour" | "priority" | "effect"
+      "id" | "title" | "enabled" | "target" | "days" | "startHour" | "endHour" | "priority" | "effects"
     >
-  > &
+  > & {
+    effect?: ControlEffect;
+  } &
     Pick<ProjectScheduleRoutine, "target" | "title"> = {
     target: createActorControlTargetRef("actor-default"),
     title: "Routine"
@@ -211,7 +282,10 @@ export function createProjectScheduleRoutine(
     startHour,
     endHour,
     priority: normalizeProjectSchedulePriority(overrides.priority),
-    effect: normalizeProjectScheduleEffectTarget(target, overrides.effect)
+    effects: normalizeProjectScheduleEffects(target, {
+      effect: overrides.effect,
+      effects: overrides.effects
+    })
   };
 }
 
@@ -238,7 +312,7 @@ export function cloneProjectScheduleRoutine(
     startHour: routine.startHour,
     endHour: routine.endHour,
     priority: routine.priority,
-    effect: cloneControlEffect(routine.effect)
+    effects: routine.effects.map(cloneControlEffect)
   };
 }
 
@@ -287,7 +361,24 @@ export function areProjectScheduleRoutinesEqual(
     left.startHour === right.startHour &&
     left.endHour === right.endHour &&
     left.priority === right.priority &&
-    areControlEffectsEqual(left.effect, right.effect)
+    left.effects.length === right.effects.length &&
+    left.effects.every((effect, index) =>
+      areControlEffectsEqual(effect, right.effects[index] as ControlEffect)
+    )
+  );
+}
+
+export function findProjectScheduleRoutineEffect<
+  TType extends ControlEffect["type"]
+>(
+  routine: ProjectScheduleRoutine,
+  type: TType
+): Extract<ControlEffect, { type: TType }> | null {
+  return (
+    routine.effects.find(
+      (effect): effect is Extract<ControlEffect, { type: TType }> =>
+        effect.type === type
+    ) ?? null
   );
 }
 
@@ -379,6 +470,40 @@ export function isProjectScheduleRoutineActiveAt(
     ) &&
       normalizedTimeOfDayHours < routine.endHour)
   );
+}
+
+export function getProjectScheduleRoutineDurationHours(
+  routine: Pick<ProjectScheduleRoutine, "startHour" | "endHour">
+): number {
+  return routine.startHour < routine.endHour
+    ? routine.endHour - routine.startHour
+    : HOURS_PER_DAY - routine.startHour + routine.endHour;
+}
+
+export function getProjectScheduleRoutineElapsedHoursAt(
+  routine: ProjectScheduleRoutine,
+  dayNumber: number,
+  timeOfDayHours: number
+): number | null {
+  if (!isProjectScheduleRoutineActiveAt(routine, dayNumber, timeOfDayHours)) {
+    return null;
+  }
+
+  const normalizedTimeOfDayHours = normalizeTimeOfDayHours(timeOfDayHours);
+  const weekday = resolveProjectScheduleWeekday(dayNumber);
+
+  if (routine.startHour < routine.endHour) {
+    return normalizedTimeOfDayHours - routine.startHour;
+  }
+
+  if (
+    isProjectScheduleDaySelectionActive(routine.days, weekday) &&
+    normalizedTimeOfDayHours >= routine.startHour
+  ) {
+    return normalizedTimeOfDayHours - routine.startHour;
+  }
+
+  return HOURS_PER_DAY - routine.startHour + normalizedTimeOfDayHours;
 }
 
 export function compareProjectScheduleRoutinePriority(
