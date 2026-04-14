@@ -137,33 +137,6 @@ function formatSequenceMinuteValue(minutes: number): string {
   return `${String(hours).padStart(2, "0")}:${String(remainderMinutes).padStart(2, "0")}`;
 }
 
-function parseSequenceMinuteValue(value: string, label: string): number {
-  const trimmed = value.trim();
-
-  if (trimmed.length === 0) {
-    throw new Error(`${label} must be non-empty.`);
-  }
-
-  if (/^\d+$/.test(trimmed)) {
-    return Math.max(0, Math.trunc(Number(trimmed)));
-  }
-
-  const match = /^(?<hours>\d{1,3}):(?<minutes>\d{2})$/.exec(trimmed);
-
-  if (match?.groups === undefined) {
-    throw new Error(`${label} must use HH:MM or a minute count.`);
-  }
-
-  const hours = Number(match.groups.hours);
-  const minutes = Number(match.groups.minutes);
-
-  if (!Number.isFinite(hours) || !Number.isFinite(minutes) || minutes >= 60) {
-    throw new Error(`${label} must use a valid HH:MM value.`);
-  }
-
-  return Math.max(0, Math.trunc(hours) * 60 + Math.trunc(minutes));
-}
-
 function getControlClipNumericValue(
   clip: Extract<SequenceClip, { type: "controlEffect" }>
 ): number | null {
@@ -557,28 +530,21 @@ export function ProjectSequencesPanel({
               <input
                 key={`${selectedSequence.id}-duration`}
                 className="text-input"
-                type="text"
-                inputMode="numeric"
-                defaultValue={formatSequenceMinuteValue(
-                  selectedSequence.durationMinutes
-                )}
+                type="number"
+                min="1"
+                step="1"
+                defaultValue={selectedSequence.durationMinutes}
                 onBlur={(event) =>
                   onSetSequenceDurationMinutes(
                     selectedSequence.id,
-                    parseSequenceMinuteValue(
-                      event.currentTarget.value,
-                      "Sequence length"
-                    )
+                    Number(event.currentTarget.value)
                   )
                 }
                 onKeyDown={(event) =>
                   commitOnEnter(event, () =>
                     onSetSequenceDurationMinutes(
                       selectedSequence.id,
-                      parseSequenceMinuteValue(
-                        event.currentTarget.value,
-                        "Sequence length"
-                      )
+                      Number(event.currentTarget.value)
                     )
                   )
                 }
@@ -752,15 +718,13 @@ export function ProjectSequencesPanel({
                   <input
                     key={`${selectedSequence.id}-${selectedClipIndex}-start`}
                     className="text-input"
-                    type="text"
-                    inputMode="numeric"
-                    defaultValue={formatSequenceMinuteValue(selectedClip.startMinute)}
+                    type="number"
+                    min="0"
+                    step="1"
+                    defaultValue={selectedClip.startMinute}
                     onBlur={(event) =>
                       onSetClipTiming(selectedSequence.id, selectedClipIndex, {
-                        startMinute: parseSequenceMinuteValue(
-                          event.currentTarget.value,
-                          "Clip start"
-                        ),
+                        startMinute: Number(event.currentTarget.value),
                         durationMinutes: selectedClip.durationMinutes,
                         lane: selectedClip.lane
                       })
@@ -768,10 +732,7 @@ export function ProjectSequencesPanel({
                     onKeyDown={(event) =>
                       commitOnEnter(event, () =>
                         onSetClipTiming(selectedSequence.id, selectedClipIndex, {
-                          startMinute: parseSequenceMinuteValue(
-                            event.currentTarget.value,
-                            "Clip start"
-                          ),
+                          startMinute: Number(event.currentTarget.value),
                           durationMinutes: selectedClip.durationMinutes,
                           lane: selectedClip.lane
                         })
@@ -784,18 +745,14 @@ export function ProjectSequencesPanel({
                   <input
                     key={`${selectedSequence.id}-${selectedClipIndex}-duration`}
                     className="text-input"
-                    type="text"
-                    inputMode="numeric"
-                    defaultValue={formatSequenceMinuteValue(
-                      selectedClip.durationMinutes
-                    )}
+                    type="number"
+                    min="1"
+                    step="1"
+                    defaultValue={selectedClip.durationMinutes}
                     onBlur={(event) =>
                       onSetClipTiming(selectedSequence.id, selectedClipIndex, {
                         startMinute: selectedClip.startMinute,
-                        durationMinutes: parseSequenceMinuteValue(
-                          event.currentTarget.value,
-                          "Clip length"
-                        ),
+                        durationMinutes: Number(event.currentTarget.value),
                         lane: selectedClip.lane
                       })
                     }
@@ -803,10 +760,7 @@ export function ProjectSequencesPanel({
                       commitOnEnter(event, () =>
                         onSetClipTiming(selectedSequence.id, selectedClipIndex, {
                           startMinute: selectedClip.startMinute,
-                          durationMinutes: parseSequenceMinuteValue(
-                            event.currentTarget.value,
-                            "Clip length"
-                          ),
+                          durationMinutes: Number(event.currentTarget.value),
                           lane: selectedClip.lane
                         })
                       )
