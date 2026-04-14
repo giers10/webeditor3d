@@ -2,8 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import { createBoxBrush } from "../../src/document/brushes";
 import {
+  createActiveSceneControlTargetRef,
   createActorControlTargetRef,
-  createSetActorPresenceControlEffect
+  createSetActorPresenceControlEffect,
+  createSetAmbientLightColorControlEffect,
+  createSetSoundVolumeControlEffect,
+  createSoundEmitterControlTargetRef
 } from "../../src/controls/control-surface";
 import { createScenePath } from "../../src/document/paths";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
@@ -21,6 +25,7 @@ import {
   createTriggerVolumeEntity
 } from "../../src/entities/entity-instances";
 import { createProjectAssetStorageKey, type AudioAssetRecord, type ModelAssetRecord } from "../../src/assets/project-assets";
+import { createControlInteractionLink } from "../../src/interactions/interaction-links";
 import { createProjectScheduleRoutine } from "../../src/scheduler/project-scheduler";
 
 describe("validateSceneDocument", () => {
