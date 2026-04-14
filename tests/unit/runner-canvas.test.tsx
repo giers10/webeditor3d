@@ -100,6 +100,7 @@ const { MockRuntimeHost, runtimeHostInstances } = vi.hoisted(() => {
     setRuntimeMessageHandler: ReturnType<typeof vi.fn>;
     setFirstPersonTelemetryHandler: ReturnType<typeof vi.fn>;
     setInteractionPromptHandler: ReturnType<typeof vi.fn>;
+    setRuntimePauseStateHandler: ReturnType<typeof vi.fn>;
     setSceneLoadStateHandler: ReturnType<typeof vi.fn>;
     setSceneExitHandler: ReturnType<typeof vi.fn>;
   }> = [];
@@ -114,6 +115,7 @@ const { MockRuntimeHost, runtimeHostInstances } = vi.hoisted(() => {
     setRuntimeMessageHandler = vi.fn();
     setFirstPersonTelemetryHandler = vi.fn();
     setInteractionPromptHandler = vi.fn();
+    setRuntimePauseStateHandler = vi.fn();
     setSceneLoadStateHandler = vi.fn();
     setSceneExitHandler = vi.fn();
 
@@ -285,6 +287,74 @@ describe("RunnerCanvas", () => {
       "aria-busy",
       "false"
     );
+  });
+
+  it("shows a centered pause overlay and hides the crosshair while paused", async () => {
+    const runtimeScene = buildRuntimeSceneFromDocument(
+      createEmptySceneDocument()
+    );
+
+    render(
+      <RunnerCanvas
+        runtimeScene={runtimeScene}
+        sceneName="Pause Runner"
+        sceneLoadingScreen={createDefaultSceneLoadingScreenSettings()}
+        projectAssets={{}}
+        loadedModelAssets={{}}
+        loadedImageAssets={{}}
+        loadedAudioAssets={{}}
+        navigationMode="firstPerson"
+        onRuntimeMessageChange={vi.fn()}
+        onFirstPersonTelemetryChange={vi.fn()}
+        onInteractionPromptChange={vi.fn()}
+        onSceneExitActivated={vi.fn()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(runtimeHostInstances).toHaveLength(1);
+      expect(
+        runtimeHostInstances[0]?.setSceneLoadStateHandler
+      ).toHaveBeenCalledTimes(1);
+      expect(
+        runtimeHostInstances[0]?.setRuntimePauseStateHandler
+      ).toHaveBeenCalledTimes(1);
+    });
+
+    const publishSceneLoadState = runtimeHostInstances[0]
+      ?.setSceneLoadStateHandler.mock.calls[0]?.[0] as
+      | ((state: RuntimeSceneLoadState) => void)
+      | undefined;
+    const publishPauseState = runtimeHostInstances[0]
+      ?.setRuntimePauseStateHandler.mock.calls[0]?.[0] as
+      | ((state: { paused: boolean; source: "manual" | "control" | "mixed" | null }) => void)
+      | undefined;
+
+    act(() => {
+      publishSceneLoadState?.({
+        status: "ready",
+        message: null
+      });
+    });
+
+    await waitFor(() => {
+      expect(document.querySelector(".runner-canvas__crosshair")).not.toBeNull();
+    });
+
+    act(() => {
+      publishPauseState?.({
+        paused: true,
+        source: "manual"
+      });
+    });
+
+    expect(screen.getByTestId("runner-pause-overlay")).toHaveTextContent(
+      "Pause"
+    );
+    expect(screen.getByTestId("runner-shell").className).toContain(
+      "runner-canvas--paused"
+    );
+    expect(document.querySelector(".runner-canvas__crosshair")).toBeNull();
   });
 
   it("keeps the overlay visible and shows load errors from the runtime host", async () => {
