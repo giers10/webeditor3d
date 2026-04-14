@@ -635,7 +635,7 @@ describe("RuntimeHost", () => {
       } | null;
       sceneReady: boolean;
       runtimeScene: typeof runtimeScene | null;
-      syncRuntimeNpcScheduleToCurrentClock(): void;
+      syncRuntimeScheduleToCurrentClock(): void;
     };
 
     expect(runtimeScene.entities.npcs).toEqual([]);
@@ -646,7 +646,7 @@ describe("RuntimeHost", () => {
       dayCount: 0,
       dayLengthMinutes: 24
     };
-    hostInternals.syncRuntimeNpcScheduleToCurrentClock();
+    hostInternals.syncRuntimeScheduleToCurrentClock();
 
     expect(hostInternals.runtimeScene?.entities.npcs).toEqual([
       expect.objectContaining({
@@ -661,7 +661,7 @@ describe("RuntimeHost", () => {
       dayCount: 1,
       dayLengthMinutes: 24
     };
-    hostInternals.syncRuntimeNpcScheduleToCurrentClock();
+    hostInternals.syncRuntimeScheduleToCurrentClock();
 
     expect(hostInternals.runtimeScene?.entities.npcs).toEqual([]);
     expect(hostInternals.runtimeScene?.npcDefinitions[0]).toEqual(
@@ -670,6 +670,106 @@ describe("RuntimeHost", () => {
         active: false,
         activeRoutineTitle: null
       })
+    );
+
+    host.dispose();
+  });
+
+  it("applies scheduler-controlled light effects and restores authored defaults when the routine ends", () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    vi.spyOn(RapierCollisionWorld, "create").mockResolvedValue({
+      dispose: vi.fn(),
+      resolveThirdPersonCameraCollision: vi.fn(
+        (_pivot, desiredCameraPosition) => desiredCameraPosition
+      )
+    } as unknown as RapierCollisionWorld);
+
+    const pointLight = createPointLightEntity({
+      id: "entity-point-light-night-lamp",
+      intensity: 1.25
+    });
+    const document = createEmptySceneDocument();
+    document.entities[pointLight.id] = pointLight;
+    document.scheduler.routines["routine-night-lamp"] =
+      createProjectScheduleRoutine({
+        id: "routine-night-lamp",
+        title: "Night Lamp",
+        target: createLightControlTargetRef("pointLight", pointLight.id),
+        startHour: 20,
+        endHour: 4,
+        effect: createSetLightIntensityControlEffect({
+          target: createLightControlTargetRef("pointLight", pointLight.id),
+          intensity: 3.5
+        })
+      });
+
+    const runtimeScene = buildRuntimeSceneFromDocument(document);
+    const host = new RuntimeHost({
+      enableRendering: false
+    });
+    host.loadScene(runtimeScene);
+
+    const hostInternals = host as unknown as {
+      currentClockState: {
+        timeOfDayHours: number;
+        dayCount: number;
+        dayLengthMinutes: number;
+      } | null;
+      sceneReady: boolean;
+      runtimeScene: typeof runtimeScene | null;
+      localLightObjects: Map<
+        string,
+        {
+          light: { intensity: number };
+        }
+      >;
+      syncRuntimeScheduleToCurrentClock(): void;
+    };
+
+    hostInternals.sceneReady = true;
+    hostInternals.currentClockState = {
+      timeOfDayHours: 21,
+      dayCount: 0,
+      dayLengthMinutes: 24
+    };
+    hostInternals.syncRuntimeScheduleToCurrentClock();
+
+    expect(
+      hostInternals.localLightObjects.get(pointLight.id)?.light.intensity
+    ).toBe(3.5);
+    expect(hostInternals.runtimeScene?.control.resolved.channels).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "lightIntensity",
+          value: 3.5,
+          source: {
+            kind: "scheduler",
+            scheduleId: "routine-night-lamp"
+          }
+        })
+      ])
+    );
+
+    hostInternals.currentClockState = {
+      timeOfDayHours: 6,
+      dayCount: 1,
+      dayLengthMinutes: 24
+    };
+    hostInternals.syncRuntimeScheduleToCurrentClock();
+
+    expect(
+      hostInternals.localLightObjects.get(pointLight.id)?.light.intensity
+    ).toBe(1.25);
+    expect(hostInternals.runtimeScene?.control.resolved.channels).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "lightIntensity",
+          value: 1.25,
+          source: {
+            kind: "default"
+          }
+        })
+      ])
     );
 
     host.dispose();
