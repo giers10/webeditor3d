@@ -1,10 +1,15 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  createActorControlTargetRef,
+  createSetActorPresenceControlEffect
+} from "../../src/controls/control-surface";
+import {
   AUTHORED_OBJECT_STATE_SCENE_DOCUMENT_VERSION,
   DEFAULT_PROJECT_NAME,
   DEFAULT_SCENE_EDITOR_SNAP_STEP,
   NPC_COLLIDER_SCENE_DOCUMENT_VERSION,
+  NPC_PRESENCE_SCENE_DOCUMENT_VERSION,
   PLAYER_START_GAMEPAD_CAMERA_LOOK_SCENE_DOCUMENT_VERSION,
   PROJECT_TIME_DAY_NIGHT_PROFILE_SCENE_DOCUMENT_VERSION,
   RUNNER_LOADING_SCREEN_SCENE_DOCUMENT_VERSION,
@@ -19,9 +24,12 @@ import {
   createDefaultWorldTimePhaseProfile
 } from "../../src/document/world-settings";
 import {
+  createNpcEntity,
+  createNpcTimeWindowPresence,
   createSceneEntryEntity,
   createSceneExitEntity
 } from "../../src/entities/entity-instances";
+import { createProjectScheduleRoutine } from "../../src/scheduler/project-scheduler";
 import {
   parseProjectDocumentJson,
   serializeProjectDocument

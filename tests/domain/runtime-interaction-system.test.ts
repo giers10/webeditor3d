@@ -15,7 +15,9 @@ import {
 } from "../../src/interactions/interaction-links";
 import { createDefaultProjectTimeSettings } from "../../src/document/project-time-settings";
 import { createDefaultWorldSettings } from "../../src/document/world-settings";
+import { createEmptyProjectScheduler } from "../../src/scheduler/project-scheduler";
 import { RuntimeInteractionSystem } from "../../src/runtime-three/runtime-interaction-system";
+import { createRuntimeProjectSchedulerState } from "../../src/runtime-three/runtime-project-scheduler";
 import type { RuntimeSceneDefinition } from "../../src/runtime-three/runtime-scene-build";
 
 function createRuntimeSceneFixture(): RuntimeSceneDefinition {
@@ -23,6 +25,9 @@ function createRuntimeSceneFixture(): RuntimeSceneDefinition {
 
   return {
     time: createDefaultProjectTimeSettings(),
+    scheduler: createRuntimeProjectSchedulerState({
+      document: createEmptyProjectScheduler()
+    }),
     world: {
       ...createDefaultWorldSettings(),
       background: {
