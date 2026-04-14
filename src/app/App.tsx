@@ -11452,8 +11452,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       routineId,
                       "Set project sequencer sequence",
                       sequenceId === null
-                        ? "Routine now uses inline effects."
-                        : "Routine now resolves a project sequence.",
+                        ? "Timeline clip now uses inline held clips."
+                        : "Timeline clip now resolves a project sequence.",
                       (routine) => {
                         routine.sequenceId = sequenceId;
                       }
