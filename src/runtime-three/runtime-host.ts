@@ -282,7 +282,6 @@ export class RuntimeHost {
     null;
   private currentInteractionPrompt: RuntimeInteractionPrompt | null = null;
   private currentDialogue: RuntimeDialogueState | null = null;
-  private suppressNextDialogueAdvanceClick = false;
   private currentSceneLoadState: RuntimeSceneLoadState | null = null;
   private currentClockState: RuntimeClockState | null = null;
   private lastPublishedClockState: RuntimeClockState | null = null;
@@ -488,7 +487,6 @@ export class RuntimeHost {
     this.interactionSystem.reset();
     this.setInteractionPrompt(null);
     this.setRuntimeDialogue(null);
-    this.suppressNextDialogueAdvanceClick = false;
     this.currentPlayerControllerTelemetry = null;
     this.currentPlayerAudioHooks = null;
     this.playerControllerTelemetryHandler?.(null);
@@ -601,7 +599,6 @@ export class RuntimeHost {
     const nextLineIndex = this.currentDialogue.lineIndex + 1;
 
     if (nextLineIndex >= dialogue.lines.length) {
-      this.suppressNextDialogueAdvanceClick = false;
       this.setRuntimeDialogue(null);
       return;
     }
@@ -616,7 +613,6 @@ export class RuntimeHost {
   }
 
   closeRuntimeDialogue() {
-    this.suppressNextDialogueAdvanceClick = false;
     this.setRuntimeDialogue(null);
   }
 
@@ -3115,8 +3111,6 @@ export class RuntimeHost {
       return;
     }
 
-    this.suppressNextDialogueAdvanceClick =
-      source.trigger === "enter" || source.trigger === "exit";
     this.setRuntimeDialogue(dialogue);
   }
 
@@ -3167,11 +3161,6 @@ export class RuntimeHost {
     this.audioSystem.handleUserGesture();
 
     if (this.currentDialogue !== null) {
-      if (this.suppressNextDialogueAdvanceClick) {
-        this.suppressNextDialogueAdvanceClick = false;
-        return;
-      }
-
       this.advanceRuntimeDialogue();
       return;
     }
