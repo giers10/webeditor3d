@@ -2,9 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import {
   createActorControlTargetRef,
+  createFollowActorPathControlEffect,
+  createPlayActorAnimationControlEffect,
   createSetActorPresenceControlEffect
 } from "../../src/controls/control-surface";
 import { createBoxBrush, deriveBoxBrushSizeFromGeometry } from "../../src/document/brushes";
+import { createScenePath } from "../../src/document/paths";
 import { createDefaultProjectTimeSettings } from "../../src/document/project-time-settings";
 import {
   ANIMATION_PLAYBACK_SCENE_DOCUMENT_VERSION,
@@ -89,6 +92,71 @@ describe("scene document JSON", () => {
           active: true
         })
       });
+
+    expect(
+      parseSceneDocumentJson(serializeSceneDocument(document))
+    ).toEqual(document);
+  });
+
+  it("round-trips actor scheduler animation and follow-path routines in the scene document schema", () => {
+    const npcModelAsset = {
+      id: "asset-model-patroller",
+      kind: "model" as const,
+      sourceName: "patroller.glb",
+      mimeType: "model/gltf-binary",
+      storageKey: "asset:model:patroller",
+      byteLength: 1024,
+      metadata: {
+        kind: "model" as const,
+        format: "glb" as const,
+        sceneName: null,
+        nodeCount: 1,
+        meshCount: 1,
+        materialNames: [],
+        textureNames: [],
+        animationNames: ["Walk"],
+        boundingBox: null,
+        warnings: []
+      }
+    };
+    const actorTarget = createActorControlTargetRef("actor-patroller");
+    const npc = createNpcEntity({
+      id: "entity-npc-patroller",
+      actorId: actorTarget.actorId,
+      modelAssetId: npcModelAsset.id
+    });
+    const path = createScenePath({
+      id: "path-patrol"
+    });
+    const document = createEmptySceneDocument({ name: "Schedule Scene" });
+    document.assets[npcModelAsset.id] = npcModelAsset;
+    document.entities[npc.id] = npc;
+    document.paths[path.id] = path;
+    document.scheduler.routines["routine-patrol"] = createProjectScheduleRoutine({
+      id: "routine-patrol",
+      title: "Patrolling",
+      target: actorTarget,
+      startHour: 9,
+      endHour: 13,
+      effects: [
+        createSetActorPresenceControlEffect({
+          target: actorTarget,
+          active: true
+        }),
+        createPlayActorAnimationControlEffect({
+          target: actorTarget,
+          clipName: "Walk",
+          loop: true
+        }),
+        createFollowActorPathControlEffect({
+          target: actorTarget,
+          pathId: path.id,
+          speed: 2,
+          loop: false,
+          progressMode: "deriveFromTime"
+        })
+      ]
+    });
 
     expect(
       parseSceneDocumentJson(serializeSceneDocument(document))
