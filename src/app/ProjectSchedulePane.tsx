@@ -207,7 +207,13 @@ export function ProjectSchedulePane({
   onSetRoutineNumericValue,
   onSetRoutineColorValue,
   onSetRoutineAnimationClip,
-  onSetRoutineAnimationLoop
+  onSetRoutineAnimationLoop,
+  onSetActorRoutinePresence,
+  onSetActorRoutineAnimationClip,
+  onSetActorRoutineAnimationLoop,
+  onSetActorRoutinePath,
+  onSetActorRoutinePathSpeed,
+  onSetActorRoutinePathLoop
 }: ProjectSchedulePaneProps) {
   const selectedRoutine =
     selectedRoutineId === null ? null : scheduler.routines[selectedRoutineId] ?? null;
@@ -219,13 +225,25 @@ export function ProjectSchedulePane({
           selectedRoutine.target
         );
   const selectedEffectOptionId =
-    selectedRoutine === null
+    selectedRoutine === null || selectedRoutine.target.kind === "actor"
       ? null
-      : getProjectScheduleEffectOptionId(selectedRoutine.effect);
+      : getProjectScheduleEffectOptionId(selectedRoutine.effects[0]!);
   const selectedEffectOptions =
-    selectedTargetOption === null
+    selectedTargetOption === null || selectedTargetOption.target.kind === "actor"
       ? []
       : listProjectScheduleEffectOptions(selectedTargetOption);
+  const selectedActorPresenceEffect =
+    selectedRoutine === null || selectedRoutine.target.kind !== "actor"
+      ? null
+      : findProjectScheduleRoutineEffect(selectedRoutine, "setActorPresence");
+  const selectedActorAnimationEffect =
+    selectedRoutine === null || selectedRoutine.target.kind !== "actor"
+      ? null
+      : findProjectScheduleRoutineEffect(selectedRoutine, "playActorAnimation");
+  const selectedActorPathEffect =
+    selectedRoutine === null || selectedRoutine.target.kind !== "actor"
+      ? null
+      : findProjectScheduleRoutineEffect(selectedRoutine, "followActorPath");
   const selectedRoutineDays =
     selectedRoutine === null
       ? PROJECT_SCHEDULE_WEEKDAYS
