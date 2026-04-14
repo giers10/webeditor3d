@@ -41,6 +41,7 @@ import { createSetPathAuthoredStateCommand } from "../commands/set-path-authored
 import { createSetPathNameCommand } from "../commands/set-path-name-command";
 import { createSetProjectNameCommand } from "../commands/set-project-name-command";
 import { createSetProjectSchedulerCommand } from "../commands/set-project-scheduler-command";
+import { createSetProjectDialoguesCommand } from "../commands/set-project-dialogues-command";
 import { createSetProjectTimeSettingsCommand } from "../commands/set-project-time-settings-command";
 import { createSetSceneLoadingScreenCommand } from "../commands/set-scene-loading-screen-command";
 import { createSetSceneNameCommand } from "../commands/set-scene-name-command";
@@ -283,6 +284,17 @@ import {
   type EntityKind
 } from "../entities/entity-instances";
 import {
+  areProjectDialogueLibrariesEqual,
+  cloneProjectDialogueLibrary,
+  createProjectDialogue,
+  createProjectDialogueLine,
+  getProjectDialogues
+} from "../dialogues/project-dialogues";
+import type {
+  ProjectDialogue,
+  ProjectDialogueLine
+} from "../dialogues/project-dialogues";
+import {
   getEntityDisplayLabelById,
   getSortedEntityDisplayLabels
 } from "../entities/entity-labels";
@@ -291,6 +303,7 @@ import {
   areInteractionLinksEqual,
   createControlInteractionLink,
   createPlayAnimationInteractionLink,
+  createStartDialogueInteractionLink,
   createPlaySoundInteractionLink,
   createStopAnimationInteractionLink,
   createStopSoundInteractionLink,
@@ -335,6 +348,7 @@ import {
 import { validateRuntimeSceneBuild } from "../runtime-three/runtime-scene-validation";
 import { EditorAutosaveController } from "../serialization/editor-autosave";
 import { Panel } from "../shared-ui/Panel";
+import { ProjectDialoguesPanel } from "./ProjectDialoguesPanel";
 import { ProjectSchedulePane } from "./ProjectSchedulePane";
 import {
   areProjectSchedulersEqual,
