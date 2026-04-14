@@ -1,6 +1,7 @@
 import {
   getControlEffectLabel,
   cloneControlEffect,
+  getControlEffectResolutionKey,
   type ControlEffect
 } from "../controls/control-surface";
 import { HOURS_PER_DAY } from "../document/project-time-settings";
@@ -316,7 +317,7 @@ export function getProjectScheduleRoutineResolvedHeldControlEffectsAtMinute(
   const resolvedByKey = new Map<string, ResolvedHeldControlSequenceEffect>();
 
   for (const effect of routine.effects) {
-    resolvedByKey.set(JSON.stringify(effect.target) + effect.type, {
+    resolvedByKey.set(getControlEffectResolutionKey(effect), {
       effect: cloneControlEffect(effect),
       elapsedMinutes: Math.max(0, routineElapsedMinutes ?? 0),
       source: "inline",
@@ -343,7 +344,7 @@ export function getProjectScheduleRoutineResolvedHeldControlEffectsAtMinute(
     }
 
     resolvedByKey.set(
-      JSON.stringify(activeClip.clip.effect.target) + activeClip.clip.effect.type,
+      getControlEffectResolutionKey(activeClip.clip.effect),
       {
         effect: cloneControlEffect(activeClip.clip.effect),
         elapsedMinutes: activeClip.elapsedMinutes,
