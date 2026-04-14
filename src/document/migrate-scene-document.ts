@@ -59,12 +59,14 @@ import {
   type PlayerStartMovementTemplateKind
 } from "../entities/entity-instances";
 import {
+  createFollowActorPathControlEffect,
   createActorControlTargetRef,
   createActiveSceneControlTargetRef,
   createEntityControlTargetRef,
   createInteractionControlTargetRef,
   createLightControlTargetRef,
   createModelInstanceControlTargetRef,
+  createPlayActorAnimationControlEffect,
   createPlayModelAnimationControlEffect,
   createPlaySoundControlEffect,
   createProjectGlobalControlTargetRef,
@@ -82,6 +84,7 @@ import {
   createSoundEmitterControlTargetRef,
   createStopModelAnimationControlEffect,
   createStopSoundControlEffect,
+  isActorPathProgressMode,
   isControlEntityTargetKind,
   isControlInteractionTargetKind,
   type ControlEffect,
@@ -146,6 +149,7 @@ import {
   PLAYER_START_COLLIDER_SETTINGS_SCENE_DOCUMENT_VERSION,
   PATH_FOUNDATION_SCENE_DOCUMENT_VERSION,
   PROJECT_SCHEDULER_FOUNDATION_SCENE_DOCUMENT_VERSION,
+  SCHEDULER_ACTOR_ROUTINE_EFFECTS_SCENE_DOCUMENT_VERSION,
   EXPANDED_CONTROL_SURFACE_SCENE_DOCUMENT_VERSION,
   RUNNER_V1_SCENE_DOCUMENT_VERSION,
   SCENE_TRANSITION_ENTITIES_SCENE_DOCUMENT_VERSION,
