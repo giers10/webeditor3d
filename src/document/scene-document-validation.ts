@@ -11,7 +11,10 @@ import {
   type ActorControlTargetRef,
   type ControlEffect,
   type InteractionControlTargetRef,
-  type LightControlTargetRef
+  type LightControlTargetRef,
+  type ModelInstanceControlTargetRef,
+  type SceneControlTargetRef,
+  type SoundEmitterControlTargetRef
 } from "../controls/control-surface";
 import { WHITEBOX_SELECTION_MODES } from "../core/whitebox-selection-mode";
 import {
