@@ -4005,7 +4005,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
   const materials = readMaterialRegistry(source.materials, "materials");
   const assets = readAssets(source.assets);
 
-  return migrateLegacySceneNpcPresenceToScheduler({
+  const migratedDocument: SceneDocument = {
     version: SCENE_DOCUMENT_VERSION,
     name: expectString(source.name, "name"),
     time: readProjectTimeSettings(source.time, "time", {
@@ -4027,7 +4027,11 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     modelInstances: readModelInstances(source.modelInstances, assets),
     entities: readEntities(source.entities, { legacySoundEmitter: false }),
     interactionLinks: readInteractionLinks(source.interactionLinks)
-  });
+  };
+
+  return source.version < PROJECT_SCHEDULER_FOUNDATION_SCENE_DOCUMENT_VERSION
+    ? migrateLegacySceneNpcPresenceToScheduler(migratedDocument)
+    : migratedDocument;
 }
 
 function readProjectScene(
@@ -4131,7 +4135,7 @@ export function migrateProjectDocument(source: unknown): ProjectDocument {
       );
     }
 
-    return migrateLegacyProjectNpcPresenceToScheduler({
+    const migratedDocument: ProjectDocument = {
       version: SCENE_DOCUMENT_VERSION,
       name: readProjectName(source.name, "name", {
         allowMissing: allowMissingProjectName
@@ -4148,7 +4152,11 @@ export function migrateProjectDocument(source: unknown): ProjectDocument {
       materials,
       textures: expectEmptyCollection(source.textures, "textures"),
       assets
-    });
+    };
+
+    return source.version < PROJECT_SCHEDULER_FOUNDATION_SCENE_DOCUMENT_VERSION
+      ? migrateLegacyProjectNpcPresenceToScheduler(migratedDocument)
+      : migratedDocument;
   }
 
   return createProjectDocumentFromSceneDocument(
