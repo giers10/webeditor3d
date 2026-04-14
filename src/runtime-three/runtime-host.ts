@@ -1900,8 +1900,8 @@ export class RuntimeHost {
           : (this.projectAssets[npc.modelAssetId] ?? null);
       const loadedAsset =
         npc.modelAssetId === null
-          ? null
-          : (this.loadedModelAssets[npc.modelAssetId] ?? null);
+          ? undefined
+          : this.loadedModelAssets[npc.modelAssetId];
       const renderGroup =
         npc.modelAssetId === null || asset?.kind !== "model"
           ? this.createNpcColliderFallbackRenderGroup(npc)
