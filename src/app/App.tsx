@@ -4378,8 +4378,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const createDefaultProjectSequenceControlStep = (
     stepClass: "held" | "impulse",
     targetKey: string,
-    previousStep?: Extract<ProjectSequence["steps"][number], { type: "controlEffect" }> | null
-  ): Extract<ProjectSequence["steps"][number], { type: "controlEffect" }> => {
+    previousStep?: Extract<ProjectSequence["clips"][number], { type: "controlEffect" }> | null
+  ): Extract<ProjectSequence["clips"][number], { type: "controlEffect" }> => {
     const targetOption = resolveSequenceControlTargetOption(targetKey);
 
     if (targetOption === null) {
@@ -4427,13 +4427,13 @@ export function App({ store, initialStatusMessage }: AppProps) {
     stepIndex: number,
     label: string,
     successMessage: string,
-    mutate: (step: ProjectSequence["steps"][number]) => void
+    mutate: (step: ProjectSequence["clips"][number]) => void
   ) => {
     updateProjectSequence(sequenceId, label, successMessage, (sequence) => {
-      const step = sequence.steps[stepIndex];
+      const step = sequence.clips[stepIndex];
 
       if (step === undefined) {
-        throw new Error("Selected project sequence step no longer exists.");
+        throw new Error("Selected project sequence clip no longer exists.");
       }
 
       mutate(step);
@@ -4545,13 +4545,13 @@ export function App({ store, initialStatusMessage }: AppProps) {
     updateProjectSequence(
       sequenceId,
       stepClass === "held"
-        ? "Add held project sequence control step"
-        : "Add impulse project sequence control step",
+        ? "Add held project sequence control clip"
+        : "Add impulse project sequence control clip",
       stepClass === "held"
-        ? "Added held control step."
-        : "Added impulse control step.",
+        ? "Added held control clip."
+        : "Added impulse control clip.",
       (sequence) => {
-        sequence.steps.push(
+        sequence.clips.push(
           createDefaultProjectSequenceControlStep(stepClass, targetKey)
         );
       }
@@ -4564,10 +4564,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
   ) => {
     updateProjectSequence(
       sequenceId,
-      "Add project sequence dialogue step",
-      "Added dialogue step.",
+      "Add project sequence dialogue clip",
+      "Added dialogue clip.",
       (sequence) => {
-        sequence.steps.push({
+        sequence.clips.push({
           stepClass: "impulse",
           type: "startDialogue",
           dialogueId
@@ -4582,10 +4582,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
   ) => {
     updateProjectSequence(
       sequenceId,
-      "Delete project sequence step",
-      "Deleted sequence step.",
+      "Delete project sequence clip",
+      "Deleted sequence clip.",
       (sequence) => {
-        sequence.steps.splice(stepIndex, 1);
+        sequence.clips.splice(stepIndex, 1);
       }
     );
   };
