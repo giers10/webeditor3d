@@ -1681,6 +1681,15 @@ button:disabled {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .schedule-pane__body {
+    grid-template-columns: 1fr;
+  }
+
+  .schedule-pane__editor {
+    border-left: 0;
+    border-top: 1px solid var(--color-border);
+  }
 }
 
 @media (max-width: 820px) {
@@ -1708,6 +1717,12 @@ button:disabled {
   .viewport-canvas,
   .runner-canvas {
     min-height: 320px;
+  }
+
+  .schedule-ruler,
+  .schedule-row {
+    grid-template-columns: minmax(160px, 180px) minmax(0, 1fr);
+    min-width: 720px;
   }
 
   .vector-inputs {
