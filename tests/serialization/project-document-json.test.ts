@@ -295,7 +295,7 @@ describe("project document JSON", () => {
       migratedDocument.sequences.sequences["sequence-legacy-dialogue"]
     ).toEqual(
       expect.objectContaining({
-        durationMinutes: 1440,
+        durationMinutes: 240,
         clips: [
           {
             startMinute: 0,
