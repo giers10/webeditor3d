@@ -93,6 +93,7 @@ import {
 import {
   createControlInteractionLink,
   createPlayAnimationInteractionLink,
+  createRunSequenceInteractionLink,
   createStartDialogueInteractionLink,
   createPlaySoundInteractionLink,
   createStopAnimationInteractionLink,
@@ -154,6 +155,7 @@ import {
   EXPANDED_CONTROL_SURFACE_SCENE_DOCUMENT_VERSION,
   NPC_DIALOGUE_REFERENCE_SCENE_DOCUMENT_VERSION,
   PROJECT_DIALOGUE_LIBRARY_SCENE_DOCUMENT_VERSION,
+  PROJECT_SEQUENCE_LIBRARY_SCENE_DOCUMENT_VERSION,
   RUNNER_V1_SCENE_DOCUMENT_VERSION,
   SCENE_TRANSITION_ENTITIES_SCENE_DOCUMENT_VERSION,
   SPATIAL_AUDIO_SCENE_DOCUMENT_VERSION,
@@ -189,6 +191,12 @@ import {
   createProjectDialogueLine,
   type ProjectDialogueLibrary
 } from "../dialogues/project-dialogues";
+import {
+  createEmptyProjectSequenceLibrary,
+  createProjectSequence,
+  type ProjectSequenceLibrary
+} from "../sequencer/project-sequences";
+import type { SequenceStep } from "../sequencer/project-sequence-steps";
 import {
   createScenePath,
   createScenePathPoint,
