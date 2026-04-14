@@ -4844,7 +4844,32 @@ function validateProjectSequence(
         }
         break;
       case "teleportPlayer":
-      case "toggleVisibility":
+        break;
+      case "setVisibility":
+        if (effect.target.kind === "brush") {
+          if (context.document.brushes[effect.target.brushId] === undefined) {
+            diagnostics.push(
+              createDiagnostic(
+                "error",
+                "missing-sequence-visibility-target-brush",
+                `Sequence visibility target brush ${effect.target.brushId} does not exist.`,
+                `${effectPath}.target.brushId`
+              )
+            );
+          }
+        } else if (
+          context.document.modelInstances[effect.target.modelInstanceId] ===
+          undefined
+        ) {
+          diagnostics.push(
+            createDiagnostic(
+              "error",
+              "missing-sequence-visibility-target-model-instance",
+              `Sequence visibility target model instance ${effect.target.modelInstanceId} does not exist.`,
+              `${effectPath}.target.modelInstanceId`
+            )
+          );
+        }
         break;
     }
   }
