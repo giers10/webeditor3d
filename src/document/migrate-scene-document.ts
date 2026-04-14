@@ -150,6 +150,7 @@ import {
   PLAYER_START_COLLIDER_SETTINGS_SCENE_DOCUMENT_VERSION,
   PATH_FOUNDATION_SCENE_DOCUMENT_VERSION,
   PROJECT_SCHEDULER_FOUNDATION_SCENE_DOCUMENT_VERSION,
+  SCHEDULER_ACTOR_ROUTINE_EFFECTS_SCENE_DOCUMENT_VERSION,
   EXPANDED_CONTROL_SURFACE_SCENE_DOCUMENT_VERSION,
   PROJECT_DIALOGUE_LIBRARY_SCENE_DOCUMENT_VERSION,
   RUNNER_V1_SCENE_DOCUMENT_VERSION,
@@ -4374,11 +4375,11 @@ export function migrateProjectDocument(source: unknown): ProjectDocument {
         allowMissing:
           source.version < PROJECT_SCHEDULER_FOUNDATION_SCENE_DOCUMENT_VERSION
       }),
-    activeSceneId: expectString(source.activeSceneId, "activeSceneId"),
       dialogues: readProjectDialogueLibrary(source.dialogues, "dialogues", {
         allowMissing:
           source.version < PROJECT_DIALOGUE_LIBRARY_SCENE_DOCUMENT_VERSION
       }),
+      activeSceneId: expectString(source.activeSceneId, "activeSceneId"),
       scenes,
       materials,
       textures: expectEmptyCollection(source.textures, "textures"),
