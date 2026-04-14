@@ -3319,6 +3319,8 @@ export class RuntimeHost {
   };
 
   private handleRuntimeKeyDown = (event: KeyboardEvent) => {
+    this.pressedKeys.add(event.code);
+
     if (
       event.defaultPrevented ||
       event.repeat ||
@@ -3337,6 +3339,15 @@ export class RuntimeHost {
     this.toggleManualPause();
   };
 
+  private handleRuntimeKeyUp = (event: KeyboardEvent) => {
+    this.pressedKeys.delete(event.code);
+  };
+
+  private handleRuntimeBlur = () => {
+    this.pressedKeys.clear();
+    this.previousPauseInputActive = false;
+  };
+
   private updatePauseInputState() {
     if (this.runtimeScene === null || !this.sceneReady) {
       this.previousPauseInputActive = false;
@@ -3345,11 +3356,7 @@ export class RuntimeHost {
 
     const pauseInputActive =
       resolvePlayerStartPauseInput(
-        this.activeController?.id === "firstPerson"
-          ? this.firstPersonController["pressedKeys"]
-          : this.activeController?.id === "thirdPerson"
-            ? this.thirdPersonController["pressedKeys"]
-            : new Set<string>(),
+        this.pressedKeys,
         this.runtimeScene.playerInputBindings
       ) >= 0.5;
 
