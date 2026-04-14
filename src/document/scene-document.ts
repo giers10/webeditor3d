@@ -24,7 +24,8 @@ import {
   type ProjectScheduler
 } from "../scheduler/project-scheduler";
 
-export const SCENE_DOCUMENT_VERSION = 48 as const;
+export const SCENE_DOCUMENT_VERSION = 49 as const;
+export const SCHEDULER_ACTOR_ROUTINE_EFFECTS_SCENE_DOCUMENT_VERSION = 49 as const;
 export const SCHEDULER_CONTROL_EFFECTS_SCENE_DOCUMENT_VERSION = 48 as const;
 export const EXPANDED_CONTROL_SURFACE_SCENE_DOCUMENT_VERSION = 47 as const;
 export const PROJECT_SCHEDULER_FOUNDATION_SCENE_DOCUMENT_VERSION = 46 as const;
