@@ -663,14 +663,16 @@ describe("project document JSON", () => {
             kind: "actor",
             actorId: legacyNpc.actorId
           },
-          effect: {
-            type: "setActorPresence",
-            target: {
-              kind: "actor",
-              actorId: legacyNpc.actorId
-            },
-            active: true
-          }
+          effects: [
+            {
+              type: "setActorPresence",
+              target: {
+                kind: "actor",
+                actorId: legacyNpc.actorId
+              },
+              active: true
+            }
+          ]
         })
     });
   });
