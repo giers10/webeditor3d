@@ -11416,6 +11416,18 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   mode={sequencerMode}
                   onSetMode={setSequencerMode}
                   targetOptions={projectScheduleTargetOptions}
+                  teleportTargetOptions={teleportTargetOptions.map(
+                    ({ entity, label }) => ({
+                      entityId: entity.id,
+                      label
+                    })
+                  )}
+                  visibilityTargetOptions={visibilityBrushOptions.map(
+                    ({ brush, label }) => ({
+                      brushId: brush.id,
+                      label
+                    })
+                  )}
                   scheduler={editorState.projectDocument.scheduler}
                   sequences={editorState.projectDocument.sequences}
                   dialogues={editorState.projectDocument.dialogues}
@@ -11904,6 +11916,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     )
                   }
                   onAddDialogueStep={handleAddProjectSequenceDialogueStep}
+                  onAddTeleportStep={handleAddProjectSequenceTeleportStep}
+                  onAddVisibilityStep={handleAddProjectSequenceVisibilityStep}
                   onDeleteStep={handleDeleteProjectSequenceStep}
                   onSetControlStepTarget={updateProjectSequenceControlStepTarget}
                   onSetControlStepEffectOption={
@@ -11923,6 +11937,15 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   }
                   onSetDialogueStepDialogueId={
                     updateProjectSequenceDialogueStepDialogueId
+                  }
+                  onSetTeleportStepTarget={
+                    updateProjectSequenceTeleportStepTarget
+                  }
+                  onSetVisibilityStepTarget={
+                    updateProjectSequenceVisibilityStepTarget
+                  }
+                  onSetVisibilityStepMode={
+                    updateProjectSequenceVisibilityStepMode
                   }
                 />
               </div>
