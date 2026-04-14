@@ -3803,6 +3803,85 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
   };
 
+  const updateProjectScheduleRoutine = (
+    routineId: string,
+    label: string,
+    successMessage: string,
+    mutate: (routine: ProjectScheduleRoutine) => void
+  ) => {
+    const currentRoutine =
+      editorState.projectDocument.scheduler.routines[routineId] ?? null;
+
+    if (currentRoutine === null) {
+      setStatusMessage("Selected schedule routine no longer exists.");
+      return;
+    }
+
+    try {
+      const nextRoutine = cloneProjectScheduleRoutine(currentRoutine);
+      mutate(nextRoutine);
+      const nextScheduler = upsertProjectScheduleRoutine(
+        cloneProjectScheduler(editorState.projectDocument.scheduler),
+        nextRoutine
+      );
+      applyProjectScheduler(nextScheduler, label, successMessage);
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const handleCreateScheduleRoutine = (actorId: string) => {
+    if (actorId.trim().length === 0) {
+      setStatusMessage("Author an NPC actor before creating a schedule routine.");
+      return;
+    }
+
+    try {
+      const nextRoutine = createProjectScheduleRoutine({
+        title: "Presence",
+        target: createActorControlTargetRef(actorId),
+        days: createProjectScheduleEveryDaySelection(),
+        startHour: 9,
+        endHour: 17,
+        priority: 0,
+        effect: createSetActorPresenceControlEffect({
+          target: createActorControlTargetRef(actorId),
+          active: true
+        })
+      });
+      const nextScheduler = upsertProjectScheduleRoutine(
+        cloneProjectScheduler(editorState.projectDocument.scheduler),
+        nextRoutine
+      );
+
+      applyProjectScheduler(
+        nextScheduler,
+        "Create project schedule routine",
+        `Created schedule routine for ${actorId}.`
+      );
+      setSchedulePaneOpen(true);
+      setSelectedScheduleRoutineId(nextRoutine.id);
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const handleDeleteScheduleRoutine = (routineId: string) => {
+    const nextScheduler = removeProjectScheduleRoutine(
+      cloneProjectScheduler(editorState.projectDocument.scheduler),
+      routineId
+    );
+
+    applyProjectScheduler(
+      nextScheduler,
+      "Delete project schedule routine",
+      "Deleted schedule routine."
+    );
+    if (selectedScheduleRoutineId === routineId) {
+      setSelectedScheduleRoutineId(null);
+    }
+  };
+
   const updateWorldTimeOfDaySettings = (
     label: string,
     successMessage: string,
