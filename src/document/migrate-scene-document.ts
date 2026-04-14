@@ -2972,6 +2972,41 @@ function readControlEffect(value: unknown, label: string): ControlEffect {
         ) as ReturnType<typeof createActorControlTargetRef>,
         active: expectBoolean(value.active, `${label}.active`)
       });
+    case "playActorAnimation":
+      return createPlayActorAnimationControlEffect({
+        target: readControlTargetRef(
+          value.target,
+          `${label}.target`
+        ) as ReturnType<typeof createActorControlTargetRef>,
+        clipName: expectString(value.clipName, `${label}.clipName`),
+        loop:
+          value.loop === undefined
+            ? undefined
+            : expectBoolean(value.loop, `${label}.loop`)
+      });
+    case "followActorPath": {
+      const progressMode = expectString(
+        value.progressMode,
+        `${label}.progressMode`
+      );
+
+      if (!isActorPathProgressMode(progressMode)) {
+        throw new Error(
+          `${label}.progressMode must be a supported actor path progress mode.`
+        );
+      }
+
+      return createFollowActorPathControlEffect({
+        target: readControlTargetRef(
+          value.target,
+          `${label}.target`
+        ) as ReturnType<typeof createActorControlTargetRef>,
+        pathId: expectString(value.pathId, `${label}.pathId`),
+        speed: expectPositiveFiniteNumber(value.speed, `${label}.speed`),
+        loop: expectBoolean(value.loop, `${label}.loop`),
+        progressMode
+      });
+    }
     case "playModelAnimation":
       return createPlayModelAnimationControlEffect({
         target: readControlTargetRef(
@@ -3228,10 +3263,22 @@ function readProjectScheduler(
         routineValue.target,
         `${label}.routines.${routineId}.target`
       );
-      const effect = readControlEffect(
-        routineValue.effect,
-        `${label}.routines.${routineId}.effect`
-      );
+      const effects =
+        Array.isArray(routineValue.effects)
+          ? routineValue.effects.map((effectValue, effectIndex) =>
+              readControlEffect(
+                effectValue,
+                `${label}.routines.${routineId}.effects.${effectIndex}`
+              )
+            )
+          : routineValue.effect === undefined
+            ? undefined
+            : [
+                readControlEffect(
+                  routineValue.effect,
+                  `${label}.routines.${routineId}.effect`
+                )
+              ];
 
       return [
         routineId,
@@ -3308,7 +3355,7 @@ function readProjectScheduler(
             `${label}.routines.${routineId}.priority`,
             0
           ),
-          effect
+          effects
         })
       ];
     })
