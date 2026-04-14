@@ -3557,9 +3557,7 @@ function validateInteractionLink(
 
 function validateProjectScheduler(
   scheduler: ProjectScheduler,
-  options: {
-    actorExists(actorId: string): boolean;
-  },
+  context: ProjectSchedulerValidationContext,
   diagnostics: SceneDiagnostic[]
 ) {
   for (const [routineKey, routine] of Object.entries(scheduler.routines)) {
@@ -3598,27 +3596,12 @@ function validateProjectScheduler(
       );
     }
 
-    if (routine.target.kind !== "actor") {
-      diagnostics.push(
-        createDiagnostic(
-          "error",
-          "invalid-project-schedule-target-kind",
-          "Project schedule routines must target authored actors in this slice.",
-          `${path}.target.kind`
-        )
-      );
-    } else {
-      if (!options.actorExists(routine.target.actorId)) {
-        diagnostics.push(
-          createDiagnostic(
-            "error",
-            "missing-control-actor-target",
-            `Actor control target ${routine.target.actorId} does not exist in this document.`,
-            `${path}.target.actorId`
-          )
-        );
-      }
-    }
+    validateProjectSchedulerControlTarget(
+      routine.target,
+      `${path}.target`,
+      context,
+      diagnostics
+    );
 
     switch (routine.days.mode) {
       case "everyDay":
@@ -3726,21 +3709,9 @@ function validateProjectScheduler(
       );
     }
 
-    if (routine.effect.type !== "setActorPresence") {
-      diagnostics.push(
-        createDiagnostic(
-          "error",
-          "invalid-project-schedule-effect-type",
-          "Project schedule routines must currently assign actor presence control effects.",
-          `${path}.effect.type`
-        )
-      );
-      continue;
-    }
-
     if (
-      routine.effect.target.kind !== "actor" ||
-      routine.effect.target.actorId !== routine.target.actorId
+      getControlTargetRefKey(routine.effect.target) !==
+      getControlTargetRefKey(routine.target)
     ) {
       diagnostics.push(
         createDiagnostic(
@@ -3752,16 +3723,595 @@ function validateProjectScheduler(
       );
     }
 
-    if (!isBoolean(routine.effect.active)) {
+    validateProjectSchedulerEffect(
+      routine.effect,
+      `${path}.effect`,
+      context,
+      diagnostics
+    );
+  }
+}
+
+interface ProjectSchedulerValidationContext {
+  actorIds: Set<string>;
+  entityCounts: Map<string, number>;
+  entityKindsById: Map<string, Set<EntityInstance["kind"]>>;
+  modelInstanceCounts: Map<string, number>;
+  modelAnimationNamesById: Map<string, string[]>;
+  soundEmitterHasAudioById: Map<string, boolean>;
+}
+
+function incrementSchedulerValidationCount(
+  counts: Map<string, number>,
+  id: string
+) {
+  counts.set(id, (counts.get(id) ?? 0) + 1);
+}
+
+function addSchedulerValidationKind<TKey extends string, TValue extends string>(
+  collection: Map<TKey, Set<TValue>>,
+  key: TKey,
+  value: TValue
+) {
+  const values = collection.get(key) ?? new Set<TValue>();
+  values.add(value);
+  collection.set(key, values);
+}
+
+function createEmptyProjectSchedulerValidationContext(): ProjectSchedulerValidationContext {
+  return {
+    actorIds: new Set<string>(),
+    entityCounts: new Map<string, number>(),
+    entityKindsById: new Map<string, Set<EntityInstance["kind"]>>(),
+    modelInstanceCounts: new Map<string, number>(),
+    modelAnimationNamesById: new Map<string, string[]>(),
+    soundEmitterHasAudioById: new Map<string, boolean>()
+  };
+}
+
+function recordProjectSchedulerSceneTargets(
+  context: ProjectSchedulerValidationContext,
+  scene: Pick<SceneDocument, "entities" | "modelInstances" | "assets">
+) {
+  for (const entity of Object.values(scene.entities)) {
+    incrementSchedulerValidationCount(context.entityCounts, entity.id);
+    addSchedulerValidationKind(context.entityKindsById, entity.id, entity.kind);
+
+    if (entity.kind === "npc") {
+      context.actorIds.add(entity.actorId);
+    }
+
+    if (entity.kind === "soundEmitter") {
+      context.soundEmitterHasAudioById.set(entity.id, entity.audioAssetId !== null);
+    }
+  }
+
+  for (const modelInstance of Object.values(scene.modelInstances)) {
+    incrementSchedulerValidationCount(
+      context.modelInstanceCounts,
+      modelInstance.id
+    );
+
+    const targetAsset = scene.assets[modelInstance.assetId];
+    const animationNames =
+      targetAsset !== undefined && targetAsset.kind === "model"
+        ? [...targetAsset.metadata.animationNames]
+        : [];
+
+    context.modelAnimationNamesById.set(modelInstance.id, animationNames);
+  }
+}
+
+function createProjectSchedulerValidationContextFromSceneDocument(
+  document: SceneDocument
+): ProjectSchedulerValidationContext {
+  const context = createEmptyProjectSchedulerValidationContext();
+  recordProjectSchedulerSceneTargets(context, document);
+  return context;
+}
+
+function createProjectSchedulerValidationContextFromProjectDocument(
+  document: ProjectDocument
+): ProjectSchedulerValidationContext {
+  const context = createEmptyProjectSchedulerValidationContext();
+
+  for (const scene of Object.values(document.scenes)) {
+    recordProjectSchedulerSceneTargets(context, {
+      entities: scene.entities,
+      modelInstances: scene.modelInstances,
+      assets: document.assets
+    });
+  }
+
+  return context;
+}
+
+function validateProjectSchedulerActorTarget(
+  target: ActorControlTargetRef,
+  path: string,
+  context: ProjectSchedulerValidationContext,
+  diagnostics: SceneDiagnostic[]
+) {
+  if (context.actorIds.has(target.actorId)) {
+    return;
+  }
+
+  diagnostics.push(
+    createDiagnostic(
+      "error",
+      "missing-control-actor-target",
+      `Actor control target ${target.actorId} does not exist in this document.`,
+      `${path}.actorId`
+    )
+  );
+}
+
+function validateProjectSchedulerEntityTarget(
+  target: ControlTargetRef & { kind: "entity" },
+  path: string,
+  context: ProjectSchedulerValidationContext,
+  diagnostics: SceneDiagnostic[]
+) {
+  const entityCount = context.entityCounts.get(target.entityId) ?? 0;
+
+  if (entityCount === 0) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        target.entityKind === "soundEmitter"
+          ? "missing-control-sound-emitter-entity"
+          : "missing-control-light-entity",
+        `${target.entityKind === "soundEmitter" ? "Control sound emitter" : "Light control"} target entity ${target.entityId} does not exist.`,
+        `${path}.entityId`
+      )
+    );
+    return;
+  }
+
+  if (entityCount > 1) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "ambiguous-project-schedule-entity-target",
+        `Project schedule target ${target.entityId} exists in multiple scenes and must be unique to be scheduler-addressable.`,
+        `${path}.entityId`
+      )
+    );
+    return;
+  }
+
+  const entityKinds = context.entityKindsById.get(target.entityId) ?? new Set();
+
+  if (!entityKinds.has(target.entityKind)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        target.entityKind === "soundEmitter"
+          ? "invalid-control-sound-emitter-kind"
+          : "invalid-control-light-target-kind",
+        target.entityKind === "soundEmitter"
+          ? "Control sound effects must target a Sound Emitter entity."
+          : "Light control effects must target a Point Light or Spot Light entity of the authored target kind.",
+        target.entityKind === "soundEmitter"
+          ? `${path}.entityKind`
+          : `${path}.entityKind`
+      )
+    );
+  }
+}
+
+function validateProjectSchedulerInteractionTarget(
+  target: InteractionControlTargetRef,
+  path: string,
+  context: ProjectSchedulerValidationContext,
+  diagnostics: SceneDiagnostic[]
+) {
+  const entityCount = context.entityCounts.get(target.entityId) ?? 0;
+
+  if (entityCount === 0) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "missing-control-interaction-entity",
+        `Interaction control target entity ${target.entityId} does not exist.`,
+        `${path}.entityId`
+      )
+    );
+    return;
+  }
+
+  if (entityCount > 1) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "ambiguous-project-schedule-interaction-target",
+        `Project schedule interaction target ${target.entityId} exists in multiple scenes and must be unique to be scheduler-addressable.`,
+        `${path}.entityId`
+      )
+    );
+    return;
+  }
+
+  const entityKinds = context.entityKindsById.get(target.entityId) ?? new Set();
+
+  if (!entityKinds.has(target.interactionKind)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-control-interaction-target-kind",
+        "Interaction control effects must target an Interactable or Scene Exit entity of the authored target kind.",
+        `${path}.interactionKind`
+      )
+    );
+  }
+}
+
+function validateProjectSchedulerModelTarget(
+  target: ModelInstanceControlTargetRef,
+  path: string,
+  context: ProjectSchedulerValidationContext,
+  diagnostics: SceneDiagnostic[]
+) {
+  const modelInstanceCount = context.modelInstanceCounts.get(target.modelInstanceId) ?? 0;
+
+  if (modelInstanceCount === 0) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "missing-control-model-instance-target",
+        `Control model instance target ${target.modelInstanceId} does not exist.`,
+        `${path}.modelInstanceId`
+      )
+    );
+    return;
+  }
+
+  if (modelInstanceCount > 1) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "ambiguous-project-schedule-model-instance-target",
+        `Project schedule model instance target ${target.modelInstanceId} exists in multiple scenes and must be unique to be scheduler-addressable.`,
+        `${path}.modelInstanceId`
+      )
+    );
+  }
+}
+
+function validateProjectSchedulerSceneTarget(
+  target: SceneControlTargetRef,
+  path: string,
+  diagnostics: SceneDiagnostic[]
+) {
+  if (target.scope === "activeScene") {
+    return;
+  }
+
+  diagnostics.push(
+    createDiagnostic(
+      "error",
+      "invalid-control-scene-target",
+      "Scene control effects must target the active scene scope.",
+      `${path}.scope`
+    )
+  );
+}
+
+function validateProjectSchedulerControlTarget(
+  target: ControlTargetRef,
+  path: string,
+  context: ProjectSchedulerValidationContext,
+  diagnostics: SceneDiagnostic[]
+) {
+  switch (target.kind) {
+    case "actor":
+      validateProjectSchedulerActorTarget(target, path, context, diagnostics);
+      return;
+    case "entity":
+      validateProjectSchedulerEntityTarget(target, path, context, diagnostics);
+      return;
+    case "interaction":
+      validateProjectSchedulerInteractionTarget(target, path, context, diagnostics);
+      return;
+    case "scene":
+      validateProjectSchedulerSceneTarget(target, path, diagnostics);
+      return;
+    case "modelInstance":
+      validateProjectSchedulerModelTarget(target, path, context, diagnostics);
+      return;
+    case "global":
       diagnostics.push(
         createDiagnostic(
           "error",
-          "invalid-control-actor-active",
-          "Actor presence control values must remain boolean.",
-          `${path}.effect.active`
+          "invalid-project-schedule-target-kind",
+          "Project schedule routines do not yet support global control targets.",
+          `${path}.kind`
         )
       );
+      return;
+  }
+}
+
+function validateProjectSchedulerSoundEmitterTarget(
+  target: SoundEmitterControlTargetRef,
+  path: string,
+  context: ProjectSchedulerValidationContext,
+  diagnostics: SceneDiagnostic[],
+  options: { requireAudioAsset: boolean }
+) {
+  validateProjectSchedulerEntityTarget(target, path, context, diagnostics);
+
+  if (!options.requireAudioAsset) {
+    return;
+  }
+
+  const entityCount = context.entityCounts.get(target.entityId) ?? 0;
+
+  if (entityCount !== 1) {
+    return;
+  }
+
+  if (context.soundEmitterHasAudioById.get(target.entityId) === false) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "missing-control-sound-emitter-audio-asset",
+        "Control sound playback effects require a Sound Emitter that references an audio asset.",
+        `${path}.entityId`
+      )
+    );
+  }
+}
+
+function validateProjectSchedulerEffect(
+  effect: ControlEffect,
+  path: string,
+  context: ProjectSchedulerValidationContext,
+  diagnostics: SceneDiagnostic[]
+) {
+  switch (effect.type) {
+    case "setActorPresence":
+      validateProjectSchedulerActorTarget(
+        effect.target,
+        `${path}.target`,
+        context,
+        diagnostics
+      );
+      if (!isBoolean(effect.active)) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-control-actor-active",
+            "Actor presence control values must remain boolean.",
+            `${path}.active`
+          )
+        );
+      }
+      return;
+    case "playModelAnimation": {
+      validateProjectSchedulerModelTarget(
+        effect.target,
+        `${path}.target`,
+        context,
+        diagnostics
+      );
+
+      if (effect.clipName.trim().length === 0) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-control-play-animation-clip-name",
+            "Control play animation clip name must be non-empty.",
+            `${path}.clipName`
+          )
+        );
+        return;
+      }
+
+      const targetCount =
+        context.modelInstanceCounts.get(effect.target.modelInstanceId) ?? 0;
+
+      if (targetCount !== 1) {
+        return;
+      }
+
+      const animationNames =
+        context.modelAnimationNamesById.get(effect.target.modelInstanceId) ?? [];
+
+      if (
+        animationNames.length > 0 &&
+        !animationNames.includes(effect.clipName)
+      ) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "missing-control-play-animation-clip",
+            `Control play animation clip ${effect.clipName} does not exist on the target model asset.`,
+            `${path}.clipName`
+          )
+        );
+      }
+      return;
     }
+    case "stopModelAnimation":
+      validateProjectSchedulerModelTarget(
+        effect.target,
+        `${path}.target`,
+        context,
+        diagnostics
+      );
+      return;
+    case "setModelInstanceVisible":
+      validateProjectSchedulerModelTarget(
+        effect.target,
+        `${path}.target`,
+        context,
+        diagnostics
+      );
+      if (!isBoolean(effect.visible)) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-control-model-instance-visible",
+            "Model visibility control values must remain boolean.",
+            `${path}.visible`
+          )
+        );
+      }
+      return;
+    case "playSound":
+    case "stopSound":
+      validateProjectSchedulerSoundEmitterTarget(
+        effect.target,
+        `${path}.target`,
+        context,
+        diagnostics,
+        { requireAudioAsset: true }
+      );
+      return;
+    case "setSoundVolume":
+      validateProjectSchedulerSoundEmitterTarget(
+        effect.target,
+        `${path}.target`,
+        context,
+        diagnostics,
+        { requireAudioAsset: false }
+      );
+      if (!isNonNegativeFiniteNumber(effect.volume)) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-control-sound-volume",
+            "Sound control volume must remain finite and zero or greater.",
+            `${path}.volume`
+          )
+        );
+      }
+      return;
+    case "setInteractionEnabled":
+      validateProjectSchedulerInteractionTarget(
+        effect.target,
+        `${path}.target`,
+        context,
+        diagnostics
+      );
+      if (!isBoolean(effect.enabled)) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-control-interaction-enabled",
+            "Interaction control enabled values must remain boolean.",
+            `${path}.enabled`
+          )
+        );
+      }
+      return;
+    case "setLightEnabled":
+      validateProjectSchedulerEntityTarget(
+        effect.target,
+        `${path}.target`,
+        context,
+        diagnostics
+      );
+      if (!isBoolean(effect.enabled)) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-control-light-enabled",
+            "Light control enabled values must remain boolean.",
+            `${path}.enabled`
+          )
+        );
+      }
+      return;
+    case "setLightIntensity":
+      validateProjectSchedulerEntityTarget(
+        effect.target,
+        `${path}.target`,
+        context,
+        diagnostics
+      );
+      if (!isNonNegativeFiniteNumber(effect.intensity)) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-control-light-intensity",
+            "Light control intensity must remain finite and zero or greater.",
+            `${path}.intensity`
+          )
+        );
+      }
+      return;
+    case "setLightColor":
+      validateProjectSchedulerEntityTarget(
+        effect.target,
+        `${path}.target`,
+        context,
+        diagnostics
+      );
+      if (!isHexColorString(effect.colorHex)) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-control-light-color",
+            "Light control color must remain a valid hex color string.",
+            `${path}.colorHex`
+          )
+        );
+      }
+      return;
+    case "setAmbientLightIntensity":
+      validateProjectSchedulerSceneTarget(effect.target, `${path}.target`, diagnostics);
+      if (!isNonNegativeFiniteNumber(effect.intensity)) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-control-ambient-light-intensity",
+            "Ambient light control intensity must remain finite and zero or greater.",
+            `${path}.intensity`
+          )
+        );
+      }
+      return;
+    case "setAmbientLightColor":
+      validateProjectSchedulerSceneTarget(effect.target, `${path}.target`, diagnostics);
+      if (!isHexColorString(effect.colorHex)) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-control-ambient-light-color",
+            "Ambient light control color must remain a valid hex color string.",
+            `${path}.colorHex`
+          )
+        );
+      }
+      return;
+    case "setSunLightIntensity":
+      validateProjectSchedulerSceneTarget(effect.target, `${path}.target`, diagnostics);
+      if (!isNonNegativeFiniteNumber(effect.intensity)) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-control-sun-light-intensity",
+            "Sun light control intensity must remain finite and zero or greater.",
+            `${path}.intensity`
+          )
+        );
+      }
+      return;
+    case "setSunLightColor":
+      validateProjectSchedulerSceneTarget(effect.target, `${path}.target`, diagnostics);
+      if (!isHexColorString(effect.colorHex)) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-control-sun-light-color",
+            "Sun light control color must remain a valid hex color string.",
+            `${path}.colorHex`
+          )
+        );
+      }
+      return;
   }
 }
 
