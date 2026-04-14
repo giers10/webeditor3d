@@ -1,16 +1,18 @@
 import { describe, expect, it } from "vitest";
 import { BoxGeometry, PlaneGeometry } from "three";
 
+import {
+  createActorControlTargetRef,
+  createSetActorPresenceControlEffect
+} from "../../src/controls/control-surface";
 import { createBoxBrush } from "../../src/document/brushes";
 import { createScenePath } from "../../src/document/paths";
 import { createDefaultProjectTimeSettings } from "../../src/document/project-time-settings";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
 import {
-  createNpcAlwaysPresence,
   DEFAULT_PLAYER_START_MOVE_SPEED,
   DEFAULT_PLAYER_START_MOVEMENT_CAPABILITIES,
   createNpcEntity,
-  createNpcTimeWindowPresence,
   createPointLightEntity,
   createInteractableEntity,
   createPlayerStartMovementTemplate,
@@ -24,6 +26,7 @@ import {
   createTriggerVolumeEntity
 } from "../../src/entities/entity-instances";
 import { createTeleportPlayerInteractionLink, createToggleVisibilityInteractionLink } from "../../src/interactions/interaction-links";
+import { createProjectScheduleRoutine } from "../../src/scheduler/project-scheduler";
 import { createModelInstance } from "../../src/assets/model-instances";
 import { createProjectAssetStorageKey, type AudioAssetRecord } from "../../src/assets/project-assets";
 import { buildRuntimeSceneFromDocument } from "../../src/runtime-three/runtime-scene-build";
