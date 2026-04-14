@@ -1338,6 +1338,58 @@ function readVisibilityModeSelectValue(
   }
 }
 
+function getSequenceVisibilityTargetKey(target: {
+  kind: "brush";
+  brushId: string;
+} | {
+  kind: "modelInstance";
+  modelInstanceId: string;
+}): string {
+  return target.kind === "brush"
+    ? `brush:${target.brushId}`
+    : `modelInstance:${target.modelInstanceId}`;
+}
+
+function readSequenceVisibilityTargetKey(
+  value: string
+):
+  | {
+      kind: "brush";
+      brushId: string;
+    }
+  | {
+      kind: "modelInstance";
+      modelInstanceId: string;
+    } {
+  if (value.startsWith("brush:")) {
+    const brushId = value.slice("brush:".length).trim();
+
+    if (brushId.length === 0) {
+      throw new Error("Visibility target brush id must be non-empty.");
+    }
+
+    return {
+      kind: "brush",
+      brushId
+    };
+  }
+
+  if (value.startsWith("modelInstance:")) {
+    const modelInstanceId = value.slice("modelInstance:".length).trim();
+
+    if (modelInstanceId.length === 0) {
+      throw new Error("Visibility target model instance id must be non-empty.");
+    }
+
+    return {
+      kind: "modelInstance",
+      modelInstanceId
+    };
+  }
+
+  throw new Error("Sequence visibility targets must reference a brush or model instance.");
+}
+
 function getDefaultTriggerVolumeLinkTrigger(
   triggerOnEnter: boolean,
   triggerOnExit: boolean
