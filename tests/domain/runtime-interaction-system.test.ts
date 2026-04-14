@@ -586,6 +586,44 @@ describe("RuntimeInteractionSystem", () => {
     ]);
   });
 
+  it("dispatches start dialogue actions for authored interaction links", () => {
+    const runtimeScene = createRuntimeSceneFixture();
+    runtimeScene.dialogues.dialogues["dialogue-console"] = {
+      id: "dialogue-console",
+      title: "Console",
+      lines: [
+        {
+          id: "dialogue-line-1",
+          speakerName: "System",
+          text: "Access granted."
+        }
+      ]
+    };
+    runtimeScene.interactionLinks = [
+      createStartDialogueInteractionLink({
+        id: "link-start-dialogue",
+        sourceEntityId: "entity-interactable-console",
+        trigger: "click",
+        dialogueId: "dialogue-console"
+      })
+    ];
+
+    const dispatches: string[] = [];
+    const interactionSystem = new RuntimeInteractionSystem();
+
+    interactionSystem.dispatchClickInteraction(
+      "entity-interactable-console",
+      runtimeScene,
+      createDispatcher({
+        startDialogue: (dialogueId, link) => {
+          dispatches.push(`${link.id}:${dialogueId}`);
+        }
+      })
+    );
+
+    expect(dispatches).toEqual(["link-start-dialogue:dialogue-console"]);
+  });
+
   it("shows a click prompt for enabled Scene Exits within range", () => {
     const runtimeScene = createRuntimeSceneFixture();
     runtimeScene.entities.sceneExits.push({
