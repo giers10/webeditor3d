@@ -1,10 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  applyControlEffectToResolvedState,
   createActorControlTargetRef,
+  createDefaultResolvedControlSource,
   createEmptyRuntimeResolvedControlState,
+  createLightControlTargetRef,
   createSetActorPresenceControlEffect
 } from "../../src/controls/control-surface";
+import { createSetLightIntensityControlEffect } from "../../src/controls/control-surface";
 import {
   createEmptyProjectScheduler,
   createProjectScheduleRoutine,
@@ -152,5 +156,86 @@ describe("runtime project scheduler", () => {
         }
       })
     ]);
+  });
+
+  it("applies non-actor scheduler effects over baseline control state and restores defaults when inactive", () => {
+    const lightTarget = createLightControlTargetRef(
+      "pointLight",
+      "entity-point-light-main"
+    );
+    const scheduler = createEmptyProjectScheduler();
+    scheduler.routines["routine-night-light"] = createProjectScheduleRoutine({
+      id: "routine-night-light",
+      title: "Night Light",
+      target: lightTarget,
+      startHour: 18,
+      endHour: 6,
+      effect: createSetLightIntensityControlEffect({
+        target: lightTarget,
+        intensity: 3.5
+      })
+    });
+
+    const baselineResolved = applyControlEffectToResolvedState(
+      createEmptyRuntimeResolvedControlState(),
+      createSetLightIntensityControlEffect({
+        target: lightTarget,
+        intensity: 1.25
+      }),
+      createDefaultResolvedControlSource()
+    );
+    const activeSchedule = resolveRuntimeProjectScheduleState({
+      scheduler,
+      actorIds: [],
+      dayNumber: 1,
+      timeOfDayHours: 21
+    });
+    const activeResolved = applyRuntimeProjectScheduleToControlState(
+      baselineResolved,
+      activeSchedule,
+      baselineResolved
+    );
+    const inactiveSchedule = resolveRuntimeProjectScheduleState({
+      scheduler,
+      actorIds: [],
+      dayNumber: 2,
+      timeOfDayHours: 9
+    });
+    const inactiveResolved = applyRuntimeProjectScheduleToControlState(
+      activeResolved,
+      inactiveSchedule,
+      baselineResolved
+    );
+
+    expect(activeSchedule.controls).toEqual([
+      expect.objectContaining({
+        routineId: "routine-night-light",
+        title: "Night Light",
+        resolutionKey: "channel:light.intensity:entity:pointLight:entity-point-light-main"
+      })
+    ]);
+    expect(activeResolved.channels).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "lightIntensity",
+          value: 3.5,
+          source: {
+            kind: "scheduler",
+            scheduleId: "routine-night-light"
+          }
+        })
+      ])
+    );
+    expect(inactiveResolved.channels).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "lightIntensity",
+          value: 1.25,
+          source: {
+            kind: "default"
+          }
+        })
+      ])
+    );
   });
 });
