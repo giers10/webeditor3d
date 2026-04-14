@@ -1184,6 +1184,13 @@ export class RuntimeHost {
       return;
     }
 
+    if (
+      this.runtimeScene.world.ambientLight.intensity === intensity &&
+      this.currentWorld.ambientLight.intensity === intensity
+    ) {
+      return;
+    }
+
     this.runtimeScene.world.ambientLight.intensity = intensity;
     this.currentWorld.ambientLight.intensity = intensity;
     this.applyDayNightLighting();
@@ -1194,6 +1201,13 @@ export class RuntimeHost {
     colorHex: string
   ) {
     if (this.runtimeScene === null || this.currentWorld === null) {
+      return;
+    }
+
+    if (
+      this.runtimeScene.world.ambientLight.colorHex === colorHex &&
+      this.currentWorld.ambientLight.colorHex === colorHex
+    ) {
       return;
     }
 
@@ -1210,6 +1224,13 @@ export class RuntimeHost {
       return;
     }
 
+    if (
+      this.runtimeScene.world.sunLight.intensity === intensity &&
+      this.currentWorld.sunLight.intensity === intensity
+    ) {
+      return;
+    }
+
     this.runtimeScene.world.sunLight.intensity = intensity;
     this.currentWorld.sunLight.intensity = intensity;
     this.applyDayNightLighting();
@@ -1220,6 +1241,13 @@ export class RuntimeHost {
     colorHex: string
   ) {
     if (this.runtimeScene === null || this.currentWorld === null) {
+      return;
+    }
+
+    if (
+      this.runtimeScene.world.sunLight.colorHex === colorHex &&
+      this.currentWorld.sunLight.colorHex === colorHex
+    ) {
       return;
     }
 
@@ -1255,6 +1283,8 @@ export class RuntimeHost {
     clipName: string | null,
     loop: boolean | undefined
   ) {
+    let stateChanged = true;
+
     if (this.runtimeScene !== null) {
       const modelInstance =
         this.runtimeScene.modelInstances.find(
@@ -1262,10 +1292,22 @@ export class RuntimeHost {
         ) ?? null;
 
       if (modelInstance !== null) {
-        modelInstance.animationClipName = clipName ?? undefined;
-        modelInstance.animationAutoplay = clipName !== null;
-        modelInstance.animationLoop = clipName === null ? undefined : loop;
+        const nextClipName = clipName ?? undefined;
+        const nextAutoplay = clipName !== null;
+        const nextLoop = clipName === null ? undefined : loop;
+
+        stateChanged =
+          modelInstance.animationClipName !== nextClipName ||
+          modelInstance.animationAutoplay !== nextAutoplay ||
+          modelInstance.animationLoop !== nextLoop;
+        modelInstance.animationClipName = nextClipName;
+        modelInstance.animationAutoplay = nextAutoplay;
+        modelInstance.animationLoop = nextLoop;
       }
+    }
+
+    if (!stateChanged) {
+      return;
     }
 
     if (!this.animationMixers.has(target.modelInstanceId)) {
@@ -1285,6 +1327,8 @@ export class RuntimeHost {
     playing: boolean,
     link: InteractionLink | null = null
   ) {
+    let stateChanged = true;
+
     if (this.runtimeScene !== null) {
       const soundEmitter =
         this.runtimeScene.entities.soundEmitters.find(
@@ -1292,8 +1336,13 @@ export class RuntimeHost {
         ) ?? null;
 
       if (soundEmitter !== null) {
+        stateChanged = soundEmitter.autoplay !== playing;
         soundEmitter.autoplay = playing;
       }
+    }
+
+    if (!stateChanged) {
+      return;
     }
 
     if (!this.audioSystem.hasSoundEmitter(target.entityId)) {
@@ -1311,6 +1360,8 @@ export class RuntimeHost {
     target: SoundEmitterControlTargetRef,
     volume: number
   ) {
+    let stateChanged = true;
+
     if (this.runtimeScene !== null) {
       const soundEmitter =
         this.runtimeScene.entities.soundEmitters.find(
@@ -1318,8 +1369,13 @@ export class RuntimeHost {
         ) ?? null;
 
       if (soundEmitter !== null) {
+        stateChanged = soundEmitter.volume !== volume;
         soundEmitter.volume = volume;
       }
+    }
+
+    if (!stateChanged) {
+      return;
     }
 
     this.audioSystem.setSoundEmitterVolume(target.entityId, volume);
