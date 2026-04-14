@@ -3736,11 +3736,21 @@ function validateProjectScheduler(
 
 interface ProjectSchedulerValidationContext {
   actorIds: Set<string>;
+  actorUsagesById: Map<string, ProjectSchedulerActorValidationUsage[]>;
   entityCounts: Map<string, number>;
   entityKindsById: Map<string, Set<EntityInstance["kind"]>>;
   modelInstanceCounts: Map<string, number>;
   modelAnimationNamesById: Map<string, string[]>;
   soundEmitterHasAudioById: Map<string, boolean>;
+}
+
+interface ProjectSchedulerActorValidationUsage {
+  sceneId: string;
+  entityId: string;
+  modelAssetId: string | null;
+  animationNames: string[];
+  pathIds: Set<string>;
+  enabledPathIds: Set<string>;
 }
 
 function incrementSchedulerValidationCount(
@@ -3763,6 +3773,7 @@ function addSchedulerValidationKind<TKey extends string, TValue extends string>(
 function createEmptyProjectSchedulerValidationContext(): ProjectSchedulerValidationContext {
   return {
     actorIds: new Set<string>(),
+    actorUsagesById: new Map<string, ProjectSchedulerActorValidationUsage[]>(),
     entityCounts: new Map<string, number>(),
     entityKindsById: new Map<string, Set<EntityInstance["kind"]>>(),
     modelInstanceCounts: new Map<string, number>(),
@@ -3773,14 +3784,37 @@ function createEmptyProjectSchedulerValidationContext(): ProjectSchedulerValidat
 
 function recordProjectSchedulerSceneTargets(
   context: ProjectSchedulerValidationContext,
-  scene: Pick<SceneDocument, "entities" | "modelInstances" | "assets">
+  scene: Pick<SceneDocument, "entities" | "modelInstances" | "assets" | "paths">,
+  sceneId: string
 ) {
+  const pathIds = new Set(Object.keys(scene.paths));
+  const enabledPathIds = new Set(
+    Object.values(scene.paths)
+      .filter((path) => path.enabled)
+      .map((path) => path.id)
+  );
+
   for (const entity of Object.values(scene.entities)) {
     incrementSchedulerValidationCount(context.entityCounts, entity.id);
     addSchedulerValidationKind(context.entityKindsById, entity.id, entity.kind);
 
     if (entity.kind === "npc") {
       context.actorIds.add(entity.actorId);
+      const usages = context.actorUsagesById.get(entity.actorId) ?? [];
+      const targetAsset =
+        entity.modelAssetId === null ? undefined : scene.assets[entity.modelAssetId];
+      usages.push({
+        sceneId,
+        entityId: entity.id,
+        modelAssetId: entity.modelAssetId,
+        animationNames:
+          targetAsset !== undefined && targetAsset.kind === "model"
+            ? [...targetAsset.metadata.animationNames]
+            : [],
+        pathIds: new Set(pathIds),
+        enabledPathIds: new Set(enabledPathIds)
+      });
+      context.actorUsagesById.set(entity.actorId, usages);
     }
 
     if (entity.kind === "soundEmitter") {
@@ -3808,7 +3842,7 @@ function createProjectSchedulerValidationContextFromSceneDocument(
   document: SceneDocument
 ): ProjectSchedulerValidationContext {
   const context = createEmptyProjectSchedulerValidationContext();
-  recordProjectSchedulerSceneTargets(context, document);
+  recordProjectSchedulerSceneTargets(context, document, "activeScene");
   return context;
 }
 
@@ -3821,8 +3855,9 @@ function createProjectSchedulerValidationContextFromProjectDocument(
     recordProjectSchedulerSceneTargets(context, {
       entities: scene.entities,
       modelInstances: scene.modelInstances,
-      assets: document.assets
-    });
+      assets: document.assets,
+      paths: scene.paths
+    }, scene.id);
   }
 
   return context;
