@@ -241,6 +241,17 @@ describe("project document JSON", () => {
     const document = createEmptyProjectDocument({
       name: "Legacy Sequence Clip Project"
     });
+    document.dialogues.dialogues["dialogue-legacy"] = {
+      id: "dialogue-legacy",
+      title: "Legacy Dialogue",
+      lines: [
+        {
+          id: "dialogue-line-legacy-1",
+          speakerName: null,
+          text: "Legacy."
+        }
+      ]
+    };
 
     document.sequences.sequences["sequence-legacy-dialogue"] = createProjectSequence({
       id: "sequence-legacy-dialogue",
