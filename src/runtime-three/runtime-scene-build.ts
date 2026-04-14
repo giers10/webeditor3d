@@ -1136,9 +1136,11 @@ function buildRuntimeControlSurface(
   return createRuntimeControlSurfaceDefinition({
     targets,
     channels,
+    baselineResolved: resolved,
     resolved: applyRuntimeProjectScheduleToControlState(
       resolved,
-      collections.scheduler
+      collections.scheduler,
+      resolved
     )
   });
 }
