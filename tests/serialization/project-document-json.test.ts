@@ -452,6 +452,7 @@ describe("project document JSON", () => {
     const migratedDocument = parseProjectDocumentJson(
       JSON.stringify({
         version: NPC_PRESENCE_SCENE_DOCUMENT_VERSION,
+        name: "Legacy Presence Project",
         activeSceneId: "scene-main",
         scenes: {
           "scene-main": {
