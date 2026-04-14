@@ -3538,7 +3538,7 @@ function readProjectSequenceClip(value: unknown, label: string): SequenceClip {
       };
     case "startDialogue":
       if (stepClass !== "impulse") {
-        throw new Error(`${label}.startDialogue steps must use the impulse class.`);
+        throw new Error(`${label}.startDialogue clips must use the impulse class.`);
       }
 
       return {
@@ -3548,7 +3548,7 @@ function readProjectSequenceClip(value: unknown, label: string): SequenceClip {
       };
     case "teleportPlayer":
       if (stepClass !== "impulse") {
-        throw new Error(`${label}.teleportPlayer steps must use the impulse class.`);
+        throw new Error(`${label}.teleportPlayer clips must use the impulse class.`);
       }
 
       return {
@@ -3561,7 +3561,7 @@ function readProjectSequenceClip(value: unknown, label: string): SequenceClip {
       };
     case "toggleVisibility":
       if (stepClass !== "impulse") {
-        throw new Error(`${label}.toggleVisibility steps must use the impulse class.`);
+        throw new Error(`${label}.toggleVisibility clips must use the impulse class.`);
       }
 
       return {
