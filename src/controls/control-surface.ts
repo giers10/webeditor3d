@@ -213,6 +213,11 @@ export type ControlEffect =
   | SetSunLightIntensityControlEffect
   | SetSunLightColorControlEffect;
 
+export type ActorControlEffect =
+  | SetActorPresenceControlEffect
+  | PlayActorAnimationControlEffect
+  | FollowActorPathControlEffect;
+
 export interface LightIntensityControlChannelDescriptor {
   channel: "light.intensity";
   target: LightControlTargetRef;
@@ -480,6 +485,19 @@ export function isControlInteractionTargetKind(
   );
 }
 
+export function isActorControlEffect(
+  effect: ControlEffect
+): effect is ActorControlEffect {
+  switch (effect.type) {
+    case "setActorPresence":
+    case "playActorAnimation":
+    case "followActorPath":
+      return true;
+    default:
+      return false;
+  }
+}
+
 export function createActorControlTargetRef(
   actorId: string
 ): ActorControlTargetRef {
@@ -576,6 +594,52 @@ export function createSetActorPresenceControlEffect(options: {
     type: "setActorPresence",
     target: cloneControlTargetRef(options.target) as ActorControlTargetRef,
     active: options.active
+  };
+}
+
+export function isActorPathProgressMode(
+  value: unknown
+): value is ActorPathProgressMode {
+  return ACTOR_PATH_PROGRESS_MODES.includes(value as ActorPathProgressMode);
+}
+
+export function createPlayActorAnimationControlEffect(options: {
+  target: ActorControlTargetRef;
+  clipName: string;
+  loop?: boolean;
+}): PlayActorAnimationControlEffect {
+  assertNonEmptyString(options.clipName, "Control actor animation clip name");
+
+  return {
+    type: "playActorAnimation",
+    target: cloneControlTargetRef(options.target) as ActorControlTargetRef,
+    clipName: options.clipName,
+    loop: options.loop
+  };
+}
+
+export function createFollowActorPathControlEffect(options: {
+  target: ActorControlTargetRef;
+  pathId: string;
+  speed: number;
+  loop?: boolean;
+  progressMode?: ActorPathProgressMode;
+}): FollowActorPathControlEffect {
+  assertNonEmptyString(options.pathId, "Control actor path id");
+
+  if (!Number.isFinite(options.speed) || options.speed <= 0) {
+    throw new Error(
+      "Control actor path speed must be a finite number greater than zero."
+    );
+  }
+
+  return {
+    type: "followActorPath",
+    target: cloneControlTargetRef(options.target) as ActorControlTargetRef,
+    pathId: options.pathId,
+    speed: options.speed,
+    loop: options.loop ?? false,
+    progressMode: options.progressMode ?? "deriveFromTime"
   };
 }
 
@@ -899,6 +963,66 @@ export function createResolvedActorPresenceState(options: {
     type: "actorPresence",
     target: cloneControlTargetRef(options.target) as ActorControlTargetRef,
     value: options.value,
+    source: cloneResolvedControlSource(options.source)
+  };
+}
+
+export function createResolvedActorAnimationPlaybackState(options: {
+  target: ActorControlTargetRef;
+  clipName: string | null;
+  loop: boolean | undefined;
+  source: RuntimeResolvedControlSource;
+}): RuntimeResolvedActorAnimationPlaybackState {
+  if (options.clipName !== null) {
+    assertNonEmptyString(options.clipName, "Resolved control actor animation clip");
+  }
+
+  return {
+    type: "actorAnimationPlayback",
+    target: cloneControlTargetRef(options.target) as ActorControlTargetRef,
+    clipName: options.clipName,
+    loop: options.loop,
+    source: cloneResolvedControlSource(options.source)
+  };
+}
+
+export function createResolvedActorPathAssignmentState(options: {
+  target: ActorControlTargetRef;
+  pathId: string | null;
+  speed: number | null;
+  loop: boolean;
+  progressMode: ActorPathProgressMode | null;
+  source: RuntimeResolvedControlSource;
+}): RuntimeResolvedActorPathAssignmentState {
+  if (options.pathId !== null) {
+    assertNonEmptyString(options.pathId, "Resolved control actor path id");
+  }
+
+  if (
+    options.speed !== null &&
+    (!Number.isFinite(options.speed) || options.speed <= 0)
+  ) {
+    throw new Error(
+      "Resolved control actor path speed must be a finite number greater than zero."
+    );
+  }
+
+  if (
+    (options.pathId === null) !== (options.speed === null) ||
+    (options.pathId === null) !== (options.progressMode === null)
+  ) {
+    throw new Error(
+      "Resolved actor path assignments must either define path, speed, and progress mode together or clear all of them."
+    );
+  }
+
+  return {
+    type: "actorPathAssignment",
+    target: cloneControlTargetRef(options.target) as ActorControlTargetRef,
+    pathId: options.pathId,
+    speed: options.speed,
+    loop: options.loop,
+    progressMode: options.progressMode,
     source: cloneResolvedControlSource(options.source)
   };
 }
