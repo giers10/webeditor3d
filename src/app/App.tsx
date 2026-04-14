@@ -15834,6 +15834,57 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       </div>
 
                       <div className="form-section">
+                        <div className="label">Dialogue</div>
+                        <div className="stat-card">
+                          <div className="value">
+                            {selectedNpc.dialogueId === null
+                              ? "Unassigned"
+                              : selectedNpcDialogue?.title ?? "Missing Dialogue"}
+                          </div>
+                          <div className="material-summary">
+                            {selectedNpc.dialogueId === null
+                              ? "Assign a project dialogue to let this NPC open a conversation directly on click."
+                              : selectedNpcDialogue === null
+                                ? `This NPC references ${selectedNpc.dialogueId}, but the dialogue resource is missing.`
+                                : `${selectedNpcDialogue.lines.length} line${selectedNpcDialogue.lines.length === 1 ? "" : "s"} in this project dialogue.`}
+                          </div>
+                        </div>
+                        <label className="form-field">
+                          <span className="label">Dialogue</span>
+                          <select
+                            data-testid="npc-dialogue"
+                            className="select-input"
+                            value={npcDialogueIdDraft}
+                            onChange={(event) => {
+                              const nextDialogueId =
+                                event.currentTarget.value.trim();
+                              setNpcDialogueIdDraft(nextDialogueId);
+                              scheduleDraftCommit(() =>
+                                applyNpcChange({
+                                  dialogueId:
+                                    nextDialogueId.length === 0
+                                      ? null
+                                      : nextDialogueId
+                                })
+                              );
+                            }}
+                          >
+                            <option value="">— none —</option>
+                            {projectDialogueList.map((dialogue) => (
+                              <option key={dialogue.id} value={dialogue.id}>
+                                {dialogue.title}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <div className="material-summary">
+                          This uses the same project dialogue library and
+                          runtime dialogue-start path as existing interaction
+                          links.
+                        </div>
+                      </div>
+
+                      <div className="form-section">
                         <div className="label">Facing</div>
                         <label className="form-field">
                           <span className="label">Yaw</span>
