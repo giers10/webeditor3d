@@ -85,11 +85,11 @@ function commitOnEnter(
 function getControlClipNumericValue(clip: Extract<SequenceClip, { type: "controlEffect" }>): number | null {
   switch (clip.effect.type) {
     case "setSoundVolume":
-      return step.effect.volume;
+      return clip.effect.volume;
     case "setLightIntensity":
     case "setAmbientLightIntensity":
     case "setSunLightIntensity":
-      return step.effect.intensity;
+      return clip.effect.intensity;
     default:
       return null;
   }
@@ -100,7 +100,7 @@ function getControlClipColorValue(clip: Extract<SequenceClip, { type: "controlEf
     case "setLightColor":
     case "setAmbientLightColor":
     case "setSunLightColor":
-      return step.effect.colorHex;
+      return clip.effect.colorHex;
     default:
       return null;
   }
