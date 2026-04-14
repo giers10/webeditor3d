@@ -367,12 +367,10 @@ import { validateRuntimeSceneBuild } from "../runtime-three/runtime-scene-valida
 import { EditorAutosaveController } from "../serialization/editor-autosave";
 import { Panel } from "../shared-ui/Panel";
 import { ProjectDialoguesPanel } from "./ProjectDialoguesPanel";
-import { ProjectSequencesPanel } from "./ProjectSequencesPanel";
 import { ProjectSequencerPane } from "./ProjectSequencerPane";
 import {
   getProjectSequenceImpulseSteps
 } from "../sequencer/project-sequence-steps";
-import { createDefaultInteractionProjectSequence } from "../sequencer/project-sequence-templates";
 import {
   areProjectSchedulersEqual,
   cloneProjectScheduleRoutine,
@@ -2221,6 +2219,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
     setProjectTimeDuskDurationHoursDraft
   ] = useState(String(editorState.projectDocument.time.duskDurationHours));
   const [schedulePaneOpen, setSchedulePaneOpen] = useState(false);
+  const [sequencerMode, setSequencerMode] = useState<"timeline" | "sequence">(
+    "timeline"
+  );
   const [selectedScheduleRoutineId, setSelectedScheduleRoutineId] = useState<
     string | null
   >(null);
