@@ -70,6 +70,31 @@ describe("scene document JSON", () => {
     expect(parseSceneDocumentJson(serializedDocument)).toEqual(document);
   });
 
+  it("round-trips authored scheduler routines in the scene document schema", () => {
+    const npc = createNpcEntity({
+      id: "entity-npc-clocksmith",
+      actorId: "actor-clocksmith"
+    });
+    const document = createEmptySceneDocument({ name: "Schedule Scene" });
+    document.entities[npc.id] = npc;
+    document.scheduler.routines["routine-clocksmith-open"] =
+      createProjectScheduleRoutine({
+        id: "routine-clocksmith-open",
+        title: "Clocksmith Open",
+        target: createActorControlTargetRef(npc.actorId),
+        startHour: 10,
+        endHour: 18,
+        effect: createSetActorPresenceControlEffect({
+          target: createActorControlTargetRef(npc.actorId),
+          active: true
+        })
+      });
+
+    expect(
+      parseSceneDocumentJson(serializeSceneDocument(document))
+    ).toEqual(document);
+  });
+
   it("round-trips a document containing a canonical box brush", () => {
     const brush = createBoxBrush({
       id: "brush-box-room",
