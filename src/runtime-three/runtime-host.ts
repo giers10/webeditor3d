@@ -142,6 +142,21 @@ interface CachedMaterialTexture {
   texture: ReturnType<typeof createStarterMaterialTexture>;
 }
 
+function isEditableEventTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) {
+    return false;
+  }
+
+  const tagName = target.tagName.toLowerCase();
+  return (
+    target.isContentEditable ||
+    tagName === "input" ||
+    tagName === "textarea" ||
+    tagName === "select" ||
+    tagName === "button"
+  );
+}
+
 interface LocalLightRenderObjects {
   group: Group;
   light: PointLight | SpotLight;
@@ -193,6 +208,11 @@ export interface RuntimeDialogueState {
   speakerName: string | null;
   text: string;
   source: RuntimeDialogueStartSource;
+}
+
+export interface RuntimePauseState {
+  paused: boolean;
+  source: "manual" | "control" | "mixed" | null;
 }
 
 export class RuntimeHost {
@@ -271,6 +291,9 @@ export class RuntimeHost {
   private runtimeDialogueHandler:
     | ((dialogue: RuntimeDialogueState | null) => void)
     | null = null;
+  private runtimePauseStateHandler:
+    | ((state: RuntimePauseState) => void)
+    | null = null;
   private sceneLoadStateHandler:
     | ((state: RuntimeSceneLoadState) => void)
     | null = null;
@@ -282,6 +305,10 @@ export class RuntimeHost {
     null;
   private currentInteractionPrompt: RuntimeInteractionPrompt | null = null;
   private currentDialogue: RuntimeDialogueState | null = null;
+  private currentPauseState: RuntimePauseState = {
+    paused: false,
+    source: null
+  };
   private currentSceneLoadState: RuntimeSceneLoadState | null = null;
   private currentClockState: RuntimeClockState | null = null;
   private lastPublishedClockState: RuntimeClockState | null = null;
@@ -296,6 +323,8 @@ export class RuntimeHost {
   private cameraEffectPitchVelocity = 0;
   private cameraEffectRollOffset = 0;
   private baseCameraFov = 70;
+  private manualPauseActive = false;
+  private controlPauseActive = false;
 
   constructor(options: { enableRendering?: boolean } = {}) {
     const enableRendering = options.enableRendering ?? true;
@@ -455,6 +484,7 @@ export class RuntimeHost {
       "pointerdown",
       this.handleRuntimePointerDown
     );
+    window.addEventListener("keydown", this.handleRuntimeKeyDown);
     this.resize();
 
     this.resizeObserver = new ResizeObserver(() => {
@@ -487,6 +517,9 @@ export class RuntimeHost {
     this.interactionSystem.reset();
     this.setInteractionPrompt(null);
     this.setRuntimeDialogue(null);
+    this.manualPauseActive = false;
+    this.controlPauseActive = false;
+    this.publishRuntimePauseState(true);
     this.currentPlayerControllerTelemetry = null;
     this.currentPlayerAudioHooks = null;
     this.playerControllerTelemetryHandler?.(null);
@@ -582,6 +615,24 @@ export class RuntimeHost {
     }
   }
 
+  setRuntimePauseStateHandler(
+    handler: ((state: RuntimePauseState) => void) | null
+  ) {
+    this.runtimePauseStateHandler = handler;
+
+    if (handler !== null) {
+      handler({ ...this.currentPauseState });
+    }
+  }
+
+  setManualPause(paused: boolean) {
+    this.setManualPauseActive(paused);
+  }
+
+  toggleManualPause() {
+    this.setManualPauseActive(!this.manualPauseActive);
+  }
+
   advanceRuntimeDialogue() {
     if (this.runtimeScene === null || this.currentDialogue === null) {
       return;
@@ -666,6 +717,9 @@ export class RuntimeHost {
     this.scene.fog = null;
     this.currentClockState = null;
     this.lastPublishedClockState = null;
+    this.manualPauseActive = false;
+    this.controlPauseActive = false;
+    this.publishRuntimePauseState(true);
     if (this.renderer !== null) {
       this.renderer.autoClear = true;
     }
@@ -683,6 +737,7 @@ export class RuntimeHost {
       "pointerdown",
       this.handleRuntimePointerDown
     );
+    window.removeEventListener("keydown", this.handleRuntimeKeyDown);
 
     if (this.container !== null && this.container.contains(this.domElement)) {
       this.container.removeChild(this.domElement);
@@ -729,6 +784,57 @@ export class RuntimeHost {
 
     this.lastPublishedClockState = nextState;
     this.runtimeClockStateHandler?.(cloneRuntimeClockState(nextState));
+  }
+
+  private isRuntimePaused(): boolean {
+    return this.manualPauseActive || this.controlPauseActive;
+  }
+
+  private publishRuntimePauseState(force = false) {
+    const nextState: RuntimePauseState = {
+      paused: this.isRuntimePaused(),
+      source: this.manualPauseActive
+        ? this.controlPauseActive
+          ? "mixed"
+          : "manual"
+        : this.controlPauseActive
+          ? "control"
+          : null
+    };
+
+    if (
+      !force &&
+      this.currentPauseState.paused === nextState.paused &&
+      this.currentPauseState.source === nextState.source
+    ) {
+      return;
+    }
+
+    this.currentPauseState = nextState;
+
+    if (nextState.paused) {
+      this.setInteractionPrompt(null);
+    }
+
+    this.runtimePauseStateHandler?.({ ...nextState });
+  }
+
+  private setManualPauseActive(paused: boolean) {
+    if (this.manualPauseActive === paused) {
+      return;
+    }
+
+    this.manualPauseActive = paused;
+    this.publishRuntimePauseState();
+  }
+
+  private setControlPauseActive(paused: boolean) {
+    if (this.controlPauseActive === paused) {
+      return;
+    }
+
+    this.controlPauseActive = paused;
+    this.publishRuntimePauseState();
   }
 
   private activateDesiredNavigationController() {
@@ -1103,6 +1209,9 @@ export class RuntimeHost {
     state: RuntimeResolvedDiscreteControlState
   ) {
     switch (state.type) {
+      case "projectTimePaused":
+        this.applyProjectTimePausedControl(state.value);
+        return;
       case "actorPresence":
         this.applyActorPresenceControl(state.target.actorId, state.value);
         return;
@@ -1557,8 +1666,15 @@ export class RuntimeHost {
     this.refreshCollisionWorldForNpcSchedule();
   }
 
+  private applyProjectTimePausedControl(paused: boolean) {
+    this.setControlPauseActive(paused);
+  }
+
   private applyControlEffect(effect: ControlEffect, link: InteractionLink) {
     switch (effect.type) {
+      case "setProjectTimePaused":
+        this.applyProjectTimePausedControl(effect.paused);
+        break;
       case "setActorPresence":
         this.applyActorPresenceControl(effect.target.actorId, effect.active);
         break;
@@ -2692,29 +2808,30 @@ export class RuntimeHost {
     const now = performance.now();
     const dt = Math.min((now - this.previousFrameTime) / 1000, 1 / 20);
     this.previousFrameTime = now;
+    const simulationDt = this.isRuntimePaused() ? 0 : dt;
 
-    this.activeController?.update(dt);
-    this.applyPlayerCameraEffects(dt);
+    this.activeController?.update(simulationDt);
+    this.applyPlayerCameraEffects(simulationDt);
     this.audioSystem.setPlayerControllerAudioHooks(
       this.currentPlayerAudioHooks
     );
     this.audioSystem.updateListenerTransform();
 
-    this.volumeTime += dt;
+    this.volumeTime += simulationDt;
     for (const uniform of this.volumeAnimatedUniforms) {
       uniform.value = this.volumeTime;
     }
 
-    if (this.currentClockState !== null) {
+    if (this.currentClockState !== null && simulationDt > 0) {
       this.currentClockState = advanceRuntimeClockState(
         this.currentClockState,
-        dt
+        simulationDt
       );
       if (this.sceneReady) {
         this.syncRuntimeScheduleToCurrentClock();
       }
       this.applyDayNightLighting();
-      this.clockPublishAccumulator += dt;
+      this.clockPublishAccumulator += simulationDt;
 
       if (
         this.clockPublishAccumulator >= RUNTIME_CLOCK_PUBLISH_INTERVAL_SECONDS
@@ -2725,13 +2842,14 @@ export class RuntimeHost {
     }
 
     for (const mixer of this.animationMixers.values()) {
-      mixer.update(dt);
+      mixer.update(simulationDt);
     }
 
     if (
       this.sceneReady &&
       this.runtimeScene !== null &&
-      this.currentPlayerControllerTelemetry !== null
+      this.currentPlayerControllerTelemetry !== null &&
+      !this.isRuntimePaused()
     ) {
       this.interactionSystem.updatePlayerPosition(
         {
@@ -3165,6 +3283,10 @@ export class RuntimeHost {
       return;
     }
 
+    if (this.isRuntimePaused()) {
+      return;
+    }
+
     if (this.currentInteractionPrompt === null) {
       return;
     }
@@ -3182,5 +3304,24 @@ export class RuntimeHost {
     }
 
     this.audioSystem.handleUserGesture();
+  };
+
+  private handleRuntimeKeyDown = (event: KeyboardEvent) => {
+    if (
+      event.defaultPrevented ||
+      event.repeat ||
+      event.altKey ||
+      event.ctrlKey ||
+      event.metaKey ||
+      isEditableEventTarget(event.target) ||
+      this.runtimeScene === null ||
+      !this.sceneReady ||
+      event.key.toLowerCase() !== "p"
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    this.toggleManualPause();
   };
 }
