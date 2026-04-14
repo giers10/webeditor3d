@@ -679,6 +679,61 @@ describe("RuntimeInteractionSystem", () => {
     expect(dispatches).toEqual(["link-trigger-dialogue:dialogue-threshold"]);
   });
 
+  it("treats the player body segment as entering a trigger volume, not just the feet point", () => {
+    const runtimeScene = createRuntimeSceneFixture();
+    runtimeScene.entities.triggerVolumes = [
+      {
+        entityId: "entity-trigger-chest-height",
+        position: {
+          x: 0,
+          y: 1.2,
+          z: 0
+        },
+        size: {
+          x: 2,
+          y: 1,
+          z: 2
+        },
+        triggerOnEnter: true,
+        triggerOnExit: false
+      }
+    ];
+    runtimeScene.interactionLinks = [
+      createStartDialogueInteractionLink({
+        id: "link-body-trigger-dialogue",
+        sourceEntityId: "entity-trigger-chest-height",
+        trigger: "enter",
+        dialogueId: "dialogue-threshold"
+      })
+    ];
+
+    const dispatches: string[] = [];
+    const interactionSystem = new RuntimeInteractionSystem();
+
+    interactionSystem.updatePlayerPosition(
+      {
+        feetPosition: {
+          x: 0,
+          y: 0,
+          z: 0
+        },
+        eyePosition: {
+          x: 0,
+          y: 1.6,
+          z: 0
+        }
+      },
+      runtimeScene,
+      createDispatcher({
+        startDialogue: (dialogueId, source) => {
+          dispatches.push(`${source?.linkId}:${dialogueId}`);
+        }
+      })
+    );
+
+    expect(dispatches).toEqual(["link-body-trigger-dialogue:dialogue-threshold"]);
+  });
+
   it("resolves direct NPC dialogue prompts and dispatches them through the shared start path", () => {
     const runtimeScene = createRuntimeSceneFixture();
     runtimeScene.entities.interactables = [];

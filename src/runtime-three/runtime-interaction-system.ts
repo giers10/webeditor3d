@@ -255,23 +255,6 @@ function getInteractableTargetRadius(
   return Math.min(DEFAULT_INTERACTABLE_TARGET_RADIUS, interactable.radius);
 }
 
-function getNpcDialogueTargetRadius(npc: RuntimeNpc): number {
-  switch (npc.collider.mode) {
-    case "capsule":
-      return Math.max(
-        DEFAULT_NPC_DIALOGUE_TARGET_RADIUS,
-        npc.collider.radius * 2
-      );
-    case "box":
-      return Math.max(
-        DEFAULT_NPC_DIALOGUE_TARGET_RADIUS,
-        Math.max(npc.collider.size.x, npc.collider.size.z) * 0.75
-      );
-    case "none":
-      return DEFAULT_NPC_DIALOGUE_TARGET_RADIUS;
-  }
-}
-
 function getNpcDialoguePrompt(
   npc: RuntimeNpc,
   hasClickLinks: boolean
@@ -413,13 +396,21 @@ export class RuntimeInteractionSystem {
   }
 
   updatePlayerPosition(
-    feetPosition: Vec3,
+    playerProbe: Vec3 | RuntimePlayerTriggerProbe,
     runtimeScene: RuntimeSceneDefinition,
     dispatcher: RuntimeInteractionDispatcher
   ) {
+    const feetPosition = isVec3(playerProbe)
+      ? playerProbe
+      : playerProbe.feetPosition;
+    const eyePosition = isVec3(playerProbe)
+      ? playerProbe
+      : playerProbe.eyePosition;
+
     for (const triggerVolume of runtimeScene.entities.triggerVolumes) {
-      const containsPlayer = isPointInsideTriggerVolume(
+      const containsPlayer = isPlayerInsideTriggerVolume(
         feetPosition,
+        eyePosition,
         triggerVolume
       );
       const wasOccupied = this.occupiedTriggerVolumes.has(
@@ -562,18 +553,17 @@ export class RuntimeInteractionSystem {
         continue;
       }
 
-      const radius = getNpcDialogueTargetRadius(npc);
-      const distance = distanceBetweenVec3(interactionOrigin, npc.position);
+      const bounds = getNpcDialogueTargetBounds(npc);
+      const distance = distanceBetweenVec3(interactionOrigin, bounds.center);
 
-      if (distance > radius) {
+      if (distance > bounds.range) {
         continue;
       }
 
-      const hitDistance = raySphereHitDistance(
+      const hitDistance = rayAxisAlignedBoxHitDistance(
         rayOrigin,
         normalizedViewDirection,
-        npc.position,
-        radius
+        bounds
       );
 
       if (hitDistance === null) {
@@ -586,7 +576,7 @@ export class RuntimeInteractionSystem {
         npc.entityId,
         getNpcDialoguePrompt(npc, hasClickLinks),
         distance,
-        radius,
+        bounds.range,
         hitDistance
       );
       bestPrompt = next.prompt;

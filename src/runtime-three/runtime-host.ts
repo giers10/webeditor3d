@@ -2734,7 +2734,10 @@ export class RuntimeHost {
       this.currentPlayerControllerTelemetry !== null
     ) {
       this.interactionSystem.updatePlayerPosition(
-        this.currentPlayerControllerTelemetry.feetPosition,
+        {
+          feetPosition: this.currentPlayerControllerTelemetry.feetPosition,
+          eyePosition: this.currentPlayerControllerTelemetry.eyePosition
+        },
         this.runtimeScene,
         this.createInteractionDispatcher()
       );
