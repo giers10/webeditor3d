@@ -1282,6 +1282,10 @@ export function getControlEffectResolutionKey(effect: ControlEffect): string {
   switch (effect.type) {
     case "setActorPresence":
       return `state:actorPresence:${getControlTargetRefKey(effect.target)}`;
+    case "playActorAnimation":
+      return `state:actorAnimationPlayback:${getControlTargetRefKey(effect.target)}`;
+    case "followActorPath":
+      return `state:actorPathAssignment:${getControlTargetRefKey(effect.target)}`;
     case "playModelAnimation":
     case "stopModelAnimation":
       return `state:modelAnimationPlayback:${getControlTargetRefKey(effect.target)}`;
@@ -1395,6 +1399,22 @@ export function cloneControlEffect<TEffect extends ControlEffect>(
         type: "setActorPresence",
         target: cloneControlTargetRef(effect.target),
         active: effect.active
+      } as TEffect;
+    case "playActorAnimation":
+      return {
+        type: "playActorAnimation",
+        target: cloneControlTargetRef(effect.target),
+        clipName: effect.clipName,
+        loop: effect.loop
+      } as TEffect;
+    case "followActorPath":
+      return {
+        type: "followActorPath",
+        target: cloneControlTargetRef(effect.target),
+        pathId: effect.pathId,
+        speed: effect.speed,
+        loop: effect.loop,
+        progressMode: effect.progressMode
       } as TEffect;
     case "playModelAnimation":
       return {
@@ -1526,6 +1546,22 @@ export function cloneRuntimeResolvedDiscreteControlState<
         value: state.value,
         source: state.source
       }) as TState;
+    case "actorAnimationPlayback":
+      return createResolvedActorAnimationPlaybackState({
+        target: state.target,
+        clipName: state.clipName,
+        loop: state.loop,
+        source: state.source
+      }) as TState;
+    case "actorPathAssignment":
+      return createResolvedActorPathAssignmentState({
+        target: state.target,
+        pathId: state.pathId,
+        speed: state.speed,
+        loop: state.loop,
+        progressMode: state.progressMode,
+        source: state.source
+      }) as TState;
     case "lightEnabled":
       return createResolvedLightEnabledState({
         target: state.target,
@@ -1648,6 +1684,19 @@ export function areControlEffectsEqual(
   switch (left.type) {
     case "setActorPresence":
       return left.active === (right as SetActorPresenceControlEffect).active;
+    case "playActorAnimation":
+      return (
+        left.clipName === (right as PlayActorAnimationControlEffect).clipName &&
+        left.loop === (right as PlayActorAnimationControlEffect).loop
+      );
+    case "followActorPath":
+      return (
+        left.pathId === (right as FollowActorPathControlEffect).pathId &&
+        left.speed === (right as FollowActorPathControlEffect).speed &&
+        left.loop === (right as FollowActorPathControlEffect).loop &&
+        left.progressMode ===
+          (right as FollowActorPathControlEffect).progressMode
+      );
     case "playModelAnimation":
       return (
         left.clipName === (right as PlayModelAnimationControlEffect).clipName &&
@@ -1699,6 +1748,10 @@ export function getControlEffectLabel(effect: ControlEffect): string {
   switch (effect.type) {
     case "setActorPresence":
       return "Set Actor Presence";
+    case "playActorAnimation":
+      return "Play Actor Animation";
+    case "followActorPath":
+      return "Follow Actor Path";
     case "playModelAnimation":
       return "Play Animation";
     case "stopModelAnimation":
@@ -1768,6 +1821,14 @@ export function formatControlEffectValue(effect: ControlEffect): string {
   switch (effect.type) {
     case "setActorPresence":
       return effect.active ? "Present" : "Hidden";
+    case "playActorAnimation":
+      return effect.loop === false
+        ? `${effect.clipName} (Once)`
+        : `${effect.clipName} (Loop)`;
+    case "followActorPath":
+      return `${effect.pathId} @ ${effect.speed}${
+        effect.loop ? " (Loop)" : ""
+      }`;
     case "playModelAnimation":
       return effect.loop === false
         ? `${effect.clipName} (Once)`
@@ -1810,6 +1871,30 @@ export function applyControlEffectToResolvedState(
         createResolvedActorPresenceState({
           target: effect.target,
           value: effect.active,
+          source
+        })
+      );
+      return nextResolved;
+    case "playActorAnimation":
+      upsertResolvedDiscreteState(
+        nextResolved,
+        createResolvedActorAnimationPlaybackState({
+          target: effect.target,
+          clipName: effect.clipName,
+          loop: effect.loop,
+          source
+        })
+      );
+      return nextResolved;
+    case "followActorPath":
+      upsertResolvedDiscreteState(
+        nextResolved,
+        createResolvedActorPathAssignmentState({
+          target: effect.target,
+          pathId: effect.pathId,
+          speed: effect.speed,
+          loop: effect.loop,
+          progressMode: effect.progressMode,
           source
         })
       );
