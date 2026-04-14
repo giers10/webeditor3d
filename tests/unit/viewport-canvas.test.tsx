@@ -23,6 +23,7 @@ const { MockViewportHost, viewportHostInstances } = vi.hoisted(() => {
     dispose: ReturnType<typeof vi.fn>;
     setRenderEnabled: ReturnType<typeof vi.fn>;
     updateWorld: ReturnType<typeof vi.fn>;
+    updateSimulation: ReturnType<typeof vi.fn>;
     updateAssets: ReturnType<typeof vi.fn>;
     updateDocument: ReturnType<typeof vi.fn>;
     setViewMode: ReturnType<typeof vi.fn>;
@@ -51,6 +52,7 @@ const { MockViewportHost, viewportHostInstances } = vi.hoisted(() => {
     dispose = vi.fn();
     setRenderEnabled = vi.fn();
     updateWorld = vi.fn();
+    updateSimulation = vi.fn();
     updateAssets = vi.fn();
     updateDocument = vi.fn();
     setViewMode = vi.fn();
@@ -132,6 +134,8 @@ describe("ViewportCanvas", () => {
         panelId="topLeft"
         world={sceneDocument.world}
         sceneDocument={sceneDocument}
+        editorSimulationScene={null}
+        editorSimulationClock={null}
         projectAssets={sceneDocument.assets}
         loadedModelAssets={{}}
         loadedImageAssets={{}}
@@ -188,6 +192,8 @@ describe("ViewportCanvas", () => {
         panelId="topLeft"
         world={sceneDocument.world}
         sceneDocument={sceneDocument}
+        editorSimulationScene={null}
+        editorSimulationClock={null}
         projectAssets={sceneDocument.assets}
         loadedModelAssets={{}}
         loadedImageAssets={{}}
