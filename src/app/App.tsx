@@ -12302,63 +12302,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 />
               </Panel>
 
-              <Panel title="Sequences">
-                <ProjectSequencesPanel
-                  sequences={editorState.projectDocument.sequences}
-                  dialogues={editorState.projectDocument.dialogues}
-                  targetOptions={projectScheduleTargetOptions}
-                  selectedSequenceId={selectedSequenceId}
-                  onSelectSequence={setSelectedSequenceId}
-                  onAddSequence={handleAddProjectSequence}
-                  onDeleteSequence={handleDeleteProjectSequence}
-                  onSetSequenceTitle={(sequenceId, title) =>
-                    updateProjectSequence(
-                      sequenceId,
-                      "Rename project sequence",
-                      "Updated project sequence title.",
-                      (sequence) => {
-                        sequence.title = title.trim() || "Sequence";
-                      }
-                    )
-                  }
-                  onAddHeldControlStep={(sequenceId, targetKey) =>
-                    handleAddProjectSequenceControlStep(
-                      sequenceId,
-                      "held",
-                      targetKey
-                    )
-                  }
-                  onAddImpulseControlStep={(sequenceId, targetKey) =>
-                    handleAddProjectSequenceControlStep(
-                      sequenceId,
-                      "impulse",
-                      targetKey
-                    )
-                  }
-                  onAddDialogueStep={handleAddProjectSequenceDialogueStep}
-                  onDeleteStep={handleDeleteProjectSequenceStep}
-                  onSetControlStepTarget={updateProjectSequenceControlStepTarget}
-                  onSetControlStepEffectOption={
-                    updateProjectSequenceControlStepEffectOption
-                  }
-                  onSetControlStepNumericValue={
-                    updateProjectSequenceControlStepNumericValue
-                  }
-                  onSetControlStepColorValue={
-                    updateProjectSequenceControlStepColorValue
-                  }
-                  onSetControlStepAnimationClip={
-                    updateProjectSequenceControlStepAnimationClip
-                  }
-                  onSetControlStepAnimationLoop={
-                    updateProjectSequenceControlStepAnimationLoop
-                  }
-                  onSetDialogueStepDialogueId={
-                    updateProjectSequenceDialogueStepDialogueId
-                  }
-                />
-              </Panel>
-
               <Panel title="World">
                 <div className="stat-card">
                   <div className="label">Day Environment</div>
