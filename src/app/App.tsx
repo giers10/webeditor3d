@@ -4065,6 +4065,68 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
+  const handleAddProjectDialogue = () => {
+    const nextDialogue = createProjectDialogue();
+
+    updateProjectDialogues(
+      "Add project dialogue",
+      "Added project dialogue.",
+      (dialogues) => {
+        dialogues.dialogues[nextDialogue.id] = nextDialogue;
+      }
+    );
+    setSelectedDialogueId(nextDialogue.id);
+  };
+
+  const handleDeleteProjectDialogue = (dialogueId: string) => {
+    updateProjectDialogues(
+      "Delete project dialogue",
+      "Deleted project dialogue.",
+      (dialogues) => {
+        delete dialogues.dialogues[dialogueId];
+      }
+    );
+
+    if (selectedDialogueId === dialogueId) {
+      setSelectedDialogueId(null);
+    }
+  };
+
+  const updateProjectDialogue = (
+    dialogueId: string,
+    label: string,
+    successMessage: string,
+    mutate: (dialogue: ProjectDialogue) => void
+  ) => {
+    updateProjectDialogues(label, successMessage, (dialogues) => {
+      const dialogue = dialogues.dialogues[dialogueId];
+
+      if (dialogue === undefined) {
+        throw new Error("Selected dialogue no longer exists.");
+      }
+
+      mutate(dialogue);
+    });
+  };
+
+  const updateProjectDialogueLine = (
+    dialogueId: string,
+    lineId: string,
+    label: string,
+    successMessage: string,
+    mutate: (line: ProjectDialogueLine) => void
+  ) => {
+    updateProjectDialogue(dialogueId, label, successMessage, (dialogue) => {
+      const line = dialogue.lines.find((candidate) => candidate.id === lineId);
+
+      if (line === undefined) {
+        throw new Error("Selected dialogue line no longer exists.");
+      }
+
+      mutate(line);
+    });
+  };
+
   const updateWorldTimeOfDaySettings = (
     label: string,
     successMessage: string,
