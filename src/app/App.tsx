@@ -369,6 +369,10 @@ import { Panel } from "../shared-ui/Panel";
 import { ProjectDialoguesPanel } from "./ProjectDialoguesPanel";
 import { ProjectSequencerPane } from "./ProjectSequencerPane";
 import {
+  DEFAULT_HELD_SEQUENCE_CLIP_DURATION_MINUTES,
+  DEFAULT_IMPULSE_SEQUENCE_CLIP_DURATION_MINUTES,
+  DEFAULT_PROJECT_SEQUENCE_DURATION_MINUTES,
+  getNextSequenceClipLane,
   getProjectSequenceImpulseSteps
 } from "../sequencer/project-sequence-steps";
 import {
