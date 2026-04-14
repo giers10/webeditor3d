@@ -759,13 +759,6 @@ export class RuntimeInteractionSystem {
         }
         return;
       }
-      case "toggleVisibility":
-        dispatcher.toggleBrushVisibility(
-          step.targetBrushId,
-          step.visible,
-          link
-        );
-        return;
       case "setVisibility":
         if (dispatcher.setVisibility !== undefined) {
           dispatcher.setVisibility(step.target, step.mode, link);
@@ -784,7 +777,6 @@ export class RuntimeInteractionSystem {
         throw new Error(
           "Runtime visibility steps targeting model instances require dispatcher.setVisibility support."
         );
-        return;
       case "startDialogue":
         dispatcher.startDialogue(step.dialogueId, {
           kind: "interactionLink",
