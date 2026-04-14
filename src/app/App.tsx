@@ -301,6 +301,8 @@ import {
   type InteractionTriggerKind
 } from "../interactions/interaction-links";
 import {
+  createFollowActorPathControlEffect,
+  createPlayActorAnimationControlEffect,
   formatControlEffectValue,
   formatControlTargetRef,
   getControlTargetRefKey
@@ -339,6 +341,7 @@ import {
   cloneProjectScheduler,
   createProjectScheduleEveryDaySelection,
   createProjectScheduleRoutine,
+  findProjectScheduleRoutineEffect,
   removeProjectScheduleRoutine,
   upsertProjectScheduleRoutine,
   type ProjectScheduleRoutine
