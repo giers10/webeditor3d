@@ -1970,6 +1970,36 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const projectImpulseSequenceList = projectSequenceList.filter(
     (sequence) => getProjectSequenceImpulseSteps(sequence).length > 0
   );
+  const sequenceVisibilityTargetOptions = [
+    ...visibilityBrushOptions.map(({ brush, label }) => ({
+      targetKey: `brush:${brush.id}`,
+      label: `Whitebox Solid · ${label}`
+    })),
+    ...modelInstanceDisplayList.map(({ modelInstance, label }) => ({
+      targetKey: `modelInstance:${modelInstance.id}`,
+      label: `Model Instance · ${label}`
+    }))
+  ];
+  const sequenceAnimationTargetOptions = projectScheduleTargetOptions
+    .filter(
+      (option) =>
+        option.target.kind === "modelInstance" &&
+        (option.defaults.animationClipNames?.length ?? 0) > 0
+    )
+    .map((option) => ({
+      targetKey: option.key,
+      label: `${option.groupLabel} · ${option.label}`
+    }));
+  const sequenceSoundTargetOptions = projectScheduleTargetOptions
+    .filter(
+      (option) =>
+        option.target.kind === "entity" &&
+        option.target.entityKind === "soundEmitter"
+    )
+    .map((option) => ({
+      targetKey: option.key,
+      label: `${option.groupLabel} · ${option.label}`
+    }));
   const selectedInteractionSource = isInteractionSourceEntity(selectedEntity)
     ? selectedEntity
     : null;
