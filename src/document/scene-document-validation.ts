@@ -3658,11 +3658,17 @@ function validateInteractionLink(
 
 function validateProjectScheduler(
   scheduler: ProjectScheduler,
+  sequences: ProjectSequenceLibrary,
   context: ProjectSchedulerValidationContext,
   diagnostics: SceneDiagnostic[]
 ) {
   for (const [routineKey, routine] of Object.entries(scheduler.routines)) {
     const path = `scheduler.routines.${routineKey}`;
+    const resolvedHeldSteps = getProjectScheduleRoutineHeldSteps(
+      routine,
+      sequences
+    );
+    const resolvedEffects = getHeldSequenceControlEffects(resolvedHeldSteps);
 
     if (routine.id !== routineKey) {
       diagnostics.push(
@@ -3703,6 +3709,20 @@ function validateProjectScheduler(
       context,
       diagnostics
     );
+
+    if (
+      routine.sequenceId !== null &&
+      sequences.sequences[routine.sequenceId] === undefined
+    ) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "missing-routine-sequence-resource",
+          `Sequence ${routine.sequenceId} does not exist in the project sequence library.`,
+          `${path}.sequenceId`
+        )
+      );
+    }
 
     switch (routine.days.mode) {
       case "everyDay":
@@ -3810,32 +3830,37 @@ function validateProjectScheduler(
       );
     }
 
-    if (routine.effects.length === 0) {
+    if (resolvedEffects.length === 0) {
       diagnostics.push(
         createDiagnostic(
           "error",
           "invalid-project-schedule-routine-effects-empty",
-          "Project schedule routines must author at least one control effect.",
-          `${path}.effects`
+          "Project schedule routines must resolve at least one held control effect.",
+          routine.sequenceId === null ? `${path}.effects` : `${path}.sequenceId`
         )
       );
       continue;
     }
 
-    if (routine.target.kind !== "actor" && routine.effects.length !== 1) {
+    if (routine.target.kind !== "actor" && resolvedEffects.length !== 1) {
       diagnostics.push(
         createDiagnostic(
           "error",
           "invalid-project-schedule-non-actor-effect-count",
-          "Non-actor schedule routines must currently author exactly one control effect.",
-          `${path}.effects`
+          "Non-actor schedule routines must currently resolve exactly one held control effect.",
+          routine.sequenceId === null ? `${path}.effects` : `${path}.sequenceId`
         )
       );
     }
 
     const seenResolutionKeys = new Set<string>();
 
-    for (const [effectIndex, effect] of routine.effects.entries()) {
+    for (const [effectIndex, effect] of resolvedEffects.entries()) {
+      const effectPath =
+        routine.sequenceId === null
+          ? `${path}.effects.${effectIndex}`
+          : `${path}.sequenceId`;
+
       if (
         getControlTargetRefKey(effect.target) !==
         getControlTargetRefKey(routine.target)
@@ -3845,7 +3870,7 @@ function validateProjectScheduler(
             "error",
             "project-schedule-effect-target-mismatch",
             "Project schedule effect targets must match the authored routine target.",
-            `${path}.effects.${effectIndex}.target`
+            `${effectPath}.target`
           )
         );
       }
@@ -3858,31 +3883,33 @@ function validateProjectScheduler(
             "error",
             "invalid-project-schedule-duplicate-effect",
             "Project schedule routines cannot author duplicate effects for the same resolved control slot.",
-            `${path}.effects.${effectIndex}`
+            effectPath
           )
         );
       } else {
         seenResolutionKeys.add(resolutionKey);
       }
 
-      validateProjectSchedulerEffect(
-        effect,
-        `${path}.effects.${effectIndex}`,
-        context,
-        diagnostics
-      );
+      if (routine.sequenceId === null) {
+        validateProjectSchedulerEffect(
+          effect,
+          effectPath,
+          context,
+          diagnostics
+        );
+      }
     }
 
     if (
       routine.target.kind === "actor" &&
-      !routine.effects.some((effect) => effect.type === "setActorPresence")
+      !resolvedEffects.some((effect) => effect.type === "setActorPresence")
     ) {
       diagnostics.push(
         createDiagnostic(
           "error",
           "invalid-project-schedule-actor-presence-missing",
           "Actor schedule routines must include an actor presence effect.",
-          `${path}.effects`
+          routine.sequenceId === null ? `${path}.effects` : `${path}.sequenceId`
         )
       );
     }
