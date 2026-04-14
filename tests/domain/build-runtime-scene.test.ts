@@ -677,6 +677,7 @@ describe("buildRuntimeSceneFromDocument", () => {
       pointLights: [
         {
           entityId: "entity-point-light-main",
+          enabled: true,
           position: {
             x: 2,
             y: 3,
@@ -690,6 +691,7 @@ describe("buildRuntimeSceneFromDocument", () => {
       spotLights: [
         {
           entityId: "entity-spot-light-main",
+          enabled: true,
           position: {
             x: -2,
             y: 4,
