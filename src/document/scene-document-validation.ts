@@ -5131,6 +5131,8 @@ export function validateSceneDocument(
 ): SceneDocumentValidationResult {
   const diagnostics: SceneDiagnostic[] = [];
   const seenIds = new Map<string, string>();
+  const projectSchedulerValidationContext =
+    createProjectSchedulerValidationContextFromSceneDocument(document);
 
   validateProjectTimeSettings(document.time, diagnostics);
   validateWorldSettings(document.world, document, diagnostics);
@@ -5168,6 +5170,48 @@ export function validateSceneDocument(
 
     registerAuthoredId(asset.id, path, seenIds, diagnostics);
     validateProjectAsset(asset, path, diagnostics);
+  }
+
+  for (const [dialogueKey, dialogue] of Object.entries(document.dialogues.dialogues)) {
+    const path = `dialogues.dialogues.${dialogueKey}`;
+
+    if (dialogue.id !== dialogueKey) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "dialogue-id-mismatch",
+          "Dialogue ids must match their registry key.",
+          `${path}.id`
+        )
+      );
+    }
+
+    registerAuthoredId(dialogue.id, path, seenIds, diagnostics);
+    validateProjectDialogue(dialogue, path, seenIds, diagnostics);
+  }
+
+  for (const [sequenceKey, sequence] of Object.entries(document.sequences.sequences)) {
+    const path = `sequences.sequences.${sequenceKey}`;
+
+    if (sequence.id !== sequenceKey) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "sequence-id-mismatch",
+          "Sequence ids must match their registry key.",
+          `${path}.id`
+        )
+      );
+    }
+
+    registerAuthoredId(sequence.id, path, seenIds, diagnostics);
+    validateProjectSequence(
+      sequence,
+      path,
+      { dialogues: document.dialogues },
+      projectSchedulerValidationContext,
+      diagnostics
+    );
   }
 
   for (const [brushKey, brush] of Object.entries(document.brushes)) {
@@ -5566,7 +5610,8 @@ export function validateSceneDocument(
 
   validateProjectScheduler(
     document.scheduler,
-    createProjectSchedulerValidationContextFromSceneDocument(document),
+    document.sequences,
+    projectSchedulerValidationContext,
     diagnostics
   );
 
@@ -5593,6 +5638,8 @@ export function validateProjectDocument(
   document: ProjectDocument
 ): SceneDocumentValidationResult {
   const diagnostics: SceneDiagnostic[] = [];
+  const projectSchedulerValidationContext =
+    createProjectSchedulerValidationContextFromProjectDocument(document);
 
   if (document.name.trim().length === 0) {
     diagnostics.push(
@@ -5628,11 +5675,16 @@ export function validateProjectDocument(
   }
 
   validateProjectTimeSettings(document.time, diagnostics);
-  validateProjectResources(document, diagnostics);
+  validateProjectResources(
+    document,
+    projectSchedulerValidationContext,
+    diagnostics
+  );
 
   validateProjectScheduler(
     document.scheduler,
-    createProjectSchedulerValidationContextFromProjectDocument(document),
+    document.sequences,
+    projectSchedulerValidationContext,
     diagnostics
   );
 
