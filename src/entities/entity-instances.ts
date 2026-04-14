@@ -74,6 +74,7 @@ export interface NpcEntity extends PositionedEntity {
   presence: NpcPresence;
   yawDegrees: number;
   modelAssetId: string | null;
+  dialogueId: string | null;
   collider: NpcColliderSettings;
 }
 
@@ -410,6 +411,7 @@ export const DEFAULT_PLAYER_START_GAMEPAD_BINDINGS: PlayerStartGamepadBindings =
 export const DEFAULT_SCENE_ENTRY_YAW_DEGREES = 0;
 export const DEFAULT_NPC_YAW_DEGREES = 0;
 export const DEFAULT_NPC_MODEL_ASSET_ID: string | null = null;
+export const DEFAULT_NPC_DIALOGUE_ID: string | null = null;
 export const DEFAULT_NPC_COLLIDER_MODE: PlayerStartColliderMode = "capsule";
 export const DEFAULT_NPC_TIME_WINDOW_START_HOUR = 9;
 export const DEFAULT_NPC_TIME_WINDOW_END_HOUR = 17;
@@ -1289,6 +1291,17 @@ function normalizeNpcModelAssetId(
   return normalizedModelAssetId.length === 0 ? null : normalizedModelAssetId;
 }
 
+function normalizeNpcDialogueId(
+  dialogueId: string | null | undefined
+): string | null {
+  if (dialogueId === undefined || dialogueId === null) {
+    return null;
+  }
+
+  const normalizedDialogueId = dialogueId.trim();
+  return normalizedDialogueId.length === 0 ? null : normalizedDialogueId;
+}
+
 export function normalizeInteractablePrompt(prompt: string): string {
   const normalizedPrompt = prompt.trim();
 
@@ -1446,6 +1459,7 @@ export function createNpcEntity(
       | "presence"
       | "yawDegrees"
       | "modelAssetId"
+      | "dialogueId"
     >
   > & {
     collider?: Partial<NpcColliderSettings>;
@@ -1457,6 +1471,9 @@ export function createNpcEntity(
   const yawDegrees = overrides.yawDegrees ?? DEFAULT_NPC_YAW_DEGREES;
   const modelAssetId = normalizeNpcModelAssetId(
     overrides.modelAssetId ?? DEFAULT_NPC_MODEL_ASSET_ID
+  );
+  const dialogueId = normalizeNpcDialogueId(
+    overrides.dialogueId ?? DEFAULT_NPC_DIALOGUE_ID
   );
   const collider = createNpcColliderSettings(overrides.collider);
 
@@ -1477,6 +1494,7 @@ export function createNpcEntity(
     presence,
     yawDegrees: normalizeYawDegrees(yawDegrees),
     modelAssetId,
+    dialogueId,
     collider
   };
 }
@@ -1851,6 +1869,7 @@ export function areEntityInstancesEqual(left: EntityInstance, right: EntityInsta
         areNpcPresencesEqual(left.presence, typedRight.presence) &&
         left.yawDegrees === typedRight.yawDegrees &&
         left.modelAssetId === typedRight.modelAssetId &&
+        left.dialogueId === typedRight.dialogueId &&
         left.collider.mode === typedRight.collider.mode &&
         left.collider.eyeHeight === typedRight.collider.eyeHeight &&
         left.collider.capsuleRadius === typedRight.collider.capsuleRadius &&
