@@ -3906,7 +3906,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const applyProjectTimeSettings = (
     nextTime: ProjectTimeSettings,
     label: string,
-    successMessage: string
+    successMessage: string,
+    options: {
+      resetEditorSimulation?: boolean;
+    } = {}
   ) => {
     if (
       areProjectTimeSettingsEqual(editorState.projectDocument.time, nextTime)
@@ -3921,7 +3924,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
           time: nextTime
         })
       );
-      if (!editorSimulationPlaying) {
+      if (options.resetEditorSimulation === true && !editorSimulationPlaying) {
         setEditorSimulationClockOverride(null);
       }
       setStatusMessage(successMessage);
@@ -4003,7 +4006,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const updateProjectTimeSettings = (
     label: string,
     successMessage: string,
-    mutate: (time: ProjectTimeSettings) => void
+    mutate: (time: ProjectTimeSettings) => void,
+    options: {
+      resetEditorSimulation?: boolean;
+    } = {}
   ) => {
     try {
       const nextTime = cloneProjectTimeSettings(
@@ -4011,7 +4017,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
       );
       mutate(nextTime);
       assertProjectTimeSettingsAreOrdered(nextTime);
-      applyProjectTimeSettings(nextTime, label, successMessage);
+      applyProjectTimeSettings(nextTime, label, successMessage, options);
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
     }
@@ -4026,6 +4032,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
           projectTimeStartDayNumberDraft,
           "Project start day"
         );
+      },
+      {
+        resetEditorSimulation: true
       }
     );
   };
@@ -4041,6 +4050,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
             "Project start time"
           )
         );
+      },
+      {
+        resetEditorSimulation: true
       }
     );
   };
