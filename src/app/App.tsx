@@ -2479,6 +2479,22 @@ export function App({ store, initialStatusMessage }: AppProps) {
   }, [selectedPlayerStart?.id]);
 
   useEffect(() => {
+    if (
+      selectedDialogueId !== null &&
+      editorState.projectDocument.dialogues.dialogues[selectedDialogueId] !==
+        undefined
+    ) {
+      return;
+    }
+
+    setSelectedDialogueId(projectDialogueList[0]?.id ?? null);
+  }, [
+    editorState.projectDocument.dialogues.dialogues,
+    projectDialogueList,
+    selectedDialogueId
+  ]);
+
+  useEffect(() => {
     schedulePaneHeightRef.current = schedulePaneHeight;
   }, [schedulePaneHeight]);
 
