@@ -4367,6 +4367,101 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
+  const resolveSequenceControlTargetOption = (targetKey: string) =>
+    getProjectScheduleTargetOptionByKey(projectScheduleTargetOptions, targetKey);
+
+  const createDefaultProjectSequenceControlStep = (
+    stepClass: "held" | "impulse",
+    targetKey: string,
+    previousStep?: Extract<ProjectSequence["steps"][number], { type: "controlEffect" }> | null
+  ): Extract<ProjectSequence["steps"][number], { type: "controlEffect" }> => {
+    const targetOption = resolveSequenceControlTargetOption(targetKey);
+
+    if (targetOption === null) {
+      throw new Error("The selected sequence control target no longer exists.");
+    }
+
+    const effectOption = listProjectScheduleEffectOptions(targetOption)[0] ?? null;
+
+    if (effectOption === null) {
+      throw new Error(
+        "The selected control target does not expose a sequence-editable effect yet."
+      );
+    }
+
+    return {
+      stepClass,
+      type: "controlEffect",
+      effect: createProjectScheduleEffectFromOption({
+        targetOption,
+        effectOptionId: effectOption.id,
+        previousEffect: previousStep?.effect ?? null
+      })
+    };
+  };
+
+  const updateProjectSequence = (
+    sequenceId: string,
+    label: string,
+    successMessage: string,
+    mutate: (sequence: ProjectSequence) => void
+  ) => {
+    updateProjectSequences(label, successMessage, (sequences) => {
+      const sequence = sequences.sequences[sequenceId];
+
+      if (sequence === undefined) {
+        throw new Error("Selected project sequence no longer exists.");
+      }
+
+      mutate(sequence);
+    });
+  };
+
+  const updateProjectSequenceStep = (
+    sequenceId: string,
+    stepIndex: number,
+    label: string,
+    successMessage: string,
+    mutate: (step: ProjectSequence["steps"][number]) => void
+  ) => {
+    updateProjectSequence(sequenceId, label, successMessage, (sequence) => {
+      const step = sequence.steps[stepIndex];
+
+      if (step === undefined) {
+        throw new Error("Selected project sequence step no longer exists.");
+      }
+
+      mutate(step);
+    });
+  };
+
+  const handleAddProjectSequence = () => {
+    const nextSequence = createProjectSequence();
+
+    updateProjectSequences(
+      "Add project sequence",
+      "Added project sequence.",
+      (sequences) => {
+        sequences.sequences[nextSequence.id] = nextSequence;
+      }
+    );
+    setSelectedSequenceId(nextSequence.id);
+  };
+
+  const handleDeleteProjectSequence = (sequenceId: string) => {
+    updateProjectSequences(
+      "Delete project sequence",
+      "Deleted project sequence.",
+      (sequences) => {
+        delete sequences.sequences[sequenceId];
+      }
+    );
+
+    if (selectedSequenceId === sequenceId) {
+      setSelectedSequenceId(null);
+    }
+  };
+
   const updateProjectDialogue = (
     dialogueId: string,
     label: string,
