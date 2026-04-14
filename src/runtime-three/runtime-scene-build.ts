@@ -1447,6 +1447,7 @@ function buildRuntimeSceneCollections(
 
   const scheduler = resolveRuntimeProjectScheduleState({
     scheduler: document.scheduler,
+    sequences: document.sequences,
     actorIds: npcDefinitions.map((npc) => npc.actorId),
     dayNumber:
       runtimeClock === null
