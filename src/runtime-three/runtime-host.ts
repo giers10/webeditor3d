@@ -1045,6 +1045,15 @@ export class RuntimeHost {
       case "actorPresence":
         this.applyActorPresenceControl(state.target.actorId, state.value);
         return;
+      case "actorAnimationPlayback":
+        this.applyActorAnimationPlaybackControl(
+          state.target,
+          state.clipName,
+          state.loop
+        );
+        return;
+      case "actorPathAssignment":
+        return;
       case "modelVisibility":
         this.applyModelInstanceVisibilityControl(state.target, state.value);
         return;
@@ -1358,6 +1367,45 @@ export class RuntimeHost {
     }
   }
 
+  private applyActorAnimationPlaybackControl(
+    target: ActorControlTargetRef,
+    clipName: string | null,
+    loop: boolean | undefined
+  ) {
+    if (this.runtimeScene !== null) {
+      for (const npc of this.runtimeScene.npcDefinitions) {
+        if (npc.actorId !== target.actorId) {
+          continue;
+        }
+
+        const nextClipName = clipName;
+
+        if (
+          npc.animationClipName === nextClipName &&
+          npc.animationLoop === loop
+        ) {
+          continue;
+        }
+
+        npc.animationClipName = nextClipName;
+        npc.animationLoop = loop;
+      }
+    }
+
+    const npcIds =
+      this.runtimeScene?.npcDefinitions
+        .filter((npc) => npc.actorId === target.actorId)
+        .map((npc) => npc.entityId) ?? [];
+
+    for (const npcId of npcIds) {
+      if (clipName === null) {
+        this.applyStopAnimationAction(npcId);
+      } else {
+        this.applyPlayAnimationAction(npcId, clipName, loop);
+      }
+    }
+  }
+
   private applySoundVolumeControl(
     target: SoundEmitterControlTargetRef,
     volume: number
@@ -1448,6 +1496,18 @@ export class RuntimeHost {
     switch (effect.type) {
       case "setActorPresence":
         this.applyActorPresenceControl(effect.target.actorId, effect.active);
+        break;
+      case "playActorAnimation":
+        this.applyActorAnimationPlaybackControl(
+          effect.target,
+          effect.clipName,
+          effect.loop
+        );
+        break;
+      case "followActorPath":
+        console.warn(
+          "followActorPath is scheduler-owned in this slice and is ignored when dispatched directly."
+        );
         break;
       case "playModelAnimation":
         this.applyModelAnimationPlaybackControl(
