@@ -68,10 +68,17 @@ import {
   createPlayModelAnimationControlEffect,
   createPlaySoundControlEffect,
   createProjectGlobalControlTargetRef,
+  createSetAmbientLightColorControlEffect,
+  createSetAmbientLightIntensityControlEffect,
   createSetActorPresenceControlEffect,
   createSetInteractionEnabledControlEffect,
   createSetLightEnabledControlEffect,
+  createSetLightColorControlEffect,
   createSetLightIntensityControlEffect,
+  createSetModelInstanceVisibleControlEffect,
+  createSetSoundVolumeControlEffect,
+  createSetSunLightColorControlEffect,
+  createSetSunLightIntensityControlEffect,
   createSoundEmitterControlTargetRef,
   createStopModelAnimationControlEffect,
   createStopSoundControlEffect,
@@ -2979,6 +2986,14 @@ function readControlEffect(value: unknown, label: string): ControlEffect {
           `${label}.target`
         ) as ReturnType<typeof createModelInstanceControlTargetRef>
       });
+    case "setModelInstanceVisible":
+      return createSetModelInstanceVisibleControlEffect({
+        target: readControlTargetRef(
+          value.target,
+          `${label}.target`
+        ) as ReturnType<typeof createModelInstanceControlTargetRef>,
+        visible: expectBoolean(value.visible, `${label}.visible`)
+      });
     case "playSound":
       return createPlaySoundControlEffect({
         target: readControlTargetRef(
@@ -2992,6 +3007,14 @@ function readControlEffect(value: unknown, label: string): ControlEffect {
           value.target,
           `${label}.target`
         ) as ReturnType<typeof createSoundEmitterControlTargetRef>
+      });
+    case "setSoundVolume":
+      return createSetSoundVolumeControlEffect({
+        target: readControlTargetRef(
+          value.target,
+          `${label}.target`
+        ) as ReturnType<typeof createSoundEmitterControlTargetRef>,
+        volume: expectNonNegativeFiniteNumber(value.volume, `${label}.volume`)
       });
     case "setInteractionEnabled":
       return createSetInteractionEnabledControlEffect({
@@ -3019,6 +3042,52 @@ function readControlEffect(value: unknown, label: string): ControlEffect {
           value.intensity,
           `${label}.intensity`
         )
+      });
+    case "setLightColor":
+      return createSetLightColorControlEffect({
+        target: readControlTargetRef(
+          value.target,
+          `${label}.target`
+        ) as ReturnType<typeof createLightControlTargetRef>,
+        colorHex: expectString(value.colorHex, `${label}.colorHex`)
+      });
+    case "setAmbientLightIntensity":
+      return createSetAmbientLightIntensityControlEffect({
+        target: readControlTargetRef(
+          value.target,
+          `${label}.target`
+        ) as ReturnType<typeof createActiveSceneControlTargetRef>,
+        intensity: expectNonNegativeFiniteNumber(
+          value.intensity,
+          `${label}.intensity`
+        )
+      });
+    case "setAmbientLightColor":
+      return createSetAmbientLightColorControlEffect({
+        target: readControlTargetRef(
+          value.target,
+          `${label}.target`
+        ) as ReturnType<typeof createActiveSceneControlTargetRef>,
+        colorHex: expectString(value.colorHex, `${label}.colorHex`)
+      });
+    case "setSunLightIntensity":
+      return createSetSunLightIntensityControlEffect({
+        target: readControlTargetRef(
+          value.target,
+          `${label}.target`
+        ) as ReturnType<typeof createActiveSceneControlTargetRef>,
+        intensity: expectNonNegativeFiniteNumber(
+          value.intensity,
+          `${label}.intensity`
+        )
+      });
+    case "setSunLightColor":
+      return createSetSunLightColorControlEffect({
+        target: readControlTargetRef(
+          value.target,
+          `${label}.target`
+        ) as ReturnType<typeof createActiveSceneControlTargetRef>,
+        colorHex: expectString(value.colorHex, `${label}.colorHex`)
       });
     default:
       throw new Error(`${label}.type must be a supported control effect.`);

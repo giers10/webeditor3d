@@ -1268,6 +1268,10 @@ export class RuntimeHost {
       }
     }
 
+    if (!this.animationMixers.has(target.modelInstanceId)) {
+      return;
+    }
+
     if (clipName === null) {
       this.applyStopAnimationAction(target.modelInstanceId);
       return;
