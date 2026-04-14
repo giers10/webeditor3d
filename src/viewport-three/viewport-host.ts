@@ -185,6 +185,11 @@ import { resolveViewportFocusTarget } from "./viewport-focus";
 import {
   createSoundEmitterMarkerMeshes
 } from "./viewport-entity-markers";
+import {
+  resolveRuntimeDayNightWorldState,
+  type RuntimeClockState
+} from "../runtime-three/runtime-project-time";
+import type { RuntimeSceneDefinition } from "../runtime-three/runtime-scene-build";
 import { resolveTransformPointerDownIntent } from "./transform-pointer-intent";
 import { resolveDominantLocalAxisForWorldAxis } from "./transform-axis-mapping";
 import {
@@ -329,6 +334,7 @@ interface EntityRenderObjects {
 
 interface LocalLightRenderObjects {
   group: Group;
+  light: PointLight | SpotLight;
 }
 
 export class ViewportHost {
@@ -404,6 +410,8 @@ export class ViewportHost {
   >();
   private currentDocument: SceneDocument | null = null;
   private currentWorld: WorldSettings | null = null;
+  private currentSimulationScene: RuntimeSceneDefinition | null = null;
+  private currentSimulationClock: RuntimeClockState | null = null;
   private currentAdvancedRenderingSettings: AdvancedRenderingSettings | null =
     null;
   private advancedRenderingComposer: EffectComposer | null = null;
@@ -630,6 +638,23 @@ export class ViewportHost {
   updateWorld(world: WorldSettings) {
     this.currentWorld = world;
     this.applyWorld();
+  }
+
+  updateSimulation(
+    runtimeScene: RuntimeSceneDefinition | null,
+    clock: RuntimeClockState | null
+  ) {
+    this.currentSimulationScene = runtimeScene;
+    this.currentSimulationClock = clock;
+    this.applyWorld();
+
+    if (this.currentDocument === null) {
+      return;
+    }
+
+    this.rebuildLocalLights(this.currentDocument);
+    this.rebuildEntityMarkers(this.currentDocument, this.currentSelection);
+    this.rebuildModelInstances(this.currentDocument, this.currentSelection);
   }
 
   updateDocument(document: SceneDocument, selection: EditorSelection) {
@@ -1240,23 +1265,36 @@ export class ViewportHost {
       return;
     }
 
-    const world = this.currentWorld;
+    const world = this.currentSimulationScene?.world ?? this.currentWorld;
+    const resolvedWorld =
+      this.currentSimulationScene !== null && this.currentSimulationClock !== null
+        ? resolveRuntimeDayNightWorldState(
+            world,
+            this.currentSimulationScene.time,
+            this.currentSimulationClock
+          )
+        : null;
     const rendererSettings =
       this.displayMode !== "normal"
         ? {
-            ...cloneAdvancedRenderingSettings(world.advancedRendering),
-            enabled: false
-          }
+          ...cloneAdvancedRenderingSettings(world.advancedRendering),
+          enabled: false
+        }
         : world.advancedRendering;
-    this.ambientLight.color.set(world.ambientLight.colorHex);
-    this.ambientLight.intensity = world.ambientLight.intensity;
-    this.sunLight.color.set(world.sunLight.colorHex);
-    this.sunLight.intensity = world.sunLight.intensity;
+    const displayedAmbientLight =
+      resolvedWorld?.ambientLight ?? world.ambientLight;
+    const displayedSunLight = resolvedWorld?.sunLight ?? world.sunLight;
+    const displayedBackground = resolvedWorld?.background ?? world.background;
+
+    this.ambientLight.color.set(displayedAmbientLight.colorHex);
+    this.ambientLight.intensity = displayedAmbientLight.intensity;
+    this.sunLight.color.set(displayedSunLight.colorHex);
+    this.sunLight.intensity = displayedSunLight.intensity;
     this.sunLight.position
       .set(
-        world.sunLight.direction.x,
-        world.sunLight.direction.y,
-        world.sunLight.direction.z
+        displayedSunLight.direction.x,
+        displayedSunLight.direction.y,
+        displayedSunLight.direction.z
       )
       .normalize()
       .multiplyScalar(18);
@@ -1268,12 +1306,12 @@ export class ViewportHost {
       this.scene.background = null;
       this.scene.environment = null;
       this.scene.environmentIntensity = 1;
-    } else if (world.background.mode === "image") {
+    } else if (displayedBackground.mode === "image") {
       const texture =
-        this.loadedImageAssets[world.background.assetId]?.texture ?? null;
+        this.loadedImageAssets[displayedBackground.assetId]?.texture ?? null;
       this.scene.background = texture;
       this.scene.environment = texture;
-      this.scene.environmentIntensity = world.background.environmentIntensity;
+      this.scene.environmentIntensity = displayedBackground.environmentIntensity;
     } else {
       this.scene.background = null;
       this.scene.environment = null;
@@ -3397,6 +3435,27 @@ export class ViewportHost {
   private rebuildLocalLights(document: SceneDocument) {
     this.clearLocalLights();
 
+    if (this.currentSimulationScene !== null) {
+      for (const pointLight of this.currentSimulationScene.localLights.pointLights) {
+        const renderObjects = this.createPointLightRuntimeObjects(pointLight);
+        renderObjects.group.visible =
+          pointLight.enabled && this.displayMode !== "wireframe";
+        this.localLightGroup.add(renderObjects.group);
+        this.localLightRenderObjects.set(pointLight.entityId, renderObjects);
+      }
+
+      for (const spotLight of this.currentSimulationScene.localLights.spotLights) {
+        const renderObjects = this.createSpotLightRuntimeObjects(spotLight);
+        renderObjects.group.visible =
+          spotLight.enabled && this.displayMode !== "wireframe";
+        this.localLightGroup.add(renderObjects.group);
+        this.localLightRenderObjects.set(spotLight.entityId, renderObjects);
+      }
+
+      this.applyShadowState();
+      return;
+    }
+
     for (const entity of getEntityInstances(document.entities)) {
       if (!entity.enabled) {
         continue;
@@ -3694,6 +3753,23 @@ export class ViewportHost {
     selection: EditorSelection
   ) {
     this.clearEntityMarkers();
+    const runtimeNpcDefinitionsByEntityId = new Map(
+      (this.currentSimulationScene?.npcDefinitions ?? []).map((npc) => [
+        npc.entityId,
+        npc
+      ])
+    );
+    const runtimeInteractablesByEntityId = new Map(
+      (this.currentSimulationScene?.entities.interactables ?? []).map(
+        (interactable) => [interactable.entityId, interactable]
+      )
+    );
+    const runtimeSceneExitsByEntityId = new Map(
+      (this.currentSimulationScene?.entities.sceneExits ?? []).map((sceneExit) => [
+        sceneExit.entityId,
+        sceneExit
+      ])
+    );
 
     for (const entity of getEntityInstances(document.entities)) {
       if (!entity.enabled || !entity.visible) {
@@ -3702,7 +3778,59 @@ export class ViewportHost {
 
       const selected =
         selection.kind === "entities" && selection.ids.includes(entity.id);
-      const renderObjects = this.createEntityRenderObjects(entity, selected);
+      let renderObjects: EntityRenderObjects | null = null;
+
+      switch (entity.kind) {
+        case "npc": {
+          const runtimeNpc = runtimeNpcDefinitionsByEntityId.get(entity.id);
+
+          if (runtimeNpc !== undefined) {
+            if (!runtimeNpc.active || !runtimeNpc.visible) {
+              continue;
+            }
+
+            renderObjects = this.createNpcRenderObjects(
+              {
+                ...entity,
+                position: runtimeNpc.position,
+                yawDegrees: runtimeNpc.yawDegrees
+              },
+              selected
+            );
+            break;
+          }
+
+          renderObjects = this.createEntityRenderObjects(entity, selected);
+          break;
+        }
+        case "interactable": {
+          const runtimeInteractable =
+            runtimeInteractablesByEntityId.get(entity.id) ?? null;
+          renderObjects = this.createInteractableRenderObjects(
+            entity.id,
+            entity.position,
+            entity.radius,
+            selected,
+            runtimeInteractable?.interactionEnabled ?? entity.interactionEnabled
+          );
+          break;
+        }
+        case "sceneExit": {
+          const runtimeSceneExit = runtimeSceneExitsByEntityId.get(entity.id) ?? null;
+          renderObjects = this.createInteractableRenderObjects(
+            entity.id,
+            entity.position,
+            entity.radius,
+            selected,
+            runtimeSceneExit?.interactionEnabled ?? entity.interactionEnabled,
+            selected ? SCENE_EXIT_SELECTED_COLOR : SCENE_EXIT_COLOR
+          );
+          break;
+        }
+        default:
+          renderObjects = this.createEntityRenderObjects(entity, selected);
+          break;
+      }
 
       if (this.displayMode === "wireframe") {
         this.applyWireframePresentation(renderObjects.group);
