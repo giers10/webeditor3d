@@ -4192,6 +4192,124 @@ function validateProjectSchedulerEffect(
         );
       }
       return;
+    case "playActorAnimation": {
+      const usage = validateProjectSchedulerSingleActorUsage(
+        effect.target,
+        `${path}.target`,
+        context,
+        diagnostics,
+        "Actor animation scheduling"
+      );
+
+      if (effect.clipName.trim().length === 0) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-control-actor-animation-clip-name",
+            "Actor animation clip names must be non-empty.",
+            `${path}.clipName`
+          )
+        );
+        return;
+      }
+
+      if (usage === null) {
+        return;
+      }
+
+      if (!usage.animationNames.includes(effect.clipName)) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "missing-control-actor-animation-clip",
+            `Actor animation clip ${effect.clipName} does not exist on the uniquely bound NPC model asset.`,
+            `${path}.clipName`
+          )
+        );
+      }
+      return;
+    }
+    case "followActorPath": {
+      const usage = validateProjectSchedulerSingleActorUsage(
+        effect.target,
+        `${path}.target`,
+        context,
+        diagnostics,
+        "Actor path scheduling"
+      );
+
+      if (effect.pathId.trim().length === 0) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-control-actor-path-id",
+            "Actor path ids must be non-empty.",
+            `${path}.pathId`
+          )
+        );
+      }
+
+      if (!isPositiveFiniteNumber(effect.speed)) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-control-actor-path-speed",
+            "Actor path speed must remain finite and greater than zero.",
+            `${path}.speed`
+          )
+        );
+      }
+
+      if (!isBoolean(effect.loop)) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-control-actor-path-loop",
+            "Actor path loop must remain a boolean.",
+            `${path}.loop`
+          )
+        );
+      }
+
+      if (!isActorPathProgressMode(effect.progressMode)) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-control-actor-path-progress-mode",
+            "Actor path progress mode must use a supported typed value.",
+            `${path}.progressMode`
+          )
+        );
+      }
+
+      if (usage === null) {
+        return;
+      }
+
+      if (!usage.pathIds.has(effect.pathId)) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "missing-control-actor-path",
+            `Actor path ${effect.pathId} does not exist in the uniquely bound NPC scene.`,
+            `${path}.pathId`
+          )
+        );
+        return;
+      }
+
+      if (!usage.enabledPathIds.has(effect.pathId)) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "disabled-control-actor-path",
+            "Actor follow-path routines require an enabled authored path.",
+            `${path}.pathId`
+          )
+        );
+      }
+      return;
+    }
     case "playModelAnimation": {
       validateProjectSchedulerModelTarget(
         effect.target,
