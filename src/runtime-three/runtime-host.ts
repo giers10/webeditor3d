@@ -1834,6 +1834,10 @@ export class RuntimeHost {
         npc.modelAssetId === null
           ? null
           : (this.projectAssets[npc.modelAssetId] ?? null);
+      const loadedAsset =
+        npc.modelAssetId === null
+          ? null
+          : (this.loadedModelAssets[npc.modelAssetId] ?? null);
       const renderGroup =
         npc.modelAssetId === null || asset?.kind !== "model"
           ? this.createNpcColliderFallbackRenderGroup(npc)
@@ -1862,12 +1866,32 @@ export class RuntimeHost {
                 }
               },
               asset,
-              this.loadedModelAssets[npc.modelAssetId],
+              loadedAsset,
               false
             );
       renderGroup.visible = npc.visible && npc.active;
       this.modelGroup.add(renderGroup);
       this.modelRenderObjects.set(npc.entityId, renderGroup);
+
+      if (loadedAsset?.animations && loadedAsset.animations.length > 0) {
+        const mixer = new AnimationMixer(renderGroup);
+        this.animationMixers.set(npc.entityId, mixer);
+        this.instanceAnimationClips.set(npc.entityId, loadedAsset.animations);
+
+        if (npc.animationClipName !== null) {
+          const clip = AnimationClip.findByName(
+            loadedAsset.animations,
+            npc.animationClipName
+          );
+
+          if (clip) {
+            const action = mixer.clipAction(clip);
+            action.loop = npc.animationLoop === false ? LoopOnce : LoopRepeat;
+            action.clampWhenFinished = npc.animationLoop === false;
+            action.reset().play();
+          }
+        }
+      }
     }
 
     this.applyShadowState();
