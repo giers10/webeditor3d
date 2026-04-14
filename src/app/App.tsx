@@ -2355,6 +2355,15 @@ export function App({ store, initialStatusMessage }: AppProps) {
       createDefaultRuntimeGlobalState(editorState.projectDocument.time)
     );
   const [runtimeMessage, setRuntimeMessage] = useState<string | null>(null);
+  const [editorSimulationClockOverride, setEditorSimulationClockOverride] =
+    useState<RuntimeClockState | null>(null);
+  const [editorSimulationPlaying, setEditorSimulationPlaying] =
+    useState(false);
+  const [editorSimulationScene, setEditorSimulationScene] =
+    useState<RuntimeSceneDefinition | null>(null);
+  const [editorSimulationMessage, setEditorSimulationMessage] = useState<
+    string | null
+  >(null);
   const [firstPersonTelemetry, setFirstPersonTelemetry] =
     useState<FirstPersonTelemetry | null>(null);
   const [runtimeInteractionPrompt, setRuntimeInteractionPrompt] =
