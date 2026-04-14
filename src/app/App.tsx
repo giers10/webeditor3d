@@ -370,7 +370,6 @@ import { ProjectDialoguesPanel } from "./ProjectDialoguesPanel";
 import { ProjectSequencesPanel } from "./ProjectSequencesPanel";
 import { ProjectSequencerPane } from "./ProjectSequencerPane";
 import {
-  getProjectSequenceHeldSteps,
   getProjectSequenceImpulseSteps
 } from "../sequencer/project-sequence-steps";
 import {
