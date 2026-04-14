@@ -715,6 +715,28 @@ function createVec3Draft(vector: Vec3): Vec3Draft {
   };
 }
 
+function offsetRuntimeClockState(
+  state: RuntimeClockState,
+  deltaHours: number
+): RuntimeClockState {
+  const totalHours = Math.max(
+    0,
+    state.dayCount * HOURS_PER_DAY + state.timeOfDayHours + deltaHours
+  );
+
+  return {
+    timeOfDayHours: normalizeTimeOfDayHours(totalHours),
+    dayCount: Math.floor(totalHours / HOURS_PER_DAY),
+    dayLengthMinutes: state.dayLengthMinutes
+  };
+}
+
+function formatRuntimeDayPhaseLabel(
+  dayPhase: ReturnType<typeof resolveRuntimeTimeState>["dayPhase"]
+): string {
+  return dayPhase.charAt(0).toUpperCase() + dayPhase.slice(1);
+}
+
 function createPlayerStartMovementTemplateNumberDraft(
   template: PlayerStartMovementTemplate
 ): PlayerStartMovementTemplateNumberDraft {
