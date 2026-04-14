@@ -7352,6 +7352,38 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
   };
 
+  const handleAddSequenceInteractionLink = () => {
+    if (selectedInteractionSource === null) {
+      setStatusMessage(
+        "Select a Trigger Volume or Interactable before adding links."
+      );
+      return;
+    }
+
+    const defaultSequence = projectImpulseSequenceList[0] ?? null;
+
+    if (defaultSequence === null) {
+      setStatusMessage(
+        "Author a project sequence with at least one impulse step before adding a sequence link."
+      );
+      return;
+    }
+
+    store.executeCommand(
+      createUpsertInteractionLinkCommand({
+        link: createRunSequenceInteractionLink({
+          sourceEntityId: selectedInteractionSource.id,
+          trigger: getDefaultInteractionLinkTrigger(selectedInteractionSource),
+          sequenceId: defaultSequence.id
+        }),
+        label: "Add run sequence interaction link"
+      })
+    );
+    setStatusMessage(
+      `Added a sequence link to the selected ${selectedInteractionSource.kind === "triggerVolume" ? "Trigger Volume" : "Interactable"}.`
+    );
+  };
+
   const handleDeleteInteractionLink = (linkId: string) => {
     try {
       store.executeCommand(createDeleteInteractionLinkCommand(linkId));
