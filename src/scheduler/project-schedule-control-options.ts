@@ -1,8 +1,8 @@
-import type { ProjectDocument } from "../document/scene-document";
-import type { ControlCapabilityKind, ControlEffect, ControlTargetRef } from "../controls/control-surface";
+import type { ProjectDocument, ProjectScene } from "../document/scene-document";
 import {
   createActiveSceneControlTargetRef,
   createActorControlTargetRef,
+  createInteractionControlTargetRef,
   createLightControlTargetRef,
   createModelInstanceControlTargetRef,
   createPlayModelAnimationControlEffect,
@@ -21,92 +21,305 @@ import {
   createSoundEmitterControlTargetRef,
   createStopModelAnimationControlEffect,
   createStopSoundControlEffect,
-  createInteractionControlTargetRef,
-  getControlEffectResolutionKey,
-  getControlTargetRefKey
+  formatControlTargetRef,
+  getControlTargetRefKey,
+  type ControlEffect,
+  type ControlTargetRef
 } from "../controls/control-surface";
-import { getEntityInstances } from "../entities/entity-instances";
+import { getModelInstances } from "../assets/model-instances";
+import { getModelInstanceDisplayLabel } from "../assets/model-instance-labels";
+import { getEntityDisplayLabel, getSortedEntityDisplayLabels } from "../entities/entity-labels";
 import { listProjectNpcActors } from "../entities/npc-actor-registry";
+
+export const PROJECT_SCHEDULE_EFFECT_OPTION_IDS = [
+  "actor.present",
+  "actor.hidden",
+  "model.playAnimation",
+  "model.stopAnimation",
+  "model.visible",
+  "model.hidden",
+  "sound.play",
+  "sound.stop",
+  "sound.volume",
+  "interaction.enabled",
+  "interaction.disabled",
+  "light.enabled",
+  "light.disabled",
+  "light.intensity",
+  "light.color",
+  "scene.ambientIntensity",
+  "scene.ambientColor",
+  "scene.sunIntensity",
+  "scene.sunColor"
+] as const;
+
+export type ProjectScheduleEffectOptionId =
+  (typeof PROJECT_SCHEDULE_EFFECT_OPTION_IDS)[number];
+
+export interface ProjectScheduleEffectOption {
+  id: ProjectScheduleEffectOptionId;
+  label: string;
+  valueKind: "none" | "number" | "color" | "animation";
+  valueLabel?: string;
+  min?: number;
+  step?: number;
+}
+
+export interface ProjectScheduleTargetOptionDefaults {
+  animationClipNames?: string[];
+  animationLoop?: boolean;
+  soundVolume?: number;
+  lightIntensity?: number;
+  lightColorHex?: string;
+  ambientLightIntensity?: number;
+  ambientLightColorHex?: string;
+  sunLightIntensity?: number;
+  sunLightColorHex?: string;
+}
 
 export interface ProjectScheduleTargetOption {
   key: string;
   target: ControlTargetRef;
   label: string;
   subtitle: string;
-  group:
-    | "actors"
-    | "models"
-    | "audio"
-    | "interactions"
-    | "lights"
-    | "scene";
-  capabilities: ControlCapabilityKind[];
-  animationClipNames: string[];
-  defaultColorHex?: string;
-  defaultIntensity?: number;
-  defaultVolume?: number;
-  defaultAmbientColorHex?: string;
-  defaultAmbientIntensity?: number;
-  defaultSunColorHex?: string;
-  defaultSunIntensity?: number;
+  groupLabel: string;
+  defaults: ProjectScheduleTargetOptionDefaults;
 }
 
-export interface ProjectScheduleEffectOption {
-  id: string;
-  label: string;
-}
-
-const TARGET_GROUP_ORDER: Record<ProjectScheduleTargetOption["group"], number> = {
-  actors: 0,
-  models: 1,
-  audio: 2,
-  interactions: 3,
-  lights: 4,
-  scene: 5
+const PROJECT_SCHEDULE_GROUP_ORDER: Record<string, number> = {
+  "Scene Lighting": 0,
+  Actors: 1,
+  "Model Instances": 2,
+  "Sound Emitters": 3,
+  Interactions: 4,
+  Lights: 5,
+  Other: 6
 };
+
+const PROJECT_SCHEDULE_EFFECT_OPTIONS: Record<
+  ProjectScheduleEffectOptionId,
+  ProjectScheduleEffectOption
+> = {
+  "actor.present": {
+    id: "actor.present",
+    label: "Present",
+    valueKind: "none"
+  },
+  "actor.hidden": {
+    id: "actor.hidden",
+    label: "Hidden",
+    valueKind: "none"
+  },
+  "model.playAnimation": {
+    id: "model.playAnimation",
+    label: "Play Animation",
+    valueKind: "animation"
+  },
+  "model.stopAnimation": {
+    id: "model.stopAnimation",
+    label: "Stop Animation",
+    valueKind: "none"
+  },
+  "model.visible": {
+    id: "model.visible",
+    label: "Visible",
+    valueKind: "none"
+  },
+  "model.hidden": {
+    id: "model.hidden",
+    label: "Hidden",
+    valueKind: "none"
+  },
+  "sound.play": {
+    id: "sound.play",
+    label: "Play Sound",
+    valueKind: "none"
+  },
+  "sound.stop": {
+    id: "sound.stop",
+    label: "Stop Sound",
+    valueKind: "none"
+  },
+  "sound.volume": {
+    id: "sound.volume",
+    label: "Set Volume",
+    valueKind: "number",
+    valueLabel: "Volume",
+    min: 0,
+    step: 0.05
+  },
+  "interaction.enabled": {
+    id: "interaction.enabled",
+    label: "Enabled",
+    valueKind: "none"
+  },
+  "interaction.disabled": {
+    id: "interaction.disabled",
+    label: "Disabled",
+    valueKind: "none"
+  },
+  "light.enabled": {
+    id: "light.enabled",
+    label: "Enabled",
+    valueKind: "none"
+  },
+  "light.disabled": {
+    id: "light.disabled",
+    label: "Disabled",
+    valueKind: "none"
+  },
+  "light.intensity": {
+    id: "light.intensity",
+    label: "Set Intensity",
+    valueKind: "number",
+    valueLabel: "Intensity",
+    min: 0,
+    step: 0.1
+  },
+  "light.color": {
+    id: "light.color",
+    label: "Set Color",
+    valueKind: "color",
+    valueLabel: "Color"
+  },
+  "scene.ambientIntensity": {
+    id: "scene.ambientIntensity",
+    label: "Ambient Intensity",
+    valueKind: "number",
+    valueLabel: "Intensity",
+    min: 0,
+    step: 0.1
+  },
+  "scene.ambientColor": {
+    id: "scene.ambientColor",
+    label: "Ambient Color",
+    valueKind: "color",
+    valueLabel: "Color"
+  },
+  "scene.sunIntensity": {
+    id: "scene.sunIntensity",
+    label: "Sun Intensity",
+    valueKind: "number",
+    valueLabel: "Intensity",
+    min: 0,
+    step: 0.1
+  },
+  "scene.sunColor": {
+    id: "scene.sunColor",
+    label: "Sun Color",
+    valueKind: "color",
+    valueLabel: "Color"
+  }
+};
+
+function compareProjectScheduleTargetOptions(
+  left: ProjectScheduleTargetOption,
+  right: ProjectScheduleTargetOption
+): number {
+  return (
+    (PROJECT_SCHEDULE_GROUP_ORDER[left.groupLabel] ?? PROJECT_SCHEDULE_GROUP_ORDER.Other) -
+      (PROJECT_SCHEDULE_GROUP_ORDER[right.groupLabel] ?? PROJECT_SCHEDULE_GROUP_ORDER.Other) ||
+    left.label.localeCompare(right.label) ||
+    left.subtitle.localeCompare(right.subtitle) ||
+    left.key.localeCompare(right.key)
+  );
+}
+
+function getSceneTargetSubtitle(scene: ProjectScene): string {
+  return `${scene.name} · ${scene.id}`;
+}
+
+function createSceneLightingTargetOption(
+  projectDocument: ProjectDocument
+): ProjectScheduleTargetOption {
+  const activeScene =
+    projectDocument.scenes[projectDocument.activeSceneId] ??
+    Object.values(projectDocument.scenes)[0];
+
+  return {
+    key: getControlTargetRefKey(createActiveSceneControlTargetRef()),
+    target: createActiveSceneControlTargetRef(),
+    label: "Active Scene Lighting",
+    subtitle:
+      activeScene === undefined
+        ? "Ambient and sun lighting of the active scene."
+        : `Ambient and sun lighting · ${getSceneTargetSubtitle(activeScene)}`,
+    groupLabel: "Scene Lighting",
+    defaults: {
+      ambientLightIntensity: activeScene?.world.ambientLight.intensity ?? 1,
+      ambientLightColorHex: activeScene?.world.ambientLight.colorHex ?? "#ffffff",
+      sunLightIntensity: activeScene?.world.sunLight.intensity ?? 1,
+      sunLightColorHex: activeScene?.world.sunLight.colorHex ?? "#ffffff"
+    }
+  };
+}
+
+function createFallbackProjectScheduleTargetOption(
+  target: ControlTargetRef
+): ProjectScheduleTargetOption {
+  return {
+    key: getControlTargetRefKey(target),
+    target,
+    label: formatControlTargetRef(target),
+    subtitle: "Target is missing or no longer available in the current project.",
+    groupLabel: "Other",
+    defaults: {}
+  };
+}
 
 export function listProjectScheduleTargetOptions(
   projectDocument: ProjectDocument
 ): ProjectScheduleTargetOption[] {
-  const options: ProjectScheduleTargetOption[] = [];
+  const options = new Map<string, ProjectScheduleTargetOption>();
+
+  const pushOption = (option: ProjectScheduleTargetOption) => {
+    if (!options.has(option.key)) {
+      options.set(option.key, option);
+    }
+  };
+
+  pushOption(createSceneLightingTargetOption(projectDocument));
 
   for (const actor of listProjectNpcActors(projectDocument)) {
-    const target = createActorControlTargetRef(actor.actorId);
-    options.push({
-      key: getControlTargetRefKey(target),
-      target,
+    const usageLabel =
+      actor.usages.length > 1 ? `${actor.usages.length} usages` : actor.actorId;
+
+    pushOption({
+      key: getControlTargetRefKey(createActorControlTargetRef(actor.actorId)),
+      target: createActorControlTargetRef(actor.actorId),
       label: actor.label,
-      subtitle: actor.actorId,
-      group: "actors",
-      capabilities: ["actorPresence"],
-      animationClipNames: []
+      subtitle: usageLabel,
+      groupLabel: "Actors",
+      defaults: {}
     });
   }
 
   for (const scene of Object.values(projectDocument.scenes)) {
-    for (const modelInstance of Object.values(scene.modelInstances)) {
+    for (const modelInstance of getModelInstances(scene.modelInstances)) {
       const asset = projectDocument.assets[modelInstance.assetId];
-      const animationClipNames =
-        asset?.kind === "model" ? [...asset.metadata.animationNames] : [];
       const target = createModelInstanceControlTargetRef(modelInstance.id);
-      const capabilities: ControlCapabilityKind[] = ["modelVisibility"];
+      const animationClipNames =
+        asset !== undefined && asset.kind === "model"
+          ? [...asset.metadata.animationNames]
+          : [];
 
-      if (animationClipNames.length > 0) {
-        capabilities.unshift("animationPlayback");
-      }
-
-      options.push({
+      pushOption({
         key: getControlTargetRefKey(target),
         target,
-        label: modelInstance.name?.trim() || modelInstance.id,
-        subtitle: `${scene.name} · Model Instance`,
-        group: "models",
-        capabilities,
-        animationClipNames
+        label: getModelInstanceDisplayLabel(modelInstance, projectDocument.assets),
+        subtitle: getSceneTargetSubtitle(scene),
+        groupLabel: "Model Instances",
+        defaults: {
+          animationClipNames,
+          animationLoop: modelInstance.animationLoop ?? true
+        }
       });
     }
 
-    for (const entity of getEntityInstances(scene.entities)) {
+    for (const { entity, label } of getSortedEntityDisplayLabels(
+      scene.entities,
+      projectDocument.assets
+    )) {
       switch (entity.kind) {
         case "soundEmitter": {
           if (entity.audioAssetId === null) {
@@ -114,71 +327,74 @@ export function listProjectScheduleTargetOptions(
           }
 
           const target = createSoundEmitterControlTargetRef(entity.id);
-          options.push({
+
+          pushOption({
             key: getControlTargetRefKey(target),
             target,
-            label: entity.name?.trim() || entity.id,
-            subtitle: `${scene.name} · Sound Emitter`,
-            group: "audio",
-            capabilities: ["soundPlayback", "soundVolume"],
-            animationClipNames: [],
-            defaultVolume: entity.volume
+            label,
+            subtitle: getSceneTargetSubtitle(scene),
+            groupLabel: "Sound Emitters",
+            defaults: {
+              soundVolume: entity.volume
+            }
           });
           break;
         }
         case "interactable": {
           const target = createInteractionControlTargetRef("interactable", entity.id);
-          options.push({
+
+          pushOption({
             key: getControlTargetRefKey(target),
             target,
-            label: entity.name?.trim() || entity.prompt || entity.id,
-            subtitle: `${scene.name} · Interactable`,
-            group: "interactions",
-            capabilities: ["interactionAvailability"],
-            animationClipNames: []
+            label,
+            subtitle: getSceneTargetSubtitle(scene),
+            groupLabel: "Interactions",
+            defaults: {}
           });
           break;
         }
         case "sceneExit": {
           const target = createInteractionControlTargetRef("sceneExit", entity.id);
-          options.push({
+
+          pushOption({
             key: getControlTargetRefKey(target),
             target,
-            label: entity.name?.trim() || entity.prompt || entity.id,
-            subtitle: `${scene.name} · Scene Exit`,
-            group: "interactions",
-            capabilities: ["interactionAvailability"],
-            animationClipNames: []
+            label,
+            subtitle: getSceneTargetSubtitle(scene),
+            groupLabel: "Interactions",
+            defaults: {}
           });
           break;
         }
         case "pointLight": {
           const target = createLightControlTargetRef("pointLight", entity.id);
-          options.push({
+
+          pushOption({
             key: getControlTargetRefKey(target),
             target,
-            label: entity.name?.trim() || entity.id,
-            subtitle: `${scene.name} · Point Light`,
-            group: "lights",
-            capabilities: ["lightEnabled", "lightIntensity", "lightColor"],
-            animationClipNames: [],
-            defaultColorHex: entity.colorHex,
-            defaultIntensity: entity.intensity
+            label,
+            subtitle: getSceneTargetSubtitle(scene),
+            groupLabel: "Lights",
+            defaults: {
+              lightIntensity: entity.intensity,
+              lightColorHex: entity.colorHex
+            }
           });
           break;
         }
         case "spotLight": {
           const target = createLightControlTargetRef("spotLight", entity.id);
-          options.push({
+
+          pushOption({
             key: getControlTargetRefKey(target),
             target,
-            label: entity.name?.trim() || entity.id,
-            subtitle: `${scene.name} · Spot Light`,
-            group: "lights",
-            capabilities: ["lightEnabled", "lightIntensity", "lightColor"],
-            animationClipNames: [],
-            defaultColorHex: entity.colorHex,
-            defaultIntensity: entity.intensity
+            label,
+            subtitle: getSceneTargetSubtitle(scene),
+            groupLabel: "Lights",
+            defaults: {
+              lightIntensity: entity.intensity,
+              lightColorHex: entity.colorHex
+            }
           });
           break;
         }
@@ -186,48 +402,27 @@ export function listProjectScheduleTargetOptions(
     }
   }
 
-  const sceneTarget = createActiveSceneControlTargetRef();
-  options.push({
-    key: getControlTargetRefKey(sceneTarget),
-    target: sceneTarget,
-    label: "Active Scene Lighting",
-    subtitle: "Ambient and sun light for the currently active scene",
-    group: "scene",
-    capabilities: [
-      "ambientLightIntensity",
-      "ambientLightColor",
-      "sunLightIntensity",
-      "sunLightColor"
-    ],
-    animationClipNames: [],
-    defaultAmbientColorHex: projectDocument.scenes[projectDocument.activeSceneId]?.world
-      .ambientLight.colorHex,
-    defaultAmbientIntensity: projectDocument.scenes[projectDocument.activeSceneId]?.world
-      .ambientLight.intensity,
-    defaultSunColorHex: projectDocument.scenes[projectDocument.activeSceneId]?.world
-      .sunLight.colorHex,
-    defaultSunIntensity: projectDocument.scenes[projectDocument.activeSceneId]?.world
-      .sunLight.intensity
-  });
-
-  return options.sort((left, right) => {
-    return (
-      TARGET_GROUP_ORDER[left.group] - TARGET_GROUP_ORDER[right.group] ||
-      left.label.localeCompare(right.label) ||
-      left.subtitle.localeCompare(right.subtitle) ||
-      left.key.localeCompare(right.key)
-    );
-  });
+  return [...options.values()].sort(compareProjectScheduleTargetOptions);
 }
 
-export function findProjectScheduleTargetOption(
+export function getProjectScheduleTargetOptionByKey(
   targetOptions: ProjectScheduleTargetOption[],
-  target: ControlTargetRef
+  targetKey: string
 ): ProjectScheduleTargetOption | null {
-  const targetKey = getControlTargetRefKey(target);
-
   return (
     targetOptions.find((candidate) => candidate.key === targetKey) ?? null
+  );
+}
+
+export function getProjectScheduleTargetOptionForRoutine(
+  targetOptions: ProjectScheduleTargetOption[],
+  target: ControlTargetRef
+): ProjectScheduleTargetOption {
+  return (
+    getProjectScheduleTargetOptionByKey(
+      targetOptions,
+      getControlTargetRefKey(target)
+    ) ?? createFallbackProjectScheduleTargetOption(target)
   );
 }
 
@@ -237,62 +432,60 @@ export function listProjectScheduleEffectOptions(
   switch (targetOption.target.kind) {
     case "actor":
       return [
-        { id: "actor.present", label: "Present" },
-        { id: "actor.hidden", label: "Hidden" }
+        PROJECT_SCHEDULE_EFFECT_OPTIONS["actor.present"],
+        PROJECT_SCHEDULE_EFFECT_OPTIONS["actor.hidden"]
       ];
     case "modelInstance": {
-      const options: ProjectScheduleEffectOption[] = [
-        { id: "model.visible", label: "Visible" },
-        { id: "model.hidden", label: "Hidden" }
-      ];
+      const options: ProjectScheduleEffectOption[] = [];
 
-      if (targetOption.animationClipNames.length > 0) {
-        options.unshift(
-          { id: "model.playAnimation", label: "Play Animation" },
-          { id: "model.stopAnimation", label: "Stop Animation" }
+      if ((targetOption.defaults.animationClipNames?.length ?? 0) > 0) {
+        options.push(
+          PROJECT_SCHEDULE_EFFECT_OPTIONS["model.playAnimation"],
+          PROJECT_SCHEDULE_EFFECT_OPTIONS["model.stopAnimation"]
         );
       }
 
+      options.push(
+        PROJECT_SCHEDULE_EFFECT_OPTIONS["model.visible"],
+        PROJECT_SCHEDULE_EFFECT_OPTIONS["model.hidden"]
+      );
       return options;
     }
     case "entity":
-      switch (targetOption.target.entityKind) {
-        case "soundEmitter":
-          return [
-            { id: "sound.play", label: "Play Sound" },
-            { id: "sound.stop", label: "Stop Sound" },
-            { id: "sound.volume", label: "Set Volume" }
-          ];
-        case "pointLight":
-        case "spotLight":
-          return [
-            { id: "light.enabled", label: "Enabled" },
-            { id: "light.disabled", label: "Disabled" },
-            { id: "light.intensity", label: "Set Intensity" },
-            { id: "light.color", label: "Set Color" }
-          ];
+      if (targetOption.target.entityKind === "soundEmitter") {
+        return [
+          PROJECT_SCHEDULE_EFFECT_OPTIONS["sound.play"],
+          PROJECT_SCHEDULE_EFFECT_OPTIONS["sound.stop"],
+          PROJECT_SCHEDULE_EFFECT_OPTIONS["sound.volume"]
+        ];
       }
-      break;
+
+      return [
+        PROJECT_SCHEDULE_EFFECT_OPTIONS["light.enabled"],
+        PROJECT_SCHEDULE_EFFECT_OPTIONS["light.disabled"],
+        PROJECT_SCHEDULE_EFFECT_OPTIONS["light.intensity"],
+        PROJECT_SCHEDULE_EFFECT_OPTIONS["light.color"]
+      ];
     case "interaction":
       return [
-        { id: "interaction.enabled", label: "Enabled" },
-        { id: "interaction.disabled", label: "Disabled" }
+        PROJECT_SCHEDULE_EFFECT_OPTIONS["interaction.enabled"],
+        PROJECT_SCHEDULE_EFFECT_OPTIONS["interaction.disabled"]
       ];
     case "scene":
       return [
-        { id: "scene.ambientIntensity", label: "Ambient Intensity" },
-        { id: "scene.ambientColor", label: "Ambient Color" },
-        { id: "scene.sunIntensity", label: "Sun Intensity" },
-        { id: "scene.sunColor", label: "Sun Color" }
+        PROJECT_SCHEDULE_EFFECT_OPTIONS["scene.ambientIntensity"],
+        PROJECT_SCHEDULE_EFFECT_OPTIONS["scene.ambientColor"],
+        PROJECT_SCHEDULE_EFFECT_OPTIONS["scene.sunIntensity"],
+        PROJECT_SCHEDULE_EFFECT_OPTIONS["scene.sunColor"]
       ];
     case "global":
       return [];
   }
-
-  return [];
 }
 
-export function getProjectScheduleEffectOptionId(effect: ControlEffect): string {
+export function getProjectScheduleEffectOptionId(
+  effect: ControlEffect
+): ProjectScheduleEffectOptionId {
   switch (effect.type) {
     case "setActorPresence":
       return effect.active ? "actor.present" : "actor.hidden";
@@ -327,151 +520,174 @@ export function getProjectScheduleEffectOptionId(effect: ControlEffect): string 
   }
 }
 
-export function createDefaultProjectScheduleEffectForTarget(
-  targetOption: ProjectScheduleTargetOption
-): ControlEffect {
-  const [firstEffectOption] = listProjectScheduleEffectOptions(targetOption);
+export function createProjectScheduleEffectFromOption(options: {
+  targetOption: ProjectScheduleTargetOption;
+  effectOptionId: ProjectScheduleEffectOptionId;
+  previousEffect?: ControlEffect | null;
+}): ControlEffect {
+  const previousEffect = options.previousEffect ?? null;
+  const { targetOption } = options;
 
-  if (firstEffectOption === undefined) {
-    throw new Error(`No schedulable effects are available for ${targetOption.label}.`);
-  }
-
-  return createProjectScheduleEffectFromOptionId(targetOption, firstEffectOption.id);
-}
-
-export function createProjectScheduleEffectFromOptionId(
-  targetOption: ProjectScheduleTargetOption,
-  optionId: string,
-  previousEffect: ControlEffect | null = null
-): ControlEffect {
-  const target = targetOption.target;
-
-  switch (optionId) {
+  switch (options.effectOptionId) {
     case "actor.present":
       return createSetActorPresenceControlEffect({
-        target: target as ReturnType<typeof createActorControlTargetRef>,
+        target: createActorControlTargetRef(
+          (targetOption.target as ReturnType<typeof createActorControlTargetRef>).actorId
+        ),
         active: true
       });
     case "actor.hidden":
       return createSetActorPresenceControlEffect({
-        target: target as ReturnType<typeof createActorControlTargetRef>,
+        target: createActorControlTargetRef(
+          (targetOption.target as ReturnType<typeof createActorControlTargetRef>).actorId
+        ),
         active: false
       });
     case "model.playAnimation":
       return createPlayModelAnimationControlEffect({
-        target: target as ReturnType<typeof createModelInstanceControlTargetRef>,
+        target: createModelInstanceControlTargetRef(
+          (targetOption.target as ReturnType<typeof createModelInstanceControlTargetRef>).modelInstanceId
+        ),
         clipName:
-          previousEffect?.type === "playModelAnimation"
+          previousEffect?.type === "playModelAnimation" &&
+          (targetOption.defaults.animationClipNames ?? []).includes(
+            previousEffect.clipName
+          )
             ? previousEffect.clipName
-            : targetOption.animationClipNames[0] ?? "Idle",
+            : targetOption.defaults.animationClipNames?.[0] ?? "Animation",
         loop:
           previousEffect?.type === "playModelAnimation"
             ? previousEffect.loop
-            : true
+            : targetOption.defaults.animationLoop
       });
     case "model.stopAnimation":
       return createStopModelAnimationControlEffect({
-        target: target as ReturnType<typeof createModelInstanceControlTargetRef>
+        target: createModelInstanceControlTargetRef(
+          (targetOption.target as ReturnType<typeof createModelInstanceControlTargetRef>).modelInstanceId
+        )
       });
     case "model.visible":
       return createSetModelInstanceVisibleControlEffect({
-        target: target as ReturnType<typeof createModelInstanceControlTargetRef>,
+        target: createModelInstanceControlTargetRef(
+          (targetOption.target as ReturnType<typeof createModelInstanceControlTargetRef>).modelInstanceId
+        ),
         visible: true
       });
     case "model.hidden":
       return createSetModelInstanceVisibleControlEffect({
-        target: target as ReturnType<typeof createModelInstanceControlTargetRef>,
+        target: createModelInstanceControlTargetRef(
+          (targetOption.target as ReturnType<typeof createModelInstanceControlTargetRef>).modelInstanceId
+        ),
         visible: false
       });
     case "sound.play":
       return createPlaySoundControlEffect({
-        target: target as ReturnType<typeof createSoundEmitterControlTargetRef>
+        target: createSoundEmitterControlTargetRef(
+          (targetOption.target as ReturnType<typeof createSoundEmitterControlTargetRef>).entityId
+        )
       });
     case "sound.stop":
       return createStopSoundControlEffect({
-        target: target as ReturnType<typeof createSoundEmitterControlTargetRef>
+        target: createSoundEmitterControlTargetRef(
+          (targetOption.target as ReturnType<typeof createSoundEmitterControlTargetRef>).entityId
+        )
       });
     case "sound.volume":
       return createSetSoundVolumeControlEffect({
-        target: target as ReturnType<typeof createSoundEmitterControlTargetRef>,
+        target: createSoundEmitterControlTargetRef(
+          (targetOption.target as ReturnType<typeof createSoundEmitterControlTargetRef>).entityId
+        ),
         volume:
           previousEffect?.type === "setSoundVolume"
             ? previousEffect.volume
-            : targetOption.defaultVolume ?? 1
+            : targetOption.defaults.soundVolume ?? 1
       });
     case "interaction.enabled":
       return createSetInteractionEnabledControlEffect({
-        target: target as ReturnType<typeof createInteractionControlTargetRef>,
+        target: createInteractionControlTargetRef(
+          (targetOption.target as ReturnType<typeof createInteractionControlTargetRef>).interactionKind,
+          (targetOption.target as ReturnType<typeof createInteractionControlTargetRef>).entityId
+        ),
         enabled: true
       });
     case "interaction.disabled":
       return createSetInteractionEnabledControlEffect({
-        target: target as ReturnType<typeof createInteractionControlTargetRef>,
+        target: createInteractionControlTargetRef(
+          (targetOption.target as ReturnType<typeof createInteractionControlTargetRef>).interactionKind,
+          (targetOption.target as ReturnType<typeof createInteractionControlTargetRef>).entityId
+        ),
         enabled: false
       });
     case "light.enabled":
       return createSetLightEnabledControlEffect({
-        target: target as ReturnType<typeof createLightControlTargetRef>,
+        target: createLightControlTargetRef(
+          (targetOption.target as ReturnType<typeof createLightControlTargetRef>).entityKind,
+          (targetOption.target as ReturnType<typeof createLightControlTargetRef>).entityId
+        ),
         enabled: true
       });
     case "light.disabled":
       return createSetLightEnabledControlEffect({
-        target: target as ReturnType<typeof createLightControlTargetRef>,
+        target: createLightControlTargetRef(
+          (targetOption.target as ReturnType<typeof createLightControlTargetRef>).entityKind,
+          (targetOption.target as ReturnType<typeof createLightControlTargetRef>).entityId
+        ),
         enabled: false
       });
     case "light.intensity":
       return createSetLightIntensityControlEffect({
-        target: target as ReturnType<typeof createLightControlTargetRef>,
+        target: createLightControlTargetRef(
+          (targetOption.target as ReturnType<typeof createLightControlTargetRef>).entityKind,
+          (targetOption.target as ReturnType<typeof createLightControlTargetRef>).entityId
+        ),
         intensity:
           previousEffect?.type === "setLightIntensity"
             ? previousEffect.intensity
-            : targetOption.defaultIntensity ?? 1
+            : targetOption.defaults.lightIntensity ?? 1
       });
     case "light.color":
       return createSetLightColorControlEffect({
-        target: target as ReturnType<typeof createLightControlTargetRef>,
+        target: createLightControlTargetRef(
+          (targetOption.target as ReturnType<typeof createLightControlTargetRef>).entityKind,
+          (targetOption.target as ReturnType<typeof createLightControlTargetRef>).entityId
+        ),
         colorHex:
           previousEffect?.type === "setLightColor"
             ? previousEffect.colorHex
-            : targetOption.defaultColorHex ?? "#ffffff"
+            : targetOption.defaults.lightColorHex ?? "#ffffff"
       });
     case "scene.ambientIntensity":
       return createSetAmbientLightIntensityControlEffect({
-        target: target as ReturnType<typeof createActiveSceneControlTargetRef>,
+        target: createActiveSceneControlTargetRef(),
         intensity:
           previousEffect?.type === "setAmbientLightIntensity"
             ? previousEffect.intensity
-            : targetOption.defaultAmbientIntensity ?? 1
+            : targetOption.defaults.ambientLightIntensity ?? 1
       });
     case "scene.ambientColor":
       return createSetAmbientLightColorControlEffect({
-        target: target as ReturnType<typeof createActiveSceneControlTargetRef>,
+        target: createActiveSceneControlTargetRef(),
         colorHex:
           previousEffect?.type === "setAmbientLightColor"
             ? previousEffect.colorHex
-            : targetOption.defaultAmbientColorHex ?? "#ffffff"
+            : targetOption.defaults.ambientLightColorHex ?? "#ffffff"
       });
     case "scene.sunIntensity":
       return createSetSunLightIntensityControlEffect({
-        target: target as ReturnType<typeof createActiveSceneControlTargetRef>,
+        target: createActiveSceneControlTargetRef(),
         intensity:
           previousEffect?.type === "setSunLightIntensity"
             ? previousEffect.intensity
-            : targetOption.defaultSunIntensity ?? 1
+            : targetOption.defaults.sunLightIntensity ?? 1
       });
     case "scene.sunColor":
       return createSetSunLightColorControlEffect({
-        target: target as ReturnType<typeof createActiveSceneControlTargetRef>,
+        target: createActiveSceneControlTargetRef(),
         colorHex:
           previousEffect?.type === "setSunLightColor"
             ? previousEffect.colorHex
-            : targetOption.defaultSunColorHex ?? "#ffffff"
+            : targetOption.defaults.sunLightColorHex ?? "#ffffff"
       });
-    default:
-      throw new Error(`Unsupported project schedule effect option ${optionId}.`);
   }
 }
 
-export function getProjectScheduleRoutineResolutionKey(effect: ControlEffect): string {
-  return getControlEffectResolutionKey(effect);
-}
