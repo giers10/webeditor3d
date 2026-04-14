@@ -71,20 +71,10 @@ interface ProjectSequencerPaneProps {
   onSetActorRoutinePathSpeed(routineId: string, speed: number): void;
   onSetActorRoutinePathLoop(routineId: string, loop: boolean): void;
   onSetSequenceTitle(sequenceId: string, title: string): void;
-  onSetSequenceDurationMinutes(sequenceId: string, durationMinutes: number): void;
   onAddHeldControlStep(sequenceId: string, targetKey: string): void;
   onAddImpulseControlStep(sequenceId: string, targetKey: string): void;
   onAddDialogueStep(sequenceId: string, dialogueId: string): void;
   onDeleteStep(sequenceId: string, stepIndex: number): void;
-  onSetClipTiming(
-    sequenceId: string,
-    stepIndex: number,
-    timing: {
-      startMinute: number;
-      durationMinutes: number;
-      lane: number;
-    }
-  ): void;
   onSetControlStepTarget(
     sequenceId: string,
     stepIndex: number,
@@ -324,12 +314,10 @@ export function ProjectSequencerPane({
   onSetActorRoutinePathSpeed,
   onSetActorRoutinePathLoop,
   onSetSequenceTitle,
-  onSetSequenceDurationMinutes,
   onAddHeldControlStep,
   onAddImpulseControlStep,
   onAddDialogueStep,
   onDeleteStep,
-  onSetClipTiming,
   onSetControlStepTarget,
   onSetControlStepEffectOption,
   onSetControlStepNumericValue,
@@ -399,8 +387,8 @@ export function ProjectSequencerPane({
           <div className="label">Sequencer</div>
           <div className="schedule-pane__summary">
             {mode === "timeline"
-              ? "Place sequence clips over global project time."
-              : "Compose reusable sequences from clips for timeline and interaction playback."}
+              ? "Place sequences over global project time."
+              : "Compose reusable sequences from engine effects for timeline and interaction playback."}
           </div>
         </div>
         <div className="schedule-pane__actions">
@@ -459,12 +447,10 @@ export function ProjectSequencerPane({
               onAddSequence={onAddSequence}
               onDeleteSequence={onDeleteSequence}
               onSetSequenceTitle={onSetSequenceTitle}
-              onSetSequenceDurationMinutes={onSetSequenceDurationMinutes}
               onAddHeldControlStep={onAddHeldControlStep}
               onAddImpulseControlStep={onAddImpulseControlStep}
               onAddDialogueStep={onAddDialogueStep}
               onDeleteStep={onDeleteStep}
-              onSetClipTiming={onSetClipTiming}
               onSetControlStepTarget={onSetControlStepTarget}
               onSetControlStepEffectOption={onSetControlStepEffectOption}
               onSetControlStepNumericValue={onSetControlStepNumericValue}
@@ -562,12 +548,12 @@ export function ProjectSequencerPane({
         <aside className="schedule-pane__editor">
           {selectedRoutine === null || selectedTargetOption === null ? (
             <div className="schedule-pane__empty">
-              Select a clip block or create a new sequencer clip.
+              Select a sequence placement or create a new one.
             </div>
           ) : (
             <>
               <div className="form-section">
-                <div className="label">Timeline Clip</div>
+                <div className="label">Sequence Placement</div>
                 <label className="form-field">
                   <span className="label">Title</span>
                   <input
@@ -625,7 +611,7 @@ export function ProjectSequencerPane({
                       )
                     }
                   >
-                    <option value="">This Clip (inline held clips)</option>
+                    <option value="">This Placement (inline effects)</option>
                     {compatibleHeldSequences.map((sequence) => (
                       <option key={sequence.id} value={sequence.id}>
                         {sequence.title}
@@ -647,17 +633,17 @@ export function ProjectSequencerPane({
                 </div>
                 {selectedRoutine.sequenceId !== null ? (
                   <div className="material-summary">
-                    This timeline clip resolves held clips from the selected
-                    project sequence. Inline clip controls stay preserved as
-                    fallback, but are not edited while a sequence is attached.
+                    This placement resolves held effects from the selected
+                    sequence. Inline effects stay preserved as fallback, but are
+                    not edited while a sequence is attached.
                   </div>
                 ) : null}
                 {selectedRoutine.sequenceId === null &&
                 compatibleHeldSequences.length === 0 ? (
                   <div className="material-summary">
-                    No compatible project sequence with held clips is authored
-                    for this target yet. Use Sequence Editor to author clips, or
-                    keep this placement on its own inline held clips.
+                    No compatible sequence with held effects is authored for this
+                    target yet. Use Sequence Editor to author effects, or keep
+                    this placement on its own inline effects.
                   </div>
                 ) : null}
                 {selectedRoutine.sequenceId === null &&
@@ -727,7 +713,7 @@ export function ProjectSequencerPane({
                 </div>
                 <div className="material-summary">
                   Day-specific routine filters are preserved for compatibility.
-                  New sequencer authoring should prefer timeline clips; a later
+                  New sequencer authoring should prefer sequence placements; a later
                   multi-day timeline will replace this legacy filter.
                 </div>
               </div>

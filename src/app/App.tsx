@@ -369,10 +369,6 @@ import { Panel } from "../shared-ui/Panel";
 import { ProjectDialoguesPanel } from "./ProjectDialoguesPanel";
 import { ProjectSequencerPane } from "./ProjectSequencerPane";
 import {
-  DEFAULT_HELD_SEQUENCE_CLIP_DURATION_MINUTES,
-  DEFAULT_IMPULSE_SEQUENCE_CLIP_DURATION_MINUTES,
-  DEFAULT_PROJECT_SEQUENCE_DURATION_MINUTES,
-  getNextSequenceClipLane,
   getProjectSequenceImpulseSteps
 } from "../sequencer/project-sequence-steps";
 import {
@@ -4246,7 +4242,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
       editorState.projectDocument.scheduler.routines[routineId] ?? null;
 
     if (currentRoutine === null) {
-      setStatusMessage("Selected sequencer clip no longer exists.");
+      setStatusMessage("Selected sequence placement no longer exists.");
       return;
     }
 
@@ -4291,7 +4287,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
     if (targetOption === null) {
       setStatusMessage(
-        "Author a sequencer-addressable control target before creating a clip."
+        "Author a sequencer-addressable control target before creating a sequence placement."
       );
       return;
     }
@@ -4324,8 +4320,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
       applyProjectScheduler(
         nextScheduler,
-        "Create project sequencer clip",
-        `Created sequencer clip for ${targetOption.label}.`
+        "Create sequence placement",
+        `Created a sequence placement for ${targetOption.label}.`
       );
       setSchedulePaneOpen(true);
       setSequencerMode("timeline");
@@ -4343,8 +4339,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
     applyProjectScheduler(
       nextScheduler,
-      "Delete project sequencer clip",
-      "Deleted sequencer clip."
+      "Delete sequence placement",
+      "Deleted sequence placement."
     );
     if (selectedScheduleRoutineId === routineId) {
       setSelectedScheduleRoutineId(null);
@@ -4384,11 +4380,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const createDefaultProjectSequenceControlStep = (
     stepClass: "held" | "impulse",
     targetKey: string,
-    previousStep?: Extract<ProjectSequence["clips"][number], { type: "controlEffect" }> | null,
-    timing?: Partial<
-      Pick<ProjectSequence["clips"][number], "startMinute" | "durationMinutes" | "lane">
-    >
-  ): Extract<ProjectSequence["clips"][number], { type: "controlEffect" }> => {
+    previousStep?: Extract<ProjectSequence["effects"][number], { type: "controlEffect" }> | null
+  ): Extract<ProjectSequence["effects"][number], { type: "controlEffect" }> => {
     const targetOption = resolveSequenceControlTargetOption(targetKey);
 
     if (targetOption === null) {
@@ -4404,13 +4397,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
 
     return {
-      startMinute: timing?.startMinute ?? 0,
-      durationMinutes:
-        timing?.durationMinutes ??
-        (stepClass === "held"
-          ? DEFAULT_HELD_SEQUENCE_CLIP_DURATION_MINUTES
-          : DEFAULT_IMPULSE_SEQUENCE_CLIP_DURATION_MINUTES),
-      lane: timing?.lane ?? 0,
       stepClass,
       type: "controlEffect",
       effect: createProjectScheduleEffectFromOption({
@@ -4420,9 +4406,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
       })
     };
   };
-
-  const getNextProjectSequenceClipLane = (sequence: ProjectSequence): number =>
-    getNextSequenceClipLane(sequence.clips);
 
   const updateProjectSequence = (
     sequenceId: string,
@@ -4446,13 +4429,13 @@ export function App({ store, initialStatusMessage }: AppProps) {
     stepIndex: number,
     label: string,
     successMessage: string,
-    mutate: (step: ProjectSequence["clips"][number]) => void
+    mutate: (step: ProjectSequence["effects"][number]) => void
   ) => {
     updateProjectSequence(sequenceId, label, successMessage, (sequence) => {
-      const step = sequence.clips[stepIndex];
+      const step = sequence.effects[stepIndex];
 
       if (step === undefined) {
-        throw new Error("Selected project sequence clip no longer exists.");
+        throw new Error("Selected project sequence effect no longer exists.");
       }
 
       mutate(step);
@@ -4460,9 +4443,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
   };
 
   const handleAddProjectSequence = () => {
-    const nextSequence = createProjectSequence({
-      durationMinutes: DEFAULT_PROJECT_SEQUENCE_DURATION_MINUTES
-    });
+    const nextSequence = createProjectSequence();
 
     updateProjectSequences(
       "Add project sequence",
@@ -4540,21 +4521,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
     updateProjectSequence(
       sequenceId,
       stepClass === "held"
-        ? "Add held project sequence control clip"
-        : "Add impulse project sequence control clip",
+        ? "Add held project sequence effect"
+        : "Add impulse project sequence effect",
       stepClass === "held"
-        ? "Added held control clip."
-        : "Added impulse control clip.",
+        ? "Added held effect."
+        : "Added impulse effect.",
       (sequence) => {
-        sequence.clips.push(
-          createDefaultProjectSequenceControlStep(stepClass, targetKey, null, {
-            startMinute: 0,
-            durationMinutes:
-              stepClass === "held"
-                ? DEFAULT_HELD_SEQUENCE_CLIP_DURATION_MINUTES
-                : DEFAULT_IMPULSE_SEQUENCE_CLIP_DURATION_MINUTES,
-            lane: getNextProjectSequenceClipLane(sequence)
-          })
+        sequence.effects.push(
+          createDefaultProjectSequenceControlStep(stepClass, targetKey)
         );
       }
     );
@@ -4567,12 +4541,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
     updateProjectSequence(
       sequenceId,
       "Add project sequence dialogue clip",
-      "Added dialogue clip.",
+      "Added dialogue effect.",
       (sequence) => {
-        sequence.clips.push({
-          startMinute: 0,
-          durationMinutes: DEFAULT_IMPULSE_SEQUENCE_CLIP_DURATION_MINUTES,
-          lane: getNextProjectSequenceClipLane(sequence),
+        sequence.effects.push({
           stepClass: "impulse",
           type: "startDialogue",
           dialogueId
@@ -4587,10 +4558,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
   ) => {
     updateProjectSequence(
       sequenceId,
-      "Delete project sequence clip",
-      "Deleted sequence clip.",
+      "Delete project sequence effect",
+      "Deleted sequence effect.",
       (sequence) => {
-        sequence.clips.splice(stepIndex, 1);
+        sequence.effects.splice(stepIndex, 1);
       }
     );
   };
@@ -4794,74 +4765,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
   };
 
-  const updateProjectSequenceDurationMinutes = (
-    sequenceId: string,
-    durationMinutes: number
-  ) => {
-    updateProjectSequence(
-      sequenceId,
-      "Set project sequence duration",
-      "Updated sequence duration.",
-      (sequence) => {
-        if (!Number.isFinite(durationMinutes) || durationMinutes < 1) {
-          throw new Error(
-            "Sequence duration must be a finite number of minutes greater than zero."
-          );
-        }
-
-        sequence.durationMinutes = Math.max(1, Math.trunc(durationMinutes));
-
-        for (const clip of sequence.clips) {
-          if (clip.startMinute >= sequence.durationMinutes) {
-            clip.startMinute = Math.max(0, sequence.durationMinutes - 1);
-          }
-
-          if (clip.startMinute + clip.durationMinutes > sequence.durationMinutes) {
-            clip.durationMinutes = Math.max(
-              1,
-              sequence.durationMinutes - clip.startMinute
-            );
-          }
-        }
-      }
-    );
-  };
-
-  const updateProjectSequenceClipTiming = (
-    sequenceId: string,
-    stepIndex: number,
-    timing: {
-      startMinute: number;
-      durationMinutes: number;
-      lane: number;
-    }
-  ) => {
-    updateProjectSequence(sequenceId, "Set project sequence clip timing", "Updated sequence clip timing.", (sequence) => {
-      const clip = sequence.clips[stepIndex];
-
-      if (clip === undefined) {
-        throw new Error("Selected project sequence clip no longer exists.");
-      }
-
-      if (
-        !Number.isFinite(timing.startMinute) ||
-        !Number.isFinite(timing.durationMinutes) ||
-        !Number.isFinite(timing.lane)
-      ) {
-        throw new Error("Sequence clip timing must use finite minute values.");
-      }
-
-      clip.startMinute = Math.min(
-        Math.max(0, Math.trunc(timing.startMinute)),
-        Math.max(0, sequence.durationMinutes - 1)
-      );
-      clip.durationMinutes = Math.min(
-        Math.max(1, Math.trunc(timing.durationMinutes)),
-        Math.max(1, sequence.durationMinutes - clip.startMinute)
-      );
-      clip.lane = Math.max(0, Math.trunc(timing.lane));
-    });
-  };
 
   const updateWorldTimeOfDaySettings = (
     label: string,
@@ -7473,7 +7376,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     if (defaultSequence === null) {
       openSequencerSequenceEditor();
       setStatusMessage(
-        "Open the Sequencer sequence editor and author a sequence with at least one impulse clip before adding a sequence link."
+        "Open the Sequencer sequence editor and author a sequence with at least one impulse effect before adding a sequence link."
       );
       return;
     }
@@ -8008,7 +7911,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
       if (defaultSequence === null) {
         openSequencerSequenceEditor();
         setStatusMessage(
-          "Open the Sequencer sequence editor and author a sequence with at least one impulse clip before switching this link to run sequence."
+          "Open the Sequencer sequence editor and author a sequence with at least one impulse effect before switching this link to run sequence."
         );
         return;
       }
@@ -8787,7 +8690,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       </div>
                       <div className="material-summary">
                         Run Sequence links can only reference sequences that
-                        contain at least one impulse clip.
+                        contain at least one impulse effect.
                       </div>
                     </div>
                   );
@@ -11431,7 +11334,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     updateProjectScheduleRoutine(
                       routineId,
                       "Set project sequencer target",
-                      "Retargeted sequencer clip.",
+                      "Retargeted sequence placement.",
                       (routine) => {
                         const targetOption =
                           resolveProjectScheduleTargetOption(targetKey);
@@ -11484,8 +11387,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   onSetRoutineTitle={(routineId, title) =>
                     updateProjectScheduleRoutine(
                       routineId,
-                      "Rename project sequencer clip",
-                      "Updated sequencer clip title.",
+                      "Rename sequence placement",
+                      "Updated sequence placement title.",
                       (routine) => {
                         routine.title = title.trim();
                       }
@@ -11494,10 +11397,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   onSetRoutineEnabled={(routineId, enabled) =>
                     updateProjectScheduleRoutine(
                       routineId,
-                      "Toggle project sequencer clip",
+                      "Toggle sequence placement",
                       enabled
-                        ? "Enabled sequencer clip."
-                        : "Disabled sequencer clip.",
+                        ? "Enabled sequence placement."
+                        : "Disabled sequence placement.",
                       (routine) => {
                         routine.enabled = enabled;
                       }
@@ -11507,7 +11410,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     updateProjectScheduleRoutine(
                       routineId,
                       "Set project sequencer start time",
-                      "Updated sequencer clip start time.",
+                      "Updated sequence placement start time.",
                       (routine) => {
                         routine.startHour = normalizeTimeOfDayHours(startHour);
                         if (routine.startHour === routine.endHour) {
@@ -11522,7 +11425,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     updateProjectScheduleRoutine(
                       routineId,
                       "Set project sequencer end time",
-                      "Updated sequencer clip end time.",
+                      "Updated sequence placement end time.",
                       (routine) => {
                         routine.endHour = normalizeTimeOfDayHours(endHour);
                         if (routine.startHour === routine.endHour) {
@@ -11537,7 +11440,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     updateProjectScheduleRoutine(
                       routineId,
                       "Set project sequencer priority",
-                      "Updated sequencer clip priority.",
+                      "Updated sequence placement priority.",
                       (routine) => {
                         if (!Number.isFinite(priority)) {
                           throw new Error(
@@ -11554,7 +11457,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       routineId,
                       "Set project sequencer sequence",
                       sequenceId === null
-                        ? "Timeline clip now uses inline held clips."
+                        ? "Sequence placement now uses inline held effects."
                         : "Timeline clip now resolves a project sequence.",
                       (routine) => {
                         routine.sequenceId = sequenceId;
@@ -11565,7 +11468,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     updateProjectScheduleRoutine(
                       routineId,
                       "Set project sequencer effect",
-                      "Updated sequencer clip effect.",
+                      "Updated sequence placement effect.",
                       (routine) => {
                         if (routine.target.kind === "actor") {
                           throw new Error(
@@ -11598,7 +11501,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     updateProjectScheduleRoutine(
                       routineId,
                       "Set project sequencer numeric value",
-                      "Updated sequencer clip value.",
+                      "Updated sequence placement value.",
                       (routine) => {
                         if (!Number.isFinite(value) || value < 0) {
                           throw new Error(
@@ -11610,7 +11513,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
                         if (effect === undefined) {
                           throw new Error(
-                            "The current sequencer clip does not expose a numeric value."
+                            "The current sequence placement does not expose a numeric value."
                           );
                         }
 
@@ -11635,13 +11538,13 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     updateProjectScheduleRoutine(
                       routineId,
                       "Set project sequencer color",
-                      "Updated sequencer clip color.",
+                      "Updated sequence placement color.",
                       (routine) => {
                         const effect = routine.effects[0];
 
                         if (effect === undefined) {
                           throw new Error(
-                            "The current sequencer clip does not expose a color value."
+                            "The current sequence placement does not expose a color value."
                           );
                         }
 
@@ -11888,7 +11791,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       }
                     )
                   }
-                  onSetSequenceDurationMinutes={updateProjectSequenceDurationMinutes}
                   onAddHeldControlStep={(sequenceId, targetKey) =>
                     handleAddProjectSequenceControlStep(
                       sequenceId,
@@ -11905,7 +11807,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   }
                   onAddDialogueStep={handleAddProjectSequenceDialogueStep}
                   onDeleteStep={handleDeleteProjectSequenceStep}
-                  onSetClipTiming={updateProjectSequenceClipTiming}
                   onSetControlStepTarget={updateProjectSequenceControlStepTarget}
                   onSetControlStepEffectOption={
                     updateProjectSequenceControlStepEffectOption
