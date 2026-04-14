@@ -4495,6 +4495,28 @@ export function App({ store, initialStatusMessage }: AppProps) {
     };
   };
 
+  const createProjectSequenceControlStepFromOption = (
+    stepClass: "held" | "impulse",
+    targetKey: string,
+    effectOptionId: ProjectScheduleEffectOptionId
+  ): Extract<ProjectSequence["effects"][number], { type: "controlEffect" }> => {
+    const targetOption = resolveSequenceControlTargetOption(targetKey);
+
+    if (targetOption === null) {
+      throw new Error("The selected sequence control target no longer exists.");
+    }
+
+    return {
+      stepClass,
+      type: "controlEffect",
+      effect: createProjectScheduleEffectFromOption({
+        targetOption,
+        effectOptionId,
+        previousEffect: null
+      })
+    };
+  };
+
   const updateProjectSequence = (
     sequenceId: string,
     label: string,
@@ -4620,6 +4642,25 @@ export function App({ store, initialStatusMessage }: AppProps) {
         );
       }
     );
+  };
+
+  const handleAddProjectSequenceSpecificControlStep = (
+    sequenceId: string,
+    stepClass: "held" | "impulse",
+    targetKey: string,
+    effectOptionId: ProjectScheduleEffectOptionId,
+    label: string,
+    successMessage: string
+  ) => {
+    updateProjectSequence(sequenceId, label, successMessage, (sequence) => {
+      sequence.effects.push(
+        createProjectSequenceControlStepFromOption(
+          stepClass,
+          targetKey,
+          effectOptionId
+        )
+      );
+    });
   };
 
   const handleAddProjectSequenceDialogueStep = (
