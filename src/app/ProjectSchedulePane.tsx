@@ -528,7 +528,7 @@ export function ProjectSequencerPane({
           ) : (
             <>
               <div className="form-section">
-                <div className="label">Routine</div>
+                <div className="label">Timeline Clip</div>
                 <label className="form-field">
                   <span className="label">Title</span>
                   <input
@@ -573,7 +573,7 @@ export function ProjectSequencerPane({
                   </select>
                 </label>
                 <label className="form-field">
-                  <span className="label">Held Sequence</span>
+                  <span className="label">Sequence</span>
                   <select
                     className="select-input"
                     value={selectedRoutine.sequenceId ?? ""}
@@ -586,7 +586,7 @@ export function ProjectSequencerPane({
                       )
                     }
                   >
-                    <option value="">This Clip (inline held steps)</option>
+                    <option value="">This Clip (inline held clips)</option>
                     {compatibleHeldSequences.map((sequence) => (
                       <option key={sequence.id} value={sequence.id}>
                         {sequence.title}
@@ -596,17 +596,17 @@ export function ProjectSequencerPane({
                 </label>
                 {selectedRoutine.sequenceId !== null ? (
                   <div className="material-summary">
-                    This clip resolves held steps from the selected project
-                    sequence. Inline routine controls stay preserved as
+                    This timeline clip resolves held clips from the selected
+                    project sequence. Inline clip controls stay preserved as
                     fallback, but are not edited while a sequence is attached.
                   </div>
                 ) : null}
                 {selectedRoutine.sequenceId === null &&
                 compatibleHeldSequences.length === 0 ? (
                   <div className="material-summary">
-                    No compatible held project sequences are authored for this
-                    target yet. Use the Sequences panel to author held steps, or
-                    keep this clip on its own inline held controls.
+                    No compatible project sequence with held clips is authored
+                    for this target yet. Use Sequence Editor to author clips, or
+                    keep this placement on its own inline held clips.
                   </div>
                 ) : null}
                 {selectedRoutine.sequenceId === null &&
