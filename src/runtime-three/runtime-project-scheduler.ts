@@ -31,6 +31,7 @@ import {
   getHeldSequenceControlEffects,
   getProjectScheduleRoutineHeldSteps
 } from "../sequencer/project-sequence-steps";
+import type { ProjectSequenceLibrary } from "../sequencer/project-sequences";
 
 type ActorScheduleRoutine = ProjectScheduleRoutine & {
   target: {
@@ -396,6 +397,7 @@ function resolveActorScheduleRules(
 
 export function resolveRuntimeActorScheduleState(options: {
   scheduler: ProjectScheduler;
+  sequences: ProjectSequenceLibrary;
   actorId: string;
   dayNumber: number;
   timeOfDayHours: number;
@@ -425,7 +427,10 @@ export function resolveRuntimeActorScheduleState(options: {
     };
   }
 
-  const heldSteps = getProjectScheduleRoutineHeldSteps(activeRoutine);
+  const heldSteps = getProjectScheduleRoutineHeldSteps(
+    activeRoutine,
+    options.sequences
+  );
 
   const presenceEffect =
     findHeldSequenceControlEffect(heldSteps, "setActorPresence") ??
@@ -468,6 +473,7 @@ export function resolveRuntimeActorScheduleState(options: {
 
 export function resolveRuntimeProjectScheduleState(options: {
   scheduler: ProjectScheduler;
+  sequences: ProjectSequenceLibrary;
   actorIds: string[];
   dayNumber: number;
   timeOfDayHours: number;
@@ -479,6 +485,7 @@ export function resolveRuntimeProjectScheduleState(options: {
     actors: actorIds.map((actorId) =>
       resolveRuntimeActorScheduleState({
         scheduler: options.scheduler,
+        sequences: options.sequences,
         actorId,
         dayNumber: options.dayNumber,
         timeOfDayHours: options.timeOfDayHours,
@@ -491,6 +498,7 @@ export function resolveRuntimeProjectScheduleState(options: {
 
 function resolveRuntimeScheduledControlRoutines(options: {
   scheduler: ProjectScheduler;
+  sequences: ProjectSequenceLibrary;
   dayNumber: number;
   timeOfDayHours: number;
 }): RuntimeResolvedScheduledControlRoutine[] {
@@ -512,7 +520,7 @@ function resolveRuntimeScheduledControlRoutines(options: {
     }
 
     for (const effect of getHeldSequenceControlEffects(
-      getProjectScheduleRoutineHeldSteps(routine)
+      getProjectScheduleRoutineHeldSteps(routine, options.sequences)
     )) {
       const resolutionKey = getControlEffectResolutionKey(effect);
 
