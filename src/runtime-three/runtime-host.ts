@@ -2724,7 +2724,8 @@ export class RuntimeHost {
       scheduler: this.runtimeScene.scheduler.document,
       actorIds: this.runtimeScene.npcDefinitions.map((npc) => npc.actorId),
       dayNumber: this.currentClockState.dayCount + 1,
-      timeOfDayHours: this.currentClockState.timeOfDayHours
+      timeOfDayHours: this.currentClockState.timeOfDayHours,
+      pathsById: new Map(this.runtimeScene.paths.map((path) => [path.id, path]))
     });
     const actorStates = new Map(
       nextResolvedScheduler.actors.map((state) => [state.actorId, state])
@@ -2733,26 +2734,45 @@ export class RuntimeHost {
 
     for (const npc of this.runtimeScene.npcDefinitions) {
       const actorState = actorStates.get(npc.actorId);
-      const nextActive = actorState?.active ?? true;
-      const nextRoutineId = actorState?.activeRoutineId ?? null;
-      const nextRoutineTitle = actorState?.activeRoutineTitle ?? null;
+      const previousActive = npc.active;
+      const previousRoutineId = npc.activeRoutineId;
+      const previousRoutineTitle = npc.activeRoutineTitle;
+      const previousAnimationClipName = npc.animationClipName;
+      const previousAnimationLoop = npc.animationLoop;
+      const previousYawDegrees = npc.yawDegrees;
+      const previousPosition = {
+        x: npc.position.x,
+        y: npc.position.y,
+        z: npc.position.z
+      };
+      const previousPathId = npc.resolvedPath?.pathId ?? null;
+      const previousPathProgress = npc.resolvedPath?.progress ?? null;
+
+      applyActorScheduleStateToNpcDefinition(npc, actorState ?? null);
 
       if (
-        npc.active === nextActive &&
-        npc.activeRoutineId === nextRoutineId &&
-        npc.activeRoutineTitle === nextRoutineTitle
+        npc.active === previousActive &&
+        npc.activeRoutineId === previousRoutineId &&
+        npc.activeRoutineTitle === previousRoutineTitle &&
+        npc.animationClipName === previousAnimationClipName &&
+        npc.animationLoop === previousAnimationLoop &&
+        npc.yawDegrees === previousYawDegrees &&
+        npc.position.x === previousPosition.x &&
+        npc.position.y === previousPosition.y &&
+        npc.position.z === previousPosition.z &&
+        (npc.resolvedPath?.pathId ?? null) === previousPathId &&
+        (npc.resolvedPath?.progress ?? null) === previousPathProgress
       ) {
         continue;
       }
 
-      npc.active = nextActive;
-      npc.activeRoutineId = nextRoutineId;
-      npc.activeRoutineTitle = nextRoutineTitle;
       changed = true;
       const renderGroup = this.modelRenderObjects.get(npc.entityId);
 
       if (renderGroup !== undefined) {
         renderGroup.visible = npc.visible && npc.active;
+        renderGroup.position.set(npc.position.x, npc.position.y, npc.position.z);
+        renderGroup.rotation.set(0, (npc.yawDegrees * Math.PI) / 180, 0);
       }
     }
 
