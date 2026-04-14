@@ -6659,6 +6659,36 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
   };
 
+  const handleAddDialogueInteractionLink = () => {
+    if (selectedInteractionSource === null) {
+      setStatusMessage(
+        "Select a Trigger Volume or Interactable before adding links."
+      );
+      return;
+    }
+
+    const defaultDialogue = projectDialogueList[0] ?? null;
+
+    if (defaultDialogue === null) {
+      setStatusMessage("Author a project dialogue before adding a dialogue link.");
+      return;
+    }
+
+    store.executeCommand(
+      createUpsertInteractionLinkCommand({
+        link: createStartDialogueInteractionLink({
+          sourceEntityId: selectedInteractionSource.id,
+          trigger: getDefaultInteractionLinkTrigger(selectedInteractionSource),
+          dialogueId: defaultDialogue.id
+        }),
+        label: "Add start dialogue interaction link"
+      })
+    );
+    setStatusMessage(
+      `Added a dialogue link to the selected ${selectedInteractionSource.kind === "triggerVolume" ? "Trigger Volume" : "Interactable"}.`
+    );
+  };
+
   const handleDeleteInteractionLink = (linkId: string) => {
     try {
       store.executeCommand(createDeleteInteractionLinkCommand(linkId));
