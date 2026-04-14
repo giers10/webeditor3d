@@ -34,6 +34,14 @@ interface ProjectSequencerPaneProps {
   mode: "timeline" | "sequence";
   onSetMode(mode: "timeline" | "sequence"): void;
   targetOptions: ProjectScheduleTargetOption[];
+  teleportTargetOptions: Array<{
+    entityId: string;
+    label: string;
+  }>;
+  visibilityTargetOptions: Array<{
+    brushId: string;
+    label: string;
+  }>;
   scheduler: ProjectScheduler;
   sequences: ProjectSequenceLibrary;
   dialogues: ProjectDialogueLibrary;
@@ -74,6 +82,8 @@ interface ProjectSequencerPaneProps {
   onAddHeldControlStep(sequenceId: string, targetKey: string): void;
   onAddImpulseControlStep(sequenceId: string, targetKey: string): void;
   onAddDialogueStep(sequenceId: string, dialogueId: string): void;
+  onAddTeleportStep(sequenceId: string, targetEntityId: string): void;
+  onAddVisibilityStep(sequenceId: string, targetBrushId: string): void;
   onDeleteStep(sequenceId: string, stepIndex: number): void;
   onSetControlStepTarget(
     sequenceId: string,
@@ -109,6 +119,21 @@ interface ProjectSequencerPaneProps {
     sequenceId: string,
     stepIndex: number,
     dialogueId: string
+  ): void;
+  onSetTeleportStepTarget(
+    sequenceId: string,
+    stepIndex: number,
+    targetEntityId: string
+  ): void;
+  onSetVisibilityStepTarget(
+    sequenceId: string,
+    stepIndex: number,
+    targetBrushId: string
+  ): void;
+  onSetVisibilityStepMode(
+    sequenceId: string,
+    stepIndex: number,
+    mode: "toggle" | "show" | "hide"
   ): void;
 }
 
@@ -283,6 +308,8 @@ export function ProjectSequencerPane({
   mode,
   onSetMode,
   targetOptions,
+  teleportTargetOptions,
+  visibilityTargetOptions,
   scheduler,
   sequences,
   dialogues,
@@ -317,6 +344,8 @@ export function ProjectSequencerPane({
   onAddHeldControlStep,
   onAddImpulseControlStep,
   onAddDialogueStep,
+  onAddTeleportStep,
+  onAddVisibilityStep,
   onDeleteStep,
   onSetControlStepTarget,
   onSetControlStepEffectOption,
@@ -324,7 +353,10 @@ export function ProjectSequencerPane({
   onSetControlStepColorValue,
   onSetControlStepAnimationClip,
   onSetControlStepAnimationLoop,
-  onSetDialogueStepDialogueId
+  onSetDialogueStepDialogueId,
+  onSetTeleportStepTarget,
+  onSetVisibilityStepTarget,
+  onSetVisibilityStepMode
 }: ProjectSequencerPaneProps) {
   const selectedRoutine =
     selectedRoutineId === null ? null : scheduler.routines[selectedRoutineId] ?? null;
@@ -442,6 +474,8 @@ export function ProjectSequencerPane({
               sequences={sequences}
               dialogues={dialogues}
               targetOptions={targetOptions}
+              teleportTargetOptions={teleportTargetOptions}
+              visibilityTargetOptions={visibilityTargetOptions}
               selectedSequenceId={selectedSequenceId}
               onSelectSequence={onSelectSequence}
               onAddSequence={onAddSequence}
@@ -450,6 +484,8 @@ export function ProjectSequencerPane({
               onAddHeldControlStep={onAddHeldControlStep}
               onAddImpulseControlStep={onAddImpulseControlStep}
               onAddDialogueStep={onAddDialogueStep}
+              onAddTeleportStep={onAddTeleportStep}
+              onAddVisibilityStep={onAddVisibilityStep}
               onDeleteStep={onDeleteStep}
               onSetControlStepTarget={onSetControlStepTarget}
               onSetControlStepEffectOption={onSetControlStepEffectOption}
@@ -458,6 +494,9 @@ export function ProjectSequencerPane({
               onSetControlStepAnimationClip={onSetControlStepAnimationClip}
               onSetControlStepAnimationLoop={onSetControlStepAnimationLoop}
               onSetDialogueStepDialogueId={onSetDialogueStepDialogueId}
+              onSetTeleportStepTarget={onSetTeleportStepTarget}
+              onSetVisibilityStepTarget={onSetVisibilityStepTarget}
+              onSetVisibilityStepMode={onSetVisibilityStepMode}
             />
           </div>
         ) : (

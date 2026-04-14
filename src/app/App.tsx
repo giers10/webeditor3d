@@ -4552,6 +4552,43 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
   };
 
+  const handleAddProjectSequenceTeleportStep = (
+    sequenceId: string,
+    targetEntityId: string
+  ) => {
+    updateProjectSequence(
+      sequenceId,
+      "Add project sequence teleport effect",
+      "Added teleport effect.",
+      (sequence) => {
+        sequence.effects.push({
+          stepClass: "impulse",
+          type: "teleportPlayer",
+          targetEntityId
+        });
+      }
+    );
+  };
+
+  const handleAddProjectSequenceVisibilityStep = (
+    sequenceId: string,
+    targetBrushId: string
+  ) => {
+    updateProjectSequence(
+      sequenceId,
+      "Add project sequence visibility effect",
+      "Added visibility effect.",
+      (sequence) => {
+        sequence.effects.push({
+          stepClass: "impulse",
+          type: "toggleVisibility",
+          targetBrushId,
+          visible: undefined
+        });
+      }
+    );
+  };
+
   const handleDeleteProjectSequenceStep = (
     sequenceId: string,
     stepIndex: number
@@ -4761,6 +4798,67 @@ export function App({ store, initialStatusMessage }: AppProps) {
         }
 
         step.dialogueId = dialogueId;
+      }
+    );
+  };
+
+  const updateProjectSequenceTeleportStepTarget = (
+    sequenceId: string,
+    stepIndex: number,
+    targetEntityId: string
+  ) => {
+    updateProjectSequenceStep(
+      sequenceId,
+      stepIndex,
+      "Set project sequence teleport target",
+      "Updated teleport target.",
+      (step) => {
+        if (step.type !== "teleportPlayer") {
+          throw new Error("Only teleport effects expose a teleport target.");
+        }
+
+        step.targetEntityId = targetEntityId;
+      }
+    );
+  };
+
+  const updateProjectSequenceVisibilityStepTarget = (
+    sequenceId: string,
+    stepIndex: number,
+    targetBrushId: string
+  ) => {
+    updateProjectSequenceStep(
+      sequenceId,
+      stepIndex,
+      "Set project sequence visibility target",
+      "Updated visibility target.",
+      (step) => {
+        if (step.type !== "toggleVisibility") {
+          throw new Error("Only visibility effects expose a whitebox solid target.");
+        }
+
+        step.targetBrushId = targetBrushId;
+      }
+    );
+  };
+
+  const updateProjectSequenceVisibilityStepMode = (
+    sequenceId: string,
+    stepIndex: number,
+    mode: "toggle" | "show" | "hide"
+  ) => {
+    updateProjectSequenceStep(
+      sequenceId,
+      stepIndex,
+      "Set project sequence visibility mode",
+      "Updated visibility mode.",
+      (step) => {
+        if (step.type !== "toggleVisibility") {
+          throw new Error("Only visibility effects expose a visibility mode.");
+        }
+
+        step.visible =
+          mode === "toggle" ? undefined : mode === "show";
       }
     );
   };
