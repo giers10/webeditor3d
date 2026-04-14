@@ -93,6 +93,7 @@ import {
 import {
   createControlInteractionLink,
   createPlayAnimationInteractionLink,
+  createStartDialogueInteractionLink,
   createPlaySoundInteractionLink,
   createStopAnimationInteractionLink,
   createStopSoundInteractionLink,
@@ -150,6 +151,7 @@ import {
   PATH_FOUNDATION_SCENE_DOCUMENT_VERSION,
   PROJECT_SCHEDULER_FOUNDATION_SCENE_DOCUMENT_VERSION,
   EXPANDED_CONTROL_SURFACE_SCENE_DOCUMENT_VERSION,
+  PROJECT_DIALOGUE_LIBRARY_SCENE_DOCUMENT_VERSION,
   RUNNER_V1_SCENE_DOCUMENT_VERSION,
   SCENE_TRANSITION_ENTITIES_SCENE_DOCUMENT_VERSION,
   SPATIAL_AUDIO_SCENE_DOCUMENT_VERSION,
@@ -179,6 +181,12 @@ import {
   type SceneLoadingScreenSettings,
   type SceneDocument
 } from "./scene-document";
+import {
+  createEmptyProjectDialogueLibrary,
+  createProjectDialogue,
+  createProjectDialogueLine,
+  type ProjectDialogueLibrary
+} from "../dialogues/project-dialogues";
 import {
   createScenePath,
   createScenePathPoint,
@@ -3223,6 +3231,18 @@ function readInteractionAction(
         targetSoundEmitterId
       }).action;
     }
+    case "startDialogue": {
+      const dialogueId = expectString(value.dialogueId, `${label}.dialogueId`);
+
+      if (dialogueId.trim().length === 0) {
+        throw new Error(`${label}.dialogueId must be non-empty.`);
+      }
+
+      return createStartDialogueInteractionLink({
+        sourceEntityId: "interaction-source-placeholder",
+        dialogueId
+      }).action;
+    }
     case "control":
       return createControlInteractionLink({
         sourceEntityId: "interaction-source-placeholder",
@@ -3362,6 +3382,77 @@ function readProjectScheduler(
 
   return {
     routines
+  };
+}
+
+function readProjectDialogueLibrary(
+  value: unknown,
+  label: string,
+  options: { allowMissing: boolean }
+): ProjectDialogueLibrary {
+  if (value === undefined && options.allowMissing) {
+    return createEmptyProjectDialogueLibrary();
+  }
+
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  if (!isRecord(value.dialogues)) {
+    throw new Error(`${label}.dialogues must be an object.`);
+  }
+
+  const dialogues: ProjectDialogueLibrary["dialogues"] = {};
+
+  for (const [dialogueKey, dialogueValue] of Object.entries(value.dialogues)) {
+    if (!isRecord(dialogueValue)) {
+      throw new Error(`${label}.dialogues.${dialogueKey} must be an object.`);
+    }
+
+    const linesValue = dialogueValue.lines;
+
+    if (!Array.isArray(linesValue)) {
+      throw new Error(
+        `${label}.dialogues.${dialogueKey}.lines must be an array.`
+      );
+    }
+
+    dialogues[dialogueKey] = createProjectDialogue({
+      id: expectString(dialogueValue.id, `${label}.dialogues.${dialogueKey}.id`),
+      title: expectString(
+        dialogueValue.title,
+        `${label}.dialogues.${dialogueKey}.title`
+      ),
+      lines: linesValue.map((lineValue, lineIndex) => {
+        if (!isRecord(lineValue)) {
+          throw new Error(
+            `${label}.dialogues.${dialogueKey}.lines.${lineIndex} must be an object.`
+          );
+        }
+
+        return createProjectDialogueLine({
+          id: expectString(
+            lineValue.id,
+            `${label}.dialogues.${dialogueKey}.lines.${lineIndex}.id`
+          ),
+          speakerName:
+            lineValue.speakerName === undefined || lineValue.speakerName === null
+              ? null
+              : expectString(
+                  lineValue.speakerName,
+                  `${label}.dialogues.${dialogueKey}.lines.${lineIndex}.speakerName`
+                ),
+          text: expectString(
+            lineValue.text,
+            `${label}.dialogues.${dialogueKey}.lines.${lineIndex}.text`
+          )
+        });
+      })
+    });
+  }
+
+  return {
+    dialogues
   };
 }
 
@@ -3568,6 +3659,16 @@ function readInteractionLink(value: unknown, label: string): InteractionLink {
         ),
         trigger,
         targetSoundEmitterId: action.targetSoundEmitterId
+      });
+    case "startDialogue":
+      return createStartDialogueInteractionLink({
+        id: expectString(value.id, `${label}.id`),
+        sourceEntityId: expectString(
+          value.sourceEntityId,
+          `${label}.sourceEntityId`
+        ),
+        trigger,
+        dialogueId: action.dialogueId
       });
     case "control":
       return createControlInteractionLink({
