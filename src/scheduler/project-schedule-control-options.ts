@@ -1,4 +1,5 @@
 import type { ProjectDocument, ProjectScene } from "../document/scene-document";
+import { getScenePathLabel, getScenePaths } from "../document/paths";
 import {
   createActiveSceneControlTargetRef,
   createActorControlTargetRef,
@@ -65,7 +66,17 @@ export interface ProjectScheduleEffectOption {
   step?: number;
 }
 
+export interface ProjectSchedulePathOption {
+  pathId: string;
+  label: string;
+  loop: boolean;
+}
+
 export interface ProjectScheduleTargetOptionDefaults {
+  actorAnimationClipNames?: string[];
+  actorAnimationLoop?: boolean;
+  actorPathOptions?: ProjectSchedulePathOption[];
+  actorPathSpeed?: number;
   animationClipNames?: string[];
   animationLoop?: boolean;
   soundVolume?: number;
@@ -281,8 +292,39 @@ export function listProjectScheduleTargetOptions(
   pushOption(createSceneLightingTargetOption(projectDocument));
 
   for (const actor of listProjectNpcActors(projectDocument)) {
+    const uniqueUsage = actor.usages.length === 1 ? actor.usages[0] ?? null : null;
+    const actorScene =
+      uniqueUsage === null
+        ? null
+        : projectDocument.scenes[uniqueUsage.sceneId] ?? null;
+    const actorEntity =
+      uniqueUsage === null || actorScene === null
+        ? null
+        : actorScene.entities[uniqueUsage.entityId];
+    const actorModelAsset =
+      actorEntity?.kind === "npc" && actorEntity.modelAssetId !== null
+        ? projectDocument.assets[actorEntity.modelAssetId]
+        : undefined;
+    const actorAnimationClipNames =
+      actorModelAsset !== undefined && actorModelAsset.kind === "model"
+        ? [...actorModelAsset.metadata.animationNames]
+        : [];
+    const actorPathOptions =
+      actorScene === null
+        ? []
+        : getScenePaths(actorScene.paths)
+            .filter((path) => path.enabled)
+            .map((path, index) => ({
+              pathId: path.id,
+              label: getScenePathLabel(path, index),
+              loop: path.loop
+            }));
     const usageLabel =
-      actor.usages.length > 1 ? `${actor.usages.length} usages` : actor.actorId;
+      uniqueUsage === null
+        ? actor.usages.length > 1
+          ? `${actor.usages.length} usages`
+          : actor.actorId
+        : `${uniqueUsage.sceneName} · ${actor.actorId}`;
 
     pushOption({
       key: getControlTargetRefKey(createActorControlTargetRef(actor.actorId)),
@@ -290,7 +332,12 @@ export function listProjectScheduleTargetOptions(
       label: actor.label,
       subtitle: usageLabel,
       groupLabel: "Actors",
-      defaults: {}
+      defaults: {
+        actorAnimationClipNames,
+        actorAnimationLoop: true,
+        actorPathOptions,
+        actorPathSpeed: 1
+      }
     });
   }
 
