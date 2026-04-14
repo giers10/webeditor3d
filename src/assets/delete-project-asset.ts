@@ -26,6 +26,7 @@ function removeInvalidatedInteractionLinks(
               return false;
             case "playModelAnimation":
             case "stopModelAnimation":
+            case "setModelInstanceVisible":
               return removedModelInstanceIds.has(
                 link.action.effect.target.modelInstanceId
               );
@@ -34,9 +35,15 @@ function removeInvalidatedInteractionLinks(
               return silencedSoundEmitterIds.has(
                 link.action.effect.target.entityId
               );
+            case "setSoundVolume":
             case "setInteractionEnabled":
             case "setLightEnabled":
             case "setLightIntensity":
+            case "setLightColor":
+            case "setAmbientLightIntensity":
+            case "setAmbientLightColor":
+            case "setSunLightIntensity":
+            case "setSunLightColor":
               return false;
           }
         default:
