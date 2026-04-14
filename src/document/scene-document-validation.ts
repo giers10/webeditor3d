@@ -3722,26 +3722,82 @@ function validateProjectScheduler(
       );
     }
 
-    if (
-      getControlTargetRefKey(routine.effect.target) !==
-      getControlTargetRefKey(routine.target)
-    ) {
+    if (routine.effects.length === 0) {
       diagnostics.push(
         createDiagnostic(
           "error",
-          "project-schedule-effect-target-mismatch",
-          "Project schedule effect targets must match the authored routine target.",
-          `${path}.effect.target`
+          "invalid-project-schedule-routine-effects-empty",
+          "Project schedule routines must author at least one control effect.",
+          `${path}.effects`
+        )
+      );
+      continue;
+    }
+
+    if (routine.target.kind !== "actor" && routine.effects.length !== 1) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-project-schedule-non-actor-effect-count",
+          "Non-actor schedule routines must currently author exactly one control effect.",
+          `${path}.effects`
         )
       );
     }
 
-    validateProjectSchedulerEffect(
-      routine.effect,
-      `${path}.effect`,
-      context,
-      diagnostics
-    );
+    const seenResolutionKeys = new Set<string>();
+
+    for (const [effectIndex, effect] of routine.effects.entries()) {
+      if (
+        getControlTargetRefKey(effect.target) !==
+        getControlTargetRefKey(routine.target)
+      ) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "project-schedule-effect-target-mismatch",
+            "Project schedule effect targets must match the authored routine target.",
+            `${path}.effects.${effectIndex}.target`
+          )
+        );
+      }
+
+      const resolutionKey = getControlEffectResolutionKey(effect);
+
+      if (seenResolutionKeys.has(resolutionKey)) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-project-schedule-duplicate-effect",
+            "Project schedule routines cannot author duplicate effects for the same resolved control slot.",
+            `${path}.effects.${effectIndex}`
+          )
+        );
+      } else {
+        seenResolutionKeys.add(resolutionKey);
+      }
+
+      validateProjectSchedulerEffect(
+        effect,
+        `${path}.effects.${effectIndex}`,
+        context,
+        diagnostics
+      );
+    }
+
+    if (
+      routine.target.kind === "actor" &&
+      !routine.effects.some((effect) => effect.type === "setActorPresence")
+    ) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-project-schedule-actor-presence-missing",
+          "Actor schedule routines must include an actor presence effect.",
+          `${path}.effects`
+        )
+      );
+    }
   }
 }
 
