@@ -11294,13 +11294,20 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 }
               >
                 <ProjectSequencerPane
+                  mode={sequencerMode}
+                  onSetMode={setSequencerMode}
                   targetOptions={projectScheduleTargetOptions}
                   scheduler={editorState.projectDocument.scheduler}
                   sequences={editorState.projectDocument.sequences}
+                  dialogues={editorState.projectDocument.dialogues}
                   selectedRoutineId={selectedScheduleRoutineId}
+                  selectedSequenceId={selectedSequenceId}
                   onSelectRoutine={setSelectedScheduleRoutineId}
+                  onSelectSequence={setSelectedSequenceId}
                   onAddRoutine={handleCreateScheduleRoutine}
+                  onAddSequence={handleAddProjectSequence}
                   onDeleteRoutine={handleDeleteScheduleRoutine}
+                  onDeleteSequence={handleDeleteProjectSequence}
                   onClose={() => setSchedulePaneOpen(false)}
                   onSetRoutineTarget={(routineId, targetKey) =>
                     updateProjectScheduleRoutine(
@@ -11752,6 +11759,51 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     effect.loop = loop;
                       }
                     )
+                  }
+                  onSetSequenceTitle={(sequenceId, title) =>
+                    updateProjectSequence(
+                      sequenceId,
+                      "Rename project sequence",
+                      "Updated project sequence title.",
+                      (sequence) => {
+                        sequence.title = title.trim() || "Sequence";
+                      }
+                    )
+                  }
+                  onAddHeldControlStep={(sequenceId, targetKey) =>
+                    handleAddProjectSequenceControlStep(
+                      sequenceId,
+                      "held",
+                      targetKey
+                    )
+                  }
+                  onAddImpulseControlStep={(sequenceId, targetKey) =>
+                    handleAddProjectSequenceControlStep(
+                      sequenceId,
+                      "impulse",
+                      targetKey
+                    )
+                  }
+                  onAddDialogueStep={handleAddProjectSequenceDialogueStep}
+                  onDeleteStep={handleDeleteProjectSequenceStep}
+                  onSetControlStepTarget={updateProjectSequenceControlStepTarget}
+                  onSetControlStepEffectOption={
+                    updateProjectSequenceControlStepEffectOption
+                  }
+                  onSetControlStepNumericValue={
+                    updateProjectSequenceControlStepNumericValue
+                  }
+                  onSetControlStepColorValue={
+                    updateProjectSequenceControlStepColorValue
+                  }
+                  onSetControlStepAnimationClip={
+                    updateProjectSequenceControlStepAnimationClip
+                  }
+                  onSetControlStepAnimationLoop={
+                    updateProjectSequenceControlStepAnimationLoop
+                  }
+                  onSetDialogueStepDialogueId={
+                    updateProjectSequenceDialogueStepDialogueId
                   }
                 />
               </div>
