@@ -4497,6 +4497,258 @@ export function App({ store, initialStatusMessage }: AppProps) {
     });
   };
 
+  const handleAddProjectSequenceControlStep = (
+    sequenceId: string,
+    stepClass: "held" | "impulse",
+    targetKey: string
+  ) => {
+    updateProjectSequence(
+      sequenceId,
+      stepClass === "held"
+        ? "Add held project sequence control step"
+        : "Add impulse project sequence control step",
+      stepClass === "held"
+        ? "Added held control step."
+        : "Added impulse control step.",
+      (sequence) => {
+        sequence.steps.push(
+          createDefaultProjectSequenceControlStep(stepClass, targetKey)
+        );
+      }
+    );
+  };
+
+  const handleAddProjectSequenceDialogueStep = (
+    sequenceId: string,
+    dialogueId: string
+  ) => {
+    updateProjectSequence(
+      sequenceId,
+      "Add project sequence dialogue step",
+      "Added dialogue step.",
+      (sequence) => {
+        sequence.steps.push({
+          stepClass: "impulse",
+          type: "startDialogue",
+          dialogueId
+        });
+      }
+    );
+  };
+
+  const handleDeleteProjectSequenceStep = (
+    sequenceId: string,
+    stepIndex: number
+  ) => {
+    updateProjectSequence(
+      sequenceId,
+      "Delete project sequence step",
+      "Deleted sequence step.",
+      (sequence) => {
+        sequence.steps.splice(stepIndex, 1);
+      }
+    );
+  };
+
+  const updateProjectSequenceControlStepTarget = (
+    sequenceId: string,
+    stepIndex: number,
+    targetKey: string
+  ) => {
+    updateProjectSequenceStep(
+      sequenceId,
+      stepIndex,
+      "Set project sequence control target",
+      "Updated sequence control target.",
+      (step) => {
+        if (step.type !== "controlEffect") {
+          throw new Error("Only control steps expose a control target.");
+        }
+
+        const replacement = createDefaultProjectSequenceControlStep(
+          step.stepClass,
+          targetKey,
+          step
+        );
+
+        step.effect = replacement.effect;
+      }
+    );
+  };
+
+  const updateProjectSequenceControlStepEffectOption = (
+    sequenceId: string,
+    stepIndex: number,
+    effectOptionId: ProjectScheduleEffectOptionId
+  ) => {
+    updateProjectSequenceStep(
+      sequenceId,
+      stepIndex,
+      "Set project sequence control effect",
+      "Updated sequence control effect.",
+      (step) => {
+        if (step.type !== "controlEffect") {
+          throw new Error("Only control steps expose a control effect.");
+        }
+
+        const targetOption = resolveSequenceControlTargetOption(
+          getControlTargetRefKey(step.effect.target)
+        );
+
+        if (targetOption === null) {
+          throw new Error("The current sequence control target no longer exists.");
+        }
+
+        step.effect = createProjectScheduleEffectFromOption({
+          targetOption,
+          effectOptionId,
+          previousEffect: step.effect
+        });
+      }
+    );
+  };
+
+  const updateProjectSequenceControlStepNumericValue = (
+    sequenceId: string,
+    stepIndex: number,
+    value: number
+  ) => {
+    updateProjectSequenceStep(
+      sequenceId,
+      stepIndex,
+      "Set project sequence numeric value",
+      "Updated sequence numeric value.",
+      (step) => {
+        if (step.type !== "controlEffect") {
+          throw new Error("Only control steps expose numeric values.");
+        }
+
+        if (!Number.isFinite(value) || value < 0) {
+          throw new Error(
+            "Sequence numeric values must be finite and zero or greater."
+          );
+        }
+
+        switch (step.effect.type) {
+          case "setSoundVolume":
+            step.effect.volume = value;
+            return;
+          case "setLightIntensity":
+          case "setAmbientLightIntensity":
+          case "setSunLightIntensity":
+            step.effect.intensity = value;
+            return;
+          default:
+            throw new Error(
+              "The current sequence control effect does not expose a numeric value."
+            );
+        }
+      }
+    );
+  };
+
+  const updateProjectSequenceControlStepColorValue = (
+    sequenceId: string,
+    stepIndex: number,
+    colorHex: string
+  ) => {
+    updateProjectSequenceStep(
+      sequenceId,
+      stepIndex,
+      "Set project sequence color value",
+      "Updated sequence color value.",
+      (step) => {
+        if (step.type !== "controlEffect") {
+          throw new Error("Only control steps expose color values.");
+        }
+
+        switch (step.effect.type) {
+          case "setLightColor":
+          case "setAmbientLightColor":
+          case "setSunLightColor":
+            step.effect.colorHex = colorHex;
+            return;
+          default:
+            throw new Error(
+              "The current sequence control effect does not expose a color value."
+            );
+        }
+      }
+    );
+  };
+
+  const updateProjectSequenceControlStepAnimationClip = (
+    sequenceId: string,
+    stepIndex: number,
+    clipName: string
+  ) => {
+    updateProjectSequenceStep(
+      sequenceId,
+      stepIndex,
+      "Set project sequence animation clip",
+      "Updated sequence animation clip.",
+      (step) => {
+        if (
+          step.type !== "controlEffect" ||
+          step.effect.type !== "playModelAnimation"
+        ) {
+          throw new Error(
+            "The current sequence control step does not expose an animation clip."
+          );
+        }
+
+        step.effect.clipName = clipName;
+      }
+    );
+  };
+
+  const updateProjectSequenceControlStepAnimationLoop = (
+    sequenceId: string,
+    stepIndex: number,
+    loop: boolean
+  ) => {
+    updateProjectSequenceStep(
+      sequenceId,
+      stepIndex,
+      "Set project sequence animation loop",
+      loop
+        ? "Sequence animation now loops."
+        : "Sequence animation now plays once.",
+      (step) => {
+        if (
+          step.type !== "controlEffect" ||
+          step.effect.type !== "playModelAnimation"
+        ) {
+          throw new Error(
+            "The current sequence control step does not expose animation looping."
+          );
+        }
+
+        step.effect.loop = loop;
+      }
+    );
+  };
+
+  const updateProjectSequenceDialogueStepDialogueId = (
+    sequenceId: string,
+    stepIndex: number,
+    dialogueId: string
+  ) => {
+    updateProjectSequenceStep(
+      sequenceId,
+      stepIndex,
+      "Set project sequence dialogue",
+      "Updated sequence dialogue.",
+      (step) => {
+        if (step.type !== "startDialogue") {
+          throw new Error("Only dialogue steps expose a dialogue id.");
+        }
+
+        step.dialogueId = dialogueId;
+      }
+    );
+  };
+
   const updateWorldTimeOfDaySettings = (
     label: string,
     successMessage: string,
