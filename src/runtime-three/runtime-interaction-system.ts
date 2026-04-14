@@ -32,6 +32,7 @@ export interface RuntimeInteractionDispatcher {
   stopAnimation(instanceId: string, link: InteractionLink): void;
   playSound(soundEmitterId: string, link: InteractionLink): void;
   stopSound(soundEmitterId: string, link: InteractionLink): void;
+  startDialogue(dialogueId: string, link: InteractionLink): void;
   dispatchControlEffect?(effect: ControlEffect, link: InteractionLink): void;
 }
 
@@ -413,6 +414,9 @@ export class RuntimeInteractionSystem {
           break;
         case "stopSound":
           dispatcher.stopSound(link.action.targetSoundEmitterId, link);
+          break;
+        case "startDialogue":
+          dispatcher.startDialogue(link.action.dialogueId, link);
           break;
         case "control":
           throw new Error(
