@@ -256,13 +256,20 @@ function groupTargetOptions(
 }
 
 export function ProjectSequencerPane({
+  mode,
+  onSetMode,
   targetOptions,
   scheduler,
   sequences,
+  dialogues,
   selectedRoutineId,
+  selectedSequenceId,
   onSelectRoutine,
+  onSelectSequence,
   onAddRoutine,
+  onAddSequence,
   onDeleteRoutine,
+  onDeleteSequence,
   onClose,
   onSetRoutineTarget,
   onSetRoutineTitle,
@@ -281,7 +288,19 @@ export function ProjectSequencerPane({
   onSetActorRoutineAnimationLoop,
   onSetActorRoutinePath,
   onSetActorRoutinePathSpeed,
-  onSetActorRoutinePathLoop
+  onSetActorRoutinePathLoop,
+  onSetSequenceTitle,
+  onAddHeldControlStep,
+  onAddImpulseControlStep,
+  onAddDialogueStep,
+  onDeleteStep,
+  onSetControlStepTarget,
+  onSetControlStepEffectOption,
+  onSetControlStepNumericValue,
+  onSetControlStepColorValue,
+  onSetControlStepAnimationClip,
+  onSetControlStepAnimationLoop,
+  onSetDialogueStepDialogueId
 }: ProjectSequencerPaneProps) {
   const selectedRoutine =
     selectedRoutineId === null ? null : scheduler.routines[selectedRoutineId] ?? null;
@@ -343,22 +362,44 @@ export function ProjectSequencerPane({
         <div>
           <div className="label">Sequencer</div>
           <div className="schedule-pane__summary">
-            Time-windowed sequencer clips over typed control targets and global
-            project time.
+            {mode === "timeline"
+              ? "Place sequence clips over global project time."
+              : "Compose reusable sequences from clips for timeline and interaction playback."}
           </div>
         </div>
         <div className="schedule-pane__actions">
           <button
+            className={`toolbar__button toolbar__button--compact ${
+              mode === "timeline" ? "toolbar__button--primary" : ""
+            }`.trim()}
+            type="button"
+            onClick={() => onSetMode("timeline")}
+          >
+            Timeline
+          </button>
+          <button
+            className={`toolbar__button toolbar__button--compact ${
+              mode === "sequence" ? "toolbar__button--primary" : ""
+            }`.trim()}
+            type="button"
+            onClick={() => onSetMode("sequence")}
+          >
+            Sequence Editor
+          </button>
+          <button
             className="toolbar__button toolbar__button--compact"
             type="button"
-            disabled={targetOptions.length === 0}
-            onClick={() =>
-              onAddRoutine(
-                selectedTargetOption?.key ?? targetOptions[0]?.key ?? ""
-              )
-            }
+            disabled={mode === "timeline" ? targetOptions.length === 0 : false}
+            onClick={() => {
+              if (mode === "timeline") {
+                onAddRoutine(selectedTargetOption?.key ?? targetOptions[0]?.key ?? "");
+                return;
+              }
+
+              onAddSequence();
+            }}
           >
-            Add Clip
+            {mode === "timeline" ? "Add Clip" : "Add Sequence"}
           </button>
           <button
             className="toolbar__button toolbar__button--compact"
@@ -371,6 +412,31 @@ export function ProjectSequencerPane({
       </div>
 
       <div className="schedule-pane__body">
+        {mode === "sequence" ? (
+          <div className="schedule-pane__editor" style={{ width: "100%" }}>
+            <ProjectSequencesPanel
+              sequences={sequences}
+              dialogues={dialogues}
+              targetOptions={targetOptions}
+              selectedSequenceId={selectedSequenceId}
+              onSelectSequence={onSelectSequence}
+              onAddSequence={onAddSequence}
+              onDeleteSequence={onDeleteSequence}
+              onSetSequenceTitle={onSetSequenceTitle}
+              onAddHeldControlStep={onAddHeldControlStep}
+              onAddImpulseControlStep={onAddImpulseControlStep}
+              onAddDialogueStep={onAddDialogueStep}
+              onDeleteStep={onDeleteStep}
+              onSetControlStepTarget={onSetControlStepTarget}
+              onSetControlStepEffectOption={onSetControlStepEffectOption}
+              onSetControlStepNumericValue={onSetControlStepNumericValue}
+              onSetControlStepColorValue={onSetControlStepColorValue}
+              onSetControlStepAnimationClip={onSetControlStepAnimationClip}
+              onSetControlStepAnimationLoop={onSetControlStepAnimationLoop}
+              onSetDialogueStepDialogueId={onSetDialogueStepDialogueId}
+            />
+          </div>
+        ) : (
         <div className="schedule-pane__timeline">
           <div className="schedule-ruler">
             <div className="schedule-ruler__label">Targets</div>
@@ -981,6 +1047,7 @@ export function ProjectSequencerPane({
             </>
           )}
         </aside>
+        )}
       </div>
     </section>
   );
