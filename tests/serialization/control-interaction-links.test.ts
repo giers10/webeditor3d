@@ -19,7 +19,6 @@ import {
 import { migrateSceneDocument } from "../../src/document/migrate-scene-document";
 import {
   createPointLightEntity,
-  createPointLightEntity,
   createSoundEmitterEntity,
   createTriggerVolumeEntity
 } from "../../src/entities/entity-instances";
