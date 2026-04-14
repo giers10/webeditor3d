@@ -5525,6 +5525,33 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
   };
 
+  const handlePlayEditorSimulation = () => {
+    setEditorSimulationClockOverride(
+      (currentClock) =>
+        currentClock ?? createRuntimeClockState(editorState.projectDocument.time)
+    );
+    setEditorSimulationPlaying(true);
+  };
+
+  const handlePauseEditorSimulation = () => {
+    setEditorSimulationPlaying(false);
+  };
+
+  const handleResetEditorSimulation = () => {
+    setEditorSimulationPlaying(false);
+    setEditorSimulationClockOverride(null);
+  };
+
+  const handleStepEditorSimulation = (deltaHours: number) => {
+    setEditorSimulationPlaying(false);
+    setEditorSimulationClockOverride((currentClock) =>
+      offsetRuntimeClockState(
+        currentClock ?? createRuntimeClockState(editorState.projectDocument.time),
+        deltaHours
+      )
+    );
+  };
+
   const handleRunnerSceneExitActivated = (
     request: RuntimeSceneExitTransitionRequest
   ) => {
