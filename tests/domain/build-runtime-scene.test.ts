@@ -1483,4 +1483,118 @@ describe("buildRuntimeSceneFromDocument", () => {
       }
     ]);
   });
+
+  it("resolves active actor routines into NPC animation and deterministic follow-path pose", () => {
+    const actorTarget = createActorControlTargetRef("actor-patroller");
+    const { asset, loadedAsset } = createFixtureLoadedModelAssetFromGeometry(
+      "asset-npc-patroller",
+      new BoxGeometry(0.8, 1.8, 0.6)
+    );
+    asset.metadata.animationNames = ["Walk"];
+    loadedAsset.animations = [new AnimationClip("Walk", 1, [])];
+    const npc = createNpcEntity({
+      id: "entity-npc-patroller",
+      actorId: actorTarget.actorId,
+      modelAssetId: asset.id,
+      yawDegrees: 15
+    });
+    const path = createScenePath({
+      id: "path-patrol",
+      points: [
+        {
+          id: "path-point-start",
+          position: {
+            x: 0,
+            y: 0,
+            z: 0
+          }
+        },
+        {
+          id: "path-point-end",
+          position: {
+            x: 8,
+            y: 0,
+            z: 0
+          }
+        }
+      ]
+    });
+    const document = createEmptySceneDocument();
+    document.assets[asset.id] = asset;
+    document.entities[npc.id] = npc;
+    document.paths[path.id] = path;
+    document.scheduler.routines["routine-patrol"] = createProjectScheduleRoutine({
+      id: "routine-patrol",
+      title: "Patrolling",
+      target: actorTarget,
+      startHour: 9,
+      endHour: 13,
+      effects: [
+        createSetActorPresenceControlEffect({
+          target: actorTarget,
+          active: true
+        }),
+        createPlayActorAnimationControlEffect({
+          target: actorTarget,
+          clipName: "Walk",
+          loop: true
+        }),
+        createFollowActorPathControlEffect({
+          target: actorTarget,
+          pathId: path.id,
+          speed: 2,
+          loop: false,
+          progressMode: "deriveFromTime"
+        })
+      ]
+    });
+
+    const runtimeScene = buildRuntimeSceneFromDocument(document, {
+      runtimeClock: {
+        timeOfDayHours: 11,
+        dayCount: 0,
+        dayLengthMinutes: 24
+      },
+      loadedModelAssets: {
+        [asset.id]: loadedAsset
+      }
+    });
+
+    expect(runtimeScene.npcDefinitions[0]).toEqual(
+      expect.objectContaining({
+        entityId: npc.id,
+        active: true,
+        activeRoutineTitle: "Patrolling",
+        animationClipName: "Walk",
+        yawDegrees: 90,
+        position: {
+          x: 4,
+          y: 0,
+          z: 0
+        },
+        resolvedPath: expect.objectContaining({
+          pathId: path.id,
+          progress: 0.5,
+          elapsedHours: 2,
+          yawDegrees: 90
+        })
+      })
+    );
+    expect(runtimeScene.entities.npcs).toEqual([
+      expect.objectContaining({
+        entityId: npc.id,
+        animationClipName: "Walk",
+        position: {
+          x: 4,
+          y: 0,
+          z: 0
+        },
+        activeRoutineTitle: "Patrolling",
+        resolvedPath: expect.objectContaining({
+          pathId: path.id,
+          progress: 0.5
+        })
+      })
+    ]);
+  });
 });
