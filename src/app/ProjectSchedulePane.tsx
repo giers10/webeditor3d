@@ -14,16 +14,16 @@ import {
   type ProjectScheduler,
   type ProjectScheduleRoutine,
   type ProjectScheduleWeekday
-} from "../scheduler/project-scheduler";
+} from "../sequencer/project-sequencer";
 import {
   getProjectScheduleEffectOptionId,
   getProjectScheduleTargetOptionForRoutine,
   listProjectScheduleEffectOptions,
   type ProjectScheduleEffectOptionId,
   type ProjectScheduleTargetOption
-} from "../scheduler/project-schedule-control-options";
+} from "../sequencer/project-sequencer-control-options";
 
-interface ProjectSchedulePaneProps {
+interface ProjectSequencerPaneProps {
   targetOptions: ProjectScheduleTargetOption[];
   scheduler: ProjectScheduler;
   selectedRoutineId: string | null;
@@ -188,7 +188,7 @@ function groupTargetOptions(
   }));
 }
 
-export function ProjectSchedulePane({
+export function ProjectSequencerPane({
   targetOptions,
   scheduler,
   selectedRoutineId,
@@ -214,7 +214,7 @@ export function ProjectSchedulePane({
   onSetActorRoutinePath,
   onSetActorRoutinePathSpeed,
   onSetActorRoutinePathLoop
-}: ProjectSchedulePaneProps) {
+}: ProjectSequencerPaneProps) {
   const selectedRoutine =
     selectedRoutineId === null ? null : scheduler.routines[selectedRoutineId] ?? null;
   const selectedTargetOption =
@@ -253,12 +253,12 @@ export function ProjectSchedulePane({
   const hourTicks = Array.from({ length: HOURS_PER_DAY }, (_, hour) => hour);
 
   return (
-    <section className="schedule-pane" data-testid="project-schedule-pane">
+    <section className="schedule-pane" data-testid="project-sequencer-pane">
       <div className="schedule-pane__header">
         <div>
-          <div className="label">Schedule</div>
+          <div className="label">Sequencer</div>
           <div className="schedule-pane__summary">
-            Scheduler-owned orchestration over typed control targets and global
+            Time-windowed sequencer clips over typed control targets and global
             project time.
           </div>
         </div>
@@ -273,7 +273,7 @@ export function ProjectSchedulePane({
               )
             }
           >
-            Add Routine
+            Add Clip
           </button>
           <button
             className="toolbar__button toolbar__button--compact"
@@ -300,7 +300,7 @@ export function ProjectSchedulePane({
 
           {targetOptions.length === 0 ? (
             <div className="schedule-pane__empty">
-              No scheduler-addressable control targets are authored in this
+              No sequencer-addressable control targets are authored in this
               project yet.
             </div>
           ) : (
@@ -372,7 +372,7 @@ export function ProjectSchedulePane({
         <aside className="schedule-pane__editor">
           {selectedRoutine === null || selectedTargetOption === null ? (
             <div className="schedule-pane__empty">
-              Select a routine block or create a new schedule routine.
+              Select a clip block or create a new sequencer clip.
             </div>
           ) : (
             <>
@@ -902,3 +902,5 @@ export function ProjectSchedulePane({
     </section>
   );
 }
+
+export const ProjectSchedulePane = ProjectSequencerPane;

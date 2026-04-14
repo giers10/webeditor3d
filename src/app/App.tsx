@@ -4155,7 +4155,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
       editorState.projectDocument.scheduler.routines[routineId] ?? null;
 
     if (currentRoutine === null) {
-      setStatusMessage("Selected schedule routine no longer exists.");
+      setStatusMessage("Selected sequencer clip no longer exists.");
       return;
     }
 
@@ -4200,7 +4200,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
     if (targetOption === null) {
       setStatusMessage(
-        "Author a scheduler-addressable control target before creating a schedule routine."
+        "Author a sequencer-addressable control target before creating a clip."
       );
       return;
     }
@@ -4233,8 +4233,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
       applyProjectScheduler(
         nextScheduler,
-        "Create project schedule routine",
-        `Created schedule routine for ${targetOption.label}.`
+        "Create project sequencer clip",
+        `Created sequencer clip for ${targetOption.label}.`
       );
       setSchedulePaneOpen(true);
       setSelectedScheduleRoutineId(nextRoutine.id);
@@ -4251,8 +4251,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
     applyProjectScheduler(
       nextScheduler,
-      "Delete project schedule routine",
-      "Deleted schedule routine."
+      "Delete project sequencer clip",
+      "Deleted sequencer clip."
     );
     if (selectedScheduleRoutineId === routineId) {
       setSelectedScheduleRoutineId(null);
