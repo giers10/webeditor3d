@@ -10943,7 +10943,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                             return;
                           default:
                             throw new Error(
-                              "The current schedule effect does not expose a numeric value."
+                              "The current sequencer effect does not expose a numeric value."
                             );
                         }
                       }
@@ -10971,7 +10971,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                             return;
                           default:
                             throw new Error(
-                              "The current schedule effect does not expose a color value."
+                              "The current sequencer effect does not expose a color value."
                             );
                         }
                       }
@@ -11346,11 +11346,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     type="button"
                     onClick={() => setSchedulePaneOpen(true)}
                   >
-                    Open Schedule
+                    Open Sequencer
                   </button>
                   <div className="material-summary">
                     Actor routines now own time-based presence orchestration and
-                    resolve through the shared control surface.
+                    resolve through the shared sequencer/control surface path.
                   </div>
                 </div>
 
@@ -16123,10 +16123,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       </div>
 
                       <div className="form-section">
-                        <div className="label">Schedule</div>
+                        <div className="label">Sequencer</div>
                         <div className="material-summary">
                           NPC presence is now orchestrated from the project
-                          scheduler instead of this inspector.
+                          sequencer instead of this inspector.
                         </div>
                         <button
                           className="toolbar__button toolbar__button--compact"
@@ -16146,7 +16146,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                             );
                           }}
                         >
-                          Open Schedule
+                          Open Sequencer
                         </button>
                       </div>
 
