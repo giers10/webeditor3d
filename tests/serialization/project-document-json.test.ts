@@ -14,6 +14,7 @@ import {
   DEFAULT_SCENE_EDITOR_SNAP_STEP,
   NPC_COLLIDER_SCENE_DOCUMENT_VERSION,
   PROJECT_DIALOGUE_LIBRARY_SCENE_DOCUMENT_VERSION,
+  PROJECT_SEQUENCE_LIBRARY_SCENE_DOCUMENT_VERSION,
   SCHEDULER_ACTOR_ROUTINE_EFFECTS_SCENE_DOCUMENT_VERSION,
   NPC_PRESENCE_SCENE_DOCUMENT_VERSION,
   PLAYER_START_GAMEPAD_CAMERA_LOOK_SCENE_DOCUMENT_VERSION,
@@ -38,6 +39,8 @@ import {
   createSceneExitEntity
 } from "../../src/entities/entity-instances";
 import { createProjectScheduleRoutine } from "../../src/scheduler/project-scheduler";
+import { createProjectSequence } from "../../src/sequencer/project-sequences";
+import { createRunSequenceInteractionLink } from "../../src/interactions/interaction-links";
 import {
   parseProjectDocumentJson,
   serializeProjectDocument
@@ -138,6 +141,89 @@ describe("project document JSON", () => {
         dialogueId: null
       })
     );
+  });
+
+  it("round-trips project sequences referenced by routines and interaction links", () => {
+    const document = createEmptyProjectDocument({
+      name: "Sequence Project"
+    });
+
+    document.dialogues.dialogues["dialogue-market"] = {
+      id: "dialogue-market",
+      title: "Market Greeting",
+      lines: [
+        {
+          id: "dialogue-line-market-1",
+          speakerName: "Merchant",
+          text: "Fresh fruit."
+        }
+      ]
+    };
+    document.sequences.sequences["sequence-market-dialogue"] = createProjectSequence({
+      id: "sequence-market-dialogue",
+      title: "Market Greeting Sequence",
+      steps: [
+        {
+          stepClass: "impulse",
+          type: "startDialogue",
+          dialogueId: "dialogue-market"
+        }
+      ]
+    });
+    document.sequences.sequences["sequence-vendor-open"] = createProjectSequence({
+      id: "sequence-vendor-open",
+      title: "Vendor Open",
+      steps: [
+        {
+          stepClass: "held",
+          type: "controlEffect",
+          effect: createSetActorPresenceControlEffect({
+            target: createActorControlTargetRef("actor-vendor"),
+            active: true
+          })
+        }
+      ]
+    });
+    document.scheduler.routines["routine-vendor-open"] = createProjectScheduleRoutine({
+      id: "routine-vendor-open",
+      title: "Vendor Open",
+      target: createActorControlTargetRef("actor-vendor"),
+      sequenceId: "sequence-vendor-open",
+      effect: createSetActorPresenceControlEffect({
+        target: createActorControlTargetRef("actor-vendor"),
+        active: false
+      })
+    });
+    document.scenes[document.activeSceneId]!.interactionLinks["link-sequence"] =
+      createRunSequenceInteractionLink({
+        id: "link-sequence",
+        sourceEntityId: "entity-trigger-sequence",
+        sequenceId: "sequence-market-dialogue"
+      });
+
+    expect(parseProjectDocumentJson(serializeProjectDocument(document))).toEqual(
+      document
+    );
+  });
+
+  it("migrates v52 project documents without sequences to an empty project sequence library", () => {
+    const document = createEmptyProjectDocument({
+      name: "Legacy Sequence Project"
+    });
+    const legacyDocument = JSON.parse(
+      serializeProjectDocument(document)
+    ) as Record<string, unknown>;
+
+    legacyDocument.version = PLAYER_START_GAMEPAD_CAMERA_LOOK_SCENE_DOCUMENT_VERSION;
+    delete legacyDocument.sequences;
+
+    const migratedDocument = parseProjectDocumentJson(
+      JSON.stringify(legacyDocument)
+    );
+
+    expect(migratedDocument.sequences).toEqual({
+      sequences: {}
+    });
   });
 
   it("round-trips the project name and authored scene loading overlay settings", () => {
