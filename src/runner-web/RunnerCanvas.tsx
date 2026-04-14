@@ -8,6 +8,7 @@ import type { SceneLoadingScreenSettings } from "../document/scene-document";
 import type { FirstPersonTelemetry } from "../runtime-three/navigation-controller";
 import {
   RuntimeHost,
+  type RuntimeDialogueState,
   type RuntimeSceneExitTransitionRequest,
   type RuntimeSceneLoadState
 } from "../runtime-three/runtime-host";
@@ -69,6 +70,8 @@ export function RunnerCanvas({
   });
   const [interactionPrompt, setInteractionPrompt] =
     useState<RuntimeInteractionPrompt | null>(null);
+  const [runtimeDialogue, setRuntimeDialogue] =
+    useState<RuntimeDialogueState | null>(null);
   const [firstPersonTelemetry, setFirstPersonTelemetry] =
     useState<FirstPersonTelemetry | null>(null);
   const overlayMessage = runnerMessage ?? sceneLoadState.message;
@@ -122,6 +125,7 @@ export function RunnerCanvas({
         setInteractionPrompt(prompt);
         onInteractionPromptChange(prompt);
       });
+      runtimeHost.setRuntimeDialogueHandler(setRuntimeDialogue);
       setRunnerMessage(null);
 
       return () => {
@@ -129,6 +133,7 @@ export function RunnerCanvas({
         onFirstPersonTelemetryChange(null);
         setFirstPersonTelemetry(null);
         setInteractionPrompt(null);
+        setRuntimeDialogue(null);
         runtimeHost.dispose();
         hostRef.current = null;
       };
@@ -278,6 +283,51 @@ export function RunnerCanvas({
           >
             {interactionPrompt.distance.toFixed(1)}m away ·{" "}
             {interactionPrompt.range.toFixed(1)}m range
+          </div>
+        </div>
+      ) : null}
+      {runnerReady && runtimeDialogue !== null ? (
+        <div
+          className="runner-canvas__dialogue"
+          data-testid="runner-dialogue-overlay"
+          role="dialog"
+          aria-live="polite"
+          aria-label={runtimeDialogue.title}
+        >
+          <div className="runner-canvas__dialogue-title">
+            {runtimeDialogue.title}
+          </div>
+          {runtimeDialogue.speakerName === null ? null : (
+            <div className="runner-canvas__dialogue-speaker">
+              {runtimeDialogue.speakerName}
+            </div>
+          )}
+          <div
+            className="runner-canvas__dialogue-text"
+            data-testid="runner-dialogue-text"
+          >
+            {runtimeDialogue.text}
+          </div>
+          <div className="runner-canvas__dialogue-meta">
+            Line {runtimeDialogue.lineIndex + 1} of {runtimeDialogue.lineCount}
+          </div>
+          <div className="runner-canvas__dialogue-actions">
+            <button
+              className="toolbar__button toolbar__button--compact"
+              type="button"
+              onClick={() => hostRef.current?.closeRuntimeDialogue()}
+            >
+              Close
+            </button>
+            <button
+              className="toolbar__button toolbar__button--accent toolbar__button--compact"
+              type="button"
+              onClick={() => hostRef.current?.advanceRuntimeDialogue()}
+            >
+              {runtimeDialogue.lineIndex + 1 >= runtimeDialogue.lineCount
+                ? "Finish"
+                : "Next"}
+            </button>
           </div>
         </div>
       ) : null}
