@@ -357,7 +357,7 @@ import { validateRuntimeSceneBuild } from "../runtime-three/runtime-scene-valida
 import { EditorAutosaveController } from "../serialization/editor-autosave";
 import { Panel } from "../shared-ui/Panel";
 import { ProjectDialoguesPanel } from "./ProjectDialoguesPanel";
-import { ProjectSchedulePane } from "./ProjectSchedulePane";
+import { ProjectSequencerPane } from "./ProjectSchedulePane";
 import {
   areProjectSchedulersEqual,
   cloneProjectScheduleRoutine,
