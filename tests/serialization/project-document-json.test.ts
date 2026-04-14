@@ -331,25 +331,6 @@ describe("project document JSON", () => {
           }
         ]
       });
-    document.scenes[document.activeSceneId]!.brushes["brush-legacy-wall"] = {
-      id: "brush-legacy-wall",
-      name: "Legacy Wall",
-      visible: true,
-      enabled: true,
-      materialId: "material-starter-wall",
-      geometry: {
-        type: "box",
-        width: 1,
-        height: 1,
-        depth: 1
-      },
-      transform: {
-        position: { x: 0, y: 0, z: 0 },
-        rotationDegrees: { x: 0, y: 0, z: 0 },
-        scale: { x: 1, y: 1, z: 1 }
-      },
-      faces: {}
-    } as never;
 
     const legacyDocument = JSON.parse(
       serializeProjectDocument(document)
