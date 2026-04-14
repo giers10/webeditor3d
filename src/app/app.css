@@ -232,6 +232,14 @@ button:disabled {
   overflow: hidden;
 }
 
+.editor-main-region {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  min-width: 0;
+}
+
 .runner-workspace {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(280px, 320px);
@@ -866,6 +874,211 @@ button:disabled {
   border-radius: 24px;
   overflow: hidden;
   box-shadow: var(--shadow-panel);
+}
+
+.schedule-pane {
+  display: flex;
+  flex-direction: column;
+  min-height: 280px;
+  background: rgba(16, 20, 26, 0.96);
+  border: 1px solid var(--color-border);
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: var(--shadow-panel);
+}
+
+.schedule-pane__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.schedule-pane__summary {
+  margin-top: 6px;
+  color: var(--color-muted);
+  font-size: 0.82rem;
+}
+
+.schedule-pane__actions {
+  display: flex;
+  gap: 8px;
+}
+
+.schedule-pane__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 320px);
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+.schedule-pane__timeline {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: auto;
+}
+
+.schedule-pane__editor {
+  padding: 16px;
+  border-left: 1px solid var(--color-border);
+  overflow-y: auto;
+}
+
+.schedule-pane__empty {
+  padding: 18px 16px;
+  color: var(--color-muted);
+}
+
+.schedule-ruler,
+.schedule-row {
+  display: grid;
+  grid-template-columns: minmax(200px, 220px) minmax(0, 1fr);
+  min-width: 860px;
+}
+
+.schedule-ruler {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: rgba(18, 22, 29, 0.98);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.schedule-ruler__label {
+  padding: 12px 14px;
+  color: #e8ddcf;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.schedule-ruler__track {
+  display: grid;
+  grid-template-columns: repeat(24, minmax(0, 1fr));
+}
+
+.schedule-ruler__tick {
+  padding: 12px 0 12px 8px;
+  color: var(--color-muted);
+  font-size: 0.72rem;
+  border-left: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.schedule-row {
+  min-height: 64px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.schedule-row__label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+}
+
+.schedule-row__add {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.04);
+  color: #f4ebde;
+  cursor: pointer;
+}
+
+.schedule-row__meta {
+  min-width: 0;
+}
+
+.schedule-row__title {
+  color: #f4ebde;
+  font-weight: 700;
+}
+
+.schedule-row__subtitle {
+  margin-top: 4px;
+  color: var(--color-muted);
+  font-size: 0.74rem;
+}
+
+.schedule-row__track {
+  position: relative;
+  min-height: 64px;
+}
+
+.schedule-row__grid {
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0.08) 0,
+    rgba(255, 255, 255, 0.08) 1px,
+    transparent 1px,
+    transparent calc(100% / 24)
+  );
+}
+
+.schedule-block {
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  min-width: 18px;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f5b66f, #d17f4a);
+  color: #24150d;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.schedule-block--inactive {
+  background: linear-gradient(135deg, #8ca3ba, #60718a);
+  color: #f4f7fb;
+}
+
+.schedule-block--disabled {
+  opacity: 0.45;
+}
+
+.schedule-block--selected {
+  box-shadow: 0 0 0 2px rgba(255, 250, 240, 0.3);
+}
+
+.schedule-block__title {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.schedule-days {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.schedule-day {
+  min-height: 32px;
+  padding: 0.35rem 0.7rem;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #eadfce;
+  cursor: pointer;
+}
+
+.schedule-day--active {
+  background: rgba(233, 170, 100, 0.16);
+  border-color: rgba(233, 170, 100, 0.5);
 }
 
 .runner-region {
