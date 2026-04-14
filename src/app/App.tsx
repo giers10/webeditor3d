@@ -10132,7 +10132,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
           </Panel>
         </aside>
 
-        <div className="editor-main-region">
+        <div
+          ref={editorMainRegionRef}
+          className={`editor-main-region ${
+            schedulePaneOpen ? "editor-main-region--schedule-open" : ""
+          }`.trim()}
+        >
           <main
             className={`viewport-region viewport-region--${layoutMode}`}
             data-testid="viewport-shell"
@@ -10232,291 +10237,319 @@ export function App({ store, initialStatusMessage }: AppProps) {
           </main>
 
           {schedulePaneOpen ? (
-            <ProjectSchedulePane
-              targetOptions={projectScheduleTargetOptions}
-              scheduler={editorState.projectDocument.scheduler}
-              selectedRoutineId={selectedScheduleRoutineId}
-              onSelectRoutine={setSelectedScheduleRoutineId}
-              onAddRoutine={handleCreateScheduleRoutine}
-              onDeleteRoutine={handleDeleteScheduleRoutine}
-              onClose={() => setSchedulePaneOpen(false)}
-              onSetRoutineTarget={(routineId, targetKey) =>
-                updateProjectScheduleRoutine(
-                  routineId,
-                  "Set project schedule target",
-                  "Retargeted schedule routine.",
-                  (routine) => {
-                    const targetOption = resolveProjectScheduleTargetOption(targetKey);
+            <>
+              <div
+                className={`schedule-pane-splitter ${
+                  schedulePaneResizeActive
+                    ? "schedule-pane-splitter--active"
+                    : ""
+                }`.trim()}
+                role="separator"
+                aria-label="Resize schedule"
+                aria-orientation="horizontal"
+                tabIndex={0}
+                onPointerDown={handleSchedulePaneResizeStart}
+                onKeyDown={handleSchedulePaneResizeKeyDown}
+              />
+              <div
+                className="schedule-pane-shell"
+                style={
+                  {
+                    height: `${schedulePaneHeight}px`
+                  } satisfies CSSProperties
+                }
+              >
+                <ProjectSchedulePane
+                  targetOptions={projectScheduleTargetOptions}
+                  scheduler={editorState.projectDocument.scheduler}
+                  selectedRoutineId={selectedScheduleRoutineId}
+                  onSelectRoutine={setSelectedScheduleRoutineId}
+                  onAddRoutine={handleCreateScheduleRoutine}
+                  onDeleteRoutine={handleDeleteScheduleRoutine}
+                  onClose={() => setSchedulePaneOpen(false)}
+                  onSetRoutineTarget={(routineId, targetKey) =>
+                    updateProjectScheduleRoutine(
+                      routineId,
+                      "Set project schedule target",
+                      "Retargeted schedule routine.",
+                      (routine) => {
+                        const targetOption =
+                          resolveProjectScheduleTargetOption(targetKey);
 
-                    if (targetOption === null) {
-                      throw new Error("Selected schedule target no longer exists.");
-                    }
+                        if (targetOption === null) {
+                          throw new Error(
+                            "Selected schedule target no longer exists."
+                          );
+                        }
 
-                    if (targetOption.target.kind === "actor") {
-                      routine.target = targetOption.target;
-                      routine.effects = [];
-                      return;
-                    }
+                        if (targetOption.target.kind === "actor") {
+                          routine.target = targetOption.target;
+                          routine.effects = [];
+                          return;
+                        }
 
-                    const effectOptions = listProjectScheduleEffectOptions(targetOption);
-                    const currentPrimaryEffect = routine.effects[0] ?? null;
-                    const nextEffectOptionId =
-                      currentPrimaryEffect === null
-                        ? effectOptions[0]?.id
-                        : effectOptions.find(
-                            (effectOption) =>
-                              effectOption.id ===
-                              getProjectScheduleEffectOptionId(currentPrimaryEffect)
-                          )?.id ?? effectOptions[0]?.id;
+                        const effectOptions =
+                          listProjectScheduleEffectOptions(targetOption);
+                        const currentPrimaryEffect = routine.effects[0] ?? null;
+                        const nextEffectOptionId =
+                          currentPrimaryEffect === null
+                            ? effectOptions[0]?.id
+                            : effectOptions.find(
+                                (effectOption) =>
+                                  effectOption.id ===
+                                  getProjectScheduleEffectOptionId(
+                                    currentPrimaryEffect
+                                  )
+                              )?.id ?? effectOptions[0]?.id;
 
-                    if (nextEffectOptionId === undefined) {
-                      throw new Error(
-                        "Selected schedule target does not expose a schedulable effect."
-                      );
-                    }
+                        if (nextEffectOptionId === undefined) {
+                          throw new Error(
+                            "Selected schedule target does not expose a schedulable effect."
+                          );
+                        }
 
-                    routine.target = targetOption.target;
-                    routine.effects = [
-                      createProjectScheduleEffectFromOption({
-                        targetOption,
-                        effectOptionId: nextEffectOptionId,
-                        previousEffect: currentPrimaryEffect
-                      })
-                    ];
+                        routine.target = targetOption.target;
+                        routine.effects = [
+                          createProjectScheduleEffectFromOption({
+                            targetOption,
+                            effectOptionId: nextEffectOptionId,
+                            previousEffect: currentPrimaryEffect
+                          })
+                        ];
+                      }
+                    )
                   }
-                )
-              }
-              onSetRoutineTitle={(routineId, title) =>
-                updateProjectScheduleRoutine(
-                  routineId,
-                  "Rename project schedule routine",
-                  "Updated schedule routine title.",
-                  (routine) => {
-                    routine.title = title.trim();
+                  onSetRoutineTitle={(routineId, title) =>
+                    updateProjectScheduleRoutine(
+                      routineId,
+                      "Rename project schedule routine",
+                      "Updated schedule routine title.",
+                      (routine) => {
+                        routine.title = title.trim();
+                      }
+                    )
                   }
-                )
-              }
-              onSetRoutineEnabled={(routineId, enabled) =>
-                updateProjectScheduleRoutine(
-                  routineId,
-                  "Toggle project schedule routine",
-                  enabled
-                    ? "Enabled schedule routine."
-                    : "Disabled schedule routine.",
-                  (routine) => {
-                    routine.enabled = enabled;
+                  onSetRoutineEnabled={(routineId, enabled) =>
+                    updateProjectScheduleRoutine(
+                      routineId,
+                      "Toggle project schedule routine",
+                      enabled
+                        ? "Enabled schedule routine."
+                        : "Disabled schedule routine.",
+                      (routine) => {
+                        routine.enabled = enabled;
+                      }
+                    )
                   }
-                )
-              }
-              onSetRoutineStartHour={(routineId, startHour) =>
-                updateProjectScheduleRoutine(
-                  routineId,
-                  "Set project schedule start time",
-                  "Updated schedule routine start time.",
-                  (routine) => {
-                    routine.startHour = normalizeTimeOfDayHours(startHour);
-                    if (routine.startHour === routine.endHour) {
-                      throw new Error(
-                        "Schedule routine start and end hours must differ."
-                      );
-                    }
+                  onSetRoutineStartHour={(routineId, startHour) =>
+                    updateProjectScheduleRoutine(
+                      routineId,
+                      "Set project schedule start time",
+                      "Updated schedule routine start time.",
+                      (routine) => {
+                        routine.startHour = normalizeTimeOfDayHours(startHour);
+                        if (routine.startHour === routine.endHour) {
+                          throw new Error(
+                            "Schedule routine start and end hours must differ."
+                          );
+                        }
+                      }
+                    )
                   }
-                )
-              }
-              onSetRoutineEndHour={(routineId, endHour) =>
-                updateProjectScheduleRoutine(
-                  routineId,
-                  "Set project schedule end time",
-                  "Updated schedule routine end time.",
-                  (routine) => {
-                    routine.endHour = normalizeTimeOfDayHours(endHour);
-                    if (routine.startHour === routine.endHour) {
-                      throw new Error(
-                        "Schedule routine start and end hours must differ."
-                      );
-                    }
+                  onSetRoutineEndHour={(routineId, endHour) =>
+                    updateProjectScheduleRoutine(
+                      routineId,
+                      "Set project schedule end time",
+                      "Updated schedule routine end time.",
+                      (routine) => {
+                        routine.endHour = normalizeTimeOfDayHours(endHour);
+                        if (routine.startHour === routine.endHour) {
+                          throw new Error(
+                            "Schedule routine start and end hours must differ."
+                          );
+                        }
+                      }
+                    )
                   }
-                )
-              }
-              onSetRoutinePriority={(routineId, priority) =>
-                updateProjectScheduleRoutine(
-                  routineId,
-                  "Set project schedule priority",
-                  "Updated schedule routine priority.",
-                  (routine) => {
-                    if (!Number.isFinite(priority)) {
-                      throw new Error(
-                        "Schedule routine priority must be a finite number."
-                      );
-                    }
+                  onSetRoutinePriority={(routineId, priority) =>
+                    updateProjectScheduleRoutine(
+                      routineId,
+                      "Set project schedule priority",
+                      "Updated schedule routine priority.",
+                      (routine) => {
+                        if (!Number.isFinite(priority)) {
+                          throw new Error(
+                            "Schedule routine priority must be a finite number."
+                          );
+                        }
 
-                    routine.priority = Math.trunc(priority);
+                        routine.priority = Math.trunc(priority);
+                      }
+                    )
                   }
-                )
-              }
-              onSetRoutineEffectOption={(routineId, effectOptionId) =>
-                updateProjectScheduleRoutine(
-                  routineId,
-                  "Set project schedule effect",
-                  "Updated schedule routine effect.",
-                  (routine) => {
-                    if (routine.target.kind === "actor") {
-                      throw new Error(
-                        "Actor routines use dedicated presence, animation, and path controls."
-                      );
-                    }
+                  onSetRoutineEffectOption={(routineId, effectOptionId) =>
+                    updateProjectScheduleRoutine(
+                      routineId,
+                      "Set project schedule effect",
+                      "Updated schedule routine effect.",
+                      (routine) => {
+                        if (routine.target.kind === "actor") {
+                          throw new Error(
+                            "Actor routines use dedicated presence, animation, and path controls."
+                          );
+                        }
 
-                    const targetOption = getProjectScheduleTargetOptionByKey(
-                      projectScheduleTargetOptions,
-                      getControlTargetRefKey(routine.target)
-                    );
-
-                    if (targetOption === null) {
-                      throw new Error(
-                        "The current schedule target no longer exists in the project."
-                      );
-                    }
-
-                    routine.effects = [
-                      createProjectScheduleEffectFromOption({
-                        targetOption,
-                        effectOptionId,
-                        previousEffect: routine.effects[0] ?? null
-                      })
-                    ];
-                  }
-                )
-              }
-              onSetRoutineDays={(routineId, mode, days) =>
-                updateProjectScheduleRoutine(
-                  routineId,
-                  "Set project schedule days",
-                  "Updated schedule routine days.",
-                  (routine) => {
-                    routine.days =
-                      mode === "everyDay"
-                        ? createProjectScheduleEveryDaySelection()
-                        : {
-                            mode: "selectedDays",
-                            days
-                          };
-                  }
-                )
-              }
-              onSetRoutineNumericValue={(routineId, value) =>
-                updateProjectScheduleRoutine(
-                  routineId,
-                  "Set project schedule numeric value",
-                  "Updated schedule routine value.",
-                  (routine) => {
-                    if (!Number.isFinite(value) || value < 0) {
-                      throw new Error(
-                        "Schedule routine numeric values must be finite and zero or greater."
-                      );
-                    }
-
-                    const effect = routine.effects[0];
-
-                    if (effect === undefined) {
-                      throw new Error(
-                        "The current schedule routine does not expose a numeric value."
-                      );
-                    }
-
-                    switch (effect.type) {
-                      case "setSoundVolume":
-                        effect.volume = value;
-                        return;
-                      case "setLightIntensity":
-                      case "setAmbientLightIntensity":
-                      case "setSunLightIntensity":
-                        effect.intensity = value;
-                        return;
-                      default:
-                        throw new Error(
-                          "The current schedule effect does not expose a numeric value."
+                        const targetOption = getProjectScheduleTargetOptionByKey(
+                          projectScheduleTargetOptions,
+                          getControlTargetRefKey(routine.target)
                         );
-                    }
+
+                        if (targetOption === null) {
+                          throw new Error(
+                            "The current schedule target no longer exists in the project."
+                          );
+                        }
+
+                        routine.effects = [
+                          createProjectScheduleEffectFromOption({
+                            targetOption,
+                            effectOptionId,
+                            previousEffect: routine.effects[0] ?? null
+                          })
+                        ];
+                      }
+                    )
                   }
-                )
-              }
-              onSetRoutineColorValue={(routineId, colorHex) =>
-                updateProjectScheduleRoutine(
-                  routineId,
-                  "Set project schedule color",
-                  "Updated schedule routine color.",
-                  (routine) => {
-                    const effect = routine.effects[0];
-
-                    if (effect === undefined) {
-                      throw new Error(
-                        "The current schedule routine does not expose a color value."
-                      );
-                    }
-
-                    switch (effect.type) {
-                      case "setLightColor":
-                      case "setAmbientLightColor":
-                      case "setSunLightColor":
-                        effect.colorHex = colorHex;
-                        return;
-                      default:
-                        throw new Error(
-                          "The current schedule effect does not expose a color value."
-                        );
-                    }
+                  onSetRoutineDays={(routineId, mode, days) =>
+                    updateProjectScheduleRoutine(
+                      routineId,
+                      "Set project schedule days",
+                      "Updated schedule routine days.",
+                      (routine) => {
+                        routine.days =
+                          mode === "everyDay"
+                            ? createProjectScheduleEveryDaySelection()
+                            : {
+                                mode: "selectedDays",
+                                days
+                              };
+                      }
+                    )
                   }
-                )
-              }
-              onSetRoutineAnimationClip={(routineId, clipName) =>
-                updateProjectScheduleRoutine(
-                  routineId,
-                  "Set project schedule animation clip",
-                  "Updated schedule animation clip.",
-                  (routine) => {
-                    const effect = routine.effects[0];
+                  onSetRoutineNumericValue={(routineId, value) =>
+                    updateProjectScheduleRoutine(
+                      routineId,
+                      "Set project schedule numeric value",
+                      "Updated schedule routine value.",
+                      (routine) => {
+                        if (!Number.isFinite(value) || value < 0) {
+                          throw new Error(
+                            "Schedule routine numeric values must be finite and zero or greater."
+                          );
+                        }
 
-                    if (effect?.type !== "playModelAnimation") {
-                      throw new Error(
-                        "The current schedule effect does not expose an animation clip."
-                      );
-                    }
+                        const effect = routine.effects[0];
 
-                    effect.clipName = clipName;
+                        if (effect === undefined) {
+                          throw new Error(
+                            "The current schedule routine does not expose a numeric value."
+                          );
+                        }
+
+                        switch (effect.type) {
+                          case "setSoundVolume":
+                            effect.volume = value;
+                            return;
+                          case "setLightIntensity":
+                          case "setAmbientLightIntensity":
+                          case "setSunLightIntensity":
+                            effect.intensity = value;
+                            return;
+                          default:
+                            throw new Error(
+                              "The current schedule effect does not expose a numeric value."
+                            );
+                        }
+                      }
+                    )
                   }
-                )
-              }
-              onSetRoutineAnimationLoop={(routineId, loop) =>
-                updateProjectScheduleRoutine(
-                  routineId,
-                  "Set project schedule animation loop",
-                  loop
-                    ? "Schedule animation now loops."
-                    : "Schedule animation now plays once.",
-                  (routine) => {
-                    const effect = routine.effects[0];
+                  onSetRoutineColorValue={(routineId, colorHex) =>
+                    updateProjectScheduleRoutine(
+                      routineId,
+                      "Set project schedule color",
+                      "Updated schedule routine color.",
+                      (routine) => {
+                        const effect = routine.effects[0];
 
-                    if (effect?.type !== "playModelAnimation") {
-                      throw new Error(
-                        "The current schedule effect does not expose animation looping."
-                      );
-                    }
+                        if (effect === undefined) {
+                          throw new Error(
+                            "The current schedule routine does not expose a color value."
+                          );
+                        }
 
-                    effect.loop = loop;
+                        switch (effect.type) {
+                          case "setLightColor":
+                          case "setAmbientLightColor":
+                          case "setSunLightColor":
+                            effect.colorHex = colorHex;
+                            return;
+                          default:
+                            throw new Error(
+                              "The current schedule effect does not expose a color value."
+                            );
+                        }
+                      }
+                    )
                   }
-                )
-              }
-              onSetActorRoutinePresence={(routineId, active) =>
-                updateProjectScheduleRoutine(
-                  routineId,
-                  "Set actor schedule presence",
-                  active
-                    ? "Actor routine now keeps the NPC present."
-                    : "Actor routine now hides the NPC during this block.",
-                  (routine) => {
-                    if (routine.target.kind !== "actor") {
-                      throw new Error("Only actor routines expose presence.");
-                    }
+                  onSetRoutineAnimationClip={(routineId, clipName) =>
+                    updateProjectScheduleRoutine(
+                      routineId,
+                      "Set project schedule animation clip",
+                      "Updated schedule animation clip.",
+                      (routine) => {
+                        const effect = routine.effects[0];
+
+                        if (effect?.type !== "playModelAnimation") {
+                          throw new Error(
+                            "The current schedule effect does not expose an animation clip."
+                          );
+                        }
+
+                        effect.clipName = clipName;
+                      }
+                    )
+                  }
+                  onSetRoutineAnimationLoop={(routineId, loop) =>
+                    updateProjectScheduleRoutine(
+                      routineId,
+                      "Set project schedule animation loop",
+                      loop
+                        ? "Schedule animation now loops."
+                        : "Schedule animation now plays once.",
+                      (routine) => {
+                        const effect = routine.effects[0];
+
+                        if (effect?.type !== "playModelAnimation") {
+                          throw new Error(
+                            "The current schedule effect does not expose animation looping."
+                          );
+                        }
+
+                        effect.loop = loop;
+                      }
+                    )
+                  }
+                  onSetActorRoutinePresence={(routineId, active) =>
+                    updateProjectScheduleRoutine(
+                      routineId,
+                      "Set actor schedule presence",
+                      active
+                        ? "Actor routine now keeps the NPC present."
+                        : "Actor routine now hides the NPC during this block.",
+                      (routine) => {
+                        if (routine.target.kind !== "actor") {
+                          throw new Error("Only actor routines expose presence.");
+                        }
 
                     upsertActorRoutineEffect(
                       routine,
