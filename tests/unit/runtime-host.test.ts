@@ -281,13 +281,24 @@ describe("RuntimeHost", () => {
 
     const hostInternals = host as unknown as {
       createInteractionDispatcher(): {
-        startDialogue(dialogueId: string, link: InteractionLink): void;
+        startDialogue(
+          dialogueId: string,
+          source?: {
+            kind: "interactionLink" | "npc" | "direct";
+            sourceEntityId: string | null;
+            linkId: string | null;
+          }
+        ): void;
       };
     };
     const dispatcher = hostInternals.createInteractionDispatcher();
     const dialogueLink = document.interactionLinks["link-start-dialogue"]!;
 
-    dispatcher.startDialogue("dialogue-warning", dialogueLink);
+    dispatcher.startDialogue("dialogue-warning", {
+      kind: "interactionLink",
+      sourceEntityId: dialogueLink.sourceEntityId,
+      linkId: dialogueLink.id
+    });
     host.advanceRuntimeDialogue();
     host.advanceRuntimeDialogue();
 
@@ -296,15 +307,123 @@ describe("RuntimeHost", () => {
         dialogueId: "dialogue-warning",
         lineIndex: 0,
         speakerName: "Operator",
-        text: "The generator is unstable."
+        text: "The generator is unstable.",
+        source: {
+          kind: "interactionLink",
+          sourceEntityId: triggerVolume.id,
+          linkId: dialogueLink.id
+        }
       }),
       expect.objectContaining({
         dialogueId: "dialogue-warning",
         lineIndex: 1,
         speakerName: null,
-        text: "A low hum fills the room."
+        text: "A low hum fills the room.",
+        source: {
+          kind: "interactionLink",
+          sourceEntityId: triggerVolume.id,
+          linkId: dialogueLink.id
+        }
       }),
       null
+    ]);
+
+    host.dispose();
+  });
+
+  it("publishes late dialogue handlers, ignores repeated same-dialogue starts, and replaces with a different dialogue", () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    vi.spyOn(RapierCollisionWorld, "create").mockResolvedValue({
+      dispose: vi.fn(),
+      resolveThirdPersonCameraCollision: vi.fn(
+        (_pivot, desiredCameraPosition) => desiredCameraPosition
+      )
+    } as unknown as RapierCollisionWorld);
+
+    const document = createEmptySceneDocument();
+    document.dialogues.dialogues["dialogue-a"] = {
+      id: "dialogue-a",
+      title: "A",
+      lines: [
+        {
+          id: "dialogue-line-a-1",
+          speakerName: null,
+          text: "First dialogue."
+        }
+      ]
+    };
+    document.dialogues.dialogues["dialogue-b"] = {
+      id: "dialogue-b",
+      title: "B",
+      lines: [
+        {
+          id: "dialogue-line-b-1",
+          speakerName: "Merchant",
+          text: "Second dialogue."
+        }
+      ]
+    };
+
+    const host = new RuntimeHost({
+      enableRendering: false
+    });
+    host.loadScene(buildRuntimeSceneFromDocument(document));
+
+    const hostInternals = host as unknown as {
+      createInteractionDispatcher(): {
+        startDialogue(
+          dialogueId: string,
+          source?: {
+            kind: "interactionLink" | "npc" | "direct";
+            sourceEntityId: string | null;
+            linkId: string | null;
+          }
+        ): void;
+      };
+    };
+    const dispatcher = hostInternals.createInteractionDispatcher();
+
+    dispatcher.startDialogue("dialogue-a", {
+      kind: "interactionLink",
+      sourceEntityId: "entity-trigger-a",
+      linkId: "link-dialogue-a"
+    });
+
+    const dialogueStates: Array<RuntimeDialogueState | null> = [];
+    host.setRuntimeDialogueHandler((dialogue) => {
+      dialogueStates.push(dialogue);
+    });
+
+    dispatcher.startDialogue("dialogue-a", {
+      kind: "interactionLink",
+      sourceEntityId: "entity-trigger-a",
+      linkId: "link-dialogue-a"
+    });
+    dispatcher.startDialogue("dialogue-b", {
+      kind: "npc",
+      sourceEntityId: "entity-npc-merchant",
+      linkId: null
+    });
+
+    expect(dialogueStates).toEqual([
+      expect.objectContaining({
+        dialogueId: "dialogue-a",
+        text: "First dialogue.",
+        source: {
+          kind: "interactionLink",
+          sourceEntityId: "entity-trigger-a",
+          linkId: "link-dialogue-a"
+        }
+      }),
+      expect.objectContaining({
+        dialogueId: "dialogue-b",
+        text: "Second dialogue.",
+        source: {
+          kind: "npc",
+          sourceEntityId: "entity-npc-merchant",
+          linkId: null
+        }
+      })
     ]);
 
     host.dispose();
