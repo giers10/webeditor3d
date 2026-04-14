@@ -423,7 +423,7 @@ export function ProjectSequencerPane({
               onAddSequence();
             }}
           >
-            {mode === "timeline" ? "Add Clip" : "Add Sequence"}
+            {mode === "timeline" ? "Add Sequence" : "Create Sequence"}
           </button>
           <button
             className="toolbar__button toolbar__button--compact"
