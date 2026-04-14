@@ -421,25 +421,50 @@ export function ProjectSchedulePane({
                     ))}
                   </select>
                 </label>
-                <label className="form-field">
-                  <span className="label">Effect</span>
-                  <select
-                    className="select-input"
-                    value={selectedEffectOptionId ?? ""}
-                    onChange={(event) =>
-                      onSetRoutineEffectOption(
-                        selectedRoutine.id,
-                        event.currentTarget.value as ProjectScheduleEffectOptionId
-                      )
-                    }
-                  >
-                    {selectedEffectOptions.map((effectOption) => (
-                      <option key={effectOption.id} value={effectOption.id}>
-                        {effectOption.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                {selectedRoutine.target.kind === "actor" ? (
+                  <>
+                    <label className="form-field">
+                      <span className="label">Presence</span>
+                      <select
+                        className="select-input"
+                        value={
+                          selectedActorPresenceEffect?.active === false
+                            ? "hidden"
+                            : "present"
+                        }
+                        onChange={(event) =>
+                          onSetActorRoutinePresence(
+                            selectedRoutine.id,
+                            event.currentTarget.value !== "hidden"
+                          )
+                        }
+                      >
+                        <option value="present">Present</option>
+                        <option value="hidden">Hidden</option>
+                      </select>
+                    </label>
+                  </>
+                ) : (
+                  <label className="form-field">
+                    <span className="label">Effect</span>
+                    <select
+                      className="select-input"
+                      value={selectedEffectOptionId ?? ""}
+                      onChange={(event) =>
+                        onSetRoutineEffectOption(
+                          selectedRoutine.id,
+                          event.currentTarget.value as ProjectScheduleEffectOptionId
+                        )
+                      }
+                    >
+                      {selectedEffectOptions.map((effectOption) => (
+                        <option key={effectOption.id} value={effectOption.id}>
+                          {effectOption.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
                 <label className="form-field form-field--inline">
                   <input
                     type="checkbox"
