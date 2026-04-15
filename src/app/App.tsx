@@ -5105,7 +5105,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
       (step) => {
         if (
           step.type !== "controlEffect" ||
-          step.effect.type !== "playModelAnimation"
+          (step.effect.type !== "playModelAnimation" &&
+            step.effect.type !== "playActorAnimation")
         ) {
           throw new Error(
             "The current sequence control step does not expose an animation clip."
@@ -5132,7 +5133,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
       (step) => {
         if (
           step.type !== "controlEffect" ||
-          step.effect.type !== "playModelAnimation"
+          (step.effect.type !== "playModelAnimation" &&
+            step.effect.type !== "playActorAnimation")
         ) {
           throw new Error(
             "The current sequence control step does not expose animation looping."
