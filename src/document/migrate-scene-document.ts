@@ -122,6 +122,7 @@ import {
   DEFAULT_BOX_BRUSH_ENABLED,
   DEFAULT_BOX_BRUSH_ROTATION_DEGREES,
   DEFAULT_BOX_BRUSH_VISIBLE,
+  DEFAULT_WEDGE_BRUSH_ROTATION_DEGREES,
   getConeFaceIds,
   getConeVertexIds,
   getRadialPrismFaceIds,
@@ -2184,6 +2185,10 @@ function readBrushes(
     if (kind === "wedge") {
       brushes[brushId] = createWedgeBrush({
         ...sharedBrushFields,
+        rotationDegrees:
+          brushValue.rotationDegrees === undefined
+            ? DEFAULT_WEDGE_BRUSH_ROTATION_DEGREES
+            : sharedBrushFields.rotationDegrees,
         geometry: readBrushGeometry(
           brushValue.geometry,
           `brushes.${brushId}.geometry`,
