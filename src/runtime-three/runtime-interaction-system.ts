@@ -57,7 +57,12 @@ export interface RuntimeInteractionDispatcher {
   stopAnimation(instanceId: string, link: InteractionLink): void;
   playSound(soundEmitterId: string, link: InteractionLink): void;
   stopSound(soundEmitterId: string, link: InteractionLink): void;
-  startDialogue(dialogueId: string, source?: RuntimeDialogueStartSource): void;
+  startNpcDialogue(
+    npcEntityId: string,
+    dialogueId: string | null,
+    source?: RuntimeDialogueStartSource
+  ): void;
+  startDialogue?(dialogueId: string, source?: RuntimeDialogueStartSource): void;
   dispatchControlEffect?(effect: ControlEffect, link: InteractionLink): void;
 }
 
@@ -329,8 +334,10 @@ function getNpcDialoguePrompt(
   hasClickLinks: boolean
 ): string {
   const trimmedName = npc.name?.trim() ?? "";
+  const hasNpcDialogue =
+    npc.defaultDialogueId !== null || npc.dialogues.length > 0;
 
-  if (npc.dialogueId !== null) {
+  if (hasNpcDialogue) {
     return trimmedName.length > 0 ? `Talk to ${trimmedName}` : "Talk";
   }
 
@@ -580,7 +587,11 @@ export class RuntimeInteractionSystem {
 
       const hasClickLinks = hasTriggerLinks(runtimeScene, npc.entityId, "click");
 
-      if (!hasClickLinks && npc.dialogueId === null) {
+      if (
+        !hasClickLinks &&
+        npc.defaultDialogueId === null &&
+        npc.dialogues.length === 0
+      ) {
         continue;
       }
 
@@ -633,8 +644,8 @@ export class RuntimeInteractionSystem {
         return;
       }
 
-      if (npc.dialogueId !== null) {
-        dispatcher.startDialogue(npc.dialogueId, {
+      if (npc.defaultDialogueId !== null || npc.dialogues.length > 0) {
+        dispatcher.startNpcDialogue(npc.entityId, npc.defaultDialogueId, {
           kind: "npc",
           sourceEntityId: npc.entityId,
           linkId: null,
@@ -742,8 +753,16 @@ export class RuntimeInteractionSystem {
         throw new Error(
           "Runtime visibility steps targeting model instances require dispatcher.setVisibility support."
         );
+      case "makeNpcTalk":
+        dispatcher.startNpcDialogue(step.npcEntityId, step.dialogueId, {
+          kind: "interactionLink",
+          sourceEntityId: link.sourceEntityId,
+          linkId: link.id,
+          trigger: link.trigger
+        });
+        return;
       case "startDialogue":
-        dispatcher.startDialogue(step.dialogueId, {
+        dispatcher.startDialogue?.(step.dialogueId, {
           kind: "interactionLink",
           sourceEntityId: link.sourceEntityId,
           linkId: link.id,
