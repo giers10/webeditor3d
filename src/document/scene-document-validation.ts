@@ -4929,7 +4929,13 @@ function validateProjectResources(
     }
 
     registerAuthoredId(sequence.id, path, seenIds, diagnostics);
-    validateProjectSequence(sequence, path, document, context, diagnostics);
+    validateProjectSequence(
+      sequence,
+      path,
+      { dialogues: document.dialogues, scenes: {} },
+      context,
+      diagnostics
+    );
   }
 }
 
