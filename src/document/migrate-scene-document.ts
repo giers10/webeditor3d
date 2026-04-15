@@ -92,7 +92,6 @@ import {
   createControlInteractionLink,
   createPlayAnimationInteractionLink,
   createRunSequenceInteractionLink,
-  createStartDialogueInteractionLink,
   createPlaySoundInteractionLink,
   createStopAnimationInteractionLink,
   createStopSoundInteractionLink,
@@ -3497,18 +3496,6 @@ function readInteractionAction(
         targetSoundEmitterId
       }).action;
     }
-    case "startDialogue": {
-      const dialogueId = expectString(value.dialogueId, `${label}.dialogueId`);
-
-      if (dialogueId.trim().length === 0) {
-        throw new Error(`${label}.dialogueId must be non-empty.`);
-      }
-
-      return createStartDialogueInteractionLink({
-        sourceEntityId: "interaction-source-placeholder",
-        dialogueId
-      }).action;
-    }
     case "runSequence": {
       const sequenceId = expectString(value.sequenceId, `${label}.sequenceId`);
 
@@ -3764,16 +3751,6 @@ function readProjectSequenceEffect(value: unknown, label: string): SequenceClip 
         stepClass,
         type: "controlEffect",
         effect: readControlEffect(value.effect, `${label}.effect`)
-      };
-    case "startDialogue":
-      if (stepClass !== "impulse") {
-        throw new Error(`${label}.startDialogue effects must use the impulse class.`);
-      }
-
-      return {
-        stepClass: "impulse",
-        type: "startDialogue",
-        dialogueId: expectString(value.dialogueId, `${label}.dialogueId`)
       };
     case "makeNpcTalk":
       if (stepClass !== "impulse") {
@@ -4153,16 +4130,6 @@ function readInteractionLink(value: unknown, label: string): InteractionLink {
         ),
         trigger,
         targetSoundEmitterId: action.targetSoundEmitterId
-      });
-    case "startDialogue":
-      return createStartDialogueInteractionLink({
-        id: expectString(value.id, `${label}.id`),
-        sourceEntityId: expectString(
-          value.sourceEntityId,
-          `${label}.sourceEntityId`
-        ),
-        trigger,
-        dialogueId: action.dialogueId
       });
     case "runSequence":
       return createRunSequenceInteractionLink({
@@ -4826,7 +4793,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
   });
   const assets = readAssets(source.assets);
   const legacyDialogues = readProjectDialogueLibrary(source.dialogues, "dialogues", {
-    allowMissing: source.version < PROJECT_DIALOGUE_LIBRARY_SCENE_DOCUMENT_VERSION
+    allowMissing: true
   });
 
   const migratedDocument: SceneDocument = {
@@ -4839,7 +4806,6 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       allowMissing:
         source.version < PROJECT_SCHEDULER_FOUNDATION_SCENE_DOCUMENT_VERSION
     }),
-    dialogues: legacyDialogues,
     sequences: readProjectSequenceLibrary(source.sequences, "sequences", {
       allowMissing: source.version < PROJECT_SEQUENCE_LIBRARY_SCENE_DOCUMENT_VERSION
     }),
@@ -4958,8 +4924,7 @@ export function migrateProjectDocument(source: unknown): ProjectDocument {
     const allowMissingTimeSettings =
       source.version < PROJECT_TIME_SYSTEM_SCENE_DOCUMENT_VERSION;
     const legacyDialogues = readProjectDialogueLibrary(source.dialogues, "dialogues", {
-      allowMissing:
-        source.version < PROJECT_DIALOGUE_LIBRARY_SCENE_DOCUMENT_VERSION
+      allowMissing: true
     });
 
     for (const [sceneKey, sceneValue] of Object.entries(source.scenes)) {
@@ -4990,7 +4955,6 @@ export function migrateProjectDocument(source: unknown): ProjectDocument {
         allowMissing:
           source.version < PROJECT_SCHEDULER_FOUNDATION_SCENE_DOCUMENT_VERSION
       }),
-      dialogues: legacyDialogues,
       sequences: readProjectSequenceLibrary(source.sequences, "sequences", {
         allowMissing:
           source.version < PROJECT_SEQUENCE_LIBRARY_SCENE_DOCUMENT_VERSION
