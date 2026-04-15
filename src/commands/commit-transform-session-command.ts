@@ -9,6 +9,7 @@ import { createUpsertModelInstanceCommand } from "./upsert-model-instance-comman
 import type { EditorCommand } from "./command";
 import type { SceneDocument } from "../document/scene-document";
 import { createModelInstance } from "../assets/model-instances";
+import { updateBrush, type Brush } from "../document/brushes";
 import {
   createInteractableEntity,
   createNpcEntity,
@@ -170,6 +171,23 @@ function createUpdatedEntityFromPreview(
   }
 }
 
+function createUpdatedBrushFromPreview(
+  brush: Brush,
+  preview: {
+    center: { x: number; y: number; z: number };
+    rotationDegrees: { x: number; y: number; z: number };
+    size: { x: number; y: number; z: number };
+    geometry: Brush["geometry"];
+  }
+): Brush {
+  return updateBrush(brush, {
+    center: preview.center,
+    rotationDegrees: preview.rotationDegrees,
+    size: preview.size,
+    geometry: preview.geometry as never
+  });
+}
+
 export function createCommitTransformSessionCommand(document: SceneDocument, session: ActiveTransformSession): EditorCommand {
   switch (session.target.kind) {
     case "brush":
@@ -216,13 +234,7 @@ export function createCommitTransformSessionCommand(document: SceneDocument, ses
             throw new Error(`Whitebox solid ${item.brushId} does not exist.`);
           }
 
-          return {
-            ...brush,
-            center: item.center,
-            rotationDegrees: item.rotationDegrees,
-            size: item.size,
-            geometry: item.geometry
-          };
+          return createUpdatedBrushFromPreview(brush, item);
         }),
         label: createTransformCommandLabel(session)
       });
