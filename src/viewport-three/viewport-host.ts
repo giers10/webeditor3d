@@ -3759,13 +3759,6 @@ export class ViewportHost {
         (interactable) => [interactable.entityId, interactable]
       )
     );
-    const runtimeSceneExitsByEntityId = new Map(
-      (this.currentSimulationScene?.entities.sceneExits ?? []).map((sceneExit) => [
-        sceneExit.entityId,
-        sceneExit
-      ])
-    );
-
     for (const entity of getEntityInstances(document.entities)) {
       if (!entity.enabled || !entity.visible) {
         continue;
@@ -3807,18 +3800,6 @@ export class ViewportHost {
             entity.radius,
             selected,
             runtimeInteractable?.interactionEnabled ?? entity.interactionEnabled
-          );
-          break;
-        }
-        case "sceneExit": {
-          const runtimeSceneExit = runtimeSceneExitsByEntityId.get(entity.id) ?? null;
-          renderObjects = this.createInteractableRenderObjects(
-            entity.id,
-            entity.position,
-            entity.radius,
-            selected,
-            runtimeSceneExit?.interactionEnabled ?? entity.interactionEnabled,
-            selected ? SCENE_EXIT_SELECTED_COLOR : SCENE_EXIT_COLOR
           );
           break;
         }
