@@ -163,7 +163,7 @@ function clampProgress(progress: number): number {
 }
 
 function resolvePathSegmentSample(
-  path: ResolvedScenePath,
+  path: ResolvedPathLike,
   progress: number
 ): { segmentIndex: number | null; distance: number } {
   if (path.segments.length === 0 || path.totalLength <= 0) {
