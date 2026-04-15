@@ -161,6 +161,48 @@ interface CachedMaterialTexture {
   textureSet: StarterMaterialTextureSet;
 }
 
+function createRuntimeGeometryBrush(brush: RuntimeBoxBrushInstance): Brush {
+  switch (brush.kind) {
+    case "box":
+      return createBoxBrush({
+        id: brush.id,
+        visible: brush.visible,
+        center: brush.center,
+        rotationDegrees: brush.rotationDegrees,
+        size: brush.size,
+        geometry: brush.geometry as Parameters<typeof createBoxBrush>[0]["geometry"],
+        faces: brush.faces as Parameters<typeof createBoxBrush>[0]["faces"],
+        volume: brush.volume
+      });
+    case "wedge":
+      return createWedgeBrush({
+        id: brush.id,
+        visible: brush.visible,
+        center: brush.center,
+        rotationDegrees: brush.rotationDegrees,
+        size: brush.size,
+        geometry:
+          brush.geometry as Parameters<typeof createWedgeBrush>[0]["geometry"],
+        faces: brush.faces as Parameters<typeof createWedgeBrush>[0]["faces"],
+        volume: brush.volume
+      });
+    case "radialPrism":
+      return createRadialPrismBrush({
+        id: brush.id,
+        visible: brush.visible,
+        center: brush.center,
+        rotationDegrees: brush.rotationDegrees,
+        size: brush.size,
+        sideCount: brush.sideCount,
+        geometry:
+          brush.geometry as Parameters<typeof createRadialPrismBrush>[0]["geometry"],
+        faces:
+          brush.faces as Parameters<typeof createRadialPrismBrush>[0]["faces"],
+        volume: brush.volume
+      });
+  }
+}
+
 function isEditableEventTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) {
     return false;
