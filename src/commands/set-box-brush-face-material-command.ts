@@ -1,7 +1,7 @@
 import type { ToolMode } from "../core/tool-mode";
 import { createOpaqueId } from "../core/ids";
 import type { EditorSelection } from "../core/selection";
-import type { BoxFaceId } from "../document/brushes";
+import type { WhiteboxFaceId } from "../document/brushes";
 
 import {
   cloneSelectionForCommand,
@@ -13,7 +13,7 @@ import type { EditorCommand } from "./command";
 
 interface SetBoxBrushFaceMaterialCommandOptions {
   brushId: string;
-  faceId: BoxFaceId;
+  faceId: WhiteboxFaceId;
   materialId: string | null;
 }
 

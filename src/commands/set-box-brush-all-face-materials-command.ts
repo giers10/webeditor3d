@@ -1,7 +1,8 @@
 import type { ToolMode } from "../core/tool-mode";
 import { createOpaqueId } from "../core/ids";
 import type { EditorSelection } from "../core/selection";
-import { BOX_FACE_IDS, type BoxFaceId } from "../document/brushes";
+import type { WhiteboxFaceId } from "../document/brushes";
+import { getBrushFaceIds } from "../geometry/whitebox-topology";
 
 import {
   cloneSelectionForCommand,
@@ -18,7 +19,7 @@ interface SetBoxBrushAllFaceMaterialsCommandOptions {
 export function createSetBoxBrushAllFaceMaterialsCommand(
   options: SetBoxBrushAllFaceMaterialsCommandOptions
 ): EditorCommand {
-  let previousMaterialIds: Record<BoxFaceId, string | null> | null = null;
+  let previousMaterialIds: Record<WhiteboxFaceId, string | null> | null = null;
   let previousSelection: EditorSelection | null = null;
   let previousToolMode: ToolMode | null = null;
 
@@ -42,14 +43,12 @@ export function createSetBoxBrushAllFaceMaterialsCommand(
       }
 
       if (previousMaterialIds === null) {
-        previousMaterialIds = {
-          posX: currentBrush.faces.posX.materialId,
-          negX: currentBrush.faces.negX.materialId,
-          posY: currentBrush.faces.posY.materialId,
-          negY: currentBrush.faces.negY.materialId,
-          posZ: currentBrush.faces.posZ.materialId,
-          negZ: currentBrush.faces.negZ.materialId
-        };
+        previousMaterialIds = Object.fromEntries(
+          getBrushFaceIds(currentBrush).map((faceId) => [
+            faceId,
+            currentBrush.faces[faceId].materialId
+          ])
+        );
       }
 
       if (previousSelection === null) {
@@ -64,7 +63,7 @@ export function createSetBoxBrushAllFaceMaterialsCommand(
         replaceBrush(currentDocument, {
           ...currentBrush,
           faces: Object.fromEntries(
-            BOX_FACE_IDS.map((faceId) => [
+            getBrushFaceIds(currentBrush).map((faceId) => [
               faceId,
               {
                 ...currentBrush.faces[faceId],
@@ -87,32 +86,15 @@ export function createSetBoxBrushAllFaceMaterialsCommand(
       context.setDocument(
         replaceBrush(currentDocument, {
           ...currentBrush,
-          faces: {
-            posX: {
-              ...currentBrush.faces.posX,
-              materialId: previousMaterialIds.posX
-            },
-            negX: {
-              ...currentBrush.faces.negX,
-              materialId: previousMaterialIds.negX
-            },
-            posY: {
-              ...currentBrush.faces.posY,
-              materialId: previousMaterialIds.posY
-            },
-            negY: {
-              ...currentBrush.faces.negY,
-              materialId: previousMaterialIds.negY
-            },
-            posZ: {
-              ...currentBrush.faces.posZ,
-              materialId: previousMaterialIds.posZ
-            },
-            negZ: {
-              ...currentBrush.faces.negZ,
-              materialId: previousMaterialIds.negZ
-            }
-          }
+          faces: Object.fromEntries(
+            getBrushFaceIds(currentBrush).map((faceId) => [
+              faceId,
+              {
+                ...currentBrush.faces[faceId],
+                materialId: previousMaterialIds[faceId] ?? null
+              }
+            ])
+          ) as typeof currentBrush.faces
         })
       );
 

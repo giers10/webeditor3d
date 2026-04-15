@@ -2,11 +2,11 @@ import type { ToolMode } from "../core/tool-mode";
 import { createOpaqueId } from "../core/ids";
 import type { EditorSelection } from "../core/selection";
 import {
-  BOX_FACE_IDS,
   cloneFaceUvState,
-  type BoxFaceId,
-  type FaceUvState
+  type FaceUvState,
+  type WhiteboxFaceId
 } from "../document/brushes";
+import { getBrushFaceIds } from "../geometry/whitebox-topology";
 
 import {
   cloneSelectionForCommand,
@@ -18,13 +18,13 @@ import type { EditorCommand } from "./command";
 interface UpdateBoxBrushAllFaceUvsCommandOptions {
   brushId: string;
   label: string;
-  updateUvState(uvState: FaceUvState, faceId: BoxFaceId): FaceUvState;
+  updateUvState(uvState: FaceUvState, faceId: WhiteboxFaceId): FaceUvState;
 }
 
 export function createUpdateBoxBrushAllFaceUvsCommand(
   options: UpdateBoxBrushAllFaceUvsCommandOptions
 ): EditorCommand {
-  let previousUvStates: Record<BoxFaceId, FaceUvState> | null = null;
+  let previousUvStates: Record<WhiteboxFaceId, FaceUvState> | null = null;
   let previousSelection: EditorSelection | null = null;
   let previousToolMode: ToolMode | null = null;
 
@@ -36,14 +36,12 @@ export function createUpdateBoxBrushAllFaceUvsCommand(
       const currentBrush = getBoxBrushOrThrow(currentDocument, options.brushId);
 
       if (previousUvStates === null) {
-        previousUvStates = {
-          posX: cloneFaceUvState(currentBrush.faces.posX.uv),
-          negX: cloneFaceUvState(currentBrush.faces.negX.uv),
-          posY: cloneFaceUvState(currentBrush.faces.posY.uv),
-          negY: cloneFaceUvState(currentBrush.faces.negY.uv),
-          posZ: cloneFaceUvState(currentBrush.faces.posZ.uv),
-          negZ: cloneFaceUvState(currentBrush.faces.negZ.uv)
-        };
+        previousUvStates = Object.fromEntries(
+          getBrushFaceIds(currentBrush).map((faceId) => [
+            faceId,
+            cloneFaceUvState(currentBrush.faces[faceId].uv)
+          ])
+        );
       }
 
       if (previousSelection === null) {
@@ -58,7 +56,7 @@ export function createUpdateBoxBrushAllFaceUvsCommand(
         replaceBrush(currentDocument, {
           ...currentBrush,
           faces: Object.fromEntries(
-            BOX_FACE_IDS.map((faceId) => [
+            getBrushFaceIds(currentBrush).map((faceId) => [
               faceId,
               {
                 ...currentBrush.faces[faceId],
@@ -83,32 +81,15 @@ export function createUpdateBoxBrushAllFaceUvsCommand(
       context.setDocument(
         replaceBrush(currentDocument, {
           ...currentBrush,
-          faces: {
-            posX: {
-              ...currentBrush.faces.posX,
-              uv: cloneFaceUvState(previousUvStates.posX)
-            },
-            negX: {
-              ...currentBrush.faces.negX,
-              uv: cloneFaceUvState(previousUvStates.negX)
-            },
-            posY: {
-              ...currentBrush.faces.posY,
-              uv: cloneFaceUvState(previousUvStates.posY)
-            },
-            negY: {
-              ...currentBrush.faces.negY,
-              uv: cloneFaceUvState(previousUvStates.negY)
-            },
-            posZ: {
-              ...currentBrush.faces.posZ,
-              uv: cloneFaceUvState(previousUvStates.posZ)
-            },
-            negZ: {
-              ...currentBrush.faces.negZ,
-              uv: cloneFaceUvState(previousUvStates.negZ)
-            }
-          }
+          faces: Object.fromEntries(
+            getBrushFaceIds(currentBrush).map((faceId) => [
+              faceId,
+              {
+                ...currentBrush.faces[faceId],
+                uv: cloneFaceUvState(previousUvStates[faceId])
+              }
+            ])
+          ) as typeof currentBrush.faces
         })
       );
 

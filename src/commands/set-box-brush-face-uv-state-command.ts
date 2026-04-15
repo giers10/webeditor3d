@@ -1,7 +1,11 @@
 import type { ToolMode } from "../core/tool-mode";
 import { createOpaqueId } from "../core/ids";
 import type { EditorSelection } from "../core/selection";
-import { cloneFaceUvState, type BoxFaceId, type FaceUvState } from "../document/brushes";
+import {
+  cloneFaceUvState,
+  type FaceUvState,
+  type WhiteboxFaceId
+} from "../document/brushes";
 
 import {
   cloneSelectionForCommand,
@@ -13,7 +17,7 @@ import type { EditorCommand } from "./command";
 
 interface SetBoxBrushFaceUvStateCommandOptions {
   brushId: string;
-  faceId: BoxFaceId;
+  faceId: WhiteboxFaceId;
   uvState: FaceUvState;
   label?: string;
 }

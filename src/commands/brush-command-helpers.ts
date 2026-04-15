@@ -1,23 +1,23 @@
 import { cloneEditorSelection, type EditorSelection } from "../core/selection";
 import {
+  cloneBrush,
+  cloneBrushGeometry,
   cloneFaceUvState,
-  type BoxBrush,
-  type BoxEdgeId,
-  type BoxFaceId,
-  type BoxVertexId,
+  type Brush,
   type BrushFace
 } from "../document/brushes";
 import type { SceneDocument } from "../document/scene-document";
+import type {
+  WhiteboxEdgeId,
+  WhiteboxFaceId,
+  WhiteboxVertexId
+} from "../document/brushes";
 
-export function getBoxBrushOrThrow(document: SceneDocument, brushId: string): BoxBrush {
+export function getBoxBrushOrThrow(document: SceneDocument, brushId: string): Brush {
   const brush = document.brushes[brushId];
 
   if (brush === undefined) {
     throw new Error(`Box brush ${brushId} does not exist.`);
-  }
-
-  if (brush.kind !== "box") {
-    throw new Error(`Brush ${brushId} is not a supported box brush.`);
   }
 
   return brush;
@@ -30,7 +30,7 @@ export function setSingleBrushSelection(brushId: string): EditorSelection {
   };
 }
 
-export function setSingleBrushFaceSelection(brushId: string, faceId: BoxFaceId): EditorSelection {
+export function setSingleBrushFaceSelection(brushId: string, faceId: WhiteboxFaceId): EditorSelection {
   return {
     kind: "brushFace",
     brushId,
@@ -38,7 +38,7 @@ export function setSingleBrushFaceSelection(brushId: string, faceId: BoxFaceId):
   };
 }
 
-export function setSingleBrushEdgeSelection(brushId: string, edgeId: BoxEdgeId): EditorSelection {
+export function setSingleBrushEdgeSelection(brushId: string, edgeId: WhiteboxEdgeId): EditorSelection {
   return {
     kind: "brushEdge",
     brushId,
@@ -46,7 +46,7 @@ export function setSingleBrushEdgeSelection(brushId: string, edgeId: BoxEdgeId):
   };
 }
 
-export function setSingleBrushVertexSelection(brushId: string, vertexId: BoxVertexId): EditorSelection {
+export function setSingleBrushVertexSelection(brushId: string, vertexId: WhiteboxVertexId): EditorSelection {
   return {
     kind: "brushVertex",
     brushId,
@@ -58,12 +58,12 @@ export function cloneSelectionForCommand(selection: EditorSelection): EditorSele
   return cloneEditorSelection(selection);
 }
 
-export function replaceBrush(document: SceneDocument, brush: BoxBrush): SceneDocument {
+export function replaceBrush(document: SceneDocument, brush: Brush): SceneDocument {
   return {
     ...document,
     brushes: {
       ...document.brushes,
-      [brush.id]: brush
+      [brush.id]: cloneBrush(brush)
     }
   };
 }
@@ -80,7 +80,7 @@ export function removeBrush(document: SceneDocument, brushId: string): SceneDocu
   };
 }
 
-export function getBoxBrushFaceOrThrow(document: SceneDocument, brushId: string, faceId: BoxFaceId): BrushFace {
+export function getBoxBrushFaceOrThrow(document: SceneDocument, brushId: string, faceId: WhiteboxFaceId): BrushFace {
   const brush = getBoxBrushOrThrow(document, brushId);
   const face = brush.faces[faceId];
 
@@ -91,7 +91,7 @@ export function getBoxBrushFaceOrThrow(document: SceneDocument, brushId: string,
   return face;
 }
 
-export function replaceBoxBrushFace(document: SceneDocument, brushId: string, faceId: BoxFaceId, face: BrushFace): SceneDocument {
+export function replaceBoxBrushFace(document: SceneDocument, brushId: string, faceId: WhiteboxFaceId, face: BrushFace): SceneDocument {
   const brush = getBoxBrushOrThrow(document, brushId);
 
   return replaceBrush(document, {
@@ -102,6 +102,7 @@ export function replaceBoxBrushFace(document: SceneDocument, brushId: string, fa
         materialId: face.materialId,
         uv: cloneFaceUvState(face.uv)
       }
-    }
+    },
+    geometry: cloneBrushGeometry(brush.geometry)
   });
 }

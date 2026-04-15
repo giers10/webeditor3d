@@ -1,12 +1,16 @@
 import type { WhiteboxSelectionMode } from "./whitebox-selection-mode";
-import type { BoxEdgeId, BoxFaceId, BoxVertexId } from "../document/brushes";
+import type {
+  WhiteboxEdgeId,
+  WhiteboxFaceId,
+  WhiteboxVertexId
+} from "../document/brushes";
 
 export type EditorSelection =
   | { kind: "none" }
   | { kind: "brushes"; ids: string[] }
-  | { kind: "brushFace"; brushId: string; faceId: BoxFaceId }
-  | { kind: "brushEdge"; brushId: string; edgeId: BoxEdgeId }
-  | { kind: "brushVertex"; brushId: string; vertexId: BoxVertexId }
+  | { kind: "brushFace"; brushId: string; faceId: WhiteboxFaceId }
+  | { kind: "brushEdge"; brushId: string; edgeId: WhiteboxEdgeId }
+  | { kind: "brushVertex"; brushId: string; vertexId: WhiteboxVertexId }
   | { kind: "paths"; ids: string[] }
   | { kind: "pathPoint"; pathId: string; pointId: string }
   | { kind: "entities"; ids: string[] }
@@ -93,7 +97,9 @@ export function getSingleSelectedBrushId(selection: EditorSelection): string | n
   return selection.ids[0];
 }
 
-export function getSelectedBrushFaceId(selection: EditorSelection): BoxFaceId | null {
+export function getSelectedBrushFaceId(
+  selection: EditorSelection
+): WhiteboxFaceId | null {
   if (selection.kind !== "brushFace") {
     return null;
   }
@@ -101,7 +107,9 @@ export function getSelectedBrushFaceId(selection: EditorSelection): BoxFaceId | 
   return selection.faceId;
 }
 
-export function getSelectedBrushEdgeId(selection: EditorSelection): BoxEdgeId | null {
+export function getSelectedBrushEdgeId(
+  selection: EditorSelection
+): WhiteboxEdgeId | null {
   if (selection.kind !== "brushEdge") {
     return null;
   }
@@ -109,7 +117,9 @@ export function getSelectedBrushEdgeId(selection: EditorSelection): BoxEdgeId | 
   return selection.edgeId;
 }
 
-export function getSelectedBrushVertexId(selection: EditorSelection): BoxVertexId | null {
+export function getSelectedBrushVertexId(
+  selection: EditorSelection
+): WhiteboxVertexId | null {
   if (selection.kind !== "brushVertex") {
     return null;
   }
@@ -168,15 +178,27 @@ export function isBrushSelected(selection: EditorSelection, brushId: string): bo
   );
 }
 
-export function isBrushFaceSelected(selection: EditorSelection, brushId: string, faceId: BoxFaceId): boolean {
+export function isBrushFaceSelected(
+  selection: EditorSelection,
+  brushId: string,
+  faceId: WhiteboxFaceId
+): boolean {
   return selection.kind === "brushFace" && selection.brushId === brushId && selection.faceId === faceId;
 }
 
-export function isBrushEdgeSelected(selection: EditorSelection, brushId: string, edgeId: BoxEdgeId): boolean {
+export function isBrushEdgeSelected(
+  selection: EditorSelection,
+  brushId: string,
+  edgeId: WhiteboxEdgeId
+): boolean {
   return selection.kind === "brushEdge" && selection.brushId === brushId && selection.edgeId === edgeId;
 }
 
-export function isBrushVertexSelected(selection: EditorSelection, brushId: string, vertexId: BoxVertexId): boolean {
+export function isBrushVertexSelected(
+  selection: EditorSelection,
+  brushId: string,
+  vertexId: WhiteboxVertexId
+): boolean {
   return selection.kind === "brushVertex" && selection.brushId === brushId && selection.vertexId === vertexId;
 }
 

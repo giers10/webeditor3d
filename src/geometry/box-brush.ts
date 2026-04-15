@@ -1,15 +1,16 @@
 import { Euler, MathUtils, Vector3 } from "three";
 
 import type { Vec3 } from "../core/vector";
-import { BOX_VERTEX_IDS, type BoxBrush } from "../document/brushes";
+import type { Brush } from "../document/brushes";
 import { getBoxBrushLocalVertexPosition } from "./box-brush-mesh";
+import { getBrushVertexIds } from "./whitebox-topology";
 
 export interface BoxBrushBounds {
   min: Vec3;
   max: Vec3;
 }
 
-export function getBoxBrushHalfSize(brush: BoxBrush): Vec3 {
+export function getBoxBrushHalfSize(brush: Brush): Vec3 {
   return {
     x: brush.size.x * 0.5,
     y: brush.size.y * 0.5,
@@ -17,7 +18,7 @@ export function getBoxBrushHalfSize(brush: BoxBrush): Vec3 {
   };
 }
 
-export function getBoxBrushBounds(brush: BoxBrush): BoxBrushBounds {
+export function getBoxBrushBounds(brush: Brush): BoxBrushBounds {
   const corners = getBoxBrushCornerPositions(brush);
   const firstCorner = corners[0];
   const min = { ...firstCorner };
@@ -38,14 +39,14 @@ export function getBoxBrushBounds(brush: BoxBrush): BoxBrushBounds {
   };
 }
 
-export function getBoxBrushCornerPositions(brush: BoxBrush): Vec3[] {
+export function getBoxBrushCornerPositions(brush: Brush): Vec3[] {
   const rotation = new Euler(
     MathUtils.degToRad(brush.rotationDegrees.x),
     MathUtils.degToRad(brush.rotationDegrees.y),
     MathUtils.degToRad(brush.rotationDegrees.z),
     "XYZ"
   );
-  const offsets = BOX_VERTEX_IDS.map((vertexId) => {
+  const offsets = getBrushVertexIds(brush).map((vertexId) => {
     const localVertex = getBoxBrushLocalVertexPosition(brush, vertexId);
     return new Vector3(localVertex.x, localVertex.y, localVertex.z);
   });

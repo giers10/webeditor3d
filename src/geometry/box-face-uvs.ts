@@ -1,14 +1,72 @@
 import { BoxGeometry } from "three";
 
 import type { Vec2, Vec3 } from "../core/vector";
-import { BOX_FACE_IDS, createDefaultFaceUvState, type BoxBrush, type BoxFaceId, type FaceUvState } from "../document/brushes";
+import {
+  BOX_FACE_IDS,
+  createDefaultFaceUvState,
+  type Brush,
+  type BoxFaceId,
+  type FaceUvState,
+  type WhiteboxFaceId
+} from "../document/brushes";
+import { getBrushFaceBasis, getBrushLocalVertexPosition } from "./whitebox-brush";
+import { getBrushFaceVertexIds } from "./whitebox-topology";
 
 interface BoxBrushUvProjectionSource {
   size: Vec3;
   faces: Record<BoxFaceId, { uv: FaceUvState }>;
 }
 
-export function getBoxBrushFaceSize(brush: BoxBrushUvProjectionSource, faceId: BoxFaceId): Vec2 {
+function computeGenericBrushFaceSize(brush: Brush, faceId: WhiteboxFaceId): Vec2 {
+  const basis = getBrushFaceBasis(brush, faceId);
+  const projectedVertices = getBrushFaceVertexIds(brush, faceId).map(
+    (vertexId) => {
+      const vertex = getBrushLocalVertexPosition(brush, vertexId);
+      const relative = {
+        x: vertex.x - basis.origin.x,
+        y: vertex.y - basis.origin.y,
+        z: vertex.z - basis.origin.z
+      };
+
+      return {
+        x:
+          relative.x * basis.uAxis.x +
+          relative.y * basis.uAxis.y +
+          relative.z * basis.uAxis.z,
+        y:
+          relative.x * basis.vAxis.x +
+          relative.y * basis.vAxis.y +
+          relative.z * basis.vAxis.z
+      };
+    }
+  );
+  const firstVertex = projectedVertices[0];
+  const min = { ...firstVertex };
+  const max = { ...firstVertex };
+
+  for (const projectedVertex of projectedVertices.slice(1)) {
+    min.x = Math.min(min.x, projectedVertex.x);
+    min.y = Math.min(min.y, projectedVertex.y);
+    max.x = Math.max(max.x, projectedVertex.x);
+    max.y = Math.max(max.y, projectedVertex.y);
+  }
+
+  return {
+    x: max.x - min.x,
+    y: max.y - min.y
+  };
+}
+
+export function getBoxBrushFaceSize(
+  brush: BoxBrushUvProjectionSource | Brush,
+  faceId: BoxFaceId | WhiteboxFaceId
+): Vec2 {
+  if ("kind" in brush) {
+    if (brush.kind !== "box") {
+      return computeGenericBrushFaceSize(brush, faceId);
+    }
+  }
+
   switch (faceId) {
     case "posX":
     case "negX":
@@ -29,9 +87,18 @@ export function getBoxBrushFaceSize(brush: BoxBrushUvProjectionSource, faceId: B
         y: brush.size.y
       };
   }
+
+  if ("kind" in brush) {
+    return computeGenericBrushFaceSize(brush, faceId);
+  }
+
+  throw new Error(`Unsupported box face id ${faceId}.`);
 }
 
-export function createFitToFaceBoxBrushFaceUvState(brush: BoxBrush, faceId: BoxFaceId): FaceUvState {
+export function createFitToFaceBoxBrushFaceUvState(
+  brush: Brush,
+  faceId: WhiteboxFaceId
+): FaceUvState {
   const faceSize = getBoxBrushFaceSize(brush, faceId);
 
   return {
@@ -44,8 +111,8 @@ export function createFitToFaceBoxBrushFaceUvState(brush: BoxBrush, faceId: BoxF
 }
 
 export function createFitToMaterialTileBoxBrushFaceUvState(
-  brush: BoxBrush,
-  faceId: BoxFaceId,
+  brush: Brush,
+  faceId: WhiteboxFaceId,
   tileSize: Vec2
 ): FaceUvState {
   const faceSize = getBoxBrushFaceSize(brush, faceId);

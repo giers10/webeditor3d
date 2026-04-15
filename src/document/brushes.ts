@@ -177,20 +177,24 @@ export interface BrushGeometry {
   vertices: Record<WhiteboxVertexId, Vec3>;
 }
 
-export type BoxBrushFaces = Record<BoxFaceId, BrushFace>;
-export type BoxBrushGeometryVertices = Record<BoxVertexId, Vec3>;
+export type BoxBrushFaces = Record<WhiteboxFaceId, BrushFace> &
+  Record<BoxFaceId, BrushFace>;
+export type BoxBrushGeometryVertices = Record<WhiteboxVertexId, Vec3> &
+  Record<BoxVertexId, Vec3>;
 export interface BoxBrushGeometry extends BrushGeometry {
   vertices: BoxBrushGeometryVertices;
 }
 
-export type WedgeBrushFaces = Record<WedgeFaceId, BrushFace>;
-export type WedgeBrushGeometryVertices = Record<WedgeVertexId, Vec3>;
+export type WedgeBrushFaces = Record<WhiteboxFaceId, BrushFace> &
+  Record<WedgeFaceId, BrushFace>;
+export type WedgeBrushGeometryVertices = Record<WhiteboxVertexId, Vec3> &
+  Record<WedgeVertexId, Vec3>;
 export interface WedgeBrushGeometry extends BrushGeometry {
   vertices: WedgeBrushGeometryVertices;
 }
 
 export interface RadialPrismBrushGeometry extends BrushGeometry {
-  vertices: Record<RadialPrismVertexId, Vec3>;
+  vertices: Record<WhiteboxVertexId, Vec3> & Record<RadialPrismVertexId, Vec3>;
 }
 
 interface BrushBase {
@@ -223,7 +227,7 @@ export interface RadialPrismBrush extends BrushBase {
   kind: "radialPrism";
   sideCount: number;
   geometry: RadialPrismBrushGeometry;
-  faces: Record<RadialPrismFaceId, BrushFace>;
+  faces: Record<WhiteboxFaceId, BrushFace> & Record<RadialPrismFaceId, BrushFace>;
   volume: BoxBrushVolumeSettings;
 }
 
