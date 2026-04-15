@@ -481,8 +481,21 @@ type WorldNightEnvironmentNumericField =
 
 type InteractionSourceEntity = Extract<
   EntityInstance,
-  { kind: "triggerVolume" | "interactable" }
+  { kind: "triggerVolume" | "interactable" | "npc" }
 >;
+
+function getInteractionSourceEntityLabel(
+  entity: InteractionSourceEntity
+): string {
+  switch (entity.kind) {
+    case "triggerVolume":
+      return "Trigger Volume";
+    case "interactable":
+      return "Interactable";
+    case "npc":
+      return "NPC";
+  }
+}
 
 function getModelInstanceCollisionModeDescription(
   mode: ModelInstanceCollisionMode
@@ -1495,7 +1508,9 @@ function isInteractionSourceEntity(
 ): entity is InteractionSourceEntity {
   return (
     entity !== null &&
-    (entity.kind === "triggerVolume" || entity.kind === "interactable")
+    (entity.kind === "triggerVolume" ||
+      entity.kind === "interactable" ||
+      entity.kind === "npc")
   );
 }
 
@@ -2132,6 +2147,13 @@ export function App({ store, initialStatusMessage }: AppProps) {
       : getInteractionLinksForSource(
           editorState.document.interactionLinks,
           selectedInteractable.id
+        );
+  const selectedNpcLinks =
+    selectedNpc === null
+      ? []
+      : getInteractionLinksForSource(
+          editorState.document.interactionLinks,
+          selectedNpc.id
         );
   const sceneTargetOptions = sceneList.map((scene) => ({
     id: scene.id,
