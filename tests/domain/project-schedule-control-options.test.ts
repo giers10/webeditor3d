@@ -49,7 +49,8 @@ describe("project schedule control options", () => {
       target: createActorControlTargetRef("guard"),
       pathId: "path-b",
       speed: 1.75,
-      loop: true
+      loop: true,
+      smoothPath: false
     });
 
     expect(getProjectScheduleEffectOptionId(animationEffect)).toBe(
@@ -82,7 +83,8 @@ describe("project schedule control options", () => {
         type: "followActorPath",
         pathId: "path-b",
         speed: 1.75,
-        loop: true
+        loop: true,
+        smoothPath: false
       })
     );
   });
