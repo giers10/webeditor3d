@@ -620,10 +620,22 @@ describe("buildRuntimeSceneFromDocument", () => {
             y: 0,
             z: -2
           },
-        yawDegrees: 45,
-        modelAssetId: modelAsset.id,
-        dialogues: [],
-        defaultDialogueId: null,
+          yawDegrees: 45,
+          modelAssetId: modelAsset.id,
+          dialogues: [
+            {
+              id: "dialogue-warning",
+              title: "Warning",
+              lines: [
+                {
+                  id: "dialogue-line-warning-1",
+                  speakerName: "Operator",
+                  text: "The generator is unstable."
+                }
+              ]
+            }
+          ],
+          defaultDialogueId: "dialogue-warning",
           activeRoutineTitle: null,
           animationClipName: null,
           animationLoop: undefined,
