@@ -8539,29 +8539,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
       return;
     }
 
-    if (actionType === "startDialogue") {
-      const defaultDialogue = projectDialogueList[0] ?? null;
-
-      if (defaultDialogue === null) {
-        setStatusMessage(
-          "Author a project dialogue before switching this link to dialogue."
-        );
-        return;
-      }
-
-      commitInteractionLinkChange(
-        link,
-        createStartDialogueInteractionLink({
-          id: link.id,
-          sourceEntityId: sourceEntity.id,
-          trigger: getCanonicalInteractionLinkTrigger(sourceEntity, link.trigger),
-          dialogueId: defaultDialogue.id
-        }),
-        "Switched link action to start dialogue."
-      );
-      return;
-    }
-
     if (actionType === "runSequence") {
       const defaultSequence = projectImpulseSequenceList[0] ?? null;
 
@@ -8741,26 +8718,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
         targetBrushId: defaultBrush.id
       }),
       "Switched link action to toggle visibility."
-    );
-  };
-
-  const updateDialogueInteractionLinkTarget = (
-    link: InteractionLink,
-    dialogueId: string
-  ) => {
-    if (link.action.type !== "startDialogue") {
-      return;
-    }
-
-    commitInteractionLinkChange(
-      link,
-      createStartDialogueInteractionLink({
-        id: link.id,
-        sourceEntityId: link.sourceEntityId,
-        trigger: link.trigger,
-        dialogueId
-      }),
-      "Updated dialogue link target."
     );
   };
 
