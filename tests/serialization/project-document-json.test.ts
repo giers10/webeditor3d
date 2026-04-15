@@ -119,19 +119,21 @@ describe("project document JSON", () => {
     const npc = createNpcEntity({
       id: "entity-npc-merchant",
       actorId: "actor-merchant",
-      dialogueId: "dialogue-market"
-    });
-    document.dialogues.dialogues["dialogue-market"] = {
-      id: "dialogue-market",
-      title: "Market",
-      lines: [
+      dialogues: [
         {
-          id: "dialogue-line-market-1",
-          speakerName: "Merchant",
-          text: "Fresh bread."
+          id: "dialogue-market",
+          title: "Market",
+          lines: [
+            {
+              id: "dialogue-line-market-1",
+              speakerName: "Merchant",
+              text: "Fresh bread."
+            }
+          ]
         }
-      ]
-    };
+      ],
+      defaultDialogueId: "dialogue-market"
+    });
     document.scenes[document.activeSceneId]!.entities[npc.id] = npc;
 
     expect(parseProjectDocumentJson(serializeProjectDocument(document))).toEqual(
@@ -139,7 +141,7 @@ describe("project document JSON", () => {
     );
   });
 
-  it("migrates project NPCs without dialogue references from v50 to null dialogue ids", () => {
+  it("migrates project NPCs without dialogue references from v50 to null NPC dialogue defaults", () => {
     const document = createEmptyProjectDocument({
       name: "Legacy NPC Dialogue Project"
     });
@@ -177,7 +179,8 @@ describe("project document JSON", () => {
     expect(migratedNpc).toEqual(
       expect.objectContaining({
         kind: "npc",
-        dialogueId: null
+        dialogues: [],
+        defaultDialogueId: null
       })
     );
   });
@@ -191,25 +194,31 @@ describe("project document JSON", () => {
       actorId: "actor-vendor"
     });
 
-    document.dialogues.dialogues["dialogue-market"] = {
-      id: "dialogue-market",
-      title: "Market Greeting",
-      lines: [
+    document.scenes[document.activeSceneId]!.entities[npc.id] = createNpcEntity({
+      ...npc,
+      dialogues: [
         {
-          id: "dialogue-line-market-1",
-          speakerName: "Merchant",
-          text: "Fresh fruit."
+          id: "dialogue-market",
+          title: "Market Greeting",
+          lines: [
+            {
+              id: "dialogue-line-market-1",
+              speakerName: "Merchant",
+              text: "Fresh fruit."
+            }
+          ]
         }
-      ]
-    };
-    document.scenes[document.activeSceneId]!.entities[npc.id] = npc;
+      ],
+      defaultDialogueId: "dialogue-market"
+    });
     document.sequences.sequences["sequence-market-dialogue"] = createProjectSequence({
       id: "sequence-market-dialogue",
       title: "Market Greeting Sequence",
       steps: [
         {
           stepClass: "impulse",
-          type: "startDialogue",
+          type: "makeNpcTalk",
+          npcEntityId: npc.id,
           dialogueId: "dialogue-market"
         }
       ]
