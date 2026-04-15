@@ -44,7 +44,6 @@ import { EffectComposer } from "postprocessing";
 
 import {
   applyEditorSelectionClick,
-  applySameKindSelectionClick,
   areEditorSelectionsEqual,
   isBrushEdgeSelected,
   isBrushFaceSelected,
