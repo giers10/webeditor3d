@@ -4781,6 +4781,10 @@ function validateProjectSequence(
       case "teleportPlayer":
         break;
       case "startSceneTransition": {
+        if (Object.keys(projectResources.scenes).length === 0) {
+          break;
+        }
+
         const targetScene =
           projectResources.scenes[effect.targetSceneId] ?? null;
 
