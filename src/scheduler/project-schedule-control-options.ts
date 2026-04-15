@@ -2,10 +2,12 @@ import type { ProjectDocument, ProjectScene } from "../document/scene-document";
 import { getScenePathLabel, getScenePaths } from "../document/paths";
 import {
   createActiveSceneControlTargetRef,
+  createFollowActorPathControlEffect,
   createActorControlTargetRef,
   createInteractionControlTargetRef,
   createLightControlTargetRef,
   createModelInstanceControlTargetRef,
+  createPlayActorAnimationControlEffect,
   createPlayModelAnimationControlEffect,
   createPlaySoundControlEffect,
   createSetActorPresenceControlEffect,
@@ -36,6 +38,8 @@ import { listProjectNpcActors } from "../entities/npc-actor-registry";
 export const PROJECT_SCHEDULE_EFFECT_OPTION_IDS = [
   "actor.present",
   "actor.hidden",
+  "actor.playAnimation",
+  "actor.followPath",
   "model.playAnimation",
   "model.stopAnimation",
   "model.visible",
@@ -61,7 +65,7 @@ export type ProjectScheduleEffectOptionId =
 export interface ProjectScheduleEffectOption {
   id: ProjectScheduleEffectOptionId;
   label: string;
-  valueKind: "none" | "number" | "color" | "animation";
+  valueKind: "none" | "number" | "color" | "animation" | "path";
   valueLabel?: string;
   min?: number;
   step?: number;
@@ -122,6 +126,16 @@ const PROJECT_SCHEDULE_EFFECT_OPTIONS: Record<
     id: "actor.hidden",
     label: "Hidden",
     valueKind: "none"
+  },
+  "actor.playAnimation": {
+    id: "actor.playAnimation",
+    label: "Play Animation",
+    valueKind: "animation"
+  },
+  "actor.followPath": {
+    id: "actor.followPath",
+    label: "Follow Path",
+    valueKind: "path"
   },
   "model.playAnimation": {
     id: "model.playAnimation",
