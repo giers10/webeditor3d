@@ -27,12 +27,9 @@ describe("ProjectSequencesPanel", () => {
       ]
     });
 
+    const onAddControlStep = vi.fn();
     const onAddTeleportStep = vi.fn();
     const onAddVisibilityStep = vi.fn();
-    const onAddPlayAnimationStep = vi.fn();
-    const onAddStopAnimationStep = vi.fn();
-    const onAddPlaySoundStep = vi.fn();
-    const onAddStopSoundStep = vi.fn();
     const onSetTeleportStepTarget = vi.fn();
     const onSetVisibilityStepTarget = vi.fn();
     const onSetVisibilityStepMode = vi.fn();
@@ -45,7 +42,33 @@ describe("ProjectSequencesPanel", () => {
           }
         }}
         dialogues={{ dialogues: {} }}
-        targetOptions={[]}
+        targetOptions={[
+          {
+            key: "modelInstance:model-a",
+            target: {
+              kind: "modelInstance",
+              modelInstanceId: "model-a"
+            },
+            label: "Model A",
+            subtitle: "Animation",
+            groupLabel: "Model Instances",
+            defaults: {
+              animationClipNames: ["Idle", "Wave"]
+            }
+          },
+          {
+            key: "entity:sound-a",
+            target: {
+              kind: "entity",
+              entityId: "sound-a",
+              entityKind: "soundEmitter"
+            },
+            label: "Sound A",
+            subtitle: "Emitter",
+            groupLabel: "Sound Emitters",
+            defaults: {}
+          }
+        ]}
         teleportTargetOptions={[
           { entityId: "teleport-a", label: "North Gate" },
           { entityId: "teleport-b", label: "South Gate" }
@@ -60,25 +83,16 @@ describe("ProjectSequencesPanel", () => {
           { targetKey: "brush:brush-a", label: "Wall A" },
           { targetKey: "brush:brush-b", label: "Wall B" }
         ]}
-        modelAnimationTargetOptions={[
-          { targetKey: "modelInstance:model-a", label: "Model A" }
-        ]}
-        soundTargetOptions={[{ targetKey: "entity:sound-a", label: "Sound A" }]}
         selectedSequenceId={sequence.id}
         onSelectSequence={() => {}}
         onAddSequence={() => {}}
         onDeleteSequence={() => {}}
         onSetSequenceTitle={() => {}}
-        onAddHeldControlStep={() => {}}
-        onAddImpulseControlStep={() => {}}
+        onAddControlStep={onAddControlStep}
         onAddDialogueStep={() => {}}
         onAddTeleportStep={onAddTeleportStep}
         onAddSceneTransitionStep={() => {}}
         onAddVisibilityStep={onAddVisibilityStep}
-        onAddPlayAnimationStep={onAddPlayAnimationStep}
-        onAddStopAnimationStep={onAddStopAnimationStep}
-        onAddPlaySoundStep={onAddPlaySoundStep}
-        onAddStopSoundStep={onAddStopSoundStep}
         onDeleteStep={() => {}}
         onSetControlStepTarget={() => {}}
         onSetControlStepEffectOption={() => {}}
@@ -107,12 +121,9 @@ describe("ProjectSequencesPanel", () => {
       target: { value: "hide" }
     });
 
+    fireEvent.click(screen.getByRole("button", { name: "Add Effect" }));
     fireEvent.click(screen.getByRole("button", { name: "Add Teleport Effect" }));
     fireEvent.click(screen.getByRole("button", { name: "Add Visibility Effect" }));
-    fireEvent.click(screen.getByRole("button", { name: "Add Play Animation Effect" }));
-    fireEvent.click(screen.getByRole("button", { name: "Add Stop Animation Effect" }));
-    fireEvent.click(screen.getByRole("button", { name: "Add Play Sound Effect" }));
-    fireEvent.click(screen.getByRole("button", { name: "Add Stop Sound Effect" }));
 
     expect(onSetTeleportStepTarget).toHaveBeenCalledWith(
       "sequence-main",
@@ -134,21 +145,9 @@ describe("ProjectSequencesPanel", () => {
       "sequence-main",
       "brush:brush-a"
     );
-    expect(onAddPlayAnimationStep).toHaveBeenCalledWith(
+    expect(onAddControlStep).toHaveBeenCalledWith(
       "sequence-main",
       "modelInstance:model-a"
-    );
-    expect(onAddStopAnimationStep).toHaveBeenCalledWith(
-      "sequence-main",
-      "modelInstance:model-a"
-    );
-    expect(onAddPlaySoundStep).toHaveBeenCalledWith(
-      "sequence-main",
-      "entity:sound-a"
-    );
-    expect(onAddStopSoundStep).toHaveBeenCalledWith(
-      "sequence-main",
-      "entity:sound-a"
     );
   });
 
@@ -223,23 +222,16 @@ describe("ProjectSequencesPanel", () => {
         teleportTargetOptions={[]}
         sceneTransitionTargetOptions={[]}
         visibilityTargetOptions={[]}
-        modelAnimationTargetOptions={[]}
-        soundTargetOptions={[]}
         selectedSequenceId="sequence-actor"
         onSelectSequence={() => {}}
         onAddSequence={() => {}}
         onDeleteSequence={() => {}}
         onSetSequenceTitle={() => {}}
-        onAddHeldControlStep={() => {}}
-        onAddImpulseControlStep={() => {}}
+        onAddControlStep={() => {}}
         onAddDialogueStep={() => {}}
         onAddTeleportStep={() => {}}
         onAddSceneTransitionStep={() => {}}
         onAddVisibilityStep={() => {}}
-        onAddPlayAnimationStep={() => {}}
-        onAddStopAnimationStep={() => {}}
-        onAddPlaySoundStep={() => {}}
-        onAddStopSoundStep={() => {}}
         onDeleteStep={() => {}}
         onSetControlStepTarget={() => {}}
         onSetControlStepEffectOption={() => {}}
