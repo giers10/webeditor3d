@@ -230,15 +230,6 @@ function convertMinuteOfDayToHours(minute: number): number {
   return normalizeMinuteOfDay(minute) / 60;
 }
 
-function getRoutineDurationMinutes(routine: ProjectScheduleRoutine): number {
-  const startMinutes = convertHoursToMinuteOfDay(routine.startHour);
-  const endMinutes = convertHoursToMinuteOfDay(routine.endHour);
-
-  return endMinutes > startMinutes
-    ? endMinutes - startMinutes
-    : MINUTES_PER_DAY - startMinutes + endMinutes;
-}
-
 function getMinuteDistance(startMinutes: number, endMinutes: number): number {
   return endMinutes > startMinutes
     ? endMinutes - startMinutes
