@@ -7683,6 +7683,38 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
+  const updateSelectedNpcDialogues = (
+    label: string,
+    successMessage: string,
+    mutate: (dialogues: ProjectDialogue[], defaultDialogueId: string | null) => {
+      dialogues: ProjectDialogue[];
+      defaultDialogueId: string | null;
+    }
+  ) => {
+    if (selectedNpc === null) {
+      setStatusMessage("Select an NPC before editing its dialogues.");
+      return;
+    }
+
+    try {
+      const nextState = mutate(
+        selectedNpc.dialogues.map((dialogue) => ({
+          ...dialogue,
+          lines: dialogue.lines.map((line) => ({ ...line }))
+        })),
+        selectedNpc.defaultDialogueId
+      );
+      const nextEntity = createNpcEntity({
+        ...selectedNpc,
+        dialogues: nextState.dialogues,
+        defaultDialogueId: nextState.defaultDialogueId
+      });
+      commitEntityChange(selectedNpc, nextEntity, successMessage, label);
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
   const applyPointLightChange = (overrides: { colorHex?: string } = {}) => {
     if (selectedPointLight === null) {
       setStatusMessage("Select a Point Light before editing it.");
