@@ -7854,7 +7854,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
-  const handleSetBrushVisible = (brush: BoxBrush, visible: boolean) => {
+  const handleSetBrushVisible = (brush: Brush, visible: boolean) => {
     try {
       store.executeCommand(
         createSetBoxBrushAuthoredStateCommand({
@@ -7872,7 +7872,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
-  const handleSetBrushEnabled = (brush: BoxBrush, enabled: boolean) => {
+  const handleSetBrushEnabled = (brush: Brush, enabled: boolean) => {
     try {
       store.executeCommand(
         createSetBoxBrushAuthoredStateCommand({
