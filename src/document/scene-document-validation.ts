@@ -3830,7 +3830,21 @@ function validateProjectScheduler(
       );
     }
 
+    const resolvedImpulseEffects =
+      routine.sequenceId === null
+        ? []
+        : getProjectSequenceImpulseSteps(
+            sequences.sequences[routine.sequenceId] ?? { id: "", title: "", effects: [] }
+          );
+
     if (resolvedEffects.length === 0) {
+      if (
+        routine.target.kind === "global" &&
+        resolvedImpulseEffects.length > 0
+      ) {
+        continue;
+      }
+
       diagnostics.push(
         createDiagnostic(
           "error",
