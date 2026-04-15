@@ -4008,6 +4008,30 @@ export class ViewportHost {
           );
         }
         break;
+      case "brushes":
+        if (this.currentTransformSession.preview.kind === "brushes") {
+          for (const previewItem of this.currentTransformSession.preview.items) {
+            const brush = this.currentDocument?.brushes[previewItem.brushId];
+
+            if (brush === undefined) {
+              continue;
+            }
+
+            this.updateBrushRenderObjectGeometry({
+              ...brush,
+              center: previewItem.center,
+              rotationDegrees: previewItem.rotationDegrees,
+              size: previewItem.size,
+              geometry: previewItem.geometry
+            });
+            this.applyBrushRenderObjectTransform(
+              previewItem.brushId,
+              previewItem.center,
+              previewItem.rotationDegrees
+            );
+          }
+        }
+        break;
       case "modelInstance":
         if (this.currentTransformSession.preview.kind === "modelInstance") {
           this.applyModelInstanceRenderObjectTransform({
@@ -4020,6 +4044,27 @@ export class ViewportHost {
               scale: this.currentTransformSession.preview.scale
             })
           });
+        }
+        break;
+      case "modelInstances":
+        if (this.currentTransformSession.preview.kind === "modelInstances") {
+          for (const previewItem of this.currentTransformSession.preview.items) {
+            const modelInstance =
+              this.currentDocument?.modelInstances[previewItem.modelInstanceId];
+
+            if (modelInstance === undefined) {
+              continue;
+            }
+
+            this.applyModelInstanceRenderObjectTransform(
+              createModelInstance({
+                ...modelInstance,
+                position: previewItem.position,
+                rotationDegrees: previewItem.rotationDegrees,
+                scale: previewItem.scale
+              })
+            );
+          }
         }
         break;
       case "pathPoint": {
@@ -4134,6 +4179,69 @@ export class ViewportHost {
         }
         break;
       }
+      case "entities":
+        if (
+          this.currentTransformSession.preview.kind !== "entities" ||
+          this.currentDocument === null
+        ) {
+          break;
+        }
+
+        for (const previewItem of this.currentTransformSession.preview.items) {
+          const currentEntity = this.currentDocument.entities[previewItem.entityId];
+
+          if (currentEntity === undefined) {
+            continue;
+          }
+
+          switch (currentEntity.kind) {
+            case "pointLight":
+            case "soundEmitter":
+            case "triggerVolume":
+            case "interactable":
+              this.applyEntityRenderObjectTransform({
+                ...currentEntity,
+                position: previewItem.position
+              });
+              this.applyLocalLightRenderObjectTransform({
+                ...currentEntity,
+                position: previewItem.position
+              });
+              break;
+            case "spotLight":
+              this.applyEntityRenderObjectTransform({
+                ...currentEntity,
+                position: previewItem.position,
+                direction:
+                  previewItem.rotation.kind === "direction"
+                    ? previewItem.rotation.direction
+                    : currentEntity.direction
+              });
+              this.applyLocalLightRenderObjectTransform({
+                ...currentEntity,
+                position: previewItem.position,
+                direction:
+                  previewItem.rotation.kind === "direction"
+                    ? previewItem.rotation.direction
+                    : currentEntity.direction
+              });
+              break;
+            case "playerStart":
+            case "sceneEntry":
+            case "npc":
+            case "teleportTarget":
+              this.applyEntityRenderObjectTransform({
+                ...currentEntity,
+                position: previewItem.position,
+                yawDegrees:
+                  previewItem.rotation.kind === "yaw"
+                    ? previewItem.rotation.yawDegrees
+                    : currentEntity.yawDegrees
+              });
+              break;
+          }
+        }
+        break;
     }
   }
 
