@@ -1155,23 +1155,6 @@ function normalizeSoundEmitterAudioAssetId(audioAssetId: string | null | undefin
   return trimmedAudioAssetId;
 }
 
-function normalizeSceneReferenceId(
-  value: string | null | undefined,
-  label: string
-): string {
-  if (value === undefined || value === null) {
-    throw new Error(`${label} must be authored.`);
-  }
-
-  const normalizedValue = value.trim();
-
-  if (normalizedValue.length === 0) {
-    throw new Error(`${label} must be non-empty.`);
-  }
-
-  return normalizedValue;
-}
-
 export function normalizeEntityName(name: string | null | undefined): string | undefined {
   if (name === undefined || name === null) {
     return undefined;
