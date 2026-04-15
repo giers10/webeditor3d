@@ -194,6 +194,9 @@ describe("project document JSON", () => {
       actorId: "actor-guard"
     });
     document.scenes[document.activeSceneId]!.entities[npc.id] = npc;
+    document.scenes[document.activeSceneId]!.paths["path-guard"] = createScenePath({
+      id: "path-guard"
+    });
     document.sequences.sequences["sequence-patrol"] = createProjectSequence({
       id: "sequence-patrol",
       title: "Patrol",
