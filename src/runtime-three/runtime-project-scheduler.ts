@@ -29,6 +29,7 @@ import {
 import {
   findHeldSequenceControlEffect,
   getHeldSequenceControlEffects,
+  getProjectSequenceImpulseSteps,
   getProjectScheduleRoutineHeldSteps
 } from "../sequencer/project-sequence-steps";
 import type { ProjectSequenceLibrary } from "../sequencer/project-sequences";
@@ -94,9 +95,16 @@ export interface RuntimeResolvedScheduledControlRoutine {
   resolutionKey: string;
 }
 
+export interface RuntimeResolvedScheduledImpulseRoutine {
+  routineId: string;
+  title: string;
+  effects: ReturnType<typeof getProjectSequenceImpulseSteps>;
+}
+
 export interface RuntimeResolvedProjectScheduleState {
   actors: RuntimeResolvedActorScheduleState[];
   controls: RuntimeResolvedScheduledControlRoutine[];
+  impulses: RuntimeResolvedScheduledImpulseRoutine[];
 }
 
 export interface RuntimeProjectSchedulerState {
@@ -169,14 +177,20 @@ export function cloneRuntimeResolvedProjectScheduleState(
         effect,
         resolutionKey: routine.resolutionKey
       };
-    })
+    }),
+    impulses: state.impulses.map((routine) => ({
+      routineId: routine.routineId,
+      title: routine.title,
+      effects: routine.effects.map((effect) => ({ ...effect }))
+    }))
   };
 }
 
 export function createEmptyRuntimeResolvedProjectScheduleState(): RuntimeResolvedProjectScheduleState {
   return {
     actors: [],
-    controls: []
+    controls: [],
+    impulses: []
   };
 }
 
