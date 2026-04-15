@@ -62,7 +62,6 @@ export interface RuntimeInteractionDispatcher {
     dialogueId: string | null,
     source?: RuntimeDialogueStartSource
   ): void;
-  startDialogue?(dialogueId: string, source?: RuntimeDialogueStartSource): void;
   dispatchControlEffect?(effect: ControlEffect, link: InteractionLink): void;
 }
 
@@ -755,14 +754,6 @@ export class RuntimeInteractionSystem {
         );
       case "makeNpcTalk":
         dispatcher.startNpcDialogue?.(step.npcEntityId, step.dialogueId, {
-          kind: "interactionLink",
-          sourceEntityId: link.sourceEntityId,
-          linkId: link.id,
-          trigger: link.trigger
-        });
-        return;
-      case "startDialogue":
-        dispatcher.startDialogue?.(step.dialogueId, {
           kind: "interactionLink",
           sourceEntityId: link.sourceEntityId,
           linkId: link.id,
