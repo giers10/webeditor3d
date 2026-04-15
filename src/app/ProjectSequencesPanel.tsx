@@ -41,7 +41,11 @@ interface ProjectSequencesPanelProps {
   onAddSequence(): void;
   onDeleteSequence(sequenceId: string): void;
   onSetSequenceTitle(sequenceId: string, title: string): void;
-  onAddControlStep(sequenceId: string, targetKey: string): void;
+  onAddControlEffect(
+    sequenceId: string,
+    targetKey: string,
+    effectOptionId: ProjectScheduleEffectOptionId
+  ): void;
   onAddDialogueStep(sequenceId: string, dialogueId: string): void;
   onAddTeleportStep(sequenceId: string, targetEntityId: string): void;
   onAddSceneTransitionStep(sequenceId: string, targetKey: string): void;
@@ -172,7 +176,7 @@ export function ProjectSequencesPanel({
   onAddSequence,
   onDeleteSequence,
   onSetSequenceTitle,
-  onAddControlStep,
+  onAddControlEffect,
   onAddDialogueStep,
   onAddTeleportStep,
   onAddSceneTransitionStep,
@@ -198,12 +202,24 @@ export function ProjectSequencesPanel({
   const editableTargetOptions = targetOptions.filter(
     (targetOption) => listProjectScheduleEffectOptions(targetOption).length > 0
   );
-  const defaultControlTargetKey =
+  const preferredControlTargetOption =
     editableTargetOptions.find(
       (targetOption) => targetOption.key === preferredControlTargetKey
-    )?.key ??
-    editableTargetOptions[0]?.key ??
-    "";
+    ) ?? null;
+  const addableControlTargetOptions =
+    preferredControlTargetOption === null
+      ? editableTargetOptions
+      : [preferredControlTargetOption];
+  const addableControlEffects = addableControlTargetOptions.flatMap((targetOption) =>
+    listProjectScheduleEffectOptions(targetOption).map((effectOption) => ({
+      targetKey: targetOption.key,
+      effectOptionId: effectOption.id,
+      label:
+        preferredControlTargetOption === null
+          ? `Add ${targetOption.label} ${effectOption.label} Effect`
+          : `Add ${effectOption.label} Effect`
+    }))
+  );
   const selectedSequence =
     selectedSequenceId === null
       ? null
@@ -765,19 +781,22 @@ export function ProjectSequencesPanel({
           )}
 
           <div className="inline-actions">
-            <button
-              className="toolbar__button toolbar__button--compact"
-              type="button"
-              disabled={editableTargetOptions.length === 0}
-              onClick={() =>
-                onAddControlStep(
-                  selectedSequence.id,
-                  defaultControlTargetKey
-                )
-              }
-            >
-              Add Effect
-            </button>
+            {addableControlEffects.map((effectButton) => (
+              <button
+                key={`${effectButton.targetKey}:${effectButton.effectOptionId}`}
+                className="toolbar__button toolbar__button--compact"
+                type="button"
+                onClick={() =>
+                  onAddControlEffect(
+                    selectedSequence.id,
+                    effectButton.targetKey,
+                    effectButton.effectOptionId
+                  )
+                }
+              >
+                {effectButton.label}
+              </button>
+            ))}
             <button
               className="toolbar__button toolbar__button--compact"
               type="button"
