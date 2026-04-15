@@ -8932,9 +8932,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
       </div>
       {links.length === 0 ? (
         <div className="outliner-empty">
-          {sourceEntity.kind === "triggerVolume"
-            ? "No sequence links authored for this Trigger Volume yet."
-            : "No sequence links authored for this Interactable yet."}
+          {`No sequence links authored for this ${getInteractionSourceEntityLabel(sourceEntity)} yet.`}
         </div>
       ) : (
         <div className="outliner-list">
@@ -9226,7 +9224,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       </div>
                       <div className="material-summary">
                         Run Sequence links can reference any authored sequence,
-                        but only its start effects fire from interactions.
+                        and interactions fire that sequence from the start.
                       </div>
                     </div>
                   );
