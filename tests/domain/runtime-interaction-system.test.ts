@@ -178,6 +178,52 @@ function createRuntimeSceneFixture(): RuntimeSceneDefinition {
   };
 }
 
+function createRuntimeNpcFixture(options: {
+  entityId: string;
+  dialogueId: string;
+  title: string;
+  text: string;
+  speakerName?: string | null;
+}): RuntimeSceneDefinition["entities"]["npcs"][number] {
+  return {
+    entityId: options.entityId,
+    actorId: `${options.entityId}-actor`,
+    name: undefined,
+    visible: true,
+    modelAssetId: null,
+    dialogues: [
+      {
+        id: options.dialogueId,
+        title: options.title,
+        lines: [
+          {
+            id: `${options.dialogueId}-line-1`,
+            speakerName: options.speakerName ?? null,
+            text: options.text
+          }
+        ]
+      }
+    ],
+    defaultDialogueId: options.dialogueId,
+    authoredPosition: { x: 0, y: 0, z: 0 },
+    authoredYawDegrees: 0,
+    active: true,
+    activeRoutineId: null,
+    activeRoutineTitle: null,
+    position: { x: 0, y: 0, z: 0 },
+    yawDegrees: 0,
+    animationClipName: null,
+    animationLoop: undefined,
+    resolvedPath: null,
+    collider: {
+      mode: "capsule",
+      radius: 0.3,
+      height: 1.8,
+      eyeHeight: 1.6
+    }
+  };
+}
+
 function createDispatcher(
   overrides: Partial<RuntimeInteractionDispatcher> = {}
 ): RuntimeInteractionDispatcher {
