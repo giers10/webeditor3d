@@ -872,7 +872,7 @@ export function ProjectSequencerPane({
                               left: `${(segment.startHour / HOURS_PER_DAY) * 100}%`,
                               width: `${((segment.endHour - segment.startHour) / HOURS_PER_DAY) * 100}%`
                             }}
-                            onPointerDown={(event) =>
+                            onMouseDown={(event) =>
                               beginRoutineDrag(event, routine, "move")
                             }
                             onClick={() => onSelectRoutine(routine.id)}
@@ -880,7 +880,7 @@ export function ProjectSequencerPane({
                             <span
                               className="schedule-block__resize-handle schedule-block__resize-handle--start"
                               aria-label={`Resize start of ${routine.title}`}
-                              onPointerDown={(event) =>
+                              onMouseDown={(event) =>
                                 beginRoutineDrag(event, routine, "resize-start")
                               }
                             />
@@ -890,7 +890,7 @@ export function ProjectSequencerPane({
                             <span
                               className="schedule-block__resize-handle schedule-block__resize-handle--end"
                               aria-label={`Resize end of ${routine.title}`}
-                              onPointerDown={(event) =>
+                              onMouseDown={(event) =>
                                 beginRoutineDrag(event, routine, "resize-end")
                               }
                             />
