@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { ProjectSequencesPanel } from "../../src/app/ProjectSequencesPanel";
+import { createActiveSceneControlTargetRef } from "../../src/controls/control-surface";
 import { createProjectSequence } from "../../src/sequencer/project-sequences";
 
 describe("ProjectSequencesPanel", () => {
@@ -290,5 +291,78 @@ describe("ProjectSequencesPanel", () => {
       1,
       true
     );
+  });
+
+  it("hides target and effect selectors for active scene lighting effects", () => {
+    render(
+      <ProjectSequencesPanel
+        sequences={{
+          sequences: {
+            "sequence-scene": createProjectSequence({
+              id: "sequence-scene",
+              title: "Scene Lighting",
+              effects: [
+                {
+                  stepClass: "held",
+                  type: "controlEffect",
+                  effect: {
+                    type: "setAmbientLightIntensity",
+                    target: createActiveSceneControlTargetRef(),
+                    intensity: 0.4
+                  }
+                }
+              ]
+            })
+          }
+        }}
+        dialogues={{ dialogues: {} }}
+        targetOptions={[
+          {
+            key: "scene:active",
+            target: createActiveSceneControlTargetRef(),
+            label: "Active Scene Lighting",
+            subtitle: "Scene",
+            groupLabel: "Scene Lighting",
+            defaults: {
+              ambientLightIntensity: 1
+            }
+          }
+        ]}
+        teleportTargetOptions={[]}
+        sceneTransitionTargetOptions={[]}
+        visibilityTargetOptions={[]}
+        selectedSequenceId="sequence-scene"
+        onSelectSequence={() => {}}
+        onAddSequence={() => {}}
+        onDeleteSequence={() => {}}
+        onSetSequenceTitle={() => {}}
+        onAddControlEffect={() => {}}
+        onAddDialogueStep={() => {}}
+        onAddTeleportStep={() => {}}
+        onAddSceneTransitionStep={() => {}}
+        onAddVisibilityStep={() => {}}
+        onDeleteStep={() => {}}
+        onSetControlStepTarget={() => {}}
+        onSetControlStepEffectOption={() => {}}
+        onSetControlStepNumericValue={() => {}}
+        onSetControlStepColorValue={() => {}}
+        onSetControlStepAnimationClip={() => {}}
+        onSetControlStepAnimationLoop={() => {}}
+        onSetControlStepPathId={() => {}}
+        onSetControlStepPathSpeed={() => {}}
+        onSetControlStepPathLoop={() => {}}
+        onSetDialogueStepDialogueId={() => {}}
+        onSetTeleportStepTarget={() => {}}
+        onSetSceneTransitionStepTarget={() => {}}
+        onSetVisibilityStepTarget={() => {}}
+        onSetVisibilityStepMode={() => {}}
+      />
+    );
+
+    expect(
+      screen.getByText("This effect applies to the active scene lighting.")
+    ).toBeVisible();
+    expect(screen.queryByLabelText("Target")).toBeNull();
+    expect(screen.queryByLabelText("Effect")).toBeNull();
   });
 });
