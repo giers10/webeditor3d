@@ -4048,13 +4048,14 @@ export class ViewportHost {
               continue;
             }
 
-            this.updateBrushRenderObjectGeometry({
-              ...brush,
-              center: previewItem.center,
-              rotationDegrees: previewItem.rotationDegrees,
-              size: previewItem.size,
-              geometry: previewItem.geometry
-            });
+            this.updateBrushRenderObjectGeometry(
+              updateBrush(brush, {
+                center: previewItem.center,
+                rotationDegrees: previewItem.rotationDegrees,
+                size: previewItem.size,
+                geometry: previewItem.geometry as never
+              })
+            );
             this.applyBrushRenderObjectTransform(
               previewItem.brushId,
               previewItem.center,
