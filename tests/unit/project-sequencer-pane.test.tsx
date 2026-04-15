@@ -6,7 +6,6 @@ import {
   createProjectGlobalControlTargetRef,
   getControlTargetRefKey
 } from "../../src/controls/control-surface";
-import { createEmptyProjectDialogueLibrary } from "../../src/dialogues/project-dialogues";
 import { ProjectSequencerPane } from "../../src/app/ProjectSequencerPane";
 import {
   createEmptyProjectScheduler,
@@ -41,7 +40,7 @@ describe("ProjectSequencerPane", () => {
         visibilityTargetOptions={[]}
         scheduler={scheduler}
         sequences={createEmptyProjectSequenceLibrary()}
-        dialogues={createEmptyProjectDialogueLibrary()}
+        npcTalkTargetOptions={[]}
         selectedRoutineId={selectedRoutineId}
         selectedSequenceId={null}
         onSelectRoutine={vi.fn()}
@@ -61,7 +60,7 @@ describe("ProjectSequencerPane", () => {
         onSetRoutineSequenceId={vi.fn()}
         onSetSequenceTitle={vi.fn()}
         onAddControlEffect={vi.fn()}
-        onAddDialogueStep={vi.fn()}
+        onAddNpcTalkEffect={vi.fn()}
         onAddTeleportStep={vi.fn()}
         onAddSceneTransitionStep={vi.fn()}
         onAddVisibilityStep={vi.fn()}
@@ -75,7 +74,8 @@ describe("ProjectSequencerPane", () => {
         onSetControlStepPathId={vi.fn()}
         onSetControlStepPathSpeed={vi.fn()}
         onSetControlStepPathLoop={vi.fn()}
-        onSetDialogueStepDialogueId={vi.fn()}
+        onSetNpcTalkStepNpcEntityId={vi.fn()}
+        onSetNpcTalkStepDialogueId={vi.fn()}
         onSetTeleportStepTarget={vi.fn()}
         onSetSceneTransitionStepTarget={vi.fn()}
         onSetVisibilityStepTarget={vi.fn()}
