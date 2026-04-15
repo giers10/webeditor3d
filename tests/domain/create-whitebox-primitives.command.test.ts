@@ -56,6 +56,11 @@ describe("whitebox primitive creation commands", () => {
     const brush = Object.values(store.getState().document.brushes)[0];
 
     expect(brush.kind).toBe("radialPrism");
+
+    if (brush.kind !== "radialPrism") {
+      throw new Error("Expected a radial prism brush.");
+    }
+
     expect(brush.sideCount).toBe(12);
     expect(Object.keys(brush.faces)).toHaveLength(14);
   });
