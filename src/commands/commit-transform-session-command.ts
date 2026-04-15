@@ -199,6 +199,33 @@ export function createCommitTransformSessionCommand(document: SceneDocument, ses
             label: createTransformCommandLabel(session)
           });
       }
+    case "brushes":
+      if (session.preview.kind !== "brushes") {
+        throw new Error("Whitebox multi-transform preview is invalid.");
+      }
+
+      return createApplyBatchSelectionTransformCommand({
+        selection: {
+          kind: "brushes",
+          ids: session.target.items.map((item) => item.brushId)
+        },
+        brushes: session.preview.items.map((item) => {
+          const brush = document.brushes[item.brushId];
+
+          if (brush === undefined) {
+            throw new Error(`Whitebox solid ${item.brushId} does not exist.`);
+          }
+
+          return {
+            ...brush,
+            center: item.center,
+            rotationDegrees: item.rotationDegrees,
+            size: item.size,
+            geometry: item.geometry
+          };
+        }),
+        label: createTransformCommandLabel(session)
+      });
     case "brushFace":
       if (session.preview.kind !== "brush") {
         throw new Error("Whitebox face transform preview is invalid.");
@@ -282,6 +309,34 @@ export function createCommitTransformSessionCommand(document: SceneDocument, ses
         label: createTransformCommandLabel(session)
       });
     }
+    case "modelInstances":
+      if (session.preview.kind !== "modelInstances") {
+        throw new Error("Model instance multi-transform preview is invalid.");
+      }
+
+      return createApplyBatchSelectionTransformCommand({
+        selection: {
+          kind: "modelInstances",
+          ids: session.target.items.map((item) => item.modelInstanceId)
+        },
+        modelInstances: session.preview.items.map((item) => {
+          const modelInstance = document.modelInstances[item.modelInstanceId];
+
+          if (modelInstance === undefined) {
+            throw new Error(
+              `Model instance ${item.modelInstanceId} does not exist.`
+            );
+          }
+
+          return createModelInstance({
+            ...modelInstance,
+            position: item.position,
+            rotationDegrees: item.rotationDegrees,
+            scale: item.scale
+          });
+        }),
+        label: createTransformCommandLabel(session)
+      });
     case "entity": {
       if (session.preview.kind !== "entity") {
         throw new Error("Entity transform preview is invalid.");
@@ -293,91 +348,31 @@ export function createCommitTransformSessionCommand(document: SceneDocument, ses
         throw new Error(`Entity ${session.target.entityId} does not exist.`);
       }
 
-      switch (entity.kind) {
-        case "pointLight":
-          return createUpsertEntityCommand({
-            entity: createPointLightEntity({
-              ...entity,
-              position: session.preview.position
-            }),
-            label: createTransformCommandLabel(session)
-          });
-        case "spotLight":
-          return createUpsertEntityCommand({
-            entity: createSpotLightEntity({
-              ...entity,
-              position: session.preview.position,
-              direction: session.preview.rotation.kind === "direction" ? session.preview.rotation.direction : entity.direction
-            }),
-            label: createTransformCommandLabel(session)
-          });
-        case "playerStart":
-          return createUpsertEntityCommand({
-            entity: createPlayerStartEntity({
-              ...entity,
-              position: session.preview.position,
-              yawDegrees: session.preview.rotation.kind === "yaw" ? session.preview.rotation.yawDegrees : entity.yawDegrees
-            }),
-            label: createTransformCommandLabel(session)
-          });
-        case "sceneEntry":
-          return createUpsertEntityCommand({
-            entity: createSceneEntryEntity({
-              ...entity,
-              position: session.preview.position,
-              yawDegrees:
-                session.preview.rotation.kind === "yaw"
-                  ? session.preview.rotation.yawDegrees
-                  : entity.yawDegrees
-            }),
-            label: createTransformCommandLabel(session)
-          });
-        case "npc":
-          return createUpsertEntityCommand({
-            entity: createNpcEntity({
-              ...entity,
-              position: session.preview.position,
-              yawDegrees:
-                session.preview.rotation.kind === "yaw"
-                  ? session.preview.rotation.yawDegrees
-                  : entity.yawDegrees
-            }),
-            label: createTransformCommandLabel(session)
-          });
-        case "soundEmitter":
-          return createUpsertEntityCommand({
-            entity: createSoundEmitterEntity({
-              ...entity,
-              position: session.preview.position
-            }),
-            label: createTransformCommandLabel(session)
-          });
-        case "triggerVolume":
-          return createUpsertEntityCommand({
-            entity: createTriggerVolumeEntity({
-              ...entity,
-              position: session.preview.position
-            }),
-            label: createTransformCommandLabel(session)
-          });
-        case "teleportTarget":
-          return createUpsertEntityCommand({
-            entity: createTeleportTargetEntity({
-              ...entity,
-              position: session.preview.position,
-              yawDegrees: session.preview.rotation.kind === "yaw" ? session.preview.rotation.yawDegrees : entity.yawDegrees
-            }),
-            label: createTransformCommandLabel(session)
-          });
-        case "interactable":
-          return createUpsertEntityCommand({
-            entity: createInteractableEntity({
-              ...entity,
-              position: session.preview.position
-            }),
-            label: createTransformCommandLabel(session)
-          });
-      }
+      return createUpsertEntityCommand({
+        entity: createUpdatedEntityFromPreview(entity, session.preview),
+        label: createTransformCommandLabel(session)
+      });
     }
+    case "entities":
+      if (session.preview.kind !== "entities") {
+        throw new Error("Entity multi-transform preview is invalid.");
+      }
+
+      return createApplyBatchSelectionTransformCommand({
+        selection: {
+          kind: "entities",
+          ids: session.target.items.map((item) => item.entityId)
+        },
+        entities: session.preview.items.map((item) => {
+          const entity = document.entities[item.entityId];
+
+          if (entity === undefined) {
+            throw new Error(`Entity ${item.entityId} does not exist.`);
+          }
+
+          return createUpdatedEntityFromPreview(entity, item);
+        }),
+        label: createTransformCommandLabel(session)
+      });
   }
 }
