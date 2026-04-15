@@ -1211,24 +1211,6 @@ function buildRuntimeControlSurface(
     );
   }
 
-  for (const sceneExit of collections.entities.sceneExits) {
-    const target = createInteractionControlTargetRef(
-      "sceneExit",
-      sceneExit.entityId
-    );
-
-    targets.push(
-      createControlTargetDescriptor(target, ["interactionAvailability"])
-    );
-    resolved.discrete.push(
-      createResolvedInteractionEnabledState({
-        target,
-        value: sceneExit.interactionEnabled,
-        source: defaultSource
-      })
-    );
-  }
-
   for (const modelInstance of modelInstances) {
     const authoredModelInstance =
       document.modelInstances[modelInstance.instanceId];
