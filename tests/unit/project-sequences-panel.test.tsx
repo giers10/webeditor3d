@@ -107,6 +107,7 @@ describe("ProjectSequencesPanel", () => {
         onSetControlStepPathId={() => {}}
         onSetControlStepPathSpeed={() => {}}
         onSetControlStepPathLoop={() => {}}
+        onSetControlStepPathSmooth={() => {}}
         onSetNpcTalkStepNpcEntityId={() => {}}
         onSetNpcTalkStepDialogueId={() => {}}
         onSetTeleportStepTarget={onSetTeleportStepTarget}
@@ -165,6 +166,7 @@ describe("ProjectSequencesPanel", () => {
     const onSetControlStepPathId = vi.fn();
     const onSetControlStepPathSpeed = vi.fn();
     const onSetControlStepPathLoop = vi.fn();
+    const onSetControlStepPathSmooth = vi.fn();
 
     render(
       <ProjectSequencesPanel
@@ -199,6 +201,7 @@ describe("ProjectSequencesPanel", () => {
                     pathId: "path-a",
                     speed: 1,
                     loop: false,
+                    smoothPath: true,
                     progressMode: "deriveFromTime"
                   }
                 }
@@ -250,6 +253,7 @@ describe("ProjectSequencesPanel", () => {
         onSetControlStepPathId={onSetControlStepPathId}
         onSetControlStepPathSpeed={onSetControlStepPathSpeed}
         onSetControlStepPathLoop={onSetControlStepPathLoop}
+        onSetControlStepPathSmooth={onSetControlStepPathSmooth}
         onSetNpcTalkStepNpcEntityId={() => {}}
         onSetNpcTalkStepDialogueId={() => {}}
         onSetTeleportStepTarget={() => {}}
@@ -270,6 +274,7 @@ describe("ProjectSequencesPanel", () => {
       target: { value: "1.6" }
     });
     fireEvent.click(screen.getAllByLabelText("Loop")[1]!);
+    fireEvent.click(screen.getByLabelText("Smooth Path"));
 
     expect(onSetControlStepAnimationClip).toHaveBeenCalledWith(
       "sequence-actor",
@@ -295,6 +300,11 @@ describe("ProjectSequencesPanel", () => {
       "sequence-actor",
       1,
       true
+    );
+    expect(onSetControlStepPathSmooth).toHaveBeenCalledWith(
+      "sequence-actor",
+      1,
+      false
     );
   });
 
@@ -358,6 +368,7 @@ describe("ProjectSequencesPanel", () => {
         onSetControlStepPathId={() => {}}
         onSetControlStepPathSpeed={() => {}}
         onSetControlStepPathLoop={() => {}}
+        onSetControlStepPathSmooth={() => {}}
         onSetNpcTalkStepNpcEntityId={() => {}}
         onSetNpcTalkStepDialogueId={() => {}}
         onSetTeleportStepTarget={() => {}}
