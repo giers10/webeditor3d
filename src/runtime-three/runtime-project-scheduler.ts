@@ -505,7 +505,8 @@ export function resolveRuntimeProjectScheduleState(options: {
         pathsById: options.pathsById
       })
     ),
-    controls: resolveRuntimeScheduledControlRoutines(options)
+    controls: resolveRuntimeScheduledControlRoutines(options),
+    impulses: resolveRuntimeScheduledImpulseRoutines(options)
   };
 }
 
@@ -550,6 +551,52 @@ function resolveRuntimeScheduledControlRoutines(options: {
         resolutionKey
       });
     }
+  }
+
+  return resolved;
+}
+
+function resolveRuntimeScheduledImpulseRoutines(options: {
+  scheduler: ProjectScheduler;
+  sequences: ProjectSequenceLibrary;
+  dayNumber: number;
+  timeOfDayHours: number;
+}): RuntimeResolvedScheduledImpulseRoutine[] {
+  const activeRoutines = Object.values(options.scheduler.routines)
+    .filter(
+      (routine) =>
+        routine.sequenceId !== null &&
+        isProjectScheduleRoutineActiveAt(
+          routine,
+          options.dayNumber,
+          options.timeOfDayHours
+        )
+    )
+    .sort(compareProjectScheduleRoutinePriority);
+  const resolved: RuntimeResolvedScheduledImpulseRoutine[] = [];
+
+  for (const routine of activeRoutines) {
+    if (routine.sequenceId === null) {
+      continue;
+    }
+
+    const sequence = options.sequences.sequences[routine.sequenceId] ?? null;
+
+    if (sequence === null) {
+      continue;
+    }
+
+    const effects = getProjectSequenceImpulseSteps(sequence);
+
+    if (effects.length === 0) {
+      continue;
+    }
+
+    resolved.push({
+      routineId: routine.id,
+      title: routine.title,
+      effects
+    });
   }
 
   return resolved;
