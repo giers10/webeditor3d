@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 
 import { createEditorStore } from "../../src/app/editor-store";
 import { createSetWorldSettingsCommand } from "../../src/commands/set-world-settings-command";
-import { createEmptySceneDocument } from "../../src/document/scene-document";
 import { cloneWorldSettings } from "../../src/document/world-settings";
 
 describe("createSetWorldSettingsCommand", () => {
@@ -33,6 +32,6 @@ describe("createSetWorldSettingsCommand", () => {
     expect(store.getState().document.world).toEqual(nextWorld);
 
     expect(store.undo()).toBe(true);
-    expect(store.getState().document.world).toEqual(createEmptySceneDocument().world);
+    expect(store.getState().document.world).toEqual(originalWorld);
   });
 });
