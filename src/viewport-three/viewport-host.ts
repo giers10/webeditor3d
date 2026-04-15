@@ -6471,6 +6471,32 @@ export class ViewportHost {
     this.creationPreviewTargetKey = null;
   }
 
+  private createBrushCreationPreviewObject(brush: Brush): Group {
+    const geometry = buildBoxBrushDerivedMeshData(brush).geometry;
+    const group = new Group();
+    const mesh = new Mesh(
+      geometry,
+      new MeshStandardMaterial({
+        color: BOX_CREATE_PREVIEW_FILL,
+        emissive: BOX_CREATE_PREVIEW_FILL,
+        emissiveIntensity: 0.12,
+        roughness: 0.68,
+        metalness: 0.02,
+        transparent: true,
+        opacity: 0.22
+      })
+    );
+    const edges = new LineSegments(
+      new EdgesGeometry(geometry),
+      new LineBasicMaterial({
+        color: BOX_CREATE_PREVIEW_EDGE
+      })
+    );
+    group.add(mesh);
+    group.add(edges);
+    return group;
+  }
+
   private createCreationPreviewObject(
     toolPreview: CreationViewportToolPreview
   ): Group {
@@ -6486,6 +6512,21 @@ export class ViewportHost {
         fallbackGroup.visible = false;
         return fallbackGroup;
       }
+      case "wedge-brush":
+        return this.createBrushCreationPreviewObject(
+          createWedgeBrush({
+            center: previewPosition,
+            size: DEFAULT_BOX_BRUSH_SIZE
+          })
+        );
+      case "cylinder-brush":
+        return this.createBrushCreationPreviewObject(
+          createRadialPrismBrush({
+            center: previewPosition,
+            size: DEFAULT_BOX_BRUSH_SIZE,
+            sideCount: toolPreview.target.sideCount
+          })
+        );
       case "entity": {
         let previewGroup: Group;
 
