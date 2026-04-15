@@ -684,6 +684,10 @@ export function createProjectScheduleEffectFromOption(options: {
           previousEffect?.type === "followActorPath"
             ? previousEffect.loop
             : targetOption.defaults.actorPathOptions?.[0]?.loop ?? false,
+        smoothPath:
+          previousEffect?.type === "followActorPath"
+            ? previousEffect.smoothPath
+            : true,
         progressMode: "deriveFromTime"
       });
     case "model.playAnimation":
