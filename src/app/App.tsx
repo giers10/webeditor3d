@@ -371,6 +371,7 @@ import { ProjectDialoguesPanel } from "./ProjectDialoguesPanel";
 import { ProjectSequencerPane } from "./ProjectSequencerPane";
 import {
   cloneSequenceEffect,
+  getProjectSequenceHeldSteps,
   getProjectSequenceImpulseSteps
 } from "../sequencer/project-sequence-steps";
 import {
