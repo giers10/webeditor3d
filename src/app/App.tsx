@@ -4406,6 +4406,84 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const resolveProjectScheduleTargetOption = (targetKey: string) =>
     getProjectScheduleTargetOptionByKey(projectScheduleTargetOptions, targetKey);
 
+  const createDefaultSequenceEffectsForTarget = (
+    targetOption: ProjectScheduleTargetOption
+  ): ProjectSequence["effects"] => {
+    if (targetOption.target.kind === "global") {
+      return [];
+    }
+
+    const effectOption = listProjectScheduleEffectOptions(targetOption)[0] ?? null;
+
+    if (effectOption === null) {
+      throw new Error(
+        "This control target does not expose a sequencer-editable effect in the current slice."
+      );
+    }
+
+    return [
+      {
+        stepClass: "held",
+        type: "controlEffect",
+        effect: createProjectScheduleEffectFromOption({
+          targetOption,
+          effectOptionId: effectOption.id
+        })
+      }
+    ];
+  };
+
+  const createAttachedSequenceForRoutine = (options: {
+    title: string;
+    targetOption: ProjectScheduleTargetOption;
+    routine?: ProjectScheduleRoutine;
+  }): ProjectSequence => {
+    const authoredEffects =
+      options.routine === undefined
+        ? []
+        : options.routine.effects.map((effect) => ({
+            stepClass: "held" as const,
+            type: "controlEffect" as const,
+            effect: cloneControlEffect(effect)
+          }));
+
+    return createProjectSequence({
+      title: options.title,
+      effects:
+        authoredEffects.length > 0
+          ? authoredEffects
+          : createDefaultSequenceEffectsForTarget(options.targetOption)
+    });
+  };
+
+  const cloneSequenceForRetargetedPlacement = (options: {
+    sequence: ProjectSequence;
+    targetOption: ProjectScheduleTargetOption;
+    previousTargetKey: string;
+  }): ProjectSequence => {
+    return createProjectSequence({
+      title: options.sequence.title,
+      effects: options.sequence.effects.map((effect) => {
+        if (
+          effect.type !== "controlEffect" ||
+          getControlTargetRefKey(effect.effect.target) !== options.previousTargetKey
+        ) {
+          return cloneSequenceEffect(effect);
+        }
+
+        return {
+          stepClass: effect.stepClass,
+          type: "controlEffect" as const,
+          effect: createProjectScheduleEffectFromOption({
+            targetOption: options.targetOption,
+            effectOptionId: getProjectScheduleEffectOptionId(effect.effect),
+            previousEffect: effect.effect
+          })
+        };
+      })
+    });
+  };
+
   const handleCreateScheduleRoutine = (targetKey: string) => {
     const targetOption = resolveProjectScheduleTargetOption(targetKey);
 
@@ -4417,65 +4495,33 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
 
     try {
-      if (targetOption.target.kind === "global") {
-        const nextRoutine = createProjectScheduleRoutine({
-          title: targetOption.label,
-          target: targetOption.target,
-          days: createProjectScheduleEveryDaySelection(),
-          startHour: 9,
-          endHour: 17,
-          priority: 0,
-          effects: []
-        });
-        const nextScheduler = upsertProjectScheduleRoutine(
-          cloneProjectScheduler(editorState.projectDocument.scheduler),
-          nextRoutine
-        );
-
-        applyProjectScheduler(
-          nextScheduler,
-          "Create sequence placement",
-          `Created a sequence placement for ${targetOption.label}.`
-        );
-        setSchedulePaneOpen(true);
-        setSequencerMode("timeline");
-        setSelectedScheduleRoutineId(nextRoutine.id);
-        return;
-      }
-
-      const effectOption = listProjectScheduleEffectOptions(targetOption)[0] ?? null;
-
-      if (effectOption === null) {
-        throw new Error(
-          "This control target does not expose a schedulable effect in the current slice."
-        );
-      }
-
+      const nextSequence = createAttachedSequenceForRoutine({
+        title: targetOption.label,
+        targetOption
+      });
       const nextRoutine = createProjectScheduleRoutine({
         title: targetOption.label,
         target: targetOption.target,
+        sequenceId: nextSequence.id,
         days: createProjectScheduleEveryDaySelection(),
         startHour: 9,
         endHour: 17,
         priority: 0,
-        effect: createProjectScheduleEffectFromOption({
-          targetOption,
-          effectOptionId: effectOption.id
-        })
+        effects: []
       });
-      const nextScheduler = upsertProjectScheduleRoutine(
-        cloneProjectScheduler(editorState.projectDocument.scheduler),
-        nextRoutine
-      );
 
-      applyProjectScheduler(
-        nextScheduler,
+      updateProjectSequencerState(
         "Create sequence placement",
-        `Created a sequence placement for ${targetOption.label}.`
+        `Created a sequence placement for ${targetOption.label}.`,
+        (scheduler, sequences) => {
+          sequences.sequences[nextSequence.id] = nextSequence;
+          scheduler.routines[nextRoutine.id] = nextRoutine;
+        }
       );
       setSchedulePaneOpen(true);
       setSequencerMode("timeline");
       setSelectedScheduleRoutineId(nextRoutine.id);
+      setSelectedSequenceId(nextSequence.id);
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
     }
