@@ -925,7 +925,11 @@ export class ViewportHost {
     this.applyWorld();
 
     if (this.currentDocument !== null) {
-      this.updateDocument(this.currentDocument, this.currentSelection);
+      this.updateDocument(
+        this.currentDocument,
+        this.currentSelection,
+        this.currentActiveSelectionId
+      );
     }
   }
 

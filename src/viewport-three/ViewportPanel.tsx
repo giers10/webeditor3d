@@ -61,6 +61,7 @@ interface ViewportPanelProps {
   whiteboxSnapStep: number;
   viewportGridVisible: boolean;
   selection: EditorSelection;
+  activeSelectionId: string | null;
   toolMode: ToolMode;
   toolPreview: ViewportToolPreview;
   transformSession: TransformSessionState;
@@ -132,6 +133,7 @@ export function ViewportPanel({
   whiteboxSnapStep,
   viewportGridVisible,
   selection,
+  activeSelectionId,
   toolMode,
   toolPreview,
   transformSession,
@@ -191,6 +193,7 @@ export function ViewportPanel({
         whiteboxSnapStep={whiteboxSnapStep}
         viewportGridVisible={viewportGridVisible}
         selection={selection}
+        activeSelectionId={activeSelectionId}
         toolMode={toolMode}
         toolPreview={toolPreview}
         transformSession={transformSession}
