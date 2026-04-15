@@ -3000,14 +3000,6 @@ export class RuntimeHost {
           trigger: null
         });
         return;
-      case "startDialogue":
-        this.openRuntimeDialogue(effect.dialogueId, {
-          kind: "direct",
-          sourceEntityId,
-          linkId: null,
-          trigger: null
-        });
-        return;
       case "teleportPlayer": {
         const teleportTarget =
           this.runtimeScene.entities.teleportTargets.find(
