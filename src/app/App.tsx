@@ -1343,7 +1343,7 @@ function getMultiSelectionSummary(
       count: number;
       activeId: string;
       activeLabel: string;
-      selectedLabels: string[];
+      selectedItems: Array<{ id: string; label: string }>;
     }
   | null {
   const resolvedActiveSelectionId = resolveSelectionActiveId(
@@ -1366,7 +1366,10 @@ function getMultiSelectionSummary(
         count: selection.ids.length,
         activeId: resolvedActiveSelectionId,
         activeLabel: getBrushLabelById(resolvedActiveSelectionId, brushes),
-        selectedLabels: selection.ids.map((id) => getBrushLabelById(id, brushes))
+        selectedItems: selection.ids.map((id) => ({
+          id,
+          label: getBrushLabelById(id, brushes)
+        }))
       };
     case "entities":
       if (selection.ids.length <= 1) {
@@ -1382,9 +1385,10 @@ function getMultiSelectionSummary(
           entities,
           assets
         ),
-        selectedLabels: selection.ids.map((id) =>
-          getEntityDisplayLabelById(id, entities, assets)
-        )
+        selectedItems: selection.ids.map((id) => ({
+          id,
+          label: getEntityDisplayLabelById(id, entities, assets)
+        }))
       };
     case "modelInstances":
       if (selection.ids.length <= 1) {
@@ -1400,9 +1404,10 @@ function getMultiSelectionSummary(
           modelInstances,
           assets
         ),
-        selectedLabels: selection.ids.map((id) =>
-          getModelInstanceDisplayLabelById(id, modelInstances, assets)
-        )
+        selectedItems: selection.ids.map((id) => ({
+          id,
+          label: getModelInstanceDisplayLabelById(id, modelInstances, assets)
+        }))
       };
     default:
       return null;
