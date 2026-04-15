@@ -4498,7 +4498,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
     if (effectOption === null) {
       throw new Error(
-        "This control target does not expose a sequencer-editable effect in the current slice."
+        "This target does not expose any direct sequencer effects in the current slice."
       );
     }
 
