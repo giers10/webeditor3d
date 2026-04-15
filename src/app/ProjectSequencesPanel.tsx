@@ -35,14 +35,6 @@ interface ProjectSequencesPanelProps {
     targetKey: string;
     label: string;
   }>;
-  modelAnimationTargetOptions: Array<{
-    targetKey: string;
-    label: string;
-  }>;
-  soundTargetOptions: Array<{
-    targetKey: string;
-    label: string;
-  }>;
   selectedSequenceId: string | null;
   onSelectSequence(sequenceId: string | null): void;
   onAddSequence(): void;
@@ -173,8 +165,6 @@ export function ProjectSequencesPanel({
   teleportTargetOptions,
   sceneTransitionTargetOptions,
   visibilityTargetOptions,
-  modelAnimationTargetOptions,
-  soundTargetOptions,
   selectedSequenceId,
   onSelectSequence,
   onAddSequence,
