@@ -127,36 +127,39 @@ import {
   type SpotLightEntity
 } from "../entities/entity-instances";
 import {
-  BOX_EDGE_IDS,
-  BOX_FACE_IDS,
-  BOX_VERTEX_IDS,
-  cloneBoxBrushGeometry,
-  deriveBoxBrushSizeFromGeometry,
-  scaleBoxBrushGeometryToSize,
+  cloneBrushGeometry,
+  deriveBrushSizeFromGeometry,
+  scaleBrushGeometryToSize,
+  updateBrush,
   DEFAULT_BOX_BRUSH_SIZE,
+  type Brush,
+  type BrushGeometry,
   type BoxBrush,
-  type BoxBrushGeometry,
-  type BoxEdgeId,
-  type BoxFaceId,
-  type BoxVertexId
+  type WhiteboxEdgeId,
+  type WhiteboxFaceId,
+  type WhiteboxVertexId
 } from "../document/brushes";
 import {
-  getBoxBrushEdgeAxis,
-  getBoxBrushEdgeTransformMeta,
-  getBoxBrushEdgeWorldSegment,
-  getBoxBrushFaceAxis,
-  getBoxBrushFaceTransformMeta,
-  getBoxBrushFaceWorldCenter,
-  getBoxBrushVertexWorldPosition,
-  transformBoxBrushWorldPointToLocal,
-  transformBoxBrushWorldVectorToLocal
-} from "../geometry/box-brush-components";
+  getBrushEdgeAxis,
+  getBrushEdgeScaleAxes,
+  getBrushEdgeWorldSegment,
+  getBrushFaceAxis,
+  getBrushFaceWorldCenter,
+  getBrushLocalVertexPosition,
+  getBrushVertexWorldPosition,
+  transformBrushWorldPointToLocal,
+  transformBrushWorldVectorToLocal
+} from "../geometry/whitebox-brush";
 import {
-  buildBoxBrushDerivedMeshData,
-  getBoxBrushEdgeVertexIds,
-  getBoxBrushFaceVertexIds,
-  getBoxBrushLocalVertexPosition
+  buildBoxBrushDerivedMeshData
 } from "../geometry/box-brush-mesh";
+import {
+  getBrushEdgeIds,
+  getBrushEdgeVertexIds,
+  getBrushFaceIds,
+  getBrushFaceVertexIds,
+  getBrushVertexIds
+} from "../geometry/whitebox-topology";
 import { createModelColliderDebugGroup } from "../geometry/model-instance-collider-debug-mesh";
 import { buildGeneratedModelCollider } from "../geometry/model-instance-collider-generation";
 import { DEFAULT_GRID_SIZE, snapValueToGrid } from "../geometry/grid-snapping";
@@ -216,13 +219,14 @@ import {
 
 interface BrushRenderObjects {
   mesh: Mesh<BufferGeometry, Material[]>;
+  faceIdsInOrder: WhiteboxFaceId[];
   edges: LineSegments<EdgesGeometry, LineBasicMaterial>;
   edgeHelpers: Array<{
-    id: BoxEdgeId;
+    id: WhiteboxEdgeId;
     line: Line<BufferGeometry, LineBasicMaterial>;
   }>;
   vertexHelpers: Array<{
-    id: BoxVertexId;
+    id: WhiteboxVertexId;
     mesh: Mesh<SphereGeometry, MeshBasicMaterial>;
   }>;
 }
