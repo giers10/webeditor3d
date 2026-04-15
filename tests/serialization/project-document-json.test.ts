@@ -13,6 +13,7 @@ import {
   DEFAULT_PROJECT_NAME,
   DEFAULT_SCENE_EDITOR_SNAP_STEP,
   NPC_COLLIDER_SCENE_DOCUMENT_VERSION,
+  NPC_DIALOGUE_LINE_SPEAKER_REMOVED_SCENE_DOCUMENT_VERSION,
   NPC_ONLY_DIALOGUES_SCENE_DOCUMENT_VERSION,
   PROJECT_DIALOGUE_LIBRARY_SCENE_DOCUMENT_VERSION,
   PROJECT_SEQUENCE_EFFECTS_SCENE_DOCUMENT_VERSION,
@@ -182,6 +183,58 @@ describe("project document JSON", () => {
       "speakerName" in
         (migratedNpc as typeof npc).dialogues[0]!.lines[0]!
     ).toBe(false);
+  });
+
+  it("migrates legacy actor follow-path effects to smooth paths by default", () => {
+    const document = createEmptyProjectDocument({
+      name: "Legacy Smooth Path Project"
+    });
+    document.sequences.sequences["sequence-patrol"] = createProjectSequence({
+      id: "sequence-patrol",
+      title: "Patrol",
+      effects: [
+        {
+          stepClass: "held",
+          type: "controlEffect",
+          effect: createFollowActorPathControlEffect({
+            target: createActorControlTargetRef("actor-guard"),
+            pathId: "path-guard",
+            speed: 1.5,
+            loop: false
+          })
+        }
+      ]
+    });
+
+    const legacyDocument = JSON.parse(
+      serializeProjectDocument(document)
+    ) as Record<string, unknown>;
+    legacyDocument.version = NPC_DIALOGUE_LINE_SPEAKER_REMOVED_SCENE_DOCUMENT_VERSION;
+    delete (
+      (
+        (
+          legacyDocument.sequences as {
+            sequences: Record<string, { effects: Array<{ effect?: Record<string, unknown> }> }>;
+          }
+        ).sequences["sequence-patrol"]!.effects[0]!.effect as Record<string, unknown>
+      ).smoothPath
+    );
+
+    const migratedDocument = parseProjectDocumentJson(
+      JSON.stringify(legacyDocument)
+    );
+    const migratedEffect =
+      migratedDocument.sequences.sequences["sequence-patrol"]!.effects[0]!;
+
+    expect(migratedEffect).toEqual(
+      expect.objectContaining({
+        type: "controlEffect",
+        effect: expect.objectContaining({
+          type: "followActorPath",
+          smoothPath: true
+        })
+      })
+    );
   });
 
   it("migrates project NPCs without dialogue references from v50 to null NPC dialogue defaults", () => {
