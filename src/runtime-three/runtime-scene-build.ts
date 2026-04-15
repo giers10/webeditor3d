@@ -35,13 +35,16 @@ import {
   type RuntimeControlSurfaceDefinition
 } from "../controls/control-surface";
 import {
-  cloneBoxBrushGeometry,
+  cloneBrushGeometry,
+  cloneBoxBrushVolumeSettings,
+  cloneBrush,
   cloneBoxBrushVolumeSettings,
   cloneFaceUvState,
-  type BoxBrush,
-  type BoxBrushGeometry,
+  type Brush,
+  type BrushGeometry,
+  type BrushKind,
   type BoxBrushVolumeSettings,
-  type BoxFaceId,
+  type WhiteboxFaceId,
   type FaceUvState
 } from "../document/brushes";
 import type { SceneDocument } from "../document/scene-document";
@@ -82,8 +85,9 @@ import {
   type PlayerStartSprintSettings,
   type PlayerStartMovementTemplate
 } from "../entities/entity-instances";
-import { getBoxBrushBounds } from "../geometry/box-brush";
+import { getBrushBounds } from "../geometry/whitebox-brush";
 import { buildBoxBrushDerivedMeshData } from "../geometry/box-brush-mesh";
+import { getBrushFaceIds } from "../geometry/whitebox-topology";
 import {
   buildGeneratedModelCollider,
   type GeneratedColliderBounds,
@@ -124,13 +128,14 @@ export interface RuntimeBrushFace {
 
 export interface RuntimeBoxBrushInstance {
   id: string;
-  kind: "box";
+  kind: BrushKind;
+  sideCount?: number;
   visible: boolean;
   center: Vec3;
   rotationDegrees: Vec3;
   size: Vec3;
-  geometry: BoxBrushGeometry;
-  faces: Record<BoxFaceId, RuntimeBrushFace>;
+  geometry: BrushGeometry;
+  faces: Record<WhiteboxFaceId, RuntimeBrushFace>;
   volume: BoxBrushVolumeSettings;
 }
 
@@ -614,54 +619,36 @@ function resolveRuntimeMaterial(
 }
 
 function buildRuntimeBrush(
-  brush: BoxBrush,
+  brush: Brush,
   document: SceneDocument
 ): RuntimeBoxBrushInstance {
   return {
     id: brush.id,
-    kind: "box",
+    kind: brush.kind,
+    sideCount: brush.kind === "radialPrism" ? brush.sideCount : undefined,
     visible: brush.visible,
     center: cloneVec3(brush.center),
     rotationDegrees: cloneVec3(brush.rotationDegrees),
     size: cloneVec3(brush.size),
-    geometry: cloneBoxBrushGeometry(brush.geometry),
+    geometry: cloneBrushGeometry(brush.geometry),
     volume: cloneBoxBrushVolumeSettings(brush.volume),
-    faces: {
-      posX: {
-        materialId: brush.faces.posX.materialId,
-        material: resolveRuntimeMaterial(document, brush.faces.posX.materialId),
-        uv: cloneFaceUvState(brush.faces.posX.uv)
-      },
-      negX: {
-        materialId: brush.faces.negX.materialId,
-        material: resolveRuntimeMaterial(document, brush.faces.negX.materialId),
-        uv: cloneFaceUvState(brush.faces.negX.uv)
-      },
-      posY: {
-        materialId: brush.faces.posY.materialId,
-        material: resolveRuntimeMaterial(document, brush.faces.posY.materialId),
-        uv: cloneFaceUvState(brush.faces.posY.uv)
-      },
-      negY: {
-        materialId: brush.faces.negY.materialId,
-        material: resolveRuntimeMaterial(document, brush.faces.negY.materialId),
-        uv: cloneFaceUvState(brush.faces.negY.uv)
-      },
-      posZ: {
-        materialId: brush.faces.posZ.materialId,
-        material: resolveRuntimeMaterial(document, brush.faces.posZ.materialId),
-        uv: cloneFaceUvState(brush.faces.posZ.uv)
-      },
-      negZ: {
-        materialId: brush.faces.negZ.materialId,
-        material: resolveRuntimeMaterial(document, brush.faces.negZ.materialId),
-        uv: cloneFaceUvState(brush.faces.negZ.uv)
-      }
-    }
+    faces: Object.fromEntries(
+      getBrushFaceIds(brush).map((faceId) => {
+        const face = brush.faces[faceId];
+        return [
+          faceId,
+          {
+            materialId: face.materialId,
+            material: resolveRuntimeMaterial(document, face.materialId),
+            uv: cloneFaceUvState(face.uv)
+          }
+        ];
+      })
+    ) as Record<WhiteboxFaceId, RuntimeBrushFace>
   };
 }
 
-function buildRuntimeFogVolume(brush: BoxBrush): RuntimeFogVolume {
+function buildRuntimeFogVolume(brush: Brush): RuntimeFogVolume {
   if (brush.volume.mode !== "fog") {
     throw new Error(`Cannot build fog volume from non-fog brush ${brush.id}.`);
   }
@@ -677,7 +664,7 @@ function buildRuntimeFogVolume(brush: BoxBrush): RuntimeFogVolume {
   };
 }
 
-function buildRuntimeWaterVolume(brush: BoxBrush): RuntimeWaterVolume {
+function buildRuntimeWaterVolume(brush: Brush): RuntimeWaterVolume {
   if (brush.volume.mode !== "water") {
     throw new Error(
       `Cannot build water volume from non-water brush ${brush.id}.`
@@ -695,8 +682,8 @@ function buildRuntimeWaterVolume(brush: BoxBrush): RuntimeWaterVolume {
   };
 }
 
-function buildRuntimeCollider(brush: BoxBrush): RuntimeBrushTriMeshCollider {
-  const bounds = getBoxBrushBounds(brush);
+function buildRuntimeCollider(brush: Brush): RuntimeBrushTriMeshCollider {
+  const bounds = getBrushBounds(brush);
   const derivedMesh = buildBoxBrushDerivedMeshData(brush);
 
   return {
@@ -1522,6 +1509,11 @@ export function buildRuntimeSceneFromDocument(
 
   for (const brush of enabledBrushes) {
     if (brush.volume.mode === "none") {
+      staticColliders.push(buildRuntimeCollider(brush));
+      continue;
+    }
+
+    if (brush.kind !== "box") {
       staticColliders.push(buildRuntimeCollider(brush));
       continue;
     }
