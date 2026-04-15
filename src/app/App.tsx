@@ -9191,25 +9191,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 </div>
               ) : link.action.type === "startDialogue" ? (
                 <div className="form-section">
-                  <label className="form-field">
-                    <span className="label">Dialogue</span>
-                    <select
-                      className="text-input"
-                      value={link.action.dialogueId}
-                      onChange={(event) =>
-                        updateDialogueInteractionLinkTarget(
-                          link,
-                          event.currentTarget.value
-                        )
-                      }
-                    >
-                      {projectDialogueList.map((dialogue) => (
-                        <option key={dialogue.id} value={dialogue.id}>
-                          {dialogue.title}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                  <div className="material-summary">
+                    Legacy direct dialogue links are no longer authored here.
+                    Move this behavior into a sequence and use a Make NPC Talk
+                    effect instead.
+                  </div>
                 </div>
               ) : link.action.type === "runSequence" ? (
                 (() => {
