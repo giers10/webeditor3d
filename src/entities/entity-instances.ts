@@ -1293,17 +1293,6 @@ function normalizeNpcModelAssetId(
   return normalizedModelAssetId.length === 0 ? null : normalizedModelAssetId;
 }
 
-function normalizeNpcDialogueId(
-  dialogueId: string | null | undefined
-): string | null {
-  if (dialogueId === undefined || dialogueId === null) {
-    return null;
-  }
-
-  const normalizedDialogueId = dialogueId.trim();
-  return normalizedDialogueId.length === 0 ? null : normalizedDialogueId;
-}
-
 function normalizeNpcDialogues(
   dialogues: ProjectDialogue[] | undefined
 ): ProjectDialogue[] {
@@ -1316,14 +1305,15 @@ function normalizeNpcDialogues(
 
 function normalizeNpcDefaultDialogueId(
   defaultDialogueId: string | null | undefined,
-  dialogues: readonly ProjectDialogue[],
-  legacyDialogueId?: string | null | undefined
+  dialogues: readonly ProjectDialogue[]
 ): string | null {
-  const normalizedDefaultDialogueId = normalizeNpcDialogueId(
-    defaultDialogueId ?? legacyDialogueId ?? null
-  );
+  if (defaultDialogueId === undefined || defaultDialogueId === null) {
+    return null;
+  }
 
-  if (normalizedDefaultDialogueId === null) {
+  const normalizedDefaultDialogueId = defaultDialogueId.trim();
+
+  if (normalizedDefaultDialogueId.length === 0) {
     return null;
   }
 
@@ -1493,7 +1483,6 @@ export function createNpcEntity(
       | "defaultDialogueId"
     >
   > & {
-    dialogueId?: string | null;
     collider?: Partial<NpcColliderSettings>;
   } = {}
 ): NpcEntity {
@@ -1507,8 +1496,7 @@ export function createNpcEntity(
   const dialogues = normalizeNpcDialogues(overrides.dialogues);
   const defaultDialogueId = normalizeNpcDefaultDialogueId(
     overrides.defaultDialogueId ?? DEFAULT_NPC_DIALOGUE_ID,
-    dialogues,
-    overrides.dialogueId
+    dialogues
   );
   const collider = createNpcColliderSettings(overrides.collider);
 
