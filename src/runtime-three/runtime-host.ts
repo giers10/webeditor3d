@@ -40,7 +40,13 @@ import type { LoadedModelAsset } from "../assets/gltf-model-import";
 import type { LoadedImageAsset } from "../assets/image-assets";
 import type { LoadedAudioAsset } from "../assets/audio-assets";
 import type { ProjectAssetRecord } from "../assets/project-assets";
-import type { BoxBrush } from "../document/brushes";
+import {
+  createBoxBrush,
+  createRadialPrismBrush,
+  createWedgeBrush,
+  type Brush,
+  type WhiteboxFaceId
+} from "../document/brushes";
 import {
   applyControlEffectToResolvedState,
   createDefaultResolvedControlSource,
@@ -134,6 +140,7 @@ import { ThirdPersonNavigationController } from "./third-person-navigation-contr
 import { resolveUnderwaterFogState } from "./underwater-fog";
 import { resolveWaterContact } from "./water-volume-utils";
 import type {
+  RuntimeBrushFace,
   RuntimeNpcDefinition,
   RuntimeBoxBrushInstance,
   RuntimeLocalLightCollection,
