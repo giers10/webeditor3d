@@ -200,7 +200,6 @@ function getRoutineSummary(
   sequences: ProjectSequenceLibrary
 ): string {
   const summaryParts = [
-    formatProjectScheduleDaySelection(routine.days),
     `${formatTimeOfDayHours(routine.startHour)}-${formatTimeOfDayHours(routine.endHour)}`
   ];
   const heldSteps = getProjectScheduleRoutineHeldSteps(routine, sequences);
@@ -332,7 +331,6 @@ export function ProjectSequencerPane({
   onDeleteRoutine,
   onDeleteSequence,
   onClose,
-  onSetRoutineTarget,
   onSetRoutineTitle,
   onSetRoutineEnabled,
   onSetRoutineStartHour,
