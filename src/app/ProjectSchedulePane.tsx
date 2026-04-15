@@ -499,6 +499,133 @@ export function ProjectSequencerPane({
   onSetVisibilityStepTarget,
   onSetVisibilityStepMode
 }: ProjectSequencerPaneProps) {
+  const [routineDragState, setRoutineDragState] = useState<RoutineDragState | null>(
+    null
+  );
+  const routineDragStateRef = useRef<RoutineDragState | null>(null);
+
+  useEffect(() => {
+    routineDragStateRef.current = routineDragState;
+  }, [routineDragState]);
+
+  useEffect(() => {
+    if (routineDragState === null) {
+      return;
+    }
+
+    const previousUserSelect = document.body.style.userSelect;
+    document.body.style.userSelect = "none";
+
+    const handlePointerMove = (event: PointerEvent) => {
+      setRoutineDragState((currentState) => {
+        if (currentState === null) {
+          return currentState;
+        }
+
+        const nextState = resolveRoutineDragState(
+          currentState,
+          event.clientX,
+          event.clientY
+        );
+        routineDragStateRef.current = nextState;
+        return nextState;
+      });
+    };
+
+    const handlePointerUp = () => {
+      const finalDragState = routineDragStateRef.current;
+
+      document.body.style.userSelect = previousUserSelect;
+      setRoutineDragState(null);
+      routineDragStateRef.current = null;
+
+      if (finalDragState === null) {
+        return;
+      }
+
+      if (finalDragState.draftTargetKey !== finalDragState.originTargetKey) {
+        onSetRoutineTarget(finalDragState.routineId, finalDragState.draftTargetKey);
+      }
+
+      if (finalDragState.draftStartMinutes !== finalDragState.originStartMinutes) {
+        onSetRoutineStartHour(
+          finalDragState.routineId,
+          convertMinuteOfDayToHours(finalDragState.draftStartMinutes)
+        );
+      }
+
+      if (finalDragState.draftEndMinutes !== finalDragState.originEndMinutes) {
+        onSetRoutineEndHour(
+          finalDragState.routineId,
+          convertMinuteOfDayToHours(finalDragState.draftEndMinutes)
+        );
+      }
+    };
+
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp);
+
+    return () => {
+      document.body.style.userSelect = previousUserSelect;
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+    };
+  }, [onSetRoutineEndHour, onSetRoutineStartHour, onSetRoutineTarget, routineDragState]);
+
+  const beginRoutineDrag = (
+    event: ReactPointerEvent<HTMLElement>,
+    routine: ProjectScheduleRoutine,
+    mode: RoutineDragState["mode"]
+  ) => {
+    if (event.button !== 0) {
+      return;
+    }
+
+    const trackElement = event.currentTarget.closest<HTMLElement>(
+      "[data-sequencer-track='true']"
+    );
+
+    if (trackElement === null) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    onSelectRoutine(routine.id);
+
+    const nextDragState: RoutineDragState = {
+      routineId: routine.id,
+      mode,
+      originStartMinutes: convertHoursToMinuteOfDay(routine.startHour),
+      originEndMinutes: convertHoursToMinuteOfDay(routine.endHour),
+      originTargetKey: getControlTargetRefKey(routine.target),
+      pointerStartX: event.clientX,
+      trackWidth: Math.max(trackElement.getBoundingClientRect().width, 1),
+      draftStartMinutes: convertHoursToMinuteOfDay(routine.startHour),
+      draftEndMinutes: convertHoursToMinuteOfDay(routine.endHour),
+      draftTargetKey: getControlTargetRefKey(routine.target)
+    };
+
+    routineDragStateRef.current = nextDragState;
+    setRoutineDragState(nextDragState);
+  };
+
+  const getRenderedRoutineTargetKey = (routine: ProjectScheduleRoutine): string =>
+    routineDragState?.routineId === routine.id
+      ? routineDragState.draftTargetKey
+      : getControlTargetRefKey(routine.target);
+
+  const getRenderedRoutine = (
+    routine: ProjectScheduleRoutine
+  ): ProjectScheduleRoutine =>
+    routineDragState?.routineId === routine.id
+      ? {
+          ...routine,
+          startHour: convertMinuteOfDayToHours(routineDragState.draftStartMinutes),
+          endHour: convertMinuteOfDayToHours(routineDragState.draftEndMinutes)
+        }
+      : routine;
+
   const selectedRoutine =
     selectedRoutineId === null ? null : scheduler.routines[selectedRoutineId] ?? null;
   const selectedRoutineHeldSteps =
