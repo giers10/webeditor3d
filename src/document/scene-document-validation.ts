@@ -4877,7 +4877,7 @@ function validateProjectSequence(
 function validateProjectResources(
   document: Pick<
     ProjectDocument,
-    "materials" | "assets" | "dialogues" | "sequences" | "scenes"
+    "materials" | "assets" | "sequences" | "scenes"
   >,
   context: ProjectSchedulerValidationContext,
   diagnostics: SceneDiagnostic[]
