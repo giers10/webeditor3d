@@ -13,11 +13,6 @@ interface NpcDialoguesPanelProps {
   onSetDialogueTitle(dialogueId: string, title: string): void;
   onAddDialogueLine(dialogueId: string): void;
   onDeleteDialogueLine(dialogueId: string, lineId: string): void;
-  onSetDialogueLineSpeaker(
-    dialogueId: string,
-    lineId: string,
-    speakerName: string | null
-  ): void;
   onSetDialogueLineText(dialogueId: string, lineId: string, text: string): void;
 }
 
@@ -44,7 +39,6 @@ export function NpcDialoguesPanel({
   onSetDialogueTitle,
   onAddDialogueLine,
   onDeleteDialogueLine,
-  onSetDialogueLineSpeaker,
   onSetDialogueLineText
 }: NpcDialoguesPanelProps) {
   const selectedDialogue =
@@ -61,9 +55,9 @@ export function NpcDialoguesPanel({
       ? null
       : dialogues.find((dialogue) => dialogue.id === resolvedDefaultDialogueId) ?? null;
   const [titleDraft, setTitleDraft] = useState(selectedDialogue?.title ?? "");
-  const [lineDrafts, setLineDrafts] = useState<
-    Record<string, { speakerName: string; text: string }>
-  >({});
+  const [lineDrafts, setLineDrafts] = useState<Record<string, { text: string }>>(
+    {}
+  );
 
   useEffect(() => {
     setTitleDraft(selectedDialogue?.title ?? "");
@@ -74,7 +68,6 @@ export function NpcDialoguesPanel({
             selectedDialogue.lines.map((line) => [
               line.id,
               {
-                speakerName: line.speakerName ?? "",
                 text: line.text
               }
             ])
@@ -95,7 +88,6 @@ export function NpcDialoguesPanel({
     (() => {
       const line = dialogue.lines.find((candidate) => candidate.id === lineId);
       return {
-        speakerName: line?.speakerName ?? "",
         text: line?.text ?? ""
       };
     })();
@@ -224,33 +216,6 @@ export function NpcDialoguesPanel({
                       x
                     </button>
                   </div>
-                  <label className="form-field">
-                    <span className="label">Speaker</span>
-                    <input
-                      className="text-input"
-                      type="text"
-                      placeholder="Optional"
-                      value={draft.speakerName}
-                      onChange={(event) => {
-                        const nextSpeakerName = event.currentTarget.value;
-
-                        setLineDrafts((current) => ({
-                          ...current,
-                          [line.id]: {
-                            ...draft,
-                            speakerName: nextSpeakerName
-                          }
-                        }));
-                      }}
-                      onBlur={() =>
-                        onSetDialogueLineSpeaker(
-                          selectedDialogue.id,
-                          line.id,
-                          draft.speakerName
-                        )
-                      }
-                    />
-                  </label>
                   <label className="form-field">
                     <span className="label">Text</span>
                     <textarea
