@@ -310,6 +310,7 @@ describe("duplicate selection command", () => {
     expect(selection.ids).toHaveLength(2);
     expect(new Set(selection.ids).size).toBe(2);
     expect(selection.ids).not.toEqual([sourceBrushA.id, sourceBrushB.id]);
+    expect(store.getState().activeSelectionId).toBe(selection.ids[1]);
 
     const duplicatedBrushA = store.getState().document.brushes[selection.ids[0]];
     const duplicatedBrushB = store.getState().document.brushes[selection.ids[1]];
@@ -325,5 +326,6 @@ describe("duplicate selection command", () => {
       kind: "brushes",
       ids: [duplicatedBrushA.id, duplicatedBrushB.id]
     });
+    expect(store.getState().activeSelectionId).toBe(duplicatedBrushB.id);
   });
 });
