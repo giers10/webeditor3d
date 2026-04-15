@@ -4258,33 +4258,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
-  const applyProjectDialogues = (
-    nextDialogues: typeof editorState.projectDocument.dialogues,
-    label: string,
-    successMessage: string
-  ) => {
-    if (
-      areProjectDialogueLibrariesEqual(
-        editorState.projectDocument.dialogues,
-        nextDialogues
-      )
-    ) {
-      return;
-    }
-
-    try {
-      store.executeCommand(
-        createSetProjectDialoguesCommand({
-          label,
-          dialogues: nextDialogues
-        })
-      );
-      setStatusMessage(successMessage);
-    } catch (error) {
-      setStatusMessage(getErrorMessage(error));
-    }
-  };
-
   const applyProjectSequences = (
     nextSequences: ProjectSequenceLibrary,
     label: string,
@@ -4340,22 +4313,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
         })
       );
       setStatusMessage(successMessage);
-    } catch (error) {
-      setStatusMessage(getErrorMessage(error));
-    }
-  };
-
-  const updateProjectDialogues = (
-    label: string,
-    successMessage: string,
-    mutate: (dialogues: typeof editorState.projectDocument.dialogues) => void
-  ) => {
-    try {
-      const nextDialogues = cloneProjectDialogueLibrary(
-        editorState.projectDocument.dialogues
-      );
-      mutate(nextDialogues);
-      applyProjectDialogues(nextDialogues, label, successMessage);
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
     }
@@ -4744,33 +4701,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
-  const handleAddProjectDialogue = () => {
-    const nextDialogue = createProjectDialogue();
-
-    updateProjectDialogues(
-      "Add project dialogue",
-      "Added project dialogue.",
-      (dialogues) => {
-        dialogues.dialogues[nextDialogue.id] = nextDialogue;
-      }
-    );
-    setSelectedDialogueId(nextDialogue.id);
-  };
-
-  const handleDeleteProjectDialogue = (dialogueId: string) => {
-    updateProjectDialogues(
-      "Delete project dialogue",
-      "Deleted project dialogue.",
-      (dialogues) => {
-        delete dialogues.dialogues[dialogueId];
-      }
-    );
-
-    if (selectedDialogueId === dialogueId) {
-      setSelectedDialogueId(null);
-    }
-  };
-
   const resolveSequenceControlTargetOption = (targetKey: string) =>
     getProjectScheduleTargetOptionByKey(projectScheduleTargetOptions, targetKey);
 
@@ -4898,41 +4828,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
     if (sequenceId !== undefined) {
       setSelectedSequenceId(sequenceId);
     }
-  };
-
-  const updateProjectDialogue = (
-    dialogueId: string,
-    label: string,
-    successMessage: string,
-    mutate: (dialogue: ProjectDialogue) => void
-  ) => {
-    updateProjectDialogues(label, successMessage, (dialogues) => {
-      const dialogue = dialogues.dialogues[dialogueId];
-
-      if (dialogue === undefined) {
-        throw new Error("Selected dialogue no longer exists.");
-      }
-
-      mutate(dialogue);
-    });
-  };
-
-  const updateProjectDialogueLine = (
-    dialogueId: string,
-    lineId: string,
-    label: string,
-    successMessage: string,
-    mutate: (line: ProjectDialogueLine) => void
-  ) => {
-    updateProjectDialogue(dialogueId, label, successMessage, (dialogue) => {
-      const line = dialogue.lines.find((candidate) => candidate.id === lineId);
-
-      if (line === undefined) {
-        throw new Error("Selected dialogue line no longer exists.");
-      }
-
-      mutate(line);
-    });
   };
 
   const handleAddProjectSequenceControlEffect = (
