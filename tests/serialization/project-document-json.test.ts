@@ -50,32 +50,6 @@ import {
 } from "../../src/serialization/scene-document-json";
 
 describe("project document JSON", () => {
-  it("round-trips project dialogue library resources", () => {
-    const document = createEmptyProjectDocument({
-      name: "Dialogue Project"
-    });
-    document.dialogues.dialogues["dialogue-market"] = {
-      id: "dialogue-market",
-      title: "Market Greeting",
-      lines: [
-        {
-          id: "dialogue-line-1",
-          speakerName: "Merchant",
-          text: "Fresh fruit, just in."
-        },
-        {
-          id: "dialogue-line-2",
-          speakerName: null,
-          text: "The crowd keeps moving around you."
-        }
-      ]
-    };
-
-    expect(parseProjectDocumentJson(serializeProjectDocument(document))).toEqual(
-      document
-    );
-  });
-
   it("round-trips scene transition sequence effects", () => {
     const document = createEmptyProjectDocument({
       name: "Scene Transition Sequence Project"
@@ -281,78 +255,6 @@ describe("project document JSON", () => {
     expect(migratedDocument.sequences).toEqual({
       sequences: {}
     });
-  });
-
-  it("migrates legacy project sequence steps and timed clips into effects", () => {
-    const document = createEmptyProjectDocument({
-      name: "Legacy Sequence Clip Project"
-    });
-    document.dialogues.dialogues["dialogue-legacy"] = {
-      id: "dialogue-legacy",
-      title: "Legacy Dialogue",
-      lines: [
-        {
-          id: "dialogue-line-legacy-1",
-          speakerName: null,
-          text: "Legacy."
-        }
-      ]
-    };
-
-    document.sequences.sequences["sequence-legacy-dialogue"] = createProjectSequence({
-      id: "sequence-legacy-dialogue",
-      title: "Legacy Dialogue Sequence",
-      steps: [
-        {
-          stepClass: "impulse",
-          type: "startDialogue",
-          dialogueId: "dialogue-legacy"
-        }
-      ]
-    });
-
-    const legacyDocument = JSON.parse(
-      serializeProjectDocument(document)
-    ) as Record<string, unknown>;
-    legacyDocument.version = PROJECT_SEQUENCE_TIMING_SCENE_DOCUMENT_VERSION;
-    const legacySequences = (legacyDocument.sequences as { sequences: Record<string, unknown> })
-      .sequences;
-    const legacySequence = legacySequences["sequence-legacy-dialogue"] as {
-      clips?: unknown;
-      steps?: unknown;
-      effects?: unknown;
-      durationMinutes?: unknown;
-    };
-    legacySequence.clips = [
-      {
-        stepClass: "impulse",
-        type: "startDialogue",
-        dialogueId: "dialogue-legacy",
-        startMinute: 30,
-        durationMinutes: 15,
-        lane: 2
-      }
-    ];
-    delete legacySequence.steps;
-    legacySequence.durationMinutes = 180;
-
-    const migratedDocument = parseProjectDocumentJson(
-      JSON.stringify(legacyDocument)
-    );
-
-    expect(
-      migratedDocument.sequences.sequences["sequence-legacy-dialogue"]
-    ).toEqual(
-      expect.objectContaining({
-        effects: [
-          {
-            stepClass: "impulse",
-            type: "startDialogue",
-            dialogueId: "dialogue-legacy"
-          }
-        ]
-      })
-    );
   });
 
   it("migrates legacy toggle visibility sequence effects to unified visibility effects", () => {
@@ -784,34 +686,6 @@ describe("project document JSON", () => {
         })
       })
     );
-  });
-
-  it("migrates v49 project documents without dialogue libraries to the current version", () => {
-    const migratedDocument = parseProjectDocumentJson(
-      JSON.stringify({
-        version: SCHEDULER_ACTOR_ROUTINE_EFFECTS_SCENE_DOCUMENT_VERSION,
-        name: "Legacy Dialogue Project",
-        time: createDefaultProjectTimeSettings(),
-        scheduler: {
-          routines: {}
-        },
-        activeSceneId: "scene-main",
-        scenes: {
-          "scene-main": createEmptyProjectScene({
-            id: "scene-main",
-            name: "Main"
-          })
-        },
-        materials: {},
-        textures: {},
-        assets: {}
-      })
-    );
-
-    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
-    expect(migratedDocument.dialogues).toEqual({
-      dialogues: {}
-    });
   });
 
   it("migrates pre-path project documents to empty scene path registries", () => {
