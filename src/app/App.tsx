@@ -6115,17 +6115,41 @@ export function App({ store, initialStatusMessage }: AppProps) {
         break;
       case "brushFace":
         setStatusMessage(
-          `Selected ${BOX_FACE_LABELS[selection.faceId]} on ${getBrushLabelById(selection.brushId, brushList)} from the ${source}${suffix}.`
+          `Selected ${
+            brushList.find((brush) => brush.id === selection.brushId) ===
+            undefined
+              ? selection.faceId
+              : getBrushFaceLabel(
+                  brushList.find((brush) => brush.id === selection.brushId)!,
+                  selection.faceId
+                )
+          } on ${getBrushLabelById(selection.brushId, brushList)} from the ${source}${suffix}.`
         );
         break;
       case "brushEdge":
         setStatusMessage(
-          `Selected ${BOX_EDGE_LABELS[selection.edgeId]} on ${getBrushLabelById(selection.brushId, brushList)} from the ${source}${suffix}.`
+          `Selected ${
+            brushList.find((brush) => brush.id === selection.brushId) ===
+            undefined
+              ? selection.edgeId
+              : getBrushEdgeLabel(
+                  brushList.find((brush) => brush.id === selection.brushId)!,
+                  selection.edgeId
+                )
+          } on ${getBrushLabelById(selection.brushId, brushList)} from the ${source}${suffix}.`
         );
         break;
       case "brushVertex":
         setStatusMessage(
-          `Selected ${BOX_VERTEX_LABELS[selection.vertexId]} on ${getBrushLabelById(selection.brushId, brushList)} from the ${source}${suffix}.`
+          `Selected ${
+            brushList.find((brush) => brush.id === selection.brushId) ===
+            undefined
+              ? selection.vertexId
+              : getBrushVertexLabel(
+                  brushList.find((brush) => brush.id === selection.brushId)!,
+                  selection.vertexId
+                )
+          } on ${getBrushLabelById(selection.brushId, brushList)} from the ${source}${suffix}.`
         );
         break;
       case "paths":
