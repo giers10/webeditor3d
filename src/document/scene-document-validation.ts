@@ -3557,7 +3557,7 @@ function validateInteractionLink(
           createDiagnostic(
             "error",
             "invalid-link-sequence-no-impulse-steps",
-            "Interaction link sequences must expose at least one impulse step.",
+            "Interaction link sequences must include at least one start effect.",
             `${path}.action.sequenceId`
           )
         );
@@ -3764,11 +3764,15 @@ function validateProjectScheduler(
         continue;
       }
 
+      if (routine.target.kind === "actor") {
+        continue;
+      }
+
       diagnostics.push(
         createDiagnostic(
           "error",
           "invalid-project-schedule-routine-effects-empty",
-          "Project schedule routines must resolve at least one held control effect.",
+          "Project sequencer placements must resolve at least one timeline control effect unless they only use start effects.",
           routine.sequenceId === null ? `${path}.effects` : `${path}.sequenceId`
         )
       );
@@ -3780,7 +3784,7 @@ function validateProjectScheduler(
         createDiagnostic(
           "error",
           "invalid-project-schedule-non-actor-effect-count",
-          "Non-actor schedule routines must currently resolve exactly one held control effect.",
+          "Non-actor sequencer placements must currently resolve exactly one timeline control effect.",
           routine.sequenceId === null ? `${path}.effects` : `${path}.sequenceId`
         )
       );
@@ -3831,20 +3835,6 @@ function validateProjectScheduler(
           diagnostics
         );
       }
-    }
-
-    if (
-      routine.target.kind === "actor" &&
-      !resolvedEffects.some((effect) => effect.type === "setActorPresence")
-    ) {
-      diagnostics.push(
-        createDiagnostic(
-          "error",
-          "invalid-project-schedule-actor-presence-missing",
-          "Actor schedule routines must include an actor presence effect.",
-          routine.sequenceId === null ? `${path}.effects` : `${path}.sequenceId`
-        )
-      );
     }
   }
 }

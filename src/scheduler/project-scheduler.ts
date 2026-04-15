@@ -6,8 +6,6 @@ import {
   getControlEffectResolutionKey,
   type ControlEffect,
   type ControlTargetRef,
-  createActorControlTargetRef,
-  createSetActorPresenceControlEffect,
   getControlTargetRefKey
 } from "../controls/control-surface";
 import {
@@ -204,19 +202,7 @@ function normalizeProjectScheduleEffects(
     }
   }
 
-  if (
-    target.kind === "actor" &&
-    !normalizedEffects.some((effect) => effect.type === "setActorPresence")
-  ) {
-    normalizedEffects.push(
-      createSetActorPresenceControlEffect({
-        target,
-        active: true
-      })
-    );
-  }
-
-  if (normalizedEffects.length === 0) {
+  if (normalizedEffects.length === 0 && target.kind !== "actor") {
     throw new Error("Project schedule routines must contain at least one control effect.");
   }
 

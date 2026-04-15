@@ -155,21 +155,21 @@ export function cloneSequenceSteps(steps: SequenceStep[]): SequenceStep[] {
 export function getSequenceEffectLabel(effect: SequenceEffect): string {
   switch (effect.type) {
     case "controlEffect":
-      return `${effect.stepClass === "held" ? "Held" : "Impulse"}: ${getControlEffectLabel(effect.effect)}`;
+      return getControlEffectLabel(effect.effect);
     case "startDialogue":
-      return "Impulse: Start Dialogue";
+      return "Start Dialogue";
     case "teleportPlayer":
-      return "Impulse: Teleport Player";
+      return "Teleport Player";
     case "startSceneTransition":
-      return "Impulse: Change Scene";
+      return "Change Scene";
     case "setVisibility":
       switch (effect.mode) {
         case "show":
-          return "Impulse: Show";
+          return "Show";
         case "hide":
-          return "Impulse: Hide";
+          return "Hide";
         case "toggle":
-          return "Impulse: Toggle Visibility";
+          return "Toggle Visibility";
       }
   }
 }
