@@ -2020,6 +2020,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const teleportTargetOptions = entityDisplayList.filter(
     ({ entity }) => entity.kind === "teleportTarget"
   );
+  const sceneTransitionTargetOptions = sceneTargetOptions.flatMap((scene) =>
+    (sceneEntryOptionsBySceneId[scene.id] ?? []).map(({ entity, label }) => ({
+      targetKey: `${scene.id}::${entity.id}`,
+      label: `${scene.name} · ${label}`
+    }))
+  );
   const soundEmitterOptions = entityDisplayList.filter(
     ({ entity }) => entity.kind === "soundEmitter"
   ) as Array<{
