@@ -207,6 +207,14 @@ export interface RadialPrismBrushGeometry extends BrushGeometry {
   vertices: Record<WhiteboxVertexId, Vec3> & Record<RadialPrismVertexId, Vec3>;
 }
 
+export interface ConeBrushGeometry extends BrushGeometry {
+  vertices: Record<WhiteboxVertexId, Vec3> & Record<ConeVertexId, Vec3>;
+}
+
+export interface TorusBrushGeometry extends BrushGeometry {
+  vertices: Record<WhiteboxVertexId, Vec3> & Record<TorusVertexId, Vec3>;
+}
+
 interface BrushBase {
   id: string;
   name?: string;
@@ -241,7 +249,29 @@ export interface RadialPrismBrush extends BrushBase {
   volume: BoxBrushVolumeSettings;
 }
 
-export type Brush = BoxBrush | WedgeBrush | RadialPrismBrush;
+export interface ConeBrush extends BrushBase {
+  kind: "cone";
+  sideCount: number;
+  geometry: ConeBrushGeometry;
+  faces: Record<WhiteboxFaceId, BrushFace> & Record<ConeFaceId, BrushFace>;
+  volume: BoxBrushVolumeSettings;
+}
+
+export interface TorusBrush extends BrushBase {
+  kind: "torus";
+  majorSegmentCount: number;
+  tubeSegmentCount: number;
+  geometry: TorusBrushGeometry;
+  faces: Record<WhiteboxFaceId, BrushFace> & Record<TorusFaceId, BrushFace>;
+  volume: BoxBrushVolumeSettings;
+}
+
+export type Brush =
+  | BoxBrush
+  | WedgeBrush
+  | RadialPrismBrush
+  | ConeBrush
+  | TorusBrush;
 
 export const DEFAULT_BOX_BRUSH_CENTER: Vec3 = {
   x: 0,
@@ -261,8 +291,20 @@ export const DEFAULT_BOX_BRUSH_ROTATION_DEGREES: Vec3 = {
   z: 0
 };
 
+export const DEFAULT_WEDGE_BRUSH_ROTATION_DEGREES: Vec3 = {
+  x: 0,
+  y: 0,
+  z: 180
+};
+
 export const DEFAULT_BOX_BRUSH_VISIBLE = true;
 export const DEFAULT_BOX_BRUSH_ENABLED = true;
+
+export const DEFAULT_TORUS_BRUSH_SIZE: Vec3 = {
+  x: 4,
+  y: 1,
+  z: 4
+};
 
 export const DEFAULT_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT = 6;
 export const MAX_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT = 24;
@@ -308,6 +350,14 @@ export function isWedgeBrush(brush: Brush): brush is WedgeBrush {
 
 export function isRadialPrismBrush(brush: Brush): brush is RadialPrismBrush {
   return brush.kind === "radialPrism";
+}
+
+export function isConeBrush(brush: Brush): brush is ConeBrush {
+  return brush.kind === "cone";
+}
+
+export function isTorusBrush(brush: Brush): brush is TorusBrush {
+  return brush.kind === "torus";
 }
 
 function cloneBrushFace(face: BrushFace): BrushFace {
