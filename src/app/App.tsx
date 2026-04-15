@@ -6147,11 +6147,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
       modelAssetId?: string | null;
     } = {}
   ) => {
-    if (kind === "sceneExit" && resolveDefaultSceneExitDestination() === null) {
-      setStatusMessage("Author a Scene Entry before placing a Scene Exit.");
-      return;
-    }
-
     beginCreation(
       {
         kind: "create",
@@ -6190,7 +6185,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
   };
 
-  const resolveDefaultSceneExitDestination = (
+  const resolveDefaultSceneTransitionTarget = (
     preferredSceneId = editorState.activeSceneId
   ): {
     targetSceneId: string;
