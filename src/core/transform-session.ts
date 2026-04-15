@@ -524,6 +524,15 @@ export function cloneTransformTarget(target: TransformTarget): TransformTarget {
         initialSize: cloneVec3(target.initialSize),
         initialGeometry: cloneBrushGeometry(target.initialGeometry)
       };
+    case "brushes":
+      return {
+        kind: "brushes",
+        activeBrushId: target.activeBrushId,
+        initialPivot: cloneVec3(target.initialPivot),
+        items: target.items.map(
+          (item) => cloneTransformTarget(item) as BrushTransformTarget
+        )
+      };
     case "brushFace":
       return {
         kind: "brushFace",
@@ -575,6 +584,15 @@ export function cloneTransformTarget(target: TransformTarget): TransformTarget {
         initialRotationDegrees: cloneVec3(target.initialRotationDegrees),
         initialScale: cloneVec3(target.initialScale)
       };
+    case "modelInstances":
+      return {
+        kind: "modelInstances",
+        activeModelInstanceId: target.activeModelInstanceId,
+        initialPivot: cloneVec3(target.initialPivot),
+        items: target.items.map(
+          (item) => cloneTransformTarget(item) as ModelInstanceTransformTarget
+        )
+      };
     case "pathPoint":
       return {
         kind: "pathPoint",
@@ -590,6 +608,15 @@ export function cloneTransformTarget(target: TransformTarget): TransformTarget {
         initialPosition: cloneVec3(target.initialPosition),
         initialRotation: cloneEntityTransformRotationState(
           target.initialRotation
+        )
+      };
+    case "entities":
+      return {
+        kind: "entities",
+        activeEntityId: target.activeEntityId,
+        initialPivot: cloneVec3(target.initialPivot),
+        items: target.items.map(
+          (item) => cloneTransformTarget(item) as EntityTransformTarget
         )
       };
   }
