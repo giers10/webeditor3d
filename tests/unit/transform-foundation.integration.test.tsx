@@ -225,6 +225,63 @@ async function renderQuadTransformFixtureApp() {
   return fixture;
 }
 
+async function renderMultiSelectionFixtureApp() {
+  const brushA = createBoxBrush({
+    id: "brush-multi-select-a",
+    name: "Brush Multi A",
+    center: {
+      x: -2,
+      y: 1,
+      z: 0
+    }
+  });
+  const brushB = createBoxBrush({
+    id: "brush-multi-select-b",
+    name: "Brush Multi B",
+    center: {
+      x: 4,
+      y: 1,
+      z: 0
+    }
+  });
+  const playerStart = createPlayerStartEntity({
+    id: "entity-multi-select-player",
+    name: "Player Multi Fixture",
+    position: {
+      x: 0,
+      y: 0,
+      z: -4
+    }
+  });
+  const store = createEditorStore({
+    initialDocument: {
+      ...createEmptySceneDocument({ name: "Multi Selection Fixture" }),
+      brushes: {
+        [brushA.id]: brushA,
+        [brushB.id]: brushB
+      },
+      entities: {
+        [playerStart.id]: playerStart
+      }
+    }
+  });
+
+  render(<App store={store} />);
+
+  await waitFor(() => {
+    expect(viewportHostInstances.length).toBeGreaterThan(0);
+    expect(getTopLeftViewportHost().setBrushSelectionChangeHandler).toHaveBeenCalled();
+  });
+
+  return {
+    store,
+    brushA,
+    brushB,
+    playerStart,
+    viewportHost: getTopLeftViewportHost()
+  };
+}
+
 function getLatestTransformSession(
   store: ReturnType<typeof createEditorStore>
 ): ActiveTransformSession {
@@ -574,6 +631,46 @@ describe("transform foundation integration", () => {
       screen.getByTestId("whitebox-selection-mode-object")
     ).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByText(/selection mode set to object/i)).toBeInTheDocument();
+  });
+
+  it("keeps outliner and viewport selection state synchronized for same-kind multi-selection", async () => {
+    const { store, brushA, brushB, playerStart, viewportHost } =
+      await renderMultiSelectionFixtureApp();
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId(`outliner-brush-${brushA.id}`));
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByTestId(`outliner-brush-${brushB.id}`), {
+        shiftKey: true
+      });
+    });
+
+    expect(store.getState().selection).toEqual({
+      kind: "brushes",
+      ids: [brushA.id, brushB.id]
+    });
+    expect(store.getState().activeSelectionId).toBe(brushB.id);
+    expect(screen.getByText("Whitebox Solids")).toBeInTheDocument();
+    expect(screen.getByText("2 selected")).toBeInTheDocument();
+    expect(screen.getByText("Brush Multi B")).toBeInTheDocument();
+
+    const selectionHandler = viewportHost.setBrushSelectionChangeHandler.mock.calls.at(
+      -1
+    )?.[0] as ((selection: { kind: "entities"; ids: string[] }) => void);
+
+    act(() => {
+      selectionHandler({
+        kind: "entities",
+        ids: [playerStart.id]
+      });
+    });
+
+    expect(store.getState().selection).toEqual({
+      kind: "entities",
+      ids: [playerStart.id]
+    });
+    expect(store.getState().activeSelectionId).toBe(playerStart.id);
   });
 
   it("moves an entity through the shared transform controller", async () => {
