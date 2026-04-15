@@ -135,10 +135,6 @@ import {
 } from "../core/whitebox-selection-mode";
 import {
   BOX_BRUSH_VOLUME_MODES,
-  BOX_EDGE_LABELS,
-  BOX_FACE_IDS,
-  BOX_FACE_LABELS,
-  BOX_VERTEX_LABELS,
   DEFAULT_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT,
   DEFAULT_BOX_BRUSH_CENTER,
   DEFAULT_BOX_BRUSH_ROTATION_DEGREES,
@@ -146,6 +142,7 @@ import {
   MAX_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT,
   createDefaultFaceUvState,
   normalizeBrushName,
+  type Brush,
   type BoxBrush,
   type BoxBrushVolumeMode,
   type FaceUvRotationQuarterTurns,
@@ -217,6 +214,16 @@ import {
   createFitToFaceBoxBrushFaceUvState,
   createFitToMaterialTileBoxBrushFaceUvState
 } from "../geometry/box-face-uvs";
+import {
+  getBrushDefaultName,
+  getBrushEdgeIds,
+  getBrushEdgeLabel,
+  getBrushFaceIds,
+  getBrushFaceLabel,
+  getBrushKindLabel,
+  getBrushVertexIds,
+  getBrushVertexLabel
+} from "../geometry/whitebox-topology";
 import {
   DEFAULT_ENTITY_POSITION,
   DEFAULT_INTERACTABLE_PROMPT,
