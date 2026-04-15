@@ -106,5 +106,7 @@ describe("ProjectSequencerPane", () => {
     expect(
       screen.getByText(/Project event placements run attached sequences only/i)
     ).toBeVisible();
+    expect(screen.queryByText("Target")).toBeNull();
+    expect(screen.queryByText("Legacy Day Filter")).toBeNull();
   });
 });
