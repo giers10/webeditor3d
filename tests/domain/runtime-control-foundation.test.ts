@@ -400,7 +400,6 @@ describe("runtime control foundation", () => {
         playSound: () => {},
         stopSound: () => {},
         startNpcDialogue: () => {},
-        startDialogue: () => {},
         dispatchControlEffect: (effect, link) => {
           dispatches.push({
             type: `${link.id}:${effect.type}`,
