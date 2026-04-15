@@ -40,7 +40,7 @@ export function createUpdateBoxBrushAllFaceUvsCommand(
         previousUvStates = Object.fromEntries(
           getBrushFaceIds(currentBrush).map((faceId) => [
             faceId,
-            cloneFaceUvState(currentBrush.faces[faceId]?.uv)
+            cloneFaceUvState(currentBrush.faces[faceId].uv)
           ])
         );
       }
