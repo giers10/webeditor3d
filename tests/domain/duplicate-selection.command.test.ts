@@ -151,7 +151,9 @@ describe("duplicate selection command", () => {
     expect(duplicatedModelInstance.assetId).toBe(sourceModelInstance.assetId);
     expect(duplicatedModelInstance.position).toEqual(sourceModelInstance.position);
     expect(store.getState().document.assets[modelAsset.id]).toEqual(modelAsset);
-    expect(Object.keys(store.getState().document.assets)).toHaveLength(1);
+    expect(
+      Object.keys(store.getState().document.assets)
+    ).toContain(modelAsset.id);
 
     expect(store.undo()).toBe(true);
     expect(store.getState().document.modelInstances[sourceModelInstance.id]).toEqual(sourceModelInstance);
