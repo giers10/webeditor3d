@@ -8023,7 +8023,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
   ): InteractionSourceEntity | null => {
     const sourceEntity = editorState.document.entities[link.sourceEntityId];
     return sourceEntity?.kind === "triggerVolume" ||
-      sourceEntity?.kind === "interactable"
+      sourceEntity?.kind === "interactable" ||
+      sourceEntity?.kind === "npc"
       ? sourceEntity
       : null;
   };
@@ -8031,7 +8032,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const handleAddSequenceInteractionLink = () => {
     if (selectedInteractionSource === null) {
       setStatusMessage(
-        "Select a Trigger Volume or Interactable before adding links."
+        "Select a Trigger Volume, Interactable, or NPC before adding links."
       );
       return;
     }
@@ -8057,7 +8058,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
       })
     );
     setStatusMessage(
-      `Added a sequence link to the selected ${selectedInteractionSource.kind === "triggerVolume" ? "Trigger Volume" : "Interactable"}.`
+      `Added a sequence link to the selected ${getInteractionSourceEntityLabel(selectedInteractionSource)}.`
     );
   };
 
