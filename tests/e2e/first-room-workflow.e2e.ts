@@ -50,7 +50,7 @@ test("first-room workflow covers create, texture, autosave recovery, and run", a
 
   await page.getByRole("button", { name: /Whitebox Box 1/ }).click();
   await page.getByTestId("face-button-posZ").click();
-  await expect(page.getByTestId("selected-face-material-name")).toContainText("Amber Grid");
+  await expect(page.getByTestId("selected-face-material-name")).toContainText("Stacked Beige Terracotta Tile");
 
   await page.getByTestId("enter-run-mode").click();
 

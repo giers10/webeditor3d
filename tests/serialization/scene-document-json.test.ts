@@ -28,6 +28,7 @@ import {
   PLAYER_START_NAVIGATION_MODE_SCENE_DOCUMENT_VERSION,
   SCENE_EDITOR_PREFERENCES_SCENE_DOCUMENT_VERSION,
   SCENE_TRANSITION_ENTITIES_SCENE_DOCUMENT_VERSION,
+  SCENE_TRANSITION_SEQUENCE_EFFECTS_SCENE_DOCUMENT_VERSION,
   SCENE_DOCUMENT_VERSION,
   SPATIAL_AUDIO_SCENE_DOCUMENT_VERSION,
   STATIC_SIMPLE_MODEL_COLLIDERS_SCENE_DOCUMENT_VERSION,
@@ -1989,6 +1990,56 @@ describe("scene document JSON", () => {
       flipU: false,
       flipV: false
     });
+  });
+
+  it("migrates legacy starter material entries to the asset-backed PBR registry", () => {
+    const legacyDocument = createEmptySceneDocument({
+      name: "Legacy Material Registry Scene"
+    });
+    const legacyBrush = createBoxBrush({
+      id: "brush-legacy-materials",
+      size: {
+        x: 4,
+        y: 2,
+        z: 4
+      }
+    });
+
+    legacyBrush.faces.posZ.materialId = "starter-amber-grid";
+    legacyDocument.brushes[legacyBrush.id] = legacyBrush;
+
+    const migratedDocument = migrateSceneDocument({
+      ...legacyDocument,
+      version: SCENE_TRANSITION_SEQUENCE_EFFECTS_SCENE_DOCUMENT_VERSION,
+      materials: {
+        ...legacyDocument.materials,
+        "starter-amber-grid": {
+          id: "starter-amber-grid",
+          name: "Amber Grid",
+          pattern: "grid",
+          baseColorHex: "#d97706",
+          accentColorHex: "#fbbf24",
+          tags: ["warm", "grid"]
+        }
+      }
+    });
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(
+      migratedDocument.brushes["brush-legacy-materials"].faces.posZ.materialId
+    ).toBe("starter-amber-grid");
+    expect(migratedDocument.materials["starter-amber-grid"]).toEqual(
+      expect.objectContaining({
+        id: "starter-amber-grid",
+        name: "Stacked Beige Terracotta Tile",
+        assetFolder: "stacked_beige_terracotta_tile_250x250",
+        previewImageName: "preview.webp",
+        sizeCm: {
+          width: 250,
+          height: 250
+        }
+      })
+    );
   });
 
   it("migrates slice 1.2 face materials to the PlayerStart-capable schema", () => {

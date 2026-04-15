@@ -2,7 +2,12 @@ import { BoxGeometry } from "three";
 import { describe, expect, it } from "vitest";
 
 import { createBoxBrush } from "../../src/document/brushes";
-import { applyBoxBrushFaceUvsToGeometry, createFitToFaceBoxBrushFaceUvState, transformProjectedFaceUv } from "../../src/geometry/box-face-uvs";
+import {
+  applyBoxBrushFaceUvsToGeometry,
+  createFitToFaceBoxBrushFaceUvState,
+  createFitToMaterialTileBoxBrushFaceUvState,
+  transformProjectedFaceUv
+} from "../../src/geometry/box-face-uvs";
 
 describe("box face UV projection", () => {
   it("fit-to-face produces finite UVs normalized across the target face", () => {
@@ -72,5 +77,25 @@ describe("box face UV projection", () => {
 
     expect(transformedUv.x).toBeCloseTo(2.5);
     expect(transformedUv.y).toBeCloseTo(-0.25);
+  });
+
+  it("fits one authored material tile across the face bounds", () => {
+    const brush = createBoxBrush({
+      size: {
+        x: 5,
+        y: 2,
+        z: 4
+      }
+    });
+
+    const uvState = createFitToMaterialTileBoxBrushFaceUvState(brush, "posZ", {
+      x: 2.5,
+      y: 2.5
+    });
+
+    expect(uvState.scale).toEqual({
+      x: 0.5,
+      y: 1.25
+    });
   });
 });
