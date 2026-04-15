@@ -1028,7 +1028,6 @@ describe("RuntimeInteractionSystem", () => {
             lines: [
               {
                 id: "dialogue-merchant-line-1",
-                speakerName: "Merchant",
                 text: "Fresh goods."
               }
             ]
