@@ -6019,9 +6019,13 @@ export class ViewportHost {
     if (candidates.length === 0) {
       this.lastClickPointer = null;
       this.lastClickSelectionKey = null;
-      this.brushSelectionChangeHandler?.({
-        kind: "none"
-      });
+
+      if (!event.shiftKey) {
+        this.brushSelectionChangeHandler?.({
+          kind: "none"
+        });
+      }
+
       return;
     }
 
@@ -6048,7 +6052,13 @@ export class ViewportHost {
 
     const chosen = candidates[candidateIndex];
     this.lastClickSelectionKey = chosen.key;
-    this.brushSelectionChangeHandler?.(chosen.selection);
+    this.brushSelectionChangeHandler?.(
+      applySameKindSelectionClick(
+        this.currentSelection,
+        chosen.selection,
+        event.shiftKey
+      )
+    );
   };
 
   private handlePointerMove = (event: PointerEvent) => {
