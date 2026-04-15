@@ -435,7 +435,7 @@ export function resolveRuntimeActorScheduleState(options: {
     return {
       actorId: options.actorId,
       hasRules: actorRules.length > 0,
-      active: actorRules.length === 0,
+      active: true,
       activeRoutineId: null,
       activeRoutineTitle: null,
       presenceEffect: null,
