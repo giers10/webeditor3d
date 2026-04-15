@@ -27,6 +27,13 @@ export interface StartDialogueSequenceEffect {
   dialogueId: string;
 }
 
+export interface MakeNpcTalkSequenceEffect {
+  stepClass: "impulse";
+  type: "makeNpcTalk";
+  npcEntityId: string;
+  dialogueId: string | null;
+}
+
 export interface TeleportPlayerSequenceEffect {
   stepClass: "impulse";
   type: "teleportPlayer";
@@ -77,6 +84,7 @@ export type HeldSequenceStep = HeldControlSequenceEffect;
 
 export type ImpulseSequenceStep =
   | ImpulseControlSequenceEffect
+  | MakeNpcTalkSequenceEffect
   | StartDialogueSequenceEffect
   | TeleportPlayerSequenceEffect
   | StartSceneTransitionSequenceEffect
@@ -98,6 +106,13 @@ export function cloneSequenceEffect(effect: SequenceEffect): SequenceEffect {
       return {
         stepClass: "impulse",
         type: "startDialogue",
+        dialogueId: effect.dialogueId
+      };
+    case "makeNpcTalk":
+      return {
+        stepClass: "impulse",
+        type: "makeNpcTalk",
+        npcEntityId: effect.npcEntityId,
         dialogueId: effect.dialogueId
       };
     case "teleportPlayer":
@@ -158,6 +173,8 @@ export function getSequenceEffectLabel(effect: SequenceEffect): string {
       return getControlEffectLabel(effect.effect);
     case "startDialogue":
       return "Start Dialogue";
+    case "makeNpcTalk":
+      return "Make NPC Talk";
     case "teleportPlayer":
       return "Teleport Player";
     case "startSceneTransition":

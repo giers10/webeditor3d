@@ -311,6 +311,10 @@ export function getBrushFaceIds(brush: Brush): WhiteboxFaceId[] {
       return [...WEDGE_FACE_IDS];
     case "radialPrism":
       return getRadialPrismFaceIds(brush.sideCount);
+    case "cone":
+      return getConeFaceIds(brush.sideCount);
+    case "torus":
+      return getTorusFaceIds(brush.majorSegmentCount, brush.tubeSegmentCount);
   }
 }
 
@@ -322,6 +326,10 @@ export function getBrushEdgeIds(brush: Brush): WhiteboxEdgeId[] {
       return [...WEDGE_EDGE_IDS];
     case "radialPrism":
       return getRadialPrismEdgeIds(brush.sideCount);
+    case "cone":
+      return getConeEdgeIds(brush.sideCount);
+    case "torus":
+      return getTorusEdgeIds(brush.majorSegmentCount, brush.tubeSegmentCount);
   }
 }
 
@@ -333,6 +341,10 @@ export function getBrushVertexIds(brush: Brush): WhiteboxVertexId[] {
       return [...WEDGE_VERTEX_IDS];
     case "radialPrism":
       return getRadialPrismVertexIds(brush.sideCount);
+    case "cone":
+      return getConeVertexIds(brush.sideCount);
+    case "torus":
+      return getTorusVertexIds(brush.majorSegmentCount, brush.tubeSegmentCount);
   }
 }
 
@@ -347,6 +359,10 @@ export function getBrushFaceLabel(
       return WEDGE_FACE_LABELS[faceId as WedgeFaceId] ?? faceId;
     case "radialPrism":
       return getRadialPrismFaceLabel(faceId as RadialPrismFaceId);
+    case "cone":
+      return getConeFaceLabel(faceId as ConeFaceId);
+    case "torus":
+      return getTorusFaceLabel(faceId as TorusFaceId);
   }
 }
 
@@ -361,6 +377,10 @@ export function getBrushEdgeLabel(
       return WEDGE_EDGE_LABELS[edgeId as WedgeEdgeId] ?? edgeId;
     case "radialPrism":
       return getRadialPrismEdgeLabel(edgeId as RadialPrismEdgeId);
+    case "cone":
+      return getConeEdgeLabel(edgeId as ConeEdgeId);
+    case "torus":
+      return getTorusEdgeLabel(edgeId as TorusEdgeId);
   }
 }
 
@@ -375,6 +395,10 @@ export function getBrushVertexLabel(
       return WEDGE_VERTEX_LABELS[vertexId as WedgeVertexId] ?? vertexId;
     case "radialPrism":
       return getRadialPrismVertexLabel(vertexId as RadialPrismVertexId);
+    case "cone":
+      return getConeVertexLabel(vertexId as ConeVertexId);
+    case "torus":
+      return getTorusVertexLabel(vertexId as TorusVertexId);
   }
 }
 
@@ -389,6 +413,10 @@ export function getBrushFaceVertexIds(
       return [...WEDGE_FACE_VERTEX_IDS[faceId as WedgeFaceId]];
     case "radialPrism":
       return getRadialPrismFaceVertexIds(brush, faceId as RadialPrismFaceId);
+    case "cone":
+      return getConeFaceVertexIds(brush, faceId as ConeFaceId);
+    case "torus":
+      return getTorusFaceVertexIds(brush, faceId as TorusFaceId);
   }
 }
 
@@ -412,6 +440,10 @@ export function getBrushEdgeVertexIds(
         edgeId as RadialPrismEdgeId,
         brush.sideCount
       );
+    case "cone":
+      return getConeEdgeVertexIds(edgeId as ConeEdgeId, brush.sideCount);
+    case "torus":
+      return getTorusEdgeVertexIds(brush, edgeId as TorusEdgeId);
   }
 }
 
@@ -439,6 +471,10 @@ export function getBrushDefaultName(brush: Brush, index: number): string {
       return `Whitebox Wedge ${index + 1}`;
     case "radialPrism":
       return `Whitebox Cylinder ${index + 1}`;
+    case "cone":
+      return `Whitebox Cone ${index + 1}`;
+    case "torus":
+      return `Whitebox Torus ${index + 1}`;
   }
 }
 
@@ -450,5 +486,9 @@ export function getBrushKindLabel(brush: Brush): string {
       return "Whitebox Wedge";
     case "radialPrism":
       return "Whitebox Cylinder";
+    case "cone":
+      return "Whitebox Cone";
+    case "torus":
+      return "Whitebox Torus";
   }
 }
