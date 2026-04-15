@@ -13,7 +13,7 @@ import type { ScenePath } from "../document/paths";
 import type { EntityInstance } from "../entities/entity-instances";
 import type { ModelInstance } from "../assets/model-instances";
 import type { ProjectAssetRecord } from "../assets/project-assets";
-import { getBoxBrushBounds } from "../geometry/box-brush";
+import { getBrushBounds } from "../geometry/whitebox-brush";
 
 const PLAYER_START_FOCUS_HALF_EXTENTS: Vec3 = {
   x: 0.35,
@@ -92,7 +92,7 @@ function createBrushFocusTarget(brush: BoxBrush): ViewportFocusTarget {
 }
 
 function includeBrush(bounds: FocusBoundsAccumulator, brush: BoxBrush) {
-  const brushBounds = getBoxBrushBounds(brush);
+  const brushBounds = getBrushBounds(brush);
   includeBounds(bounds, brushBounds.min, brushBounds.max);
 }
 
