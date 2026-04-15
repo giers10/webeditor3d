@@ -219,6 +219,7 @@ import {
   createEmptyProjectDialogueLibrary,
   createProjectDialogue,
   createProjectDialogueLine,
+  type ProjectDialogue,
   type ProjectDialogueLibrary
 } from "../dialogues/project-dialogues";
 import {
@@ -333,7 +334,7 @@ function readOptionalDialogueResourceId(
 function readNpcDialogues(
   value: unknown,
   label: string,
-  legacyProjectDialogues: ProjectDialogueLibrary
+  _legacyProjectDialogues: ProjectDialogueLibrary
 ): ProjectDialogue[] {
   if (value === undefined) {
     return [];
