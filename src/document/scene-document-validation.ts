@@ -5301,7 +5301,7 @@ export function validateSceneDocument(
       );
     }
 
-    for (const vertexId of BOX_VERTEX_IDS) {
+    for (const vertexId of getBrushVertexIds(brush)) {
       if (!isFiniteVec3(brush.geometry.vertices[vertexId])) {
         diagnostics.push(
           createDiagnostic(
@@ -5314,7 +5314,7 @@ export function validateSceneDocument(
       }
     }
 
-    for (const faceId of BOX_FACE_IDS) {
+    for (const faceId of getBrushFaceIds(brush)) {
       const materialId = brush.faces[faceId].materialId;
 
       if (materialId !== null && document.materials[materialId] === undefined) {
@@ -5337,6 +5337,18 @@ export function validateSceneDocument(
           "error",
           "invalid-box-volume-mode",
           "Box volume mode must be none, water, or fog.",
+          `${path}.volume.mode`
+        )
+      );
+      continue;
+    }
+
+    if (brush.kind !== "box" && volume.mode !== "none") {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-non-box-volume-mode",
+          "Only whitebox boxes support water or fog volume modes.",
           `${path}.volume.mode`
         )
       );
