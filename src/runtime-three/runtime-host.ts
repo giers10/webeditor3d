@@ -760,12 +760,18 @@ export class RuntimeHost {
     }
 
     this.setRuntimeDialogue(
-      this.createRuntimeNpcDialogueState(
-        this.currentDialogue.npcEntityId,
-        dialogue.id,
-        nextLineIndex,
-        this.currentDialogue.source
-      )
+      this.currentDialogue.npcEntityId === null
+        ? this.createRuntimeDialogueState(
+            dialogue.id,
+            nextLineIndex,
+            this.currentDialogue.source
+          )
+        : this.createRuntimeNpcDialogueState(
+            this.currentDialogue.npcEntityId,
+            dialogue.id,
+            nextLineIndex,
+            this.currentDialogue.source
+          )
     );
   }
 
