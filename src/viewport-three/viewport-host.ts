@@ -1948,13 +1948,25 @@ export class ViewportHost {
       case "brushEdge":
       case "brushVertex":
         return this.isBrushDisplayedInViewport(session.target.brushId);
+      case "brushes":
+        return session.target.items.every((item) =>
+          this.isBrushDisplayedInViewport(item.brushId)
+        );
       case "pathPoint":
         return this.isPathDisplayedInViewport(session.target.pathId);
       case "entity":
         return this.isEntityDisplayedInViewport(session.target.entityId);
+      case "entities":
+        return session.target.items.every((item) =>
+          this.isEntityDisplayedInViewport(item.entityId)
+        );
       case "modelInstance":
         return this.isModelInstanceDisplayedInViewport(
           session.target.modelInstanceId
+        );
+      case "modelInstances":
+        return session.target.items.every((item) =>
+          this.isModelInstanceDisplayedInViewport(item.modelInstanceId)
         );
     }
   }
@@ -1973,7 +1985,8 @@ export class ViewportHost {
     const transformTarget = resolveTransformTarget(
       this.currentDocument,
       this.currentSelection,
-      this.whiteboxSelectionMode
+      this.whiteboxSelectionMode,
+      this.currentActiveSelectionId
     ).target;
 
     if (
