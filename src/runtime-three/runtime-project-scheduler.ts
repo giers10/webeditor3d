@@ -182,7 +182,9 @@ export function cloneRuntimeResolvedProjectScheduleState(
     impulses: state.impulses.map((routine) => ({
       routineId: routine.routineId,
       title: routine.title,
-      effects: routine.effects.map(cloneSequenceEffect)
+      effects: routine.effects.map(
+        (effect) => cloneSequenceEffect(effect) as ImpulseSequenceStep
+      )
     }))
   };
 }
