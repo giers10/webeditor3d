@@ -10,8 +10,10 @@ import {
 } from "react";
 
 import { createCreateBoxBrushCommand } from "../commands/create-box-brush-command";
+import { createCreateConeBrushCommand } from "../commands/create-cone-brush-command";
 import { createCreateRadialPrismBrushCommand } from "../commands/create-radial-prism-brush-command";
 import { createCreateSceneCommand } from "../commands/create-scene-command";
+import { createCreateTorusBrushCommand } from "../commands/create-torus-brush-command";
 import { createCreateWedgeBrushCommand } from "../commands/create-wedge-brush-command";
 import { createDeleteBoxBrushCommand } from "../commands/delete-box-brush-command";
 import { createDeleteEntityCommand } from "../commands/delete-entity-command";
@@ -141,6 +143,9 @@ import {
   DEFAULT_BOX_BRUSH_CENTER,
   DEFAULT_BOX_BRUSH_ROTATION_DEGREES,
   DEFAULT_BOX_BRUSH_SIZE,
+  DEFAULT_CONE_SIDE_COUNT,
+  DEFAULT_TORUS_MAJOR_SEGMENT_COUNT,
+  DEFAULT_TORUS_TUBE_SEGMENT_COUNT,
   MAX_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT,
   createDefaultFaceUvState,
   normalizeBrushName,
@@ -6077,6 +6082,37 @@ export function App({ store, initialStatusMessage }: AppProps) {
         center: null
       },
       `Previewing a whitebox cylinder. Click in the viewport to create it${whiteboxSnapEnabled ? ` on the ${whiteboxSnapStep}m grid` : ""}.`
+    );
+  };
+
+  const beginConeCreation = () => {
+    beginCreation(
+      {
+        kind: "create",
+        sourcePanelId: activePanelId,
+        target: {
+          kind: "cone-brush",
+          sideCount: DEFAULT_CONE_SIDE_COUNT
+        },
+        center: null
+      },
+      `Previewing a whitebox cone. Click in the viewport to create it${whiteboxSnapEnabled ? ` on the ${whiteboxSnapStep}m grid` : ""}.`
+    );
+  };
+
+  const beginTorusCreation = () => {
+    beginCreation(
+      {
+        kind: "create",
+        sourcePanelId: activePanelId,
+        target: {
+          kind: "torus-brush",
+          majorSegmentCount: DEFAULT_TORUS_MAJOR_SEGMENT_COUNT,
+          tubeSegmentCount: DEFAULT_TORUS_TUBE_SEGMENT_COUNT
+        },
+        center: null
+      },
+      `Previewing a whitebox torus. Click in the viewport to create it${whiteboxSnapEnabled ? ` on the ${whiteboxSnapStep}m grid` : ""}.`
     );
   };
 

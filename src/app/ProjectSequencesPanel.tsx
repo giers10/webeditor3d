@@ -1,7 +1,6 @@
 import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 
 import { formatControlEffectValue, getControlTargetRefKey } from "../controls/control-surface";
-import { type ProjectDialogueLibrary, getProjectDialogues } from "../dialogues/project-dialogues";
 import {
   getProjectScheduleEffectOptionId,
   getProjectScheduleTargetOptionByKey,
@@ -21,8 +20,16 @@ import {
 
 interface ProjectSequencesPanelProps {
   sequences: ProjectSequenceLibrary;
-  dialogues: ProjectDialogueLibrary;
   targetOptions: ProjectScheduleTargetOption[];
+  npcTalkTargetOptions: Array<{
+    npcEntityId: string;
+    label: string;
+    defaultDialogueId: string | null;
+    dialogues: Array<{
+      dialogueId: string;
+      label: string;
+    }>;
+  }>;
   teleportTargetOptions: Array<{
     entityId: string;
     label: string;
@@ -46,7 +53,11 @@ interface ProjectSequencesPanelProps {
     targetKey: string,
     effectOptionId: ProjectScheduleEffectOptionId
   ): void;
-  onAddDialogueStep(sequenceId: string, dialogueId: string): void;
+  onAddNpcTalkEffect(
+    sequenceId: string,
+    npcEntityId: string,
+    dialogueId: string | null
+  ): void;
   onAddTeleportStep(sequenceId: string, targetEntityId: string): void;
   onAddSceneTransitionStep(sequenceId: string, targetKey: string): void;
   onAddVisibilityStep(sequenceId: string, targetKey: string): void;
@@ -96,10 +107,15 @@ interface ProjectSequencesPanelProps {
     stepIndex: number,
     loop: boolean
   ): void;
-  onSetDialogueStepDialogueId(
+  onSetNpcTalkStepNpcEntityId(
     sequenceId: string,
     stepIndex: number,
-    dialogueId: string
+    npcEntityId: string
+  ): void;
+  onSetNpcTalkStepDialogueId(
+    sequenceId: string,
+    stepIndex: number,
+    dialogueId: string | null
   ): void;
   onSetTeleportStepTarget(
     sequenceId: string,
@@ -165,8 +181,8 @@ function getControlEffectColorValue(
 
 export function ProjectSequencesPanel({
   sequences,
-  dialogues,
   targetOptions,
+  npcTalkTargetOptions,
   teleportTargetOptions,
   sceneTransitionTargetOptions,
   visibilityTargetOptions,
@@ -177,7 +193,7 @@ export function ProjectSequencesPanel({
   onDeleteSequence,
   onSetSequenceTitle,
   onAddControlEffect,
-  onAddDialogueStep,
+  onAddNpcTalkEffect,
   onAddTeleportStep,
   onAddSceneTransitionStep,
   onAddVisibilityStep,
@@ -191,14 +207,14 @@ export function ProjectSequencesPanel({
   onSetControlStepPathId,
   onSetControlStepPathSpeed,
   onSetControlStepPathLoop,
-  onSetDialogueStepDialogueId,
+  onSetNpcTalkStepNpcEntityId,
+  onSetNpcTalkStepDialogueId,
   onSetTeleportStepTarget,
   onSetSceneTransitionStepTarget,
   onSetVisibilityStepTarget,
   onSetVisibilityStepMode
 }: ProjectSequencesPanelProps) {
   const sequenceList = getProjectSequences(sequences);
-  const dialogueList = getProjectDialogues(dialogues);
   const editableTargetOptions = targetOptions.filter(
     (targetOption) => listProjectScheduleEffectOptions(targetOption).length > 0
   );
@@ -586,7 +602,20 @@ export function ProjectSequencesPanel({
                   );
                 }
 
-                if (effect.type === "startDialogue") {
+                if (effect.type === "makeNpcTalk") {
+                  const selectedNpcOption =
+                    npcTalkTargetOptions.find(
+                      (option) => option.npcEntityId === effect.npcEntityId
+                    ) ?? null;
+                  const dialogueOptions = selectedNpcOption?.dialogues ?? [];
+                  const resolvedDialogueId =
+                    effect.dialogueId !== null &&
+                    dialogueOptions.some(
+                      (option) => option.dialogueId === effect.dialogueId
+                    )
+                      ? effect.dialogueId
+                      : "";
+
                   return (
                     <div key={`${selectedSequence.id}-${effectIndex}`} className="outliner-item">
                       <div className="outliner-item__row">
@@ -601,26 +630,61 @@ export function ProjectSequencesPanel({
                           x
                         </button>
                       </div>
-                      <label className="form-field">
-                        <span className="label">Dialogue</span>
-                        <select
-                          className="select-input"
-                          value={effect.dialogueId}
-                          onChange={(event) =>
-                            onSetDialogueStepDialogueId(
-                              selectedSequence.id,
-                              effectIndex,
-                              event.currentTarget.value
-                            )
-                          }
-                        >
-                          {dialogueList.map((dialogue) => (
-                            <option key={dialogue.id} value={dialogue.id}>
-                              {dialogue.title}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
+                      {selectedNpcOption === null ? (
+                        <div className="material-summary">
+                          The targeted NPC no longer exists or no longer exposes any
+                          authored dialogues.
+                        </div>
+                      ) : (
+                        <>
+                          <label className="form-field">
+                            <span className="label">NPC</span>
+                            <select
+                              className="select-input"
+                              value={effect.npcEntityId}
+                              onChange={(event) =>
+                                onSetNpcTalkStepNpcEntityId(
+                                  selectedSequence.id,
+                                  effectIndex,
+                                  event.currentTarget.value
+                                )
+                              }
+                            >
+                              {npcTalkTargetOptions.map((option) => (
+                                <option key={option.npcEntityId} value={option.npcEntityId}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Dialogue</span>
+                            <select
+                              className="select-input"
+                              value={resolvedDialogueId}
+                              onChange={(event) =>
+                                onSetNpcTalkStepDialogueId(
+                                  selectedSequence.id,
+                                  effectIndex,
+                                  event.currentTarget.value.trim().length === 0
+                                    ? null
+                                    : event.currentTarget.value
+                                )
+                              }
+                            >
+                              <option value="">Use NPC Default</option>
+                              {dialogueOptions.map((dialogue) => (
+                                <option
+                                  key={dialogue.dialogueId}
+                                  value={dialogue.dialogueId}
+                                >
+                                  {dialogue.label}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                        </>
+                      )}
                     </div>
                   );
                 }
@@ -810,12 +874,18 @@ export function ProjectSequencesPanel({
             <button
               className="toolbar__button toolbar__button--compact"
               type="button"
-              disabled={dialogueList.length === 0}
+              disabled={npcTalkTargetOptions.length === 0}
               onClick={() =>
-                onAddDialogueStep(selectedSequence.id, dialogueList[0]?.id ?? "")
+                onAddNpcTalkEffect(
+                  selectedSequence.id,
+                  npcTalkTargetOptions[0]?.npcEntityId ?? "",
+                  npcTalkTargetOptions[0]?.defaultDialogueId ??
+                    npcTalkTargetOptions[0]?.dialogues[0]?.dialogueId ??
+                    null
+                )
               }
             >
-              Add Dialogue Effect
+              Add Make NPC Talk Effect
             </button>
             <button
               className="toolbar__button toolbar__button--compact"
