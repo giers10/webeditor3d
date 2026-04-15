@@ -1900,6 +1900,46 @@ export function App({ store, initialStatusMessage }: AppProps) {
     selectedFace !== null && selectedFace.materialId !== null
       ? (editorState.document.materials[selectedFace.materialId] ?? null)
       : null;
+  const selectedBrushSharedMaterialId =
+    selectedBrush === null ? null : getSharedBrushFaceMaterialId(selectedBrush);
+  const selectedBrushSharedMaterial =
+    selectedBrushSharedMaterialId === undefined ||
+    selectedBrushSharedMaterialId === null
+      ? null
+      : (editorState.document.materials[selectedBrushSharedMaterialId] ?? null);
+  const selectedBrushHasMixedFaceMaterials =
+    selectedBrush !== null && selectedBrushSharedMaterialId === undefined;
+  const selectedBrushHasMixedFaceUvs =
+    selectedBrush !== null
+      ? BOX_FACE_IDS.slice(1).some(
+          (faceId) =>
+            !areFaceUvStatesEqual(
+              selectedBrush.faces[BOX_FACE_IDS[0]].uv,
+              selectedBrush.faces[faceId].uv
+            )
+        )
+      : false;
+  const materialInspectorScope =
+    whiteboxSelectionMode === "object" && selectedBrush !== null
+      ? "brush"
+      : whiteboxSelectionMode === "face" &&
+          selectedBrush !== null &&
+          selectedFaceId !== null &&
+          selectedFace !== null
+        ? "face"
+        : null;
+  const materialInspectorMaterialId =
+    materialInspectorScope === "brush"
+      ? selectedBrushSharedMaterialId
+      : materialInspectorScope === "face"
+        ? selectedFace?.materialId ?? null
+        : null;
+  const materialInspectorMaterial =
+    materialInspectorScope === "brush"
+      ? selectedBrushSharedMaterial
+      : materialInspectorScope === "face"
+        ? selectedFaceMaterial
+        : null;
   const selectedModelAsset =
     selectedModelInstance !== null
       ? (editorState.document.assets[selectedModelInstance.assetId] ?? null)
@@ -2906,6 +2946,24 @@ export function App({ store, initialStatusMessage }: AppProps) {
   }, [selectedBrush]);
 
   useEffect(() => {
+    if (
+      whiteboxSelectionMode === "object" &&
+      selectedBrush !== null &&
+      selectedFace === null
+    ) {
+      setUvOffsetDraft(
+        createMaybeMixedVec2Draft(
+          BOX_FACE_IDS.map((faceId) => selectedBrush.faces[faceId].uv.offset)
+        )
+      );
+      setUvScaleDraft(
+        createMaybeMixedVec2Draft(
+          BOX_FACE_IDS.map((faceId) => selectedBrush.faces[faceId].uv.scale)
+        )
+      );
+      return;
+    }
+
     if (selectedFace === null) {
       const defaultUvState = createDefaultFaceUvState();
       setUvOffsetDraft(createVec2Draft(defaultUvState.offset));
@@ -2915,7 +2973,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
     setUvOffsetDraft(createVec2Draft(selectedFace.uv.offset));
     setUvScaleDraft(createVec2Draft(selectedFace.uv.scale));
-  }, [selectedFace]);
+  }, [selectedBrush, selectedFace, whiteboxSelectionMode]);
 
   useEffect(() => {
     if (selectedEntity === null) {
@@ -10132,6 +10190,32 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
   const applyFaceMaterial = (materialId: string) => {
     if (
+      selectedBrush !== null &&
+      whiteboxSelectionMode === "object" &&
+      materialInspectorScope === "brush"
+    ) {
+      if (selectedBrushSharedMaterialId === materialId) {
+        setStatusMessage("All faces on the selected whitebox already use that material.");
+        return;
+      }
+
+      try {
+        store.executeCommand(
+          createSetBoxBrushAllFaceMaterialsCommand({
+            brushId: selectedBrush.id,
+            materialId
+          })
+        );
+        setStatusMessage(
+          `Applied ${editorState.document.materials[materialId]?.name ?? materialId} to all faces on the selected whitebox.`
+        );
+      } catch (error) {
+        setStatusMessage(getErrorMessage(error));
+      }
+      return;
+    }
+
+    if (
       selectedBrush === null ||
       selectedFaceId === null ||
       selectedFace === null
@@ -10164,6 +10248,30 @@ export function App({ store, initialStatusMessage }: AppProps) {
   };
 
   const clearFaceMaterial = () => {
+    if (
+      selectedBrush !== null &&
+      whiteboxSelectionMode === "object" &&
+      materialInspectorScope === "brush"
+    ) {
+      if (selectedBrushSharedMaterialId === null && !selectedBrushHasMixedFaceMaterials) {
+        setStatusMessage(
+          "All faces on the selected whitebox already use the fallback face material."
+        );
+        return;
+      }
+
+      store.executeCommand(
+        createSetBoxBrushAllFaceMaterialsCommand({
+          brushId: selectedBrush.id,
+          materialId: null
+        })
+      );
+      setStatusMessage(
+        "Cleared the authored material on every face of the selected whitebox."
+      );
+      return;
+    }
+
     if (
       selectedBrush === null ||
       selectedFaceId === null ||
@@ -10200,6 +10308,35 @@ export function App({ store, initialStatusMessage }: AppProps) {
     successMessage: string
   ) => {
     if (
+      selectedBrush !== null &&
+      whiteboxSelectionMode === "object" &&
+      materialInspectorScope === "brush"
+    ) {
+      const allFacesAlreadyMatch = BOX_FACE_IDS.every((faceId) =>
+        areFaceUvStatesEqual(selectedBrush.faces[faceId].uv, uvState)
+      );
+
+      if (allFacesAlreadyMatch) {
+        setStatusMessage("All face UVs on that whitebox are already current.");
+        return;
+      }
+
+      try {
+        store.executeCommand(
+          createUpdateBoxBrushAllFaceUvsCommand({
+            brushId: selectedBrush.id,
+            label,
+            updateUvState: () => uvState
+          })
+        );
+        setStatusMessage(successMessage);
+      } catch (error) {
+        setStatusMessage(getErrorMessage(error));
+      }
+      return;
+    }
+
+    if (
       selectedBrush === null ||
       selectedFaceId === null ||
       selectedFace === null
@@ -10229,6 +10366,35 @@ export function App({ store, initialStatusMessage }: AppProps) {
   };
 
   const handleApplyUvDraft = () => {
+    if (
+      selectedBrush !== null &&
+      whiteboxSelectionMode === "object" &&
+      materialInspectorScope === "brush"
+    ) {
+      try {
+        const offset = readVec2Draft(uvOffsetDraft, "Face UV offset");
+        const scale = readPositiveVec2Draft(uvScaleDraft, "Face UV scale");
+
+        store.executeCommand(
+          createUpdateBoxBrushAllFaceUvsCommand({
+            brushId: selectedBrush.id,
+            label: "Set solid face UV offset and scale",
+            updateUvState: (uvState) => ({
+              ...uvState,
+              offset,
+              scale
+            })
+          })
+        );
+        setStatusMessage(
+          "Updated face UV offset and scale across the selected whitebox."
+        );
+      } catch (error) {
+        setStatusMessage(getErrorMessage(error));
+      }
+      return;
+    }
+
     if (selectedFace === null) {
       setStatusMessage("Select a single box face before editing UVs.");
       return;
@@ -10250,6 +10416,27 @@ export function App({ store, initialStatusMessage }: AppProps) {
   };
 
   const handleRotateUv = () => {
+    if (
+      selectedBrush !== null &&
+      whiteboxSelectionMode === "object" &&
+      materialInspectorScope === "brush"
+    ) {
+      store.executeCommand(
+        createUpdateBoxBrushAllFaceUvsCommand({
+          brushId: selectedBrush.id,
+          label: "Rotate solid face UVs 90 degrees",
+          updateUvState: (uvState) => ({
+            ...uvState,
+            rotationQuarterTurns: rotateQuarterTurns(
+              uvState.rotationQuarterTurns
+            )
+          })
+        })
+      );
+      setStatusMessage("Rotated all face UVs 90 degrees on the selected whitebox.");
+      return;
+    }
+
     if (selectedFace === null) {
       setStatusMessage("Select a single box face before rotating UVs.");
       return;
@@ -10268,6 +10455,30 @@ export function App({ store, initialStatusMessage }: AppProps) {
   };
 
   const handleFlipUv = (axis: "u" | "v") => {
+    if (
+      selectedBrush !== null &&
+      whiteboxSelectionMode === "object" &&
+      materialInspectorScope === "brush"
+    ) {
+      store.executeCommand(
+        createUpdateBoxBrushAllFaceUvsCommand({
+          brushId: selectedBrush.id,
+          label: axis === "u" ? "Flip solid face UV U" : "Flip solid face UV V",
+          updateUvState: (uvState) => ({
+            ...uvState,
+            flipU: axis === "u" ? !uvState.flipU : uvState.flipU,
+            flipV: axis === "v" ? !uvState.flipV : uvState.flipV
+          })
+        })
+      );
+      setStatusMessage(
+        axis === "u"
+          ? "Flipped U across all faces on the selected whitebox."
+          : "Flipped V across all faces on the selected whitebox."
+      );
+      return;
+    }
+
     if (selectedFace === null) {
       setStatusMessage("Select a single box face before flipping UVs.");
       return;
@@ -10285,6 +10496,35 @@ export function App({ store, initialStatusMessage }: AppProps) {
   };
 
   const handleFitUvToFace = () => {
+    if (
+      selectedBrush !== null &&
+      whiteboxSelectionMode === "object" &&
+      materialInspectorScope === "brush"
+    ) {
+      store.executeCommand(
+        createUpdateBoxBrushAllFaceUvsCommand({
+          brushId: selectedBrush.id,
+          label: "Fit solid face UVs to face",
+          updateUvState: (uvState, faceId) => {
+            const material =
+              uvState === undefined
+                ? null
+                : currentMaterialId => currentMaterialId;
+            return materialInspectorMaterialId === undefined ||
+              materialInspectorMaterial === null
+              ? createFitToFaceBoxBrushFaceUvState(selectedBrush, faceId)
+              : createFitToMaterialTileBoxBrushFaceUvState(
+                  selectedBrush,
+                  faceId,
+                  getStarterMaterialTileSizeMeters(materialInspectorMaterial)
+                );
+          }
+        })
+      );
+      setStatusMessage("Fit all selected whitebox face UVs to their face bounds.");
+      return;
+    }
+
     if (selectedBrush === null || selectedFaceId === null) {
       setStatusMessage("Select a single box face before fitting UVs.");
       return;
