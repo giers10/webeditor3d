@@ -1033,12 +1033,13 @@ export function doesTransformSessionChangeTarget(
           ))
       );
     case "brushes":
+      const brushesTarget = session.target;
       return (
         session.preview.kind === "brushes" &&
-        (!areVec3Equal(session.preview.pivot, session.target.initialPivot) ||
-          session.preview.items.length !== session.target.items.length ||
+        (!areVec3Equal(session.preview.pivot, brushesTarget.initialPivot) ||
+          session.preview.items.length !== brushesTarget.items.length ||
           session.preview.items.some((item, index) => {
-            const targetItem = session.target.items[index];
+            const targetItem = brushesTarget.items[index];
 
             return (
               item.brushId !== targetItem.brushId ||
@@ -1066,12 +1067,16 @@ export function doesTransformSessionChangeTarget(
           !areVec3Equal(session.preview.scale, session.target.initialScale))
       );
     case "modelInstances":
+      const modelInstancesTarget = session.target;
       return (
         session.preview.kind === "modelInstances" &&
-        (!areVec3Equal(session.preview.pivot, session.target.initialPivot) ||
-          session.preview.items.length !== session.target.items.length ||
+        (!areVec3Equal(
+          session.preview.pivot,
+          modelInstancesTarget.initialPivot
+        ) ||
+          session.preview.items.length !== modelInstancesTarget.items.length ||
           session.preview.items.some((item, index) => {
-            const targetItem = session.target.items[index];
+            const targetItem = modelInstancesTarget.items[index];
 
             return (
               item.modelInstanceId !== targetItem.modelInstanceId ||
@@ -1105,12 +1110,13 @@ export function doesTransformSessionChangeTarget(
           ))
       );
     case "entities":
+      const entitiesTarget = session.target;
       return (
         session.preview.kind === "entities" &&
-        (!areVec3Equal(session.preview.pivot, session.target.initialPivot) ||
-          session.preview.items.length !== session.target.items.length ||
+        (!areVec3Equal(session.preview.pivot, entitiesTarget.initialPivot) ||
+          session.preview.items.length !== entitiesTarget.items.length ||
           session.preview.items.some((item, index) => {
-            const targetItem = session.target.items[index];
+            const targetItem = entitiesTarget.items[index];
 
             return (
               item.entityId !== targetItem.entityId ||
