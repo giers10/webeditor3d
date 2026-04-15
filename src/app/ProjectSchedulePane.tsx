@@ -66,14 +66,6 @@ interface ProjectSequencerPaneProps {
     targetKey: string;
     label: string;
   }>;
-  modelAnimationTargetOptions: Array<{
-    targetKey: string;
-    label: string;
-  }>;
-  soundTargetOptions: Array<{
-    targetKey: string;
-    label: string;
-  }>;
   scheduler: ProjectScheduler;
   sequences: ProjectSequenceLibrary;
   dialogues: ProjectDialogueLibrary;
@@ -95,16 +87,11 @@ interface ProjectSequencerPaneProps {
   onSetRoutinePriority(routineId: string, priority: number): void;
   onSetRoutineSequenceId(routineId: string, sequenceId: string | null): void;
   onSetSequenceTitle(sequenceId: string, title: string): void;
-  onAddHeldControlStep(sequenceId: string, targetKey: string): void;
-  onAddImpulseControlStep(sequenceId: string, targetKey: string): void;
+  onAddControlStep(sequenceId: string, targetKey: string): void;
   onAddDialogueStep(sequenceId: string, dialogueId: string): void;
   onAddTeleportStep(sequenceId: string, targetEntityId: string): void;
   onAddSceneTransitionStep(sequenceId: string, targetKey: string): void;
   onAddVisibilityStep(sequenceId: string, targetKey: string): void;
-  onAddPlayAnimationStep(sequenceId: string, targetKey: string): void;
-  onAddStopAnimationStep(sequenceId: string, targetKey: string): void;
-  onAddPlaySoundStep(sequenceId: string, targetKey: string): void;
-  onAddStopSoundStep(sequenceId: string, targetKey: string): void;
   onDeleteStep(sequenceId: string, stepIndex: number): void;
   onSetControlStepTarget(
     sequenceId: string,
