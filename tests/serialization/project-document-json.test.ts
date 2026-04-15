@@ -44,6 +44,7 @@ import {
 import { createProjectScheduleRoutine } from "../../src/scheduler/project-scheduler";
 import { createProjectSequence } from "../../src/sequencer/project-sequences";
 import { createRunSequenceInteractionLink } from "../../src/interactions/interaction-links";
+import { assertProjectDocumentIsValid } from "../../src/document/scene-document-validation";
 import {
   parseProjectDocumentJson,
   serializeProjectDocument
@@ -1086,7 +1087,9 @@ describe("project document JSON", () => {
     });
 
     expect(() =>
-      parseProjectDocumentJson(JSON.stringify(document))
+      assertProjectDocumentIsValid(
+        parseProjectDocumentJson(JSON.stringify(document))
+      )
     ).toThrow("target entry");
   });
 });
