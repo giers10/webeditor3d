@@ -107,6 +107,11 @@ interface ProjectSequencesPanelProps {
     stepIndex: number,
     loop: boolean
   ): void;
+  onSetControlStepPathSmooth(
+    sequenceId: string,
+    stepIndex: number,
+    smoothPath: boolean
+  ): void;
   onSetNpcTalkStepNpcEntityId(
     sequenceId: string,
     stepIndex: number,
@@ -207,6 +212,7 @@ export function ProjectSequencesPanel({
   onSetControlStepPathId,
   onSetControlStepPathSpeed,
   onSetControlStepPathLoop,
+  onSetControlStepPathSmooth,
   onSetNpcTalkStepNpcEntityId,
   onSetNpcTalkStepDialogueId,
   onSetTeleportStepTarget,
