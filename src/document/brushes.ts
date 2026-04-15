@@ -1107,9 +1107,14 @@ export function createWedgeBrush(
     overrides.geometry === undefined
       ? createDefaultWedgeBrushGeometry(fallbackSize)
       : cloneBrushGeometry(overrides.geometry);
+  const baseOverrides = {
+    ...overrides,
+    rotationDegrees:
+      overrides.rotationDegrees ?? DEFAULT_WEDGE_BRUSH_ROTATION_DEGREES
+  };
 
   return {
-    ...createBrushBase(overrides, geometry),
+    ...createBrushBase(baseOverrides, geometry),
     kind: "wedge",
     geometry,
     faces:
@@ -1143,7 +1148,9 @@ export function createRadialPrismBrush(
     >
   > = {}
 ): RadialPrismBrush {
-  const sideCount = normalizeRadialPrismSideCount(overrides.sideCount ?? 12);
+  const sideCount = normalizeRadialPrismSideCount(
+    overrides.sideCount ?? DEFAULT_RADIAL_PRISM_SIDE_COUNT
+  );
   const fallbackSize = cloneVec3(overrides.size ?? DEFAULT_BOX_BRUSH_SIZE);
   const geometry =
     overrides.geometry === undefined
@@ -1158,6 +1165,105 @@ export function createRadialPrismBrush(
     faces:
       overrides.faces === undefined
         ? createDefaultRadialPrismBrushFaces(sideCount)
+        : cloneBrushFaces(overrides.faces),
+    volume:
+      overrides.volume === undefined
+        ? createDefaultBoxBrushVolumeSettings()
+        : cloneBoxBrushVolumeSettings(overrides.volume)
+  };
+}
+
+export function createConeBrush(
+  overrides: Partial<
+    Pick<
+      ConeBrush,
+      | "id"
+      | "name"
+      | "visible"
+      | "enabled"
+      | "center"
+      | "rotationDegrees"
+      | "size"
+      | "sideCount"
+      | "geometry"
+      | "faces"
+      | "volume"
+      | "layerId"
+      | "groupId"
+    >
+  > = {}
+): ConeBrush {
+  const sideCount = normalizeConeSideCount(
+    overrides.sideCount ?? DEFAULT_CONE_SIDE_COUNT
+  );
+  const fallbackSize = cloneVec3(overrides.size ?? DEFAULT_BOX_BRUSH_SIZE);
+  const geometry =
+    overrides.geometry === undefined
+      ? createDefaultConeBrushGeometry(fallbackSize, sideCount)
+      : cloneBrushGeometry(overrides.geometry);
+
+  return {
+    ...createBrushBase(overrides, geometry),
+    kind: "cone",
+    sideCount,
+    geometry,
+    faces:
+      overrides.faces === undefined
+        ? createDefaultConeBrushFaces(sideCount)
+        : cloneBrushFaces(overrides.faces),
+    volume:
+      overrides.volume === undefined
+        ? createDefaultBoxBrushVolumeSettings()
+        : cloneBoxBrushVolumeSettings(overrides.volume)
+  };
+}
+
+export function createTorusBrush(
+  overrides: Partial<
+    Pick<
+      TorusBrush,
+      | "id"
+      | "name"
+      | "visible"
+      | "enabled"
+      | "center"
+      | "rotationDegrees"
+      | "size"
+      | "majorSegmentCount"
+      | "tubeSegmentCount"
+      | "geometry"
+      | "faces"
+      | "volume"
+      | "layerId"
+      | "groupId"
+    >
+  > = {}
+): TorusBrush {
+  const majorSegmentCount = normalizeTorusMajorSegmentCount(
+    overrides.majorSegmentCount ?? DEFAULT_TORUS_MAJOR_SEGMENT_COUNT
+  );
+  const tubeSegmentCount = normalizeTorusTubeSegmentCount(
+    overrides.tubeSegmentCount ?? DEFAULT_TORUS_TUBE_SEGMENT_COUNT
+  );
+  const fallbackSize = cloneVec3(overrides.size ?? DEFAULT_TORUS_BRUSH_SIZE);
+  const geometry =
+    overrides.geometry === undefined
+      ? createDefaultTorusBrushGeometry(
+          fallbackSize,
+          majorSegmentCount,
+          tubeSegmentCount
+        )
+      : cloneBrushGeometry(overrides.geometry);
+
+  return {
+    ...createBrushBase(overrides, geometry),
+    kind: "torus",
+    majorSegmentCount,
+    tubeSegmentCount,
+    geometry,
+    faces:
+      overrides.faces === undefined
+        ? createDefaultTorusBrushFaces(majorSegmentCount, tubeSegmentCount)
         : cloneBrushFaces(overrides.faces),
     volume:
       overrides.volume === undefined
