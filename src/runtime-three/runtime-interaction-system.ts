@@ -573,44 +573,6 @@ export class RuntimeInteractionSystem {
       bestHitDistance = next.hitDistance;
     }
 
-    for (const sceneExit of runtimeScene.entities.sceneExits) {
-      if (!sceneExit.interactionEnabled) {
-        continue;
-      }
-
-      const distance = distanceBetweenVec3(
-        interactionOrigin,
-        sceneExit.position
-      );
-
-      if (distance > sceneExit.radius) {
-        continue;
-      }
-
-      const hitDistance = raySphereHitDistance(
-        rayOrigin,
-        normalizedViewDirection,
-        sceneExit.position,
-        Math.min(DEFAULT_INTERACTABLE_TARGET_RADIUS, sceneExit.radius)
-      );
-
-      if (hitDistance === null) {
-        continue;
-      }
-
-      const next = updateBestPrompt(
-        bestPrompt,
-        bestHitDistance,
-        sceneExit.entityId,
-        sceneExit.prompt,
-        distance,
-        sceneExit.radius,
-        hitDistance
-      );
-      bestPrompt = next.prompt;
-      bestHitDistance = next.hitDistance;
-    }
-
     for (const npc of runtimeScene.entities.npcs) {
       if (!npc.visible) {
         continue;
