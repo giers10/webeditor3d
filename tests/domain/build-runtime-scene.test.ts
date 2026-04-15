@@ -918,7 +918,11 @@ describe("buildRuntimeSceneFromDocument", () => {
 
     expect(
       daytimeRuntimeScene.entities.npcs.map((npc) => npc.entityId)
-    ).toEqual(["entity-npc-always", "entity-npc-daytime"]);
+    ).toEqual([
+      "entity-npc-always",
+      "entity-npc-daytime",
+      "entity-npc-overnight"
+    ]);
     expect(
       daytimeRuntimeScene.npcDefinitions.map((npc) => ({
         entityId: npc.entityId,
@@ -942,16 +946,28 @@ describe("buildRuntimeSceneFromDocument", () => {
       daytimeRuntimeScene.colliders
         .filter((collider) => collider.source === "npc")
         .map((collider) => collider.entityId)
-    ).toEqual(["entity-npc-always", "entity-npc-daytime"]);
+    ).toEqual([
+      "entity-npc-always",
+      "entity-npc-daytime",
+      "entity-npc-overnight"
+    ]);
 
     expect(
       overnightRuntimeScene.entities.npcs.map((npc) => npc.entityId)
-    ).toEqual(["entity-npc-always", "entity-npc-overnight"]);
+    ).toEqual([
+      "entity-npc-always",
+      "entity-npc-daytime",
+      "entity-npc-overnight"
+    ]);
     expect(
       overnightRuntimeScene.colliders
         .filter((collider) => collider.source === "npc")
         .map((collider) => collider.entityId)
-    ).toEqual(["entity-npc-always", "entity-npc-overnight"]);
+    ).toEqual([
+      "entity-npc-always",
+      "entity-npc-daytime",
+      "entity-npc-overnight"
+    ]);
     expect(
       overnightRuntimeScene.entities.npcs.find(
         (npc) => npc.entityId === overnightNpc.id
