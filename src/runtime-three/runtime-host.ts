@@ -2992,6 +2992,14 @@ export class RuntimeHost {
       case "controlEffect":
         this.applyControlEffect(effect.effect, null);
         return;
+      case "makeNpcTalk":
+        this.openRuntimeNpcDialogue(effect.npcEntityId, effect.dialogueId, {
+          kind: "direct",
+          sourceEntityId,
+          linkId: null,
+          trigger: null
+        });
+        return;
       case "startDialogue":
         this.openRuntimeDialogue(effect.dialogueId, {
           kind: "direct",
