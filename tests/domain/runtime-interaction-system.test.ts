@@ -191,6 +191,7 @@ function createDispatcher(
     stopAnimation: () => {},
     playSound: () => {},
     stopSound: () => {},
+    startNpcDialogue: () => {},
     startDialogue: () => {},
     ...overrides
   };
@@ -918,7 +919,20 @@ describe("RuntimeInteractionSystem", () => {
         },
         yawDegrees: 180,
         modelAssetId: null,
-        dialogueId: "dialogue-merchant",
+        dialogues: [
+          {
+            id: "dialogue-merchant",
+            title: "Merchant Greeting",
+            lines: [
+              {
+                id: "dialogue-merchant-line-1",
+                speakerName: "Merchant",
+                text: "Fresh goods."
+              }
+            ]
+          }
+        ],
+        defaultDialogueId: "dialogue-merchant",
         collider: {
           mode: "capsule",
           radius: 0.3,
@@ -964,16 +978,16 @@ describe("RuntimeInteractionSystem", () => {
       "entity-npc-merchant",
       runtimeScene,
       createDispatcher({
-        startDialogue: (dialogueId, source) => {
+        startNpcDialogue: (npcEntityId, dialogueId, source) => {
           dispatches.push(
-            `${source?.kind}:${source?.sourceEntityId}:${source?.trigger}:${dialogueId}`
+            `${source?.kind}:${source?.sourceEntityId}:${source?.trigger}:${npcEntityId}:${dialogueId}`
           );
         }
       })
     );
 
     expect(dispatches).toEqual([
-      "npc:entity-npc-merchant:click:dialogue-merchant"
+      "npc:entity-npc-merchant:click:entity-npc-merchant:dialogue-merchant"
     ]);
   });
 
