@@ -12165,6 +12165,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   whiteboxSnapStep={whiteboxSnapStep}
                   viewportGridVisible={viewportGridVisible}
                   selection={editorState.selection}
+                  activeSelectionId={editorState.activeSelectionId}
                   toolMode={editorState.toolMode}
                   toolPreview={viewportToolPreview}
                   transformSession={transformSession}
