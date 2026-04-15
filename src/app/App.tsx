@@ -48,7 +48,6 @@ import { createSetPathNameCommand } from "../commands/set-path-name-command";
 import { createSetProjectNameCommand } from "../commands/set-project-name-command";
 import { createSetProjectSchedulerCommand } from "../commands/set-project-scheduler-command";
 import { createSetProjectSequencerCommand } from "../commands/set-project-sequencer-command";
-import { createSetProjectDialoguesCommand } from "../commands/set-project-dialogues-command";
 import { createSetProjectSequencesCommand } from "../commands/set-project-sequences-command";
 import { createSetProjectTimeSettingsCommand } from "../commands/set-project-time-settings-command";
 import { createSetSceneLoadingScreenCommand } from "../commands/set-scene-loading-screen-command";
@@ -302,11 +301,8 @@ import {
   type EntityKind
 } from "../entities/entity-instances";
 import {
-  areProjectDialogueLibrariesEqual,
-  cloneProjectDialogueLibrary,
   createProjectDialogue,
   createProjectDialogueLine,
-  getProjectDialogues
 } from "../dialogues/project-dialogues";
 import type {
   ProjectDialogue,
@@ -330,7 +326,6 @@ import {
   createControlInteractionLink,
   createPlayAnimationInteractionLink,
   createRunSequenceInteractionLink,
-  createStartDialogueInteractionLink,
   createPlaySoundInteractionLink,
   createStopAnimationInteractionLink,
   createStopSoundInteractionLink,
@@ -380,7 +375,7 @@ import { applyResolvedControlStateToRuntimeScene } from "../runtime-three/runtim
 import { validateRuntimeSceneBuild } from "../runtime-three/runtime-scene-validation";
 import { EditorAutosaveController } from "../serialization/editor-autosave";
 import { Panel } from "../shared-ui/Panel";
-import { ProjectDialoguesPanel } from "./ProjectDialoguesPanel";
+import { NpcDialoguesPanel } from "./NpcDialoguesPanel";
 import { ProjectSequencerPane } from "./ProjectSequencerPane";
 import {
   cloneSequenceEffect,
