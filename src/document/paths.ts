@@ -163,7 +163,7 @@ function clampProgress(progress: number): number {
 }
 
 function resolvePathSegmentSample(
-  path: ResolvedPathLike,
+  path: ResolvedPathLike<PathPointLike, ResolvedPathSegmentLike>,
   progress: number
 ): { segmentIndex: number | null; distance: number } {
   if (path.segments.length === 0 || path.totalLength <= 0) {
@@ -193,7 +193,7 @@ function resolvePathSegmentSample(
 }
 
 function findNonZeroSegmentTangent(
-  path: ResolvedPathLike,
+  path: ResolvedPathLike<PathPointLike, ResolvedPathSegmentLike>,
   index: number
 ): Vec3 {
   for (let candidateIndex = index; candidateIndex < path.segments.length; candidateIndex += 1) {
@@ -230,6 +230,9 @@ function lerpVec3(start: Vec3, end: Vec3, t: number): Vec3 {
 }
 
 function buildSmoothedPolylinePoints(path: ResolvedPathLike): Vec3[] {
+function buildSmoothedPolylinePoints(
+  path: ResolvedPathLike<PathPointLike, ResolvedPathSegmentLike>
+): Vec3[] {
   let points = path.points.map((point) => cloneVec3(point.position));
 
   for (
@@ -272,6 +275,9 @@ function buildSmoothedPolylinePoints(path: ResolvedPathLike): Vec3[] {
 }
 
 function buildSmoothedPathSamples(path: ResolvedPathLike): SmoothedPathSample[] {
+function buildSmoothedPathSamples(
+  path: ResolvedPathLike<PathPointLike, ResolvedPathSegmentLike>
+): SmoothedPathSample[] {
   if (path.points.length === 0) {
     return [
       {
@@ -339,7 +345,7 @@ function buildSmoothedPathSamples(path: ResolvedPathLike): SmoothedPathSample[] 
 }
 
 function sampleSmoothedPath(
-  path: ResolvedPathLike,
+  path: ResolvedPathLike<PathPointLike, ResolvedPathSegmentLike>,
   progress: number
 ): { position: Vec3; tangent: Vec3 } {
   const samples = buildSmoothedPathSamples(path);
@@ -663,7 +669,7 @@ export function getScenePathLength(path: Pick<ScenePath, "loop" | "points">): nu
 }
 
 export function sampleResolvedScenePathPosition(
-  path: ResolvedPathLike,
+  path: ResolvedPathLike<PathPointLike, ResolvedPathSegmentLike>,
   progress: number,
   options: { smooth?: boolean } = {}
 ): Vec3 {
@@ -713,7 +719,7 @@ export function sampleScenePathPosition(
 }
 
 export function sampleResolvedScenePathTangent(
-  path: ResolvedPathLike,
+  path: ResolvedPathLike<PathPointLike, ResolvedPathSegmentLike>,
   progress: number,
   options: { smooth?: boolean } = {}
 ): Vec3 {
