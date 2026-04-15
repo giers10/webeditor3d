@@ -28,7 +28,9 @@ import {
   type ProjectSequenceLibrary
 } from "../sequencer/project-sequences";
 
-export const SCENE_DOCUMENT_VERSION = 62 as const;
+export const SCENE_DOCUMENT_VERSION = 63 as const;
+export const NPC_DIALOGUE_LINE_SPEAKER_REMOVED_SCENE_DOCUMENT_VERSION =
+  63 as const;
 export const NPC_ONLY_DIALOGUES_SCENE_DOCUMENT_VERSION = 62 as const;
 export const WHITEBOX_EXPANDED_PRIMITIVES_SCENE_DOCUMENT_VERSION = 61 as const;
 export const WHITEBOX_PRIMITIVES_SCENE_DOCUMENT_VERSION = 60 as const;
