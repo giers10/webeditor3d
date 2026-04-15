@@ -1998,13 +1998,28 @@ function readBoxBrushFaces(
   materials: SceneDocument["materials"],
   allowMissingUvState: boolean
 ): BoxBrushFaces {
+  return readBrushFaces(
+    value,
+    label,
+    materials,
+    allowMissingUvState,
+    ["posX", "negX", "posY", "negY", "posZ", "negZ"]
+  ) as BoxBrushFaces;
+}
+
+function readBrushFaces(
+  value: unknown,
+  label: string,
+  materials: SceneDocument["materials"],
+  allowMissingUvState: boolean,
+  faceIds: readonly WhiteboxFaceId[]
+) {
   if (!isRecord(value)) {
     throw new Error(`${label} must be an object.`);
   }
 
-  const extraFaceKeys = Object.keys(value).filter(
-    (faceId) => !isBoxFaceId(faceId)
-  );
+  const supportedFaceIds = new Set(faceIds);
+  const extraFaceKeys = Object.keys(value).filter((faceId) => !supportedFaceIds.has(faceId));
 
   if (extraFaceKeys.length > 0) {
     throw new Error(
@@ -2012,44 +2027,17 @@ function readBoxBrushFaces(
     );
   }
 
-  return {
-    posX: readBrushFace(
-      value.posX,
-      `${label}.posX`,
-      materials,
-      allowMissingUvState
-    ),
-    negX: readBrushFace(
-      value.negX,
-      `${label}.negX`,
-      materials,
-      allowMissingUvState
-    ),
-    posY: readBrushFace(
-      value.posY,
-      `${label}.posY`,
-      materials,
-      allowMissingUvState
-    ),
-    negY: readBrushFace(
-      value.negY,
-      `${label}.negY`,
-      materials,
-      allowMissingUvState
-    ),
-    posZ: readBrushFace(
-      value.posZ,
-      `${label}.posZ`,
-      materials,
-      allowMissingUvState
-    ),
-    negZ: readBrushFace(
-      value.negZ,
-      `${label}.negZ`,
-      materials,
-      allowMissingUvState
-    )
-  };
+  return Object.fromEntries(
+    faceIds.map((faceId) => [
+      faceId,
+      readBrushFace(
+        value[faceId],
+        `${label}.${faceId}`,
+        materials,
+        allowMissingUvState
+      )
+    ])
+  );
 }
 
 function readBoxBrushGeometry(
@@ -2057,8 +2045,22 @@ function readBoxBrushGeometry(
   label: string,
   size: { x: number; y: number; z: number }
 ) {
+  return readBrushGeometry(
+    value,
+    label,
+    createDefaultBoxBrushGeometry(size),
+    BOX_VERTEX_IDS
+  );
+}
+
+function readBrushGeometry<T extends { vertices: Record<string, unknown> }>(
+  value: unknown,
+  label: string,
+  fallbackGeometry: T,
+  vertexIds: readonly WhiteboxVertexId[]
+): T {
   if (value === undefined) {
-    return createDefaultBoxBrushGeometry(size);
+    return fallbackGeometry;
   }
 
   if (!isRecord(value)) {
@@ -2070,8 +2072,7 @@ function readBoxBrushGeometry(
   }
 
   const extraVertexKeys = Object.keys(value.vertices).filter(
-    (vertexId) =>
-      !BOX_VERTEX_IDS.includes(vertexId as (typeof BOX_VERTEX_IDS)[number])
+    (vertexId) => !vertexIds.includes(vertexId as WhiteboxVertexId)
   );
 
   if (extraVertexKeys.length > 0) {
@@ -2081,41 +2082,13 @@ function readBoxBrushGeometry(
   }
 
   return {
-    vertices: {
-      negX_negY_negZ: readVec3(
-        value.vertices.negX_negY_negZ,
-        `${label}.vertices.negX_negY_negZ`
-      ),
-      posX_negY_negZ: readVec3(
-        value.vertices.posX_negY_negZ,
-        `${label}.vertices.posX_negY_negZ`
-      ),
-      negX_posY_negZ: readVec3(
-        value.vertices.negX_posY_negZ,
-        `${label}.vertices.negX_posY_negZ`
-      ),
-      posX_posY_negZ: readVec3(
-        value.vertices.posX_posY_negZ,
-        `${label}.vertices.posX_posY_negZ`
-      ),
-      negX_negY_posZ: readVec3(
-        value.vertices.negX_negY_posZ,
-        `${label}.vertices.negX_negY_posZ`
-      ),
-      posX_negY_posZ: readVec3(
-        value.vertices.posX_negY_posZ,
-        `${label}.vertices.posX_negY_posZ`
-      ),
-      negX_posY_posZ: readVec3(
-        value.vertices.negX_posY_posZ,
-        `${label}.vertices.negX_posY_posZ`
-      ),
-      posX_posY_posZ: readVec3(
-        value.vertices.posX_posY_posZ,
-        `${label}.vertices.posX_posY_posZ`
-      )
-    }
-  };
+    vertices: Object.fromEntries(
+      vertexIds.map((vertexId) => [
+        vertexId,
+        readVec3(value.vertices[vertexId], `${label}.vertices.${vertexId}`)
+      ])
+    ) as T["vertices"]
+  } as T;
 }
 
 function readBrushes(
