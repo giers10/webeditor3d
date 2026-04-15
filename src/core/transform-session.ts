@@ -1030,6 +1030,8 @@ function createBrushFaceTransformTarget(
       brushId,
       brushKind: brushResolution.target.brushKind,
       sideCount: brushResolution.target.sideCount,
+      majorSegmentCount: brushResolution.target.majorSegmentCount,
+      tubeSegmentCount: brushResolution.target.tubeSegmentCount,
       faceId,
       initialCenter: cloneVec3(brushResolution.target.initialCenter),
       initialRotationDegrees: cloneVec3(
@@ -1064,6 +1066,8 @@ function createBrushEdgeTransformTarget(
       brushId,
       brushKind: brushResolution.target.brushKind,
       sideCount: brushResolution.target.sideCount,
+      majorSegmentCount: brushResolution.target.majorSegmentCount,
+      tubeSegmentCount: brushResolution.target.tubeSegmentCount,
       edgeId,
       initialCenter: cloneVec3(brushResolution.target.initialCenter),
       initialRotationDegrees: cloneVec3(
@@ -1098,6 +1102,8 @@ function createBrushVertexTransformTarget(
       brushId,
       brushKind: brushResolution.target.brushKind,
       sideCount: brushResolution.target.sideCount,
+      majorSegmentCount: brushResolution.target.majorSegmentCount,
+      tubeSegmentCount: brushResolution.target.tubeSegmentCount,
       vertexId,
       initialCenter: cloneVec3(brushResolution.target.initialCenter),
       initialRotationDegrees: cloneVec3(
