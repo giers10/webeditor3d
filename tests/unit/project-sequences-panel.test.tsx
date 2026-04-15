@@ -50,6 +50,12 @@ describe("ProjectSequencesPanel", () => {
           { entityId: "teleport-a", label: "North Gate" },
           { entityId: "teleport-b", label: "South Gate" }
         ]}
+        sceneTransitionTargetOptions={[
+          {
+            targetKey: "scene-house::entry-front",
+            label: "House · Front Entry"
+          }
+        ]}
         visibilityTargetOptions={[
           { targetKey: "brush:brush-a", label: "Wall A" },
           { targetKey: "brush:brush-b", label: "Wall B" }
@@ -67,6 +73,7 @@ describe("ProjectSequencesPanel", () => {
         onAddImpulseControlStep={() => {}}
         onAddDialogueStep={() => {}}
         onAddTeleportStep={onAddTeleportStep}
+        onAddSceneTransitionStep={() => {}}
         onAddVisibilityStep={onAddVisibilityStep}
         onAddPlayAnimationStep={onAddPlayAnimationStep}
         onAddStopAnimationStep={onAddStopAnimationStep}
@@ -81,6 +88,7 @@ describe("ProjectSequencesPanel", () => {
         onSetControlStepAnimationLoop={() => {}}
         onSetDialogueStepDialogueId={() => {}}
         onSetTeleportStepTarget={onSetTeleportStepTarget}
+        onSetSceneTransitionStepTarget={() => {}}
         onSetVisibilityStepTarget={onSetVisibilityStepTarget}
         onSetVisibilityStepMode={onSetVisibilityStepMode}
       />
