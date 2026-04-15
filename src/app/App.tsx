@@ -6285,8 +6285,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
   };
 
-  const handleRunnerSceneExitActivated = (
-    request: RuntimeSceneExitTransitionRequest
+  const handleRunnerSceneTransitionActivated = (
+    request: RuntimeSceneTransitionRequest
   ) => {
     if (runtimeSceneId === null || runtimeSceneName === null) {
       setRuntimeMessage("Scene transition failed: run mode is not active.");
@@ -6347,7 +6347,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
           fromSceneName: sourceScene.name,
           toSceneId: targetScene.id,
           toSceneName: targetScene.name,
-          viaExitEntityId: request.sourceExitEntityId,
+          sourceEntityId: request.sourceEntityId,
           targetEntryEntityId: targetEntry.id
         }
       }));
