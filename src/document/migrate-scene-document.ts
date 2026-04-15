@@ -37,7 +37,6 @@ import {
   createPointLightEntity,
   createPlayerStartEntity,
   createSceneEntryEntity,
-  createSceneExitEntity,
   createSoundEmitterEntity,
   createSpotLightEntity,
   createTeleportTargetEntity,
