@@ -269,6 +269,50 @@ describe("validateSceneDocument", () => {
     );
   });
 
+  it("accepts NPC interaction links that run click sequences", () => {
+    const npc = createNpcEntity({
+      id: "entity-npc-guide",
+      actorId: "actor-guide",
+      dialogues: [
+        {
+          id: "dialogue-guide",
+          title: "Guide",
+          lines: [
+            {
+              id: "dialogue-guide-line-1",
+              text: "Welcome."
+            }
+          ]
+        }
+      ],
+      defaultDialogueId: "dialogue-guide"
+    });
+    const document = createEmptySceneDocument();
+    document.entities[npc.id] = npc;
+    document.sequences.sequences["sequence-guide-talk"] = createProjectSequence({
+      id: "sequence-guide-talk",
+      title: "Guide Talk",
+      effects: [
+        {
+          stepClass: "impulse",
+          type: "makeNpcTalk",
+          npcEntityId: npc.id,
+          dialogueId: "dialogue-guide"
+        }
+      ]
+    });
+    document.interactionLinks["link-guide-talk"] = createRunSequenceInteractionLink({
+      id: "link-guide-talk",
+      sourceEntityId: npc.id,
+      trigger: "click",
+      sequenceId: "sequence-guide-talk"
+    });
+
+    const validation = validateSceneDocument(document);
+
+    expect(validation.errors).toEqual([]);
+  });
+
   it("accepts actor timeline sequences without an explicit presence effect", () => {
     const npc = createNpcEntity({
       id: "entity-npc-guard",
