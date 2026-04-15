@@ -407,7 +407,7 @@ export function resolveViewportFocusTarget(document: SceneDocument, selection: E
   if (selectedBrushId !== null) {
     const brush = document.brushes[selectedBrushId];
 
-    if (brush !== undefined && brush.kind === "box") {
+    if (brush !== undefined) {
       return createBrushFocusTarget(brush);
     }
   }
