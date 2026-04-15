@@ -4856,7 +4856,10 @@ function validateProjectSequence(
 }
 
 function validateProjectResources(
-  document: Pick<ProjectDocument, "materials" | "assets" | "dialogues" | "sequences">,
+  document: Pick<
+    ProjectDocument,
+    "materials" | "assets" | "dialogues" | "sequences" | "scenes"
+  >,
   context: ProjectSchedulerValidationContext,
   diagnostics: SceneDiagnostic[]
 ) {
