@@ -1375,6 +1375,33 @@ function readSequenceVisibilityTargetKey(
   throw new Error("Sequence visibility targets must reference a brush or model instance.");
 }
 
+function readSceneTransitionTargetKey(value: string): {
+  targetSceneId: string;
+  targetEntryEntityId: string;
+} {
+  const separatorIndex = value.indexOf("::");
+
+  if (separatorIndex <= 0 || separatorIndex >= value.length - 2) {
+    throw new Error(
+      "Scene transition targets must reference a scene id and Scene Entry id."
+    );
+  }
+
+  const targetSceneId = value.slice(0, separatorIndex).trim();
+  const targetEntryEntityId = value.slice(separatorIndex + 2).trim();
+
+  if (targetSceneId.length === 0 || targetEntryEntityId.length === 0) {
+    throw new Error(
+      "Scene transition targets must reference a scene id and Scene Entry id."
+    );
+  }
+
+  return {
+    targetSceneId,
+    targetEntryEntityId
+  };
+}
+
 function getDefaultTriggerVolumeLinkTrigger(
   triggerOnEnter: boolean,
   triggerOnExit: boolean
