@@ -52,7 +52,6 @@ import {
   isModelInstanceSelected,
   isPathPointSelected,
   isPathSelected,
-  isSelectionActiveId,
   type EditorSelection
 } from "../core/selection";
 import { getWhiteboxSelectionFeedbackLabel } from "../core/whitebox-selection-feedback";
