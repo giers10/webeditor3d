@@ -11571,13 +11571,18 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   {brushList.map((brush, brushIndex) => {
                     const label = getBrushLabel(brush, brushIndex);
                     const isSelected = selectedBrush?.id === brush.id;
+                    const isActiveSelection = isSelectionActiveId(
+                      editorState.selection,
+                      editorState.activeSelectionId,
+                      brush.id
+                    );
                     const authoredStateSummary =
                       formatAuthoredObjectStateSummary(brush);
 
                     return (
                       <div
                         key={brush.id}
-                        className={`outliner-item outliner-item--compact ${isBrushSelected(editorState.selection, brush.id) ? "outliner-item--selected" : ""} ${brush.enabled ? "" : "outliner-item--disabled"}`}
+                        className={`outliner-item outliner-item--compact ${isBrushSelected(editorState.selection, brush.id) ? "outliner-item--selected" : ""} ${isActiveSelection ? "outliner-item--active" : ""} ${brush.enabled ? "" : "outliner-item--disabled"}`}
                       >
                         <div className="outliner-item__row">
                           <input
@@ -11616,12 +11621,16 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               className="outliner-item__select"
                               type="button"
                               data-testid={`outliner-brush-${brush.id}`}
-                              onClick={() =>
+                              onClick={(event) =>
                                 applySelection(
-                                  {
-                                    kind: "brushes",
-                                    ids: [brush.id]
-                                  },
+                                  applySameKindSelectionClick(
+                                    editorState.selection,
+                                    {
+                                      kind: "brushes",
+                                      ids: [brush.id]
+                                    },
+                                    event.shiftKey
+                                  ),
                                   "outliner",
                                   {
                                     focusViewport: true
@@ -11774,13 +11783,18 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     const isSelected =
                       editorState.selection.kind === "modelInstances" &&
                       editorState.selection.ids.includes(modelInstance.id);
+                    const isActiveSelection = isSelectionActiveId(
+                      editorState.selection,
+                      editorState.activeSelectionId,
+                      modelInstance.id
+                    );
                     const authoredStateSummary =
                       formatAuthoredObjectStateSummary(modelInstance);
 
                     return (
                       <div
                         key={modelInstance.id}
-                        className={`outliner-item ${isSelected ? "outliner-item--selected" : ""} outliner-item--compact ${modelInstance.enabled ? "" : "outliner-item--disabled"}`}
+                        className={`outliner-item ${isSelected ? "outliner-item--selected" : ""} ${isActiveSelection ? "outliner-item--active" : ""} outliner-item--compact ${modelInstance.enabled ? "" : "outliner-item--disabled"}`}
                       >
                         <div className="outliner-item__row">
                           <input
@@ -11827,12 +11841,16 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               data-testid={`outliner-model-instance-${modelInstance.id}`}
                               className="outliner-item__select"
                               type="button"
-                              onClick={() =>
+                              onClick={(event) =>
                                 applySelection(
-                                  {
-                                    kind: "modelInstances",
-                                    ids: [modelInstance.id]
-                                  },
+                                  applySameKindSelectionClick(
+                                    editorState.selection,
+                                    {
+                                      kind: "modelInstances",
+                                      ids: [modelInstance.id]
+                                    },
+                                    event.shiftKey
+                                  ),
                                   "outliner",
                                   {
                                     focusViewport: true
@@ -11882,13 +11900,18 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     const isSelected =
                       editorState.selection.kind === "entities" &&
                       editorState.selection.ids.includes(entity.id);
+                    const isActiveSelection = isSelectionActiveId(
+                      editorState.selection,
+                      editorState.activeSelectionId,
+                      entity.id
+                    );
                     const authoredStateSummary =
                       formatAuthoredObjectStateSummary(entity);
 
                     return (
                       <div
                         key={entity.id}
-                        className={`outliner-item ${isSelected ? "outliner-item--selected" : ""} outliner-item--compact ${entity.enabled ? "" : "outliner-item--disabled"}`}
+                        className={`outliner-item ${isSelected ? "outliner-item--selected" : ""} ${isActiveSelection ? "outliner-item--active" : ""} outliner-item--compact ${entity.enabled ? "" : "outliner-item--disabled"}`}
                       >
                         <div className="outliner-item__row">
                           <input
@@ -11929,12 +11952,16 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               data-testid={`outliner-entity-${entity.id}`}
                               className="outliner-item__select"
                               type="button"
-                              onClick={() =>
+                              onClick={(event) =>
                                 applySelection(
-                                  {
-                                    kind: "entities",
-                                    ids: [entity.id]
-                                  },
+                                  applySameKindSelectionClick(
+                                    editorState.selection,
+                                    {
+                                      kind: "entities",
+                                      ids: [entity.id]
+                                    },
+                                    event.shiftKey
+                                  ),
                                   "outliner",
                                   {
                                     focusViewport: true
