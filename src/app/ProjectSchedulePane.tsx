@@ -662,35 +662,6 @@ export function ProjectSequencerPane({
           targetOptions,
           selectedRoutine.target
         );
-  const selectedRoutineUsesInlineControlEffect =
-    selectedRoutine !== null &&
-    selectedRoutine.sequenceId === null &&
-    selectedRoutine.target.kind !== "actor" &&
-    selectedRoutine.target.kind !== "global";
-  const selectedEffectOptionId =
-    !selectedRoutineUsesInlineControlEffect
-      ? null
-      : selectedRoutine.effects[0] === undefined
-        ? null
-        : getProjectScheduleEffectOptionId(selectedRoutine.effects[0]);
-  const selectedEffectOptions =
-    selectedTargetOption === null ||
-    selectedTargetOption.target.kind === "actor" ||
-    selectedTargetOption.target.kind === "global"
-      ? []
-      : listProjectScheduleEffectOptions(selectedTargetOption);
-  const selectedActorPresenceEffect =
-    selectedRoutine === null || selectedRoutine.target.kind !== "actor"
-      ? null
-      : findHeldSequenceControlEffect(selectedRoutineHeldSteps, "setActorPresence");
-  const selectedActorAnimationEffect =
-    selectedRoutine === null || selectedRoutine.target.kind !== "actor"
-      ? null
-      : findHeldSequenceControlEffect(selectedRoutineHeldSteps, "playActorAnimation");
-  const selectedActorPathEffect =
-    selectedRoutine === null || selectedRoutine.target.kind !== "actor"
-      ? null
-      : findHeldSequenceControlEffect(selectedRoutineHeldSteps, "followActorPath");
   const compatibleHeldSequences =
     selectedRoutine === null
       ? []
