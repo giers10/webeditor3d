@@ -622,16 +622,6 @@ export class RuntimeInteractionSystem {
     runtimeScene: RuntimeSceneDefinition,
     dispatcher: RuntimeInteractionDispatcher
   ) {
-    const sceneExit =
-      runtimeScene.entities.sceneExits.find(
-        (candidate) => candidate.entityId === sourceEntityId
-      ) ?? null;
-
-    if (sceneExit !== null) {
-      dispatcher.activateSceneExit(sceneExit);
-      return;
-    }
-
     const npc =
       runtimeScene.entities.npcs.find(
         (candidate) => candidate.entityId === sourceEntityId
@@ -724,6 +714,16 @@ export class RuntimeInteractionSystem {
         }
         return;
       }
+      case "startSceneTransition":
+        dispatcher.startSceneTransition(
+          {
+            sourceEntityId: link.sourceEntityId,
+            targetSceneId: step.targetSceneId,
+            targetEntryEntityId: step.targetEntryEntityId
+          },
+          link
+        );
+        return;
       case "setVisibility":
         if (dispatcher.setVisibility !== undefined) {
           dispatcher.setVisibility(step.target, step.mode, link);
