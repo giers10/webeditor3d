@@ -353,7 +353,6 @@ function includeEntity(bounds: FocusBoundsAccumulator, entity: EntityInstance) {
       includeTeleportTarget(bounds, entity.position);
       break;
     case "interactable":
-    case "sceneExit":
       includeSphereEntity(bounds, entity.position, Math.max(0.4, entity.radius));
       break;
   }
@@ -376,7 +375,6 @@ function createEntityFocusTarget(entity: EntityInstance): ViewportFocusTarget {
     case "teleportTarget":
       return createTeleportTargetFocusTarget(entity.position);
     case "interactable":
-    case "sceneExit":
       return createSphereEntityFocusTarget(entity.position, entity.radius, 0.65);
   }
 }

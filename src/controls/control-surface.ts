@@ -6,8 +6,7 @@ export const CONTROL_ENTITY_TARGET_KINDS = [
   "soundEmitter"
 ] as const;
 export const CONTROL_INTERACTION_TARGET_KINDS = [
-  "interactable",
-  "sceneExit"
+  "interactable"
 ] as const;
 export const CONTROL_CAPABILITY_KINDS = [
   "projectTimePause",
@@ -1874,8 +1873,6 @@ function formatTargetKindLabel(
       return "Sound Emitter";
     case "interactable":
       return "Interactable";
-    case "sceneExit":
-      return "Scene Exit";
   }
 }
 

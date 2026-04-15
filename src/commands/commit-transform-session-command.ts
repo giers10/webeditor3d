@@ -14,7 +14,6 @@ import {
   createPlayerStartEntity,
   createPointLightEntity,
   createSceneEntryEntity,
-  createSceneExitEntity,
   createSoundEmitterEntity,
   createSpotLightEntity,
   createTeleportTargetEntity,
@@ -60,11 +59,11 @@ function createTransformCommandLabel(session: ActiveTransformSession): string {
                     ? "trigger volume"
                     : session.target.entityKind === "sceneEntry"
                       ? "scene entry"
-                      : session.target.entityKind === "teleportTarget"
-                        ? "teleport target"
-                        : session.target.entityKind === "interactable"
-                          ? "interactable"
-                          : "scene exit";
+                        : session.target.entityKind === "teleportTarget"
+                          ? "teleport target"
+                          : session.target.entityKind === "interactable"
+                            ? "interactable"
+                            : "entity";
       break;
     case "modelInstance":
       break;
@@ -275,14 +274,6 @@ export function createCommitTransformSessionCommand(document: SceneDocument, ses
         case "interactable":
           return createUpsertEntityCommand({
             entity: createInteractableEntity({
-              ...entity,
-              position: session.preview.position
-            }),
-            label: createTransformCommandLabel(session)
-          });
-        case "sceneExit":
-          return createUpsertEntityCommand({
-            entity: createSceneExitEntity({
               ...entity,
               position: session.preview.position
             }),

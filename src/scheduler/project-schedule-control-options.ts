@@ -16,6 +16,7 @@ import {
   createSetLightEnabledControlEffect,
   createSetLightIntensityControlEffect,
   createSetModelInstanceVisibleControlEffect,
+  createProjectGlobalControlTargetRef,
   createSetSoundVolumeControlEffect,
   createSetSunLightColorControlEffect,
   createSetSunLightIntensityControlEffect,
@@ -98,13 +99,14 @@ export interface ProjectScheduleTargetOption {
 }
 
 const PROJECT_SCHEDULE_GROUP_ORDER: Record<string, number> = {
-  "Scene Lighting": 0,
-  Actors: 1,
-  "Model Instances": 2,
-  "Sound Emitters": 3,
-  Interactions: 4,
-  Lights: 5,
-  Other: 6
+  Project: 0,
+  "Scene Lighting": 1,
+  Actors: 2,
+  "Model Instances": 3,
+  "Sound Emitters": 4,
+  Interactions: 5,
+  Lights: 6,
+  Other: 7
 };
 
 const PROJECT_SCHEDULE_EFFECT_OPTIONS: Record<
@@ -265,6 +267,17 @@ function createSceneLightingTargetOption(
   };
 }
 
+function createProjectEventTargetOption(): ProjectScheduleTargetOption {
+  return {
+    key: getControlTargetRefKey(createProjectGlobalControlTargetRef()),
+    target: createProjectGlobalControlTargetRef(),
+    label: "Project Events",
+    subtitle: "Timeline-triggered sequences and global one-shot events.",
+    groupLabel: "Project",
+    defaults: {}
+  };
+}
+
 function createFallbackProjectScheduleTargetOption(
   target: ControlTargetRef
 ): ProjectScheduleTargetOption {
@@ -289,6 +302,7 @@ export function listProjectScheduleTargetOptions(
     }
   };
 
+  pushOption(createProjectEventTargetOption());
   pushOption(createSceneLightingTargetOption(projectDocument));
 
   for (const actor of listProjectNpcActors(projectDocument)) {
@@ -389,19 +403,6 @@ export function listProjectScheduleTargetOptions(
         }
         case "interactable": {
           const target = createInteractionControlTargetRef("interactable", entity.id);
-
-          pushOption({
-            key: getControlTargetRefKey(target),
-            target,
-            label,
-            subtitle: getSceneTargetSubtitle(scene),
-            groupLabel: "Interactions",
-            defaults: {}
-          });
-          break;
-        }
-        case "sceneExit": {
-          const target = createInteractionControlTargetRef("sceneExit", entity.id);
 
           pushOption({
             key: getControlTargetRefKey(target),
