@@ -217,7 +217,7 @@ describe("box brush face editing commands", () => {
         updateUvState: (uvState, faceId) => ({
           ...uvState,
           offset: {
-            x: BOX_FACE_IDS.indexOf(faceId),
+            x: BOX_FACE_IDS.indexOf(faceId as (typeof BOX_FACE_IDS)[number]),
             y: uvState.offset.y + 1
           },
           scale: {
