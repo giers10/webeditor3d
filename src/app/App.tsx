@@ -7629,7 +7629,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const applyNpcChange = (
     overrides: {
       modelAssetId?: string | null;
-      dialogueId?: string | null;
       colliderMode?: PlayerStartColliderMode;
     } = {}
   ) => {
@@ -7640,7 +7639,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
     try {
       const trimmedModelAssetId = npcModelAssetIdDraft.trim();
-      const trimmedDialogueId = npcDialogueIdDraft.trim();
       const colliderMode = overrides.colliderMode ?? npcColliderModeDraft;
 
       const nextEntity = createNpcEntity({
@@ -7659,12 +7657,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
             : trimmedModelAssetId.length === 0
               ? null
               : trimmedModelAssetId,
-        dialogueId:
-          overrides.dialogueId !== undefined
-            ? overrides.dialogueId
-            : trimmedDialogueId.length === 0
-              ? null
-              : trimmedDialogueId,
+        dialogues: selectedNpc.dialogues,
+        defaultDialogueId: selectedNpc.defaultDialogueId,
         collider: {
           mode: colliderMode,
           eyeHeight: readPositiveNumberDraft(
