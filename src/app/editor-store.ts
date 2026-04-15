@@ -2,6 +2,7 @@ import { CommandHistory } from "../commands/command-history";
 import type { CommandContext, EditorCommand } from "../commands/command";
 import {
   areEditorSelectionsEqual,
+  getSelectionDefaultActiveId,
   normalizeSelectionForWhiteboxSelectionMode,
   type EditorSelection
 } from "../core/selection";
@@ -71,6 +72,7 @@ export interface EditorStoreState {
   activeSceneId: string;
   document: SceneDocument;
   selection: EditorSelection;
+  activeSelectionId: string | null;
   whiteboxSelectionMode: WhiteboxSelectionMode;
   whiteboxSnapEnabled: boolean;
   whiteboxSnapStep: number;
@@ -211,6 +213,7 @@ export class EditorStore {
   private document: SceneDocument;
   private commandTargetSceneId: string | null = null;
   private selection: EditorSelection = { kind: "none" };
+  private activeSelectionId: string | null = null;
   private whiteboxSelectionMode: WhiteboxSelectionMode = "object";
   private whiteboxSnapEnabled = true;
   private whiteboxSnapStep = 1;
@@ -251,6 +254,7 @@ export class EditorStore {
     getSelection: () => this.selection,
     setSelection: (selection) => {
       this.selection = selection;
+      this.activeSelectionId = getSelectionDefaultActiveId(selection);
     },
     getToolMode: () => this.toolMode,
     setToolMode: (toolMode) => {
@@ -624,6 +628,7 @@ export class EditorStore {
     }
 
     this.selection = selection;
+    this.activeSelectionId = getSelectionDefaultActiveId(selection);
     this.emit();
   }
 
@@ -644,6 +649,7 @@ export class EditorStore {
       this.selection,
       mode
     );
+    this.activeSelectionId = getSelectionDefaultActiveId(this.selection);
     this.updateActiveSceneEditorPreferences((preferences) => ({
       ...preferences,
       whiteboxSelectionMode: mode
@@ -726,6 +732,7 @@ export class EditorStore {
     this.syncActiveSceneDocument();
     this.commandTargetSceneId = null;
     this.selection = { kind: "none" };
+    this.activeSelectionId = null;
     this.toolMode = "select";
     this.previousEditingToolMode = "select";
     this.viewportTransientState = createDefaultViewportTransientState();
@@ -821,6 +828,7 @@ export class EditorStore {
       activeSceneId: this.projectDocument.activeSceneId,
       document: this.document,
       selection: this.selection,
+      activeSelectionId: this.activeSelectionId,
       whiteboxSelectionMode: this.whiteboxSelectionMode,
       whiteboxSnapEnabled: this.whiteboxSnapEnabled,
       whiteboxSnapStep: this.whiteboxSnapStep,

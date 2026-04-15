@@ -1,5 +1,8 @@
 import { createOpaqueId } from "./ids";
-import type { EditorSelection } from "./selection";
+import {
+  resolveSelectionActiveId,
+  type EditorSelection
+} from "./selection";
 import type { WhiteboxSelectionMode } from "./whitebox-selection-mode";
 import type { Vec3 } from "./vector";
 import {
@@ -149,14 +152,38 @@ export interface EntityTransformTarget {
   initialRotation: EntityTransformRotationState;
 }
 
+export interface BrushesTransformTarget {
+  kind: "brushes";
+  activeBrushId: string;
+  initialPivot: Vec3;
+  items: BrushTransformTarget[];
+}
+
+export interface ModelInstancesTransformTarget {
+  kind: "modelInstances";
+  activeModelInstanceId: string;
+  initialPivot: Vec3;
+  items: ModelInstanceTransformTarget[];
+}
+
+export interface EntitiesTransformTarget {
+  kind: "entities";
+  activeEntityId: string;
+  initialPivot: Vec3;
+  items: EntityTransformTarget[];
+}
+
 export type TransformTarget =
   | BrushTransformTarget
+  | BrushesTransformTarget
   | BrushFaceTransformTarget
   | BrushEdgeTransformTarget
   | BrushVertexTransformTarget
   | ModelInstanceTransformTarget
+  | ModelInstancesTransformTarget
   | PathPointTransformTarget
-  | EntityTransformTarget;
+  | EntityTransformTarget
+  | EntitiesTransformTarget;
 
 export interface BrushTransformPreview {
   kind: "brush";
@@ -202,11 +229,53 @@ export interface EntityTransformPreview {
   rotation: EntityTransformRotationState;
 }
 
+export interface BrushTransformPreviewItem {
+  brushId: string;
+  center: Vec3;
+  rotationDegrees: Vec3;
+  size: Vec3;
+  geometry: BrushGeometry;
+}
+
+export interface BrushesTransformPreview {
+  kind: "brushes";
+  pivot: Vec3;
+  items: BrushTransformPreviewItem[];
+}
+
+export interface ModelInstanceTransformPreviewItem {
+  modelInstanceId: string;
+  position: Vec3;
+  rotationDegrees: Vec3;
+  scale: Vec3;
+}
+
+export interface ModelInstancesTransformPreview {
+  kind: "modelInstances";
+  pivot: Vec3;
+  items: ModelInstanceTransformPreviewItem[];
+}
+
+export interface EntityTransformPreviewItem {
+  entityId: string;
+  position: Vec3;
+  rotation: EntityTransformRotationState;
+}
+
+export interface EntitiesTransformPreview {
+  kind: "entities";
+  pivot: Vec3;
+  items: EntityTransformPreviewItem[];
+}
+
 export type TransformPreview =
   | BrushTransformPreview
+  | BrushesTransformPreview
   | ModelInstanceTransformPreview
+  | ModelInstancesTransformPreview
   | PathPointTransformPreview
-  | EntityTransformPreview;
+  | EntityTransformPreview
+  | EntitiesTransformPreview;
 
 export interface ActiveTransformSession {
   kind: "active";
