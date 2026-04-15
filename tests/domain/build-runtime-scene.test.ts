@@ -152,7 +152,6 @@ describe("buildRuntimeSceneFromDocument", () => {
           lines: [
             {
               id: "dialogue-line-warning-1",
-              speakerName: "Operator",
               text: "The generator is unstable."
             }
           ]
@@ -629,7 +628,6 @@ describe("buildRuntimeSceneFromDocument", () => {
               lines: [
                 {
                   id: "dialogue-line-warning-1",
-                  speakerName: "Operator",
                   text: "The generator is unstable."
                 }
               ]
@@ -1567,7 +1565,6 @@ describe("buildRuntimeSceneFromDocument", () => {
           lines: [
             {
               id: "dialogue-line-patrol-1",
-              speakerName: "Guard",
               text: "All clear."
             }
           ]
