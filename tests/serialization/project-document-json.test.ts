@@ -13,6 +13,7 @@ import {
   DEFAULT_PROJECT_NAME,
   DEFAULT_SCENE_EDITOR_SNAP_STEP,
   NPC_COLLIDER_SCENE_DOCUMENT_VERSION,
+  NPC_ONLY_DIALOGUES_SCENE_DOCUMENT_VERSION,
   PROJECT_DIALOGUE_LIBRARY_SCENE_DOCUMENT_VERSION,
   PROJECT_SEQUENCE_EFFECTS_SCENE_DOCUMENT_VERSION,
   NPC_PRESENCE_SCENE_DOCUMENT_VERSION,
@@ -110,6 +111,77 @@ describe("project document JSON", () => {
     expect(parseProjectDocumentJson(serializeProjectDocument(document))).toEqual(
       document
     );
+  });
+
+  it("migrates legacy NPC dialogue speaker fields by deriving names from actor ids instead", () => {
+    const document = createEmptyProjectDocument({
+      name: "Legacy NPC Speaker Project"
+    });
+    const npc = createNpcEntity({
+      id: "entity-npc-merchant",
+      actorId: "actor-merchant",
+      dialogues: [
+        {
+          id: "dialogue-market",
+          title: "Market",
+          lines: [
+            {
+              id: "dialogue-line-market-1",
+              text: "Fresh bread."
+            }
+          ]
+        }
+      ],
+      defaultDialogueId: "dialogue-market"
+    });
+    document.scenes[document.activeSceneId]!.entities[npc.id] = npc;
+
+    const legacyDocument = JSON.parse(
+      serializeProjectDocument(document)
+    ) as Record<string, unknown>;
+    legacyDocument.version = NPC_ONLY_DIALOGUES_SCENE_DOCUMENT_VERSION;
+    (
+      (
+        (
+          legacyDocument.scenes as Record<string, unknown>
+        )[document.activeSceneId] as {
+          entities: Record<string, unknown>;
+        }
+      ).entities[npc.id] as {
+        dialogues: Array<{
+          lines: Array<Record<string, unknown>>;
+        }>;
+      }
+    ).dialogues[0]!.lines[0]!.speakerName = "Merchant";
+
+    const migratedDocument = parseProjectDocumentJson(
+      JSON.stringify(legacyDocument)
+    );
+    const migratedNpc = migratedDocument.scenes[migratedDocument.activeSceneId]!
+      .entities[npc.id];
+
+    expect(migratedNpc).toEqual(
+      expect.objectContaining({
+        kind: "npc",
+        actorId: "actor-merchant",
+        dialogues: [
+          {
+            id: "dialogue-market",
+            title: "Market",
+            lines: [
+              {
+                id: "dialogue-line-market-1",
+                text: "Fresh bread."
+              }
+            ]
+          }
+        ]
+      })
+    );
+    expect(
+      "speakerName" in
+        (migratedNpc as typeof npc).dialogues[0]!.lines[0]!
+    ).toBe(false);
   });
 
   it("migrates project NPCs without dialogue references from v50 to null NPC dialogue defaults", () => {
