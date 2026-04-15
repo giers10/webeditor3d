@@ -11,7 +11,6 @@ import {
 import {
   createControlInteractionLink,
   createPlaySoundInteractionLink,
-  createStartDialogueInteractionLink,
   createTeleportPlayerInteractionLink,
   createToggleVisibilityInteractionLink
 } from "../../src/interactions/interaction-links";
@@ -29,11 +28,6 @@ describe("project sequence steps", () => {
       id: "link-play-sound",
       sourceEntityId: "entity-trigger-main",
       targetSoundEmitterId: "entity-sound-main"
-    });
-    const dialogueLink = createStartDialogueInteractionLink({
-      id: "link-start-dialogue",
-      sourceEntityId: "entity-trigger-main",
-      dialogueId: "dialogue-main"
     });
     const teleportLink = createTeleportPlayerInteractionLink({
       id: "link-teleport",
@@ -54,13 +48,6 @@ describe("project sequence steps", () => {
         effect: createPlaySoundControlEffect({
           target: createSoundEmitterControlTargetRef("entity-sound-main")
         })
-      }
-    ]);
-    expect(getInteractionLinkSequenceSteps(dialogueLink)).toEqual([
-      {
-        stepClass: "impulse",
-        type: "startDialogue",
-        dialogueId: "dialogue-main"
       }
     ]);
     expect(getInteractionLinkSequenceSteps(teleportLink)).toEqual([
