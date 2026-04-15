@@ -11432,7 +11432,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
               <div className="label">Whitebox Solids</div>
               {brushList.length === 0 ? (
                 <div className="outliner-empty">
-                  Use Add &gt; Whitebox Box and click in the viewport to create
+                  Use Add &gt; Whitebox Primitives &gt; Box and click in the viewport to create
                   the first solid.
                 </div>
               ) : (
