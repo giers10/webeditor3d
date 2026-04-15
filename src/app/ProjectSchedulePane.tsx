@@ -3,7 +3,7 @@ import {
   useRef,
   useState,
   type KeyboardEvent as ReactKeyboardEvent,
-  type PointerEvent as ReactPointerEvent
+  type MouseEvent as ReactMouseEvent
 } from "react";
 
 import {
@@ -516,7 +516,7 @@ export function ProjectSequencerPane({
   }, []);
 
   const beginRoutineDrag = (
-    event: ReactPointerEvent<HTMLElement>,
+    event: ReactMouseEvent<HTMLElement>,
     routine: ProjectScheduleRoutine,
     mode: RoutineDragState["mode"]
   ) => {
@@ -550,7 +550,7 @@ export function ProjectSequencerPane({
     const previousUserSelect = document.body.style.userSelect;
     document.body.style.userSelect = "none";
 
-    const handlePointerMove = (pointerEvent: PointerEvent) => {
+    const handlePointerMove = (pointerEvent: MouseEvent) => {
       const currentDragState = routineDragStateRef.current;
 
       if (currentDragState === null) {
@@ -571,8 +571,8 @@ export function ProjectSequencerPane({
       const finalDragState = routineDragStateRef.current;
 
       document.body.style.userSelect = previousUserSelect;
-      window.removeEventListener("pointermove", handlePointerMove);
-      window.removeEventListener("pointerup", handlePointerUp);
+      window.removeEventListener("mousemove", handlePointerMove);
+      window.removeEventListener("mouseup", handlePointerUp);
       routineDragCleanupRef.current = null;
       setRoutineDragState(null);
       routineDragStateRef.current = null;
@@ -602,13 +602,13 @@ export function ProjectSequencerPane({
 
     routineDragCleanupRef.current = () => {
       document.body.style.userSelect = previousUserSelect;
-      window.removeEventListener("pointermove", handlePointerMove);
-      window.removeEventListener("pointerup", handlePointerUp);
+      window.removeEventListener("mousemove", handlePointerMove);
+      window.removeEventListener("mouseup", handlePointerUp);
       routineDragCleanupRef.current = null;
     };
 
-    window.addEventListener("pointermove", handlePointerMove);
-    window.addEventListener("pointerup", handlePointerUp);
+    window.addEventListener("mousemove", handlePointerMove);
+    window.addEventListener("mouseup", handlePointerUp);
     routineDragStateRef.current = nextDragState;
     setRoutineDragState(nextDragState);
   };
