@@ -1,10 +1,6 @@
 import { useEffect, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 
-import {
-  type ProjectDialogue,
-  createProjectDialogue,
-  createProjectDialogueLine
-} from "../dialogues/project-dialogues";
+import { type ProjectDialogue } from "../dialogues/project-dialogues";
 
 interface NpcDialoguesPanelProps {
   dialogues: ProjectDialogue[];
