@@ -10,7 +10,9 @@ import {
 } from "react";
 
 import { createCreateBoxBrushCommand } from "../commands/create-box-brush-command";
+import { createCreateRadialPrismBrushCommand } from "../commands/create-radial-prism-brush-command";
 import { createCreateSceneCommand } from "../commands/create-scene-command";
+import { createCreateWedgeBrushCommand } from "../commands/create-wedge-brush-command";
 import { createDeleteBoxBrushCommand } from "../commands/delete-box-brush-command";
 import { createDeleteEntityCommand } from "../commands/delete-entity-command";
 import { createDeleteProjectAssetCommand } from "../commands/delete-project-asset-command";
@@ -6046,6 +6048,35 @@ export function App({ store, initialStatusMessage }: AppProps) {
         center: null
       },
       `Previewing a whitebox box. Click in the viewport to create it${whiteboxSnapEnabled ? ` on the ${whiteboxSnapStep}m grid` : ""}.`
+    );
+  };
+
+  const beginWedgeCreation = () => {
+    beginCreation(
+      {
+        kind: "create",
+        sourcePanelId: activePanelId,
+        target: {
+          kind: "wedge-brush"
+        },
+        center: null
+      },
+      `Previewing a whitebox wedge. Click in the viewport to create it${whiteboxSnapEnabled ? ` on the ${whiteboxSnapStep}m grid` : ""}.`
+    );
+  };
+
+  const beginCylinderCreation = () => {
+    beginCreation(
+      {
+        kind: "create",
+        sourcePanelId: activePanelId,
+        target: {
+          kind: "cylinder-brush",
+          sideCount: 12
+        },
+        center: null
+      },
+      `Previewing a whitebox cylinder. Click in the viewport to create it${whiteboxSnapEnabled ? ` on the ${whiteboxSnapStep}m grid` : ""}.`
     );
   };
 
