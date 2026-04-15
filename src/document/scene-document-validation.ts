@@ -4919,24 +4919,6 @@ function validateProjectResources(
     validateProjectAsset(asset, path, diagnostics);
   }
 
-  for (const [dialogueKey, dialogue] of Object.entries(document.dialogues.dialogues)) {
-    const path = `dialogues.dialogues.${dialogueKey}`;
-
-    if (dialogue.id !== dialogueKey) {
-      diagnostics.push(
-        createDiagnostic(
-          "error",
-          "dialogue-id-mismatch",
-          "Dialogue ids must match their registry key.",
-          `${path}.id`
-        )
-      );
-    }
-
-    registerAuthoredId(dialogue.id, path, seenIds, diagnostics);
-    validateProjectDialogue(dialogue, path, seenIds, diagnostics);
-  }
-
   for (const [sequenceKey, sequence] of Object.entries(document.sequences.sequences)) {
     const path = `sequences.sequences.${sequenceKey}`;
 
@@ -5205,24 +5187,6 @@ export function validateSceneDocument(
 
     registerAuthoredId(asset.id, path, seenIds, diagnostics);
     validateProjectAsset(asset, path, diagnostics);
-  }
-
-  for (const [dialogueKey, dialogue] of Object.entries(document.dialogues.dialogues)) {
-    const path = `dialogues.dialogues.${dialogueKey}`;
-
-    if (dialogue.id !== dialogueKey) {
-      diagnostics.push(
-        createDiagnostic(
-          "error",
-          "dialogue-id-mismatch",
-          "Dialogue ids must match their registry key.",
-          `${path}.id`
-        )
-      );
-    }
-
-    registerAuthoredId(dialogue.id, path, seenIds, diagnostics);
-    validateProjectDialogue(dialogue, path, seenIds, diagnostics);
   }
 
   for (const [sequenceKey, sequence] of Object.entries(document.sequences.sequences)) {
