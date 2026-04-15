@@ -17346,53 +17346,78 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
                       <div className="form-section">
                         <div className="label">Dialogue</div>
-                        <div className="stat-card">
-                          <div className="value">
-                            {selectedNpc.dialogueId === null
-                              ? "Unassigned"
-                              : selectedNpcDialogue?.title ?? "Missing Dialogue"}
-                          </div>
-                          <div className="material-summary">
-                            {selectedNpc.dialogueId === null
-                              ? "Assign a project dialogue to let this NPC open a conversation directly on click."
-                              : selectedNpcDialogue === null
-                                ? `This NPC references ${selectedNpc.dialogueId}, but the dialogue resource is missing.`
-                                : `${selectedNpcDialogue.lines.length} line${selectedNpcDialogue.lines.length === 1 ? "" : "s"} in this project dialogue.`}
-                          </div>
-                        </div>
-                        <label className="form-field">
-                          <span className="label">Dialogue</span>
-                          <select
-                            data-testid="npc-dialogue"
-                            className="select-input"
-                            value={npcDialogueIdDraft}
-                            onChange={(event) => {
-                              const nextDialogueId =
-                                event.currentTarget.value.trim();
-                              setNpcDialogueIdDraft(nextDialogueId);
-                              scheduleDraftCommit(() =>
-                                applyNpcChange({
-                                  dialogueId:
-                                    nextDialogueId.length === 0
-                                      ? null
-                                      : nextDialogueId
-                                })
-                              );
-                            }}
-                          >
-                            <option value="">— none —</option>
-                            {projectDialogueList.map((dialogue) => (
-                              <option key={dialogue.id} value={dialogue.id}>
-                                {dialogue.title}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                        <div className="material-summary">
-                          This uses the same project dialogue library and
-                          runtime dialogue-start path as existing interaction
-                          links.
-                        </div>
+                        <NpcDialoguesPanel
+                          dialogues={selectedNpc.dialogues}
+                          defaultDialogueId={selectedNpc.defaultDialogueId}
+                          selectedDialogueId={selectedNpcDialogueId}
+                          onSelectDialogue={setSelectedNpcDialogueId}
+                          onSetDefaultDialogueId={(dialogueId) =>
+                            updateSelectedNpcDialogues(
+                              "Set NPC default dialogue",
+                              "Updated NPC default dialogue.",
+                              (dialogues) => ({
+                                dialogues,
+                                defaultDialogueId: dialogueId
+                              })
+                            )
+                          }
+                          onAddDialogue={handleAddNpcDialogue}
+                          onDeleteDialogue={handleDeleteNpcDialogue}
+                          onSetDialogueTitle={(dialogueId, title) =>
+                            updateNpcDialogue(
+                              dialogueId,
+                              "Rename NPC dialogue",
+                              "Updated NPC dialogue title.",
+                              (dialogue) => {
+                                dialogue.title = title.trim() || "Untitled Dialogue";
+                              }
+                            )
+                          }
+                          onAddDialogueLine={(dialogueId) =>
+                            updateNpcDialogue(
+                              dialogueId,
+                              "Add NPC dialogue line",
+                              "Added NPC dialogue line.",
+                              (dialogue) => {
+                                dialogue.lines.push(createProjectDialogueLine());
+                              }
+                            )
+                          }
+                          onDeleteDialogueLine={(dialogueId, lineId) =>
+                            updateNpcDialogue(
+                              dialogueId,
+                              "Delete NPC dialogue line",
+                              "Deleted NPC dialogue line.",
+                              (dialogue) => {
+                                dialogue.lines = dialogue.lines.filter(
+                                  (line) => line.id !== lineId
+                                );
+                              }
+                            )
+                          }
+                          onSetDialogueLineSpeaker={(dialogueId, lineId, speakerName) =>
+                            updateNpcDialogueLine(
+                              dialogueId,
+                              lineId,
+                              "Set NPC dialogue speaker",
+                              "Updated NPC dialogue speaker.",
+                              (line) => {
+                                line.speakerName = speakerName?.trim() || null;
+                              }
+                            )
+                          }
+                          onSetDialogueLineText={(dialogueId, lineId, text) =>
+                            updateNpcDialogueLine(
+                              dialogueId,
+                              lineId,
+                              "Set NPC dialogue line text",
+                              "Updated NPC dialogue line text.",
+                              (line) => {
+                                line.text = text.trim() || "...";
+                              }
+                            )
+                          }
+                        />
                       </div>
 
                       <div className="form-section">
