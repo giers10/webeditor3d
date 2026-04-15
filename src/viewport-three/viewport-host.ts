@@ -1626,11 +1626,17 @@ export class ViewportHost {
     session: ActiveTransformSession
   ): TransformAxis {
     if (session.target.kind === "brushFace") {
-      return getBoxBrushFaceAxis(session.target.faceId);
+      const previewBrush = this.createPreviewBrushForSession(session);
+      return previewBrush === null
+        ? "y"
+        : getBrushFaceAxis(previewBrush, session.target.faceId);
     }
 
     if (session.target.kind === "brushEdge") {
-      return getBoxBrushEdgeAxis(session.target.edgeId);
+      const previewBrush = this.createPreviewBrushForSession(session);
+      return previewBrush === null
+        ? "y"
+        : getBrushEdgeAxis(previewBrush, session.target.edgeId);
     }
 
     if (
@@ -1649,21 +1655,16 @@ export class ViewportHost {
 
       if (previewBrush !== null) {
         if (session.target.kind === "brushFace") {
-          return getBoxBrushFaceWorldCenter(
-            previewBrush,
-            session.target.faceId
-          );
+          return getBrushFaceWorldCenter(previewBrush, session.target.faceId);
         }
 
         if (session.target.kind === "brushEdge") {
-          return getBoxBrushEdgeWorldSegment(
-            previewBrush,
-            session.target.edgeId
-          ).center;
+          return getBrushEdgeWorldSegment(previewBrush, session.target.edgeId)
+            .center;
         }
 
         if (session.target.kind === "brushVertex") {
-          return getBoxBrushVertexWorldPosition(
+          return getBrushVertexWorldPosition(
             previewBrush,
             session.target.vertexId
           );
@@ -1685,7 +1686,7 @@ export class ViewportHost {
 
   private createPreviewBrushForSession(
     session: ActiveTransformSession
-  ): BoxBrush | null {
+  ): Brush | null {
     if (session.preview.kind !== "brush") {
       return null;
     }
@@ -1701,12 +1702,11 @@ export class ViewportHost {
 
     const currentBrush = this.currentDocument?.brushes[session.target.brushId];
 
-    if (currentBrush === undefined || currentBrush.kind !== "box") {
+    if (currentBrush === undefined) {
       return null;
     }
 
-    return {
-      ...currentBrush,
+    return updateBrush(currentBrush, {
       center: {
         ...session.preview.center
       },
@@ -1716,8 +1716,8 @@ export class ViewportHost {
       size: {
         ...session.preview.size
       },
-      geometry: cloneBoxBrushGeometry(session.preview.geometry)
-    };
+      geometry: cloneBrushGeometry(session.preview.geometry)
+    });
   }
 
   private clearTransformGizmo() {
