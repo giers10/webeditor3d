@@ -10,6 +10,9 @@ import {
   type Brush,
   type BrushGeometry,
   type BrushKind,
+  type BoxBrushGeometry,
+  type RadialPrismBrushGeometry,
+  type WedgeBrushGeometry,
   type WhiteboxEdgeId,
   type WhiteboxFaceId,
   type WhiteboxVertexId
@@ -259,7 +262,7 @@ function createBrushSnapshotFromTarget(
         center: target.initialCenter,
         rotationDegrees: target.initialRotationDegrees,
         size: target.initialSize,
-        geometry: target.initialGeometry as Parameters<typeof createBoxBrush>[0]["geometry"]
+        geometry: target.initialGeometry as BoxBrushGeometry
       });
     case "wedge":
       return createWedgeBrush({
@@ -267,7 +270,7 @@ function createBrushSnapshotFromTarget(
         center: target.initialCenter,
         rotationDegrees: target.initialRotationDegrees,
         size: target.initialSize,
-        geometry: target.initialGeometry as Parameters<typeof createWedgeBrush>[0]["geometry"]
+        geometry: target.initialGeometry as WedgeBrushGeometry
       });
     case "radialPrism":
       return createRadialPrismBrush({
@@ -276,10 +279,7 @@ function createBrushSnapshotFromTarget(
         rotationDegrees: target.initialRotationDegrees,
         size: target.initialSize,
         sideCount: target.sideCount,
-        geometry:
-          target.initialGeometry as Parameters<
-            typeof createRadialPrismBrush
-          >[0]["geometry"]
+        geometry: target.initialGeometry as RadialPrismBrushGeometry
       });
   }
 }
