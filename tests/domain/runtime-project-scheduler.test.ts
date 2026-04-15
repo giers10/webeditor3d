@@ -181,14 +181,6 @@ describe("runtime project scheduler", () => {
         {
           stepClass: "held",
           type: "controlEffect",
-          effect: createSetActorPresenceControlEffect({
-            target: actorTarget,
-            active: true
-          })
-        },
-        {
-          stepClass: "held",
-          type: "controlEffect",
           effect: createPlayActorAnimationControlEffect({
             target: actorTarget,
             clipName: "Wave",
@@ -204,10 +196,7 @@ describe("runtime project scheduler", () => {
       startHour: 8,
       endHour: 16,
       sequenceId: "sequence-vendor-open",
-      effect: createSetActorPresenceControlEffect({
-        target: actorTarget,
-        active: false
-      })
+      effects: []
     });
 
     const resolved = resolveRuntimeProjectScheduleState({
