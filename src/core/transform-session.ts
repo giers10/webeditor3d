@@ -1157,6 +1157,8 @@ export function getTransformTargetLabel(target: TransformTarget): string {
   switch (target.kind) {
     case "brush":
       return getBrushKindLabel(createBrushSnapshotFromTarget(target));
+    case "brushes":
+      return `${target.items.length} Whitebox Solid${target.items.length === 1 ? "" : "s"}`;
     case "brushFace":
       return `Whitebox Face (${getBrushFaceLabel(createBrushSnapshotFromTarget(target), target.faceId)})`;
     case "brushEdge":
@@ -1165,10 +1167,14 @@ export function getTransformTargetLabel(target: TransformTarget): string {
       return `Whitebox Vertex (${getBrushVertexLabel(createBrushSnapshotFromTarget(target), target.vertexId)})`;
     case "modelInstance":
       return getModelInstanceKindLabel();
+    case "modelInstances":
+      return `${target.items.length} ${getModelInstanceKindLabel()}${target.items.length === 1 ? "" : "s"}`;
     case "pathPoint":
       return "Path Point";
     case "entity":
       return getEntityKindLabel(target.entityKind);
+    case "entities":
+      return `${target.items.length} Entit${target.items.length === 1 ? "y" : "ies"}`;
   }
 }
 
@@ -1177,6 +1183,7 @@ export function getSupportedTransformOperations(
 ): TransformOperation[] {
   switch (target.kind) {
     case "brush":
+    case "brushes":
     case "brushFace":
     case "brushEdge":
       return ["translate", "rotate", "scale"];
@@ -1184,11 +1191,18 @@ export function getSupportedTransformOperations(
     case "pathPoint":
       return ["translate"];
     case "modelInstance":
+    case "modelInstances":
       return ["translate", "rotate", "scale"];
     case "entity":
       return target.initialRotation.kind === "none"
         ? ["translate"]
         : ["translate", "rotate"];
+    case "entities":
+      return target.items.every(
+        (item) => getSupportedTransformOperations(item).includes("rotate")
+      )
+        ? ["translate", "rotate"]
+        : ["translate"];
   }
 }
 
@@ -1205,10 +1219,13 @@ export function supportsTransformAxisConstraint(
 ): boolean {
   const brushTarget =
     session.target.kind === "brush" ||
+    session.target.kind === "brushes" ||
     session.target.kind === "brushFace" ||
     session.target.kind === "brushEdge" ||
     session.target.kind === "brushVertex"
-      ? createBrushSnapshotFromTarget(session.target)
+      ? session.target.kind === "brushes"
+        ? createBrushSnapshotFromTarget(session.target.items[0])
+        : createBrushSnapshotFromTarget(session.target)
       : null;
 
   switch (session.operation) {
@@ -1217,7 +1234,10 @@ export function supportsTransformAxisConstraint(
     case "scale":
       if (
         session.target.kind === "modelInstance" ||
+        session.target.kind === "modelInstances" ||
         session.target.kind === "brush"
+        ||
+        session.target.kind === "brushes"
       ) {
         return true;
       }
@@ -1254,6 +1274,16 @@ export function supportsTransformAxisConstraint(
         session.target.initialRotation.kind === "yaw"
       ) {
         return axis === "y";
+      }
+
+      if (session.target.kind === "entities") {
+        return session.target.items.every((item) =>
+          item.initialRotation.kind === "none"
+            ? false
+            : item.initialRotation.kind === "yaw"
+              ? axis === "y"
+              : true
+        );
       }
 
       if (session.target.kind === "brushFace") {
@@ -1294,10 +1324,16 @@ export function supportsLocalTransformAxisConstraint(
 
   switch (session.target.kind) {
     case "brush":
+    case "brushes":
     case "modelInstance":
+    case "modelInstances":
       return true;
     case "entity":
       return session.target.initialRotation.kind !== "none";
+    case "entities":
+      return session.target.items.every(
+        (item) => item.initialRotation.kind !== "none"
+      );
     case "brushFace":
     case "brushEdge":
     case "brushVertex":
