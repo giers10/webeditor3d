@@ -330,6 +330,60 @@ function readOptionalDialogueResourceId(
   return dialogueId.length === 0 ? null : dialogueId;
 }
 
+function readNpcDialogues(
+  value: unknown,
+  label: string,
+  legacyProjectDialogues: ProjectDialogueLibrary
+): ProjectDialogue[] {
+  if (value === undefined) {
+    return [];
+  }
+
+  if (!Array.isArray(value)) {
+    throw new Error(`${label} must be an array.`);
+  }
+
+  return value.map((dialogueValue, dialogueIndex) => {
+    if (!isRecord(dialogueValue)) {
+      throw new Error(`${label}.${dialogueIndex} must be an object.`);
+    }
+
+    const linesValue = dialogueValue.lines;
+
+    if (!Array.isArray(linesValue)) {
+      throw new Error(`${label}.${dialogueIndex}.lines must be an array.`);
+    }
+
+    return createProjectDialogue({
+      id: expectString(dialogueValue.id, `${label}.${dialogueIndex}.id`),
+      title: expectString(dialogueValue.title, `${label}.${dialogueIndex}.title`),
+      lines: linesValue.map((lineValue, lineIndex) => {
+        if (!isRecord(lineValue)) {
+          throw new Error(`${label}.${dialogueIndex}.lines.${lineIndex} must be an object.`);
+        }
+
+        return createProjectDialogueLine({
+          id: expectString(
+            lineValue.id,
+            `${label}.${dialogueIndex}.lines.${lineIndex}.id`
+          ),
+          speakerName:
+            lineValue.speakerName === undefined || lineValue.speakerName === null
+              ? null
+              : expectString(
+                  lineValue.speakerName,
+                  `${label}.${dialogueIndex}.lines.${lineIndex}.speakerName`
+                ),
+          text: expectString(
+            lineValue.text,
+            `${label}.${dialogueIndex}.lines.${lineIndex}.text`
+          )
+        });
+      })
+    });
+  });
+}
+
 function readSceneLoadingScreen(
   value: unknown,
   label: string,
