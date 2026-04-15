@@ -350,6 +350,8 @@ export function cloneTransformTarget(target: TransformTarget): TransformTarget {
         brushId: target.brushId,
         brushKind: target.brushKind,
         sideCount: target.sideCount,
+        majorSegmentCount: target.majorSegmentCount,
+        tubeSegmentCount: target.tubeSegmentCount,
         initialCenter: cloneVec3(target.initialCenter),
         initialRotationDegrees: cloneVec3(target.initialRotationDegrees),
         initialSize: cloneVec3(target.initialSize),
@@ -361,6 +363,8 @@ export function cloneTransformTarget(target: TransformTarget): TransformTarget {
         brushId: target.brushId,
         brushKind: target.brushKind,
         sideCount: target.sideCount,
+        majorSegmentCount: target.majorSegmentCount,
+        tubeSegmentCount: target.tubeSegmentCount,
         faceId: target.faceId,
         initialCenter: cloneVec3(target.initialCenter),
         initialRotationDegrees: cloneVec3(target.initialRotationDegrees),
@@ -373,6 +377,8 @@ export function cloneTransformTarget(target: TransformTarget): TransformTarget {
         brushId: target.brushId,
         brushKind: target.brushKind,
         sideCount: target.sideCount,
+        majorSegmentCount: target.majorSegmentCount,
+        tubeSegmentCount: target.tubeSegmentCount,
         edgeId: target.edgeId,
         initialCenter: cloneVec3(target.initialCenter),
         initialRotationDegrees: cloneVec3(target.initialRotationDegrees),
@@ -385,6 +391,8 @@ export function cloneTransformTarget(target: TransformTarget): TransformTarget {
         brushId: target.brushId,
         brushKind: target.brushKind,
         sideCount: target.sideCount,
+        majorSegmentCount: target.majorSegmentCount,
+        tubeSegmentCount: target.tubeSegmentCount,
         vertexId: target.vertexId,
         initialCenter: cloneVec3(target.initialCenter),
         initialRotationDegrees: cloneVec3(target.initialRotationDegrees),
@@ -512,6 +520,8 @@ function areTransformTargetsEqual(
         left.brushId === right.brushId &&
         left.brushKind === right.brushKind &&
         left.sideCount === right.sideCount &&
+        left.majorSegmentCount === right.majorSegmentCount &&
+        left.tubeSegmentCount === right.tubeSegmentCount &&
         areVec3Equal(left.initialCenter, right.initialCenter) &&
         areVec3Equal(
           left.initialRotationDegrees,
@@ -526,6 +536,8 @@ function areTransformTargetsEqual(
         left.brushId === right.brushId &&
         left.brushKind === right.brushKind &&
         left.sideCount === right.sideCount &&
+        left.majorSegmentCount === right.majorSegmentCount &&
+        left.tubeSegmentCount === right.tubeSegmentCount &&
         left.faceId === right.faceId &&
         areVec3Equal(left.initialCenter, right.initialCenter) &&
         areVec3Equal(
@@ -541,6 +553,8 @@ function areTransformTargetsEqual(
         left.brushId === right.brushId &&
         left.brushKind === right.brushKind &&
         left.sideCount === right.sideCount &&
+        left.majorSegmentCount === right.majorSegmentCount &&
+        left.tubeSegmentCount === right.tubeSegmentCount &&
         left.edgeId === right.edgeId &&
         areVec3Equal(left.initialCenter, right.initialCenter) &&
         areVec3Equal(
@@ -556,6 +570,8 @@ function areTransformTargetsEqual(
         left.brushId === right.brushId &&
         left.brushKind === right.brushKind &&
         left.sideCount === right.sideCount &&
+        left.majorSegmentCount === right.majorSegmentCount &&
+        left.tubeSegmentCount === right.tubeSegmentCount &&
         left.vertexId === right.vertexId &&
         areVec3Equal(left.initialCenter, right.initialCenter) &&
         areVec3Equal(
