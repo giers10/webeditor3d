@@ -621,6 +621,11 @@ export function ProjectSequencerPane({
     selectedRoutine?.sequenceId === null || selectedRoutine?.sequenceId === undefined
       ? null
       : sequences.sequences[selectedRoutine.sequenceId] ?? null;
+  const selectableSequences =
+    selectedAttachedSequence === null ||
+    compatibleHeldSequences.some((sequence) => sequence.id === selectedAttachedSequence.id)
+      ? compatibleHeldSequences
+      : [selectedAttachedSequence, ...compatibleHeldSequences];
   const hourTicks = Array.from({ length: HOURS_PER_DAY }, (_, hour) => hour);
 
   return (
