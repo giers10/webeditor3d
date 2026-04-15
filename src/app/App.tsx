@@ -17244,17 +17244,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               }
                             )
                           }
-                          onSetDialogueLineSpeaker={(dialogueId, lineId, speakerName) =>
-                            updateNpcDialogueLine(
-                              dialogueId,
-                              lineId,
-                              "Set NPC dialogue speaker",
-                              "Updated NPC dialogue speaker.",
-                              (line) => {
-                                line.speakerName = speakerName?.trim() || null;
-                              }
-                            )
-                          }
                           onSetDialogueLineText={(dialogueId, lineId, text) =>
                             updateNpcDialogueLine(
                               dialogueId,
