@@ -1942,12 +1942,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
       : (editorState.document.materials[selectedBrushSharedMaterialId] ?? null);
   const selectedBrushHasMixedFaceMaterials =
     selectedBrush !== null && selectedBrushSharedMaterialId === undefined;
+  const selectedBrushFaceIds =
+    selectedBrush === null ? [] : getBrushFaceIds(selectedBrush);
   const selectedBrushHasMixedFaceUvs =
     selectedBrush !== null
-      ? BOX_FACE_IDS.slice(1).some(
+      ? selectedBrushFaceIds.slice(1).some(
           (faceId) =>
             !areFaceUvStatesEqual(
-              selectedBrush.faces[BOX_FACE_IDS[0]].uv,
+              selectedBrush.faces[selectedBrushFaceIds[0]].uv,
               selectedBrush.faces[faceId].uv
             )
         )
@@ -1980,7 +1982,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
       ? "Whole Solid"
       : selectedFaceId === null
         ? null
-        : BOX_FACE_LABELS[selectedFaceId];
+        : selectedBrush === null
+          ? selectedFaceId
+          : getBrushFaceLabel(selectedBrush, selectedFaceId);
   const materialInspectorMaterialSummary =
     materialInspectorScope === "brush" && selectedBrushHasMixedFaceMaterials
       ? "Mixed across faces"
@@ -1990,7 +1994,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
           : materialInspectorMaterialId ?? "Fallback face color");
   const materialInspectorUvState =
     materialInspectorScope === "brush" && selectedBrush !== null
-      ? selectedBrush.faces[BOX_FACE_IDS[0]].uv
+      ? selectedBrush.faces[selectedBrushFaceIds[0]].uv
       : materialInspectorScope === "face"
         ? selectedFace?.uv ?? null
         : null;
