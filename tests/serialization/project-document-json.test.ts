@@ -189,6 +189,11 @@ describe("project document JSON", () => {
     const document = createEmptyProjectDocument({
       name: "Legacy Smooth Path Project"
     });
+    const npc = createNpcEntity({
+      id: "entity-npc-guard",
+      actorId: "actor-guard"
+    });
+    document.scenes[document.activeSceneId]!.entities[npc.id] = npc;
     document.sequences.sequences["sequence-patrol"] = createProjectSequence({
       id: "sequence-patrol",
       title: "Patrol",
