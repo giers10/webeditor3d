@@ -4705,7 +4705,6 @@ export class ViewportHost {
     const face = brush.faces[faceId];
     const selectedFace = highlightState === "selected";
     const hoveredFace = highlightState === "hovered";
-    const emphasizedFace = selectedFace || hoveredFace;
     const whiteboxBevelSettings = this.currentWorld?.advancedRendering;
 
     if (brush.volume.mode === "water") {
