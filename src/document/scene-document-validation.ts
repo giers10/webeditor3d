@@ -49,7 +49,11 @@ import { type InteractionLink } from "../interactions/interaction-links";
 import {
   MAX_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT,
   hasPositiveBoxSize,
-  isBoxBrushVolumeMode
+  isBoxBrushVolumeMode,
+  normalizeConeSideCount,
+  normalizeRadialPrismSideCount,
+  normalizeTorusMajorSegmentCount,
+  normalizeTorusTubeSegmentCount
 } from "./brushes";
 import { getBrushFaceIds, getBrushVertexIds } from "../geometry/whitebox-topology";
 import {
