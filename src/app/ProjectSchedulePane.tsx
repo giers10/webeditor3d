@@ -38,6 +38,10 @@ interface ProjectSequencerPaneProps {
     entityId: string;
     label: string;
   }>;
+  sceneTransitionTargetOptions: Array<{
+    targetKey: string;
+    label: string;
+  }>;
   visibilityTargetOptions: Array<{
     targetKey: string;
     label: string;
@@ -91,6 +95,7 @@ interface ProjectSequencerPaneProps {
   onAddImpulseControlStep(sequenceId: string, targetKey: string): void;
   onAddDialogueStep(sequenceId: string, dialogueId: string): void;
   onAddTeleportStep(sequenceId: string, targetEntityId: string): void;
+  onAddSceneTransitionStep(sequenceId: string, targetKey: string): void;
   onAddVisibilityStep(sequenceId: string, targetKey: string): void;
   onAddPlayAnimationStep(sequenceId: string, targetKey: string): void;
   onAddStopAnimationStep(sequenceId: string, targetKey: string): void;
@@ -136,6 +141,11 @@ interface ProjectSequencerPaneProps {
     sequenceId: string,
     stepIndex: number,
     targetEntityId: string
+  ): void;
+  onSetSceneTransitionStepTarget(
+    sequenceId: string,
+    stepIndex: number,
+    targetKey: string
   ): void;
   onSetVisibilityStepTarget(
     sequenceId: string,
@@ -321,6 +331,7 @@ export function ProjectSequencerPane({
   onSetMode,
   targetOptions,
   teleportTargetOptions,
+  sceneTransitionTargetOptions,
   visibilityTargetOptions,
   modelAnimationTargetOptions,
   soundTargetOptions,
@@ -359,6 +370,7 @@ export function ProjectSequencerPane({
   onAddImpulseControlStep,
   onAddDialogueStep,
   onAddTeleportStep,
+  onAddSceneTransitionStep,
   onAddVisibilityStep,
   onAddPlayAnimationStep,
   onAddStopAnimationStep,
@@ -373,6 +385,7 @@ export function ProjectSequencerPane({
   onSetControlStepAnimationLoop,
   onSetDialogueStepDialogueId,
   onSetTeleportStepTarget,
+  onSetSceneTransitionStepTarget,
   onSetVisibilityStepTarget,
   onSetVisibilityStepMode
 }: ProjectSequencerPaneProps) {
@@ -414,7 +427,11 @@ export function ProjectSequencerPane({
   const compatibleHeldSequences =
     selectedRoutine === null
       ? []
-      : getProjectSequences(sequences).filter((sequence) => {
+      : selectedRoutine.target.kind === "global"
+        ? getProjectSequences(sequences).filter(
+            (sequence) => getProjectSequenceImpulseSteps(sequence).length > 0
+          )
+        : getProjectSequences(sequences).filter((sequence) => {
           const heldSteps = getProjectSequenceHeldSteps(sequence);
 
           if (heldSteps.length === 0) {
@@ -493,6 +510,7 @@ export function ProjectSequencerPane({
               dialogues={dialogues}
               targetOptions={targetOptions}
               teleportTargetOptions={teleportTargetOptions}
+              sceneTransitionTargetOptions={sceneTransitionTargetOptions}
               visibilityTargetOptions={visibilityTargetOptions}
               modelAnimationTargetOptions={modelAnimationTargetOptions}
               soundTargetOptions={soundTargetOptions}
@@ -505,6 +523,7 @@ export function ProjectSequencerPane({
               onAddImpulseControlStep={onAddImpulseControlStep}
               onAddDialogueStep={onAddDialogueStep}
               onAddTeleportStep={onAddTeleportStep}
+              onAddSceneTransitionStep={onAddSceneTransitionStep}
               onAddVisibilityStep={onAddVisibilityStep}
               onAddPlayAnimationStep={onAddPlayAnimationStep}
               onAddStopAnimationStep={onAddStopAnimationStep}
@@ -519,6 +538,7 @@ export function ProjectSequencerPane({
               onSetControlStepAnimationLoop={onSetControlStepAnimationLoop}
               onSetDialogueStepDialogueId={onSetDialogueStepDialogueId}
               onSetTeleportStepTarget={onSetTeleportStepTarget}
+              onSetSceneTransitionStepTarget={onSetSceneTransitionStepTarget}
               onSetVisibilityStepTarget={onSetVisibilityStepTarget}
               onSetVisibilityStepMode={onSetVisibilityStepMode}
             />
