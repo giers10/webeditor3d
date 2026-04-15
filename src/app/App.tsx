@@ -390,7 +390,8 @@ import {
   getProjectScheduleTargetOptionByKey,
   listProjectScheduleEffectOptions,
   listProjectScheduleTargetOptions,
-  type ProjectScheduleEffectOptionId
+  type ProjectScheduleEffectOptionId,
+  type ProjectScheduleTargetOption
 } from "../scheduler/project-schedule-control-options";
 import {
   loadProjectPackage,
