@@ -4726,12 +4726,19 @@ export class ViewportHost {
     const whiteboxBevelSettings = this.currentWorld?.advancedRendering;
 
     if (brush.volume.mode === "water") {
+      if (brush.kind !== "box") {
+        throw new Error(
+          `Only whitebox boxes support water volume rendering (${brush.id}).`
+        );
+      }
+
       const quality = volumeRenderPaths.water === "quality";
       const baseOpacity = Math.max(
         0.08,
         Math.min(1, brush.volume.water.surfaceOpacity)
       );
-      const opacityBoost = faceId === "posY" ? 0.16 : 0;
+      const isTopFace = faceId === "posY";
+      const opacityBoost = isTopFace ? 0.16 : 0;
       const opacity = Math.min(
         1,
         baseOpacity +
@@ -4748,7 +4755,7 @@ export class ViewportHost {
         opacity,
         quality,
         wireframe: this.displayMode === "wireframe",
-        isTopFace: faceId === "posY",
+        isTopFace,
         time: this.volumeTime,
         halfSize: {
           x: brush.size.x * 0.5,
@@ -4757,7 +4764,7 @@ export class ViewportHost {
         contactPatches,
         reflection: {
           texture: null,
-          enabled: faceId === "posY"
+          enabled: isTopFace
         }
       });
 
@@ -4766,7 +4773,7 @@ export class ViewportHost {
       }
 
       if (
-        faceId === "posY" &&
+        isTopFace &&
         waterMaterial.reflectionMatrixUniform !== null &&
         waterMaterial.reflectionEnabledUniform !== null
       ) {
