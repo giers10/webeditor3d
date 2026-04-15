@@ -2357,6 +2357,20 @@ export class ViewportHost {
     axisConstraintSpace: TransformAxisSpace
   ) {
     if (
+      session.target.kind === "brushes" ||
+      session.target.kind === "entities" ||
+      session.target.kind === "modelInstances"
+    ) {
+      return this.buildBatchTranslatedPreview(
+        session,
+        origin,
+        current,
+        axisConstraint,
+        axisConstraintSpace
+      );
+    }
+
+    if (
       session.target.kind === "brushFace" ||
       session.target.kind === "brushEdge" ||
       session.target.kind === "brushVertex"
@@ -2527,6 +2541,20 @@ export class ViewportHost {
     axisConstraint: TransformAxis | null,
     axisConstraintSpace: TransformAxisSpace
   ) {
+    if (
+      session.target.kind === "brushes" ||
+      session.target.kind === "entities" ||
+      session.target.kind === "modelInstances"
+    ) {
+      return this.buildBatchRotatedPreview(
+        session,
+        origin,
+        current,
+        axisConstraint,
+        axisConstraintSpace
+      );
+    }
+
     if (
       session.target.kind === "brushFace" ||
       session.target.kind === "brushEdge"
@@ -2729,6 +2757,18 @@ export class ViewportHost {
     current: { x: number; y: number },
     axisConstraint: TransformAxis | null
   ) {
+    if (
+      session.target.kind === "brushes" ||
+      session.target.kind === "modelInstances"
+    ) {
+      return this.buildBatchScaledPreview(
+        session,
+        origin,
+        current,
+        axisConstraint
+      );
+    }
+
     if (
       session.target.kind === "brushFace" ||
       session.target.kind === "brushEdge"
