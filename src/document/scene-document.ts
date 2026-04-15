@@ -24,15 +24,12 @@ import {
   type ProjectScheduler
 } from "../scheduler/project-scheduler";
 import {
-  createEmptyProjectDialogueLibrary,
-  type ProjectDialogueLibrary
-} from "../dialogues/project-dialogues";
-import {
   createEmptyProjectSequenceLibrary,
   type ProjectSequenceLibrary
 } from "../sequencer/project-sequences";
 
-export const SCENE_DOCUMENT_VERSION = 61 as const;
+export const SCENE_DOCUMENT_VERSION = 62 as const;
+export const NPC_ONLY_DIALOGUES_SCENE_DOCUMENT_VERSION = 62 as const;
 export const WHITEBOX_EXPANDED_PRIMITIVES_SCENE_DOCUMENT_VERSION = 61 as const;
 export const WHITEBOX_PRIMITIVES_SCENE_DOCUMENT_VERSION = 60 as const;
 export const STARTER_PBR_MATERIAL_LIBRARY_SCENE_DOCUMENT_VERSION =
@@ -168,7 +165,6 @@ export interface ProjectDocument {
   name: string;
   time: ProjectTimeSettings;
   scheduler: ProjectScheduler;
-  dialogues: ProjectDialogueLibrary;
   sequences: ProjectSequenceLibrary;
   activeSceneId: string;
   scenes: Record<string, ProjectScene>;
@@ -182,7 +178,6 @@ export interface SceneDocument {
   name: string;
   time: ProjectTimeSettings;
   scheduler: ProjectScheduler;
-  dialogues: ProjectDialogueLibrary;
   sequences: ProjectSequenceLibrary;
   world: WorldSettings;
   materials: Record<string, MaterialDef>;
@@ -205,7 +200,6 @@ export function createEmptySceneDocument(
     name: overrides.name ?? "Untitled Scene",
     time: overrides.time ?? createDefaultProjectTimeSettings(),
     scheduler: createEmptyProjectScheduler(),
-    dialogues: createEmptyProjectDialogueLibrary(),
     sequences: createEmptyProjectSequenceLibrary(),
     world: overrides.world ?? createDefaultWorldSettings(),
     materials: cloneMaterialRegistry(
@@ -254,7 +248,6 @@ export function createEmptyProjectDocument(
       | "name"
       | "time"
       | "scheduler"
-      | "dialogues"
       | "sequences"
       | "activeSceneId"
       | "materials"
@@ -279,7 +272,6 @@ export function createEmptyProjectDocument(
     name: overrides.name ?? DEFAULT_PROJECT_NAME,
     time: overrides.time ?? createDefaultProjectTimeSettings(),
     scheduler: overrides.scheduler ?? createEmptyProjectScheduler(),
-    dialogues: overrides.dialogues ?? createEmptyProjectDialogueLibrary(),
     sequences: overrides.sequences ?? createEmptyProjectSequenceLibrary(),
     activeSceneId: initialScene.id,
     scenes: {
@@ -317,7 +309,6 @@ export function createSceneDocumentFromProject(
     name: scene.name,
     time: projectDocument.time,
     scheduler: projectDocument.scheduler,
-    dialogues: projectDocument.dialogues,
     sequences: projectDocument.sequences,
     world: scene.world,
     materials: projectDocument.materials,
@@ -341,7 +332,6 @@ export function createProjectDocumentFromSceneDocument(
     name: projectName,
     time: sceneDocument.time,
     scheduler: sceneDocument.scheduler,
-    dialogues: sceneDocument.dialogues,
     sequences: sceneDocument.sequences,
     activeSceneId: sceneId,
     scenes: {
@@ -376,7 +366,6 @@ export function applySceneDocumentToProject(
     version: SCENE_DOCUMENT_VERSION,
     time: sceneDocument.time,
     scheduler: sceneDocument.scheduler,
-    dialogues: sceneDocument.dialogues,
     sequences: sceneDocument.sequences,
     materials: sceneDocument.materials,
     textures: sceneDocument.textures,
