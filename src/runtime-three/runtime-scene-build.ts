@@ -294,16 +294,6 @@ export interface RuntimeInteractable {
   interactionEnabled: boolean;
 }
 
-export interface RuntimeSceneExit {
-  entityId: string;
-  position: Vec3;
-  radius: number;
-  prompt: string;
-  interactionEnabled: boolean;
-  targetSceneId: string;
-  targetEntryEntityId: string;
-}
-
 export interface RuntimePointLight {
   entityId: string;
   enabled: boolean;
@@ -378,7 +368,6 @@ export interface RuntimeEntityCollection {
   triggerVolumes: RuntimeTriggerVolume[];
   teleportTargets: RuntimeTeleportTarget[];
   interactables: RuntimeInteractable[];
-  sceneExits: RuntimeSceneExit[];
 }
 
 export interface RuntimeSpawnPoint {
