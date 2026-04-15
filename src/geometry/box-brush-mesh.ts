@@ -3,7 +3,6 @@ import { BufferAttribute, BufferGeometry } from "three";
 import type { Vec2, Vec3 } from "../core/vector";
 import type {
   Brush,
-  BoxBrush,
   BoxEdgeId,
   BoxFaceId,
   BoxVertexId,
