@@ -2833,50 +2833,6 @@ function readNpcPresence(value: unknown, label: string): NpcPresence {
   }
 }
 
-function readSceneExitEntity(value: unknown, label: string): EntityInstance {
-  if (!isRecord(value)) {
-    throw new Error(`${label} must be an object.`);
-  }
-
-  const kind = expectLiteralString(value.kind, "sceneExit", `${label}.kind`);
-  const interactionEnabled =
-    value.interactionEnabled === undefined
-      ? expectBoolean(value.enabled, `${label}.enabled`)
-      : expectBoolean(value.interactionEnabled, `${label}.interactionEnabled`);
-  const entity = createSceneExitEntity({
-    id: expectString(value.id, `${label}.id`),
-    name: readOptionalEntityName(value.name, `${label}.name`),
-    visible: readOptionalBoolean(
-      value.visible,
-      `${label}.visible`,
-      DEFAULT_ENTITY_VISIBLE
-    ),
-    enabled:
-      value.interactionEnabled === undefined
-        ? DEFAULT_ENTITY_ENABLED
-        : readOptionalBoolean(
-            value.enabled,
-            `${label}.enabled`,
-            DEFAULT_ENTITY_ENABLED
-          ),
-    position: readVec3(value.position, `${label}.position`),
-    radius: expectPositiveFiniteNumber(value.radius, `${label}.radius`),
-    prompt: expectString(value.prompt, `${label}.prompt`),
-    interactionEnabled,
-    targetSceneId: expectString(value.targetSceneId, `${label}.targetSceneId`),
-    targetEntryEntityId: expectString(
-      value.targetEntryEntityId,
-      `${label}.targetEntryEntityId`
-    )
-  });
-
-  if (entity.kind !== kind) {
-    throw new Error(`${label}.kind must be sceneExit.`);
-  }
-
-  return entity;
-}
-
 function readEntityInstance(
   value: unknown,
   label: string,
@@ -2907,8 +2863,6 @@ function readEntityInstance(
       return readTeleportTargetEntity(value, label);
     case "interactable":
       return readInteractableEntity(value, label);
-    case "sceneExit":
-      return readSceneExitEntity(value, label);
     default:
       throw new Error(`${label}.kind must be a supported entity type.`);
   }
