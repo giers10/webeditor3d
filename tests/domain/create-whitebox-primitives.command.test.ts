@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 
+import { createCreateConeBrushCommand } from "../../src/commands/create-cone-brush-command";
 import { createEditorStore } from "../../src/app/editor-store";
 import { createCreateRadialPrismBrushCommand } from "../../src/commands/create-radial-prism-brush-command";
+import { createCreateTorusBrushCommand } from "../../src/commands/create-torus-brush-command";
 import { createCreateWedgeBrushCommand } from "../../src/commands/create-wedge-brush-command";
 
 describe("whitebox primitive creation commands", () => {
@@ -26,6 +28,11 @@ describe("whitebox primitive creation commands", () => {
     const brush = Object.values(store.getState().document.brushes)[0];
 
     expect(brush.kind).toBe("wedge");
+    expect(brush.rotationDegrees).toEqual({
+      x: 0,
+      y: 0,
+      z: 180
+    });
     expect(Object.keys(brush.faces)).toEqual([
       "bottom",
       "back",
@@ -63,5 +70,49 @@ describe("whitebox primitive creation commands", () => {
 
     expect(brush.sideCount).toBe(12);
     expect(Object.keys(brush.faces)).toHaveLength(14);
+  });
+
+  it("creates a cone brush as a capped 12-sided cone", () => {
+    const store = createEditorStore();
+
+    store.executeCommand(
+      createCreateConeBrushCommand({
+        sideCount: 12
+      })
+    );
+
+    const brush = Object.values(store.getState().document.brushes)[0];
+
+    expect(brush.kind).toBe("cone");
+
+    if (brush.kind !== "cone") {
+      throw new Error("Expected a cone brush.");
+    }
+
+    expect(brush.sideCount).toBe(12);
+    expect(Object.keys(brush.faces)).toHaveLength(13);
+  });
+
+  it("creates a torus brush with stable major and tube segments", () => {
+    const store = createEditorStore();
+
+    store.executeCommand(
+      createCreateTorusBrushCommand({
+        majorSegmentCount: 16,
+        tubeSegmentCount: 8
+      })
+    );
+
+    const brush = Object.values(store.getState().document.brushes)[0];
+
+    expect(brush.kind).toBe("torus");
+
+    if (brush.kind !== "torus") {
+      throw new Error("Expected a torus brush.");
+    }
+
+    expect(brush.majorSegmentCount).toBe(16);
+    expect(brush.tubeSegmentCount).toBe(8);
+    expect(Object.keys(brush.faces)).toHaveLength(128);
   });
 });
