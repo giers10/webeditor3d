@@ -31,9 +31,13 @@ import {
   getBrushEdgeLabel,
   getBrushFaceLabel,
   getBrushKindLabel,
-  getBrushVertexIds,
   getBrushVertexLabel
 } from "../geometry/whitebox-topology";
+import {
+  getBrushEdgeAxis,
+  getBrushEdgeScaleAxes,
+  getBrushFaceAxis
+} from "../geometry/whitebox-brush";
 
 export type TransformOperation = "translate" | "rotate" | "scale";
 export type TransformAxis = "x" | "y" | "z";
@@ -255,7 +259,7 @@ function createBrushSnapshotFromTarget(
         center: target.initialCenter,
         rotationDegrees: target.initialRotationDegrees,
         size: target.initialSize,
-        geometry: target.initialGeometry
+        geometry: target.initialGeometry as Parameters<typeof createBoxBrush>[0]["geometry"]
       });
     case "wedge":
       return createWedgeBrush({
@@ -263,7 +267,7 @@ function createBrushSnapshotFromTarget(
         center: target.initialCenter,
         rotationDegrees: target.initialRotationDegrees,
         size: target.initialSize,
-        geometry: target.initialGeometry
+        geometry: target.initialGeometry as Parameters<typeof createWedgeBrush>[0]["geometry"]
       });
     case "radialPrism":
       return createRadialPrismBrush({
@@ -272,7 +276,10 @@ function createBrushSnapshotFromTarget(
         rotationDegrees: target.initialRotationDegrees,
         size: target.initialSize,
         sideCount: target.sideCount,
-        geometry: target.initialGeometry
+        geometry:
+          target.initialGeometry as Parameters<
+            typeof createRadialPrismBrush
+          >[0]["geometry"]
       });
   }
 }
@@ -790,6 +797,14 @@ export function supportsTransformAxisConstraint(
   session: ActiveTransformSession,
   axis: TransformAxis
 ): boolean {
+  const brushTarget =
+    session.target.kind === "brush" ||
+    session.target.kind === "brushFace" ||
+    session.target.kind === "brushEdge" ||
+    session.target.kind === "brushVertex"
+      ? createBrushSnapshotFromTarget(session.target)
+      : null;
+
   switch (session.operation) {
     case "translate":
       return true;
@@ -809,26 +824,21 @@ export function supportsTransformAxisConstraint(
       }
 
       if (session.target.kind === "brushFace") {
-        const normalAxis =
-          session.target.faceId === "posX" || session.target.faceId === "negX"
-            ? "x"
-            : session.target.faceId === "posY" ||
-                session.target.faceId === "negY"
-              ? "y"
-              : "z";
-        return axis === normalAxis;
+        if (brushTarget === null) {
+          return false;
+        }
+
+        return axis === getBrushFaceAxis(brushTarget, session.target.faceId);
       }
 
       if (session.target.kind === "brushEdge") {
-        if (session.target.edgeId.startsWith("edgeX_")) {
-          return axis !== "x";
+        if (brushTarget === null) {
+          return false;
         }
 
-        if (session.target.edgeId.startsWith("edgeY_")) {
-          return axis !== "y";
-        }
-
-        return axis !== "z";
+        return getBrushEdgeScaleAxes(brushTarget, session.target.edgeId).includes(
+          axis
+        );
       }
 
       return false;
@@ -841,26 +851,19 @@ export function supportsTransformAxisConstraint(
       }
 
       if (session.target.kind === "brushFace") {
-        const normalAxis =
-          session.target.faceId === "posX" || session.target.faceId === "negX"
-            ? "x"
-            : session.target.faceId === "posY" ||
-                session.target.faceId === "negY"
-              ? "y"
-              : "z";
-        return axis === normalAxis;
+        if (brushTarget === null) {
+          return false;
+        }
+
+        return axis === getBrushFaceAxis(brushTarget, session.target.faceId);
       }
 
       if (session.target.kind === "brushEdge") {
-        if (session.target.edgeId.startsWith("edgeX_")) {
-          return axis === "x";
+        if (brushTarget === null) {
+          return false;
         }
 
-        if (session.target.edgeId.startsWith("edgeY_")) {
-          return axis === "y";
-        }
-
-        return axis === "z";
+        return axis === getBrushEdgeAxis(brushTarget, session.target.edgeId);
       }
 
       if (session.target.kind === "brushVertex") {
@@ -1200,7 +1203,8 @@ export function resolveTransformTarget(
       if (whiteboxSelectionMode !== "object") {
         return {
           target: null,
-          message: "Switch to Object mode to transform the whole whitebox box."
+          message:
+            "Switch to Object mode to transform the whole whitebox solid."
         };
       }
 
