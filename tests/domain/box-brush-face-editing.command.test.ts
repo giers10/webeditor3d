@@ -121,6 +121,10 @@ describe("box brush face editing commands", () => {
         materialId: "starter-concrete-checker"
       })
     );
+    store.setSelection({
+      kind: "brushes",
+      ids: [createdBrush.id]
+    });
 
     store.executeCommand(
       createSetBoxBrushAllFaceMaterialsCommand({
@@ -136,9 +140,8 @@ describe("box brush face editing commands", () => {
       ).toBe("starter-amber-grid");
     });
     expect(store.getState().selection).toEqual({
-      kind: "brushFace",
-      brushId: createdBrush.id,
-      faceId: "negY"
+      kind: "brushes",
+      ids: [createdBrush.id]
     });
 
     expect(store.undo()).toBe(true);
@@ -202,6 +205,10 @@ describe("box brush face editing commands", () => {
         label: "Seed back face UVs"
       })
     );
+    store.setSelection({
+      kind: "brushes",
+      ids: [createdBrush.id]
+    });
 
     store.executeCommand(
       createUpdateBoxBrushAllFaceUvsCommand({
@@ -238,9 +245,8 @@ describe("box brush face editing commands", () => {
       expect(nextUv.flipV).toBe(false);
     });
     expect(store.getState().selection).toEqual({
-      kind: "brushFace",
-      brushId: createdBrush.id,
-      faceId: "negZ"
+      kind: "brushes",
+      ids: [createdBrush.id]
     });
 
     expect(store.undo()).toBe(true);
