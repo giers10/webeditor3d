@@ -10225,7 +10225,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
     if (selectedFace.materialId === materialId) {
       setStatusMessage(
-        `${BOX_FACE_LABELS[selectedFaceId]} already uses that material.`
+        `${getBrushFaceLabel(selectedBrush, selectedFaceId)} already uses that material.`
       );
       return;
     }
@@ -10239,7 +10239,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
         })
       );
       setStatusMessage(
-        `Applied ${editorState.document.materials[materialId]?.name ?? materialId} to ${BOX_FACE_LABELS[selectedFaceId]}.`
+        `Applied ${editorState.document.materials[materialId]?.name ?? materialId} to ${getBrushFaceLabel(selectedBrush, selectedFaceId)}.`
       );
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
@@ -10284,7 +10284,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
     if (selectedFace.materialId === null) {
       setStatusMessage(
-        `${BOX_FACE_LABELS[selectedFaceId]} already uses the fallback face material.`
+        `${getBrushFaceLabel(selectedBrush, selectedFaceId)} already uses the fallback face material.`
       );
       return;
     }
@@ -10297,7 +10297,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
       })
     );
     setStatusMessage(
-      `Cleared the authored material on ${BOX_FACE_LABELS[selectedFaceId]}.`
+      `Cleared the authored material on ${getBrushFaceLabel(selectedBrush, selectedFaceId)}.`
     );
   };
 
@@ -10311,7 +10311,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
       whiteboxSelectionMode === "object" &&
       materialInspectorScope === "brush"
     ) {
-      const allFacesAlreadyMatch = BOX_FACE_IDS.every((faceId) =>
+      const allFacesAlreadyMatch = selectedBrushFaceIds.every((faceId) =>
         areFaceUvStatesEqual(selectedBrush.faces[faceId].uv, uvState)
       );
 
