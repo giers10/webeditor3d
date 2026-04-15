@@ -8470,6 +8470,31 @@ export function App({ store, initialStatusMessage }: AppProps) {
       return true;
     }
 
+    if (editorState.selection.kind === "brushes") {
+      try {
+        store.executeCommand(
+          createDeleteSelectionCommand(
+            editorState.selection,
+            editorState.selection.ids.length === 1
+              ? "Delete whitebox solid"
+              : "Delete whitebox solids"
+          )
+        );
+        setStatusMessage(
+          editorState.selection.ids.length === 1
+            ? `Deleted ${getBrushLabelById(
+                editorState.selection.ids[0],
+                brushList
+              )}.`
+            : `Deleted ${editorState.selection.ids.length} whitebox solids.`
+        );
+        return true;
+      } catch (error) {
+        setStatusMessage(getErrorMessage(error));
+        return false;
+      }
+    }
+
     const selectedBrushId = getSingleSelectedBrushId(editorState.selection);
 
     if (selectedBrushId !== null) {
@@ -8482,6 +8507,32 @@ export function App({ store, initialStatusMessage }: AppProps) {
       return handleDeletePath(selectedPathId);
     }
 
+    if (editorState.selection.kind === "entities") {
+      try {
+        store.executeCommand(
+          createDeleteSelectionCommand(
+            editorState.selection,
+            editorState.selection.ids.length === 1
+              ? "Delete entity"
+              : "Delete entities"
+          )
+        );
+        setStatusMessage(
+          editorState.selection.ids.length === 1
+            ? `Deleted ${getEntityDisplayLabelById(
+                editorState.selection.ids[0],
+                editorState.document.entities,
+                editorState.document.assets
+              )}.`
+            : `Deleted ${editorState.selection.ids.length} entities.`
+        );
+        return true;
+      } catch (error) {
+        setStatusMessage(getErrorMessage(error));
+        return false;
+      }
+    }
+
     const selectedEntityId = getSingleSelectedEntityId(editorState.selection);
 
     if (selectedEntityId !== null) {
@@ -8491,6 +8542,32 @@ export function App({ store, initialStatusMessage }: AppProps) {
     const selectedModelInstanceId = getSingleSelectedModelInstanceId(
       editorState.selection
     );
+
+    if (editorState.selection.kind === "modelInstances") {
+      try {
+        store.executeCommand(
+          createDeleteSelectionCommand(
+            editorState.selection,
+            editorState.selection.ids.length === 1
+              ? "Delete model instance"
+              : "Delete model instances"
+          )
+        );
+        setStatusMessage(
+          editorState.selection.ids.length === 1
+            ? `Deleted ${getModelInstanceDisplayLabelById(
+                editorState.selection.ids[0],
+                editorState.document.modelInstances,
+                editorState.document.assets
+              )}.`
+            : `Deleted ${editorState.selection.ids.length} model instances.`
+        );
+        return true;
+      } catch (error) {
+        setStatusMessage(getErrorMessage(error));
+        return false;
+      }
+    }
 
     if (selectedModelInstanceId !== null) {
       return handleDeleteModelInstance(selectedModelInstanceId);
