@@ -2037,11 +2037,18 @@ export function App({ store, initialStatusMessage }: AppProps) {
     selectedNpcAsset !== null && selectedNpcAsset.kind === "model"
       ? selectedNpcAsset
       : null;
-  const selectedNpcDialogue =
-    selectedNpc === null || selectedNpc.dialogueId === null
+  const resolvedSelectedNpcDefaultDialogueId =
+    selectedNpc === null
       ? null
-      : editorState.projectDocument.dialogues.dialogues[selectedNpc.dialogueId] ??
+      : selectedNpc.defaultDialogueId ??
+        selectedNpc.dialogues[0]?.id ??
         null;
+  const selectedNpcDialogue =
+    selectedNpc === null || resolvedSelectedNpcDefaultDialogueId === null
+      ? null
+      : selectedNpc.dialogues.find(
+          (dialogue) => dialogue.id === resolvedSelectedNpcDefaultDialogueId
+        ) ?? null;
   const selectedNpcActorUsages =
     selectedNpc === null
       ? []
@@ -2092,15 +2099,37 @@ export function App({ store, initialStatusMessage }: AppProps) {
     editorState.document.modelInstances,
     editorState.document.assets
   );
-  const projectDialogueList = getProjectDialogues(
-    editorState.projectDocument.dialogues
-  );
   const projectSequenceList = getProjectSequences(
     editorState.projectDocument.sequences
   );
   const projectImpulseSequenceList = projectSequenceList.filter(
     (sequence) => getProjectSequenceImpulseSteps(sequence).length > 0
   );
+  const npcDialogueSequenceTargetOptions = Object.values(
+    editorState.projectDocument.scenes
+  )
+    .flatMap((scene) =>
+      Object.values(scene.entities).flatMap((entity) => {
+        if (entity.kind !== "npc" || entity.dialogues.length === 0) {
+          return [];
+        }
+
+        const npcLabel = (entity.name?.trim() || entity.id).trim();
+
+        return [
+          {
+            npcEntityId: entity.id,
+            label: `${scene.name} · ${npcLabel}`,
+            defaultDialogueId: entity.defaultDialogueId,
+            dialogues: entity.dialogues.map((dialogue) => ({
+              dialogueId: dialogue.id,
+              label: dialogue.title
+            }))
+          }
+        ];
+      })
+    )
+    .sort((left, right) => left.label.localeCompare(right.label));
   const selectedInteractionSource = isInteractionSourceEntity(selectedEntity)
     ? selectedEntity
     : null;
