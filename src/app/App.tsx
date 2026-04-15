@@ -12158,8 +12158,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     Open Sequencer
                   </button>
                   <div className="material-summary">
-                    Actor routines now own time-based presence orchestration and
-                    resolve through the shared sequencer/control surface path.
+                    Time-based actor behavior now resolves through the shared
+                    sequencer/control surface path.
                   </div>
                 </div>
 
