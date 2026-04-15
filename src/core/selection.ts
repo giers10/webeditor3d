@@ -16,6 +16,30 @@ export type EditorSelection =
   | { kind: "entities"; ids: string[] }
   | { kind: "modelInstances"; ids: string[] };
 
+export type EditorSelectionWithIds = Extract<EditorSelection, { ids: string[] }>;
+export type SameKindMultiSelectableEditorSelection = Extract<
+  EditorSelection,
+  | { kind: "brushes"; ids: string[] }
+  | { kind: "entities"; ids: string[] }
+  | { kind: "modelInstances"; ids: string[] }
+>;
+
+export function isEditorSelectionWithIds(
+  selection: EditorSelection
+): selection is EditorSelectionWithIds {
+  return "ids" in selection;
+}
+
+export function isSameKindMultiSelectableSelection(
+  selection: EditorSelection
+): selection is SameKindMultiSelectableEditorSelection {
+  return (
+    selection.kind === "brushes" ||
+    selection.kind === "entities" ||
+    selection.kind === "modelInstances"
+  );
+}
+
 export function cloneEditorSelection(selection: EditorSelection): EditorSelection {
   if (selection.kind === "none") {
     return {
@@ -83,6 +107,104 @@ export function areEditorSelectionsEqual(left: EditorSelection, right: EditorSel
     case "modelInstances":
       return right.kind === left.kind && left.ids.length === right.ids.length && left.ids.every((id, index) => id === right.ids[index]);
   }
+}
+
+export function getSelectionDefaultActiveId(selection: EditorSelection): string | null {
+  switch (selection.kind) {
+    case "none":
+      return null;
+    case "brushFace":
+    case "brushEdge":
+    case "brushVertex":
+      return selection.brushId;
+    case "pathPoint":
+      return selection.pointId;
+    case "brushes":
+    case "paths":
+    case "entities":
+    case "modelInstances":
+      return selection.ids.at(-1) ?? null;
+  }
+}
+
+export function resolveSelectionActiveId(
+  selection: EditorSelection,
+  activeSelectionId: string | null
+): string | null {
+  if (activeSelectionId === null) {
+    return getSelectionDefaultActiveId(selection);
+  }
+
+  switch (selection.kind) {
+    case "none":
+      return null;
+    case "brushFace":
+    case "brushEdge":
+    case "brushVertex":
+      return selection.brushId === activeSelectionId
+        ? activeSelectionId
+        : selection.brushId;
+    case "pathPoint":
+      return selection.pointId === activeSelectionId
+        ? activeSelectionId
+        : selection.pointId;
+    case "brushes":
+    case "paths":
+    case "entities":
+    case "modelInstances":
+      return selection.ids.includes(activeSelectionId)
+        ? activeSelectionId
+        : getSelectionDefaultActiveId(selection);
+  }
+}
+
+export function isSelectionActiveId(
+  selection: EditorSelection,
+  activeSelectionId: string | null,
+  id: string
+): boolean {
+  return resolveSelectionActiveId(selection, activeSelectionId) === id;
+}
+
+export function applySameKindSelectionClick(
+  currentSelection: EditorSelection,
+  clickedSelection: EditorSelection,
+  shiftKey: boolean
+): EditorSelection {
+  if (!shiftKey || !isSameKindMultiSelectableSelection(clickedSelection)) {
+    return cloneEditorSelection(clickedSelection);
+  }
+
+  if (
+    !isSameKindMultiSelectableSelection(currentSelection) ||
+    currentSelection.kind !== clickedSelection.kind
+  ) {
+    return cloneEditorSelection(clickedSelection);
+  }
+
+  if (clickedSelection.ids.length !== 1) {
+    return cloneEditorSelection(clickedSelection);
+  }
+
+  const clickedId = clickedSelection.ids[0];
+
+  if (!currentSelection.ids.includes(clickedId)) {
+    return {
+      kind: currentSelection.kind,
+      ids: [...currentSelection.ids, clickedId]
+    };
+  }
+
+  const remainingIds = currentSelection.ids.filter((id) => id !== clickedId);
+
+  return remainingIds.length === 0
+    ? {
+        kind: "none"
+      }
+    : {
+        kind: currentSelection.kind,
+        ids: remainingIds
+      };
 }
 
 export function getSingleSelectedBrushId(selection: EditorSelection): string | null {
