@@ -261,7 +261,7 @@ describe("ProjectSequencesPanel", () => {
     fireEvent.change(screen.getByDisplayValue("Idle"), {
       target: { value: "Wave" }
     });
-    fireEvent.click(screen.getByLabelText("Loop"));
+    fireEvent.click(screen.getAllByLabelText("Loop")[0]!);
     fireEvent.change(screen.getByDisplayValue("Patrol A"), {
       target: { value: "path-b" }
     });
