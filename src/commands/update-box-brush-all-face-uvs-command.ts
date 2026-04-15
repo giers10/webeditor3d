@@ -3,6 +3,7 @@ import { createOpaqueId } from "../core/ids";
 import type { EditorSelection } from "../core/selection";
 import {
   cloneFaceUvState,
+  updateBrush,
   type FaceUvState,
   type WhiteboxFaceId
 } from "../document/brushes";
@@ -39,7 +40,7 @@ export function createUpdateBoxBrushAllFaceUvsCommand(
         previousUvStates = Object.fromEntries(
           getBrushFaceIds(currentBrush).map((faceId) => [
             faceId,
-            cloneFaceUvState(currentBrush.faces[faceId].uv)
+            cloneFaceUvState(currentBrush.faces[faceId]?.uv)
           ])
         );
       }
@@ -53,20 +54,22 @@ export function createUpdateBoxBrushAllFaceUvsCommand(
       }
 
       context.setDocument(
-        replaceBrush(currentDocument, {
-          ...currentBrush,
-          faces: Object.fromEntries(
-            getBrushFaceIds(currentBrush).map((faceId) => [
-              faceId,
-              {
-                ...currentBrush.faces[faceId],
-                uv: cloneFaceUvState(
-                  options.updateUvState(currentBrush.faces[faceId].uv, faceId)
-                )
-              }
-            ])
-          ) as typeof currentBrush.faces
-        })
+        replaceBrush(
+          currentDocument,
+          updateBrush(currentBrush, {
+            faces: Object.fromEntries(
+              getBrushFaceIds(currentBrush).map((faceId) => [
+                faceId,
+                {
+                  ...currentBrush.faces[faceId],
+                  uv: cloneFaceUvState(
+                    options.updateUvState(currentBrush.faces[faceId].uv, faceId)
+                  )
+                }
+              ])
+            ) as typeof currentBrush.faces
+          })
+        )
       );
       context.setToolMode("select");
     },
@@ -77,20 +80,23 @@ export function createUpdateBoxBrushAllFaceUvsCommand(
 
       const currentDocument = context.getDocument();
       const currentBrush = getBoxBrushOrThrow(currentDocument, options.brushId);
+      const restoredUvStates = previousUvStates;
 
       context.setDocument(
-        replaceBrush(currentDocument, {
-          ...currentBrush,
-          faces: Object.fromEntries(
-            getBrushFaceIds(currentBrush).map((faceId) => [
-              faceId,
-              {
-                ...currentBrush.faces[faceId],
-                uv: cloneFaceUvState(previousUvStates[faceId])
-              }
-            ])
-          ) as typeof currentBrush.faces
-        })
+        replaceBrush(
+          currentDocument,
+          updateBrush(currentBrush, {
+            faces: Object.fromEntries(
+              getBrushFaceIds(currentBrush).map((faceId) => [
+                faceId,
+                {
+                  ...currentBrush.faces[faceId],
+                  uv: cloneFaceUvState(restoredUvStates[faceId])
+                }
+              ])
+            ) as typeof currentBrush.faces
+          })
+        )
       );
 
       if (previousSelection !== null) {
