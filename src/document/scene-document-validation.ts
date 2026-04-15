@@ -5305,6 +5305,72 @@ export function validateSceneDocument(
       );
     }
 
+    if (brush.kind === "radialPrism") {
+      try {
+        normalizeRadialPrismSideCount(brush.sideCount);
+      } catch (error) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-radial-prism-side-count",
+            error instanceof Error
+              ? error.message
+              : "Radial prism side count must be valid.",
+            `${path}.sideCount`
+          )
+        );
+      }
+    }
+
+    if (brush.kind === "cone") {
+      try {
+        normalizeConeSideCount(brush.sideCount);
+      } catch (error) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-cone-side-count",
+            error instanceof Error
+              ? error.message
+              : "Cone side count must be valid.",
+            `${path}.sideCount`
+          )
+        );
+      }
+    }
+
+    if (brush.kind === "torus") {
+      try {
+        normalizeTorusMajorSegmentCount(brush.majorSegmentCount);
+      } catch (error) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-torus-major-segment-count",
+            error instanceof Error
+              ? error.message
+              : "Torus major segment count must be valid.",
+            `${path}.majorSegmentCount`
+          )
+        );
+      }
+
+      try {
+        normalizeTorusTubeSegmentCount(brush.tubeSegmentCount);
+      } catch (error) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-torus-tube-segment-count",
+            error instanceof Error
+              ? error.message
+              : "Torus tube segment count must be valid.",
+            `${path}.tubeSegmentCount`
+          )
+        );
+      }
+    }
+
     for (const vertexId of getBrushVertexIds(brush)) {
       if (!isFiniteVec3(brush.geometry.vertices[vertexId])) {
         diagnostics.push(
