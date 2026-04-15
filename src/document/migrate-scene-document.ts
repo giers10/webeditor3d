@@ -3097,7 +3097,10 @@ function readNpcPresence(value: unknown, label: string): NpcPresence {
 function readEntityInstance(
   value: unknown,
   label: string,
-  options: { legacySoundEmitter: boolean }
+  options: {
+    legacySoundEmitter: boolean;
+    legacyProjectDialogues?: ProjectDialogueLibrary;
+  }
 ): EntityInstance {
   if (!isRecord(value)) {
     throw new Error(`${label} must be an object.`);
@@ -3113,7 +3116,11 @@ function readEntityInstance(
     case "sceneEntry":
       return readSceneEntryEntity(value, label);
     case "npc":
-      return readNpcEntity(value, label);
+      return readNpcEntity(
+        value,
+        label,
+        options.legacyProjectDialogues ?? createEmptyProjectDialogueLibrary()
+      );
     case "soundEmitter":
       return options.legacySoundEmitter
         ? readLegacySoundEmitterEntity(value, label)
@@ -3131,7 +3138,10 @@ function readEntityInstance(
 
 function readEntities(
   value: unknown,
-  options: { legacySoundEmitter: boolean }
+  options: {
+    legacySoundEmitter: boolean;
+    legacyProjectDialogues?: ProjectDialogueLibrary;
+  }
 ): SceneDocument["entities"] {
   if (!isRecord(value)) {
     throw new Error("entities must be a record.");
