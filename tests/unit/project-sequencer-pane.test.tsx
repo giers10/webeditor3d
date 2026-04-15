@@ -12,6 +12,7 @@ import {
   createEmptyProjectScheduler,
   createProjectScheduleRoutine
 } from "../../src/scheduler/project-scheduler";
+import type { ProjectScheduleTargetOption } from "../../src/scheduler/project-schedule-control-options";
 import { createEmptyProjectSequenceLibrary } from "../../src/sequencer/project-sequences";
 
 describe("ProjectSequencerPane", () => {
@@ -24,16 +25,7 @@ describe("ProjectSequencerPane", () => {
     onSetRoutineEndHour = vi.fn()
   }: {
     scheduler?: ReturnType<typeof createEmptyProjectScheduler>;
-    targetOptions: Array<{
-      key: string;
-      target: ReturnType<
-        typeof createProjectGlobalControlTargetRef | typeof createActorControlTargetRef
-      >;
-      label: string;
-      subtitle: string;
-      groupLabel: string;
-      defaults: Record<string, unknown>;
-    }>;
+    targetOptions: ProjectScheduleTargetOption[];
     selectedRoutineId?: string | null;
     onSetRoutineTarget?: ReturnType<typeof vi.fn>;
     onSetRoutineStartHour?: ReturnType<typeof vi.fn>;
