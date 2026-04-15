@@ -367,13 +367,6 @@ function readNpcDialogues(
             lineValue.id,
             `${label}.${dialogueIndex}.lines.${lineIndex}.id`
           ),
-          speakerName:
-            lineValue.speakerName === undefined || lineValue.speakerName === null
-              ? null
-              : expectString(
-                  lineValue.speakerName,
-                  `${label}.${dialogueIndex}.lines.${lineIndex}.speakerName`
-                ),
           text: expectString(
             lineValue.text,
             `${label}.${dialogueIndex}.lines.${lineIndex}.text`
@@ -3711,13 +3704,6 @@ function readProjectDialogueLibrary(
             lineValue.id,
             `${label}.dialogues.${dialogueKey}.lines.${lineIndex}.id`
           ),
-          speakerName:
-            lineValue.speakerName === undefined || lineValue.speakerName === null
-              ? null
-              : expectString(
-                  lineValue.speakerName,
-                  `${label}.dialogues.${dialogueKey}.lines.${lineIndex}.speakerName`
-                ),
           text: expectString(
             lineValue.text,
             `${label}.dialogues.${dialogueKey}.lines.${lineIndex}.text`
