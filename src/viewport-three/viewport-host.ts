@@ -3152,7 +3152,6 @@ export class ViewportHost {
       case "soundEmitter":
       case "triggerVolume":
       case "interactable":
-      case "sceneExit":
         renderObjects.group.position.set(
           entity.position.x,
           entity.position.y,
@@ -3372,7 +3371,6 @@ export class ViewportHost {
           case "soundEmitter":
           case "triggerVolume":
           case "interactable":
-          case "sceneExit":
             this.applyEntityRenderObjectTransform({
               ...currentEntity,
               position: this.currentTransformSession.preview.position
