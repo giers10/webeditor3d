@@ -662,6 +662,12 @@ export function ProjectSequencerPane({
               teleportTargetOptions={teleportTargetOptions}
               sceneTransitionTargetOptions={sceneTransitionTargetOptions}
               visibilityTargetOptions={visibilityTargetOptions}
+              preferredControlTargetKey={
+                selectedRoutine?.sequenceId === selectedSequenceId &&
+                selectedRoutine.target.kind !== "global"
+                  ? getControlTargetRefKey(selectedRoutine.target)
+                  : null
+              }
               selectedSequenceId={selectedSequenceId}
               onSelectSequence={onSelectSequence}
               onAddSequence={onAddSequence}
