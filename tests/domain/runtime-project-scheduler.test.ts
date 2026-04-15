@@ -523,4 +523,94 @@ describe("runtime project scheduler", () => {
       ])
     );
   });
+
+  it("samples followed actor paths with rounded corners when smoothPath is enabled", () => {
+    const actorTarget = createActorControlTargetRef("actor-smooth-guard");
+    const scheduler = createEmptyProjectScheduler();
+    const sequences = createEmptyProjectSequenceLibrary();
+
+    sequences.sequences["sequence-smooth-patrol"] = createProjectSequence({
+      id: "sequence-smooth-patrol",
+      title: "Smooth Patrol",
+      effects: [
+        {
+          stepClass: "held",
+          type: "controlEffect",
+          effect: createFollowActorPathControlEffect({
+            target: actorTarget,
+            pathId: "path-corner",
+            speed: 7,
+            loop: false,
+            smoothPath: true
+          })
+        }
+      ]
+    });
+    scheduler.routines["routine-smooth-patrol"] = createProjectScheduleRoutine({
+      id: "routine-smooth-patrol",
+      title: "Smooth Patrol",
+      target: actorTarget,
+      startHour: 9,
+      endHour: 10,
+      sequenceId: "sequence-smooth-patrol"
+    });
+
+    const resolved = resolveRuntimeProjectScheduleState({
+      scheduler,
+      sequences,
+      actorIds: [actorTarget.actorId],
+      dayNumber: 1,
+      timeOfDayHours: 9.5,
+      pathsById: new Map([
+        [
+          "path-corner",
+          {
+            id: "path-corner",
+            loop: false,
+            points: [
+              { position: { x: 0, y: 0, z: 0 } },
+              { position: { x: 0, y: 0, z: 3 } },
+              { position: { x: 4, y: 0, z: 3 } }
+            ],
+            segments: [
+              {
+                start: { x: 0, y: 0, z: 0 },
+                end: { x: 0, y: 0, z: 3 },
+                length: 3,
+                distanceStart: 0,
+                distanceEnd: 3,
+                tangent: { x: 0, y: 0, z: 1 }
+              },
+              {
+                start: { x: 0, y: 0, z: 3 },
+                end: { x: 4, y: 0, z: 3 },
+                length: 4,
+                distanceStart: 3,
+                distanceEnd: 7,
+                tangent: { x: 1, y: 0, z: 0 }
+              }
+            ],
+            totalLength: 7
+          }
+        ]
+      ])
+    });
+
+    expect(resolved.actors[0]).toEqual(
+      expect.objectContaining({
+        actorId: actorTarget.actorId,
+        pathEffect: expect.objectContaining({
+          type: "followActorPath",
+          smoothPath: true
+        }),
+        resolvedPath: expect.objectContaining({
+          smoothPath: true
+        })
+      })
+    );
+    expect(resolved.actors[0]!.resolvedPath!.position.x).toBeGreaterThan(0);
+    expect(resolved.actors[0]!.resolvedPath!.position.z).toBeLessThan(3);
+    expect(resolved.actors[0]!.resolvedPath!.tangent.x).toBeGreaterThan(0);
+    expect(resolved.actors[0]!.resolvedPath!.tangent.z).toBeGreaterThan(0);
+  });
 });
