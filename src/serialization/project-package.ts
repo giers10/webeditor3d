@@ -1,6 +1,7 @@
 import { strFromU8, strToU8, unzipSync, Zip, ZipDeflate } from "fflate";
 
 import type { ProjectDocument } from "../document/scene-document";
+import { isStarterEnvironmentImageAsset } from "../assets/starter-environment-assets";
 import { getProjectAssetKindLabel, type ProjectAssetRecord } from "../assets/project-assets";
 import type { ProjectAssetStorage, ProjectAssetStoragePackageRecord } from "../assets/project-asset-storage";
 import {
@@ -257,8 +258,9 @@ export async function saveProjectPackage(
 ): Promise<Uint8Array> {
   const sceneJson = serializeProjectDocument(document);
   const assets = Object.values(document.assets).sort((left, right) => left.id.localeCompare(right.id));
+  const bundledAssets = assets.filter((asset) => !isStarterEnvironmentImageAsset(asset));
 
-  if (assets.length > 0 && storage === null) {
+  if (bundledAssets.length > 0 && storage === null) {
     throw new Error("Project save failed: project asset storage is unavailable for asset-backed scenes.");
   }
 
@@ -266,7 +268,7 @@ export async function saveProjectPackage(
   setPackagedFile(packageEntries, PROJECT_PACKAGE_SCENE_PATH, strToU8(sceneJson));
   const missingAssetDiagnostics: string[] = [];
 
-  for (const asset of assets) {
+  for (const asset of bundledAssets) {
     let storedAsset: ProjectAssetStoragePackageRecord | null;
 
     try {
@@ -334,18 +336,19 @@ export async function loadProjectPackage(
   }
 
   const assets = Object.values(document.assets).sort((left, right) => left.id.localeCompare(right.id));
+  const bundledAssets = assets.filter((asset) => !isStarterEnvironmentImageAsset(asset));
 
   if (assets.length === 0) {
     return document;
   }
 
-  if (storage === null) {
+  if (bundledAssets.length > 0 && storage === null) {
     throw new Error("Project load failed: project asset storage is unavailable for asset-backed scenes.");
   }
 
   const packagedAssetRecords = buildStoredAssetRecordsFromPackage(entries, document);
 
-  for (const asset of assets) {
+  for (const asset of bundledAssets) {
     const packagedAsset = packagedAssetRecords.get(asset.id);
 
     if (packagedAsset === undefined || Object.keys(packagedAsset.files).length === 0) {
@@ -357,7 +360,7 @@ export async function loadProjectPackage(
   const writtenStorageKeys: string[] = [];
 
   try {
-    for (const asset of assets) {
+    for (const asset of bundledAssets) {
       const packagedAsset = packagedAssetRecords.get(asset.id);
 
       if (packagedAsset === undefined) {
