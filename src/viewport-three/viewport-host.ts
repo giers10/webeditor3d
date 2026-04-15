@@ -43,6 +43,7 @@ import {
 import { EffectComposer } from "postprocessing";
 
 import {
+  applyEditorSelectionClick,
   applySameKindSelectionClick,
   areEditorSelectionsEqual,
   isBrushEdgeSelected,
@@ -6838,12 +6839,9 @@ export class ViewportHost {
     if (candidates.length === 0) {
       this.lastClickPointer = null;
       this.lastClickSelectionKey = null;
-
-      if (!event.shiftKey) {
-        this.brushSelectionChangeHandler?.({
-          kind: "none"
-        });
-      }
+      this.brushSelectionChangeHandler?.(
+        applyEditorSelectionClick(this.currentSelection, null, event.shiftKey)
+      );
 
       return;
     }
@@ -6872,7 +6870,7 @@ export class ViewportHost {
     const chosen = candidates[candidateIndex];
     this.lastClickSelectionKey = chosen.key;
     this.brushSelectionChangeHandler?.(
-      applySameKindSelectionClick(
+      applyEditorSelectionClick(
         this.currentSelection,
         chosen.selection,
         event.shiftKey

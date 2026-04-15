@@ -207,6 +207,26 @@ export function applySameKindSelectionClick(
       };
 }
 
+export function applyEditorSelectionClick(
+  currentSelection: EditorSelection,
+  clickedSelection: EditorSelection | null,
+  shiftKey: boolean
+): EditorSelection {
+  if (clickedSelection === null) {
+    return shiftKey
+      ? cloneEditorSelection(currentSelection)
+      : {
+          kind: "none"
+        };
+  }
+
+  return applySameKindSelectionClick(
+    currentSelection,
+    clickedSelection,
+    shiftKey
+  );
+}
+
 export function getSingleSelectedBrushId(selection: EditorSelection): string | null {
   if (selection.kind === "brushFace" || selection.kind === "brushEdge" || selection.kind === "brushVertex") {
     return selection.brushId;
