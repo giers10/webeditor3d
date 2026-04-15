@@ -9049,7 +9049,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       </div>
                       <div className="material-summary">
                         Run Sequence links can reference any authored sequence,
-                        but only its impulse effects fire from interactions.
+                        but only its start effects fire from interactions.
                       </div>
                     </div>
                   );
