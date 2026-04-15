@@ -103,7 +103,7 @@ const { MockRuntimeHost, runtimeHostInstances } = vi.hoisted(() => {
     setRuntimeDialogueHandler: ReturnType<typeof vi.fn>;
     setRuntimePauseStateHandler: ReturnType<typeof vi.fn>;
     setSceneLoadStateHandler: ReturnType<typeof vi.fn>;
-    setSceneExitHandler: ReturnType<typeof vi.fn>;
+    setSceneTransitionHandler: ReturnType<typeof vi.fn>;
   }> = [];
 
   class MockRuntimeHost {
@@ -119,7 +119,7 @@ const { MockRuntimeHost, runtimeHostInstances } = vi.hoisted(() => {
     setRuntimeDialogueHandler = vi.fn();
     setRuntimePauseStateHandler = vi.fn();
     setSceneLoadStateHandler = vi.fn();
-    setSceneExitHandler = vi.fn();
+    setSceneTransitionHandler = vi.fn();
 
     constructor() {
       runtimeHostInstances.push(this);
@@ -164,7 +164,7 @@ describe("RunnerCanvas", () => {
         onRuntimeMessageChange={vi.fn()}
         onFirstPersonTelemetryChange={onTelemetryChange}
         onInteractionPromptChange={vi.fn()}
-        onSceneExitActivated={vi.fn()}
+        onSceneTransitionActivated={vi.fn()}
       />
     );
 
@@ -238,7 +238,7 @@ describe("RunnerCanvas", () => {
         onRuntimeMessageChange={vi.fn()}
         onFirstPersonTelemetryChange={vi.fn()}
         onInteractionPromptChange={vi.fn()}
-        onSceneExitActivated={vi.fn()}
+        onSceneTransitionActivated={vi.fn()}
       />
     );
 
@@ -309,7 +309,7 @@ describe("RunnerCanvas", () => {
         onRuntimeMessageChange={vi.fn()}
         onFirstPersonTelemetryChange={vi.fn()}
         onInteractionPromptChange={vi.fn()}
-        onSceneExitActivated={vi.fn()}
+        onSceneTransitionActivated={vi.fn()}
       />
     );
 
@@ -377,7 +377,7 @@ describe("RunnerCanvas", () => {
         onRuntimeMessageChange={vi.fn()}
         onFirstPersonTelemetryChange={vi.fn()}
         onInteractionPromptChange={vi.fn()}
-        onSceneExitActivated={vi.fn()}
+        onSceneTransitionActivated={vi.fn()}
       />
     );
 
@@ -428,7 +428,7 @@ describe("RunnerCanvas", () => {
         onRuntimeMessageChange={onRuntimeMessageChange}
         onFirstPersonTelemetryChange={onFirstPersonTelemetryChange}
         onInteractionPromptChange={onInteractionPromptChange}
-        onSceneExitActivated={vi.fn()}
+        onSceneTransitionActivated={vi.fn()}
       />
     );
 
@@ -450,14 +450,14 @@ describe("RunnerCanvas", () => {
         onRuntimeMessageChange={onRuntimeMessageChange}
         onFirstPersonTelemetryChange={onFirstPersonTelemetryChange}
         onInteractionPromptChange={onInteractionPromptChange}
-        onSceneExitActivated={vi.fn()}
+        onSceneTransitionActivated={vi.fn()}
       />
     );
 
     expect(runtimeHostInstances).toHaveLength(1);
     expect(runtimeHostInstances[0]?.loadScene).toHaveBeenCalledTimes(1);
     expect(
-      runtimeHostInstances[0]?.setSceneExitHandler
+      runtimeHostInstances[0]?.setSceneTransitionHandler
     ).toHaveBeenCalledTimes(2);
   });
 
@@ -507,7 +507,7 @@ describe("RunnerCanvas", () => {
         onRuntimeMessageChange={vi.fn()}
         onFirstPersonTelemetryChange={vi.fn()}
         onInteractionPromptChange={vi.fn()}
-        onSceneExitActivated={vi.fn()}
+        onSceneTransitionActivated={vi.fn()}
       />
     );
 
@@ -538,7 +538,7 @@ describe("RunnerCanvas", () => {
         onRuntimeMessageChange={vi.fn()}
         onFirstPersonTelemetryChange={vi.fn()}
         onInteractionPromptChange={vi.fn()}
-        onSceneExitActivated={vi.fn()}
+        onSceneTransitionActivated={vi.fn()}
       />
     );
 
