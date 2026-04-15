@@ -2,7 +2,6 @@ import { createOpaqueId } from "../core/ids";
 
 export interface ProjectDialogueLine {
   id: string;
-  speakerName: string | null;
   text: string;
 }
 
@@ -27,7 +26,6 @@ export function createProjectDialogueLine(
 ): ProjectDialogueLine {
   return {
     id: overrides.id ?? createOpaqueId("dialogue-line"),
-    speakerName: overrides.speakerName?.trim() || null,
     text: overrides.text ?? "..."
   };
 }
@@ -52,7 +50,6 @@ export function cloneProjectDialogueLine(
 ): ProjectDialogueLine {
   return {
     id: line.id,
-    speakerName: line.speakerName,
     text: line.text
   };
 }
@@ -84,11 +81,7 @@ export function areProjectDialogueLinesEqual(
   left: ProjectDialogueLine,
   right: ProjectDialogueLine
 ): boolean {
-  return (
-    left.id === right.id &&
-    left.speakerName === right.speakerName &&
-    left.text === right.text
-  );
+  return left.id === right.id && left.text === right.text;
 }
 
 export function areProjectDialoguesEqual(
