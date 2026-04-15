@@ -589,25 +589,59 @@ describe("RuntimeInteractionSystem", () => {
     ]);
   });
 
-  it("dispatches start dialogue actions for authored interaction links", () => {
+  it("dispatches make-npc-talk sequences for authored interaction links", () => {
     const runtimeScene = createRuntimeSceneFixture();
-    runtimeScene.dialogues.dialogues["dialogue-console"] = {
-      id: "dialogue-console",
-      title: "Console",
-      lines: [
-        {
-          id: "dialogue-line-1",
-          speakerName: "System",
-          text: "Access granted."
-        }
-      ]
-    };
+    runtimeScene.entities.npcs = [
+      {
+        ...createNpcEntity({
+          id: "entity-npc-console",
+          dialogues: [
+            {
+              id: "dialogue-console",
+              title: "Console",
+              lines: [
+                {
+                  id: "dialogue-line-1",
+                  speakerName: "System",
+                  text: "Access granted."
+                }
+              ]
+            }
+          ],
+          defaultDialogueId: "dialogue-console"
+        }),
+        active: true,
+        activeRoutineId: null,
+        activeRoutineTitle: null,
+        authoredPosition: { x: 0, y: 0, z: 0 },
+        authoredYawDegrees: 0,
+        visible: true,
+        position: { x: 0, y: 0, z: 0 },
+        yawDegrees: 0,
+        animationClipName: null,
+        animationLoop: undefined,
+        resolvedPath: null
+      }
+    ];
+    runtimeScene.sequences.sequences["sequence-console-dialogue"] =
+      createProjectSequence({
+        id: "sequence-console-dialogue",
+        title: "Console Dialogue Sequence",
+        effects: [
+          {
+            stepClass: "impulse",
+            type: "makeNpcTalk",
+            npcEntityId: "entity-npc-console",
+            dialogueId: "dialogue-console"
+          }
+        ]
+      });
     runtimeScene.interactionLinks = [
-      createStartDialogueInteractionLink({
-        id: "link-start-dialogue",
+      createRunSequenceInteractionLink({
+        id: "link-run-sequence-dialogue",
         sourceEntityId: "entity-interactable-console",
         trigger: "click",
-        dialogueId: "dialogue-console"
+        sequenceId: "sequence-console-dialogue"
       })
     ];
 
@@ -618,36 +652,60 @@ describe("RuntimeInteractionSystem", () => {
       "entity-interactable-console",
       runtimeScene,
       createDispatcher({
-        startDialogue: (dialogueId, source) => {
-          dispatches.push(`${source?.linkId}:${dialogueId}`);
+        startNpcDialogue: (npcEntityId, dialogueId, source) => {
+          dispatches.push(`${source?.linkId}:${npcEntityId}:${dialogueId}`);
         }
       })
     );
 
-    expect(dispatches).toEqual(["link-start-dialogue:dialogue-console"]);
+    expect(dispatches).toEqual([
+      "link-run-sequence-dialogue:entity-npc-console:dialogue-console"
+    ]);
   });
 
   it("dispatches run-sequence links through authored impulse steps", () => {
     const runtimeScene = createRuntimeSceneFixture();
-    runtimeScene.dialogues.dialogues["dialogue-sequence"] = {
-      id: "dialogue-sequence",
-      title: "Sequence Dialogue",
-      lines: [
-        {
-          id: "dialogue-line-sequence-1",
-          speakerName: "Console",
-          text: "Sequence started."
-        }
-      ]
-    };
+    runtimeScene.entities.npcs = [
+      {
+        ...createNpcEntity({
+          id: "entity-npc-sequence",
+          dialogues: [
+            {
+              id: "dialogue-sequence",
+              title: "Sequence Dialogue",
+              lines: [
+                {
+                  id: "dialogue-line-sequence-1",
+                  speakerName: "Console",
+                  text: "Sequence started."
+                }
+              ]
+            }
+          ],
+          defaultDialogueId: "dialogue-sequence"
+        }),
+        active: true,
+        activeRoutineId: null,
+        activeRoutineTitle: null,
+        authoredPosition: { x: 0, y: 0, z: 0 },
+        authoredYawDegrees: 0,
+        visible: true,
+        position: { x: 0, y: 0, z: 0 },
+        yawDegrees: 0,
+        animationClipName: null,
+        animationLoop: undefined,
+        resolvedPath: null
+      }
+    ];
     runtimeScene.sequences.sequences["sequence-console-dialogue"] =
       createProjectSequence({
         id: "sequence-console-dialogue",
         title: "Console Dialogue Sequence",
-        steps: [
+        effects: [
           {
             stepClass: "impulse",
-            type: "startDialogue",
+            type: "makeNpcTalk",
+            npcEntityId: "entity-npc-sequence",
             dialogueId: "dialogue-sequence"
           }
         ]
@@ -668,34 +726,70 @@ describe("RuntimeInteractionSystem", () => {
       "entity-interactable-console",
       runtimeScene,
       createDispatcher({
-        startDialogue: (dialogueId, source) => {
-          dispatches.push(`${source?.linkId}:${dialogueId}`);
+        startNpcDialogue: (npcEntityId, dialogueId, source) => {
+          dispatches.push(`${source?.linkId}:${npcEntityId}:${dialogueId}`);
         }
       })
     );
 
-    expect(dispatches).toEqual(["link-run-sequence-dialogue:dialogue-sequence"]);
+    expect(dispatches).toEqual([
+      "link-run-sequence-dialogue:entity-npc-sequence:dialogue-sequence"
+    ]);
   });
 
-  it("treats interactable dialogue links as click interactions even when the stored trigger is non-click", () => {
+  it("treats interactable sequence links as click interactions even when the stored trigger is non-click", () => {
     const runtimeScene = createRuntimeSceneFixture();
-    runtimeScene.dialogues.dialogues["dialogue-console"] = {
-      id: "dialogue-console",
-      title: "Console",
-      lines: [
-        {
-          id: "dialogue-line-console-1",
-          speakerName: "System",
-          text: "Console online."
-        }
-      ]
-    };
+    runtimeScene.entities.npcs = [
+      {
+        ...createNpcEntity({
+          id: "entity-npc-console",
+          dialogues: [
+            {
+              id: "dialogue-console",
+              title: "Console",
+              lines: [
+                {
+                  id: "dialogue-line-console-1",
+                  speakerName: "System",
+                  text: "Console online."
+                }
+              ]
+            }
+          ],
+          defaultDialogueId: "dialogue-console"
+        }),
+        active: true,
+        activeRoutineId: null,
+        activeRoutineTitle: null,
+        authoredPosition: { x: 0, y: 0, z: 0 },
+        authoredYawDegrees: 0,
+        visible: true,
+        position: { x: 0, y: 0, z: 0 },
+        yawDegrees: 0,
+        animationClipName: null,
+        animationLoop: undefined,
+        resolvedPath: null
+      }
+    ];
+    runtimeScene.sequences.sequences["sequence-console-dialogue"] =
+      createProjectSequence({
+        id: "sequence-console-dialogue",
+        title: "Console Dialogue Sequence",
+        effects: [
+          {
+            stepClass: "impulse",
+            type: "makeNpcTalk",
+            npcEntityId: "entity-npc-console",
+            dialogueId: "dialogue-console"
+          }
+        ]
+      });
     runtimeScene.interactionLinks = [
-      createStartDialogueInteractionLink({
-        id: "link-start-dialogue-console",
+      createRunSequenceInteractionLink({
+        id: "link-run-sequence-console",
         sourceEntityId: "entity-interactable-console",
         trigger: "enter",
-        dialogueId: "dialogue-console"
+        sequenceId: "sequence-console-dialogue"
       })
     ];
 
@@ -731,38 +825,72 @@ describe("RuntimeInteractionSystem", () => {
       "entity-interactable-console",
       runtimeScene,
       createDispatcher({
-        startDialogue: (dialogueId, source) => {
+        startNpcDialogue: (npcEntityId, dialogueId, source) => {
           dispatches.push(
-            `${source?.kind}:${source?.sourceEntityId}:${source?.trigger}:${dialogueId}`
+            `${source?.kind}:${source?.sourceEntityId}:${source?.trigger}:${npcEntityId}:${dialogueId}`
           );
         }
       })
     );
 
     expect(dispatches).toEqual([
-      "interactionLink:entity-interactable-console:enter:dialogue-console"
+      "interactionLink:entity-interactable-console:enter:entity-npc-console:dialogue-console"
     ]);
   });
 
-  it("dispatches trigger-volume dialogue starts once on enter", () => {
+  it("dispatches trigger-volume make-npc-talk sequences once on enter", () => {
     const runtimeScene = createRuntimeSceneFixture();
-    runtimeScene.dialogues.dialogues["dialogue-threshold"] = {
-      id: "dialogue-threshold",
-      title: "Threshold",
-      lines: [
-        {
-          id: "dialogue-line-threshold-1",
-          speakerName: null,
-          text: "You crossed the threshold."
-        }
-      ]
-    };
+    runtimeScene.entities.npcs = [
+      {
+        ...createNpcEntity({
+          id: "entity-npc-threshold",
+          dialogues: [
+            {
+              id: "dialogue-threshold",
+              title: "Threshold",
+              lines: [
+                {
+                  id: "dialogue-line-threshold-1",
+                  speakerName: null,
+                  text: "You crossed the threshold."
+                }
+              ]
+            }
+          ],
+          defaultDialogueId: "dialogue-threshold"
+        }),
+        active: true,
+        activeRoutineId: null,
+        activeRoutineTitle: null,
+        authoredPosition: { x: 0, y: 0, z: 0 },
+        authoredYawDegrees: 0,
+        visible: true,
+        position: { x: 0, y: 0, z: 0 },
+        yawDegrees: 0,
+        animationClipName: null,
+        animationLoop: undefined,
+        resolvedPath: null
+      }
+    ];
+    runtimeScene.sequences.sequences["sequence-trigger-dialogue"] =
+      createProjectSequence({
+        id: "sequence-trigger-dialogue",
+        title: "Trigger Dialogue Sequence",
+        effects: [
+          {
+            stepClass: "impulse",
+            type: "makeNpcTalk",
+            npcEntityId: "entity-npc-threshold",
+            dialogueId: "dialogue-threshold"
+          }
+        ]
+      });
     runtimeScene.interactionLinks = [
-      createStartDialogueInteractionLink({
-        id: "link-trigger-dialogue",
+      createRunSequenceInteractionLink({
+        id: "link-trigger-sequence",
         sourceEntityId: "entity-trigger-main",
         trigger: "enter",
-        dialogueId: "dialogue-threshold"
+        sequenceId: "sequence-trigger-dialogue"
       })
     ];
 
@@ -777,8 +905,8 @@ describe("RuntimeInteractionSystem", () => {
       },
       runtimeScene,
       createDispatcher({
-        startDialogue: (dialogueId, source) => {
-          dispatches.push(`${source?.linkId}:${dialogueId}`);
+        startNpcDialogue: (npcEntityId, dialogueId, source) => {
+          dispatches.push(`${source?.linkId}:${npcEntityId}:${dialogueId}`);
         }
       })
     );
@@ -790,34 +918,70 @@ describe("RuntimeInteractionSystem", () => {
       },
       runtimeScene,
       createDispatcher({
-        startDialogue: (dialogueId, source) => {
-          dispatches.push(`${source?.linkId}:${dialogueId}`);
+        startNpcDialogue: (npcEntityId, dialogueId, source) => {
+          dispatches.push(`${source?.linkId}:${npcEntityId}:${dialogueId}`);
         }
       })
     );
 
-    expect(dispatches).toEqual(["link-trigger-dialogue:dialogue-threshold"]);
+    expect(dispatches).toEqual([
+      "link-trigger-sequence:entity-npc-threshold:dialogue-threshold"
+    ]);
   });
 
-  it("treats trigger-volume dialogue links authored with click as enter interactions", () => {
+  it("treats trigger-volume sequence links authored with click as enter interactions", () => {
     const runtimeScene = createRuntimeSceneFixture();
-    runtimeScene.dialogues.dialogues["dialogue-threshold"] = {
-      id: "dialogue-threshold",
-      title: "Threshold",
-      lines: [
-        {
-          id: "dialogue-line-threshold-1",
-          speakerName: null,
-          text: "Welcome."
-        }
-      ]
-    };
+    runtimeScene.entities.npcs = [
+      {
+        ...createNpcEntity({
+          id: "entity-npc-threshold",
+          dialogues: [
+            {
+              id: "dialogue-threshold",
+              title: "Threshold",
+              lines: [
+                {
+                  id: "dialogue-line-threshold-1",
+                  speakerName: null,
+                  text: "Welcome."
+                }
+              ]
+            }
+          ],
+          defaultDialogueId: "dialogue-threshold"
+        }),
+        active: true,
+        activeRoutineId: null,
+        activeRoutineTitle: null,
+        authoredPosition: { x: 0, y: 0, z: 0 },
+        authoredYawDegrees: 0,
+        visible: true,
+        position: { x: 0, y: 0, z: 0 },
+        yawDegrees: 0,
+        animationClipName: null,
+        animationLoop: undefined,
+        resolvedPath: null
+      }
+    ];
+    runtimeScene.sequences.sequences["sequence-trigger-dialogue"] =
+      createProjectSequence({
+        id: "sequence-trigger-dialogue",
+        title: "Trigger Dialogue Sequence",
+        effects: [
+          {
+            stepClass: "impulse",
+            type: "makeNpcTalk",
+            npcEntityId: "entity-npc-threshold",
+            dialogueId: "dialogue-threshold"
+          }
+        ]
+      });
     runtimeScene.interactionLinks = [
-      createStartDialogueInteractionLink({
-        id: "link-trigger-dialogue-click",
+      createRunSequenceInteractionLink({
+        id: "link-trigger-sequence-click",
         sourceEntityId: "entity-trigger-main",
         trigger: "click",
-        dialogueId: "dialogue-threshold"
+        sequenceId: "sequence-trigger-dialogue"
       })
     ];
 
@@ -832,16 +996,16 @@ describe("RuntimeInteractionSystem", () => {
       },
       runtimeScene,
       createDispatcher({
-        startDialogue: (dialogueId, source) => {
+        startNpcDialogue: (npcEntityId, dialogueId, source) => {
           dispatches.push(
-            `${source?.kind}:${source?.sourceEntityId}:${source?.trigger}:${dialogueId}`
+            `${source?.kind}:${source?.sourceEntityId}:${source?.trigger}:${npcEntityId}:${dialogueId}`
           );
         }
       })
     );
 
     expect(dispatches).toEqual([
-      "interactionLink:entity-trigger-main:click:dialogue-threshold"
+      "interactionLink:entity-trigger-main:click:entity-npc-threshold:dialogue-threshold"
     ]);
   });
 
@@ -865,13 +1029,58 @@ describe("RuntimeInteractionSystem", () => {
       }
     ];
     runtimeScene.interactionLinks = [
-      createStartDialogueInteractionLink({
-        id: "link-body-trigger-dialogue",
+      createRunSequenceInteractionLink({
+        id: "link-body-trigger-sequence",
         sourceEntityId: "entity-trigger-chest-height",
         trigger: "enter",
-        dialogueId: "dialogue-threshold"
+        sequenceId: "sequence-trigger-dialogue"
       })
     ];
+    runtimeScene.entities.npcs = [
+      {
+        ...createNpcEntity({
+          id: "entity-npc-threshold",
+          dialogues: [
+            {
+              id: "dialogue-threshold",
+              title: "Threshold",
+              lines: [
+                {
+                  id: "dialogue-line-threshold-1",
+                  speakerName: null,
+                  text: "Welcome."
+                }
+              ]
+            }
+          ],
+          defaultDialogueId: "dialogue-threshold"
+        }),
+        active: true,
+        activeRoutineId: null,
+        activeRoutineTitle: null,
+        authoredPosition: { x: 0, y: 0, z: 0 },
+        authoredYawDegrees: 0,
+        visible: true,
+        position: { x: 0, y: 0, z: 0 },
+        yawDegrees: 0,
+        animationClipName: null,
+        animationLoop: undefined,
+        resolvedPath: null
+      }
+    ];
+    runtimeScene.sequences.sequences["sequence-trigger-dialogue"] =
+      createProjectSequence({
+        id: "sequence-trigger-dialogue",
+        title: "Trigger Dialogue Sequence",
+        effects: [
+          {
+            stepClass: "impulse",
+            type: "makeNpcTalk",
+            npcEntityId: "entity-npc-threshold",
+            dialogueId: "dialogue-threshold"
+          }
+        ]
+      });
 
     const dispatches: string[] = [];
     const interactionSystem = new RuntimeInteractionSystem();
@@ -891,13 +1100,15 @@ describe("RuntimeInteractionSystem", () => {
       },
       runtimeScene,
       createDispatcher({
-        startDialogue: (dialogueId, source) => {
-          dispatches.push(`${source?.linkId}:${dialogueId}`);
+        startNpcDialogue: (npcEntityId, dialogueId, source) => {
+          dispatches.push(`${source?.linkId}:${npcEntityId}:${dialogueId}`);
         }
       })
     );
 
-    expect(dispatches).toEqual(["link-body-trigger-dialogue:dialogue-threshold"]);
+    expect(dispatches).toEqual([
+      "link-body-trigger-sequence:entity-npc-threshold:dialogue-threshold"
+    ]);
   });
 
   it("resolves direct NPC dialogue prompts and dispatches them through the shared start path", () => {
