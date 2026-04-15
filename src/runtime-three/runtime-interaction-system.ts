@@ -336,6 +336,10 @@ function getNpcDialoguePrompt(
   const hasNpcDialogue =
     npc.defaultDialogueId !== null || npc.dialogues.length > 0;
 
+  if (!hasClickLinks) {
+    return trimmedName.length > 0 ? `Talk to ${trimmedName}` : "Talk";
+  }
+
   if (hasNpcDialogue) {
     return trimmedName.length > 0 ? `Talk to ${trimmedName}` : "Talk";
   }
@@ -586,11 +590,7 @@ export class RuntimeInteractionSystem {
 
       const hasClickLinks = hasTriggerLinks(runtimeScene, npc.entityId, "click");
 
-      if (
-        !hasClickLinks &&
-        npc.defaultDialogueId === null &&
-        npc.dialogues.length === 0
-      ) {
+      if (!hasClickLinks) {
         continue;
       }
 
@@ -638,20 +638,8 @@ export class RuntimeInteractionSystem {
       ) ?? null;
 
     if (npc !== null) {
-      if (hasTriggerLinks(runtimeScene, npc.entityId, "click")) {
-        this.dispatchLinks(sourceEntityId, "click", runtimeScene, dispatcher);
-        return;
-      }
-
-      if (npc.defaultDialogueId !== null || npc.dialogues.length > 0) {
-        dispatcher.startNpcDialogue?.(npc.entityId, npc.defaultDialogueId, {
-          kind: "npc",
-          sourceEntityId: npc.entityId,
-          linkId: null,
-          trigger: "click"
-        });
-        return;
-      }
+      this.dispatchLinks(sourceEntityId, "click", runtimeScene, dispatcher);
+      return;
     }
 
     this.dispatchLinks(sourceEntityId, "click", runtimeScene, dispatcher);
