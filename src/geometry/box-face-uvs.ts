@@ -43,6 +43,22 @@ export function createFitToFaceBoxBrushFaceUvState(brush: BoxBrush, faceId: BoxF
   };
 }
 
+export function createFitToMaterialTileBoxBrushFaceUvState(
+  brush: BoxBrush,
+  faceId: BoxFaceId,
+  tileSize: Vec2
+): FaceUvState {
+  const faceSize = getBoxBrushFaceSize(brush, faceId);
+
+  return {
+    ...createDefaultFaceUvState(),
+    scale: {
+      x: tileSize.x / faceSize.x,
+      y: tileSize.y / faceSize.y
+    }
+  };
+}
+
 export function projectBoxFaceVertexToUv(vertexPosition: Vec3, brush: BoxBrushUvProjectionSource, faceId: BoxFaceId): Vec2 {
   const halfSize = {
     x: brush.size.x * 0.5,

@@ -5,6 +5,7 @@ import {
   BufferGeometry,
   BoxGeometry,
   CapsuleGeometry,
+  Color,
   ConeGeometry,
   DirectionalLight,
   Euler,
@@ -16,6 +17,7 @@ import {
   Material,
   Mesh,
   MeshBasicMaterial,
+  MeshPhysicalMaterial,
   MeshStandardMaterial,
   PerspectiveCamera,
   PointLight,
@@ -24,6 +26,7 @@ import {
   ShaderMaterial,
   Vector3,
   SpotLight,
+  TextureLoader,
   WebGLRenderTarget,
   WebGLRenderer
 } from "three";
@@ -55,8 +58,11 @@ import {
 import { buildBoxBrushDerivedMeshData } from "../geometry/box-brush-mesh";
 import {
   createStarterMaterialSignature,
-  createStarterMaterialTexture
+  createStarterMaterialTextureSet,
+  disposeStarterMaterialTextureSet,
+  type StarterMaterialTextureSet
 } from "../materials/starter-material-textures";
+import type { MaterialDef } from "../materials/starter-material-library";
 import {
   applyAdvancedRenderingLightShadowFlags,
   applyAdvancedRenderingRenderableShadowFlags,
@@ -146,7 +152,7 @@ import { resolvePlayerStartPauseInput } from "./player-input-bindings";
 
 interface CachedMaterialTexture {
   signature: string;
-  texture: ReturnType<typeof createStarterMaterialTexture>;
+  textureSet: StarterMaterialTextureSet;
 }
 
 function isEditableEventTarget(target: EventTarget | null): boolean {
@@ -266,6 +272,7 @@ export class RuntimeHost {
     string,
     CachedMaterialTexture
   >();
+  private readonly materialTextureLoader = new TextureLoader();
   private readonly animationMixers = new Map<string, AnimationMixer>();
   private readonly instanceAnimationClips = new Map<string, AnimationClip[]>();
   private readonly controllerContext: RuntimeControllerContext;
@@ -744,7 +751,7 @@ export class RuntimeHost {
     }
 
     for (const cachedTexture of this.materialTextureCache.values()) {
-      cachedTexture.texture.dispose();
+      disposeStarterMaterialTextureSet(cachedTexture.textureSet);
     }
 
     this.materialTextureCache.clear();
@@ -2275,11 +2282,18 @@ export class RuntimeHost {
       return faceMaterial;
     }
 
-    const faceMaterial = new MeshStandardMaterial({
+    const textureSet = this.getOrCreateTextureSet(material);
+    const faceMaterial = new MeshPhysicalMaterial({
       color: 0xffffff,
-      map: this.getOrCreateTexture(material),
-      roughness: 0.92,
-      metalness: 0.02
+      map: textureSet.baseColor,
+      normalMap: textureSet.normal,
+      roughnessMap: textureSet.roughness,
+      roughness: 1,
+      metalnessMap: textureSet.metallic,
+      metalness: textureSet.metallic === null ? 0.03 : 1,
+      specularColorMap: textureSet.specular,
+      specularColor: new Color(0xffffff),
+      specularIntensity: textureSet.specular === null ? 0.2 : 1
     });
 
     if (
@@ -2566,25 +2580,30 @@ export class RuntimeHost {
     }
   }
 
-  private getOrCreateTexture(
+  private getOrCreateTextureSet(
     material: NonNullable<RuntimeBoxBrushInstance["faces"]["posX"]["material"]>
   ) {
     const signature = createStarterMaterialSignature(material);
     const cachedTexture = this.materialTextureCache.get(material.id);
 
     if (cachedTexture !== undefined && cachedTexture.signature === signature) {
-      return cachedTexture.texture;
+      return cachedTexture.textureSet;
     }
 
-    cachedTexture?.texture.dispose();
+    if (cachedTexture !== undefined) {
+      disposeStarterMaterialTextureSet(cachedTexture.textureSet);
+    }
 
-    const texture = createStarterMaterialTexture(material);
+    const textureSet = createStarterMaterialTextureSet(
+      material,
+      this.materialTextureLoader
+    );
     this.materialTextureCache.set(material.id, {
       signature,
-      texture
+      textureSet
     });
 
-    return texture;
+    return textureSet;
   }
 
   private clearLocalLights() {

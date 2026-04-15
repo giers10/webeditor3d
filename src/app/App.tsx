@@ -210,7 +210,10 @@ import {
   snapPositiveSizeToGrid,
   snapVec3ToGrid
 } from "../geometry/grid-snapping";
-import { createFitToFaceBoxBrushFaceUvState } from "../geometry/box-face-uvs";
+import {
+  createFitToFaceBoxBrushFaceUvState,
+  createFitToMaterialTileBoxBrushFaceUvState
+} from "../geometry/box-face-uvs";
 import {
   DEFAULT_ENTITY_POSITION,
   DEFAULT_INTERACTABLE_PROMPT,
@@ -333,6 +336,8 @@ import {
 } from "../controls/control-surface";
 import {
   STARTER_MATERIAL_LIBRARY,
+  getStarterMaterialPreviewUrl,
+  getStarterMaterialTileSizeMeters,
   type MaterialDef
 } from "../materials/starter-material-library";
 import { RunnerCanvas } from "../runner-web/RunnerCanvas";
@@ -1534,32 +1539,13 @@ function sortDocumentMaterials(
 }
 
 function getMaterialPreviewStyle(material: MaterialDef): CSSProperties {
-  switch (material.pattern) {
-    case "grid":
-      return {
-        backgroundColor: material.baseColorHex,
-        backgroundImage: `linear-gradient(${material.accentColorHex} 2px, transparent 2px), linear-gradient(90deg, ${material.accentColorHex} 2px, transparent 2px)`,
-        backgroundSize: "18px 18px"
-      };
-    case "checker":
-      return {
-        backgroundColor: material.baseColorHex,
-        backgroundImage: `linear-gradient(45deg, ${material.accentColorHex} 25%, transparent 25%, transparent 75%, ${material.accentColorHex} 75%, ${material.accentColorHex}), linear-gradient(45deg, ${material.accentColorHex} 25%, transparent 25%, transparent 75%, ${material.accentColorHex} 75%, ${material.accentColorHex})`,
-        backgroundPosition: "0 0, 9px 9px",
-        backgroundSize: "18px 18px"
-      };
-    case "stripes":
-      return {
-        backgroundColor: material.baseColorHex,
-        backgroundImage: `repeating-linear-gradient(135deg, ${material.accentColorHex} 0 9px, transparent 9px 18px)`
-      };
-    case "diamond":
-      return {
-        backgroundColor: material.baseColorHex,
-        backgroundImage: `linear-gradient(45deg, ${material.accentColorHex} 12%, transparent 12%, transparent 88%, ${material.accentColorHex} 88%), linear-gradient(-45deg, ${material.accentColorHex} 12%, transparent 12%, transparent 88%, ${material.accentColorHex} 88%)`,
-        backgroundSize: "22px 22px"
-      };
-  }
+  return {
+    backgroundColor: material.swatchColorHex,
+    backgroundImage: `url("${getStarterMaterialPreviewUrl(material)}")`,
+    backgroundPosition: "center",
+    backgroundRepeat: "no-repeat",
+    backgroundSize: "cover"
+  };
 }
 
 function rotateQuarterTurns(
@@ -10033,7 +10019,13 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
 
     applyFaceUvState(
-      createFitToFaceBoxBrushFaceUvState(selectedBrush, selectedFaceId),
+      selectedFaceMaterial === undefined || selectedFaceMaterial === null
+        ? createFitToFaceBoxBrushFaceUvState(selectedBrush, selectedFaceId)
+        : createFitToMaterialTileBoxBrushFaceUvState(
+            selectedBrush,
+            selectedFaceId,
+            getStarterMaterialTileSizeMeters(selectedFaceMaterial)
+          ),
       "Fit face UV to face",
       "Fit the selected face UVs to the face bounds."
     );

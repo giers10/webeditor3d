@@ -3,8 +3,8 @@ import {
   AxesHelper,
   BufferGeometry,
   BoxGeometry,
-  CanvasTexture,
   CapsuleGeometry,
+  Color,
   ConeGeometry,
   CylinderGeometry,
   DirectionalLight,
@@ -19,6 +19,7 @@ import {
   Matrix4,
   Mesh,
   MeshBasicMaterial,
+  MeshPhysicalMaterial,
   MeshStandardMaterial,
   Object3D,
   OrthographicCamera,
@@ -33,6 +34,7 @@ import {
   Spherical,
   TorusGeometry,
   SpotLight,
+  TextureLoader,
   Vector2,
   Vector3,
   WebGLRenderTarget,
@@ -160,7 +162,9 @@ import { buildGeneratedModelCollider } from "../geometry/model-instance-collider
 import { DEFAULT_GRID_SIZE, snapValueToGrid } from "../geometry/grid-snapping";
 import {
   createStarterMaterialSignature,
-  createStarterMaterialTexture
+  createStarterMaterialTextureSet,
+  disposeStarterMaterialTextureSet,
+  type StarterMaterialTextureSet
 } from "../materials/starter-material-textures";
 import type { MaterialDef } from "../materials/starter-material-library";
 import {
@@ -320,7 +324,7 @@ const VIEWPORT_GRID_VISUAL_DIVISIONS = 400;
 
 interface CachedMaterialTexture {
   signature: string;
-  texture: CanvasTexture;
+  textureSet: StarterMaterialTextureSet;
 }
 
 interface EntityRenderObjects {
@@ -405,6 +409,7 @@ export class ViewportHost {
     string,
     CachedMaterialTexture
   >();
+  private readonly materialTextureLoader = new TextureLoader();
   private currentDocument: SceneDocument | null = null;
   private currentWorld: WorldSettings | null = null;
   private currentSimulationScene: RuntimeSceneDefinition | null = null;
@@ -1020,7 +1025,7 @@ export class ViewportHost {
     this.renderer.autoClear = true;
 
     for (const cachedTexture of this.materialTextureCache.values()) {
-      cachedTexture.texture.dispose();
+      disposeStarterMaterialTextureSet(cachedTexture.textureSet);
     }
 
     this.materialTextureCache.clear();
@@ -4671,6 +4676,21 @@ export class ViewportHost {
     return "none";
   }
 
+  private getMaterialSwatchColorHex(
+    material: MaterialDef,
+    highlightState: "none" | "hovered" | "selected"
+  ): number {
+    const swatchColor = new Color(material.swatchColorHex);
+
+    if (highlightState === "selected") {
+      swatchColor.lerp(new Color(SELECTED_FACE_FALLBACK_COLOR), 0.42);
+    } else if (highlightState === "hovered") {
+      swatchColor.lerp(new Color(HOVERED_FACE_FALLBACK_COLOR), 0.28);
+    }
+
+    return swatchColor.getHex();
+  }
+
   private createFaceMaterial(
     brush: BoxBrush,
     faceId: BoxFaceId,
@@ -4822,9 +4842,7 @@ export class ViewportHost {
             : hoveredFace
               ? HOVERED_FACE_FALLBACK_COLOR
               : FALLBACK_FACE_COLOR
-          : emphasizedFace
-            ? material.accentColorHex
-            : material.baseColorHex;
+          : this.getMaterialSwatchColorHex(material, highlightState);
 
       return new MeshBasicMaterial({
         color: colorHex,
@@ -4842,9 +4860,7 @@ export class ViewportHost {
             : hoveredFace
               ? HOVERED_FACE_FALLBACK_COLOR
               : FALLBACK_FACE_COLOR
-          : emphasizedFace
-            ? material.accentColorHex
-            : material.baseColorHex;
+          : this.getMaterialSwatchColorHex(material, highlightState);
 
       return new MeshBasicMaterial({
         color: colorHex,
@@ -4885,17 +4901,24 @@ export class ViewportHost {
       return faceMaterial;
     }
 
-    const faceMaterial = new MeshStandardMaterial({
+    const textureSet = this.getOrCreateTextureSet(material);
+    const faceMaterial = new MeshPhysicalMaterial({
       color: 0xffffff,
-      map: this.getOrCreateTexture(material),
+      map: textureSet.baseColor,
+      normalMap: textureSet.normal,
+      roughnessMap: textureSet.roughness,
       emissive: selectedFace
         ? SELECTED_FACE_EMISSIVE
         : hoveredFace
           ? HOVERED_FACE_EMISSIVE
           : 0x000000,
       emissiveIntensity: selectedFace ? 0.32 : hoveredFace ? 0.18 : 0,
-      roughness: 0.92,
-      metalness: 0.02
+      roughness: 1,
+      metalnessMap: textureSet.metallic,
+      metalness: textureSet.metallic === null ? 0.03 : 1,
+      specularColorMap: textureSet.specular,
+      specularColor: new Color(0xffffff),
+      specularIntensity: textureSet.specular === null ? 0.2 : 1
     });
 
     if (
@@ -5150,24 +5173,29 @@ export class ViewportHost {
     }
   }
 
-  private getOrCreateTexture(material: MaterialDef): CanvasTexture {
+  private getOrCreateTextureSet(material: MaterialDef) {
     const signature = createStarterMaterialSignature(material);
     const cachedTexture = this.materialTextureCache.get(material.id);
 
     if (cachedTexture !== undefined && cachedTexture.signature === signature) {
-      return cachedTexture.texture;
+      return cachedTexture.textureSet;
     }
 
-    cachedTexture?.texture.dispose();
+    if (cachedTexture !== undefined) {
+      disposeStarterMaterialTextureSet(cachedTexture.textureSet);
+    }
 
-    const texture = createStarterMaterialTexture(material);
+    const textureSet = createStarterMaterialTextureSet(
+      material,
+      this.materialTextureLoader
+    );
 
     this.materialTextureCache.set(material.id, {
       signature,
-      texture
+      textureSet
     });
 
-    return texture;
+    return textureSet;
   }
 
   private collectViewportWaterContactPatches(
