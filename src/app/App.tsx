@@ -1941,10 +1941,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
         ? selectedFaceMaterial
         : null;
   const materialInspectorActiveLabel =
-    materialInspectorScope === "brush" ? "Whole Solid" : "Active Face";
+    materialInspectorScope === "brush" ? "Active Scope" : "Active Face";
   const materialInspectorActiveValue =
     materialInspectorScope === "brush"
-      ? "All Six Faces"
+      ? "Whole Solid"
       : selectedFaceId === null
         ? null
         : BOX_FACE_LABELS[selectedFaceId];
