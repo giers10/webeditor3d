@@ -1254,9 +1254,13 @@ function getBrushLabelById(brushId: string, brushes: Brush[]): string {
 
 function getSelectedBrushLabel(
   selection: EditorSelection,
-  brushes: Brush[]
+  brushes: Brush[],
+  activeSelectionId: string | null
 ): string {
-  const selectedBrushId = getSingleSelectedBrushId(selection);
+  const selectedBrushId =
+    selection.kind === "brushes"
+      ? resolveSelectionActiveId(selection, activeSelectionId)
+      : getSingleSelectedBrushId(selection);
 
   if (selectedBrushId === null) {
     return "No solid selected";
@@ -1271,13 +1275,14 @@ function describeSelection(
   paths: ScenePath[],
   modelInstances: Record<string, ModelInstance>,
   assets: Record<string, ProjectAssetRecord>,
-  entities: Record<string, EntityInstance>
+  entities: Record<string, EntityInstance>,
+  activeSelectionId: string | null
 ): string {
   switch (selection.kind) {
     case "none":
       return "No authored selection";
     case "brushes":
-      return `${selection.ids.length} solid${selection.ids.length === 1 ? "" : "s"} selected (${getSelectedBrushLabel(selection, brushes)})`;
+      return `${selection.ids.length} solid${selection.ids.length === 1 ? "" : "s"} selected (${getSelectedBrushLabel(selection, brushes, activeSelectionId)})`;
     case "brushFace": {
       const brush = brushes.find((candidate) => candidate.id === selection.brushId);
       const faceLabel =
@@ -1317,9 +1322,9 @@ function describeSelection(
       return `${pointLabel} selected (${getPathLabelById(selection.pathId, paths)})`;
     }
     case "entities":
-      return `${selection.ids.length} entity selected (${getEntityDisplayLabelById(selection.ids[0], entities, assets)})`;
+      return `${selection.ids.length} entit${selection.ids.length === 1 ? "y" : "ies"} selected (${getEntityDisplayLabelById(resolveSelectionActiveId(selection, activeSelectionId) ?? selection.ids[0], entities, assets)})`;
     case "modelInstances":
-      return `${selection.ids.length} model instance${selection.ids.length === 1 ? "" : "s"} selected (${getModelInstanceDisplayLabelById(selection.ids[0], modelInstances, assets)})`;
+      return `${selection.ids.length} model instance${selection.ids.length === 1 ? "" : "s"} selected (${getModelInstanceDisplayLabelById(resolveSelectionActiveId(selection, activeSelectionId) ?? selection.ids[0], modelInstances, assets)})`;
     default:
       return "Unknown selection";
   }
