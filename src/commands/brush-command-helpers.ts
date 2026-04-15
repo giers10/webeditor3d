@@ -3,6 +3,7 @@ import {
   cloneBrush,
   cloneBrushGeometry,
   cloneFaceUvState,
+  updateBrush,
   type Brush,
   type BrushFace
 } from "../document/brushes";
@@ -17,7 +18,7 @@ export function getBoxBrushOrThrow(document: SceneDocument, brushId: string): Br
   const brush = document.brushes[brushId];
 
   if (brush === undefined) {
-    throw new Error(`Box brush ${brushId} does not exist.`);
+    throw new Error(`Whitebox solid ${brushId} does not exist.`);
   }
 
   return brush;
@@ -85,7 +86,7 @@ export function getBoxBrushFaceOrThrow(document: SceneDocument, brushId: string,
   const face = brush.faces[faceId];
 
   if (face === undefined) {
-    throw new Error(`Box brush ${brushId} does not contain face ${faceId}.`);
+    throw new Error(`Whitebox solid ${brushId} does not contain face ${faceId}.`);
   }
 
   return face;
@@ -94,15 +95,17 @@ export function getBoxBrushFaceOrThrow(document: SceneDocument, brushId: string,
 export function replaceBoxBrushFace(document: SceneDocument, brushId: string, faceId: WhiteboxFaceId, face: BrushFace): SceneDocument {
   const brush = getBoxBrushOrThrow(document, brushId);
 
-  return replaceBrush(document, {
-    ...brush,
-    faces: {
-      ...brush.faces,
-      [faceId]: {
-        materialId: face.materialId,
-        uv: cloneFaceUvState(face.uv)
-      }
-    },
-    geometry: cloneBrushGeometry(brush.geometry)
-  });
+  return replaceBrush(
+    document,
+    updateBrush(brush, {
+      faces: {
+        ...brush.faces,
+        [faceId]: {
+          materialId: face.materialId,
+          uv: cloneFaceUvState(face.uv)
+        }
+      } as typeof brush.faces,
+      geometry: cloneBrushGeometry(brush.geometry)
+    })
+  );
 }
