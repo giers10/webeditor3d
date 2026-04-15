@@ -2107,9 +2107,7 @@ function readBrushes(
       throw new Error(`brushes.${brushId} must be an object.`);
     }
 
-    if (brushValue.kind !== "box") {
-      throw new Error(`brushes.${brushId}.kind must be box.`);
-    }
+    const kind = brushValue.kind;
 
     const center = readVec3(brushValue.center, `brushes.${brushId}.center`);
     const size = readVec3(brushValue.size, `brushes.${brushId}.size`);
@@ -2118,7 +2116,7 @@ function readBrushes(
       throw new Error(`brushes.${brushId}.size values must be positive.`);
     }
 
-    brushes[brushId] = createBoxBrush({
+    const sharedBrushFields = {
       id: expectString(brushValue.id, `brushes.${brushId}.id`),
       name: readOptionalBrushName(brushValue.name, `brushes.${brushId}.name`),
       visible: readOptionalBoolean(
@@ -2138,17 +2136,6 @@ function readBrushes(
         DEFAULT_BOX_BRUSH_ROTATION_DEGREES
       ),
       size,
-      geometry: readBoxBrushGeometry(
-        brushValue.geometry,
-        `brushes.${brushId}.geometry`,
-        size
-      ),
-      faces: readBoxBrushFaces(
-        brushValue.faces,
-        `brushes.${brushId}.faces`,
-        materials,
-        allowMissingUvState
-      ),
       volume: readBoxBrushVolumeSettings(
         brushValue.volume,
         `brushes.${brushId}.volume`
@@ -2161,7 +2148,74 @@ function readBrushes(
         brushValue.groupId,
         `brushes.${brushId}.groupId`
       )
-    });
+    };
+
+    if (kind === "box") {
+      brushes[brushId] = createBoxBrush({
+        ...sharedBrushFields,
+        geometry: readBoxBrushGeometry(
+          brushValue.geometry,
+          `brushes.${brushId}.geometry`,
+          size
+        ),
+        faces: readBoxBrushFaces(
+          brushValue.faces,
+          `brushes.${brushId}.faces`,
+          materials,
+          allowMissingUvState
+        )
+      });
+      continue;
+    }
+
+    if (kind === "wedge") {
+      brushes[brushId] = createWedgeBrush({
+        ...sharedBrushFields,
+        geometry: readBrushGeometry(
+          brushValue.geometry,
+          `brushes.${brushId}.geometry`,
+          createDefaultWedgeBrushGeometry(size),
+          WEDGE_VERTEX_IDS
+        ),
+        faces: readBrushFaces(
+          brushValue.faces,
+          `brushes.${brushId}.faces`,
+          materials,
+          allowMissingUvState,
+          WEDGE_FACE_IDS
+        )
+      });
+      continue;
+    }
+
+    if (kind === "radialPrism") {
+      const sideCount = normalizeRadialPrismSideCount(
+        expectNumber(brushValue.sideCount, `brushes.${brushId}.sideCount`)
+      );
+
+      brushes[brushId] = createRadialPrismBrush({
+        ...sharedBrushFields,
+        sideCount,
+        geometry: readBrushGeometry(
+          brushValue.geometry,
+          `brushes.${brushId}.geometry`,
+          createDefaultRadialPrismBrushGeometry(size, sideCount),
+          getRadialPrismVertexIds(sideCount)
+        ),
+        faces: readBrushFaces(
+          brushValue.faces,
+          `brushes.${brushId}.faces`,
+          materials,
+          allowMissingUvState,
+          getRadialPrismFaceIds(sideCount)
+        )
+      });
+      continue;
+    }
+
+    throw new Error(
+      `brushes.${brushId}.kind must be box, wedge, or radialPrism.`
+    );
   }
 
   return brushes;
