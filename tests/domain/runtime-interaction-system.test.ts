@@ -182,7 +182,6 @@ function createRuntimeNpcFixture(options: {
   dialogueId: string;
   title: string;
   text: string;
-  speakerName?: string | null;
   position?: { x: number; y: number; z: number };
 }): RuntimeSceneDefinition["entities"]["npcs"][number] {
   const position = options.position ?? { x: 0, y: 0, z: 0 };
@@ -202,7 +201,6 @@ function createRuntimeNpcFixture(options: {
         lines: [
           {
             id: `${options.dialogueId}-line-1`,
-            speakerName: options.speakerName ?? null,
             text: options.text
           }
         ]
@@ -633,7 +631,6 @@ describe("RuntimeInteractionSystem", () => {
         entityId: "entity-npc-console",
         dialogueId: "dialogue-console",
         title: "Console",
-        speakerName: "System",
         text: "Access granted.",
         position: { x: 10, y: 0, z: 0 }
       })
@@ -685,7 +682,6 @@ describe("RuntimeInteractionSystem", () => {
         entityId: "entity-npc-sequence",
         dialogueId: "dialogue-sequence",
         title: "Sequence Dialogue",
-        speakerName: "Console",
         text: "Sequence started.",
         position: { x: 10, y: 0, z: 0 }
       })
@@ -737,7 +733,6 @@ describe("RuntimeInteractionSystem", () => {
         entityId: "entity-npc-console",
         dialogueId: "dialogue-console",
         title: "Console",
-        speakerName: "System",
         text: "Console online.",
         position: { x: 10, y: 0, z: 0 }
       })
