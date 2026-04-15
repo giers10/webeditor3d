@@ -2886,6 +2886,558 @@ export class ViewportHost {
     };
   }
 
+  private scalePositionAroundPivot(
+    position: Vec3,
+    pivot: Vec3,
+    scaleFactor: number,
+    axisConstraint: TransformAxis | null
+  ): Vec3 {
+    if (axisConstraint === null) {
+      return {
+        x: this.snapWhiteboxPositionValue(
+          pivot.x + (position.x - pivot.x) * scaleFactor
+        ),
+        y: this.snapWhiteboxPositionValue(
+          pivot.y + (position.y - pivot.y) * scaleFactor
+        ),
+        z: this.snapWhiteboxPositionValue(
+          pivot.z + (position.z - pivot.z) * scaleFactor
+        )
+      };
+    }
+
+    return {
+      x:
+        axisConstraint === "x"
+          ? this.snapWhiteboxPositionValue(
+              pivot.x + (position.x - pivot.x) * scaleFactor
+            )
+          : position.x,
+      y:
+        axisConstraint === "y"
+          ? this.snapWhiteboxPositionValue(
+              pivot.y + (position.y - pivot.y) * scaleFactor
+            )
+          : position.y,
+      z:
+        axisConstraint === "z"
+          ? this.snapWhiteboxPositionValue(
+              pivot.z + (position.z - pivot.z) * scaleFactor
+            )
+          : position.z
+    };
+  }
+
+  private buildBatchTranslatedPreview(
+    session: ActiveTransformSession,
+    origin: { x: number; y: number },
+    current: { x: number; y: number },
+    axisConstraint: TransformAxis | null,
+    axisConstraintSpace: TransformAxisSpace
+  ) {
+    const initialPivot = session.target.initialPivot;
+    let nextPivot = {
+      ...initialPivot
+    };
+
+    if (axisConstraint === null) {
+      const plane = this.getTransformPlaneForPivot(initialPivot);
+      const startIntersection = this.getPointerPlaneIntersection(
+        origin.x,
+        origin.y,
+        plane
+      );
+      const currentIntersection = this.getPointerPlaneIntersection(
+        current.x,
+        current.y,
+        plane
+      );
+
+      if (startIntersection !== null && currentIntersection !== null) {
+        const delta = currentIntersection.sub(startIntersection);
+
+        switch (this.viewMode) {
+          case "perspective":
+          case "top":
+            nextPivot = {
+              ...initialPivot,
+              x: this.snapWhiteboxPositionValue(initialPivot.x + delta.x),
+              z: this.snapWhiteboxPositionValue(initialPivot.z + delta.z)
+            };
+            break;
+          case "front":
+            nextPivot = {
+              ...initialPivot,
+              x: this.snapWhiteboxPositionValue(initialPivot.x + delta.x),
+              y: this.snapWhiteboxPositionValue(initialPivot.y + delta.y)
+            };
+            break;
+          case "side":
+            nextPivot = {
+              ...initialPivot,
+              y: this.snapWhiteboxPositionValue(initialPivot.y + delta.y),
+              z: this.snapWhiteboxPositionValue(initialPivot.z + delta.z)
+            };
+            break;
+        }
+      }
+    } else if (
+      axisConstraintSpace === "local" &&
+      supportsLocalTransformAxisConstraint(session, axisConstraint)
+    ) {
+      const axisVector = this.getConstraintAxisWorldVector(
+        session,
+        axisConstraint,
+        axisConstraintSpace
+      );
+      const axisDelta = this.getMovementDistanceAlongWorldAxis(
+        axisVector,
+        initialPivot,
+        origin,
+        current
+      );
+      const snappedAxisDelta = this.whiteboxSnapEnabled
+        ? snapValueToGrid(axisDelta, this.whiteboxSnapStep)
+        : axisDelta;
+      const worldDelta = axisVector.clone().multiplyScalar(snappedAxisDelta);
+
+      nextPivot = {
+        x: initialPivot.x + worldDelta.x,
+        y: initialPivot.y + worldDelta.y,
+        z: initialPivot.z + worldDelta.z
+      };
+    } else {
+      const axisDelta = this.getAxisMovementDistance(
+        axisConstraint,
+        initialPivot,
+        origin,
+        current
+      );
+
+      nextPivot = this.setAxisComponent(
+        nextPivot,
+        axisConstraint,
+        this.snapWhiteboxPositionValue(
+          this.getAxisComponent(initialPivot, axisConstraint) + axisDelta
+        )
+      );
+    }
+
+    const worldDelta = {
+      x: nextPivot.x - initialPivot.x,
+      y: nextPivot.y - initialPivot.y,
+      z: nextPivot.z - initialPivot.z
+    };
+
+    if (session.target.kind === "brushes") {
+      return {
+        kind: "brushes" as const,
+        pivot: nextPivot,
+        items: session.target.items.map((item) => ({
+          brushId: item.brushId,
+          center: {
+            x: item.initialCenter.x + worldDelta.x,
+            y: item.initialCenter.y + worldDelta.y,
+            z: item.initialCenter.z + worldDelta.z
+          },
+          rotationDegrees: {
+            ...item.initialRotationDegrees
+          },
+          size: {
+            ...item.initialSize
+          },
+          geometry: cloneBrushGeometry(item.initialGeometry)
+        }))
+      };
+    }
+
+    if (session.target.kind === "modelInstances") {
+      return {
+        kind: "modelInstances" as const,
+        pivot: nextPivot,
+        items: session.target.items.map((item) => ({
+          modelInstanceId: item.modelInstanceId,
+          position: {
+            x: item.initialPosition.x + worldDelta.x,
+            y: item.initialPosition.y + worldDelta.y,
+            z: item.initialPosition.z + worldDelta.z
+          },
+          rotationDegrees: {
+            ...item.initialRotationDegrees
+          },
+          scale: {
+            ...item.initialScale
+          }
+        }))
+      };
+    }
+
+    return {
+      kind: "entities" as const,
+      pivot: nextPivot,
+      items: session.target.items.map((item) => ({
+        entityId: item.entityId,
+        position: {
+          x: item.initialPosition.x + worldDelta.x,
+          y: item.initialPosition.y + worldDelta.y,
+          z: item.initialPosition.z + worldDelta.z
+        },
+        rotation:
+          item.initialRotation.kind === "yaw"
+            ? {
+                kind: "yaw" as const,
+                yawDegrees: item.initialRotation.yawDegrees
+              }
+            : item.initialRotation.kind === "direction"
+              ? {
+                  kind: "direction" as const,
+                  direction: {
+                    ...item.initialRotation.direction
+                  }
+                }
+              : {
+                  kind: "none" as const
+                }
+      }))
+    };
+  }
+
+  private buildBatchRotatedPreview(
+    session: ActiveTransformSession,
+    origin: { x: number; y: number },
+    current: { x: number; y: number },
+    axisConstraint: TransformAxis | null,
+    axisConstraintSpace: TransformAxisSpace
+  ) {
+    const effectiveAxis =
+      axisConstraint ?? this.getEffectiveRotationAxis(session);
+    const pointerDeltaDegrees =
+      (current.x - origin.x - (current.y - origin.y)) * 0.5;
+    const pointerDeltaRadians = (pointerDeltaDegrees * Math.PI) / 180;
+    const pivotWorld = session.target.initialPivot;
+    const rotationAxis =
+      axisConstraint !== null &&
+      axisConstraintSpace === "local" &&
+      supportsLocalTransformAxisConstraint(session, effectiveAxis)
+        ? this.getConstraintAxisWorldVector(
+            session,
+            effectiveAxis,
+            axisConstraintSpace
+          )
+        : this.axisVector(effectiveAxis);
+    const normalizedRotationAxis = rotationAxis.clone().normalize();
+    const deltaRotation = new Quaternion().setFromAxisAngle(
+      normalizedRotationAxis,
+      pointerDeltaRadians
+    );
+    const pivotVector = new Vector3(pivotWorld.x, pivotWorld.y, pivotWorld.z);
+
+    if (session.target.kind === "brushes") {
+      return {
+        kind: "brushes" as const,
+        pivot: {
+          ...pivotWorld
+        },
+        items: session.target.items.map((item) => {
+          const nextCenter = new Vector3(
+            item.initialCenter.x - pivotWorld.x,
+            item.initialCenter.y - pivotWorld.y,
+            item.initialCenter.z - pivotWorld.z
+          )
+            .applyAxisAngle(normalizedRotationAxis, pointerDeltaRadians)
+            .add(pivotVector);
+
+          let nextRotationDegrees = {
+            ...item.initialRotationDegrees
+          };
+
+          if (axisConstraint === null) {
+            nextRotationDegrees[effectiveAxis] = this.normalizeDegrees(
+              nextRotationDegrees[effectiveAxis] + pointerDeltaDegrees
+            );
+          } else {
+            nextRotationDegrees = this.getQuaternionEulerDegrees(
+              deltaRotation
+                .clone()
+                .multiply(
+                  this.createRotationQuaternion(item.initialRotationDegrees)
+                )
+            );
+          }
+
+          return {
+            brushId: item.brushId,
+            center: {
+              x: nextCenter.x,
+              y: nextCenter.y,
+              z: nextCenter.z
+            },
+            rotationDegrees: nextRotationDegrees,
+            size: {
+              ...item.initialSize
+            },
+            geometry: cloneBrushGeometry(item.initialGeometry)
+          };
+        })
+      };
+    }
+
+    if (session.target.kind === "modelInstances") {
+      return {
+        kind: "modelInstances" as const,
+        pivot: {
+          ...pivotWorld
+        },
+        items: session.target.items.map((item) => {
+          const nextPosition = new Vector3(
+            item.initialPosition.x - pivotWorld.x,
+            item.initialPosition.y - pivotWorld.y,
+            item.initialPosition.z - pivotWorld.z
+          )
+            .applyAxisAngle(normalizedRotationAxis, pointerDeltaRadians)
+            .add(pivotVector);
+
+          let nextRotationDegrees = {
+            ...item.initialRotationDegrees
+          };
+
+          if (axisConstraint === null) {
+            nextRotationDegrees[effectiveAxis] = this.normalizeDegrees(
+              nextRotationDegrees[effectiveAxis] + pointerDeltaDegrees
+            );
+          } else {
+            nextRotationDegrees = this.getQuaternionEulerDegrees(
+              deltaRotation
+                .clone()
+                .multiply(
+                  this.createRotationQuaternion(item.initialRotationDegrees)
+                )
+            );
+          }
+
+          return {
+            modelInstanceId: item.modelInstanceId,
+            position: {
+              x: nextPosition.x,
+              y: nextPosition.y,
+              z: nextPosition.z
+            },
+            rotationDegrees: nextRotationDegrees,
+            scale: {
+              ...item.initialScale
+            }
+          };
+        })
+      };
+    }
+
+    return {
+      kind: "entities" as const,
+      pivot: {
+        ...pivotWorld
+      },
+      items: session.target.items.map((item) => {
+        const nextPosition = new Vector3(
+          item.initialPosition.x - pivotWorld.x,
+          item.initialPosition.y - pivotWorld.y,
+          item.initialPosition.z - pivotWorld.z
+        )
+          .applyAxisAngle(normalizedRotationAxis, pointerDeltaRadians)
+          .add(pivotVector);
+
+        if (item.initialRotation.kind === "yaw") {
+          if (axisConstraint === null) {
+            return {
+              entityId: item.entityId,
+              position: {
+                x: nextPosition.x,
+                y: nextPosition.y,
+                z: nextPosition.z
+              },
+              rotation: {
+                kind: "yaw" as const,
+                yawDegrees: normalizeYawDegrees(
+                  item.initialRotation.yawDegrees + pointerDeltaDegrees
+                )
+              }
+            };
+          }
+
+          const nextRotationDegrees = this.getQuaternionEulerDegrees(
+            deltaRotation.clone().multiply(
+              this.createRotationQuaternion({
+                x: 0,
+                y: item.initialRotation.yawDegrees,
+                z: 0
+              })
+            )
+          );
+
+          return {
+            entityId: item.entityId,
+            position: {
+              x: nextPosition.x,
+              y: nextPosition.y,
+              z: nextPosition.z
+            },
+            rotation: {
+              kind: "yaw" as const,
+              yawDegrees: normalizeYawDegrees(nextRotationDegrees.y)
+            }
+          };
+        }
+
+        if (item.initialRotation.kind === "direction") {
+          const direction = new Vector3(
+            item.initialRotation.direction.x,
+            item.initialRotation.direction.y,
+            item.initialRotation.direction.z
+          )
+            .applyQuaternion(deltaRotation)
+            .normalize();
+
+          return {
+            entityId: item.entityId,
+            position: {
+              x: nextPosition.x,
+              y: nextPosition.y,
+              z: nextPosition.z
+            },
+            rotation: {
+              kind: "direction" as const,
+              direction: {
+                x: direction.x,
+                y: direction.y,
+                z: direction.z
+              }
+            }
+          };
+        }
+
+        return {
+          entityId: item.entityId,
+          position: {
+            x: nextPosition.x,
+            y: nextPosition.y,
+            z: nextPosition.z
+          },
+          rotation: {
+            kind: "none" as const
+          }
+        };
+      })
+    };
+  }
+
+  private buildBatchScaledPreview(
+    session: ActiveTransformSession,
+    origin: { x: number; y: number },
+    current: { x: number; y: number },
+    axisConstraint: TransformAxis | null
+  ) {
+    const initialPivot = session.target.initialPivot;
+    const scaleFactor =
+      axisConstraint === null
+        ? 1 + (current.x - origin.x - (current.y - origin.y)) * 0.01
+        : 1 +
+          this.getAxisMovementDistance(
+            axisConstraint,
+            initialPivot,
+            origin,
+            current
+          ) *
+            0.45;
+
+    if (session.target.kind === "brushes") {
+      return {
+        kind: "brushes" as const,
+        pivot: {
+          ...initialPivot
+        },
+        items: session.target.items.map((item) => {
+          const nextSize = {
+            ...item.initialSize
+          };
+
+          if (axisConstraint === null) {
+            nextSize.x = this.snapWhiteboxSizeValue(
+              item.initialSize.x * scaleFactor
+            );
+            nextSize.y = this.snapWhiteboxSizeValue(
+              item.initialSize.y * scaleFactor
+            );
+            nextSize.z = this.snapWhiteboxSizeValue(
+              item.initialSize.z * scaleFactor
+            );
+          } else {
+            const scaleAxis = resolveDominantLocalAxisForWorldAxis(
+              item.initialRotationDegrees,
+              axisConstraint
+            );
+            nextSize[scaleAxis] = this.snapWhiteboxSizeValue(
+              item.initialSize[scaleAxis] * scaleFactor
+            );
+          }
+
+          return {
+            brushId: item.brushId,
+            center: this.scalePositionAroundPivot(
+              item.initialCenter,
+              initialPivot,
+              scaleFactor,
+              axisConstraint
+            ),
+            rotationDegrees: {
+              ...item.initialRotationDegrees
+            },
+            size: nextSize,
+            geometry: scaleBrushGeometryToSize(item.initialGeometry, nextSize)
+          };
+        })
+      };
+    }
+
+    return {
+      kind: "modelInstances" as const,
+      pivot: {
+        ...initialPivot
+      },
+      items: session.target.items.map((item) => {
+        const nextScale = {
+          ...item.initialScale
+        };
+
+        if (axisConstraint === null) {
+          nextScale.x = this.snapScaleValue(item.initialScale.x * scaleFactor);
+          nextScale.y = this.snapScaleValue(item.initialScale.y * scaleFactor);
+          nextScale.z = this.snapScaleValue(item.initialScale.z * scaleFactor);
+        } else {
+          const scaleAxis = resolveDominantLocalAxisForWorldAxis(
+            item.initialRotationDegrees,
+            axisConstraint
+          );
+          nextScale[scaleAxis] = this.snapScaleValue(
+            item.initialScale[scaleAxis] * scaleFactor
+          );
+        }
+
+        return {
+          modelInstanceId: item.modelInstanceId,
+          position: this.scalePositionAroundPivot(
+            item.initialPosition,
+            initialPivot,
+            scaleFactor,
+            axisConstraint
+          ),
+          rotationDegrees: {
+            ...item.initialRotationDegrees
+          },
+          scale: nextScale
+        };
+      })
+    };
+  }
+
   private createTargetPreviewBrush(
     session: ActiveTransformSession
   ): Brush | null {
