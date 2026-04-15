@@ -1477,12 +1477,33 @@ export class ViewportHost {
         }
 
         return this.createRotationQuaternion(session.preview.rotationDegrees);
+      case "brushes":
+        if (session.preview.kind !== "brushes") {
+          return null;
+        }
+
+        return this.createRotationQuaternion(
+          session.preview.items.find(
+            (item) => item.brushId === session.target.activeBrushId
+          )?.rotationDegrees ?? { x: 0, y: 0, z: 0 }
+        );
       case "modelInstance":
         if (session.preview.kind !== "modelInstance") {
           return null;
         }
 
         return this.createRotationQuaternion(session.preview.rotationDegrees);
+      case "modelInstances":
+        if (session.preview.kind !== "modelInstances") {
+          return null;
+        }
+
+        return this.createRotationQuaternion(
+          session.preview.items.find(
+            (item) =>
+              item.modelInstanceId === session.target.activeModelInstanceId
+          )?.rotationDegrees ?? { x: 0, y: 0, z: 0 }
+        );
       case "pathPoint":
         return null;
       case "entity":
@@ -1507,6 +1528,51 @@ export class ViewportHost {
               ).normalize()
             );
           case "none":
+            return null;
+        }
+      case "entities":
+        if (session.preview.kind !== "entities") {
+          return null;
+        }
+
+        switch (
+          session.preview.items.find(
+            (item) => item.entityId === session.target.activeEntityId
+          )?.rotation.kind
+        ) {
+          case "yaw":
+            return this.createRotationQuaternion({
+              x: 0,
+              y:
+                session.preview.items.find(
+                  (item) => item.entityId === session.target.activeEntityId
+                )?.rotation.kind === "yaw"
+                  ? session.preview.items.find(
+                      (item) => item.entityId === session.target.activeEntityId
+                    )!.rotation.yawDegrees
+                  : 0,
+              z: 0
+            });
+          case "direction": {
+            const rotation = session.preview.items.find(
+              (item) => item.entityId === session.target.activeEntityId
+            )?.rotation;
+
+            if (rotation?.kind !== "direction") {
+              return null;
+            }
+
+            return new Quaternion().setFromUnitVectors(
+              new Vector3(0, 1, 0),
+              new Vector3(
+                rotation.direction.x,
+                rotation.direction.y,
+                rotation.direction.z
+              ).normalize()
+            );
+          }
+          case "none":
+          case undefined:
             return null;
         }
       case "brushFace":
@@ -1688,12 +1754,18 @@ export class ViewportHost {
     switch (session.preview.kind) {
       case "brush":
         return session.preview.center;
+      case "brushes":
+        return session.preview.pivot;
       case "modelInstance":
         return session.preview.position;
+      case "modelInstances":
+        return session.preview.pivot;
       case "pathPoint":
         return session.preview.position;
       case "entity":
         return session.preview.position;
+      case "entities":
+        return session.preview.pivot;
     }
   }
 
