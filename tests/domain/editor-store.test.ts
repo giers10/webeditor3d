@@ -620,4 +620,66 @@ describe("EditorStore", () => {
       kind: "none"
     });
   });
+
+  it("tracks the active id for same-kind multi-selection and falls back to the last remaining id", () => {
+    const brushA = createBoxBrush({
+      id: "brush-active-a"
+    });
+    const brushB = createBoxBrush({
+      id: "brush-active-b"
+    });
+    const brushC = createBoxBrush({
+      id: "brush-active-c"
+    });
+    const store = createEditorStore({
+      initialDocument: {
+        ...createEmptySceneDocument(),
+        brushes: {
+          [brushA.id]: brushA,
+          [brushB.id]: brushB,
+          [brushC.id]: brushC
+        }
+      }
+    });
+
+    store.setSelection({
+      kind: "brushes",
+      ids: [brushA.id, brushB.id, brushC.id]
+    });
+
+    expect(store.getState().activeSelectionId).toBe(brushC.id);
+
+    store.setSelection({
+      kind: "brushes",
+      ids: [brushA.id, brushB.id]
+    });
+
+    expect(store.getState().activeSelectionId).toBe(brushB.id);
+  });
+
+  it("does not add selection-only changes to undo or redo history", () => {
+    const store = createEditorStore();
+
+    store.executeCommand(createSetSceneNameCommand("Selection History Fixture"));
+
+    store.setSelection({
+      kind: "entities",
+      ids: ["entity-selection-only"]
+    });
+    store.setSelection({
+      kind: "none"
+    });
+
+    expect(store.undo()).toBe(true);
+    expect(store.getState().document.name).toBe("Untitled Scene");
+    expect(store.getState().selection).toEqual({
+      kind: "none"
+    });
+
+    expect(store.redo()).toBe(true);
+    expect(store.getState().document.name).toBe("Selection History Fixture");
+    expect(store.getState().selection).toEqual({
+      kind: "none"
+    });
+  });
 });
