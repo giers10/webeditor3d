@@ -812,7 +812,11 @@ export function ProjectSequencerPane({
                 .filter(
                   (routine) => getRenderedRoutineTargetKey(routine) === targetOption.key
                 )
-                .sort((left, right) => left.startHour - right.startHour);
+                .sort(
+                  (left, right) =>
+                    getRenderedRoutine(left).startHour -
+                    getRenderedRoutine(right).startHour
+                );
 
               return (
                 <div key={targetOption.key} className="schedule-row">
