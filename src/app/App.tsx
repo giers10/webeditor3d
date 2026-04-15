@@ -1368,8 +1368,6 @@ function getInteractionActionLabel(link: InteractionLink): string {
       return "Play Sound";
     case "stopSound":
       return "Stop Sound";
-    case "startDialogue":
-      return "Start Dialogue";
     case "runSequence":
       return "Run Sequence";
     case "control":
@@ -8477,17 +8475,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
           targetSoundEmitterId: link.action.targetSoundEmitterId
         });
         break;
-      case "startDialogue":
-        nextLink = {
-          id: link.id,
-          sourceEntityId: link.sourceEntityId,
-          trigger,
-          action: {
-            type: "startDialogue",
-            dialogueId: link.action.dialogueId
-          }
-        };
-        break;
       case "runSequence":
         nextLink = createRunSequenceInteractionLink({
           id: link.id,
@@ -9179,14 +9166,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       ))}
                     </select>
                   </label>
-                </div>
-              ) : link.action.type === "startDialogue" ? (
-                <div className="form-section">
-                  <div className="material-summary">
-                    Legacy direct dialogue links are no longer authored here.
-                    Move this behavior into a sequence and use a Make NPC Talk
-                    effect instead.
-                  </div>
                 </div>
               ) : link.action.type === "runSequence" ? (
                 (() => {
