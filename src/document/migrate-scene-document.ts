@@ -2226,8 +2226,72 @@ function readBrushes(
       continue;
     }
 
+    if (kind === "cone") {
+      const sideCount = normalizeConeSideCount(
+        expectFiniteNumber(brushValue.sideCount, `brushes.${brushId}.sideCount`)
+      );
+
+      brushes[brushId] = createConeBrush({
+        ...sharedBrushFields,
+        sideCount,
+        geometry: readBrushGeometry(
+          brushValue.geometry,
+          `brushes.${brushId}.geometry`,
+          createDefaultConeBrushGeometry(size, sideCount),
+          getConeVertexIds(sideCount)
+        ),
+        faces: readBrushFaces(
+          brushValue.faces,
+          `brushes.${brushId}.faces`,
+          materials,
+          allowMissingUvState,
+          getConeFaceIds(sideCount)
+        ) as ReturnType<typeof createConeBrush>["faces"]
+      });
+      continue;
+    }
+
+    if (kind === "torus") {
+      const majorSegmentCount = normalizeTorusMajorSegmentCount(
+        expectFiniteNumber(
+          brushValue.majorSegmentCount,
+          `brushes.${brushId}.majorSegmentCount`
+        )
+      );
+      const tubeSegmentCount = normalizeTorusTubeSegmentCount(
+        expectFiniteNumber(
+          brushValue.tubeSegmentCount,
+          `brushes.${brushId}.tubeSegmentCount`
+        )
+      );
+
+      brushes[brushId] = createTorusBrush({
+        ...sharedBrushFields,
+        majorSegmentCount,
+        tubeSegmentCount,
+        geometry: readBrushGeometry(
+          brushValue.geometry,
+          `brushes.${brushId}.geometry`,
+          createDefaultTorusBrushGeometry(
+            size,
+            majorSegmentCount,
+            tubeSegmentCount
+          ),
+          getTorusVertexIds(majorSegmentCount, tubeSegmentCount)
+        ),
+        faces: readBrushFaces(
+          brushValue.faces,
+          `brushes.${brushId}.faces`,
+          materials,
+          allowMissingUvState,
+          getTorusFaceIds(majorSegmentCount, tubeSegmentCount)
+        ) as ReturnType<typeof createTorusBrush>["faces"]
+      });
+      continue;
+    }
+
     throw new Error(
-      `brushes.${brushId}.kind must be box, wedge, or radialPrism.`
+      `brushes.${brushId}.kind must be box, wedge, radialPrism, cone, or torus.`
     );
   }
 
