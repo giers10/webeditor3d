@@ -5,13 +5,17 @@ import type { Vec3 } from "./vector";
 import {
   cloneBrushGeometry,
   createBoxBrush,
+  createConeBrush,
   createRadialPrismBrush,
+  createTorusBrush,
   createWedgeBrush,
   type Brush,
   type BrushGeometry,
   type BrushKind,
   type BoxBrushGeometry,
+  type ConeBrushGeometry,
   type RadialPrismBrushGeometry,
+  type TorusBrushGeometry,
   type WedgeBrushGeometry,
   type WhiteboxEdgeId,
   type WhiteboxFaceId,
@@ -71,6 +75,8 @@ export interface BrushTransformTarget {
   brushId: string;
   brushKind: BrushKind;
   sideCount?: number;
+  majorSegmentCount?: number;
+  tubeSegmentCount?: number;
   initialCenter: Vec3;
   initialRotationDegrees: Vec3;
   initialSize: Vec3;
@@ -82,6 +88,8 @@ export interface BrushFaceTransformTarget {
   brushId: string;
   brushKind: BrushKind;
   sideCount?: number;
+  majorSegmentCount?: number;
+  tubeSegmentCount?: number;
   faceId: WhiteboxFaceId;
   initialCenter: Vec3;
   initialRotationDegrees: Vec3;
@@ -94,6 +102,8 @@ export interface BrushEdgeTransformTarget {
   brushId: string;
   brushKind: BrushKind;
   sideCount?: number;
+  majorSegmentCount?: number;
+  tubeSegmentCount?: number;
   edgeId: WhiteboxEdgeId;
   initialCenter: Vec3;
   initialRotationDegrees: Vec3;
@@ -106,6 +116,8 @@ export interface BrushVertexTransformTarget {
   brushId: string;
   brushKind: BrushKind;
   sideCount?: number;
+  majorSegmentCount?: number;
+  tubeSegmentCount?: number;
   vertexId: WhiteboxVertexId;
   initialCenter: Vec3;
   initialRotationDegrees: Vec3;
