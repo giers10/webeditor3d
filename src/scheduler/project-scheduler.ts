@@ -168,6 +168,7 @@ function compareProjectScheduleEffectOrder(
 
 function normalizeProjectScheduleEffects(
   target: ControlTargetRef,
+  sequenceId: string | null,
   options: {
     effect?: ControlEffect;
     effects?: ControlEffect[];
@@ -180,6 +181,14 @@ function normalizeProjectScheduleEffects(
         ? []
         : [options.effect];
   const normalizedEffects = authoredEffects.map(cloneControlEffect);
+
+  if (normalizedEffects.length === 0 && target.kind === "global") {
+    return [];
+  }
+
+  if (normalizedEffects.length === 0 && sequenceId !== null) {
+    return [];
+  }
 
   if (normalizedEffects.length === 0 && target.kind !== "actor") {
     throw new Error(
@@ -309,7 +318,7 @@ export function createProjectScheduleRoutine(
     startHour,
     endHour,
     priority: normalizeProjectSchedulePriority(overrides.priority),
-    effects: normalizeProjectScheduleEffects(target, {
+    effects: normalizeProjectScheduleEffects(target, normalizeProjectScheduleSequenceId(overrides.sequenceId), {
       effect: overrides.effect,
       effects: overrides.effects
     })
