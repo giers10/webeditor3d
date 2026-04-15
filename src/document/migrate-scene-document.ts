@@ -4684,6 +4684,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     source.version !== PROJECT_TIME_DAY_NIGHT_PROFILE_SCENE_DOCUMENT_VERSION &&
     source.version !== WATER_SURFACE_DISPLACEMENT_SCENE_DOCUMENT_VERSION &&
     source.version !== WHITEBOX_BEVEL_SCENE_DOCUMENT_VERSION &&
+    source.version !== WHITEBOX_PRIMITIVES_SCENE_DOCUMENT_VERSION &&
     source.version !== WHITEBOX_BOX_VOLUME_SCENE_DOCUMENT_VERSION &&
     source.version !== WHITEBOX_FLOAT_TRANSFORM_SCENE_DOCUMENT_VERSION &&
     source.version !== WHITEBOX_GEOMETRY_SCENE_DOCUMENT_VERSION &&
