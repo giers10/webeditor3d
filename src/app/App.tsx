@@ -3425,7 +3425,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     };
 
     const syncImageAsset = async (
-      storage: ProjectAssetStorage,
+      storage: ProjectAssetStorage | null,
       asset: ImageAssetRecord
     ) => {
       try {
@@ -3455,32 +3455,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
     };
 
     const syncAssets = async () => {
-      if (projectAssetStorage === null) {
-        for (const loadedAsset of Object.values(previousLoadedModelAssets)) {
-          disposeModelTemplate(loadedAsset.template);
-        }
-
-        for (const loadedAsset of Object.values(previousLoadedImageAssets)) {
-          disposeLoadedImageAsset(loadedAsset);
-        }
-
-        if (!cancelled) {
-          loadedModelAssetsRef.current = {};
-          loadedImageAssetsRef.current = {};
-          loadedAudioAssetsRef.current = {};
-          previousProjectAssetsRef.current = currentAssets;
-          setLoadedModelAssets({});
-          setLoadedImageAssets({});
-          setLoadedAudioAssets({});
-        }
-
-        return;
-      }
-
       const storage = projectAssetStorage;
 
       for (const asset of Object.values(currentAssets)) {
         if (isModelAsset(asset)) {
+          if (storage === null) {
+            continue;
+          }
+
           previousLoadedModelAssetIds.delete(asset.id);
 
           const cachedLoadedAsset = previousLoadedModelAssets[asset.id];
@@ -3534,6 +3516,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
         }
 
         if (isAudioAsset(asset)) {
+          if (storage === null) {
+            continue;
+          }
+
           previousLoadedAudioAssetIds.delete(asset.id);
 
           const cachedLoadedAsset = previousLoadedAudioAssets[asset.id];
@@ -3578,6 +3564,36 @@ export function App({ store, initialStatusMessage }: AppProps) {
       const removedAssets = Object.values(previousAssets).filter(
         (asset) => currentAssets[asset.id] === undefined
       );
+
+      if (storage === null) {
+        for (const assetId of previousLoadedModelAssetIds) {
+          const removedAsset = previousLoadedModelAssets[assetId];
+
+          if (removedAsset !== undefined) {
+            disposeModelTemplate(removedAsset.template);
+          }
+        }
+
+        for (const assetId of previousLoadedImageAssetIds) {
+          const removedAsset = previousLoadedImageAssets[assetId];
+
+          if (removedAsset !== undefined) {
+            disposeLoadedImageAsset(removedAsset);
+          }
+        }
+
+        loadedModelAssetsRef.current = nextLoadedModelAssets;
+        loadedImageAssetsRef.current = nextLoadedImageAssets;
+        loadedAudioAssetsRef.current = nextLoadedAudioAssets;
+        previousProjectAssetsRef.current = currentAssets;
+        setLoadedModelAssets(nextLoadedModelAssets);
+        setLoadedImageAssets(nextLoadedImageAssets);
+        setLoadedAudioAssets(nextLoadedAudioAssets);
+        setAssetStatusMessage(
+          syncErrorMessages.length === 0 ? null : syncErrorMessages.join(" | ")
+        );
+        return;
+      }
 
       for (const removedAsset of removedAssets) {
         try {
@@ -12381,7 +12397,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         editorState.document.world.background.mode === "image"
                           ? (loadedImageAssets[
                               editorState.document.world.background.assetId
-                            ]?.sourceUrl ?? null)
+                            ]?.previewUrl ?? null)
                           : null
                       )}
                     />
@@ -13090,7 +13106,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               ? (loadedImageAssets[
                                   editorState.document.world.timeOfDay.night
                                     .background.assetId
-                                ]?.sourceUrl ?? null)
+                                ]?.previewUrl ?? null)
                               : null
                           )}
                         />
