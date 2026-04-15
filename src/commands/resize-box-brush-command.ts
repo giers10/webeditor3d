@@ -1,6 +1,6 @@
 import type { ToolMode } from "../core/tool-mode";
 import { DEFAULT_GRID_SIZE, snapPositiveSizeToGrid } from "../geometry/grid-snapping";
-import { cloneBoxBrushGeometry, scaleBoxBrushGeometryToSize } from "../document/brushes";
+import { cloneBrushGeometry, scaleBrushGeometryToSize } from "../document/brushes";
 
 import { createOpaqueId } from "../core/ids";
 import type { EditorSelection } from "../core/selection";
@@ -22,7 +22,7 @@ export function createResizeBoxBrushCommand(options: ResizeBoxBrushCommandOption
     options.snapToGrid === false ? options.size : snapPositiveSizeToGrid(options.size, options.gridSize ?? DEFAULT_GRID_SIZE);
 
   let previousSize: Vec3 | null = null;
-  let previousGeometry: ReturnType<typeof cloneBoxBrushGeometry> | null = null;
+  let previousGeometry: ReturnType<typeof cloneBrushGeometry> | null = null;
   let previousSelection: EditorSelection | null = null;
   let previousToolMode: ToolMode | null = null;
 
@@ -37,7 +37,7 @@ export function createResizeBoxBrushCommand(options: ResizeBoxBrushCommandOption
         previousSize = {
           ...brush.size
         };
-        previousGeometry = cloneBoxBrushGeometry(brush.geometry);
+        previousGeometry = cloneBrushGeometry(brush.geometry);
       }
 
       if (previousSelection === null) {
@@ -48,7 +48,7 @@ export function createResizeBoxBrushCommand(options: ResizeBoxBrushCommandOption
         previousToolMode = context.getToolMode();
       }
 
-      const nextGeometry = scaleBoxBrushGeometryToSize(brush.geometry, resolvedSize);
+      const nextGeometry = scaleBrushGeometryToSize(brush.geometry, resolvedSize);
 
       context.setDocument(
         replaceBrush(currentDocument, {
@@ -76,7 +76,7 @@ export function createResizeBoxBrushCommand(options: ResizeBoxBrushCommandOption
           size: {
             ...previousSize
           },
-          geometry: cloneBoxBrushGeometry(previousGeometry)
+          geometry: cloneBrushGeometry(previousGeometry)
         })
       );
 

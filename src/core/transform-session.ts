@@ -3,15 +3,16 @@ import type { EditorSelection } from "./selection";
 import type { WhiteboxSelectionMode } from "./whitebox-selection-mode";
 import type { Vec3 } from "./vector";
 import {
-  BOX_VERTEX_IDS,
-  BOX_EDGE_LABELS,
-  BOX_FACE_LABELS,
-  BOX_VERTEX_LABELS,
-  cloneBoxBrushGeometry,
-  type BoxBrushGeometry,
-  type BoxEdgeId,
-  type BoxFaceId,
-  type BoxVertexId
+  cloneBrushGeometry,
+  createBoxBrush,
+  createRadialPrismBrush,
+  createWedgeBrush,
+  type Brush,
+  type BrushGeometry,
+  type BrushKind,
+  type WhiteboxEdgeId,
+  type WhiteboxFaceId,
+  type WhiteboxVertexId
 } from "../document/brushes";
 import { getScenePathPoint } from "../document/paths";
 import type { SceneDocument } from "../document/scene-document";
@@ -26,6 +27,13 @@ import {
   getModelInstanceKindLabel
 } from "../assets/model-instances";
 import type { ViewportPanelId } from "../viewport-three/viewport-layout";
+import {
+  getBrushEdgeLabel,
+  getBrushFaceLabel,
+  getBrushKindLabel,
+  getBrushVertexIds,
+  getBrushVertexLabel
+} from "../geometry/whitebox-topology";
 
 export type TransformOperation = "translate" | "rotate" | "scale";
 export type TransformAxis = "x" | "y" | "z";
@@ -54,40 +62,48 @@ export type EntityTransformRotationState =
 export interface BrushTransformTarget {
   kind: "brush";
   brushId: string;
+  brushKind: BrushKind;
+  sideCount?: number;
   initialCenter: Vec3;
   initialRotationDegrees: Vec3;
   initialSize: Vec3;
-  initialGeometry: BoxBrushGeometry;
+  initialGeometry: BrushGeometry;
 }
 
 export interface BrushFaceTransformTarget {
   kind: "brushFace";
   brushId: string;
-  faceId: BoxFaceId;
+  brushKind: BrushKind;
+  sideCount?: number;
+  faceId: WhiteboxFaceId;
   initialCenter: Vec3;
   initialRotationDegrees: Vec3;
   initialSize: Vec3;
-  initialGeometry: BoxBrushGeometry;
+  initialGeometry: BrushGeometry;
 }
 
 export interface BrushEdgeTransformTarget {
   kind: "brushEdge";
   brushId: string;
-  edgeId: BoxEdgeId;
+  brushKind: BrushKind;
+  sideCount?: number;
+  edgeId: WhiteboxEdgeId;
   initialCenter: Vec3;
   initialRotationDegrees: Vec3;
   initialSize: Vec3;
-  initialGeometry: BoxBrushGeometry;
+  initialGeometry: BrushGeometry;
 }
 
 export interface BrushVertexTransformTarget {
   kind: "brushVertex";
   brushId: string;
-  vertexId: BoxVertexId;
+  brushKind: BrushKind;
+  sideCount?: number;
+  vertexId: WhiteboxVertexId;
   initialCenter: Vec3;
   initialRotationDegrees: Vec3;
   initialSize: Vec3;
-  initialGeometry: BoxBrushGeometry;
+  initialGeometry: BrushGeometry;
 }
 
 export interface ModelInstanceTransformTarget {
@@ -128,17 +144,24 @@ export interface BrushTransformPreview {
   center: Vec3;
   rotationDegrees: Vec3;
   size: Vec3;
-  geometry: BoxBrushGeometry;
+  geometry: BrushGeometry;
 }
 
 function areBrushGeometriesEqual(
-  left: BoxBrushGeometry,
-  right: BoxBrushGeometry
+  left: BrushGeometry,
+  right: BrushGeometry
 ): boolean {
-  return BOX_VERTEX_IDS.every((vertexId) => {
+  const leftVertexIds = Object.keys(left.vertices);
+  const rightVertexIds = Object.keys(right.vertices);
+
+  if (leftVertexIds.length !== rightVertexIds.length) {
+    return false;
+  }
+
+  return leftVertexIds.every((vertexId) => {
     const leftVertex = left.vertices[vertexId];
     const rightVertex = right.vertices[vertexId];
-    return areVec3Equal(leftVertex, rightVertex);
+    return rightVertex !== undefined && areVec3Equal(leftVertex, rightVertex);
   });
 }
 
@@ -218,6 +241,42 @@ function cloneEntityTransformRotationState(
   }
 }
 
+function createBrushSnapshotFromTarget(
+  target:
+    | BrushTransformTarget
+    | BrushFaceTransformTarget
+    | BrushEdgeTransformTarget
+    | BrushVertexTransformTarget
+): Brush {
+  switch (target.brushKind) {
+    case "box":
+      return createBoxBrush({
+        id: target.brushId,
+        center: target.initialCenter,
+        rotationDegrees: target.initialRotationDegrees,
+        size: target.initialSize,
+        geometry: target.initialGeometry
+      });
+    case "wedge":
+      return createWedgeBrush({
+        id: target.brushId,
+        center: target.initialCenter,
+        rotationDegrees: target.initialRotationDegrees,
+        size: target.initialSize,
+        geometry: target.initialGeometry
+      });
+    case "radialPrism":
+      return createRadialPrismBrush({
+        id: target.brushId,
+        center: target.initialCenter,
+        rotationDegrees: target.initialRotationDegrees,
+        size: target.initialSize,
+        sideCount: target.sideCount,
+        geometry: target.initialGeometry
+      });
+  }
+}
+
 function areEntityTransformRotationsEqual(
   left: EntityTransformRotationState,
   right: EntityTransformRotationState
@@ -251,40 +310,48 @@ export function cloneTransformTarget(target: TransformTarget): TransformTarget {
       return {
         kind: "brush",
         brushId: target.brushId,
+        brushKind: target.brushKind,
+        sideCount: target.sideCount,
         initialCenter: cloneVec3(target.initialCenter),
         initialRotationDegrees: cloneVec3(target.initialRotationDegrees),
         initialSize: cloneVec3(target.initialSize),
-        initialGeometry: cloneBoxBrushGeometry(target.initialGeometry)
+        initialGeometry: cloneBrushGeometry(target.initialGeometry)
       };
     case "brushFace":
       return {
         kind: "brushFace",
         brushId: target.brushId,
+        brushKind: target.brushKind,
+        sideCount: target.sideCount,
         faceId: target.faceId,
         initialCenter: cloneVec3(target.initialCenter),
         initialRotationDegrees: cloneVec3(target.initialRotationDegrees),
         initialSize: cloneVec3(target.initialSize),
-        initialGeometry: cloneBoxBrushGeometry(target.initialGeometry)
+        initialGeometry: cloneBrushGeometry(target.initialGeometry)
       };
     case "brushEdge":
       return {
         kind: "brushEdge",
         brushId: target.brushId,
+        brushKind: target.brushKind,
+        sideCount: target.sideCount,
         edgeId: target.edgeId,
         initialCenter: cloneVec3(target.initialCenter),
         initialRotationDegrees: cloneVec3(target.initialRotationDegrees),
         initialSize: cloneVec3(target.initialSize),
-        initialGeometry: cloneBoxBrushGeometry(target.initialGeometry)
+        initialGeometry: cloneBrushGeometry(target.initialGeometry)
       };
     case "brushVertex":
       return {
         kind: "brushVertex",
         brushId: target.brushId,
+        brushKind: target.brushKind,
+        sideCount: target.sideCount,
         vertexId: target.vertexId,
         initialCenter: cloneVec3(target.initialCenter),
         initialRotationDegrees: cloneVec3(target.initialRotationDegrees),
         initialSize: cloneVec3(target.initialSize),
-        initialGeometry: cloneBoxBrushGeometry(target.initialGeometry)
+        initialGeometry: cloneBrushGeometry(target.initialGeometry)
       };
     case "modelInstance":
       return {
@@ -325,7 +392,7 @@ export function cloneTransformPreview(
         center: cloneVec3(preview.center),
         rotationDegrees: cloneVec3(preview.rotationDegrees),
         size: cloneVec3(preview.size),
-        geometry: cloneBoxBrushGeometry(preview.geometry)
+        geometry: cloneBrushGeometry(preview.geometry)
       };
     case "modelInstance":
       return {
@@ -405,6 +472,8 @@ function areTransformTargetsEqual(
       return (
         right.kind === "brush" &&
         left.brushId === right.brushId &&
+        left.brushKind === right.brushKind &&
+        left.sideCount === right.sideCount &&
         areVec3Equal(left.initialCenter, right.initialCenter) &&
         areVec3Equal(
           left.initialRotationDegrees,
@@ -417,6 +486,8 @@ function areTransformTargetsEqual(
       return (
         right.kind === "brushFace" &&
         left.brushId === right.brushId &&
+        left.brushKind === right.brushKind &&
+        left.sideCount === right.sideCount &&
         left.faceId === right.faceId &&
         areVec3Equal(left.initialCenter, right.initialCenter) &&
         areVec3Equal(
@@ -430,6 +501,8 @@ function areTransformTargetsEqual(
       return (
         right.kind === "brushEdge" &&
         left.brushId === right.brushId &&
+        left.brushKind === right.brushKind &&
+        left.sideCount === right.sideCount &&
         left.edgeId === right.edgeId &&
         areVec3Equal(left.initialCenter, right.initialCenter) &&
         areVec3Equal(
@@ -443,6 +516,8 @@ function areTransformTargetsEqual(
       return (
         right.kind === "brushVertex" &&
         left.brushId === right.brushId &&
+        left.brushKind === right.brushKind &&
+        left.sideCount === right.sideCount &&
         left.vertexId === right.vertexId &&
         areVec3Equal(left.initialCenter, right.initialCenter) &&
         areVec3Equal(
@@ -557,7 +632,7 @@ export function createTransformPreviewFromTarget(
         center: cloneVec3(target.initialCenter),
         rotationDegrees: cloneVec3(target.initialRotationDegrees),
         size: cloneVec3(target.initialSize),
-        geometry: cloneBoxBrushGeometry(target.initialGeometry)
+        geometry: cloneBrushGeometry(target.initialGeometry)
       };
     case "modelInstance":
       return {
@@ -668,13 +743,13 @@ export function getTransformAxisSpaceLabel(
 export function getTransformTargetLabel(target: TransformTarget): string {
   switch (target.kind) {
     case "brush":
-      return "Whitebox Box";
+      return getBrushKindLabel(createBrushSnapshotFromTarget(target));
     case "brushFace":
-      return `Whitebox Face (${BOX_FACE_LABELS[target.faceId]})`;
+      return `Whitebox Face (${getBrushFaceLabel(createBrushSnapshotFromTarget(target), target.faceId)})`;
     case "brushEdge":
-      return `Whitebox Edge (${BOX_EDGE_LABELS[target.edgeId]})`;
+      return `Whitebox Edge (${getBrushEdgeLabel(createBrushSnapshotFromTarget(target), target.edgeId)})`;
     case "brushVertex":
-      return `Whitebox Vertex (${BOX_VERTEX_LABELS[target.vertexId]})`;
+      return `Whitebox Vertex (${getBrushVertexLabel(createBrushSnapshotFromTarget(target), target.vertexId)})`;
     case "modelInstance":
       return getModelInstanceKindLabel();
     case "pathPoint":
@@ -856,10 +931,10 @@ function createBrushTransformTarget(
 ): TransformTargetResolution {
   const brush = document.brushes[brushId];
 
-  if (brush === undefined || brush.kind !== "box") {
+  if (brush === undefined) {
     return {
       target: null,
-      message: "Select a supported whitebox box before transforming it."
+      message: "Select a supported whitebox solid before transforming it."
     };
   }
 
@@ -867,10 +942,12 @@ function createBrushTransformTarget(
     target: {
       kind: "brush",
       brushId: brush.id,
+      brushKind: brush.kind,
+      sideCount: brush.kind === "radialPrism" ? brush.sideCount : undefined,
       initialCenter: cloneVec3(brush.center),
       initialRotationDegrees: cloneVec3(brush.rotationDegrees),
       initialSize: cloneVec3(brush.size),
-      initialGeometry: cloneBoxBrushGeometry(brush.geometry)
+      initialGeometry: cloneBrushGeometry(brush.geometry)
     },
     message: null
   };
@@ -879,7 +956,7 @@ function createBrushTransformTarget(
 function createBrushFaceTransformTarget(
   document: SceneDocument,
   brushId: string,
-  faceId: BoxFaceId
+  faceId: WhiteboxFaceId
 ): TransformTargetResolution {
   const brushResolution = createBrushTransformTarget(document, brushId);
 
@@ -894,13 +971,15 @@ function createBrushFaceTransformTarget(
     target: {
       kind: "brushFace",
       brushId,
+      brushKind: brushResolution.target.brushKind,
+      sideCount: brushResolution.target.sideCount,
       faceId,
       initialCenter: cloneVec3(brushResolution.target.initialCenter),
       initialRotationDegrees: cloneVec3(
         brushResolution.target.initialRotationDegrees
       ),
       initialSize: cloneVec3(brushResolution.target.initialSize),
-      initialGeometry: cloneBoxBrushGeometry(
+      initialGeometry: cloneBrushGeometry(
         brushResolution.target.initialGeometry
       )
     },
@@ -911,7 +990,7 @@ function createBrushFaceTransformTarget(
 function createBrushEdgeTransformTarget(
   document: SceneDocument,
   brushId: string,
-  edgeId: BoxEdgeId
+  edgeId: WhiteboxEdgeId
 ): TransformTargetResolution {
   const brushResolution = createBrushTransformTarget(document, brushId);
 
@@ -926,13 +1005,15 @@ function createBrushEdgeTransformTarget(
     target: {
       kind: "brushEdge",
       brushId,
+      brushKind: brushResolution.target.brushKind,
+      sideCount: brushResolution.target.sideCount,
       edgeId,
       initialCenter: cloneVec3(brushResolution.target.initialCenter),
       initialRotationDegrees: cloneVec3(
         brushResolution.target.initialRotationDegrees
       ),
       initialSize: cloneVec3(brushResolution.target.initialSize),
-      initialGeometry: cloneBoxBrushGeometry(
+      initialGeometry: cloneBrushGeometry(
         brushResolution.target.initialGeometry
       )
     },
@@ -943,7 +1024,7 @@ function createBrushEdgeTransformTarget(
 function createBrushVertexTransformTarget(
   document: SceneDocument,
   brushId: string,
-  vertexId: BoxVertexId
+  vertexId: WhiteboxVertexId
 ): TransformTargetResolution {
   const brushResolution = createBrushTransformTarget(document, brushId);
 
@@ -958,13 +1039,15 @@ function createBrushVertexTransformTarget(
     target: {
       kind: "brushVertex",
       brushId,
+      brushKind: brushResolution.target.brushKind,
+      sideCount: brushResolution.target.sideCount,
       vertexId,
       initialCenter: cloneVec3(brushResolution.target.initialCenter),
       initialRotationDegrees: cloneVec3(
         brushResolution.target.initialRotationDegrees
       ),
       initialSize: cloneVec3(brushResolution.target.initialSize),
-      initialGeometry: cloneBoxBrushGeometry(
+      initialGeometry: cloneBrushGeometry(
         brushResolution.target.initialGeometry
       )
     },

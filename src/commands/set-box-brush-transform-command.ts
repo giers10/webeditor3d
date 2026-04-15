@@ -3,7 +3,15 @@ import type { ToolMode } from "../core/tool-mode";
 import { createOpaqueId } from "../core/ids";
 import type { EditorSelection } from "../core/selection";
 import type { Vec3 } from "../core/vector";
-import { cloneBoxBrushGeometry, deriveBoxBrushSizeFromGeometry, scaleBoxBrushGeometryToSize, type BoxBrushGeometry } from "../document/brushes";
+import {
+  cloneBrushGeometry,
+  deriveBrushSizeFromGeometry,
+  scaleBrushGeometryToSize,
+  type BrushGeometry,
+  type WhiteboxEdgeId,
+  type WhiteboxFaceId,
+  type WhiteboxVertexId
+} from "../document/brushes";
 
 import {
   cloneSelectionForCommand,
@@ -15,20 +23,19 @@ import {
   setSingleBrushVertexSelection
 } from "./brush-command-helpers";
 import type { EditorCommand } from "./command";
-import type { BoxEdgeId, BoxFaceId, BoxVertexId } from "../document/brushes";
 
 type BrushTransformCommandSelection =
   | { kind: "brush"; brushId: string }
-  | { kind: "brushFace"; brushId: string; faceId: BoxFaceId }
-  | { kind: "brushEdge"; brushId: string; edgeId: BoxEdgeId }
-  | { kind: "brushVertex"; brushId: string; vertexId: BoxVertexId };
+  | { kind: "brushFace"; brushId: string; faceId: WhiteboxFaceId }
+  | { kind: "brushEdge"; brushId: string; edgeId: WhiteboxEdgeId }
+  | { kind: "brushVertex"; brushId: string; vertexId: WhiteboxVertexId };
 
 interface SetBoxBrushTransformCommandOptions {
   selection: BrushTransformCommandSelection;
   center: Vec3;
   rotationDegrees: Vec3;
   size: Vec3;
-  geometry?: BoxBrushGeometry;
+  geometry?: BrushGeometry;
   label?: string;
 }
 
@@ -36,7 +43,7 @@ interface BrushTransformSnapshot {
   center: Vec3;
   rotationDegrees: Vec3;
   size: Vec3;
-  geometry: ReturnType<typeof cloneBoxBrushGeometry>;
+  geometry: ReturnType<typeof cloneBrushGeometry>;
 }
 
 function cloneVec3(vector: Vec3): Vec3 {
@@ -94,7 +101,7 @@ export function createSetBoxBrushTransformCommand(options: SetBoxBrushTransformC
           center: cloneVec3(brush.center),
           rotationDegrees: cloneVec3(brush.rotationDegrees),
           size: cloneVec3(brush.size),
-          geometry: cloneBoxBrushGeometry(brush.geometry)
+          geometry: cloneBrushGeometry(brush.geometry)
         };
       }
 
@@ -106,8 +113,8 @@ export function createSetBoxBrushTransformCommand(options: SetBoxBrushTransformC
         previousToolMode = context.getToolMode();
       }
 
-      const nextGeometry = options.geometry === undefined ? scaleBoxBrushGeometryToSize(brush.geometry, options.size) : cloneBoxBrushGeometry(options.geometry);
-      const nextSize = deriveBoxBrushSizeFromGeometry(nextGeometry);
+      const nextGeometry = options.geometry === undefined ? scaleBrushGeometryToSize(brush.geometry, options.size) : cloneBrushGeometry(options.geometry);
+      const nextSize = deriveBrushSizeFromGeometry(nextGeometry);
 
       assertPositiveSize(nextSize);
 
@@ -138,7 +145,7 @@ export function createSetBoxBrushTransformCommand(options: SetBoxBrushTransformC
           center: cloneVec3(previousSnapshot.center),
           rotationDegrees: cloneVec3(previousSnapshot.rotationDegrees),
           size: cloneVec3(previousSnapshot.size),
-          geometry: cloneBoxBrushGeometry(previousSnapshot.geometry)
+          geometry: cloneBrushGeometry(previousSnapshot.geometry)
         })
       );
 

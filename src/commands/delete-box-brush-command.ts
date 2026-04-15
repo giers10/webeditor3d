@@ -1,7 +1,7 @@
 import { createOpaqueId } from "../core/ids";
 import type { EditorSelection } from "../core/selection";
 import type { ToolMode } from "../core/tool-mode";
-import { cloneBoxBrush, type BoxBrush } from "../document/brushes";
+import { cloneBrush, type Brush } from "../document/brushes";
 
 import { cloneSelectionForCommand, removeBrush } from "./brush-command-helpers";
 import type { EditorCommand } from "./command";
@@ -15,7 +15,7 @@ function selectionIncludesBrush(selection: EditorSelection, brushId: string): bo
 }
 
 export function createDeleteBoxBrushCommand(brushId: string): EditorCommand {
-  let previousBrush: BoxBrush | null = null;
+  let previousBrush: Brush | null = null;
   let previousSelection: EditorSelection | null = null;
   let previousToolMode: ToolMode | null = null;
 
@@ -31,7 +31,7 @@ export function createDeleteBoxBrushCommand(brushId: string): EditorCommand {
       }
 
       if (previousBrush === null) {
-        previousBrush = cloneBoxBrush(currentBrush);
+        previousBrush = cloneBrush(currentBrush);
       }
 
       if (previousSelection === null) {
@@ -63,7 +63,7 @@ export function createDeleteBoxBrushCommand(brushId: string): EditorCommand {
         ...currentDocument,
         brushes: {
           ...currentDocument.brushes,
-          [previousBrush.id]: cloneBoxBrush(previousBrush)
+          [previousBrush.id]: cloneBrush(previousBrush)
         }
       });
 
