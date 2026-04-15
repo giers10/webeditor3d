@@ -14,7 +14,6 @@ import type {
   RuntimeInteractable,
   RuntimeNpc,
   RuntimeSceneDefinition,
-  RuntimeSceneExit,
   RuntimeTeleportTarget,
   RuntimeTriggerVolume
 } from "./runtime-scene-build";
@@ -31,7 +30,14 @@ export interface RuntimeDialogueStartSource {
 
 export interface RuntimeInteractionDispatcher {
   teleportPlayer(target: RuntimeTeleportTarget, link: InteractionLink): void;
-  activateSceneExit(sceneExit: RuntimeSceneExit): void;
+  startSceneTransition(
+    request: {
+      sourceEntityId: string | null;
+      targetSceneId: string;
+      targetEntryEntityId: string;
+    },
+    link: InteractionLink | null
+  ): void;
   toggleBrushVisibility(
     brushId: string,
     visible: boolean | undefined,
