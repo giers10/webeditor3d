@@ -6257,33 +6257,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
   };
 
-  const resolveDefaultSceneTransitionTarget = (
-    preferredSceneId = editorState.activeSceneId
-  ): {
-    targetSceneId: string;
-    targetEntryEntityId: string;
-  } | null => {
-    const preferredOrder = [
-      ...sceneTargetOptions
-        .map(({ id }) => id)
-        .filter((sceneId) => sceneId !== preferredSceneId),
-      preferredSceneId
-    ];
-
-    for (const sceneId of preferredOrder) {
-      const firstSceneEntry = sceneEntryOptionsBySceneId[sceneId]?.[0]?.entity;
-
-      if (firstSceneEntry !== undefined) {
-        return {
-          targetSceneId: sceneId,
-          targetEntryEntityId: firstSceneEntry.id
-        };
-      }
-    }
-
-    return null;
-  };
-
   const buildRuntimeSceneForProjectScene = (
     sceneId: string,
     options: { sceneEntryId?: string | null } = {}
