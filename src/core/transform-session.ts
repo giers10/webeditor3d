@@ -1405,6 +1405,57 @@ function createBrushTransformTarget(
   };
 }
 
+function resolveActiveTransformTargetId(
+  ids: readonly string[],
+  activeSelectionId: string | null
+): string | null {
+  if (activeSelectionId !== null && ids.includes(activeSelectionId)) {
+    return activeSelectionId;
+  }
+
+  return ids.at(-1) ?? null;
+}
+
+function createBrushesTransformTarget(
+  document: SceneDocument,
+  brushIds: string[],
+  activeSelectionId: string | null
+): TransformTargetResolution {
+  const items: BrushTransformTarget[] = [];
+
+  for (const brushId of brushIds) {
+    const itemResolution = createBrushTransformTarget(document, brushId);
+
+    if (itemResolution.target === null || itemResolution.target.kind !== "brush") {
+      return itemResolution;
+    }
+
+    items.push(itemResolution.target);
+  }
+
+  const activeBrushId = resolveActiveTransformTargetId(
+    brushIds,
+    activeSelectionId
+  );
+
+  if (activeBrushId === null) {
+    return {
+      target: null,
+      message: "Select at least one whitebox solid before transforming it."
+    };
+  }
+
+  return {
+    target: {
+      kind: "brushes",
+      activeBrushId,
+      initialPivot: averageVec3(items.map((item) => item.initialCenter)),
+      items
+    },
+    message: null
+  };
+}
+
 function createBrushFaceTransformTarget(
   document: SceneDocument,
   brushId: string,
@@ -1540,6 +1591,46 @@ function createEntityTransformTarget(
   };
 }
 
+function createEntitiesTransformTarget(
+  document: SceneDocument,
+  entityIds: string[],
+  activeSelectionId: string | null
+): TransformTargetResolution {
+  const items: EntityTransformTarget[] = [];
+
+  for (const entityId of entityIds) {
+    const itemResolution = createEntityTransformTarget(document, entityId);
+
+    if (itemResolution.target === null || itemResolution.target.kind !== "entity") {
+      return itemResolution;
+    }
+
+    items.push(itemResolution.target);
+  }
+
+  const activeEntityId = resolveActiveTransformTargetId(
+    entityIds,
+    activeSelectionId
+  );
+
+  if (activeEntityId === null) {
+    return {
+      target: null,
+      message: "Select at least one authored entity before transforming it."
+    };
+  }
+
+  return {
+    target: {
+      kind: "entities",
+      activeEntityId,
+      initialPivot: averageVec3(items.map((item) => item.initialPosition)),
+      items
+    },
+    message: null
+  };
+}
+
 function createModelInstanceTransformTarget(
   document: SceneDocument,
   modelInstanceId: string
@@ -1563,6 +1654,52 @@ function createModelInstanceTransformTarget(
       initialPosition: cloneVec3(clonedModelInstance.position),
       initialRotationDegrees: cloneVec3(clonedModelInstance.rotationDegrees),
       initialScale: cloneVec3(clonedModelInstance.scale)
+    },
+    message: null
+  };
+}
+
+function createModelInstancesTransformTarget(
+  document: SceneDocument,
+  modelInstanceIds: string[],
+  activeSelectionId: string | null
+): TransformTargetResolution {
+  const items: ModelInstanceTransformTarget[] = [];
+
+  for (const modelInstanceId of modelInstanceIds) {
+    const itemResolution = createModelInstanceTransformTarget(
+      document,
+      modelInstanceId
+    );
+
+    if (
+      itemResolution.target === null ||
+      itemResolution.target.kind !== "modelInstance"
+    ) {
+      return itemResolution;
+    }
+
+    items.push(itemResolution.target);
+  }
+
+  const activeModelInstanceId = resolveActiveTransformTargetId(
+    modelInstanceIds,
+    activeSelectionId
+  );
+
+  if (activeModelInstanceId === null) {
+    return {
+      target: null,
+      message: "Select at least one model instance before transforming it."
+    };
+  }
+
+  return {
+    target: {
+      kind: "modelInstances",
+      activeModelInstanceId,
+      initialPivot: averageVec3(items.map((item) => item.initialPosition)),
+      items
     },
     message: null
   };
@@ -1605,7 +1742,8 @@ function createPathPointTransformTarget(
 export function resolveTransformTarget(
   document: SceneDocument,
   selection: EditorSelection,
-  whiteboxSelectionMode: WhiteboxSelectionMode = "object"
+  whiteboxSelectionMode: WhiteboxSelectionMode = "object",
+  activeSelectionId: string | null = resolveSelectionActiveId(selection, null)
 ): TransformTargetResolution {
   switch (selection.kind) {
     case "none":
@@ -1663,23 +1801,27 @@ export function resolveTransformTarget(
         };
       }
 
-      if (selection.ids.length !== 1) {
+      if (selection.ids.length === 0) {
         return {
           target: null,
-          message: "Select a single brush before transforming it."
+          message: "Select at least one brush before transforming it."
         };
       }
 
-      return createBrushTransformTarget(document, selection.ids[0]);
+      return selection.ids.length === 1
+        ? createBrushTransformTarget(document, selection.ids[0])
+        : createBrushesTransformTarget(document, selection.ids, activeSelectionId);
     case "entities":
-      if (selection.ids.length !== 1) {
+      if (selection.ids.length === 0) {
         return {
           target: null,
-          message: "Select a single entity before transforming it."
+          message: "Select at least one entity before transforming it."
         };
       }
 
-      return createEntityTransformTarget(document, selection.ids[0]);
+      return selection.ids.length === 1
+        ? createEntityTransformTarget(document, selection.ids[0])
+        : createEntitiesTransformTarget(document, selection.ids, activeSelectionId);
     case "paths":
       return {
         target: null,
@@ -1693,13 +1835,19 @@ export function resolveTransformTarget(
         selection.pointId
       );
     case "modelInstances":
-      if (selection.ids.length !== 1) {
+      if (selection.ids.length === 0) {
         return {
           target: null,
-          message: "Select a single model instance before transforming it."
+          message: "Select at least one model instance before transforming it."
         };
       }
 
-      return createModelInstanceTransformTarget(document, selection.ids[0]);
+      return selection.ids.length === 1
+        ? createModelInstanceTransformTarget(document, selection.ids[0])
+        : createModelInstancesTransformTarget(
+            document,
+            selection.ids,
+            activeSelectionId
+          );
   }
 }
