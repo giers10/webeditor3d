@@ -40,7 +40,6 @@ import {
   type PointLightEntity,
   type PlayerStartEntity,
   type SceneEntryEntity,
-  type SceneExitEntity,
   type SoundEmitterEntity,
   type SpotLightEntity,
   type TeleportTargetEntity,
