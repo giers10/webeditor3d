@@ -1940,6 +1940,27 @@ export function App({ store, initialStatusMessage }: AppProps) {
       : materialInspectorScope === "face"
         ? selectedFaceMaterial
         : null;
+  const materialInspectorActiveLabel =
+    materialInspectorScope === "brush" ? "Whole Solid" : "Active Face";
+  const materialInspectorActiveValue =
+    materialInspectorScope === "brush"
+      ? "All Six Faces"
+      : selectedFaceId === null
+        ? null
+        : BOX_FACE_LABELS[selectedFaceId];
+  const materialInspectorMaterialSummary =
+    materialInspectorScope === "brush" && selectedBrushHasMixedFaceMaterials
+      ? "Mixed across faces"
+      : materialInspectorMaterial?.name ??
+        (materialInspectorMaterialId === null
+          ? "Fallback face color"
+          : materialInspectorMaterialId ?? "Fallback face color");
+  const materialInspectorUvState =
+    materialInspectorScope === "brush" && selectedBrush !== null
+      ? selectedBrush.faces[BOX_FACE_IDS[0]].uv
+      : materialInspectorScope === "face"
+        ? selectedFace?.uv ?? null
+        : null;
   const selectedModelAsset =
     selectedModelInstance !== null
       ? (editorState.document.assets[selectedModelInstance.assetId] ?? null)
@@ -10505,23 +10526,26 @@ export function App({ store, initialStatusMessage }: AppProps) {
         createUpdateBoxBrushAllFaceUvsCommand({
           brushId: selectedBrush.id,
           label: "Fit solid face UVs to face",
-          updateUvState: (uvState, faceId) => {
-            const material =
-              uvState === undefined
+          updateUvState: (_, faceId) => {
+            const currentMaterialId = selectedBrush.faces[faceId].materialId;
+            const currentMaterial =
+              currentMaterialId === null
                 ? null
-                : currentMaterialId => currentMaterialId;
-            return materialInspectorMaterialId === undefined ||
-              materialInspectorMaterial === null
+                : editorState.document.materials[currentMaterialId] ?? null;
+
+            return currentMaterial === null
               ? createFitToFaceBoxBrushFaceUvState(selectedBrush, faceId)
               : createFitToMaterialTileBoxBrushFaceUvState(
                   selectedBrush,
                   faceId,
-                  getStarterMaterialTileSizeMeters(materialInspectorMaterial)
+                  getStarterMaterialTileSizeMeters(currentMaterial)
                 );
           }
         })
       );
-      setStatusMessage("Fit all selected whitebox face UVs to their face bounds.");
+      setStatusMessage(
+        "Fit all face UVs on the selected whitebox to their face bounds and tile size."
+      );
       return;
     }
 
@@ -18650,29 +18674,39 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         </div>
                       </div>
                     )
-                  ) : whiteboxSelectionMode !== "face" ? (
+                  ) : materialInspectorScope === null ? (
                     <div className="outliner-empty">
-                      Switch to Face mode or choose a face chip to edit
-                      materials and UVs.
-                    </div>
-                  ) : selectedFace === null || selectedFaceId === null ? (
-                    <div className="outliner-empty">
-                      Select a face to edit its material and UV transform.
+                      {whiteboxSelectionMode === "face"
+                        ? "Select a face to edit its material and UV transform."
+                        : "Select a whitebox to edit material and UVs across all faces."}
                     </div>
                   ) : (
                     <>
                       <div className="stat-card">
-                        <div className="label">Active Face</div>
+                        <div className="label">
+                          {materialInspectorActiveLabel}
+                        </div>
                         <div className="value">
-                          {BOX_FACE_LABELS[selectedFaceId]}
+                          {materialInspectorActiveValue}
                         </div>
                         <div
                           className="material-summary"
                           data-testid="selected-face-material-name"
                         >
-                          Material:{" "}
-                          {selectedFaceMaterial?.name ?? "Fallback face color"}
+                          Material: {materialInspectorMaterialSummary}
                         </div>
+                        {materialInspectorScope === "brush" ? (
+                          <div className="material-summary">
+                            Edits here apply to all six faces.
+                          </div>
+                        ) : null}
+                        {materialInspectorScope === "brush" &&
+                        selectedBrushHasMixedFaceUvs ? (
+                          <div className="material-summary">
+                            Mixed UV transforms will be overwritten where you
+                            edit them here.
+                          </div>
+                        ) : null}
                       </div>
 
                       <div className="form-section">
@@ -18683,7 +18717,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               key={material.id}
                               type="button"
                               data-testid={`material-button-${material.id}`}
-                              className={`material-item ${selectedFace.materialId === material.id ? "material-item--active" : ""}`}
+                              className={`material-item ${materialInspectorMaterialId === material.id ? "material-item--active" : ""}`}
                               onClick={() => applyFaceMaterial(material.id)}
                             >
                               <span
@@ -18724,6 +18758,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               type="number"
                               step="0.125"
                               value={uvOffsetDraft.x}
+                              placeholder={
+                                materialInspectorScope === "brush" &&
+                                uvOffsetDraft.x === ""
+                                  ? "Mixed"
+                                  : undefined
+                              }
                               onChange={(event) => {
                                 const nextValue = event.currentTarget.value;
                                 setUvOffsetDraft((draft) => ({
@@ -18747,6 +18787,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               type="number"
                               step="0.125"
                               value={uvOffsetDraft.y}
+                              placeholder={
+                                materialInspectorScope === "brush" &&
+                                uvOffsetDraft.y === ""
+                                  ? "Mixed"
+                                  : undefined
+                              }
                               onChange={(event) => {
                                 const nextValue = event.currentTarget.value;
                                 setUvOffsetDraft((draft) => ({
@@ -18777,6 +18823,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               min="0.001"
                               step="0.125"
                               value={uvScaleDraft.x}
+                              placeholder={
+                                materialInspectorScope === "brush" &&
+                                uvScaleDraft.x === ""
+                                  ? "Mixed"
+                                  : undefined
+                              }
                               onChange={(event) => {
                                 const nextValue = event.currentTarget.value;
                                 setUvScaleDraft((draft) => ({
@@ -18801,6 +18853,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               min="0.001"
                               step="0.125"
                               value={uvScaleDraft.y}
+                              placeholder={
+                                materialInspectorScope === "brush" &&
+                                uvScaleDraft.y === ""
+                                  ? "Mixed"
+                                  : undefined
+                              }
                               onChange={(event) => {
                                 const nextValue = event.currentTarget.value;
                                 setUvScaleDraft((draft) => ({
@@ -18860,13 +18918,35 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
                       <div className="stat-card">
                         <div className="label">UV Flags</div>
-                        <div className="value">
-                          Rotation {selectedFace.uv.rotationQuarterTurns * 90}°
-                        </div>
-                        <div className="material-summary">
-                          U {selectedFace.uv.flipU ? "flipped" : "normal"} · V{" "}
-                          {selectedFace.uv.flipV ? "flipped" : "normal"}
-                        </div>
+                        {materialInspectorScope === "brush" &&
+                        selectedBrushHasMixedFaceUvs ? (
+                          <>
+                            <div className="value">Mixed across faces</div>
+                            <div className="material-summary">
+                              Rotation, flips, or numeric UV transforms differ
+                              across this solid.
+                            </div>
+                          </>
+                        ) : materialInspectorUvState === null ? null : (
+                          <>
+                            <div className="value">
+                              Rotation{" "}
+                              {materialInspectorUvState.rotationQuarterTurns *
+                                90}
+                              °
+                            </div>
+                            <div className="material-summary">
+                              U{" "}
+                              {materialInspectorUvState.flipU
+                                ? "flipped"
+                                : "normal"}{" "}
+                              · V{" "}
+                              {materialInspectorUvState.flipV
+                                ? "flipped"
+                                : "normal"}
+                            </div>
+                          </>
+                        )}
                       </div>
                     </>
                   )}
