@@ -701,10 +701,10 @@ export class RuntimeHost {
     }
   }
 
-  setSceneExitHandler(
-    handler: ((request: RuntimeSceneExitTransitionRequest) => void) | null
+  setSceneTransitionHandler(
+    handler: ((request: RuntimeSceneTransitionRequest) => void) | null
   ) {
-    this.sceneExitHandler = handler;
+    this.sceneTransitionHandler = handler;
   }
 
   dispose() {
