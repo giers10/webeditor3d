@@ -3,6 +3,7 @@ import {
   areControlEffectsEqual,
   cloneControlEffect,
   cloneControlTargetRef,
+  createActorControlTargetRef,
   getControlEffectResolutionKey,
   type ControlEffect,
   type ControlTargetRef,
