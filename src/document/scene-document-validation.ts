@@ -4792,7 +4792,7 @@ function validateProjectDialogue(
 function validateProjectSequence(
   sequence: ProjectSequence,
   path: string,
-  projectResources: Pick<ProjectDocument, "dialogues">,
+  projectResources: Pick<ProjectDocument, "dialogues" | "scenes">,
   context: ProjectSchedulerValidationContext,
   diagnostics: SceneDiagnostic[]
 ) {
@@ -4847,6 +4847,49 @@ function validateProjectSequence(
         break;
       case "teleportPlayer":
         break;
+      case "startSceneTransition": {
+        const targetScene =
+          projectResources.scenes[effect.targetSceneId] ?? null;
+
+        if (targetScene === null) {
+          diagnostics.push(
+            createDiagnostic(
+              "error",
+              "missing-sequence-transition-target-scene",
+              `Scene transition target scene ${effect.targetSceneId} does not exist in this project.`,
+              `${effectPath}.targetSceneId`
+            )
+          );
+          break;
+        }
+
+        const targetEntry =
+          targetScene.entities[effect.targetEntryEntityId] ?? null;
+
+        if (targetEntry === null) {
+          diagnostics.push(
+            createDiagnostic(
+              "error",
+              "missing-sequence-transition-target-entry",
+              `Scene transition target entry ${effect.targetEntryEntityId} does not exist in scene ${targetScene.name}.`,
+              `${effectPath}.targetEntryEntityId`
+            )
+          );
+          break;
+        }
+
+        if (targetEntry.kind !== "sceneEntry") {
+          diagnostics.push(
+            createDiagnostic(
+              "error",
+              "invalid-sequence-transition-target-entry-kind",
+              `Scene transition target ${effect.targetEntryEntityId} in scene ${targetScene.name} is not a Scene Entry.`,
+              `${effectPath}.targetEntryEntityId`
+            )
+          );
+        }
+        break;
+      }
       case "setVisibility":
         if (effect.target.kind === "brush") {
           if ((context.brushCounts.get(effect.target.brushId) ?? 0) === 0) {
