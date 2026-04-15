@@ -5144,6 +5144,89 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
   };
 
+  const updateProjectSequenceControlStepPathId = (
+    sequenceId: string,
+    stepIndex: number,
+    pathId: string
+  ) => {
+    updateProjectSequenceStep(
+      sequenceId,
+      stepIndex,
+      "Set project sequence actor path",
+      "Updated sequence actor path.",
+      (step) => {
+        if (
+          step.type !== "controlEffect" ||
+          step.effect.type !== "followActorPath"
+        ) {
+          throw new Error(
+            "The current sequence control step does not expose an actor path."
+          );
+        }
+
+        step.effect.pathId = pathId;
+      }
+    );
+  };
+
+  const updateProjectSequenceControlStepPathSpeed = (
+    sequenceId: string,
+    stepIndex: number,
+    speed: number
+  ) => {
+    updateProjectSequenceStep(
+      sequenceId,
+      stepIndex,
+      "Set project sequence actor path speed",
+      "Updated sequence actor path speed.",
+      (step) => {
+        if (
+          step.type !== "controlEffect" ||
+          step.effect.type !== "followActorPath"
+        ) {
+          throw new Error(
+            "The current sequence control step does not expose an actor path speed."
+          );
+        }
+
+        if (!Number.isFinite(speed) || speed <= 0) {
+          throw new Error(
+            "Actor path speed must be a finite number greater than zero."
+          );
+        }
+
+        step.effect.speed = speed;
+      }
+    );
+  };
+
+  const updateProjectSequenceControlStepPathLoop = (
+    sequenceId: string,
+    stepIndex: number,
+    loop: boolean
+  ) => {
+    updateProjectSequenceStep(
+      sequenceId,
+      stepIndex,
+      "Set project sequence actor path loop",
+      loop
+        ? "Sequence actor path now loops."
+        : "Sequence actor path now clamps at the end.",
+      (step) => {
+        if (
+          step.type !== "controlEffect" ||
+          step.effect.type !== "followActorPath"
+        ) {
+          throw new Error(
+            "The current sequence control step does not expose actor path looping."
+          );
+        }
+
+        step.effect.loop = loop;
+      }
+    );
+  };
+
   const updateProjectSequenceDialogueStepDialogueId = (
     sequenceId: string,
     stepIndex: number,
@@ -11744,6 +11827,13 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   }
                   onSetControlStepAnimationLoop={
                     updateProjectSequenceControlStepAnimationLoop
+                  }
+                  onSetControlStepPathId={updateProjectSequenceControlStepPathId}
+                  onSetControlStepPathSpeed={
+                    updateProjectSequenceControlStepPathSpeed
+                  }
+                  onSetControlStepPathLoop={
+                    updateProjectSequenceControlStepPathLoop
                   }
                   onSetDialogueStepDialogueId={
                     updateProjectSequenceDialogueStepDialogueId
