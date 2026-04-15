@@ -45,7 +45,6 @@ describe("ProjectSequencesPanel", () => {
             [sequence.id]: sequence
           }
         }}
-        dialogues={{ dialogues: {} }}
         targetOptions={[
           {
             key: "modelInstance:model-a",
@@ -73,6 +72,7 @@ describe("ProjectSequencesPanel", () => {
             defaults: {}
           }
         ]}
+        npcTalkTargetOptions={[]}
         teleportTargetOptions={[
           { entityId: "teleport-a", label: "North Gate" },
           { entityId: "teleport-b", label: "South Gate" }
@@ -93,7 +93,7 @@ describe("ProjectSequencesPanel", () => {
         onDeleteSequence={() => {}}
         onSetSequenceTitle={() => {}}
         onAddControlEffect={onAddControlEffect}
-        onAddDialogueStep={() => {}}
+        onAddNpcTalkEffect={() => {}}
         onAddTeleportStep={onAddTeleportStep}
         onAddSceneTransitionStep={() => {}}
         onAddVisibilityStep={onAddVisibilityStep}
@@ -107,7 +107,8 @@ describe("ProjectSequencesPanel", () => {
         onSetControlStepPathId={() => {}}
         onSetControlStepPathSpeed={() => {}}
         onSetControlStepPathLoop={() => {}}
-        onSetDialogueStepDialogueId={() => {}}
+        onSetNpcTalkStepNpcEntityId={() => {}}
+        onSetNpcTalkStepDialogueId={() => {}}
         onSetTeleportStepTarget={onSetTeleportStepTarget}
         onSetSceneTransitionStepTarget={() => {}}
         onSetVisibilityStepTarget={onSetVisibilityStepTarget}
@@ -205,7 +206,6 @@ describe("ProjectSequencesPanel", () => {
             })
           }
         }}
-        dialogues={{ dialogues: {} }}
         targetOptions={[
           {
             key: "actor:actor-guard",
@@ -226,6 +226,7 @@ describe("ProjectSequencesPanel", () => {
             }
           }
         ]}
+        npcTalkTargetOptions={[]}
         teleportTargetOptions={[]}
         sceneTransitionTargetOptions={[]}
         visibilityTargetOptions={[]}
@@ -235,7 +236,7 @@ describe("ProjectSequencesPanel", () => {
         onDeleteSequence={() => {}}
         onSetSequenceTitle={() => {}}
         onAddControlEffect={() => {}}
-        onAddDialogueStep={() => {}}
+        onAddNpcTalkEffect={() => {}}
         onAddTeleportStep={() => {}}
         onAddSceneTransitionStep={() => {}}
         onAddVisibilityStep={() => {}}
@@ -249,7 +250,8 @@ describe("ProjectSequencesPanel", () => {
         onSetControlStepPathId={onSetControlStepPathId}
         onSetControlStepPathSpeed={onSetControlStepPathSpeed}
         onSetControlStepPathLoop={onSetControlStepPathLoop}
-        onSetDialogueStepDialogueId={() => {}}
+        onSetNpcTalkStepNpcEntityId={() => {}}
+        onSetNpcTalkStepDialogueId={() => {}}
         onSetTeleportStepTarget={() => {}}
         onSetSceneTransitionStepTarget={() => {}}
         onSetVisibilityStepTarget={() => {}}
@@ -320,7 +322,6 @@ describe("ProjectSequencesPanel", () => {
             })
           }
         }}
-        dialogues={{ dialogues: {} }}
         targetOptions={[
           {
             key: getControlTargetRefKey(sceneTarget),
@@ -333,6 +334,7 @@ describe("ProjectSequencesPanel", () => {
             }
           }
         ]}
+        npcTalkTargetOptions={[]}
         teleportTargetOptions={[]}
         sceneTransitionTargetOptions={[]}
         visibilityTargetOptions={[]}
@@ -342,7 +344,7 @@ describe("ProjectSequencesPanel", () => {
         onDeleteSequence={() => {}}
         onSetSequenceTitle={() => {}}
         onAddControlEffect={() => {}}
-        onAddDialogueStep={() => {}}
+        onAddNpcTalkEffect={() => {}}
         onAddTeleportStep={() => {}}
         onAddSceneTransitionStep={() => {}}
         onAddVisibilityStep={() => {}}
@@ -356,7 +358,8 @@ describe("ProjectSequencesPanel", () => {
         onSetControlStepPathId={() => {}}
         onSetControlStepPathSpeed={() => {}}
         onSetControlStepPathLoop={() => {}}
-        onSetDialogueStepDialogueId={() => {}}
+        onSetNpcTalkStepNpcEntityId={() => {}}
+        onSetNpcTalkStepDialogueId={() => {}}
         onSetTeleportStepTarget={() => {}}
         onSetSceneTransitionStepTarget={() => {}}
         onSetVisibilityStepTarget={() => {}}
