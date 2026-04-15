@@ -7,7 +7,6 @@ import {
   getBrushDefaultName,
   getBrushEdgeLabel,
   getBrushFaceLabel,
-  getBrushKindLabel,
   getBrushVertexLabel
 } from "../geometry/whitebox-topology";
 
