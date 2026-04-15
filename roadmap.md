@@ -628,18 +628,20 @@ The time/living-world direction should stay closer to Majora's Mask than to a fu
 - one global project clock
 - deterministic resolution from time + flags + scene context
 - unloaded scenes reconstructed on demand instead of fully simulated all the time
-- authored day/night comes before a large generic scheduling UI
+- authored day/night came before the current scheduler/notebook foundation; next work should build on that shared time/control path rather than add one-off per-system timers
 
 ### Candidate slices
 
-- authored day/night refinement on top of project-global time
-- small reusable time-query/day-phase foundation
-- typed NPC/runtime actor foundation
-- spline/path authoring for camera/object/NPC motion
+- dialogue robustness, variants, and outcomes on top of the current dialogue foundation
+- scheduler conditions / overrides / scene-global rows on top of the current scheduler/notebook
+- event/reaction sources that reuse the same control surface as scheduler and interaction links
 - deterministic schedules/routines driven by time windows and flags
+- cross-scene resolution for actors and dialogue state from time + flags + scene context
 - cycle/reset mechanics if loop gameplay becomes a core pillar
+- curve/track authoring for interpolatable control-surface channels
 - advanced UV tools
 - nav waypoints authoring
+- later route-finding / A* only after authored-path and scene-connection semantics are clear
 - ambient zones and audio buses
 - lightweight scripting
 - plugin/tool API

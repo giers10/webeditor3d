@@ -94,6 +94,7 @@ This is not:
   - night/dawn/dusk appearance
   - scene-level lighting opt-in/out
 - Do not build a large generic schedule editor before the runtime hooks it would drive are real.
+- The shared control surface and scheduler/notebook foundations now exist; extend them instead of adding new parallel time-orchestration paths.
 - Long-term world logic should resolve deterministically from:
   - global time
   - persistent/cycle flags
@@ -107,6 +108,12 @@ This is not:
   - control-surface support -> scheduler/notebook availability
 - NPC presence, routines, dialogue variants, interaction availability, and path progress should eventually be reconstructible from authored rules plus global state.
 - If loop/reset mechanics are added later, they should reset/re-resolve cycle-scoped state rather than trying to rewind arbitrary runtime simulation.
+
+### Dialogue direction
+
+- Dialogue content should remain authored data, not ad hoc runtime-only strings.
+- New dialogue work should prefer reusable authored resources and references over NPC-only bespoke fields.
+- NPCs, interactions, triggers, scheduler/sequencer layers, and later event-driven systems should be able to consume the same dialogue foundations where appropriate.
 
 ### Imported model collision
 

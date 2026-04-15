@@ -48,7 +48,9 @@ Highest-priority confidence areas:
 10. spatial audio and interaction basics
 11. critical regressions caught in CI
 12. project-time/day-phase determinism where time-driven runtime systems exist
-13. later schedule/routine resolution from time + flags + scene context
+13. control-surface effect resolution and execution across actor/entity/interaction/scene targets
+14. scheduler/routine resolution from time + authored rules, and later from time + flags + scene context
+15. dialogue library, dialogue start sources, and runtime dialogue overlay correctness
 
 ---
 
@@ -478,6 +480,9 @@ The following invariants are important enough to deserve repeated coverage:
 - interactions target the correct entities or model instances
 - project-global time survives scene transitions where intended
 - time-driven scene state resolves deterministically from canonical/authored inputs
+- control effects resolve to the intended runtime targets and do not silently noop
+- scheduler/routine resolution is deterministic for the same authored inputs and project time
+- dialogue start from supported sources resolves through one coherent runtime dialogue path
 
 ---
 

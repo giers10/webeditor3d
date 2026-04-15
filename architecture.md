@@ -379,6 +379,8 @@ interface ProjectDocument {
   version: number;
   name: string;
   time: ProjectTimeSettings;
+  scheduler: ProjectScheduler;
+  sequences: ProjectSequenceLibrary;
   activeSceneId: string;
   scenes: Record<string, ProjectScene>;
   materials: Record<string, MaterialDef>;
@@ -390,8 +392,10 @@ interface ProjectScene {
   id: string;
   name: string;
   loadingScreen: SceneLoadingScreenSettings;
+  editorPreferences: SceneEditorPreferences;
   world: WorldSettings;
   brushes: Record<string, Brush>;
+  paths: Record<string, ScenePath>;
   modelInstances: Record<string, ModelInstance>;
   entities: Record<string, EntityInstance>;
   interactionLinks: Record<string, InteractionLink>;
@@ -419,7 +423,9 @@ Time architecture direction:
   - authored day/night settings
   - scene world settings
 - do not hide time semantics only inside renderer-side constants; keep reusable pure resolution logic where practical
-- generic schedules, NPC routines, dialogue variants, and interaction availability should eventually resolve from:
+- shared control-surface and scheduler/notebook foundations exist and should remain the default path for new time-steerable behavior
+- current routine/control work already covers authored actor presence, actor animation, actor path-following, light/audio/interaction control, and scene lighting overrides
+- richer schedule conditions, dialogue variants, interaction availability, and later event-driven reactions should continue to resolve from:
   - global time
   - world/quest flags
   - scene/location context
@@ -1006,6 +1012,9 @@ Recommended separation:
 - trigger occupancy
 - animation playback state
 - project clock state
+- active dialogue overlay state
+- resolved scheduler/control state
+- transient sequence/scheduler impulse state
 
 Keep ephemeral rendering and interaction state out of the serialized document.
 

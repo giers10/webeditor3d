@@ -31,6 +31,10 @@ Broadly implemented already:
 - transform foundations
 - project-wide time foundation with a running global clock
 - first day/night lighting override tied to project time
+- typed control-surface foundation for steerable runtime capabilities
+- scheduler/notebook foundation with authored routines over global time
+- scheduler-driven NPC presence, path-following, and animation triggering
+- first dialogue foundations with runtime dialogue overlay and dialogue-start interaction links
 
 Important consequence:
 
@@ -77,9 +81,10 @@ Treat current box-brush structures as the starting point for whitebox solids unl
 - local authored lights stay in typed entities
 - project save/load and runner export are separate concerns
 - project time is global, not per scene
-- current day/night logic exists, but it is still a small dedicated driver rather than a generic schedule system
+- project-global day/night, control-surface, and scheduler/notebook foundations already exist and should be extended rather than reinvented
 - scheduler/notebook work should sit on top of a shared control surface, not a growing pile of one-off scheduler-only effect types
 - when a new capability is added that is meaningfully steerable over time, prefer making it control-surface-addressable and scheduler-available instead of adding isolated time fields
+- dialogue foundations already exist, but branching choices, outcomes, robust trigger/NPC sources, and scheduler-driven availability/variants are still incomplete
 
 Imported model collision:
 
@@ -138,9 +143,11 @@ The next large topics are more likely to be things like:
 
 - whitebox-solid editing model
 - multi-scene / project structure
-- richer runtime systems
+- richer runtime systems and dialogue behavior
 - authored day/night refinement on top of project-global time
-- later deterministic schedule/routine/event systems driven by global time + flags + scene context
+- scheduler conditions / overrides / scene-global rows and later deterministic schedule/routine/event systems driven by global time + flags + scene context
+- event/reaction sources that reuse the same control surface as scheduler and interactions
+- dialogue variants / outcomes on top of the existing dialogue foundation
 - scheduler/control-surface convergence so newly steerable runtime features are naturally available in the notebook
 - remaining packaging / portability work
 - future primitives and topology tools after the whitebox direction is coherent
