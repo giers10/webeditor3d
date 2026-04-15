@@ -494,8 +494,6 @@ export function listProjectScheduleEffectOptions(
   switch (targetOption.target.kind) {
     case "actor":
       return [
-        PROJECT_SCHEDULE_EFFECT_OPTIONS["actor.present"],
-        PROJECT_SCHEDULE_EFFECT_OPTIONS["actor.hidden"],
         ...((targetOption.defaults.actorAnimationClipNames?.length ?? 0) > 0
           ? [PROJECT_SCHEDULE_EFFECT_OPTIONS["actor.playAnimation"]]
           : []),
@@ -548,6 +546,36 @@ export function listProjectScheduleEffectOptions(
       ];
     case "global":
       return [];
+  }
+}
+
+export function getProjectSequenceControlStepClassForEffectOptionId(
+  effectOptionId: ProjectScheduleEffectOptionId
+): "held" | "impulse" {
+  switch (effectOptionId) {
+    case "model.playAnimation":
+    case "model.stopAnimation":
+    case "sound.play":
+    case "sound.stop":
+      return "impulse";
+    case "actor.present":
+    case "actor.hidden":
+    case "actor.playAnimation":
+    case "actor.followPath":
+    case "model.visible":
+    case "model.hidden":
+    case "sound.volume":
+    case "interaction.enabled":
+    case "interaction.disabled":
+    case "light.enabled":
+    case "light.disabled":
+    case "light.intensity":
+    case "light.color":
+    case "scene.ambientIntensity":
+    case "scene.ambientColor":
+    case "scene.sunIntensity":
+    case "scene.sunColor":
+      return "held";
   }
 }
 
