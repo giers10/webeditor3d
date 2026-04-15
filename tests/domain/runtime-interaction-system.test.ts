@@ -977,22 +977,32 @@ describe("RuntimeInteractionSystem", () => {
     ]);
   });
 
-  it("shows a click prompt for enabled Scene Exits within range", () => {
+  it("shows a click prompt for interactables that run a scene transition sequence", () => {
     const runtimeScene = createRuntimeSceneFixture();
-    runtimeScene.entities.sceneExits.push({
-      entityId: "entity-scene-exit-house-door",
-      position: {
-        x: 0,
-        y: 1,
-        z: 1
-      },
-      radius: 2,
-      prompt: "Enter House",
-      interactionEnabled: true,
-      targetSceneId: "scene-house",
-      targetEntryEntityId: "entity-scene-entry-house-front"
-    });
-    runtimeScene.entities.interactables = [];
+    runtimeScene.sequences = {
+      sequences: {
+        "sequence-enter-house": createProjectSequence({
+          id: "sequence-enter-house",
+          title: "Enter House",
+          effects: [
+            {
+              stepClass: "impulse",
+              type: "startSceneTransition",
+              targetSceneId: "scene-house",
+              targetEntryEntityId: "entity-scene-entry-house-front"
+            }
+          ]
+        })
+      }
+    };
+    runtimeScene.interactionLinks = [
+      createRunSequenceInteractionLink({
+        id: "link-enter-house",
+        sourceEntityId: "entity-interactable-console",
+        trigger: "click",
+        sequenceId: "sequence-enter-house"
+      })
+    ];
 
     const interactionSystem = new RuntimeInteractionSystem();
 
@@ -1016,45 +1026,56 @@ describe("RuntimeInteractionSystem", () => {
         runtimeScene
       )
     ).toEqual({
-      sourceEntityId: "entity-scene-exit-house-door",
-      prompt: "Enter House",
+      sourceEntityId: "entity-interactable-console",
+      prompt: "Use Console",
       distance: expect.any(Number),
       range: 2
     });
   });
 
-  it("dispatches scene transition requests for Scene Exit click targets", () => {
+  it("dispatches scene transition requests for interactable scene transition sequences", () => {
     const runtimeScene = createRuntimeSceneFixture();
-    runtimeScene.entities.sceneExits.push({
-      entityId: "entity-scene-exit-house-door",
-      position: {
-        x: 0,
-        y: 1,
-        z: 1
-      },
-      radius: 2,
-      prompt: "Enter House",
-      interactionEnabled: true,
-      targetSceneId: "scene-house",
-      targetEntryEntityId: "entity-scene-entry-house-front"
-    });
+    runtimeScene.sequences = {
+      sequences: {
+        "sequence-enter-house": createProjectSequence({
+          id: "sequence-enter-house",
+          title: "Enter House",
+          effects: [
+            {
+              stepClass: "impulse",
+              type: "startSceneTransition",
+              targetSceneId: "scene-house",
+              targetEntryEntityId: "entity-scene-entry-house-front"
+            }
+          ]
+        })
+      }
+    };
+    runtimeScene.interactionLinks = [
+      createRunSequenceInteractionLink({
+        id: "link-enter-house",
+        sourceEntityId: "entity-interactable-console",
+        trigger: "click",
+        sequenceId: "sequence-enter-house"
+      })
+    ];
     const dispatches: string[] = [];
     const interactionSystem = new RuntimeInteractionSystem();
 
     interactionSystem.dispatchClickInteraction(
-      "entity-scene-exit-house-door",
+      "entity-interactable-console",
       runtimeScene,
       {
         teleportPlayer: () => {
-          throw new Error("Teleport should not dispatch for a scene exit.");
+          throw new Error("Teleport should not dispatch for a scene transition.");
         },
-        activateSceneExit: (sceneExit) => {
+        startSceneTransition: (request) => {
           dispatches.push(
-            `${sceneExit.entityId}:${sceneExit.targetSceneId}:${sceneExit.targetEntryEntityId}`
+            `${request.sourceEntityId}:${request.targetSceneId}:${request.targetEntryEntityId}`
           );
         },
         toggleBrushVisibility: () => {
-          throw new Error("Visibility should not dispatch for a scene exit.");
+          throw new Error("Visibility should not dispatch for a scene transition.");
         },
         playAnimation: () => {},
         stopAnimation: () => {},
@@ -1065,7 +1086,7 @@ describe("RuntimeInteractionSystem", () => {
     );
 
     expect(dispatches).toEqual([
-      "entity-scene-exit-house-door:scene-house:entity-scene-entry-house-front"
+      "entity-interactable-console:scene-house:entity-scene-entry-house-front"
     ]);
   });
 });
