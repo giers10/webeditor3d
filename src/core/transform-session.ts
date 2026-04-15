@@ -634,12 +634,24 @@ export function cloneTransformPreview(
         size: cloneVec3(preview.size),
         geometry: cloneBrushGeometry(preview.geometry)
       };
+    case "brushes":
+      return {
+        kind: "brushes",
+        pivot: cloneVec3(preview.pivot),
+        items: preview.items.map(cloneBrushTransformPreviewItem)
+      };
     case "modelInstance":
       return {
         kind: "modelInstance",
         position: cloneVec3(preview.position),
         rotationDegrees: cloneVec3(preview.rotationDegrees),
         scale: cloneVec3(preview.scale)
+      };
+    case "modelInstances":
+      return {
+        kind: "modelInstances",
+        pivot: cloneVec3(preview.pivot),
+        items: preview.items.map(cloneModelInstanceTransformPreviewItem)
       };
     case "pathPoint":
       return {
@@ -651,6 +663,12 @@ export function cloneTransformPreview(
         kind: "entity",
         position: cloneVec3(preview.position),
         rotation: cloneEntityTransformRotationState(preview.rotation)
+      };
+    case "entities":
+      return {
+        kind: "entities",
+        pivot: cloneVec3(preview.pivot),
+        items: preview.items.map(cloneEntityTransformPreviewItem)
       };
   }
 }
