@@ -2376,7 +2376,7 @@ export class ViewportHost {
         size: {
           ...session.target.initialSize
         },
-        geometry: cloneBoxBrushGeometry(session.target.initialGeometry)
+        geometry: cloneBrushGeometry(session.target.initialGeometry)
       };
     }
 
@@ -2482,7 +2482,7 @@ export class ViewportHost {
         size: {
           ...session.target.initialSize
         },
-        geometry: cloneBoxBrushGeometry(session.target.initialGeometry)
+        geometry: cloneBrushGeometry(session.target.initialGeometry)
       };
     }
 
@@ -2688,7 +2688,7 @@ export class ViewportHost {
           ...session.target.initialRotationDegrees
         },
         size: nextSize,
-        geometry: scaleBoxBrushGeometryToSize(
+        geometry: scaleBrushGeometryToSize(
           session.target.initialGeometry,
           nextSize
         )
@@ -2750,7 +2750,7 @@ export class ViewportHost {
 
   private createTargetPreviewBrush(
     session: ActiveTransformSession
-  ): BoxBrush | null {
+  ): Brush | null {
     if (
       session.target.kind !== "brush" &&
       session.target.kind !== "brushFace" &&
@@ -2762,12 +2762,11 @@ export class ViewportHost {
 
     const currentBrush = this.currentDocument?.brushes[session.target.brushId];
 
-    if (currentBrush === undefined || currentBrush.kind !== "box") {
+    if (currentBrush === undefined) {
       return null;
     }
 
-    return {
-      ...currentBrush,
+    return updateBrush(currentBrush, {
       center: {
         ...session.target.initialCenter
       },
@@ -2777,21 +2776,21 @@ export class ViewportHost {
       size: {
         ...session.target.initialSize
       },
-      geometry: cloneBoxBrushGeometry(session.target.initialGeometry)
-    };
+      geometry: cloneBrushGeometry(session.target.initialGeometry)
+    });
   }
 
   private createBrushPreviewFromGeometry(
-    brush: BoxBrush,
-    geometry: BoxBrushGeometry
+    brush: Brush,
+    geometry: BrushGeometry
   ): {
     kind: "brush";
     center: Vec3;
     rotationDegrees: Vec3;
     size: Vec3;
-    geometry: BoxBrushGeometry;
+    geometry: BrushGeometry;
   } {
-    const nextGeometry = cloneBoxBrushGeometry(geometry);
+    const nextGeometry = cloneBrushGeometry(geometry);
 
     return {
       kind: "brush",
@@ -2801,19 +2800,30 @@ export class ViewportHost {
       rotationDegrees: {
         ...brush.rotationDegrees
       },
-      size: deriveBoxBrushSizeFromGeometry(nextGeometry),
+      size: deriveBrushSizeFromGeometry(nextGeometry),
       geometry: nextGeometry
     };
   }
 
   private getComponentTargetVertexIds(
     target: ActiveTransformSession["target"]
-  ): BoxVertexId[] {
+  ): WhiteboxVertexId[] {
+    const brush = this.currentDocument?.brushes[target.brushId];
+
+    if (
+      brush === undefined ||
+      (target.kind !== "brushFace" &&
+        target.kind !== "brushEdge" &&
+        target.kind !== "brushVertex")
+    ) {
+      return [];
+    }
+
     switch (target.kind) {
       case "brushFace":
-        return [...getBoxBrushFaceVertexIds(target.faceId)];
+        return [...getBrushFaceVertexIds(brush, target.faceId)];
       case "brushEdge": {
-        const [start, end] = getBoxBrushEdgeVertexIds(target.edgeId);
+        const [start, end] = getBrushEdgeVertexIds(brush, target.edgeId);
         return [start, end];
       }
       case "brushVertex":
@@ -2824,11 +2834,11 @@ export class ViewportHost {
   }
 
   private applyDeltaToVertices(
-    brush: BoxBrush,
-    vertexIds: BoxVertexId[],
+    brush: Brush,
+    vertexIds: WhiteboxVertexId[],
     delta: Vec3
-  ): BoxBrushGeometry {
-    const nextGeometry = cloneBoxBrushGeometry(brush.geometry);
+  ): BrushGeometry {
+    const nextGeometry = cloneBrushGeometry(brush.geometry);
 
     for (const vertexId of vertexIds) {
       const vertex = nextGeometry.vertices[vertexId];
