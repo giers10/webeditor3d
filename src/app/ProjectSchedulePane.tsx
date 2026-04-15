@@ -23,6 +23,7 @@ import {
 import {
   findHeldSequenceControlEffect,
   getProjectScheduleRoutineHeldSteps,
+  getProjectSequenceImpulseSteps,
   getProjectSequenceHeldSteps
 } from "../sequencer/project-sequence-steps";
 import {
@@ -231,7 +232,9 @@ function getRoutineSummary(
   } else {
     const effect = heldSteps[0];
 
-    if (effect?.type === "controlEffect") {
+    if (routine.target.kind === "global" && routine.sequenceId !== null) {
+      summaryParts.push("Impulse Sequence");
+    } else if (effect?.type === "controlEffect") {
       summaryParts.push(formatControlEffectValue(effect.effect));
     }
   }
@@ -724,9 +727,9 @@ export function ProjectSequencerPane({
                 {selectedRoutine.sequenceId === null &&
                 compatibleHeldSequences.length === 0 ? (
                   <div className="material-summary">
-                    No compatible sequence with held effects is authored for this
-                    target yet. Use Sequence Editor to author effects, or keep
-                    this placement on its own inline effects.
+                    {selectedRoutine.target.kind === "global"
+                      ? "No compatible impulse sequence is authored yet for this project event lane. Use Sequence Editor to author one-shot effects like scene transitions, dialogue starts, or teleports."
+                      : "No compatible sequence with held effects is authored for this target yet. Use Sequence Editor to author effects, or keep this placement on its own inline effects."}
                   </div>
                 ) : null}
                 {selectedRoutine.sequenceId === null &&
