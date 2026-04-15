@@ -2037,12 +2037,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
     selectedNpcAsset !== null && selectedNpcAsset.kind === "model"
       ? selectedNpcAsset
       : null;
-  const resolvedSelectedNpcDefaultDialogueId =
-    selectedNpc === null
-      ? null
-      : selectedNpc.defaultDialogueId ??
-        selectedNpc.dialogues[0]?.id ??
-        null;
   const selectedNpcActorUsages =
     selectedNpc === null
       ? []
