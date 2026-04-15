@@ -39,7 +39,6 @@ import {
   createNpcEntity,
   createNpcTimeWindowPresence,
   createSceneEntryEntity,
-  createSceneExitEntity,
   createTriggerVolumeEntity
 } from "../../src/entities/entity-instances";
 import { createProjectScheduleRoutine } from "../../src/scheduler/project-scheduler";
@@ -389,16 +388,6 @@ describe("project document JSON", () => {
       },
       yawDegrees: 180
     });
-    const mainExit = createSceneExitEntity({
-      id: "entity-scene-exit-main-hatch",
-      position: {
-        x: 0,
-        y: 1,
-        z: 3
-      },
-      targetSceneId: "scene-cellar",
-      targetEntryEntityId: cellarEntry.id
-    });
     const document = {
       ...createEmptyProjectDocument({
         name: "Castle Project",
@@ -421,7 +410,6 @@ describe("project document JSON", () => {
         })
       }
     };
-    document.scenes["scene-main"].entities[mainExit.id] = mainExit;
     document.scenes["scene-cellar"].entities[cellarEntry.id] = cellarEntry;
     document.scenes["scene-main"].editorPreferences = {
       ...document.scenes["scene-main"].editorPreferences,
@@ -950,7 +938,7 @@ describe("project document JSON", () => {
     );
   });
 
-  it("migrates v23 project documents without Scene Entry and Scene Exit entities", () => {
+  it("migrates v23 project documents without Scene Entry entities", () => {
     const legacyScene = createEmptyProjectScene({
       id: "scene-main",
       name: "Legacy Entry"
@@ -1041,19 +1029,25 @@ describe("project document JSON", () => {
     });
   });
 
-  it("rejects Scene Exit targets that point at a missing Scene Entry", () => {
+  it("rejects scene transition sequence targets that point at a missing Scene Entry", () => {
     const document = createEmptyProjectDocument({ sceneName: "Outside" });
     const targetScene = createEmptyProjectScene({
       id: "scene-house",
       name: "House"
     });
     document.scenes[targetScene.id] = targetScene;
-    document.scenes["scene-main"].entities["entity-scene-exit-door"] =
-      createSceneExitEntity({
-        id: "entity-scene-exit-door",
-        targetSceneId: targetScene.id,
-        targetEntryEntityId: "missing-entry"
-      });
+    document.sequences.sequences["sequence-enter-house"] = createProjectSequence({
+      id: "sequence-enter-house",
+      title: "Enter House",
+      effects: [
+        {
+          stepClass: "impulse",
+          type: "startSceneTransition",
+          targetSceneId: targetScene.id,
+          targetEntryEntityId: "missing-entry"
+        }
+      ]
+    });
 
     expect(() =>
       parseProjectDocumentJson(JSON.stringify(document))
