@@ -8490,12 +8490,15 @@ export function App({ store, initialStatusMessage }: AppProps) {
         });
         break;
       case "startDialogue":
-        nextLink = createStartDialogueInteractionLink({
+        nextLink = {
           id: link.id,
           sourceEntityId: link.sourceEntityId,
           trigger,
-          dialogueId: link.action.dialogueId
-        });
+          action: {
+            type: "startDialogue",
+            dialogueId: link.action.dialogueId
+          }
+        };
         break;
       case "runSequence":
         nextLink = createRunSequenceInteractionLink({
