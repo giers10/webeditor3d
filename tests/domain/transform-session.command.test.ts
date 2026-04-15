@@ -899,7 +899,9 @@ describe("transform session commit commands", () => {
       throw new Error("Expected a whitebox vertex transform target.");
     }
 
-    const deformedGeometry = cloneBoxBrushGeometry(target.initialGeometry);
+    const deformedGeometry = cloneBoxBrushGeometry(
+      target.initialGeometry as ReturnType<typeof cloneBoxBrushGeometry>
+    );
     deformedGeometry.vertices.posX_posY_posZ = {
       ...deformedGeometry.vertices.posX_posY_posZ,
       x: deformedGeometry.vertices.posX_posY_posZ.x + 1
