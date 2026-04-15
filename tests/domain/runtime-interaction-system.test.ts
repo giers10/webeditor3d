@@ -189,6 +189,8 @@ function createRuntimeNpcFixture(options: {
     actorId: `${options.entityId}-actor`,
     name: undefined,
     visible: true,
+    position: { x: 0, y: 0, z: 0 },
+    yawDegrees: 0,
     modelAssetId: null,
     dialogues: [
       {
@@ -204,13 +206,7 @@ function createRuntimeNpcFixture(options: {
       }
     ],
     defaultDialogueId: options.dialogueId,
-    authoredPosition: { x: 0, y: 0, z: 0 },
-    authoredYawDegrees: 0,
-    active: true,
-    activeRoutineId: null,
     activeRoutineTitle: null,
-    position: { x: 0, y: 0, z: 0 },
-    yawDegrees: 0,
     animationClipName: null,
     animationLoop: undefined,
     resolvedPath: null,
