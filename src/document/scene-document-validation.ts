@@ -2851,16 +2851,29 @@ function validateNpcEntity(
 
   validateNpcPresence(entity.presence, `${path}.presence`, diagnostics);
   validateNpcModelAssetId(entity, path, document, diagnostics);
+  const seenNpcDialogueIds = new Map<string, string>();
+
+  for (const [dialogueIndex, dialogue] of entity.dialogues.entries()) {
+    const dialoguePath = `${path}.dialogues.${dialogueIndex}`;
+    registerAuthoredId(dialogue.id, dialoguePath, seenNpcDialogueIds, diagnostics);
+    validateProjectDialogue(
+      dialogue,
+      dialoguePath,
+      seenNpcDialogueIds,
+      diagnostics
+    );
+  }
+
   if (
-    entity.dialogueId !== null &&
-    document.dialogues.dialogues[entity.dialogueId] === undefined
+    entity.defaultDialogueId !== null &&
+    !entity.dialogues.some((dialogue) => dialogue.id === entity.defaultDialogueId)
   ) {
     diagnostics.push(
       createDiagnostic(
         "error",
-        "missing-dialogue-resource",
-        `Dialogue ${entity.dialogueId} does not exist in the project dialogue library.`,
-        `${path}.dialogueId`
+        "missing-npc-default-dialogue",
+        `NPC default dialogue ${entity.defaultDialogueId} does not exist on this NPC.`,
+        `${path}.defaultDialogueId`
       )
     );
   }
@@ -4759,6 +4772,45 @@ function validateProjectSequence(
           diagnostics
         );
         break;
+      case "makeNpcTalk": {
+        let targetNpc: NpcEntity | null = null;
+
+        for (const scene of Object.values(projectScenes)) {
+          const candidate = scene.entities[effect.npcEntityId];
+
+          if (candidate?.kind === "npc") {
+            targetNpc = candidate;
+            break;
+          }
+        }
+
+        if (targetNpc === null) {
+          diagnostics.push(
+            createDiagnostic(
+              "error",
+              "missing-sequence-npc-dialogue-target",
+              `NPC ${effect.npcEntityId} does not exist in this project.`,
+              `${effectPath}.npcEntityId`
+            )
+          );
+          break;
+        }
+
+        if (
+          effect.dialogueId !== null &&
+          !targetNpc.dialogues.some((dialogue) => dialogue.id === effect.dialogueId)
+        ) {
+          diagnostics.push(
+            createDiagnostic(
+              "error",
+              "missing-sequence-npc-dialogue",
+              `Dialogue ${effect.dialogueId} does not exist on NPC ${effect.npcEntityId}.`,
+              `${effectPath}.dialogueId`
+            )
+          );
+        }
+        break;
+      }
       case "startDialogue":
         if (
           projectResources.dialogues.dialogues[effect.dialogueId] === undefined
