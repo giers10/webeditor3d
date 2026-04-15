@@ -1280,8 +1280,7 @@ function buildRuntimeSceneCollections(
     soundEmitters: [],
     triggerVolumes: [],
     teleportTargets: [],
-    interactables: [],
-    sceneExits: []
+    interactables: []
   };
   const localLights: RuntimeLocalLightCollection = {
     pointLights: [],
@@ -1398,17 +1397,6 @@ function buildRuntimeSceneCollections(
           radius: entity.radius,
           prompt: entity.prompt,
           interactionEnabled: entity.interactionEnabled
-        });
-        break;
-      case "sceneExit":
-        runtimeEntities.sceneExits.push({
-          entityId: entity.id,
-          position: cloneVec3(entity.position),
-          radius: entity.radius,
-          prompt: entity.prompt,
-          interactionEnabled: entity.interactionEnabled,
-          targetSceneId: entity.targetSceneId,
-          targetEntryEntityId: entity.targetEntryEntityId
         });
         break;
       default:
