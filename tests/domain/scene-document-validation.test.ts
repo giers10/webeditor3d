@@ -345,11 +345,11 @@ describe("validateSceneDocument", () => {
     );
   });
 
-  it("rejects NPC dialogue references that point to missing dialogue resources", () => {
+  it("rejects NPC default dialogues that point to missing NPC-authored dialogues", () => {
     const npc = createNpcEntity({
       id: "entity-npc-guide",
       actorId: "actor-guide",
-      dialogueId: "dialogue-missing"
+      defaultDialogueId: "dialogue-missing"
     });
     const document = createEmptySceneDocument();
     document.entities[npc.id] = npc;
@@ -359,8 +359,8 @@ describe("validateSceneDocument", () => {
     expect(validation.errors).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          code: "missing-dialogue-resource",
-          path: `entities.${npc.id}.dialogueId`
+          code: "missing-npc-default-dialogue",
+          path: `entities.${npc.id}.defaultDialogueId`
         })
       ])
     );
