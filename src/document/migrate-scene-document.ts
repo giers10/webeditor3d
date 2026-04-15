@@ -3516,6 +3516,25 @@ function readProjectSequenceEffect(value: unknown, label: string): SequenceClip 
           `${label}.targetEntityId`
         )
       };
+    case "startSceneTransition":
+      if (stepClass !== "impulse") {
+        throw new Error(
+          `${label}.startSceneTransition effects must use the impulse class.`
+        );
+      }
+
+      return {
+        stepClass: "impulse",
+        type: "startSceneTransition",
+        targetSceneId: expectString(
+          value.targetSceneId,
+          `${label}.targetSceneId`
+        ),
+        targetEntryEntityId: expectString(
+          value.targetEntryEntityId,
+          `${label}.targetEntryEntityId`
+        )
+      };
     case "toggleVisibility":
     case "setVisibility": {
       const isLegacyToggle = value.type === "toggleVisibility";
