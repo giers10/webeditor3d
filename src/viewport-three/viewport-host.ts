@@ -5761,7 +5761,7 @@ export class ViewportHost {
       return {
         kind: "brushEdge",
         brushId,
-        edgeId: brushEdgeId as BoxEdgeId
+        edgeId: brushEdgeId as WhiteboxEdgeId
       };
     }
 
@@ -5770,7 +5770,7 @@ export class ViewportHost {
       return {
         kind: "brushVertex",
         brushId,
-        vertexId: brushVertexId as BoxVertexId
+        vertexId: brushVertexId as WhiteboxVertexId
       };
     }
 
