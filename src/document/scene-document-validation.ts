@@ -3030,13 +3030,13 @@ function validateInteractionControlTarget(
 
   if (
     targetEntity.kind !== target.interactionKind ||
-    (targetEntity.kind !== "interactable" && targetEntity.kind !== "sceneExit")
+    targetEntity.kind !== "interactable"
   ) {
     diagnostics.push(
       createDiagnostic(
         "error",
         "invalid-control-interaction-target-kind",
-        "Interaction control effects must target an Interactable or Scene Exit entity of the authored target kind.",
+        "Interaction control effects must target an Interactable entity of the authored target kind.",
         `${path}.interactionKind`
       )
     );
