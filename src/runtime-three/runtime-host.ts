@@ -195,7 +195,6 @@ interface RuntimeWaterContactUniformBinding {
 }
 
 const FALLBACK_FACE_COLOR = 0xf2ece2;
-const BOX_FACE_MATERIAL_COUNT = 6;
 const RUNTIME_CLOCK_PUBLISH_INTERVAL_SECONDS = 1 / 30;
 const WATER_REFLECTION_UPDATE_INTERVAL_MS = 96;
 
