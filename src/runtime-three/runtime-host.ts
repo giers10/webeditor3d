@@ -280,7 +280,7 @@ export interface RuntimeSceneTransitionRequest {
 }
 
 export interface RuntimeDialogueState {
-  npcEntityId: string;
+  npcEntityId: string | null;
   dialogueId: string;
   title: string;
   lineId: string;
@@ -730,14 +730,22 @@ export class RuntimeHost {
       return;
     }
 
-    const npc =
-      this.runtimeScene.entities.npcs.find(
-        (candidate) => candidate.entityId === this.currentDialogue?.npcEntityId
-      ) ?? null;
     const dialogue =
-      npc?.dialogues.find(
-        (candidate) => candidate.id === this.currentDialogue?.dialogueId
-      ) ?? null;
+      this.currentDialogue.npcEntityId === null
+        ? this.runtimeScene.dialogues.dialogues[this.currentDialogue.dialogueId] ??
+          null
+        : (() => {
+            const npc =
+              this.runtimeScene.entities.npcs.find(
+                (candidate) =>
+                  candidate.entityId === this.currentDialogue?.npcEntityId
+              ) ?? null;
+            return (
+              npc?.dialogues.find(
+                (candidate) => candidate.id === this.currentDialogue?.dialogueId
+              ) ?? null
+            );
+          })();
 
     if (dialogue === null) {
       this.setRuntimeDialogue(null);
@@ -3412,7 +3420,7 @@ export class RuntimeHost {
     }
 
     return {
-      npcEntityId: source.sourceEntityId ?? "legacy-dialogue-source",
+      npcEntityId: null,
       dialogueId,
       title: dialogue.title,
       lineId: line.id,
