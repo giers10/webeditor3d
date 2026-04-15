@@ -40,6 +40,7 @@ import type { ProjectAssetRecord } from "../assets/project-assets";
 import type { BoxBrush } from "../document/brushes";
 import {
   applyControlEffectToResolvedState,
+  createDefaultResolvedControlSource,
   createInteractionLinkResolvedControlSource,
   type ActorControlTargetRef,
   type ControlEffect,
