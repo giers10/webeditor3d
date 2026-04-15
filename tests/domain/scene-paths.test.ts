@@ -127,4 +127,53 @@ describe("scene paths", () => {
       z: -1
     });
   });
+
+  it("can smooth followed paths into rounded corners", () => {
+    const path = createScenePath({
+      id: "path-smooth-corner",
+      points: [
+        {
+          id: "point-a",
+          position: {
+            x: 0,
+            y: 0,
+            z: 0
+          }
+        },
+        {
+          id: "point-b",
+          position: {
+            x: 0,
+            y: 0,
+            z: 3
+          }
+        },
+        {
+          id: "point-c",
+          position: {
+            x: 4,
+            y: 0,
+            z: 3
+          }
+        }
+      ]
+    });
+    const resolvedPath = resolveScenePath(path);
+    const smoothedPosition = sampleResolvedScenePathPosition(resolvedPath, 0.5, {
+      smooth: true
+    });
+    const smoothedTangent = sampleResolvedScenePathTangent(resolvedPath, 0.5, {
+      smooth: true
+    });
+
+    expect(smoothedPosition).not.toEqual({
+      x: 0.5,
+      y: 0,
+      z: 3
+    });
+    expect(smoothedPosition.x).toBeGreaterThan(0);
+    expect(smoothedPosition.z).toBeLessThan(3);
+    expect(smoothedTangent.x).toBeGreaterThan(0);
+    expect(smoothedTangent.z).toBeGreaterThan(0);
+  });
 });
