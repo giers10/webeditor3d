@@ -994,6 +994,10 @@ function createBrushTransformTarget(
       brushId: brush.id,
       brushKind: brush.kind,
       sideCount: brush.kind === "radialPrism" ? brush.sideCount : undefined,
+      majorSegmentCount:
+        brush.kind === "torus" ? brush.majorSegmentCount : undefined,
+      tubeSegmentCount:
+        brush.kind === "torus" ? brush.tubeSegmentCount : undefined,
       initialCenter: cloneVec3(brush.center),
       initialRotationDegrees: cloneVec3(brush.rotationDegrees),
       initialSize: cloneVec3(brush.size),

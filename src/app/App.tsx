@@ -4930,18 +4930,20 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
   };
 
-  const handleAddProjectSequenceDialogueStep = (
+  const handleAddProjectSequenceNpcTalkStep = (
     sequenceId: string,
-    dialogueId: string
+    npcEntityId: string,
+    dialogueId: string | null
   ) => {
     updateProjectSequence(
       sequenceId,
-      "Add project sequence dialogue clip",
-      "Added dialogue effect.",
+      "Add project sequence NPC talk effect",
+      "Added NPC talk effect.",
       (sequence) => {
         sequence.effects.push({
           stepClass: "impulse",
-          type: "startDialogue",
+          type: "makeNpcTalk",
+          npcEntityId,
           dialogueId
         });
       }
@@ -5287,19 +5289,48 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
   };
 
-  const updateProjectSequenceDialogueStepDialogueId = (
+  const updateProjectSequenceNpcTalkStepNpcEntityId = (
     sequenceId: string,
     stepIndex: number,
-    dialogueId: string
+    npcEntityId: string
   ) => {
     updateProjectSequenceStep(
       sequenceId,
       stepIndex,
-      "Set project sequence dialogue",
-      "Updated sequence dialogue.",
+      "Set project sequence talk NPC",
+      "Updated talking NPC.",
       (step) => {
-        if (step.type !== "startDialogue") {
-          throw new Error("Only dialogue steps expose a dialogue id.");
+        if (step.type !== "makeNpcTalk") {
+          throw new Error("Only NPC talk effects expose a talking NPC.");
+        }
+
+        const npcTargetOption =
+          npcDialogueSequenceTargetOptions.find(
+            (option) => option.npcEntityId === npcEntityId
+          ) ?? null;
+
+        step.npcEntityId = npcEntityId;
+        step.dialogueId =
+          npcTargetOption?.defaultDialogueId ??
+          npcTargetOption?.dialogues[0]?.dialogueId ??
+          null;
+      }
+    );
+  };
+
+  const updateProjectSequenceNpcTalkStepDialogueId = (
+    sequenceId: string,
+    stepIndex: number,
+    dialogueId: string | null
+  ) => {
+    updateProjectSequenceStep(
+      sequenceId,
+      stepIndex,
+      "Set project sequence NPC dialogue",
+      "Updated NPC dialogue.",
+      (step) => {
+        if (step.type !== "makeNpcTalk") {
+          throw new Error("Only NPC talk effects expose an NPC dialogue.");
         }
 
         step.dialogueId = dialogueId;
