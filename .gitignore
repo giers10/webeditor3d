@@ -31,3 +31,4 @@ test-results
 .DS_Store
 .materials_*/
 .hdris_*/
+*.zip
