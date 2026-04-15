@@ -88,6 +88,7 @@ interface ProjectSequencerPaneProps {
   onDeleteRoutine(routineId: string): void;
   onDeleteSequence(sequenceId: string): void;
   onClose(): void;
+  onCreateRoutineSequence(routineId: string): void;
   onSetRoutineTarget(routineId: string, targetKey: string): void;
   onSetRoutineTitle(routineId: string, title: string): void;
   onSetRoutineEnabled(routineId: string, enabled: boolean): void;
@@ -150,6 +151,21 @@ interface ProjectSequencerPaneProps {
     clipName: string
   ): void;
   onSetControlStepAnimationLoop(
+    sequenceId: string,
+    stepIndex: number,
+    loop: boolean
+  ): void;
+  onSetControlStepPathId(
+    sequenceId: string,
+    stepIndex: number,
+    pathId: string
+  ): void;
+  onSetControlStepPathSpeed(
+    sequenceId: string,
+    stepIndex: number,
+    speed: number
+  ): void;
+  onSetControlStepPathLoop(
     sequenceId: string,
     stepIndex: number,
     loop: boolean
@@ -457,6 +473,7 @@ export function ProjectSequencerPane({
   onDeleteRoutine,
   onDeleteSequence,
   onClose,
+  onCreateRoutineSequence,
   onSetRoutineTarget,
   onSetRoutineTitle,
   onSetRoutineEnabled,
@@ -493,6 +510,9 @@ export function ProjectSequencerPane({
   onSetControlStepColorValue,
   onSetControlStepAnimationClip,
   onSetControlStepAnimationLoop,
+  onSetControlStepPathId,
+  onSetControlStepPathSpeed,
+  onSetControlStepPathLoop,
   onSetDialogueStepDialogueId,
   onSetTeleportStepTarget,
   onSetSceneTransitionStepTarget,
@@ -783,6 +803,9 @@ export function ProjectSequencerPane({
               onSetControlStepColorValue={onSetControlStepColorValue}
               onSetControlStepAnimationClip={onSetControlStepAnimationClip}
               onSetControlStepAnimationLoop={onSetControlStepAnimationLoop}
+              onSetControlStepPathId={onSetControlStepPathId}
+              onSetControlStepPathSpeed={onSetControlStepPathSpeed}
+              onSetControlStepPathLoop={onSetControlStepPathLoop}
               onSetDialogueStepDialogueId={onSetDialogueStepDialogueId}
               onSetTeleportStepTarget={onSetTeleportStepTarget}
               onSetSceneTransitionStepTarget={onSetSceneTransitionStepTarget}
