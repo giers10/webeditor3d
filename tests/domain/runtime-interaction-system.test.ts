@@ -183,13 +183,16 @@ function createRuntimeNpcFixture(options: {
   title: string;
   text: string;
   speakerName?: string | null;
+  position?: { x: number; y: number; z: number };
 }): RuntimeSceneDefinition["entities"]["npcs"][number] {
+  const position = options.position ?? { x: 0, y: 0, z: 0 };
+
   return {
     entityId: options.entityId,
     actorId: `${options.entityId}-actor`,
     name: undefined,
     visible: true,
-    position: { x: 0, y: 0, z: 0 },
+    position,
     yawDegrees: 0,
     modelAssetId: null,
     dialogues: [
@@ -631,7 +634,8 @@ describe("RuntimeInteractionSystem", () => {
         dialogueId: "dialogue-console",
         title: "Console",
         speakerName: "System",
-        text: "Access granted."
+        text: "Access granted.",
+        position: { x: 10, y: 0, z: 0 }
       })
     ];
     runtimeScene.sequences.sequences["sequence-console-dialogue"] =
@@ -682,7 +686,8 @@ describe("RuntimeInteractionSystem", () => {
         dialogueId: "dialogue-sequence",
         title: "Sequence Dialogue",
         speakerName: "Console",
-        text: "Sequence started."
+        text: "Sequence started.",
+        position: { x: 10, y: 0, z: 0 }
       })
     ];
     runtimeScene.sequences.sequences["sequence-console-dialogue"] =
@@ -733,7 +738,8 @@ describe("RuntimeInteractionSystem", () => {
         dialogueId: "dialogue-console",
         title: "Console",
         speakerName: "System",
-        text: "Console online."
+        text: "Console online.",
+        position: { x: 10, y: 0, z: 0 }
       })
     ];
     runtimeScene.sequences.sequences["sequence-console-dialogue"] =
