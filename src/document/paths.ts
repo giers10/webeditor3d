@@ -35,6 +35,35 @@ export interface ResolvedScenePath {
   totalLength: number;
 }
 
+interface PathPointLike {
+  position: Vec3;
+}
+
+interface ResolvedPathSegmentLike {
+  start: Vec3;
+  end: Vec3;
+  length: number;
+  distanceStart: number;
+  distanceEnd: number;
+  tangent: Vec3;
+}
+
+interface ResolvedPathLike<
+  TPoint extends PathPointLike = ScenePathPoint,
+  TSegment extends ResolvedPathSegmentLike = ResolvedScenePathSegment
+> {
+  loop: boolean;
+  points: TPoint[];
+  segments: TSegment[];
+  totalLength: number;
+}
+
+interface SmoothedPathSample {
+  distance: number;
+  position: Vec3;
+  tangent: Vec3;
+}
+
 export const DEFAULT_SCENE_PATH_VISIBLE = true;
 export const DEFAULT_SCENE_PATH_ENABLED = true;
 export const DEFAULT_SCENE_PATH_LOOP = false;
@@ -89,6 +118,34 @@ function normalizeDelta(delta: Vec3): Vec3 {
   };
 }
 
+function addVec3(left: Vec3, right: Vec3): Vec3 {
+  return {
+    x: left.x + right.x,
+    y: left.y + right.y,
+    z: left.z + right.z
+  };
+}
+
+function subtractVec3(left: Vec3, right: Vec3): Vec3 {
+  return {
+    x: left.x - right.x,
+    y: left.y - right.y,
+    z: left.z - right.z
+  };
+}
+
+function scaleVec3(vector: Vec3, scalar: number): Vec3 {
+  return {
+    x: vector.x * scalar,
+    y: vector.y * scalar,
+    z: vector.z * scalar
+  };
+}
+
+function getVec3Distance(left: Vec3, right: Vec3): number {
+  return Math.hypot(left.x - right.x, left.y - right.y, left.z - right.z);
+}
+
 function clampProgress(progress: number): number {
   if (!Number.isFinite(progress)) {
     throw new Error("Path progress must be a finite number.");
@@ -136,7 +193,7 @@ function resolvePathSegmentSample(
 }
 
 function findNonZeroSegmentTangent(
-  path: ResolvedScenePath,
+  path: ResolvedPathLike,
   index: number
 ): Vec3 {
   for (let candidateIndex = index; candidateIndex < path.segments.length; candidateIndex += 1) {
@@ -159,6 +216,255 @@ function findNonZeroSegmentTangent(
     x: 0,
     y: 0,
     z: 0
+  };
+}
+
+const SMOOTH_PATH_SEGMENT_SUBDIVISIONS = 16;
+
+function getPathSamplePoint(
+  path: ResolvedPathLike,
+  index: number
+): Vec3 {
+  const points = path.points;
+  const pointCount = points.length;
+
+  if (pointCount === 0) {
+    return {
+      x: 0,
+      y: 0,
+      z: 0
+    };
+  }
+
+  if (path.loop) {
+    const wrappedIndex = ((index % pointCount) + pointCount) % pointCount;
+    return cloneVec3(points[wrappedIndex]!.position);
+  }
+
+  if (index <= 0) {
+    return cloneVec3(points[0]!.position);
+  }
+
+  if (index >= pointCount - 1) {
+    return cloneVec3(points[pointCount - 1]!.position);
+  }
+
+  return cloneVec3(points[index]!.position);
+}
+
+function evaluateCatmullRomPosition(
+  p0: Vec3,
+  p1: Vec3,
+  p2: Vec3,
+  p3: Vec3,
+  t: number
+): Vec3 {
+  const t2 = t * t;
+  const t3 = t2 * t;
+
+  return scaleVec3(
+    addVec3(
+      addVec3(
+        scaleVec3(p1, 2),
+        scaleVec3(subtractVec3(p2, p0), t)
+      ),
+      addVec3(
+        scaleVec3(
+          addVec3(
+            addVec3(scaleVec3(p0, 2), scaleVec3(p1, -5)),
+            addVec3(scaleVec3(p2, 4), scaleVec3(p3, -1))
+          ),
+          t2
+        ),
+        scaleVec3(
+          addVec3(
+            addVec3(scaleVec3(p0, -1), scaleVec3(p1, 3)),
+            addVec3(scaleVec3(p2, -3), p3)
+          ),
+          t3
+        )
+      )
+    ),
+    0.5
+  );
+}
+
+function evaluateCatmullRomTangent(
+  p0: Vec3,
+  p1: Vec3,
+  p2: Vec3,
+  p3: Vec3,
+  t: number
+): Vec3 {
+  const t2 = t * t;
+
+  return normalizeDelta(
+    scaleVec3(
+      addVec3(
+        subtractVec3(p2, p0),
+        addVec3(
+          scaleVec3(
+            addVec3(
+              addVec3(scaleVec3(p0, 4), scaleVec3(p1, -10)),
+              addVec3(scaleVec3(p2, 8), scaleVec3(p3, -2))
+            ),
+            t
+          ),
+          scaleVec3(
+            addVec3(
+              addVec3(scaleVec3(p0, -3), scaleVec3(p1, 9)),
+              addVec3(scaleVec3(p2, -9), scaleVec3(p3, 3))
+            ),
+            t2
+          )
+        )
+      ),
+      0.5
+    )
+  );
+}
+
+function buildSmoothedPathSamples(path: ResolvedPathLike): SmoothedPathSample[] {
+  if (path.points.length === 0) {
+    return [
+      {
+        distance: 0,
+        position: {
+          x: 0,
+          y: 0,
+          z: 0
+        },
+        tangent: {
+          x: 0,
+          y: 0,
+          z: 0
+        }
+      }
+    ];
+  }
+
+  if (path.points.length < 3 || path.totalLength <= 0) {
+    return path.points.map((point, index) => ({
+      distance:
+        index === 0
+          ? 0
+          : path.segments[Math.min(index - 1, path.segments.length - 1)]?.distanceEnd ?? 0,
+      position: cloneVec3(point.position),
+      tangent:
+        index < path.segments.length
+          ? cloneVec3(path.segments[index]!.tangent)
+          : cloneVec3(path.segments[path.segments.length - 1]?.tangent ?? { x: 0, y: 0, z: 0 })
+    }));
+  }
+
+  const samples: SmoothedPathSample[] = [];
+  const segmentCount = path.loop ? path.points.length : path.points.length - 1;
+  let cumulativeDistance = 0;
+  let previousPosition: Vec3 | null = null;
+
+  for (let segmentIndex = 0; segmentIndex < segmentCount; segmentIndex += 1) {
+    const p0 = getPathSamplePoint(path, segmentIndex - 1);
+    const p1 = getPathSamplePoint(path, segmentIndex);
+    const p2 = getPathSamplePoint(path, segmentIndex + 1);
+    const p3 = getPathSamplePoint(path, segmentIndex + 2);
+
+    for (
+      let subdivisionIndex = segmentIndex === 0 ? 0 : 1;
+      subdivisionIndex <= SMOOTH_PATH_SEGMENT_SUBDIVISIONS;
+      subdivisionIndex += 1
+    ) {
+      const t = subdivisionIndex / SMOOTH_PATH_SEGMENT_SUBDIVISIONS;
+      const position = evaluateCatmullRomPosition(p0, p1, p2, p3, t);
+      const tangent = evaluateCatmullRomTangent(p0, p1, p2, p3, t);
+
+      if (previousPosition !== null) {
+        cumulativeDistance += getVec3Distance(previousPosition, position);
+      }
+
+      samples.push({
+        distance: cumulativeDistance,
+        position,
+        tangent
+      });
+      previousPosition = position;
+    }
+  }
+
+  return samples;
+}
+
+function sampleSmoothedPath(
+  path: ResolvedPathLike,
+  progress: number
+): { position: Vec3; tangent: Vec3 } {
+  const samples = buildSmoothedPathSamples(path);
+
+  if (samples.length === 0) {
+    return {
+      position: {
+        x: 0,
+        y: 0,
+        z: 0
+      },
+      tangent: {
+        x: 0,
+        y: 0,
+        z: 0
+      }
+    };
+  }
+
+  const totalDistance = samples[samples.length - 1]!.distance;
+
+  if (totalDistance <= 0) {
+    return {
+      position: cloneVec3(samples[0]!.position),
+      tangent: cloneVec3(samples[0]!.tangent)
+    };
+  }
+
+  const targetDistance = clampProgress(progress) * totalDistance;
+
+  if (targetDistance >= totalDistance) {
+    return {
+      position: cloneVec3(samples[samples.length - 1]!.position),
+      tangent: cloneVec3(samples[samples.length - 1]!.tangent)
+    };
+  }
+
+  const sampleIndex = samples.findIndex(
+    (sample) => sample.distance >= targetDistance
+  );
+
+  if (sampleIndex <= 0) {
+    return {
+      position: cloneVec3(samples[0]!.position),
+      tangent: cloneVec3(samples[0]!.tangent)
+    };
+  }
+
+  const previousSample = samples[sampleIndex - 1]!;
+  const nextSample = samples[sampleIndex]!;
+  const spanDistance = nextSample.distance - previousSample.distance;
+  const t =
+    spanDistance <= 0
+      ? 0
+      : (targetDistance - previousSample.distance) / spanDistance;
+  const position = {
+    x:
+      previousSample.position.x +
+      (nextSample.position.x - previousSample.position.x) * t,
+    y:
+      previousSample.position.y +
+      (nextSample.position.y - previousSample.position.y) * t,
+    z:
+      previousSample.position.z +
+      (nextSample.position.z - previousSample.position.z) * t
+  };
+
+  return {
+    position,
+    tangent: normalizeDelta(subtractVec3(nextSample.position, previousSample.position))
   };
 }
 
@@ -412,9 +718,14 @@ export function getScenePathLength(path: Pick<ScenePath, "loop" | "points">): nu
 }
 
 export function sampleResolvedScenePathPosition(
-  path: ResolvedScenePath,
-  progress: number
+  path: ResolvedPathLike,
+  progress: number,
+  options: { smooth?: boolean } = {}
 ): Vec3 {
+  if (options.smooth) {
+    return sampleSmoothedPath(path, progress).position;
+  }
+
   if (path.points.length === 0) {
     return {
       x: 0,
@@ -450,15 +761,21 @@ export function sampleResolvedScenePathPosition(
 
 export function sampleScenePathPosition(
   path: Pick<ScenePath, "loop" | "points">,
-  progress: number
+  progress: number,
+  options: { smooth?: boolean } = {}
 ): Vec3 {
-  return sampleResolvedScenePathPosition(resolveScenePath(path), progress);
+  return sampleResolvedScenePathPosition(resolveScenePath(path), progress, options);
 }
 
 export function sampleResolvedScenePathTangent(
-  path: ResolvedScenePath,
-  progress: number
+  path: ResolvedPathLike,
+  progress: number,
+  options: { smooth?: boolean } = {}
 ): Vec3 {
+  if (options.smooth) {
+    return sampleSmoothedPath(path, progress).tangent;
+  }
+
   const { segmentIndex } = resolvePathSegmentSample(path, progress);
 
   if (segmentIndex === null) {
@@ -474,7 +791,8 @@ export function sampleResolvedScenePathTangent(
 
 export function sampleScenePathTangent(
   path: Pick<ScenePath, "loop" | "points">,
-  progress: number
+  progress: number,
+  options: { smooth?: boolean } = {}
 ): Vec3 {
-  return sampleResolvedScenePathTangent(resolveScenePath(path), progress);
+  return sampleResolvedScenePathTangent(resolveScenePath(path), progress, options);
 }
