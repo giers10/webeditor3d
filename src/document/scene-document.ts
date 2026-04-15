@@ -32,7 +32,8 @@ import {
   type ProjectSequenceLibrary
 } from "../sequencer/project-sequences";
 
-export const SCENE_DOCUMENT_VERSION = 59 as const;
+export const SCENE_DOCUMENT_VERSION = 60 as const;
+export const WHITEBOX_PRIMITIVES_SCENE_DOCUMENT_VERSION = 60 as const;
 export const STARTER_PBR_MATERIAL_LIBRARY_SCENE_DOCUMENT_VERSION =
   59 as const;
 export const SCENE_TRANSITION_SEQUENCE_EFFECTS_SCENE_DOCUMENT_VERSION =
