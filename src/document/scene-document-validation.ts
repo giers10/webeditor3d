@@ -4729,6 +4729,8 @@ function validateProjectSequence(
   context: ProjectSchedulerValidationContext,
   diagnostics: SceneDiagnostic[]
 ) {
+  const projectScenes = projectResources.scenes ?? {};
+
   if (sequence.title.trim().length === 0) {
     diagnostics.push(
       createDiagnostic(
@@ -4781,12 +4783,11 @@ function validateProjectSequence(
       case "teleportPlayer":
         break;
       case "startSceneTransition": {
-        if (Object.keys(projectResources.scenes).length === 0) {
+        if (Object.keys(projectScenes).length === 0) {
           break;
         }
 
-        const targetScene =
-          projectResources.scenes[effect.targetSceneId] ?? null;
+        const targetScene = projectScenes[effect.targetSceneId] ?? null;
 
         if (targetScene === null) {
           diagnostics.push(
