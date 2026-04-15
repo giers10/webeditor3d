@@ -41,6 +41,7 @@ import { createSetPathAuthoredStateCommand } from "../commands/set-path-authored
 import { createSetPathNameCommand } from "../commands/set-path-name-command";
 import { createSetProjectNameCommand } from "../commands/set-project-name-command";
 import { createSetProjectSchedulerCommand } from "../commands/set-project-scheduler-command";
+import { createSetProjectSequencerCommand } from "../commands/set-project-sequencer-command";
 import { createSetProjectDialoguesCommand } from "../commands/set-project-dialogues-command";
 import { createSetProjectSequencesCommand } from "../commands/set-project-sequences-command";
 import { createSetProjectTimeSettingsCommand } from "../commands/set-project-time-settings-command";
@@ -327,9 +328,8 @@ import {
   type InteractionTriggerKind
 } from "../interactions/interaction-links";
 import {
-  createFollowActorPathControlEffect,
-  createPlayActorAnimationControlEffect,
   createSetActorPresenceControlEffect,
+  cloneControlEffect,
   formatControlEffectValue,
   formatControlTargetRef,
   getControlTargetRefKey
@@ -371,6 +371,7 @@ import { Panel } from "../shared-ui/Panel";
 import { ProjectDialoguesPanel } from "./ProjectDialoguesPanel";
 import { ProjectSequencerPane } from "./ProjectSequencerPane";
 import {
+  cloneSequenceEffect,
   getProjectSequenceImpulseSteps
 } from "../sequencer/project-sequence-steps";
 import {
@@ -379,7 +380,6 @@ import {
   cloneProjectScheduler,
   createProjectScheduleEveryDaySelection,
   createProjectScheduleRoutine,
-  findProjectScheduleRoutineEffect,
   removeProjectScheduleRoutine,
   upsertProjectScheduleRoutine,
   type ProjectScheduleRoutine
