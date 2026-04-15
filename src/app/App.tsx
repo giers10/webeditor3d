@@ -11485,8 +11485,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
                             "Selected sequence placement no longer exists."
                           );
                         }
-
-                        routineId,
                         const targetOption =
                           resolveProjectScheduleTargetOption(targetKey);
 
@@ -11495,6 +11493,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                             "Selected sequencer target no longer exists."
                           );
                         }
+
+                        const previousTargetKey = getControlTargetRefKey(routine.target);
 
                         if (targetOption.target.kind === "actor") {
                           const attachedSequence =
@@ -11510,9 +11510,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               cloneSequenceForRetargetedPlacement({
                                 sequence: attachedSequence,
                                 targetOption,
-                                previousTargetKey: getControlTargetRefKey(
-                                  routine.target
-                                )
+                                previousTargetKey
                               });
                             sequences.sequences[retargetedSequence.id] =
                               retargetedSequence;
@@ -11573,7 +11571,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           );
                         }
 
-                        const previousTargetKey = getControlTargetRefKey(routine.target);
                         const attachedSequence =
                           routine.sequenceId === null
                             ? null
