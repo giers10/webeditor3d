@@ -86,6 +86,9 @@ describe("ProjectSequencesPanel", () => {
         onSetControlStepColorValue={() => {}}
         onSetControlStepAnimationClip={() => {}}
         onSetControlStepAnimationLoop={() => {}}
+        onSetControlStepPathId={() => {}}
+        onSetControlStepPathSpeed={() => {}}
+        onSetControlStepPathLoop={() => {}}
         onSetDialogueStepDialogueId={() => {}}
         onSetTeleportStepTarget={onSetTeleportStepTarget}
         onSetSceneTransitionStepTarget={() => {}}
@@ -146,6 +149,151 @@ describe("ProjectSequencesPanel", () => {
     expect(onAddStopSoundStep).toHaveBeenCalledWith(
       "sequence-main",
       "entity:sound-a"
+    );
+  });
+
+  it("edits actor animation and path effects through the sequence editor", () => {
+    const onSetControlStepAnimationClip = vi.fn();
+    const onSetControlStepAnimationLoop = vi.fn();
+    const onSetControlStepPathId = vi.fn();
+    const onSetControlStepPathSpeed = vi.fn();
+    const onSetControlStepPathLoop = vi.fn();
+
+    render(
+      <ProjectSequencesPanel
+        sequences={{
+          sequences: {
+            "sequence-actor": createProjectSequence({
+              id: "sequence-actor",
+              title: "Actor Routine",
+              effects: [
+                {
+                  stepClass: "held",
+                  type: "controlEffect",
+                  effect: {
+                    type: "playActorAnimation",
+                    target: {
+                      kind: "actor",
+                      actorId: "actor-guard"
+                    },
+                    clipName: "Idle",
+                    loop: true
+                  }
+                },
+                {
+                  stepClass: "held",
+                  type: "controlEffect",
+                  effect: {
+                    type: "followActorPath",
+                    target: {
+                      kind: "actor",
+                      actorId: "actor-guard"
+                    },
+                    pathId: "path-a",
+                    speed: 1,
+                    loop: false,
+                    progressMode: "deriveFromTime"
+                  }
+                }
+              ]
+            })
+          }
+        }}
+        dialogues={{ dialogues: {} }}
+        targetOptions={[
+          {
+            key: "actor:actor-guard",
+            target: {
+              kind: "actor",
+              actorId: "actor-guard"
+            },
+            label: "Guard",
+            subtitle: "NPC",
+            groupLabel: "Actors",
+            defaults: {
+              actorAnimationClipNames: ["Idle", "Wave"],
+              actorPathOptions: [
+                { pathId: "path-a", label: "Patrol A", loop: false },
+                { pathId: "path-b", label: "Patrol B", loop: true }
+              ],
+              actorPathSpeed: 1.2
+            }
+          }
+        ]}
+        teleportTargetOptions={[]}
+        sceneTransitionTargetOptions={[]}
+        visibilityTargetOptions={[]}
+        modelAnimationTargetOptions={[]}
+        soundTargetOptions={[]}
+        selectedSequenceId="sequence-actor"
+        onSelectSequence={() => {}}
+        onAddSequence={() => {}}
+        onDeleteSequence={() => {}}
+        onSetSequenceTitle={() => {}}
+        onAddHeldControlStep={() => {}}
+        onAddImpulseControlStep={() => {}}
+        onAddDialogueStep={() => {}}
+        onAddTeleportStep={() => {}}
+        onAddSceneTransitionStep={() => {}}
+        onAddVisibilityStep={() => {}}
+        onAddPlayAnimationStep={() => {}}
+        onAddStopAnimationStep={() => {}}
+        onAddPlaySoundStep={() => {}}
+        onAddStopSoundStep={() => {}}
+        onDeleteStep={() => {}}
+        onSetControlStepTarget={() => {}}
+        onSetControlStepEffectOption={() => {}}
+        onSetControlStepNumericValue={() => {}}
+        onSetControlStepColorValue={() => {}}
+        onSetControlStepAnimationClip={onSetControlStepAnimationClip}
+        onSetControlStepAnimationLoop={onSetControlStepAnimationLoop}
+        onSetControlStepPathId={onSetControlStepPathId}
+        onSetControlStepPathSpeed={onSetControlStepPathSpeed}
+        onSetControlStepPathLoop={onSetControlStepPathLoop}
+        onSetDialogueStepDialogueId={() => {}}
+        onSetTeleportStepTarget={() => {}}
+        onSetSceneTransitionStepTarget={() => {}}
+        onSetVisibilityStepTarget={() => {}}
+        onSetVisibilityStepMode={() => {}}
+      />
+    );
+
+    fireEvent.change(screen.getByDisplayValue("Idle"), {
+      target: { value: "Wave" }
+    });
+    fireEvent.click(screen.getByLabelText("Loop"));
+    fireEvent.change(screen.getByDisplayValue("Patrol A"), {
+      target: { value: "path-b" }
+    });
+    fireEvent.blur(screen.getByDisplayValue("1"), {
+      target: { value: "1.6" }
+    });
+    fireEvent.click(screen.getAllByLabelText("Loop")[1]!);
+
+    expect(onSetControlStepAnimationClip).toHaveBeenCalledWith(
+      "sequence-actor",
+      0,
+      "Wave"
+    );
+    expect(onSetControlStepAnimationLoop).toHaveBeenCalledWith(
+      "sequence-actor",
+      0,
+      false
+    );
+    expect(onSetControlStepPathId).toHaveBeenCalledWith(
+      "sequence-actor",
+      1,
+      "path-b"
+    );
+    expect(onSetControlStepPathSpeed).toHaveBeenCalledWith(
+      "sequence-actor",
+      1,
+      1.6
+    );
+    expect(onSetControlStepPathLoop).toHaveBeenCalledWith(
+      "sequence-actor",
+      1,
+      true
     );
   });
 });
