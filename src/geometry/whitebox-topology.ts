@@ -15,7 +15,6 @@ import {
   getRadialPrismFaceIds,
   getRadialPrismVertexIds,
   type Brush,
-  type BoxBrush,
   type BoxEdgeId,
   type BoxFaceId,
   type BoxVertexId,
@@ -26,7 +25,6 @@ import {
   type WhiteboxEdgeId,
   type WhiteboxFaceId,
   type WhiteboxVertexId,
-  type WedgeBrush,
   type WedgeEdgeId,
   type WedgeFaceId,
   type WedgeVertexId
