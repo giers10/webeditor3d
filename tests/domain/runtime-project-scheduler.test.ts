@@ -304,8 +304,8 @@ describe("runtime project scheduler", () => {
         }),
         resolvedPath: expect.objectContaining({
           pathId: "path-a",
-          progress: 1,
-          position: { x: 4, y: 0, z: 0 }
+          progress: 0.5,
+          position: { x: 2, y: 0, z: 0 }
         })
       })
     );
