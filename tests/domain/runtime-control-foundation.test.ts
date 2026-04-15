@@ -393,7 +393,7 @@ describe("runtime control foundation", () => {
       runtimeScene,
       {
         teleportPlayer: () => {},
-        activateSceneExit: () => {},
+        startSceneTransition: () => {},
         toggleBrushVisibility: () => {},
         playAnimation: () => {},
         stopAnimation: () => {},
