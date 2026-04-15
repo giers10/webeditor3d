@@ -10124,12 +10124,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
           label: "Interactable",
           testId: "add-menu-interactable",
           onSelect: () => beginEntityCreation("interactable")
-        },
-        {
-          kind: "action",
-          label: "Scene Exit",
-          testId: "add-menu-scene-exit",
-          onSelect: () => beginEntityCreation("sceneExit")
         }
       ]
     },
@@ -10300,7 +10294,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
               onRuntimeClockChange={handleRuntimeClockChange}
               onFirstPersonTelemetryChange={setFirstPersonTelemetry}
               onInteractionPromptChange={setRuntimeInteractionPrompt}
-              onSceneExitActivated={handleRunnerSceneExitActivated}
+              onSceneTransitionActivated={handleRunnerSceneTransitionActivated}
             />
           </main>
 
