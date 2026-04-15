@@ -26,6 +26,7 @@ import { createCommitTransformSessionCommand } from "../commands/commit-transfor
 import { createMoveBoxBrushCommand } from "../commands/move-box-brush-command";
 import { createRotateBoxBrushCommand } from "../commands/rotate-box-brush-command";
 import { createResizeBoxBrushCommand } from "../commands/resize-box-brush-command";
+import { createSetBoxBrushAllFaceMaterialsCommand } from "../commands/set-box-brush-all-face-materials-command";
 import { createSetBoxBrushFaceMaterialCommand } from "../commands/set-box-brush-face-material-command";
 import { createSetBoxBrushAuthoredStateCommand } from "../commands/set-box-brush-authored-state-command";
 import { createSetBoxBrushNameCommand } from "../commands/set-box-brush-name-command";
@@ -33,6 +34,7 @@ import { createSetBoxBrushVolumeSettingsCommand } from "../commands/set-box-brus
 import { createSetEntityAuthoredStateCommand } from "../commands/set-entity-authored-state-command";
 import { createSetEntityNameCommand } from "../commands/set-entity-name-command";
 import { createSetBoxBrushFaceUvStateCommand } from "../commands/set-box-brush-face-uv-state-command";
+import { createUpdateBoxBrushAllFaceUvsCommand } from "../commands/update-box-brush-all-face-uvs-command";
 import { createSetActiveSceneCommand } from "../commands/set-active-scene-command";
 import { createDeleteInteractionLinkCommand } from "../commands/delete-interaction-link-command";
 import { createSetModelInstanceAuthoredStateCommand } from "../commands/set-model-instance-authored-state-command";
@@ -730,6 +732,27 @@ function createVec2Draft(vector: Vec2): Vec2Draft {
   };
 }
 
+function createMaybeMixedVec2Draft(
+  values: readonly Vec2[],
+  equals: (left: number, right: number) => boolean = (left, right) =>
+    left === right
+): Vec2Draft {
+  if (values.length === 0) {
+    return createVec2Draft(createDefaultFaceUvState().offset);
+  }
+
+  const [firstValue, ...remainingValues] = values;
+
+  return {
+    x: remainingValues.every((value) => equals(value.x, firstValue.x))
+      ? String(firstValue.x)
+      : "",
+    y: remainingValues.every((value) => equals(value.y, firstValue.y))
+      ? String(firstValue.y)
+      : ""
+  };
+}
+
 function createVec3Draft(vector: Vec3): Vec3Draft {
   return {
     x: String(vector.x),
@@ -778,6 +801,10 @@ function createPlayerStartMovementTemplateNumberDraft(
 }
 
 function readVec2Draft(draft: Vec2Draft, label: string): Vec2 {
+  if (draft.x.trim().length === 0 || draft.y.trim().length === 0) {
+    throw new Error(`${label} values must be provided.`);
+  }
+
   const vector = {
     x: Number(draft.x),
     y: Number(draft.y)
@@ -952,6 +979,16 @@ function areFaceUvStatesEqual(left: FaceUvState, right: FaceUvState): boolean {
     left.flipU === right.flipU &&
     left.flipV === right.flipV
   );
+}
+
+function getSharedBrushFaceMaterialId(brush: BoxBrush): string | null | undefined {
+  const firstMaterialId = brush.faces[BOX_FACE_IDS[0]].materialId;
+
+  return BOX_FACE_IDS.slice(1).every(
+    (faceId) => brush.faces[faceId].materialId === firstMaterialId
+  )
+    ? firstMaterialId
+    : undefined;
 }
 
 function getSelectedBoxBrush(
