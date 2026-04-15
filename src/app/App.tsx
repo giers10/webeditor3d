@@ -389,6 +389,7 @@ import {
 import {
   createProjectScheduleEffectFromOption,
   getProjectScheduleEffectOptionId,
+  getProjectSequenceControlStepClassForEffectOptionId,
   getProjectScheduleTargetOptionByKey,
   listProjectScheduleEffectOptions,
   listProjectScheduleTargetOptions,
@@ -4506,7 +4507,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const createDefaultSequenceEffectsForTarget = (
     targetOption: ProjectScheduleTargetOption
   ): ProjectSequence["effects"] => {
-    if (targetOption.target.kind === "global") {
+    if (
+      targetOption.target.kind === "global" ||
+      targetOption.target.kind === "actor"
+    ) {
       return [];
     }
 
@@ -4542,7 +4546,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
             stepClass: "held" as const,
             type: "controlEffect" as const,
             effect: cloneControlEffect(effect)
-          }));
+          })).filter((step) => step.effect.type !== "setActorPresence");
 
     return createProjectSequence({
       title: options.title,
@@ -4717,7 +4721,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
     getProjectScheduleTargetOptionByKey(projectScheduleTargetOptions, targetKey);
 
   const createDefaultProjectSequenceControlStep = (
-    stepClass: "held" | "impulse",
     targetKey: string,
     previousStep?: Extract<ProjectSequence["effects"][number], { type: "controlEffect" }> | null
   ): Extract<ProjectSequence["effects"][number], { type: "controlEffect" }> => {
@@ -4736,7 +4739,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
 
     return {
-      stepClass,
+      stepClass: getProjectSequenceControlStepClassForEffectOptionId(
+        effectOption.id
+      ),
       type: "controlEffect",
       effect: createProjectScheduleEffectFromOption({
         targetOption,
@@ -4747,7 +4752,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
   };
 
   const createProjectSequenceControlStepFromOption = (
-    stepClass: "held" | "impulse",
     targetKey: string,
     effectOptionId: ProjectScheduleEffectOptionId
   ): Extract<ProjectSequence["effects"][number], { type: "controlEffect" }> => {
@@ -4758,7 +4762,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
 
     return {
-      stepClass,
+      stepClass: getProjectSequenceControlStepClassForEffectOptionId(
+        effectOptionId
+      ),
       type: "controlEffect",
       effect: createProjectScheduleEffectFromOption({
         targetOption,
@@ -4876,28 +4882,20 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
   const handleAddProjectSequenceControlStep = (
     sequenceId: string,
-    stepClass: "held" | "impulse",
     targetKey: string
   ) => {
     updateProjectSequence(
       sequenceId,
-      stepClass === "held"
-        ? "Add held project sequence effect"
-        : "Add impulse project sequence effect",
-      stepClass === "held"
-        ? "Added held effect."
-        : "Added impulse effect.",
+      "Add project sequence effect",
+      "Added sequence effect.",
       (sequence) => {
-        sequence.effects.push(
-          createDefaultProjectSequenceControlStep(stepClass, targetKey)
-        );
+        sequence.effects.push(createDefaultProjectSequenceControlStep(targetKey));
       }
     );
   };
 
   const handleAddProjectSequenceSpecificControlStep = (
     sequenceId: string,
-    stepClass: "held" | "impulse",
     targetKey: string,
     effectOptionId: ProjectScheduleEffectOptionId,
     label: string,
@@ -4905,11 +4903,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
   ) => {
     updateProjectSequence(sequenceId, label, successMessage, (sequence) => {
       sequence.effects.push(
-        createProjectSequenceControlStepFromOption(
-          stepClass,
-          targetKey,
-          effectOptionId
-        )
+        createProjectSequenceControlStepFromOption(targetKey, effectOptionId)
       );
     });
   };
@@ -4998,7 +4992,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
   ) => {
     handleAddProjectSequenceSpecificControlStep(
       sequenceId,
-      "impulse",
       targetKey,
       "model.playAnimation",
       "Add project sequence play animation effect",
@@ -5012,7 +5005,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
   ) => {
     handleAddProjectSequenceSpecificControlStep(
       sequenceId,
-      "impulse",
       targetKey,
       "model.stopAnimation",
       "Add project sequence stop animation effect",
@@ -5026,7 +5018,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
   ) => {
     handleAddProjectSequenceSpecificControlStep(
       sequenceId,
-      "impulse",
       targetKey,
       "sound.play",
       "Add project sequence play sound effect",
@@ -5040,7 +5031,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
   ) => {
     handleAddProjectSequenceSpecificControlStep(
       sequenceId,
-      "impulse",
       targetKey,
       "sound.stop",
       "Add project sequence stop sound effect",
@@ -5078,7 +5068,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
         }
 
         const replacement = createDefaultProjectSequenceControlStep(
-          step.stepClass,
           targetKey,
           step
         );
@@ -5116,6 +5105,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
           effectOptionId,
           previousEffect: step.effect
         });
+        step.stepClass =
+          getProjectSequenceControlStepClassForEffectOptionId(effectOptionId);
       }
     );
   };
