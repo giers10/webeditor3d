@@ -495,74 +495,17 @@ export function ProjectSequencerPane({
     null
   );
   const routineDragStateRef = useRef<RoutineDragState | null>(null);
+  const routineDragCleanupRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     routineDragStateRef.current = routineDragState;
   }, [routineDragState]);
 
   useEffect(() => {
-    if (routineDragState === null) {
-      return;
-    }
-
-    const previousUserSelect = document.body.style.userSelect;
-    document.body.style.userSelect = "none";
-
-    const handlePointerMove = (event: PointerEvent) => {
-      setRoutineDragState((currentState) => {
-        if (currentState === null) {
-          return currentState;
-        }
-
-        const nextState = resolveRoutineDragState(
-          currentState,
-          event.clientX,
-          event.clientY
-        );
-        routineDragStateRef.current = nextState;
-        return nextState;
-      });
-    };
-
-    const handlePointerUp = () => {
-      const finalDragState = routineDragStateRef.current;
-
-      document.body.style.userSelect = previousUserSelect;
-      setRoutineDragState(null);
-      routineDragStateRef.current = null;
-
-      if (finalDragState === null) {
-        return;
-      }
-
-      if (finalDragState.draftTargetKey !== finalDragState.originTargetKey) {
-        onSetRoutineTarget(finalDragState.routineId, finalDragState.draftTargetKey);
-      }
-
-      if (finalDragState.draftStartMinutes !== finalDragState.originStartMinutes) {
-        onSetRoutineStartHour(
-          finalDragState.routineId,
-          convertMinuteOfDayToHours(finalDragState.draftStartMinutes)
-        );
-      }
-
-      if (finalDragState.draftEndMinutes !== finalDragState.originEndMinutes) {
-        onSetRoutineEndHour(
-          finalDragState.routineId,
-          convertMinuteOfDayToHours(finalDragState.draftEndMinutes)
-        );
-      }
-    };
-
-    window.addEventListener("pointermove", handlePointerMove);
-    window.addEventListener("pointerup", handlePointerUp);
-
     return () => {
-      document.body.style.userSelect = previousUserSelect;
-      window.removeEventListener("pointermove", handlePointerMove);
-      window.removeEventListener("pointerup", handlePointerUp);
+      routineDragCleanupRef.current?.();
     };
-  }, [onSetRoutineEndHour, onSetRoutineStartHour, onSetRoutineTarget, routineDragState]);
+  }, []);
 
   const beginRoutineDrag = (
     event: ReactPointerEvent<HTMLElement>,
@@ -598,6 +541,70 @@ export function ProjectSequencerPane({
       draftTargetKey: getControlTargetRefKey(routine.target)
     };
 
+    routineDragCleanupRef.current?.();
+
+    const previousUserSelect = document.body.style.userSelect;
+    document.body.style.userSelect = "none";
+
+    const handlePointerMove = (pointerEvent: PointerEvent) => {
+      const currentDragState = routineDragStateRef.current;
+
+      if (currentDragState === null) {
+        return;
+      }
+
+      const updatedDragState = resolveRoutineDragState(
+        currentDragState,
+        pointerEvent.clientX,
+        pointerEvent.clientY
+      );
+
+      routineDragStateRef.current = updatedDragState;
+      setRoutineDragState(updatedDragState);
+    };
+
+    const handlePointerUp = () => {
+      const finalDragState = routineDragStateRef.current;
+
+      document.body.style.userSelect = previousUserSelect;
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+      routineDragCleanupRef.current = null;
+      setRoutineDragState(null);
+      routineDragStateRef.current = null;
+
+      if (finalDragState === null) {
+        return;
+      }
+
+      if (finalDragState.draftTargetKey !== finalDragState.originTargetKey) {
+        onSetRoutineTarget(finalDragState.routineId, finalDragState.draftTargetKey);
+      }
+
+      if (finalDragState.draftStartMinutes !== finalDragState.originStartMinutes) {
+        onSetRoutineStartHour(
+          finalDragState.routineId,
+          convertMinuteOfDayToHours(finalDragState.draftStartMinutes)
+        );
+      }
+
+      if (finalDragState.draftEndMinutes !== finalDragState.originEndMinutes) {
+        onSetRoutineEndHour(
+          finalDragState.routineId,
+          convertMinuteOfDayToHours(finalDragState.draftEndMinutes)
+        );
+      }
+    };
+
+    routineDragCleanupRef.current = () => {
+      document.body.style.userSelect = previousUserSelect;
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+      routineDragCleanupRef.current = null;
+    };
+
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp);
     routineDragStateRef.current = nextDragState;
     setRoutineDragState(nextDragState);
   };
