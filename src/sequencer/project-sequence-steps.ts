@@ -33,6 +33,13 @@ export interface TeleportPlayerSequenceEffect {
   targetEntityId: string;
 }
 
+export interface StartSceneTransitionSequenceEffect {
+  stepClass: "impulse";
+  type: "startSceneTransition";
+  targetSceneId: string;
+  targetEntryEntityId: string;
+}
+
 export const SEQUENCE_VISIBILITY_MODES = ["toggle", "show", "hide"] as const;
 export type SequenceVisibilityMode = (typeof SEQUENCE_VISIBILITY_MODES)[number];
 
@@ -72,6 +79,7 @@ export type ImpulseSequenceStep =
   | ImpulseControlSequenceEffect
   | StartDialogueSequenceEffect
   | TeleportPlayerSequenceEffect
+  | StartSceneTransitionSequenceEffect
   | SetVisibilitySequenceEffect;
 
 export type SequenceEffect = HeldSequenceStep | ImpulseSequenceStep;
@@ -97,6 +105,13 @@ export function cloneSequenceEffect(effect: SequenceEffect): SequenceEffect {
         stepClass: "impulse",
         type: "teleportPlayer",
         targetEntityId: effect.targetEntityId
+      };
+    case "startSceneTransition":
+      return {
+        stepClass: "impulse",
+        type: "startSceneTransition",
+        targetSceneId: effect.targetSceneId,
+        targetEntryEntityId: effect.targetEntryEntityId
       };
     case "setVisibility":
       return {
@@ -145,6 +160,8 @@ export function getSequenceEffectLabel(effect: SequenceEffect): string {
       return "Impulse: Start Dialogue";
     case "teleportPlayer":
       return "Impulse: Teleport Player";
+    case "startSceneTransition":
+      return "Impulse: Change Scene";
     case "setVisibility":
       switch (effect.mode) {
         case "show":
