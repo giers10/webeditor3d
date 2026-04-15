@@ -1284,6 +1284,10 @@ export function cloneBrush(brush: Brush): Brush {
       return createWedgeBrush(brush);
     case "radialPrism":
       return createRadialPrismBrush(brush);
+    case "cone":
+      return createConeBrush(brush);
+    case "torus":
+      return createTorusBrush(brush);
   }
 }
 
@@ -1306,6 +1310,16 @@ export function updateBrush<T extends Brush>(
       return createRadialPrismBrush({
         ...brush,
         ...(overrides as Partial<Omit<RadialPrismBrush, "kind">>)
+      }) as T;
+    case "cone":
+      return createConeBrush({
+        ...brush,
+        ...(overrides as Partial<Omit<ConeBrush, "kind">>)
+      }) as T;
+    case "torus":
+      return createTorusBrush({
+        ...brush,
+        ...(overrides as Partial<Omit<TorusBrush, "kind">>)
       }) as T;
   }
 }
