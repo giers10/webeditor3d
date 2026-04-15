@@ -4285,14 +4285,6 @@ function validateProjectSchedulerControlTarget(
       validateProjectSchedulerModelTarget(target, path, context, diagnostics);
       return;
     case "global":
-      diagnostics.push(
-        createDiagnostic(
-          "error",
-          "invalid-project-schedule-target-kind",
-          "Project schedule routines do not yet support global control targets.",
-          `${path}.kind`
-        )
-      );
       return;
   }
 }
