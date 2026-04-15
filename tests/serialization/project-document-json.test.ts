@@ -44,7 +44,7 @@ import {
 import { createProjectScheduleRoutine } from "../../src/scheduler/project-scheduler";
 import { createProjectSequence } from "../../src/sequencer/project-sequences";
 import { createRunSequenceInteractionLink } from "../../src/interactions/interaction-links";
-import { assertProjectDocumentIsValid } from "../../src/document/scene-document-validation";
+import { validateProjectDocument } from "../../src/document/scene-document-validation";
 import {
   parseProjectDocumentJson,
   serializeProjectDocument
@@ -1086,10 +1086,14 @@ describe("project document JSON", () => {
       ]
     });
 
-    expect(() =>
-      assertProjectDocumentIsValid(
-        parseProjectDocumentJson(JSON.stringify(document))
+    const validation = validateProjectDocument(
+      parseProjectDocumentJson(JSON.stringify(document))
+    );
+
+    expect(
+      validation.errors.some((diagnostic) =>
+        diagnostic.message.includes("target entry")
       )
-    ).toThrow("target entry");
+    ).toBe(true);
   });
 });
