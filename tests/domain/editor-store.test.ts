@@ -533,6 +533,7 @@ describe("EditorStore", () => {
         target: {
           kind: "brush",
           brushId: "brush-main",
+          brushKind: "box",
           initialCenter: {
             x: 0,
             y: 1,
