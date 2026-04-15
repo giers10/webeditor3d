@@ -5291,7 +5291,7 @@ export function validateSceneDocument(
     validateProjectSequence(
       sequence,
       path,
-      { dialogues: document.dialogues },
+      { dialogues: document.dialogues, scenes: {} },
       projectSchedulerValidationContext,
       diagnostics
     );
