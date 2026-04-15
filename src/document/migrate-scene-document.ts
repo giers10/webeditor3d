@@ -4255,7 +4255,6 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     return {
       time: createDefaultProjectTimeSettings(),
       scheduler: createEmptyProjectScheduler(),
-      dialogues: createEmptyProjectDialogueLibrary(),
       sequences: createEmptyProjectSequenceLibrary(),
       version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
@@ -4284,7 +4283,6 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     return {
       time: createDefaultProjectTimeSettings(),
       scheduler: createEmptyProjectScheduler(),
-      dialogues: createEmptyProjectDialogueLibrary(),
       sequences: createEmptyProjectSequenceLibrary(),
       version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
@@ -4315,7 +4313,6 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     return {
       time: createDefaultProjectTimeSettings(),
       scheduler: createEmptyProjectScheduler(),
-      dialogues: createEmptyProjectDialogueLibrary(),
       sequences: createEmptyProjectSequenceLibrary(),
       version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
@@ -4346,7 +4343,6 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     return {
       time: createDefaultProjectTimeSettings(),
       scheduler: createEmptyProjectScheduler(),
-      dialogues: createEmptyProjectDialogueLibrary(),
       sequences: createEmptyProjectSequenceLibrary(),
       version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
@@ -4377,7 +4373,6 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     return {
       time: createDefaultProjectTimeSettings(),
       scheduler: createEmptyProjectScheduler(),
-      dialogues: createEmptyProjectDialogueLibrary(),
       sequences: createEmptyProjectSequenceLibrary(),
       version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
@@ -4408,7 +4403,6 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     return {
       time: createDefaultProjectTimeSettings(),
       scheduler: createEmptyProjectScheduler(),
-      dialogues: createEmptyProjectDialogueLibrary(),
       sequences: createEmptyProjectSequenceLibrary(),
       version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
@@ -4439,7 +4433,6 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     return {
       time: createDefaultProjectTimeSettings(),
       scheduler: createEmptyProjectScheduler(),
-      dialogues: createEmptyProjectDialogueLibrary(),
       sequences: createEmptyProjectSequenceLibrary(),
       version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
@@ -4472,7 +4465,6 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     return {
       time: createDefaultProjectTimeSettings(),
       scheduler: createEmptyProjectScheduler(),
-      dialogues: createEmptyProjectDialogueLibrary(),
       sequences: createEmptyProjectSequenceLibrary(),
       version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
@@ -4500,7 +4492,6 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     return {
       time: createDefaultProjectTimeSettings(),
       scheduler: createEmptyProjectScheduler(),
-      dialogues: createEmptyProjectDialogueLibrary(),
       sequences: createEmptyProjectSequenceLibrary(),
       version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
@@ -4529,7 +4520,6 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     return {
       time: createDefaultProjectTimeSettings(),
       scheduler: createEmptyProjectScheduler(),
-      dialogues: createEmptyProjectDialogueLibrary(),
       sequences: createEmptyProjectSequenceLibrary(),
       version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
@@ -4555,7 +4545,6 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     return {
       time: createDefaultProjectTimeSettings(),
       scheduler: createEmptyProjectScheduler(),
-      dialogues: createEmptyProjectDialogueLibrary(),
       sequences: createEmptyProjectSequenceLibrary(),
       version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
@@ -4584,7 +4573,6 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     return {
       time: createDefaultProjectTimeSettings(),
       scheduler: createEmptyProjectScheduler(),
-      dialogues: createEmptyProjectDialogueLibrary(),
       sequences: createEmptyProjectSequenceLibrary(),
       version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
@@ -4610,7 +4598,6 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     return {
       time: createDefaultProjectTimeSettings(),
       scheduler: createEmptyProjectScheduler(),
-      dialogues: createEmptyProjectDialogueLibrary(),
       sequences: createEmptyProjectSequenceLibrary(),
       version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
@@ -4637,7 +4624,6 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     return {
       time: createDefaultProjectTimeSettings(),
       scheduler: createEmptyProjectScheduler(),
-      dialogues: createEmptyProjectDialogueLibrary(),
       sequences: createEmptyProjectSequenceLibrary(),
       version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
@@ -4666,7 +4652,6 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     return {
       time: createDefaultProjectTimeSettings(),
       scheduler: createEmptyProjectScheduler(),
-      dialogues: createEmptyProjectDialogueLibrary(),
       sequences: createEmptyProjectSequenceLibrary(),
       version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
@@ -4693,7 +4678,6 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     return {
       time: createDefaultProjectTimeSettings(),
       scheduler: createEmptyProjectScheduler(),
-      dialogues: createEmptyProjectDialogueLibrary(),
       sequences: createEmptyProjectSequenceLibrary(),
       version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
@@ -4720,7 +4704,6 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     return {
       time: createDefaultProjectTimeSettings(),
       scheduler: createEmptyProjectScheduler(),
-      dialogues: createEmptyProjectDialogueLibrary(),
       sequences: createEmptyProjectSequenceLibrary(),
       version: SCENE_DOCUMENT_VERSION,
       name: expectString(source.name, "name"),
