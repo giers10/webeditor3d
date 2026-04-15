@@ -205,7 +205,7 @@ describe("ProjectSequencerPane", () => {
     });
 
     const originalElementFromPoint = document.elementFromPoint;
-    document.elementFromPoint = vi.fn((x: number, y: number) =>
+    document.elementFromPoint = vi.fn((_x: number, y: number) =>
       y >= 100 ? tracks[1] : tracks[0]
     );
 
