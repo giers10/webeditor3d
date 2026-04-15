@@ -3000,12 +3000,34 @@ function readSceneEntryEntity(value: unknown, label: string): EntityInstance {
   return entity;
 }
 
-function readNpcEntity(value: unknown, label: string): EntityInstance {
+function readNpcEntity(
+  value: unknown,
+  label: string,
+  legacyProjectDialogues: ProjectDialogueLibrary
+): EntityInstance {
   if (!isRecord(value)) {
     throw new Error(`${label} must be an object.`);
   }
 
   const kind = expectLiteralString(value.kind, "npc", `${label}.kind`);
+  const dialogueId = readOptionalDialogueResourceId(
+    value.dialogueId,
+    `${label}.dialogueId`
+  );
+  const dialogues =
+    value.dialogues === undefined
+      ? dialogueId === null
+        ? []
+        : (() => {
+            const legacyDialogue =
+              legacyProjectDialogues.dialogues[dialogueId] ?? null;
+            return legacyDialogue === null ? [] : [legacyDialogue];
+          })()
+      : readNpcDialogues(
+          value.dialogues,
+          `${label}.dialogues`,
+          legacyProjectDialogues
+        );
   const entity = createNpcEntity({
     id: expectString(value.id, `${label}.id`),
     name: readOptionalEntityName(value.name, `${label}.name`),
@@ -3027,10 +3049,15 @@ function readNpcEntity(value: unknown, label: string): EntityInstance {
       value.modelAssetId === undefined || value.modelAssetId === null
         ? undefined
         : expectString(value.modelAssetId, `${label}.modelAssetId`),
-    dialogueId: readOptionalDialogueResourceId(
-      value.dialogueId,
-      `${label}.dialogueId`
-    ),
+    dialogues,
+    defaultDialogueId:
+      value.defaultDialogueId === undefined
+        ? dialogueId
+        : readOptionalDialogueResourceId(
+            value.defaultDialogueId,
+            `${label}.defaultDialogueId`
+          ),
+    dialogueId,
     collider: readNpcColliderSettings(value.collider, `${label}.collider`)
   });
 
