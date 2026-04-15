@@ -260,7 +260,35 @@ describe("runtime project scheduler", () => {
       sequences,
       actorIds: ["actor-patrol"],
       dayNumber: 1,
-      timeOfDayHours: 12
+      timeOfDayHours: 12,
+      pathsById: new Map([
+        [
+          "path-a",
+          {
+            id: "path-a",
+            loop: false,
+            points: [
+              {
+                position: { x: 0, y: 0, z: 0 }
+              },
+              {
+                position: { x: 4, y: 0, z: 0 }
+              }
+            ],
+            segments: [
+              {
+                start: { x: 0, y: 0, z: 0 },
+                end: { x: 4, y: 0, z: 0 },
+                length: 4,
+                distanceStart: 0,
+                distanceEnd: 4,
+                tangent: { x: 1, y: 0, z: 0 }
+              }
+            ],
+            totalLength: 4
+          }
+        ]
+      ])
     });
 
     expect(resolved.actors[0]).toEqual(
@@ -270,7 +298,15 @@ describe("runtime project scheduler", () => {
         active: true,
         activeRoutineId: null,
         activeRoutineTitle: null,
-        resolvedPath: null
+        pathEffect: expect.objectContaining({
+          type: "followActorPath",
+          pathId: "path-a"
+        }),
+        resolvedPath: expect.objectContaining({
+          pathId: "path-a",
+          progress: 1,
+          position: { x: 4, y: 0, z: 0 }
+        })
       })
     );
   });
