@@ -4140,6 +4140,39 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
+  const applyProjectSequencerState = (
+    nextScheduler: typeof editorState.projectDocument.scheduler,
+    nextSequences: ProjectSequenceLibrary,
+    label: string,
+    successMessage: string
+  ) => {
+    if (
+      areProjectSchedulersEqual(
+        editorState.projectDocument.scheduler,
+        nextScheduler
+      ) &&
+      areProjectSequenceLibrariesEqual(
+        editorState.projectDocument.sequences,
+        nextSequences
+      )
+    ) {
+      return;
+    }
+
+    try {
+      store.executeCommand(
+        createSetProjectSequencerCommand({
+          label,
+          scheduler: nextScheduler,
+          sequences: nextSequences
+        })
+      );
+      setStatusMessage(successMessage);
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
   const updateProjectDialogues = (
     label: string,
     successMessage: string,
@@ -4167,6 +4200,33 @@ export function App({ store, initialStatusMessage }: AppProps) {
       );
       mutate(nextSequences);
       applyProjectSequences(nextSequences, label, successMessage);
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const updateProjectSequencerState = (
+    label: string,
+    successMessage: string,
+    mutate: (
+      scheduler: typeof editorState.projectDocument.scheduler,
+      sequences: ProjectSequenceLibrary
+    ) => void
+  ) => {
+    try {
+      const nextScheduler = cloneProjectScheduler(
+        editorState.projectDocument.scheduler
+      );
+      const nextSequences = cloneProjectSequenceLibrary(
+        editorState.projectDocument.sequences
+      );
+      mutate(nextScheduler, nextSequences);
+      applyProjectSequencerState(
+        nextScheduler,
+        nextSequences,
+        label,
+        successMessage
+      );
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
     }
