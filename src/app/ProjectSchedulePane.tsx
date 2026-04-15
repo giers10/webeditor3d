@@ -683,6 +683,10 @@ export function ProjectSequencerPane({
                 getControlTargetRefKey(selectedRoutine.target)
           );
         });
+  const selectedAttachedSequence =
+    selectedRoutine?.sequenceId === null || selectedRoutine?.sequenceId === undefined
+      ? null
+      : sequences.sequences[selectedRoutine.sequenceId] ?? null;
   const hourTicks = Array.from({ length: HOURS_PER_DAY }, (_, hour) => hour);
 
   return (
