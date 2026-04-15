@@ -1330,6 +1330,85 @@ function describeSelection(
   }
 }
 
+function getMultiSelectionSummary(
+  selection: EditorSelection,
+  activeSelectionId: string | null,
+  brushes: Brush[],
+  modelInstances: Record<string, ModelInstance>,
+  assets: Record<string, ProjectAssetRecord>,
+  entities: Record<string, EntityInstance>
+):
+  | {
+      kindLabel: string;
+      count: number;
+      activeId: string;
+      activeLabel: string;
+      selectedLabels: string[];
+    }
+  | null {
+  const resolvedActiveSelectionId = resolveSelectionActiveId(
+    selection,
+    activeSelectionId
+  );
+
+  if (resolvedActiveSelectionId === null) {
+    return null;
+  }
+
+  switch (selection.kind) {
+    case "brushes":
+      if (selection.ids.length <= 1) {
+        return null;
+      }
+
+      return {
+        kindLabel: "Whitebox Solids",
+        count: selection.ids.length,
+        activeId: resolvedActiveSelectionId,
+        activeLabel: getBrushLabelById(resolvedActiveSelectionId, brushes),
+        selectedLabels: selection.ids.map((id) => getBrushLabelById(id, brushes))
+      };
+    case "entities":
+      if (selection.ids.length <= 1) {
+        return null;
+      }
+
+      return {
+        kindLabel: "Entities",
+        count: selection.ids.length,
+        activeId: resolvedActiveSelectionId,
+        activeLabel: getEntityDisplayLabelById(
+          resolvedActiveSelectionId,
+          entities,
+          assets
+        ),
+        selectedLabels: selection.ids.map((id) =>
+          getEntityDisplayLabelById(id, entities, assets)
+        )
+      };
+    case "modelInstances":
+      if (selection.ids.length <= 1) {
+        return null;
+      }
+
+      return {
+        kindLabel: "Model Instances",
+        count: selection.ids.length,
+        activeId: resolvedActiveSelectionId,
+        activeLabel: getModelInstanceDisplayLabelById(
+          resolvedActiveSelectionId,
+          modelInstances,
+          assets
+        ),
+        selectedLabels: selection.ids.map((id) =>
+          getModelInstanceDisplayLabelById(id, modelInstances, assets)
+        )
+      };
+    default:
+      return null;
+  }
+}
+
 function getWhiteboxSelectionModeStatus(mode: WhiteboxSelectionMode): string {
   switch (mode) {
     case "object":
