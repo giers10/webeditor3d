@@ -259,6 +259,7 @@ export interface RuntimeResolvedNpcPathState {
   progressMode: "deriveFromTime";
   speed: number;
   loop: boolean;
+  smoothPath: boolean;
   elapsedHours: number;
   distance: number;
   progress: number;
@@ -492,6 +493,7 @@ function cloneRuntimeResolvedNpcPathState(
     progressMode: pathState.progressMode,
     speed: pathState.speed,
     loop: pathState.loop,
+    smoothPath: pathState.smoothPath,
     elapsedHours: pathState.elapsedHours,
     distance: pathState.distance,
     progress: pathState.progress,
@@ -774,6 +776,7 @@ function cloneResolvedActorPathToNpcPathState(
     progressMode: pathState.progressMode,
     speed: pathState.speed,
     loop: pathState.loop,
+    smoothPath: pathState.smoothPath,
     elapsedHours: pathState.elapsedHours,
     distance: pathState.distance,
     progress: pathState.progress,
