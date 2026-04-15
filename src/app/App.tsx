@@ -7709,7 +7709,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
         dialogues: nextState.dialogues,
         defaultDialogueId: nextState.defaultDialogueId
       });
-      commitEntityChange(selectedNpc, nextEntity, successMessage, label);
+      commitEntityChange(selectedNpc, nextEntity, successMessage);
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
     }
