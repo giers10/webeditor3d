@@ -4363,6 +4363,17 @@ function validateProjectSchedulerEffect(
         );
       }
 
+      if (!isBoolean(effect.smoothPath)) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-control-actor-path-smooth",
+            "Actor path smoothing must remain a boolean.",
+            `${path}.smoothPath`
+          )
+        );
+      }
+
       if (!isActorPathProgressMode(effect.progressMode)) {
         diagnostics.push(
           createDiagnostic(
