@@ -6546,29 +6546,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
           );
           completeCreation("Placed Interactable.");
           return true;
-        case "sceneExit": {
-          const destination = resolveDefaultSceneExitDestination();
-
-          if (destination === null) {
-            setStatusMessage(
-              "Author a Scene Entry before placing a Scene Exit."
-            );
-            return false;
-          }
-
-          store.executeCommand(
-            createUpsertEntityCommand({
-              entity: createSceneExitEntity({
-                position,
-                targetSceneId: destination.targetSceneId,
-                targetEntryEntityId: destination.targetEntryEntityId
-              }),
-              label: "Place scene exit"
-            })
-          );
-          completeCreation("Placed Scene Exit.");
-          return true;
-        }
       }
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
