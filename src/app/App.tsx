@@ -11539,6 +11539,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   onDeleteRoutine={handleDeleteScheduleRoutine}
                   onDeleteSequence={handleDeleteProjectSequence}
                   onClose={() => setSchedulePaneOpen(false)}
+                  onCreateRoutineSequence={handleCreateAttachedSequenceForRoutine}
                   onSetRoutineTarget={(routineId, targetKey) =>
                     updateProjectSequencerState(
                       "Set project sequencer target",
