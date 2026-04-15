@@ -2808,14 +2808,17 @@ export class ViewportHost {
   private getComponentTargetVertexIds(
     target: ActiveTransformSession["target"]
   ): WhiteboxVertexId[] {
+    if (
+      target.kind !== "brushFace" &&
+      target.kind !== "brushEdge" &&
+      target.kind !== "brushVertex"
+    ) {
+      return [];
+    }
+
     const brush = this.currentDocument?.brushes[target.brushId];
 
-    if (
-      brush === undefined ||
-      (target.kind !== "brushFace" &&
-        target.kind !== "brushEdge" &&
-        target.kind !== "brushVertex")
-    ) {
+    if (brush === undefined) {
       return [];
     }
 
