@@ -2783,20 +2783,24 @@ export function App({ store, initialStatusMessage }: AppProps) {
   }, [selectedPlayerStart?.id]);
 
   useEffect(() => {
+    if (selectedNpc === null) {
+      setSelectedNpcDialogueId(null);
+      return;
+    }
+
     if (
-      selectedDialogueId !== null &&
-      editorState.projectDocument.dialogues.dialogues[selectedDialogueId] !==
-        undefined
+      selectedNpcDialogueId !== null &&
+      selectedNpc.dialogues.some(
+        (dialogue) => dialogue.id === selectedNpcDialogueId
+      )
     ) {
       return;
     }
 
-    setSelectedDialogueId(projectDialogueList[0]?.id ?? null);
-  }, [
-    editorState.projectDocument.dialogues.dialogues,
-    projectDialogueList,
-    selectedDialogueId
-  ]);
+    setSelectedNpcDialogueId(
+      selectedNpc.defaultDialogueId ?? selectedNpc.dialogues[0]?.id ?? null
+    );
+  }, [selectedNpc, selectedNpcDialogueId]);
 
   useEffect(() => {
     if (
