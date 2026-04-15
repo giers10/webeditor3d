@@ -241,8 +241,13 @@ function resolveRoutineDragState(
   clientX: number,
   clientY: number
 ): RoutineDragState {
+  const resolvedClientX = Number.isFinite(clientX)
+    ? clientX
+    : dragState.pointerStartX;
+  const resolvedClientY = Number.isFinite(clientY) ? clientY : 0;
   const deltaMinutes = Math.round(
-    ((clientX - dragState.pointerStartX) / dragState.trackWidth) * MINUTES_PER_DAY
+    ((resolvedClientX - dragState.pointerStartX) / dragState.trackWidth) *
+      MINUTES_PER_DAY
   );
 
   switch (dragState.mode) {
@@ -258,6 +263,10 @@ function resolveRoutineDragState(
         draftStartMinutes + durationMinutes
       );
       const pointerTargetElement = document.elementFromPoint(clientX, clientY);
+      const pointerTargetElement = document.elementFromPoint(
+        resolvedClientX,
+        resolvedClientY
+      );
       const draftTargetKey =
         pointerTargetElement instanceof HTMLElement
           ? pointerTargetElement
@@ -530,7 +539,7 @@ export function ProjectSequencerPane({
       originStartMinutes: convertHoursToMinuteOfDay(routine.startHour),
       originEndMinutes: convertHoursToMinuteOfDay(routine.endHour),
       originTargetKey: getControlTargetRefKey(routine.target),
-      pointerStartX: event.clientX,
+      pointerStartX: Number.isFinite(event.clientX) ? event.clientX : 0,
       trackWidth: Math.max(trackElement.getBoundingClientRect().width, 1),
       draftStartMinutes: convertHoursToMinuteOfDay(routine.startHour),
       draftEndMinutes: convertHoursToMinuteOfDay(routine.endHour),
