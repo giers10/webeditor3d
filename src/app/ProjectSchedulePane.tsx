@@ -405,14 +405,21 @@ export function ProjectSequencerPane({
           targetOptions,
           selectedRoutine.target
         );
+  const selectedRoutineUsesInlineControlEffect =
+    selectedRoutine !== null &&
+    selectedRoutine.sequenceId === null &&
+    selectedRoutine.target.kind !== "actor" &&
+    selectedRoutine.target.kind !== "global";
   const selectedEffectOptionId =
-    selectedRoutine === null ||
-    selectedRoutine.target.kind === "actor" ||
-    selectedRoutine.sequenceId !== null
+    !selectedRoutineUsesInlineControlEffect
       ? null
-      : getProjectScheduleEffectOptionId(selectedRoutine.effects[0]!);
+      : selectedRoutine.effects[0] === undefined
+        ? null
+        : getProjectScheduleEffectOptionId(selectedRoutine.effects[0]);
   const selectedEffectOptions =
-    selectedTargetOption === null || selectedTargetOption.target.kind === "actor"
+    selectedTargetOption === null ||
+    selectedTargetOption.target.kind === "actor" ||
+    selectedTargetOption.target.kind === "global"
       ? []
       : listProjectScheduleEffectOptions(selectedTargetOption);
   const selectedActorPresenceEffect =
@@ -756,6 +763,12 @@ export function ProjectSequencerPane({
                       </select>
                     </label>
                   </>
+                ) : selectedRoutine.target.kind === "global" ? (
+                  <div className="material-summary">
+                    Project event placements run attached sequences only. Add or
+                    pick a sequence with impulse effects like scene transitions,
+                    dialogue starts, teleports, or other one-shot engine events.
+                  </div>
                 ) : selectedRoutine.sequenceId === null ? (
                   <label className="form-field">
                     <span className="label">Effect</span>
@@ -1025,7 +1038,7 @@ export function ProjectSequencerPane({
                     ) : null}
                   </div>
                 </>
-              ) : selectedRoutine.sequenceId === null ? (
+              ) : selectedRoutine.target.kind === "global" ? null : selectedRoutine.sequenceId === null ? (
                 <>
                   {selectedEffectOptions.find(
                     (effectOption) => effectOption.id === selectedEffectOptionId
