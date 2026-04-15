@@ -3541,18 +3541,6 @@ function validateInteractionLink(
 
       break;
     }
-    case "startDialogue":
-      if (document.dialogues.dialogues[link.action.dialogueId] === undefined) {
-        diagnostics.push(
-          createDiagnostic(
-            "error",
-            "missing-dialogue-resource",
-            `Dialogue ${link.action.dialogueId} does not exist in the project dialogue library.`,
-            `${path}.action.dialogueId`
-          )
-        );
-      }
-      break;
     case "runSequence": {
       const sequence = document.sequences.sequences[link.action.sequenceId] ?? null;
 
@@ -4731,7 +4719,7 @@ function validateProjectDialogue(
 function validateProjectSequence(
   sequence: ProjectSequence,
   path: string,
-  projectResources: Pick<ProjectDocument, "dialogues" | "scenes">,
+  projectResources: Pick<ProjectDocument, "scenes">,
   context: ProjectSchedulerValidationContext,
   diagnostics: SceneDiagnostic[]
 ) {
@@ -4811,20 +4799,6 @@ function validateProjectSequence(
         }
         break;
       }
-      case "startDialogue":
-        if (
-          projectResources.dialogues.dialogues[effect.dialogueId] === undefined
-        ) {
-          diagnostics.push(
-            createDiagnostic(
-              "error",
-              "missing-sequence-dialogue-resource",
-              `Dialogue ${effect.dialogueId} does not exist in the project dialogue library.`,
-              `${effectPath}.dialogueId`
-            )
-          );
-        }
-        break;
       case "teleportPlayer":
         break;
       case "startSceneTransition": {
