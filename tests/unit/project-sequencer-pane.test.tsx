@@ -211,10 +211,9 @@ describe("ProjectSequencerPane", () => {
 
     const block = screen.getByRole("button", { name: /morning patrol/i });
 
-    fireEvent.pointerDown(block, { button: 0, clientX: 540, clientY: 24 });
-    await Promise.resolve();
-    fireEvent.pointerMove(window, { clientX: 600, clientY: 120 });
-    fireEvent.pointerUp(window, { clientX: 600, clientY: 120 });
+    fireEvent.mouseDown(block, { button: 0, clientX: 540, clientY: 24 });
+    fireEvent.mouseMove(window, { clientX: 600, clientY: 120 });
+    fireEvent.mouseUp(window, { clientX: 600, clientY: 120 });
 
     document.elementFromPoint = originalElementFromPoint;
 
@@ -280,28 +279,26 @@ describe("ProjectSequencerPane", () => {
       })
     });
 
-    fireEvent.pointerDown(screen.getByLabelText("Resize start of Morning Patrol"), {
+    fireEvent.mouseDown(screen.getByLabelText("Resize start of Morning Patrol"), {
       button: 0,
       clientX: 540,
       clientY: 24
     });
-    await Promise.resolve();
-    fireEvent.pointerMove(window, { clientX: 525, clientY: 24 });
-    fireEvent.pointerUp(window, { clientX: 525, clientY: 24 });
+    fireEvent.mouseMove(window, { clientX: 525, clientY: 24 });
+    fireEvent.mouseUp(window, { clientX: 525, clientY: 24 });
 
     expect(onSetRoutineStartHour).toHaveBeenLastCalledWith(routine.id, 8.75);
 
     onSetRoutineStartHour.mockClear();
     onSetRoutineEndHour.mockClear();
 
-    fireEvent.pointerDown(screen.getByLabelText("Resize end of Morning Patrol"), {
+    fireEvent.mouseDown(screen.getByLabelText("Resize end of Morning Patrol"), {
       button: 0,
       clientX: 600,
       clientY: 24
     });
-    await Promise.resolve();
-    fireEvent.pointerMove(window, { clientX: 630, clientY: 24 });
-    fireEvent.pointerUp(window, { clientX: 630, clientY: 24 });
+    fireEvent.mouseMove(window, { clientX: 630, clientY: 24 });
+    fireEvent.mouseUp(window, { clientX: 630, clientY: 24 });
 
     expect(onSetRoutineEndHour).toHaveBeenLastCalledWith(routine.id, 10.5);
   });
