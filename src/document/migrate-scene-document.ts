@@ -4824,6 +4824,9 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       source.version < STARTER_PBR_MATERIAL_LIBRARY_SCENE_DOCUMENT_VERSION
   });
   const assets = readAssets(source.assets);
+  const legacyDialogues = readProjectDialogueLibrary(source.dialogues, "dialogues", {
+    allowMissing: source.version < PROJECT_DIALOGUE_LIBRARY_SCENE_DOCUMENT_VERSION
+  });
 
   const migratedDocument: SceneDocument = {
     version: SCENE_DOCUMENT_VERSION,
@@ -4835,9 +4838,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       allowMissing:
         source.version < PROJECT_SCHEDULER_FOUNDATION_SCENE_DOCUMENT_VERSION
     }),
-    dialogues: readProjectDialogueLibrary(source.dialogues, "dialogues", {
-      allowMissing: source.version < PROJECT_DIALOGUE_LIBRARY_SCENE_DOCUMENT_VERSION
-    }),
+    dialogues: legacyDialogues,
     sequences: readProjectSequenceLibrary(source.sequences, "sequences", {
       allowMissing: source.version < PROJECT_SEQUENCE_LIBRARY_SCENE_DOCUMENT_VERSION
     }),
@@ -4851,7 +4852,10 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     brushes: readBrushes(source.brushes, materials, false),
     paths: readScenePaths(source.paths),
     modelInstances: readModelInstances(source.modelInstances, assets),
-    entities: readEntities(source.entities, { legacySoundEmitter: false }),
+    entities: readEntities(source.entities, {
+      legacySoundEmitter: false,
+      legacyProjectDialogues: legacyDialogues
+    }),
     interactionLinks: readInteractionLinks(source.interactionLinks)
   };
 
@@ -4952,6 +4956,10 @@ export function migrateProjectDocument(source: unknown): ProjectDocument {
       source.version < SCENE_EDITOR_PREFERENCES_SCENE_DOCUMENT_VERSION;
     const allowMissingTimeSettings =
       source.version < PROJECT_TIME_SYSTEM_SCENE_DOCUMENT_VERSION;
+    const legacyDialogues = readProjectDialogueLibrary(source.dialogues, "dialogues", {
+      allowMissing:
+        source.version < PROJECT_DIALOGUE_LIBRARY_SCENE_DOCUMENT_VERSION
+    });
 
     for (const [sceneKey, sceneValue] of Object.entries(source.scenes)) {
       scenes[sceneKey] = readProjectScene(
@@ -4963,7 +4971,8 @@ export function migrateProjectDocument(source: unknown): ProjectDocument {
           allowMissingLoadingScreen,
           allowMissingEditorPreferences,
           legacyProjectTimeValue:
-            source.version < SCENE_DOCUMENT_VERSION ? source.time : undefined
+            source.version < SCENE_DOCUMENT_VERSION ? source.time : undefined,
+          legacyProjectDialogues: legacyDialogues
         }
       );
     }
@@ -4980,10 +4989,7 @@ export function migrateProjectDocument(source: unknown): ProjectDocument {
         allowMissing:
           source.version < PROJECT_SCHEDULER_FOUNDATION_SCENE_DOCUMENT_VERSION
       }),
-      dialogues: readProjectDialogueLibrary(source.dialogues, "dialogues", {
-        allowMissing:
-          source.version < PROJECT_DIALOGUE_LIBRARY_SCENE_DOCUMENT_VERSION
-      }),
+      dialogues: legacyDialogues,
       sequences: readProjectSequenceLibrary(source.sequences, "sequences", {
         allowMissing:
           source.version < PROJECT_SEQUENCE_LIBRARY_SCENE_DOCUMENT_VERSION
