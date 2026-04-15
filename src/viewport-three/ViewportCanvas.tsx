@@ -304,7 +304,7 @@ export function ViewportCanvas({
           : createWorldBackgroundStyle(
               resolvedViewportBackground,
               resolvedViewportBackground.mode === "image"
-                ? (loadedImageAssets[resolvedViewportBackground.assetId]?.sourceUrl ??
+                ? (loadedImageAssets[resolvedViewportBackground.assetId]?.previewUrl ??
                     null)
                 : null
             )
