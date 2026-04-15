@@ -810,8 +810,7 @@ export function ProjectSequencerPane({
             targetOptions.map((targetOption) => {
               const routines = Object.values(scheduler.routines)
                 .filter(
-                  (routine) =>
-                    getControlTargetRefKey(routine.target) === targetOption.key
+                  (routine) => getRenderedRoutineTargetKey(routine) === targetOption.key
                 )
                 .sort((left, right) => left.startHour - right.startHour);
 
@@ -832,10 +831,16 @@ export function ProjectSequencerPane({
                       </div>
                     </div>
                   </div>
-                  <div className="schedule-row__track">
+                  <div
+                    className="schedule-row__track"
+                    data-sequencer-target-key={targetOption.key}
+                    data-sequencer-track="true"
+                  >
                     <div className="schedule-row__grid" />
-                    {routines.map((routine) =>
-                      getProjectScheduleTimelineSegments(routine).map(
+                    {routines.map((routine) => {
+                      const renderedRoutine = getRenderedRoutine(routine);
+
+                      return getProjectScheduleTimelineSegments(renderedRoutine).map(
                         (segment) => (
                           <button
                             key={segment.key}
@@ -849,6 +854,10 @@ export function ProjectSequencerPane({
                                 : ""
                             } ${
                               routine.enabled ? "" : "schedule-block--disabled"
+                            } ${
+                              routineDragState?.routineId === routine.id
+                                ? "schedule-block--dragging"
+                                : ""
                             }`.trim()}
                             type="button"
                             title={`${routine.title} · ${getRoutineSummary(routine, sequences)}`}
@@ -856,15 +865,32 @@ export function ProjectSequencerPane({
                               left: `${(segment.startHour / HOURS_PER_DAY) * 100}%`,
                               width: `${((segment.endHour - segment.startHour) / HOURS_PER_DAY) * 100}%`
                             }}
+                            onPointerDown={(event) =>
+                              beginRoutineDrag(event, routine, "move")
+                            }
                             onClick={() => onSelectRoutine(routine.id)}
                           >
+                            <span
+                              className="schedule-block__resize-handle schedule-block__resize-handle--start"
+                              aria-label={`Resize start of ${routine.title}`}
+                              onPointerDown={(event) =>
+                                beginRoutineDrag(event, routine, "resize-start")
+                              }
+                            />
                             <span className="schedule-block__title">
                               {routine.title}
                             </span>
+                            <span
+                              className="schedule-block__resize-handle schedule-block__resize-handle--end"
+                              aria-label={`Resize end of ${routine.title}`}
+                              onPointerDown={(event) =>
+                                beginRoutineDrag(event, routine, "resize-end")
+                              }
+                            />
                           </button>
                         )
-                      )
-                    )}
+                      );
+                    })}
                   </div>
                 </div>
               );
