@@ -3431,7 +3431,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
       try {
         return await loadImageAssetFromStorage(storage, asset);
       } catch (error) {
-        if (await restoreDeletedStoredAsset(storage, asset)) {
+        if (storage !== null && (await restoreDeletedStoredAsset(storage, asset))) {
           return loadImageAssetFromStorage(storage, asset);
         }
 

@@ -346,6 +346,10 @@ export async function loadProjectPackage(
     throw new Error("Project load failed: project asset storage is unavailable for asset-backed scenes.");
   }
 
+  if (storage === null) {
+    return document;
+  }
+
   const packagedAssetRecords = buildStoredAssetRecordsFromPackage(entries, document);
 
   for (const asset of bundledAssets) {
@@ -367,7 +371,10 @@ export async function loadProjectPackage(
         continue;
       }
 
-      previousStoredAssets.set(asset.storageKey, await storage.getAsset(asset.storageKey));
+      previousStoredAssets.set(
+        asset.storageKey,
+        await storage.getAsset(asset.storageKey)
+      );
       await storage.putAsset(asset.storageKey, packagedAsset);
       writtenStorageKeys.push(asset.storageKey);
     }

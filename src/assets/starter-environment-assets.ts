@@ -174,7 +174,7 @@ export function createStarterEnvironmentAssetRegistry(): Record<
 
 export function isStarterEnvironmentImageAsset(
   asset: ProjectAssetRecord | ImageAssetRecord
-): asset is ImageAssetRecord {
+): boolean {
   return (
     asset.kind === "image" &&
     asset.storageKey.startsWith(STARTER_ENVIRONMENT_STORAGE_KEY_PREFIX)
