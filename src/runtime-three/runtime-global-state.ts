@@ -15,7 +15,7 @@ export interface RuntimeSceneTransitionRecord {
   fromSceneName: string;
   toSceneId: string;
   toSceneName: string;
-  viaExitEntityId: string;
+  sourceEntityId: string | null;
   targetEntryEntityId: string;
 }
 

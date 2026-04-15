@@ -844,7 +844,6 @@ function resolveEntityRotation(
     case "soundEmitter":
     case "triggerVolume":
     case "interactable":
-    case "sceneExit":
       return {
         kind: "none"
       };

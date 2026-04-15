@@ -10,7 +10,7 @@ import {
   RuntimeHost,
   type RuntimeDialogueState,
   type RuntimePauseState,
-  type RuntimeSceneExitTransitionRequest,
+  type RuntimeSceneTransitionRequest,
   type RuntimeSceneLoadState
 } from "../runtime-three/runtime-host";
 import type { RuntimeInteractionPrompt } from "../runtime-three/runtime-interaction-system";
@@ -40,7 +40,7 @@ interface RunnerCanvasProps {
   onRuntimeClockChange?(clock: RuntimeClockState): void;
   onFirstPersonTelemetryChange(telemetry: FirstPersonTelemetry | null): void;
   onInteractionPromptChange(prompt: RuntimeInteractionPrompt | null): void;
-  onSceneExitActivated(request: RuntimeSceneExitTransitionRequest): void;
+  onSceneTransitionActivated(request: RuntimeSceneTransitionRequest): void;
 }
 
 export function RunnerCanvas({
@@ -57,7 +57,7 @@ export function RunnerCanvas({
   onRuntimeClockChange = () => {},
   onFirstPersonTelemetryChange,
   onInteractionPromptChange,
-  onSceneExitActivated
+  onSceneTransitionActivated
 }: RunnerCanvasProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const hostRef = useRef<RuntimeHost | null>(null);
@@ -170,8 +170,8 @@ export function RunnerCanvas({
   ]);
 
   useEffect(() => {
-    hostRef.current?.setSceneExitHandler(onSceneExitActivated);
-  }, [onSceneExitActivated]);
+    hostRef.current?.setSceneTransitionHandler(onSceneTransitionActivated);
+  }, [onSceneTransitionActivated]);
 
   useEffect(() => {
     lastForwardedRuntimeClockRef.current = runtimeClock;
