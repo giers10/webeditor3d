@@ -528,6 +528,30 @@ export function normalizeRadialPrismSideCount(value: number): number {
   return value;
 }
 
+export function normalizeConeSideCount(value: number): number {
+  if (!Number.isFinite(value) || !Number.isInteger(value) || value < 3) {
+    throw new Error("Cone side count must be an integer of at least 3.");
+  }
+
+  return value;
+}
+
+export function normalizeTorusMajorSegmentCount(value: number): number {
+  if (!Number.isFinite(value) || !Number.isInteger(value) || value < 3) {
+    throw new Error("Torus major segment count must be an integer of at least 3.");
+  }
+
+  return value;
+}
+
+export function normalizeTorusTubeSegmentCount(value: number): number {
+  if (!Number.isFinite(value) || !Number.isInteger(value) || value < 3) {
+    throw new Error("Torus tube segment count must be an integer of at least 3.");
+  }
+
+  return value;
+}
+
 export function getRadialPrismFaceIds(sideCount: number): RadialPrismFaceId[] {
   const normalizedSideCount = normalizeRadialPrismSideCount(sideCount);
   return [
@@ -558,7 +582,7 @@ export function getRadialPrismVertexIds(
 
 export function createDefaultRadialPrismBrushGeometry(
   size: Vec3 = DEFAULT_BOX_BRUSH_SIZE,
-  sideCount = 12
+  sideCount = DEFAULT_RADIAL_PRISM_SIDE_COUNT
 ): RadialPrismBrushGeometry {
   const normalizedSideCount = normalizeRadialPrismSideCount(sideCount);
   const halfHeight = size.y * 0.5;
@@ -580,6 +604,171 @@ export function createDefaultRadialPrismBrushGeometry(
   return {
     vertices
   };
+}
+
+export function getConeFaceIds(sideCount: number): ConeFaceId[] {
+  const normalizedSideCount = normalizeConeSideCount(sideCount);
+  return [
+    "bottom",
+    ...Array.from({ length: normalizedSideCount }, (_, index) => `side-${index}` as const)
+  ];
+}
+
+export function getConeEdgeIds(sideCount: number): ConeEdgeId[] {
+  const normalizedSideCount = normalizeConeSideCount(sideCount);
+  return [
+    ...Array.from({ length: normalizedSideCount }, (_, index) => `bottom-${index}` as const),
+    ...Array.from({ length: normalizedSideCount }, (_, index) => `side-${index}` as const)
+  ];
+}
+
+export function getConeVertexIds(sideCount: number): ConeVertexId[] {
+  const normalizedSideCount = normalizeConeSideCount(sideCount);
+  return [
+    "apex",
+    ...Array.from({ length: normalizedSideCount }, (_, index) => `bottom-${index}` as const)
+  ];
+}
+
+export function createDefaultConeBrushGeometry(
+  size: Vec3 = DEFAULT_BOX_BRUSH_SIZE,
+  sideCount = DEFAULT_CONE_SIDE_COUNT
+): ConeBrushGeometry {
+  const normalizedSideCount = normalizeConeSideCount(sideCount);
+  const halfHeight = size.y * 0.5;
+  const radiusX = size.x * 0.5;
+  const radiusZ = size.z * 0.5;
+  const vertices: Record<ConeVertexId, Vec3> = {
+    apex: { x: 0, y: halfHeight, z: 0 }
+  } as Record<ConeVertexId, Vec3>;
+
+  for (let index = 0; index < normalizedSideCount; index += 1) {
+    const angle = (Math.PI * 2 * index) / normalizedSideCount;
+    vertices[`bottom-${index}`] = {
+      x: Math.sin(angle) * radiusX,
+      y: -halfHeight,
+      z: Math.cos(angle) * radiusZ
+    };
+  }
+
+  return {
+    vertices
+  };
+}
+
+export function getTorusFaceIds(
+  majorSegmentCount: number,
+  tubeSegmentCount: number
+): TorusFaceId[] {
+  const normalizedMajorSegmentCount =
+    normalizeTorusMajorSegmentCount(majorSegmentCount);
+  const normalizedTubeSegmentCount =
+    normalizeTorusTubeSegmentCount(tubeSegmentCount);
+
+  return Array.from(
+    { length: normalizedMajorSegmentCount * normalizedTubeSegmentCount },
+    (_, index) => {
+      const majorIndex = Math.floor(index / normalizedTubeSegmentCount);
+      const tubeIndex = index % normalizedTubeSegmentCount;
+      return `face-${majorIndex}-${tubeIndex}` as const;
+    }
+  );
+}
+
+export function getTorusEdgeIds(
+  majorSegmentCount: number,
+  tubeSegmentCount: number
+): TorusEdgeId[] {
+  const normalizedMajorSegmentCount =
+    normalizeTorusMajorSegmentCount(majorSegmentCount);
+  const normalizedTubeSegmentCount =
+    normalizeTorusTubeSegmentCount(tubeSegmentCount);
+
+  return [
+    ...Array.from(
+      { length: normalizedMajorSegmentCount * normalizedTubeSegmentCount },
+      (_, index) => {
+        const majorIndex = Math.floor(index / normalizedTubeSegmentCount);
+        const tubeIndex = index % normalizedTubeSegmentCount;
+        return `major-${majorIndex}-${tubeIndex}` as const;
+      }
+    ),
+    ...Array.from(
+      { length: normalizedMajorSegmentCount * normalizedTubeSegmentCount },
+      (_, index) => {
+        const majorIndex = Math.floor(index / normalizedTubeSegmentCount);
+        const tubeIndex = index % normalizedTubeSegmentCount;
+        return `tube-${majorIndex}-${tubeIndex}` as const;
+      }
+    )
+  ];
+}
+
+export function getTorusVertexIds(
+  majorSegmentCount: number,
+  tubeSegmentCount: number
+): TorusVertexId[] {
+  const normalizedMajorSegmentCount =
+    normalizeTorusMajorSegmentCount(majorSegmentCount);
+  const normalizedTubeSegmentCount =
+    normalizeTorusTubeSegmentCount(tubeSegmentCount);
+
+  return Array.from(
+    { length: normalizedMajorSegmentCount * normalizedTubeSegmentCount },
+    (_, index) => {
+      const majorIndex = Math.floor(index / normalizedTubeSegmentCount);
+      const tubeIndex = index % normalizedTubeSegmentCount;
+      return `vertex-${majorIndex}-${tubeIndex}` as const;
+    }
+  );
+}
+
+function createDefaultBaseTorusBrushGeometry(
+  majorSegmentCount: number,
+  tubeSegmentCount: number
+): TorusBrushGeometry {
+  const normalizedMajorSegmentCount =
+    normalizeTorusMajorSegmentCount(majorSegmentCount);
+  const normalizedTubeSegmentCount =
+    normalizeTorusTubeSegmentCount(tubeSegmentCount);
+  const majorRadius = 0.75;
+  const tubeRadius = 0.25;
+  const vertices: Record<TorusVertexId, Vec3> = {} as Record<TorusVertexId, Vec3>;
+
+  for (let majorIndex = 0; majorIndex < normalizedMajorSegmentCount; majorIndex += 1) {
+    const majorAngle =
+      (Math.PI * 2 * majorIndex) / normalizedMajorSegmentCount;
+    const majorCos = Math.cos(majorAngle);
+    const majorSin = Math.sin(majorAngle);
+
+    for (let tubeIndex = 0; tubeIndex < normalizedTubeSegmentCount; tubeIndex += 1) {
+      const tubeAngle = (Math.PI * 2 * tubeIndex) / normalizedTubeSegmentCount;
+      const tubeCos = Math.cos(tubeAngle);
+      const tubeSin = Math.sin(tubeAngle);
+      const ringRadius = majorRadius + tubeRadius * tubeCos;
+
+      vertices[`vertex-${majorIndex}-${tubeIndex}`] = {
+        x: ringRadius * majorCos,
+        y: tubeRadius * tubeSin,
+        z: ringRadius * majorSin
+      };
+    }
+  }
+
+  return {
+    vertices
+  };
+}
+
+export function createDefaultTorusBrushGeometry(
+  size: Vec3 = DEFAULT_TORUS_BRUSH_SIZE,
+  majorSegmentCount = DEFAULT_TORUS_MAJOR_SEGMENT_COUNT,
+  tubeSegmentCount = DEFAULT_TORUS_TUBE_SEGMENT_COUNT
+): TorusBrushGeometry {
+  return scaleBrushGeometryToSize(
+    createDefaultBaseTorusBrushGeometry(majorSegmentCount, tubeSegmentCount),
+    size
+  );
 }
 
 export function isBoxFaceId(value: unknown): value is BoxFaceId {
