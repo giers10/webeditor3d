@@ -10,7 +10,6 @@ import {
   HOURS_PER_DAY,
   formatTimeOfDayHours
 } from "../document/project-time-settings";
-import type { ProjectDialogueLibrary } from "../dialogues/project-dialogues";
 import { formatControlEffectValue, getControlTargetRefKey } from "../controls/control-surface";
 import { ProjectSequencesPanel } from "./ProjectSequencesPanel";
 import {
@@ -67,7 +66,15 @@ interface ProjectSequencerPaneProps {
   }>;
   scheduler: ProjectScheduler;
   sequences: ProjectSequenceLibrary;
-  dialogues: ProjectDialogueLibrary;
+  npcTalkTargetOptions: Array<{
+    npcEntityId: string;
+    label: string;
+    defaultDialogueId: string | null;
+    dialogues: Array<{
+      dialogueId: string;
+      label: string;
+    }>;
+  }>;
   selectedRoutineId: string | null;
   selectedSequenceId: string | null;
   onSelectRoutine(routineId: string | null): void;
@@ -91,7 +98,11 @@ interface ProjectSequencerPaneProps {
     targetKey: string,
     effectOptionId: ProjectScheduleEffectOptionId
   ): void;
-  onAddDialogueStep(sequenceId: string, dialogueId: string): void;
+  onAddNpcTalkEffect(
+    sequenceId: string,
+    npcEntityId: string,
+    dialogueId: string | null
+  ): void;
   onAddTeleportStep(sequenceId: string, targetEntityId: string): void;
   onAddSceneTransitionStep(sequenceId: string, targetKey: string): void;
   onAddVisibilityStep(sequenceId: string, targetKey: string): void;
@@ -141,10 +152,15 @@ interface ProjectSequencerPaneProps {
     stepIndex: number,
     loop: boolean
   ): void;
-  onSetDialogueStepDialogueId(
+  onSetNpcTalkStepNpcEntityId(
     sequenceId: string,
     stepIndex: number,
-    dialogueId: string
+    npcEntityId: string
+  ): void;
+  onSetNpcTalkStepDialogueId(
+    sequenceId: string,
+    stepIndex: number,
+    dialogueId: string | null
   ): void;
   onSetTeleportStepTarget(
     sequenceId: string,
@@ -388,7 +404,7 @@ export function ProjectSequencerPane({
   visibilityTargetOptions,
   scheduler,
   sequences,
-  dialogues,
+  npcTalkTargetOptions,
   selectedRoutineId,
   selectedSequenceId,
   onSelectRoutine,
@@ -408,7 +424,7 @@ export function ProjectSequencerPane({
   onSetRoutineSequenceId,
   onSetSequenceTitle,
   onAddControlEffect,
-  onAddDialogueStep,
+  onAddNpcTalkEffect,
   onAddTeleportStep,
   onAddSceneTransitionStep,
   onAddVisibilityStep,
@@ -422,7 +438,8 @@ export function ProjectSequencerPane({
   onSetControlStepPathId,
   onSetControlStepPathSpeed,
   onSetControlStepPathLoop,
-  onSetDialogueStepDialogueId,
+  onSetNpcTalkStepNpcEntityId,
+  onSetNpcTalkStepDialogueId,
   onSetTeleportStepTarget,
   onSetSceneTransitionStepTarget,
   onSetVisibilityStepTarget,
@@ -661,8 +678,8 @@ export function ProjectSequencerPane({
           <div className="schedule-pane__editor" style={{ width: "100%" }}>
             <ProjectSequencesPanel
               sequences={sequences}
-              dialogues={dialogues}
               targetOptions={targetOptions}
+              npcTalkTargetOptions={npcTalkTargetOptions}
               teleportTargetOptions={teleportTargetOptions}
               sceneTransitionTargetOptions={sceneTransitionTargetOptions}
               visibilityTargetOptions={visibilityTargetOptions}
@@ -678,7 +695,7 @@ export function ProjectSequencerPane({
               onDeleteSequence={onDeleteSequence}
               onSetSequenceTitle={onSetSequenceTitle}
               onAddControlEffect={onAddControlEffect}
-              onAddDialogueStep={onAddDialogueStep}
+              onAddNpcTalkEffect={onAddNpcTalkEffect}
               onAddTeleportStep={onAddTeleportStep}
               onAddSceneTransitionStep={onAddSceneTransitionStep}
               onAddVisibilityStep={onAddVisibilityStep}
@@ -692,7 +709,8 @@ export function ProjectSequencerPane({
               onSetControlStepPathId={onSetControlStepPathId}
               onSetControlStepPathSpeed={onSetControlStepPathSpeed}
               onSetControlStepPathLoop={onSetControlStepPathLoop}
-              onSetDialogueStepDialogueId={onSetDialogueStepDialogueId}
+              onSetNpcTalkStepNpcEntityId={onSetNpcTalkStepNpcEntityId}
+              onSetNpcTalkStepDialogueId={onSetNpcTalkStepDialogueId}
               onSetTeleportStepTarget={onSetTeleportStepTarget}
               onSetSceneTransitionStepTarget={onSetSceneTransitionStepTarget}
               onSetVisibilityStepTarget={onSetVisibilityStepTarget}

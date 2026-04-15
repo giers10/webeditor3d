@@ -6881,6 +6881,72 @@ export function App({ store, initialStatusMessage }: AppProps) {
         return true;
       }
 
+      if (creationPreview.target.kind === "cone-brush") {
+        const center =
+          creationPreview.center === null ? undefined : creationPreview.center;
+
+        store.executeCommand(
+          createCreateConeBrushCommand(
+            center === undefined
+              ? {
+                  sideCount: creationPreview.target.sideCount,
+                  snapToGrid: whiteboxSnapEnabled,
+                  gridSize: whiteboxSnapStep
+                }
+              : {
+                  center,
+                  sideCount: creationPreview.target.sideCount,
+                  snapToGrid: whiteboxSnapEnabled,
+                  gridSize: whiteboxSnapStep
+                }
+          )
+        );
+        completeCreation(
+          center === undefined
+            ? whiteboxSnapEnabled
+              ? `Created a whitebox cone on the ${whiteboxSnapStep}m grid.`
+              : "Created a whitebox cone."
+            : whiteboxSnapEnabled
+              ? `Created a whitebox cone at snapped center ${formatVec3(center)}.`
+              : `Created a whitebox cone at ${formatVec3(center)}.`
+        );
+        return true;
+      }
+
+      if (creationPreview.target.kind === "torus-brush") {
+        const center =
+          creationPreview.center === null ? undefined : creationPreview.center;
+
+        store.executeCommand(
+          createCreateTorusBrushCommand(
+            center === undefined
+              ? {
+                  majorSegmentCount: creationPreview.target.majorSegmentCount,
+                  tubeSegmentCount: creationPreview.target.tubeSegmentCount,
+                  snapToGrid: whiteboxSnapEnabled,
+                  gridSize: whiteboxSnapStep
+                }
+              : {
+                  center,
+                  majorSegmentCount: creationPreview.target.majorSegmentCount,
+                  tubeSegmentCount: creationPreview.target.tubeSegmentCount,
+                  snapToGrid: whiteboxSnapEnabled,
+                  gridSize: whiteboxSnapStep
+                }
+          )
+        );
+        completeCreation(
+          center === undefined
+            ? whiteboxSnapEnabled
+              ? `Created a whitebox torus on the ${whiteboxSnapStep}m grid.`
+              : "Created a whitebox torus."
+            : whiteboxSnapEnabled
+              ? `Created a whitebox torus at snapped center ${formatVec3(center)}.`
+              : `Created a whitebox torus at ${formatVec3(center)}.`
+        );
+        return true;
+      }
+
       if (creationPreview.target.kind === "model-instance") {
         const asset =
           editorState.document.assets[creationPreview.target.assetId];
@@ -10740,22 +10806,41 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
   const addMenuItems: HierarchicalMenuItem[] = [
     {
-      kind: "action",
-      label: "Whitebox Box",
-      testId: "add-menu-box",
-      onSelect: beginBoxCreation
-    },
-    {
-      kind: "action",
-      label: "Whitebox Wedge",
-      testId: "add-menu-wedge",
-      onSelect: beginWedgeCreation
-    },
-    {
-      kind: "action",
-      label: "Whitebox Cylinder",
-      testId: "add-menu-cylinder",
-      onSelect: beginCylinderCreation
+      kind: "group",
+      label: "Whitebox Primitives",
+      testId: "add-menu-whitebox-primitives",
+      children: [
+        {
+          kind: "action",
+          label: "Box",
+          testId: "add-menu-box",
+          onSelect: beginBoxCreation
+        },
+        {
+          kind: "action",
+          label: "Wedge",
+          testId: "add-menu-wedge",
+          onSelect: beginWedgeCreation
+        },
+        {
+          kind: "action",
+          label: "Cylinder",
+          testId: "add-menu-cylinder",
+          onSelect: beginCylinderCreation
+        },
+        {
+          kind: "action",
+          label: "Cone",
+          testId: "add-menu-cone",
+          onSelect: beginConeCreation
+        },
+        {
+          kind: "action",
+          label: "Torus",
+          testId: "add-menu-torus",
+          onSelect: beginTorusCreation
+        }
+      ]
     },
     {
       kind: "action",
