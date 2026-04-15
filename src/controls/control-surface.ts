@@ -115,6 +115,7 @@ export interface FollowActorPathControlEffect {
   pathId: string;
   speed: number;
   loop: boolean;
+  smoothPath: boolean;
   progressMode: ActorPathProgressMode;
 }
 
@@ -313,6 +314,7 @@ export interface RuntimeResolvedActorPathAssignmentState {
   pathId: string | null;
   speed: number | null;
   loop: boolean;
+  smoothPath: boolean;
   progressMode: ActorPathProgressMode | null;
   source: RuntimeResolvedControlSource;
 }
@@ -651,6 +653,7 @@ export function createFollowActorPathControlEffect(options: {
   pathId: string;
   speed: number;
   loop?: boolean;
+  smoothPath?: boolean;
   progressMode?: ActorPathProgressMode;
 }): FollowActorPathControlEffect {
   assertNonEmptyString(options.pathId, "Control actor path id");
@@ -667,6 +670,7 @@ export function createFollowActorPathControlEffect(options: {
     pathId: options.pathId,
     speed: options.speed,
     loop: options.loop ?? false,
+    smoothPath: options.smoothPath ?? true,
     progressMode: options.progressMode ?? "deriveFromTime"
   };
 }
@@ -1034,6 +1038,7 @@ export function createResolvedActorPathAssignmentState(options: {
   pathId: string | null;
   speed: number | null;
   loop: boolean;
+  smoothPath: boolean;
   progressMode: ActorPathProgressMode | null;
   source: RuntimeResolvedControlSource;
 }): RuntimeResolvedActorPathAssignmentState {
@@ -1065,6 +1070,7 @@ export function createResolvedActorPathAssignmentState(options: {
     pathId: options.pathId,
     speed: options.speed,
     loop: options.loop,
+    smoothPath: options.smoothPath,
     progressMode: options.progressMode,
     source: cloneResolvedControlSource(options.source)
   };
