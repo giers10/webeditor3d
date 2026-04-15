@@ -37,8 +37,6 @@ import {
 import {
   cloneBrushGeometry,
   cloneBoxBrushVolumeSettings,
-  cloneBrush,
-  cloneBoxBrushVolumeSettings,
   cloneFaceUvState,
   type Brush,
   type BrushGeometry,
