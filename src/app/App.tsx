@@ -4830,6 +4830,89 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
+  const handleAddNpcDialogue = () => {
+    const nextDialogue = createProjectDialogue();
+
+    updateSelectedNpcDialogues(
+      "Add NPC dialogue",
+      "Added NPC dialogue.",
+      (dialogues, defaultDialogueId) => ({
+        dialogues: [...dialogues, nextDialogue],
+        defaultDialogueId:
+          defaultDialogueId ?? nextDialogue.id
+      })
+    );
+    setSelectedNpcDialogueId(nextDialogue.id);
+  };
+
+  const handleDeleteNpcDialogue = (dialogueId: string) => {
+    updateSelectedNpcDialogues(
+      "Delete NPC dialogue",
+      "Deleted NPC dialogue.",
+      (dialogues, defaultDialogueId) => {
+        const nextDialogues = dialogues.filter(
+          (dialogue) => dialogue.id !== dialogueId
+        );
+        return {
+          dialogues: nextDialogues,
+          defaultDialogueId:
+            defaultDialogueId === dialogueId
+              ? nextDialogues[0]?.id ?? null
+              : defaultDialogueId
+        };
+      }
+    );
+
+    if (selectedNpcDialogueId === dialogueId) {
+      setSelectedNpcDialogueId(null);
+    }
+  };
+
+  const updateNpcDialogue = (
+    dialogueId: string,
+    label: string,
+    successMessage: string,
+    mutate: (dialogue: ProjectDialogue) => void
+  ) => {
+    updateSelectedNpcDialogues(label, successMessage, (dialogues, defaultDialogueId) => {
+      const nextDialogues = dialogues.map((dialogue) => {
+        if (dialogue.id !== dialogueId) {
+          return dialogue;
+        }
+
+        const nextDialogue: ProjectDialogue = {
+          ...dialogue,
+          lines: dialogue.lines.map((line) => ({ ...line }))
+        };
+        mutate(nextDialogue);
+        return nextDialogue;
+      });
+
+      return {
+        dialogues: nextDialogues,
+        defaultDialogueId
+      };
+    });
+  };
+
+  const updateNpcDialogueLine = (
+    dialogueId: string,
+    lineId: string,
+    label: string,
+    successMessage: string,
+    mutate: (line: ProjectDialogueLine) => void
+  ) => {
+    updateNpcDialogue(dialogueId, label, successMessage, (dialogue) => {
+      const line = dialogue.lines.find((candidate) => candidate.id === lineId);
+
+      if (line === undefined) {
+        throw new Error("Selected dialogue line no longer exists.");
+      }
+
+      mutate(line);
+    });
+  };
+
   const handleAddProjectSequenceControlEffect = (
     sequenceId: string,
     targetKey: string,
