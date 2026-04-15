@@ -345,7 +345,7 @@ import {
   createDefaultRuntimeGlobalState,
   type RuntimeGlobalState
 } from "../runtime-three/runtime-global-state";
-import type { RuntimeSceneExitTransitionRequest } from "../runtime-three/runtime-host";
+import type { RuntimeSceneTransitionRequest } from "../runtime-three/runtime-host";
 import {
   advanceRuntimeClockState,
   areRuntimeClockStatesEqual,
