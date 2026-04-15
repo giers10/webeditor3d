@@ -4354,6 +4354,32 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
 
     try {
+      if (targetOption.target.kind === "global") {
+        const nextRoutine = createProjectScheduleRoutine({
+          title: targetOption.label,
+          target: targetOption.target,
+          days: createProjectScheduleEveryDaySelection(),
+          startHour: 9,
+          endHour: 17,
+          priority: 0,
+          effects: []
+        });
+        const nextScheduler = upsertProjectScheduleRoutine(
+          cloneProjectScheduler(editorState.projectDocument.scheduler),
+          nextRoutine
+        );
+
+        applyProjectScheduler(
+          nextScheduler,
+          "Create sequence placement",
+          `Created a sequence placement for ${targetOption.label}.`
+        );
+        setSchedulePaneOpen(true);
+        setSequencerMode("timeline");
+        setSelectedScheduleRoutineId(nextRoutine.id);
+        return;
+      }
+
       const effectOption = listProjectScheduleEffectOptions(targetOption)[0] ?? null;
 
       if (effectOption === null) {
@@ -11284,6 +11310,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         if (targetOption.target.kind === "actor") {
                           routine.target = targetOption.target;
                           routine.sequenceId = null;
+                          routine.effects = [];
+                          return;
+                        }
+
+                        if (targetOption.target.kind === "global") {
+                          routine.target = targetOption.target;
                           routine.effects = [];
                           return;
                         }
