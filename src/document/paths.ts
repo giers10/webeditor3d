@@ -118,27 +118,11 @@ function normalizeDelta(delta: Vec3): Vec3 {
   };
 }
 
-function addVec3(left: Vec3, right: Vec3): Vec3 {
-  return {
-    x: left.x + right.x,
-    y: left.y + right.y,
-    z: left.z + right.z
-  };
-}
-
 function subtractVec3(left: Vec3, right: Vec3): Vec3 {
   return {
     x: left.x - right.x,
     y: left.y - right.y,
     z: left.z - right.z
-  };
-}
-
-function scaleVec3(vector: Vec3, scalar: number): Vec3 {
-  return {
-    x: vector.x * scalar,
-    y: vector.y * scalar,
-    z: vector.z * scalar
   };
 }
 
