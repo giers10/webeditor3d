@@ -61,7 +61,9 @@ import {
   type WorldSettings
 } from "../document/world-settings";
 import {
+  cloneProjectDialogue,
   cloneProjectDialogueLibrary,
+  type ProjectDialogue,
   type ProjectDialogueLibrary
 } from "../dialogues/project-dialogues";
 import {
@@ -236,7 +238,8 @@ export interface RuntimeNpc {
   position: Vec3;
   yawDegrees: number;
   modelAssetId: string | null;
-  dialogueId: string | null;
+  dialogues: ProjectDialogue[];
+  defaultDialogueId: string | null;
   collider: FirstPersonPlayerShape;
   activeRoutineTitle: string | null;
   animationClipName: string | null;
@@ -510,7 +513,8 @@ export function createRuntimeNpcFromDefinition(
     position: cloneVec3(npc.position),
     yawDegrees: npc.yawDegrees,
     modelAssetId: npc.modelAssetId,
-    dialogueId: npc.dialogueId,
+    dialogues: npc.dialogues.map(cloneProjectDialogue),
+    defaultDialogueId: npc.defaultDialogueId,
     collider: cloneRuntimeCharacterShape(npc.collider),
     activeRoutineTitle: npc.activeRoutineTitle,
     animationClipName: npc.animationClipName,
@@ -1333,7 +1337,8 @@ function buildRuntimeSceneCollections(
           yawDegrees: entity.yawDegrees,
           authoredYawDegrees: entity.yawDegrees,
           modelAssetId: entity.modelAssetId,
-          dialogueId: entity.dialogueId,
+          dialogues: entity.dialogues.map(cloneProjectDialogue),
+          defaultDialogueId: entity.defaultDialogueId,
           collider: createRuntimeCharacterShape(entity.collider),
           animationClipName: null,
           animationLoop: undefined,
