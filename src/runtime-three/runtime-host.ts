@@ -89,6 +89,7 @@ import {
 import { getNpcColliderHeight } from "../entities/entity-instances";
 import type { InteractionLink } from "../interactions/interaction-links";
 import type {
+  ImpulseSequenceStep,
   SequenceVisibilityMode,
   SequenceVisibilityTarget
 } from "../sequencer/project-sequence-steps";
@@ -198,8 +199,8 @@ export interface RuntimeSceneLoadState {
   message: string | null;
 }
 
-export interface RuntimeSceneExitTransitionRequest {
-  sourceExitEntityId: string;
+export interface RuntimeSceneTransitionRequest {
+  sourceEntityId: string | null;
   targetSceneId: string;
   targetEntryEntityId: string;
 }
@@ -302,8 +303,8 @@ export class RuntimeHost {
   private sceneLoadStateHandler:
     | ((state: RuntimeSceneLoadState) => void)
     | null = null;
-  private sceneExitHandler:
-    | ((request: RuntimeSceneExitTransitionRequest) => void)
+  private sceneTransitionHandler:
+    | ((request: RuntimeSceneTransitionRequest) => void)
     | null = null;
   private currentRuntimeMessage: string | null = null;
   private currentPlayerControllerTelemetry: PlayerControllerTelemetry | null =
@@ -332,6 +333,7 @@ export class RuntimeHost {
   private controlPauseActive = false;
   private previousPauseInputActive = false;
   private readonly pressedKeys = new Set<string>();
+  private activeScheduledImpulseRoutineIds = new Set<string>();
 
   constructor(options: { enableRendering?: boolean } = {}) {
     const enableRendering = options.enableRendering ?? true;
