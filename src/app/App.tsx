@@ -2343,7 +2343,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [npcModelAssetIdDraft, setNpcModelAssetIdDraft] = useState(
     DEFAULT_NPC_MODEL_ASSET_ID ?? ""
   );
-  const [npcDialogueIdDraft, setNpcDialogueIdDraft] = useState("");
   const [teleportTargetYawDraft, setTeleportTargetYawDraft] = useState(
     String(DEFAULT_TELEPORT_TARGET_YAW_DEGREES)
   );
@@ -2402,7 +2401,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [selectedScheduleRoutineId, setSelectedScheduleRoutineId] = useState<
     string | null
   >(null);
-  const [selectedDialogueId, setSelectedDialogueId] = useState<string | null>(
+  const [selectedNpcDialogueId, setSelectedNpcDialogueId] = useState<string | null>(
     null
   );
   const [selectedSequenceId, setSelectedSequenceId] = useState<string | null>(
