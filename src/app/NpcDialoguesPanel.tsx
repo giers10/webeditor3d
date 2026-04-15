@@ -101,9 +101,9 @@ export function NpcDialoguesPanel({
         </div>
         <div className="material-summary">
           {dialogues.length === 0
-            ? "Author one or more dialogues for this NPC. Sequences can later make this NPC talk, and direct NPC clicks use the default dialogue."
+            ? "Author one or more dialogues for this NPC. NPC sequence links can later make this NPC talk."
             : defaultDialogue === null
-              ? "Pick a default dialogue for direct NPC click/talk behavior."
+              ? "Pick a default dialogue for NPC talk effects that do not target a specific dialogue."
               : `${defaultDialogue.lines.length} line${defaultDialogue.lines.length === 1 ? "" : "s"} in the default NPC dialogue.`}
         </div>
       </div>
