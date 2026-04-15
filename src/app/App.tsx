@@ -6783,6 +6783,68 @@ export function App({ store, initialStatusMessage }: AppProps) {
         return true;
       }
 
+      if (creationPreview.target.kind === "wedge-brush") {
+        const center =
+          creationPreview.center === null ? undefined : creationPreview.center;
+
+        store.executeCommand(
+          createCreateWedgeBrushCommand(
+            center === undefined
+              ? {
+                  snapToGrid: whiteboxSnapEnabled,
+                  gridSize: whiteboxSnapStep
+                }
+              : {
+                  center,
+                  snapToGrid: whiteboxSnapEnabled,
+                  gridSize: whiteboxSnapStep
+                }
+          )
+        );
+        completeCreation(
+          center === undefined
+            ? whiteboxSnapEnabled
+              ? `Created a whitebox wedge on the ${whiteboxSnapStep}m grid.`
+              : "Created a whitebox wedge."
+            : whiteboxSnapEnabled
+              ? `Created a whitebox wedge at snapped center ${formatVec3(center)}.`
+              : `Created a whitebox wedge at ${formatVec3(center)}.`
+        );
+        return true;
+      }
+
+      if (creationPreview.target.kind === "cylinder-brush") {
+        const center =
+          creationPreview.center === null ? undefined : creationPreview.center;
+
+        store.executeCommand(
+          createCreateRadialPrismBrushCommand(
+            center === undefined
+              ? {
+                  sideCount: creationPreview.target.sideCount,
+                  snapToGrid: whiteboxSnapEnabled,
+                  gridSize: whiteboxSnapStep
+                }
+              : {
+                  center,
+                  sideCount: creationPreview.target.sideCount,
+                  snapToGrid: whiteboxSnapEnabled,
+                  gridSize: whiteboxSnapStep
+                }
+          )
+        );
+        completeCreation(
+          center === undefined
+            ? whiteboxSnapEnabled
+              ? `Created a whitebox cylinder on the ${whiteboxSnapStep}m grid.`
+              : "Created a whitebox cylinder."
+            : whiteboxSnapEnabled
+              ? `Created a whitebox cylinder at snapped center ${formatVec3(center)}.`
+              : `Created a whitebox cylinder at ${formatVec3(center)}.`
+        );
+        return true;
+      }
+
       if (creationPreview.target.kind === "model-instance") {
         const asset =
           editorState.document.assets[creationPreview.target.assetId];
