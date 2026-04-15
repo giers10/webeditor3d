@@ -46,7 +46,7 @@ export function createSetBoxBrushAllFaceMaterialsCommand(
         previousMaterialIds = Object.fromEntries(
           getBrushFaceIds(currentBrush).map((faceId) => [
             faceId,
-            currentBrush.faces[faceId]?.materialId ?? null
+            currentBrush.faces[faceId].materialId
           ])
         );
       }
