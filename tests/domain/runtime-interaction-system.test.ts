@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import { createEmptyRuntimeControlSurfaceDefinition } from "../../src/controls/control-surface";
-import { createEmptyProjectDialogueLibrary } from "../../src/dialogues/project-dialogues";
 import {
   createEmptyProjectSequenceLibrary,
   createProjectSequence
 } from "../../src/sequencer/project-sequences";
 import {
+  createNpcEntity,
   createPlayerStartInputBindings,
   createPlayerStartMovementTemplate
 } from "../../src/entities/entity-instances";
@@ -14,7 +14,6 @@ import {
   createPlayAnimationInteractionLink,
   createPlaySoundInteractionLink,
   createRunSequenceInteractionLink,
-  createStartDialogueInteractionLink,
   createTeleportPlayerInteractionLink,
   createToggleVisibilityInteractionLink,
   createStopAnimationInteractionLink,
@@ -36,7 +35,6 @@ function createRuntimeSceneFixture(): RuntimeSceneDefinition {
     scheduler: createRuntimeProjectSchedulerState({
       document: createEmptyProjectScheduler()
     }),
-    dialogues: createEmptyProjectDialogueLibrary(),
     sequences: createEmptyProjectSequenceLibrary(),
     world: {
       ...createDefaultWorldSettings(),
@@ -192,7 +190,6 @@ function createDispatcher(
     playSound: () => {},
     stopSound: () => {},
     startNpcDialogue: () => {},
-    startDialogue: () => {},
     ...overrides
   };
 }
