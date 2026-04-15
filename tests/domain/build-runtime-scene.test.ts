@@ -603,9 +603,10 @@ describe("buildRuntimeSceneFromDocument", () => {
             y: 0,
             z: -2
           },
-          yawDegrees: 45,
-          modelAssetId: modelAsset.id,
-          dialogueId: null,
+        yawDegrees: 45,
+        modelAssetId: modelAsset.id,
+        dialogues: [],
+        defaultDialogueId: null,
           activeRoutineTitle: null,
           animationClipName: null,
           animationLoop: undefined,
@@ -1514,7 +1515,20 @@ describe("buildRuntimeSceneFromDocument", () => {
       id: "entity-npc-patroller",
       actorId: actorTarget.actorId,
       modelAssetId: asset.id,
-      dialogueId: "dialogue-patrol",
+      dialogues: [
+        {
+          id: "dialogue-patrol",
+          title: "Patrol",
+          lines: [
+            {
+              id: "dialogue-line-patrol-1",
+              speakerName: "Guard",
+              text: "All clear."
+            }
+          ]
+        }
+      ],
+      defaultDialogueId: "dialogue-patrol",
       yawDegrees: 15
     });
     const path = createScenePath({
@@ -1541,17 +1555,6 @@ describe("buildRuntimeSceneFromDocument", () => {
     const document = createEmptySceneDocument();
     document.assets[asset.id] = asset;
     document.entities[npc.id] = npc;
-    document.dialogues.dialogues["dialogue-patrol"] = {
-      id: "dialogue-patrol",
-      title: "Patrol",
-      lines: [
-        {
-          id: "dialogue-line-patrol-1",
-          speakerName: "Guard",
-          text: "All clear."
-        }
-      ]
-    };
     document.paths[path.id] = path;
     document.scheduler.routines["routine-patrol"] = createProjectScheduleRoutine({
       id: "routine-patrol",
@@ -1614,7 +1617,12 @@ describe("buildRuntimeSceneFromDocument", () => {
       expect.objectContaining({
         entityId: npc.id,
         animationClipName: "Walk",
-        dialogueId: "dialogue-patrol",
+        defaultDialogueId: "dialogue-patrol",
+        dialogues: expect.arrayContaining([
+          expect.objectContaining({
+            id: "dialogue-patrol"
+          })
+        ]),
         position: {
           x: 4,
           y: 0,
