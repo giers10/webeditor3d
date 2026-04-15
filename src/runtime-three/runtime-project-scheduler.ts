@@ -27,6 +27,7 @@ import {
   type ProjectScheduleRoutine
 } from "../sequencer/project-sequencer";
 import {
+  cloneSequenceEffect,
   findHeldSequenceControlEffect,
   getHeldSequenceControlEffects,
   getProjectSequenceImpulseSteps,
@@ -181,7 +182,7 @@ export function cloneRuntimeResolvedProjectScheduleState(
     impulses: state.impulses.map((routine) => ({
       routineId: routine.routineId,
       title: routine.title,
-      effects: routine.effects.map((effect) => ({ ...effect }))
+      effects: routine.effects.map(cloneSequenceEffect)
     }))
   };
 }
