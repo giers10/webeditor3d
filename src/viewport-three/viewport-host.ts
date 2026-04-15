@@ -128,6 +128,8 @@ import {
 } from "../entities/entity-instances";
 import {
   cloneBrushGeometry,
+  createRadialPrismBrush,
+  createWedgeBrush,
   deriveBrushSizeFromGeometry,
   scaleBrushGeometryToSize,
   updateBrush,
