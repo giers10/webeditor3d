@@ -6321,6 +6321,8 @@ export class ViewportHost {
   ): Vec3 | null {
     switch (target.kind) {
       case "box-brush":
+      case "wedge-brush":
+      case "cylinder-brush":
         return this.getBoxCreationPreviewCenter(event, DEFAULT_BOX_BRUSH_SIZE);
       case "entity":
         switch (target.entityKind) {
@@ -6452,6 +6454,10 @@ export class ViewportHost {
     switch (target.kind) {
       case "box-brush":
         return "box-brush";
+      case "wedge-brush":
+        return "wedge-brush";
+      case "cylinder-brush":
+        return `cylinder-brush:${target.sideCount}`;
       case "entity":
         return `entity:${target.entityKind}:${target.audioAssetId}:${target.modelAssetId}`;
       case "model-instance":
@@ -6702,6 +6708,15 @@ export class ViewportHost {
                       kind: "model-instance",
                       assetId: toolPreview.target.assetId
                     }
+                  : toolPreview.target.kind === "wedge-brush"
+                    ? {
+                        kind: "wedge-brush"
+                      }
+                    : toolPreview.target.kind === "cylinder-brush"
+                      ? {
+                          kind: "cylinder-brush",
+                          sideCount: toolPreview.target.sideCount
+                        }
                   : {
                       kind: "box-brush"
                     },
