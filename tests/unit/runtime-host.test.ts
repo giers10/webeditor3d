@@ -939,7 +939,12 @@ describe("RuntimeHost", () => {
       syncRuntimeScheduleToCurrentClock(): void;
     };
 
-    expect(runtimeScene.entities.npcs).toEqual([]);
+    expect(runtimeScene.entities.npcs).toEqual([
+      expect.objectContaining({
+        entityId: npc.id,
+        activeRoutineTitle: null
+      })
+    ]);
 
     hostInternals.sceneReady = true;
     hostInternals.currentClockState = {
@@ -964,7 +969,12 @@ describe("RuntimeHost", () => {
     };
     hostInternals.syncRuntimeScheduleToCurrentClock();
 
-    expect(hostInternals.runtimeScene?.entities.npcs).toEqual([]);
+    expect(hostInternals.runtimeScene?.entities.npcs).toEqual([
+      expect.objectContaining({
+        entityId: npc.id,
+        activeRoutineTitle: null
+      })
+    ]);
     expect(hostInternals.runtimeScene?.npcDefinitions[0]).toEqual(
       expect.objectContaining({
         entityId: npc.id,
@@ -1152,20 +1162,39 @@ describe("RuntimeHost", () => {
     };
     hostInternals.syncRuntimeScheduleToCurrentClock();
 
-    expect(hostInternals.runtimeScene?.entities.npcs).toEqual([]);
+    expect(hostInternals.runtimeScene?.entities.npcs).toEqual([
+      expect.objectContaining({
+        entityId: npc.id,
+        activeRoutineTitle: null,
+        animationClipName: null,
+        position: {
+          x: 8,
+          y: 0,
+          z: 0
+        },
+        resolvedPath: expect.objectContaining({
+          pathId: path.id,
+          progress: 1
+        })
+      })
+    ]);
     expect(hostInternals.runtimeScene?.npcDefinitions[0]).toEqual(
       expect.objectContaining({
         entityId: npc.id,
         active: false,
         activeRoutineTitle: null,
         animationClipName: null,
-        yawDegrees: 15,
+        yawDegrees: 90,
         position: {
-          x: 0,
+          x: 8,
           y: 0,
           z: 0
         },
-        resolvedPath: null
+        resolvedPath: expect.objectContaining({
+          pathId: path.id,
+          progress: 1,
+          yawDegrees: 90
+        })
       })
     );
 
