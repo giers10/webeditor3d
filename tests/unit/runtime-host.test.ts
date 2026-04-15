@@ -11,7 +11,6 @@ import {
   createPlayModelAnimationControlEffect,
   createProjectGlobalControlTargetRef,
   createPlaySoundControlEffect,
-  createProjectGlobalControlTargetRef,
   createSetActorPresenceControlEffect,
   createSetProjectTimePausedControlEffect,
   type ControlEffect,
