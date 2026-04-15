@@ -152,6 +152,11 @@ interface ProjectSequencerPaneProps {
     stepIndex: number,
     loop: boolean
   ): void;
+  onSetControlStepPathSmooth(
+    sequenceId: string,
+    stepIndex: number,
+    smoothPath: boolean
+  ): void;
   onSetNpcTalkStepNpcEntityId(
     sequenceId: string,
     stepIndex: number,
@@ -438,6 +443,7 @@ export function ProjectSequencerPane({
   onSetControlStepPathId,
   onSetControlStepPathSpeed,
   onSetControlStepPathLoop,
+  onSetControlStepPathSmooth,
   onSetNpcTalkStepNpcEntityId,
   onSetNpcTalkStepDialogueId,
   onSetTeleportStepTarget,
@@ -709,6 +715,7 @@ export function ProjectSequencerPane({
               onSetControlStepPathId={onSetControlStepPathId}
               onSetControlStepPathSpeed={onSetControlStepPathSpeed}
               onSetControlStepPathLoop={onSetControlStepPathLoop}
+              onSetControlStepPathSmooth={onSetControlStepPathSmooth}
               onSetNpcTalkStepNpcEntityId={onSetNpcTalkStepNpcEntityId}
               onSetNpcTalkStepDialogueId={onSetNpcTalkStepDialogueId}
               onSetTeleportStepTarget={onSetTeleportStepTarget}
