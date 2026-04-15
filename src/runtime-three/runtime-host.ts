@@ -3322,9 +3322,6 @@ export class RuntimeHost {
       startNpcDialogue: (npcEntityId, dialogueId, source) => {
         this.openRuntimeNpcDialogue(npcEntityId, dialogueId, source);
       },
-      startDialogue: (dialogueId, source) => {
-        this.openRuntimeDialogue(dialogueId, source);
-      },
       dispatchControlEffect: (effect, link) => {
         this.applyControlEffect(effect, link);
       }
@@ -3390,40 +3387,6 @@ export class RuntimeHost {
     };
   }
 
-  private createRuntimeDialogueState(
-    dialogueId: string,
-    lineIndex: number,
-    source: RuntimeDialogueStartSource
-  ): RuntimeDialogueState | null {
-    if (this.runtimeScene === null) {
-      return null;
-    }
-
-    const dialogue = this.runtimeScene.dialogues.dialogues[dialogueId];
-
-    if (dialogue === undefined) {
-      return null;
-    }
-
-    const line = dialogue.lines[lineIndex];
-
-    if (line === undefined) {
-      return null;
-    }
-
-    return {
-      npcEntityId: null,
-      dialogueId,
-      title: dialogue.title,
-      lineId: line.id,
-      lineIndex,
-      lineCount: dialogue.lines.length,
-      speakerName: line.speakerName,
-      text: line.text,
-      source
-    };
-  }
-
   private setRuntimeDialogue(dialogue: RuntimeDialogueState | null) {
     if (
       this.currentDialogue?.npcEntityId === dialogue?.npcEntityId &&
@@ -3445,29 +3408,6 @@ export class RuntimeHost {
 
     this.currentDialogue = dialogue;
     this.runtimeDialogueHandler?.(dialogue);
-  }
-
-  private openRuntimeDialogue(
-    dialogueId: string,
-    source: RuntimeDialogueStartSource = {
-      kind: "direct",
-      sourceEntityId: null,
-      linkId: null,
-      trigger: null
-    }
-  ) {
-    if (this.currentDialogue?.dialogueId === dialogueId) {
-      return;
-    }
-
-    const dialogue = this.createRuntimeDialogueState(dialogueId, 0, source);
-
-    if (dialogue === null) {
-      console.warn(`dialogue: missing dialogue ${dialogueId}`);
-      return;
-    }
-
-    this.setRuntimeDialogue(dialogue);
   }
 
   private openRuntimeNpcDialogue(
