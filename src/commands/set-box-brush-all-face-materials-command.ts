@@ -1,7 +1,7 @@
 import type { ToolMode } from "../core/tool-mode";
 import { createOpaqueId } from "../core/ids";
 import type { EditorSelection } from "../core/selection";
-import type { WhiteboxFaceId } from "../document/brushes";
+import { updateBrush, type WhiteboxFaceId } from "../document/brushes";
 import { getBrushFaceIds } from "../geometry/whitebox-topology";
 
 import {
@@ -46,7 +46,7 @@ export function createSetBoxBrushAllFaceMaterialsCommand(
         previousMaterialIds = Object.fromEntries(
           getBrushFaceIds(currentBrush).map((faceId) => [
             faceId,
-            currentBrush.faces[faceId].materialId
+            currentBrush.faces[faceId]?.materialId ?? null
           ])
         );
       }
@@ -60,18 +60,20 @@ export function createSetBoxBrushAllFaceMaterialsCommand(
       }
 
       context.setDocument(
-        replaceBrush(currentDocument, {
-          ...currentBrush,
-          faces: Object.fromEntries(
-            getBrushFaceIds(currentBrush).map((faceId) => [
-              faceId,
-              {
-                ...currentBrush.faces[faceId],
-                materialId: options.materialId
-              }
-            ])
-          ) as typeof currentBrush.faces
-        })
+        replaceBrush(
+          currentDocument,
+          updateBrush(currentBrush, {
+            faces: Object.fromEntries(
+              getBrushFaceIds(currentBrush).map((faceId) => [
+                faceId,
+                {
+                  ...currentBrush.faces[faceId],
+                  materialId: options.materialId
+                }
+              ])
+            ) as typeof currentBrush.faces
+          })
+        )
       );
       context.setToolMode("select");
     },
@@ -82,20 +84,23 @@ export function createSetBoxBrushAllFaceMaterialsCommand(
 
       const currentDocument = context.getDocument();
       const currentBrush = getBoxBrushOrThrow(currentDocument, options.brushId);
+      const restoredMaterialIds = previousMaterialIds;
 
       context.setDocument(
-        replaceBrush(currentDocument, {
-          ...currentBrush,
-          faces: Object.fromEntries(
-            getBrushFaceIds(currentBrush).map((faceId) => [
-              faceId,
-              {
-                ...currentBrush.faces[faceId],
-                materialId: previousMaterialIds[faceId] ?? null
-              }
-            ])
-          ) as typeof currentBrush.faces
-        })
+        replaceBrush(
+          currentDocument,
+          updateBrush(currentBrush, {
+            faces: Object.fromEntries(
+              getBrushFaceIds(currentBrush).map((faceId) => [
+                faceId,
+                {
+                  ...currentBrush.faces[faceId],
+                  materialId: restoredMaterialIds[faceId] ?? null
+                }
+              ])
+            ) as typeof currentBrush.faces
+          })
+        )
       );
 
       if (previousSelection !== null) {
