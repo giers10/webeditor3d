@@ -335,12 +335,10 @@ describe("RuntimeHost", () => {
           lines: [
             {
               id: "dialogue-line-warning-1",
-              speakerName: "Operator",
               text: "The generator is unstable."
             },
             {
               id: "dialogue-line-warning-2",
-              speakerName: null,
               text: "A low hum fills the room."
             }
           ]
@@ -390,7 +388,7 @@ describe("RuntimeHost", () => {
         dialogueId: "dialogue-warning",
         npcEntityId: npc.id,
         lineIndex: 0,
-        speakerName: "Operator",
+        speakerName: npc.actorId,
         text: "The generator is unstable.",
         source: {
           kind: "npc",
@@ -403,7 +401,7 @@ describe("RuntimeHost", () => {
         dialogueId: "dialogue-warning",
         npcEntityId: npc.id,
         lineIndex: 1,
-        speakerName: null,
+        speakerName: npc.actorId,
         text: "A low hum fills the room.",
         source: {
           kind: "npc",
@@ -437,7 +435,6 @@ describe("RuntimeHost", () => {
           lines: [
             {
               id: "dialogue-line-a-1",
-              speakerName: null,
               text: "First dialogue."
             }
           ]
@@ -454,7 +451,6 @@ describe("RuntimeHost", () => {
           lines: [
             {
               id: "dialogue-line-b-1",
-              speakerName: "Merchant",
               text: "Second dialogue."
             }
           ]
