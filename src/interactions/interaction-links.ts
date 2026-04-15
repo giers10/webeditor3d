@@ -48,11 +48,6 @@ export interface StopSoundAction {
   targetSoundEmitterId: string;
 }
 
-export interface StartDialogueAction {
-  type: "startDialogue";
-  dialogueId: string;
-}
-
 export interface RunSequenceAction {
   type: "runSequence";
   sequenceId: string;
@@ -70,7 +65,6 @@ export type InteractionAction =
   | StopAnimationAction
   | PlaySoundAction
   | StopSoundAction
-  | StartDialogueAction
   | RunSequenceAction
   | ControlInteractionAction;
 
@@ -124,13 +118,6 @@ export interface CreateStopSoundInteractionLinkOptions {
   sourceEntityId: string;
   trigger?: InteractionTriggerKind;
   targetSoundEmitterId: string;
-}
-
-export interface CreateStartDialogueInteractionLinkOptions {
-  id?: string;
-  sourceEntityId: string;
-  trigger?: InteractionTriggerKind;
-  dialogueId: string;
 }
 
 export interface CreateControlInteractionLinkOptions {
@@ -187,11 +174,6 @@ function cloneAction(action: InteractionAction): InteractionAction {
       return {
         type: "stopSound",
         targetSoundEmitterId: action.targetSoundEmitterId
-      };
-    case "startDialogue":
-      return {
-        type: "startDialogue",
-        dialogueId: action.dialogueId
       };
     case "runSequence":
       return {
@@ -342,23 +324,6 @@ export function createStopSoundInteractionLink(
   };
 }
 
-export function createStartDialogueInteractionLink(
-  options: CreateStartDialogueInteractionLinkOptions
-): InteractionLink {
-  assertNonEmptyString(options.sourceEntityId, "Interaction source entity id");
-  assertNonEmptyString(options.dialogueId, "Dialogue id");
-
-  return {
-    id: options.id ?? createOpaqueId("interaction-link"),
-    sourceEntityId: options.sourceEntityId,
-    trigger: options.trigger ?? "enter",
-    action: {
-      type: "startDialogue",
-      dialogueId: options.dialogueId
-    }
-  };
-}
-
 export function createControlInteractionLink(
   options: CreateControlInteractionLinkOptions
 ): InteractionLink {
@@ -418,7 +383,6 @@ export function getInteractionActionControlEffect(
       return createStopSoundControlEffect({
         target: createSoundEmitterControlTargetRef(action.targetSoundEmitterId)
       });
-    case "startDialogue":
     case "runSequence":
       return null;
     case "control":
@@ -443,8 +407,6 @@ export function getInteractionActionLabel(action: InteractionAction): string {
       return "Play Sound";
     case "stopSound":
       return "Stop Sound";
-    case "startDialogue":
-      return "Start Dialogue";
     case "runSequence":
       return "Run Sequence";
     case "control":
@@ -511,11 +473,6 @@ export function areInteractionLinksEqual(
       return (
         left.action.targetSoundEmitterId ===
         (right.action as StopSoundAction).targetSoundEmitterId
-      );
-    case "startDialogue":
-      return (
-        left.action.dialogueId ===
-        (right.action as StartDialogueAction).dialogueId
       );
     case "runSequence":
       return (
