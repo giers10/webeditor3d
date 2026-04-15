@@ -6326,7 +6326,10 @@ export class ViewportHost {
       case "box-brush":
       case "wedge-brush":
       case "cylinder-brush":
+      case "cone-brush":
         return this.getBoxCreationPreviewCenter(event, DEFAULT_BOX_BRUSH_SIZE);
+      case "torus-brush":
+        return this.getBoxCreationPreviewCenter(event, DEFAULT_TORUS_BRUSH_SIZE);
       case "entity":
         switch (target.entityKind) {
           case "triggerVolume":
@@ -6461,6 +6464,10 @@ export class ViewportHost {
         return "wedge-brush";
       case "cylinder-brush":
         return `cylinder-brush:${target.sideCount}`;
+      case "cone-brush":
+        return `cone-brush:${target.sideCount}`;
+      case "torus-brush":
+        return `torus-brush:${target.majorSegmentCount}:${target.tubeSegmentCount}`;
       case "entity":
         return `entity:${target.entityKind}:${target.audioAssetId}:${target.modelAssetId}`;
       case "model-instance":
@@ -6534,6 +6541,23 @@ export class ViewportHost {
             center: previewPosition,
             size: DEFAULT_BOX_BRUSH_SIZE,
             sideCount: toolPreview.target.sideCount
+          })
+        );
+      case "cone-brush":
+        return this.createBrushCreationPreviewObject(
+          createConeBrush({
+            center: previewPosition,
+            size: DEFAULT_BOX_BRUSH_SIZE,
+            sideCount: toolPreview.target.sideCount
+          })
+        );
+      case "torus-brush":
+        return this.createBrushCreationPreviewObject(
+          createTorusBrush({
+            center: previewPosition,
+            size: DEFAULT_TORUS_BRUSH_SIZE,
+            majorSegmentCount: toolPreview.target.majorSegmentCount,
+            tubeSegmentCount: toolPreview.target.tubeSegmentCount
           })
         );
       case "entity": {
@@ -6720,6 +6744,17 @@ export class ViewportHost {
                           kind: "cylinder-brush",
                           sideCount: toolPreview.target.sideCount
                         }
+                      : toolPreview.target.kind === "cone-brush"
+                        ? {
+                            kind: "cone-brush",
+                            sideCount: toolPreview.target.sideCount
+                          }
+                        : toolPreview.target.kind === "torus-brush"
+                          ? {
+                              kind: "torus-brush",
+                              majorSegmentCount: toolPreview.target.majorSegmentCount,
+                              tubeSegmentCount: toolPreview.target.tubeSegmentCount
+                            }
                   : {
                       kind: "box-brush"
                     },
