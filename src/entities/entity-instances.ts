@@ -1,5 +1,10 @@
 import { createOpaqueId } from "../core/ids";
 import type { Vec3 } from "../core/vector";
+import {
+  areProjectDialoguesEqual,
+  cloneProjectDialogue,
+  type ProjectDialogue
+} from "../dialogues/project-dialogues";
 import { normalizeTimeOfDayHours } from "../document/project-time-settings";
 import { isHexColorString } from "../document/world-settings";
 
@@ -74,7 +79,8 @@ export interface NpcEntity extends PositionedEntity {
   presence: NpcPresence;
   yawDegrees: number;
   modelAssetId: string | null;
-  dialogueId: string | null;
+  dialogues: ProjectDialogue[];
+  defaultDialogueId: string | null;
   collider: NpcColliderSettings;
 }
 
@@ -1298,6 +1304,34 @@ function normalizeNpcDialogueId(
   return normalizedDialogueId.length === 0 ? null : normalizedDialogueId;
 }
 
+function normalizeNpcDialogues(
+  dialogues: ProjectDialogue[] | undefined
+): ProjectDialogue[] {
+  if (dialogues === undefined) {
+    return [];
+  }
+
+  return dialogues.map(cloneProjectDialogue);
+}
+
+function normalizeNpcDefaultDialogueId(
+  defaultDialogueId: string | null | undefined,
+  dialogues: readonly ProjectDialogue[],
+  legacyDialogueId?: string | null | undefined
+): string | null {
+  const normalizedDefaultDialogueId = normalizeNpcDialogueId(
+    defaultDialogueId ?? legacyDialogueId ?? null
+  );
+
+  if (normalizedDefaultDialogueId === null) {
+    return null;
+  }
+
+  return dialogues.some((dialogue) => dialogue.id === normalizedDefaultDialogueId)
+    ? normalizedDefaultDialogueId
+    : null;
+}
+
 export function normalizeInteractablePrompt(prompt: string): string {
   const normalizedPrompt = prompt.trim();
 
@@ -1455,9 +1489,11 @@ export function createNpcEntity(
       | "presence"
       | "yawDegrees"
       | "modelAssetId"
-      | "dialogueId"
+      | "dialogues"
+      | "defaultDialogueId"
     >
   > & {
+    dialogueId?: string | null;
     collider?: Partial<NpcColliderSettings>;
   } = {}
 ): NpcEntity {
@@ -1468,8 +1504,11 @@ export function createNpcEntity(
   const modelAssetId = normalizeNpcModelAssetId(
     overrides.modelAssetId ?? DEFAULT_NPC_MODEL_ASSET_ID
   );
-  const dialogueId = normalizeNpcDialogueId(
-    overrides.dialogueId ?? DEFAULT_NPC_DIALOGUE_ID
+  const dialogues = normalizeNpcDialogues(overrides.dialogues);
+  const defaultDialogueId = normalizeNpcDefaultDialogueId(
+    overrides.defaultDialogueId ?? DEFAULT_NPC_DIALOGUE_ID,
+    dialogues,
+    overrides.dialogueId
   );
   const collider = createNpcColliderSettings(overrides.collider);
 
@@ -1490,7 +1529,8 @@ export function createNpcEntity(
     presence,
     yawDegrees: normalizeYawDegrees(yawDegrees),
     modelAssetId,
-    dialogueId,
+    dialogues,
+    defaultDialogueId,
     collider
   };
 }
@@ -1802,7 +1842,11 @@ export function areEntityInstancesEqual(left: EntityInstance, right: EntityInsta
         areNpcPresencesEqual(left.presence, typedRight.presence) &&
         left.yawDegrees === typedRight.yawDegrees &&
         left.modelAssetId === typedRight.modelAssetId &&
-        left.dialogueId === typedRight.dialogueId &&
+        left.defaultDialogueId === typedRight.defaultDialogueId &&
+        left.dialogues.length === typedRight.dialogues.length &&
+        left.dialogues.every((dialogue, index) =>
+          areProjectDialoguesEqual(dialogue, typedRight.dialogues[index]!)
+        ) &&
         left.collider.mode === typedRight.collider.mode &&
         left.collider.eyeHeight === typedRight.collider.eyeHeight &&
         left.collider.capsuleRadius === typedRight.collider.capsuleRadius &&

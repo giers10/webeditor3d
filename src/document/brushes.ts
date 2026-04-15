@@ -821,6 +821,36 @@ export function isRadialPrismVertexId(
   );
 }
 
+export function isConeFaceId(value: unknown): value is ConeFaceId {
+  return value === "bottom" || (typeof value === "string" && value.startsWith("side-"));
+}
+
+export function isConeEdgeId(value: unknown): value is ConeEdgeId {
+  return (
+    typeof value === "string" &&
+    (value.startsWith("bottom-") || value.startsWith("side-"))
+  );
+}
+
+export function isConeVertexId(value: unknown): value is ConeVertexId {
+  return value === "apex" || (typeof value === "string" && value.startsWith("bottom-"));
+}
+
+export function isTorusFaceId(value: unknown): value is TorusFaceId {
+  return typeof value === "string" && value.startsWith("face-");
+}
+
+export function isTorusEdgeId(value: unknown): value is TorusEdgeId {
+  return (
+    typeof value === "string" &&
+    (value.startsWith("major-") || value.startsWith("tube-"))
+  );
+}
+
+export function isTorusVertexId(value: unknown): value is TorusVertexId {
+  return typeof value === "string" && value.startsWith("vertex-");
+}
+
 export function isFaceUvRotationQuarterTurns(value: unknown): value is FaceUvRotationQuarterTurns {
   return typeof value === "number" && FACE_UV_ROTATION_QUARTER_TURNS.includes(value as FaceUvRotationQuarterTurns);
 }
@@ -898,9 +928,24 @@ export function createDefaultWedgeBrushFaces(): WedgeBrushFaces {
 }
 
 export function createDefaultRadialPrismBrushFaces(
-  sideCount = 12
+  sideCount = DEFAULT_RADIAL_PRISM_SIDE_COUNT
 ): Record<RadialPrismFaceId, BrushFace> {
   return createDefaultBrushFaces(getRadialPrismFaceIds(sideCount));
+}
+
+export function createDefaultConeBrushFaces(
+  sideCount = DEFAULT_CONE_SIDE_COUNT
+): Record<ConeFaceId, BrushFace> {
+  return createDefaultBrushFaces(getConeFaceIds(sideCount));
+}
+
+export function createDefaultTorusBrushFaces(
+  majorSegmentCount = DEFAULT_TORUS_MAJOR_SEGMENT_COUNT,
+  tubeSegmentCount = DEFAULT_TORUS_TUBE_SEGMENT_COUNT
+): Record<TorusFaceId, BrushFace> {
+  return createDefaultBrushFaces(
+    getTorusFaceIds(majorSegmentCount, tubeSegmentCount)
+  );
 }
 
 export function createDefaultBoxBrushWaterSettings(): BoxBrushWaterSettings {
