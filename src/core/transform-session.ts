@@ -293,6 +293,25 @@ function createBrushSnapshotFromTarget(
         sideCount: target.sideCount,
         geometry: target.initialGeometry as RadialPrismBrushGeometry
       });
+    case "cone":
+      return createConeBrush({
+        id: target.brushId,
+        center: target.initialCenter,
+        rotationDegrees: target.initialRotationDegrees,
+        size: target.initialSize,
+        sideCount: target.sideCount,
+        geometry: target.initialGeometry as ConeBrushGeometry
+      });
+    case "torus":
+      return createTorusBrush({
+        id: target.brushId,
+        center: target.initialCenter,
+        rotationDegrees: target.initialRotationDegrees,
+        size: target.initialSize,
+        majorSegmentCount: target.majorSegmentCount,
+        tubeSegmentCount: target.tubeSegmentCount,
+        geometry: target.initialGeometry as TorusBrushGeometry
+      });
   }
 }
 
