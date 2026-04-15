@@ -18566,7 +18566,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   <div className="form-section">
                     <div className="label">Faces</div>
                     <div className="face-grid">
-                      {BOX_FACE_IDS.map((faceId) => (
+                      {getBrushFaceIds(selectedBrush).map((faceId) => (
                         <button
                           key={faceId}
                           type="button"
@@ -18585,7 +18585,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           }}
                         >
                           <span className="face-chip__title">
-                            {BOX_FACE_LABELS[faceId]}
+                            {getBrushFaceLabel(selectedBrush, faceId)}
                           </span>
                           <span className="face-chip__meta">{faceId}</span>
                         </button>
@@ -18603,7 +18603,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       <div className="stat-card">
                         <div className="label">Active Edge</div>
                         <div className="value">
-                          {BOX_EDGE_LABELS[selectedEdgeId]}
+                          {getBrushEdgeLabel(selectedBrush, selectedEdgeId)}
                         </div>
                         <div className="material-summary">
                           Edge selection is visible in the viewport. Persistent
@@ -18621,7 +18621,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       <div className="stat-card">
                         <div className="label">Active Vertex</div>
                         <div className="value">
-                          {BOX_VERTEX_LABELS[selectedVertexId]}
+                          {getBrushVertexLabel(selectedBrush, selectedVertexId)}
                         </div>
                         <div className="material-summary">
                           Vertex selection is visible in the viewport.
