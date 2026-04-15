@@ -7,7 +7,7 @@ import {
   type EditorSelection
 } from "../core/selection";
 import type { Vec3 } from "../core/vector";
-import type { BoxBrush } from "../document/brushes";
+import type { Brush } from "../document/brushes";
 import type { SceneDocument } from "../document/scene-document";
 import type { ScenePath } from "../document/paths";
 import type { EntityInstance } from "../entities/entity-instances";
@@ -82,7 +82,7 @@ function finishBounds(bounds: FocusBoundsAccumulator): ViewportFocusTarget | nul
   };
 }
 
-function createBrushFocusTarget(brush: BoxBrush): ViewportFocusTarget {
+function createBrushFocusTarget(brush: Brush): ViewportFocusTarget {
   return {
     center: {
       ...brush.center
@@ -91,7 +91,7 @@ function createBrushFocusTarget(brush: BoxBrush): ViewportFocusTarget {
   };
 }
 
-function includeBrush(bounds: FocusBoundsAccumulator, brush: BoxBrush) {
+function includeBrush(bounds: FocusBoundsAccumulator, brush: Brush) {
   const brushBounds = getBrushBounds(brush);
   includeBounds(bounds, brushBounds.min, brushBounds.max);
 }
