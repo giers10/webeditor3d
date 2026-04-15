@@ -313,6 +313,8 @@ export function ProjectSequencesPanel({
                   const targetKey = getControlTargetRefKey(effect.effect.target);
                   const targetOption =
                     getProjectScheduleTargetOptionByKey(targetOptions, targetKey);
+                  const isSceneLightingEffect =
+                    targetOption?.target.kind === "scene";
                   const effectOptions =
                     targetOption === null
                       ? []
@@ -351,48 +353,56 @@ export function ProjectSequencesPanel({
                         </div>
                       ) : (
                         <>
-                          <div className="vector-inputs vector-inputs--two">
-                            <label className="form-field">
-                              <span className="label">Target</span>
-                              <select
-                                className="select-input"
-                                value={targetOption.key}
-                                onChange={(event) =>
-                                  onSetControlStepTarget(
-                                    selectedSequence.id,
-                                    effectIndex,
-                                    event.currentTarget.value
-                                  )
-                                }
-                              >
-                                {editableTargetOptions.map((option) => (
-                                  <option key={option.key} value={option.key}>
-                                    {option.groupLabel} · {option.label}
-                                  </option>
-                                ))}
-                              </select>
-                            </label>
-                          </div>
-                          <label className="form-field">
-                            <span className="label">Effect</span>
-                            <select
-                              className="select-input"
-                              value={effectOptionId}
-                              onChange={(event) =>
-                                onSetControlStepEffectOption(
-                                  selectedSequence.id,
-                                  effectIndex,
-                                  event.currentTarget.value as ProjectScheduleEffectOptionId
-                                )
-                              }
-                            >
-                              {effectOptions.map((option) => (
-                                <option key={option.id} value={option.id}>
-                                  {option.label}
-                                </option>
-                              ))}
-                            </select>
-                          </label>
+                          {isSceneLightingEffect ? (
+                            <div className="material-summary">
+                              This effect applies to the active scene lighting.
+                            </div>
+                          ) : (
+                            <>
+                              <div className="vector-inputs vector-inputs--two">
+                                <label className="form-field">
+                                  <span className="label">Target</span>
+                                  <select
+                                    className="select-input"
+                                    value={targetOption.key}
+                                    onChange={(event) =>
+                                      onSetControlStepTarget(
+                                        selectedSequence.id,
+                                        effectIndex,
+                                        event.currentTarget.value
+                                      )
+                                    }
+                                  >
+                                    {editableTargetOptions.map((option) => (
+                                      <option key={option.key} value={option.key}>
+                                        {option.groupLabel} · {option.label}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </label>
+                              </div>
+                              <label className="form-field">
+                                <span className="label">Effect</span>
+                                <select
+                                  className="select-input"
+                                  value={effectOptionId}
+                                  onChange={(event) =>
+                                    onSetControlStepEffectOption(
+                                      selectedSequence.id,
+                                      effectIndex,
+                                      event.currentTarget.value as ProjectScheduleEffectOptionId
+                                    )
+                                  }
+                                >
+                                  {effectOptions.map((option) => (
+                                    <option key={option.id} value={option.id}>
+                                      {option.label}
+                                    </option>
+                                  ))}
+                                </select>
+                              </label>
+                            </>
+                          )}
 
                           {effectOptions.find((option) => option.id === effectOptionId)
                             ?.valueKind === "number" ? (
