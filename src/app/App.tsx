@@ -6304,8 +6304,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
     label: string,
     successMessage: string
   ) => {
-    if (selectedBrush === null) {
-      setStatusMessage("Select a whitebox box before editing volume settings.");
+    if (selectedBrush === null || selectedBrush.kind !== "box") {
+      setStatusMessage(
+        "Select a whitebox box before editing box volume settings."
+      );
       return;
     }
 
