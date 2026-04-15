@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { createModelInstance } from "../../src/assets/model-instances";
 import { createBoxBrush } from "../../src/document/brushes";
 import { createScenePath } from "../../src/document/paths";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
@@ -321,6 +322,58 @@ describe("resolveViewportFocusTarget", () => {
         z: -1
       },
       radius: Math.hypot(2, 3, 1)
+    });
+  });
+
+  it("frames multiple selected model instances around their combined authored bounds", () => {
+    const modelInstanceA = createModelInstance({
+      id: "model-focus-a",
+      assetId: "asset-model-focus",
+      position: {
+        x: 0,
+        y: 0,
+        z: 0
+      },
+      scale: {
+        x: 2,
+        y: 2,
+        z: 2
+      }
+    });
+    const modelInstanceB = createModelInstance({
+      id: "model-focus-b",
+      assetId: "asset-model-focus",
+      position: {
+        x: 6,
+        y: 0,
+        z: 0
+      },
+      scale: {
+        x: 2,
+        y: 2,
+        z: 2
+      }
+    });
+    const document = {
+      ...createEmptySceneDocument(),
+      modelInstances: {
+        [modelInstanceA.id]: modelInstanceA,
+        [modelInstanceB.id]: modelInstanceB
+      }
+    };
+
+    expect(
+      resolveViewportFocusTarget(document, {
+        kind: "modelInstances",
+        ids: [modelInstanceA.id, modelInstanceB.id]
+      })
+    ).toEqual({
+      center: {
+        x: 3,
+        y: 0,
+        z: 0
+      },
+      radius: Math.hypot(8, 2, 2) * 0.5
     });
   });
 
