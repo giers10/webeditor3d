@@ -2839,7 +2839,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const selectedTransformTarget = resolveTransformTarget(
     editorState.document,
     editorState.selection,
-    whiteboxSelectionMode
+    whiteboxSelectionMode,
+    editorState.activeSelectionId
   ).target;
   const canTranslateSelectedTarget =
     selectedTransformTarget !== null &&
@@ -5991,7 +5992,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
     const transformTargetResult = resolveTransformTarget(
       editorState.document,
       editorState.selection,
-      whiteboxSelectionMode
+      whiteboxSelectionMode,
+      editorState.activeSelectionId
     );
     const transformTarget = transformTargetResult.target;
 
@@ -8509,7 +8511,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
         const transformTargetResult = resolveTransformTarget(
           duplicatedState.document,
           duplicatedSelection,
-          whiteboxSelectionMode
+          whiteboxSelectionMode,
+          duplicatedState.activeSelectionId
         );
         const transformTarget = transformTargetResult.target;
 
