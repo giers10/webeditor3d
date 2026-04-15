@@ -2955,14 +2955,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
       setInteractableRadiusDraft(String(DEFAULT_INTERACTABLE_RADIUS));
       setInteractablePromptDraft(DEFAULT_INTERACTABLE_PROMPT);
       setInteractableEnabledDraft(true);
-      setSceneExitRadiusDraft(String(DEFAULT_SCENE_EXIT_RADIUS));
-      setSceneExitPromptDraft(DEFAULT_SCENE_EXIT_PROMPT);
-      setSceneExitEnabledDraft(true);
-      setSceneExitTargetSceneIdDraft(sceneTargetOptions[0]?.id ?? "");
-      setSceneExitTargetEntryIdDraft(
-        sceneEntryOptionsBySceneId[sceneTargetOptions[0]?.id ?? ""]?.[0]?.entity
-          .id ?? ""
-      );
       return;
     }
 
@@ -3039,13 +3031,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
         setInteractableRadiusDraft(String(selectedEntity.radius));
         setInteractablePromptDraft(selectedEntity.prompt);
         setInteractableEnabledDraft(selectedEntity.interactionEnabled);
-        break;
-      case "sceneExit":
-        setSceneExitRadiusDraft(String(selectedEntity.radius));
-        setSceneExitPromptDraft(selectedEntity.prompt);
-        setSceneExitEnabledDraft(selectedEntity.interactionEnabled);
-        setSceneExitTargetSceneIdDraft(selectedEntity.targetSceneId);
-        setSceneExitTargetEntryIdDraft(selectedEntity.targetEntryEntityId);
         break;
     }
   }, [editorState.projectDocument, selectedEntity]);
