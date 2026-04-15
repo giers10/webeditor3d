@@ -25,6 +25,7 @@ function createActiveBrushTransformSession(): TransformSessionState {
     target: {
       kind: "brush",
       brushId: brush.id,
+      brushKind: brush.kind,
       initialCenter: brush.center,
       initialRotationDegrees: brush.rotationDegrees,
       initialSize: brush.size,
