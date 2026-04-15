@@ -5776,9 +5776,10 @@ export class ViewportHost {
 
     if (this.whiteboxSelectionMode === "face") {
       const faceMaterialIndex = hit.face?.materialIndex;
+      const renderObjects = this.brushRenderObjects.get(brushId);
       const faceId =
-        typeof faceMaterialIndex === "number"
-          ? (BOX_FACE_IDS[faceMaterialIndex] ?? null)
+        typeof faceMaterialIndex === "number" && renderObjects !== undefined
+          ? (renderObjects.faceIdsInOrder[faceMaterialIndex] ?? null)
           : null;
 
       if (faceId === null) {
