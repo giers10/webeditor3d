@@ -11323,6 +11323,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       label
                     })
                   )}
+                  sceneTransitionTargetOptions={sceneTransitionTargetOptions}
                   visibilityTargetOptions={sequenceVisibilityTargetOptions}
                   modelAnimationTargetOptions={sequenceAnimationTargetOptions}
                   soundTargetOptions={sequenceSoundTargetOptions}
@@ -11821,6 +11822,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   }
                   onAddDialogueStep={handleAddProjectSequenceDialogueStep}
                   onAddTeleportStep={handleAddProjectSequenceTeleportStep}
+                  onAddSceneTransitionStep={
+                    handleAddProjectSequenceSceneTransitionStep
+                  }
                   onAddVisibilityStep={handleAddProjectSequenceVisibilityStep}
                   onAddPlayAnimationStep={
                     handleAddProjectSequencePlayAnimationStep
@@ -11852,6 +11856,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   }
                   onSetTeleportStepTarget={
                     updateProjectSequenceTeleportStepTarget
+                  }
+                  onSetSceneTransitionStepTarget={
+                    updateProjectSequenceSceneTransitionStepTarget
                   }
                   onSetVisibilityStepTarget={
                     updateProjectSequenceVisibilityStepTarget
