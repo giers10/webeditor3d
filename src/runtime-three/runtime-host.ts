@@ -2990,6 +2990,9 @@ export class RuntimeHost {
     const actorStates = new Map(
       nextResolvedScheduler.actors.map((state) => [state.actorId, state])
     );
+    const nextActiveImpulseRoutineIds = new Set(
+      nextResolvedScheduler.impulses.map((routine) => routine.routineId)
+    );
     let changed = false;
 
     for (const npc of this.runtimeScene.npcDefinitions) {
@@ -3058,8 +3061,20 @@ export class RuntimeHost {
       this.runtimeScene.control.baselineResolved
     );
     this.syncResolvedControlStateToRuntime(nextResolvedControl);
+
+    for (const impulseRoutine of nextResolvedScheduler.impulses) {
+      if (this.activeScheduledImpulseRoutineIds.has(impulseRoutine.routineId)) {
+        continue;
+      }
+
+      for (const effect of impulseRoutine.effects) {
+        this.dispatchImpulseSequenceEffect(effect, null);
+      }
+    }
+
     this.runtimeScene.scheduler.resolved = nextResolvedScheduler;
     this.runtimeScene.control.resolved = nextResolvedControl;
+    this.activeScheduledImpulseRoutineIds = nextActiveImpulseRoutineIds;
 
     if (changed) {
       this.refreshRuntimeNpcCollections();
@@ -3220,12 +3235,8 @@ export class RuntimeHost {
       teleportPlayer: (target) => {
         this.applyTeleportPlayerAction(target);
       },
-      activateSceneExit: (sceneExit) => {
-        this.sceneExitHandler?.({
-          sourceExitEntityId: sceneExit.entityId,
-          targetSceneId: sceneExit.targetSceneId,
-          targetEntryEntityId: sceneExit.targetEntryEntityId
-        });
+      startSceneTransition: (request) => {
+        this.applySceneTransitionEffect(request);
       },
       toggleBrushVisibility: (brushId, visible) => {
         this.applyToggleBrushVisibilityAction(brushId, visible);
