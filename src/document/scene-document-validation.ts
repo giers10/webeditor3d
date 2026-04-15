@@ -47,12 +47,11 @@ import {
 } from "../entities/entity-instances";
 import { type InteractionLink } from "../interactions/interaction-links";
 import {
-  BOX_FACE_IDS,
-  BOX_VERTEX_IDS,
   MAX_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT,
   hasPositiveBoxSize,
   isBoxBrushVolumeMode
 } from "./brushes";
+import { getBrushFaceIds, getBrushVertexIds } from "../geometry/whitebox-topology";
 import {
   createSceneDocumentFromProject,
   type ProjectDocument,
