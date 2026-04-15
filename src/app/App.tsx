@@ -216,12 +216,9 @@ import {
 } from "../geometry/box-face-uvs";
 import {
   getBrushDefaultName,
-  getBrushEdgeIds,
   getBrushEdgeLabel,
   getBrushFaceIds,
   getBrushFaceLabel,
-  getBrushKindLabel,
-  getBrushVertexIds,
   getBrushVertexLabel
 } from "../geometry/whitebox-topology";
 import {
