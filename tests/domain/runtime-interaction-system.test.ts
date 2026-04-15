@@ -1005,7 +1005,7 @@ describe("RuntimeInteractionSystem", () => {
     ]);
   });
 
-  it("resolves direct NPC dialogue prompts and dispatches them through the shared start path", () => {
+  it("resolves NPC click prompts from sequence links and dispatches them through the shared sequence path", () => {
     const runtimeScene = createRuntimeSceneFixture();
     runtimeScene.entities.interactables = [];
     runtimeScene.entities.npcs = [
@@ -1046,6 +1046,30 @@ describe("RuntimeInteractionSystem", () => {
         resolvedPath: null
       }
     ];
+    runtimeScene.sequences = {
+      sequences: {
+        "sequence-merchant-talk": createProjectSequence({
+          id: "sequence-merchant-talk",
+          title: "Merchant Talk",
+          effects: [
+            {
+              stepClass: "impulse",
+              type: "makeNpcTalk",
+              npcEntityId: "entity-npc-merchant",
+              dialogueId: "dialogue-merchant"
+            }
+          ]
+        })
+      }
+    };
+    runtimeScene.interactionLinks = {
+      "link-npc-merchant-talk": createRunSequenceInteractionLink({
+        id: "link-npc-merchant-talk",
+        sourceEntityId: "entity-npc-merchant",
+        trigger: "click",
+        sequenceId: "sequence-merchant-talk"
+      })
+    };
 
     const interactionSystem = new RuntimeInteractionSystem();
     const prompt = interactionSystem.resolveClickInteractionPrompt(
@@ -1088,8 +1112,49 @@ describe("RuntimeInteractionSystem", () => {
     );
 
     expect(dispatches).toEqual([
-      "npc:entity-npc-merchant:click:entity-npc-merchant:dialogue-merchant"
+      "interactionLink:entity-npc-merchant:click:entity-npc-merchant:dialogue-merchant"
     ]);
+  });
+
+  it("does not expose direct NPC click prompts when no NPC sequence link is authored", () => {
+    const runtimeScene = createRuntimeSceneFixture();
+    runtimeScene.entities.interactables = [];
+    runtimeScene.entities.npcs = [
+      createRuntimeNpcFixture({
+        entityId: "entity-npc-silent-merchant",
+        dialogueId: "dialogue-silent-merchant",
+        title: "Merchant Greeting",
+        text: "Fresh goods.",
+        position: {
+          x: 0,
+          y: 1,
+          z: 1.5
+        }
+      })
+    ];
+
+    const interactionSystem = new RuntimeInteractionSystem();
+
+    expect(
+      interactionSystem.resolveClickInteractionPrompt(
+        {
+          x: 0,
+          y: 1,
+          z: 0
+        },
+        {
+          x: 0,
+          y: 1.6,
+          z: 0
+        },
+        {
+          x: 0,
+          y: 0,
+          z: 1
+        },
+        runtimeScene
+      )
+    ).toBeNull();
   });
 
   it("shows a click prompt for interactables that run a scene transition sequence", () => {
