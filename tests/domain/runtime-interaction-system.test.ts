@@ -228,7 +228,6 @@ describe("RuntimeInteractionSystem", () => {
         stopAnimation: () => {},
         playSound: () => {},
         stopSound: () => {},
-        startDialogue: () => {}
       }
     );
     interactionSystem.updatePlayerPosition(
@@ -250,7 +249,6 @@ describe("RuntimeInteractionSystem", () => {
         stopAnimation: () => {},
         playSound: () => {},
         stopSound: () => {},
-        startDialogue: () => {}
       }
     );
 
@@ -302,7 +300,6 @@ describe("RuntimeInteractionSystem", () => {
         },
         playSound: () => {},
         stopSound: () => {},
-        startDialogue: () => {}
       }
     );
 
@@ -352,7 +349,6 @@ describe("RuntimeInteractionSystem", () => {
         stopAnimation: () => {},
         playSound: () => {},
         stopSound: () => {},
-        startDialogue: () => {}
       }
     );
     interactionSystem.updatePlayerPosition(
@@ -379,7 +375,6 @@ describe("RuntimeInteractionSystem", () => {
         stopAnimation: () => {},
         playSound: () => {},
         stopSound: () => {},
-        startDialogue: () => {}
       }
     );
 
@@ -527,7 +522,6 @@ describe("RuntimeInteractionSystem", () => {
         stopAnimation: () => {},
         playSound: () => {},
         stopSound: () => {},
-        startDialogue: () => {}
       }
     );
 
@@ -579,7 +573,6 @@ describe("RuntimeInteractionSystem", () => {
         stopSound: (soundEmitterId, link) => {
           dispatches.push(`${link.id}:${soundEmitterId}`);
         },
-        startDialogue: () => {}
       }
     );
 
@@ -1303,7 +1296,6 @@ describe("RuntimeInteractionSystem", () => {
         stopAnimation: () => {},
         playSound: () => {},
         stopSound: () => {},
-        startDialogue: () => {}
       }
     );
 
