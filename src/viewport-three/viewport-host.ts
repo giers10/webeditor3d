@@ -3967,15 +3967,6 @@ export class ViewportHost {
           selected,
           entity.interactionEnabled
         );
-      case "sceneExit":
-        return this.createInteractableRenderObjects(
-          entity.id,
-          entity.position,
-          entity.radius,
-          selected,
-          entity.interactionEnabled,
-          selected ? SCENE_EXIT_SELECTED_COLOR : SCENE_EXIT_COLOR
-        );
     }
   }
 
@@ -6290,7 +6281,6 @@ export class ViewportHost {
           case "soundEmitter":
           case "teleportTarget":
           case "interactable":
-          case "sceneExit":
           case "spotLight":
             return this.getPlanarCreationAnchor(event);
         }
@@ -6542,16 +6532,6 @@ export class ViewportHost {
               "creation-preview",
               previewPosition,
               DEFAULT_INTERACTABLE_RADIUS,
-              false,
-              true,
-              BOX_CREATE_PREVIEW_FILL
-            ).group;
-            break;
-          case "sceneExit":
-            previewGroup = this.createInteractableRenderObjects(
-              "creation-preview",
-              previewPosition,
-              DEFAULT_SCENE_EXIT_RADIUS,
               false,
               true,
               BOX_CREATE_PREVIEW_FILL
