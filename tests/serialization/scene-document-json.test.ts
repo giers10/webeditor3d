@@ -46,7 +46,6 @@ import {
   createPointLightEntity,
   createInteractableEntity,
   createPlayerStartEntity,
-  createSceneExitEntity,
   createSoundEmitterEntity,
   createSpotLightEntity,
   createTeleportTargetEntity,
@@ -1215,12 +1214,6 @@ describe("scene document JSON", () => {
       id: "entity-interactable-authored-state-legacy",
       interactionEnabled: false
     });
-    const sceneExit = createSceneExitEntity({
-      id: "entity-scene-exit-authored-state-legacy",
-      interactionEnabled: false,
-      targetSceneId: "scene-target-legacy",
-      targetEntryEntityId: "entity-scene-entry-target-legacy"
-    });
     const {
       visible: _legacyBrushVisible,
       enabled: _legacyBrushEnabled,
@@ -1237,12 +1230,6 @@ describe("scene document JSON", () => {
       interactionEnabled: legacyInteractableInteractionEnabled,
       ...legacyInteractable
     } = interactable;
-    const {
-      visible: _legacySceneExitVisible,
-      enabled: _legacySceneExitEnabled,
-      interactionEnabled: legacySceneExitInteractionEnabled,
-      ...legacySceneExit
-    } = sceneExit;
 
     const migratedDocument = migrateSceneDocument({
       ...createEmptySceneDocument({ name: "Legacy Authored State Scene" }),
@@ -1260,10 +1247,6 @@ describe("scene document JSON", () => {
         [interactable.id]: {
           ...legacyInteractable,
           enabled: legacyInteractableInteractionEnabled
-        },
-        [sceneExit.id]: {
-          ...legacySceneExit,
-          enabled: legacySceneExitInteractionEnabled
         }
       }
     });
@@ -1278,11 +1261,6 @@ describe("scene document JSON", () => {
       enabled: true
     });
     expect(migratedDocument.entities[interactable.id]).toMatchObject({
-      visible: true,
-      enabled: true,
-      interactionEnabled: false
-    });
-    expect(migratedDocument.entities[sceneExit.id]).toMatchObject({
       visible: true,
       enabled: true,
       interactionEnabled: false
