@@ -130,6 +130,8 @@ export interface RuntimeBoxBrushInstance {
   id: string;
   kind: BrushKind;
   sideCount?: number;
+  majorSegmentCount?: number;
+  tubeSegmentCount?: number;
   visible: boolean;
   center: Vec3;
   rotationDegrees: Vec3;
@@ -627,7 +629,14 @@ function buildRuntimeBrush(
   return {
     id: brush.id,
     kind: brush.kind,
-    sideCount: brush.kind === "radialPrism" ? brush.sideCount : undefined,
+    sideCount:
+      brush.kind === "radialPrism" || brush.kind === "cone"
+        ? brush.sideCount
+        : undefined,
+    majorSegmentCount:
+      brush.kind === "torus" ? brush.majorSegmentCount : undefined,
+    tubeSegmentCount:
+      brush.kind === "torus" ? brush.tubeSegmentCount : undefined,
     visible: brush.visible,
     center: cloneVec3(brush.center),
     rotationDegrees: cloneVec3(brush.rotationDegrees),
