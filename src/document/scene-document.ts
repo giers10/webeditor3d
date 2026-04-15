@@ -32,7 +32,9 @@ import {
   type ProjectSequenceLibrary
 } from "../sequencer/project-sequences";
 
-export const SCENE_DOCUMENT_VERSION = 57 as const;
+export const SCENE_DOCUMENT_VERSION = 58 as const;
+export const SCENE_TRANSITION_SEQUENCE_EFFECTS_SCENE_DOCUMENT_VERSION =
+  58 as const;
 export const PROJECT_SEQUENCE_UNIFIED_VISIBILITY_SCENE_DOCUMENT_VERSION =
   57 as const;
 export const PROJECT_SEQUENCE_EFFECTS_SCENE_DOCUMENT_VERSION = 56 as const;
