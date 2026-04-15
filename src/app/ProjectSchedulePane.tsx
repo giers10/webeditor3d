@@ -573,8 +573,12 @@ export function ProjectSequencerPane({
           )
         : getProjectSequences(sequences).filter((sequence) => {
           const controlSteps = sequence.effects.filter(
-            (effect): effect is Extract<typeof effect, { type: "controlEffect" }> =>
-              effect.type === "controlEffect"
+            (
+              effect
+            ): effect is Extract<
+              (typeof sequence.effects)[number],
+              { type: "controlEffect" }
+            > => effect.type === "controlEffect"
           );
 
           return controlSteps.every(
