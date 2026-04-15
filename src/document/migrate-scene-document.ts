@@ -3774,6 +3774,20 @@ function readProjectSequenceEffect(value: unknown, label: string): SequenceClip 
         type: "startDialogue",
         dialogueId: expectString(value.dialogueId, `${label}.dialogueId`)
       };
+    case "makeNpcTalk":
+      if (stepClass !== "impulse") {
+        throw new Error(`${label}.makeNpcTalk effects must use the impulse class.`);
+      }
+
+      return {
+        stepClass: "impulse",
+        type: "makeNpcTalk",
+        npcEntityId: expectString(value.npcEntityId, `${label}.npcEntityId`),
+        dialogueId: readOptionalDialogueResourceId(
+          value.dialogueId,
+          `${label}.dialogueId`
+        )
+      };
     case "teleportPlayer":
       if (stepClass !== "impulse") {
         throw new Error(`${label}.teleportPlayer effects must use the impulse class.`);
