@@ -1632,25 +1632,13 @@ export class RuntimeHost {
       return;
     }
 
-    if (target.interactionKind === "interactable") {
-      const interactable =
-        this.runtimeScene.entities.interactables.find(
-          (candidate) => candidate.entityId === target.entityId
-        ) ?? null;
-
-      if (interactable !== null) {
-        interactable.interactionEnabled = enabled;
-      }
-      return;
-    }
-
-    const sceneExit =
-      this.runtimeScene.entities.sceneExits.find(
+    const interactable =
+      this.runtimeScene.entities.interactables.find(
         (candidate) => candidate.entityId === target.entityId
       ) ?? null;
 
-    if (sceneExit !== null) {
-      sceneExit.interactionEnabled = enabled;
+    if (interactable !== null) {
+      interactable.interactionEnabled = enabled;
     }
   }
 
