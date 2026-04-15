@@ -12091,7 +12091,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   visibilityTargetOptions={sequenceVisibilityTargetOptions}
                   scheduler={editorState.projectDocument.scheduler}
                   sequences={editorState.projectDocument.sequences}
-                  dialogues={editorState.projectDocument.dialogues}
+                  npcTalkTargetOptions={npcDialogueSequenceTargetOptions}
                   selectedRoutineId={selectedScheduleRoutineId}
                   selectedSequenceId={selectedSequenceId}
                   onSelectRoutine={setSelectedScheduleRoutineId}
@@ -12338,7 +12338,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     )
                   }
                   onAddControlEffect={handleAddProjectSequenceControlEffect}
-                  onAddDialogueStep={handleAddProjectSequenceDialogueStep}
+                  onAddNpcTalkEffect={handleAddProjectSequenceNpcTalkStep}
                   onAddTeleportStep={handleAddProjectSequenceTeleportStep}
                   onAddSceneTransitionStep={
                     handleAddProjectSequenceSceneTransitionStep
@@ -12368,8 +12368,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   onSetControlStepPathLoop={
                     updateProjectSequenceControlStepPathLoop
                   }
-                  onSetDialogueStepDialogueId={
-                    updateProjectSequenceDialogueStepDialogueId
+                  onSetNpcTalkStepNpcEntityId={
+                    updateProjectSequenceNpcTalkStepNpcEntityId
+                  }
+                  onSetNpcTalkStepDialogueId={
+                    updateProjectSequenceNpcTalkStepDialogueId
                   }
                   onSetTeleportStepTarget={
                     updateProjectSequenceTeleportStepTarget

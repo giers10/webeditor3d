@@ -993,7 +993,10 @@ function createBrushTransformTarget(
       kind: "brush",
       brushId: brush.id,
       brushKind: brush.kind,
-      sideCount: brush.kind === "radialPrism" ? brush.sideCount : undefined,
+      sideCount:
+        brush.kind === "radialPrism" || brush.kind === "cone"
+          ? brush.sideCount
+          : undefined,
       majorSegmentCount:
         brush.kind === "torus" ? brush.majorSegmentCount : undefined,
       tubeSegmentCount:
