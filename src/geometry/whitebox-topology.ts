@@ -196,11 +196,14 @@ function getRadialPrismFaceVertexIds(
   faceId: RadialPrismFaceId
 ): WhiteboxVertexId[] {
   if (faceId === "top") {
-    return Array.from({ length: brush.sideCount }, (_, index) => `top-${brush.sideCount - 1 - index}` as const);
+    return Array.from({ length: brush.sideCount }, (_, index) => `top-${index}` as const);
   }
 
   if (faceId === "bottom") {
-    return Array.from({ length: brush.sideCount }, (_, index) => `bottom-${index}` as const);
+    return Array.from(
+      { length: brush.sideCount },
+      (_, index) => `bottom-${brush.sideCount - 1 - index}` as const
+    );
   }
 
   const sideIndex = Number(faceId.slice(5));
@@ -232,6 +235,72 @@ function getRadialPrismEdgeVertexIds(
   const index = Number(edgeId.slice(7));
   const nextIndex = (index + 1) % sideCount;
   return [`bottom-${index}`, `bottom-${nextIndex}`];
+}
+
+function getConeFaceVertexIds(
+  brush: ConeBrush,
+  faceId: ConeFaceId
+): WhiteboxVertexId[] {
+  if (faceId === "bottom") {
+    return Array.from(
+      { length: brush.sideCount },
+      (_, index) => `bottom-${brush.sideCount - 1 - index}` as const
+    );
+  }
+
+  const sideIndex = Number(faceId.slice(5));
+  const nextIndex = (sideIndex + 1) % brush.sideCount;
+  return [`bottom-${sideIndex}`, `bottom-${nextIndex}`, "apex"];
+}
+
+function getConeEdgeVertexIds(
+  edgeId: ConeEdgeId,
+  sideCount: number
+): [ConeVertexId, ConeVertexId] {
+  if (edgeId.startsWith("bottom-")) {
+    const index = Number(edgeId.slice(7));
+    const nextIndex = (index + 1) % sideCount;
+    return [`bottom-${index}`, `bottom-${nextIndex}`];
+  }
+
+  const index = Number(edgeId.slice(5));
+  return [`bottom-${index}`, "apex"];
+}
+
+function getTorusFaceVertexIds(
+  brush: TorusBrush,
+  faceId: TorusFaceId
+): WhiteboxVertexId[] {
+  const [majorIndex, tubeIndex] = parseIndexedWhiteboxId(faceId, "face-");
+  const nextMajorIndex = (majorIndex + 1) % brush.majorSegmentCount;
+  const nextTubeIndex = (tubeIndex + 1) % brush.tubeSegmentCount;
+  return [
+    `vertex-${majorIndex}-${tubeIndex}`,
+    `vertex-${majorIndex}-${nextTubeIndex}`,
+    `vertex-${nextMajorIndex}-${nextTubeIndex}`,
+    `vertex-${nextMajorIndex}-${tubeIndex}`
+  ];
+}
+
+function getTorusEdgeVertexIds(
+  brush: TorusBrush,
+  edgeId: TorusEdgeId
+): [TorusVertexId, TorusVertexId] {
+  if (edgeId.startsWith("major-")) {
+    const [majorIndex, tubeIndex] = parseIndexedWhiteboxId(edgeId, "major-");
+    const nextMajorIndex = (majorIndex + 1) % brush.majorSegmentCount;
+    return [
+      `vertex-${majorIndex}-${tubeIndex}`,
+      `vertex-${nextMajorIndex}-${tubeIndex}`
+    ];
+  }
+
+  const [majorIndex, tubeIndex] = parseIndexedWhiteboxId(edgeId, "tube-");
+  const nextTubeIndex = (tubeIndex + 1) % brush.tubeSegmentCount;
+  return [
+    `vertex-${majorIndex}-${tubeIndex}`,
+    `vertex-${majorIndex}-${nextTubeIndex}`
+  ];
 }
 
 export function getBrushFaceIds(brush: Brush): WhiteboxFaceId[] {

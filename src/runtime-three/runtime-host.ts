@@ -263,6 +263,7 @@ export interface RuntimeSceneTransitionRequest {
 }
 
 export interface RuntimeDialogueState {
+  npcEntityId: string;
   dialogueId: string;
   title: string;
   lineId: string;
@@ -712,9 +713,14 @@ export class RuntimeHost {
       return;
     }
 
+    const npc =
+      this.runtimeScene.entities.npcs.find(
+        (candidate) => candidate.entityId === this.currentDialogue?.npcEntityId
+      ) ?? null;
     const dialogue =
-      this.runtimeScene.dialogues.dialogues[this.currentDialogue.dialogueId] ??
-      null;
+      npc?.dialogues.find(
+        (candidate) => candidate.id === this.currentDialogue?.dialogueId
+      ) ?? null;
 
     if (dialogue === null) {
       this.setRuntimeDialogue(null);
@@ -729,7 +735,8 @@ export class RuntimeHost {
     }
 
     this.setRuntimeDialogue(
-      this.createRuntimeDialogueState(
+      this.createRuntimeNpcDialogueState(
+        this.currentDialogue.npcEntityId,
         dialogue.id,
         nextLineIndex,
         this.currentDialogue.source
@@ -3287,6 +3294,9 @@ export class RuntimeHost {
       stopSound: (soundEmitterId) => {
         this.audioSystem.stopSound(soundEmitterId);
       },
+      startNpcDialogue: (npcEntityId, dialogueId, source) => {
+        this.openRuntimeNpcDialogue(npcEntityId, dialogueId, source);
+      },
       startDialogue: (dialogueId, source) => {
         this.openRuntimeDialogue(dialogueId, source);
       },
@@ -3311,6 +3321,50 @@ export class RuntimeHost {
     this.interactionPromptHandler?.(prompt);
   }
 
+  private createRuntimeNpcDialogueState(
+    npcEntityId: string,
+    dialogueId: string,
+    lineIndex: number,
+    source: RuntimeDialogueStartSource
+  ): RuntimeDialogueState | null {
+    if (this.runtimeScene === null) {
+      return null;
+    }
+
+    const npc =
+      this.runtimeScene.entities.npcs.find(
+        (candidate) => candidate.entityId === npcEntityId
+      ) ?? null;
+
+    if (npc === null) {
+      return null;
+    }
+
+    const dialogue = npc.dialogues.find((candidate) => candidate.id === dialogueId);
+
+    if (dialogue === undefined) {
+      return null;
+    }
+
+    const line = dialogue.lines[lineIndex];
+
+    if (line === undefined) {
+      return null;
+    }
+
+    return {
+      npcEntityId,
+      dialogueId,
+      title: dialogue.title,
+      lineId: line.id,
+      lineIndex,
+      lineCount: dialogue.lines.length,
+      speakerName: line.speakerName,
+      text: line.text,
+      source
+    };
+  }
+
   private createRuntimeDialogueState(
     dialogueId: string,
     lineIndex: number,
@@ -3333,6 +3387,7 @@ export class RuntimeHost {
     }
 
     return {
+      npcEntityId: source.sourceEntityId ?? "legacy-dialogue-source",
       dialogueId,
       title: dialogue.title,
       lineId: line.id,
@@ -3346,6 +3401,7 @@ export class RuntimeHost {
 
   private setRuntimeDialogue(dialogue: RuntimeDialogueState | null) {
     if (
+      this.currentDialogue?.npcEntityId === dialogue?.npcEntityId &&
       this.currentDialogue?.dialogueId === dialogue?.dialogueId &&
       this.currentDialogue?.lineId === dialogue?.lineId &&
       this.currentDialogue?.lineIndex === dialogue?.lineIndex &&
@@ -3383,6 +3439,65 @@ export class RuntimeHost {
 
     if (dialogue === null) {
       console.warn(`dialogue: missing dialogue ${dialogueId}`);
+      return;
+    }
+
+    this.setRuntimeDialogue(dialogue);
+  }
+
+  private openRuntimeNpcDialogue(
+    npcEntityId: string,
+    dialogueId: string | null,
+    source: RuntimeDialogueStartSource = {
+      kind: "direct",
+      sourceEntityId: null,
+      linkId: null,
+      trigger: null
+    }
+  ) {
+    if (this.runtimeScene === null) {
+      return;
+    }
+
+    const npc =
+      this.runtimeScene.entities.npcs.find(
+        (candidate) => candidate.entityId === npcEntityId
+      ) ?? null;
+
+    if (npc === null) {
+      console.warn(`dialogue: missing npc ${npcEntityId}`);
+      return;
+    }
+
+    const resolvedDialogueId =
+      dialogueId ??
+      npc.defaultDialogueId ??
+      npc.dialogues[0]?.id ??
+      null;
+
+    if (resolvedDialogueId === null) {
+      console.warn(`dialogue: npc ${npcEntityId} has no dialogue to speak`);
+      return;
+    }
+
+    if (
+      this.currentDialogue?.npcEntityId === npcEntityId &&
+      this.currentDialogue?.dialogueId === resolvedDialogueId
+    ) {
+      return;
+    }
+
+    const dialogue = this.createRuntimeNpcDialogueState(
+      npcEntityId,
+      resolvedDialogueId,
+      0,
+      source
+    );
+
+    if (dialogue === null) {
+      console.warn(
+        `dialogue: npc ${npcEntityId} is missing dialogue ${resolvedDialogueId}`
+      );
       return;
     }
 
