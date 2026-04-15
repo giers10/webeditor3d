@@ -7792,7 +7792,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     if (defaultSequence === null) {
       openSequencerSequenceEditor();
       setStatusMessage(
-        "Open the Sequencer sequence editor and author a sequence with at least one impulse effect before adding a sequence link."
+        "Open the Sequencer sequence editor and author a sequence with at least one start effect before adding a sequence link."
       );
       return;
     }
@@ -8327,7 +8327,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
       if (defaultSequence === null) {
         openSequencerSequenceEditor();
         setStatusMessage(
-          "Open the Sequencer sequence editor and author a sequence with at least one impulse effect before switching this link to run sequence."
+          "Open the Sequencer sequence editor and author a sequence with at least one start effect before switching this link to run sequence."
         );
         return;
       }
