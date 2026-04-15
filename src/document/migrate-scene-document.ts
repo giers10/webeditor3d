@@ -121,7 +121,6 @@ import {
   getRadialPrismFaceIds,
   getRadialPrismVertexIds,
   isBoxBrushVolumeMode,
-  isBoxFaceId,
   isFaceUvRotationQuarterTurns,
   normalizeRadialPrismSideCount,
   normalizeBrushName,
@@ -2071,7 +2070,9 @@ function readBrushGeometry<T extends { vertices: Record<string, unknown> }>(
     throw new Error(`${label}.vertices must be an object.`);
   }
 
-  const extraVertexKeys = Object.keys(value.vertices).filter(
+  const vertices = value.vertices;
+
+  const extraVertexKeys = Object.keys(vertices).filter(
     (vertexId) => !vertexIds.includes(vertexId as WhiteboxVertexId)
   );
 
@@ -2085,7 +2086,7 @@ function readBrushGeometry<T extends { vertices: Record<string, unknown> }>(
     vertices: Object.fromEntries(
       vertexIds.map((vertexId) => [
         vertexId,
-        readVec3(value.vertices[vertexId], `${label}.vertices.${vertexId}`)
+        readVec3(vertices[vertexId], `${label}.vertices.${vertexId}`)
       ])
     ) as T["vertices"]
   } as T;
@@ -2183,14 +2184,14 @@ function readBrushes(
           materials,
           allowMissingUvState,
           WEDGE_FACE_IDS
-        )
+        ) as ReturnType<typeof createWedgeBrush>["faces"]
       });
       continue;
     }
 
     if (kind === "radialPrism") {
       const sideCount = normalizeRadialPrismSideCount(
-        expectNumber(brushValue.sideCount, `brushes.${brushId}.sideCount`)
+        expectFiniteNumber(brushValue.sideCount, `brushes.${brushId}.sideCount`)
       );
 
       brushes[brushId] = createRadialPrismBrush({
@@ -2208,7 +2209,7 @@ function readBrushes(
           materials,
           allowMissingUvState,
           getRadialPrismFaceIds(sideCount)
-        )
+        ) as ReturnType<typeof createRadialPrismBrush>["faces"]
       });
       continue;
     }
