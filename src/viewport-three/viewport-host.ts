@@ -1473,39 +1473,41 @@ export class ViewportHost {
   private getTransformTargetOrientation(
     session: ActiveTransformSession
   ): Quaternion | null {
-    switch (session.target.kind) {
+    const target = session.target;
+    const preview = session.preview;
+
+    switch (target.kind) {
       case "brush":
-        if (session.preview.kind !== "brush") {
+        if (preview.kind !== "brush") {
           return null;
         }
 
-        return this.createRotationQuaternion(session.preview.rotationDegrees);
+        return this.createRotationQuaternion(preview.rotationDegrees);
       case "brushes":
-        if (session.preview.kind !== "brushes") {
+        if (preview.kind !== "brushes") {
           return null;
         }
 
-        const activeBrushPreview = session.preview.items.find(
-          (item) => item.brushId === session.target.activeBrushId
+        const activeBrushPreview = preview.items.find(
+          (item) => item.brushId === target.activeBrushId
         );
 
         return this.createRotationQuaternion(
           activeBrushPreview?.rotationDegrees ?? { x: 0, y: 0, z: 0 }
         );
       case "modelInstance":
-        if (session.preview.kind !== "modelInstance") {
+        if (preview.kind !== "modelInstance") {
           return null;
         }
 
-        return this.createRotationQuaternion(session.preview.rotationDegrees);
+        return this.createRotationQuaternion(preview.rotationDegrees);
       case "modelInstances":
-        if (session.preview.kind !== "modelInstances") {
+        if (preview.kind !== "modelInstances") {
           return null;
         }
 
-        const activeModelInstancePreview = session.preview.items.find(
-          (item) =>
-            item.modelInstanceId === session.target.activeModelInstanceId
+        const activeModelInstancePreview = preview.items.find(
+          (item) => item.modelInstanceId === target.activeModelInstanceId
         );
 
         return this.createRotationQuaternion(
@@ -1514,36 +1516,36 @@ export class ViewportHost {
       case "pathPoint":
         return null;
       case "entity":
-        if (session.preview.kind !== "entity") {
+        if (preview.kind !== "entity") {
           return null;
         }
 
-        switch (session.preview.rotation.kind) {
+        switch (preview.rotation.kind) {
           case "yaw":
             return this.createRotationQuaternion({
               x: 0,
-              y: session.preview.rotation.yawDegrees,
+              y: preview.rotation.yawDegrees,
               z: 0
             });
           case "direction":
             return new Quaternion().setFromUnitVectors(
               new Vector3(0, 1, 0),
               new Vector3(
-                session.preview.rotation.direction.x,
-                session.preview.rotation.direction.y,
-                session.preview.rotation.direction.z
+                preview.rotation.direction.x,
+                preview.rotation.direction.y,
+                preview.rotation.direction.z
               ).normalize()
             );
           case "none":
             return null;
         }
       case "entities":
-        if (session.preview.kind !== "entities") {
+        if (preview.kind !== "entities") {
           return null;
         }
 
-        const activeEntityPreview = session.preview.items.find(
-          (item) => item.entityId === session.target.activeEntityId
+        const activeEntityPreview = preview.items.find(
+          (item) => item.entityId === target.activeEntityId
         );
 
         if (activeEntityPreview === undefined) {
@@ -1583,11 +1585,11 @@ export class ViewportHost {
       case "brushFace":
       case "brushEdge":
       case "brushVertex":
-        if (session.preview.kind !== "brush") {
+        if (preview.kind !== "brush") {
           return null;
         }
 
-        return this.createRotationQuaternion(session.preview.rotationDegrees);
+        return this.createRotationQuaternion(preview.rotationDegrees);
     }
   }
 
