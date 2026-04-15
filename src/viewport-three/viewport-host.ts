@@ -1546,7 +1546,11 @@ export class ViewportHost {
           (item) => item.entityId === session.target.activeEntityId
         );
 
-        switch (activeEntityPreview?.rotation.kind) {
+        if (activeEntityPreview === undefined) {
+          return null;
+        }
+
+        switch (activeEntityPreview.rotation.kind) {
           case "yaw":
             return this.createRotationQuaternion({
               x: 0,
