@@ -98,7 +98,6 @@ describe("project document JSON", () => {
           lines: [
             {
               id: "dialogue-line-market-1",
-              speakerName: "Merchant",
               text: "Fresh bread."
             }
           ]
@@ -175,7 +174,6 @@ describe("project document JSON", () => {
           lines: [
             {
               id: "dialogue-line-market-1",
-              speakerName: "Merchant",
               text: "Fresh fruit."
             }
           ]
