@@ -1079,6 +1079,7 @@ function buildRuntimeControlSurface(
         pathId: null,
         speed: null,
         loop: false,
+        smoothPath: true,
         progressMode: null,
         source: defaultSource
       })
