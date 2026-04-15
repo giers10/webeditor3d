@@ -495,7 +495,13 @@ export function listProjectScheduleEffectOptions(
     case "actor":
       return [
         PROJECT_SCHEDULE_EFFECT_OPTIONS["actor.present"],
-        PROJECT_SCHEDULE_EFFECT_OPTIONS["actor.hidden"]
+        PROJECT_SCHEDULE_EFFECT_OPTIONS["actor.hidden"],
+        ...((targetOption.defaults.actorAnimationClipNames?.length ?? 0) > 0
+          ? [PROJECT_SCHEDULE_EFFECT_OPTIONS["actor.playAnimation"]]
+          : []),
+        ...((targetOption.defaults.actorPathOptions?.length ?? 0) > 0
+          ? [PROJECT_SCHEDULE_EFFECT_OPTIONS["actor.followPath"]]
+          : [])
       ];
     case "modelInstance": {
       const options: ProjectScheduleEffectOption[] = [];
@@ -556,10 +562,9 @@ export function getProjectScheduleEffectOptionId(
     case "setActorPresence":
       return effect.active ? "actor.present" : "actor.hidden";
     case "playActorAnimation":
+      return "actor.playAnimation";
     case "followActorPath":
-      throw new Error(
-        "Actor animation and follow-path effects use the dedicated actor routine editor."
-      );
+      return "actor.followPath";
     case "playModelAnimation":
       return "model.playAnimation";
     case "stopModelAnimation":
@@ -613,6 +618,45 @@ export function createProjectScheduleEffectFromOption(options: {
           (targetOption.target as ReturnType<typeof createActorControlTargetRef>).actorId
         ),
         active: false
+      });
+    case "actor.playAnimation":
+      return createPlayActorAnimationControlEffect({
+        target: createActorControlTargetRef(
+          (targetOption.target as ReturnType<typeof createActorControlTargetRef>).actorId
+        ),
+        clipName:
+          previousEffect?.type === "playActorAnimation" &&
+          (targetOption.defaults.actorAnimationClipNames ?? []).includes(
+            previousEffect.clipName
+          )
+            ? previousEffect.clipName
+            : targetOption.defaults.actorAnimationClipNames?.[0] ?? "Animation",
+        loop:
+          previousEffect?.type === "playActorAnimation"
+            ? previousEffect.loop
+            : targetOption.defaults.actorAnimationLoop
+      });
+    case "actor.followPath":
+      return createFollowActorPathControlEffect({
+        target: createActorControlTargetRef(
+          (targetOption.target as ReturnType<typeof createActorControlTargetRef>).actorId
+        ),
+        pathId:
+          previousEffect?.type === "followActorPath" &&
+          (targetOption.defaults.actorPathOptions ?? []).some(
+            (pathOption) => pathOption.pathId === previousEffect.pathId
+          )
+            ? previousEffect.pathId
+            : targetOption.defaults.actorPathOptions?.[0]?.pathId ?? "path",
+        speed:
+          previousEffect?.type === "followActorPath"
+            ? previousEffect.speed
+            : targetOption.defaults.actorPathSpeed ?? 1,
+        loop:
+          previousEffect?.type === "followActorPath"
+            ? previousEffect.loop
+            : targetOption.defaults.actorPathOptions?.[0]?.loop ?? false,
+        progressMode: "deriveFromTime"
       });
     case "model.playAnimation":
       return createPlayModelAnimationControlEffect({
