@@ -62,7 +62,6 @@ import {
   disposeStarterMaterialTextureSet,
   type StarterMaterialTextureSet
 } from "../materials/starter-material-textures";
-import type { MaterialDef } from "../materials/starter-material-library";
 import {
   applyAdvancedRenderingLightShadowFlags,
   applyAdvancedRenderingRenderableShadowFlags,
