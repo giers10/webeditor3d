@@ -1828,20 +1828,9 @@ export class RuntimeHost {
         : resolveBoxVolumeRenderPaths(this.currentWorld.advancedRendering);
 
     for (const brush of brushes) {
-      const geometryBrush: BoxBrush = {
-        id: brush.id,
-        kind: "box",
-        name: undefined,
-        visible: brush.visible,
-        enabled: true,
-        center: brush.center,
-        rotationDegrees: brush.rotationDegrees,
-        size: brush.size,
-        geometry: brush.geometry,
-        faces: brush.faces,
-        volume: brush.volume
-      };
-      const geometry = buildBoxBrushDerivedMeshData(geometryBrush).geometry;
+      const geometryBrush = createRuntimeGeometryBrush(brush);
+      const derivedMesh = buildBoxBrushDerivedMeshData(geometryBrush);
+      const geometry = derivedMesh.geometry;
       const staticContactPatches =
         brush.volume.mode === "water"
           ? this.collectRuntimeStaticWaterContactPatches(brush)
@@ -1855,56 +1844,22 @@ export class RuntimeHost {
             )
           : [];
 
-      const materials = this.createFogMaterialSet(brush, volumeRenderPaths) ?? [
-        this.createFaceMaterial(
+      const materials =
+        this.createFogMaterialSet(
           brush,
-          "posX",
-          brush.faces.posX.material,
           volumeRenderPaths,
-          contactPatches,
-          staticContactPatches
-        ),
-        this.createFaceMaterial(
-          brush,
-          "negX",
-          brush.faces.negX.material,
-          volumeRenderPaths,
-          contactPatches,
-          staticContactPatches
-        ),
-        this.createFaceMaterial(
-          brush,
-          "posY",
-          brush.faces.posY.material,
-          volumeRenderPaths,
-          contactPatches,
-          staticContactPatches
-        ),
-        this.createFaceMaterial(
-          brush,
-          "negY",
-          brush.faces.negY.material,
-          volumeRenderPaths,
-          contactPatches,
-          staticContactPatches
-        ),
-        this.createFaceMaterial(
-          brush,
-          "posZ",
-          brush.faces.posZ.material,
-          volumeRenderPaths,
-          contactPatches,
-          staticContactPatches
-        ),
-        this.createFaceMaterial(
-          brush,
-          "negZ",
-          brush.faces.negZ.material,
-          volumeRenderPaths,
-          contactPatches,
-          staticContactPatches
-        )
-      ];
+          derivedMesh.faceIdsInOrder
+        ) ??
+        derivedMesh.faceIdsInOrder.map((faceId) =>
+          this.createFaceMaterial(
+            brush,
+            faceId,
+            brush.faces[faceId]?.material ?? null,
+            volumeRenderPaths,
+            contactPatches,
+            staticContactPatches
+          )
+        );
 
       const mesh = new Mesh(geometry, materials);
       mesh.position.set(brush.center.x, brush.center.y, brush.center.z);
@@ -1927,7 +1882,8 @@ export class RuntimeHost {
     volumeRenderPaths: {
       fog: "performance" | "quality";
       water: "performance" | "quality";
-    }
+    },
+    faceIds: WhiteboxFaceId[]
   ): Material[] | null {
     if (brush.volume.mode !== "fog") {
       return null;
@@ -1947,10 +1903,7 @@ export class RuntimeHost {
       });
 
       this.volumeAnimatedUniforms.push(fogMaterial.animationUniform);
-      return Array.from(
-        { length: BOX_FACE_MATERIAL_COUNT },
-        () => fogMaterial.material
-      );
+      return faceIds.map(() => fogMaterial.material);
     }
 
     const densityOpacity = Math.max(
@@ -1964,7 +1917,7 @@ export class RuntimeHost {
       depthWrite: false
     });
 
-    return Array.from({ length: BOX_FACE_MATERIAL_COUNT }, () => fogMaterial);
+    return faceIds.map(() => fogMaterial);
   }
 
   private configureFogVolumeMesh(
@@ -2211,8 +2164,8 @@ export class RuntimeHost {
 
   private createFaceMaterial(
     brush: RuntimeBoxBrushInstance,
-    faceId: "posX" | "negX" | "posY" | "negY" | "posZ" | "negZ",
-    material: RuntimeBoxBrushInstance["faces"]["posX"]["material"],
+    faceId: WhiteboxFaceId,
+    material: RuntimeBrushFace["material"],
     volumeRenderPaths: {
       fog: "performance" | "quality";
       water: "performance" | "quality";
@@ -2225,6 +2178,7 @@ export class RuntimeHost {
         0.05,
         Math.min(1, brush.volume.water.surfaceOpacity)
       );
+      const isTopFace = brush.kind === "box" && faceId === "posY";
       const waterMaterial = createWaterMaterial({
         colorHex: brush.volume.water.colorHex,
         surfaceOpacity: brush.volume.water.surfaceOpacity,
@@ -2232,12 +2186,12 @@ export class RuntimeHost {
         surfaceDisplacementEnabled:
           brush.volume.water.surfaceDisplacementEnabled,
         opacity:
-          faceId === "posY"
+          isTopFace
             ? Math.min(1, baseOpacity + 0.18)
             : baseOpacity * 0.5,
         quality: volumeRenderPaths.water === "quality",
         wireframe: false,
-        isTopFace: faceId === "posY",
+        isTopFace,
         time: this.volumeTime,
         halfSize: {
           x: brush.size.x * 0.5,
@@ -2246,7 +2200,7 @@ export class RuntimeHost {
         contactPatches,
         reflection: {
           texture: null,
-          enabled: faceId === "posY"
+          enabled: isTopFace
         }
       });
 
@@ -2255,7 +2209,7 @@ export class RuntimeHost {
       }
 
       if (
-        faceId === "posY" &&
+        isTopFace &&
         waterMaterial.contactPatchesUniform !== null &&
         waterMaterial.contactPatchAxesUniform !== null
       ) {
@@ -2630,7 +2584,7 @@ export class RuntimeHost {
   }
 
   private getOrCreateTextureSet(
-    material: NonNullable<RuntimeBoxBrushInstance["faces"]["posX"]["material"]>
+    material: NonNullable<RuntimeBrushFace["material"]>
   ) {
     const signature = createStarterMaterialSignature(material);
     const cachedTexture = this.materialTextureCache.get(material.id);
