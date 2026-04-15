@@ -943,13 +943,15 @@ export function ProjectSequencerPane({
                     onChange={(event) =>
                       onSetRoutineSequenceId(
                         selectedRoutine.id,
-                        event.currentTarget.value === ""
-                          ? null
-                          : event.currentTarget.value
+                        event.currentTarget.value
                       )
                     }
                   >
-                    <option value="">This Placement (inline effects)</option>
+                    {selectedRoutine.sequenceId === null ? (
+                      <option value="" disabled>
+                        Select Sequence
+                      </option>
+                    ) : null}
                     {compatibleHeldSequences.map((sequence) => (
                       <option key={sequence.id} value={sequence.id}>
                         {sequence.title}
@@ -958,82 +960,43 @@ export function ProjectSequencerPane({
                   </select>
                 </label>
                 <div className="inline-actions">
-                  <button
-                    className="toolbar__button toolbar__button--compact"
-                    type="button"
-                    onClick={() => {
-                      onSelectSequence(selectedRoutine.sequenceId ?? selectedSequenceId);
-                      onSetMode("sequence");
-                    }}
-                  >
-                    Edit Sequences
-                  </button>
+                  {selectedRoutine.sequenceId === null ? (
+                    <button
+                      className="toolbar__button toolbar__button--compact"
+                      type="button"
+                      onClick={() => onCreateRoutineSequence(selectedRoutine.id)}
+                    >
+                      Create Attached Sequence
+                    </button>
+                  ) : (
+                    <button
+                      className="toolbar__button toolbar__button--compact"
+                      type="button"
+                      onClick={() => {
+                        onSelectSequence(
+                          selectedRoutine.sequenceId ?? selectedSequenceId
+                        );
+                        onSetMode("sequence");
+                      }}
+                    >
+                      Edit Sequence
+                    </button>
+                  )}
                 </div>
-                {selectedRoutine.sequenceId !== null ? (
+                {selectedAttachedSequence !== null ? (
                   <div className="material-summary">
-                    This placement resolves held effects from the selected
-                    sequence. Inline effects stay preserved as fallback, but are
-                    not edited while a sequence is attached.
+                    This placement resolves held effects from{" "}
+                    <strong>{selectedAttachedSequence.title}</strong>.
+                    Edit animation, path, presence, lighting, or other held
+                    engine effects in the Sequence Editor.
                   </div>
                 ) : null}
-                {selectedRoutine.sequenceId === null &&
-                compatibleHeldSequences.length === 0 ? (
+                {selectedRoutine.sequenceId === null ? (
                   <div className="material-summary">
                     {selectedRoutine.target.kind === "global"
-                      ? "No compatible impulse sequence is authored yet for this project event lane. Use Sequence Editor to author one-shot effects like scene transitions, dialogue starts, or teleports."
-                      : "No compatible sequence with held effects is authored for this target yet. Use Sequence Editor to author effects, or keep this placement on its own inline effects."}
+                      ? "Project event placements run attached sequences only. Create a sequence with impulse effects like scene transitions, dialogue starts, or teleports."
+                      : "This placement has no attached sequence yet. Create one, then author presence, animation, path, lighting, sound, or other engine effects inside the Sequence Editor."}
                   </div>
-                ) : null}
-                {selectedRoutine.sequenceId === null &&
-                selectedRoutine.target.kind === "actor" ? (
-                  <>
-                    <label className="form-field">
-                      <span className="label">Presence</span>
-                      <select
-                        className="select-input"
-                        value={
-                          selectedActorPresenceEffect?.active === false
-                            ? "hidden"
-                            : "present"
-                        }
-                        onChange={(event) =>
-                          onSetActorRoutinePresence(
-                            selectedRoutine.id,
-                            event.currentTarget.value !== "hidden"
-                          )
-                        }
-                      >
-                        <option value="present">Present</option>
-                        <option value="hidden">Hidden</option>
-                      </select>
-                    </label>
-                  </>
-                ) : selectedRoutine.target.kind === "global" ? (
-                  <div className="material-summary">
-                    Project event placements run attached sequences only. Add or
-                    pick a sequence with impulse effects like scene transitions,
-                    dialogue starts, teleports, or other one-shot engine events.
-                  </div>
-                ) : selectedRoutine.sequenceId === null ? (
-                  <label className="form-field">
-                    <span className="label">Effect</span>
-                    <select
-                      className="select-input"
-                      value={selectedEffectOptionId ?? ""}
-                      onChange={(event) =>
-                        onSetRoutineEffectOption(
-                          selectedRoutine.id,
-                          event.currentTarget.value as ProjectScheduleEffectOptionId
-                        )
-                      }
-                    >
-                      {selectedEffectOptions.map((effectOption) => (
-                        <option key={effectOption.id} value={effectOption.id}>
-                          {effectOption.label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
                 ) : null}
                 <label className="form-field form-field--inline">
                   <input
@@ -1139,268 +1102,6 @@ export function ProjectSequencerPane({
                   />
                 </label>
               </div>
-
-              {selectedRoutine.sequenceId === null &&
-              selectedRoutine.target.kind === "actor" ? (
-                <>
-                  <div className="form-section">
-                    <div className="label">Animation</div>
-                    <label className="form-field">
-                      <span className="label">Clip</span>
-                      <select
-                        className="select-input"
-                        value={selectedActorAnimationEffect?.clipName ?? ""}
-                        onChange={(event) =>
-                          onSetActorRoutineAnimationClip(
-                            selectedRoutine.id,
-                            event.currentTarget.value === ""
-                              ? null
-                              : event.currentTarget.value
-                          )
-                        }
-                      >
-                        <option value="">None</option>
-                        {(selectedTargetOption.defaults.actorAnimationClipNames ?? []).map(
-                          (clipName) => (
-                            <option key={clipName} value={clipName}>
-                              {clipName}
-                            </option>
-                          )
-                        )}
-                      </select>
-                    </label>
-                    <label className="form-field form-field--inline">
-                      <input
-                        type="checkbox"
-                        checked={selectedActorAnimationEffect?.loop !== false}
-                        disabled={selectedActorAnimationEffect === null}
-                        onChange={(event) =>
-                          onSetActorRoutineAnimationLoop(
-                            selectedRoutine.id,
-                            event.currentTarget.checked
-                          )
-                        }
-                      />
-                      <span className="label">Loop</span>
-                    </label>
-                    {(selectedTargetOption.defaults.actorAnimationClipNames ?? [])
-                      .length === 0 ? (
-                      <div className="schedule-pane__summary">
-                        Animation clips are available only when this actor has one
-                        uniquely bound NPC model with imported clips.
-                      </div>
-                    ) : null}
-                  </div>
-
-                  <div className="form-section">
-                    <div className="label">Path</div>
-                    <label className="form-field">
-                      <span className="label">Path</span>
-                      <select
-                        className="select-input"
-                        value={selectedActorPathEffect?.pathId ?? ""}
-                        onChange={(event) =>
-                          onSetActorRoutinePath(
-                            selectedRoutine.id,
-                            event.currentTarget.value === ""
-                              ? null
-                              : event.currentTarget.value
-                          )
-                        }
-                      >
-                        <option value="">None</option>
-                        {(selectedTargetOption.defaults.actorPathOptions ?? []).map(
-                          (pathOption) => (
-                            <option key={pathOption.pathId} value={pathOption.pathId}>
-                              {pathOption.label}
-                            </option>
-                          )
-                        )}
-                      </select>
-                    </label>
-                    <label className="form-field">
-                      <span className="label">Speed</span>
-                      <input
-                        key={`${selectedRoutine.id}-actor-path-speed`}
-                        className="text-input"
-                        type="number"
-                        min="0.01"
-                        step="0.1"
-                        defaultValue={
-                          selectedActorPathEffect?.speed ??
-                          selectedTargetOption.defaults.actorPathSpeed ??
-                          1
-                        }
-                        disabled={selectedActorPathEffect === null}
-                        onBlur={(event) =>
-                          onSetActorRoutinePathSpeed(
-                            selectedRoutine.id,
-                            Number(event.currentTarget.value)
-                          )
-                        }
-                        onKeyDown={(event) =>
-                          handleCommitOnEnter(event, () =>
-                            onSetActorRoutinePathSpeed(
-                              selectedRoutine.id,
-                              Number(event.currentTarget.value)
-                            )
-                          )
-                        }
-                      />
-                    </label>
-                    <label className="form-field form-field--inline">
-                      <input
-                        type="checkbox"
-                        checked={selectedActorPathEffect?.loop ?? false}
-                        disabled={selectedActorPathEffect === null}
-                        onChange={(event) =>
-                          onSetActorRoutinePathLoop(
-                            selectedRoutine.id,
-                            event.currentTarget.checked
-                          )
-                        }
-                      />
-                      <span className="label">Loop</span>
-                    </label>
-                    {(selectedTargetOption.defaults.actorPathOptions ?? []).length ===
-                    0 ? (
-                      <div className="schedule-pane__summary">
-                        Paths are available only when this actor has one uniquely
-                        bound NPC usage in a scene with enabled authored paths.
-                      </div>
-                    ) : null}
-                  </div>
-                </>
-              ) : selectedRoutine.target.kind === "global" ? null : selectedRoutine.sequenceId === null ? (
-                <>
-                  {selectedEffectOptions.find(
-                    (effectOption) => effectOption.id === selectedEffectOptionId
-                  )?.valueKind === "number" ? (
-                    <div className="form-section">
-                      <div className="label">Value</div>
-                      <label className="form-field">
-                        <span className="label">
-                          {selectedEffectOptions.find(
-                            (effectOption) =>
-                              effectOption.id === selectedEffectOptionId
-                          )?.valueLabel ?? "Value"}
-                        </span>
-                        <input
-                          key={`${selectedRoutine.id}-numeric`}
-                          className="text-input"
-                          type="number"
-                          min={
-                            selectedEffectOptions.find(
-                              (effectOption) =>
-                                effectOption.id === selectedEffectOptionId
-                            )?.min ?? 0
-                          }
-                          step={
-                            selectedEffectOptions.find(
-                              (effectOption) =>
-                                effectOption.id === selectedEffectOptionId
-                            )?.step ?? 0.1
-                          }
-                          defaultValue={getRoutineNumericValue(selectedRoutine) ?? 0}
-                          onBlur={(event) =>
-                            onSetRoutineNumericValue(
-                              selectedRoutine.id,
-                              Number(event.currentTarget.value)
-                            )
-                          }
-                          onKeyDown={(event) =>
-                            handleCommitOnEnter(event, () =>
-                              onSetRoutineNumericValue(
-                                selectedRoutine.id,
-                                Number(event.currentTarget.value)
-                              )
-                            )
-                          }
-                        />
-                      </label>
-                    </div>
-                  ) : null}
-
-                  {selectedEffectOptions.find(
-                    (effectOption) => effectOption.id === selectedEffectOptionId
-                  )?.valueKind === "color" ? (
-                    <div className="form-section">
-                      <div className="label">Value</div>
-                      <label className="form-field">
-                        <span className="label">
-                          {selectedEffectOptions.find(
-                            (effectOption) =>
-                              effectOption.id === selectedEffectOptionId
-                          )?.valueLabel ?? "Color"}
-                        </span>
-                        <input
-                          className="color-input"
-                          type="color"
-                          value={getRoutineColorValue(selectedRoutine) ?? "#ffffff"}
-                          onChange={(event) =>
-                            onSetRoutineColorValue(
-                              selectedRoutine.id,
-                              event.currentTarget.value
-                            )
-                          }
-                        />
-                      </label>
-                    </div>
-                  ) : null}
-
-                  {selectedEffectOptions.find(
-                    (effectOption) => effectOption.id === selectedEffectOptionId
-                  )?.valueKind === "animation" ? (
-                    <div className="form-section">
-                      <div className="label">Animation</div>
-                      <label className="form-field">
-                        <span className="label">Clip</span>
-                        <select
-                          className="select-input"
-                          value={
-                            selectedRoutine.effects[0]?.type === "playModelAnimation"
-                              ? selectedRoutine.effects[0].clipName
-                              : selectedTargetOption.defaults.animationClipNames?.[0] ??
-                                ""
-                          }
-                          onChange={(event) =>
-                            onSetRoutineAnimationClip(
-                              selectedRoutine.id,
-                              event.currentTarget.value
-                            )
-                          }
-                        >
-                          {(selectedTargetOption.defaults.animationClipNames ?? []).map(
-                            (clipName) => (
-                              <option key={clipName} value={clipName}>
-                                {clipName}
-                              </option>
-                            )
-                          )}
-                        </select>
-                      </label>
-                      <label className="form-field form-field--inline">
-                        <input
-                          type="checkbox"
-                          checked={
-                            selectedRoutine.effects[0]?.type ===
-                            "playModelAnimation"
-                              ? selectedRoutine.effects[0].loop !== false
-                              : true
-                          }
-                          onChange={(event) =>
-                            onSetRoutineAnimationLoop(
-                              selectedRoutine.id,
-                              event.currentTarget.checked
-                            )
-                          }
-                        />
-                        <span className="label">Loop</span>
-                      </label>
-                    </div>
-                  ) : null}
-                </>
-              ) : null}
 
               <div className="form-section">
                 <div className="label">Details</div>
