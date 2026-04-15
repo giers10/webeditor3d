@@ -11571,7 +11571,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           routine.target = targetOption.target;
                           routine.effects = [];
 
-                          if (attachedSequence !== null) {
+                          if (
+                            attachedSequence !== null &&
+                            getProjectSequenceHeldSteps(attachedSequence).length > 0
+                          ) {
                             const retargetedSequence =
                               cloneSequenceForRetargetedPlacement({
                                 sequence: attachedSequence,
@@ -11604,16 +11607,18 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           routine.target = targetOption.target;
                           routine.effects = [];
 
-                          if (attachedSequence === null) {
-                            const nextSequence = createAttachedSequenceForRoutine({
-                              title: routine.title,
-                              targetOption,
-                              routine
-                            });
-                            sequences.sequences[nextSequence.id] = nextSequence;
-                            routine.sequenceId = nextSequence.id;
-                            setSelectedSequenceId(nextSequence.id);
-                          }
+                          const nextSequence = createProjectSequence({
+                            title: attachedSequence?.title ?? routine.title,
+                            effects:
+                              attachedSequence === null
+                                ? []
+                                : attachedSequence.effects
+                                    .filter((effect) => effect.stepClass === "impulse")
+                                    .map(cloneSequenceEffect)
+                          });
+                          sequences.sequences[nextSequence.id] = nextSequence;
+                          routine.sequenceId = nextSequence.id;
+                          setSelectedSequenceId(nextSequence.id);
                           return;
                         }
 
@@ -11645,7 +11650,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         routine.target = targetOption.target;
                         routine.effects = [];
 
-                        if (attachedSequence !== null) {
+                        if (
+                          attachedSequence !== null &&
+                          getProjectSequenceHeldSteps(attachedSequence).length > 0
+                        ) {
                           const retargetedSequence = cloneSequenceForRetargetedPlacement({
                             sequence: attachedSequence,
                             targetOption,
@@ -11659,7 +11667,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         }
 
                         const nextSequence = createProjectSequence({
-                          title: routine.title,
+                          title: attachedSequence?.title ?? routine.title,
                           effects: [
                             {
                               stepClass: "held",
