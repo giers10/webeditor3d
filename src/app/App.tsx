@@ -2043,12 +2043,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
       : selectedNpc.defaultDialogueId ??
         selectedNpc.dialogues[0]?.id ??
         null;
-  const selectedNpcDialogue =
-    selectedNpc === null || resolvedSelectedNpcDefaultDialogueId === null
-      ? null
-      : selectedNpc.dialogues.find(
-          (dialogue) => dialogue.id === resolvedSelectedNpcDefaultDialogueId
-        ) ?? null;
   const selectedNpcActorUsages =
     selectedNpc === null
       ? []
@@ -7693,7 +7687,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
   };
 
   const updateSelectedNpcDialogues = (
-    label: string,
+    _label: string,
     successMessage: string,
     mutate: (dialogues: ProjectDialogue[], defaultDialogueId: string | null) => {
       dialogues: ProjectDialogue[];
