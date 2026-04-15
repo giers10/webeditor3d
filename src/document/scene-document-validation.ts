@@ -4955,7 +4955,7 @@ function validateProjectResources(
     validateProjectSequence(
       sequence,
       path,
-      { dialogues: document.dialogues, scenes: document.scenes },
+      { scenes: document.scenes },
       context,
       diagnostics
     );
@@ -5243,7 +5243,7 @@ export function validateSceneDocument(
     validateProjectSequence(
       sequence,
       path,
-      { dialogues: document.dialogues, scenes: {} },
+      { scenes: {} },
       projectSchedulerValidationContext,
       diagnostics
     );
