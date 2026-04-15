@@ -31,7 +31,8 @@ import {
   findHeldSequenceControlEffect,
   getHeldSequenceControlEffects,
   getProjectSequenceImpulseSteps,
-  getProjectScheduleRoutineHeldSteps
+  getProjectScheduleRoutineHeldSteps,
+  type ImpulseSequenceStep
 } from "../sequencer/project-sequence-steps";
 import type { ProjectSequenceLibrary } from "../sequencer/project-sequences";
 
