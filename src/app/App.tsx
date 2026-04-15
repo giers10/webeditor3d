@@ -10478,7 +10478,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   data-testid="runner-interaction-summary"
                 >
                   {runtimeInteractionPrompt === null
-                    ? "Aim at an authored Interactable or Scene Exit and click when a prompt appears."
+                    ? "Aim at an authored Interactable or NPC and click when a prompt appears."
                     : `Click "${runtimeInteractionPrompt.prompt}" within ${runtimeInteractionPrompt.range.toFixed(1)}m.`}
                 </div>
               </div>
