@@ -302,9 +302,6 @@ function resolveEffectiveInteractionTrigger(
     runtimeScene.entities.interactables.some(
       (entity) => entity.entityId === link.sourceEntityId
     ) ||
-    runtimeScene.entities.sceneExits.some(
-      (entity) => entity.entityId === link.sourceEntityId
-    ) ||
     runtimeScene.entities.npcs.some((entity) => entity.entityId === link.sourceEntityId)
   ) {
     return "click";
