@@ -4543,6 +4543,52 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
+  const handleCreateAttachedSequenceForRoutine = (routineId: string) => {
+    const routine = editorState.projectDocument.scheduler.routines[routineId] ?? null;
+
+    if (routine === null) {
+      setStatusMessage("Selected sequence placement no longer exists.");
+      return;
+    }
+
+    const targetOption = resolveProjectScheduleTargetOption(
+      getControlTargetRefKey(routine.target)
+    );
+
+    if (targetOption === null) {
+      setStatusMessage("Selected sequencer target no longer exists.");
+      return;
+    }
+
+    try {
+      const nextSequence = createAttachedSequenceForRoutine({
+        title: routine.title,
+        targetOption,
+        routine
+      });
+
+      updateProjectSequencerState(
+        "Create attached sequence",
+        "Created an attached sequence from this placement.",
+        (scheduler, sequences) => {
+          sequences.sequences[nextSequence.id] = nextSequence;
+          const draftRoutine = scheduler.routines[routineId];
+
+          if (draftRoutine === undefined) {
+            throw new Error("Selected sequence placement no longer exists.");
+          }
+
+          draftRoutine.sequenceId = nextSequence.id;
+          draftRoutine.effects = [];
+        }
+      );
+      setSelectedSequenceId(nextSequence.id);
+      setSequencerMode("timeline");
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
   const handleAddProjectDialogue = () => {
     const nextDialogue = createProjectDialogue();
 
