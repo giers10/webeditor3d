@@ -21,8 +21,11 @@ import { normalizeYawDegrees } from "../entities/entity-instances";
 import {
   cloneProjectScheduler,
   compareProjectScheduleRoutinePriority,
+  getProjectScheduleRoutineDurationHours,
   getProjectScheduleRoutineElapsedHoursAt,
+  isProjectScheduleDaySelectionActive,
   isProjectScheduleRoutineActiveAt,
+  resolveProjectScheduleWeekday,
   type ProjectScheduler,
   type ProjectScheduleRoutine
 } from "../sequencer/project-sequencer";
@@ -413,6 +416,101 @@ function resolveActorScheduleRules(
     .sort(compareProjectScheduleRoutinePriority);
 }
 
+function getAbsoluteScheduleHours(dayNumber: number, timeOfDayHours: number): number {
+  return (Math.floor(dayNumber) - 1) * 24 + timeOfDayHours;
+}
+
+function resolveMostRecentCompletedActorPathState(options: {
+  actorRules: ActorScheduleRoutine[];
+  sequences: ProjectSequenceLibrary;
+  actorId: string;
+  dayNumber: number;
+  timeOfDayHours: number;
+  pathsById?: ReadonlyMap<string, RuntimeProjectSchedulePathDefinition>;
+}): {
+  pathEffect: FollowActorPathControlEffect;
+  resolvedPath: RuntimeResolvedActorPathState;
+} | null {
+  const currentAbsoluteHours = getAbsoluteScheduleHours(
+    options.dayNumber,
+    options.timeOfDayHours
+  );
+  let bestMatch:
+    | {
+        endAbsoluteHours: number;
+        routine: ActorScheduleRoutine;
+        pathEffect: FollowActorPathControlEffect;
+      }
+    | null = null;
+
+  for (const routine of options.actorRules) {
+    const heldSteps = getProjectScheduleRoutineHeldSteps(routine, options.sequences);
+    const pathEffect = findHeldSequenceControlEffect(heldSteps, "followActorPath");
+
+    if (pathEffect === null) {
+      continue;
+    }
+
+    const durationHours = getProjectScheduleRoutineDurationHours(routine);
+
+    for (let dayOffset = 0; dayOffset <= 7; dayOffset += 1) {
+      const occurrenceStartDayNumber = options.dayNumber - dayOffset;
+
+      if (
+        !isProjectScheduleDaySelectionActive(
+          routine.days,
+          resolveProjectScheduleWeekday(occurrenceStartDayNumber)
+        )
+      ) {
+        continue;
+      }
+
+      const occurrenceEndAbsoluteHours =
+        getAbsoluteScheduleHours(occurrenceStartDayNumber, routine.startHour) +
+        durationHours;
+
+      if (occurrenceEndAbsoluteHours > currentAbsoluteHours) {
+        continue;
+      }
+
+      if (
+        bestMatch !== null &&
+        (bestMatch.endAbsoluteHours > occurrenceEndAbsoluteHours ||
+          (bestMatch.endAbsoluteHours === occurrenceEndAbsoluteHours &&
+            compareProjectScheduleRoutinePriority(bestMatch.routine, routine) <= 0))
+      ) {
+        continue;
+      }
+
+      bestMatch = {
+        endAbsoluteHours: occurrenceEndAbsoluteHours,
+        routine,
+        pathEffect
+      };
+      break;
+    }
+  }
+
+  if (bestMatch === null) {
+    return null;
+  }
+
+  const resolvedPath = resolveActorSchedulePathState({
+    effect: bestMatch.pathEffect,
+    elapsedHours: getProjectScheduleRoutineDurationHours(bestMatch.routine),
+    path: options.pathsById?.get(bestMatch.pathEffect.pathId) ?? null
+  });
+
+  if (resolvedPath === null) {
+    return null;
+  }
+
+  return {
+    pathEffect: cloneControlEffect(bestMatch.pathEffect),
+    resolvedPath
+  };
+}
+
 export function resolveRuntimeActorScheduleState(options: {
   scheduler: ProjectScheduler;
   sequences: ProjectSequenceLibrary;
@@ -432,6 +530,15 @@ export function resolveRuntimeActorScheduleState(options: {
     ) ?? null;
 
   if (activeRoutine === null) {
+    const completedPathState = resolveMostRecentCompletedActorPathState({
+      actorRules,
+      sequences: options.sequences,
+      actorId: options.actorId,
+      dayNumber: options.dayNumber,
+      timeOfDayHours: options.timeOfDayHours,
+      pathsById: options.pathsById
+    });
+
     return {
       actorId: options.actorId,
       hasRules: actorRules.length > 0,
@@ -440,8 +547,8 @@ export function resolveRuntimeActorScheduleState(options: {
       activeRoutineTitle: null,
       presenceEffect: null,
       animationEffect: null,
-      pathEffect: null,
-      resolvedPath: null
+      pathEffect: completedPathState?.pathEffect ?? null,
+      resolvedPath: completedPathState?.resolvedPath ?? null
     };
   }
 
