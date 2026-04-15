@@ -5576,9 +5576,6 @@ export function validateSceneDocument(
       case "interactable":
         validateInteractableEntity(entity, path, diagnostics);
         break;
-      case "sceneExit":
-        validateSceneExitEntity(entity, path, diagnostics);
-        break;
       default:
         diagnostics.push(
           createDiagnostic(
@@ -5732,52 +5729,6 @@ export function validateProjectDocument(
       });
     }
 
-    for (const [entityId, entity] of Object.entries(scene.entities)) {
-      if (entity.kind !== "sceneExit") {
-        continue;
-      }
-
-      const targetScenePath = `${scenePath}.entities.${entityId}.targetSceneId`;
-      const targetEntryPath = `${scenePath}.entities.${entityId}.targetEntryEntityId`;
-      const targetScene = document.scenes[entity.targetSceneId];
-
-      if (targetScene === undefined) {
-        diagnostics.push(
-          createDiagnostic(
-            "error",
-            "missing-scene-exit-target-scene",
-            `Scene Exit target scene ${entity.targetSceneId} does not exist in this project.`,
-            targetScenePath
-          )
-        );
-        continue;
-      }
-
-      const targetEntry = targetScene.entities[entity.targetEntryEntityId];
-
-      if (targetEntry === undefined) {
-        diagnostics.push(
-          createDiagnostic(
-            "error",
-            "missing-scene-exit-target-entry",
-            `Scene Exit target entry ${entity.targetEntryEntityId} does not exist in scene ${targetScene.name}.`,
-            targetEntryPath
-          )
-        );
-        continue;
-      }
-
-      if (targetEntry.kind !== "sceneEntry") {
-        diagnostics.push(
-          createDiagnostic(
-            "error",
-            "scene-exit-target-entry-kind-mismatch",
-            `Scene Exit target ${entity.targetEntryEntityId} in scene ${targetScene.name} is not a Scene Entry.`,
-            targetEntryPath
-          )
-        );
-      }
-    }
   }
 
   return {
