@@ -9,6 +9,11 @@ import { EXRLoader } from "three/examples/jsm/loaders/EXRLoader.js";
 import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader.js";
 
 import { createOpaqueId } from "../core/ids";
+import {
+  getStarterEnvironmentPreviewUrl,
+  getStarterEnvironmentTextureUrl,
+  isStarterEnvironmentImageAsset
+} from "./starter-environment-assets";
 import { createProjectAssetStorageKey, type ImageAssetMetadata, type ImageAssetRecord } from "./project-assets";
 import {
   type ProjectAssetStorage,
@@ -22,6 +27,7 @@ export interface LoadedImageAsset {
   metadata: ImageAssetMetadata;
   texture: Texture;
   sourceUrl: string;
+  previewUrl: string;
   revokeSourceUrl: () => void;
 }
 
@@ -112,6 +118,24 @@ function createTransientResourceUrl(file: ProjectAssetStorageFileRecord): { revo
   return {
     url: createDataUrlForStoredFile(file),
     revoke: () => undefined
+  };
+}
+
+function createPersistentResourceUrl(url: string): {
+  revoke: () => void;
+  url: string;
+} {
+  return {
+    url,
+    revoke: () => undefined
+  };
+}
+
+function combineRevokeHandlers(...handlers: Array<() => void>): () => void {
+  return () => {
+    for (const handler of handlers) {
+      handler();
+    }
   };
 }
 
@@ -230,6 +254,7 @@ function createLoadedImageAsset(
   asset: ImageAssetRecord,
   image: HTMLImageElement,
   sourceUrl: string,
+  previewUrl: string,
   revokeSourceUrl: () => void
 ): LoadedImageAsset {
   return {
@@ -238,6 +263,7 @@ function createLoadedImageAsset(
     metadata: asset.metadata,
     texture: createImageTexture(image),
     sourceUrl,
+    previewUrl,
     revokeSourceUrl
   };
 }
@@ -246,6 +272,7 @@ function createLoadedHdrImageAsset(
   asset: ImageAssetRecord,
   texture: DataTexture,
   sourceUrl: string,
+  previewUrl: string,
   revokeSourceUrl: () => void
 ): LoadedImageAsset {
   return {
@@ -254,6 +281,7 @@ function createLoadedHdrImageAsset(
     metadata: asset.metadata,
     texture: configureHdrTexture(texture),
     sourceUrl,
+    previewUrl,
     revokeSourceUrl
   };
 }
@@ -296,25 +324,105 @@ function getStoredImageAssetFile(
   return null;
 }
 
-async function loadImageAssetFromFileRecord(
-  asset: ImageAssetRecord,
-  fileRecord: ProjectAssetStorageFileRecord
+function getStoredPreviewImageFile(
+  storedAsset: ProjectAssetStoragePackageRecord
+): ProjectAssetStorageFileRecord | null {
+  for (const previewPath of [
+    "preview.jpg",
+    "preview.jpeg",
+    "preview.webp",
+    "preview.png"
+  ]) {
+    const previewFile = storedAsset.files[previewPath];
+
+    if (previewFile !== undefined) {
+      return previewFile;
+    }
+  }
+
+  return null;
+}
+
+async function loadStarterEnvironmentImageAsset(
+  asset: ImageAssetRecord
 ): Promise<LoadedImageAsset> {
+  const sourceResource = createPersistentResourceUrl(
+    getStarterEnvironmentTextureUrl(asset)
+  );
+  const previewResource = createPersistentResourceUrl(
+    getStarterEnvironmentPreviewUrl(asset)
+  );
+
+  try {
+    const texture = await loadHdrTexture(sourceResource.url, asset.sourceName);
+
+    return createLoadedHdrImageAsset(
+      asset,
+      texture,
+      sourceResource.url,
+      previewResource.url,
+      combineRevokeHandlers(sourceResource.revoke, previewResource.revoke)
+    );
+  } catch (error) {
+    throw new Error(
+      `Image asset reload failed for ${asset.sourceName}: ${getErrorDetail(error)}`
+    );
+  }
+}
+
+async function loadImageAssetFromPackageRecord(
+  asset: ImageAssetRecord,
+  storedAsset: ProjectAssetStoragePackageRecord
+): Promise<LoadedImageAsset> {
+  const fileRecord = getStoredImageAssetFile(asset, storedAsset);
+
+  if (fileRecord === null) {
+    throw new Error(
+      `Missing stored image file for imported image asset ${asset.sourceName}.`
+    );
+  }
+
   const transientResourceUrl = createTransientResourceUrl(fileRecord);
 
   if (isHdrFormat(asset.sourceName)) {
+    const previewFileRecord = getStoredPreviewImageFile(storedAsset);
+    const previewResourceUrl =
+      previewFileRecord === null
+        ? transientResourceUrl
+        : createTransientResourceUrl(previewFileRecord);
+
     try {
       const texture = await loadHdrTexture(transientResourceUrl.url, asset.sourceName);
-      return createLoadedHdrImageAsset(asset, texture, transientResourceUrl.url, transientResourceUrl.revoke);
+      return createLoadedHdrImageAsset(
+        asset,
+        texture,
+        transientResourceUrl.url,
+        previewResourceUrl.url,
+        combineRevokeHandlers(
+          transientResourceUrl.revoke,
+          previewResourceUrl === transientResourceUrl
+            ? () => undefined
+            : previewResourceUrl.revoke
+        )
+      );
     } catch (error) {
       transientResourceUrl.revoke();
+      if (previewResourceUrl !== transientResourceUrl) {
+        previewResourceUrl.revoke();
+      }
       throw new Error(`Image asset reload failed for ${asset.sourceName}: ${getErrorDetail(error)}`);
     }
   }
 
   try {
     const image = await loadImageElement(transientResourceUrl.url);
-    return createLoadedImageAsset(asset, image, transientResourceUrl.url, transientResourceUrl.revoke);
+    return createLoadedImageAsset(
+      asset,
+      image,
+      transientResourceUrl.url,
+      transientResourceUrl.url,
+      transientResourceUrl.revoke
+    );
   } catch (error) {
     transientResourceUrl.revoke();
     throw new Error(`Image asset reload failed for ${asset.sourceName}: ${getErrorDetail(error)}`);
@@ -346,7 +454,13 @@ export async function importBackgroundImageAssetFromFile(
 
     const metadata = extractHdrTextureMetadata(texture);
     asset = createImageAssetRecord(sourceName, mimeType, bytes.byteLength, metadata);
-    loadedAsset = createLoadedHdrImageAsset(asset, texture, transientResourceUrl.url, transientResourceUrl.revoke);
+    loadedAsset = createLoadedHdrImageAsset(
+      asset,
+      texture,
+      transientResourceUrl.url,
+      transientResourceUrl.url,
+      transientResourceUrl.revoke
+    );
   } else {
     const transientResourceUrl = createTransientResourceUrl(fileRecord);
     let image: HTMLImageElement;
@@ -360,7 +474,13 @@ export async function importBackgroundImageAssetFromFile(
 
     const metadata = extractImageAssetMetadata(image);
     asset = createImageAssetRecord(sourceName, mimeType, bytes.byteLength, metadata);
-    loadedAsset = createLoadedImageAsset(asset, image, transientResourceUrl.url, transientResourceUrl.revoke);
+    loadedAsset = createLoadedImageAsset(
+      asset,
+      image,
+      transientResourceUrl.url,
+      transientResourceUrl.url,
+      transientResourceUrl.revoke
+    );
   }
 
   const packageRecord: ProjectAssetStoragePackageRecord = {
@@ -378,9 +498,19 @@ export async function importBackgroundImageAssetFromFile(
 }
 
 export async function loadImageAssetFromStorage(
-  storage: ProjectAssetStorage,
+  storage: ProjectAssetStorage | null,
   asset: ImageAssetRecord
 ): Promise<LoadedImageAsset> {
+  if (isStarterEnvironmentImageAsset(asset)) {
+    return loadStarterEnvironmentImageAsset(asset);
+  }
+
+  if (storage === null) {
+    throw new Error(
+      `Missing stored binary data for imported image asset ${asset.sourceName}.`
+    );
+  }
+
   let storedAsset: ProjectAssetStoragePackageRecord | null;
 
   try {
@@ -393,13 +523,7 @@ export async function loadImageAssetFromStorage(
     throw new Error(`Missing stored binary data for imported image asset ${asset.sourceName}.`);
   }
 
-  const storedImageFile = getStoredImageAssetFile(asset, storedAsset);
-
-  if (storedImageFile === null) {
-    throw new Error(`Missing stored image file for imported image asset ${asset.sourceName}.`);
-  }
-
-  return loadImageAssetFromFileRecord(asset, storedImageFile);
+  return loadImageAssetFromPackageRecord(asset, storedAsset);
 }
 
 export function disposeLoadedImageAsset(asset: LoadedImageAsset) {
