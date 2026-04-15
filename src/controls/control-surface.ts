@@ -1471,6 +1471,7 @@ export function cloneControlEffect<TEffect extends ControlEffect>(
         pathId: effect.pathId,
         speed: effect.speed,
         loop: effect.loop,
+        smoothPath: effect.smoothPath,
         progressMode: effect.progressMode
       } as TEffect;
     case "playModelAnimation":
