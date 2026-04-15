@@ -512,10 +512,6 @@ export function ProjectSequencerPane({
     routine: ProjectScheduleRoutine,
     mode: RoutineDragState["mode"]
   ) => {
-    if (event.button !== 0) {
-      return;
-    }
-
     const trackElement = event.currentTarget.closest<HTMLElement>(
       "[data-sequencer-track='true']"
     );
