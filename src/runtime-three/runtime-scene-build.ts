@@ -62,9 +62,7 @@ import {
 } from "../document/world-settings";
 import {
   cloneProjectDialogue,
-  cloneProjectDialogueLibrary,
-  type ProjectDialogue,
-  type ProjectDialogueLibrary
+  type ProjectDialogue
 } from "../dialogues/project-dialogues";
 import {
   cloneProjectSequenceLibrary,
@@ -388,7 +386,6 @@ export interface RuntimeSpawnPoint {
 export interface RuntimeSceneDefinition {
   time: ProjectTimeSettings;
   scheduler: RuntimeProjectSchedulerState;
-  dialogues: ProjectDialogueLibrary;
   sequences: ProjectSequenceLibrary;
   world: WorldSettings;
   control: RuntimeControlSurfaceDefinition;
@@ -1580,8 +1577,6 @@ export function buildRuntimeSceneFromDocument(
         case "playSound":
         case "stopSound":
           return enabledEntityIds.has(link.action.targetSoundEmitterId);
-        case "startDialogue":
-          return document.dialogues.dialogues[link.action.dialogueId] !== undefined;
         case "runSequence":
           return getInteractionLinkImpulseSteps(link, document.sequences).length > 0;
         case "control":
@@ -1653,7 +1648,6 @@ export function buildRuntimeSceneFromDocument(
       document: cloneProjectScheduler(document.scheduler),
       resolved: collections.scheduler
     }),
-    dialogues: cloneProjectDialogueLibrary(document.dialogues),
     sequences: cloneProjectSequenceLibrary(document.sequences),
     world: cloneWorldSettings(document.world),
     control,
