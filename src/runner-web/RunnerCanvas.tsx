@@ -321,11 +321,9 @@ export function RunnerCanvas({
           <div className="runner-canvas__dialogue-title">
             {runtimeDialogue.title}
           </div>
-          {runtimeDialogue.speakerName === null ? null : (
-            <div className="runner-canvas__dialogue-speaker">
-              {runtimeDialogue.speakerName}
-            </div>
-          )}
+          <div className="runner-canvas__dialogue-speaker">
+            {runtimeDialogue.speakerName}
+          </div>
           <div
             className="runner-canvas__dialogue-text"
             data-testid="runner-dialogue-text"
