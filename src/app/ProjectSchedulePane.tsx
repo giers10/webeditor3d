@@ -8,7 +8,6 @@ import type { ProjectDialogueLibrary } from "../dialogues/project-dialogues";
 import { formatControlEffectValue, getControlTargetRefKey } from "../controls/control-surface";
 import { ProjectSequencesPanel } from "./ProjectSequencesPanel";
 import {
-  formatProjectScheduleDaySelection,
   getProjectScheduleTimelineSegments,
   type ProjectScheduler,
   type ProjectScheduleRoutine
@@ -310,23 +309,6 @@ function getRoutineColorValue(routine: ProjectScheduleRoutine): string | null {
     default:
       return null;
   }
-}
-
-function groupTargetOptions(
-  targetOptions: ProjectScheduleTargetOption[]
-): Array<{ groupLabel: string; options: ProjectScheduleTargetOption[] }> {
-  const grouped = new Map<string, ProjectScheduleTargetOption[]>();
-
-  for (const option of targetOptions) {
-    const entries = grouped.get(option.groupLabel) ?? [];
-    entries.push(option);
-    grouped.set(option.groupLabel, entries);
-  }
-
-  return [...grouped.entries()].map(([groupLabel, options]) => ({
-    groupLabel,
-    options
-  }));
 }
 
 export function ProjectSequencerPane({
@@ -671,26 +653,6 @@ export function ProjectSequencerPane({
                   />
                 </label>
                 <label className="form-field">
-                  <span className="label">Target</span>
-                  <select
-                    className="select-input"
-                    value={selectedTargetOption.key}
-                    onChange={(event) =>
-                      onSetRoutineTarget(selectedRoutine.id, event.currentTarget.value)
-                    }
-                  >
-                    {groupTargetOptions(targetOptions).map((group) => (
-                      <optgroup key={group.groupLabel} label={group.groupLabel}>
-                        {group.options.map((option) => (
-                          <option key={option.key} value={option.key}>
-                            {option.label} ({option.subtitle})
-                          </option>
-                        ))}
-                      </optgroup>
-                    ))}
-                  </select>
-                </label>
-                <label className="form-field">
                   <span className="label">Sequence</span>
                   <select
                     className="select-input"
@@ -803,18 +765,6 @@ export function ProjectSequencerPane({
                   />
                   <span className="label">Enabled</span>
                 </label>
-              </div>
-
-              <div className="form-section">
-                <div className="label">Legacy Day Filter</div>
-                <div className="schedule-pane__summary">
-                  {formatProjectScheduleDaySelection(selectedRoutine.days)}
-                </div>
-                <div className="material-summary">
-                  Day-specific routine filters are preserved for compatibility.
-                  New sequencer authoring should prefer sequence placements; a later
-                  multi-day timeline will replace this legacy filter.
-                </div>
               </div>
 
               <div className="form-section">
