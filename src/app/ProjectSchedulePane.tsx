@@ -1,4 +1,10 @@
-import type { KeyboardEvent as ReactKeyboardEvent } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type PointerEvent as ReactPointerEvent
+} from "react";
 
 import {
   HOURS_PER_DAY,
@@ -29,6 +35,22 @@ import {
   getProjectSequences,
   type ProjectSequenceLibrary
 } from "../sequencer/project-sequences";
+
+const MINUTES_PER_DAY = HOURS_PER_DAY * 60;
+const MINIMUM_SEQUENCE_PLACEMENT_DURATION_MINUTES = 1;
+
+interface RoutineDragState {
+  routineId: string;
+  mode: "move" | "resize-start" | "resize-end";
+  originStartMinutes: number;
+  originEndMinutes: number;
+  originTargetKey: string;
+  pointerStartX: number;
+  trackWidth: number;
+  draftStartMinutes: number;
+  draftEndMinutes: number;
+  draftTargetKey: string;
+}
 
 interface ProjectSequencerPaneProps {
   mode: "timeline" | "sequence";
@@ -193,6 +215,111 @@ function parseTimeOfDayInputHours(value: string, label: string): number {
   }
 
   return hours + minutes / 60;
+}
+
+function normalizeMinuteOfDay(minute: number): number {
+  const wrappedMinute = minute % MINUTES_PER_DAY;
+  return wrappedMinute < 0 ? wrappedMinute + MINUTES_PER_DAY : wrappedMinute;
+}
+
+function convertHoursToMinuteOfDay(hours: number): number {
+  return normalizeMinuteOfDay(Math.round(hours * 60));
+}
+
+function convertMinuteOfDayToHours(minute: number): number {
+  return normalizeMinuteOfDay(minute) / 60;
+}
+
+function getRoutineDurationMinutes(routine: ProjectScheduleRoutine): number {
+  const startMinutes = convertHoursToMinuteOfDay(routine.startHour);
+  const endMinutes = convertHoursToMinuteOfDay(routine.endHour);
+
+  return endMinutes > startMinutes
+    ? endMinutes - startMinutes
+    : MINUTES_PER_DAY - startMinutes + endMinutes;
+}
+
+function getMinuteDistance(startMinutes: number, endMinutes: number): number {
+  return endMinutes > startMinutes
+    ? endMinutes - startMinutes
+    : MINUTES_PER_DAY - startMinutes + endMinutes;
+}
+
+function resolveRoutineDragState(
+  dragState: RoutineDragState,
+  clientX: number,
+  clientY: number
+): RoutineDragState {
+  const deltaMinutes = Math.round(
+    ((clientX - dragState.pointerStartX) / dragState.trackWidth) * MINUTES_PER_DAY
+  );
+
+  switch (dragState.mode) {
+    case "move": {
+      const durationMinutes = getMinuteDistance(
+        dragState.originStartMinutes,
+        dragState.originEndMinutes
+      );
+      const draftStartMinutes = normalizeMinuteOfDay(
+        dragState.originStartMinutes + deltaMinutes
+      );
+      const draftEndMinutes = normalizeMinuteOfDay(
+        draftStartMinutes + durationMinutes
+      );
+      const pointerTargetElement = document.elementFromPoint(clientX, clientY);
+      const draftTargetKey =
+        pointerTargetElement instanceof HTMLElement
+          ? pointerTargetElement
+              .closest<HTMLElement>("[data-sequencer-target-key]")
+              ?.dataset.sequencerTargetKey ?? dragState.originTargetKey
+          : dragState.originTargetKey;
+
+      return {
+        ...dragState,
+        draftStartMinutes,
+        draftEndMinutes,
+        draftTargetKey
+      };
+    }
+    case "resize-start": {
+      let draftStartMinutes = normalizeMinuteOfDay(
+        dragState.originStartMinutes + deltaMinutes
+      );
+
+      if (
+        getMinuteDistance(draftStartMinutes, dragState.originEndMinutes) <
+        MINIMUM_SEQUENCE_PLACEMENT_DURATION_MINUTES
+      ) {
+        draftStartMinutes = normalizeMinuteOfDay(
+          dragState.originEndMinutes - MINIMUM_SEQUENCE_PLACEMENT_DURATION_MINUTES
+        );
+      }
+
+      return {
+        ...dragState,
+        draftStartMinutes
+      };
+    }
+    case "resize-end": {
+      let draftEndMinutes = normalizeMinuteOfDay(
+        dragState.originEndMinutes + deltaMinutes
+      );
+
+      if (
+        getMinuteDistance(dragState.originStartMinutes, draftEndMinutes) <
+        MINIMUM_SEQUENCE_PLACEMENT_DURATION_MINUTES
+      ) {
+        draftEndMinutes = normalizeMinuteOfDay(
+          dragState.originStartMinutes + MINIMUM_SEQUENCE_PLACEMENT_DURATION_MINUTES
+        );
+      }
+
+      return {
+        ...dragState,
+        draftEndMinutes
+      };
+    }
+  }
 }
 
 function getRoutineSummary(
