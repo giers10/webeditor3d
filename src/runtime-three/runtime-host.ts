@@ -1677,7 +1677,10 @@ export class RuntimeHost {
     this.setControlPauseActive(paused);
   }
 
-  private applyControlEffect(effect: ControlEffect, link: InteractionLink) {
+  private applyControlEffect(
+    effect: ControlEffect,
+    link: InteractionLink | null = null
+  ) {
     switch (effect.type) {
       case "setProjectTimePaused":
         this.applyProjectTimePausedControl(effect.paused);
@@ -1752,7 +1755,9 @@ export class RuntimeHost {
     this.runtimeScene.control.resolved = applyControlEffectToResolvedState(
       this.runtimeScene.control.resolved,
       effect,
-      createInteractionLinkResolvedControlSource(link.id)
+      link === null
+        ? createDefaultResolvedControlSource()
+        : createInteractionLinkResolvedControlSource(link.id)
     );
   }
 
