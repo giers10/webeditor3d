@@ -1,4 +1,5 @@
 import { createMoveBoxBrushCommand } from "./move-box-brush-command";
+import { createApplyBatchSelectionTransformCommand } from "./apply-batch-selection-transform-command";
 import { createResizeBoxBrushCommand } from "./resize-box-brush-command";
 import { createRotateBoxBrushCommand } from "./rotate-box-brush-command";
 import { createSetPathPointPositionCommand } from "./set-path-point-position-command";
@@ -30,6 +31,12 @@ function createTransformCommandLabel(session: ActiveTransformSession): string {
   switch (session.target.kind) {
     case "brush":
       targetLabel = "whitebox box";
+      break;
+    case "brushes":
+      targetLabel =
+        session.target.items.length === 1
+          ? "whitebox solid"
+          : `${session.target.items.length} whitebox solids`;
       break;
     case "brushFace":
       targetLabel = "whitebox face";
@@ -65,11 +72,102 @@ function createTransformCommandLabel(session: ActiveTransformSession): string {
                             ? "interactable"
                             : "entity";
       break;
+    case "entities":
+      targetLabel =
+        session.target.items.length === 1
+          ? "entity"
+          : `${session.target.items.length} entities`;
+      break;
     case "modelInstance":
+      break;
+    case "modelInstances":
+      targetLabel =
+        session.target.items.length === 1
+          ? "model instance"
+          : `${session.target.items.length} model instances`;
       break;
   }
 
   return `${getTransformOperationLabel(session.operation)} ${targetLabel}`;
+}
+
+function createUpdatedEntityFromPreview(
+  entity: SceneDocument["entities"][string],
+  preview: {
+    position: { x: number; y: number; z: number };
+    rotation:
+      | { kind: "none" }
+      | { kind: "yaw"; yawDegrees: number }
+      | { kind: "direction"; direction: { x: number; y: number; z: number } };
+  }
+) {
+  switch (entity.kind) {
+    case "pointLight":
+      return createPointLightEntity({
+        ...entity,
+        position: preview.position
+      });
+    case "spotLight":
+      return createSpotLightEntity({
+        ...entity,
+        position: preview.position,
+        direction:
+          preview.rotation.kind === "direction"
+            ? preview.rotation.direction
+            : entity.direction
+      });
+    case "playerStart":
+      return createPlayerStartEntity({
+        ...entity,
+        position: preview.position,
+        yawDegrees:
+          preview.rotation.kind === "yaw"
+            ? preview.rotation.yawDegrees
+            : entity.yawDegrees
+      });
+    case "sceneEntry":
+      return createSceneEntryEntity({
+        ...entity,
+        position: preview.position,
+        yawDegrees:
+          preview.rotation.kind === "yaw"
+            ? preview.rotation.yawDegrees
+            : entity.yawDegrees
+      });
+    case "npc":
+      return createNpcEntity({
+        ...entity,
+        position: preview.position,
+        yawDegrees:
+          preview.rotation.kind === "yaw"
+            ? preview.rotation.yawDegrees
+            : entity.yawDegrees
+      });
+    case "soundEmitter":
+      return createSoundEmitterEntity({
+        ...entity,
+        position: preview.position
+      });
+    case "triggerVolume":
+      return createTriggerVolumeEntity({
+        ...entity,
+        position: preview.position
+      });
+    case "teleportTarget":
+      return createTeleportTargetEntity({
+        ...entity,
+        position: preview.position,
+        yawDegrees:
+          preview.rotation.kind === "yaw"
+            ? preview.rotation.yawDegrees
+            : entity.yawDegrees
+      });
+    case "interactable":
+      return createInteractableEntity({
+        ...entity,
+        position: preview.position
+      });
+  }
 }
 
 export function createCommitTransformSessionCommand(document: SceneDocument, session: ActiveTransformSession): EditorCommand {
