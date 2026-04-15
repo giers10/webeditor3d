@@ -286,7 +286,7 @@ export interface RuntimeDialogueState {
   lineId: string;
   lineIndex: number;
   lineCount: number;
-  speakerName: string | null;
+  speakerName: string;
   text: string;
   source: RuntimeDialogueStartSource;
 }
@@ -3373,7 +3373,7 @@ export class RuntimeHost {
       lineId: line.id,
       lineIndex,
       lineCount: dialogue.lines.length,
-      speakerName: line.speakerName,
+      speakerName: npc.actorId,
       text: line.text,
       source
     };
