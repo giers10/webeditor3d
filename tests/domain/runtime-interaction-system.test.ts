@@ -6,7 +6,6 @@ import {
   createProjectSequence
 } from "../../src/sequencer/project-sequences";
 import {
-  createNpcEntity,
   createPlayerStartInputBindings,
   createPlayerStartMovementTemplate
 } from "../../src/entities/entity-instances";
@@ -682,36 +681,13 @@ describe("RuntimeInteractionSystem", () => {
   it("dispatches run-sequence links through authored impulse steps", () => {
     const runtimeScene = createRuntimeSceneFixture();
     runtimeScene.entities.npcs = [
-      {
-        ...createNpcEntity({
-          id: "entity-npc-sequence",
-          dialogues: [
-            {
-              id: "dialogue-sequence",
-              title: "Sequence Dialogue",
-              lines: [
-                {
-                  id: "dialogue-line-sequence-1",
-                  speakerName: "Console",
-                  text: "Sequence started."
-                }
-              ]
-            }
-          ],
-          defaultDialogueId: "dialogue-sequence"
-        }),
-        active: true,
-        activeRoutineId: null,
-        activeRoutineTitle: null,
-        authoredPosition: { x: 0, y: 0, z: 0 },
-        authoredYawDegrees: 0,
-        visible: true,
-        position: { x: 0, y: 0, z: 0 },
-        yawDegrees: 0,
-        animationClipName: null,
-        animationLoop: undefined,
-        resolvedPath: null
-      }
+      createRuntimeNpcFixture({
+        entityId: "entity-npc-sequence",
+        dialogueId: "dialogue-sequence",
+        title: "Sequence Dialogue",
+        speakerName: "Console",
+        text: "Sequence started."
+      })
     ];
     runtimeScene.sequences.sequences["sequence-console-dialogue"] =
       createProjectSequence({
@@ -756,36 +732,13 @@ describe("RuntimeInteractionSystem", () => {
   it("treats interactable sequence links as click interactions even when the stored trigger is non-click", () => {
     const runtimeScene = createRuntimeSceneFixture();
     runtimeScene.entities.npcs = [
-      {
-        ...createNpcEntity({
-          id: "entity-npc-console",
-          dialogues: [
-            {
-              id: "dialogue-console",
-              title: "Console",
-              lines: [
-                {
-                  id: "dialogue-line-console-1",
-                  speakerName: "System",
-                  text: "Console online."
-                }
-              ]
-            }
-          ],
-          defaultDialogueId: "dialogue-console"
-        }),
-        active: true,
-        activeRoutineId: null,
-        activeRoutineTitle: null,
-        authoredPosition: { x: 0, y: 0, z: 0 },
-        authoredYawDegrees: 0,
-        visible: true,
-        position: { x: 0, y: 0, z: 0 },
-        yawDegrees: 0,
-        animationClipName: null,
-        animationLoop: undefined,
-        resolvedPath: null
-      }
+      createRuntimeNpcFixture({
+        entityId: "entity-npc-console",
+        dialogueId: "dialogue-console",
+        title: "Console",
+        speakerName: "System",
+        text: "Console online."
+      })
     ];
     runtimeScene.sequences.sequences["sequence-console-dialogue"] =
       createProjectSequence({
@@ -857,36 +810,12 @@ describe("RuntimeInteractionSystem", () => {
   it("dispatches trigger-volume make-npc-talk sequences once on enter", () => {
     const runtimeScene = createRuntimeSceneFixture();
     runtimeScene.entities.npcs = [
-      {
-        ...createNpcEntity({
-          id: "entity-npc-threshold",
-          dialogues: [
-            {
-              id: "dialogue-threshold",
-              title: "Threshold",
-              lines: [
-                {
-                  id: "dialogue-line-threshold-1",
-                  speakerName: null,
-                  text: "You crossed the threshold."
-                }
-              ]
-            }
-          ],
-          defaultDialogueId: "dialogue-threshold"
-        }),
-        active: true,
-        activeRoutineId: null,
-        activeRoutineTitle: null,
-        authoredPosition: { x: 0, y: 0, z: 0 },
-        authoredYawDegrees: 0,
-        visible: true,
-        position: { x: 0, y: 0, z: 0 },
-        yawDegrees: 0,
-        animationClipName: null,
-        animationLoop: undefined,
-        resolvedPath: null
-      }
+      createRuntimeNpcFixture({
+        entityId: "entity-npc-threshold",
+        dialogueId: "dialogue-threshold",
+        title: "Threshold",
+        text: "You crossed the threshold."
+      })
     ];
     runtimeScene.sequences.sequences["sequence-trigger-dialogue"] =
       createProjectSequence({
@@ -948,36 +877,12 @@ describe("RuntimeInteractionSystem", () => {
   it("treats trigger-volume sequence links authored with click as enter interactions", () => {
     const runtimeScene = createRuntimeSceneFixture();
     runtimeScene.entities.npcs = [
-      {
-        ...createNpcEntity({
-          id: "entity-npc-threshold",
-          dialogues: [
-            {
-              id: "dialogue-threshold",
-              title: "Threshold",
-              lines: [
-                {
-                  id: "dialogue-line-threshold-1",
-                  speakerName: null,
-                  text: "Welcome."
-                }
-              ]
-            }
-          ],
-          defaultDialogueId: "dialogue-threshold"
-        }),
-        active: true,
-        activeRoutineId: null,
-        activeRoutineTitle: null,
-        authoredPosition: { x: 0, y: 0, z: 0 },
-        authoredYawDegrees: 0,
-        visible: true,
-        position: { x: 0, y: 0, z: 0 },
-        yawDegrees: 0,
-        animationClipName: null,
-        animationLoop: undefined,
-        resolvedPath: null
-      }
+      createRuntimeNpcFixture({
+        entityId: "entity-npc-threshold",
+        dialogueId: "dialogue-threshold",
+        title: "Threshold",
+        text: "Welcome."
+      })
     ];
     runtimeScene.sequences.sequences["sequence-trigger-dialogue"] =
       createProjectSequence({
@@ -1053,36 +958,12 @@ describe("RuntimeInteractionSystem", () => {
       })
     ];
     runtimeScene.entities.npcs = [
-      {
-        ...createNpcEntity({
-          id: "entity-npc-threshold",
-          dialogues: [
-            {
-              id: "dialogue-threshold",
-              title: "Threshold",
-              lines: [
-                {
-                  id: "dialogue-line-threshold-1",
-                  speakerName: null,
-                  text: "Welcome."
-                }
-              ]
-            }
-          ],
-          defaultDialogueId: "dialogue-threshold"
-        }),
-        active: true,
-        activeRoutineId: null,
-        activeRoutineTitle: null,
-        authoredPosition: { x: 0, y: 0, z: 0 },
-        authoredYawDegrees: 0,
-        visible: true,
-        position: { x: 0, y: 0, z: 0 },
-        yawDegrees: 0,
-        animationClipName: null,
-        animationLoop: undefined,
-        resolvedPath: null
-      }
+      createRuntimeNpcFixture({
+        entityId: "entity-npc-threshold",
+        dialogueId: "dialogue-threshold",
+        title: "Threshold",
+        text: "Welcome."
+      })
     ];
     runtimeScene.sequences.sequences["sequence-trigger-dialogue"] =
       createProjectSequence({
