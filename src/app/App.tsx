@@ -11817,8 +11817,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   )}
                   sceneTransitionTargetOptions={sceneTransitionTargetOptions}
                   visibilityTargetOptions={sequenceVisibilityTargetOptions}
-                  modelAnimationTargetOptions={sequenceAnimationTargetOptions}
-                  soundTargetOptions={sequenceSoundTargetOptions}
                   scheduler={editorState.projectDocument.scheduler}
                   sequences={editorState.projectDocument.sequences}
                   dialogues={editorState.projectDocument.dialogues}
@@ -12067,34 +12065,13 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       }
                     )
                   }
-                  onAddHeldControlStep={(sequenceId, targetKey) =>
-                    handleAddProjectSequenceControlStep(
-                      sequenceId,
-                      "held",
-                      targetKey
-                    )
-                  }
-                  onAddImpulseControlStep={(sequenceId, targetKey) =>
-                    handleAddProjectSequenceControlStep(
-                      sequenceId,
-                      "impulse",
-                      targetKey
-                    )
-                  }
+                  onAddControlStep={handleAddProjectSequenceControlStep}
                   onAddDialogueStep={handleAddProjectSequenceDialogueStep}
                   onAddTeleportStep={handleAddProjectSequenceTeleportStep}
                   onAddSceneTransitionStep={
                     handleAddProjectSequenceSceneTransitionStep
                   }
                   onAddVisibilityStep={handleAddProjectSequenceVisibilityStep}
-                  onAddPlayAnimationStep={
-                    handleAddProjectSequencePlayAnimationStep
-                  }
-                  onAddStopAnimationStep={
-                    handleAddProjectSequenceStopAnimationStep
-                  }
-                  onAddPlaySoundStep={handleAddProjectSequencePlaySoundStep}
-                  onAddStopSoundStep={handleAddProjectSequenceStopSoundStep}
                   onDeleteStep={handleDeleteProjectSequenceStep}
                   onSetControlStepTarget={updateProjectSequenceControlStepTarget}
                   onSetControlStepEffectOption={
