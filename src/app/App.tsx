@@ -2020,6 +2020,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
     editorState.selection,
     Object.values(editorState.document.modelInstances)
   );
+  const multiSelectionSummary = getMultiSelectionSummary(
+    editorState.selection,
+    editorState.activeSelectionId,
+    brushList,
+    editorState.document.modelInstances,
+    editorState.document.assets,
+    editorState.document.entities
+  );
   const whiteboxSelectionMode = editorState.whiteboxSelectionMode;
   const whiteboxSnapEnabled = editorState.whiteboxSnapEnabled;
   const viewportGridVisible = editorState.viewportGridVisible;
