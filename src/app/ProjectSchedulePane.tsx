@@ -19,10 +19,7 @@ import {
   type ProjectScheduleRoutine
 } from "../sequencer/project-sequencer";
 import {
-  getProjectScheduleEffectOptionId,
   getProjectScheduleTargetOptionForRoutine,
-  listProjectScheduleEffectOptions,
-  type ProjectScheduleEffectOptionId,
   type ProjectScheduleTargetOption
 } from "../sequencer/project-sequencer-control-options";
 import {
@@ -416,42 +413,6 @@ function isRoutineEffectInactive(
   }
 }
 
-function getRoutineNumericValue(routine: ProjectScheduleRoutine): number | null {
-  const effect = routine.effects[0];
-
-  if (effect === undefined) {
-    return null;
-  }
-
-  switch (effect.type) {
-    case "setSoundVolume":
-      return effect.volume;
-    case "setLightIntensity":
-    case "setAmbientLightIntensity":
-    case "setSunLightIntensity":
-      return effect.intensity;
-    default:
-      return null;
-  }
-}
-
-function getRoutineColorValue(routine: ProjectScheduleRoutine): string | null {
-  const effect = routine.effects[0];
-
-  if (effect === undefined) {
-    return null;
-  }
-
-  switch (effect.type) {
-    case "setLightColor":
-    case "setAmbientLightColor":
-    case "setSunLightColor":
-      return effect.colorHex;
-    default:
-      return null;
-  }
-}
-
 export function ProjectSequencerPane({
   mode,
   onSetMode,
@@ -481,17 +442,6 @@ export function ProjectSequencerPane({
   onSetRoutineEndHour,
   onSetRoutinePriority,
   onSetRoutineSequenceId,
-  onSetRoutineEffectOption,
-  onSetRoutineNumericValue,
-  onSetRoutineColorValue,
-  onSetRoutineAnimationClip,
-  onSetRoutineAnimationLoop,
-  onSetActorRoutinePresence,
-  onSetActorRoutineAnimationClip,
-  onSetActorRoutineAnimationLoop,
-  onSetActorRoutinePath,
-  onSetActorRoutinePathSpeed,
-  onSetActorRoutinePathLoop,
   onSetSequenceTitle,
   onAddHeldControlStep,
   onAddImpulseControlStep,
