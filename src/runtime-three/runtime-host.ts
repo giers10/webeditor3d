@@ -41,9 +41,6 @@ import type { LoadedImageAsset } from "../assets/image-assets";
 import type { LoadedAudioAsset } from "../assets/audio-assets";
 import type { ProjectAssetRecord } from "../assets/project-assets";
 import {
-  createBoxBrush,
-  createRadialPrismBrush,
-  createWedgeBrush,
   type Brush,
   type WhiteboxFaceId
 } from "../document/brushes";
@@ -162,44 +159,40 @@ interface CachedMaterialTexture {
 }
 
 function createRuntimeGeometryBrush(brush: RuntimeBoxBrushInstance): Brush {
+  const base = {
+    id: brush.id,
+    name: undefined,
+    visible: brush.visible,
+    enabled: true,
+    center: brush.center,
+    rotationDegrees: brush.rotationDegrees,
+    size: brush.size,
+    volume: brush.volume
+  };
+
   switch (brush.kind) {
     case "box":
-      return createBoxBrush({
-        id: brush.id,
-        visible: brush.visible,
-        center: brush.center,
-        rotationDegrees: brush.rotationDegrees,
-        size: brush.size,
-        geometry: brush.geometry as Parameters<typeof createBoxBrush>[0]["geometry"],
-        faces: brush.faces as Parameters<typeof createBoxBrush>[0]["faces"],
-        volume: brush.volume
-      });
+      return {
+        ...base,
+        kind: "box",
+        geometry: brush.geometry as Brush["geometry"],
+        faces: brush.faces as Brush["faces"]
+      } as Brush;
     case "wedge":
-      return createWedgeBrush({
-        id: brush.id,
-        visible: brush.visible,
-        center: brush.center,
-        rotationDegrees: brush.rotationDegrees,
-        size: brush.size,
-        geometry:
-          brush.geometry as Parameters<typeof createWedgeBrush>[0]["geometry"],
-        faces: brush.faces as Parameters<typeof createWedgeBrush>[0]["faces"],
-        volume: brush.volume
-      });
+      return {
+        ...base,
+        kind: "wedge",
+        geometry: brush.geometry as Brush["geometry"],
+        faces: brush.faces as Brush["faces"]
+      } as Brush;
     case "radialPrism":
-      return createRadialPrismBrush({
-        id: brush.id,
-        visible: brush.visible,
-        center: brush.center,
-        rotationDegrees: brush.rotationDegrees,
-        size: brush.size,
-        sideCount: brush.sideCount,
-        geometry:
-          brush.geometry as Parameters<typeof createRadialPrismBrush>[0]["geometry"],
-        faces:
-          brush.faces as Parameters<typeof createRadialPrismBrush>[0]["faces"],
-        volume: brush.volume
-      });
+      return {
+        ...base,
+        kind: "radialPrism",
+        sideCount: brush.sideCount ?? 12,
+        geometry: brush.geometry as Brush["geometry"],
+        faces: brush.faces as Brush["faces"]
+      } as Brush;
   }
 }
 
