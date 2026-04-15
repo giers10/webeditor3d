@@ -51,6 +51,7 @@ interface ViewportCanvasProps {
   whiteboxSnapStep: number;
   viewportGridVisible: boolean;
   selection: EditorSelection;
+  activeSelectionId: string | null;
   toolMode: ToolMode;
   toolPreview: ViewportToolPreview;
   transformSession: TransformSessionState;
@@ -84,6 +85,7 @@ export function ViewportCanvas({
   whiteboxSnapStep,
   viewportGridVisible,
   selection,
+  activeSelectionId,
   toolMode,
   toolPreview,
   transformSession,
@@ -184,8 +186,12 @@ export function ViewportCanvas({
   }, [whiteboxSelectionMode]);
 
   useLayoutEffect(() => {
-    hostRef.current?.updateDocument(sceneDocument, selection);
-  }, [sceneDocument, selection]);
+    hostRef.current?.updateDocument(
+      sceneDocument,
+      selection,
+      activeSelectionId
+    );
+  }, [sceneDocument, selection, activeSelectionId]);
 
   useLayoutEffect(() => {
     hostRef.current?.setViewMode(viewMode);
