@@ -134,7 +134,7 @@ describe("ProjectSequencerPane", () => {
     expect(screen.queryByText("Legacy Day Filter")).toBeNull();
   });
 
-  it("moves sequence placements horizontally and between target rows", () => {
+  it("moves sequence placements horizontally and between target rows", async () => {
     const actorA = createActorControlTargetRef("actor-a");
     const actorB = createActorControlTargetRef("actor-b");
     const routine = createProjectScheduleRoutine({
@@ -212,6 +212,7 @@ describe("ProjectSequencerPane", () => {
     const block = screen.getByRole("button", { name: /morning patrol/i });
 
     fireEvent.pointerDown(block, { button: 0, clientX: 540, clientY: 24 });
+    await Promise.resolve();
     fireEvent.pointerMove(window, { clientX: 600, clientY: 120 });
     fireEvent.pointerUp(window, { clientX: 600, clientY: 120 });
 
@@ -225,7 +226,7 @@ describe("ProjectSequencerPane", () => {
     expect(onSetRoutineEndHour).toHaveBeenCalledWith(routine.id, 11);
   });
 
-  it("resizes sequence placements from both edges with minute precision", () => {
+  it("resizes sequence placements from both edges with minute precision", async () => {
     const actor = createActorControlTargetRef("actor-a");
     const routine = createProjectScheduleRoutine({
       id: "routine-a",
@@ -284,6 +285,7 @@ describe("ProjectSequencerPane", () => {
       clientX: 540,
       clientY: 24
     });
+    await Promise.resolve();
     fireEvent.pointerMove(window, { clientX: 525, clientY: 24 });
     fireEvent.pointerUp(window, { clientX: 525, clientY: 24 });
 
@@ -297,6 +299,7 @@ describe("ProjectSequencerPane", () => {
       clientX: 600,
       clientY: 24
     });
+    await Promise.resolve();
     fireEvent.pointerMove(window, { clientX: 630, clientY: 24 });
     fireEvent.pointerUp(window, { clientX: 630, clientY: 24 });
 
