@@ -27,11 +27,12 @@ import {
   createTriggerVolumeEntity
 } from "../../src/entities/entity-instances";
 import {
-  createStartDialogueInteractionLink,
+  createRunSequenceInteractionLink,
   createTeleportPlayerInteractionLink,
   createToggleVisibilityInteractionLink
 } from "../../src/interactions/interaction-links";
 import { createProjectScheduleRoutine } from "../../src/scheduler/project-scheduler";
+import { createProjectSequence } from "../../src/sequencer/project-sequences";
 import { createModelInstance } from "../../src/assets/model-instances";
 import { createProjectAssetStorageKey, type AudioAssetRecord } from "../../src/assets/project-assets";
 import { buildRuntimeSceneFromDocument } from "../../src/runtime-three/runtime-scene-build";
@@ -143,7 +144,21 @@ describe("buildRuntimeSceneFromDocument", () => {
         z: -2
       },
       yawDegrees: 45,
-      modelAssetId: "asset-model-triangle"
+      modelAssetId: "asset-model-triangle",
+      dialogues: [
+        {
+          id: "dialogue-warning",
+          title: "Warning",
+          lines: [
+            {
+              id: "dialogue-line-warning-1",
+              speakerName: "Operator",
+              text: "The generator is unstable."
+            }
+          ]
+        }
+      ],
+      defaultDialogueId: "dialogue-warning"
     });
     const pointLight = createPointLightEntity({
       id: "entity-point-light-main",
@@ -329,31 +344,33 @@ describe("buildRuntimeSceneFromDocument", () => {
           trigger: "click",
           targetEntityId: teleportTarget.id
         }),
-        "link-interactable-dialogue": createStartDialogueInteractionLink({
+        "link-interactable-dialogue": createRunSequenceInteractionLink({
           id: "link-interactable-dialogue",
           sourceEntityId: interactable.id,
           trigger: "click",
-          dialogueId: "dialogue-warning"
+          sequenceId: "sequence-warning-dialogue"
         }),
-        "link-trigger-dialogue": createStartDialogueInteractionLink({
+        "link-trigger-dialogue": createRunSequenceInteractionLink({
           id: "link-trigger-dialogue",
           sourceEntityId: triggerVolume.id,
           trigger: "enter",
-          dialogueId: "dialogue-warning"
+          sequenceId: "sequence-warning-dialogue"
         })
       }
     };
-    document.dialogues.dialogues["dialogue-warning"] = {
-      id: "dialogue-warning",
-      title: "Warning",
-      lines: [
-        {
-          id: "dialogue-line-warning-1",
-          speakerName: "Operator",
-          text: "The generator is unstable."
-        }
-      ]
-    };
+    document.sequences.sequences["sequence-warning-dialogue"] =
+      createProjectSequence({
+        id: "sequence-warning-dialogue",
+        title: "Warning Dialogue",
+        effects: [
+          {
+            stepClass: "impulse",
+            type: "makeNpcTalk",
+            npcEntityId: npc.id,
+            dialogueId: "dialogue-warning"
+          }
+        ]
+      });
     document.world.background = {
       mode: "image",
       assetId: imageAsset.id,
@@ -728,8 +745,8 @@ describe("buildRuntimeSceneFromDocument", () => {
         sourceEntityId: "entity-interactable-console",
         trigger: "click",
         action: {
-          type: "startDialogue",
-          dialogueId: "dialogue-warning"
+          type: "runSequence",
+          sequenceId: "sequence-warning-dialogue"
         }
       },
       {
@@ -746,8 +763,8 @@ describe("buildRuntimeSceneFromDocument", () => {
         sourceEntityId: "entity-trigger-door",
         trigger: "enter",
         action: {
-          type: "startDialogue",
-          dialogueId: "dialogue-warning"
+          type: "runSequence",
+          sequenceId: "sequence-warning-dialogue"
         }
       },
       {
