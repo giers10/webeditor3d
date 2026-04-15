@@ -3077,7 +3077,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
       );
       setNpcBoxSizeDraft(createVec3Draft(createNpcColliderSettings().boxSize));
       setNpcModelAssetIdDraft(DEFAULT_NPC_MODEL_ASSET_ID ?? "");
-      setNpcDialogueIdDraft("");
       setTeleportTargetYawDraft(String(DEFAULT_TELEPORT_TARGET_YAW_DEGREES));
       setInteractableRadiusDraft(String(DEFAULT_INTERACTABLE_RADIUS));
       setInteractablePromptDraft(DEFAULT_INTERACTABLE_PROMPT);
@@ -3138,7 +3137,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
         setNpcCapsuleHeightDraft(String(selectedEntity.collider.capsuleHeight));
         setNpcBoxSizeDraft(createVec3Draft(selectedEntity.collider.boxSize));
         setNpcModelAssetIdDraft(selectedEntity.modelAssetId ?? "");
-        setNpcDialogueIdDraft(selectedEntity.dialogueId ?? "");
         break;
       case "soundEmitter":
         setSoundEmitterAudioAssetIdDraft(selectedEntity.audioAssetId ?? "");
