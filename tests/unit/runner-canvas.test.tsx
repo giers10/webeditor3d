@@ -499,6 +499,7 @@ describe("RunnerCanvas", () => {
         loadedModelAssets={{}}
         loadedImageAssets={{
           "asset-night-sky": {
+            previewUrl: "/night-sky.png",
             sourceUrl: "/night-sky.png"
           } as never
         }}
