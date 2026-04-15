@@ -14664,7 +14664,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     pathList,
                     editorState.document.modelInstances,
                     editorState.document.assets,
-                    editorState.document.entities
+                    editorState.document.entities,
+                    editorState.activeSelectionId
                   )}
                 </div>
               </div>
