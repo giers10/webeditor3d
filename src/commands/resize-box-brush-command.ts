@@ -1,6 +1,10 @@
 import type { ToolMode } from "../core/tool-mode";
 import { DEFAULT_GRID_SIZE, snapPositiveSizeToGrid } from "../geometry/grid-snapping";
-import { cloneBrushGeometry, scaleBrushGeometryToSize } from "../document/brushes";
+import {
+  cloneBrushGeometry,
+  scaleBrushGeometryToSize,
+  updateBrush
+} from "../document/brushes";
 
 import { createOpaqueId } from "../core/ids";
 import type { EditorSelection } from "../core/selection";
@@ -51,13 +55,15 @@ export function createResizeBoxBrushCommand(options: ResizeBoxBrushCommandOption
       const nextGeometry = scaleBrushGeometryToSize(brush.geometry, resolvedSize);
 
       context.setDocument(
-        replaceBrush(currentDocument, {
-          ...brush,
-          size: {
-            ...resolvedSize
-          },
-          geometry: nextGeometry
-        })
+        replaceBrush(
+          currentDocument,
+          updateBrush(brush, {
+            size: {
+              ...resolvedSize
+            },
+            geometry: nextGeometry
+          })
+        )
       );
       context.setSelection(setSingleBrushSelection(options.brushId));
       context.setToolMode("select");
@@ -71,13 +77,15 @@ export function createResizeBoxBrushCommand(options: ResizeBoxBrushCommandOption
       const brush = getBoxBrushOrThrow(currentDocument, options.brushId);
 
       context.setDocument(
-        replaceBrush(currentDocument, {
-          ...brush,
-          size: {
-            ...previousSize
-          },
-          geometry: cloneBrushGeometry(previousGeometry)
-        })
+        replaceBrush(
+          currentDocument,
+          updateBrush(brush, {
+            size: {
+              ...previousSize
+            },
+            geometry: cloneBrushGeometry(previousGeometry)
+          })
+        )
       );
 
       if (previousSelection !== null) {
