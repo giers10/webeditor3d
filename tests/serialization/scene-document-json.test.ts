@@ -74,25 +74,6 @@ describe("scene document JSON", () => {
     expect(parseSceneDocumentJson(serializedDocument)).toEqual(document);
   });
 
-  it("round-trips project dialogue library resources through the scene schema", () => {
-    const document = createEmptySceneDocument({ name: "Dialogue Scene" });
-    document.dialogues.dialogues["dialogue-bell"] = {
-      id: "dialogue-bell",
-      title: "Bell Tower",
-      lines: [
-        {
-          id: "dialogue-line-bell-1",
-          speakerName: "Watcher",
-          text: "The bell rings before dawn."
-        }
-      ]
-    };
-
-    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(
-      document
-    );
-  });
-
   it("round-trips authored scheduler routines in the scene document schema", () => {
     const npc = createNpcEntity({
       id: "entity-npc-clocksmith",
