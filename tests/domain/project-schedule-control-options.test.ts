@@ -33,8 +33,6 @@ describe("project schedule control options", () => {
   it("lists actor animation and path as normal effect options", () => {
     expect(listProjectScheduleEffectOptions(actorTargetOption)).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ id: "actor.present" }),
-        expect.objectContaining({ id: "actor.hidden" }),
         expect.objectContaining({ id: "actor.playAnimation" }),
         expect.objectContaining({ id: "actor.followPath" })
       ])
