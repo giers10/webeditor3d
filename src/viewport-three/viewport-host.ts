@@ -2872,7 +2872,7 @@ export class ViewportHost {
         center: { ...initialBrush.center },
         rotationDegrees: { ...initialBrush.rotationDegrees },
         size: { ...initialBrush.size },
-        geometry: cloneBoxBrushGeometry(initialBrush.geometry)
+        geometry: cloneBrushGeometry(initialBrush.geometry)
       }
     });
     let worldDelta = {
@@ -2946,7 +2946,7 @@ export class ViewportHost {
       worldDelta = this.setAxisComponent(worldDelta, axisConstraint, axisDelta);
     }
 
-    const localDelta = transformBoxBrushWorldVectorToLocal(
+    const localDelta = transformBrushWorldVectorToLocal(
       initialBrush,
       worldDelta
     );
@@ -2985,19 +2985,19 @@ export class ViewportHost {
         center: { ...initialBrush.center },
         rotationDegrees: { ...initialBrush.rotationDegrees },
         size: { ...initialBrush.size },
-        geometry: cloneBoxBrushGeometry(initialBrush.geometry)
+        geometry: cloneBrushGeometry(initialBrush.geometry)
       }
     });
-    const pivotLocal = transformBoxBrushWorldPointToLocal(
+    const pivotLocal = transformBrushWorldPointToLocal(
       initialBrush,
       pivotWorld
     );
     const rotationAxis = this.axisVector(effectiveAxis).normalize();
     const vertexIds = this.getComponentTargetVertexIds(session.target);
-    const nextGeometry = cloneBoxBrushGeometry(initialBrush.geometry);
+    const nextGeometry = cloneBrushGeometry(initialBrush.geometry);
 
     for (const vertexId of vertexIds) {
-      const vertex = getBoxBrushLocalVertexPosition(initialBrush, vertexId);
+      const vertex = getBrushLocalVertexPosition(initialBrush, vertexId);
       const next = new Vector3(
         vertex.x - pivotLocal.x,
         vertex.y - pivotLocal.y,
@@ -3036,19 +3036,19 @@ export class ViewportHost {
         center: { ...initialBrush.center },
         rotationDegrees: { ...initialBrush.rotationDegrees },
         size: { ...initialBrush.size },
-        geometry: cloneBoxBrushGeometry(initialBrush.geometry)
+        geometry: cloneBrushGeometry(initialBrush.geometry)
       }
     });
-    const pivotLocal = transformBoxBrushWorldPointToLocal(
+    const pivotLocal = transformBrushWorldPointToLocal(
       initialBrush,
       pivotWorld
     );
-    const nextGeometry = cloneBoxBrushGeometry(initialBrush.geometry);
+    const nextGeometry = cloneBrushGeometry(initialBrush.geometry);
     const vertexIds = this.getComponentTargetVertexIds(session.target);
 
     if (session.target.kind === "brushFace") {
-      const meta = getBoxBrushFaceTransformMeta(session.target.faceId);
-      const axis = axisConstraint ?? meta.axis;
+      const axis =
+        axisConstraint ?? getBrushFaceAxis(initialBrush, session.target.faceId);
       const scaleFactor =
         1 +
         this.getAxisMovementDistance(axis, pivotWorld, origin, current) * 0.45;
@@ -3060,12 +3060,10 @@ export class ViewportHost {
         );
       }
     } else if (session.target.kind === "brushEdge") {
-      const meta = getBoxBrushEdgeTransformMeta(session.target.edgeId);
-      const affectedAxes = (["x", "y", "z"] as const).filter(
-        (axis) =>
-          meta.signs[axis] !== null &&
-          (axisConstraint === null || axisConstraint === axis)
-      );
+      const affectedAxes = getBrushEdgeScaleAxes(
+        initialBrush,
+        session.target.edgeId
+      ).filter((axis) => axisConstraint === null || axisConstraint === axis);
 
       for (const axis of affectedAxes) {
         const scaleFactor =
@@ -3099,7 +3097,7 @@ export class ViewportHost {
     renderObjects.edges.geometry = new EdgesGeometry(nextGeometry);
 
     for (const edgeHelper of renderObjects.edgeHelpers) {
-      const segment = getBoxBrushEdgeWorldSegment(brush, edgeHelper.id);
+      const segment = getBrushEdgeWorldSegment(brush, edgeHelper.id);
       const nextEdgeGeometry = new BufferGeometry().setFromPoints([
         new Vector3(segment.start.x, segment.start.y, segment.start.z),
         new Vector3(segment.end.x, segment.end.y, segment.end.z)
@@ -3109,7 +3107,7 @@ export class ViewportHost {
     }
 
     for (const vertexHelper of renderObjects.vertexHelpers) {
-      const vertex = getBoxBrushVertexWorldPosition(brush, vertexHelper.id);
+      const vertex = getBrushVertexWorldPosition(brush, vertexHelper.id);
       vertexHelper.mesh.position.set(vertex.x, vertex.y, vertex.z);
     }
   }
