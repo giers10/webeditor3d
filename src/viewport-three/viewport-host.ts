@@ -128,12 +128,15 @@ import {
 } from "../entities/entity-instances";
 import {
   cloneBrushGeometry,
+  createConeBrush,
   createRadialPrismBrush,
+  createTorusBrush,
   createWedgeBrush,
   deriveBrushSizeFromGeometry,
   scaleBrushGeometryToSize,
   updateBrush,
   DEFAULT_BOX_BRUSH_SIZE,
+  DEFAULT_TORUS_BRUSH_SIZE,
   type Brush,
   type BrushGeometry,
   type BoxBrush,
