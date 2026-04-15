@@ -280,7 +280,7 @@ export interface RuntimeSceneTransitionRequest {
 }
 
 export interface RuntimeDialogueState {
-  npcEntityId: string | null;
+  npcEntityId: string;
   dialogueId: string;
   title: string;
   lineId: string;
@@ -730,22 +730,14 @@ export class RuntimeHost {
       return;
     }
 
+    const npc =
+      this.runtimeScene.entities.npcs.find(
+        (candidate) => candidate.entityId === this.currentDialogue?.npcEntityId
+      ) ?? null;
     const dialogue =
-      this.currentDialogue.npcEntityId === null
-        ? this.runtimeScene.dialogues.dialogues[this.currentDialogue.dialogueId] ??
-          null
-        : (() => {
-            const npc =
-              this.runtimeScene.entities.npcs.find(
-                (candidate) =>
-                  candidate.entityId === this.currentDialogue?.npcEntityId
-              ) ?? null;
-            return (
-              npc?.dialogues.find(
-                (candidate) => candidate.id === this.currentDialogue?.dialogueId
-              ) ?? null
-            );
-          })();
+      npc?.dialogues.find(
+        (candidate) => candidate.id === this.currentDialogue?.dialogueId
+      ) ?? null;
 
     if (dialogue === null) {
       this.setRuntimeDialogue(null);
@@ -760,18 +752,12 @@ export class RuntimeHost {
     }
 
     this.setRuntimeDialogue(
-      this.currentDialogue.npcEntityId === null
-        ? this.createRuntimeDialogueState(
-            dialogue.id,
-            nextLineIndex,
-            this.currentDialogue.source
-          )
-        : this.createRuntimeNpcDialogueState(
-            this.currentDialogue.npcEntityId,
-            dialogue.id,
-            nextLineIndex,
-            this.currentDialogue.source
-          )
+      this.createRuntimeNpcDialogueState(
+        this.currentDialogue.npcEntityId,
+        dialogue.id,
+        nextLineIndex,
+        this.currentDialogue.source
+      )
     );
   }
 
