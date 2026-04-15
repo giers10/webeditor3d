@@ -18,6 +18,7 @@ import { createCreateWedgeBrushCommand } from "../commands/create-wedge-brush-co
 import { createDeleteBoxBrushCommand } from "../commands/delete-box-brush-command";
 import { createDeleteEntityCommand } from "../commands/delete-entity-command";
 import { createDeleteProjectAssetCommand } from "../commands/delete-project-asset-command";
+import { createDeleteSelectionCommand } from "../commands/delete-selection-command";
 import { createDuplicateSelectionCommand } from "../commands/duplicate-selection-command";
 import { createImportAudioAssetCommand } from "../commands/import-audio-asset-command";
 import { createImportBackgroundImageAssetCommand } from "../commands/import-background-image-asset-command";
@@ -58,9 +59,11 @@ import { createUpsertModelInstanceCommand } from "../commands/upsert-model-insta
 import { createUpsertPathCommand } from "../commands/upsert-path-command";
 import { createUpsertInteractionLinkCommand } from "../commands/upsert-interaction-link-command";
 import {
+  applySameKindSelectionClick,
   getSelectedBrushEdgeId,
   getSelectedBrushFaceId,
   getSelectedBrushVertexId,
+  getSelectionDefaultActiveId,
   getSingleSelectedBrushId,
   getSingleSelectedEntityId,
   getSingleSelectedModelInstanceId,
@@ -70,6 +73,8 @@ import {
   isBrushSelected,
   isPathPointSelected,
   isPathSelected,
+  isSelectionActiveId,
+  resolveSelectionActiveId,
   type EditorSelection
 } from "../core/selection";
 import {
