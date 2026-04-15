@@ -1032,6 +1032,26 @@ export function doesTransformSessionChangeTarget(
             session.target.initialGeometry
           ))
       );
+    case "brushes":
+      return (
+        session.preview.kind === "brushes" &&
+        (!areVec3Equal(session.preview.pivot, session.target.initialPivot) ||
+          session.preview.items.length !== session.target.items.length ||
+          session.preview.items.some((item, index) => {
+            const targetItem = session.target.items[index];
+
+            return (
+              item.brushId !== targetItem.brushId ||
+              !areVec3Equal(item.center, targetItem.initialCenter) ||
+              !areVec3Equal(
+                item.rotationDegrees,
+                targetItem.initialRotationDegrees
+              ) ||
+              !areVec3Equal(item.size, targetItem.initialSize) ||
+              !areBrushGeometriesEqual(item.geometry, targetItem.initialGeometry)
+            );
+          }))
+      );
     case "modelInstance":
       return (
         session.preview.kind === "modelInstance" &&
@@ -1044,6 +1064,25 @@ export function doesTransformSessionChangeTarget(
             session.target.initialRotationDegrees
           ) ||
           !areVec3Equal(session.preview.scale, session.target.initialScale))
+      );
+    case "modelInstances":
+      return (
+        session.preview.kind === "modelInstances" &&
+        (!areVec3Equal(session.preview.pivot, session.target.initialPivot) ||
+          session.preview.items.length !== session.target.items.length ||
+          session.preview.items.some((item, index) => {
+            const targetItem = session.target.items[index];
+
+            return (
+              item.modelInstanceId !== targetItem.modelInstanceId ||
+              !areVec3Equal(item.position, targetItem.initialPosition) ||
+              !areVec3Equal(
+                item.rotationDegrees,
+                targetItem.initialRotationDegrees
+              ) ||
+              !areVec3Equal(item.scale, targetItem.initialScale)
+            );
+          }))
       );
     case "pathPoint":
       return (
@@ -1064,6 +1103,24 @@ export function doesTransformSessionChangeTarget(
             session.preview.rotation,
             session.target.initialRotation
           ))
+      );
+    case "entities":
+      return (
+        session.preview.kind === "entities" &&
+        (!areVec3Equal(session.preview.pivot, session.target.initialPivot) ||
+          session.preview.items.length !== session.target.items.length ||
+          session.preview.items.some((item, index) => {
+            const targetItem = session.target.items[index];
+
+            return (
+              item.entityId !== targetItem.entityId ||
+              !areVec3Equal(item.position, targetItem.initialPosition) ||
+              !areEntityTransformRotationsEqual(
+                item.rotation,
+                targetItem.initialRotation
+              )
+            );
+          }))
       );
   }
 }
