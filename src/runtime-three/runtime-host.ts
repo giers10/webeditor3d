@@ -341,6 +341,7 @@ export class RuntimeHost {
   private previousPauseInputActive = false;
   private readonly pressedKeys = new Set<string>();
   private activeScheduledImpulseRoutineIds = new Set<string>();
+  private completedScheduledImpulseRoutineIds = new Set<string>();
 
   constructor(options: { enableRendering?: boolean } = {}) {
     const enableRendering = options.enableRendering ?? true;
@@ -740,6 +741,7 @@ export class RuntimeHost {
     this.currentClockState = null;
     this.lastPublishedClockState = null;
     this.activeScheduledImpulseRoutineIds.clear();
+    this.completedScheduledImpulseRoutineIds.clear();
     this.manualPauseActive = false;
     this.controlPauseActive = false;
     this.previousPauseInputActive = false;
@@ -3082,13 +3084,18 @@ export class RuntimeHost {
     this.syncResolvedControlStateToRuntime(nextResolvedControl);
 
     for (const impulseRoutine of nextResolvedScheduler.impulses) {
-      if (this.activeScheduledImpulseRoutineIds.has(impulseRoutine.routineId)) {
+      if (
+        this.activeScheduledImpulseRoutineIds.has(impulseRoutine.routineId) ||
+        this.completedScheduledImpulseRoutineIds.has(impulseRoutine.routineId)
+      ) {
         continue;
       }
 
       for (const effect of impulseRoutine.effects) {
         this.dispatchImpulseSequenceEffect(effect, null);
       }
+
+      this.completedScheduledImpulseRoutineIds.add(impulseRoutine.routineId);
     }
 
     this.runtimeScene.scheduler.resolved = nextResolvedScheduler;
