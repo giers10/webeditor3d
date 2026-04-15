@@ -91,6 +91,21 @@ interface ProjectSequencesPanelProps {
     stepIndex: number,
     loop: boolean
   ): void;
+  onSetControlStepPathId(
+    sequenceId: string,
+    stepIndex: number,
+    pathId: string
+  ): void;
+  onSetControlStepPathSpeed(
+    sequenceId: string,
+    stepIndex: number,
+    speed: number
+  ): void;
+  onSetControlStepPathLoop(
+    sequenceId: string,
+    stepIndex: number,
+    loop: boolean
+  ): void;
   onSetDialogueStepDialogueId(
     sequenceId: string,
     stepIndex: number,
@@ -189,6 +204,9 @@ export function ProjectSequencesPanel({
   onSetControlStepColorValue,
   onSetControlStepAnimationClip,
   onSetControlStepAnimationLoop,
+  onSetControlStepPathId,
+  onSetControlStepPathSpeed,
+  onSetControlStepPathLoop,
   onSetDialogueStepDialogueId,
   onSetTeleportStepTarget,
   onSetSceneTransitionStepTarget,
@@ -444,7 +462,8 @@ export function ProjectSequencesPanel({
                             </label>
                           ) : null}
 
-                          {effect.effect.type === "playModelAnimation" ? (
+                          {effect.effect.type === "playModelAnimation" ||
+                          effect.effect.type === "playActorAnimation" ? (
                             <>
                               <label className="form-field">
                                 <span className="label">Clip</span>
@@ -459,13 +478,15 @@ export function ProjectSequencesPanel({
                                     )
                                   }
                                 >
-                                  {(targetOption.defaults.animationClipNames ?? []).map(
-                                    (clipName) => (
-                                      <option key={clipName} value={clipName}>
-                                        {clipName}
-                                      </option>
-                                    )
-                                  )}
+                                  {(
+                                    effect.effect.type === "playActorAnimation"
+                                      ? targetOption.defaults.actorAnimationClipNames
+                                      : targetOption.defaults.animationClipNames
+                                  )?.map((clipName) => (
+                                    <option key={clipName} value={clipName}>
+                                      {clipName}
+                                    </option>
+                                  ))}
                                 </select>
                               </label>
                               <label className="form-field form-field--inline">
@@ -474,6 +495,77 @@ export function ProjectSequencesPanel({
                                   checked={effect.effect.loop !== false}
                                   onChange={(event) =>
                                     onSetControlStepAnimationLoop(
+                                      selectedSequence.id,
+                                      effectIndex,
+                                      event.currentTarget.checked
+                                    )
+                                  }
+                                />
+                                <span className="label">Loop</span>
+                              </label>
+                            </>
+                          ) : null}
+
+                          {effect.effect.type === "followActorPath" ? (
+                            <>
+                              <label className="form-field">
+                                <span className="label">Path</span>
+                                <select
+                                  className="select-input"
+                                  value={effect.effect.pathId}
+                                  onChange={(event) =>
+                                    onSetControlStepPathId(
+                                      selectedSequence.id,
+                                      effectIndex,
+                                      event.currentTarget.value
+                                    )
+                                  }
+                                >
+                                  {(targetOption.defaults.actorPathOptions ?? []).map(
+                                    (pathOption) => (
+                                      <option
+                                        key={pathOption.pathId}
+                                        value={pathOption.pathId}
+                                      >
+                                        {pathOption.label}
+                                      </option>
+                                    )
+                                  )}
+                                </select>
+                              </label>
+                              <label className="form-field">
+                                <span className="label">Speed</span>
+                                <input
+                                  key={`${selectedSequence.id}-${effectIndex}-path-speed`}
+                                  className="text-input"
+                                  type="number"
+                                  min="0.01"
+                                  step="0.1"
+                                  defaultValue={effect.effect.speed}
+                                  onBlur={(event) =>
+                                    onSetControlStepPathSpeed(
+                                      selectedSequence.id,
+                                      effectIndex,
+                                      Number(event.currentTarget.value)
+                                    )
+                                  }
+                                  onKeyDown={(event) =>
+                                    commitOnEnter(event, () =>
+                                      onSetControlStepPathSpeed(
+                                        selectedSequence.id,
+                                        effectIndex,
+                                        Number(event.currentTarget.value)
+                                      )
+                                    )
+                                  }
+                                />
+                              </label>
+                              <label className="form-field form-field--inline">
+                                <input
+                                  type="checkbox"
+                                  checked={effect.effect.loop}
+                                  onChange={(event) =>
+                                    onSetControlStepPathLoop(
                                       selectedSequence.id,
                                       effectIndex,
                                       event.currentTarget.checked
