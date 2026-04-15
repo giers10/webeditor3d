@@ -21,7 +21,6 @@ import {
   createPlayerStartInputBindings,
   createPlayerStartEntity,
   createSceneEntryEntity,
-  createSceneExitEntity,
   createSoundEmitterEntity,
   createSpotLightEntity,
   createTeleportTargetEntity,
@@ -145,19 +144,6 @@ describe("buildRuntimeSceneFromDocument", () => {
       },
       yawDegrees: 45,
       modelAssetId: "asset-model-triangle"
-    });
-    const sceneExit = createSceneExitEntity({
-      id: "entity-scene-exit-house-door",
-      position: {
-        x: 3,
-        y: 1,
-        z: 0.5
-      },
-      radius: 2.25,
-      prompt: "Enter House",
-      interactionEnabled: true,
-      targetSceneId: "scene-house",
-      targetEntryEntityId: sceneEntry.id
     });
     const pointLight = createPointLightEntity({
       id: "entity-point-light-main",
@@ -320,7 +306,6 @@ describe("buildRuntimeSceneFromDocument", () => {
         [teleportTarget.id]: teleportTarget,
         [interactable.id]: interactable,
         [sceneEntry.id]: sceneEntry,
-        [sceneExit.id]: sceneExit,
         [pointLight.id]: pointLight,
         [spotLight.id]: spotLight
       },
@@ -690,21 +675,7 @@ describe("buildRuntimeSceneFromDocument", () => {
           interactionEnabled: true
         }
       ],
-      sceneExits: [
-        {
-          entityId: "entity-scene-exit-house-door",
-          position: {
-            x: 3,
-            y: 1,
-            z: 0.5
-          },
-          radius: 2.25,
-          prompt: "Enter House",
-          interactionEnabled: true,
-          targetSceneId: "scene-house",
-          targetEntryEntityId: "entity-scene-entry-house-front"
-        }
-      ]
+      sceneExits: undefined
     });
     expect(runtimeScene.localLights).toEqual({
       pointLights: [
@@ -1042,8 +1013,7 @@ describe("buildRuntimeSceneFromDocument", () => {
       soundEmitters: [],
       triggerVolumes: [],
       teleportTargets: [],
-      interactables: [],
-      sceneExits: []
+      interactables: []
     });
     expect(runtimeScene.interactionLinks).toEqual([]);
     expect(runtimeScene.spawn).toEqual({
