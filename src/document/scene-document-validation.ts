@@ -4703,16 +4703,6 @@ function validateProjectDialogue(
       );
     }
 
-    if (line.speakerName !== null && line.speakerName.trim().length === 0) {
-      diagnostics.push(
-        createDiagnostic(
-          "error",
-          "invalid-dialogue-line-speaker",
-          "Dialogue speaker names must be non-empty when authored.",
-          `${linePath}.speakerName`
-        )
-      );
-    }
   }
 }
 
