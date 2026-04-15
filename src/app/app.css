@@ -1088,13 +1088,16 @@ button:disabled {
   min-width: 18px;
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 6px;
   padding: 0 10px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 12px;
   background: linear-gradient(135deg, #f5b66f, #d17f4a);
   color: #24150d;
   overflow: hidden;
-  cursor: pointer;
+  cursor: grab;
+  touch-action: none;
 }
 
 .schedule-block--inactive {
@@ -1110,8 +1113,31 @@ button:disabled {
   box-shadow: 0 0 0 2px rgba(255, 250, 240, 0.3);
 }
 
+.schedule-block--dragging {
+  opacity: 0.88;
+  cursor: grabbing;
+}
+
+.schedule-block__resize-handle {
+  width: 8px;
+  align-self: stretch;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: rgba(36, 21, 13, 0.2);
+  cursor: ew-resize;
+}
+
+.schedule-block__resize-handle--start {
+  margin-left: -4px;
+}
+
+.schedule-block__resize-handle--end {
+  margin-right: -4px;
+}
+
 .schedule-block__title {
   min-width: 0;
+  flex: 1 1 auto;
   overflow: hidden;
   font-size: 0.78rem;
   font-weight: 700;
