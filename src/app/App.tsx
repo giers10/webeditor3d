@@ -4698,6 +4698,27 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
   };
 
+  const handleAddProjectSequenceSceneTransitionStep = (
+    sequenceId: string,
+    targetKey: string
+  ) => {
+    const target = readSceneTransitionTargetKey(targetKey);
+
+    updateProjectSequence(
+      sequenceId,
+      "Add project sequence scene transition effect",
+      "Added scene transition effect.",
+      (sequence) => {
+        sequence.effects.push({
+          stepClass: "impulse",
+          type: "startSceneTransition",
+          targetSceneId: target.targetSceneId,
+          targetEntryEntityId: target.targetEntryEntityId
+        });
+      }
+    );
+  };
+
   const handleAddProjectSequenceVisibilityStep = (
     sequenceId: string,
     targetKey: string
@@ -5004,6 +5025,31 @@ export function App({ store, initialStatusMessage }: AppProps) {
         }
 
         step.targetEntityId = targetEntityId;
+      }
+    );
+  };
+
+  const updateProjectSequenceSceneTransitionStepTarget = (
+    sequenceId: string,
+    stepIndex: number,
+    targetKey: string
+  ) => {
+    const target = readSceneTransitionTargetKey(targetKey);
+
+    updateProjectSequenceStep(
+      sequenceId,
+      stepIndex,
+      "Set project sequence scene transition target",
+      "Updated scene transition target.",
+      (step) => {
+        if (step.type !== "startSceneTransition") {
+          throw new Error(
+            "Only scene transition effects expose a scene transition target."
+          );
+        }
+
+        step.targetSceneId = target.targetSceneId;
+        step.targetEntryEntityId = target.targetEntryEntityId;
       }
     );
   };
