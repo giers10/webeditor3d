@@ -3083,7 +3083,7 @@ export class ViewportHost {
     return this.createBrushPreviewFromGeometry(initialBrush, nextGeometry);
   }
 
-  private updateBrushRenderObjectGeometry(brush: BoxBrush) {
+  private updateBrushRenderObjectGeometry(brush: Brush) {
     const renderObjects = this.brushRenderObjects.get(brush.id);
 
     if (renderObjects === undefined) {
@@ -3506,15 +3506,16 @@ export class ViewportHost {
         continue;
       }
 
-      const geometry = buildBoxBrushDerivedMeshData(brush).geometry;
+      const derivedMesh = buildBoxBrushDerivedMeshData(brush);
+      const geometry = derivedMesh.geometry;
       const contactPatches =
-        brush.volume.mode === "water"
+        brush.kind === "box" && brush.volume.mode === "water"
           ? this.collectViewportWaterContactPatches(document, brush)
           : [];
 
       const materials =
         this.createFogMaterialSet(brush, volumeRenderPaths) ??
-        BOX_FACE_IDS.map((faceId) =>
+        derivedMesh.faceIdsInOrder.map((faceId) =>
           this.createFaceMaterial(
             brush,
             faceId,
@@ -3541,10 +3542,10 @@ export class ViewportHost {
       );
       edges.visible = this.displayMode !== "wireframe";
 
-      const edgeHelpers = BOX_EDGE_IDS.map((edgeId) =>
+      const edgeHelpers = getBrushEdgeIds(brush).map((edgeId) =>
         this.createEdgeHelper(brush, edgeId)
       );
-      const vertexHelpers = BOX_VERTEX_IDS.map((vertexId) =>
+      const vertexHelpers = getBrushVertexIds(brush).map((vertexId) =>
         this.createVertexHelper(brush, vertexId)
       );
 
@@ -3558,6 +3559,7 @@ export class ViewportHost {
       }
       this.brushRenderObjects.set(brush.id, {
         mesh,
+        faceIdsInOrder: derivedMesh.faceIdsInOrder,
         edges,
         edgeHelpers,
         vertexHelpers
@@ -3700,7 +3702,7 @@ export class ViewportHost {
   }
 
   private createFogMaterialSet(
-    brush: BoxBrush,
+    brush: Brush,
     volumeRenderPaths: {
       fog: "performance" | "quality";
       water: "performance" | "quality";
@@ -3714,7 +3716,8 @@ export class ViewportHost {
       return null;
     }
 
-    const highlightStates = BOX_FACE_IDS.map((faceId) =>
+    const faceIds = getBrushFaceIds(brush);
+    const highlightStates = faceIds.map((faceId) =>
       this.getFaceHighlightState(brush.id, faceId)
     );
     const selectedFace = highlightStates.includes("selected");
@@ -3739,7 +3742,7 @@ export class ViewportHost {
       });
 
       this.volumeAnimatedUniforms.push(fogMaterial.animationUniform);
-      return BOX_FACE_IDS.map(() => fogMaterial.material);
+      return faceIds.map(() => fogMaterial.material);
     }
 
     const baseOpacity = Math.max(
@@ -3757,7 +3760,7 @@ export class ViewportHost {
       depthWrite: false
     });
 
-    return BOX_FACE_IDS.map(() => fogMaterial);
+    return faceIds.map(() => fogMaterial);
   }
 
   private rebuildEntityMarkers(
@@ -4671,7 +4674,7 @@ export class ViewportHost {
 
   private getFaceHighlightState(
     brushId: string,
-    faceId: BoxFaceId
+    faceId: WhiteboxFaceId
   ): "none" | "hovered" | "selected" {
     if (isBrushFaceSelected(this.currentSelection, brushId, faceId)) {
       return "selected";
@@ -4704,8 +4707,8 @@ export class ViewportHost {
   }
 
   private createFaceMaterial(
-    brush: BoxBrush,
-    faceId: BoxFaceId,
+    brush: Brush,
+    faceId: WhiteboxFaceId,
     material: MaterialDef | undefined,
     highlightState: "none" | "hovered" | "selected",
     volumeRenderPaths: {
@@ -5292,10 +5295,10 @@ export class ViewportHost {
   }
 
   private createEdgeHelper(
-    brush: BoxBrush,
-    edgeId: BoxEdgeId
-  ): { id: BoxEdgeId; line: Line<BufferGeometry, LineBasicMaterial> } {
-    const segment = getBoxBrushEdgeWorldSegment(brush, edgeId);
+    brush: Brush,
+    edgeId: WhiteboxEdgeId
+  ): { id: WhiteboxEdgeId; line: Line<BufferGeometry, LineBasicMaterial> } {
+    const segment = getBrushEdgeWorldSegment(brush, edgeId);
     const geometry = new BufferGeometry().setFromPoints([
       new Vector3(segment.start.x, segment.start.y, segment.start.z),
       new Vector3(segment.end.x, segment.end.y, segment.end.z)
@@ -5320,10 +5323,10 @@ export class ViewportHost {
   }
 
   private createVertexHelper(
-    brush: BoxBrush,
-    vertexId: BoxVertexId
-  ): { id: BoxVertexId; mesh: Mesh<SphereGeometry, MeshBasicMaterial> } {
-    const position = getBoxBrushVertexWorldPosition(brush, vertexId);
+    brush: Brush,
+    vertexId: WhiteboxVertexId
+  ): { id: WhiteboxVertexId; mesh: Mesh<SphereGeometry, MeshBasicMaterial> } {
+    const position = getBrushVertexWorldPosition(brush, vertexId);
     const mesh = new Mesh(
       new SphereGeometry(WHITEBOX_VERTEX_RADIUS, 10, 8),
       new MeshBasicMaterial({
@@ -5378,7 +5381,7 @@ export class ViewportHost {
 
         const previousMaterials = renderObjects.mesh.material;
         const contactPatches =
-          brush.volume.mode === "water"
+          brush.kind === "box" && brush.volume.mode === "water"
             ? this.collectViewportWaterContactPatches(
                 this.currentDocument,
                 brush
@@ -5386,7 +5389,7 @@ export class ViewportHost {
             : [];
         renderObjects.mesh.material =
           this.createFogMaterialSet(brush, volumeRenderPaths) ??
-          BOX_FACE_IDS.map((faceId) =>
+          renderObjects.faceIdsInOrder.map((faceId) =>
             this.createFaceMaterial(
               brush,
               faceId,
