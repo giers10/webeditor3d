@@ -37,7 +37,6 @@ import {
 } from "../../src/entities/entity-instances";
 import {
   createControlInteractionLink,
-  createStartDialogueInteractionLink,
   type InteractionLink
 } from "../../src/interactions/interaction-links";
 import { createProjectScheduleRoutine } from "../../src/scheduler/project-scheduler";
@@ -317,7 +316,7 @@ describe("RuntimeHost", () => {
     host.dispose();
   });
 
-  it("opens, advances, and closes project dialogues through the runtime host", () => {
+  it("opens, advances, and closes NPC dialogues through the runtime host", () => {
     vi.spyOn(console, "warn").mockImplementation(() => undefined);
     vi.spyOn(RapierCollisionWorld, "create").mockResolvedValue({
       dispose: vi.fn(),
@@ -326,34 +325,30 @@ describe("RuntimeHost", () => {
       )
     } as unknown as RapierCollisionWorld);
 
-    const triggerVolume = createTriggerVolumeEntity({
-      id: "entity-trigger-main"
-    });
     const document = createEmptySceneDocument();
-    document.entities[triggerVolume.id] = triggerVolume;
-    document.dialogues.dialogues["dialogue-warning"] = {
-      id: "dialogue-warning",
-      title: "Generator Warning",
-      lines: [
+    const npc = createNpcEntity({
+      id: "entity-npc-operator",
+      dialogues: [
         {
-          id: "dialogue-line-warning-1",
-          speakerName: "Operator",
-          text: "The generator is unstable."
-        },
-        {
-          id: "dialogue-line-warning-2",
-          speakerName: null,
-          text: "A low hum fills the room."
+          id: "dialogue-warning",
+          title: "Generator Warning",
+          lines: [
+            {
+              id: "dialogue-line-warning-1",
+              speakerName: "Operator",
+              text: "The generator is unstable."
+            },
+            {
+              id: "dialogue-line-warning-2",
+              speakerName: null,
+              text: "A low hum fills the room."
+            }
+          ]
         }
-      ]
-    };
-    document.interactionLinks["link-start-dialogue"] =
-      createStartDialogueInteractionLink({
-        id: "link-start-dialogue",
-        sourceEntityId: triggerVolume.id,
-        trigger: "enter",
-        dialogueId: "dialogue-warning"
-      });
+      ],
+      defaultDialogueId: "dialogue-warning"
+    });
+    document.entities[npc.id] = npc;
 
     const runtimeScene = buildRuntimeSceneFromDocument(document);
     const host = new RuntimeHost({
@@ -367,8 +362,9 @@ describe("RuntimeHost", () => {
 
     const hostInternals = host as unknown as {
       createInteractionDispatcher(): {
-        startDialogue(
-          dialogueId: string,
+        startNpcDialogue(
+          npcEntityId: string,
+          dialogueId: string | null,
           source?: {
             kind: "interactionLink" | "npc" | "direct";
             sourceEntityId: string | null;
@@ -379,13 +375,12 @@ describe("RuntimeHost", () => {
       };
     };
     const dispatcher = hostInternals.createInteractionDispatcher();
-    const dialogueLink = document.interactionLinks["link-start-dialogue"]!;
 
-    dispatcher.startDialogue("dialogue-warning", {
-      kind: "interactionLink",
-      sourceEntityId: dialogueLink.sourceEntityId,
-      linkId: dialogueLink.id,
-      trigger: "enter"
+    dispatcher.startNpcDialogue(npc.id, "dialogue-warning", {
+      kind: "npc",
+      sourceEntityId: npc.id,
+      linkId: null,
+      trigger: "click"
     });
     host.advanceRuntimeDialogue();
     host.advanceRuntimeDialogue();
@@ -393,26 +388,28 @@ describe("RuntimeHost", () => {
     expect(dialogueStates).toEqual([
       expect.objectContaining({
         dialogueId: "dialogue-warning",
+        npcEntityId: npc.id,
         lineIndex: 0,
         speakerName: "Operator",
         text: "The generator is unstable.",
         source: {
-          kind: "interactionLink",
-          sourceEntityId: triggerVolume.id,
-          linkId: dialogueLink.id,
-          trigger: "enter"
+          kind: "npc",
+          sourceEntityId: npc.id,
+          linkId: null,
+          trigger: "click"
         }
       }),
       expect.objectContaining({
         dialogueId: "dialogue-warning",
+        npcEntityId: npc.id,
         lineIndex: 1,
         speakerName: null,
         text: "A low hum fills the room.",
         source: {
-          kind: "interactionLink",
-          sourceEntityId: triggerVolume.id,
-          linkId: dialogueLink.id,
-          trigger: "enter"
+          kind: "npc",
+          sourceEntityId: npc.id,
+          linkId: null,
+          trigger: "click"
         }
       }),
       null
@@ -421,7 +418,7 @@ describe("RuntimeHost", () => {
     host.dispose();
   });
 
-  it("publishes late dialogue handlers, ignores repeated same-dialogue starts, and replaces with a different dialogue", () => {
+  it("publishes late dialogue handlers, ignores repeated same-NPC dialogue starts, and replaces with a different NPC dialogue", () => {
     vi.spyOn(console, "warn").mockImplementation(() => undefined);
     vi.spyOn(RapierCollisionWorld, "create").mockResolvedValue({
       dispose: vi.fn(),
@@ -431,28 +428,42 @@ describe("RuntimeHost", () => {
     } as unknown as RapierCollisionWorld);
 
     const document = createEmptySceneDocument();
-    document.dialogues.dialogues["dialogue-a"] = {
-      id: "dialogue-a",
-      title: "A",
-      lines: [
+    const npcA = createNpcEntity({
+      id: "entity-npc-a",
+      dialogues: [
         {
-          id: "dialogue-line-a-1",
-          speakerName: null,
-          text: "First dialogue."
+          id: "dialogue-a",
+          title: "A",
+          lines: [
+            {
+              id: "dialogue-line-a-1",
+              speakerName: null,
+              text: "First dialogue."
+            }
+          ]
         }
-      ]
-    };
-    document.dialogues.dialogues["dialogue-b"] = {
-      id: "dialogue-b",
-      title: "B",
-      lines: [
+      ],
+      defaultDialogueId: "dialogue-a"
+    });
+    const npcB = createNpcEntity({
+      id: "entity-npc-b",
+      dialogues: [
         {
-          id: "dialogue-line-b-1",
-          speakerName: "Merchant",
-          text: "Second dialogue."
+          id: "dialogue-b",
+          title: "B",
+          lines: [
+            {
+              id: "dialogue-line-b-1",
+              speakerName: "Merchant",
+              text: "Second dialogue."
+            }
+          ]
         }
-      ]
-    };
+      ],
+      defaultDialogueId: "dialogue-b"
+    });
+    document.entities[npcA.id] = npcA;
+    document.entities[npcB.id] = npcB;
 
     const host = new RuntimeHost({
       enableRendering: false
@@ -461,8 +472,9 @@ describe("RuntimeHost", () => {
 
     const hostInternals = host as unknown as {
       createInteractionDispatcher(): {
-        startDialogue(
-          dialogueId: string,
+        startNpcDialogue(
+          npcEntityId: string,
+          dialogueId: string | null,
           source?: {
             kind: "interactionLink" | "npc" | "direct";
             sourceEntityId: string | null;
@@ -474,11 +486,11 @@ describe("RuntimeHost", () => {
     };
     const dispatcher = hostInternals.createInteractionDispatcher();
 
-    dispatcher.startDialogue("dialogue-a", {
-      kind: "interactionLink",
-      sourceEntityId: "entity-trigger-a",
-      linkId: "link-dialogue-a",
-      trigger: "enter"
+    dispatcher.startNpcDialogue(npcA.id, "dialogue-a", {
+      kind: "npc",
+      sourceEntityId: npcA.id,
+      linkId: null,
+      trigger: "click"
     });
 
     const dialogueStates: Array<RuntimeDialogueState | null> = [];
@@ -486,15 +498,15 @@ describe("RuntimeHost", () => {
       dialogueStates.push(dialogue);
     });
 
-    dispatcher.startDialogue("dialogue-a", {
-      kind: "interactionLink",
-      sourceEntityId: "entity-trigger-a",
-      linkId: "link-dialogue-a",
-      trigger: "enter"
-    });
-    dispatcher.startDialogue("dialogue-b", {
+    dispatcher.startNpcDialogue(npcA.id, "dialogue-a", {
       kind: "npc",
-      sourceEntityId: "entity-npc-merchant",
+      sourceEntityId: npcA.id,
+      linkId: null,
+      trigger: "click"
+    });
+    dispatcher.startNpcDialogue(npcB.id, "dialogue-b", {
+      kind: "npc",
+      sourceEntityId: npcB.id,
       linkId: null,
       trigger: "click"
     });
@@ -502,20 +514,22 @@ describe("RuntimeHost", () => {
     expect(dialogueStates).toEqual([
       expect.objectContaining({
         dialogueId: "dialogue-a",
+        npcEntityId: npcA.id,
         text: "First dialogue.",
         source: {
-          kind: "interactionLink",
-          sourceEntityId: "entity-trigger-a",
-          linkId: "link-dialogue-a",
-          trigger: "enter"
+          kind: "npc",
+          sourceEntityId: npcA.id,
+          linkId: null,
+          trigger: "click"
         }
       }),
       expect.objectContaining({
         dialogueId: "dialogue-b",
+        npcEntityId: npcB.id,
         text: "Second dialogue.",
         source: {
           kind: "npc",
-          sourceEntityId: "entity-npc-merchant",
+          sourceEntityId: npcB.id,
           linkId: null,
           trigger: "click"
         }
