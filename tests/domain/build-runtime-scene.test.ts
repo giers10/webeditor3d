@@ -939,7 +939,7 @@ describe("buildRuntimeSceneFromDocument", () => {
       },
       {
         entityId: "entity-npc-overnight",
-        active: false
+        active: true
       }
     ]);
     expect(

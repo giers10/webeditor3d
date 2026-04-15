@@ -978,7 +978,7 @@ describe("RuntimeHost", () => {
     expect(hostInternals.runtimeScene?.npcDefinitions[0]).toEqual(
       expect.objectContaining({
         entityId: npc.id,
-        active: false,
+        active: true,
         activeRoutineTitle: null
       })
     );
@@ -1181,7 +1181,7 @@ describe("RuntimeHost", () => {
     expect(hostInternals.runtimeScene?.npcDefinitions[0]).toEqual(
       expect.objectContaining({
         entityId: npc.id,
-        active: false,
+        active: true,
         activeRoutineTitle: null,
         animationClipName: null,
         yawDegrees: 90,
