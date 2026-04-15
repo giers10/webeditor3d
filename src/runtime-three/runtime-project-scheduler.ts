@@ -1,5 +1,9 @@
 import type { Vec3 } from "../core/vector";
 import {
+  sampleResolvedScenePathPosition,
+  sampleResolvedScenePathTangent
+} from "../document/paths";
+import {
   applyControlEffectToResolvedState,
   cloneControlEffect,
   cloneRuntimeResolvedControlState,
@@ -72,6 +76,7 @@ export interface RuntimeResolvedActorPathState {
   progressMode: "deriveFromTime";
   speed: number;
   loop: boolean;
+  smoothPath: boolean;
   elapsedHours: number;
   distance: number;
   progress: number;
@@ -137,6 +142,7 @@ function cloneRuntimeResolvedActorPathState(
     progressMode: state.progressMode,
     speed: state.speed,
     loop: state.loop,
+    smoothPath: state.smoothPath,
     elapsedHours: state.elapsedHours,
     distance: state.distance,
     progress: state.progress,
@@ -213,133 +219,6 @@ export function createRuntimeProjectSchedulerState(options: {
   };
 }
 
-function clampPathProgress(progress: number): number {
-  if (!Number.isFinite(progress)) {
-    return 0;
-  }
-
-  if (progress <= 0) {
-    return 0;
-  }
-
-  if (progress >= 1) {
-    return 1;
-  }
-
-  return progress;
-}
-
-function resolvePathSegmentSample(
-  path: RuntimeProjectSchedulePathDefinition,
-  progress: number
-): { segmentIndex: number | null; distance: number } {
-  if (path.segments.length === 0 || path.totalLength <= 0) {
-    return {
-      segmentIndex: null,
-      distance: 0
-    };
-  }
-
-  const distance = clampPathProgress(progress) * path.totalLength;
-
-  if (distance >= path.totalLength) {
-    return {
-      segmentIndex: path.segments.length - 1,
-      distance
-    };
-  }
-
-  const segmentIndex = path.segments.findIndex(
-    (segment) => distance <= segment.distanceEnd
-  );
-
-  return {
-    segmentIndex: segmentIndex === -1 ? path.segments.length - 1 : segmentIndex,
-    distance
-  };
-}
-
-function findNonZeroPathTangent(
-  path: RuntimeProjectSchedulePathDefinition,
-  index: number
-): Vec3 {
-  for (let candidateIndex = index; candidateIndex < path.segments.length; candidateIndex += 1) {
-    const candidate = path.segments[candidateIndex];
-
-    if (candidate !== undefined && candidate.length > 0) {
-      return cloneVec3(candidate.tangent);
-    }
-  }
-
-  for (let candidateIndex = index - 1; candidateIndex >= 0; candidateIndex -= 1) {
-    const candidate = path.segments[candidateIndex];
-
-    if (candidate !== undefined && candidate.length > 0) {
-      return cloneVec3(candidate.tangent);
-    }
-  }
-
-  return {
-    x: 0,
-    y: 0,
-    z: 0
-  };
-}
-
-function sampleRuntimeSchedulePathPosition(
-  path: RuntimeProjectSchedulePathDefinition,
-  progress: number
-): Vec3 {
-  if (path.points.length === 0) {
-    return {
-      x: 0,
-      y: 0,
-      z: 0
-    };
-  }
-
-  const { segmentIndex, distance } = resolvePathSegmentSample(path, progress);
-
-  if (segmentIndex === null) {
-    return cloneVec3(path.points[0]?.position ?? { x: 0, y: 0, z: 0 });
-  }
-
-  const segment = path.segments[segmentIndex];
-
-  if (segment.length <= 0) {
-    return cloneVec3(segment.start);
-  }
-
-  const localDistance = Math.min(
-    segment.length,
-    Math.max(0, distance - segment.distanceStart)
-  );
-  const t = localDistance / segment.length;
-
-  return {
-    x: segment.start.x + (segment.end.x - segment.start.x) * t,
-    y: segment.start.y + (segment.end.y - segment.start.y) * t,
-    z: segment.start.z + (segment.end.z - segment.start.z) * t
-  };
-}
-
-function sampleRuntimeSchedulePathTangent(
-  path: RuntimeProjectSchedulePathDefinition,
-  progress: number
-): Vec3 {
-  const { segmentIndex } = resolvePathSegmentSample(path, progress);
-
-  if (segmentIndex === null) {
-    return {
-      x: 0,
-      y: 0,
-      z: 0
-    };
-  }
-
-  return findNonZeroPathTangent(path, segmentIndex);
-}
-
 function resolveActorPathProgress(
   path: RuntimeProjectSchedulePathDefinition,
   effect: FollowActorPathControlEffect,
@@ -383,14 +262,19 @@ function resolveActorSchedulePathState(options: {
     options.effect,
     options.elapsedHours
   );
-  const position = sampleRuntimeSchedulePathPosition(options.path, progress);
-  const tangent = sampleRuntimeSchedulePathTangent(options.path, progress);
+  const position = sampleResolvedScenePathPosition(options.path, progress, {
+    smooth: options.effect.smoothPath
+  });
+  const tangent = sampleResolvedScenePathTangent(options.path, progress, {
+    smooth: options.effect.smoothPath
+  });
 
   return {
     pathId: options.effect.pathId,
     progressMode: options.effect.progressMode,
     speed: options.effect.speed,
     loop: options.effect.loop,
+    smoothPath: options.effect.smoothPath,
     elapsedHours: options.elapsedHours,
     distance,
     progress,
