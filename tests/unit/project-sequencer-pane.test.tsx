@@ -74,6 +74,7 @@ describe("ProjectSequencerPane", () => {
         onSetControlStepPathId={vi.fn()}
         onSetControlStepPathSpeed={vi.fn()}
         onSetControlStepPathLoop={vi.fn()}
+        onSetControlStepPathSmooth={vi.fn()}
         onSetNpcTalkStepNpcEntityId={vi.fn()}
         onSetNpcTalkStepDialogueId={vi.fn()}
         onSetTeleportStepTarget={vi.fn()}
