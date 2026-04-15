@@ -346,11 +346,13 @@ describe("validateSceneDocument", () => {
   });
 
   it("rejects NPC default dialogues that point to missing NPC-authored dialogues", () => {
-    const npc = createNpcEntity({
-      id: "entity-npc-guide",
-      actorId: "actor-guide",
+    const npc = {
+      ...createNpcEntity({
+        id: "entity-npc-guide",
+        actorId: "actor-guide"
+      }),
       defaultDialogueId: "dialogue-missing"
-    });
+    };
     const document = createEmptySceneDocument();
     document.entities[npc.id] = npc;
 
