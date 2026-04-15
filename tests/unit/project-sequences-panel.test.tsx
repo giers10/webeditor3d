@@ -2,7 +2,10 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { ProjectSequencesPanel } from "../../src/app/ProjectSequencesPanel";
-import { createActiveSceneControlTargetRef } from "../../src/controls/control-surface";
+import {
+  createActiveSceneControlTargetRef,
+  getControlTargetRefKey
+} from "../../src/controls/control-surface";
 import { createProjectSequence } from "../../src/sequencer/project-sequences";
 
 describe("ProjectSequencesPanel", () => {
@@ -294,6 +297,8 @@ describe("ProjectSequencesPanel", () => {
   });
 
   it("hides target and effect selectors for active scene lighting effects", () => {
+    const sceneTarget = createActiveSceneControlTargetRef();
+
     render(
       <ProjectSequencesPanel
         sequences={{
@@ -307,7 +312,7 @@ describe("ProjectSequencesPanel", () => {
                   type: "controlEffect",
                   effect: {
                     type: "setAmbientLightIntensity",
-                    target: createActiveSceneControlTargetRef(),
+                    target: sceneTarget,
                     intensity: 0.4
                   }
                 }
@@ -318,8 +323,8 @@ describe("ProjectSequencesPanel", () => {
         dialogues={{ dialogues: {} }}
         targetOptions={[
           {
-            key: "scene:active",
-            target: createActiveSceneControlTargetRef(),
+            key: getControlTargetRefKey(sceneTarget),
+            target: sceneTarget,
             label: "Active Scene Lighting",
             subtitle: "Scene",
             groupLabel: "Scene Lighting",
