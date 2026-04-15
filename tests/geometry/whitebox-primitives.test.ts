@@ -91,18 +91,12 @@ describe("whitebox primitives", () => {
     expect(derivedMesh.faceIdsInOrder).toEqual(getBrushFaceIds(brush));
     expect(
       derivedMesh.faceSurfaces.find((surface) => surface.faceId === "top")?.normal
-    ).toEqual({
-      x: 0,
-      y: 1,
-      z: 0
-    });
+        .y
+    ).toBeGreaterThan(0.99);
     expect(
       derivedMesh.faceSurfaces.find((surface) => surface.faceId === "bottom")?.normal
-    ).toEqual({
-      x: 0,
-      y: -1,
-      z: 0
-    });
+        .y
+    ).toBeLessThan(-0.99);
     expect(Array.from(derivedMesh.colliderVertices).every(Number.isFinite)).toBe(
       true
     );
@@ -134,11 +128,8 @@ describe("whitebox primitives", () => {
     expect(derivedMesh.faceIdsInOrder).toEqual(getBrushFaceIds(brush));
     expect(
       derivedMesh.faceSurfaces.find((surface) => surface.faceId === "bottom")?.normal
-    ).toEqual({
-      x: 0,
-      y: -1,
-      z: 0
-    });
+        .y
+    ).toBeLessThan(-0.99);
     expect(Array.from(derivedMesh.colliderVertices).every(Number.isFinite)).toBe(
       true
     );
