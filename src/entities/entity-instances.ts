@@ -260,15 +260,6 @@ export interface InteractableEntity extends PositionedEntity {
   interactionEnabled: boolean;
 }
 
-export interface SceneExitEntity extends PositionedEntity {
-  kind: "sceneExit";
-  radius: number;
-  prompt: string;
-  interactionEnabled: boolean;
-  targetSceneId: string;
-  targetEntryEntityId: string;
-}
-
 export type EntityInstance =
   | PointLightEntity
   | SpotLightEntity
@@ -278,8 +269,7 @@ export type EntityInstance =
   | SoundEmitterEntity
   | TriggerVolumeEntity
   | TeleportTargetEntity
-  | InteractableEntity
-  | SceneExitEntity;
+  | InteractableEntity;
 
 export type EntityKind = EntityInstance["kind"];
 
@@ -299,8 +289,7 @@ export const ENTITY_KIND_ORDER = [
   "soundEmitter",
   "triggerVolume",
   "teleportTarget",
-  "interactable",
-  "sceneExit"
+  "interactable"
 ] as const;
 export const DEFAULT_POINT_LIGHT_POSITION: Vec3 = {
   x: 0,
@@ -447,9 +436,6 @@ export const DEFAULT_TRIGGER_VOLUME_SIZE: Vec3 = {
 export const DEFAULT_TELEPORT_TARGET_YAW_DEGREES = 0;
 export const DEFAULT_INTERACTABLE_RADIUS = 1.5;
 export const DEFAULT_INTERACTABLE_PROMPT = "Use";
-export const DEFAULT_SCENE_EXIT_RADIUS = 1.5;
-export const DEFAULT_SCENE_EXIT_PROMPT = "Enter";
-
 function cloneVec3(vector: Vec3): Vec3 {
   return {
     x: vector.x,
@@ -1644,57 +1630,6 @@ export function createInteractableEntity(
   };
 }
 
-export function createSceneExitEntity(
-  overrides: Partial<
-    Pick<
-      SceneExitEntity,
-      | "id"
-      | "name"
-      | "visible"
-      | "enabled"
-      | "position"
-      | "radius"
-      | "prompt"
-      | "interactionEnabled"
-      | "targetSceneId"
-      | "targetEntryEntityId"
-    >
-  > = {}
-): SceneExitEntity {
-  const position = cloneVec3(overrides.position ?? DEFAULT_ENTITY_POSITION);
-  const radius = overrides.radius ?? DEFAULT_SCENE_EXIT_RADIUS;
-  const prompt = normalizeInteractablePrompt(
-    overrides.prompt ?? DEFAULT_SCENE_EXIT_PROMPT
-  );
-  const interactionEnabled = overrides.interactionEnabled ?? true;
-  const targetSceneId = normalizeSceneReferenceId(
-    overrides.targetSceneId,
-    "Scene Exit target scene id"
-  );
-  const targetEntryEntityId = normalizeSceneReferenceId(
-    overrides.targetEntryEntityId,
-    "Scene Exit target entry id"
-  );
-
-  assertFiniteVec3(position, "Scene Exit position");
-  assertPositiveFiniteNumber(radius, "Scene Exit radius");
-  assertBoolean(interactionEnabled, "Scene Exit interactionEnabled");
-
-  return {
-    id: overrides.id ?? createOpaqueId("entity-scene-exit"),
-    kind: "sceneExit",
-    name: normalizeEntityName(overrides.name),
-    visible: resolveAuthoredEntityVisibility(overrides.visible),
-    enabled: resolveAuthoredEntityEnabled(overrides.enabled),
-    position,
-    radius,
-    prompt,
-    interactionEnabled,
-    targetSceneId,
-    targetEntryEntityId
-  };
-}
-
 export const ENTITY_REGISTRY: { [K in EntityKind]: EntityRegistryEntry<Extract<EntityInstance, { kind: K }>> } = {
   pointLight: {
     kind: "pointLight",
@@ -1752,13 +1687,6 @@ export const ENTITY_REGISTRY: { [K in EntityKind]: EntityRegistryEntry<Extract<E
     label: "Interactable",
     description: "Explicit authored interaction point for later click and use behavior.",
     createDefaultEntity: createInteractableEntity
-  },
-  sceneExit: {
-    kind: "sceneExit",
-    label: "Scene Exit",
-    description:
-      "Explicit authored scene-transition exit that loads a target scene entry on demand.",
-    createDefaultEntity: createSceneExitEntity
   }
 };
 
@@ -1779,7 +1707,6 @@ export function createDefaultEntityInstance(kind: "soundEmitter", overrides?: Pa
 export function createDefaultEntityInstance(kind: "triggerVolume", overrides?: Partial<TriggerVolumeEntity>): TriggerVolumeEntity;
 export function createDefaultEntityInstance(kind: "teleportTarget", overrides?: Partial<TeleportTargetEntity>): TeleportTargetEntity;
 export function createDefaultEntityInstance(kind: "interactable", overrides?: Partial<InteractableEntity>): InteractableEntity;
-export function createDefaultEntityInstance(kind: "sceneExit", overrides?: Partial<SceneExitEntity>): SceneExitEntity;
 export function createDefaultEntityInstance(kind: EntityKind, overrides: Partial<EntityInstance> = {}): EntityInstance {
   switch (kind) {
     case "pointLight":
@@ -1800,8 +1727,6 @@ export function createDefaultEntityInstance(kind: EntityKind, overrides: Partial
       return createTeleportTargetEntity(overrides);
     case "interactable":
       return createInteractableEntity(overrides);
-    case "sceneExit":
-      return createSceneExitEntity(overrides);
   }
 }
 
@@ -1825,8 +1750,6 @@ export function cloneEntityInstance(entity: EntityInstance): EntityInstance {
       return createTeleportTargetEntity(entity);
     case "interactable":
       return createInteractableEntity(entity);
-    case "sceneExit":
-      return createSceneExitEntity(entity);
   }
 }
 
@@ -1933,16 +1856,6 @@ export function areEntityInstancesEqual(left: EntityInstance, right: EntityInsta
         left.radius === typedRight.radius &&
         left.prompt === typedRight.prompt &&
         left.interactionEnabled === typedRight.interactionEnabled
-      );
-    }
-    case "sceneExit": {
-      const typedRight = right as SceneExitEntity;
-      return (
-        left.radius === typedRight.radius &&
-        left.prompt === typedRight.prompt &&
-        left.interactionEnabled === typedRight.interactionEnabled &&
-        left.targetSceneId === typedRight.targetSceneId &&
-        left.targetEntryEntityId === typedRight.targetEntryEntityId
       );
     }
   }
