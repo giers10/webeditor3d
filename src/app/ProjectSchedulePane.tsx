@@ -315,10 +315,6 @@ function getRoutineSummary(
   const heldSteps = getProjectScheduleRoutineHeldSteps(routine, sequences);
 
   if (routine.target.kind === "actor") {
-    const presenceEffect = findHeldSequenceControlEffect(
-      heldSteps,
-      "setActorPresence"
-    );
     const animationEffect = findHeldSequenceControlEffect(
       heldSteps,
       "playActorAnimation"
@@ -327,8 +323,6 @@ function getRoutineSummary(
       heldSteps,
       "followActorPath"
     );
-
-    summaryParts.push(presenceEffect?.active === false ? "Hidden" : "Present");
 
     if (animationEffect !== null) {
       summaryParts.push(formatControlEffectValue(animationEffect));
@@ -358,9 +352,7 @@ function isRoutineEffectInactive(
   const heldSteps = getProjectScheduleRoutineHeldSteps(routine, sequences);
 
   if (routine.target.kind === "actor") {
-    return (
-      findHeldSequenceControlEffect(heldSteps, "setActorPresence")?.active === false
-    );
+    return false;
   }
 
   const effect =
@@ -893,17 +885,16 @@ export function ProjectSequencerPane({
                 </div>
                 {selectedAttachedSequence !== null ? (
                   <div className="material-summary">
-                    This placement resolves held effects from{" "}
-                    <strong>{selectedAttachedSequence.title}</strong>.
-                    Edit animation, path, presence, lighting, or other held
+                    This placement runs <strong>{selectedAttachedSequence.title}</strong>.
+                    Edit animation, path, lighting, audio, dialogue, or other
                     engine effects in the Sequence Editor.
                   </div>
                 ) : null}
                 {selectedRoutine.sequenceId === null ? (
                   <div className="material-summary">
                     {selectedRoutine.target.kind === "global"
-                      ? "Project event placements run attached sequences only. Create a sequence with impulse effects like scene transitions, dialogue starts, or teleports."
-                      : "This placement has no attached sequence yet. Create one, then author presence, animation, path, lighting, sound, or other engine effects inside the Sequence Editor."}
+                      ? "Project event placements run attached sequences only. Create a sequence with start effects like scene transitions, dialogue starts, or teleports."
+                      : "This placement has no attached sequence yet. Create one, then author animation, path, lighting, sound, dialogue, or other engine effects inside the Sequence Editor."}
                   </div>
                 ) : null}
                 <label className="form-field form-field--inline">
