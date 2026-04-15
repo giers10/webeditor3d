@@ -1,7 +1,6 @@
 import {
   createStarterMaterialRegistry,
-  type MaterialDef,
-  type MaterialPattern
+  type MaterialDef
 } from "../materials/starter-material-library";
 import {
   createModelInstanceCollisionSettings,
