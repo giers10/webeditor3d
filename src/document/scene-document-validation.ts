@@ -4719,11 +4719,14 @@ function validateProjectDialogue(
 function validateProjectSequence(
   sequence: ProjectSequence,
   path: string,
-  projectResources: Pick<ProjectDocument, "scenes">,
+  projectResources: Pick<ProjectDocument, "scenes"> & {
+    currentSceneEntities?: SceneDocument["entities"];
+  },
   context: ProjectSchedulerValidationContext,
   diagnostics: SceneDiagnostic[]
 ) {
   const projectScenes = projectResources.scenes ?? {};
+  const currentSceneEntities = projectResources.currentSceneEntities ?? {};
 
   if (sequence.title.trim().length === 0) {
     diagnostics.push(
@@ -4769,6 +4772,14 @@ function validateProjectSequence(
           if (candidate?.kind === "npc") {
             targetNpc = candidate;
             break;
+          }
+        }
+
+        if (targetNpc === null) {
+          const candidate = currentSceneEntities[effect.npcEntityId];
+
+          if (candidate?.kind === "npc") {
+            targetNpc = candidate;
           }
         }
 
@@ -5207,7 +5218,7 @@ export function validateSceneDocument(
     validateProjectSequence(
       sequence,
       path,
-      { scenes: {} },
+      { scenes: {}, currentSceneEntities: document.entities },
       projectSchedulerValidationContext,
       diagnostics
     );
