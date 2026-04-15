@@ -103,7 +103,6 @@ import {
 } from "../interactions/interaction-links";
 import {
   BOX_VERTEX_IDS,
-  DEFAULT_TORUS_BRUSH_SIZE,
   WEDGE_FACE_IDS,
   WEDGE_VERTEX_IDS,
   MAX_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT,
