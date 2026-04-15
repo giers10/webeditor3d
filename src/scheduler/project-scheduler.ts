@@ -295,6 +295,7 @@ export function createProjectScheduleRoutine(
   }
 ): ProjectScheduleRoutine {
   const target = cloneControlTargetRef(overrides.target);
+  const sequenceId = normalizeProjectScheduleSequenceId(overrides.sequenceId);
   const startHour = normalizeProjectScheduleHours(
     overrides.startHour ?? DEFAULT_PROJECT_SCHEDULE_START_HOUR,
     "Project schedule start hour"
@@ -313,12 +314,12 @@ export function createProjectScheduleRoutine(
     title: normalizeProjectScheduleTitle(overrides.title),
     enabled: overrides.enabled ?? true,
     target,
-    sequenceId: normalizeProjectScheduleSequenceId(overrides.sequenceId),
+    sequenceId,
     days: normalizeProjectScheduleDays(overrides.days),
     startHour,
     endHour,
     priority: normalizeProjectSchedulePriority(overrides.priority),
-    effects: normalizeProjectScheduleEffects(target, normalizeProjectScheduleSequenceId(overrides.sequenceId), {
+    effects: normalizeProjectScheduleEffects(target, sequenceId, {
       effect: overrides.effect,
       effects: overrides.effects
     })
