@@ -891,7 +891,7 @@ export function ProjectSequencerPane({
                         Select Sequence
                       </option>
                     ) : null}
-                    {compatibleHeldSequences.map((sequence) => (
+                    {selectableSequences.map((sequence) => (
                       <option key={sequence.id} value={sequence.id}>
                         {sequence.title}
                       </option>
