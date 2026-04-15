@@ -334,7 +334,7 @@ function getRoutineSummary(
     const effect = heldSteps[0];
 
     if (routine.target.kind === "global" && routine.sequenceId !== null) {
-      summaryParts.push("Impulse Sequence");
+      summaryParts.push("Start Sequence");
     } else if (effect?.type === "controlEffect") {
       summaryParts.push(formatControlEffectValue(effect.effect));
     }
