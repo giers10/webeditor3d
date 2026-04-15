@@ -1485,10 +1485,12 @@ export class ViewportHost {
           return null;
         }
 
+        const activeBrushPreview = session.preview.items.find(
+          (item) => item.brushId === session.target.activeBrushId
+        );
+
         return this.createRotationQuaternion(
-          session.preview.items.find(
-            (item) => item.brushId === session.target.activeBrushId
-          )?.rotationDegrees ?? { x: 0, y: 0, z: 0 }
+          activeBrushPreview?.rotationDegrees ?? { x: 0, y: 0, z: 0 }
         );
       case "modelInstance":
         if (session.preview.kind !== "modelInstance") {
@@ -1501,11 +1503,13 @@ export class ViewportHost {
           return null;
         }
 
+        const activeModelInstancePreview = session.preview.items.find(
+          (item) =>
+            item.modelInstanceId === session.target.activeModelInstanceId
+        );
+
         return this.createRotationQuaternion(
-          session.preview.items.find(
-            (item) =>
-              item.modelInstanceId === session.target.activeModelInstanceId
-          )?.rotationDegrees ?? { x: 0, y: 0, z: 0 }
+          activeModelInstancePreview?.rotationDegrees ?? { x: 0, y: 0, z: 0 }
         );
       case "pathPoint":
         return null;
@@ -1538,28 +1542,22 @@ export class ViewportHost {
           return null;
         }
 
-        switch (
-          session.preview.items.find(
-            (item) => item.entityId === session.target.activeEntityId
-          )?.rotation.kind
-        ) {
+        const activeEntityPreview = session.preview.items.find(
+          (item) => item.entityId === session.target.activeEntityId
+        );
+
+        switch (activeEntityPreview?.rotation.kind) {
           case "yaw":
             return this.createRotationQuaternion({
               x: 0,
               y:
-                session.preview.items.find(
-                  (item) => item.entityId === session.target.activeEntityId
-                )?.rotation.kind === "yaw"
-                  ? session.preview.items.find(
-                      (item) => item.entityId === session.target.activeEntityId
-                    )!.rotation.yawDegrees
+                activeEntityPreview.rotation.kind === "yaw"
+                  ? activeEntityPreview.rotation.yawDegrees
                   : 0,
               z: 0
             });
           case "direction": {
-            const rotation = session.preview.items.find(
-              (item) => item.entityId === session.target.activeEntityId
-            )?.rotation;
+            const rotation = activeEntityPreview.rotation;
 
             if (rotation?.kind !== "direction") {
               return null;
