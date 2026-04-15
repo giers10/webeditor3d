@@ -1797,48 +1797,103 @@ function assertNonZeroVec3(
   }
 }
 
-function expectMaterialPattern(value: unknown, label: string): MaterialPattern {
-  if (
-    value !== "grid" &&
-    value !== "checker" &&
-    value !== "stripes" &&
-    value !== "diamond"
-  ) {
-    throw new Error(`${label} must be a supported starter material pattern.`);
-  }
-
-  return value;
-}
-
 function readMaterialRegistry(
   value: unknown,
-  label: string
+  label: string,
+  options: { allowLegacyStarterPatterns: boolean }
 ): SceneDocument["materials"] {
   if (!isRecord(value)) {
     throw new Error(`${label} must be a record.`);
   }
 
   const materials: SceneDocument["materials"] = {};
+  const starterRegistry = createStarterMaterialRegistry();
 
   for (const [materialId, materialValue] of Object.entries(value)) {
     if (!isRecord(materialValue)) {
       throw new Error(`${label}.${materialId} must be an object.`);
     }
 
+    if (
+      options.allowLegacyStarterPatterns &&
+      materialValue.pattern !== undefined
+    ) {
+      const legacyMaterialId = expectString(
+        materialValue.id,
+        `${label}.${materialId}.id`
+      );
+
+      if (legacyMaterialId !== materialId) {
+        throw new Error(`${label}.${materialId}.id must match the registry key.`);
+      }
+
+      if (starterRegistry[materialId] === undefined) {
+        throw new Error(
+          `${label}.${materialId} is not a supported legacy starter material id.`
+        );
+      }
+
+      materials[materialId] = starterRegistry[materialId];
+      continue;
+    }
+
+    const workflow = expectString(
+      materialValue.workflow,
+      `${label}.${materialId}.workflow`
+    );
+
+    if (
+      workflow !== "roughness-only" &&
+      workflow !== "metallic-roughness" &&
+      workflow !== "specular-roughness"
+    ) {
+      throw new Error(
+        `${label}.${materialId}.workflow must be a supported material workflow.`
+      );
+    }
+
+    const previewImageName = expectString(
+      materialValue.previewImageName,
+      `${label}.${materialId}.previewImageName`
+    );
+
+    if (
+      previewImageName !== "preview.webp" &&
+      previewImageName !== "preview_sphere.webp"
+    ) {
+      throw new Error(
+        `${label}.${materialId}.previewImageName must be preview.webp or preview_sphere.webp.`
+      );
+    }
+
+    const sizeCmValue = materialValue.sizeCm;
+
+    if (!isRecord(sizeCmValue)) {
+      throw new Error(`${label}.${materialId}.sizeCm must be an object.`);
+    }
+
     const material: MaterialDef = {
       id: expectString(materialValue.id, `${label}.${materialId}.id`),
       name: expectString(materialValue.name, `${label}.${materialId}.name`),
-      baseColorHex: expectHexColor(
-        materialValue.baseColorHex,
-        `${label}.${materialId}.baseColorHex`
+      assetFolder: expectString(
+        materialValue.assetFolder,
+        `${label}.${materialId}.assetFolder`
       ),
-      accentColorHex: expectHexColor(
-        materialValue.accentColorHex,
-        `${label}.${materialId}.accentColorHex`
-      ),
-      pattern: expectMaterialPattern(
-        materialValue.pattern,
-        `${label}.${materialId}.pattern`
+      workflow,
+      previewImageName,
+      sizeCm: {
+        width: expectPositiveFiniteNumber(
+          sizeCmValue.width,
+          `${label}.${materialId}.sizeCm.width`
+        ),
+        height: expectPositiveFiniteNumber(
+          sizeCmValue.height,
+          `${label}.${materialId}.sizeCm.height`
+        )
+      },
+      swatchColorHex: expectHexColor(
+        materialValue.swatchColorHex,
+        `${label}.${materialId}.swatchColorHex`
       ),
       tags: expectStringArray(materialValue.tags, `${label}.${materialId}.tags`)
     };
