@@ -86,23 +86,12 @@ function applyResolvedDiscreteControlStateToRuntimeScene(
       });
       return;
     case "interactionEnabled":
-      if (state.target.interactionKind === "interactable") {
-        const interactable = runtimeScene.entities.interactables.find(
-          (candidate) => candidate.entityId === state.target.entityId
-        );
-
-        if (interactable !== undefined) {
-          interactable.interactionEnabled = state.value;
-        }
-        return;
-      }
-
-      const sceneExit = runtimeScene.entities.sceneExits.find(
+      const interactable = runtimeScene.entities.interactables.find(
         (candidate) => candidate.entityId === state.target.entityId
       );
 
-      if (sceneExit !== undefined) {
-        sceneExit.interactionEnabled = state.value;
+      if (interactable !== undefined) {
+        interactable.interactionEnabled = state.value;
       }
       return;
     case "ambientLightColor":
