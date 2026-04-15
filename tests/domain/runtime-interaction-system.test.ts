@@ -1062,14 +1062,14 @@ describe("RuntimeInteractionSystem", () => {
         })
       }
     };
-    runtimeScene.interactionLinks = {
-      "link-npc-merchant-talk": createRunSequenceInteractionLink({
+    runtimeScene.interactionLinks = [
+      createRunSequenceInteractionLink({
         id: "link-npc-merchant-talk",
         sourceEntityId: "entity-npc-merchant",
         trigger: "click",
         sequenceId: "sequence-merchant-talk"
       })
-    };
+    ];
 
     const interactionSystem = new RuntimeInteractionSystem();
     const prompt = interactionSystem.resolveClickInteractionPrompt(
