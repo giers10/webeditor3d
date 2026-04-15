@@ -20,7 +20,10 @@ import {
 } from "../../src/document/brushes";
 import { createScenePath } from "../../src/document/paths";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
-import { createPlayerStartEntity } from "../../src/entities/entity-instances";
+import {
+  createPlayerStartEntity,
+  createTriggerVolumeEntity
+} from "../../src/entities/entity-instances";
 import { getBoxBrushLocalVertexPosition } from "../../src/geometry/box-brush-mesh";
 
 const modelAsset = {
@@ -1126,5 +1129,527 @@ describe("transform session commit commands", () => {
       },
       yawDegrees: 90
     });
+  });
+
+  it("resolves same-kind multi targets with averaged pivots and deterministic active ids", () => {
+    const brushA = createBoxBrush({
+      id: "brush-multi-a",
+      center: {
+        x: -2,
+        y: 1,
+        z: 4
+      }
+    });
+    const brushB = createBoxBrush({
+      id: "brush-multi-b",
+      center: {
+        x: 4,
+        y: 3,
+        z: -2
+      }
+    });
+    const modelInstanceA = createModelInstance({
+      id: "model-multi-a",
+      assetId: modelAsset.id,
+      position: {
+        x: -3,
+        y: 0,
+        z: 1
+      }
+    });
+    const modelInstanceB = createModelInstance({
+      id: "model-multi-b",
+      assetId: modelAsset.id,
+      position: {
+        x: 5,
+        y: 2,
+        z: -1
+      }
+    });
+    const entityA = createPlayerStartEntity({
+      id: "entity-multi-a",
+      position: {
+        x: -4,
+        y: 0,
+        z: 0
+      }
+    });
+    const entityB = createPlayerStartEntity({
+      id: "entity-multi-b",
+      position: {
+        x: 2,
+        y: 0,
+        z: 6
+      }
+    });
+    const document = {
+      ...createEmptySceneDocument(),
+      assets: {
+        [modelAsset.id]: modelAsset
+      },
+      brushes: {
+        [brushA.id]: brushA,
+        [brushB.id]: brushB
+      },
+      entities: {
+        [entityA.id]: entityA,
+        [entityB.id]: entityB
+      },
+      modelInstances: {
+        [modelInstanceA.id]: modelInstanceA,
+        [modelInstanceB.id]: modelInstanceB
+      }
+    };
+
+    const brushTarget = resolveTransformTarget(
+      document,
+      {
+        kind: "brushes",
+        ids: [brushA.id, brushB.id]
+      },
+      "object",
+      brushA.id
+    ).target;
+    const modelTarget = resolveTransformTarget(
+      document,
+      {
+        kind: "modelInstances",
+        ids: [modelInstanceA.id, modelInstanceB.id]
+      },
+      "object",
+      modelInstanceA.id
+    ).target;
+    const entityTarget = resolveTransformTarget(
+      document,
+      {
+        kind: "entities",
+        ids: [entityA.id, entityB.id]
+      },
+      "object",
+      entityA.id
+    ).target;
+
+    expect(brushTarget).toMatchObject({
+      kind: "brushes",
+      activeBrushId: brushA.id,
+      initialPivot: {
+        x: 1,
+        y: 2,
+        z: 1
+      }
+    });
+    expect(modelTarget).toMatchObject({
+      kind: "modelInstances",
+      activeModelInstanceId: modelInstanceA.id,
+      initialPivot: {
+        x: 1,
+        y: 1,
+        z: 0
+      }
+    });
+    expect(entityTarget).toMatchObject({
+      kind: "entities",
+      activeEntityId: entityA.id,
+      initialPivot: {
+        x: -1,
+        y: 0,
+        z: 3
+      }
+    });
+  });
+
+  it("commits a multi-brush translate transform in one undoable command", () => {
+    const brushA = createBoxBrush({
+      id: "brush-batch-translate-a",
+      center: {
+        x: 0,
+        y: 1,
+        z: 0
+      }
+    });
+    const brushB = createBoxBrush({
+      id: "brush-batch-translate-b",
+      center: {
+        x: 6,
+        y: 2,
+        z: -4
+      }
+    });
+    const store = createEditorStore({
+      initialDocument: {
+        ...createEmptySceneDocument({ name: "Multi Brush Translate" }),
+        brushes: {
+          [brushA.id]: brushA,
+          [brushB.id]: brushB
+        }
+      }
+    });
+    const selection = {
+      kind: "brushes" as const,
+      ids: [brushA.id, brushB.id]
+    };
+    const target = resolveTransformTarget(
+      store.getState().document,
+      selection
+    ).target;
+
+    if (target === null || target.kind !== "brushes") {
+      throw new Error("Expected a multi-brush transform target.");
+    }
+
+    store.setSelection(selection);
+
+    const session = createTransformSession({
+      source: "keyboard",
+      sourcePanelId: "topLeft",
+      operation: "translate",
+      target
+    });
+
+    session.preview = {
+      kind: "brushes",
+      pivot: {
+        x: target.initialPivot.x + 2,
+        y: target.initialPivot.y,
+        z: target.initialPivot.z - 1
+      },
+      items: target.items.map((item) => ({
+        brushId: item.brushId,
+        center: {
+          x: item.initialCenter.x + 2,
+          y: item.initialCenter.y,
+          z: item.initialCenter.z - 1
+        },
+        rotationDegrees: {
+          ...item.initialRotationDegrees
+        },
+        size: {
+          ...item.initialSize
+        },
+        geometry: cloneBoxBrushGeometry(
+          item.initialGeometry as ReturnType<typeof cloneBoxBrushGeometry>
+        )
+      }))
+    };
+
+    store.executeCommand(
+      createCommitTransformSessionCommand(store.getState().document, session)
+    );
+
+    expect(store.getState().document.brushes[brushA.id].center).toEqual({
+      x: 2,
+      y: 1,
+      z: -1
+    });
+    expect(store.getState().document.brushes[brushB.id].center).toEqual({
+      x: 8,
+      y: 2,
+      z: -5
+    });
+    expect(store.getState().selection).toEqual(selection);
+
+    expect(store.undo()).toBe(true);
+    expect(store.getState().document.brushes[brushA.id].center).toEqual(
+      brushA.center
+    );
+    expect(store.getState().document.brushes[brushB.id].center).toEqual(
+      brushB.center
+    );
+
+    expect(store.redo()).toBe(true);
+    expect(store.getState().document.brushes[brushA.id].center).toEqual({
+      x: 2,
+      y: 1,
+      z: -1
+    });
+    expect(store.getState().document.brushes[brushB.id].center).toEqual({
+      x: 8,
+      y: 2,
+      z: -5
+    });
+  });
+
+  it("commits a multi-model-instance scale transform with undo and redo", () => {
+    const modelInstanceA = createModelInstance({
+      id: "model-batch-scale-a",
+      assetId: modelAsset.id,
+      position: {
+        x: -1,
+        y: 0,
+        z: 0
+      }
+    });
+    const modelInstanceB = createModelInstance({
+      id: "model-batch-scale-b",
+      assetId: modelAsset.id,
+      position: {
+        x: 1,
+        y: 0,
+        z: 0
+      }
+    });
+    const store = createEditorStore({
+      initialDocument: {
+        ...createEmptySceneDocument({ name: "Multi Model Scale" }),
+        assets: {
+          [modelAsset.id]: modelAsset
+        },
+        modelInstances: {
+          [modelInstanceA.id]: modelInstanceA,
+          [modelInstanceB.id]: modelInstanceB
+        }
+      }
+    });
+    const selection = {
+      kind: "modelInstances" as const,
+      ids: [modelInstanceA.id, modelInstanceB.id]
+    };
+    const target = resolveTransformTarget(
+      store.getState().document,
+      selection
+    ).target;
+
+    if (target === null || target.kind !== "modelInstances") {
+      throw new Error("Expected a multi-model transform target.");
+    }
+
+    store.setSelection(selection);
+
+    const session = createTransformSession({
+      source: "keyboard",
+      sourcePanelId: "topLeft",
+      operation: "scale",
+      target
+    });
+
+    session.preview = {
+      kind: "modelInstances",
+      pivot: {
+        ...target.initialPivot
+      },
+      items: [
+        {
+          modelInstanceId: modelInstanceA.id,
+          position: {
+            x: -2,
+            y: 0,
+            z: 0
+          },
+          rotationDegrees: {
+            ...modelInstanceA.rotationDegrees
+          },
+          scale: {
+            x: 2,
+            y: 2,
+            z: 2
+          }
+        },
+        {
+          modelInstanceId: modelInstanceB.id,
+          position: {
+            x: 2,
+            y: 0,
+            z: 0
+          },
+          rotationDegrees: {
+            ...modelInstanceB.rotationDegrees
+          },
+          scale: {
+            x: 2,
+            y: 2,
+            z: 2
+          }
+        }
+      ]
+    };
+
+    store.executeCommand(
+      createCommitTransformSessionCommand(store.getState().document, session)
+    );
+
+    expect(store.getState().document.modelInstances[modelInstanceA.id]).toMatchObject({
+      position: {
+        x: -2,
+        y: 0,
+        z: 0
+      },
+      scale: {
+        x: 2,
+        y: 2,
+        z: 2
+      }
+    });
+    expect(store.getState().document.modelInstances[modelInstanceB.id]).toMatchObject({
+      position: {
+        x: 2,
+        y: 0,
+        z: 0
+      },
+      scale: {
+        x: 2,
+        y: 2,
+        z: 2
+      }
+    });
+
+    expect(store.undo()).toBe(true);
+    expect(store.getState().document.modelInstances[modelInstanceA.id]).toEqual(
+      modelInstanceA
+    );
+    expect(store.getState().document.modelInstances[modelInstanceB.id]).toEqual(
+      modelInstanceB
+    );
+
+    expect(store.redo()).toBe(true);
+    expect(store.getState().document.modelInstances[modelInstanceA.id]).toMatchObject({
+      position: {
+        x: -2,
+        y: 0,
+        z: 0
+      },
+      scale: {
+        x: 2,
+        y: 2,
+        z: 2
+      }
+    });
+  });
+
+  it("commits a multi-entity rotate transform when the selected kinds support it", () => {
+    const entityA = createPlayerStartEntity({
+      id: "entity-batch-rotate-a",
+      position: {
+        x: -2,
+        y: 0,
+        z: 0
+      },
+      yawDegrees: 0
+    });
+    const entityB = createPlayerStartEntity({
+      id: "entity-batch-rotate-b",
+      position: {
+        x: 2,
+        y: 0,
+        z: 0
+      },
+      yawDegrees: 0
+    });
+    const store = createEditorStore({
+      initialDocument: {
+        ...createEmptySceneDocument({ name: "Multi Entity Rotate" }),
+        entities: {
+          [entityA.id]: entityA,
+          [entityB.id]: entityB
+        }
+      }
+    });
+    const selection = {
+      kind: "entities" as const,
+      ids: [entityA.id, entityB.id]
+    };
+    const target = resolveTransformTarget(
+      store.getState().document,
+      selection
+    ).target;
+
+    if (target === null || target.kind !== "entities") {
+      throw new Error("Expected a multi-entity transform target.");
+    }
+
+    expect(supportsTransformOperation(target, "rotate")).toBe(true);
+    store.setSelection(selection);
+
+    const session = createTransformSession({
+      source: "keyboard",
+      sourcePanelId: "topLeft",
+      operation: "rotate",
+      target
+    });
+
+    session.preview = {
+      kind: "entities",
+      pivot: {
+        ...target.initialPivot
+      },
+      items: [
+        {
+          entityId: entityA.id,
+          position: {
+            x: 0,
+            y: 0,
+            z: 2
+          },
+          rotation: {
+            kind: "yaw",
+            yawDegrees: 90
+          }
+        },
+        {
+          entityId: entityB.id,
+          position: {
+            x: 0,
+            y: 0,
+            z: -2
+          },
+          rotation: {
+            kind: "yaw",
+            yawDegrees: 90
+          }
+        }
+      ]
+    };
+
+    store.executeCommand(
+      createCommitTransformSessionCommand(store.getState().document, session)
+    );
+
+    expect(store.getState().document.entities[entityA.id]).toMatchObject({
+      position: {
+        x: 0,
+        y: 0,
+        z: 2
+      },
+      yawDegrees: 90
+    });
+    expect(store.getState().document.entities[entityB.id]).toMatchObject({
+      position: {
+        x: 0,
+        y: 0,
+        z: -2
+      },
+      yawDegrees: 90
+    });
+
+    expect(store.undo()).toBe(true);
+    expect(store.getState().document.entities[entityA.id]).toEqual(entityA);
+    expect(store.getState().document.entities[entityB.id]).toEqual(entityB);
+  });
+
+  it("disables unsupported mixed-capability entity rotation for batch selections", () => {
+    const playerStart = createPlayerStartEntity({
+      id: "entity-mixed-player-start"
+    });
+    const triggerVolume = createTriggerVolumeEntity({
+      id: "entity-mixed-trigger-volume"
+    });
+    const document = {
+      ...createEmptySceneDocument(),
+      entities: {
+        [playerStart.id]: playerStart,
+        [triggerVolume.id]: triggerVolume
+      }
+    };
+    const target = resolveTransformTarget(document, {
+      kind: "entities",
+      ids: [playerStart.id, triggerVolume.id]
+    }).target;
+
+    if (target === null || target.kind !== "entities") {
+      throw new Error("Expected a mixed entity batch target.");
+    }
+
+    expect(supportsTransformOperation(target, "translate")).toBe(true);
+    expect(supportsTransformOperation(target, "rotate")).toBe(false);
+    expect(supportsTransformOperation(target, "scale")).toBe(false);
   });
 });
