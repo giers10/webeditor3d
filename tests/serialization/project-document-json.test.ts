@@ -76,6 +76,42 @@ describe("project document JSON", () => {
     );
   });
 
+  it("round-trips scene transition sequence effects", () => {
+    const document = createEmptyProjectDocument({
+      name: "Scene Transition Sequence Project"
+    });
+    const targetScene = createEmptyProjectScene({
+      id: "scene-house",
+      name: "House"
+    });
+    const houseEntry = createSceneEntryEntity({
+      id: "entity-scene-entry-house-front",
+      position: {
+        x: 0,
+        y: 0,
+        z: 0
+      }
+    });
+    targetScene.entities[houseEntry.id] = houseEntry;
+    document.scenes[targetScene.id] = targetScene;
+    document.sequences.sequences["sequence-enter-house"] = createProjectSequence({
+      id: "sequence-enter-house",
+      title: "Enter House",
+      effects: [
+        {
+          stepClass: "impulse",
+          type: "startSceneTransition",
+          targetSceneId: targetScene.id,
+          targetEntryEntityId: houseEntry.id
+        }
+      ]
+    });
+
+    expect(parseProjectDocumentJson(serializeProjectDocument(document))).toEqual(
+      document
+    );
+  });
+
   it("round-trips NPC dialogue references in project scenes", () => {
     const document = createEmptyProjectDocument({
       name: "NPC Dialogue Project"
