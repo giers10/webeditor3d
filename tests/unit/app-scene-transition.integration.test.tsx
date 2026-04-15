@@ -7,8 +7,7 @@ import {
 } from "../../src/document/scene-document";
 import {
   createPlayerStartEntity,
-  createSceneEntryEntity,
-  createSceneExitEntity
+  createSceneEntryEntity
 } from "../../src/entities/entity-instances";
 
 const { MockViewportHost, viewportHostInstances } = vi.hoisted(() => {
@@ -92,43 +91,27 @@ vi.mock("../../src/assets/project-asset-storage", () => ({
 vi.mock("../../src/runner-web/RunnerCanvas", () => ({
   RunnerCanvas: (props: {
     sceneName: string;
-    runtimeScene: {
-      entities: {
-        sceneExits: Array<{
-          entityId: string;
-          targetSceneId: string;
-          targetEntryEntityId: string;
-        }>;
-      };
-    };
-    onSceneExitActivated(request: {
-      sourceExitEntityId: string;
+    onSceneTransitionActivated(request: {
+      sourceEntityId: string | null;
       targetSceneId: string;
       targetEntryEntityId: string;
     }): void;
   }) => {
-    const firstSceneExit = props.runtimeScene.entities.sceneExits[0] ?? null;
-
     return (
       <div data-testid="mock-runner-canvas">
         <div data-testid="mock-runner-scene-name">{props.sceneName}</div>
         <button
           type="button"
-          data-testid="mock-trigger-scene-exit"
-          disabled={firstSceneExit === null}
+          data-testid="mock-trigger-scene-transition"
           onClick={() => {
-            if (firstSceneExit === null) {
-              return;
-            }
-
-            props.onSceneExitActivated({
-              sourceExitEntityId: firstSceneExit.entityId,
-              targetSceneId: firstSceneExit.targetSceneId,
-              targetEntryEntityId: firstSceneExit.targetEntryEntityId
+            props.onSceneTransitionActivated({
+              sourceEntityId: "entity-interactable-front-door",
+              targetSceneId: "scene-house",
+              targetEntryEntityId: "entity-scene-entry-house-front"
             });
           }}
         >
-          Trigger Scene Exit
+          Trigger Scene Transition
         </button>
       </div>
     );
@@ -174,17 +157,6 @@ function createSceneTransitionProject() {
     },
     yawDegrees: 270
   });
-  const outsideExit = createSceneExitEntity({
-    id: "entity-scene-exit-front-door",
-    position: {
-      x: 2,
-      y: 1,
-      z: 0
-    },
-    prompt: "Enter House",
-    targetSceneId: houseScene.id,
-    targetEntryEntityId: houseEntry.id
-  });
   const projectDocument = createEmptyProjectDocument({
     sceneId: outdoorScene.id,
     sceneName: outdoorScene.name
@@ -195,8 +167,7 @@ function createSceneTransitionProject() {
     [outdoorScene.id]: {
       ...outdoorScene,
       entities: {
-        [outdoorPlayerStart.id]: outdoorPlayerStart,
-        [outsideExit.id]: outsideExit
+        [outdoorPlayerStart.id]: outdoorPlayerStart
       }
     },
     [houseScene.id]: {
@@ -223,7 +194,7 @@ describe("App scene transition flow", () => {
     vi.restoreAllMocks();
   });
 
-  it("switches runtime scenes through Scene Exits without changing the editor active scene", async () => {
+  it("switches runtime scenes through scene transition requests without changing the editor active scene", async () => {
     const store = createEditorStore({
       initialProjectDocument: createSceneTransitionProject()
     });
@@ -250,7 +221,7 @@ describe("App scene transition flow", () => {
     );
     expect(store.getState().activeSceneId).toBe("scene-outside");
 
-    fireEvent.click(screen.getByTestId("mock-trigger-scene-exit"));
+    fireEvent.click(screen.getByTestId("mock-trigger-scene-transition"));
 
     await waitFor(() => {
       expect(screen.getByTestId("mock-runner-scene-name")).toHaveTextContent(
