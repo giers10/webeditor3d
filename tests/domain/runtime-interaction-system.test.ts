@@ -631,36 +631,13 @@ describe("RuntimeInteractionSystem", () => {
   it("dispatches make-npc-talk sequences for authored interaction links", () => {
     const runtimeScene = createRuntimeSceneFixture();
     runtimeScene.entities.npcs = [
-      {
-        ...createNpcEntity({
-          id: "entity-npc-console",
-          dialogues: [
-            {
-              id: "dialogue-console",
-              title: "Console",
-              lines: [
-                {
-                  id: "dialogue-line-1",
-                  speakerName: "System",
-                  text: "Access granted."
-                }
-              ]
-            }
-          ],
-          defaultDialogueId: "dialogue-console"
-        }),
-        active: true,
-        activeRoutineId: null,
-        activeRoutineTitle: null,
-        authoredPosition: { x: 0, y: 0, z: 0 },
-        authoredYawDegrees: 0,
-        visible: true,
-        position: { x: 0, y: 0, z: 0 },
-        yawDegrees: 0,
-        animationClipName: null,
-        animationLoop: undefined,
-        resolvedPath: null
-      }
+      createRuntimeNpcFixture({
+        entityId: "entity-npc-console",
+        dialogueId: "dialogue-console",
+        title: "Console",
+        speakerName: "System",
+        text: "Access granted."
+      })
     ];
     runtimeScene.sequences.sequences["sequence-console-dialogue"] =
       createProjectSequence({
