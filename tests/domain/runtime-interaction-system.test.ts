@@ -146,7 +146,6 @@ function createRuntimeSceneFixture(): RuntimeSceneDefinition {
           interactionEnabled: false
         }
       ],
-      sceneExits: []
     },
     interactionLinks: [],
     control: createEmptyRuntimeControlSurfaceDefinition(),
@@ -186,7 +185,7 @@ function createDispatcher(
 ): RuntimeInteractionDispatcher {
   return {
     teleportPlayer: () => {},
-    activateSceneExit: () => {},
+    startSceneTransition: () => {},
     toggleBrushVisibility: () => {},
     playAnimation: () => {},
     stopAnimation: () => {},
@@ -223,7 +222,7 @@ describe("RuntimeInteractionSystem", () => {
         teleportPlayer: (target, link) => {
           dispatches.push(`${link.id}:${target.entityId}:${target.position.x}`);
         },
-        activateSceneExit: () => {},
+        startSceneTransition: () => {},
         toggleBrushVisibility: () => {
           dispatches.push("toggle");
         },
@@ -245,7 +244,7 @@ describe("RuntimeInteractionSystem", () => {
         teleportPlayer: (target, link) => {
           dispatches.push(`${link.id}:${target.entityId}:${target.position.x}`);
         },
-        activateSceneExit: () => {},
+        startSceneTransition: () => {},
         toggleBrushVisibility: () => {
           dispatches.push("toggle");
         },
@@ -289,7 +288,7 @@ describe("RuntimeInteractionSystem", () => {
         teleportPlayer: () => {
           throw new Error("Teleport should not dispatch in this fixture.");
         },
-        activateSceneExit: () => {
+        startSceneTransition: () => {
           throw new Error("Scene exit should not dispatch in this fixture.");
         },
         toggleBrushVisibility: () => {
@@ -342,7 +341,7 @@ describe("RuntimeInteractionSystem", () => {
         teleportPlayer: () => {
           throw new Error("Teleport should not dispatch in this fixture.");
         },
-        activateSceneExit: () => {
+        startSceneTransition: () => {
           throw new Error("Scene exit should not dispatch in this fixture.");
         },
         toggleBrushVisibility: (brushId, visible) => {
@@ -369,7 +368,7 @@ describe("RuntimeInteractionSystem", () => {
         teleportPlayer: () => {
           throw new Error("Teleport should not dispatch in this fixture.");
         },
-        activateSceneExit: () => {
+        startSceneTransition: () => {
           throw new Error("Scene exit should not dispatch in this fixture.");
         },
         toggleBrushVisibility: (brushId, visible) => {
@@ -516,7 +515,7 @@ describe("RuntimeInteractionSystem", () => {
         teleportPlayer: (target, link) => {
           dispatches.push(`${link.id}:${target.entityId}:${target.position.x}`);
         },
-        activateSceneExit: () => {
+        startSceneTransition: () => {
           throw new Error(
             "Scene exit should not dispatch for this click fixture."
           );
@@ -564,7 +563,7 @@ describe("RuntimeInteractionSystem", () => {
         teleportPlayer: () => {
           throw new Error("Teleport should not dispatch in this fixture.");
         },
-        activateSceneExit: () => {
+        startSceneTransition: () => {
           throw new Error("Scene exit should not dispatch in this fixture.");
         },
         toggleBrushVisibility: () => {
