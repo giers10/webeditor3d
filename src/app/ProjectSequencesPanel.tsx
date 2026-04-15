@@ -600,6 +600,20 @@ export function ProjectSequencesPanel({
                                 />
                                 <span className="label">Loop</span>
                               </label>
+                              <label className="form-field form-field--inline">
+                                <input
+                                  type="checkbox"
+                                  checked={effect.effect.smoothPath}
+                                  onChange={(event) =>
+                                    onSetControlStepPathSmooth(
+                                      selectedSequence.id,
+                                      effectIndex,
+                                      event.currentTarget.checked
+                                    )
+                                  }
+                                />
+                                <span className="label">Smooth Path</span>
+                              </label>
                             </>
                           ) : null}
                         </>
