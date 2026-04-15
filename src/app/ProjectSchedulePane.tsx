@@ -26,8 +26,7 @@ import {
 import {
   findHeldSequenceControlEffect,
   getProjectScheduleRoutineHeldSteps,
-  getProjectSequenceImpulseSteps,
-  getProjectSequenceHeldSteps
+  getProjectSequenceImpulseSteps
 } from "../sequencer/project-sequence-steps";
 import {
   getProjectSequences,
