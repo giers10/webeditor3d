@@ -20,6 +20,7 @@ import {
 } from "../sequencer/project-sequencer";
 import {
   getProjectScheduleTargetOptionForRoutine,
+  type ProjectScheduleEffectOptionId,
   type ProjectScheduleTargetOption
 } from "../sequencer/project-sequencer-control-options";
 import {
