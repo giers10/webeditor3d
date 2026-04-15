@@ -57,7 +57,7 @@ export interface RuntimeInteractionDispatcher {
   stopAnimation(instanceId: string, link: InteractionLink): void;
   playSound(soundEmitterId: string, link: InteractionLink): void;
   stopSound(soundEmitterId: string, link: InteractionLink): void;
-  startNpcDialogue(
+  startNpcDialogue?(
     npcEntityId: string,
     dialogueId: string | null,
     source?: RuntimeDialogueStartSource
@@ -645,7 +645,7 @@ export class RuntimeInteractionSystem {
       }
 
       if (npc.defaultDialogueId !== null || npc.dialogues.length > 0) {
-        dispatcher.startNpcDialogue(npc.entityId, npc.defaultDialogueId, {
+        dispatcher.startNpcDialogue?.(npc.entityId, npc.defaultDialogueId, {
           kind: "npc",
           sourceEntityId: npc.entityId,
           linkId: null,
@@ -754,7 +754,7 @@ export class RuntimeInteractionSystem {
           "Runtime visibility steps targeting model instances require dispatcher.setVisibility support."
         );
       case "makeNpcTalk":
-        dispatcher.startNpcDialogue(step.npcEntityId, step.dialogueId, {
+        dispatcher.startNpcDialogue?.(step.npcEntityId, step.dialogueId, {
           kind: "interactionLink",
           sourceEntityId: link.sourceEntityId,
           linkId: link.id,
