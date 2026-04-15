@@ -10,8 +10,6 @@ import {
   type ProjectScheduleTargetOption
 } from "../scheduler/project-schedule-control-options";
 import {
-  getProjectSequenceHeldSteps,
-  getProjectSequenceImpulseSteps,
   getSequenceEffectLabel,
   type SequenceEffect,
   type SequenceVisibilityMode
@@ -50,16 +48,11 @@ interface ProjectSequencesPanelProps {
   onAddSequence(): void;
   onDeleteSequence(sequenceId: string): void;
   onSetSequenceTitle(sequenceId: string, title: string): void;
-  onAddHeldControlStep(sequenceId: string, targetKey: string): void;
-  onAddImpulseControlStep(sequenceId: string, targetKey: string): void;
+  onAddControlStep(sequenceId: string, targetKey: string): void;
   onAddDialogueStep(sequenceId: string, dialogueId: string): void;
   onAddTeleportStep(sequenceId: string, targetEntityId: string): void;
   onAddSceneTransitionStep(sequenceId: string, targetKey: string): void;
   onAddVisibilityStep(sequenceId: string, targetKey: string): void;
-  onAddPlayAnimationStep(sequenceId: string, targetKey: string): void;
-  onAddStopAnimationStep(sequenceId: string, targetKey: string): void;
-  onAddPlaySoundStep(sequenceId: string, targetKey: string): void;
-  onAddStopSoundStep(sequenceId: string, targetKey: string): void;
   onDeleteStep(sequenceId: string, stepIndex: number): void;
   onSetControlStepTarget(
     sequenceId: string,
@@ -187,16 +180,11 @@ export function ProjectSequencesPanel({
   onAddSequence,
   onDeleteSequence,
   onSetSequenceTitle,
-  onAddHeldControlStep,
-  onAddImpulseControlStep,
+  onAddControlStep,
   onAddDialogueStep,
   onAddTeleportStep,
   onAddSceneTransitionStep,
   onAddVisibilityStep,
-  onAddPlayAnimationStep,
-  onAddStopAnimationStep,
-  onAddPlaySoundStep,
-  onAddStopSoundStep,
   onDeleteStep,
   onSetControlStepTarget,
   onSetControlStepEffectOption,
@@ -215,6 +203,9 @@ export function ProjectSequencesPanel({
 }: ProjectSequencesPanelProps) {
   const sequenceList = getProjectSequences(sequences);
   const dialogueList = getProjectDialogues(dialogues);
+  const editableTargetOptions = targetOptions.filter(
+    (targetOption) => listProjectScheduleEffectOptions(targetOption).length > 0
+  );
   const selectedSequence =
     selectedSequenceId === null
       ? null
@@ -245,9 +236,7 @@ export function ProjectSequencesPanel({
                   <span className="outliner-item__title">{sequence.title}</span>
                   <span className="outliner-item__meta">
                     {sequence.effects.length} effect
-                    {sequence.effects.length === 1 ? "" : "s"} ·{" "}
-                    {getProjectSequenceHeldSteps(sequence).length} held ·{" "}
-                    {getProjectSequenceImpulseSteps(sequence).length} impulse
+                    {sequence.effects.length === 1 ? "" : "s"}
                   </span>
                 </button>
                 <button
@@ -277,9 +266,9 @@ export function ProjectSequencesPanel({
       ) : (
         <div className="form-section">
           <div className="material-summary">
-            A sequence is a reusable bundle of engine effects. Held effects stay
-            active for the whole placement window. Impulse effects fire when the
-            sequence starts from an interaction or future event trigger.
+            A sequence is a reusable bundle of engine effects. Some effects stay
+            active while a timeline placement is active. Others fire once when the
+            sequence starts.
           </div>
           <label className="form-field">
             <span className="label">Title</span>
@@ -301,7 +290,7 @@ export function ProjectSequencesPanel({
           <div className="label">Effects</div>
           {selectedSequence.effects.length === 0 ? (
             <div className="outliner-empty">
-              Add held control, impulse control, or dialogue effects.
+              Add an effect to define what this sequence does.
             </div>
           ) : (
             <div className="outliner-list">
@@ -350,15 +339,6 @@ export function ProjectSequencesPanel({
                         <>
                           <div className="vector-inputs vector-inputs--two">
                             <label className="form-field">
-                              <span className="label">Class</span>
-                              <input
-                                className="text-input"
-                                type="text"
-                                value={effect.stepClass === "held" ? "Held" : "Impulse"}
-                                readOnly
-                              />
-                            </label>
-                            <label className="form-field">
                               <span className="label">Target</span>
                               <select
                                 className="select-input"
@@ -371,7 +351,7 @@ export function ProjectSequencesPanel({
                                   )
                                 }
                               >
-                                {targetOptions.map((option) => (
+                                {editableTargetOptions.map((option) => (
                                   <option key={option.key} value={option.key}>
                                     {option.groupLabel} · {option.label}
                                   </option>
@@ -790,22 +770,15 @@ export function ProjectSequencesPanel({
             <button
               className="toolbar__button toolbar__button--compact"
               type="button"
-              disabled={targetOptions.length === 0}
+              disabled={editableTargetOptions.length === 0}
               onClick={() =>
-                onAddHeldControlStep(selectedSequence.id, targetOptions[0]?.key ?? "")
+                onAddControlStep(
+                  selectedSequence.id,
+                  editableTargetOptions[0]?.key ?? ""
+                )
               }
             >
-              Add Held Effect
-            </button>
-            <button
-              className="toolbar__button toolbar__button--compact"
-              type="button"
-              disabled={targetOptions.length === 0}
-              onClick={() =>
-                onAddImpulseControlStep(selectedSequence.id, targetOptions[0]?.key ?? "")
-              }
-            >
-              Add Impulse Effect
+              Add Effect
             </button>
             <button
               className="toolbar__button toolbar__button--compact"
@@ -855,58 +828,6 @@ export function ProjectSequencesPanel({
               }
             >
               Add Visibility Effect
-            </button>
-            <button
-              className="toolbar__button toolbar__button--compact"
-              type="button"
-              disabled={modelAnimationTargetOptions.length === 0}
-              onClick={() =>
-                onAddPlayAnimationStep(
-                  selectedSequence.id,
-                  modelAnimationTargetOptions[0]?.targetKey ?? ""
-                )
-              }
-            >
-              Add Play Animation Effect
-            </button>
-            <button
-              className="toolbar__button toolbar__button--compact"
-              type="button"
-              disabled={modelAnimationTargetOptions.length === 0}
-              onClick={() =>
-                onAddStopAnimationStep(
-                  selectedSequence.id,
-                  modelAnimationTargetOptions[0]?.targetKey ?? ""
-                )
-              }
-            >
-              Add Stop Animation Effect
-            </button>
-            <button
-              className="toolbar__button toolbar__button--compact"
-              type="button"
-              disabled={soundTargetOptions.length === 0}
-              onClick={() =>
-                onAddPlaySoundStep(
-                  selectedSequence.id,
-                  soundTargetOptions[0]?.targetKey ?? ""
-                )
-              }
-            >
-              Add Play Sound Effect
-            </button>
-            <button
-              className="toolbar__button toolbar__button--compact"
-              type="button"
-              disabled={soundTargetOptions.length === 0}
-              onClick={() =>
-                onAddStopSoundStep(
-                  selectedSequence.id,
-                  soundTargetOptions[0]?.targetKey ?? ""
-                )
-              }
-            >
-              Add Stop Sound Effect
             </button>
           </div>
         </div>
