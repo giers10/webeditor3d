@@ -17279,6 +17279,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         />
                       </div>
 
+                      {renderInteractionLinksSection(
+                        selectedNpc,
+                        selectedNpcLinks
+                      )}
+
                       <div className="form-section">
                         <div className="label">Facing</div>
                         <label className="form-field">
