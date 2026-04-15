@@ -4966,58 +4966,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
   };
 
-  const handleAddProjectSequencePlayAnimationStep = (
-    sequenceId: string,
-    targetKey: string
-  ) => {
-    handleAddProjectSequenceSpecificControlStep(
-      sequenceId,
-      targetKey,
-      "model.playAnimation",
-      "Add project sequence play animation effect",
-      "Added play animation effect."
-    );
-  };
-
-  const handleAddProjectSequenceStopAnimationStep = (
-    sequenceId: string,
-    targetKey: string
-  ) => {
-    handleAddProjectSequenceSpecificControlStep(
-      sequenceId,
-      targetKey,
-      "model.stopAnimation",
-      "Add project sequence stop animation effect",
-      "Added stop animation effect."
-    );
-  };
-
-  const handleAddProjectSequencePlaySoundStep = (
-    sequenceId: string,
-    targetKey: string
-  ) => {
-    handleAddProjectSequenceSpecificControlStep(
-      sequenceId,
-      targetKey,
-      "sound.play",
-      "Add project sequence play sound effect",
-      "Added play sound effect."
-    );
-  };
-
-  const handleAddProjectSequenceStopSoundStep = (
-    sequenceId: string,
-    targetKey: string
-  ) => {
-    handleAddProjectSequenceSpecificControlStep(
-      sequenceId,
-      targetKey,
-      "sound.stop",
-      "Add project sequence stop sound effect",
-      "Added stop sound effect."
-    );
-  };
-
   const handleDeleteProjectSequenceStep = (
     sequenceId: string,
     stepIndex: number
