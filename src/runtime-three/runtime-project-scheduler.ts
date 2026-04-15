@@ -423,7 +423,6 @@ function getAbsoluteScheduleHours(dayNumber: number, timeOfDayHours: number): nu
 function resolveMostRecentCompletedActorPathState(options: {
   actorRules: ActorScheduleRoutine[];
   sequences: ProjectSequenceLibrary;
-  actorId: string;
   dayNumber: number;
   timeOfDayHours: number;
   pathsById?: ReadonlyMap<string, RuntimeProjectSchedulePathDefinition>;
@@ -533,7 +532,6 @@ export function resolveRuntimeActorScheduleState(options: {
     const completedPathState = resolveMostRecentCompletedActorPathState({
       actorRules,
       sequences: options.sequences,
-      actorId: options.actorId,
       dayNumber: options.dayNumber,
       timeOfDayHours: options.timeOfDayHours,
       pathsById: options.pathsById
