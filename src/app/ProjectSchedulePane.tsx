@@ -458,6 +458,7 @@ export function ProjectSequencerPane({
   onDeleteRoutine,
   onDeleteSequence,
   onClose,
+  onSetRoutineTarget,
   onSetRoutineTitle,
   onSetRoutineEnabled,
   onSetRoutineStartHour,
