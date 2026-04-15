@@ -2991,12 +2991,16 @@ export function App({ store, initialStatusMessage }: AppProps) {
     ) {
       setUvOffsetDraft(
         createMaybeMixedVec2Draft(
-          BOX_FACE_IDS.map((faceId) => selectedBrush.faces[faceId].uv.offset)
+          selectedBrushFaceIds.map(
+            (faceId) => selectedBrush.faces[faceId].uv.offset
+          )
         )
       );
       setUvScaleDraft(
         createMaybeMixedVec2Draft(
-          BOX_FACE_IDS.map((faceId) => selectedBrush.faces[faceId].uv.scale)
+          selectedBrushFaceIds.map(
+            (faceId) => selectedBrush.faces[faceId].uv.scale
+          )
         )
       );
       return;
@@ -3011,7 +3015,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
     setUvOffsetDraft(createVec2Draft(selectedFace.uv.offset));
     setUvScaleDraft(createVec2Draft(selectedFace.uv.scale));
-  }, [selectedBrush, selectedFace, whiteboxSelectionMode]);
+  }, [
+    selectedBrush,
+    selectedBrushFaceIds,
+    selectedFace,
+    whiteboxSelectionMode
+  ]);
 
   useEffect(() => {
     if (selectedEntity === null) {
