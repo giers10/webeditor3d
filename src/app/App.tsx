@@ -14704,7 +14704,52 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 </div>
               </div>
 
-              {selectedModelInstance !== null ? (
+              {multiSelectionSummary !== null ? (
+                <>
+                  <div className="stat-card">
+                    <div className="label">Selection Kind</div>
+                    <div className="value">{multiSelectionSummary.kindLabel}</div>
+                    <div className="material-summary">
+                      {multiSelectionSummary.count} selected
+                    </div>
+                  </div>
+
+                  <div className="stat-card">
+                    <div className="label">Active Item</div>
+                    <div className="value">{multiSelectionSummary.activeLabel}</div>
+                    <div className="material-summary">
+                      {multiSelectionSummary.activeId}
+                    </div>
+                  </div>
+
+                  <div className="form-section">
+                    <div className="label">Selected Items</div>
+                    <div className="material-summary">
+                      Batch transform, duplicate, and delete stay available.
+                      Inline rename remains single-selection only.
+                    </div>
+                    <div className="outliner-list">
+                      {multiSelectionSummary.selectedLabels.map((label, index) => (
+                        <div
+                          key={`${multiSelectionSummary.activeId}-${label}-${index}`}
+                          className={`outliner-item outliner-item--compact ${label === multiSelectionSummary.activeLabel ? "outliner-item--active" : ""}`}
+                        >
+                          <div className="outliner-item__row">
+                            <div className="outliner-item__select">
+                              <span className="outliner-item__title">{label}</span>
+                              <span className="outliner-item__meta">
+                                {label === multiSelectionSummary.activeLabel
+                                  ? "Active"
+                                  : "Selected"}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              ) : selectedModelInstance !== null ? (
                 <>
                   <div className="stat-card">
                     <div className="label">Model Asset</div>
