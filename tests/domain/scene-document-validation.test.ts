@@ -296,6 +296,55 @@ describe("validateSceneDocument", () => {
     );
   });
 
+  it("accepts actor timeline sequences without an explicit presence effect", () => {
+    const npc = createNpcEntity({
+      id: "entity-npc-guard",
+      actorId: "actor-guard"
+    });
+    const path = createScenePath({
+      id: "path-guard-patrol"
+    });
+    const document = createEmptySceneDocument();
+    document.entities[npc.id] = npc;
+    document.paths[path.id] = path;
+    document.sequences.sequences["sequence-guard-patrol"] = createProjectSequence({
+      id: "sequence-guard-patrol",
+      title: "Guard Patrol",
+      effects: [
+        {
+          stepClass: "held",
+          type: "controlEffect",
+          effect: createFollowActorPathControlEffect({
+            target: createActorControlTargetRef("actor-guard"),
+            pathId: path.id,
+            speed: 1,
+            loop: true,
+            progressMode: "deriveFromTime"
+          })
+        }
+      ]
+    });
+    document.scheduler.routines["routine-guard-patrol"] = createProjectScheduleRoutine({
+      id: "routine-guard-patrol",
+      title: "Guard Patrol",
+      target: createActorControlTargetRef("actor-guard"),
+      startHour: 8,
+      endHour: 18,
+      sequenceId: "sequence-guard-patrol",
+      effects: []
+    });
+
+    const validation = validateSceneDocument(document);
+
+    expect(validation.errors).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "invalid-project-schedule-actor-presence-missing"
+        })
+      ])
+    );
+  });
+
   it("rejects NPC dialogue references that point to missing dialogue resources", () => {
     const npc = createNpcEntity({
       id: "entity-npc-guide",
