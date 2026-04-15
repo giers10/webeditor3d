@@ -10649,6 +10649,18 @@ export function App({ store, initialStatusMessage }: AppProps) {
     },
     {
       kind: "action",
+      label: "Whitebox Wedge",
+      testId: "add-menu-wedge",
+      onSelect: beginWedgeCreation
+    },
+    {
+      kind: "action",
+      label: "Whitebox Cylinder",
+      testId: "add-menu-cylinder",
+      onSelect: beginCylinderCreation
+    },
+    {
+      kind: "action",
       label: "Path",
       testId: "add-menu-path",
       onSelect: handleCreatePath
