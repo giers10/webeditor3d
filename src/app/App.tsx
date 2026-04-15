@@ -989,20 +989,27 @@ function areFaceUvStatesEqual(left: FaceUvState, right: FaceUvState): boolean {
   );
 }
 
-function getSharedBrushFaceMaterialId(brush: BoxBrush): string | null | undefined {
-  const firstMaterialId = brush.faces[BOX_FACE_IDS[0]].materialId;
+function getSharedBrushFaceMaterialId(brush: Brush): string | null | undefined {
+  const faceIds = getBrushFaceIds(brush);
+  const firstFace = brush.faces[faceIds[0]];
 
-  return BOX_FACE_IDS.slice(1).every(
-    (faceId) => brush.faces[faceId].materialId === firstMaterialId
-  )
+  if (firstFace === undefined) {
+    return null;
+  }
+
+  const firstMaterialId = firstFace.materialId;
+
+  return faceIds
+    .slice(1)
+    .every((faceId) => brush.faces[faceId]?.materialId === firstMaterialId)
     ? firstMaterialId
     : undefined;
 }
 
 function getSelectedBoxBrush(
   selection: EditorSelection,
-  brushes: BoxBrush[]
-): BoxBrush | null {
+  brushes: Brush[]
+): Brush | null {
   const selectedBrushId = getSingleSelectedBrushId(selection);
 
   if (selectedBrushId === null) {
@@ -1193,8 +1200,8 @@ function formatAssetHoverStatus(asset: ProjectAssetRecord): string {
   return `${asset.sourceName} | ${details.join(" | ")}`;
 }
 
-function getBrushLabel(brush: BoxBrush, index: number): string {
-  return brush.name ?? `Whitebox Box ${index + 1}`;
+function getBrushLabel(brush: Brush, index: number): string {
+  return brush.name ?? getBrushDefaultName(brush, index);
 }
 
 function getPathLabelById(pathId: string, paths: ScenePath[]): string {
@@ -1221,16 +1228,16 @@ function formatAuthoredObjectStateSummary(state: {
   return parts.length === 0 ? null : parts.join(" | ");
 }
 
-function getBrushLabelById(brushId: string, brushes: BoxBrush[]): string {
+function getBrushLabelById(brushId: string, brushes: Brush[]): string {
   const brushIndex = brushes.findIndex((brush) => brush.id === brushId);
   return brushIndex === -1
-    ? "Whitebox Box"
+    ? "Whitebox Solid"
     : getBrushLabel(brushes[brushIndex], brushIndex);
 }
 
 function getSelectedBrushLabel(
   selection: EditorSelection,
-  brushes: BoxBrush[]
+  brushes: Brush[]
 ): string {
   const selectedBrushId = getSingleSelectedBrushId(selection);
 
@@ -1243,7 +1250,7 @@ function getSelectedBrushLabel(
 
 function describeSelection(
   selection: EditorSelection,
-  brushes: BoxBrush[],
+  brushes: Brush[],
   paths: ScenePath[],
   modelInstances: Record<string, ModelInstance>,
   assets: Record<string, ProjectAssetRecord>,
@@ -1254,12 +1261,30 @@ function describeSelection(
       return "No authored selection";
     case "brushes":
       return `${selection.ids.length} solid${selection.ids.length === 1 ? "" : "s"} selected (${getSelectedBrushLabel(selection, brushes)})`;
-    case "brushFace":
-      return `1 face selected (${BOX_FACE_LABELS[selection.faceId]} on ${getBrushLabelById(selection.brushId, brushes)})`;
-    case "brushEdge":
-      return `1 edge selected (${BOX_EDGE_LABELS[selection.edgeId]} on ${getBrushLabelById(selection.brushId, brushes)})`;
-    case "brushVertex":
-      return `1 vertex selected (${BOX_VERTEX_LABELS[selection.vertexId]} on ${getBrushLabelById(selection.brushId, brushes)})`;
+    case "brushFace": {
+      const brush = brushes.find((candidate) => candidate.id === selection.brushId);
+      const faceLabel =
+        brush === undefined
+          ? selection.faceId
+          : getBrushFaceLabel(brush, selection.faceId);
+      return `1 face selected (${faceLabel} on ${getBrushLabelById(selection.brushId, brushes)})`;
+    }
+    case "brushEdge": {
+      const brush = brushes.find((candidate) => candidate.id === selection.brushId);
+      const edgeLabel =
+        brush === undefined
+          ? selection.edgeId
+          : getBrushEdgeLabel(brush, selection.edgeId);
+      return `1 edge selected (${edgeLabel} on ${getBrushLabelById(selection.brushId, brushes)})`;
+    }
+    case "brushVertex": {
+      const brush = brushes.find((candidate) => candidate.id === selection.brushId);
+      const vertexLabel =
+        brush === undefined
+          ? selection.vertexId
+          : getBrushVertexLabel(brush, selection.vertexId);
+      return `1 vertex selected (${vertexLabel} on ${getBrushLabelById(selection.brushId, brushes)})`;
+    }
     case "paths":
       return `${selection.ids.length} path${selection.ids.length === 1 ? "" : "s"} selected (${getPathLabelById(selection.ids[0], paths)})`;
     case "pathPoint": {
