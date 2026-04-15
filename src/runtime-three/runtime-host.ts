@@ -203,6 +203,23 @@ function createRuntimeGeometryBrush(brush: RuntimeBoxBrushInstance): Brush {
         geometry: brush.geometry as Brush["geometry"],
         faces: faces as unknown as Brush["faces"]
       } as Brush;
+    case "cone":
+      return {
+        ...base,
+        kind: "cone",
+        sideCount: brush.sideCount ?? 12,
+        geometry: brush.geometry as Brush["geometry"],
+        faces: faces as unknown as Brush["faces"]
+      } as Brush;
+    case "torus":
+      return {
+        ...base,
+        kind: "torus",
+        majorSegmentCount: brush.majorSegmentCount ?? 16,
+        tubeSegmentCount: brush.tubeSegmentCount ?? 8,
+        geometry: brush.geometry as Brush["geometry"],
+        faces: faces as unknown as Brush["faces"]
+      } as Brush;
   }
 }
 
