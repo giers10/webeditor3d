@@ -399,6 +399,7 @@ describe("runtime control foundation", () => {
         stopAnimation: () => {},
         playSound: () => {},
         stopSound: () => {},
+        startNpcDialogue: () => {},
         startDialogue: () => {},
         dispatchControlEffect: (effect, link) => {
           dispatches.push({
