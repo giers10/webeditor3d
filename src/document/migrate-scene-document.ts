@@ -3268,6 +3268,10 @@ function readControlEffect(value: unknown, label: string): ControlEffect {
         pathId: expectString(value.pathId, `${label}.pathId`),
         speed: expectPositiveFiniteNumber(value.speed, `${label}.speed`),
         loop: expectBoolean(value.loop, `${label}.loop`),
+        smoothPath:
+          value.smoothPath === undefined
+            ? true
+            : expectBoolean(value.smoothPath, `${label}.smoothPath`),
         progressMode
       });
     }
