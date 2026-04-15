@@ -572,17 +572,15 @@ export function ProjectSequencerPane({
             (sequence) => getProjectSequenceImpulseSteps(sequence).length > 0
           )
         : getProjectSequences(sequences).filter((sequence) => {
-          const heldSteps = getProjectSequenceHeldSteps(sequence);
+          const controlSteps = sequence.effects.filter(
+            (effect): effect is Extract<typeof effect, { type: "controlEffect" }> =>
+              effect.type === "controlEffect"
+          );
 
-          if (heldSteps.length === 0) {
-            return false;
-          }
-
-          return heldSteps.every(
+          return controlSteps.every(
             (step) =>
-              step.type === "controlEffect" &&
               getControlTargetRefKey(step.effect.target) ===
-                getControlTargetRefKey(selectedRoutine.target)
+              getControlTargetRefKey(selectedRoutine.target)
           );
         });
   const selectedAttachedSequence =
