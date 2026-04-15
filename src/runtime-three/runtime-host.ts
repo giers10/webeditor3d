@@ -2918,6 +2918,62 @@ export class RuntimeHost {
     this.firstPersonController.teleportTo(target.position, target.yawDegrees);
   }
 
+  private applySceneTransitionEffect(options: {
+    sourceEntityId: string | null;
+    targetSceneId: string;
+    targetEntryEntityId: string;
+  }) {
+    this.sceneTransitionHandler?.({
+      sourceEntityId: options.sourceEntityId,
+      targetSceneId: options.targetSceneId,
+      targetEntryEntityId: options.targetEntryEntityId
+    });
+  }
+
+  private dispatchImpulseSequenceEffect(
+    effect: ImpulseSequenceStep,
+    sourceEntityId: string | null
+  ) {
+    if (this.runtimeScene === null) {
+      return;
+    }
+
+    switch (effect.type) {
+      case "controlEffect":
+        this.applyControlEffect(effect.effect, null);
+        return;
+      case "startDialogue":
+        this.openRuntimeDialogue(effect.dialogueId, {
+          kind: "direct",
+          sourceEntityId,
+          linkId: null,
+          trigger: null
+        });
+        return;
+      case "teleportPlayer": {
+        const teleportTarget =
+          this.runtimeScene.entities.teleportTargets.find(
+            (candidate) => candidate.entityId === effect.targetEntityId
+          ) ?? null;
+
+        if (teleportTarget !== null) {
+          this.applyTeleportPlayerAction(teleportTarget);
+        }
+        return;
+      }
+      case "startSceneTransition":
+        this.applySceneTransitionEffect({
+          sourceEntityId,
+          targetSceneId: effect.targetSceneId,
+          targetEntryEntityId: effect.targetEntryEntityId
+        });
+        return;
+      case "setVisibility":
+        this.applyVisibilitySequenceEffect(effect.target, effect.mode);
+        return;
+    }
+  }
+
   private syncRuntimeScheduleToCurrentClock() {
     if (this.runtimeScene === null || this.currentClockState === null) {
       return;
