@@ -4054,7 +4054,10 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
   }
 
   if (source.version === FACE_MATERIALS_SCENE_DOCUMENT_VERSION) {
-    const materials = readMaterialRegistry(source.materials, "materials");
+    const materials = readMaterialRegistry(source.materials, "materials", {
+      allowLegacyStarterPatterns:
+        source.version < STARTER_PBR_MATERIAL_LIBRARY_SCENE_DOCUMENT_VERSION
+    });
 
     return {
       time: createDefaultProjectTimeSettings(),
@@ -4082,7 +4085,10 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
   }
 
   if (source.version === RUNNER_V1_SCENE_DOCUMENT_VERSION) {
-    const materials = readMaterialRegistry(source.materials, "materials");
+    const materials = readMaterialRegistry(source.materials, "materials", {
+      allowLegacyStarterPatterns:
+        source.version < STARTER_PBR_MATERIAL_LIBRARY_SCENE_DOCUMENT_VERSION
+    });
 
     return {
       time: createDefaultProjectTimeSettings(),
@@ -4110,7 +4116,10 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
   }
 
   if (source.version === FIRST_ROOM_POLISH_SCENE_DOCUMENT_VERSION) {
-    const materials = readMaterialRegistry(source.materials, "materials");
+    const materials = readMaterialRegistry(source.materials, "materials", {
+      allowLegacyStarterPatterns:
+        source.version < STARTER_PBR_MATERIAL_LIBRARY_SCENE_DOCUMENT_VERSION
+    });
 
     return {
       time: createDefaultProjectTimeSettings(),
@@ -4138,7 +4147,10 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
   }
 
   if (source.version === WORLD_ENVIRONMENT_SCENE_DOCUMENT_VERSION) {
-    const materials = readMaterialRegistry(source.materials, "materials");
+    const materials = readMaterialRegistry(source.materials, "materials", {
+      allowLegacyStarterPatterns:
+        source.version < STARTER_PBR_MATERIAL_LIBRARY_SCENE_DOCUMENT_VERSION
+    });
 
     return {
       time: createDefaultProjectTimeSettings(),
@@ -4166,7 +4178,10 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
   }
 
   if (source.version === ENTITY_SYSTEM_FOUNDATION_SCENE_DOCUMENT_VERSION) {
-    const materials = readMaterialRegistry(source.materials, "materials");
+    const materials = readMaterialRegistry(source.materials, "materials", {
+      allowLegacyStarterPatterns:
+        source.version < STARTER_PBR_MATERIAL_LIBRARY_SCENE_DOCUMENT_VERSION
+    });
 
     return {
       time: createDefaultProjectTimeSettings(),
@@ -4196,7 +4211,10 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
   if (
     source.version === TRIGGER_ACTION_TARGET_FOUNDATION_SCENE_DOCUMENT_VERSION
   ) {
-    const materials = readMaterialRegistry(source.materials, "materials");
+    const materials = readMaterialRegistry(source.materials, "materials", {
+      allowLegacyStarterPatterns:
+        source.version < STARTER_PBR_MATERIAL_LIBRARY_SCENE_DOCUMENT_VERSION
+    });
 
     return {
       time: createDefaultProjectTimeSettings(),
@@ -4221,7 +4239,10 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
   }
 
   if (source.version === MODEL_ASSET_PIPELINE_SCENE_DOCUMENT_VERSION) {
-    const materials = readMaterialRegistry(source.materials, "materials");
+    const materials = readMaterialRegistry(source.materials, "materials", {
+      allowLegacyStarterPatterns:
+        source.version < STARTER_PBR_MATERIAL_LIBRARY_SCENE_DOCUMENT_VERSION
+    });
 
     return {
       time: createDefaultProjectTimeSettings(),
@@ -4246,7 +4267,10 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
   }
 
   if (source.version === LOCAL_LIGHTS_AND_SKYBOX_SCENE_DOCUMENT_VERSION) {
-    const materials = readMaterialRegistry(source.materials, "materials");
+    const materials = readMaterialRegistry(source.materials, "materials", {
+      allowLegacyStarterPatterns:
+        source.version < STARTER_PBR_MATERIAL_LIBRARY_SCENE_DOCUMENT_VERSION
+    });
     const assets = readAssets(source.assets);
 
     return {
@@ -4269,7 +4293,10 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
   }
 
   if (source.version === ANIMATION_PLAYBACK_SCENE_DOCUMENT_VERSION) {
-    const materials = readMaterialRegistry(source.materials, "materials");
+    const materials = readMaterialRegistry(source.materials, "materials", {
+      allowLegacyStarterPatterns:
+        source.version < STARTER_PBR_MATERIAL_LIBRARY_SCENE_DOCUMENT_VERSION
+    });
     const assets = readAssets(source.assets);
 
     return {
@@ -4295,7 +4322,10 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
   // readModelInstance now reads animationClipName/animationAutoplay as optional (defaulting to undefined)
   // so no special handling is needed beyond routing through the same readers
   if (source.version === 11) {
-    const materials = readMaterialRegistry(source.materials, "materials");
+    const materials = readMaterialRegistry(source.materials, "materials", {
+      allowLegacyStarterPatterns:
+        source.version < STARTER_PBR_MATERIAL_LIBRARY_SCENE_DOCUMENT_VERSION
+    });
     const assets = readAssets(source.assets);
 
     return {
@@ -4318,7 +4348,10 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
   }
 
   if (source.version === SPATIAL_AUDIO_SCENE_DOCUMENT_VERSION) {
-    const materials = readMaterialRegistry(source.materials, "materials");
+    const materials = readMaterialRegistry(source.materials, "materials", {
+      allowLegacyStarterPatterns:
+        source.version < STARTER_PBR_MATERIAL_LIBRARY_SCENE_DOCUMENT_VERSION
+    });
     const assets = readAssets(source.assets);
 
     return {
@@ -4342,7 +4375,10 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
 
   // v16 -> v18: Player Start collider settings landed before whitebox box rotation.
   if (source.version === IMPORTED_MODEL_COLLIDERS_SCENE_DOCUMENT_VERSION) {
-    const materials = readMaterialRegistry(source.materials, "materials");
+    const materials = readMaterialRegistry(source.materials, "materials", {
+      allowLegacyStarterPatterns:
+        source.version < STARTER_PBR_MATERIAL_LIBRARY_SCENE_DOCUMENT_VERSION
+    });
     const assets = readAssets(source.assets);
 
     return {
@@ -4368,7 +4404,10 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
   if (
     source.version === PLAYER_START_COLLIDER_SETTINGS_SCENE_DOCUMENT_VERSION
   ) {
-    const materials = readMaterialRegistry(source.materials, "materials");
+    const materials = readMaterialRegistry(source.materials, "materials", {
+      allowLegacyStarterPatterns:
+        source.version < STARTER_PBR_MATERIAL_LIBRARY_SCENE_DOCUMENT_VERSION
+    });
     const assets = readAssets(source.assets);
 
     return {
@@ -4392,7 +4431,10 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
 
   // v15 -> v16: model instances gained authored collider settings.
   if (source.version === ENTITY_NAMES_SCENE_DOCUMENT_VERSION) {
-    const materials = readMaterialRegistry(source.materials, "materials");
+    const materials = readMaterialRegistry(source.materials, "materials", {
+      allowLegacyStarterPatterns:
+        source.version < STARTER_PBR_MATERIAL_LIBRARY_SCENE_DOCUMENT_VERSION
+    });
     const assets = readAssets(source.assets);
 
     return {
@@ -4483,7 +4525,10 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     );
   }
 
-  const materials = readMaterialRegistry(source.materials, "materials");
+  const materials = readMaterialRegistry(source.materials, "materials", {
+    allowLegacyStarterPatterns:
+      source.version < STARTER_PBR_MATERIAL_LIBRARY_SCENE_DOCUMENT_VERSION
+  });
   const assets = readAssets(source.assets);
 
   const migratedDocument: SceneDocument = {
@@ -4595,7 +4640,10 @@ export function migrateProjectDocument(source: unknown): ProjectDocument {
       throw new Error("scenes must be an object.");
     }
 
-    const materials = readMaterialRegistry(source.materials, "materials");
+    const materials = readMaterialRegistry(source.materials, "materials", {
+      allowLegacyStarterPatterns:
+        source.version < STARTER_PBR_MATERIAL_LIBRARY_SCENE_DOCUMENT_VERSION
+    });
     const assets = readAssets(source.assets);
     const scenes: Record<string, ProjectScene> = {};
     const allowMissingLoadingScreen =
