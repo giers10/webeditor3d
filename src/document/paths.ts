@@ -232,9 +232,6 @@ function lerpVec3(start: Vec3, end: Vec3, t: number): Vec3 {
 function buildSmoothedPolylinePoints(
   path: ResolvedPathLike<PathPointLike, ResolvedPathSegmentLike>
 ): Vec3[] {
-function buildSmoothedPolylinePoints(
-  path: ResolvedPathLike<PathPointLike, ResolvedPathSegmentLike>
-): Vec3[] {
   let points = path.points.map((point) => cloneVec3(point.position));
 
   for (
@@ -276,9 +273,6 @@ function buildSmoothedPolylinePoints(
   return points;
 }
 
-function buildSmoothedPathSamples(
-  path: ResolvedPathLike<PathPointLike, ResolvedPathSegmentLike>
-): SmoothedPathSample[] {
 function buildSmoothedPathSamples(
   path: ResolvedPathLike<PathPointLike, ResolvedPathSegmentLike>
 ): SmoothedPathSample[] {
