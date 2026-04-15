@@ -12329,6 +12329,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   onSetControlStepPathLoop={
                     updateProjectSequenceControlStepPathLoop
                   }
+                  onSetControlStepPathSmooth={
+                    updateProjectSequenceControlStepPathSmooth
+                  }
                   onSetNpcTalkStepNpcEntityId={
                     updateProjectSequenceNpcTalkStepNpcEntityId
                   }
