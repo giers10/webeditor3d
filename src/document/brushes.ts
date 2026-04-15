@@ -48,6 +48,10 @@ export const WEDGE_VERTEX_IDS = [
 ] as const;
 export const FACE_UV_ROTATION_QUARTER_TURNS = [0, 1, 2, 3] as const;
 export const BOX_BRUSH_VOLUME_MODES = ["none", "water", "fog"] as const;
+export const DEFAULT_RADIAL_PRISM_SIDE_COUNT = 12 as const;
+export const DEFAULT_CONE_SIDE_COUNT = 12 as const;
+export const DEFAULT_TORUS_MAJOR_SEGMENT_COUNT = 16 as const;
+export const DEFAULT_TORUS_TUBE_SEGMENT_COUNT = 8 as const;
 
 export type BoxFaceId = (typeof BOX_FACE_IDS)[number];
 export type BoxEdgeId = (typeof BOX_EDGE_IDS)[number];
@@ -61,12 +65,18 @@ export type RadialPrismEdgeId =
   | `bottom-${number}`
   | `vertical-${number}`;
 export type RadialPrismVertexId = `top-${number}` | `bottom-${number}`;
+export type ConeFaceId = "bottom" | `side-${number}`;
+export type ConeEdgeId = `bottom-${number}` | `side-${number}`;
+export type ConeVertexId = "apex" | `bottom-${number}`;
+export type TorusFaceId = `face-${number}-${number}`;
+export type TorusEdgeId = `major-${number}-${number}` | `tube-${number}-${number}`;
+export type TorusVertexId = `vertex-${number}-${number}`;
 export type WhiteboxFaceId = string;
 export type WhiteboxEdgeId = string;
 export type WhiteboxVertexId = string;
 export type FaceUvRotationQuarterTurns = (typeof FACE_UV_ROTATION_QUARTER_TURNS)[number];
 export type BoxBrushVolumeMode = (typeof BOX_BRUSH_VOLUME_MODES)[number];
-export type BrushKind = "box" | "wedge" | "radialPrism";
+export type BrushKind = "box" | "wedge" | "radialPrism" | "cone" | "torus";
 
 export const BOX_FACE_LABELS: Record<BoxFaceId, string> = {
   posX: "Right",
