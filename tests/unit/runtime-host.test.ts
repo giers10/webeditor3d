@@ -9,6 +9,7 @@ import {
   createModelInstanceControlTargetRef,
   createPlayActorAnimationControlEffect,
   createPlayModelAnimationControlEffect,
+  createProjectGlobalControlTargetRef,
   createPlaySoundControlEffect,
   createProjectGlobalControlTargetRef,
   createSetActorPresenceControlEffect,
@@ -41,6 +42,7 @@ import {
   type InteractionLink
 } from "../../src/interactions/interaction-links";
 import { createProjectScheduleRoutine } from "../../src/scheduler/project-scheduler";
+import { createProjectSequence } from "../../src/sequencer/project-sequences";
 import {
   createProjectAssetStorageKey,
   type AudioAssetRecord,
@@ -1267,6 +1269,106 @@ describe("RuntimeHost", () => {
         })
       ])
     );
+
+    host.dispose();
+  });
+
+  it("fires scheduler impulse sequences only once until the runtime session is reset", () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    vi.spyOn(RapierCollisionWorld, "create").mockResolvedValue({
+      dispose: vi.fn(),
+      resolveThirdPersonCameraCollision: vi.fn(
+        (_pivot, desiredCameraPosition) => desiredCameraPosition
+      )
+    } as unknown as RapierCollisionWorld);
+
+    const document = createEmptySceneDocument();
+    document.sequences.sequences["sequence-scene-transition"] =
+      createProjectSequence({
+        id: "sequence-scene-transition",
+        title: "Scene Transition",
+        effects: [
+          {
+            stepClass: "impulse",
+            type: "startSceneTransition",
+            targetSceneId: "scene-house",
+            targetEntryEntityId: "entry-house"
+          }
+        ]
+      });
+    document.scheduler.routines["routine-scene-transition"] =
+      createProjectScheduleRoutine({
+        id: "routine-scene-transition",
+        title: "Scene Transition Window",
+        target: createProjectGlobalControlTargetRef(),
+        sequenceId: "sequence-scene-transition",
+        startHour: 8,
+        endHour: 12,
+        priority: 0,
+        effects: []
+      });
+
+    const runtimeScene = buildRuntimeSceneFromDocument(document);
+    const host = new RuntimeHost({
+      enableRendering: false
+    });
+    const transitions: Array<{
+      sourceEntityId: string | null;
+      targetSceneId: string;
+      targetEntryEntityId: string;
+    }> = [];
+    host.setSceneTransitionHandler((request) => {
+      transitions.push(request);
+    });
+    host.loadScene(runtimeScene);
+
+    const hostInternals = host as unknown as {
+      currentClockState: {
+        timeOfDayHours: number;
+        dayCount: number;
+        dayLengthMinutes: number;
+      } | null;
+      sceneReady: boolean;
+      syncRuntimeScheduleToCurrentClock(): void;
+    };
+
+    hostInternals.sceneReady = true;
+    hostInternals.currentClockState = {
+      timeOfDayHours: 9,
+      dayCount: 0,
+      dayLengthMinutes: 24
+    };
+    hostInternals.syncRuntimeScheduleToCurrentClock();
+
+    hostInternals.currentClockState = {
+      timeOfDayHours: 10,
+      dayCount: 0,
+      dayLengthMinutes: 24
+    };
+    hostInternals.syncRuntimeScheduleToCurrentClock();
+
+    host.loadScene(runtimeScene);
+    hostInternals.currentClockState = {
+      timeOfDayHours: 10.5,
+      dayCount: 0,
+      dayLengthMinutes: 24
+    };
+    hostInternals.syncRuntimeScheduleToCurrentClock();
+
+    hostInternals.currentClockState = {
+      timeOfDayHours: 9,
+      dayCount: 1,
+      dayLengthMinutes: 24
+    };
+    hostInternals.syncRuntimeScheduleToCurrentClock();
+
+    expect(transitions).toEqual([
+      {
+        sourceEntityId: null,
+        targetSceneId: "scene-house",
+        targetEntryEntityId: "entry-house"
+      }
+    ]);
 
     host.dispose();
   });
