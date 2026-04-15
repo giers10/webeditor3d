@@ -4714,7 +4714,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
     if (effectOption === null) {
       throw new Error(
-        "The selected control target does not expose a sequence-editable effect yet."
+        "The selected target does not expose any direct sequence effects yet."
       );
     }
 
