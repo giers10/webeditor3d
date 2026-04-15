@@ -11474,11 +11474,19 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   onDeleteSequence={handleDeleteProjectSequence}
                   onClose={() => setSchedulePaneOpen(false)}
                   onSetRoutineTarget={(routineId, targetKey) =>
-                    updateProjectScheduleRoutine(
-                      routineId,
+                    updateProjectSequencerState(
                       "Set project sequencer target",
                       "Retargeted sequence placement.",
-                      (routine) => {
+                      (scheduler, sequences) => {
+                        const routine = scheduler.routines[routineId];
+
+                        if (routine === undefined) {
+                          throw new Error(
+                            "Selected sequence placement no longer exists."
+                          );
+                        }
+
+                        routineId,
                         const targetOption =
                           resolveProjectScheduleTargetOption(targetKey);
 
@@ -11489,15 +11497,59 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         }
 
                         if (targetOption.target.kind === "actor") {
+                          const attachedSequence =
+                            routine.sequenceId === null
+                              ? null
+                              : sequences.sequences[routine.sequenceId] ?? null;
+
                           routine.target = targetOption.target;
-                          routine.sequenceId = null;
                           routine.effects = [];
+
+                          if (attachedSequence !== null) {
+                            const retargetedSequence =
+                              cloneSequenceForRetargetedPlacement({
+                                sequence: attachedSequence,
+                                targetOption,
+                                previousTargetKey: getControlTargetRefKey(
+                                  routine.target
+                                )
+                              });
+                            sequences.sequences[retargetedSequence.id] =
+                              retargetedSequence;
+                            routine.sequenceId = retargetedSequence.id;
+                            setSelectedSequenceId(retargetedSequence.id);
+                          } else {
+                            const nextSequence = createAttachedSequenceForRoutine({
+                              title: routine.title,
+                              targetOption,
+                              routine
+                            });
+                            sequences.sequences[nextSequence.id] = nextSequence;
+                            routine.sequenceId = nextSequence.id;
+                            setSelectedSequenceId(nextSequence.id);
+                          }
                           return;
                         }
 
                         if (targetOption.target.kind === "global") {
+                          const attachedSequence =
+                            routine.sequenceId === null
+                              ? null
+                              : sequences.sequences[routine.sequenceId] ?? null;
+
                           routine.target = targetOption.target;
                           routine.effects = [];
+
+                          if (attachedSequence === null) {
+                            const nextSequence = createAttachedSequenceForRoutine({
+                              title: routine.title,
+                              targetOption,
+                              routine
+                            });
+                            sequences.sequences[nextSequence.id] = nextSequence;
+                            routine.sequenceId = nextSequence.id;
+                            setSelectedSequenceId(nextSequence.id);
+                          }
                           return;
                         }
 
@@ -11521,15 +11573,45 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           );
                         }
 
+                        const previousTargetKey = getControlTargetRefKey(routine.target);
+                        const attachedSequence =
+                          routine.sequenceId === null
+                            ? null
+                            : sequences.sequences[routine.sequenceId] ?? null;
+
                         routine.target = targetOption.target;
-                        routine.sequenceId = null;
-                        routine.effects = [
-                          createProjectScheduleEffectFromOption({
+                        routine.effects = [];
+
+                        if (attachedSequence !== null) {
+                          const retargetedSequence = cloneSequenceForRetargetedPlacement({
+                            sequence: attachedSequence,
                             targetOption,
-                            effectOptionId: nextEffectOptionId,
-                            previousEffect: currentPrimaryEffect
-                          })
-                        ];
+                            previousTargetKey
+                          });
+                          sequences.sequences[retargetedSequence.id] =
+                            retargetedSequence;
+                          routine.sequenceId = retargetedSequence.id;
+                          setSelectedSequenceId(retargetedSequence.id);
+                          return;
+                        }
+
+                        const nextSequence = createProjectSequence({
+                          title: routine.title,
+                          effects: [
+                            {
+                              stepClass: "held",
+                              type: "controlEffect",
+                              effect: createProjectScheduleEffectFromOption({
+                                targetOption,
+                                effectOptionId: nextEffectOptionId,
+                                previousEffect: currentPrimaryEffect
+                              })
+                            }
+                          ]
+                        });
+                        sequences.sequences[nextSequence.id] = nextSequence;
+                        routine.sequenceId = nextSequence.id;
+                        setSelectedSequenceId(nextSequence.id);
                       }
                     )
                   }
