@@ -4869,6 +4869,7 @@ function readProjectScene(
     allowMissingLoadingScreen: boolean;
     allowMissingEditorPreferences: boolean;
     legacyProjectTimeValue?: unknown;
+    legacyProjectDialogues?: ProjectDialogueLibrary;
   }
 ): ProjectScene {
   if (!isRecord(value)) {
@@ -4898,7 +4899,10 @@ function readProjectScene(
     brushes: readBrushes(value.brushes, materials, false),
     paths: readScenePaths(value.paths),
     modelInstances: readModelInstances(value.modelInstances, assets),
-    entities: readEntities(value.entities, { legacySoundEmitter: false }),
+    entities: readEntities(value.entities, {
+      legacySoundEmitter: false,
+      legacyProjectDialogues: options.legacyProjectDialogues
+    }),
     interactionLinks: readInteractionLinks(value.interactionLinks)
   };
 }
