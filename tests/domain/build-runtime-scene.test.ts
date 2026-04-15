@@ -674,8 +674,7 @@ describe("buildRuntimeSceneFromDocument", () => {
           prompt: "Use Console",
           interactionEnabled: true
         }
-      ],
-      sceneExits: undefined
+      ]
     });
     expect(runtimeScene.localLights).toEqual({
       pointLights: [
