@@ -1,4 +1,5 @@
 import {
+  isSameKindMultiSelectableSelection,
   getSingleSelectedBrushId,
   getSingleSelectedEntityId,
   getSingleSelectedModelInstanceId,
@@ -247,6 +248,56 @@ function createPathFocusTarget(path: ScenePath): ViewportFocusTarget | null {
   return finishBounds(bounds);
 }
 
+function createMultiSelectionFocusTarget(
+  document: SceneDocument,
+  selection: EditorSelection
+): ViewportFocusTarget | null {
+  if (
+    !isSameKindMultiSelectableSelection(selection) ||
+    selection.ids.length <= 1
+  ) {
+    return null;
+  }
+
+  const bounds = createEmptyBoundsAccumulator();
+
+  switch (selection.kind) {
+    case "brushes":
+      for (const brushId of selection.ids) {
+        const brush = document.brushes[brushId];
+
+        if (brush !== undefined) {
+          includeBrush(bounds, brush);
+        }
+      }
+      break;
+    case "entities":
+      for (const entityId of selection.ids) {
+        const entity = document.entities[entityId];
+
+        if (entity !== undefined) {
+          includeEntity(bounds, entity);
+        }
+      }
+      break;
+    case "modelInstances":
+      for (const modelInstanceId of selection.ids) {
+        const modelInstance = document.modelInstances[modelInstanceId];
+
+        if (modelInstance !== undefined) {
+          includeModelInstance(
+            bounds,
+            modelInstance,
+            document.assets[modelInstance.assetId]
+          );
+        }
+      }
+      break;
+  }
+
+  return finishBounds(bounds);
+}
+
 function createPathPointFocusTarget(position: Vec3): ViewportFocusTarget {
   return createBoundsFocusTarget(
     {
@@ -402,6 +453,15 @@ function getSceneFocusTarget(document: SceneDocument): ViewportFocusTarget | nul
 }
 
 export function resolveViewportFocusTarget(document: SceneDocument, selection: EditorSelection): ViewportFocusTarget | null {
+  const multiSelectionFocusTarget = createMultiSelectionFocusTarget(
+    document,
+    selection
+  );
+
+  if (multiSelectionFocusTarget !== null) {
+    return multiSelectionFocusTarget;
+  }
+
   const selectedBrushId = getSingleSelectedBrushId(selection);
 
   if (selectedBrushId !== null) {
