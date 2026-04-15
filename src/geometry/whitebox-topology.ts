@@ -102,6 +102,16 @@ const WEDGE_EDGE_VERTEX_IDS: Record<
   rightSlope: ["posX_posY_negZ", "posX_negY_posZ"]
 };
 
+function parseIndexedWhiteboxId(
+  value: string,
+  prefix: string
+): number[] {
+  return value
+    .slice(prefix.length)
+    .split("-")
+    .map((segment) => Number(segment));
+}
+
 function getRadialPrismFaceLabel(faceId: RadialPrismFaceId): string {
   if (faceId === "top") {
     return "Top";
@@ -132,6 +142,53 @@ function getRadialPrismVertexLabel(vertexId: RadialPrismVertexId): string {
   }
 
   return `Bottom ${Number(vertexId.slice(7)) + 1}`;
+}
+
+function getConeFaceLabel(faceId: ConeFaceId): string {
+  if (faceId === "bottom") {
+    return "Bottom";
+  }
+
+  return `Side ${Number(faceId.slice(5)) + 1}`;
+}
+
+function getConeEdgeLabel(edgeId: ConeEdgeId): string {
+  if (edgeId.startsWith("bottom-")) {
+    return `Bottom Ring ${Number(edgeId.slice(7)) + 1}`;
+  }
+
+  return `Side ${Number(edgeId.slice(5)) + 1}`;
+}
+
+function getConeVertexLabel(vertexId: ConeVertexId): string {
+  if (vertexId === "apex") {
+    return "Apex";
+  }
+
+  return `Bottom ${Number(vertexId.slice(7)) + 1}`;
+}
+
+function getTorusFaceLabel(faceId: TorusFaceId): string {
+  const [majorIndex, tubeIndex] = parseIndexedWhiteboxId(faceId, "face-");
+  return `Face ${majorIndex + 1}:${tubeIndex + 1}`;
+}
+
+function getTorusEdgeLabel(edgeId: TorusEdgeId): string {
+  if (edgeId.startsWith("major-")) {
+    const [majorIndex, tubeIndex] = parseIndexedWhiteboxId(edgeId, "major-");
+    return `Major ${majorIndex + 1}:${tubeIndex + 1}`;
+  }
+
+  const [majorIndex, tubeIndex] = parseIndexedWhiteboxId(edgeId, "tube-");
+  return `Tube ${majorIndex + 1}:${tubeIndex + 1}`;
+}
+
+function getTorusVertexLabel(vertexId: TorusVertexId): string {
+  const [majorIndex, tubeIndex] = parseIndexedWhiteboxId(
+    vertexId,
+    "vertex-"
+  );
+  return `Vertex ${majorIndex + 1}:${tubeIndex + 1}`;
 }
 
 function getRadialPrismFaceVertexIds(
