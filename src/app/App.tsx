@@ -6328,6 +6328,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
   ) => {
     blurActiveTextEntry();
     store.setSelection(selection);
+    const activeSelectionId = getSelectionDefaultActiveId(selection);
 
     const suffix =
       source === "outliner" && options.focusViewport
@@ -6342,7 +6343,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
         break;
       case "brushes":
         setStatusMessage(
-          `Selected ${getBrushLabelById(selection.ids[0], brushList)} from the ${source}${suffix}.`
+          selection.ids.length === 1
+            ? `Selected ${getBrushLabelById(selection.ids[0], brushList)} from the ${source}${suffix}.`
+            : `Selected ${selection.ids.length} whitebox solids from the ${source}${suffix}. Active: ${getBrushLabelById(activeSelectionId ?? selection.ids.at(-1) ?? selection.ids[0], brushList)}.`
         );
         break;
       case "brushFace":
@@ -6407,12 +6410,16 @@ export function App({ store, initialStatusMessage }: AppProps) {
       }
       case "entities":
         setStatusMessage(
-          `Selected ${getEntityDisplayLabelById(selection.ids[0], editorState.document.entities, editorState.document.assets)} from the ${source}${suffix}.`
+          selection.ids.length === 1
+            ? `Selected ${getEntityDisplayLabelById(selection.ids[0], editorState.document.entities, editorState.document.assets)} from the ${source}${suffix}.`
+            : `Selected ${selection.ids.length} entities from the ${source}${suffix}. Active: ${getEntityDisplayLabelById(activeSelectionId ?? selection.ids.at(-1) ?? selection.ids[0], editorState.document.entities, editorState.document.assets)}.`
         );
         break;
       case "modelInstances":
         setStatusMessage(
-          `Selected ${getModelInstanceDisplayLabelById(selection.ids[0], editorState.document.modelInstances, editorState.document.assets)} from the ${source}${suffix}.`
+          selection.ids.length === 1
+            ? `Selected ${getModelInstanceDisplayLabelById(selection.ids[0], editorState.document.modelInstances, editorState.document.assets)} from the ${source}${suffix}.`
+            : `Selected ${selection.ids.length} model instances from the ${source}${suffix}. Active: ${getModelInstanceDisplayLabelById(activeSelectionId ?? selection.ids.at(-1) ?? selection.ids[0], editorState.document.modelInstances, editorState.document.assets)}.`
         );
         break;
       default:
