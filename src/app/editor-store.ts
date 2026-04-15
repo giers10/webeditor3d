@@ -16,6 +16,9 @@ import {
   type TransformSessionState
 } from "../core/transform-session";
 import {
+  applyStarterEnvironmentAssetsToProjectDocument
+} from "../assets/starter-environment-assets";
+import {
   applySceneDocumentToProject,
   createDefaultSceneEditorPreferences,
   createEmptyProjectDocument,
@@ -260,11 +263,12 @@ export class EditorStore {
       options.initialViewportLayoutState ?? createDefaultViewportLayoutState()
     );
 
-    this.projectDocument =
+    this.projectDocument = applyStarterEnvironmentAssetsToProjectDocument(
       options.initialProjectDocument ??
-      (options.initialDocument !== undefined
-        ? createProjectDocumentFromSceneDocument(options.initialDocument)
-        : createEmptyProjectDocument());
+        (options.initialDocument !== undefined
+          ? createProjectDocumentFromSceneDocument(options.initialDocument)
+          : createEmptyProjectDocument())
+    );
     this.document = createSceneDocumentFromProject(this.projectDocument);
       this.viewportLayoutMode = initialViewportLayoutState.layoutMode;
       this.activeViewportPanelId = initialViewportLayoutState.activePanelId;
