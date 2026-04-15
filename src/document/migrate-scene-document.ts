@@ -3057,7 +3057,6 @@ function readNpcEntity(
             value.defaultDialogueId,
             `${label}.defaultDialogueId`
           ),
-    dialogueId,
     collider: readNpcColliderSettings(value.collider, `${label}.collider`)
   });
 
