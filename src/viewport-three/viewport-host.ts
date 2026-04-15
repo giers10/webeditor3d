@@ -43,6 +43,7 @@ import {
 import { EffectComposer } from "postprocessing";
 
 import {
+  applySameKindSelectionClick,
   areEditorSelectionsEqual,
   isBrushEdgeSelected,
   isBrushFaceSelected,
@@ -51,6 +52,7 @@ import {
   isModelInstanceSelected,
   isPathPointSelected,
   isPathSelected,
+  isSelectionActiveId,
   type EditorSelection
 } from "../core/selection";
 import { getWhiteboxSelectionFeedbackLabel } from "../core/whitebox-selection-feedback";
@@ -429,6 +431,7 @@ export class ViewportHost {
   private currentSelection: EditorSelection = {
     kind: "none"
   };
+  private currentActiveSelectionId: string | null = null;
   private hoveredSelection: EditorSelection = {
     kind: "none"
   };
@@ -668,9 +671,14 @@ export class ViewportHost {
     this.rebuildModelInstances(this.currentDocument, this.currentSelection);
   }
 
-  updateDocument(document: SceneDocument, selection: EditorSelection) {
+  updateDocument(
+    document: SceneDocument,
+    selection: EditorSelection,
+    activeSelectionId: string | null
+  ) {
     this.currentDocument = document;
     this.currentSelection = selection;
+    this.currentActiveSelectionId = activeSelectionId;
     this.setHoveredSelection({
       kind: "none"
     });
