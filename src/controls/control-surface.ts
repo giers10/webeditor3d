@@ -1623,6 +1623,7 @@ export function cloneRuntimeResolvedDiscreteControlState<
         pathId: state.pathId,
         speed: state.speed,
         loop: state.loop,
+        smoothPath: state.smoothPath,
         progressMode: state.progressMode,
         source: state.source
       }) as TState;
@@ -1760,6 +1761,7 @@ export function areControlEffectsEqual(
         left.pathId === (right as FollowActorPathControlEffect).pathId &&
         left.speed === (right as FollowActorPathControlEffect).speed &&
         left.loop === (right as FollowActorPathControlEffect).loop &&
+        left.smoothPath === (right as FollowActorPathControlEffect).smoothPath &&
         left.progressMode ===
           (right as FollowActorPathControlEffect).progressMode
       );
@@ -1896,7 +1898,7 @@ export function formatControlEffectValue(effect: ControlEffect): string {
     case "followActorPath":
       return `${effect.pathId} @ ${effect.speed}${
         effect.loop ? " (Loop)" : ""
-      }`;
+      }${effect.smoothPath ? " (Smooth)" : ""}`;
     case "playModelAnimation":
       return effect.loop === false
         ? `${effect.clipName} (Once)`
@@ -1972,6 +1974,7 @@ export function applyControlEffectToResolvedState(
           pathId: effect.pathId,
           speed: effect.speed,
           loop: effect.loop,
+          smoothPath: effect.smoothPath,
           progressMode: effect.progressMode,
           source
         })
