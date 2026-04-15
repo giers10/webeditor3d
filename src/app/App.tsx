@@ -5297,6 +5297,33 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
   };
 
+  const updateProjectSequenceControlStepPathSmooth = (
+    sequenceId: string,
+    stepIndex: number,
+    smoothPath: boolean
+  ) => {
+    updateProjectSequenceStep(
+      sequenceId,
+      stepIndex,
+      "Set project sequence actor path smoothing",
+      smoothPath
+        ? "Sequence actor path now uses smoothing."
+        : "Sequence actor path now follows authored corners directly.",
+      (step) => {
+        if (
+          step.type !== "controlEffect" ||
+          step.effect.type !== "followActorPath"
+        ) {
+          throw new Error(
+            "The current sequence control step does not expose actor path smoothing."
+          );
+        }
+
+        step.effect.smoothPath = smoothPath;
+      }
+    );
+  };
+
   const updateProjectSequenceNpcTalkStepNpcEntityId = (
     sequenceId: string,
     stepIndex: number,
