@@ -14811,20 +14811,23 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       Inline rename remains single-selection only.
                     </div>
                     <div className="outliner-list">
-                      {multiSelectionSummary.selectedLabels.map((label, index) => (
+                      {multiSelectionSummary.selectedItems.map((item) => (
                         <div
-                          key={`${multiSelectionSummary.activeId}-${label}-${index}`}
-                          className={`outliner-item outliner-item--compact ${label === multiSelectionSummary.activeLabel ? "outliner-item--active" : ""}`}
+                          key={item.id}
+                          className={`outliner-item outliner-item--compact ${item.id === multiSelectionSummary.activeId ? "outliner-item--active" : ""}`}
                         >
                           <div className="outliner-item__row">
                             <div className="outliner-item__select">
-                              <span className="outliner-item__title">{label}</span>
+                              <span className="outliner-item__title">
+                                {item.label}
+                              </span>
                               <span className="outliner-item__meta">
-                                {label === multiSelectionSummary.activeLabel
+                                {item.id === multiSelectionSummary.activeId
                                   ? "Active"
                                   : "Selected"}
                               </span>
                             </div>
+                            <span className="outliner-item__meta">{item.id}</span>
                           </div>
                         </div>
                       ))}
