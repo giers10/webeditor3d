@@ -98,7 +98,7 @@ describe("runtime project scheduler", () => {
       expect.objectContaining({
         actorId: "actor-night-watch",
         hasRules: true,
-        active: false,
+        active: true,
         activeRoutineId: null,
         activeRoutineTitle: null
       })
@@ -218,6 +218,59 @@ describe("runtime project scheduler", () => {
           clipName: "Wave",
           loop: true
         })
+      })
+    );
+  });
+
+  it("keeps actors visible outside active placements when they have sequence rules", () => {
+    const actorTarget = createActorControlTargetRef("actor-patrol");
+    const scheduler = createEmptyProjectScheduler();
+    const sequences = createEmptyProjectSequenceLibrary();
+
+    sequences.sequences["sequence-patrol"] = createProjectSequence({
+      id: "sequence-patrol",
+      title: "Patrol",
+      steps: [
+        {
+          stepClass: "held",
+          type: "controlEffect",
+          effect: createFollowActorPathControlEffect({
+            target: actorTarget,
+            pathId: "path-a",
+            speed: 1,
+            loop: false,
+            progressMode: "deriveFromTime"
+          })
+        }
+      ]
+    });
+
+    scheduler.routines["routine-patrol"] = createProjectScheduleRoutine({
+      id: "routine-patrol",
+      title: "Patrol",
+      target: actorTarget,
+      startHour: 8,
+      endHour: 10,
+      sequenceId: "sequence-patrol",
+      effects: []
+    });
+
+    const resolved = resolveRuntimeProjectScheduleState({
+      scheduler,
+      sequences,
+      actorIds: ["actor-patrol"],
+      dayNumber: 1,
+      timeOfDayHours: 12
+    });
+
+    expect(resolved.actors[0]).toEqual(
+      expect.objectContaining({
+        actorId: "actor-patrol",
+        hasRules: true,
+        active: true,
+        activeRoutineId: null,
+        activeRoutineTitle: null,
+        resolvedPath: null
       })
     );
   });

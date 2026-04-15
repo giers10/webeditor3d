@@ -86,7 +86,11 @@ interface ProjectSequencerPaneProps {
   onSetRoutinePriority(routineId: string, priority: number): void;
   onSetRoutineSequenceId(routineId: string, sequenceId: string | null): void;
   onSetSequenceTitle(sequenceId: string, title: string): void;
-  onAddControlStep(sequenceId: string, targetKey: string): void;
+  onAddControlEffect(
+    sequenceId: string,
+    targetKey: string,
+    effectOptionId: ProjectScheduleEffectOptionId
+  ): void;
   onAddDialogueStep(sequenceId: string, dialogueId: string): void;
   onAddTeleportStep(sequenceId: string, targetEntityId: string): void;
   onAddSceneTransitionStep(sequenceId: string, targetKey: string): void;
@@ -403,7 +407,7 @@ export function ProjectSequencerPane({
   onSetRoutinePriority,
   onSetRoutineSequenceId,
   onSetSequenceTitle,
-  onAddControlStep,
+  onAddControlEffect,
   onAddDialogueStep,
   onAddTeleportStep,
   onAddSceneTransitionStep,
@@ -673,7 +677,7 @@ export function ProjectSequencerPane({
               onAddSequence={onAddSequence}
               onDeleteSequence={onDeleteSequence}
               onSetSequenceTitle={onSetSequenceTitle}
-              onAddControlStep={onAddControlStep}
+              onAddControlEffect={onAddControlEffect}
               onAddDialogueStep={onAddDialogueStep}
               onAddTeleportStep={onAddTeleportStep}
               onAddSceneTransitionStep={onAddSceneTransitionStep}

@@ -4731,6 +4731,30 @@ export function App({ store, initialStatusMessage }: AppProps) {
     };
   };
 
+  const createProjectSequenceControlStepFromOption = (
+    targetKey: string,
+    effectOptionId: ProjectScheduleEffectOptionId,
+    previousStep?: Extract<ProjectSequence["effects"][number], { type: "controlEffect" }> | null
+  ): Extract<ProjectSequence["effects"][number], { type: "controlEffect" }> => {
+    const targetOption = resolveSequenceControlTargetOption(targetKey);
+
+    if (targetOption === null) {
+      throw new Error("The selected sequence control target no longer exists.");
+    }
+
+    return {
+      stepClass: getProjectSequenceControlStepClassForEffectOptionId(
+        effectOptionId
+      ),
+      type: "controlEffect",
+      effect: createProjectScheduleEffectFromOption({
+        targetOption,
+        effectOptionId,
+        previousEffect: previousStep?.effect ?? null
+      })
+    };
+  };
+
   const updateProjectSequence = (
     sequenceId: string,
     label: string,
@@ -4837,16 +4861,19 @@ export function App({ store, initialStatusMessage }: AppProps) {
     });
   };
 
-  const handleAddProjectSequenceControlStep = (
+  const handleAddProjectSequenceControlEffect = (
     sequenceId: string,
-    targetKey: string
+    targetKey: string,
+    effectOptionId: ProjectScheduleEffectOptionId
   ) => {
     updateProjectSequence(
       sequenceId,
       "Add project sequence effect",
       "Added sequence effect.",
       (sequence) => {
-        sequence.effects.push(createDefaultProjectSequenceControlStep(targetKey));
+        sequence.effects.push(
+          createProjectSequenceControlStepFromOption(targetKey, effectOptionId)
+        );
       }
     );
   };
@@ -11956,7 +11983,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       }
                     )
                   }
-                  onAddControlStep={handleAddProjectSequenceControlStep}
+                  onAddControlEffect={handleAddProjectSequenceControlEffect}
                   onAddDialogueStep={handleAddProjectSequenceDialogueStep}
                   onAddTeleportStep={handleAddProjectSequenceTeleportStep}
                   onAddSceneTransitionStep={

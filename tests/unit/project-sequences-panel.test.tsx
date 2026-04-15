@@ -27,7 +27,7 @@ describe("ProjectSequencesPanel", () => {
       ]
     });
 
-    const onAddControlStep = vi.fn();
+    const onAddControlEffect = vi.fn();
     const onAddTeleportStep = vi.fn();
     const onAddVisibilityStep = vi.fn();
     const onSetTeleportStepTarget = vi.fn();
@@ -88,7 +88,7 @@ describe("ProjectSequencesPanel", () => {
         onAddSequence={() => {}}
         onDeleteSequence={() => {}}
         onSetSequenceTitle={() => {}}
-        onAddControlStep={onAddControlStep}
+        onAddControlEffect={onAddControlEffect}
         onAddDialogueStep={() => {}}
         onAddTeleportStep={onAddTeleportStep}
         onAddSceneTransitionStep={() => {}}
@@ -121,7 +121,9 @@ describe("ProjectSequencesPanel", () => {
       target: { value: "hide" }
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Add Effect" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Add Model A Play Animation Effect" })
+    );
     fireEvent.click(screen.getByRole("button", { name: "Add Teleport Effect" }));
     fireEvent.click(screen.getByRole("button", { name: "Add Visibility Effect" }));
 
@@ -145,9 +147,10 @@ describe("ProjectSequencesPanel", () => {
       "sequence-main",
       "brush:brush-a"
     );
-    expect(onAddControlStep).toHaveBeenCalledWith(
+    expect(onAddControlEffect).toHaveBeenCalledWith(
       "sequence-main",
-      "modelInstance:model-a"
+      "modelInstance:model-a",
+      "model.playAnimation"
     );
   });
 
@@ -227,7 +230,7 @@ describe("ProjectSequencesPanel", () => {
         onAddSequence={() => {}}
         onDeleteSequence={() => {}}
         onSetSequenceTitle={() => {}}
-        onAddControlStep={() => {}}
+        onAddControlEffect={() => {}}
         onAddDialogueStep={() => {}}
         onAddTeleportStep={() => {}}
         onAddSceneTransitionStep={() => {}}
