@@ -328,7 +328,6 @@ import {
   type InteractionTriggerKind
 } from "../interactions/interaction-links";
 import {
-  createSetActorPresenceControlEffect,
   cloneControlEffect,
   formatControlEffectValue,
   formatControlTargetRef,
@@ -4382,25 +4381,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
     }
-  };
-
-  const upsertActorRoutineEffect = (
-    routine: ProjectScheduleRoutine,
-    effect: ProjectScheduleRoutine["effects"][number]
-  ) => {
-    routine.effects = [
-      ...routine.effects.filter((candidate) => candidate.type !== effect.type),
-      effect
-    ];
-  };
-
-  const removeActorRoutineEffect = (
-    routine: ProjectScheduleRoutine,
-    effectType: ProjectScheduleRoutine["effects"][number]["type"]
-  ) => {
-    routine.effects = routine.effects.filter(
-      (candidate) => candidate.type !== effectType
-    );
   };
 
   const resolveProjectScheduleTargetOption = (targetKey: string) =>
