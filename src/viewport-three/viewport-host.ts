@@ -2940,7 +2940,16 @@ export class ViewportHost {
     axisConstraint: TransformAxis | null,
     axisConstraintSpace: TransformAxisSpace
   ) {
-    const initialPivot = session.target.initialPivot;
+    if (
+      session.target.kind !== "brushes" &&
+      session.target.kind !== "modelInstances" &&
+      session.target.kind !== "entities"
+    ) {
+      throw new Error("Batch translate preview requires a batch target.");
+    }
+
+    const target = session.target;
+    const initialPivot = target.initialPivot;
     let nextPivot = {
       ...initialPivot
     };
@@ -3034,11 +3043,11 @@ export class ViewportHost {
       z: nextPivot.z - initialPivot.z
     };
 
-    if (session.target.kind === "brushes") {
+    if (target.kind === "brushes") {
       return {
         kind: "brushes" as const,
         pivot: nextPivot,
-        items: session.target.items.map((item) => ({
+        items: target.items.map((item) => ({
           brushId: item.brushId,
           center: {
             x: item.initialCenter.x + worldDelta.x,
@@ -3056,11 +3065,11 @@ export class ViewportHost {
       };
     }
 
-    if (session.target.kind === "modelInstances") {
+    if (target.kind === "modelInstances") {
       return {
         kind: "modelInstances" as const,
         pivot: nextPivot,
-        items: session.target.items.map((item) => ({
+        items: target.items.map((item) => ({
           modelInstanceId: item.modelInstanceId,
           position: {
             x: item.initialPosition.x + worldDelta.x,
@@ -3080,7 +3089,7 @@ export class ViewportHost {
     return {
       kind: "entities" as const,
       pivot: nextPivot,
-      items: session.target.items.map((item) => ({
+      items: target.items.map((item) => ({
         entityId: item.entityId,
         position: {
           x: item.initialPosition.x + worldDelta.x,
@@ -3114,12 +3123,21 @@ export class ViewportHost {
     axisConstraint: TransformAxis | null,
     axisConstraintSpace: TransformAxisSpace
   ) {
+    if (
+      session.target.kind !== "brushes" &&
+      session.target.kind !== "modelInstances" &&
+      session.target.kind !== "entities"
+    ) {
+      throw new Error("Batch rotate preview requires a batch target.");
+    }
+
+    const target = session.target;
     const effectiveAxis =
       axisConstraint ?? this.getEffectiveRotationAxis(session);
     const pointerDeltaDegrees =
       (current.x - origin.x - (current.y - origin.y)) * 0.5;
     const pointerDeltaRadians = (pointerDeltaDegrees * Math.PI) / 180;
-    const pivotWorld = session.target.initialPivot;
+    const pivotWorld = target.initialPivot;
     const rotationAxis =
       axisConstraint !== null &&
       axisConstraintSpace === "local" &&
@@ -3137,13 +3155,13 @@ export class ViewportHost {
     );
     const pivotVector = new Vector3(pivotWorld.x, pivotWorld.y, pivotWorld.z);
 
-    if (session.target.kind === "brushes") {
+    if (target.kind === "brushes") {
       return {
         kind: "brushes" as const,
         pivot: {
           ...pivotWorld
         },
-        items: session.target.items.map((item) => {
+        items: target.items.map((item) => {
           const nextCenter = new Vector3(
             item.initialCenter.x - pivotWorld.x,
             item.initialCenter.y - pivotWorld.y,
@@ -3187,13 +3205,13 @@ export class ViewportHost {
       };
     }
 
-    if (session.target.kind === "modelInstances") {
+    if (target.kind === "modelInstances") {
       return {
         kind: "modelInstances" as const,
         pivot: {
           ...pivotWorld
         },
-        items: session.target.items.map((item) => {
+        items: target.items.map((item) => {
           const nextPosition = new Vector3(
             item.initialPosition.x - pivotWorld.x,
             item.initialPosition.y - pivotWorld.y,
@@ -3241,7 +3259,7 @@ export class ViewportHost {
       pivot: {
         ...pivotWorld
       },
-      items: session.target.items.map((item) => {
+      items: target.items.map((item) => {
         const nextPosition = new Vector3(
           item.initialPosition.x - pivotWorld.x,
           item.initialPosition.y - pivotWorld.y,
@@ -3340,7 +3358,15 @@ export class ViewportHost {
     current: { x: number; y: number },
     axisConstraint: TransformAxis | null
   ) {
-    const initialPivot = session.target.initialPivot;
+    if (
+      session.target.kind !== "brushes" &&
+      session.target.kind !== "modelInstances"
+    ) {
+      throw new Error("Batch scale preview requires a scalable batch target.");
+    }
+
+    const target = session.target;
+    const initialPivot = target.initialPivot;
     const scaleFactor =
       axisConstraint === null
         ? 1 + (current.x - origin.x - (current.y - origin.y)) * 0.01
@@ -3353,13 +3379,13 @@ export class ViewportHost {
           ) *
             0.45;
 
-    if (session.target.kind === "brushes") {
+    if (target.kind === "brushes") {
       return {
         kind: "brushes" as const,
         pivot: {
           ...initialPivot
         },
-        items: session.target.items.map((item) => {
+        items: target.items.map((item) => {
           const nextSize = {
             ...item.initialSize
           };
@@ -3407,7 +3433,7 @@ export class ViewportHost {
       pivot: {
         ...initialPivot
       },
-      items: session.target.items.map((item) => {
+      items: target.items.map((item) => {
         const nextScale = {
           ...item.initialScale
         };
