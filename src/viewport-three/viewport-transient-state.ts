@@ -14,6 +14,13 @@ export type CreationTarget =
       kind: "box-brush";
     }
   | {
+      kind: "wedge-brush";
+    }
+  | {
+      kind: "cylinder-brush";
+      sideCount: number;
+    }
+  | {
       kind: "entity";
       entityKind: EntityKind;
       audioAssetId: string | null;
@@ -68,6 +75,15 @@ export function cloneViewportToolPreview(toolPreview: ViewportToolPreview): View
               kind: "model-instance",
               assetId: toolPreview.target.assetId
             }
+          : toolPreview.target.kind === "wedge-brush"
+            ? {
+                kind: "wedge-brush"
+              }
+            : toolPreview.target.kind === "cylinder-brush"
+              ? {
+                  kind: "cylinder-brush",
+                  sideCount: toolPreview.target.sideCount
+                }
           : {
               kind: "box-brush"
             },
@@ -107,6 +123,14 @@ export function areViewportToolPreviewsEqual(left: ViewportToolPreview, right: V
   }
 
   if (left.target.kind === "model-instance" && right.target.kind === "model-instance" && left.target.assetId !== right.target.assetId) {
+    return false;
+  }
+
+  if (
+    left.target.kind === "cylinder-brush" &&
+    right.target.kind === "cylinder-brush" &&
+    left.target.sideCount !== right.target.sideCount
+  ) {
     return false;
   }
 
