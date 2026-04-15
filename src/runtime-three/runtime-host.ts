@@ -518,6 +518,7 @@ export class RuntimeHost {
     this.sceneReady = false;
     this.runtimeScene = runtimeScene;
     this.currentWorld = runtimeScene.world;
+    this.activeScheduledImpulseRoutineIds.clear();
     this.syncRuntimeClockState(runtimeScene.time);
     this.syncRuntimeScheduleToCurrentClock();
     this.activeController?.deactivate(this.controllerContext, {
@@ -731,6 +732,7 @@ export class RuntimeHost {
     this.scene.fog = null;
     this.currentClockState = null;
     this.lastPublishedClockState = null;
+    this.activeScheduledImpulseRoutineIds.clear();
     this.manualPauseActive = false;
     this.controlPauseActive = false;
     this.previousPauseInputActive = false;
