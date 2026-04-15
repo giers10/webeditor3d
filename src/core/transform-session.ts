@@ -308,6 +308,35 @@ function areVec3Equal(left: Vec3, right: Vec3): boolean {
   return left.x === right.x && left.y === right.y && left.z === right.z;
 }
 
+function averageVec3(vectors: readonly Vec3[]): Vec3 {
+  if (vectors.length === 0) {
+    return {
+      x: 0,
+      y: 0,
+      z: 0
+    };
+  }
+
+  const totals = vectors.reduce(
+    (accumulator, vector) => ({
+      x: accumulator.x + vector.x,
+      y: accumulator.y + vector.y,
+      z: accumulator.z + vector.z
+    }),
+    {
+      x: 0,
+      y: 0,
+      z: 0
+    }
+  );
+
+  return {
+    x: totals.x / vectors.length,
+    y: totals.y / vectors.length,
+    z: totals.z / vectors.length
+  };
+}
+
 function cloneEntityTransformRotationState(
   rotation: EntityTransformRotationState
 ): EntityTransformRotationState {
@@ -327,6 +356,75 @@ function cloneEntityTransformRotationState(
         direction: cloneVec3(rotation.direction)
       };
   }
+}
+
+function cloneBrushTransformPreviewItem(
+  preview: BrushTransformPreviewItem
+): BrushTransformPreviewItem {
+  return {
+    brushId: preview.brushId,
+    center: cloneVec3(preview.center),
+    rotationDegrees: cloneVec3(preview.rotationDegrees),
+    size: cloneVec3(preview.size),
+    geometry: cloneBrushGeometry(preview.geometry)
+  };
+}
+
+function cloneModelInstanceTransformPreviewItem(
+  preview: ModelInstanceTransformPreviewItem
+): ModelInstanceTransformPreviewItem {
+  return {
+    modelInstanceId: preview.modelInstanceId,
+    position: cloneVec3(preview.position),
+    rotationDegrees: cloneVec3(preview.rotationDegrees),
+    scale: cloneVec3(preview.scale)
+  };
+}
+
+function cloneEntityTransformPreviewItem(
+  preview: EntityTransformPreviewItem
+): EntityTransformPreviewItem {
+  return {
+    entityId: preview.entityId,
+    position: cloneVec3(preview.position),
+    rotation: cloneEntityTransformRotationState(preview.rotation)
+  };
+}
+
+function areBrushTransformPreviewItemsEqual(
+  left: BrushTransformPreviewItem,
+  right: BrushTransformPreviewItem
+): boolean {
+  return (
+    left.brushId === right.brushId &&
+    areVec3Equal(left.center, right.center) &&
+    areVec3Equal(left.rotationDegrees, right.rotationDegrees) &&
+    areVec3Equal(left.size, right.size) &&
+    areBrushGeometriesEqual(left.geometry, right.geometry)
+  );
+}
+
+function areModelInstanceTransformPreviewItemsEqual(
+  left: ModelInstanceTransformPreviewItem,
+  right: ModelInstanceTransformPreviewItem
+): boolean {
+  return (
+    left.modelInstanceId === right.modelInstanceId &&
+    areVec3Equal(left.position, right.position) &&
+    areVec3Equal(left.rotationDegrees, right.rotationDegrees) &&
+    areVec3Equal(left.scale, right.scale)
+  );
+}
+
+function areEntityTransformPreviewItemsEqual(
+  left: EntityTransformPreviewItem,
+  right: EntityTransformPreviewItem
+): boolean {
+  return (
+    left.entityId === right.entityId &&
+    areVec3Equal(left.position, right.position) &&
+    areEntityTransformRotationsEqual(left.rotation, right.rotation)
+  );
 }
 
 function createBrushSnapshotFromTarget(
