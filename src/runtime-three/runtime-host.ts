@@ -41,6 +41,7 @@ import type { LoadedImageAsset } from "../assets/image-assets";
 import type { LoadedAudioAsset } from "../assets/audio-assets";
 import type { ProjectAssetRecord } from "../assets/project-assets";
 import {
+  cloneFaceUvState,
   type Brush,
   type WhiteboxFaceId
 } from "../document/brushes";
@@ -159,6 +160,15 @@ interface CachedMaterialTexture {
 }
 
 function createRuntimeGeometryBrush(brush: RuntimeBoxBrushInstance): Brush {
+  const faces = Object.fromEntries(
+    Object.entries(brush.faces).map(([faceId, face]) => [
+      faceId,
+      {
+        materialId: face.materialId,
+        uv: cloneFaceUvState(face.uv)
+      }
+    ])
+  );
   const base = {
     id: brush.id,
     name: undefined,
@@ -176,14 +186,14 @@ function createRuntimeGeometryBrush(brush: RuntimeBoxBrushInstance): Brush {
         ...base,
         kind: "box",
         geometry: brush.geometry as Brush["geometry"],
-        faces: brush.faces as Brush["faces"]
+        faces: faces as unknown as Brush["faces"]
       } as Brush;
     case "wedge":
       return {
         ...base,
         kind: "wedge",
         geometry: brush.geometry as Brush["geometry"],
-        faces: brush.faces as Brush["faces"]
+        faces: faces as unknown as Brush["faces"]
       } as Brush;
     case "radialPrism":
       return {
@@ -191,7 +201,7 @@ function createRuntimeGeometryBrush(brush: RuntimeBoxBrushInstance): Brush {
         kind: "radialPrism",
         sideCount: brush.sideCount ?? 12,
         geometry: brush.geometry as Brush["geometry"],
-        faces: brush.faces as Brush["faces"]
+        faces: faces as unknown as Brush["faces"]
       } as Brush;
   }
 }
