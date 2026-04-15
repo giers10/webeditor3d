@@ -93,23 +93,6 @@ interface ProjectSequencerPaneProps {
   onSetRoutineEndHour(routineId: string, endHour: number): void;
   onSetRoutinePriority(routineId: string, priority: number): void;
   onSetRoutineSequenceId(routineId: string, sequenceId: string | null): void;
-  onSetRoutineEffectOption(
-    routineId: string,
-    effectOptionId: ProjectScheduleEffectOptionId
-  ): void;
-  onSetRoutineNumericValue(routineId: string, value: number): void;
-  onSetRoutineColorValue(routineId: string, colorHex: string): void;
-  onSetRoutineAnimationClip(routineId: string, clipName: string): void;
-  onSetRoutineAnimationLoop(routineId: string, loop: boolean): void;
-  onSetActorRoutinePresence(routineId: string, active: boolean): void;
-  onSetActorRoutineAnimationClip(
-    routineId: string,
-    clipName: string | null
-  ): void;
-  onSetActorRoutineAnimationLoop(routineId: string, loop: boolean): void;
-  onSetActorRoutinePath(routineId: string, pathId: string | null): void;
-  onSetActorRoutinePathSpeed(routineId: string, speed: number): void;
-  onSetActorRoutinePathLoop(routineId: string, loop: boolean): void;
   onSetSequenceTitle(sequenceId: string, title: string): void;
   onAddHeldControlStep(sequenceId: string, targetKey: string): void;
   onAddImpulseControlStep(sequenceId: string, targetKey: string): void;
