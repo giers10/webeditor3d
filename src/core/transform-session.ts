@@ -742,6 +742,16 @@ function areTransformTargetsEqual(
         areVec3Equal(left.initialSize, right.initialSize) &&
         areBrushGeometriesEqual(left.initialGeometry, right.initialGeometry)
       );
+    case "brushes":
+      return (
+        right.kind === "brushes" &&
+        left.activeBrushId === right.activeBrushId &&
+        areVec3Equal(left.initialPivot, right.initialPivot) &&
+        left.items.length === right.items.length &&
+        left.items.every((item, index) =>
+          areTransformTargetsEqual(item, right.items[index])
+        )
+      );
     case "brushFace":
       return (
         right.kind === "brushFace" &&
@@ -805,6 +815,16 @@ function areTransformTargetsEqual(
         ) &&
         areVec3Equal(left.initialScale, right.initialScale)
       );
+    case "modelInstances":
+      return (
+        right.kind === "modelInstances" &&
+        left.activeModelInstanceId === right.activeModelInstanceId &&
+        areVec3Equal(left.initialPivot, right.initialPivot) &&
+        left.items.length === right.items.length &&
+        left.items.every((item, index) =>
+          areTransformTargetsEqual(item, right.items[index])
+        )
+      );
     case "pathPoint":
       return (
         right.kind === "pathPoint" &&
@@ -821,6 +841,16 @@ function areTransformTargetsEqual(
         areEntityTransformRotationsEqual(
           left.initialRotation,
           right.initialRotation
+        )
+      );
+    case "entities":
+      return (
+        right.kind === "entities" &&
+        left.activeEntityId === right.activeEntityId &&
+        areVec3Equal(left.initialPivot, right.initialPivot) &&
+        left.items.length === right.items.length &&
+        left.items.every((item, index) =>
+          areTransformTargetsEqual(item, right.items[index])
         )
       );
   }
@@ -843,12 +873,30 @@ function areTransformPreviewsEqual(
         areVec3Equal(left.size, right.size) &&
         areBrushGeometriesEqual(left.geometry, right.geometry)
       );
+    case "brushes":
+      return (
+        right.kind === "brushes" &&
+        areVec3Equal(left.pivot, right.pivot) &&
+        left.items.length === right.items.length &&
+        left.items.every((item, index) =>
+          areBrushTransformPreviewItemsEqual(item, right.items[index])
+        )
+      );
     case "modelInstance":
       return (
         right.kind === "modelInstance" &&
         areVec3Equal(left.position, right.position) &&
         areVec3Equal(left.rotationDegrees, right.rotationDegrees) &&
         areVec3Equal(left.scale, right.scale)
+      );
+    case "modelInstances":
+      return (
+        right.kind === "modelInstances" &&
+        areVec3Equal(left.pivot, right.pivot) &&
+        left.items.length === right.items.length &&
+        left.items.every((item, index) =>
+          areModelInstanceTransformPreviewItemsEqual(item, right.items[index])
+        )
       );
     case "pathPoint":
       return (
@@ -860,6 +908,15 @@ function areTransformPreviewsEqual(
         right.kind === "entity" &&
         areVec3Equal(left.position, right.position) &&
         areEntityTransformRotationsEqual(left.rotation, right.rotation)
+      );
+    case "entities":
+      return (
+        right.kind === "entities" &&
+        areVec3Equal(left.pivot, right.pivot) &&
+        left.items.length === right.items.length &&
+        left.items.every((item, index) =>
+          areEntityTransformPreviewItemsEqual(item, right.items[index])
+        )
       );
   }
 }
@@ -900,12 +957,35 @@ export function createTransformPreviewFromTarget(
         size: cloneVec3(target.initialSize),
         geometry: cloneBrushGeometry(target.initialGeometry)
       };
+    case "brushes":
+      return {
+        kind: "brushes",
+        pivot: cloneVec3(target.initialPivot),
+        items: target.items.map((item) => ({
+          brushId: item.brushId,
+          center: cloneVec3(item.initialCenter),
+          rotationDegrees: cloneVec3(item.initialRotationDegrees),
+          size: cloneVec3(item.initialSize),
+          geometry: cloneBrushGeometry(item.initialGeometry)
+        }))
+      };
     case "modelInstance":
       return {
         kind: "modelInstance",
         position: cloneVec3(target.initialPosition),
         rotationDegrees: cloneVec3(target.initialRotationDegrees),
         scale: cloneVec3(target.initialScale)
+      };
+    case "modelInstances":
+      return {
+        kind: "modelInstances",
+        pivot: cloneVec3(target.initialPivot),
+        items: target.items.map((item) => ({
+          modelInstanceId: item.modelInstanceId,
+          position: cloneVec3(item.initialPosition),
+          rotationDegrees: cloneVec3(item.initialRotationDegrees),
+          scale: cloneVec3(item.initialScale)
+        }))
       };
     case "pathPoint":
       return {
@@ -917,6 +997,16 @@ export function createTransformPreviewFromTarget(
         kind: "entity",
         position: cloneVec3(target.initialPosition),
         rotation: cloneEntityTransformRotationState(target.initialRotation)
+      };
+    case "entities":
+      return {
+        kind: "entities",
+        pivot: cloneVec3(target.initialPivot),
+        items: target.items.map((item) => ({
+          entityId: item.entityId,
+          position: cloneVec3(item.initialPosition),
+          rotation: cloneEntityTransformRotationState(item.initialRotation)
+        }))
       };
   }
 }
