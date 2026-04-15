@@ -219,109 +219,56 @@ function findNonZeroSegmentTangent(
   };
 }
 
-const SMOOTH_PATH_SEGMENT_SUBDIVISIONS = 16;
+const SMOOTH_PATH_CORNER_CUTTING_PASSES = 3;
 
-function getPathSamplePoint(
-  path: ResolvedPathLike,
-  index: number
-): Vec3 {
-  const points = path.points;
-  const pointCount = points.length;
-
-  if (pointCount === 0) {
-    return {
-      x: 0,
-      y: 0,
-      z: 0
-    };
-  }
-
-  if (path.loop) {
-    const wrappedIndex = ((index % pointCount) + pointCount) % pointCount;
-    return cloneVec3(points[wrappedIndex]!.position);
-  }
-
-  if (index <= 0) {
-    return cloneVec3(points[0]!.position);
-  }
-
-  if (index >= pointCount - 1) {
-    return cloneVec3(points[pointCount - 1]!.position);
-  }
-
-  return cloneVec3(points[index]!.position);
+function lerpVec3(start: Vec3, end: Vec3, t: number): Vec3 {
+  return {
+    x: start.x + (end.x - start.x) * t,
+    y: start.y + (end.y - start.y) * t,
+    z: start.z + (end.z - start.z) * t
+  };
 }
 
-function evaluateCatmullRomPosition(
-  p0: Vec3,
-  p1: Vec3,
-  p2: Vec3,
-  p3: Vec3,
-  t: number
-): Vec3 {
-  const t2 = t * t;
-  const t3 = t2 * t;
+function buildSmoothedPolylinePoints(path: ResolvedPathLike): Vec3[] {
+  let points = path.points.map((point) => cloneVec3(point.position));
 
-  return scaleVec3(
-    addVec3(
-      addVec3(
-        scaleVec3(p1, 2),
-        scaleVec3(subtractVec3(p2, p0), t)
-      ),
-      addVec3(
-        scaleVec3(
-          addVec3(
-            addVec3(scaleVec3(p0, 2), scaleVec3(p1, -5)),
-            addVec3(scaleVec3(p2, 4), scaleVec3(p3, -1))
-          ),
-          t2
-        ),
-        scaleVec3(
-          addVec3(
-            addVec3(scaleVec3(p0, -1), scaleVec3(p1, 3)),
-            addVec3(scaleVec3(p2, -3), p3)
-          ),
-          t3
-        )
-      )
-    ),
-    0.5
-  );
-}
+  for (
+    let passIndex = 0;
+    passIndex < SMOOTH_PATH_CORNER_CUTTING_PASSES;
+    passIndex += 1
+  ) {
+    if (points.length < 2) {
+      return points;
+    }
 
-function evaluateCatmullRomTangent(
-  p0: Vec3,
-  p1: Vec3,
-  p2: Vec3,
-  p3: Vec3,
-  t: number
-): Vec3 {
-  const t2 = t * t;
+    const refined: Vec3[] = [];
 
-  return normalizeDelta(
-    scaleVec3(
-      addVec3(
-        subtractVec3(p2, p0),
-        addVec3(
-          scaleVec3(
-            addVec3(
-              addVec3(scaleVec3(p0, 4), scaleVec3(p1, -10)),
-              addVec3(scaleVec3(p2, 8), scaleVec3(p3, -2))
-            ),
-            t
-          ),
-          scaleVec3(
-            addVec3(
-              addVec3(scaleVec3(p0, -3), scaleVec3(p1, 9)),
-              addVec3(scaleVec3(p2, -9), scaleVec3(p3, 3))
-            ),
-            t2
-          )
-        )
-      ),
-      0.5
-    )
-  );
+    if (path.loop) {
+      for (let pointIndex = 0; pointIndex < points.length; pointIndex += 1) {
+        const start = points[pointIndex]!;
+        const end = points[(pointIndex + 1) % points.length]!;
+
+        refined.push(lerpVec3(start, end, 0.25));
+        refined.push(lerpVec3(start, end, 0.75));
+      }
+    } else {
+      refined.push(cloneVec3(points[0]!));
+
+      for (let pointIndex = 0; pointIndex < points.length - 1; pointIndex += 1) {
+        const start = points[pointIndex]!;
+        const end = points[pointIndex + 1]!;
+
+        refined.push(lerpVec3(start, end, 0.25));
+        refined.push(lerpVec3(start, end, 0.75));
+      }
+
+      refined.push(cloneVec3(points[points.length - 1]!));
+    }
+
+    points = refined;
+  }
+
+  return points;
 }
 
 function buildSmoothedPathSamples(path: ResolvedPathLike): SmoothedPathSample[] {
@@ -358,36 +305,34 @@ function buildSmoothedPathSamples(path: ResolvedPathLike): SmoothedPathSample[] 
   }
 
   const samples: SmoothedPathSample[] = [];
-  const segmentCount = path.loop ? path.points.length : path.points.length - 1;
+  const points = buildSmoothedPolylinePoints(path);
+  const segmentCount = path.loop ? points.length : points.length - 1;
   let cumulativeDistance = 0;
-  let previousPosition: Vec3 | null = null;
+  let previousPosition = cloneVec3(points[0]!);
+
+  samples.push({
+    distance: 0,
+    position: previousPosition,
+    tangent: {
+      x: 0,
+      y: 0,
+      z: 0
+    }
+  });
 
   for (let segmentIndex = 0; segmentIndex < segmentCount; segmentIndex += 1) {
-    const p0 = getPathSamplePoint(path, segmentIndex - 1);
-    const p1 = getPathSamplePoint(path, segmentIndex);
-    const p2 = getPathSamplePoint(path, segmentIndex + 1);
-    const p3 = getPathSamplePoint(path, segmentIndex + 2);
+    const nextPosition = cloneVec3(
+      points[(segmentIndex + 1) % points.length]!
+    );
+    cumulativeDistance += getVec3Distance(previousPosition, nextPosition);
 
-    for (
-      let subdivisionIndex = segmentIndex === 0 ? 0 : 1;
-      subdivisionIndex <= SMOOTH_PATH_SEGMENT_SUBDIVISIONS;
-      subdivisionIndex += 1
-    ) {
-      const t = subdivisionIndex / SMOOTH_PATH_SEGMENT_SUBDIVISIONS;
-      const position = evaluateCatmullRomPosition(p0, p1, p2, p3, t);
-      const tangent = evaluateCatmullRomTangent(p0, p1, p2, p3, t);
+    samples.push({
+      distance: cumulativeDistance,
+      position: nextPosition,
+      tangent: normalizeDelta(subtractVec3(nextPosition, previousPosition))
+    });
 
-      if (previousPosition !== null) {
-        cumulativeDistance += getVec3Distance(previousPosition, position);
-      }
-
-      samples.push({
-        distance: cumulativeDistance,
-        position,
-        tangent
-      });
-      previousPosition = position;
-    }
+    previousPosition = nextPosition;
   }
 
   return samples;
