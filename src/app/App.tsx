@@ -1927,8 +1927,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
     selectedEntity?.kind === "teleportTarget" ? selectedEntity : null;
   const selectedInteractable =
     selectedEntity?.kind === "interactable" ? selectedEntity : null;
-  const selectedSceneExit =
-    selectedEntity?.kind === "sceneExit" ? selectedEntity : null;
   const projectAssetList = Object.values(editorState.document.assets);
   const projectAssetDisplayList = [...projectAssetList].sort(
     (left, right) =>
@@ -2223,34 +2221,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
   );
   const [interactableEnabledDraft, setInteractableEnabledDraft] =
     useState(true);
-  const [sceneExitRadiusDraft, setSceneExitRadiusDraft] = useState(
-    String(DEFAULT_SCENE_EXIT_RADIUS)
-  );
-  const [sceneExitPromptDraft, setSceneExitPromptDraft] = useState(
-    DEFAULT_SCENE_EXIT_PROMPT
-  );
-  const [sceneExitEnabledDraft, setSceneExitEnabledDraft] = useState(true);
-  const [sceneExitTargetSceneIdDraft, setSceneExitTargetSceneIdDraft] =
-    useState("");
-  const [sceneExitTargetEntryIdDraft, setSceneExitTargetEntryIdDraft] =
-    useState("");
-  const selectedSceneExitTargetEntryOptions = [
-    ...(sceneEntryOptionsBySceneId[sceneExitTargetSceneIdDraft] ?? [])
-  ];
-  if (
-    sceneExitTargetEntryIdDraft.trim().length > 0 &&
-    !selectedSceneExitTargetEntryOptions.some(
-      ({ entity }) => entity.id === sceneExitTargetEntryIdDraft
-    )
-  ) {
-    selectedSceneExitTargetEntryOptions.push({
-      entity: createSceneEntryEntity({
-        id: sceneExitTargetEntryIdDraft,
-        name: "Missing Scene Entry"
-      }),
-      label: `Missing Scene Entry (${sceneExitTargetEntryIdDraft})`
-    });
-  }
   const [modelPositionDraft, setModelPositionDraft] = useState(
     createVec3Draft(DEFAULT_MODEL_INSTANCE_POSITION)
   );
