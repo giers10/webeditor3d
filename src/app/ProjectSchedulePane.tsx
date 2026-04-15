@@ -262,7 +262,6 @@ function resolveRoutineDragState(
       const draftEndMinutes = normalizeMinuteOfDay(
         draftStartMinutes + durationMinutes
       );
-      const pointerTargetElement = document.elementFromPoint(clientX, clientY);
       const pointerTargetElement = document.elementFromPoint(
         resolvedClientX,
         resolvedClientY
