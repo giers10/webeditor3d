@@ -585,10 +585,6 @@ export function ProjectSequencerPane({
 
   const selectedRoutine =
     selectedRoutineId === null ? null : scheduler.routines[selectedRoutineId] ?? null;
-  const selectedRoutineHeldSteps =
-    selectedRoutine === null
-      ? []
-      : getProjectScheduleRoutineHeldSteps(selectedRoutine, sequences);
   const selectedTargetOption =
     selectedRoutine === null
       ? null
