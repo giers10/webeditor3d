@@ -1,6 +1,6 @@
 import type { LoadedModelAsset } from "../assets/gltf-model-import";
 import { getModelInstances } from "../assets/model-instances";
-import type { BoxBrush } from "../document/brushes";
+import type { Brush } from "../document/brushes";
 import type { SceneDocument } from "../document/scene-document";
 import {
   assertSceneDocumentIsValid,
@@ -23,7 +23,7 @@ interface ValidateRuntimeSceneBuildOptions {
   loadedModelAssets?: Record<string, LoadedModelAsset>;
 }
 
-function validateBrushGeometry(brush: BoxBrush, path: string, diagnostics: SceneDiagnostic[]) {
+function validateBrushGeometry(brush: Brush, path: string, diagnostics: SceneDiagnostic[]) {
   for (const diagnostic of validateBoxBrushGeometry(brush)) {
     diagnostics.push(createDiagnostic("error", diagnostic.code, diagnostic.message, `${path}.geometry`, "build"));
   }
