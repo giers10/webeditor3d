@@ -582,7 +582,7 @@ export function getRadialPrismVertexIds(
 
 export function createDefaultRadialPrismBrushGeometry(
   size: Vec3 = DEFAULT_BOX_BRUSH_SIZE,
-  sideCount = DEFAULT_RADIAL_PRISM_SIDE_COUNT
+  sideCount: number = DEFAULT_RADIAL_PRISM_SIDE_COUNT
 ): RadialPrismBrushGeometry {
   const normalizedSideCount = normalizeRadialPrismSideCount(sideCount);
   const halfHeight = size.y * 0.5;
@@ -632,7 +632,7 @@ export function getConeVertexIds(sideCount: number): ConeVertexId[] {
 
 export function createDefaultConeBrushGeometry(
   size: Vec3 = DEFAULT_BOX_BRUSH_SIZE,
-  sideCount = DEFAULT_CONE_SIDE_COUNT
+  sideCount: number = DEFAULT_CONE_SIDE_COUNT
 ): ConeBrushGeometry {
   const normalizedSideCount = normalizeConeSideCount(sideCount);
   const halfHeight = size.y * 0.5;
@@ -762,8 +762,8 @@ function createDefaultBaseTorusBrushGeometry(
 
 export function createDefaultTorusBrushGeometry(
   size: Vec3 = DEFAULT_TORUS_BRUSH_SIZE,
-  majorSegmentCount = DEFAULT_TORUS_MAJOR_SEGMENT_COUNT,
-  tubeSegmentCount = DEFAULT_TORUS_TUBE_SEGMENT_COUNT
+  majorSegmentCount: number = DEFAULT_TORUS_MAJOR_SEGMENT_COUNT,
+  tubeSegmentCount: number = DEFAULT_TORUS_TUBE_SEGMENT_COUNT
 ): TorusBrushGeometry {
   return scaleBrushGeometryToSize(
     createDefaultBaseTorusBrushGeometry(majorSegmentCount, tubeSegmentCount),
@@ -928,20 +928,20 @@ export function createDefaultWedgeBrushFaces(): WedgeBrushFaces {
 }
 
 export function createDefaultRadialPrismBrushFaces(
-  sideCount = DEFAULT_RADIAL_PRISM_SIDE_COUNT
+  sideCount: number = DEFAULT_RADIAL_PRISM_SIDE_COUNT
 ): Record<RadialPrismFaceId, BrushFace> {
   return createDefaultBrushFaces(getRadialPrismFaceIds(sideCount));
 }
 
 export function createDefaultConeBrushFaces(
-  sideCount = DEFAULT_CONE_SIDE_COUNT
+  sideCount: number = DEFAULT_CONE_SIDE_COUNT
 ): Record<ConeFaceId, BrushFace> {
   return createDefaultBrushFaces(getConeFaceIds(sideCount));
 }
 
 export function createDefaultTorusBrushFaces(
-  majorSegmentCount = DEFAULT_TORUS_MAJOR_SEGMENT_COUNT,
-  tubeSegmentCount = DEFAULT_TORUS_TUBE_SEGMENT_COUNT
+  majorSegmentCount: number = DEFAULT_TORUS_MAJOR_SEGMENT_COUNT,
+  tubeSegmentCount: number = DEFAULT_TORUS_TUBE_SEGMENT_COUNT
 ): Record<TorusFaceId, BrushFace> {
   return createDefaultBrushFaces(
     getTorusFaceIds(majorSegmentCount, tubeSegmentCount)
