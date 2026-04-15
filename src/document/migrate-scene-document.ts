@@ -103,23 +103,34 @@ import {
 } from "../interactions/interaction-links";
 import {
   BOX_VERTEX_IDS,
+  WEDGE_FACE_IDS,
+  WEDGE_VERTEX_IDS,
   MAX_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT,
   createBoxBrush,
+  createDefaultRadialPrismBrushGeometry,
   createDefaultBoxBrushGeometry,
   createDefaultBoxBrushFogSettings,
   createDefaultBoxBrushWaterSettings,
+  createDefaultWedgeBrushGeometry,
   createDefaultFaceUvState,
+  createRadialPrismBrush,
+  createWedgeBrush,
   DEFAULT_BOX_BRUSH_ENABLED,
   DEFAULT_BOX_BRUSH_ROTATION_DEGREES,
   DEFAULT_BOX_BRUSH_VISIBLE,
+  getRadialPrismFaceIds,
+  getRadialPrismVertexIds,
   isBoxBrushVolumeMode,
   isBoxFaceId,
   isFaceUvRotationQuarterTurns,
+  normalizeRadialPrismSideCount,
   normalizeBrushName,
   type BoxBrushVolumeSettings,
   type BoxBrushFaces,
   type BrushFace,
-  type FaceUvState
+  type FaceUvState,
+  type WhiteboxFaceId,
+  type WhiteboxVertexId
 } from "./brushes";
 import {
   BOX_BRUSH_SCENE_DOCUMENT_VERSION,
