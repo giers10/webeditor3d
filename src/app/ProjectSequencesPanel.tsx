@@ -29,6 +29,10 @@ interface ProjectSequencesPanelProps {
     entityId: string;
     label: string;
   }>;
+  sceneTransitionTargetOptions: Array<{
+    targetKey: string;
+    label: string;
+  }>;
   visibilityTargetOptions: Array<{
     targetKey: string;
     label: string;
@@ -50,6 +54,7 @@ interface ProjectSequencesPanelProps {
   onAddImpulseControlStep(sequenceId: string, targetKey: string): void;
   onAddDialogueStep(sequenceId: string, dialogueId: string): void;
   onAddTeleportStep(sequenceId: string, targetEntityId: string): void;
+  onAddSceneTransitionStep(sequenceId: string, targetKey: string): void;
   onAddVisibilityStep(sequenceId: string, targetKey: string): void;
   onAddPlayAnimationStep(sequenceId: string, targetKey: string): void;
   onAddStopAnimationStep(sequenceId: string, targetKey: string): void;
@@ -95,6 +100,11 @@ interface ProjectSequencesPanelProps {
     sequenceId: string,
     stepIndex: number,
     targetEntityId: string
+  ): void;
+  onSetSceneTransitionStepTarget(
+    sequenceId: string,
+    stepIndex: number,
+    targetKey: string
   ): void;
   onSetVisibilityStepTarget(
     sequenceId: string,
@@ -153,6 +163,7 @@ export function ProjectSequencesPanel({
   dialogues,
   targetOptions,
   teleportTargetOptions,
+  sceneTransitionTargetOptions,
   visibilityTargetOptions,
   modelAnimationTargetOptions,
   soundTargetOptions,
@@ -165,6 +176,7 @@ export function ProjectSequencesPanel({
   onAddImpulseControlStep,
   onAddDialogueStep,
   onAddTeleportStep,
+  onAddSceneTransitionStep,
   onAddVisibilityStep,
   onAddPlayAnimationStep,
   onAddStopAnimationStep,
@@ -179,6 +191,7 @@ export function ProjectSequencesPanel({
   onSetControlStepAnimationLoop,
   onSetDialogueStepDialogueId,
   onSetTeleportStepTarget,
+  onSetSceneTransitionStepTarget,
   onSetVisibilityStepTarget,
   onSetVisibilityStepMode
 }: ProjectSequencesPanelProps) {
@@ -555,6 +568,45 @@ export function ProjectSequencesPanel({
                   );
                 }
 
+                if (effect.type === "startSceneTransition") {
+                  return (
+                    <div key={`${selectedSequence.id}-${effectIndex}`} className="outliner-item">
+                      <div className="outliner-item__row">
+                        <div className="outliner-item__meta">
+                          {getSequenceEffectLabel(effect)}
+                        </div>
+                        <button
+                          className="outliner-item__delete"
+                          type="button"
+                          onClick={() => onDeleteStep(selectedSequence.id, effectIndex)}
+                        >
+                          x
+                        </button>
+                      </div>
+                      <label className="form-field">
+                        <span className="label">Destination</span>
+                        <select
+                          className="select-input"
+                          value={`${effect.targetSceneId}::${effect.targetEntryEntityId}`}
+                          onChange={(event) =>
+                            onSetSceneTransitionStepTarget(
+                              selectedSequence.id,
+                              effectIndex,
+                              event.currentTarget.value
+                            )
+                          }
+                        >
+                          {sceneTransitionTargetOptions.map((target) => (
+                            <option key={target.targetKey} value={target.targetKey}>
+                              {target.label}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
+                  );
+                }
+
                 if (effect.type === "setVisibility") {
                   return (
                     <div key={`${selectedSequence.id}-${effectIndex}`} className="outliner-item">
@@ -685,6 +737,19 @@ export function ProjectSequencesPanel({
               }
             >
               Add Teleport Effect
+            </button>
+            <button
+              className="toolbar__button toolbar__button--compact"
+              type="button"
+              disabled={sceneTransitionTargetOptions.length === 0}
+              onClick={() =>
+                onAddSceneTransitionStep(
+                  selectedSequence.id,
+                  sceneTransitionTargetOptions[0]?.targetKey ?? ""
+                )
+              }
+            >
+              Add Scene Transition Effect
             </button>
             <button
               className="toolbar__button toolbar__button--compact"
