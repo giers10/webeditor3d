@@ -35,6 +35,7 @@ interface ProjectSequencesPanelProps {
     targetKey: string;
     label: string;
   }>;
+  preferredControlTargetKey?: string | null;
   selectedSequenceId: string | null;
   onSelectSequence(sequenceId: string | null): void;
   onAddSequence(): void;
@@ -165,6 +166,7 @@ export function ProjectSequencesPanel({
   teleportTargetOptions,
   sceneTransitionTargetOptions,
   visibilityTargetOptions,
+  preferredControlTargetKey = null,
   selectedSequenceId,
   onSelectSequence,
   onAddSequence,
@@ -196,6 +198,12 @@ export function ProjectSequencesPanel({
   const editableTargetOptions = targetOptions.filter(
     (targetOption) => listProjectScheduleEffectOptions(targetOption).length > 0
   );
+  const defaultControlTargetKey =
+    editableTargetOptions.find(
+      (targetOption) => targetOption.key === preferredControlTargetKey
+    )?.key ??
+    editableTargetOptions[0]?.key ??
+    "";
   const selectedSequence =
     selectedSequenceId === null
       ? null
@@ -764,7 +772,7 @@ export function ProjectSequencesPanel({
               onClick={() =>
                 onAddControlStep(
                   selectedSequence.id,
-                  editableTargetOptions[0]?.key ?? ""
+                  defaultControlTargetKey
                 )
               }
             >
