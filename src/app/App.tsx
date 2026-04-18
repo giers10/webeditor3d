@@ -1690,11 +1690,12 @@ function isTextEntryTarget(target: EventTarget | null): boolean {
 function selectionCanBeDuplicated(selection: EditorSelection): boolean {
   switch (selection.kind) {
     case "brushes":
-    case "terrains":
     case "paths":
     case "entities":
     case "modelInstances":
       return selection.ids.length > 0;
+    case "terrains":
+      return false;
     case "brushFace":
     case "brushEdge":
     case "brushVertex":
