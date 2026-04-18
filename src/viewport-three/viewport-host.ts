@@ -1065,6 +1065,7 @@ export class ViewportHost {
     window.removeEventListener("pointermove", this.handleWindowPointerMove);
     this.clearLocalLights();
     this.clearBrushMeshes();
+    this.clearTerrains();
     this.clearPaths();
     this.clearEntityMarkers();
     this.creationPreviewChangeHandler = null;
