@@ -7273,15 +7273,13 @@ export class ViewportHost {
   }
 
   private cancelActiveTerrainBrushStroke(rebuildTerrain: boolean) {
+    this.terrainBrushPreviewGroup.visible = false;
+
     if (this.activeTerrainBrushStroke === null) {
-      if (!rebuildTerrain) {
-        this.terrainBrushPreviewGroup.visible = false;
-      }
       return;
     }
 
     this.activeTerrainBrushStroke = null;
-    this.terrainBrushPreviewGroup.visible = false;
 
     if (rebuildTerrain) {
       this.rebuildDisplayedTerrainState();
