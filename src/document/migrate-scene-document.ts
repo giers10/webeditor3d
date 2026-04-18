@@ -236,6 +236,13 @@ import {
   type ScenePathPoint
 } from "./paths";
 import {
+  createTerrain,
+  normalizeTerrainCellSize,
+  normalizeTerrainName,
+  normalizeTerrainSampleCount,
+  type Terrain
+} from "./terrains";
+import {
   createDefaultProjectTimeSettings,
   normalizeProjectStartDayNumber,
   normalizeTimeOfDayHours,
@@ -1822,6 +1829,66 @@ function readModelInstances(
   }
 
   return modelInstances;
+}
+
+function readTerrain(value: unknown, label: string): Terrain {
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  const sampleCountX = normalizeTerrainSampleCount(
+    expectFiniteNumber(value.sampleCountX, `${label}.sampleCountX`),
+    `${label}.sampleCountX`
+  );
+  const sampleCountZ = normalizeTerrainSampleCount(
+    expectFiniteNumber(value.sampleCountZ, `${label}.sampleCountZ`),
+    `${label}.sampleCountZ`
+  );
+  const cellSize = normalizeTerrainCellSize(
+    expectFiniteNumber(value.cellSize, `${label}.cellSize`)
+  );
+  const heights = expectArray(value.heights, `${label}.heights`).map(
+    (heightValue, index) =>
+      expectFiniteNumber(heightValue, `${label}.heights.${index}`)
+  );
+
+  return createTerrain({
+    id: expectString(value.id, `${label}.id`),
+    name: normalizeTerrainName(
+      expectOptionalString(value.name, `${label}.name`)
+    ),
+    visible: expectBoolean(value.visible, `${label}.visible`),
+    enabled: expectBoolean(value.enabled, `${label}.enabled`),
+    position: readVec3(value.position, `${label}.position`),
+    sampleCountX,
+    sampleCountZ,
+    cellSize,
+    heights
+  });
+}
+
+function readTerrains(value: unknown): SceneDocument["terrains"] {
+  if (value === undefined) {
+    return {};
+  }
+
+  if (!isRecord(value)) {
+    throw new Error("terrains must be a record.");
+  }
+
+  const terrains: SceneDocument["terrains"] = {};
+
+  for (const [terrainId, terrainValue] of Object.entries(value)) {
+    const terrain = readTerrain(terrainValue, `terrains.${terrainId}`);
+
+    if (terrain.id !== terrainId) {
+      throw new Error(`terrains.${terrainId}.id must match the registry key.`);
+    }
+
+    terrains[terrainId] = terrain;
+  }
+
+  return terrains;
 }
 
 function readVec2(value: unknown, label: string) {
