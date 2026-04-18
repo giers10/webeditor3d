@@ -8615,6 +8615,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
       return handleDeletePath(selectedPathId);
     }
 
+    const selectedTerrainId = getSingleSelectedTerrainId(editorState.selection);
+
+    if (selectedTerrainId !== null) {
+      return handleDeleteTerrain(selectedTerrainId);
+    }
+
     if (editorState.selection.kind === "entities") {
       try {
         store.executeCommand(
