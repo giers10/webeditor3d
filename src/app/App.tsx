@@ -15043,6 +15043,57 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     </div>
                   </div>
                 </>
+              ) : selectedTerrain !== null ? (
+                <>
+                  <div className="stat-card">
+                    <div className="label">Terrain</div>
+                    <div className="value">
+                      {getTerrainLabelById(selectedTerrain.id, terrainList)}
+                    </div>
+                    <div className="material-summary">
+                      {selectedTerrain.sampleCountX} x {selectedTerrain.sampleCountZ} samples
+                      {" · "}
+                      {selectedTerrain.cellSize}m cells
+                    </div>
+                    <div className="material-summary">{selectedTerrain.id}</div>
+                  </div>
+
+                  <div className="form-section">
+                    <div className="label">Authored State</div>
+                    <div className="material-summary">
+                      {formatAuthoredObjectStateSummary(selectedTerrain) ??
+                        "Visible and enabled"}
+                    </div>
+                    <div className="material-summary">
+                      Terrain editing tools land in a later inspector slice. This foundation keeps the authored grid and derived mesh selectable and inspectable.
+                    </div>
+                  </div>
+
+                  <div className="form-section">
+                    <div className="label">Grid</div>
+                    <div className="material-summary">
+                      {(selectedTerrain.sampleCountX - 1) * selectedTerrain.cellSize}m x{" "}
+                      {(selectedTerrain.sampleCountZ - 1) * selectedTerrain.cellSize}m footprint
+                    </div>
+                    <div className="material-summary">
+                      {selectedTerrain.heights.length} height samples
+                    </div>
+                    {selectedTerrainHeightRange === null ? null : (
+                      <div className="material-summary">
+                        Height range {selectedTerrainHeightRange.min}m to{" "}
+                        {selectedTerrainHeightRange.max}m
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="form-section">
+                    <div className="label">Origin</div>
+                    <div className="material-summary">
+                      X {selectedTerrain.position.x} · Y {selectedTerrain.position.y} · Z{" "}
+                      {selectedTerrain.position.z}
+                    </div>
+                  </div>
+                </>
               ) : selectedModelInstance !== null ? (
                 <>
                   <div className="stat-card">
