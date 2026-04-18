@@ -2188,16 +2188,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
           min: selectedTerrainBounds.min.y,
           max: selectedTerrainBounds.max.y
         };
-  const activeTerrainBrushState: ArmedTerrainBrushState | null =
-    selectedTerrain === null || armedTerrainBrushTool === null
-      ? null
-      : {
-          terrainId: selectedTerrain.id,
-          tool: armedTerrainBrushTool,
-          radius: terrainBrushSettings.radius,
-          strength: terrainBrushSettings.strength,
-          falloff: terrainBrushSettings.falloff
-        };
   const selectedPlayerStart =
     selectedEntity?.kind === "playerStart" ? selectedEntity : null;
   const selectedSoundEmitter = isSoundEmitterEntity(selectedEntity)
