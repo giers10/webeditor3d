@@ -2762,11 +2762,11 @@ export class RuntimeHost {
 
   private collectRuntimeStaticWaterContactPatches(
     brush: RuntimeBoxBrushInstance
-  ) {
+  ): ReturnType<typeof collectWaterContactPatches> {
     const contactBounds: Parameters<typeof collectWaterContactPatches>[1] = [];
 
     if (this.runtimeScene === null) {
-      return contactBounds;
+      return [];
     }
 
     for (const collider of this.runtimeScene.colliders) {
