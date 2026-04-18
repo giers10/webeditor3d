@@ -4925,6 +4925,7 @@ function readProjectScene(
       legacyProjectTimeValue: options.legacyProjectTimeValue
     }),
     brushes: readBrushes(value.brushes, materials, false),
+    terrains: readTerrains(value.terrains),
     paths: readScenePaths(value.paths),
     modelInstances: readModelInstances(value.modelInstances, assets),
     entities: readEntities(value.entities, {
