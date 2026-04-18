@@ -127,7 +127,7 @@ describe("Terrain foundation", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Terrain editing tools land in a later inspector slice. This foundation keeps the authored grid and derived mesh selectable and inspectable."
+        "Terrain editing stays inspector-driven. Arm a brush here, then drag on the selected terrain in the viewport."
       )
     ).toBeInTheDocument();
     expect(screen.getByText(/9 x 9 samples/)).toBeInTheDocument();
