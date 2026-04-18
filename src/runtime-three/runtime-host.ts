@@ -424,6 +424,7 @@ export class RuntimeHost {
     this.scene.add(this.moonLight);
     this.scene.add(this.localLightGroup);
     this.scene.add(this.brushGroup);
+    this.scene.add(this.terrainGroup);
     this.scene.add(this.modelGroup);
     this.underwaterSceneFog.density = 0;
     this.scene.fog = this.underwaterSceneFog;
