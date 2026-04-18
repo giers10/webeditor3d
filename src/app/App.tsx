@@ -2027,6 +2027,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
   }
 
   const brushList = Object.values(editorState.document.brushes);
+  const terrainList = getTerrains(editorState.document.terrains);
   const pathList = getScenePaths(editorState.document.paths);
   const layoutMode = editorState.viewportLayoutMode;
   const activePanelId = editorState.activeViewportPanelId;
@@ -2042,6 +2043,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
   );
   const materialList = sortDocumentMaterials(editorState.document.materials);
   const selectedBrush = getSelectedBoxBrush(editorState.selection, brushList);
+  const selectedTerrain = getSelectedTerrain(editorState.selection, terrainList);
   const selectedPath = getSelectedPath(editorState.selection, pathList);
   const selectedPathPointState = getSelectedPathPointState(
     editorState.selection,
