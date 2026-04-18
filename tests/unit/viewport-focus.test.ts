@@ -4,6 +4,7 @@ import { createModelInstance } from "../../src/assets/model-instances";
 import { createBoxBrush } from "../../src/document/brushes";
 import { createScenePath } from "../../src/document/paths";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
+import { createTerrain } from "../../src/document/terrains";
 import { createPointLightEntity, createPlayerStartEntity, createSpotLightEntity, createTriggerVolumeEntity } from "../../src/entities/entity-instances";
 import { resolveViewportFocusTarget } from "../../src/viewport-three/viewport-focus";
 
@@ -209,6 +210,41 @@ describe("resolveViewportFocusTarget", () => {
         z: 2
       },
       radius: Math.hypot(6, 2, 2) * 0.5
+    });
+  });
+
+  it("frames the selected terrain from its authored grid bounds", () => {
+    const terrain = createTerrain({
+      id: "terrain-focus",
+      position: {
+        x: -4,
+        y: 2,
+        z: -2
+      },
+      sampleCountX: 3,
+      sampleCountZ: 2,
+      cellSize: 2,
+      heights: [0, 1, 2, -1, 0, 1]
+    });
+    const document = {
+      ...createEmptySceneDocument(),
+      terrains: {
+        [terrain.id]: terrain
+      }
+    };
+
+    expect(
+      resolveViewportFocusTarget(document, {
+        kind: "terrains",
+        ids: [terrain.id]
+      })
+    ).toEqual({
+      center: {
+        x: -2,
+        y: 2.5,
+        z: -1
+      },
+      radius: Math.max(0.5, Math.hypot(4, 3, 2) * 0.5)
     });
   });
 
