@@ -19,6 +19,7 @@ import { createDeleteBoxBrushCommand } from "../commands/delete-box-brush-comman
 import { createDeleteEntityCommand } from "../commands/delete-entity-command";
 import { createDeleteProjectAssetCommand } from "../commands/delete-project-asset-command";
 import { createDeleteSelectionCommand } from "../commands/delete-selection-command";
+import { createDeleteTerrainCommand } from "../commands/delete-terrain-command";
 import { createDuplicateSelectionCommand } from "../commands/duplicate-selection-command";
 import { createImportAudioAssetCommand } from "../commands/import-audio-asset-command";
 import { createImportBackgroundImageAssetCommand } from "../commands/import-background-image-asset-command";
@@ -57,6 +58,7 @@ import { createSetWorldSettingsCommand } from "../commands/set-world-settings-co
 import { createUpsertEntityCommand } from "../commands/upsert-entity-command";
 import { createUpsertModelInstanceCommand } from "../commands/upsert-model-instance-command";
 import { createUpsertPathCommand } from "../commands/upsert-path-command";
+import { createUpsertTerrainCommand } from "../commands/upsert-terrain-command";
 import { createUpsertInteractionLinkCommand } from "../commands/upsert-interaction-link-command";
 import {
   applySameKindSelectionClick,
@@ -69,11 +71,13 @@ import {
   getSingleSelectedModelInstanceId,
   getSingleSelectedPathOwnerId,
   getSingleSelectedPathPoint,
+  getSingleSelectedTerrainId,
   isBrushFaceSelected,
   isBrushSelected,
   isPathPointSelected,
   isPathSelected,
   isSelectionActiveId,
+  isTerrainSelected,
   resolveSelectionActiveId,
   type EditorSelection
 } from "../core/selection";
@@ -198,6 +202,13 @@ import {
   type ScenePath,
   type ScenePathPoint
 } from "../document/paths";
+import {
+  createTerrain,
+  getTerrainBounds,
+  getTerrainKindLabel,
+  getTerrains,
+  type Terrain
+} from "../document/terrains";
 import {
   areProjectTimeSettingsEqual,
   cloneProjectTimeSettings,
