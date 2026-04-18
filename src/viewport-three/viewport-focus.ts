@@ -450,6 +450,10 @@ function getSceneFocusTarget(document: SceneDocument): ViewportFocusTarget | nul
     includeBrush(bounds, brush);
   }
 
+  for (const terrain of Object.values(document.terrains)) {
+    includeTerrain(bounds, terrain);
+  }
+
   for (const modelInstance of Object.values(document.modelInstances)) {
     includeModelInstance(bounds, modelInstance, document.assets[modelInstance.assetId]);
   }
@@ -502,6 +506,16 @@ export function resolveViewportFocusTarget(document: SceneDocument, selection: E
 
     if (modelInstance !== undefined) {
       return createModelInstanceFocusTarget(modelInstance, document.assets[modelInstance.assetId]);
+    }
+  }
+
+  const selectedTerrainId = getSingleSelectedTerrainId(selection);
+
+  if (selectedTerrainId !== null) {
+    const terrain = document.terrains[selectedTerrainId];
+
+    if (terrain !== undefined) {
+      return createTerrainFocusTarget(terrain);
     }
   }
 
