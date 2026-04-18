@@ -56,6 +56,7 @@ import {
   type ScenePath,
   type ScenePathPoint
 } from "../document/paths";
+import { getTerrainBounds, getTerrains, type Terrain } from "../document/terrains";
 import {
   cloneWorldSettings,
   type WorldSettings
@@ -162,6 +163,17 @@ export interface RuntimeWaterVolume {
 export interface RuntimeBoxVolumeCollection {
   fog: RuntimeFogVolume[];
   water: RuntimeWaterVolume[];
+}
+
+export interface RuntimeTerrain {
+  id: string;
+  name?: string;
+  visible: boolean;
+  position: Vec3;
+  sampleCountX: number;
+  sampleCountZ: number;
+  cellSize: number;
+  heights: number[];
 }
 
 export interface RuntimeBrushTriMeshCollider {
@@ -392,6 +404,7 @@ export interface RuntimeSceneDefinition {
   control: RuntimeControlSurfaceDefinition;
   localLights: RuntimeLocalLightCollection;
   brushes: RuntimeBoxBrushInstance[];
+  terrains: RuntimeTerrain[];
   volumes: RuntimeBoxVolumeCollection;
   staticColliders: RuntimeSceneCollider[];
   colliders: RuntimeSceneCollider[];
