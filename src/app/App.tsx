@@ -15165,8 +15165,101 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         "Visible and enabled"}
                     </div>
                     <div className="material-summary">
-                      Terrain editing tools land in a later inspector slice. This foundation keeps the authored grid and derived mesh selectable and inspectable.
+                      Terrain editing stays inspector-driven. Arm a brush here,
+                      then drag on the selected terrain in the viewport.
                     </div>
+                  </div>
+
+                  <div className="form-section">
+                    <div className="label">Terrain Tools</div>
+                    <div
+                      className="viewport-panel__control-group"
+                      role="group"
+                      aria-label="Terrain brush tools"
+                    >
+                      {(
+                        [
+                          "raise",
+                          "lower",
+                          "smooth",
+                          "flatten"
+                        ] as const satisfies readonly TerrainBrushTool[]
+                      ).map((tool) => (
+                        <button
+                          key={tool}
+                          className={`viewport-panel__button ${armedTerrainBrushTool === tool ? "viewport-panel__button--active" : ""}`}
+                          type="button"
+                          data-testid={`terrain-brush-tool-${tool}`}
+                          aria-pressed={armedTerrainBrushTool === tool}
+                          onClick={() => handleArmTerrainBrushTool(tool)}
+                        >
+                          {getTerrainBrushToolLabel(tool)}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="material-summary">
+                      {armedTerrainBrushTool === null
+                        ? "No terrain brush is armed. Existing selection and transforms stay unchanged."
+                        : `${getTerrainBrushToolLabel(armedTerrainBrushTool)} is armed for ${getTerrainLabelById(selectedTerrain.id, terrainList)}. Click the active tool again to disarm it.`}
+                    </div>
+                  </div>
+
+                  <div className="form-section">
+                    <div className="label">Brush</div>
+                    <label className="form-field">
+                      <span className="label">
+                        Radius {terrainBrushSettings.radius.toFixed(2)}m
+                      </span>
+                      <input
+                        data-testid="terrain-brush-radius"
+                        type="range"
+                        min="0.25"
+                        max="12"
+                        step="0.25"
+                        value={terrainBrushSettings.radius}
+                        onChange={(event) =>
+                          handleTerrainBrushRadiusChange(
+                            event.currentTarget.value
+                          )
+                        }
+                      />
+                    </label>
+                    <label className="form-field">
+                      <span className="label">
+                        Strength {terrainBrushSettings.strength.toFixed(2)}
+                      </span>
+                      <input
+                        data-testid="terrain-brush-strength"
+                        type="range"
+                        min="0.05"
+                        max="1"
+                        step="0.05"
+                        value={terrainBrushSettings.strength}
+                        onChange={(event) =>
+                          handleTerrainBrushStrengthChange(
+                            event.currentTarget.value
+                          )
+                        }
+                      />
+                    </label>
+                    <label className="form-field">
+                      <span className="label">
+                        Falloff {terrainBrushSettings.falloff.toFixed(2)}
+                      </span>
+                      <input
+                        data-testid="terrain-brush-falloff"
+                        type="range"
+                        min="0"
+                        max="1"
+                        step="0.05"
+                        value={terrainBrushSettings.falloff}
+                        onChange={(event) =>
+                          handleTerrainBrushFalloffChange(
+                            event.currentTarget.value
+                          )
+                        }
+                      />
+                    </label>
                   </div>
 
                   <div className="form-section">
