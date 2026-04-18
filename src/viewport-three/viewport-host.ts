@@ -4936,31 +4936,35 @@ export class ViewportHost {
     this.clearTerrains();
 
     for (const terrain of getTerrains(document.terrains)) {
-      if (!terrain.enabled || !terrain.visible) {
+      const displayedTerrain =
+        this.getDisplayedTerrainState(terrain.id) ?? terrain;
+
+      if (!displayedTerrain.enabled || !displayedTerrain.visible) {
         continue;
       }
 
-      const derivedMesh = buildTerrainDerivedMeshData(terrain);
+      const derivedMesh = buildTerrainDerivedMeshData(displayedTerrain);
       const mesh = new Mesh(
         derivedMesh.geometry,
-        this.createTerrainMaterial(terrain.id)
+        this.createTerrainMaterial(displayedTerrain.id)
       );
 
       mesh.position.set(
-        terrain.position.x,
-        terrain.position.y,
-        terrain.position.z
+        displayedTerrain.position.x,
+        displayedTerrain.position.y,
+        displayedTerrain.position.z
       );
-      mesh.userData.terrainId = terrain.id;
+      mesh.userData.terrainId = displayedTerrain.id;
       mesh.castShadow = false;
       mesh.receiveShadow = true;
       this.terrainGroup.add(mesh);
-      this.terrainRenderObjects.set(terrain.id, {
+      this.terrainRenderObjects.set(displayedTerrain.id, {
         mesh
       });
     }
 
     this.applyShadowState();
+    this.syncTerrainBrushPreview();
   }
 
   private createPathLineGeometry(path: ScenePath): BufferGeometry {
