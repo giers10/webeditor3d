@@ -2758,6 +2758,8 @@ export class RuntimeHost {
           }
         };
     }
+
+    return null;
   }
 
   private collectRuntimeStaticWaterContactPatches(
