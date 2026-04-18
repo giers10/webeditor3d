@@ -57,6 +57,7 @@ import {
 } from "../core/selection";
 import type {
   ArmedTerrainBrushState,
+  getTerrainBrushCommandLabel,
   TerrainBrushStrokeCommit
 } from "../core/terrain-brush";
 import { getWhiteboxSelectionFeedbackLabel } from "../core/whitebox-selection-feedback";
