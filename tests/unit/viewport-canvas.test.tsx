@@ -7,6 +7,7 @@ import {
   type ActiveTransformSession,
   type TransformSessionState
 } from "../../src/core/transform-session";
+import type { ArmedTerrainBrushState } from "../../src/core/terrain-brush";
 import { createBoxBrush } from "../../src/document/brushes";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
 import { createRuntimeClockState } from "../../src/runtime-three/runtime-project-time";
@@ -40,11 +41,13 @@ const { MockViewportHost, viewportHostInstances } = vi.hoisted(() => {
     setTransformSessionChangeHandler: ReturnType<typeof vi.fn>;
     setTransformCommitHandler: ReturnType<typeof vi.fn>;
     setTransformCancelHandler: ReturnType<typeof vi.fn>;
+    setTerrainBrushCommitHandler: ReturnType<typeof vi.fn>;
     setWhiteboxHoverLabelChangeHandler: ReturnType<typeof vi.fn>;
     setWhiteboxSelectionMode: ReturnType<typeof vi.fn>;
     setWhiteboxSnapSettings: ReturnType<typeof vi.fn>;
     setGridVisible: ReturnType<typeof vi.fn>;
     setToolMode: ReturnType<typeof vi.fn>;
+    setTerrainBrushState: ReturnType<typeof vi.fn>;
     setCreationPreview: ReturnType<typeof vi.fn>;
     setTransformSession: ReturnType<typeof vi.fn>;
     setPanelId: ReturnType<typeof vi.fn>;
@@ -69,11 +72,13 @@ const { MockViewportHost, viewportHostInstances } = vi.hoisted(() => {
     setTransformSessionChangeHandler = vi.fn();
     setTransformCommitHandler = vi.fn();
     setTransformCancelHandler = vi.fn();
+    setTerrainBrushCommitHandler = vi.fn();
     setWhiteboxHoverLabelChangeHandler = vi.fn();
     setWhiteboxSelectionMode = vi.fn();
     setWhiteboxSnapSettings = vi.fn();
     setGridVisible = vi.fn();
     setToolMode = vi.fn();
+    setTerrainBrushState = vi.fn();
     setCreationPreview = vi.fn();
     setTransformSession = vi.fn();
     setPanelId = vi.fn();
@@ -149,6 +154,7 @@ describe("ViewportCanvas", () => {
         viewportGridVisible={true}
         selection={{ kind: "none" }}
         activeSelectionId={null}
+        terrainBrushState={null}
         toolMode="create"
         toolPreview={toolPreview}
         transformSession={createInactiveTransformSession()}
@@ -160,6 +166,7 @@ describe("ViewportCanvas", () => {
         focusRequestId={0}
         focusSelection={{ kind: "none" }}
         onSelectionChange={onSelectionChange}
+        onTerrainBrushCommit={vi.fn(() => true)}
         onCommitCreation={onCommitCreation}
         onCameraStateChange={onCameraStateChange}
         onToolPreviewChange={onToolPreviewChange}
@@ -208,6 +215,7 @@ describe("ViewportCanvas", () => {
         viewportGridVisible={true}
         selection={{ kind: "none" }}
         activeSelectionId={null}
+        terrainBrushState={null}
         toolMode="select"
         toolPreview={{ kind: "none" }}
         transformSession={createInactiveTransformSession()}
@@ -219,6 +227,7 @@ describe("ViewportCanvas", () => {
         focusRequestId={0}
         focusSelection={{ kind: "none" }}
         onSelectionChange={vi.fn()}
+        onTerrainBrushCommit={vi.fn(() => true)}
         onCommitCreation={vi.fn(() => true)}
         onCameraStateChange={onCameraStateChange}
         onToolPreviewChange={vi.fn()}
@@ -260,6 +269,7 @@ describe("ViewportCanvas", () => {
         viewportGridVisible={true}
         selection={{ kind: "none" }}
         activeSelectionId={null}
+        terrainBrushState={null}
         toolMode="select"
         toolPreview={{ kind: "none" }}
         transformSession={createInactiveTransformSession()}
@@ -271,6 +281,7 @@ describe("ViewportCanvas", () => {
         focusRequestId={0}
         focusSelection={{ kind: "none" }}
         onSelectionChange={vi.fn()}
+        onTerrainBrushCommit={vi.fn(() => true)}
         onCommitCreation={vi.fn(() => true)}
         onCameraStateChange={vi.fn()}
         onToolPreviewChange={vi.fn()}
@@ -312,6 +323,7 @@ describe("ViewportCanvas", () => {
         viewportGridVisible={true}
         selection={{ kind: "brushes", ids: [brush.id] }}
         activeSelectionId={brush.id}
+        terrainBrushState={null}
         toolMode="select"
         toolPreview={{ kind: "none" }}
         transformSession={createTransformSession({
@@ -339,6 +351,7 @@ describe("ViewportCanvas", () => {
         focusRequestId={0}
         focusSelection={{ kind: "none" }}
         onSelectionChange={vi.fn()}
+        onTerrainBrushCommit={vi.fn(() => true)}
         onCommitCreation={vi.fn(() => true)}
         onCameraStateChange={vi.fn()}
         onToolPreviewChange={vi.fn()}
@@ -351,5 +364,68 @@ describe("ViewportCanvas", () => {
     expect(screen.getByTestId("viewport-transform-preview-topLeft")).toHaveTextContent(
       "translate · surface snap · Local X"
     );
+  });
+
+  it("shows the terrain brush overlay and pushes brush state into the viewport host", async () => {
+    const sceneDocument = createEmptySceneDocument();
+    const terrainBrushState: ArmedTerrainBrushState = {
+      terrainId: "terrain-selected",
+      tool: "smooth",
+      radius: 2.5,
+      strength: 0.4,
+      falloff: 0.7
+    };
+
+    render(
+      <ViewportCanvas
+        panelId="topLeft"
+        world={sceneDocument.world}
+        sceneDocument={sceneDocument}
+        editorSimulationScene={null}
+        editorSimulationClock={null}
+        projectAssets={sceneDocument.assets}
+        loadedModelAssets={{}}
+        loadedImageAssets={{}}
+        whiteboxSelectionMode="object"
+        whiteboxSnapEnabled
+        whiteboxSnapStep={1}
+        viewportGridVisible={true}
+        selection={{ kind: "terrains", ids: [terrainBrushState.terrainId] }}
+        activeSelectionId={terrainBrushState.terrainId}
+        terrainBrushState={terrainBrushState}
+        toolMode="select"
+        toolPreview={{ kind: "none" }}
+        transformSession={createInactiveTransformSession()}
+        cameraState={createDefaultViewportPanelCameraState()}
+        viewMode="perspective"
+        displayMode="normal"
+        layoutMode="single"
+        isActivePanel
+        focusRequestId={0}
+        focusSelection={{ kind: "none" }}
+        onSelectionChange={vi.fn()}
+        onTerrainBrushCommit={vi.fn(() => true)}
+        onCommitCreation={vi.fn(() => true)}
+        onCameraStateChange={vi.fn()}
+        onToolPreviewChange={vi.fn()}
+        onTransformSessionChange={vi.fn()}
+        onTransformCommit={vi.fn()}
+        onTransformCancel={vi.fn()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(viewportHostInstances).toHaveLength(1);
+      expect(viewportHostInstances[0].setTerrainBrushState).toHaveBeenCalledWith(
+        terrainBrushState
+      );
+      expect(
+        viewportHostInstances[0].setTerrainBrushCommitHandler
+      ).toHaveBeenCalledTimes(1);
+    });
+
+    expect(
+      screen.getByTestId("viewport-terrain-brush-preview-topLeft")
+    ).toHaveTextContent("terrain · smooth");
   });
 });
