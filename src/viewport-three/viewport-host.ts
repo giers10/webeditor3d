@@ -96,8 +96,7 @@ import {
   type ScenePath
 } from "../document/paths";
 import {
-  getTerrains,
-  type Terrain
+  getTerrains
 } from "../document/terrains";
 import {
   areAdvancedRenderingSettingsEqual,
