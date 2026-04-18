@@ -811,6 +811,7 @@ export class RuntimeHost {
     this.resizeObserver = null;
     this.clearLocalLights();
     this.clearBrushMeshes();
+    this.clearTerrainMeshes();
     this.clearModelRenderObjects();
     this.collisionWorldRequestId += 1;
     this.clearCollisionWorld();
@@ -2700,6 +2701,16 @@ export class RuntimeHost {
       binding.reflectionRenderTarget?.dispose();
     }
     this.runtimeWaterContactUniforms.length = 0;
+  }
+
+  private clearTerrainMeshes() {
+    for (const mesh of this.terrainMeshes.values()) {
+      this.terrainGroup.remove(mesh);
+      mesh.geometry.dispose();
+      mesh.material.dispose();
+    }
+
+    this.terrainMeshes.clear();
   }
 
   private disposeUniqueMaterials(materials: Material[]) {
