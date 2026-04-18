@@ -11,6 +11,7 @@ export type EditorSelection =
   | { kind: "brushFace"; brushId: string; faceId: WhiteboxFaceId }
   | { kind: "brushEdge"; brushId: string; edgeId: WhiteboxEdgeId }
   | { kind: "brushVertex"; brushId: string; vertexId: WhiteboxVertexId }
+  | { kind: "terrains"; ids: string[] }
   | { kind: "paths"; ids: string[] }
   | { kind: "pathPoint"; pathId: string; pointId: string }
   | { kind: "entities"; ids: string[] }
@@ -99,6 +100,7 @@ export function areEditorSelectionsEqual(left: EditorSelection, right: EditorSel
       return right.kind === "brushEdge" && left.brushId === right.brushId && left.edgeId === right.edgeId;
     case "brushVertex":
       return right.kind === "brushVertex" && left.brushId === right.brushId && left.vertexId === right.vertexId;
+    case "terrains":
     case "pathPoint":
       return right.kind === "pathPoint" && left.pathId === right.pathId && left.pointId === right.pointId;
     case "brushes":
@@ -120,6 +122,7 @@ export function getSelectionDefaultActiveId(selection: EditorSelection): string 
     case "pathPoint":
       return selection.pointId;
     case "brushes":
+    case "terrains":
     case "paths":
     case "entities":
     case "modelInstances":
@@ -149,6 +152,7 @@ export function resolveSelectionActiveId(
         ? activeSelectionId
         : selection.pointId;
     case "brushes":
+    case "terrains":
     case "paths":
     case "entities":
     case "modelInstances":
@@ -312,6 +316,14 @@ export function getSingleSelectedModelInstanceId(selection: EditorSelection): st
   return selection.ids[0];
 }
 
+export function getSingleSelectedTerrainId(selection: EditorSelection): string | null {
+  if (selection.kind !== "terrains" || selection.ids.length !== 1) {
+    return null;
+  }
+
+  return selection.ids[0];
+}
+
 export function isBrushSelected(selection: EditorSelection, brushId: string): boolean {
   return (
     (selection.kind === "brushes" && selection.ids.includes(brushId)) ||
@@ -346,6 +358,10 @@ export function isBrushVertexSelected(
 
 export function isModelInstanceSelected(selection: EditorSelection, modelInstanceId: string): boolean {
   return selection.kind === "modelInstances" && selection.ids.includes(modelInstanceId);
+}
+
+export function isTerrainSelected(selection: EditorSelection, terrainId: string): boolean {
+  return selection.kind === "terrains" && selection.ids.includes(terrainId);
 }
 
 export function isPathSelected(selection: EditorSelection, pathId: string): boolean {
