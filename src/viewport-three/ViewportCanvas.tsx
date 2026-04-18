@@ -4,6 +4,10 @@ import type { LoadedModelAsset } from "../assets/gltf-model-import";
 import type { LoadedImageAsset } from "../assets/image-assets";
 import type { ProjectAssetRecord } from "../assets/project-assets";
 import type { EditorSelection } from "../core/selection";
+import type {
+  ArmedTerrainBrushState,
+  TerrainBrushStrokeCommit
+} from "../core/terrain-brush";
 import { getWhiteboxSelectionFeedbackLabel } from "../core/whitebox-selection-feedback";
 import type { ToolMode } from "../core/tool-mode";
 import { type WhiteboxSelectionMode } from "../core/whitebox-selection-mode";
@@ -52,6 +56,7 @@ interface ViewportCanvasProps {
   viewportGridVisible: boolean;
   selection: EditorSelection;
   activeSelectionId: string | null;
+  terrainBrushState: ArmedTerrainBrushState | null;
   toolMode: ToolMode;
   toolPreview: ViewportToolPreview;
   transformSession: TransformSessionState;
@@ -63,6 +68,7 @@ interface ViewportCanvasProps {
   focusRequestId: number;
   focusSelection: EditorSelection;
   onSelectionChange(selection: EditorSelection): void;
+  onTerrainBrushCommit(commit: TerrainBrushStrokeCommit): boolean;
   onCommitCreation(toolPreview: CreationViewportToolPreview): boolean;
   onCameraStateChange(cameraState: ViewportPanelCameraState): void;
   onToolPreviewChange(toolPreview: ViewportToolPreview): void;
@@ -86,6 +92,7 @@ export function ViewportCanvas({
   viewportGridVisible,
   selection,
   activeSelectionId,
+  terrainBrushState,
   toolMode,
   toolPreview,
   transformSession,
@@ -97,6 +104,7 @@ export function ViewportCanvas({
   focusRequestId,
   focusSelection,
   onSelectionChange,
+  onTerrainBrushCommit,
   onCommitCreation,
   onCameraStateChange,
   onToolPreviewChange,
@@ -210,6 +218,10 @@ export function ViewportCanvas({
   }, [onSelectionChange]);
 
   useEffect(() => {
+    hostRef.current?.setTerrainBrushCommitHandler?.(onTerrainBrushCommit);
+  }, [onTerrainBrushCommit]);
+
+  useEffect(() => {
     hostRef.current?.setWhiteboxHoverLabelChangeHandler(
       setHoveredWhiteboxLabel
     );
@@ -253,6 +265,10 @@ export function ViewportCanvas({
   }, [toolMode]);
 
   useLayoutEffect(() => {
+    hostRef.current?.setTerrainBrushState?.(terrainBrushState);
+  }, [terrainBrushState]);
+
+  useLayoutEffect(() => {
     hostRef.current?.setCreationPreview(
       toolMode === "create" && toolPreview.kind === "create"
         ? toolPreview
@@ -280,6 +296,8 @@ export function ViewportCanvas({
   const selectedWhiteboxLabel = toolMode === "select"
     ? getWhiteboxSelectionFeedbackLabel(sceneDocument, selection)
     : null;
+  const terrainBrushOverlayVisible =
+    toolMode === "select" && terrainBrushState !== null;
   const resolvedViewportBackground =
     editorSimulationScene !== null && editorSimulationClock !== null
       ? resolveRuntimeDayNightWorldState(
@@ -291,6 +309,7 @@ export function ViewportCanvas({
   const showOverlay =
     previewVisible ||
     transformPreviewVisible ||
+    terrainBrushOverlayVisible ||
     selectedWhiteboxLabel !== null ||
     hoveredWhiteboxLabel !== null;
 
@@ -351,6 +370,14 @@ export function ViewportCanvas({
                   ]
                     .filter((part) => part !== null)
                     .join(" · ")}
+                </div>
+          )}
+          {!terrainBrushOverlayVisible ? null : (
+            <div
+              className="viewport-canvas__overlay-preview"
+              data-testid={`viewport-terrain-brush-preview-${panelId}`}
+            >
+              terrain · {terrainBrushState.tool}
             </div>
           )}
           {selectedWhiteboxLabel === null ? null : (

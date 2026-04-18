@@ -25,6 +25,10 @@ import type { LoadedModelAsset } from "../assets/gltf-model-import";
 import type { LoadedImageAsset } from "../assets/image-assets";
 import type { ProjectAssetRecord } from "../assets/project-assets";
 import type { EditorSelection } from "../core/selection";
+import type {
+  ArmedTerrainBrushState,
+  TerrainBrushStrokeCommit
+} from "../core/terrain-brush";
 import {
   getWhiteboxSelectionModeLabel,
   WHITEBOX_SELECTION_MODES,
@@ -62,6 +66,7 @@ interface ViewportPanelProps {
   viewportGridVisible: boolean;
   selection: EditorSelection;
   activeSelectionId: string | null;
+  terrainBrushState: ArmedTerrainBrushState | null;
   toolMode: ToolMode;
   toolPreview: ViewportToolPreview;
   transformSession: TransformSessionState;
@@ -85,6 +90,7 @@ interface ViewportPanelProps {
     displayMode: ViewportDisplayMode
   ): void;
   onCommitCreation(toolPreview: CreationViewportToolPreview): boolean;
+  onTerrainBrushCommit(commit: TerrainBrushStrokeCommit): boolean;
   onCameraStateChange(cameraState: ViewportPanelCameraState): void;
   onToolPreviewChange(toolPreview: ViewportToolPreview): void;
   onBeginTransformOperation(operation: TransformOperation): void;
@@ -136,6 +142,7 @@ export function ViewportPanel({
   viewportGridVisible,
   selection,
   activeSelectionId,
+  terrainBrushState,
   toolMode,
   toolPreview,
   transformSession,
@@ -153,6 +160,7 @@ export function ViewportPanel({
   onSetPanelViewMode,
   onSetPanelDisplayMode,
   onCommitCreation,
+  onTerrainBrushCommit,
   onCameraStateChange,
   onToolPreviewChange,
   onBeginTransformOperation,
@@ -198,6 +206,7 @@ export function ViewportPanel({
         viewportGridVisible={viewportGridVisible}
         selection={selection}
         activeSelectionId={activeSelectionId}
+        terrainBrushState={terrainBrushState}
         toolMode={toolMode}
         toolPreview={toolPreview}
         transformSession={transformSession}
@@ -209,6 +218,7 @@ export function ViewportPanel({
         focusRequestId={focusRequestId}
         focusSelection={focusSelection}
         onSelectionChange={onSelectionChange}
+        onTerrainBrushCommit={onTerrainBrushCommit}
         onCommitCreation={onCommitCreation}
         onCameraStateChange={onCameraStateChange}
         onToolPreviewChange={onToolPreviewChange}
