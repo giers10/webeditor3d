@@ -6871,6 +6871,16 @@ export class ViewportHost {
     this.pathRenderObjects.clear();
   }
 
+  private clearTerrains() {
+    for (const renderObjects of this.terrainRenderObjects.values()) {
+      this.terrainGroup.remove(renderObjects.mesh);
+      renderObjects.mesh.geometry.dispose();
+      renderObjects.mesh.material.dispose();
+    }
+
+    this.terrainRenderObjects.clear();
+  }
+
   private clearEntityMarkers() {
     for (const renderObjects of this.entityRenderObjects.values()) {
       this.entityGroup.remove(renderObjects.group);
