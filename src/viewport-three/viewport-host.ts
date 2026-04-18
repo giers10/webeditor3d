@@ -7003,6 +7003,8 @@ export class ViewportHost {
         return `brushEdge:${selection.brushId}:${selection.edgeId}`;
       case "brushVertex":
         return `brushVertex:${selection.brushId}:${selection.vertexId}`;
+      case "terrains":
+        return selection.ids.length === 1 ? `terrain:${selection.ids[0]}` : null;
       case "paths":
         return selection.ids.length === 1 ? `path:${selection.ids[0]}` : null;
       case "pathPoint":
@@ -7032,6 +7034,14 @@ export class ViewportHost {
 
     const pathId = hit.object.userData.pathId;
     const pathPointId = hit.object.userData.pathPointId;
+
+    const terrainId = hit.object.userData.terrainId;
+    if (typeof terrainId === "string") {
+      return {
+        kind: "terrains",
+        ids: [terrainId]
+      };
+    }
 
     if (typeof pathId === "string" && typeof pathPointId === "string") {
       return {
@@ -7130,6 +7140,9 @@ export class ViewportHost {
           renderObjects.line,
           ...renderObjects.pointMeshes.map((pointMesh) => pointMesh.mesh)
         ]).flat(),
+        ...Array.from(this.terrainRenderObjects.values(), (renderObjects) =>
+          renderObjects.mesh
+        ),
         ...Array.from(this.modelRenderObjects.values()),
         ...this.getBrushPickableObjects()
       ],
