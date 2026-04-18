@@ -423,6 +423,7 @@ export class ViewportHost {
   private readonly sunLight = new DirectionalLight();
   private readonly localLightGroup = new Group();
   private readonly brushGroup = new Group();
+  private readonly terrainGroup = new Group();
   private readonly pathGroup = new Group();
   private readonly entityGroup = new Group();
   private readonly modelGroup = new Group();
@@ -435,6 +436,7 @@ export class ViewportHost {
   private readonly transformIntersection = new Vector3();
   private readonly transformGizmoGroup = new Group();
   private readonly brushRenderObjects = new Map<string, BrushRenderObjects>();
+  private readonly terrainRenderObjects = new Map<string, TerrainRenderObjects>();
   private readonly pathRenderObjects = new Map<string, PathRenderObjects>();
   private readonly entityRenderObjects = new Map<string, EntityRenderObjects>();
   private readonly localLightRenderObjects = new Map<
@@ -591,6 +593,7 @@ export class ViewportHost {
     this.scene.add(this.sunLight);
     this.scene.add(this.localLightGroup);
     this.scene.add(this.brushGroup);
+    this.scene.add(this.terrainGroup);
     this.scene.add(this.pathGroup);
     this.scene.add(this.entityGroup);
     this.scene.add(this.modelGroup);
@@ -710,6 +713,7 @@ export class ViewportHost {
     });
     this.rebuildLocalLights(document);
     this.rebuildBrushMeshes(document, selection);
+    this.rebuildTerrains(document, selection, activeSelectionId);
     this.rebuildPaths(document, selection);
     this.rebuildEntityMarkers(document, selection);
     this.rebuildModelInstances(document, selection);
