@@ -1847,9 +1847,12 @@ function readTerrain(value: unknown, label: string): Terrain {
   const cellSize = normalizeTerrainCellSize(
     expectFiniteNumber(value.cellSize, `${label}.cellSize`)
   );
-  const heights = expectArray(value.heights, `${label}.heights`).map(
-    (heightValue, index) =>
-      expectFiniteNumber(heightValue, `${label}.heights.${index}`)
+  if (!Array.isArray(value.heights)) {
+    throw new Error(`${label}.heights must be an array.`);
+  }
+
+  const heights = value.heights.map((heightValue, index) =>
+    expectFiniteNumber(heightValue, `${label}.heights.${index}`)
   );
 
   return createTerrain({
