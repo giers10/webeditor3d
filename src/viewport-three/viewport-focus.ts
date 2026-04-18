@@ -99,6 +99,11 @@ function includeBrush(bounds: FocusBoundsAccumulator, brush: Brush) {
   includeBounds(bounds, brushBounds.min, brushBounds.max);
 }
 
+function includeTerrain(bounds: FocusBoundsAccumulator, terrain: Terrain) {
+  const terrainBounds = getTerrainBounds(terrain);
+  includeBounds(bounds, terrainBounds.min, terrainBounds.max);
+}
+
 function includePlayerStart(bounds: FocusBoundsAccumulator, position: Vec3) {
   includeBounds(
     bounds,
@@ -247,6 +252,12 @@ function includePath(bounds: FocusBoundsAccumulator, path: ScenePath) {
 function createPathFocusTarget(path: ScenePath): ViewportFocusTarget | null {
   const bounds = createEmptyBoundsAccumulator();
   includePath(bounds, path);
+  return finishBounds(bounds);
+}
+
+function createTerrainFocusTarget(terrain: Terrain): ViewportFocusTarget | null {
+  const bounds = createEmptyBoundsAccumulator();
+  includeTerrain(bounds, terrain);
   return finishBounds(bounds);
 }
 
