@@ -4777,6 +4777,73 @@ export class ViewportHost {
     this.applyShadowState();
   }
 
+  private createTerrainMaterial(terrainId: string): Material {
+    const selected = isTerrainSelected(this.currentSelection, terrainId);
+    const hovered = isTerrainSelected(this.hoveredSelection, terrainId);
+    const active = selected && this.currentActiveSelectionId === terrainId;
+    const color = active
+      ? TERRAIN_ACTIVE_COLOR
+      : selected
+        ? TERRAIN_SELECTED_COLOR
+        : hovered
+          ? TERRAIN_HOVERED_COLOR
+          : TERRAIN_BASE_COLOR;
+
+    if (this.displayMode === "wireframe") {
+      return new MeshBasicMaterial({
+        color,
+        wireframe: true
+      });
+    }
+
+    return new MeshStandardMaterial({
+      color,
+      emissive: active
+        ? TERRAIN_ACTIVE_EMISSIVE
+        : selected
+          ? TERRAIN_SELECTED_EMISSIVE
+          : 0x000000,
+      emissiveIntensity: active ? 0.26 : selected ? 0.18 : 0,
+      roughness: 0.98,
+      metalness: 0
+    });
+  }
+
+  private rebuildTerrains(
+    document: SceneDocument,
+    _selection: EditorSelection,
+    _activeSelectionId: string | null
+  ) {
+    this.clearTerrains();
+
+    for (const terrain of getTerrains(document.terrains)) {
+      if (!terrain.enabled || !terrain.visible) {
+        continue;
+      }
+
+      const derivedMesh = buildTerrainDerivedMeshData(terrain);
+      const mesh = new Mesh(
+        derivedMesh.geometry,
+        this.createTerrainMaterial(terrain.id)
+      );
+
+      mesh.position.set(
+        terrain.position.x,
+        terrain.position.y,
+        terrain.position.z
+      );
+      mesh.userData.terrainId = terrain.id;
+      mesh.castShadow = false;
+      mesh.receiveShadow = true;
+      this.terrainGroup.add(mesh);
+      this.terrainRenderObjects.set(terrain.id, {
+        mesh
+      });
+    }
+
+    this.applyShadowState();
+  }
+
   private createPathLineGeometry(path: ScenePath): BufferGeometry {
     const points = path.points.map(
       (point) =>
@@ -5870,6 +5937,7 @@ export class ViewportHost {
 
     this.hoveredSelection = selection;
     this.refreshBrushPresentation();
+    this.refreshTerrainPresentation();
     this.refreshPathPresentation();
     this.emitWhiteboxHoverLabelChange();
   }
