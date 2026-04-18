@@ -715,6 +715,12 @@ function formatPlayerStartGamepadCameraLookBindingLabel(
 const STARTER_MATERIAL_ORDER = new Map(
   STARTER_MATERIAL_LIBRARY.map((material, index) => [material.id, index])
 );
+const TERRAIN_BRUSH_TOOLS: TerrainBrushTool[] = [
+  "raise",
+  "lower",
+  "smooth",
+  "flatten"
+];
 const MIN_VIEWPORT_QUAD_SPLIT = 0.2;
 const MAX_VIEWPORT_QUAD_SPLIT = 0.8;
 
