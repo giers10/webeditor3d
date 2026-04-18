@@ -7446,6 +7446,66 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
+  const handleArmTerrainBrushTool = (tool: TerrainBrushTool) => {
+    if (selectedTerrain === null) {
+      return;
+    }
+
+    if (armedTerrainBrushTool === tool) {
+      setArmedTerrainBrushTool(null);
+      setStatusMessage(
+        `Disarmed terrain brush editing for ${getTerrainLabelById(selectedTerrain.id, terrainList)}.`
+      );
+      return;
+    }
+
+    setArmedTerrainBrushTool(tool);
+    setStatusMessage(
+      `Armed ${getTerrainBrushToolLabel(tool)} terrain brush for ${getTerrainLabelById(selectedTerrain.id, terrainList)}. Drag in the viewport to edit the selected terrain.`
+    );
+  };
+
+  const handleTerrainBrushRadiusChange = (value: string) => {
+    setTerrainBrushSettings((currentSettings) => ({
+      ...currentSettings,
+      radius: clampTerrainBrushRadius(Number(value))
+    }));
+  };
+
+  const handleTerrainBrushStrengthChange = (value: string) => {
+    setTerrainBrushSettings((currentSettings) => ({
+      ...currentSettings,
+      strength: clampTerrainBrushStrength(Number(value))
+    }));
+  };
+
+  const handleTerrainBrushFalloffChange = (value: string) => {
+    setTerrainBrushSettings((currentSettings) => ({
+      ...currentSettings,
+      falloff: clampTerrainBrushFalloff(Number(value))
+    }));
+  };
+
+  const handleCommitTerrainBrushStroke = (
+    commit: TerrainBrushStrokeCommit
+  ): boolean => {
+    try {
+      store.executeCommand(
+        createUpsertTerrainCommand({
+          terrain: commit.terrain,
+          label: commit.commandLabel
+        })
+      );
+      setStatusMessage(
+        `${commit.commandLabel} on ${getTerrainLabelById(commit.terrain.id, terrainList)}.`
+      );
+      return true;
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+      return false;
+    }
+  };
+
   const commitPathChange = (
     currentPath: ScenePath,
     nextPath: ScenePath,
