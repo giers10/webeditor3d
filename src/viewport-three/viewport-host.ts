@@ -6747,6 +6747,24 @@ export class ViewportHost {
     }
   }
 
+  private refreshTerrainPresentation() {
+    if (this.currentDocument === null) {
+      return;
+    }
+
+    for (const terrain of Object.values(this.currentDocument.terrains)) {
+      const renderObjects = this.terrainRenderObjects.get(terrain.id);
+
+      if (renderObjects === undefined) {
+        continue;
+      }
+
+      const previousMaterial = renderObjects.mesh.material;
+      renderObjects.mesh.material = this.createTerrainMaterial(terrain.id);
+      previousMaterial.dispose();
+    }
+  }
+
   private refreshPathPresentation() {
     if (this.currentDocument === null) {
       return;
