@@ -6888,6 +6888,482 @@ export class ViewportHost {
     }
   }
 
+  private getDisplayedTerrainState(terrainId: string): Terrain | null {
+    if (
+      this.activeTerrainBrushStroke !== null &&
+      this.activeTerrainBrushStroke.previewTerrain.id === terrainId
+    ) {
+      return this.activeTerrainBrushStroke.previewTerrain;
+    }
+
+    return this.currentDocument?.terrains[terrainId] ?? null;
+  }
+
+  private rebuildDisplayedTerrainState() {
+    if (this.currentDocument === null) {
+      return;
+    }
+
+    this.rebuildTerrains(
+      this.currentDocument,
+      this.currentSelection,
+      this.currentActiveSelectionId
+    );
+  }
+
+  private isTerrainBrushActive(): boolean {
+    return (
+      this.toolMode === "select" &&
+      this.currentTerrainBrushState !== null &&
+      this.currentDocument !== null &&
+      this.currentSelection.kind === "terrains" &&
+      this.currentSelection.ids.length === 1 &&
+      this.currentSelection.ids[0] === this.currentTerrainBrushState.terrainId
+    );
+  }
+
+  private getTerrainBrushPreviewColor(
+    tool: ArmedTerrainBrushState["tool"]
+  ): number {
+    switch (tool) {
+      case "raise":
+        return TERRAIN_BRUSH_PREVIEW_RAISE_COLOR;
+      case "lower":
+        return TERRAIN_BRUSH_PREVIEW_LOWER_COLOR;
+      case "smooth":
+        return TERRAIN_BRUSH_PREVIEW_SMOOTH_COLOR;
+      case "flatten":
+        return TERRAIN_BRUSH_PREVIEW_FLATTEN_COLOR;
+    }
+  }
+
+  private setTerrainBrushHover(hit: TerrainBrushHit | null) {
+    this.terrainBrushHover = hit;
+    this.syncTerrainBrushPreview();
+  }
+
+  private syncTerrainBrushPreview() {
+    if (
+      !this.isTerrainBrushActive() ||
+      this.currentTerrainBrushState === null ||
+      this.terrainBrushHover === null ||
+      this.terrainBrushHover.terrainId !== this.currentTerrainBrushState.terrainId
+    ) {
+      this.terrainBrushPreviewGroup.visible = false;
+      return;
+    }
+
+    const terrain = this.getDisplayedTerrainState(this.terrainBrushHover.terrainId);
+
+    if (terrain === null) {
+      this.terrainBrushPreviewGroup.visible = false;
+      return;
+    }
+
+    const previewPoints = createTerrainBrushPreviewPoints(
+      terrain,
+      {
+        x: this.terrainBrushHover.point.x,
+        z: this.terrainBrushHover.point.z
+      },
+      this.currentTerrainBrushState.radius,
+      40,
+      TERRAIN_BRUSH_PREVIEW_OFFSET
+    ).map((point) => new Vector3(point.x, point.y, point.z));
+
+    if (previewPoints.length < 2) {
+      this.terrainBrushPreviewGroup.visible = false;
+      return;
+    }
+
+    const previousGeometry = this.terrainBrushPreviewLine.geometry;
+    this.terrainBrushPreviewLine.geometry = new BufferGeometry().setFromPoints(
+      previewPoints
+    );
+    previousGeometry.dispose();
+
+    const previewColor = this.getTerrainBrushPreviewColor(
+      this.currentTerrainBrushState.tool
+    );
+    (this.terrainBrushPreviewLine.material as LineBasicMaterial).color.setHex(
+      previewColor
+    );
+    (this.terrainBrushPreviewCenter.material as MeshBasicMaterial).color.setHex(
+      previewColor
+    );
+    this.terrainBrushPreviewCenter.position.set(
+      this.terrainBrushHover.point.x,
+      this.terrainBrushHover.point.y + TERRAIN_BRUSH_PREVIEW_OFFSET,
+      this.terrainBrushHover.point.z
+    );
+    this.terrainBrushPreviewCenter.scale.setScalar(
+      Math.max(0.08, this.currentTerrainBrushState.radius * 0.04)
+    );
+    this.terrainBrushPreviewGroup.visible = true;
+  }
+
+  private extractTerrainIdFromObject(object: Object3D): string | null {
+    let current: Object3D | null = object;
+
+    while (current !== null) {
+      const terrainId = current.userData.terrainId;
+
+      if (typeof terrainId === "string") {
+        return terrainId;
+      }
+
+      current = current.parent;
+    }
+
+    return null;
+  }
+
+  private getTerrainBrushRaycastObjects(): Object3D[] {
+    const raycastObjects: Object3D[] = [];
+
+    for (const renderObjects of this.brushRenderObjects.values()) {
+      raycastObjects.push(renderObjects.mesh);
+    }
+
+    if (this.currentDocument !== null) {
+      for (const [entityId, renderObjects] of this.entityRenderObjects) {
+        const entity = this.currentDocument.entities[entityId];
+
+        if (entity?.kind !== "triggerVolume") {
+          continue;
+        }
+
+        raycastObjects.push(renderObjects.group);
+      }
+    }
+
+    for (const renderObjects of this.terrainRenderObjects.values()) {
+      raycastObjects.push(renderObjects.mesh);
+    }
+
+    for (const renderGroup of this.modelRenderObjects.values()) {
+      raycastObjects.push(renderGroup);
+    }
+
+    return raycastObjects;
+  }
+
+  private getTerrainBrushHitAtClientPosition(
+    clientX: number,
+    clientY: number
+  ): TerrainBrushHit | null {
+    if (
+      !this.isTerrainBrushActive() ||
+      this.currentTerrainBrushState === null ||
+      !this.setPointerFromClientPosition(clientX, clientY)
+    ) {
+      return null;
+    }
+
+    const raycastObjects = this.getTerrainBrushRaycastObjects();
+
+    if (raycastObjects.length === 0) {
+      return null;
+    }
+
+    this.raycaster.setFromCamera(this.pointer, this.getActiveCamera());
+    const hit = this.raycaster.intersectObjects(raycastObjects, true)[0];
+
+    if (hit === undefined) {
+      return null;
+    }
+
+    const terrainId = this.extractTerrainIdFromObject(hit.object);
+
+    if (terrainId !== this.currentTerrainBrushState.terrainId) {
+      return null;
+    }
+
+    return {
+      terrainId,
+      point: {
+        x: hit.point.x,
+        y: hit.point.y,
+        z: hit.point.z
+      }
+    };
+  }
+
+  private applyTerrainBrushPoint(
+    terrain: Terrain,
+    point: {
+      x: number;
+      z: number;
+    },
+    toolState: ArmedTerrainBrushState,
+    referenceHeight: number | null
+  ): Terrain {
+    return applyTerrainBrushStamp({
+      terrain,
+      center: point,
+      settings: toolState,
+      tool: toolState.tool,
+      referenceHeight
+    });
+  }
+
+  private applyTerrainBrushSegment(
+    terrain: Terrain,
+    from: {
+      x: number;
+      z: number;
+    },
+    to: {
+      x: number;
+      z: number;
+    },
+    toolState: ArmedTerrainBrushState,
+    referenceHeight: number | null
+  ): {
+    terrain: Terrain;
+    lastAppliedPoint: {
+      x: number;
+      z: number;
+    };
+  } {
+    const spacing = getTerrainBrushStrokeSpacing(terrain, toolState);
+    const deltaX = to.x - from.x;
+    const deltaZ = to.z - from.z;
+    const distance = Math.hypot(deltaX, deltaZ);
+
+    if (distance < spacing) {
+      return {
+        terrain,
+        lastAppliedPoint: from
+      };
+    }
+
+    let nextTerrain = terrain;
+    let lastAppliedPoint = from;
+    const stepCount = Math.floor(distance / spacing);
+
+    for (let stepIndex = 1; stepIndex <= stepCount; stepIndex += 1) {
+      const t = Math.min(1, (stepIndex * spacing) / distance);
+      const point = {
+        x: from.x + deltaX * t,
+        z: from.z + deltaZ * t
+      };
+      nextTerrain = this.applyTerrainBrushPoint(
+        nextTerrain,
+        point,
+        toolState,
+        referenceHeight
+      );
+      lastAppliedPoint = point;
+    }
+
+    return {
+      terrain: nextTerrain,
+      lastAppliedPoint
+    };
+  }
+
+  private beginTerrainBrushStroke(event: PointerEvent): boolean {
+    if (
+      !this.isTerrainBrushActive() ||
+      this.currentTerrainBrushState === null
+    ) {
+      return false;
+    }
+
+    event.preventDefault();
+    const hit = this.getTerrainBrushHitAtClientPosition(
+      event.clientX,
+      event.clientY
+    );
+    this.setTerrainBrushHover(hit);
+
+    if (hit === null) {
+      return true;
+    }
+
+    const terrain = this.getDisplayedTerrainState(hit.terrainId);
+
+    if (terrain === null) {
+      return true;
+    }
+
+    const referenceHeight =
+      this.currentTerrainBrushState.tool === "flatten"
+        ? hit.point.y - terrain.position.y
+        : null;
+    const previewTerrain = this.applyTerrainBrushPoint(
+      terrain,
+      {
+        x: hit.point.x,
+        z: hit.point.z
+      },
+      this.currentTerrainBrushState,
+      referenceHeight
+    );
+
+    this.activeTerrainBrushStroke = {
+      pointerId: event.pointerId,
+      previewTerrain,
+      referenceHeight,
+      lastAppliedPoint: {
+        x: hit.point.x,
+        z: hit.point.z
+      },
+      toolState: this.currentTerrainBrushState
+    };
+    this.renderer.domElement.setPointerCapture(event.pointerId);
+    this.rebuildDisplayedTerrainState();
+    return true;
+  }
+
+  private continueTerrainBrushStroke(event: PointerEvent): boolean {
+    if (
+      this.activeTerrainBrushStroke === null ||
+      this.activeTerrainBrushStroke.pointerId !== event.pointerId
+    ) {
+      return false;
+    }
+
+    const hit = this.getTerrainBrushHitAtClientPosition(
+      event.clientX,
+      event.clientY
+    );
+    this.setTerrainBrushHover(hit);
+
+    if (hit === null) {
+      return true;
+    }
+
+    const segmentResult = this.applyTerrainBrushSegment(
+      this.activeTerrainBrushStroke.previewTerrain,
+      this.activeTerrainBrushStroke.lastAppliedPoint,
+      {
+        x: hit.point.x,
+        z: hit.point.z
+      },
+      this.activeTerrainBrushStroke.toolState,
+      this.activeTerrainBrushStroke.referenceHeight
+    );
+
+    if (
+      !areTerrainsEqual(
+        segmentResult.terrain,
+        this.activeTerrainBrushStroke.previewTerrain
+      ) ||
+      segmentResult.lastAppliedPoint.x !==
+        this.activeTerrainBrushStroke.lastAppliedPoint.x ||
+      segmentResult.lastAppliedPoint.z !==
+        this.activeTerrainBrushStroke.lastAppliedPoint.z
+    ) {
+      this.activeTerrainBrushStroke = {
+        ...this.activeTerrainBrushStroke,
+        previewTerrain: segmentResult.terrain,
+        lastAppliedPoint: segmentResult.lastAppliedPoint
+      };
+      this.rebuildDisplayedTerrainState();
+    }
+
+    return true;
+  }
+
+  private cancelActiveTerrainBrushStroke(rebuildTerrain: boolean) {
+    if (this.activeTerrainBrushStroke === null) {
+      if (!rebuildTerrain) {
+        this.terrainBrushPreviewGroup.visible = false;
+      }
+      return;
+    }
+
+    this.activeTerrainBrushStroke = null;
+    this.terrainBrushPreviewGroup.visible = false;
+
+    if (rebuildTerrain) {
+      this.rebuildDisplayedTerrainState();
+    }
+  }
+
+  private finishTerrainBrushStroke(event: PointerEvent): boolean {
+    if (
+      this.activeTerrainBrushStroke === null ||
+      this.activeTerrainBrushStroke.pointerId !== event.pointerId
+    ) {
+      return false;
+    }
+
+    if (this.renderer.domElement.hasPointerCapture(event.pointerId)) {
+      this.renderer.domElement.releasePointerCapture(event.pointerId);
+    }
+
+    const cancelled = event.type === "pointercancel";
+    let finalPreviewTerrain = this.activeTerrainBrushStroke.previewTerrain;
+
+    if (!cancelled) {
+      const hit = this.getTerrainBrushHitAtClientPosition(
+        event.clientX,
+        event.clientY
+      );
+
+      if (hit !== null) {
+        const segmentResult = this.applyTerrainBrushSegment(
+          finalPreviewTerrain,
+          this.activeTerrainBrushStroke.lastAppliedPoint,
+          {
+            x: hit.point.x,
+            z: hit.point.z
+          },
+          this.activeTerrainBrushStroke.toolState,
+          this.activeTerrainBrushStroke.referenceHeight
+        );
+        finalPreviewTerrain = segmentResult.terrain;
+
+        if (
+          segmentResult.lastAppliedPoint.x !== hit.point.x ||
+          segmentResult.lastAppliedPoint.z !== hit.point.z
+        ) {
+          finalPreviewTerrain = this.applyTerrainBrushPoint(
+            finalPreviewTerrain,
+            {
+              x: hit.point.x,
+              z: hit.point.z
+            },
+            this.activeTerrainBrushStroke.toolState,
+            this.activeTerrainBrushStroke.referenceHeight
+          );
+        }
+      }
+    }
+
+    const baseTerrain =
+      this.currentDocument?.terrains[this.activeTerrainBrushStroke.toolState.terrainId] ??
+      null;
+    const commit =
+      !cancelled &&
+      baseTerrain !== null &&
+      !areTerrainsEqual(baseTerrain, finalPreviewTerrain);
+    const toolState = this.activeTerrainBrushStroke.toolState;
+    this.activeTerrainBrushStroke = null;
+    this.terrainBrushPreviewGroup.visible = false;
+
+    if (!commit) {
+      this.rebuildDisplayedTerrainState();
+      return true;
+    }
+
+    const committed =
+      this.terrainBrushCommitHandler?.({
+        terrain: cloneTerrain(finalPreviewTerrain),
+        commandLabel: `${toolState.tool.charAt(0).toUpperCase()}${toolState.tool.slice(1)} terrain`,
+        tool: toolState.tool
+      }) === true;
+
+    if (!committed) {
+      this.rebuildDisplayedTerrainState();
+    }
+
+    return true;
+  }
+
   private refreshPathPresentation() {
     if (this.currentDocument === null) {
       return;
