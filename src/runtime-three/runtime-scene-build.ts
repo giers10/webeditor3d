@@ -1606,6 +1606,10 @@ export function buildRuntimeSceneFromDocument(
   const brushes = enabledBrushes.map((brush) =>
     buildRuntimeBrush(brush, document)
   );
+  const enabledTerrains = getTerrains(document.terrains).filter(
+    (terrain) => terrain.enabled
+  );
+  const terrains = enabledTerrains.map(buildRuntimeTerrain);
   const staticColliders: RuntimeSceneCollider[] = [];
   const volumes: RuntimeBoxVolumeCollection = {
     fog: [],
@@ -1724,7 +1728,10 @@ export function buildRuntimeSceneFromDocument(
     }
   }
 
-  const combinedSceneBounds = combineColliderBounds(colliders);
+  const combinedSceneBounds = combineSceneBounds(
+    combineColliderBounds(colliders),
+    terrains
+  );
   const playerStart =
     playerStartEntity === null
       ? null
@@ -1749,6 +1756,7 @@ export function buildRuntimeSceneFromDocument(
     control,
     localLights: collections.localLights,
     brushes,
+    terrains,
     volumes,
     staticColliders,
     colliders,
