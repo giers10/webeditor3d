@@ -632,6 +632,7 @@ export class RuntimeHost {
     this.applyWorld();
     this.rebuildLocalLights(runtimeScene.localLights);
     this.rebuildBrushMeshes(runtimeScene.brushes);
+    this.rebuildTerrainMeshes(runtimeScene.terrains);
     this.rebuildModelRenderObjects(
       runtimeScene.modelInstances,
       runtimeScene.npcDefinitions
