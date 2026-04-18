@@ -1060,6 +1060,7 @@ export class ViewportHost {
     });
 
     this.applyViewModePose();
+    this.syncTerrainBrushPreview();
 
     if (this.currentAdvancedRenderingSettings !== null) {
       this.syncAdvancedRenderingComposer(this.currentAdvancedRenderingSettings);
