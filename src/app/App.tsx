@@ -6456,6 +6456,13 @@ export function App({ store, initialStatusMessage }: AppProps) {
           } on ${getBrushLabelById(selection.brushId, brushList)} from the ${source}${suffix}.`
         );
         break;
+      case "terrains":
+        setStatusMessage(
+          selection.ids.length === 1
+            ? `Selected ${getTerrainLabelById(selection.ids[0], terrainList)} from the ${source}${suffix}.`
+            : `Selected ${selection.ids.length} terrains from the ${source}${suffix}.`
+        );
+        break;
       case "paths":
         setStatusMessage(
           `Selected ${getPathLabelById(selection.ids[0], pathList)} from the ${source}${suffix}.`
