@@ -5703,6 +5703,24 @@ export function validateSceneDocument(
     validateScenePath(pathValue, path, diagnostics);
   }
 
+  for (const [terrainKey, terrain] of Object.entries(document.terrains)) {
+    const path = `terrains.${terrainKey}`;
+
+    if (terrain.id !== terrainKey) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "terrain-id-mismatch",
+          "Terrain ids must match their registry key.",
+          `${path}.id`
+        )
+      );
+    }
+
+    registerAuthoredId(terrain.id, path, seenIds, diagnostics);
+    validateTerrain(terrain, path, diagnostics);
+  }
+
   for (const [modelInstanceKey, modelInstance] of Object.entries(
     document.modelInstances
   )) {
