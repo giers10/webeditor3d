@@ -2564,6 +2564,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [modelScaleDraft, setModelScaleDraft] = useState(
     createVec3Draft(DEFAULT_MODEL_INSTANCE_SCALE)
   );
+  const [armedTerrainBrushTool, setArmedTerrainBrushTool] =
+    useState<TerrainBrushTool | null>(null);
+  const [terrainBrushSettings, setTerrainBrushSettings] = useState(
+    createDefaultTerrainBrushSettings()
+  );
   const [ambientLightIntensityDraft, setAmbientLightIntensityDraft] = useState(
     String(editorState.document.world.ambientLight.intensity)
   );
