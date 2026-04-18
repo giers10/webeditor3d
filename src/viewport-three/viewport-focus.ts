@@ -5,12 +5,14 @@ import {
   getSingleSelectedModelInstanceId,
   getSingleSelectedPathOwnerId,
   getSingleSelectedPathPoint,
+  getSingleSelectedTerrainId,
   type EditorSelection
 } from "../core/selection";
 import type { Vec3 } from "../core/vector";
 import type { Brush } from "../document/brushes";
 import type { SceneDocument } from "../document/scene-document";
 import type { ScenePath } from "../document/paths";
+import { getTerrainBounds, type Terrain } from "../document/terrains";
 import type { EntityInstance } from "../entities/entity-instances";
 import type { ModelInstance } from "../assets/model-instances";
 import type { ProjectAssetRecord } from "../assets/project-assets";
