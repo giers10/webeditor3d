@@ -55,6 +55,10 @@ import {
   isTerrainSelected,
   type EditorSelection
 } from "../core/selection";
+import type {
+  ArmedTerrainBrushState,
+  TerrainBrushStrokeCommit
+} from "../core/terrain-brush";
 import { getWhiteboxSelectionFeedbackLabel } from "../core/whitebox-selection-feedback";
 import type { WhiteboxSelectionMode } from "../core/whitebox-selection-mode";
 import {
@@ -96,7 +100,10 @@ import {
   type ScenePath
 } from "../document/paths";
 import {
-  getTerrains
+  areTerrainsEqual,
+  cloneTerrain,
+  getTerrains,
+  type Terrain
 } from "../document/terrains";
 import {
   areAdvancedRenderingSettingsEqual,
@@ -166,6 +173,11 @@ import {
   buildBoxBrushDerivedMeshData
 } from "../geometry/box-brush-mesh";
 import { buildTerrainDerivedMeshData } from "../geometry/terrain-mesh";
+import {
+  applyTerrainBrushStamp,
+  createTerrainBrushPreviewPoints,
+  getTerrainBrushStrokeSpacing
+} from "../geometry/terrain-brush";
 import {
   getBrushEdgeIds,
   getBrushEdgeVertexIds,
@@ -265,6 +277,22 @@ interface TerrainRenderObjects {
   mesh: Mesh<BufferGeometry, Material>;
 }
 
+interface TerrainBrushHit {
+  terrainId: string;
+  point: Vec3;
+}
+
+interface ActiveTerrainBrushStroke {
+  pointerId: number;
+  previewTerrain: Terrain;
+  referenceHeight: number | null;
+  lastAppliedPoint: {
+    x: number;
+    z: number;
+  };
+  toolState: ArmedTerrainBrushState;
+}
+
 interface ViewportWaterSurfaceBinding {
   brush: BoxBrush;
   reflectionTextureUniform: { value: unknown } | null;
@@ -319,6 +347,11 @@ const TERRAIN_SELECTED_COLOR = 0xe0c17f;
 const TERRAIN_ACTIVE_COLOR = 0xf0d8a2;
 const TERRAIN_ACTIVE_EMISSIVE = 0x5c4623;
 const TERRAIN_SELECTED_EMISSIVE = 0x3f2d17;
+const TERRAIN_BRUSH_PREVIEW_RAISE_COLOR = 0x8dd977;
+const TERRAIN_BRUSH_PREVIEW_LOWER_COLOR = 0xe17b75;
+const TERRAIN_BRUSH_PREVIEW_SMOOTH_COLOR = 0x7dbbf1;
+const TERRAIN_BRUSH_PREVIEW_FLATTEN_COLOR = 0xf1d37d;
+const TERRAIN_BRUSH_PREVIEW_OFFSET = 0.05;
 const BOX_CREATE_PREVIEW_FILL = 0x89b6ff;
 const BOX_CREATE_PREVIEW_EDGE = 0xf3be8f;
 const PLACEMENT_PREVIEW_COLOR_HEX = "#89b6ff";
@@ -423,6 +456,21 @@ export class ViewportHost {
   private readonly localLightGroup = new Group();
   private readonly brushGroup = new Group();
   private readonly terrainGroup = new Group();
+  private readonly terrainBrushPreviewGroup = new Group();
+  private readonly terrainBrushPreviewLine = new Line(
+    new BufferGeometry(),
+    new LineBasicMaterial({
+      color: TERRAIN_BRUSH_PREVIEW_RAISE_COLOR,
+      depthTest: false
+    })
+  );
+  private readonly terrainBrushPreviewCenter = new Mesh(
+    new SphereGeometry(1, 12, 12),
+    new MeshBasicMaterial({
+      color: TERRAIN_BRUSH_PREVIEW_RAISE_COLOR,
+      depthTest: false
+    })
+  );
   private readonly pathGroup = new Group();
   private readonly entityGroup = new Group();
   private readonly modelGroup = new Group();
@@ -526,11 +574,17 @@ export class ViewportHost {
     | ((transformSession: ActiveTransformSession) => void)
     | null = null;
   private transformCancelHandler: (() => void) | null = null;
+  private terrainBrushCommitHandler:
+    | ((commit: TerrainBrushStrokeCommit) => boolean)
+    | null = null;
   private toolMode: ToolMode = "select";
   private viewMode: ViewportViewMode = "perspective";
   private displayMode: ViewportDisplayMode = "normal";
   private panelId: ViewportPanelId = "topLeft";
   private creationPreview: CreationViewportToolPreview | null = null;
+  private currentTerrainBrushState: ArmedTerrainBrushState | null = null;
+  private terrainBrushHover: TerrainBrushHit | null = null;
+  private activeTerrainBrushStroke: ActiveTerrainBrushStroke | null = null;
   private creationPreviewTargetKey: string | null = null;
   private creationPreviewObject: Group | null = null;
   private currentTransformSession: TransformSessionState =
@@ -593,6 +647,13 @@ export class ViewportHost {
     this.scene.add(this.localLightGroup);
     this.scene.add(this.brushGroup);
     this.scene.add(this.terrainGroup);
+    this.terrainBrushPreviewGroup.visible = false;
+    this.terrainBrushPreviewLine.frustumCulled = false;
+    this.terrainBrushPreviewCenter.frustumCulled = false;
+    this.terrainBrushPreviewCenter.renderOrder = 2;
+    this.terrainBrushPreviewGroup.add(this.terrainBrushPreviewLine);
+    this.terrainBrushPreviewGroup.add(this.terrainBrushPreviewCenter);
+    this.scene.add(this.terrainBrushPreviewGroup);
     this.scene.add(this.pathGroup);
     this.scene.add(this.entityGroup);
     this.scene.add(this.modelGroup);
@@ -799,6 +860,12 @@ export class ViewportHost {
     this.transformCancelHandler = handler;
   }
 
+  setTerrainBrushCommitHandler(
+    handler: ((commit: TerrainBrushStrokeCommit) => boolean) | null
+  ) {
+    this.terrainBrushCommitHandler = handler;
+  }
+
   setCameraState(cameraState: ViewportPanelCameraState) {
     if (
       areViewportPanelCameraStatesEqual(
@@ -929,8 +996,51 @@ export class ViewportHost {
       kind: "none"
     });
 
+    if (toolMode !== "select") {
+      this.cancelActiveTerrainBrushStroke(false);
+      this.setTerrainBrushHover(null);
+    } else {
+      this.syncTerrainBrushPreview();
+    }
+
     if (toolMode !== "create") {
       this.syncCreationPreview(null);
+    }
+  }
+
+  setTerrainBrushState(terrainBrushState: ArmedTerrainBrushState | null) {
+    const terrainChanged =
+      this.currentTerrainBrushState?.terrainId !== terrainBrushState?.terrainId;
+    const toolChanged =
+      this.currentTerrainBrushState?.tool !== terrainBrushState?.tool;
+
+    this.currentTerrainBrushState = terrainBrushState;
+
+    if (terrainChanged || toolChanged || terrainBrushState === null) {
+      this.cancelActiveTerrainBrushStroke(false);
+    }
+
+    if (terrainBrushState === null || this.toolMode !== "select") {
+      this.setTerrainBrushHover(null);
+      return;
+    }
+
+    if (
+      this.terrainBrushHover !== null &&
+      this.terrainBrushHover.terrainId !== terrainBrushState.terrainId
+    ) {
+      this.terrainBrushHover = null;
+    }
+
+    if (this.lastCanvasPointerPosition !== null) {
+      this.setTerrainBrushHover(
+        this.getTerrainBrushHitAtClientPosition(
+          this.lastCanvasPointerPosition.x,
+          this.lastCanvasPointerPosition.y
+        )
+      );
+    } else {
+      this.syncTerrainBrushPreview();
     }
   }
 
