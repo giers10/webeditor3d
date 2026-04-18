@@ -7358,7 +7358,7 @@ export class ViewportHost {
     const committed =
       this.terrainBrushCommitHandler?.({
         terrain: cloneTerrain(finalPreviewTerrain),
-        commandLabel: `${toolState.tool.charAt(0).toUpperCase()}${toolState.tool.slice(1)} terrain`,
+        commandLabel: getTerrainBrushCommandLabel(toolState.tool),
         tool: toolState.tool
       }) === true;
 

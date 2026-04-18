@@ -82,6 +82,16 @@ import {
   type EditorSelection
 } from "../core/selection";
 import {
+  clampTerrainBrushFalloff,
+  clampTerrainBrushRadius,
+  clampTerrainBrushStrength,
+  createDefaultTerrainBrushSettings,
+  getTerrainBrushToolLabel,
+  type ArmedTerrainBrushState,
+  type TerrainBrushStrokeCommit,
+  type TerrainBrushTool
+} from "../core/terrain-brush";
+import {
   createTransformSession,
   doesTransformSessionChangeTarget,
   getTransformAxisLabel,
