@@ -66,6 +66,7 @@ import {
   type ProjectTimeSettings
 } from "./project-time-settings";
 import { MIN_SCENE_PATH_POINT_COUNT, type ScenePath } from "./paths";
+import { MIN_TERRAIN_SAMPLE_COUNT, type Terrain } from "./terrains";
 import {
   isAdvancedRenderingWaterReflectionMode,
   isAdvancedRenderingShadowMapSize,
@@ -1645,6 +1646,121 @@ function validateScenePath(
         )
       );
     }
+  }
+}
+
+function validateTerrain(
+  terrain: Terrain,
+  path: string,
+  diagnostics: SceneDiagnostic[]
+) {
+  if (!isBoolean(terrain.visible)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-terrain-visible",
+        "Terrain visible must remain a boolean.",
+        `${path}.visible`
+      )
+    );
+  }
+
+  if (!isBoolean(terrain.enabled)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-terrain-enabled",
+        "Terrain enabled must remain a boolean.",
+        `${path}.enabled`
+      )
+    );
+  }
+
+  if (terrain.name !== undefined && terrain.name.trim().length === 0) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-terrain-name",
+        "Terrain names must be non-empty when authored.",
+        `${path}.name`
+      )
+    );
+  }
+
+  if (!isFiniteVec3(terrain.position)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-terrain-position",
+        "Terrain positions must remain finite on every axis.",
+        `${path}.position`
+      )
+    );
+  }
+
+  if (
+    !isPositiveInteger(terrain.sampleCountX) ||
+    terrain.sampleCountX < MIN_TERRAIN_SAMPLE_COUNT
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-terrain-sample-count-x",
+        `Terrain sampleCountX must be an integer greater than or equal to ${MIN_TERRAIN_SAMPLE_COUNT}.`,
+        `${path}.sampleCountX`
+      )
+    );
+  }
+
+  if (
+    !isPositiveInteger(terrain.sampleCountZ) ||
+    terrain.sampleCountZ < MIN_TERRAIN_SAMPLE_COUNT
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-terrain-sample-count-z",
+        `Terrain sampleCountZ must be an integer greater than or equal to ${MIN_TERRAIN_SAMPLE_COUNT}.`,
+        `${path}.sampleCountZ`
+      )
+    );
+  }
+
+  if (!isPositiveFiniteNumber(terrain.cellSize)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-terrain-cell-size",
+        "Terrain cellSize must be a positive finite number.",
+        `${path}.cellSize`
+      )
+    );
+  }
+
+  if (terrain.heights.length !== terrain.sampleCountX * terrain.sampleCountZ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-terrain-height-count",
+        "Terrain heights must contain exactly one sample per grid point.",
+        `${path}.heights`
+      )
+    );
+  }
+
+  for (let index = 0; index < terrain.heights.length; index += 1) {
+    if (isFiniteNumber(terrain.heights[index])) {
+      continue;
+    }
+
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-terrain-height",
+        "Terrain heights must remain finite.",
+        `${path}.heights.${index}`
+      )
+    );
   }
 }
 
