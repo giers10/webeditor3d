@@ -55,10 +55,10 @@ import {
   isTerrainSelected,
   type EditorSelection
 } from "../core/selection";
-import type {
-  ArmedTerrainBrushState,
+import {
   getTerrainBrushCommandLabel,
-  TerrainBrushStrokeCommit
+  type ArmedTerrainBrushState,
+  type TerrainBrushStrokeCommit
 } from "../core/terrain-brush";
 import { getWhiteboxSelectionFeedbackLabel } from "../core/whitebox-selection-feedback";
 import type { WhiteboxSelectionMode } from "../core/whitebox-selection-mode";
