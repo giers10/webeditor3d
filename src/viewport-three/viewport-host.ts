@@ -1463,6 +1463,13 @@ export class ViewportHost {
       );
     }
 
+    for (const renderObjects of this.terrainRenderObjects.values()) {
+      applyAdvancedRenderingRenderableShadowFlags(
+        renderObjects.mesh,
+        shadowsEnabled
+      );
+    }
+
     for (const renderObjects of this.entityRenderObjects.values()) {
       applyAdvancedRenderingRenderableShadowFlags(
         renderObjects.group,
