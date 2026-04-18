@@ -765,6 +765,7 @@ export class ViewportHost {
     selection: EditorSelection,
     activeSelectionId: string | null
   ) {
+    this.activeTerrainBrushStroke = null;
     this.currentDocument = document;
     this.currentSelection = selection;
     this.currentActiveSelectionId = activeSelectionId;
@@ -779,6 +780,7 @@ export class ViewportHost {
     this.rebuildModelInstances(document, selection);
     this.applyTransformPreview();
     this.syncTransformGizmo();
+    this.syncTerrainBrushPreview();
   }
 
   updateAssets(
