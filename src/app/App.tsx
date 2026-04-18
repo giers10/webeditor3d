@@ -8494,6 +8494,23 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
+  const handleDeleteTerrain = (terrainId: string) => {
+    const label = getTerrainLabelById(terrainId, terrainList);
+
+    if (!confirmDeleteSceneItem(label)) {
+      return false;
+    }
+
+    try {
+      store.executeCommand(createDeleteTerrainCommand(terrainId));
+      setStatusMessage(`Deleted ${label}.`);
+      return true;
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+      return false;
+    }
+  };
+
   const handleDeleteEntity = (entityId: string) => {
     const label = getEntityDisplayLabelById(
       entityId,
