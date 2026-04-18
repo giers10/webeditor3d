@@ -4319,6 +4319,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       textures: expectEmptyCollection(source.textures, "textures"),
       assets: expectEmptyCollection(source.assets, "assets"),
       brushes: {},
+      terrains: {},
       paths: {},
       modelInstances: expectEmptyCollection(
         source.modelInstances,
@@ -4347,6 +4348,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       textures: expectEmptyCollection(source.textures, "textures"),
       assets: expectEmptyCollection(source.assets, "assets"),
       brushes: readBrushes(source.brushes, materials, true),
+      terrains: {},
       paths: {},
       modelInstances: expectEmptyCollection(
         source.modelInstances,
@@ -4377,6 +4379,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       textures: expectEmptyCollection(source.textures, "textures"),
       assets: expectEmptyCollection(source.assets, "assets"),
       brushes: readBrushes(source.brushes, materials, false),
+      terrains: {},
       paths: {},
       modelInstances: expectEmptyCollection(
         source.modelInstances,
@@ -4407,6 +4410,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       textures: expectEmptyCollection(source.textures, "textures"),
       assets: expectEmptyCollection(source.assets, "assets"),
       brushes: readBrushes(source.brushes, materials, false),
+      terrains: {},
       paths: {},
       modelInstances: expectEmptyCollection(
         source.modelInstances,
@@ -4437,6 +4441,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       textures: expectEmptyCollection(source.textures, "textures"),
       assets: expectEmptyCollection(source.assets, "assets"),
       brushes: readBrushes(source.brushes, materials, false),
+      terrains: {},
       paths: {},
       modelInstances: expectEmptyCollection(
         source.modelInstances,
@@ -4467,6 +4472,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       textures: expectEmptyCollection(source.textures, "textures"),
       assets: expectEmptyCollection(source.assets, "assets"),
       brushes: readBrushes(source.brushes, materials, false),
+      terrains: {},
       paths: {},
       modelInstances: expectEmptyCollection(
         source.modelInstances,
@@ -4497,6 +4503,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       textures: expectEmptyCollection(source.textures, "textures"),
       assets: expectEmptyCollection(source.assets, "assets"),
       brushes: readBrushes(source.brushes, materials, false),
+      terrains: {},
       paths: {},
       modelInstances: expectEmptyCollection(
         source.modelInstances,
@@ -4529,6 +4536,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       textures: expectEmptyCollection(source.textures, "textures"),
       assets: expectEmptyCollection(source.assets, "assets"),
       brushes: readBrushes(source.brushes, materials, false),
+      terrains: {},
       paths: {},
       modelInstances: expectEmptyCollection(
         source.modelInstances,
@@ -4556,6 +4564,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       textures: expectEmptyCollection(source.textures, "textures"),
       assets: expectEmptyCollection(source.assets, "assets"),
       brushes: readBrushes(source.brushes, materials, false),
+      terrains: {},
       paths: {},
       modelInstances: expectEmptyCollection(
         source.modelInstances,
@@ -4584,6 +4593,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       textures: expectEmptyCollection(source.textures, "textures"),
       assets,
       brushes: readBrushes(source.brushes, materials, false),
+      terrains: {},
       paths: {},
       modelInstances: readModelInstances(source.modelInstances, assets),
       entities: readEntities(source.entities, { legacySoundEmitter: false }),
@@ -4609,6 +4619,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       textures: expectEmptyCollection(source.textures, "textures"),
       assets,
       brushes: readBrushes(source.brushes, materials, false),
+      terrains: {},
       paths: {},
       modelInstances: readModelInstances(source.modelInstances, assets),
       entities: readEntities(source.entities, { legacySoundEmitter: true }),
@@ -4637,6 +4648,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       textures: expectEmptyCollection(source.textures, "textures"),
       assets,
       brushes: readBrushes(source.brushes, materials, false),
+      terrains: {},
       paths: {},
       modelInstances: readModelInstances(source.modelInstances, assets),
       entities: readEntities(source.entities, { legacySoundEmitter: false }),
@@ -4662,6 +4674,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       textures: expectEmptyCollection(source.textures, "textures"),
       assets,
       brushes: readBrushes(source.brushes, materials, false),
+      terrains: {},
       paths: {},
       modelInstances: readModelInstances(source.modelInstances, assets),
       entities: readEntities(source.entities, { legacySoundEmitter: false }),
@@ -4688,6 +4701,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       textures: expectEmptyCollection(source.textures, "textures"),
       assets,
       brushes: readBrushes(source.brushes, materials, false),
+      terrains: {},
       paths: {},
       modelInstances: readModelInstances(source.modelInstances, assets),
       entities: readEntities(source.entities, { legacySoundEmitter: false }),
@@ -4716,6 +4730,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       textures: expectEmptyCollection(source.textures, "textures"),
       assets,
       brushes: readBrushes(source.brushes, materials, false),
+      terrains: {},
       paths: {},
       modelInstances: readModelInstances(source.modelInstances, assets),
       entities: readEntities(source.entities, { legacySoundEmitter: false }),
@@ -4742,6 +4757,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       textures: expectEmptyCollection(source.textures, "textures"),
       assets,
       brushes: readBrushes(source.brushes, materials, false),
+      terrains: {},
       paths: {},
       modelInstances: readModelInstances(source.modelInstances, assets),
       entities: readEntities(source.entities, { legacySoundEmitter: false }),
@@ -4768,6 +4784,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       textures: expectEmptyCollection(source.textures, "textures"),
       assets,
       brushes: readBrushes(source.brushes, materials, false),
+      terrains: {},
       paths: {},
       modelInstances: readModelInstances(source.modelInstances, assets),
       entities: readEntities(source.entities, { legacySoundEmitter: false }),
@@ -4856,6 +4873,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     textures: expectEmptyCollection(source.textures, "textures"),
     assets,
     brushes: readBrushes(source.brushes, materials, false),
+    terrains: readTerrains(source.terrains),
     paths: readScenePaths(source.paths),
     modelInstances: readModelInstances(source.modelInstances, assets),
     entities: readEntities(source.entities, {
