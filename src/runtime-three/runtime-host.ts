@@ -60,6 +60,7 @@ import {
   type SoundEmitterControlTargetRef
 } from "../controls/control-surface";
 import { buildBoxBrushDerivedMeshData } from "../geometry/box-brush-mesh";
+import { buildTerrainDerivedMeshData } from "../geometry/terrain-mesh";
 import {
   createStarterMaterialSignature,
   createStarterMaterialTextureSet,
@@ -145,6 +146,7 @@ import type {
   RuntimeNavigationMode,
   RuntimeNpc,
   RuntimeSceneDefinition,
+  RuntimeTerrain,
   RuntimeTeleportTarget
 } from "./runtime-scene-build";
 import {
