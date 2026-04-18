@@ -52,6 +52,7 @@ import {
   isModelInstanceSelected,
   isPathPointSelected,
   isPathSelected,
+  isTerrainSelected,
   type EditorSelection
 } from "../core/selection";
 import { getWhiteboxSelectionFeedbackLabel } from "../core/whitebox-selection-feedback";
@@ -94,6 +95,10 @@ import {
   getScenePaths,
   type ScenePath
 } from "../document/paths";
+import {
+  getTerrains,
+  type Terrain
+} from "../document/terrains";
 import {
   areAdvancedRenderingSettingsEqual,
   cloneAdvancedRenderingSettings,
@@ -161,6 +166,7 @@ import {
 import {
   buildBoxBrushDerivedMeshData
 } from "../geometry/box-brush-mesh";
+import { buildTerrainDerivedMeshData } from "../geometry/terrain-mesh";
 import {
   getBrushEdgeIds,
   getBrushEdgeVertexIds,
