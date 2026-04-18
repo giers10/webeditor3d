@@ -9,6 +9,7 @@ import {
 import { createBoxBrush, deriveBoxBrushSizeFromGeometry } from "../../src/document/brushes";
 import { createScenePath } from "../../src/document/paths";
 import { createDefaultProjectTimeSettings } from "../../src/document/project-time-settings";
+import { createTerrain } from "../../src/document/terrains";
 import {
   ANIMATION_PLAYBACK_SCENE_DOCUMENT_VERSION,
   ENTITY_NAMES_SCENE_DOCUMENT_VERSION,
@@ -72,6 +73,43 @@ describe("scene document JSON", () => {
     const serializedDocument = serializeSceneDocument(document);
 
     expect(parseSceneDocumentJson(serializedDocument)).toEqual(document);
+  });
+
+  it("round-trips authored terrain foundations in the current schema", () => {
+    const terrain = createTerrain({
+      id: "terrain-roundtrip-main",
+      name: "Plateau",
+      position: {
+        x: -6,
+        y: 1,
+        z: -4
+      },
+      sampleCountX: 3,
+      sampleCountZ: 4,
+      cellSize: 2,
+      heights: [0, 0, 1, 1, 2, 3, 0, 1, 2, -1, 0, 0]
+    });
+    const document = createEmptySceneDocument({ name: "Terrain Scene" });
+    document.terrains[terrain.id] = terrain;
+
+    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(
+      document
+    );
+  });
+
+  it("migrates pre-terrain scene documents by defaulting the terrain registry to empty", () => {
+    const legacyDocument = {
+      ...createEmptySceneDocument({ name: "Legacy Terrainless Scene" }),
+      version: FOLLOW_ACTOR_PATH_SMOOTH_SCENE_DOCUMENT_VERSION
+    };
+    delete (legacyDocument as Partial<typeof legacyDocument>).terrains;
+
+    const migratedDocument = parseSceneDocumentJson(
+      JSON.stringify(legacyDocument)
+    );
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.terrains).toEqual({});
   });
 
   it("round-trips authored scheduler routines in the scene document schema", () => {
