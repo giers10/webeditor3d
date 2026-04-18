@@ -724,6 +724,19 @@ function buildRuntimeCollider(brush: Brush): RuntimeBrushTriMeshCollider {
   };
 }
 
+function buildRuntimeTerrain(terrain: Terrain): RuntimeTerrain {
+  return {
+    id: terrain.id,
+    name: terrain.name,
+    visible: terrain.visible,
+    position: cloneVec3(terrain.position),
+    sampleCountX: terrain.sampleCountX,
+    sampleCountZ: terrain.sampleCountZ,
+    cellSize: terrain.cellSize,
+    heights: [...terrain.heights]
+  };
+}
+
 function buildRuntimeModelInstance(
   modelInstance: SceneDocument["modelInstances"][string]
 ): RuntimeModelInstance {
@@ -926,6 +939,72 @@ function combineColliderBounds(
 
   for (const collider of colliders.slice(1)) {
     const bounds = getColliderBounds(collider);
+    min.x = Math.min(min.x, bounds.min.x);
+    min.y = Math.min(min.y, bounds.min.y);
+    min.z = Math.min(min.z, bounds.min.z);
+    max.x = Math.max(max.x, bounds.max.x);
+    max.y = Math.max(max.y, bounds.max.y);
+    max.z = Math.max(max.z, bounds.max.z);
+  }
+
+  return {
+    min,
+    max,
+    center: {
+      x: (min.x + max.x) * 0.5,
+      y: (min.y + max.y) * 0.5,
+      z: (min.z + max.z) * 0.5
+    },
+    size: {
+      x: max.x - min.x,
+      y: max.y - min.y,
+      z: max.z - min.z
+    }
+  };
+}
+
+function getRuntimeTerrainSceneBounds(terrain: RuntimeTerrain): RuntimeSceneBounds {
+  const bounds = getTerrainBounds({
+    ...terrain,
+    kind: "terrain"
+  });
+  const min = cloneVec3(bounds.min);
+  const max = cloneVec3(bounds.max);
+
+  return {
+    min,
+    max,
+    center: {
+      x: (min.x + max.x) * 0.5,
+      y: (min.y + max.y) * 0.5,
+      z: (min.z + max.z) * 0.5
+    },
+    size: {
+      x: max.x - min.x,
+      y: max.y - min.y,
+      z: max.z - min.z
+    }
+  };
+}
+
+function combineSceneBounds(
+  colliderBounds: RuntimeSceneBounds | null,
+  terrains: RuntimeTerrain[]
+): RuntimeSceneBounds | null {
+  const terrainBounds = terrains.map(getRuntimeTerrainSceneBounds);
+
+  if (colliderBounds === null && terrainBounds.length === 0) {
+    return null;
+  }
+
+  const min = colliderBounds?.min
+    ? cloneVec3(colliderBounds.min)
+    : cloneVec3(terrainBounds[0]!.min);
+  const max = colliderBounds?.max
+    ? cloneVec3(colliderBounds.max)
+    : cloneVec3(terrainBounds[0]!.max);
+
+  for (const bounds of terrainBounds) {
     min.x = Math.min(min.x, bounds.min.x);
     min.y = Math.min(min.y, bounds.min.y);
     min.z = Math.min(min.z, bounds.min.z);
