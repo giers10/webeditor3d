@@ -11868,6 +11868,80 @@ export function App({ store, initialStatusMessage }: AppProps) {
             </div>
 
             <div className="outliner-section">
+              <div className="label">Terrain</div>
+              {terrainList.length === 0 ? (
+                <div className="outliner-empty">
+                  Use Add &gt; Terrain to create the first authored terrain.
+                </div>
+              ) : (
+                <div
+                  className="outliner-list"
+                  data-testid="outliner-terrain-list"
+                >
+                  {terrainList.map((terrain, terrainIndex) => {
+                    const label = getTerrainLabel(terrain, terrainIndex);
+                    const authoredStateSummary =
+                      formatAuthoredObjectStateSummary(terrain);
+                    const isActiveSelection = isSelectionActiveId(
+                      editorState.selection,
+                      editorState.activeSelectionId,
+                      terrain.id
+                    );
+
+                    return (
+                      <div
+                        key={terrain.id}
+                        className={`outliner-item outliner-item--compact ${isTerrainSelected(editorState.selection, terrain.id) ? "outliner-item--selected" : ""} ${isActiveSelection ? "outliner-item--active" : ""} ${terrain.enabled ? "" : "outliner-item--disabled"}`}
+                      >
+                        <div className="outliner-item__row">
+                          <button
+                            className="outliner-item__select"
+                            type="button"
+                            data-testid={`outliner-terrain-${terrain.id}`}
+                            onClick={() =>
+                              applySelection(
+                                {
+                                  kind: "terrains",
+                                  ids: [terrain.id]
+                                },
+                                "outliner",
+                                {
+                                  focusViewport: true
+                                }
+                              )
+                            }
+                          >
+                            <span className="outliner-item__title">
+                              {label}
+                            </span>
+                          </button>
+                          <button
+                            className="outliner-item__delete"
+                            type="button"
+                            data-testid={`outliner-delete-terrain-${terrain.id}`}
+                            aria-label={`Delete ${label}`}
+                            onClick={() => handleDeleteTerrain(terrain.id)}
+                          >
+                            x
+                          </button>
+                        </div>
+                        <div className="outliner-item__meta">
+                          {[
+                            authoredStateSummary,
+                            `${terrain.sampleCountX} x ${terrain.sampleCountZ} samples`,
+                            `${terrain.cellSize}m cells`
+                          ]
+                            .filter((part): part is string => part !== null)
+                            .join(" | ")}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div className="outliner-section">
               <div className="label">Paths</div>
               {pathList.length === 0 ? (
                 <div className="outliner-empty">
