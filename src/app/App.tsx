@@ -14976,6 +14976,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   {describeSelection(
                     editorState.selection,
                     brushList,
+                    terrainList,
                     pathList,
                     editorState.document.modelInstances,
                     editorState.document.assets,
