@@ -15183,14 +15183,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       role="group"
                       aria-label="Terrain brush tools"
                     >
-                      {(
-                        [
-                          "raise",
-                          "lower",
-                          "smooth",
-                          "flatten"
-                        ] as const satisfies readonly TerrainBrushTool[]
-                      ).map((tool) => (
+                      {TERRAIN_BRUSH_TOOLS.map((tool) => (
                         <button
                           key={tool}
                           className={`viewport-panel__button ${armedTerrainBrushTool === tool ? "viewport-panel__button--active" : ""}`}
