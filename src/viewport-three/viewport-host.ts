@@ -1204,6 +1204,10 @@ export class ViewportHost {
     this.boxCreatePreviewMesh.material.dispose();
     this.boxCreatePreviewEdges.geometry.dispose();
     this.boxCreatePreviewEdges.material.dispose();
+    this.terrainBrushPreviewLine.geometry.dispose();
+    this.terrainBrushPreviewLine.material.dispose();
+    this.terrainBrushPreviewCenter.geometry.dispose();
+    this.terrainBrushPreviewCenter.material.dispose();
     this.renderer.forceContextLoss();
     this.renderer.dispose();
 
