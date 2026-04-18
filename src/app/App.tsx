@@ -12467,6 +12467,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   viewportGridVisible={viewportGridVisible}
                   selection={editorState.selection}
                   activeSelectionId={editorState.activeSelectionId}
+                  terrainBrushState={activeTerrainBrushState}
                   toolMode={editorState.toolMode}
                   toolPreview={viewportToolPreview}
                   transformSession={transformSession}
@@ -12487,6 +12488,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   onSetViewportLayoutMode={handleSetViewportLayoutMode}
                   onSetPanelViewMode={handleSetViewportPanelViewMode}
                   onSetPanelDisplayMode={handleSetViewportPanelDisplayMode}
+                  onTerrainBrushCommit={handleCommitTerrainBrushStroke}
                   onCommitCreation={handleCommitCreation}
                   onCameraStateChange={(cameraState) => {
                     store.setViewportPanelCameraState(panelId, cameraState);
