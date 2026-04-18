@@ -1216,6 +1216,10 @@ export class RuntimeHost {
       applyAdvancedRenderingRenderableShadowFlags(mesh, shadowsEnabled);
     }
 
+    for (const mesh of this.terrainMeshes.values()) {
+      applyAdvancedRenderingRenderableShadowFlags(mesh, shadowsEnabled);
+    }
+
     for (const renderGroup of this.modelRenderObjects.values()) {
       applyAdvancedRenderingRenderableShadowFlags(renderGroup, shadowsEnabled);
     }
@@ -2737,41 +2741,7 @@ export class RuntimeHost {
             z: feetPosition.z - playerShape.size.z * 0.5
           },
           max: {
-            x: feetPosition.x + playerShape.size.x * 0.5,
-            y: feetPosition.y + playerShape.size.y,
-            z: feetPosition.z + playerShape.size.z * 0.5
-          }
-        };
-      case "none":
-        return null;
-    }
-  }
-
-  private collectRuntimeStaticWaterContactPatches(
-    brush: RuntimeBoxBrushInstance
-  ) {
-    const contactBounds: Parameters<typeof collectWaterContactPatches>[1] = [];
-
-    const runtimeBrushesById = new Map(
-      (this.runtimeScene?.brushes ?? []).map((runtimeBrush) => [
-        runtimeBrush.id,
-        runtimeBrush
-      ])
-    );
-
-    for (const collider of this.runtimeScene?.colliders ?? []) {
-      if (collider.source === "brush") {
-        const otherBrush = runtimeBrushesById.get(collider.brushId);
-
-        if (
-          otherBrush === undefined ||
-          otherBrush.id === brush.id ||
-          otherBrush.volume.mode !== "none"
-        ) {
-          continue;
-        }
-
-        contactBounds.push({
+            x: feetPosition.x + pla({
           kind: "triangleMesh",
           vertices: collider.vertices,
           indices: collider.indices,
@@ -3591,6 +3561,46 @@ export class RuntimeHost {
       event.altKey ||
       event.ctrlKey ||
       event.metaKey ||
+      isEditableEventTarget(event.target)
+    ) {
+      return;
+    }
+
+    this.pressedKeys.add(event.code);
+    event.preventDefault();
+    this.toggleManualPause();
+    this.previousPauseInputActive = true;
+  };
+
+  private handleRuntimeKeyUp = (event: KeyboardEvent) => {
+    this.pressedKeys.delete(event.code);
+  };
+
+  private handleRuntimeBlur = () => {
+    this.pressedKeys.clear();
+    this.previousPauseInputActive = false;
+  };
+
+  private updatePauseInputState() {
+    if (this.runtimeScene === null || !this.sceneReady) {
+      this.previousPauseInputActive = false;
+      return;
+    }
+
+    const pauseInputActive =
+      resolvePlayerStartPauseInput(
+        this.pressedKeys,
+        this.runtimeScene.playerInputBindings
+      ) >= 0.5;
+
+    if (pauseInputActive && !this.previousPauseInputActive) {
+      this.toggleManualPause();
+    }
+
+    this.previousPauseInputActive = pauseInputActive;
+  }
+}
+nt.metaKey ||
       isEditableEventTarget(event.target)
     ) {
       return;
