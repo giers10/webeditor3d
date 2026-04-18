@@ -11,6 +11,7 @@ import { createScenePath } from "../../src/document/paths";
 import { createDefaultProjectTimeSettings } from "../../src/document/project-time-settings";
 import { createTerrain } from "../../src/document/terrains";
 import {
+  FOLLOW_ACTOR_PATH_SMOOTH_SCENE_DOCUMENT_VERSION,
   ANIMATION_PLAYBACK_SCENE_DOCUMENT_VERSION,
   ENTITY_NAMES_SCENE_DOCUMENT_VERSION,
   ENTITY_SYSTEM_FOUNDATION_SCENE_DOCUMENT_VERSION,
