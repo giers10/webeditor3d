@@ -2150,6 +2150,15 @@ export function App({ store, initialStatusMessage }: AppProps) {
     selectedModelAsset !== null && selectedModelAsset.kind === "model"
       ? selectedModelAsset
       : null;
+  const selectedTerrainBounds =
+    selectedTerrain === null ? null : getTerrainBounds(selectedTerrain);
+  const selectedTerrainHeightRange =
+    selectedTerrainBounds === null
+      ? null
+      : {
+          min: selectedTerrainBounds.min.y,
+          max: selectedTerrainBounds.max.y
+        };
   const selectedPlayerStart =
     selectedEntity?.kind === "playerStart" ? selectedEntity : null;
   const selectedSoundEmitter = isSoundEmitterEntity(selectedEntity)
