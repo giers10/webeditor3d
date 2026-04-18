@@ -2752,7 +2752,30 @@ export class RuntimeHost {
             z: feetPosition.z - playerShape.size.z * 0.5
           },
           max: {
-            x: feetPosition.x + pla({
+            x: feetPosition.x + playerShape.size.x * 0.5,
+            y: feetPosition.y + playerShape.size.y,
+            z: feetPosition.z + playerShape.size.z * 0.5
+          }
+        };
+    }
+  }
+
+  private collectRuntimeStaticWaterContactPatches(
+    brush: RuntimeBoxBrushInstance
+  ) {
+    const contactBounds: Parameters<typeof collectWaterContactPatches>[1] = [];
+
+    if (this.runtimeScene === null) {
+      return contactBounds;
+    }
+
+    for (const collider of this.runtimeScene.colliders) {
+      if (collider.kind === "trimesh" && collider.source === "brush") {
+        if (collider.brushId === brush.id) {
+          continue;
+        }
+
+        contactBounds.push({
           kind: "triangleMesh",
           vertices: collider.vertices,
           indices: collider.indices,
