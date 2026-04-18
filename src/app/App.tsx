@@ -1297,6 +1297,7 @@ function getSelectedBrushLabel(
 function describeSelection(
   selection: EditorSelection,
   brushes: Brush[],
+  terrains: Terrain[],
   paths: ScenePath[],
   modelInstances: Record<string, ModelInstance>,
   assets: Record<string, ProjectAssetRecord>,
@@ -1332,6 +1333,8 @@ function describeSelection(
           : getBrushVertexLabel(brush, selection.vertexId);
       return `1 vertex selected (${vertexLabel} on ${getBrushLabelById(selection.brushId, brushes)})`;
     }
+    case "terrains":
+      return `${selection.ids.length} terrain${selection.ids.length === 1 ? "" : "s"} selected (${getTerrainLabelById(resolveSelectionActiveId(selection, activeSelectionId) ?? selection.ids[0], terrains)})`;
     case "paths":
       return `${selection.ids.length} path${selection.ids.length === 1 ? "" : "s"} selected (${getPathLabelById(selection.ids[0], paths)})`;
     case "pathPoint": {
