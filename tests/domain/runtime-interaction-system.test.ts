@@ -56,6 +56,7 @@ function createRuntimeSceneFixture(): RuntimeSceneDefinition {
       }
     },
     brushes: [],
+    terrains: [],
     volumes: {
       fog: [],
       water: []
