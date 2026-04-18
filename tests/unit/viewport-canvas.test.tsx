@@ -1,11 +1,13 @@
-import { render, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
+  createTransformSession,
   createInactiveTransformSession,
   type ActiveTransformSession,
   type TransformSessionState
 } from "../../src/core/transform-session";
+import { createBoxBrush } from "../../src/document/brushes";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
 import { createRuntimeClockState } from "../../src/runtime-three/runtime-project-time";
 import { buildRuntimeSceneFromDocument } from "../../src/runtime-three/runtime-scene-build";
@@ -285,5 +287,69 @@ describe("ViewportCanvas", () => {
         editorSimulationClock
       );
     });
+  });
+
+  it("shows the surface snap translate overlay when the active transform enables it", () => {
+    const sceneDocument = createEmptySceneDocument();
+    const brush = createBoxBrush({
+      id: "overlay-brush",
+      center: { x: 0, y: 1, z: 0 }
+    });
+
+    render(
+      <ViewportCanvas
+        panelId="topLeft"
+        world={sceneDocument.world}
+        sceneDocument={sceneDocument}
+        editorSimulationScene={null}
+        editorSimulationClock={null}
+        projectAssets={sceneDocument.assets}
+        loadedModelAssets={{}}
+        loadedImageAssets={{}}
+        whiteboxSelectionMode="object"
+        whiteboxSnapEnabled
+        whiteboxSnapStep={1}
+        viewportGridVisible={true}
+        selection={{ kind: "brushes", ids: [brush.id] }}
+        activeSelectionId={brush.id}
+        toolMode="select"
+        toolPreview={{ kind: "none" }}
+        transformSession={createTransformSession({
+          source: "keyboard",
+          sourcePanelId: "topLeft",
+          operation: "translate",
+          surfaceSnapEnabled: true,
+          axisConstraint: "x",
+          axisConstraintSpace: "local",
+          target: {
+            kind: "brush",
+            brushId: brush.id,
+            brushKind: brush.kind,
+            initialCenter: brush.center,
+            initialRotationDegrees: brush.rotationDegrees,
+            initialSize: brush.size,
+            initialGeometry: brush.geometry
+          }
+        })}
+        cameraState={createDefaultViewportPanelCameraState()}
+        viewMode="perspective"
+        displayMode="normal"
+        layoutMode="single"
+        isActivePanel
+        focusRequestId={0}
+        focusSelection={{ kind: "none" }}
+        onSelectionChange={vi.fn()}
+        onCommitCreation={vi.fn(() => true)}
+        onCameraStateChange={vi.fn()}
+        onToolPreviewChange={vi.fn()}
+        onTransformSessionChange={vi.fn()}
+        onTransformCommit={vi.fn()}
+        onTransformCancel={vi.fn()}
+      />
+    );
+
+    expect(screen.getByTestId("viewport-transform-preview-topLeft")).toHaveTextContent(
+      "translate · surface snap · Local X"
+    );
   });
 });

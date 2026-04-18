@@ -34,7 +34,7 @@ function cloneVec3(vector: Vec3): Vec3 {
   };
 }
 
-function createBrushRotationEuler(brush: Brush): Euler {
+function createBrushRotationEuler(brush: { rotationDegrees: Vec3 }): Euler {
   return new Euler(
     MathUtils.degToRad(brush.rotationDegrees.x),
     MathUtils.degToRad(brush.rotationDegrees.y),
@@ -57,7 +57,7 @@ export function getBrushLocalVertexPosition(
 }
 
 export function transformBrushWorldVectorToLocal(
-  brush: Brush,
+  brush: { rotationDegrees: Vec3 },
   worldVector: Vec3
 ): Vec3 {
   const rotation = createBrushRotationEuler(brush);
@@ -76,7 +76,7 @@ export function transformBrushWorldVectorToLocal(
 }
 
 export function transformBrushWorldPointToLocal(
-  brush: Brush,
+  brush: { center: Vec3; rotationDegrees: Vec3 },
   worldPoint: Vec3
 ): Vec3 {
   const rotation = createBrushRotationEuler(brush);
@@ -95,7 +95,7 @@ export function transformBrushWorldPointToLocal(
 }
 
 export function transformBrushLocalPointToWorld(
-  brush: Brush,
+  brush: { center: Vec3; rotationDegrees: Vec3 },
   localPoint: Vec3
 ): Vec3 {
   const rotation = createBrushRotationEuler(brush);
@@ -113,7 +113,7 @@ export function transformBrushLocalPointToWorld(
 }
 
 export function getBrushVertexWorldPosition(
-  brush: Brush,
+  brush: { center: Vec3; rotationDegrees: Vec3; geometry: BrushGeometry },
   vertexId: WhiteboxVertexId
 ): Vec3 {
   return transformBrushLocalPointToWorld(

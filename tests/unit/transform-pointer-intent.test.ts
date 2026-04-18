@@ -20,6 +20,7 @@ function createActiveBrushTransformSession(): TransformSessionState {
     source: "keyboard",
     sourcePanelId: "topLeft",
     operation: "scale",
+    surfaceSnapEnabled: false,
     axisConstraint: null,
     axisConstraintSpace: "world",
     target: {

@@ -64,10 +64,12 @@ import {
   resolveTransformTarget,
   supportsLocalTransformAxisConstraint,
   supportsTransformOperation,
+  supportsTransformSurfaceSnapTarget,
   supportsTransformAxisConstraint,
   type ActiveTransformSession,
   type TransformAxis,
   type TransformAxisSpace,
+  type TransformPreview,
   type TransformSessionState
 } from "../core/transform-session";
 import type { ToolMode } from "../core/tool-mode";
@@ -204,6 +206,15 @@ import {
 import type { RuntimeSceneDefinition } from "../runtime-three/runtime-scene-build";
 import { resolveTransformPointerDownIntent } from "./transform-pointer-intent";
 import { resolveDominantLocalAxisForWorldAxis } from "./transform-axis-mapping";
+import {
+  SURFACE_SNAP_OFFSET,
+  applyRigidDeltaToTransformPreview,
+  computeSurfaceSnapDelta,
+  createAxisAlignedBoxSurfaceSnapSupportPoints,
+  createBrushSurfaceSnapSupportPoints,
+  createModelBoundingBoxSurfaceSnapSupportPoints,
+  resolveSurfaceSnapHitFromIntersections
+} from "./transform-surface-snap";
 import {
   getViewportViewModeDefinition,
   isOrthographicViewportViewMode,
@@ -832,6 +843,7 @@ export class ViewportHost {
 
   setTransformSession(transformSession: TransformSessionState) {
     const previousTransformSession = this.currentTransformSession;
+    let rebuiltPreviewFromPointer = false;
     this.currentTransformSession = cloneTransformSession(transformSession);
 
     if (this.currentTransformSession.kind === "none") {
@@ -856,8 +868,10 @@ export class ViewportHost {
       previousTransformSession.kind === "active" &&
       this.currentTransformSession.kind === "active" &&
       previousTransformSession.id === this.currentTransformSession.id &&
-      (previousTransformSession.axisConstraint !==
-        this.currentTransformSession.axisConstraint ||
+      (previousTransformSession.surfaceSnapEnabled !==
+        this.currentTransformSession.surfaceSnapEnabled ||
+        previousTransformSession.axisConstraint !==
+          this.currentTransformSession.axisConstraint ||
         previousTransformSession.axisConstraintSpace !==
           this.currentTransformSession.axisConstraintSpace) &&
       this.currentTransformSession.sourcePanelId === this.panelId &&
@@ -877,10 +891,15 @@ export class ViewportHost {
         this.currentTransformSession.axisConstraint,
         this.currentTransformSession.axisConstraintSpace
       );
+      rebuiltPreviewFromPointer = true;
     }
 
     this.applyTransformPreview();
     this.syncTransformGizmo();
+
+    if (rebuiltPreviewFromPointer) {
+      this.transformSessionChangeHandler?.(this.currentTransformSession);
+    }
   }
 
   setToolMode(toolMode: ToolMode) {
@@ -2081,6 +2100,7 @@ export class ViewportHost {
       source: "gizmo",
       sourcePanelId: this.panelId,
       operation: "translate",
+      surfaceSnapEnabled: false,
       axisConstraint: null,
       axisConstraintSpace: "world",
       target: transformTarget,
@@ -2368,9 +2388,17 @@ export class ViewportHost {
       session.target.kind === "entities" ||
       session.target.kind === "modelInstances"
     ) {
-      return this.buildBatchTranslatedPreview(
+      const preview = this.buildBatchTranslatedPreview(
         session,
         origin,
+        current,
+        axisConstraint,
+        axisConstraintSpace
+      );
+
+      return this.applySurfaceSnapMoveToTranslatedPreview(
+        session,
+        preview,
         current,
         axisConstraint,
         axisConstraintSpace
@@ -2485,8 +2513,10 @@ export class ViewportHost {
       );
     }
 
+    let preview: TransformPreview;
+
     if (session.target.kind === "brush") {
-      return {
+      preview = {
         kind: "brush" as const,
         center: nextPosition,
         rotationDegrees: {
@@ -2497,10 +2527,8 @@ export class ViewportHost {
         },
         geometry: cloneBrushGeometry(session.target.initialGeometry)
       };
-    }
-
-    if (session.target.kind === "modelInstance") {
-      return {
+    } else if (session.target.kind === "modelInstance") {
+      preview = {
         kind: "modelInstance" as const,
         position: nextPosition,
         rotationDegrees: {
@@ -2510,35 +2538,41 @@ export class ViewportHost {
           ...session.target.initialScale
         }
       };
-    }
-
-    if (session.target.kind === "pathPoint") {
-      return {
+    } else if (session.target.kind === "pathPoint") {
+      preview = {
         kind: "pathPoint" as const,
         position: nextPosition
       };
+    } else {
+      preview = {
+        kind: "entity" as const,
+        position: nextPosition,
+        rotation:
+          session.target.initialRotation.kind === "yaw"
+            ? {
+                kind: "yaw" as const,
+                yawDegrees: session.target.initialRotation.yawDegrees
+              }
+            : session.target.initialRotation.kind === "direction"
+              ? {
+                  kind: "direction" as const,
+                  direction: {
+                    ...session.target.initialRotation.direction
+                  }
+                }
+              : {
+                  kind: "none" as const
+                }
+      };
     }
 
-    return {
-      kind: "entity" as const,
-      position: nextPosition,
-      rotation:
-        session.target.initialRotation.kind === "yaw"
-          ? {
-              kind: "yaw" as const,
-              yawDegrees: session.target.initialRotation.yawDegrees
-            }
-          : session.target.initialRotation.kind === "direction"
-            ? {
-                kind: "direction" as const,
-                direction: {
-                  ...session.target.initialRotation.direction
-                }
-              }
-            : {
-                kind: "none" as const
-              }
-    };
+    return this.applySurfaceSnapMoveToTranslatedPreview(
+      session,
+      preview,
+      current,
+      axisConstraint,
+      axisConstraintSpace
+    );
   }
 
   private buildRotatedPreview(
@@ -3116,6 +3150,319 @@ export class ViewportHost {
                 }
       }))
     };
+  }
+
+  private applySurfaceSnapMoveToTranslatedPreview(
+    session: ActiveTransformSession,
+    preview: TransformPreview,
+    current: { x: number; y: number },
+    axisConstraint: TransformAxis | null,
+    axisConstraintSpace: TransformAxisSpace
+  ): TransformPreview {
+    if (
+      !session.surfaceSnapEnabled ||
+      !supportsTransformSurfaceSnapTarget(session.target)
+    ) {
+      return preview;
+    }
+
+    const hit = this.getSurfaceSnapHitAtPointer(session, current);
+
+    if (hit === null) {
+      return preview;
+    }
+
+    const supportPoints = this.collectSurfaceSnapSupportPoints(session, preview);
+    const axisVector =
+      axisConstraint === null
+        ? null
+        : this.getConstraintAxisWorldVector(
+            session,
+            axisConstraint,
+            axisConstraintSpace
+          );
+    const delta = computeSurfaceSnapDelta({
+      supportPoints,
+      hit,
+      axisVector:
+        axisVector === null
+          ? null
+          : {
+              x: axisVector.x,
+              y: axisVector.y,
+              z: axisVector.z
+            },
+      surfaceOffset: SURFACE_SNAP_OFFSET
+    });
+
+    return delta === null
+      ? preview
+      : applyRigidDeltaToTransformPreview(preview, delta);
+  }
+
+  private getSurfaceSnapHitAtPointer(
+    session: ActiveTransformSession,
+    current: { x: number; y: number }
+  ) {
+    if (!this.setPointerFromClientPosition(current.x, current.y)) {
+      return null;
+    }
+
+    const excludedIds = this.getSurfaceSnapExcludedIds(session);
+    const raycastObjects = this.getSurfaceSnapRaycastObjects(excludedIds);
+
+    if (raycastObjects.length === 0) {
+      return null;
+    }
+
+    this.raycaster.setFromCamera(this.pointer, this.getActiveCamera());
+
+    return resolveSurfaceSnapHitFromIntersections({
+      hits: this.raycaster.intersectObjects(raycastObjects, true),
+      rayDirection: {
+        x: this.raycaster.ray.direction.x,
+        y: this.raycaster.ray.direction.y,
+        z: this.raycaster.ray.direction.z
+      },
+      isObjectExcluded: (object) =>
+        this.isSurfaceSnapObjectExcluded(object, excludedIds)
+    });
+  }
+
+  private getSurfaceSnapExcludedIds(session: ActiveTransformSession) {
+    const brushIds = new Set<string>();
+    const entityIds = new Set<string>();
+    const modelInstanceIds = new Set<string>();
+
+    switch (session.target.kind) {
+      case "brush":
+        brushIds.add(session.target.brushId);
+        break;
+      case "brushes":
+        for (const item of session.target.items) {
+          brushIds.add(item.brushId);
+        }
+        break;
+      case "entity":
+        entityIds.add(session.target.entityId);
+        break;
+      case "entities":
+        for (const item of session.target.items) {
+          entityIds.add(item.entityId);
+        }
+        break;
+      case "modelInstance":
+        modelInstanceIds.add(session.target.modelInstanceId);
+        break;
+      case "modelInstances":
+        for (const item of session.target.items) {
+          modelInstanceIds.add(item.modelInstanceId);
+        }
+        break;
+      case "brushFace":
+      case "brushEdge":
+      case "brushVertex":
+      case "pathPoint":
+        break;
+    }
+
+    return {
+      brushIds,
+      entityIds,
+      modelInstanceIds
+    };
+  }
+
+  private isSurfaceSnapObjectExcluded(
+    object: Object3D,
+    excludedIds: {
+      brushIds: ReadonlySet<string>;
+      entityIds: ReadonlySet<string>;
+      modelInstanceIds: ReadonlySet<string>;
+    }
+  ): boolean {
+    let current: Object3D | null = object;
+
+    while (current !== null) {
+      const brushId = current.userData.brushId;
+
+      if (
+        typeof brushId === "string" &&
+        excludedIds.brushIds.has(brushId)
+      ) {
+        return true;
+      }
+
+      const entityId = current.userData.entityId;
+
+      if (
+        typeof entityId === "string" &&
+        excludedIds.entityIds.has(entityId)
+      ) {
+        return true;
+      }
+
+      const modelInstanceId = current.userData.modelInstanceId;
+
+      if (
+        typeof modelInstanceId === "string" &&
+        excludedIds.modelInstanceIds.has(modelInstanceId)
+      ) {
+        return true;
+      }
+
+      current = current.parent;
+    }
+
+    return false;
+  }
+
+  private getSurfaceSnapRaycastObjects(excludedIds: {
+    brushIds: ReadonlySet<string>;
+    entityIds: ReadonlySet<string>;
+    modelInstanceIds: ReadonlySet<string>;
+  }): Object3D[] {
+    const raycastObjects: Object3D[] = [];
+
+    for (const [brushId, renderObjects] of this.brushRenderObjects) {
+      if (excludedIds.brushIds.has(brushId)) {
+        continue;
+      }
+
+      raycastObjects.push(renderObjects.mesh);
+    }
+
+    if (this.currentDocument !== null) {
+      for (const [entityId, renderObjects] of this.entityRenderObjects) {
+        if (excludedIds.entityIds.has(entityId)) {
+          continue;
+        }
+
+        const entity = this.currentDocument.entities[entityId];
+
+        if (entity?.kind !== "triggerVolume") {
+          continue;
+        }
+
+        raycastObjects.push(renderObjects.group);
+      }
+    }
+
+    for (const [modelInstanceId, renderGroup] of this.modelRenderObjects) {
+      if (excludedIds.modelInstanceIds.has(modelInstanceId)) {
+        continue;
+      }
+
+      raycastObjects.push(renderGroup);
+    }
+
+    return raycastObjects;
+  }
+
+  private collectSurfaceSnapSupportPoints(
+    session: ActiveTransformSession,
+    preview: TransformPreview
+  ): Vec3[] {
+    switch (session.target.kind) {
+      case "brush":
+        return preview.kind === "brush"
+          ? createBrushSurfaceSnapSupportPoints(preview)
+          : [];
+      case "brushes":
+        return preview.kind === "brushes"
+          ? preview.items.flatMap((item) =>
+              createBrushSurfaceSnapSupportPoints(item)
+            )
+          : [];
+      case "modelInstance":
+        return preview.kind === "modelInstance"
+          ? createModelBoundingBoxSurfaceSnapSupportPoints({
+              position: preview.position,
+              rotationDegrees: preview.rotationDegrees,
+              scale: preview.scale,
+              boundingBox: this.getModelAssetBoundingBox(session.target.assetId)
+            })
+          : [];
+      case "modelInstances":
+        if (preview.kind !== "modelInstances") {
+          return [];
+        }
+
+        const modelInstancesTarget = session.target;
+
+        return preview.items.flatMap((item, index) =>
+          createModelBoundingBoxSurfaceSnapSupportPoints({
+            position: item.position,
+            rotationDegrees: item.rotationDegrees,
+            scale: item.scale,
+            boundingBox: this.getModelAssetBoundingBox(
+              modelInstancesTarget.items[index]?.assetId ?? ""
+            )
+          })
+        );
+      case "entity": {
+        if (
+          preview.kind !== "entity" ||
+          session.target.entityKind !== "triggerVolume" ||
+          this.currentDocument === null
+        ) {
+          return [];
+        }
+
+        const entity = this.currentDocument.entities[session.target.entityId];
+
+        return entity?.kind === "triggerVolume"
+          ? createAxisAlignedBoxSurfaceSnapSupportPoints(
+              preview.position,
+              entity.size
+            )
+          : [];
+      }
+      case "entities": {
+        if (preview.kind !== "entities" || this.currentDocument === null) {
+          return [];
+        }
+
+        const supportPoints: Vec3[] = [];
+
+        for (const [index, item] of session.target.items.entries()) {
+          if (item.entityKind !== "triggerVolume") {
+            continue;
+          }
+
+          const previewItem = preview.items[index];
+
+          if (previewItem === undefined) {
+            continue;
+          }
+
+          const entity = this.currentDocument.entities[item.entityId];
+
+          if (entity?.kind !== "triggerVolume") {
+            continue;
+          }
+
+          supportPoints.push(
+            ...createAxisAlignedBoxSurfaceSnapSupportPoints(
+              previewItem.position,
+              entity.size
+            )
+          );
+        }
+
+        return supportPoints;
+      }
+      case "brushFace":
+      case "brushEdge":
+      case "brushVertex":
+      case "pathPoint":
+        return [];
+    }
+  }
+
+  private getModelAssetBoundingBox(assetId: string) {
+    const asset = this.projectAssets[assetId];
+    return asset?.kind === "model" ? asset.metadata.boundingBox : null;
   }
 
   private buildBatchRotatedPreview(
@@ -6768,6 +7115,7 @@ export class ViewportHost {
           source: "gizmo",
           sourcePanelId: this.panelId,
           operation: interactionSession.operation,
+          surfaceSnapEnabled: interactionSession.surfaceSnapEnabled,
           axisConstraint: transformHandle.axisConstraint,
           axisConstraintSpace:
             transformHandle.axisConstraint === null

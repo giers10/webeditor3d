@@ -88,6 +88,7 @@ import {
   supportsLocalTransformAxisConstraint,
   supportsTransformAxisConstraint,
   supportsTransformOperation,
+  supportsTransformSurfaceSnapTarget,
   type ActiveTransformSession,
   type TransformAxis,
   type TransformOperation,
@@ -2856,6 +2857,13 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const canScaleSelectedTarget =
     selectedTransformTarget !== null &&
     supportsTransformOperation(selectedTransformTarget, "scale");
+  const surfaceSnapTransformTarget =
+    transformSession.kind === "active"
+      ? transformSession.target
+      : selectedTransformTarget;
+  const canSurfaceSnapTransformTarget =
+    surfaceSnapTransformTarget !== null &&
+    supportsTransformSurfaceSnapTarget(surfaceSnapTransformTarget);
   const whiteboxSnapStep = editorState.whiteboxSnapStep;
   const whiteboxVectorInputStep = getWhiteboxInputStep(
     whiteboxSnapEnabled,
@@ -6120,6 +6128,33 @@ export function App({ store, initialStatusMessage }: AppProps) {
       `Constrained ${getTransformOperationLabel(transformSession.operation).toLowerCase()} to ${getTransformAxisSpaceLabel(
         nextAxisConstraintSpace
       ).toLowerCase()} ${getTransformAxisLabel(axis)}.`
+    );
+  };
+
+  const toggleTransformSurfaceSnap = () => {
+    if (
+      transformSession.kind !== "active" ||
+      transformSession.operation !== "translate"
+    ) {
+      return;
+    }
+
+    if (!supportsTransformSurfaceSnapTarget(transformSession.target)) {
+      setStatusMessage(
+        `Surface Snap Move is not available for ${getTransformTargetLabel(transformSession.target).toLowerCase()}.`
+      );
+      return;
+    }
+
+    const nextSurfaceSnapEnabled = !transformSession.surfaceSnapEnabled;
+    store.setTransformSession({
+      ...transformSession,
+      surfaceSnapEnabled: nextSurfaceSnapEnabled
+    });
+    setStatusMessage(
+      nextSurfaceSnapEnabled
+        ? "Enabled Surface Snap Move."
+        : "Disabled Surface Snap Move."
     );
   };
 
@@ -12172,6 +12207,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   canTranslateSelectedTarget={canTranslateSelectedTarget}
                   canRotateSelectedTarget={canRotateSelectedTarget}
                   canScaleSelectedTarget={canScaleSelectedTarget}
+                  canSurfaceSnapTransformTarget={
+                    canSurfaceSnapTransformTarget
+                  }
                   cameraState={editorState.viewportPanels[panelId].cameraState}
                   focusRequestId={
                     focusRequest.panelId === panelId ? focusRequest.id : 0
@@ -12193,6 +12231,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   onBeginTransformOperation={(operation) =>
                     beginTransformOperation(operation, "toolbar")
                   }
+                  onToggleTransformSurfaceSnap={toggleTransformSurfaceSnap}
                   onWhiteboxSelectionModeChange={
                     handleWhiteboxSelectionModeChange
                   }

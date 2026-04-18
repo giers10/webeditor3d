@@ -337,13 +337,20 @@ export function ViewportCanvas({
             >
               {transformSession.kind !== "active"
                 ? null
-                : `${transformSession.operation}${
+                : [
+                    transformSession.operation,
+                    transformSession.operation === "translate" &&
+                    transformSession.surfaceSnapEnabled
+                      ? "surface snap"
+                      : null,
                     transformSession.axisConstraint === null
-                      ? ""
-                      : ` · ${getTransformAxisSpaceLabel(transformSession.axisConstraintSpace)} ${getTransformAxisLabel(
+                      ? null
+                      : `${getTransformAxisSpaceLabel(transformSession.axisConstraintSpace)} ${getTransformAxisLabel(
                           transformSession.axisConstraint
                         )}`
-                  }`}
+                  ]
+                    .filter((part) => part !== null)
+                    .join(" · ")}
             </div>
           )}
           {selectedWhiteboxLabel === null ? null : (

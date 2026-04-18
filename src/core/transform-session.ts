@@ -283,6 +283,7 @@ export interface ActiveTransformSession {
   source: TransformSessionSource;
   sourcePanelId: ViewportPanelId;
   operation: TransformOperation;
+  surfaceSnapEnabled: boolean;
   axisConstraint: TransformAxis | null;
   axisConstraintSpace: TransformAxisSpace;
   target: TransformTarget;
@@ -686,6 +687,7 @@ export function cloneTransformSession(
     source: session.source,
     sourcePanelId: session.sourcePanelId,
     operation: session.operation,
+    surfaceSnapEnabled: session.surfaceSnapEnabled,
     axisConstraint: session.axisConstraint,
     axisConstraintSpace: session.axisConstraintSpace,
     target: cloneTransformTarget(session.target),
@@ -710,6 +712,7 @@ export function areTransformSessionsEqual(
     left.source === right.source &&
     left.sourcePanelId === right.sourcePanelId &&
     left.operation === right.operation &&
+    left.surfaceSnapEnabled === right.surfaceSnapEnabled &&
     left.axisConstraint === right.axisConstraint &&
     left.axisConstraintSpace === right.axisConstraintSpace &&
     areTransformTargetsEqual(left.target, right.target) &&
@@ -925,6 +928,7 @@ export function createTransformSession(options: {
   source: TransformSessionSource;
   sourcePanelId: ViewportPanelId;
   operation: TransformOperation;
+  surfaceSnapEnabled?: boolean;
   axisConstraint?: TransformAxis | null;
   axisConstraintSpace?: TransformAxisSpace;
   target: TransformTarget;
@@ -935,6 +939,7 @@ export function createTransformSession(options: {
     source: options.source,
     sourcePanelId: options.sourcePanelId,
     operation: options.operation,
+    surfaceSnapEnabled: options.surfaceSnapEnabled ?? false,
     axisConstraint: options.axisConstraint ?? null,
     axisConstraintSpace: options.axisConstraintSpace ?? "world",
     target: cloneTransformTarget(options.target),
@@ -1217,6 +1222,27 @@ export function supportsTransformOperation(
   operation: TransformOperation
 ): boolean {
   return getSupportedTransformOperations(target).includes(operation);
+}
+
+export function supportsTransformSurfaceSnapTarget(
+  target: TransformTarget
+): boolean {
+  switch (target.kind) {
+    case "brush":
+    case "brushes":
+    case "modelInstance":
+    case "modelInstances":
+      return true;
+    case "entity":
+      return target.entityKind === "triggerVolume";
+    case "entities":
+      return target.items.every((item) => item.entityKind === "triggerVolume");
+    case "brushFace":
+    case "brushEdge":
+    case "brushVertex":
+    case "pathPoint":
+      return false;
+  }
 }
 
 export function supportsTransformAxisConstraint(

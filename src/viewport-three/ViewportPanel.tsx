@@ -68,6 +68,7 @@ interface ViewportPanelProps {
   canTranslateSelectedTarget: boolean;
   canRotateSelectedTarget: boolean;
   canScaleSelectedTarget: boolean;
+  canSurfaceSnapTransformTarget: boolean;
   cameraState: ViewportPanelCameraState;
   focusRequestId: number;
   focusSelection: EditorSelection;
@@ -87,6 +88,7 @@ interface ViewportPanelProps {
   onCameraStateChange(cameraState: ViewportPanelCameraState): void;
   onToolPreviewChange(toolPreview: ViewportToolPreview): void;
   onBeginTransformOperation(operation: TransformOperation): void;
+  onToggleTransformSurfaceSnap(): void;
   onWhiteboxSelectionModeChange(mode: WhiteboxSelectionMode): void;
   onViewportGridToggle(): void;
   onWhiteboxSnapToggle(): void;
@@ -140,6 +142,7 @@ export function ViewportPanel({
   canTranslateSelectedTarget,
   canRotateSelectedTarget,
   canScaleSelectedTarget,
+  canSurfaceSnapTransformTarget,
   cameraState,
   focusRequestId,
   focusSelection,
@@ -153,6 +156,7 @@ export function ViewportPanel({
   onCameraStateChange,
   onToolPreviewChange,
   onBeginTransformOperation,
+  onToggleTransformSurfaceSnap,
   onWhiteboxSelectionModeChange,
   onViewportGridToggle,
   onWhiteboxSnapToggle,
@@ -375,6 +379,28 @@ export function ViewportPanel({
           >
             Move
           </button>
+          {transformSession.kind === "active" &&
+          transformSession.operation === "translate" ? (
+            <button
+              className={`viewport-panel__button ${transformSession.surfaceSnapEnabled ? "viewport-panel__button--active" : ""}`}
+              type="button"
+              data-testid={getSharedControlTestId(
+                panelId,
+                isActive,
+                "transform-surface-snap-button"
+              )}
+              aria-pressed={transformSession.surfaceSnapEnabled}
+              disabled={!canSurfaceSnapTransformTarget}
+              onClick={onToggleTransformSurfaceSnap}
+              title={
+                canSurfaceSnapTransformTarget
+                  ? "Snap the current move preview onto the visible surface under the cursor."
+                  : "Surface Snap Move currently supports whitebox solids, model instances, and trigger volumes."
+              }
+            >
+              Surface Snap
+            </button>
+          ) : null}
           <button
             className={`viewport-panel__button ${transformSession.kind === "active" && transformSession.operation === "rotate" ? "viewport-panel__button--active" : ""}`}
             type="button"
