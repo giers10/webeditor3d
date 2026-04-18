@@ -262,6 +262,10 @@ interface PathRenderObjects {
   }>;
 }
 
+interface TerrainRenderObjects {
+  mesh: Mesh<BufferGeometry, Material>;
+}
+
 interface ViewportWaterSurfaceBinding {
   brush: BoxBrush;
   reflectionTextureUniform: { value: unknown } | null;
@@ -310,6 +314,12 @@ const PATH_POINT_SELECTED_COLOR = 0xcf7b42;
 const PATH_POINT_RADIUS = 0.12;
 const PATH_POINT_HOVERED_SCALE = 1.18;
 const PATH_POINT_SELECTED_SCALE = 1.35;
+const TERRAIN_BASE_COLOR = 0x708b57;
+const TERRAIN_HOVERED_COLOR = 0x89a765;
+const TERRAIN_SELECTED_COLOR = 0xe0c17f;
+const TERRAIN_ACTIVE_COLOR = 0xf0d8a2;
+const TERRAIN_ACTIVE_EMISSIVE = 0x5c4623;
+const TERRAIN_SELECTED_EMISSIVE = 0x3f2d17;
 const BOX_CREATE_PREVIEW_FILL = 0x89b6ff;
 const BOX_CREATE_PREVIEW_EDGE = 0xf3be8f;
 const PLACEMENT_PREVIEW_COLOR_HEX = "#89b6ff";
