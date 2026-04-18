@@ -1910,6 +1910,39 @@ export class RuntimeHost {
     this.applyShadowState();
   }
 
+  private rebuildTerrainMeshes(terrains: RuntimeTerrain[]) {
+    this.clearTerrainMeshes();
+
+    for (const terrain of terrains) {
+      const geometry = buildTerrainDerivedMeshData({
+        ...terrain,
+        kind: "terrain",
+        enabled: true
+      }).geometry;
+      const mesh = new Mesh(
+        geometry,
+        new MeshStandardMaterial({
+          color: 0x708b57,
+          roughness: 0.98,
+          metalness: 0
+        })
+      );
+
+      mesh.position.set(
+        terrain.position.x,
+        terrain.position.y,
+        terrain.position.z
+      );
+      mesh.visible = terrain.visible;
+      mesh.castShadow = false;
+      mesh.receiveShadow = true;
+      this.terrainGroup.add(mesh);
+      this.terrainMeshes.set(terrain.id, mesh);
+    }
+
+    this.applyShadowState();
+  }
+
   private createFogMaterialSet(
     brush: RuntimeBoxBrushInstance,
     volumeRenderPaths: {
