@@ -11168,6 +11168,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
     },
     {
       kind: "action",
+      label: "Terrain",
+      testId: "add-menu-terrain",
+      onSelect: handleCreateTerrain
+    },
+    {
+      kind: "action",
       label: "Path",
       testId: "add-menu-path",
       onSelect: handleCreatePath
