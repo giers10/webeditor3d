@@ -312,6 +312,7 @@ export class RuntimeHost {
   private readonly moonLight = new DirectionalLight();
   private readonly localLightGroup = new Group();
   private readonly brushGroup = new Group();
+  private readonly terrainGroup = new Group();
   private readonly modelGroup = new Group();
   private readonly firstPersonController =
     new FirstPersonNavigationController();
@@ -329,6 +330,7 @@ export class RuntimeHost {
     string,
     Mesh<BufferGeometry, Material[]>
   >();
+  private readonly terrainMeshes = new Map<string, Mesh<BufferGeometry, Material>>();
   private volumeTime = 0;
   private readonly volumeAnimatedUniforms: Array<{ value: number }> = [];
   private readonly runtimeWaterContactUniforms: RuntimeWaterContactUniformBinding[] =
