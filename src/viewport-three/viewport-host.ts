@@ -7909,6 +7909,10 @@ export class ViewportHost {
       return;
     }
 
+    if (this.beginTerrainBrushStroke(event)) {
+      return;
+    }
+
     const candidates = this.getSelectionCandidates(event);
 
     if (candidates.length === 0) {
@@ -8004,6 +8008,20 @@ export class ViewportHost {
       return;
     }
 
+    if (this.continueTerrainBrushStroke(event)) {
+      return;
+    }
+
+    if (this.isTerrainBrushActive()) {
+      this.setHoveredSelection({
+        kind: "none"
+      });
+      this.setTerrainBrushHover(
+        this.getTerrainBrushHitAtClientPosition(event.clientX, event.clientY)
+      );
+      return;
+    }
+
     if (this.toolMode === "select") {
       const hoveredCandidate = this.getSelectionCandidates(event)[0]
         ?.selection ?? { kind: "none" };
@@ -8058,6 +8076,10 @@ export class ViewportHost {
       return;
     }
 
+    if (this.finishTerrainBrushStroke(event)) {
+      return;
+    }
+
     if (this.activeCameraDragPointerId !== event.pointerId) {
       return;
     }
@@ -8079,6 +8101,7 @@ export class ViewportHost {
     this.setHoveredSelection({
       kind: "none"
     });
+    this.setTerrainBrushHover(null);
 
     // Keep the shared creation preview alive across panel boundaries; the next
     // viewport panel will update it as the pointer continues moving.
