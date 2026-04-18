@@ -7379,6 +7379,26 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
+  const handleCreateTerrain = () => {
+    try {
+      const nextTerrain = createTerrain();
+
+      store.executeCommand(
+        createUpsertTerrainCommand({
+          terrain: nextTerrain,
+          label: "Create terrain"
+        })
+      );
+      requestViewportFocus({
+        kind: "terrains",
+        ids: [nextTerrain.id]
+      });
+      setStatusMessage("Created Terrain and framed it in the viewport.");
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
   const commitPathChange = (
     currentPath: ScenePath,
     nextPath: ScenePath,
