@@ -1843,6 +1843,12 @@ export function resolveTransformTarget(
       return selection.ids.length === 1
         ? createBrushTransformTarget(document, selection.ids[0])
         : createBrushesTransformTarget(document, selection.ids, activeSelectionId);
+    case "terrains":
+      return {
+        target: null,
+        message:
+          "Terrain transforms and editing tools land in a later inspector slice."
+      };
     case "entities":
       if (selection.ids.length === 0) {
         return {
