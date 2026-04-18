@@ -2575,6 +2575,16 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [terrainBrushSettings, setTerrainBrushSettings] = useState(
     createDefaultTerrainBrushSettings()
   );
+  const activeTerrainBrushState: ArmedTerrainBrushState | null =
+    selectedTerrain === null || armedTerrainBrushTool === null
+      ? null
+      : {
+          terrainId: selectedTerrain.id,
+          tool: armedTerrainBrushTool,
+          radius: terrainBrushSettings.radius,
+          strength: terrainBrushSettings.strength,
+          falloff: terrainBrushSettings.falloff
+        };
   const [ambientLightIntensityDraft, setAmbientLightIntensityDraft] = useState(
     String(editorState.document.world.ambientLight.intensity)
   );
