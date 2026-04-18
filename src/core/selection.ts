@@ -100,10 +100,10 @@ export function areEditorSelectionsEqual(left: EditorSelection, right: EditorSel
       return right.kind === "brushEdge" && left.brushId === right.brushId && left.edgeId === right.edgeId;
     case "brushVertex":
       return right.kind === "brushVertex" && left.brushId === right.brushId && left.vertexId === right.vertexId;
-    case "terrains":
     case "pathPoint":
       return right.kind === "pathPoint" && left.pathId === right.pathId && left.pointId === right.pointId;
     case "brushes":
+    case "terrains":
     case "paths":
     case "entities":
     case "modelInstances":
