@@ -966,7 +966,8 @@ function combineColliderBounds(
 function getRuntimeTerrainSceneBounds(terrain: RuntimeTerrain): RuntimeSceneBounds {
   const bounds = getTerrainBounds({
     ...terrain,
-    kind: "terrain"
+    kind: "terrain",
+    enabled: true
   });
   const min = cloneVec3(bounds.min);
   const max = cloneVec3(bounds.max);
