@@ -27,8 +27,10 @@ import {
   createEmptyProjectSequenceLibrary,
   type ProjectSequenceLibrary
 } from "../sequencer/project-sequences";
+import type { Terrain } from "./terrains";
 
-export const SCENE_DOCUMENT_VERSION = 64 as const;
+export const SCENE_DOCUMENT_VERSION = 65 as const;
+export const AUTHORED_TERRAIN_FOUNDATION_SCENE_DOCUMENT_VERSION = 65 as const;
 export const FOLLOW_ACTOR_PATH_SMOOTH_SCENE_DOCUMENT_VERSION = 64 as const;
 export const NPC_DIALOGUE_LINE_SPEAKER_REMOVED_SCENE_DOCUMENT_VERSION =
   63 as const;
@@ -157,6 +159,7 @@ export interface ProjectScene {
   editorPreferences: SceneEditorPreferences;
   world: WorldSettings;
   brushes: Record<string, Brush>;
+  terrains: Record<string, Terrain>;
   paths: Record<string, ScenePath>;
   modelInstances: Record<string, ModelInstance>;
   entities: Record<string, EntityInstance>;
@@ -187,6 +190,7 @@ export interface SceneDocument {
   textures: Record<string, never>;
   assets: Record<string, ProjectAssetRecord>;
   brushes: Record<string, Brush>;
+  terrains: Record<string, Terrain>;
   paths: Record<string, ScenePath>;
   modelInstances: Record<string, ModelInstance>;
   entities: Record<string, EntityInstance>;
@@ -211,6 +215,7 @@ export function createEmptySceneDocument(
     textures: {},
     assets: {},
     brushes: {},
+    terrains: {},
     paths: {},
     modelInstances: {},
     entities: {},
@@ -237,6 +242,7 @@ export function createEmptyProjectScene(
     ),
     world: overrides.world ?? createDefaultWorldSettings(),
     brushes: {},
+    terrains: {},
     paths: {},
     modelInstances: {},
     entities: {},
@@ -318,6 +324,7 @@ export function createSceneDocumentFromProject(
     textures: projectDocument.textures,
     assets: projectDocument.assets,
     brushes: scene.brushes,
+    terrains: scene.terrains,
     paths: scene.paths,
     modelInstances: scene.modelInstances,
     entities: scene.entities,
@@ -345,6 +352,7 @@ export function createProjectDocumentFromSceneDocument(
         editorPreferences: createDefaultSceneEditorPreferences(),
         world: sceneDocument.world,
         brushes: sceneDocument.brushes,
+        terrains: sceneDocument.terrains,
         paths: sceneDocument.paths,
         modelInstances: sceneDocument.modelInstances,
         entities: sceneDocument.entities,
@@ -380,6 +388,7 @@ export function applySceneDocumentToProject(
         name: sceneDocument.name,
         world: sceneDocument.world,
         brushes: sceneDocument.brushes,
+        terrains: sceneDocument.terrains,
         paths: sceneDocument.paths,
         modelInstances: sceneDocument.modelInstances,
         entities: sceneDocument.entities,
