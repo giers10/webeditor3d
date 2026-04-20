@@ -428,4 +428,58 @@ describe("ViewportCanvas", () => {
       screen.getByTestId("viewport-terrain-brush-preview-topLeft")
     ).toHaveTextContent("terrain · smooth");
   });
+
+  it("shows the active terrain paint layer in the viewport overlay", () => {
+    const sceneDocument = createEmptySceneDocument();
+    const terrainBrushState: ArmedTerrainBrushState = {
+      terrainId: "terrain-selected",
+      tool: "paint",
+      layerIndex: 2,
+      radius: 2.5,
+      strength: 0.4,
+      falloff: 0.7
+    };
+
+    render(
+      <ViewportCanvas
+        panelId="topLeft"
+        world={sceneDocument.world}
+        sceneDocument={sceneDocument}
+        editorSimulationScene={null}
+        editorSimulationClock={null}
+        projectAssets={sceneDocument.assets}
+        loadedModelAssets={{}}
+        loadedImageAssets={{}}
+        whiteboxSelectionMode="object"
+        whiteboxSnapEnabled
+        whiteboxSnapStep={1}
+        viewportGridVisible={true}
+        selection={{ kind: "terrains", ids: [terrainBrushState.terrainId] }}
+        activeSelectionId={terrainBrushState.terrainId}
+        terrainBrushState={terrainBrushState}
+        toolMode="select"
+        toolPreview={{ kind: "none" }}
+        transformSession={createInactiveTransformSession()}
+        cameraState={createDefaultViewportPanelCameraState()}
+        viewMode="perspective"
+        displayMode="normal"
+        layoutMode="single"
+        isActivePanel
+        focusRequestId={0}
+        focusSelection={{ kind: "none" }}
+        onSelectionChange={vi.fn()}
+        onTerrainBrushCommit={vi.fn(() => true)}
+        onCommitCreation={vi.fn(() => true)}
+        onCameraStateChange={vi.fn()}
+        onToolPreviewChange={vi.fn()}
+        onTransformSessionChange={vi.fn()}
+        onTransformCommit={vi.fn()}
+        onTransformCancel={vi.fn()}
+      />
+    );
+
+    expect(
+      screen.getByTestId("viewport-terrain-brush-preview-topLeft")
+    ).toHaveTextContent("terrain · paint · layer 3");
+  });
 });

@@ -19,6 +19,7 @@ import { getFirstPersonPlayerShapeSignature } from "./player-collision";
 import type {
   RuntimeBrushTriMeshCollider,
   RuntimeNpcCollider,
+  RuntimeTerrainHeightfieldCollider,
   RuntimeSceneCollider
 } from "./runtime-scene-build";
 
@@ -86,7 +87,11 @@ function scaleBoundsCenter(bounds: { min: Vec3; max: Vec3 }, scale: Vec3): Vec3 
   };
 }
 
-function createRapierHeightfieldHeights(collider: GeneratedModelHeightfieldCollider): Float32Array {
+function createRapierHeightfieldHeights(collider: {
+  rows: number;
+  cols: number;
+  heights: ArrayLike<number>;
+}): Float32Array {
   const heights = new Float32Array(collider.heights.length);
 
   // Rapier's heightfield samples are column-major, with the Z axis varying
@@ -178,6 +183,45 @@ function attachTerrainModelCollider(world: RAPIER.World, collider: GeneratedMode
       y: collider.transform.scale.y,
       z: (collider.maxZ - collider.minZ) * collider.transform.scale.z
     }).setTranslation(center.x, center.y, center.z),
+    body
+  );
+}
+
+function attachTerrainCollider(
+  world: RAPIER.World,
+  collider: RuntimeTerrainHeightfieldCollider
+) {
+  if (collider.rows < 2 || collider.cols < 2) {
+    throw new Error(
+      `Terrain collider ${collider.terrainId} must have at least a 2x2 height sample grid.`
+    );
+  }
+
+  const body = world.createRigidBody(
+    RAPIER.RigidBodyDesc.fixed().setTranslation(
+      collider.position.x,
+      collider.position.y,
+      collider.position.z
+    )
+  );
+  const rowSubdivisions = collider.rows - 1;
+  const colSubdivisions = collider.cols - 1;
+
+  world.createCollider(
+    RAPIER.ColliderDesc.heightfield(
+      rowSubdivisions,
+      colSubdivisions,
+      createRapierHeightfieldHeights(collider),
+      {
+        x: collider.maxX - collider.minX,
+        y: 1,
+        z: collider.maxZ - collider.minZ
+      }
+    ).setTranslation(
+      (collider.minX + collider.maxX) * 0.5,
+      0,
+      (collider.minZ + collider.maxZ) * 0.5
+    ),
     body
   );
 }
@@ -385,6 +429,11 @@ export class RapierCollisionWorld {
     });
 
     for (const collider of colliders) {
+      if (collider.source === "terrain") {
+        attachTerrainCollider(world, collider);
+        continue;
+      }
+
       if (collider.source === "brush") {
         attachBrushCollider(world, collider);
         continue;

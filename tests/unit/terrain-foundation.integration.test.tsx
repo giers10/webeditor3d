@@ -132,4 +132,54 @@ describe("Terrain foundation", () => {
     ).toBeInTheDocument();
     expect(screen.getByText(/9 x 9 samples/)).toBeInTheDocument();
   });
+
+  it("updates selected terrain grid settings and collision from the inspector", async () => {
+    const store = createEditorStore();
+
+    render(<App store={store} />);
+
+    await waitFor(() => {
+      expect(viewportHostInstances.length).toBeGreaterThan(0);
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Add" }));
+    fireEvent.click(await screen.findByTestId("add-menu-terrain"));
+
+    await waitFor(() => {
+      expect(Object.keys(store.getState().document.terrains)).toHaveLength(1);
+    });
+
+    const createdTerrain = Object.values(store.getState().document.terrains)[0];
+
+    if (createdTerrain === undefined) {
+      throw new Error("Expected the created terrain to exist.");
+    }
+
+    fireEvent.change(screen.getByTestId("terrain-grid-sample-count-x"), {
+      target: { value: "5" }
+    });
+    fireEvent.change(screen.getByTestId("terrain-grid-sample-count-z"), {
+      target: { value: "7" }
+    });
+    fireEvent.change(screen.getByTestId("terrain-grid-cell-size"), {
+      target: { value: "2" }
+    });
+    fireEvent.click(screen.getByTestId("terrain-grid-apply"));
+
+    await waitFor(() => {
+      const updatedTerrain = store.getState().document.terrains[createdTerrain.id];
+
+      expect(updatedTerrain?.sampleCountX).toBe(5);
+      expect(updatedTerrain?.sampleCountZ).toBe(7);
+      expect(updatedTerrain?.cellSize).toBe(2);
+    });
+
+    fireEvent.click(screen.getByTestId("terrain-collision-enabled"));
+
+    await waitFor(() => {
+      expect(
+        store.getState().document.terrains[createdTerrain.id]?.collisionEnabled
+      ).toBe(false);
+    });
+  });
 });

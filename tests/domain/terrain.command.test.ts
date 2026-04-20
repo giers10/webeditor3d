@@ -62,7 +62,36 @@ describe("terrain commands", () => {
       sampleCountX: 3,
       sampleCountZ: 3,
       cellSize: 1.5,
-      heights: [0, 1, 0, 1, 3, 1, 0, 1, 0]
+      heights: [0, 1, 0, 1, 3, 1, 0, 1, 0],
+      paintWeights: [
+        0.2,
+        0,
+        0,
+        0.1,
+        0.3,
+        0,
+        0,
+        0.15,
+        0,
+        0.25,
+        0.25,
+        0,
+        0.05,
+        0.1,
+        0.1,
+        0,
+        0,
+        0,
+        0.2,
+        0,
+        0.2,
+        0,
+        0.1,
+        0,
+        0,
+        0,
+        0
+      ]
     });
 
     store.executeCommand(

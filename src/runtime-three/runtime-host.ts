@@ -27,6 +27,7 @@ import {
   Vector3,
   SpotLight,
   TextureLoader,
+  Texture,
   WebGLRenderTarget,
   WebGLRenderer
 } from "three";
@@ -88,6 +89,10 @@ import {
 } from "../rendering/water-material";
 import { createFogQualityMaterial } from "../rendering/fog-material";
 import { updatePlanarReflectionCamera } from "../rendering/planar-reflection";
+import {
+  createTerrainLayerBlendMaterial,
+  getTerrainLayerTexture
+} from "../rendering/terrain-layer-material";
 import {
   applyWhiteboxBevelToMaterial,
   shouldApplyWhiteboxBevel
@@ -1924,14 +1929,7 @@ export class RuntimeHost {
         kind: "terrain",
         enabled: true
       }).geometry;
-      const mesh = new Mesh(
-        geometry,
-        new MeshStandardMaterial({
-          color: 0x708b57,
-          roughness: 0.98,
-          metalness: 0
-        })
-      );
+      const mesh = new Mesh(geometry, this.createRuntimeTerrainMaterial(terrain));
 
       mesh.position.set(
         terrain.position.x,
@@ -1946,6 +1944,18 @@ export class RuntimeHost {
     }
 
     this.applyShadowState();
+  }
+
+  private createRuntimeTerrainMaterial(terrain: RuntimeTerrain): Material {
+    const layerTextures = terrain.layers.map((layer) =>
+      getTerrainLayerTexture(layer.material, (material) =>
+        this.getOrCreateTextureSet(material).baseColor
+      )
+    ) as [Texture, Texture, Texture, Texture];
+
+    return createTerrainLayerBlendMaterial({
+      layerTextures
+    });
   }
 
   private createFogMaterialSet(
@@ -2771,7 +2781,43 @@ export class RuntimeHost {
       return [];
     }
 
+    for (const terrain of this.runtimeScene.terrains) {
+      if (!terrain.visible) {
+        continue;
+      }
+
+      const derivedMesh = buildTerrainDerivedMeshData({
+        ...terrain,
+        kind: "terrain",
+        enabled: true
+      });
+
+      contactBounds.push({
+        kind: "triangleMesh",
+        vertices: derivedMesh.positions,
+        indices: derivedMesh.indices,
+        mergeProfile: "aggressive",
+        transform: {
+          position: terrain.position,
+          rotationDegrees: {
+            x: 0,
+            y: 0,
+            z: 0
+          },
+          scale: {
+            x: 1,
+            y: 1,
+            z: 1
+          }
+        }
+      });
+    }
+
     for (const collider of this.runtimeScene.colliders) {
+      if (collider.source === "terrain") {
+        continue;
+      }
+
       if (collider.kind === "trimesh" && collider.source === "brush") {
         if (collider.brushId === brush.id) {
           continue;

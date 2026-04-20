@@ -1,12 +1,16 @@
 import type { Vec3 } from "../core/vector";
 import type {
+  ArmedTerrainBrushState,
   TerrainBrushSettings,
   TerrainBrushTool
 } from "../core/terrain-brush";
 import {
   createTerrain,
   getTerrainHeightAtSample,
+  getTerrainPaintWeightSampleOffset,
   getTerrainSampleIndex,
+  getTerrainSampleLayerWeights,
+  TERRAIN_LAYER_COUNT,
   type Terrain
 } from "../document/terrains";
 
@@ -154,14 +158,54 @@ function getTerrainSmoothTargetHeight(
     : total / count;
 }
 
+function createTerrainPaintTargetWeights(
+  layerIndex: number
+): [number, number, number, number] {
+  if (
+    !Number.isInteger(layerIndex) ||
+    layerIndex < 0 ||
+    layerIndex >= TERRAIN_LAYER_COUNT
+  ) {
+    throw new Error(`Terrain paint layer index ${layerIndex} is out of range.`);
+  }
+
+  return [
+    layerIndex === 0 ? 1 : 0,
+    layerIndex === 1 ? 1 : 0,
+    layerIndex === 2 ? 1 : 0,
+    layerIndex === 3 ? 1 : 0
+  ];
+}
+
+function setTerrainSamplePaintWeights(
+  paintWeights: number[],
+  terrain: Terrain,
+  sampleX: number,
+  sampleZ: number,
+  weights: readonly [number, number, number, number]
+) {
+  const offset = getTerrainPaintWeightSampleOffset(terrain, sampleX, sampleZ);
+  paintWeights[offset] = weights[1];
+  paintWeights[offset + 1] = weights[2];
+  paintWeights[offset + 2] = weights[3];
+}
+
 export function applyTerrainBrushStamp(options: {
   terrain: Terrain;
   center: TerrainBrushPoint;
   settings: TerrainBrushSettings;
   tool: TerrainBrushTool;
   referenceHeight?: number | null;
+  layerIndex?: number | null;
 }): Terrain {
-  const { terrain, center, settings, tool, referenceHeight = null } = options;
+  const {
+    terrain,
+    center,
+    settings,
+    tool,
+    referenceHeight = null,
+    layerIndex = null
+  } = options;
   const { radius, strength, falloff } = settings;
   const minSampleX = Math.max(
     0,
@@ -180,7 +224,9 @@ export function applyTerrainBrushStamp(options: {
     Math.ceil((center.z - terrain.position.z + radius) / terrain.cellSize)
   );
   const sourceHeights = terrain.heights;
+  const sourcePaintWeights = terrain.paintWeights;
   const nextHeights = [...sourceHeights];
+  const nextPaintWeights = [...sourcePaintWeights];
   const smoothingStrength = clamp01(strength);
   let changed = false;
 
@@ -233,6 +279,41 @@ export function applyTerrainBrushStamp(options: {
             clamp01(smoothingStrength * weight)
           );
           break;
+        case "paint": {
+          if (layerIndex === null) {
+            throw new Error("Paint terrain brush stamps require a layer index.");
+          }
+
+          const currentWeights = getTerrainSampleLayerWeights(
+            terrain,
+            sampleX,
+            sampleZ
+          );
+          const targetWeights = createTerrainPaintTargetWeights(layerIndex);
+          const blend = clamp01(smoothingStrength * weight);
+          const nextWeights: [number, number, number, number] = [
+            lerp(currentWeights[0], targetWeights[0], blend),
+            lerp(currentWeights[1], targetWeights[1], blend),
+            lerp(currentWeights[2], targetWeights[2], blend),
+            lerp(currentWeights[3], targetWeights[3], blend)
+          ];
+
+          if (
+            nextWeights[1] !== currentWeights[1] ||
+            nextWeights[2] !== currentWeights[2] ||
+            nextWeights[3] !== currentWeights[3]
+          ) {
+            setTerrainSamplePaintWeights(
+              nextPaintWeights,
+              terrain,
+              sampleX,
+              sampleZ,
+              nextWeights
+            );
+            changed = true;
+          }
+          continue;
+        }
       }
 
       if (nextHeight !== currentHeight) {
@@ -242,7 +323,13 @@ export function applyTerrainBrushStamp(options: {
     }
   }
 
-  return changed ? createTerrain({ ...terrain, heights: nextHeights }) : terrain;
+  return changed
+    ? createTerrain({
+        ...terrain,
+        heights: nextHeights,
+        paintWeights: nextPaintWeights
+      })
+    : terrain;
 }
 
 export function getTerrainBrushStrokeSpacing(
@@ -250,4 +337,10 @@ export function getTerrainBrushStrokeSpacing(
   settings: TerrainBrushSettings
 ): number {
   return Math.max(terrain.cellSize * 0.5, settings.radius * 0.25);
+}
+
+export function getTerrainBrushPaintLayerIndex(
+  brushState: ArmedTerrainBrushState
+): number | null {
+  return brushState.tool === "paint" ? brushState.layerIndex : null;
 }

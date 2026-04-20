@@ -66,7 +66,11 @@ import {
   type ProjectTimeSettings
 } from "./project-time-settings";
 import { MIN_SCENE_PATH_POINT_COUNT, type ScenePath } from "./paths";
-import { MIN_TERRAIN_SAMPLE_COUNT, type Terrain } from "./terrains";
+import {
+  MIN_TERRAIN_SAMPLE_COUNT,
+  TERRAIN_LAYER_COUNT,
+  type Terrain
+} from "./terrains";
 import {
   isAdvancedRenderingWaterReflectionMode,
   isAdvancedRenderingShadowMapSize,
@@ -1652,6 +1656,7 @@ function validateScenePath(
 function validateTerrain(
   terrain: Terrain,
   path: string,
+  document: SceneDocument,
   diagnostics: SceneDiagnostic[]
 ) {
   if (!isBoolean(terrain.visible)) {
@@ -1694,6 +1699,17 @@ function validateTerrain(
         "invalid-terrain-position",
         "Terrain positions must remain finite on every axis.",
         `${path}.position`
+      )
+    );
+  }
+
+  if (!isBoolean(terrain.collisionEnabled)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-terrain-collision-enabled",
+        "Terrain collisionEnabled must remain a boolean.",
+        `${path}.collisionEnabled`
       )
     );
   }
@@ -1759,6 +1775,67 @@ function validateTerrain(
         "invalid-terrain-height",
         "Terrain heights must remain finite.",
         `${path}.heights.${index}`
+      )
+    );
+  }
+
+  if (terrain.layers.length !== TERRAIN_LAYER_COUNT) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-terrain-layer-count",
+        `Terrain layers must contain exactly ${TERRAIN_LAYER_COUNT} authored layer slots.`,
+        `${path}.layers`
+      )
+    );
+  }
+
+  for (let index = 0; index < terrain.layers.length; index += 1) {
+    const layer = terrain.layers[index];
+
+    if (layer.materialId === null) {
+      continue;
+    }
+
+    if (document.materials[layer.materialId] === undefined) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-terrain-layer-material",
+          `Terrain layer material reference ${layer.materialId} does not exist in the document material registry.`,
+          `${path}.layers.${index}.materialId`
+        )
+      );
+    }
+  }
+
+  const expectedPaintWeightCount =
+    terrain.sampleCountX * terrain.sampleCountZ * (TERRAIN_LAYER_COUNT - 1);
+
+  if (terrain.paintWeights.length !== expectedPaintWeightCount) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-terrain-paint-weight-count",
+        `Terrain paint weights must contain exactly ${expectedPaintWeightCount} values.`,
+        `${path}.paintWeights`
+      )
+    );
+  }
+
+  for (let index = 0; index < terrain.paintWeights.length; index += 1) {
+    const paintWeight = terrain.paintWeights[index];
+
+    if (isFiniteNumber(paintWeight) && paintWeight >= 0 && paintWeight <= 1) {
+      continue;
+    }
+
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-terrain-paint-weight",
+        "Terrain paint weights must remain finite values between 0 and 1.",
+        `${path}.paintWeights.${index}`
       )
     );
   }
@@ -5718,7 +5795,7 @@ export function validateSceneDocument(
     }
 
     registerAuthoredId(terrain.id, path, seenIds, diagnostics);
-    validateTerrain(terrain, path, diagnostics);
+    validateTerrain(terrain, path, document, diagnostics);
   }
 
   for (const [modelInstanceKey, modelInstance] of Object.entries(

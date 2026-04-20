@@ -11,6 +11,8 @@ import { createScenePath } from "../../src/document/paths";
 import { createDefaultProjectTimeSettings } from "../../src/document/project-time-settings";
 import { createTerrain } from "../../src/document/terrains";
 import {
+  AUTHORED_TERRAIN_PAINT_SCENE_DOCUMENT_VERSION,
+  AUTHORED_TERRAIN_FOUNDATION_SCENE_DOCUMENT_VERSION,
   FOLLOW_ACTOR_PATH_SMOOTH_SCENE_DOCUMENT_VERSION,
   ANIMATION_PLAYBACK_SCENE_DOCUMENT_VERSION,
   ENTITY_NAMES_SCENE_DOCUMENT_VERSION,
@@ -80,6 +82,7 @@ describe("scene document JSON", () => {
     const terrain = createTerrain({
       id: "terrain-roundtrip-main",
       name: "Plateau",
+      collisionEnabled: false,
       position: {
         x: -6,
         y: 1,
@@ -96,6 +99,79 @@ describe("scene document JSON", () => {
     expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(
       document
     );
+  });
+
+  it("migrates pre-paint terrain documents by defaulting terrain layer data", () => {
+    const legacyTerrainDocument = {
+      ...createEmptySceneDocument({
+        name: "Legacy Terrain Paint Scene"
+      }),
+      version: AUTHORED_TERRAIN_FOUNDATION_SCENE_DOCUMENT_VERSION
+    };
+    const terrain = createTerrain({
+      id: "terrain-legacy-paint",
+      sampleCountX: 3,
+      sampleCountZ: 3
+    });
+    legacyTerrainDocument.terrains[terrain.id] = {
+      id: terrain.id,
+      kind: terrain.kind,
+      name: terrain.name,
+      visible: terrain.visible,
+      enabled: terrain.enabled,
+      position: terrain.position,
+      sampleCountX: terrain.sampleCountX,
+      sampleCountZ: terrain.sampleCountZ,
+      cellSize: terrain.cellSize,
+      heights: terrain.heights
+    } as typeof terrain;
+
+    const migratedDocument = parseSceneDocumentJson(
+      JSON.stringify(legacyTerrainDocument)
+    );
+    const migratedTerrain = migratedDocument.terrains[terrain.id];
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedTerrain.layers).toHaveLength(4);
+    expect(migratedTerrain.paintWeights).toHaveLength(27);
+    expect(migratedTerrain.paintWeights.every((weight) => weight === 0)).toBe(
+      true
+    );
+  });
+
+  it("migrates pre-collision terrain documents by defaulting terrain collision to enabled", () => {
+    const legacyTerrainDocument = {
+      ...createEmptySceneDocument({
+        name: "Legacy Terrain Collision Scene"
+      }),
+      version: AUTHORED_TERRAIN_PAINT_SCENE_DOCUMENT_VERSION
+    };
+    const terrain = createTerrain({
+      id: "terrain-legacy-collision",
+      sampleCountX: 3,
+      sampleCountZ: 3
+    });
+    legacyTerrainDocument.terrains[terrain.id] = {
+      id: terrain.id,
+      kind: terrain.kind,
+      name: terrain.name,
+      visible: terrain.visible,
+      enabled: terrain.enabled,
+      position: terrain.position,
+      sampleCountX: terrain.sampleCountX,
+      sampleCountZ: terrain.sampleCountZ,
+      cellSize: terrain.cellSize,
+      heights: terrain.heights,
+      layers: terrain.layers,
+      paintWeights: terrain.paintWeights
+    } as typeof terrain;
+
+    const migratedDocument = parseSceneDocumentJson(
+      JSON.stringify(legacyTerrainDocument)
+    );
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.terrains[terrain.id]?.collisionEnabled).toBe(true);
   });
 
   it("migrates pre-terrain scene documents by defaulting the terrain registry to empty", () => {

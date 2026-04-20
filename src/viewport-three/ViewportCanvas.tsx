@@ -92,7 +92,7 @@ export function ViewportCanvas({
   viewportGridVisible,
   selection,
   activeSelectionId,
-  terrainBrushState,
+  terrainBrushState = null,
   toolMode,
   toolPreview,
   transformSession,
@@ -297,7 +297,7 @@ export function ViewportCanvas({
     ? getWhiteboxSelectionFeedbackLabel(sceneDocument, selection)
     : null;
   const terrainBrushOverlayVisible =
-    toolMode === "select" && terrainBrushState !== null;
+    toolMode === "select" && terrainBrushState != null;
   const resolvedViewportBackground =
     editorSimulationScene !== null && editorSimulationClock !== null
       ? resolveRuntimeDayNightWorldState(
@@ -378,6 +378,9 @@ export function ViewportCanvas({
               data-testid={`viewport-terrain-brush-preview-${panelId}`}
             >
               terrain · {terrainBrushState.tool}
+              {terrainBrushState.tool === "paint"
+                ? ` · layer ${terrainBrushState.layerIndex + 1}`
+                : ""}
             </div>
           )}
           {selectedWhiteboxLabel === null ? null : (

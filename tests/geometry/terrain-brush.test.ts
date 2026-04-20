@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import { createDefaultTerrainBrushSettings } from "../../src/core/terrain-brush";
-import { createTerrain } from "../../src/document/terrains";
+import {
+  createTerrain,
+  getTerrainSampleLayerWeights
+} from "../../src/document/terrains";
 import {
   applyTerrainBrushStamp,
   getTerrainBrushWeight,
@@ -107,5 +110,53 @@ describe("terrain brush geometry", () => {
 
   it("returns zero influence outside the brush radius", () => {
     expect(getTerrainBrushWeight(2, 1, 0.5)).toBe(0);
+  });
+
+  it("paints terrain layer weights toward the active layer while preserving a normalized blend", () => {
+    const terrain = createTerrain({
+      id: "terrain-paint",
+      position: { x: 0, y: 0, z: 0 },
+      sampleCountX: 3,
+      sampleCountZ: 3,
+      cellSize: 1
+    });
+
+    const paintedTerrain = applyTerrainBrushStamp({
+      terrain,
+      center: { x: 1, z: 1 },
+      settings: {
+        radius: 1.2,
+        strength: 0.5,
+        falloff: 0
+      },
+      tool: "paint",
+      layerIndex: 2
+    });
+
+    const paintedWeights = getTerrainSampleLayerWeights(paintedTerrain, 1, 1);
+
+    expect(paintedWeights[2]).toBeCloseTo(0.5);
+    expect(
+      paintedWeights[0] +
+        paintedWeights[1] +
+        paintedWeights[2] +
+        paintedWeights[3]
+    ).toBeCloseTo(1);
+
+    const repaintedBaseTerrain = applyTerrainBrushStamp({
+      terrain: paintedTerrain,
+      center: { x: 1, z: 1 },
+      settings: {
+        radius: 1.2,
+        strength: 0.5,
+        falloff: 0
+      },
+      tool: "paint",
+      layerIndex: 0
+    });
+
+    const baseWeights = getTerrainSampleLayerWeights(repaintedBaseTerrain, 1, 1);
+    expect(baseWeights[0]).toBeGreaterThan(paintedWeights[0]);
+    expect(baseWeights[2]).toBeLessThan(paintedWeights[2]);
   });
 });

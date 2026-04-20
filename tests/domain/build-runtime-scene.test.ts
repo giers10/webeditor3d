@@ -10,6 +10,7 @@ import {
 import { createBoxBrush } from "../../src/document/brushes";
 import { createScenePath } from "../../src/document/paths";
 import { createDefaultProjectTimeSettings } from "../../src/document/project-time-settings";
+import { createTerrain } from "../../src/document/terrains";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
 import {
   DEFAULT_PLAYER_START_MOVE_SPEED,
@@ -1349,6 +1350,56 @@ describe("buildRuntimeSceneFromDocument", () => {
       visible: true
     });
     expect(runtimeScene.sceneBounds?.max.y).toBeGreaterThanOrEqual(2);
+  });
+
+  it("adds authored terrain heightfield colliders to the runtime scene build", () => {
+    const terrain = createTerrain({
+      id: "terrain-runtime-heightfield",
+      position: {
+        x: -4,
+        y: 0,
+        z: -4
+      },
+      sampleCountX: 3,
+      sampleCountZ: 3,
+      cellSize: 4,
+      heights: [0, 1, 0, 0, 2, 0, 0, 1, 0]
+    });
+
+    const runtimeScene = buildRuntimeSceneFromDocument({
+      ...createEmptySceneDocument({ name: "Authored Terrain Collider Scene" }),
+      terrains: {
+        [terrain.id]: terrain
+      }
+    });
+
+    expect(runtimeScene.terrains[0]).toMatchObject({
+      id: terrain.id,
+      collisionEnabled: true
+    });
+    expect(runtimeScene.colliders[0]).toMatchObject({
+      source: "terrain",
+      terrainId: terrain.id,
+      kind: "heightfield",
+      rows: 3,
+      cols: 3,
+      minX: 0,
+      maxX: 8,
+      minZ: 0,
+      maxZ: 8
+    });
+
+    if (
+      runtimeScene.colliders[0] === undefined ||
+      runtimeScene.colliders[0].source !== "terrain"
+    ) {
+      throw new Error("Expected the runtime collider to be an authored terrain heightfield.");
+    }
+
+    expect(Array.from(runtimeScene.colliders[0].heights)).toEqual(
+      terrain.heights
+    );
+    expect(runtimeScene.sceneBounds?.max.y).toBe(2);
   });
 
   it("adds static-simple imported-model colliders as compound box pieces", () => {

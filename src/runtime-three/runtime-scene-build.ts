@@ -56,7 +56,13 @@ import {
   type ScenePath,
   type ScenePathPoint
 } from "../document/paths";
-import { getTerrainBounds, getTerrains, type Terrain } from "../document/terrains";
+import {
+  getTerrainBounds,
+  getTerrainFootprintDepth,
+  getTerrainFootprintWidth,
+  getTerrains,
+  type Terrain
+} from "../document/terrains";
 import {
   cloneWorldSettings,
   type WorldSettings
@@ -169,11 +175,35 @@ export interface RuntimeTerrain {
   id: string;
   name?: string;
   visible: boolean;
+  collisionEnabled: boolean;
   position: Vec3;
   sampleCountX: number;
   sampleCountZ: number;
   cellSize: number;
   heights: number[];
+  layers: Array<{
+    materialId: string | null;
+    material: MaterialDef | null;
+  }>;
+  paintWeights: number[];
+}
+
+export interface RuntimeTerrainHeightfieldCollider {
+  kind: "heightfield";
+  source: "terrain";
+  terrainId: string;
+  position: Vec3;
+  rows: number;
+  cols: number;
+  heights: Float32Array;
+  minX: number;
+  maxX: number;
+  minZ: number;
+  maxZ: number;
+  worldBounds: {
+    min: Vec3;
+    max: Vec3;
+  };
 }
 
 export interface RuntimeBrushTriMeshCollider {
@@ -205,6 +235,7 @@ export interface RuntimeNpcCollider {
 
 export type RuntimeSceneCollider =
   | RuntimeBrushTriMeshCollider
+  | RuntimeTerrainHeightfieldCollider
   | GeneratedModelCollider
   | RuntimeNpcCollider;
 
@@ -724,16 +755,53 @@ function buildRuntimeCollider(brush: Brush): RuntimeBrushTriMeshCollider {
   };
 }
 
-function buildRuntimeTerrain(terrain: Terrain): RuntimeTerrain {
+function buildRuntimeTerrain(
+  terrain: Terrain,
+  document: SceneDocument
+): RuntimeTerrain {
   return {
     id: terrain.id,
     name: terrain.name,
     visible: terrain.visible,
+    collisionEnabled: terrain.collisionEnabled,
     position: cloneVec3(terrain.position),
     sampleCountX: terrain.sampleCountX,
     sampleCountZ: terrain.sampleCountZ,
     cellSize: terrain.cellSize,
-    heights: [...terrain.heights]
+    heights: [...terrain.heights],
+    layers: terrain.layers.map((layer) => ({
+      materialId: layer.materialId,
+      material: resolveRuntimeMaterial(document, layer.materialId)
+    })),
+    paintWeights: [...terrain.paintWeights]
+  };
+}
+
+function buildRuntimeTerrainCollider(
+  terrain: Terrain
+): RuntimeTerrainHeightfieldCollider | null {
+  if (!terrain.collisionEnabled) {
+    return null;
+  }
+
+  const bounds = getTerrainBounds(terrain);
+
+  return {
+    kind: "heightfield",
+    source: "terrain",
+    terrainId: terrain.id,
+    position: cloneVec3(terrain.position),
+    rows: terrain.sampleCountX,
+    cols: terrain.sampleCountZ,
+    heights: new Float32Array(terrain.heights),
+    minX: 0,
+    maxX: getTerrainFootprintWidth(terrain),
+    minZ: 0,
+    maxZ: getTerrainFootprintDepth(terrain),
+    worldBounds: {
+      min: cloneVec3(bounds.min),
+      max: cloneVec3(bounds.max)
+    }
   };
 }
 
@@ -1610,7 +1678,9 @@ export function buildRuntimeSceneFromDocument(
   const enabledTerrains = getTerrains(document.terrains).filter(
     (terrain) => terrain.enabled
   );
-  const terrains = enabledTerrains.map(buildRuntimeTerrain);
+  const terrains = enabledTerrains.map((terrain) =>
+    buildRuntimeTerrain(terrain, document)
+  );
   const staticColliders: RuntimeSceneCollider[] = [];
   const volumes: RuntimeBoxVolumeCollection = {
     fog: [],
@@ -1635,6 +1705,15 @@ export function buildRuntimeSceneFromDocument(
 
     volumes.water.push(buildRuntimeWaterVolume(brush));
   }
+
+  for (const terrain of enabledTerrains) {
+    const terrainCollider = buildRuntimeTerrainCollider(terrain);
+
+    if (terrainCollider !== null) {
+      staticColliders.push(terrainCollider);
+    }
+  }
+
   const enabledModelInstances = getModelInstances(
     document.modelInstances
   ).filter((modelInstance) => modelInstance.enabled);

@@ -56,4 +56,46 @@ describe("terrain mesh generation", () => {
 
     expect(Array.from(derivedMesh.uvs)).toEqual([10, -6, 12, -6, 10, -4, 12, -4]);
   });
+
+  it("derives full per-vertex layer weights from the compact terrain paint data", () => {
+    const terrain = createTerrain({
+      sampleCountX: 2,
+      sampleCountZ: 2,
+      paintWeights: [
+        0.2,
+        0.3,
+        0.1,
+        0,
+        0.5,
+        0,
+        0.1,
+        0.1,
+        0.1,
+        0.25,
+        0.25,
+        0.25
+      ]
+    });
+
+    const derivedMesh = buildTerrainDerivedMeshData(terrain);
+
+    expect(Array.from(derivedMesh.layerWeights)).toEqual([
+      expect.closeTo(0.4, 5),
+      expect.closeTo(0.2, 5),
+      expect.closeTo(0.3, 5),
+      expect.closeTo(0.1, 5),
+      expect.closeTo(0.5, 5),
+      expect.closeTo(0, 5),
+      expect.closeTo(0.5, 5),
+      expect.closeTo(0, 5),
+      expect.closeTo(0.7, 5),
+      expect.closeTo(0.1, 5),
+      expect.closeTo(0.1, 5),
+      expect.closeTo(0.1, 5),
+      expect.closeTo(0.25, 5),
+      expect.closeTo(0.25, 5),
+      expect.closeTo(0.25, 5),
+      expect.closeTo(0.25, 5)
+    ]);
+  });
 });

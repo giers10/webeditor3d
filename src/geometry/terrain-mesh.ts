@@ -3,6 +3,8 @@ import { BufferAttribute, BufferGeometry } from "three";
 import type { Vec3 } from "../core/vector";
 import {
   getTerrainHeightAtSample,
+  getTerrainSampleLayerWeights,
+  TERRAIN_LAYER_COUNT,
   type Terrain
 } from "../document/terrains";
 
@@ -19,6 +21,7 @@ export interface DerivedTerrainMeshData {
   positions: Float32Array;
   normals: Float32Array;
   uvs: Float32Array;
+  layerWeights: Float32Array;
   indices: Uint32Array;
   cellTriangulation: TerrainCellTriangulation[];
   localBounds: {
@@ -86,14 +89,21 @@ export function buildTerrainDerivedMeshData(
   const vertexCount = terrain.sampleCountX * terrain.sampleCountZ;
   const positions = new Float32Array(vertexCount * 3);
   const uvs = new Float32Array(vertexCount * 2);
+  const layerWeights = new Float32Array(vertexCount * TERRAIN_LAYER_COUNT);
   const localBounds = createEmptyLocalBounds();
   let vertexOffset = 0;
   let uvOffset = 0;
+  let layerWeightOffset = 0;
 
   for (let sampleZ = 0; sampleZ < terrain.sampleCountZ; sampleZ += 1) {
     for (let sampleX = 0; sampleX < terrain.sampleCountX; sampleX += 1) {
       const localX = sampleX * terrain.cellSize;
       const localY = getTerrainHeightAtSample(terrain, sampleX, sampleZ);
+      const sampleLayerWeights = getTerrainSampleLayerWeights(
+        terrain,
+        sampleX,
+        sampleZ
+      );
       const localZ = sampleZ * terrain.cellSize;
       positions[vertexOffset] = localX;
       positions[vertexOffset + 1] = localY;
@@ -110,6 +120,16 @@ export function buildTerrainDerivedMeshData(
       uvs[uvOffset] = terrain.position.x + localX;
       uvs[uvOffset + 1] = terrain.position.z + localZ;
       uvOffset += 2;
+
+      for (
+        let layerIndex = 0;
+        layerIndex < TERRAIN_LAYER_COUNT;
+        layerIndex += 1
+      ) {
+        layerWeights[layerWeightOffset + layerIndex] =
+          sampleLayerWeights[layerIndex];
+      }
+      layerWeightOffset += TERRAIN_LAYER_COUNT;
     }
   }
 
@@ -147,6 +167,10 @@ export function buildTerrainDerivedMeshData(
   const geometry = new BufferGeometry();
   geometry.setAttribute("position", new BufferAttribute(positions, 3));
   geometry.setAttribute("uv", new BufferAttribute(uvs, 2));
+  geometry.setAttribute(
+    "terrainLayerWeights",
+    new BufferAttribute(layerWeights, TERRAIN_LAYER_COUNT)
+  );
   geometry.setIndex(new BufferAttribute(indices, 1));
   geometry.computeVertexNormals();
 
@@ -159,6 +183,7 @@ export function buildTerrainDerivedMeshData(
     positions,
     normals,
     uvs,
+    layerWeights,
     indices,
     cellTriangulation,
     localBounds

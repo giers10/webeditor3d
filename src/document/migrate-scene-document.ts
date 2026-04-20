@@ -145,6 +145,9 @@ import {
 import {
   BOX_BRUSH_SCENE_DOCUMENT_VERSION,
   ANIMATION_PLAYBACK_SCENE_DOCUMENT_VERSION,
+  AUTHORED_TERRAIN_COLLISION_SCENE_DOCUMENT_VERSION,
+  AUTHORED_TERRAIN_FOUNDATION_SCENE_DOCUMENT_VERSION,
+  AUTHORED_TERRAIN_PAINT_SCENE_DOCUMENT_VERSION,
   AUTHORED_OBJECT_STATE_SCENE_DOCUMENT_VERSION,
   CONTROL_SURFACE_FOUNDATION_SCENE_DOCUMENT_VERSION,
   DEFAULT_PROJECT_NAME,
@@ -1855,6 +1858,36 @@ function readTerrain(value: unknown, label: string): Terrain {
   const heights = value.heights.map((heightValue, index) =>
     expectFiniteNumber(heightValue, `${label}.heights.${index}`)
   );
+  const layers =
+    value.layers === undefined
+      ? undefined
+      : (() => {
+          if (!Array.isArray(value.layers) || value.layers.some((layer) => !isRecord(layer))) {
+            throw new Error(`${label}.layers must be an array of layer objects.`);
+          }
+
+          return value.layers.map((layerValue, layerIndex) => ({
+            materialId:
+              layerValue.materialId === undefined || layerValue.materialId === null
+                ? null
+                : expectString(
+                    layerValue.materialId,
+                    `${label}.layers.${layerIndex}.materialId`
+                  )
+          }));
+        })();
+  const paintWeights =
+    value.paintWeights === undefined
+      ? undefined
+      : (() => {
+          if (!Array.isArray(value.paintWeights)) {
+            throw new Error(`${label}.paintWeights must be an array.`);
+          }
+
+          return value.paintWeights.map((paintWeight, index) =>
+            expectFiniteNumber(paintWeight, `${label}.paintWeights.${index}`)
+          );
+        })();
 
   return createTerrain({
     id: expectString(value.id, `${label}.id`),
@@ -1863,11 +1896,17 @@ function readTerrain(value: unknown, label: string): Terrain {
     ),
     visible: expectBoolean(value.visible, `${label}.visible`),
     enabled: expectBoolean(value.enabled, `${label}.enabled`),
+    collisionEnabled:
+      value.collisionEnabled === undefined
+        ? undefined
+        : expectBoolean(value.collisionEnabled, `${label}.collisionEnabled`),
     position: readVec3(value.position, `${label}.position`),
     sampleCountX,
     sampleCountZ,
     cellSize,
-    heights
+    heights,
+    layers,
+    paintWeights
   });
 }
 
@@ -4841,6 +4880,9 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     source.version !== PROJECT_SEQUENCE_EFFECTS_SCENE_DOCUMENT_VERSION &&
     source.version !== PROJECT_SEQUENCE_UNIFIED_VISIBILITY_SCENE_DOCUMENT_VERSION &&
     source.version !== SCENE_TRANSITION_SEQUENCE_EFFECTS_SCENE_DOCUMENT_VERSION &&
+    source.version !== AUTHORED_TERRAIN_FOUNDATION_SCENE_DOCUMENT_VERSION &&
+    source.version !== AUTHORED_TERRAIN_PAINT_SCENE_DOCUMENT_VERSION &&
+    source.version !== AUTHORED_TERRAIN_COLLISION_SCENE_DOCUMENT_VERSION &&
     source.version !== FOLLOW_ACTOR_PATH_SMOOTH_SCENE_DOCUMENT_VERSION
   ) {
     throw new Error(

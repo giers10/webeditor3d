@@ -83,6 +83,7 @@ import {
 } from "../core/selection";
 import {
   clampTerrainBrushFalloff,
+  clampTerrainPaintLayerIndex,
   clampTerrainBrushRadius,
   clampTerrainBrushStrength,
   createDefaultTerrainBrushSettings,
@@ -213,10 +214,17 @@ import {
   type ScenePathPoint
 } from "../document/paths";
 import {
+  areTerrainsEqual,
   createTerrain,
   getTerrainBounds,
+  getTerrainFootprintDepth,
+  getTerrainFootprintWidth,
   getTerrainKindLabel,
+  getTerrainLayerLabel,
   getTerrains,
+  MIN_TERRAIN_SAMPLE_COUNT,
+  resizeTerrainGrid,
+  TERRAIN_LAYER_COUNT,
   type Terrain
 } from "../document/terrains";
 import {
@@ -715,7 +723,7 @@ function formatPlayerStartGamepadCameraLookBindingLabel(
 const STARTER_MATERIAL_ORDER = new Map(
   STARTER_MATERIAL_LIBRARY.map((material, index) => [material.id, index])
 );
-const TERRAIN_BRUSH_TOOLS: TerrainBrushTool[] = [
+const TERRAIN_SCULPT_BRUSH_TOOLS: Exclude<TerrainBrushTool, "paint">[] = [
   "raise",
   "lower",
   "smooth",
@@ -2181,6 +2189,13 @@ export function App({ store, initialStatusMessage }: AppProps) {
       : null;
   const selectedTerrainBounds =
     selectedTerrain === null ? null : getTerrainBounds(selectedTerrain);
+  const selectedTerrainFootprint =
+    selectedTerrain === null
+      ? null
+      : {
+          width: getTerrainFootprintWidth(selectedTerrain),
+          depth: getTerrainFootprintDepth(selectedTerrain)
+        };
   const selectedTerrainHeightRange =
     selectedTerrainBounds === null
       ? null
@@ -2572,19 +2587,49 @@ export function App({ store, initialStatusMessage }: AppProps) {
   );
   const [armedTerrainBrushTool, setArmedTerrainBrushTool] =
     useState<TerrainBrushTool | null>(null);
+  const [activeTerrainPaintLayerIndex, setActiveTerrainPaintLayerIndex] =
+    useState(0);
   const [terrainBrushSettings, setTerrainBrushSettings] = useState(
     createDefaultTerrainBrushSettings()
   );
+  const [terrainSampleCountXDraft, setTerrainSampleCountXDraft] = useState(
+    "9"
+  );
+  const [terrainSampleCountZDraft, setTerrainSampleCountZDraft] = useState(
+    "9"
+  );
+  const [terrainCellSizeDraft, setTerrainCellSizeDraft] = useState("1");
   const activeTerrainBrushState: ArmedTerrainBrushState | null =
     selectedTerrain === null || armedTerrainBrushTool === null
       ? null
-      : {
-          terrainId: selectedTerrain.id,
-          tool: armedTerrainBrushTool,
-          radius: terrainBrushSettings.radius,
-          strength: terrainBrushSettings.strength,
-          falloff: terrainBrushSettings.falloff
-        };
+      : armedTerrainBrushTool === "paint"
+        ? {
+            terrainId: selectedTerrain.id,
+            tool: "paint",
+            layerIndex: clampTerrainPaintLayerIndex(activeTerrainPaintLayerIndex),
+            radius: terrainBrushSettings.radius,
+            strength: terrainBrushSettings.strength,
+            falloff: terrainBrushSettings.falloff
+          }
+        : {
+            terrainId: selectedTerrain.id,
+            tool: armedTerrainBrushTool,
+            radius: terrainBrushSettings.radius,
+            strength: terrainBrushSettings.strength,
+            falloff: terrainBrushSettings.falloff
+          };
+  const resolvedTerrainPaintLayerIndex = clampTerrainPaintLayerIndex(
+    activeTerrainPaintLayerIndex
+  );
+  const selectedTerrainActivePaintLayer =
+    selectedTerrain?.layers[resolvedTerrainPaintLayerIndex] ?? null;
+  const selectedTerrainActivePaintMaterial =
+    selectedTerrainActivePaintLayer?.materialId === null ||
+    selectedTerrainActivePaintLayer === null
+      ? null
+      : (editorState.document.materials[
+          selectedTerrainActivePaintLayer.materialId
+        ] ?? null);
   const [ambientLightIntensityDraft, setAmbientLightIntensityDraft] = useState(
     String(editorState.document.world.ambientLight.intensity)
   );
@@ -3410,6 +3455,19 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
     setModelScaleDraft(createVec3Draft(selectedModelInstance.scale));
   }, [selectedModelInstance]);
+
+  useEffect(() => {
+    if (selectedTerrain === null) {
+      setTerrainSampleCountXDraft("9");
+      setTerrainSampleCountZDraft("9");
+      setTerrainCellSizeDraft("1");
+      return;
+    }
+
+    setTerrainSampleCountXDraft(String(selectedTerrain.sampleCountX));
+    setTerrainSampleCountZDraft(String(selectedTerrain.sampleCountZ));
+    setTerrainCellSizeDraft(String(selectedTerrain.cellSize));
+  }, [selectedTerrain]);
 
   useEffect(() => {
     const projectTime = editorState.projectDocument.time;
@@ -7466,8 +7524,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
 
     setArmedTerrainBrushTool(tool);
+    const paintLayerLabel =
+      tool === "paint"
+        ? ` ${getTerrainLayerLabel(
+            clampTerrainPaintLayerIndex(activeTerrainPaintLayerIndex)
+          ).toLowerCase()}`
+        : "";
     setStatusMessage(
-      `Armed ${getTerrainBrushToolLabel(tool)} terrain brush for ${getTerrainLabelById(selectedTerrain.id, terrainList)}. Drag in the viewport to edit the selected terrain.`
+      `Armed ${getTerrainBrushToolLabel(tool)} terrain brush${paintLayerLabel} for ${getTerrainLabelById(selectedTerrain.id, terrainList)}. Drag in the viewport to edit the selected terrain.`
     );
   };
 
@@ -7490,6 +7554,54 @@ export function App({ store, initialStatusMessage }: AppProps) {
       ...currentSettings,
       falloff: clampTerrainBrushFalloff(Number(value))
     }));
+  };
+
+  const handleTerrainPaintLayerChange = (value: string) => {
+    setActiveTerrainPaintLayerIndex(clampTerrainPaintLayerIndex(Number(value)));
+  };
+
+  const handleTerrainLayerMaterialChange = (
+    layerIndex: number,
+    materialId: string
+  ) => {
+    if (selectedTerrain === null) {
+      return;
+    }
+
+    const nextMaterialId = materialId === "" ? null : materialId;
+    const currentMaterialId = selectedTerrain.layers[layerIndex]?.materialId ?? null;
+
+    if (currentMaterialId === nextMaterialId) {
+      return;
+    }
+
+    try {
+      const nextTerrain = createTerrain({
+        ...selectedTerrain,
+        layers: selectedTerrain.layers.map((layer, currentLayerIndex) => ({
+          materialId:
+            currentLayerIndex === layerIndex ? nextMaterialId : layer.materialId
+        }))
+      });
+
+      store.executeCommand(
+        createUpsertTerrainCommand({
+          terrain: nextTerrain,
+          label: `Set ${getTerrainLayerLabel(layerIndex).toLowerCase()} material`
+        })
+      );
+
+      setStatusMessage(
+        `${getTerrainLayerLabel(layerIndex)} now uses ${
+          nextMaterialId === null
+            ? "no assigned material"
+            : editorState.document.materials[nextMaterialId]?.name ??
+              nextMaterialId
+        }.`
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
   };
 
   const handleCommitTerrainBrushStroke = (
@@ -7664,6 +7776,26 @@ export function App({ store, initialStatusMessage }: AppProps) {
     setStatusMessage(successMessage);
   };
 
+  const commitTerrainChange = (
+    currentTerrain: Terrain,
+    nextTerrain: Terrain,
+    commandLabel: string,
+    successMessage: string
+  ): boolean => {
+    if (areTerrainsEqual(currentTerrain, nextTerrain)) {
+      return false;
+    }
+
+    store.executeCommand(
+      createUpsertTerrainCommand({
+        terrain: nextTerrain,
+        label: commandLabel
+      })
+    );
+    setStatusMessage(successMessage);
+    return true;
+  };
+
   const applyModelInstanceChange = () => {
     if (selectedModelInstance === null) {
       setStatusMessage("Select a model instance before editing it.");
@@ -7690,6 +7822,56 @@ export function App({ store, initialStatusMessage }: AppProps) {
         selectedModelInstance,
         nextModelInstance,
         "Updated model instance."
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const applyTerrainGridChange = () => {
+    if (selectedTerrain === null) {
+      setStatusMessage("Select a terrain before resizing its grid.");
+      return;
+    }
+
+    try {
+      const nextTerrain = resizeTerrainGrid(selectedTerrain, {
+        sampleCountX: Number(terrainSampleCountXDraft),
+        sampleCountZ: Number(terrainSampleCountZDraft),
+        cellSize: Number(terrainCellSizeDraft)
+      });
+      const terrainLabel = getTerrainLabelById(selectedTerrain.id, terrainList);
+
+      commitTerrainChange(
+        selectedTerrain,
+        nextTerrain,
+        "Resize terrain grid",
+        `Resampled ${terrainLabel} to ${nextTerrain.sampleCountX} x ${nextTerrain.sampleCountZ} samples with ${nextTerrain.cellSize}m square cells.`
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const handleTerrainCollisionEnabledChange = (enabled: boolean) => {
+    if (selectedTerrain === null || selectedTerrain.collisionEnabled === enabled) {
+      return;
+    }
+
+    try {
+      const nextTerrain = createTerrain({
+        ...selectedTerrain,
+        collisionEnabled: enabled
+      });
+      const terrainLabel = getTerrainLabelById(selectedTerrain.id, terrainList);
+
+      commitTerrainChange(
+        selectedTerrain,
+        nextTerrain,
+        enabled ? "Enable terrain collision" : "Disable terrain collision",
+        enabled
+          ? `${terrainLabel} now participates in runner collision as a heightfield.`
+          : `${terrainLabel} no longer contributes runner collision.`
       );
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
@@ -15177,13 +15359,161 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   </div>
 
                   <div className="form-section">
-                    <div className="label">Terrain Tools</div>
+                    <div className="label">Collision</div>
+                    <label className="form-field form-field--toggle">
+                      <span className="label">Enable runner heightfield collision</span>
+                      <input
+                        data-testid="terrain-collision-enabled"
+                        type="checkbox"
+                        checked={selectedTerrain.collisionEnabled}
+                        onChange={(event) =>
+                          handleTerrainCollisionEnabledChange(
+                            event.currentTarget.checked
+                          )
+                        }
+                      />
+                    </label>
+                    <div className="material-summary">
+                      Hidden terrain keeps collision. Disabled terrain is removed
+                      from editor picking, rendering, and runtime collision.
+                    </div>
+                  </div>
+
+                  <div className="form-section">
+                    <div className="label">Grid Settings</div>
+                    <div className="material-summary">
+                      Resizing keeps the terrain centered and resamples heights
+                      and paint across the new grid.
+                    </div>
+                    <div className="vector-inputs">
+                      <label className="form-field">
+                        <span className="label">Samples X</span>
+                        <input
+                          data-testid="terrain-grid-sample-count-x"
+                          className="text-input"
+                          type="number"
+                          min={MIN_TERRAIN_SAMPLE_COUNT}
+                          step="1"
+                          value={terrainSampleCountXDraft}
+                          onChange={(event) =>
+                            setTerrainSampleCountXDraft(
+                              event.currentTarget.value
+                            )
+                          }
+                          onBlur={applyTerrainGridChange}
+                          onKeyDown={(event) =>
+                            handleDraftVectorKeyDown(
+                              event,
+                              applyTerrainGridChange
+                            )
+                          }
+                          onKeyUp={(event) =>
+                            handleNumberInputKeyUp(
+                              event,
+                              applyTerrainGridChange
+                            )
+                          }
+                          onPointerUp={(event) =>
+                            handleNumberInputPointerUp(
+                              event,
+                              applyTerrainGridChange
+                            )
+                          }
+                        />
+                      </label>
+                      <label className="form-field">
+                        <span className="label">Samples Z</span>
+                        <input
+                          data-testid="terrain-grid-sample-count-z"
+                          className="text-input"
+                          type="number"
+                          min={MIN_TERRAIN_SAMPLE_COUNT}
+                          step="1"
+                          value={terrainSampleCountZDraft}
+                          onChange={(event) =>
+                            setTerrainSampleCountZDraft(
+                              event.currentTarget.value
+                            )
+                          }
+                          onBlur={applyTerrainGridChange}
+                          onKeyDown={(event) =>
+                            handleDraftVectorKeyDown(
+                              event,
+                              applyTerrainGridChange
+                            )
+                          }
+                          onKeyUp={(event) =>
+                            handleNumberInputKeyUp(
+                              event,
+                              applyTerrainGridChange
+                            )
+                          }
+                          onPointerUp={(event) =>
+                            handleNumberInputPointerUp(
+                              event,
+                              applyTerrainGridChange
+                            )
+                          }
+                        />
+                      </label>
+                      <label className="form-field">
+                        <span className="label">Cell Size</span>
+                        <input
+                          data-testid="terrain-grid-cell-size"
+                          className="text-input"
+                          type="number"
+                          min="0.1"
+                          step="0.1"
+                          value={terrainCellSizeDraft}
+                          onChange={(event) =>
+                            setTerrainCellSizeDraft(event.currentTarget.value)
+                          }
+                          onBlur={applyTerrainGridChange}
+                          onKeyDown={(event) =>
+                            handleDraftVectorKeyDown(
+                              event,
+                              applyTerrainGridChange
+                            )
+                          }
+                          onKeyUp={(event) =>
+                            handleNumberInputKeyUp(
+                              event,
+                              applyTerrainGridChange
+                            )
+                          }
+                          onPointerUp={(event) =>
+                            handleNumberInputPointerUp(
+                              event,
+                              applyTerrainGridChange
+                            )
+                          }
+                        />
+                      </label>
+                    </div>
+                    <button
+                      className="viewport-panel__button"
+                      type="button"
+                      data-testid="terrain-grid-apply"
+                      onClick={applyTerrainGridChange}
+                    >
+                      Apply Grid
+                    </button>
+                    {selectedTerrainFootprint === null ? null : (
+                      <div className="material-summary">
+                        Footprint {selectedTerrainFootprint.width}m x{" "}
+                        {selectedTerrainFootprint.depth}m with square cells
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="form-section">
+                    <div className="label">Terrain Sculpt</div>
                     <div
                       className="viewport-panel__control-group"
                       role="group"
-                      aria-label="Terrain brush tools"
+                      aria-label="Terrain sculpt brush tools"
                     >
-                      {TERRAIN_BRUSH_TOOLS.map((tool) => (
+                      {TERRAIN_SCULPT_BRUSH_TOOLS.map((tool) => (
                         <button
                           key={tool}
                           className={`viewport-panel__button ${armedTerrainBrushTool === tool ? "viewport-panel__button--active" : ""}`}
@@ -15199,12 +15529,88 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     <div className="material-summary">
                       {armedTerrainBrushTool === null
                         ? "No terrain brush is armed. Existing selection and transforms stay unchanged."
-                        : `${getTerrainBrushToolLabel(armedTerrainBrushTool)} is armed for ${getTerrainLabelById(selectedTerrain.id, terrainList)}. Click the active tool again to disarm it.`}
+                        : armedTerrainBrushTool === "paint"
+                          ? `Paint is armed for ${getTerrainLabelById(selectedTerrain.id, terrainList)} on ${getTerrainLayerLabel(resolvedTerrainPaintLayerIndex).toLowerCase()}.`
+                          : `${getTerrainBrushToolLabel(armedTerrainBrushTool)} is armed for ${getTerrainLabelById(selectedTerrain.id, terrainList)}. Click the active tool again to disarm it.`}
                     </div>
                   </div>
 
                   <div className="form-section">
-                    <div className="label">Brush</div>
+                    <div className="label">Terrain Paint</div>
+                    <div
+                      className="viewport-panel__control-group"
+                      role="group"
+                      aria-label="Terrain paint controls"
+                    >
+                      <button
+                        className={`viewport-panel__button ${armedTerrainBrushTool === "paint" ? "viewport-panel__button--active" : ""}`}
+                        type="button"
+                        data-testid="terrain-brush-tool-paint"
+                        aria-pressed={armedTerrainBrushTool === "paint"}
+                        onClick={() => handleArmTerrainBrushTool("paint")}
+                      >
+                        Paint Layer
+                      </button>
+                    </div>
+                    <label className="form-field">
+                      <span className="label">Active Layer</span>
+                      <select
+                        data-testid="terrain-paint-active-layer"
+                        value={resolvedTerrainPaintLayerIndex}
+                        onChange={(event) =>
+                          handleTerrainPaintLayerChange(event.currentTarget.value)
+                        }
+                      >
+                        {Array.from(
+                          { length: TERRAIN_LAYER_COUNT },
+                          (_, layerIndex) => layerIndex
+                        ).map((layerIndex) => (
+                          <option key={layerIndex} value={layerIndex}>
+                            {getTerrainLayerLabel(layerIndex)}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <div className="material-summary">
+                      {getTerrainLayerLabel(resolvedTerrainPaintLayerIndex)} uses{" "}
+                      {selectedTerrainActivePaintMaterial?.name ??
+                        selectedTerrainActivePaintLayer?.materialId ??
+                        "no assigned material"}
+                      .
+                    </div>
+                    <div className="terrain-layer-list">
+                      {selectedTerrain.layers.map((layer, layerIndex) => (
+                        <label
+                          key={layerIndex}
+                          className="form-field"
+                        >
+                          <span className="label">
+                            {getTerrainLayerLabel(layerIndex)}
+                          </span>
+                          <select
+                            data-testid={`terrain-layer-material-${layerIndex}`}
+                            value={layer.materialId ?? ""}
+                            onChange={(event) =>
+                              handleTerrainLayerMaterialChange(
+                                layerIndex,
+                                event.currentTarget.value
+                              )
+                            }
+                          >
+                            <option value="">Unassigned</option>
+                            {materialList.map((material) => (
+                              <option key={material.id} value={material.id}>
+                                {material.name}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="form-section">
+                    <div className="label">Brush Settings</div>
                     <label className="form-field">
                       <span className="label">
                         Radius {terrainBrushSettings.radius.toFixed(2)}m
@@ -15263,10 +15669,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
                   <div className="form-section">
                     <div className="label">Grid</div>
-                    <div className="material-summary">
-                      {(selectedTerrain.sampleCountX - 1) * selectedTerrain.cellSize}m x{" "}
-                      {(selectedTerrain.sampleCountZ - 1) * selectedTerrain.cellSize}m footprint
-                    </div>
+                    {selectedTerrainFootprint === null ? null : (
+                      <div className="material-summary">
+                        {selectedTerrainFootprint.width}m x{" "}
+                        {selectedTerrainFootprint.depth}m footprint
+                      </div>
+                    )}
                     <div className="material-summary">
                       {selectedTerrain.heights.length} height samples
                     </div>

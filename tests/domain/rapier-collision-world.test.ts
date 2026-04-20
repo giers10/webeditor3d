@@ -4,6 +4,7 @@ import { BoxGeometry, PlaneGeometry } from "three";
 import { createModelInstance } from "../../src/assets/model-instances";
 import { createBoxBrush } from "../../src/document/brushes";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
+import { createTerrain } from "../../src/document/terrains";
 import {
   createNpcEntity,
   createPlayerStartEntity
@@ -950,6 +951,95 @@ describe("RapierCollisionWorld", () => {
       expect(steepProbe.grounded).toBe(false);
       expect(steepProbe.slopeDegrees ?? 0).toBeGreaterThan(55);
       expect(steepProbe.slopeDegrees ?? 0).toBeLessThan(65);
+    } finally {
+      collisionWorld.dispose();
+    }
+  });
+
+  it("initializes and resolves first-person motion against authored terrain colliders", async () => {
+    const terrain = createTerrain({
+      id: "terrain-authored-collision",
+      position: {
+        x: -4,
+        y: 0,
+        z: -4
+      },
+      sampleCountX: 5,
+      sampleCountZ: 5,
+      cellSize: 2,
+      heights: [
+        0,
+        0.25,
+        0.5,
+        0.75,
+        1,
+        0.75,
+        1,
+        1.25,
+        1.5,
+        1.75,
+        1.5,
+        1.75,
+        2,
+        2.25,
+        2.5,
+        2.25,
+        2.5,
+        2.75,
+        3,
+        3.25,
+        3,
+        3.25,
+        3.5,
+        3.75,
+        4
+      ]
+    });
+    const runtimeScene = buildRuntimeSceneFromDocument({
+      ...createEmptySceneDocument({ name: "Authored Terrain Collision Scene" }),
+      terrains: {
+        [terrain.id]: terrain
+      }
+    });
+    const collisionWorld = await RapierCollisionWorld.create(
+      runtimeScene.colliders,
+      runtimeScene.playerCollider
+    );
+
+    try {
+      const highLanding = collisionWorld.resolveFirstPersonMotion(
+        {
+          x: 4,
+          y: 8,
+          z: 4
+        },
+        {
+          x: 0,
+          y: -10,
+          z: 0
+        },
+        runtimeScene.playerCollider
+      );
+      const lowLanding = collisionWorld.resolveFirstPersonMotion(
+        {
+          x: -2,
+          y: 8,
+          z: -2
+        },
+        {
+          x: 0,
+          y: -10,
+          z: 0
+        },
+        runtimeScene.playerCollider
+      );
+
+      expect(highLanding.grounded).toBe(true);
+      expect(highLanding.feetPosition.y).toBeGreaterThan(3.9);
+      expect(highLanding.feetPosition.y).toBeLessThan(4.1);
+      expect(lowLanding.grounded).toBe(true);
+      expect(lowLanding.feetPosition.y).toBeGreaterThan(1.0);
+      expect(lowLanding.feetPosition.y).toBeLessThan(1.2);
     } finally {
       collisionWorld.dispose();
     }

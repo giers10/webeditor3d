@@ -1,26 +1,41 @@
 import { createOpaqueId } from "../core/ids";
 import type { Vec3 } from "../core/vector";
 
+export interface TerrainLayer {
+  materialId: string | null;
+}
+
 export interface Terrain {
   id: string;
   kind: "terrain";
   name?: string;
   visible: boolean;
   enabled: boolean;
+  collisionEnabled: boolean;
   position: Vec3;
   sampleCountX: number;
   sampleCountZ: number;
   cellSize: number;
   heights: number[];
+  layers: TerrainLayer[];
+  paintWeights: number[];
 }
 
 export const DEFAULT_TERRAIN_VISIBLE = true;
 export const DEFAULT_TERRAIN_ENABLED = true;
+export const DEFAULT_TERRAIN_COLLISION_ENABLED = true;
 export const MIN_TERRAIN_SAMPLE_COUNT = 2;
 export const DEFAULT_TERRAIN_SAMPLE_COUNT_X = 9;
 export const DEFAULT_TERRAIN_SAMPLE_COUNT_Z = 9;
 export const DEFAULT_TERRAIN_CELL_SIZE = 1;
 export const DEFAULT_TERRAIN_HEIGHT = 0;
+export const TERRAIN_LAYER_COUNT = 4;
+export const DEFAULT_TERRAIN_LAYER_MATERIAL_IDS = [
+  "patchy_grass_ground_250x250",
+  "patchy_weedy_dirt_ground_300x300",
+  "ground_sand_300x300",
+  "concrete_wall_cladding_250x250"
+] as const;
 
 function cloneVec3(vector: Vec3): Vec3 {
   return {
@@ -72,6 +87,82 @@ export function normalizeTerrainCellSize(value: number): number {
   return value;
 }
 
+function normalizeTerrainLayerMaterialId(
+  value: string | null | undefined,
+  label: string
+): string | null {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  if (typeof value !== "string") {
+    throw new Error(`${label} must be a string or null.`);
+  }
+
+  const normalizedValue = value.trim();
+  return normalizedValue.length === 0 ? null : normalizedValue;
+}
+
+function normalizeTerrainCollisionEnabled(value: boolean): boolean {
+  if (typeof value !== "boolean") {
+    throw new Error("Terrain collisionEnabled must be a boolean.");
+  }
+
+  return value;
+}
+
+export function getTerrainLayerLabel(layerIndex: number): string {
+  if (!Number.isInteger(layerIndex) || layerIndex < 0 || layerIndex >= TERRAIN_LAYER_COUNT) {
+    throw new Error(`Terrain layer index ${layerIndex} is out of range.`);
+  }
+
+  return layerIndex === 0 ? "Base Layer" : `Layer ${layerIndex + 1}`;
+}
+
+export function createDefaultTerrainLayers(): TerrainLayer[] {
+  return Array.from({ length: TERRAIN_LAYER_COUNT }, (_, layerIndex) => ({
+    materialId: DEFAULT_TERRAIN_LAYER_MATERIAL_IDS[layerIndex] ?? null
+  }));
+}
+
+export function cloneTerrainLayers(
+  layers: readonly TerrainLayer[]
+): TerrainLayer[] {
+  return layers.map((layer, layerIndex) => ({
+    materialId: normalizeTerrainLayerMaterialId(
+      layer.materialId,
+      `Terrain layer ${layerIndex}`
+    )
+  }));
+}
+
+function normalizeTerrainLayers(
+  layers: readonly TerrainLayer[] | undefined
+): TerrainLayer[] {
+  if (layers === undefined) {
+    return createDefaultTerrainLayers();
+  }
+
+  if (layers.length !== TERRAIN_LAYER_COUNT) {
+    throw new Error(
+      `Terrain layers must contain exactly ${TERRAIN_LAYER_COUNT} layer slots.`
+    );
+  }
+
+  return layers.map((layer, layerIndex) => {
+    if (typeof layer !== "object" || layer === null) {
+      throw new Error(`Terrain layer ${layerIndex} must be an object.`);
+    }
+
+    return {
+      materialId: normalizeTerrainLayerMaterialId(
+        layer.materialId,
+        `Terrain layer ${layerIndex}.materialId`
+      )
+    };
+  });
+}
+
 export function createFlatTerrainHeights(
   sampleCountX: number,
   sampleCountZ: number,
@@ -91,6 +182,26 @@ export function createFlatTerrainHeights(
   }
 
   return new Array(normalizedSampleCountX * normalizedSampleCountZ).fill(height);
+}
+
+export function createFlatTerrainPaintWeights(
+  sampleCountX: number,
+  sampleCountZ: number
+): number[] {
+  const normalizedSampleCountX = normalizeTerrainSampleCount(
+    sampleCountX,
+    "Terrain sampleCountX"
+  );
+  const normalizedSampleCountZ = normalizeTerrainSampleCount(
+    sampleCountZ,
+    "Terrain sampleCountZ"
+  );
+
+  return new Array(
+    normalizedSampleCountX *
+      normalizedSampleCountZ *
+      (TERRAIN_LAYER_COUNT - 1)
+  ).fill(0);
 }
 
 export function getTerrainSampleIndex(
@@ -117,12 +228,104 @@ export function getTerrainSampleIndex(
   return sampleZ * terrain.sampleCountX + sampleX;
 }
 
+export function getTerrainPaintWeightSampleOffset(
+  terrain: Pick<Terrain, "sampleCountX" | "sampleCountZ">,
+  sampleX: number,
+  sampleZ: number
+): number {
+  return getTerrainSampleIndex(terrain, sampleX, sampleZ) * (TERRAIN_LAYER_COUNT - 1);
+}
+
 export function getTerrainHeightAtSample(
   terrain: Terrain,
   sampleX: number,
   sampleZ: number
 ): number {
   return terrain.heights[getTerrainSampleIndex(terrain, sampleX, sampleZ)] ?? 0;
+}
+
+function normalizeTerrainPaintWeights(
+  sampleCountX: number,
+  sampleCountZ: number,
+  paintWeights: readonly number[] | undefined
+): number[] {
+  const expectedLength =
+    sampleCountX * sampleCountZ * (TERRAIN_LAYER_COUNT - 1);
+  const normalizedPaintWeights =
+    paintWeights === undefined
+      ? createFlatTerrainPaintWeights(sampleCountX, sampleCountZ)
+      : [...paintWeights];
+
+  if (normalizedPaintWeights.length !== expectedLength) {
+    throw new Error(
+      `Terrain paint weights must contain exactly ${expectedLength} values.`
+    );
+  }
+
+  for (
+    let sampleIndex = 0;
+    sampleIndex < sampleCountX * sampleCountZ;
+    sampleIndex += 1
+  ) {
+    const offset = sampleIndex * (TERRAIN_LAYER_COUNT - 1);
+    let weightSum = 0;
+
+    for (
+      let layerOffset = 0;
+      layerOffset < TERRAIN_LAYER_COUNT - 1;
+      layerOffset += 1
+    ) {
+      const value = normalizedPaintWeights[offset + layerOffset];
+
+      if (!Number.isFinite(value)) {
+        throw new Error("Terrain paint weights must remain finite.");
+      }
+
+      const clampedValue = Math.min(1, Math.max(0, value));
+      normalizedPaintWeights[offset + layerOffset] = clampedValue;
+      weightSum += clampedValue;
+    }
+
+    if (weightSum <= 1) {
+      continue;
+    }
+
+    const scale = 1 / weightSum;
+
+    for (
+      let layerOffset = 0;
+      layerOffset < TERRAIN_LAYER_COUNT - 1;
+      layerOffset += 1
+    ) {
+      normalizedPaintWeights[offset + layerOffset] *= scale;
+    }
+  }
+
+  return normalizedPaintWeights;
+}
+
+export function getTerrainSampleLayerWeights(
+  terrain: Pick<Terrain, "sampleCountX" | "sampleCountZ" | "paintWeights">,
+  sampleX: number,
+  sampleZ: number
+): [number, number, number, number] {
+  const offset = getTerrainPaintWeightSampleOffset(terrain, sampleX, sampleZ);
+  const layer1 = terrain.paintWeights[offset] ?? 0;
+  const layer2 = terrain.paintWeights[offset + 1] ?? 0;
+  const layer3 = terrain.paintWeights[offset + 2] ?? 0;
+  const baseLayer = Math.max(0, 1 - (layer1 + layer2 + layer3));
+  const weightSum = baseLayer + layer1 + layer2 + layer3;
+
+  if (weightSum <= 0) {
+    return [1, 0, 0, 0];
+  }
+
+  return [
+    baseLayer / weightSum,
+    layer1 / weightSum,
+    layer2 / weightSum,
+    layer3 / weightSum
+  ];
 }
 
 export function getTerrainWorldSamplePosition(
@@ -137,9 +340,21 @@ export function getTerrainWorldSamplePosition(
   };
 }
 
+export function getTerrainFootprintWidth(
+  terrain: Pick<Terrain, "sampleCountX" | "cellSize">
+): number {
+  return (terrain.sampleCountX - 1) * terrain.cellSize;
+}
+
+export function getTerrainFootprintDepth(
+  terrain: Pick<Terrain, "sampleCountZ" | "cellSize">
+): number {
+  return (terrain.sampleCountZ - 1) * terrain.cellSize;
+}
+
 export function getTerrainBounds(terrain: Terrain): { min: Vec3; max: Vec3 } {
-  const width = (terrain.sampleCountX - 1) * terrain.cellSize;
-  const depth = (terrain.sampleCountZ - 1) * terrain.cellSize;
+  const width = getTerrainFootprintWidth(terrain);
+  const depth = getTerrainFootprintDepth(terrain);
   let minHeight = Number.POSITIVE_INFINITY;
   let maxHeight = Number.NEGATIVE_INFINITY;
 
@@ -167,6 +382,225 @@ export function getTerrainBounds(terrain: Terrain): { min: Vec3; max: Vec3 } {
   };
 }
 
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
+function lerp(start: number, end: number, alpha: number): number {
+  return start + (end - start) * alpha;
+}
+
+function sampleTerrainHeightAtGridCoordinate(
+  terrain: Terrain,
+  sampleX: number,
+  sampleZ: number
+): number {
+  const clampedSampleX = clamp(sampleX, 0, terrain.sampleCountX - 1);
+  const clampedSampleZ = clamp(sampleZ, 0, terrain.sampleCountZ - 1);
+  const minSampleX = Math.floor(clampedSampleX);
+  const maxSampleX = Math.min(terrain.sampleCountX - 1, minSampleX + 1);
+  const minSampleZ = Math.floor(clampedSampleZ);
+  const maxSampleZ = Math.min(terrain.sampleCountZ - 1, minSampleZ + 1);
+  const blendX = clampedSampleX - minSampleX;
+  const blendZ = clampedSampleZ - minSampleZ;
+  const height00 = getTerrainHeightAtSample(terrain, minSampleX, minSampleZ);
+  const height10 = getTerrainHeightAtSample(terrain, maxSampleX, minSampleZ);
+  const height01 = getTerrainHeightAtSample(terrain, minSampleX, maxSampleZ);
+  const height11 = getTerrainHeightAtSample(terrain, maxSampleX, maxSampleZ);
+
+  return lerp(
+    lerp(height00, height10, blendX),
+    lerp(height01, height11, blendX),
+    blendZ
+  );
+}
+
+function getStoredTerrainPaintWeightAtSample(
+  terrain: Terrain,
+  sampleX: number,
+  sampleZ: number,
+  layerOffset: number
+): number {
+  const offset = getTerrainPaintWeightSampleOffset(terrain, sampleX, sampleZ);
+  return terrain.paintWeights[offset + layerOffset] ?? 0;
+}
+
+function sampleTerrainPaintWeightAtGridCoordinate(
+  terrain: Terrain,
+  sampleX: number,
+  sampleZ: number,
+  layerOffset: number
+): number {
+  const clampedSampleX = clamp(sampleX, 0, terrain.sampleCountX - 1);
+  const clampedSampleZ = clamp(sampleZ, 0, terrain.sampleCountZ - 1);
+  const minSampleX = Math.floor(clampedSampleX);
+  const maxSampleX = Math.min(terrain.sampleCountX - 1, minSampleX + 1);
+  const minSampleZ = Math.floor(clampedSampleZ);
+  const maxSampleZ = Math.min(terrain.sampleCountZ - 1, minSampleZ + 1);
+  const blendX = clampedSampleX - minSampleX;
+  const blendZ = clampedSampleZ - minSampleZ;
+  const weight00 = getStoredTerrainPaintWeightAtSample(
+    terrain,
+    minSampleX,
+    minSampleZ,
+    layerOffset
+  );
+  const weight10 = getStoredTerrainPaintWeightAtSample(
+    terrain,
+    maxSampleX,
+    minSampleZ,
+    layerOffset
+  );
+  const weight01 = getStoredTerrainPaintWeightAtSample(
+    terrain,
+    minSampleX,
+    maxSampleZ,
+    layerOffset
+  );
+  const weight11 = getStoredTerrainPaintWeightAtSample(
+    terrain,
+    maxSampleX,
+    maxSampleZ,
+    layerOffset
+  );
+
+  return lerp(
+    lerp(weight00, weight10, blendX),
+    lerp(weight01, weight11, blendX),
+    blendZ
+  );
+}
+
+function createTerrainPositionFromCenter(
+  center: Vec3,
+  sampleCountX: number,
+  sampleCountZ: number,
+  cellSize: number
+): Vec3 {
+  return {
+    x: center.x - ((sampleCountX - 1) * cellSize) * 0.5,
+    y: center.y,
+    z: center.z - ((sampleCountZ - 1) * cellSize) * 0.5
+  };
+}
+
+function getTerrainFootprintCenter(terrain: Terrain): Vec3 {
+  return {
+    x: terrain.position.x + getTerrainFootprintWidth(terrain) * 0.5,
+    y: terrain.position.y,
+    z: terrain.position.z + getTerrainFootprintDepth(terrain) * 0.5
+  };
+}
+
+function createResampledTerrainHeights(
+  terrain: Terrain,
+  sampleCountX: number,
+  sampleCountZ: number
+): number[] {
+  const heights = new Array<number>(sampleCountX * sampleCountZ);
+
+  for (let sampleZ = 0; sampleZ < sampleCountZ; sampleZ += 1) {
+    const normalizedSampleZ =
+      sampleCountZ === 1 ? 0 : sampleZ / (sampleCountZ - 1);
+    const sourceSampleZ = normalizedSampleZ * (terrain.sampleCountZ - 1);
+
+    for (let sampleX = 0; sampleX < sampleCountX; sampleX += 1) {
+      const normalizedSampleX =
+        sampleCountX === 1 ? 0 : sampleX / (sampleCountX - 1);
+      const sourceSampleX = normalizedSampleX * (terrain.sampleCountX - 1);
+
+      heights[sampleZ * sampleCountX + sampleX] =
+        sampleTerrainHeightAtGridCoordinate(
+          terrain,
+          sourceSampleX,
+          sourceSampleZ
+        );
+    }
+  }
+
+  return heights;
+}
+
+function createResampledTerrainPaintWeights(
+  terrain: Terrain,
+  sampleCountX: number,
+  sampleCountZ: number
+): number[] {
+  const paintWeights = new Array<number>(
+    sampleCountX * sampleCountZ * (TERRAIN_LAYER_COUNT - 1)
+  );
+
+  for (let sampleZ = 0; sampleZ < sampleCountZ; sampleZ += 1) {
+    const normalizedSampleZ =
+      sampleCountZ === 1 ? 0 : sampleZ / (sampleCountZ - 1);
+    const sourceSampleZ = normalizedSampleZ * (terrain.sampleCountZ - 1);
+
+    for (let sampleX = 0; sampleX < sampleCountX; sampleX += 1) {
+      const normalizedSampleX =
+        sampleCountX === 1 ? 0 : sampleX / (sampleCountX - 1);
+      const sourceSampleX = normalizedSampleX * (terrain.sampleCountX - 1);
+      const offset =
+        (sampleZ * sampleCountX + sampleX) * (TERRAIN_LAYER_COUNT - 1);
+
+      for (
+        let layerOffset = 0;
+        layerOffset < TERRAIN_LAYER_COUNT - 1;
+        layerOffset += 1
+      ) {
+        paintWeights[offset + layerOffset] =
+          sampleTerrainPaintWeightAtGridCoordinate(
+            terrain,
+            sourceSampleX,
+            sourceSampleZ,
+            layerOffset
+          );
+      }
+    }
+  }
+
+  return paintWeights;
+}
+
+export function resizeTerrainGrid(
+  terrain: Terrain,
+  options: Pick<Terrain, "sampleCountX" | "sampleCountZ" | "cellSize"> & {
+    preserveCenter?: boolean;
+  }
+): Terrain {
+  const sampleCountX = normalizeTerrainSampleCount(
+    options.sampleCountX,
+    "Terrain sampleCountX"
+  );
+  const sampleCountZ = normalizeTerrainSampleCount(
+    options.sampleCountZ,
+    "Terrain sampleCountZ"
+  );
+  const cellSize = normalizeTerrainCellSize(options.cellSize);
+  const preserveCenter = options.preserveCenter ?? true;
+  const nextPosition = preserveCenter
+    ? createTerrainPositionFromCenter(
+        getTerrainFootprintCenter(terrain),
+        sampleCountX,
+        sampleCountZ,
+        cellSize
+      )
+    : cloneVec3(terrain.position);
+
+  return createTerrain({
+    ...terrain,
+    position: nextPosition,
+    sampleCountX,
+    sampleCountZ,
+    cellSize,
+    heights: createResampledTerrainHeights(terrain, sampleCountX, sampleCountZ),
+    paintWeights: createResampledTerrainPaintWeights(
+      terrain,
+      sampleCountX,
+      sampleCountZ
+    )
+  });
+}
+
 function createDefaultTerrainPosition(
   sampleCountX: number,
   sampleCountZ: number,
@@ -187,11 +621,14 @@ export function createTerrain(
       | "name"
       | "visible"
       | "enabled"
+      | "collisionEnabled"
       | "position"
       | "sampleCountX"
       | "sampleCountZ"
       | "cellSize"
       | "heights"
+      | "layers"
+      | "paintWeights"
     >
   > = {}
 ): Terrain {
@@ -214,8 +651,17 @@ export function createTerrain(
     overrides.heights !== undefined
       ? [...overrides.heights]
       : createFlatTerrainHeights(sampleCountX, sampleCountZ);
+  const layers = normalizeTerrainLayers(overrides.layers);
+  const paintWeights = normalizeTerrainPaintWeights(
+    sampleCountX,
+    sampleCountZ,
+    overrides.paintWeights
+  );
   const visible = overrides.visible ?? DEFAULT_TERRAIN_VISIBLE;
   const enabled = overrides.enabled ?? DEFAULT_TERRAIN_ENABLED;
+  const collisionEnabled = normalizeTerrainCollisionEnabled(
+    overrides.collisionEnabled ?? DEFAULT_TERRAIN_COLLISION_ENABLED
+  );
 
   assertFiniteVec3(position, "Terrain position");
 
@@ -243,11 +689,14 @@ export function createTerrain(
     name: normalizeTerrainName(overrides.name),
     visible,
     enabled,
+    collisionEnabled,
     position,
     sampleCountX,
     sampleCountZ,
     cellSize,
-    heights
+    heights,
+    layers,
+    paintWeights
   };
 }
 
@@ -262,12 +711,21 @@ export function areTerrainsEqual(left: Terrain, right: Terrain): boolean {
     left.name === right.name &&
     left.visible === right.visible &&
     left.enabled === right.enabled &&
+    left.collisionEnabled === right.collisionEnabled &&
     areVec3Equal(left.position, right.position) &&
     left.sampleCountX === right.sampleCountX &&
     left.sampleCountZ === right.sampleCountZ &&
     left.cellSize === right.cellSize &&
     left.heights.length === right.heights.length &&
-    left.heights.every((height, index) => height === right.heights[index])
+    left.heights.every((height, index) => height === right.heights[index]) &&
+    left.layers.length === right.layers.length &&
+    left.layers.every(
+      (layer, index) => layer.materialId === right.layers[index]?.materialId
+    ) &&
+    left.paintWeights.length === right.paintWeights.length &&
+    left.paintWeights.every(
+      (weight, index) => weight === right.paintWeights[index]
+    )
   );
 }
 

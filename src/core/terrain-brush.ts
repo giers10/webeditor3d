@@ -1,6 +1,12 @@
 import type { Terrain } from "../document/terrains";
+import { TERRAIN_LAYER_COUNT } from "../document/terrains";
 
-export type TerrainBrushTool = "raise" | "lower" | "smooth" | "flatten";
+export type TerrainBrushTool =
+  | "raise"
+  | "lower"
+  | "smooth"
+  | "flatten"
+  | "paint";
 
 export interface TerrainBrushSettings {
   radius: number;
@@ -8,10 +14,20 @@ export interface TerrainBrushSettings {
   falloff: number;
 }
 
-export interface ArmedTerrainBrushState extends TerrainBrushSettings {
+export interface ArmedTerrainSculptBrushState extends TerrainBrushSettings {
   terrainId: string;
-  tool: TerrainBrushTool;
+  tool: Exclude<TerrainBrushTool, "paint">;
 }
+
+export interface ArmedTerrainPaintBrushState extends TerrainBrushSettings {
+  terrainId: string;
+  tool: "paint";
+  layerIndex: number;
+}
+
+export type ArmedTerrainBrushState =
+  | ArmedTerrainSculptBrushState
+  | ArmedTerrainPaintBrushState;
 
 export interface TerrainBrushStrokeCommit {
   terrain: Terrain;
@@ -73,6 +89,17 @@ export function createDefaultTerrainBrushSettings(): TerrainBrushSettings {
   };
 }
 
+export function clampTerrainPaintLayerIndex(layerIndex: number): number {
+  if (!Number.isFinite(layerIndex)) {
+    return 0;
+  }
+
+  return Math.min(
+    TERRAIN_LAYER_COUNT - 1,
+    Math.max(0, Math.round(layerIndex))
+  );
+}
+
 export function getTerrainBrushToolLabel(tool: TerrainBrushTool): string {
   switch (tool) {
     case "raise":
@@ -83,6 +110,8 @@ export function getTerrainBrushToolLabel(tool: TerrainBrushTool): string {
       return "Smooth";
     case "flatten":
       return "Flatten";
+    case "paint":
+      return "Paint";
   }
 }
 

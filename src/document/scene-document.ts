@@ -29,7 +29,9 @@ import {
 } from "../sequencer/project-sequences";
 import type { Terrain } from "./terrains";
 
-export const SCENE_DOCUMENT_VERSION = 65 as const;
+export const SCENE_DOCUMENT_VERSION = 67 as const;
+export const AUTHORED_TERRAIN_COLLISION_SCENE_DOCUMENT_VERSION = 67 as const;
+export const AUTHORED_TERRAIN_PAINT_SCENE_DOCUMENT_VERSION = 66 as const;
 export const AUTHORED_TERRAIN_FOUNDATION_SCENE_DOCUMENT_VERSION = 65 as const;
 export const FOLLOW_ACTOR_PATH_SMOOTH_SCENE_DOCUMENT_VERSION = 64 as const;
 export const NPC_DIALOGUE_LINE_SPEAKER_REMOVED_SCENE_DOCUMENT_VERSION =

@@ -142,7 +142,7 @@ export function ViewportPanel({
   viewportGridVisible,
   selection,
   activeSelectionId,
-  terrainBrushState,
+  terrainBrushState = null,
   toolMode,
   toolPreview,
   transformSession,

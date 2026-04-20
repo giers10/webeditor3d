@@ -35,6 +35,7 @@ import {
   TorusGeometry,
   SpotLight,
   TextureLoader,
+  Texture,
   Vector2,
   Vector3,
   WebGLRenderTarget,
@@ -206,6 +207,11 @@ import {
 import { createFogQualityMaterial } from "../rendering/fog-material";
 import { updatePlanarReflectionCamera } from "../rendering/planar-reflection";
 import {
+  createTerrainLayerBlendMaterial,
+  getTerrainLayerPreviewColor,
+  getTerrainLayerTexture
+} from "../rendering/terrain-layer-material";
+import {
   applyWhiteboxBevelToMaterial,
   shouldApplyWhiteboxBevel
 } from "../rendering/whitebox-bevel-material";
@@ -348,10 +354,12 @@ const TERRAIN_SELECTED_COLOR = 0xe0c17f;
 const TERRAIN_ACTIVE_COLOR = 0xf0d8a2;
 const TERRAIN_ACTIVE_EMISSIVE = 0x5c4623;
 const TERRAIN_SELECTED_EMISSIVE = 0x3f2d17;
+const TERRAIN_HOVERED_EMISSIVE = 0x24311b;
 const TERRAIN_BRUSH_PREVIEW_RAISE_COLOR = 0x8dd977;
 const TERRAIN_BRUSH_PREVIEW_LOWER_COLOR = 0xe17b75;
 const TERRAIN_BRUSH_PREVIEW_SMOOTH_COLOR = 0x7dbbf1;
 const TERRAIN_BRUSH_PREVIEW_FLATTEN_COLOR = 0xf1d37d;
+const TERRAIN_BRUSH_PREVIEW_PAINT_COLOR = 0x8eb9ff;
 const TERRAIN_BRUSH_PREVIEW_OFFSET = 0.05;
 const BOX_CREATE_PREVIEW_FILL = 0x89b6ff;
 const BOX_CREATE_PREVIEW_EDGE = 0xf3be8f;
@@ -1016,10 +1024,22 @@ export class ViewportHost {
       this.currentTerrainBrushState?.terrainId !== terrainBrushState?.terrainId;
     const toolChanged =
       this.currentTerrainBrushState?.tool !== terrainBrushState?.tool;
+    const layerChanged =
+      this.currentTerrainBrushState?.tool === "paint" &&
+      terrainBrushState?.tool === "paint"
+        ? this.currentTerrainBrushState.layerIndex !==
+          terrainBrushState.layerIndex
+        : this.currentTerrainBrushState?.tool === "paint" ||
+            terrainBrushState?.tool === "paint";
 
     this.currentTerrainBrushState = terrainBrushState;
 
-    if (terrainChanged || toolChanged || terrainBrushState === null) {
+    if (
+      terrainChanged ||
+      toolChanged ||
+      layerChanged ||
+      terrainBrushState === null
+    ) {
       this.cancelActiveTerrainBrushStroke(false);
     }
 
@@ -4902,10 +4922,18 @@ export class ViewportHost {
     this.applyShadowState();
   }
 
-  private createTerrainMaterial(terrainId: string): Material {
-    const selected = isTerrainSelected(this.currentSelection, terrainId);
-    const hovered = isTerrainSelected(this.hoveredSelection, terrainId);
-    const active = selected && this.currentActiveSelectionId === terrainId;
+  private resolveTerrainLayerMaterial(materialId: string | null): MaterialDef | null {
+    if (materialId === null || this.currentDocument === null) {
+      return null;
+    }
+
+    return this.currentDocument.materials[materialId] ?? null;
+  }
+
+  private createTerrainMaterial(terrain: Terrain): Material {
+    const selected = isTerrainSelected(this.currentSelection, terrain.id);
+    const hovered = isTerrainSelected(this.hoveredSelection, terrain.id);
+    const active = selected && this.currentActiveSelectionId === terrain.id;
     const color = active
       ? TERRAIN_ACTIVE_COLOR
       : selected
@@ -4921,16 +4949,23 @@ export class ViewportHost {
       });
     }
 
-    return new MeshStandardMaterial({
-      color,
-      emissive: active
+    const layerTextures = terrain.layers.map((layer) =>
+      getTerrainLayerTexture(
+        this.resolveTerrainLayerMaterial(layer.materialId),
+        (material) => this.getOrCreateTextureSet(material).baseColor
+      )
+    ) as [Texture, Texture, Texture, Texture];
+
+    return createTerrainLayerBlendMaterial({
+      layerTextures,
+      emissiveHex: active
         ? TERRAIN_ACTIVE_EMISSIVE
         : selected
           ? TERRAIN_SELECTED_EMISSIVE
-          : 0x000000,
-      emissiveIntensity: active ? 0.26 : selected ? 0.18 : 0,
-      roughness: 0.98,
-      metalness: 0
+          : hovered
+            ? TERRAIN_HOVERED_EMISSIVE
+            : 0x000000,
+      emissiveIntensity: active ? 0.26 : selected ? 0.18 : hovered ? 0.08 : 0
     });
   }
 
@@ -4952,7 +4987,7 @@ export class ViewportHost {
       const derivedMesh = buildTerrainDerivedMeshData(displayedTerrain);
       const mesh = new Mesh(
         derivedMesh.geometry,
-        this.createTerrainMaterial(displayedTerrain.id)
+        this.createTerrainMaterial(displayedTerrain)
       );
 
       mesh.position.set(
@@ -6647,6 +6682,34 @@ export class ViewportHost {
       });
     }
 
+    for (const terrain of getTerrains(document.terrains)) {
+      if (!terrain.enabled || !terrain.visible) {
+        continue;
+      }
+
+      const derivedMesh = buildTerrainDerivedMeshData(terrain);
+
+      contactBounds.push({
+        kind: "triangleMesh",
+        vertices: derivedMesh.positions,
+        indices: derivedMesh.indices,
+        mergeProfile: "aggressive",
+        transform: {
+          position: terrain.position,
+          rotationDegrees: {
+            x: 0,
+            y: 0,
+            z: 0
+          },
+          scale: {
+            x: 1,
+            y: 1,
+            z: 1
+          }
+        }
+      });
+    }
+
     for (const modelInstance of getModelInstances(document.modelInstances)) {
       if (modelInstance.collision.mode === "none") {
         continue;
@@ -6888,8 +6951,9 @@ export class ViewportHost {
         continue;
       }
 
+      const displayedTerrain = this.getDisplayedTerrainState(terrain.id) ?? terrain;
       const previousMaterial = renderObjects.mesh.material;
-      renderObjects.mesh.material = this.createTerrainMaterial(terrain.id);
+      renderObjects.mesh.material = this.createTerrainMaterial(displayedTerrain);
       previousMaterial.dispose();
     }
   }
@@ -6928,10 +6992,8 @@ export class ViewportHost {
     );
   }
 
-  private getTerrainBrushPreviewColor(
-    tool: ArmedTerrainBrushState["tool"]
-  ): number {
-    switch (tool) {
+  private getTerrainBrushPreviewColor(brushState: ArmedTerrainBrushState): number {
+    switch (brushState.tool) {
       case "raise":
         return TERRAIN_BRUSH_PREVIEW_RAISE_COLOR;
       case "lower":
@@ -6940,6 +7002,23 @@ export class ViewportHost {
         return TERRAIN_BRUSH_PREVIEW_SMOOTH_COLOR;
       case "flatten":
         return TERRAIN_BRUSH_PREVIEW_FLATTEN_COLOR;
+      case "paint": {
+        const terrain =
+          this.getDisplayedTerrainState(brushState.terrainId) ??
+          this.currentDocument?.terrains[brushState.terrainId] ??
+          null;
+
+        if (terrain === null) {
+          return TERRAIN_BRUSH_PREVIEW_PAINT_COLOR;
+        }
+
+        const terrainLayer = terrain.layers[brushState.layerIndex] ?? null;
+        const terrainMaterial =
+          terrainLayer === null
+            ? null
+            : this.resolveTerrainLayerMaterial(terrainLayer.materialId);
+        return getTerrainLayerPreviewColor(terrainMaterial);
+      }
     }
   }
 
@@ -6989,7 +7068,7 @@ export class ViewportHost {
     previousGeometry.dispose();
 
     const previewColor = this.getTerrainBrushPreviewColor(
-      this.currentTerrainBrushState.tool
+      this.currentTerrainBrushState
     );
     (this.terrainBrushPreviewLine.material as LineBasicMaterial).color.setHex(
       previewColor
@@ -7109,7 +7188,8 @@ export class ViewportHost {
       center: point,
       settings: toolState,
       tool: toolState.tool,
-      referenceHeight
+      referenceHeight,
+      layerIndex: toolState.tool === "paint" ? toolState.layerIndex : null
     });
   }
 
