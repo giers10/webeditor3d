@@ -10,6 +10,7 @@ import {
 import type { ArmedTerrainBrushState } from "../../src/core/terrain-brush";
 import { createBoxBrush } from "../../src/document/brushes";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
+import { createTerrain } from "../../src/document/terrains";
 import { createRuntimeClockState } from "../../src/runtime-three/runtime-project-time";
 import { buildRuntimeSceneFromDocument } from "../../src/runtime-three/runtime-scene-build";
 import { ViewportCanvas } from "../../src/viewport-three/ViewportCanvas";
@@ -481,5 +482,127 @@ describe("ViewportCanvas", () => {
     expect(
       screen.getByTestId("viewport-terrain-brush-preview-topLeft")
     ).toHaveTextContent("terrain · paint · layer 3");
+  });
+
+  it("does not refocus the viewport when the scene document changes without a new focus request", async () => {
+    const baseSceneDocument = createEmptySceneDocument();
+    const focusedTerrain = createTerrain({
+      id: "terrain-focused"
+    });
+    const focusedSceneDocument = {
+      ...baseSceneDocument,
+      terrains: {
+        [focusedTerrain.id]: focusedTerrain
+      }
+    };
+    const updatedSceneDocument = {
+      ...focusedSceneDocument,
+      terrains: {
+        [focusedTerrain.id]: createTerrain({
+          ...focusedTerrain,
+          heights: focusedTerrain.heights.map((height, index) =>
+            index === 0 ? height + 1 : height
+          )
+        })
+      }
+    };
+    const cameraState = createDefaultViewportPanelCameraState();
+    const onCameraStateChange = vi.fn(
+      (_cameraState: ViewportPanelCameraState) => undefined
+    );
+    const onToolPreviewChange = vi.fn(
+      (_toolPreview: ViewportToolPreview) => undefined
+    );
+    const onTransformSessionChange = vi.fn(
+      (_transformSession: TransformSessionState) => undefined
+    );
+    const onTransformCommit = vi.fn(
+      (_transformSession: ActiveTransformSession) => undefined
+    );
+    const onTransformCancel = vi.fn(() => undefined);
+    const onSelectionChange = vi.fn();
+
+    const { rerender } = render(
+      <ViewportCanvas
+        panelId="topLeft"
+        world={focusedSceneDocument.world}
+        sceneDocument={focusedSceneDocument}
+        editorSimulationScene={null}
+        editorSimulationClock={null}
+        projectAssets={focusedSceneDocument.assets}
+        loadedModelAssets={{}}
+        loadedImageAssets={{}}
+        whiteboxSelectionMode="object"
+        whiteboxSnapEnabled
+        whiteboxSnapStep={1}
+        viewportGridVisible={true}
+        selection={{ kind: "terrains", ids: [focusedTerrain.id] }}
+        activeSelectionId={focusedTerrain.id}
+        terrainBrushState={null}
+        toolMode="select"
+        toolPreview={{ kind: "none" }}
+        transformSession={createInactiveTransformSession()}
+        cameraState={cameraState}
+        viewMode="perspective"
+        displayMode="authoring"
+        layoutMode="single"
+        isActivePanel
+        focusRequestId={1}
+        focusSelection={{ kind: "terrains", ids: [focusedTerrain.id] }}
+        onSelectionChange={onSelectionChange}
+        onTerrainBrushCommit={vi.fn(() => true)}
+        onCommitCreation={vi.fn(() => true)}
+        onCameraStateChange={onCameraStateChange}
+        onToolPreviewChange={onToolPreviewChange}
+        onTransformSessionChange={onTransformSessionChange}
+        onTransformCommit={onTransformCommit}
+        onTransformCancel={onTransformCancel}
+      />
+    );
+
+    await waitFor(() => {
+      expect(viewportHostInstances).toHaveLength(1);
+      expect(viewportHostInstances[0].focusSelection).toHaveBeenCalledTimes(1);
+    });
+
+    rerender(
+      <ViewportCanvas
+        panelId="topLeft"
+        world={updatedSceneDocument.world}
+        sceneDocument={updatedSceneDocument}
+        editorSimulationScene={null}
+        editorSimulationClock={null}
+        projectAssets={updatedSceneDocument.assets}
+        loadedModelAssets={{}}
+        loadedImageAssets={{}}
+        whiteboxSelectionMode="object"
+        whiteboxSnapEnabled
+        whiteboxSnapStep={1}
+        viewportGridVisible={true}
+        selection={{ kind: "terrains", ids: [focusedTerrain.id] }}
+        activeSelectionId={focusedTerrain.id}
+        terrainBrushState={null}
+        toolMode="select"
+        toolPreview={{ kind: "none" }}
+        transformSession={createInactiveTransformSession()}
+        cameraState={cameraState}
+        viewMode="perspective"
+        displayMode="authoring"
+        layoutMode="single"
+        isActivePanel
+        focusRequestId={1}
+        focusSelection={{ kind: "terrains", ids: [focusedTerrain.id] }}
+        onSelectionChange={onSelectionChange}
+        onTerrainBrushCommit={vi.fn(() => true)}
+        onCommitCreation={vi.fn(() => true)}
+        onCameraStateChange={onCameraStateChange}
+        onToolPreviewChange={onToolPreviewChange}
+        onTransformSessionChange={onTransformSessionChange}
+        onTransformCommit={onTransformCommit}
+        onTransformCancel={onTransformCancel}
+      />
+    );
+
+    expect(viewportHostInstances[0].focusSelection).toHaveBeenCalledTimes(1);
   });
 });
