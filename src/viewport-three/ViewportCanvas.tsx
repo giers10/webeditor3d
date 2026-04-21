@@ -286,7 +286,7 @@ export function ViewportCanvas({
     }
 
     hostRef.current?.focusSelection(sceneDocument, focusSelection);
-  }, [focusRequestId, focusSelection]);
+  }, [focusRequestId]);
 
   const previewVisible =
     toolMode === "create" &&
