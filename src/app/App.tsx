@@ -18654,7 +18654,68 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   {selectedCameraRig !== null ? (
                     <>
                       <div className="form-section">
-                        <div className="label">Fixed Rig</div>
+                        <div className="label">Rig</div>
+                        <div className="vector-inputs vector-inputs--two">
+                          <label className="form-field">
+                            <span className="label">Type</span>
+                            <select
+                              data-testid="camera-rig-rig-type"
+                              className="select-input"
+                              value={cameraRigRigTypeDraft}
+                              onChange={(event) => {
+                                const nextRigType = event.currentTarget
+                                  .value as CameraRigType;
+                                const nextPathId =
+                                  nextRigType === "rail"
+                                    ? cameraRigPathIdDraft.trim() ||
+                                      cameraRigPathOptions[0]?.path.id ||
+                                      ""
+                                    : "";
+                                setCameraRigRigTypeDraft(nextRigType);
+                                setCameraRigPathIdDraft(nextPathId);
+                                scheduleDraftCommit(() =>
+                                  applyCameraRigChange({
+                                    rigType: nextRigType,
+                                    pathId: nextPathId
+                                  })
+                                );
+                              }}
+                            >
+                              <option value="fixed">Fixed</option>
+                              <option value="rail">Rail</option>
+                            </select>
+                          </label>
+                          {cameraRigRigTypeDraft === "rail" ? (
+                            <label className="form-field">
+                              <span className="label">Path</span>
+                              <select
+                                data-testid="camera-rig-path"
+                                className="select-input"
+                                value={cameraRigPathIdDraft}
+                                onChange={(event) => {
+                                  const nextPathId = event.currentTarget.value;
+                                  setCameraRigPathIdDraft(nextPathId);
+                                  scheduleDraftCommit(() =>
+                                    applyCameraRigChange({
+                                      pathId: nextPathId
+                                    })
+                                  );
+                                }}
+                              >
+                                <option value="">— select path —</option>
+                                {cameraRigPathOptions.map(({ path, label }) => (
+                                  <option key={path.id} value={path.id}>
+                                    {label}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      <div className="form-section">
+                        <div className="label">Activation</div>
                         <div className="vector-inputs vector-inputs--two">
                           <label className="form-field">
                             <span className="label">Priority</span>
