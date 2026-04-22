@@ -2531,15 +2531,27 @@ function readWorldTimePhaseProfile(
     throw new Error(`${label} must be an object.`);
   }
 
+  const skyTopColorHex = expectHexColor(
+    value.skyTopColorHex ?? defaults.skyTopColorHex,
+    `${label}.skyTopColorHex`
+  );
+  const skyBottomColorHex = expectHexColor(
+    value.skyBottomColorHex ?? defaults.skyBottomColorHex,
+    `${label}.skyBottomColorHex`
+  );
+  const fallbackBackground: WorldBackgroundSettings = {
+    mode: "verticalGradient",
+    topColorHex: skyTopColorHex,
+    bottomColorHex: skyBottomColorHex
+  };
+
   return {
-    skyTopColorHex: expectHexColor(
-      value.skyTopColorHex ?? defaults.skyTopColorHex,
-      `${label}.skyTopColorHex`
-    ),
-    skyBottomColorHex: expectHexColor(
-      value.skyBottomColorHex ?? defaults.skyBottomColorHex,
-      `${label}.skyBottomColorHex`
-    ),
+    background: readWorldBackgroundSettings(value.background, `${label}.background`, {
+      allowMissing: true,
+      defaultValue: fallbackBackground
+    }),
+    skyTopColorHex,
+    skyBottomColorHex,
     ambientColorHex: expectHexColor(
       value.ambientColorHex ?? defaults.ambientColorHex,
       `${label}.ambientColorHex`
@@ -2607,8 +2619,14 @@ function readLegacyWorldTimeOfDaySettings(
   }
 
   return {
-    dawn,
-    dusk,
+    dawn: {
+      ...dawn,
+      background: cloneWorldBackgroundSettings(dawn.background)
+    },
+    dusk: {
+      ...dusk,
+      background: cloneWorldBackgroundSettings(dusk.background)
+    },
     night: {
       background: nightBackground,
       ambientColorHex: nightProfile.ambientColorHex,
