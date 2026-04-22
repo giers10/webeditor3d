@@ -352,12 +352,12 @@ function validateWorldShaderSkySettings(
     );
   }
 
-  if (!isFiniteNumberInRange(settings.horizonHeight, -1, 1)) {
+  if (!isFiniteNumberInRange(settings.horizonHeight, -0.5, 0.5)) {
     diagnostics.push(
       createDiagnostic(
         "error",
         "invalid-world-shader-sky-horizon-height",
-        "World shader sky horizon height must stay between -1 and 1.",
+        "World shader sky horizon height must stay between -0.5 and 0.5.",
         `${path}.horizonHeight`
       )
     );

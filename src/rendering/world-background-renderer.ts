@@ -875,6 +875,7 @@ export class WorldBackgroundRenderer {
 
   private syncShaderSkyState(state: WorldShaderSkyRenderState | null) {
     if (state === null) {
+      this.shaderSkyMaterial.uniforms.uHorizonHeight.value = 0;
       this.shaderSkyMaterial.uniforms.uStarVisibility.value = 0;
       this.shaderSkyMaterial.uniforms.uSunVisible.value = 0;
       this.shaderSkyMaterial.uniforms.uMoonVisible.value = 0;
