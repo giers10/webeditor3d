@@ -2,7 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import { createDefaultProjectTimeSettings } from "../../src/document/project-time-settings";
 import { createDefaultWorldSettings } from "../../src/document/world-settings";
-import { resolveWorldShaderSkyRenderState } from "../../src/rendering/world-shader-sky";
+import {
+  createWorldShaderSkyEnvironmentCacheKey,
+  resolveWorldShaderSkyEnvironmentPhaseStates,
+  resolveWorldShaderSkyRenderState
+} from "../../src/rendering/world-shader-sky";
 import {
   resolveRuntimeDayNightWorldState,
   resolveRuntimeTimeState
@@ -224,6 +228,103 @@ describe("resolveWorldShaderSkyRenderState", () => {
     );
     expect(shiftedSky?.celestial.moonDirection.y ?? 0).toBeGreaterThan(
       baseSky?.celestial.moonDirection.y ?? 0
+    );
+  });
+
+  it("resolves representative shader environment states for day, dawn, dusk, and night", () => {
+    const world = createDefaultWorldSettings();
+    const time = createDefaultProjectTimeSettings();
+    world.background = {
+      mode: "shader"
+    };
+
+    const states = resolveWorldShaderSkyEnvironmentPhaseStates(world, time);
+
+    expect(states.day?.time.dayPhase).toBe("day");
+    expect(states.dawn?.time.dayPhase).toBe("dawn");
+    expect(states.dusk?.time.dayPhase).toBe("dusk");
+    expect(states.night?.time.dayPhase).toBe("night");
+    expect(states.day?.sky.topColorHex).not.toBe(states.night?.sky.topColorHex);
+  });
+
+  it("quantizes small shader-environment state changes into the same cache key", () => {
+    const world = createDefaultWorldSettings();
+    const time = createDefaultProjectTimeSettings();
+    world.background = {
+      mode: "shader"
+    };
+    const noonTime = resolveRuntimeTimeState(time, {
+      timeOfDayHours: 12,
+      dayCount: 0,
+      dayLengthMinutes: 24
+    });
+    const noonWorld = resolveRuntimeDayNightWorldState(
+      world,
+      time,
+      {
+        timeOfDayHours: 12,
+        dayCount: 0,
+        dayLengthMinutes: 24
+      },
+      noonTime
+    );
+    const baseSky = resolveWorldShaderSkyRenderState(
+      world,
+      noonWorld,
+      noonTime,
+      time
+    );
+    const nearSky =
+      baseSky === null
+        ? null
+        : {
+            ...baseSky,
+            celestial: {
+              ...baseSky.celestial,
+              sunDirection: {
+                ...baseSky.celestial.sunDirection,
+                x: baseSky.celestial.sunDirection.x + 0.004
+              }
+            },
+            clouds: {
+              ...baseSky.clouds,
+              driftOffset: {
+                x: baseSky.clouds.driftOffset.x + 0.009,
+                y: baseSky.clouds.driftOffset.y
+              }
+            }
+          };
+    const shiftedSky =
+      baseSky === null
+        ? null
+        : {
+            ...baseSky,
+            celestial: {
+              ...baseSky.celestial,
+              sunIntensity: baseSky.celestial.sunIntensity + 0.2
+            }
+          };
+
+    expect(baseSky).not.toBeNull();
+    expect(nearSky).not.toBeNull();
+    expect(shiftedSky).not.toBeNull();
+    expect(
+      createWorldShaderSkyEnvironmentCacheKey(
+        nearSky ?? (baseSky as NonNullable<typeof baseSky>)
+      )
+    ).toBe(
+      createWorldShaderSkyEnvironmentCacheKey(
+        baseSky as NonNullable<typeof baseSky>
+      )
+    );
+    expect(
+      createWorldShaderSkyEnvironmentCacheKey(
+        shiftedSky ?? (baseSky as NonNullable<typeof baseSky>)
+      )
+    ).not.toBe(
+      createWorldShaderSkyEnvironmentCacheKey(
+        baseSky as NonNullable<typeof baseSky>
+      )
     );
   });
 });
