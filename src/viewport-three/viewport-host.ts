@@ -1539,6 +1539,7 @@ export class ViewportHost {
     const displayedAmbientLight =
       resolvedWorld?.ambientLight ?? world.ambientLight;
     const displayedSunLight = resolvedWorld?.sunLight ?? world.sunLight;
+    const displayedMoonLight = resolvedWorld?.moonLight ?? null;
     const displayedBackground = resolvedWorld?.background ?? world.background;
     const backgroundTexture =
       displayedBackground.mode === "image" &&
@@ -1561,6 +1562,11 @@ export class ViewportHost {
 
     this.ambientLight.color.set(displayedAmbientLight.colorHex);
     this.ambientLight.intensity = displayedAmbientLight.intensity;
+    this.currentCelestialShadowCaster =
+      resolveDominantCelestialShadowCaster(
+        displayedSunLight,
+        displayedMoonLight
+      )?.key ?? null;
     this.sunLight.color.set(displayedSunLight.colorHex);
     this.sunLight.intensity = displayedSunLight.intensity;
     this.sunLight.position
@@ -1571,8 +1577,29 @@ export class ViewportHost {
       )
       .normalize()
       .multiplyScalar(18);
+    this.sunLight.target.position.set(0, 0, 0);
+    this.moonLight.visible = false;
+    this.moonLight.intensity = 0;
+
+    if (displayedMoonLight !== null) {
+      this.moonLight.color.set(displayedMoonLight.colorHex);
+      this.moonLight.intensity = displayedMoonLight.intensity;
+      this.moonLight.position
+        .set(
+          displayedMoonLight.direction.x,
+          displayedMoonLight.direction.y,
+          displayedMoonLight.direction.z
+        )
+        .normalize()
+        .multiplyScalar(16);
+      this.moonLight.target.position.set(0, 0, 0);
+      this.moonLight.visible =
+        this.displayMode !== "wireframe" && displayedMoonLight.intensity > 1e-4;
+    }
+
     this.ambientLight.visible = this.displayMode !== "wireframe";
-    this.sunLight.visible = this.displayMode !== "wireframe";
+    this.sunLight.visible =
+      this.displayMode !== "wireframe" && displayedSunLight.intensity > 1e-4;
     this.localLightGroup.visible = this.displayMode !== "wireframe";
     this.lightVolumeGroup.visible = this.displayMode !== "wireframe";
 
@@ -1590,7 +1617,7 @@ export class ViewportHost {
       const celestialBodiesState = resolveWorldCelestialBodiesState(
         world.showCelestialBodies,
         displayedSunLight,
-        resolvedWorld?.moonLight ?? null
+        displayedMoonLight
       );
 
       this.worldBackgroundRenderer.update(
@@ -1659,7 +1686,8 @@ export class ViewportHost {
       return;
     }
 
-    const advancedRendering = this.currentWorld.advancedRendering;
+    const world = this.currentSimulationScene?.world ?? this.currentWorld;
+    const advancedRendering = world.advancedRendering;
     const shadowsEnabled =
       advancedRendering.enabled &&
       advancedRendering.shadows.enabled &&
@@ -1671,15 +1699,6 @@ export class ViewportHost {
             ...advancedRendering,
             enabled: false
           };
-
-    applyAdvancedRenderingLightShadowFlags(this.sunLight, shadowSettings);
-
-    for (const renderObjects of this.localLightRenderObjects.values()) {
-      applyAdvancedRenderingLightShadowFlags(
-        renderObjects.group,
-        shadowSettings
-      );
-    }
 
     for (const renderObjects of this.brushRenderObjects.values()) {
       applyAdvancedRenderingRenderableShadowFlags(
@@ -1698,13 +1717,144 @@ export class ViewportHost {
     for (const renderObjects of this.entityRenderObjects.values()) {
       applyAdvancedRenderingRenderableShadowFlags(
         renderObjects.group,
-        shadowsEnabled
+        false
       );
     }
 
     for (const renderGroup of this.modelRenderObjects.values()) {
       applyAdvancedRenderingRenderableShadowFlags(renderGroup, shadowsEnabled);
     }
+
+    this.syncCelestialShadowState();
+  }
+
+  private resolveViewportShadowFocusTarget() {
+    if (this.viewMode === "perspective") {
+      return {
+        center: {
+          x: this.cameraTarget.x,
+          y: this.cameraTarget.y,
+          z: this.cameraTarget.z
+        },
+        radius: Math.max(
+          4,
+          this.perspectiveCamera.position.distanceTo(this.cameraTarget) * 0.25
+        )
+      };
+    }
+
+    const halfWidth =
+      Math.abs(this.orthographicCamera.right - this.orthographicCamera.left) /
+      Math.max(this.orthographicCamera.zoom, 0.0001) *
+      0.5;
+    const halfHeight =
+      Math.abs(this.orthographicCamera.top - this.orthographicCamera.bottom) /
+      Math.max(this.orthographicCamera.zoom, 0.0001) *
+      0.5;
+
+    return {
+      center: {
+        x: this.cameraTarget.x,
+        y: this.cameraTarget.y,
+        z: this.cameraTarget.z
+      },
+      radius: Math.max(3, Math.hypot(halfWidth, halfHeight) * 0.65)
+    };
+  }
+
+  private syncCelestialShadowState() {
+    if (this.currentWorld === null) {
+      return;
+    }
+
+    const world = this.currentSimulationScene?.world ?? this.currentWorld;
+    const advancedRendering = world.advancedRendering;
+    const shadowsEnabled =
+      advancedRendering.enabled &&
+      advancedRendering.shadows.enabled &&
+      this.displayMode === "normal";
+
+    for (const renderObjects of this.localLightRenderObjects.values()) {
+      configureAdvancedRenderingShadowLight(
+        renderObjects.light,
+        advancedRendering,
+        false
+      );
+    }
+
+    for (const renderObjects of this.lightVolumeRenderObjects.values()) {
+      for (const light of renderObjects.lights) {
+        configureAdvancedRenderingShadowLight(light, advancedRendering, false);
+      }
+    }
+
+    if (!shadowsEnabled || this.currentCelestialShadowCaster === null) {
+      configureAdvancedRenderingShadowLight(this.sunLight, advancedRendering, false);
+      configureAdvancedRenderingShadowLight(this.moonLight, advancedRendering, false);
+      return;
+    }
+
+    const activeCamera = this.getActiveCamera();
+    const activeLight =
+      this.currentCelestialShadowCaster === "moon"
+        ? this.moonLight
+        : this.sunLight;
+    const lightDirection = activeLight.position
+      .clone()
+      .sub(activeLight.target.position)
+      .normalize();
+    const fit = fitCelestialDirectionalShadow({
+      activeCamera,
+      focusTarget: this.resolveViewportShadowFocusTarget(),
+      lightDirection: {
+        x: lightDirection.x,
+        y: lightDirection.y,
+        z: lightDirection.z
+      },
+      mapSize: advancedRendering.shadows.mapSize,
+      sceneBounds: this.viewportSceneBounds
+    });
+
+    if (fit === null) {
+      configureAdvancedRenderingShadowLight(this.sunLight, advancedRendering, false);
+      configureAdvancedRenderingShadowLight(this.moonLight, advancedRendering, false);
+      return;
+    }
+
+    configureAdvancedRenderingShadowLight(
+      this.sunLight,
+      advancedRendering,
+      this.currentCelestialShadowCaster === "sun",
+      this.currentCelestialShadowCaster === "sun" ? fit.normalBias : 0
+    );
+    configureAdvancedRenderingShadowLight(
+      this.moonLight,
+      advancedRendering,
+      this.currentCelestialShadowCaster === "moon",
+      this.currentCelestialShadowCaster === "moon" ? fit.normalBias : 0
+    );
+
+    activeLight.position.set(
+      fit.lightPosition.x,
+      fit.lightPosition.y,
+      fit.lightPosition.z
+    );
+    activeLight.target.position.set(
+      fit.targetPosition.x,
+      fit.targetPosition.y,
+      fit.targetPosition.z
+    );
+    activeLight.updateMatrixWorld();
+    activeLight.target.updateMatrixWorld();
+    const shadowCamera = activeLight.shadow.camera as OrthographicCamera;
+    shadowCamera.left = fit.cameraBounds.left;
+    shadowCamera.right = fit.cameraBounds.right;
+    shadowCamera.top = fit.cameraBounds.top;
+    shadowCamera.bottom = fit.cameraBounds.bottom;
+    shadowCamera.near = fit.cameraBounds.near;
+    shadowCamera.far = fit.cameraBounds.far;
+    shadowCamera.updateProjectionMatrix();
+    activeLight.shadow.needsUpdate = true;
   }
 
   private getPointerOriginForTransformSession() {
@@ -9075,6 +9225,8 @@ export class ViewportHost {
     if (this.viewportWaterSurfaceBindings.length > 0) {
       this.updateViewportWaterReflections();
     }
+
+    this.syncCelestialShadowState();
 
     if (this.advancedRenderingComposer !== null) {
       this.worldBackgroundRenderer.syncToCamera(this.perspectiveCamera);
