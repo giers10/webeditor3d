@@ -2487,6 +2487,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
     ({ entity }) =>
       entity.id !== selectedCameraRig?.id && entity.kind !== "cameraRig"
   );
+  const cameraRigPathOptions = pathList.map((path, index) => ({
+    path,
+    label: getScenePathLabel(path, index)
+  }));
   const playableSoundEmitterOptions = soundEmitterOptions.filter(
     ({ entity }) => {
       if (entity.audioAssetId === null) {
