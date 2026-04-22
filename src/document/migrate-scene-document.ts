@@ -2640,6 +2640,11 @@ function readWorldShaderSkySettings(
       value.dayBottomColorHex ?? defaults.dayBottomColorHex,
       `${label}.dayBottomColorHex`
     ),
+    horizonHeight: readOptionalFiniteNumber(
+      value.horizonHeight,
+      `${label}.horizonHeight`,
+      defaults.horizonHeight
+    ),
     celestial: {
       sunDiscSizeDegrees: readOptionalPositiveFiniteNumber(
         celestial.sunDiscSizeDegrees,
