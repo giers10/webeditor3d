@@ -1489,6 +1489,24 @@ export class ViewportHost {
       resolvedWorld?.ambientLight ?? world.ambientLight;
     const displayedSunLight = resolvedWorld?.sunLight ?? world.sunLight;
     const displayedBackground = resolvedWorld?.background ?? world.background;
+    const backgroundTexture =
+      displayedBackground.mode === "image" &&
+      displayedBackground.assetId.trim().length > 0
+        ? (this.loadedImageAssets[displayedBackground.assetId]?.texture ?? null)
+        : null;
+    const backgroundOverlayState =
+      resolvedWorld?.nightBackgroundOverlay === undefined ||
+      resolvedWorld?.nightBackgroundOverlay === null
+        ? null
+        : {
+            texture:
+              this.loadedImageAssets[
+                resolvedWorld.nightBackgroundOverlay.assetId
+              ]?.texture ?? null,
+            opacity: resolvedWorld.nightBackgroundOverlay.opacity,
+            environmentIntensity:
+              resolvedWorld.nightBackgroundOverlay.environmentIntensity
+          };
 
     this.ambientLight.color.set(displayedAmbientLight.colorHex);
     this.ambientLight.intensity = displayedAmbientLight.intensity;
@@ -1510,16 +1528,21 @@ export class ViewportHost {
       this.scene.background = null;
       this.scene.environment = null;
       this.scene.environmentIntensity = 1;
-    } else if (displayedBackground.mode === "image") {
-      const texture =
-        this.loadedImageAssets[displayedBackground.assetId]?.texture ?? null;
-      this.scene.background = texture;
-      this.scene.environment = texture;
-      this.scene.environmentIntensity = displayedBackground.environmentIntensity;
     } else {
+      const environmentState = resolveWorldEnvironmentState(
+        displayedBackground,
+        backgroundTexture,
+        backgroundOverlayState
+      );
+
+      this.worldBackgroundRenderer.update(
+        displayedBackground,
+        backgroundTexture,
+        backgroundOverlayState
+      );
       this.scene.background = null;
-      this.scene.environment = null;
-      this.scene.environmentIntensity = 1;
+      this.scene.environment = environmentState.texture;
+      this.scene.environmentIntensity = environmentState.intensity;
     }
 
     configureAdvancedRenderingRenderer(this.renderer, rendererSettings);
