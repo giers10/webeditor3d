@@ -444,7 +444,9 @@ export class RuntimeHost {
 
     this.scene.add(this.ambientLight);
     this.scene.add(this.sunLight);
+    this.scene.add(this.sunLight.target);
     this.scene.add(this.moonLight);
+    this.scene.add(this.moonLight.target);
     this.scene.add(this.localLightGroup);
     this.scene.add(this.lightVolumeGroup);
     this.scene.add(this.brushGroup);
