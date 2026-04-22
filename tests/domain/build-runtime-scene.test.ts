@@ -124,6 +124,91 @@ describe("buildRuntimeSceneFromDocument", () => {
     ]);
   });
 
+  it("builds enabled rail camera rigs into runtime entities", () => {
+    const interactable = createInteractableEntity({
+      id: "entity-interactable-rail-anchor",
+      position: {
+        x: 3,
+        y: 1,
+        z: 2
+      },
+      prompt: "Anchor"
+    });
+    const path = createScenePath({
+      id: "path-camera-rail",
+      points: [
+        {
+          id: "point-a",
+          position: {
+            x: 0,
+            y: 3,
+            z: 0
+          }
+        },
+        {
+          id: "point-b",
+          position: {
+            x: 10,
+            y: 3,
+            z: 0
+          }
+        }
+      ]
+    });
+    const cameraRig = createCameraRigEntity({
+      id: "entity-camera-rig-rail",
+      rigType: "rail",
+      pathId: path.id,
+      priority: 9,
+      defaultActive: true,
+      target: createCameraRigEntityTargetRef(interactable.id),
+      targetOffset: {
+        x: 0,
+        y: 1.25,
+        z: 0
+      },
+      transitionMode: "cut"
+    });
+
+    const runtimeScene = buildRuntimeSceneFromDocument({
+      ...createEmptySceneDocument({ name: "Rail Camera Rig Runtime Scene" }),
+      paths: {
+        [path.id]: path
+      },
+      entities: {
+        [interactable.id]: interactable,
+        [cameraRig.id]: cameraRig
+      }
+    });
+
+    expect(runtimeScene.entities.cameraRigs).toEqual([
+      {
+        entityId: cameraRig.id,
+        rigType: "rail",
+        priority: 9,
+        defaultActive: true,
+        pathId: path.id,
+        target: {
+          kind: "entity",
+          entityId: interactable.id
+        },
+        targetOffset: {
+          x: 0,
+          y: 1.25,
+          z: 0
+        },
+        transitionMode: "cut",
+        transitionDurationSeconds: 0.35,
+        lookAround: {
+          enabled: true,
+          yawLimitDegrees: 12,
+          pitchLimitDegrees: 8,
+          recenterSpeed: 6
+        }
+      }
+    ]);
+  });
+
   it("builds runtime brush data, colliders, and an authored player spawn from the document", () => {
     const brush = createBoxBrush({
       id: "brush-room-floor",
