@@ -77,6 +77,7 @@ import {
   type ResolvedBoxVolumeRenderPaths
 } from "../rendering/advanced-rendering";
 import {
+  resolveWorldCelestialBodiesState,
   resolveWorldEnvironmentState,
   WorldBackgroundRenderer
 } from "../rendering/world-background-renderer";
@@ -1111,11 +1112,17 @@ export class RuntimeHost {
       backgroundOverlayState,
       this.environmentBlendCache
     );
+    const celestialBodiesState = resolveWorldCelestialBodiesState(
+      this.currentWorld.showCelestialBodies,
+      resolvedWorld.sunLight,
+      resolvedWorld.moonLight
+    );
 
     this.worldBackgroundRenderer.update(
       resolvedWorld.background,
       backgroundTexture,
-      backgroundOverlayState
+      backgroundOverlayState,
+      celestialBodiesState
     );
     this.scene.background = null;
     this.scene.environment = environmentState.texture;
