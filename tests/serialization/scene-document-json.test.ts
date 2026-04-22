@@ -16,6 +16,7 @@ import { createTerrain } from "../../src/document/terrains";
 import {
   AUTHORED_TERRAIN_PAINT_SCENE_DOCUMENT_VERSION,
   AUTHORED_TERRAIN_FOUNDATION_SCENE_DOCUMENT_VERSION,
+  CAMERA_RIG_ENTITY_SCENE_DOCUMENT_VERSION,
   CELESTIAL_BODY_OVERLAY_SCENE_DOCUMENT_VERSION,
   DAWN_DUSK_BACKGROUND_IMAGE_SCENE_DOCUMENT_VERSION,
   FOLLOW_ACTOR_PATH_SMOOTH_SCENE_DOCUMENT_VERSION,
@@ -38,6 +39,7 @@ import {
   SCENE_EDITOR_PREFERENCES_SCENE_DOCUMENT_VERSION,
   SCENE_TRANSITION_ENTITIES_SCENE_DOCUMENT_VERSION,
   SCENE_TRANSITION_SEQUENCE_EFFECTS_SCENE_DOCUMENT_VERSION,
+  CELESTIAL_ORBIT_SETTINGS_SCENE_DOCUMENT_VERSION,
   SCENE_DOCUMENT_VERSION,
   SHADER_SKY_HORIZON_HEIGHT_SCENE_DOCUMENT_VERSION,
   SHADER_SKY_SCENE_DOCUMENT_VERSION,
@@ -207,6 +209,39 @@ describe("scene document JSON", () => {
     expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
     expect(migratedDocument.world.shaderSky.stars.density).toBe(0.72);
     expect(migratedDocument.world.shaderSky.stars.horizonFadeOffset).toBe(0);
+  });
+
+  it("migrates v74 scene documents by defaulting celestial orbit settings from the legacy sun direction", () => {
+    const document = createEmptySceneDocument({
+      name: "Legacy Celestial Orbit Scene"
+    });
+    document.world.sunLight.direction = {
+      x: -0.4,
+      y: 1,
+      z: 0.2
+    };
+
+    const legacyDocument = JSON.parse(
+      serializeSceneDocument(document)
+    ) as Record<string, unknown>;
+    legacyDocument.version = CAMERA_RIG_ENTITY_SCENE_DOCUMENT_VERSION;
+    delete (legacyDocument.world as Record<string, unknown>).celestialOrbits;
+
+    const migratedDocument = parseSceneDocumentJson(
+      JSON.stringify(legacyDocument)
+    );
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.world.celestialOrbits.sun.azimuthDegrees).toBeCloseTo(
+      153.4349,
+      3
+    );
+    expect(
+      migratedDocument.world.celestialOrbits.sun.peakAltitudeDegrees
+    ).toBeGreaterThan(60);
+    expect(migratedDocument.world.celestialOrbits.moon).toEqual(
+      migratedDocument.world.celestialOrbits.sun
+    );
   });
 
   it("migrates pre-paint terrain documents by defaulting terrain layer data", () => {

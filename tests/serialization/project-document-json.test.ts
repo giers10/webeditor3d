@@ -65,6 +65,8 @@ describe("project document JSON", () => {
       mode: "shader"
     };
     activeScene.world.showCelestialBodies = true;
+    activeScene.world.celestialOrbits.sun.azimuthDegrees = 132;
+    activeScene.world.celestialOrbits.moon.azimuthDegrees = 204;
     activeScene.world.shaderSky.dayTopColorHex = "#4a76bb";
     activeScene.world.shaderSky.dayBottomColorHex = "#d6efff";
     activeScene.world.shaderSky.horizonHeight = -0.06;
