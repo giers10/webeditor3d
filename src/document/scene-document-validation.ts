@@ -22,6 +22,7 @@ import {
 } from "../controls/control-surface";
 import { WHITEBOX_SELECTION_MODES } from "../core/whitebox-selection-mode";
 import {
+  isCameraRigTransitionMode,
   isNpcPresenceMode,
   isPlayerStartColliderMode,
   isPlayerStartGamepadActionBinding,
@@ -32,6 +33,8 @@ import {
   isPlayerStartNavigationMode,
   getNpcColliderHeight,
   getPlayerStartColliderHeight,
+  type CameraRigEntity,
+  type CameraRigTargetRef,
   type EntityInstance,
   type InteractableEntity,
   type CharacterColliderSettings,
@@ -1394,6 +1397,249 @@ function validateSpotLightEntity(
         "invalid-spot-light-angle",
         "Spot Light angle must remain a finite degree value between 0 and 180.",
         `${path}.angleDegrees`
+      )
+    );
+  }
+}
+
+function validateCameraRigTargetRef(
+  target: CameraRigTargetRef,
+  entity: CameraRigEntity,
+  path: string,
+  document: SceneDocument,
+  diagnostics: SceneDiagnostic[]
+) {
+  switch (target.kind) {
+    case "player":
+      return;
+    case "actor": {
+      if (target.actorId.trim().length === 0) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-camera-rig-target-actor-id",
+            "Camera Rig actor targets must reference a non-empty actor id.",
+            `${path}.actorId`
+          )
+        );
+        return;
+      }
+
+      const matchingActor = Object.values(document.entities).some(
+        (candidate) =>
+          candidate.kind === "npc" && candidate.actorId === target.actorId
+      );
+
+      if (!matchingActor) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "missing-camera-rig-target-actor",
+            `Camera Rig actor target ${target.actorId} does not exist in this scene.`,
+            `${path}.actorId`
+          )
+        );
+      }
+      return;
+    }
+    case "entity": {
+      if (target.entityId.trim().length === 0) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-camera-rig-target-entity-id",
+            "Camera Rig entity targets must reference a non-empty entity id.",
+            `${path}.entityId`
+          )
+        );
+        return;
+      }
+
+      const targetEntity = document.entities[target.entityId];
+
+      if (targetEntity === undefined) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "missing-camera-rig-target-entity",
+            `Camera Rig entity target ${target.entityId} does not exist in this scene.`,
+            `${path}.entityId`
+          )
+        );
+        return;
+      }
+
+      if (targetEntity.id === entity.id) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "camera-rig-self-target",
+            "Camera Rigs must not target themselves.",
+            `${path}.entityId`
+          )
+        );
+      }
+
+      if (targetEntity.kind === "cameraRig") {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-camera-rig-target-entity-kind",
+            "Camera Rigs must not target another Camera Rig entity.",
+            `${path}.entityId`
+          )
+        );
+      }
+      return;
+    }
+    case "worldPoint":
+      if (!isFiniteVec3(target.point)) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-camera-rig-target-world-point",
+            "Camera Rig world-point targets must remain finite on every axis.",
+            `${path}.point`
+          )
+        );
+      }
+      return;
+  }
+}
+
+function validateCameraRigEntity(
+  entity: CameraRigEntity,
+  path: string,
+  document: SceneDocument,
+  diagnostics: SceneDiagnostic[]
+) {
+  validateAuthoredEntityState(entity, path, diagnostics);
+
+  if (!isFiniteVec3(entity.position)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-camera-rig-position",
+        "Camera Rig position must remain finite on every axis.",
+        `${path}.position`
+      )
+    );
+  }
+
+  if (entity.rigType !== "fixed") {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-camera-rig-type",
+        "Camera Rig rigType must be fixed in this slice.",
+        `${path}.rigType`
+      )
+    );
+  }
+
+  if (!isNonNegativeFiniteNumber(entity.priority)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-camera-rig-priority",
+        "Camera Rig priority must remain finite and zero or greater.",
+        `${path}.priority`
+      )
+    );
+  }
+
+  if (!isBoolean(entity.defaultActive)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-camera-rig-default-active",
+        "Camera Rig defaultActive must remain a boolean.",
+        `${path}.defaultActive`
+      )
+    );
+  }
+
+  validateCameraRigTargetRef(
+    entity.target,
+    entity,
+    `${path}.target`,
+    document,
+    diagnostics
+  );
+
+  if (!isFiniteVec3(entity.targetOffset)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-camera-rig-target-offset",
+        "Camera Rig targetOffset must remain finite on every axis.",
+        `${path}.targetOffset`
+      )
+    );
+  }
+
+  if (!isCameraRigTransitionMode(entity.transitionMode)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-camera-rig-transition-mode",
+        "Camera Rig transitionMode must be cut or blend.",
+        `${path}.transitionMode`
+      )
+    );
+  }
+
+  if (!isNonNegativeFiniteNumber(entity.transitionDurationSeconds)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-camera-rig-transition-duration",
+        "Camera Rig transition duration must remain finite and zero or greater.",
+        `${path}.transitionDurationSeconds`
+      )
+    );
+  }
+
+  if (!isBoolean(entity.lookAround.enabled)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-camera-rig-look-around-enabled",
+        "Camera Rig look-around enabled must remain a boolean.",
+        `${path}.lookAround.enabled`
+      )
+    );
+  }
+
+  if (!isNonNegativeFiniteNumber(entity.lookAround.yawLimitDegrees)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-camera-rig-look-around-yaw-limit",
+        "Camera Rig look-around yaw limit must remain finite and zero or greater.",
+        `${path}.lookAround.yawLimitDegrees`
+      )
+    );
+  }
+
+  if (!isNonNegativeFiniteNumber(entity.lookAround.pitchLimitDegrees)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-camera-rig-look-around-pitch-limit",
+        "Camera Rig look-around pitch limit must remain finite and zero or greater.",
+        `${path}.lookAround.pitchLimitDegrees`
+      )
+    );
+  }
+
+  if (!isNonNegativeFiniteNumber(entity.lookAround.recenterSpeed)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-camera-rig-look-around-recenter-speed",
+        "Camera Rig look-around recenter speed must remain finite and zero or greater.",
+        `${path}.lookAround.recenterSpeed`
       )
     );
   }
