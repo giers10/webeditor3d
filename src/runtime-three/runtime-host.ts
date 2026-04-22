@@ -1392,6 +1392,7 @@ export class RuntimeHost {
       fit.targetPosition.y,
       fit.targetPosition.z
     );
+    activeLight.updateMatrixWorld();
     activeLight.target.updateMatrixWorld();
     const shadowCamera = activeLight.shadow.camera as OrthographicCamera;
     shadowCamera.left = fit.cameraBounds.left;
