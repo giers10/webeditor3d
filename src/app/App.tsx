@@ -2293,6 +2293,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
         };
   const selectedPlayerStart =
     selectedEntity?.kind === "playerStart" ? selectedEntity : null;
+  const selectedCameraRig =
+    selectedEntity?.kind === "cameraRig" ? selectedEntity : null;
   const selectedSoundEmitter = isSoundEmitterEntity(selectedEntity)
     ? selectedEntity
     : null;
@@ -2470,6 +2472,17 @@ export function App({ store, initialStatusMessage }: AppProps) {
     entity: Extract<EntityInstance, { kind: "soundEmitter" }>;
     label: string;
   }>;
+  const cameraRigActorOptions = Array.from(
+    new Set(
+      entityList
+        .filter((entity): entity is Extract<EntityInstance, { kind: "npc" }> => entity.kind === "npc")
+        .map((entity) => entity.actorId)
+    )
+  ).sort((left, right) => left.localeCompare(right));
+  const cameraRigEntityTargetOptions = entityDisplayList.filter(
+    ({ entity }) =>
+      entity.id !== selectedCameraRig?.id && entity.kind !== "cameraRig"
+  );
   const playableSoundEmitterOptions = soundEmitterOptions.filter(
     ({ entity }) => {
       if (entity.audioAssetId === null) {
