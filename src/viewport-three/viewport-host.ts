@@ -1534,6 +1534,8 @@ export class ViewportHost {
     this.localLightGroup.visible = this.displayMode !== "wireframe";
 
     if (this.displayMode !== "normal") {
+      this.dynamicWorldEnvironmentTarget?.dispose();
+      this.dynamicWorldEnvironmentTarget = null;
       this.scene.background = null;
       this.scene.environment = null;
       this.scene.environmentIntensity = 1;
