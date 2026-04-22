@@ -2580,6 +2580,42 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [entityPositionDraft, setEntityPositionDraft] = useState(
     createVec3Draft(DEFAULT_ENTITY_POSITION)
   );
+  const [cameraRigPriorityDraft, setCameraRigPriorityDraft] = useState(
+    String(DEFAULT_CAMERA_RIG_PRIORITY)
+  );
+  const [cameraRigDefaultActiveDraft, setCameraRigDefaultActiveDraft] =
+    useState(DEFAULT_CAMERA_RIG_DEFAULT_ACTIVE);
+  const [cameraRigTargetKindDraft, setCameraRigTargetKindDraft] =
+    useState<CameraRigTargetKind>("player");
+  const [cameraRigTargetActorIdDraft, setCameraRigTargetActorIdDraft] =
+    useState("");
+  const [cameraRigTargetEntityIdDraft, setCameraRigTargetEntityIdDraft] =
+    useState("");
+  const [cameraRigTargetWorldPointDraft, setCameraRigTargetWorldPointDraft] =
+    useState(createVec3Draft(DEFAULT_ENTITY_POSITION));
+  const [cameraRigTargetOffsetDraft, setCameraRigTargetOffsetDraft] = useState(
+    createVec3Draft(DEFAULT_CAMERA_RIG_TARGET_OFFSET)
+  );
+  const [cameraRigTransitionModeDraft, setCameraRigTransitionModeDraft] =
+    useState<CameraRigTransitionMode>(DEFAULT_CAMERA_RIG_TRANSITION_MODE);
+  const [
+    cameraRigTransitionDurationDraft,
+    setCameraRigTransitionDurationDraft
+  ] = useState(String(DEFAULT_CAMERA_RIG_TRANSITION_DURATION_SECONDS));
+  const [cameraRigLookAroundEnabledDraft, setCameraRigLookAroundEnabledDraft] =
+    useState(DEFAULT_CAMERA_RIG_LOOK_AROUND_ENABLED);
+  const [
+    cameraRigLookAroundYawLimitDraft,
+    setCameraRigLookAroundYawLimitDraft
+  ] = useState(String(DEFAULT_CAMERA_RIG_LOOK_AROUND_YAW_LIMIT_DEGREES));
+  const [
+    cameraRigLookAroundPitchLimitDraft,
+    setCameraRigLookAroundPitchLimitDraft
+  ] = useState(String(DEFAULT_CAMERA_RIG_LOOK_AROUND_PITCH_LIMIT_DEGREES));
+  const [
+    cameraRigLookAroundRecenterSpeedDraft,
+    setCameraRigLookAroundRecenterSpeedDraft
+  ] = useState(String(DEFAULT_CAMERA_RIG_LOOK_AROUND_RECENTER_SPEED));
   const [pointLightColorDraft, setPointLightColorDraft] = useState(
     DEFAULT_POINT_LIGHT_COLOR_HEX
   );
