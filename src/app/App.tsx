@@ -14008,9 +14008,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     />
                   </label>
                   <div className="material-summary">
-                    Draws shader-based sun and moon overlays at the current
-                    resolved light directions in both the editor viewport and
-                    the runner.
+                    Draws sun and moon visuals in both the editor viewport and
+                    the runner. In shader mode, the sky shader owns those
+                    discs directly.
                   </div>
                 </div>
 
@@ -14025,19 +14025,24 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           ? (loadedImageAssets[
                               editorState.document.world.background.assetId
                             ]?.previewUrl ?? null)
+                          : null,
+                        editorState.document.world.background.mode === "shader"
+                          ? {
+                              topColorHex:
+                                editorState.document.world.shaderSky
+                                  .dayTopColorHex,
+                              bottomColorHex:
+                                editorState.document.world.shaderSky
+                                  .dayBottomColorHex
+                            }
                           : null
                       )}
                     />
                     <div className="material-summary">
-                      {editorState.document.world.background.mode === "solid"
-                        ? editorState.document.world.background.colorHex
-                        : editorState.document.world.background.mode ===
-                            "verticalGradient"
-                          ? `${editorState.document.world.background.topColorHex} -> ${editorState.document.world.background.bottomColorHex}`
-                          : (editorState.document.assets[
-                              editorState.document.world.background.assetId
-                            ]?.sourceName ??
-                            editorState.document.world.background.assetId)}
+                      {describeWorldBackground(
+                        editorState.document.world.background,
+                        editorState.document.assets
+                      )}
                     </div>
                     {editorState.document.world.background.mode !==
                     "image" ? null : (
