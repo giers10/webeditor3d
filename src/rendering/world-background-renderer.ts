@@ -5,19 +5,30 @@ import {
   Group,
   Mesh,
   MeshBasicMaterial,
+  PlaneGeometry,
   Scene,
   ShaderMaterial,
   SphereGeometry,
-  Texture
+  Texture,
+  Vector3
 } from "three";
 
-import type { WorldBackgroundSettings } from "../document/world-settings";
+import type { Vec3 } from "../core/vector";
+import type {
+  WorldBackgroundSettings,
+  WorldSunLightSettings
+} from "../document/world-settings";
 
 const BACKGROUND_SPHERE_RADIUS = 320;
 const BACKGROUND_SPHERE_WIDTH_SEGMENTS = 48;
 const BACKGROUND_SPHERE_HEIGHT_SEGMENTS = 24;
 const DEFAULT_IMAGE_BACKGROUND_FALLBACK_COLOR = "#0d1116";
 const NIGHT_BACKGROUND_EPSILON = 1e-4;
+const MIN_CELESTIAL_BODY_INTENSITY = 1e-4;
+const MIN_CELESTIAL_BODY_ALTITUDE = -0.02;
+const CELESTIAL_BODY_DISTANCE = BACKGROUND_SPHERE_RADIUS - 6;
+const SUN_CELESTIAL_BODY_SIZE = 28;
+const MOON_CELESTIAL_BODY_SIZE = 20;
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
@@ -65,6 +76,18 @@ export interface WorldEnvironmentBlendTextureResolver {
 export interface WorldEnvironmentState {
   texture: Texture | null;
   intensity: number;
+}
+
+export interface WorldCelestialBodyState {
+  colorHex: string;
+  direction: Vec3;
+  intensity: number;
+  size: number;
+}
+
+export interface WorldCelestialBodiesState {
+  sun: WorldCelestialBodyState | null;
+  moon: WorldCelestialBodyState | null;
 }
 
 export function resolveWorldEnvironmentState(
@@ -135,6 +158,60 @@ export function resolveWorldEnvironmentState(
   };
 }
 
+function normalizeDirection(direction: Vec3): Vec3 | null {
+  const length = Math.hypot(direction.x, direction.y, direction.z);
+
+  if (length <= 1e-6) {
+    return null;
+  }
+
+  return {
+    x: direction.x / length,
+    y: direction.y / length,
+    z: direction.z / length
+  };
+}
+
+function resolveWorldCelestialBodyState(
+  light: WorldSunLightSettings | null,
+  size: number
+): WorldCelestialBodyState | null {
+  if (light === null || light.intensity <= MIN_CELESTIAL_BODY_INTENSITY) {
+    return null;
+  }
+
+  const direction = normalizeDirection(light.direction);
+
+  if (direction === null || direction.y < MIN_CELESTIAL_BODY_ALTITUDE) {
+    return null;
+  }
+
+  return {
+    colorHex: light.colorHex,
+    direction,
+    intensity: light.intensity,
+    size
+  };
+}
+
+export function resolveWorldCelestialBodiesState(
+  showCelestialBodies: boolean,
+  sunLight: WorldSunLightSettings,
+  moonLight: WorldSunLightSettings | null
+): WorldCelestialBodiesState {
+  if (!showCelestialBodies) {
+    return {
+      sun: null,
+      moon: null
+    };
+  }
+
+  return {
+    sun: resolveWorldCelestialBodyState(sunLight, SUN_CELESTIAL_BODY_SIZE),
+    moon: resolveWorldCelestialBodyState(moonLight, MOON_CELESTIAL_BODY_SIZE)
+  };
+}
+
 const GRADIENT_VERTEX_SHADER = `
 varying vec3 vWorldPosition;
 
@@ -154,9 +231,107 @@ void main() {
   vec3 direction = normalize(vWorldPosition - cameraPosition);
   float gradientAmount = clamp(direction.y * 0.5 + 0.5, 0.0, 1.0);
   vec3 color = mix(uBottomColor, uTopColor, gradientAmount);
-  gl_FragColor = vec4(color, 1.0);
+gl_FragColor = vec4(color, 1.0);
 }
 `;
+
+const CELESTIAL_BODY_VERTEX_SHADER = `
+varying vec2 vUv;
+
+void main() {
+  vUv = uv;
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+}
+`;
+
+const SUN_FRAGMENT_SHADER = `
+uniform vec3 uColor;
+uniform float uIntensity;
+varying vec2 vUv;
+
+void main() {
+  vec2 centeredUv = vUv * 2.0 - 1.0;
+  float distanceFromCenter = length(centeredUv);
+  float disc = smoothstep(0.52, 0.18, distanceFromCenter);
+  float core = smoothstep(0.26, 0.0, distanceFromCenter);
+  float halo = smoothstep(1.0, 0.28, distanceFromCenter);
+  float glow = clamp(0.18 + min(uIntensity, 4.0) * 0.18, 0.18, 0.95);
+  vec3 warmCore = mix(uColor, vec3(1.0, 0.97, 0.88), 0.45);
+  vec3 color =
+    warmCore * (disc * 1.15 + core * 0.8) +
+    uColor * halo * glow * 0.55;
+  float alpha = disc * 0.82 + core * 0.28 + halo * glow * 0.22;
+
+  if (alpha <= 0.001) {
+    discard;
+  }
+
+  gl_FragColor = vec4(color, alpha);
+}
+`;
+
+const MOON_FRAGMENT_SHADER = `
+uniform vec3 uColor;
+uniform float uIntensity;
+varying vec2 vUv;
+
+float hash(vec2 point) {
+  return fract(sin(dot(point, vec2(127.1, 311.7))) * 43758.5453123);
+}
+
+float noise(vec2 point) {
+  vec2 cell = floor(point);
+  vec2 local = fract(point);
+  vec2 blend = local * local * (3.0 - 2.0 * local);
+
+  float a = hash(cell);
+  float b = hash(cell + vec2(1.0, 0.0));
+  float c = hash(cell + vec2(0.0, 1.0));
+  float d = hash(cell + vec2(1.0, 1.0));
+
+  return mix(mix(a, b, blend.x), mix(c, d, blend.x), blend.y);
+}
+
+void main() {
+  vec2 centeredUv = vUv * 2.0 - 1.0;
+  float distanceFromCenter = length(centeredUv);
+  float disc = smoothstep(0.52, 0.44, distanceFromCenter);
+  float body = smoothstep(0.48, 0.0, distanceFromCenter);
+  float halo = smoothstep(0.92, 0.32, distanceFromCenter);
+  float craterNoise = noise(centeredUv * 6.0 + vec2(17.0, 9.0));
+  float mariaNoise = noise(centeredUv * 3.0 + vec2(3.0, 5.0));
+  float surfaceVariation = mix(0.86, 1.04, craterNoise * 0.65 + mariaNoise * 0.35);
+  float glow = clamp(0.12 + min(uIntensity, 2.0) * 0.16, 0.12, 0.42);
+  vec3 moonColor = mix(uColor, vec3(1.0, 1.0, 1.0), 0.35) * surfaceVariation;
+  vec3 color = moonColor * (body * 1.08 + disc * 0.18) + uColor * halo * glow * 0.18;
+  float alpha = disc * 0.82 + halo * glow * 0.12;
+
+  if (alpha <= 0.001) {
+    discard;
+  }
+
+  gl_FragColor = vec4(color, alpha);
+}
+`;
+
+function createCelestialBodyMaterial(fragmentShader: string) {
+  return new ShaderMaterial({
+    uniforms: {
+      uColor: {
+        value: new Color("#ffffff")
+      },
+      uIntensity: {
+        value: 0
+      }
+    },
+    vertexShader: CELESTIAL_BODY_VERTEX_SHADER,
+    fragmentShader,
+    depthTest: false,
+    depthWrite: false,
+    fog: false,
+    transparent: true
+  });
+}
 
 export class WorldBackgroundRenderer {
   readonly scene = new Scene();
@@ -199,29 +374,52 @@ export class WorldBackgroundRenderer {
     transparent: true,
     opacity: 0
   });
+  private readonly celestialGeometry = new PlaneGeometry(1, 1);
+  private readonly sunMaterial = createCelestialBodyMaterial(
+    SUN_FRAGMENT_SHADER
+  );
+  private readonly moonMaterial = createCelestialBodyMaterial(
+    MOON_FRAGMENT_SHADER
+  );
   private readonly gradientMesh = new Mesh(this.geometry, this.gradientMaterial);
   private readonly imageMesh = new Mesh(this.geometry, this.imageMaterial);
   private readonly overlayMesh = new Mesh(this.geometry, this.overlayMaterial);
+  private readonly sunMesh = new Mesh(this.celestialGeometry, this.sunMaterial);
+  private readonly moonMesh = new Mesh(this.celestialGeometry, this.moonMaterial);
+  private readonly celestialBodyPosition = new Vector3();
+  private sunState: WorldCelestialBodyState | null = null;
+  private moonState: WorldCelestialBodyState | null = null;
 
   constructor() {
     this.gradientMesh.renderOrder = -1002;
     this.imageMesh.renderOrder = -1001;
     this.overlayMesh.renderOrder = -1000;
+    this.moonMesh.renderOrder = -999;
+    this.sunMesh.renderOrder = -998;
 
-    for (const mesh of [this.gradientMesh, this.imageMesh, this.overlayMesh]) {
+    for (const mesh of [
+      this.gradientMesh,
+      this.imageMesh,
+      this.overlayMesh,
+      this.sunMesh,
+      this.moonMesh
+    ]) {
       mesh.frustumCulled = false;
     }
 
     this.anchor.add(this.gradientMesh);
     this.anchor.add(this.imageMesh);
     this.anchor.add(this.overlayMesh);
+    this.anchor.add(this.moonMesh);
+    this.anchor.add(this.sunMesh);
     this.scene.add(this.anchor);
   }
 
   update(
     background: WorldBackgroundSettings,
     backgroundTexture: Texture | null,
-    overlay: WorldBackgroundOverlayState | null
+    overlay: WorldBackgroundOverlayState | null,
+    celestialBodies: WorldCelestialBodiesState | null = null
   ) {
     const gradientColors = resolveGradientColors(background);
     this.gradientMaterial.uniforms.uTopColor.value.set(
@@ -253,16 +451,68 @@ export class WorldBackgroundRenderer {
 
     this.overlayMaterial.opacity = overlayOpacity;
     this.overlayMesh.visible = overlayOpacity > NIGHT_BACKGROUND_EPSILON;
+    this.sunState = celestialBodies?.sun ?? null;
+    this.moonState = celestialBodies?.moon ?? null;
+    this.syncCelestialBodyVisualState(
+      this.sunMesh,
+      this.sunMaterial,
+      this.sunState
+    );
+    this.syncCelestialBodyVisualState(
+      this.moonMesh,
+      this.moonMaterial,
+      this.moonState
+    );
   }
 
   syncToCamera(camera: Camera) {
     this.anchor.position.copy(camera.position);
+    this.syncCelestialBodyPose(this.sunMesh, this.sunState, camera);
+    this.syncCelestialBodyPose(this.moonMesh, this.moonState, camera);
   }
 
   dispose() {
     this.geometry.dispose();
+    this.celestialGeometry.dispose();
     this.gradientMaterial.dispose();
     this.imageMaterial.dispose();
     this.overlayMaterial.dispose();
+    this.sunMaterial.dispose();
+    this.moonMaterial.dispose();
+  }
+
+  private syncCelestialBodyVisualState(
+    mesh: Mesh,
+    material: ShaderMaterial,
+    state: WorldCelestialBodyState | null
+  ) {
+    if (state === null) {
+      mesh.visible = false;
+      material.uniforms.uIntensity.value = 0;
+      return;
+    }
+
+    material.uniforms.uColor.value.set(state.colorHex);
+    material.uniforms.uIntensity.value = state.intensity;
+    mesh.scale.setScalar(state.size);
+    mesh.visible = true;
+  }
+
+  private syncCelestialBodyPose(
+    mesh: Mesh,
+    state: WorldCelestialBodyState | null,
+    camera: Camera
+  ) {
+    if (state === null) {
+      mesh.visible = false;
+      return;
+    }
+
+    this.celestialBodyPosition
+      .set(state.direction.x, state.direction.y, state.direction.z)
+      .normalize()
+      .multiplyScalar(CELESTIAL_BODY_DISTANCE);
+    mesh.position.copy(this.celestialBodyPosition);
+    mesh.lookAt(camera.position);
   }
 }
