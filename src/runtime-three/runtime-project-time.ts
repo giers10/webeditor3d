@@ -465,7 +465,6 @@ export function resolveRuntimeDayNightPhaseWeights(
 }
 
 function resolveTimeDrivenCelestialOrbitRadians(
-  peakDirection: Vec3,
   visibleStartTimeOfDayHours: number,
   visibleEndTimeOfDayHours: number,
   timeOfDayHours: number
@@ -478,9 +477,8 @@ function resolveTimeDrivenCelestialOrbitRadians(
   const relativeTime =
     wrapTimeForward(timeOfDayHours, visibleStartTimeOfDayHours) -
     visibleStartTimeOfDayHours;
-  const peakAltitudeRadians = Math.asin(clamp(peakDirection.y, -1, 1));
-  const risingHorizonOrbitRadians = -peakAltitudeRadians;
-  const settingHorizonOrbitRadians = Math.PI - peakAltitudeRadians;
+  const risingHorizonOrbitRadians = -Math.PI / 2;
+  const settingHorizonOrbitRadians = Math.PI / 2;
 
   if (relativeTime <= visibleDuration) {
     const visibleProgress = clamp(relativeTime / visibleDuration, 0, 1);
@@ -506,27 +504,22 @@ function resolveTimeDrivenCelestialOrbitRadians(
   );
 }
 
+function resolveTimeDrivenCelestialOrbitNormal(peakDirection: Vec3): Vec3 {
+  return normalizeVec3({
+    x: -peakDirection.x * peakDirection.y,
+    y: 1 - peakDirection.y * peakDirection.y,
+    z: -peakDirection.z * peakDirection.y
+  });
+}
+
 function resolveTimeDrivenCelestialDirection(
   peakDirection: Vec3,
   visibleStartTimeOfDayHours: number,
   visibleEndTimeOfDayHours: number,
   timeOfDayHours: number
 ): Vec3 {
-  const orbitAxisCandidate = cross(peakDirection, UP_AXIS);
-  const orbitAxis =
-    Math.hypot(
-      orbitAxisCandidate.x,
-      orbitAxisCandidate.y,
-      orbitAxisCandidate.z
-    ) <= 1e-6
-      ? {
-          x: 1,
-          y: 0,
-          z: 0
-        }
-      : normalizeVec3(orbitAxisCandidate);
+  const orbitAxis = resolveTimeDrivenCelestialOrbitNormal(peakDirection);
   const orbitRadians = resolveTimeDrivenCelestialOrbitRadians(
-    peakDirection,
     visibleStartTimeOfDayHours,
     visibleEndTimeOfDayHours,
     timeOfDayHours
