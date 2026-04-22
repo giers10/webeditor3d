@@ -1943,14 +1943,19 @@ export function createCameraRigEntity(
   };
 
   if (rigType === "rail") {
+    const railOverrides = overrides as RailCameraRigEntityOverrides;
+
     return {
       ...base,
       rigType: "rail",
-      pathId: normalizeCameraRigPathId(overrides.pathId)
+      pathId: normalizeCameraRigPathId(railOverrides.pathId)
     };
   }
 
-  const position = cloneVec3(overrides.position ?? DEFAULT_ENTITY_POSITION);
+  const fixedOverrides = overrides as FixedCameraRigEntityOverrides;
+  const position = cloneVec3(
+    fixedOverrides.position ?? DEFAULT_ENTITY_POSITION
+  );
   assertFiniteVec3(position, "Camera Rig position");
 
   return {
