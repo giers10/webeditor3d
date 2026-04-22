@@ -278,18 +278,26 @@ export class ThirdPersonNavigationController implements NavigationController {
       runtimeScene.playerInputBindings
     );
 
-    if (lookInput.horizontal !== 0 || lookInput.vertical !== 0) {
+    if (
+      this.context.isCameraDrivenExternally() !== true &&
+      (lookInput.horizontal !== 0 || lookInput.vertical !== 0)
+    ) {
       this.cameraYawRadians -= lookInput.horizontal * GAMEPAD_LOOK_SPEED * dt;
       this.pitchRadians = clampPitch(
         this.pitchRadians - lookInput.vertical * GAMEPAD_LOOK_SPEED * dt
       );
     }
 
+    const movementYawRadians =
+      this.context.isCameraDrivenExternally() === true
+        ? this.context.getCameraYawRadians()
+        : this.cameraYawRadians;
+
     const locomotionStep = stepPlayerLocomotion(
       {
         dt,
         feetPosition: this.feetPosition,
-        movementYawRadians: this.cameraYawRadians,
+        movementYawRadians,
         airDirectionYawRadians: this.yawRadians,
         standingShape: this.standingPlayerShape,
         verticalVelocity: this.verticalVelocity,
@@ -500,7 +508,8 @@ export class ThirdPersonNavigationController implements NavigationController {
   private handlePointerDown = (event: PointerEvent) => {
     if (
       event.button !== 0 ||
-      this.context?.isInputSuspended() === true
+      this.context?.isInputSuspended() === true ||
+      this.context?.isCameraDrivenExternally() === true
     ) {
       return;
     }
@@ -513,7 +522,8 @@ export class ThirdPersonNavigationController implements NavigationController {
   private handlePointerMove = (event: PointerEvent) => {
     if (
       !this.dragging ||
-      this.context?.isInputSuspended() === true
+      this.context?.isInputSuspended() === true ||
+      this.context?.isCameraDrivenExternally() === true
     ) {
       return;
     }
@@ -534,7 +544,10 @@ export class ThirdPersonNavigationController implements NavigationController {
   };
 
   private handleWheel = (event: WheelEvent) => {
-    if (this.context?.isInputSuspended() === true) {
+    if (
+      this.context?.isInputSuspended() === true ||
+      this.context?.isCameraDrivenExternally() === true
+    ) {
       return;
     }
 
