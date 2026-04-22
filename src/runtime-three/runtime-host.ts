@@ -1423,8 +1423,9 @@ export class RuntimeHost {
     }
 
     const nextLookTarget = this.resolveRuntimeCameraRigLookTarget(nextRig);
+    const nextPosition = this.resolveRuntimeCameraRigPosition(nextRig);
 
-    if (nextLookTarget === null) {
+    if (nextLookTarget === null || nextPosition === null) {
       this.activeRuntimeCameraRig = null;
       this.activeRuntimeCameraRigId = null;
       this.cameraRigBlendState = null;
@@ -1451,9 +1452,9 @@ export class RuntimeHost {
             .clone()
             .add(this.camera.getWorldDirection(this.cameraRigForward)),
           toPosition: new Vector3(
-            nextRig.position.x,
-            nextRig.position.y,
-            nextRig.position.z
+            nextPosition.x,
+            nextPosition.y,
+            nextPosition.z
           ),
           toLookTarget: new Vector3(
             nextLookTarget.x,
@@ -1471,9 +1472,9 @@ export class RuntimeHost {
     this.updateRuntimeCameraRigLookState(nextRig, dt);
 
     const authoredPosition = new Vector3(
-      nextRig.position.x,
-      nextRig.position.y,
-      nextRig.position.z
+      nextPosition.x,
+      nextPosition.y,
+      nextPosition.z
     );
     this.cameraRigLookTarget.set(
       nextLookTarget.x,
