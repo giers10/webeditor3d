@@ -14165,7 +14165,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     </div>
                   )}
 
-                  {editorState.document.world.background.mode !== "image" && (
+                  {(editorState.document.world.background.mode === "solid" ||
+                    editorState.document.world.background.mode ===
+                      "verticalGradient") && (
                     <div className="form-section">
                       <div className="label">Background Colors</div>
                       {editorState.document.world.background.mode ===
@@ -14227,6 +14229,430 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         </div>
                       )}
                     </div>
+                  )}
+
+                  {editorState.document.world.background.mode === "shader" && (
+                    <>
+                      <div className="form-section">
+                        <div className="label">Shader Sky</div>
+                        <div className="material-summary">
+                          Built-in preset: Default Sky. The shader blends these
+                          day colors with the authored dawn, dusk, and night
+                          phase colors from this panel.
+                        </div>
+                      </div>
+
+                      <div className="form-section">
+                        <div className="label">Day Color Basis</div>
+                        <div className="vector-inputs vector-inputs--two">
+                          <label className="form-field">
+                            <span className="label">Top</span>
+                            <input
+                              className="color-input"
+                              type="color"
+                              value={
+                                editorState.document.world.shaderSky
+                                  .dayTopColorHex
+                              }
+                              onChange={(event) =>
+                                applyShaderSkyDayColor(
+                                  "top",
+                                  event.currentTarget.value
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Bottom</span>
+                            <input
+                              className="color-input"
+                              type="color"
+                              value={
+                                editorState.document.world.shaderSky
+                                  .dayBottomColorHex
+                              }
+                              onChange={(event) =>
+                                applyShaderSkyDayColor(
+                                  "bottom",
+                                  event.currentTarget.value
+                                )
+                              }
+                            />
+                          </label>
+                        </div>
+                      </div>
+
+                      <div className="form-section">
+                        <div className="label">Celestial Discs</div>
+                        <div className="vector-inputs vector-inputs--two">
+                          <label className="form-field">
+                            <span className="label">Sun Size</span>
+                            <input
+                              className="text-input"
+                              type="number"
+                              min="0.1"
+                              step="0.1"
+                              value={
+                                editorState.document.world.shaderSky.celestial
+                                  .sunDiscSizeDegrees
+                              }
+                              onChange={(event) =>
+                                applyShaderSkyNumericSetting(
+                                  "Set shader sky sun disc size",
+                                  "Updated the shader sky sun disc size.",
+                                  event.currentTarget.valueAsNumber,
+                                  (shaderSky, nextValue) => {
+                                    shaderSky.celestial.sunDiscSizeDegrees =
+                                      nextValue;
+                                  }
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Moon Size</span>
+                            <input
+                              className="text-input"
+                              type="number"
+                              min="0.1"
+                              step="0.1"
+                              value={
+                                editorState.document.world.shaderSky.celestial
+                                  .moonDiscSizeDegrees
+                              }
+                              onChange={(event) =>
+                                applyShaderSkyNumericSetting(
+                                  "Set shader sky moon disc size",
+                                  "Updated the shader sky moon disc size.",
+                                  event.currentTarget.valueAsNumber,
+                                  (shaderSky, nextValue) => {
+                                    shaderSky.celestial.moonDiscSizeDegrees =
+                                      nextValue;
+                                  }
+                                )
+                              }
+                            />
+                          </label>
+                        </div>
+                      </div>
+
+                      <div className="form-section">
+                        <div className="label">Stars</div>
+                        <div className="vector-inputs vector-inputs--two">
+                          <label className="form-field">
+                            <span className="label">Density</span>
+                            <input
+                              className="text-input"
+                              type="number"
+                              min="0"
+                              step="0.05"
+                              value={
+                                editorState.document.world.shaderSky.stars
+                                  .density
+                              }
+                              onChange={(event) =>
+                                applyShaderSkyNumericSetting(
+                                  "Set shader sky star density",
+                                  "Updated the shader sky star density.",
+                                  event.currentTarget.valueAsNumber,
+                                  (shaderSky, nextValue) => {
+                                    shaderSky.stars.density = nextValue;
+                                  }
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Brightness</span>
+                            <input
+                              className="text-input"
+                              type="number"
+                              min="0"
+                              step="0.05"
+                              value={
+                                editorState.document.world.shaderSky.stars
+                                  .brightness
+                              }
+                              onChange={(event) =>
+                                applyShaderSkyNumericSetting(
+                                  "Set shader sky star brightness",
+                                  "Updated the shader sky star brightness.",
+                                  event.currentTarget.valueAsNumber,
+                                  (shaderSky, nextValue) => {
+                                    shaderSky.stars.brightness = nextValue;
+                                  }
+                                )
+                              }
+                            />
+                          </label>
+                        </div>
+                      </div>
+
+                      <div className="form-section">
+                        <div className="label">Clouds</div>
+                        <div className="vector-inputs vector-inputs--two">
+                          <label className="form-field">
+                            <span className="label">Coverage</span>
+                            <input
+                              className="text-input"
+                              type="number"
+                              min="0"
+                              max="1"
+                              step="0.05"
+                              value={
+                                editorState.document.world.shaderSky.clouds
+                                  .coverage
+                              }
+                              onChange={(event) =>
+                                applyShaderSkyNumericSetting(
+                                  "Set shader sky cloud coverage",
+                                  "Updated the shader sky cloud coverage.",
+                                  event.currentTarget.valueAsNumber,
+                                  (shaderSky, nextValue) => {
+                                    shaderSky.clouds.coverage = nextValue;
+                                  }
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Density</span>
+                            <input
+                              className="text-input"
+                              type="number"
+                              min="0"
+                              step="0.05"
+                              value={
+                                editorState.document.world.shaderSky.clouds
+                                  .density
+                              }
+                              onChange={(event) =>
+                                applyShaderSkyNumericSetting(
+                                  "Set shader sky cloud density",
+                                  "Updated the shader sky cloud density.",
+                                  event.currentTarget.valueAsNumber,
+                                  (shaderSky, nextValue) => {
+                                    shaderSky.clouds.density = nextValue;
+                                  }
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Softness</span>
+                            <input
+                              className="text-input"
+                              type="number"
+                              min="0"
+                              max="1"
+                              step="0.05"
+                              value={
+                                editorState.document.world.shaderSky.clouds
+                                  .softness
+                              }
+                              onChange={(event) =>
+                                applyShaderSkyNumericSetting(
+                                  "Set shader sky cloud softness",
+                                  "Updated the shader sky cloud softness.",
+                                  event.currentTarget.valueAsNumber,
+                                  (shaderSky, nextValue) => {
+                                    shaderSky.clouds.softness = nextValue;
+                                  }
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Scale</span>
+                            <input
+                              className="text-input"
+                              type="number"
+                              min="0.1"
+                              step="0.05"
+                              value={
+                                editorState.document.world.shaderSky.clouds
+                                  .scale
+                              }
+                              onChange={(event) =>
+                                applyShaderSkyNumericSetting(
+                                  "Set shader sky cloud scale",
+                                  "Updated the shader sky cloud scale.",
+                                  event.currentTarget.valueAsNumber,
+                                  (shaderSky, nextValue) => {
+                                    shaderSky.clouds.scale = nextValue;
+                                  }
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Height</span>
+                            <input
+                              className="text-input"
+                              type="number"
+                              min="0"
+                              max="1"
+                              step="0.05"
+                              value={
+                                editorState.document.world.shaderSky.clouds
+                                  .height
+                              }
+                              onChange={(event) =>
+                                applyShaderSkyNumericSetting(
+                                  "Set shader sky cloud height",
+                                  "Updated the shader sky cloud height.",
+                                  event.currentTarget.valueAsNumber,
+                                  (shaderSky, nextValue) => {
+                                    shaderSky.clouds.height = nextValue;
+                                  }
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Height Variation</span>
+                            <input
+                              className="text-input"
+                              type="number"
+                              min="0"
+                              max="1"
+                              step="0.05"
+                              value={
+                                editorState.document.world.shaderSky.clouds
+                                  .heightVariation
+                              }
+                              onChange={(event) =>
+                                applyShaderSkyNumericSetting(
+                                  "Set shader sky cloud height variation",
+                                  "Updated the shader sky cloud height variation.",
+                                  event.currentTarget.valueAsNumber,
+                                  (shaderSky, nextValue) => {
+                                    shaderSky.clouds.heightVariation =
+                                      nextValue;
+                                  }
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Tint</span>
+                            <input
+                              className="color-input"
+                              type="color"
+                              value={
+                                editorState.document.world.shaderSky.clouds
+                                  .tintHex
+                              }
+                              onChange={(event) =>
+                                applyShaderSkySettings(
+                                  "Set shader sky cloud tint",
+                                  "Updated the shader sky cloud tint.",
+                                  (shaderSky) => {
+                                    shaderSky.clouds.tintHex =
+                                      event.currentTarget.value;
+                                  }
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Opacity</span>
+                            <input
+                              className="text-input"
+                              type="number"
+                              min="0"
+                              max="1"
+                              step="0.05"
+                              value={
+                                editorState.document.world.shaderSky.clouds
+                                  .opacity
+                              }
+                              onChange={(event) =>
+                                applyShaderSkyNumericSetting(
+                                  "Set shader sky cloud opacity",
+                                  "Updated the shader sky cloud opacity.",
+                                  event.currentTarget.valueAsNumber,
+                                  (shaderSky, nextValue) => {
+                                    shaderSky.clouds.opacity = nextValue;
+                                  }
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Opacity Randomness</span>
+                            <input
+                              className="text-input"
+                              type="number"
+                              min="0"
+                              max="1"
+                              step="0.05"
+                              value={
+                                editorState.document.world.shaderSky.clouds
+                                  .opacityRandomness
+                              }
+                              onChange={(event) =>
+                                applyShaderSkyNumericSetting(
+                                  "Set shader sky cloud opacity randomness",
+                                  "Updated the shader sky cloud opacity randomness.",
+                                  event.currentTarget.valueAsNumber,
+                                  (shaderSky, nextValue) => {
+                                    shaderSky.clouds.opacityRandomness =
+                                      nextValue;
+                                  }
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Drift Speed</span>
+                            <input
+                              className="text-input"
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={
+                                editorState.document.world.shaderSky.clouds
+                                  .driftSpeed
+                              }
+                              onChange={(event) =>
+                                applyShaderSkyNumericSetting(
+                                  "Set shader sky cloud drift speed",
+                                  "Updated the shader sky cloud drift speed.",
+                                  event.currentTarget.valueAsNumber,
+                                  (shaderSky, nextValue) => {
+                                    shaderSky.clouds.driftSpeed = nextValue;
+                                  }
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Drift Direction</span>
+                            <input
+                              className="text-input"
+                              type="number"
+                              step="1"
+                              value={
+                                editorState.document.world.shaderSky.clouds
+                                  .driftDirectionDegrees
+                              }
+                              onChange={(event) =>
+                                applyShaderSkyNumericSetting(
+                                  "Set shader sky cloud drift direction",
+                                  "Updated the shader sky cloud drift direction.",
+                                  event.currentTarget.valueAsNumber,
+                                  (shaderSky, nextValue) => {
+                                    shaderSky.clouds.driftDirectionDegrees =
+                                      nextValue;
+                                  }
+                                )
+                              }
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    </>
                   )}
 
                   <div className="form-section">
