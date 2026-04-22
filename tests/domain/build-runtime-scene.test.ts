@@ -1499,7 +1499,7 @@ describe("buildRuntimeSceneFromDocument", () => {
     expect(runtimeScene.sceneBounds?.max.z).toBeCloseTo(1.3713203436);
   });
 
-  it("builds non-blocking water and fog volumes from whitebox boxes", () => {
+  it("builds non-blocking water, fog, and light volumes from whitebox boxes", () => {
     const solidBrush = createBoxBrush({
       id: "brush-solid",
       center: {
@@ -1557,17 +1557,40 @@ describe("buildRuntimeSceneFromDocument", () => {
         }
       }
     });
+    const lightBrush = createBoxBrush({
+      id: "brush-light",
+      center: {
+        x: 0,
+        y: 2,
+        z: -3
+      },
+      size: {
+        x: 5,
+        y: 4,
+        z: 3
+      },
+      volume: {
+        mode: "light",
+        light: {
+          colorHex: "#ffe0b6",
+          intensity: 2.25,
+          padding: 0.5,
+          falloff: "smoothstep"
+        }
+      }
+    });
 
     const runtimeScene = buildRuntimeSceneFromDocument({
       ...createEmptySceneDocument({ name: "Volume Runtime Scene" }),
       brushes: {
         [solidBrush.id]: solidBrush,
         [waterBrush.id]: waterBrush,
-        [fogBrush.id]: fogBrush
+        [fogBrush.id]: fogBrush,
+        [lightBrush.id]: lightBrush
       }
     });
 
-    expect(runtimeScene.brushes).toHaveLength(3);
+    expect(runtimeScene.brushes).toHaveLength(4);
     expect(runtimeScene.colliders).toHaveLength(1);
     expect(runtimeScene.colliders[0]).toMatchObject({
       source: "brush",
@@ -1595,6 +1618,27 @@ describe("buildRuntimeSceneFromDocument", () => {
         padding: 0.25
       }
     ]);
+    expect(runtimeScene.volumes.light).toEqual([
+      expect.objectContaining({
+        brushId: lightBrush.id,
+        enabled: true,
+        center: lightBrush.center,
+        rotationDegrees: lightBrush.rotationDegrees,
+        size: lightBrush.size,
+        colorHex: "#ffe0b6",
+        intensity: 2.25,
+        padding: 0.5,
+        falloff: "smoothstep",
+        lights: expect.arrayContaining([
+          expect.objectContaining({
+            intensity: expect.any(Number),
+            distance: expect.any(Number),
+            decay: 2
+          })
+        ])
+      })
+    ]);
+    expect(runtimeScene.volumes.light[0]?.lights).toHaveLength(4);
   });
 
   it("resolves active actor routines into NPC animation and deterministic follow-path pose", () => {
