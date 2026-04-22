@@ -81,6 +81,7 @@ import {
   fitCelestialDirectionalShadow,
   resolveDominantCelestialShadowCaster
 } from "../rendering/celestial-shadows";
+import { resolveWorldShaderSkyRenderState } from "../rendering/world-shader-sky";
 import {
   resolveWorldCelestialBodiesState,
   resolveWorldEnvironmentState,
