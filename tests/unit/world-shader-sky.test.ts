@@ -175,4 +175,53 @@ describe("resolveWorldShaderSkyRenderState", () => {
       firstNightSky?.clouds.driftOffset.x ?? 0
     );
   });
+
+  it("offsets shader-rendered celestial positions when the horizon height changes", () => {
+    const world = createDefaultWorldSettings();
+    const time = createDefaultProjectTimeSettings();
+    world.background = {
+      mode: "shader"
+    };
+    world.showCelestialBodies = true;
+
+    const noonTime = resolveRuntimeTimeState(time, {
+      timeOfDayHours: 12,
+      dayCount: 0,
+      dayLengthMinutes: 24
+    });
+    const noonWorld = resolveRuntimeDayNightWorldState(
+      world,
+      time,
+      {
+        timeOfDayHours: 12,
+        dayCount: 0,
+        dayLengthMinutes: 24
+      },
+      noonTime
+    );
+    const baseSky = resolveWorldShaderSkyRenderState(
+      world,
+      noonWorld,
+      noonTime,
+      time
+    );
+
+    world.shaderSky.horizonHeight = -0.12;
+
+    const shiftedSky = resolveWorldShaderSkyRenderState(
+      world,
+      noonWorld,
+      noonTime,
+      time
+    );
+
+    expect(baseSky).not.toBeNull();
+    expect(shiftedSky).not.toBeNull();
+    expect(shiftedSky?.celestial.sunDirection.y ?? 0).toBeGreaterThan(
+      baseSky?.celestial.sunDirection.y ?? 0
+    );
+    expect(shiftedSky?.celestial.moonDirection.y ?? 0).toBeGreaterThan(
+      baseSky?.celestial.moonDirection.y ?? 0
+    );
+  });
 });
