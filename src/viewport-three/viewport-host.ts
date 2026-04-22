@@ -212,6 +212,10 @@ import {
   getTerrainLayerTexture
 } from "../rendering/terrain-layer-material";
 import {
+  resolveWorldEnvironmentState,
+  WorldBackgroundRenderer
+} from "../rendering/world-background-renderer";
+import {
   applyWhiteboxBevelToMaterial,
   shouldApplyWhiteboxBevel
 } from "../rendering/whitebox-bevel-material";
@@ -418,6 +422,7 @@ interface LocalLightRenderObjects {
 
 export class ViewportHost {
   private readonly scene = new Scene();
+  private readonly worldBackgroundRenderer = new WorldBackgroundRenderer();
   private readonly axesHelper = new AxesHelper(2);
   private readonly perspectiveCamera = new PerspectiveCamera(60, 1, 0.1, 1000);
   private readonly orthographicCamera = new OrthographicCamera(
