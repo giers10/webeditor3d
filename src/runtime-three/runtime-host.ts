@@ -1087,7 +1087,12 @@ export class RuntimeHost {
             opacity: nightBackgroundOverlay.opacity,
             environmentIntensity: nightBackgroundOverlay.environmentIntensity
           };
-    const environmentState = resolveWorldEnvironmentState(
+    let environmentState = resolveWorldEnvironmentState(
+      resolvedWorld.background,
+      backgroundTexture,
+      backgroundOverlayState
+    );
+    const useDynamicEnvironment = shouldUseDynamicWorldEnvironment(
       resolvedWorld.background,
       backgroundTexture,
       backgroundOverlayState
@@ -1098,6 +1103,22 @@ export class RuntimeHost {
       backgroundTexture,
       backgroundOverlayState
     );
+
+    if (useDynamicEnvironment && this.pmremGenerator !== null) {
+      this.worldBackgroundRenderer.syncToOrigin();
+      this.dynamicWorldEnvironmentTarget?.dispose();
+      this.dynamicWorldEnvironmentTarget = this.pmremGenerator.fromScene(
+        this.worldBackgroundRenderer.scene
+      ) as WebGLCubeRenderTarget;
+      environmentState = {
+        texture: this.dynamicWorldEnvironmentTarget.texture,
+        intensity: environmentState.intensity
+      };
+    } else if (this.dynamicWorldEnvironmentTarget !== null) {
+      this.dynamicWorldEnvironmentTarget.dispose();
+      this.dynamicWorldEnvironmentTarget = null;
+    }
+
     this.scene.background = null;
     this.scene.environment = environmentState.texture;
     this.scene.environmentIntensity = environmentState.intensity;
