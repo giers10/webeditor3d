@@ -31,8 +31,12 @@ import { createBoxBrush } from "../../src/document/brushes";
 import { createScenePath } from "../../src/document/paths";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
 import {
+  createCameraRigEntity,
+  createCameraRigPlayerTargetRef,
+  createCameraRigWorldPointTargetRef,
   createNpcEntity,
   createPointLightEntity,
+  createPlayerStartEntity,
   createSoundEmitterEntity,
   createTriggerVolumeEntity
 } from "../../src/entities/entity-instances";
@@ -56,7 +60,7 @@ import {
   type RuntimeSceneLoadState
 } from "../../src/runtime-three/runtime-host";
 import { buildRuntimeSceneFromDocument } from "../../src/runtime-three/runtime-scene-build";
-import { AnimationClip, BoxGeometry, type AnimationMixer } from "three";
+import { AnimationClip, BoxGeometry, PerspectiveCamera, Vector3, type AnimationMixer } from "three";
 import { createFixtureLoadedModelAssetFromGeometry } from "../helpers/model-collider-fixtures";
 
 function createDeferred<T>() {
@@ -75,6 +79,13 @@ function createDeferred<T>() {
     reject(error: unknown) {
       reject?.(error);
     }
+  };
+}
+
+function resolveYawPitchRadians(direction: Vector3) {
+  return {
+    yawRadians: Math.atan2(direction.x, direction.z),
+    pitchRadians: Math.asin(Math.max(-1, Math.min(1, direction.y)))
   };
 }
 
@@ -136,6 +147,220 @@ describe("RuntimeHost", () => {
 
     host.dispose();
     expect(collisionWorld.dispose).toHaveBeenCalledTimes(1);
+  });
+
+  it("resolves fixed camera rigs by priority, supports explicit overrides, and blends transitions", () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    vi.spyOn(RapierCollisionWorld, "create").mockResolvedValue({
+      dispose: vi.fn(),
+      resolveThirdPersonCameraCollision: vi.fn(
+        (_pivot, desiredCameraPosition) => desiredCameraPosition
+      )
+    } as unknown as RapierCollisionWorld);
+
+    const defaultRig = createCameraRigEntity({
+      id: "entity-camera-rig-default",
+      position: {
+        x: 0,
+        y: 5,
+        z: 10
+      },
+      priority: 10,
+      defaultActive: true,
+      target: createCameraRigWorldPointTargetRef({
+        x: 0,
+        y: 1,
+        z: 0
+      }),
+      transitionMode: "cut"
+    });
+    const overrideRig = createCameraRigEntity({
+      id: "entity-camera-rig-override",
+      position: {
+        x: 10,
+        y: 4,
+        z: -6
+      },
+      priority: 0,
+      defaultActive: false,
+      target: createCameraRigWorldPointTargetRef({
+        x: 2,
+        y: 2,
+        z: -1
+      }),
+      transitionMode: "blend",
+      transitionDurationSeconds: 0.5
+    });
+    const runtimeScene = buildRuntimeSceneFromDocument({
+      ...createEmptySceneDocument({ name: "Camera Rig Priority Scene" }),
+      entities: {
+        [defaultRig.id]: defaultRig,
+        [overrideRig.id]: overrideRig
+      }
+    });
+    const host = new RuntimeHost({
+      enableRendering: false
+    });
+    host.loadScene(runtimeScene);
+
+    const hostInternals = host as unknown as {
+      sceneReady: boolean;
+      camera: PerspectiveCamera;
+      activeRuntimeCameraRig: { entityId: string } | null;
+      applyActiveCameraRig(dt: number): { entityId: string } | null;
+    };
+
+    hostInternals.sceneReady = true;
+
+    expect(hostInternals.applyActiveCameraRig(0)?.entityId).toBe(defaultRig.id);
+    expect(hostInternals.camera.position).toMatchObject(defaultRig.position);
+
+    host.setActiveCameraRigOverride(overrideRig.id);
+
+    expect(hostInternals.applyActiveCameraRig(0.25)?.entityId).toBe(
+      overrideRig.id
+    );
+    expect(hostInternals.activeRuntimeCameraRig?.entityId).toBe(overrideRig.id);
+    expect(hostInternals.camera.position.x).toBeCloseTo(5, 4);
+    expect(hostInternals.camera.position.y).toBeCloseTo(4.5, 4);
+    expect(hostInternals.camera.position.z).toBeCloseTo(2, 4);
+
+    hostInternals.applyActiveCameraRig(0.25);
+
+    expect(hostInternals.camera.position).toMatchObject(overrideRig.position);
+
+    host.dispose();
+  });
+
+  it("locks a fixed camera rig to its target and clamps authored look-around input", () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    vi.spyOn(RapierCollisionWorld, "create").mockResolvedValue({
+      dispose: vi.fn(),
+      resolveThirdPersonCameraCollision: vi.fn(
+        (_pivot, desiredCameraPosition) => desiredCameraPosition
+      )
+    } as unknown as RapierCollisionWorld);
+
+    const playerStart = createPlayerStartEntity({
+      id: "entity-player-start-camera-rig",
+      position: {
+        x: 1,
+        y: 0,
+        z: -2
+      }
+    });
+    const cameraRig = createCameraRigEntity({
+      id: "entity-camera-rig-lookaround",
+      position: {
+        x: -4,
+        y: 3,
+        z: -8
+      },
+      target: createCameraRigPlayerTargetRef(),
+      targetOffset: {
+        x: 0,
+        y: 1.6,
+        z: 0
+      },
+      lookAround: {
+        enabled: true,
+        yawLimitDegrees: 10,
+        pitchLimitDegrees: 5,
+        recenterSpeed: 12
+      }
+    });
+    const runtimeScene = buildRuntimeSceneFromDocument({
+      ...createEmptySceneDocument({ name: "Camera Rig Look Scene" }),
+      entities: {
+        [playerStart.id]: playerStart,
+        [cameraRig.id]: cameraRig
+      }
+    });
+    const host = new RuntimeHost({
+      enableRendering: false
+    });
+    host.loadScene(runtimeScene);
+
+    const hostInternals = host as unknown as {
+      sceneReady: boolean;
+      camera: PerspectiveCamera;
+      applyActiveCameraRig(dt: number): { entityId: string } | null;
+      handleRuntimePointerDown(event: {
+        button: number;
+        clientX: number;
+        clientY: number;
+        preventDefault(): void;
+        stopImmediatePropagation(): void;
+      }): void;
+      handleRuntimePointerMove(event: {
+        clientX: number;
+        clientY: number;
+        preventDefault(): void;
+        stopImmediatePropagation(): void;
+      }): void;
+      handleRuntimePointerUp(event: {
+        stopImmediatePropagation(): void;
+      }): void;
+    };
+
+    hostInternals.sceneReady = true;
+
+    expect(hostInternals.applyActiveCameraRig(0)?.entityId).toBe(cameraRig.id);
+
+    const expectedBaseDirection = new Vector3(
+      playerStart.position.x - cameraRig.position.x,
+      playerStart.position.y + 1.6 - cameraRig.position.y,
+      playerStart.position.z - cameraRig.position.z
+    ).normalize();
+    const baseDirection = hostInternals.camera.getWorldDirection(new Vector3());
+
+    expect(baseDirection.angleTo(expectedBaseDirection)).toBeLessThan(1e-4);
+
+    hostInternals.handleRuntimePointerDown({
+      button: 0,
+      clientX: 0,
+      clientY: 0,
+      preventDefault: vi.fn(),
+      stopImmediatePropagation: vi.fn()
+    });
+    hostInternals.handleRuntimePointerMove({
+      clientX: -10000,
+      clientY: 10000,
+      preventDefault: vi.fn(),
+      stopImmediatePropagation: vi.fn()
+    });
+    hostInternals.applyActiveCameraRig(0);
+
+    const lookedDirection = hostInternals.camera.getWorldDirection(new Vector3());
+    const baseAngles = resolveYawPitchRadians(expectedBaseDirection);
+    const lookedAngles = resolveYawPitchRadians(lookedDirection);
+
+    expect(
+      ((lookedAngles.yawRadians - baseAngles.yawRadians) * 180) / Math.PI
+    ).toBeCloseTo(10, 1);
+    expect(
+      ((lookedAngles.pitchRadians - baseAngles.pitchRadians) * 180) / Math.PI
+    ).toBeCloseTo(-5, 1);
+
+    hostInternals.handleRuntimePointerUp({
+      stopImmediatePropagation: vi.fn()
+    });
+    hostInternals.applyActiveCameraRig(0.5);
+
+    const recenteredAngles = resolveYawPitchRadians(
+      hostInternals.camera.getWorldDirection(new Vector3())
+    );
+
+    expect(
+      Math.abs(recenteredAngles.yawRadians - baseAngles.yawRadians)
+    ).toBeLessThan(Math.abs(lookedAngles.yawRadians - baseAngles.yawRadians));
+    expect(
+      Math.abs(recenteredAngles.pitchRadians - baseAngles.pitchRadians)
+    ).toBeLessThan(
+      Math.abs(lookedAngles.pitchRadians - baseAngles.pitchRadians)
+    );
+
+    host.dispose();
   });
 
   it("applies typed light control effects through the runtime dispatcher", () => {
