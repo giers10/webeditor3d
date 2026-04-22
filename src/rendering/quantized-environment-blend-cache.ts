@@ -431,44 +431,46 @@ class RendererEnvironmentBlendTextureBuilder {
     const previousToneMapping = this.renderer.toneMapping;
     const previousOutputColorSpace = this.renderer.outputColorSpace;
 
-    this.renderer.xr.enabled = false;
-    this.renderer.autoClear = true;
-    this.renderer.toneMapping = NoToneMapping;
-    this.renderer.outputColorSpace = LinearSRGBColorSpace;
-    this.blendMaterial.uniforms.uBaseTexture.value = baseTexture;
-    this.blendMaterial.uniforms.uOverlayTexture.value = overlayTexture;
-    this.blendMaterial.uniforms.uBlendAmount.value = blendAmount;
-    this.blendMaterial.uniforms.uBaseTextureIsSrgb.value = isSrgbTexture(
-      baseTexture
-    )
-      ? 1
-      : 0;
-    this.blendMaterial.uniforms.uOverlayTextureIsSrgb.value = isSrgbTexture(
-      overlayTexture
-    )
-      ? 1
-      : 0;
+    try {
+      this.renderer.xr.enabled = false;
+      this.renderer.autoClear = true;
+      this.renderer.toneMapping = NoToneMapping;
+      this.renderer.outputColorSpace = LinearSRGBColorSpace;
+      this.blendMaterial.uniforms.uBaseTexture.value = baseTexture;
+      this.blendMaterial.uniforms.uOverlayTexture.value = overlayTexture;
+      this.blendMaterial.uniforms.uBlendAmount.value = blendAmount;
+      this.blendMaterial.uniforms.uBaseTextureIsSrgb.value = isSrgbTexture(
+        baseTexture
+      )
+        ? 1
+        : 0;
+      this.blendMaterial.uniforms.uOverlayTextureIsSrgb.value = isSrgbTexture(
+        overlayTexture
+      )
+        ? 1
+        : 0;
 
-    this.renderer.setRenderTarget(this.scratchTarget);
-    this.renderer.clear();
-    this.renderer.render(this.blendScene, this.blendCamera);
+      this.renderer.setRenderTarget(this.scratchTarget);
+      this.renderer.clear();
+      this.renderer.render(this.blendScene, this.blendCamera);
 
-    const pmremTarget = this.pmremGenerator.fromEquirectangular(
-      this.scratchTarget.texture
-    );
+      const pmremTarget = this.pmremGenerator.fromEquirectangular(
+        this.scratchTarget.texture
+      );
 
-    this.renderer.setRenderTarget(previousRenderTarget);
-    this.renderer.autoClear = previousAutoClear;
-    this.renderer.xr.enabled = previousXrEnabled;
-    this.renderer.toneMapping = previousToneMapping;
-    this.renderer.outputColorSpace = previousOutputColorSpace;
-
-    return {
-      texture: pmremTarget.texture,
-      dispose: () => {
-        pmremTarget.dispose();
-      }
-    };
+      return {
+        texture: pmremTarget.texture,
+        dispose: () => {
+          pmremTarget.dispose();
+        }
+      };
+    } finally {
+      this.renderer.setRenderTarget(previousRenderTarget);
+      this.renderer.autoClear = previousAutoClear;
+      this.renderer.xr.enabled = previousXrEnabled;
+      this.renderer.toneMapping = previousToneMapping;
+      this.renderer.outputColorSpace = previousOutputColorSpace;
+    }
   }
 
   dispose() {
