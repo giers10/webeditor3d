@@ -32,8 +32,10 @@ import { createScenePath } from "../../src/document/paths";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
 import {
   createCameraRigEntity,
+  createCameraRigEntityTargetRef,
   createCameraRigPlayerTargetRef,
   createCameraRigWorldPointTargetRef,
+  createInteractableEntity,
   createNpcEntity,
   createPointLightEntity,
   createPlayerStartEntity,
