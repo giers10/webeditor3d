@@ -304,16 +304,24 @@ describe("runtime project time", () => {
       dayCount: 0,
       dayLengthMinutes: 24
     });
-    const shortNightMoonPeak = resolveRuntimeDayNightWorldState(world, longDay, {
-      timeOfDayHours: 1,
-      dayCount: 0,
-      dayLengthMinutes: 24
-    });
-    const longNightMoonPeak = resolveRuntimeDayNightWorldState(world, shortDay, {
-      timeOfDayHours: 1,
-      dayCount: 0,
-      dayLengthMinutes: 24
-    });
+    const shortNightMoonPeak = resolveRuntimeDayNightWorldState(
+      world,
+      longDay,
+      {
+        timeOfDayHours: 1,
+        dayCount: 0,
+        dayLengthMinutes: 24
+      }
+    );
+    const longNightMoonPeak = resolveRuntimeDayNightWorldState(
+      world,
+      shortDay,
+      {
+        timeOfDayHours: 1,
+        dayCount: 0,
+        dayLengthMinutes: 24
+      }
+    );
 
     expect(shortDayPeak.sunLight.direction.y).toBeLessThan(
       longDayPeak.sunLight.direction.y

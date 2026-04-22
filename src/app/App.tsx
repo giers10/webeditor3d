@@ -2474,7 +2474,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const cameraRigActorOptions = Array.from(
     new Set(
       entityList
-        .filter((entity): entity is Extract<EntityInstance, { kind: "npc" }> => entity.kind === "npc")
+        .filter(
+          (entity): entity is Extract<EntityInstance, { kind: "npc" }> =>
+            entity.kind === "npc"
+        )
         .map((entity) => entity.actorId)
     )
   ).sort((left, right) => left.localeCompare(right));
@@ -15084,14 +15087,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     </div>
                   </div>
 
-                    <div className="form-section">
-                      <div className="label">Celestial Orbits</div>
-                      <div className="material-summary">
-                        These angles drive the time-aware sun and moon paths in
-                        the editor viewport and runner. Base peak altitude is
-                        the 12-hour reference height; longer or shorter
-                        day/night windows shift the orbit automatically.
-                      </div>
+                  <div className="form-section">
+                    <div className="label">Celestial Orbits</div>
+                    <div className="material-summary">
+                      These angles drive the time-aware sun and moon paths in
+                      the editor viewport and runner. Base peak altitude is the
+                      12-hour reference height; longer or shorter day/night
+                      windows shift the orbit automatically.
+                    </div>
                     <div className="vector-inputs vector-inputs--two">
                       <label className="form-field">
                         <span className="label">Sun Azimuth</span>
@@ -18649,8 +18652,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               type="checkbox"
                               checked={cameraRigDefaultActiveDraft}
                               onChange={(event) => {
-                                const nextValue =
-                                  event.currentTarget.checked;
+                                const nextValue = event.currentTarget.checked;
                                 setCameraRigDefaultActiveDraft(nextValue);
                                 scheduleDraftCommit(() =>
                                   applyCameraRigChange({
@@ -18683,7 +18685,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               } else if (nextKind === "entity") {
                                 setCameraRigTargetEntityIdDraft(
                                   cameraRigTargetEntityIdDraft.trim() ||
-                                    cameraRigEntityTargetOptions[0]?.entity.id ||
+                                    cameraRigEntityTargetOptions[0]?.entity
+                                      .id ||
                                     ""
                                 );
                               }
@@ -18709,8 +18712,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               className="select-input"
                               value={cameraRigTargetActorIdDraft}
                               onChange={(event) => {
-                                const nextActorId =
-                                  event.currentTarget.value;
+                                const nextActorId = event.currentTarget.value;
                                 setCameraRigTargetActorIdDraft(nextActorId);
                                 scheduleDraftCommit(() =>
                                   applyCameraRigChange()
@@ -18734,8 +18736,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               className="select-input"
                               value={cameraRigTargetEntityIdDraft}
                               onChange={(event) => {
-                                const nextEntityId =
-                                  event.currentTarget.value;
+                                const nextEntityId = event.currentTarget.value;
                                 setCameraRigTargetEntityIdDraft(nextEntityId);
                                 scheduleDraftCommit(() =>
                                   applyCameraRigChange()
@@ -18764,10 +18765,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
                                 step={DEFAULT_GRID_SIZE}
                                 value={cameraRigTargetWorldPointDraft.x}
                                 onChange={(event) =>
-                                  setCameraRigTargetWorldPointDraft((draft) => ({
-                                    ...draft,
-                                    x: event.currentTarget.value
-                                  }))
+                                  setCameraRigTargetWorldPointDraft(
+                                    (draft) => ({
+                                      ...draft,
+                                      x: event.currentTarget.value
+                                    })
+                                  )
                                 }
                                 onBlur={() => applyCameraRigChange()}
                                 onKeyDown={(event) =>
@@ -18799,10 +18802,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
                                 step={DEFAULT_GRID_SIZE}
                                 value={cameraRigTargetWorldPointDraft.y}
                                 onChange={(event) =>
-                                  setCameraRigTargetWorldPointDraft((draft) => ({
-                                    ...draft,
-                                    y: event.currentTarget.value
-                                  }))
+                                  setCameraRigTargetWorldPointDraft(
+                                    (draft) => ({
+                                      ...draft,
+                                      y: event.currentTarget.value
+                                    })
+                                  )
                                 }
                                 onBlur={() => applyCameraRigChange()}
                                 onKeyDown={(event) =>
@@ -18834,10 +18839,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
                                 step={DEFAULT_GRID_SIZE}
                                 value={cameraRigTargetWorldPointDraft.z}
                                 onChange={(event) =>
-                                  setCameraRigTargetWorldPointDraft((draft) => ({
-                                    ...draft,
-                                    z: event.currentTarget.value
-                                  }))
+                                  setCameraRigTargetWorldPointDraft(
+                                    (draft) => ({
+                                      ...draft,
+                                      z: event.currentTarget.value
+                                    })
+                                  )
                                 }
                                 onBlur={() => applyCameraRigChange()}
                                 onKeyDown={(event) =>
