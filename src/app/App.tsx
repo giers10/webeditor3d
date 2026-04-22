@@ -184,6 +184,8 @@ import {
   areWorldSettingsEqual,
   changeWorldBackgroundMode,
   cloneWorldSettings,
+  DEFAULT_NIGHT_IMAGE_ENVIRONMENT_INTENSITY,
+  DEFAULT_TIME_PHASE_IMAGE_ENVIRONMENT_INTENSITY,
   type WorldBackgroundMode,
   type WorldBackgroundSettings,
   type AdvancedRenderingSettings,
