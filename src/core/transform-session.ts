@@ -1379,6 +1379,10 @@ function resolveEntityRotation(
   entity: EntityInstance
 ): EntityTransformRotationState {
   switch (entity.kind) {
+    case "cameraRig":
+      return {
+        kind: "none"
+      };
     case "playerStart":
     case "sceneEntry":
     case "npc":
