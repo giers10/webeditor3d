@@ -41,6 +41,7 @@ import {
   type Brush,
   type BrushGeometry,
   type BrushKind,
+  type BoxBrushLightFalloffMode,
   type BoxBrushVolumeSettings,
   type WhiteboxFaceId,
   type FaceUvState
@@ -116,6 +117,10 @@ import {
   type RuntimeProjectSchedulerState,
   type RuntimeResolvedProjectScheduleState
 } from "./runtime-project-scheduler";
+import {
+  deriveBoxLightVolumePointLights,
+  type DerivedLightVolumePointLight
+} from "./light-volume-utils";
 import { assertRuntimeSceneBuildable } from "./runtime-scene-validation";
 import type { RuntimeClockState } from "./runtime-project-time";
 import {
@@ -166,9 +171,23 @@ export interface RuntimeWaterVolume {
   waveStrength: number;
 }
 
+export interface RuntimeLightVolume {
+  brushId: string;
+  enabled: boolean;
+  center: Vec3;
+  rotationDegrees: Vec3;
+  size: Vec3;
+  colorHex: string;
+  intensity: number;
+  padding: number;
+  falloff: BoxBrushLightFalloffMode;
+  lights: DerivedLightVolumePointLight[];
+}
+
 export interface RuntimeBoxVolumeCollection {
   fog: RuntimeFogVolume[];
   water: RuntimeWaterVolume[];
+  light: RuntimeLightVolume[];
 }
 
 export interface RuntimeTerrain {
