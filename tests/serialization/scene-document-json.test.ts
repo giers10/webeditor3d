@@ -192,14 +192,12 @@ describe("scene document JSON", () => {
     legacyDocument.version = SHADER_SKY_HORIZON_HEIGHT_SCENE_DOCUMENT_VERSION;
     delete (
       (
-        (
-          legacyDocument.world as {
-            shaderSky: {
-              stars: Record<string, unknown>;
-            };
-          }
-        ).shaderSky.stars
-      ) as Record<string, unknown>
+        legacyDocument.world as {
+          shaderSky: {
+            stars: Record<string, unknown>;
+          };
+        }
+      ).shaderSky.stars as Record<string, unknown>
     ).horizonFadeOffset;
 
     const migratedDocument = parseSceneDocumentJson(
