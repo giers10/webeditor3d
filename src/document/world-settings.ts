@@ -370,9 +370,8 @@ export function resolveWorldCelestialOrbitPeakDirection(
 export function createDefaultWorldCelestialOrbitAuthoringSettings(
   sunDirection: Vec3 = DEFAULT_SUN_DIRECTION
 ): WorldCelestialOrbitAuthoringSettings {
-  const sunOrbit = createWorldCelestialOrbitSettingsFromPeakDirection(
-    sunDirection
-  );
+  const sunOrbit =
+    createWorldCelestialOrbitSettingsFromPeakDirection(sunDirection);
 
   return {
     sun: {

@@ -2823,9 +2823,8 @@ function readWorldCelestialOrbitAuthoringSettings(
   label: string,
   sunDirection: Vec3
 ): WorldCelestialOrbitAuthoringSettings {
-  const defaults = createDefaultWorldCelestialOrbitAuthoringSettings(
-    sunDirection
-  );
+  const defaults =
+    createDefaultWorldCelestialOrbitAuthoringSettings(sunDirection);
 
   if (value === undefined) {
     return defaults;
@@ -3298,7 +3297,10 @@ function readCameraRigEntity(value: unknown, label: string): EntityInstance {
     ),
     position: readVec3(value.position, `${label}.position`),
     rigType: expectLiteralString(value.rigType, "fixed", `${label}.rigType`),
-    priority: expectNonNegativeFiniteNumber(value.priority, `${label}.priority`),
+    priority: expectNonNegativeFiniteNumber(
+      value.priority,
+      `${label}.priority`
+    ),
     defaultActive: expectBoolean(value.defaultActive, `${label}.defaultActive`),
     target: readCameraRigTargetRef(value.target, `${label}.target`),
     targetOffset: readVec3(value.targetOffset, `${label}.targetOffset`),
