@@ -1286,19 +1286,21 @@ export class RuntimeHost {
       };
     }
 
-    if (this.runtimeScene?.sceneBounds !== null) {
+    const sceneBounds = this.runtimeScene?.sceneBounds ?? null;
+
+    if (sceneBounds !== null) {
       return {
         center: {
-          x: this.runtimeScene.sceneBounds.center.x,
-          y: this.runtimeScene.sceneBounds.center.y,
-          z: this.runtimeScene.sceneBounds.center.z
+          x: sceneBounds.center.x,
+          y: sceneBounds.center.y,
+          z: sceneBounds.center.z
         },
         radius: Math.max(
           6,
           Math.hypot(
-            this.runtimeScene.sceneBounds.size.x,
-            this.runtimeScene.sceneBounds.size.y,
-            this.runtimeScene.sceneBounds.size.z
+            sceneBounds.size.x,
+            sceneBounds.size.y,
+            sceneBounds.size.z
           ) * 0.2
         )
       };
