@@ -107,6 +107,17 @@ function createProjectDocumentFixture() {
             mode: "image",
             assetId: imageAsset.id,
             environmentIntensity: 0.8
+          },
+          timeOfDay: {
+            ...baseScene.world.timeOfDay,
+            dawn: {
+              ...baseScene.world.timeOfDay.dawn,
+              background: {
+                mode: "image",
+                assetId: imageAsset.id,
+                environmentIntensity: 0.55
+              }
+            }
           }
         },
         modelInstances: {
@@ -198,6 +209,11 @@ describe("deleteProjectAssetFromProjectDocument", () => {
     expect(nextScene.world.background).toEqual(
       createDefaultWorldSettings().background
     );
+    expect(nextScene.world.timeOfDay.dawn.background).toEqual({
+      mode: "image",
+      assetId: "",
+      environmentIntensity: 0.55
+    });
   });
 
   it("silences sound emitters and removes sound links when deleting an audio asset", () => {
