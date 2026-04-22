@@ -2065,6 +2065,17 @@ function formatBoxVolumeModeLabel(mode: BoxBrushVolumeMode): string {
       return "Water";
     case "fog":
       return "Fog";
+    case "light":
+      return "Light";
+  }
+}
+
+function formatBoxLightFalloffLabel(mode: BoxBrushLightFalloffMode): string {
+  switch (mode) {
+    case "linear":
+      return "Linear";
+    case "smoothstep":
+      return "Smoothstep";
   }
 }
 
