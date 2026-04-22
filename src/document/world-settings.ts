@@ -81,6 +81,16 @@ export interface WorldSunLightSettings {
   direction: Vec3;
 }
 
+export interface WorldCelestialOrbitSettings {
+  azimuthDegrees: number;
+  peakAltitudeDegrees: number;
+}
+
+export interface WorldCelestialOrbitAuthoringSettings {
+  sun: WorldCelestialOrbitSettings;
+  moon: WorldCelestialOrbitSettings;
+}
+
 export interface WorldTimePhaseProfile {
   background: WorldBackgroundSettings;
   skyTopColorHex: string;
@@ -197,6 +207,7 @@ export interface WorldSettings {
   showCelestialBodies: boolean;
   background: WorldBackgroundSettings;
   shaderSky: WorldShaderSkySettings;
+  celestialOrbits: WorldCelestialOrbitAuthoringSettings;
   ambientLight: WorldAmbientLightSettings;
   sunLight: WorldSunLightSettings;
   timeOfDay: WorldTimeOfDaySettings;
@@ -248,6 +259,8 @@ const DEFAULT_SHADER_SKY_CLOUD_OPACITY = 0.68;
 const DEFAULT_SHADER_SKY_CLOUD_OPACITY_RANDOMNESS = 0.24;
 const DEFAULT_SHADER_SKY_CLOUD_DRIFT_SPEED = 0.025;
 const DEFAULT_SHADER_SKY_CLOUD_DRIFT_DIRECTION_DEGREES = 18;
+const MIN_WORLD_CELESTIAL_PEAK_ALTITUDE_DEGREES = 0.1;
+const MAX_WORLD_CELESTIAL_PEAK_ALTITUDE_DEGREES = 89.9;
 
 function resolveShaderSkyDayGradient(
   background: WorldBackgroundSettings | null = null
@@ -272,6 +285,115 @@ function resolveShaderSkyDayGradient(
   return {
     topColorHex: DEFAULT_SHADER_SKY_DAY_TOP_COLOR,
     bottomColorHex: DEFAULT_SHADER_SKY_DAY_BOTTOM_COLOR
+  };
+}
+
+function normalizeVec3(vector: Vec3): Vec3 {
+  const length = Math.hypot(vector.x, vector.y, vector.z);
+
+  if (length <= 1e-6) {
+    return {
+      ...DEFAULT_SUN_DIRECTION
+    };
+  }
+
+  return {
+    x: vector.x / length,
+    y: vector.y / length,
+    z: vector.z / length
+  };
+}
+
+function normalizeDegrees(value: number): number {
+  const normalized = value % 360;
+
+  return normalized < 0 ? normalized + 360 : normalized;
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max);
+}
+
+function resolveLegacyCelestialPeakDirection(direction: Vec3): Vec3 {
+  const normalizedDirection = normalizeVec3(direction);
+
+  if (normalizedDirection.y >= 0.2) {
+    return normalizedDirection;
+  }
+
+  return normalizeVec3({
+    x: normalizedDirection.x,
+    y: Math.abs(normalizedDirection.y) + 0.35,
+    z: normalizedDirection.z
+  });
+}
+
+export function createWorldCelestialOrbitSettingsFromPeakDirection(
+  direction: Vec3
+): WorldCelestialOrbitSettings {
+  const peakDirection = resolveLegacyCelestialPeakDirection(direction);
+
+  return {
+    azimuthDegrees: normalizeDegrees(
+      (Math.atan2(peakDirection.z, peakDirection.x) * 180) / Math.PI
+    ),
+    peakAltitudeDegrees: clamp(
+      (Math.asin(clamp(peakDirection.y, -1, 1)) * 180) / Math.PI,
+      MIN_WORLD_CELESTIAL_PEAK_ALTITUDE_DEGREES,
+      MAX_WORLD_CELESTIAL_PEAK_ALTITUDE_DEGREES
+    )
+  };
+}
+
+export function resolveWorldCelestialOrbitPeakDirection(
+  orbit: WorldCelestialOrbitSettings
+): Vec3 {
+  const azimuthRadians =
+    (normalizeDegrees(orbit.azimuthDegrees) * Math.PI) / 180;
+  const altitudeRadians =
+    (clamp(
+      orbit.peakAltitudeDegrees,
+      MIN_WORLD_CELESTIAL_PEAK_ALTITUDE_DEGREES,
+      MAX_WORLD_CELESTIAL_PEAK_ALTITUDE_DEGREES
+    ) *
+      Math.PI) /
+    180;
+  const horizontalLength = Math.cos(altitudeRadians);
+
+  return normalizeVec3({
+    x: Math.cos(azimuthRadians) * horizontalLength,
+    y: Math.sin(altitudeRadians),
+    z: Math.sin(azimuthRadians) * horizontalLength
+  });
+}
+
+export function createDefaultWorldCelestialOrbitAuthoringSettings(
+  sunDirection: Vec3 = DEFAULT_SUN_DIRECTION
+): WorldCelestialOrbitAuthoringSettings {
+  const sunOrbit = createWorldCelestialOrbitSettingsFromPeakDirection(
+    sunDirection
+  );
+
+  return {
+    sun: {
+      ...sunOrbit
+    },
+    moon: {
+      ...sunOrbit
+    }
+  };
+}
+
+export function cloneWorldCelestialOrbitAuthoringSettings(
+  settings: WorldCelestialOrbitAuthoringSettings
+): WorldCelestialOrbitAuthoringSettings {
+  return {
+    sun: {
+      ...settings.sun
+    },
+    moon: {
+      ...settings.moon
+    }
   };
 }
 
@@ -499,6 +621,10 @@ export function createDefaultWorldTimeOfDaySettings(): WorldTimeOfDaySettings {
 }
 
 export function createDefaultWorldSettings(): WorldSettings {
+  const celestialOrbits = createDefaultWorldCelestialOrbitAuthoringSettings(
+    DEFAULT_SUN_DIRECTION
+  );
+
   return {
     projectTimeLightingEnabled: true,
     showCelestialBodies: false,
@@ -507,6 +633,7 @@ export function createDefaultWorldSettings(): WorldSettings {
       colorHex: DEFAULT_SOLID_BACKGROUND_COLOR
     },
     shaderSky: createDefaultWorldShaderSkySettings(),
+    celestialOrbits,
     ambientLight: {
       colorHex: "#f7f1e8",
       intensity: 1
@@ -611,6 +738,9 @@ export function cloneWorldSettings(world: WorldSettings): WorldSettings {
     showCelestialBodies: world.showCelestialBodies,
     background: cloneWorldBackgroundSettings(world.background),
     shaderSky: cloneWorldShaderSkySettings(world.shaderSky),
+    celestialOrbits: cloneWorldCelestialOrbitAuthoringSettings(
+      world.celestialOrbits
+    ),
     ambientLight: {
       ...world.ambientLight
     },
@@ -753,6 +883,18 @@ export function areWorldTimeOfDaySettingsEqual(
   );
 }
 
+export function areWorldCelestialOrbitSettingsEqual(
+  left: WorldCelestialOrbitAuthoringSettings,
+  right: WorldCelestialOrbitAuthoringSettings
+): boolean {
+  return (
+    left.sun.azimuthDegrees === right.sun.azimuthDegrees &&
+    left.sun.peakAltitudeDegrees === right.sun.peakAltitudeDegrees &&
+    left.moon.azimuthDegrees === right.moon.azimuthDegrees &&
+    left.moon.peakAltitudeDegrees === right.moon.peakAltitudeDegrees
+  );
+}
+
 export function areWorldSettingsEqual(
   left: WorldSettings,
   right: WorldSettings
@@ -762,6 +904,10 @@ export function areWorldSettingsEqual(
     left.showCelestialBodies === right.showCelestialBodies &&
     areWorldBackgroundSettingsEqual(left.background, right.background) &&
     areWorldShaderSkySettingsEqual(left.shaderSky, right.shaderSky) &&
+    areWorldCelestialOrbitSettingsEqual(
+      left.celestialOrbits,
+      right.celestialOrbits
+    ) &&
     left.ambientLight.colorHex === right.ambientLight.colorHex &&
     left.ambientLight.intensity === right.ambientLight.intensity &&
     left.sunLight.colorHex === right.sunLight.colorHex &&
