@@ -275,6 +275,7 @@ import {
 } from "../scheduler/project-scheduler";
 import {
   cloneWorldBackgroundSettings,
+  createDefaultWorldCelestialOrbitAuthoringSettings,
   createDefaultWorldTimeOfDaySettings,
   createDefaultWorldTimePhaseProfile,
   createDefaultWorldShaderSkySettings,
