@@ -525,6 +525,100 @@ export class WorldBackgroundRenderer {
     depthWrite: false,
     fog: false
   });
+  private readonly shaderSkyMaterial = new ShaderMaterial({
+    uniforms: {
+      uSkyTopColor: {
+        value: new Color(DEFAULT_IMAGE_BACKGROUND_FALLBACK_COLOR)
+      },
+      uSkyBottomColor: {
+        value: new Color(DEFAULT_IMAGE_BACKGROUND_FALLBACK_COLOR)
+      },
+      uSunDirection: {
+        value: new Vector3(0, 1, 0)
+      },
+      uSunColor: {
+        value: new Color("#ffffff")
+      },
+      uSunIntensity: {
+        value: 0
+      },
+      uSunDiscSizeDegrees: {
+        value: 2.6
+      },
+      uSunVisible: {
+        value: 0
+      },
+      uMoonDirection: {
+        value: new Vector3(0, 1, 0)
+      },
+      uMoonColor: {
+        value: new Color("#ffffff")
+      },
+      uMoonIntensity: {
+        value: 0
+      },
+      uMoonDiscSizeDegrees: {
+        value: 1.8
+      },
+      uMoonVisible: {
+        value: 0
+      },
+      uDaylightFactor: {
+        value: 1
+      },
+      uTwilightFactor: {
+        value: 0
+      },
+      uStarDensity: {
+        value: 0.5
+      },
+      uStarBrightness: {
+        value: 0.75
+      },
+      uStarVisibility: {
+        value: 0
+      },
+      uStarRotationRadians: {
+        value: 0
+      },
+      uCloudCoverage: {
+        value: 0.55
+      },
+      uCloudDensity: {
+        value: 0.6
+      },
+      uCloudSoftness: {
+        value: 0.4
+      },
+      uCloudScale: {
+        value: 1.2
+      },
+      uCloudHeight: {
+        value: 0.6
+      },
+      uCloudHeightVariation: {
+        value: 0.2
+      },
+      uCloudTint: {
+        value: new Color("#ffffff")
+      },
+      uCloudOpacity: {
+        value: 0.65
+      },
+      uCloudOpacityRandomness: {
+        value: 0.2
+      },
+      uCloudDriftOffset: {
+        value: new Vector2(0, 0)
+      }
+    },
+    vertexShader: GRADIENT_VERTEX_SHADER,
+    fragmentShader: DEFAULT_SKY_FRAGMENT_SHADER,
+    side: BackSide,
+    depthTest: false,
+    depthWrite: false,
+    fog: false
+  });
   private readonly imageMaterial = new MeshBasicMaterial({
     color: 0xffffff,
     side: BackSide,
@@ -548,6 +642,7 @@ export class WorldBackgroundRenderer {
   private readonly moonMaterial = createCelestialBodyMaterial(
     MOON_FRAGMENT_SHADER
   );
+  private readonly shaderMesh = new Mesh(this.geometry, this.shaderSkyMaterial);
   private readonly gradientMesh = new Mesh(this.geometry, this.gradientMaterial);
   private readonly imageMesh = new Mesh(this.geometry, this.imageMaterial);
   private readonly overlayMesh = new Mesh(this.geometry, this.overlayMaterial);
