@@ -4387,12 +4387,27 @@ export class RuntimeHost {
     );
   };
 
-  private handleRuntimePointerDown = () => {
+  private handleRuntimePointerDown = (event: PointerEvent) => {
     if (!this.sceneReady) {
       return;
     }
 
     this.audioSystem.handleUserGesture();
+
+    if (
+      this.activeRuntimeCameraRig === null ||
+      !this.activeRuntimeCameraRig.lookAround.enabled ||
+      this.isRuntimePaused() ||
+      event.button !== 0
+    ) {
+      return;
+    }
+
+    this.cameraRigLookDragging = true;
+    this.lastCameraRigPointerClientX = event.clientX;
+    this.lastCameraRigPointerClientY = event.clientY;
+    event.preventDefault();
+    event.stopImmediatePropagation();
   };
 
   private handleRuntimeKeyDown = (event: KeyboardEvent) => {
@@ -4427,9 +4442,60 @@ export class RuntimeHost {
     this.pressedKeys.delete(event.code);
   };
 
+  private handleRuntimePointerMove = (event: PointerEvent) => {
+    if (
+      !this.cameraRigLookDragging ||
+      this.activeRuntimeCameraRig === null ||
+      !this.activeRuntimeCameraRig.lookAround.enabled ||
+      this.isRuntimePaused()
+    ) {
+      return;
+    }
+
+    const deltaX = event.clientX - this.lastCameraRigPointerClientX;
+    const deltaY = event.clientY - this.lastCameraRigPointerClientY;
+    this.lastCameraRigPointerClientX = event.clientX;
+    this.lastCameraRigPointerClientY = event.clientY;
+    this.cameraRigLookYawRadians = clampScalar(
+      this.cameraRigLookYawRadians -
+        deltaX * CAMERA_RIG_POINTER_LOOK_SENSITIVITY,
+      (-this.activeRuntimeCameraRig.lookAround.yawLimitDegrees * Math.PI) / 180,
+      (this.activeRuntimeCameraRig.lookAround.yawLimitDegrees * Math.PI) / 180
+    );
+    this.cameraRigLookPitchRadians = clampScalar(
+      this.cameraRigLookPitchRadians -
+        deltaY * CAMERA_RIG_POINTER_LOOK_SENSITIVITY,
+      (-this.activeRuntimeCameraRig.lookAround.pitchLimitDegrees * Math.PI) /
+        180,
+      (this.activeRuntimeCameraRig.lookAround.pitchLimitDegrees * Math.PI) /
+        180
+    );
+    event.preventDefault();
+    event.stopImmediatePropagation();
+  };
+
+  private handleRuntimePointerUp = (event: PointerEvent) => {
+    if (!this.cameraRigLookDragging) {
+      return;
+    }
+
+    this.cameraRigLookDragging = false;
+    event.stopImmediatePropagation();
+  };
+
+  private handleRuntimeWheel = (event: WheelEvent) => {
+    if (this.activeRuntimeCameraRig === null) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopImmediatePropagation();
+  };
+
   private handleRuntimeBlur = () => {
     this.pressedKeys.clear();
     this.previousPauseInputActive = false;
+    this.cameraRigLookDragging = false;
   };
 
   private updatePauseInputState() {
