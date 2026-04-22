@@ -15117,7 +15117,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                                 }
                               />
                             </label>
-                          ) : (
+                          ) : editorState.document.world.timeOfDay.dawn
+                              .background.mode === "verticalGradient" ? (
                             <div className="vector-inputs vector-inputs--two">
                               <label className="form-field">
                                 <span className="label">Top</span>
@@ -15156,7 +15157,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                                 />
                               </label>
                             </div>
-                          )}
+                          ) : null}
                         </div>
                       )}
                       <div className="vector-inputs">
@@ -15406,7 +15407,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                                 }
                               />
                             </label>
-                          ) : (
+                          ) : editorState.document.world.timeOfDay.dusk
+                              .background.mode === "verticalGradient" ? (
                             <div className="vector-inputs vector-inputs--two">
                               <label className="form-field">
                                 <span className="label">Top</span>
@@ -15445,7 +15447,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                                 />
                               </label>
                             </div>
-                          )}
+                          ) : null}
                         </div>
                       )}
                       <div className="vector-inputs">
@@ -15567,19 +15569,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           )}
                         />
                         <div className="material-summary">
-                          {editorState.document.world.timeOfDay.night.background
-                            .mode === "solid"
-                            ? editorState.document.world.timeOfDay.night
-                                .background.colorHex
-                            : editorState.document.world.timeOfDay.night
-                                  .background.mode === "verticalGradient"
-                              ? `${editorState.document.world.timeOfDay.night.background.topColorHex} -> ${editorState.document.world.timeOfDay.night.background.bottomColorHex}`
-                              : (editorState.document.assets[
-                                  editorState.document.world.timeOfDay.night
-                                    .background.assetId
-                                ]?.sourceName ??
-                                editorState.document.world.timeOfDay.night
-                                  .background.assetId)}
+                          {describeWorldBackground(
+                            editorState.document.world.timeOfDay.night
+                              .background,
+                            editorState.document.assets
+                          )}
                         </div>
                       </div>
 
@@ -15702,7 +15696,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                                 }
                               />
                             </label>
-                          ) : (
+                          ) : editorState.document.world.timeOfDay.night
+                              .background.mode === "verticalGradient" ? (
                             <div className="vector-inputs vector-inputs--two">
                               <label className="form-field">
                                 <span className="label">Top</span>
@@ -15739,7 +15734,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                                 />
                               </label>
                             </div>
-                          )}
+                          ) : null}
                         </div>
                       )}
 
