@@ -235,6 +235,33 @@ describe("runtime project time", () => {
     expect(lateDusk.moonLight?.direction.y ?? 0).toBeGreaterThan(0.05);
   });
 
+  it("uses independent authored orbit settings for the moon path", () => {
+    const world = createDefaultWorldSettings();
+    const time = createDefaultProjectTimeSettings();
+    time.sunriseTimeOfDayHours = 7;
+    time.sunsetTimeOfDayHours = 20;
+    time.dawnDurationHours = 2;
+    time.duskDurationHours = 2;
+    world.celestialOrbits.sun.azimuthDegrees = 180;
+    world.celestialOrbits.moon.azimuthDegrees = 90;
+
+    const duskEnd = resolveRuntimeDayNightWorldState(world, time, {
+      timeOfDayHours: 21,
+      dayCount: 0,
+      dayLengthMinutes: 24
+    });
+    const lateDusk = resolveRuntimeDayNightWorldState(world, time, {
+      timeOfDayHours: 22,
+      dayCount: 0,
+      dayLengthMinutes: 24
+    });
+
+    expect(Math.abs(duskEnd.sunLight.direction.y)).toBeLessThan(0.05);
+    expect(Math.abs(duskEnd.moonLight?.direction.y ?? 1)).toBeLessThan(0.05);
+    expect(Math.abs(lateDusk.sunLight.direction.x)).toBeGreaterThan(0.4);
+    expect(Math.abs(lateDusk.moonLight?.direction.z ?? 0)).toBeGreaterThan(0.4);
+  });
+
   it("uses the scene night image as a runtime overlay when the night background is an image", () => {
     const world = createDefaultWorldSettings();
     const time = createDefaultProjectTimeSettings();
