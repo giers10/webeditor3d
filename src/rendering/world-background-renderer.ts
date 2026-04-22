@@ -54,6 +54,14 @@ export interface WorldBackgroundOverlayState {
   environmentIntensity: number;
 }
 
+export interface WorldEnvironmentBlendTextureResolver {
+  resolveBlendTexture(
+    baseTexture: Texture,
+    overlayTexture: Texture,
+    blendAmount: number
+  ): Texture | null;
+}
+
 export interface WorldEnvironmentState {
   texture: Texture | null;
   intensity: number;
@@ -62,7 +70,8 @@ export interface WorldEnvironmentState {
 export function resolveWorldEnvironmentState(
   background: WorldBackgroundSettings,
   backgroundTexture: Texture | null,
-  overlay: WorldBackgroundOverlayState | null
+  overlay: WorldBackgroundOverlayState | null,
+  environmentBlendTextureResolver: WorldEnvironmentBlendTextureResolver | null = null
 ): WorldEnvironmentState {
   const baseTexture = background.mode === "image" ? backgroundTexture : null;
   const baseIntensity =
@@ -77,8 +86,15 @@ export function resolveWorldEnvironmentState(
     overlayOpacity > NIGHT_BACKGROUND_EPSILON &&
     overlayOpacity < 1 - NIGHT_BACKGROUND_EPSILON
   ) {
+    const blendedTexture =
+      environmentBlendTextureResolver?.resolveBlendTexture(
+        baseTexture,
+        overlayTexture,
+        overlayOpacity
+      ) ?? baseTexture;
+
     return {
-      texture: baseTexture,
+      texture: blendedTexture,
       intensity: lerp(baseIntensity, overlayIntensity, overlayOpacity)
     };
   }
