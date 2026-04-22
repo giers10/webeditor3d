@@ -421,7 +421,11 @@ function createTriggerVolumeFocusTarget(position: Vec3, size: Vec3): ViewportFoc
   );
 }
 
-function includeEntity(bounds: FocusBoundsAccumulator, entity: EntityInstance) {
+function includeEntity(
+  bounds: FocusBoundsAccumulator,
+  entity: EntityInstance,
+  document: SceneDocument
+) {
   switch (entity.kind) {
     case "pointLight":
       includeSphereEntity(bounds, entity.position, Math.max(0.5, entity.distance));
@@ -429,9 +433,21 @@ function includeEntity(bounds: FocusBoundsAccumulator, entity: EntityInstance) {
     case "spotLight":
       includeSphereEntity(bounds, entity.position, Math.max(0.75, entity.distance));
       break;
-    case "cameraRig":
-      includeTeleportTarget(bounds, entity.position);
+    case "cameraRig": {
+      const position = resolveCameraRigDocumentPosition(
+        entity,
+        document.entities,
+        document.paths,
+        {
+          fallbackToPathStart: true
+        }
+      );
+
+      if (position !== null) {
+        includeTeleportTarget(bounds, position);
+      }
       break;
+    }
     case "playerStart":
     case "sceneEntry":
     case "npc":
@@ -452,14 +468,27 @@ function includeEntity(bounds: FocusBoundsAccumulator, entity: EntityInstance) {
   }
 }
 
-function createEntityFocusTarget(entity: EntityInstance): ViewportFocusTarget {
+function createEntityFocusTarget(
+  entity: EntityInstance,
+  document: SceneDocument
+): ViewportFocusTarget | null {
   switch (entity.kind) {
     case "pointLight":
       return createSphereEntityFocusTarget(entity.position, Math.max(0.6, entity.distance), 0.75);
     case "spotLight":
       return createSphereEntityFocusTarget(entity.position, Math.max(0.8, entity.distance), 0.9);
-    case "cameraRig":
-      return createTeleportTargetFocusTarget(entity.position);
+    case "cameraRig": {
+      const position = resolveCameraRigDocumentPosition(
+        entity,
+        document.entities,
+        document.paths,
+        {
+          fallbackToPathStart: true
+        }
+      );
+
+      return position === null ? null : createTeleportTargetFocusTarget(position);
+    }
     case "playerStart":
     case "sceneEntry":
     case "npc":
