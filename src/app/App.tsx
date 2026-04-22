@@ -18595,6 +18595,558 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     </>
                   ) : null}
 
+                  {selectedCameraRig !== null ? (
+                    <>
+                      <div className="form-section">
+                        <div className="label">Fixed Rig</div>
+                        <div className="vector-inputs vector-inputs--two">
+                          <label className="form-field">
+                            <span className="label">Priority</span>
+                            <input
+                              data-testid="camera-rig-priority"
+                              className="text-input"
+                              type="number"
+                              min="0"
+                              step="1"
+                              value={cameraRigPriorityDraft}
+                              onChange={(event) =>
+                                setCameraRigPriorityDraft(
+                                  event.currentTarget.value
+                                )
+                              }
+                              onBlur={() => applyCameraRigChange()}
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(
+                                  event,
+                                  applyCameraRigChange
+                                )
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(
+                                  event,
+                                  applyCameraRigChange
+                                )
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(
+                                  event,
+                                  applyCameraRigChange
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field form-field--toggle">
+                            <span className="label">Default Active</span>
+                            <input
+                              data-testid="camera-rig-default-active"
+                              type="checkbox"
+                              checked={cameraRigDefaultActiveDraft}
+                              onChange={(event) => {
+                                const nextValue =
+                                  event.currentTarget.checked;
+                                setCameraRigDefaultActiveDraft(nextValue);
+                                scheduleDraftCommit(() =>
+                                  applyCameraRigChange({
+                                    defaultActive: nextValue
+                                  })
+                                );
+                              }}
+                            />
+                          </label>
+                        </div>
+                      </div>
+
+                      <div className="form-section">
+                        <div className="label">Target</div>
+                        <label className="form-field">
+                          <span className="label">Kind</span>
+                          <select
+                            data-testid="camera-rig-target-kind"
+                            className="select-input"
+                            value={cameraRigTargetKindDraft}
+                            onChange={(event) => {
+                              const nextKind = event.currentTarget
+                                .value as CameraRigTargetKind;
+                              setCameraRigTargetKindDraft(nextKind);
+                              scheduleDraftCommit(() =>
+                                applyCameraRigChange({
+                                  targetKind: nextKind
+                                })
+                              );
+                            }}
+                          >
+                            <option value="player">Player</option>
+                            <option value="actor">Actor</option>
+                            <option value="entity">Entity</option>
+                            <option value="worldPoint">World Point</option>
+                          </select>
+                        </label>
+                        {cameraRigTargetKindDraft === "actor" ? (
+                          <label className="form-field">
+                            <span className="label">Actor</span>
+                            <select
+                              data-testid="camera-rig-target-actor"
+                              className="select-input"
+                              value={cameraRigTargetActorIdDraft}
+                              onChange={(event) => {
+                                const nextActorId =
+                                  event.currentTarget.value;
+                                setCameraRigTargetActorIdDraft(nextActorId);
+                                scheduleDraftCommit(() =>
+                                  applyCameraRigChange()
+                                );
+                              }}
+                            >
+                              <option value="">— select actor —</option>
+                              {cameraRigActorOptions.map((actorId) => (
+                                <option key={actorId} value={actorId}>
+                                  {actorId}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                        ) : null}
+                        {cameraRigTargetKindDraft === "entity" ? (
+                          <label className="form-field">
+                            <span className="label">Entity</span>
+                            <select
+                              data-testid="camera-rig-target-entity"
+                              className="select-input"
+                              value={cameraRigTargetEntityIdDraft}
+                              onChange={(event) => {
+                                const nextEntityId =
+                                  event.currentTarget.value;
+                                setCameraRigTargetEntityIdDraft(nextEntityId);
+                                scheduleDraftCommit(() =>
+                                  applyCameraRigChange()
+                                );
+                              }}
+                            >
+                              <option value="">— select entity —</option>
+                              {cameraRigEntityTargetOptions.map(
+                                ({ entity, label }) => (
+                                  <option key={entity.id} value={entity.id}>
+                                    {label}
+                                  </option>
+                                )
+                              )}
+                            </select>
+                          </label>
+                        ) : null}
+                        {cameraRigTargetKindDraft === "worldPoint" ? (
+                          <div className="vector-inputs">
+                            <label className="form-field">
+                              <span className="label">World X</span>
+                              <input
+                                data-testid="camera-rig-target-world-x"
+                                className="text-input"
+                                type="number"
+                                step={DEFAULT_GRID_SIZE}
+                                value={cameraRigTargetWorldPointDraft.x}
+                                onChange={(event) =>
+                                  setCameraRigTargetWorldPointDraft((draft) => ({
+                                    ...draft,
+                                    x: event.currentTarget.value
+                                  }))
+                                }
+                                onBlur={() => applyCameraRigChange()}
+                                onKeyDown={(event) =>
+                                  handleDraftVectorKeyDown(
+                                    event,
+                                    applyCameraRigChange
+                                  )
+                                }
+                                onKeyUp={(event) =>
+                                  handleNumberInputKeyUp(
+                                    event,
+                                    applyCameraRigChange
+                                  )
+                                }
+                                onPointerUp={(event) =>
+                                  handleNumberInputPointerUp(
+                                    event,
+                                    applyCameraRigChange
+                                  )
+                                }
+                              />
+                            </label>
+                            <label className="form-field">
+                              <span className="label">World Y</span>
+                              <input
+                                data-testid="camera-rig-target-world-y"
+                                className="text-input"
+                                type="number"
+                                step={DEFAULT_GRID_SIZE}
+                                value={cameraRigTargetWorldPointDraft.y}
+                                onChange={(event) =>
+                                  setCameraRigTargetWorldPointDraft((draft) => ({
+                                    ...draft,
+                                    y: event.currentTarget.value
+                                  }))
+                                }
+                                onBlur={() => applyCameraRigChange()}
+                                onKeyDown={(event) =>
+                                  handleDraftVectorKeyDown(
+                                    event,
+                                    applyCameraRigChange
+                                  )
+                                }
+                                onKeyUp={(event) =>
+                                  handleNumberInputKeyUp(
+                                    event,
+                                    applyCameraRigChange
+                                  )
+                                }
+                                onPointerUp={(event) =>
+                                  handleNumberInputPointerUp(
+                                    event,
+                                    applyCameraRigChange
+                                  )
+                                }
+                              />
+                            </label>
+                            <label className="form-field">
+                              <span className="label">World Z</span>
+                              <input
+                                data-testid="camera-rig-target-world-z"
+                                className="text-input"
+                                type="number"
+                                step={DEFAULT_GRID_SIZE}
+                                value={cameraRigTargetWorldPointDraft.z}
+                                onChange={(event) =>
+                                  setCameraRigTargetWorldPointDraft((draft) => ({
+                                    ...draft,
+                                    z: event.currentTarget.value
+                                  }))
+                                }
+                                onBlur={() => applyCameraRigChange()}
+                                onKeyDown={(event) =>
+                                  handleDraftVectorKeyDown(
+                                    event,
+                                    applyCameraRigChange
+                                  )
+                                }
+                                onKeyUp={(event) =>
+                                  handleNumberInputKeyUp(
+                                    event,
+                                    applyCameraRigChange
+                                  )
+                                }
+                                onPointerUp={(event) =>
+                                  handleNumberInputPointerUp(
+                                    event,
+                                    applyCameraRigChange
+                                  )
+                                }
+                              />
+                            </label>
+                          </div>
+                        ) : null}
+                      </div>
+
+                      <div className="form-section">
+                        <div className="label">Target Offset</div>
+                        <div className="vector-inputs">
+                          <label className="form-field">
+                            <span className="label">X</span>
+                            <input
+                              data-testid="camera-rig-target-offset-x"
+                              className="text-input"
+                              type="number"
+                              step="0.1"
+                              value={cameraRigTargetOffsetDraft.x}
+                              onChange={(event) =>
+                                setCameraRigTargetOffsetDraft((draft) => ({
+                                  ...draft,
+                                  x: event.currentTarget.value
+                                }))
+                              }
+                              onBlur={() => applyCameraRigChange()}
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(
+                                  event,
+                                  applyCameraRigChange
+                                )
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(
+                                  event,
+                                  applyCameraRigChange
+                                )
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(
+                                  event,
+                                  applyCameraRigChange
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Y</span>
+                            <input
+                              data-testid="camera-rig-target-offset-y"
+                              className="text-input"
+                              type="number"
+                              step="0.1"
+                              value={cameraRigTargetOffsetDraft.y}
+                              onChange={(event) =>
+                                setCameraRigTargetOffsetDraft((draft) => ({
+                                  ...draft,
+                                  y: event.currentTarget.value
+                                }))
+                              }
+                              onBlur={() => applyCameraRigChange()}
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(
+                                  event,
+                                  applyCameraRigChange
+                                )
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(
+                                  event,
+                                  applyCameraRigChange
+                                )
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(
+                                  event,
+                                  applyCameraRigChange
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Z</span>
+                            <input
+                              data-testid="camera-rig-target-offset-z"
+                              className="text-input"
+                              type="number"
+                              step="0.1"
+                              value={cameraRigTargetOffsetDraft.z}
+                              onChange={(event) =>
+                                setCameraRigTargetOffsetDraft((draft) => ({
+                                  ...draft,
+                                  z: event.currentTarget.value
+                                }))
+                              }
+                              onBlur={() => applyCameraRigChange()}
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(
+                                  event,
+                                  applyCameraRigChange
+                                )
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(
+                                  event,
+                                  applyCameraRigChange
+                                )
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(
+                                  event,
+                                  applyCameraRigChange
+                                )
+                              }
+                            />
+                          </label>
+                        </div>
+                      </div>
+
+                      <div className="form-section">
+                        <div className="label">Transition</div>
+                        <div className="vector-inputs vector-inputs--two">
+                          <label className="form-field">
+                            <span className="label">Mode</span>
+                            <select
+                              data-testid="camera-rig-transition-mode"
+                              className="select-input"
+                              value={cameraRigTransitionModeDraft}
+                              onChange={(event) => {
+                                const nextMode = event.currentTarget
+                                  .value as CameraRigTransitionMode;
+                                setCameraRigTransitionModeDraft(nextMode);
+                                scheduleDraftCommit(() =>
+                                  applyCameraRigChange({
+                                    transitionMode: nextMode
+                                  })
+                                );
+                              }}
+                            >
+                              <option value="blend">Blend</option>
+                              <option value="cut">Cut</option>
+                            </select>
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Duration</span>
+                            <input
+                              data-testid="camera-rig-transition-duration"
+                              className="text-input"
+                              type="number"
+                              min="0"
+                              step="0.05"
+                              value={cameraRigTransitionDurationDraft}
+                              onChange={(event) =>
+                                setCameraRigTransitionDurationDraft(
+                                  event.currentTarget.value
+                                )
+                              }
+                              onBlur={() => applyCameraRigChange()}
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(
+                                  event,
+                                  applyCameraRigChange
+                                )
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(
+                                  event,
+                                  applyCameraRigChange
+                                )
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(
+                                  event,
+                                  applyCameraRigChange
+                                )
+                              }
+                            />
+                          </label>
+                        </div>
+                      </div>
+
+                      <div className="form-section">
+                        <div className="label">Look Around</div>
+                        <label className="form-field form-field--toggle">
+                          <span className="label">Enabled</span>
+                          <input
+                            data-testid="camera-rig-look-around-enabled"
+                            type="checkbox"
+                            checked={cameraRigLookAroundEnabledDraft}
+                            onChange={(event) => {
+                              const nextValue = event.currentTarget.checked;
+                              setCameraRigLookAroundEnabledDraft(nextValue);
+                              scheduleDraftCommit(() =>
+                                applyCameraRigChange({
+                                  lookAroundEnabled: nextValue
+                                })
+                              );
+                            }}
+                          />
+                        </label>
+                        <div className="vector-inputs vector-inputs--two">
+                          <label className="form-field">
+                            <span className="label">Yaw Limit</span>
+                            <input
+                              data-testid="camera-rig-look-around-yaw-limit"
+                              className="text-input"
+                              type="number"
+                              min="0"
+                              step="1"
+                              value={cameraRigLookAroundYawLimitDraft}
+                              onChange={(event) =>
+                                setCameraRigLookAroundYawLimitDraft(
+                                  event.currentTarget.value
+                                )
+                              }
+                              onBlur={() => applyCameraRigChange()}
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(
+                                  event,
+                                  applyCameraRigChange
+                                )
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(
+                                  event,
+                                  applyCameraRigChange
+                                )
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(
+                                  event,
+                                  applyCameraRigChange
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Pitch Limit</span>
+                            <input
+                              data-testid="camera-rig-look-around-pitch-limit"
+                              className="text-input"
+                              type="number"
+                              min="0"
+                              step="1"
+                              value={cameraRigLookAroundPitchLimitDraft}
+                              onChange={(event) =>
+                                setCameraRigLookAroundPitchLimitDraft(
+                                  event.currentTarget.value
+                                )
+                              }
+                              onBlur={() => applyCameraRigChange()}
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(
+                                  event,
+                                  applyCameraRigChange
+                                )
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(
+                                  event,
+                                  applyCameraRigChange
+                                )
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(
+                                  event,
+                                  applyCameraRigChange
+                                )
+                              }
+                            />
+                          </label>
+                        </div>
+                        <label className="form-field">
+                          <span className="label">Recenter Speed</span>
+                          <input
+                            data-testid="camera-rig-look-around-recenter-speed"
+                            className="text-input"
+                            type="number"
+                            min="0"
+                            step="0.1"
+                            value={cameraRigLookAroundRecenterSpeedDraft}
+                            onChange={(event) =>
+                              setCameraRigLookAroundRecenterSpeedDraft(
+                                event.currentTarget.value
+                              )
+                            }
+                            onBlur={() => applyCameraRigChange()}
+                            onKeyDown={(event) =>
+                              handleDraftVectorKeyDown(
+                                event,
+                                applyCameraRigChange
+                              )
+                            }
+                            onKeyUp={(event) =>
+                              handleNumberInputKeyUp(
+                                event,
+                                applyCameraRigChange
+                              )
+                            }
+                            onPointerUp={(event) =>
+                              handleNumberInputPointerUp(
+                                event,
+                                applyCameraRigChange
+                              )
+                            }
+                          />
+                        </label>
+                      </div>
+                    </>
+                  ) : null}
+
                   {selectedPlayerStart !== null ? (
                     <>
                       <div className="form-section">
