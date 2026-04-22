@@ -8590,6 +8590,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
   const applyCameraRigChange = (
     overrides: {
+      rigType?: CameraRigType;
+      pathId?: string;
       defaultActive?: boolean;
       targetKind?: CameraRigTargetKind;
       transitionMode?: CameraRigTransitionMode;
@@ -8602,6 +8604,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
 
     try {
+      const rigType = overrides.rigType ?? cameraRigRigTypeDraft;
+      const pathId =
+        (overrides.pathId ?? cameraRigPathIdDraft).trim() ||
+        cameraRigPathOptions[0]?.path.id ||
+        "";
       const targetKind = overrides.targetKind ?? cameraRigTargetKindDraft;
       const targetActorId =
         cameraRigTargetActorIdDraft.trim() || cameraRigActorOptions[0] || "";
@@ -8622,16 +8629,25 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     "Camera Rig world target"
                   )
                 );
+      const fixedPosition = snapVec3ToGrid(
+        readVec3Draft(entityPositionDraft, "Camera Rig position"),
+        DEFAULT_GRID_SIZE
+      );
 
       const nextEntity = createCameraRigEntity({
         id: selectedCameraRig.id,
         name: selectedCameraRig.name,
         visible: selectedCameraRig.visible,
         enabled: selectedCameraRig.enabled,
-        position: snapVec3ToGrid(
-          readVec3Draft(entityPositionDraft, "Camera Rig position"),
-          DEFAULT_GRID_SIZE
-        ),
+        ...(rigType === "fixed"
+          ? {
+              rigType: "fixed" as const,
+              position: fixedPosition
+            }
+          : {
+              rigType: "rail" as const,
+              pathId
+            }),
         priority: readNonNegativeNumberDraft(
           cameraRigPriorityDraft,
           "Camera Rig priority"
