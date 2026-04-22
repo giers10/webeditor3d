@@ -657,6 +657,7 @@ export class RuntimeHost {
     this.syncResolvedControlStateToRuntime(runtimeScene.control.resolved);
     this.applyWorld();
     this.rebuildLocalLights(runtimeScene.localLights);
+    this.rebuildLightVolumes(runtimeScene.volumes.light);
     this.rebuildBrushMeshes(runtimeScene.brushes);
     this.rebuildTerrainMeshes(runtimeScene.terrains);
     this.rebuildModelRenderObjects(
@@ -837,6 +838,7 @@ export class RuntimeHost {
     this.resizeObserver?.disconnect();
     this.resizeObserver = null;
     this.clearLocalLights();
+    this.clearLightVolumes();
     this.clearBrushMeshes();
     this.clearTerrainMeshes();
     this.clearModelRenderObjects();
