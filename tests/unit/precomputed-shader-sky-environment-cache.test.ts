@@ -6,7 +6,8 @@ import { createDefaultWorldSettings } from "../../src/document/world-settings";
 import { PrecomputedShaderSkyEnvironmentCache } from "../../src/rendering/precomputed-shader-sky-environment-cache";
 import {
   resolveWorldShaderSkyEnvironmentPhaseStates,
-  resolveWorldShaderSkyRenderState
+  resolveWorldShaderSkyRenderState,
+  type WorldShaderSkyRenderState
 } from "../../src/rendering/world-shader-sky";
 import {
   resolveRuntimeDayNightWorldState,
@@ -54,7 +55,7 @@ describe("PrecomputedShaderSkyEnvironmentCache", () => {
       mode: "shader"
     };
     const cache = new PrecomputedShaderSkyEnvironmentCache({
-      buildEnvironmentTexture: vi.fn((state) => {
+      buildEnvironmentTexture: vi.fn((state: WorldShaderSkyRenderState) => {
         buildOrder.push(state.time.dayPhase);
         return {
           texture: phaseTextures[state.time.dayPhase],
