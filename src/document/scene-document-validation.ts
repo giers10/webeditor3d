@@ -735,7 +735,7 @@ function validateWorldTimePhaseProfile(
     document,
     diagnostics,
     `${path}.background`,
-    `${label} background`,
+    `${label}-background`,
     {
       allowEmptyImageAssetId: true
     }
