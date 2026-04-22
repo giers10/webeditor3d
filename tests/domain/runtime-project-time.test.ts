@@ -191,6 +191,45 @@ describe("runtime project time", () => {
     );
   });
 
+  it("starts the visible sun and moon journeys at the end of dawn and dusk", () => {
+    const world = createDefaultWorldSettings();
+    const time = createDefaultProjectTimeSettings();
+    time.sunriseTimeOfDayHours = 7;
+    time.sunsetTimeOfDayHours = 20;
+    time.dawnDurationHours = 2;
+    time.duskDurationHours = 2;
+
+    const midDawn = resolveRuntimeDayNightWorldState(world, time, {
+      timeOfDayHours: 7.5,
+      dayCount: 0,
+      dayLengthMinutes: 24
+    });
+    const dawnEnd = resolveRuntimeDayNightWorldState(world, time, {
+      timeOfDayHours: 8,
+      dayCount: 0,
+      dayLengthMinutes: 24
+    });
+    const duskEnd = resolveRuntimeDayNightWorldState(world, time, {
+      timeOfDayHours: 21,
+      dayCount: 0,
+      dayLengthMinutes: 24
+    });
+    const lateDusk = resolveRuntimeDayNightWorldState(world, time, {
+      timeOfDayHours: 21.5,
+      dayCount: 0,
+      dayLengthMinutes: 24
+    });
+
+    expect(midDawn.sunLight.direction.y).toBeLessThan(-0.05);
+    expect(Math.abs(dawnEnd.sunLight.direction.y)).toBeLessThan(0.05);
+    expect(Math.abs(duskEnd.sunLight.direction.y)).toBeLessThan(0.05);
+    expect(lateDusk.sunLight.direction.y).toBeLessThan(-0.05);
+    expect(midDawn.moonLight?.direction.y ?? 0).toBeGreaterThan(0.05);
+    expect(Math.abs(dawnEnd.moonLight?.direction.y ?? 1)).toBeLessThan(0.05);
+    expect(Math.abs(duskEnd.moonLight?.direction.y ?? 1)).toBeLessThan(0.05);
+    expect(lateDusk.moonLight?.direction.y ?? 0).toBeGreaterThan(0.05);
+  });
+
   it("uses the scene night image as a runtime overlay when the night background is an image", () => {
     const world = createDefaultWorldSettings();
     const time = createDefaultProjectTimeSettings();
