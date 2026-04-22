@@ -246,6 +246,11 @@ describe("RuntimeHost", () => {
 
     const lightBrush = createBoxBrush({
       id: "brush-runtime-light-volume",
+      size: {
+        x: 6,
+        y: 5,
+        z: 3
+      },
       volume: {
         mode: "light",
         light: {
