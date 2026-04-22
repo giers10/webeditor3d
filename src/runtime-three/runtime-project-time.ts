@@ -478,20 +478,29 @@ export function resolveRuntimeDayNightPhaseWeights(
 }
 
 function resolveTimeDrivenSunOrbitRadians(
+  noonDirection: Vec3,
   settings: ProjectTimeSettings,
   timeOfDayHours: number
 ): number {
-  const sunrise = settings.sunriseTimeOfDayHours;
+  const boundaries = resolveRuntimeDayPhaseWindowBoundaries(settings);
+  const daytimeStart = boundaries.dawnEnd;
+  const daytimeEnd = boundaries.duskEnd;
   const daytimeDuration = Math.max(
-    settings.sunsetTimeOfDayHours - settings.sunriseTimeOfDayHours,
+    wrapTimeForward(daytimeEnd, daytimeStart) - daytimeStart,
     0.001
   );
-  const relativeTime = wrapTimeForward(timeOfDayHours, sunrise) - sunrise;
+  const relativeTime =
+    wrapTimeForward(timeOfDayHours, daytimeStart) - daytimeStart;
+  const noonAltitudeRadians = Math.acos(clamp(noonDirection.y, -1, 1));
+  const horizonOrbitRadians = Math.max(
+    Math.PI / 2 - noonAltitudeRadians,
+    0.001
+  );
 
   if (relativeTime <= daytimeDuration) {
     const daytimeProgress = clamp(relativeTime / daytimeDuration, 0, 1);
 
-    return lerp(-Math.PI / 2, Math.PI / 2, daytimeProgress);
+    return lerp(-horizonOrbitRadians, horizonOrbitRadians, daytimeProgress);
   }
 
   const nighttimeDuration = Math.max(HOURS_PER_DAY - daytimeDuration, 0.001);
@@ -501,7 +510,11 @@ function resolveTimeDrivenSunOrbitRadians(
     1
   );
 
-  return lerp(Math.PI / 2, Math.PI * 1.5, nighttimeProgress);
+  return lerp(
+    horizonOrbitRadians,
+    Math.PI * 2 - horizonOrbitRadians,
+    nighttimeProgress
+  );
 }
 
 function resolveTimeDrivenSunDirection(
@@ -523,6 +536,7 @@ function resolveTimeDrivenSunDirection(
         }
       : normalizeVec3(orbitAxisCandidate);
   const orbitRadians = resolveTimeDrivenSunOrbitRadians(
+    noonDirection,
     settings,
     timeOfDayHours
   );
