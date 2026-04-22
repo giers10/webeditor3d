@@ -1025,6 +1025,30 @@ describe("validateSceneDocument", () => {
     expect(validation.errors).toEqual([]);
   });
 
+  it("allows dawn and dusk image backgrounds to omit a direct asset id", () => {
+    const document = createEmptySceneDocument();
+    document.world.timeOfDay.dawn.background = {
+      mode: "image",
+      assetId: "",
+      environmentIntensity: 0.55
+    };
+    document.world.timeOfDay.dusk.background = {
+      mode: "image",
+      assetId: "",
+      environmentIntensity: 0.45
+    };
+
+    const validation = validateSceneDocument(document);
+
+    expect(
+      validation.errors.some(
+        (diagnostic) =>
+          diagnostic.path === "world.timeOfDay.dawn.background.assetId" ||
+          diagnostic.path === "world.timeOfDay.dusk.background.assetId"
+      )
+    ).toBe(false);
+  });
+
   it("detects invalid local light values and missing image background assets", () => {
     const pointLight = createPointLightEntity({
       id: "entity-point-light-invalid"
