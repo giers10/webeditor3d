@@ -69,13 +69,17 @@ import {
   type StarterMaterialTextureSet
 } from "../materials/starter-material-textures";
 import {
-  applyAdvancedRenderingLightShadowFlags,
   applyAdvancedRenderingRenderableShadowFlags,
+  configureAdvancedRenderingShadowLight,
   configureAdvancedRenderingRenderer,
   createAdvancedRenderingComposer,
   resolveBoxVolumeRenderPaths,
   type ResolvedBoxVolumeRenderPaths
 } from "../rendering/advanced-rendering";
+import {
+  fitCelestialDirectionalShadow,
+  resolveDominantCelestialShadowCaster
+} from "../rendering/celestial-shadows";
 import {
   resolveWorldCelestialBodiesState,
   resolveWorldEnvironmentState,
@@ -407,6 +411,7 @@ export class RuntimeHost {
   private currentRuntimeMessage: string | null = null;
   private currentPlayerControllerTelemetry: PlayerControllerTelemetry | null =
     null;
+  private currentCelestialShadowCaster: "sun" | "moon" | null = null;
   private currentInteractionPrompt: RuntimeInteractionPrompt | null = null;
   private currentDialogue: RuntimeDialogueState | null = null;
   private currentPauseState: RuntimePauseState = {
