@@ -352,6 +352,17 @@ function validateWorldShaderSkySettings(
     );
   }
 
+  if (!isFiniteNumberInRange(settings.horizonHeight, -1, 1)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-world-shader-sky-horizon-height",
+        "World shader sky horizon height must stay between -1 and 1.",
+        `${path}.horizonHeight`
+      )
+    );
+  }
+
   if (!isPositiveFiniteNumber(settings.celestial.sunDiscSizeDegrees)) {
     diagnostics.push(
       createDiagnostic(
