@@ -653,6 +653,7 @@ export class WorldBackgroundRenderer {
   private moonState: WorldCelestialBodyState | null = null;
 
   constructor() {
+    this.shaderMesh.renderOrder = -1003;
     this.gradientMesh.renderOrder = -1002;
     this.imageMesh.renderOrder = -1001;
     this.overlayMesh.renderOrder = -1000;
@@ -660,6 +661,7 @@ export class WorldBackgroundRenderer {
     this.sunMesh.renderOrder = -998;
 
     for (const mesh of [
+      this.shaderMesh,
       this.gradientMesh,
       this.imageMesh,
       this.overlayMesh,
@@ -669,6 +671,7 @@ export class WorldBackgroundRenderer {
       mesh.frustumCulled = false;
     }
 
+    this.anchor.add(this.shaderMesh);
     this.anchor.add(this.gradientMesh);
     this.anchor.add(this.imageMesh);
     this.anchor.add(this.overlayMesh);
