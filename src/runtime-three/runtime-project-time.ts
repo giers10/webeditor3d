@@ -7,6 +7,7 @@ import {
 } from "../document/project-time-settings";
 import {
   cloneWorldBackgroundSettings,
+  resolveWorldCelestialOrbitPeakDirection,
   type WorldAmbientLightSettings,
   type WorldBackgroundSettings,
   type WorldTimeOfDaySettings,
@@ -222,20 +223,6 @@ function blendScalarByWeights(
       nightValue * weights.night) /
     totalWeight
   );
-}
-
-function resolveNoonSunDirection(direction: Vec3): Vec3 {
-  const normalizedDirection = normalizeVec3(direction);
-
-  if (normalizedDirection.y >= 0.2) {
-    return normalizedDirection;
-  }
-
-  return normalizeVec3({
-    x: normalizedDirection.x,
-    y: Math.abs(normalizedDirection.y) + 0.35,
-    z: normalizedDirection.z
-  });
 }
 
 function wrapTimeForward(hours: number, originHours: number): number {
@@ -477,54 +464,55 @@ export function resolveRuntimeDayNightPhaseWeights(
   };
 }
 
-function resolveTimeDrivenSunOrbitRadians(
-  noonDirection: Vec3,
-  settings: ProjectTimeSettings,
+function resolveTimeDrivenCelestialOrbitRadians(
+  peakDirection: Vec3,
+  visibleStartTimeOfDayHours: number,
+  visibleEndTimeOfDayHours: number,
   timeOfDayHours: number
 ): number {
-  const boundaries = resolveRuntimeDayPhaseWindowBoundaries(settings);
-  const daytimeStart = boundaries.dawnEnd;
-  const daytimeEnd = boundaries.duskEnd;
-  const daytimeDuration = Math.max(
-    wrapTimeForward(daytimeEnd, daytimeStart) - daytimeStart,
+  const visibleDuration = Math.max(
+    wrapTimeForward(visibleEndTimeOfDayHours, visibleStartTimeOfDayHours) -
+      visibleStartTimeOfDayHours,
     0.001
   );
   const relativeTime =
-    wrapTimeForward(timeOfDayHours, daytimeStart) - daytimeStart;
-  const noonAltitudeRadians = Math.acos(clamp(noonDirection.y, -1, 1));
-  const morningHorizonOrbitRadians = noonAltitudeRadians - Math.PI / 2;
-  const eveningHorizonOrbitRadians = noonAltitudeRadians + Math.PI / 2;
+    wrapTimeForward(timeOfDayHours, visibleStartTimeOfDayHours) -
+    visibleStartTimeOfDayHours;
+  const peakAltitudeRadians = Math.asin(clamp(peakDirection.y, -1, 1));
+  const risingHorizonOrbitRadians = -peakAltitudeRadians;
+  const settingHorizonOrbitRadians = Math.PI - peakAltitudeRadians;
 
-  if (relativeTime <= daytimeDuration) {
-    const daytimeProgress = clamp(relativeTime / daytimeDuration, 0, 1);
+  if (relativeTime <= visibleDuration) {
+    const visibleProgress = clamp(relativeTime / visibleDuration, 0, 1);
 
     return lerp(
-      morningHorizonOrbitRadians,
-      eveningHorizonOrbitRadians,
-      daytimeProgress
+      risingHorizonOrbitRadians,
+      settingHorizonOrbitRadians,
+      visibleProgress
     );
   }
 
-  const nighttimeDuration = Math.max(HOURS_PER_DAY - daytimeDuration, 0.001);
-  const nighttimeProgress = clamp(
-    (relativeTime - daytimeDuration) / nighttimeDuration,
+  const hiddenDuration = Math.max(HOURS_PER_DAY - visibleDuration, 0.001);
+  const hiddenProgress = clamp(
+    (relativeTime - visibleDuration) / hiddenDuration,
     0,
     1
   );
 
   return lerp(
-    eveningHorizonOrbitRadians,
-    morningHorizonOrbitRadians + Math.PI * 2,
-    nighttimeProgress
+    settingHorizonOrbitRadians,
+    risingHorizonOrbitRadians + Math.PI * 2,
+    hiddenProgress
   );
 }
 
-function resolveTimeDrivenSunDirection(
-  noonDirection: Vec3,
-  settings: ProjectTimeSettings,
+function resolveTimeDrivenCelestialDirection(
+  peakDirection: Vec3,
+  visibleStartTimeOfDayHours: number,
+  visibleEndTimeOfDayHours: number,
   timeOfDayHours: number
 ): Vec3 {
-  const orbitAxisCandidate = cross(noonDirection, UP_AXIS);
+  const orbitAxisCandidate = cross(peakDirection, UP_AXIS);
   const orbitAxis =
     Math.hypot(
       orbitAxisCandidate.x,
@@ -537,13 +525,14 @@ function resolveTimeDrivenSunDirection(
           z: 0
         }
       : normalizeVec3(orbitAxisCandidate);
-  const orbitRadians = resolveTimeDrivenSunOrbitRadians(
-    noonDirection,
-    settings,
+  const orbitRadians = resolveTimeDrivenCelestialOrbitRadians(
+    peakDirection,
+    visibleStartTimeOfDayHours,
+    visibleEndTimeOfDayHours,
     timeOfDayHours
   );
 
-  return rotateAroundAxis(noonDirection, orbitAxis, orbitRadians);
+  return rotateAroundAxis(peakDirection, orbitAxis, orbitRadians);
 }
 
 function createFallbackPhaseGradientBackground(
@@ -953,11 +942,24 @@ export function resolveRuntimeDayNightWorldState(
     settings,
     normalizedTime
   );
+  const boundaries = resolveRuntimeDayPhaseWindowBoundaries(settings);
   const timeOfDay = world.timeOfDay;
-  const noonDirection = resolveNoonSunDirection(world.sunLight.direction);
-  const sunDirection = resolveTimeDrivenSunDirection(
-    noonDirection,
-    settings,
+  const sunPeakDirection = resolveWorldCelestialOrbitPeakDirection(
+    world.celestialOrbits.sun
+  );
+  const moonPeakDirection = resolveWorldCelestialOrbitPeakDirection(
+    world.celestialOrbits.moon
+  );
+  const sunDirection = resolveTimeDrivenCelestialDirection(
+    sunPeakDirection,
+    boundaries.dawnEnd,
+    boundaries.duskEnd,
+    normalizedTime
+  );
+  const moonDirection = resolveTimeDrivenCelestialDirection(
+    moonPeakDirection,
+    boundaries.duskEnd,
+    boundaries.dawnEnd,
     normalizedTime
   );
   const daylightFactor = clamp(
@@ -1014,7 +1016,7 @@ export function resolveRuntimeDayNightWorldState(
         world.sunLight.intensity *
         timeOfDay.night.lightIntensityFactor *
         moonVisibilityFactor,
-      direction: scaleVec3(sunDirection, -1)
+      direction: moonDirection
     };
   }
 
