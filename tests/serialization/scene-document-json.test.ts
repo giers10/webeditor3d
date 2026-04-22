@@ -232,10 +232,9 @@ describe("scene document JSON", () => {
     );
 
     expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
-    expect(migratedDocument.world.celestialOrbits.sun.azimuthDegrees).toBeCloseTo(
-      153.4349,
-      3
-    );
+    expect(
+      migratedDocument.world.celestialOrbits.sun.azimuthDegrees
+    ).toBeCloseTo(153.4349, 3);
     expect(
       migratedDocument.world.celestialOrbits.sun.peakAltitudeDegrees
     ).toBeGreaterThan(60);

@@ -207,9 +207,8 @@ describe("world settings helpers", () => {
       y: 1,
       z: 0.35
     };
-    const defaults = createDefaultWorldCelestialOrbitAuthoringSettings(
-      direction
-    );
+    const defaults =
+      createDefaultWorldCelestialOrbitAuthoringSettings(direction);
     const derivedSunOrbit =
       createWorldCelestialOrbitSettingsFromPeakDirection(direction);
 
