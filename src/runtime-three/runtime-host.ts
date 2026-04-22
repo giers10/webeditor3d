@@ -19,6 +19,7 @@ import {
   MeshBasicMaterial,
   MeshPhysicalMaterial,
   MeshStandardMaterial,
+  OrthographicCamera,
   PerspectiveCamera,
   PointLight,
   Quaternion,
@@ -1137,8 +1138,14 @@ export class RuntimeHost {
 
     this.ambientLight.color.set(resolvedWorld.ambientLight.colorHex);
     this.ambientLight.intensity = resolvedWorld.ambientLight.intensity;
+    this.currentCelestialShadowCaster =
+      resolveDominantCelestialShadowCaster(
+        resolvedWorld.sunLight,
+        resolvedWorld.moonLight
+      )?.key ?? null;
     this.sunLight.color.set(resolvedWorld.sunLight.colorHex);
     this.sunLight.intensity = resolvedWorld.sunLight.intensity;
+    this.sunLight.visible = resolvedWorld.sunLight.intensity > 1e-4;
     this.sunLight.position
       .set(
         resolvedWorld.sunLight.direction.x,
@@ -1147,10 +1154,12 @@ export class RuntimeHost {
       )
       .normalize()
       .multiplyScalar(18);
+    this.sunLight.target.position.set(0, 0, 0);
 
     if (resolvedWorld.moonLight === null) {
       this.moonLight.visible = false;
       this.moonLight.intensity = 0;
+      this.moonLight.target.position.set(0, 0, 0);
       return;
     }
 
@@ -1165,6 +1174,7 @@ export class RuntimeHost {
       )
       .normalize()
       .multiplyScalar(16);
+    this.moonLight.target.position.set(0, 0, 0);
   }
 
   private async buildCollisionWorld(
@@ -1247,17 +1257,6 @@ export class RuntimeHost {
     const shadowsEnabled =
       advancedRendering.enabled && advancedRendering.shadows.enabled;
 
-    applyAdvancedRenderingLightShadowFlags(this.sunLight, advancedRendering);
-    this.moonLight.castShadow = false;
-    this.moonLight.shadow.autoUpdate = false;
-
-    for (const renderObjects of this.localLightObjects.values()) {
-      applyAdvancedRenderingLightShadowFlags(
-        renderObjects.group,
-        advancedRendering
-      );
-    }
-
     for (const mesh of this.brushMeshes.values()) {
       applyAdvancedRenderingRenderableShadowFlags(mesh, shadowsEnabled);
     }
@@ -1269,6 +1268,140 @@ export class RuntimeHost {
     for (const renderGroup of this.modelRenderObjects.values()) {
       applyAdvancedRenderingRenderableShadowFlags(renderGroup, shadowsEnabled);
     }
+
+    this.syncCelestialShadowState();
+  }
+
+  private resolveRuntimeShadowFocusTarget() {
+    const telemetry = this.currentPlayerControllerTelemetry;
+
+    if (telemetry !== null) {
+      return {
+        center: {
+          x: telemetry.feetPosition.x,
+          y: (telemetry.feetPosition.y + telemetry.eyePosition.y) * 0.5,
+          z: telemetry.feetPosition.z
+        },
+        radius: 8
+      };
+    }
+
+    if (this.runtimeScene?.sceneBounds !== null) {
+      return {
+        center: {
+          x: this.runtimeScene.sceneBounds.center.x,
+          y: this.runtimeScene.sceneBounds.center.y,
+          z: this.runtimeScene.sceneBounds.center.z
+        },
+        radius: Math.max(
+          6,
+          Math.hypot(
+            this.runtimeScene.sceneBounds.size.x,
+            this.runtimeScene.sceneBounds.size.y,
+            this.runtimeScene.sceneBounds.size.z
+          ) * 0.2
+        )
+      };
+    }
+
+    return {
+      center: {
+        x: this.camera.position.x,
+        y: this.camera.position.y,
+        z: this.camera.position.z
+      },
+      radius: 8
+    };
+  }
+
+  private syncCelestialShadowState() {
+    if (this.currentWorld === null) {
+      return;
+    }
+
+    const advancedRendering = this.currentWorld.advancedRendering;
+    const shadowsEnabled =
+      advancedRendering.enabled && advancedRendering.shadows.enabled;
+
+    for (const renderObjects of this.localLightObjects.values()) {
+      configureAdvancedRenderingShadowLight(
+        renderObjects.light,
+        advancedRendering,
+        false
+      );
+    }
+
+    for (const renderObjects of this.lightVolumeObjects.values()) {
+      for (const light of renderObjects.lights) {
+        configureAdvancedRenderingShadowLight(light, advancedRendering, false);
+      }
+    }
+
+    if (!shadowsEnabled || this.currentCelestialShadowCaster === null) {
+      configureAdvancedRenderingShadowLight(this.sunLight, advancedRendering, false);
+      configureAdvancedRenderingShadowLight(this.moonLight, advancedRendering, false);
+      return;
+    }
+
+    const activeLight =
+      this.currentCelestialShadowCaster === "moon"
+        ? this.moonLight
+        : this.sunLight;
+    const lightDirection = activeLight.position
+      .clone()
+      .sub(activeLight.target.position)
+      .normalize();
+    const fit = fitCelestialDirectionalShadow({
+      activeCamera: this.camera,
+      focusTarget: this.resolveRuntimeShadowFocusTarget(),
+      lightDirection: {
+        x: lightDirection.x,
+        y: lightDirection.y,
+        z: lightDirection.z
+      },
+      mapSize: advancedRendering.shadows.mapSize,
+      sceneBounds: this.runtimeScene?.sceneBounds ?? null
+    });
+
+    if (fit === null) {
+      configureAdvancedRenderingShadowLight(this.sunLight, advancedRendering, false);
+      configureAdvancedRenderingShadowLight(this.moonLight, advancedRendering, false);
+      return;
+    }
+
+    configureAdvancedRenderingShadowLight(
+      this.sunLight,
+      advancedRendering,
+      this.currentCelestialShadowCaster === "sun",
+      this.currentCelestialShadowCaster === "sun" ? fit.normalBias : 0
+    );
+    configureAdvancedRenderingShadowLight(
+      this.moonLight,
+      advancedRendering,
+      this.currentCelestialShadowCaster === "moon",
+      this.currentCelestialShadowCaster === "moon" ? fit.normalBias : 0
+    );
+
+    activeLight.position.set(
+      fit.lightPosition.x,
+      fit.lightPosition.y,
+      fit.lightPosition.z
+    );
+    activeLight.target.position.set(
+      fit.targetPosition.x,
+      fit.targetPosition.y,
+      fit.targetPosition.z
+    );
+    activeLight.target.updateMatrixWorld();
+    const shadowCamera = activeLight.shadow.camera as OrthographicCamera;
+    shadowCamera.left = fit.cameraBounds.left;
+    shadowCamera.right = fit.cameraBounds.right;
+    shadowCamera.top = fit.cameraBounds.top;
+    shadowCamera.bottom = fit.cameraBounds.bottom;
+    shadowCamera.near = fit.cameraBounds.near;
+    shadowCamera.far = fit.cameraBounds.far;
+    shadowCamera.updateProjectionMatrix();
+    activeLight.shadow.needsUpdate = true;
   }
 
   private rebuildLocalLights(localLights: RuntimeLocalLightCollection) {
