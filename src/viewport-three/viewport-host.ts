@@ -135,6 +135,7 @@ import {
   getPlayerStartColliderHeight,
   getEntityInstances,
   normalizeYawDegrees,
+  resolveCameraRigDocumentPosition,
   resolveCameraRigDocumentLookTarget,
   type CameraRigEntity,
   type EntityInstance,
@@ -4718,10 +4719,35 @@ export class ViewportHost {
 
   private applyCameraRigGroupTransform(
     group: Group,
-    entity: Pick<CameraRigEntity, "position" | "target" | "targetOffset">,
+    entity: CameraRigEntity,
     document: SceneDocument | null
   ) {
-    group.position.set(entity.position.x, entity.position.y, entity.position.z);
+    const authoredPosition =
+      document === null
+        ? entity.rigType === "fixed"
+          ? entity.position
+          : null
+        : resolveCameraRigDocumentPosition(
+            entity,
+            document.entities,
+            document.paths,
+            {
+              fallbackToPathStart: true
+            }
+          );
+
+    if (authoredPosition === null) {
+      group.position.set(0, 0, 0);
+      group.rotation.set(0, 0, 0);
+      group.quaternion.identity();
+      return;
+    }
+
+    group.position.set(
+      authoredPosition.x,
+      authoredPosition.y,
+      authoredPosition.z
+    );
 
     const lookTarget =
       document === null
@@ -4735,6 +4761,25 @@ export class ViewportHost {
     }
 
     group.lookAt(lookTarget.x, lookTarget.y, lookTarget.z);
+  }
+
+  private isSelectedRailCameraRigPathPreviewed(pathId: string): boolean {
+    if (this.currentDocument === null || this.currentSelection.kind !== "entities") {
+      return false;
+    }
+
+    if (this.currentSelection.ids.length !== 1) {
+      return false;
+    }
+
+    const selectedEntity =
+      this.currentDocument.entities[this.currentSelection.ids[0]] ?? null;
+
+    return (
+      selectedEntity?.kind === "cameraRig" &&
+      selectedEntity.rigType === "rail" &&
+      selectedEntity.pathId === pathId
+    );
   }
 
   private applyEntityRenderObjectTransform(entity: EntityInstance) {
@@ -5432,7 +5477,10 @@ export class ViewportHost {
     this.clearPaths();
 
     for (const path of getScenePaths(document.paths)) {
-      if (!path.enabled || !path.visible) {
+      if (
+        !path.enabled ||
+        (!path.visible && !this.isSelectedRailCameraRigPathPreviewed(path.id))
+      ) {
         continue;
       }
 
