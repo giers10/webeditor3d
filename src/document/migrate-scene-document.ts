@@ -3200,6 +3200,56 @@ function readPlayerStartEntity(value: unknown, label: string): EntityInstance {
   return entity;
 }
 
+function readCameraRigEntity(value: unknown, label: string): EntityInstance {
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  const kind = expectLiteralString(value.kind, "cameraRig", `${label}.kind`);
+  const transitionMode = readOptionalAllowedValue(
+    value.transitionMode,
+    `${label}.transitionMode`,
+    "blend",
+    (candidate): candidate is "cut" | "blend" =>
+      typeof candidate === "string" && isCameraRigTransitionMode(candidate)
+  );
+  const entity = createCameraRigEntity({
+    id: expectString(value.id, `${label}.id`),
+    name: readOptionalEntityName(value.name, `${label}.name`),
+    visible: readOptionalBoolean(
+      value.visible,
+      `${label}.visible`,
+      DEFAULT_ENTITY_VISIBLE
+    ),
+    enabled: readOptionalBoolean(
+      value.enabled,
+      `${label}.enabled`,
+      DEFAULT_ENTITY_ENABLED
+    ),
+    position: readVec3(value.position, `${label}.position`),
+    rigType: expectLiteralString(value.rigType, "fixed", `${label}.rigType`),
+    priority: expectNonNegativeFiniteNumber(value.priority, `${label}.priority`),
+    defaultActive: expectBoolean(value.defaultActive, `${label}.defaultActive`),
+    target: readCameraRigTargetRef(value.target, `${label}.target`),
+    targetOffset: readVec3(value.targetOffset, `${label}.targetOffset`),
+    transitionMode,
+    transitionDurationSeconds: expectNonNegativeFiniteNumber(
+      value.transitionDurationSeconds,
+      `${label}.transitionDurationSeconds`
+    ),
+    lookAround: readCameraRigLookAroundSettings(
+      value.lookAround,
+      `${label}.lookAround`
+    )
+  });
+
+  if (entity.kind !== kind) {
+    throw new Error(`${label}.kind must be cameraRig.`);
+  }
+
+  return entity;
+}
+
 function readSoundEmitterEntity(value: unknown, label: string): EntityInstance {
   if (!isRecord(value)) {
     throw new Error(`${label} must be an object.`);
