@@ -3598,6 +3598,8 @@ function readEntityInstance(
       return readSpotLightEntity(value, label);
     case "playerStart":
       return readPlayerStartEntity(value, label);
+    case "cameraRig":
+      return readCameraRigEntity(value, label);
     case "sceneEntry":
       return readSceneEntryEntity(value, label);
     case "npc":
