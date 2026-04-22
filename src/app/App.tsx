@@ -15084,12 +15084,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     </div>
                   </div>
 
-                  <div className="form-section">
-                    <div className="label">Celestial Orbits</div>
-                    <div className="material-summary">
-                      These angles drive the time-aware sun and moon paths in
-                      the editor viewport and runner.
-                    </div>
+                    <div className="form-section">
+                      <div className="label">Celestial Orbits</div>
+                      <div className="material-summary">
+                        These angles drive the time-aware sun and moon paths in
+                        the editor viewport and runner. Base peak altitude is
+                        the 12-hour reference height; longer or shorter
+                        day/night windows shift the orbit automatically.
+                      </div>
                     <div className="vector-inputs vector-inputs--two">
                       <label className="form-field">
                         <span className="label">Sun Azimuth</span>
@@ -15117,7 +15119,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         />
                       </label>
                       <label className="form-field">
-                        <span className="label">Sun Peak Altitude</span>
+                        <span className="label">Sun Base Peak Altitude</span>
                         <input
                           className="text-input"
                           type="number"
@@ -15167,7 +15169,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         />
                       </label>
                       <label className="form-field">
-                        <span className="label">Moon Peak Altitude</span>
+                        <span className="label">Moon Base Peak Altitude</span>
                         <input
                           className="text-input"
                           type="number"
