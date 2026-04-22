@@ -296,7 +296,7 @@ describe("runtime project time", () => {
       Math.sin((40 * Math.PI) / 180),
       3
     );
-    expect((moonPeak.moonLight?.direction.z ?? 0)).toBeGreaterThan(0.85);
+    expect(moonPeak.moonLight?.direction.z ?? 0).toBeGreaterThan(0.85);
     expect(Math.abs(moonPeak.moonLight?.direction.x ?? 1)).toBeLessThan(0.05);
     expect(moonPeak.moonLight?.direction.y ?? 0).toBeCloseTo(
       Math.sin((25 * Math.PI) / 180),
