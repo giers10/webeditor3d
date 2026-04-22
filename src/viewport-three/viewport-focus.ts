@@ -426,6 +426,9 @@ function includeEntity(bounds: FocusBoundsAccumulator, entity: EntityInstance) {
     case "spotLight":
       includeSphereEntity(bounds, entity.position, Math.max(0.75, entity.distance));
       break;
+    case "cameraRig":
+      includeTeleportTarget(bounds, entity.position);
+      break;
     case "playerStart":
     case "sceneEntry":
     case "npc":
@@ -452,6 +455,8 @@ function createEntityFocusTarget(entity: EntityInstance): ViewportFocusTarget {
       return createSphereEntityFocusTarget(entity.position, Math.max(0.6, entity.distance), 0.75);
     case "spotLight":
       return createSphereEntityFocusTarget(entity.position, Math.max(0.8, entity.distance), 0.9);
+    case "cameraRig":
+      return createTeleportTargetFocusTarget(entity.position);
     case "playerStart":
     case "sceneEntry":
     case "npc":
