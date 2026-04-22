@@ -235,6 +235,7 @@ import {
   resolveRuntimeDayNightWorldState,
   type RuntimeClockState
 } from "../runtime-three/runtime-project-time";
+import { deriveBoxLightVolumePointLights } from "../runtime-three/light-volume-utils";
 import type { RuntimeSceneDefinition } from "../runtime-three/runtime-scene-build";
 import { resolveTransformPointerDownIntent } from "./transform-pointer-intent";
 import { resolveDominantLocalAxisForWorldAxis } from "./transform-axis-mapping";
