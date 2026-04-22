@@ -47,6 +47,7 @@ import {
   type Brush,
   type WhiteboxFaceId
 } from "../document/brushes";
+import { resolveNearestPointOnResolvedScenePath } from "../document/paths";
 import {
   applyControlEffectToResolvedState,
   createDefaultResolvedControlSource,
