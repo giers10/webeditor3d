@@ -6456,6 +6456,22 @@ export class ViewportHost {
       });
     }
 
+    if (brush.volume.mode === "light") {
+      const baseOpacity =
+        this.displayMode === "authoring" ? 0.03 : 0;
+      const opacity =
+        baseOpacity + (selectedFace ? 0.14 : hoveredFace ? 0.08 : 0);
+      const lightMaterial = new MeshBasicMaterial({
+        color: brush.volume.light.colorHex,
+        transparent: true,
+        opacity,
+        depthWrite: false,
+        wireframe: this.displayMode === "wireframe"
+      });
+      lightMaterial.colorWrite = opacity > 0;
+      return lightMaterial;
+    }
+
     if (this.displayMode === "authoring") {
       const colorHex =
         material === undefined || face.materialId === null
