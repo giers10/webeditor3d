@@ -7,12 +7,20 @@ import {
 } from "../dialogues/project-dialogues";
 import { normalizeTimeOfDayHours } from "../document/project-time-settings";
 import { isHexColorString } from "../document/world-settings";
+import {
+  resolveNearestPointOnResolvedScenePath,
+  resolveScenePath,
+  type ScenePath
+} from "../document/paths";
 
-interface PositionedEntity {
+interface AuthoredEntityState {
   id: string;
   name?: string;
   visible: boolean;
   enabled: boolean;
+}
+
+interface PositionedEntity extends AuthoredEntityState {
   position: Vec3;
 }
 
@@ -46,7 +54,7 @@ export interface SceneEntryEntity extends PositionedEntity {
   yawDegrees: number;
 }
 
-export const CAMERA_RIG_TYPES = ["fixed"] as const;
+export const CAMERA_RIG_TYPES = ["fixed", "rail"] as const;
 export type CameraRigType = (typeof CAMERA_RIG_TYPES)[number];
 export const CAMERA_RIG_TARGET_KINDS = [
   "player",
@@ -91,9 +99,8 @@ export interface CameraRigLookAroundSettings {
   recenterSpeed: number;
 }
 
-export interface CameraRigEntity extends PositionedEntity {
+export interface CameraRigBaseEntity extends AuthoredEntityState {
   kind: "cameraRig";
-  rigType: CameraRigType;
   priority: number;
   defaultActive: boolean;
   target: CameraRigTargetRef;
@@ -102,6 +109,19 @@ export interface CameraRigEntity extends PositionedEntity {
   transitionDurationSeconds: number;
   lookAround: CameraRigLookAroundSettings;
 }
+
+export interface FixedCameraRigEntity
+  extends PositionedEntity,
+    CameraRigBaseEntity {
+  rigType: "fixed";
+}
+
+export interface RailCameraRigEntity extends CameraRigBaseEntity {
+  rigType: "rail";
+  pathId: string;
+}
+
+export type CameraRigEntity = FixedCameraRigEntity | RailCameraRigEntity;
 
 export interface CharacterColliderSettings {
   mode: PlayerStartColliderMode;

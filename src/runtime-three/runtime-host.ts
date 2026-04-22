@@ -1614,12 +1614,6 @@ export class RuntimeHost {
             opacity: nightBackgroundOverlay.opacity,
             environmentIntensity: nightBackgroundOverlay.environmentIntensity
           };
-    const environmentState = resolveWorldEnvironmentState(
-      resolvedWorld.background,
-      backgroundTexture,
-      backgroundOverlayState,
-      this.environmentBlendCache
-    );
     const celestialBodiesState = resolveWorldCelestialBodiesState(
       this.currentWorld.showCelestialBodies,
       resolvedWorld.sunLight,
@@ -1631,6 +1625,14 @@ export class RuntimeHost {
       resolvedTime,
       this.runtimeScene.time
     );
+    if (this.currentWorld.background.mode === "shader") {
+      this.shaderSkyEnvironmentCache?.syncPhaseTextures(
+        resolveWorldShaderSkyEnvironmentPhaseStates(
+          this.currentWorld,
+          this.runtimeScene.time
+        )
+      );
+    }
 
     this.worldBackgroundRenderer.update(
       resolvedWorld.background,
@@ -1638,6 +1640,14 @@ export class RuntimeHost {
       backgroundOverlayState,
       celestialBodiesState,
       shaderSkyState
+    );
+    const environmentState = resolveWorldEnvironmentState(
+      resolvedWorld.background,
+      backgroundTexture,
+      backgroundOverlayState,
+      this.environmentBlendCache,
+      shaderSkyState,
+      this.shaderSkyEnvironmentCache
     );
     this.scene.background = null;
     this.scene.environment = environmentState.texture;
