@@ -370,12 +370,14 @@ function validateWorldSettings(
   validateWorldTimePhaseProfile(
     world.timeOfDay.dawn,
     diagnostics,
+    document,
     "world.timeOfDay.dawn",
     "dawn"
   );
   validateWorldTimePhaseProfile(
     world.timeOfDay.dusk,
     diagnostics,
+    document,
     "world.timeOfDay.dusk",
     "dusk"
   );
