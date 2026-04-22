@@ -1,7 +1,14 @@
 import { DEFAULT_SUN_DIRECTION, type Vec3 } from "../core/vector";
 
-export type WorldBackgroundMode = "solid" | "verticalGradient" | "image";
+export const WORLD_SHADER_SKY_PRESET_IDS = ["defaultSky"] as const;
+
+export type WorldBackgroundMode =
+  | "solid"
+  | "verticalGradient"
+  | "image"
+  | "shader";
 export type WorldTimePhase = "dawn" | "dusk" | "night";
+export type WorldShaderSkyPresetId = (typeof WORLD_SHADER_SKY_PRESET_IDS)[number];
 
 export const ADVANCED_RENDERING_SHADOW_MAP_SIZES = [512, 1024, 2048, 4096] as const;
 export const ADVANCED_RENDERING_SHADOW_TYPES = ["basic", "pcf", "pcfSoft"] as const;
@@ -32,10 +39,15 @@ export interface WorldImageBackgroundSettings {
   environmentIntensity: number;
 }
 
+export interface WorldShaderBackgroundSettings {
+  mode: "shader";
+}
+
 export type WorldBackgroundSettings =
   | WorldSolidBackgroundSettings
   | WorldVerticalGradientBackgroundSettings
-  | WorldImageBackgroundSettings;
+  | WorldImageBackgroundSettings
+  | WorldShaderBackgroundSettings;
 
 export interface WorldAmbientLightSettings {
   colorHex: string;
@@ -124,10 +136,44 @@ export interface AdvancedRenderingSettings {
   waterReflectionMode: AdvancedRenderingWaterReflectionMode;
 }
 
+export interface WorldShaderSkyCelestialSettings {
+  sunDiscSizeDegrees: number;
+  moonDiscSizeDegrees: number;
+}
+
+export interface WorldShaderSkyStarSettings {
+  density: number;
+  brightness: number;
+}
+
+export interface WorldShaderSkyCloudSettings {
+  coverage: number;
+  density: number;
+  softness: number;
+  scale: number;
+  height: number;
+  heightVariation: number;
+  tintHex: string;
+  opacity: number;
+  opacityRandomness: number;
+  driftSpeed: number;
+  driftDirectionDegrees: number;
+}
+
+export interface WorldShaderSkySettings {
+  presetId: WorldShaderSkyPresetId;
+  dayTopColorHex: string;
+  dayBottomColorHex: string;
+  celestial: WorldShaderSkyCelestialSettings;
+  stars: WorldShaderSkyStarSettings;
+  clouds: WorldShaderSkyCloudSettings;
+}
+
 export interface WorldSettings {
   projectTimeLightingEnabled: boolean;
   showCelestialBodies: boolean;
   background: WorldBackgroundSettings;
+  shaderSky: WorldShaderSkySettings;
   ambientLight: WorldAmbientLightSettings;
   sunLight: WorldSunLightSettings;
   timeOfDay: WorldTimeOfDaySettings;
@@ -157,6 +203,49 @@ const DEFAULT_ADVANCED_RENDERING_WHITEBOX_BEVEL_EDGE_WIDTH = 0.14;
 const DEFAULT_ADVANCED_RENDERING_WHITEBOX_BEVEL_NORMAL_STRENGTH = 0.75;
 const DEFAULT_BOX_VOLUME_RENDER_PATH: BoxVolumeRenderPath = "performance";
 const DEFAULT_ADVANCED_RENDERING_WATER_REFLECTION_MODE: AdvancedRenderingWaterReflectionMode = "none";
+const DEFAULT_SHADER_SKY_DAY_TOP_COLOR = "#5f8fd3";
+const DEFAULT_SHADER_SKY_DAY_BOTTOM_COLOR = "#d8eeff";
+const DEFAULT_SHADER_SKY_SUN_DISC_SIZE_DEGREES = 2.6;
+const DEFAULT_SHADER_SKY_MOON_DISC_SIZE_DEGREES = 1.8;
+const DEFAULT_SHADER_SKY_STAR_DENSITY = 0.55;
+const DEFAULT_SHADER_SKY_STAR_BRIGHTNESS = 0.85;
+const DEFAULT_SHADER_SKY_CLOUD_COVERAGE = 0.58;
+const DEFAULT_SHADER_SKY_CLOUD_DENSITY = 0.62;
+const DEFAULT_SHADER_SKY_CLOUD_SOFTNESS = 0.42;
+const DEFAULT_SHADER_SKY_CLOUD_SCALE = 1.35;
+const DEFAULT_SHADER_SKY_CLOUD_HEIGHT = 0.62;
+const DEFAULT_SHADER_SKY_CLOUD_HEIGHT_VARIATION = 0.22;
+const DEFAULT_SHADER_SKY_CLOUD_TINT = "#f7f1ea";
+const DEFAULT_SHADER_SKY_CLOUD_OPACITY = 0.68;
+const DEFAULT_SHADER_SKY_CLOUD_OPACITY_RANDOMNESS = 0.24;
+const DEFAULT_SHADER_SKY_CLOUD_DRIFT_SPEED = 0.025;
+const DEFAULT_SHADER_SKY_CLOUD_DRIFT_DIRECTION_DEGREES = 18;
+
+function resolveShaderSkyDayGradient(
+  background: WorldBackgroundSettings | null = null
+): {
+  topColorHex: string;
+  bottomColorHex: string;
+} {
+  if (background?.mode === "solid") {
+    return {
+      topColorHex: background.colorHex,
+      bottomColorHex: background.colorHex
+    };
+  }
+
+  if (background?.mode === "verticalGradient") {
+    return {
+      topColorHex: background.topColorHex,
+      bottomColorHex: background.bottomColorHex
+    };
+  }
+
+  return {
+    topColorHex: DEFAULT_SHADER_SKY_DAY_TOP_COLOR,
+    bottomColorHex: DEFAULT_SHADER_SKY_DAY_BOTTOM_COLOR
+  };
+}
 
 export function isAdvancedRenderingShadowMapSize(value: unknown): value is AdvancedRenderingShadowMapSize {
   return ADVANCED_RENDERING_SHADOW_MAP_SIZES.includes(value as AdvancedRenderingShadowMapSize);
@@ -217,6 +306,77 @@ export function createDefaultAdvancedRenderingSettings(): AdvancedRenderingSetti
     fogPath: DEFAULT_BOX_VOLUME_RENDER_PATH,
     waterPath: DEFAULT_BOX_VOLUME_RENDER_PATH,
     waterReflectionMode: DEFAULT_ADVANCED_RENDERING_WATER_REFLECTION_MODE
+  };
+}
+
+export function isWorldShaderSkyPresetId(
+  value: unknown
+): value is WorldShaderSkyPresetId {
+  return WORLD_SHADER_SKY_PRESET_IDS.includes(value as WorldShaderSkyPresetId);
+}
+
+export function createDefaultWorldShaderSkySettings(
+  background: WorldBackgroundSettings | null = null
+): WorldShaderSkySettings {
+  const dayGradient = resolveShaderSkyDayGradient(background);
+
+  return {
+    presetId: "defaultSky",
+    dayTopColorHex: dayGradient.topColorHex,
+    dayBottomColorHex: dayGradient.bottomColorHex,
+    celestial: {
+      sunDiscSizeDegrees: DEFAULT_SHADER_SKY_SUN_DISC_SIZE_DEGREES,
+      moonDiscSizeDegrees: DEFAULT_SHADER_SKY_MOON_DISC_SIZE_DEGREES
+    },
+    stars: {
+      density: DEFAULT_SHADER_SKY_STAR_DENSITY,
+      brightness: DEFAULT_SHADER_SKY_STAR_BRIGHTNESS
+    },
+    clouds: {
+      coverage: DEFAULT_SHADER_SKY_CLOUD_COVERAGE,
+      density: DEFAULT_SHADER_SKY_CLOUD_DENSITY,
+      softness: DEFAULT_SHADER_SKY_CLOUD_SOFTNESS,
+      scale: DEFAULT_SHADER_SKY_CLOUD_SCALE,
+      height: DEFAULT_SHADER_SKY_CLOUD_HEIGHT,
+      heightVariation: DEFAULT_SHADER_SKY_CLOUD_HEIGHT_VARIATION,
+      tintHex: DEFAULT_SHADER_SKY_CLOUD_TINT,
+      opacity: DEFAULT_SHADER_SKY_CLOUD_OPACITY,
+      opacityRandomness: DEFAULT_SHADER_SKY_CLOUD_OPACITY_RANDOMNESS,
+      driftSpeed: DEFAULT_SHADER_SKY_CLOUD_DRIFT_SPEED,
+      driftDirectionDegrees: DEFAULT_SHADER_SKY_CLOUD_DRIFT_DIRECTION_DEGREES
+    }
+  };
+}
+
+export function cloneWorldShaderSkySettings(
+  settings: WorldShaderSkySettings
+): WorldShaderSkySettings {
+  return {
+    presetId: settings.presetId,
+    dayTopColorHex: settings.dayTopColorHex,
+    dayBottomColorHex: settings.dayBottomColorHex,
+    celestial: {
+      ...settings.celestial
+    },
+    stars: {
+      ...settings.stars
+    },
+    clouds: {
+      ...settings.clouds
+    }
+  };
+}
+
+export function syncWorldShaderSkyDayGradientToBackground(
+  settings: WorldShaderSkySettings,
+  background: WorldBackgroundSettings
+): WorldShaderSkySettings {
+  const dayGradient = resolveShaderSkyDayGradient(background);
+
+  return {
+    ...cloneWorldShaderSkySettings(settings),
+    dayTopColorHex: dayGradient.topColorHex,
+    dayBottomColorHex: dayGradient.bottomColorHex
   };
 }
 
@@ -297,6 +457,7 @@ export function createDefaultWorldSettings(): WorldSettings {
       mode: "solid",
       colorHex: DEFAULT_SOLID_BACKGROUND_COLOR
     },
+    shaderSky: createDefaultWorldShaderSkySettings(),
     ambientLight: {
       colorHex: "#f7f1e8",
       intensity: 1
@@ -318,7 +479,12 @@ export function isHexColorString(value: string): boolean {
 }
 
 export function isWorldBackgroundMode(value: unknown): value is WorldBackgroundMode {
-  return value === "solid" || value === "verticalGradient" || value === "image";
+  return (
+    value === "solid" ||
+    value === "verticalGradient" ||
+    value === "image" ||
+    value === "shader"
+  );
 }
 
 export function cloneWorldBackgroundSettings(background: WorldBackgroundSettings): WorldBackgroundSettings {
@@ -334,6 +500,12 @@ export function cloneWorldBackgroundSettings(background: WorldBackgroundSettings
       mode: "verticalGradient",
       topColorHex: background.topColorHex,
       bottomColorHex: background.bottomColorHex
+    };
+  }
+
+  if (background.mode === "shader") {
+    return {
+      mode: "shader"
     };
   }
 
@@ -385,6 +557,7 @@ export function cloneWorldSettings(world: WorldSettings): WorldSettings {
     projectTimeLightingEnabled: world.projectTimeLightingEnabled,
     showCelestialBodies: world.showCelestialBodies,
     background: cloneWorldBackgroundSettings(world.background),
+    shaderSky: cloneWorldShaderSkySettings(world.shaderSky),
     ambientLight: {
       ...world.ambientLight
     },
@@ -439,7 +612,37 @@ export function areWorldBackgroundSettingsEqual(left: WorldBackgroundSettings, r
     return left.topColorHex === right.topColorHex && left.bottomColorHex === right.bottomColorHex;
   }
 
+  if (left.mode === "shader" && right.mode === "shader") {
+    return true;
+  }
+
   return left.mode === "image" && right.mode === "image" && left.assetId === right.assetId && left.environmentIntensity === right.environmentIntensity;
+}
+
+export function areWorldShaderSkySettingsEqual(
+  left: WorldShaderSkySettings,
+  right: WorldShaderSkySettings
+): boolean {
+  return (
+    left.presetId === right.presetId &&
+    left.dayTopColorHex === right.dayTopColorHex &&
+    left.dayBottomColorHex === right.dayBottomColorHex &&
+    left.celestial.sunDiscSizeDegrees === right.celestial.sunDiscSizeDegrees &&
+    left.celestial.moonDiscSizeDegrees === right.celestial.moonDiscSizeDegrees &&
+    left.stars.density === right.stars.density &&
+    left.stars.brightness === right.stars.brightness &&
+    left.clouds.coverage === right.clouds.coverage &&
+    left.clouds.density === right.clouds.density &&
+    left.clouds.softness === right.clouds.softness &&
+    left.clouds.scale === right.clouds.scale &&
+    left.clouds.height === right.clouds.height &&
+    left.clouds.heightVariation === right.clouds.heightVariation &&
+    left.clouds.tintHex === right.clouds.tintHex &&
+    left.clouds.opacity === right.clouds.opacity &&
+    left.clouds.opacityRandomness === right.clouds.opacityRandomness &&
+    left.clouds.driftSpeed === right.clouds.driftSpeed &&
+    left.clouds.driftDirectionDegrees === right.clouds.driftDirectionDegrees
+  );
 }
 
 export function areWorldTimePhaseProfilesEqual(
@@ -486,6 +689,7 @@ export function areWorldSettingsEqual(left: WorldSettings, right: WorldSettings)
     left.projectTimeLightingEnabled === right.projectTimeLightingEnabled &&
     left.showCelestialBodies === right.showCelestialBodies &&
     areWorldBackgroundSettingsEqual(left.background, right.background) &&
+    areWorldShaderSkySettingsEqual(left.shaderSky, right.shaderSky) &&
     left.ambientLight.colorHex === right.ambientLight.colorHex &&
     left.ambientLight.intensity === right.ambientLight.intensity &&
     left.sunLight.colorHex === right.sunLight.colorHex &&
@@ -533,7 +737,8 @@ export function changeWorldBackgroundMode(
   mode: WorldBackgroundMode,
   imageAssetId?: string,
   imageEnvironmentIntensity: number =
-    DEFAULT_TIME_PHASE_IMAGE_ENVIRONMENT_INTENSITY
+    DEFAULT_TIME_PHASE_IMAGE_ENVIRONMENT_INTENSITY,
+  shaderSkySettings?: WorldShaderSkySettings
 ): WorldBackgroundSettings {
   if (mode === "image") {
     if (imageAssetId === undefined || imageAssetId.trim().length === 0) {
@@ -554,6 +759,12 @@ export function changeWorldBackgroundMode(
     };
   }
 
+  if (mode === "shader") {
+    return {
+      mode: "shader"
+    };
+  }
+
   if (background.mode === mode) {
     return cloneWorldBackgroundSettings(background);
   }
@@ -566,6 +777,8 @@ export function changeWorldBackgroundMode(
           ? background.colorHex
           : background.mode === "verticalGradient"
             ? background.topColorHex
+            : background.mode === "shader" && shaderSkySettings !== undefined
+              ? shaderSkySettings.dayTopColorHex
             : DEFAULT_SOLID_BACKGROUND_COLOR
     };
   }
@@ -583,6 +796,14 @@ export function changeWorldBackgroundMode(
       mode: "verticalGradient",
       topColorHex: background.topColorHex,
       bottomColorHex: background.bottomColorHex
+    };
+  }
+
+  if (background.mode === "shader" && shaderSkySettings !== undefined) {
+    return {
+      mode: "verticalGradient",
+      topColorHex: shaderSkySettings.dayTopColorHex,
+      bottomColorHex: shaderSkySettings.dayBottomColorHex
     };
   }
 
