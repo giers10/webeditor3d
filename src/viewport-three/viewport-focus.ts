@@ -35,6 +35,11 @@ interface FocusBoundsAccumulator {
   max: Vec3;
 }
 
+export interface ViewportSceneBounds {
+  min: Vec3;
+  max: Vec3;
+}
+
 export interface ViewportFocusTarget {
   center: Vec3;
   radius: number;
@@ -82,6 +87,25 @@ function finishBounds(bounds: FocusBoundsAccumulator): ViewportFocusTarget | nul
   return {
     center,
     radius
+  };
+}
+
+function finishSceneBounds(bounds: FocusBoundsAccumulator): ViewportSceneBounds | null {
+  if (!Number.isFinite(bounds.min.x) || !Number.isFinite(bounds.max.x)) {
+    return null;
+  }
+
+  return {
+    min: {
+      x: bounds.min.x,
+      y: bounds.min.y,
+      z: bounds.min.z
+    },
+    max: {
+      x: bounds.max.x,
+      y: bounds.max.y,
+      z: bounds.max.z
+    }
   };
 }
 
@@ -443,7 +467,9 @@ function createEntityFocusTarget(entity: EntityInstance): ViewportFocusTarget {
   }
 }
 
-function getSceneFocusTarget(document: SceneDocument): ViewportFocusTarget | null {
+export function resolveViewportDocumentBounds(
+  document: SceneDocument
+): ViewportSceneBounds | null {
   const bounds = createEmptyBoundsAccumulator();
 
   for (const brush of Object.values(document.brushes)) {
@@ -466,7 +492,20 @@ function getSceneFocusTarget(document: SceneDocument): ViewportFocusTarget | nul
     includeEntity(bounds, entity);
   }
 
-  return finishBounds(bounds);
+  return finishSceneBounds(bounds);
+}
+
+function getSceneFocusTarget(document: SceneDocument): ViewportFocusTarget | null {
+  const bounds = resolveViewportDocumentBounds(document);
+
+  if (bounds === null) {
+    return null;
+  }
+
+  return finishBounds({
+    min: bounds.min,
+    max: bounds.max
+  });
 }
 
 export function resolveViewportFocusTarget(document: SceneDocument, selection: EditorSelection): ViewportFocusTarget | null {
