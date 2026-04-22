@@ -831,6 +831,54 @@ describe("validateSceneDocument", () => {
     );
   });
 
+  it("validates rail camera rig path references", () => {
+    const disabledPath = createScenePath({
+      id: "path-camera-disabled",
+      enabled: false
+    });
+    const blankPathRig = createCameraRigEntity({
+      id: "entity-camera-rig-blank-path",
+      rigType: "rail",
+      pathId: ""
+    });
+    const missingPathRig = createCameraRigEntity({
+      id: "entity-camera-rig-missing-path",
+      rigType: "rail",
+      pathId: "path-camera-missing"
+    });
+    const disabledPathRig = createCameraRigEntity({
+      id: "entity-camera-rig-disabled-path",
+      rigType: "rail",
+      pathId: disabledPath.id
+    });
+
+    const validation = validateSceneDocument({
+      ...createEmptySceneDocument(),
+      paths: {
+        [disabledPath.id]: disabledPath
+      },
+      entities: {
+        [blankPathRig.id]: blankPathRig,
+        [missingPathRig.id]: missingPathRig,
+        [disabledPathRig.id]: disabledPathRig
+      }
+    });
+
+    expect(validation.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "invalid-camera-rig-path-id"
+        }),
+        expect.objectContaining({
+          code: "missing-camera-rig-path"
+        }),
+        expect.objectContaining({
+          code: "disabled-camera-rig-path"
+        })
+      ])
+    );
+  });
+
   it("detects missing and invalid audio asset references on Sound Emitters", () => {
     const audioAsset = {
       id: "asset-audio-main",
