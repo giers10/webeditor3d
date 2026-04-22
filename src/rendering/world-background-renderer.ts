@@ -385,7 +385,7 @@ void main() {
   float coverageThreshold = mix(0.94, 0.12, clamp(uCloudCoverage, 0.0, 1.0));
   float softness = mix(0.01, 0.22, clamp(uCloudSoftness, 0.0, 1.0));
   float opacityNoise = mix(1.0, noise(cloudUv * 2.6 + vec2(19.0, 7.0)), clamp(uCloudOpacityRandomness, 0.0, 1.0));
-  float clouds = smoothstep(coverageThreshold, coverageThreshold - softness - 0.0001, cloudShape + bandMask * 0.22);
+  float clouds = smoothstep(coverageThreshold - softness, coverageThreshold + softness, cloudShape + bandMask * 0.22);
   clouds *= bandMask;
   clouds *= clamp(uCloudOpacity, 0.0, 1.0) * mix(0.82, 1.0, opacityNoise);
 
