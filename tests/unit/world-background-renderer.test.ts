@@ -22,7 +22,7 @@ describe("resolveWorldEnvironmentState", () => {
     });
   });
 
-  it("hands the environment off through zero intensity during a day-to-night crossfade", () => {
+  it("keeps environment lighting energy during a day-to-night crossfade", () => {
     const world = createDefaultWorldSettings();
     const dayTexture = new Texture();
     const nightTexture = new Texture();
@@ -40,7 +40,7 @@ describe("resolveWorldEnvironmentState", () => {
       })
     ).toEqual({
       texture: dayTexture,
-      intensity: 0.2
+      intensity: 0.5
     });
 
     expect(
@@ -51,7 +51,7 @@ describe("resolveWorldEnvironmentState", () => {
       })
     ).toEqual({
       texture: nightTexture,
-      intensity: 0.4
+      intensity: 0.7000000000000001
     });
   });
 
