@@ -291,26 +291,24 @@ describe("box brush commands", () => {
       createSetBoxBrushVolumeSettingsCommand({
         brushId: createdBrush.id,
         volume: {
-          mode: "water",
-          water: {
-            colorHex: "#3a7dc2",
-            surfaceOpacity: 0.65,
-            waveStrength: 0.4,
-            foamContactLimit: 6,
-            surfaceDisplacementEnabled: false
+          mode: "light",
+          light: {
+            colorHex: "#ffd9a6",
+            intensity: 1.75,
+            padding: 0.45,
+            falloff: "smoothstep"
           }
         }
       })
     );
 
     expect(store.getState().document.brushes[createdBrush.id].volume).toEqual({
-      mode: "water",
-      water: {
-        colorHex: "#3a7dc2",
-        surfaceOpacity: 0.65,
-        waveStrength: 0.4,
-        foamContactLimit: 6,
-        surfaceDisplacementEnabled: false
+      mode: "light",
+      light: {
+        colorHex: "#ffd9a6",
+        intensity: 1.75,
+        padding: 0.45,
+        falloff: "smoothstep"
       }
     });
 
@@ -321,13 +319,12 @@ describe("box brush commands", () => {
 
     expect(store.redo()).toBe(true);
     expect(store.getState().document.brushes[createdBrush.id].volume).toEqual({
-      mode: "water",
-      water: {
-        colorHex: "#3a7dc2",
-        surfaceOpacity: 0.65,
-        waveStrength: 0.4,
-        foamContactLimit: 6,
-        surfaceDisplacementEnabled: false
+      mode: "light",
+      light: {
+        colorHex: "#ffd9a6",
+        intensity: 1.75,
+        padding: 0.45,
+        falloff: "smoothstep"
       }
     });
   });
