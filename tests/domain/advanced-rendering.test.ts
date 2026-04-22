@@ -1,4 +1,12 @@
-import { MeshStandardMaterial, PerspectiveCamera, Scene, UnsignedByteType } from "three";
+import {
+  BoxGeometry,
+  Group,
+  Mesh,
+  MeshStandardMaterial,
+  PerspectiveCamera,
+  Scene,
+  UnsignedByteType
+} from "three";
 import { describe, expect, it, vi } from "vitest";
 
 const postprocessingState = vi.hoisted(() => ({
@@ -84,7 +92,11 @@ vi.mock("postprocessing", () => {
 });
 
 import { createDefaultWorldSettings } from "../../src/document/world-settings";
-import { createAdvancedRenderingComposer, resolveBoxVolumeRenderPaths } from "../../src/rendering/advanced-rendering";
+import {
+  applyAdvancedRenderingRenderableShadowFlags,
+  createAdvancedRenderingComposer,
+  resolveBoxVolumeRenderPaths
+} from "../../src/rendering/advanced-rendering";
 import {
   applyWhiteboxBevelToMaterial,
   shouldApplyWhiteboxBevel
@@ -231,5 +243,45 @@ describe("whitebox bevel materials", () => {
     expect(shader.fragmentShader).toContain("varying vec2 vWhiteboxFaceUv;");
     expect(shader.fragmentShader).toContain("whiteboxBevelMask");
     expect(material.customProgramCacheKey?.()).toContain("whitebox-bevel:");
+  });
+});
+
+describe("advanced rendering shadow flags", () => {
+  it("only enables shadows for opaque renderable meshes", () => {
+    const group = new Group();
+    const opaqueMesh = new Mesh(
+      new BoxGeometry(1, 1, 1),
+      new MeshStandardMaterial()
+    );
+    const transparentMesh = new Mesh(
+      new BoxGeometry(1, 1, 1),
+      new MeshStandardMaterial({
+        transparent: true,
+        opacity: 0.4
+      })
+    );
+    const ignoredMesh = new Mesh(
+      new BoxGeometry(1, 1, 1),
+      new MeshStandardMaterial()
+    );
+    ignoredMesh.userData.shadowIgnored = true;
+
+    group.add(opaqueMesh);
+    group.add(transparentMesh);
+    group.add(ignoredMesh);
+
+    applyAdvancedRenderingRenderableShadowFlags(group, true);
+
+    expect(opaqueMesh.castShadow).toBe(true);
+    expect(opaqueMesh.receiveShadow).toBe(true);
+    expect(transparentMesh.castShadow).toBe(false);
+    expect(transparentMesh.receiveShadow).toBe(false);
+    expect(ignoredMesh.castShadow).toBe(false);
+    expect(ignoredMesh.receiveShadow).toBe(false);
+
+    applyAdvancedRenderingRenderableShadowFlags(group, false);
+
+    expect(opaqueMesh.castShadow).toBe(false);
+    expect(opaqueMesh.receiveShadow).toBe(false);
   });
 });
