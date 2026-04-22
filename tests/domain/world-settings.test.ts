@@ -4,6 +4,7 @@ import {
   areWorldSettingsEqual,
   changeWorldBackgroundMode,
   cloneWorldSettings,
+  createDefaultWorldShaderSkySettings,
   createDefaultWorldSettings
 } from "../../src/document/world-settings";
 
@@ -15,6 +16,9 @@ describe("world settings helpers", () => {
     expect(clone).toEqual(source);
     expect(clone).not.toBe(source);
     expect(clone.background).not.toBe(source.background);
+    expect(clone.shaderSky).not.toBe(source.shaderSky);
+    expect(clone.shaderSky.celestial).not.toBe(source.shaderSky.celestial);
+    expect(clone.shaderSky.clouds).not.toBe(source.shaderSky.clouds);
     expect(clone.sunLight.direction).not.toBe(source.sunLight.direction);
     expect(clone.advancedRendering).not.toBe(source.advancedRendering);
     expect(clone.advancedRendering.shadows).not.toBe(source.advancedRendering.shadows);
@@ -71,6 +75,39 @@ describe("world settings helpers", () => {
     expect(clonedWorld.background).toEqual(nextImageBackground);
     expect(clonedWorld.background).not.toBe(world.background);
     expect(areWorldSettingsEqual(world, clonedWorld)).toBe(true);
+  });
+
+  it("switches into shader mode and restores the shader day gradient when switching back out", () => {
+    const shaderBackground = changeWorldBackgroundMode(
+      {
+        mode: "verticalGradient",
+        topColorHex: "#335577",
+        bottomColorHex: "#99ccff"
+      },
+      "shader"
+    );
+
+    expect(shaderBackground).toEqual({
+      mode: "shader"
+    });
+
+    const restoredGradient = changeWorldBackgroundMode(
+      shaderBackground,
+      "verticalGradient",
+      undefined,
+      undefined,
+      {
+        ...createDefaultWorldShaderSkySettings(),
+        dayTopColorHex: "#335577",
+        dayBottomColorHex: "#99ccff"
+      }
+    );
+
+    expect(restoredGradient).toEqual({
+      mode: "verticalGradient",
+      topColorHex: "#335577",
+      bottomColorHex: "#99ccff"
+    });
   });
 
   it("compares authored world settings by value", () => {
