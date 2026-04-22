@@ -212,6 +212,7 @@ import {
   getTerrainLayerTexture
 } from "../rendering/terrain-layer-material";
 import {
+  resolveWorldCelestialBodiesState,
   resolveWorldEnvironmentState,
   WorldBackgroundRenderer
 } from "../rendering/world-background-renderer";
@@ -1567,11 +1568,17 @@ export class ViewportHost {
         backgroundOverlayState,
         this.environmentBlendCache
       );
+      const celestialBodiesState = resolveWorldCelestialBodiesState(
+        world.showCelestialBodies,
+        displayedSunLight,
+        resolvedWorld?.moonLight ?? null
+      );
 
       this.worldBackgroundRenderer.update(
         displayedBackground,
         backgroundTexture,
-        backgroundOverlayState
+        backgroundOverlayState,
+        celestialBodiesState
       );
       this.scene.background = null;
       this.scene.environment = environmentState.texture;
