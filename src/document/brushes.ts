@@ -47,7 +47,8 @@ export const WEDGE_VERTEX_IDS = [
   "posX_posY_negZ"
 ] as const;
 export const FACE_UV_ROTATION_QUARTER_TURNS = [0, 1, 2, 3] as const;
-export const BOX_BRUSH_VOLUME_MODES = ["none", "water", "fog"] as const;
+export const BOX_BRUSH_VOLUME_MODES = ["none", "water", "fog", "light"] as const;
+export const BOX_BRUSH_LIGHT_FALLOFF_MODES = ["linear", "smoothstep"] as const;
 export const DEFAULT_RADIAL_PRISM_SIDE_COUNT = 12 as const;
 export const DEFAULT_CONE_SIDE_COUNT = 12 as const;
 export const DEFAULT_TORUS_MAJOR_SEGMENT_COUNT = 16 as const;
@@ -76,6 +77,8 @@ export type WhiteboxEdgeId = string;
 export type WhiteboxVertexId = string;
 export type FaceUvRotationQuarterTurns = (typeof FACE_UV_ROTATION_QUARTER_TURNS)[number];
 export type BoxBrushVolumeMode = (typeof BOX_BRUSH_VOLUME_MODES)[number];
+export type BoxBrushLightFalloffMode =
+  (typeof BOX_BRUSH_LIGHT_FALLOFF_MODES)[number];
 export type BrushKind = "box" | "wedge" | "radialPrism" | "cone" | "torus";
 
 export const BOX_FACE_LABELS: Record<BoxFaceId, string> = {
@@ -169,6 +172,13 @@ export interface BoxBrushFogSettings {
   padding: number;
 }
 
+export interface BoxBrushLightSettings {
+  colorHex: string;
+  intensity: number;
+  padding: number;
+  falloff: BoxBrushLightFalloffMode;
+}
+
 export type BoxBrushVolumeSettings =
   | {
       mode: "none";
@@ -180,6 +190,10 @@ export type BoxBrushVolumeSettings =
   | {
       mode: "fog";
       fog: BoxBrushFogSettings;
+    }
+  | {
+      mode: "light";
+      light: BoxBrushLightSettings;
     };
 
 export type BrushVolumeSettings = BoxBrushVolumeSettings;
@@ -321,6 +335,13 @@ const DEFAULT_BOX_BRUSH_FOG_SETTINGS: BoxBrushFogSettings = {
   colorHex: "#9cb7c7",
   density: 0.08,
   padding: 0.2
+};
+
+const DEFAULT_BOX_BRUSH_LIGHT_SETTINGS: BoxBrushLightSettings = {
+  colorHex: "#ffffff",
+  intensity: 1.25,
+  padding: 0.35,
+  falloff: "smoothstep"
 };
 
 function cloneVec3(vector: Vec3): Vec3 {
@@ -859,6 +880,15 @@ export function isBoxBrushVolumeMode(value: unknown): value is BoxBrushVolumeMod
   return typeof value === "string" && BOX_BRUSH_VOLUME_MODES.includes(value as BoxBrushVolumeMode);
 }
 
+export function isBoxBrushLightFalloffMode(
+  value: unknown
+): value is BoxBrushLightFalloffMode {
+  return (
+    typeof value === "string" &&
+    BOX_BRUSH_LIGHT_FALLOFF_MODES.includes(value as BoxBrushLightFalloffMode)
+  );
+}
+
 export function hasPositiveBoxSize(size: Vec3): boolean {
   return size.x > 0 && size.y > 0 && size.z > 0;
 }
@@ -966,6 +996,15 @@ export function createDefaultBoxBrushFogSettings(): BoxBrushFogSettings {
   };
 }
 
+export function createDefaultBoxBrushLightSettings(): BoxBrushLightSettings {
+  return {
+    colorHex: DEFAULT_BOX_BRUSH_LIGHT_SETTINGS.colorHex,
+    intensity: DEFAULT_BOX_BRUSH_LIGHT_SETTINGS.intensity,
+    padding: DEFAULT_BOX_BRUSH_LIGHT_SETTINGS.padding,
+    falloff: DEFAULT_BOX_BRUSH_LIGHT_SETTINGS.falloff
+  };
+}
+
 export function createDefaultBoxBrushVolumeSettings(): BoxBrushVolumeSettings {
   return {
     mode: "none"
@@ -996,6 +1035,16 @@ export function cloneBoxBrushVolumeSettings(volume: BoxBrushVolumeSettings): Box
           colorHex: volume.fog.colorHex,
           density: volume.fog.density,
           padding: volume.fog.padding
+        }
+      };
+    case "light":
+      return {
+        mode: "light",
+        light: {
+          colorHex: volume.light.colorHex,
+          intensity: volume.light.intensity,
+          padding: volume.light.padding,
+          falloff: volume.light.falloff
         }
       };
   }
