@@ -49,6 +49,7 @@ import { type InteractionLink } from "../interactions/interaction-links";
 import {
   MAX_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT,
   hasPositiveBoxSize,
+  isBoxBrushLightFalloffMode,
   isBoxBrushVolumeMode,
   normalizeConeSideCount,
   normalizeRadialPrismSideCount,
@@ -5630,7 +5631,7 @@ export function validateSceneDocument(
         createDiagnostic(
           "error",
           "invalid-box-volume-mode",
-          "Box volume mode must be none, water, or fog.",
+          "Box volume mode must be none, water, fog, or light.",
           `${path}.volume.mode`
         )
       );
@@ -5642,7 +5643,7 @@ export function validateSceneDocument(
         createDiagnostic(
           "error",
           "invalid-non-box-volume-mode",
-          "Only whitebox boxes support water or fog volume modes.",
+          "Only whitebox boxes support water, fog, or light volume modes.",
           `${path}.volume.mode`
         )
       );
@@ -5772,6 +5773,68 @@ export function validateSceneDocument(
               "invalid-box-fog-padding",
               "Fog volume padding must be a non-negative finite number.",
               `${path}.volume.fog.padding`
+            )
+          );
+        }
+      }
+    }
+
+    if (volume.mode === "light") {
+      const light = volume.light as Record<string, unknown> | undefined;
+
+      if (light === undefined) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-box-light-settings",
+            "Light volumes must define light settings.",
+            `${path}.volume.light`
+          )
+        );
+      } else {
+        if (
+          typeof light.colorHex !== "string" ||
+          !isHexColorString(light.colorHex)
+        ) {
+          diagnostics.push(
+            createDiagnostic(
+              "error",
+              "invalid-box-light-color",
+              "Light volume color must use #RRGGBB format.",
+              `${path}.volume.light.colorHex`
+            )
+          );
+        }
+
+        if (!isNonNegativeFiniteNumber(light.intensity)) {
+          diagnostics.push(
+            createDiagnostic(
+              "error",
+              "invalid-box-light-intensity",
+              "Light volume intensity must be a non-negative finite number.",
+              `${path}.volume.light.intensity`
+            )
+          );
+        }
+
+        if (!isNonNegativeFiniteNumber(light.padding)) {
+          diagnostics.push(
+            createDiagnostic(
+              "error",
+              "invalid-box-light-padding",
+              "Light volume padding must be a non-negative finite number.",
+              `${path}.volume.light.padding`
+            )
+          );
+        }
+
+        if (!isBoxBrushLightFalloffMode(light.falloff)) {
+          diagnostics.push(
+            createDiagnostic(
+              "error",
+              "invalid-box-light-falloff",
+              "Light volume falloff must be linear or smoothstep.",
+              `${path}.volume.light.falloff`
             )
           );
         }
