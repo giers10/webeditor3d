@@ -103,6 +103,33 @@ describe("scene document JSON", () => {
     );
   });
 
+  it("migrates v70 scene documents by defaulting shader sky settings from the authored day background", () => {
+    const document = createEmptySceneDocument({
+      name: "Legacy Shader Sky Scene"
+    });
+    document.world.background = {
+      mode: "verticalGradient",
+      topColorHex: "#335577",
+      bottomColorHex: "#aaccee"
+    };
+
+    const migratedDocument = parseSceneDocumentJson(
+      JSON.stringify({
+        ...document,
+        version: CELESTIAL_BODY_OVERLAY_SCENE_DOCUMENT_VERSION,
+        world: {
+          ...document.world,
+          shaderSky: undefined
+        }
+      })
+    );
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.world.background).toEqual(document.world.background);
+    expect(migratedDocument.world.shaderSky.dayTopColorHex).toBe("#335577");
+    expect(migratedDocument.world.shaderSky.dayBottomColorHex).toBe("#aaccee");
+  });
+
   it("migrates pre-paint terrain documents by defaulting terrain layer data", () => {
     const legacyTerrainDocument = {
       ...createEmptySceneDocument({
