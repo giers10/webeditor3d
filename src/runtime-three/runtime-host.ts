@@ -3129,23 +3129,18 @@ export class RuntimeHost {
   }
 
   private updateUnderwaterSceneFog() {
+    const cameraVolumeState = this.resolvePlayerVolumeState({
+      x: this.camera.position.x,
+      y: this.camera.position.y,
+      z: this.camera.position.z
+    });
     const fogTelemetry =
       this.activeRuntimeCameraRig !== null
         ? {
             cameraSubmerged:
-              this.resolvePlayerVolumeState({
-                x: this.camera.position.x,
-                y: this.camera.position.y,
-                z: this.camera.position.z
-              }).waterSurfaceHeight !== null &&
-              resolveWaterContact(
-                {
-                  x: this.camera.position.x,
-                  y: this.camera.position.y,
-                  z: this.camera.position.z
-                },
-                this.runtimeScene?.volumes.water ?? []
-              ) !== null,
+              cameraVolumeState.inWater &&
+              cameraVolumeState.waterSurfaceHeight !== null &&
+              this.camera.position.y < cameraVolumeState.waterSurfaceHeight,
             eyePosition: {
               x: this.camera.position.x,
               y: this.camera.position.y,
