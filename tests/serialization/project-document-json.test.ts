@@ -69,6 +69,7 @@ describe("project document JSON", () => {
     activeScene.world.shaderSky.dayBottomColorHex = "#d6efff";
     activeScene.world.shaderSky.horizonHeight = -0.06;
     activeScene.world.shaderSky.stars.density = 0.72;
+    activeScene.world.shaderSky.stars.horizonFadeOffset = 0.09;
     activeScene.world.shaderSky.clouds.coverage = 0.63;
     activeScene.world.shaderSky.clouds.tintHex = "#ece7df";
 

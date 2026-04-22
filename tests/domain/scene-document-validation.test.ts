@@ -1172,6 +1172,7 @@ describe("validateSceneDocument", () => {
     };
     document.world.shaderSky.dayTopColorHex = "bad-color" as `#${string}`;
     document.world.shaderSky.horizonHeight = 0.75;
+    document.world.shaderSky.stars.horizonFadeOffset = 0.75;
     document.world.shaderSky.celestial.sunDiscSizeDegrees = 0;
     document.world.shaderSky.clouds.coverage = 2;
     document.world.timeOfDay.dawn.background = {
@@ -1189,6 +1190,10 @@ describe("validateSceneDocument", () => {
         expect.objectContaining({
           code: "invalid-world-shader-sky-horizon-height",
           path: "world.shaderSky.horizonHeight"
+        }),
+        expect.objectContaining({
+          code: "invalid-world-shader-sky-star-horizon-fade-offset",
+          path: "world.shaderSky.stars.horizonFadeOffset"
         }),
         expect.objectContaining({
           code: "invalid-world-shader-sky-sun-disc-size",

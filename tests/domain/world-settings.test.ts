@@ -177,4 +177,13 @@ describe("world settings helpers", () => {
 
     expect(areWorldSettingsEqual(left, right)).toBe(false);
   });
+
+  it("treats shader sky star horizon offset as part of authored world equality", () => {
+    const left = createDefaultWorldSettings();
+    const right = cloneWorldSettings(left);
+
+    right.shaderSky.stars.horizonFadeOffset = 0.08;
+
+    expect(areWorldSettingsEqual(left, right)).toBe(false);
+  });
 });
