@@ -8871,6 +8871,7 @@ export class ViewportHost {
               event,
               DEFAULT_TRIGGER_VOLUME_SIZE
             );
+          case "cameraRig":
           case "pointLight":
           case "playerStart":
           case "sceneEntry":
@@ -8881,6 +8882,7 @@ export class ViewportHost {
           case "spotLight":
             return this.getPlanarCreationAnchor(event);
         }
+        return null;
       case "model-instance": {
         const anchor = this.getPlanarCreationAnchor(event);
 
@@ -9116,6 +9118,18 @@ export class ViewportHost {
               DEFAULT_SPOT_LIGHT_ANGLE_DEGREES,
               PLACEMENT_PREVIEW_COLOR_HEX,
               false
+            ).group;
+            break;
+          case "cameraRig":
+            previewGroup = this.createCameraRigRenderObjects(
+              createCameraRigEntity({
+                id: "creation-preview",
+                position: previewPosition,
+                targetOffset: DEFAULT_CAMERA_RIG_TARGET_OFFSET
+              }),
+              false,
+              this.currentDocument,
+              BOX_CREATE_PREVIEW_FILL
             ).group;
             break;
           case "playerStart":
