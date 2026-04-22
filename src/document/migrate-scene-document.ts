@@ -3119,6 +3119,11 @@ function readWorldSettings(
       "world.shaderSky",
       resolvedBackground
     ),
+    celestialOrbits: readWorldCelestialOrbitAuthoringSettings(
+      value.celestialOrbits,
+      "world.celestialOrbits",
+      direction
+    ),
     ambientLight: {
       colorHex: expectHexColor(
         ambientLight.colorHex,
