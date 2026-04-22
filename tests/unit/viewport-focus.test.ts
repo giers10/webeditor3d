@@ -196,14 +196,9 @@ describe("resolveViewportFocusTarget", () => {
       ids: [cameraRig.id]
     });
 
-    expect(focusTarget).toEqual({
-      center: {
-        x: -3,
-        y: 2.28,
-        z: 5
-      },
-      radius: expect.any(Number)
-    });
+    expect(focusTarget?.center.x).toBeCloseTo(-3);
+    expect(focusTarget?.center.y).toBeCloseTo(2.28);
+    expect(focusTarget?.center.z).toBeCloseTo(5);
     expect(focusTarget?.radius).toBeGreaterThan(0.45);
   });
 

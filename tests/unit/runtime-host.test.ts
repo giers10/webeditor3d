@@ -262,6 +262,7 @@ describe("RuntimeHost", () => {
         y: 1.6,
         z: 0
       },
+      transitionMode: "cut",
       lookAround: {
         enabled: true,
         yawLimitDegrees: 10,

@@ -3298,18 +3298,27 @@ function readCameraRigEntity(value: unknown, label: string): EntityInstance {
     ),
     position: readVec3(value.position, `${label}.position`),
     rigType: expectLiteralString(value.rigType, "fixed", `${label}.rigType`),
-    priority: expectNonNegativeFiniteNumber(
-      value.priority,
-      `${label}.priority`
-    ),
-    defaultActive: expectBoolean(value.defaultActive, `${label}.defaultActive`),
+    priority:
+      value.priority === undefined
+        ? undefined
+        : expectNonNegativeFiniteNumber(value.priority, `${label}.priority`),
+    defaultActive:
+      value.defaultActive === undefined
+        ? undefined
+        : expectBoolean(value.defaultActive, `${label}.defaultActive`),
     target: readCameraRigTargetRef(value.target, `${label}.target`),
-    targetOffset: readVec3(value.targetOffset, `${label}.targetOffset`),
+    targetOffset:
+      value.targetOffset === undefined
+        ? undefined
+        : readVec3(value.targetOffset, `${label}.targetOffset`),
     transitionMode,
-    transitionDurationSeconds: expectNonNegativeFiniteNumber(
-      value.transitionDurationSeconds,
-      `${label}.transitionDurationSeconds`
-    ),
+    transitionDurationSeconds:
+      value.transitionDurationSeconds === undefined
+        ? undefined
+        : expectNonNegativeFiniteNumber(
+            value.transitionDurationSeconds,
+            `${label}.transitionDurationSeconds`
+          ),
     lookAround: readCameraRigLookAroundSettings(
       value.lookAround,
       `${label}.lookAround`

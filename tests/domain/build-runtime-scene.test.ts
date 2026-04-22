@@ -680,6 +680,7 @@ describe("buildRuntimeSceneFromDocument", () => {
           }
         }
       ],
+      cameraRigs: [],
       sceneEntries: [
         {
           entityId: "entity-scene-entry-house-front",
@@ -1134,6 +1135,7 @@ describe("buildRuntimeSceneFromDocument", () => {
     expect(runtimeScene.navigationMode).toBe("thirdPerson");
     expect(runtimeScene.entities).toEqual({
       playerStarts: [],
+      cameraRigs: [],
       sceneEntries: [],
       npcs: [],
       soundEmitters: [],
