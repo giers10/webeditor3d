@@ -5364,6 +5364,9 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     source.version !== CELESTIAL_BODY_OVERLAY_SCENE_DOCUMENT_VERSION &&
     source.version !== SHADER_SKY_SCENE_DOCUMENT_VERSION &&
     source.version !== SHADER_SKY_HORIZON_HEIGHT_SCENE_DOCUMENT_VERSION &&
+    source.version !== SHADER_SKY_STAR_HORIZON_FADE_SCENE_DOCUMENT_VERSION &&
+    source.version !== CAMERA_RIG_ENTITY_SCENE_DOCUMENT_VERSION &&
+    source.version !== CELESTIAL_ORBIT_SETTINGS_SCENE_DOCUMENT_VERSION &&
     source.version !== SCENE_DOCUMENT_VERSION &&
     source.version !== FOLLOW_ACTOR_PATH_SMOOTH_SCENE_DOCUMENT_VERSION
   ) {
