@@ -1630,15 +1630,31 @@ export class ViewportHost {
         displayedSunLight,
         displayedMoonLight
       );
+      const shaderSkyResolvedWorld =
+        resolvedWorld ?? {
+          ambientLight: {
+            ...world.ambientLight
+          },
+          sunLight: {
+            ...world.sunLight,
+            direction: {
+              ...world.sunLight.direction
+            }
+          },
+          moonLight: null,
+          background: world.background,
+          nightBackgroundOverlay: null,
+          daylightFactor: 1
+        };
       const shaderSkyState =
-        resolvedWorld === null
-          ? null
-          : resolveWorldShaderSkyRenderState(
+        world.background.mode === "shader"
+          ? resolveWorldShaderSkyRenderState(
               world,
-              resolvedWorld,
+              shaderSkyResolvedWorld,
               resolvedTime,
               this.currentSimulationScene?.time ?? null
-            );
+            )
+          : null;
 
       this.worldBackgroundRenderer.update(
         displayedBackground,
