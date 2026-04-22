@@ -1837,70 +1837,63 @@ export function createSceneEntryEntity(
   };
 }
 
+type FixedCameraRigEntityOverrides = Partial<
+  Pick<
+    FixedCameraRigEntity,
+    | "id"
+    | "name"
+    | "visible"
+    | "enabled"
+    | "position"
+    | "rigType"
+    | "priority"
+    | "defaultActive"
+    | "target"
+    | "targetOffset"
+    | "transitionMode"
+    | "transitionDurationSeconds"
+  >
+> & {
+  rigType?: "fixed";
+  lookAround?: Partial<CameraRigLookAroundSettings>;
+};
+
+type RailCameraRigEntityOverrides = Partial<
+  Pick<
+    RailCameraRigEntity,
+    | "id"
+    | "name"
+    | "visible"
+    | "enabled"
+    | "rigType"
+    | "pathId"
+    | "priority"
+    | "defaultActive"
+    | "target"
+    | "targetOffset"
+    | "transitionMode"
+    | "transitionDurationSeconds"
+  >
+> & {
+  rigType: "rail";
+  lookAround?: Partial<CameraRigLookAroundSettings>;
+};
+
+export type CameraRigEntityOverrides =
+  | FixedCameraRigEntityOverrides
+  | RailCameraRigEntityOverrides;
+
 export function createCameraRigEntity(
-  overrides: Partial<
-    Pick<
-      FixedCameraRigEntity,
-      | "id"
-      | "name"
-      | "visible"
-      | "enabled"
-      | "position"
-      | "rigType"
-      | "priority"
-      | "defaultActive"
-      | "target"
-      | "targetOffset"
-      | "transitionMode"
-      | "transitionDurationSeconds"
-    >
-  > & {
-    lookAround?: Partial<CameraRigLookAroundSettings>;
-  }
+  overrides: FixedCameraRigEntityOverrides
 ): FixedCameraRigEntity;
 export function createCameraRigEntity(
-  overrides: Partial<
-    Pick<
-      RailCameraRigEntity,
-      | "id"
-      | "name"
-      | "visible"
-      | "enabled"
-      | "rigType"
-      | "pathId"
-      | "priority"
-      | "defaultActive"
-      | "target"
-      | "targetOffset"
-      | "transitionMode"
-      | "transitionDurationSeconds"
-    >
-  > & {
-    rigType: "rail";
-    lookAround?: Partial<CameraRigLookAroundSettings>;
-  }
+  overrides: RailCameraRigEntityOverrides
 ): RailCameraRigEntity;
 export function createCameraRigEntity(
-  overrides: Partial<
-    Pick<
-      CameraRigEntity,
-      | "id"
-      | "name"
-      | "visible"
-      | "enabled"
-      | "rigType"
-      | "priority"
-      | "defaultActive"
-      | "target"
-      | "targetOffset"
-      | "transitionMode"
-      | "transitionDurationSeconds"
-    >
-  > & {
-    position?: Vec3;
-    pathId?: string;
-    lookAround?: Partial<CameraRigLookAroundSettings>;
-  } = {}
+  overrides?: CameraRigEntityOverrides
+): CameraRigEntity;
+export function createCameraRigEntity(
+  overrides: CameraRigEntityOverrides = {}
 ): CameraRigEntity {
   const rigType = overrides.rigType ?? "fixed";
   const priority = overrides.priority ?? DEFAULT_CAMERA_RIG_PRIORITY;
