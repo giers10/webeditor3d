@@ -1266,6 +1266,9 @@ describe("validateSceneDocument", () => {
     const invalidFogBrush = createBoxBrush({
       id: "brush-invalid-volume-fog"
     });
+    const invalidLightBrush = createBoxBrush({
+      id: "brush-invalid-volume-light"
+    });
 
     (invalidModeBrush as any).volume = {
       mode: "lava",
@@ -1292,13 +1295,23 @@ describe("validateSceneDocument", () => {
         padding: -0.5
       }
     };
+    (invalidLightBrush as any).volume = {
+      mode: "light",
+      light: {
+        colorHex: "light",
+        intensity: Number.NaN,
+        padding: -0.25,
+        falloff: "ease"
+      }
+    };
 
     const validation = validateSceneDocument({
       ...createEmptySceneDocument(),
       brushes: {
         [invalidModeBrush.id]: invalidModeBrush,
         [invalidWaterBrush.id]: invalidWaterBrush,
-        [invalidFogBrush.id]: invalidFogBrush
+        [invalidFogBrush.id]: invalidFogBrush,
+        [invalidLightBrush.id]: invalidLightBrush
       }
     });
 
@@ -1335,6 +1348,22 @@ describe("validateSceneDocument", () => {
         expect.objectContaining({
           code: "invalid-box-fog-padding",
           path: "brushes.brush-invalid-volume-fog.volume.fog.padding"
+        }),
+        expect.objectContaining({
+          code: "invalid-box-light-color",
+          path: "brushes.brush-invalid-volume-light.volume.light.colorHex"
+        }),
+        expect.objectContaining({
+          code: "invalid-box-light-intensity",
+          path: "brushes.brush-invalid-volume-light.volume.light.intensity"
+        }),
+        expect.objectContaining({
+          code: "invalid-box-light-padding",
+          path: "brushes.brush-invalid-volume-light.volume.light.padding"
+        }),
+        expect.objectContaining({
+          code: "invalid-box-light-falloff",
+          path: "brushes.brush-invalid-volume-light.volume.light.falloff"
         })
       ])
     );
