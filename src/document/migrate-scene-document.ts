@@ -1478,6 +1478,76 @@ function readPlayerStartNavigationMode(value: unknown, label: string) {
   );
 }
 
+function readCameraRigTargetRef(value: unknown, label: string) {
+  if (value === undefined) {
+    return createCameraRigPlayerTargetRef();
+  }
+
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  const kind = expectString(value.kind, `${label}.kind`);
+
+  if (!isCameraRigTargetKind(kind)) {
+    throw new Error(
+      `${label}.kind must be player, actor, entity, or worldPoint.`
+    );
+  }
+
+  switch (kind) {
+    case "player":
+      return createCameraRigPlayerTargetRef();
+    case "actor":
+      return createCameraRigActorTargetRef(
+        expectString(value.actorId, `${label}.actorId`)
+      );
+    case "entity":
+      return createCameraRigEntityTargetRef(
+        expectString(value.entityId, `${label}.entityId`)
+      );
+    case "worldPoint":
+      return createCameraRigWorldPointTargetRef(
+        readVec3(value.point, `${label}.point`)
+      );
+  }
+}
+
+function readCameraRigLookAroundSettings(value: unknown, label: string) {
+  if (value === undefined) {
+    return createCameraRigLookAroundSettings();
+  }
+
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  return createCameraRigLookAroundSettings({
+    enabled: readOptionalBoolean(value.enabled, `${label}.enabled`, true),
+    yawLimitDegrees:
+      value.yawLimitDegrees === undefined
+        ? undefined
+        : expectNonNegativeFiniteNumber(
+            value.yawLimitDegrees,
+            `${label}.yawLimitDegrees`
+          ),
+    pitchLimitDegrees:
+      value.pitchLimitDegrees === undefined
+        ? undefined
+        : expectNonNegativeFiniteNumber(
+            value.pitchLimitDegrees,
+            `${label}.pitchLimitDegrees`
+          ),
+    recenterSpeed:
+      value.recenterSpeed === undefined
+        ? undefined
+        : expectNonNegativeFiniteNumber(
+            value.recenterSpeed,
+            `${label}.recenterSpeed`
+          )
+  });
+}
+
 function readPlayerStartKeyboardBindingCode(
   value: unknown,
   label: string,
