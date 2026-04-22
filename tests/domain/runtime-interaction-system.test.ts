@@ -59,7 +59,8 @@ function createRuntimeSceneFixture(): RuntimeSceneDefinition {
     terrains: [],
     volumes: {
       fog: [],
-      water: []
+      water: [],
+      light: []
     },
     staticColliders: [],
     colliders: [],
