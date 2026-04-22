@@ -21,6 +21,11 @@ const DEFAULT_NOON_DIRECTION: Vec3 = {
   y: 0.88,
   z: 0.15
 };
+const UP_AXIS: Vec3 = {
+  x: 0,
+  y: 1,
+  z: 0
+};
 export interface RuntimeClockState {
   timeOfDayHours: number;
   dayCount: number;
@@ -80,10 +85,6 @@ function smoothstep(edge0: number, edge1: number, value: number): number {
   return t * t * (3 - 2 * t);
 }
 
-function lerp(left: number, right: number, amount: number): number {
-  return left + (right - left) * amount;
-}
-
 function normalizeVec3(vector: Vec3): Vec3 {
   const length = Math.hypot(vector.x, vector.y, vector.z);
 
@@ -126,18 +127,6 @@ function addVec3(left: Vec3, right: Vec3): Vec3 {
     y: left.y + right.y,
     z: left.z + right.z
   };
-}
-
-function rotateAroundAxis(vector: Vec3, axis: Vec3, radians: number): Vec3 {
-  const cosine = Math.cos(radians);
-  const sine = Math.sin(radians);
-
-  return normalizeVec3(
-    addVec3(
-      addVec3(scaleVec3(vector, cosine), scaleVec3(cross(axis, vector), sine)),
-      scaleVec3(axis, dot(axis, vector) * (1 - cosine))
-    )
-  );
 }
 
 function parseHexColor(colorHex: string): { r: number; g: number; b: number } {
@@ -512,12 +501,8 @@ function resolveTimeDrivenCelestialOrbitAxialOffset(
   visibleDurationHours: number
 ): number {
   const visibleFraction = clamp(visibleDurationHours / HOURS_PER_DAY, 0, 1);
-  const axisHeight = Math.max(Math.abs(dot(orbitAxis, basePeakDirection)), 1e-6);
-  const peakHeight = clamp(dot(basePeakDirection, {
-    x: 0,
-    y: 1,
-    z: 0
-  }), -1, 1);
+  const axisHeight = Math.max(Math.abs(dot(orbitAxis, UP_AXIS)), 1e-6);
+  const peakHeight = clamp(dot(basePeakDirection, UP_AXIS), -1, 1);
   const offsetRatio =
     (-Math.cos(visibleFraction * Math.PI) * peakHeight) / axisHeight;
 
@@ -548,7 +533,7 @@ function resolveTimeDrivenCelestialDirection(
     peakDirection,
     visibleDurationHours
   );
-  const radialScale = Math.sqrt(Math.max(1 - axialOffset * axialOffset, 1e-6));
+  const radialScale = Math.sqrt(Math.max(1 - axialOffset * axialOffset, 0));
   const peakTimeOfDayHours = normalizeTimeOfDayHours(
     visibleStartTimeOfDayHours + visibleDurationHours / 2
   );
