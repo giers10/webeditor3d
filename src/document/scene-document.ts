@@ -29,7 +29,8 @@ import {
 } from "../sequencer/project-sequences";
 import type { Terrain } from "./terrains";
 
-export const SCENE_DOCUMENT_VERSION = 69 as const;
+export const SCENE_DOCUMENT_VERSION = 70 as const;
+export const CELESTIAL_BODY_OVERLAY_SCENE_DOCUMENT_VERSION = 70 as const;
 export const WHITEBOX_BOX_LIGHT_VOLUME_SCENE_DOCUMENT_VERSION = 69 as const;
 export const DAWN_DUSK_BACKGROUND_IMAGE_SCENE_DOCUMENT_VERSION = 68 as const;
 export const AUTHORED_TERRAIN_COLLISION_SCENE_DOCUMENT_VERSION = 67 as const;
