@@ -1235,6 +1235,7 @@ export class ViewportHost {
     this.terrainBrushPreviewLine.material.dispose();
     this.terrainBrushPreviewCenter.geometry.dispose();
     this.terrainBrushPreviewCenter.material.dispose();
+    this.worldBackgroundRenderer.dispose();
     this.renderer.forceContextLoss();
     this.renderer.dispose();
 
