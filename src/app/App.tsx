@@ -10358,11 +10358,23 @@ export function App({ store, initialStatusMessage }: AppProps) {
         ...editorState.document.world,
         showCelestialBodies: enabled
       },
-      enabled ? "Enable celestial body overlay" : "Disable celestial body overlay",
       enabled
-        ? "Sun and moon overlays now render in the sky."
-        : "Sun and moon overlays are now hidden."
+        ? "Enable celestial body visuals"
+        : "Disable celestial body visuals",
+      enabled
+        ? "Sun and moon visuals now render in the active sky."
+        : "Sun and moon visuals are now hidden."
     );
+  };
+
+  const applyShaderSkySettings = (
+    label: string,
+    successMessage: string,
+    mutate: (shaderSky: WorldShaderSkySettings) => void
+  ) => {
+    const nextWorld = cloneWorldSettings(editorState.document.world);
+    mutate(nextWorld.shaderSky);
+    applyWorldSettings(nextWorld, label, successMessage);
   };
 
   const applyAdvancedRenderingSettings = (
@@ -10379,6 +10391,18 @@ export function App({ store, initialStatusMessage }: AppProps) {
     mode: WorldBackgroundMode,
     imageAssetId?: string
   ) => {
+    const nextWorld = cloneWorldSettings(editorState.document.world);
+
+    if (
+      mode === "shader" &&
+      editorState.document.world.background.mode !== "shader"
+    ) {
+      nextWorld.shaderSky = syncWorldShaderSkyDayGradientToBackground(
+        nextWorld.shaderSky,
+        editorState.document.world.background
+      );
+    }
+
     if (mode === "image") {
       const currentBackgroundAssetId =
         editorState.document.world.background.mode === "image"
@@ -10400,11 +10424,13 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
       applyWorldSettings(
         {
-          ...editorState.document.world,
+          ...nextWorld,
           background: changeWorldBackgroundMode(
             editorState.document.world.background,
             "image",
-            nextImageAssetId
+            nextImageAssetId,
+            DEFAULT_TIME_PHASE_IMAGE_ENVIRONMENT_INTENSITY,
+            nextWorld.shaderSky
           )
         },
         "Set world background image",
@@ -10413,18 +10439,25 @@ export function App({ store, initialStatusMessage }: AppProps) {
       return;
     }
 
+    const nextBackground = changeWorldBackgroundMode(
+      editorState.document.world.background,
+      mode,
+      undefined,
+      DEFAULT_TIME_PHASE_IMAGE_ENVIRONMENT_INTENSITY,
+      nextWorld.shaderSky
+    );
+
     applyWorldSettings(
       {
-        ...editorState.document.world,
-        background: changeWorldBackgroundMode(
-          editorState.document.world.background,
-          mode
-        )
+        ...nextWorld,
+        background: nextBackground
       },
       "Set world background mode",
       mode === "solid"
         ? "World background set to a solid color."
-        : "World background set to a vertical gradient."
+        : mode === "verticalGradient"
+          ? "World background set to a vertical gradient."
+          : "World background set to the default shader sky."
     );
   };
 
@@ -10474,6 +10507,43 @@ export function App({ store, initialStatusMessage }: AppProps) {
       edge === "top"
         ? "Updated the world gradient top color."
         : "Updated the world gradient bottom color."
+    );
+  };
+
+  const applyShaderSkyNumericSetting = (
+    label: string,
+    successMessage: string,
+    value: number,
+    mutate: (shaderSky: WorldShaderSkySettings, nextValue: number) => void
+  ) => {
+    if (!Number.isFinite(value)) {
+      return;
+    }
+
+    applyShaderSkySettings(label, successMessage, (shaderSky) =>
+      mutate(shaderSky, value)
+    );
+  };
+
+  const applyShaderSkyDayColor = (
+    edge: "top" | "bottom",
+    colorHex: string
+  ) => {
+    applyShaderSkySettings(
+      edge === "top"
+        ? "Set shader sky day top color"
+        : "Set shader sky day bottom color",
+      edge === "top"
+        ? "Updated the shader sky day top color."
+        : "Updated the shader sky day bottom color.",
+      (shaderSky) => {
+        if (edge === "top") {
+          shaderSky.dayTopColorHex = colorHex;
+          return;
+        }
+
+        shaderSky.dayBottomColorHex = colorHex;
+      }
     );
   };
 
