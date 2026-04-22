@@ -25,6 +25,7 @@ export interface WorldShaderSkyRenderState {
   sky: {
     topColorHex: string;
     bottomColorHex: string;
+    horizonHeight: number;
   };
   celestial: {
     sunDirection: Vec3;
@@ -261,7 +262,8 @@ export function resolveWorldShaderSkyRenderState(
           night: nightGradient.bottomColorHex
         },
         phaseWeights
-      )
+      ),
+      horizonHeight: world.shaderSky.horizonHeight
     },
     celestial: {
       sunDirection,
@@ -269,17 +271,14 @@ export function resolveWorldShaderSkyRenderState(
       sunIntensity: resolvedWorld.sunLight.intensity,
       sunDiscSizeDegrees: world.shaderSky.celestial.sunDiscSizeDegrees,
       sunVisible:
-        world.showCelestialBodies &&
-        resolvedWorld.sunLight.intensity > 1e-4 &&
-        sunDirection.y > -0.06,
+        world.showCelestialBodies && resolvedWorld.sunLight.intensity > 1e-4,
       moonDirection,
       moonColorHex: resolvedWorld.moonLight?.colorHex ?? "#d7e4ff",
       moonIntensity: resolvedWorld.moonLight?.intensity ?? 0,
       moonDiscSizeDegrees: world.shaderSky.celestial.moonDiscSizeDegrees,
       moonVisible:
         world.showCelestialBodies &&
-        (resolvedWorld.moonLight?.intensity ?? 0) > 1e-4 &&
-        moonDirection.y > -0.06
+        (resolvedWorld.moonLight?.intensity ?? 0) > 1e-4
     },
     stars: {
       density: world.shaderSky.stars.density,
