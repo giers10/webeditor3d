@@ -16,7 +16,8 @@ describe("resolveUnderwaterFogState", () => {
           waveStrength: 0.4
         }
       ],
-      fog: []
+      fog: [],
+      light: []
     }
   };
 
