@@ -266,6 +266,7 @@ import {
   cloneWorldBackgroundSettings,
   createDefaultWorldTimeOfDaySettings,
   createDefaultWorldTimePhaseProfile,
+  createDefaultWorldShaderSkySettings,
   DEFAULT_NIGHT_IMAGE_ENVIRONMENT_INTENSITY,
   isAdvancedRenderingWaterReflectionMode,
   createDefaultAdvancedRenderingSettings,
@@ -274,6 +275,8 @@ import {
   isAdvancedRenderingShadowType,
   isAdvancedRenderingToneMappingMode,
   isWorldBackgroundMode,
+  isWorldShaderSkyPresetId,
+  type WorldShaderSkySettings,
   type AdvancedRenderingSettings,
   type WorldBackgroundSettings,
   type WorldTimeOfDaySettings,
@@ -2556,6 +2559,144 @@ function readWorldBackgroundSettings(
   };
 }
 
+function readWorldShaderSkySettings(
+  value: unknown,
+  label: string,
+  dayBackground: WorldBackgroundSettings
+): WorldShaderSkySettings {
+  const defaults = createDefaultWorldShaderSkySettings(dayBackground);
+
+  if (value === undefined) {
+    return defaults;
+  }
+
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  const celestial =
+    value.celestial === undefined
+      ? {}
+      : isRecord(value.celestial)
+        ? value.celestial
+        : (() => {
+            throw new Error(`${label}.celestial must be an object.`);
+          })();
+  const stars =
+    value.stars === undefined
+      ? {}
+      : isRecord(value.stars)
+        ? value.stars
+        : (() => {
+            throw new Error(`${label}.stars must be an object.`);
+          })();
+  const clouds =
+    value.clouds === undefined
+      ? {}
+      : isRecord(value.clouds)
+        ? value.clouds
+        : (() => {
+            throw new Error(`${label}.clouds must be an object.`);
+          })();
+  const presetId = value.presetId ?? defaults.presetId;
+
+  if (!isWorldShaderSkyPresetId(presetId)) {
+    throw new Error(`${label}.presetId must be a supported shader sky preset.`);
+  }
+
+  return {
+    presetId,
+    dayTopColorHex: expectHexColor(
+      value.dayTopColorHex ?? defaults.dayTopColorHex,
+      `${label}.dayTopColorHex`
+    ),
+    dayBottomColorHex: expectHexColor(
+      value.dayBottomColorHex ?? defaults.dayBottomColorHex,
+      `${label}.dayBottomColorHex`
+    ),
+    celestial: {
+      sunDiscSizeDegrees: readOptionalPositiveFiniteNumber(
+        celestial.sunDiscSizeDegrees,
+        `${label}.celestial.sunDiscSizeDegrees`,
+        defaults.celestial.sunDiscSizeDegrees
+      ),
+      moonDiscSizeDegrees: readOptionalPositiveFiniteNumber(
+        celestial.moonDiscSizeDegrees,
+        `${label}.celestial.moonDiscSizeDegrees`,
+        defaults.celestial.moonDiscSizeDegrees
+      )
+    },
+    stars: {
+      density: readOptionalNonNegativeFiniteNumber(
+        stars.density,
+        `${label}.stars.density`,
+        defaults.stars.density
+      ),
+      brightness: readOptionalNonNegativeFiniteNumber(
+        stars.brightness,
+        `${label}.stars.brightness`,
+        defaults.stars.brightness
+      )
+    },
+    clouds: {
+      coverage: readOptionalNonNegativeFiniteNumber(
+        clouds.coverage,
+        `${label}.clouds.coverage`,
+        defaults.clouds.coverage
+      ),
+      density: readOptionalNonNegativeFiniteNumber(
+        clouds.density,
+        `${label}.clouds.density`,
+        defaults.clouds.density
+      ),
+      softness: readOptionalNonNegativeFiniteNumber(
+        clouds.softness,
+        `${label}.clouds.softness`,
+        defaults.clouds.softness
+      ),
+      scale: readOptionalPositiveFiniteNumber(
+        clouds.scale,
+        `${label}.clouds.scale`,
+        defaults.clouds.scale
+      ),
+      height: readOptionalFiniteNumber(
+        clouds.height,
+        `${label}.clouds.height`,
+        defaults.clouds.height
+      ),
+      heightVariation: readOptionalNonNegativeFiniteNumber(
+        clouds.heightVariation,
+        `${label}.clouds.heightVariation`,
+        defaults.clouds.heightVariation
+      ),
+      tintHex: expectHexColor(
+        clouds.tintHex ?? defaults.clouds.tintHex,
+        `${label}.clouds.tintHex`
+      ),
+      opacity: readOptionalNonNegativeFiniteNumber(
+        clouds.opacity,
+        `${label}.clouds.opacity`,
+        defaults.clouds.opacity
+      ),
+      opacityRandomness: readOptionalNonNegativeFiniteNumber(
+        clouds.opacityRandomness,
+        `${label}.clouds.opacityRandomness`,
+        defaults.clouds.opacityRandomness
+      ),
+      driftSpeed: readOptionalNonNegativeFiniteNumber(
+        clouds.driftSpeed,
+        `${label}.clouds.driftSpeed`,
+        defaults.clouds.driftSpeed
+      ),
+      driftDirectionDegrees: readOptionalFiniteNumber(
+        clouds.driftDirectionDegrees,
+        `${label}.clouds.driftDirectionDegrees`,
+        defaults.clouds.driftDirectionDegrees
+      )
+    }
+  };
+}
+
 function readWorldTimePhaseProfile(
   value: unknown,
   label: string,
@@ -2784,6 +2925,11 @@ function readWorldSettings(
       false
     ),
     background: resolvedBackground,
+    shaderSky: readWorldShaderSkySettings(
+      value.shaderSky,
+      "world.shaderSky",
+      resolvedBackground
+    ),
     ambientLight: {
       colorHex: expectHexColor(
         ambientLight.colorHex,
