@@ -366,6 +366,159 @@ describe("RuntimeHost", () => {
     host.dispose();
   });
 
+  it("resolves rail camera rigs from the target's nearest path progress and preserves look-around", () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    vi.spyOn(RapierCollisionWorld, "create").mockResolvedValue({
+      dispose: vi.fn(),
+      resolveThirdPersonCameraCollision: vi.fn(
+        (_pivot, desiredCameraPosition) => desiredCameraPosition
+      )
+    } as unknown as RapierCollisionWorld);
+
+    const target = createInteractableEntity({
+      id: "entity-camera-rail-target",
+      position: {
+        x: 3,
+        y: 1,
+        z: 2
+      },
+      prompt: "Anchor"
+    });
+    const path = createScenePath({
+      id: "path-camera-rail-runtime",
+      points: [
+        {
+          id: "point-a",
+          position: {
+            x: 0,
+            y: 3,
+            z: 0
+          }
+        },
+        {
+          id: "point-b",
+          position: {
+            x: 10,
+            y: 3,
+            z: 0
+          }
+        }
+      ]
+    });
+    const cameraRig = createCameraRigEntity({
+      id: "entity-camera-rig-rail-runtime",
+      rigType: "rail",
+      pathId: path.id,
+      target: createCameraRigEntityTargetRef(target.id),
+      targetOffset: {
+        x: 0,
+        y: 1.5,
+        z: 0
+      },
+      transitionMode: "cut",
+      lookAround: {
+        enabled: true,
+        yawLimitDegrees: 12,
+        pitchLimitDegrees: 6,
+        recenterSpeed: 10
+      }
+    });
+    const runtimeScene = buildRuntimeSceneFromDocument({
+      ...createEmptySceneDocument({ name: "Rail Camera Rig Runtime Scene" }),
+      paths: {
+        [path.id]: path
+      },
+      entities: {
+        [target.id]: target,
+        [cameraRig.id]: cameraRig
+      }
+    });
+    const host = new RuntimeHost({
+      enableRendering: false
+    });
+    host.loadScene(runtimeScene);
+
+    const hostInternals = host as unknown as {
+      sceneReady: boolean;
+      camera: PerspectiveCamera;
+      runtimeScene: typeof runtimeScene;
+      applyActiveCameraRig(dt: number): { entityId: string } | null;
+      handleRuntimePointerDown(event: {
+        button: number;
+        clientX: number;
+        clientY: number;
+        preventDefault(): void;
+        stopImmediatePropagation(): void;
+      }): void;
+      handleRuntimePointerMove(event: {
+        clientX: number;
+        clientY: number;
+        preventDefault(): void;
+        stopImmediatePropagation(): void;
+      }): void;
+      handleRuntimePointerUp(event: {
+        stopImmediatePropagation(): void;
+      }): void;
+    };
+
+    hostInternals.sceneReady = true;
+
+    expect(hostInternals.applyActiveCameraRig(0)?.entityId).toBe(cameraRig.id);
+    expect(hostInternals.camera.position).toMatchObject({
+      x: 3,
+      y: 3,
+      z: 0
+    });
+
+    const initialDirection = hostInternals.camera.getWorldDirection(
+      new Vector3()
+    );
+
+    hostInternals.handleRuntimePointerDown({
+      button: 0,
+      clientX: 0,
+      clientY: 0,
+      preventDefault: vi.fn(),
+      stopImmediatePropagation: vi.fn()
+    });
+    hostInternals.handleRuntimePointerMove({
+      clientX: -1000,
+      clientY: 0,
+      preventDefault: vi.fn(),
+      stopImmediatePropagation: vi.fn()
+    });
+    hostInternals.applyActiveCameraRig(0);
+
+    expect(hostInternals.camera.position).toMatchObject({
+      x: 3,
+      y: 3,
+      z: 0
+    });
+    expect(
+      hostInternals.camera
+        .getWorldDirection(new Vector3())
+        .angleTo(initialDirection)
+    ).toBeGreaterThan(0.05);
+
+    hostInternals.handleRuntimePointerUp({
+      stopImmediatePropagation: vi.fn()
+    });
+    hostInternals.runtimeScene.entities.interactables[0]!.position = {
+      x: 8,
+      y: 1,
+      z: 2
+    };
+    hostInternals.applyActiveCameraRig(0);
+
+    expect(hostInternals.camera.position).toMatchObject({
+      x: 8,
+      y: 3,
+      z: 0
+    });
+
+    host.dispose();
+  });
+
   it("applies typed light control effects through the runtime dispatcher", () => {
     vi.spyOn(console, "warn").mockImplementation(() => undefined);
     vi.spyOn(RapierCollisionWorld, "create").mockResolvedValue({
