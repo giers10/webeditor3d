@@ -731,20 +731,27 @@ function resolveTimeDrivenBackground(
   const nightBackground = timeOfDay.night.background;
   const twilightNightOpacity =
     weights.night + weights.dawn * 0.5 + weights.dusk * 0.5;
-  const daylikeImageBackground = resolvePreferredDaylikeImageBackground([
-    {
-      background: dayBackground,
-      weight: weights.day
-    },
-    {
-      background: dawnBackground,
-      weight: weights.dawn
-    },
-    {
-      background: duskBackground,
-      weight: weights.dusk
-    }
-  ]);
+  const daylikeImageBackground =
+    weights.dawn > 1e-6 && hasConfiguredImageBackground(dawnBackground)
+      ? cloneWorldBackgroundSettings(dawnBackground)
+      : weights.dusk > 1e-6 && hasConfiguredImageBackground(duskBackground)
+        ? cloneWorldBackgroundSettings(duskBackground)
+        : hasConfiguredImageBackground(dayBackground)
+          ? cloneWorldBackgroundSettings(dayBackground)
+          : resolvePreferredDaylikeImageBackground([
+              {
+                background: dayBackground,
+                weight: weights.day
+              },
+              {
+                background: dawnBackground,
+                weight: weights.dawn
+              },
+              {
+                background: duskBackground,
+                weight: weights.dusk
+              }
+            ]);
 
   if (daylikeImageBackground !== null) {
     const nightOverlay =
