@@ -3129,13 +3129,33 @@ export class RuntimeHost {
   }
 
   private updateUnderwaterSceneFog() {
-    const fogState =
-      this.activeController === this.firstPersonController
-        ? resolveUnderwaterFogState(
-            this.runtimeScene,
-            this.currentPlayerControllerTelemetry
-          )
-        : null;
+    const fogTelemetry =
+      this.activeRuntimeCameraRig !== null
+        ? {
+            cameraSubmerged:
+              this.resolvePlayerVolumeState({
+                x: this.camera.position.x,
+                y: this.camera.position.y,
+                z: this.camera.position.z
+              }).waterSurfaceHeight !== null &&
+              resolveWaterContact(
+                {
+                  x: this.camera.position.x,
+                  y: this.camera.position.y,
+                  z: this.camera.position.z
+                },
+                this.runtimeScene?.volumes.water ?? []
+              ) !== null,
+            eyePosition: {
+              x: this.camera.position.x,
+              y: this.camera.position.y,
+              z: this.camera.position.z
+            }
+          }
+        : this.activeController === this.firstPersonController
+          ? this.currentPlayerControllerTelemetry
+          : null;
+    const fogState = resolveUnderwaterFogState(this.runtimeScene, fogTelemetry);
 
     if (fogState === null) {
       this.underwaterSceneFog.density = 0;
