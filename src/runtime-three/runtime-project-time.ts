@@ -21,12 +21,6 @@ const DEFAULT_NOON_DIRECTION: Vec3 = {
   y: 0.88,
   z: 0.15
 };
-const UP_AXIS: Vec3 = {
-  x: 0,
-  y: 1,
-  z: 0
-};
-
 export interface RuntimeClockState {
   timeOfDayHours: number;
   dayCount: number;
