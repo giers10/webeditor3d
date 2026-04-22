@@ -77,6 +77,7 @@ function createRuntimeSceneFixture(): RuntimeSceneDefinition {
       playerStarts: [],
       sceneEntries: [],
       npcs: [],
+      cameraRigs: [],
       soundEmitters: [
         {
           entityId: "entity-sound-lobby",

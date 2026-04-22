@@ -71,6 +71,8 @@ function createSuspendedContext(navigationMode: "firstPerson" | "thirdPerson") {
         _pivot: Vec3,
         desiredCameraPosition: Vec3
       ) => ({ ...desiredCameraPosition }),
+      isCameraDrivenExternally: () => false,
+      getCameraYawRadians: () => 0,
       isInputSuspended: () => true,
       setRuntimeMessage: vi.fn(),
       setPlayerControllerTelemetry: vi.fn()

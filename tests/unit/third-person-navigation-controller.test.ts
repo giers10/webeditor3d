@@ -101,6 +101,8 @@ function createRuntimeControllerContext(
       ) => ({
         ...desiredCameraPosition
       }),
+      isCameraDrivenExternally: () => false,
+      getCameraYawRadians: () => 0,
       isInputSuspended: () => false,
       setRuntimeMessage: vi.fn(),
       setPlayerControllerTelemetry: vi.fn()

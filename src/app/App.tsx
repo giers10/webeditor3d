@@ -356,7 +356,6 @@ import {
   type PlayerStartSystemAction,
   type PlayerStartMovementTemplate,
   type PlayerStartNavigationMode,
-  type CameraRigEntity,
   type EntityInstance,
   type EntityKind
 } from "../entities/entity-instances";
