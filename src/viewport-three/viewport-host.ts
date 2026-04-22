@@ -5737,6 +5737,12 @@ export class ViewportHost {
           entity.colorHex,
           selected
         );
+      case "cameraRig":
+        return this.createCameraRigRenderObjects(
+          entity,
+          selected,
+          this.currentDocument
+        );
       case "playerStart":
         return this.createPlayerStartRenderObjects(
           entity.id,
