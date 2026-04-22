@@ -219,9 +219,17 @@ import {
   resolveWorldEnvironmentState,
   WorldBackgroundRenderer
 } from "../rendering/world-background-renderer";
-import { resolveWorldShaderSkyRenderState } from "../rendering/world-shader-sky";
+import {
+  resolveWorldShaderSkyEnvironmentPhaseStates,
+  resolveWorldShaderSkyRenderState
+} from "../rendering/world-shader-sky";
+import {
+  createRendererPrecomputedShaderSkyEnvironmentCache,
+  type PrecomputedShaderSkyEnvironmentCache
+} from "../rendering/precomputed-shader-sky-environment-cache";
 import {
   createRendererQuantizedEnvironmentBlendCache,
+  createRendererQuantizedPmremBlendCache,
   type QuantizedEnvironmentBlendCache
 } from "../rendering/quantized-environment-blend-cache";
 import {
@@ -539,6 +547,8 @@ export class ViewportHost {
   >();
   private readonly materialTextureLoader = new TextureLoader();
   private readonly environmentBlendCache: QuantizedEnvironmentBlendCache;
+  private readonly shaderSkyEnvironmentBlendCache: QuantizedEnvironmentBlendCache;
+  private readonly shaderSkyEnvironmentCache: PrecomputedShaderSkyEnvironmentCache;
   private currentDocument: SceneDocument | null = null;
   private currentWorld: WorldSettings | null = null;
   private currentSimulationScene: RuntimeSceneDefinition | null = null;
@@ -725,6 +735,22 @@ export class ViewportHost {
         }
       }
     );
+    this.shaderSkyEnvironmentBlendCache = createRendererQuantizedPmremBlendCache(
+      this.renderer,
+      {
+        onTextureReady: () => {
+          this.applyWorld();
+        }
+      }
+    );
+    this.shaderSkyEnvironmentCache =
+      createRendererPrecomputedShaderSkyEnvironmentCache(
+        this.renderer,
+        this.worldBackgroundRenderer,
+        {
+          phaseBlendTextureResolver: this.shaderSkyEnvironmentBlendCache
+        }
+      );
     this.moonLight.visible = false;
     this.moonLight.intensity = 0;
     this.applyViewModePose();
@@ -1289,6 +1315,8 @@ export class ViewportHost {
     this.terrainBrushPreviewCenter.geometry.dispose();
     this.terrainBrushPreviewCenter.material.dispose();
     this.environmentBlendCache.dispose();
+    this.shaderSkyEnvironmentBlendCache.dispose();
+    this.shaderSkyEnvironmentCache.dispose();
     this.worldBackgroundRenderer.dispose();
     this.renderer.forceContextLoss();
     this.renderer.dispose();
@@ -1658,6 +1686,14 @@ export class ViewportHost {
               this.currentSimulationScene?.time ?? null
             )
           : null;
+      if (world.background.mode === "shader") {
+        this.shaderSkyEnvironmentCache.syncPhaseTextures(
+          resolveWorldShaderSkyEnvironmentPhaseStates(
+            world,
+            this.currentSimulationScene?.time ?? null
+          )
+        );
+      }
 
       this.worldBackgroundRenderer.update(
         displayedBackground,
@@ -1665,6 +1701,14 @@ export class ViewportHost {
         backgroundOverlayState,
         celestialBodiesState,
         shaderSkyState
+      );
+      const environmentState = resolveWorldEnvironmentState(
+        displayedBackground,
+        backgroundTexture,
+        backgroundOverlayState,
+        this.environmentBlendCache,
+        shaderSkyState,
+        this.shaderSkyEnvironmentCache
       );
       this.scene.background = null;
       this.scene.environment = environmentState.texture;
