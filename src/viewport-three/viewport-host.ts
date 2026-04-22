@@ -1548,7 +1548,8 @@ export class ViewportHost {
       const environmentState = resolveWorldEnvironmentState(
         displayedBackground,
         backgroundTexture,
-        backgroundOverlayState
+        backgroundOverlayState,
+        this.environmentBlendCache
       );
 
       this.worldBackgroundRenderer.update(
