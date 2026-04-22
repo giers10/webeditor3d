@@ -112,10 +112,12 @@ function createUpdatedEntityFromPreview(
         position: preview.position
       });
     case "cameraRig":
-      return createCameraRigEntity({
-        ...entity,
-        position: preview.position
-      });
+      return entity.rigType === "fixed"
+        ? createCameraRigEntity({
+            ...entity,
+            position: preview.position
+          })
+        : createCameraRigEntity(entity);
     case "spotLight":
       return createSpotLightEntity({
         ...entity,
