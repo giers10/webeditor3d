@@ -281,6 +281,21 @@ function hasTimeBoundaryBeenCrossed(
   );
 }
 
+function resolveWrappedRelativeHours(
+  timeOfDayHours: number,
+  referenceTimeOfDayHours: number
+): number {
+  let relativeHours =
+    wrapTimeForward(timeOfDayHours, referenceTimeOfDayHours) -
+    referenceTimeOfDayHours;
+
+  if (relativeHours > HOURS_PER_DAY / 2) {
+    relativeHours -= HOURS_PER_DAY;
+  }
+
+  return relativeHours;
+}
+
 export function isWithinTimeWindow(
   startTimeOfDayHours: number,
   endTimeOfDayHours: number,
@@ -458,68 +473,99 @@ export function resolveRuntimeDayNightPhaseWeights(
   };
 }
 
-function resolveTimeDrivenCelestialOrbitRadians(
-  visibleStartTimeOfDayHours: number,
-  visibleEndTimeOfDayHours: number,
+function resolveTimeDrivenCelestialPhaseRadians(
+  peakTimeOfDayHours: number,
   timeOfDayHours: number
 ): number {
-  const visibleDuration = Math.max(
+  return (
+    (resolveWrappedRelativeHours(timeOfDayHours, peakTimeOfDayHours) /
+      HOURS_PER_DAY) *
+    Math.PI *
+    2
+  );
+}
+
+function resolveTimeDrivenCelestialVisibleDurationHours(
+  visibleStartTimeOfDayHours: number,
+  visibleEndTimeOfDayHours: number
+): number {
+  return Math.max(
     wrapTimeForward(visibleEndTimeOfDayHours, visibleStartTimeOfDayHours) -
       visibleStartTimeOfDayHours,
     0.001
   );
-  const relativeTime =
-    wrapTimeForward(timeOfDayHours, visibleStartTimeOfDayHours) -
-    visibleStartTimeOfDayHours;
-  const risingHorizonOrbitRadians = -Math.PI / 2;
-  const settingHorizonOrbitRadians = Math.PI / 2;
-
-  if (relativeTime <= visibleDuration) {
-    const visibleProgress = clamp(relativeTime / visibleDuration, 0, 1);
-
-    return lerp(
-      risingHorizonOrbitRadians,
-      settingHorizonOrbitRadians,
-      visibleProgress
-    );
-  }
-
-  const hiddenDuration = Math.max(HOURS_PER_DAY - visibleDuration, 0.001);
-  const hiddenProgress = clamp(
-    (relativeTime - visibleDuration) / hiddenDuration,
-    0,
-    1
-  );
-
-  return lerp(
-    settingHorizonOrbitRadians,
-    risingHorizonOrbitRadians + Math.PI * 2,
-    hiddenProgress
-  );
 }
 
-function resolveTimeDrivenCelestialOrbitNormal(peakDirection: Vec3): Vec3 {
+function resolveTimeDrivenCelestialOrbitAxis(
+  basePeakDirection: Vec3
+): Vec3 {
   return normalizeVec3({
-    x: -peakDirection.x * peakDirection.y,
-    y: 1 - peakDirection.y * peakDirection.y,
-    z: -peakDirection.z * peakDirection.y
+    x: -basePeakDirection.x * basePeakDirection.y,
+    y: 1 - basePeakDirection.y * basePeakDirection.y,
+    z: -basePeakDirection.z * basePeakDirection.y
   });
 }
 
+function resolveTimeDrivenCelestialOrbitAxialOffset(
+  orbitAxis: Vec3,
+  basePeakDirection: Vec3,
+  visibleDurationHours: number
+): number {
+  const visibleFraction = clamp(visibleDurationHours / HOURS_PER_DAY, 0, 1);
+  const axisHeight = Math.max(Math.abs(dot(orbitAxis, basePeakDirection)), 1e-6);
+  const peakHeight = clamp(dot(basePeakDirection, {
+    x: 0,
+    y: 1,
+    z: 0
+  }), -1, 1);
+  const offsetRatio =
+    (-Math.cos(visibleFraction * Math.PI) * peakHeight) / axisHeight;
+
+  return offsetRatio / Math.sqrt(1 + offsetRatio * offsetRatio);
+}
+
 function resolveTimeDrivenCelestialDirection(
-  peakDirection: Vec3,
+  basePeakDirection: Vec3,
   visibleStartTimeOfDayHours: number,
   visibleEndTimeOfDayHours: number,
   timeOfDayHours: number
 ): Vec3 {
-  const orbitAxis = resolveTimeDrivenCelestialOrbitNormal(peakDirection);
-  const orbitRadians = resolveTimeDrivenCelestialOrbitRadians(
+  const orbitAxis = resolveTimeDrivenCelestialOrbitAxis(basePeakDirection);
+  const peakDirection = normalizeVec3({
+    x: basePeakDirection.x - orbitAxis.x * dot(basePeakDirection, orbitAxis),
+    y: basePeakDirection.y - orbitAxis.y * dot(basePeakDirection, orbitAxis),
+    z: basePeakDirection.z - orbitAxis.z * dot(basePeakDirection, orbitAxis)
+  });
+  const tangentDirection = normalizeVec3(
+    cross(peakDirection, orbitAxis)
+  );
+  const visibleDurationHours = resolveTimeDrivenCelestialVisibleDurationHours(
     visibleStartTimeOfDayHours,
-    visibleEndTimeOfDayHours,
+    visibleEndTimeOfDayHours
+  );
+  const axialOffset = resolveTimeDrivenCelestialOrbitAxialOffset(
+    orbitAxis,
+    peakDirection,
+    visibleDurationHours
+  );
+  const radialScale = Math.sqrt(Math.max(1 - axialOffset * axialOffset, 1e-6));
+  const peakTimeOfDayHours = normalizeTimeOfDayHours(
+    visibleStartTimeOfDayHours + visibleDurationHours / 2
+  );
+  const phaseRadians = resolveTimeDrivenCelestialPhaseRadians(
+    peakTimeOfDayHours,
     timeOfDayHours
   );
 
-  return rotateAroundAxis(peakDirection, orbitAxis, orbitRadians);
+  return normalizeVec3(
+    addVec3(
+      scaleVec3(orbitAxis, axialOffset),
+      addVec3(
+        scaleVec3(peakDirection, radialScale * Math.cos(phaseRadians)),
+        scaleVec3(tangentDirection, radialScale * Math.sin(phaseRadians))
+      )
+    )
+  );
 }
 
 function createFallbackPhaseGradientBackground(
