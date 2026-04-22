@@ -478,6 +478,7 @@ export class ViewportHost {
   private readonly ambientLight = new AmbientLight();
   private readonly sunLight = new DirectionalLight();
   private readonly localLightGroup = new Group();
+  private readonly lightVolumeGroup = new Group();
   private readonly brushGroup = new Group();
   private readonly terrainGroup = new Group();
   private readonly terrainBrushPreviewGroup = new Group();
@@ -513,6 +514,10 @@ export class ViewportHost {
   private readonly localLightRenderObjects = new Map<
     string,
     LocalLightRenderObjects
+  >();
+  private readonly lightVolumeRenderObjects = new Map<
+    string,
+    LightVolumeRenderObjects
   >();
   private readonly modelRenderObjects = new Map<string, Group>();
   private readonly materialTextureCache = new Map<
