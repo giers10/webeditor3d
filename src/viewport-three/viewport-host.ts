@@ -746,7 +746,8 @@ export class ViewportHost {
         this.renderer,
         this.worldBackgroundRenderer,
         {
-          phaseBlendTextureResolver: this.shaderSkyEnvironmentBlendCache
+          phaseBlendTextureResolver: this.shaderSkyEnvironmentBlendCache,
+          captureSize: 32
         }
       );
     this.moonLight.visible = false;
