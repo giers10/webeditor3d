@@ -696,6 +696,14 @@ function normalizeCameraRigTargetEntityId(entityId: string): string {
   return normalizedEntityId;
 }
 
+function normalizeCameraRigPathId(pathId: string | undefined): string {
+  if (pathId === undefined) {
+    return "";
+  }
+
+  return pathId.trim();
+}
+
 export function createCameraRigPlayerTargetRef(): CameraRigPlayerTargetRef {
   return {
     kind: "player"
@@ -868,8 +876,45 @@ export function resolveCameraRigDocumentTargetPosition(
   }
 }
 
+export function resolveCameraRigDocumentPosition(
+  rig: CameraRigEntity,
+  entities: Record<string, EntityInstance>,
+  paths: Record<string, ScenePath>,
+  options: { fallbackToPathStart?: boolean } = {}
+): Vec3 | null {
+  switch (rig.rigType) {
+    case "fixed":
+      return cloneVec3(rig.position);
+    case "rail": {
+      const path = paths[rig.pathId] ?? null;
+
+      if (path === null) {
+        return null;
+      }
+
+      const resolvedPath = resolveScenePath(path);
+      const baseTarget = resolveCameraRigDocumentTargetPosition(
+        rig.target,
+        entities
+      );
+
+      if (baseTarget === null) {
+        return options.fallbackToPathStart === true &&
+          resolvedPath.points.length > 0
+          ? cloneVec3(resolvedPath.points[0]!.position)
+          : null;
+      }
+
+      return resolveNearestPointOnResolvedScenePath(
+        resolvedPath,
+        baseTarget
+      ).position;
+    }
+  }
+}
+
 export function resolveCameraRigDocumentLookTarget(
-  rig: Pick<CameraRigEntity, "target" | "targetOffset">,
+  rig: Pick<CameraRigBaseEntity, "target" | "targetOffset">,
   entities: Record<string, EntityInstance>
 ): Vec3 | null {
   const baseTarget = resolveCameraRigDocumentTargetPosition(rig.target, entities);
