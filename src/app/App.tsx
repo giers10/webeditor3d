@@ -14503,6 +14503,31 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               }
                             />
                           </label>
+                          <label className="form-field">
+                            <span className="label">Horizon Offset</span>
+                            <input
+                              className="text-input"
+                              type="number"
+                              min="-0.5"
+                              max="0.5"
+                              step="0.01"
+                              value={
+                                editorState.document.world.shaderSky.stars
+                                  .horizonFadeOffset
+                              }
+                              onChange={(event) =>
+                                applyShaderSkyNumericSetting(
+                                  "Set shader sky star horizon offset",
+                                  "Updated the shader sky star horizon offset.",
+                                  event.currentTarget.valueAsNumber,
+                                  (shaderSky, nextValue) => {
+                                    shaderSky.stars.horizonFadeOffset =
+                                      nextValue;
+                                  }
+                                )
+                              }
+                            />
+                          </label>
                         </div>
                       </div>
 
