@@ -24,6 +24,7 @@ import {
   RUNNER_LOADING_SCREEN_SCENE_DOCUMENT_VERSION,
   SCHEDULER_CONTROL_EFFECTS_SCENE_DOCUMENT_VERSION,
   SCENE_DOCUMENT_VERSION,
+  WHITEBOX_BOX_LIGHT_VOLUME_SCENE_DOCUMENT_VERSION,
   createEmptyProjectDocument,
   createEmptyProjectScene
 } from "../../src/document/scene-document";
@@ -531,6 +532,7 @@ describe("project document JSON", () => {
       }
     };
     document.scenes["scene-cellar"].world.projectTimeLightingEnabled = false;
+    document.scenes["scene-cellar"].world.showCelestialBodies = true;
     document.assets["asset-night-sky"] = {
       id: "asset-night-sky",
       kind: "image",
@@ -955,6 +957,39 @@ describe("project document JSON", () => {
       migratedDocument.scenes[migratedDocument.activeSceneId]?.world
         .projectTimeLightingEnabled
     ).toBe(true);
+  });
+
+  it("defaults legacy scene world celestial body overlays to disabled", () => {
+    const document = createEmptyProjectDocument({
+      name: "Celestial Overlay Project"
+    });
+    const activeScene = document.scenes[document.activeSceneId];
+
+    if (activeScene === undefined) {
+      throw new Error("Expected an active scene in the project document.");
+    }
+
+    const migratedDocument = parseProjectDocumentJson(
+      JSON.stringify({
+        ...document,
+        version: WHITEBOX_BOX_LIGHT_VOLUME_SCENE_DOCUMENT_VERSION,
+        scenes: {
+          [activeScene.id]: {
+            ...activeScene,
+            world: {
+              ...activeScene.world,
+              showCelestialBodies: undefined
+            }
+          }
+        }
+      })
+    );
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(
+      migratedDocument.scenes[migratedDocument.activeSceneId]?.world
+        .showCelestialBodies
+    ).toBe(false);
   });
 
   it("migrates pre-project-name multi-scene documents to Untitled Project", () => {
