@@ -80,6 +80,7 @@ import {
   resolveWorldEnvironmentState,
   WorldBackgroundRenderer
 } from "../rendering/world-background-renderer";
+import { createRendererQuantizedEnvironmentBlendCache } from "../rendering/quantized-environment-blend-cache";
 import {
   collectWaterContactPatches,
   createWaterContactPatchAxisUniformValue,
@@ -354,6 +355,7 @@ export class RuntimeHost {
   private readonly instanceAnimationClips = new Map<string, AnimationClip[]>();
   private readonly controllerContext: RuntimeControllerContext;
   private readonly renderer: WebGLRenderer | null;
+  private readonly environmentBlendCache;
   private runtimeScene: RuntimeSceneDefinition | null = null;
   private collisionWorld: RapierCollisionWorld | null = null;
   private collisionWorldRequestId = 0;
@@ -448,6 +450,14 @@ export class RuntimeHost {
 
     this.moonLight.intensity = 0;
     this.moonLight.visible = false;
+    this.environmentBlendCache =
+      this.renderer === null
+        ? null
+        : createRendererQuantizedEnvironmentBlendCache(this.renderer, {
+            onTextureReady: () => {
+              this.applyDayNightLighting();
+            }
+          });
 
     this.controllerContext = {
       camera: this.camera,
@@ -660,6 +670,7 @@ export class RuntimeHost {
     this.projectAssets = projectAssets;
     this.loadedModelAssets = loadedModelAssets;
     this.loadedImageAssets = loadedImageAssets;
+    this.environmentBlendCache?.clear();
 
     if (this.currentWorld !== null) {
       this.applyWorld();
@@ -843,6 +854,7 @@ export class RuntimeHost {
     }
 
     this.materialTextureCache.clear();
+    this.environmentBlendCache?.dispose();
     this.worldBackgroundRenderer.dispose();
     this.renderer?.forceContextLoss();
     this.renderer?.dispose();
@@ -1083,7 +1095,8 @@ export class RuntimeHost {
     const environmentState = resolveWorldEnvironmentState(
       resolvedWorld.background,
       backgroundTexture,
-      backgroundOverlayState
+      backgroundOverlayState,
+      this.environmentBlendCache
     );
 
     this.worldBackgroundRenderer.update(
