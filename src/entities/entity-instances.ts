@@ -1835,7 +1835,7 @@ export function createSceneEntryEntity(
 export function createCameraRigEntity(
   overrides: Partial<
     Pick<
-      CameraRigEntity,
+      FixedCameraRigEntity,
       | "id"
       | "name"
       | "visible"
@@ -1851,9 +1851,52 @@ export function createCameraRigEntity(
     >
   > & {
     lookAround?: Partial<CameraRigLookAroundSettings>;
+  }
+): FixedCameraRigEntity;
+export function createCameraRigEntity(
+  overrides: Partial<
+    Pick<
+      RailCameraRigEntity,
+      | "id"
+      | "name"
+      | "visible"
+      | "enabled"
+      | "rigType"
+      | "pathId"
+      | "priority"
+      | "defaultActive"
+      | "target"
+      | "targetOffset"
+      | "transitionMode"
+      | "transitionDurationSeconds"
+    >
+  > & {
+    rigType: "rail";
+    lookAround?: Partial<CameraRigLookAroundSettings>;
+  }
+): RailCameraRigEntity;
+export function createCameraRigEntity(
+  overrides: Partial<
+    Pick<
+      CameraRigEntity,
+      | "id"
+      | "name"
+      | "visible"
+      | "enabled"
+      | "rigType"
+      | "priority"
+      | "defaultActive"
+      | "target"
+      | "targetOffset"
+      | "transitionMode"
+      | "transitionDurationSeconds"
+    >
+  > & {
+    position?: Vec3;
+    pathId?: string;
+    lookAround?: Partial<CameraRigLookAroundSettings>;
   } = {}
 ): CameraRigEntity {
-  const position = cloneVec3(overrides.position ?? DEFAULT_ENTITY_POSITION);
   const rigType = overrides.rigType ?? "fixed";
   const priority = overrides.priority ?? DEFAULT_CAMERA_RIG_PRIORITY;
   const defaultActive =
@@ -1869,7 +1912,6 @@ export function createCameraRigEntity(
     DEFAULT_CAMERA_RIG_TRANSITION_DURATION_SECONDS;
   const lookAround = createCameraRigLookAroundSettings(overrides.lookAround);
 
-  assertFiniteVec3(position, "Camera Rig position");
   assertFiniteVec3(targetOffset, "Camera Rig target offset");
   assertBoolean(defaultActive, "Camera Rig defaultActive");
   assertNonNegativeFiniteNumber(priority, "Camera Rig priority");
@@ -1879,20 +1921,19 @@ export function createCameraRigEntity(
   );
 
   if (!isCameraRigType(rigType)) {
-    throw new Error("Camera Rig type must currently be fixed.");
+    throw new Error("Camera Rig type must be fixed or rail.");
   }
 
   if (!isCameraRigTransitionMode(transitionMode)) {
     throw new Error("Camera Rig transition mode must be cut or blend.");
   }
 
-  return {
+  const base = {
     id: overrides.id ?? createOpaqueId("entity-camera-rig"),
-    kind: "cameraRig",
+    kind: "cameraRig" as const,
     name: normalizeEntityName(overrides.name),
     visible: resolveAuthoredEntityVisibility(overrides.visible),
     enabled: resolveAuthoredEntityEnabled(overrides.enabled),
-    position,
     rigType,
     priority,
     defaultActive,
@@ -1901,6 +1942,23 @@ export function createCameraRigEntity(
     transitionMode,
     transitionDurationSeconds,
     lookAround
+  };
+
+  if (rigType === "rail") {
+    return {
+      ...base,
+      rigType: "rail",
+      pathId: normalizeCameraRigPathId(overrides.pathId)
+    };
+  }
+
+  const position = cloneVec3(overrides.position ?? DEFAULT_ENTITY_POSITION);
+  assertFiniteVec3(position, "Camera Rig position");
+
+  return {
+    ...base,
+    rigType: "fixed",
+    position
   };
 }
 
