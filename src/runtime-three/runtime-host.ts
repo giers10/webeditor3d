@@ -80,7 +80,10 @@ import {
   resolveWorldEnvironmentState,
   WorldBackgroundRenderer
 } from "../rendering/world-background-renderer";
-import { createRendererQuantizedEnvironmentBlendCache } from "../rendering/quantized-environment-blend-cache";
+import {
+  createRendererQuantizedEnvironmentBlendCache,
+  type QuantizedEnvironmentBlendCache
+} from "../rendering/quantized-environment-blend-cache";
 import {
   collectWaterContactPatches,
   createWaterContactPatchAxisUniformValue,
@@ -355,7 +358,7 @@ export class RuntimeHost {
   private readonly instanceAnimationClips = new Map<string, AnimationClip[]>();
   private readonly controllerContext: RuntimeControllerContext;
   private readonly renderer: WebGLRenderer | null;
-  private readonly environmentBlendCache;
+  private readonly environmentBlendCache: QuantizedEnvironmentBlendCache | null;
   private runtimeScene: RuntimeSceneDefinition | null = null;
   private collisionWorld: RapierCollisionWorld | null = null;
   private collisionWorldRequestId = 0;
