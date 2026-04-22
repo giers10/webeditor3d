@@ -1551,6 +1551,7 @@ export class ViewportHost {
     this.ambientLight.visible = this.displayMode !== "wireframe";
     this.sunLight.visible = this.displayMode !== "wireframe";
     this.localLightGroup.visible = this.displayMode !== "wireframe";
+    this.lightVolumeGroup.visible = this.displayMode !== "wireframe";
 
     if (this.displayMode !== "normal") {
       this.scene.background = null;
