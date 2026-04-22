@@ -77,16 +77,9 @@ export function resolveWorldEnvironmentState(
     overlayOpacity > NIGHT_BACKGROUND_EPSILON &&
     overlayOpacity < 1 - NIGHT_BACKGROUND_EPSILON
   ) {
-    if (overlayOpacity < 0.5) {
-      return {
-        texture: baseTexture,
-        intensity: lerp(baseIntensity, 0, overlayOpacity * 2)
-      };
-    }
-
     return {
-      texture: overlayTexture,
-      intensity: lerp(0, overlayIntensity, (overlayOpacity - 0.5) * 2)
+      texture: overlayOpacity < 0.5 ? baseTexture : overlayTexture,
+      intensity: lerp(baseIntensity, overlayIntensity, overlayOpacity)
     };
   }
 
