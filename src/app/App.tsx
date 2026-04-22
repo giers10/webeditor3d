@@ -18161,16 +18161,18 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         }
                       />
                     </label>
-                    <div className="material-summary">
-                      Hidden entities stay active for authored runtime behavior.
-                      Disable them to remove them from the editor viewport,
-                      picking, and runtime build.
-                    </div>
+                  <div className="material-summary">
+                    Hidden entities stay active for authored runtime behavior.
+                    Disable them to remove them from the editor viewport,
+                    picking, and runtime build.
                   </div>
+                </div>
 
-                  <div className="form-section">
-                    <div className="label">Position</div>
-                    <div className="vector-inputs">
+                  {selectedEntity.kind !== "cameraRig" ||
+                  selectedEntity.rigType === "fixed" ? (
+                    <div className="form-section">
+                      <div className="label">Position</div>
+                      <div className="vector-inputs">
                       <label className="form-field">
                         <span className="label">X</span>
                         <input
