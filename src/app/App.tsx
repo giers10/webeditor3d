@@ -14093,6 +14093,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       >
                         Image
                       </button>
+                      <button
+                        className={`toolbar__button ${editorState.document.world.background.mode === "shader" ? "toolbar__button--active" : ""}`}
+                        type="button"
+                        data-testid="world-background-mode-shader"
+                        onClick={() => applyWorldBackgroundMode("shader")}
+                      >
+                        Shader
+                      </button>
                     </div>
                   </div>
 
