@@ -56,7 +56,10 @@ import {
   normalizeTorusMajorSegmentCount,
   normalizeTorusTubeSegmentCount
 } from "./brushes";
-import { getBrushFaceIds, getBrushVertexIds } from "../geometry/whitebox-topology";
+import {
+  getBrushFaceIds,
+  getBrushVertexIds
+} from "../geometry/whitebox-topology";
 import {
   createSceneDocumentFromProject,
   type ProjectDocument,
@@ -3315,7 +3318,12 @@ function validateNpcEntity(
 
   for (const [dialogueIndex, dialogue] of entity.dialogues.entries()) {
     const dialoguePath = `${path}.dialogues.${dialogueIndex}`;
-    registerAuthoredId(dialogue.id, dialoguePath, seenNpcDialogueIds, diagnostics);
+    registerAuthoredId(
+      dialogue.id,
+      dialoguePath,
+      seenNpcDialogueIds,
+      diagnostics
+    );
     validateProjectDialogue(
       dialogue,
       dialoguePath,
@@ -3326,7 +3334,9 @@ function validateNpcEntity(
 
   if (
     entity.defaultDialogueId !== null &&
-    !entity.dialogues.some((dialogue) => dialogue.id === entity.defaultDialogueId)
+    !entity.dialogues.some(
+      (dialogue) => dialogue.id === entity.defaultDialogueId
+    )
   ) {
     diagnostics.push(
       createDiagnostic(
@@ -3479,7 +3489,10 @@ function validateSoundEmitterControlTarget(
     return;
   }
 
-  if (targetEntity.kind !== target.entityKind || targetEntity.kind !== "soundEmitter") {
+  if (
+    targetEntity.kind !== target.entityKind ||
+    targetEntity.kind !== "soundEmitter"
+  ) {
     diagnostics.push(
       createDiagnostic(
         "error",
@@ -4014,7 +4027,8 @@ function validateInteractionLink(
       break;
     }
     case "runSequence": {
-      const sequence = document.sequences.sequences[link.action.sequenceId] ?? null;
+      const sequence =
+        document.sequences.sequences[link.action.sequenceId] ?? null;
 
       if (sequence === null) {
         diagnostics.push(
@@ -4214,7 +4228,10 @@ function validateProjectScheduler(
       );
     }
 
-    if (!isFiniteNumber(routine.priority) || !Number.isInteger(routine.priority)) {
+    if (
+      !isFiniteNumber(routine.priority) ||
+      !Number.isInteger(routine.priority)
+    ) {
       diagnostics.push(
         createDiagnostic(
           "error",
@@ -4229,7 +4246,11 @@ function validateProjectScheduler(
       routine.sequenceId === null
         ? []
         : getProjectSequenceImpulseSteps(
-            sequences.sequences[routine.sequenceId] ?? { id: "", title: "", effects: [] }
+            sequences.sequences[routine.sequenceId] ?? {
+              id: "",
+              title: "",
+              effects: []
+            }
           );
 
     if (resolvedEffects.length === 0) {
@@ -4392,7 +4413,9 @@ function recordProjectSchedulerSceneTargets(
       context.actorIds.add(entity.actorId);
       const usages = context.actorUsagesById.get(entity.actorId) ?? [];
       const targetAsset =
-        entity.modelAssetId === null ? undefined : scene.assets[entity.modelAssetId];
+        entity.modelAssetId === null
+          ? undefined
+          : scene.assets[entity.modelAssetId];
       usages.push({
         sceneId,
         entityId: entity.id,
@@ -4408,7 +4431,10 @@ function recordProjectSchedulerSceneTargets(
     }
 
     if (entity.kind === "soundEmitter") {
-      context.soundEmitterHasAudioById.set(entity.id, entity.audioAssetId !== null);
+      context.soundEmitterHasAudioById.set(
+        entity.id,
+        entity.audioAssetId !== null
+      );
     }
   }
 
@@ -4442,13 +4468,17 @@ function createProjectSchedulerValidationContextFromProjectDocument(
   const context = createEmptyProjectSchedulerValidationContext();
 
   for (const scene of Object.values(document.scenes)) {
-    recordProjectSchedulerSceneTargets(context, {
-      brushes: scene.brushes,
-      entities: scene.entities,
-      modelInstances: scene.modelInstances,
-      assets: document.assets,
-      paths: scene.paths
-    }, scene.id);
+    recordProjectSchedulerSceneTargets(
+      context,
+      {
+        brushes: scene.brushes,
+        entities: scene.entities,
+        modelInstances: scene.modelInstances,
+        assets: document.assets,
+        paths: scene.paths
+      },
+      scene.id
+    );
   }
 
   return context;
@@ -4490,7 +4520,10 @@ function validateProjectSchedulerSingleActorUsage(
 ): ProjectSchedulerActorValidationUsage | null {
   validateProjectSchedulerActorTarget(target, path, context, diagnostics);
 
-  const usages = getProjectSchedulerActorValidationUsages(context, target.actorId);
+  const usages = getProjectSchedulerActorValidationUsages(
+    context,
+    target.actorId
+  );
 
   if (usages.length === 1) {
     return usages[0] ?? null;
@@ -4616,7 +4649,8 @@ function validateProjectSchedulerModelTarget(
   context: ProjectSchedulerValidationContext,
   diagnostics: SceneDiagnostic[]
 ) {
-  const modelInstanceCount = context.modelInstanceCounts.get(target.modelInstanceId) ?? 0;
+  const modelInstanceCount =
+    context.modelInstanceCounts.get(target.modelInstanceId) ?? 0;
 
   if (modelInstanceCount === 0) {
     diagnostics.push(
@@ -4675,7 +4709,12 @@ function validateProjectSchedulerControlTarget(
       validateProjectSchedulerEntityTarget(target, path, context, diagnostics);
       return;
     case "interaction":
-      validateProjectSchedulerInteractionTarget(target, path, context, diagnostics);
+      validateProjectSchedulerInteractionTarget(
+        target,
+        path,
+        context,
+        diagnostics
+      );
       return;
     case "scene":
       validateProjectSchedulerSceneTarget(target, path, diagnostics);
@@ -4901,7 +4940,8 @@ function validateProjectSchedulerEffect(
       }
 
       const animationNames =
-        context.modelAnimationNamesById.get(effect.target.modelInstanceId) ?? [];
+        context.modelAnimationNamesById.get(effect.target.modelInstanceId) ??
+        [];
 
       if (
         animationNames.length > 0 &&
@@ -5046,7 +5086,11 @@ function validateProjectSchedulerEffect(
       }
       return;
     case "setAmbientLightIntensity":
-      validateProjectSchedulerSceneTarget(effect.target, `${path}.target`, diagnostics);
+      validateProjectSchedulerSceneTarget(
+        effect.target,
+        `${path}.target`,
+        diagnostics
+      );
       if (!isNonNegativeFiniteNumber(effect.intensity)) {
         diagnostics.push(
           createDiagnostic(
@@ -5059,7 +5103,11 @@ function validateProjectSchedulerEffect(
       }
       return;
     case "setAmbientLightColor":
-      validateProjectSchedulerSceneTarget(effect.target, `${path}.target`, diagnostics);
+      validateProjectSchedulerSceneTarget(
+        effect.target,
+        `${path}.target`,
+        diagnostics
+      );
       if (!isHexColorString(effect.colorHex)) {
         diagnostics.push(
           createDiagnostic(
@@ -5072,7 +5120,11 @@ function validateProjectSchedulerEffect(
       }
       return;
     case "setSunLightIntensity":
-      validateProjectSchedulerSceneTarget(effect.target, `${path}.target`, diagnostics);
+      validateProjectSchedulerSceneTarget(
+        effect.target,
+        `${path}.target`,
+        diagnostics
+      );
       if (!isNonNegativeFiniteNumber(effect.intensity)) {
         diagnostics.push(
           createDiagnostic(
@@ -5085,7 +5137,11 @@ function validateProjectSchedulerEffect(
       }
       return;
     case "setSunLightColor":
-      validateProjectSchedulerSceneTarget(effect.target, `${path}.target`, diagnostics);
+      validateProjectSchedulerSceneTarget(
+        effect.target,
+        `${path}.target`,
+        diagnostics
+      );
       if (!isHexColorString(effect.colorHex)) {
         diagnostics.push(
           createDiagnostic(
@@ -5185,7 +5241,6 @@ function validateProjectDialogue(
         )
       );
     }
-
   }
 }
 
@@ -5270,7 +5325,9 @@ function validateProjectSequence(
 
         if (
           effect.dialogueId !== null &&
-          !targetNpc.dialogues.some((dialogue) => dialogue.id === effect.dialogueId)
+          !targetNpc.dialogues.some(
+            (dialogue) => dialogue.id === effect.dialogueId
+          )
         ) {
           diagnostics.push(
             createDiagnostic(
@@ -5343,7 +5400,10 @@ function validateProjectSequence(
               )
             );
           }
-        } else if ((context.modelInstanceCounts.get(effect.target.modelInstanceId) ?? 0) === 0) {
+        } else if (
+          (context.modelInstanceCounts.get(effect.target.modelInstanceId) ??
+            0) === 0
+        ) {
           diagnostics.push(
             createDiagnostic(
               "error",
@@ -5403,7 +5463,9 @@ function validateProjectResources(
     validateProjectAsset(asset, path, diagnostics);
   }
 
-  for (const [sequenceKey, sequence] of Object.entries(document.sequences.sequences)) {
+  for (const [sequenceKey, sequence] of Object.entries(
+    document.sequences.sequences
+  )) {
     const path = `sequences.sequences.${sequenceKey}`;
 
     if (sequence.id !== sequenceKey) {
@@ -5673,7 +5735,9 @@ export function validateSceneDocument(
     validateProjectAsset(asset, path, diagnostics);
   }
 
-  for (const [sequenceKey, sequence] of Object.entries(document.sequences.sequences)) {
+  for (const [sequenceKey, sequence] of Object.entries(
+    document.sequences.sequences
+  )) {
     const path = `sequences.sequences.${sequenceKey}`;
 
     if (sequence.id !== sequenceKey) {
@@ -6367,7 +6431,6 @@ export function validateProjectDocument(
         path: prefixDiagnosticPath(`${scenePath}.`, diagnostic.path)
       });
     }
-
   }
 
   return {

@@ -5,12 +5,10 @@ import type { WorldBackgroundSettings } from "../document/world-settings";
 export function createWorldBackgroundStyle(
   background: WorldBackgroundSettings,
   imageUrl: string | null = null,
-  shaderPreview:
-    | {
-        topColorHex: string;
-        bottomColorHex: string;
-      }
-    | null = null
+  shaderPreview: {
+    topColorHex: string;
+    bottomColorHex: string;
+  } | null = null
 ): CSSProperties {
   if (background.mode === "solid") {
     return {
@@ -24,9 +22,7 @@ export function createWorldBackgroundStyle(
       backgroundColor: shaderPreview?.bottomColorHex ?? "#8cbef6",
       backgroundImage: `linear-gradient(180deg, ${
         shaderPreview?.topColorHex ?? "#5f8fd3"
-      } 0%, ${
-        shaderPreview?.bottomColorHex ?? "#d8eeff"
-      } 100%)`
+      } 0%, ${shaderPreview?.bottomColorHex ?? "#d8eeff"} 100%)`
     };
   }
 

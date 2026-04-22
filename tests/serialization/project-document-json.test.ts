@@ -71,9 +71,9 @@ describe("project document JSON", () => {
     activeScene.world.shaderSky.clouds.coverage = 0.63;
     activeScene.world.shaderSky.clouds.tintHex = "#ece7df";
 
-    expect(parseProjectDocumentJson(serializeProjectDocument(document))).toEqual(
-      document
-    );
+    expect(
+      parseProjectDocumentJson(serializeProjectDocument(document))
+    ).toEqual(document);
   });
 
   it("round-trips scene transition sequence effects", () => {
@@ -94,22 +94,23 @@ describe("project document JSON", () => {
     });
     targetScene.entities[houseEntry.id] = houseEntry;
     document.scenes[targetScene.id] = targetScene;
-    document.sequences.sequences["sequence-enter-house"] = createProjectSequence({
-      id: "sequence-enter-house",
-      title: "Enter House",
-      effects: [
-        {
-          stepClass: "impulse",
-          type: "startSceneTransition",
-          targetSceneId: targetScene.id,
-          targetEntryEntityId: houseEntry.id
-        }
-      ]
-    });
+    document.sequences.sequences["sequence-enter-house"] =
+      createProjectSequence({
+        id: "sequence-enter-house",
+        title: "Enter House",
+        effects: [
+          {
+            stepClass: "impulse",
+            type: "startSceneTransition",
+            targetSceneId: targetScene.id,
+            targetEntryEntityId: houseEntry.id
+          }
+        ]
+      });
 
-    expect(parseProjectDocumentJson(serializeProjectDocument(document))).toEqual(
-      document
-    );
+    expect(
+      parseProjectDocumentJson(serializeProjectDocument(document))
+    ).toEqual(document);
   });
 
   it("round-trips NPC dialogue references in project scenes", () => {
@@ -135,9 +136,9 @@ describe("project document JSON", () => {
     });
     document.scenes[document.activeSceneId]!.entities[npc.id] = npc;
 
-    expect(parseProjectDocumentJson(serializeProjectDocument(document))).toEqual(
-      document
-    );
+    expect(
+      parseProjectDocumentJson(serializeProjectDocument(document))
+    ).toEqual(document);
   });
 
   it("migrates legacy NPC dialogue speaker fields by deriving names from actor ids instead", () => {
@@ -169,9 +170,9 @@ describe("project document JSON", () => {
     legacyDocument.version = NPC_ONLY_DIALOGUES_SCENE_DOCUMENT_VERSION;
     (
       (
-        (
-          legacyDocument.scenes as Record<string, unknown>
-        )[document.activeSceneId] as {
+        (legacyDocument.scenes as Record<string, unknown>)[
+          document.activeSceneId
+        ] as {
           entities: Record<string, unknown>;
         }
       ).entities[npc.id] as {
@@ -184,8 +185,8 @@ describe("project document JSON", () => {
     const migratedDocument = parseProjectDocumentJson(
       JSON.stringify(legacyDocument)
     );
-    const migratedNpc = migratedDocument.scenes[migratedDocument.activeSceneId]!
-      .entities[npc.id];
+    const migratedNpc =
+      migratedDocument.scenes[migratedDocument.activeSceneId]!.entities[npc.id];
 
     expect(migratedNpc).toEqual(
       expect.objectContaining({
@@ -206,8 +207,7 @@ describe("project document JSON", () => {
       })
     );
     expect(
-      "speakerName" in
-        (migratedNpc as typeof npc).dialogues[0]!.lines[0]!
+      "speakerName" in (migratedNpc as typeof npc).dialogues[0]!.lines[0]!
     ).toBe(false);
   });
 
@@ -220,9 +220,10 @@ describe("project document JSON", () => {
       actorId: "actor-guard"
     });
     document.scenes[document.activeSceneId]!.entities[npc.id] = npc;
-    document.scenes[document.activeSceneId]!.paths["path-guard"] = createScenePath({
-      id: "path-guard"
-    });
+    document.scenes[document.activeSceneId]!.paths["path-guard"] =
+      createScenePath({
+        id: "path-guard"
+      });
     document.sequences.sequences["sequence-patrol"] = createProjectSequence({
       id: "sequence-patrol",
       title: "Patrol",
@@ -243,16 +244,21 @@ describe("project document JSON", () => {
     const legacyDocument = JSON.parse(
       serializeProjectDocument(document)
     ) as Record<string, unknown>;
-    legacyDocument.version = NPC_DIALOGUE_LINE_SPEAKER_REMOVED_SCENE_DOCUMENT_VERSION;
+    legacyDocument.version =
+      NPC_DIALOGUE_LINE_SPEAKER_REMOVED_SCENE_DOCUMENT_VERSION;
     delete (
       (
-        (
-          legacyDocument.sequences as {
-            sequences: Record<string, { effects: Array<{ effect?: Record<string, unknown> }> }>;
-          }
-        ).sequences["sequence-patrol"]!.effects[0]!.effect as Record<string, unknown>
-      ).smoothPath
-    );
+        legacyDocument.sequences as {
+          sequences: Record<
+            string,
+            { effects: Array<{ effect?: Record<string, unknown> }> }
+          >;
+        }
+      ).sequences["sequence-patrol"]!.effects[0]!.effect as Record<
+        string,
+        unknown
+      >
+    ).smoothPath;
 
     const migratedDocument = parseProjectDocumentJson(
       JSON.stringify(legacyDocument)
@@ -303,8 +309,8 @@ describe("project document JSON", () => {
     const migratedDocument = parseProjectDocumentJson(
       JSON.stringify(legacyDocument)
     );
-    const migratedNpc = migratedDocument.scenes[migratedDocument.activeSceneId]!
-      .entities[npc.id];
+    const migratedNpc =
+      migratedDocument.scenes[migratedDocument.activeSceneId]!.entities[npc.id];
 
     expect(migratedNpc).toEqual(
       expect.objectContaining({
@@ -324,62 +330,68 @@ describe("project document JSON", () => {
       actorId: "actor-vendor"
     });
 
-    document.scenes[document.activeSceneId]!.entities[npc.id] = createNpcEntity({
-      ...npc,
-      dialogues: [
-        {
-          id: "dialogue-market",
-          title: "Market Greeting",
-          lines: [
-            {
-              id: "dialogue-line-market-1",
-              text: "Fresh fruit."
-            }
-          ]
-        }
-      ],
-      defaultDialogueId: "dialogue-market"
-    });
-    document.sequences.sequences["sequence-market-dialogue"] = createProjectSequence({
-      id: "sequence-market-dialogue",
-      title: "Market Greeting Sequence",
-      steps: [
-        {
-          stepClass: "impulse",
-          type: "makeNpcTalk",
-          npcEntityId: npc.id,
-          dialogueId: "dialogue-market"
-        }
-      ]
-    });
-    document.sequences.sequences["sequence-vendor-open"] = createProjectSequence({
-      id: "sequence-vendor-open",
-      title: "Vendor Open",
-      steps: [
-        {
-          stepClass: "held",
-          type: "controlEffect",
-          effect: createSetActorPresenceControlEffect({
-            target: createActorControlTargetRef("actor-vendor"),
-            active: true
-          })
-        }
-      ]
-    });
-    document.scheduler.routines["routine-vendor-open"] = createProjectScheduleRoutine({
-      id: "routine-vendor-open",
-      title: "Vendor Open",
-      target: createActorControlTargetRef("actor-vendor"),
-      sequenceId: "sequence-vendor-open",
-      effect: createSetActorPresenceControlEffect({
-        target: createActorControlTargetRef("actor-vendor"),
-        active: false
-      })
-    });
-    document.scenes[document.activeSceneId]!.entities["entity-trigger-sequence"] =
-      createTriggerVolumeEntity({
-        id: "entity-trigger-sequence"
+    document.scenes[document.activeSceneId]!.entities[npc.id] = createNpcEntity(
+      {
+        ...npc,
+        dialogues: [
+          {
+            id: "dialogue-market",
+            title: "Market Greeting",
+            lines: [
+              {
+                id: "dialogue-line-market-1",
+                text: "Fresh fruit."
+              }
+            ]
+          }
+        ],
+        defaultDialogueId: "dialogue-market"
+      }
+    );
+    document.sequences.sequences["sequence-market-dialogue"] =
+      createProjectSequence({
+        id: "sequence-market-dialogue",
+        title: "Market Greeting Sequence",
+        steps: [
+          {
+            stepClass: "impulse",
+            type: "makeNpcTalk",
+            npcEntityId: npc.id,
+            dialogueId: "dialogue-market"
+          }
+        ]
       });
+    document.sequences.sequences["sequence-vendor-open"] =
+      createProjectSequence({
+        id: "sequence-vendor-open",
+        title: "Vendor Open",
+        steps: [
+          {
+            stepClass: "held",
+            type: "controlEffect",
+            effect: createSetActorPresenceControlEffect({
+              target: createActorControlTargetRef("actor-vendor"),
+              active: true
+            })
+          }
+        ]
+      });
+    document.scheduler.routines["routine-vendor-open"] =
+      createProjectScheduleRoutine({
+        id: "routine-vendor-open",
+        title: "Vendor Open",
+        target: createActorControlTargetRef("actor-vendor"),
+        sequenceId: "sequence-vendor-open",
+        effect: createSetActorPresenceControlEffect({
+          target: createActorControlTargetRef("actor-vendor"),
+          active: false
+        })
+      });
+    document.scenes[document.activeSceneId]!.entities[
+      "entity-trigger-sequence"
+    ] = createTriggerVolumeEntity({
+      id: "entity-trigger-sequence"
+    });
     document.scenes[document.activeSceneId]!.interactionLinks["link-sequence"] =
       createRunSequenceInteractionLink({
         id: "link-sequence",
@@ -387,9 +399,9 @@ describe("project document JSON", () => {
         sequenceId: "sequence-market-dialogue"
       });
 
-    expect(parseProjectDocumentJson(serializeProjectDocument(document))).toEqual(
-      document
-    );
+    expect(
+      parseProjectDocumentJson(serializeProjectDocument(document))
+    ).toEqual(document);
   });
 
   it("migrates v52 project documents without sequences to an empty project sequence library", () => {
@@ -621,8 +633,8 @@ describe("project document JSON", () => {
         lightIntensityFactor: 0.19
       }
     };
-    document.scenes["scene-cellar"].paths["path-cellar-patrol"] = createScenePath(
-      {
+    document.scenes["scene-cellar"].paths["path-cellar-patrol"] =
+      createScenePath({
         id: "path-cellar-patrol",
         name: "Cellar Patrol",
         loop: true,
@@ -652,8 +664,7 @@ describe("project document JSON", () => {
             }
           }
         ]
-      }
-    );
+      });
 
     const serializedDocument = serializeProjectDocument(document);
 
@@ -725,31 +736,32 @@ describe("project document JSON", () => {
     document.assets[npcModelAsset.id] = npcModelAsset;
     document.scenes[document.activeSceneId].entities[npc.id] = npc;
     document.scenes[document.activeSceneId].paths[path.id] = path;
-    document.scheduler.routines["routine-patrol"] = createProjectScheduleRoutine({
-      id: "routine-patrol",
-      title: "Patrolling",
-      target: createActorControlTargetRef(npc.actorId),
-      startHour: 9,
-      endHour: 13,
-      effects: [
-        createSetActorPresenceControlEffect({
-          target: createActorControlTargetRef(npc.actorId),
-          active: true
-        }),
-        createPlayActorAnimationControlEffect({
-          target: createActorControlTargetRef(npc.actorId),
-          clipName: "Walk",
-          loop: true
-        }),
-        createFollowActorPathControlEffect({
-          target: createActorControlTargetRef(npc.actorId),
-          pathId: path.id,
-          speed: 2,
-          loop: false,
-          progressMode: "deriveFromTime"
-        })
-      ]
-    });
+    document.scheduler.routines["routine-patrol"] =
+      createProjectScheduleRoutine({
+        id: "routine-patrol",
+        title: "Patrolling",
+        target: createActorControlTargetRef(npc.actorId),
+        startHour: 9,
+        endHour: 13,
+        effects: [
+          createSetActorPresenceControlEffect({
+            target: createActorControlTargetRef(npc.actorId),
+            active: true
+          }),
+          createPlayActorAnimationControlEffect({
+            target: createActorControlTargetRef(npc.actorId),
+            clipName: "Walk",
+            loop: true
+          }),
+          createFollowActorPathControlEffect({
+            target: createActorControlTargetRef(npc.actorId),
+            pathId: path.id,
+            speed: 2,
+            loop: false,
+            progressMode: "deriveFromTime"
+          })
+        ]
+      });
 
     expect(
       parseProjectDocumentJson(serializeProjectDocument(document))
@@ -765,7 +777,8 @@ describe("project document JSON", () => {
       intensity: 1.25
     });
 
-    document.scenes[document.activeSceneId].entities[pointLight.id] = pointLight;
+    document.scenes[document.activeSceneId].entities[pointLight.id] =
+      pointLight;
     document.scheduler.routines["routine-night-light"] =
       createProjectScheduleRoutine({
         id: "routine-night-light",
@@ -910,7 +923,9 @@ describe("project document JSON", () => {
     const legacyScene = legacyProject.scenes[legacyProject.activeSceneId];
 
     if (legacyScene === undefined) {
-      throw new Error("Expected the legacy project to contain an active scene.");
+      throw new Error(
+        "Expected the legacy project to contain an active scene."
+      );
     }
 
     const migratedDocument = parseProjectDocumentJson(
@@ -975,9 +990,7 @@ describe("project document JSON", () => {
     expect(
       migratedDocument.scenes[migratedDocument.activeSceneId]?.world.timeOfDay
         .night.background
-    ).toEqual(
-      createDefaultWorldSettings().timeOfDay.night.background
-    );
+    ).toEqual(createDefaultWorldSettings().timeOfDay.night.background);
     expect(
       migratedDocument.scenes[migratedDocument.activeSceneId]?.world
         .projectTimeLightingEnabled
@@ -1044,16 +1057,16 @@ describe("project document JSON", () => {
     expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
     expect(migratedDocument.name).toBe(DEFAULT_PROJECT_NAME);
     expect(migratedDocument.scenes["scene-main"]?.name).toBe("Legacy Entry");
-    expect(migratedDocument.scenes["scene-main"]?.editorPreferences).toMatchObject(
-      {
-        whiteboxSelectionMode: "object",
-        whiteboxSnapEnabled: true,
-        whiteboxSnapStep: DEFAULT_SCENE_EDITOR_SNAP_STEP,
-        viewportGridVisible: true,
-        viewportLayoutMode: "single",
-        activeViewportPanelId: "topLeft"
-      }
-    );
+    expect(
+      migratedDocument.scenes["scene-main"]?.editorPreferences
+    ).toMatchObject({
+      whiteboxSelectionMode: "object",
+      whiteboxSnapEnabled: true,
+      whiteboxSnapStep: DEFAULT_SCENE_EDITOR_SNAP_STEP,
+      viewportGridVisible: true,
+      viewportLayoutMode: "single",
+      activeViewportPanelId: "topLeft"
+    });
   });
 
   it("migrates v23 project documents without Scene Entry entities", () => {
@@ -1114,7 +1127,9 @@ describe("project document JSON", () => {
       })
     );
 
-    expect(migratedDocument.scenes["scene-main"]?.entities[legacyNpc.id]).toEqual(
+    expect(
+      migratedDocument.scenes["scene-main"]?.entities[legacyNpc.id]
+    ).toEqual(
       createNpcEntity({
         ...legacyNpc,
         presence: {
@@ -1154,21 +1169,22 @@ describe("project document JSON", () => {
       name: "House"
     });
     document.scenes[targetScene.id] = targetScene;
-    document.sequences.sequences["sequence-enter-house"] = createProjectSequence({
-      id: "sequence-enter-house",
-      title: "Enter House",
-      effects: [
-        {
-          stepClass: "impulse",
-          type: "startSceneTransition",
-          targetSceneId: targetScene.id,
-          targetEntryEntityId: "missing-entry"
-        }
-      ]
-    });
+    document.sequences.sequences["sequence-enter-house"] =
+      createProjectSequence({
+        id: "sequence-enter-house",
+        title: "Enter House",
+        effects: [
+          {
+            stepClass: "impulse",
+            type: "startSceneTransition",
+            targetSceneId: targetScene.id,
+            targetEntryEntityId: "missing-entry"
+          }
+        ]
+      });
 
-    expect(() =>
-      parseProjectDocumentJson(JSON.stringify(document))
-    ).toThrow("target entry");
+    expect(() => parseProjectDocumentJson(JSON.stringify(document))).toThrow(
+      "target entry"
+    );
   });
 });

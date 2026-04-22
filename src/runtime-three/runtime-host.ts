@@ -352,7 +352,10 @@ export class RuntimeHost {
     string,
     Mesh<BufferGeometry, Material[]>
   >();
-  private readonly terrainMeshes = new Map<string, Mesh<BufferGeometry, Material>>();
+  private readonly terrainMeshes = new Map<
+    string,
+    Mesh<BufferGeometry, Material>
+  >();
   private volumeTime = 0;
   private readonly volumeAnimatedUniforms: Array<{ value: number }> = [];
   private readonly runtimeWaterContactUniforms: RuntimeWaterContactUniformBinding[] =
@@ -361,7 +364,10 @@ export class RuntimeHost {
     string,
     LocalLightRenderObjects
   >();
-  private readonly lightVolumeObjects = new Map<string, LightVolumeRenderObjects>();
+  private readonly lightVolumeObjects = new Map<
+    string,
+    LightVolumeRenderObjects
+  >();
   private readonly modelRenderObjects = new Map<string, Group>();
   private readonly materialTextureCache = new Map<
     string,
@@ -1348,8 +1354,16 @@ export class RuntimeHost {
     }
 
     if (!shadowsEnabled || this.currentCelestialShadowCaster === null) {
-      configureAdvancedRenderingShadowLight(this.sunLight, advancedRendering, false);
-      configureAdvancedRenderingShadowLight(this.moonLight, advancedRendering, false);
+      configureAdvancedRenderingShadowLight(
+        this.sunLight,
+        advancedRendering,
+        false
+      );
+      configureAdvancedRenderingShadowLight(
+        this.moonLight,
+        advancedRendering,
+        false
+      );
       return;
     }
 
@@ -1374,8 +1388,16 @@ export class RuntimeHost {
     });
 
     if (fit === null) {
-      configureAdvancedRenderingShadowLight(this.sunLight, advancedRendering, false);
-      configureAdvancedRenderingShadowLight(this.moonLight, advancedRendering, false);
+      configureAdvancedRenderingShadowLight(
+        this.sunLight,
+        advancedRendering,
+        false
+      );
+      configureAdvancedRenderingShadowLight(
+        this.moonLight,
+        advancedRendering,
+        false
+      );
       return;
     }
 
@@ -1661,7 +1683,9 @@ export class RuntimeHost {
       target.entityKind === "pointLight"
         ? this.runtimeScene.localLights.pointLights
         : this.runtimeScene.localLights.spotLights;
-    const light = lights.find((candidate) => candidate.entityId === target.entityId);
+    const light = lights.find(
+      (candidate) => candidate.entityId === target.entityId
+    );
 
     if (light !== undefined) {
       mutate(light);
@@ -1702,7 +1726,10 @@ export class RuntimeHost {
     renderObjects.light.intensity = intensity;
   }
 
-  private applyLightColorControl(target: LightControlTargetRef, colorHex: string) {
+  private applyLightColorControl(
+    target: LightControlTargetRef,
+    colorHex: string
+  ) {
     this.mutateRuntimeLightState(target, (light) => {
       light.colorHex = colorHex;
     });
@@ -2167,7 +2194,10 @@ export class RuntimeHost {
         kind: "terrain",
         enabled: true
       }).geometry;
-      const mesh = new Mesh(geometry, this.createRuntimeTerrainMaterial(terrain));
+      const mesh = new Mesh(
+        geometry,
+        this.createRuntimeTerrainMaterial(terrain)
+      );
 
       mesh.position.set(
         terrain.position.x,
@@ -2186,8 +2216,9 @@ export class RuntimeHost {
 
   private createRuntimeTerrainMaterial(terrain: RuntimeTerrain): Material {
     const layerTextures = terrain.layers.map((layer) =>
-      getTerrainLayerTexture(layer.material, (material) =>
-        this.getOrCreateTextureSet(material).baseColor
+      getTerrainLayerTexture(
+        layer.material,
+        (material) => this.getOrCreateTextureSet(material).baseColor
       )
     ) as [Texture, Texture, Texture, Texture];
 
@@ -2504,10 +2535,9 @@ export class RuntimeHost {
         waveStrength: brush.volume.water.waveStrength,
         surfaceDisplacementEnabled:
           brush.volume.water.surfaceDisplacementEnabled,
-        opacity:
-          isTopFace
-            ? Math.min(1, baseOpacity + 0.18)
-            : baseOpacity * 0.5,
+        opacity: isTopFace
+          ? Math.min(1, baseOpacity + 0.18)
+          : baseOpacity * 0.5,
         quality: volumeRenderPaths.water === "quality",
         wireframe: false,
         isTopFace,
@@ -3433,7 +3463,11 @@ export class RuntimeHost {
 
       if (renderGroup !== undefined) {
         renderGroup.visible = npc.visible && npc.active;
-        renderGroup.position.set(npc.position.x, npc.position.y, npc.position.z);
+        renderGroup.position.set(
+          npc.position.x,
+          npc.position.y,
+          npc.position.z
+        );
         renderGroup.rotation.set(0, (npc.yawDegrees * Math.PI) / 180, 0);
       }
 
@@ -3552,8 +3586,9 @@ export class RuntimeHost {
 
     if (this.runtimeScene !== null) {
       const brush =
-        this.runtimeScene.brushes.find((candidate) => candidate.id === brushId) ??
-        null;
+        this.runtimeScene.brushes.find(
+          (candidate) => candidate.id === brushId
+        ) ?? null;
 
       if (brush !== null) {
         brush.visible = visible ?? !brush.visible;
@@ -3567,8 +3602,7 @@ export class RuntimeHost {
     target: SequenceVisibilityTarget,
     mode: SequenceVisibilityMode
   ) {
-    const explicitVisible =
-      mode === "toggle" ? undefined : mode === "show";
+    const explicitVisible = mode === "toggle" ? undefined : mode === "show";
 
     if (target.kind === "brush") {
       this.applyToggleBrushVisibilityAction(target.brushId, explicitVisible);
@@ -3703,7 +3737,9 @@ export class RuntimeHost {
       return null;
     }
 
-    const dialogue = npc.dialogues.find((candidate) => candidate.id === dialogueId);
+    const dialogue = npc.dialogues.find(
+      (candidate) => candidate.id === dialogueId
+    );
 
     if (dialogue === undefined) {
       return null;
@@ -3776,10 +3812,7 @@ export class RuntimeHost {
     }
 
     const resolvedDialogueId =
-      dialogueId ??
-      npc.defaultDialogueId ??
-      npc.dialogues[0]?.id ??
-      null;
+      dialogueId ?? npc.defaultDialogueId ?? npc.dialogues[0]?.id ?? null;
 
     if (resolvedDialogueId === null) {
       console.warn(`dialogue: npc ${npcEntityId} has no dialogue to speak`);

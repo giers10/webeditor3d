@@ -183,7 +183,9 @@ describe("runtime project time", () => {
       midnight.background.topColorHex
     );
     expect(dawn.background.topColorHex).not.toBe(noon.background.topColorHex);
-    expect(midnight.background.topColorHex).not.toBe(noon.background.topColorHex);
+    expect(midnight.background.topColorHex).not.toBe(
+      noon.background.topColorHex
+    );
     expect(midnight.background.bottomColorHex).not.toBe(
       noon.background.bottomColorHex
     );

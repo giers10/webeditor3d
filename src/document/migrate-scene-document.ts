@@ -235,9 +235,7 @@ import {
   createProjectSequence,
   type ProjectSequenceLibrary
 } from "../sequencer/project-sequences";
-import {
-  type SequenceClip
-} from "../sequencer/project-sequence-steps";
+import { type SequenceClip } from "../sequencer/project-sequence-steps";
 import {
   createScenePath,
   createScenePathPoint,
@@ -375,10 +373,15 @@ function readNpcDialogues(
 
     return createProjectDialogue({
       id: expectString(dialogueValue.id, `${label}.${dialogueIndex}.id`),
-      title: expectString(dialogueValue.title, `${label}.${dialogueIndex}.title`),
+      title: expectString(
+        dialogueValue.title,
+        `${label}.${dialogueIndex}.title`
+      ),
       lines: linesValue.map((lineValue, lineIndex) => {
         if (!isRecord(lineValue)) {
-          throw new Error(`${label}.${dialogueIndex}.lines.${lineIndex} must be an object.`);
+          throw new Error(
+            `${label}.${dialogueIndex}.lines.${lineIndex} must be an object.`
+          );
         }
 
         return createProjectDialogueLine({
@@ -1906,13 +1909,19 @@ function readTerrain(value: unknown, label: string): Terrain {
     value.layers === undefined
       ? undefined
       : (() => {
-          if (!Array.isArray(value.layers) || value.layers.some((layer) => !isRecord(layer))) {
-            throw new Error(`${label}.layers must be an array of layer objects.`);
+          if (
+            !Array.isArray(value.layers) ||
+            value.layers.some((layer) => !isRecord(layer))
+          ) {
+            throw new Error(
+              `${label}.layers must be an array of layer objects.`
+            );
           }
 
           return value.layers.map((layerValue, layerIndex) => ({
             materialId:
-              layerValue.materialId === undefined || layerValue.materialId === null
+              layerValue.materialId === undefined ||
+              layerValue.materialId === null
                 ? null
                 : expectString(
                     layerValue.materialId,
@@ -2053,7 +2062,9 @@ function readMaterialRegistry(
       );
 
       if (legacyMaterialId !== materialId) {
-        throw new Error(`${label}.${materialId}.id must match the registry key.`);
+        throw new Error(
+          `${label}.${materialId}.id must match the registry key.`
+        );
       }
 
       if (starterRegistry[materialId] === undefined) {
@@ -2211,13 +2222,14 @@ function readBoxBrushFaces(
   materials: SceneDocument["materials"],
   allowMissingUvState: boolean
 ): BoxBrushFaces {
-  return readBrushFaces(
-    value,
-    label,
-    materials,
-    allowMissingUvState,
-    ["posX", "negX", "posY", "negY", "posZ", "negZ"]
-  ) as BoxBrushFaces;
+  return readBrushFaces(value, label, materials, allowMissingUvState, [
+    "posX",
+    "negX",
+    "posY",
+    "negY",
+    "posZ",
+    "negZ"
+  ]) as BoxBrushFaces;
 }
 
 function readBrushFaces(
@@ -2232,7 +2244,9 @@ function readBrushFaces(
   }
 
   const supportedFaceIds = new Set(faceIds);
-  const extraFaceKeys = Object.keys(value).filter((faceId) => !supportedFaceIds.has(faceId));
+  const extraFaceKeys = Object.keys(value).filter(
+    (faceId) => !supportedFaceIds.has(faceId)
+  );
 
   if (extraFaceKeys.length > 0) {
     throw new Error(
@@ -2733,11 +2747,15 @@ function readWorldTimePhaseProfile(
   };
 
   return {
-    background: readWorldBackgroundSettings(value.background, `${label}.background`, {
-      allowMissing: true,
-      allowShader: false,
-      defaultValue: fallbackBackground
-    }),
+    background: readWorldBackgroundSettings(
+      value.background,
+      `${label}.background`,
+      {
+        allowMissing: true,
+        allowShader: false,
+        defaultValue: fallbackBackground
+      }
+    ),
     skyTopColorHex,
     skyBottomColorHex,
     ambientColorHex: expectHexColor(
@@ -3870,27 +3888,29 @@ function readProjectScheduler(
         routineValue.target,
         `${label}.routines.${routineId}.target`
       );
-      const effects =
-        Array.isArray(routineValue.effects)
-          ? routineValue.effects.map((effectValue, effectIndex) =>
-              readControlEffect(
-                effectValue,
-                `${label}.routines.${routineId}.effects.${effectIndex}`
-              )
+      const effects = Array.isArray(routineValue.effects)
+        ? routineValue.effects.map((effectValue, effectIndex) =>
+            readControlEffect(
+              effectValue,
+              `${label}.routines.${routineId}.effects.${effectIndex}`
             )
-          : routineValue.effect === undefined
-            ? undefined
-            : [
-                readControlEffect(
-                  routineValue.effect,
-                  `${label}.routines.${routineId}.effect`
-                )
-              ];
+          )
+        : routineValue.effect === undefined
+          ? undefined
+          : [
+              readControlEffect(
+                routineValue.effect,
+                `${label}.routines.${routineId}.effect`
+              )
+            ];
 
       return [
         routineId,
         createProjectScheduleRoutine({
-          id: expectString(routineValue.id, `${label}.routines.${routineId}.id`),
+          id: expectString(
+            routineValue.id,
+            `${label}.routines.${routineId}.id`
+          ),
           title: expectString(
             routineValue.title,
             `${label}.routines.${routineId}.title`
@@ -4018,7 +4038,10 @@ function readProjectDialogueLibrary(
     }
 
     dialogues[dialogueKey] = createProjectDialogue({
-      id: expectString(dialogueValue.id, `${label}.dialogues.${dialogueKey}.id`),
+      id: expectString(
+        dialogueValue.id,
+        `${label}.dialogues.${dialogueKey}.id`
+      ),
       title: expectString(
         dialogueValue.title,
         `${label}.dialogues.${dialogueKey}.title`
@@ -4049,7 +4072,10 @@ function readProjectDialogueLibrary(
   };
 }
 
-function readProjectSequenceEffect(value: unknown, label: string): SequenceClip {
+function readProjectSequenceEffect(
+  value: unknown,
+  label: string
+): SequenceClip {
   if (!isRecord(value)) {
     throw new Error(`${label} must be an object.`);
   }
@@ -4070,7 +4096,9 @@ function readProjectSequenceEffect(value: unknown, label: string): SequenceClip 
       };
     case "makeNpcTalk":
       if (stepClass !== "impulse") {
-        throw new Error(`${label}.makeNpcTalk effects must use the impulse class.`);
+        throw new Error(
+          `${label}.makeNpcTalk effects must use the impulse class.`
+        );
       }
 
       return {
@@ -4084,7 +4112,9 @@ function readProjectSequenceEffect(value: unknown, label: string): SequenceClip 
       };
     case "teleportPlayer":
       if (stepClass !== "impulse") {
-        throw new Error(`${label}.teleportPlayer effects must use the impulse class.`);
+        throw new Error(
+          `${label}.teleportPlayer effects must use the impulse class.`
+        );
       }
 
       return {
@@ -4119,7 +4149,9 @@ function readProjectSequenceEffect(value: unknown, label: string): SequenceClip 
       const isLegacyToggle = value.type === "toggleVisibility";
 
       if (stepClass !== "impulse") {
-        throw new Error(`${label}.${String(value.type)} effects must use the impulse class.`);
+        throw new Error(
+          `${label}.${String(value.type)} effects must use the impulse class.`
+        );
       }
 
       if (isLegacyToggle) {
@@ -4135,8 +4167,7 @@ function readProjectSequenceEffect(value: unknown, label: string): SequenceClip 
             kind: "brush",
             brushId: expectString(value.targetBrushId, `${label}.targetBrushId`)
           },
-          mode:
-            visible === undefined ? "toggle" : visible ? "show" : "hide"
+          mode: visible === undefined ? "toggle" : visible ? "show" : "hide"
         };
       }
 
@@ -4144,7 +4175,10 @@ function readProjectSequenceEffect(value: unknown, label: string): SequenceClip 
         throw new Error(`${label}.target must be an object.`);
       }
 
-      const targetKind = expectString(value.target.kind, `${label}.target.kind`);
+      const targetKind = expectString(
+        value.target.kind,
+        `${label}.target.kind`
+      );
 
       if (targetKind !== "brush" && targetKind !== "modelInstance") {
         throw new Error(`${label}.target.kind must be brush or modelInstance.`);
@@ -4224,7 +4258,10 @@ function readProjectSequenceLibrary(
     }
 
     sequences[sequenceKey] = createProjectSequence({
-      id: expectString(sequenceValue.id, `${label}.sequences.${sequenceKey}.id`),
+      id: expectString(
+        sequenceValue.id,
+        `${label}.sequences.${sequenceKey}.id`
+      ),
       title: expectString(
         sequenceValue.title,
         `${label}.sequences.${sequenceKey}.title`
@@ -5095,8 +5132,10 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     source.version !== PROJECT_SEQUENCE_CLIPS_SCENE_DOCUMENT_VERSION &&
     source.version !== PROJECT_SEQUENCE_TIMING_SCENE_DOCUMENT_VERSION &&
     source.version !== PROJECT_SEQUENCE_EFFECTS_SCENE_DOCUMENT_VERSION &&
-    source.version !== PROJECT_SEQUENCE_UNIFIED_VISIBILITY_SCENE_DOCUMENT_VERSION &&
-    source.version !== SCENE_TRANSITION_SEQUENCE_EFFECTS_SCENE_DOCUMENT_VERSION &&
+    source.version !==
+      PROJECT_SEQUENCE_UNIFIED_VISIBILITY_SCENE_DOCUMENT_VERSION &&
+    source.version !==
+      SCENE_TRANSITION_SEQUENCE_EFFECTS_SCENE_DOCUMENT_VERSION &&
     source.version !== AUTHORED_TERRAIN_FOUNDATION_SCENE_DOCUMENT_VERSION &&
     source.version !== AUTHORED_TERRAIN_PAINT_SCENE_DOCUMENT_VERSION &&
     source.version !== AUTHORED_TERRAIN_COLLISION_SCENE_DOCUMENT_VERSION &&
@@ -5115,9 +5154,13 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       source.version < STARTER_PBR_MATERIAL_LIBRARY_SCENE_DOCUMENT_VERSION
   });
   const assets = readAssets(source.assets);
-  const legacyDialogues = readProjectDialogueLibrary(source.dialogues, "dialogues", {
-    allowMissing: true
-  });
+  const legacyDialogues = readProjectDialogueLibrary(
+    source.dialogues,
+    "dialogues",
+    {
+      allowMissing: true
+    }
+  );
 
   const migratedDocument: SceneDocument = {
     version: SCENE_DOCUMENT_VERSION,
@@ -5130,7 +5173,8 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
         source.version < PROJECT_SCHEDULER_FOUNDATION_SCENE_DOCUMENT_VERSION
     }),
     sequences: readProjectSequenceLibrary(source.sequences, "sequences", {
-      allowMissing: source.version < PROJECT_SEQUENCE_LIBRARY_SCENE_DOCUMENT_VERSION
+      allowMissing:
+        source.version < PROJECT_SEQUENCE_LIBRARY_SCENE_DOCUMENT_VERSION
     }),
     world: readWorldSettings(source.world, {
       legacyProjectTimeValue:
@@ -5248,9 +5292,13 @@ export function migrateProjectDocument(source: unknown): ProjectDocument {
       source.version < SCENE_EDITOR_PREFERENCES_SCENE_DOCUMENT_VERSION;
     const allowMissingTimeSettings =
       source.version < PROJECT_TIME_SYSTEM_SCENE_DOCUMENT_VERSION;
-    const legacyDialogues = readProjectDialogueLibrary(source.dialogues, "dialogues", {
-      allowMissing: true
-    });
+    const legacyDialogues = readProjectDialogueLibrary(
+      source.dialogues,
+      "dialogues",
+      {
+        allowMissing: true
+      }
+    );
 
     for (const [sceneKey, sceneValue] of Object.entries(source.scenes)) {
       scenes[sceneKey] = readProjectScene(

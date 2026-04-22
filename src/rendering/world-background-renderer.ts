@@ -636,18 +636,22 @@ export class WorldBackgroundRenderer {
     opacity: 0
   });
   private readonly celestialGeometry = new PlaneGeometry(1, 1);
-  private readonly sunMaterial = createCelestialBodyMaterial(
-    SUN_FRAGMENT_SHADER
-  );
-  private readonly moonMaterial = createCelestialBodyMaterial(
-    MOON_FRAGMENT_SHADER
-  );
+  private readonly sunMaterial =
+    createCelestialBodyMaterial(SUN_FRAGMENT_SHADER);
+  private readonly moonMaterial =
+    createCelestialBodyMaterial(MOON_FRAGMENT_SHADER);
   private readonly shaderMesh = new Mesh(this.geometry, this.shaderSkyMaterial);
-  private readonly gradientMesh = new Mesh(this.geometry, this.gradientMaterial);
+  private readonly gradientMesh = new Mesh(
+    this.geometry,
+    this.gradientMaterial
+  );
   private readonly imageMesh = new Mesh(this.geometry, this.imageMaterial);
   private readonly overlayMesh = new Mesh(this.geometry, this.overlayMaterial);
   private readonly sunMesh = new Mesh(this.celestialGeometry, this.sunMaterial);
-  private readonly moonMesh = new Mesh(this.celestialGeometry, this.moonMaterial);
+  private readonly moonMesh = new Mesh(
+    this.celestialGeometry,
+    this.moonMaterial
+  );
   private readonly celestialBodyPosition = new Vector3();
   private sunState: WorldCelestialBodyState | null = null;
   private moonState: WorldCelestialBodyState | null = null;
@@ -730,9 +734,12 @@ export class WorldBackgroundRenderer {
     this.overlayMaterial.opacity = overlayOpacity;
     this.overlayMesh.visible =
       !showShaderBackground && overlayOpacity > NIGHT_BACKGROUND_EPSILON;
-    this.sunState = showShaderBackground ? null : celestialBodies?.sun ?? null;
-    this.moonState =
-      showShaderBackground ? null : celestialBodies?.moon ?? null;
+    this.sunState = showShaderBackground
+      ? null
+      : (celestialBodies?.sun ?? null);
+    this.moonState = showShaderBackground
+      ? null
+      : (celestialBodies?.moon ?? null);
     this.syncCelestialBodyVisualState(
       this.sunMesh,
       this.sunMaterial,
@@ -805,7 +812,8 @@ export class WorldBackgroundRenderer {
       state.celestial.sunIntensity;
     this.shaderSkyMaterial.uniforms.uSunDiscSizeDegrees.value =
       state.celestial.sunDiscSizeDegrees;
-    this.shaderSkyMaterial.uniforms.uSunVisible.value = state.celestial.sunVisible
+    this.shaderSkyMaterial.uniforms.uSunVisible.value = state.celestial
+      .sunVisible
       ? 1
       : 0;
     this.shaderSkyMaterial.uniforms.uMoonDirection.value.set(
@@ -820,7 +828,8 @@ export class WorldBackgroundRenderer {
       state.celestial.moonIntensity;
     this.shaderSkyMaterial.uniforms.uMoonDiscSizeDegrees.value =
       state.celestial.moonDiscSizeDegrees;
-    this.shaderSkyMaterial.uniforms.uMoonVisible.value = state.celestial.moonVisible
+    this.shaderSkyMaterial.uniforms.uMoonVisible.value = state.celestial
+      .moonVisible
       ? 1
       : 0;
     this.shaderSkyMaterial.uniforms.uDaylightFactor.value =

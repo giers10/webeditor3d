@@ -28,7 +28,11 @@ import {
   createTeleportTargetEntity,
   createTriggerVolumeEntity
 } from "../../src/entities/entity-instances";
-import { createProjectAssetStorageKey, type AudioAssetRecord, type ModelAssetRecord } from "../../src/assets/project-assets";
+import {
+  createProjectAssetStorageKey,
+  type AudioAssetRecord,
+  type ModelAssetRecord
+} from "../../src/assets/project-assets";
 import {
   createControlInteractionLink,
   createRunSequenceInteractionLink
@@ -199,11 +203,11 @@ describe("validateSceneDocument", () => {
       }
     };
     const soundVolumeAction = document.interactionLinks["link-sound-volume"]
-      .action as typeof document.interactionLinks["link-sound-volume"]["action"] & {
+      .action as (typeof document.interactionLinks)["link-sound-volume"]["action"] & {
       effect: { volume: number };
     };
     const ambientColorAction = document.interactionLinks["link-ambient-color"]
-      .action as typeof document.interactionLinks["link-ambient-color"]["action"] & {
+      .action as (typeof document.interactionLinks)["link-ambient-color"]["action"] & {
       effect: { colorHex: string };
     };
     soundVolumeAction.effect.volume = Number.NaN;
@@ -289,24 +293,27 @@ describe("validateSceneDocument", () => {
     });
     const document = createEmptySceneDocument();
     document.entities[npc.id] = npc;
-    document.sequences.sequences["sequence-guide-talk"] = createProjectSequence({
-      id: "sequence-guide-talk",
-      title: "Guide Talk",
-      effects: [
-        {
-          stepClass: "impulse",
-          type: "makeNpcTalk",
-          npcEntityId: npc.id,
-          dialogueId: "dialogue-guide"
-        }
-      ]
-    });
-    document.interactionLinks["link-guide-talk"] = createRunSequenceInteractionLink({
-      id: "link-guide-talk",
-      sourceEntityId: npc.id,
-      trigger: "click",
-      sequenceId: "sequence-guide-talk"
-    });
+    document.sequences.sequences["sequence-guide-talk"] = createProjectSequence(
+      {
+        id: "sequence-guide-talk",
+        title: "Guide Talk",
+        effects: [
+          {
+            stepClass: "impulse",
+            type: "makeNpcTalk",
+            npcEntityId: npc.id,
+            dialogueId: "dialogue-guide"
+          }
+        ]
+      }
+    );
+    document.interactionLinks["link-guide-talk"] =
+      createRunSequenceInteractionLink({
+        id: "link-guide-talk",
+        sourceEntityId: npc.id,
+        trigger: "click",
+        sequenceId: "sequence-guide-talk"
+      });
 
     const validation = validateSceneDocument(document);
 
@@ -324,32 +331,34 @@ describe("validateSceneDocument", () => {
     const document = createEmptySceneDocument();
     document.entities[npc.id] = npc;
     document.paths[path.id] = path;
-    document.sequences.sequences["sequence-guard-patrol"] = createProjectSequence({
-      id: "sequence-guard-patrol",
-      title: "Guard Patrol",
-      effects: [
-        {
-          stepClass: "held",
-          type: "controlEffect",
-          effect: createFollowActorPathControlEffect({
-            target: createActorControlTargetRef("actor-guard"),
-            pathId: path.id,
-            speed: 1,
-            loop: true,
-            progressMode: "deriveFromTime"
-          })
-        }
-      ]
-    });
-    document.scheduler.routines["routine-guard-patrol"] = createProjectScheduleRoutine({
-      id: "routine-guard-patrol",
-      title: "Guard Patrol",
-      target: createActorControlTargetRef("actor-guard"),
-      startHour: 8,
-      endHour: 18,
-      sequenceId: "sequence-guard-patrol",
-      effects: []
-    });
+    document.sequences.sequences["sequence-guard-patrol"] =
+      createProjectSequence({
+        id: "sequence-guard-patrol",
+        title: "Guard Patrol",
+        effects: [
+          {
+            stepClass: "held",
+            type: "controlEffect",
+            effect: createFollowActorPathControlEffect({
+              target: createActorControlTargetRef("actor-guard"),
+              pathId: path.id,
+              speed: 1,
+              loop: true,
+              progressMode: "deriveFromTime"
+            })
+          }
+        ]
+      });
+    document.scheduler.routines["routine-guard-patrol"] =
+      createProjectScheduleRoutine({
+        id: "routine-guard-patrol",
+        title: "Guard Patrol",
+        target: createActorControlTargetRef("actor-guard"),
+        startHour: 8,
+        endHour: 18,
+        sequenceId: "sequence-guard-patrol",
+        effects: []
+      });
 
     const validation = validateSceneDocument(document);
 
@@ -444,31 +453,32 @@ describe("validateSceneDocument", () => {
     document.assets[npcModelAsset.id] = npcModelAsset;
     document.entities[npc.id] = npc;
     document.paths[path.id] = path;
-    document.scheduler.routines["routine-patrol"] = createProjectScheduleRoutine({
-      id: "routine-patrol",
-      title: "Patrolling",
-      target: actorTarget,
-      startHour: 9,
-      endHour: 13,
-      effects: [
-        createSetActorPresenceControlEffect({
-          target: actorTarget,
-          active: true
-        }),
-        createPlayActorAnimationControlEffect({
-          target: actorTarget,
-          clipName: "Walk",
-          loop: true
-        }),
-        createFollowActorPathControlEffect({
-          target: actorTarget,
-          pathId: path.id,
-          speed: 2,
-          loop: false,
-          progressMode: "deriveFromTime"
-        })
-      ]
-    });
+    document.scheduler.routines["routine-patrol"] =
+      createProjectScheduleRoutine({
+        id: "routine-patrol",
+        title: "Patrolling",
+        target: actorTarget,
+        startHour: 9,
+        endHour: 13,
+        effects: [
+          createSetActorPresenceControlEffect({
+            target: actorTarget,
+            active: true
+          }),
+          createPlayActorAnimationControlEffect({
+            target: actorTarget,
+            clipName: "Walk",
+            loop: true
+          }),
+          createFollowActorPathControlEffect({
+            target: actorTarget,
+            pathId: path.id,
+            speed: 2,
+            loop: false,
+            progressMode: "deriveFromTime"
+          })
+        ]
+      });
 
     const validation = validateSceneDocument(document);
 
@@ -548,7 +558,9 @@ describe("validateSceneDocument", () => {
             crouch: {
               speedMultiplier: 0
             }
-          } as unknown as ReturnType<typeof createPlayerStartEntity>["movementTemplate"],
+          } as unknown as ReturnType<
+            typeof createPlayerStartEntity
+          >["movementTemplate"],
           inputBindings: {
             keyboard: {
               ...createPlayerStartInputBindings().keyboard,
@@ -564,7 +576,9 @@ describe("validateSceneDocument", () => {
               crouch: "invalidButton",
               pauseTime: "invalidButton"
             }
-          } as unknown as ReturnType<typeof createPlayerStartEntity>["inputBindings"],
+          } as unknown as ReturnType<
+            typeof createPlayerStartEntity
+          >["inputBindings"],
           collider: {
             mode: "capsule",
             eyeHeight: 3,
@@ -980,7 +994,9 @@ describe("validateSceneDocument", () => {
         width: 512,
         height: 256,
         hasAlpha: false,
-        warnings: ["Background images work best as a 2:1 equirectangular panorama."]
+        warnings: [
+          "Background images work best as a 2:1 equirectangular panorama."
+        ]
       }
     };
     const pointLight = createPointLightEntity({
@@ -1159,7 +1175,7 @@ describe("validateSceneDocument", () => {
     document.world.shaderSky.clouds.coverage = 2;
     document.world.timeOfDay.dawn.background = {
       mode: "shader"
-    } as (typeof document.world.timeOfDay.dawn.background);
+    } as typeof document.world.timeOfDay.dawn.background;
 
     const validation = validateSceneDocument(document);
 

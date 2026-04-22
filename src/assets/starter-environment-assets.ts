@@ -159,7 +159,9 @@ function isDefaultDayBackground(background: WorldBackgroundSettings): boolean {
   );
 }
 
-function isDefaultNightBackground(background: WorldBackgroundSettings): boolean {
+function isDefaultNightBackground(
+  background: WorldBackgroundSettings
+): boolean {
   return areWorldBackgroundSettingsEqual(
     background,
     createDefaultWorldTimeOfDaySettings().night.background
@@ -189,8 +191,9 @@ export function isStarterEnvironmentImageAsset(
 
 function getStarterEnvironmentDefinitionById(assetId: string) {
   return (
-    STARTER_ENVIRONMENT_LIBRARY.find((definition) => definition.asset.id === assetId) ??
-    null
+    STARTER_ENVIRONMENT_LIBRARY.find(
+      (definition) => definition.asset.id === assetId
+    ) ?? null
   );
 }
 
@@ -228,7 +231,8 @@ export function mergeStarterEnvironmentAssets(
   const mergedAssets: Record<string, ProjectAssetRecord> = {};
 
   for (const definition of STARTER_ENVIRONMENT_LIBRARY) {
-    mergedAssets[definition.asset.id] = cloneStarterEnvironmentAsset(definition);
+    mergedAssets[definition.asset.id] =
+      cloneStarterEnvironmentAsset(definition);
   }
 
   for (const [assetId, asset] of Object.entries(assets)) {
@@ -257,10 +261,11 @@ export function applyStarterEnvironmentAssetsToProjectDocument(
       }
 
       if (isDefaultNightBackground(nextWorld.timeOfDay.night.background)) {
-        nextWorld.timeOfDay.night.background = createStarterEnvironmentBackground(
-          STARTER_NIGHT_ENVIRONMENT_ASSET_ID,
-          DEFAULT_NIGHT_IMAGE_ENVIRONMENT_INTENSITY
-        );
+        nextWorld.timeOfDay.night.background =
+          createStarterEnvironmentBackground(
+            STARTER_NIGHT_ENVIRONMENT_ASSET_ID,
+            DEFAULT_NIGHT_IMAGE_ENVIRONMENT_INTENSITY
+          );
       } else {
         nextWorld.timeOfDay.night.background = cloneWorldBackground(
           nextWorld.timeOfDay.night.background

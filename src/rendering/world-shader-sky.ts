@@ -72,7 +72,9 @@ function parseHexColor(colorHex: string): { r: number; g: number; b: number } {
 
 function formatHexColor(color: { r: number; g: number; b: number }): string {
   const toHex = (value: number) =>
-    Math.round(clamp(value, 0, 255)).toString(16).padStart(2, "0");
+    Math.round(clamp(value, 0, 255))
+      .toString(16)
+      .padStart(2, "0");
 
   return `#${toHex(color.r)}${toHex(color.g)}${toHex(color.b)}`;
 }
@@ -86,8 +88,7 @@ function blendHexColorsByWeights(
   },
   weights: RuntimeDayNightPhaseWeights
 ): string {
-  const totalWeight =
-    weights.day + weights.dawn + weights.dusk + weights.night;
+  const totalWeight = weights.day + weights.dawn + weights.dusk + weights.night;
 
   if (totalWeight <= 1e-6) {
     return colors.day;

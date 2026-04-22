@@ -162,7 +162,10 @@ export function ViewportCanvas({
   }, [world]);
 
   useLayoutEffect(() => {
-    hostRef.current?.updateSimulation(editorSimulationScene, editorSimulationClock);
+    hostRef.current?.updateSimulation(
+      editorSimulationScene,
+      editorSimulationClock
+    );
   }, [
     editorSimulationScene,
     editorSimulationClock?.dayCount,
@@ -293,9 +296,10 @@ export function ViewportCanvas({
     toolPreview.kind === "create" &&
     toolPreview.center !== null;
   const transformPreviewVisible = transformSession.kind === "active";
-  const selectedWhiteboxLabel = toolMode === "select"
-    ? getWhiteboxSelectionFeedbackLabel(sceneDocument, selection)
-    : null;
+  const selectedWhiteboxLabel =
+    toolMode === "select"
+      ? getWhiteboxSelectionFeedbackLabel(sceneDocument, selection)
+      : null;
   const terrainBrushOverlayVisible =
     toolMode === "select" && terrainBrushState != null;
   const resolvedViewportBackground =
@@ -329,8 +333,8 @@ export function ViewportCanvas({
           : createWorldBackgroundStyle(
               resolvedViewportBackground,
               resolvedViewportBackground.mode === "image"
-                ? (loadedImageAssets[resolvedViewportBackground.assetId]?.previewUrl ??
-                    null)
+                ? (loadedImageAssets[resolvedViewportBackground.assetId]
+                    ?.previewUrl ?? null)
                 : null,
               resolvedViewportBackground.mode === "shader"
                 ? {
@@ -376,7 +380,7 @@ export function ViewportCanvas({
                   ]
                     .filter((part) => part !== null)
                     .join(" · ")}
-                </div>
+            </div>
           )}
           {!terrainBrushOverlayVisible ? null : (
             <div

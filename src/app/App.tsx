@@ -344,7 +344,7 @@ import {
 } from "../entities/entity-instances";
 import {
   createProjectDialogue,
-  createProjectDialogueLine,
+  createProjectDialogueLine
 } from "../dialogues/project-dialogues";
 import type {
   ProjectDialogue,
@@ -1289,7 +1289,9 @@ function getTerrainLabel(terrain: Terrain, index: number): string {
 }
 
 function getTerrainLabelById(terrainId: string, terrains: Terrain[]): string {
-  const terrainIndex = terrains.findIndex((terrain) => terrain.id === terrainId);
+  const terrainIndex = terrains.findIndex(
+    (terrain) => terrain.id === terrainId
+  );
   return terrainIndex === -1
     ? getTerrainKindLabel()
     : getTerrainLabel(terrains[terrainIndex], terrainIndex);
@@ -1352,7 +1354,9 @@ function describeSelection(
     case "brushes":
       return `${selection.ids.length} solid${selection.ids.length === 1 ? "" : "s"} selected (${getSelectedBrushLabel(selection, brushes, activeSelectionId)})`;
     case "brushFace": {
-      const brush = brushes.find((candidate) => candidate.id === selection.brushId);
+      const brush = brushes.find(
+        (candidate) => candidate.id === selection.brushId
+      );
       const faceLabel =
         brush === undefined
           ? selection.faceId
@@ -1360,7 +1364,9 @@ function describeSelection(
       return `1 face selected (${faceLabel} on ${getBrushLabelById(selection.brushId, brushes)})`;
     }
     case "brushEdge": {
-      const brush = brushes.find((candidate) => candidate.id === selection.brushId);
+      const brush = brushes.find(
+        (candidate) => candidate.id === selection.brushId
+      );
       const edgeLabel =
         brush === undefined
           ? selection.edgeId
@@ -1368,7 +1374,9 @@ function describeSelection(
       return `1 edge selected (${edgeLabel} on ${getBrushLabelById(selection.brushId, brushes)})`;
     }
     case "brushVertex": {
-      const brush = brushes.find((candidate) => candidate.id === selection.brushId);
+      const brush = brushes.find(
+        (candidate) => candidate.id === selection.brushId
+      );
       const vertexLabel =
         brush === undefined
           ? selection.vertexId
@@ -1407,15 +1415,13 @@ function getMultiSelectionSummary(
   modelInstances: Record<string, ModelInstance>,
   assets: Record<string, ProjectAssetRecord>,
   entities: Record<string, EntityInstance>
-):
-  | {
-      kindLabel: string;
-      count: number;
-      activeId: string;
-      activeLabel: string;
-      selectedItems: Array<{ id: string; label: string }>;
-    }
-  | null {
+): {
+  kindLabel: string;
+  count: number;
+  activeId: string;
+  activeLabel: string;
+  selectedItems: Array<{ id: string; label: string }>;
+} | null {
   const resolvedActiveSelectionId = resolveSelectionActiveId(
     selection,
     activeSelectionId
@@ -1585,9 +1591,7 @@ function readVisibilityModeSelectValue(
   }
 }
 
-function readSequenceVisibilityTargetKey(
-  value: string
-):
+function readSequenceVisibilityTargetKey(value: string):
   | {
       kind: "brush";
       brushId: string;
@@ -1622,7 +1626,9 @@ function readSequenceVisibilityTargetKey(
     };
   }
 
-  throw new Error("Sequence visibility targets must reference a brush or model instance.");
+  throw new Error(
+    "Sequence visibility targets must reference a brush or model instance."
+  );
 }
 
 function readSceneTransitionTargetKey(value: string): {
@@ -2139,7 +2145,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
   );
   const materialList = sortDocumentMaterials(editorState.document.materials);
   const selectedBrush = getSelectedBoxBrush(editorState.selection, brushList);
-  const selectedTerrain = getSelectedTerrain(editorState.selection, terrainList);
+  const selectedTerrain = getSelectedTerrain(
+    editorState.selection,
+    terrainList
+  );
   const selectedPath = getSelectedPath(editorState.selection, pathList);
   const selectedPathPointState = getSelectedPathPointState(
     editorState.selection,
@@ -2186,13 +2195,15 @@ export function App({ store, initialStatusMessage }: AppProps) {
     selectedBrush === null ? [] : getBrushFaceIds(selectedBrush);
   const selectedBrushHasMixedFaceUvs =
     selectedBrush !== null
-      ? selectedBrushFaceIds.slice(1).some(
-          (faceId) =>
-            !areFaceUvStatesEqual(
-              selectedBrush.faces[selectedBrushFaceIds[0]].uv,
-              selectedBrush.faces[faceId].uv
-            )
-        )
+      ? selectedBrushFaceIds
+          .slice(1)
+          .some(
+            (faceId) =>
+              !areFaceUvStatesEqual(
+                selectedBrush.faces[selectedBrushFaceIds[0]].uv,
+                selectedBrush.faces[faceId].uv
+              )
+          )
       : false;
   const materialInspectorScope =
     whiteboxSelectionMode === "object" && selectedBrush !== null
@@ -2207,7 +2218,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     materialInspectorScope === "brush"
       ? selectedBrushSharedMaterialId
       : materialInspectorScope === "face"
-        ? selectedFace?.materialId ?? null
+        ? (selectedFace?.materialId ?? null)
         : null;
   const materialInspectorMaterial =
     materialInspectorScope === "brush"
@@ -2228,15 +2239,15 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const materialInspectorMaterialSummary =
     materialInspectorScope === "brush" && selectedBrushHasMixedFaceMaterials
       ? "Mixed across faces"
-      : materialInspectorMaterial?.name ??
+      : (materialInspectorMaterial?.name ??
         (materialInspectorMaterialId === null
           ? "Fallback face color"
-          : materialInspectorMaterialId ?? "Fallback face color");
+          : (materialInspectorMaterialId ?? "Fallback face color")));
   const materialInspectorUvState =
     materialInspectorScope === "brush" && selectedBrush !== null
       ? selectedBrush.faces[selectedBrushFaceIds[0]].uv
       : materialInspectorScope === "face"
-        ? selectedFace?.uv ?? null
+        ? (selectedFace?.uv ?? null)
         : null;
   const selectedModelAsset =
     selectedModelInstance !== null
@@ -2523,7 +2534,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
     String(DEFAULT_BOX_VOLUME_LIGHT_SETTINGS.padding)
   );
   const [boxVolumeLightFalloffDraft, setBoxVolumeLightFalloffDraft] =
-    useState<BoxBrushLightFalloffMode>(DEFAULT_BOX_VOLUME_LIGHT_SETTINGS.falloff);
+    useState<BoxBrushLightFalloffMode>(
+      DEFAULT_BOX_VOLUME_LIGHT_SETTINGS.falloff
+    );
   const [whiteboxSnapStepDraft, setWhiteboxSnapStepDraft] = useState(
     String(editorState.whiteboxSnapStep)
   );
@@ -2661,12 +2674,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [terrainBrushSettings, setTerrainBrushSettings] = useState(
     createDefaultTerrainBrushSettings()
   );
-  const [terrainSampleCountXDraft, setTerrainSampleCountXDraft] = useState(
-    "9"
-  );
-  const [terrainSampleCountZDraft, setTerrainSampleCountZDraft] = useState(
-    "9"
-  );
+  const [terrainSampleCountXDraft, setTerrainSampleCountXDraft] = useState("9");
+  const [terrainSampleCountZDraft, setTerrainSampleCountZDraft] = useState("9");
   const [terrainCellSizeDraft, setTerrainCellSizeDraft] = useState("1");
   const activeTerrainBrushState: ArmedTerrainBrushState | null =
     selectedTerrain === null || armedTerrainBrushTool === null
@@ -2675,7 +2684,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
         ? {
             terrainId: selectedTerrain.id,
             tool: "paint",
-            layerIndex: clampTerrainPaintLayerIndex(activeTerrainPaintLayerIndex),
+            layerIndex: clampTerrainPaintLayerIndex(
+              activeTerrainPaintLayerIndex
+            ),
             radius: terrainBrushSettings.radius,
             strength: terrainBrushSettings.strength,
             falloff: terrainBrushSettings.falloff
@@ -2737,9 +2748,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [selectedScheduleRoutineId, setSelectedScheduleRoutineId] = useState<
     string | null
   >(null);
-  const [selectedNpcDialogueId, setSelectedNpcDialogueId] = useState<string | null>(
-    null
-  );
+  const [selectedNpcDialogueId, setSelectedNpcDialogueId] = useState<
+    string | null
+  >(null);
   const [selectedSequenceId, setSelectedSequenceId] = useState<string | null>(
     null
   );
@@ -2938,8 +2949,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [runtimeMessage, setRuntimeMessage] = useState<string | null>(null);
   const [editorSimulationClockOverride, setEditorSimulationClockOverride] =
     useState<RuntimeClockState | null>(null);
-  const [editorSimulationPlaying, setEditorSimulationPlaying] =
-    useState(false);
+  const [editorSimulationPlaying, setEditorSimulationPlaying] = useState(false);
   const [editorSimulationScene, setEditorSimulationScene] =
     useState<RuntimeSceneDefinition | null>(null);
   const [editorSimulationMessage, setEditorSimulationMessage] = useState<
@@ -3102,13 +3112,13 @@ export function App({ store, initialStatusMessage }: AppProps) {
   };
 
   const commitSchedulePaneHeight = (
-    nextHeight:
-      | number
-      | ((previousHeight: number) => number)
+    nextHeight: number | ((previousHeight: number) => number)
   ) => {
     setSchedulePaneHeight((previousHeight) => {
       const resolvedHeight =
-        typeof nextHeight === "function" ? nextHeight(previousHeight) : nextHeight;
+        typeof nextHeight === "function"
+          ? nextHeight(previousHeight)
+          : nextHeight;
       const clampedHeight = clampSchedulePaneHeight(resolvedHeight);
       schedulePaneHeightRef.current = clampedHeight;
       return clampedHeight;
@@ -3360,7 +3370,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
     if (selectedBrush.volume.mode === "light") {
       setBoxVolumeLightColorDraft(selectedBrush.volume.light.colorHex);
-      setBoxVolumeLightIntensityDraft(String(selectedBrush.volume.light.intensity));
+      setBoxVolumeLightIntensityDraft(
+        String(selectedBrush.volume.light.intensity)
+      );
       setBoxVolumeLightPaddingDraft(String(selectedBrush.volume.light.padding));
       setBoxVolumeLightFalloffDraft(selectedBrush.volume.light.falloff);
     }
@@ -3626,10 +3638,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
     const tick = (timestamp: number) => {
       if (previousFrameTime !== null) {
-        const dtSeconds = Math.min(0.25, (timestamp - previousFrameTime) / 1000);
+        const dtSeconds = Math.min(
+          0.25,
+          (timestamp - previousFrameTime) / 1000
+        );
         setEditorSimulationClockOverride((currentClock) =>
           advanceRuntimeClockState(
-            currentClock ?? createRuntimeClockState(editorState.projectDocument.time),
+            currentClock ??
+              createRuntimeClockState(editorState.projectDocument.time),
             dtSeconds
           )
         );
@@ -3685,8 +3701,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
 
     if (
-      editorState.projectDocument.scheduler.routines[selectedScheduleRoutineId] !==
-      undefined
+      editorState.projectDocument.scheduler.routines[
+        selectedScheduleRoutineId
+      ] !== undefined
     ) {
       return;
     }
@@ -3978,7 +3995,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
       try {
         return await loadImageAssetFromStorage(storage, asset);
       } catch (error) {
-        if (storage !== null && (await restoreDeletedStoredAsset(storage, asset))) {
+        if (
+          storage !== null &&
+          (await restoreDeletedStoredAsset(storage, asset))
+        ) {
           return loadImageAssetFromStorage(storage, asset);
         }
 
@@ -4888,7 +4908,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
   };
 
   const resolveProjectScheduleTargetOption = (targetKey: string) =>
-    getProjectScheduleTargetOptionByKey(projectScheduleTargetOptions, targetKey);
+    getProjectScheduleTargetOptionByKey(
+      projectScheduleTargetOptions,
+      targetKey
+    );
 
   const createDefaultSequenceEffectsForTarget = (
     targetOption: ProjectScheduleTargetOption
@@ -4900,7 +4923,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
       return [];
     }
 
-    const effectOption = listProjectScheduleEffectOptions(targetOption)[0] ?? null;
+    const effectOption =
+      listProjectScheduleEffectOptions(targetOption)[0] ?? null;
 
     if (effectOption === null) {
       throw new Error(
@@ -4928,11 +4952,13 @@ export function App({ store, initialStatusMessage }: AppProps) {
     const authoredEffects =
       options.routine === undefined
         ? []
-        : options.routine.effects.map((effect) => ({
-            stepClass: "held" as const,
-            type: "controlEffect" as const,
-            effect: cloneControlEffect(effect)
-          })).filter((step) => step.effect.type !== "setActorPresence");
+        : options.routine.effects
+            .map((effect) => ({
+              stepClass: "held" as const,
+              type: "controlEffect" as const,
+              effect: cloneControlEffect(effect)
+            }))
+            .filter((step) => step.effect.type !== "setActorPresence");
 
     return createProjectSequence({
       title: options.title,
@@ -4953,7 +4979,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
       effects: options.sequence.effects.map((effect) => {
         if (
           effect.type !== "controlEffect" ||
-          getControlTargetRefKey(effect.effect.target) !== options.previousTargetKey
+          getControlTargetRefKey(effect.effect.target) !==
+            options.previousTargetKey
         ) {
           return cloneSequenceEffect(effect);
         }
@@ -5031,7 +5058,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
   };
 
   const handleCreateAttachedSequenceForRoutine = (routineId: string) => {
-    const routine = editorState.projectDocument.scheduler.routines[routineId] ?? null;
+    const routine =
+      editorState.projectDocument.scheduler.routines[routineId] ?? null;
 
     if (routine === null) {
       setStatusMessage("Selected sequence placement no longer exists.");
@@ -5077,11 +5105,17 @@ export function App({ store, initialStatusMessage }: AppProps) {
   };
 
   const resolveSequenceControlTargetOption = (targetKey: string) =>
-    getProjectScheduleTargetOptionByKey(projectScheduleTargetOptions, targetKey);
+    getProjectScheduleTargetOptionByKey(
+      projectScheduleTargetOptions,
+      targetKey
+    );
 
   const createDefaultProjectSequenceControlStep = (
     targetKey: string,
-    previousStep?: Extract<ProjectSequence["effects"][number], { type: "controlEffect" }> | null
+    previousStep?: Extract<
+      ProjectSequence["effects"][number],
+      { type: "controlEffect" }
+    > | null
   ): Extract<ProjectSequence["effects"][number], { type: "controlEffect" }> => {
     const targetOption = resolveSequenceControlTargetOption(targetKey);
 
@@ -5089,7 +5123,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
       throw new Error("The selected sequence control target no longer exists.");
     }
 
-    const effectOption = listProjectScheduleEffectOptions(targetOption)[0] ?? null;
+    const effectOption =
+      listProjectScheduleEffectOptions(targetOption)[0] ?? null;
 
     if (effectOption === null) {
       throw new Error(
@@ -5113,7 +5148,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const createProjectSequenceControlStepFromOption = (
     targetKey: string,
     effectOptionId: ProjectScheduleEffectOptionId,
-    previousStep?: Extract<ProjectSequence["effects"][number], { type: "controlEffect" }> | null
+    previousStep?: Extract<
+      ProjectSequence["effects"][number],
+      { type: "controlEffect" }
+    > | null
   ): Extract<ProjectSequence["effects"][number], { type: "controlEffect" }> => {
     const targetOption = resolveSequenceControlTargetOption(targetKey);
 
@@ -5122,9 +5160,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
 
     return {
-      stepClass: getProjectSequenceControlStepClassForEffectOptionId(
-        effectOptionId
-      ),
+      stepClass:
+        getProjectSequenceControlStepClassForEffectOptionId(effectOptionId),
       type: "controlEffect",
       effect: createProjectScheduleEffectFromOption({
         targetOption,
@@ -5213,8 +5250,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
       "Added NPC dialogue.",
       (dialogues, defaultDialogueId) => ({
         dialogues: [...dialogues, nextDialogue],
-        defaultDialogueId:
-          defaultDialogueId ?? nextDialogue.id
+        defaultDialogueId: defaultDialogueId ?? nextDialogue.id
       })
     );
     setSelectedNpcDialogueId(nextDialogue.id);
@@ -5232,7 +5268,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
           dialogues: nextDialogues,
           defaultDialogueId:
             defaultDialogueId === dialogueId
-              ? nextDialogues[0]?.id ?? null
+              ? (nextDialogues[0]?.id ?? null)
               : defaultDialogueId
         };
       }
@@ -5249,25 +5285,29 @@ export function App({ store, initialStatusMessage }: AppProps) {
     successMessage: string,
     mutate: (dialogue: ProjectDialogue) => void
   ) => {
-    updateSelectedNpcDialogues(label, successMessage, (dialogues, defaultDialogueId) => {
-      const nextDialogues = dialogues.map((dialogue) => {
-        if (dialogue.id !== dialogueId) {
-          return dialogue;
-        }
+    updateSelectedNpcDialogues(
+      label,
+      successMessage,
+      (dialogues, defaultDialogueId) => {
+        const nextDialogues = dialogues.map((dialogue) => {
+          if (dialogue.id !== dialogueId) {
+            return dialogue;
+          }
 
-        const nextDialogue: ProjectDialogue = {
-          ...dialogue,
-          lines: dialogue.lines.map((line) => ({ ...line }))
+          const nextDialogue: ProjectDialogue = {
+            ...dialogue,
+            lines: dialogue.lines.map((line) => ({ ...line }))
+          };
+          mutate(nextDialogue);
+          return nextDialogue;
+        });
+
+        return {
+          dialogues: nextDialogues,
+          defaultDialogueId
         };
-        mutate(nextDialogue);
-        return nextDialogue;
-      });
-
-      return {
-        dialogues: nextDialogues,
-        defaultDialogueId
-      };
-    });
+      }
+    );
   };
 
   const updateNpcDialogueLine = (
@@ -5444,7 +5484,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
         );
 
         if (targetOption === null) {
-          throw new Error("The current sequence control target no longer exists.");
+          throw new Error(
+            "The current sequence control target no longer exists."
+          );
         }
 
         step.effect = createProjectScheduleEffectFromOption({
@@ -5799,7 +5841,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
       "Updated visibility target.",
       (step) => {
         if (step.type !== "setVisibility") {
-          throw new Error("Only visibility effects expose a whitebox solid target.");
+          throw new Error(
+            "Only visibility effects expose a whitebox solid target."
+          );
         }
 
         step.target = target;
@@ -5826,7 +5870,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
       }
     );
   };
-
 
   const updateWorldTimeOfDaySettings = (
     label: string,
@@ -5891,7 +5934,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
     mode: WorldBackgroundMode,
     imageAssetId?: string
   ) => {
-    const currentBackground = editorState.document.world.timeOfDay[phase].background;
+    const currentBackground =
+      editorState.document.world.timeOfDay[phase].background;
 
     if (mode === "image") {
       const currentBackgroundAssetId =
@@ -5959,7 +6003,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
     phase: WorldTimePhaseKey,
     colorHex: string
   ) => {
-    if (editorState.document.world.timeOfDay[phase].background.mode !== "solid") {
+    if (
+      editorState.document.world.timeOfDay[phase].background.mode !== "solid"
+    ) {
       return;
     }
 
@@ -6024,7 +6070,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
     phase: WorldTimePhaseKey,
     draftValue: string
   ) => {
-    if (editorState.document.world.timeOfDay[phase].background.mode !== "image") {
+    if (
+      editorState.document.world.timeOfDay[phase].background.mode !== "image"
+    ) {
       return;
     }
 
@@ -7265,7 +7313,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
     colorHex: overrides.colorHex ?? boxVolumeLightColorDraft,
     intensity:
       overrides.intensity ??
-      readNonNegativeNumberDraft(boxVolumeLightIntensityDraft, "Light intensity"),
+      readNonNegativeNumberDraft(
+        boxVolumeLightIntensityDraft,
+        "Light intensity"
+      ),
     padding:
       overrides.padding ??
       readNonNegativeNumberDraft(boxVolumeLightPaddingDraft, "Light padding"),
@@ -7421,7 +7472,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const handlePlayEditorSimulation = () => {
     setEditorSimulationClockOverride(
       (currentClock) =>
-        currentClock ?? createRuntimeClockState(editorState.projectDocument.time)
+        currentClock ??
+        createRuntimeClockState(editorState.projectDocument.time)
     );
     setEditorSimulationPlaying(true);
   };
@@ -7439,7 +7491,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
     setEditorSimulationPlaying(false);
     setEditorSimulationClockOverride((currentClock) =>
       offsetRuntimeClockState(
-        currentClock ?? createRuntimeClockState(editorState.projectDocument.time),
+        currentClock ??
+          createRuntimeClockState(editorState.projectDocument.time),
         deltaHours
       )
     );
@@ -7941,7 +7994,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
 
     const nextMaterialId = materialId === "" ? null : materialId;
-    const currentMaterialId = selectedTerrain.layers[layerIndex]?.materialId ?? null;
+    const currentMaterialId =
+      selectedTerrain.layers[layerIndex]?.materialId ?? null;
 
     if (currentMaterialId === nextMaterialId) {
       return;
@@ -7967,8 +8021,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
         `${getTerrainLayerLabel(layerIndex)} now uses ${
           nextMaterialId === null
             ? "no assigned material"
-            : editorState.document.materials[nextMaterialId]?.name ??
-              nextMaterialId
+            : (editorState.document.materials[nextMaterialId]?.name ??
+              nextMaterialId)
         }.`
       );
     } catch (error) {
@@ -8226,7 +8280,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
   };
 
   const handleTerrainCollisionEnabledChange = (enabled: boolean) => {
-    if (selectedTerrain === null || selectedTerrain.collisionEnabled === enabled) {
+    if (
+      selectedTerrain === null ||
+      selectedTerrain.collisionEnabled === enabled
+    ) {
       return;
     }
 
@@ -8599,7 +8656,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const updateSelectedNpcDialogues = (
     _label: string,
     successMessage: string,
-    mutate: (dialogues: ProjectDialogue[], defaultDialogueId: string | null) => {
+    mutate: (
+      dialogues: ProjectDialogue[],
+      defaultDialogueId: string | null
+    ) => {
       dialogues: ProjectDialogue[];
       defaultDialogueId: string | null;
     }
@@ -9553,7 +9613,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
         createRunSequenceInteractionLink({
           id: link.id,
           sourceEntityId: sourceEntity.id,
-          trigger: getCanonicalInteractionLinkTrigger(sourceEntity, link.trigger),
+          trigger: getCanonicalInteractionLinkTrigger(
+            sourceEntity,
+            link.trigger
+          ),
           sequenceId: defaultSequence.id
         }),
         "Switched link action to run sequence."
@@ -10214,7 +10277,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         <button
                           className="toolbar__button toolbar__button--compact"
                           type="button"
-                          onClick={() => openSequencerSequenceEditor(sequenceId)}
+                          onClick={() =>
+                            openSequencerSequenceEditor(sequenceId)
+                          }
                         >
                           Edit in Sequencer
                         </button>
@@ -10525,10 +10590,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
   };
 
-  const applyShaderSkyDayColor = (
-    edge: "top" | "bottom",
-    colorHex: string
-  ) => {
+  const applyShaderSkyDayColor = (edge: "top" | "bottom", colorHex: string) => {
     applyShaderSkySettings(
       edge === "top"
         ? "Set shader sky day top color"
@@ -11462,7 +11524,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
       materialInspectorScope === "brush"
     ) {
       if (selectedBrushSharedMaterialId === materialId) {
-        setStatusMessage("All faces on the selected whitebox already use that material.");
+        setStatusMessage(
+          "All faces on the selected whitebox already use that material."
+        );
         return;
       }
 
@@ -11520,7 +11584,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
       whiteboxSelectionMode === "object" &&
       materialInspectorScope === "brush"
     ) {
-      if (selectedBrushSharedMaterialId === null && !selectedBrushHasMixedFaceMaterials) {
+      if (
+        selectedBrushSharedMaterialId === null &&
+        !selectedBrushHasMixedFaceMaterials
+      ) {
         setStatusMessage(
           "All faces on the selected whitebox already use the fallback face material."
         );
@@ -11700,7 +11767,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
           })
         })
       );
-      setStatusMessage("Rotated all face UVs 90 degrees on the selected whitebox.");
+      setStatusMessage(
+        "Rotated all face UVs 90 degrees on the selected whitebox."
+      );
       return;
     }
 
@@ -11777,7 +11846,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
             const currentMaterial =
               currentMaterialId === null
                 ? null
-                : editorState.document.materials[currentMaterialId] ?? null;
+                : (editorState.document.materials[currentMaterialId] ?? null);
 
             return currentMaterial === null
               ? createFitToFaceBoxBrushFaceUvState(selectedBrush, faceId)
@@ -12512,8 +12581,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
               <div className="label">Whitebox Solids</div>
               {brushList.length === 0 ? (
                 <div className="outliner-empty">
-                  Use Add &gt; Whitebox Primitives &gt; Box and click in the viewport to create
-                  the first solid.
+                  Use Add &gt; Whitebox Primitives &gt; Box and click in the
+                  viewport to create the first solid.
                 </div>
               ) : (
                 <div
@@ -13117,9 +13186,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   canTranslateSelectedTarget={canTranslateSelectedTarget}
                   canRotateSelectedTarget={canRotateSelectedTarget}
                   canScaleSelectedTarget={canScaleSelectedTarget}
-                  canSurfaceSnapTransformTarget={
-                    canSurfaceSnapTransformTarget
-                  }
+                  canSurfaceSnapTransformTarget={canSurfaceSnapTransformTarget}
                   cameraState={editorState.viewportPanels[panelId].cameraState}
                   focusRequestId={
                     focusRequest.panelId === panelId ? focusRequest.id : 0
@@ -13229,7 +13296,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   onDeleteRoutine={handleDeleteScheduleRoutine}
                   onDeleteSequence={handleDeleteProjectSequence}
                   onClose={() => setSchedulePaneOpen(false)}
-                  onCreateRoutineSequence={handleCreateAttachedSequenceForRoutine}
+                  onCreateRoutineSequence={
+                    handleCreateAttachedSequenceForRoutine
+                  }
                   onSetRoutineTarget={(routineId, targetKey) =>
                     updateProjectSequencerState(
                       "Set project sequencer target",
@@ -13251,20 +13320,24 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           );
                         }
 
-                        const previousTargetKey = getControlTargetRefKey(routine.target);
+                        const previousTargetKey = getControlTargetRefKey(
+                          routine.target
+                        );
 
                         if (targetOption.target.kind === "actor") {
                           const attachedSequence =
                             routine.sequenceId === null
                               ? null
-                              : sequences.sequences[routine.sequenceId] ?? null;
+                              : (sequences.sequences[routine.sequenceId] ??
+                                null);
 
                           routine.target = targetOption.target;
                           routine.effects = [];
 
                           if (
                             attachedSequence !== null &&
-                            getProjectSequenceHeldSteps(attachedSequence).length > 0
+                            getProjectSequenceHeldSteps(attachedSequence)
+                              .length > 0
                           ) {
                             const retargetedSequence =
                               cloneSequenceForRetargetedPlacement({
@@ -13277,11 +13350,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
                             routine.sequenceId = retargetedSequence.id;
                             setSelectedSequenceId(retargetedSequence.id);
                           } else {
-                            const nextSequence = createAttachedSequenceForRoutine({
-                              title: routine.title,
-                              targetOption,
-                              routine
-                            });
+                            const nextSequence =
+                              createAttachedSequenceForRoutine({
+                                title: routine.title,
+                                targetOption,
+                                routine
+                              });
                             sequences.sequences[nextSequence.id] = nextSequence;
                             routine.sequenceId = nextSequence.id;
                             setSelectedSequenceId(nextSequence.id);
@@ -13293,7 +13367,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           const attachedSequence =
                             routine.sequenceId === null
                               ? null
-                              : sequences.sequences[routine.sequenceId] ?? null;
+                              : (sequences.sequences[routine.sequenceId] ??
+                                null);
 
                           routine.target = targetOption.target;
                           routine.effects = [];
@@ -13304,7 +13379,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               attachedSequence === null
                                 ? []
                                 : attachedSequence.effects
-                                    .filter((effect) => effect.stepClass === "impulse")
+                                    .filter(
+                                      (effect) => effect.stepClass === "impulse"
+                                    )
                                     .map(cloneSequenceEffect)
                           });
                           sequences.sequences[nextSequence.id] = nextSequence;
@@ -13319,13 +13396,13 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         const nextEffectOptionId =
                           currentPrimaryEffect === null
                             ? effectOptions[0]?.id
-                            : effectOptions.find(
+                            : (effectOptions.find(
                                 (effectOption) =>
                                   effectOption.id ===
                                   getProjectScheduleEffectOptionId(
                                     currentPrimaryEffect
                                   )
-                              )?.id ?? effectOptions[0]?.id;
+                              )?.id ?? effectOptions[0]?.id);
 
                         if (nextEffectOptionId === undefined) {
                           throw new Error(
@@ -13336,20 +13413,22 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         const attachedSequence =
                           routine.sequenceId === null
                             ? null
-                            : sequences.sequences[routine.sequenceId] ?? null;
+                            : (sequences.sequences[routine.sequenceId] ?? null);
 
                         routine.target = targetOption.target;
                         routine.effects = [];
 
                         if (
                           attachedSequence !== null &&
-                          getProjectSequenceHeldSteps(attachedSequence).length > 0
+                          getProjectSequenceHeldSteps(attachedSequence).length >
+                            0
                         ) {
-                          const retargetedSequence = cloneSequenceForRetargetedPlacement({
-                            sequence: attachedSequence,
-                            targetOption,
-                            previousTargetKey
-                          });
+                          const retargetedSequence =
+                            cloneSequenceForRetargetedPlacement({
+                              sequence: attachedSequence,
+                              targetOption,
+                              previousTargetKey
+                            });
                           sequences.sequences[retargetedSequence.id] =
                             retargetedSequence;
                           routine.sequenceId = retargetedSequence.id;
@@ -13473,7 +13552,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   }
                   onAddVisibilityStep={handleAddProjectSequenceVisibilityStep}
                   onDeleteStep={handleDeleteProjectSequenceStep}
-                  onSetControlStepTarget={updateProjectSequenceControlStepTarget}
+                  onSetControlStepTarget={
+                    updateProjectSequenceControlStepTarget
+                  }
                   onSetControlStepEffectOption={
                     updateProjectSequenceControlStepEffectOption
                   }
@@ -13489,7 +13570,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   onSetControlStepAnimationLoop={
                     updateProjectSequenceControlStepAnimationLoop
                   }
-                  onSetControlStepPathId={updateProjectSequenceControlStepPathId}
+                  onSetControlStepPathId={
+                    updateProjectSequenceControlStepPathId
+                  }
                   onSetControlStepPathSpeed={
                     updateProjectSequenceControlStepPathSpeed
                   }
@@ -13602,8 +13685,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   <div className="label">Clock</div>
                   <div className="value">
                     Day {editorSimulationClock.dayCount + 1} ·{" "}
-                    {formatTimeOfDayHours(editorSimulationClock.timeOfDayHours)} ·{" "}
-                    {formatRuntimeDayPhaseLabel(editorSimulationTimeState.dayPhase)}
+                    {formatTimeOfDayHours(editorSimulationClock.timeOfDayHours)}{" "}
+                    ·{" "}
+                    {formatRuntimeDayPhaseLabel(
+                      editorSimulationTimeState.dayPhase
+                    )}
                   </div>
                   <div className="material-summary">
                     {editorSimulationClockOverride === null
@@ -13656,7 +13742,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     </button>
                   </div>
                   {editorSimulationMessage === null ? null : (
-                    <div className="material-summary">{editorSimulationMessage}</div>
+                    <div className="material-summary">
+                      {editorSimulationMessage}
+                    </div>
                   )}
                 </div>
 
@@ -14009,8 +14097,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   </label>
                   <div className="material-summary">
                     Draws sun and moon visuals in both the editor viewport and
-                    the runner. In shader mode, the sky shader owns those
-                    discs directly.
+                    the runner. In shader mode, the sky shader owns those discs
+                    directly.
                   </div>
                 </div>
 
@@ -14890,16 +14978,19 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         <div
                           className="world-background-preview"
                           style={createWorldBackgroundStyle(
-                            editorState.document.world.timeOfDay.dawn.background,
+                            editorState.document.world.timeOfDay.dawn
+                              .background,
                             getWorldBackgroundImagePreviewUrl(
-                              editorState.document.world.timeOfDay.dawn.background,
+                              editorState.document.world.timeOfDay.dawn
+                                .background,
                               loadedImageAssets
                             )
                           )}
                         />
                         <div className="material-summary">
                           {describeWorldBackground(
-                            editorState.document.world.timeOfDay.dawn.background,
+                            editorState.document.world.timeOfDay.dawn
+                              .background,
                             editorState.document.assets,
                             {
                               emptyImageLabel:
@@ -15176,16 +15267,19 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         <div
                           className="world-background-preview"
                           style={createWorldBackgroundStyle(
-                            editorState.document.world.timeOfDay.dusk.background,
+                            editorState.document.world.timeOfDay.dusk
+                              .background,
                             getWorldBackgroundImagePreviewUrl(
-                              editorState.document.world.timeOfDay.dusk.background,
+                              editorState.document.world.timeOfDay.dusk
+                                .background,
                               loadedImageAssets
                             )
                           )}
                         />
                         <div className="material-summary">
                           {describeWorldBackground(
-                            editorState.document.world.timeOfDay.dusk.background,
+                            editorState.document.world.timeOfDay.dusk
+                              .background,
                             editorState.document.assets,
                             {
                               emptyImageLabel:
@@ -16498,7 +16592,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 <>
                   <div className="stat-card">
                     <div className="label">Selection Kind</div>
-                    <div className="value">{multiSelectionSummary.kindLabel}</div>
+                    <div className="value">
+                      {multiSelectionSummary.kindLabel}
+                    </div>
                     <div className="material-summary">
                       {multiSelectionSummary.count} selected
                     </div>
@@ -16506,7 +16602,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
                   <div className="stat-card">
                     <div className="label">Active Item</div>
-                    <div className="value">{multiSelectionSummary.activeLabel}</div>
+                    <div className="value">
+                      {multiSelectionSummary.activeLabel}
+                    </div>
                     <div className="material-summary">
                       {multiSelectionSummary.activeId}
                     </div>
@@ -16535,7 +16633,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                                   : "Selected"}
                               </span>
                             </div>
-                            <span className="outliner-item__meta">{item.id}</span>
+                            <span className="outliner-item__meta">
+                              {item.id}
+                            </span>
                           </div>
                         </div>
                       ))}
@@ -16550,7 +16650,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       {getTerrainLabelById(selectedTerrain.id, terrainList)}
                     </div>
                     <div className="material-summary">
-                      {selectedTerrain.sampleCountX} x {selectedTerrain.sampleCountZ} samples
+                      {selectedTerrain.sampleCountX} x{" "}
+                      {selectedTerrain.sampleCountZ} samples
                       {" · "}
                       {selectedTerrain.cellSize}m cells
                     </div>
@@ -16572,7 +16673,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   <div className="form-section">
                     <div className="label">Collision</div>
                     <label className="form-field form-field--toggle">
-                      <span className="label">Enable runner heightfield collision</span>
+                      <span className="label">
+                        Enable runner heightfield collision
+                      </span>
                       <input
                         data-testid="terrain-collision-enabled"
                         type="checkbox"
@@ -16585,8 +16688,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       />
                     </label>
                     <div className="material-summary">
-                      Hidden terrain keeps collision. Disabled terrain is removed
-                      from editor picking, rendering, and runtime collision.
+                      Hidden terrain keeps collision. Disabled terrain is
+                      removed from editor picking, rendering, and runtime
+                      collision.
                     </div>
                   </div>
 
@@ -16769,7 +16873,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         data-testid="terrain-paint-active-layer"
                         value={resolvedTerrainPaintLayerIndex}
                         onChange={(event) =>
-                          handleTerrainPaintLayerChange(event.currentTarget.value)
+                          handleTerrainPaintLayerChange(
+                            event.currentTarget.value
+                          )
                         }
                       >
                         {Array.from(
@@ -16783,7 +16889,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       </select>
                     </label>
                     <div className="material-summary">
-                      {getTerrainLayerLabel(resolvedTerrainPaintLayerIndex)} uses{" "}
+                      {getTerrainLayerLabel(resolvedTerrainPaintLayerIndex)}{" "}
+                      uses{" "}
                       {selectedTerrainActivePaintMaterial?.name ??
                         selectedTerrainActivePaintLayer?.materialId ??
                         "no assigned material"}
@@ -16791,10 +16898,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     </div>
                     <div className="terrain-layer-list">
                       {selectedTerrain.layers.map((layer, layerIndex) => (
-                        <label
-                          key={layerIndex}
-                          className="form-field"
-                        >
+                        <label key={layerIndex} className="form-field">
                           <span className="label">
                             {getTerrainLayerLabel(layerIndex)}
                           </span>
@@ -16900,7 +17004,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   <div className="form-section">
                     <div className="label">Origin</div>
                     <div className="material-summary">
-                      X {selectedTerrain.position.x} · Y {selectedTerrain.position.y} · Z{" "}
+                      X {selectedTerrain.position.x} · Y{" "}
+                      {selectedTerrain.position.y} · Z{" "}
                       {selectedTerrain.position.z}
                     </div>
                   </div>
@@ -19454,9 +19559,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
                         <div className="material-summary">
                           These bindings feed the same typed movement,
-                          locomotion, system, and camera actions in First
-                          Person and Third Person. Mouse look stays available
-                          as before.
+                          locomotion, system, and camera actions in First Person
+                          and Third Person. Mouse look stays available as
+                          before.
                         </div>
                       </div>
                     </>
@@ -19605,7 +19710,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               "Rename NPC dialogue",
                               "Updated NPC dialogue title.",
                               (dialogue) => {
-                                dialogue.title = title.trim() || "Untitled Dialogue";
+                                dialogue.title =
+                                  title.trim() || "Untitled Dialogue";
                               }
                             )
                           }
@@ -19615,7 +19721,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               "Add NPC dialogue line",
                               "Added NPC dialogue line.",
                               (dialogue) => {
-                                dialogue.lines.push(createProjectDialogueLine());
+                                dialogue.lines.push(
+                                  createProjectDialogueLine()
+                                );
                               }
                             )
                           }
@@ -20432,7 +20540,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       )}
                     </>
                   ) : null}
-
                 </>
               ) : selectedBrush === null ? (
                 <div className="outliner-empty">

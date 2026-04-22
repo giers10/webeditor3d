@@ -21,7 +21,9 @@ describe("world settings helpers", () => {
     expect(clone.shaderSky.clouds).not.toBe(source.shaderSky.clouds);
     expect(clone.sunLight.direction).not.toBe(source.sunLight.direction);
     expect(clone.advancedRendering).not.toBe(source.advancedRendering);
-    expect(clone.advancedRendering.shadows).not.toBe(source.advancedRendering.shadows);
+    expect(clone.advancedRendering.shadows).not.toBe(
+      source.advancedRendering.shadows
+    );
     expect(clone.advancedRendering.whiteboxBevel).not.toBe(
       source.advancedRendering.whiteboxBevel
     );
@@ -59,7 +61,11 @@ describe("world settings helpers", () => {
       environmentIntensity: 0.5
     });
 
-    const nextImageBackground = changeWorldBackgroundMode(imageBackground, "image", "asset-background-panorama-2");
+    const nextImageBackground = changeWorldBackgroundMode(
+      imageBackground,
+      "image",
+      "asset-background-panorama-2"
+    );
 
     expect(nextImageBackground).toEqual({
       mode: "image",
@@ -121,7 +127,8 @@ describe("world settings helpers", () => {
     expect(areWorldSettingsEqual(left, right)).toBe(false);
 
     right.sunLight.direction.x = left.sunLight.direction.x;
-    right.advancedRendering.bloom.intensity = right.advancedRendering.bloom.intensity + 0.1;
+    right.advancedRendering.bloom.intensity =
+      right.advancedRendering.bloom.intensity + 0.1;
 
     expect(areWorldSettingsEqual(left, right)).toBe(false);
   });

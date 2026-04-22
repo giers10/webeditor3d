@@ -6,7 +6,10 @@ import {
   createPlayActorAnimationControlEffect,
   createSetActorPresenceControlEffect
 } from "../../src/controls/control-surface";
-import { createBoxBrush, deriveBoxBrushSizeFromGeometry } from "../../src/document/brushes";
+import {
+  createBoxBrush,
+  deriveBoxBrushSizeFromGeometry
+} from "../../src/document/brushes";
 import { createScenePath } from "../../src/document/paths";
 import { createDefaultProjectTimeSettings } from "../../src/document/project-time-settings";
 import { createTerrain } from "../../src/document/terrains";
@@ -69,8 +72,16 @@ import {
 } from "../../src/interactions/interaction-links";
 import { STARTER_MATERIAL_LIBRARY } from "../../src/materials/starter-material-library";
 import { createModelInstance } from "../../src/assets/model-instances";
-import { createProjectAssetStorageKey, type AudioAssetRecord, type ImageAssetRecord, type ModelAssetRecord } from "../../src/assets/project-assets";
-import { parseSceneDocumentJson, serializeSceneDocument } from "../../src/serialization/scene-document-json";
+import {
+  createProjectAssetStorageKey,
+  type AudioAssetRecord,
+  type ImageAssetRecord,
+  type ModelAssetRecord
+} from "../../src/assets/project-assets";
+import {
+  parseSceneDocumentJson,
+  serializeSceneDocument
+} from "../../src/serialization/scene-document-json";
 
 describe("scene document JSON", () => {
   it("round-trips the current empty schema", () => {
@@ -125,7 +136,9 @@ describe("scene document JSON", () => {
     );
 
     expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
-    expect(migratedDocument.world.background).toEqual(document.world.background);
+    expect(migratedDocument.world.background).toEqual(
+      document.world.background
+    );
     expect(migratedDocument.world.shaderSky.dayTopColorHex).toBe("#335577");
     expect(migratedDocument.world.shaderSky.dayBottomColorHex).toBe("#aaccee");
   });
@@ -238,9 +251,9 @@ describe("scene document JSON", () => {
         })
       });
 
-    expect(
-      parseSceneDocumentJson(serializeSceneDocument(document))
-    ).toEqual(document);
+    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(
+      document
+    );
   });
 
   it("round-trips actor scheduler animation and follow-path routines in the scene document schema", () => {
@@ -277,35 +290,36 @@ describe("scene document JSON", () => {
     document.assets[npcModelAsset.id] = npcModelAsset;
     document.entities[npc.id] = npc;
     document.paths[path.id] = path;
-    document.scheduler.routines["routine-patrol"] = createProjectScheduleRoutine({
-      id: "routine-patrol",
-      title: "Patrolling",
-      target: actorTarget,
-      startHour: 9,
-      endHour: 13,
-      effects: [
-        createSetActorPresenceControlEffect({
-          target: actorTarget,
-          active: true
-        }),
-        createPlayActorAnimationControlEffect({
-          target: actorTarget,
-          clipName: "Walk",
-          loop: true
-        }),
-        createFollowActorPathControlEffect({
-          target: actorTarget,
-          pathId: path.id,
-          speed: 2,
-          loop: false,
-          progressMode: "deriveFromTime"
-        })
-      ]
-    });
+    document.scheduler.routines["routine-patrol"] =
+      createProjectScheduleRoutine({
+        id: "routine-patrol",
+        title: "Patrolling",
+        target: actorTarget,
+        startHour: 9,
+        endHour: 13,
+        effects: [
+          createSetActorPresenceControlEffect({
+            target: actorTarget,
+            active: true
+          }),
+          createPlayActorAnimationControlEffect({
+            target: actorTarget,
+            clipName: "Walk",
+            loop: true
+          }),
+          createFollowActorPathControlEffect({
+            target: actorTarget,
+            pathId: path.id,
+            speed: 2,
+            loop: false,
+            progressMode: "deriveFromTime"
+          })
+        ]
+      });
 
-    expect(
-      parseSceneDocumentJson(serializeSceneDocument(document))
-    ).toEqual(document);
+    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(
+      document
+    );
   });
 
   it("round-trips a document containing a canonical box brush", () => {
@@ -331,7 +345,9 @@ describe("scene document JSON", () => {
       }
     };
 
-    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(document);
+    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(
+      document
+    );
   });
 
   it("round-trips floating-point whitebox box transforms without accidental snapping", () => {
@@ -361,7 +377,9 @@ describe("scene document JSON", () => {
       }
     };
 
-    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(document);
+    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(
+      document
+    );
   });
 
   it("round-trips per-face material and UV state", () => {
@@ -401,7 +419,9 @@ describe("scene document JSON", () => {
       }
     };
 
-    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(document);
+    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(
+      document
+    );
   });
 
   it("round-trips whitebox box volume settings", () => {
@@ -450,7 +470,9 @@ describe("scene document JSON", () => {
       }
     };
 
-    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(document);
+    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(
+      document
+    );
   });
 
   it("migrates pre-light-volume documents to the current schema version", () => {
@@ -512,11 +534,15 @@ describe("scene document JSON", () => {
       }
     };
 
-    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(document);
+    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(
+      document
+    );
   });
 
   it("round-trips authored world environment settings", () => {
-    const document = createEmptySceneDocument({ name: "World Environment Scene" });
+    const document = createEmptySceneDocument({
+      name: "World Environment Scene"
+    });
     document.world.background = {
       mode: "verticalGradient",
       topColorHex: "#6a87ab",
@@ -536,11 +562,15 @@ describe("scene document JSON", () => {
       }
     };
 
-    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(document);
+    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(
+      document
+    );
   });
 
   it("round-trips authored advanced rendering settings", () => {
-    const document = createEmptySceneDocument({ name: "Advanced Rendering Scene" });
+    const document = createEmptySceneDocument({
+      name: "Advanced Rendering Scene"
+    });
     document.world.advancedRendering = {
       enabled: true,
       shadows: {
@@ -581,7 +611,9 @@ describe("scene document JSON", () => {
       }
     };
 
-    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(document);
+    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(
+      document
+    );
   });
 
   it("migrates v32 scene documents without whitebox bevel settings to defaults", () => {
@@ -627,7 +659,9 @@ describe("scene document JSON", () => {
           waterPath: "quality"
         }
       },
-      materials: STARTER_MATERIAL_LIBRARY.reduce<Record<string, (typeof STARTER_MATERIAL_LIBRARY)[number]>>((registry, material) => {
+      materials: STARTER_MATERIAL_LIBRARY.reduce<
+        Record<string, (typeof STARTER_MATERIAL_LIBRARY)[number]>
+      >((registry, material) => {
         registry[material.id] = material;
         return registry;
       }, {}),
@@ -652,7 +686,9 @@ describe("scene document JSON", () => {
       interactionLinks: {}
     } as unknown);
 
-    expect(migratedDocument.world.advancedRendering.waterReflectionMode).toBe("none");
+    expect(migratedDocument.world.advancedRendering.waterReflectionMode).toBe(
+      "none"
+    );
     expect(migratedDocument.brushes["brush-water-legacy"]?.volume).toEqual({
       mode: "water",
       water: expect.objectContaining({
@@ -663,8 +699,11 @@ describe("scene document JSON", () => {
   });
 
   it("migrates legacy documents without advanced rendering settings to defaults", () => {
-    const emptyScene = createEmptySceneDocument({ name: "Legacy Advanced Rendering Scene" });
-    const { advancedRendering: _advancedRendering, ...legacyWorld } = emptyScene.world;
+    const emptyScene = createEmptySceneDocument({
+      name: "Legacy Advanced Rendering Scene"
+    });
+    const { advancedRendering: _advancedRendering, ...legacyWorld } =
+      emptyScene.world;
 
     const migratedDocument = migrateSceneDocument({
       version: SPATIAL_AUDIO_SCENE_DOCUMENT_VERSION,
@@ -680,7 +719,9 @@ describe("scene document JSON", () => {
     });
 
     expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
-    expect(migratedDocument.world.advancedRendering).toEqual(emptyScene.world.advancedRendering);
+    expect(migratedDocument.world.advancedRendering).toEqual(
+      emptyScene.world.advancedRendering
+    );
   });
 
   it("round-trips authored local lights and an image background asset", () => {
@@ -743,7 +784,9 @@ describe("scene document JSON", () => {
       environmentIntensity: 0.75
     };
 
-    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(document);
+    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(
+      document
+    );
   });
 
   it("round-trips a document containing an authored PlayerStart entity", () => {
@@ -823,7 +866,9 @@ describe("scene document JSON", () => {
       }
     };
 
-    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(document);
+    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(
+      document
+    );
   });
 
   it("migrates version 14 documents without entity names", () => {
@@ -920,7 +965,10 @@ describe("scene document JSON", () => {
     });
 
     expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
-    expect(migratedDocument.modelInstances["model-instance-legacy-collider"].collision).toEqual({
+    expect(
+      migratedDocument.modelInstances["model-instance-legacy-collider"]
+        .collision
+    ).toEqual({
       mode: "none",
       visible: false
     });
@@ -1128,7 +1176,9 @@ describe("scene document JSON", () => {
       id: "entity-player-start-legacy-pause-binding"
     });
     const legacyDocument = {
-      ...createEmptySceneDocument({ name: "Legacy Player Pause Binding Scene" }),
+      ...createEmptySceneDocument({
+        name: "Legacy Player Pause Binding Scene"
+      }),
       version: NPC_DIALOGUE_REFERENCE_SCENE_DOCUMENT_VERSION,
       entities: {
         [playerStart.id]: {
@@ -1331,10 +1381,8 @@ describe("scene document JSON", () => {
         kind: "responsive"
       }
     });
-    const {
-      directionOnly: _directionOnly,
-      ...legacyJump
-    } = playerStart.movementTemplate.jump;
+    const { directionOnly: _directionOnly, ...legacyJump } =
+      playerStart.movementTemplate.jump;
     const legacyDocument = {
       ...createEmptySceneDocument({
         name: "Legacy Player Air Direction Scene"
@@ -1366,7 +1414,9 @@ describe("scene document JSON", () => {
       kind: "model",
       sourceName: "legacy-authored-state.glb",
       mimeType: "model/gltf-binary",
-      storageKey: createProjectAssetStorageKey("asset-model-authored-state-legacy"),
+      storageKey: createProjectAssetStorageKey(
+        "asset-model-authored-state-legacy"
+      ),
       byteLength: 2048,
       metadata: {
         kind: "model",
@@ -1539,7 +1589,9 @@ describe("scene document JSON", () => {
       }
     };
 
-    const roundTripDocument = parseSceneDocumentJson(serializeSceneDocument(document));
+    const roundTripDocument = parseSceneDocumentJson(
+      serializeSceneDocument(document)
+    );
 
     expect(roundTripDocument).toEqual(document);
     expect(roundTripDocument.modelInstances).toEqual({});
@@ -1655,7 +1707,9 @@ describe("scene document JSON", () => {
       }
     };
 
-    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(document);
+    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(
+      document
+    );
   });
 
   it("round-trips imported model assets and placed model instances", () => {
@@ -1725,7 +1779,9 @@ describe("scene document JSON", () => {
       }
     };
 
-    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(document);
+    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(
+      document
+    );
   });
 
   it("round-trips authored model-instance collision settings", () => {
@@ -1783,7 +1839,9 @@ describe("scene document JSON", () => {
       }
     };
 
-    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(document);
+    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(
+      document
+    );
   });
 
   it("round-trips authored static-simple model-instance collision settings", () => {
@@ -1792,7 +1850,9 @@ describe("scene document JSON", () => {
       kind: "model",
       sourceName: "collision-static-simple.glb",
       mimeType: "model/gltf-binary",
-      storageKey: createProjectAssetStorageKey("asset-model-static-simple-collider"),
+      storageKey: createProjectAssetStorageKey(
+        "asset-model-static-simple-collider"
+      ),
       byteLength: 64,
       metadata: {
         kind: "model",
@@ -1832,7 +1892,9 @@ describe("scene document JSON", () => {
       }
     });
     const document = {
-      ...createEmptySceneDocument({ name: "Static Simple Model Collision Scene" }),
+      ...createEmptySceneDocument({
+        name: "Static Simple Model Collision Scene"
+      }),
       assets: {
         [asset.id]: asset
       },
@@ -1841,7 +1903,9 @@ describe("scene document JSON", () => {
       }
     };
 
-    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(document);
+    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(
+      document
+    );
   });
 
   it("migrates version 29 scene documents to preserve existing model collision settings", () => {
@@ -1904,7 +1968,9 @@ describe("scene document JSON", () => {
     const migratedDocument = migrateSceneDocument(legacyDocument);
 
     expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
-    expect(migratedDocument.modelInstances["model-instance-v29-collider"].collision).toEqual({
+    expect(
+      migratedDocument.modelInstances["model-instance-v29-collider"].collision
+    ).toEqual({
       mode: "dynamic",
       visible: true
     });
@@ -1957,7 +2023,9 @@ describe("scene document JSON", () => {
       }
     };
 
-    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(document);
+    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(
+      document
+    );
   });
 
   it("migrates the foundation schema to the current schema version", () => {
@@ -1977,7 +2045,9 @@ describe("scene document JSON", () => {
     expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
     expect(migratedDocument.brushes).toEqual({});
     expect(migratedDocument.name).toBe("Foundation Scene");
-    expect(Object.keys(migratedDocument.materials)).toEqual(STARTER_MATERIAL_LIBRARY.map((material) => material.id));
+    expect(Object.keys(migratedDocument.materials)).toEqual(
+      STARTER_MATERIAL_LIBRARY.map((material) => material.id)
+    );
   });
 
   it("migrates NPC foundation entities to include default collider settings", () => {
@@ -2150,7 +2220,9 @@ describe("scene document JSON", () => {
     });
 
     expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
-    expect(migratedDocument.brushes["brush-legacy"].faces.posZ.materialId).toBe("starter-amber-grid");
+    expect(migratedDocument.brushes["brush-legacy"].faces.posZ.materialId).toBe(
+      "starter-amber-grid"
+    );
     expect(migratedDocument.brushes["brush-legacy"].faces.posZ.uv).toEqual({
       offset: {
         x: 0,
@@ -2284,10 +2356,12 @@ describe("scene document JSON", () => {
 
     expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
     expect(migratedDocument.brushes["brush-room-shell"].name).toBeUndefined();
-    expect(migratedDocument.entities["entity-player-start-main"]).toMatchObject({
-      kind: "playerStart",
-      yawDegrees: 45
-    });
+    expect(migratedDocument.entities["entity-player-start-main"]).toMatchObject(
+      {
+        kind: "playerStart",
+        yawDegrees: 45
+      }
+    );
   });
 
   it("migrates slice 1.4 documents to the world-environment schema without changing authored solid backgrounds", () => {
@@ -2395,10 +2469,12 @@ describe("scene document JSON", () => {
     });
 
     expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
-    expect(migratedDocument.entities["entity-player-start-main"]).toMatchObject({
-      kind: "playerStart",
-      yawDegrees: 90
-    });
+    expect(migratedDocument.entities["entity-player-start-main"]).toMatchObject(
+      {
+        kind: "playerStart",
+        yawDegrees: 90
+      }
+    );
   });
 
   it("migrates slice 2.1 documents to the interaction-link schema with empty interaction links", () => {
@@ -2549,8 +2625,12 @@ describe("scene document JSON", () => {
     });
 
     expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
-    expect(migratedDocument.modelInstances["mi-1"].animationClipName).toBeUndefined();
-    expect(migratedDocument.modelInstances["mi-1"].animationAutoplay).toBeUndefined();
+    expect(
+      migratedDocument.modelInstances["mi-1"].animationClipName
+    ).toBeUndefined();
+    expect(
+      migratedDocument.modelInstances["mi-1"].animationAutoplay
+    ).toBeUndefined();
   });
 
   it("migrates v12 sound emitters to the current schema version", () => {
@@ -2604,7 +2684,8 @@ describe("scene document JSON", () => {
 
   it("migrates v13 documents without the advanced rendering block to the current schema version", () => {
     const emptyScene = createEmptySceneDocument();
-    const { advancedRendering: _advancedRendering, ...legacyWorld } = emptyScene.world;
+    const { advancedRendering: _advancedRendering, ...legacyWorld } =
+      emptyScene.world;
 
     const migratedDocument = migrateSceneDocument({
       version: SPATIAL_AUDIO_SCENE_DOCUMENT_VERSION,
@@ -2620,7 +2701,9 @@ describe("scene document JSON", () => {
     });
 
     expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
-    expect(migratedDocument.world.advancedRendering).toEqual(emptyScene.world.advancedRendering);
+    expect(migratedDocument.world.advancedRendering).toEqual(
+      emptyScene.world.advancedRendering
+    );
   });
 
   it("migrates v19 whitebox boxes without volume settings to the current schema version", () => {
@@ -2658,9 +2741,15 @@ describe("scene document JSON", () => {
     } as any);
 
     expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
-    expect(migratedDocument.brushes["brush-legacy"].volume).toEqual({ mode: "none" });
-    expect(migratedDocument.world.advancedRendering.fogPath).toBe("performance");
-    expect(migratedDocument.world.advancedRendering.waterPath).toBe("performance");
+    expect(migratedDocument.brushes["brush-legacy"].volume).toEqual({
+      mode: "none"
+    });
+    expect(migratedDocument.world.advancedRendering.fogPath).toBe(
+      "performance"
+    );
+    expect(migratedDocument.world.advancedRendering.waterPath).toBe(
+      "performance"
+    );
   });
 
   it("round-trips authored playAnimation and stopAnimation interaction links", () => {
@@ -2717,7 +2806,9 @@ describe("scene document JSON", () => {
       }
     };
 
-    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(document);
+    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(
+      document
+    );
   });
 
   it("rejects a v12 document where a playAnimation action has an empty clipName", () => {

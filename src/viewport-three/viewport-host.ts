@@ -97,10 +97,7 @@ import {
   type ModelInstance
 } from "../assets/model-instances";
 import type { SceneDocument } from "../document/scene-document";
-import {
-  getScenePaths,
-  type ScenePath
-} from "../document/paths";
+import { getScenePaths, type ScenePath } from "../document/paths";
 import {
   areTerrainsEqual,
   cloneTerrain,
@@ -171,9 +168,7 @@ import {
   transformBrushWorldPointToLocal,
   transformBrushWorldVectorToLocal
 } from "../geometry/whitebox-brush";
-import {
-  buildBoxBrushDerivedMeshData
-} from "../geometry/box-brush-mesh";
+import { buildBoxBrushDerivedMeshData } from "../geometry/box-brush-mesh";
 import { buildTerrainDerivedMeshData } from "../geometry/terrain-mesh";
 import {
   applyTerrainBrushStamp,
@@ -237,9 +232,7 @@ import {
   resolveViewportDocumentBounds,
   resolveViewportFocusTarget
 } from "./viewport-focus";
-import {
-  createSoundEmitterMarkerMeshes
-} from "./viewport-entity-markers";
+import { createSoundEmitterMarkerMeshes } from "./viewport-entity-markers";
 import {
   resolveRuntimeTimeState,
   resolveRuntimeDayNightWorldState,
@@ -519,7 +512,10 @@ export class ViewportHost {
   private readonly transformIntersection = new Vector3();
   private readonly transformGizmoGroup = new Group();
   private readonly brushRenderObjects = new Map<string, BrushRenderObjects>();
-  private readonly terrainRenderObjects = new Map<string, TerrainRenderObjects>();
+  private readonly terrainRenderObjects = new Map<
+    string,
+    TerrainRenderObjects
+  >();
   private readonly pathRenderObjects = new Map<string, PathRenderObjects>();
   private readonly entityRenderObjects = new Map<string, EntityRenderObjects>();
   private readonly localLightRenderObjects = new Map<
@@ -1085,7 +1081,7 @@ export class ViewportHost {
         ? this.currentTerrainBrushState.layerIndex !==
           terrainBrushState.layerIndex
         : this.currentTerrainBrushState?.tool === "paint" ||
-            terrainBrushState?.tool === "paint";
+          terrainBrushState?.tool === "paint";
 
     this.currentTerrainBrushState = terrainBrushState;
 
@@ -1524,14 +1520,16 @@ export class ViewportHost {
 
     const world = this.currentSimulationScene?.world ?? this.currentWorld;
     const resolvedTime =
-      this.currentSimulationScene !== null && this.currentSimulationClock !== null
+      this.currentSimulationScene !== null &&
+      this.currentSimulationClock !== null
         ? resolveRuntimeTimeState(
             this.currentSimulationScene.time,
             this.currentSimulationClock
           )
         : null;
     const resolvedWorld =
-      this.currentSimulationScene !== null && this.currentSimulationClock !== null
+      this.currentSimulationScene !== null &&
+      this.currentSimulationClock !== null
         ? resolveRuntimeDayNightWorldState(
             world,
             this.currentSimulationScene.time,
@@ -1542,9 +1540,9 @@ export class ViewportHost {
     const rendererSettings =
       this.displayMode !== "normal"
         ? {
-          ...cloneAdvancedRenderingSettings(world.advancedRendering),
-          enabled: false
-        }
+            ...cloneAdvancedRenderingSettings(world.advancedRendering),
+            enabled: false
+          }
         : world.advancedRendering;
     const displayedAmbientLight =
       resolvedWorld?.ambientLight ?? world.ambientLight;
@@ -1630,22 +1628,21 @@ export class ViewportHost {
         displayedSunLight,
         displayedMoonLight
       );
-      const shaderSkyResolvedWorld =
-        resolvedWorld ?? {
-          ambientLight: {
-            ...world.ambientLight
-          },
-          sunLight: {
-            ...world.sunLight,
-            direction: {
-              ...world.sunLight.direction
-            }
-          },
-          moonLight: null,
-          background: world.background,
-          nightBackgroundOverlay: null,
-          daylightFactor: 1
-        };
+      const shaderSkyResolvedWorld = resolvedWorld ?? {
+        ambientLight: {
+          ...world.ambientLight
+        },
+        sunLight: {
+          ...world.sunLight,
+          direction: {
+            ...world.sunLight.direction
+          }
+        },
+        moonLight: null,
+        background: world.background,
+        nightBackgroundOverlay: null,
+        daylightFactor: 1
+      };
       const shaderSkyState =
         world.background.mode === "shader"
           ? resolveWorldShaderSkyRenderState(
@@ -1744,10 +1741,7 @@ export class ViewportHost {
     }
 
     for (const renderObjects of this.entityRenderObjects.values()) {
-      applyAdvancedRenderingRenderableShadowFlags(
-        renderObjects.group,
-        false
-      );
+      applyAdvancedRenderingRenderableShadowFlags(renderObjects.group, false);
     }
 
     for (const renderGroup of this.modelRenderObjects.values()) {
@@ -1773,12 +1767,12 @@ export class ViewportHost {
     }
 
     const halfWidth =
-      Math.abs(this.orthographicCamera.right - this.orthographicCamera.left) /
-      Math.max(this.orthographicCamera.zoom, 0.0001) *
+      (Math.abs(this.orthographicCamera.right - this.orthographicCamera.left) /
+        Math.max(this.orthographicCamera.zoom, 0.0001)) *
       0.5;
     const halfHeight =
-      Math.abs(this.orthographicCamera.top - this.orthographicCamera.bottom) /
-      Math.max(this.orthographicCamera.zoom, 0.0001) *
+      (Math.abs(this.orthographicCamera.top - this.orthographicCamera.bottom) /
+        Math.max(this.orthographicCamera.zoom, 0.0001)) *
       0.5;
 
     return {
@@ -1818,8 +1812,16 @@ export class ViewportHost {
     }
 
     if (!shadowsEnabled || this.currentCelestialShadowCaster === null) {
-      configureAdvancedRenderingShadowLight(this.sunLight, advancedRendering, false);
-      configureAdvancedRenderingShadowLight(this.moonLight, advancedRendering, false);
+      configureAdvancedRenderingShadowLight(
+        this.sunLight,
+        advancedRendering,
+        false
+      );
+      configureAdvancedRenderingShadowLight(
+        this.moonLight,
+        advancedRendering,
+        false
+      );
       return;
     }
 
@@ -1845,8 +1847,16 @@ export class ViewportHost {
     });
 
     if (fit === null) {
-      configureAdvancedRenderingShadowLight(this.sunLight, advancedRendering, false);
-      configureAdvancedRenderingShadowLight(this.moonLight, advancedRendering, false);
+      configureAdvancedRenderingShadowLight(
+        this.sunLight,
+        advancedRendering,
+        false
+      );
+      configureAdvancedRenderingShadowLight(
+        this.moonLight,
+        advancedRendering,
+        false
+      );
       return;
     }
 
@@ -2471,7 +2481,9 @@ export class ViewportHost {
     return path?.enabled === true && path.visible === true;
   }
 
-  private isTransformTargetDisplayedInViewport(session: ActiveTransformSession): boolean {
+  private isTransformTargetDisplayedInViewport(
+    session: ActiveTransformSession
+  ): boolean {
     switch (session.target.kind) {
       case "brush":
       case "brushFace":
@@ -2503,7 +2515,9 @@ export class ViewportHost {
 
   private getDisplayedTransformSession(): ActiveTransformSession | null {
     if (this.currentTransformSession.kind === "active") {
-      return this.isTransformTargetDisplayedInViewport(this.currentTransformSession)
+      return this.isTransformTargetDisplayedInViewport(
+        this.currentTransformSession
+      )
         ? this.currentTransformSession
         : null;
     }
@@ -2858,7 +2872,7 @@ export class ViewportHost {
           ? session.target.initialPosition
           : session.target.kind === "pathPoint"
             ? session.target.initialPosition
-          : session.target.initialPosition;
+            : session.target.initialPosition;
     let nextPosition = {
       ...initialPosition
     };
@@ -3604,7 +3618,10 @@ export class ViewportHost {
       return preview;
     }
 
-    const supportPoints = this.collectSurfaceSnapSupportPoints(session, preview);
+    const supportPoints = this.collectSurfaceSnapSupportPoints(
+      session,
+      preview
+    );
     const axisVector =
       axisConstraint === null
         ? null
@@ -3718,19 +3735,13 @@ export class ViewportHost {
     while (current !== null) {
       const brushId = current.userData.brushId;
 
-      if (
-        typeof brushId === "string" &&
-        excludedIds.brushIds.has(brushId)
-      ) {
+      if (typeof brushId === "string" && excludedIds.brushIds.has(brushId)) {
         return true;
       }
 
       const entityId = current.userData.entityId;
 
-      if (
-        typeof entityId === "string" &&
-        excludedIds.entityIds.has(entityId)
-      ) {
+      if (typeof entityId === "string" && excludedIds.entityIds.has(entityId)) {
         return true;
       }
 
@@ -4822,7 +4833,8 @@ export class ViewportHost {
         break;
       case "brushes":
         if (this.currentTransformSession.preview.kind === "brushes") {
-          for (const previewItem of this.currentTransformSession.preview.items) {
+          for (const previewItem of this.currentTransformSession.preview
+            .items) {
             const brush = this.currentDocument?.brushes[previewItem.brushId];
 
             if (brush === undefined) {
@@ -4861,7 +4873,8 @@ export class ViewportHost {
         break;
       case "modelInstances":
         if (this.currentTransformSession.preview.kind === "modelInstances") {
-          for (const previewItem of this.currentTransformSession.preview.items) {
+          for (const previewItem of this.currentTransformSession.preview
+            .items) {
             const modelInstance =
               this.currentDocument?.modelInstances[previewItem.modelInstanceId];
 
@@ -4902,19 +4915,17 @@ export class ViewportHost {
         const previewPointId = activeTransformSession.target.pointId;
         const previewPosition = activeTransformSession.preview.position;
 
-        this.updatePathRenderObjectState(
-          {
-            ...currentPath,
-            points: currentPath.points.map((point) =>
-              point.id === previewPointId
-                ? {
-                    ...point,
-                    position: previewPosition
-                  }
-                : point
-            )
-          }
-        );
+        this.updatePathRenderObjectState({
+          ...currentPath,
+          points: currentPath.points.map((point) =>
+            point.id === previewPointId
+              ? {
+                  ...point,
+                  position: previewPosition
+                }
+              : point
+          )
+        });
         break;
       }
       case "entity": {
@@ -5001,7 +5012,8 @@ export class ViewportHost {
         }
 
         for (const previewItem of this.currentTransformSession.preview.items) {
-          const currentEntity = this.currentDocument.entities[previewItem.entityId];
+          const currentEntity =
+            this.currentDocument.entities[previewItem.entityId];
 
           if (currentEntity === undefined) {
             continue;
@@ -5062,7 +5074,8 @@ export class ViewportHost {
     this.clearLocalLights();
 
     if (this.currentSimulationScene !== null) {
-      for (const pointLight of this.currentSimulationScene.localLights.pointLights) {
+      for (const pointLight of this.currentSimulationScene.localLights
+        .pointLights) {
         const renderObjects = this.createPointLightRuntimeObjects(pointLight);
         renderObjects.group.visible =
           pointLight.enabled && this.displayMode !== "wireframe";
@@ -5070,7 +5083,8 @@ export class ViewportHost {
         this.localLightRenderObjects.set(pointLight.entityId, renderObjects);
       }
 
-      for (const spotLight of this.currentSimulationScene.localLights.spotLights) {
+      for (const spotLight of this.currentSimulationScene.localLights
+        .spotLights) {
         const renderObjects = this.createSpotLightRuntimeObjects(spotLight);
         renderObjects.group.visible =
           spotLight.enabled && this.displayMode !== "wireframe";
@@ -5234,7 +5248,9 @@ export class ViewportHost {
     this.applyShadowState();
   }
 
-  private resolveTerrainLayerMaterial(materialId: string | null): MaterialDef | null {
+  private resolveTerrainLayerMaterial(
+    materialId: string | null
+  ): MaterialDef | null {
     if (materialId === null || this.currentDocument === null) {
       return null;
     }
@@ -5590,7 +5606,8 @@ export class ViewportHost {
   ) {
     this.clearModelInstances();
 
-    const runtimeModelInstances = this.currentSimulationScene?.modelInstances ?? null;
+    const runtimeModelInstances =
+      this.currentSimulationScene?.modelInstances ?? null;
     const authoredModelInstancesById = new Map(
       getModelInstances(document.modelInstances).map((modelInstance) => [
         modelInstance.id,
@@ -5599,8 +5616,9 @@ export class ViewportHost {
     );
     const displayedModelInstances =
       runtimeModelInstances?.map((runtimeModelInstance) => {
-        const authoredModelInstance =
-          authoredModelInstancesById.get(runtimeModelInstance.instanceId);
+        const authoredModelInstance = authoredModelInstancesById.get(
+          runtimeModelInstance.instanceId
+        );
 
         return createModelInstance({
           id: runtimeModelInstance.instanceId,
@@ -5611,11 +5629,10 @@ export class ViewportHost {
           position: runtimeModelInstance.position,
           rotationDegrees: runtimeModelInstance.rotationDegrees,
           scale: runtimeModelInstance.scale,
-          collision:
-            authoredModelInstance?.collision ?? {
-              mode: "none",
-              visible: false
-            },
+          collision: authoredModelInstance?.collision ?? {
+            mode: "none",
+            visible: false
+          },
           animationClipName: runtimeModelInstance.animationClipName,
           animationAutoplay: runtimeModelInstance.animationAutoplay
         });
@@ -5884,7 +5901,12 @@ export class ViewportHost {
   private createSpotLightRuntimeObjects(
     entity: Pick<
       SpotLightEntity,
-      "position" | "direction" | "colorHex" | "intensity" | "distance" | "angleDegrees"
+      | "position"
+      | "direction"
+      | "colorHex"
+      | "intensity"
+      | "distance"
+      | "angleDegrees"
     >
   ): LocalLightRenderObjects {
     const group = new Group();
@@ -6207,10 +6229,7 @@ export class ViewportHost {
     const body = new Mesh(new BoxGeometry(0.08, 0.08, 0.34), facingMaterial);
     body.position.set(0, colliderTop + 0.12, 0.06);
 
-    const arrowHead = new Mesh(
-      new ConeGeometry(0.1, 0.22, 14),
-      facingMaterial
-    );
+    const arrowHead = new Mesh(new ConeGeometry(0.1, 0.22, 14), facingMaterial);
     arrowHead.rotation.x = Math.PI * 0.5;
     arrowHead.position.set(0, colliderTop + 0.12, 0.28);
 
@@ -6233,7 +6252,7 @@ export class ViewportHost {
     const asset =
       entity.modelAssetId === null
         ? null
-        : this.projectAssets[entity.modelAssetId] ?? null;
+        : (this.projectAssets[entity.modelAssetId] ?? null);
 
     if (entity.modelAssetId !== null && asset?.kind === "model") {
       const loadedAsset = this.loadedModelAssets[entity.modelAssetId];
@@ -6655,8 +6674,7 @@ export class ViewportHost {
     }
 
     if (brush.volume.mode === "light") {
-      const baseOpacity =
-        this.displayMode === "authoring" ? 0.03 : 0;
+      const baseOpacity = this.displayMode === "authoring" ? 0.03 : 0;
       const opacity =
         baseOpacity + (selectedFace ? 0.14 : hoveredFace ? 0.08 : 0);
       const lightMaterial = new MeshBasicMaterial({
@@ -7332,9 +7350,11 @@ export class ViewportHost {
         continue;
       }
 
-      const displayedTerrain = this.getDisplayedTerrainState(terrain.id) ?? terrain;
+      const displayedTerrain =
+        this.getDisplayedTerrainState(terrain.id) ?? terrain;
       const previousMaterial = renderObjects.mesh.material;
-      renderObjects.mesh.material = this.createTerrainMaterial(displayedTerrain);
+      renderObjects.mesh.material =
+        this.createTerrainMaterial(displayedTerrain);
       previousMaterial.dispose();
     }
   }
@@ -7373,7 +7393,9 @@ export class ViewportHost {
     );
   }
 
-  private getTerrainBrushPreviewColor(brushState: ArmedTerrainBrushState): number {
+  private getTerrainBrushPreviewColor(
+    brushState: ArmedTerrainBrushState
+  ): number {
     switch (brushState.tool) {
       case "raise":
         return TERRAIN_BRUSH_PREVIEW_RAISE_COLOR;
@@ -7413,13 +7435,16 @@ export class ViewportHost {
       !this.isTerrainBrushActive() ||
       this.currentTerrainBrushState === null ||
       this.terrainBrushHover === null ||
-      this.terrainBrushHover.terrainId !== this.currentTerrainBrushState.terrainId
+      this.terrainBrushHover.terrainId !==
+        this.currentTerrainBrushState.terrainId
     ) {
       this.terrainBrushPreviewGroup.visible = false;
       return;
     }
 
-    const terrain = this.getDisplayedTerrainState(this.terrainBrushHover.terrainId);
+    const terrain = this.getDisplayedTerrainState(
+      this.terrainBrushHover.terrainId
+    );
 
     if (terrain === null) {
       this.terrainBrushPreviewGroup.visible = false;
@@ -7800,8 +7825,9 @@ export class ViewportHost {
     }
 
     const baseTerrain =
-      this.currentDocument?.terrains[this.activeTerrainBrushStroke.toolState.terrainId] ??
-      null;
+      this.currentDocument?.terrains[
+        this.activeTerrainBrushStroke.toolState.terrainId
+      ] ?? null;
     const commit =
       !cancelled &&
       baseTerrain !== null &&
@@ -7845,7 +7871,11 @@ export class ViewportHost {
       const hovered = isPathSelected(this.hoveredSelection, path.id);
 
       renderObjects.line.material.color.setHex(
-        selected ? PATH_SELECTED_COLOR : hovered ? PATH_HOVERED_COLOR : PATH_COLOR
+        selected
+          ? PATH_SELECTED_COLOR
+          : hovered
+            ? PATH_HOVERED_COLOR
+            : PATH_COLOR
       );
 
       for (const pointMesh of renderObjects.pointMeshes) {
@@ -8075,7 +8105,9 @@ export class ViewportHost {
       case "brushVertex":
         return `brushVertex:${selection.brushId}:${selection.vertexId}`;
       case "terrains":
-        return selection.ids.length === 1 ? `terrain:${selection.ids[0]}` : null;
+        return selection.ids.length === 1
+          ? `terrain:${selection.ids[0]}`
+          : null;
       case "paths":
         return selection.ids.length === 1 ? `path:${selection.ids[0]}` : null;
       case "pathPoint":
@@ -8211,8 +8243,9 @@ export class ViewportHost {
           renderObjects.line,
           ...renderObjects.pointMeshes.map((pointMesh) => pointMesh.mesh)
         ]).flat(),
-        ...Array.from(this.terrainRenderObjects.values(), (renderObjects) =>
-          renderObjects.mesh
+        ...Array.from(
+          this.terrainRenderObjects.values(),
+          (renderObjects) => renderObjects.mesh
         ),
         ...Array.from(this.modelRenderObjects.values()),
         ...this.getBrushPickableObjects()
@@ -8283,7 +8316,9 @@ export class ViewportHost {
 
     if (transformPointerIntent.commitActiveTransform) {
       if (this.currentTransformSession.kind !== "active") {
-        throw new Error("Active transform intent resolved without an active session.");
+        throw new Error(
+          "Active transform intent resolved without an active session."
+        );
       }
 
       event.preventDefault();
@@ -8735,7 +8770,10 @@ export class ViewportHost {
       case "cone-brush":
         return this.getBoxCreationPreviewCenter(event, DEFAULT_BOX_BRUSH_SIZE);
       case "torus-brush":
-        return this.getBoxCreationPreviewCenter(event, DEFAULT_TORUS_BRUSH_SIZE);
+        return this.getBoxCreationPreviewCenter(
+          event,
+          DEFAULT_TORUS_BRUSH_SIZE
+        );
       case "entity":
         switch (target.entityKind) {
           case "triggerVolume":
@@ -9159,12 +9197,14 @@ export class ViewportHost {
                         : toolPreview.target.kind === "torus-brush"
                           ? {
                               kind: "torus-brush",
-                              majorSegmentCount: toolPreview.target.majorSegmentCount,
-                              tubeSegmentCount: toolPreview.target.tubeSegmentCount
+                              majorSegmentCount:
+                                toolPreview.target.majorSegmentCount,
+                              tubeSegmentCount:
+                                toolPreview.target.tubeSegmentCount
                             }
-                  : {
-                      kind: "box-brush"
-                    },
+                          : {
+                              kind: "box-brush"
+                            },
             center:
               toolPreview.center === null ? null : { ...toolPreview.center }
           };

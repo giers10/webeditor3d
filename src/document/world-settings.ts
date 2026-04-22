@@ -8,19 +8,40 @@ export type WorldBackgroundMode =
   | "image"
   | "shader";
 export type WorldTimePhase = "dawn" | "dusk" | "night";
-export type WorldShaderSkyPresetId = (typeof WORLD_SHADER_SKY_PRESET_IDS)[number];
+export type WorldShaderSkyPresetId =
+  (typeof WORLD_SHADER_SKY_PRESET_IDS)[number];
 
-export const ADVANCED_RENDERING_SHADOW_MAP_SIZES = [512, 1024, 2048, 4096] as const;
-export const ADVANCED_RENDERING_SHADOW_TYPES = ["basic", "pcf", "pcfSoft"] as const;
-export const ADVANCED_RENDERING_TONE_MAPPING_MODES = ["none", "linear", "reinhard", "cineon", "acesFilmic"] as const;
+export const ADVANCED_RENDERING_SHADOW_MAP_SIZES = [
+  512, 1024, 2048, 4096
+] as const;
+export const ADVANCED_RENDERING_SHADOW_TYPES = [
+  "basic",
+  "pcf",
+  "pcfSoft"
+] as const;
+export const ADVANCED_RENDERING_TONE_MAPPING_MODES = [
+  "none",
+  "linear",
+  "reinhard",
+  "cineon",
+  "acesFilmic"
+] as const;
 export const BOX_VOLUME_RENDER_PATHS = ["performance", "quality"] as const;
-export const ADVANCED_RENDERING_WATER_REFLECTION_MODES = ["none", "world", "all"] as const;
+export const ADVANCED_RENDERING_WATER_REFLECTION_MODES = [
+  "none",
+  "world",
+  "all"
+] as const;
 
-export type AdvancedRenderingShadowMapSize = (typeof ADVANCED_RENDERING_SHADOW_MAP_SIZES)[number];
-export type AdvancedRenderingShadowType = (typeof ADVANCED_RENDERING_SHADOW_TYPES)[number];
-export type AdvancedRenderingToneMappingMode = (typeof ADVANCED_RENDERING_TONE_MAPPING_MODES)[number];
+export type AdvancedRenderingShadowMapSize =
+  (typeof ADVANCED_RENDERING_SHADOW_MAP_SIZES)[number];
+export type AdvancedRenderingShadowType =
+  (typeof ADVANCED_RENDERING_SHADOW_TYPES)[number];
+export type AdvancedRenderingToneMappingMode =
+  (typeof ADVANCED_RENDERING_TONE_MAPPING_MODES)[number];
 export type BoxVolumeRenderPath = (typeof BOX_VOLUME_RENDER_PATHS)[number];
-export type AdvancedRenderingWaterReflectionMode = (typeof ADVANCED_RENDERING_WATER_REFLECTION_MODES)[number];
+export type AdvancedRenderingWaterReflectionMode =
+  (typeof ADVANCED_RENDERING_WATER_REFLECTION_MODES)[number];
 
 export interface WorldSolidBackgroundSettings {
   mode: "solid";
@@ -186,7 +207,8 @@ const DEFAULT_GRADIENT_BOTTOM_COLOR = "#141a22";
 export const DEFAULT_NIGHT_IMAGE_ENVIRONMENT_INTENSITY = 0.35 as const;
 export const DEFAULT_TIME_PHASE_IMAGE_ENVIRONMENT_INTENSITY = 0.5 as const;
 const DEFAULT_ADVANCED_RENDERING_SHADOW_MAP_SIZE: AdvancedRenderingShadowMapSize = 2048;
-const DEFAULT_ADVANCED_RENDERING_SHADOW_TYPE: AdvancedRenderingShadowType = "pcfSoft";
+const DEFAULT_ADVANCED_RENDERING_SHADOW_TYPE: AdvancedRenderingShadowType =
+  "pcfSoft";
 const DEFAULT_ADVANCED_RENDERING_SHADOW_BIAS = -0.0005;
 const DEFAULT_ADVANCED_RENDERING_AMBIENT_OCCLUSION_INTENSITY = 1;
 const DEFAULT_ADVANCED_RENDERING_AMBIENT_OCCLUSION_RADIUS = 0.5;
@@ -194,7 +216,8 @@ const DEFAULT_ADVANCED_RENDERING_AMBIENT_OCCLUSION_SAMPLES = 8;
 const DEFAULT_ADVANCED_RENDERING_BLOOM_INTENSITY = 0.75;
 const DEFAULT_ADVANCED_RENDERING_BLOOM_THRESHOLD = 0.85;
 const DEFAULT_ADVANCED_RENDERING_BLOOM_RADIUS = 0.35;
-const DEFAULT_ADVANCED_RENDERING_TONE_MAPPING_MODE: AdvancedRenderingToneMappingMode = "acesFilmic";
+const DEFAULT_ADVANCED_RENDERING_TONE_MAPPING_MODE: AdvancedRenderingToneMappingMode =
+  "acesFilmic";
 const DEFAULT_ADVANCED_RENDERING_TONE_MAPPING_EXPOSURE = 1;
 const DEFAULT_ADVANCED_RENDERING_DEPTH_OF_FIELD_FOCUS_DISTANCE = 10;
 const DEFAULT_ADVANCED_RENDERING_DEPTH_OF_FIELD_FOCAL_LENGTH = 0.03;
@@ -202,7 +225,8 @@ const DEFAULT_ADVANCED_RENDERING_DEPTH_OF_FIELD_BOKEH_SCALE = 1.5;
 const DEFAULT_ADVANCED_RENDERING_WHITEBOX_BEVEL_EDGE_WIDTH = 0.14;
 const DEFAULT_ADVANCED_RENDERING_WHITEBOX_BEVEL_NORMAL_STRENGTH = 0.75;
 const DEFAULT_BOX_VOLUME_RENDER_PATH: BoxVolumeRenderPath = "performance";
-const DEFAULT_ADVANCED_RENDERING_WATER_REFLECTION_MODE: AdvancedRenderingWaterReflectionMode = "none";
+const DEFAULT_ADVANCED_RENDERING_WATER_REFLECTION_MODE: AdvancedRenderingWaterReflectionMode =
+  "none";
 const DEFAULT_SHADER_SKY_DAY_TOP_COLOR = "#5f8fd3";
 const DEFAULT_SHADER_SKY_DAY_BOTTOM_COLOR = "#d8eeff";
 const DEFAULT_SHADER_SKY_SUN_DISC_SIZE_DEGREES = 2.6;
@@ -247,24 +271,42 @@ function resolveShaderSkyDayGradient(
   };
 }
 
-export function isAdvancedRenderingShadowMapSize(value: unknown): value is AdvancedRenderingShadowMapSize {
-  return ADVANCED_RENDERING_SHADOW_MAP_SIZES.includes(value as AdvancedRenderingShadowMapSize);
+export function isAdvancedRenderingShadowMapSize(
+  value: unknown
+): value is AdvancedRenderingShadowMapSize {
+  return ADVANCED_RENDERING_SHADOW_MAP_SIZES.includes(
+    value as AdvancedRenderingShadowMapSize
+  );
 }
 
-export function isAdvancedRenderingShadowType(value: unknown): value is AdvancedRenderingShadowType {
-  return ADVANCED_RENDERING_SHADOW_TYPES.includes(value as AdvancedRenderingShadowType);
+export function isAdvancedRenderingShadowType(
+  value: unknown
+): value is AdvancedRenderingShadowType {
+  return ADVANCED_RENDERING_SHADOW_TYPES.includes(
+    value as AdvancedRenderingShadowType
+  );
 }
 
-export function isAdvancedRenderingToneMappingMode(value: unknown): value is AdvancedRenderingToneMappingMode {
-  return ADVANCED_RENDERING_TONE_MAPPING_MODES.includes(value as AdvancedRenderingToneMappingMode);
+export function isAdvancedRenderingToneMappingMode(
+  value: unknown
+): value is AdvancedRenderingToneMappingMode {
+  return ADVANCED_RENDERING_TONE_MAPPING_MODES.includes(
+    value as AdvancedRenderingToneMappingMode
+  );
 }
 
-export function isBoxVolumeRenderPath(value: unknown): value is BoxVolumeRenderPath {
+export function isBoxVolumeRenderPath(
+  value: unknown
+): value is BoxVolumeRenderPath {
   return BOX_VOLUME_RENDER_PATHS.includes(value as BoxVolumeRenderPath);
 }
 
-export function isAdvancedRenderingWaterReflectionMode(value: unknown): value is AdvancedRenderingWaterReflectionMode {
-  return ADVANCED_RENDERING_WATER_REFLECTION_MODES.includes(value as AdvancedRenderingWaterReflectionMode);
+export function isAdvancedRenderingWaterReflectionMode(
+  value: unknown
+): value is AdvancedRenderingWaterReflectionMode {
+  return ADVANCED_RENDERING_WATER_REFLECTION_MODES.includes(
+    value as AdvancedRenderingWaterReflectionMode
+  );
 }
 
 export function createDefaultAdvancedRenderingSettings(): AdvancedRenderingSettings {
@@ -478,7 +520,9 @@ export function isHexColorString(value: string): boolean {
   return /^#[0-9a-f]{6}$/i.test(value);
 }
 
-export function isWorldBackgroundMode(value: unknown): value is WorldBackgroundMode {
+export function isWorldBackgroundMode(
+  value: unknown
+): value is WorldBackgroundMode {
   return (
     value === "solid" ||
     value === "verticalGradient" ||
@@ -487,7 +531,9 @@ export function isWorldBackgroundMode(value: unknown): value is WorldBackgroundM
   );
 }
 
-export function cloneWorldBackgroundSettings(background: WorldBackgroundSettings): WorldBackgroundSettings {
+export function cloneWorldBackgroundSettings(
+  background: WorldBackgroundSettings
+): WorldBackgroundSettings {
   if (background.mode === "solid") {
     return {
       mode: "solid",
@@ -572,7 +618,9 @@ export function cloneWorldSettings(world: WorldSettings): WorldSettings {
   };
 }
 
-export function cloneAdvancedRenderingSettings(settings: AdvancedRenderingSettings): AdvancedRenderingSettings {
+export function cloneAdvancedRenderingSettings(
+  settings: AdvancedRenderingSettings
+): AdvancedRenderingSettings {
   return {
     enabled: settings.enabled,
     shadows: {
@@ -599,7 +647,10 @@ export function cloneAdvancedRenderingSettings(settings: AdvancedRenderingSettin
   };
 }
 
-export function areWorldBackgroundSettingsEqual(left: WorldBackgroundSettings, right: WorldBackgroundSettings): boolean {
+export function areWorldBackgroundSettingsEqual(
+  left: WorldBackgroundSettings,
+  right: WorldBackgroundSettings
+): boolean {
   if (left.mode !== right.mode) {
     return false;
   }
@@ -609,14 +660,22 @@ export function areWorldBackgroundSettingsEqual(left: WorldBackgroundSettings, r
   }
 
   if (left.mode === "verticalGradient" && right.mode === "verticalGradient") {
-    return left.topColorHex === right.topColorHex && left.bottomColorHex === right.bottomColorHex;
+    return (
+      left.topColorHex === right.topColorHex &&
+      left.bottomColorHex === right.bottomColorHex
+    );
   }
 
   if (left.mode === "shader" && right.mode === "shader") {
     return true;
   }
 
-  return left.mode === "image" && right.mode === "image" && left.assetId === right.assetId && left.environmentIntensity === right.environmentIntensity;
+  return (
+    left.mode === "image" &&
+    right.mode === "image" &&
+    left.assetId === right.assetId &&
+    left.environmentIntensity === right.environmentIntensity
+  );
 }
 
 export function areWorldShaderSkySettingsEqual(
@@ -628,7 +687,8 @@ export function areWorldShaderSkySettingsEqual(
     left.dayTopColorHex === right.dayTopColorHex &&
     left.dayBottomColorHex === right.dayBottomColorHex &&
     left.celestial.sunDiscSizeDegrees === right.celestial.sunDiscSizeDegrees &&
-    left.celestial.moonDiscSizeDegrees === right.celestial.moonDiscSizeDegrees &&
+    left.celestial.moonDiscSizeDegrees ===
+      right.celestial.moonDiscSizeDegrees &&
     left.stars.density === right.stars.density &&
     left.stars.brightness === right.stars.brightness &&
     left.clouds.coverage === right.clouds.coverage &&
@@ -684,7 +744,10 @@ export function areWorldTimeOfDaySettingsEqual(
   );
 }
 
-export function areWorldSettingsEqual(left: WorldSettings, right: WorldSettings): boolean {
+export function areWorldSettingsEqual(
+  left: WorldSettings,
+  right: WorldSettings
+): boolean {
   return (
     left.projectTimeLightingEnabled === right.projectTimeLightingEnabled &&
     left.showCelestialBodies === right.showCelestialBodies &&
@@ -698,11 +761,17 @@ export function areWorldSettingsEqual(left: WorldSettings, right: WorldSettings)
     left.sunLight.direction.y === right.sunLight.direction.y &&
     left.sunLight.direction.z === right.sunLight.direction.z &&
     areWorldTimeOfDaySettingsEqual(left.timeOfDay, right.timeOfDay) &&
-    areAdvancedRenderingSettingsEqual(left.advancedRendering, right.advancedRendering)
+    areAdvancedRenderingSettingsEqual(
+      left.advancedRendering,
+      right.advancedRendering
+    )
   );
 }
 
-export function areAdvancedRenderingSettingsEqual(left: AdvancedRenderingSettings, right: AdvancedRenderingSettings): boolean {
+export function areAdvancedRenderingSettingsEqual(
+  left: AdvancedRenderingSettings,
+  right: AdvancedRenderingSettings
+): boolean {
   return (
     left.enabled === right.enabled &&
     left.shadows.enabled === right.shadows.enabled &&
@@ -736,8 +805,7 @@ export function changeWorldBackgroundMode(
   background: WorldBackgroundSettings,
   mode: WorldBackgroundMode,
   imageAssetId?: string,
-  imageEnvironmentIntensity: number =
-    DEFAULT_TIME_PHASE_IMAGE_ENVIRONMENT_INTENSITY,
+  imageEnvironmentIntensity: number = DEFAULT_TIME_PHASE_IMAGE_ENVIRONMENT_INTENSITY,
   shaderSkySettings?: WorldShaderSkySettings
 ): WorldBackgroundSettings {
   if (mode === "image") {
@@ -746,7 +814,9 @@ export function changeWorldBackgroundMode(
         return cloneWorldBackgroundSettings(background);
       }
 
-      throw new Error("An image asset must be selected to use an image background.");
+      throw new Error(
+        "An image asset must be selected to use an image background."
+      );
     }
 
     return {
@@ -779,7 +849,7 @@ export function changeWorldBackgroundMode(
             ? background.topColorHex
             : background.mode === "shader" && shaderSkySettings !== undefined
               ? shaderSkySettings.dayTopColorHex
-            : DEFAULT_SOLID_BACKGROUND_COLOR
+              : DEFAULT_SOLID_BACKGROUND_COLOR
     };
   }
 

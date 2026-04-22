@@ -139,10 +139,7 @@ function rotateAroundAxis(vector: Vec3, axis: Vec3, radians: number): Vec3 {
 
   return normalizeVec3(
     addVec3(
-      addVec3(
-        scaleVec3(vector, cosine),
-        scaleVec3(cross(axis, vector), sine)
-      ),
+      addVec3(scaleVec3(vector, cosine), scaleVec3(cross(axis, vector), sine)),
       scaleVec3(axis, dot(axis, vector) * (1 - cosine))
     )
   );
@@ -158,7 +155,9 @@ function parseHexColor(colorHex: string): { r: number; g: number; b: number } {
 
 function formatHexColor(color: { r: number; g: number; b: number }): string {
   const toHex = (value: number) =>
-    Math.round(clamp(value, 0, 255)).toString(16).padStart(2, "0");
+    Math.round(clamp(value, 0, 255))
+      .toString(16)
+      .padStart(2, "0");
 
   return `#${toHex(color.r)}${toHex(color.g)}${toHex(color.b)}`;
 }
@@ -170,8 +169,7 @@ function blendHexColorsByWeights(
   nightHex: string,
   weights: RuntimeDayNightPhaseWeights
 ): string {
-  const totalWeight =
-    weights.day + weights.dawn + weights.dusk + weights.night;
+  const totalWeight = weights.day + weights.dawn + weights.dusk + weights.night;
 
   if (totalWeight <= 1e-6) {
     return dayHex;
@@ -211,19 +209,19 @@ function blendScalarByWeights(
   nightValue: number,
   weights: RuntimeDayNightPhaseWeights
 ): number {
-  const totalWeight =
-    weights.day + weights.dawn + weights.dusk + weights.night;
+  const totalWeight = weights.day + weights.dawn + weights.dusk + weights.night;
 
   if (totalWeight <= 1e-6) {
     return dayValue;
   }
 
   return (
-    dayValue * weights.day +
-    dawnValue * weights.dawn +
-    duskValue * weights.dusk +
-    nightValue * weights.night
-  ) / totalWeight;
+    (dayValue * weights.day +
+      dawnValue * weights.dawn +
+      duskValue * weights.dusk +
+      nightValue * weights.night) /
+    totalWeight
+  );
 }
 
 function resolveNoonSunDirection(direction: Vec3): Vec3 {
@@ -279,7 +277,9 @@ function hasTimeBoundaryBeenCrossed(
   currentTimeOfDayHours: number,
   boundaryTimeOfDayHours: number
 ): boolean {
-  const normalizedPreviousTime = normalizeTimeOfDayHours(previousTimeOfDayHours);
+  const normalizedPreviousTime = normalizeTimeOfDayHours(
+    previousTimeOfDayHours
+  );
 
   if (areTimesEquivalent(normalizedPreviousTime, boundaryTimeOfDayHours)) {
     return false;
@@ -563,7 +563,9 @@ function hasConfiguredImageBackground(
   return background.mode === "image" && background.assetId.trim().length > 0;
 }
 
-function resolveBackgroundTopColor(background: WorldBackgroundSettings): string {
+function resolveBackgroundTopColor(
+  background: WorldBackgroundSettings
+): string {
   if (background.mode === "solid") {
     return background.colorHex;
   }
@@ -575,7 +577,9 @@ function resolveBackgroundTopColor(background: WorldBackgroundSettings): string 
   return "#000000";
 }
 
-function resolveBackgroundBottomColor(background: WorldBackgroundSettings): string {
+function resolveBackgroundBottomColor(
+  background: WorldBackgroundSettings
+): string {
   if (background.mode === "solid") {
     return background.colorHex;
   }
@@ -900,10 +904,15 @@ export function resolveRuntimeDayNightWorldState(
   world: WorldSettings,
   settings: ProjectTimeSettings,
   clock: RuntimeClockState | null,
-  resolvedTime: RuntimeResolvedTimeState | null =
-    clock === null ? null : resolveRuntimeTimeState(settings, clock)
+  resolvedTime: RuntimeResolvedTimeState | null = clock === null
+    ? null
+    : resolveRuntimeTimeState(settings, clock)
 ): RuntimeDayNightWorldState {
-  if (clock === null || resolvedTime === null || !world.projectTimeLightingEnabled) {
+  if (
+    clock === null ||
+    resolvedTime === null ||
+    !world.projectTimeLightingEnabled
+  ) {
     return {
       ambientLight: {
         colorHex: world.ambientLight.colorHex,

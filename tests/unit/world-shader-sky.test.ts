@@ -107,9 +107,7 @@ describe("resolveWorldShaderSkyRenderState", () => {
     expect(noonSky?.sky.topColorHex).toBe("#88ccff");
     expect(noonSky?.sky.bottomColorHex).toBe("#dff3ff");
     expect(dawnSky?.sky.topColorHex).not.toBe(noonSky?.sky.topColorHex);
-    expect(dawnSky?.sky.topColorHex).not.toBe(
-      midnightSky?.sky.topColorHex
-    );
+    expect(dawnSky?.sky.topColorHex).not.toBe(midnightSky?.sky.topColorHex);
     expect(midnightSky?.stars.visibility ?? 0).toBeGreaterThan(
       dawnSky?.stars.visibility ?? 0
     );
