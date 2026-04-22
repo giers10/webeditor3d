@@ -51,6 +51,31 @@ import {
 } from "../../src/serialization/scene-document-json";
 
 describe("project document JSON", () => {
+  it("round-trips shader sky world settings in project scenes", () => {
+    const document = createEmptyProjectDocument({
+      name: "Shader Sky Project"
+    });
+    const activeScene = document.scenes[document.activeSceneId];
+
+    if (activeScene === undefined) {
+      throw new Error("Expected an active scene in the project document.");
+    }
+
+    activeScene.world.background = {
+      mode: "shader"
+    };
+    activeScene.world.showCelestialBodies = true;
+    activeScene.world.shaderSky.dayTopColorHex = "#4a76bb";
+    activeScene.world.shaderSky.dayBottomColorHex = "#d6efff";
+    activeScene.world.shaderSky.stars.density = 0.72;
+    activeScene.world.shaderSky.clouds.coverage = 0.63;
+    activeScene.world.shaderSky.clouds.tintHex = "#ece7df";
+
+    expect(parseProjectDocumentJson(serializeProjectDocument(document))).toEqual(
+      document
+    );
+  });
+
   it("round-trips scene transition sequence effects", () => {
     const document = createEmptyProjectDocument({
       name: "Scene Transition Sequence Project"
