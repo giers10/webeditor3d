@@ -79,7 +79,9 @@ import {
   isBoxVolumeRenderPath,
   isAdvancedRenderingToneMappingMode,
   isHexColorString,
+  isWorldShaderSkyPresetId,
   type WorldBackgroundSettings,
+  type WorldShaderSkySettings,
   type WorldTimePhaseProfile,
   type WorldSettings
 } from "./world-settings";
@@ -162,6 +164,14 @@ function isNonNegativeFiniteNumber(value: unknown): value is number {
 
 function isPositiveFiniteNumber(value: unknown): value is number {
   return isFiniteNumber(value) && value > 0;
+}
+
+function isFiniteNumberInRange(
+  value: unknown,
+  min: number,
+  max: number
+): value is number {
+  return isFiniteNumber(value) && value >= min && value <= max;
 }
 
 function isPositiveInteger(value: unknown): value is number {
