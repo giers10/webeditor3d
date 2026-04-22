@@ -647,8 +647,13 @@ export class RuntimeHost {
       "pointerdown",
       this.handleRuntimePointerDown
     );
+    this.domElement.addEventListener("wheel", this.handleRuntimeWheel, {
+      passive: false
+    });
     window.addEventListener("keydown", this.handleRuntimeKeyDown);
     window.addEventListener("keyup", this.handleRuntimeKeyUp);
+    window.addEventListener("pointermove", this.handleRuntimePointerMove);
+    window.addEventListener("pointerup", this.handleRuntimePointerUp);
     window.addEventListener("blur", this.handleRuntimeBlur);
     this.resize();
 
@@ -921,8 +926,11 @@ export class RuntimeHost {
       "pointerdown",
       this.handleRuntimePointerDown
     );
+    this.domElement.removeEventListener("wheel", this.handleRuntimeWheel);
     window.removeEventListener("keydown", this.handleRuntimeKeyDown);
     window.removeEventListener("keyup", this.handleRuntimeKeyUp);
+    window.removeEventListener("pointermove", this.handleRuntimePointerMove);
+    window.removeEventListener("pointerup", this.handleRuntimePointerUp);
     window.removeEventListener("blur", this.handleRuntimeBlur);
     this.pressedKeys.clear();
 
