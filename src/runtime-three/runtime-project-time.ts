@@ -711,7 +711,11 @@ function resolvePreferredDaylikeImageBackground(
 
   return bestContribution === null
     ? null
-    : cloneWorldBackgroundSettings(bestContribution.background);
+    : {
+        mode: "image",
+        assetId: bestContribution.background.assetId,
+        environmentIntensity: bestContribution.background.environmentIntensity
+      };
 }
 
 function resolveTimeDrivenBackground(
