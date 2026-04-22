@@ -138,7 +138,10 @@ function normalizeDirection(direction: Vec3, fallback: Vec3): Vec3 {
   };
 }
 
-function offsetDirectionForHorizon(direction: Vec3, horizonHeight: number): Vec3 {
+function offsetDirectionForHorizon(
+  direction: Vec3,
+  horizonHeight: number
+): Vec3 {
   if (Math.abs(horizonHeight) <= 1e-6) {
     return direction;
   }
