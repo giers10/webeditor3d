@@ -185,6 +185,7 @@ export interface WorldShaderSkySettings {
   presetId: WorldShaderSkyPresetId;
   dayTopColorHex: string;
   dayBottomColorHex: string;
+  horizonHeight: number;
   celestial: WorldShaderSkyCelestialSettings;
   stars: WorldShaderSkyStarSettings;
   clouds: WorldShaderSkyCloudSettings;
@@ -229,6 +230,7 @@ const DEFAULT_ADVANCED_RENDERING_WATER_REFLECTION_MODE: AdvancedRenderingWaterRe
   "none";
 const DEFAULT_SHADER_SKY_DAY_TOP_COLOR = "#5f8fd3";
 const DEFAULT_SHADER_SKY_DAY_BOTTOM_COLOR = "#d8eeff";
+const DEFAULT_SHADER_SKY_HORIZON_HEIGHT = 0;
 const DEFAULT_SHADER_SKY_SUN_DISC_SIZE_DEGREES = 2.6;
 const DEFAULT_SHADER_SKY_MOON_DISC_SIZE_DEGREES = 1.8;
 const DEFAULT_SHADER_SKY_STAR_DENSITY = 0.55;
@@ -366,6 +368,7 @@ export function createDefaultWorldShaderSkySettings(
     presetId: "defaultSky",
     dayTopColorHex: dayGradient.topColorHex,
     dayBottomColorHex: dayGradient.bottomColorHex,
+    horizonHeight: DEFAULT_SHADER_SKY_HORIZON_HEIGHT,
     celestial: {
       sunDiscSizeDegrees: DEFAULT_SHADER_SKY_SUN_DISC_SIZE_DEGREES,
       moonDiscSizeDegrees: DEFAULT_SHADER_SKY_MOON_DISC_SIZE_DEGREES
@@ -397,6 +400,7 @@ export function cloneWorldShaderSkySettings(
     presetId: settings.presetId,
     dayTopColorHex: settings.dayTopColorHex,
     dayBottomColorHex: settings.dayBottomColorHex,
+    horizonHeight: settings.horizonHeight,
     celestial: {
       ...settings.celestial
     },
@@ -686,6 +690,7 @@ export function areWorldShaderSkySettingsEqual(
     left.presetId === right.presetId &&
     left.dayTopColorHex === right.dayTopColorHex &&
     left.dayBottomColorHex === right.dayBottomColorHex &&
+    left.horizonHeight === right.horizonHeight &&
     left.celestial.sunDiscSizeDegrees === right.celestial.sunDiscSizeDegrees &&
     left.celestial.moonDiscSizeDegrees ===
       right.celestial.moonDiscSizeDegrees &&
