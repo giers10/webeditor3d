@@ -202,6 +202,62 @@ describe("resolveViewportFocusTarget", () => {
     expect(focusTarget?.radius).toBeGreaterThan(0.45);
   });
 
+  it("frames the selected rail Camera Rig helper from its resolved path position", () => {
+    const path = createScenePath({
+      id: "path-camera-rig-focus-rail",
+      points: [
+        {
+          id: "point-a",
+          position: {
+            x: 0,
+            y: 2,
+            z: 0
+          }
+        },
+        {
+          id: "point-b",
+          position: {
+            x: 10,
+            y: 2,
+            z: 0
+          }
+        }
+      ]
+    });
+    const cameraRig = createCameraRigEntity({
+      id: "entity-camera-rig-focus-rail",
+      rigType: "rail",
+      pathId: path.id,
+      target: {
+        kind: "worldPoint",
+        point: {
+          x: 3,
+          y: 1,
+          z: 4
+        }
+      }
+    });
+    const document = {
+      ...createEmptySceneDocument(),
+      paths: {
+        [path.id]: path
+      },
+      entities: {
+        [cameraRig.id]: cameraRig
+      }
+    };
+
+    const focusTarget = resolveViewportFocusTarget(document, {
+      kind: "entities",
+      ids: [cameraRig.id]
+    });
+
+    expect(focusTarget?.center.x).toBeCloseTo(3);
+    expect(focusTarget?.center.y).toBeCloseTo(2.28);
+    expect(focusTarget?.center.z).toBeCloseTo(0);
+    expect(focusTarget?.radius).toBeGreaterThan(0.45);
+  });
+
   it("frames the selected Path around its authored point bounds", () => {
     const path = createScenePath({
       id: "path-focus",
