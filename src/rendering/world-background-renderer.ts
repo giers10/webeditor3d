@@ -59,23 +59,6 @@ export interface WorldEnvironmentState {
   intensity: number;
 }
 
-export function shouldUseDynamicWorldEnvironment(
-  background: WorldBackgroundSettings,
-  backgroundTexture: Texture | null,
-  overlay: WorldBackgroundOverlayState | null
-): boolean {
-  const overlayTexture = overlay?.texture ?? null;
-  const overlayOpacity = clamp(overlay?.opacity ?? 0, 0, 1);
-
-  return (
-    background.mode === "image" &&
-    backgroundTexture !== null &&
-    overlayTexture !== null &&
-    overlayOpacity > NIGHT_BACKGROUND_EPSILON &&
-    overlayOpacity < 1 - NIGHT_BACKGROUND_EPSILON
-  );
-}
-
 export function resolveWorldEnvironmentState(
   background: WorldBackgroundSettings,
   backgroundTexture: Texture | null,
@@ -258,10 +241,6 @@ export class WorldBackgroundRenderer {
 
   syncToCamera(camera: Camera) {
     this.anchor.position.copy(camera.position);
-  }
-
-  syncToOrigin() {
-    this.anchor.position.set(0, 0, 0);
   }
 
   dispose() {

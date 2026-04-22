@@ -20,7 +20,6 @@ import {
   MeshPhysicalMaterial,
   MeshStandardMaterial,
   PerspectiveCamera,
-  PMREMGenerator,
   PointLight,
   Quaternion,
   Scene,
@@ -29,7 +28,6 @@ import {
   SpotLight,
   TextureLoader,
   Texture,
-  WebGLCubeRenderTarget,
   WebGLRenderTarget,
   WebGLRenderer
 } from "three";
@@ -80,7 +78,6 @@ import {
 } from "../rendering/advanced-rendering";
 import {
   resolveWorldEnvironmentState,
-  shouldUseDynamicWorldEnvironment,
   WorldBackgroundRenderer
 } from "../rendering/world-background-renderer";
 import {
@@ -357,8 +354,6 @@ export class RuntimeHost {
   private readonly instanceAnimationClips = new Map<string, AnimationClip[]>();
   private readonly controllerContext: RuntimeControllerContext;
   private readonly renderer: WebGLRenderer | null;
-  private readonly pmremGenerator: PMREMGenerator | null;
-  private dynamicWorldEnvironmentTarget: WebGLRenderTarget | null = null;
   private runtimeScene: RuntimeSceneDefinition | null = null;
   private collisionWorld: RapierCollisionWorld | null = null;
   private collisionWorldRequestId = 0;
@@ -441,8 +436,6 @@ export class RuntimeHost {
     this.renderer = enableRendering
       ? new WebGLRenderer({ antialias: false, alpha: true })
       : null;
-    this.pmremGenerator =
-      this.renderer === null ? null : new PMREMGenerator(this.renderer);
     this.domElement =
       this.renderer?.domElement ?? document.createElement("canvas");
 
@@ -850,9 +843,6 @@ export class RuntimeHost {
     }
 
     this.materialTextureCache.clear();
-    this.dynamicWorldEnvironmentTarget?.dispose();
-    this.dynamicWorldEnvironmentTarget = null;
-    this.pmremGenerator?.dispose();
     this.worldBackgroundRenderer.dispose();
     this.renderer?.forceContextLoss();
     this.renderer?.dispose();
@@ -1090,12 +1080,7 @@ export class RuntimeHost {
             opacity: nightBackgroundOverlay.opacity,
             environmentIntensity: nightBackgroundOverlay.environmentIntensity
           };
-    let environmentState = resolveWorldEnvironmentState(
-      resolvedWorld.background,
-      backgroundTexture,
-      backgroundOverlayState
-    );
-    const useDynamicEnvironment = shouldUseDynamicWorldEnvironment(
+    const environmentState = resolveWorldEnvironmentState(
       resolvedWorld.background,
       backgroundTexture,
       backgroundOverlayState
@@ -1106,22 +1091,6 @@ export class RuntimeHost {
       backgroundTexture,
       backgroundOverlayState
     );
-
-    if (useDynamicEnvironment && this.pmremGenerator !== null) {
-      this.worldBackgroundRenderer.syncToOrigin();
-      this.dynamicWorldEnvironmentTarget?.dispose();
-      this.dynamicWorldEnvironmentTarget = this.pmremGenerator.fromScene(
-        this.worldBackgroundRenderer.scene
-      ) as WebGLCubeRenderTarget;
-      environmentState = {
-        texture: this.dynamicWorldEnvironmentTarget.texture,
-        intensity: environmentState.intensity
-      };
-    } else if (this.dynamicWorldEnvironmentTarget !== null) {
-      this.dynamicWorldEnvironmentTarget.dispose();
-      this.dynamicWorldEnvironmentTarget = null;
-    }
-
     this.scene.background = null;
     this.scene.environment = environmentState.texture;
     this.scene.environmentIntensity = environmentState.intensity;

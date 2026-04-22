@@ -25,7 +25,6 @@ import {
   OrthographicCamera,
   Plane,
   PerspectiveCamera,
-  PMREMGenerator,
   PointLight,
   Quaternion,
   Raycaster,
@@ -37,7 +36,6 @@ import {
   SpotLight,
   TextureLoader,
   Texture,
-  WebGLCubeRenderTarget,
   Vector2,
   Vector3,
   WebGLRenderTarget,
@@ -215,7 +213,6 @@ import {
 } from "../rendering/terrain-layer-material";
 import {
   resolveWorldEnvironmentState,
-  shouldUseDynamicWorldEnvironment,
   WorldBackgroundRenderer
 } from "../rendering/world-background-renderer";
 import {
@@ -440,7 +437,6 @@ export class ViewportHost {
     antialias: false,
     alpha: true
   });
-  private readonly pmremGenerator = new PMREMGenerator(this.renderer);
   private readonly cameraTarget = new Vector3(0, 0, 0);
   private readonly cameraOffset = new Vector3();
   private readonly cameraForward = new Vector3();
@@ -513,7 +509,6 @@ export class ViewportHost {
     string,
     CachedMaterialTexture
   >();
-  private dynamicWorldEnvironmentTarget: WebGLRenderTarget | null = null;
   private readonly materialTextureLoader = new TextureLoader();
   private currentDocument: SceneDocument | null = null;
   private currentWorld: WorldSettings | null = null;
@@ -1240,9 +1235,6 @@ export class ViewportHost {
     this.terrainBrushPreviewLine.material.dispose();
     this.terrainBrushPreviewCenter.geometry.dispose();
     this.terrainBrushPreviewCenter.material.dispose();
-    this.dynamicWorldEnvironmentTarget?.dispose();
-    this.dynamicWorldEnvironmentTarget = null;
-    this.pmremGenerator.dispose();
     this.worldBackgroundRenderer.dispose();
     this.renderer.forceContextLoss();
     this.renderer.dispose();
@@ -1534,18 +1526,11 @@ export class ViewportHost {
     this.localLightGroup.visible = this.displayMode !== "wireframe";
 
     if (this.displayMode !== "normal") {
-      this.dynamicWorldEnvironmentTarget?.dispose();
-      this.dynamicWorldEnvironmentTarget = null;
       this.scene.background = null;
       this.scene.environment = null;
       this.scene.environmentIntensity = 1;
     } else {
-      let environmentState = resolveWorldEnvironmentState(
-        displayedBackground,
-        backgroundTexture,
-        backgroundOverlayState
-      );
-      const useDynamicEnvironment = shouldUseDynamicWorldEnvironment(
+      const environmentState = resolveWorldEnvironmentState(
         displayedBackground,
         backgroundTexture,
         backgroundOverlayState
@@ -1556,22 +1541,6 @@ export class ViewportHost {
         backgroundTexture,
         backgroundOverlayState
       );
-
-      if (useDynamicEnvironment) {
-        this.worldBackgroundRenderer.syncToOrigin();
-        this.dynamicWorldEnvironmentTarget?.dispose();
-        this.dynamicWorldEnvironmentTarget = this.pmremGenerator.fromScene(
-          this.worldBackgroundRenderer.scene
-        ) as WebGLCubeRenderTarget;
-        environmentState = {
-          texture: this.dynamicWorldEnvironmentTarget.texture,
-          intensity: environmentState.intensity
-        };
-      } else if (this.dynamicWorldEnvironmentTarget !== null) {
-        this.dynamicWorldEnvironmentTarget.dispose();
-        this.dynamicWorldEnvironmentTarget = null;
-      }
-
       this.scene.background = null;
       this.scene.environment = environmentState.texture;
       this.scene.environmentIntensity = environmentState.intensity;
