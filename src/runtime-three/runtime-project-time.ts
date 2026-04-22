@@ -492,15 +492,17 @@ function resolveTimeDrivenSunOrbitRadians(
   const relativeTime =
     wrapTimeForward(timeOfDayHours, daytimeStart) - daytimeStart;
   const noonAltitudeRadians = Math.acos(clamp(noonDirection.y, -1, 1));
-  const horizonOrbitRadians = Math.max(
-    Math.PI / 2 - noonAltitudeRadians,
-    0.001
-  );
+  const morningHorizonOrbitRadians = noonAltitudeRadians - Math.PI / 2;
+  const eveningHorizonOrbitRadians = noonAltitudeRadians + Math.PI / 2;
 
   if (relativeTime <= daytimeDuration) {
     const daytimeProgress = clamp(relativeTime / daytimeDuration, 0, 1);
 
-    return lerp(-horizonOrbitRadians, horizonOrbitRadians, daytimeProgress);
+    return lerp(
+      morningHorizonOrbitRadians,
+      eveningHorizonOrbitRadians,
+      daytimeProgress
+    );
   }
 
   const nighttimeDuration = Math.max(HOURS_PER_DAY - daytimeDuration, 0.001);
@@ -511,8 +513,8 @@ function resolveTimeDrivenSunOrbitRadians(
   );
 
   return lerp(
-    horizonOrbitRadians,
-    Math.PI * 2 - horizonOrbitRadians,
+    eveningHorizonOrbitRadians,
+    morningHorizonOrbitRadians + Math.PI * 2,
     nighttimeProgress
   );
 }
