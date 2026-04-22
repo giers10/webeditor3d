@@ -235,23 +235,23 @@ describe("runtime project time", () => {
     expect(lateDusk.moonLight?.direction.y ?? 0).toBeGreaterThan(0.05);
   });
 
-  it("uses the authored peak altitude as the true maximum sky height", () => {
+  it("uses the authored peak altitude as the 12-hour baseline orbit height", () => {
     const world = createDefaultWorldSettings();
     const time = createDefaultProjectTimeSettings();
     time.sunriseTimeOfDayHours = 7;
-    time.sunsetTimeOfDayHours = 20;
+    time.sunsetTimeOfDayHours = 19;
     time.dawnDurationHours = 2;
     time.duskDurationHours = 2;
     world.celestialOrbits.sun.peakAltitudeDegrees = 28;
     world.celestialOrbits.moon.peakAltitudeDegrees = 42;
 
     const sunPeak = resolveRuntimeDayNightWorldState(world, time, {
-      timeOfDayHours: 14.5,
+      timeOfDayHours: 14,
       dayCount: 0,
       dayLengthMinutes: 24
     });
     const moonPeak = resolveRuntimeDayNightWorldState(world, time, {
-      timeOfDayHours: 2.5,
+      timeOfDayHours: 2,
       dayCount: 0,
       dayLengthMinutes: 24
     });
@@ -267,11 +267,71 @@ describe("runtime project time", () => {
     expect(moonPeak.moonLight?.direction.y ?? 0).toBeLessThan(0.7);
   });
 
+  it("changes orbit height and sideways horizon position from day and night length", () => {
+    const world = createDefaultWorldSettings();
+    const shortDay = createDefaultProjectTimeSettings();
+    const longDay = createDefaultProjectTimeSettings();
+    world.celestialOrbits.sun.azimuthDegrees = 0;
+    world.celestialOrbits.sun.peakAltitudeDegrees = 45;
+    world.celestialOrbits.moon.azimuthDegrees = 0;
+    world.celestialOrbits.moon.peakAltitudeDegrees = 32;
+    shortDay.sunriseTimeOfDayHours = 8;
+    shortDay.sunsetTimeOfDayHours = 16;
+    shortDay.dawnDurationHours = 2;
+    shortDay.duskDurationHours = 2;
+    longDay.sunriseTimeOfDayHours = 4;
+    longDay.sunsetTimeOfDayHours = 20;
+    longDay.dawnDurationHours = 2;
+    longDay.duskDurationHours = 2;
+
+    const shortDayPeak = resolveRuntimeDayNightWorldState(world, shortDay, {
+      timeOfDayHours: 13,
+      dayCount: 0,
+      dayLengthMinutes: 24
+    });
+    const longDayPeak = resolveRuntimeDayNightWorldState(world, longDay, {
+      timeOfDayHours: 13,
+      dayCount: 0,
+      dayLengthMinutes: 24
+    });
+    const shortDaySunrise = resolveRuntimeDayNightWorldState(world, shortDay, {
+      timeOfDayHours: 9,
+      dayCount: 0,
+      dayLengthMinutes: 24
+    });
+    const longDaySunrise = resolveRuntimeDayNightWorldState(world, longDay, {
+      timeOfDayHours: 5,
+      dayCount: 0,
+      dayLengthMinutes: 24
+    });
+    const shortNightMoonPeak = resolveRuntimeDayNightWorldState(world, longDay, {
+      timeOfDayHours: 1,
+      dayCount: 0,
+      dayLengthMinutes: 24
+    });
+    const longNightMoonPeak = resolveRuntimeDayNightWorldState(world, shortDay, {
+      timeOfDayHours: 1,
+      dayCount: 0,
+      dayLengthMinutes: 24
+    });
+
+    expect(shortDayPeak.sunLight.direction.y).toBeLessThan(
+      longDayPeak.sunLight.direction.y
+    );
+    expect(Math.abs(shortDaySunrise.sunLight.direction.y)).toBeLessThan(0.05);
+    expect(Math.abs(longDaySunrise.sunLight.direction.y)).toBeLessThan(0.05);
+    expect(shortDaySunrise.sunLight.direction.x).toBeGreaterThan(0.05);
+    expect(longDaySunrise.sunLight.direction.x).toBeLessThan(-0.05);
+    expect(longNightMoonPeak.moonLight?.direction.y ?? 0).toBeGreaterThan(
+      shortNightMoonPeak.moonLight?.direction.y ?? 0
+    );
+  });
+
   it("uses independent authored orbit settings for the moon path", () => {
     const world = createDefaultWorldSettings();
     const time = createDefaultProjectTimeSettings();
     time.sunriseTimeOfDayHours = 7;
-    time.sunsetTimeOfDayHours = 20;
+    time.sunsetTimeOfDayHours = 19;
     time.dawnDurationHours = 2;
     time.duskDurationHours = 2;
     world.celestialOrbits.sun.azimuthDegrees = 180;
@@ -280,12 +340,12 @@ describe("runtime project time", () => {
     world.celestialOrbits.moon.peakAltitudeDegrees = 25;
 
     const sunPeak = resolveRuntimeDayNightWorldState(world, time, {
-      timeOfDayHours: 14.5,
+      timeOfDayHours: 14,
       dayCount: 0,
       dayLengthMinutes: 24
     });
     const moonPeak = resolveRuntimeDayNightWorldState(world, time, {
-      timeOfDayHours: 2.5,
+      timeOfDayHours: 2,
       dayCount: 0,
       dayLengthMinutes: 24
     });
