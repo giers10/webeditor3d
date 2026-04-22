@@ -284,9 +284,15 @@ interface RuntimeWaterContactUniformBinding {
 const FALLBACK_FACE_COLOR = 0xf2ece2;
 const RUNTIME_CLOCK_PUBLISH_INTERVAL_SECONDS = 1 / 30;
 const WATER_REFLECTION_UPDATE_INTERVAL_MS = 96;
+const CAMERA_RIG_POINTER_LOOK_SENSITIVITY = 0.004;
+const CAMERA_RIG_GAMEPAD_LOOK_SPEED = 2.2;
 
 function dampScalar(current: number, target: number, rate: number, dt: number) {
   return current + (target - current) * Math.min(1, dt * rate);
+}
+
+function clampScalar(value: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, value));
 }
 
 function isNonNull<T>(value: T | null): value is T {
