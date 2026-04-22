@@ -1,13 +1,20 @@
 import type { Vec2, Vec3 } from "../core/vector";
-import type { ProjectTimeSettings } from "../document/project-time-settings";
+import {
+  HOURS_PER_DAY,
+  normalizeTimeOfDayHours,
+  type ProjectTimeSettings
+} from "../document/project-time-settings";
 import {
   createDefaultWorldTimePhaseProfile,
   type WorldBackgroundSettings,
   type WorldSettings
 } from "../document/world-settings";
 import {
+  resolveRuntimeDayNightWorldState,
   resolveRuntimeDayNightPhaseWeights,
+  resolveRuntimeTimeState,
   type RuntimeDayNightPhaseWeights,
+  type RuntimeDayPhase,
   type RuntimeDayNightWorldState,
   type RuntimeResolvedTimeState
 } from "../runtime-three/runtime-project-time";
@@ -60,8 +67,46 @@ export interface WorldShaderSkyRenderState {
   };
 }
 
+export interface WorldShaderSkyEnvironmentPhaseStates {
+  day: WorldShaderSkyRenderState | null;
+  dawn: WorldShaderSkyRenderState | null;
+  dusk: WorldShaderSkyRenderState | null;
+  night: WorldShaderSkyRenderState | null;
+}
+
+export interface WorldShaderSkyEnvironmentPhaseBlend {
+  basePhase: RuntimeDayPhase;
+  overlayPhase: RuntimeDayPhase | null;
+  blendAmount: number;
+}
+
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
+}
+
+function wrapTimeForward(hours: number, originHours: number): number {
+  let wrappedHours = normalizeTimeOfDayHours(hours);
+
+  while (wrappedHours < originHours) {
+    wrappedHours += HOURS_PER_DAY;
+  }
+
+  return wrappedHours;
+}
+
+function resolveTimeWindowMidpoint(
+  startTimeOfDayHours: number,
+  endTimeOfDayHours: number
+): number {
+  const wrappedEndTime = wrapTimeForward(endTimeOfDayHours, startTimeOfDayHours);
+
+  return normalizeTimeOfDayHours(
+    startTimeOfDayHours + (wrappedEndTime - startTimeOfDayHours) / 2
+  );
+}
+
+function quantizeNumberToBucket(value: number, step: number): number {
+  return Math.round(value / step);
 }
 
 function parseHexColor(colorHex: string): { r: number; g: number; b: number } {
@@ -329,5 +374,205 @@ export function resolveWorldShaderSkyRenderState(
         y: Math.sin(cloudDriftDirectionRadians) * cloudDriftDistance * 0.35
       }
     }
+  };
+}
+
+export function resolveWorldShaderSkyEnvironmentPhaseStates(
+  world: WorldSettings,
+  timeSettings: ProjectTimeSettings | null
+): WorldShaderSkyEnvironmentPhaseStates {
+  if (world.background.mode !== "shader") {
+    return {
+      day: null,
+      dawn: null,
+      dusk: null,
+      night: null
+    };
+  }
+
+  if (!world.projectTimeLightingEnabled || timeSettings === null) {
+    const resolvedWorld: RuntimeDayNightWorldState = {
+      ambientLight: {
+        ...world.ambientLight
+      },
+      sunLight: {
+        ...world.sunLight,
+        direction: {
+          ...world.sunLight.direction
+        }
+      },
+      moonLight: null,
+      background: {
+        ...world.background
+      },
+      nightBackgroundOverlay: null,
+      daylightFactor: 1
+    };
+    const dayState = resolveWorldShaderSkyRenderState(
+      world,
+      resolvedWorld,
+      null,
+      null
+    );
+
+    return {
+      day: dayState,
+      dawn: dayState,
+      dusk: dayState,
+      night: dayState
+    };
+  }
+
+  const dawnHalfDuration =
+    Math.max(timeSettings.dawnDurationHours, 0.001) / 2;
+  const duskHalfDuration =
+    Math.max(timeSettings.duskDurationHours, 0.001) / 2;
+  const dawnStart = timeSettings.sunriseTimeOfDayHours - dawnHalfDuration;
+  const dawnEnd = timeSettings.sunriseTimeOfDayHours + dawnHalfDuration;
+  const duskStart = timeSettings.sunsetTimeOfDayHours - duskHalfDuration;
+  const duskEnd = timeSettings.sunsetTimeOfDayHours + duskHalfDuration;
+  const representativeTimes = {
+    dawn: resolveTimeWindowMidpoint(dawnStart, dawnEnd),
+    day: resolveTimeWindowMidpoint(dawnEnd, duskStart),
+    dusk: resolveTimeWindowMidpoint(duskStart, duskEnd),
+    night: resolveTimeWindowMidpoint(duskEnd, dawnStart)
+  };
+  const resolveRepresentativeState = (
+    timeOfDayHours: number
+  ): WorldShaderSkyRenderState | null => {
+    const resolvedTime = resolveRuntimeTimeState(timeSettings, {
+      timeOfDayHours,
+      dayCount: 0,
+      dayLengthMinutes: timeSettings.dayLengthMinutes
+    });
+    const resolvedWorld = resolveRuntimeDayNightWorldState(
+      world,
+      timeSettings,
+      {
+        timeOfDayHours,
+        dayCount: 0,
+        dayLengthMinutes: timeSettings.dayLengthMinutes
+      },
+      resolvedTime
+    );
+
+    return resolveWorldShaderSkyRenderState(
+      world,
+      resolvedWorld,
+      resolvedTime,
+      timeSettings
+    );
+  };
+
+  return {
+    day: resolveRepresentativeState(representativeTimes.day),
+    dawn: resolveRepresentativeState(representativeTimes.dawn),
+    dusk: resolveRepresentativeState(representativeTimes.dusk),
+    night: resolveRepresentativeState(representativeTimes.night)
+  };
+}
+
+export function createWorldShaderSkyEnvironmentCacheKey(
+  state: WorldShaderSkyRenderState
+): string {
+  return JSON.stringify({
+    presetId: state.presetId,
+    sky: [
+      state.sky.topColorHex,
+      state.sky.bottomColorHex,
+      quantizeNumberToBucket(state.sky.horizonHeight, 0.01)
+    ],
+    sun: [
+      state.celestial.sunColorHex,
+      quantizeNumberToBucket(state.celestial.sunDirection.x, 0.01),
+      quantizeNumberToBucket(state.celestial.sunDirection.y, 0.01),
+      quantizeNumberToBucket(state.celestial.sunDirection.z, 0.01),
+      quantizeNumberToBucket(state.celestial.sunIntensity, 0.05),
+      quantizeNumberToBucket(state.celestial.sunDiscSizeDegrees, 0.05),
+      state.celestial.sunVisible ? 1 : 0
+    ],
+    moon: [
+      state.celestial.moonColorHex,
+      quantizeNumberToBucket(state.celestial.moonDirection.x, 0.01),
+      quantizeNumberToBucket(state.celestial.moonDirection.y, 0.01),
+      quantizeNumberToBucket(state.celestial.moonDirection.z, 0.01),
+      quantizeNumberToBucket(state.celestial.moonIntensity, 0.05),
+      quantizeNumberToBucket(state.celestial.moonDiscSizeDegrees, 0.05),
+      state.celestial.moonVisible ? 1 : 0
+    ],
+    stars: [
+      quantizeNumberToBucket(state.stars.density, 0.05),
+      quantizeNumberToBucket(state.stars.brightness, 0.05),
+      quantizeNumberToBucket(state.stars.visibility, 0.05),
+      quantizeNumberToBucket(state.stars.horizonFadeOffset, 0.01),
+      quantizeNumberToBucket(state.stars.rotationRadians, 0.02)
+    ],
+    clouds: [
+      state.clouds.tintHex,
+      quantizeNumberToBucket(state.clouds.coverage, 0.05),
+      quantizeNumberToBucket(state.clouds.density, 0.05),
+      quantizeNumberToBucket(state.clouds.softness, 0.05),
+      quantizeNumberToBucket(state.clouds.scale, 0.05),
+      quantizeNumberToBucket(state.clouds.height, 0.05),
+      quantizeNumberToBucket(state.clouds.heightVariation, 0.05),
+      quantizeNumberToBucket(state.clouds.opacity, 0.05),
+      quantizeNumberToBucket(state.clouds.opacityRandomness, 0.05),
+      quantizeNumberToBucket(state.clouds.driftOffset.x, 0.02),
+      quantizeNumberToBucket(state.clouds.driftOffset.y, 0.02)
+    ]
+  });
+}
+
+export function createWorldShaderSkyEnvironmentPhaseCacheKey(
+  states: WorldShaderSkyEnvironmentPhaseStates
+): string {
+  return JSON.stringify({
+    day:
+      states.day === null
+        ? null
+        : createWorldShaderSkyEnvironmentCacheKey(states.day),
+    dawn:
+      states.dawn === null
+        ? null
+        : createWorldShaderSkyEnvironmentCacheKey(states.dawn),
+    dusk:
+      states.dusk === null
+        ? null
+        : createWorldShaderSkyEnvironmentCacheKey(states.dusk),
+    night:
+      states.night === null
+        ? null
+        : createWorldShaderSkyEnvironmentCacheKey(states.night)
+  });
+}
+
+export function resolveWorldShaderSkyEnvironmentPhaseBlend(
+  state: Pick<WorldShaderSkyRenderState, "time">
+): WorldShaderSkyEnvironmentPhaseBlend | null {
+  const activePhases = (
+    ["day", "dawn", "dusk", "night"] as const
+  ).filter((phase) => state.time.phaseWeights[phase] > 1e-4);
+
+  if (activePhases.length === 0) {
+    return null;
+  }
+
+  if (activePhases.length === 1) {
+    return {
+      basePhase: activePhases[0],
+      overlayPhase: null,
+      blendAmount: 0
+    };
+  }
+
+  const [basePhase, overlayPhase] = activePhases;
+  const baseWeight = state.time.phaseWeights[basePhase];
+  const overlayWeight = state.time.phaseWeights[overlayPhase];
+  const totalWeight = Math.max(baseWeight + overlayWeight, 1e-6);
+
+  return {
+    basePhase,
+    overlayPhase,
+    blendAmount: overlayWeight / totalWeight
   };
 }
