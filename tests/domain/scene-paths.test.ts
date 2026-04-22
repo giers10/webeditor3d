@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   createScenePath,
   getScenePathLength,
+  resolveNearestPointOnResolvedScenePath,
   resolveScenePath,
   sampleResolvedScenePathPosition,
   sampleResolvedScenePathTangent,
@@ -175,5 +176,61 @@ describe("scene paths", () => {
     expect(smoothedPosition.z).toBeLessThan(3);
     expect(smoothedTangent.x).toBeGreaterThan(0);
     expect(smoothedTangent.z).toBeGreaterThan(0);
+  });
+
+  it("projects world points onto the nearest resolved path segment and returns progress", () => {
+    const path = createScenePath({
+      id: "path-nearest-point",
+      points: [
+        {
+          id: "point-a",
+          position: {
+            x: 0,
+            y: 0,
+            z: 0
+          }
+        },
+        {
+          id: "point-b",
+          position: {
+            x: 0,
+            y: 0,
+            z: 4
+          }
+        },
+        {
+          id: "point-c",
+          position: {
+            x: 6,
+            y: 0,
+            z: 4
+          }
+        }
+      ]
+    });
+    const resolvedPath = resolveScenePath(path);
+
+    expect(
+      resolveNearestPointOnResolvedScenePath(resolvedPath, {
+        x: 2,
+        y: 0,
+        z: 5
+      })
+    ).toEqual({
+      progress: 0.6,
+      distance: 1,
+      distanceAlongPath: 6,
+      segmentIndex: 1,
+      position: {
+        x: 2,
+        y: 0,
+        z: 4
+      },
+      tangent: {
+        x: 1,
+        y: 0,
+        z: 0
+      }
+    });
   });
 });
