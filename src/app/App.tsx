@@ -3652,11 +3652,21 @@ export function App({ store, initialStatusMessage }: AppProps) {
     setWorldDawnLightIntensityFactorDraft(
       String(worldTimeOfDay.dawn.lightIntensityFactor)
     );
+    setWorldDawnBackgroundEnvironmentIntensityDraft(
+      worldTimeOfDay.dawn.background.mode === "image"
+        ? String(worldTimeOfDay.dawn.background.environmentIntensity)
+        : String(DEFAULT_TIME_PHASE_IMAGE_ENVIRONMENT_INTENSITY)
+    );
     setWorldDuskAmbientIntensityFactorDraft(
       String(worldTimeOfDay.dusk.ambientIntensityFactor)
     );
     setWorldDuskLightIntensityFactorDraft(
       String(worldTimeOfDay.dusk.lightIntensityFactor)
+    );
+    setWorldDuskBackgroundEnvironmentIntensityDraft(
+      worldTimeOfDay.dusk.background.mode === "image"
+        ? String(worldTimeOfDay.dusk.background.environmentIntensity)
+        : String(DEFAULT_TIME_PHASE_IMAGE_ENVIRONMENT_INTENSITY)
     );
     setWorldNightAmbientIntensityFactorDraft(
       String(worldTimeOfDay.night.ambientIntensityFactor)
@@ -3667,7 +3677,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     setWorldNightBackgroundEnvironmentIntensityDraft(
       worldTimeOfDay.night.background.mode === "image"
         ? String(worldTimeOfDay.night.background.environmentIntensity)
-        : "0.5"
+        : String(DEFAULT_NIGHT_IMAGE_ENVIRONMENT_INTENSITY)
     );
   }, [editorState.document.world.timeOfDay]);
 
