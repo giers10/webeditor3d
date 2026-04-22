@@ -256,6 +256,7 @@ uniform float uTwilightFactor;
 uniform float uStarDensity;
 uniform float uStarBrightness;
 uniform float uStarVisibility;
+uniform float uStarHorizonFadeOffset;
 uniform float uStarRotationRadians;
 uniform float uCloudCoverage;
 uniform float uCloudDensity;
@@ -413,7 +414,8 @@ void main() {
   );
   float starTwinkle = noise3(rotatedStarDirection * 24.0 + vec3(uTwilightFactor * 17.0, uStarRotationRadians * 0.5, 9.0));
   float stars = (starLayerA * 0.75 + starLayerB * 1.15) * mix(0.8, 1.18, starTwinkle);
-  float starHorizonFade = smoothstep(uHorizonHeight - 0.08, uHorizonHeight + 0.12, direction.y);
+  float starHorizonLine = uHorizonHeight + uStarHorizonFadeOffset;
+  float starHorizonFade = smoothstep(starHorizonLine - 0.08, starHorizonLine + 0.12, direction.y);
   skyColor += vec3(stars) * uStarBrightness * uStarVisibility * starHorizonFade;
 
   float cloudScale = max(uCloudScale, 0.01);
@@ -665,6 +667,9 @@ export class WorldBackgroundRenderer {
       uStarVisibility: {
         value: 0
       },
+      uStarHorizonFadeOffset: {
+        value: 0
+      },
       uStarRotationRadians: {
         value: 0
       },
@@ -877,6 +882,7 @@ export class WorldBackgroundRenderer {
     if (state === null) {
       this.shaderSkyMaterial.uniforms.uHorizonHeight.value = 0;
       this.shaderSkyMaterial.uniforms.uStarVisibility.value = 0;
+      this.shaderSkyMaterial.uniforms.uStarHorizonFadeOffset.value = 0;
       this.shaderSkyMaterial.uniforms.uSunVisible.value = 0;
       this.shaderSkyMaterial.uniforms.uMoonVisible.value = 0;
       return;
@@ -931,6 +937,8 @@ export class WorldBackgroundRenderer {
       state.stars.brightness;
     this.shaderSkyMaterial.uniforms.uStarVisibility.value =
       state.stars.visibility;
+    this.shaderSkyMaterial.uniforms.uStarHorizonFadeOffset.value =
+      state.stars.horizonFadeOffset;
     this.shaderSkyMaterial.uniforms.uStarRotationRadians.value =
       state.stars.rotationRadians;
     this.shaderSkyMaterial.uniforms.uCloudCoverage.value =

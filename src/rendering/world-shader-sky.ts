@@ -43,6 +43,7 @@ export interface WorldShaderSkyRenderState {
     density: number;
     brightness: number;
     visibility: number;
+    horizonFadeOffset: number;
     rotationRadians: number;
   };
   clouds: {
@@ -310,6 +311,7 @@ export function resolveWorldShaderSkyRenderState(
       density: world.shaderSky.stars.density,
       brightness: world.shaderSky.stars.brightness,
       visibility: starVisibility,
+      horizonFadeOffset: world.shaderSky.stars.horizonFadeOffset,
       rotationRadians: Math.atan2(sunDirection.z, sunDirection.x)
     },
     clouds: {
