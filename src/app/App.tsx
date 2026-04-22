@@ -8548,6 +8548,84 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
+  const applyCameraRigChange = (
+    overrides: {
+      defaultActive?: boolean;
+      targetKind?: CameraRigTargetKind;
+      transitionMode?: CameraRigTransitionMode;
+      lookAroundEnabled?: boolean;
+    } = {}
+  ) => {
+    if (selectedCameraRig === null) {
+      setStatusMessage("Select a Camera Rig before editing it.");
+      return;
+    }
+
+    try {
+      const targetKind = overrides.targetKind ?? cameraRigTargetKindDraft;
+      const target =
+        targetKind === "player"
+          ? createCameraRigPlayerTargetRef()
+          : targetKind === "actor"
+            ? createCameraRigActorTargetRef(cameraRigTargetActorIdDraft)
+            : targetKind === "entity"
+              ? createCameraRigEntityTargetRef(cameraRigTargetEntityIdDraft)
+              : createCameraRigWorldPointTargetRef(
+                  readVec3Draft(
+                    cameraRigTargetWorldPointDraft,
+                    "Camera Rig world target"
+                  )
+                );
+
+      const nextEntity = createCameraRigEntity({
+        id: selectedCameraRig.id,
+        name: selectedCameraRig.name,
+        visible: selectedCameraRig.visible,
+        enabled: selectedCameraRig.enabled,
+        position: snapVec3ToGrid(
+          readVec3Draft(entityPositionDraft, "Camera Rig position"),
+          DEFAULT_GRID_SIZE
+        ),
+        priority: readNonNegativeNumberDraft(
+          cameraRigPriorityDraft,
+          "Camera Rig priority"
+        ),
+        defaultActive: overrides.defaultActive ?? cameraRigDefaultActiveDraft,
+        target,
+        targetOffset: readVec3Draft(
+          cameraRigTargetOffsetDraft,
+          "Camera Rig target offset"
+        ),
+        transitionMode:
+          overrides.transitionMode ?? cameraRigTransitionModeDraft,
+        transitionDurationSeconds: readNonNegativeNumberDraft(
+          cameraRigTransitionDurationDraft,
+          "Camera Rig transition duration"
+        ),
+        lookAround: {
+          enabled:
+            overrides.lookAroundEnabled ?? cameraRigLookAroundEnabledDraft,
+          yawLimitDegrees: readNonNegativeNumberDraft(
+            cameraRigLookAroundYawLimitDraft,
+            "Camera Rig look-around yaw limit"
+          ),
+          pitchLimitDegrees: readNonNegativeNumberDraft(
+            cameraRigLookAroundPitchLimitDraft,
+            "Camera Rig look-around pitch limit"
+          ),
+          recenterSpeed: readNonNegativeNumberDraft(
+            cameraRigLookAroundRecenterSpeedDraft,
+            "Camera Rig look-around recenter speed"
+          )
+        }
+      });
+
+      commitEntityChange(selectedCameraRig, nextEntity, "Updated Camera Rig.");
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
   const applyPlayerStartChange = (
     overrides: {
       colliderMode?: PlayerStartColliderMode;
