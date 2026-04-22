@@ -191,7 +191,8 @@ function validateWorldBackgroundSettings(
   document: SceneDocument | ProjectDocument,
   diagnostics: SceneDiagnostic[],
   path: string,
-  label: string
+  label: string,
+  options: { allowEmptyImageAssetId?: boolean } = {}
 ) {
   if (background.mode === "solid") {
     if (!isHexColorString(background.colorHex)) {
@@ -238,14 +239,16 @@ function validateWorldBackgroundSettings(
     typeof background.assetId !== "string" ||
     background.assetId.trim().length === 0
   ) {
-    diagnostics.push(
-      createDiagnostic(
-        "error",
-        `invalid-${label}-asset-id`,
-        `${label} must reference a non-empty image asset id.`,
-        `${path}.assetId`
-      )
-    );
+    if (!options.allowEmptyImageAssetId) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          `invalid-${label}-asset-id`,
+          `${label} must reference a non-empty image asset id.`,
+          `${path}.assetId`
+        )
+      );
+    }
   } else {
     const backgroundAsset = document.assets[background.assetId];
 
