@@ -1,10 +1,10 @@
 import {
   BackSide,
+  Camera,
   Color,
   Group,
   Mesh,
   MeshBasicMaterial,
-  PerspectiveCamera,
   Scene,
   ShaderMaterial,
   SphereGeometry,
@@ -246,7 +246,7 @@ export class WorldBackgroundRenderer {
     this.overlayMesh.visible = overlayOpacity > NIGHT_BACKGROUND_EPSILON;
   }
 
-  syncToCamera(camera: PerspectiveCamera) {
+  syncToCamera(camera: Camera) {
     this.anchor.position.copy(camera.position);
   }
 
