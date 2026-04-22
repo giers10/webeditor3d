@@ -4900,6 +4900,51 @@ export class ViewportHost {
     this.applyShadowState();
   }
 
+  private rebuildLightVolumes(document: SceneDocument) {
+    this.clearLightVolumes();
+
+    if (this.currentSimulationScene !== null) {
+      for (const lightVolume of this.currentSimulationScene.volumes.light) {
+        const renderObjects = this.createLightVolumeRenderObjects(lightVolume);
+        renderObjects.group.visible =
+          lightVolume.enabled && this.displayMode !== "wireframe";
+        this.lightVolumeGroup.add(renderObjects.group);
+        this.lightVolumeRenderObjects.set(lightVolume.brushId, renderObjects);
+      }
+
+      return;
+    }
+
+    for (const brush of Object.values(document.brushes)) {
+      if (
+        !brush.enabled ||
+        !brush.visible ||
+        brush.kind !== "box" ||
+        brush.volume.mode !== "light"
+      ) {
+        continue;
+      }
+
+      const renderObjects = this.createLightVolumeRenderObjects({
+        brushId: brush.id,
+        enabled: brush.visible,
+        center: brush.center,
+        rotationDegrees: brush.rotationDegrees,
+        size: brush.size,
+        colorHex: brush.volume.light.colorHex,
+        lights: deriveBoxLightVolumePointLights({
+          size: brush.size,
+          intensity: brush.volume.light.intensity,
+          padding: brush.volume.light.padding,
+          falloff: brush.volume.light.falloff
+        })
+      });
+      renderObjects.group.visible = this.displayMode !== "wireframe";
+      this.lightVolumeGroup.add(renderObjects.group);
+      this.lightVolumeRenderObjects.set(brush.id, renderObjects);
+    }
+  }
+
   private rebuildBrushMeshes(
     document: SceneDocument,
     selection: EditorSelection
@@ -5665,6 +5710,59 @@ export class ViewportHost {
     return {
       group,
       light
+    };
+  }
+
+  private createLightVolumeRenderObjects(lightVolume: {
+    brushId: string;
+    enabled: boolean;
+    center: Vec3;
+    rotationDegrees: Vec3;
+    size: Vec3;
+    colorHex: string;
+    lights: Array<{
+      localPosition: Vec3;
+      intensity: number;
+      distance: number;
+      decay: number;
+    }>;
+  }): LightVolumeRenderObjects {
+    const group = new Group();
+    const lights: PointLight[] = [];
+
+    group.position.set(
+      lightVolume.center.x,
+      lightVolume.center.y,
+      lightVolume.center.z
+    );
+    group.rotation.set(
+      (lightVolume.rotationDegrees.x * Math.PI) / 180,
+      (lightVolume.rotationDegrees.y * Math.PI) / 180,
+      (lightVolume.rotationDegrees.z * Math.PI) / 180
+    );
+    group.visible = lightVolume.enabled;
+
+    for (const derivedLight of lightVolume.lights) {
+      const light = new PointLight(
+        lightVolume.colorHex,
+        derivedLight.intensity,
+        derivedLight.distance,
+        derivedLight.decay
+      );
+      light.castShadow = false;
+      light.shadow.autoUpdate = false;
+      light.position.set(
+        derivedLight.localPosition.x,
+        derivedLight.localPosition.y,
+        derivedLight.localPosition.z
+      );
+      group.add(light);
+      lights.push(light);
+    }
+
+    return {
+      group,
+      lights
     };
   }
 
