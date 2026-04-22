@@ -746,8 +746,8 @@ function resolveTimeDrivenBackground(
     return {
       background: daylikeImageBackground,
       nightBackgroundOverlay: resolveBackgroundImageOverlay(
-        dayBackground,
-        0
+        nightBackground,
+        twilightNightOpacity
       )
     };
   }
