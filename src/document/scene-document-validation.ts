@@ -724,9 +724,21 @@ function validateWorldSettings(
 function validateWorldTimePhaseProfile(
   profile: WorldTimePhaseProfile,
   diagnostics: SceneDiagnostic[],
+  document: SceneDocument | ProjectDocument,
   path: string,
   label: string
 ) {
+  validateWorldBackgroundSettings(
+    profile.background,
+    document,
+    diagnostics,
+    `${path}.background`,
+    `${label} background`,
+    {
+      allowEmptyImageAssetId: true
+    }
+  );
+
   if (!isHexColorString(profile.skyTopColorHex)) {
     diagnostics.push(
       createDiagnostic(
