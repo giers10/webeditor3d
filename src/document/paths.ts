@@ -35,6 +35,34 @@ export interface ResolvedScenePath {
   totalLength: number;
 }
 
+export interface ResolvedScenePathProjectionSource {
+  points: Array<{
+    position: Vec3;
+  }>;
+  segments: Array<
+    Pick<
+      ResolvedScenePathSegment,
+      | "index"
+      | "start"
+      | "end"
+      | "length"
+      | "distanceStart"
+      | "distanceEnd"
+      | "tangent"
+    >
+  >;
+  totalLength: number;
+}
+
+export interface ResolvedScenePathNearestPoint {
+  progress: number;
+  distance: number;
+  distanceAlongPath: number;
+  segmentIndex: number | null;
+  position: Vec3;
+  tangent: Vec3;
+}
+
 interface PathPointLike {
   position: Vec3;
 }
@@ -690,6 +718,99 @@ export function sampleResolvedScenePathPosition(
     y: segment.start.y + (segment.end.y - segment.start.y) * t,
     z: segment.start.z + (segment.end.z - segment.start.z) * t
   };
+}
+
+export function resolveNearestPointOnResolvedScenePath(
+  path: ResolvedScenePathProjectionSource,
+  point: Vec3
+): ResolvedScenePathNearestPoint {
+  assertFiniteVec3(point, "Nearest path query point");
+
+  if (path.points.length === 0) {
+    return {
+      progress: 0,
+      distance: Math.hypot(point.x, point.y, point.z),
+      distanceAlongPath: 0,
+      segmentIndex: null,
+      position: {
+        x: 0,
+        y: 0,
+        z: 0
+      },
+      tangent: {
+        x: 0,
+        y: 0,
+        z: 0
+      }
+    };
+  }
+
+  if (path.segments.length === 0 || path.totalLength <= 0) {
+    const firstPoint = path.points[0]!.position;
+    return {
+      progress: 0,
+      distance: getVec3Distance(firstPoint, point),
+      distanceAlongPath: 0,
+      segmentIndex: null,
+      position: cloneVec3(firstPoint),
+      tangent: {
+        x: 0,
+        y: 0,
+        z: 0
+      }
+    };
+  }
+
+  let nearestSample: ResolvedScenePathNearestPoint | null = null;
+
+  for (const segment of path.segments) {
+    const delta = subtractVec3(segment.end, segment.start);
+    const lengthSquared =
+      delta.x * delta.x + delta.y * delta.y + delta.z * delta.z;
+    const pointOffset = subtractVec3(point, segment.start);
+    const unclampedT =
+      lengthSquared <= 1e-8
+        ? 0
+        : (pointOffset.x * delta.x +
+            pointOffset.y * delta.y +
+            pointOffset.z * delta.z) /
+          lengthSquared;
+    const t = Math.min(1, Math.max(0, unclampedT));
+    const position = {
+      x: segment.start.x + delta.x * t,
+      y: segment.start.y + delta.y * t,
+      z: segment.start.z + delta.z * t
+    };
+    const distanceAlongPath = segment.distanceStart + segment.length * t;
+    const progress = clampProgress(distanceAlongPath / path.totalLength);
+    const distance = getVec3Distance(position, point);
+    const tangent =
+      segment.length > 1e-8
+        ? cloneVec3(segment.tangent)
+        : findNonZeroSegmentTangent(
+            path as ResolvedPathLike<PathPointLike, ResolvedPathSegmentLike>,
+            segment.index
+          );
+    const candidate: ResolvedScenePathNearestPoint = {
+      progress,
+      distance,
+      distanceAlongPath,
+      segmentIndex: segment.index,
+      position,
+      tangent,
+      };
+
+    if (
+      nearestSample === null ||
+      candidate.distance < nearestSample.distance - 1e-8 ||
+      (Math.abs(candidate.distance - nearestSample.distance) <= 1e-8 &&
+        candidate.progress < nearestSample.progress)
+    ) {
+      nearestSample = candidate;
+    }
+  }
+
+  return nearestSample!;
 }
 
 export function sampleScenePathPosition(

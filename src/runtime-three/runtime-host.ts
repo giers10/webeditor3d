@@ -81,14 +81,22 @@ import {
   fitCelestialDirectionalShadow,
   resolveDominantCelestialShadowCaster
 } from "../rendering/celestial-shadows";
-import { resolveWorldShaderSkyRenderState } from "../rendering/world-shader-sky";
+import {
+  resolveWorldShaderSkyEnvironmentPhaseStates,
+  resolveWorldShaderSkyRenderState
+} from "../rendering/world-shader-sky";
 import {
   resolveWorldCelestialBodiesState,
   resolveWorldEnvironmentState,
   WorldBackgroundRenderer
 } from "../rendering/world-background-renderer";
 import {
+  createRendererPrecomputedShaderSkyEnvironmentCache,
+  type PrecomputedShaderSkyEnvironmentCache
+} from "../rendering/precomputed-shader-sky-environment-cache";
+import {
   createRendererQuantizedEnvironmentBlendCache,
+  createRendererQuantizedPmremBlendCache,
   type QuantizedEnvironmentBlendCache
 } from "../rendering/quantized-environment-blend-cache";
 import {
@@ -399,6 +407,8 @@ export class RuntimeHost {
   private readonly controllerContext: RuntimeControllerContext;
   private readonly renderer: WebGLRenderer | null;
   private readonly environmentBlendCache: QuantizedEnvironmentBlendCache | null;
+  private readonly shaderSkyEnvironmentBlendCache: QuantizedEnvironmentBlendCache | null;
+  private readonly shaderSkyEnvironmentCache: PrecomputedShaderSkyEnvironmentCache | null;
   private runtimeScene: RuntimeSceneDefinition | null = null;
   private collisionWorld: RapierCollisionWorld | null = null;
   private collisionWorldRequestId = 0;
@@ -514,6 +524,24 @@ export class RuntimeHost {
               this.applyDayNightLighting();
             }
           });
+    this.shaderSkyEnvironmentBlendCache =
+      this.renderer === null
+        ? null
+        : createRendererQuantizedPmremBlendCache(this.renderer, {
+            onTextureReady: () => {
+              this.applyDayNightLighting();
+            }
+          });
+    this.shaderSkyEnvironmentCache =
+      this.renderer === null
+        ? null
+        : createRendererPrecomputedShaderSkyEnvironmentCache(
+            this.renderer,
+            this.worldBackgroundRenderer,
+            {
+              phaseBlendTextureResolver: this.shaderSkyEnvironmentBlendCache
+            }
+          );
 
     this.controllerContext = {
       camera: this.camera,
@@ -945,6 +973,8 @@ export class RuntimeHost {
 
     this.materialTextureCache.clear();
     this.environmentBlendCache?.dispose();
+    this.shaderSkyEnvironmentBlendCache?.dispose();
+    this.shaderSkyEnvironmentCache?.dispose();
     this.worldBackgroundRenderer.dispose();
     this.renderer?.forceContextLoss();
     this.renderer?.dispose();
