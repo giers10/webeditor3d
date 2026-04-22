@@ -109,20 +109,16 @@ function resolveTextureDimensions(texture: Texture): {
         height?: number;
       }
     | undefined;
-  const sourceData = texture.source.data as
-    | {
-        width?: number;
-        height?: number;
-      }
-    | null;
+  const sourceData = texture.source.data as {
+    width?: number;
+    height?: number;
+  } | null;
 
   return {
     width: Math.max(
       1,
       Math.floor(
-        image?.width ??
-          sourceData?.width ??
-          DEFAULT_BLEND_RENDER_TARGET_WIDTH
+        image?.width ?? sourceData?.width ?? DEFAULT_BLEND_RENDER_TARGET_WIDTH
       )
     ),
     height: Math.max(
@@ -186,9 +182,7 @@ export function createQuantizedEnvironmentBlendCacheKey(
   return `${getOrderedPairCacheKey(baseTexture, overlayTexture)}@${bucketIndex}`;
 }
 
-export class QuantizedEnvironmentBlendCache
-  implements WorldEnvironmentBlendTextureResolver
-{
+export class QuantizedEnvironmentBlendCache implements WorldEnvironmentBlendTextureResolver {
   private readonly bucketCount: number;
   private readonly buildBlendTexture: QuantizedEnvironmentBlendCacheOptions["buildBlendTexture"];
   private readonly disposeBuildResources: (() => void) | undefined;
@@ -208,9 +202,7 @@ export class QuantizedEnvironmentBlendCache
   constructor(options: QuantizedEnvironmentBlendCacheOptions) {
     this.bucketCount = Math.max(
       1,
-      Math.floor(
-        options.bucketCount ?? DEFAULT_QUANTIZED_BLEND_BUCKET_COUNT
-      )
+      Math.floor(options.bucketCount ?? DEFAULT_QUANTIZED_BLEND_BUCKET_COUNT)
     );
     this.buildBlendTexture = options.buildBlendTexture;
     this.disposeBuildResources = options.disposeBuildResources;
@@ -359,7 +351,11 @@ export class QuantizedEnvironmentBlendCache
   }
 
   private schedulePendingBuilds() {
-    if (this.disposed || this.buildScheduled || this.pendingBuilds.length === 0) {
+    if (
+      this.disposed ||
+      this.buildScheduled ||
+      this.pendingBuilds.length === 0
+    ) {
       return;
     }
 

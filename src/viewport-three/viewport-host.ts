@@ -735,14 +735,12 @@ export class ViewportHost {
         }
       }
     );
-    this.shaderSkyEnvironmentBlendCache = createRendererQuantizedPmremBlendCache(
-      this.renderer,
-      {
+    this.shaderSkyEnvironmentBlendCache =
+      createRendererQuantizedPmremBlendCache(this.renderer, {
         onTextureReady: () => {
           this.applyWorld();
         }
-      }
-    );
+      });
     this.shaderSkyEnvironmentCache =
       createRendererPrecomputedShaderSkyEnvironmentCache(
         this.renderer,

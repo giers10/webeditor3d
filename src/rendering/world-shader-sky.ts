@@ -98,7 +98,10 @@ function resolveTimeWindowMidpoint(
   startTimeOfDayHours: number,
   endTimeOfDayHours: number
 ): number {
-  const wrappedEndTime = wrapTimeForward(endTimeOfDayHours, startTimeOfDayHours);
+  const wrappedEndTime = wrapTimeForward(
+    endTimeOfDayHours,
+    startTimeOfDayHours
+  );
 
   return normalizeTimeOfDayHours(
     startTimeOfDayHours + (wrappedEndTime - startTimeOfDayHours) / 2
@@ -423,10 +426,8 @@ export function resolveWorldShaderSkyEnvironmentPhaseStates(
     };
   }
 
-  const dawnHalfDuration =
-    Math.max(timeSettings.dawnDurationHours, 0.001) / 2;
-  const duskHalfDuration =
-    Math.max(timeSettings.duskDurationHours, 0.001) / 2;
+  const dawnHalfDuration = Math.max(timeSettings.dawnDurationHours, 0.001) / 2;
+  const duskHalfDuration = Math.max(timeSettings.duskDurationHours, 0.001) / 2;
   const dawnStart = timeSettings.sunriseTimeOfDayHours - dawnHalfDuration;
   const dawnEnd = timeSettings.sunriseTimeOfDayHours + dawnHalfDuration;
   const duskStart = timeSettings.sunsetTimeOfDayHours - duskHalfDuration;
@@ -549,9 +550,9 @@ export function createWorldShaderSkyEnvironmentPhaseCacheKey(
 export function resolveWorldShaderSkyEnvironmentPhaseBlend(
   state: Pick<WorldShaderSkyRenderState, "time">
 ): WorldShaderSkyEnvironmentPhaseBlend | null {
-  const activePhases = (
-    ["day", "dawn", "dusk", "night"] as const
-  ).filter((phase) => state.time.phaseWeights[phase] > 1e-4);
+  const activePhases = (["day", "dawn", "dusk", "night"] as const).filter(
+    (phase) => state.time.phaseWeights[phase] > 1e-4
+  );
 
   if (activePhases.length === 0) {
     return null;

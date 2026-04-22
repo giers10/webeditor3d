@@ -756,8 +756,7 @@ function applyShaderSkyStateToMaterial(
   material.uniforms.uCloudSoftness.value = state.clouds.softness;
   material.uniforms.uCloudScale.value = state.clouds.scale;
   material.uniforms.uCloudHeight.value = state.clouds.height;
-  material.uniforms.uCloudHeightVariation.value =
-    state.clouds.heightVariation;
+  material.uniforms.uCloudHeightVariation.value = state.clouds.heightVariation;
   material.uniforms.uCloudTint.value.set(state.clouds.tintHex);
   material.uniforms.uCloudOpacity.value = state.clouds.opacity;
   material.uniforms.uCloudOpacityRandomness.value =
@@ -904,7 +903,9 @@ export class WorldBackgroundRenderer {
     }
 
     applyShaderSkyStateToMaterial(this.shaderSkyMaterial, shaderSkyState);
-    this.syncEnvironmentCaptureState(showShaderBackground ? shaderSkyState : null);
+    this.syncEnvironmentCaptureState(
+      showShaderBackground ? shaderSkyState : null
+    );
     this.shaderMesh.visible = showShaderBackground;
     this.gradientMesh.visible = !showShaderBackground && !showImageBackground;
     this.imageMesh.visible = showImageBackground;

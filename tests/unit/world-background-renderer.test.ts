@@ -36,16 +36,24 @@ describe("resolveWorldEnvironmentState", () => {
       environmentIntensity: 0.4
     };
 
-    const earlyTwilight = resolveWorldEnvironmentState(world.background, dayTexture, {
-      texture: nightTexture,
-      opacity: 0.25,
-      environmentIntensity: 0.8
-    });
-    const lateTwilight = resolveWorldEnvironmentState(world.background, dayTexture, {
-      texture: nightTexture,
-      opacity: 0.75,
-      environmentIntensity: 0.8
-    });
+    const earlyTwilight = resolveWorldEnvironmentState(
+      world.background,
+      dayTexture,
+      {
+        texture: nightTexture,
+        opacity: 0.25,
+        environmentIntensity: 0.8
+      }
+    );
+    const lateTwilight = resolveWorldEnvironmentState(
+      world.background,
+      dayTexture,
+      {
+        texture: nightTexture,
+        opacity: 0.75,
+        environmentIntensity: 0.8
+      }
+    );
 
     expect(earlyTwilight.texture).toBe(dayTexture);
     expect(earlyTwilight.intensity).toBeCloseTo(0.5);

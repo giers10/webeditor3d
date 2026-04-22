@@ -106,14 +106,14 @@ class RendererShaderSkyEnvironmentTextureBuilder {
   }
 }
 
-export class PrecomputedShaderSkyEnvironmentCache
-  implements WorldShaderSkyEnvironmentTextureResolver
-{
+export class PrecomputedShaderSkyEnvironmentCache implements WorldShaderSkyEnvironmentTextureResolver {
   private currentKey: string | null = null;
   private readonly phaseEntries = createEmptyPhaseEntries();
   private disposed = false;
 
-  constructor(private readonly options: PrecomputedShaderSkyEnvironmentCacheOptions) {}
+  constructor(
+    private readonly options: PrecomputedShaderSkyEnvironmentCacheOptions
+  ) {}
 
   syncPhaseTextures(states: WorldShaderSkyEnvironmentPhaseStates) {
     if (this.disposed) {
@@ -132,9 +132,7 @@ export class PrecomputedShaderSkyEnvironmentCache
       for (const phase of SHADER_SKY_PHASES) {
         const state = states[phase];
         nextEntries[phase] =
-          state === null
-            ? null
-            : this.options.buildEnvironmentTexture(state);
+          state === null ? null : this.options.buildEnvironmentTexture(state);
       }
     } catch (error) {
       disposePhaseEntries(nextEntries);
@@ -166,7 +164,8 @@ export class PrecomputedShaderSkyEnvironmentCache
       return null;
     }
 
-    const baseTexture = this.phaseEntries[phaseBlend.basePhase]?.texture ?? null;
+    const baseTexture =
+      this.phaseEntries[phaseBlend.basePhase]?.texture ?? null;
 
     if (baseTexture === null) {
       return null;
@@ -188,8 +187,7 @@ export class PrecomputedShaderSkyEnvironmentCache
         baseTexture,
         overlayTexture,
         phaseBlend.blendAmount
-      ) ??
-      (phaseBlend.blendAmount >= 0.5 ? overlayTexture : baseTexture)
+      ) ?? (phaseBlend.blendAmount >= 0.5 ? overlayTexture : baseTexture)
     );
   }
 

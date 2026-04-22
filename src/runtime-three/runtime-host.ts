@@ -180,7 +180,10 @@ import {
   buildRuntimeNpcCollider,
   createRuntimeNpcFromDefinition
 } from "./runtime-scene-build";
-import { resolvePlayerStartLookInput, resolvePlayerStartPauseInput } from "./player-input-bindings";
+import {
+  resolvePlayerStartLookInput,
+  resolvePlayerStartPauseInput
+} from "./player-input-bindings";
 
 interface CachedMaterialTexture {
   signature: string;
@@ -584,7 +587,8 @@ export class RuntimeHost {
           desiredCameraPosition,
           radius
         ) ?? { ...desiredCameraPosition },
-      isCameraDrivenExternally: () => this.resolveActiveRuntimeCameraRig() !== null,
+      isCameraDrivenExternally: () =>
+        this.resolveActiveRuntimeCameraRig() !== null,
       getCameraYawRadians: () => {
         this.camera.getWorldDirection(this.cameraForward);
         return Math.atan2(this.cameraForward.x, this.cameraForward.z);
@@ -1215,7 +1219,8 @@ export class RuntimeHost {
         const target = rig.target;
         const activeNpc =
           this.runtimeScene.npcDefinitions.find(
-            (candidate) => candidate.actorId === target.actorId && candidate.active
+            (candidate) =>
+              candidate.actorId === target.actorId && candidate.active
           ) ??
           this.runtimeScene.npcDefinitions.find(
             (candidate) => candidate.actorId === target.actorId
@@ -1259,12 +1264,15 @@ export class RuntimeHost {
     if (this.activeCameraRigOverrideEntityId !== null) {
       return (
         cameraRigs.find(
-          (candidate) => candidate.entityId === this.activeCameraRigOverrideEntityId
+          (candidate) =>
+            candidate.entityId === this.activeCameraRigOverrideEntityId
         ) ?? null
       );
     }
 
-    const eligibleCameraRigs = cameraRigs.filter((candidate) => candidate.defaultActive);
+    const eligibleCameraRigs = cameraRigs.filter(
+      (candidate) => candidate.defaultActive
+    );
 
     if (eligibleCameraRigs.length === 0) {
       return null;
@@ -1277,10 +1285,7 @@ export class RuntimeHost {
     )[0]!;
   }
 
-  private updateRuntimeCameraRigLookState(
-    rig: RuntimeCameraRig,
-    dt: number
-  ) {
+  private updateRuntimeCameraRigLookState(rig: RuntimeCameraRig, dt: number) {
     if (this.runtimeScene === null) {
       return;
     }
@@ -4514,8 +4519,7 @@ export class RuntimeHost {
         deltaY * CAMERA_RIG_POINTER_LOOK_SENSITIVITY,
       (-this.activeRuntimeCameraRig.lookAround.pitchLimitDegrees * Math.PI) /
         180,
-      (this.activeRuntimeCameraRig.lookAround.pitchLimitDegrees * Math.PI) /
-        180
+      (this.activeRuntimeCameraRig.lookAround.pitchLimitDegrees * Math.PI) / 180
     );
     event.preventDefault();
     event.stopImmediatePropagation();
