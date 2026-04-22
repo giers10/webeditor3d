@@ -2,6 +2,7 @@ import {
   createStarterMaterialRegistry,
   type MaterialDef
 } from "../materials/starter-material-library";
+import type { Vec3 } from "../core/vector";
 import {
   createModelInstanceCollisionSettings,
   createModelInstance,
