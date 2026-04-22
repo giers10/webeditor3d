@@ -40,6 +40,7 @@ test("world environment settings persist and carry into the runner", async ({ pa
   await page.getByTestId("world-sun-intensity").press("Tab");
   await page.getByTestId("world-sun-direction-x").fill("-1");
   await page.getByTestId("world-sun-direction-x").press("Tab");
+  await page.getByTestId("world-show-celestial-bodies").check();
 
   await expect(page.getByTestId("world-background-mode-value")).toContainText("Vertical Gradient");
   await expect(page.getByTestId("viewport-canvas-topLeft")).toHaveCSS("background-image", /linear-gradient/);
@@ -49,6 +50,7 @@ test("world environment settings persist and carry into the runner", async ({ pa
 
   await expect(page.getByTestId("world-background-mode-value")).toContainText("Vertical Gradient");
   await expect(page.getByTestId("world-ambient-intensity")).toHaveValue("0.45");
+  await expect(page.getByTestId("world-show-celestial-bodies")).toBeChecked();
   await expect(page.getByTestId("viewport-canvas-topLeft")).toHaveCSS("background-image", /linear-gradient/);
 
   await page.getByTestId("enter-run-mode").click();
