@@ -7057,52 +7057,69 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
     applyBoxVolumeSettings(
       (currentVolume) => {
-        if (mode === "none") {
-          return {
-            mode: "none"
-          };
-        }
-
-        if (mode === "water") {
-          return currentVolume.mode === "water"
-            ? currentVolume
-            : {
-                mode: "water",
-                water: {
-                  colorHex: boxVolumeWaterColorDraft,
-                  surfaceOpacity: readNonNegativeNumberDraft(
-                    boxVolumeWaterSurfaceOpacityDraft,
-                    "Water surface opacity"
-                  ),
-                  waveStrength: readNonNegativeNumberDraft(
-                    boxVolumeWaterWaveStrengthDraft,
-                    "Water wave strength"
-                  ),
-                  foamContactLimit: readWaterFoamContactLimitDraft(
-                    boxVolumeWaterFoamContactLimitDraft
-                  ),
-                  surfaceDisplacementEnabled:
-                    boxVolumeWaterSurfaceDisplacementEnabledDraft
-                }
-              };
-        }
-
-        return currentVolume.mode === "fog"
-          ? currentVolume
-          : {
-              mode: "fog",
-              fog: {
-                colorHex: boxVolumeFogColorDraft,
-                density: readNonNegativeNumberDraft(
-                  boxVolumeFogDensityDraft,
-                  "Fog density"
-                ),
-                padding: readNonNegativeNumberDraft(
-                  boxVolumeFogPaddingDraft,
-                  "Fog padding"
-                )
-              }
+        switch (mode) {
+          case "none":
+            return {
+              mode: "none"
             };
+          case "water":
+            return currentVolume.mode === "water"
+              ? currentVolume
+              : {
+                  mode: "water",
+                  water: {
+                    colorHex: boxVolumeWaterColorDraft,
+                    surfaceOpacity: readNonNegativeNumberDraft(
+                      boxVolumeWaterSurfaceOpacityDraft,
+                      "Water surface opacity"
+                    ),
+                    waveStrength: readNonNegativeNumberDraft(
+                      boxVolumeWaterWaveStrengthDraft,
+                      "Water wave strength"
+                    ),
+                    foamContactLimit: readWaterFoamContactLimitDraft(
+                      boxVolumeWaterFoamContactLimitDraft
+                    ),
+                    surfaceDisplacementEnabled:
+                      boxVolumeWaterSurfaceDisplacementEnabledDraft
+                  }
+                };
+          case "fog":
+            return currentVolume.mode === "fog"
+              ? currentVolume
+              : {
+                  mode: "fog",
+                  fog: {
+                    colorHex: boxVolumeFogColorDraft,
+                    density: readNonNegativeNumberDraft(
+                      boxVolumeFogDensityDraft,
+                      "Fog density"
+                    ),
+                    padding: readNonNegativeNumberDraft(
+                      boxVolumeFogPaddingDraft,
+                      "Fog padding"
+                    )
+                  }
+                };
+          case "light":
+            return currentVolume.mode === "light"
+              ? currentVolume
+              : {
+                  mode: "light",
+                  light: {
+                    colorHex: boxVolumeLightColorDraft,
+                    intensity: readNonNegativeNumberDraft(
+                      boxVolumeLightIntensityDraft,
+                      "Light intensity"
+                    ),
+                    padding: readNonNegativeNumberDraft(
+                      boxVolumeLightPaddingDraft,
+                      "Light padding"
+                    ),
+                    falloff: boxVolumeLightFalloffDraft
+                  }
+                };
+        }
       },
       `Set box volume mode to ${mode}`,
       `Set selected whitebox box volume mode to ${formatBoxVolumeModeLabel(mode)}.`
@@ -7224,6 +7241,61 @@ export function App({ store, initialStatusMessage }: AppProps) {
       }),
       "Set box fog color",
       "Updated selected whitebox fog color."
+    );
+  };
+
+  const resolveDraftBoxLightSettings = (
+    overrides: {
+      colorHex?: string;
+      intensity?: number;
+      padding?: number;
+      falloff?: BoxBrushLightFalloffMode;
+    } = {}
+  ) => ({
+    colorHex: overrides.colorHex ?? boxVolumeLightColorDraft,
+    intensity:
+      overrides.intensity ??
+      readNonNegativeNumberDraft(boxVolumeLightIntensityDraft, "Light intensity"),
+    padding:
+      overrides.padding ??
+      readNonNegativeNumberDraft(boxVolumeLightPaddingDraft, "Light padding"),
+    falloff: overrides.falloff ?? boxVolumeLightFalloffDraft
+  });
+
+  const applyBoxLightSettings = (
+    overrides: {
+      colorHex?: string;
+      intensity?: number;
+      padding?: number;
+      falloff?: BoxBrushLightFalloffMode;
+    } = {}
+  ) => {
+    if (selectedBrush === null || selectedBrush.volume.mode !== "light") {
+      return;
+    }
+
+    applyBoxVolumeSettings(
+      () => ({
+        mode: "light",
+        light: resolveDraftBoxLightSettings(overrides)
+      }),
+      "Set box light settings",
+      "Updated selected whitebox light settings."
+    );
+  };
+
+  const applyBoxLightColorDraft = (colorHex: string) => {
+    if (selectedBrush === null || selectedBrush.volume.mode !== "light") {
+      return;
+    }
+
+    applyBoxVolumeSettings(
+      () => ({
+        mode: "light",
+        light: resolveDraftBoxLightSettings({ colorHex })
+      }),
+      "Set box light color",
+      "Updated selected whitebox light color."
     );
   };
 
