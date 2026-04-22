@@ -203,7 +203,7 @@ describe("buildRuntimeSceneFromDocument", () => {
           enabled: true,
           yawLimitDegrees: 12,
           pitchLimitDegrees: 8,
-          recenterSpeed: 6
+          recenterSpeed: 3.5
         }
       }
     ]);
