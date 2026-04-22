@@ -2088,6 +2088,8 @@ function formatBoxVolumeRenderPathLabel(path: BoxVolumeRenderPath): string {
   }
 }
 
+const DEFAULT_BOX_VOLUME_LIGHT_SETTINGS = createDefaultBoxBrushLightSettings();
+
 function createProjectDownloadName(projectName: string): string {
   const slug = projectName
     .trim()
