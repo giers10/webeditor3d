@@ -341,6 +341,9 @@ export class RuntimeHost {
   private readonly worldBackgroundRenderer = new WorldBackgroundRenderer();
   private readonly camera = new PerspectiveCamera(70, 1, 0.05, 1000);
   private readonly cameraForward = new Vector3();
+  private readonly cameraRigLookTarget = new Vector3();
+  private readonly cameraRigDirection = new Vector3();
+  private readonly cameraRigForward = new Vector3();
   private readonly volumeOffset = new Vector3();
   private readonly volumeInverseRotation = new Quaternion();
   private readonly fogLocalCameraPosition = new Vector3();
@@ -447,6 +450,15 @@ export class RuntimeHost {
   private currentClockState: RuntimeClockState | null = null;
   private lastPublishedClockState: RuntimeClockState | null = null;
   private currentPlayerAudioHooks: RuntimePlayerAudioHookState | null = null;
+  private activeCameraRigOverrideEntityId: string | null = null;
+  private activeRuntimeCameraRigId: string | null = null;
+  private activeRuntimeCameraRig: RuntimeCameraRig | null = null;
+  private cameraRigBlendState: RuntimeCameraRigBlendState | null = null;
+  private cameraRigLookYawRadians = 0;
+  private cameraRigLookPitchRadians = 0;
+  private cameraRigLookDragging = false;
+  private lastCameraRigPointerClientX = 0;
+  private lastCameraRigPointerClientY = 0;
   private runtimeClockStateHandler:
     | ((state: RuntimeClockState) => void)
     | null = null;
