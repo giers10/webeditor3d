@@ -869,7 +869,12 @@ export function resolveCameraRigDocumentTargetPosition(
     }
     case "entity": {
       const entity = entities[target.entityId] ?? null;
-      return entity === null ? null : cloneVec3(entity.position);
+
+      if (entity === null || entity.kind === "cameraRig") {
+        return null;
+      }
+
+      return cloneVec3(entity.position);
     }
     case "worldPoint":
       return cloneVec3(target.point);
