@@ -1117,6 +1117,7 @@ describe("validateSceneDocument", () => {
       topColorHex: "sky-blue",
       bottomColorHex: "#18212b"
     };
+    document.world.showCelestialBodies = "yes" as unknown as boolean;
     document.world.ambientLight.intensity = -0.25;
     document.world.sunLight.direction = {
       x: 0,
@@ -1131,6 +1132,10 @@ describe("validateSceneDocument", () => {
         expect.objectContaining({
           code: "invalid-world-background-top-color",
           path: "world.background.topColorHex"
+        }),
+        expect.objectContaining({
+          code: "invalid-world-show-celestial-bodies",
+          path: "world.showCelestialBodies"
         }),
         expect.objectContaining({
           code: "invalid-world-ambient-intensity",
