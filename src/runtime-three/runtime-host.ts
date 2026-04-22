@@ -2778,6 +2778,14 @@ export class RuntimeHost {
     this.localLightObjects.clear();
   }
 
+  private clearLightVolumes() {
+    for (const renderObjects of this.lightVolumeObjects.values()) {
+      this.lightVolumeGroup.remove(renderObjects.group);
+    }
+
+    this.lightVolumeObjects.clear();
+  }
+
   private clearBrushMeshes() {
     for (const mesh of this.brushMeshes.values()) {
       this.brushGroup.remove(mesh);
