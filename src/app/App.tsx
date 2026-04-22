@@ -20549,6 +20549,128 @@ export function App({ store, initialStatusMessage }: AppProps) {
                             </label>
                           </>
                         ) : null}
+
+                        {boxVolumeModeDraft === "light" ? (
+                          <>
+                            <div className="vector-inputs vector-inputs--two">
+                              <label className="form-field">
+                                <span className="label">Color</span>
+                                <input
+                                  data-testid="brush-light-color"
+                                  className="color-input"
+                                  type="color"
+                                  value={boxVolumeLightColorDraft}
+                                  onChange={(event) => {
+                                    const nextColorHex =
+                                      event.currentTarget.value;
+                                    setBoxVolumeLightColorDraft(nextColorHex);
+                                    scheduleDraftCommit(() =>
+                                      applyBoxLightColorDraft(nextColorHex)
+                                    );
+                                  }}
+                                />
+                              </label>
+                              <label className="form-field">
+                                <span className="label">Intensity</span>
+                                <input
+                                  data-testid="brush-light-intensity"
+                                  className="text-input"
+                                  type="number"
+                                  min="0"
+                                  step="0.05"
+                                  value={boxVolumeLightIntensityDraft}
+                                  onChange={(event) =>
+                                    setBoxVolumeLightIntensityDraft(
+                                      event.currentTarget.value
+                                    )
+                                  }
+                                  onBlur={() => applyBoxLightSettings()}
+                                  onKeyDown={(event) =>
+                                    handleDraftVectorKeyDown(
+                                      event,
+                                      applyBoxLightSettings
+                                    )
+                                  }
+                                  onKeyUp={(event) =>
+                                    handleNumberInputKeyUp(
+                                      event,
+                                      applyBoxLightSettings
+                                    )
+                                  }
+                                  onPointerUp={(event) =>
+                                    handleNumberInputPointerUp(
+                                      event,
+                                      applyBoxLightSettings
+                                    )
+                                  }
+                                />
+                              </label>
+                            </div>
+                            <div className="vector-inputs vector-inputs--two">
+                              <label className="form-field">
+                                <span className="label">Padding</span>
+                                <input
+                                  data-testid="brush-light-padding"
+                                  className="text-input"
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
+                                  value={boxVolumeLightPaddingDraft}
+                                  onChange={(event) =>
+                                    setBoxVolumeLightPaddingDraft(
+                                      event.currentTarget.value
+                                    )
+                                  }
+                                  onBlur={() => applyBoxLightSettings()}
+                                  onKeyDown={(event) =>
+                                    handleDraftVectorKeyDown(
+                                      event,
+                                      applyBoxLightSettings
+                                    )
+                                  }
+                                  onKeyUp={(event) =>
+                                    handleNumberInputKeyUp(
+                                      event,
+                                      applyBoxLightSettings
+                                    )
+                                  }
+                                  onPointerUp={(event) =>
+                                    handleNumberInputPointerUp(
+                                      event,
+                                      applyBoxLightSettings
+                                    )
+                                  }
+                                />
+                              </label>
+                              <label className="form-field">
+                                <span className="label">Falloff</span>
+                                <select
+                                  data-testid="brush-light-falloff"
+                                  className="select-input"
+                                  value={boxVolumeLightFalloffDraft}
+                                  onChange={(event) => {
+                                    const nextFalloff = event.currentTarget
+                                      .value as BoxBrushLightFalloffMode;
+                                    setBoxVolumeLightFalloffDraft(nextFalloff);
+                                    scheduleDraftCommit(() =>
+                                      applyBoxLightSettings({
+                                        falloff: nextFalloff
+                                      })
+                                    );
+                                  }}
+                                >
+                                  {BOX_BRUSH_LIGHT_FALLOFF_MODES.map(
+                                    (falloff) => (
+                                      <option key={falloff} value={falloff}>
+                                        {formatBoxLightFalloffLabel(falloff)}
+                                      </option>
+                                    )
+                                  )}
+                                </select>
+                              </label>
+                            </div>
+                          </>
+                        ) : null}
                       </div>
                     </>
                   )}
