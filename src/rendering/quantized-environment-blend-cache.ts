@@ -99,6 +99,43 @@ function isSrgbTexture(texture: Texture): boolean {
   return texture.colorSpace === SRGBColorSpace;
 }
 
+function resolveTextureDimensions(texture: Texture): {
+  width: number;
+  height: number;
+} {
+  const image = texture.image as
+    | {
+        width?: number;
+        height?: number;
+      }
+    | undefined;
+  const sourceData = texture.source.data as
+    | {
+        width?: number;
+        height?: number;
+      }
+    | null;
+
+  return {
+    width: Math.max(
+      1,
+      Math.floor(
+        image?.width ??
+          sourceData?.width ??
+          DEFAULT_BLEND_RENDER_TARGET_WIDTH
+      )
+    ),
+    height: Math.max(
+      1,
+      Math.floor(
+        image?.height ??
+          sourceData?.height ??
+          DEFAULT_BLEND_RENDER_TARGET_HEIGHT
+      )
+    )
+  };
+}
+
 export interface CachedEnvironmentBlendTexture {
   texture: Texture;
   dispose: () => void;
@@ -481,6 +518,110 @@ class RendererEnvironmentBlendTextureBuilder {
   }
 }
 
+class RendererPmremBlendTextureBuilder {
+  private readonly blendScene = new Scene();
+  private readonly blendCamera = new OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  private readonly blendMaterial = new ShaderMaterial({
+    uniforms: {
+      uBaseTexture: {
+        value: null
+      },
+      uOverlayTexture: {
+        value: null
+      },
+      uBlendAmount: {
+        value: 0
+      },
+      uBaseTextureIsSrgb: {
+        value: 0
+      },
+      uOverlayTextureIsSrgb: {
+        value: 0
+      }
+    },
+    vertexShader: BLEND_VERTEX_SHADER,
+    fragmentShader: BLEND_FRAGMENT_SHADER,
+    depthTest: false,
+    depthWrite: false,
+    fog: false
+  });
+  private readonly blendMesh = new Mesh(
+    new PlaneGeometry(2, 2),
+    this.blendMaterial
+  );
+
+  constructor(private readonly renderer: WebGLRenderer) {
+    this.blendMesh.frustumCulled = false;
+    this.blendScene.add(this.blendMesh);
+  }
+
+  build(
+    baseTexture: Texture,
+    overlayTexture: Texture,
+    blendAmount: number
+  ): CachedEnvironmentBlendTexture {
+    const { width, height } = resolveTextureDimensions(baseTexture);
+    const target = new WebGLRenderTarget(width, height, {
+      depthBuffer: false,
+      stencilBuffer: false,
+      magFilter: LinearFilter,
+      minFilter: LinearFilter,
+      type: HalfFloatType
+    });
+    target.texture.colorSpace = LinearSRGBColorSpace;
+    target.texture.mapping = baseTexture.mapping;
+    target.texture.generateMipmaps = false;
+
+    const previousRenderTarget = this.renderer.getRenderTarget();
+    const previousAutoClear = this.renderer.autoClear;
+    const previousXrEnabled = this.renderer.xr.enabled;
+    const previousToneMapping = this.renderer.toneMapping;
+    const previousOutputColorSpace = this.renderer.outputColorSpace;
+
+    try {
+      this.renderer.xr.enabled = false;
+      this.renderer.autoClear = true;
+      this.renderer.toneMapping = NoToneMapping;
+      this.renderer.outputColorSpace = LinearSRGBColorSpace;
+      this.blendMaterial.uniforms.uBaseTexture.value = baseTexture;
+      this.blendMaterial.uniforms.uOverlayTexture.value = overlayTexture;
+      this.blendMaterial.uniforms.uBlendAmount.value = blendAmount;
+      this.blendMaterial.uniforms.uBaseTextureIsSrgb.value = isSrgbTexture(
+        baseTexture
+      )
+        ? 1
+        : 0;
+      this.blendMaterial.uniforms.uOverlayTextureIsSrgb.value = isSrgbTexture(
+        overlayTexture
+      )
+        ? 1
+        : 0;
+
+      this.renderer.setRenderTarget(target);
+      this.renderer.clear();
+      this.renderer.render(this.blendScene, this.blendCamera);
+
+      return {
+        texture: target.texture,
+        dispose: () => {
+          target.dispose();
+        }
+      };
+    } finally {
+      this.renderer.setRenderTarget(previousRenderTarget);
+      this.renderer.autoClear = previousAutoClear;
+      this.renderer.xr.enabled = previousXrEnabled;
+      this.renderer.toneMapping = previousToneMapping;
+      this.renderer.outputColorSpace = previousOutputColorSpace;
+    }
+  }
+
+  dispose() {
+    this.blendMesh.geometry.dispose();
+    this.blendMaterial.dispose();
+  }
+}
+
 export function createRendererQuantizedEnvironmentBlendCache(
   renderer: WebGLRenderer,
   options: Omit<
@@ -495,6 +636,25 @@ export function createRendererQuantizedEnvironmentBlendCache(
     targetWidth: options.targetWidth,
     targetHeight: options.targetHeight
   });
+
+  return new QuantizedEnvironmentBlendCache({
+    ...options,
+    buildBlendTexture: (baseTexture, overlayTexture, blendAmount) =>
+      builder.build(baseTexture, overlayTexture, blendAmount),
+    disposeBuildResources: () => {
+      builder.dispose();
+    }
+  });
+}
+
+export function createRendererQuantizedPmremBlendCache(
+  renderer: WebGLRenderer,
+  options: Omit<
+    QuantizedEnvironmentBlendCacheOptions,
+    "buildBlendTexture" | "disposeBuildResources"
+  > = {}
+): QuantizedEnvironmentBlendCache {
+  const builder = new RendererPmremBlendTextureBuilder(renderer);
 
   return new QuantizedEnvironmentBlendCache({
     ...options,
