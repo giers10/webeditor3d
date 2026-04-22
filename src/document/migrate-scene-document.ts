@@ -2818,6 +2818,68 @@ function readWorldShaderSkySettings(
   };
 }
 
+function readWorldCelestialOrbitAuthoringSettings(
+  value: unknown,
+  label: string,
+  sunDirection: Vec3
+): WorldCelestialOrbitAuthoringSettings {
+  const defaults = createDefaultWorldCelestialOrbitAuthoringSettings(
+    sunDirection
+  );
+
+  if (value === undefined) {
+    return defaults;
+  }
+
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  const sun =
+    value.sun === undefined
+      ? {}
+      : isRecord(value.sun)
+        ? value.sun
+        : (() => {
+            throw new Error(`${label}.sun must be an object.`);
+          })();
+  const moon =
+    value.moon === undefined
+      ? {}
+      : isRecord(value.moon)
+        ? value.moon
+        : (() => {
+            throw new Error(`${label}.moon must be an object.`);
+          })();
+
+  return {
+    sun: {
+      azimuthDegrees: readOptionalFiniteNumber(
+        sun.azimuthDegrees,
+        `${label}.sun.azimuthDegrees`,
+        defaults.sun.azimuthDegrees
+      ),
+      peakAltitudeDegrees: readOptionalFiniteNumber(
+        sun.peakAltitudeDegrees,
+        `${label}.sun.peakAltitudeDegrees`,
+        defaults.sun.peakAltitudeDegrees
+      )
+    },
+    moon: {
+      azimuthDegrees: readOptionalFiniteNumber(
+        moon.azimuthDegrees,
+        `${label}.moon.azimuthDegrees`,
+        defaults.moon.azimuthDegrees
+      ),
+      peakAltitudeDegrees: readOptionalFiniteNumber(
+        moon.peakAltitudeDegrees,
+        `${label}.moon.peakAltitudeDegrees`,
+        defaults.moon.peakAltitudeDegrees
+      )
+    }
+  };
+}
+
 function readWorldTimePhaseProfile(
   value: unknown,
   label: string,
