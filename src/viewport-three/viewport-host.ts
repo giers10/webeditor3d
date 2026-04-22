@@ -440,6 +440,7 @@ export class ViewportHost {
     antialias: false,
     alpha: true
   });
+  private readonly pmremGenerator = new PMREMGenerator(this.renderer);
   private readonly cameraTarget = new Vector3(0, 0, 0);
   private readonly cameraOffset = new Vector3();
   private readonly cameraForward = new Vector3();
@@ -512,6 +513,7 @@ export class ViewportHost {
     string,
     CachedMaterialTexture
   >();
+  private dynamicWorldEnvironmentTarget: WebGLRenderTarget | null = null;
   private readonly materialTextureLoader = new TextureLoader();
   private currentDocument: SceneDocument | null = null;
   private currentWorld: WorldSettings | null = null;
