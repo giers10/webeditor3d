@@ -13,6 +13,8 @@ import { createDefaultProjectTimeSettings } from "../../src/document/project-tim
 import { createTerrain } from "../../src/document/terrains";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
 import {
+  createCameraRigEntity,
+  createCameraRigEntityTargetRef,
   DEFAULT_PLAYER_START_MOVE_SPEED,
   DEFAULT_PLAYER_START_MOVEMENT_CAPABILITIES,
   createNpcEntity,
@@ -42,6 +44,86 @@ import { createFixtureLoadedModelAssetFromGeometry } from "../helpers/model-coll
 const defaultMovementTemplate = createPlayerStartMovementTemplate();
 
 describe("buildRuntimeSceneFromDocument", () => {
+  it("builds enabled fixed camera rigs into runtime entities", () => {
+    const interactable = createInteractableEntity({
+      id: "entity-interactable-camera-anchor",
+      position: {
+        x: 4,
+        y: 1,
+        z: -2
+      },
+      prompt: "Anchor"
+    });
+    const cameraRig = createCameraRigEntity({
+      id: "entity-camera-rig-overlook",
+      position: {
+        x: 8,
+        y: 3,
+        z: -6
+      },
+      priority: 7,
+      defaultActive: false,
+      target: createCameraRigEntityTargetRef(interactable.id),
+      targetOffset: {
+        x: 0,
+        y: 1.5,
+        z: 0
+      },
+      transitionMode: "blend",
+      transitionDurationSeconds: 0.6,
+      lookAround: {
+        enabled: true,
+        yawLimitDegrees: 10,
+        pitchLimitDegrees: 6,
+        recenterSpeed: 5
+      }
+    });
+    const disabledCameraRig = createCameraRigEntity({
+      id: "entity-camera-rig-disabled",
+      enabled: false
+    });
+
+    const runtimeScene = buildRuntimeSceneFromDocument({
+      ...createEmptySceneDocument({ name: "Camera Rig Runtime Scene" }),
+      entities: {
+        [interactable.id]: interactable,
+        [cameraRig.id]: cameraRig,
+        [disabledCameraRig.id]: disabledCameraRig
+      }
+    });
+
+    expect(runtimeScene.entities.cameraRigs).toEqual([
+      {
+        entityId: cameraRig.id,
+        rigType: "fixed",
+        priority: 7,
+        defaultActive: false,
+        position: {
+          x: 8,
+          y: 3,
+          z: -6
+        },
+        target: {
+          kind: "entity",
+          entityId: interactable.id
+        },
+        targetOffset: {
+          x: 0,
+          y: 1.5,
+          z: 0
+        },
+        transitionMode: "blend",
+        transitionDurationSeconds: 0.6,
+        lookAround: {
+          enabled: true,
+          yawLimitDegrees: 10,
+          pitchLimitDegrees: 6,
+          recenterSpeed: 5
+        }
+      }
+    ]);
+  });
+
   it("builds runtime brush data, colliders, and an authored player spawn from the document", () => {
     const brush = createBoxBrush({
       id: "brush-room-floor",

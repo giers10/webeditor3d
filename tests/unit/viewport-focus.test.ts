@@ -5,7 +5,13 @@ import { createBoxBrush } from "../../src/document/brushes";
 import { createScenePath } from "../../src/document/paths";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
 import { createTerrain } from "../../src/document/terrains";
-import { createPointLightEntity, createPlayerStartEntity, createSpotLightEntity, createTriggerVolumeEntity } from "../../src/entities/entity-instances";
+import {
+  createCameraRigEntity,
+  createPointLightEntity,
+  createPlayerStartEntity,
+  createSpotLightEntity,
+  createTriggerVolumeEntity
+} from "../../src/entities/entity-instances";
 import { resolveViewportFocusTarget } from "../../src/viewport-three/viewport-focus";
 
 describe("resolveViewportFocusTarget", () => {
@@ -167,6 +173,38 @@ describe("resolveViewportFocusTarget", () => {
       },
       radius: 8
     });
+  });
+
+  it("frames the selected Camera Rig helper", () => {
+    const cameraRig = createCameraRigEntity({
+      id: "entity-camera-rig-focus",
+      position: {
+        x: -3,
+        y: 2,
+        z: 5
+      }
+    });
+    const document = {
+      ...createEmptySceneDocument(),
+      entities: {
+        [cameraRig.id]: cameraRig
+      }
+    };
+
+    const focusTarget = resolveViewportFocusTarget(document, {
+      kind: "entities",
+      ids: [cameraRig.id]
+    });
+
+    expect(focusTarget).toEqual({
+      center: {
+        x: -3,
+        y: 2.28,
+        z: 5
+      },
+      radius: expect.any(Number)
+    });
+    expect(focusTarget?.radius).toBeGreaterThan(0.45);
   });
 
   it("frames the selected Path around its authored point bounds", () => {

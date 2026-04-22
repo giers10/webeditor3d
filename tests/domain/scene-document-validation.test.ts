@@ -17,6 +17,9 @@ import { createScenePath } from "../../src/document/paths";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
 import { validateSceneDocument } from "../../src/document/scene-document-validation";
 import {
+  createCameraRigActorTargetRef,
+  createCameraRigEntity,
+  createCameraRigEntityTargetRef,
   createPointLightEntity,
   createInteractableEntity,
   createNpcEntity,
@@ -748,6 +751,81 @@ describe("validateSceneDocument", () => {
         }),
         expect.objectContaining({
           code: "invalid-interactable-interaction-enabled"
+        })
+      ])
+    );
+  });
+
+  it("validates fixed camera rig targets and authored settings", () => {
+    const otherCameraRig = createCameraRigEntity({
+      id: "entity-camera-rig-other"
+    });
+    const missingActorRig = createCameraRigEntity({
+      id: "entity-camera-rig-missing-actor",
+      target: createCameraRigActorTargetRef("actor-missing")
+    });
+    const missingEntityRig = createCameraRigEntity({
+      id: "entity-camera-rig-missing-entity",
+      target: createCameraRigEntityTargetRef("entity-missing")
+    });
+    const selfTargetRig = createCameraRigEntity({
+      id: "entity-camera-rig-self"
+    });
+    const cameraTargetRig = createCameraRigEntity({
+      id: "entity-camera-rig-camera-target",
+      target: createCameraRigEntityTargetRef(otherCameraRig.id)
+    });
+    const invalidRig = createCameraRigEntity({
+      id: "entity-camera-rig-invalid"
+    });
+
+    selfTargetRig.target = createCameraRigEntityTargetRef(selfTargetRig.id);
+    invalidRig.priority = Number.NaN;
+    invalidRig.targetOffset = {
+      x: Number.POSITIVE_INFINITY,
+      y: 0,
+      z: 0
+    };
+    invalidRig.lookAround.enabled = "yes" as unknown as boolean;
+    invalidRig.lookAround.pitchLimitDegrees = Number.NaN;
+
+    const validation = validateSceneDocument({
+      ...createEmptySceneDocument(),
+      entities: {
+        [otherCameraRig.id]: otherCameraRig,
+        [missingActorRig.id]: missingActorRig,
+        [missingEntityRig.id]: missingEntityRig,
+        [selfTargetRig.id]: selfTargetRig,
+        [cameraTargetRig.id]: cameraTargetRig,
+        [invalidRig.id]: invalidRig
+      }
+    });
+
+    expect(validation.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "missing-camera-rig-target-actor"
+        }),
+        expect.objectContaining({
+          code: "missing-camera-rig-target-entity"
+        }),
+        expect.objectContaining({
+          code: "camera-rig-self-target"
+        }),
+        expect.objectContaining({
+          code: "invalid-camera-rig-target-entity-kind"
+        }),
+        expect.objectContaining({
+          code: "invalid-camera-rig-priority"
+        }),
+        expect.objectContaining({
+          code: "invalid-camera-rig-target-offset"
+        }),
+        expect.objectContaining({
+          code: "invalid-camera-rig-look-around-enabled"
+        }),
+        expect.objectContaining({
+          code: "invalid-camera-rig-look-around-pitch-limit"
         })
       ])
     );

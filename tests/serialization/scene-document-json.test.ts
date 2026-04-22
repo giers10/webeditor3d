@@ -53,7 +53,9 @@ import {
 } from "../../src/document/scene-document";
 import { migrateSceneDocument } from "../../src/document/migrate-scene-document";
 import {
+  createCameraRigEntity,
   createNpcAlwaysPresence,
+  createCameraRigWorldPointTargetRef,
   createNpcEntity,
   createNpcTimeWindowPresence,
   createPointLightEntity,
@@ -967,6 +969,103 @@ describe("scene document JSON", () => {
 
     expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(
       document
+    );
+  });
+
+  it("round-trips a document containing an authored Camera Rig entity", () => {
+    const cameraRig = createCameraRigEntity({
+      id: "entity-camera-rig-main",
+      name: "Overlook",
+      position: {
+        x: 6,
+        y: 4,
+        z: -8
+      },
+      priority: 5,
+      defaultActive: false,
+      target: createCameraRigWorldPointTargetRef({
+        x: 1,
+        y: 1.75,
+        z: -2
+      }),
+      targetOffset: {
+        x: 0,
+        y: 0.25,
+        z: 0
+      },
+      transitionMode: "blend",
+      transitionDurationSeconds: 0.8,
+      lookAround: {
+        enabled: true,
+        yawLimitDegrees: 15,
+        pitchLimitDegrees: 9,
+        recenterSpeed: 4
+      }
+    });
+    const document = {
+      ...createEmptySceneDocument({ name: "Camera Rig Scene" }),
+      entities: {
+        [cameraRig.id]: cameraRig
+      }
+    };
+
+    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(
+      document
+    );
+  });
+
+  it("migrates version 73 camera rigs to include fixed-rig defaults", () => {
+    const cameraRig = createCameraRigEntity({
+      id: "entity-camera-rig-legacy",
+      name: "Legacy Camera",
+      position: {
+        x: -4,
+        y: 3,
+        z: 9
+      },
+      target: createCameraRigWorldPointTargetRef({
+        x: 2,
+        y: 1,
+        z: -3
+      })
+    });
+    const legacyDocument = {
+      ...createEmptySceneDocument({ name: "Legacy Camera Rig Scene" }),
+      entities: {
+        [cameraRig.id]: cameraRig
+      }
+    };
+    const serializedLegacyDocument = JSON.parse(
+      serializeSceneDocument(legacyDocument)
+    ) as {
+      version: number;
+      entities: Record<string, Record<string, unknown>>;
+    };
+    const serializedCameraRig = serializedLegacyDocument.entities[cameraRig.id];
+
+    serializedLegacyDocument.version =
+      CAMERA_RIG_ENTITY_SCENE_DOCUMENT_VERSION - 1;
+    delete serializedCameraRig.priority;
+    delete serializedCameraRig.defaultActive;
+    delete serializedCameraRig.targetOffset;
+    delete serializedCameraRig.transitionMode;
+    delete serializedCameraRig.transitionDurationSeconds;
+    delete serializedCameraRig.lookAround;
+
+    const migratedDocument = parseSceneDocumentJson(
+      JSON.stringify(serializedLegacyDocument)
+    );
+
+    expect(migratedDocument.entities[cameraRig.id]).toEqual(
+      createCameraRigEntity({
+        id: cameraRig.id,
+        name: cameraRig.name,
+        visible: cameraRig.visible,
+        enabled: cameraRig.enabled,
+        position: cameraRig.position,
+        rigType: cameraRig.rigType,
+        target: cameraRig.target
+      })
     );
   });
 

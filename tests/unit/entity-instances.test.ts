@@ -1,6 +1,15 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  DEFAULT_CAMERA_RIG_DEFAULT_ACTIVE,
+  DEFAULT_CAMERA_RIG_LOOK_AROUND_ENABLED,
+  DEFAULT_CAMERA_RIG_LOOK_AROUND_PITCH_LIMIT_DEGREES,
+  DEFAULT_CAMERA_RIG_LOOK_AROUND_RECENTER_SPEED,
+  DEFAULT_CAMERA_RIG_LOOK_AROUND_YAW_LIMIT_DEGREES,
+  DEFAULT_CAMERA_RIG_PRIORITY,
+  DEFAULT_CAMERA_RIG_TARGET_OFFSET,
+  DEFAULT_CAMERA_RIG_TRANSITION_DURATION_SECONDS,
+  DEFAULT_CAMERA_RIG_TRANSITION_MODE,
   DEFAULT_POINT_LIGHT_COLOR_HEX,
   DEFAULT_POINT_LIGHT_DISTANCE,
   DEFAULT_POINT_LIGHT_INTENSITY,
@@ -84,6 +93,26 @@ describe("entity registry defaults", () => {
       colorHex: DEFAULT_POINT_LIGHT_COLOR_HEX,
       intensity: DEFAULT_POINT_LIGHT_INTENSITY,
       distance: DEFAULT_POINT_LIGHT_DISTANCE
+    });
+
+    expect(createDefaultEntityInstance("cameraRig")).toMatchObject({
+      kind: "cameraRig",
+      position: { x: 0, y: 0, z: 0 },
+      rigType: "fixed",
+      priority: DEFAULT_CAMERA_RIG_PRIORITY,
+      defaultActive: DEFAULT_CAMERA_RIG_DEFAULT_ACTIVE,
+      target: {
+        kind: "player"
+      },
+      targetOffset: DEFAULT_CAMERA_RIG_TARGET_OFFSET,
+      transitionMode: DEFAULT_CAMERA_RIG_TRANSITION_MODE,
+      transitionDurationSeconds: DEFAULT_CAMERA_RIG_TRANSITION_DURATION_SECONDS,
+      lookAround: {
+        enabled: DEFAULT_CAMERA_RIG_LOOK_AROUND_ENABLED,
+        yawLimitDegrees: DEFAULT_CAMERA_RIG_LOOK_AROUND_YAW_LIMIT_DEGREES,
+        pitchLimitDegrees: DEFAULT_CAMERA_RIG_LOOK_AROUND_PITCH_LIMIT_DEGREES,
+        recenterSpeed: DEFAULT_CAMERA_RIG_LOOK_AROUND_RECENTER_SPEED
+      }
     });
 
     expect(createDefaultEntityInstance("spotLight")).toMatchObject({
