@@ -32,27 +32,21 @@ describe("resolveWorldEnvironmentState", () => {
       environmentIntensity: 0.4
     };
 
-    expect(
-      resolveWorldEnvironmentState(world.background, dayTexture, {
-        texture: nightTexture,
-        opacity: 0.25,
-        environmentIntensity: 0.8
-      })
-    ).toEqual({
-      texture: dayTexture,
-      intensity: 0.5
+    const earlyTwilight = resolveWorldEnvironmentState(world.background, dayTexture, {
+      texture: nightTexture,
+      opacity: 0.25,
+      environmentIntensity: 0.8
+    });
+    const lateTwilight = resolveWorldEnvironmentState(world.background, dayTexture, {
+      texture: nightTexture,
+      opacity: 0.75,
+      environmentIntensity: 0.8
     });
 
-    expect(
-      resolveWorldEnvironmentState(world.background, dayTexture, {
-        texture: nightTexture,
-        opacity: 0.75,
-        environmentIntensity: 0.8
-      })
-    ).toEqual({
-      texture: nightTexture,
-      intensity: 0.7000000000000001
-    });
+    expect(earlyTwilight.texture).toBe(dayTexture);
+    expect(earlyTwilight.intensity).toBeCloseTo(0.5);
+    expect(lateTwilight.texture).toBe(nightTexture);
+    expect(lateTwilight.intensity).toBeCloseTo(0.7);
   });
 
   it("fades the night environment in when the authored day background has no image environment", () => {
