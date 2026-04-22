@@ -39,6 +39,7 @@ import {
   SCENE_TRANSITION_ENTITIES_SCENE_DOCUMENT_VERSION,
   SCENE_TRANSITION_SEQUENCE_EFFECTS_SCENE_DOCUMENT_VERSION,
   SCENE_DOCUMENT_VERSION,
+  SHADER_SKY_HORIZON_HEIGHT_SCENE_DOCUMENT_VERSION,
   SHADER_SKY_SCENE_DOCUMENT_VERSION,
   SPATIAL_AUDIO_SCENE_DOCUMENT_VERSION,
   STATIC_SIMPLE_MODEL_COLLIDERS_SCENE_DOCUMENT_VERSION,
@@ -174,6 +175,40 @@ describe("scene document JSON", () => {
     expect(migratedDocument.world.shaderSky.dayTopColorHex).toBe("#335577");
     expect(migratedDocument.world.shaderSky.dayBottomColorHex).toBe("#aaccee");
     expect(migratedDocument.world.shaderSky.horizonHeight).toBe(0);
+  });
+
+  it("migrates v72 scene documents by defaulting the shader sky star horizon offset", () => {
+    const document = createEmptySceneDocument({
+      name: "Legacy Shader Star Horizon Scene"
+    });
+    document.world.background = {
+      mode: "shader"
+    };
+    document.world.shaderSky.stars.density = 0.72;
+
+    const legacyDocument = JSON.parse(
+      serializeSceneDocument(document)
+    ) as Record<string, unknown>;
+    legacyDocument.version = SHADER_SKY_HORIZON_HEIGHT_SCENE_DOCUMENT_VERSION;
+    delete (
+      (
+        (
+          legacyDocument.world as {
+            shaderSky: {
+              stars: Record<string, unknown>;
+            };
+          }
+        ).shaderSky.stars
+      ) as Record<string, unknown>
+    ).horizonFadeOffset;
+
+    const migratedDocument = parseSceneDocumentJson(
+      JSON.stringify(legacyDocument)
+    );
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.world.shaderSky.stars.density).toBe(0.72);
+    expect(migratedDocument.world.shaderSky.stars.horizonFadeOffset).toBe(0);
   });
 
   it("migrates pre-paint terrain documents by defaulting terrain layer data", () => {

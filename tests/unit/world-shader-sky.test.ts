@@ -19,6 +19,7 @@ describe("resolveWorldShaderSkyRenderState", () => {
     world.shaderSky.dayTopColorHex = "#88ccff";
     world.shaderSky.dayBottomColorHex = "#dff3ff";
     world.shaderSky.horizonHeight = -0.08;
+    world.shaderSky.stars.horizonFadeOffset = 0.06;
     world.timeOfDay.dawn.background = {
       mode: "verticalGradient",
       topColorHex: "#ff8855",
@@ -108,6 +109,7 @@ describe("resolveWorldShaderSkyRenderState", () => {
     expect(noonSky?.sky.topColorHex).toBe("#88ccff");
     expect(noonSky?.sky.bottomColorHex).toBe("#dff3ff");
     expect(noonSky?.sky.horizonHeight).toBe(-0.08);
+    expect(noonSky?.stars.horizonFadeOffset).toBe(0.06);
     expect(dawnSky?.sky.topColorHex).not.toBe(noonSky?.sky.topColorHex);
     expect(dawnSky?.sky.topColorHex).not.toBe(midnightSky?.sky.topColorHex);
     expect(midnightSky?.stars.visibility ?? 0).toBeGreaterThan(
