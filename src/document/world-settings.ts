@@ -49,6 +49,7 @@ export interface WorldSunLightSettings {
 }
 
 export interface WorldTimePhaseProfile {
+  background: WorldBackgroundSettings;
   skyTopColorHex: string;
   skyBottomColorHex: string;
   ambientColorHex: string;
@@ -136,6 +137,7 @@ const DEFAULT_SOLID_BACKGROUND_COLOR = "#2f3947";
 const DEFAULT_GRADIENT_TOP_COLOR = DEFAULT_SOLID_BACKGROUND_COLOR;
 const DEFAULT_GRADIENT_BOTTOM_COLOR = "#141a22";
 export const DEFAULT_NIGHT_IMAGE_ENVIRONMENT_INTENSITY = 0.35 as const;
+export const DEFAULT_TIME_PHASE_IMAGE_ENVIRONMENT_INTENSITY = 0.5 as const;
 const DEFAULT_ADVANCED_RENDERING_SHADOW_MAP_SIZE: AdvancedRenderingShadowMapSize = 2048;
 const DEFAULT_ADVANCED_RENDERING_SHADOW_TYPE: AdvancedRenderingShadowType = "pcfSoft";
 const DEFAULT_ADVANCED_RENDERING_SHADOW_BIAS = -0.0005;
@@ -223,6 +225,11 @@ export function createDefaultWorldTimePhaseProfile(
   switch (phase) {
     case "dawn":
       return {
+        background: {
+          mode: "verticalGradient",
+          topColorHex: "#5877b2",
+          bottomColorHex: "#f6a66f"
+        },
         skyTopColorHex: "#5877b2",
         skyBottomColorHex: "#f6a66f",
         ambientColorHex: "#ffd7b0",
@@ -232,6 +239,11 @@ export function createDefaultWorldTimePhaseProfile(
       };
     case "dusk":
       return {
+        background: {
+          mode: "verticalGradient",
+          topColorHex: "#304076",
+          bottomColorHex: "#f08b5b"
+        },
         skyTopColorHex: "#304076",
         skyBottomColorHex: "#f08b5b",
         ambientColorHex: "#f0b69a",
@@ -241,6 +253,11 @@ export function createDefaultWorldTimePhaseProfile(
       };
     case "night":
       return {
+        background: {
+          mode: "verticalGradient",
+          topColorHex: "#081120",
+          bottomColorHex: "#1a2438"
+        },
         skyTopColorHex: "#081120",
         skyBottomColorHex: "#1a2438",
         ambientColorHex: "#1d2d45",
@@ -329,6 +346,7 @@ export function cloneWorldTimePhaseProfile(
   profile: WorldTimePhaseProfile
 ): WorldTimePhaseProfile {
   return {
+    background: cloneWorldBackgroundSettings(profile.background),
     skyTopColorHex: profile.skyTopColorHex,
     skyBottomColorHex: profile.skyBottomColorHex,
     ambientColorHex: profile.ambientColorHex,
@@ -426,6 +444,7 @@ export function areWorldTimePhaseProfilesEqual(
   right: WorldTimePhaseProfile
 ): boolean {
   return (
+    areWorldBackgroundSettingsEqual(left.background, right.background) &&
     left.skyTopColorHex === right.skyTopColorHex &&
     left.skyBottomColorHex === right.skyBottomColorHex &&
     left.ambientColorHex === right.ambientColorHex &&
@@ -522,7 +541,10 @@ export function changeWorldBackgroundMode(
     return {
       mode: "image",
       assetId: imageAssetId,
-      environmentIntensity: background.mode === "image" ? background.environmentIntensity : 0.5
+      environmentIntensity:
+        background.mode === "image"
+          ? background.environmentIntensity
+          : DEFAULT_TIME_PHASE_IMAGE_ENVIRONMENT_INTENSITY
     };
   }
 
