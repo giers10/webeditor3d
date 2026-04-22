@@ -978,7 +978,8 @@ function validateWorldTimePhaseProfile(
     `${path}.background`,
     `${label}-background`,
     {
-      allowEmptyImageAssetId: true
+      allowEmptyImageAssetId: true,
+      allowShader: false
     }
   );
 
