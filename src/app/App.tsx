@@ -2471,7 +2471,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [entityNameDraft, setEntityNameDraft] = useState("");
   const [modelInstanceNameDraft, setModelInstanceNameDraft] = useState("");
   const [pathPointDrafts, setPathPointDrafts] = useState<Vec3Draft[]>([]);
-  const defaultBoxLightSettings = createDefaultBoxBrushLightSettings();
   const [positionDraft, setPositionDraft] = useState(
     createVec3Draft(DEFAULT_BOX_BRUSH_CENTER)
   );
@@ -2506,15 +2505,15 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [boxVolumeFogPaddingDraft, setBoxVolumeFogPaddingDraft] =
     useState("0.2");
   const [boxVolumeLightColorDraft, setBoxVolumeLightColorDraft] = useState(
-    defaultBoxLightSettings.colorHex
+    DEFAULT_BOX_VOLUME_LIGHT_SETTINGS.colorHex
   );
   const [boxVolumeLightIntensityDraft, setBoxVolumeLightIntensityDraft] =
-    useState(String(defaultBoxLightSettings.intensity));
+    useState(String(DEFAULT_BOX_VOLUME_LIGHT_SETTINGS.intensity));
   const [boxVolumeLightPaddingDraft, setBoxVolumeLightPaddingDraft] = useState(
-    String(defaultBoxLightSettings.padding)
+    String(DEFAULT_BOX_VOLUME_LIGHT_SETTINGS.padding)
   );
   const [boxVolumeLightFalloffDraft, setBoxVolumeLightFalloffDraft] =
-    useState<BoxBrushLightFalloffMode>(defaultBoxLightSettings.falloff);
+    useState<BoxBrushLightFalloffMode>(DEFAULT_BOX_VOLUME_LIGHT_SETTINGS.falloff);
   const [whiteboxSnapStepDraft, setWhiteboxSnapStepDraft] = useState(
     String(editorState.whiteboxSnapStep)
   );
