@@ -357,6 +357,8 @@ export class RuntimeHost {
   private readonly instanceAnimationClips = new Map<string, AnimationClip[]>();
   private readonly controllerContext: RuntimeControllerContext;
   private readonly renderer: WebGLRenderer | null;
+  private readonly pmremGenerator: PMREMGenerator | null;
+  private dynamicWorldEnvironmentTarget: WebGLRenderTarget | null = null;
   private runtimeScene: RuntimeSceneDefinition | null = null;
   private collisionWorld: RapierCollisionWorld | null = null;
   private collisionWorldRequestId = 0;
