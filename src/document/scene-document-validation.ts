@@ -83,6 +83,7 @@ import {
   isAdvancedRenderingToneMappingMode,
   isHexColorString,
   isWorldShaderSkyPresetId,
+  type WorldCelestialOrbitAuthoringSettings,
   type WorldBackgroundSettings,
   type WorldShaderSkySettings,
   type WorldTimePhaseProfile,
@@ -540,6 +541,43 @@ function validateWorldShaderSkySettings(
   }
 }
 
+function validateWorldCelestialOrbitSettings(
+  settings: WorldCelestialOrbitAuthoringSettings,
+  diagnostics: SceneDiagnostic[],
+  path: string
+) {
+  const validateOrbit = (
+    orbit: WorldCelestialOrbitAuthoringSettings["sun"],
+    orbitPath: string,
+    label: "sun" | "moon"
+  ) => {
+    if (!isFiniteNumberInRange(orbit.azimuthDegrees, 0, 360)) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          `invalid-world-${label}-orbit-azimuth`,
+          `World ${label} orbit azimuth must stay between 0 and 360 degrees.`,
+          `${orbitPath}.azimuthDegrees`
+        )
+      );
+    }
+
+    if (!isFiniteNumberInRange(orbit.peakAltitudeDegrees, 0.1, 89.9)) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          `invalid-world-${label}-orbit-peak-altitude`,
+          `World ${label} orbit peak altitude must stay between 0.1 and 89.9 degrees.`,
+          `${orbitPath}.peakAltitudeDegrees`
+        )
+      );
+    }
+  };
+
+  validateOrbit(settings.sun, `${path}.sun`, "sun");
+  validateOrbit(settings.moon, `${path}.moon`, "moon");
+}
+
 function validateWorldSettings(
   world: WorldSettings,
   document: SceneDocument,
@@ -578,6 +616,11 @@ function validateWorldSettings(
     world.shaderSky,
     diagnostics,
     "world.shaderSky"
+  );
+  validateWorldCelestialOrbitSettings(
+    world.celestialOrbits,
+    diagnostics,
+    "world.celestialOrbits"
   );
 
   if (!isHexColorString(world.ambientLight.colorHex)) {
