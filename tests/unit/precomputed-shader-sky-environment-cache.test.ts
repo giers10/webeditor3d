@@ -46,6 +46,10 @@ describe("PrecomputedShaderSkyEnvironmentCache", () => {
       night: new Texture()
     };
     const blendedTexture = new Texture();
+    time.sunriseTimeOfDayHours = 7;
+    time.sunsetTimeOfDayHours = 20;
+    time.dawnDurationHours = 2;
+    time.duskDurationHours = 2;
     world.background = {
       mode: "shader"
     };

@@ -2161,7 +2161,7 @@ export const ENTITY_REGISTRY: { [K in EntityKind]: EntityRegistryEntry<Extract<E
     kind: "cameraRig",
     label: "Camera Rig",
     description:
-      "Authored runtime camera framing rig that can lock from a fixed world position onto a typed target.",
+      "Authored runtime camera framing rig that can lock from a fixed world position or a scene path onto a typed target.",
     createDefaultEntity: createCameraRigEntity
   },
   sceneEntry: {
@@ -2282,8 +2282,7 @@ export function areEntityInstancesEqual(left: EntityInstance, right: EntityInsta
     left.id !== right.id ||
     left.name !== right.name ||
     left.visible !== right.visible ||
-    left.enabled !== right.enabled ||
-    !areVec3Equal(left.position, right.position)
+    left.enabled !== right.enabled
   ) {
     return false;
   }
@@ -2292,6 +2291,7 @@ export function areEntityInstancesEqual(left: EntityInstance, right: EntityInsta
     case "pointLight": {
       const typedRight = right as PointLightEntity;
       return (
+        areVec3Equal(left.position, typedRight.position) &&
         left.colorHex === typedRight.colorHex &&
         left.intensity === typedRight.intensity &&
         left.distance === typedRight.distance
@@ -2300,6 +2300,7 @@ export function areEntityInstancesEqual(left: EntityInstance, right: EntityInsta
     case "spotLight": {
       const typedRight = right as SpotLightEntity;
       return (
+        areVec3Equal(left.position, typedRight.position) &&
         areVec3Equal(left.direction, typedRight.direction) &&
         left.colorHex === typedRight.colorHex &&
         left.intensity === typedRight.intensity &&
@@ -2310,6 +2311,7 @@ export function areEntityInstancesEqual(left: EntityInstance, right: EntityInsta
     case "playerStart": {
       const typedRight = right as PlayerStartEntity;
       return (
+        areVec3Equal(left.position, typedRight.position) &&
         left.yawDegrees === typedRight.yawDegrees &&
         left.navigationMode === typedRight.navigationMode &&
         arePlayerStartMovementTemplatesEqual(
@@ -2331,6 +2333,10 @@ export function areEntityInstancesEqual(left: EntityInstance, right: EntityInsta
       const typedRight = right as CameraRigEntity;
       return (
         left.rigType === typedRight.rigType &&
+        (left.rigType === "fixed"
+          ? typedRight.rigType === "fixed" &&
+            areVec3Equal(left.position, typedRight.position)
+          : typedRight.rigType === "rail" && left.pathId === typedRight.pathId) &&
         left.priority === typedRight.priority &&
         left.defaultActive === typedRight.defaultActive &&
         areCameraRigTargetRefsEqual(left.target, typedRight.target) &&
@@ -2346,11 +2352,15 @@ export function areEntityInstancesEqual(left: EntityInstance, right: EntityInsta
     }
     case "sceneEntry": {
       const typedRight = right as SceneEntryEntity;
-      return left.yawDegrees === typedRight.yawDegrees;
+      return (
+        areVec3Equal(left.position, typedRight.position) &&
+        left.yawDegrees === typedRight.yawDegrees
+      );
     }
     case "npc": {
       const typedRight = right as NpcEntity;
       return (
+        areVec3Equal(left.position, typedRight.position) &&
         left.actorId === typedRight.actorId &&
         areNpcPresencesEqual(left.presence, typedRight.presence) &&
         left.yawDegrees === typedRight.yawDegrees &&
@@ -2370,6 +2380,7 @@ export function areEntityInstancesEqual(left: EntityInstance, right: EntityInsta
     case "soundEmitter": {
       const typedRight = right as SoundEmitterEntity;
       return (
+        areVec3Equal(left.position, typedRight.position) &&
         left.audioAssetId === typedRight.audioAssetId &&
         left.volume === typedRight.volume &&
         left.refDistance === typedRight.refDistance &&
@@ -2381,6 +2392,7 @@ export function areEntityInstancesEqual(left: EntityInstance, right: EntityInsta
     case "triggerVolume": {
       const typedRight = right as TriggerVolumeEntity;
       return (
+        areVec3Equal(left.position, typedRight.position) &&
         areVec3Equal(left.size, typedRight.size) &&
         left.triggerOnEnter === typedRight.triggerOnEnter &&
         left.triggerOnExit === typedRight.triggerOnExit
@@ -2388,11 +2400,15 @@ export function areEntityInstancesEqual(left: EntityInstance, right: EntityInsta
     }
     case "teleportTarget": {
       const typedRight = right as TeleportTargetEntity;
-      return left.yawDegrees === typedRight.yawDegrees;
+      return (
+        areVec3Equal(left.position, typedRight.position) &&
+        left.yawDegrees === typedRight.yawDegrees
+      );
     }
     case "interactable": {
       const typedRight = right as InteractableEntity;
       return (
+        areVec3Equal(left.position, typedRight.position) &&
         left.radius === typedRight.radius &&
         left.prompt === typedRight.prompt &&
         left.interactionEnabled === typedRight.interactionEnabled
