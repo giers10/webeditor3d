@@ -1982,6 +1982,10 @@ function formatWorldBackgroundLabel(
     return "Vertical Gradient";
   }
 
+  if (background.mode === "shader") {
+    return "Shader Sky";
+  }
+
   return "Image";
 }
 
@@ -2007,6 +2011,10 @@ function describeWorldBackground(
 
   if (background.mode === "verticalGradient") {
     return `${background.topColorHex} -> ${background.bottomColorHex}`;
+  }
+
+  if (background.mode === "shader") {
+    return "Default Sky";
   }
 
   if (background.assetId.trim().length === 0) {
