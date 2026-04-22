@@ -10,6 +10,7 @@ import {
   ShaderMaterial,
   SphereGeometry,
   Texture,
+  Vector2,
   Vector3
 } from "three";
 
@@ -18,6 +19,7 @@ import type {
   WorldBackgroundSettings,
   WorldSunLightSettings
 } from "../document/world-settings";
+import type { WorldShaderSkyRenderState } from "./world-shader-sky";
 
 const BACKGROUND_SPHERE_RADIUS = 320;
 const BACKGROUND_SPHERE_WIDTH_SEGMENTS = 48;
