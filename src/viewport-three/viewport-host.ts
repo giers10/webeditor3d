@@ -216,6 +216,10 @@ import {
   WorldBackgroundRenderer
 } from "../rendering/world-background-renderer";
 import {
+  createRendererQuantizedEnvironmentBlendCache,
+  type QuantizedEnvironmentBlendCache
+} from "../rendering/quantized-environment-blend-cache";
+import {
   applyWhiteboxBevelToMaterial,
   shouldApplyWhiteboxBevel
 } from "../rendering/whitebox-bevel-material";
@@ -510,6 +514,7 @@ export class ViewportHost {
     CachedMaterialTexture
   >();
   private readonly materialTextureLoader = new TextureLoader();
+  private readonly environmentBlendCache: QuantizedEnvironmentBlendCache;
   private currentDocument: SceneDocument | null = null;
   private currentWorld: WorldSettings | null = null;
   private currentSimulationScene: RuntimeSceneDefinition | null = null;
@@ -679,6 +684,14 @@ export class ViewportHost {
     this.scene.add(this.boxCreatePreviewEdges);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.setClearAlpha(0);
+    this.environmentBlendCache = createRendererQuantizedEnvironmentBlendCache(
+      this.renderer,
+      {
+        onTextureReady: () => {
+          this.applyWorld();
+        }
+      }
+    );
     this.applyViewModePose();
   }
 
@@ -805,6 +818,7 @@ export class ViewportHost {
     this.projectAssets = projectAssets;
     this.loadedModelAssets = loadedModelAssets;
     this.loadedImageAssets = loadedImageAssets;
+    this.environmentBlendCache.clear();
 
     if (this.currentWorld !== null) {
       this.applyWorld();
@@ -1235,6 +1249,7 @@ export class ViewportHost {
     this.terrainBrushPreviewLine.material.dispose();
     this.terrainBrushPreviewCenter.geometry.dispose();
     this.terrainBrushPreviewCenter.material.dispose();
+    this.environmentBlendCache.dispose();
     this.worldBackgroundRenderer.dispose();
     this.renderer.forceContextLoss();
     this.renderer.dispose();
