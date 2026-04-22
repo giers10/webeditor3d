@@ -527,7 +527,8 @@ export function areAdvancedRenderingSettingsEqual(left: AdvancedRenderingSetting
 export function changeWorldBackgroundMode(
   background: WorldBackgroundSettings,
   mode: WorldBackgroundMode,
-  imageAssetId?: string
+  imageAssetId?: string,
+  imageEnvironmentIntensity = DEFAULT_TIME_PHASE_IMAGE_ENVIRONMENT_INTENSITY
 ): WorldBackgroundSettings {
   if (mode === "image") {
     if (imageAssetId === undefined || imageAssetId.trim().length === 0) {
@@ -544,7 +545,7 @@ export function changeWorldBackgroundMode(
       environmentIntensity:
         background.mode === "image"
           ? background.environmentIntensity
-          : DEFAULT_TIME_PHASE_IMAGE_ENVIRONMENT_INTENSITY
+          : imageEnvironmentIntensity
     };
   }
 
