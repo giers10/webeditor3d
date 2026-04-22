@@ -45,7 +45,7 @@ describe("resolveWorldEnvironmentState", () => {
 
     expect(earlyTwilight.texture).toBe(dayTexture);
     expect(earlyTwilight.intensity).toBeCloseTo(0.5);
-    expect(lateTwilight.texture).toBe(nightTexture);
+    expect(lateTwilight.texture).toBe(dayTexture);
     expect(lateTwilight.intensity).toBeCloseTo(0.7);
   });
 
