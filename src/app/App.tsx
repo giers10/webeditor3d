@@ -189,6 +189,7 @@ import {
   cloneWorldSettings,
   DEFAULT_NIGHT_IMAGE_ENVIRONMENT_INTENSITY,
   DEFAULT_TIME_PHASE_IMAGE_ENVIRONMENT_INTENSITY,
+  syncWorldShaderSkyDayGradientToBackground,
   type WorldBackgroundMode,
   type WorldBackgroundSettings,
   type AdvancedRenderingSettings,
@@ -197,6 +198,7 @@ import {
   type AdvancedRenderingShadowMapSize,
   type AdvancedRenderingShadowType,
   type AdvancedRenderingToneMappingMode,
+  type WorldShaderSkySettings,
   type WorldSettings
 } from "../document/world-settings";
 import {
