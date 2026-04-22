@@ -14850,6 +14850,116 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   </div>
 
                   <div className="form-section">
+                    <div className="label">Celestial Orbits</div>
+                    <div className="material-summary">
+                      These angles drive the time-aware sun and moon paths in
+                      the editor viewport and runner.
+                    </div>
+                    <div className="vector-inputs vector-inputs--two">
+                      <label className="form-field">
+                        <span className="label">Sun Azimuth</span>
+                        <input
+                          className="text-input"
+                          type="number"
+                          min="0"
+                          max="360"
+                          step="1"
+                          value={
+                            editorState.document.world.celestialOrbits.sun
+                              .azimuthDegrees
+                          }
+                          onChange={(event) =>
+                            applyCelestialOrbitNumericSetting(
+                              "Set sun orbit azimuth",
+                              "Updated the sun orbit azimuth.",
+                              event.currentTarget.valueAsNumber,
+                              (world, nextValue) => {
+                                world.celestialOrbits.sun.azimuthDegrees =
+                                  nextValue;
+                              }
+                            )
+                          }
+                        />
+                      </label>
+                      <label className="form-field">
+                        <span className="label">Sun Peak Altitude</span>
+                        <input
+                          className="text-input"
+                          type="number"
+                          min="0.1"
+                          max="89.9"
+                          step="0.1"
+                          value={
+                            editorState.document.world.celestialOrbits.sun
+                              .peakAltitudeDegrees
+                          }
+                          onChange={(event) =>
+                            applyCelestialOrbitNumericSetting(
+                              "Set sun orbit peak altitude",
+                              "Updated the sun orbit peak altitude.",
+                              event.currentTarget.valueAsNumber,
+                              (world, nextValue) => {
+                                world.celestialOrbits.sun.peakAltitudeDegrees =
+                                  nextValue;
+                              }
+                            )
+                          }
+                        />
+                      </label>
+                      <label className="form-field">
+                        <span className="label">Moon Azimuth</span>
+                        <input
+                          className="text-input"
+                          type="number"
+                          min="0"
+                          max="360"
+                          step="1"
+                          value={
+                            editorState.document.world.celestialOrbits.moon
+                              .azimuthDegrees
+                          }
+                          onChange={(event) =>
+                            applyCelestialOrbitNumericSetting(
+                              "Set moon orbit azimuth",
+                              "Updated the moon orbit azimuth.",
+                              event.currentTarget.valueAsNumber,
+                              (world, nextValue) => {
+                                world.celestialOrbits.moon.azimuthDegrees =
+                                  nextValue;
+                              }
+                            )
+                          }
+                        />
+                      </label>
+                      <label className="form-field">
+                        <span className="label">Moon Peak Altitude</span>
+                        <input
+                          className="text-input"
+                          type="number"
+                          min="0.1"
+                          max="89.9"
+                          step="0.1"
+                          value={
+                            editorState.document.world.celestialOrbits.moon
+                              .peakAltitudeDegrees
+                          }
+                          onChange={(event) =>
+                            applyCelestialOrbitNumericSetting(
+                              "Set moon orbit peak altitude",
+                              "Updated the moon orbit peak altitude.",
+                              event.currentTarget.valueAsNumber,
+                              (world, nextValue) => {
+                                world.celestialOrbits.moon.peakAltitudeDegrees =
+                                  nextValue;
+                              }
+                            )
+                          }
+                        />
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="form-section">
                     <div className="label">Sun Light</div>
                     <div className="vector-inputs vector-inputs--two">
                       <label className="form-field">
@@ -14893,117 +15003,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
                             handleNumberInputPointerUp(
                               event,
                               applySunLightIntensity
-                            )
-                          }
-                        />
-                      </label>
-                    </div>
-
-                    <div className="vector-inputs">
-                      <label className="form-field">
-                        <span className="label">Dir X</span>
-                        <input
-                          data-testid="world-sun-direction-x"
-                          className="text-input"
-                          type="number"
-                          step="0.1"
-                          value={sunDirectionDraft.x}
-                          onChange={(event) => {
-                            const nextValue = event.currentTarget.value;
-                            setSunDirectionDraft((draft) => ({
-                              ...draft,
-                              x: nextValue
-                            }));
-                          }}
-                          onBlur={applySunLightDirection}
-                          onKeyDown={(event) =>
-                            handleDraftVectorKeyDown(
-                              event,
-                              applySunLightDirection
-                            )
-                          }
-                          onKeyUp={(event) =>
-                            handleNumberInputKeyUp(
-                              event,
-                              applySunLightDirection
-                            )
-                          }
-                          onPointerUp={(event) =>
-                            handleNumberInputPointerUp(
-                              event,
-                              applySunLightDirection
-                            )
-                          }
-                        />
-                      </label>
-                      <label className="form-field">
-                        <span className="label">Dir Y</span>
-                        <input
-                          data-testid="world-sun-direction-y"
-                          className="text-input"
-                          type="number"
-                          step="0.1"
-                          value={sunDirectionDraft.y}
-                          onChange={(event) => {
-                            const nextValue = event.currentTarget.value;
-                            setSunDirectionDraft((draft) => ({
-                              ...draft,
-                              y: nextValue
-                            }));
-                          }}
-                          onBlur={applySunLightDirection}
-                          onKeyDown={(event) =>
-                            handleDraftVectorKeyDown(
-                              event,
-                              applySunLightDirection
-                            )
-                          }
-                          onKeyUp={(event) =>
-                            handleNumberInputKeyUp(
-                              event,
-                              applySunLightDirection
-                            )
-                          }
-                          onPointerUp={(event) =>
-                            handleNumberInputPointerUp(
-                              event,
-                              applySunLightDirection
-                            )
-                          }
-                        />
-                      </label>
-                      <label className="form-field">
-                        <span className="label">Dir Z</span>
-                        <input
-                          data-testid="world-sun-direction-z"
-                          className="text-input"
-                          type="number"
-                          step="0.1"
-                          value={sunDirectionDraft.z}
-                          onChange={(event) => {
-                            const nextValue = event.currentTarget.value;
-                            setSunDirectionDraft((draft) => ({
-                              ...draft,
-                              z: nextValue
-                            }));
-                          }}
-                          onBlur={applySunLightDirection}
-                          onKeyDown={(event) =>
-                            handleDraftVectorKeyDown(
-                              event,
-                              applySunLightDirection
-                            )
-                          }
-                          onKeyUp={(event) =>
-                            handleNumberInputKeyUp(
-                              event,
-                              applySunLightDirection
-                            )
-                          }
-                          onPointerUp={(event) =>
-                            handleNumberInputPointerUp(
-                              event,
-                              applySunLightDirection
                             )
                           }
                         />
