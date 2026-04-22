@@ -11,6 +11,7 @@ import type { SceneDocument } from "../document/scene-document";
 import { createModelInstance } from "../assets/model-instances";
 import { updateBrush, type Brush } from "../document/brushes";
 import {
+  createCameraRigEntity,
   createInteractableEntity,
   createNpcEntity,
   createPlayerStartEntity,
@@ -53,7 +54,9 @@ function createTransformCommandLabel(session: ActiveTransformSession): string {
       break;
     case "entity":
       targetLabel =
-        session.target.entityKind === "playerStart"
+        session.target.entityKind === "cameraRig"
+          ? "camera rig"
+          : session.target.entityKind === "playerStart"
           ? "player start"
           : session.target.entityKind === "npc"
             ? "NPC"
@@ -105,6 +108,11 @@ function createUpdatedEntityFromPreview(
   switch (entity.kind) {
     case "pointLight":
       return createPointLightEntity({
+        ...entity,
+        position: preview.position
+      });
+    case "cameraRig":
+      return createCameraRigEntity({
         ...entity,
         position: preview.position
       });
