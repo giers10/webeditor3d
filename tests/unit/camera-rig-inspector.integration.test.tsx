@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const { MockViewportHost, viewportHostInstances } = vi.hoisted(() => {
@@ -93,13 +93,14 @@ describe("Camera Rig inspector", () => {
   });
 
   afterEach(() => {
+    cleanup();
     vi.restoreAllMocks();
   });
 
   it("creates a camera rig from the Add menu and persists fixed-rig inspector edits", async () => {
     const store = createEditorStore();
 
-    render(<App store={store} />);
+    const { unmount } = render(<App store={store} />);
 
     await waitFor(() => {
       expect(viewportHostInstances.length).toBeGreaterThan(0);
@@ -188,5 +189,7 @@ describe("Camera Rig inspector", () => {
         }
       });
     });
+
+    unmount();
   });
 });
