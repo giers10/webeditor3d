@@ -297,18 +297,28 @@ export interface RuntimeSceneEntry {
   yawDegrees: number;
 }
 
-export interface RuntimeCameraRig {
+interface RuntimeCameraRigBase {
   entityId: string;
-  rigType: "fixed";
   priority: number;
   defaultActive: boolean;
-  position: Vec3;
   target: CameraRigTargetRef;
   targetOffset: Vec3;
   transitionMode: CameraRigTransitionMode;
   transitionDurationSeconds: number;
   lookAround: CameraRigLookAroundSettings;
 }
+
+export interface RuntimeFixedCameraRig extends RuntimeCameraRigBase {
+  rigType: "fixed";
+  position: Vec3;
+}
+
+export interface RuntimeRailCameraRig extends RuntimeCameraRigBase {
+  rigType: "rail";
+  pathId: string;
+}
+
+export type RuntimeCameraRig = RuntimeFixedCameraRig | RuntimeRailCameraRig;
 
 export interface RuntimeNpc {
   entityId: string;
@@ -1560,18 +1570,33 @@ function buildRuntimeSceneCollections(
         });
         break;
       case "cameraRig":
-        runtimeEntities.cameraRigs.push({
-          entityId: entity.id,
-          rigType: entity.rigType,
-          priority: entity.priority,
-          defaultActive: entity.defaultActive,
-          position: cloneVec3(entity.position),
-          target: cloneCameraRigTargetRef(entity.target),
-          targetOffset: cloneVec3(entity.targetOffset),
-          transitionMode: entity.transitionMode,
-          transitionDurationSeconds: entity.transitionDurationSeconds,
-          lookAround: cloneCameraRigLookAroundSettings(entity.lookAround)
-        });
+        runtimeEntities.cameraRigs.push(
+          entity.rigType === "fixed"
+            ? {
+                entityId: entity.id,
+                rigType: "fixed",
+                priority: entity.priority,
+                defaultActive: entity.defaultActive,
+                position: cloneVec3(entity.position),
+                target: cloneCameraRigTargetRef(entity.target),
+                targetOffset: cloneVec3(entity.targetOffset),
+                transitionMode: entity.transitionMode,
+                transitionDurationSeconds: entity.transitionDurationSeconds,
+                lookAround: cloneCameraRigLookAroundSettings(entity.lookAround)
+              }
+            : {
+                entityId: entity.id,
+                rigType: "rail",
+                priority: entity.priority,
+                defaultActive: entity.defaultActive,
+                pathId: entity.pathId,
+                target: cloneCameraRigTargetRef(entity.target),
+                targetOffset: cloneVec3(entity.targetOffset),
+                transitionMode: entity.transitionMode,
+                transitionDurationSeconds: entity.transitionDurationSeconds,
+                lookAround: cloneCameraRigLookAroundSettings(entity.lookAround)
+              }
+        );
         break;
       case "npc": {
         const npc: RuntimeNpcDefinition = {
