@@ -143,11 +143,11 @@ import {
   cloneRuntimeClockState,
   createRuntimeClockState,
   reconfigureRuntimeClockState,
-  resolveRuntimePlayerMovementHooks,
   resolveRuntimeDayNightWorldState,
   resolveRuntimeTimeState,
   type RuntimeClockState
 } from "./runtime-project-time";
+import { resolveRuntimePlayerMovementHooks } from "./player-controller-telemetry";
 import {
   applyRuntimeProjectScheduleToControlState,
   resolveRuntimeProjectScheduleState
