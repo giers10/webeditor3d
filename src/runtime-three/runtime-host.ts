@@ -20,6 +20,7 @@ import {
   MeshPhysicalMaterial,
   MeshStandardMaterial,
   PerspectiveCamera,
+  PMREMGenerator,
   PointLight,
   Quaternion,
   Scene,
@@ -28,6 +29,7 @@ import {
   SpotLight,
   TextureLoader,
   Texture,
+  WebGLCubeRenderTarget,
   WebGLRenderTarget,
   WebGLRenderer
 } from "three";
@@ -78,6 +80,7 @@ import {
 } from "../rendering/advanced-rendering";
 import {
   resolveWorldEnvironmentState,
+  shouldUseDynamicWorldEnvironment,
   WorldBackgroundRenderer
 } from "../rendering/world-background-renderer";
 import {
