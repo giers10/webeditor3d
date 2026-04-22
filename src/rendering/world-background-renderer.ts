@@ -678,6 +678,12 @@ export class WorldBackgroundRenderer {
     this.anchor.add(this.moonMesh);
     this.anchor.add(this.sunMesh);
     this.scene.add(this.anchor);
+
+    this.shaderMesh.visible = false;
+    this.imageMesh.visible = false;
+    this.overlayMesh.visible = false;
+    this.sunMesh.visible = false;
+    this.moonMesh.visible = false;
   }
 
   update(
