@@ -691,6 +691,12 @@ export class RuntimeHost {
     this.manualPauseActive = false;
     this.controlPauseActive = false;
     this.previousPauseInputActive = false;
+    this.cameraRigLookDragging = false;
+    this.cameraRigLookYawRadians = 0;
+    this.cameraRigLookPitchRadians = 0;
+    this.activeRuntimeCameraRig = null;
+    this.activeRuntimeCameraRigId = null;
+    this.cameraRigBlendState = null;
     this.pressedKeys.clear();
     this.publishRuntimePauseState(true);
     this.currentPlayerControllerTelemetry = null;
@@ -906,6 +912,12 @@ export class RuntimeHost {
     this.manualPauseActive = false;
     this.controlPauseActive = false;
     this.previousPauseInputActive = false;
+    this.cameraRigLookDragging = false;
+    this.cameraRigLookYawRadians = 0;
+    this.cameraRigLookPitchRadians = 0;
+    this.activeRuntimeCameraRig = null;
+    this.activeRuntimeCameraRigId = null;
+    this.cameraRigBlendState = null;
     this.pressedKeys.clear();
     this.publishRuntimePauseState(true);
     if (this.renderer !== null) {
