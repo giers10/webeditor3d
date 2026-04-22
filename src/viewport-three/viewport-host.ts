@@ -8897,10 +8897,27 @@ export class ViewportHost {
     }
 
     if (this.advancedRenderingComposer !== null) {
+      this.worldBackgroundRenderer.syncToCamera(this.perspectiveCamera);
       this.advancedRenderingComposer.render();
       return;
     }
 
-    this.renderer.render(this.scene, this.getActiveCamera());
+    const activeCamera = this.getActiveCamera();
+    const previousAutoClear = this.renderer.autoClear;
+
+    if (this.displayMode === "normal") {
+      this.worldBackgroundRenderer.syncToCamera(activeCamera);
+      this.renderer.autoClear = true;
+      this.renderer.clear();
+      this.renderer.render(this.worldBackgroundRenderer.scene, activeCamera);
+      this.renderer.autoClear = false;
+      this.renderer.render(this.scene, activeCamera);
+      this.renderer.autoClear = previousAutoClear;
+      return;
+    }
+
+    this.renderer.autoClear = true;
+    this.renderer.render(this.scene, activeCamera);
+    this.renderer.autoClear = previousAutoClear;
   };
 }
