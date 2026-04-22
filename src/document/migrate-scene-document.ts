@@ -197,6 +197,7 @@ import {
   NPC_COLLIDER_SCENE_DOCUMENT_VERSION,
   NPC_ENTITY_FOUNDATION_SCENE_DOCUMENT_VERSION,
   NPC_PRESENCE_SCENE_DOCUMENT_VERSION,
+  WHITEBOX_BOX_LIGHT_VOLUME_SCENE_DOCUMENT_VERSION,
   SCENE_DOCUMENT_VERSION,
   STATIC_SIMPLE_MODEL_COLLIDERS_SCENE_DOCUMENT_VERSION,
   TRIGGER_ACTION_TARGET_FOUNDATION_SCENE_DOCUMENT_VERSION,
@@ -2776,6 +2777,11 @@ function readWorldSettings(
       "world.projectTimeLightingEnabled",
       true
     ),
+    showCelestialBodies: readOptionalBoolean(
+      value.showCelestialBodies,
+      "world.showCelestialBodies",
+      false
+    ),
     background: resolvedBackground,
     ambientLight: {
       colorHex: expectHexColor(
@@ -4939,6 +4945,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     source.version !== AUTHORED_TERRAIN_FOUNDATION_SCENE_DOCUMENT_VERSION &&
     source.version !== AUTHORED_TERRAIN_PAINT_SCENE_DOCUMENT_VERSION &&
     source.version !== AUTHORED_TERRAIN_COLLISION_SCENE_DOCUMENT_VERSION &&
+    source.version !== WHITEBOX_BOX_LIGHT_VOLUME_SCENE_DOCUMENT_VERSION &&
     source.version !== FOLLOW_ACTOR_PATH_SMOOTH_SCENE_DOCUMENT_VERSION
   ) {
     throw new Error(
