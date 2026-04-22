@@ -1275,6 +1275,18 @@ export class RuntimeHost {
     this.applyShadowState();
   }
 
+  private rebuildLightVolumes(
+    lightVolumes: RuntimeSceneDefinition["volumes"]["light"]
+  ) {
+    this.clearLightVolumes();
+
+    for (const lightVolume of lightVolumes) {
+      const renderObjects = this.createLightVolumeRuntimeObjects(lightVolume);
+      this.lightVolumeGroup.add(renderObjects.group);
+      this.lightVolumeObjects.set(lightVolume.brushId, renderObjects);
+    }
+  }
+
   private createPointLightRuntimeObjects(
     pointLight: RuntimeLocalLightCollection["pointLights"][number]
   ): LocalLightRenderObjects {
@@ -1297,6 +1309,48 @@ export class RuntimeHost {
     return {
       group,
       light
+    };
+  }
+
+  private createLightVolumeRuntimeObjects(
+    lightVolume: RuntimeSceneDefinition["volumes"]["light"][number]
+  ): LightVolumeRenderObjects {
+    const group = new Group();
+    const lights: PointLight[] = [];
+
+    group.position.set(
+      lightVolume.center.x,
+      lightVolume.center.y,
+      lightVolume.center.z
+    );
+    group.rotation.set(
+      (lightVolume.rotationDegrees.x * Math.PI) / 180,
+      (lightVolume.rotationDegrees.y * Math.PI) / 180,
+      (lightVolume.rotationDegrees.z * Math.PI) / 180
+    );
+    group.visible = lightVolume.enabled;
+
+    for (const derivedLight of lightVolume.lights) {
+      const light = new PointLight(
+        lightVolume.colorHex,
+        derivedLight.intensity,
+        derivedLight.distance,
+        derivedLight.decay
+      );
+      light.castShadow = false;
+      light.shadow.autoUpdate = false;
+      light.position.set(
+        derivedLight.localPosition.x,
+        derivedLight.localPosition.y,
+        derivedLight.localPosition.z
+      );
+      group.add(light);
+      lights.push(light);
+    }
+
+    return {
+      group,
+      lights
     };
   }
 
