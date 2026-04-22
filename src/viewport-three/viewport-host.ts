@@ -485,6 +485,7 @@ export class ViewportHost {
   };
   private readonly ambientLight = new AmbientLight();
   private readonly sunLight = new DirectionalLight();
+  private readonly moonLight = new DirectionalLight();
   private readonly localLightGroup = new Group();
   private readonly lightVolumeGroup = new Group();
   private readonly brushGroup = new Group();
@@ -538,6 +539,7 @@ export class ViewportHost {
   private currentWorld: WorldSettings | null = null;
   private currentSimulationScene: RuntimeSceneDefinition | null = null;
   private currentSimulationClock: RuntimeClockState | null = null;
+  private currentCelestialShadowCaster: "sun" | "moon" | null = null;
   private currentAdvancedRenderingSettings: AdvancedRenderingSettings | null =
     null;
   private advancedRenderingComposer: EffectComposer | null = null;
@@ -555,6 +557,10 @@ export class ViewportHost {
   private projectAssets: Record<string, ProjectAssetRecord> = {};
   private loadedModelAssets: Record<string, LoadedModelAsset> = {};
   private loadedImageAssets: Record<string, LoadedImageAsset> = {};
+  private viewportSceneBounds: {
+    min: Vec3;
+    max: Vec3;
+  } | null = null;
   private volumeTime = 0;
   private previousFrameTime = 0;
   private readonly volumeAnimatedUniforms: Array<{ value: number }> = [];
