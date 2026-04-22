@@ -684,7 +684,8 @@ export class WorldBackgroundRenderer {
     background: WorldBackgroundSettings,
     backgroundTexture: Texture | null,
     overlay: WorldBackgroundOverlayState | null,
-    celestialBodies: WorldCelestialBodiesState | null = null
+    celestialBodies: WorldCelestialBodiesState | null = null,
+    shaderSkyState: WorldShaderSkyRenderState | null = null
   ) {
     const gradientColors = resolveGradientColors(background);
     this.gradientMaterial.uniforms.uTopColor.value.set(
@@ -694,15 +695,21 @@ export class WorldBackgroundRenderer {
       gradientColors.bottomColorHex
     );
 
+    const showShaderBackground =
+      background.mode === "shader" && shaderSkyState !== null;
     const showImageBackground =
-      background.mode === "image" && backgroundTexture !== null;
+      !showShaderBackground &&
+      background.mode === "image" &&
+      backgroundTexture !== null;
 
     if (this.imageMaterial.map !== backgroundTexture) {
       this.imageMaterial.map = backgroundTexture;
       this.imageMaterial.needsUpdate = true;
     }
 
-    this.gradientMesh.visible = !showImageBackground;
+    this.syncShaderSkyState(shaderSkyState);
+    this.shaderMesh.visible = showShaderBackground;
+    this.gradientMesh.visible = !showShaderBackground && !showImageBackground;
     this.imageMesh.visible = showImageBackground;
 
     const overlayTexture = overlay?.texture ?? null;
@@ -715,9 +722,11 @@ export class WorldBackgroundRenderer {
     }
 
     this.overlayMaterial.opacity = overlayOpacity;
-    this.overlayMesh.visible = overlayOpacity > NIGHT_BACKGROUND_EPSILON;
-    this.sunState = celestialBodies?.sun ?? null;
-    this.moonState = celestialBodies?.moon ?? null;
+    this.overlayMesh.visible =
+      !showShaderBackground && overlayOpacity > NIGHT_BACKGROUND_EPSILON;
+    this.sunState = showShaderBackground ? null : celestialBodies?.sun ?? null;
+    this.moonState =
+      showShaderBackground ? null : celestialBodies?.moon ?? null;
     this.syncCelestialBodyVisualState(
       this.sunMesh,
       this.sunMaterial,
@@ -740,6 +749,7 @@ export class WorldBackgroundRenderer {
     this.geometry.dispose();
     this.celestialGeometry.dispose();
     this.gradientMaterial.dispose();
+    this.shaderSkyMaterial.dispose();
     this.imageMaterial.dispose();
     this.overlayMaterial.dispose();
     this.sunMaterial.dispose();
@@ -761,6 +771,80 @@ export class WorldBackgroundRenderer {
     material.uniforms.uIntensity.value = state.intensity;
     mesh.scale.setScalar(state.size);
     mesh.visible = true;
+  }
+
+  private syncShaderSkyState(state: WorldShaderSkyRenderState | null) {
+    if (state === null) {
+      this.shaderSkyMaterial.uniforms.uStarVisibility.value = 0;
+      this.shaderSkyMaterial.uniforms.uSunVisible.value = 0;
+      this.shaderSkyMaterial.uniforms.uMoonVisible.value = 0;
+      return;
+    }
+
+    this.shaderSkyMaterial.uniforms.uSkyTopColor.value.set(
+      state.sky.topColorHex
+    );
+    this.shaderSkyMaterial.uniforms.uSkyBottomColor.value.set(
+      state.sky.bottomColorHex
+    );
+    this.shaderSkyMaterial.uniforms.uSunDirection.value.set(
+      state.celestial.sunDirection.x,
+      state.celestial.sunDirection.y,
+      state.celestial.sunDirection.z
+    );
+    this.shaderSkyMaterial.uniforms.uSunColor.value.set(
+      state.celestial.sunColorHex
+    );
+    this.shaderSkyMaterial.uniforms.uSunIntensity.value =
+      state.celestial.sunIntensity;
+    this.shaderSkyMaterial.uniforms.uSunDiscSizeDegrees.value =
+      state.celestial.sunDiscSizeDegrees;
+    this.shaderSkyMaterial.uniforms.uSunVisible.value = state.celestial.sunVisible
+      ? 1
+      : 0;
+    this.shaderSkyMaterial.uniforms.uMoonDirection.value.set(
+      state.celestial.moonDirection.x,
+      state.celestial.moonDirection.y,
+      state.celestial.moonDirection.z
+    );
+    this.shaderSkyMaterial.uniforms.uMoonColor.value.set(
+      state.celestial.moonColorHex
+    );
+    this.shaderSkyMaterial.uniforms.uMoonIntensity.value =
+      state.celestial.moonIntensity;
+    this.shaderSkyMaterial.uniforms.uMoonDiscSizeDegrees.value =
+      state.celestial.moonDiscSizeDegrees;
+    this.shaderSkyMaterial.uniforms.uMoonVisible.value = state.celestial.moonVisible
+      ? 1
+      : 0;
+    this.shaderSkyMaterial.uniforms.uDaylightFactor.value =
+      state.time.daylightFactor;
+    this.shaderSkyMaterial.uniforms.uTwilightFactor.value =
+      state.time.twilightFactor;
+    this.shaderSkyMaterial.uniforms.uStarDensity.value = state.stars.density;
+    this.shaderSkyMaterial.uniforms.uStarBrightness.value =
+      state.stars.brightness;
+    this.shaderSkyMaterial.uniforms.uStarVisibility.value =
+      state.stars.visibility;
+    this.shaderSkyMaterial.uniforms.uStarRotationRadians.value =
+      state.stars.rotationRadians;
+    this.shaderSkyMaterial.uniforms.uCloudCoverage.value =
+      state.clouds.coverage;
+    this.shaderSkyMaterial.uniforms.uCloudDensity.value = state.clouds.density;
+    this.shaderSkyMaterial.uniforms.uCloudSoftness.value =
+      state.clouds.softness;
+    this.shaderSkyMaterial.uniforms.uCloudScale.value = state.clouds.scale;
+    this.shaderSkyMaterial.uniforms.uCloudHeight.value = state.clouds.height;
+    this.shaderSkyMaterial.uniforms.uCloudHeightVariation.value =
+      state.clouds.heightVariation;
+    this.shaderSkyMaterial.uniforms.uCloudTint.value.set(state.clouds.tintHex);
+    this.shaderSkyMaterial.uniforms.uCloudOpacity.value = state.clouds.opacity;
+    this.shaderSkyMaterial.uniforms.uCloudOpacityRandomness.value =
+      state.clouds.opacityRandomness;
+    this.shaderSkyMaterial.uniforms.uCloudDriftOffset.value.set(
+      state.clouds.driftOffset.x,
+      state.clouds.driftOffset.y
+    );
   }
 
   private syncCelestialBodyPose(
