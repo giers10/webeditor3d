@@ -1651,12 +1651,6 @@ export class ViewportHost {
       this.scene.environment = null;
       this.scene.environmentIntensity = 1;
     } else {
-      const environmentState = resolveWorldEnvironmentState(
-        displayedBackground,
-        backgroundTexture,
-        backgroundOverlayState,
-        this.environmentBlendCache
-      );
       const celestialBodiesState = resolveWorldCelestialBodiesState(
         world.showCelestialBodies,
         displayedSunLight,
