@@ -543,7 +543,8 @@ export class RuntimeHost {
             this.renderer,
             this.worldBackgroundRenderer,
             {
-              phaseBlendTextureResolver: this.shaderSkyEnvironmentBlendCache
+              phaseBlendTextureResolver: this.shaderSkyEnvironmentBlendCache,
+              captureSize: 32
             }
           );
 
