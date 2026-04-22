@@ -67,6 +67,7 @@ describe("project document JSON", () => {
     activeScene.world.showCelestialBodies = true;
     activeScene.world.shaderSky.dayTopColorHex = "#4a76bb";
     activeScene.world.shaderSky.dayBottomColorHex = "#d6efff";
+    activeScene.world.shaderSky.horizonHeight = -0.06;
     activeScene.world.shaderSky.stars.density = 0.72;
     activeScene.world.shaderSky.clouds.coverage = 0.63;
     activeScene.world.shaderSky.clouds.tintHex = "#ece7df";

@@ -168,4 +168,13 @@ describe("world settings helpers", () => {
 
     expect(areWorldSettingsEqual(left, right)).toBe(false);
   });
+
+  it("treats shader sky horizon height as part of authored world equality", () => {
+    const left = createDefaultWorldSettings();
+    const right = cloneWorldSettings(left);
+
+    right.shaderSky.horizonHeight = 0.08;
+
+    expect(areWorldSettingsEqual(left, right)).toBe(false);
+  });
 });
