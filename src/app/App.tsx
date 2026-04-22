@@ -189,6 +189,7 @@ import {
   cloneWorldSettings,
   DEFAULT_NIGHT_IMAGE_ENVIRONMENT_INTENSITY,
   DEFAULT_TIME_PHASE_IMAGE_ENVIRONMENT_INTENSITY,
+  resolveWorldCelestialOrbitPeakDirection,
   syncWorldShaderSkyDayGradientToBackground,
   type WorldBackgroundMode,
   type WorldBackgroundSettings,
@@ -2716,9 +2717,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [sunLightIntensityDraft, setSunLightIntensityDraft] = useState(
     String(editorState.document.world.sunLight.intensity)
   );
-  const [sunDirectionDraft, setSunDirectionDraft] = useState(
-    createVec3Draft(editorState.document.world.sunLight.direction)
-  );
   const [projectTimeStartDayNumberDraft, setProjectTimeStartDayNumberDraft] =
     useState(String(editorState.projectDocument.time.startDayNumber));
   const [projectTimeStartTimeOfDayDraft, setProjectTimeStartTimeOfDayDraft] =
@@ -3768,12 +3766,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
       String(editorState.document.world.sunLight.intensity)
     );
   }, [editorState.document.world.sunLight.intensity]);
-
-  useEffect(() => {
-    setSunDirectionDraft(
-      createVec3Draft(editorState.document.world.sunLight.direction)
-    );
-  }, [editorState.document.world.sunLight.direction]);
 
   useEffect(() => {
     const advancedRendering = editorState.document.world.advancedRendering;
@@ -10609,6 +10601,34 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
   };
 
+  const applyCelestialOrbitSettings = (
+    label: string,
+    successMessage: string,
+    mutate: (world: WorldSettings) => void
+  ) => {
+    const nextWorld = cloneWorldSettings(editorState.document.world);
+    mutate(nextWorld);
+    nextWorld.sunLight.direction = resolveWorldCelestialOrbitPeakDirection(
+      nextWorld.celestialOrbits.sun
+    );
+    applyWorldSettings(nextWorld, label, successMessage);
+  };
+
+  const applyCelestialOrbitNumericSetting = (
+    label: string,
+    successMessage: string,
+    value: number,
+    mutate: (world: WorldSettings, nextValue: number) => void
+  ) => {
+    if (!Number.isFinite(value)) {
+      return;
+    }
+
+    applyCelestialOrbitSettings(label, successMessage, (world) =>
+      mutate(world, value)
+    );
+  };
+
   const applyBackgroundEnvironmentIntensity = () => {
     if (editorState.document.world.background.mode !== "image") {
       return;
@@ -10695,30 +10715,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
         },
         "Set world sun intensity",
         "Updated the world sun intensity."
-      );
-    } catch (error) {
-      setStatusMessage(getErrorMessage(error));
-    }
-  };
-
-  const applySunLightDirection = () => {
-    try {
-      const direction = readVec3Draft(sunDirectionDraft, "Sun direction");
-
-      if (direction.x === 0 && direction.y === 0 && direction.z === 0) {
-        throw new Error("Sun direction must not be the zero vector.");
-      }
-
-      applyWorldSettings(
-        {
-          ...editorState.document.world,
-          sunLight: {
-            ...editorState.document.world.sunLight,
-            direction
-          }
-        },
-        "Set world sun direction",
-        "Updated the world sun direction."
       );
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
