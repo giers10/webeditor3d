@@ -2567,6 +2567,12 @@ function readWorldBackgroundSettings(
     };
   }
 
+  if (backgroundMode === "shader") {
+    return {
+      mode: "shader"
+    };
+  }
+
   return {
     mode: "image",
     assetId: expectString(value.assetId, `${label}.assetId`),
