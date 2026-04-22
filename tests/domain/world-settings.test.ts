@@ -4,7 +4,9 @@ import {
   areWorldSettingsEqual,
   changeWorldBackgroundMode,
   cloneWorldSettings,
+  createDefaultWorldCelestialOrbitAuthoringSettings,
   createDefaultWorldShaderSkySettings,
+  createWorldCelestialOrbitSettingsFromPeakDirection,
   createDefaultWorldSettings
 } from "../../src/document/world-settings";
 
@@ -19,6 +21,8 @@ describe("world settings helpers", () => {
     expect(clone.shaderSky).not.toBe(source.shaderSky);
     expect(clone.shaderSky.celestial).not.toBe(source.shaderSky.celestial);
     expect(clone.shaderSky.clouds).not.toBe(source.shaderSky.clouds);
+    expect(clone.celestialOrbits).not.toBe(source.celestialOrbits);
+    expect(clone.celestialOrbits.sun).not.toBe(source.celestialOrbits.sun);
     expect(clone.sunLight.direction).not.toBe(source.sunLight.direction);
     expect(clone.advancedRendering).not.toBe(source.advancedRendering);
     expect(clone.advancedRendering.shadows).not.toBe(
@@ -185,5 +189,31 @@ describe("world settings helpers", () => {
     right.shaderSky.stars.horizonFadeOffset = 0.08;
 
     expect(areWorldSettingsEqual(left, right)).toBe(false);
+  });
+
+  it("treats celestial orbit settings as part of authored world equality", () => {
+    const left = createDefaultWorldSettings();
+    const right = cloneWorldSettings(left);
+
+    right.celestialOrbits.moon.azimuthDegrees =
+      right.celestialOrbits.moon.azimuthDegrees + 12;
+
+    expect(areWorldSettingsEqual(left, right)).toBe(false);
+  });
+
+  it("derives default celestial orbit settings from a legacy sun direction", () => {
+    const direction = {
+      x: -0.6,
+      y: 1,
+      z: 0.35
+    };
+    const defaults = createDefaultWorldCelestialOrbitAuthoringSettings(
+      direction
+    );
+    const derivedSunOrbit =
+      createWorldCelestialOrbitSettingsFromPeakDirection(direction);
+
+    expect(defaults.sun).toEqual(derivedSunOrbit);
+    expect(defaults.moon).toEqual(derivedSunOrbit);
   });
 });
