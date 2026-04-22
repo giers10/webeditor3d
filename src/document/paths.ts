@@ -797,8 +797,8 @@ export function resolveNearestPointOnResolvedScenePath(
       distanceAlongPath,
       segmentIndex: segment.index,
       position,
-      tangent,
-      };
+      tangent
+    };
 
     if (
       nearestSample === null ||
