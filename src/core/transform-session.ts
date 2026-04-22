@@ -1613,6 +1613,13 @@ function createEntityTransformTarget(
     };
   }
 
+  if (entity.kind === "cameraRig" && entity.rigType === "rail") {
+    return {
+      target: null,
+      message: "Rail camera rigs are positioned by their assigned path."
+    };
+  }
+
   const clonedEntity = cloneEntityInstance(entity);
 
   return {
