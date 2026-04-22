@@ -36,6 +36,7 @@ export interface ResolvedScenePath {
 }
 
 export interface ResolvedScenePathProjectionSource {
+  loop: boolean;
   points: Array<{
     position: Vec3;
   }>;
