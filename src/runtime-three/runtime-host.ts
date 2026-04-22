@@ -1237,6 +1237,36 @@ export class RuntimeHost {
     }
   }
 
+  private resolveRuntimeCameraRigPosition(rig: RuntimeCameraRig) {
+    if (this.runtimeScene === null) {
+      return null;
+    }
+
+    switch (rig.rigType) {
+      case "fixed":
+        return rig.position;
+      case "rail": {
+        const path =
+          this.runtimeScene.paths.find(
+            (candidate) => candidate.id === rig.pathId
+          ) ?? null;
+
+        if (path === null) {
+          return null;
+        }
+
+        const targetPosition = this.resolveRuntimeCameraRigTargetPosition(rig);
+
+        if (targetPosition === null) {
+          return null;
+        }
+
+        return resolveNearestPointOnResolvedScenePath(path, targetPosition)
+          .position;
+      }
+    }
+  }
+
   private resolveRuntimeCameraRigLookTarget(rig: RuntimeCameraRig) {
     const targetPosition = this.resolveRuntimeCameraRigTargetPosition(rig);
 
