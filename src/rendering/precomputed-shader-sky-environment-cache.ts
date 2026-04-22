@@ -1,8 +1,12 @@
 import {
+  CubeCamera,
+  HalfFloatType,
   LinearSRGBColorSpace,
+  LinearFilter,
   NoToneMapping,
   PMREMGenerator,
   Texture,
+  WebGLCubeRenderTarget,
   type WebGLRenderer
 } from "three";
 
@@ -24,6 +28,7 @@ import {
 } from "./world-shader-sky";
 
 const SHADER_SKY_PHASES: RuntimeDayPhase[] = ["day", "dawn", "dusk", "night"];
+const DEFAULT_SHADER_SKY_ENVIRONMENT_CAPTURE_SIZE = 32;
 
 interface ShaderSkyEnvironmentPhaseEntries {
   day: CachedEnvironmentBlendTexture | null;
@@ -58,15 +63,35 @@ function disposePhaseEntries(entries: ShaderSkyEnvironmentPhaseEntries) {
 
 class RendererShaderSkyEnvironmentTextureBuilder {
   private readonly pmremGenerator: PMREMGenerator;
+  private readonly captureTarget: WebGLCubeRenderTarget;
+  private readonly captureCamera: CubeCamera;
 
   constructor(
     private readonly renderer: WebGLRenderer,
-    private readonly worldBackgroundRenderer: WorldBackgroundRenderer
+    private readonly worldBackgroundRenderer: WorldBackgroundRenderer,
+    captureSize: number = DEFAULT_SHADER_SKY_ENVIRONMENT_CAPTURE_SIZE
   ) {
     this.pmremGenerator = new PMREMGenerator(renderer);
+    this.pmremGenerator.compileCubemapShader();
+    this.captureTarget = new WebGLCubeRenderTarget(
+      Math.max(16, Math.floor(captureSize)),
+      {
+        type: HalfFloatType,
+        magFilter: LinearFilter,
+        minFilter: LinearFilter,
+        generateMipmaps: false
+      }
+    );
+    this.captureTarget.texture.colorSpace = LinearSRGBColorSpace;
+    this.captureCamera = new CubeCamera(
+      0.1,
+      this.worldBackgroundRenderer.getEnvironmentCaptureFarPlane(),
+      this.captureTarget
+    );
   }
 
   build(state: WorldShaderSkyRenderState): CachedEnvironmentBlendTexture {
+    const previousRenderTarget = this.renderer.getRenderTarget();
     const previousAutoClear = this.renderer.autoClear;
     const previousXrEnabled = this.renderer.xr.enabled;
     const previousToneMapping = this.renderer.toneMapping;
@@ -78,12 +103,13 @@ class RendererShaderSkyEnvironmentTextureBuilder {
       this.renderer.toneMapping = NoToneMapping;
       this.renderer.outputColorSpace = LinearSRGBColorSpace;
       this.worldBackgroundRenderer.syncEnvironmentCaptureState(state);
+      this.captureCamera.update(
+        this.renderer,
+        this.worldBackgroundRenderer.environmentCaptureScene
+      );
 
-      const pmremTarget = this.pmremGenerator.fromScene(
-        this.worldBackgroundRenderer.environmentCaptureScene,
-        0,
-        0.1,
-        this.worldBackgroundRenderer.getEnvironmentCaptureFarPlane()
+      const pmremTarget = this.pmremGenerator.fromCubemap(
+        this.captureTarget.texture
       );
 
       return {
@@ -97,11 +123,13 @@ class RendererShaderSkyEnvironmentTextureBuilder {
       this.renderer.xr.enabled = previousXrEnabled;
       this.renderer.toneMapping = previousToneMapping;
       this.renderer.outputColorSpace = previousOutputColorSpace;
+      this.renderer.setRenderTarget(previousRenderTarget);
     }
   }
 
   dispose() {
     this.worldBackgroundRenderer.syncEnvironmentCaptureState(null);
+    this.captureTarget.dispose();
     this.pmremGenerator.dispose();
   }
 }
@@ -216,11 +244,13 @@ export function createRendererPrecomputedShaderSkyEnvironmentCache(
   worldBackgroundRenderer: WorldBackgroundRenderer,
   options: {
     phaseBlendTextureResolver?: QuantizedEnvironmentBlendCache | null;
+    captureSize?: number;
   } = {}
 ): PrecomputedShaderSkyEnvironmentCache {
   const builder = new RendererShaderSkyEnvironmentTextureBuilder(
     renderer,
-    worldBackgroundRenderer
+    worldBackgroundRenderer,
+    options.captureSize
   );
 
   return new PrecomputedShaderSkyEnvironmentCache({
