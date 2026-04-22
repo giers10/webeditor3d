@@ -254,6 +254,11 @@ interface LocalLightRenderObjects {
   light: PointLight | SpotLight;
 }
 
+interface LightVolumeRenderObjects {
+  group: Group;
+  lights: PointLight[];
+}
+
 interface RuntimeWaterContactUniformBinding {
   brush: RuntimeBoxBrushInstance;
   uniform: { value: import("three").Vector4[] };
@@ -320,6 +325,7 @@ export class RuntimeHost {
   private readonly sunLight = new DirectionalLight();
   private readonly moonLight = new DirectionalLight();
   private readonly localLightGroup = new Group();
+  private readonly lightVolumeGroup = new Group();
   private readonly brushGroup = new Group();
   private readonly terrainGroup = new Group();
   private readonly modelGroup = new Group();
@@ -348,6 +354,7 @@ export class RuntimeHost {
     string,
     LocalLightRenderObjects
   >();
+  private readonly lightVolumeObjects = new Map<string, LightVolumeRenderObjects>();
   private readonly modelRenderObjects = new Map<string, Group>();
   private readonly materialTextureCache = new Map<
     string,
@@ -433,6 +440,7 @@ export class RuntimeHost {
     this.scene.add(this.sunLight);
     this.scene.add(this.moonLight);
     this.scene.add(this.localLightGroup);
+    this.scene.add(this.lightVolumeGroup);
     this.scene.add(this.brushGroup);
     this.scene.add(this.terrainGroup);
     this.scene.add(this.modelGroup);
