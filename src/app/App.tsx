@@ -17396,11 +17396,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     </div>
                   </div>
 
-                  {selectedEntity.kind !== "cameraRig" ||
-                  selectedEntity.rigType === "fixed" ? (
-                    <div className="form-section">
-                      <div className="label">Position</div>
-                      <div className="vector-inputs">
+                  <div className="form-section">
+                    <div className="label">Position</div>
+                    <div className="vector-inputs">
                       <label className="form-field">
                         <span className="label">X</span>
                         <input
@@ -18291,9 +18289,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           }
                         />
                       </label>
-                      </div>
                     </div>
-                  ) : null}
+                  </div>
 
                   {selectedPointLight !== null ? (
                     <>
