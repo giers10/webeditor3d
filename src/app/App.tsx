@@ -2588,6 +2588,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [entityPositionDraft, setEntityPositionDraft] = useState(
     createVec3Draft(DEFAULT_ENTITY_POSITION)
   );
+  const [cameraRigRigTypeDraft, setCameraRigRigTypeDraft] =
+    useState<CameraRigType>("fixed");
+  const [cameraRigPathIdDraft, setCameraRigPathIdDraft] = useState("");
   const [cameraRigPriorityDraft, setCameraRigPriorityDraft] = useState(
     String(DEFAULT_CAMERA_RIG_PRIORITY)
   );
