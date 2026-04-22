@@ -271,6 +271,15 @@ import {
   getBrushVertexLabel
 } from "../geometry/whitebox-topology";
 import {
+  DEFAULT_CAMERA_RIG_DEFAULT_ACTIVE,
+  DEFAULT_CAMERA_RIG_LOOK_AROUND_ENABLED,
+  DEFAULT_CAMERA_RIG_LOOK_AROUND_PITCH_LIMIT_DEGREES,
+  DEFAULT_CAMERA_RIG_LOOK_AROUND_RECENTER_SPEED,
+  DEFAULT_CAMERA_RIG_LOOK_AROUND_YAW_LIMIT_DEGREES,
+  DEFAULT_CAMERA_RIG_PRIORITY,
+  DEFAULT_CAMERA_RIG_TARGET_OFFSET,
+  DEFAULT_CAMERA_RIG_TRANSITION_DURATION_SECONDS,
+  DEFAULT_CAMERA_RIG_TRANSITION_MODE,
   DEFAULT_ENTITY_POSITION,
   DEFAULT_INTERACTABLE_PROMPT,
   DEFAULT_INTERACTABLE_RADIUS,
@@ -306,6 +315,11 @@ import {
   DEFAULT_SPOT_LIGHT_INTENSITY,
   DEFAULT_TRIGGER_VOLUME_SIZE,
   areEntityInstancesEqual,
+  createCameraRigActorTargetRef,
+  createCameraRigEntity,
+  createCameraRigEntityTargetRef,
+  createCameraRigPlayerTargetRef,
+  createCameraRigWorldPointTargetRef,
   clonePlayerStartInputBindings,
   clonePlayerStartMovementTemplate,
   createInteractableEntity,
@@ -328,6 +342,8 @@ import {
   normalizeEntityName,
   normalizeYawDegrees,
   normalizeInteractablePrompt,
+  type CameraRigTargetKind,
+  type CameraRigTransitionMode,
   type PlayerStartGamepadActionBinding,
   type PlayerStartGamepadCameraLookBinding,
   type PlayerStartColliderMode,
@@ -340,6 +356,7 @@ import {
   type PlayerStartSystemAction,
   type PlayerStartMovementTemplate,
   type PlayerStartNavigationMode,
+  type CameraRigEntity,
   type EntityInstance,
   type EntityKind
 } from "../entities/entity-instances";
