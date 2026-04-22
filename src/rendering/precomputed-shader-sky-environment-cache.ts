@@ -38,6 +38,7 @@ export interface PrecomputedShaderSkyEnvironmentCacheOptions {
   ) => CachedEnvironmentBlendTexture;
   disposeBuildResources?: () => void;
   phaseBlendTextureResolver?: WorldEnvironmentBlendTextureResolver | null;
+  clearPhaseBlendTextureResolver?: () => void;
 }
 
 function createEmptyPhaseEntries(): ShaderSkyEnvironmentPhaseEntries {
@@ -144,6 +145,7 @@ export class PrecomputedShaderSkyEnvironmentCache
       return;
     }
 
+    this.options.clearPhaseBlendTextureResolver?.();
     this.clear();
 
     for (const phase of SHADER_SKY_PHASES) {
@@ -228,6 +230,9 @@ export function createRendererPrecomputedShaderSkyEnvironmentCache(
     disposeBuildResources: () => {
       builder.dispose();
     },
-    phaseBlendTextureResolver: options.phaseBlendTextureResolver ?? null
+    phaseBlendTextureResolver: options.phaseBlendTextureResolver ?? null,
+    clearPhaseBlendTextureResolver: () => {
+      options.phaseBlendTextureResolver?.clear();
+    }
   });
 }
