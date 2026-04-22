@@ -9,6 +9,7 @@ import {
   PointLight,
   SpotLight,
   type Object3D,
+  type Material,
   type PerspectiveCamera,
   type Scene,
   type WebGLRenderer,
@@ -207,25 +208,50 @@ export function createAdvancedRenderingComposer(
 
 export function applyAdvancedRenderingRenderableShadowFlags(root: Object3D, enabled: boolean) {
   root.traverse((object) => {
-    if ((object as Mesh).isMesh === true && object.userData.shadowIgnored !== true) {
+    if ((object as Mesh).isMesh === true) {
       const mesh = object as Mesh;
-      mesh.castShadow = enabled;
-      mesh.receiveShadow = enabled;
+      const shadowEligible =
+        enabled &&
+        object.userData.shadowIgnored !== true &&
+        isRenderableMaterialEligibleForShadows(mesh.material);
+      mesh.castShadow = shadowEligible;
+      mesh.receiveShadow = shadowEligible;
     }
   });
 }
 
-export function applyAdvancedRenderingLightShadowFlags(
-  root: Object3D,
-  settings: Pick<AdvancedRenderingSettings, "enabled" | "shadows">
+function isRenderableMaterialEligibleForShadows(
+  material: Material | Material[]
 ) {
-  const shadowEnabled = settings.enabled && settings.shadows.enabled;
+  const materials = Array.isArray(material) ? material : [material];
 
-  root.traverse((object) => {
-    if (object instanceof DirectionalLight || object instanceof PointLight || object instanceof SpotLight) {
-      object.castShadow = shadowEnabled;
-      object.shadow.bias = settings.shadows.bias;
-      object.shadow.mapSize.set(settings.shadows.mapSize, settings.shadows.mapSize);
-    }
+  return materials.every((candidate) => {
+    const shadowMaterial = candidate as Material & {
+      opacity?: number;
+      transparent?: boolean;
+      visible?: boolean;
+    };
+    const opacity = shadowMaterial.opacity ?? 1;
+
+    return shadowMaterial.visible !== false &&
+      shadowMaterial.transparent !== true &&
+      opacity >= 0.999;
   });
+}
+
+export function configureAdvancedRenderingShadowLight(
+  light: DirectionalLight | PointLight | SpotLight,
+  settings: Pick<AdvancedRenderingSettings, "enabled" | "shadows">
+  ,
+  castShadow: boolean,
+  normalBias = 0
+) {
+  const shadowEnabled =
+    settings.enabled && settings.shadows.enabled && castShadow;
+
+  light.castShadow = shadowEnabled;
+  light.shadow.autoUpdate = shadowEnabled;
+  light.shadow.bias = settings.shadows.bias;
+  light.shadow.normalBias = shadowEnabled ? Math.max(0, normalBias) : 0;
+  light.shadow.mapSize.set(settings.shadows.mapSize, settings.shadows.mapSize);
 }
