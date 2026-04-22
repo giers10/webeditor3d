@@ -5063,6 +5063,15 @@ export class ViewportHost {
 
         switch (currentEntity.kind) {
           case "cameraRig":
+            this.applyEntityRenderObjectTransform(
+              currentEntity.rigType === "fixed"
+                ? {
+                    ...currentEntity,
+                    position: this.currentTransformSession.preview.position
+                  }
+                : currentEntity
+            );
+            break;
           case "pointLight":
           case "soundEmitter":
           case "triggerVolume":
@@ -5138,6 +5147,15 @@ export class ViewportHost {
 
           switch (currentEntity.kind) {
             case "cameraRig":
+              this.applyEntityRenderObjectTransform(
+                currentEntity.rigType === "fixed"
+                  ? {
+                      ...currentEntity,
+                      position: previewItem.position
+                    }
+                  : currentEntity
+              );
+              break;
             case "pointLight":
             case "soundEmitter":
             case "triggerVolume":
