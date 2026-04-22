@@ -848,6 +848,7 @@ export class WorldBackgroundRenderer {
 
     for (const mesh of [
       this.shaderMesh,
+      this.environmentCaptureShaderMesh,
       this.gradientMesh,
       this.imageMesh,
       this.overlayMesh,
@@ -864,8 +865,11 @@ export class WorldBackgroundRenderer {
     this.anchor.add(this.moonMesh);
     this.anchor.add(this.sunMesh);
     this.scene.add(this.anchor);
+    this.environmentCaptureAnchor.add(this.environmentCaptureShaderMesh);
+    this.environmentCaptureScene.add(this.environmentCaptureAnchor);
 
     this.shaderMesh.visible = false;
+    this.environmentCaptureShaderMesh.visible = false;
     this.imageMesh.visible = false;
     this.overlayMesh.visible = false;
     this.sunMesh.visible = false;
@@ -899,7 +903,8 @@ export class WorldBackgroundRenderer {
       this.imageMaterial.needsUpdate = true;
     }
 
-    this.syncShaderSkyState(shaderSkyState);
+    applyShaderSkyStateToMaterial(this.shaderSkyMaterial, shaderSkyState);
+    this.syncEnvironmentCaptureState(showShaderBackground ? shaderSkyState : null);
     this.shaderMesh.visible = showShaderBackground;
     this.gradientMesh.visible = !showShaderBackground && !showImageBackground;
     this.imageMesh.visible = showImageBackground;
@@ -945,10 +950,20 @@ export class WorldBackgroundRenderer {
     this.celestialGeometry.dispose();
     this.gradientMaterial.dispose();
     this.shaderSkyMaterial.dispose();
+    this.environmentCaptureShaderMaterial.dispose();
     this.imageMaterial.dispose();
     this.overlayMaterial.dispose();
     this.sunMaterial.dispose();
     this.moonMaterial.dispose();
+  }
+
+  syncEnvironmentCaptureState(state: WorldShaderSkyRenderState | null) {
+    applyShaderSkyStateToMaterial(this.environmentCaptureShaderMaterial, state);
+    this.environmentCaptureShaderMesh.visible = state !== null;
+  }
+
+  getEnvironmentCaptureFarPlane() {
+    return BACKGROUND_SPHERE_RADIUS + 8;
   }
 
   private syncCelestialBodyVisualState(
