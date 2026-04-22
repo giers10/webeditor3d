@@ -220,6 +220,7 @@ import {
   resolveWorldEnvironmentState,
   WorldBackgroundRenderer
 } from "../rendering/world-background-renderer";
+import { resolveWorldShaderSkyRenderState } from "../rendering/world-shader-sky";
 import {
   createRendererQuantizedEnvironmentBlendCache,
   type QuantizedEnvironmentBlendCache
@@ -240,6 +241,7 @@ import {
   createSoundEmitterMarkerMeshes
 } from "./viewport-entity-markers";
 import {
+  resolveRuntimeTimeState,
   resolveRuntimeDayNightWorldState,
   type RuntimeClockState
 } from "../runtime-three/runtime-project-time";
