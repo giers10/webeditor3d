@@ -764,6 +764,16 @@ export class RuntimeHost {
     this.activateDesiredNavigationController();
   }
 
+  setActiveCameraRigOverride(entityId: string | null) {
+    this.activeCameraRigOverrideEntityId =
+      entityId === null ? null : entityId.trim() || null;
+    this.activeRuntimeCameraRig = null;
+    this.activeRuntimeCameraRigId = null;
+    this.cameraRigBlendState = null;
+    this.cameraRigLookYawRadians = 0;
+    this.cameraRigLookPitchRadians = 0;
+  }
+
   setRuntimeMessageHandler(handler: ((message: string | null) => void) | null) {
     this.runtimeMessageHandler = handler;
     this.audioSystem.setRuntimeMessageHandler(handler);
