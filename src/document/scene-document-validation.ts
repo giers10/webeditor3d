@@ -407,6 +407,17 @@ function validateWorldShaderSkySettings(
     );
   }
 
+  if (!isFiniteNumberInRange(settings.stars.horizonFadeOffset, -0.5, 0.5)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-world-shader-sky-star-horizon-fade-offset",
+        "World shader sky star horizon offset must stay between -0.5 and 0.5.",
+        `${path}.stars.horizonFadeOffset`
+      )
+    );
+  }
+
   if (!isFiniteNumberInRange(settings.clouds.coverage, 0, 1)) {
     diagnostics.push(
       createDiagnostic(

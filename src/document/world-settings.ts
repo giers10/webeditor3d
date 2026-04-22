@@ -165,6 +165,7 @@ export interface WorldShaderSkyCelestialSettings {
 export interface WorldShaderSkyStarSettings {
   density: number;
   brightness: number;
+  horizonFadeOffset: number;
 }
 
 export interface WorldShaderSkyCloudSettings {
@@ -235,6 +236,7 @@ const DEFAULT_SHADER_SKY_SUN_DISC_SIZE_DEGREES = 2.6;
 const DEFAULT_SHADER_SKY_MOON_DISC_SIZE_DEGREES = 1.8;
 const DEFAULT_SHADER_SKY_STAR_DENSITY = 0.55;
 const DEFAULT_SHADER_SKY_STAR_BRIGHTNESS = 0.85;
+const DEFAULT_SHADER_SKY_STAR_HORIZON_FADE_OFFSET = 0;
 const DEFAULT_SHADER_SKY_CLOUD_COVERAGE = 0.58;
 const DEFAULT_SHADER_SKY_CLOUD_DENSITY = 0.62;
 const DEFAULT_SHADER_SKY_CLOUD_SOFTNESS = 0.42;
@@ -375,7 +377,8 @@ export function createDefaultWorldShaderSkySettings(
     },
     stars: {
       density: DEFAULT_SHADER_SKY_STAR_DENSITY,
-      brightness: DEFAULT_SHADER_SKY_STAR_BRIGHTNESS
+      brightness: DEFAULT_SHADER_SKY_STAR_BRIGHTNESS,
+      horizonFadeOffset: DEFAULT_SHADER_SKY_STAR_HORIZON_FADE_OFFSET
     },
     clouds: {
       coverage: DEFAULT_SHADER_SKY_CLOUD_COVERAGE,
@@ -696,6 +699,7 @@ export function areWorldShaderSkySettingsEqual(
       right.celestial.moonDiscSizeDegrees &&
     left.stars.density === right.stars.density &&
     left.stars.brightness === right.stars.brightness &&
+    left.stars.horizonFadeOffset === right.stars.horizonFadeOffset &&
     left.clouds.coverage === right.clouds.coverage &&
     left.clouds.density === right.clouds.density &&
     left.clouds.softness === right.clouds.softness &&

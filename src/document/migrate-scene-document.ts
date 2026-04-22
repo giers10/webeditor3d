@@ -192,6 +192,7 @@ import {
   SCENE_TRANSITION_SEQUENCE_EFFECTS_SCENE_DOCUMENT_VERSION,
   SCHEDULER_CONTROL_EFFECTS_SCENE_DOCUMENT_VERSION,
   SHADER_SKY_SCENE_DOCUMENT_VERSION,
+  SHADER_SKY_HORIZON_HEIGHT_SCENE_DOCUMENT_VERSION,
   SPATIAL_AUDIO_SCENE_DOCUMENT_VERSION,
   STARTER_PBR_MATERIAL_LIBRARY_SCENE_DOCUMENT_VERSION,
   PROJECT_NAME_SCENE_DOCUMENT_VERSION,
@@ -2668,6 +2669,11 @@ function readWorldShaderSkySettings(
         stars.brightness,
         `${label}.stars.brightness`,
         defaults.stars.brightness
+      ),
+      horizonFadeOffset: readOptionalFiniteNumber(
+        stars.horizonFadeOffset,
+        `${label}.stars.horizonFadeOffset`,
+        defaults.stars.horizonFadeOffset
       )
     },
     clouds: {
@@ -5155,6 +5161,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     source.version !== WHITEBOX_BOX_LIGHT_VOLUME_SCENE_DOCUMENT_VERSION &&
     source.version !== CELESTIAL_BODY_OVERLAY_SCENE_DOCUMENT_VERSION &&
     source.version !== SHADER_SKY_SCENE_DOCUMENT_VERSION &&
+    source.version !== SHADER_SKY_HORIZON_HEIGHT_SCENE_DOCUMENT_VERSION &&
     source.version !== SCENE_DOCUMENT_VERSION &&
     source.version !== FOLLOW_ACTOR_PATH_SMOOTH_SCENE_DOCUMENT_VERSION
   ) {
