@@ -157,6 +157,7 @@ import { resolveUnderwaterFogState } from "./underwater-fog";
 import { resolveWaterContact } from "./water-volume-utils";
 import type {
   RuntimeBrushFace,
+  RuntimeCameraRig,
   RuntimeNpcDefinition,
   RuntimeBoxBrushInstance,
   RuntimeLocalLightCollection,
@@ -172,7 +173,6 @@ import {
   createRuntimeNpcFromDefinition
 } from "./runtime-scene-build";
 import { resolvePlayerStartLookInput, resolvePlayerStartPauseInput } from "./player-input-bindings";
-import type { RuntimeCameraRig } from "./runtime-scene-build";
 
 interface CachedMaterialTexture {
   signature: string;
