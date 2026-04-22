@@ -826,6 +826,7 @@ export class ViewportHost {
   ) {
     this.activeTerrainBrushStroke = null;
     this.currentDocument = document;
+    this.viewportSceneBounds = resolveViewportDocumentBounds(document);
     this.currentSelection = selection;
     this.currentActiveSelectionId = activeSelectionId;
     this.setHoveredSelection({
