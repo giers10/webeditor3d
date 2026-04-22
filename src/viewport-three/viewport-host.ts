@@ -1580,6 +1580,7 @@ export class ViewportHost {
     this.sunLight.target.position.set(0, 0, 0);
     this.moonLight.visible = false;
     this.moonLight.intensity = 0;
+    this.moonLight.target.position.set(0, 0, 0);
 
     if (displayedMoonLight !== null) {
       this.moonLight.color.set(displayedMoonLight.colorHex);
@@ -1692,14 +1693,6 @@ export class ViewportHost {
       advancedRendering.enabled &&
       advancedRendering.shadows.enabled &&
       this.displayMode === "normal";
-    const shadowSettings =
-      this.displayMode === "normal"
-        ? advancedRendering
-        : {
-            ...advancedRendering,
-            enabled: false
-          };
-
     for (const renderObjects of this.brushRenderObjects.values()) {
       applyAdvancedRenderingRenderableShadowFlags(
         renderObjects.mesh,
