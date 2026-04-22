@@ -795,6 +795,7 @@ export class ViewportHost {
     }
 
     this.rebuildLocalLights(this.currentDocument);
+    this.rebuildLightVolumes(this.currentDocument);
     this.rebuildEntityMarkers(this.currentDocument, this.currentSelection);
     this.rebuildModelInstances(this.currentDocument, this.currentSelection);
   }
@@ -812,6 +813,7 @@ export class ViewportHost {
       kind: "none"
     });
     this.rebuildLocalLights(document);
+    this.rebuildLightVolumes(document);
     this.rebuildBrushMeshes(document, selection);
     this.rebuildTerrains(document, selection, activeSelectionId);
     this.rebuildPaths(document, selection);
