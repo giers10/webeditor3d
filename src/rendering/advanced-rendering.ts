@@ -241,8 +241,7 @@ function isRenderableMaterialEligibleForShadows(
 
 export function configureAdvancedRenderingShadowLight(
   light: DirectionalLight | PointLight | SpotLight,
-  settings: Pick<AdvancedRenderingSettings, "enabled" | "shadows">
-  ,
+  settings: Pick<AdvancedRenderingSettings, "enabled" | "shadows">,
   castShadow: boolean,
   normalBias = 0
 ) {
