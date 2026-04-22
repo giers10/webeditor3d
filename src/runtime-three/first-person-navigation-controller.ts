@@ -306,7 +306,10 @@ export class FirstPersonNavigationController implements NavigationController {
       runtimeScene.playerInputBindings
     );
 
-    if (lookInput.horizontal !== 0 || lookInput.vertical !== 0) {
+    if (
+      this.context.isCameraDrivenExternally() !== true &&
+      (lookInput.horizontal !== 0 || lookInput.vertical !== 0)
+    ) {
       this.yawRadians -= lookInput.horizontal * GAMEPAD_LOOK_SPEED * dt;
       this.pitchRadians = clampPitch(
         this.pitchRadians + lookInput.vertical * GAMEPAD_LOOK_SPEED * dt
@@ -527,7 +530,8 @@ export class FirstPersonNavigationController implements NavigationController {
   private handleMouseMove = (event: MouseEvent) => {
     if (
       !this.pointerLocked ||
-      this.context?.isInputSuspended() === true
+      this.context?.isInputSuspended() === true ||
+      this.context?.isCameraDrivenExternally() === true
     ) {
       return;
     }
