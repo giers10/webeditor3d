@@ -29,7 +29,8 @@ import {
 } from "../sequencer/project-sequences";
 import type { Terrain } from "./terrains";
 
-export const SCENE_DOCUMENT_VERSION = 73 as const;
+export const SCENE_DOCUMENT_VERSION = 74 as const;
+export const CAMERA_RIG_ENTITY_SCENE_DOCUMENT_VERSION = 74 as const;
 export const SHADER_SKY_STAR_HORIZON_FADE_SCENE_DOCUMENT_VERSION = 73 as const;
 export const SHADER_SKY_HORIZON_HEIGHT_SCENE_DOCUMENT_VERSION = 72 as const;
 export const SHADER_SKY_SCENE_DOCUMENT_VERSION = 71 as const;
