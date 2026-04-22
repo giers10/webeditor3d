@@ -6064,7 +6064,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
           world.timeOfDay.night.background = changeWorldBackgroundMode(
             world.timeOfDay.night.background,
             "image",
-            nextImageAssetId
+            nextImageAssetId,
+            DEFAULT_NIGHT_IMAGE_ENVIRONMENT_INTENSITY
           );
         }
       );
@@ -6079,7 +6080,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
       (world) => {
         world.timeOfDay.night.background = changeWorldBackgroundMode(
           world.timeOfDay.night.background,
-          mode
+          mode,
+          undefined,
+          DEFAULT_NIGHT_IMAGE_ENVIRONMENT_INTENSITY
         );
       }
     );
