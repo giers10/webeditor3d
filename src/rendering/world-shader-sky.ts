@@ -138,6 +138,21 @@ function normalizeDirection(direction: Vec3, fallback: Vec3): Vec3 {
   };
 }
 
+function offsetDirectionForHorizon(direction: Vec3, horizonHeight: number): Vec3 {
+  if (Math.abs(horizonHeight) <= 1e-6) {
+    return direction;
+  }
+
+  return normalizeDirection(
+    {
+      x: direction.x,
+      y: direction.y - horizonHeight,
+      z: direction.z
+    },
+    direction
+  );
+}
+
 function resolveGradientBasis(
   background: WorldBackgroundSettings,
   fallbackTopColorHex: string,
@@ -226,6 +241,14 @@ export function resolveWorldShaderSkyRenderState(
       z: -sunDirection.z
     }
   );
+  const sunRenderDirection = offsetDirectionForHorizon(
+    sunDirection,
+    world.shaderSky.horizonHeight
+  );
+  const moonRenderDirection = offsetDirectionForHorizon(
+    moonDirection,
+    world.shaderSky.horizonHeight
+  );
   const starVisibility =
     clamp(phaseWeights.night + twilightFactor * 0.45, 0, 1) *
     clamp(1 - resolvedWorld.daylightFactor * 0.85, 0, 1);
@@ -266,13 +289,13 @@ export function resolveWorldShaderSkyRenderState(
       horizonHeight: world.shaderSky.horizonHeight
     },
     celestial: {
-      sunDirection,
+      sunDirection: sunRenderDirection,
       sunColorHex: resolvedWorld.sunLight.colorHex,
       sunIntensity: resolvedWorld.sunLight.intensity,
       sunDiscSizeDegrees: world.shaderSky.celestial.sunDiscSizeDegrees,
       sunVisible:
         world.showCelestialBodies && resolvedWorld.sunLight.intensity > 1e-4,
-      moonDirection,
+      moonDirection: moonRenderDirection,
       moonColorHex: resolvedWorld.moonLight?.colorHex ?? "#d7e4ff",
       moonIntensity: resolvedWorld.moonLight?.intensity ?? 0,
       moonDiscSizeDegrees: world.shaderSky.celestial.moonDiscSizeDegrees,
