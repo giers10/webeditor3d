@@ -159,9 +159,11 @@ describe("scene document JSON", () => {
     ) as Record<string, unknown>;
     legacyDocument.version = SHADER_SKY_SCENE_DOCUMENT_VERSION;
     delete (
-      (legacyDocument.world as {
-        shaderSky: Record<string, unknown>;
-      }).shaderSky as Record<string, unknown>
+      (
+        legacyDocument.world as {
+          shaderSky: Record<string, unknown>;
+        }
+      ).shaderSky as Record<string, unknown>
     ).horizonHeight;
 
     const migratedDocument = parseSceneDocumentJson(
