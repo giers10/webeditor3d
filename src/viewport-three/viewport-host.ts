@@ -1587,7 +1587,8 @@ export class ViewportHost {
       this.renderer,
       this.scene,
       this.perspectiveCamera,
-      settings
+      settings,
+      this.worldBackgroundRenderer.scene
     );
     this.currentAdvancedRenderingSettings =
       cloneAdvancedRenderingSettings(settings);
