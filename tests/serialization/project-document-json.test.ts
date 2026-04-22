@@ -557,6 +557,11 @@ describe("project document JSON", () => {
     };
     document.scenes["scene-cellar"].world.timeOfDay = {
       dawn: {
+        background: {
+          mode: "verticalGradient",
+          topColorHex: "#6680bc",
+          bottomColorHex: "#f3b07a"
+        },
         skyTopColorHex: "#6680bc",
         skyBottomColorHex: "#f3b07a",
         ambientColorHex: "#ffe0ba",
@@ -565,6 +570,11 @@ describe("project document JSON", () => {
         lightIntensityFactor: 0.82
       },
       dusk: {
+        background: {
+          mode: "verticalGradient",
+          topColorHex: "#313d70",
+          bottomColorHex: "#e27b5e"
+        },
         skyTopColorHex: "#313d70",
         skyBottomColorHex: "#e27b5e",
         ambientColorHex: "#f0bf9f",
