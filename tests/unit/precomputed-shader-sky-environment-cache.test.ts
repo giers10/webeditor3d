@@ -39,7 +39,7 @@ describe("PrecomputedShaderSkyEnvironmentCache", () => {
     const world = createDefaultWorldSettings();
     const time = createDefaultProjectTimeSettings();
     const buildOrder: string[] = [];
-    const phaseTextures = {
+    const phaseTextures: Record<"day" | "dawn" | "dusk" | "night", Texture> = {
       day: new Texture(),
       dawn: new Texture(),
       dusk: new Texture(),
