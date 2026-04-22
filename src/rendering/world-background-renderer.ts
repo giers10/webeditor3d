@@ -75,6 +75,10 @@ export interface WorldEnvironmentBlendTextureResolver {
   ): Texture | null;
 }
 
+export interface WorldShaderSkyEnvironmentTextureResolver {
+  resolveEnvironmentTexture(state: WorldShaderSkyRenderState): Texture | null;
+}
+
 export interface WorldEnvironmentState {
   texture: Texture | null;
   intensity: number;
@@ -96,8 +100,22 @@ export function resolveWorldEnvironmentState(
   background: WorldBackgroundSettings,
   backgroundTexture: Texture | null,
   overlay: WorldBackgroundOverlayState | null,
-  environmentBlendTextureResolver: WorldEnvironmentBlendTextureResolver | null = null
+  environmentBlendTextureResolver: WorldEnvironmentBlendTextureResolver | null = null,
+  shaderSkyState: WorldShaderSkyRenderState | null = null,
+  shaderSkyEnvironmentTextureResolver: WorldShaderSkyEnvironmentTextureResolver | null = null
 ): WorldEnvironmentState {
+  if (background.mode === "shader") {
+    return {
+      texture:
+        shaderSkyState === null
+          ? null
+          : (shaderSkyEnvironmentTextureResolver?.resolveEnvironmentTexture(
+              shaderSkyState
+            ) ?? null),
+      intensity: 1
+    };
+  }
+
   const baseTexture = background.mode === "image" ? backgroundTexture : null;
   const baseIntensity =
     background.mode === "image" ? background.environmentIntensity : 0;
