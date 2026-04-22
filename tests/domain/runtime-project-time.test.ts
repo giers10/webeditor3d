@@ -315,4 +315,36 @@ describe("runtime project time", () => {
     expect(resolved.background).toEqual(world.background);
     expect(resolved.moonLight).toBeNull();
   });
+
+  it("keeps shader sky mode active across time phases without reusing image overlays", () => {
+    const world = createDefaultWorldSettings();
+    const time = createDefaultProjectTimeSettings();
+    world.background = {
+      mode: "shader"
+    };
+    time.sunriseTimeOfDayHours = 7;
+    time.sunsetTimeOfDayHours = 20;
+    time.dawnDurationHours = 2;
+    time.duskDurationHours = 2;
+
+    const dusk = resolveRuntimeDayNightWorldState(world, time, {
+      timeOfDayHours: 20.5,
+      dayCount: 0,
+      dayLengthMinutes: 24
+    });
+    const midnight = resolveRuntimeDayNightWorldState(world, time, {
+      timeOfDayHours: 0,
+      dayCount: 0,
+      dayLengthMinutes: 24
+    });
+
+    expect(dusk.background).toEqual({
+      mode: "shader"
+    });
+    expect(midnight.background).toEqual({
+      mode: "shader"
+    });
+    expect(dusk.nightBackgroundOverlay).toBeNull();
+    expect(midnight.nightBackgroundOverlay).toBeNull();
+  });
 });
