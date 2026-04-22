@@ -111,8 +111,10 @@ import {
 } from "../document/world-settings";
 import type { WorldSettings } from "../document/world-settings";
 import {
+  createCameraRigEntity,
   createNpcAlwaysPresence,
   createNpcColliderSettings,
+  DEFAULT_CAMERA_RIG_TARGET_OFFSET,
   DEFAULT_INTERACTABLE_RADIUS,
   DEFAULT_NPC_YAW_DEGREES,
   DEFAULT_PLAYER_START_BOX_SIZE,
@@ -133,6 +135,8 @@ import {
   getPlayerStartColliderHeight,
   getEntityInstances,
   normalizeYawDegrees,
+  resolveCameraRigDocumentLookTarget,
+  type CameraRigEntity,
   type EntityInstance,
   type NpcEntity,
   type PlayerStartEntity,
