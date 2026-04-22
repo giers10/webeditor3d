@@ -2426,6 +2426,17 @@ export class RuntimeHost {
       });
     }
 
+    if (brush.volume.mode === "light") {
+      const lightMaterial = new MeshBasicMaterial({
+        color: brush.volume.light.colorHex,
+        transparent: true,
+        opacity: 0,
+        depthWrite: false
+      });
+      lightMaterial.colorWrite = false;
+      return lightMaterial;
+    }
+
     if (material === null) {
       const faceMaterial = new MeshStandardMaterial({
         color: FALLBACK_FACE_COLOR,

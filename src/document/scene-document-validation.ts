@@ -302,6 +302,17 @@ function validateWorldSettings(
     );
   }
 
+  if (!isBoolean(world.showCelestialBodies)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-world-show-celestial-bodies",
+        "Scene world celestial body toggle must be true or false.",
+        "world.showCelestialBodies"
+      )
+    );
+  }
+
   validateWorldBackgroundSettings(
     world.background,
     document,
