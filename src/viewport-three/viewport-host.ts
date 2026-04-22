@@ -1240,6 +1240,9 @@ export class ViewportHost {
     this.terrainBrushPreviewLine.material.dispose();
     this.terrainBrushPreviewCenter.geometry.dispose();
     this.terrainBrushPreviewCenter.material.dispose();
+    this.dynamicWorldEnvironmentTarget?.dispose();
+    this.dynamicWorldEnvironmentTarget = null;
+    this.pmremGenerator.dispose();
     this.worldBackgroundRenderer.dispose();
     this.renderer.forceContextLoss();
     this.renderer.dispose();
