@@ -441,6 +441,8 @@ export class RuntimeHost {
     this.renderer = enableRendering
       ? new WebGLRenderer({ antialias: false, alpha: true })
       : null;
+    this.pmremGenerator =
+      this.renderer === null ? null : new PMREMGenerator(this.renderer);
     this.domElement =
       this.renderer?.domElement ?? document.createElement("canvas");
 
