@@ -5796,6 +5796,22 @@ export function App({ store, initialStatusMessage }: AppProps) {
   ) => {
     updateWorldTimeOfDaySettings(label, successMessage, (world) => {
       world.timeOfDay[phase][field] = colorHex;
+
+      if (
+        (field === "skyTopColorHex" || field === "skyBottomColorHex") &&
+        world.timeOfDay[phase].background.mode === "verticalGradient"
+      ) {
+        world.timeOfDay[phase].background =
+          field === "skyTopColorHex"
+            ? {
+                ...world.timeOfDay[phase].background,
+                topColorHex: colorHex
+              }
+            : {
+                ...world.timeOfDay[phase].background,
+                bottomColorHex: colorHex
+              };
+      }
     });
   };
 
@@ -5814,6 +5830,171 @@ export function App({ store, initialStatusMessage }: AppProps) {
           draftLabel
         );
       });
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const applyWorldTimePhaseBackgroundMode = (
+    phase: WorldTimePhaseKey,
+    mode: WorldBackgroundMode,
+    imageAssetId?: string
+  ) => {
+    const currentBackground = editorState.document.world.timeOfDay[phase].background;
+
+    if (mode === "image") {
+      const currentBackgroundAssetId =
+        currentBackground.mode === "image" ? currentBackground.assetId : "";
+      const nextImageAssetId =
+        imageAssetId ??
+        (currentBackgroundAssetId.trim().length > 0 &&
+        editorState.document.assets[currentBackgroundAssetId]?.kind === "image"
+          ? currentBackgroundAssetId
+          : (imageAssetList[0]?.id ?? ""));
+
+      updateWorldTimeOfDaySettings(
+        `Set ${phase} background image mode`,
+        nextImageAssetId.trim().length > 0
+          ? `${phase[0].toUpperCase()}${phase.slice(1)} background set to ${
+              editorState.document.assets[nextImageAssetId]?.sourceName ??
+              nextImageAssetId
+            }.`
+          : `${phase[0].toUpperCase()}${phase.slice(1)} background now falls back to available day/night images when possible.`,
+        (world) => {
+          const profile = world.timeOfDay[phase];
+          profile.background = {
+            mode: "image",
+            assetId: nextImageAssetId,
+            environmentIntensity:
+              currentBackground.mode === "image"
+                ? currentBackground.environmentIntensity
+                : DEFAULT_TIME_PHASE_IMAGE_ENVIRONMENT_INTENSITY
+          };
+        }
+      );
+      return;
+    }
+
+    updateWorldTimeOfDaySettings(
+      `Set ${phase} background mode`,
+      mode === "solid"
+        ? `${phase[0].toUpperCase()}${phase.slice(1)} background set to a solid color.`
+        : `${phase[0].toUpperCase()}${phase.slice(1)} background set to a vertical gradient.`,
+      (world) => {
+        const profile = world.timeOfDay[phase];
+        if (mode === "solid") {
+          profile.background = {
+            mode: "solid",
+            colorHex:
+              profile.background.mode === "solid"
+                ? profile.background.colorHex
+                : profile.background.mode === "verticalGradient"
+                  ? profile.background.topColorHex
+                  : profile.skyTopColorHex
+          };
+          return;
+        }
+
+        profile.background = {
+          mode: "verticalGradient",
+          topColorHex: profile.skyTopColorHex,
+          bottomColorHex: profile.skyBottomColorHex
+        };
+      }
+    );
+  };
+
+  const applyWorldTimePhaseBackgroundColor = (
+    phase: WorldTimePhaseKey,
+    colorHex: string
+  ) => {
+    if (editorState.document.world.timeOfDay[phase].background.mode !== "solid") {
+      return;
+    }
+
+    updateWorldTimeOfDaySettings(
+      `Set ${phase} background color`,
+      `Updated the ${phase} background color.`,
+      (world) => {
+        world.timeOfDay[phase].background = {
+          mode: "solid",
+          colorHex
+        };
+      }
+    );
+  };
+
+  const applyWorldTimePhaseGradientColor = (
+    phase: WorldTimePhaseKey,
+    edge: "top" | "bottom",
+    colorHex: string
+  ) => {
+    if (
+      editorState.document.world.timeOfDay[phase].background.mode !==
+      "verticalGradient"
+    ) {
+      return;
+    }
+
+    updateWorldTimeOfDaySettings(
+      edge === "top"
+        ? `Set ${phase} gradient top color`
+        : `Set ${phase} gradient bottom color`,
+      edge === "top"
+        ? `Updated the ${phase} gradient top color.`
+        : `Updated the ${phase} gradient bottom color.`,
+      (world) => {
+        const profile = world.timeOfDay[phase];
+
+        if (profile.background.mode !== "verticalGradient") {
+          return;
+        }
+
+        profile.background =
+          edge === "top"
+            ? {
+                ...profile.background,
+                topColorHex: colorHex
+              }
+            : {
+                ...profile.background,
+                bottomColorHex: colorHex
+              };
+        if (edge === "top") {
+          profile.skyTopColorHex = colorHex;
+        } else {
+          profile.skyBottomColorHex = colorHex;
+        }
+      }
+    );
+  };
+
+  const applyWorldTimePhaseBackgroundEnvironmentIntensity = (
+    phase: WorldTimePhaseKey,
+    draftValue: string
+  ) => {
+    if (editorState.document.world.timeOfDay[phase].background.mode !== "image") {
+      return;
+    }
+
+    try {
+      updateWorldTimeOfDaySettings(
+        `Set ${phase} background environment intensity`,
+        `Updated the ${phase} background environment intensity.`,
+        (world) => {
+          if (world.timeOfDay[phase].background.mode !== "image") {
+            return;
+          }
+
+          world.timeOfDay[phase].background = {
+            ...world.timeOfDay[phase].background,
+            environmentIntensity: readNonNegativeNumberDraft(
+              draftValue,
+              `${phase[0].toUpperCase()}${phase.slice(1)} background environment intensity`
+            )
+          };
+        }
+      );
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
     }
