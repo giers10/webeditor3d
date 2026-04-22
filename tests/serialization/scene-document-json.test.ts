@@ -13,6 +13,7 @@ import { createTerrain } from "../../src/document/terrains";
 import {
   AUTHORED_TERRAIN_PAINT_SCENE_DOCUMENT_VERSION,
   AUTHORED_TERRAIN_FOUNDATION_SCENE_DOCUMENT_VERSION,
+  DAWN_DUSK_BACKGROUND_IMAGE_SCENE_DOCUMENT_VERSION,
   FOLLOW_ACTOR_PATH_SMOOTH_SCENE_DOCUMENT_VERSION,
   ANIMATION_PLAYBACK_SCENE_DOCUMENT_VERSION,
   ENTITY_NAMES_SCENE_DOCUMENT_VERSION,
@@ -422,6 +423,42 @@ describe("scene document JSON", () => {
     };
 
     expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(document);
+  });
+
+  it("migrates pre-light-volume documents to the current schema version", () => {
+    const legacyDocument = {
+      ...createEmptySceneDocument({ name: "Legacy Box Volume Scene" }),
+      version: DAWN_DUSK_BACKGROUND_IMAGE_SCENE_DOCUMENT_VERSION
+    };
+    legacyDocument.brushes["brush-water-legacy"] = createBoxBrush({
+      id: "brush-water-legacy",
+      volume: {
+        mode: "water",
+        water: {
+          colorHex: "#4da6d9",
+          surfaceOpacity: 0.55,
+          waveStrength: 0.35,
+          foamContactLimit: 6,
+          surfaceDisplacementEnabled: false
+        }
+      }
+    });
+
+    const migratedDocument = parseSceneDocumentJson(
+      JSON.stringify(legacyDocument)
+    );
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.brushes["brush-water-legacy"]?.volume).toEqual({
+      mode: "water",
+      water: {
+        colorHex: "#4da6d9",
+        surfaceOpacity: 0.55,
+        waveStrength: 0.35,
+        foamContactLimit: 6,
+        surfaceDisplacementEnabled: false
+      }
+    });
   });
 
   it("round-trips authored whitebox geometry vertices", () => {
