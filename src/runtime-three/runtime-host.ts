@@ -3275,6 +3275,7 @@ export class RuntimeHost {
     }
 
     this.updateUnderwaterSceneFog();
+    this.syncCelestialShadowState();
 
     if (this.advancedRenderingComposer !== null) {
       this.worldBackgroundRenderer.syncToCamera(this.camera);
