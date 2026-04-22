@@ -2508,6 +2508,7 @@ function readWorldBackgroundSettings(
   label: string,
   options: {
     allowMissing?: boolean;
+    allowShader?: boolean;
     defaultValue?: WorldBackgroundSettings;
   } = {}
 ): WorldBackgroundSettings {
@@ -2527,6 +2528,10 @@ function readWorldBackgroundSettings(
 
   if (!isWorldBackgroundMode(backgroundMode)) {
     throw new Error(`${label}.mode must be a supported background mode.`);
+  }
+
+  if (backgroundMode === "shader" && options.allowShader === false) {
+    throw new Error(`${label}.mode must not use a shader background here.`);
   }
 
   if (backgroundMode === "solid") {
@@ -2729,6 +2734,7 @@ function readWorldTimePhaseProfile(
   return {
     background: readWorldBackgroundSettings(value.background, `${label}.background`, {
       allowMissing: true,
+      allowShader: false,
       defaultValue: fallbackBackground
     }),
     skyTopColorHex,
@@ -2852,6 +2858,7 @@ function readWorldTimeOfDaySettings(
         `${label}.night.background`,
         {
           allowMissing: true,
+          allowShader: false,
           defaultValue: nightDefaults.background
         }
       ),
