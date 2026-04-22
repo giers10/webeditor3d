@@ -14371,6 +14371,36 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       </div>
 
                       <div className="form-section">
+                        <div className="label">Sky Shape</div>
+                        <div className="vector-inputs vector-inputs--two">
+                          <label className="form-field">
+                            <span className="label">Horizon Height</span>
+                            <input
+                              className="text-input"
+                              type="number"
+                              min="-0.5"
+                              max="0.5"
+                              step="0.01"
+                              value={
+                                editorState.document.world.shaderSky
+                                  .horizonHeight
+                              }
+                              onChange={(event) =>
+                                applyShaderSkyNumericSetting(
+                                  "Set shader sky horizon height",
+                                  "Updated the shader sky horizon height.",
+                                  event.currentTarget.valueAsNumber,
+                                  (shaderSky, nextValue) => {
+                                    shaderSky.horizonHeight = nextValue;
+                                  }
+                                )
+                              }
+                            />
+                          </label>
+                        </div>
+                      </div>
+
+                      <div className="form-section">
                         <div className="label">Celestial Discs</div>
                         <div className="vector-inputs vector-inputs--two">
                           <label className="form-field">
