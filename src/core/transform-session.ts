@@ -1620,6 +1620,13 @@ function createEntityTransformTarget(
     };
   }
 
+  if (!("position" in entity)) {
+    return {
+      target: null,
+      message: "Select an authored entity before transforming it."
+    };
+  }
+
   const clonedEntity = cloneEntityInstance(entity);
 
   return {
@@ -1627,7 +1634,7 @@ function createEntityTransformTarget(
       kind: "entity",
       entityId: clonedEntity.id,
       entityKind: clonedEntity.kind,
-      initialPosition: cloneVec3(clonedEntity.position),
+      initialPosition: cloneVec3(entity.position),
       initialRotation: resolveEntityRotation(clonedEntity)
     },
     message: null
