@@ -6548,6 +6548,9 @@ export function validateSceneDocument(
       case "spotLight":
         validateSpotLightEntity(entity, path, diagnostics);
         break;
+      case "cameraRig":
+        validateCameraRigEntity(entity, path, document, diagnostics);
+        break;
       case "playerStart":
         validatePlayerStartEntity(entity, path, diagnostics);
         break;
