@@ -604,32 +604,8 @@ function createCelestialBodyMaterial(fragmentShader: string) {
   });
 }
 
-export class WorldBackgroundRenderer {
-  readonly scene = new Scene();
-
-  private readonly anchor = new Group();
-  private readonly geometry = new SphereGeometry(
-    BACKGROUND_SPHERE_RADIUS,
-    BACKGROUND_SPHERE_WIDTH_SEGMENTS,
-    BACKGROUND_SPHERE_HEIGHT_SEGMENTS
-  );
-  private readonly gradientMaterial = new ShaderMaterial({
-    uniforms: {
-      uTopColor: {
-        value: new Color(DEFAULT_IMAGE_BACKGROUND_FALLBACK_COLOR)
-      },
-      uBottomColor: {
-        value: new Color(DEFAULT_IMAGE_BACKGROUND_FALLBACK_COLOR)
-      }
-    },
-    vertexShader: GRADIENT_VERTEX_SHADER,
-    fragmentShader: GRADIENT_FRAGMENT_SHADER,
-    side: BackSide,
-    depthTest: false,
-    depthWrite: false,
-    fog: false
-  });
-  private readonly shaderSkyMaterial = new ShaderMaterial({
+function createShaderSkyMaterial() {
+  return new ShaderMaterial({
     uniforms: {
       uSkyTopColor: {
         value: new Color(DEFAULT_IMAGE_BACKGROUND_FALLBACK_COLOR)
@@ -729,6 +705,98 @@ export class WorldBackgroundRenderer {
     depthWrite: false,
     fog: false
   });
+}
+
+function applyShaderSkyStateToMaterial(
+  material: ShaderMaterial,
+  state: WorldShaderSkyRenderState | null
+) {
+  if (state === null) {
+    material.uniforms.uHorizonHeight.value = 0;
+    material.uniforms.uStarVisibility.value = 0;
+    material.uniforms.uStarHorizonFadeOffset.value = 0;
+    material.uniforms.uSunVisible.value = 0;
+    material.uniforms.uMoonVisible.value = 0;
+    return;
+  }
+
+  material.uniforms.uSkyTopColor.value.set(state.sky.topColorHex);
+  material.uniforms.uSkyBottomColor.value.set(state.sky.bottomColorHex);
+  material.uniforms.uHorizonHeight.value = state.sky.horizonHeight;
+  material.uniforms.uSunDirection.value.set(
+    state.celestial.sunDirection.x,
+    state.celestial.sunDirection.y,
+    state.celestial.sunDirection.z
+  );
+  material.uniforms.uSunColor.value.set(state.celestial.sunColorHex);
+  material.uniforms.uSunIntensity.value = state.celestial.sunIntensity;
+  material.uniforms.uSunDiscSizeDegrees.value =
+    state.celestial.sunDiscSizeDegrees;
+  material.uniforms.uSunVisible.value = state.celestial.sunVisible ? 1 : 0;
+  material.uniforms.uMoonDirection.value.set(
+    state.celestial.moonDirection.x,
+    state.celestial.moonDirection.y,
+    state.celestial.moonDirection.z
+  );
+  material.uniforms.uMoonColor.value.set(state.celestial.moonColorHex);
+  material.uniforms.uMoonIntensity.value = state.celestial.moonIntensity;
+  material.uniforms.uMoonDiscSizeDegrees.value =
+    state.celestial.moonDiscSizeDegrees;
+  material.uniforms.uMoonVisible.value = state.celestial.moonVisible ? 1 : 0;
+  material.uniforms.uDaylightFactor.value = state.time.daylightFactor;
+  material.uniforms.uTwilightFactor.value = state.time.twilightFactor;
+  material.uniforms.uStarDensity.value = state.stars.density;
+  material.uniforms.uStarBrightness.value = state.stars.brightness;
+  material.uniforms.uStarVisibility.value = state.stars.visibility;
+  material.uniforms.uStarHorizonFadeOffset.value =
+    state.stars.horizonFadeOffset;
+  material.uniforms.uStarRotationRadians.value = state.stars.rotationRadians;
+  material.uniforms.uCloudCoverage.value = state.clouds.coverage;
+  material.uniforms.uCloudDensity.value = state.clouds.density;
+  material.uniforms.uCloudSoftness.value = state.clouds.softness;
+  material.uniforms.uCloudScale.value = state.clouds.scale;
+  material.uniforms.uCloudHeight.value = state.clouds.height;
+  material.uniforms.uCloudHeightVariation.value =
+    state.clouds.heightVariation;
+  material.uniforms.uCloudTint.value.set(state.clouds.tintHex);
+  material.uniforms.uCloudOpacity.value = state.clouds.opacity;
+  material.uniforms.uCloudOpacityRandomness.value =
+    state.clouds.opacityRandomness;
+  material.uniforms.uCloudDriftOffset.value.set(
+    state.clouds.driftOffset.x,
+    state.clouds.driftOffset.y
+  );
+}
+
+export class WorldBackgroundRenderer {
+  readonly scene = new Scene();
+  readonly environmentCaptureScene = new Scene();
+
+  private readonly anchor = new Group();
+  private readonly environmentCaptureAnchor = new Group();
+  private readonly geometry = new SphereGeometry(
+    BACKGROUND_SPHERE_RADIUS,
+    BACKGROUND_SPHERE_WIDTH_SEGMENTS,
+    BACKGROUND_SPHERE_HEIGHT_SEGMENTS
+  );
+  private readonly gradientMaterial = new ShaderMaterial({
+    uniforms: {
+      uTopColor: {
+        value: new Color(DEFAULT_IMAGE_BACKGROUND_FALLBACK_COLOR)
+      },
+      uBottomColor: {
+        value: new Color(DEFAULT_IMAGE_BACKGROUND_FALLBACK_COLOR)
+      }
+    },
+    vertexShader: GRADIENT_VERTEX_SHADER,
+    fragmentShader: GRADIENT_FRAGMENT_SHADER,
+    side: BackSide,
+    depthTest: false,
+    depthWrite: false,
+    fog: false
+  });
+  private readonly shaderSkyMaterial = createShaderSkyMaterial();
+  private readonly environmentCaptureShaderMaterial = createShaderSkyMaterial();
   private readonly imageMaterial = new MeshBasicMaterial({
     color: 0xffffff,
     side: BackSide,
@@ -751,6 +819,10 @@ export class WorldBackgroundRenderer {
   private readonly moonMaterial =
     createCelestialBodyMaterial(MOON_FRAGMENT_SHADER);
   private readonly shaderMesh = new Mesh(this.geometry, this.shaderSkyMaterial);
+  private readonly environmentCaptureShaderMesh = new Mesh(
+    this.geometry,
+    this.environmentCaptureShaderMaterial
+  );
   private readonly gradientMesh = new Mesh(
     this.geometry,
     this.gradientMaterial
