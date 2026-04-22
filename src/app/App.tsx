@@ -10342,6 +10342,19 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
   };
 
+  const applySceneShowCelestialBodies = (enabled: boolean) => {
+    applyWorldSettings(
+      {
+        ...editorState.document.world,
+        showCelestialBodies: enabled
+      },
+      enabled ? "Enable celestial body overlay" : "Disable celestial body overlay",
+      enabled
+        ? "Sun and moon overlays now render in the sky."
+        : "Sun and moon overlays are now hidden."
+    );
+  };
+
   const applyAdvancedRenderingSettings = (
     label: string,
     successMessage: string,
@@ -13897,6 +13910,27 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     Disable this when a scene should keep its authored world sky
                     and lighting instead of the global sunrise, sunset, dawn,
                     dusk, and night overrides.
+                  </div>
+                </div>
+
+                <div className="form-section">
+                  <label className="form-field form-field--toggle">
+                    <span className="label">Show Sun &amp; Moon</span>
+                    <input
+                      data-testid="world-show-celestial-bodies"
+                      type="checkbox"
+                      checked={editorState.document.world.showCelestialBodies}
+                      onChange={(event) =>
+                        applySceneShowCelestialBodies(
+                          event.currentTarget.checked
+                        )
+                      }
+                    />
+                  </label>
+                  <div className="material-summary">
+                    Draws shader-based sun and moon overlays at the current
+                    resolved light directions in both the editor viewport and
+                    the runner.
                   </div>
                 </div>
 

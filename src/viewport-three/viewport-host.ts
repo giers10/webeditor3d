@@ -298,6 +298,11 @@ interface TerrainBrushHit {
   point: Vec3;
 }
 
+interface LightVolumeRenderObjects {
+  group: Group;
+  lights: PointLight[];
+}
+
 interface ActiveTerrainBrushStroke {
   pointerId: number;
   previewTerrain: Terrain;
