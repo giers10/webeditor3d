@@ -850,6 +850,9 @@ export class RuntimeHost {
     }
 
     this.materialTextureCache.clear();
+    this.dynamicWorldEnvironmentTarget?.dispose();
+    this.dynamicWorldEnvironmentTarget = null;
+    this.pmremGenerator?.dispose();
     this.worldBackgroundRenderer.dispose();
     this.renderer?.forceContextLoss();
     this.renderer?.dispose();
