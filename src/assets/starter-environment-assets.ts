@@ -121,6 +121,12 @@ function cloneWorldBackground(background: WorldBackgroundSettings) {
     };
   }
 
+  if (background.mode === "shader") {
+    return {
+      mode: "shader" as const
+    };
+  }
+
   if (background.mode === "solid") {
     return {
       mode: "solid" as const,
