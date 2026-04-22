@@ -86,6 +86,35 @@ function cleanupSceneForDeletedAsset(
     };
   }
 
+  if (asset.kind === "image") {
+    const nextTimeOfDay = { ...nextWorld.timeOfDay };
+    let didChangeTimeOfDay = false;
+
+    for (const phase of ["dawn", "dusk"] as const) {
+      const profile = nextTimeOfDay[phase];
+      if (
+        profile.background.mode === "image" &&
+        profile.background.assetId === asset.id
+      ) {
+        nextTimeOfDay[phase] = {
+          ...profile,
+          background: {
+            ...profile.background,
+            assetId: ""
+          }
+        };
+        didChangeTimeOfDay = true;
+      }
+    }
+
+    if (didChangeTimeOfDay) {
+      nextWorld = {
+        ...nextWorld,
+        timeOfDay: nextTimeOfDay
+      };
+    }
+  }
+
   if (asset.kind === "model") {
     const remainingModelInstances: ProjectScene["modelInstances"] = {};
     const updatedEntities: ProjectScene["entities"] = {};
