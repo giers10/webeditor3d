@@ -6,6 +6,7 @@ import {
   resolveWorldCelestialBodiesState,
   resolveWorldEnvironmentState
 } from "../../src/rendering/world-background-renderer";
+import type { WorldShaderSkyRenderState } from "../../src/rendering/world-shader-sky";
 
 describe("resolveWorldEnvironmentState", () => {
   it("keeps the authored day environment when no night overlay is active", () => {
@@ -125,6 +126,50 @@ describe("resolveWorldEnvironmentState", () => {
     ).toEqual({
       texture: nightTexture,
       intensity: 0.35
+    });
+  });
+
+  it("uses a shader-derived environment texture when shader mode is active", () => {
+    const world = createDefaultWorldSettings();
+    const shaderTexture = new Texture();
+    const shaderState = {
+      presetId: "defaultSky",
+      time: {
+        dayCount: 0,
+        timeOfDayHours: 12,
+        dayPhase: "day",
+        daylightFactor: 1,
+        twilightFactor: 0,
+        phaseWeights: {
+          day: 1,
+          dawn: 0,
+          dusk: 0,
+          night: 0
+        }
+      }
+    } as unknown as WorldShaderSkyRenderState;
+    const shaderEnvironmentTextureResolver = {
+      resolveEnvironmentTexture: vi.fn().mockReturnValue(shaderTexture)
+    };
+    world.background = {
+      mode: "shader"
+    };
+
+    const environment = resolveWorldEnvironmentState(
+      world.background,
+      null,
+      null,
+      null,
+      shaderState,
+      shaderEnvironmentTextureResolver
+    );
+
+    expect(
+      shaderEnvironmentTextureResolver.resolveEnvironmentTexture
+    ).toHaveBeenCalledWith(shaderState);
+    expect(environment).toEqual({
+      texture: shaderTexture,
+      intensity: 1
     });
   });
 });
