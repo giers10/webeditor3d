@@ -2,7 +2,10 @@ import { Texture } from "three";
 import { describe, expect, it, vi } from "vitest";
 
 import { createDefaultWorldSettings } from "../../src/document/world-settings";
-import { resolveWorldEnvironmentState } from "../../src/rendering/world-background-renderer";
+import {
+  resolveWorldCelestialBodiesState,
+  resolveWorldEnvironmentState
+} from "../../src/rendering/world-background-renderer";
 
 describe("resolveWorldEnvironmentState", () => {
   it("keeps the authored day environment when no night overlay is active", () => {
@@ -122,6 +125,94 @@ describe("resolveWorldEnvironmentState", () => {
     ).toEqual({
       texture: nightTexture,
       intensity: 0.35
+    });
+  });
+});
+
+describe("resolveWorldCelestialBodiesState", () => {
+  it("returns aligned sun and moon overlay state when enabled", () => {
+    const world = createDefaultWorldSettings();
+    world.showCelestialBodies = true;
+
+    const celestialBodies = resolveWorldCelestialBodiesState(
+      world.showCelestialBodies,
+      {
+        colorHex: "#ffddaa",
+        intensity: 1.8,
+        direction: {
+          x: 0.2,
+          y: 0.9,
+          z: -0.1
+        }
+      },
+      {
+        colorHex: "#c7d8ff",
+        intensity: 0.28,
+        direction: {
+          x: -0.2,
+          y: 0.45,
+          z: 0.87
+        }
+      }
+    );
+
+    expect(celestialBodies.sun).toMatchObject({
+      colorHex: "#ffddaa",
+      intensity: 1.8,
+      size: 28
+    });
+    expect(celestialBodies.moon).toMatchObject({
+      colorHex: "#c7d8ff",
+      intensity: 0.28,
+      size: 20
+    });
+    expect(celestialBodies.sun?.direction.y ?? 0).toBeGreaterThan(0);
+    expect(celestialBodies.moon?.direction.y ?? 0).toBeGreaterThan(0);
+  });
+
+  it("hides celestial bodies when the feature is disabled or the light sits below the horizon", () => {
+    const enabledButBelowHorizon = resolveWorldCelestialBodiesState(
+      true,
+      {
+        colorHex: "#ffddaa",
+        intensity: 1.8,
+        direction: {
+          x: 0.2,
+          y: -0.25,
+          z: -0.1
+        }
+      },
+      {
+        colorHex: "#c7d8ff",
+        intensity: 0.28,
+        direction: {
+          x: -0.2,
+          y: -0.45,
+          z: 0.87
+        }
+      }
+    );
+    const disabled = resolveWorldCelestialBodiesState(
+      false,
+      {
+        colorHex: "#ffddaa",
+        intensity: 1.8,
+        direction: {
+          x: 0.2,
+          y: 0.9,
+          z: -0.1
+        }
+      },
+      null
+    );
+
+    expect(enabledButBelowHorizon).toEqual({
+      sun: null,
+      moon: null
+    });
+    expect(disabled).toEqual({
+      sun: null,
+      moon: null
     });
   });
 });
