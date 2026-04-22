@@ -158,6 +158,7 @@ import {
   type WhiteboxSelectionMode
 } from "../core/whitebox-selection-mode";
 import {
+  BOX_BRUSH_LIGHT_FALLOFF_MODES,
   BOX_BRUSH_VOLUME_MODES,
   DEFAULT_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT,
   DEFAULT_BOX_BRUSH_CENTER,
@@ -167,10 +168,12 @@ import {
   DEFAULT_TORUS_MAJOR_SEGMENT_COUNT,
   DEFAULT_TORUS_TUBE_SEGMENT_COUNT,
   MAX_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT,
+  createDefaultBoxBrushLightSettings,
   createDefaultFaceUvState,
   normalizeBrushName,
   type Brush,
   type BoxBrush,
+  type BoxBrushLightFalloffMode,
   type BoxBrushVolumeMode,
   type FaceUvRotationQuarterTurns,
   type FaceUvState
