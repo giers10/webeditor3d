@@ -235,6 +235,38 @@ describe("runtime project time", () => {
     expect(lateDusk.moonLight?.direction.y ?? 0).toBeGreaterThan(0.05);
   });
 
+  it("uses the authored peak altitude as the true maximum sky height", () => {
+    const world = createDefaultWorldSettings();
+    const time = createDefaultProjectTimeSettings();
+    time.sunriseTimeOfDayHours = 7;
+    time.sunsetTimeOfDayHours = 20;
+    time.dawnDurationHours = 2;
+    time.duskDurationHours = 2;
+    world.celestialOrbits.sun.peakAltitudeDegrees = 28;
+    world.celestialOrbits.moon.peakAltitudeDegrees = 42;
+
+    const sunPeak = resolveRuntimeDayNightWorldState(world, time, {
+      timeOfDayHours: 14.5,
+      dayCount: 0,
+      dayLengthMinutes: 24
+    });
+    const moonPeak = resolveRuntimeDayNightWorldState(world, time, {
+      timeOfDayHours: 2.5,
+      dayCount: 0,
+      dayLengthMinutes: 24
+    });
+    const expectedSunPeakY = Math.sin((28 * Math.PI) / 180);
+    const expectedMoonPeakY = Math.sin((42 * Math.PI) / 180);
+
+    expect(sunPeak.sunLight.direction.y).toBeCloseTo(expectedSunPeakY, 3);
+    expect(moonPeak.moonLight?.direction.y ?? 0).toBeCloseTo(
+      expectedMoonPeakY,
+      3
+    );
+    expect(sunPeak.sunLight.direction.y).toBeLessThan(0.55);
+    expect(moonPeak.moonLight?.direction.y ?? 0).toBeLessThan(0.7);
+  });
+
   it("uses independent authored orbit settings for the moon path", () => {
     const world = createDefaultWorldSettings();
     const time = createDefaultProjectTimeSettings();
@@ -244,22 +276,32 @@ describe("runtime project time", () => {
     time.duskDurationHours = 2;
     world.celestialOrbits.sun.azimuthDegrees = 180;
     world.celestialOrbits.moon.azimuthDegrees = 90;
+    world.celestialOrbits.sun.peakAltitudeDegrees = 40;
+    world.celestialOrbits.moon.peakAltitudeDegrees = 25;
 
-    const duskEnd = resolveRuntimeDayNightWorldState(world, time, {
-      timeOfDayHours: 21,
+    const sunPeak = resolveRuntimeDayNightWorldState(world, time, {
+      timeOfDayHours: 14.5,
       dayCount: 0,
       dayLengthMinutes: 24
     });
-    const lateDusk = resolveRuntimeDayNightWorldState(world, time, {
-      timeOfDayHours: 22,
+    const moonPeak = resolveRuntimeDayNightWorldState(world, time, {
+      timeOfDayHours: 2.5,
       dayCount: 0,
       dayLengthMinutes: 24
     });
 
-    expect(Math.abs(duskEnd.sunLight.direction.y)).toBeLessThan(0.05);
-    expect(Math.abs(duskEnd.moonLight?.direction.y ?? 1)).toBeLessThan(0.05);
-    expect(Math.abs(lateDusk.sunLight.direction.x)).toBeGreaterThan(0.4);
-    expect(Math.abs(lateDusk.moonLight?.direction.z ?? 0)).toBeGreaterThan(0.4);
+    expect(sunPeak.sunLight.direction.x).toBeLessThan(-0.7);
+    expect(Math.abs(sunPeak.sunLight.direction.z)).toBeLessThan(0.05);
+    expect(sunPeak.sunLight.direction.y).toBeCloseTo(
+      Math.sin((40 * Math.PI) / 180),
+      3
+    );
+    expect((moonPeak.moonLight?.direction.z ?? 0)).toBeGreaterThan(0.85);
+    expect(Math.abs(moonPeak.moonLight?.direction.x ?? 1)).toBeLessThan(0.05);
+    expect(moonPeak.moonLight?.direction.y ?? 0).toBeCloseTo(
+      Math.sin((25 * Math.PI) / 180),
+      3
+    );
   });
 
   it("uses the scene night image as a runtime overlay when the night background is an image", () => {
