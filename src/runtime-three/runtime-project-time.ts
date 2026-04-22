@@ -55,7 +55,7 @@ export interface RuntimeDayNightWorldState {
   daylightFactor: number;
 }
 
-interface RuntimeDayNightPhaseWeights {
+export interface RuntimeDayNightPhaseWeights {
   day: number;
   dawn: number;
   dusk: number;
@@ -403,7 +403,7 @@ export function resolveRuntimeTimeState(
   };
 }
 
-function resolveRuntimeDayNightPhaseWeights(
+export function resolveRuntimeDayNightPhaseWeights(
   settings: ProjectTimeSettings,
   timeOfDayHours: number
 ): RuntimeDayNightPhaseWeights {
@@ -726,6 +726,13 @@ function resolveTimeDrivenBackground(
   background: WorldBackgroundSettings;
   nightBackgroundOverlay: RuntimeDayNightWorldState["nightBackgroundOverlay"];
 } {
+  if (dayBackground.mode === "shader") {
+    return {
+      background: cloneWorldBackgroundSettings(dayBackground),
+      nightBackgroundOverlay: null
+    };
+  }
+
   const dawnBackground = resolveTimePhaseBackground(timeOfDay.dawn);
   const duskBackground = resolveTimePhaseBackground(timeOfDay.dusk);
   const nightBackground = timeOfDay.night.background;
