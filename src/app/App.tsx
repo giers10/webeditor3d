@@ -8574,13 +8574,19 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
     try {
       const targetKind = overrides.targetKind ?? cameraRigTargetKindDraft;
+      const targetActorId =
+        cameraRigTargetActorIdDraft.trim() || cameraRigActorOptions[0] || "";
+      const targetEntityId =
+        cameraRigTargetEntityIdDraft.trim() ||
+        cameraRigEntityTargetOptions[0]?.entity.id ||
+        "";
       const target =
         targetKind === "player"
           ? createCameraRigPlayerTargetRef()
           : targetKind === "actor"
-            ? createCameraRigActorTargetRef(cameraRigTargetActorIdDraft)
+            ? createCameraRigActorTargetRef(targetActorId)
             : targetKind === "entity"
-              ? createCameraRigEntityTargetRef(cameraRigTargetEntityIdDraft)
+              ? createCameraRigEntityTargetRef(targetEntityId)
               : createCameraRigWorldPointTargetRef(
                   readVec3Draft(
                     cameraRigTargetWorldPointDraft,
