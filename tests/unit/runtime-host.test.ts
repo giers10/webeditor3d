@@ -235,6 +235,64 @@ describe("RuntimeHost", () => {
     host.dispose();
   });
 
+  it("creates derived runtime point lights for authored light volumes", () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    vi.spyOn(RapierCollisionWorld, "create").mockResolvedValue({
+      dispose: vi.fn(),
+      resolveThirdPersonCameraCollision: vi.fn(
+        (_pivot, desiredCameraPosition) => desiredCameraPosition
+      )
+    } as unknown as RapierCollisionWorld);
+
+    const lightBrush = createBoxBrush({
+      id: "brush-runtime-light-volume",
+      volume: {
+        mode: "light",
+        light: {
+          colorHex: "#ffe0b6",
+          intensity: 2,
+          padding: 0.4,
+          falloff: "smoothstep"
+        }
+      }
+    });
+    const runtimeScene = buildRuntimeSceneFromDocument({
+      ...createEmptySceneDocument(),
+      brushes: {
+        [lightBrush.id]: lightBrush
+      }
+    });
+    const host = new RuntimeHost({
+      enableRendering: false
+    });
+
+    host.loadScene(runtimeScene);
+
+    const hostInternals = host as unknown as {
+      lightVolumeObjects: Map<
+        string,
+        {
+          group: { visible: boolean };
+          lights: Array<{ intensity: number; distance: number; castShadow: boolean }>;
+        }
+      >;
+    };
+    const renderObjects = hostInternals.lightVolumeObjects.get(lightBrush.id);
+
+    expect(runtimeScene.volumes.light).toHaveLength(1);
+    expect(runtimeScene.volumes.light[0]?.lights).toHaveLength(4);
+    expect(renderObjects).toBeDefined();
+    expect(renderObjects?.group.visible).toBe(true);
+    expect(renderObjects?.lights).toHaveLength(4);
+    expect(
+      renderObjects?.lights.every(
+        (light) => light.intensity > 0 && light.distance > 0 && light.castShadow === false
+      )
+    ).toBe(true);
+
+    host.dispose();
+  });
+
   it("applies project time pause control effects through the runtime dispatcher", () => {
     vi.spyOn(console, "warn").mockImplementation(() => undefined);
     vi.spyOn(RapierCollisionWorld, "create").mockResolvedValue({
