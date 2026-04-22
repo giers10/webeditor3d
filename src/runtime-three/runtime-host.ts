@@ -1395,6 +1395,8 @@ export class RuntimeHost {
       }
     }
 
+    this.activeRuntimeCameraRig = nextRig;
+
     this.updateRuntimeCameraRigLookState(nextRig, dt);
 
     const authoredPosition = new Vector3(
