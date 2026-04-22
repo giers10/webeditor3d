@@ -1135,6 +1135,7 @@ describe("validateSceneDocument", () => {
     };
     document.world.showCelestialBodies = "yes" as unknown as boolean;
     document.world.ambientLight.intensity = -0.25;
+    document.world.celestialOrbits.sun.azimuthDegrees = 400;
     document.world.sunLight.direction = {
       x: 0,
       y: 0,
@@ -1156,6 +1157,10 @@ describe("validateSceneDocument", () => {
         expect.objectContaining({
           code: "invalid-world-ambient-intensity",
           path: "world.ambientLight.intensity"
+        }),
+        expect.objectContaining({
+          code: "invalid-world-sun-orbit-azimuth",
+          path: "world.celestialOrbits.sun.azimuthDegrees"
         }),
         expect.objectContaining({
           code: "invalid-world-sun-direction",
