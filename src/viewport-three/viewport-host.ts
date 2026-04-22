@@ -6059,6 +6059,54 @@ export class ViewportHost {
     };
   }
 
+  private createCameraRigRenderObjects(
+    entity: CameraRigEntity,
+    selected: boolean,
+    document: SceneDocument | null,
+    markerColor = selected ? CAMERA_RIG_SELECTED_COLOR : CAMERA_RIG_COLOR
+  ): EntityRenderObjects {
+    const group = new Group();
+    this.applyCameraRigGroupTransform(group, entity, document);
+
+    const bodyMaterial = new MeshStandardMaterial({
+      color: markerColor,
+      emissive: markerColor,
+      emissiveIntensity: selected ? 0.18 : 0.08,
+      roughness: 0.34,
+      metalness: 0.04
+    });
+    const frustumMaterial = new MeshStandardMaterial({
+      color: markerColor,
+      emissive: markerColor,
+      emissiveIntensity: selected ? 0.08 : 0.03,
+      roughness: 0.85,
+      metalness: 0,
+      transparent: true,
+      opacity: selected ? 0.2 : 0.1,
+      wireframe: true
+    });
+
+    const body = new Mesh(new BoxGeometry(0.26, 0.16, 0.2), bodyMaterial);
+    body.position.set(0, 0, -0.12);
+
+    const lens = new Mesh(
+      new ConeGeometry(0.2, 0.45, 16, 1, true),
+      frustumMaterial
+    );
+    lens.rotation.x = -Math.PI * 0.5;
+    lens.position.set(0, 0, -0.38);
+    lens.userData.nonPickable = true;
+
+    for (const mesh of [body, lens]) {
+      this.tagEntityMesh(mesh, entity.id, "cameraRig", group);
+    }
+
+    return {
+      group,
+      meshes: [body, lens]
+    };
+  }
+
   private createPlayerStartRenderObjects(
     entityId: string,
     position: Vec3,
