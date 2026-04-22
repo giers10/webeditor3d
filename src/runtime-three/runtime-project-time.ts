@@ -743,12 +743,15 @@ function resolveTimeDrivenBackground(
   ]);
 
   if (daylikeImageBackground !== null) {
+    const nightOverlay =
+      hasConfiguredImageBackground(nightBackground) &&
+      nightBackground.assetId !== daylikeImageBackground.assetId
+        ? resolveBackgroundImageOverlay(nightBackground, twilightNightOpacity)
+        : null;
+
     return {
       background: daylikeImageBackground,
-      nightBackgroundOverlay: resolveBackgroundImageOverlay(
-        nightBackground,
-        twilightNightOpacity
-      )
+      nightBackgroundOverlay: nightOverlay
     };
   }
 
