@@ -327,6 +327,15 @@ export interface RuntimePauseState {
   source: "manual" | "control" | "mixed" | null;
 }
 
+interface RuntimeCameraRigBlendState {
+  durationSeconds: number;
+  elapsedSeconds: number;
+  fromPosition: Vector3;
+  fromLookTarget: Vector3;
+  toPosition: Vector3;
+  toLookTarget: Vector3;
+}
+
 export class RuntimeHost {
   private readonly scene = new Scene();
   private readonly worldBackgroundRenderer = new WorldBackgroundRenderer();
