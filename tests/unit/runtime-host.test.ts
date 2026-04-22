@@ -27,6 +27,7 @@ import {
   createStopModelAnimationControlEffect,
   createStopSoundControlEffect
 } from "../../src/controls/control-surface";
+import { createBoxBrush } from "../../src/document/brushes";
 import { createScenePath } from "../../src/document/paths";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
 import {
