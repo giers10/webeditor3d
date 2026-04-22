@@ -675,6 +675,7 @@ export class ViewportHost {
     this.scene.add(this.ambientLight);
     this.scene.add(this.sunLight);
     this.scene.add(this.localLightGroup);
+    this.scene.add(this.lightVolumeGroup);
     this.scene.add(this.brushGroup);
     this.scene.add(this.terrainGroup);
     this.terrainBrushPreviewGroup.visible = false;
