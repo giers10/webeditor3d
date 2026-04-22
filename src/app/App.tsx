@@ -7914,6 +7914,17 @@ export function App({ store, initialStatusMessage }: AppProps) {
           );
           completeCreation("Placed Spot Light.");
           return true;
+        case "cameraRig":
+          store.executeCommand(
+            createUpsertEntityCommand({
+              entity: createCameraRigEntity({
+                position
+              }),
+              label: "Place camera rig"
+            })
+          );
+          completeCreation("Placed Camera Rig.");
+          return true;
         case "playerStart":
           store.executeCommand(
             createUpsertEntityCommand({
