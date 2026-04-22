@@ -224,6 +224,81 @@ describe("runtime project time", () => {
     expect(midnight.nightBackgroundOverlay?.opacity ?? 0).toBeCloseTo(1);
   });
 
+  it("falls back to day and night image maps when dusk image mode has no assigned asset", () => {
+    const world = createDefaultWorldSettings();
+    const time = createDefaultProjectTimeSettings();
+    time.sunriseTimeOfDayHours = 7;
+    time.sunsetTimeOfDayHours = 20;
+    time.dawnDurationHours = 2;
+    time.duskDurationHours = 2;
+    world.background = {
+      mode: "image",
+      assetId: "asset-day-sky",
+      environmentIntensity: 0.8
+    };
+    world.timeOfDay.dusk.background = {
+      mode: "image",
+      assetId: "",
+      environmentIntensity: 0.55
+    };
+    world.timeOfDay.night.background = {
+      mode: "image",
+      assetId: "asset-night-sky",
+      environmentIntensity: 0.35
+    };
+
+    const dusk = resolveRuntimeDayNightWorldState(world, time, {
+      timeOfDayHours: 20.5,
+      dayCount: 0,
+      dayLengthMinutes: 24
+    });
+
+    expect(dusk.background).toEqual({
+      mode: "image",
+      assetId: "asset-day-sky",
+      environmentIntensity: 0.8
+    });
+    expect(dusk.nightBackgroundOverlay?.assetId).toBe("asset-night-sky");
+    expect(dusk.nightBackgroundOverlay?.opacity ?? 0).toBeGreaterThan(0);
+  });
+
+  it("prefers a twilight-specific image background when one is authored", () => {
+    const world = createDefaultWorldSettings();
+    const time = createDefaultProjectTimeSettings();
+    time.sunriseTimeOfDayHours = 7;
+    time.sunsetTimeOfDayHours = 20;
+    time.dawnDurationHours = 2;
+    time.duskDurationHours = 2;
+    world.background = {
+      mode: "image",
+      assetId: "asset-day-sky",
+      environmentIntensity: 0.8
+    };
+    world.timeOfDay.dawn.background = {
+      mode: "image",
+      assetId: "asset-dawn-sky",
+      environmentIntensity: 0.6
+    };
+    world.timeOfDay.night.background = {
+      mode: "image",
+      assetId: "asset-night-sky",
+      environmentIntensity: 0.35
+    };
+
+    const dawn = resolveRuntimeDayNightWorldState(world, time, {
+      timeOfDayHours: 7.5,
+      dayCount: 0,
+      dayLengthMinutes: 24
+    });
+
+    expect(dawn.background).toEqual({
+      mode: "image",
+      assetId: "asset-dawn-sky",
+      environmentIntensity: 0.6
+    });
+    expect(dawn.nightBackgroundOverlay?.assetId).toBe("asset-night-sky");
+  });
+
   it("leaves scene lighting untouched when the scene disables project time influence", () => {
     const world = createDefaultWorldSettings();
     const time = createDefaultProjectTimeSettings();
