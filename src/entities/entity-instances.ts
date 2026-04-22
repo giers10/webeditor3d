@@ -46,6 +46,63 @@ export interface SceneEntryEntity extends PositionedEntity {
   yawDegrees: number;
 }
 
+export const CAMERA_RIG_TYPES = ["fixed"] as const;
+export type CameraRigType = (typeof CAMERA_RIG_TYPES)[number];
+export const CAMERA_RIG_TARGET_KINDS = [
+  "player",
+  "actor",
+  "entity",
+  "worldPoint"
+] as const;
+export type CameraRigTargetKind = (typeof CAMERA_RIG_TARGET_KINDS)[number];
+export const CAMERA_RIG_TRANSITION_MODES = ["cut", "blend"] as const;
+export type CameraRigTransitionMode =
+  (typeof CAMERA_RIG_TRANSITION_MODES)[number];
+
+export interface CameraRigPlayerTargetRef {
+  kind: "player";
+}
+
+export interface CameraRigActorTargetRef {
+  kind: "actor";
+  actorId: string;
+}
+
+export interface CameraRigEntityTargetRef {
+  kind: "entity";
+  entityId: string;
+}
+
+export interface CameraRigWorldPointTargetRef {
+  kind: "worldPoint";
+  point: Vec3;
+}
+
+export type CameraRigTargetRef =
+  | CameraRigPlayerTargetRef
+  | CameraRigActorTargetRef
+  | CameraRigEntityTargetRef
+  | CameraRigWorldPointTargetRef;
+
+export interface CameraRigLookAroundSettings {
+  enabled: boolean;
+  yawLimitDegrees: number;
+  pitchLimitDegrees: number;
+  recenterSpeed: number;
+}
+
+export interface CameraRigEntity extends PositionedEntity {
+  kind: "cameraRig";
+  rigType: CameraRigType;
+  priority: number;
+  defaultActive: boolean;
+  target: CameraRigTargetRef;
+  targetOffset: Vec3;
+  transitionMode: CameraRigTransitionMode;
+  transitionDurationSeconds: number;
+  lookAround: CameraRigLookAroundSettings;
+}
+
 export interface CharacterColliderSettings {
   mode: PlayerStartColliderMode;
   eyeHeight: number;
@@ -270,6 +327,7 @@ export type EntityInstance =
   | PointLightEntity
   | SpotLightEntity
   | PlayerStartEntity
+  | CameraRigEntity
   | SceneEntryEntity
   | NpcEntity
   | SoundEmitterEntity
@@ -290,6 +348,7 @@ export const ENTITY_KIND_ORDER = [
   "pointLight",
   "spotLight",
   "playerStart",
+  "cameraRig",
   "sceneEntry",
   "npc",
   "soundEmitter",
@@ -331,6 +390,20 @@ export const DEFAULT_ENTITY_ENABLED = true;
 
 export const DEFAULT_PLAYER_START_POSITION = DEFAULT_ENTITY_POSITION;
 export const DEFAULT_PLAYER_START_YAW_DEGREES = 0;
+export const DEFAULT_CAMERA_RIG_PRIORITY = 0;
+export const DEFAULT_CAMERA_RIG_DEFAULT_ACTIVE = true;
+export const DEFAULT_CAMERA_RIG_TARGET_OFFSET: Vec3 = {
+  x: 0,
+  y: 1.4,
+  z: 0
+};
+export const DEFAULT_CAMERA_RIG_TRANSITION_MODE: CameraRigTransitionMode =
+  "blend";
+export const DEFAULT_CAMERA_RIG_TRANSITION_DURATION_SECONDS = 0.35;
+export const DEFAULT_CAMERA_RIG_LOOK_AROUND_ENABLED = true;
+export const DEFAULT_CAMERA_RIG_LOOK_AROUND_YAW_LIMIT_DEGREES = 12;
+export const DEFAULT_CAMERA_RIG_LOOK_AROUND_PITCH_LIMIT_DEGREES = 8;
+export const DEFAULT_CAMERA_RIG_LOOK_AROUND_RECENTER_SPEED = 3.5;
 export const DEFAULT_PLAYER_START_NAVIGATION_MODE: PlayerStartNavigationMode =
   "firstPerson";
 export const DEFAULT_PLAYER_START_MOVEMENT_TEMPLATE_KIND: PlayerStartMovementTemplateKind =
@@ -510,6 +583,25 @@ export function isPlayerStartNavigationMode(
   );
 }
 
+export function isCameraRigType(value: string): value is CameraRigType {
+  return CAMERA_RIG_TYPES.includes(value as CameraRigType);
+}
+
+export function isCameraRigTargetKind(
+  value: unknown
+): value is CameraRigTargetKind {
+  return (
+    typeof value === "string" &&
+    CAMERA_RIG_TARGET_KINDS.includes(value as CameraRigTargetKind)
+  );
+}
+
+export function isCameraRigTransitionMode(
+  value: string
+): value is CameraRigTransitionMode {
+  return CAMERA_RIG_TRANSITION_MODES.includes(value as CameraRigTransitionMode);
+}
+
 export function isPlayerStartKeyboardBindingCode(
   value: string
 ): value is PlayerStartKeyboardBindingCode {
@@ -562,6 +654,215 @@ export function cloneNpcColliderSettings(
   settings: NpcColliderSettings
 ): NpcColliderSettings {
   return cloneCharacterColliderSettings(settings);
+}
+
+function normalizeCameraRigTargetActorId(actorId: string): string {
+  const normalizedActorId = actorId.trim();
+
+  if (normalizedActorId.length === 0) {
+    throw new Error("Camera Rig actor targets must reference a non-empty actor id.");
+  }
+
+  return normalizedActorId;
+}
+
+function normalizeCameraRigTargetEntityId(entityId: string): string {
+  const normalizedEntityId = entityId.trim();
+
+  if (normalizedEntityId.length === 0) {
+    throw new Error("Camera Rig entity targets must reference a non-empty entity id.");
+  }
+
+  return normalizedEntityId;
+}
+
+export function createCameraRigPlayerTargetRef(): CameraRigPlayerTargetRef {
+  return {
+    kind: "player"
+  };
+}
+
+export function createCameraRigActorTargetRef(
+  actorId: string
+): CameraRigActorTargetRef {
+  return {
+    kind: "actor",
+    actorId: normalizeCameraRigTargetActorId(actorId)
+  };
+}
+
+export function createCameraRigEntityTargetRef(
+  entityId: string
+): CameraRigEntityTargetRef {
+  return {
+    kind: "entity",
+    entityId: normalizeCameraRigTargetEntityId(entityId)
+  };
+}
+
+export function createCameraRigWorldPointTargetRef(
+  point: Vec3 = DEFAULT_ENTITY_POSITION
+): CameraRigWorldPointTargetRef {
+  const normalizedPoint = cloneVec3(point);
+  assertFiniteVec3(normalizedPoint, "Camera Rig world-point target");
+
+  return {
+    kind: "worldPoint",
+    point: normalizedPoint
+  };
+}
+
+export function cloneCameraRigTargetRef(target: CameraRigTargetRef): CameraRigTargetRef {
+  switch (target.kind) {
+    case "player":
+      return createCameraRigPlayerTargetRef();
+    case "actor":
+      return createCameraRigActorTargetRef(target.actorId);
+    case "entity":
+      return createCameraRigEntityTargetRef(target.entityId);
+    case "worldPoint":
+      return createCameraRigWorldPointTargetRef(target.point);
+  }
+}
+
+function normalizeCameraRigTargetRef(
+  target: CameraRigTargetRef | undefined
+): CameraRigTargetRef {
+  if (target === undefined) {
+    return createCameraRigPlayerTargetRef();
+  }
+
+  return cloneCameraRigTargetRef(target);
+}
+
+export function areCameraRigTargetRefsEqual(
+  left: CameraRigTargetRef,
+  right: CameraRigTargetRef
+): boolean {
+  if (left.kind !== right.kind) {
+    return false;
+  }
+
+  switch (left.kind) {
+    case "player":
+      return true;
+    case "actor":
+      return right.kind === "actor" && left.actorId === right.actorId;
+    case "entity":
+      return right.kind === "entity" && left.entityId === right.entityId;
+    case "worldPoint":
+      return right.kind === "worldPoint" && areVec3Equal(left.point, right.point);
+  }
+}
+
+export function createCameraRigLookAroundSettings(
+  overrides: Partial<CameraRigLookAroundSettings> = {}
+): CameraRigLookAroundSettings {
+  const enabled =
+    overrides.enabled ?? DEFAULT_CAMERA_RIG_LOOK_AROUND_ENABLED;
+  const yawLimitDegrees =
+    overrides.yawLimitDegrees ??
+    DEFAULT_CAMERA_RIG_LOOK_AROUND_YAW_LIMIT_DEGREES;
+  const pitchLimitDegrees =
+    overrides.pitchLimitDegrees ??
+    DEFAULT_CAMERA_RIG_LOOK_AROUND_PITCH_LIMIT_DEGREES;
+  const recenterSpeed =
+    overrides.recenterSpeed ?? DEFAULT_CAMERA_RIG_LOOK_AROUND_RECENTER_SPEED;
+
+  assertBoolean(enabled, "Camera Rig look-around enabled");
+  assertNonNegativeFiniteNumber(
+    yawLimitDegrees,
+    "Camera Rig look-around yaw limit"
+  );
+  assertNonNegativeFiniteNumber(
+    pitchLimitDegrees,
+    "Camera Rig look-around pitch limit"
+  );
+  assertNonNegativeFiniteNumber(
+    recenterSpeed,
+    "Camera Rig look-around recenter speed"
+  );
+
+  return {
+    enabled,
+    yawLimitDegrees,
+    pitchLimitDegrees,
+    recenterSpeed
+  };
+}
+
+export function cloneCameraRigLookAroundSettings(
+  settings: CameraRigLookAroundSettings
+): CameraRigLookAroundSettings {
+  return createCameraRigLookAroundSettings(settings);
+}
+
+export function areCameraRigLookAroundSettingsEqual(
+  left: CameraRigLookAroundSettings,
+  right: CameraRigLookAroundSettings
+): boolean {
+  return (
+    left.enabled === right.enabled &&
+    left.yawLimitDegrees === right.yawLimitDegrees &&
+    left.pitchLimitDegrees === right.pitchLimitDegrees &&
+    left.recenterSpeed === right.recenterSpeed
+  );
+}
+
+function getPrimaryCameraRigDocumentPlayerTarget(
+  entities: Record<string, EntityInstance>
+): PlayerStartEntity | null {
+  return getPrimaryEnabledPlayerStartEntity(entities) ?? getPrimaryPlayerStartEntity(entities);
+}
+
+export function resolveCameraRigDocumentTargetPosition(
+  target: CameraRigTargetRef,
+  entities: Record<string, EntityInstance>
+): Vec3 | null {
+  switch (target.kind) {
+    case "player":
+      return getPrimaryCameraRigDocumentPlayerTarget(entities)?.position ?? null;
+    case "actor": {
+      const enabledNpc =
+        getEntityInstances(entities).find(
+          (entity): entity is NpcEntity =>
+            entity.kind === "npc" &&
+            entity.enabled &&
+            entity.actorId === target.actorId
+        ) ?? null;
+      const fallbackNpc =
+        enabledNpc ??
+        getEntityInstances(entities).find(
+          (entity): entity is NpcEntity =>
+            entity.kind === "npc" && entity.actorId === target.actorId
+        ) ??
+        null;
+      return fallbackNpc === null ? null : cloneVec3(fallbackNpc.position);
+    }
+    case "entity": {
+      const entity = entities[target.entityId] ?? null;
+      return entity === null ? null : cloneVec3(entity.position);
+    }
+    case "worldPoint":
+      return cloneVec3(target.point);
+  }
+}
+
+export function resolveCameraRigDocumentLookTarget(
+  rig: Pick<CameraRigEntity, "target" | "targetOffset">,
+  entities: Record<string, EntityInstance>
+): Vec3 | null {
+  const baseTarget = resolveCameraRigDocumentTargetPosition(rig.target, entities);
+
+  if (baseTarget === null) {
+    return null;
+  }
+
+  return {
+    x: baseTarget.x + rig.targetOffset.x,
+    y: baseTarget.y + rig.targetOffset.y,
+    z: baseTarget.z + rig.targetOffset.z
+  };
 }
 
 function clonePlayerStartMovementCapabilities(
@@ -1466,6 +1767,78 @@ export function createSceneEntryEntity(
   };
 }
 
+export function createCameraRigEntity(
+  overrides: Partial<
+    Pick<
+      CameraRigEntity,
+      | "id"
+      | "name"
+      | "visible"
+      | "enabled"
+      | "position"
+      | "rigType"
+      | "priority"
+      | "defaultActive"
+      | "target"
+      | "targetOffset"
+      | "transitionMode"
+      | "transitionDurationSeconds"
+    >
+  > & {
+    lookAround?: Partial<CameraRigLookAroundSettings>;
+  } = {}
+): CameraRigEntity {
+  const position = cloneVec3(overrides.position ?? DEFAULT_ENTITY_POSITION);
+  const rigType = overrides.rigType ?? "fixed";
+  const priority = overrides.priority ?? DEFAULT_CAMERA_RIG_PRIORITY;
+  const defaultActive =
+    overrides.defaultActive ?? DEFAULT_CAMERA_RIG_DEFAULT_ACTIVE;
+  const target = normalizeCameraRigTargetRef(overrides.target);
+  const targetOffset = cloneVec3(
+    overrides.targetOffset ?? DEFAULT_CAMERA_RIG_TARGET_OFFSET
+  );
+  const transitionMode =
+    overrides.transitionMode ?? DEFAULT_CAMERA_RIG_TRANSITION_MODE;
+  const transitionDurationSeconds =
+    overrides.transitionDurationSeconds ??
+    DEFAULT_CAMERA_RIG_TRANSITION_DURATION_SECONDS;
+  const lookAround = createCameraRigLookAroundSettings(overrides.lookAround);
+
+  assertFiniteVec3(position, "Camera Rig position");
+  assertFiniteVec3(targetOffset, "Camera Rig target offset");
+  assertBoolean(defaultActive, "Camera Rig defaultActive");
+  assertNonNegativeFiniteNumber(priority, "Camera Rig priority");
+  assertNonNegativeFiniteNumber(
+    transitionDurationSeconds,
+    "Camera Rig transition duration"
+  );
+
+  if (!isCameraRigType(rigType)) {
+    throw new Error("Camera Rig type must currently be fixed.");
+  }
+
+  if (!isCameraRigTransitionMode(transitionMode)) {
+    throw new Error("Camera Rig transition mode must be cut or blend.");
+  }
+
+  return {
+    id: overrides.id ?? createOpaqueId("entity-camera-rig"),
+    kind: "cameraRig",
+    name: normalizeEntityName(overrides.name),
+    visible: resolveAuthoredEntityVisibility(overrides.visible),
+    enabled: resolveAuthoredEntityEnabled(overrides.enabled),
+    position,
+    rigType,
+    priority,
+    defaultActive,
+    target,
+    targetOffset,
+    transitionMode,
+    transitionDurationSeconds,
+    lookAround
+  };
+}
+
 export function createNpcEntity(
   overrides: Partial<
     Pick<
@@ -1661,6 +2034,13 @@ export const ENTITY_REGISTRY: { [K in EntityKind]: EntityRegistryEntry<Extract<E
       "Primary authored spawn point for first-person or third-person runtime navigation.",
     createDefaultEntity: createPlayerStartEntity
   },
+  cameraRig: {
+    kind: "cameraRig",
+    label: "Camera Rig",
+    description:
+      "Authored runtime camera framing rig that can lock from a fixed world position onto a typed target.",
+    createDefaultEntity: createCameraRigEntity
+  },
   sceneEntry: {
     kind: "sceneEntry",
     label: "Scene Entry",
@@ -1710,6 +2090,7 @@ export function getEntityRegistryEntry<K extends EntityKind>(kind: K): EntityReg
 }
 
 export function createDefaultEntityInstance(kind: "playerStart", overrides?: Partial<PlayerStartEntity>): PlayerStartEntity;
+export function createDefaultEntityInstance(kind: "cameraRig", overrides?: Partial<CameraRigEntity>): CameraRigEntity;
 export function createDefaultEntityInstance(kind: "sceneEntry", overrides?: Partial<SceneEntryEntity>): SceneEntryEntity;
 export function createDefaultEntityInstance(kind: "npc", overrides?: Partial<NpcEntity>): NpcEntity;
 export function createDefaultEntityInstance(kind: "pointLight", overrides?: Partial<PointLightEntity>): PointLightEntity;
@@ -1726,6 +2107,8 @@ export function createDefaultEntityInstance(kind: EntityKind, overrides: Partial
       return createSpotLightEntity(overrides);
     case "playerStart":
       return createPlayerStartEntity(overrides);
+    case "cameraRig":
+      return createCameraRigEntity(overrides);
     case "sceneEntry":
       return createSceneEntryEntity(overrides);
     case "npc":
@@ -1749,6 +2132,8 @@ export function cloneEntityInstance(entity: EntityInstance): EntityInstance {
       return createSpotLightEntity(entity);
     case "playerStart":
       return createPlayerStartEntity(entity);
+    case "cameraRig":
+      return createCameraRigEntity(entity);
     case "sceneEntry":
       return createSceneEntryEntity(entity);
     case "npc":
@@ -1817,6 +2202,23 @@ export function areEntityInstancesEqual(left: EntityInstance, right: EntityInsta
         left.collider.capsuleRadius === typedRight.collider.capsuleRadius &&
         left.collider.capsuleHeight === typedRight.collider.capsuleHeight &&
         areVec3Equal(left.collider.boxSize, typedRight.collider.boxSize)
+      );
+    }
+    case "cameraRig": {
+      const typedRight = right as CameraRigEntity;
+      return (
+        left.rigType === typedRight.rigType &&
+        left.priority === typedRight.priority &&
+        left.defaultActive === typedRight.defaultActive &&
+        areCameraRigTargetRefsEqual(left.target, typedRight.target) &&
+        areVec3Equal(left.targetOffset, typedRight.targetOffset) &&
+        left.transitionMode === typedRight.transitionMode &&
+        left.transitionDurationSeconds ===
+          typedRight.transitionDurationSeconds &&
+        areCameraRigLookAroundSettingsEqual(
+          left.lookAround,
+          typedRight.lookAround
+        )
       );
     }
     case "sceneEntry": {
@@ -1900,6 +2302,12 @@ export function getEntitiesOfKind<K extends EntityKind>(
 
 export function getPlayerStartEntities(entities: Record<string, EntityInstance>): PlayerStartEntity[] {
   return getEntitiesOfKind(entities, "playerStart");
+}
+
+export function getCameraRigEntities(
+  entities: Record<string, EntityInstance>
+): CameraRigEntity[] {
+  return getEntitiesOfKind(entities, "cameraRig");
 }
 
 export function getPrimaryPlayerStartEntity(entities: Record<string, EntityInstance>): PlayerStartEntity | null {
