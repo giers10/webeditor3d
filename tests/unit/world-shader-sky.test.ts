@@ -289,7 +289,7 @@ describe("resolveWorldShaderSkyRenderState", () => {
             clouds: {
               ...baseSky.clouds,
               driftOffset: {
-                x: baseSky.clouds.driftOffset.x + 0.009,
+                x: baseSky.clouds.driftOffset.x + 0.004,
                 y: baseSky.clouds.driftOffset.y
               }
             }
