@@ -485,9 +485,7 @@ function resolveTimeDrivenCelestialVisibleDurationHours(
   );
 }
 
-function resolveTimeDrivenCelestialOrbitAxis(
-  basePeakDirection: Vec3
-): Vec3 {
+function resolveTimeDrivenCelestialOrbitAxis(basePeakDirection: Vec3): Vec3 {
   return normalizeVec3({
     x: -basePeakDirection.x * basePeakDirection.y,
     y: 1 - basePeakDirection.y * basePeakDirection.y,
@@ -521,9 +519,7 @@ function resolveTimeDrivenCelestialDirection(
     y: basePeakDirection.y - orbitAxis.y * dot(basePeakDirection, orbitAxis),
     z: basePeakDirection.z - orbitAxis.z * dot(basePeakDirection, orbitAxis)
   });
-  const tangentDirection = normalizeVec3(
-    cross(peakDirection, orbitAxis)
-  );
+  const tangentDirection = normalizeVec3(cross(peakDirection, orbitAxis));
   const visibleDurationHours = resolveTimeDrivenCelestialVisibleDurationHours(
     visibleStartTimeOfDayHours,
     visibleEndTimeOfDayHours
