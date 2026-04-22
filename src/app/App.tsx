@@ -18673,6 +18673,19 @@ export function App({ store, initialStatusMessage }: AppProps) {
                             onChange={(event) => {
                               const nextKind = event.currentTarget
                                 .value as CameraRigTargetKind;
+                              if (nextKind === "actor") {
+                                setCameraRigTargetActorIdDraft(
+                                  cameraRigTargetActorIdDraft.trim() ||
+                                    cameraRigActorOptions[0] ||
+                                    ""
+                                );
+                              } else if (nextKind === "entity") {
+                                setCameraRigTargetEntityIdDraft(
+                                  cameraRigTargetEntityIdDraft.trim() ||
+                                    cameraRigEntityTargetOptions[0]?.entity.id ||
+                                    ""
+                                );
+                              }
                               setCameraRigTargetKindDraft(nextKind);
                               scheduleDraftCommit(() =>
                                 applyCameraRigChange({
