@@ -237,6 +237,171 @@ gl_FragColor = vec4(color, 1.0);
 }
 `;
 
+const DEFAULT_SKY_FRAGMENT_SHADER = `
+uniform vec3 uSkyTopColor;
+uniform vec3 uSkyBottomColor;
+uniform vec3 uSunDirection;
+uniform vec3 uSunColor;
+uniform float uSunIntensity;
+uniform float uSunDiscSizeDegrees;
+uniform float uSunVisible;
+uniform vec3 uMoonDirection;
+uniform vec3 uMoonColor;
+uniform float uMoonIntensity;
+uniform float uMoonDiscSizeDegrees;
+uniform float uMoonVisible;
+uniform float uDaylightFactor;
+uniform float uTwilightFactor;
+uniform float uStarDensity;
+uniform float uStarBrightness;
+uniform float uStarVisibility;
+uniform float uStarRotationRadians;
+uniform float uCloudCoverage;
+uniform float uCloudDensity;
+uniform float uCloudSoftness;
+uniform float uCloudScale;
+uniform float uCloudHeight;
+uniform float uCloudHeightVariation;
+uniform vec3 uCloudTint;
+uniform float uCloudOpacity;
+uniform float uCloudOpacityRandomness;
+uniform vec2 uCloudDriftOffset;
+varying vec3 vWorldPosition;
+
+const float PI = 3.1415926535897932384626433832795;
+
+float hash12(vec2 point) {
+  return fract(sin(dot(point, vec2(127.1, 311.7))) * 43758.5453123);
+}
+
+float noise(vec2 point) {
+  vec2 cell = floor(point);
+  vec2 local = fract(point);
+  vec2 blend = local * local * (3.0 - 2.0 * local);
+  float a = hash12(cell);
+  float b = hash12(cell + vec2(1.0, 0.0));
+  float c = hash12(cell + vec2(0.0, 1.0));
+  float d = hash12(cell + vec2(1.0, 1.0));
+
+  return mix(mix(a, b, blend.x), mix(c, d, blend.x), blend.y);
+}
+
+float fbm(vec2 point) {
+  float value = 0.0;
+  float amplitude = 0.5;
+
+  for (int octave = 0; octave < 5; octave++) {
+    value += noise(point) * amplitude;
+    point = point * 2.03 + vec2(19.7, 7.3);
+    amplitude *= 0.5;
+  }
+
+  return value;
+}
+
+mat2 rotation2d(float radians) {
+  float sine = sin(radians);
+  float cosine = cos(radians);
+
+  return mat2(cosine, -sine, sine, cosine);
+}
+
+vec2 toSkyUv(vec3 direction) {
+  float longitude = atan(direction.z, direction.x);
+  float latitude = asin(clamp(direction.y, -1.0, 1.0));
+
+  return vec2(longitude / (2.0 * PI) + 0.5, latitude / PI + 0.5);
+}
+
+float discMask(vec3 direction, vec3 lightDirection, float sizeDegrees, float featherScale) {
+  float sizeRadians = radians(max(sizeDegrees, 0.01));
+  float alignment = dot(direction, normalize(lightDirection));
+  float outerCos = cos(sizeRadians * 1.6);
+  float innerCos = cos(sizeRadians * max(featherScale, 0.18));
+
+  return smoothstep(outerCos, innerCos, alignment);
+}
+
+float glowMask(vec3 direction, vec3 lightDirection, float sizeDegrees, float radiusScale) {
+  float sizeRadians = radians(max(sizeDegrees, 0.01) * max(radiusScale, 1.0));
+  float alignment = dot(direction, normalize(lightDirection));
+  float outerCos = cos(sizeRadians * 1.8);
+  float innerCos = cos(sizeRadians * 0.55);
+
+  return smoothstep(outerCos, innerCos, alignment);
+}
+
+float starLayer(vec2 uv, float scale, float densityThreshold) {
+  vec2 scaledUv = uv * scale;
+  vec2 cell = floor(scaledUv);
+  vec2 local = fract(scaledUv) - 0.5;
+  float seed = hash12(cell);
+  float star = smoothstep(0.18, 0.0, length(local));
+
+  return step(densityThreshold, seed) * star * mix(0.45, 1.0, hash12(cell + 17.0));
+}
+
+void main() {
+  vec3 direction = normalize(vWorldPosition - cameraPosition);
+  float skyMix = clamp(direction.y * 0.5 + 0.5, 0.0, 1.0);
+  skyMix = pow(skyMix, 0.72);
+
+  vec3 skyColor = mix(uSkyBottomColor, uSkyTopColor, skyMix);
+  float horizonMask = pow(clamp(1.0 - abs(direction.y), 0.0, 1.0), 2.6);
+  skyColor += mix(uSkyBottomColor, vec3(1.0), 0.1 + uTwilightFactor * 0.18) * horizonMask * 0.04;
+
+  float sunDisc = uSunVisible * discMask(direction, uSunDirection, uSunDiscSizeDegrees, 0.42);
+  float sunGlow = uSunVisible * glowMask(direction, uSunDirection, uSunDiscSizeDegrees, 4.8);
+  float moonDisc = uMoonVisible * discMask(direction, uMoonDirection, uMoonDiscSizeDegrees, 0.5);
+  float moonGlow = uMoonVisible * glowMask(direction, uMoonDirection, uMoonDiscSizeDegrees, 5.6);
+
+  vec2 skyUv = toSkyUv(direction);
+  vec2 centeredStarUv = skyUv - 0.5;
+  centeredStarUv = rotation2d(uStarRotationRadians) * centeredStarUv;
+  vec2 starUv = centeredStarUv + 0.5;
+  float starDensity = clamp(uStarDensity, 0.0, 2.0);
+  float starLayerA = starLayer(starUv, mix(110.0, 360.0, clamp(starDensity * 0.65, 0.0, 1.0)), mix(0.994, 0.9, clamp(starDensity, 0.0, 1.0)));
+  float starLayerB = starLayer(starUv + vec2(13.4, 5.7), mix(220.0, 640.0, clamp(starDensity * 0.5, 0.0, 1.0)), mix(0.9985, 0.96, clamp(starDensity * 0.8, 0.0, 1.0)));
+  float starTwinkle = noise(starUv * 24.0 + vec2(uStarRotationRadians * 0.5, uTwilightFactor * 17.0));
+  float stars = (starLayerA * 0.75 + starLayerB * 1.15) * mix(0.8, 1.18, starTwinkle);
+  float starHorizonFade = smoothstep(-0.08, 0.12, direction.y);
+  skyColor += vec3(stars) * uStarBrightness * uStarVisibility * starHorizonFade;
+
+  vec2 cloudUv = skyUv;
+  cloudUv.x += uCloudDriftOffset.x;
+  cloudUv.y += uCloudDriftOffset.y;
+  float cloudScale = max(uCloudScale, 0.01);
+  float layerA = fbm(cloudUv * (0.9 + cloudScale * 1.4));
+  float layerB = fbm((cloudUv + vec2(5.1, 1.7)) * (1.8 + cloudScale * 2.1));
+  float layerC = noise((cloudUv - vec2(3.4, 7.2)) * (3.4 + cloudScale * 3.4));
+  float cloudDensity = clamp(uCloudDensity, 0.0, 2.0);
+  float cloudShape = mix(layerA, layerA * 0.58 + layerB * 0.42, clamp(cloudDensity / 1.35, 0.0, 1.0));
+  cloudShape = mix(cloudShape, cloudShape * 0.72 + layerC * 0.28, 0.35);
+
+  float bandCenter = mix(-0.15, 0.85, clamp(uCloudHeight, 0.0, 1.0));
+  float bandNoise = (noise(cloudUv * 0.45 + vec2(11.0, 23.0)) - 0.5) * 2.0 * clamp(uCloudHeightVariation, 0.0, 1.0);
+  float bandDistance = abs(direction.y - (bandCenter + bandNoise * 0.45));
+  float bandMask = 1.0 - smoothstep(0.22, 0.88, bandDistance + (1.0 - clamp(cloudDensity / 1.35, 0.0, 1.0)) * 0.15);
+  float coverageThreshold = mix(0.94, 0.12, clamp(uCloudCoverage, 0.0, 1.0));
+  float softness = mix(0.01, 0.22, clamp(uCloudSoftness, 0.0, 1.0));
+  float opacityNoise = mix(1.0, noise(cloudUv * 2.6 + vec2(19.0, 7.0)), clamp(uCloudOpacityRandomness, 0.0, 1.0));
+  float clouds = smoothstep(coverageThreshold, coverageThreshold - softness - 0.0001, cloudShape + bandMask * 0.22);
+  clouds *= bandMask;
+  clouds *= clamp(uCloudOpacity, 0.0, 1.0) * mix(0.82, 1.0, opacityNoise);
+
+  vec3 cloudLight = mix(mix(uSkyBottomColor, uSkyTopColor, 0.62), vec3(1.0), 0.12 + uDaylightFactor * 0.18 + uTwilightFactor * 0.08);
+  cloudLight += uSunColor * sunGlow * (0.16 + uTwilightFactor * 0.12);
+  vec3 cloudColor = mix(cloudLight, uCloudTint, 0.56);
+  skyColor = mix(skyColor, cloudColor, clamp(clouds, 0.0, 1.0));
+
+  skyColor += uSunColor * (sunGlow * (0.16 + uTwilightFactor * 0.32) + sunDisc * (0.75 + min(uSunIntensity, 3.5) * 0.25));
+  skyColor += uMoonColor * (moonGlow * 0.12 + moonDisc * 0.35 * (0.35 + min(uMoonIntensity, 2.0) * 0.65));
+  skyColor = clamp(skyColor, 0.0, 1.0);
+
+  gl_FragColor = vec4(skyColor, 1.0);
+}
+`;
+
 const CELESTIAL_BODY_VERTEX_SHADER = `
 varying vec2 vUv;
 
