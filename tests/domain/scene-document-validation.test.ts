@@ -1149,6 +1149,42 @@ describe("validateSceneDocument", () => {
     );
   });
 
+  it("detects invalid shader sky settings and rejects phase-local shader backgrounds", () => {
+    const document = createEmptySceneDocument();
+    document.world.background = {
+      mode: "shader"
+    };
+    document.world.shaderSky.dayTopColorHex = "bad-color" as `#${string}`;
+    document.world.shaderSky.celestial.sunDiscSizeDegrees = 0;
+    document.world.shaderSky.clouds.coverage = 2;
+    document.world.timeOfDay.dawn.background = {
+      mode: "shader"
+    } as (typeof document.world.timeOfDay.dawn.background);
+
+    const validation = validateSceneDocument(document);
+
+    expect(validation.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "invalid-world-shader-sky-day-top-color",
+          path: "world.shaderSky.dayTopColorHex"
+        }),
+        expect.objectContaining({
+          code: "invalid-world-shader-sky-sun-disc-size",
+          path: "world.shaderSky.celestial.sunDiscSizeDegrees"
+        }),
+        expect.objectContaining({
+          code: "invalid-world-shader-sky-cloud-coverage",
+          path: "world.shaderSky.clouds.coverage"
+        }),
+        expect.objectContaining({
+          code: "invalid-dawn-background-mode",
+          path: "world.timeOfDay.dawn.background.mode"
+        })
+      ])
+    );
+  });
+
   it("detects invalid advanced rendering settings", () => {
     const document = createEmptySceneDocument();
     document.world.advancedRendering = {
