@@ -316,7 +316,7 @@ function createMultiSelectionFocusTarget(
         const entity = document.entities[entityId];
 
         if (entity !== undefined) {
-          includeEntity(bounds, entity);
+          includeEntity(bounds, entity, document);
         }
       }
       break;
@@ -526,7 +526,7 @@ export function resolveViewportDocumentBounds(
   }
 
   for (const entity of Object.values(document.entities)) {
-    includeEntity(bounds, entity);
+    includeEntity(bounds, entity, document);
   }
 
   return finishSceneBounds(bounds);
@@ -571,7 +571,7 @@ export function resolveViewportFocusTarget(document: SceneDocument, selection: E
     const entity = document.entities[selectedEntityId];
 
     if (entity !== undefined) {
-      return createEntityFocusTarget(entity);
+      return createEntityFocusTarget(entity, document);
     }
   }
 
