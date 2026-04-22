@@ -12224,6 +12224,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
       children: [
         {
           kind: "action",
+          label: "Camera Rig",
+          testId: "add-menu-camera-rig",
+          onSelect: () => beginEntityCreation("cameraRig")
+        },
+        {
+          kind: "action",
           label: "Player Start",
           testId: "add-menu-player-start",
           onSelect: () => beginEntityCreation("playerStart")
