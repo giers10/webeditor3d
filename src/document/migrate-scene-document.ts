@@ -161,6 +161,7 @@ import {
   AUTHORED_TERRAIN_PAINT_SCENE_DOCUMENT_VERSION,
   AUTHORED_OBJECT_STATE_SCENE_DOCUMENT_VERSION,
   CAMERA_RIG_ENTITY_SCENE_DOCUMENT_VERSION,
+  CAMERA_RIG_RAIL_SCENE_DOCUMENT_VERSION,
   CELESTIAL_ORBIT_SETTINGS_SCENE_DOCUMENT_VERSION,
   CONTROL_SURFACE_FOUNDATION_SCENE_DOCUMENT_VERSION,
   DEFAULT_PROJECT_NAME,
@@ -3276,6 +3277,13 @@ function readCameraRigEntity(value: unknown, label: string): EntityInstance {
   }
 
   const kind = expectLiteralString(value.kind, "cameraRig", `${label}.kind`);
+  const rigType = readOptionalAllowedValue(
+    value.rigType,
+    `${label}.rigType`,
+    "fixed",
+    (candidate): candidate is "fixed" | "rail" =>
+      candidate === "fixed" || candidate === "rail"
+  );
   const transitionMode = readOptionalAllowedValue(
     value.transitionMode,
     `${label}.transitionMode`,
@@ -3296,8 +3304,15 @@ function readCameraRigEntity(value: unknown, label: string): EntityInstance {
       `${label}.enabled`,
       DEFAULT_ENTITY_ENABLED
     ),
-    position: readVec3(value.position, `${label}.position`),
-    rigType: expectLiteralString(value.rigType, "fixed", `${label}.rigType`),
+    ...(rigType === "fixed"
+      ? {
+          position: readVec3(value.position, `${label}.position`),
+          rigType: "fixed" as const
+        }
+      : {
+          rigType: "rail" as const,
+          pathId: expectString(value.pathId, `${label}.pathId`)
+        }),
     priority:
       value.priority === undefined
         ? undefined
@@ -5378,6 +5393,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     source.version !== SHADER_SKY_HORIZON_HEIGHT_SCENE_DOCUMENT_VERSION &&
     source.version !== SHADER_SKY_STAR_HORIZON_FADE_SCENE_DOCUMENT_VERSION &&
     source.version !== CAMERA_RIG_ENTITY_SCENE_DOCUMENT_VERSION &&
+    source.version !== CAMERA_RIG_RAIL_SCENE_DOCUMENT_VERSION &&
     source.version !== CELESTIAL_ORBIT_SETTINGS_SCENE_DOCUMENT_VERSION &&
     source.version !== SCENE_DOCUMENT_VERSION &&
     source.version !== FOLLOW_ACTOR_PATH_SMOOTH_SCENE_DOCUMENT_VERSION
