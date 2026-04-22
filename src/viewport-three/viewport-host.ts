@@ -198,12 +198,16 @@ import {
 } from "../materials/starter-material-textures";
 import type { MaterialDef } from "../materials/starter-material-library";
 import {
-  applyAdvancedRenderingLightShadowFlags,
   applyAdvancedRenderingRenderableShadowFlags,
+  configureAdvancedRenderingShadowLight,
   configureAdvancedRenderingRenderer,
   createAdvancedRenderingComposer,
   resolveBoxVolumeRenderPaths
 } from "../rendering/advanced-rendering";
+import {
+  fitCelestialDirectionalShadow,
+  resolveDominantCelestialShadowCaster
+} from "../rendering/celestial-shadows";
 import { createFogQualityMaterial } from "../rendering/fog-material";
 import { updatePlanarReflectionCamera } from "../rendering/planar-reflection";
 import {
@@ -228,7 +232,10 @@ import {
   collectWaterContactPatches,
   createWaterMaterial
 } from "../rendering/water-material";
-import { resolveViewportFocusTarget } from "./viewport-focus";
+import {
+  resolveViewportDocumentBounds,
+  resolveViewportFocusTarget
+} from "./viewport-focus";
 import {
   createSoundEmitterMarkerMeshes
 } from "./viewport-entity-markers";
