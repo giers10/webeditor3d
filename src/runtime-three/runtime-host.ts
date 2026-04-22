@@ -1075,6 +1075,403 @@ export class RuntimeHost {
     this.activeController.activate(this.controllerContext);
   }
 
+  private resolveRuntimeEntityPositionById(entityId: string) {
+    if (this.runtimeScene === null) {
+      return null;
+    }
+
+    const playerStart =
+      this.runtimeScene.entities.playerStarts.find(
+        (candidate) => candidate.entityId === entityId
+      ) ?? null;
+
+    if (playerStart !== null) {
+      return playerStart.position;
+    }
+
+    const sceneEntry =
+      this.runtimeScene.entities.sceneEntries.find(
+        (candidate) => candidate.entityId === entityId
+      ) ?? null;
+
+    if (sceneEntry !== null) {
+      return sceneEntry.position;
+    }
+
+    const npc =
+      this.runtimeScene.npcDefinitions.find(
+        (candidate) => candidate.entityId === entityId
+      ) ?? null;
+
+    if (npc !== null) {
+      return npc.position;
+    }
+
+    const soundEmitter =
+      this.runtimeScene.entities.soundEmitters.find(
+        (candidate) => candidate.entityId === entityId
+      ) ?? null;
+
+    if (soundEmitter !== null) {
+      return soundEmitter.position;
+    }
+
+    const triggerVolume =
+      this.runtimeScene.entities.triggerVolumes.find(
+        (candidate) => candidate.entityId === entityId
+      ) ?? null;
+
+    if (triggerVolume !== null) {
+      return triggerVolume.position;
+    }
+
+    const teleportTarget =
+      this.runtimeScene.entities.teleportTargets.find(
+        (candidate) => candidate.entityId === entityId
+      ) ?? null;
+
+    if (teleportTarget !== null) {
+      return teleportTarget.position;
+    }
+
+    const interactable =
+      this.runtimeScene.entities.interactables.find(
+        (candidate) => candidate.entityId === entityId
+      ) ?? null;
+
+    if (interactable !== null) {
+      return interactable.position;
+    }
+
+    const pointLight =
+      this.runtimeScene.localLights.pointLights.find(
+        (candidate) => candidate.entityId === entityId
+      ) ?? null;
+
+    if (pointLight !== null) {
+      return pointLight.position;
+    }
+
+    const spotLight =
+      this.runtimeScene.localLights.spotLights.find(
+        (candidate) => candidate.entityId === entityId
+      ) ?? null;
+
+    if (spotLight !== null) {
+      return spotLight.position;
+    }
+
+    return null;
+  }
+
+  private resolveRuntimeCameraRigTargetPosition(rig: RuntimeCameraRig) {
+    if (this.runtimeScene === null) {
+      return null;
+    }
+
+    switch (rig.target.kind) {
+      case "player":
+        return (
+          this.currentPlayerControllerTelemetry?.feetPosition ??
+          this.runtimeScene.playerStart?.position ??
+          this.runtimeScene.spawn.position
+        );
+      case "actor": {
+        const activeNpc =
+          this.runtimeScene.npcDefinitions.find(
+            (candidate) =>
+              candidate.actorId === rig.target.actorId && candidate.active
+          ) ??
+          this.runtimeScene.npcDefinitions.find(
+            (candidate) => candidate.actorId === rig.target.actorId
+          ) ??
+          null;
+
+        return activeNpc?.position ?? null;
+      }
+      case "entity":
+        return this.resolveRuntimeEntityPositionById(rig.target.entityId);
+      case "worldPoint":
+        return rig.target.point;
+    }
+  }
+
+  private resolveRuntimeCameraRigLookTarget(rig: RuntimeCameraRig) {
+    const targetPosition = this.resolveRuntimeCameraRigTargetPosition(rig);
+
+    if (targetPosition === null) {
+      return null;
+    }
+
+    return {
+      x: targetPosition.x + rig.targetOffset.x,
+      y: targetPosition.y + rig.targetOffset.y,
+      z: targetPosition.z + rig.targetOffset.z
+    };
+  }
+
+  private resolveActiveRuntimeCameraRig() {
+    if (this.runtimeScene === null) {
+      return null;
+    }
+
+    const cameraRigs = this.runtimeScene.entities.cameraRigs;
+
+    if (cameraRigs.length === 0) {
+      return null;
+    }
+
+    if (this.activeCameraRigOverrideEntityId !== null) {
+      return (
+        cameraRigs.find(
+          (candidate) => candidate.entityId === this.activeCameraRigOverrideEntityId
+        ) ?? null
+      );
+    }
+
+    const eligibleCameraRigs = cameraRigs.filter((candidate) => candidate.defaultActive);
+
+    if (eligibleCameraRigs.length === 0) {
+      return null;
+    }
+
+    return [...eligibleCameraRigs].sort(
+      (left, right) =>
+        right.priority - left.priority ||
+        left.entityId.localeCompare(right.entityId)
+    )[0]!;
+  }
+
+  private updateRuntimeCameraRigLookState(
+    rig: RuntimeCameraRig,
+    dt: number
+  ) {
+    if (this.runtimeScene === null) {
+      return;
+    }
+
+    if (rig.lookAround.enabled) {
+      const lookInput = resolvePlayerStartLookInput(
+        this.runtimeScene.playerInputBindings
+      );
+
+      if (lookInput.horizontal !== 0 || lookInput.vertical !== 0) {
+        this.cameraRigLookYawRadians -=
+          lookInput.horizontal * CAMERA_RIG_GAMEPAD_LOOK_SPEED * dt;
+        this.cameraRigLookPitchRadians = clampScalar(
+          this.cameraRigLookPitchRadians -
+            lookInput.vertical * CAMERA_RIG_GAMEPAD_LOOK_SPEED * dt,
+          (-rig.lookAround.pitchLimitDegrees * Math.PI) / 180,
+          (rig.lookAround.pitchLimitDegrees * Math.PI) / 180
+        );
+      }
+
+      this.cameraRigLookYawRadians = clampScalar(
+        this.cameraRigLookYawRadians,
+        (-rig.lookAround.yawLimitDegrees * Math.PI) / 180,
+        (rig.lookAround.yawLimitDegrees * Math.PI) / 180
+      );
+    }
+
+    const recenterRate =
+      rig.lookAround.enabled && !this.cameraRigLookDragging
+        ? rig.lookAround.recenterSpeed
+        : rig.lookAround.enabled
+          ? 0
+          : Math.max(8, rig.lookAround.recenterSpeed);
+
+    this.cameraRigLookYawRadians = dampScalar(
+      this.cameraRigLookYawRadians,
+      0,
+      recenterRate,
+      dt
+    );
+    this.cameraRigLookPitchRadians = dampScalar(
+      this.cameraRigLookPitchRadians,
+      0,
+      recenterRate,
+      dt
+    );
+  }
+
+  private syncCameraRigTelemetryHooks() {
+    const telemetry = this.currentPlayerControllerTelemetry;
+
+    if (telemetry === null) {
+      this.currentPlayerAudioHooks = null;
+      return;
+    }
+
+    const cameraVolumeState = this.resolvePlayerVolumeState({
+      x: this.camera.position.x,
+      y: this.camera.position.y,
+      z: this.camera.position.z
+    });
+    const cameraSubmerged =
+      cameraVolumeState.inWater &&
+      cameraVolumeState.waterSurfaceHeight !== null &&
+      this.camera.position.y < cameraVolumeState.waterSurfaceHeight;
+    const hooks = resolveRuntimePlayerMovementHooks({
+      locomotionState: telemetry.locomotionState,
+      inWaterVolume: telemetry.inWaterVolume,
+      cameraSubmerged,
+      signals: telemetry.signals
+    });
+    const nextTelemetry: PlayerControllerTelemetry = {
+      ...telemetry,
+      cameraSubmerged,
+      hooks
+    };
+
+    this.currentPlayerControllerTelemetry = nextTelemetry;
+    this.currentPlayerAudioHooks = hooks.audio;
+    this.playerControllerTelemetryHandler?.(nextTelemetry);
+  }
+
+  private applyActiveCameraRig(dt: number) {
+    const nextRig = this.resolveActiveRuntimeCameraRig();
+
+    if (nextRig === null) {
+      this.activeRuntimeCameraRig = null;
+      this.activeRuntimeCameraRigId = null;
+      this.cameraRigBlendState = null;
+      this.cameraRigLookDragging = false;
+      this.cameraRigLookYawRadians = dampScalar(
+        this.cameraRigLookYawRadians,
+        0,
+        8,
+        dt
+      );
+      this.cameraRigLookPitchRadians = dampScalar(
+        this.cameraRigLookPitchRadians,
+        0,
+        8,
+        dt
+      );
+      return null;
+    }
+
+    const nextLookTarget = this.resolveRuntimeCameraRigLookTarget(nextRig);
+
+    if (nextLookTarget === null) {
+      this.activeRuntimeCameraRig = null;
+      this.activeRuntimeCameraRigId = null;
+      this.cameraRigBlendState = null;
+      this.cameraRigLookDragging = false;
+      return null;
+    }
+
+    if (this.activeRuntimeCameraRigId !== nextRig.entityId) {
+      this.activeRuntimeCameraRigId = nextRig.entityId;
+      this.activeRuntimeCameraRig = nextRig;
+      this.cameraRigLookDragging = false;
+      this.cameraRigLookYawRadians = 0;
+      this.cameraRigLookPitchRadians = 0;
+
+      if (
+        nextRig.transitionMode === "blend" &&
+        nextRig.transitionDurationSeconds > 0
+      ) {
+        this.cameraRigBlendState = {
+          durationSeconds: nextRig.transitionDurationSeconds,
+          elapsedSeconds: 0,
+          fromPosition: this.camera.position.clone(),
+          fromLookTarget: this.camera.position
+            .clone()
+            .add(this.camera.getWorldDirection(this.cameraRigForward)),
+          toPosition: new Vector3(
+            nextRig.position.x,
+            nextRig.position.y,
+            nextRig.position.z
+          ),
+          toLookTarget: new Vector3(
+            nextLookTarget.x,
+            nextLookTarget.y,
+            nextLookTarget.z
+          )
+        };
+      } else {
+        this.cameraRigBlendState = null;
+      }
+    }
+
+    this.updateRuntimeCameraRigLookState(nextRig, dt);
+
+    const authoredPosition = new Vector3(
+      nextRig.position.x,
+      nextRig.position.y,
+      nextRig.position.z
+    );
+    this.cameraRigLookTarget.set(
+      nextLookTarget.x,
+      nextLookTarget.y,
+      nextLookTarget.z
+    );
+    this.cameraRigDirection
+      .subVectors(this.cameraRigLookTarget, authoredPosition)
+      .normalize();
+
+    if (this.cameraRigDirection.lengthSq() <= 1e-8) {
+      this.cameraRigDirection.set(0, 0, 1);
+    }
+
+    const baseYawRadians = Math.atan2(
+      this.cameraRigDirection.x,
+      this.cameraRigDirection.z
+    );
+    const basePitchRadians = Math.asin(
+      clampScalar(this.cameraRigDirection.y, -1, 1)
+    );
+    const lookYawRadians = baseYawRadians + this.cameraRigLookYawRadians;
+    const lookPitchRadians = clampScalar(
+      basePitchRadians + this.cameraRigLookPitchRadians,
+      -Math.PI * 0.49,
+      Math.PI * 0.49
+    );
+    const lookDirection = new Vector3(
+      Math.sin(lookYawRadians) * Math.cos(lookPitchRadians),
+      Math.sin(lookPitchRadians),
+      Math.cos(lookYawRadians) * Math.cos(lookPitchRadians)
+    );
+    const lookTarget = authoredPosition.clone().add(lookDirection);
+
+    if (this.cameraRigBlendState !== null) {
+      this.cameraRigBlendState.elapsedSeconds = Math.min(
+        this.cameraRigBlendState.durationSeconds,
+        this.cameraRigBlendState.elapsedSeconds + dt
+      );
+      this.cameraRigBlendState.toPosition.copy(authoredPosition);
+      this.cameraRigBlendState.toLookTarget.copy(lookTarget);
+      const blendT =
+        this.cameraRigBlendState.durationSeconds <= 0
+          ? 1
+          : this.cameraRigBlendState.elapsedSeconds /
+            this.cameraRigBlendState.durationSeconds;
+
+      this.camera.position.lerpVectors(
+        this.cameraRigBlendState.fromPosition,
+        this.cameraRigBlendState.toPosition,
+        blendT
+      );
+      this.cameraRigLookTarget.lerpVectors(
+        this.cameraRigBlendState.fromLookTarget,
+        this.cameraRigBlendState.toLookTarget,
+        blendT
+      );
+      this.camera.lookAt(this.cameraRigLookTarget);
+
+      if (blendT >= 1) {
+        this.cameraRigBlendState = null;
+      }
+    } else {
+      this.camera.position.copy(authoredPosition);
+      this.camera.lookAt(lookTarget);
+    }
+
+    this.syncCameraRigTelemetryHooks();
+    return nextRig;
+  }
+
   private async finalizeSceneLoad(
     requestId: number,
     colliders: RuntimeSceneDefinition["colliders"],
