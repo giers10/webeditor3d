@@ -77,7 +77,12 @@ import {
   type ProjectSequenceLibrary
 } from "../sequencer/project-sequences";
 import {
+  cloneCameraRigLookAroundSettings,
+  cloneCameraRigTargetRef,
   type CharacterColliderSettings,
+  type CameraRigLookAroundSettings,
+  type CameraRigTargetRef,
+  type CameraRigTransitionMode,
   clonePlayerStartInputBindings,
   createPlayerStartMovementTemplate,
   createPlayerStartInputBindings,
@@ -292,6 +297,19 @@ export interface RuntimeSceneEntry {
   yawDegrees: number;
 }
 
+export interface RuntimeCameraRig {
+  entityId: string;
+  rigType: "fixed";
+  priority: number;
+  defaultActive: boolean;
+  position: Vec3;
+  target: CameraRigTargetRef;
+  targetOffset: Vec3;
+  transitionMode: CameraRigTransitionMode;
+  transitionDurationSeconds: number;
+  lookAround: CameraRigLookAroundSettings;
+}
+
 export interface RuntimeNpc {
   entityId: string;
   actorId: string;
@@ -432,6 +450,7 @@ export interface RuntimePath {
 export interface RuntimeEntityCollection {
   playerStarts: RuntimePlayerStart[];
   sceneEntries: RuntimeSceneEntry[];
+  cameraRigs: RuntimeCameraRig[];
   npcs: RuntimeNpc[];
   soundEmitters: RuntimeSoundEmitter[];
   triggerVolumes: RuntimeTriggerVolume[];
@@ -1481,6 +1500,7 @@ function buildRuntimeSceneCollections(
   const runtimeEntities: RuntimeEntityCollection = {
     playerStarts: [],
     sceneEntries: [],
+    cameraRigs: [],
     npcs: [],
     soundEmitters: [],
     triggerVolumes: [],
@@ -1537,6 +1557,20 @@ function buildRuntimeSceneCollections(
           entityId: entity.id,
           position: cloneVec3(entity.position),
           yawDegrees: entity.yawDegrees
+        });
+        break;
+      case "cameraRig":
+        runtimeEntities.cameraRigs.push({
+          entityId: entity.id,
+          rigType: entity.rigType,
+          priority: entity.priority,
+          defaultActive: entity.defaultActive,
+          position: cloneVec3(entity.position),
+          target: cloneCameraRigTargetRef(entity.target),
+          targetOffset: cloneVec3(entity.targetOffset),
+          transitionMode: entity.transitionMode,
+          transitionDurationSeconds: entity.transitionDurationSeconds,
+          lookAround: cloneCameraRigLookAroundSettings(entity.lookAround)
         });
         break;
       case "npc": {
