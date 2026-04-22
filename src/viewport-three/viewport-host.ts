@@ -1523,12 +1523,20 @@ export class ViewportHost {
     }
 
     const world = this.currentSimulationScene?.world ?? this.currentWorld;
+    const resolvedTime =
+      this.currentSimulationScene !== null && this.currentSimulationClock !== null
+        ? resolveRuntimeTimeState(
+            this.currentSimulationScene.time,
+            this.currentSimulationClock
+          )
+        : null;
     const resolvedWorld =
       this.currentSimulationScene !== null && this.currentSimulationClock !== null
         ? resolveRuntimeDayNightWorldState(
             world,
             this.currentSimulationScene.time,
-            this.currentSimulationClock
+            this.currentSimulationClock,
+            resolvedTime
           )
         : null;
     const rendererSettings =
@@ -1622,12 +1630,22 @@ export class ViewportHost {
         displayedSunLight,
         displayedMoonLight
       );
+      const shaderSkyState =
+        resolvedWorld === null
+          ? null
+          : resolveWorldShaderSkyRenderState(
+              world,
+              resolvedWorld,
+              resolvedTime,
+              this.currentSimulationScene?.time ?? null
+            );
 
       this.worldBackgroundRenderer.update(
         displayedBackground,
         backgroundTexture,
         backgroundOverlayState,
-        celestialBodiesState
+        celestialBodiesState,
+        shaderSkyState
       );
       this.scene.background = null;
       this.scene.environment = environmentState.texture;
