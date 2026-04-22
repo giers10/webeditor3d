@@ -400,11 +400,24 @@ describe("scene document JSON", () => {
         }
       }
     });
+    const lightBrush = createBoxBrush({
+      id: "brush-light-volume",
+      volume: {
+        mode: "light",
+        light: {
+          colorHex: "#ffe0b6",
+          intensity: 2,
+          padding: 0.4,
+          falloff: "linear"
+        }
+      }
+    });
     const document = {
       ...createEmptySceneDocument({ name: "Volume Round Trip Scene" }),
       brushes: {
         [waterBrush.id]: waterBrush,
-        [fogBrush.id]: fogBrush
+        [fogBrush.id]: fogBrush,
+        [lightBrush.id]: lightBrush
       }
     };
 
