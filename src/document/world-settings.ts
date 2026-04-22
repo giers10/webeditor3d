@@ -528,7 +528,8 @@ export function changeWorldBackgroundMode(
   background: WorldBackgroundSettings,
   mode: WorldBackgroundMode,
   imageAssetId?: string,
-  imageEnvironmentIntensity = DEFAULT_TIME_PHASE_IMAGE_ENVIRONMENT_INTENSITY
+  imageEnvironmentIntensity: number =
+    DEFAULT_TIME_PHASE_IMAGE_ENVIRONMENT_INTENSITY
 ): WorldBackgroundSettings {
   if (mode === "image") {
     if (imageAssetId === undefined || imageAssetId.trim().length === 0) {
