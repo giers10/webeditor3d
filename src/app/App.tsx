@@ -2720,6 +2720,17 @@ export function App({ store, initialStatusMessage }: AppProps) {
     String(editorState.document.world.timeOfDay.dawn.lightIntensityFactor)
   );
   const [
+    worldDawnBackgroundEnvironmentIntensityDraft,
+    setWorldDawnBackgroundEnvironmentIntensityDraft
+  ] = useState(
+    editorState.document.world.timeOfDay.dawn.background.mode === "image"
+      ? String(
+          editorState.document.world.timeOfDay.dawn.background
+            .environmentIntensity
+        )
+      : String(DEFAULT_TIME_PHASE_IMAGE_ENVIRONMENT_INTENSITY)
+  );
+  const [
     worldDuskAmbientIntensityFactorDraft,
     setWorldDuskAmbientIntensityFactorDraft
   ] = useState(
@@ -2730,6 +2741,17 @@ export function App({ store, initialStatusMessage }: AppProps) {
     setWorldDuskLightIntensityFactorDraft
   ] = useState(
     String(editorState.document.world.timeOfDay.dusk.lightIntensityFactor)
+  );
+  const [
+    worldDuskBackgroundEnvironmentIntensityDraft,
+    setWorldDuskBackgroundEnvironmentIntensityDraft
+  ] = useState(
+    editorState.document.world.timeOfDay.dusk.background.mode === "image"
+      ? String(
+          editorState.document.world.timeOfDay.dusk.background
+            .environmentIntensity
+        )
+      : String(DEFAULT_TIME_PHASE_IMAGE_ENVIRONMENT_INTENSITY)
   );
   const [
     worldNightAmbientIntensityFactorDraft,
@@ -2752,7 +2774,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
           editorState.document.world.timeOfDay.night.background
             .environmentIntensity
         )
-      : "0.5"
+      : String(DEFAULT_NIGHT_IMAGE_ENVIRONMENT_INTENSITY)
   );
   const [
     backgroundEnvironmentIntensityDraft,
