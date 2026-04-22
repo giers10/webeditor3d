@@ -4679,6 +4679,27 @@ export class ViewportHost {
     group.quaternion.copy(orientation);
   }
 
+  private applyCameraRigGroupTransform(
+    group: Group,
+    entity: Pick<CameraRigEntity, "position" | "target" | "targetOffset">,
+    document: SceneDocument | null
+  ) {
+    group.position.set(entity.position.x, entity.position.y, entity.position.z);
+
+    const lookTarget =
+      document === null
+        ? null
+        : resolveCameraRigDocumentLookTarget(entity, document.entities);
+
+    if (lookTarget === null) {
+      group.rotation.set(0, 0, 0);
+      group.quaternion.identity();
+      return;
+    }
+
+    group.lookAt(lookTarget.x, lookTarget.y, lookTarget.z);
+  }
+
   private applyEntityRenderObjectTransform(entity: EntityInstance) {
     const renderObjects = this.entityRenderObjects.get(entity.id);
 
@@ -4698,6 +4719,13 @@ export class ViewportHost {
         );
         renderObjects.group.rotation.set(0, 0, 0);
         renderObjects.group.quaternion.identity();
+        break;
+      case "cameraRig":
+        this.applyCameraRigGroupTransform(
+          renderObjects.group,
+          entity,
+          this.currentDocument
+        );
         break;
       case "spotLight":
         this.applySpotLightGroupTransform(
