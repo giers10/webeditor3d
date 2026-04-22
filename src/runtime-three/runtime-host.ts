@@ -556,6 +556,11 @@ export class RuntimeHost {
           desiredCameraPosition,
           radius
         ) ?? { ...desiredCameraPosition },
+      isCameraDrivenExternally: () => this.resolveActiveRuntimeCameraRig() !== null,
+      getCameraYawRadians: () => {
+        this.camera.getWorldDirection(this.cameraForward);
+        return Math.atan2(this.cameraForward.x, this.cameraForward.z);
+      },
       isInputSuspended: () => this.isRuntimePaused(),
       setRuntimeMessage: (message) => {
         if (message === this.currentRuntimeMessage) {
