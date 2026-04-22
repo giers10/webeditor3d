@@ -755,6 +755,32 @@ function buildRuntimeWaterVolume(brush: Brush): RuntimeWaterVolume {
   };
 }
 
+function buildRuntimeLightVolume(brush: Brush): RuntimeLightVolume {
+  if (brush.volume.mode !== "light") {
+    throw new Error(
+      `Cannot build light volume from non-light brush ${brush.id}.`
+    );
+  }
+
+  return {
+    brushId: brush.id,
+    enabled: brush.visible,
+    center: cloneVec3(brush.center),
+    rotationDegrees: cloneVec3(brush.rotationDegrees),
+    size: cloneVec3(brush.size),
+    colorHex: brush.volume.light.colorHex,
+    intensity: brush.volume.light.intensity,
+    padding: brush.volume.light.padding,
+    falloff: brush.volume.light.falloff,
+    lights: deriveBoxLightVolumePointLights({
+      size: brush.size,
+      intensity: brush.volume.light.intensity,
+      padding: brush.volume.light.padding,
+      falloff: brush.volume.light.falloff
+    })
+  };
+}
+
 function buildRuntimeCollider(brush: Brush): RuntimeBrushTriMeshCollider {
   const bounds = getBrushBounds(brush);
   const derivedMesh = buildBoxBrushDerivedMeshData(brush);
@@ -1703,7 +1729,8 @@ export function buildRuntimeSceneFromDocument(
   const staticColliders: RuntimeSceneCollider[] = [];
   const volumes: RuntimeBoxVolumeCollection = {
     fog: [],
-    water: []
+    water: [],
+    light: []
   };
 
   for (const brush of enabledBrushes) {
@@ -1719,6 +1746,11 @@ export function buildRuntimeSceneFromDocument(
 
     if (brush.volume.mode === "fog") {
       volumes.fog.push(buildRuntimeFogVolume(brush));
+      continue;
+    }
+
+    if (brush.volume.mode === "light") {
+      volumes.light.push(buildRuntimeLightVolume(brush));
       continue;
     }
 
