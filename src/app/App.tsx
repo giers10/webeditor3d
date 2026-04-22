@@ -3308,6 +3308,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
         String(DEFAULT_BOX_BRUSH_WATER_FOAM_CONTACT_LIMIT)
       );
       setBoxVolumeWaterSurfaceDisplacementEnabledDraft(false);
+      setBoxVolumeLightColorDraft(defaultBoxLightSettings.colorHex);
+      setBoxVolumeLightIntensityDraft(String(defaultBoxLightSettings.intensity));
+      setBoxVolumeLightPaddingDraft(String(defaultBoxLightSettings.padding));
+      setBoxVolumeLightFalloffDraft(defaultBoxLightSettings.falloff);
       return;
     }
 
@@ -3338,7 +3342,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
       setBoxVolumeFogDensityDraft(String(selectedBrush.volume.fog.density));
       setBoxVolumeFogPaddingDraft(String(selectedBrush.volume.fog.padding));
     }
-  }, [selectedBrush]);
+
+    if (selectedBrush.volume.mode === "light") {
+      setBoxVolumeLightColorDraft(selectedBrush.volume.light.colorHex);
+      setBoxVolumeLightIntensityDraft(String(selectedBrush.volume.light.intensity));
+      setBoxVolumeLightPaddingDraft(String(selectedBrush.volume.light.padding));
+      setBoxVolumeLightFalloffDraft(selectedBrush.volume.light.falloff);
+    }
+  }, [defaultBoxLightSettings, selectedBrush]);
 
   useEffect(() => {
     if (
