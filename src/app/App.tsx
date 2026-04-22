@@ -342,6 +342,8 @@ import {
   normalizeEntityName,
   normalizeYawDegrees,
   normalizeInteractablePrompt,
+  resolveCameraRigDocumentPosition,
+  type CameraRigType,
   type CameraRigTargetKind,
   type CameraRigTransitionMode,
   type PlayerStartGamepadActionBinding,
