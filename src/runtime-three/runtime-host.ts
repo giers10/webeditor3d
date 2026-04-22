@@ -1126,12 +1126,19 @@ export class RuntimeHost {
       resolvedWorld.sunLight,
       resolvedWorld.moonLight
     );
+    const shaderSkyState = resolveWorldShaderSkyRenderState(
+      this.currentWorld,
+      resolvedWorld,
+      resolvedTime,
+      this.runtimeScene.time
+    );
 
     this.worldBackgroundRenderer.update(
       resolvedWorld.background,
       backgroundTexture,
       backgroundOverlayState,
-      celestialBodiesState
+      celestialBodiesState,
+      shaderSkyState
     );
     this.scene.background = null;
     this.scene.environment = environmentState.texture;
