@@ -210,6 +210,11 @@ describe("duplicate selection command", () => {
     const duplicatedEntity = store.getState().document.entities[selection.ids[0]];
     expect(duplicatedEntity).toBeDefined();
     expect(duplicatedEntity.kind).toBe(sourceEntity.kind);
+
+    if (!("position" in duplicatedEntity)) {
+      throw new Error("Expected duplicated entity to expose a position.");
+    }
+
     expect(duplicatedEntity.position).toEqual(sourceEntity.position);
 
     expect(store.undo()).toBe(true);
