@@ -1182,13 +1182,13 @@ export class RuntimeHost {
           this.runtimeScene.spawn.position
         );
       case "actor": {
+        const target = rig.target;
         const activeNpc =
           this.runtimeScene.npcDefinitions.find(
-            (candidate) =>
-              candidate.actorId === rig.target.actorId && candidate.active
+            (candidate) => candidate.actorId === target.actorId && candidate.active
           ) ??
           this.runtimeScene.npcDefinitions.find(
-            (candidate) => candidate.actorId === rig.target.actorId
+            (candidate) => candidate.actorId === target.actorId
           ) ??
           null;
 
