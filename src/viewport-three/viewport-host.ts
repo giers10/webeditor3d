@@ -7670,6 +7670,14 @@ export class ViewportHost {
     this.localLightRenderObjects.clear();
   }
 
+  private clearLightVolumes() {
+    for (const renderObjects of this.lightVolumeRenderObjects.values()) {
+      this.lightVolumeGroup.remove(renderObjects.group);
+    }
+
+    this.lightVolumeRenderObjects.clear();
+  }
+
   private clearBrushMeshes() {
     for (const renderObjects of this.brushRenderObjects.values()) {
       this.brushGroup.remove(renderObjects.mesh);
