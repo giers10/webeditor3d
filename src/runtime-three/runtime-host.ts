@@ -3710,7 +3710,14 @@ export class RuntimeHost {
     const simulationDt = this.isRuntimePaused() ? 0 : dt;
 
     this.activeController?.update(simulationDt);
-    this.applyPlayerCameraEffects(simulationDt);
+    const activeCameraRig = this.applyActiveCameraRig(simulationDt);
+
+    if (activeCameraRig === null) {
+      this.applyPlayerCameraEffects(simulationDt);
+    } else {
+      this.resetPlayerCameraEffects();
+    }
+
     this.audioSystem.setPlayerControllerAudioHooks(
       this.currentPlayerAudioHooks
     );
