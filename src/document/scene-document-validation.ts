@@ -1515,26 +1515,50 @@ function validateCameraRigEntity(
 ) {
   validateAuthoredEntityState(entity, path, diagnostics);
 
-  if (!isFiniteVec3(entity.position)) {
-    diagnostics.push(
-      createDiagnostic(
-        "error",
-        "invalid-camera-rig-position",
-        "Camera Rig position must remain finite on every axis.",
-        `${path}.position`
-      )
-    );
-  }
+  if (entity.rigType === "fixed") {
+    if (!isFiniteVec3(entity.position)) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-camera-rig-position",
+          "Camera Rig position must remain finite on every axis.",
+          `${path}.position`
+        )
+      );
+    }
+  } else {
+    if (entity.pathId.trim().length === 0) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-camera-rig-path-id",
+          "Rail Camera Rig path ids must be non-empty.",
+          `${path}.pathId`
+        )
+      );
+    } else {
+      const authoredPath = document.paths[entity.pathId] ?? null;
 
-  if (entity.rigType !== "fixed") {
-    diagnostics.push(
-      createDiagnostic(
-        "error",
-        "invalid-camera-rig-type",
-        "Camera Rig rigType must be fixed in this slice.",
-        `${path}.rigType`
-      )
-    );
+      if (authoredPath === null) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "missing-camera-rig-path",
+            `Rail Camera Rig path ${entity.pathId} does not exist in the scene.`,
+            `${path}.pathId`
+          )
+        );
+      } else if (!authoredPath.enabled) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "disabled-camera-rig-path",
+            "Rail Camera Rigs require an enabled authored path.",
+            `${path}.pathId`
+          )
+        );
+      }
+    }
   }
 
   if (!isNonNegativeFiniteNumber(entity.priority)) {
