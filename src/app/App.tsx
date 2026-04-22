@@ -8976,6 +8976,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
       case "spotLight":
         applySpotLightChange();
         break;
+      case "cameraRig":
+        applyCameraRigChange();
+        break;
       case "playerStart":
         applyPlayerStartChange();
         break;
