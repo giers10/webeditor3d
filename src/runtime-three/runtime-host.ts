@@ -143,6 +143,7 @@ import {
   cloneRuntimeClockState,
   createRuntimeClockState,
   reconfigureRuntimeClockState,
+  resolveRuntimePlayerMovementHooks,
   resolveRuntimeDayNightWorldState,
   resolveRuntimeTimeState,
   type RuntimeClockState
@@ -170,7 +171,8 @@ import {
   buildRuntimeNpcCollider,
   createRuntimeNpcFromDefinition
 } from "./runtime-scene-build";
-import { resolvePlayerStartPauseInput } from "./player-input-bindings";
+import { resolvePlayerStartLookInput, resolvePlayerStartPauseInput } from "./player-input-bindings";
+import type { RuntimeCameraRig } from "./runtime-scene-build";
 
 interface CachedMaterialTexture {
   signature: string;
