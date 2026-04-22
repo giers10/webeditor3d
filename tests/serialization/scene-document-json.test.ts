@@ -1014,6 +1014,58 @@ describe("scene document JSON", () => {
     );
   });
 
+  it("round-trips a document containing an authored rail Camera Rig entity", () => {
+    const path = createScenePath({
+      id: "path-camera-rail-roundtrip"
+    });
+    const interactable = createInteractableEntity({
+      id: "entity-camera-rail-anchor",
+      position: {
+        x: 3,
+        y: 1,
+        z: -2
+      }
+    });
+    const cameraRig = createCameraRigEntity({
+      id: "entity-camera-rig-rail-main",
+      name: "Catwalk Rail",
+      rigType: "rail",
+      pathId: path.id,
+      priority: 8,
+      defaultActive: true,
+      target: {
+        kind: "entity",
+        entityId: interactable.id
+      },
+      targetOffset: {
+        x: 0,
+        y: 1.5,
+        z: 0
+      },
+      transitionMode: "cut",
+      lookAround: {
+        enabled: true,
+        yawLimitDegrees: 18,
+        pitchLimitDegrees: 10,
+        recenterSpeed: 5
+      }
+    });
+    const document = {
+      ...createEmptySceneDocument({ name: "Rail Camera Rig Scene" }),
+      paths: {
+        [path.id]: path
+      },
+      entities: {
+        [interactable.id]: interactable,
+        [cameraRig.id]: cameraRig
+      }
+    };
+
+    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(
+      document
+    );
+  });
+
   it("migrates version 73 camera rigs to include fixed-rig defaults", () => {
     const cameraRig = createCameraRigEntity({
       id: "entity-camera-rig-legacy",
