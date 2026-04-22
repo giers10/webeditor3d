@@ -288,6 +288,7 @@ import {
   isAdvancedRenderingToneMappingMode,
   isWorldBackgroundMode,
   isWorldShaderSkyPresetId,
+  type WorldCelestialOrbitAuthoringSettings,
   type WorldShaderSkySettings,
   type AdvancedRenderingSettings,
   type WorldBackgroundSettings,
