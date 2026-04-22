@@ -209,6 +209,11 @@ describe("runtime project time", () => {
       dayCount: 0,
       dayLengthMinutes: 24
     });
+    const preDawnEnd = resolveRuntimeDayNightWorldState(world, time, {
+      timeOfDayHours: 7.99,
+      dayCount: 0,
+      dayLengthMinutes: 24
+    });
     const duskEnd = resolveRuntimeDayNightWorldState(world, time, {
       timeOfDayHours: 21,
       dayCount: 0,
@@ -225,7 +230,7 @@ describe("runtime project time", () => {
     expect(Math.abs(duskEnd.sunLight.direction.y)).toBeLessThan(0.05);
     expect(lateDusk.sunLight.direction.y).toBeLessThan(-0.05);
     expect(midDawn.moonLight?.direction.y ?? 0).toBeGreaterThan(0.05);
-    expect(Math.abs(dawnEnd.moonLight?.direction.y ?? 1)).toBeLessThan(0.05);
+    expect(Math.abs(preDawnEnd.moonLight?.direction.y ?? 1)).toBeLessThan(0.05);
     expect(Math.abs(duskEnd.moonLight?.direction.y ?? 1)).toBeLessThan(0.05);
     expect(lateDusk.moonLight?.direction.y ?? 0).toBeGreaterThan(0.05);
   });
