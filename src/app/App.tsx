@@ -1980,6 +1980,37 @@ function formatWorldBackgroundLabel(
   return "Image";
 }
 
+function getWorldBackgroundImagePreviewUrl(
+  background: WorldBackgroundSettings,
+  loadedImageAssets: Record<string, LoadedImageAsset>
+): string | null {
+  if (background.mode !== "image" || background.assetId.trim().length === 0) {
+    return null;
+  }
+
+  return loadedImageAssets[background.assetId]?.previewUrl ?? null;
+}
+
+function describeWorldBackground(
+  background: WorldBackgroundSettings,
+  assets: Record<string, ProjectAssetRecord>,
+  options: { emptyImageLabel?: string } = {}
+): string {
+  if (background.mode === "solid") {
+    return background.colorHex;
+  }
+
+  if (background.mode === "verticalGradient") {
+    return `${background.topColorHex} -> ${background.bottomColorHex}`;
+  }
+
+  if (background.assetId.trim().length === 0) {
+    return options.emptyImageLabel ?? "Automatic fallback";
+  }
+
+  return assets[background.assetId]?.sourceName ?? background.assetId;
+}
+
 function formatAdvancedRenderingShadowTypeLabel(
   type: AdvancedRenderingShadowType
 ): string {
