@@ -115,4 +115,13 @@ describe("world settings helpers", () => {
 
     expect(areWorldSettingsEqual(left, right)).toBe(false);
   });
+
+  it("treats the celestial body toggle as part of authored world equality", () => {
+    const left = createDefaultWorldSettings();
+    const right = cloneWorldSettings(left);
+
+    right.showCelestialBodies = true;
+
+    expect(areWorldSettingsEqual(left, right)).toBe(false);
+  });
 });
