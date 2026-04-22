@@ -25,6 +25,7 @@ import {
   OrthographicCamera,
   Plane,
   PerspectiveCamera,
+  PMREMGenerator,
   PointLight,
   Quaternion,
   Raycaster,
@@ -36,6 +37,7 @@ import {
   SpotLight,
   TextureLoader,
   Texture,
+  WebGLCubeRenderTarget,
   Vector2,
   Vector3,
   WebGLRenderTarget,
@@ -213,6 +215,7 @@ import {
 } from "../rendering/terrain-layer-material";
 import {
   resolveWorldEnvironmentState,
+  shouldUseDynamicWorldEnvironment,
   WorldBackgroundRenderer
 } from "../rendering/world-background-renderer";
 import {
