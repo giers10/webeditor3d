@@ -1071,30 +1071,66 @@ function readBoxBrushVolumeSettings(
     };
   }
 
-  const defaults = createDefaultBoxBrushFogSettings();
+  if (mode === "fog") {
+    const defaults = createDefaultBoxBrushFogSettings();
 
-  if (value.fog !== undefined && !isRecord(value.fog)) {
-    throw new Error(`${label}.fog must be an object.`);
+    if (value.fog !== undefined && !isRecord(value.fog)) {
+      throw new Error(`${label}.fog must be an object.`);
+    }
+
+    const fog = (value.fog ?? {}) as Record<string, unknown>;
+
+    return {
+      mode: "fog",
+      fog: {
+        colorHex:
+          fog.colorHex === undefined
+            ? defaults.colorHex
+            : expectHexColor(fog.colorHex, `${label}.fog.colorHex`),
+        density: readOptionalNonNegativeFiniteNumber(
+          fog.density,
+          `${label}.fog.density`,
+          defaults.density
+        ),
+        padding: readOptionalNonNegativeFiniteNumber(
+          fog.padding,
+          `${label}.fog.padding`,
+          defaults.padding
+        )
+      }
+    };
   }
 
-  const fog = (value.fog ?? {}) as Record<string, unknown>;
+  const defaults = createDefaultBoxBrushLightSettings();
+
+  if (value.light !== undefined && !isRecord(value.light)) {
+    throw new Error(`${label}.light must be an object.`);
+  }
+
+  const light = (value.light ?? {}) as Record<string, unknown>;
 
   return {
-    mode: "fog",
-    fog: {
+    mode: "light",
+    light: {
       colorHex:
-        fog.colorHex === undefined
+        light.colorHex === undefined
           ? defaults.colorHex
-          : expectHexColor(fog.colorHex, `${label}.fog.colorHex`),
-      density: readOptionalNonNegativeFiniteNumber(
-        fog.density,
-        `${label}.fog.density`,
-        defaults.density
+          : expectHexColor(light.colorHex, `${label}.light.colorHex`),
+      intensity: readOptionalNonNegativeFiniteNumber(
+        light.intensity,
+        `${label}.light.intensity`,
+        defaults.intensity
       ),
       padding: readOptionalNonNegativeFiniteNumber(
-        fog.padding,
-        `${label}.fog.padding`,
+        light.padding,
+        `${label}.light.padding`,
         defaults.padding
+      ),
+      falloff: readOptionalAllowedValue(
+        light.falloff,
+        `${label}.light.falloff`,
+        defaults.falloff,
+        isBoxBrushLightFalloffMode
       )
     }
   };
