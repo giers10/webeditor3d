@@ -733,11 +733,23 @@ function resolveTimeDrivenBackground(
     weights.night + weights.dawn * 0.5 + weights.dusk * 0.5;
   const daylikeImageBackground =
     weights.dawn > 1e-6 && hasConfiguredImageBackground(dawnBackground)
-      ? cloneWorldBackgroundSettings(dawnBackground)
+      ? {
+          mode: "image" as const,
+          assetId: dawnBackground.assetId,
+          environmentIntensity: dawnBackground.environmentIntensity
+        }
       : weights.dusk > 1e-6 && hasConfiguredImageBackground(duskBackground)
-        ? cloneWorldBackgroundSettings(duskBackground)
+        ? {
+            mode: "image" as const,
+            assetId: duskBackground.assetId,
+            environmentIntensity: duskBackground.environmentIntensity
+          }
         : hasConfiguredImageBackground(dayBackground)
-          ? cloneWorldBackgroundSettings(dayBackground)
+          ? {
+              mode: "image" as const,
+              assetId: dayBackground.assetId,
+              environmentIntensity: dayBackground.environmentIntensity
+            }
           : resolvePreferredDaylikeImageBackground([
               {
                 background: dayBackground,
