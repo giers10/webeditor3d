@@ -21,6 +21,12 @@ import {
   type ProjectAssetRecord
 } from "../assets/project-assets";
 import {
+  createCameraRigActorTargetRef,
+  createCameraRigEntity,
+  createCameraRigEntityTargetRef,
+  createCameraRigLookAroundSettings,
+  createCameraRigPlayerTargetRef,
+  createCameraRigWorldPointTargetRef,
   DEFAULT_PLAYER_START_GAMEPAD_BINDINGS,
   DEFAULT_PLAYER_START_KEYBOARD_BINDINGS,
   createNpcAlwaysPresence,
@@ -31,6 +37,8 @@ import {
   createPlayerStartInputBindings,
   createPlayerStartMovementTemplate,
   createInteractableEntity,
+  isCameraRigTargetKind,
+  isCameraRigTransitionMode,
   isNpcPresenceMode,
   normalizeEntityName,
   createPointLightEntity,
@@ -151,6 +159,7 @@ import {
   AUTHORED_TERRAIN_FOUNDATION_SCENE_DOCUMENT_VERSION,
   AUTHORED_TERRAIN_PAINT_SCENE_DOCUMENT_VERSION,
   AUTHORED_OBJECT_STATE_SCENE_DOCUMENT_VERSION,
+  CAMERA_RIG_ENTITY_SCENE_DOCUMENT_VERSION,
   CONTROL_SURFACE_FOUNDATION_SCENE_DOCUMENT_VERSION,
   DEFAULT_PROJECT_NAME,
   DEFAULT_PROJECT_SCENE_ID,
@@ -193,6 +202,7 @@ import {
   SCHEDULER_CONTROL_EFFECTS_SCENE_DOCUMENT_VERSION,
   SHADER_SKY_SCENE_DOCUMENT_VERSION,
   SHADER_SKY_HORIZON_HEIGHT_SCENE_DOCUMENT_VERSION,
+  SHADER_SKY_STAR_HORIZON_FADE_SCENE_DOCUMENT_VERSION,
   SPATIAL_AUDIO_SCENE_DOCUMENT_VERSION,
   STARTER_PBR_MATERIAL_LIBRARY_SCENE_DOCUMENT_VERSION,
   PROJECT_NAME_SCENE_DOCUMENT_VERSION,
