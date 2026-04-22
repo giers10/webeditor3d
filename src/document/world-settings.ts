@@ -126,6 +126,7 @@ export interface AdvancedRenderingSettings {
 
 export interface WorldSettings {
   projectTimeLightingEnabled: boolean;
+  showCelestialBodies: boolean;
   background: WorldBackgroundSettings;
   ambientLight: WorldAmbientLightSettings;
   sunLight: WorldSunLightSettings;
@@ -291,6 +292,7 @@ export function createDefaultWorldTimeOfDaySettings(): WorldTimeOfDaySettings {
 export function createDefaultWorldSettings(): WorldSettings {
   return {
     projectTimeLightingEnabled: true,
+    showCelestialBodies: false,
     background: {
       mode: "solid",
       colorHex: DEFAULT_SOLID_BACKGROUND_COLOR
@@ -381,6 +383,7 @@ export function cloneWorldTimeOfDaySettings(
 export function cloneWorldSettings(world: WorldSettings): WorldSettings {
   return {
     projectTimeLightingEnabled: world.projectTimeLightingEnabled,
+    showCelestialBodies: world.showCelestialBodies,
     background: cloneWorldBackgroundSettings(world.background),
     ambientLight: {
       ...world.ambientLight
@@ -481,6 +484,7 @@ export function areWorldTimeOfDaySettingsEqual(
 export function areWorldSettingsEqual(left: WorldSettings, right: WorldSettings): boolean {
   return (
     left.projectTimeLightingEnabled === right.projectTimeLightingEnabled &&
+    left.showCelestialBodies === right.showCelestialBodies &&
     areWorldBackgroundSettingsEqual(left.background, right.background) &&
     left.ambientLight.colorHex === right.ambientLight.colorHex &&
     left.ambientLight.intensity === right.ambientLight.intensity &&
