@@ -4980,6 +4980,7 @@ export class ViewportHost {
         }
 
         switch (currentEntity.kind) {
+          case "cameraRig":
           case "pointLight":
           case "soundEmitter":
           case "triggerVolume":
@@ -5054,6 +5055,7 @@ export class ViewportHost {
           }
 
           switch (currentEntity.kind) {
+            case "cameraRig":
             case "pointLight":
             case "soundEmitter":
             case "triggerVolume":
