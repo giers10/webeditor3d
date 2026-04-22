@@ -5101,6 +5101,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     source.version !== AUTHORED_TERRAIN_COLLISION_SCENE_DOCUMENT_VERSION &&
     source.version !== DAWN_DUSK_BACKGROUND_IMAGE_SCENE_DOCUMENT_VERSION &&
     source.version !== WHITEBOX_BOX_LIGHT_VOLUME_SCENE_DOCUMENT_VERSION &&
+    source.version !== CELESTIAL_BODY_OVERLAY_SCENE_DOCUMENT_VERSION &&
     source.version !== FOLLOW_ACTOR_PATH_SMOOTH_SCENE_DOCUMENT_VERSION
   ) {
     throw new Error(
