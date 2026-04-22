@@ -3495,6 +3495,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
   useEffect(() => {
     if (selectedEntity === null) {
       setEntityPositionDraft(createVec3Draft(DEFAULT_ENTITY_POSITION));
+      setCameraRigRigTypeDraft("fixed");
+      setCameraRigPathIdDraft("");
       setCameraRigPriorityDraft(String(DEFAULT_CAMERA_RIG_PRIORITY));
       setCameraRigDefaultActiveDraft(DEFAULT_CAMERA_RIG_DEFAULT_ACTIVE);
       setCameraRigTargetKindDraft("player");
@@ -3583,7 +3585,19 @@ export function App({ store, initialStatusMessage }: AppProps) {
       return;
     }
 
-    setEntityPositionDraft(createVec3Draft(selectedEntity.position));
+    const selectedEntityPosition =
+      selectedEntity.kind === "cameraRig"
+        ? resolveCameraRigDocumentPosition(
+            selectedEntity,
+            editorState.document.entities,
+            editorState.document.paths,
+            {
+              fallbackToPathStart: true
+            }
+          ) ?? DEFAULT_ENTITY_POSITION
+        : selectedEntity.position;
+
+    setEntityPositionDraft(createVec3Draft(selectedEntityPosition));
 
     switch (selectedEntity.kind) {
       case "pointLight":
@@ -3599,6 +3613,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
         setSpotLightDirectionDraft(createVec3Draft(selectedEntity.direction));
         break;
       case "cameraRig":
+        setCameraRigRigTypeDraft(selectedEntity.rigType);
+        setCameraRigPathIdDraft(
+          selectedEntity.rigType === "rail" ? selectedEntity.pathId : ""
+        );
         setCameraRigPriorityDraft(String(selectedEntity.priority));
         setCameraRigDefaultActiveDraft(selectedEntity.defaultActive);
         setCameraRigTargetKindDraft(selectedEntity.target.kind);
