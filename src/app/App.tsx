@@ -3484,6 +3484,33 @@ export function App({ store, initialStatusMessage }: AppProps) {
   useEffect(() => {
     if (selectedEntity === null) {
       setEntityPositionDraft(createVec3Draft(DEFAULT_ENTITY_POSITION));
+      setCameraRigPriorityDraft(String(DEFAULT_CAMERA_RIG_PRIORITY));
+      setCameraRigDefaultActiveDraft(DEFAULT_CAMERA_RIG_DEFAULT_ACTIVE);
+      setCameraRigTargetKindDraft("player");
+      setCameraRigTargetActorIdDraft("");
+      setCameraRigTargetEntityIdDraft("");
+      setCameraRigTargetWorldPointDraft(
+        createVec3Draft(DEFAULT_ENTITY_POSITION)
+      );
+      setCameraRigTargetOffsetDraft(
+        createVec3Draft(DEFAULT_CAMERA_RIG_TARGET_OFFSET)
+      );
+      setCameraRigTransitionModeDraft(DEFAULT_CAMERA_RIG_TRANSITION_MODE);
+      setCameraRigTransitionDurationDraft(
+        String(DEFAULT_CAMERA_RIG_TRANSITION_DURATION_SECONDS)
+      );
+      setCameraRigLookAroundEnabledDraft(
+        DEFAULT_CAMERA_RIG_LOOK_AROUND_ENABLED
+      );
+      setCameraRigLookAroundYawLimitDraft(
+        String(DEFAULT_CAMERA_RIG_LOOK_AROUND_YAW_LIMIT_DEGREES)
+      );
+      setCameraRigLookAroundPitchLimitDraft(
+        String(DEFAULT_CAMERA_RIG_LOOK_AROUND_PITCH_LIMIT_DEGREES)
+      );
+      setCameraRigLookAroundRecenterSpeedDraft(
+        String(DEFAULT_CAMERA_RIG_LOOK_AROUND_RECENTER_SPEED)
+      );
       setPointLightColorDraft(DEFAULT_POINT_LIGHT_COLOR_HEX);
       setPointLightIntensityDraft(String(DEFAULT_POINT_LIGHT_INTENSITY));
       setPointLightDistanceDraft(String(DEFAULT_POINT_LIGHT_DISTANCE));
@@ -3559,6 +3586,45 @@ export function App({ store, initialStatusMessage }: AppProps) {
         setSpotLightDistanceDraft(String(selectedEntity.distance));
         setSpotLightAngleDraft(String(selectedEntity.angleDegrees));
         setSpotLightDirectionDraft(createVec3Draft(selectedEntity.direction));
+        break;
+      case "cameraRig":
+        setCameraRigPriorityDraft(String(selectedEntity.priority));
+        setCameraRigDefaultActiveDraft(selectedEntity.defaultActive);
+        setCameraRigTargetKindDraft(selectedEntity.target.kind);
+        setCameraRigTargetActorIdDraft(
+          selectedEntity.target.kind === "actor"
+            ? selectedEntity.target.actorId
+            : ""
+        );
+        setCameraRigTargetEntityIdDraft(
+          selectedEntity.target.kind === "entity"
+            ? selectedEntity.target.entityId
+            : ""
+        );
+        setCameraRigTargetWorldPointDraft(
+          createVec3Draft(
+            selectedEntity.target.kind === "worldPoint"
+              ? selectedEntity.target.point
+              : DEFAULT_ENTITY_POSITION
+          )
+        );
+        setCameraRigTargetOffsetDraft(
+          createVec3Draft(selectedEntity.targetOffset)
+        );
+        setCameraRigTransitionModeDraft(selectedEntity.transitionMode);
+        setCameraRigTransitionDurationDraft(
+          String(selectedEntity.transitionDurationSeconds)
+        );
+        setCameraRigLookAroundEnabledDraft(selectedEntity.lookAround.enabled);
+        setCameraRigLookAroundYawLimitDraft(
+          String(selectedEntity.lookAround.yawLimitDegrees)
+        );
+        setCameraRigLookAroundPitchLimitDraft(
+          String(selectedEntity.lookAround.pitchLimitDegrees)
+        );
+        setCameraRigLookAroundRecenterSpeedDraft(
+          String(selectedEntity.lookAround.recenterSpeed)
+        );
         break;
       case "playerStart":
         setPlayerStartYawDraft(String(selectedEntity.yawDegrees));
