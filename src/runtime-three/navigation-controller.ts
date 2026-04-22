@@ -144,6 +144,8 @@ export interface RuntimeControllerContext {
     desiredCameraPosition: Vec3,
     radius: number
   ): Vec3;
+  isCameraDrivenExternally(): boolean;
+  getCameraYawRadians(): number;
   isInputSuspended(): boolean;
   setRuntimeMessage(message: string | null): void;
   setPlayerControllerTelemetry(
