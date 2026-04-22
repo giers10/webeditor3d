@@ -549,6 +549,11 @@ function validateWorldSettings(
     "world.background",
     "world-background"
   );
+  validateWorldShaderSkySettings(
+    world.shaderSky,
+    diagnostics,
+    "world.shaderSky"
+  );
 
   if (!isHexColorString(world.ambientLight.colorHex)) {
     diagnostics.push(
@@ -627,7 +632,10 @@ function validateWorldSettings(
     document,
     diagnostics,
     "world.timeOfDay.night.background",
-    "night-background"
+    "night-background",
+    {
+      allowShader: false
+    }
   );
 
   if (!isHexColorString(world.timeOfDay.night.ambientColorHex)) {
