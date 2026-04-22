@@ -1535,7 +1535,12 @@ export class ViewportHost {
       this.scene.environment = null;
       this.scene.environmentIntensity = 1;
     } else {
-      const environmentState = resolveWorldEnvironmentState(
+      let environmentState = resolveWorldEnvironmentState(
+        displayedBackground,
+        backgroundTexture,
+        backgroundOverlayState
+      );
+      const useDynamicEnvironment = shouldUseDynamicWorldEnvironment(
         displayedBackground,
         backgroundTexture,
         backgroundOverlayState
@@ -1546,6 +1551,22 @@ export class ViewportHost {
         backgroundTexture,
         backgroundOverlayState
       );
+
+      if (useDynamicEnvironment) {
+        this.worldBackgroundRenderer.syncToOrigin();
+        this.dynamicWorldEnvironmentTarget?.dispose();
+        this.dynamicWorldEnvironmentTarget = this.pmremGenerator.fromScene(
+          this.worldBackgroundRenderer.scene
+        ) as WebGLCubeRenderTarget;
+        environmentState = {
+          texture: this.dynamicWorldEnvironmentTarget.texture,
+          intensity: environmentState.intensity
+        };
+      } else if (this.dynamicWorldEnvironmentTarget !== null) {
+        this.dynamicWorldEnvironmentTarget.dispose();
+        this.dynamicWorldEnvironmentTarget = null;
+      }
+
       this.scene.background = null;
       this.scene.environment = environmentState.texture;
       this.scene.environmentIntensity = environmentState.intensity;
