@@ -331,6 +331,12 @@ export function ViewportCanvas({
               resolvedViewportBackground.mode === "image"
                 ? (loadedImageAssets[resolvedViewportBackground.assetId]?.previewUrl ??
                     null)
+                : null,
+              resolvedViewportBackground.mode === "shader"
+                ? {
+                    topColorHex: world.shaderSky.dayTopColorHex,
+                    bottomColorHex: world.shaderSky.dayBottomColorHex
+                  }
                 : null
             )
       }
