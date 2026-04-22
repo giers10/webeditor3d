@@ -203,7 +203,7 @@ function validateWorldBackgroundSettings(
   diagnostics: SceneDiagnostic[],
   path: string,
   label: string,
-  options: { allowEmptyImageAssetId?: boolean } = {}
+  options: { allowEmptyImageAssetId?: boolean; allowShader?: boolean } = {}
 ) {
   if (background.mode === "solid") {
     if (!isHexColorString(background.colorHex)) {
@@ -239,6 +239,21 @@ function validateWorldBackgroundSettings(
           `invalid-${label}-bottom-color`,
           `${label} bottom color must use a #RRGGBB color.`,
           `${path}.bottomColorHex`
+        )
+      );
+    }
+
+    return;
+  }
+
+  if (background.mode === "shader") {
+    if (options.allowShader === false) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          `invalid-${label}-mode`,
+          `${label} must not use shader mode here.`,
+          `${path}.mode`
         )
       );
     }
@@ -291,6 +306,210 @@ function validateWorldBackgroundSettings(
         `invalid-${label}-environment-intensity`,
         `${label} environment intensity must be a non-negative finite number.`,
         `${path}.environmentIntensity`
+      )
+    );
+  }
+}
+
+function validateWorldShaderSkySettings(
+  settings: WorldShaderSkySettings,
+  diagnostics: SceneDiagnostic[],
+  path: string
+) {
+  if (!isWorldShaderSkyPresetId(settings.presetId)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-world-shader-sky-preset",
+        "World shader sky preset must be a supported built-in preset.",
+        `${path}.presetId`
+      )
+    );
+  }
+
+  if (!isHexColorString(settings.dayTopColorHex)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-world-shader-sky-day-top-color",
+        "World shader sky day top color must use a #RRGGBB color.",
+        `${path}.dayTopColorHex`
+      )
+    );
+  }
+
+  if (!isHexColorString(settings.dayBottomColorHex)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-world-shader-sky-day-bottom-color",
+        "World shader sky day bottom color must use a #RRGGBB color.",
+        `${path}.dayBottomColorHex`
+      )
+    );
+  }
+
+  if (!isPositiveFiniteNumber(settings.celestial.sunDiscSizeDegrees)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-world-shader-sky-sun-disc-size",
+        "World shader sky sun disc size must be a positive finite number.",
+        `${path}.celestial.sunDiscSizeDegrees`
+      )
+    );
+  }
+
+  if (!isPositiveFiniteNumber(settings.celestial.moonDiscSizeDegrees)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-world-shader-sky-moon-disc-size",
+        "World shader sky moon disc size must be a positive finite number.",
+        `${path}.celestial.moonDiscSizeDegrees`
+      )
+    );
+  }
+
+  if (!isNonNegativeFiniteNumber(settings.stars.density)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-world-shader-sky-star-density",
+        "World shader sky star density must be a non-negative finite number.",
+        `${path}.stars.density`
+      )
+    );
+  }
+
+  if (!isNonNegativeFiniteNumber(settings.stars.brightness)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-world-shader-sky-star-brightness",
+        "World shader sky star brightness must be a non-negative finite number.",
+        `${path}.stars.brightness`
+      )
+    );
+  }
+
+  if (!isFiniteNumberInRange(settings.clouds.coverage, 0, 1)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-world-shader-sky-cloud-coverage",
+        "World shader sky cloud coverage must stay between 0 and 1.",
+        `${path}.clouds.coverage`
+      )
+    );
+  }
+
+  if (!isNonNegativeFiniteNumber(settings.clouds.density)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-world-shader-sky-cloud-density",
+        "World shader sky cloud density must be a non-negative finite number.",
+        `${path}.clouds.density`
+      )
+    );
+  }
+
+  if (!isFiniteNumberInRange(settings.clouds.softness, 0, 1)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-world-shader-sky-cloud-softness",
+        "World shader sky cloud softness must stay between 0 and 1.",
+        `${path}.clouds.softness`
+      )
+    );
+  }
+
+  if (!isPositiveFiniteNumber(settings.clouds.scale)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-world-shader-sky-cloud-scale",
+        "World shader sky cloud scale must be a positive finite number.",
+        `${path}.clouds.scale`
+      )
+    );
+  }
+
+  if (!isFiniteNumberInRange(settings.clouds.height, 0, 1)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-world-shader-sky-cloud-height",
+        "World shader sky cloud height must stay between 0 and 1.",
+        `${path}.clouds.height`
+      )
+    );
+  }
+
+  if (!isFiniteNumberInRange(settings.clouds.heightVariation, 0, 1)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-world-shader-sky-cloud-height-variation",
+        "World shader sky cloud height variation must stay between 0 and 1.",
+        `${path}.clouds.heightVariation`
+      )
+    );
+  }
+
+  if (!isHexColorString(settings.clouds.tintHex)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-world-shader-sky-cloud-tint",
+        "World shader sky cloud tint must use a #RRGGBB color.",
+        `${path}.clouds.tintHex`
+      )
+    );
+  }
+
+  if (!isFiniteNumberInRange(settings.clouds.opacity, 0, 1)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-world-shader-sky-cloud-opacity",
+        "World shader sky cloud opacity must stay between 0 and 1.",
+        `${path}.clouds.opacity`
+      )
+    );
+  }
+
+  if (!isFiniteNumberInRange(settings.clouds.opacityRandomness, 0, 1)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-world-shader-sky-cloud-opacity-randomness",
+        "World shader sky cloud opacity randomness must stay between 0 and 1.",
+        `${path}.clouds.opacityRandomness`
+      )
+    );
+  }
+
+  if (!isNonNegativeFiniteNumber(settings.clouds.driftSpeed)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-world-shader-sky-cloud-drift-speed",
+        "World shader sky cloud drift speed must be a non-negative finite number.",
+        `${path}.clouds.driftSpeed`
+      )
+    );
+  }
+
+  if (!isFiniteNumber(settings.clouds.driftDirectionDegrees)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-world-shader-sky-cloud-drift-direction",
+        "World shader sky cloud drift direction must be a finite number.",
+        `${path}.clouds.driftDirectionDegrees`
       )
     );
   }
