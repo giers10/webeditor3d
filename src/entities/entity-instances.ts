@@ -2497,7 +2497,16 @@ export function areEntityInstancesEqual(left: EntityInstance, right: EntityInsta
         (left.rigType === "fixed"
           ? typedRight.rigType === "fixed" &&
             areVec3Equal(left.position, typedRight.position)
-          : typedRight.rigType === "rail" && left.pathId === typedRight.pathId) &&
+          : typedRight.rigType === "rail" &&
+            left.pathId === typedRight.pathId &&
+            left.railPlacementMode === typedRight.railPlacementMode &&
+            (left.railPlacementMode === "mapTargetBetweenPoints"
+              ? typedRight.railPlacementMode === "mapTargetBetweenPoints" &&
+                areVec3Equal(left.trackStartPoint, typedRight.trackStartPoint) &&
+                areVec3Equal(left.trackEndPoint, typedRight.trackEndPoint) &&
+                left.railStartProgress === typedRight.railStartProgress &&
+                left.railEndProgress === typedRight.railEndProgress
+              : true)) &&
         left.priority === typedRight.priority &&
         left.defaultActive === typedRight.defaultActive &&
         areCameraRigTargetRefsEqual(left.target, typedRight.target) &&
