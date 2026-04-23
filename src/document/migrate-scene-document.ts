@@ -66,9 +66,11 @@ import {
   type PlayerStartMovementTemplateKind
 } from "../entities/entity-instances";
 import {
+  createActivateCameraRigOverrideControlEffect,
   createFollowActorPathControlEffect,
   createActorControlTargetRef,
   createActiveSceneControlTargetRef,
+  createClearCameraRigOverrideControlEffect,
   createEntityControlTargetRef,
   createInteractionControlTargetRef,
   createLightControlTargetRef,
@@ -3820,6 +3822,20 @@ function readControlEffect(value: unknown, label: string): ControlEffect {
   const type = expectString(value.type, `${label}.type`);
 
   switch (type) {
+    case "activateCameraRigOverride":
+      return createActivateCameraRigOverrideControlEffect({
+        target: readControlTargetRef(
+          value.target,
+          `${label}.target`
+        ) as ReturnType<typeof createEntityControlTargetRef<"cameraRig">>
+      });
+    case "clearCameraRigOverride":
+      return createClearCameraRigOverrideControlEffect({
+        target: readControlTargetRef(
+          value.target,
+          `${label}.target`
+        ) as ReturnType<typeof createEntityControlTargetRef<"cameraRig">>
+      });
     case "setActorPresence":
       return createSetActorPresenceControlEffect({
         target: readControlTargetRef(
