@@ -70,6 +70,7 @@ import {
   createFollowActorPathControlEffect,
   createActorControlTargetRef,
   createActiveSceneControlTargetRef,
+  createCameraRigControlTargetRef,
   createClearCameraRigOverrideControlEffect,
   createEntityControlTargetRef,
   createInteractionControlTargetRef,
@@ -3827,14 +3828,14 @@ function readControlEffect(value: unknown, label: string): ControlEffect {
         target: readControlTargetRef(
           value.target,
           `${label}.target`
-        ) as ReturnType<typeof createEntityControlTargetRef<"cameraRig">>
+        ) as ReturnType<typeof createCameraRigControlTargetRef>
       });
     case "clearCameraRigOverride":
       return createClearCameraRigOverrideControlEffect({
         target: readControlTargetRef(
           value.target,
           `${label}.target`
-        ) as ReturnType<typeof createEntityControlTargetRef<"cameraRig">>
+        ) as ReturnType<typeof createCameraRigControlTargetRef>
       });
     case "setActorPresence":
       return createSetActorPresenceControlEffect({
