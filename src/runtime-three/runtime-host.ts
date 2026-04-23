@@ -1278,8 +1278,19 @@ export class RuntimeHost {
           return null;
         }
 
-        return resolveNearestPointOnResolvedScenePath(path, targetPosition)
-          .position;
+        if (rig.railPlacementMode === "mapTargetBetweenPoints") {
+          const mappedProgress = mapWorldPointToScenePathProgressBetweenPoints({
+            point: targetPosition,
+            trackStartPoint: rig.trackStartPoint,
+            trackEndPoint: rig.trackEndPoint,
+            railStartProgress: rig.railStartProgress,
+            railEndProgress: rig.railEndProgress
+          });
+
+          return sampleResolvedScenePathPosition(path, mappedProgress.railProgress);
+        }
+
+        return resolveNearestPointOnResolvedScenePath(path, targetPosition).position;
       }
     }
   }
