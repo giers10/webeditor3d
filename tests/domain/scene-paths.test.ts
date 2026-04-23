@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   createScenePath,
   getScenePathLength,
+  mapWorldPointToScenePathProgressBetweenPoints,
   resolveNearestPointOnResolvedScenePath,
   resolveScenePath,
   sampleResolvedScenePathPosition,
@@ -230,6 +231,38 @@ describe("scene paths", () => {
         x: 1,
         y: 0,
         z: 0
+      }
+    });
+  });
+
+  it("maps world points between authored track points into clamped rail progress", () => {
+    expect(
+      mapWorldPointToScenePathProgressBetweenPoints({
+        point: {
+          x: 12,
+          y: 1,
+          z: 2
+        },
+        trackStartPoint: {
+          x: 0,
+          y: 1,
+          z: 2
+        },
+        trackEndPoint: {
+          x: 10,
+          y: 1,
+          z: 2
+        },
+        railStartProgress: 0.25,
+        railEndProgress: 0.75
+      })
+    ).toEqual({
+      trackProgress: 1,
+      railProgress: 0.75,
+      projectedTrackPosition: {
+        x: 10,
+        y: 1,
+        z: 2
       }
     });
   });
