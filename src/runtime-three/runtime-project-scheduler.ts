@@ -7,7 +7,10 @@ import {
   applyControlEffectToResolvedState,
   cloneControlEffect,
   cloneRuntimeResolvedControlState,
+  createActivateCameraRigOverrideControlEffect,
   createActorControlTargetRef,
+  createCameraRigControlTargetRef,
+  createClearCameraRigOverrideControlEffect,
   createDefaultResolvedControlSource,
   createFollowActorPathControlEffect,
   createPlayActorAnimationControlEffect,
@@ -689,6 +692,16 @@ function cloneDiscreteStateAsEffect(
       throw new Error(
         "Project time pause is intentionally not cloned into scheduler routine effects because pausing the scheduler clock would deadlock time progression."
       );
+    case "cameraRigOverride":
+      return state.entityId === null
+        ? createClearCameraRigOverrideControlEffect({
+            target: createCameraRigControlTargetRef(
+              "__camera-rig-override-clear__"
+            )
+          })
+        : createActivateCameraRigOverrideControlEffect({
+            target: createCameraRigControlTargetRef(state.entityId)
+          });
     case "actorPresence":
       return createSetActorPresenceControlEffect({
         target: state.target,
