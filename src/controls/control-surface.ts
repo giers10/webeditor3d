@@ -590,6 +590,12 @@ export function createProjectGlobalControlTargetRef(): GlobalControlTargetRef {
   };
 }
 
+export function createCameraRigControlTargetRef(
+  entityId: string
+): CameraRigControlTargetRef {
+  return createEntityControlTargetRef("cameraRig", entityId);
+}
+
 export function createModelInstanceControlTargetRef(
   modelInstanceId: string
 ): ModelInstanceControlTargetRef {
@@ -647,6 +653,24 @@ export function createSetProjectTimePausedControlEffect(options: {
     type: "setProjectTimePaused",
     target: cloneControlTargetRef(options.target) as GlobalControlTargetRef,
     paused: options.paused
+  };
+}
+
+export function createActivateCameraRigOverrideControlEffect(options: {
+  target: CameraRigControlTargetRef;
+}): ActivateCameraRigOverrideControlEffect {
+  return {
+    type: "activateCameraRigOverride",
+    target: cloneControlTargetRef(options.target) as CameraRigControlTargetRef
+  };
+}
+
+export function createClearCameraRigOverrideControlEffect(options: {
+  target: CameraRigControlTargetRef;
+}): ClearCameraRigOverrideControlEffect {
+  return {
+    type: "clearCameraRigOverride",
+    target: cloneControlTargetRef(options.target) as CameraRigControlTargetRef
   };
 }
 
@@ -1018,6 +1042,23 @@ export function createResolvedProjectTimePausedState(options: {
     type: "projectTimePaused",
     target: cloneControlTargetRef(options.target) as GlobalControlTargetRef,
     value: options.value,
+    source: cloneResolvedControlSource(options.source)
+  };
+}
+
+export function createResolvedCameraRigOverrideState(options: {
+  target: GlobalControlTargetRef;
+  entityId: string | null;
+  source: RuntimeResolvedControlSource;
+}): RuntimeResolvedCameraRigOverrideState {
+  if (options.entityId !== null) {
+    assertNonEmptyString(options.entityId, "Resolved control camera rig override");
+  }
+
+  return {
+    type: "cameraRigOverride",
+    target: cloneControlTargetRef(options.target) as GlobalControlTargetRef,
+    entityId: options.entityId,
     source: cloneResolvedControlSource(options.source)
   };
 }
