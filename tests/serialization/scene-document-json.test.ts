@@ -17,10 +17,11 @@ import { createScenePath } from "../../src/document/paths";
 import { createDefaultProjectTimeSettings } from "../../src/document/project-time-settings";
 import { createTerrain } from "../../src/document/terrains";
 import {
-  AUTHORED_TERRAIN_PAINT_SCENE_DOCUMENT_VERSION,
-  AUTHORED_TERRAIN_FOUNDATION_SCENE_DOCUMENT_VERSION,
-  CAMERA_RIG_ENTITY_SCENE_DOCUMENT_VERSION,
-  CELESTIAL_BODY_OVERLAY_SCENE_DOCUMENT_VERSION,
+    AUTHORED_TERRAIN_PAINT_SCENE_DOCUMENT_VERSION,
+    AUTHORED_TERRAIN_FOUNDATION_SCENE_DOCUMENT_VERSION,
+    CAMERA_RIG_MAPPED_RAIL_SCENE_DOCUMENT_VERSION,
+    CAMERA_RIG_ENTITY_SCENE_DOCUMENT_VERSION,
+    CELESTIAL_BODY_OVERLAY_SCENE_DOCUMENT_VERSION,
   DAWN_DUSK_BACKGROUND_IMAGE_SCENE_DOCUMENT_VERSION,
   FOLLOW_ACTOR_PATH_SMOOTH_SCENE_DOCUMENT_VERSION,
   ANIMATION_PLAYBACK_SCENE_DOCUMENT_VERSION,
@@ -1124,6 +1125,82 @@ describe("scene document JSON", () => {
     );
   });
 
+  it("round-trips a document containing an authored mapped rail Camera Rig entity", () => {
+    const path = createScenePath({
+      id: "path-camera-rail-mapped-roundtrip",
+      points: [
+        {
+          id: "point-a",
+          position: {
+            x: 0,
+            y: 3,
+            z: 0
+          }
+        },
+        {
+          id: "point-b",
+          position: {
+            x: 12,
+            y: 3,
+            z: 0
+          }
+        }
+      ]
+    });
+    const interactable = createInteractableEntity({
+      id: "entity-camera-mapped-rail-anchor",
+      position: {
+        x: 5,
+        y: 1,
+        z: 2
+      }
+    });
+    const cameraRig = createCameraRigEntity({
+      id: "entity-camera-rig-rail-mapped-main",
+      name: "Gallery Rail",
+      rigType: "rail",
+      pathId: path.id,
+      railPlacementMode: "mapTargetBetweenPoints",
+      trackStartPoint: {
+        x: 0,
+        y: 1,
+        z: 2
+      },
+      trackEndPoint: {
+        x: 10,
+        y: 1,
+        z: 2
+      },
+      railStartProgress: 0.2,
+      railEndProgress: 0.8,
+      target: {
+        kind: "entity",
+        entityId: interactable.id
+      },
+      targetOffset: {
+        x: 0,
+        y: 1.5,
+        z: 0
+      },
+      transitionMode: "blend",
+      transitionDurationSeconds: 0.45
+    });
+    const document = {
+      ...createEmptySceneDocument({ name: "Mapped Rail Camera Rig Scene" }),
+      paths: {
+        [path.id]: path
+      },
+      entities: {
+        [interactable.id]: interactable,
+        [cameraRig.id]: cameraRig
+      }
+    };
+
+    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(
+      document
+    );
+  });
+
   it("migrates version 73 camera rigs to include fixed-rig defaults", () => {
     const cameraRig = createCameraRigEntity({
       id: "entity-camera-rig-legacy",
@@ -1174,6 +1251,57 @@ describe("scene document JSON", () => {
         enabled: cameraRig.enabled,
         position: cameraRig.position,
         rigType: cameraRig.rigType,
+        target: cameraRig.target
+      })
+    );
+  });
+
+  it("migrates version 77 rail camera rigs to default nearest placement mode", () => {
+    const path = createScenePath({
+      id: "path-camera-rail-legacy"
+    });
+    const cameraRig = createCameraRigEntity({
+      id: "entity-camera-rig-rail-legacy",
+      rigType: "rail",
+      pathId: path.id
+    });
+    const legacyDocument = {
+      ...createEmptySceneDocument({ name: "Legacy Rail Camera Rig Scene" }),
+      paths: {
+        [path.id]: path
+      },
+      entities: {
+        [cameraRig.id]: cameraRig
+      }
+    };
+    const serializedLegacyDocument = JSON.parse(
+      serializeSceneDocument(legacyDocument)
+    ) as {
+      version: number;
+      entities: Record<string, Record<string, unknown>>;
+    };
+    const serializedCameraRig = serializedLegacyDocument.entities[cameraRig.id];
+
+    serializedLegacyDocument.version =
+      CAMERA_RIG_MAPPED_RAIL_SCENE_DOCUMENT_VERSION - 1;
+    delete serializedCameraRig.railPlacementMode;
+    delete serializedCameraRig.trackStartPoint;
+    delete serializedCameraRig.trackEndPoint;
+    delete serializedCameraRig.railStartProgress;
+    delete serializedCameraRig.railEndProgress;
+
+    const migratedDocument = parseSceneDocumentJson(
+      JSON.stringify(serializedLegacyDocument)
+    );
+
+    expect(migratedDocument.entities[cameraRig.id]).toEqual(
+      createCameraRigEntity({
+        id: cameraRig.id,
+        name: cameraRig.name,
+        visible: cameraRig.visible,
+        enabled: cameraRig.enabled,
+        rigType: "rail",
+        pathId: path.id,
         target: cameraRig.target
       })
     );
