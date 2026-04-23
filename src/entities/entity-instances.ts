@@ -2323,7 +2323,8 @@ export const ENTITY_REGISTRY: { [K in EntityKind]: EntityRegistryEntry<Extract<E
     label: "Camera Rig",
     description:
       "Authored runtime camera framing rig that can lock from a fixed world position or a scene path onto a typed target.",
-    createDefaultEntity: createCameraRigEntity
+    createDefaultEntity: (overrides) =>
+      createCameraRigEntity(overrides as CameraRigEntityOverrides)
   },
   sceneEntry: {
     kind: "sceneEntry",
@@ -2392,7 +2393,7 @@ export function createDefaultEntityInstance(kind: EntityKind, overrides: Partial
     case "playerStart":
       return createPlayerStartEntity(overrides);
     case "cameraRig":
-      return createCameraRigEntity(overrides);
+      return createCameraRigEntity(overrides as CameraRigEntityOverrides);
     case "sceneEntry":
       return createSceneEntryEntity(overrides);
     case "npc":
