@@ -47,7 +47,11 @@ import {
   type Brush,
   type WhiteboxFaceId
 } from "../document/brushes";
-import { resolveNearestPointOnResolvedScenePath } from "../document/paths";
+import {
+  mapWorldPointToScenePathProgressBetweenPoints,
+  resolveNearestPointOnResolvedScenePath,
+  sampleResolvedScenePathPosition
+} from "../document/paths";
 import {
   applyControlEffectToResolvedState,
   createDefaultResolvedControlSource,
@@ -339,13 +343,19 @@ export interface RuntimePauseState {
   source: "manual" | "control" | "mixed" | null;
 }
 
-interface RuntimeCameraRigBlendState {
+type RuntimeCameraSourceKey = "gameplay" | `rig:${string}`;
+
+interface RuntimeCameraPose {
+  position: Vector3;
+  lookTarget: Vector3;
+}
+
+interface RuntimeCameraTransitionState {
   durationSeconds: number;
   elapsedSeconds: number;
-  fromPosition: Vector3;
-  fromLookTarget: Vector3;
-  toPosition: Vector3;
-  toLookTarget: Vector3;
+  fromPose: RuntimeCameraPose;
+  toPose: RuntimeCameraPose;
+  destinationSourceKey: RuntimeCameraSourceKey;
 }
 
 export class RuntimeHost {
@@ -465,9 +475,11 @@ export class RuntimeHost {
   private lastPublishedClockState: RuntimeClockState | null = null;
   private currentPlayerAudioHooks: RuntimePlayerAudioHookState | null = null;
   private activeCameraRigOverrideEntityId: string | null = null;
+  private activeCameraSourceKey: RuntimeCameraSourceKey | null = null;
   private activeRuntimeCameraRigId: string | null = null;
   private activeRuntimeCameraRig: RuntimeCameraRig | null = null;
-  private cameraRigBlendState: RuntimeCameraRigBlendState | null = null;
+  private cameraTransitionState: RuntimeCameraTransitionState | null = null;
+  private suppressNextCameraSourceTransition = false;
   private cameraRigLookYawRadians = 0;
   private cameraRigLookPitchRadians = 0;
   private cameraRigLookDragging = false;
