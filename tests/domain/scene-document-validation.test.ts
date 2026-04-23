@@ -917,6 +917,82 @@ describe("validateSceneDocument", () => {
     );
   });
 
+  it("validates mapped rail camera rig placement fields", () => {
+    const path = createScenePath({
+      id: "path-camera-mapped"
+    });
+    const invalidPlacementRig = createCameraRigEntity({
+      id: "entity-camera-rig-invalid-placement",
+      rigType: "rail",
+      pathId: path.id
+    }) as ReturnType<typeof createCameraRigEntity> & {
+      railPlacementMode: string;
+    };
+    const invalidMappedRig = createCameraRigEntity({
+      id: "entity-camera-rig-invalid-mapped",
+      rigType: "rail",
+      pathId: path.id,
+      railPlacementMode: "mapTargetBetweenPoints",
+      trackStartPoint: {
+        x: 0,
+        y: 1,
+        z: 2
+      },
+      trackEndPoint: {
+        x: 10,
+        y: 1,
+        z: 2
+      },
+      railStartProgress: 0.2,
+      railEndProgress: 0.8
+    });
+
+    invalidPlacementRig.railPlacementMode = "diagonal";
+    invalidMappedRig.trackStartPoint = {
+      x: Number.NaN,
+      y: 1,
+      z: 2
+    };
+    invalidMappedRig.trackEndPoint = {
+      x: 10,
+      y: Number.POSITIVE_INFINITY,
+      z: 2
+    };
+    invalidMappedRig.railStartProgress = -0.1;
+    invalidMappedRig.railEndProgress = 1.1;
+
+    const validation = validateSceneDocument({
+      ...createEmptySceneDocument(),
+      paths: {
+        [path.id]: path
+      },
+      entities: {
+        [invalidPlacementRig.id]: invalidPlacementRig,
+        [invalidMappedRig.id]: invalidMappedRig
+      }
+    });
+
+    expect(validation.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "invalid-camera-rig-rail-placement-mode"
+        }),
+        expect.objectContaining({
+          code: "invalid-camera-rig-track-start-point"
+        }),
+        expect.objectContaining({
+          code: "invalid-camera-rig-track-end-point"
+        }),
+        expect.objectContaining({
+          code: "invalid-camera-rig-rail-start-progress"
+        }),
+        expect.objectContaining({
+          code: "invalid-camera-rig-rail-end-progress"
+        })
+      ])
+    );
+  });
+
   it("detects missing and invalid audio asset references on Sound Emitters", () => {
     const audioAsset = {
       id: "asset-audio-main",
