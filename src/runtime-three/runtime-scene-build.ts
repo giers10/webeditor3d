@@ -83,6 +83,7 @@ import {
   cloneCameraRigTargetRef,
   type CharacterColliderSettings,
   type CameraRigLookAroundSettings,
+  type CameraRigRailPlacementMode,
   type CameraRigTargetRef,
   type CameraRigTransitionMode,
   clonePlayerStartInputBindings,
@@ -315,10 +316,27 @@ export interface RuntimeFixedCameraRig extends RuntimeCameraRigBase {
   position: Vec3;
 }
 
-export interface RuntimeRailCameraRig extends RuntimeCameraRigBase {
+interface RuntimeRailCameraRigBase extends RuntimeCameraRigBase {
   rigType: "rail";
   pathId: string;
+  railPlacementMode: CameraRigRailPlacementMode;
 }
+
+export interface RuntimeNearestRailCameraRig extends RuntimeRailCameraRigBase {
+  railPlacementMode: "nearestToTarget";
+}
+
+export interface RuntimeMappedRailCameraRig extends RuntimeRailCameraRigBase {
+  railPlacementMode: "mapTargetBetweenPoints";
+  trackStartPoint: Vec3;
+  trackEndPoint: Vec3;
+  railStartProgress: number;
+  railEndProgress: number;
+}
+
+export type RuntimeRailCameraRig =
+  | RuntimeNearestRailCameraRig
+  | RuntimeMappedRailCameraRig;
 
 export type RuntimeCameraRig = RuntimeFixedCameraRig | RuntimeRailCameraRig;
 
