@@ -9293,6 +9293,96 @@ export function App({ store, initialStatusMessage }: AppProps) {
       : null;
   };
 
+  const resolveInteractionControlTargetOption = (targetKey: string) =>
+    getProjectScheduleTargetOptionByKey(
+      projectScheduleTargetOptions,
+      targetKey
+    );
+
+  const resolveDefaultInteractionControlTargetOption = () =>
+    interactionControlTargetOptions.find(
+      (targetOption) =>
+        targetOption.target.kind === "entity" &&
+        targetOption.target.entityKind === "cameraRig"
+    ) ??
+    interactionControlTargetOptions[0] ??
+    null;
+
+  const createInteractionControlLinkFromTargetOption = (options: {
+    id?: string;
+    sourceEntity: InteractionSourceEntity;
+    trigger: InteractionTriggerKind;
+    targetOption: ProjectScheduleTargetOption;
+    effectOptionId?: ProjectScheduleEffectOptionId;
+    previousEffect?: ControlEffect | null;
+  }): InteractionLink => {
+    const effectOptions = listProjectInteractionControlEffectOptions(
+      options.targetOption
+    );
+    const effectOptionId =
+      options.effectOptionId ??
+      effectOptions.find((effectOption) => {
+        if (options.previousEffect === undefined || options.previousEffect === null) {
+          return false;
+        }
+
+        try {
+          return (
+            effectOption.id ===
+            getProjectScheduleEffectOptionId(options.previousEffect)
+          );
+        } catch {
+          return false;
+        }
+      })?.id ??
+      effectOptions[0]?.id;
+
+    if (effectOptionId === undefined) {
+      throw new Error(
+        "The selected control target does not expose any interaction control effects."
+      );
+    }
+
+    return createControlInteractionLink({
+      id: options.id,
+      sourceEntityId: options.sourceEntity.id,
+      trigger: getCanonicalInteractionLinkTrigger(
+        options.sourceEntity,
+        options.trigger
+      ),
+      effect: createProjectScheduleEffectFromOption({
+        targetOption: options.targetOption,
+        effectOptionId,
+        previousEffect: options.previousEffect ?? null
+      })
+    });
+  };
+
+  const updateControlInteractionLinkEffect = (
+    link: InteractionLink,
+    successMessage: string,
+    mutate: (effect: ControlEffect) => void,
+    label = "Update interaction control link"
+  ) => {
+    if (link.action.type !== "control") {
+      return;
+    }
+
+    const nextEffect = cloneControlEffect(link.action.effect);
+    mutate(nextEffect);
+    commitInteractionLinkChange(
+      link,
+      createControlInteractionLink({
+        id: link.id,
+        sourceEntityId: link.sourceEntityId,
+        trigger: link.trigger,
+        effect: nextEffect
+      }),
+      successMessage,
+      label
+    );
+  };
+
   const handleAddSequenceInteractionLink = () => {
     if (selectedInteractionSource === null) {
       setStatusMessage(
@@ -9324,6 +9414,42 @@ export function App({ store, initialStatusMessage }: AppProps) {
     setStatusMessage(
       `Added a sequence link to the selected ${getInteractionSourceEntityLabel(selectedInteractionSource)}.`
     );
+  };
+
+  const handleAddControlInteractionLink = () => {
+    if (selectedInteractionSource === null) {
+      setStatusMessage(
+        "Select a Trigger Volume, Interactable, or NPC before adding links."
+      );
+      return;
+    }
+
+    const targetOption = resolveDefaultInteractionControlTargetOption();
+
+    if (targetOption === null) {
+      setStatusMessage(
+        "Author a control-addressable target before adding a control link."
+      );
+      return;
+    }
+
+    try {
+      store.executeCommand(
+        createUpsertInteractionLinkCommand({
+          link: createInteractionControlLinkFromTargetOption({
+            sourceEntity: selectedInteractionSource,
+            trigger: getDefaultInteractionLinkTrigger(selectedInteractionSource),
+            targetOption
+          }),
+          label: "Add control interaction link"
+        })
+      );
+      setStatusMessage(
+        `Added a control link to the selected ${getInteractionSourceEntityLabel(selectedInteractionSource)}.`
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
   };
 
   const handleDeleteInteractionLink = (linkId: string) => {
