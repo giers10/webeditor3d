@@ -7,6 +7,8 @@ import {
   type ModelAssetRecord
 } from "../../src/assets/project-assets";
 import {
+  createCameraRigEntity,
+  createCameraRigWorldPointTargetRef,
   createInteractableEntity,
   createNpcEntity,
   createPointLightEntity,
@@ -46,6 +48,14 @@ describe("runtime control foundation", () => {
     const npc = createNpcEntity({
       id: "entity-npc-vendor",
       actorId: "actor-market-vendor"
+    });
+    const cameraRig = createCameraRigEntity({
+      id: "entity-camera-rig-main",
+      target: createCameraRigWorldPointTargetRef({
+        x: 0,
+        y: 1.5,
+        z: 0
+      })
     });
     const triggerVolume = createTriggerVolumeEntity({
       id: "entity-trigger-main"
@@ -120,6 +130,7 @@ describe("runtime control foundation", () => {
         [interactable.id]: interactable,
         [soundEmitter.id]: soundEmitter,
         [npc.id]: npc,
+        [cameraRig.id]: cameraRig,
         [triggerVolume.id]: triggerVolume
       }
     });
@@ -151,6 +162,14 @@ describe("runtime control foundation", () => {
             actorId: npc.actorId
           },
           capabilities: ["actorPresence"]
+        }),
+        expect.objectContaining({
+          target: {
+            kind: "entity",
+            entityKind: "cameraRig",
+            entityId: cameraRig.id
+          },
+          capabilities: ["cameraRigOverride"]
         }),
         expect.objectContaining({
           target: {
@@ -228,6 +247,11 @@ describe("runtime control foundation", () => {
           type: "projectTimePaused",
           target: createProjectGlobalControlTargetRef(),
           value: false
+        }),
+        expect.objectContaining({
+          type: "cameraRigOverride",
+          target: createProjectGlobalControlTargetRef(),
+          entityId: null
         }),
         expect.objectContaining({
           type: "ambientLightColor",
