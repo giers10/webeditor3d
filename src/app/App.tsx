@@ -2638,6 +2638,20 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [cameraRigRigTypeDraft, setCameraRigRigTypeDraft] =
     useState<CameraRigType>("fixed");
   const [cameraRigPathIdDraft, setCameraRigPathIdDraft] = useState("");
+  const [
+    cameraRigRailPlacementModeDraft,
+    setCameraRigRailPlacementModeDraft
+  ] = useState<CameraRigRailPlacementMode>(
+    DEFAULT_CAMERA_RIG_RAIL_PLACEMENT_MODE
+  );
+  const [cameraRigTrackStartPointDraft, setCameraRigTrackStartPointDraft] =
+    useState(createVec3Draft(DEFAULT_CAMERA_RIG_TRACK_START_POINT));
+  const [cameraRigTrackEndPointDraft, setCameraRigTrackEndPointDraft] =
+    useState(createVec3Draft(DEFAULT_CAMERA_RIG_TRACK_END_POINT));
+  const [cameraRigRailStartProgressDraft, setCameraRigRailStartProgressDraft] =
+    useState(String(DEFAULT_CAMERA_RIG_RAIL_START_PROGRESS));
+  const [cameraRigRailEndProgressDraft, setCameraRigRailEndProgressDraft] =
+    useState(String(DEFAULT_CAMERA_RIG_RAIL_END_PROGRESS));
   const [cameraRigPriorityDraft, setCameraRigPriorityDraft] = useState(
     String(DEFAULT_CAMERA_RIG_PRIORITY)
   );
