@@ -64,6 +64,18 @@ export interface ResolvedScenePathNearestPoint {
   tangent: Vec3;
 }
 
+export interface ProjectedWorldSegmentPoint {
+  progress: number;
+  distance: number;
+  position: Vec3;
+}
+
+export interface MappedScenePathProgressBetweenWorldPoints {
+  trackProgress: number;
+  railProgress: number;
+  projectedTrackPosition: Vec3;
+}
+
 interface PathPointLike {
   position: Vec3;
 }
@@ -718,6 +730,65 @@ export function sampleResolvedScenePathPosition(
     x: segment.start.x + (segment.end.x - segment.start.x) * t,
     y: segment.start.y + (segment.end.y - segment.start.y) * t,
     z: segment.start.z + (segment.end.z - segment.start.z) * t
+  };
+}
+
+export function projectWorldPointOntoSegment(
+  point: Vec3,
+  start: Vec3,
+  end: Vec3
+): ProjectedWorldSegmentPoint {
+  assertFiniteVec3(point, "Projected world point");
+  assertFiniteVec3(start, "Projected segment start");
+  assertFiniteVec3(end, "Projected segment end");
+
+  const delta = subtractVec3(end, start);
+  const lengthSquared =
+    delta.x * delta.x + delta.y * delta.y + delta.z * delta.z;
+  const pointOffset = subtractVec3(point, start);
+  const unclampedT =
+    lengthSquared <= 1e-8
+      ? 0
+      : (pointOffset.x * delta.x +
+          pointOffset.y * delta.y +
+          pointOffset.z * delta.z) /
+        lengthSquared;
+  const progress = clampProgress(unclampedT);
+  const position = {
+    x: start.x + delta.x * progress,
+    y: start.y + delta.y * progress,
+    z: start.z + delta.z * progress
+  };
+
+  return {
+    progress,
+    distance: getVec3Distance(position, point),
+    position
+  };
+}
+
+export function mapWorldPointToScenePathProgressBetweenPoints(options: {
+  point: Vec3;
+  trackStartPoint: Vec3;
+  trackEndPoint: Vec3;
+  railStartProgress: number;
+  railEndProgress: number;
+}): MappedScenePathProgressBetweenWorldPoints {
+  const projectedTrackPoint = projectWorldPointOntoSegment(
+    options.point,
+    options.trackStartPoint,
+    options.trackEndPoint
+  );
+  const railProgress = clampProgress(
+    options.railStartProgress +
+      (options.railEndProgress - options.railStartProgress) *
+        projectedTrackPoint.progress
+  );
+
+  return {
+    trackProgress: projectedTrackPoint.progress,
+    railProgress,
+    projectedTrackPosition: projectedTrackPoint.position
   };
 }
 
