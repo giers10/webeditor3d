@@ -97,7 +97,11 @@ import {
   type ModelInstance
 } from "../assets/model-instances";
 import type { SceneDocument } from "../document/scene-document";
-import { getScenePaths, type ScenePath } from "../document/paths";
+import {
+  getScenePaths,
+  sampleScenePathPosition,
+  type ScenePath
+} from "../document/paths";
 import {
   areTerrainsEqual,
   cloneTerrain,
@@ -441,6 +445,16 @@ interface EntityRenderObjects {
   group: Group;
   meshes: Mesh[];
   dispose?: () => void;
+}
+
+interface CameraRigPreviewRenderObjects {
+  previewGroup: Group;
+  trackLine: Line<BufferGeometry, LineBasicMaterial>;
+  trackStartMesh: Mesh<SphereGeometry, MeshBasicMaterial>;
+  trackEndMesh: Mesh<SphereGeometry, MeshBasicMaterial>;
+  railSpanLine: Line<BufferGeometry, LineBasicMaterial>;
+  railStartMesh: Mesh<SphereGeometry, MeshBasicMaterial>;
+  railEndMesh: Mesh<SphereGeometry, MeshBasicMaterial>;
 }
 
 interface LocalLightRenderObjects {
