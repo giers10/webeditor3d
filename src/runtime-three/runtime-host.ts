@@ -804,8 +804,13 @@ export class RuntimeHost {
   }
 
   setActiveCameraRigOverride(entityId: string | null) {
-    this.activeCameraRigOverrideEntityId =
-      entityId === null ? null : entityId.trim() || null;
+    const nextEntityId = entityId === null ? null : entityId.trim() || null;
+
+    if (this.activeCameraRigOverrideEntityId === nextEntityId) {
+      return;
+    }
+
+    this.activeCameraRigOverrideEntityId = nextEntityId;
     this.activeRuntimeCameraRig = null;
     this.activeRuntimeCameraRigId = null;
     this.cameraRigBlendState = null;
@@ -2134,6 +2139,9 @@ export class RuntimeHost {
       case "projectTimePaused":
         this.applyProjectTimePausedControl(state.value);
         return;
+      case "cameraRigOverride":
+        this.applyCameraRigOverrideControl(state.entityId);
+        return;
       case "actorPresence":
         this.applyActorPresenceControl(state.target.actorId, state.value);
         return;
@@ -2585,6 +2593,10 @@ export class RuntimeHost {
     this.setControlPauseActive(paused);
   }
 
+  private applyCameraRigOverrideControl(entityId: string | null) {
+    this.setActiveCameraRigOverride(entityId);
+  }
+
   private applyControlEffect(
     effect: ControlEffect,
     link: InteractionLink | null = null
@@ -2592,6 +2604,12 @@ export class RuntimeHost {
     switch (effect.type) {
       case "setProjectTimePaused":
         this.applyProjectTimePausedControl(effect.paused);
+        break;
+      case "activateCameraRigOverride":
+        this.applyCameraRigOverrideControl(effect.target.entityId);
+        break;
+      case "clearCameraRigOverride":
+        this.applyCameraRigOverrideControl(null);
         break;
       case "setActorPresence":
         this.applyActorPresenceControl(effect.target.actorId, effect.active);
