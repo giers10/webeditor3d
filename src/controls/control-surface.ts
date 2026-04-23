@@ -3,7 +3,8 @@ import { isHexColorString } from "../document/world-settings";
 export const CONTROL_ENTITY_TARGET_KINDS = [
   "pointLight",
   "spotLight",
-  "soundEmitter"
+  "soundEmitter",
+  "cameraRig"
 ] as const;
 export const CONTROL_INTERACTION_TARGET_KINDS = [
   "interactable"
@@ -17,6 +18,7 @@ export const CONTROL_CAPABILITY_KINDS = [
   "modelVisibility",
   "soundPlayback",
   "soundVolume",
+  "cameraRigOverride",
   "interactionAvailability",
   "lightEnabled",
   "lightIntensity",
@@ -77,6 +79,7 @@ export type LightControlTargetRef = EntityControlTargetRef<
 >;
 export type SoundEmitterControlTargetRef =
   EntityControlTargetRef<"soundEmitter">;
+export type CameraRigControlTargetRef = EntityControlTargetRef<"cameraRig">;
 export type ControlTargetRef =
   | ActorControlTargetRef
   | EntityControlTargetRef
@@ -100,6 +103,16 @@ export interface SetProjectTimePausedControlEffect {
   type: "setProjectTimePaused";
   target: GlobalControlTargetRef;
   paused: boolean;
+}
+
+export interface ActivateCameraRigOverrideControlEffect {
+  type: "activateCameraRigOverride";
+  target: CameraRigControlTargetRef;
+}
+
+export interface ClearCameraRigOverrideControlEffect {
+  type: "clearCameraRigOverride";
+  target: CameraRigControlTargetRef;
 }
 
 export interface PlayActorAnimationControlEffect {
@@ -203,6 +216,8 @@ export interface SetSunLightColorControlEffect {
 
 export type ControlEffect =
   | SetProjectTimePausedControlEffect
+  | ActivateCameraRigOverrideControlEffect
+  | ClearCameraRigOverrideControlEffect
   | SetActorPresenceControlEffect
   | PlayActorAnimationControlEffect
   | FollowActorPathControlEffect
@@ -293,6 +308,13 @@ export interface RuntimeResolvedProjectTimePausedState {
   source: RuntimeResolvedControlSource;
 }
 
+export interface RuntimeResolvedCameraRigOverrideState {
+  type: "cameraRigOverride";
+  target: GlobalControlTargetRef;
+  entityId: string | null;
+  source: RuntimeResolvedControlSource;
+}
+
 export interface RuntimeResolvedActorPresenceState {
   type: "actorPresence";
   target: ActorControlTargetRef;
@@ -371,6 +393,7 @@ export interface RuntimeResolvedSunLightColorState {
 
 export type RuntimeResolvedDiscreteControlState =
   | RuntimeResolvedProjectTimePausedState
+  | RuntimeResolvedCameraRigOverrideState
   | RuntimeResolvedActorPresenceState
   | RuntimeResolvedActorAnimationPlaybackState
   | RuntimeResolvedActorPathAssignmentState
