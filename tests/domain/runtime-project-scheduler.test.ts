@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import {
   applyControlEffectToResolvedState,
+  createActivateCameraRigOverrideControlEffect,
   createActorControlTargetRef,
+  createCameraRigControlTargetRef,
   createDefaultResolvedControlSource,
   createEmptyRuntimeResolvedControlState,
   createLightControlTargetRef,
@@ -387,6 +389,87 @@ describe("runtime project scheduler", () => {
         expect.objectContaining({
           type: "lightIntensity",
           value: 1.25,
+          source: {
+            kind: "default"
+          }
+        })
+      ])
+    );
+  });
+
+  it("applies camera rig override scheduler effects over baseline control state and restores fallback when inactive", () => {
+    const cameraRigTarget = createCameraRigControlTargetRef(
+      "entity-camera-rig-main"
+    );
+    const scheduler = createEmptyProjectScheduler();
+    const sequences = createEmptyProjectSequenceLibrary();
+    scheduler.routines["routine-overlook-camera"] = createProjectScheduleRoutine({
+      id: "routine-overlook-camera",
+      title: "Overlook Camera",
+      target: cameraRigTarget,
+      startHour: 18,
+      endHour: 20,
+      effect: createActivateCameraRigOverrideControlEffect({
+        target: cameraRigTarget
+      })
+    });
+
+    const baselineResolved = applyControlEffectToResolvedState(
+      createEmptyRuntimeResolvedControlState(),
+      createClearCameraRigOverrideControlEffect({
+        target: cameraRigTarget
+      }),
+      createDefaultResolvedControlSource()
+    );
+    const activeSchedule = resolveRuntimeProjectScheduleState({
+      scheduler,
+      sequences,
+      actorIds: [],
+      dayNumber: 1,
+      timeOfDayHours: 19
+    });
+    const activeResolved = applyRuntimeProjectScheduleToControlState(
+      baselineResolved,
+      activeSchedule,
+      baselineResolved
+    );
+    const inactiveSchedule = resolveRuntimeProjectScheduleState({
+      scheduler,
+      sequences,
+      actorIds: [],
+      dayNumber: 1,
+      timeOfDayHours: 9
+    });
+    const inactiveResolved = applyRuntimeProjectScheduleToControlState(
+      activeResolved,
+      inactiveSchedule,
+      baselineResolved
+    );
+
+    expect(activeSchedule.controls).toEqual([
+      expect.objectContaining({
+        routineId: "routine-overlook-camera",
+        title: "Overlook Camera",
+        resolutionKey: "state:cameraRigOverride:global:project"
+      })
+    ]);
+    expect(activeResolved.discrete).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "cameraRigOverride",
+          entityId: "entity-camera-rig-main",
+          source: {
+            kind: "scheduler",
+            scheduleId: "routine-overlook-camera"
+          }
+        })
+      ])
+    );
+    expect(inactiveResolved.discrete).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "cameraRigOverride",
+          entityId: null,
           source: {
             kind: "default"
           }
