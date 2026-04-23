@@ -8,6 +8,7 @@ import {
 import type { ModelInstance } from "../assets/model-instances";
 import { isModelInstanceCollisionMode } from "../assets/model-instances";
 import {
+  type CameraRigControlTargetRef,
   type ActorControlTargetRef,
   getControlEffectResolutionKey,
   isActorPathProgressMode,
@@ -3724,6 +3725,38 @@ function validateLightControlTarget(
   }
 }
 
+function validateCameraRigControlTarget(
+  target: CameraRigControlTargetRef,
+  path: string,
+  document: SceneDocument,
+  diagnostics: SceneDiagnostic[]
+) {
+  const targetEntity = document.entities[target.entityId];
+
+  if (targetEntity === undefined) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "missing-control-camera-rig-entity",
+        `Camera control target entity ${target.entityId} does not exist.`,
+        `${path}.entityId`
+      )
+    );
+    return;
+  }
+
+  if (targetEntity.kind !== target.entityKind || targetEntity.kind !== "cameraRig") {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-control-camera-rig-target-kind",
+        "Camera control effects must target a Camera Rig entity of the authored target kind.",
+        `${path}.entityKind`
+      )
+    );
+  }
+}
+
 function validateActorControlTarget(
   target: ActorControlTargetRef,
   path: string,
@@ -3894,6 +3927,15 @@ function validateControlEffect(
           )
         );
       }
+      return;
+    case "activateCameraRigOverride":
+    case "clearCameraRigOverride":
+      validateCameraRigControlTarget(
+        effect.target,
+        `${path}.target`,
+        document,
+        diagnostics
+      );
       return;
     case "playActorAnimation":
     case "followActorPath":
@@ -4892,8 +4934,16 @@ function validateProjectSchedulerEntityTarget(
         "error",
         target.entityKind === "soundEmitter"
           ? "missing-control-sound-emitter-entity"
-          : "missing-control-light-entity",
-        `${target.entityKind === "soundEmitter" ? "Control sound emitter" : "Light control"} target entity ${target.entityId} does not exist.`,
+          : target.entityKind === "cameraRig"
+            ? "missing-control-camera-rig-entity"
+            : "missing-control-light-entity",
+        `${
+          target.entityKind === "soundEmitter"
+            ? "Control sound emitter"
+            : target.entityKind === "cameraRig"
+              ? "Camera control"
+              : "Light control"
+        } target entity ${target.entityId} does not exist.`,
         `${path}.entityId`
       )
     );
@@ -4920,13 +4970,15 @@ function validateProjectSchedulerEntityTarget(
         "error",
         target.entityKind === "soundEmitter"
           ? "invalid-control-sound-emitter-kind"
-          : "invalid-control-light-target-kind",
+          : target.entityKind === "cameraRig"
+            ? "invalid-control-camera-rig-target-kind"
+            : "invalid-control-light-target-kind",
         target.entityKind === "soundEmitter"
           ? "Control sound effects must target a Sound Emitter entity."
-          : "Light control effects must target a Point Light or Spot Light entity of the authored target kind.",
-        target.entityKind === "soundEmitter"
-          ? `${path}.entityKind`
-          : `${path}.entityKind`
+          : target.entityKind === "cameraRig"
+            ? "Camera control effects must target a Camera Rig entity of the authored target kind."
+            : "Light control effects must target a Point Light or Spot Light entity of the authored target kind.",
+        `${path}.entityKind`
       )
     );
   }
@@ -5117,6 +5169,15 @@ function validateProjectSchedulerEffect(
           )
         );
       }
+      return;
+    case "activateCameraRigOverride":
+    case "clearCameraRigOverride":
+      validateProjectSchedulerEntityTarget(
+        effect.target,
+        `${path}.target`,
+        context,
+        diagnostics
+      );
       return;
     case "playActorAnimation": {
       const usage = validateProjectSchedulerSingleActorUsage(
