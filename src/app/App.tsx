@@ -9368,19 +9368,23 @@ export function App({ store, initialStatusMessage }: AppProps) {
       return;
     }
 
-    const nextEffect = cloneControlEffect(link.action.effect);
-    mutate(nextEffect);
-    commitInteractionLinkChange(
-      link,
-      createControlInteractionLink({
-        id: link.id,
-        sourceEntityId: link.sourceEntityId,
-        trigger: link.trigger,
-        effect: nextEffect
-      }),
-      successMessage,
-      label
-    );
+    try {
+      const nextEffect = cloneControlEffect(link.action.effect);
+      mutate(nextEffect);
+      commitInteractionLinkChange(
+        link,
+        createControlInteractionLink({
+          id: link.id,
+          sourceEntityId: link.sourceEntityId,
+          trigger: link.trigger,
+          effect: nextEffect
+        }),
+        successMessage,
+        label
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
   };
 
   const handleAddSequenceInteractionLink = () => {
