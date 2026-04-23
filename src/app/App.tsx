@@ -3718,24 +3718,20 @@ export function App({ store, initialStatusMessage }: AppProps) {
             : DEFAULT_CAMERA_RIG_RAIL_PLACEMENT_MODE
         );
         setCameraRigTrackStartPointDraft(
-          createVec3Draft(
-            selectedEntity.rigType === "rail" &&
-              selectedEntity.railPlacementMode === "mapTargetBetweenPoints"
-              ? selectedEntity.trackStartPoint
-              : getDefaultCameraRigRailMappingDraft(
-                  selectedEntity.rigType === "rail" ? selectedEntity.pathId : ""
-                ).trackStartPoint
-          )
+          selectedEntity.rigType === "rail" &&
+            selectedEntity.railPlacementMode === "mapTargetBetweenPoints"
+            ? createVec3Draft(selectedEntity.trackStartPoint)
+            : getDefaultCameraRigRailMappingDraft(
+                selectedEntity.rigType === "rail" ? selectedEntity.pathId : ""
+              ).trackStartPoint
         );
         setCameraRigTrackEndPointDraft(
-          createVec3Draft(
-            selectedEntity.rigType === "rail" &&
-              selectedEntity.railPlacementMode === "mapTargetBetweenPoints"
-              ? selectedEntity.trackEndPoint
-              : getDefaultCameraRigRailMappingDraft(
-                  selectedEntity.rigType === "rail" ? selectedEntity.pathId : ""
-                ).trackEndPoint
-          )
+          selectedEntity.rigType === "rail" &&
+            selectedEntity.railPlacementMode === "mapTargetBetweenPoints"
+            ? createVec3Draft(selectedEntity.trackEndPoint)
+            : getDefaultCameraRigRailMappingDraft(
+                selectedEntity.rigType === "rail" ? selectedEntity.pathId : ""
+              ).trackEndPoint
         );
         setCameraRigRailStartProgressDraft(
           selectedEntity.rigType === "rail" &&
