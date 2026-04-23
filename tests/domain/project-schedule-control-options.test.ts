@@ -11,6 +11,7 @@ import {
 import {
   createProjectScheduleEffectFromOption,
   getProjectScheduleEffectOptionId,
+  listProjectInteractionControlEffectOptions,
   listProjectScheduleEffectOptions,
   type ProjectScheduleTargetOption
 } from "../../src/scheduler/project-schedule-control-options";
@@ -53,6 +54,20 @@ describe("project schedule control options", () => {
 
   it("lists camera override options for camera rig targets", () => {
     expect(listProjectScheduleEffectOptions(cameraRigTargetOption)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: "camera.activate" }),
+        expect.objectContaining({ id: "camera.clear" })
+      ])
+    );
+  });
+
+  it("filters out scheduler-only actor control effects for interaction authoring", () => {
+    expect(listProjectInteractionControlEffectOptions(actorTargetOption)).toEqual(
+      []
+    );
+    expect(
+      listProjectInteractionControlEffectOptions(cameraRigTargetOption)
+    ).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ id: "camera.activate" }),
         expect.objectContaining({ id: "camera.clear" })
