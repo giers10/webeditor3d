@@ -94,6 +94,16 @@ function resolveYawPitchRadians(direction: Vector3) {
   };
 }
 
+function captureCameraPose(camera: PerspectiveCamera) {
+  const position = camera.position.clone();
+  const lookTarget = position.clone().add(camera.getWorldDirection(new Vector3()));
+
+  return {
+    position,
+    lookTarget
+  };
+}
+
 describe("RuntimeHost", () => {
   afterEach(() => {
     vi.restoreAllMocks();
@@ -154,7 +164,7 @@ describe("RuntimeHost", () => {
     expect(collisionWorld.dispose).toHaveBeenCalledTimes(1);
   });
 
-  it("resolves fixed camera rigs by priority, supports explicit overrides, and blends transitions", () => {
+  it("starts default-active rigs in place and blends rig-to-rig overrides", () => {
     vi.spyOn(console, "warn").mockImplementation(() => undefined);
     vi.spyOn(RapierCollisionWorld, "create").mockResolvedValue({
       dispose: vi.fn(),
@@ -177,7 +187,8 @@ describe("RuntimeHost", () => {
         y: 1,
         z: 0
       }),
-      transitionMode: "cut"
+      transitionMode: "blend",
+      transitionDurationSeconds: 0.75
     });
     const overrideRig = createCameraRigEntity({
       id: "entity-camera-rig-override",
@@ -212,13 +223,17 @@ describe("RuntimeHost", () => {
       sceneReady: boolean;
       camera: PerspectiveCamera;
       activeRuntimeCameraRig: { entityId: string } | null;
+      cameraTransitionState: { elapsedSeconds: number } | null;
       applyActiveCameraRig(dt: number): { entityId: string } | null;
     };
 
     hostInternals.sceneReady = true;
+    hostInternals.camera.position.set(-12, 3, 14);
+    hostInternals.camera.lookAt(0, 1.6, 0);
 
-    expect(hostInternals.applyActiveCameraRig(0)?.entityId).toBe(defaultRig.id);
+    expect(hostInternals.applyActiveCameraRig(0.1)?.entityId).toBe(defaultRig.id);
     expect(hostInternals.camera.position).toMatchObject(defaultRig.position);
+    expect(hostInternals.cameraTransitionState).toBeNull();
 
     host.setActiveCameraRigOverride(overrideRig.id);
 
@@ -233,6 +248,150 @@ describe("RuntimeHost", () => {
     hostInternals.applyActiveCameraRig(0.25);
 
     expect(hostInternals.camera.position).toMatchObject(overrideRig.position);
+
+    host.dispose();
+  });
+
+  it("blends from gameplay camera into an active rig override", () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    vi.spyOn(RapierCollisionWorld, "create").mockResolvedValue({
+      dispose: vi.fn(),
+      resolveThirdPersonCameraCollision: vi.fn(
+        (_pivot, desiredCameraPosition) => desiredCameraPosition
+      )
+    } as unknown as RapierCollisionWorld);
+
+    const cameraRig = createCameraRigEntity({
+      id: "entity-camera-rig-gameplay-entry",
+      defaultActive: false,
+      position: {
+        x: 8,
+        y: 4,
+        z: -6
+      },
+      target: createCameraRigWorldPointTargetRef({
+        x: 0,
+        y: 1.5,
+        z: 0
+      }),
+      transitionMode: "blend",
+      transitionDurationSeconds: 0.5
+    });
+    const runtimeScene = buildRuntimeSceneFromDocument({
+      ...createEmptySceneDocument({ name: "Camera Rig Gameplay Entry Scene" }),
+      entities: {
+        [cameraRig.id]: cameraRig
+      }
+    });
+    const host = new RuntimeHost({
+      enableRendering: false
+    });
+    host.loadScene(runtimeScene);
+
+    const hostInternals = host as unknown as {
+      sceneReady: boolean;
+      camera: PerspectiveCamera;
+      cameraTransitionState: { elapsedSeconds: number } | null;
+      applyActiveCameraRig(dt: number): { entityId: string } | null;
+    };
+
+    hostInternals.sceneReady = true;
+    hostInternals.applyActiveCameraRig(0);
+    hostInternals.camera.position.set(0, 2, 12);
+    hostInternals.camera.lookAt(0, 1.5, 0);
+
+    host.setActiveCameraRigOverride(cameraRig.id);
+
+    expect(hostInternals.applyActiveCameraRig(0.25)?.entityId).toBe(cameraRig.id);
+    expect(hostInternals.cameraTransitionState).not.toBeNull();
+    expect(hostInternals.camera.position.x).toBeCloseTo(4, 4);
+    expect(hostInternals.camera.position.y).toBeCloseTo(3, 4);
+    expect(hostInternals.camera.position.z).toBeCloseTo(3, 4);
+
+    hostInternals.applyActiveCameraRig(0.25);
+
+    expect(hostInternals.camera.position).toMatchObject(cameraRig.position);
+
+    host.dispose();
+  });
+
+  it("blends from a rig back to the gameplay camera", () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    vi.spyOn(RapierCollisionWorld, "create").mockResolvedValue({
+      dispose: vi.fn(),
+      resolveThirdPersonCameraCollision: vi.fn(
+        (_pivot, desiredCameraPosition) => desiredCameraPosition
+      )
+    } as unknown as RapierCollisionWorld);
+
+    const cameraRig = createCameraRigEntity({
+      id: "entity-camera-rig-gameplay-exit",
+      defaultActive: false,
+      position: {
+        x: 8,
+        y: 4,
+        z: -6
+      },
+      target: createCameraRigWorldPointTargetRef({
+        x: 0,
+        y: 1.5,
+        z: 0
+      }),
+      transitionMode: "blend",
+      transitionDurationSeconds: 0.5
+    });
+    const runtimeScene = buildRuntimeSceneFromDocument({
+      ...createEmptySceneDocument({ name: "Camera Rig Gameplay Exit Scene" }),
+      entities: {
+        [cameraRig.id]: cameraRig
+      }
+    });
+    const host = new RuntimeHost({
+      enableRendering: false
+    });
+    host.loadScene(runtimeScene);
+
+    const hostInternals = host as unknown as {
+      sceneReady: boolean;
+      camera: PerspectiveCamera;
+      cameraTransitionState: { elapsedSeconds: number } | null;
+      applyActiveCameraRig(
+        dt: number,
+        previousCameraPose?: {
+          position: Vector3;
+          lookTarget: Vector3;
+        }
+      ): { entityId: string } | null;
+    };
+
+    hostInternals.sceneReady = true;
+    hostInternals.applyActiveCameraRig(0);
+    hostInternals.camera.position.set(0, 2, 12);
+    hostInternals.camera.lookAt(0, 1.5, 0);
+    host.setActiveCameraRigOverride(cameraRig.id);
+    hostInternals.applyActiveCameraRig(0.5);
+
+    const previousRigPose = captureCameraPose(hostInternals.camera);
+
+    host.setActiveCameraRigOverride(null);
+    hostInternals.camera.position.set(-6, 3, 8);
+    hostInternals.camera.lookAt(0, 1.5, 0);
+
+    expect(hostInternals.applyActiveCameraRig(0.25, previousRigPose)).toBeNull();
+    expect(hostInternals.cameraTransitionState).not.toBeNull();
+    expect(hostInternals.camera.position.x).toBeCloseTo(1, 4);
+    expect(hostInternals.camera.position.y).toBeCloseTo(3.5, 4);
+    expect(hostInternals.camera.position.z).toBeCloseTo(1, 4);
+
+    hostInternals.camera.position.set(-6, 3, 8);
+    hostInternals.camera.lookAt(0, 1.5, 0);
+    hostInternals.applyActiveCameraRig(0.25, previousRigPose);
+
+    expect(hostInternals.camera.position).toMatchObject({
+      x: -6,
+      y: 3,
+      z: 8
+    });
 
     host.dispose();
   });
