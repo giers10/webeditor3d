@@ -10957,31 +10957,222 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     </select>
                   </label>
                 </div>
-              ) : (
-                <div className="form-section">
-                  <div className="vector-inputs vector-inputs--two">
-                    <label className="form-field">
-                      <span className="label">Target</span>
-                      <input
-                        className="text-input"
-                        type="text"
-                        value={formatControlTargetRef(
-                          link.action.effect.target
-                        )}
-                        readOnly
-                      />
-                    </label>
-                    <label className="form-field">
-                      <span className="label">Value</span>
-                      <input
-                        className="text-input"
-                        type="text"
-                        value={formatControlEffectValue(link.action.effect)}
-                        readOnly
-                      />
-                    </label>
-                  </div>
-                </div>
+              ) : link.action.type === "control" ? (
+                (() => {
+                  const targetOption = resolveInteractionControlTargetOption(
+                    getControlTargetRefKey(link.action.effect.target)
+                  );
+                  const effectOptions =
+                    targetOption === null
+                      ? []
+                      : listProjectInteractionControlEffectOptions(targetOption);
+                  const effectOptionId =
+                    targetOption === null
+                      ? null
+                      : (() => {
+                          try {
+                            const nextEffectOptionId =
+                              getProjectScheduleEffectOptionId(
+                                link.action.effect
+                              );
+
+                            return effectOptions.some(
+                              (effectOption) =>
+                                effectOption.id === nextEffectOptionId
+                            )
+                              ? nextEffectOptionId
+                              : null;
+                          } catch {
+                            return null;
+                          }
+                        })();
+                  const selectedEffectOption =
+                    effectOptionId === null
+                      ? null
+                      : (effectOptions.find(
+                          (effectOption) => effectOption.id === effectOptionId
+                        ) ?? null);
+
+                  if (targetOption === null || selectedEffectOption === null) {
+                    return (
+                      <div className="form-section">
+                        <div className="material-summary">
+                          {`${formatControlEffectValue(link.action.effect)}. This control link is preserved, but the current inspector can only edit effects exposed through the shared control catalog.`}
+                        </div>
+                        <div className="vector-inputs vector-inputs--two">
+                          <label className="form-field">
+                            <span className="label">Target</span>
+                            <input
+                              className="text-input"
+                              type="text"
+                              value={formatControlTargetRef(
+                                link.action.effect.target
+                              )}
+                              readOnly
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Value</span>
+                            <input
+                              className="text-input"
+                              type="text"
+                              value={formatControlEffectValue(link.action.effect)}
+                              readOnly
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div className="form-section">
+                      <div className="vector-inputs vector-inputs--two">
+                        <label className="form-field">
+                          <span className="label">Target</span>
+                          <select
+                            data-testid={`interaction-link-control-target-${link.id}`}
+                            className="select-input"
+                            value={targetOption.key}
+                            onChange={(event) =>
+                              updateControlInteractionLinkTarget(
+                                link,
+                                event.currentTarget.value
+                              )
+                            }
+                          >
+                            {interactionControlTargetOptions.map((option) => (
+                              <option key={option.key} value={option.key}>
+                                {option.groupLabel} · {option.label}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <label className="form-field">
+                          <span className="label">Effect</span>
+                          <select
+                            data-testid={`interaction-link-control-effect-${link.id}`}
+                            className="select-input"
+                            value={effectOptionId}
+                            onChange={(event) =>
+                              updateControlInteractionLinkEffectOption(
+                                link,
+                                event.currentTarget
+                                  .value as ProjectScheduleEffectOptionId
+                              )
+                            }
+                          >
+                            {effectOptions.map((option) => (
+                              <option key={option.id} value={option.id}>
+                                {option.label}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      </div>
+
+                      {selectedEffectOption.valueKind === "number" ? (
+                        <label className="form-field">
+                          <span className="label">
+                            {selectedEffectOption.valueLabel ?? "Value"}
+                          </span>
+                          <input
+                            key={`${link.id}-${effectOptionId}-numeric`}
+                            data-testid={`interaction-link-control-number-${link.id}`}
+                            className="text-input"
+                            type="number"
+                            min={selectedEffectOption.min ?? 0}
+                            step={selectedEffectOption.step ?? 0.1}
+                            defaultValue={
+                              getControlEffectNumericValue(link.action.effect) ?? 0
+                            }
+                            onBlur={(event) =>
+                              updateControlInteractionLinkNumericValue(
+                                link,
+                                Number(event.currentTarget.value)
+                              )
+                            }
+                            onKeyDown={(event) =>
+                              commitOnEnter(event, () =>
+                                updateControlInteractionLinkNumericValue(
+                                  link,
+                                  Number(event.currentTarget.value)
+                                )
+                              )
+                            }
+                          />
+                        </label>
+                      ) : null}
+
+                      {selectedEffectOption.valueKind === "color" ? (
+                        <label className="form-field">
+                          <span className="label">
+                            {selectedEffectOption.valueLabel ?? "Color"}
+                          </span>
+                          <input
+                            data-testid={`interaction-link-control-color-${link.id}`}
+                            className="color-input"
+                            type="color"
+                            value={
+                              getControlEffectColorValue(link.action.effect) ??
+                              "#ffffff"
+                            }
+                            onChange={(event) =>
+                              updateControlInteractionLinkColorValue(
+                                link,
+                                event.currentTarget.value
+                              )
+                            }
+                          />
+                        </label>
+                      ) : null}
+
+                      {link.action.effect.type === "playModelAnimation" ||
+                      link.action.effect.type === "playActorAnimation" ? (
+                        <>
+                          <label className="form-field">
+                            <span className="label">Clip</span>
+                            <select
+                              data-testid={`interaction-link-control-animation-clip-${link.id}`}
+                              className="select-input"
+                              value={link.action.effect.clipName}
+                              onChange={(event) =>
+                                updateControlInteractionLinkAnimationClip(
+                                  link,
+                                  event.currentTarget.value
+                                )
+                              }
+                            >
+                              {(
+                                link.action.effect.type === "playActorAnimation"
+                                  ? targetOption.defaults.actorAnimationClipNames
+                                  : targetOption.defaults.animationClipNames
+                              )?.map((clipName) => (
+                                <option key={clipName} value={clipName}>
+                                  {clipName}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                          <label className="form-field form-field--inline">
+                            <input
+                              data-testid={`interaction-link-control-animation-loop-${link.id}`}
+                              type="checkbox"
+                              checked={link.action.effect.loop !== false}
+                              onChange={(event) =>
+                                updateControlInteractionLinkAnimationLoop(
+                                  link,
+                                  event.currentTarget.checked
+                                )
+                              }
+                            />
+                            <span className="label">Loop</span>
+                          </label>
+                        </>
+                      ) : null}
+                    </div>
+                  );
+                })()
               )}
 
               <div className="inline-actions">
