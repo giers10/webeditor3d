@@ -11173,7 +11173,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     </div>
                   );
                 })()
-              )}
+              ) : null}
 
               <div className="inline-actions">
                 <button
