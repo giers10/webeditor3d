@@ -445,6 +445,17 @@ export const DEFAULT_CAMERA_RIG_TARGET_OFFSET: Vec3 = {
 export const DEFAULT_CAMERA_RIG_TRANSITION_MODE: CameraRigTransitionMode =
   "blend";
 export const DEFAULT_CAMERA_RIG_TRANSITION_DURATION_SECONDS = 0.35;
+export const DEFAULT_CAMERA_RIG_RAIL_PLACEMENT_MODE: CameraRigRailPlacementMode =
+  "nearestToTarget";
+export const DEFAULT_CAMERA_RIG_TRACK_START_POINT: Vec3 =
+  DEFAULT_ENTITY_POSITION;
+export const DEFAULT_CAMERA_RIG_TRACK_END_POINT: Vec3 = {
+  x: 1,
+  y: 0,
+  z: 0
+};
+export const DEFAULT_CAMERA_RIG_RAIL_START_PROGRESS = 0;
+export const DEFAULT_CAMERA_RIG_RAIL_END_PROGRESS = 1;
 export const DEFAULT_CAMERA_RIG_LOOK_AROUND_ENABLED = true;
 export const DEFAULT_CAMERA_RIG_LOOK_AROUND_YAW_LIMIT_DEGREES = 12;
 export const DEFAULT_CAMERA_RIG_LOOK_AROUND_PITCH_LIMIT_DEGREES = 8;
@@ -645,6 +656,17 @@ export function isCameraRigTransitionMode(
   value: string
 ): value is CameraRigTransitionMode {
   return CAMERA_RIG_TRANSITION_MODES.includes(value as CameraRigTransitionMode);
+}
+
+export function isCameraRigRailPlacementMode(
+  value: unknown
+): value is CameraRigRailPlacementMode {
+  return (
+    typeof value === "string" &&
+    CAMERA_RIG_RAIL_PLACEMENT_MODES.includes(
+      value as CameraRigRailPlacementMode
+    )
+  );
 }
 
 export function isPlayerStartKeyboardBindingCode(
