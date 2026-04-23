@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { createEmptyRuntimeControlSurfaceDefinition } from "../../src/controls/control-surface";
+import {
+  createActivateCameraRigOverrideControlEffect,
+  createCameraRigControlTargetRef,
+  createClearCameraRigOverrideControlEffect,
+  createEmptyRuntimeControlSurfaceDefinition
+} from "../../src/controls/control-surface";
 import {
   createEmptyProjectSequenceLibrary,
   createProjectSequence
@@ -10,6 +15,7 @@ import {
   createPlayerStartMovementTemplate
 } from "../../src/entities/entity-instances";
 import {
+  createControlInteractionLink,
   createPlayAnimationInteractionLink,
   createPlaySoundInteractionLink,
   createRunSequenceInteractionLink,
@@ -351,6 +357,86 @@ describe("RuntimeInteractionSystem", () => {
     expect(dispatches).toEqual([
       "link-play-animation:model-instance-animated:Walk:once",
       "link-stop-animation:model-instance-animated"
+    ]);
+  });
+
+  it("dispatches shared camera control effects on Trigger Volume enter", () => {
+    const runtimeScene = createRuntimeSceneFixture();
+    runtimeScene.interactionLinks = [
+      createControlInteractionLink({
+        id: "link-trigger-camera-override",
+        sourceEntityId: "entity-trigger-main",
+        trigger: "enter",
+        effect: createActivateCameraRigOverrideControlEffect({
+          target: createCameraRigControlTargetRef("entity-camera-rig-main")
+        })
+      })
+    ];
+
+    const interactionSystem = new RuntimeInteractionSystem();
+    const dispatches: string[] = [];
+
+    interactionSystem.updatePlayerPosition(
+      {
+        x: 0,
+        y: 0,
+        z: 0
+      },
+      runtimeScene,
+      createDispatcher({
+        dispatchControlEffect: (effect, link) => {
+          dispatches.push(`${link.id}:${effect.type}:${effect.target.entityId}`);
+        }
+      })
+    );
+
+    interactionSystem.updatePlayerPosition(
+      {
+        x: 0.25,
+        y: 0,
+        z: 0.25
+      },
+      runtimeScene,
+      createDispatcher({
+        dispatchControlEffect: (effect, link) => {
+          dispatches.push(`${link.id}:${effect.type}:${effect.target.entityId}`);
+        }
+      })
+    );
+
+    expect(dispatches).toEqual([
+      "link-trigger-camera-override:activateCameraRigOverride:entity-camera-rig-main"
+    ]);
+  });
+
+  it("dispatches shared camera control effects on interactable click", () => {
+    const runtimeScene = createRuntimeSceneFixture();
+    runtimeScene.interactionLinks = [
+      createControlInteractionLink({
+        id: "link-click-camera-clear",
+        sourceEntityId: "entity-interactable-console",
+        trigger: "click",
+        effect: createClearCameraRigOverrideControlEffect({
+          target: createCameraRigControlTargetRef("entity-camera-rig-main")
+        })
+      })
+    ];
+
+    const interactionSystem = new RuntimeInteractionSystem();
+    const dispatches: string[] = [];
+
+    interactionSystem.dispatchClickInteraction(
+      "entity-interactable-console",
+      runtimeScene,
+      createDispatcher({
+        dispatchControlEffect: (effect, link) => {
+          dispatches.push(`${link.id}:${effect.type}:${effect.target.entityId}`);
+        }
+      })
+    );
+
+    expect(dispatches).toEqual([
+      "link-click-camera-clear:clearCameraRigOverride:entity-camera-rig-main"
     ]);
   });
 
