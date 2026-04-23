@@ -19,6 +19,7 @@ import { createTerrain } from "../../src/document/terrains";
 import {
     AUTHORED_TERRAIN_PAINT_SCENE_DOCUMENT_VERSION,
     AUTHORED_TERRAIN_FOUNDATION_SCENE_DOCUMENT_VERSION,
+    CAMERA_RIG_CONTROL_SURFACE_SCENE_DOCUMENT_VERSION,
     CAMERA_RIG_MAPPED_RAIL_SCENE_DOCUMENT_VERSION,
     CAMERA_RIG_ENTITY_SCENE_DOCUMENT_VERSION,
     CELESTIAL_BODY_OVERLAY_SCENE_DOCUMENT_VERSION,
@@ -1283,7 +1284,7 @@ describe("scene document JSON", () => {
     const serializedCameraRig = serializedLegacyDocument.entities[cameraRig.id];
 
     serializedLegacyDocument.version =
-      CAMERA_RIG_MAPPED_RAIL_SCENE_DOCUMENT_VERSION - 1;
+      CAMERA_RIG_CONTROL_SURFACE_SCENE_DOCUMENT_VERSION;
     delete serializedCameraRig.railPlacementMode;
     delete serializedCameraRig.trackStartPoint;
     delete serializedCameraRig.trackEndPoint;
