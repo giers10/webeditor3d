@@ -3,7 +3,9 @@ import { describe, expect, it } from "vitest";
 import { createBoxBrush } from "../../src/document/brushes";
 import {
   createActiveSceneControlTargetRef,
+  createActivateCameraRigOverrideControlEffect,
   createActorControlTargetRef,
+  createCameraRigControlTargetRef,
   createFollowActorPathControlEffect,
   createLightControlTargetRef,
   createPlayActorAnimationControlEffect,
@@ -416,6 +418,42 @@ describe("validateSceneDocument", () => {
           intensity: 0.35
         })
       });
+
+    const validation = validateSceneDocument(document);
+
+    expect(validation.errors).toEqual([]);
+  });
+
+  it("accepts typed camera rig control effects in scheduler routines and interaction links", () => {
+    const triggerVolume = createTriggerVolumeEntity({
+      id: "entity-trigger-camera"
+    });
+    const cameraRig = createCameraRigEntity({
+      id: "entity-camera-rig-main"
+    });
+    const document = createEmptySceneDocument();
+    document.entities[triggerVolume.id] = triggerVolume;
+    document.entities[cameraRig.id] = cameraRig;
+    document.scheduler.routines["routine-camera-override"] =
+      createProjectScheduleRoutine({
+        id: "routine-camera-override",
+        title: "Camera Override",
+        target: createCameraRigControlTargetRef(cameraRig.id),
+        startHour: 8,
+        endHour: 18,
+        effect: createActivateCameraRigOverrideControlEffect({
+          target: createCameraRigControlTargetRef(cameraRig.id)
+        })
+      });
+    document.interactionLinks["link-camera-override"] = createControlInteractionLink(
+      {
+        id: "link-camera-override",
+        sourceEntityId: triggerVolume.id,
+        effect: createActivateCameraRigOverrideControlEffect({
+          target: createCameraRigControlTargetRef(cameraRig.id)
+        })
+      }
+    );
 
     const validation = validateSceneDocument(document);
 
