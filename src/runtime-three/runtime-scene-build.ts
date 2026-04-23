@@ -1624,11 +1624,20 @@ function buildRuntimeSceneCollections(
                 priority: entity.priority,
                 defaultActive: entity.defaultActive,
                 pathId: entity.pathId,
+                railPlacementMode: entity.railPlacementMode,
                 target: cloneCameraRigTargetRef(entity.target),
                 targetOffset: cloneVec3(entity.targetOffset),
                 transitionMode: entity.transitionMode,
                 transitionDurationSeconds: entity.transitionDurationSeconds,
-                lookAround: cloneCameraRigLookAroundSettings(entity.lookAround)
+                lookAround: cloneCameraRigLookAroundSettings(entity.lookAround),
+                ...(entity.railPlacementMode === "mapTargetBetweenPoints"
+                  ? {
+                      trackStartPoint: cloneVec3(entity.trackStartPoint),
+                      trackEndPoint: cloneVec3(entity.trackEndPoint),
+                      railStartProgress: entity.railStartProgress,
+                      railEndProgress: entity.railEndProgress
+                    }
+                  : {})
               }
         );
         break;
