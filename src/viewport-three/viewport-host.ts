@@ -6277,9 +6277,97 @@ export class ViewportHost {
       this.tagEntityMesh(mesh, entity.id, "cameraRig", group);
     }
 
+    let dispose: (() => void) | undefined;
+
+    if (selected && entity.rigType === "rail") {
+      const previewGroup = new Group();
+      previewGroup.visible = false;
+      previewGroup.userData.nonPickable = true;
+
+      const trackLine = new Line(
+        new BufferGeometry().setFromPoints([new Vector3(), new Vector3()]),
+        new LineBasicMaterial({
+          color: CAMERA_RIG_SELECTED_COLOR
+        })
+      );
+      const railSpanLine = new Line(
+        new BufferGeometry().setFromPoints([new Vector3(), new Vector3()]),
+        new LineBasicMaterial({
+          color: PATH_SELECTED_COLOR
+        })
+      );
+      const trackStartMesh = new Mesh(
+        new SphereGeometry(PATH_POINT_RADIUS * 0.7, 10, 10),
+        new MeshBasicMaterial({
+          color: CAMERA_RIG_SELECTED_COLOR
+        })
+      );
+      const trackEndMesh = new Mesh(
+        new SphereGeometry(PATH_POINT_RADIUS * 0.7, 10, 10),
+        new MeshBasicMaterial({
+          color: CAMERA_RIG_SELECTED_COLOR
+        })
+      );
+      const railStartMesh = new Mesh(
+        new SphereGeometry(PATH_POINT_RADIUS * 0.7, 10, 10),
+        new MeshBasicMaterial({
+          color: PATH_SELECTED_COLOR
+        })
+      );
+      const railEndMesh = new Mesh(
+        new SphereGeometry(PATH_POINT_RADIUS * 0.7, 10, 10),
+        new MeshBasicMaterial({
+          color: PATH_SELECTED_COLOR
+        })
+      );
+
+      for (const object of [
+        trackLine,
+        railSpanLine,
+        trackStartMesh,
+        trackEndMesh,
+        railStartMesh,
+        railEndMesh
+      ]) {
+        object.userData.nonPickable = true;
+        previewGroup.add(object);
+      }
+
+      group.add(previewGroup);
+      group.userData.cameraRigPreview = {
+        previewGroup,
+        trackLine,
+        trackStartMesh,
+        trackEndMesh,
+        railSpanLine,
+        railStartMesh,
+        railEndMesh
+      } satisfies CameraRigPreviewRenderObjects;
+      this.applyCameraRigGroupTransform(group, entity, document);
+
+      dispose = () => {
+        for (const mesh of [
+          body,
+          lens,
+          trackStartMesh,
+          trackEndMesh,
+          railStartMesh,
+          railEndMesh
+        ]) {
+          mesh.geometry.dispose();
+          mesh.material.dispose();
+        }
+        for (const line of [trackLine, railSpanLine]) {
+          line.geometry.dispose();
+          line.material.dispose();
+        }
+      };
+    }
+
     return {
       group,
-      meshes: [body, lens]
+      meshes: [body, lens],
+      dispose
     };
   }
 
