@@ -4754,6 +4754,7 @@ export class ViewportHost {
       group.position.set(0, 0, 0);
       group.rotation.set(0, 0, 0);
       group.quaternion.identity();
+      this.updateCameraRigPreview(group, entity, document, null);
       return;
     }
 
@@ -4771,10 +4772,68 @@ export class ViewportHost {
     if (lookTarget === null) {
       group.rotation.set(0, 0, 0);
       group.quaternion.identity();
+      this.updateCameraRigPreview(group, entity, document, authoredPosition);
       return;
     }
 
     group.lookAt(lookTarget.x, lookTarget.y, lookTarget.z);
+    this.updateCameraRigPreview(group, entity, document, authoredPosition);
+  }
+
+  private updateCameraRigPreview(
+    group: Group,
+    entity: CameraRigEntity,
+    document: SceneDocument | null,
+    authoredPosition: Vec3 | null
+  ) {
+    const preview = group.userData.cameraRigPreview as
+      | CameraRigPreviewRenderObjects
+      | undefined;
+
+    if (preview === undefined) {
+      return;
+    }
+
+    if (
+      authoredPosition === null ||
+      document === null ||
+      entity.rigType !== "rail" ||
+      entity.railPlacementMode !== "mapTargetBetweenPoints"
+    ) {
+      preview.previewGroup.visible = false;
+      return;
+    }
+
+    const authoredPath = document.paths[entity.pathId] ?? null;
+
+    if (authoredPath === null) {
+      preview.previewGroup.visible = false;
+      return;
+    }
+
+    const toLocalPoint = (point: Vec3) =>
+      new Vector3(
+        point.x - authoredPosition.x,
+        point.y - authoredPosition.y,
+        point.z - authoredPosition.z
+      );
+    const trackStartPoint = toLocalPoint(entity.trackStartPoint);
+    const trackEndPoint = toLocalPoint(entity.trackEndPoint);
+    const railStartPoint = toLocalPoint(
+      sampleScenePathPosition(authoredPath, entity.railStartProgress)
+    );
+    const railEndPoint = toLocalPoint(
+      sampleScenePathPosition(authoredPath, entity.railEndProgress)
+    );
+
+    preview.previewGroup.visible = true;
+    preview.previewGroup.quaternion.copy(group.quaternion).invert();
+    preview.trackLine.geometry.setFromPoints([trackStartPoint, trackEndPoint]);
+    preview.trackStartMesh.position.copy(trackStartPoint);
+    preview.trackEndMesh.position.copy(trackEndPoint);
+    preview.railSpanLine.geometry.setFromPoints([railStartPoint, railEndPoint]);
+    preview.railStartMesh.position.copy(railStartPoint);
+    preview.railEndMesh.position.copy(railEndPoint);
   }
 
   private isSelectedRailCameraRigPathPreviewed(pathId: string): boolean {
