@@ -476,7 +476,6 @@ export class RuntimeHost {
   private currentPlayerAudioHooks: RuntimePlayerAudioHookState | null = null;
   private activeCameraRigOverrideEntityId: string | null = null;
   private activeCameraSourceKey: RuntimeCameraSourceKey | null = null;
-  private activeRuntimeCameraRigId: string | null = null;
   private activeRuntimeCameraRig: RuntimeCameraRig | null = null;
   private cameraTransitionState: RuntimeCameraTransitionState | null = null;
   private suppressNextCameraSourceTransition = false;
@@ -747,7 +746,6 @@ export class RuntimeHost {
     this.cameraRigLookPitchRadians = 0;
     this.activeCameraSourceKey = null;
     this.activeRuntimeCameraRig = null;
-    this.activeRuntimeCameraRigId = null;
     this.cameraTransitionState = null;
     this.suppressNextCameraSourceTransition = true;
     this.pressedKeys.clear();
@@ -980,7 +978,6 @@ export class RuntimeHost {
     this.cameraRigLookPitchRadians = 0;
     this.activeCameraSourceKey = null;
     this.activeRuntimeCameraRig = null;
-    this.activeRuntimeCameraRigId = null;
     this.cameraTransitionState = null;
     this.suppressNextCameraSourceTransition = false;
     this.pressedKeys.clear();
@@ -1600,7 +1597,6 @@ export class RuntimeHost {
     }
 
     this.activeRuntimeCameraRig = nextRig;
-    this.activeRuntimeCameraRigId = nextRig?.entityId ?? null;
 
     if (
       this.cameraTransitionState !== null &&
