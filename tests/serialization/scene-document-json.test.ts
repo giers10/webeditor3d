@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  createActivateCameraRigOverrideControlEffect,
   createActorControlTargetRef,
+  createCameraRigControlTargetRef,
+  createClearCameraRigOverrideControlEffect,
   createFollowActorPathControlEffect,
   createPlayActorAnimationControlEffect,
   createSetActorPresenceControlEffect
@@ -68,6 +71,7 @@ import {
 } from "../../src/entities/entity-instances";
 import { createProjectScheduleRoutine } from "../../src/scheduler/project-scheduler";
 import {
+  createControlInteractionLink,
   createPlayAnimationInteractionLink,
   createPlaySoundInteractionLink,
   createStopAnimationInteractionLink,
@@ -113,6 +117,59 @@ describe("scene document JSON", () => {
     });
     const document = createEmptySceneDocument({ name: "Terrain Scene" });
     document.terrains[terrain.id] = terrain;
+
+    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(
+      document
+    );
+  });
+
+  it("round-trips camera rig control effects in interaction links, sequences, and scheduler routines", () => {
+    const cameraRig = createCameraRigEntity({
+      id: "entity-camera-rig-main",
+      target: createCameraRigWorldPointTargetRef({
+        x: 0,
+        y: 1.5,
+        z: 0
+      })
+    });
+    const triggerVolume = createTriggerVolumeEntity({
+      id: "entity-trigger-camera"
+    });
+    const document = createEmptySceneDocument({ name: "Camera Control Scene" });
+    document.entities[cameraRig.id] = cameraRig;
+    document.entities[triggerVolume.id] = triggerVolume;
+    document.interactionLinks["link-camera-activate"] = createControlInteractionLink(
+      {
+        id: "link-camera-activate",
+        sourceEntityId: triggerVolume.id,
+        effect: createActivateCameraRigOverrideControlEffect({
+          target: createCameraRigControlTargetRef(cameraRig.id)
+        })
+      }
+    );
+    document.sequences.sequences["sequence-camera-clear"] = {
+      id: "sequence-camera-clear",
+      title: "Camera Clear",
+      steps: [
+        {
+          stepClass: "held",
+          type: "controlEffect",
+          effect: createClearCameraRigOverrideControlEffect({
+            target: createCameraRigControlTargetRef(cameraRig.id)
+          })
+        }
+      ]
+    };
+    document.scheduler.routines["routine-camera-activate"] =
+      createProjectScheduleRoutine({
+        id: "routine-camera-activate",
+        title: "Camera Activate",
+        target: createCameraRigControlTargetRef(cameraRig.id),
+        sequenceId: "sequence-camera-clear",
+        effect: createActivateCameraRigOverrideControlEffect({
+          target: createCameraRigControlTargetRef(cameraRig.id)
+        })
+      });
 
     expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(
       document
