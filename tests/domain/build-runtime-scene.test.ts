@@ -300,7 +300,7 @@ describe("buildRuntimeSceneFromDocument", () => {
         },
         targetOffset: {
           x: 0,
-          y: 1.6,
+          y: 1.4,
           z: 0
         },
         transitionMode: "blend",
