@@ -385,6 +385,10 @@ describe("RuntimeInteractionSystem", () => {
       runtimeScene,
       createDispatcher({
         dispatchControlEffect: (effect, link) => {
+          if (effect.target.kind !== "entity") {
+            throw new Error("Expected a camera rig entity control target.");
+          }
+
           dispatches.push(`${link.id}:${effect.type}:${effect.target.entityId}`);
         }
       })
@@ -399,6 +403,10 @@ describe("RuntimeInteractionSystem", () => {
       runtimeScene,
       createDispatcher({
         dispatchControlEffect: (effect, link) => {
+          if (effect.target.kind !== "entity") {
+            throw new Error("Expected a camera rig entity control target.");
+          }
+
           dispatches.push(`${link.id}:${effect.type}:${effect.target.entityId}`);
         }
       })
@@ -430,6 +438,10 @@ describe("RuntimeInteractionSystem", () => {
       runtimeScene,
       createDispatcher({
         dispatchControlEffect: (effect, link) => {
+          if (effect.target.kind !== "entity") {
+            throw new Error("Expected a camera rig entity control target.");
+          }
+
           dispatches.push(`${link.id}:${effect.type}:${effect.target.entityId}`);
         }
       })
