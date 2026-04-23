@@ -255,6 +255,11 @@ const PROJECT_SCHEDULE_EFFECT_OPTIONS: Record<
   }
 };
 
+const INTERACTION_UNSUPPORTED_PROJECT_SCHEDULE_EFFECT_OPTION_IDS = new Set<ProjectScheduleEffectOptionId>([
+  "actor.playAnimation",
+  "actor.followPath"
+]);
+
 function compareProjectScheduleTargetOptions(
   left: ProjectScheduleTargetOption,
   right: ProjectScheduleTargetOption
@@ -583,6 +588,24 @@ export function listProjectScheduleEffectOptions(
     case "global":
       return [];
   }
+}
+
+export function listProjectInteractionControlEffectOptions(
+  targetOption: ProjectScheduleTargetOption
+): ProjectScheduleEffectOption[] {
+  return listProjectScheduleEffectOptions(targetOption).filter(
+    (option) =>
+      !INTERACTION_UNSUPPORTED_PROJECT_SCHEDULE_EFFECT_OPTION_IDS.has(option.id)
+  );
+}
+
+export function listProjectInteractionControlTargetOptions(
+  targetOptions: ProjectScheduleTargetOption[]
+): ProjectScheduleTargetOption[] {
+  return targetOptions.filter(
+    (targetOption) =>
+      listProjectInteractionControlEffectOptions(targetOption).length > 0
+  );
 }
 
 export function getProjectSequenceControlStepClassForEffectOptionId(
