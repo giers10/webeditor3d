@@ -804,6 +804,112 @@ describe("RuntimeHost", () => {
     host.dispose();
   });
 
+  it("maps rail camera rig progress between authored world points", () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    vi.spyOn(RapierCollisionWorld, "create").mockResolvedValue({
+      dispose: vi.fn(),
+      resolveThirdPersonCameraCollision: vi.fn(
+        (_pivot, desiredCameraPosition) => desiredCameraPosition
+      )
+    } as unknown as RapierCollisionWorld);
+
+    const target = createInteractableEntity({
+      id: "entity-camera-mapped-rail-target",
+      position: {
+        x: 2,
+        y: 1,
+        z: 2
+      },
+      prompt: "Anchor"
+    });
+    const path = createScenePath({
+      id: "path-camera-mapped-rail-runtime",
+      points: [
+        {
+          id: "point-a",
+          position: {
+            x: 0,
+            y: 3,
+            z: 0
+          }
+        },
+        {
+          id: "point-b",
+          position: {
+            x: 10,
+            y: 3,
+            z: 0
+          }
+        }
+      ]
+    });
+    const cameraRig = createCameraRigEntity({
+      id: "entity-camera-rig-mapped-rail-runtime",
+      rigType: "rail",
+      pathId: path.id,
+      railPlacementMode: "mapTargetBetweenPoints",
+      trackStartPoint: {
+        x: 0,
+        y: 1,
+        z: 2
+      },
+      trackEndPoint: {
+        x: 10,
+        y: 1,
+        z: 2
+      },
+      railStartProgress: 0.25,
+      railEndProgress: 0.75,
+      target: createCameraRigEntityTargetRef(target.id),
+      transitionMode: "cut"
+    });
+    const runtimeScene = buildRuntimeSceneFromDocument({
+      ...createEmptySceneDocument({ name: "Mapped Rail Camera Rig Runtime Scene" }),
+      paths: {
+        [path.id]: path
+      },
+      entities: {
+        [target.id]: target,
+        [cameraRig.id]: cameraRig
+      }
+    });
+    const host = new RuntimeHost({
+      enableRendering: false
+    });
+    host.loadScene(runtimeScene);
+
+    const hostInternals = host as unknown as {
+      sceneReady: boolean;
+      camera: PerspectiveCamera;
+      runtimeScene: typeof runtimeScene;
+      applyActiveCameraRig(dt: number): { entityId: string } | null;
+    };
+
+    hostInternals.sceneReady = true;
+
+    expect(hostInternals.applyActiveCameraRig(0)?.entityId).toBe(cameraRig.id);
+    expect(hostInternals.camera.position).toMatchObject({
+      x: 3.5,
+      y: 3,
+      z: 0
+    });
+
+    hostInternals.runtimeScene.entities.interactables[0]!.position = {
+      x: 10,
+      y: 1,
+      z: 2
+    };
+    hostInternals.applyActiveCameraRig(0);
+
+    expect(hostInternals.camera.position).toMatchObject({
+      x: 7.5,
+      y: 3,
+      z: 0
+    });
+
+    host.dispose();
+  });
+
   it("applies typed light control effects through the runtime dispatcher", () => {
     vi.spyOn(console, "warn").mockImplementation(() => undefined);
     vi.spyOn(RapierCollisionWorld, "create").mockResolvedValue({
