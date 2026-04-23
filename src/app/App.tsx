@@ -10025,8 +10025,24 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
 
     if (actionType === "control") {
-      setStatusMessage(
-        "Control links are not authored from this inspector yet."
+      const targetOption = resolveDefaultInteractionControlTargetOption();
+
+      if (targetOption === null) {
+        setStatusMessage(
+          "Author a control-addressable target before switching this link to a control effect."
+        );
+        return;
+      }
+
+      commitInteractionLinkChange(
+        link,
+        createInteractionControlLinkFromTargetOption({
+          id: link.id,
+          sourceEntity,
+          trigger: link.trigger,
+          targetOption
+        }),
+        "Switched link action to a control effect."
       );
       return;
     }
@@ -10213,6 +10229,189 @@ export function App({ store, initialStatusMessage }: AppProps) {
         targetBrushId: defaultBrush.id
       }),
       "Switched link action to toggle visibility."
+    );
+  };
+
+  const updateControlInteractionLinkTarget = (
+    link: InteractionLink,
+    targetKey: string
+  ) => {
+    if (link.action.type !== "control") {
+      return;
+    }
+
+    const sourceEntity = getInteractionSourceEntityForLink(link);
+
+    if (sourceEntity === null) {
+      setStatusMessage("Selected interaction source no longer exists.");
+      return;
+    }
+
+    const targetOption = resolveInteractionControlTargetOption(targetKey);
+
+    if (targetOption === null) {
+      setStatusMessage("Selected control target no longer exists.");
+      return;
+    }
+
+    try {
+      commitInteractionLinkChange(
+        link,
+        createInteractionControlLinkFromTargetOption({
+          id: link.id,
+          sourceEntity,
+          trigger: link.trigger,
+          targetOption,
+          previousEffect: link.action.effect
+        }),
+        "Updated control link target."
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const updateControlInteractionLinkEffectOption = (
+    link: InteractionLink,
+    effectOptionId: ProjectScheduleEffectOptionId
+  ) => {
+    if (link.action.type !== "control") {
+      return;
+    }
+
+    const targetOption = resolveInteractionControlTargetOption(
+      getControlTargetRefKey(link.action.effect.target)
+    );
+
+    if (targetOption === null) {
+      setStatusMessage("Selected control target no longer exists.");
+      return;
+    }
+
+    const effectOptions = listProjectInteractionControlEffectOptions(targetOption);
+
+    if (!effectOptions.some((effectOption) => effectOption.id === effectOptionId)) {
+      setStatusMessage(
+        "Selected control effect is not available for the current target."
+      );
+      return;
+    }
+
+    commitInteractionLinkChange(
+      link,
+      createControlInteractionLink({
+        id: link.id,
+        sourceEntityId: link.sourceEntityId,
+        trigger: link.trigger,
+        effect: createProjectScheduleEffectFromOption({
+          targetOption,
+          effectOptionId,
+          previousEffect: link.action.effect
+        })
+      }),
+      "Updated control link effect."
+    );
+  };
+
+  const updateControlInteractionLinkNumericValue = (
+    link: InteractionLink,
+    value: number
+  ) => {
+    if (!Number.isFinite(value) || value < 0) {
+      setStatusMessage(
+        "Control numeric values must be finite and zero or greater."
+      );
+      return;
+    }
+
+    updateControlInteractionLinkEffect(
+      link,
+      "Updated control link value.",
+      (effect) => {
+        switch (effect.type) {
+          case "setSoundVolume":
+            effect.volume = value;
+            return;
+          case "setLightIntensity":
+          case "setAmbientLightIntensity":
+          case "setSunLightIntensity":
+            effect.intensity = value;
+            return;
+          default:
+            throw new Error(
+              "The current control link effect does not expose a numeric value."
+            );
+        }
+      }
+    );
+  };
+
+  const updateControlInteractionLinkColorValue = (
+    link: InteractionLink,
+    colorHex: string
+  ) => {
+    updateControlInteractionLinkEffect(
+      link,
+      "Updated control link color.",
+      (effect) => {
+        switch (effect.type) {
+          case "setLightColor":
+          case "setAmbientLightColor":
+          case "setSunLightColor":
+            effect.colorHex = colorHex;
+            return;
+          default:
+            throw new Error(
+              "The current control link effect does not expose a color value."
+            );
+        }
+      }
+    );
+  };
+
+  const updateControlInteractionLinkAnimationClip = (
+    link: InteractionLink,
+    clipName: string
+  ) => {
+    updateControlInteractionLinkEffect(
+      link,
+      "Updated control link animation clip.",
+      (effect) => {
+        if (
+          effect.type !== "playModelAnimation" &&
+          effect.type !== "playActorAnimation"
+        ) {
+          throw new Error(
+            "The current control link effect does not expose an animation clip."
+          );
+        }
+
+        effect.clipName = clipName;
+      }
+    );
+  };
+
+  const updateControlInteractionLinkAnimationLoop = (
+    link: InteractionLink,
+    loop: boolean
+  ) => {
+    updateControlInteractionLinkEffect(
+      link,
+      loop
+        ? "Control link animation now loops."
+        : "Control link animation now plays once.",
+      (effect) => {
+        if (
+          effect.type !== "playModelAnimation" &&
+          effect.type !== "playActorAnimation"
+        ) {
+          throw new Error(
+            "The current control link effect does not expose animation looping."
+          );
+        }
+
+        effect.loop = loop;
+      }
     );
   };
 
