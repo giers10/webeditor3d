@@ -3,7 +3,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   createActiveSceneControlTargetRef,
+  createActivateCameraRigOverrideControlEffect,
   createActorControlTargetRef,
+  createCameraRigControlTargetRef,
+  createClearCameraRigOverrideControlEffect,
   createFollowActorPathControlEffect,
   createLightControlTargetRef,
   createModelInstanceControlTargetRef,
@@ -361,6 +364,129 @@ describe("RuntimeHost", () => {
       Math.abs(recenteredAngles.pitchRadians - baseAngles.pitchRadians)
     ).toBeLessThan(
       Math.abs(lookedAngles.pitchRadians - baseAngles.pitchRadians)
+    );
+
+    host.dispose();
+  });
+
+  it("routes camera rig control effects through the runtime override path", () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    vi.spyOn(RapierCollisionWorld, "create").mockResolvedValue({
+      dispose: vi.fn(),
+      resolveThirdPersonCameraCollision: vi.fn(
+        (_pivot, desiredCameraPosition) => desiredCameraPosition
+      )
+    } as unknown as RapierCollisionWorld);
+
+    const defaultRig = createCameraRigEntity({
+      id: "entity-camera-rig-default-control",
+      position: {
+        x: 0,
+        y: 3,
+        z: 6
+      },
+      defaultActive: true,
+      target: createCameraRigWorldPointTargetRef({
+        x: 0,
+        y: 1.5,
+        z: 0
+      })
+    });
+    const overrideRig = createCameraRigEntity({
+      id: "entity-camera-rig-override-control",
+      position: {
+        x: 10,
+        y: 5,
+        z: -4
+      },
+      defaultActive: false,
+      target: createCameraRigWorldPointTargetRef({
+        x: 1,
+        y: 2,
+        z: 0
+      })
+    });
+    const triggerVolume = createTriggerVolumeEntity({
+      id: "entity-trigger-camera-control"
+    });
+    const runtimeScene = buildRuntimeSceneFromDocument({
+      ...createEmptySceneDocument({ name: "Camera Control Runtime Scene" }),
+      entities: {
+        [defaultRig.id]: defaultRig,
+        [overrideRig.id]: overrideRig,
+        [triggerVolume.id]: triggerVolume
+      }
+    });
+    const host = new RuntimeHost({
+      enableRendering: false
+    });
+    host.loadScene(runtimeScene);
+
+    const activateEffect = createActivateCameraRigOverrideControlEffect({
+      target: createCameraRigControlTargetRef(overrideRig.id)
+    });
+    const clearEffect = createClearCameraRigOverrideControlEffect({
+      target: createCameraRigControlTargetRef(overrideRig.id)
+    });
+    const activateLink = createControlInteractionLink({
+      id: "link-camera-activate",
+      sourceEntityId: triggerVolume.id,
+      effect: activateEffect
+    });
+    const clearLink = createControlInteractionLink({
+      id: "link-camera-clear",
+      sourceEntityId: triggerVolume.id,
+      effect: clearEffect
+    });
+    const hostInternals = host as unknown as {
+      sceneReady: boolean;
+      activeCameraRigOverrideEntityId: string | null;
+      activeRuntimeCameraRig: { entityId: string } | null;
+      applyActiveCameraRig(dt: number): { entityId: string } | null;
+      createInteractionDispatcher(): {
+        dispatchControlEffect(
+          effect: ControlEffect,
+          link: InteractionLink
+        ): void;
+      };
+    };
+    const dispatcher = hostInternals.createInteractionDispatcher();
+
+    hostInternals.sceneReady = true;
+    expect(hostInternals.applyActiveCameraRig(0)?.entityId).toBe(defaultRig.id);
+
+    dispatcher.dispatchControlEffect(activateEffect, activateLink);
+
+    expect(hostInternals.activeCameraRigOverrideEntityId).toBe(overrideRig.id);
+    expect(hostInternals.applyActiveCameraRig(0)?.entityId).toBe(overrideRig.id);
+    expect(runtimeScene.control.resolved.discrete).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "cameraRigOverride",
+          entityId: overrideRig.id,
+          source: {
+            kind: "interactionLink",
+            linkId: activateLink.id
+          }
+        })
+      ])
+    );
+
+    dispatcher.dispatchControlEffect(clearEffect, clearLink);
+
+    expect(hostInternals.activeCameraRigOverrideEntityId).toBeNull();
+    expect(hostInternals.applyActiveCameraRig(0)?.entityId).toBe(defaultRig.id);
+    expect(runtimeScene.control.resolved.discrete).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "cameraRigOverride",
+          entityId: null,
+          source: {
+            kind: "interactionLink",
+            linkId: clearLink.id
+          }
+        })
+      ])
     );
 
     host.dispose();
