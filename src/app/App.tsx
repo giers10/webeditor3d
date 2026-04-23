@@ -1613,6 +1613,42 @@ function readVisibilityModeSelectValue(
   }
 }
 
+function commitOnEnter(
+  event: ReactKeyboardEvent<HTMLInputElement>,
+  commit: () => void
+) {
+  if (event.key !== "Enter") {
+    return;
+  }
+
+  event.currentTarget.blur();
+  commit();
+}
+
+function getControlEffectNumericValue(effect: ControlEffect): number | null {
+  switch (effect.type) {
+    case "setSoundVolume":
+      return effect.volume;
+    case "setLightIntensity":
+    case "setAmbientLightIntensity":
+    case "setSunLightIntensity":
+      return effect.intensity;
+    default:
+      return null;
+  }
+}
+
+function getControlEffectColorValue(effect: ControlEffect): string | null {
+  switch (effect.type) {
+    case "setLightColor":
+    case "setAmbientLightColor":
+    case "setSunLightColor":
+      return effect.colorHex;
+    default:
+      return null;
+  }
+}
+
 function readSequenceVisibilityTargetKey(value: string):
   | {
       kind: "brush";
