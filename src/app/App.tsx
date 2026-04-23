@@ -400,7 +400,8 @@ import {
   cloneControlEffect,
   formatControlEffectValue,
   formatControlTargetRef,
-  getControlTargetRefKey
+  getControlTargetRefKey,
+  type ControlEffect
 } from "../controls/control-surface";
 import {
   STARTER_MATERIAL_LIBRARY,
@@ -457,6 +458,8 @@ import {
   createProjectScheduleEffectFromOption,
   getProjectScheduleEffectOptionId,
   getProjectSequenceControlStepClassForEffectOptionId,
+  listProjectInteractionControlEffectOptions,
+  listProjectInteractionControlTargetOptions,
   getProjectScheduleTargetOptionByKey,
   listProjectScheduleEffectOptions,
   listProjectScheduleTargetOptions,
