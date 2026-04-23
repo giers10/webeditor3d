@@ -1935,6 +1935,7 @@ type RailCameraRigEntityOverrides = Partial<
     | "enabled"
     | "rigType"
     | "pathId"
+    | "railPlacementMode"
     | "priority"
     | "defaultActive"
     | "target"
@@ -1947,9 +1948,37 @@ type RailCameraRigEntityOverrides = Partial<
   lookAround?: Partial<CameraRigLookAroundSettings>;
 };
 
+type MappedRailCameraRigEntityOverrides = Partial<
+  Pick<
+    MappedRailCameraRigEntity,
+    | "id"
+    | "name"
+    | "visible"
+    | "enabled"
+    | "rigType"
+    | "pathId"
+    | "railPlacementMode"
+    | "trackStartPoint"
+    | "trackEndPoint"
+    | "railStartProgress"
+    | "railEndProgress"
+    | "priority"
+    | "defaultActive"
+    | "target"
+    | "targetOffset"
+    | "transitionMode"
+    | "transitionDurationSeconds"
+  >
+> & {
+  rigType: "rail";
+  railPlacementMode: "mapTargetBetweenPoints";
+  lookAround?: Partial<CameraRigLookAroundSettings>;
+};
+
 export type CameraRigEntityOverrides =
   | FixedCameraRigEntityOverrides
-  | RailCameraRigEntityOverrides;
+  | RailCameraRigEntityOverrides
+  | MappedRailCameraRigEntityOverrides;
 
 export function createCameraRigEntity(
   overrides: FixedCameraRigEntityOverrides
@@ -1957,6 +1986,9 @@ export function createCameraRigEntity(
 export function createCameraRigEntity(
   overrides: RailCameraRigEntityOverrides
 ): RailCameraRigEntity;
+export function createCameraRigEntity(
+  overrides: MappedRailCameraRigEntityOverrides
+): MappedRailCameraRigEntity;
 export function createCameraRigEntity(
   overrides?: CameraRigEntityOverrides
 ): CameraRigEntity;
@@ -2011,12 +2043,70 @@ export function createCameraRigEntity(
   };
 
   if (rigType === "rail") {
-    const railOverrides = overrides as RailCameraRigEntityOverrides;
+    const railOverrides = overrides as
+      | RailCameraRigEntityOverrides
+      | MappedRailCameraRigEntityOverrides;
+    const railPlacementMode =
+      railOverrides.railPlacementMode ?? DEFAULT_CAMERA_RIG_RAIL_PLACEMENT_MODE;
+
+    if (!isCameraRigRailPlacementMode(railPlacementMode)) {
+      throw new Error(
+        "Rail Camera Rig placement mode must be nearestToTarget or mapTargetBetweenPoints."
+      );
+    }
+
+    if (railPlacementMode === "mapTargetBetweenPoints") {
+      const mappedRailOverrides =
+        railOverrides as MappedRailCameraRigEntityOverrides;
+      const trackStartPoint = cloneVec3(
+        mappedRailOverrides.trackStartPoint ??
+          DEFAULT_CAMERA_RIG_TRACK_START_POINT
+      );
+      const trackEndPoint = cloneVec3(
+        mappedRailOverrides.trackEndPoint ??
+          DEFAULT_CAMERA_RIG_TRACK_END_POINT
+      );
+      const railStartProgress =
+        mappedRailOverrides.railStartProgress ??
+        DEFAULT_CAMERA_RIG_RAIL_START_PROGRESS;
+      const railEndProgress =
+        mappedRailOverrides.railEndProgress ??
+        DEFAULT_CAMERA_RIG_RAIL_END_PROGRESS;
+
+      assertFiniteVec3(trackStartPoint, "Rail Camera Rig track start point");
+      assertFiniteVec3(trackEndPoint, "Rail Camera Rig track end point");
+      assertNonNegativeFiniteNumber(
+        railStartProgress,
+        "Rail Camera Rig start progress"
+      );
+      assertNonNegativeFiniteNumber(
+        railEndProgress,
+        "Rail Camera Rig end progress"
+      );
+
+      if (railStartProgress > 1 || railEndProgress > 1) {
+        throw new Error(
+          "Rail Camera Rig mapped progress values must remain between 0 and 1."
+        );
+      }
+
+      return {
+        ...base,
+        rigType: "rail",
+        pathId: normalizeCameraRigPathId(railOverrides.pathId),
+        railPlacementMode: "mapTargetBetweenPoints",
+        trackStartPoint,
+        trackEndPoint,
+        railStartProgress,
+        railEndProgress
+      };
+    }
 
     return {
       ...base,
       rigType: "rail",
-      pathId: normalizeCameraRigPathId(railOverrides.pathId)
+      pathId: normalizeCameraRigPathId(railOverrides.pathId),
+      railPlacementMode: "nearestToTarget"
     };
   }
 
