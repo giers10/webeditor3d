@@ -3296,6 +3296,13 @@ function readCameraRigEntity(value: unknown, label: string): EntityInstance {
     (candidate): candidate is "cut" | "blend" =>
       typeof candidate === "string" && isCameraRigTransitionMode(candidate)
   );
+  const railPlacementMode = readOptionalAllowedValue(
+    value.railPlacementMode,
+    `${label}.railPlacementMode`,
+    "nearestToTarget",
+    (candidate): candidate is "nearestToTarget" | "mapTargetBetweenPoints" =>
+      isCameraRigRailPlacementMode(candidate)
+  );
   const entity = createCameraRigEntity({
     id: expectString(value.id, `${label}.id`),
     name: readOptionalEntityName(value.name, `${label}.name`),
@@ -3316,7 +3323,34 @@ function readCameraRigEntity(value: unknown, label: string): EntityInstance {
         }
       : {
           rigType: "rail" as const,
-          pathId: expectString(value.pathId, `${label}.pathId`)
+          pathId: expectString(value.pathId, `${label}.pathId`),
+          railPlacementMode,
+          ...(railPlacementMode === "mapTargetBetweenPoints"
+            ? {
+                trackStartPoint:
+                  value.trackStartPoint === undefined
+                    ? undefined
+                    : readVec3(value.trackStartPoint, `${label}.trackStartPoint`),
+                trackEndPoint:
+                  value.trackEndPoint === undefined
+                    ? undefined
+                    : readVec3(value.trackEndPoint, `${label}.trackEndPoint`),
+                railStartProgress:
+                  value.railStartProgress === undefined
+                    ? undefined
+                    : expectNonNegativeFiniteNumber(
+                        value.railStartProgress,
+                        `${label}.railStartProgress`
+                      ),
+                railEndProgress:
+                  value.railEndProgress === undefined
+                    ? undefined
+                    : expectNonNegativeFiniteNumber(
+                        value.railEndProgress,
+                        `${label}.railEndProgress`
+                      )
+              }
+            : {})
         }),
     priority:
       value.priority === undefined
