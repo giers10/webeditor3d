@@ -10623,13 +10623,13 @@ export function App({ store, initialStatusMessage }: AppProps) {
     <div className="form-section">
       <div className="label">Links</div>
       <div className="material-summary">
-        Links now start sequences. Build teleport, dialogue, animation, audio,
-        visibility, and control behavior as sequence effects in the Sequencer,
-        then reference the sequence here.
+        Links can either run a reusable sequence or dispatch a shared control
+        effect directly. Use sequences for multi-step reusable behavior. Use
+        control links for small direct state changes such as camera overrides.
       </div>
       {links.length === 0 ? (
         <div className="outliner-empty">
-          {`No sequence links authored for this ${getInteractionSourceEntityLabel(sourceEntity)} yet.`}
+          {`No links authored for this ${getInteractionSourceEntityLabel(sourceEntity)} yet.`}
         </div>
       ) : (
         <div className="outliner-list">
