@@ -5,6 +5,7 @@ import {
   createActivateCameraRigOverrideControlEffect,
   createActorControlTargetRef,
   createCameraRigControlTargetRef,
+  createClearCameraRigOverrideControlEffect,
   createDefaultResolvedControlSource,
   createEmptyRuntimeResolvedControlState,
   createLightControlTargetRef,
