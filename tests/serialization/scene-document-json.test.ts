@@ -70,6 +70,7 @@ import {
   createTriggerVolumeEntity
 } from "../../src/entities/entity-instances";
 import { createProjectScheduleRoutine } from "../../src/scheduler/project-scheduler";
+import { createProjectSequence } from "../../src/sequencer/project-sequences";
 import {
   createControlInteractionLink,
   createPlayAnimationInteractionLink,
@@ -147,7 +148,7 @@ describe("scene document JSON", () => {
         })
       }
     );
-    document.sequences.sequences["sequence-camera-clear"] = {
+    document.sequences.sequences["sequence-camera-clear"] = createProjectSequence({
       id: "sequence-camera-clear",
       title: "Camera Clear",
       steps: [
@@ -159,7 +160,7 @@ describe("scene document JSON", () => {
           })
         }
       ]
-    };
+    });
     document.scheduler.routines["routine-camera-activate"] =
       createProjectScheduleRoutine({
         id: "routine-camera-activate",
