@@ -188,6 +188,7 @@ describe("buildRuntimeSceneFromDocument", () => {
         priority: 9,
         defaultActive: true,
         pathId: path.id,
+        railPlacementMode: "nearestToTarget",
         target: {
           kind: "entity",
           entityId: interactable.id
@@ -199,6 +200,111 @@ describe("buildRuntimeSceneFromDocument", () => {
         },
         transitionMode: "cut",
         transitionDurationSeconds: 0.35,
+        lookAround: {
+          enabled: true,
+          yawLimitDegrees: 12,
+          pitchLimitDegrees: 8,
+          recenterSpeed: 3.5
+        }
+      }
+    ]);
+  });
+
+  it("builds mapped rail camera rigs into runtime entities", () => {
+    const interactable = createInteractableEntity({
+      id: "entity-interactable-mapped-rail-anchor",
+      position: {
+        x: 2,
+        y: 1,
+        z: 2
+      },
+      prompt: "Anchor"
+    });
+    const path = createScenePath({
+      id: "path-camera-rail-mapped",
+      points: [
+        {
+          id: "point-a",
+          position: {
+            x: 0,
+            y: 3,
+            z: 0
+          }
+        },
+        {
+          id: "point-b",
+          position: {
+            x: 10,
+            y: 3,
+            z: 0
+          }
+        }
+      ]
+    });
+    const cameraRig = createCameraRigEntity({
+      id: "entity-camera-rig-rail-mapped",
+      rigType: "rail",
+      pathId: path.id,
+      railPlacementMode: "mapTargetBetweenPoints",
+      trackStartPoint: {
+        x: 0,
+        y: 1,
+        z: 2
+      },
+      trackEndPoint: {
+        x: 10,
+        y: 1,
+        z: 2
+      },
+      railStartProgress: 0.2,
+      railEndProgress: 0.8,
+      target: createCameraRigEntityTargetRef(interactable.id),
+      transitionMode: "blend",
+      transitionDurationSeconds: 0.5
+    });
+
+    const runtimeScene = buildRuntimeSceneFromDocument({
+      ...createEmptySceneDocument({ name: "Mapped Rail Camera Rig Runtime Scene" }),
+      paths: {
+        [path.id]: path
+      },
+      entities: {
+        [interactable.id]: interactable,
+        [cameraRig.id]: cameraRig
+      }
+    });
+
+    expect(runtimeScene.entities.cameraRigs).toEqual([
+      {
+        entityId: cameraRig.id,
+        rigType: "rail",
+        priority: 0,
+        defaultActive: true,
+        pathId: path.id,
+        railPlacementMode: "mapTargetBetweenPoints",
+        trackStartPoint: {
+          x: 0,
+          y: 1,
+          z: 2
+        },
+        trackEndPoint: {
+          x: 10,
+          y: 1,
+          z: 2
+        },
+        railStartProgress: 0.2,
+        railEndProgress: 0.8,
+        target: {
+          kind: "entity",
+          entityId: interactable.id
+        },
+        targetOffset: {
+          x: 0,
+          y: 1.6,
+          z: 0
+        },
+        transitionMode: "blend",
+        transitionDurationSeconds: 0.5,
         lookAround: {
           enabled: true,
           yawLimitDegrees: 12,
