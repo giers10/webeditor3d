@@ -8724,6 +8724,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     overrides: {
       rigType?: CameraRigType;
       pathId?: string;
+      railPlacementMode?: CameraRigRailPlacementMode;
       defaultActive?: boolean;
       targetKind?: CameraRigTargetKind;
       transitionMode?: CameraRigTransitionMode;
@@ -8741,6 +8742,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
         (overrides.pathId ?? cameraRigPathIdDraft).trim() ||
         cameraRigPathOptions[0]?.path.id ||
         "";
+      const railPlacementMode =
+        overrides.railPlacementMode ?? cameraRigRailPlacementModeDraft;
       const targetKind = overrides.targetKind ?? cameraRigTargetKindDraft;
       const targetActorId =
         cameraRigTargetActorIdDraft.trim() || cameraRigActorOptions[0] || "";
@@ -8765,6 +8768,20 @@ export function App({ store, initialStatusMessage }: AppProps) {
         readVec3Draft(entityPositionDraft, "Camera Rig position"),
         DEFAULT_GRID_SIZE
       );
+      const railStartProgress = readNonNegativeNumberDraft(
+        cameraRigRailStartProgressDraft,
+        "Camera Rig rail start progress"
+      );
+      const railEndProgress = readNonNegativeNumberDraft(
+        cameraRigRailEndProgressDraft,
+        "Camera Rig rail end progress"
+      );
+
+      if (railStartProgress > 1 || railEndProgress > 1) {
+        throw new Error(
+          "Camera Rig mapped rail progress values must remain between 0 and 1."
+        );
+      }
 
       const nextEntity = createCameraRigEntity({
         id: selectedCameraRig.id,
@@ -8776,10 +8793,27 @@ export function App({ store, initialStatusMessage }: AppProps) {
               rigType: "fixed" as const,
               position: fixedPosition
             }
-          : {
-              rigType: "rail" as const,
-              pathId
-            }),
+          : railPlacementMode === "mapTargetBetweenPoints"
+            ? {
+                rigType: "rail" as const,
+                pathId,
+                railPlacementMode: "mapTargetBetweenPoints" as const,
+                trackStartPoint: readVec3Draft(
+                  cameraRigTrackStartPointDraft,
+                  "Camera Rig track start point"
+                ),
+                trackEndPoint: readVec3Draft(
+                  cameraRigTrackEndPointDraft,
+                  "Camera Rig track end point"
+                ),
+                railStartProgress,
+                railEndProgress
+              }
+            : {
+                rigType: "rail" as const,
+                pathId,
+                railPlacementMode: "nearestToTarget" as const
+              }),
         priority: readNonNegativeNumberDraft(
           cameraRigPriorityDraft,
           "Camera Rig priority"
