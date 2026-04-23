@@ -2,8 +2,11 @@ import type { ProjectDocument, ProjectScene } from "../document/scene-document";
 import { getScenePathLabel, getScenePaths } from "../document/paths";
 import {
   createActiveSceneControlTargetRef,
+  createActivateCameraRigOverrideControlEffect,
   createFollowActorPathControlEffect,
   createActorControlTargetRef,
+  createCameraRigControlTargetRef,
+  createClearCameraRigOverrideControlEffect,
   createInteractionControlTargetRef,
   createLightControlTargetRef,
   createModelInstanceControlTargetRef,
@@ -36,6 +39,8 @@ import { getSortedEntityDisplayLabels } from "../entities/entity-labels";
 import { listProjectNpcActors } from "../entities/npc-actor-registry";
 
 export const PROJECT_SCHEDULE_EFFECT_OPTION_IDS = [
+  "camera.activate",
+  "camera.clear",
   "actor.present",
   "actor.hidden",
   "actor.playAnimation",
@@ -105,18 +110,29 @@ export interface ProjectScheduleTargetOption {
 const PROJECT_SCHEDULE_GROUP_ORDER: Record<string, number> = {
   Project: 0,
   "Scene Lighting": 1,
-  Actors: 2,
-  "Model Instances": 3,
-  "Sound Emitters": 4,
-  Interactions: 5,
-  Lights: 6,
-  Other: 7
+  "Camera Rigs": 2,
+  Actors: 3,
+  "Model Instances": 4,
+  "Sound Emitters": 5,
+  Interactions: 6,
+  Lights: 7,
+  Other: 8
 };
 
 const PROJECT_SCHEDULE_EFFECT_OPTIONS: Record<
   ProjectScheduleEffectOptionId,
   ProjectScheduleEffectOption
 > = {
+  "camera.activate": {
+    id: "camera.activate",
+    label: "Activate Camera Override",
+    valueKind: "none"
+  },
+  "camera.clear": {
+    id: "camera.clear",
+    label: "Clear Camera Override",
+    valueKind: "none"
+  },
   "actor.present": {
     id: "actor.present",
     label: "Present",
@@ -415,6 +431,19 @@ export function listProjectScheduleTargetOptions(
           });
           break;
         }
+        case "cameraRig": {
+          const target = createCameraRigControlTargetRef(entity.id);
+
+          pushOption({
+            key: getControlTargetRefKey(target),
+            target,
+            label,
+            subtitle: getSceneTargetSubtitle(scene),
+            groupLabel: "Camera Rigs",
+            defaults: {}
+          });
+          break;
+        }
         case "interactable": {
           const target = createInteractionControlTargetRef("interactable", entity.id);
 
@@ -518,6 +547,13 @@ export function listProjectScheduleEffectOptions(
       return options;
     }
     case "entity":
+      if (targetOption.target.entityKind === "cameraRig") {
+        return [
+          PROJECT_SCHEDULE_EFFECT_OPTIONS["camera.activate"],
+          PROJECT_SCHEDULE_EFFECT_OPTIONS["camera.clear"]
+        ];
+      }
+
       if (targetOption.target.entityKind === "soundEmitter") {
         return [
           PROJECT_SCHEDULE_EFFECT_OPTIONS["sound.play"],
@@ -553,6 +589,9 @@ export function getProjectSequenceControlStepClassForEffectOptionId(
   effectOptionId: ProjectScheduleEffectOptionId
 ): "held" | "impulse" {
   switch (effectOptionId) {
+    case "camera.activate":
+    case "camera.clear":
+      return "held";
     case "model.playAnimation":
     case "model.stopAnimation":
     case "sound.play":
@@ -587,6 +626,10 @@ export function getProjectScheduleEffectOptionId(
       throw new Error(
         "Project time pause is intentionally not exposed in the schedule editor because a scheduler routine cannot safely pause its own project clock."
       );
+    case "activateCameraRigOverride":
+      return "camera.activate";
+    case "clearCameraRigOverride":
+      return "camera.clear";
     case "setActorPresence":
       return effect.active ? "actor.present" : "actor.hidden";
     case "playActorAnimation":
@@ -633,6 +676,18 @@ export function createProjectScheduleEffectFromOption(options: {
   const { targetOption } = options;
 
   switch (options.effectOptionId) {
+    case "camera.activate":
+      return createActivateCameraRigOverrideControlEffect({
+        target: createCameraRigControlTargetRef(
+          (targetOption.target as ReturnType<typeof createCameraRigControlTargetRef>).entityId
+        )
+      });
+    case "camera.clear":
+      return createClearCameraRigOverrideControlEffect({
+        target: createCameraRigControlTargetRef(
+          (targetOption.target as ReturnType<typeof createCameraRigControlTargetRef>).entityId
+        )
+      });
     case "actor.present":
       return createSetActorPresenceControlEffect({
         target: createActorControlTargetRef(
