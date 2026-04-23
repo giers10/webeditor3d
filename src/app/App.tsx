@@ -11053,7 +11053,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           <select
                             data-testid={`interaction-link-control-effect-${link.id}`}
                             className="select-input"
-                            value={effectOptionId}
+                            value={selectedEffectOption.id}
                             onChange={(event) =>
                               updateControlInteractionLinkEffectOption(
                                 link,
