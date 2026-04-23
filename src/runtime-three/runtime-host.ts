@@ -745,9 +745,11 @@ export class RuntimeHost {
     this.cameraRigLookDragging = false;
     this.cameraRigLookYawRadians = 0;
     this.cameraRigLookPitchRadians = 0;
+    this.activeCameraSourceKey = null;
     this.activeRuntimeCameraRig = null;
     this.activeRuntimeCameraRigId = null;
-    this.cameraRigBlendState = null;
+    this.cameraTransitionState = null;
+    this.suppressNextCameraSourceTransition = true;
     this.pressedKeys.clear();
     this.publishRuntimePauseState(true);
     this.currentPlayerControllerTelemetry = null;
@@ -823,11 +825,6 @@ export class RuntimeHost {
     }
 
     this.activeCameraRigOverrideEntityId = nextEntityId;
-    this.activeRuntimeCameraRig = null;
-    this.activeRuntimeCameraRigId = null;
-    this.cameraRigBlendState = null;
-    this.cameraRigLookYawRadians = 0;
-    this.cameraRigLookPitchRadians = 0;
   }
 
   setRuntimeMessageHandler(handler: ((message: string | null) => void) | null) {
@@ -981,9 +978,11 @@ export class RuntimeHost {
     this.cameraRigLookDragging = false;
     this.cameraRigLookYawRadians = 0;
     this.cameraRigLookPitchRadians = 0;
+    this.activeCameraSourceKey = null;
     this.activeRuntimeCameraRig = null;
     this.activeRuntimeCameraRigId = null;
-    this.cameraRigBlendState = null;
+    this.cameraTransitionState = null;
+    this.suppressNextCameraSourceTransition = false;
     this.pressedKeys.clear();
     this.publishRuntimePauseState(true);
     if (this.renderer !== null) {
