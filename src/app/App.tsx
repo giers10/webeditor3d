@@ -2394,6 +2394,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const projectScheduleTargetOptions = listProjectScheduleTargetOptions(
     editorState.projectDocument
   );
+  const interactionControlTargetOptions =
+    listProjectInteractionControlTargetOptions(projectScheduleTargetOptions);
   const selectedTeleportTarget =
     selectedEntity?.kind === "teleportTarget" ? selectedEntity : null;
   const selectedInteractable =
