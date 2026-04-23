@@ -2538,6 +2538,25 @@ export function App({ store, initialStatusMessage }: AppProps) {
     path,
     label: getScenePathLabel(path, index)
   }));
+  const getCameraRigPathById = (pathId: string) =>
+    editorState.document.paths[pathId] ??
+    cameraRigPathOptions[0]?.path ??
+    null;
+  const getDefaultCameraRigRailMappingDraft = (pathId: string) => {
+    const authoredPath = getCameraRigPathById(pathId);
+    const startPoint =
+      authoredPath?.points[0]?.position ?? DEFAULT_CAMERA_RIG_TRACK_START_POINT;
+    const endPoint =
+      authoredPath?.points[authoredPath.points.length - 1]?.position ??
+      DEFAULT_CAMERA_RIG_TRACK_END_POINT;
+
+    return {
+      trackStartPoint: createVec3Draft(startPoint),
+      trackEndPoint: createVec3Draft(endPoint),
+      railStartProgress: String(DEFAULT_CAMERA_RIG_RAIL_START_PROGRESS),
+      railEndProgress: String(DEFAULT_CAMERA_RIG_RAIL_END_PROGRESS)
+    };
+  };
   const playableSoundEmitterOptions = soundEmitterOptions.filter(
     ({ entity }) => {
       if (entity.audioAssetId === null) {
