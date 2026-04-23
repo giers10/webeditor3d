@@ -1395,6 +1395,11 @@ export function getControlEffectResolutionKey(effect: ControlEffect): string {
   switch (effect.type) {
     case "setProjectTimePaused":
       return `state:projectTimePaused:${getControlTargetRefKey(effect.target)}`;
+    case "activateCameraRigOverride":
+    case "clearCameraRigOverride":
+      return `state:cameraRigOverride:${getControlTargetRefKey(
+        createProjectGlobalControlTargetRef()
+      )}`;
     case "setActorPresence":
       return `state:actorPresence:${getControlTargetRefKey(effect.target)}`;
     case "playActorAnimation":
@@ -1514,6 +1519,16 @@ export function cloneControlEffect<TEffect extends ControlEffect>(
         type: "setProjectTimePaused",
         target: cloneControlTargetRef(effect.target),
         paused: effect.paused
+      } as TEffect;
+    case "activateCameraRigOverride":
+      return {
+        type: "activateCameraRigOverride",
+        target: cloneControlTargetRef(effect.target)
+      } as TEffect;
+    case "clearCameraRigOverride":
+      return {
+        type: "clearCameraRigOverride",
+        target: cloneControlTargetRef(effect.target)
       } as TEffect;
     case "setActorPresence":
       return {
@@ -1668,6 +1683,12 @@ export function cloneRuntimeResolvedDiscreteControlState<
         value: state.value,
         source: state.source
       }) as TState;
+    case "cameraRigOverride":
+      return createResolvedCameraRigOverrideState({
+        target: state.target,
+        entityId: state.entityId,
+        source: state.source
+      }) as TState;
     case "actorPresence":
       return createResolvedActorPresenceState({
         target: state.target,
@@ -1813,6 +1834,9 @@ export function areControlEffectsEqual(
   switch (left.type) {
     case "setProjectTimePaused":
       return left.paused === (right as SetProjectTimePausedControlEffect).paused;
+    case "activateCameraRigOverride":
+    case "clearCameraRigOverride":
+      return true;
     case "setActorPresence":
       return left.active === (right as SetActorPresenceControlEffect).active;
     case "playActorAnimation":
@@ -1880,6 +1904,10 @@ export function getControlEffectLabel(effect: ControlEffect): string {
   switch (effect.type) {
     case "setProjectTimePaused":
       return "Set Project Time Paused";
+    case "activateCameraRigOverride":
+      return "Activate Camera Rig Override";
+    case "clearCameraRigOverride":
+      return "Clear Camera Rig Override";
     case "setActorPresence":
       return "Set Actor Presence";
     case "playActorAnimation":
@@ -1938,6 +1966,8 @@ function formatTargetKindLabel(
   kind: ControlEntityTargetKind | ControlInteractionTargetKind
 ): string {
   switch (kind) {
+    case "cameraRig":
+      return "Camera Rig";
     case "pointLight":
       return "Point Light";
     case "spotLight":
@@ -1953,6 +1983,10 @@ export function formatControlEffectValue(effect: ControlEffect): string {
   switch (effect.type) {
     case "setProjectTimePaused":
       return effect.paused ? "Paused" : "Running";
+    case "activateCameraRigOverride":
+      return "Activate";
+    case "clearCameraRigOverride":
+      return "Return to Normal";
     case "setActorPresence":
       return effect.active ? "Present" : "Hidden";
     case "playActorAnimation":
@@ -1997,6 +2031,7 @@ export function applyControlEffectToResolvedState(
   source: RuntimeResolvedControlSource
 ): RuntimeResolvedControlState {
   const nextResolved = cloneRuntimeResolvedControlState(resolved);
+  const globalTarget = createProjectGlobalControlTargetRef();
 
   switch (effect.type) {
     case "setProjectTimePaused":
@@ -2005,6 +2040,26 @@ export function applyControlEffectToResolvedState(
         createResolvedProjectTimePausedState({
           target: effect.target,
           value: effect.paused,
+          source
+        })
+      );
+      return nextResolved;
+    case "activateCameraRigOverride":
+      upsertResolvedDiscreteState(
+        nextResolved,
+        createResolvedCameraRigOverrideState({
+          target: globalTarget,
+          entityId: effect.target.entityId,
+          source
+        })
+      );
+      return nextResolved;
+    case "clearCameraRigOverride":
+      upsertResolvedDiscreteState(
+        nextResolved,
+        createResolvedCameraRigOverrideState({
+          target: globalTarget,
+          entityId: null,
           source
         })
       );
