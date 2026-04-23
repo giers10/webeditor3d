@@ -8,8 +8,10 @@ import {
 import { normalizeTimeOfDayHours } from "../document/project-time-settings";
 import { isHexColorString } from "../document/world-settings";
 import {
+  mapWorldPointToScenePathProgressBetweenPoints,
   resolveNearestPointOnResolvedScenePath,
   resolveScenePath,
+  sampleResolvedScenePathPosition,
   type ScenePath
 } from "../document/paths";
 
@@ -66,6 +68,12 @@ export type CameraRigTargetKind = (typeof CAMERA_RIG_TARGET_KINDS)[number];
 export const CAMERA_RIG_TRANSITION_MODES = ["cut", "blend"] as const;
 export type CameraRigTransitionMode =
   (typeof CAMERA_RIG_TRANSITION_MODES)[number];
+export const CAMERA_RIG_RAIL_PLACEMENT_MODES = [
+  "nearestToTarget",
+  "mapTargetBetweenPoints"
+] as const;
+export type CameraRigRailPlacementMode =
+  (typeof CAMERA_RIG_RAIL_PLACEMENT_MODES)[number];
 
 export interface CameraRigPlayerTargetRef {
   kind: "player";
@@ -116,10 +124,27 @@ export interface FixedCameraRigEntity
   rigType: "fixed";
 }
 
-export interface RailCameraRigEntity extends CameraRigBaseEntity {
+interface RailCameraRigBaseEntity extends CameraRigBaseEntity {
   rigType: "rail";
   pathId: string;
+  railPlacementMode: CameraRigRailPlacementMode;
 }
+
+export interface NearestRailCameraRigEntity extends RailCameraRigBaseEntity {
+  railPlacementMode: "nearestToTarget";
+}
+
+export interface MappedRailCameraRigEntity extends RailCameraRigBaseEntity {
+  railPlacementMode: "mapTargetBetweenPoints";
+  trackStartPoint: Vec3;
+  trackEndPoint: Vec3;
+  railStartProgress: number;
+  railEndProgress: number;
+}
+
+export type RailCameraRigEntity =
+  | NearestRailCameraRigEntity
+  | MappedRailCameraRigEntity;
 
 export type CameraRigEntity = FixedCameraRigEntity | RailCameraRigEntity;
 
