@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  createActivateCameraRigOverrideControlEffect,
   createActorControlTargetRef,
+  createCameraRigControlTargetRef,
+  createClearCameraRigOverrideControlEffect,
   createFollowActorPathControlEffect,
   createPlayActorAnimationControlEffect
 } from "../../src/controls/control-surface";
@@ -30,11 +33,29 @@ describe("project schedule control options", () => {
     }
   };
 
+  const cameraRigTargetOption: ProjectScheduleTargetOption = {
+    key: "entity:cameraRig:entity-camera-rig-main",
+    target: createCameraRigControlTargetRef("entity-camera-rig-main"),
+    label: "Overlook Camera",
+    subtitle: "Scene",
+    groupLabel: "Camera Rigs",
+    defaults: {}
+  };
+
   it("lists actor animation and path as normal effect options", () => {
     expect(listProjectScheduleEffectOptions(actorTargetOption)).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ id: "actor.playAnimation" }),
         expect.objectContaining({ id: "actor.followPath" })
+      ])
+    );
+  });
+
+  it("lists camera override options for camera rig targets", () => {
+    expect(listProjectScheduleEffectOptions(cameraRigTargetOption)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: "camera.activate" }),
+        expect.objectContaining({ id: "camera.clear" })
       ])
     );
   });
@@ -87,5 +108,32 @@ describe("project schedule control options", () => {
         smoothPath: false
       })
     );
+  });
+
+  it("roundtrips camera override effects through option ids", () => {
+    const activateEffect = createActivateCameraRigOverrideControlEffect({
+      target: createCameraRigControlTargetRef("entity-camera-rig-main")
+    });
+    const clearEffect = createClearCameraRigOverrideControlEffect({
+      target: createCameraRigControlTargetRef("entity-camera-rig-main")
+    });
+
+    expect(getProjectScheduleEffectOptionId(activateEffect)).toBe(
+      "camera.activate"
+    );
+    expect(getProjectScheduleEffectOptionId(clearEffect)).toBe("camera.clear");
+
+    expect(
+      createProjectScheduleEffectFromOption({
+        targetOption: cameraRigTargetOption,
+        effectOptionId: "camera.activate"
+      })
+    ).toEqual(activateEffect);
+    expect(
+      createProjectScheduleEffectFromOption({
+        targetOption: cameraRigTargetOption,
+        effectOptionId: "camera.clear"
+      })
+    ).toEqual(clearEffect);
   });
 });
