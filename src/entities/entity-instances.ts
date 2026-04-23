@@ -951,16 +951,37 @@ export function resolveCameraRigDocumentPosition(
       );
 
       if (baseTarget === null) {
-        return options.fallbackToPathStart === true &&
-          resolvedPath.points.length > 0
-          ? cloneVec3(resolvedPath.points[0]!.position)
-          : null;
+        if (options.fallbackToPathStart !== true) {
+          return null;
+        }
+
+        return rig.railPlacementMode === "mapTargetBetweenPoints"
+          ? sampleResolvedScenePathPosition(
+              resolvedPath,
+              rig.railStartProgress
+            )
+          : resolvedPath.points.length > 0
+            ? cloneVec3(resolvedPath.points[0]!.position)
+            : null;
       }
 
-      return resolveNearestPointOnResolvedScenePath(
-        resolvedPath,
-        baseTarget
-      ).position;
+      if (rig.railPlacementMode === "mapTargetBetweenPoints") {
+        const mappedProgress = mapWorldPointToScenePathProgressBetweenPoints({
+          point: baseTarget,
+          trackStartPoint: rig.trackStartPoint,
+          trackEndPoint: rig.trackEndPoint,
+          railStartProgress: rig.railStartProgress,
+          railEndProgress: rig.railEndProgress
+        });
+
+        return sampleResolvedScenePathPosition(
+          resolvedPath,
+          mappedProgress.railProgress
+        );
+      }
+
+      return resolveNearestPointOnResolvedScenePath(resolvedPath, baseTarget)
+        .position;
     }
   }
 }
