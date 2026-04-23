@@ -10694,6 +10694,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       }
                     >
                       <option value="runSequence">Run Sequence</option>
+                      <option value="control">Control Effect</option>
                       {isLegacyInteractionActionType(link.action.type) ? (
                         <option value={link.action.type}>
                           {getInteractionActionLabel(link)} (Legacy)
