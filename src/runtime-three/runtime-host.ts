@@ -1427,77 +1427,35 @@ export class RuntimeHost {
     this.playerControllerTelemetryHandler?.(nextTelemetry);
   }
 
-  private applyActiveCameraRig(dt: number) {
-    const nextRig = this.resolveActiveRuntimeCameraRig();
+  private captureCurrentCameraPose(): RuntimeCameraPose {
+    const position = this.camera.position.clone();
+    const lookTarget = position
+      .clone()
+      .add(this.camera.getWorldDirection(this.cameraForward));
 
-    if (nextRig === null) {
-      this.activeRuntimeCameraRig = null;
-      this.activeRuntimeCameraRigId = null;
-      this.cameraRigBlendState = null;
-      this.cameraRigLookDragging = false;
-      this.cameraRigLookYawRadians = dampScalar(
-        this.cameraRigLookYawRadians,
-        0,
-        8,
-        dt
-      );
-      this.cameraRigLookPitchRadians = dampScalar(
-        this.cameraRigLookPitchRadians,
-        0,
-        8,
-        dt
-      );
-      return null;
-    }
+    return {
+      position,
+      lookTarget
+    };
+  }
 
-    const nextLookTarget = this.resolveRuntimeCameraRigLookTarget(nextRig);
-    const nextPosition = this.resolveRuntimeCameraRigPosition(nextRig);
+  private applyCameraPose(pose: RuntimeCameraPose) {
+    this.camera.position.copy(pose.position);
+    this.camera.lookAt(pose.lookTarget);
+  }
+
+  private resolveRuntimeCameraRigPose(
+    rig: RuntimeCameraRig,
+    dt: number
+  ): RuntimeCameraPose | null {
+    const nextLookTarget = this.resolveRuntimeCameraRigLookTarget(rig);
+    const nextPosition = this.resolveRuntimeCameraRigPosition(rig);
 
     if (nextLookTarget === null || nextPosition === null) {
-      this.activeRuntimeCameraRig = null;
-      this.activeRuntimeCameraRigId = null;
-      this.cameraRigBlendState = null;
-      this.cameraRigLookDragging = false;
       return null;
     }
 
-    if (this.activeRuntimeCameraRigId !== nextRig.entityId) {
-      this.activeRuntimeCameraRigId = nextRig.entityId;
-      this.activeRuntimeCameraRig = nextRig;
-      this.cameraRigLookDragging = false;
-      this.cameraRigLookYawRadians = 0;
-      this.cameraRigLookPitchRadians = 0;
-
-      if (
-        nextRig.transitionMode === "blend" &&
-        nextRig.transitionDurationSeconds > 0
-      ) {
-        this.cameraRigBlendState = {
-          durationSeconds: nextRig.transitionDurationSeconds,
-          elapsedSeconds: 0,
-          fromPosition: this.camera.position.clone(),
-          fromLookTarget: this.camera.position
-            .clone()
-            .add(this.camera.getWorldDirection(this.cameraRigForward)),
-          toPosition: new Vector3(
-            nextPosition.x,
-            nextPosition.y,
-            nextPosition.z
-          ),
-          toLookTarget: new Vector3(
-            nextLookTarget.x,
-            nextLookTarget.y,
-            nextLookTarget.z
-          )
-        };
-      } else {
-        this.cameraRigBlendState = null;
-      }
-    }
-
-    this.activeRuntimeCameraRig = nextRig;
-
-    this.updateRuntimeCameraRigLookState(nextRig, dt);
+    this.updateRuntimeCameraRigLookState(rig, dt);
 
     const authoredPosition = new Vector3(
       nextPosition.x,
@@ -1535,42 +1493,156 @@ export class RuntimeHost {
       Math.sin(lookPitchRadians),
       Math.cos(lookYawRadians) * Math.cos(lookPitchRadians)
     );
-    const lookTarget = authoredPosition.clone().add(lookDirection);
 
-    if (this.cameraRigBlendState !== null) {
-      this.cameraRigBlendState.elapsedSeconds = Math.min(
-        this.cameraRigBlendState.durationSeconds,
-        this.cameraRigBlendState.elapsedSeconds + dt
-      );
-      this.cameraRigBlendState.toPosition.copy(authoredPosition);
-      this.cameraRigBlendState.toLookTarget.copy(lookTarget);
-      const blendT =
-        this.cameraRigBlendState.durationSeconds <= 0
-          ? 1
-          : this.cameraRigBlendState.elapsedSeconds /
-            this.cameraRigBlendState.durationSeconds;
+    return {
+      position: authoredPosition,
+      lookTarget: authoredPosition.clone().add(lookDirection)
+    };
+  }
 
-      this.camera.position.lerpVectors(
-        this.cameraRigBlendState.fromPosition,
-        this.cameraRigBlendState.toPosition,
-        blendT
-      );
-      this.cameraRigLookTarget.lerpVectors(
-        this.cameraRigBlendState.fromLookTarget,
-        this.cameraRigBlendState.toLookTarget,
-        blendT
-      );
-      this.camera.lookAt(this.cameraRigLookTarget);
+  private createRuntimeCameraSourceKey(
+    rig: RuntimeCameraRig | null
+  ): RuntimeCameraSourceKey {
+    return rig === null ? "gameplay" : `rig:${rig.entityId}`;
+  }
 
-      if (blendT >= 1) {
-        this.cameraRigBlendState = null;
-      }
-    } else {
-      this.camera.position.copy(authoredPosition);
-      this.camera.lookAt(lookTarget);
+  private resolveRuntimeCameraTransitionSettings(
+    previousRig: RuntimeCameraRig | null,
+    nextRig: RuntimeCameraRig | null
+  ) {
+    if (this.suppressNextCameraSourceTransition) {
+      return {
+        mode: "cut" as const,
+        durationSeconds: 0
+      };
     }
 
-    this.syncCameraRigTelemetryHooks();
+    const transitionRig = nextRig ?? previousRig;
+
+    return transitionRig === null
+      ? {
+          mode: "cut" as const,
+          durationSeconds: 0
+        }
+      : {
+          mode: transitionRig.transitionMode,
+          durationSeconds: transitionRig.transitionDurationSeconds
+        };
+  }
+
+  private applyActiveCameraRig(
+    dt: number,
+    previousCameraPose: RuntimeCameraPose = this.captureCurrentCameraPose()
+  ) {
+    const previousRig = this.activeRuntimeCameraRig;
+    let nextRig = this.resolveActiveRuntimeCameraRig();
+    let nextSourceKey = this.createRuntimeCameraSourceKey(nextRig);
+    let sourceChanged = this.activeCameraSourceKey !== nextSourceKey;
+
+    if (sourceChanged) {
+      this.cameraRigLookDragging = false;
+      this.cameraRigLookYawRadians = 0;
+      this.cameraRigLookPitchRadians = 0;
+    }
+
+    let targetPose =
+      nextRig === null ? null : this.resolveRuntimeCameraRigPose(nextRig, dt);
+
+    if (targetPose === null) {
+      nextRig = null;
+      nextSourceKey = "gameplay";
+      sourceChanged = this.activeCameraSourceKey !== nextSourceKey;
+      this.cameraRigLookDragging = false;
+      this.cameraRigLookYawRadians = dampScalar(
+        this.cameraRigLookYawRadians,
+        0,
+        8,
+        dt
+      );
+      this.cameraRigLookPitchRadians = dampScalar(
+        this.cameraRigLookPitchRadians,
+        0,
+        8,
+        dt
+      );
+      targetPose = this.captureCurrentCameraPose();
+    }
+
+    if (sourceChanged) {
+      const transitionSettings = this.resolveRuntimeCameraTransitionSettings(
+        previousRig,
+        nextRig
+      );
+
+      if (
+        transitionSettings.mode === "blend" &&
+        transitionSettings.durationSeconds > 0
+      ) {
+        this.cameraTransitionState = {
+          durationSeconds: transitionSettings.durationSeconds,
+          elapsedSeconds: 0,
+          fromPose: {
+            position: previousCameraPose.position.clone(),
+            lookTarget: previousCameraPose.lookTarget.clone()
+          },
+          toPose: {
+            position: targetPose.position.clone(),
+            lookTarget: targetPose.lookTarget.clone()
+          },
+          destinationSourceKey: nextSourceKey
+        };
+      } else {
+        this.cameraTransitionState = null;
+      }
+
+      this.activeCameraSourceKey = nextSourceKey;
+      this.suppressNextCameraSourceTransition = false;
+    }
+
+    this.activeRuntimeCameraRig = nextRig;
+    this.activeRuntimeCameraRigId = nextRig?.entityId ?? null;
+
+    if (
+      this.cameraTransitionState !== null &&
+      this.cameraTransitionState.destinationSourceKey === nextSourceKey
+    ) {
+      this.cameraTransitionState.elapsedSeconds = Math.min(
+        this.cameraTransitionState.durationSeconds,
+        this.cameraTransitionState.elapsedSeconds + dt
+      );
+      this.cameraTransitionState.toPose.position.copy(targetPose.position);
+      this.cameraTransitionState.toPose.lookTarget.copy(targetPose.lookTarget);
+      const blendT =
+        this.cameraTransitionState.durationSeconds <= 0
+          ? 1
+          : this.cameraTransitionState.elapsedSeconds /
+            this.cameraTransitionState.durationSeconds;
+      const blendedPosition = this.cameraRigForward.lerpVectors(
+        this.cameraTransitionState.fromPose.position,
+        this.cameraTransitionState.toPose.position,
+        blendT
+      );
+      const blendedLookTarget = this.cameraRigLookTarget.lerpVectors(
+        this.cameraTransitionState.fromPose.lookTarget,
+        this.cameraTransitionState.toPose.lookTarget,
+        blendT
+      );
+
+      this.camera.position.copy(blendedPosition);
+      this.camera.lookAt(blendedLookTarget);
+
+      if (blendT >= 1) {
+        this.cameraTransitionState = null;
+      }
+    } else {
+      this.cameraTransitionState = null;
+      this.applyCameraPose(targetPose);
+    }
+
+    if (nextRig !== null) {
+      this.syncCameraRigTelemetryHooks();
+    }
+
     return nextRig;
   }
 
