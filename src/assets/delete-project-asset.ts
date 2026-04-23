@@ -23,6 +23,8 @@ function removeInvalidatedInteractionLinks(
         case "control":
           switch (link.action.effect.type) {
             case "setProjectTimePaused":
+            case "activateCameraRigOverride":
+            case "clearCameraRigOverride":
             case "setActorPresence":
             case "playActorAnimation":
             case "followActorPath":
