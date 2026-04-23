@@ -11201,6 +11201,13 @@ export function App({ store, initialStatusMessage }: AppProps) {
         <button
           className="toolbar__button"
           type="button"
+          onClick={handleAddControlInteractionLink}
+        >
+          Add Control Link
+        </button>
+        <button
+          className="toolbar__button"
+          type="button"
           onClick={() => openSequencerSequenceEditor()}
         >
           Open Sequence Editor
