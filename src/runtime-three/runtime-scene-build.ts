@@ -5,6 +5,7 @@ import {
   createActorControlTargetRef,
   createActiveSceneControlTargetRef,
   createAmbientLightIntensityControlChannelDescriptor,
+  createCameraRigControlTargetRef,
   createControlTargetDescriptor,
   createDefaultResolvedControlSource,
   createEmptyRuntimeResolvedControlState,
@@ -17,6 +18,7 @@ import {
   createResolvedActorAnimationPlaybackState,
   createResolvedActorPathAssignmentState,
   createResolvedAmbientLightIntensityChannelValue,
+  createResolvedCameraRigOverrideState,
   createResolvedInteractionEnabledState,
   createResolvedLightColorState,
   createResolvedLightEnabledState,
@@ -1237,6 +1239,11 @@ function buildRuntimeControlSurface(
       target: globalTarget,
       value: false,
       source: defaultSource
+    }),
+    createResolvedCameraRigOverrideState({
+      target: globalTarget,
+      entityId: null,
+      source: defaultSource
     })
   );
 
@@ -1318,6 +1325,15 @@ function buildRuntimeControlSurface(
         progressMode: null,
         source: defaultSource
       })
+    );
+  }
+
+  for (const cameraRig of collections.entities.cameraRigs) {
+    targets.push(
+      createControlTargetDescriptor(
+        createCameraRigControlTargetRef(cameraRig.entityId),
+        ["cameraRigOverride"]
+      )
     );
   }
 
