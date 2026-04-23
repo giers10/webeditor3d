@@ -37,6 +37,8 @@ function applyResolvedDiscreteControlStateToRuntimeScene(
   state: RuntimeResolvedDiscreteControlState
 ) {
   switch (state.type) {
+    case "projectTimePaused":
+    case "cameraRigOverride":
     case "actorPresence":
     case "actorAnimationPlayback":
     case "actorPathAssignment":
