@@ -1583,7 +1583,7 @@ function getInteractionActionLabel(link: InteractionLink): string {
 function isLegacyInteractionActionType(
   actionType: InteractionLink["action"]["type"]
 ): boolean {
-  return actionType !== "runSequence";
+  return actionType !== "runSequence" && actionType !== "control";
 }
 
 function getVisibilityModeSelectValue(
