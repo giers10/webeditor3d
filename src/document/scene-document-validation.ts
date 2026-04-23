@@ -23,6 +23,7 @@ import {
 } from "../controls/control-surface";
 import { WHITEBOX_SELECTION_MODES } from "../core/whitebox-selection-mode";
 import {
+  isCameraRigRailPlacementMode,
   isCameraRigTransitionMode,
   isNpcPresenceMode,
   isPlayerStartColliderMode,
@@ -1556,6 +1557,61 @@ function validateCameraRigEntity(
             "disabled-camera-rig-path",
             "Rail Camera Rigs require an enabled authored path.",
             `${path}.pathId`
+          )
+        );
+      }
+    }
+
+    if (!isCameraRigRailPlacementMode(entity.railPlacementMode)) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-camera-rig-rail-placement-mode",
+          "Rail Camera Rig placement mode must be nearestToTarget or mapTargetBetweenPoints.",
+          `${path}.railPlacementMode`
+        )
+      );
+    } else if (entity.railPlacementMode === "mapTargetBetweenPoints") {
+      if (!isFiniteVec3(entity.trackStartPoint)) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-camera-rig-track-start-point",
+            "Mapped Rail Camera Rig track start points must remain finite on every axis.",
+            `${path}.trackStartPoint`
+          )
+        );
+      }
+
+      if (!isFiniteVec3(entity.trackEndPoint)) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-camera-rig-track-end-point",
+            "Mapped Rail Camera Rig track end points must remain finite on every axis.",
+            `${path}.trackEndPoint`
+          )
+        );
+      }
+
+      if (!isFiniteNumberInRange(entity.railStartProgress, 0, 1)) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-camera-rig-rail-start-progress",
+            "Mapped Rail Camera Rig start progress must remain between 0 and 1.",
+            `${path}.railStartProgress`
+          )
+        );
+      }
+
+      if (!isFiniteNumberInRange(entity.railEndProgress, 0, 1)) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-camera-rig-rail-end-progress",
+            "Mapped Rail Camera Rig end progress must remain between 0 and 1.",
+            `${path}.railEndProgress`
           )
         );
       }
