@@ -3577,6 +3577,21 @@ export function App({ store, initialStatusMessage }: AppProps) {
       setEntityPositionDraft(createVec3Draft(DEFAULT_ENTITY_POSITION));
       setCameraRigRigTypeDraft("fixed");
       setCameraRigPathIdDraft("");
+      setCameraRigRailPlacementModeDraft(
+        DEFAULT_CAMERA_RIG_RAIL_PLACEMENT_MODE
+      );
+      setCameraRigTrackStartPointDraft(
+        createVec3Draft(DEFAULT_CAMERA_RIG_TRACK_START_POINT)
+      );
+      setCameraRigTrackEndPointDraft(
+        createVec3Draft(DEFAULT_CAMERA_RIG_TRACK_END_POINT)
+      );
+      setCameraRigRailStartProgressDraft(
+        String(DEFAULT_CAMERA_RIG_RAIL_START_PROGRESS)
+      );
+      setCameraRigRailEndProgressDraft(
+        String(DEFAULT_CAMERA_RIG_RAIL_END_PROGRESS)
+      );
       setCameraRigPriorityDraft(String(DEFAULT_CAMERA_RIG_PRIORITY));
       setCameraRigDefaultActiveDraft(DEFAULT_CAMERA_RIG_DEFAULT_ACTIVE);
       setCameraRigTargetKindDraft("player");
@@ -3696,6 +3711,43 @@ export function App({ store, initialStatusMessage }: AppProps) {
         setCameraRigRigTypeDraft(selectedEntity.rigType);
         setCameraRigPathIdDraft(
           selectedEntity.rigType === "rail" ? selectedEntity.pathId : ""
+        );
+        setCameraRigRailPlacementModeDraft(
+          selectedEntity.rigType === "rail"
+            ? selectedEntity.railPlacementMode
+            : DEFAULT_CAMERA_RIG_RAIL_PLACEMENT_MODE
+        );
+        setCameraRigTrackStartPointDraft(
+          createVec3Draft(
+            selectedEntity.rigType === "rail" &&
+              selectedEntity.railPlacementMode === "mapTargetBetweenPoints"
+              ? selectedEntity.trackStartPoint
+              : getDefaultCameraRigRailMappingDraft(
+                  selectedEntity.rigType === "rail" ? selectedEntity.pathId : ""
+                ).trackStartPoint
+          )
+        );
+        setCameraRigTrackEndPointDraft(
+          createVec3Draft(
+            selectedEntity.rigType === "rail" &&
+              selectedEntity.railPlacementMode === "mapTargetBetweenPoints"
+              ? selectedEntity.trackEndPoint
+              : getDefaultCameraRigRailMappingDraft(
+                  selectedEntity.rigType === "rail" ? selectedEntity.pathId : ""
+                ).trackEndPoint
+          )
+        );
+        setCameraRigRailStartProgressDraft(
+          selectedEntity.rigType === "rail" &&
+            selectedEntity.railPlacementMode === "mapTargetBetweenPoints"
+            ? String(selectedEntity.railStartProgress)
+            : String(DEFAULT_CAMERA_RIG_RAIL_START_PROGRESS)
+        );
+        setCameraRigRailEndProgressDraft(
+          selectedEntity.rigType === "rail" &&
+            selectedEntity.railPlacementMode === "mapTargetBetweenPoints"
+            ? String(selectedEntity.railEndProgress)
+            : String(DEFAULT_CAMERA_RIG_RAIL_END_PROGRESS)
         );
         setCameraRigPriorityDraft(String(selectedEntity.priority));
         setCameraRigDefaultActiveDraft(selectedEntity.defaultActive);
