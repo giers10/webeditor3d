@@ -74,6 +74,11 @@ describe("project document JSON", () => {
     activeScene.world.shaderSky.stars.horizonFadeOffset = 0.09;
     activeScene.world.shaderSky.clouds.coverage = 0.63;
     activeScene.world.shaderSky.clouds.tintHex = "#ece7df";
+    activeScene.world.shaderSky.aurora.enabled = true;
+    activeScene.world.shaderSky.aurora.intensity = 1.5;
+    activeScene.world.shaderSky.aurora.height = 0.74;
+    activeScene.world.shaderSky.aurora.primaryColorHex = "#8affd4";
+    activeScene.world.shaderSky.aurora.secondaryColorHex = "#6f90ff";
 
     expect(
       parseProjectDocumentJson(serializeProjectDocument(document))
