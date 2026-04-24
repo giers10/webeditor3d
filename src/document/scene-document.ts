@@ -29,7 +29,8 @@ import {
 } from "../sequencer/project-sequences";
 import type { Terrain } from "./terrains";
 
-export const SCENE_DOCUMENT_VERSION = 78 as const;
+export const SCENE_DOCUMENT_VERSION = 79 as const;
+export const SHADER_SKY_AURORA_SCENE_DOCUMENT_VERSION = 79 as const;
 export const CAMERA_RIG_MAPPED_RAIL_SCENE_DOCUMENT_VERSION = 78 as const;
 export const CAMERA_RIG_CONTROL_SURFACE_SCENE_DOCUMENT_VERSION = 77 as const;
 export const CAMERA_RIG_RAIL_SCENE_DOCUMENT_VERSION = 76 as const;
