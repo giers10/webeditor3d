@@ -192,6 +192,16 @@ export interface WorldShaderSkyCloudSettings {
   driftDirectionDegrees: number;
 }
 
+export interface WorldShaderSkyAuroraSettings {
+  enabled: boolean;
+  intensity: number;
+  height: number;
+  thickness: number;
+  speed: number;
+  primaryColorHex: string;
+  secondaryColorHex: string;
+}
+
 export interface WorldShaderSkySettings {
   presetId: WorldShaderSkyPresetId;
   dayTopColorHex: string;
@@ -200,6 +210,7 @@ export interface WorldShaderSkySettings {
   celestial: WorldShaderSkyCelestialSettings;
   stars: WorldShaderSkyStarSettings;
   clouds: WorldShaderSkyCloudSettings;
+  aurora: WorldShaderSkyAuroraSettings;
 }
 
 export interface WorldSettings {
@@ -259,6 +270,12 @@ const DEFAULT_SHADER_SKY_CLOUD_OPACITY = 0.68;
 const DEFAULT_SHADER_SKY_CLOUD_OPACITY_RANDOMNESS = 0.24;
 const DEFAULT_SHADER_SKY_CLOUD_DRIFT_SPEED = 0.025;
 const DEFAULT_SHADER_SKY_CLOUD_DRIFT_DIRECTION_DEGREES = 18;
+const DEFAULT_SHADER_SKY_AURORA_INTENSITY = 1.25;
+const DEFAULT_SHADER_SKY_AURORA_HEIGHT = 0.66;
+const DEFAULT_SHADER_SKY_AURORA_THICKNESS = 0.42;
+const DEFAULT_SHADER_SKY_AURORA_SPEED = 0.12;
+const DEFAULT_SHADER_SKY_AURORA_PRIMARY_COLOR = "#6df7d0";
+const DEFAULT_SHADER_SKY_AURORA_SECONDARY_COLOR = "#6e8dff";
 const MIN_WORLD_CELESTIAL_PEAK_ALTITUDE_DEGREES = 0.1;
 const MAX_WORLD_CELESTIAL_PEAK_ALTITUDE_DEGREES = 89.9;
 
@@ -513,6 +530,15 @@ export function createDefaultWorldShaderSkySettings(
       opacityRandomness: DEFAULT_SHADER_SKY_CLOUD_OPACITY_RANDOMNESS,
       driftSpeed: DEFAULT_SHADER_SKY_CLOUD_DRIFT_SPEED,
       driftDirectionDegrees: DEFAULT_SHADER_SKY_CLOUD_DRIFT_DIRECTION_DEGREES
+    },
+    aurora: {
+      enabled: false,
+      intensity: DEFAULT_SHADER_SKY_AURORA_INTENSITY,
+      height: DEFAULT_SHADER_SKY_AURORA_HEIGHT,
+      thickness: DEFAULT_SHADER_SKY_AURORA_THICKNESS,
+      speed: DEFAULT_SHADER_SKY_AURORA_SPEED,
+      primaryColorHex: DEFAULT_SHADER_SKY_AURORA_PRIMARY_COLOR,
+      secondaryColorHex: DEFAULT_SHADER_SKY_AURORA_SECONDARY_COLOR
     }
   };
 }
@@ -533,6 +559,9 @@ export function cloneWorldShaderSkySettings(
     },
     clouds: {
       ...settings.clouds
+    },
+    aurora: {
+      ...settings.aurora
     }
   };
 }
@@ -839,7 +868,14 @@ export function areWorldShaderSkySettingsEqual(
     left.clouds.opacity === right.clouds.opacity &&
     left.clouds.opacityRandomness === right.clouds.opacityRandomness &&
     left.clouds.driftSpeed === right.clouds.driftSpeed &&
-    left.clouds.driftDirectionDegrees === right.clouds.driftDirectionDegrees
+    left.clouds.driftDirectionDegrees === right.clouds.driftDirectionDegrees &&
+    left.aurora.enabled === right.aurora.enabled &&
+    left.aurora.intensity === right.aurora.intensity &&
+    left.aurora.height === right.aurora.height &&
+    left.aurora.thickness === right.aurora.thickness &&
+    left.aurora.speed === right.aurora.speed &&
+    left.aurora.primaryColorHex === right.aurora.primaryColorHex &&
+    left.aurora.secondaryColorHex === right.aurora.secondaryColorHex
   );
 }
 
