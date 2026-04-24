@@ -544,6 +544,83 @@ function validateWorldShaderSkySettings(
       )
     );
   }
+
+  if (typeof settings.aurora.enabled !== "boolean") {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-world-shader-sky-aurora-enabled",
+        "World shader sky aurora toggle must be true or false.",
+        `${path}.aurora.enabled`
+      )
+    );
+  }
+
+  if (!isNonNegativeFiniteNumber(settings.aurora.intensity)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-world-shader-sky-aurora-intensity",
+        "World shader sky aurora intensity must be a non-negative finite number.",
+        `${path}.aurora.intensity`
+      )
+    );
+  }
+
+  if (!isFiniteNumberInRange(settings.aurora.height, 0, 1)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-world-shader-sky-aurora-height",
+        "World shader sky aurora height must stay between 0 and 1.",
+        `${path}.aurora.height`
+      )
+    );
+  }
+
+  if (!isFiniteNumberInRange(settings.aurora.thickness, 0, 1)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-world-shader-sky-aurora-thickness",
+        "World shader sky aurora thickness must stay between 0 and 1.",
+        `${path}.aurora.thickness`
+      )
+    );
+  }
+
+  if (!isNonNegativeFiniteNumber(settings.aurora.speed)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-world-shader-sky-aurora-speed",
+        "World shader sky aurora speed must be a non-negative finite number.",
+        `${path}.aurora.speed`
+      )
+    );
+  }
+
+  if (!isHexColorString(settings.aurora.primaryColorHex)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-world-shader-sky-aurora-primary-color",
+        "World shader sky aurora primary color must use a #RRGGBB color.",
+        `${path}.aurora.primaryColorHex`
+      )
+    );
+  }
+
+  if (!isHexColorString(settings.aurora.secondaryColorHex)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-world-shader-sky-aurora-secondary-color",
+        "World shader sky aurora secondary color must use a #RRGGBB color.",
+        `${path}.aurora.secondaryColorHex`
+      )
+    );
+  }
 }
 
 function validateWorldCelestialOrbitSettings(
