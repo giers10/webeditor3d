@@ -2717,6 +2717,14 @@ function readWorldShaderSkySettings(
         : (() => {
             throw new Error(`${label}.clouds must be an object.`);
           })();
+  const aurora =
+    value.aurora === undefined
+      ? {}
+      : isRecord(value.aurora)
+        ? value.aurora
+        : (() => {
+            throw new Error(`${label}.aurora must be an object.`);
+          })();
   const presetId = value.presetId ?? defaults.presetId;
 
   if (!isWorldShaderSkyPresetId(presetId)) {
@@ -2821,6 +2829,41 @@ function readWorldShaderSkySettings(
         clouds.driftDirectionDegrees,
         `${label}.clouds.driftDirectionDegrees`,
         defaults.clouds.driftDirectionDegrees
+      )
+    },
+    aurora: {
+      enabled: readOptionalBoolean(
+        aurora.enabled,
+        `${label}.aurora.enabled`,
+        defaults.aurora.enabled
+      ),
+      intensity: readOptionalNonNegativeFiniteNumber(
+        aurora.intensity,
+        `${label}.aurora.intensity`,
+        defaults.aurora.intensity
+      ),
+      height: readOptionalFiniteNumber(
+        aurora.height,
+        `${label}.aurora.height`,
+        defaults.aurora.height
+      ),
+      thickness: readOptionalNonNegativeFiniteNumber(
+        aurora.thickness,
+        `${label}.aurora.thickness`,
+        defaults.aurora.thickness
+      ),
+      speed: readOptionalNonNegativeFiniteNumber(
+        aurora.speed,
+        `${label}.aurora.speed`,
+        defaults.aurora.speed
+      ),
+      primaryColorHex: expectHexColor(
+        aurora.primaryColorHex ?? defaults.aurora.primaryColorHex,
+        `${label}.aurora.primaryColorHex`
+      ),
+      secondaryColorHex: expectHexColor(
+        aurora.secondaryColorHex ?? defaults.aurora.secondaryColorHex,
+        `${label}.aurora.secondaryColorHex`
       )
     }
   };
