@@ -23,6 +23,8 @@ describe("resolveWorldShaderSkyRenderState", () => {
     world.shaderSky.dayTopColorHex = "#88ccff";
     world.shaderSky.dayBottomColorHex = "#dff3ff";
     world.shaderSky.horizonHeight = -0.08;
+    world.shaderSky.aurora.enabled = true;
+    world.shaderSky.aurora.intensity = 1.4;
     world.shaderSky.stars.horizonFadeOffset = 0.06;
     world.timeOfDay.dawn.background = {
       mode: "verticalGradient",
@@ -121,6 +123,11 @@ describe("resolveWorldShaderSkyRenderState", () => {
     );
     expect(dawnSky?.stars.visibility ?? 0).toBeGreaterThan(0);
     expect(noonSky?.stars.visibility ?? 1).toBe(0);
+    expect(midnightSky?.aurora.visibility ?? 0).toBeGreaterThan(
+      dawnSky?.aurora.visibility ?? 0
+    );
+    expect(dawnSky?.aurora.visibility ?? 0).toBeGreaterThan(0);
+    expect(noonSky?.aurora.visibility ?? 1).toBe(0);
   });
 
   it("keeps shader sky drift and celestial visibility coherent across days", () => {
@@ -304,10 +311,21 @@ describe("resolveWorldShaderSkyRenderState", () => {
               sunIntensity: baseSky.celestial.sunIntensity + 0.2
             }
           };
+    const auroraSky =
+      baseSky === null
+        ? null
+        : {
+            ...baseSky,
+            aurora: {
+              ...baseSky.aurora,
+              visibility: baseSky.aurora.visibility + 0.12
+            }
+          };
 
     expect(baseSky).not.toBeNull();
     expect(nearSky).not.toBeNull();
     expect(shiftedSky).not.toBeNull();
+    expect(auroraSky).not.toBeNull();
     expect(
       createWorldShaderSkyEnvironmentCacheKey(
         nearSky ?? (baseSky as NonNullable<typeof baseSky>)
@@ -320,6 +338,15 @@ describe("resolveWorldShaderSkyRenderState", () => {
     expect(
       createWorldShaderSkyEnvironmentCacheKey(
         shiftedSky ?? (baseSky as NonNullable<typeof baseSky>)
+      )
+    ).not.toBe(
+      createWorldShaderSkyEnvironmentCacheKey(
+        baseSky as NonNullable<typeof baseSky>
+      )
+    );
+    expect(
+      createWorldShaderSkyEnvironmentCacheKey(
+        auroraSky ?? (baseSky as NonNullable<typeof baseSky>)
       )
     ).not.toBe(
       createWorldShaderSkyEnvironmentCacheKey(
