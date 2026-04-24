@@ -286,6 +286,15 @@ uniform vec3 uCloudTint;
 uniform float uCloudOpacity;
 uniform float uCloudOpacityRandomness;
 uniform vec2 uCloudDriftOffset;
+uniform float uAuroraVisibility;
+uniform float uAuroraIntensity;
+uniform float uAuroraHeight;
+uniform float uAuroraThickness;
+uniform float uAuroraSpeed;
+uniform vec3 uAuroraPrimaryColor;
+uniform vec3 uAuroraSecondaryColor;
+uniform float uAuroraRotationRadians;
+uniform float uAuroraTimeHours;
 varying vec3 vWorldPosition;
 
 float hash12(vec2 point) {
@@ -343,6 +352,13 @@ float fbm2(vec2 point) {
   }
 
   return value;
+}
+
+float auroraFilamentPattern(vec2 point, float timeShift) {
+  float broad = abs(sin(point.x * 18.0 + noise2(point * 0.45) * 4.0 + timeShift));
+  float fine = abs(sin(point.x * 54.0 - point.y * 7.0 + noise2(point * 1.35) * 5.5 + timeShift * 1.8));
+
+  return mix(pow(broad, 3.4), pow(fine, 5.6), 0.58);
 }
 
 mat3 rotationY(float radians) {
@@ -489,6 +505,96 @@ void main() {
   cloudLight += uMoonColor * moonGlow * 0.04 * (1.0 - uDaylightFactor);
   vec3 cloudColor = mix(cloudLight, uCloudTint, 0.56);
   skyColor = mix(skyColor, cloudColor, clamp(clouds, 0.0, 1.0));
+
+  if (uAuroraVisibility > 0.001) {
+    vec3 auroraDirection = normalize(rotationY(uAuroraRotationRadians) * direction);
+    float auroraTime = uAuroraTimeHours * max(uAuroraSpeed, 0.0);
+    float hemisphereMask = smoothstep(-0.24, 0.42, auroraDirection.z);
+    vec2 auroraUv = vec2(
+      auroraDirection.x * 2.2 + auroraDirection.z * 0.35,
+      auroraDirection.z * 1.28
+    );
+    float arcNoise = fbm2(
+      auroraUv * 0.72 + vec2(auroraTime * 0.06, -auroraTime * 0.025)
+    );
+    float arcCenter =
+      uHorizonHeight +
+      mix(0.16, 0.82, clamp(uAuroraHeight, 0.0, 1.0)) +
+      (arcNoise - 0.5) * mix(0.1, 0.34, clamp(uAuroraThickness, 0.0, 1.0));
+    float curtainThickness = mix(0.09, 0.34, clamp(uAuroraThickness, 0.0, 1.0));
+    float curtainMask =
+      1.0 -
+      smoothstep(
+        curtainThickness,
+        curtainThickness + 0.1,
+        abs(direction.y - arcCenter)
+      );
+    float horizonFade = smoothstep(
+      uHorizonHeight - 0.02,
+      uHorizonHeight + 0.14,
+      direction.y
+    );
+    float topFade =
+      1.0 -
+      smoothstep(
+        arcCenter + curtainThickness * 1.45,
+        arcCenter + curtainThickness * 2.3,
+        direction.y
+      );
+    float sway = fbm2(
+      vec2(
+        auroraUv.x * 3.5 - auroraTime * 0.22,
+        auroraUv.y * 1.4 + auroraTime * 0.04
+      )
+    );
+    float sweep = fbm2(
+      vec2(
+        auroraUv.x * 6.4 + auroraTime * 0.15,
+        auroraUv.y * 2.8 - auroraTime * 0.03
+      )
+    );
+    float filamentPattern = auroraFilamentPattern(
+      vec2(auroraUv.x * 1.8, direction.y * 6.0 + auroraUv.y * 2.0),
+      auroraTime * 1.7
+    );
+    float skirt =
+      1.0 -
+      smoothstep(
+        arcCenter - curtainThickness * 1.8,
+        arcCenter - curtainThickness * 0.2,
+        direction.y
+      );
+    float auroraStrength =
+      curtainMask *
+      hemisphereMask *
+      horizonFade *
+      topFade *
+      (0.42 + sway * 0.78) *
+      mix(0.55, 1.25, filamentPattern) *
+      mix(0.76, 1.0, sweep) *
+      mix(0.62, 1.0, skirt);
+    float auroraGlow =
+      hemisphereMask *
+      horizonFade *
+      (1.0 -
+        smoothstep(
+          curtainThickness * 1.6,
+          curtainThickness * 3.0,
+          abs(direction.y - arcCenter)
+        )) *
+      (0.16 + sway * 0.32);
+    float auroraColorMix = clamp(0.18 + filamentPattern * 0.46 + sweep * 0.5, 0.0, 1.0);
+    vec3 auroraColor = mix(
+      uAuroraPrimaryColor,
+      uAuroraSecondaryColor,
+      auroraColorMix
+    );
+    auroraColor += vec3(0.82, 1.0, 0.9) * filamentPattern * 0.07;
+    skyColor +=
+      auroraColor *
+      (auroraStrength * uAuroraVisibility * uAuroraIntensity +
+        auroraGlow * uAuroraVisibility * uAuroraIntensity * 0.4);
+  }
 
   skyColor +=
     uSunColor *
@@ -696,6 +802,33 @@ function createShaderSkyMaterial() {
       },
       uCloudDriftOffset: {
         value: new Vector2(0, 0)
+      },
+      uAuroraVisibility: {
+        value: 0
+      },
+      uAuroraIntensity: {
+        value: 1
+      },
+      uAuroraHeight: {
+        value: 0.66
+      },
+      uAuroraThickness: {
+        value: 0.42
+      },
+      uAuroraSpeed: {
+        value: 0.12
+      },
+      uAuroraPrimaryColor: {
+        value: new Color("#6df7d0")
+      },
+      uAuroraSecondaryColor: {
+        value: new Color("#6e8dff")
+      },
+      uAuroraRotationRadians: {
+        value: 0
+      },
+      uAuroraTimeHours: {
+        value: 0
       }
     },
     vertexShader: GRADIENT_VERTEX_SHADER,
@@ -717,6 +850,7 @@ function applyShaderSkyStateToMaterial(
     material.uniforms.uStarHorizonFadeOffset.value = 0;
     material.uniforms.uSunVisible.value = 0;
     material.uniforms.uMoonVisible.value = 0;
+    material.uniforms.uAuroraVisibility.value = 0;
     return;
   }
 
@@ -765,6 +899,20 @@ function applyShaderSkyStateToMaterial(
     state.clouds.driftOffset.x,
     state.clouds.driftOffset.y
   );
+  material.uniforms.uAuroraVisibility.value = state.aurora.visibility;
+  material.uniforms.uAuroraIntensity.value = state.aurora.intensity;
+  material.uniforms.uAuroraHeight.value = state.aurora.height;
+  material.uniforms.uAuroraThickness.value = state.aurora.thickness;
+  material.uniforms.uAuroraSpeed.value = state.aurora.speed;
+  material.uniforms.uAuroraPrimaryColor.value.set(
+    state.aurora.primaryColorHex
+  );
+  material.uniforms.uAuroraSecondaryColor.value.set(
+    state.aurora.secondaryColorHex
+  );
+  material.uniforms.uAuroraRotationRadians.value =
+    state.aurora.rotationRadians;
+  material.uniforms.uAuroraTimeHours.value = state.aurora.timeHours;
 }
 
 export class WorldBackgroundRenderer {
