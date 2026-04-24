@@ -315,11 +315,10 @@ export function resolveWorldShaderSkyRenderState(
   const starVisibility =
     clamp(phaseWeights.night + twilightFactor * 0.45, 0, 1) *
     clamp(1 - resolvedWorld.daylightFactor * 0.85, 0, 1);
-  const auroraVisibility =
-    world.shaderSky.aurora.enabled
-      ? clamp(phaseWeights.night + twilightFactor * 0.32, 0, 1) *
-        clamp(1 - resolvedWorld.daylightFactor * 1.15, 0, 1)
-      : 0;
+  const auroraVisibility = world.shaderSky.aurora.enabled
+    ? clamp(phaseWeights.night + twilightFactor * 0.32, 0, 1) *
+      clamp(1 - resolvedWorld.daylightFactor * 1.15, 0, 1)
+    : 0;
   const cloudDriftDirectionRadians =
     (world.shaderSky.clouds.driftDirectionDegrees * Math.PI) / 180;
   const cloudDriftDistance =

@@ -2539,9 +2539,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     label: getScenePathLabel(path, index)
   }));
   const getCameraRigPathById = (pathId: string) =>
-    editorState.document.paths[pathId] ??
-    cameraRigPathOptions[0]?.path ??
-    null;
+    editorState.document.paths[pathId] ?? cameraRigPathOptions[0]?.path ?? null;
   const getDefaultCameraRigRailMappingDraft = (pathId: string) => {
     const authoredPath = getCameraRigPathById(pathId);
     const startPoint =
@@ -2657,12 +2655,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [cameraRigRigTypeDraft, setCameraRigRigTypeDraft] =
     useState<CameraRigType>("fixed");
   const [cameraRigPathIdDraft, setCameraRigPathIdDraft] = useState("");
-  const [
-    cameraRigRailPlacementModeDraft,
-    setCameraRigRailPlacementModeDraft
-  ] = useState<CameraRigRailPlacementMode>(
-    DEFAULT_CAMERA_RIG_RAIL_PLACEMENT_MODE
-  );
+  const [cameraRigRailPlacementModeDraft, setCameraRigRailPlacementModeDraft] =
+    useState<CameraRigRailPlacementMode>(
+      DEFAULT_CAMERA_RIG_RAIL_PLACEMENT_MODE
+    );
   const [cameraRigTrackStartPointDraft, setCameraRigTrackStartPointDraft] =
     useState(createVec3Draft(DEFAULT_CAMERA_RIG_TRACK_START_POINT));
   const [cameraRigTrackEndPointDraft, setCameraRigTrackEndPointDraft] =
@@ -3682,14 +3678,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
     const selectedEntityPosition =
       selectedEntity.kind === "cameraRig"
-        ? resolveCameraRigDocumentPosition(
+        ? (resolveCameraRigDocumentPosition(
             selectedEntity,
             editorState.document.entities,
             editorState.document.paths,
             {
               fallbackToPathStart: true
             }
-          ) ?? DEFAULT_ENTITY_POSITION
+          ) ?? DEFAULT_ENTITY_POSITION)
         : selectedEntity.position;
 
     setEntityPositionDraft(createVec3Draft(selectedEntityPosition));
@@ -9443,7 +9439,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
     const effectOptionId =
       options.effectOptionId ??
       effectOptions.find((effectOption) => {
-        if (options.previousEffect === undefined || options.previousEffect === null) {
+        if (
+          options.previousEffect === undefined ||
+          options.previousEffect === null
+        ) {
           return false;
         }
 
@@ -9563,7 +9562,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
         createUpsertInteractionLinkCommand({
           link: createInteractionControlLinkFromTargetOption({
             sourceEntity: selectedInteractionSource,
-            trigger: getDefaultInteractionLinkTrigger(selectedInteractionSource),
+            trigger: getDefaultInteractionLinkTrigger(
+              selectedInteractionSource
+            ),
             targetOption
           }),
           label: "Add control interaction link"
@@ -10413,9 +10414,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
       return;
     }
 
-    const effectOptions = listProjectInteractionControlEffectOptions(targetOption);
+    const effectOptions =
+      listProjectInteractionControlEffectOptions(targetOption);
 
-    if (!effectOptions.some((effectOption) => effectOption.id === effectOptionId)) {
+    if (
+      !effectOptions.some((effectOption) => effectOption.id === effectOptionId)
+    ) {
       setStatusMessage(
         "Selected control effect is not available for the current target."
       );
@@ -11086,7 +11090,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   const effectOptions =
                     targetOption === null
                       ? []
-                      : listProjectInteractionControlEffectOptions(targetOption);
+                      : listProjectInteractionControlEffectOptions(
+                          targetOption
+                        );
                   const effectOptionId =
                     targetOption === null
                       ? null
@@ -11137,7 +11143,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                             <input
                               className="text-input"
                               type="text"
-                              value={formatControlEffectValue(link.action.effect)}
+                              value={formatControlEffectValue(
+                                link.action.effect
+                              )}
                               readOnly
                             />
                           </label>
@@ -11205,7 +11213,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                             min={selectedEffectOption.min ?? 0}
                             step={selectedEffectOption.step ?? 0.1}
                             defaultValue={
-                              getControlEffectNumericValue(link.action.effect) ?? 0
+                              getControlEffectNumericValue(
+                                link.action.effect
+                              ) ?? 0
                             }
                             onBlur={(event) =>
                               updateControlInteractionLinkNumericValue(
@@ -11264,10 +11274,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                                 )
                               }
                             >
-                              {(
-                                link.action.effect.type === "playActorAnimation"
-                                  ? targetOption.defaults.actorAnimationClipNames
-                                  : targetOption.defaults.animationClipNames
+                              {(link.action.effect.type === "playActorAnimation"
+                                ? targetOption.defaults.actorAnimationClipNames
+                                : targetOption.defaults.animationClipNames
                               )?.map((clipName) => (
                                 <option key={clipName} value={clipName}>
                                   {clipName}
@@ -19028,138 +19037,138 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         }
                       />
                     </label>
-                  <div className="material-summary">
-                    Hidden entities stay active for authored runtime behavior.
-                    Disable them to remove them from the editor viewport,
-                    picking, and runtime build.
+                    <div className="material-summary">
+                      Hidden entities stay active for authored runtime behavior.
+                      Disable them to remove them from the editor viewport,
+                      picking, and runtime build.
+                    </div>
                   </div>
-                </div>
 
                   {selectedEntity.kind !== "cameraRig" ||
                   selectedEntity.rigType === "fixed" ? (
                     <div className="form-section">
                       <div className="label">Position</div>
                       <div className="vector-inputs">
-                      <label className="form-field">
-                        <span className="label">X</span>
-                        <input
-                          data-testid={
-                            selectedEntity.kind === "playerStart"
-                              ? "player-start-position-x"
-                              : `${selectedEntity.kind}-position-x`
-                          }
-                          className="text-input"
-                          type="number"
-                          step={DEFAULT_GRID_SIZE}
-                          value={entityPositionDraft.x}
-                          onChange={(event) => {
-                            const nextValue = event.currentTarget.value;
-                            setEntityPositionDraft((draft) => ({
-                              ...draft,
-                              x: nextValue
-                            }));
-                          }}
-                          onBlur={applySelectedEntityDraftChange}
-                          onKeyDown={(event) =>
-                            handleDraftVectorKeyDown(
-                              event,
-                              applySelectedEntityDraftChange
-                            )
-                          }
-                          onKeyUp={(event) =>
-                            handleNumberInputKeyUp(
-                              event,
-                              applySelectedEntityDraftChange
-                            )
-                          }
-                          onPointerUp={(event) =>
-                            handleNumberInputPointerUp(
-                              event,
-                              applySelectedEntityDraftChange
-                            )
-                          }
-                        />
-                      </label>
-                      <label className="form-field">
-                        <span className="label">Y</span>
-                        <input
-                          data-testid={
-                            selectedEntity.kind === "playerStart"
-                              ? "player-start-position-y"
-                              : `${selectedEntity.kind}-position-y`
-                          }
-                          className="text-input"
-                          type="number"
-                          step={DEFAULT_GRID_SIZE}
-                          value={entityPositionDraft.y}
-                          onChange={(event) => {
-                            const nextValue = event.currentTarget.value;
-                            setEntityPositionDraft((draft) => ({
-                              ...draft,
-                              y: nextValue
-                            }));
-                          }}
-                          onBlur={applySelectedEntityDraftChange}
-                          onKeyDown={(event) =>
-                            handleDraftVectorKeyDown(
-                              event,
-                              applySelectedEntityDraftChange
-                            )
-                          }
-                          onKeyUp={(event) =>
-                            handleNumberInputKeyUp(
-                              event,
-                              applySelectedEntityDraftChange
-                            )
-                          }
-                          onPointerUp={(event) =>
-                            handleNumberInputPointerUp(
-                              event,
-                              applySelectedEntityDraftChange
-                            )
-                          }
-                        />
-                      </label>
-                      <label className="form-field">
-                        <span className="label">Z</span>
-                        <input
-                          data-testid={
-                            selectedEntity.kind === "playerStart"
-                              ? "player-start-position-z"
-                              : `${selectedEntity.kind}-position-z`
-                          }
-                          className="text-input"
-                          type="number"
-                          step={DEFAULT_GRID_SIZE}
-                          value={entityPositionDraft.z}
-                          onChange={(event) => {
-                            const nextValue = event.currentTarget.value;
-                            setEntityPositionDraft((draft) => ({
-                              ...draft,
-                              z: nextValue
-                            }));
-                          }}
-                          onBlur={applySelectedEntityDraftChange}
-                          onKeyDown={(event) =>
-                            handleDraftVectorKeyDown(
-                              event,
-                              applySelectedEntityDraftChange
-                            )
-                          }
-                          onKeyUp={(event) =>
-                            handleNumberInputKeyUp(
-                              event,
-                              applySelectedEntityDraftChange
-                            )
-                          }
-                          onPointerUp={(event) =>
-                            handleNumberInputPointerUp(
-                              event,
-                              applySelectedEntityDraftChange
-                            )
-                          }
-                        />
-                      </label>
+                        <label className="form-field">
+                          <span className="label">X</span>
+                          <input
+                            data-testid={
+                              selectedEntity.kind === "playerStart"
+                                ? "player-start-position-x"
+                                : `${selectedEntity.kind}-position-x`
+                            }
+                            className="text-input"
+                            type="number"
+                            step={DEFAULT_GRID_SIZE}
+                            value={entityPositionDraft.x}
+                            onChange={(event) => {
+                              const nextValue = event.currentTarget.value;
+                              setEntityPositionDraft((draft) => ({
+                                ...draft,
+                                x: nextValue
+                              }));
+                            }}
+                            onBlur={applySelectedEntityDraftChange}
+                            onKeyDown={(event) =>
+                              handleDraftVectorKeyDown(
+                                event,
+                                applySelectedEntityDraftChange
+                              )
+                            }
+                            onKeyUp={(event) =>
+                              handleNumberInputKeyUp(
+                                event,
+                                applySelectedEntityDraftChange
+                              )
+                            }
+                            onPointerUp={(event) =>
+                              handleNumberInputPointerUp(
+                                event,
+                                applySelectedEntityDraftChange
+                              )
+                            }
+                          />
+                        </label>
+                        <label className="form-field">
+                          <span className="label">Y</span>
+                          <input
+                            data-testid={
+                              selectedEntity.kind === "playerStart"
+                                ? "player-start-position-y"
+                                : `${selectedEntity.kind}-position-y`
+                            }
+                            className="text-input"
+                            type="number"
+                            step={DEFAULT_GRID_SIZE}
+                            value={entityPositionDraft.y}
+                            onChange={(event) => {
+                              const nextValue = event.currentTarget.value;
+                              setEntityPositionDraft((draft) => ({
+                                ...draft,
+                                y: nextValue
+                              }));
+                            }}
+                            onBlur={applySelectedEntityDraftChange}
+                            onKeyDown={(event) =>
+                              handleDraftVectorKeyDown(
+                                event,
+                                applySelectedEntityDraftChange
+                              )
+                            }
+                            onKeyUp={(event) =>
+                              handleNumberInputKeyUp(
+                                event,
+                                applySelectedEntityDraftChange
+                              )
+                            }
+                            onPointerUp={(event) =>
+                              handleNumberInputPointerUp(
+                                event,
+                                applySelectedEntityDraftChange
+                              )
+                            }
+                          />
+                        </label>
+                        <label className="form-field">
+                          <span className="label">Z</span>
+                          <input
+                            data-testid={
+                              selectedEntity.kind === "playerStart"
+                                ? "player-start-position-z"
+                                : `${selectedEntity.kind}-position-z`
+                            }
+                            className="text-input"
+                            type="number"
+                            step={DEFAULT_GRID_SIZE}
+                            value={entityPositionDraft.z}
+                            onChange={(event) => {
+                              const nextValue = event.currentTarget.value;
+                              setEntityPositionDraft((draft) => ({
+                                ...draft,
+                                z: nextValue
+                              }));
+                            }}
+                            onBlur={applySelectedEntityDraftChange}
+                            onKeyDown={(event) =>
+                              handleDraftVectorKeyDown(
+                                event,
+                                applySelectedEntityDraftChange
+                              )
+                            }
+                            onKeyUp={(event) =>
+                              handleNumberInputKeyUp(
+                                event,
+                                applySelectedEntityDraftChange
+                              )
+                            }
+                            onPointerUp={(event) =>
+                              handleNumberInputPointerUp(
+                                event,
+                                applySelectedEntityDraftChange
+                              )
+                            }
+                          />
+                        </label>
                       </div>
                     </div>
                   ) : null}

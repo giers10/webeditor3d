@@ -3374,7 +3374,10 @@ function readCameraRigEntity(value: unknown, label: string): EntityInstance {
                 trackStartPoint:
                   value.trackStartPoint === undefined
                     ? undefined
-                    : readVec3(value.trackStartPoint, `${label}.trackStartPoint`),
+                    : readVec3(
+                        value.trackStartPoint,
+                        `${label}.trackStartPoint`
+                      ),
                 trackEndPoint:
                   value.trackEndPoint === undefined
                     ? undefined

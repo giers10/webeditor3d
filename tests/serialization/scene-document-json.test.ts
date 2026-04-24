@@ -17,12 +17,12 @@ import { createScenePath } from "../../src/document/paths";
 import { createDefaultProjectTimeSettings } from "../../src/document/project-time-settings";
 import { createTerrain } from "../../src/document/terrains";
 import {
-    AUTHORED_TERRAIN_PAINT_SCENE_DOCUMENT_VERSION,
-    AUTHORED_TERRAIN_FOUNDATION_SCENE_DOCUMENT_VERSION,
-    CAMERA_RIG_MAPPED_RAIL_SCENE_DOCUMENT_VERSION,
-    CAMERA_RIG_CONTROL_SURFACE_SCENE_DOCUMENT_VERSION,
-    CAMERA_RIG_ENTITY_SCENE_DOCUMENT_VERSION,
-    CELESTIAL_BODY_OVERLAY_SCENE_DOCUMENT_VERSION,
+  AUTHORED_TERRAIN_PAINT_SCENE_DOCUMENT_VERSION,
+  AUTHORED_TERRAIN_FOUNDATION_SCENE_DOCUMENT_VERSION,
+  CAMERA_RIG_MAPPED_RAIL_SCENE_DOCUMENT_VERSION,
+  CAMERA_RIG_CONTROL_SURFACE_SCENE_DOCUMENT_VERSION,
+  CAMERA_RIG_ENTITY_SCENE_DOCUMENT_VERSION,
+  CELESTIAL_BODY_OVERLAY_SCENE_DOCUMENT_VERSION,
   DAWN_DUSK_BACKGROUND_IMAGE_SCENE_DOCUMENT_VERSION,
   FOLLOW_ACTOR_PATH_SMOOTH_SCENE_DOCUMENT_VERSION,
   ANIMATION_PLAYBACK_SCENE_DOCUMENT_VERSION,
@@ -141,28 +141,28 @@ describe("scene document JSON", () => {
     const document = createEmptySceneDocument({ name: "Camera Control Scene" });
     document.entities[cameraRig.id] = cameraRig;
     document.entities[triggerVolume.id] = triggerVolume;
-    document.interactionLinks["link-camera-activate"] = createControlInteractionLink(
-      {
+    document.interactionLinks["link-camera-activate"] =
+      createControlInteractionLink({
         id: "link-camera-activate",
         sourceEntityId: triggerVolume.id,
         effect: createActivateCameraRigOverrideControlEffect({
           target: createCameraRigControlTargetRef(cameraRig.id)
         })
-      }
-    );
-    document.sequences.sequences["sequence-camera-clear"] = createProjectSequence({
-      id: "sequence-camera-clear",
-      title: "Camera Clear",
-      steps: [
-        {
-          stepClass: "held",
-          type: "controlEffect",
-          effect: createClearCameraRigOverrideControlEffect({
-            target: createCameraRigControlTargetRef(cameraRig.id)
-          })
-        }
-      ]
-    });
+      });
+    document.sequences.sequences["sequence-camera-clear"] =
+      createProjectSequence({
+        id: "sequence-camera-clear",
+        title: "Camera Clear",
+        steps: [
+          {
+            stepClass: "held",
+            type: "controlEffect",
+            effect: createClearCameraRigOverrideControlEffect({
+              target: createCameraRigControlTargetRef(cameraRig.id)
+            })
+          }
+        ]
+      });
     document.scheduler.routines["routine-camera-activate"] =
       createProjectScheduleRoutine({
         id: "routine-camera-activate",

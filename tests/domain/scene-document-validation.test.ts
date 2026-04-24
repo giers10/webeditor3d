@@ -445,15 +445,14 @@ describe("validateSceneDocument", () => {
           target: createCameraRigControlTargetRef(cameraRig.id)
         })
       });
-    document.interactionLinks["link-camera-override"] = createControlInteractionLink(
-      {
+    document.interactionLinks["link-camera-override"] =
+      createControlInteractionLink({
         id: "link-camera-override",
         sourceEntityId: triggerVolume.id,
         effect: createActivateCameraRigOverrideControlEffect({
           target: createCameraRigControlTargetRef(cameraRig.id)
         })
-      }
-    );
+      });
 
     const validation = validateSceneDocument(document);
 
@@ -1421,7 +1420,8 @@ describe("validateSceneDocument", () => {
     document.world.shaderSky.celestial.sunDiscSizeDegrees = 0;
     document.world.shaderSky.clouds.coverage = 2;
     document.world.shaderSky.aurora.intensity = -1;
-    document.world.shaderSky.aurora.primaryColorHex = "bad-color" as `#${string}`;
+    document.world.shaderSky.aurora.primaryColorHex =
+      "bad-color" as `#${string}`;
     document.world.timeOfDay.dawn.background = {
       mode: "shader"
     } as typeof document.world.timeOfDay.dawn.background;

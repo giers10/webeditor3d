@@ -904,14 +904,11 @@ function applyShaderSkyStateToMaterial(
   material.uniforms.uAuroraHeight.value = state.aurora.height;
   material.uniforms.uAuroraThickness.value = state.aurora.thickness;
   material.uniforms.uAuroraSpeed.value = state.aurora.speed;
-  material.uniforms.uAuroraPrimaryColor.value.set(
-    state.aurora.primaryColorHex
-  );
+  material.uniforms.uAuroraPrimaryColor.value.set(state.aurora.primaryColorHex);
   material.uniforms.uAuroraSecondaryColor.value.set(
     state.aurora.secondaryColorHex
   );
-  material.uniforms.uAuroraRotationRadians.value =
-    state.aurora.rotationRadians;
+  material.uniforms.uAuroraRotationRadians.value = state.aurora.rotationRadians;
   material.uniforms.uAuroraTimeHours.value = state.aurora.timeHours;
 }
 

@@ -3878,7 +3878,10 @@ function validateCameraRigControlTarget(
     return;
   }
 
-  if (targetEntity.kind !== target.entityKind || targetEntity.kind !== "cameraRig") {
+  if (
+    targetEntity.kind !== target.entityKind ||
+    targetEntity.kind !== "cameraRig"
+  ) {
     diagnostics.push(
       createDiagnostic(
         "error",
