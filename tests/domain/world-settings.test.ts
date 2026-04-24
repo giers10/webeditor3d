@@ -21,6 +21,7 @@ describe("world settings helpers", () => {
     expect(clone.shaderSky).not.toBe(source.shaderSky);
     expect(clone.shaderSky.celestial).not.toBe(source.shaderSky.celestial);
     expect(clone.shaderSky.clouds).not.toBe(source.shaderSky.clouds);
+    expect(clone.shaderSky.aurora).not.toBe(source.shaderSky.aurora);
     expect(clone.celestialOrbits).not.toBe(source.celestialOrbits);
     expect(clone.celestialOrbits.sun).not.toBe(source.celestialOrbits.sun);
     expect(clone.sunLight.direction).not.toBe(source.sunLight.direction);
@@ -187,6 +188,15 @@ describe("world settings helpers", () => {
     const right = cloneWorldSettings(left);
 
     right.shaderSky.stars.horizonFadeOffset = 0.08;
+
+    expect(areWorldSettingsEqual(left, right)).toBe(false);
+  });
+
+  it("treats shader sky aurora settings as part of authored world equality", () => {
+    const left = createDefaultWorldSettings();
+    const right = cloneWorldSettings(left);
+
+    right.shaderSky.aurora.enabled = true;
 
     expect(areWorldSettingsEqual(left, right)).toBe(false);
   });
