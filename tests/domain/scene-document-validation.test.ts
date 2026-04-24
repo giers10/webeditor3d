@@ -1420,6 +1420,8 @@ describe("validateSceneDocument", () => {
     document.world.shaderSky.stars.horizonFadeOffset = 0.75;
     document.world.shaderSky.celestial.sunDiscSizeDegrees = 0;
     document.world.shaderSky.clouds.coverage = 2;
+    document.world.shaderSky.aurora.intensity = -1;
+    document.world.shaderSky.aurora.primaryColorHex = "bad-color" as `#${string}`;
     document.world.timeOfDay.dawn.background = {
       mode: "shader"
     } as typeof document.world.timeOfDay.dawn.background;
@@ -1447,6 +1449,14 @@ describe("validateSceneDocument", () => {
         expect.objectContaining({
           code: "invalid-world-shader-sky-cloud-coverage",
           path: "world.shaderSky.clouds.coverage"
+        }),
+        expect.objectContaining({
+          code: "invalid-world-shader-sky-aurora-intensity",
+          path: "world.shaderSky.aurora.intensity"
+        }),
+        expect.objectContaining({
+          code: "invalid-world-shader-sky-aurora-primary-color",
+          path: "world.shaderSky.aurora.primaryColorHex"
         }),
         expect.objectContaining({
           code: "invalid-dawn-background-mode",
