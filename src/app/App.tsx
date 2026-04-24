@@ -15511,6 +15511,173 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       </div>
 
                       <div className="form-section">
+                        <label className="form-field form-field--toggle">
+                          <span className="label">Aurora Borealis</span>
+                          <input
+                            type="checkbox"
+                            checked={
+                              editorState.document.world.shaderSky.aurora
+                                .enabled
+                            }
+                            onChange={(event) =>
+                              applyShaderSkyAuroraEnabled(
+                                event.currentTarget.checked
+                              )
+                            }
+                          />
+                        </label>
+                        <div className="material-summary">
+                          Adds giant animated northern lights to the shader sky.
+                          Aurora is weighted toward night and late twilight and
+                          fades out in daylight.
+                        </div>
+                      </div>
+
+                      {editorState.document.world.shaderSky.aurora.enabled && (
+                        <div className="form-section">
+                          <div className="label">Aurora Settings</div>
+                          <div className="vector-inputs vector-inputs--two">
+                            <label className="form-field">
+                              <span className="label">Intensity</span>
+                              <input
+                                className="text-input"
+                                type="number"
+                                min="0"
+                                step="0.05"
+                                value={
+                                  editorState.document.world.shaderSky.aurora
+                                    .intensity
+                                }
+                                onChange={(event) =>
+                                  applyShaderSkyNumericSetting(
+                                    "Set shader sky aurora intensity",
+                                    "Updated the shader sky aurora intensity.",
+                                    event.currentTarget.valueAsNumber,
+                                    (shaderSky, nextValue) => {
+                                      shaderSky.aurora.intensity = nextValue;
+                                    }
+                                  )
+                                }
+                              />
+                            </label>
+                            <label className="form-field">
+                              <span className="label">Height</span>
+                              <input
+                                className="text-input"
+                                type="number"
+                                min="0"
+                                max="1"
+                                step="0.05"
+                                value={
+                                  editorState.document.world.shaderSky.aurora
+                                    .height
+                                }
+                                onChange={(event) =>
+                                  applyShaderSkyNumericSetting(
+                                    "Set shader sky aurora height",
+                                    "Updated the shader sky aurora height.",
+                                    event.currentTarget.valueAsNumber,
+                                    (shaderSky, nextValue) => {
+                                      shaderSky.aurora.height = nextValue;
+                                    }
+                                  )
+                                }
+                              />
+                            </label>
+                            <label className="form-field">
+                              <span className="label">Thickness</span>
+                              <input
+                                className="text-input"
+                                type="number"
+                                min="0"
+                                max="1"
+                                step="0.05"
+                                value={
+                                  editorState.document.world.shaderSky.aurora
+                                    .thickness
+                                }
+                                onChange={(event) =>
+                                  applyShaderSkyNumericSetting(
+                                    "Set shader sky aurora thickness",
+                                    "Updated the shader sky aurora thickness.",
+                                    event.currentTarget.valueAsNumber,
+                                    (shaderSky, nextValue) => {
+                                      shaderSky.aurora.thickness = nextValue;
+                                    }
+                                  )
+                                }
+                              />
+                            </label>
+                            <label className="form-field">
+                              <span className="label">Speed</span>
+                              <input
+                                className="text-input"
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={
+                                  editorState.document.world.shaderSky.aurora
+                                    .speed
+                                }
+                                onChange={(event) =>
+                                  applyShaderSkyNumericSetting(
+                                    "Set shader sky aurora speed",
+                                    "Updated the shader sky aurora speed.",
+                                    event.currentTarget.valueAsNumber,
+                                    (shaderSky, nextValue) => {
+                                      shaderSky.aurora.speed = nextValue;
+                                    }
+                                  )
+                                }
+                              />
+                            </label>
+                            <label className="form-field">
+                              <span className="label">Primary Color</span>
+                              <input
+                                className="color-input"
+                                type="color"
+                                value={
+                                  editorState.document.world.shaderSky.aurora
+                                    .primaryColorHex
+                                }
+                                onChange={(event) =>
+                                  applyShaderSkySettings(
+                                    "Set shader sky aurora primary color",
+                                    "Updated the shader sky aurora primary color.",
+                                    (shaderSky) => {
+                                      shaderSky.aurora.primaryColorHex =
+                                        event.currentTarget.value;
+                                    }
+                                  )
+                                }
+                              />
+                            </label>
+                            <label className="form-field">
+                              <span className="label">Secondary Color</span>
+                              <input
+                                className="color-input"
+                                type="color"
+                                value={
+                                  editorState.document.world.shaderSky.aurora
+                                    .secondaryColorHex
+                                }
+                                onChange={(event) =>
+                                  applyShaderSkySettings(
+                                    "Set shader sky aurora secondary color",
+                                    "Updated the shader sky aurora secondary color.",
+                                    (shaderSky) => {
+                                      shaderSky.aurora.secondaryColorHex =
+                                        event.currentTarget.value;
+                                    }
+                                  )
+                                }
+                              />
+                            </label>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="form-section">
                         <div className="label">Clouds</div>
                         <div className="vector-inputs vector-inputs--two">
                           <label className="form-field">
