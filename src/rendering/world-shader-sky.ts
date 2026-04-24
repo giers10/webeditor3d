@@ -65,6 +65,17 @@ export interface WorldShaderSkyRenderState {
     opacityRandomness: number;
     driftOffset: Vec2;
   };
+  aurora: {
+    visibility: number;
+    intensity: number;
+    height: number;
+    thickness: number;
+    speed: number;
+    primaryColorHex: string;
+    secondaryColorHex: string;
+    rotationRadians: number;
+    timeHours: number;
+  };
 }
 
 export interface WorldShaderSkyEnvironmentPhaseStates {
@@ -304,10 +315,16 @@ export function resolveWorldShaderSkyRenderState(
   const starVisibility =
     clamp(phaseWeights.night + twilightFactor * 0.45, 0, 1) *
     clamp(1 - resolvedWorld.daylightFactor * 0.85, 0, 1);
+  const auroraVisibility =
+    world.shaderSky.aurora.enabled
+      ? clamp(phaseWeights.night + twilightFactor * 0.32, 0, 1) *
+        clamp(1 - resolvedWorld.daylightFactor * 1.15, 0, 1)
+      : 0;
   const cloudDriftDirectionRadians =
     (world.shaderSky.clouds.driftDirectionDegrees * Math.PI) / 180;
   const cloudDriftDistance =
     continuousHours * world.shaderSky.clouds.driftSpeed;
+  const skyRotationRadians = Math.atan2(sunDirection.z, sunDirection.x);
 
   return {
     presetId: world.shaderSky.presetId,
@@ -360,7 +377,7 @@ export function resolveWorldShaderSkyRenderState(
       brightness: world.shaderSky.stars.brightness,
       visibility: starVisibility,
       horizonFadeOffset: world.shaderSky.stars.horizonFadeOffset,
-      rotationRadians: Math.atan2(sunDirection.z, sunDirection.x)
+      rotationRadians: skyRotationRadians
     },
     clouds: {
       coverage: world.shaderSky.clouds.coverage,
@@ -376,6 +393,17 @@ export function resolveWorldShaderSkyRenderState(
         x: Math.cos(cloudDriftDirectionRadians) * cloudDriftDistance,
         y: Math.sin(cloudDriftDirectionRadians) * cloudDriftDistance * 0.35
       }
+    },
+    aurora: {
+      visibility: auroraVisibility,
+      intensity: world.shaderSky.aurora.intensity,
+      height: world.shaderSky.aurora.height,
+      thickness: world.shaderSky.aurora.thickness,
+      speed: world.shaderSky.aurora.speed,
+      primaryColorHex: world.shaderSky.aurora.primaryColorHex,
+      secondaryColorHex: world.shaderSky.aurora.secondaryColorHex,
+      rotationRadians: skyRotationRadians + Math.PI * 0.5,
+      timeHours: continuousHours
     }
   };
 }
@@ -520,6 +548,16 @@ export function createWorldShaderSkyEnvironmentCacheKey(
       quantizeNumberToBucket(state.clouds.opacityRandomness, 0.05),
       quantizeNumberToBucket(state.clouds.driftOffset.x, 0.02),
       quantizeNumberToBucket(state.clouds.driftOffset.y, 0.02)
+    ],
+    aurora: [
+      state.aurora.primaryColorHex,
+      state.aurora.secondaryColorHex,
+      quantizeNumberToBucket(state.aurora.visibility, 0.05),
+      quantizeNumberToBucket(state.aurora.intensity, 0.05),
+      quantizeNumberToBucket(state.aurora.height, 0.05),
+      quantizeNumberToBucket(state.aurora.thickness, 0.05),
+      quantizeNumberToBucket(state.aurora.speed, 0.05),
+      quantizeNumberToBucket(state.aurora.rotationRadians, 0.02)
     ]
   });
 }
