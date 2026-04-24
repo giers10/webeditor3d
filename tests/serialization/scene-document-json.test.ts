@@ -19,6 +19,7 @@ import { createTerrain } from "../../src/document/terrains";
 import {
     AUTHORED_TERRAIN_PAINT_SCENE_DOCUMENT_VERSION,
     AUTHORED_TERRAIN_FOUNDATION_SCENE_DOCUMENT_VERSION,
+    CAMERA_RIG_MAPPED_RAIL_SCENE_DOCUMENT_VERSION,
     CAMERA_RIG_CONTROL_SURFACE_SCENE_DOCUMENT_VERSION,
     CAMERA_RIG_ENTITY_SCENE_DOCUMENT_VERSION,
     CELESTIAL_BODY_OVERLAY_SCENE_DOCUMENT_VERSION,
@@ -269,6 +270,42 @@ describe("scene document JSON", () => {
     expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
     expect(migratedDocument.world.shaderSky.stars.density).toBe(0.72);
     expect(migratedDocument.world.shaderSky.stars.horizonFadeOffset).toBe(0);
+  });
+
+  it("migrates v78 scene documents by defaulting shader sky aurora settings", () => {
+    const document = createEmptySceneDocument({
+      name: "Legacy Shader Aurora Scene"
+    });
+    document.world.background = {
+      mode: "shader"
+    };
+    document.world.shaderSky.dayTopColorHex = "#335577";
+    document.world.shaderSky.dayBottomColorHex = "#aaccee";
+
+    const legacyDocument = JSON.parse(
+      serializeSceneDocument(document)
+    ) as Record<string, unknown>;
+    legacyDocument.version = CAMERA_RIG_MAPPED_RAIL_SCENE_DOCUMENT_VERSION;
+    delete (
+      (
+        legacyDocument.world as {
+          shaderSky: Record<string, unknown>;
+        }
+      ).shaderSky as Record<string, unknown>
+    ).aurora;
+
+    const migratedDocument = parseSceneDocumentJson(
+      JSON.stringify(legacyDocument)
+    );
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.world.shaderSky.aurora.enabled).toBe(false);
+    expect(migratedDocument.world.shaderSky.aurora.primaryColorHex).toBe(
+      "#6df7d0"
+    );
+    expect(migratedDocument.world.shaderSky.aurora.secondaryColorHex).toBe(
+      "#6e8dff"
+    );
   });
 
   it("migrates v74 scene documents by defaulting celestial orbit settings from the legacy sun direction", () => {
