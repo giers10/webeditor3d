@@ -11566,6 +11566,18 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
   };
 
+  const applyShaderSkyAuroraEnabled = (enabled: boolean) => {
+    applyShaderSkySettings(
+      enabled ? "Enable shader sky aurora" : "Disable shader sky aurora",
+      enabled
+        ? "Shader sky aurora is now active."
+        : "Shader sky aurora is now hidden.",
+      (shaderSky) => {
+        shaderSky.aurora.enabled = enabled;
+      }
+    );
+  };
+
   const applyCelestialOrbitSettings = (
     label: string,
     successMessage: string,
