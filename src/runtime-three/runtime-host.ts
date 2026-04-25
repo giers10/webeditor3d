@@ -144,7 +144,9 @@ import type {
   PlayerControllerTelemetry,
   RuntimeControllerContext,
   RuntimePlayerAudioHookState,
-  RuntimePlayerVolumeState
+  RuntimePlayerVolumeState,
+  type RuntimeTargetLookInput,
+  type RuntimeTargetLookInputResult
 } from "./navigation-controller";
 import { RapierCollisionWorld } from "./rapier-collision-world";
 import {
@@ -330,7 +332,11 @@ const DIALOGUE_PARTICIPANT_RESTORE_EPSILON_DEGREES = 0.5;
 const TARGETING_LUX_FOLLOW_RATE = 8;
 const TARGETING_LUX_BOB_RATE = 4.2;
 const TARGETING_LUX_PULSE_RATE = 6.5;
-const TARGETING_SIDE_SWITCH_EPSILON_RADIANS = Math.PI / 180;
+const TARGETING_DIRECTION_SWITCH_INPUT_THRESHOLD = 0.28;
+const TARGETING_SCREEN_SWITCH_MIN_DISTANCE = 0.04;
+const TARGETING_SCREEN_SWITCH_MIN_ALIGNMENT = 0.68;
+const TARGETING_SCREEN_SWITCH_MAX_ABS_X = 1.35;
+const TARGETING_SCREEN_SWITCH_MAX_ABS_Y = 1.25;
 const TARGETING_MAX_ACTIVE_TARGET_DISTANCE = 15;
 // Proposed-target camera nudging is intentionally disabled for now. Lux alone
 // should communicate proposal without moving the gameplay camera.
@@ -722,7 +728,7 @@ export class RuntimeHost {
   private runtimeTargetCandidates: RuntimeTargetCandidate[] = [];
   private proposedRuntimeTarget: RuntimeTargetCandidate | null = null;
   private activeRuntimeTargetReference: RuntimeTargetReference | null = null;
-  private runtimeTargetLookInputHeldDirection: -1 | 1 | null = null;
+  private runtimeTargetSwitchInputHeld = false;
   private previousTargetCycleInputActive = false;
   private activeCameraRigOverrideEntityId: string | null = null;
   private activeCameraSourceKey: RuntimeCameraSourceKey | null = null;
@@ -873,8 +879,8 @@ export class RuntimeHost {
         ) ?? { ...desiredCameraPosition },
       resolveThirdPersonTargetAssist: () =>
         this.resolveThirdPersonTargetAssist(),
-      handleRuntimeTargetLookInput: (horizontalIntent) =>
-        this.handleRuntimeTargetLookInput(horizontalIntent),
+      handleRuntimeTargetLookInput: (input) =>
+        this.handleRuntimeTargetLookInput(input),
       isCameraDrivenExternally: () =>
         this.resolveActiveRuntimeCameraRig() !== null ||
         this.resolveDialogueAttentionNpc() !== null,
