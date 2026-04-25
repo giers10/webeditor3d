@@ -83,6 +83,8 @@ export function RunnerCanvas({
   const overlayStatus =
     overlayMessage !== null ? "error" : sceneLoadState.status;
   const runnerReady = overlayStatus === "ready";
+  const showPauseOverlay =
+    runnerReady && runtimePauseState.paused && runtimeDialogue === null;
 
   onRuntimeClockChangeRef.current = onRuntimeClockChange;
 
@@ -212,12 +214,12 @@ export function RunnerCanvas({
   }, [navigationMode]);
 
   return (
-    <div
-      ref={containerRef}
-      className={`runner-canvas ${navigationMode === "firstPerson" && firstPersonTelemetry?.cameraSubmerged ? "runner-canvas--underwater" : ""} ${runnerReady && runtimePauseState.paused ? "runner-canvas--paused" : ""}`}
-      data-testid="runner-shell"
-      aria-label="Built-in scene runner"
-      aria-busy={!runnerReady}
+      <div
+        ref={containerRef}
+        className={`runner-canvas ${navigationMode === "firstPerson" && firstPersonTelemetry?.cameraSubmerged ? "runner-canvas--underwater" : ""} ${showPauseOverlay ? "runner-canvas--paused" : ""}`}
+        data-testid="runner-shell"
+        aria-label="Built-in scene runner"
+        aria-busy={!runnerReady}
     >
       <div
         className={`runner-canvas__loading-overlay ${runnerReady ? "runner-canvas__loading-overlay--hidden" : ""}`}
@@ -270,7 +272,7 @@ export function RunnerCanvas({
       firstPersonTelemetry?.cameraSubmerged ? (
         <div className="runner-canvas__underwater" aria-hidden="true" />
       ) : null}
-      {runnerReady && runtimePauseState.paused ? (
+      {showPauseOverlay ? (
         <>
           <div className="runner-canvas__pause-veil" aria-hidden="true" />
           <div
