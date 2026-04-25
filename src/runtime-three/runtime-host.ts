@@ -4705,7 +4705,7 @@ export class RuntimeHost {
     }
 
     if (
-      dialogue === null ||
+      dialogue !== null &&
       this.activeDialogueAttentionState?.npcEntityId !== dialogue.npcEntityId
     ) {
       this.activeDialogueAttentionState = null;
