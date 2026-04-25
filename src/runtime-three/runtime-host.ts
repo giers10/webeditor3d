@@ -5592,7 +5592,7 @@ export class RuntimeHost {
           };
     const sideTarget = this.resolveRuntimeTargetCandidateOnLookSide(
       activeTarget,
-      horizontalIntent,
+      -horizontalIntent as -1 | 1,
       cameraDirection
     );
 
