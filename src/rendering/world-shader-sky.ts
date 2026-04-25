@@ -6,6 +6,8 @@ import {
 } from "../document/project-time-settings";
 import {
   createDefaultWorldTimePhaseProfile,
+  resolveWorldCelestialOrbitPeakDirection,
+  type WorldCelestialOrbitSettings,
   type WorldBackgroundSettings,
   type WorldSettings
 } from "../document/world-settings";
@@ -51,6 +53,7 @@ export interface WorldShaderSkyRenderState {
     brightness: number;
     visibility: number;
     horizonFadeOffset: number;
+    rotationAxis: Vec3;
     rotationRadians: number;
   };
   clouds: {
@@ -124,6 +127,11 @@ function quantizeNumberToBucket(value: number, step: number): number {
 }
 
 const AURORA_WORLD_ROTATION_RADIANS = 0;
+const DEFAULT_SKY_ROTATION_AXIS: Vec3 = {
+  x: 0,
+  y: 1,
+  z: 0
+};
 
 function parseHexColor(colorHex: string): { r: number; g: number; b: number } {
   return {
@@ -197,6 +205,30 @@ function normalizeDirection(direction: Vec3, fallback: Vec3): Vec3 {
     x: direction.x / length,
     y: direction.y / length,
     z: direction.z / length
+  };
+}
+
+export function resolveWorldShaderSkyStarRotation(
+  timeOfDayHours: number,
+  sunOrbit: WorldCelestialOrbitSettings
+): {
+  rotationAxis: Vec3;
+  rotationRadians: number;
+} {
+  const sunPeakDirection = resolveWorldCelestialOrbitPeakDirection(sunOrbit);
+  const rotationAxis = normalizeDirection(
+    {
+      x: -sunPeakDirection.x * sunPeakDirection.y,
+      y: 1 - sunPeakDirection.y * sunPeakDirection.y,
+      z: -sunPeakDirection.z * sunPeakDirection.y
+    },
+    DEFAULT_SKY_ROTATION_AXIS
+  );
+
+  return {
+    rotationAxis,
+    rotationRadians:
+      (normalizeTimeOfDayHours(timeOfDayHours) / HOURS_PER_DAY) * Math.PI * 2
   };
 }
 
@@ -325,7 +357,10 @@ export function resolveWorldShaderSkyRenderState(
     (world.shaderSky.clouds.driftDirectionDegrees * Math.PI) / 180;
   const cloudDriftDistance =
     continuousHours * world.shaderSky.clouds.driftSpeed;
-  const skyRotationRadians = Math.atan2(sunDirection.z, sunDirection.x);
+  const starRotation = resolveWorldShaderSkyStarRotation(
+    timeOfDayHours,
+    world.celestialOrbits.sun
+  );
 
   return {
     presetId: world.shaderSky.presetId,
@@ -378,7 +413,8 @@ export function resolveWorldShaderSkyRenderState(
       brightness: world.shaderSky.stars.brightness,
       visibility: starVisibility,
       horizonFadeOffset: world.shaderSky.stars.horizonFadeOffset,
-      rotationRadians: skyRotationRadians
+      rotationAxis: starRotation.rotationAxis,
+      rotationRadians: starRotation.rotationRadians
     },
     clouds: {
       coverage: world.shaderSky.clouds.coverage,
@@ -535,6 +571,9 @@ export function createWorldShaderSkyEnvironmentCacheKey(
       quantizeNumberToBucket(state.stars.brightness, 0.05),
       quantizeNumberToBucket(state.stars.visibility, 0.05),
       quantizeNumberToBucket(state.stars.horizonFadeOffset, 0.01),
+      quantizeNumberToBucket(state.stars.rotationAxis.x, 0.01),
+      quantizeNumberToBucket(state.stars.rotationAxis.y, 0.01),
+      quantizeNumberToBucket(state.stars.rotationAxis.z, 0.01),
       quantizeNumberToBucket(state.stars.rotationRadians, 0.02)
     ],
     clouds: [
