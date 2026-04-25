@@ -72,6 +72,23 @@ export interface RuntimeInteractionPrompt {
   range: number;
 }
 
+export type RuntimeTargetCandidateKind = "npc" | "interactable";
+
+export interface RuntimeTargetReference {
+  kind: RuntimeTargetCandidateKind;
+  entityId: string;
+}
+
+export interface RuntimeTargetCandidate extends RuntimeTargetReference {
+  prompt: string;
+  position: Vec3;
+  center: Vec3;
+  distance: number;
+  range: number;
+  viewDot: number;
+  score: number;
+}
+
 export interface RuntimePlayerTriggerProbe {
   feetPosition: Vec3;
   eyePosition: Vec3;
