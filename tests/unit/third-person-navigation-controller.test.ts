@@ -276,7 +276,10 @@ describe("ThirdPersonNavigationController", () => {
     controller.update(0);
 
     expect(latestDesiredCameraPosition).not.toBeNull();
-    expect(latestDesiredCameraPosition?.y ?? 0).toBeLessThan(floorHeight);
+    const desiredCameraPosition =
+      latestDesiredCameraPosition ?? { x: 0, y: 0, z: 0 };
+
+    expect(desiredCameraPosition.y).toBeLessThan(floorHeight);
     expect(context.camera.position.y).toBeCloseTo(floorHeight);
     expect(
       distanceBetween(
@@ -289,7 +292,7 @@ describe("ThirdPersonNavigationController", () => {
       )
     ).toBeLessThan(
       distanceBetween(
-        latestDesiredCameraPosition ?? { x: 0, y: 0, z: 0 },
+        desiredCameraPosition,
         latestPivot ?? { x: 0, y: 0, z: 0 }
       )
     );
