@@ -1,7 +1,20 @@
 import { describe, expect, it } from "vitest";
-import { Vector3 } from "three";
+import { PerspectiveCamera, Vector3 } from "three";
 
 import { resolveDialogueAttentionCameraSolution } from "../../src/runtime-three/dialogue-attention-camera";
+
+function projectPoint(solution: ReturnType<typeof resolveDialogueAttentionCameraSolution>, point: { x: number; y: number; z: number }) {
+  const camera = new PerspectiveCamera(70, 16 / 9, 0.05, 100);
+  camera.position.set(
+    solution.position.x,
+    solution.position.y,
+    solution.position.z
+  );
+  camera.lookAt(solution.lookTarget.x, solution.lookTarget.y, solution.lookTarget.z);
+  camera.updateMatrixWorld(true);
+
+  return new Vector3(point.x, point.y, point.z).project(camera);
+}
 
 describe("resolveDialogueAttentionCameraSolution", () => {
   it("orbits around the conversation midpoint and frames the player and npc on opposite sides", () => {
@@ -147,5 +160,98 @@ describe("resolveDialogueAttentionCameraSolution", () => {
     expect(Math.hypot(wide.position.x, wide.position.z)).toBeGreaterThan(
       Math.hypot(narrow.position.x, narrow.position.z)
     );
+  });
+
+  it("keeps a wide conversation inside a safe frame", () => {
+    const playerFocusPoint = {
+      x: 0,
+      y: 1.6,
+      z: 0
+    };
+    const npcFocusPoint = {
+      x: 4,
+      y: 1.6,
+      z: 4
+    };
+    const solution = resolveDialogueAttentionCameraSolution({
+      playerFocusPoint,
+      npcFocusPoint,
+      referenceCameraPosition: {
+        x: 3,
+        y: 2.2,
+        z: -2
+      },
+      referenceLookTarget: {
+        x: 2,
+        y: 1.6,
+        z: 2
+      },
+      cameraVerticalFovRadians: (70 * Math.PI) / 180,
+      cameraAspect: 16 / 9
+    });
+    const samplePoints = [
+      playerFocusPoint,
+      npcFocusPoint,
+      {
+        x: playerFocusPoint.x,
+        y: playerFocusPoint.y + 0.26,
+        z: playerFocusPoint.z
+      },
+      {
+        x: npcFocusPoint.x,
+        y: npcFocusPoint.y + 0.26,
+        z: npcFocusPoint.z
+      },
+      {
+        x: playerFocusPoint.x,
+        y: playerFocusPoint.y - 0.82,
+        z: playerFocusPoint.z
+      },
+      {
+        x: npcFocusPoint.x,
+        y: npcFocusPoint.y - 0.82,
+        z: npcFocusPoint.z
+      }
+    ].map((point) => projectPoint(solution, point));
+
+    for (const projectedPoint of samplePoints) {
+      expect(Math.abs(projectedPoint.x)).toBeLessThan(0.82);
+      expect(Math.abs(projectedPoint.y)).toBeLessThan(0.84);
+    }
+  });
+
+  it("keeps a narrow conversation readable instead of pushing too far away", () => {
+    const playerFocusPoint = {
+      x: 0,
+      y: 1.6,
+      z: 0
+    };
+    const npcFocusPoint = {
+      x: 1.1,
+      y: 1.6,
+      z: 0.9
+    };
+    const solution = resolveDialogueAttentionCameraSolution({
+      playerFocusPoint,
+      npcFocusPoint,
+      referenceCameraPosition: {
+        x: 2.5,
+        y: 2.2,
+        z: -2
+      },
+      referenceLookTarget: {
+        x: 0.55,
+        y: 1.6,
+        z: 0.45
+      },
+      cameraVerticalFovRadians: (70 * Math.PI) / 180,
+      cameraAspect: 16 / 9
+    });
+    const projectedPlayer = projectPoint(solution, playerFocusPoint);
+    const projectedNpc = projectPoint(solution, npcFocusPoint);
+
+    expect(Math.abs(projectedNpc.x - projectedPlayer.x)).toBeGreaterThan(0.42);
+    expect(Math.abs(projectedPlayer.x)).toBeLessThan(0.75);
+    expect(Math.abs(projectedNpc.x)).toBeLessThan(0.75);
   });
 });
