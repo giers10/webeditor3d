@@ -89,6 +89,13 @@ export interface RuntimeTargetCandidate extends RuntimeTargetReference {
   score: number;
 }
 
+export interface RuntimeResolvedTarget extends RuntimeTargetReference {
+  prompt: string;
+  position: Vec3;
+  center: Vec3;
+  range: number;
+}
+
 export interface RuntimePlayerTriggerProbe {
   feetPosition: Vec3;
   eyePosition: Vec3;

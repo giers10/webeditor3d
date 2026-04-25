@@ -25,10 +25,12 @@ import {
   Quaternion,
   Scene,
   ShaderMaterial,
+  SphereGeometry,
   Vector3,
   SpotLight,
   TextureLoader,
   Texture,
+  TorusGeometry,
   WebGLRenderTarget,
   WebGLRenderer
 } from "three";
@@ -145,9 +147,13 @@ import type {
 import { RapierCollisionWorld } from "./rapier-collision-world";
 import {
   RuntimeInteractionSystem,
+  resolveRuntimeTargetCandidates,
+  resolveStableRuntimeTargetProposal,
   type RuntimeDialogueStartSource,
   type RuntimeInteractionDispatcher,
-  type RuntimeInteractionPrompt
+  type RuntimeInteractionPrompt,
+  type RuntimeTargetCandidate,
+  type RuntimeTargetReference
 } from "./runtime-interaction-system";
 import { RuntimeAudioSystem } from "./runtime-audio-system";
 import {
@@ -193,6 +199,7 @@ import {
   createRuntimeNpcFromDefinition
 } from "./runtime-scene-build";
 import {
+  resolveDefaultTargetCycleInput,
   resolvePlayerStartLookInput,
   resolvePlayerStartPauseInput
 } from "./player-input-bindings";
