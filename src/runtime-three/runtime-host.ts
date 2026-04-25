@@ -4649,7 +4649,10 @@ export class RuntimeHost {
     this.renderer.autoClear = previousAutoClear;
   };
 
-  private applyTeleportPlayerAction(target: RuntimeTeleportTarget) {
+  private applyTeleportPlayerAction(target: {
+    position: RuntimeTeleportTarget["position"];
+    yawDegrees: number;
+  }) {
     if (this.activeController === this.thirdPersonController) {
       this.thirdPersonController.teleportTo(target.position, target.yawDegrees);
       return;

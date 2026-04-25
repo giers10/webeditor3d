@@ -29,6 +29,7 @@ function createSwimmingTelemetry(
   return {
     feetPosition: { x: 0, y: 0, z: 0 },
     eyePosition: { x: 0, y: cameraSubmerged ? 0.4 : 1.7, z: 0 },
+    yawDegrees: 0,
     grounded: false,
     locomotionState: {
       locomotionMode: "swimming",
