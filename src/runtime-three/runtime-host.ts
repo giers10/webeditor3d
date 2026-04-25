@@ -899,12 +899,11 @@ export class RuntimeHost {
         desiredCameraPosition,
         radius
       ) =>
-        this.resolveSmoothedCameraCollision(
+        this.collisionWorld?.resolveThirdPersonCameraCollision(
           pivot,
           desiredCameraPosition,
-          radius,
-          0
-        ),
+          radius
+        ) ?? { ...desiredCameraPosition },
       resolveThirdPersonTargetAssist: () =>
         this.resolveThirdPersonTargetAssist(),
       handleRuntimeTargetLookInput: (input) =>
