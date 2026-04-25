@@ -5618,138 +5618,168 @@ export class RuntimeHost {
     this.setActiveRuntimeTargetReference(null);
   }
 
-  private handleRuntimeTargetLookInput(horizontalIntent: -1 | 0 | 1): boolean {
+  private createRuntimeTargetLookInputResult(
+    result: Partial<RuntimeTargetLookInputResult> = {}
+  ): RuntimeTargetLookInputResult {
+    return {
+      activeTargetLocked: result.activeTargetLocked ?? false,
+      switchedTarget: result.switchedTarget ?? false,
+      switchInputHeld: result.switchInputHeld ?? false
+    };
+  }
+
+  private handleRuntimeTargetLookInput(
+    input: RuntimeTargetLookInput
+  ): RuntimeTargetLookInputResult {
     const activeTarget = this.resolveActiveRuntimeTarget();
 
     if (activeTarget === null) {
       if (this.activeRuntimeTargetReference !== null) {
         this.setActiveRuntimeTargetReference(null);
       }
-      this.runtimeTargetLookInputHeldDirection = null;
-      return false;
+      this.runtimeTargetSwitchInputHeld = false;
+      return this.createRuntimeTargetLookInputResult();
     }
 
-    if (horizontalIntent === 0) {
-      this.runtimeTargetLookInputHeldDirection = null;
-      return true;
+    const inputMagnitude = Math.hypot(input.horizontal, input.vertical);
+
+    if (inputMagnitude <= Number.EPSILON) {
+      this.runtimeTargetSwitchInputHeld = false;
+      return this.createRuntimeTargetLookInputResult({
+        activeTargetLocked: true
+      });
     }
 
-    if (this.runtimeTargetLookInputHeldDirection === horizontalIntent) {
-      return true;
+    if (
+      this.runtimeTargetSwitchInputHeld ||
+      inputMagnitude < TARGETING_DIRECTION_SWITCH_INPUT_THRESHOLD
+    ) {
+      if (inputMagnitude < TARGETING_DIRECTION_SWITCH_INPUT_THRESHOLD) {
+        this.runtimeTargetSwitchInputHeld = false;
+      }
+
+      return this.createRuntimeTargetLookInputResult({
+        activeTargetLocked: true,
+        switchInputHeld: this.runtimeTargetSwitchInputHeld
+      });
     }
 
-    this.runtimeTargetLookInputHeldDirection = horizontalIntent;
-    const origin = this.currentPlayerControllerTelemetry?.eyePosition ?? null;
-
-    if (origin === null) {
-      return true;
-    }
-
-    this.camera.getWorldDirection(this.cameraForward);
-    const cameraLength = Math.hypot(this.cameraForward.x, this.cameraForward.z);
-    const fallbackDirection = {
-      x: activeTarget.center.x - origin.x,
-      z: activeTarget.center.z - origin.z
-    };
-    const fallbackLength = Math.hypot(fallbackDirection.x, fallbackDirection.z);
-    const cameraDirection =
-      cameraLength <= Number.EPSILON && fallbackLength > Number.EPSILON
-        ? {
-            x: fallbackDirection.x / fallbackLength,
-            z: fallbackDirection.z / fallbackLength
-          }
-        : {
-            x: this.cameraForward.x / Math.max(cameraLength, Number.EPSILON),
-            z: this.cameraForward.z / Math.max(cameraLength, Number.EPSILON)
-          };
-    const sideTarget = this.resolveRuntimeTargetCandidateOnLookSide(
+    const directionalTarget = this.resolveRuntimeTargetCandidateInLookDirection(
       activeTarget,
-      -horizontalIntent as -1 | 1,
-      cameraDirection
+      input
     );
 
-    if (sideTarget !== null) {
+    if (directionalTarget !== null) {
       this.setActiveRuntimeTargetReference({
-        kind: sideTarget.kind,
-        entityId: sideTarget.entityId
+        kind: directionalTarget.kind,
+        entityId: directionalTarget.entityId
       });
-      this.runtimeTargetLookInputHeldDirection = horizontalIntent;
-      this.proposedRuntimeTarget = sideTarget;
+      this.runtimeTargetSwitchInputHeld = true;
+      this.proposedRuntimeTarget = directionalTarget;
+
+      return this.createRuntimeTargetLookInputResult({
+        activeTargetLocked: true,
+        switchedTarget: true,
+        switchInputHeld: true
+      });
     }
 
-    return true;
+    return this.createRuntimeTargetLookInputResult({
+      activeTargetLocked: true
+    });
   }
 
-  private resolveRuntimeTargetCandidateOnLookSide(
-    activeTarget: RuntimeResolvedTarget,
-    lookSide: -1 | 1,
-    cameraDirection: { x: number; z: number }
-  ): RuntimeTargetCandidate | null {
-    const origin = this.currentPlayerControllerTelemetry?.eyePosition ?? null;
+  private resolveRuntimeTargetScreenPoint(point: {
+    x: number;
+    y: number;
+    z: number;
+  }) {
+    const projected = new Vector3(point.x, point.y, point.z).project(this.camera);
 
-    if (origin === null) {
+    if (
+      !Number.isFinite(projected.x) ||
+      !Number.isFinite(projected.y) ||
+      !Number.isFinite(projected.z) ||
+      projected.z < -1 ||
+      projected.z > 1
+    ) {
       return null;
     }
 
-    const activeDirection = {
-      x: activeTarget.center.x - origin.x,
-      z: activeTarget.center.z - origin.z
+    return {
+      x: projected.x,
+      y: projected.y
     };
-    const activeLength = Math.hypot(activeDirection.x, activeDirection.z);
+  }
 
-    if (activeLength <= Number.EPSILON) {
+  private resolveRuntimeTargetCandidateInLookDirection(
+    activeTarget: RuntimeResolvedTarget,
+    input: RuntimeTargetLookInput
+  ): RuntimeTargetCandidate | null {
+    const inputLength = Math.hypot(input.horizontal, input.vertical);
+
+    if (inputLength <= Number.EPSILON) {
+      return null;
+    }
+
+    const activeScreenPoint = this.resolveRuntimeTargetScreenPoint(
+      activeTarget.center
+    );
+
+    if (activeScreenPoint === null) {
       return null;
     }
 
     let bestCandidate: RuntimeTargetCandidate | null = null;
-    let bestCameraAngle = Number.POSITIVE_INFINITY;
-    const activeX = activeDirection.x / activeLength;
-    const activeZ = activeDirection.z / activeLength;
+    let bestAlignment = TARGETING_SCREEN_SWITCH_MIN_ALIGNMENT;
+    let bestScreenDistance = 0;
+    const inputX = input.horizontal / inputLength;
+    const inputY = input.vertical / inputLength;
 
     for (const candidate of this.runtimeTargetCandidates) {
       if (candidate.entityId === activeTarget.entityId) {
         continue;
       }
 
-      const candidateDirection = {
-        x: candidate.center.x - origin.x,
-        z: candidate.center.z - origin.z
-      };
-      const candidateLength = Math.hypot(
-        candidateDirection.x,
-        candidateDirection.z
-      );
-
-      if (candidateLength <= Number.EPSILON) {
-        continue;
-      }
-
-      const candidateX = candidateDirection.x / candidateLength;
-      const candidateZ = candidateDirection.z / candidateLength;
-      const signedAngle = Math.atan2(
-        activeZ * candidateX - activeX * candidateZ,
-        activeX * candidateX + activeZ * candidateZ
-      );
-
-      if (signedAngle * lookSide <= TARGETING_SIDE_SWITCH_EPSILON_RADIANS) {
-        continue;
-      }
-
-      const cameraAngle = Math.acos(
-        clampScalar(
-          candidateX * cameraDirection.x + candidateZ * cameraDirection.z,
-          -1,
-          1
-        )
+      const candidateScreenPoint = this.resolveRuntimeTargetScreenPoint(
+        candidate.center
       );
 
       if (
+        candidateScreenPoint === null ||
+        Math.abs(candidateScreenPoint.x) > TARGETING_SCREEN_SWITCH_MAX_ABS_X ||
+        Math.abs(candidateScreenPoint.y) > TARGETING_SCREEN_SWITCH_MAX_ABS_Y
+      ) {
+        continue;
+      }
+
+      const screenDeltaX = candidateScreenPoint.x - activeScreenPoint.x;
+      const screenDeltaY = candidateScreenPoint.y - activeScreenPoint.y;
+      const screenDistance = Math.hypot(screenDeltaX, screenDeltaY);
+
+      if (screenDistance < TARGETING_SCREEN_SWITCH_MIN_DISTANCE) {
+        continue;
+      }
+
+      const alignment =
+        (screenDeltaX / screenDistance) * inputX +
+        (screenDeltaY / screenDistance) * inputY;
+
+      if (alignment < TARGETING_SCREEN_SWITCH_MIN_ALIGNMENT) {
+        continue;
+      }
+
+      if (
         bestCandidate === null ||
-        cameraAngle < bestCameraAngle ||
-        (cameraAngle === bestCameraAngle && candidate.score > bestCandidate.score)
+        alignment > bestAlignment ||
+        (alignment === bestAlignment && screenDistance > bestScreenDistance) ||
+        (alignment === bestAlignment &&
+          screenDistance === bestScreenDistance &&
+          candidate.score > bestCandidate.score)
       ) {
         bestCandidate = candidate;
-        bestCameraAngle = cameraAngle;
+        bestAlignment = alignment;
+        bestScreenDistance = screenDistance;
       }
     }
 
