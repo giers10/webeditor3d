@@ -668,12 +668,34 @@ export class ThirdPersonNavigationController implements NavigationController {
     this.lastPointerClientX = event.clientX;
     this.lastPointerClientY = event.clientY;
 
-    const targetLookConsumed =
-      this.context?.handleRuntimeTargetLookInput?.(
-        deltaX > 0 ? 1 : deltaX < 0 ? -1 : 0
-      ) ?? false;
+    const targetLookResult =
+      this.context?.handleRuntimeTargetLookInput?.({
+        horizontal: deltaX * POINTER_TARGET_LOOK_INPUT_SCALE,
+        vertical: -deltaY * POINTER_TARGET_LOOK_INPUT_SCALE
+      }) ?? null;
 
-    if (targetLookConsumed) {
+    if (targetLookResult?.activeTargetLocked === true) {
+      if (
+        targetLookResult.switchedTarget !== true &&
+        targetLookResult.switchInputHeld !== true
+      ) {
+        this.targetLookOffsetYawRadians = Math.max(
+          -TARGET_LOOK_OFFSET_YAW_LIMIT,
+          Math.min(
+            TARGET_LOOK_OFFSET_YAW_LIMIT,
+            this.targetLookOffsetYawRadians -
+              deltaX * TARGET_LOOK_OFFSET_POINTER_SENSITIVITY
+          )
+        );
+        this.targetLookOffsetPitchRadians = Math.max(
+          -TARGET_LOOK_OFFSET_PITCH_LIMIT,
+          Math.min(
+            TARGET_LOOK_OFFSET_PITCH_LIMIT,
+            this.targetLookOffsetPitchRadians +
+              deltaY * TARGET_LOOK_OFFSET_POINTER_SENSITIVITY
+          )
+        );
+      }
       return;
     }
 
@@ -685,7 +707,10 @@ export class ThirdPersonNavigationController implements NavigationController {
 
   private handlePointerUp = () => {
     this.dragging = false;
-    this.context?.handleRuntimeTargetLookInput?.(0);
+    this.context?.handleRuntimeTargetLookInput?.({
+      horizontal: 0,
+      vertical: 0
+    });
   };
 
   private handleWheel = (event: WheelEvent) => {
