@@ -552,12 +552,17 @@ export class ThirdPersonNavigationController implements NavigationController {
       y: this.smoothedFeetY + eyeHeight * CAMERA_PIVOT_EYE_HEIGHT_FACTOR,
       z: this.feetPosition.z
     };
+    const resolvedCameraYawRadians =
+      this.cameraYawRadians + this.targetLookOffsetYawRadians;
+    const resolvedPitchRadians = clampPitch(
+      this.pitchRadians + this.targetLookOffsetPitchRadians
+    );
     const horizontalDistance =
-      Math.cos(this.pitchRadians) * this.cameraDistance;
+      Math.cos(resolvedPitchRadians) * this.cameraDistance;
     const desiredCameraPosition = {
-      x: pivot.x - Math.sin(this.cameraYawRadians) * horizontalDistance,
-      y: pivot.y + Math.sin(this.pitchRadians) * this.cameraDistance,
-      z: pivot.z - Math.cos(this.cameraYawRadians) * horizontalDistance
+      x: pivot.x - Math.sin(resolvedCameraYawRadians) * horizontalDistance,
+      y: pivot.y + Math.sin(resolvedPitchRadians) * this.cameraDistance,
+      z: pivot.z - Math.cos(resolvedCameraYawRadians) * horizontalDistance
     };
     const resolvedCameraPosition =
       this.context.resolveThirdPersonCameraCollision(
