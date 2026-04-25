@@ -1586,6 +1586,125 @@ describe("RuntimeHost", () => {
     host.dispose();
   });
 
+  it("keeps dialogue pause active for runtime progression while camera blends and dialogue advance still work", () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    vi.spyOn(RapierCollisionWorld, "create").mockResolvedValue({
+      dispose: vi.fn(),
+      resolveThirdPersonCameraCollision: vi.fn(
+        (_pivot, desiredCameraPosition) => desiredCameraPosition
+      )
+    } as unknown as RapierCollisionWorld);
+    vi.spyOn(window, "requestAnimationFrame").mockReturnValue(1);
+    vi.spyOn(performance, "now").mockReturnValue(1100);
+
+    const playerStart = createPlayerStartEntity({
+      id: "entity-player-start-dialogue-pause",
+      position: {
+        x: 0,
+        y: 0,
+        z: 0
+      }
+    });
+    const npc = createNpcEntity({
+      id: "entity-npc-dialogue-pause",
+      position: {
+        x: 2,
+        y: 0,
+        z: 2
+      },
+      dialogues: [
+        {
+          id: "dialogue-pause",
+          title: "Pause",
+          lines: [
+            {
+              id: "dialogue-pause-line-1",
+              text: "Time should stop."
+            },
+            {
+              id: "dialogue-pause-line-2",
+              text: "But dialogue should keep going."
+            }
+          ]
+        }
+      ],
+      defaultDialogueId: "dialogue-pause"
+    });
+    const runtimeScene = buildRuntimeSceneFromDocument({
+      ...createEmptySceneDocument({ name: "Dialogue Pause Scene" }),
+      entities: {
+        [playerStart.id]: playerStart,
+        [npc.id]: npc
+      }
+    });
+    const host = new RuntimeHost({
+      enableRendering: false
+    });
+    host.loadScene(runtimeScene);
+
+    const hostInternals = host as unknown as {
+      sceneReady: boolean;
+      camera: PerspectiveCamera;
+      currentClockState: {
+        timeOfDayHours: number;
+        dayCount: number;
+        dayLengthMinutes: number;
+      } | null;
+      currentDialogue: RuntimeDialogueState | null;
+      currentPauseState: RuntimePauseState;
+      activeCameraSourceKey: string | null;
+      cameraTransitionState: { elapsedSeconds: number } | null;
+      previousFrameTime: number;
+      render(): void;
+      createInteractionDispatcher(): {
+        startNpcDialogue(
+          npcEntityId: string,
+          dialogueId: string | null,
+          source?: {
+            kind: "interactionLink" | "npc" | "direct";
+            sourceEntityId: string | null;
+            linkId: string | null;
+            trigger: "enter" | "exit" | "click" | null;
+          }
+        ): void;
+      };
+    };
+    const dispatcher = hostInternals.createInteractionDispatcher();
+
+    hostInternals.sceneReady = true;
+    hostInternals.previousFrameTime = 1000;
+    hostInternals.camera.position.set(0, 2.6, 6);
+    hostInternals.camera.lookAt(0, 1.6, 0);
+    const clockBefore = {
+      ...hostInternals.currentClockState!
+    };
+
+    dispatcher.startNpcDialogue(npc.id, null, {
+      kind: "npc",
+      sourceEntityId: npc.id,
+      linkId: null,
+      trigger: "click"
+    });
+    hostInternals.render();
+
+    expect(hostInternals.currentPauseState).toEqual({
+      paused: true,
+      source: "dialogue"
+    });
+    expect(hostInternals.activeCameraSourceKey).toBe(`dialogue:${npc.id}`);
+    expect(hostInternals.cameraTransitionState?.elapsedSeconds).toBeGreaterThan(0);
+    expect(hostInternals.currentClockState).toEqual(clockBefore);
+
+    host.advanceRuntimeDialogue();
+
+    expect(hostInternals.currentDialogue?.lineIndex).toBe(1);
+    expect(hostInternals.currentDialogue?.text).toBe(
+      "But dialogue should keep going."
+    );
+
+    host.dispose();
+  });
+
   it("publishes late dialogue handlers, ignores repeated same-NPC dialogue starts, and replaces with a different NPC dialogue", () => {
     vi.spyOn(console, "warn").mockImplementation(() => undefined);
     vi.spyOn(RapierCollisionWorld, "create").mockResolvedValue({
