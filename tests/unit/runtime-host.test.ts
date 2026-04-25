@@ -764,6 +764,11 @@ describe("RuntimeHost", () => {
       hostInternals.runtimeScene?.entities.npcs.find(
         (candidate) => candidate.entityId === npc.id
       ) ?? null;
+    console.log("dialogue debug", {
+      telemetry: playerTelemetry,
+      state: hostInternals.dialogueParticipantState,
+      npc: runtimeNpc
+    });
 
     expect(canOccupyPlayerShape).toHaveBeenCalled();
     expect(playerTelemetry).not.toBeNull();
