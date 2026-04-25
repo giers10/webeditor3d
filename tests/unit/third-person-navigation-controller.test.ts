@@ -1,4 +1,4 @@
-import { PerspectiveCamera } from "three";
+import { PerspectiveCamera, Vector3 } from "three";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { Vec3 } from "../../src/core/vector";
