@@ -241,6 +241,39 @@ describe("ThirdPersonNavigationController", () => {
     controller.deactivate(targetContext);
   });
 
+  it("fades vertical target assist when camera collision pushes the camera close", () => {
+    const { context } = createRuntimeControllerContext();
+    const controller = new ThirdPersonNavigationController();
+    const targetContext = {
+      ...context,
+      resolveThirdPersonCameraCollision: (
+        pivot: Vec3,
+        desiredCameraPosition: Vec3
+      ) => ({
+        x: pivot.x + (desiredCameraPosition.x - pivot.x) * 0.12,
+        y: pivot.y + (desiredCameraPosition.y - pivot.y) * 0.12,
+        z: pivot.z + (desiredCameraPosition.z - pivot.z) * 0.12
+      }),
+      resolveThirdPersonTargetAssist: () => ({
+        targetPosition: {
+          x: 0,
+          y: 5,
+          z: 5
+        },
+        strength: 1
+      })
+    };
+    const cameraDirection = new Vector3();
+
+    controller.activate(targetContext);
+    controller.update(1);
+    targetContext.camera.getWorldDirection(cameraDirection);
+
+    expect(cameraDirection.y).toBeLessThan(0.15);
+
+    controller.deactivate(targetContext);
+  });
+
 
   it("uses the authored movement template speed for third-person motion telemetry", () => {
     const playerStart = createPlayerStartEntity({
