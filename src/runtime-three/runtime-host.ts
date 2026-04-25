@@ -339,6 +339,10 @@ const TARGETING_SCREEN_SWITCH_MAX_ABS_Y = 1.25;
 const TARGETING_SCREEN_PROPOSAL_MAX_ABS_X = 1;
 const TARGETING_SCREEN_PROPOSAL_MAX_ABS_Y = 1;
 const TARGETING_MAX_ACTIVE_TARGET_DISTANCE = 15;
+const TARGETING_ACTIVE_TARGET_RELEASE_DISTANCE =
+  TARGETING_MAX_ACTIVE_TARGET_DISTANCE + 0.75;
+const TARGETING_AUTO_RETARGET_SAFE_DISTANCE =
+  TARGETING_MAX_ACTIVE_TARGET_DISTANCE - 0.75;
 // Proposed-target camera nudging is intentionally disabled for now. Lux alone
 // should communicate proposal without moving the gameplay camera.
 // const PROPOSED_TARGET_CAMERA_ASSIST_STRENGTH = 0.28;
@@ -5788,9 +5792,17 @@ export class RuntimeHost {
   }
 
   private resolveRuntimeTargetCandidateNearestScreenCenter(
-    options: { exclude?: RuntimeTargetReference | null } = {}
+    options: {
+      exclude?: RuntimeTargetReference | null;
+      maxDistanceFromPlayer?: number;
+    } = {}
   ): RuntimeTargetCandidate | null {
     const exclude = options.exclude ?? null;
+    const maxDistanceFromPlayer = options.maxDistanceFromPlayer ?? null;
+    const playerEyePosition =
+      maxDistanceFromPlayer === null
+        ? null
+        : this.currentPlayerControllerTelemetry?.eyePosition ?? null;
     let bestCandidate: RuntimeTargetCandidate | null = null;
     let bestScreenDistanceSquared = Number.POSITIVE_INFINITY;
 
@@ -5799,6 +5811,15 @@ export class RuntimeHost {
         exclude !== null &&
         candidate.kind === exclude.kind &&
         candidate.entityId === exclude.entityId
+      ) {
+        continue;
+      }
+
+      if (
+        maxDistanceFromPlayer !== null &&
+        playerEyePosition !== null &&
+        distanceBetweenPoints(playerEyePosition, candidate.center) >
+          maxDistanceFromPlayer
       ) {
         continue;
       }
@@ -5850,11 +5871,12 @@ export class RuntimeHost {
       distanceBetweenPoints(
         this.currentPlayerControllerTelemetry.eyePosition,
         activeTarget.center
-      ) > TARGETING_MAX_ACTIVE_TARGET_DISTANCE
+      ) > TARGETING_ACTIVE_TARGET_RELEASE_DISTANCE
     ) {
       const replacementTarget =
         this.resolveRuntimeTargetCandidateNearestScreenCenter({
-          exclude: this.activeRuntimeTargetReference
+          exclude: this.activeRuntimeTargetReference,
+          maxDistanceFromPlayer: TARGETING_AUTO_RETARGET_SAFE_DISTANCE
         });
 
       if (replacementTarget !== null) {
