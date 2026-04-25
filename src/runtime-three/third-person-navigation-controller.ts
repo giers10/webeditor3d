@@ -298,8 +298,19 @@ export class ThirdPersonNavigationController implements NavigationController {
     );
 
     const cameraDrivenExternally = this.context.isCameraDrivenExternally() === true;
+    const lookInputActive = lookInput.horizontal !== 0 || lookInput.vertical !== 0;
+    let targetLookConsumed = false;
 
-    if (!cameraDrivenExternally && (lookInput.horizontal !== 0 || lookInput.vertical !== 0)) {
+    if (!cameraDrivenExternally && lookInputActive) {
+      targetLookConsumed =
+        this.context.handleRuntimeTargetLookInput?.(
+          lookInput.horizontal > 0 ? 1 : lookInput.horizontal < 0 ? -1 : 0
+        ) ?? false;
+    } else if (!cameraDrivenExternally) {
+      this.context.handleRuntimeTargetLookInput?.(0);
+    }
+
+    if (!cameraDrivenExternally && lookInputActive && !targetLookConsumed) {
       this.cameraYawRadians -= lookInput.horizontal * GAMEPAD_LOOK_SPEED * dt;
       this.pitchRadians = clampPitch(
         this.pitchRadians - lookInput.vertical * GAMEPAD_LOOK_SPEED * dt
@@ -570,6 +581,15 @@ export class ThirdPersonNavigationController implements NavigationController {
     this.lastPointerClientX = event.clientX;
     this.lastPointerClientY = event.clientY;
 
+    const targetLookConsumed =
+      this.context?.handleRuntimeTargetLookInput?.(
+        deltaX > 0 ? 1 : deltaX < 0 ? -1 : 0
+      ) ?? false;
+
+    if (targetLookConsumed) {
+      return;
+    }
+
     this.cameraYawRadians -= deltaX * LOOK_SENSITIVITY;
     this.pitchRadians = clampPitch(
       this.pitchRadians + deltaY * LOOK_SENSITIVITY
@@ -578,6 +598,7 @@ export class ThirdPersonNavigationController implements NavigationController {
 
   private handlePointerUp = () => {
     this.dragging = false;
+    this.context?.handleRuntimeTargetLookInput?.(0);
   };
 
   private handleWheel = (event: WheelEvent) => {
