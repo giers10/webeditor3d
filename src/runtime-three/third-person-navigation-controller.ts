@@ -613,7 +613,60 @@ export class ThirdPersonNavigationController implements NavigationController {
     }
   }
 
-  private updateCameraTransform() {
+  private resolveSmoothedCameraCollisionPosition(
+    pivot: Vec3,
+    desiredCameraPosition: Vec3,
+    resolvedCameraPosition: Vec3,
+    dt: number
+  ): Vec3 {
+    const desiredDelta = {
+      x: desiredCameraPosition.x - pivot.x,
+      y: desiredCameraPosition.y - pivot.y,
+      z: desiredCameraPosition.z - pivot.z
+    };
+    const desiredDistance = Math.hypot(
+      desiredDelta.x,
+      desiredDelta.y,
+      desiredDelta.z
+    );
+
+    if (desiredDistance <= CAMERA_COLLISION_DISTANCE_EPSILON) {
+      this.smoothedCameraCollisionDistance = null;
+      return resolvedCameraPosition;
+    }
+
+    const resolvedDistance = Math.hypot(
+      resolvedCameraPosition.x - pivot.x,
+      resolvedCameraPosition.y - pivot.y,
+      resolvedCameraPosition.z - pivot.z
+    );
+    const previousDistance = this.smoothedCameraCollisionDistance;
+    const nextDistance =
+      previousDistance === null ||
+      dt <= 0 ||
+      resolvedDistance < previousDistance
+        ? resolvedDistance
+        : dampScalar(
+            previousDistance,
+            resolvedDistance,
+            CAMERA_COLLISION_RECOVERY_SPEED,
+            dt
+          );
+    const clampedDistance = Math.min(
+      Math.max(0, nextDistance),
+      Math.min(resolvedDistance, desiredDistance)
+    );
+
+    this.smoothedCameraCollisionDistance = clampedDistance;
+
+    return {
+      x: pivot.x + (desiredDelta.x / desiredDistance) * clampedDistance,
+      y: pivot.y + (desiredDelta.y / desiredDistance) * clampedDistance,
+      z: pivot.z + (desiredDelta.z / desiredDistance) * clampedDistance
+    };
+  }
+
+  private updateCameraTransform(dt = 0) {
     if (this.context === null) {
       return;
     }
@@ -636,12 +689,18 @@ export class ThirdPersonNavigationController implements NavigationController {
       y: pivot.y + Math.sin(resolvedPitchRadians) * this.cameraDistance,
       z: pivot.z - Math.cos(resolvedCameraYawRadians) * horizontalDistance
     };
-    const resolvedCameraPosition =
+    const rawResolvedCameraPosition =
       this.context.resolveThirdPersonCameraCollision(
         pivot,
         desiredCameraPosition,
         THIRD_PERSON_CAMERA_COLLISION_RADIUS
       );
+    const resolvedCameraPosition = this.resolveSmoothedCameraCollisionPosition(
+      pivot,
+      desiredCameraPosition,
+      rawResolvedCameraPosition,
+      dt
+    );
     const resolvedCameraDistance = Math.hypot(
       resolvedCameraPosition.x - pivot.x,
       resolvedCameraPosition.y - pivot.y,
