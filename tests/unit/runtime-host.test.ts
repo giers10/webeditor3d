@@ -647,11 +647,15 @@ describe("RuntimeHost", () => {
     });
     expect(pivot?.y).toBeCloseTo(1.36, 5);
     expect(radius).toBe(0.2);
-    expect(hostInternals.camera.position).toMatchObject({
-      x: pivot.x + (desiredCameraPosition.x - pivot.x) * 0.55,
-      y: pivot.y + (desiredCameraPosition.y - pivot.y) * 0.55,
-      z: pivot.z + (desiredCameraPosition.z - pivot.z) * 0.55
-    });
+    expect(hostInternals.camera.position.x).toBeCloseTo(
+      pivot.x + (desiredCameraPosition.x - pivot.x) * 0.55
+    );
+    expect(hostInternals.camera.position.y).toBeCloseTo(
+      pivot.y + (desiredCameraPosition.y - pivot.y) * 0.55
+    );
+    expect(hostInternals.camera.position.z).toBeCloseTo(
+      pivot.z + (desiredCameraPosition.z - pivot.z) * 0.55
+    );
 
     host.dispose();
   });
