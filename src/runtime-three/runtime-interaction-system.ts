@@ -731,69 +731,25 @@ export class RuntimeInteractionSystem {
     let bestPrompt: RuntimeInteractionPrompt | null = null;
     let bestHitDistance = Number.POSITIVE_INFINITY;
 
-    for (const interactable of runtimeScene.entities.interactables) {
-      if (
-        !interactable.interactionEnabled ||
-        !hasTriggerLinks(runtimeScene, interactable.entityId, "click")
-      ) {
-        continue;
-      }
-
-      const distance = distanceBetweenVec3(
-        interactionOrigin,
-        interactable.position
-      );
-
-      if (distance > interactable.radius) {
-        continue;
-      }
-
-      const hitDistance = raySphereHitDistance(
-        rayOrigin,
-        normalizedViewDirection,
-        interactable.position,
-        getInteractableTargetRadius(interactable)
-      );
-
-      if (hitDistance === null) {
-        continue;
-      }
-      const next = updateBestPrompt(
-        bestPrompt,
-        bestHitDistance,
-        interactable.entityId,
-        interactable.prompt,
-        distance,
-        interactable.radius,
-        hitDistance
-      );
-      bestPrompt = next.prompt;
-      bestHitDistance = next.hitDistance;
-    }
-
-    for (const npc of runtimeScene.entities.npcs) {
-      if (!npc.visible) {
-        continue;
-      }
-
-      const hasClickLinks = hasTriggerLinks(runtimeScene, npc.entityId, "click");
-
-      if (!hasClickLinks) {
-        continue;
-      }
-
-      const bounds = getNpcDialogueTargetBounds(npc);
-      const distance = distanceToAxisAlignedBox(interactionOrigin, bounds);
-
-      if (distance > bounds.range) {
-        continue;
-      }
-
-      const hitDistance = rayAxisAlignedBoxHitDistance(
-        rayOrigin,
-        normalizedViewDirection,
-        bounds
-      );
+    for (const candidate of collectRuntimeInteractionTargetSources(
+      interactionOrigin,
+      runtimeScene
+    )) {
+      const hitDistance =
+        candidate.kind === "interactable"
+          ? raySphereHitDistance(
+              rayOrigin,
+              normalizedViewDirection,
+              candidate.center,
+              candidate.targetRadius ?? DEFAULT_INTERACTABLE_TARGET_RADIUS
+            )
+          : candidate.bounds
+            ? rayAxisAlignedBoxHitDistance(
+                rayOrigin,
+                normalizedViewDirection,
+                candidate.bounds
+              )
+            : null;
 
       if (hitDistance === null) {
         continue;
@@ -802,10 +758,10 @@ export class RuntimeInteractionSystem {
       const next = updateBestPrompt(
         bestPrompt,
         bestHitDistance,
-        npc.entityId,
-        getNpcDialoguePrompt(npc, hasClickLinks),
-        distance,
-        bounds.range,
+        candidate.entityId,
+        candidate.prompt,
+        candidate.distance,
+        candidate.range,
         hitDistance
       );
       bestPrompt = next.prompt;
