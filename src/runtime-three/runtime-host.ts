@@ -547,6 +547,7 @@ export class RuntimeHost {
   private activeCameraSourceKey: RuntimeCameraSourceKey | null = null;
   private activeRuntimeCameraRig: RuntimeCameraRig | null = null;
   private activeDialogueAttentionState: RuntimeDialogueAttentionState | null = null;
+  private dialogueParticipantState: RuntimeDialogueParticipantState | null = null;
   private cameraTransitionState: RuntimeCameraTransitionState | null = null;
   private suppressNextCameraSourceTransition = false;
   private cameraRigLookYawRadians = 0;
