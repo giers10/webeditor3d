@@ -419,11 +419,8 @@ export function resolveRuntimeTargetVisualPlacement(target: {
   const luxLift =
     clampScalar(target.range * 0.42, 0.78, 1.35) +
     TARGETING_LUX_EXTRA_TARGET_LIFT;
-  const activeMarkerLift = Math.max(
-    clampScalar(target.range * 0.62, 0.95, 1.7),
-    luxLift + 0.2
-  );
-  const activeMarkerScale = clampScalar(target.range * 0.82, 0.9, 2);
+  const activeMarkerRadius = clampScalar(target.range * 0.48, 0.62, 1.15);
+  const activeMarkerScale = clampScalar(target.range * 0.55, 0.8, 1.35);
 
   return {
     luxPosition: {
@@ -433,9 +430,10 @@ export function resolveRuntimeTargetVisualPlacement(target: {
     },
     activeMarkerPosition: {
       x: target.center.x,
-      y: target.center.y + activeMarkerLift,
+      y: target.center.y,
       z: target.center.z
     },
+    activeMarkerRadius,
     activeMarkerScale
   };
 }
