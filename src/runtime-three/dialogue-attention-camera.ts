@@ -3,6 +3,7 @@ import type { Vec3 } from "../core/vector";
 export type DialogueAttentionSideSign = -1 | 1;
 
 export interface DialogueAttentionCameraSolution {
+  pivot: Vec3;
   position: Vec3;
   lookTarget: Vec3;
   sideSign: DialogueAttentionSideSign;
@@ -23,12 +24,12 @@ const DEFAULT_DIALOGUE_ATTENTION_DISTANCE = 3.8;
 const DEFAULT_DIALOGUE_ATTENTION_HEIGHT = 0.48;
 const MIN_DIALOGUE_ATTENTION_DISTANCE = 3.2;
 const MAX_DIALOGUE_ATTENTION_DISTANCE = 7.5;
-const MIN_DIALOGUE_ATTENTION_LATERAL_OFFSET = 1.05;
-const MAX_DIALOGUE_ATTENTION_LATERAL_OFFSET = 2.3;
 const MIN_DIALOGUE_ATTENTION_LOOK_AHEAD = 0.08;
-const MAX_DIALOGUE_ATTENTION_LOOK_AHEAD = 0.34;
-const MIN_DIALOGUE_ATTENTION_COMPOSITION_OFFSET = 0.04;
-const MAX_DIALOGUE_ATTENTION_COMPOSITION_OFFSET = 0.18;
+const MAX_DIALOGUE_ATTENTION_LOOK_AHEAD = 0.28;
+const MIN_DIALOGUE_ATTENTION_COMPOSITION_OFFSET = 0.03;
+const MAX_DIALOGUE_ATTENTION_COMPOSITION_OFFSET = 0.14;
+const MIN_DIALOGUE_ATTENTION_SHOULDER_ORBIT_RADIANS = 0.56;
+const MAX_DIALOGUE_ATTENTION_SHOULDER_ORBIT_RADIANS = 0.68;
 const CAMERA_SIDE_EPSILON = 1e-4;
 
 function addVec3(left: Vec3, right: Vec3): Vec3 {
@@ -185,36 +186,28 @@ export function resolveDialogueAttentionCameraSolution(
     MIN_DIALOGUE_ATTENTION_DISTANCE,
     MAX_DIALOGUE_ATTENTION_DISTANCE
   );
-  const lateralOffset = clampScalar(
-    MIN_DIALOGUE_ATTENTION_LATERAL_OFFSET + subjectDistance * 0.18,
-    MIN_DIALOGUE_ATTENTION_LATERAL_OFFSET,
-    MAX_DIALOGUE_ATTENTION_LATERAL_OFFSET
-  );
   const verticalOffset =
     preferredConversationHeight + Math.min(0.42, subjectDistance * 0.05);
-  const backOffset = Math.max(
-    desiredDistance * 0.7,
-    Math.sqrt(
-      Math.max(
-        desiredDistance * desiredDistance -
-          lateralOffset * lateralOffset -
-          verticalOffset * verticalOffset,
-        desiredDistance * desiredDistance * 0.45
-      )
+  const horizontalDistance = Math.sqrt(
+    Math.max(
+      desiredDistance * desiredDistance - verticalOffset * verticalOffset,
+      desiredDistance * desiredDistance * 0.45
     )
   );
-  const cameraAnchor = lerpVec3(
-    options.playerFocusPoint,
-    options.npcFocusPoint,
-    0.4
+  const shoulderOrbitRadians = clampScalar(
+    MIN_DIALOGUE_ATTENTION_SHOULDER_ORBIT_RADIANS + subjectDistance * 0.02,
+    MIN_DIALOGUE_ATTENTION_SHOULDER_ORBIT_RADIANS,
+    MAX_DIALOGUE_ATTENTION_SHOULDER_ORBIT_RADIANS
   );
+  const lateralOffset = horizontalDistance * Math.sin(shoulderOrbitRadians);
+  const backOffset = horizontalDistance * Math.cos(shoulderOrbitRadians);
   const lookTarget = addVec3(
     addVec3(
-      lerpVec3(options.playerFocusPoint, options.npcFocusPoint, 0.56),
+      conversationMidpoint,
       scaleVec3(
         pairDirection,
         clampScalar(
-          subjectDistance * 0.1,
+          subjectDistance * 0.12,
           MIN_DIALOGUE_ATTENTION_LOOK_AHEAD,
           MAX_DIALOGUE_ATTENTION_LOOK_AHEAD
         )
@@ -225,7 +218,7 @@ export function resolveDialogueAttentionCameraSolution(
         pairRight,
         -sideSign *
           clampScalar(
-            subjectDistance * 0.05,
+            subjectDistance * 0.03,
             MIN_DIALOGUE_ATTENTION_COMPOSITION_OFFSET,
             MAX_DIALOGUE_ATTENTION_COMPOSITION_OFFSET
           )
@@ -239,9 +232,10 @@ export function resolveDialogueAttentionCameraSolution(
   );
 
   return {
+    pivot: conversationMidpoint,
     position: addVec3(
       addVec3(
-        cameraAnchor,
+        conversationMidpoint,
         scaleVec3(pairDirection, -backOffset)
       ),
       {
