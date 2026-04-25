@@ -40,6 +40,8 @@ const CAMERA_PIVOT_EYE_HEIGHT_FACTOR = 0.85;
 const TARGET_ASSIST_YAW_SPEED = 2.2;
 const TARGET_ASSIST_VERTICAL_LOOK_SPEED = 3.4;
 const TARGET_ASSIST_VERTICAL_LOOK_LIMIT = 1.25;
+const TARGET_ASSIST_VERTICAL_COLLISION_FADE_START_RATIO = 0.28;
+const TARGET_ASSIST_VERTICAL_COLLISION_FADE_END_RATIO = 0.72;
 const TARGET_LOOK_OFFSET_GAMEPAD_SPEED = 1.15;
 const TARGET_LOOK_OFFSET_POINTER_SENSITIVITY = 0.004;
 const TARGET_LOOK_OFFSET_RETURN_SPEED = 5.5;
@@ -92,6 +94,12 @@ function dampScalar(
   const alpha = 1 - Math.exp(-strength * dt);
 
   return current + (target - current) * alpha;
+}
+
+function smoothStep01(value: number): number {
+  const t = Math.max(0, Math.min(1, value));
+
+  return t * t * (3 - 2 * t);
 }
 
 function toEyePosition(feetPosition: Vec3, eyeHeight: number): Vec3 {
