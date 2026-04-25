@@ -5,7 +5,8 @@ import { createDefaultWorldSettings } from "../../src/document/world-settings";
 import {
   createWorldShaderSkyEnvironmentCacheKey,
   resolveWorldShaderSkyEnvironmentPhaseStates,
-  resolveWorldShaderSkyRenderState
+  resolveWorldShaderSkyRenderState,
+  resolveWorldShaderSkyStarRotation
 } from "../../src/rendering/world-shader-sky";
 import {
   resolveRuntimeDayNightWorldState,
@@ -247,6 +248,73 @@ describe("resolveWorldShaderSkyRenderState", () => {
     expect(lateNightSky?.aurora.timeHours ?? 0).toBeGreaterThan(
       eveningSky?.aurora.timeHours ?? 0
     );
+  });
+
+  it("rotates shader stars linearly around the authored sun orbit axis", () => {
+    const world = createDefaultWorldSettings();
+    const time = createDefaultProjectTimeSettings();
+    world.background = {
+      mode: "shader"
+    };
+    world.celestialOrbits.sun = {
+      azimuthDegrees: 35,
+      peakAltitudeDegrees: 38
+    };
+
+    const resolveSkyAtHour = (timeOfDayHours: number) => {
+      const resolvedTime = resolveRuntimeTimeState(time, {
+        timeOfDayHours,
+        dayCount: 0,
+        dayLengthMinutes: 24
+      });
+      const resolvedWorld = resolveRuntimeDayNightWorldState(
+        world,
+        time,
+        {
+          timeOfDayHours,
+          dayCount: 0,
+          dayLengthMinutes: 24
+        },
+        resolvedTime
+      );
+
+      return resolveWorldShaderSkyRenderState(
+        world,
+        resolvedWorld,
+        resolvedTime,
+        time
+      );
+    };
+
+    const midnightSky = resolveSkyAtHour(0);
+    const morningSky = resolveSkyAtHour(6);
+    const noonSky = resolveSkyAtHour(12);
+    const expectedMorningRotation = resolveWorldShaderSkyStarRotation(
+      6,
+      world.celestialOrbits.sun
+    );
+    const axis = morningSky?.stars.rotationAxis ?? { x: 0, y: 0, z: 0 };
+    const axisLength = Math.hypot(axis.x, axis.y, axis.z);
+
+    expect(midnightSky).not.toBeNull();
+    expect(morningSky).not.toBeNull();
+    expect(noonSky).not.toBeNull();
+    expect(
+      (morningSky?.stars.rotationRadians ?? 0) -
+        (midnightSky?.stars.rotationRadians ?? 0)
+    ).toBeCloseTo(Math.PI / 2);
+    expect(
+      (noonSky?.stars.rotationRadians ?? 0) -
+        (morningSky?.stars.rotationRadians ?? 0)
+    ).toBeCloseTo(Math.PI / 2);
+    expect(morningSky?.stars.rotationRadians).toBeCloseTo(
+      expectedMorningRotation.rotationRadians
+    );
+    expect(axis.x).toBeCloseTo(expectedMorningRotation.rotationAxis.x);
+    expect(axis.y).toBeCloseTo(expectedMorningRotation.rotationAxis.y);
+    expect(axis.z).toBeCloseTo(expectedMorningRotation.rotationAxis.z);
+    expect(axisLength).toBeCloseTo(1);
+    expect(Math.abs(axis.x) + Math.abs(axis.z)).toBeGreaterThan(0.1);
   });
 
   it("offsets shader-rendered celestial positions when the horizon height changes", () => {
