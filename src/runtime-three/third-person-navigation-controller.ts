@@ -598,8 +598,6 @@ export class ThirdPersonNavigationController implements NavigationController {
 
     if (boundaryReached) {
       this.context?.handleRuntimeTargetLookBoundaryReached?.();
-      this.targetLookOffsetYawRadians = 0;
-      this.targetLookOffsetPitchRadians = 0;
     }
   }
 
