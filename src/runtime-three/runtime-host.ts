@@ -622,6 +622,25 @@ export class RuntimeHost {
   private readonly targetingLuxTargetPosition = new Vector3();
   private readonly targetingLuxHomePosition = new Vector3();
   private readonly targetingLuxSwayDirection = new Vector3();
+  private readonly targetingActiveCameraRight = new Vector3();
+  private readonly targetingActiveCameraUp = new Vector3();
+  private readonly targetingActiveArrowDirection = new Vector3();
+  private readonly targetingActiveArrowLocalTipAxis = new Vector3(0, 1, 0);
+  private readonly targetingActiveArrowGeometry = new ConeGeometry(0.16, 0.38, 16);
+  private readonly targetingActiveArrowMaterial = new MeshBasicMaterial({
+    color: 0xfff2a2,
+    depthTest: false,
+    depthWrite: false,
+    transparent: true,
+    opacity: 0.95
+  });
+  private readonly targetingActiveArrows: Mesh<
+    ConeGeometry,
+    MeshBasicMaterial
+  >[] = Array.from(
+    { length: TARGETING_ACTIVE_ARROW_COUNT },
+    () => new Mesh(this.targetingActiveArrowGeometry, this.targetingActiveArrowMaterial)
+  );
   private readonly targetingLuxMesh = new Mesh(
     new PlaneGeometry(0.32, 0.32),
     createTargetingLuxCoreMaterial()
@@ -631,26 +650,6 @@ export class RuntimeHost {
     createTargetingLuxGlowMaterial()
   );
   private readonly targetingLuxLight = new PointLight(0x8df7ff, 1.25, 3.2, 2);
-  private readonly targetingActiveRing = new Mesh(
-    new TorusGeometry(0.52, 0.026, 8, 48),
-    new MeshBasicMaterial({
-      color: 0xfff2a2,
-      depthTest: false,
-      depthWrite: false,
-      transparent: true,
-      opacity: 0.95
-    })
-  );
-  private readonly targetingActiveArrow = new Mesh(
-    new ConeGeometry(0.16, 0.32, 16),
-    new MeshBasicMaterial({
-      color: 0xfff2a2,
-      depthTest: false,
-      depthWrite: false,
-      transparent: true,
-      opacity: 0.95
-    })
-  );
   private targetingLuxInitialized = false;
   private targetingLuxFlightState: TargetingLuxFlightState = "hidden";
   private targetingVisualTime = 0;
