@@ -5445,6 +5445,16 @@ export class RuntimeHost {
     );
   }
 
+  private setActiveRuntimeTargetReference(reference: RuntimeTargetReference | null) {
+    const previousEntityId = this.activeRuntimeTargetReference?.entityId ?? null;
+    const nextEntityId = reference?.entityId ?? null;
+    this.activeRuntimeTargetReference = reference;
+
+    if (previousEntityId !== nextEntityId) {
+      this.runtimeTargetLookYawDeltaRadians = 0;
+    }
+  }
+
   private refreshRuntimeTargetingState() {
     if (
       this.runtimeScene === null ||
@@ -5490,7 +5500,7 @@ export class RuntimeHost {
       this.activeRuntimeTargetReference !== null &&
       this.resolveActiveRuntimeTarget() === null
     ) {
-      this.activeRuntimeTargetReference = null;
+      this.setActiveRuntimeTargetReference(null);
     }
 
     this.proposedRuntimeTarget = resolveStableRuntimeTargetProposal(
@@ -5517,10 +5527,10 @@ export class RuntimeHost {
         this.proposedRuntimeTarget ?? this.runtimeTargetCandidates[0] ?? null;
 
       if (nextTarget !== null) {
-        this.activeRuntimeTargetReference = {
+        this.setActiveRuntimeTargetReference({
           kind: nextTarget.kind,
           entityId: nextTarget.entityId
-        };
+        });
       }
       return;
     }
@@ -5538,15 +5548,158 @@ export class RuntimeHost {
         ? 0
         : (activeIndex + 1) % this.runtimeTargetCandidates.length;
     const nextTarget = this.runtimeTargetCandidates[nextIndex]!;
-    this.activeRuntimeTargetReference = {
+    this.setActiveRuntimeTargetReference({
       kind: nextTarget.kind,
       entityId: nextTarget.entityId
-    };
+    });
     this.proposedRuntimeTarget = nextTarget;
   }
 
   private clearActiveRuntimeTarget() {
-    this.activeRuntimeTargetReference = null;
+    this.setActiveRuntimeTargetReference(null);
+  }
+
+  private reportThirdPersonCameraLookIntent(yawDeltaRadians: number) {
+    if (
+      this.activeRuntimeTargetReference === null ||
+      !Number.isFinite(yawDeltaRadians) ||
+      Math.abs(yawDeltaRadians) <= Number.EPSILON
+    ) {
+      return;
+    }
+
+    this.runtimeTargetLookYawDeltaRadians += yawDeltaRadians;
+  }
+
+  private resolveRuntimeTargetCandidateOnLookSide(
+    activeTarget: RuntimeResolvedTarget,
+    lookSide: -1 | 1
+  ): RuntimeTargetCandidate | null {
+    const origin = this.currentPlayerControllerTelemetry?.eyePosition ?? null;
+
+    if (origin === null) {
+      return null;
+    }
+
+    const activeDirection = {
+      x: activeTarget.center.x - origin.x,
+      z: activeTarget.center.z - origin.z
+    };
+    const activeLength = Math.hypot(activeDirection.x, activeDirection.z);
+
+    if (activeLength <= Number.EPSILON) {
+      return null;
+    }
+
+    let bestCandidate: RuntimeTargetCandidate | null = null;
+    let bestAngle = Number.POSITIVE_INFINITY;
+    const activeX = activeDirection.x / activeLength;
+    const activeZ = activeDirection.z / activeLength;
+
+    for (const candidate of this.runtimeTargetCandidates) {
+      if (candidate.entityId === activeTarget.entityId) {
+        continue;
+      }
+
+      const candidateDirection = {
+        x: candidate.center.x - origin.x,
+        z: candidate.center.z - origin.z
+      };
+      const candidateLength = Math.hypot(
+        candidateDirection.x,
+        candidateDirection.z
+      );
+
+      if (candidateLength <= Number.EPSILON) {
+        continue;
+      }
+
+      const candidateX = candidateDirection.x / candidateLength;
+      const candidateZ = candidateDirection.z / candidateLength;
+      const signedAngle = Math.atan2(
+        activeZ * candidateX - activeX * candidateZ,
+        activeX * candidateX + activeZ * candidateZ
+      );
+
+      if (signedAngle * lookSide <= TARGETING_SIDE_SWITCH_YAW_THRESHOLD_RADIANS * 0.5) {
+        continue;
+      }
+
+      const absAngle = Math.abs(signedAngle);
+
+      if (
+        bestCandidate === null ||
+        absAngle < bestAngle ||
+        (absAngle === bestAngle && candidate.score > bestCandidate.score)
+      ) {
+        bestCandidate = candidate;
+        bestAngle = absAngle;
+      }
+    }
+
+    return bestCandidate;
+  }
+
+  private updateActiveRuntimeTargetLockState() {
+    if (
+      this.activeRuntimeTargetReference === null ||
+      this.currentPlayerControllerTelemetry === null ||
+      this.activeController !== this.thirdPersonController
+    ) {
+      this.runtimeTargetLookYawDeltaRadians = 0;
+      return;
+    }
+
+    const activeTarget = this.resolveActiveRuntimeTarget();
+
+    if (activeTarget === null) {
+      this.setActiveRuntimeTargetReference(null);
+      return;
+    }
+
+    if (
+      distanceBetweenPoints(
+        this.currentPlayerControllerTelemetry.eyePosition,
+        activeTarget.center
+      ) > TARGETING_MAX_ACTIVE_TARGET_DISTANCE
+    ) {
+      this.setActiveRuntimeTargetReference(null);
+      return;
+    }
+
+    const otherTargetsAvailable = this.runtimeTargetCandidates.some(
+      (candidate) => candidate.entityId !== activeTarget.entityId
+    );
+    const yawDelta = this.runtimeTargetLookYawDeltaRadians;
+    const absYawDelta = Math.abs(yawDelta);
+
+    if (
+      otherTargetsAvailable &&
+      absYawDelta >= TARGETING_CANCEL_YAW_THRESHOLD_RADIANS
+    ) {
+      this.setActiveRuntimeTargetReference(null);
+      return;
+    }
+
+    if (absYawDelta < TARGETING_SIDE_SWITCH_YAW_THRESHOLD_RADIANS) {
+      return;
+    }
+
+    const lookSide = yawDelta > 0 ? 1 : -1;
+    const sideTarget = this.resolveRuntimeTargetCandidateOnLookSide(
+      activeTarget,
+      lookSide
+    );
+
+    if (sideTarget === null) {
+      return;
+    }
+
+    this.setActiveRuntimeTargetReference({
+      kind: sideTarget.kind,
+      entityId: sideTarget.entityId
+    });
+    this.proposedRuntimeTarget = sideTarget;
   }
 
   private updateRuntimeTargetingInputState() {
