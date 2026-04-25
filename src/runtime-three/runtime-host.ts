@@ -162,6 +162,10 @@ import {
 } from "./runtime-project-time";
 import { resolveRuntimePlayerMovementHooks } from "./player-controller-telemetry";
 import {
+  resolveDialogueAttentionCameraSolution,
+  type DialogueAttentionSideSign
+} from "./dialogue-attention-camera";
+import {
   applyRuntimeProjectScheduleToControlState,
   resolveRuntimeProjectScheduleState
 } from "./runtime-project-scheduler";
