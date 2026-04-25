@@ -9,6 +9,7 @@ import {
   Color,
   ConeGeometry,
   DirectionalLight,
+  DoubleSide,
   Euler,
   Group,
   FogExp2,
@@ -22,11 +23,11 @@ import {
   MeshStandardMaterial,
   OrthographicCamera,
   PerspectiveCamera,
+  PlaneGeometry,
   PointLight,
   Quaternion,
   Scene,
   ShaderMaterial,
-  SphereGeometry,
   Vector3,
   SpotLight,
   TextureLoader,
@@ -335,6 +336,59 @@ const TARGETING_MAX_ACTIVE_TARGET_DISTANCE = 15;
 // should communicate proposal without moving the gameplay camera.
 // const PROPOSED_TARGET_CAMERA_ASSIST_STRENGTH = 0.28;
 const ACTIVE_TARGET_CAMERA_ASSIST_STRENGTH = 0.55;
+const TARGETING_LUX_VERTEX_SHADER = `
+varying vec2 vUv;
+
+void main() {
+  vUv = uv;
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+}
+`;
+const TARGETING_LUX_CORE_FRAGMENT_SHADER = `
+varying vec2 vUv;
+
+void main() {
+  vec2 centeredUv = vUv * 2.0 - 1.0;
+  float distanceFromCenter = length(centeredUv);
+  float body = smoothstep(0.72, 0.2, distanceFromCenter);
+  float rim = smoothstep(0.56, 0.76, distanceFromCenter) *
+    smoothstep(1.0, 0.7, distanceFromCenter);
+  float edgeFade = smoothstep(1.0, 0.78, distanceFromCenter);
+
+  vec3 whiteCore = vec3(1.0, 0.98, 0.9);
+  vec3 tealRim = vec3(0.35, 1.0, 1.0);
+  vec3 color = mix(whiteCore, tealRim, rim * 0.7);
+  color += tealRim * rim * 0.35;
+
+  float alpha = clamp(body * 0.95 + rim * 0.45, 0.0, 1.0) * edgeFade;
+  if (alpha <= 0.002) {
+    discard;
+  }
+
+  gl_FragColor = vec4(color, alpha);
+}
+`;
+const TARGETING_LUX_GLOW_FRAGMENT_SHADER = `
+varying vec2 vUv;
+
+void main() {
+  vec2 centeredUv = vUv * 2.0 - 1.0;
+  float distanceFromCenter = length(centeredUv);
+  float outerFade = smoothstep(1.0, 0.04, distanceFromCenter);
+  float ringWeight = smoothstep(0.28, 0.64, distanceFromCenter) *
+    smoothstep(1.0, 0.58, distanceFromCenter);
+  vec3 teal = vec3(0.36, 0.98, 1.0);
+  vec3 deepTeal = vec3(0.02, 0.46, 0.54);
+  vec3 color = mix(deepTeal, teal, ringWeight);
+  float alpha = outerFade * (0.12 + ringWeight * 0.42);
+
+  if (alpha <= 0.002) {
+    discard;
+  }
+
+  gl_FragColor = vec4(color, alpha);
+}
+`;
 
 export function resolveRuntimeTargetVisualPlacement(target: {
   center: { x: number; y: number; z: number };
@@ -369,6 +423,31 @@ function clampScalar(value: number, min: number, max: number) {
 
 function lerpScalar(start: number, end: number, t: number) {
   return start + (end - start) * t;
+}
+
+function createTargetingLuxCoreMaterial() {
+  return new ShaderMaterial({
+    vertexShader: TARGETING_LUX_VERTEX_SHADER,
+    fragmentShader: TARGETING_LUX_CORE_FRAGMENT_SHADER,
+    depthTest: false,
+    depthWrite: false,
+    fog: false,
+    transparent: true,
+    side: DoubleSide
+  });
+}
+
+function createTargetingLuxGlowMaterial() {
+  return new ShaderMaterial({
+    vertexShader: TARGETING_LUX_VERTEX_SHADER,
+    fragmentShader: TARGETING_LUX_GLOW_FRAGMENT_SHADER,
+    blending: AdditiveBlending,
+    depthTest: false,
+    depthWrite: false,
+    fog: false,
+    transparent: true,
+    side: DoubleSide
+  });
 }
 
 function distanceBetweenPoints(
@@ -514,25 +593,12 @@ export class RuntimeHost {
   private readonly targetingLuxGroup = new Group();
   private readonly targetingActiveGroup = new Group();
   private readonly targetingLuxMesh = new Mesh(
-    new SphereGeometry(0.13, 24, 12),
-    new MeshBasicMaterial({
-      color: 0x8df7ff,
-      depthTest: false,
-      depthWrite: false,
-      transparent: true,
-      opacity: 0.95
-    })
+    new PlaneGeometry(0.32, 0.32),
+    createTargetingLuxCoreMaterial()
   );
   private readonly targetingLuxGlowMesh = new Mesh(
-    new SphereGeometry(0.34, 24, 12),
-    new MeshBasicMaterial({
-      blending: AdditiveBlending,
-      color: 0x8df7ff,
-      depthTest: false,
-      depthWrite: false,
-      transparent: true,
-      opacity: 0.28
-    })
+    new PlaneGeometry(0.76, 0.76),
+    createTargetingLuxGlowMaterial()
   );
   private readonly targetingLuxLight = new PointLight(0x8df7ff, 1.25, 3.2, 2);
   private readonly targetingActiveRing = new Mesh(

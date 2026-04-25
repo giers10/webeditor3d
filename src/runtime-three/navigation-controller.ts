@@ -126,6 +126,17 @@ export interface RuntimeThirdPersonTargetAssist {
   strength: number;
 }
 
+export interface RuntimeTargetLookInput {
+  horizontal: number;
+  vertical: number;
+}
+
+export interface RuntimeTargetLookInputResult {
+  activeTargetLocked: boolean;
+  switchedTarget: boolean;
+  switchInputHeld: boolean;
+}
+
 export interface RuntimeControllerContext {
   camera: PerspectiveCamera;
   domElement: HTMLCanvasElement;
@@ -151,7 +162,9 @@ export interface RuntimeControllerContext {
     radius: number
   ): Vec3;
   resolveThirdPersonTargetAssist?(): RuntimeThirdPersonTargetAssist | null;
-  handleRuntimeTargetLookInput?(horizontalIntent: -1 | 0 | 1): boolean;
+  handleRuntimeTargetLookInput?(
+    input: RuntimeTargetLookInput
+  ): RuntimeTargetLookInputResult;
   isCameraDrivenExternally(): boolean;
   getCameraYawRadians(): number;
   isInputSuspended(): boolean;
