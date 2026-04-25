@@ -587,6 +587,8 @@ type RuntimeResolvedCameraSource =
       state: RuntimeDialogueAttentionState;
     };
 
+type TargetingLuxFlightState = "hidden" | "outbound" | "following" | "returning";
+
 export class RuntimeHost {
   private readonly scene = new Scene();
   private readonly worldBackgroundRenderer = new WorldBackgroundRenderer();
@@ -610,6 +612,8 @@ export class RuntimeHost {
   private readonly targetingVisualGroup = new Group();
   private readonly targetingLuxGroup = new Group();
   private readonly targetingActiveGroup = new Group();
+  private readonly targetingLuxTargetPosition = new Vector3();
+  private readonly targetingLuxHomePosition = new Vector3();
   private readonly targetingLuxMesh = new Mesh(
     new PlaneGeometry(0.32, 0.32),
     createTargetingLuxCoreMaterial()
@@ -640,6 +644,7 @@ export class RuntimeHost {
     })
   );
   private targetingLuxInitialized = false;
+  private targetingLuxFlightState: TargetingLuxFlightState = "hidden";
   private targetingVisualTime = 0;
   private readonly firstPersonController =
     new FirstPersonNavigationController();
