@@ -41,7 +41,8 @@ function createNpc(overrides: Partial<RuntimeNpc> & { entityId: string }): Runti
       overrides.collider ?? {
         mode: "capsule",
         radius: 0.35,
-        height: 1.8
+        height: 1.8,
+        eyeHeight: 1.6
       },
     activeRoutineTitle: overrides.activeRoutineTitle ?? null,
     animationClipName: overrides.animationClipName ?? null,
