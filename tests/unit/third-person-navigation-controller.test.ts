@@ -213,9 +213,12 @@ describe("ThirdPersonNavigationController", () => {
     controller.deactivate(targetContext);
   });
 
-  it("requests target retarget or clear when lock-on manual look reaches its boundary", () => {
+  it("requests target clear without snapping back when lock-on manual look reaches its boundary", () => {
     const { context } = createRuntimeControllerContext();
     const controller = new ThirdPersonNavigationController();
+    const controllerInternals = controller as unknown as {
+      targetLookOffsetYawRadians: number;
+    };
     const getGamepads = vi.fn<() => Gamepad[]>(() => [
       createMockGamepad({
         axes: [0, 0, 1, 0]
@@ -241,6 +244,9 @@ describe("ThirdPersonNavigationController", () => {
     controller.update(1);
 
     expect(handleRuntimeTargetLookBoundaryReached).toHaveBeenCalledTimes(1);
+    expect(Math.abs(controllerInternals.targetLookOffsetYawRadians)).toBeGreaterThan(
+      0.7
+    );
 
     controller.deactivate(targetContext);
   });
