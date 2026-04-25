@@ -884,6 +884,9 @@ function createShaderSkyMaterial() {
       uStarHorizonFadeOffset: {
         value: 0
       },
+      uStarRotationAxis: {
+        value: new Vector3(0, 1, 0)
+      },
       uStarRotationRadians: {
         value: 0
       },
@@ -962,6 +965,8 @@ function applyShaderSkyStateToMaterial(
     material.uniforms.uHorizonHeight.value = 0;
     material.uniforms.uStarVisibility.value = 0;
     material.uniforms.uStarHorizonFadeOffset.value = 0;
+    material.uniforms.uStarRotationAxis.value.set(0, 1, 0);
+    material.uniforms.uStarRotationRadians.value = 0;
     material.uniforms.uSunVisible.value = 0;
     material.uniforms.uMoonVisible.value = 0;
     material.uniforms.uAuroraVisibility.value = 0;
@@ -998,6 +1003,11 @@ function applyShaderSkyStateToMaterial(
   material.uniforms.uStarVisibility.value = state.stars.visibility;
   material.uniforms.uStarHorizonFadeOffset.value =
     state.stars.horizonFadeOffset;
+  material.uniforms.uStarRotationAxis.value.set(
+    state.stars.rotationAxis.x,
+    state.stars.rotationAxis.y,
+    state.stars.rotationAxis.z
+  );
   material.uniforms.uStarRotationRadians.value = state.stars.rotationRadians;
   material.uniforms.uCloudCoverage.value = state.clouds.coverage;
   material.uniforms.uCloudDensity.value = state.clouds.density;

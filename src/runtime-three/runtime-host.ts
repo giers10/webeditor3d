@@ -331,7 +331,7 @@ const TARGETING_LUX_BOB_RATE = 4.2;
 const TARGETING_LUX_PULSE_RATE = 6.5;
 const TARGETING_SIDE_SWITCH_YAW_THRESHOLD_RADIANS = (12 * Math.PI) / 180;
 const TARGETING_CANCEL_YAW_THRESHOLD_RADIANS = (60 * Math.PI) / 180;
-const TARGETING_MAX_ACTIVE_TARGET_DISTANCE = 35;
+const TARGETING_MAX_ACTIVE_TARGET_DISTANCE = 15;
 // Proposed-target camera nudging is intentionally disabled for now. Lux alone
 // should communicate proposal without moving the gameplay camera.
 // const PROPOSED_TARGET_CAMERA_ASSIST_STRENGTH = 0.28;
@@ -657,7 +657,6 @@ export class RuntimeHost {
   private runtimeTargetCandidates: RuntimeTargetCandidate[] = [];
   private proposedRuntimeTarget: RuntimeTargetCandidate | null = null;
   private activeRuntimeTargetReference: RuntimeTargetReference | null = null;
-  private runtimeTargetLookYawDeltaRadians = 0;
   private previousTargetCycleInputActive = false;
   private activeCameraRigOverrideEntityId: string | null = null;
   private activeCameraSourceKey: RuntimeCameraSourceKey | null = null;
@@ -808,9 +807,6 @@ export class RuntimeHost {
         ) ?? { ...desiredCameraPosition },
       resolveThirdPersonTargetAssist: () =>
         this.resolveThirdPersonTargetAssist(),
-      reportThirdPersonCameraLookIntent: (yawDeltaRadians) => {
-        this.reportThirdPersonCameraLookIntent(yawDeltaRadians);
-      },
       isCameraDrivenExternally: () =>
         this.resolveActiveRuntimeCameraRig() !== null ||
         this.resolveDialogueAttentionNpc() !== null,
@@ -5432,7 +5428,6 @@ export class RuntimeHost {
     this.runtimeTargetCandidates = [];
     this.proposedRuntimeTarget = null;
     this.activeRuntimeTargetReference = null;
-    this.runtimeTargetLookYawDeltaRadians = 0;
     this.previousTargetCycleInputActive = false;
     this.targetingLuxInitialized = false;
     this.targetingVisualTime = 0;
@@ -5461,7 +5456,7 @@ export class RuntimeHost {
     this.activeRuntimeTargetReference = reference;
 
     if (previousEntityId !== nextEntityId) {
-      this.runtimeTargetLookYawDeltaRadians = 0;
+      return;
     }
   }
 
