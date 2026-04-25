@@ -299,6 +299,7 @@ export class ThirdPersonNavigationController implements NavigationController {
     this.grounded = false;
     this.jumpPressed = false;
     this.smoothedFeetY = 0;
+    this.smoothedCameraCollisionDistance = null;
     this.standingPlayerShape = cloneFirstPersonPlayerShape(
       FIRST_PERSON_PLAYER_SHAPE
     );
