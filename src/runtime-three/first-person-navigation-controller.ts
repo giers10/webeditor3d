@@ -537,12 +537,13 @@ export class FirstPersonNavigationController implements NavigationController {
       return;
     }
 
-    const targetLookConsumed =
-      this.context?.handleRuntimeTargetLookInput?.(
-        event.movementX > 0 ? 1 : event.movementX < 0 ? -1 : 0
-      ) ?? false;
+    const targetLookResult =
+      this.context?.handleRuntimeTargetLookInput?.({
+        horizontal: event.movementX,
+        vertical: -event.movementY
+      }) ?? null;
 
-    if (targetLookConsumed) {
+    if (targetLookResult?.activeTargetLocked === true) {
       return;
     }
 
