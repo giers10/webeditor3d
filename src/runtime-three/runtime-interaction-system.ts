@@ -447,6 +447,177 @@ function getNpcDialogueTargetBounds(npc: RuntimeNpc): {
   }
 }
 
+interface RuntimeInteractionTargetSource {
+  kind: RuntimeTargetCandidateKind;
+  entityId: string;
+  prompt: string;
+  position: Vec3;
+  center: Vec3;
+  distance: number;
+  range: number;
+  bounds?: { min: Vec3; max: Vec3 };
+  targetRadius?: number;
+}
+
+function collectRuntimeInteractionTargetSources(
+  interactionOrigin: Vec3,
+  runtimeScene: RuntimeSceneDefinition
+): RuntimeInteractionTargetSource[] {
+  const candidates: RuntimeInteractionTargetSource[] = [];
+
+  for (const interactable of runtimeScene.entities.interactables) {
+    if (
+      !interactable.interactionEnabled ||
+      !hasTriggerLinks(runtimeScene, interactable.entityId, "click")
+    ) {
+      continue;
+    }
+
+    const distance = distanceBetweenVec3(interactionOrigin, interactable.position);
+
+    if (distance > interactable.radius) {
+      continue;
+    }
+
+    candidates.push({
+      kind: "interactable",
+      entityId: interactable.entityId,
+      prompt: interactable.prompt,
+      position: interactable.position,
+      center: interactable.position,
+      distance,
+      range: interactable.radius,
+      targetRadius: getInteractableTargetRadius(interactable)
+    });
+  }
+
+  for (const npc of runtimeScene.entities.npcs) {
+    if (!npc.visible) {
+      continue;
+    }
+
+    const hasClickLinks = hasTriggerLinks(runtimeScene, npc.entityId, "click");
+
+    if (!hasClickLinks) {
+      continue;
+    }
+
+    const bounds = getNpcDialogueTargetBounds(npc);
+    const distance = distanceToAxisAlignedBox(interactionOrigin, bounds);
+
+    if (distance > bounds.range) {
+      continue;
+    }
+
+    candidates.push({
+      kind: "npc",
+      entityId: npc.entityId,
+      prompt: getNpcDialoguePrompt(npc, hasClickLinks),
+      position: npc.position,
+      center: bounds.center,
+      distance,
+      range: bounds.range,
+      bounds
+    });
+  }
+
+  return candidates;
+}
+
+export function resolveRuntimeTargetCandidates(options: {
+  interactionOrigin: Vec3;
+  cameraPosition: Vec3;
+  cameraForward: Vec3;
+  runtimeScene: RuntimeSceneDefinition;
+  previousProposedTargetEntityId?: string | null;
+}): RuntimeTargetCandidate[] {
+  const normalizedViewDirection = normalizeVec3(options.cameraForward);
+
+  if (normalizedViewDirection === null) {
+    return [];
+  }
+
+  const previousId = options.previousProposedTargetEntityId ?? null;
+  const candidates: RuntimeTargetCandidate[] = [];
+
+  for (const source of collectRuntimeInteractionTargetSources(
+    options.interactionOrigin,
+    options.runtimeScene
+  )) {
+    const toTarget = subtractVec3(source.center, options.cameraPosition);
+    const cameraDistanceSquared = lengthSquaredVec3(toTarget);
+
+    if (cameraDistanceSquared <= Number.EPSILON) {
+      continue;
+    }
+
+    const cameraDistance = Math.sqrt(cameraDistanceSquared);
+    const viewDirection = scaleVec3(toTarget, 1 / cameraDistance);
+    const viewDot = dotVec3(viewDirection, normalizedViewDirection);
+
+    if (viewDot <= 0.05) {
+      continue;
+    }
+
+    const interactionDistanceScore =
+      1 / (1 + source.distance / Math.max(source.range, 0.001));
+    const cameraDistanceScore = 1 / (1 + cameraDistance * 0.12);
+    const stabilityBonus = source.entityId === previousId ? 0.12 : 0;
+    const score =
+      viewDot * 2 +
+      interactionDistanceScore * 0.6 +
+      cameraDistanceScore * 0.4 +
+      stabilityBonus;
+
+    candidates.push({
+      kind: source.kind,
+      entityId: source.entityId,
+      prompt: source.prompt,
+      position: source.position,
+      center: source.center,
+      distance: source.distance,
+      range: source.range,
+      viewDot,
+      score
+    });
+  }
+
+  candidates.sort(
+    (a, b) =>
+      b.score - a.score ||
+      a.distance - b.distance ||
+      a.entityId.localeCompare(b.entityId)
+  );
+  return candidates;
+}
+
+export function resolveStableRuntimeTargetProposal(
+  candidates: RuntimeTargetCandidate[],
+  previousProposedTargetEntityId: string | null,
+  minScoreLead = 0.12
+): RuntimeTargetCandidate | null {
+  const best = candidates[0] ?? null;
+
+  if (
+    best === null ||
+    previousProposedTargetEntityId === null ||
+    best.entityId === previousProposedTargetEntityId
+  ) {
+    return best;
+  }
+
+  const previous =
+    candidates.find(
+      (candidate) => candidate.entityId === previousProposedTargetEntityId
+    ) ?? null;
+
+  if (previous !== null && best.score < previous.score + minScoreLead) {
+    return previous;
+  }
+
+  return best;
+}
+
 function updateBestPrompt(
   currentBestPrompt: RuntimeInteractionPrompt | null,
   currentBestHitDistance: number,
