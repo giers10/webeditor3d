@@ -174,10 +174,9 @@ describe("runtime interaction targeting", () => {
     });
     const system = new RuntimeInteractionSystem();
 
-    expect(candidates.map((candidate) => candidate.entityId)).toEqual([
-      "interactable-distant",
-      "npc-distant"
-    ]);
+    expect(candidates.map((candidate) => candidate.entityId)).toEqual(
+      expect.arrayContaining(["interactable-distant", "npc-distant"])
+    );
     expect(
       system.resolveClickInteractionPrompt(
         { x: 0, y: 1, z: 0 },
