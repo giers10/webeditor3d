@@ -502,6 +502,9 @@ describe("RuntimeHost", () => {
     expect(hostInternals.activeRuntimeCameraRig).toBeNull();
     expect(hostInternals.cameraTransitionState).not.toBeNull();
     expect(hostInternals.camera.position.z).toBeLessThan(6);
+
+    hostInternals.applyActiveCameraRig(0.175, gameplayPose);
+
     expect(
       hostInternals.camera
         .getWorldDirection(new Vector3())
