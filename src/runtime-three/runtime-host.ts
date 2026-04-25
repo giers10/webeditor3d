@@ -1532,7 +1532,6 @@ export class RuntimeHost {
   }
 
   private syncNpcRenderGroupTransform(renderGroup: Group, npc: RuntimeNpc) {
-    renderGroup.visible = npc.visible;
     renderGroup.position.set(npc.position.x, npc.position.y, npc.position.z);
     const facingGroup = renderGroup.getObjectByName("npcFacingGroup");
 
@@ -4557,6 +4556,7 @@ export class RuntimeHost {
     const cameraDt = dt;
     const previousCameraPose = this.captureCurrentCameraPose();
 
+    this.updateRuntimeDialogueParticipants(cameraDt);
     this.activeController?.update(simulationDt);
     const activeCameraRig = this.applyActiveCameraRig(cameraDt, previousCameraPose);
 
@@ -5096,6 +5096,13 @@ export class RuntimeHost {
       this.activeDialogueAttentionState = null;
     }
 
+    if (
+      dialogue !== null &&
+      this.dialogueParticipantState?.npcEntityId !== dialogue.npcEntityId
+    ) {
+      this.dialogueParticipantState = null;
+    }
+
     this.currentDialogue = dialogue;
     this.setDialoguePauseActive(dialogue !== null);
     this.runtimeDialogueHandler?.(dialogue);
@@ -5154,6 +5161,7 @@ export class RuntimeHost {
       return;
     }
 
+    this.dialogueParticipantState = this.resolveDialogueParticipantState(npc);
     this.setRuntimeDialogue(dialogue);
   }
 
