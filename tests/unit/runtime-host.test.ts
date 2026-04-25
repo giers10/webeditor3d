@@ -529,12 +529,17 @@ describe("RuntimeHost", () => {
     const resolveThirdPersonCameraCollision = vi.fn(
       (
         pivot: { x: number; y: number; z: number },
-        desiredCameraPosition: { x: number; y: number; z: number }
-      ) => ({
-        x: pivot.x + (desiredCameraPosition.x - pivot.x) * 0.55,
-        y: pivot.y + (desiredCameraPosition.y - pivot.y) * 0.55,
-        z: pivot.z + (desiredCameraPosition.z - pivot.z) * 0.55
-      })
+        desiredCameraPosition: { x: number; y: number; z: number },
+        radius: number
+      ) => {
+        expect(radius).toBeGreaterThan(0);
+
+        return {
+          x: pivot.x + (desiredCameraPosition.x - pivot.x) * 0.55,
+          y: pivot.y + (desiredCameraPosition.y - pivot.y) * 0.55,
+          z: pivot.z + (desiredCameraPosition.z - pivot.z) * 0.55
+        };
+      }
     );
     vi.spyOn(RapierCollisionWorld, "create").mockResolvedValue({
       dispose: vi.fn(),
