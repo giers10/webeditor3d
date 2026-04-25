@@ -417,7 +417,37 @@ export class ThirdPersonNavigationController implements NavigationController {
           TARGET_ASSIST_YAW_SPEED * targetAssist.strength,
           dt
         );
+        const eyeHeight = getFirstPersonPlayerEyeHeight(this.activePlayerShape);
+        const pivotY =
+          this.smoothedFeetY + eyeHeight * CAMERA_PIVOT_EYE_HEIGHT_FACTOR;
+        const targetLookOffsetY = Math.max(
+          -TARGET_ASSIST_VERTICAL_LOOK_LIMIT,
+          Math.min(
+            TARGET_ASSIST_VERTICAL_LOOK_LIMIT,
+            targetAssist.targetPosition.y - pivotY
+          )
+        );
+        this.targetAssistLookOffsetY = dampScalar(
+          this.targetAssistLookOffsetY,
+          targetLookOffsetY,
+          TARGET_ASSIST_VERTICAL_LOOK_SPEED * targetAssist.strength,
+          dt
+        );
+      } else {
+        this.targetAssistLookOffsetY = dampScalar(
+          this.targetAssistLookOffsetY,
+          0,
+          TARGET_ASSIST_VERTICAL_LOOK_SPEED,
+          dt
+        );
       }
+    } else {
+      this.targetAssistLookOffsetY = dampScalar(
+        this.targetAssistLookOffsetY,
+        0,
+        TARGET_ASSIST_VERTICAL_LOOK_SPEED,
+        dt
+      );
     }
 
     const movementYawRadians =
