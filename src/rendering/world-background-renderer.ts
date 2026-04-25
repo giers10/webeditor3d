@@ -583,17 +583,11 @@ void main() {
     );
     float zenithFade = 1.0 - smoothstep(0.92, 1.0, direction.y);
     float forwardMask = smoothstep(-0.36, 0.18, auroraDirection.z);
-    float sideFalloff =
-      1.0 -
-      smoothstep(
-        1.18,
-        2.05,
-        abs(atan(auroraDirection.x, max(auroraDirection.z, 0.08)))
-      );
-    float auroraAzimuth = atan(auroraDirection.x, max(auroraDirection.z, 0.08));
+    float auroraX = auroraDirection.x;
+    float sideFalloff = 1.0 - smoothstep(0.72, 1.0, abs(auroraX));
     vec2 auroraUv = vec2(
-      auroraAzimuth * 1.15 + auroraDirection.x * 0.28,
-      auroraDirection.z * 1.4 + direction.y * 0.18
+      auroraX * 2.7,
+      direction.y * 1.16 + auroraDirection.z * 0.22
     );
     float authoredHeight = clamp(uAuroraHeight, 0.0, 1.0);
     float authoredThickness = clamp(uAuroraThickness, 0.0, 1.0);
