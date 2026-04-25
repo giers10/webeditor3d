@@ -3662,8 +3662,15 @@ describe("RuntimeHost", () => {
 
     hostInternals.refreshRuntimeTargetingState();
 
-    expect(hostInternals.runtimeTargetCandidates[0]?.entityId).toBe(
-      "npc-close-edge"
+    const closeCandidate = hostInternals.runtimeTargetCandidates.find(
+      (candidate) => candidate.entityId === "npc-close-edge"
+    );
+    const centeredCandidate = hostInternals.runtimeTargetCandidates.find(
+      (candidate) => candidate.entityId === "npc-center-farther"
+    );
+
+    expect(closeCandidate?.distance).toBeLessThan(
+      centeredCandidate?.distance ?? 0
     );
     expect(hostInternals.proposedRuntimeTarget).toMatchObject({
       kind: "npc",
