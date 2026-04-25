@@ -3043,7 +3043,7 @@ describe("RuntimeHost", () => {
     host.dispose();
   });
 
-  it("activates the proposed runtime target and cycles visible target candidates", () => {
+  it("toggles the proposed runtime target instead of cycling candidates", () => {
     const host = new RuntimeHost({
       enableRendering: false
     });
@@ -3101,10 +3101,7 @@ describe("RuntimeHost", () => {
 
     hostInternals.activateOrCycleRuntimeTarget();
 
-    expect(hostInternals.activeRuntimeTargetReference).toEqual({
-      kind: "interactable",
-      entityId: "switch-two"
-    });
+    expect(hostInternals.activeRuntimeTargetReference).toBeNull();
 
     hostInternals.clearActiveRuntimeTarget();
 

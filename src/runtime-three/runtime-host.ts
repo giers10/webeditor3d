@@ -5531,41 +5531,81 @@ export class RuntimeHost {
       return;
     }
 
-    if (this.activeRuntimeTargetReference === null) {
-      const nextTarget =
-        this.proposedRuntimeTarget ?? this.runtimeTargetCandidates[0] ?? null;
+    const nextTarget =
+      this.proposedRuntimeTarget ?? this.runtimeTargetCandidates[0] ?? null;
 
-      if (nextTarget !== null) {
-        this.setActiveRuntimeTargetReference({
-          kind: nextTarget.kind,
-          entityId: nextTarget.entityId
-        });
-      }
-      return;
+    if (nextTarget !== null) {
+      this.setActiveRuntimeTargetReference({
+        kind: nextTarget.kind,
+        entityId: nextTarget.entityId
+      });
     }
-
-    if (this.runtimeTargetCandidates.length === 0) {
-      return;
-    }
-
-    const activeEntityId = this.activeRuntimeTargetReference.entityId;
-    const activeIndex = this.runtimeTargetCandidates.findIndex(
-      (candidate) => candidate.entityId === activeEntityId
-    );
-    const nextIndex =
-      activeIndex < 0
-        ? 0
-        : (activeIndex + 1) % this.runtimeTargetCandidates.length;
-    const nextTarget = this.runtimeTargetCandidates[nextIndex]!;
-    this.setActiveRuntimeTargetReference({
-      kind: nextTarget.kind,
-      entityId: nextTarget.entityId
-    });
-    this.proposedRuntimeTarget = nextTarget;
   }
 
   private clearActiveRuntimeTarget() {
     this.setActiveRuntimeTargetReference(null);
+  }
+
+  private handleRuntimeTargetLookInput(horizontalIntent: -1 | 0 | 1): boolean {
+    const activeTarget = this.resolveActiveRuntimeTarget();
+
+    if (activeTarget === null) {
+      if (this.activeRuntimeTargetReference !== null) {
+        this.setActiveRuntimeTargetReference(null);
+      }
+      this.runtimeTargetLookInputHeldDirection = null;
+      return false;
+    }
+
+    if (horizontalIntent === 0) {
+      this.runtimeTargetLookInputHeldDirection = null;
+      return true;
+    }
+
+    if (this.runtimeTargetLookInputHeldDirection === horizontalIntent) {
+      return true;
+    }
+
+    this.runtimeTargetLookInputHeldDirection = horizontalIntent;
+    const origin = this.currentPlayerControllerTelemetry?.eyePosition ?? null;
+
+    if (origin === null) {
+      return true;
+    }
+
+    this.camera.getWorldDirection(this.cameraForward);
+    const cameraLength = Math.hypot(this.cameraForward.x, this.cameraForward.z);
+    const fallbackDirection = {
+      x: activeTarget.center.x - origin.x,
+      z: activeTarget.center.z - origin.z
+    };
+    const fallbackLength = Math.hypot(fallbackDirection.x, fallbackDirection.z);
+    const cameraDirection =
+      cameraLength <= Number.EPSILON && fallbackLength > Number.EPSILON
+        ? {
+            x: fallbackDirection.x / fallbackLength,
+            z: fallbackDirection.z / fallbackLength
+          }
+        : {
+            x: this.cameraForward.x / Math.max(cameraLength, Number.EPSILON),
+            z: this.cameraForward.z / Math.max(cameraLength, Number.EPSILON)
+          };
+    const sideTarget = this.resolveRuntimeTargetCandidateOnLookSide(
+      activeTarget,
+      horizontalIntent,
+      cameraDirection
+    );
+
+    if (sideTarget !== null) {
+      this.setActiveRuntimeTargetReference({
+        kind: sideTarget.kind,
+        entityId: sideTarget.entityId
+      });
+      this.runtimeTargetLookInputHeldDirection = horizontalIntent;
+      this.proposedRuntimeTarget = sideTarget;
+    }
+
+    return true;
   }
 
   private resolveRuntimeTargetCandidateOnLookSide(
@@ -5619,7 +5659,7 @@ export class RuntimeHost {
         activeX * candidateX + activeZ * candidateZ
       );
 
-      if (signedAngle * lookSide <= TARGETING_SIDE_SWITCH_YAW_THRESHOLD_RADIANS * 0.5) {
+      if (signedAngle * lookSide <= TARGETING_SIDE_SWITCH_EPSILON_RADIANS) {
         continue;
       }
 
@@ -5670,65 +5710,6 @@ export class RuntimeHost {
       return;
     }
 
-    const otherTargetsAvailable = this.runtimeTargetCandidates.some(
-      (candidate) => candidate.entityId !== activeTarget.entityId
-    );
-    const origin = this.currentPlayerControllerTelemetry.eyePosition;
-    const activeDirection = {
-      x: activeTarget.center.x - origin.x,
-      z: activeTarget.center.z - origin.z
-    };
-    const activeLength = Math.hypot(activeDirection.x, activeDirection.z);
-
-    if (activeLength <= Number.EPSILON) {
-      return;
-    }
-
-    this.camera.getWorldDirection(this.cameraForward);
-    const cameraLength = Math.hypot(this.cameraForward.x, this.cameraForward.z);
-
-    if (cameraLength <= Number.EPSILON) {
-      return;
-    }
-
-    const activeX = activeDirection.x / activeLength;
-    const activeZ = activeDirection.z / activeLength;
-    const cameraDirection = {
-      x: this.cameraForward.x / cameraLength,
-      z: this.cameraForward.z / cameraLength
-    };
-    const cameraAngleFromTarget = Math.atan2(
-      activeZ * cameraDirection.x - activeX * cameraDirection.z,
-      activeX * cameraDirection.x + activeZ * cameraDirection.z
-    );
-    const absCameraAngleFromTarget = Math.abs(cameraAngleFromTarget);
-
-    if (absCameraAngleFromTarget < TARGETING_SIDE_SWITCH_YAW_THRESHOLD_RADIANS) {
-      return;
-    }
-
-    const lookSide = cameraAngleFromTarget > 0 ? 1 : -1;
-    const sideTarget = this.resolveRuntimeTargetCandidateOnLookSide(
-      activeTarget,
-      lookSide,
-      cameraDirection
-    );
-
-    if (sideTarget !== null) {
-      this.setActiveRuntimeTargetReference({
-        kind: sideTarget.kind,
-        entityId: sideTarget.entityId
-      });
-      this.proposedRuntimeTarget = sideTarget;
-      return;
-    }
-
-    if (
-      otherTargetsAvailable &&
-      absCameraAngleFromTarget >= TARGETING_CANCEL_YAW_THRESHOLD_RADIANS
-    ) {
-      this.setActiveRuntimeTargetReference(null);
-    }
   }
 
   private updateRuntimeTargetingInputState() {
