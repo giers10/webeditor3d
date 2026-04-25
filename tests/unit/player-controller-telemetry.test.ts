@@ -131,6 +131,7 @@ describe("player-controller-telemetry", () => {
     const telemetry = createPlayerControllerTelemetry({
       feetPosition: { x: 1, y: 2, z: 3 },
       eyePosition: { x: 1, y: 3.6, z: 3 },
+      yawDegrees: 45,
       grounded: false,
       locomotionState: createLocomotionState({
         locomotionMode: "swimming",
@@ -174,6 +175,7 @@ describe("player-controller-telemetry", () => {
     const telemetry = createPlayerControllerTelemetry({
       feetPosition: { x: 0, y: 0.5, z: 0 },
       eyePosition: { x: 0, y: 2, z: 0 },
+      yawDegrees: 0,
       grounded: false,
       locomotionState: createLocomotionState({
         locomotionMode: "diving",
