@@ -241,33 +241,6 @@ describe("ThirdPersonNavigationController", () => {
     controller.deactivate(targetContext);
   });
 
-  it("uses target direction as the lock-on base yaw immediately", () => {
-    const { context } = createRuntimeControllerContext();
-    const controller = new ThirdPersonNavigationController();
-    const targetContext = {
-      ...context,
-      resolveThirdPersonTargetAssist: () => ({
-        targetPosition: {
-          x: 5,
-          y: 1,
-          z: 0
-        },
-        strength: 1
-      })
-    };
-
-    controller.activate(targetContext);
-
-    expect(Math.abs(targetContext.camera.position.x)).toBeLessThan(0.001);
-
-    controller.update(0);
-
-    expect(targetContext.camera.position.x).toBeLessThan(-3);
-    expect(Math.abs(targetContext.camera.position.z)).toBeLessThan(1);
-
-    controller.deactivate(targetContext);
-  });
-
   it("fades vertical target assist when camera collision pushes the camera close", () => {
     const { context } = createRuntimeControllerContext();
     const controller = new ThirdPersonNavigationController();

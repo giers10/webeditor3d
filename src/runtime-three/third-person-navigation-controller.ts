@@ -37,6 +37,7 @@ const MIN_PITCH_RADIANS = -0.2;
 const MAX_PITCH_RADIANS = Math.PI * 0.45;
 export const THIRD_PERSON_CAMERA_COLLISION_RADIUS = 0.2;
 const CAMERA_PIVOT_EYE_HEIGHT_FACTOR = 0.85;
+const TARGET_ASSIST_YAW_SPEED = 2.2;
 const TARGET_ASSIST_VERTICAL_LOOK_SPEED = 3.4;
 const TARGET_ASSIST_VERTICAL_LOOK_LIMIT = 1.25;
 const TARGET_ASSIST_VERTICAL_COLLISION_FADE_START_RATIO = 0.28;
@@ -60,6 +61,24 @@ function clampCameraDistance(distance: number): number {
     MIN_CAMERA_DISTANCE,
     Math.min(MAX_CAMERA_DISTANCE, distance)
   );
+}
+
+function normalizeAngleRadians(angle: number): number {
+  return Math.atan2(Math.sin(angle), Math.cos(angle));
+}
+
+function dampAngleRadians(
+  current: number,
+  target: number,
+  strength: number,
+  dt: number
+): number {
+  if (dt <= 0 || strength <= 0) {
+    return current;
+  }
+
+  const alpha = 1 - Math.exp(-strength * dt);
+  return current + normalizeAngleRadians(target - current) * alpha;
 }
 
 function dampScalar(
@@ -400,7 +419,12 @@ export class ThirdPersonNavigationController implements NavigationController {
           targetAssist.targetPosition.x - this.feetPosition.x,
           targetAssist.targetPosition.z - this.feetPosition.z
         );
-        this.cameraYawRadians = targetYaw;
+        this.cameraYawRadians = dampAngleRadians(
+          this.cameraYawRadians,
+          targetYaw,
+          TARGET_ASSIST_YAW_SPEED * targetAssist.strength,
+          dt
+        );
         const eyeHeight = getFirstPersonPlayerEyeHeight(this.activePlayerShape);
         const pivotY =
           this.smoothedFeetY + eyeHeight * CAMERA_PIVOT_EYE_HEIGHT_FACTOR;
