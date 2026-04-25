@@ -1093,19 +1093,36 @@ export class RuntimeHost {
   }
 
   private isRuntimePaused(): boolean {
-    return this.manualPauseActive || this.controlPauseActive;
+    return (
+      this.manualPauseActive ||
+      this.controlPauseActive ||
+      this.dialoguePauseActive
+    );
   }
 
   private publishRuntimePauseState(force = false) {
+    const pauseSources: RuntimePauseState["source"][] = [];
+
+    if (this.manualPauseActive) {
+      pauseSources.push("manual");
+    }
+
+    if (this.controlPauseActive) {
+      pauseSources.push("control");
+    }
+
+    if (this.dialoguePauseActive) {
+      pauseSources.push("dialogue");
+    }
+
     const nextState: RuntimePauseState = {
       paused: this.isRuntimePaused(),
-      source: this.manualPauseActive
-        ? this.controlPauseActive
-          ? "mixed"
-          : "manual"
-        : this.controlPauseActive
-          ? "control"
-          : null
+      source:
+        pauseSources.length === 0
+          ? null
+          : pauseSources.length === 1
+            ? pauseSources[0]
+            : "mixed"
     };
 
     if (
@@ -1140,6 +1157,15 @@ export class RuntimeHost {
     }
 
     this.controlPauseActive = paused;
+    this.publishRuntimePauseState();
+  }
+
+  private setDialoguePauseActive(paused: boolean) {
+    if (this.dialoguePauseActive === paused) {
+      return;
+    }
+
+    this.dialoguePauseActive = paused;
     this.publishRuntimePauseState();
   }
 
