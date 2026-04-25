@@ -647,6 +647,7 @@ export class RuntimeHost {
   private runtimeTargetCandidates: RuntimeTargetCandidate[] = [];
   private proposedRuntimeTarget: RuntimeTargetCandidate | null = null;
   private activeRuntimeTargetReference: RuntimeTargetReference | null = null;
+  private runtimeTargetLookYawDeltaRadians = 0;
   private previousTargetCycleInputActive = false;
   private activeCameraRigOverrideEntityId: string | null = null;
   private activeCameraSourceKey: RuntimeCameraSourceKey | null = null;
