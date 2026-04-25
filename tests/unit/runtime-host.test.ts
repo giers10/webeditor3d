@@ -478,6 +478,7 @@ describe("RuntimeHost", () => {
     hostInternals.sceneReady = true;
     hostInternals.camera.position.set(0, 2.6, 6);
     hostInternals.camera.lookAt(0, 1.6, 0);
+    hostInternals.applyActiveCameraRig(0, captureCameraPose(hostInternals.camera));
 
     dispatcher.startNpcDialogue(npc.id, null, {
       kind: "npc",
@@ -1655,6 +1656,13 @@ describe("RuntimeHost", () => {
       activeCameraSourceKey: string | null;
       cameraTransitionState: { elapsedSeconds: number } | null;
       previousFrameTime: number;
+      applyActiveCameraRig(
+        dt: number,
+        previousCameraPose?: {
+          position: Vector3;
+          lookTarget: Vector3;
+        }
+      ): { entityId: string } | null;
       render(): void;
       createInteractionDispatcher(): {
         startNpcDialogue(
@@ -1675,6 +1683,7 @@ describe("RuntimeHost", () => {
     hostInternals.previousFrameTime = 1000;
     hostInternals.camera.position.set(0, 2.6, 6);
     hostInternals.camera.lookAt(0, 1.6, 0);
+    hostInternals.applyActiveCameraRig(0, captureCameraPose(hostInternals.camera));
     const clockBefore = {
       ...hostInternals.currentClockState!
     };
