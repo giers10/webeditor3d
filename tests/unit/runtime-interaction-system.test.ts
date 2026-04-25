@@ -150,11 +150,11 @@ describe("runtime interaction targeting", () => {
     const distantNpc = createNpc({
       entityId: "npc-distant",
       name: "Far Guard",
-      position: { x: 0, y: 0, z: 6.2 }
+      position: { x: 0, y: 0, z: 14.4 }
     });
     const distantInteractable = createInteractable({
       entityId: "interactable-distant",
-      position: { x: 1.2, y: 1, z: 4.5 },
+      position: { x: 1.2, y: 1, z: 13.5 },
       radius: 1,
       prompt: "Use"
     });
