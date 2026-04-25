@@ -4007,6 +4007,88 @@ describe("RuntimeHost", () => {
     host.dispose();
   });
 
+  it("keeps Lux proposed when close above-target rays need body sample clearance", () => {
+    const host = new RuntimeHost({
+      enableRendering: false
+    });
+    const hostInternals = host as unknown as {
+      runtimeScene: unknown;
+      sceneReady: boolean;
+      activeController: unknown;
+      thirdPersonController: unknown;
+      currentPlayerControllerTelemetry: unknown;
+      collisionWorld: {
+        isLineSegmentClear(
+          start: { x: number; y: number; z: number },
+          end: { x: number; y: number; z: number },
+          options?: { targetClearance?: number }
+        ): boolean;
+        dispose(): void;
+      };
+      runtimeTargetCandidates: Array<{
+        kind: "npc";
+        entityId: string;
+      }>;
+      proposedRuntimeTarget: {
+        kind: "npc";
+        entityId: string;
+      } | null;
+      camera: PerspectiveCamera;
+      refreshRuntimeTargetingState(): void;
+    };
+
+    hostInternals.runtimeScene = {
+      entities: {
+        npcs: [
+          {
+            entityId: "npc-close-above",
+            visible: true,
+            position: { x: 0, y: 0, z: 1 },
+            collider: { mode: "capsule", radius: 0.35, height: 1.8, eyeHeight: 1.6 },
+            name: "Close Above",
+            defaultDialogueId: null,
+            dialogues: []
+          }
+        ],
+        interactables: [],
+        cameraRigs: []
+      },
+      interactionLinks: [
+        { id: "link-close-above", sourceEntityId: "npc-close-above", trigger: "click", action: { type: "runSequence", sequenceId: "noop" } }
+      ]
+    } as never;
+    hostInternals.sceneReady = true;
+    hostInternals.activeController = hostInternals.thirdPersonController;
+    hostInternals.currentPlayerControllerTelemetry = {
+      eyePosition: { x: 0, y: 2.6, z: 0.8 }
+    };
+    hostInternals.collisionWorld = {
+      isLineSegmentClear: vi.fn((_start, end, options) => {
+        const clearance = options?.targetClearance ?? 0;
+        return end.y > 1.35 && clearance >= 0.5;
+      }),
+      dispose: vi.fn()
+    };
+    hostInternals.camera.position.set(0, 3, 0.2);
+    hostInternals.camera.lookAt(0, 1.45, 1);
+    hostInternals.camera.updateMatrixWorld();
+    hostInternals.camera.updateProjectionMatrix();
+
+    hostInternals.refreshRuntimeTargetingState();
+
+    expect(hostInternals.runtimeTargetCandidates).toEqual([
+      expect.objectContaining({
+        kind: "npc",
+        entityId: "npc-close-above"
+      })
+    ]);
+    expect(hostInternals.proposedRuntimeTarget).toMatchObject({
+      kind: "npc",
+      entityId: "npc-close-above"
+    });
+    host.dispose();
+  });
+
   it("keeps an occluded active target through a short camera visibility grace", () => {
     const host = new RuntimeHost({
       enableRendering: false
