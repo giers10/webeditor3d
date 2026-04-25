@@ -169,7 +169,10 @@ import {
   applyRuntimeProjectScheduleToControlState,
   resolveRuntimeProjectScheduleState
 } from "./runtime-project-scheduler";
-import { ThirdPersonNavigationController } from "./third-person-navigation-controller";
+import {
+  THIRD_PERSON_CAMERA_COLLISION_RADIUS,
+  ThirdPersonNavigationController
+} from "./third-person-navigation-controller";
 import { resolveUnderwaterFogState } from "./underwater-fog";
 import { resolveWaterContact } from "./water-volume-utils";
 import type {
@@ -358,6 +361,8 @@ type RuntimeCameraSourceKey =
 interface RuntimeCameraPose {
   position: Vector3;
   lookTarget: Vector3;
+  collisionPivot?: Vector3 | null;
+  collisionRadius?: number | null;
 }
 
 interface RuntimeCameraTransitionState {
@@ -1546,9 +1551,51 @@ export class RuntimeHost {
     };
   }
 
+  private resolveCollisionAdjustedCameraPose(
+    pose: RuntimeCameraPose
+  ): RuntimeCameraPose {
+    if (
+      pose.collisionPivot === undefined ||
+      pose.collisionPivot === null ||
+      pose.collisionRadius === undefined ||
+      pose.collisionRadius === null
+    ) {
+      return pose;
+    }
+
+    const resolvedPosition = this.collisionWorld?.resolveThirdPersonCameraCollision(
+      {
+        x: pose.collisionPivot.x,
+        y: pose.collisionPivot.y,
+        z: pose.collisionPivot.z
+      },
+      {
+        x: pose.position.x,
+        y: pose.position.y,
+        z: pose.position.z
+      },
+      pose.collisionRadius
+    );
+
+    if (resolvedPosition === undefined) {
+      return pose;
+    }
+
+    return {
+      ...pose,
+      position: new Vector3(
+        resolvedPosition.x,
+        resolvedPosition.y,
+        resolvedPosition.z
+      )
+    };
+  }
+
   private applyCameraPose(pose: RuntimeCameraPose) {
-    this.camera.position.copy(pose.position);
-    this.camera.lookAt(pose.lookTarget);
+    const resolvedPose = this.resolveCollisionAdjustedCameraPose(pose);
+
+    this.camera.position.copy(resolvedPose.position);
+    this.camera.lookAt(resolvedPose.lookTarget);
   }
 
   private isActiveExternalCameraSource() {
@@ -1670,7 +1717,13 @@ export class RuntimeHost {
         solution.lookTarget.x,
         solution.lookTarget.y,
         solution.lookTarget.z
-      )
+      ),
+      collisionPivot: new Vector3(
+        solution.pivot.x,
+        solution.pivot.y,
+        solution.pivot.z
+      ),
+      collisionRadius: THIRD_PERSON_CAMERA_COLLISION_RADIUS
     };
   }
 
@@ -1830,11 +1883,15 @@ export class RuntimeHost {
           elapsedSeconds: 0,
           fromPose: {
             position: previousCameraPose.position.clone(),
-            lookTarget: previousCameraPose.lookTarget.clone()
+            lookTarget: previousCameraPose.lookTarget.clone(),
+            collisionPivot: previousCameraPose.collisionPivot?.clone() ?? null,
+            collisionRadius: previousCameraPose.collisionRadius ?? null
           },
           toPose: {
             position: targetPose.position.clone(),
-            lookTarget: targetPose.lookTarget.clone()
+            lookTarget: targetPose.lookTarget.clone(),
+            collisionPivot: targetPose.collisionPivot?.clone() ?? null,
+            collisionRadius: targetPose.collisionRadius ?? null
           },
           destinationSourceKey: nextSourceKey
         };
@@ -1863,6 +1920,10 @@ export class RuntimeHost {
       );
       this.cameraTransitionState.toPose.position.copy(targetPose.position);
       this.cameraTransitionState.toPose.lookTarget.copy(targetPose.lookTarget);
+      this.cameraTransitionState.toPose.collisionPivot =
+        targetPose.collisionPivot?.clone() ?? null;
+      this.cameraTransitionState.toPose.collisionRadius =
+        targetPose.collisionRadius ?? null;
       const blendT =
         this.cameraTransitionState.durationSeconds <= 0
           ? 1
@@ -1878,9 +1939,13 @@ export class RuntimeHost {
         this.cameraTransitionState.toPose.lookTarget,
         blendT
       );
-
-      this.camera.position.copy(blendedPosition);
-      this.camera.lookAt(blendedLookTarget);
+      this.applyCameraPose({
+        position: blendedPosition.clone(),
+        lookTarget: blendedLookTarget.clone(),
+        collisionPivot:
+          this.cameraTransitionState.toPose.collisionPivot?.clone() ?? null,
+        collisionRadius: this.cameraTransitionState.toPose.collisionRadius ?? null
+      });
 
       if (blendT >= 1) {
         this.cameraTransitionState = null;
