@@ -396,6 +396,340 @@ describe("RuntimeHost", () => {
     host.dispose();
   });
 
+  it("activates the dialogue attention camera and pauses runtime when dialogue opens", () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    vi.spyOn(RapierCollisionWorld, "create").mockResolvedValue({
+      dispose: vi.fn(),
+      resolveThirdPersonCameraCollision: vi.fn(
+        (_pivot, desiredCameraPosition) => desiredCameraPosition
+      )
+    } as unknown as RapierCollisionWorld);
+
+    const playerStart = createPlayerStartEntity({
+      id: "entity-player-start-dialogue-camera",
+      position: {
+        x: 0,
+        y: 0,
+        z: 0
+      }
+    });
+    const npc = createNpcEntity({
+      id: "entity-npc-dialogue-camera",
+      position: {
+        x: 2,
+        y: 0,
+        z: 2
+      },
+      dialogues: [
+        {
+          id: "dialogue-attention",
+          title: "Attention",
+          lines: [
+            {
+              id: "dialogue-attention-line-1",
+              text: "Look this way."
+            }
+          ]
+        }
+      ],
+      defaultDialogueId: "dialogue-attention"
+    });
+    const runtimeScene = buildRuntimeSceneFromDocument({
+      ...createEmptySceneDocument({ name: "Dialogue Attention Scene" }),
+      entities: {
+        [playerStart.id]: playerStart,
+        [npc.id]: npc
+      }
+    });
+    const host = new RuntimeHost({
+      enableRendering: false
+    });
+    host.loadScene(runtimeScene);
+
+    const hostInternals = host as unknown as {
+      sceneReady: boolean;
+      camera: PerspectiveCamera;
+      currentPauseState: RuntimePauseState;
+      activeCameraSourceKey: string | null;
+      activeRuntimeCameraRig: { entityId: string } | null;
+      cameraTransitionState: { elapsedSeconds: number } | null;
+      applyActiveCameraRig(
+        dt: number,
+        previousCameraPose?: {
+          position: Vector3;
+          lookTarget: Vector3;
+        }
+      ): { entityId: string } | null;
+      createInteractionDispatcher(): {
+        startNpcDialogue(
+          npcEntityId: string,
+          dialogueId: string | null,
+          source?: {
+            kind: "interactionLink" | "npc" | "direct";
+            sourceEntityId: string | null;
+            linkId: string | null;
+            trigger: "enter" | "exit" | "click" | null;
+          }
+        ): void;
+      };
+    };
+    const dispatcher = hostInternals.createInteractionDispatcher();
+
+    hostInternals.sceneReady = true;
+    hostInternals.camera.position.set(0, 2.6, 6);
+    hostInternals.camera.lookAt(0, 1.6, 0);
+
+    dispatcher.startNpcDialogue(npc.id, null, {
+      kind: "npc",
+      sourceEntityId: npc.id,
+      linkId: null,
+      trigger: "click"
+    });
+
+    const gameplayPose = captureCameraPose(hostInternals.camera);
+    hostInternals.applyActiveCameraRig(0.175, gameplayPose);
+
+    const expectedMidpoint = new Vector3(1, 1.36, 1).sub(
+      hostInternals.camera.position
+    );
+
+    expect(hostInternals.currentPauseState).toEqual({
+      paused: true,
+      source: "dialogue"
+    });
+    expect(hostInternals.activeCameraSourceKey).toBe(`dialogue:${npc.id}`);
+    expect(hostInternals.activeRuntimeCameraRig).toBeNull();
+    expect(hostInternals.cameraTransitionState).not.toBeNull();
+    expect(hostInternals.camera.position.z).toBeLessThan(6);
+    expect(
+      hostInternals.camera
+        .getWorldDirection(new Vector3())
+        .angleTo(expectedMidpoint.normalize())
+    ).toBeLessThan(0.45);
+
+    host.dispose();
+  });
+
+  it("keeps explicit camera rig overrides above dialogue attention", () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    vi.spyOn(RapierCollisionWorld, "create").mockResolvedValue({
+      dispose: vi.fn(),
+      resolveThirdPersonCameraCollision: vi.fn(
+        (_pivot, desiredCameraPosition) => desiredCameraPosition
+      )
+    } as unknown as RapierCollisionWorld);
+
+    const npc = createNpcEntity({
+      id: "entity-npc-dialogue-rig-priority",
+      position: {
+        x: 2,
+        y: 0,
+        z: 2
+      },
+      dialogues: [
+        {
+          id: "dialogue-priority",
+          title: "Priority",
+          lines: [
+            {
+              id: "dialogue-priority-line-1",
+              text: "Rig wins."
+            }
+          ]
+        }
+      ],
+      defaultDialogueId: "dialogue-priority"
+    });
+    const rig = createCameraRigEntity({
+      id: "entity-camera-rig-dialogue-override",
+      position: {
+        x: 8,
+        y: 4,
+        z: -6
+      },
+      target: createCameraRigEntityTargetRef(npc.id),
+      transitionMode: "cut"
+    });
+    const runtimeScene = buildRuntimeSceneFromDocument({
+      ...createEmptySceneDocument({ name: "Dialogue Rig Priority Scene" }),
+      entities: {
+        [npc.id]: npc,
+        [rig.id]: rig
+      }
+    });
+    const host = new RuntimeHost({
+      enableRendering: false
+    });
+    host.loadScene(runtimeScene);
+
+    const hostInternals = host as unknown as {
+      sceneReady: boolean;
+      camera: PerspectiveCamera;
+      currentPauseState: RuntimePauseState;
+      activeCameraSourceKey: string | null;
+      activeRuntimeCameraRig: { entityId: string } | null;
+      applyActiveCameraRig(
+        dt: number,
+        previousCameraPose?: {
+          position: Vector3;
+          lookTarget: Vector3;
+        }
+      ): { entityId: string } | null;
+      createInteractionDispatcher(): {
+        startNpcDialogue(
+          npcEntityId: string,
+          dialogueId: string | null,
+          source?: {
+            kind: "interactionLink" | "npc" | "direct";
+            sourceEntityId: string | null;
+            linkId: string | null;
+            trigger: "enter" | "exit" | "click" | null;
+          }
+        ): void;
+      };
+    };
+    const dispatcher = hostInternals.createInteractionDispatcher();
+
+    hostInternals.sceneReady = true;
+    dispatcher.startNpcDialogue(npc.id, null, {
+      kind: "npc",
+      sourceEntityId: npc.id,
+      linkId: null,
+      trigger: "click"
+    });
+    host.setActiveCameraRigOverride(rig.id);
+
+    expect(hostInternals.applyActiveCameraRig(0)?.entityId).toBe(rig.id);
+    expect(hostInternals.currentPauseState).toEqual({
+      paused: true,
+      source: "dialogue"
+    });
+    expect(hostInternals.activeCameraSourceKey).toBe(`rig:${rig.id}`);
+    expect(hostInternals.activeRuntimeCameraRig?.entityId).toBe(rig.id);
+    expect(hostInternals.camera.position).toMatchObject(rig.position);
+
+    host.dispose();
+  });
+
+  it("blends back to gameplay camera when dialogue closes", () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    vi.spyOn(RapierCollisionWorld, "create").mockResolvedValue({
+      dispose: vi.fn(),
+      resolveThirdPersonCameraCollision: vi.fn(
+        (_pivot, desiredCameraPosition) => desiredCameraPosition
+      )
+    } as unknown as RapierCollisionWorld);
+
+    const playerStart = createPlayerStartEntity({
+      id: "entity-player-start-dialogue-exit",
+      position: {
+        x: 0,
+        y: 0,
+        z: 0
+      }
+    });
+    const npc = createNpcEntity({
+      id: "entity-npc-dialogue-exit",
+      position: {
+        x: 2,
+        y: 0,
+        z: 2
+      },
+      dialogues: [
+        {
+          id: "dialogue-exit",
+          title: "Exit",
+          lines: [
+            {
+              id: "dialogue-exit-line-1",
+              text: "Back to play."
+            }
+          ]
+        }
+      ],
+      defaultDialogueId: "dialogue-exit"
+    });
+    const runtimeScene = buildRuntimeSceneFromDocument({
+      ...createEmptySceneDocument({ name: "Dialogue Exit Scene" }),
+      entities: {
+        [playerStart.id]: playerStart,
+        [npc.id]: npc
+      }
+    });
+    const host = new RuntimeHost({
+      enableRendering: false
+    });
+    host.loadScene(runtimeScene);
+
+    const hostInternals = host as unknown as {
+      sceneReady: boolean;
+      camera: PerspectiveCamera;
+      currentPauseState: RuntimePauseState;
+      activeCameraSourceKey: string | null;
+      cameraTransitionState: { elapsedSeconds: number } | null;
+      applyActiveCameraRig(
+        dt: number,
+        previousCameraPose?: {
+          position: Vector3;
+          lookTarget: Vector3;
+        }
+      ): { entityId: string } | null;
+      createInteractionDispatcher(): {
+        startNpcDialogue(
+          npcEntityId: string,
+          dialogueId: string | null,
+          source?: {
+            kind: "interactionLink" | "npc" | "direct";
+            sourceEntityId: string | null;
+            linkId: string | null;
+            trigger: "enter" | "exit" | "click" | null;
+          }
+        ): void;
+      };
+    };
+    const dispatcher = hostInternals.createInteractionDispatcher();
+
+    hostInternals.sceneReady = true;
+    hostInternals.camera.position.set(0, 2.6, 6);
+    hostInternals.camera.lookAt(0, 1.6, 0);
+    dispatcher.startNpcDialogue(npc.id, null, {
+      kind: "npc",
+      sourceEntityId: npc.id,
+      linkId: null,
+      trigger: "click"
+    });
+    hostInternals.applyActiveCameraRig(0.35, captureCameraPose(hostInternals.camera));
+    const dialoguePose = captureCameraPose(hostInternals.camera);
+
+    host.closeRuntimeDialogue();
+    hostInternals.camera.position.set(0, 2.6, 6);
+    hostInternals.camera.lookAt(0, 1.6, 0);
+
+    expect(hostInternals.applyActiveCameraRig(0.175, dialoguePose)).toBeNull();
+    expect(hostInternals.currentPauseState).toEqual({
+      paused: false,
+      source: null
+    });
+    expect(hostInternals.activeCameraSourceKey).toBe("gameplay");
+    expect(hostInternals.cameraTransitionState).not.toBeNull();
+    expect(hostInternals.camera.position.z).toBeGreaterThan(
+      dialoguePose.position.z
+    );
+    expect(hostInternals.camera.position.z).toBeLessThan(6);
+
+    hostInternals.camera.position.set(0, 2.6, 6);
+    hostInternals.camera.lookAt(0, 1.6, 0);
+    hostInternals.applyActiveCameraRig(0.175, dialoguePose);
+
+    expect(hostInternals.camera.position).toMatchObject({
+      x: 0,
+      y: 2.6,
+      z: 6
+    });
+
+    host.dispose();
+  });
+
   it("locks a fixed camera rig to its target and clamps authored look-around input", () => {
     vi.spyOn(console, "warn").mockImplementation(() => undefined);
     vi.spyOn(RapierCollisionWorld, "create").mockResolvedValue({
