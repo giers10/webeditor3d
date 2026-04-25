@@ -148,11 +148,13 @@ import { RapierCollisionWorld } from "./rapier-collision-world";
 import {
   RuntimeInteractionSystem,
   resolveRuntimeTargetCandidates,
+  resolveRuntimeTargetReference,
   resolveStableRuntimeTargetProposal,
   type RuntimeDialogueStartSource,
   type RuntimeInteractionDispatcher,
   type RuntimeInteractionPrompt,
   type RuntimeTargetCandidate,
+  type RuntimeResolvedTarget,
   type RuntimeTargetReference
 } from "./runtime-interaction-system";
 import { RuntimeAudioSystem } from "./runtime-audio-system";
