@@ -213,6 +213,34 @@ describe("ThirdPersonNavigationController", () => {
     controller.deactivate(targetContext);
   });
 
+  it("uses third-person target assist to adjust vertical camera aim", () => {
+    const { context } = createRuntimeControllerContext();
+    const controller = new ThirdPersonNavigationController();
+    const targetContext = {
+      ...context,
+      resolveThirdPersonTargetAssist: () => ({
+        targetPosition: {
+          x: 0,
+          y: 4,
+          z: 5
+        },
+        strength: 1
+      })
+    };
+    const cameraDirection = new Vector3();
+
+    controller.activate(targetContext);
+    targetContext.camera.getWorldDirection(cameraDirection);
+    const initialForwardY = cameraDirection.y;
+
+    controller.update(1);
+    targetContext.camera.getWorldDirection(cameraDirection);
+
+    expect(cameraDirection.y).toBeGreaterThan(initialForwardY);
+
+    controller.deactivate(targetContext);
+  });
+
 
   it("uses the authored movement template speed for third-person motion telemetry", () => {
     const playerStart = createPlayerStartEntity({
