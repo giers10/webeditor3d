@@ -707,7 +707,9 @@ describe("RuntimeHost", () => {
 
     const hostInternals = host as unknown as {
       sceneReady: boolean;
+      camera: PerspectiveCamera;
       collisionWorld: RapierCollisionWorld | null;
+      activeCameraSourceKey: string | null;
       currentPlayerControllerTelemetry:
         | {
             feetPosition: { x: number; y: number; z: number };
@@ -718,6 +720,13 @@ describe("RuntimeHost", () => {
       runtimeScene: ReturnType<typeof buildRuntimeSceneFromDocument> | null;
       activateDesiredNavigationController(): void;
       updateRuntimeDialogueParticipants(dt: number): void;
+      applyActiveCameraRig(
+        dt: number,
+        previousCameraPose?: {
+          position: Vector3;
+          lookTarget: Vector3;
+        }
+      ): { entityId: string } | null;
       createInteractionDispatcher(): {
         startNpcDialogue(
           npcEntityId: string,
@@ -758,6 +767,10 @@ describe("RuntimeHost", () => {
 
     hostInternals.updateRuntimeDialogueParticipants(0.05);
     hostInternals.updateRuntimeDialogueParticipants(0.05);
+    hostInternals.applyActiveCameraRig(
+      0.1,
+      captureCameraPose(hostInternals.camera)
+    );
 
     const playerTelemetry = hostInternals.currentPlayerControllerTelemetry;
     const runtimeNpc =
@@ -783,7 +796,9 @@ describe("RuntimeHost", () => {
         180) /
       Math.PI;
 
-    expect(playerDistanceFromNpc).toBeGreaterThanOrEqual(1.09);
+    expect(playerDistanceFromNpc).toBeGreaterThan(0.1);
+    expect(playerDistanceFromNpc).toBeLessThan(1.09);
+    expect(hostInternals.activeCameraSourceKey).toBe("gameplay");
     expect(
       Math.abs(
         resolveShortestAngleDeltaDegrees(
@@ -797,6 +812,22 @@ describe("RuntimeHost", () => {
         resolveShortestAngleDeltaDegrees(runtimeNpc?.yawDegrees ?? 0, 0)
       )
     ).toBeGreaterThan(10);
+
+    hostInternals.updateRuntimeDialogueParticipants(0.1);
+    hostInternals.updateRuntimeDialogueParticipants(0.1);
+    hostInternals.applyActiveCameraRig(
+      0.1,
+      captureCameraPose(hostInternals.camera)
+    );
+
+    const stagedPlayerTelemetry = hostInternals.currentPlayerControllerTelemetry;
+    const stagedPlayerDistanceFromNpc = Math.hypot(
+      (stagedPlayerTelemetry?.feetPosition.x ?? 0) - npc.position.x,
+      (stagedPlayerTelemetry?.feetPosition.z ?? 0) - npc.position.z
+    );
+
+    expect(stagedPlayerDistanceFromNpc).toBeGreaterThanOrEqual(1.09);
+    expect(hostInternals.activeCameraSourceKey).toBe(`dialogue:${npc.id}`);
 
     host.closeRuntimeDialogue();
     hostInternals.updateRuntimeDialogueParticipants(0.05);

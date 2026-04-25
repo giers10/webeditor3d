@@ -313,6 +313,7 @@ const DIALOGUE_ATTENTION_CAMERA_TRANSITION_DURATION_SECONDS = 0.35;
 const DIALOGUE_ATTENTION_PLAYER_FOCUS_HEIGHT_FACTOR = 0.82;
 const DIALOGUE_ATTENTION_NPC_FOCUS_HEIGHT_FACTOR = 0.88;
 const DIALOGUE_PARTICIPANT_MIN_SURFACE_DISTANCE = 0.5;
+const DIALOGUE_PARTICIPANT_PUSHBACK_DURATION_SECONDS = 0.3;
 const DIALOGUE_PARTICIPANT_YAW_BLEND_RATE = 8;
 const DIALOGUE_PARTICIPANT_RESTORE_EPSILON_DEGREES = 0.5;
 
@@ -322,6 +323,16 @@ function dampScalar(current: number, target: number, rate: number, dt: number) {
 
 function clampScalar(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
+}
+
+function lerpScalar(start: number, end: number, t: number) {
+  return start + (end - start) * t;
+}
+
+function smoothStep01(value: number) {
+  const t = clampScalar(value, 0, 1);
+
+  return t * t * (3 - 2 * t);
 }
 
 function normalizeDegrees(value: number) {
@@ -409,7 +420,10 @@ interface RuntimeDialogueParticipantState {
   npcCurrentYawDegrees: number;
   npcTargetYawDegrees: number;
   npcRestoreYawDegrees: number;
+  playerStartFeetPosition: RuntimeTeleportTarget["position"];
   playerTargetFeetPosition: RuntimeTeleportTarget["position"];
+  playerPositionBlendElapsedSeconds: number;
+  playerPositionBlendDurationSeconds: number;
   playerCurrentYawDegrees: number;
   playerTargetYawDegrees: number;
 }
@@ -1428,6 +1442,51 @@ export class RuntimeHost {
     return (Math.atan2(to.x - from.x, to.z - from.z) * 180) / Math.PI;
   }
 
+  private resolveDialogueParticipantPlayerFeetPosition(
+    state: RuntimeDialogueParticipantState
+  ) {
+    if (state.playerPositionBlendDurationSeconds <= 0) {
+      return state.playerTargetFeetPosition;
+    }
+
+    const blendT = smoothStep01(
+      state.playerPositionBlendElapsedSeconds /
+        state.playerPositionBlendDurationSeconds
+    );
+
+    return {
+      x: lerpScalar(
+        state.playerStartFeetPosition.x,
+        state.playerTargetFeetPosition.x,
+        blendT
+      ),
+      y: lerpScalar(
+        state.playerStartFeetPosition.y,
+        state.playerTargetFeetPosition.y,
+        blendT
+      ),
+      z: lerpScalar(
+        state.playerStartFeetPosition.z,
+        state.playerTargetFeetPosition.z,
+        blendT
+      )
+    };
+  }
+
+  private isDialogueAttentionCameraReady(npcEntityId: string) {
+    const state = this.dialogueParticipantState;
+
+    if (state === null || state.npcEntityId !== npcEntityId) {
+      return true;
+    }
+
+    return (
+      state.playerPositionBlendDurationSeconds <= 0 ||
+      state.playerPositionBlendElapsedSeconds >=
+        state.playerPositionBlendDurationSeconds - 1e-4
+    );
+  }
+
   private resolveDialogueParticipantState(
     npc: RuntimeNpc
   ): RuntimeDialogueParticipantState | null {
@@ -1526,7 +1585,15 @@ export class RuntimeHost {
       npcCurrentYawDegrees: npc.yawDegrees,
       npcTargetYawDegrees,
       npcRestoreYawDegrees: npc.yawDegrees,
+      playerStartFeetPosition: {
+        ...playerFeetPosition
+      },
       playerTargetFeetPosition: targetFeetPosition,
+      playerPositionBlendElapsedSeconds: 0,
+      playerPositionBlendDurationSeconds:
+        currentHorizontalDistance < desiredHorizontalDistance - 1e-4
+          ? DIALOGUE_PARTICIPANT_PUSHBACK_DURATION_SECONDS
+          : 0,
       playerCurrentYawDegrees: currentPlayerYawDegrees,
       playerTargetYawDegrees
     };
@@ -1597,10 +1664,16 @@ export class RuntimeHost {
           z: state.playerTargetFeetPosition.z
         }
       );
+      state.playerPositionBlendElapsedSeconds = Math.min(
+        state.playerPositionBlendDurationSeconds,
+        state.playerPositionBlendElapsedSeconds + dt
+      );
+      const playerFeetPosition =
+        this.resolveDialogueParticipantPlayerFeetPosition(state);
       state.playerTargetYawDegrees = this.resolveYawDegreesTowards(
         {
-          x: state.playerTargetFeetPosition.x,
-          z: state.playerTargetFeetPosition.z
+          x: playerFeetPosition.x,
+          z: playerFeetPosition.z
         },
         {
           x: npc.position.x,
@@ -1620,7 +1693,7 @@ export class RuntimeHost {
         dt
       );
       this.applyTeleportPlayerAction({
-        position: state.playerTargetFeetPosition,
+        position: playerFeetPosition,
         yawDegrees: state.playerCurrentYawDegrees
       });
       this.setRuntimeNpcYawDegrees(state.npcEntityId, state.npcCurrentYawDegrees);
@@ -2057,6 +2130,12 @@ export class RuntimeHost {
     const dialogueNpc = this.resolveDialogueAttentionNpc();
 
     if (dialogueNpc !== null) {
+      if (!this.isDialogueAttentionCameraReady(dialogueNpc.entityId)) {
+        return {
+          kind: "gameplay"
+        };
+      }
+
       return {
         kind: "dialogue",
         state:
