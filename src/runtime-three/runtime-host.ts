@@ -6250,6 +6250,50 @@ export class RuntimeHost {
     this.targetingLuxFlightState = "hidden";
   }
 
+  private updateRuntimeActiveTargetIndicator(
+    visualPlacement: ReturnType<typeof resolveRuntimeTargetVisualPlacement>
+  ) {
+    this.targetingActiveGroup.position.set(
+      visualPlacement.activeMarkerPosition.x,
+      visualPlacement.activeMarkerPosition.y,
+      visualPlacement.activeMarkerPosition.z
+    );
+    this.targetingActiveGroup.quaternion.identity();
+    this.targetingActiveGroup.scale.setScalar(visualPlacement.activeMarkerScale);
+    this.targetingActiveCameraRight
+      .setFromMatrixColumn(this.camera.matrixWorld, 0)
+      .normalize();
+    this.targetingActiveCameraUp
+      .setFromMatrixColumn(this.camera.matrixWorld, 1)
+      .normalize();
+
+    const orbitAngle =
+      this.targetingVisualTime * TARGETING_ACTIVE_ARROW_ORBIT_RATE;
+    const localRadius =
+      visualPlacement.activeMarkerRadius / visualPlacement.activeMarkerScale;
+
+    this.targetingActiveArrows.forEach((arrow, index) => {
+      const angle =
+        orbitAngle + (index / TARGETING_ACTIVE_ARROW_COUNT) * Math.PI * 2;
+      arrow.position
+        .copy(this.targetingActiveCameraRight)
+        .multiplyScalar(Math.cos(angle) * localRadius)
+        .addScaledVector(
+          this.targetingActiveCameraUp,
+          Math.sin(angle) * localRadius
+        );
+      this.targetingActiveArrowDirection.copy(arrow.position).multiplyScalar(-1);
+
+      if (this.targetingActiveArrowDirection.lengthSq() > Number.EPSILON) {
+        this.targetingActiveArrowDirection.normalize();
+        arrow.quaternion.setFromUnitVectors(
+          this.targetingActiveArrowLocalTipAxis,
+          this.targetingActiveArrowDirection
+        );
+      }
+    });
+  }
+
   private updateRuntimeTargetingVisuals(dt: number) {
     const activeTarget = this.resolveActiveRuntimeTarget();
     const visualTarget = activeTarget ?? this.proposedRuntimeTarget;
@@ -6368,13 +6412,7 @@ export class RuntimeHost {
     this.targetingActiveGroup.visible = activeTarget !== null;
 
     if (activeTarget !== null) {
-      this.targetingActiveGroup.position.set(
-        visualPlacement.activeMarkerPosition.x,
-        visualPlacement.activeMarkerPosition.y,
-        visualPlacement.activeMarkerPosition.z
-      );
-      this.targetingActiveGroup.scale.setScalar(visualPlacement.activeMarkerScale);
-      this.targetingActiveGroup.lookAt(this.camera.position);
+      this.updateRuntimeActiveTargetIndicator(visualPlacement);
     }
   }
 
