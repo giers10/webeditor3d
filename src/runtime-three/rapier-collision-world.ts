@@ -835,6 +835,49 @@ export class RapierCollisionWorld {
     return !intersects;
   }
 
+  isLineSegmentClear(
+    start: Vec3,
+    end: Vec3,
+    options: { targetClearance?: number } = {}
+  ): boolean {
+    const delta = {
+      x: end.x - start.x,
+      y: end.y - start.y,
+      z: end.z - start.z
+    };
+    const distance = Math.hypot(delta.x, delta.y, delta.z);
+
+    if (distance <= COLLISION_EPSILON) {
+      return true;
+    }
+
+    const maxToi = Math.max(
+      0,
+      distance - Math.max(0, options.targetClearance ?? 0)
+    );
+
+    if (maxToi <= COLLISION_EPSILON) {
+      return true;
+    }
+
+    const ray = new RAPIER.Ray(start, {
+      x: delta.x / distance,
+      y: delta.y / distance,
+      z: delta.z / distance
+    });
+
+    return (
+      this.world.castRay(
+        ray,
+        maxToi,
+        true,
+        undefined,
+        undefined,
+        this.playerCollider ?? undefined
+      ) === null
+    );
+  }
+
   resolveThirdPersonCameraCollision(
     pivot: Vec3,
     desiredCameraPosition: Vec3,
