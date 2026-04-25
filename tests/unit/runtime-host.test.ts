@@ -3301,7 +3301,7 @@ describe("RuntimeHost", () => {
 
     expect(
       hostInternals.handleRuntimeTargetLookInput({
-        horizontal: 1,
+        horizontal: -1,
         vertical: 0
       })
     ).toEqual({
@@ -3316,7 +3316,7 @@ describe("RuntimeHost", () => {
     });
     expect(
       hostInternals.handleRuntimeTargetLookInput({
-        horizontal: 1,
+        horizontal: -1,
         vertical: 0
       })
     ).toEqual({
@@ -3436,7 +3436,7 @@ describe("RuntimeHost", () => {
     host.dispose();
   });
 
-  it("clears an active target when the player moves too far away", () => {
+  it("retargets to the centered on-screen candidate before clearing a distant active target", () => {
     const host = new RuntimeHost({
       enableRendering: false
     });
@@ -3445,6 +3445,115 @@ describe("RuntimeHost", () => {
       activeController: unknown;
       thirdPersonController: unknown;
       currentPlayerControllerTelemetry: unknown;
+      runtimeTargetCandidates: Array<{
+        kind: "npc";
+        entityId: string;
+        prompt: string;
+        position: { x: number; y: number; z: number };
+        center: { x: number; y: number; z: number };
+        distance: number;
+        range: number;
+        viewDot: number;
+        score: number;
+      }>;
+      proposedRuntimeTarget: {
+        kind: "npc";
+        entityId: string;
+      } | null;
+      activeRuntimeTargetReference: {
+        kind: "npc";
+        entityId: string;
+      } | null;
+      camera: PerspectiveCamera;
+      updateActiveRuntimeTargetLockState(): void;
+    };
+
+    hostInternals.runtimeScene = {
+      entities: {
+        npcs: [
+          {
+            entityId: "npc-far",
+            visible: true,
+            position: { x: 0, y: 0, z: 16 },
+            collider: { mode: "capsule", radius: 0.35, height: 1.8, eyeHeight: 1.6 },
+            name: "Far",
+            defaultDialogueId: null,
+            dialogues: []
+          },
+          {
+            entityId: "npc-near",
+            visible: true,
+            position: { x: 0, y: 0, z: 6 },
+            collider: { mode: "capsule", radius: 0.35, height: 1.8, eyeHeight: 1.6 },
+            name: "Near",
+            defaultDialogueId: null,
+            dialogues: []
+          }
+        ],
+        interactables: [],
+        cameraRigs: []
+      },
+      interactionLinks: [
+        { id: "link-far", sourceEntityId: "npc-far", trigger: "click", action: { type: "runSequence", sequenceId: "noop" } },
+        { id: "link-near", sourceEntityId: "npc-near", trigger: "click", action: { type: "runSequence", sequenceId: "noop" } }
+      ]
+    } as never;
+    hostInternals.activeController = hostInternals.thirdPersonController;
+    hostInternals.currentPlayerControllerTelemetry = {
+      eyePosition: { x: 0, y: 1.6, z: 0 }
+    };
+    hostInternals.activeRuntimeTargetReference = {
+      kind: "npc",
+      entityId: "npc-far"
+    };
+    hostInternals.runtimeTargetCandidates = [
+      {
+        kind: "npc",
+        entityId: "npc-near",
+        prompt: "Talk",
+        position: { x: 0, y: 0, z: 6 },
+        center: { x: 0, y: 0.9, z: 6 },
+        distance: 6,
+        range: 1.5,
+        viewDot: 1,
+        score: 2
+      }
+    ];
+    hostInternals.camera.position.set(0, 1.6, 0);
+    hostInternals.camera.lookAt(0, 0.9, 6);
+    hostInternals.camera.updateMatrixWorld();
+    hostInternals.camera.updateProjectionMatrix();
+
+    hostInternals.updateActiveRuntimeTargetLockState();
+
+    expect(hostInternals.activeRuntimeTargetReference).toEqual({
+      kind: "npc",
+      entityId: "npc-near"
+    });
+    expect(hostInternals.proposedRuntimeTarget).toEqual({
+      kind: "npc",
+      entityId: "npc-near",
+      prompt: "Talk",
+      position: { x: 0, y: 0, z: 6 },
+      center: { x: 0, y: 0.9, z: 6 },
+      distance: 6,
+      range: 1.5,
+      viewDot: 1,
+      score: 2
+    });
+    host.dispose();
+  });
+
+  it("clears an active target when the player moves too far away without an on-screen fallback", () => {
+    const host = new RuntimeHost({
+      enableRendering: false
+    });
+    const hostInternals = host as unknown as {
+      runtimeScene: unknown;
+      activeController: unknown;
+      thirdPersonController: unknown;
+      currentPlayerControllerTelemetry: unknown;
+      runtimeTargetCandidates: unknown[];
       activeRuntimeTargetReference: {
         kind: "npc";
         entityId: string;
@@ -3480,10 +3589,86 @@ describe("RuntimeHost", () => {
       kind: "npc",
       entityId: "npc-far"
     };
+    hostInternals.runtimeTargetCandidates = [];
 
     hostInternals.updateActiveRuntimeTargetLockState();
 
     expect(hostInternals.activeRuntimeTargetReference).toBeNull();
+    host.dispose();
+  });
+
+  it("proposes the target closest to screen center instead of the nearest candidate", () => {
+    const host = new RuntimeHost({
+      enableRendering: false
+    });
+    const hostInternals = host as unknown as {
+      runtimeScene: unknown;
+      sceneReady: boolean;
+      activeController: unknown;
+      thirdPersonController: unknown;
+      currentPlayerControllerTelemetry: unknown;
+      runtimeTargetCandidates: Array<{
+        kind: "npc";
+        entityId: string;
+        distance: number;
+      }>;
+      proposedRuntimeTarget: {
+        kind: "npc";
+        entityId: string;
+      } | null;
+      camera: PerspectiveCamera;
+      refreshRuntimeTargetingState(): void;
+    };
+
+    hostInternals.runtimeScene = {
+      entities: {
+        npcs: [
+          {
+            entityId: "npc-close-edge",
+            visible: true,
+            position: { x: 3, y: 0, z: 4 },
+            collider: { mode: "capsule", radius: 0.35, height: 1.8, eyeHeight: 1.6 },
+            name: "Close Edge",
+            defaultDialogueId: null,
+            dialogues: []
+          },
+          {
+            entityId: "npc-center-farther",
+            visible: true,
+            position: { x: 0, y: 0, z: 10 },
+            collider: { mode: "capsule", radius: 0.35, height: 1.8, eyeHeight: 1.6 },
+            name: "Center Farther",
+            defaultDialogueId: null,
+            dialogues: []
+          }
+        ],
+        interactables: [],
+        cameraRigs: []
+      },
+      interactionLinks: [
+        { id: "link-close-edge", sourceEntityId: "npc-close-edge", trigger: "click", action: { type: "runSequence", sequenceId: "noop" } },
+        { id: "link-center-farther", sourceEntityId: "npc-center-farther", trigger: "click", action: { type: "runSequence", sequenceId: "noop" } }
+      ]
+    } as never;
+    hostInternals.sceneReady = true;
+    hostInternals.activeController = hostInternals.thirdPersonController;
+    hostInternals.currentPlayerControllerTelemetry = {
+      eyePosition: { x: 0, y: 1.6, z: 0 }
+    };
+    hostInternals.camera.position.set(0, 1.6, 0);
+    hostInternals.camera.lookAt(0, 0.9, 10);
+    hostInternals.camera.updateMatrixWorld();
+    hostInternals.camera.updateProjectionMatrix();
+
+    hostInternals.refreshRuntimeTargetingState();
+
+    expect(hostInternals.runtimeTargetCandidates[0]?.entityId).toBe(
+      "npc-close-edge"
+    );
+    expect(hostInternals.proposedRuntimeTarget).toMatchObject({
+      kind: "npc",
+      entityId: "npc-center-farther"
+    });
     host.dispose();
   });
 
