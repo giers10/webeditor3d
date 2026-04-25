@@ -4865,7 +4865,7 @@ export class RuntimeHost {
     this.refreshRuntimeTargetingState();
     this.activeController?.update(simulationDt);
     this.refreshRuntimeTargetingState();
-    this.updateActiveRuntimeTargetLockState();
+    this.updateActiveRuntimeTargetLockState(cameraDt);
     const activeCameraRig = this.applyActiveCameraRig(cameraDt, previousCameraPose);
     this.updateRuntimeTargetingVisuals(cameraDt);
 
