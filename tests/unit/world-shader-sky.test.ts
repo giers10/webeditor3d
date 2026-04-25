@@ -189,6 +189,66 @@ describe("resolveWorldShaderSkyRenderState", () => {
     );
   });
 
+  it("keeps aurora orientation stable while animation advances linearly with time", () => {
+    const world = createDefaultWorldSettings();
+    const time = createDefaultProjectTimeSettings();
+    world.background = {
+      mode: "shader"
+    };
+    world.shaderSky.aurora.enabled = true;
+
+    const eveningTime = resolveRuntimeTimeState(time, {
+      timeOfDayHours: 21,
+      dayCount: 0,
+      dayLengthMinutes: 24
+    });
+    const eveningWorld = resolveRuntimeDayNightWorldState(
+      world,
+      time,
+      {
+        timeOfDayHours: 21,
+        dayCount: 0,
+        dayLengthMinutes: 24
+      },
+      eveningTime
+    );
+    const lateNightTime = resolveRuntimeTimeState(time, {
+      timeOfDayHours: 3,
+      dayCount: 1,
+      dayLengthMinutes: 24
+    });
+    const lateNightWorld = resolveRuntimeDayNightWorldState(
+      world,
+      time,
+      {
+        timeOfDayHours: 3,
+        dayCount: 1,
+        dayLengthMinutes: 24
+      },
+      lateNightTime
+    );
+
+    const eveningSky = resolveWorldShaderSkyRenderState(
+      world,
+      eveningWorld,
+      eveningTime,
+      time
+    );
+    const lateNightSky = resolveWorldShaderSkyRenderState(
+      world,
+      lateNightWorld,
+      lateNightTime,
+      time
+    );
+
+    expect(eveningSky?.aurora.rotationRadians).toBe(
+      lateNightSky?.aurora.rotationRadians
+    );
+    expect(lateNightSky?.aurora.timeHours ?? 0).toBeGreaterThan(
+      eveningSky?.aurora.timeHours ?? 0
+    );
+  });
+
   it("offsets shader-rendered celestial positions when the horizon height changes", () => {
     const world = createDefaultWorldSettings();
     const time = createDefaultProjectTimeSettings();
