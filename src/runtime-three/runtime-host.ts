@@ -3637,6 +3637,7 @@ export class RuntimeHost {
     }
 
     const facingGroup = new Group();
+    facingGroup.name = "npcFacingGroup";
     facingGroup.rotation.y = (npc.yawDegrees * Math.PI) / 180;
     group.add(facingGroup);
     const colliderTop =
@@ -4773,12 +4774,7 @@ export class RuntimeHost {
 
       if (renderGroup !== undefined) {
         renderGroup.visible = npc.visible && npc.active;
-        renderGroup.position.set(
-          npc.position.x,
-          npc.position.y,
-          npc.position.z
-        );
-        renderGroup.rotation.set(0, (npc.yawDegrees * Math.PI) / 180, 0);
+        this.syncNpcRenderGroupTransform(renderGroup, npc);
       }
 
       if (
