@@ -2639,13 +2639,17 @@ export class RuntimeHost {
         this.cameraTransitionState.toPose.lookTarget,
         blendT
       );
-      this.applyCameraPose({
-        position: blendedPosition.clone(),
-        lookTarget: blendedLookTarget.clone(),
-        collisionPivot:
-          this.cameraTransitionState.toPose.collisionPivot?.clone() ?? null,
-        collisionRadius: this.cameraTransitionState.toPose.collisionRadius ?? null
-      }, dt);
+      this.applyCameraPose(
+        {
+          position: blendedPosition.clone(),
+          lookTarget: blendedLookTarget.clone(),
+          collisionPivot:
+            this.cameraTransitionState.toPose.collisionPivot?.clone() ?? null,
+          collisionRadius:
+            this.cameraTransitionState.toPose.collisionRadius ?? null
+        },
+        dt
+      );
 
       if (blendT >= 1) {
         this.cameraTransitionState = null;
